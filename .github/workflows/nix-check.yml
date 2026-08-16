@@ -55,6 +55,9 @@ jobs:
             echo "No unregistered port numbers detected"
           fi
 
+      - name: Check templ generated files are committed
+        run: scripts/check-templ-committed.sh
+
       - name: Flake input hygiene (ref=master + GOTOOLCHAIN)
         run: |
           # Fail on GOTOOLCHAIN=auto (sandbox purity violation)

@@ -29,83 +29,462 @@
         --solution: var(--color-blue);
         --warning: var(--color-yellow);
         --radius: 0px;
-        --font-heading: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        --font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas, monospace;
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
       }
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      html { scroll-behavior: smooth; }
-      section[id], [id] { scroll-margin-top: 60px; }
-      body { background: var(--surface); color: var(--text); font-family: var(--font-body); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
-      :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-      .top-bar { background: var(--text); color: var(--surface); padding: 0.6rem 2rem; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
-      .layout { display: flex; gap: 2.5rem; padding: 2rem; }
-      .sidebar { width: 220px; flex-shrink: 0; position: sticky; top: 1rem; align-self: flex-start; height: calc(100vh - 2rem); overflow-y: auto; display: none; }
-      .sidebar nav { display: flex; flex-direction: column; }
-      .sidebar .label { font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--border-strong); }
-      .sidebar a { font-size: 0.85rem; color: var(--text-muted); text-decoration: none; padding: 0.45rem 0.75rem; border-left: 2px solid transparent; transition: all 0.15s ease; font-weight: 500; }
-      .sidebar a:hover, .sidebar a.active { color: var(--accent); border-left-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
-      .main { flex: 1; min-width: 0; }
-      h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: 800; letter-spacing: -0.02em; }
-      h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.1; margin: 0 0 0.6rem; }
-      h2 { font-size: 1.4rem; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--border-strong); display: flex; align-items: baseline; gap: 0.6rem; }
-      h2 .num { font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent); font-weight: 700; }
-      h3 { font-size: 1.1rem; margin: 0 0 0.4rem; font-weight: 700; }
-      h4 { font-size: 0.98rem; margin: 0 0 0.3rem; font-weight: 700; }
-      p { margin: 0 0 1rem; }
-      .hero { padding: 1.5rem 0 1.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-strong); }
-      .hero-badge { display: inline-block; font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--surface); background: var(--accent); padding: 0.3rem 0.7rem; margin-bottom: 0.9rem; }
-      .hero-subtitle { font-size: 1.05rem; color: var(--text-muted); max-width: 70ch; margin: 0; }
-      .hero-shapes { position: relative; height: 80px; margin-bottom: 1rem; }
-      .hero-shapes .circle { position: absolute; top: 0; left: 0; width: 56px; height: 56px; background: var(--problem); border-radius: 50%; }
-      .hero-shapes .square { position: absolute; top: 24px; left: 72px; width: 48px; height: 48px; background: var(--solution); }
-      .hero-shapes .tri { position: absolute; top: 8px; left: 140px; width: 0; height: 0; border-left: 28px solid transparent; border-right: 28px solid transparent; border-bottom: 48px solid var(--warning); }
-      .card { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1.3rem; margin-bottom: 1rem; border-left: 4px solid var(--border-strong); }
-      .card-problem { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised)); }
-      .card-solution { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised)); }
-      .card-warning { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised)); }
-      .issue { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1.3rem; margin-bottom: 1rem; border-left: 4px solid var(--border-strong); }
-      .issue-critical { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised)); }
-      .issue-important { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised)); }
-      .issue-nice { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised)); }
-      .issue h3 { margin-bottom: 0.3rem; }
-      .issue .where { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-faint); margin: 0.2rem 0 0.6rem; }
-      .issue p:last-child { margin-bottom: 0; }
-      .severity { display: inline-block; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.55rem; margin-bottom: 0.6rem; color: var(--surface); }
-      .severity-critical { background: var(--problem); }
-      .severity-important { background: var(--warning); }
-      .severity-nice { background: var(--solution); }
-      .badge { display: inline-block; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.18rem 0.5rem; border: 1px solid var(--border-strong); color: var(--text-muted); }
-      .badge-critical { color: var(--problem); border-color: var(--problem); }
-      .badge-high { color: var(--warning); border-color: var(--warning); }
-      .badge-medium { color: var(--accent); border-color: var(--accent); }
-      .badge-low { color: var(--text-muted); }
-      .badge-fixed { color: var(--solution); border-color: var(--solution); }
-      .callout { margin: 0.8rem 0 0; padding: 0.7rem 0.9rem; border-left: 3px solid var(--border-strong); background: color-mix(in srgb, var(--text) 5%, transparent); font-size: 0.9rem; }
-      .callout strong { display: inline-block; margin-right: 0.4rem; }
-      .callout-solution { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 10%, transparent); }
-      .callout-warning { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 10%, transparent); }
-      .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin: 1rem 0 1.5rem; }
-      .stat-card { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1rem; position: relative; }
-      .stat-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--border-strong); }
-      .stat-bad::before { background: var(--problem); }
-      .stat-good::before { background: var(--solution); }
-      .stat-warn::before { background: var(--warning); }
-      .stat-value { font-family: var(--font-heading); font-size: 2rem; font-weight: 800; line-height: 1; letter-spacing: -0.03em; color: var(--text); }
-      .stat-bad .stat-value { color: var(--problem); }
-      .stat-good .stat-value { color: var(--solution); }
-      .stat-warn .stat-value { color: var(--warning); }
-      .stat-label { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint); margin-top: 0.5rem; }
-      .table-wrap { overflow-x: auto; }
-      table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: 0.9rem; }
-      th { text-align: left; padding: 0.6rem 0.9rem; background: var(--surface-raised); color: var(--text-faint); font-family: var(--font-mono); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid var(--border-strong); }
-      td { padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--border); }
-      tr:hover td { background: var(--surface-raised); }
-      code { font-family: var(--font-mono); }
-      p code, li code, td code { font-size: 0.88em; background: var(--surface-sunken); padding: 0.1rem 0.35rem; }
-      .footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-faint); font-family: var(--font-mono); }
-      @media (min-width: 1024px) { .sidebar { display: block; } }
-      @media (max-width: 768px) { .layout { flex-direction: column; padding: 1rem; } .top-bar { padding: 0.6rem 1rem; flex-wrap: wrap; gap: 0.3rem; } .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before {
+        background: var(--warning);
+      }
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value {
+        color: var(--problem);
+      }
+      .stat-good .stat-value {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value {
+        color: var(--warning);
+      }
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
     </style>
   </head>
   <body>
@@ -140,11 +519,12 @@
           <div class="hero-badge">Point-in-time snapshot</div>
           <h1>SystemNix Status</h1>
           <p class="hero-subtitle">
-            Four parallel sessions landed a monitoring-honesty batch, a focus-follow
-            daemon, /rust-cache retirement and 41&nbsp;GiB of tmpfs relief in the last
-            24&nbsp;hours — while the root disk climbed to 93%, the off-site backup
-            still does not exist, and every deploy ships a ~9-minute browser-history
-            downtime window. Monitoring got more honest; the disk did not get emptier.
+            Four parallel sessions landed a monitoring-honesty batch, a
+            focus-follow daemon, /rust-cache retirement and 41&nbsp;GiB of tmpfs
+            relief in the last 24&nbsp;hours — while the root disk climbed to
+            93%, the off-site backup still does not exist, and every deploy
+            ships a ~9-minute browser-history downtime window. Monitoring got
+            more honest; the disk did not get emptier.
           </p>
         </div>
 
@@ -176,34 +556,43 @@
           </div>
         </div>
 
-        <h2 id="done"><span class="num">a</span>FULLY DONE — verified, committed, deployed</h2>
+        <h2 id="done">
+          <span class="num">a</span>FULLY DONE — verified, committed, deployed
+        </h2>
 
         <div class="issue issue-nice">
           <span class="severity severity-nice">Deployed + live-verified</span>
           <h3>Discord alert spam: all 5 root causes fixed</h3>
-          <div class="where">commit 66e78231 &middot; sessions 01-34 → 03-30</div>
+          <div class="where">
+            commit 66e78231 &middot; sessions 01-34 → 03-30
+          </div>
           <p>
-            C1 provisioning churn (provisioner now converges — 2nd run reports all 20
-            rules "Unchanged", zero deploy-time notifications), C2 label-dump bodies
-            (custom 🔴/🟡/🟢 templates + <code>annotations.description</code>), C3
-            localhost links (<code>external_url = https://signoz.home.lan</code>),
-            C4 PMA threshold flap (thresholds derived from each unit's own MemoryMax —
-            live: 15,461,882,265 = exactly 90% of 16G), C5 nvme phantom zeros (key
-            names proven from nvme-cli 2.16 source; live: 100% spare, 13% used,
-            <code>keys_missing 0</code>).
+            C1 provisioning churn (provisioner now converges — 2nd run reports
+            all 20 rules "Unchanged", zero deploy-time notifications), C2
+            label-dump bodies (custom 🔴/🟡/🟢 templates +
+            <code>annotations.description</code>), C3 localhost links (<code
+              >external_url = https://signoz.home.lan</code
+            >), C4 PMA threshold flap (thresholds derived from each unit's own
+            MemoryMax — live: 15,461,882,265 = exactly 90% of 16G), C5 nvme
+            phantom zeros (key names proven from nvme-cli 2.16 source; live:
+            100% spare, 13% used, <code>keys_missing 0</code>).
           </p>
         </div>
 
         <div class="issue issue-nice">
           <span class="severity severity-nice">Deployed + live-verified</span>
           <h3>focus-new-windows daemon (launch follow)</h3>
-          <div class="where">modules/nixos/desktop/focus-new-windows.nix &middot; commit 66e78231</div>
+          <div class="where">
+            modules/nixos/desktop/focus-new-windows.nix &middot; commit 66e78231
+          </div>
           <p>
-            Spotlight launches now follow their <code>open-on-workspace</code> target:
-            daemon watches the niri event stream, calls <code>focus-window --id</code>
-            on newly opened unfocused windows. Known-ID tracking prevents title-change
-            focus theft; 10s login grace; <code>skipAppIds</code> option. Cross-workspace
-            follow verified live tonight; cross-output (DP-2) case awaits DP-2 reconnect.
+            Spotlight launches now follow their
+            <code>open-on-workspace</code> target: daemon watches the niri event
+            stream, calls <code>focus-window --id</code> on newly opened
+            unfocused windows. Known-ID tracking prevents title-change focus
+            theft; 10s login grace; <code>skipAppIds</code> option.
+            Cross-workspace follow verified live tonight; cross-output (DP-2)
+            case awaits DP-2 reconnect.
           </p>
         </div>
 
@@ -212,22 +601,25 @@
           <h3>/rust-cache retired &middot; /tmp reclaimed 42G → 406M</h3>
           <div class="where">commits e495e423 &middot; session 03-44</div>
           <p>
-            Mount removed from hardware-configuration.nix, 32G stale contents wiped,
-            unmount verified post-deploy. /tmp swept with open-file check first:
-            ~41&nbsp;GiB of RAM/zram freed. All smoke FAILs driven to documented
-            monitor365-only noise (39 PASS / 4 FAIL).
+            Mount removed from hardware-configuration.nix, 32G stale contents
+            wiped, unmount verified post-deploy. /tmp swept with open-file check
+            first: ~41&nbsp;GiB of RAM/zram freed. All smoke FAILs driven to
+            documented monitor365-only noise (39 PASS / 4 FAIL).
           </p>
         </div>
 
         <div class="issue issue-nice">
           <span class="severity severity-nice">Committed</span>
           <h3>Go build-cascade relock + deploy recovery</h3>
-          <div class="where">commits a60a646e, e5162b94 &middot; session 03-08</div>
+          <div class="where">
+            commits a60a646e, e5162b94 &middot; session 03-08
+          </div>
           <p>
             Broken Go flake inputs (browser-history, go-cqrs-lite,
-            file-and-image-renamer) re-locked after a vendor-hash cascade; deploy lock
-            contention diagnosed and recovered. Smoke probes fixed to hit
-            browser-history <code>/health</code> instead of <code>/</code> (7fb3e534).
+            file-and-image-renamer) re-locked after a vendor-hash cascade;
+            deploy lock contention diagnosed and recovered. Smoke probes fixed
+            to hit browser-history <code>/health</code> instead of
+            <code>/</code> (7fb3e534).
           </p>
         </div>
 
@@ -236,96 +628,174 @@
           <h3>Monitoring-integrity additions</h3>
           <div class="where">commits e495e423, 66e78231</div>
           <p>
-            New "NVMe Collector Key Integrity" Gatus check (catches the phantom-zero
-            class that hid "Spare Blocks Low" for weeks); <code>available_spare_percent</code>
-            added to NVMe health; endurance check label-bound to a real device. Two
-            latent Gatus <code>pat()</code> bugs fixed (one check blind for days).
-            KSM VM test added and wired (<code>tests/test-ksm.nix</code>, 134 lines).
-            pre-deploy-check <code>KNOWN_NEW_METRICS</code> emptied — the guard now
-            pages on real signal loss, not exception-list artifacts.
+            New "NVMe Collector Key Integrity" Gatus check (catches the
+            phantom-zero class that hid "Spare Blocks Low" for weeks);
+            <code>available_spare_percent</code> added to NVMe health; endurance
+            check label-bound to a real device. Two latent Gatus
+            <code>pat()</code> bugs fixed (one check blind for days). KSM VM
+            test added and wired (<code>tests/test-ksm.nix</code>, 134 lines).
+            pre-deploy-check <code>KNOWN_NEW_METRICS</code> emptied — the guard
+            now pages on real signal loss, not exception-list artifacts.
           </p>
         </div>
 
         <h2 id="partial"><span class="num">b</span>PARTIALLY DONE</h2>
 
         <div class="issue issue-important">
-          <span class="severity severity-important">Blocked on authorization</span>
+          <span class="severity severity-important"
+            >Blocked on authorization</span
+          >
           <h3>/rust-cache partition reclaim — 98G still partitioned off</h3>
           <div class="where">nvme0n1p9 &middot; TODO_LIST P2</div>
           <p>
-            Mount and contents gone, but the 98G partition itself still exists and the
-            space is not usable by <code>/</code>. Needs <code>parted</code> surgery +
-            adjacent-BTRFS grow. A root-owned empty mountpoint dir remains (4K, cosmetic).
-            Effort: L. Blocker: user authorization for irreversible disk surgery.
+            Mount and contents gone, but the 98G partition itself still exists
+            and the space is not usable by <code>/</code>. Needs
+            <code>parted</code> surgery + adjacent-BTRFS grow. A root-owned
+            empty mountpoint dir remains (4K, cosmetic). Effort: L. Blocker:
+            user authorization for irreversible disk surgery.
           </p>
         </div>
 
         <div class="issue issue-important">
-          <span class="severity severity-important">Awaiting first real event</span>
+          <span class="severity severity-important"
+            >Awaiting first real event</span
+          >
           <h3>Discord alert end-to-end visual proof</h3>
           <div class="where">session 03-30 §b.11</div>
           <p>
-            Every component (templates, annotations, external_url) verified deployed,
-            but no genuine alert fired since — the final visual proof (one real 🔴
-            message with value + link) is pending the next real incident. Effort: S
-            (passive). Blocker: time.
+            Every component (templates, annotations, external_url) verified
+            deployed, but no genuine alert fired since — the final visual proof
+            (one real 🔴 message with value + link) is pending the next real
+            incident. Effort: S (passive). Blocker: time.
           </p>
         </div>
 
         <div class="issue issue-important">
           <span class="severity severity-important">Needs check</span>
           <h3>browser-history-agent failed to start at 03:46 today</h3>
-          <div class="where">system journal 03:46:08 &middot; server /health = 200 now</div>
+          <div class="where">
+            system journal 03:46:08 &middot; server /health = 200 now
+          </div>
           <p>
-            "Failed to start Browser History Agent" during the 03:4x deploy window —
-            same agent→server race class fixed on 08-10. Server is healthy (HTTP 200);
-            agent state unverified at report time. Effort: S.
+            "Failed to start Browser History Agent" during the 03:4x deploy
+            window — same agent→server race class fixed on 08-10. Server is
+            healthy (HTTP 200); agent state unverified at report time. Effort:
+            S.
           </p>
         </div>
 
         <div class="issue issue-important">
-          <span class="severity severity-important">Chain verified, release pending</span>
+          <span class="severity severity-important"
+            >Chain verified, release pending</span
+          >
           <h3>Registration gate is a NO-OP in production</h3>
-          <div class="where">TODO_LIST P3 &middot; browser-history tag step</div>
+          <div class="where">
+            TODO_LIST P3 &middot; browser-history tag step
+          </div>
           <p>
-            Deployed binary predates all gate work: <code>MAX_USERS=1</code> does nothing
-            live. cqrs-htmx v4.8.0 tagged ✓; browser-history commits done but untagged;
-            go.mod has zero v4.8.0 references. Break is at the browser-history tag step.
-            Effort: S (tag + go.mod + flake bump + deploy + verify 403).
+            Deployed binary predates all gate work:
+            <code>MAX_USERS=1</code> does nothing live. cqrs-htmx v4.8.0 tagged
+            ✓; browser-history commits done but untagged; go.mod has zero v4.8.0
+            references. Break is at the browser-history tag step. Effort: S (tag
+            + go.mod + flake bump + deploy + verify 403).
           </p>
         </div>
 
         <div class="issue issue-nice">
           <span class="severity severity-nice">Cheap wins pending</span>
-          <h3>Hermes patch deletion &middot; immich DB backup &middot; off-site backup</h3>
+          <h3>
+            Hermes patch deletion &middot; immich DB backup &middot; off-site
+            backup
+          </h3>
           <div class="where">TODO_LIST P0/P2</div>
           <p>
-            Hermes: upstream v0.20.1 ships <code>registration_lifecycle</code>; input
-            bump + patch deletion pending (S). Immich DB backup NEVER succeeded
-            (<code>backup_last_success_timestamp 0</code>, pg_dump unit broken — M).
-            Off-site backup: Hetzner StorageBox + Borg researched, never executed (L) —
-            flagged daily since 2026-06-25.
+            Hermes: upstream v0.20.1 ships <code>registration_lifecycle</code>;
+            input bump + patch deletion pending (S). Immich DB backup NEVER
+            succeeded (<code>backup_last_success_timestamp 0</code>, pg_dump
+            unit broken — M). Off-site backup: Hetzner StorageBox + Borg
+            researched, never executed (L) — flagged daily since 2026-06-25.
           </p>
         </div>
 
-        <h2 id="notstarted"><span class="num">c</span>NOT STARTED (planned, no code)</h2>
+        <h2 id="notstarted">
+          <span class="num">c</span>NOT STARTED (planned, no code)
+        </h2>
         <table>
           <thead>
-            <tr><th>Item</th><th>Why not started</th><th>Still wanted?</th></tr>
+            <tr>
+              <th>Item</th>
+              <th>Why not started</th>
+              <th>Still wanted?</th>
+            </tr>
           </thead>
           <tbody>
-            <tr><td>Partition surgery p9 delete + root grow</td><td>Needs user authorization (irreversible)</td><td><span class="badge badge-critical">Critical</span></td></tr>
-            <tr><td>Redundant subvolume automount removal (@cache-home/@go/@npm/@cargo)</td><td>Batched with partition surgery</td><td><span class="badge badge-high">High</span></td></tr>
-            <tr><td>monitor365 restoration (empty-journal mystery)</td><td>Deliberately disabled 08-12; deprioritized under disk work</td><td><span class="badge badge-high">High</span></td></tr>
-            <tr><td>Docker data-root → SSD2 (btrfs)</td><td>Manual migration, deferred</td><td><span class="badge badge-high">High</span></td></tr>
-            <tr><td>FastFlowLM NPU packaging (design complete)</td><td>Large effort, planned in 2026-08-15 doc</td><td><span class="badge badge-medium">Medium</span></td></tr>
-            <tr><td>StartLimitBurst eval-time guard</td><td>Zero current violations; guard is regression insurance</td><td><span class="badge badge-medium">Medium</span></td></tr>
-            <tr><td>Gatus unlabeled-value-pat lint + meta-check auth fix</td><td>Queued this arc (verify-the-verifier)</td><td><span class="badge badge-medium">Medium</span></td></tr>
-            <tr><td>Provisioner idempotency VM test</td><td>Queued; most consequential untested shell logic</td><td><span class="badge badge-medium">Medium</span></td></tr>
-            <tr><td>SigNoz dashboards v2 rewrite (or delete ghost)</td><td>Awaiting user decision</td><td><span class="badge badge-medium">Medium</span></td></tr>
-            <tr><td>GOEXPERIMENT sweep (21 satellite repos)</td><td>Manual, boring, non-blocking</td><td><span class="badge badge-medium">Medium</span></td></tr>
-            <tr><td>macOS deploy (registry override written, not deployed)</td><td>Requires action on the MacBook</td><td><span class="badge badge-low">Low</span></td></tr>
-            <tr><td>Attic cache + CI token &middot; BTRFS /data subvolume migration</td><td>Deferred infrastructure</td><td><span class="badge badge-low">Low</span></td></tr>
+            <tr>
+              <td>Partition surgery p9 delete + root grow</td>
+              <td>Needs user authorization (irreversible)</td>
+              <td><span class="badge badge-critical">Critical</span></td>
+            </tr>
+            <tr>
+              <td>
+                Redundant subvolume automount removal
+                (@cache-home/@go/@npm/@cargo)
+              </td>
+              <td>Batched with partition surgery</td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td>monitor365 restoration (empty-journal mystery)</td>
+              <td>
+                Deliberately disabled 08-12; deprioritized under disk work
+              </td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td>Docker data-root → SSD2 (btrfs)</td>
+              <td>Manual migration, deferred</td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td>FastFlowLM NPU packaging (design complete)</td>
+              <td>Large effort, planned in 2026-08-15 doc</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+            </tr>
+            <tr>
+              <td>StartLimitBurst eval-time guard</td>
+              <td>Zero current violations; guard is regression insurance</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+            </tr>
+            <tr>
+              <td>Gatus unlabeled-value-pat lint + meta-check auth fix</td>
+              <td>Queued this arc (verify-the-verifier)</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+            </tr>
+            <tr>
+              <td>Provisioner idempotency VM test</td>
+              <td>Queued; most consequential untested shell logic</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+            </tr>
+            <tr>
+              <td>SigNoz dashboards v2 rewrite (or delete ghost)</td>
+              <td>Awaiting user decision</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+            </tr>
+            <tr>
+              <td>GOEXPERIMENT sweep (21 satellite repos)</td>
+              <td>Manual, boring, non-blocking</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+            </tr>
+            <tr>
+              <td>macOS deploy (registry override written, not deployed)</td>
+              <td>Requires action on the MacBook</td>
+              <td><span class="badge badge-low">Low</span></td>
+            </tr>
+            <tr>
+              <td>
+                Attic cache + CI token &middot; BTRFS /data subvolume migration
+              </td>
+              <td>Deferred infrastructure</td>
+              <td><span class="badge badge-low">Low</span></td>
+            </tr>
           </tbody>
         </table>
 
@@ -334,32 +804,38 @@
         <div class="issue issue-critical">
           <span class="severity severity-critical">Data-loss risk</span>
           <h3>Root disk 93% and still climbing</h3>
-          <div class="where">/ = 648G / 723G, 57G free &middot; 92% → 93% in one hour tonight</div>
+          <div class="where">
+            / = 648G / 723G, 57G free &middot; 92% → 93% in one hour tonight
+          </div>
           <p>
-            Every reclamation today was tmpfs or a separate partition — <strong>zero
-            net relief on <code>/</code></strong>. High fill feeds write amplification,
-            SLC-cache exhaustion and the documented WDT-crash mode. The un-investigated
-            1%/hour growth during deploys suggests build artifacts/snapshots are the
-            leak. Real levers (98G partition grow, subvolume automount reclaim, Docker
-            → SSD2, /data audits: activitywatch 12G, DuckDB 13G) are all still ahead.
+            Every reclamation today was tmpfs or a separate partition —
+            <strong>zero net relief on <code>/</code></strong
+            >. High fill feeds write amplification, SLC-cache exhaustion and the
+            documented WDT-crash mode. The un-investigated 1%/hour growth during
+            deploys suggests build artifacts/snapshots are the leak. Real levers
+            (98G partition grow, subvolume automount reclaim, Docker → SSD2,
+            /data audits: activitywatch 12G, DuckDB 13G) are all still ahead.
           </p>
           <div class="callout callout-warning">
             <strong>Mitigation</strong> 10G emergency reserve file exists at
-            <code>/btrfs-emergency-reserve</code> (delete for instant relief), but the
-            structural fix needs authorization.
+            <code>/btrfs-emergency-reserve</code> (delete for instant relief),
+            but the structural fix needs authorization.
           </div>
         </div>
 
         <div class="issue issue-critical">
           <span class="severity severity-critical">Data-loss risk</span>
           <h3>Backup posture is theater</h3>
-          <div class="where">immich DB: never succeeded &middot; monitor365: 999h stale &middot; off-site: none</div>
+          <div class="where">
+            immich DB: never succeeded &middot; monitor365: 999h stale &middot;
+            off-site: none
+          </div>
           <p>
-            <code>backup_all_healthy 0</code> is truthful right now. The Aug 3 BTRFS
-            corruption event (13 files lost) proved the NVMe is a single point of
-            failure — Forgejo history, Immich photos, Twenty CRM, DiscordSync archive
-            all live on it. Snapshot-only protection flagged since 2026-06-25 with zero
-            movement on the Hetzner/Borg plan.
+            <code>backup_all_healthy 0</code> is truthful right now. The Aug 3
+            BTRFS corruption event (13 files lost) proved the NVMe is a single
+            point of failure — Forgejo history, Immich photos, Twenty CRM,
+            DiscordSync archive all live on it. Snapshot-only protection flagged
+            since 2026-06-25 with zero movement on the Hetzner/Borg plan.
           </p>
         </div>
 
@@ -368,71 +844,91 @@
           <h3>~9-minute browser-history downtime window per deploy</h3>
           <div class="where">double restart × ~4.5 min pre-bind CPU burn</div>
           <p>
-            Every deploy restarts browser-history twice (switch + deploy.sh explicit
-            restart); each start burns ~4.5 min between "OAuth2 providers configured"
-            and binding (cause never profiled — full event replay, no CheckpointStore).
-            Smoke checks insta-fail during this window on EVERY deploy. Root fix is
-            upstream (bind-early/async-replay) or halving the restarts in deploy.sh.
+            Every deploy restarts browser-history twice (switch + deploy.sh
+            explicit restart); each start burns ~4.5 min between "OAuth2
+            providers configured" and binding (cause never profiled — full event
+            replay, no CheckpointStore). Smoke checks insta-fail during this
+            window on EVERY deploy. Root fix is upstream
+            (bind-early/async-replay) or halving the restarts in deploy.sh.
           </p>
         </div>
 
         <div class="issue issue-important">
           <span class="severity severity-important">Alert fatigue</span>
           <h3>4 permanent smoke FAILs mask real regressions</h3>
-          <div class="where">monitor365 probes unconditional &middot; TODO_LIST P3</div>
+          <div class="where">
+            monitor365 probes unconditional &middot; TODO_LIST P3
+          </div>
           <p>
-            post-deploy-check probes deliberately-disabled monitor365 on every run —
-            4 of 4 remaining FAILs are noise. A real regression in that block would be
-            indistinguishable. Fix is a one-line enable-flag gate, queued twice, never done.
+            post-deploy-check probes deliberately-disabled monitor365 on every
+            run — 4 of 4 remaining FAILs are noise. A real regression in that
+            block would be indistinguishable. Fix is a one-line enable-flag
+            gate, queued twice, never done.
           </p>
         </div>
 
         <div class="issue issue-important">
           <span class="severity severity-important">History integrity</span>
-          <h3>Auto-git daemon bundles unrelated sessions into single commits</h3>
-          <div class="where">66e78231 mixes 3 sessions' work &middot; e495e423 mixes 2</div>
+          <h3>
+            Auto-git daemon bundles unrelated sessions into single commits
+          </h3>
+          <div class="where">
+            66e78231 mixes 3 sessions' work &middot; e495e423 mixes 2
+          </div>
           <p>
-            <code>git log</code> is becoming unauditable: alert fixes + focus-follow +
-            zellij work share one commit message; rust-cache retirement + KSM test +
-            gatus hardening share another. Sessions have asked for a commit rule
-            <strong>three times</strong> with no answer. Not revertable without history
-            surgery (itself an open, now-less-urgent question).
+            <code>git log</code> is becoming unauditable: alert fixes +
+            focus-follow + zellij work share one commit message; rust-cache
+            retirement + KSM test + gatus hardening share another. Sessions have
+            asked for a commit rule <strong>three times</strong> with no answer.
+            Not revertable without history surgery (itself an open,
+            now-less-urgent question).
           </p>
         </div>
 
         <div class="issue issue-important">
           <span class="severity severity-important">Ghost system</span>
           <h3>SigNoz dashboards v1→v2 provisioning fails every deploy</h3>
-          <div class="where">HTTP 400 unknown field "title" &middot; 5 dashboards &middot; since v2 API</div>
+          <div class="where">
+            HTTP 400 unknown field "title" &middot; 5 dashboards &middot; since
+            v2 API
+          </div>
           <p>
-            Five dashboard files that will never apply, consuming attention in every
-            deploy log. Honest in logs, dishonest in intent. Decision needed: v2
-            rewrite or delete the loop.
+            Five dashboard files that will never apply, consuming attention in
+            every deploy log. Honest in logs, dishonest in intent. Decision
+            needed: v2 rewrite or delete the loop.
           </p>
         </div>
 
         <div class="issue issue-important">
           <span class="severity severity-important">Pattern</span>
           <h3>Silent-zero fallback culture in collectors</h3>
-          <div class="where">3 instances surfaced this arc (nvme ×2, gatus meta-check)</div>
+          <div class="where">
+            3 instances surfaced this arc (nvme ×2, gatus meta-check)
+          </div>
           <p>
-            "Safe defaults" convert missing data into confident zeros — the exact
-            mechanism that hid "Spare Blocks Low" for weeks and may still make
+            "Safe defaults" convert missing data into confident zeros — the
+            exact mechanism that hid "Spare Blocks Low" for weeks and may still
+            make
             <code>system_gatus_endpoints_in_error_long 0</code> a false green.
-            Mitigation started (keys_missing metric + integrity check) but the pattern
-            persists wherever <code>|| 0</code> survives.
+            Mitigation started (keys_missing metric + integrity check) but the
+            pattern persists wherever <code>|| 0</code> survives.
           </p>
         </div>
 
         <div class="issue issue-nice">
           <span class="severity severity-nice">New, minor</span>
-          <h3>Fresh noise tonight: forgejo commit-graph lock + bluetooth RAP spam</h3>
-          <div class="where">journal 03:35 (golangci-lint mirror) &middot; BB:E9:B0:AA:53:2F repeating</div>
+          <h3>
+            Fresh noise tonight: forgejo commit-graph lock + bluetooth RAP spam
+          </h3>
+          <div class="where">
+            journal 03:35 (golangci-lint mirror) &middot; BB:E9:B0:AA:53:2F
+            repeating
+          </div>
           <p>
-            Forgejo mirror sync hit a stale <code>commit-graph.lock</code> (exit 128) —
-            watch for recurrence, likely benign single-shot. A Bluetooth device is
-            spamming RAP profile failures every few minutes — cosmetic journal noise,
-            blacklist or ignore.
+            Forgejo mirror sync hit a stale <code>commit-graph.lock</code> (exit
+            128) — watch for recurrence, likely benign single-shot. A Bluetooth
+            device is spamming RAP profile failures every few minutes — cosmetic
+            journal noise, blacklist or ignore.
           </p>
         </div>
 
@@ -441,109 +937,340 @@
         <div class="card card-warning">
           <h4>Verify the verifier (meta-theme of the arc)</h4>
           <p>
-            Three blind spots found in one arc: pre-deploy-check validates Gatus pats
-            syntactically but not semantically; the gatus meta-check has a silent-zero
-            fallback; SigNoz rule queries have no metric-presence validation. Encode
-            every lesson as a CHECK, not a comment — prose has failed three times;
-            automation hasn't failed yet.
+            Three blind spots found in one arc: pre-deploy-check validates Gatus
+            pats syntactically but not semantically; the gatus meta-check has a
+            silent-zero fallback; SigNoz rule queries have no metric-presence
+            validation. Encode every lesson as a CHECK, not a comment — prose
+            has failed three times; automation hasn't failed yet.
           </p>
         </div>
         <div class="card card-warning">
           <h4>Deploy hygiene trio</h4>
           <p>
-            (1) Poll-with-timeout browser-history <code>/health</code> in smoke checks
-            instead of insta-fail. (2) Gate monitor365 probes on the enable flag.
-            (3) Deploy reports should list every commit the activation carries —
-            production state is a shared ledger across sibling sessions.
+            (1) Poll-with-timeout browser-history <code>/health</code> in smoke
+            checks instead of insta-fail. (2) Gate monitor365 probes on the
+            enable flag. (3) Deploy reports should list every commit the
+            activation carries — production state is a shared ledger across
+            sibling sessions.
           </p>
         </div>
         <div class="card card-warning">
           <h4>Capture before/after metrics on every reclamation</h4>
           <p>
-            "Freed ~41G" without a meminfo/zram snapshot is a narrative, not evidence.
-            One command per reclamation turns stories into data.
+            "Freed ~41G" without a meminfo/zram snapshot is a narrative, not
+            evidence. One command per reclamation turns stories into data.
           </p>
         </div>
         <div class="card card-warning">
           <h4>Parallel-session discipline</h4>
           <p>
-            With sibling sessions active: re-view files immediately before every edit
-            (2 failed edits cost this arc), <code>stat -c %U</code> the parent before
-            any rm plan, and commit with pathspec discipline — or answer the standing
-            commit-rule question so the daemon's bundling is at least sanctioned.
+            With sibling sessions active: re-view files immediately before every
+            edit (2 failed edits cost this arc), <code>stat -c %U</code> the
+            parent before any rm plan, and commit with pathspec discipline — or
+            answer the standing commit-rule question so the daemon's bundling is
+            at least sanctioned.
           </p>
         </div>
         <div class="card card-warning">
           <h4>HARVEST debt: 3 reports and counting</h4>
           <p>
             Sections (f) from the last three reports were never harvested into
-            TODO_LIST/ROADMAP — this report's (f) is built from them to stop the drift,
-            but the docs-health HARVEST run itself is still owed.
+            TODO_LIST/ROADMAP — this report's (f) is built from them to stop the
+            drift, but the docs-health HARVEST run itself is still owed.
           </p>
         </div>
 
         <h2 id="next"><span class="num">f</span>Top 27 Next (impact-ranked)</h2>
         <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>#</th><th>Task</th><th>Impact</th><th>Effort</th><th>Category</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>1</td><td>Check browser-history-agent state after 03:46 start failure; restart if dead</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Bug</td></tr>
-            <tr><td>2</td><td>Root-disk leak audit: what grew 92→93% in 1h (nix store size, snapshots, build dirs)</td><td><span class="badge badge-critical">Critical</span></td><td>M</td><td>Bug</td></tr>
-            <tr><td>3</td><td>Immich DB backup: fix the pg_dump unit (never succeeded)</td><td><span class="badge badge-critical">Critical</span></td><td>M</td><td>Bug</td></tr>
-            <tr><td>4</td><td>Off-site backup: execute the Hetzner StorageBox + BorgBackup plan</td><td><span class="badge badge-critical">Critical</span></td><td>L</td><td>Feature</td></tr>
-            <tr><td>5</td><td>Partition surgery: delete nvme0n1p9, grow root BTRFS (+98G) — needs authorization</td><td><span class="badge badge-critical">Critical</span></td><td>L</td><td>Infrastructure</td></tr>
-            <tr><td>6</td><td>dnsblockd ManagedOOMPreference=omit (sole DNS resolver, 730 kills/day before raise)</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Bug</td></tr>
-            <tr><td>7</td><td>browser-history v0.4.3 tag + go.mod v4.8.0 + flake bump → registration gate finally live</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Security</td></tr>
-            <tr><td>8</td><td>Foreground BTRFS scrub on / (never scrubbed; /data had 13 corrupt files)</td><td><span class="badge badge-high">High</span></td><td>M</td><td>Infrastructure</td></tr>
-            <tr><td>9</td><td>Gate monitor365 smoke probes on enable flag (kill permanent FAILs)</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Quality</td></tr>
-            <tr><td>10</td><td>Poll-with-timeout browser-history /health in post-deploy-check</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Quality</td></tr>
-            <tr><td>11</td><td>Gatus meta-check auth fix (false-green risk on the monitor-of-monitors)</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Bug</td></tr>
-            <tr><td>12</td><td>Remove redundant @cache-home/@go/@npm/@cargo automounts</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Cleanup</td></tr>
-            <tr><td>13</td><td>Docker data-root → SSD2 btrfs (Docker churn off the QLC NVMe)</td><td><span class="badge badge-high">High</span></td><td>M</td><td>Infrastructure</td></tr>
-            <tr><td>14</td><td>Root-cause browser-history 4.5-min pre-bind burn; upstream bind-early or halve restarts</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td>Bug</td></tr>
-            <tr><td>15</td><td>Provisioner idempotency VM test (run twice → identical rule set)</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td>Quality</td></tr>
-            <tr><td>16</td><td>Unlabeled-value-pat lint (pre-commit candidate)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Quality</td></tr>
-            <tr><td>17</td><td>monitor365 restoration — start with the empty-journal mystery</td><td><span class="badge badge-high">High</span></td><td>L</td><td>Feature</td></tr>
-            <tr><td>18</td><td>SigNoz dashboards: v2 rewrite or delete the ghost (decision)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Cleanup</td></tr>
-            <tr><td>19</td><td>watch first real Discord alert render (checklist in 03-30 §b.11)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Verification</td></tr>
-            <tr><td>20</td><td>import_export.go registration gate (hole #3, ~15-min fix)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Security</td></tr>
-            <tr><td>21</td><td>forgejo-oidc-setup deploy restart race (after/wants caddy)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Bug</td></tr>
-            <tr><td>22</td><td>StartLimitBurst eval-time guard (start-limit-audit.nix)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Quality</td></tr>
-            <tr><td>23</td><td>Hermes: bump past v0.20.1, delete registration_lifecycle patch</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Cleanup</td></tr>
-            <tr><td>24</td><td>HARVEST the last 3 reports' (f) sections into TODO_LIST (docs-health)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Documentation</td></tr>
-            <tr><td>25</td><td>FastFlowLM NPU packaging (design complete, 2026-08-15 doc)</td><td><span class="badge badge-medium">Medium</span></td><td>L</td><td>Feature</td></tr>
-            <tr><td>26</td><td>GOEXPERIMENT sweep — 21 satellite repos (fix pattern: dnsblockd)</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td>Cleanup</td></tr>
-            <tr><td>27</td><td>Deploy macOS (registry override already written)</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>Infrastructure</td></tr>
-          </tbody>
-        </table>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Task</th>
+                <th>Impact</th>
+                <th>Effort</th>
+                <th>Category</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>
+                  Check browser-history-agent state after 03:46 start failure;
+                  restart if dead
+                </td>
+                <td><span class="badge badge-high">High</span></td>
+                <td>S</td>
+                <td>Bug</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>
+                  Root-disk leak audit: what grew 92→93% in 1h (nix store size,
+                  snapshots, build dirs)
+                </td>
+                <td><span class="badge badge-critical">Critical</span></td>
+                <td>M</td>
+                <td>Bug</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>
+                  Immich DB backup: fix the pg_dump unit (never succeeded)
+                </td>
+                <td><span class="badge badge-critical">Critical</span></td>
+                <td>M</td>
+                <td>Bug</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>
+                  Off-site backup: execute the Hetzner StorageBox + BorgBackup
+                  plan
+                </td>
+                <td><span class="badge badge-critical">Critical</span></td>
+                <td>L</td>
+                <td>Feature</td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>
+                  Partition surgery: delete nvme0n1p9, grow root BTRFS (+98G) —
+                  needs authorization
+                </td>
+                <td><span class="badge badge-critical">Critical</span></td>
+                <td>L</td>
+                <td>Infrastructure</td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td>
+                  dnsblockd ManagedOOMPreference=omit (sole DNS resolver, 730
+                  kills/day before raise)
+                </td>
+                <td><span class="badge badge-high">High</span></td>
+                <td>S</td>
+                <td>Bug</td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td>
+                  browser-history v0.4.3 tag + go.mod v4.8.0 + flake bump →
+                  registration gate finally live
+                </td>
+                <td><span class="badge badge-high">High</span></td>
+                <td>S</td>
+                <td>Security</td>
+              </tr>
+              <tr>
+                <td>8</td>
+                <td>
+                  Foreground BTRFS scrub on / (never scrubbed; /data had 13
+                  corrupt files)
+                </td>
+                <td><span class="badge badge-high">High</span></td>
+                <td>M</td>
+                <td>Infrastructure</td>
+              </tr>
+              <tr>
+                <td>9</td>
+                <td>
+                  Gate monitor365 smoke probes on enable flag (kill permanent
+                  FAILs)
+                </td>
+                <td><span class="badge badge-high">High</span></td>
+                <td>S</td>
+                <td>Quality</td>
+              </tr>
+              <tr>
+                <td>10</td>
+                <td>
+                  Poll-with-timeout browser-history /health in post-deploy-check
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>S</td>
+                <td>Quality</td>
+              </tr>
+              <tr>
+                <td>11</td>
+                <td>
+                  Gatus meta-check auth fix (false-green risk on the
+                  monitor-of-monitors)
+                </td>
+                <td><span class="badge badge-high">High</span></td>
+                <td>S</td>
+                <td>Bug</td>
+              </tr>
+              <tr>
+                <td>12</td>
+                <td>Remove redundant @cache-home/@go/@npm/@cargo automounts</td>
+                <td><span class="badge badge-high">High</span></td>
+                <td>S</td>
+                <td>Cleanup</td>
+              </tr>
+              <tr>
+                <td>13</td>
+                <td>
+                  Docker data-root → SSD2 btrfs (Docker churn off the QLC NVMe)
+                </td>
+                <td><span class="badge badge-high">High</span></td>
+                <td>M</td>
+                <td>Infrastructure</td>
+              </tr>
+              <tr>
+                <td>14</td>
+                <td>
+                  Root-cause browser-history 4.5-min pre-bind burn; upstream
+                  bind-early or halve restarts
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>M</td>
+                <td>Bug</td>
+              </tr>
+              <tr>
+                <td>15</td>
+                <td>
+                  Provisioner idempotency VM test (run twice → identical rule
+                  set)
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>M</td>
+                <td>Quality</td>
+              </tr>
+              <tr>
+                <td>16</td>
+                <td>Unlabeled-value-pat lint (pre-commit candidate)</td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>S</td>
+                <td>Quality</td>
+              </tr>
+              <tr>
+                <td>17</td>
+                <td>
+                  monitor365 restoration — start with the empty-journal mystery
+                </td>
+                <td><span class="badge badge-high">High</span></td>
+                <td>L</td>
+                <td>Feature</td>
+              </tr>
+              <tr>
+                <td>18</td>
+                <td>
+                  SigNoz dashboards: v2 rewrite or delete the ghost (decision)
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>S</td>
+                <td>Cleanup</td>
+              </tr>
+              <tr>
+                <td>19</td>
+                <td>
+                  watch first real Discord alert render (checklist in 03-30
+                  §b.11)
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>S</td>
+                <td>Verification</td>
+              </tr>
+              <tr>
+                <td>20</td>
+                <td>
+                  import_export.go registration gate (hole #3, ~15-min fix)
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>S</td>
+                <td>Security</td>
+              </tr>
+              <tr>
+                <td>21</td>
+                <td>
+                  forgejo-oidc-setup deploy restart race (after/wants caddy)
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>S</td>
+                <td>Bug</td>
+              </tr>
+              <tr>
+                <td>22</td>
+                <td>StartLimitBurst eval-time guard (start-limit-audit.nix)</td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>S</td>
+                <td>Quality</td>
+              </tr>
+              <tr>
+                <td>23</td>
+                <td>
+                  Hermes: bump past v0.20.1, delete registration_lifecycle patch
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>S</td>
+                <td>Cleanup</td>
+              </tr>
+              <tr>
+                <td>24</td>
+                <td>
+                  HARVEST the last 3 reports' (f) sections into TODO_LIST
+                  (docs-health)
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>S</td>
+                <td>Documentation</td>
+              </tr>
+              <tr>
+                <td>25</td>
+                <td>
+                  FastFlowLM NPU packaging (design complete, 2026-08-15 doc)
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>L</td>
+                <td>Feature</td>
+              </tr>
+              <tr>
+                <td>26</td>
+                <td>
+                  GOEXPERIMENT sweep — 21 satellite repos (fix pattern:
+                  dnsblockd)
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>M</td>
+                <td>Cleanup</td>
+              </tr>
+              <tr>
+                <td>27</td>
+                <td>Deploy macOS (registry override already written)</td>
+                <td><span class="badge badge-low">Low</span></td>
+                <td>S</td>
+                <td>Infrastructure</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <h2 id="question"><span class="num">g</span>Top Question</h2>
         <div class="card card-problem">
           <h4>Authorize the disk surgery — and give me the sequencing</h4>
           <p>
-            Three critical tracks are open and I keep serializing whichever you last
-            touched: <strong>(1)</strong> irreversible partition surgery on the
-            93%-full production root (delete p9, grow /, +98G — online possible, or
-            maintenance window with fresh btrbk snapshot verification first?),
-            <strong>(2)</strong> monitor365 restoration, <strong>(3)</strong> off-site
-            backup execution. I cannot answer the ordering myself because all three
-            are risk/priority tradeoffs only you can weigh — and the surgery additionally
-            needs an explicit go/no-go since it is irreversible.
+            Three critical tracks are open and I keep serializing whichever you
+            last touched: <strong>(1)</strong> irreversible partition surgery on
+            the 93%-full production root (delete p9, grow /, +98G — online
+            possible, or maintenance window with fresh btrbk snapshot
+            verification first?), <strong>(2)</strong> monitor365 restoration,
+            <strong>(3)</strong> off-site backup execution. I cannot answer the
+            ordering myself because all three are risk/priority tradeoffs only
+            you can weigh — and the surgery additionally needs an explicit
+            go/no-go since it is irreversible.
           </p>
-          <p style="margin-bottom:0;">
-            Secondary (asked 3×, still unanswered): should sessions self-commit with
-            pathspec discipline, or is the daemon's bundling sanctioned? The answer
-            decides whether git history stays auditable.
+          <p style="margin-bottom: 0">
+            Secondary (asked 3×, still unanswered): should sessions self-commit
+            with pathspec discipline, or is the daemon's bundling sanctioned?
+            The answer decides whether git history stays auditable.
           </p>
         </div>
 
         <footer class="footer">
-          Generated 2026-08-16 03:50 CEST &middot; Live data: df, journalctl, /health probe,
-          git log @ e495e423 &middot; Section (f) supersedes the un-harvested (f) sections of
-          the 03-08 / 03-30 / 03-44 reports
+          Generated 2026-08-16 03:50 CEST &middot; Live data: df, journalctl,
+          /health probe, git log @ e495e423 &middot; Section (f) supersedes the
+          un-harvested (f) sections of the 03-08 / 03-30 / 03-44 reports
         </footer>
       </main>
     </div>
@@ -554,22 +1281,33 @@
         var nav = document.querySelector("[data-nav]");
         if (!nav) return;
         var links = nav.querySelectorAll('a[href^="#"]');
-        var ids = Array.from(links).map(function (l) { return l.getAttribute("href").slice(1); });
-        var sections = ids.map(function (id) { return document.getElementById(id); }).filter(Boolean);
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
         if (!sections.length) return;
         var observer = new IntersectionObserver(
           function (entries) {
             entries.forEach(function (entry) {
               if (entry.isIntersecting) {
                 links.forEach(function (link) {
-                  link.classList.toggle("active", link.getAttribute("href") === "#" + entry.target.id);
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
                 });
               }
             });
           },
-          { rootMargin: "-80px 0px -60% 0px", threshold: 0 }
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
         );
-        sections.forEach(function (s) { observer.observe(s); });
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
       })();
     </script>
   </body>

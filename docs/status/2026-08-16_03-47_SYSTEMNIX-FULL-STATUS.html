@@ -29,91 +29,485 @@
         --solution: var(--color-blue);
         --warning: var(--color-yellow);
         --radius: 0px;
-        --font-heading: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        --font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas, monospace;
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
       }
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      html { scroll-behavior: smooth; }
-      section[id], [id] { scroll-margin-top: 60px; }
-      body { background: var(--surface); color: var(--text); font-family: var(--font-body); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
-      :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-      .top-bar { background: var(--text); color: var(--surface); padding: 0.6rem 2rem; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
-      .layout { display: flex; gap: 2.5rem; padding: 2rem; }
-      .sidebar { width: 220px; flex-shrink: 0; position: sticky; top: 1rem; align-self: flex-start; height: calc(100vh - 2rem); overflow-y: auto; display: none; }
-      .sidebar nav { display: flex; flex-direction: column; gap: 0; }
-      .sidebar .label { font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--border-strong); }
-      .sidebar a { font-size: 0.85rem; color: var(--text-muted); text-decoration: none; padding: 0.45rem 0.75rem; border-left: 2px solid transparent; transition: all 0.15s ease; line-height: 1.4; font-weight: 500; }
-      .sidebar a:hover, .sidebar a.active { color: var(--accent); border-left-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
-      .main { flex: 1; min-width: 0; }
-      h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: 800; letter-spacing: -0.02em; }
-      h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.1; margin: 0 0 0.6rem; }
-      h2 { font-size: 1.4rem; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--border-strong); display: flex; align-items: baseline; gap: 0.6rem; }
-      h2 .num { font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent); font-weight: 700; letter-spacing: 0.06em; }
-      h3 { font-size: 1.1rem; margin: 0 0 0.4rem; font-weight: 700; }
-      h4 { font-size: 0.98rem; margin: 0 0 0.3rem; font-weight: 700; }
-      p { margin: 0 0 1rem; }
-      ul { margin: 0 0 1rem; padding-left: 1.2rem; }
-      li { margin: 0.3rem 0; }
-      .hero { padding: 1.5rem 0 1.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-strong); }
-      .hero-badge { display: inline-block; font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--surface); background: var(--accent); padding: 0.3rem 0.7rem; margin-bottom: 0.9rem; }
-      .hero-subtitle { font-size: 1.05rem; color: var(--text-muted); max-width: 75ch; margin: 0; }
-      .hero-shapes { position: relative; height: 80px; margin-bottom: 1rem; }
-      .hero-shapes .circle { position: absolute; top: 0; left: 0; width: 56px; height: 56px; background: var(--problem); border-radius: 50%; }
-      .hero-shapes .square { position: absolute; top: 24px; left: 72px; width: 48px; height: 48px; background: var(--solution); }
-      .hero-shapes .tri { position: absolute; top: 8px; left: 140px; width: 0; height: 0; border-left: 28px solid transparent; border-right: 28px solid transparent; border-bottom: 48px solid var(--warning); }
-      .card { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1.3rem; margin-bottom: 1rem; border-left: 4px solid var(--border-strong); }
-      .card-problem { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised)); }
-      .card-solution { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised)); }
-      .card-warning { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised)); }
-      .issue { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1.3rem; margin-bottom: 1rem; border-left: 4px solid var(--border-strong); }
-      .issue-critical { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised)); }
-      .issue-important { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised)); }
-      .issue-nice { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised)); }
-      .issue h3 { margin-bottom: 0.3rem; }
-      .issue .where { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-faint); margin: 0.2rem 0 0.6rem; }
-      .issue p:last-child { margin-bottom: 0; }
-      .severity { display: inline-block; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.55rem; margin-bottom: 0.6rem; color: var(--surface); }
-      .severity-critical { background: var(--problem); }
-      .severity-important { background: var(--warning); }
-      .severity-nice { background: var(--solution); }
-      .badge { display: inline-block; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.18rem 0.5rem; border: 1px solid var(--border-strong); color: var(--text-muted); }
-      .badge-critical { color: var(--problem); border-color: var(--problem); }
-      .badge-high { color: var(--warning); border-color: var(--warning); }
-      .badge-medium { color: var(--accent); border-color: var(--accent); }
-      .badge-low { color: var(--text-muted); }
-      .badge-fixed { color: var(--solution); border-color: var(--solution); }
-      .callout { margin: 0.8rem 0 0; padding: 0.7rem 0.9rem; border-left: 3px solid var(--border-strong); background: color-mix(in srgb, var(--text) 5%, transparent); font-size: 0.9rem; }
-      .callout strong { display: inline-block; margin-right: 0.4rem; }
-      .callout-solution { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 10%, transparent); }
-      .callout-warning { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 10%, transparent); }
-      .callout-problem { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 10%, transparent); }
-      .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin: 1rem 0 1.5rem; }
-      .stat-card { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1rem; position: relative; }
-      .stat-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--border-strong); }
-      .stat-bad::before { background: var(--problem); }
-      .stat-good::before { background: var(--solution); }
-      .stat-warn::before { background: var(--warning); }
-      .stat-value { font-family: var(--font-heading); font-size: 2rem; font-weight: 800; line-height: 1; letter-spacing: -0.03em; color: var(--text); }
-      .stat-bad .stat-value { color: var(--problem); }
-      .stat-good .stat-value { color: var(--solution); }
-      .stat-warn .stat-value { color: var(--warning); }
-      .stat-label { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint); margin-top: 0.5rem; }
-      .table-wrap { overflow-x: auto; }
-      table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: 0.9rem; }
-      th { text-align: left; padding: 0.6rem 0.9rem; background: var(--surface-raised); color: var(--text-faint); font-family: var(--font-mono); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid var(--border-strong); }
-      td { padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--border); vertical-align: top; }
-      tr:hover td { background: var(--surface-raised); }
-      code { font-family: var(--font-mono); }
-      p code, li code, td code { font-size: 0.88em; background: var(--surface-sunken); padding: 0.1rem 0.35rem; }
-      .footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-faint); font-family: var(--font-mono); }
-      .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin: 1rem 0; }
-      @media (min-width: 1024px) { .sidebar { display: block; } }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+      ul {
+        margin: 0 0 1rem;
+        padding-left: 1.2rem;
+      }
+      li {
+        margin: 0.3rem 0;
+      }
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 75ch;
+        margin: 0;
+      }
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+      .callout-problem {
+        border-left-color: var(--problem);
+        background: color-mix(in srgb, var(--problem) 10%, transparent);
+      }
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before {
+        background: var(--warning);
+      }
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value {
+        color: var(--problem);
+      }
+      .stat-good .stat-value {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value {
+        color: var(--warning);
+      }
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
       @media (max-width: 768px) {
-        .layout { flex-direction: column; padding: 1rem; }
-        .top-bar { padding: 0.6rem 1rem; flex-wrap: wrap; gap: 0.3rem; }
-        .grid-2 { grid-template-columns: 1fr; }
-        .stat-grid { grid-template-columns: repeat(2, 1fr); }
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2 {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
       }
     </style>
   </head>
@@ -149,10 +543,11 @@
           <div class="hero-badge">Point-in-Time Snapshot</div>
           <h1>SystemNix Status</h1>
           <p class="hero-subtitle">
-            After a productive overnight arc (alert-spam fix batch, tmpfs/rust-cache reclaim,
-            Go build-cascade repair, buildcache verification) the monitoring stack is honest
-            again — but the root disk is at <strong>93%</strong> with the actual leak
-            unquantified, the monitor365 TODO entry contradicts itself, and several
+            After a productive overnight arc (alert-spam fix batch,
+            tmpfs/rust-cache reclaim, Go build-cascade repair, buildcache
+            verification) the monitoring stack is honest again — but the root
+            disk is at <strong>93%</strong> with the actual leak unquantified,
+            the monitor365 TODO entry contradicts itself, and several
             security-chain items remain no-ops in production.
           </p>
         </div>
@@ -188,13 +583,15 @@
         <div class="card card-solution">
           <h4>Tone of this snapshot</h4>
           <p>
-            The overnight sessions (00:01 → 03:44) closed the Discord alert-spam incident
-            end-to-end, freed ~41G of tmpfs RAM, retired the <code>/rust-cache</code> mount,
-            and verified the buildcache overhaul by execution. Deploy smoke is
-            <strong>39 PASS / 4 FAIL</strong> where all 4 FAILs are documented monitor365
-            noise. The remaining risk concentrates in: disk headroom on <code>/</code>,
-            un-executed irreversible reclaims (partition surgery), production no-ops
-            (registration gate), and stale-truth contradictions in the TODO list itself.
+            The overnight sessions (00:01 → 03:44) closed the Discord alert-spam
+            incident end-to-end, freed ~41G of tmpfs RAM, retired the
+            <code>/rust-cache</code> mount, and verified the buildcache overhaul
+            by execution. Deploy smoke is
+            <strong>39 PASS / 4 FAIL</strong> where all 4 FAILs are documented
+            monitor365 noise. The remaining risk concentrates in: disk headroom
+            on <code>/</code>, un-executed irreversible reclaims (partition
+            surgery), production no-ops (registration gate), and stale-truth
+            contradictions in the TODO list itself.
           </p>
         </div>
 
@@ -202,40 +599,96 @@
 
         <div class="issue issue-nice">
           <span class="severity severity-nice">Incident Closed</span>
-          <h3>Discord alert spam — all 5 root causes fixed, deployed, verified</h3>
-          <div class="where">commits 66e78231 + a60a646e · _signoz-alerts/_signoz-metrics/_signoz-scripts/signoz/gatus-config</div>
+          <h3>
+            Discord alert spam — all 5 root causes fixed, deployed, verified
+          </h3>
+          <div class="where">
+            commits 66e78231 + a60a646e ·
+            _signoz-alerts/_signoz-metrics/_signoz-scripts/signoz/gatus-config
+          </div>
           <ul>
-            <li><strong>C1 provisioning churn:</strong> provisioner v5 converges — second deploy restart showed all 20 rules "Unchanged — skipping"; double-restart now emits zero notifications. Live API: 20 rules / 20 unique / zero dupes.</li>
-            <li><strong>C2 label-dump bodies:</strong> channel templates (🔴/🟡/🟢 title, description+value+ruleSource link) + <code>annotations.description</code> with <code>{{ $value }}</code> on all rules.</li>
-            <li><strong>C3 localhost links:</strong> <code>alertmanager.signoz.external_url</code> live (caveat: no SigNoz frontend shipped — links render 404 until a frontend package exists).</li>
-            <li><strong>C4 PMA threshold flap:</strong> thresholds runtime-derived = 90% of each unit's own MemoryMax (PMA: exactly 90% of 16G).</li>
-            <li><strong>C5 nvme phantom zeros:</strong> proven from deployed nvme-cli 2.16 source — real keys <code>avail_spare</code>/<code>percent_used</code>/<code>spare_thresh</code>; live: 100% spare / 13% used / 10% thresh, <code>keys_missing 0</code>.</li>
-            <li><strong>Bonus:</strong> 2 latent Gatus <code>pat()</code> value-match bugs fixed — "NVMe Endurance Warning" had been silently blind for days.</li>
+            <li>
+              <strong>C1 provisioning churn:</strong> provisioner v5 converges —
+              second deploy restart showed all 20 rules "Unchanged — skipping";
+              double-restart now emits zero notifications. Live API: 20 rules /
+              20 unique / zero dupes.
+            </li>
+            <li>
+              <strong>C2 label-dump bodies:</strong> channel templates (🔴/🟡/🟢
+              title, description+value+ruleSource link) +
+              <code>annotations.description</code> with
+              <code>{{ $value }}</code> on all rules.
+            </li>
+            <li>
+              <strong>C3 localhost links:</strong>
+              <code>alertmanager.signoz.external_url</code> live (caveat: no
+              SigNoz frontend shipped — links render 404 until a frontend
+              package exists).
+            </li>
+            <li>
+              <strong>C4 PMA threshold flap:</strong> thresholds runtime-derived
+              = 90% of each unit's own MemoryMax (PMA: exactly 90% of 16G).
+            </li>
+            <li>
+              <strong>C5 nvme phantom zeros:</strong> proven from deployed
+              nvme-cli 2.16 source — real keys
+              <code>avail_spare</code
+              >/<code>percent_used</code>/<code>spare_thresh</code>; live: 100%
+              spare / 13% used / 10% thresh, <code>keys_missing 0</code>.
+            </li>
+            <li>
+              <strong>Bonus:</strong> 2 latent Gatus
+              <code>pat()</code> value-match bugs fixed — "NVMe Endurance
+              Warning" had been silently blind for days.
+            </li>
           </ul>
         </div>
 
         <div class="issue issue-nice">
           <span class="severity severity-nice">Reclaim</span>
           <h3>/tmp 42G → 406M · /rust-cache retired</h3>
-          <div class="where">docs/status/2026-08-16_03-44_TMPFS-RUSTCACHE-RECLAIM-DEPLOY.md</div>
+          <div class="where">
+            docs/status/2026-08-16_03-44_TMPFS-RUSTCACHE-RECLAIM-DEPLOY.md
+          </div>
           <p>
-            Open-file sweep (<code>lsof +D</code>) before deletion; 40G benchmark dataset +
-            session scratch removed (~41G RAM/zram freed). The 98G <code>/rust-cache</code>
-            partition's only content (stale 32G monitor365 target/) verified migrated to
-            buildcache, wiped, mount removed from <code>hardware-configuration.nix</code>,
-            deployed, unmount confirmed. Final smoke: 39 PASS / 4 FAIL (monitor365 noise only).
+            Open-file sweep (<code>lsof +D</code>) before deletion; 40G
+            benchmark dataset + session scratch removed (~41G RAM/zram freed).
+            The 98G <code>/rust-cache</code> partition's only content (stale 32G
+            monitor365 target/) verified migrated to buildcache, wiped, mount
+            removed from <code>hardware-configuration.nix</code>, deployed,
+            unmount confirmed. Final smoke: 39 PASS / 4 FAIL (monitor365 noise
+            only).
           </p>
         </div>
 
         <div class="issue issue-nice">
           <span class="severity severity-nice">Build</span>
-          <h3>Go build cascade repaired + buildcache overhaul verified by execution</h3>
-          <div class="where">commits f40afd2d, a60a646e, 82bb9707, 2b04b3b6</div>
+          <h3>
+            Go build cascade repaired + buildcache overhaul verified by
+            execution
+          </h3>
+          <div class="where">
+            commits f40afd2d, a60a646e, 82bb9707, 2b04b3b6
+          </div>
           <ul>
-            <li>3 repos re-locked after the cascade; browser-history smoke test switched to <code>/health</code> (7fb3e534).</li>
-            <li><code>GOTOOLCHAIN=local</code> + <code>GOEXPERIMENT=jsonv2</code> key unification collapsed the Go build cache to ONE key (was: 15k duplicate entries/day from auto-downloaded toolchains).</li>
-            <li>Bounded GC verified live: 12s run, ~4G freed (44%→41%); sccache proven end-to-end (clean rebuild 6.1s → 2.3s, 12/12 dep hits).</li>
-            <li>Gatus ≥85% alert lifecycle VERIFIED from the 96% event: TRIGGERED 03:37 → RESOLVED 21:58, both delivered to Discord.</li>
+            <li>
+              3 repos re-locked after the cascade; browser-history smoke test
+              switched to <code>/health</code> (7fb3e534).
+            </li>
+            <li>
+              <code>GOTOOLCHAIN=local</code> +
+              <code>GOEXPERIMENT=jsonv2</code> key unification collapsed the Go
+              build cache to ONE key (was: 15k duplicate entries/day from
+              auto-downloaded toolchains).
+            </li>
+            <li>
+              Bounded GC verified live: 12s run, ~4G freed (44%→41%); sccache
+              proven end-to-end (clean rebuild 6.1s → 2.3s, 12/12 dep hits).
+            </li>
+            <li>
+              Gatus ≥85% alert lifecycle VERIFIED from the 96% event: TRIGGERED
+              03:37 → RESOLVED 21:58, both delivered to Discord.
+            </li>
           </ul>
         </div>
 
@@ -244,11 +697,12 @@
           <h3>Monitor-aware desktop + quality-of-life shipped</h3>
           <div class="where">commits 2566b900, 16e1605e, ae7bfef3</div>
           <p>
-            niri monitor binds (<code>Mod+Ctrl[/Shift]+HJKL/arrows</code>), workspace pinning
-            (DP-1=work, DP-2=chat+media), DMS <code>notificationFocusedMonitor=true</code>,
-            rofi <code>monitor=-1</code>. macOS-style <code>open</code> working over SSH,
-            mpv audio MIME defaults, shutdown countdown overlay module, FastFlowLM NPU
-            integration plan doc.
+            niri monitor binds (<code>Mod+Ctrl[/Shift]+HJKL/arrows</code>),
+            workspace pinning (DP-1=work, DP-2=chat+media), DMS
+            <code>notificationFocusedMonitor=true</code>, rofi
+            <code>monitor=-1</code>. macOS-style <code>open</code> working over
+            SSH, mpv audio MIME defaults, shutdown countdown overlay module,
+            FastFlowLM NPU integration plan doc.
           </p>
         </div>
 
@@ -257,61 +711,80 @@
         <div class="issue issue-critical">
           <span class="severity severity-critical">93% full</span>
           <h3>Disk crisis on / — reclaims so far freed everything EXCEPT /</h3>
-          <div class="where">/ = 648G/723G, 57G free · /data 82% · buildcache 55%</div>
+          <div class="where">
+            / = 648G/723G, 57G free · /data 82% · buildcache 55%
+          </div>
           <p>
-            tmpfs (RAM), rust-cache (own partition), buildcache (USB SSD) were all relieved —
-            but root climbed 92% → 93% anyway. The real levers are all ahead: delete
+            tmpfs (RAM), rust-cache (own partition), buildcache (USB SSD) were
+            all relieved — but root climbed 92% → 93% anyway. The real levers
+            are all ahead: delete
             <code>nvme0n1p9</code> + grow root BTRFS (+98G), remove redundant
-            <code>@cache-home/@go/@npm/@cargo</code> automounts, Docker data-root → SSD2
-            (~sizeable /data relief). <strong>The actual leak on / is still unquantified.</strong>
+            <code>@cache-home/@go/@npm/@cargo</code> automounts, Docker
+            data-root → SSD2 (~sizeable /data relief).
+            <strong>The actual leak on / is still unquantified.</strong>
           </p>
         </div>
 
         <div class="issue issue-important">
           <span class="severity severity-important">Chain break</span>
           <h3>browser-history registration gate is a NO-OP in production</h3>
-          <div class="where">TODO Priority 3 · cqrs-htmx v4.8.0 tagged ✓ · browser-history commits UNtagged ✗</div>
+          <div class="where">
+            TODO Priority 3 · cqrs-htmx v4.8.0 tagged ✓ · browser-history
+            commits UNtagged ✗
+          </div>
           <p>
-            <code>MAX_USERS=1</code> is not live: the deployed binary predates all gate work.
-            Everything upstream of the browser-history tag step is done; the remaining steps
-            are: go.mod requires v4.8.0 → tag → bump flake input → deploy → verify
-            <code>POST /auth/register</code> returns 403. Fold in the OTel schemeless-endpoint
-            parse bug (live crash-loop trigger) so one bump ships both.
+            <code>MAX_USERS=1</code> is not live: the deployed binary predates
+            all gate work. Everything upstream of the browser-history tag step
+            is done; the remaining steps are: go.mod requires v4.8.0 → tag →
+            bump flake input → deploy → verify
+            <code>POST /auth/register</code> returns 403. Fold in the OTel
+            schemeless-endpoint parse bug (live crash-loop trigger) so one bump
+            ships both.
           </p>
         </div>
 
         <div class="issue issue-important">
           <span class="severity severity-important">Awaiting event</span>
-          <h3>Alert pipeline: all components verified, no visual E2E proof yet</h3>
+          <h3>
+            Alert pipeline: all components verified, no visual E2E proof yet
+          </h3>
           <div class="where">03-30 report §b.11</div>
           <p>
-            Templates, annotations, external_url, idempotent provisioner all live — but no
-            genuine alert has fired since the fix batch, so the final proof (a real Discord
-            message rendering correctly) is still pending. Bonus pending: whether alerts fired
-            (correctly) during the 03:26–03:39 browser-history deploy downtime.
+            Templates, annotations, external_url, idempotent provisioner all
+            live — but no genuine alert has fired since the fix batch, so the
+            final proof (a real Discord message rendering correctly) is still
+            pending. Bonus pending: whether alerts fired (correctly) during the
+            03:26–03:39 browser-history deploy downtime.
           </p>
         </div>
 
         <div class="issue issue-important">
           <span class="severity severity-important">Deploy pending</span>
           <h3>aw-watcher fix written but not deployed</h3>
-          <div class="where">platforms/common/programs/activitywatch.nix · TODO Priority 1</div>
+          <div class="where">
+            platforms/common/programs/activitywatch.nix · TODO Priority 1
+          </div>
           <p>
-            Root cause fully diagnosed (hardcoded <code>wayland-0</code> fallback vs this
-            machine's <code>wayland-1</code>, plus <code>After=</code> without
-            <code>Wants=</code>). Fix eval-verified, shellcheck-clean. Remaining: deploy +
-            <code>systemctl --user reset-failed</code> + start.
+            Root cause fully diagnosed (hardcoded
+            <code>wayland-0</code> fallback vs this machine's
+            <code>wayland-1</code>, plus <code>After=</code> without
+            <code>Wants=</code>). Fix eval-verified, shellcheck-clean.
+            Remaining: deploy + <code>systemctl --user reset-failed</code> +
+            start.
           </p>
         </div>
 
         <div class="issue issue-nice">
           <span class="severity severity-nice">Research 100%</span>
           <h3>SigNoz dashboards v1→v2 migration — planned, not executed</h3>
-          <div class="where">TODO Priority 3 · 251 duplicate dashboards in live DB</div>
+          <div class="where">
+            TODO Priority 3 · 251 duplicate dashboards in live DB
+          </div>
           <p>
-            30-step execution list extracted from the exact locked rev. Order: fix
-            provisioner idempotency (partially addressed by v5), purge the 251 dupes
-            (user decision needed), rewrite the 5 JSONs against verified live metrics.
+            30-step execution list extracted from the exact locked rev. Order:
+            fix provisioner idempotency (partially addressed by v5), purge the
+            251 dupes (user decision needed), rewrite the 5 JSONs against
+            verified live metrics.
           </p>
         </div>
 
@@ -320,103 +793,141 @@
           <h3>Hermes v0.20.1 bump + registration_lifecycle patch deletion</h3>
           <div class="where">TODO Priority 2 · hermes.nix</div>
           <p>
-            Upstream now ships the module in py-modules (verified). After the input bump the
-            SystemNix PYTHONPATH patch becomes a hidden second source of truth — delete it.
+            Upstream now ships the module in py-modules (verified). After the
+            input bump the SystemNix PYTHONPATH patch becomes a hidden second
+            source of truth — delete it.
           </p>
         </div>
 
         <div class="issue issue-important">
           <span class="severity severity-important">Uncommitted</span>
           <h3>Working tree: 11 files from interleaved sibling sessions</h3>
-          <div class="where">AGENTS.md, CHANGELOG.md, TODO_LIST.md, gatus-config.nix, hardware-configuration.nix, pre-deploy-check.sh + staged tests/test-ksm.nix</div>
+          <div class="where">
+            AGENTS.md, CHANGELOG.md, TODO_LIST.md, gatus-config.nix,
+            hardware-configuration.nix, pre-deploy-check.sh + staged
+            tests/test-ksm.nix
+          </div>
           <p>
-            All deployed (activation carried them) but not committed. A KSM VM test
-            (134 lines) is staged and <strong>unreviewed</strong> — no session has claimed it.
-            Pathspec discipline required: sibling edits are intermixed within single files
-            (AGENTS.md has hunks from ≥2 sessions).
+            All deployed (activation carried them) but not committed. A KSM VM
+            test (134 lines) is staged and <strong>unreviewed</strong> — no
+            session has claimed it. Pathspec discipline required: sibling edits
+            are intermixed within single files (AGENTS.md has hunks from ≥2
+            sessions).
           </p>
         </div>
 
-        <h2 id="notstarted"><span class="num">C</span>Not Started (top scope)</h2>
+        <h2 id="notstarted">
+          <span class="num">C</span>Not Started (top scope)
+        </h2>
         <div class="card card-problem">
           <h4>Off-site backup — flagged since 2026-06-25</h4>
           <p>
-            No DR backup exists. Forgejo, Immich, Twenty, DiscordSync all lost on SSD failure.
-            The Aug 3 corruption event (13 files) proved this is not theoretical. Hetzner
-            StorageBox + BorgBackup researched, never executed. <strong>#1 data-loss risk.</strong>
+            No DR backup exists. Forgejo, Immich, Twenty, DiscordSync all lost
+            on SSD failure. The Aug 3 corruption event (13 files) proved this is
+            not theoretical. Hetzner StorageBox + BorgBackup researched, never
+            executed. <strong>#1 data-loss risk.</strong>
           </p>
         </div>
         <div class="card card-problem">
           <h4>Immich database backup has NEVER succeeded</h4>
           <p>
-            <code>backup_healthy{backup="immich"} 0</code>, 999h stale, despite correct
-            registration. The pg_dump timer/oneshot itself is broken — photo DB has zero backups.
+            <code>backup_healthy{backup="immich"} 0</code>, 999h stale, despite
+            correct registration. The pg_dump timer/oneshot itself is broken —
+            photo DB has zero backups.
           </p>
         </div>
         <div class="card card-problem">
           <h4>Foreground BTRFS scrub on / — never run</h4>
           <p>
-            Same physical NVMe as /data which had 13 corrupted files. Both recent /data
-            autoScrubs were interrupted by reboots. <code>sudo btrfs scrub start -B /</code>.
+            Same physical NVMe as /data which had 13 corrupted files. Both
+            recent /data autoScrubs were interrupted by reboots.
+            <code>sudo btrfs scrub start -B /</code>.
           </p>
         </div>
         <div class="card card-warning">
-          <h4>FastFlowLM NPU packaging · start-limit-audit.nix · dnsblockd oomd exemption · niri multiscreen binds</h4>
+          <h4>
+            FastFlowLM NPU packaging · start-limit-audit.nix · dnsblockd oomd
+            exemption · niri multiscreen binds
+          </h4>
           <p>
-            All designed/diagnosed, none implemented. The niri batch (TV-not-adjacent plan:
-            <code>Mod+Tab</code> monitor toggle, named-workspace binds, throw-to-TV) was agreed
-            this session and awaits a go.
+            All designed/diagnosed, none implemented. The niri batch
+            (TV-not-adjacent plan:
+            <code>Mod+Tab</code> monitor toggle, named-workspace binds,
+            throw-to-TV) was agreed this session and awaits a go.
           </p>
         </div>
 
-        <h2 id="fucked"><span class="num">D</span>Totally Fucked Up (honest accounting)</h2>
+        <h2 id="fucked">
+          <span class="num">D</span>Totally Fucked Up (honest accounting)
+        </h2>
 
         <div class="issue issue-critical">
           <span class="severity severity-critical">Split brain</span>
           <h3>The TODO list contradicts itself about monitor365</h3>
-          <div class="where">TODO_LIST.md line 9 ("LIVE OUTAGE... dead since Aug 11, restart it") vs line 51 ("services deliberately disabled 2026-08-12")</div>
+          <div class="where">
+            TODO_LIST.md line 9 ("LIVE OUTAGE... dead since Aug 11, restart it")
+            vs line 51 ("services deliberately disabled 2026-08-12")
+          </div>
           <p>
-            Two contradictory truths coexist in the same file. Three sessions have treated the
-            smoke FAILs as "documented noise" without reconciling the P0 item. Meanwhile
-            monitor365's dead backup drives <code>backup_all_healthy 0</code> RIGHT NOW —
-            either a real alert condition being ignored, or noise eroding trust in the
-            backup-health signal. Either way: <strong>restore the service or formally retire
-            the P0 item and gate the probes.</strong>
+            Two contradictory truths coexist in the same file. Three sessions
+            have treated the smoke FAILs as "documented noise" without
+            reconciling the P0 item. Meanwhile monitor365's dead backup drives
+            <code>backup_all_healthy 0</code> RIGHT NOW — either a real alert
+            condition being ignored, or noise eroding trust in the backup-health
+            signal. Either way:
+            <strong
+              >restore the service or formally retire the P0 item and gate the
+              probes.</strong
+            >
           </p>
         </div>
 
         <div class="issue issue-critical">
           <span class="severity severity-critical">Unquantified</span>
-          <h3>Root disk leak never diagnosed — reclaims keep missing the target filesystem</h3>
+          <h3>
+            Root disk leak never diagnosed — reclaims keep missing the target
+            filesystem
+          </h3>
           <div class="where">/ 92% → 93% during a session ABOUT disk space</div>
           <p>
-            Three successful reclaims (tmpfs, rust-cache, buildcache) freed zero bytes on /.
-            Candidates never quantified: nix store growth (47G+), btrbk snapshot extent
-            retention, DuckDB 13G, ActivityWatch 12G, Steam 5.9G. The Root Disk Usage Gatus
-            alert fires continuously — alert fatigue is the predictable outcome.
+            Three successful reclaims (tmpfs, rust-cache, buildcache) freed zero
+            bytes on /. Candidates never quantified: nix store growth (47G+),
+            btrbk snapshot extent retention, DuckDB 13G, ActivityWatch 12G,
+            Steam 5.9G. The Root Disk Usage Gatus alert fires continuously —
+            alert fatigue is the predictable outcome.
           </p>
         </div>
 
         <div class="issue issue-important">
           <span class="severity severity-important">Every deploy</span>
-          <h3>Deploy double-restart = guaranteed ~9-min browser-history false-FAIL window</h3>
-          <div class="where">~4.5-min pre-bind CPU burn × 2 restarts (cause never profiled)</div>
+          <h3>
+            Deploy double-restart = guaranteed ~9-min browser-history false-FAIL
+            window
+          </h3>
+          <div class="where">
+            ~4.5-min pre-bind CPU burn × 2 restarts (cause never profiled)
+          </div>
           <p>
-            switch-to-configuration restarts the unit, then deploy.sh explicitly restarts it
-            again. Post-deploy-check insta-fails inside that window on EVERY deploy, training
-            sessions to skim past FAILs — exactly how real regressions get masked. Cheap fixes:
-            poll <code>/health</code> with timeout; drop the explicit restart.
+            switch-to-configuration restarts the unit, then deploy.sh explicitly
+            restarts it again. Post-deploy-check insta-fails inside that window
+            on EVERY deploy, training sessions to skim past FAILs — exactly how
+            real regressions get masked. Cheap fixes: poll
+            <code>/health</code> with timeout; drop the explicit restart.
           </p>
         </div>
 
         <div class="issue issue-important">
           <span class="severity severity-important">Unverified cargo</span>
           <h3>Sibling production changes deployed without verification</h3>
-          <div class="where">66e78231 (focus-follow, zellij auto-attach) carried live by the 03-26 deploy</div>
+          <div class="where">
+            66e78231 (focus-follow, zellij auto-attach) carried live by the
+            03-26 deploy
+          </div>
           <p>
-            The 03-44 session shipped a sibling's uncommitted-to-verification changes to
-            production and reported "deploy healthy" without acknowledging the cargo. Nobody
-            has verified those changes behave correctly live.
+            The 03-44 session shipped a sibling's uncommitted-to-verification
+            changes to production and reported "deploy healthy" without
+            acknowledging the cargo. Nobody has verified those changes behave
+            correctly live.
           </p>
         </div>
 
@@ -425,80 +936,329 @@
           <h3>Session-close overclaiming (self-reported)</h3>
           <div class="where">03-44 report §d.3/d.5/d.6</div>
           <p>
-            Inference presented as fact (per-restart delay "confirmed" from n=2), unverified
-            auto-daemon assumptions, missing before/after metrics on a 41G reclamation.
-            Improving, but the pattern recurs.
+            Inference presented as fact (per-restart delay "confirmed" from
+            n=2), unverified auto-daemon assumptions, missing before/after
+            metrics on a 41G reclamation. Improving, but the pattern recurs.
           </p>
         </div>
 
         <h2 id="improve"><span class="num">E</span>What We Should Improve</h2>
-        <div class="strengths" style="display: grid; gap: 0.5rem; margin: 1rem 0 1.5rem;">
-          <div class="card card-solution"><h4>1 · Reconcile monitor365 truth</h4><p>One item, one truth: restore the service or retire it and gate the 4 smoke probes on <code>services.monitor365-server.enable</code>.</p></div>
-          <div class="card card-solution"><h4>2 · Make post-deploy-check poll instead of insta-fail</h4><p><code>curl --retry</code> loop on browser-history <code>/health</code> (60–120s). Kills the guaranteed false-FAIL window.</p></div>
-          <div class="card card-solution"><h4>3 · Quantify the root-disk leak BEFORE more surgery</h4><p><code>du</code> on /nix, snapshot extent audit, Docker dir size — evidence first, then choose the reclaim order.</p></div>
-          <div class="card card-solution"><h4>4 · Deploy reports list ALL carried commits</h4><p>Production state is a shared ledger across sibling sessions.</p></div>
-          <div class="card card-solution"><h4>5 · HARVEST discipline</h4><p>Three consecutive sessions carried the "harvest section (f) into TODO_LIST" item. Do it or drop the pretense.</p></div>
+        <div
+          class="strengths"
+          style="display: grid; gap: 0.5rem; margin: 1rem 0 1.5rem"
+        >
+          <div class="card card-solution">
+            <h4>1 · Reconcile monitor365 truth</h4>
+            <p>
+              One item, one truth: restore the service or retire it and gate the
+              4 smoke probes on <code>services.monitor365-server.enable</code>.
+            </p>
+          </div>
+          <div class="card card-solution">
+            <h4>2 · Make post-deploy-check poll instead of insta-fail</h4>
+            <p>
+              <code>curl --retry</code> loop on browser-history
+              <code>/health</code> (60–120s). Kills the guaranteed false-FAIL
+              window.
+            </p>
+          </div>
+          <div class="card card-solution">
+            <h4>3 · Quantify the root-disk leak BEFORE more surgery</h4>
+            <p>
+              <code>du</code> on /nix, snapshot extent audit, Docker dir size —
+              evidence first, then choose the reclaim order.
+            </p>
+          </div>
+          <div class="card card-solution">
+            <h4>4 · Deploy reports list ALL carried commits</h4>
+            <p>Production state is a shared ledger across sibling sessions.</p>
+          </div>
+          <div class="card card-solution">
+            <h4>5 · HARVEST discipline</h4>
+            <p>
+              Three consecutive sessions carried the "harvest section (f) into
+              TODO_LIST" item. Do it or drop the pretense.
+            </p>
+          </div>
         </div>
 
-        <h2 id="next"><span class="num">F</span>Top 25 Next (impact-ordered)</h2>
+        <h2 id="next">
+          <span class="num">F</span>Top 25 Next (impact-ordered)
+        </h2>
         <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>#</th><th>Priority</th><th>Task</th><th>Effort / Blocker</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>1</td><td><span class="badge badge-critical">P0</span></td><td><strong>Authorize + execute partition surgery</strong>: delete nvme0n1p9 (98G), grow root BTRFS — irreversible, needs your call</td><td>1–2h · <strong>needs authorization</strong></td></tr>
-            <tr><td>2</td><td><span class="badge badge-critical">P0</span></td><td><strong>Quantify the / leak</strong> (nix store, snapshot extents, DuckDB, ActivityWatch) before choosing next reclaims</td><td>30min</td></tr>
-            <tr><td>3</td><td><span class="badge badge-critical">P0</span></td><td><strong>Off-site backup</strong>: Hetzner StorageBox + BorgBackup (researched, never executed)</td><td>Half day · money decision</td></tr>
-            <tr><td>4</td><td><span class="badge badge-critical">P0</span></td><td><strong>Immich DB backup</strong>: fix the broken pg_dump timer (photos have zero backups)</td><td>1h</td></tr>
-            <tr><td>5</td><td><span class="badge badge-critical">P0</span></td><td><strong>Reconcile monitor365</strong>: restore service or retire the P0 item + gate 4 smoke probes</td><td>Decision + 30min</td></tr>
-            <tr><td>6</td><td><span class="badge badge-critical">P0</span></td><td><strong>Foreground BTRFS scrub on /</strong> (never scrubbed; same NVMe as the corruption event)</td><td>Hours runtime · manual</td></tr>
-            <tr><td>7</td><td><span class="badge badge-high">P1</span></td><td><strong>browser-history registration gate</strong>: go.mod → tag → bump → verify 403 (+ OTel parse bug in same bump)</td><td>1–2h</td></tr>
-            <tr><td>8</td><td><span class="badge badge-high">P1</span></td><td><strong>Deploy aw-watcher fix</strong> (written, eval-verified)</td><td>15min</td></tr>
-            <tr><td>9</td><td><span class="badge badge-high">P1</span></td><td><strong>post-deploy-check hygiene</strong>: poll /health, gate monitor365 probes, require-N for SQLITE_BUSY</td><td>1h</td></tr>
-            <tr><td>10</td><td><span class="badge badge-high">P1</span></td><td><strong>Root-cause browser-history 4.5-min pre-bind CPU burn</strong> (upstream fix = bind-early/async-replay)</td><td>Half day upstream</td></tr>
-            <tr><td>11</td><td><span class="badge badge-high">P1</span></td><td><strong>Commit the working tree</strong> with pathspec discipline; review the staged unclaimed KSM test first</td><td>30min</td></tr>
-            <tr><td>12</td><td><span class="badge badge-high">P1</span></td><td><strong>Remove redundant cache subvolume automounts</strong> (@cache-home/@go/@npm/@cargo)</td><td>30min + deploy</td></tr>
-            <tr><td>13</td><td><span class="badge badge-high">P1</span></td><td><strong>Docker data-root → SSD2 btrfs</strong> (mounted, awaiting role; /data relief)</td><td>2–3h + downtime</td></tr>
-            <tr><td>14</td><td><span class="badge badge-medium">P2</span></td><td><strong>dnsblockd ManagedOOMPreference=omit</strong> (was oomd-killed 730×/day)</td><td>15min</td></tr>
-            <tr><td>15</td><td><span class="badge badge-medium">P2</span></td><td><strong>Verify alert fixes E2E</strong> on the next genuine event (the whole point of the fix batch)</td><td>Passive</td></tr>
-            <tr><td>16</td><td><span class="badge badge-medium">P2</span></td><td><strong>Hermes bump past v0.20.1</strong> + delete registration_lifecycle patch</td><td>30min</td></tr>
-            <tr><td>17</td><td><span class="badge badge-medium">P2</span></td><td><strong>Niri multiscreen "Now" batch</strong>: Mod+Tab monitor toggle, Mod+Shift+Tab throw-to-TV, named-workspace binds (agreed this session)</td><td>30min + deploy</td></tr>
-            <tr><td>18</td><td><span class="badge badge-medium">P2</span></td><td><strong>FastFlowLM NPU packaging</strong> (design complete: socket-activated, idle TTL, ports)</td><td>Half day</td></tr>
-            <tr><td>19</td><td><span class="badge badge-medium">P2</span></td><td><strong>start-limit-audit.nix</strong> eval-time guard (the systemd 261+ silent-ignore class)</td><td>1h</td></tr>
-            <tr><td>20</td><td><span class="badge badge-medium">P2</span></td><td><strong>SigNoz dashboards v2 execution</strong> (purge decision needed: 251 dupes)</td><td>Half day · <strong>needs decision</strong></td></tr>
-            <tr><td>21</td><td><span class="badge badge-medium">P2</span></td><td><strong>Forgejo OIDC restart race</strong> (after/wants on caddy — recurring deploy blocker)</td><td>30min</td></tr>
-            <tr><td>22</td><td><span class="badge badge-low">P3</span></td><td><strong>importUsers() gate</strong> (registration lock hole #3, admin-only, ~15min upstream)</td><td>15min upstream</td></tr>
-            <tr><td>23</td><td><span class="badge badge-low">P3</span></td><td><strong>Satellite GOEXPERIMENT sweep</strong> (21 repos broken for external contributors)</td><td>Batchable</td></tr>
-            <tr><td>24</td><td><span class="badge badge-low">P3</span></td><td><strong>MiniMax quota decision</strong> (carried ×4 — decide: upgrade / PAYG / wait)</td><td>Decision only</td></tr>
-            <tr><td>25</td><td><span class="badge badge-low">P3</span></td><td><strong>Turso plan decision</strong> (DiscordSync stuck on sqlite-only after EOF crashes)</td><td>Decision only</td></tr>
-          </tbody>
-        </table>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Priority</th>
+                <th>Task</th>
+                <th>Effort / Blocker</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td><span class="badge badge-critical">P0</span></td>
+                <td>
+                  <strong>Authorize + execute partition surgery</strong>: delete
+                  nvme0n1p9 (98G), grow root BTRFS — irreversible, needs your
+                  call
+                </td>
+                <td>1–2h · <strong>needs authorization</strong></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td><span class="badge badge-critical">P0</span></td>
+                <td>
+                  <strong>Quantify the / leak</strong> (nix store, snapshot
+                  extents, DuckDB, ActivityWatch) before choosing next reclaims
+                </td>
+                <td>30min</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td><span class="badge badge-critical">P0</span></td>
+                <td>
+                  <strong>Off-site backup</strong>: Hetzner StorageBox +
+                  BorgBackup (researched, never executed)
+                </td>
+                <td>Half day · money decision</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td><span class="badge badge-critical">P0</span></td>
+                <td>
+                  <strong>Immich DB backup</strong>: fix the broken pg_dump
+                  timer (photos have zero backups)
+                </td>
+                <td>1h</td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td><span class="badge badge-critical">P0</span></td>
+                <td>
+                  <strong>Reconcile monitor365</strong>: restore service or
+                  retire the P0 item + gate 4 smoke probes
+                </td>
+                <td>Decision + 30min</td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td><span class="badge badge-critical">P0</span></td>
+                <td>
+                  <strong>Foreground BTRFS scrub on /</strong> (never scrubbed;
+                  same NVMe as the corruption event)
+                </td>
+                <td>Hours runtime · manual</td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td><span class="badge badge-high">P1</span></td>
+                <td>
+                  <strong>browser-history registration gate</strong>: go.mod →
+                  tag → bump → verify 403 (+ OTel parse bug in same bump)
+                </td>
+                <td>1–2h</td>
+              </tr>
+              <tr>
+                <td>8</td>
+                <td><span class="badge badge-high">P1</span></td>
+                <td>
+                  <strong>Deploy aw-watcher fix</strong> (written,
+                  eval-verified)
+                </td>
+                <td>15min</td>
+              </tr>
+              <tr>
+                <td>9</td>
+                <td><span class="badge badge-high">P1</span></td>
+                <td>
+                  <strong>post-deploy-check hygiene</strong>: poll /health, gate
+                  monitor365 probes, require-N for SQLITE_BUSY
+                </td>
+                <td>1h</td>
+              </tr>
+              <tr>
+                <td>10</td>
+                <td><span class="badge badge-high">P1</span></td>
+                <td>
+                  <strong
+                    >Root-cause browser-history 4.5-min pre-bind CPU
+                    burn</strong
+                  >
+                  (upstream fix = bind-early/async-replay)
+                </td>
+                <td>Half day upstream</td>
+              </tr>
+              <tr>
+                <td>11</td>
+                <td><span class="badge badge-high">P1</span></td>
+                <td>
+                  <strong>Commit the working tree</strong> with pathspec
+                  discipline; review the staged unclaimed KSM test first
+                </td>
+                <td>30min</td>
+              </tr>
+              <tr>
+                <td>12</td>
+                <td><span class="badge badge-high">P1</span></td>
+                <td>
+                  <strong>Remove redundant cache subvolume automounts</strong>
+                  (@cache-home/@go/@npm/@cargo)
+                </td>
+                <td>30min + deploy</td>
+              </tr>
+              <tr>
+                <td>13</td>
+                <td><span class="badge badge-high">P1</span></td>
+                <td>
+                  <strong>Docker data-root → SSD2 btrfs</strong> (mounted,
+                  awaiting role; /data relief)
+                </td>
+                <td>2–3h + downtime</td>
+              </tr>
+              <tr>
+                <td>14</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td>
+                  <strong>dnsblockd ManagedOOMPreference=omit</strong> (was
+                  oomd-killed 730×/day)
+                </td>
+                <td>15min</td>
+              </tr>
+              <tr>
+                <td>15</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td>
+                  <strong>Verify alert fixes E2E</strong> on the next genuine
+                  event (the whole point of the fix batch)
+                </td>
+                <td>Passive</td>
+              </tr>
+              <tr>
+                <td>16</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td>
+                  <strong>Hermes bump past v0.20.1</strong> + delete
+                  registration_lifecycle patch
+                </td>
+                <td>30min</td>
+              </tr>
+              <tr>
+                <td>17</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td>
+                  <strong>Niri multiscreen "Now" batch</strong>: Mod+Tab monitor
+                  toggle, Mod+Shift+Tab throw-to-TV, named-workspace binds
+                  (agreed this session)
+                </td>
+                <td>30min + deploy</td>
+              </tr>
+              <tr>
+                <td>18</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td>
+                  <strong>FastFlowLM NPU packaging</strong> (design complete:
+                  socket-activated, idle TTL, ports)
+                </td>
+                <td>Half day</td>
+              </tr>
+              <tr>
+                <td>19</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td>
+                  <strong>start-limit-audit.nix</strong> eval-time guard (the
+                  systemd 261+ silent-ignore class)
+                </td>
+                <td>1h</td>
+              </tr>
+              <tr>
+                <td>20</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td>
+                  <strong>SigNoz dashboards v2 execution</strong> (purge
+                  decision needed: 251 dupes)
+                </td>
+                <td>Half day · <strong>needs decision</strong></td>
+              </tr>
+              <tr>
+                <td>21</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td>
+                  <strong>Forgejo OIDC restart race</strong> (after/wants on
+                  caddy — recurring deploy blocker)
+                </td>
+                <td>30min</td>
+              </tr>
+              <tr>
+                <td>22</td>
+                <td><span class="badge badge-low">P3</span></td>
+                <td>
+                  <strong>importUsers() gate</strong> (registration lock hole
+                  #3, admin-only, ~15min upstream)
+                </td>
+                <td>15min upstream</td>
+              </tr>
+              <tr>
+                <td>23</td>
+                <td><span class="badge badge-low">P3</span></td>
+                <td>
+                  <strong>Satellite GOEXPERIMENT sweep</strong> (21 repos broken
+                  for external contributors)
+                </td>
+                <td>Batchable</td>
+              </tr>
+              <tr>
+                <td>24</td>
+                <td><span class="badge badge-low">P3</span></td>
+                <td>
+                  <strong>MiniMax quota decision</strong> (carried ×4 — decide:
+                  upgrade / PAYG / wait)
+                </td>
+                <td>Decision only</td>
+              </tr>
+              <tr>
+                <td>25</td>
+                <td><span class="badge badge-low">P3</span></td>
+                <td>
+                  <strong>Turso plan decision</strong> (DiscordSync stuck on
+                  sqlite-only after EOF crashes)
+                </td>
+                <td>Decision only</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
-        <h2 id="question"><span class="num">G</span>Question I Cannot Answer Myself</h2>
+        <h2 id="question">
+          <span class="num">G</span>Question I Cannot Answer Myself
+        </h2>
         <div class="issue issue-critical">
           <span class="severity severity-critical">Blocking 3 top tasks</span>
           <h3>Authorize the irreversible step, and pick the sequence</h3>
           <p>
-            <strong>1) Partition surgery:</strong> authorize deleting <code>nvme0n1p9</code>
-            (98G) and growing the root BTRFS partition? Online <code>parted</code> +
-            <code>btrfs filesystem resize</code> works without reboot, but it is irreversible
-            disk surgery on a 93%-full production root — I need your call on timing
-            (now vs maintenance window with fresh btrbk snapshot verification first).
+            <strong>1) Partition surgery:</strong> authorize deleting
+            <code>nvme0n1p9</code> (98G) and growing the root BTRFS partition?
+            Online <code>parted</code> +
+            <code>btrfs filesystem resize</code> works without reboot, but it is
+            irreversible disk surgery on a 93%-full production root — I need
+            your call on timing (now vs maintenance window with fresh btrbk
+            snapshot verification first).
           </p>
           <p>
-            <strong>2) Sequencing:</strong> disk surgery (#1) vs monitor365 reconciliation (#5)
-            vs off-site backup (#3) are all open and sessions keep serializing whichever was
-            touched last. <strong>3) monitor365:</strong> restore the service or formally
+            <strong>2) Sequencing:</strong> disk surgery (#1) vs monitor365
+            reconciliation (#5) vs off-site backup (#3) are all open and
+            sessions keep serializing whichever was touched last.
+            <strong>3) monitor365:</strong> restore the service or formally
             retire it (and with it the 4 permanent smoke FAILs)?
           </p>
         </div>
 
         <div class="footer">
-          SystemNix · evo-x2 (NixOS unstable, niri + DMS) + Lars-MacBook-Air (nix-darwin) ·
-          Sources: TODO_LIST.md, CHANGELOG.md, git log (e5162b94…2566b900), live df,
-          status reports 03-09 / 03-30 / 03-44 · Snapshot — will go stale.
+          SystemNix · evo-x2 (NixOS unstable, niri + DMS) + Lars-MacBook-Air
+          (nix-darwin) · Sources: TODO_LIST.md, CHANGELOG.md, git log
+          (e5162b94…2566b900), live df, status reports 03-09 / 03-30 / 03-44 ·
+          Snapshot — will go stale.
         </div>
       </main>
     </div>
@@ -507,20 +1267,26 @@
       (function () {
         var nav = document.querySelector("[data-nav]");
         if (!nav || !("IntersectionObserver" in window)) return;
-        var links = Array.prototype.slice.call(nav.querySelectorAll("a[href^='#']"));
+        var links = Array.prototype.slice.call(
+          nav.querySelectorAll("a[href^='#']"),
+        );
         var map = {};
-        links.forEach(function (l) { map[l.getAttribute("href").slice(1)] = l; });
+        links.forEach(function (l) {
+          map[l.getAttribute("href").slice(1)] = l;
+        });
         var obs = new IntersectionObserver(
           function (entries) {
             entries.forEach(function (e) {
               if (e.isIntersecting) {
-                links.forEach(function (l) { l.classList.remove("active"); });
+                links.forEach(function (l) {
+                  l.classList.remove("active");
+                });
                 var link = map[e.target.id];
                 if (link) link.classList.add("active");
               }
             });
           },
-          { rootMargin: "-20% 0px -70% 0px" }
+          { rootMargin: "-20% 0px -70% 0px" },
         );
         Object.keys(map).forEach(function (id) {
           var el = document.getElementById(id);

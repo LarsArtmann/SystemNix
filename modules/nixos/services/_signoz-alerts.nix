@@ -45,8 +45,12 @@ let
         # Fired alerts carry annotations (not the top-level description, which
         # is UI-only). The Discord message template renders
         # .Annotations.description; $value is expanded at rule-eval time.
+        # {{$value}} MUST have zero spaces inside the braces: SigNoz's
+        # preprocessTemplate special-cases only the EXACT strings
+        # {{$value}}/{{$threshold}}; "{{ $value }}" gets rewritten to
+        # {{index .Labels "value"}} → renders empty.
         annotations = {
-          description = "${description} (current: {{ $value }})";
+          description = "${description} (current: {{$value}})";
         };
         evalWindow = interval;
         frequency = interval;

@@ -267,6 +267,11 @@ in
               wantedBy = [ "signoz.target" ];
               startLimitBurst = 5;
               startLimitIntervalSec = 300;
+              # The rules engine bakes external_url into every rule object at
+              # construction (startup); without this trigger signoz.yaml
+              # changes never apply — the 2026-08-16 ruleSource=localhost bug
+              # was exactly this: config deployed, process never restarted.
+              restartTriggers = [ config.environment.etc."signoz/signoz.yaml".source ];
               serviceConfig = lib.mkMerge [
                 {
                   Type = "simple";
@@ -337,7 +342,10 @@ in
                 pkgs.jq
                 pkgs.coreutils
               ];
-              restartTriggers = [ (lib.getExe provisionScript) ];
+              restartTriggers = [
+                (lib.getExe provisionScript)
+              ]
+              ++ lib.catAttrs "source" (lib.attrValues alerts.rules);
               serviceConfig = lib.mkMerge [
                 (harden {
                   MemoryMax = "512M";

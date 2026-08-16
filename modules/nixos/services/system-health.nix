@@ -71,6 +71,12 @@ _: {
       # warning before the critical zone.
       diskUsageThreshold = 85;
 
+      # zram swap fill alert threshold (percentage of the zram device capacity
+      # consumed). With zram-only swap (no disk fallback), a full zram forces
+      # the kernel into page-cache reclaim — the BTRFS I/O storm precursor.
+      # Alert at 90% to leave headroom before the 100% cliff.
+      zramFillThreshold = 90;
+
       # Crash-loop detection: restarts per collection interval (2min) that
       # indicate a crash loop. The browser-history 520-restart loop had ~26
       # restarts per 2min. 3 restarts in 2 minutes is definitely a crash loop.
@@ -91,6 +97,7 @@ _: {
           pkgs.jq
           pkgs.procps
           pkgs.docker
+          pkgs.sqlite
         ];
         text = ''
           OUT="${textfileDir}/system_health.prom"
@@ -261,16 +268,33 @@ _: {
           # is NOT affected, so memory.events is readable without additional grants.
 
           # === Gatus self-monitoring meta-check ===
-          # Counts endpoints where ALL recent results are failures (sustained
-          # failure across the entire result window). This catches monitoring
-          # blind spots: if an endpoint has been red for the full retention
-          # window, either the service is truly down or the alert chain broke.
+          # Reads gatus's sqlite DB directly (readonly): the HTTP API sits
+          # behind OIDC and 401s unauthenticated curl — the old curl-based
+          # check always fell back to a phantom 0 (permanently green).
+          # Gatus self-prunes result retention, so an endpoint with ZERO
+          # successes in the whole table has been failing for the entire
+          # retained window. Staleness = db/wal mtime: gatus writes results
+          # at least every few minutes; >15 min without a write means gatus
+          # itself is wedged or dead. Fail-closed: on any error the value
+          # metrics are NOT emitted — gatus pat() presence checks go red.
           collect_gatus=${lib.boolToString cfg.collectGatusHealth}
-          GATUS_ENDPOINTS_LONG_FAIL=0
-          if [ "$collect_gatus" = "true" ]; then
-            GATUS_ENDPOINTS_LONG_FAIL=$(curl -sf --max-time 5 "http://127.0.0.1:${toString cfg.gatus.port}/api/v1/endpoints/statuses" 2>/dev/null | \
-              jq '[.[] | select(.results | length > 0) | select((.results | map(.success) | any(. == true)) | not)] | length' 2>/dev/null) || GATUS_ENDPOINTS_LONG_FAIL=0
-            GATUS_ENDPOINTS_LONG_FAIL="''${GATUS_ENDPOINTS_LONG_FAIL:-0}"
+          GATUS_META_ERRORS=1
+          GATUS_ENDPOINTS_LONG_FAIL=""
+          GATUS_RESULTS_STALE=""
+          if [ "$collect_gatus" = "true" ] && [ -r "${cfg.gatus.dbPath}" ]; then
+            GATUS_ENDPOINTS_LONG_FAIL=$(sqlite3 -readonly "${cfg.gatus.dbPath}" "SELECT COUNT(*) FROM endpoints e WHERE EXISTS (SELECT 1 FROM endpoint_results r WHERE r.endpoint_id = e.endpoint_id) AND NOT EXISTS (SELECT 1 FROM endpoint_results r WHERE r.endpoint_id = e.endpoint_id AND r.success = 1)" 2>/dev/null) || GATUS_ENDPOINTS_LONG_FAIL=""
+            if [ -n "$GATUS_ENDPOINTS_LONG_FAIL" ]; then
+              GATUS_META_ERRORS=0
+              GATUS_FRESH_EPOCH=$(stat -c %Y "${cfg.gatus.dbPath}" 2>/dev/null) || GATUS_FRESH_EPOCH=0
+              GATUS_WAL_EPOCH=$(stat -c %Y "${cfg.gatus.dbPath}-wal" 2>/dev/null) || GATUS_WAL_EPOCH=0
+              if [ "$GATUS_WAL_EPOCH" -gt "$GATUS_FRESH_EPOCH" ] 2>/dev/null; then
+                GATUS_FRESH_EPOCH=$GATUS_WAL_EPOCH
+              fi
+              GATUS_RESULTS_STALE=0
+              if [ $((NOW_EPOCH - GATUS_FRESH_EPOCH)) -ge 900 ]; then
+                GATUS_RESULTS_STALE=1
+              fi
+            fi
           fi
 
           # === Root disk usage ===
@@ -281,6 +305,32 @@ _: {
             DISK_USAGE=$(df --output=pcent / 2>/dev/null | tail -1 | tr -dc '0-9') || DISK_USAGE=0
             DISK_USAGE="''${DISK_USAGE:-0}"
             [ "$DISK_USAGE" -ge ${toString diskUsageThreshold} ] 2>/dev/null && DISK_OVER=1
+          fi
+
+          # === zram swap fill (zram-only swap hosts) ===
+          # mm_stat fields: orig_data_size compr_data_size mem_used_total ...
+          # "fill" = orig_data_size / disksize = how full the zram SWAP device
+          # is. When it hits 100%, the kernel falls back to page-cache reclaim
+          # (disk I/O) — the BTRFS I/O storm precursor on zram-only hosts.
+          # Metrics are ONLY emitted when /sys is readable: an absent metric
+          # makes the Gatus pat() condition fail (fail-closed), never a
+          # phantom green from zero defaults.
+          collect_zram=${lib.boolToString cfg.collectZram}
+          ZRAM_FILL=""
+          if [ "$collect_zram" = "true" ] && [ -r /sys/block/zram0/mm_stat ] && [ -r /sys/block/zram0/disksize ]; then
+            ZRAM_ORIG=$(awk '{print $1}' /sys/block/zram0/mm_stat 2>/dev/null) || ZRAM_ORIG=0
+            ZRAM_MEM_USED=$(awk '{print $3}' /sys/block/zram0/mm_stat 2>/dev/null) || ZRAM_MEM_USED=0
+            ZRAM_DISKSIZE=$(cat /sys/block/zram0/disksize 2>/dev/null) || ZRAM_DISKSIZE=0
+            ZRAM_ORIG="''${ZRAM_ORIG:-0}"
+            ZRAM_MEM_USED="''${ZRAM_MEM_USED:-0}"
+            ZRAM_DISKSIZE="''${ZRAM_DISKSIZE:-0}"
+            if [ "$ZRAM_DISKSIZE" -gt 0 ] 2>/dev/null; then
+              ZRAM_FILL=$(awk -v o="$ZRAM_ORIG" -v d="$ZRAM_DISKSIZE" 'BEGIN { printf "%.1f", o * 100.0 / d }')
+              ZRAM_OVER=0
+              if awk -v f="$ZRAM_FILL" 'BEGIN { exit !(f >= ${toString zramFillThreshold}) }'; then
+                ZRAM_OVER=1
+              fi
+            fi
           fi
 
           # === systemd-oomd kills tracking ===
@@ -477,9 +527,20 @@ _: {
             echo "# TYPE system_emeet_pixyd_expected_down gauge"
             echo "system_emeet_pixyd_expected_down ''${EMEET_EXPECTED_DOWN}"
 
-            echo "# HELP system_gatus_endpoints_in_error_long Count of Gatus endpoints with sustained failures (all recent results failed)"
-            echo "# TYPE system_gatus_endpoints_in_error_long gauge"
-            echo "system_gatus_endpoints_in_error_long ''${GATUS_ENDPOINTS_LONG_FAIL}"
+            if [ "$collect_gatus" = "true" ]; then
+              echo "# HELP system_gatus_meta_scrape_errors 1 if the gatus sqlite meta-check failed (DB unreadable or query error), 0 otherwise"
+              echo "# TYPE system_gatus_meta_scrape_errors gauge"
+              echo "system_gatus_meta_scrape_errors ''${GATUS_META_ERRORS}"
+            fi
+            if [ -n "$GATUS_ENDPOINTS_LONG_FAIL" ]; then
+              echo "# HELP system_gatus_endpoints_in_error_long Count of Gatus endpoints with sustained failures (zero successes in the entire retained result window)"
+              echo "# TYPE system_gatus_endpoints_in_error_long gauge"
+              echo "system_gatus_endpoints_in_error_long ''${GATUS_ENDPOINTS_LONG_FAIL}"
+
+              echo "# HELP system_gatus_results_stale 1 if the gatus result DB has had no writes for >15 minutes, 0 otherwise"
+              echo "# TYPE system_gatus_results_stale gauge"
+              echo "system_gatus_results_stale ''${GATUS_RESULTS_STALE}"
+            fi
 
             echo "# HELP system_disk_usage_percent Root filesystem usage percentage (0-100)"
             echo "# TYPE system_disk_usage_percent gauge"
@@ -488,6 +549,28 @@ _: {
             echo "# HELP system_disk_usage_over_threshold 1 if root filesystem exceeds ${toString diskUsageThreshold}% usage, 0 otherwise"
             echo "# TYPE system_disk_usage_over_threshold gauge"
             echo "system_disk_usage_over_threshold ''${DISK_OVER}"
+
+            if [ -n "$ZRAM_FILL" ]; then
+              echo "# HELP system_zram_swap_fill_percent zram swap fill: orig_data_size / disksize from mm_stat (percent)"
+              echo "# TYPE system_zram_swap_fill_percent gauge"
+              echo "system_zram_swap_fill_percent ''${ZRAM_FILL}"
+
+              echo "# HELP system_zram_swap_orig_data_bytes Uncompressed bytes currently stored in zram (mm_stat orig_data_size)"
+              echo "# TYPE system_zram_swap_orig_data_bytes gauge"
+              echo "system_zram_swap_orig_data_bytes ''${ZRAM_ORIG}"
+
+              echo "# HELP system_zram_swap_disksize_bytes zram device capacity (disksize)"
+              echo "# TYPE system_zram_swap_disksize_bytes gauge"
+              echo "system_zram_swap_disksize_bytes ''${ZRAM_DISKSIZE}"
+
+              echo "# HELP system_zram_mem_used_bytes Physical RAM consumed by zram (mm_stat mem_used_total)"
+              echo "# TYPE system_zram_mem_used_bytes gauge"
+              echo "system_zram_mem_used_bytes ''${ZRAM_MEM_USED}"
+
+              echo "# HELP system_zram_fill_over_threshold 1 if zram swap fill exceeds ${toString zramFillThreshold}%, 0 otherwise"
+              echo "# TYPE system_zram_fill_over_threshold gauge"
+              echo "system_zram_fill_over_threshold ''${ZRAM_OVER}"
+            fi
 
             echo "# HELP system_service_crash_loop 1 if service restarted >=${toString crashLoopRestartThreshold} times since last collection, 0 otherwise"
             echo "# TYPE system_service_crash_loop gauge"
@@ -647,6 +730,12 @@ _: {
           description = "Collect Docker container restart count metrics (auto-disabled if Docker is not enabled)";
         };
 
+        collectZram = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Collect zram swap fill metrics from /sys/block/zram0/mm_stat (auto-disabled without zramSwap)";
+        };
+
         signoz.port = lib.mkOption {
           type = lib.types.int;
           default = 8080;
@@ -657,6 +746,12 @@ _: {
           type = lib.types.int;
           default = 9110;
           description = "Gatus web port for the API";
+        };
+
+        gatus.dbPath = lib.mkOption {
+          type = lib.types.str;
+          default = "/var/lib/private/gatus/gatus.db";
+          description = "Host path to the gatus sqlite DB (DynamicUser hides /var/lib/gatus behind /var/lib/private on the host)";
         };
 
         monitor365.stateDir = lib.mkOption {
@@ -685,6 +780,9 @@ _: {
           })
           // (lib.optionalAttrs (options ? virtualisation.docker) {
             collectDockerRestarts = lib.mkDefault (config.virtualisation.docker.enable or false);
+          })
+          // (lib.optionalAttrs (options ? services.zramSwap) {
+            collectZram = lib.mkDefault (config.services.zramSwap.enable or false);
           });
 
         systemd = {

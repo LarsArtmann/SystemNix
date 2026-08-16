@@ -544,6 +544,18 @@ _: {
                 ];
               })
               (mkHttpCheck {
+                name = "ZRAM Fill";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "2m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*system_zram_swap_fill_percent*)"
+                  "[BODY] == pat(*system_zram_fill_over_threshold 0*)"
+                ];
+                alerts = discordAlert "zram swap over 90% full — with zram as the ONLY swap the kernel falls back to page-cache reclaim once full, the BTRFS I/O storm precursor. Free memory NOW (systemd-cgtop, smem) before the device hits 100%. Metric: system_zram_swap_fill_percent (node_exporter textfile collector, updated every 2min)";
+              })
+              (mkHttpCheck {
                 name = "Root Disk Space";
                 group = "Monitoring";
                 url = "http://localhost:${toString nodePort}/metrics";
@@ -865,9 +877,11 @@ _: {
                 interval = "5m";
                 conditions = [
                   "[STATUS] == 200"
+                  "[BODY] == pat(*system_gatus_meta_scrape_errors 0*)"
                   "[BODY] == pat(*system_gatus_endpoints_in_error_long 0*)"
+                  "[BODY] == pat(*system_gatus_results_stale 0*)"
                 ];
-                alerts = discordAlert "Gatus reports endpoints with sustained failures (all recent checks failed). Either services are down or the alert chain itself is broken. Check: Gatus dashboard for which endpoints are red.";
+                alerts = discordAlert "Gatus self-check failed: either endpoints have sustained failures (zero successes in retention), the result DB is stale (>15 min no writes = gatus wedged), or the meta-scrape itself errored (DB unreadable). Check: Gatus dashboard, journalctl -u gatus, /var/lib/private/gatus/gatus.db mtime.";
               })
               (mkHttpCheck {
                 name = "Memory Events Thrash";

@@ -34,7 +34,7 @@
       pkgs.diffutils
     ];
     text = ''
-      echo "signoz-provision: starting (v5 — converge: skip-unchanged, PUT in place, verified deletes)"
+      echo "signoz-provision: starting (v6 — converge rules + route policies: skip-unchanged, PUT in place, verified deletes)"
       SIGNOZ_URL="http://${cfg.settings.queryService.host}:${toString cfg.settings.queryService.port}"
       CHANNEL_NAME="Discord Alerts"
       FAILED=0
@@ -233,6 +233,102 @@
           echo "  Convergence mismatch — desired vs live:" >&2
           diff <(printf '%s\n' "$DESIRED_SORTED") <(printf '%s\n' "$LIVE_NAMES") >&2 || true
           fail "rules did not converge (live=$LIVE_TOTAL desired=''${#DESIRED_NAMES[@]})"
+        fi
+      fi
+
+      # ---------------- Route policies (converge) ----------------
+      # SigNoz's dispatcher routes alerts ONLY via route policies looked
+      # up by ruleId (nfmanager.Match → GetAllByName(ruleId) → expr-lang
+      # over alert labels → channels). v1-API rules never get policies
+      # auto-created (that path only runs for rules carrying
+      # notificationSettings from the UI), so without this loop every
+      # alert is silently DROPPED — no receiver, no error (2026-08-16
+      # regression). Converge exactly one policy per desired ruleId;
+      # tag "systemnix" marks ownership — NEVER touch untagged policies
+      # (they may be user-created).
+      echo "Deploying route policies (converge)..."
+      POLICIES_PATH="/api/v1/route_policies"
+      OWNED_TAG="systemnix"
+
+      http GET "$RULES_PATH"
+      if ! ok; then
+        fail "policy convergence could not list rules (HTTP $HTTP_STATUS)"
+      else
+        mapfile -t DESIRED_PAIRS < <(jq -r --argjson names "$(printf '%s\n' "''${DESIRED_NAMES[@]}" | jq -R . | jq -s .)" '.data.rules[]? | select(.alert as $a | $names | index($a)) | [.id, .alert] | @tsv' "$RESP")
+
+        http GET "$POLICIES_PATH"
+        if ! ok; then
+          fail "policy convergence could not list policies (HTTP $HTTP_STATUS)"
+        else
+          # our policies as id<TAB>name pairs
+          mapfile -t OWNED_PAIRS < <(jq -r --arg t "$OWNED_TAG" '.data[]? | select((.tags // []) | index($t)) | [.id, .name] | @tsv' "$RESP")
+
+          # delete orphans + duplicates (keep first per name)
+          declare -A KEPT=()
+          for pair in "''${OWNED_PAIRS[@]}"; do
+            [ -n "$pair" ] || continue
+            pol_id="''${pair%%$'\t'*}"
+            pol_name="''${pair#*$'\t'}"
+            wanted=false
+            for dpair in "''${DESIRED_PAIRS[@]}"; do
+              if [ "''${dpair%%$'\t'*}" = "$pol_name" ]; then
+                wanted=true
+                break
+              fi
+            done
+            if [ "$wanted" = false ]; then
+              echo "  Deleting orphan policy: $pol_name ($pol_id)"
+              http DELETE "$POLICIES_PATH/$pol_id"
+              ok || fail "delete orphan policy $pol_name (HTTP $HTTP_STATUS): $(head -c 300 "$RESP")"
+            elif [ -n "''${KEPT[$pol_name]:-}" ]; then
+              echo "  Deleting duplicate policy: $pol_name ($pol_id)"
+              http DELETE "$POLICIES_PATH/$pol_id"
+              ok || fail "delete duplicate policy $pol_name (HTTP $HTTP_STATUS): $(head -c 300 "$RESP")"
+            else
+              KEPT[$pol_name]=1
+            fi
+          done
+
+          for dpair in "''${DESIRED_PAIRS[@]}"; do
+            [ -n "$dpair" ] || continue
+            rid="''${dpair%%$'\t'*}"
+            rname="''${dpair#*$'\t'}"
+            if [ -n "''${KEPT[$rid]:-}" ]; then
+              echo "  Policy unchanged: $rname — skipping"
+              continue
+            fi
+            echo "  Creating policy: $rname ($rid)"
+            POLICY_JSON=$(jq -n \
+              --arg name "$rid" \
+              --arg expr "ruleId == \"$rid\"" \
+              --arg ch "$CHANNEL_NAME" \
+              --arg desc "SystemNix auto-provisioned: route rule '$rname' to $CHANNEL_NAME" \
+              '{expression: $expr, kind: "policy", channels: [$ch], name: $name, description: $desc, tags: ["systemnix", "auto-provisioned"]}')
+            http POST "$POLICIES_PATH" "$POLICY_JSON"
+            if ok; then
+              echo "  OK policy created: $rname (HTTP $HTTP_STATUS)"
+            else
+              fail "create policy $rname (HTTP $HTTP_STATUS): $(head -c 300 "$RESP")"
+            fi
+          done
+        fi
+      fi
+
+      # ---------------- Policy convergence assertion ----------------
+      echo "Verifying route-policy convergence..."
+      http GET "$POLICIES_PATH"
+      if ! ok; then
+        fail "policy assertion could not list policies (HTTP $HTTP_STATUS)"
+      else
+        OWNED_NAMES=$(jq -r --arg t "$OWNED_TAG" '.data[]? | select((.tags // []) | index($t)) | .name' "$RESP" | sort)
+        OWNED_COUNT=$(jq -r --arg t "$OWNED_TAG" '[.data[]? | select((.tags // []) | index($t))] | length' "$RESP")
+        DESIRED_POLICY_NAMES=$(printf '%s\n' "''${DESIRED_PAIRS[@]}" | cut -f1 | sort)
+        if [ "$OWNED_NAMES" = "$DESIRED_POLICY_NAMES" ] && [ "$OWNED_COUNT" -eq "''${#DESIRED_PAIRS[@]}" ]; then
+          echo "  OK $OWNED_COUNT route policies — exact one-per-rule, zero orphans"
+        else
+          echo "  Policy convergence mismatch — desired ruleIds vs owned policies:" >&2
+          diff <(printf '%s\n' "$DESIRED_POLICY_NAMES") <(printf '%s\n' "$OWNED_NAMES") >&2 || true
+          fail "route policies did not converge (owned=$OWNED_COUNT desired=''${#DESIRED_PAIRS[@]})"
         fi
       fi
 

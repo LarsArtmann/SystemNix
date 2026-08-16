@@ -42,6 +42,15 @@ if git diff --cached --name-only --diff-filter=ACM | grep -q 'gatus-config.nix';
     fi
 fi
 
+# Fast guard: every tracked *.templ needs a tracked *_templ.go sibling.
+# Nix builds vendor source without running `templ generate` — an untracked
+# generated file breaks the build with `undefined: someFragment`.
+if ! templ_out=$(scripts/check-templ-committed.sh 2>&1); then
+    echo "$templ_out" >&2
+    log_error "Tracked .templ file(s) without committed *_templ.go — commit the generated files."
+    exit 1
+fi
+
 # Fast guard: reject commits with "Unknown Author" identity.
 # Catches the silent fallback bug where PMA daemon produced 6,400 unattributable
 # commits across 145 repos when git config couldn't be resolved.
