@@ -26,6 +26,33 @@ if nix run .#pre-deploy-check; then
   done
 
   echo ""
+  echo "=== Reaping displaced buildcache cache dirs ==="
+  # While the buildcache mount is dead, env-less tools recreate ~/.cache/<name>
+  # as REAL dirs where home.file expects out-of-store symlinks. Those both move
+  # build churn back onto the NVMe and abort the NEXT home-manager activation
+  # (checkLinkTargets "Existing file ... in the way") — so they must be reaped
+  # BEFORE nh os switch. Cache data only, exact names, symlink occupants kept;
+  # rm (not trash) because trashing gigabytes of rebuildable cache writes them
+  # onto the NVMe this whole setup exists to protect. Mirrors the reap loop in
+  # buildcache-usb-recovery.service.
+  for d in goimports go go-build; do
+    if [ -e "$HOME/.cache/$d" ] && [ ! -L "$HOME/.cache/$d" ]; then
+      sudo rm -rf -- "$HOME/.cache/$d"
+      echo "  Reaped ~/.cache/$d (real dir had displaced the HM symlink)"
+    fi
+  done
+  # 2026-08-16 incident debris: root-owned cache trees created by an env-less
+  # root shell (GOTOOLCHAIN=auto pulled a go1.26.6 toolchain into
+  # ~/.cache/go-mod-fallback) while the buildcache mount was dead. Cache data
+  # only; safe to remove with sudo since the owner session is long gone.
+  for d in go-build-fallback go-build-override go-mod-fallback golangci-lint-override; do
+    if [ -e "$HOME/.cache/$d" ]; then
+      sudo rm -rf -- "$HOME/.cache/$d"
+      echo "  Reaped incident debris ~/.cache/$d"
+    fi
+  done
+
+  echo ""
   echo "=== Deploying NixOS config to evo-x2 ==="
   set +e
   nh_output="$(nh os switch . 2>&1 | tee /dev/stderr)"
@@ -97,6 +124,14 @@ if nix run .#pre-deploy-check; then
   if systemctl cat buildcache-usb-recovery.service >/dev/null 2>&1; then
     echo "Running buildcache-usb-recovery.service (zombie reaper + remount)"
     sudo systemctl start buildcache-usb-recovery.service 2>/dev/null || true
+  fi
+
+  # Run the buildcache GC after recovery so every deploy verifies the prune
+  # path end-to-end (a silent pnpm failure hid here for a week) and reclaims
+  # incident debris without waiting for the weekly Sun 05:00 timer.
+  if systemctl cat buildcache-gc.service >/dev/null 2>&1; then
+    echo "Running buildcache-gc.service (prune verification + reclaim)"
+    sudo systemctl start buildcache-gc.service 2>/dev/null || true
   fi
 
   echo ""

@@ -164,3 +164,32 @@ Copying the WHOLE HDDs including ALL snapshots — i.e., the send stream include
 ### FINAL ANSWER
 
 **There is no lost user data.** Immich/Paperless were never populated. Kubernetes never stored anything. datapool held only Docker layers. The only irreplaceable items recovered: SSH keys, sops age key, bash histories, the journal, and service configs — all safe in `/data/backup-2026-08-11-private-cloud-ssh/` (bit-perfect verified).
+
+---
+
+## J) EXTRACTION COMPLETE — 2026-08-16 (every disk, bit-perfect, verified)
+
+| Disk | What | Backup location | Verification |
+|---|---|---|---|
+| sdf2 (root ext4, 442G) | Full system clone | `/data/backup-2026-08-11-private-cloud-ssh/` | **373,491/373,491 files sha256-matched, 0 missing** (sudo both sides, `/tmp/verify-clone-definitive.sh`) |
+| sdf1 (EFI vfat, 512M) | Boot incl. Secure Boot keys (PK/KEK/db/dbx), kernel 6.6.116, initrd, systemd-boot, gen-161 conf | `/data/backup-2026-08-11-private-cloud-ssh-boot/` | **12/12 files bit-perfect** (`/tmp/clone-sdf1.sh`) |
+| datapool (sdb+sde ZFS) | All live user data | `/data/backup-2026-08-11-private-cloud-hdds/` | **20/20 files bit-perfect** (`/tmp/zfs-final-extract2.sh`) |
+
+### Empty-dirs worry (resolved)
+All empty dirs in the sdf2 clone were verified empty **on the source too** (`/tmp/check-empty-dirs.sh`): virtual FS mountpoints (dev/proc/sys/run), excluded `/nix`, ZFS mountpoint `/storage` (data lived on pool — extracted separately), scaffolding (`nas`, `srv`, `storage-backup-ssd{2,3,4}`), `lost+found`, `boot` (= separate sdf1, now cloned). 71,145 source dirs checked — every dir that had files on source has files on clone.
+
+### Bugs found & fixed during final pass
+- `verify-clone-definitive.sh`: `$EXC` glob patterns expanded against real files → empty manifest; fixed with `set -f`
+- `zfs-final-extract.sh` v1: `tar --one-file-system` refused to cross into the ZFS mounts under `/storage` → archived empty dirs. v2 drops it + explicit includes. Verified by sha256 both sides.
+- Phase-3 verify abort: `find storage mnt` failed on nonexistent `mnt/` under `set -e`
+
+### What was deliberately NOT copied (rebuildable, documented)
+- `/nix` store (22G) — regeneratable from flake
+- `/var/lib/docker/overlay2` (~11G) + `datapool/apps/<64hex>` datasets — Docker image layers
+- `datapool/cache/{health_check,zfs_*}` (~15G) — ZFS benchmark files
+- `.zfs/snapshot` views — all 488 snapshots verified to contain nothing beyond live state (1,821 virtual paths = 20 real files)
+
+### sdf1 note
+Contains custom Secure Boot keys (`PK`, `KEK`, `db`) — if the machine ever rebooted with Secure Boot enabled and custom keys enrolled, these are irreplaceable. Now safely cloned.
+
+**Nothing user-created remains on sdf or the datapool that is not in /data. The drives can be repurposed.**

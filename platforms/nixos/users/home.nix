@@ -233,6 +233,13 @@ in
     file = {
       ".cache/goimports".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/goimports";
       ".cache/go".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/go";
+      # Belt-and-braces for GOCACHE: processes WITHOUT the session env
+      # (systemd user services, dbus-activated apps, emergency shells) fall
+      # back to Go's default ~/.cache/go-build — a real dir there silently
+      # moves build churn back onto the NVMe (2026-08-16: 5.4 GB accumulated
+      # in the USB-outage window). Kept in sync with the reap list in
+      # modules/nixos/services/buildcache.nix (buildcache-usb-recovery).
+      ".cache/go-build".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/go-build";
       # pnpm 11 ignores npm_config_* env vars AND .npmrc for store-dir, so the
       # store is redirected via symlink at its default location instead —
       # mechanism-independent, survives pnpm config-scheme changes.

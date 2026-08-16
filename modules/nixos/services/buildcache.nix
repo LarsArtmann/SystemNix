@@ -184,13 +184,12 @@
         #  - SYSTEMD_WANTS on partition add runs the recovery service the
         #    moment the SSD reappears, so the remount is immediate rather
         #    than waiting for the next build access or metrics poll.
-        services.udev.extraRules =
-          ''
-            ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="152d", ATTR{idProduct}=="0567", TEST=="power/control", ATTR{power/control}="on"
-          ''
-          + lib.optionalString (deviceSerial != null) ''
-            ACTION=="add", SUBSYSTEM=="block", ENV{DEVTYPE}=="partition", ENV{ID_SERIAL}=="${deviceSerial}", ENV{SYSTEMD_WANTS}+="buildcache-usb-recovery.service"
-          '';
+        services.udev.extraRules = ''
+          ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="152d", ATTR{idProduct}=="0567", TEST=="power/control", ATTR{power/control}="on"
+        ''
+        + lib.optionalString (deviceSerial != null) ''
+          ACTION=="add", SUBSYSTEM=="block", ENV{DEVTYPE}=="partition", ENV{ID_SERIAL}=="${deviceSerial}", ENV{SYSTEMD_WANTS}+="buildcache-usb-recovery.service"
+        '';
 
         # Runs on EVERY boot, deliberately: mkdir/chown/chmod are idempotent,
         # and an init-once `.initialized` gate (removed 2026-08-15) made any
@@ -301,6 +300,19 @@
             # 2. Clear failed start state and make sure the automount is armed.
             systemctl reset-failed ${mountUnitName}.mount 2>/dev/null || true
             systemctl start ${mountUnitName}.automount 2>/dev/null || true
+
+            # 2.5 Reap real dirs that displaced the HM-managed ~/.cache
+            # symlinks while the mount was dead: env-less tools (no GOCACHE)
+            # recreate ~/.cache/<name> as REAL dirs on the NVMe, which both
+            # re-contaminates the NVMe with build churn AND blocks the next
+            # home-manager activation (checkLinkTargets "Existing file in the
+            # way"). Cache data only, exact paths, symlink occupants kept.
+            for d in goimports go go-build; do
+              if [ -e "${homeDir}/.cache/$d" ] && [ ! -L "${homeDir}/.cache/$d" ]; then
+                rm -rf -- "${homeDir}/.cache/$d"
+                echo "reaped real dir at ${homeDir}/.cache/$d (HM symlink will replace it)"
+              fi
+            done
 
             # 3. Drive absent: done — zombie (if any) is reaped, automount is
             #    armed, and the udev SYSTEMD_WANTS rule heals on replug. Do NOT
@@ -453,6 +465,11 @@
             {
               Type = "oneshot";
               User = primaryUser;
+              # pnpm resolves its store relative to CWD when PNPM_HOME/XDG vars
+              # are absent (a bare unit cwd=/ made it write /_tmp_* and fail
+              # EACCES under ProtectSystem=strict, 2026-08-16). The mount is
+              # writable and always exists for this unit.
+              WorkingDirectory = cfg.mountPoint;
               # 45min: `go clean -cache` at high-watermark scale (100G+ of
               # small files) and rust-target rm -rf are metadata-bound on a
               # DRAM-less USB SSD — 20min was too tight to survive the exact
@@ -460,13 +477,15 @@
               TimeoutStartSec = "45min";
             }
             (harden {
-              # pnpm store prune updates its state dir (~/.cache/pnpm: dlx +
-              # project registries, verified live 2026-08-15) — without this
-              # hole prune fails under read-only home every week.
+              # pnpm writes state/metadata under HOME: ~/.cache/pnpm (dlx +
+              # project registries) and ~/.local/state/pnpm (pnpm-state.json) —
+              # without these holes prune fails under read-only home (verified
+              # live 2026-08-15; the state hole added 2026-08-16).
               ProtectHome = "read-only";
               ReadWritePaths = [
                 cfg.mountPoint
                 "${homeDir}/.cache/pnpm"
+                "${homeDir}/.local/state/pnpm"
               ];
               MemoryMax = "512M";
             })
@@ -488,8 +507,12 @@
             # 1. npm: verify garbage-collects corrupt/old tarballs
             npm cache verify || echo "buildcache-gc: npm cache verify failed (non-fatal)"
 
-            # 2. pnpm: remove packages no longer referenced by any project
-            pnpm store prune || echo "buildcache-gc: pnpm store prune failed (non-fatal)"
+            # 2. pnpm: remove packages no longer referenced by any project.
+            #    --store is MANDATORY: pnpm resolves its store relative to
+            #    CWD/HOME state when PNPM_HOME/XDG vars are absent — a bare
+            #    unit cwd=/ made it EACCES on /_tmp_* under ProtectSystem
+            #    (silent weekly prune failure, caught 2026-08-16).
+            pnpm store prune --store "$mnt/pnpm-store" || echo "buildcache-gc: pnpm store prune failed (non-fatal)"
 
             # 3. Stale rust target dirs — cheap to lose with sccache
             find "$mnt/rust" -mindepth 1 -maxdepth 1 -type d -mtime "+$max_age" -print -exec rm -rf -- {} + || true
