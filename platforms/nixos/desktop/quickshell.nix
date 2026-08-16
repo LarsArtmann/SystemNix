@@ -21,7 +21,7 @@ in
 
     package = lib.mkOption {
       type = lib.types.package;
-      default = dankMaterialShell.packages.${pkgs.system}.default;
+      default = dankMaterialShell.packages.${pkgs.stdenv.hostPlatform.system}.default;
       description = "The DankMaterialShell package";
     };
   };

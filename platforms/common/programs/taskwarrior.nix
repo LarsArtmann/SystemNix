@@ -148,7 +148,7 @@ in
     '';
   };
 
-  systemd.user = lib.mkIf pkgs.stdenv.isLinux {
+  systemd.user = lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
     services = {
       taskwarrior-backup = {
         Unit = {

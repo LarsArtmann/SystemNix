@@ -33,7 +33,7 @@ in
   };
 
   # Helium browser native messaging host (non-standard config path)
-  home.file = lib.mkIf pkgs.stdenv.isDarwin {
+  home.file = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
     "Library/Application Support/net.imput.helium/NativeMessagingHosts/org.keepassxc.keepassxc_browser.json" =
       {
         text = heliumManifest;
@@ -41,7 +41,7 @@ in
       };
   };
 
-  xdg.configFile = lib.mkIf pkgs.stdenv.isLinux {
+  xdg.configFile = lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
     "net.imput.helium/NativeMessagingHosts/org.keepassxc.keepassxc_browser.json" = {
       text = heliumManifest;
       force = true;

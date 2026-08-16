@@ -19,7 +19,7 @@
       log-lines = 25;
       max-free = lib.mkDefault 100000000000; # 100GB — stop GC when 100GB free reached
       min-free = lib.mkDefault 5000000000; # 5GB — trigger GC when only 5GB free
-      sandbox = lib.mkDefault (!pkgs.stdenv.isDarwin);
+      sandbox = lib.mkDefault (!pkgs.stdenv.hostPlatform.isDarwin);
       # Force IPv4-only binary caches
       substituters = [
         "https://cache.nixos.org/"
@@ -43,12 +43,12 @@
       automatic = true;
       options = "--delete-older-than 3d";
     }
-    // lib.optionalAttrs pkgs.stdenv.isDarwin {
+    // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
       interval = {
         Hour = 3;
       };
     }
-    // lib.optionalAttrs (!pkgs.stdenv.isDarwin) {
+    // lib.optionalAttrs (!pkgs.stdenv.hostPlatform.isDarwin) {
       persistent = true;
       dates = "daily";
     };

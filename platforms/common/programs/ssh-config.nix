@@ -93,7 +93,7 @@ in
   # Ensure the ControlPath target exists before SSH tries to spawn a master.
   # Linux: systemd.user.tmpfiles.rules creates it declaratively (below).
   # Darwin: no systemd, so use an activation script.
-  home.activation = lib.optionalAttrs (!pkgs.stdenv.isLinux) {
+  home.activation = lib.optionalAttrs (!pkgs.stdenv.hostPlatform.isLinux) {
     ssh-sockets-dir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       $DRY_RUN_CMD mkdir -p "${socketsDir}"
       $DRY_RUN_CMD chmod 700 "${socketsDir}"
@@ -101,7 +101,7 @@ in
   };
 
   # Self-heal orphaned control-master sockets (Linux only — no systemd on Darwin).
-  systemd.user = lib.optionalAttrs pkgs.stdenv.isLinux {
+  systemd.user = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
     tmpfiles.rules = [
       "d ${socketsDir} 0700 - - -"
     ];

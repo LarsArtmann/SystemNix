@@ -17,7 +17,7 @@ let
       null;
 
   heliumWrapped =
-    if heliumPackage != null && pkgs.stdenv.isLinux then
+    if heliumPackage != null && pkgs.stdenv.hostPlatform.isLinux then
       pkgs.symlinkJoin {
         name = "helium";
         paths = [ heliumPackage ];
@@ -178,7 +178,7 @@ let
       # Desktop integration (cross-platform)
       xdg-utils # XDG desktop utilities for both platforms
     ]
-    ++ lib.optionals stdenv.isLinux [
+    ++ lib.optionals stdenv.hostPlatform.isLinux [
       cliphist # Wayland clipboard history for Linux
     ];
 
@@ -258,7 +258,7 @@ let
       # Wallpaper management tools (Linux-only)
       imagemagick # Image manipulation for wallpaper management
     ]
-    ++ lib.optionals stdenv.isLinux [
+    ++ lib.optionals stdenv.hostPlatform.isLinux [
       geekbench_6 # Geekbench 6 includes AI/ML benchmarking capabilities (Linux-only)
       goreleaser # Release Go projects with ease — global binary, Linux-only (Darwin disk-constrained)
     ];
@@ -266,7 +266,7 @@ let
   # Linux-specific utilities
   linuxUtilities =
     with pkgs;
-    lib.optionals stdenv.isLinux [
+    lib.optionals stdenv.hostPlatform.isLinux [
       jetbrains.idea
       openaudible
       prismlauncher # Minecraft launcher (MultiMC fork)
@@ -316,7 +316,7 @@ let
   guiPackages =
     with pkgs;
     lib.optional (heliumWrapped != null) heliumWrapped
-    ++ lib.optionals stdenv.isDarwin [
+    ++ lib.optionals stdenv.hostPlatform.isDarwin [
       google-chrome
       iterm2
       duti # macOS file association utility (used by activation scripts)
@@ -331,9 +331,9 @@ let
   realCrush = pkgs.nur.repos.charmbracelet.crush;
   crushWithIoPriority = pkgs.writeShellApplication {
     name = "crush";
-    runtimeInputs = lib.optionals pkgs.stdenv.isLinux [ pkgs.util-linux ];
+    runtimeInputs = lib.optionals pkgs.stdenv.hostPlatform.isLinux [ pkgs.util-linux ];
     text =
-      if pkgs.stdenv.isLinux then
+      if pkgs.stdenv.hostPlatform.isLinux then
         ''
           exec ionice -c 2 -n 3 nice -n 5 ${lib.getExe' realCrush "crush"} "$@"
         ''

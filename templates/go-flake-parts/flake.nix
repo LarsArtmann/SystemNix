@@ -196,7 +196,7 @@
         };
 
       flake.overlays.default = final: _prev: {
-        REPLACE_ME = self.packages.${final.stdenv.system}.default;
+        REPLACE_ME = self.packages.${final.stdenv.hostPlatform.system}.default;
       };
     };
 }

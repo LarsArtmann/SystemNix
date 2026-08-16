@@ -45,14 +45,14 @@
 
   (
     _final: prev:
-    prev.lib.optionalAttrs prev.stdenv.isLinux {
+    prev.lib.optionalAttrs prev.stdenv.hostPlatform.isLinux {
       openseo = prev.callPackage ../pkgs/openseo.nix { };
     }
   )
 
   (
     _final: prev:
-    prev.lib.optionalAttrs prev.stdenv.isDarwin {
+    prev.lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
       d2 = prev.callPackage (prev.path + "/pkgs/by-name/d2/d2/package.nix") {
         libgbm = prev.runCommand "libgbm-stub" { } "mkdir $out";
         playwright-driver = {

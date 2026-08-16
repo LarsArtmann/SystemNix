@@ -14,7 +14,7 @@ in
   # NOTE: This Home Manager module is only used on Darwin (macOS).
   # On NixOS, extension management is handled system-wide via programs.chromium
   # in platforms/nixos/programs/chrome.nix
-  programs.chromium = lib.mkIf pkgs.stdenv.isDarwin {
+  programs.chromium = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
     enable = true;
     package = pkgs.brave; # Use Brave as primary Chromium-based browser for extension support
 

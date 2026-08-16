@@ -589,7 +589,7 @@
                 sqlc
                 ;
             }
-            // lib.optionalAttrs pkgs.stdenv.isLinux {
+            // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
               inherit (pkgs)
                 openaudible
                 openseo
@@ -676,7 +676,7 @@
               touch $out
             '';
           }
-          // lib.optionalAttrs pkgs.stdenv.isLinux (
+          // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux (
             import ./tests {
               inherit
                 pkgs
@@ -757,7 +757,7 @@
                   [ pkgs.curl pkgs.jq ]
                   ./scripts/pocket-id-login-code.sh;
             }
-            // lib.optionalAttrs pkgs.stdenv.isLinux {
+            // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
               dns-diagnostics =
                 mkApp "dns-diagnostics" "Run DNS stack diagnostics (resolution, blocking, stats, connectivity)"
                   [

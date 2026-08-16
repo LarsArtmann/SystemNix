@@ -45,7 +45,7 @@ let
 in
 {
   services.activitywatch = {
-    enable = pkgs.stdenv.isLinux;
+    enable = pkgs.stdenv.hostPlatform.isLinux;
     package = pkgs.activitywatch;
     watchers = {
       aw-watcher-window-wayland = {
@@ -62,7 +62,7 @@ in
     };
   };
 
-  systemd.user.services = lib.optionalAttrs pkgs.stdenv.isLinux {
+  systemd.user.services = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
     activitywatch-watcher-aw-watcher-window-wayland = {
       Unit = {
         After = lib.mkAfter [

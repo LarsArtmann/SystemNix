@@ -4,7 +4,7 @@
   ...
 }:
 {
-  fonts = lib.mkIf pkgs.stdenv.isLinux {
+  fonts = lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
     packages = [
       pkgs.nerd-fonts.jetbrains-mono
       pkgs.nerd-fonts.fira-code

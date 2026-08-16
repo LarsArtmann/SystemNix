@@ -22,7 +22,7 @@ in
       packages = mkPackages pkgs;
     in
     {
-      packages = lib.optionalAttrs pkgs.stdenv.isLinux {
+      packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
         inherit (packages) signoz;
         signoz-otel-collector = packages.otelCollector;
         signoz-schema-migrator = packages.schemaMigrator;

@@ -14,6 +14,6 @@ _: {
   };
 
   # Darwin-specific packages - NOTE: iterm2 now in common/packages/base.nix
-  # (platform-scoped with lib.optionals stdenv.isDarwin)
+  # (platform-scoped with lib.optionals stdenv.hostPlatform.isDarwin)
   # No additional system packages needed here
 }

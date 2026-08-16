@@ -71,7 +71,7 @@ in
         };
       };
     }
-    // lib.optionalAttrs pkgs.stdenv.isDarwin {
+    // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
       # Replaces OSC52 with a local command on macOS
       copy_command = "pbcopy";
     };
@@ -227,8 +227,8 @@ in
                         {
                           pane = {
                             name = "logs";
-                            command = if pkgs.stdenv.isDarwin then "log" else "journalctl";
-                            args = if pkgs.stdenv.isDarwin then [ "stream" ] else [ "-f" ];
+                            command = if pkgs.stdenv.hostPlatform.isDarwin then "log" else "journalctl";
+                            args = if pkgs.stdenv.hostPlatform.isDarwin then [ "stream" ] else [ "-f" ];
                           };
                         }
                         {
