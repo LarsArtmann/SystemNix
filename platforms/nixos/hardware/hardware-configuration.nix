@@ -6,11 +6,9 @@
   lib,
   modulesPath,
   ...
-}:
-let
+}: let
   mkFilesystem = import ../../../lib/filesystems.nix lib;
-in
-{
+in {
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
   ];
@@ -24,7 +22,7 @@ in
         "usbhid"
         "sdhci_pci"
       ];
-      kernelModules = [ "amdgpu" ];
+      kernelModules = ["amdgpu"];
     };
     # Restore critical network drivers (Realtek 2.5G Ethernet + MediaTek WiFi)
     kernelModules = [
@@ -32,7 +30,7 @@ in
       "mt7925e"
       "r8125"
     ];
-    extraModulePackages = with config.boot.kernelPackages; [ r8125 ];
+    extraModulePackages = with config.boot.kernelPackages; [r8125];
   };
 
   # Required for WiFi/Bluetooth hardware
@@ -82,6 +80,23 @@ in
       options = [
         "fmask=0077"
         "dmask=0077"
+      ];
+    };
+    # Mirrored BTRFS pool (data+metadata raid1) on the two recovered Toshiba
+    # MG08ACA16TE 16TB HDDs (USB DAS, created 2026-08-16 from the dead
+    # private-cloud box). Either member by-id mounts the fs. Layout:
+    # services/<name> (per-service snapshottable subvols), backups/ (btrbk
+    # receive target from NVMe @ + /data), archive/ (forensics + cold data).
+    # Members: ata-TOSHIBA_MG08ACA16TE_72U0A005FWTG +
+    #          ata-TOSHIBA_MG08ACA16TE_72U0A0ZUFWTG (serials 72U0A005FWTG/72U0A0ZUFWTG)
+    "/mnt/pool" = mkFilesystem {
+      device = "/dev/disk/by-id/ata-TOSHIBA_MG08ACA16TE_72U0A005FWTG";
+      fsType = "btrfs";
+      options = [
+        "compress=zstd"
+        "noatime"
+        "nofail"
+        "commit=300"
       ];
     };
     # Old /rust-cache mount (nvme0n1p9, ext4, by-partlabel/rust-cache) removed

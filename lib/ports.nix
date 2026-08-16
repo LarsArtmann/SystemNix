@@ -16,6 +16,8 @@
     immich = 2283;
     redis = 6379;
 
+    paperless = 2892;
+
     manifest = 2099;
 
     monitor365-server = 3001;

@@ -539,6 +539,7 @@ serviceConfig = lib.mkMerge [
 
 ### Shell & DevTools
 
+- **curl ≥8.2x advertises `Accept-Encoding` by default — body-parsing curls MUST pass `--compressed`** (2026-08-16 nixpkgs bump). Servers that honor it (crush-daily API middleware, node_exporter `/metrics`, anything behind Caddy `encode`) return `Content-Encoding: gzip`, which plain `curl -s` does NOT decode: greps match nothing, jq fails, and bash warns "ignored null byte in input" (gzip streams contain NULs). Status-code-only checks (`-o /dev/null -w %{http_code}`) are unaffected. Bit the smoke checks twice under different disguises: first DiscordSync `/api/stats` (misdiagnosed as "null bytes in JSON", "fixed" with `grep -a`), then Crush Daily `/api/reports` ("unexpected response" forever against a healthy API). `--compressed` is a no-op on identity responses — safe on every body-parsing curl
 - **`writeShellApplication` pipefail + `|| echo 0`** — Produces multi-line output under pipefail. Use `|| true` + `''${var:-0}`.
 - **`writeShellApplication` pipefail + `| sort | head` SIGPIPE** — Append `|| true` to pipeline.
 - **`find -L` for Nix store symlinks** — `find` does NOT follow starting-point symlinks by default.

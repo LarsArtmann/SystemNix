@@ -83,7 +83,7 @@
 - [ ] **Add eval-time assertions to gate helpers** — Validate `domain` non-empty, `serviceName` has no spaces (would break script derivation name)
 - [ ] **Clean up stale qmd references in planning docs** — `docs/service-integration-plan.md` (lines 276-295: SearXNG adapter, Crush Daily QMD integration), `docs/crash-analysis-2026-08-11.md:143` (SQLite WAL recommendation mentions qmd)
 - [ ] **SearXNG streaming exploration** — User wants streaming results (progressive rendering). Options: SearXNG fork with SSE endpoint, Go/Rust streaming proxy, or Caddy flush_buffers
-- [ ] **Track wf-recorder FFmpeg 7 upstream fix** — `wfRecorderFfmpeg6Overlay` in `overlays/linux.nix:203` pins ffmpeg_6 because wf-recorder 0.6.0 accesses AVCodec fields FFmpeg 7 made private. Remove overlay when upstream releases a fix. **Source:** `docs/status/archived/2026-08-13_18-36_flake-lock-repair-and-build-failures.md`
+- [x] **Track wf-recorder FFmpeg 7 upstream fix** — DONE 2026-08-16: nixpkgs master (`fc31aa40b9`, 2026-08-13) pins wf-recorder to `ffmpeg_8` and wf-recorder 0.6.0 builds against it (verified empirically); the unversioned `ffmpeg` callPackage arg was removed treewide, which made our `.override { ffmpeg = ffmpeg_6; }` a hard eval error. `wfRecorderFfmpeg6Overlay` deleted from `overlays/linux.nix`
 - [ ] **Pin go-cqrs-lite benchstat `rev = "master"`** — Third-party (golang/perf) tool with a floating rev; its hashes WILL drift again on every `nix flake update` (already required 2 hash fixes). Pin to a commit or drop the check. **Source:** `docs/status/archived/2026-08-14_13-22_vendorhash-hardening-iowrap-gomemlimit-session.md`
 - [ ] **Switch root `go-cqrs-lite` flake input from `git+ssh://` to `github:`** — Last remaining `git+ssh://` root input (NAR-divergence vector: same commit yields different narHash per fetch type; the daemon caches whichever it saw first). All other LarsArtmann inputs are on `github:` with `go-nix-helpers.follows`. Requires `sudo systemctl restart nix-daemon` if the daemon cached the ssh hash. **Source:** 16-20 report §f.19, `19-01` §f.38
 - [ ] **Add `file-and-image-renamer.inputs.go-nix-helpers.follows`** — The LAST Go flake input missing the follows override; without it the input locks an independent go-nix-helpers revision that diverges from the root pin. **Source:** 16-20 report §f.18
@@ -124,7 +124,7 @@
 - [ ] **`jscpd` lockfile** — PR upstream to publish `pnpm-lock.yaml` (the vendored lockfile needed a typo fix, `72115c62`)
 - [ ] **XRT boost 1.87+ compat** — PR to `nix-amd-npu` to pin `boost187` for XRT build
 - [ ] **Upstream direnv caching pattern** — The fish-native mtime gate (46ms→0.7ms) and `_nix_add_gcroot` optimization would benefit all fish+direnv users on large flakes
-- [ ] **wf-recorder FFmpeg 7 compat** — file/subscribe to upstream issue; unblocks removing the SystemNix ffmpeg_6 overlay
+- [x] **wf-recorder FFmpeg 7 compat** — DONE 2026-08-16: no upstream issue needed; nixpkgs builds wf-recorder 0.6.0 against ffmpeg_8 by default since `fc31aa40b9` (verified by local build). SystemNix ffmpeg_6 overlay removed
 
 ### LarsArtmann Apps
 

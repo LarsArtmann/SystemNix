@@ -100,7 +100,7 @@ echo ""
 echo "--- SigNoz Verification ---"
 
 # Check SigNoz is reachable
-if curl -sf http://localhost:8080/api/v1/health 2>/dev/null | grep -q "ok\|healthy"; then
+if curl -sf --compressed http://localhost:8080/api/v1/health 2>/dev/null | grep -q "ok\|healthy"; then
   log_pass "SigNoz health check OK"
 else
   log_fail "SigNoz not reachable on localhost:8080"
@@ -120,7 +120,7 @@ fi
 
 # Check provisioned dashboards exist
 log_info "Checking SigNoz dashboards..."
-DASH_COUNT=$(curl -sf http://localhost:8080/api/v1/dashboards 2>/dev/null | grep -o '"id"' | wc -l || echo "0")
+DASH_COUNT=$(curl -sf --compressed http://localhost:8080/api/v1/dashboards 2>/dev/null | grep -o '"id"' | wc -l || echo "0")
 if [ "$DASH_COUNT" -gt 0 ]; then
   log_pass "SigNoz dashboards provisioned: $DASH_COUNT"
 else
@@ -129,7 +129,7 @@ fi
 
 # Check alert rules
 log_info "Checking SigNoz alert rules..."
-RULE_COUNT=$(curl -sf http://localhost:8080/api/v1/rules 2>/dev/null | grep -o '"id"' | wc -l || echo "0")
+RULE_COUNT=$(curl -sf --compressed http://localhost:8080/api/v1/rules 2>/dev/null | grep -o '"id"' | wc -l || echo "0")
 if [ "$RULE_COUNT" -gt 0 ]; then
   log_pass "SigNoz alert rules active: $RULE_COUNT"
 else
@@ -139,14 +139,14 @@ fi
 echo ""
 echo "--- Gatus Verification ---"
 
-if curl -sf http://localhost:9110/api/v1/endpoints/status 2>/dev/null | grep -q "status"; then
+if curl -sf --compressed http://localhost:9110/api/v1/endpoints/status 2>/dev/null | grep -q "status"; then
   log_pass "Gatus API reachable on localhost:9110"
 else
   log_fail "Gatus not reachable on localhost:9110"
 fi
 
 # Check TLS cert expiry monitoring
-if curl -sf http://localhost:9110/api/v1/endpoints/status 2>/dev/null | grep -qi "tls\|cert\|expiry"; then
+if curl -sf --compressed http://localhost:9110/api/v1/endpoints/status 2>/dev/null | grep -qi "tls\|cert\|expiry"; then
   log_pass "TLS certificate checks present in Gatus"
 else
   log_warn "TLS certificate expiry check not found in Gatus"

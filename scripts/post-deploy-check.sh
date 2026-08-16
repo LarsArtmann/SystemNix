@@ -30,7 +30,9 @@ check() {
   local response
   local status
 
-  response=$(curl -s -o /tmp/.smoke-body -w "%{http_code}" --max-time 10 "$url" 2>/dev/null || true)
+  # --compressed: curl ≥8.2x advertises Accept-Encoding by default; servers then
+  # gzip the body which an un-decoded grep can never match (phantom "unexpected response")
+  response=$(curl -s --compressed -o /tmp/.smoke-body -w "%{http_code}" --max-time 10 "$url" 2>/dev/null || true)
   status="$response"
 
   if [ "$status" = "000" ]; then
@@ -172,8 +174,19 @@ check_local "Crush Daily" "8081" "/api/health" "200" 2>/dev/null || true
 check_local "Overview" "8083" "/" "200" "<html" 2>/dev/null || true
 
 # --- Monitor365: the bug we fixed ---
-check_local "Monitor365 API" "3001" "/health" "200" 2>/dev/null || true
-check_local "Monitor365 UI" "3001" "/ui/" "200" "<html" 2>/dev/null || true
+# Monitor365 is intentionally disabled on evo-x2 (private-git-dep blocker — see
+# configuration.nix). When its units are absent from systemd, SKIP instead of
+# FAILing a deliberately-off service (red FAILs on known-off services breed alert fatigue).
+m365_enabled=false
+systemctl list-unit-files 'monitor365*' --no-legend 2>/dev/null | grep -q monitor365 && m365_enabled=true
+
+if $m365_enabled; then
+  check_local "Monitor365 API" "3001" "/health" "200" 2>/dev/null || true
+  check_local "Monitor365 UI" "3001" "/ui/" "200" "<html" 2>/dev/null || true
+else
+  echo -e "${YELLOW}SKIP${NC} Monitor365 API/UI — service disabled (units absent from systemd)"
+  SKIP=$((SKIP + 1))
+fi
 
 check_local "File Renamer" "8086" "/status" "200" "" 2>/dev/null || true
 
@@ -183,7 +196,7 @@ check_local "SearXNG" "8889" "/healthz" "200" 2>/dev/null || true
 
 # SearXNG: functional search test (HTML mode — JSON API is disabled by design).
 # Write to file then grep — avoids pipefail SIGPIPE trap on large HTML bodies.
-if curl -s --max-time 10 -o /tmp/.smoke-searx "http://localhost:8889/search?q=test" 2>/dev/null; then
+if curl -s --compressed --max-time 10 -o /tmp/.smoke-searx "http://localhost:8889/search?q=test" 2>/dev/null; then
   if grep -qi 'article\|<h4\|result-default' /tmp/.smoke-searx 2>/dev/null; then
     report_pass "SearXNG — functional search returns results"
   else
@@ -212,7 +225,7 @@ echo "=== Functional Checks ==="
 
 # Crush Daily: reports should exist after first collection.
 # The API returns a JSON array of date strings: ["2026-07-19", "2026-07-18", ...]
-if crush_reports=$(curl -s --max-time 5 "http://localhost:8081/api/reports" 2>/dev/null); then
+if crush_reports=$(curl -s --compressed --max-time 5 "http://localhost:8081/api/reports" 2>/dev/null); then
   if echo "$crush_reports" | grep -qE '"[0-9]{4}-[0-9]{2}-[0-9]{2}"'; then
     echo -e "${GREEN}PASS${NC} Crush Daily has reports"
     PASS=$((PASS + 1))
@@ -224,7 +237,7 @@ if crush_reports=$(curl -s --max-time 5 "http://localhost:8081/api/reports" 2>/d
     # zero-data reports can sit silently for weeks.
     latest_date=$(echo "$crush_reports" | grep -oE '"[0-9]{4}-[0-9]{2}-[0-9]{2}"' | head -1 | tr -d '"')
     if [ -n "$latest_date" ] &&
-      curl -s --max-time 5 -o /tmp/.smoke-crush-report "http://localhost:8081/api/reports/$latest_date" 2>/dev/null &&
+      curl -s --compressed --max-time 5 -o /tmp/.smoke-crush-report "http://localhost:8081/api/reports/$latest_date" 2>/dev/null &&
       grep -qE '"session_count":[ ]*[1-9][0-9]*' /tmp/.smoke-crush-report; then
       echo -e "${GREEN}PASS${NC} Crush Daily latest report ($latest_date) has session_count >0"
       PASS=$((PASS + 1))
@@ -263,7 +276,7 @@ else
 fi
 
 # SigNoz: impersonation mode must be active (auth delegated to Caddy + Pocket ID)
-if signoz_config=$(curl -s --max-time 5 "http://localhost:8080/api/v1/global/config" 2>/dev/null); then
+if signoz_config=$(curl -s --compressed --max-time 5 "http://localhost:8080/api/v1/global/config" 2>/dev/null); then
   if echo "$signoz_config" | grep -q '"impersonation"'; then
     if echo "$signoz_config" | grep -q '"enabled": *true'; then
       echo -e "${GREEN}PASS${NC} SigNoz impersonation mode active (Pocket ID is sole auth boundary)"
@@ -282,7 +295,7 @@ else
 fi
 
 # SigNoz: alert rules must be provisioned (>15 rules expected)
-if signoz_rules=$(curl -s --max-time 5 "http://localhost:8080/api/v1/rules" 2>/dev/null); then
+if signoz_rules=$(curl -s --compressed --max-time 5 "http://localhost:8080/api/v1/rules" 2>/dev/null); then
   RULE_COUNT=$(echo "$signoz_rules" | jq -r '.data.rules | length' 2>/dev/null || echo "0")
   RULE_COUNT="${RULE_COUNT:-0}"
   if [ "$RULE_COUNT" -gt 15 ] 2>/dev/null; then
@@ -313,6 +326,8 @@ m365_server_ok=false
 # Check 1: Agent metrics endpoint (port 9191) — verifies agent process is alive
 if curl -sf -m 5 -o /dev/null "http://localhost:9191/metrics" 2>/dev/null; then
   : # agent alive
+elif ! $m365_enabled; then
+  : # disabled — reported below, no restart attempt on absent units
 else
   echo -e "${YELLOW}WARN${NC} Monitor365 agent metrics not responding — attempting restart"
   sudo systemctl reset-failed monitor365.service 2>/dev/null || true
@@ -325,6 +340,9 @@ if curl -sf -m 5 -o /dev/null "http://localhost:9191/metrics" 2>/dev/null; then
   echo -e "${GREEN}PASS${NC} Monitor365 agent metrics responding (localhost:9191)"
   m365_agent_ok=true
   PASS=$((PASS + 1))
+elif ! $m365_enabled; then
+  echo -e "${YELLOW}SKIP${NC} Monitor365 agent — service disabled (units absent from systemd)"
+  SKIP=$((SKIP + 1))
 else
   echo -e "${RED}FAIL${NC} Monitor365 agent metrics NOT responding (localhost:9191) — agent may be crashed or circuit-breaker deadlocked"
   FAIL=$((FAIL + 1))
@@ -336,13 +354,13 @@ fi
 # This avoids false FAILs right after deploy (agent was just started).
 m365_check_server() {
   local health
-  health=$(curl -s --max-time 5 "http://localhost:3001/health" 2>/dev/null) || return 3
+  health=$(curl -s --compressed --max-time 5 "http://localhost:3001/health" 2>/dev/null) || return 3
   echo "$health" | grep -qE '"realtime":"connected \([1-9][0-9]* devices\)"' && return 0
   echo "$health" | grep -q '"realtime":"connected (0 devices)"' && return 1
   return 2
 }
 
-if m365_health=$(curl -s --max-time 5 "http://localhost:3001/health" 2>/dev/null); then
+if m365_health=$(curl -s --compressed --max-time 5 "http://localhost:3001/health" 2>/dev/null); then
   if echo "$m365_health" | grep -q '"realtime"'; then
     if echo "$m365_health" | grep -qE '"realtime":"connected \([1-9][0-9]* devices\)"'; then
       echo -e "${GREEN}PASS${NC} Monitor365 agent connected to server"
@@ -407,6 +425,9 @@ fi
 # Monitor365: server-watchdog timer must be active (catches DuckDB pool deadlock)
 if systemctl is-active monitor365-server-watchdog.timer >/dev/null 2>&1; then
   report_pass "Monitor365 — server-watchdog timer active"
+elif ! $m365_enabled; then
+  echo -e "${YELLOW}SKIP${NC} Monitor365 — server-watchdog timer absent (service disabled)"
+  SKIP=$((SKIP + 1))
 else
   report_fail "Monitor365 — server-watchdog timer NOT active (pool deadlock detection offline)"
 fi
@@ -415,7 +436,7 @@ fi
 # The watcher and health service MUST share the same state files. A 200 with
 # total_operations: 0 on a system that's been renaming for weeks means split-brain
 # (watcher writing to ~/.renamer-history.json, dashboard reading dataDir/history.json).
-if renamer_status=$(curl -s --max-time 5 "http://localhost:8086/status" 2>/dev/null); then
+if renamer_status=$(curl -s --compressed --max-time 5 "http://localhost:8086/status" 2>/dev/null); then
   total_ops=$(echo "$renamer_status" | grep -oE '"total_operations":[0-9]+' | grep -oE '[0-9]+$' || echo "0")
   if [ "$total_ops" -gt 0 ] 2>/dev/null; then
     echo -e "${GREEN}PASS${NC} File Renamer dashboard has real history ($total_ops operations)"
@@ -445,13 +466,16 @@ check "Overview (HTTPS)" "https://overview.$DOMAIN/" "200" "<html" 2>/dev/null |
 # A 500/502/503 means oauth2-proxy itself is broken — the exact SigNoz incident.
 echo ""
 echo "=== Auth Gateway Health ==="
+# Subdomain names MUST match the Caddy vHost definitions in caddy.nix
+# (dozzle→logs, monitor365→monitor, searx→search, crush-daily→daily,
+# taskchampion→tasks). Wrong names SKIP forever = phantom coverage.
 AUTH_VHOSTS=(
   "signoz.$DOMAIN"
-  "dozzle.$DOMAIN"
-  "monitor365.$DOMAIN"
-  "searx.$DOMAIN"
-  "crush.$DOMAIN"
-  "taskchampion.$DOMAIN"
+  "logs.$DOMAIN"
+  "monitor.$DOMAIN"
+  "search.$DOMAIN"
+  "daily.$DOMAIN"
+  "tasks.$DOMAIN"
   "manifest.$DOMAIN"
 )
 for vhost in "${AUTH_VHOSTS[@]}"; do

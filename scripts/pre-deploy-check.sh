@@ -181,13 +181,13 @@ trap 'rm -f "$METRICS_FILE"' EXIT
 
 MONITOR365_UP=false
 
-if curl -sf --max-time 5 "http://127.0.0.1:${NODE_EXPORTER_PORT}/metrics" -o "$METRICS_FILE" 2>/dev/null; then
+if curl -sf --compressed --max-time 5 "http://127.0.0.1:${NODE_EXPORTER_PORT}/metrics" -o "$METRICS_FILE" 2>/dev/null; then
   pass "Node exporter (port ${NODE_EXPORTER_PORT}) responding"
 else
   warn "Node exporter (port ${NODE_EXPORTER_PORT}) not responding — node-exporter metrics will be skipped"
 fi
 
-if curl -sf --max-time 5 "http://127.0.0.1:${MONITOR365_PORT}/metrics" >>"$METRICS_FILE" 2>/dev/null; then
+if curl -sf --compressed --max-time 5 "http://127.0.0.1:${MONITOR365_PORT}/metrics" >>"$METRICS_FILE" 2>/dev/null; then
   pass "Monitor365 metrics (port ${MONITOR365_PORT}) responding"
   MONITOR365_UP=true
 else
