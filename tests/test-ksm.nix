@@ -12,8 +12,7 @@
 # The probe allocates anonymous memory, fills every 4 KiB page with the same
 # pattern, madvise(MADV_MERGEABLE)s it, and sleeps. This is exactly what QEMU
 # does for guest RAM (memory-backend merge=on) — the workload KSM was built for.
-{ pkgs }:
-let
+{pkgs}: let
   ksmProbe = pkgs.stdenv.mkDerivation {
     name = "ksm-probe";
     src = pkgs.writeText "ksm-probe.c" ''
@@ -60,16 +59,13 @@ let
       runHook postInstall
     '';
   };
-in
-{
+in {
   name = "ksm";
 
-  nodes.machine =
-    { pkgs, ... }:
-    {
-      virtualisation.memorySize = 4096;
-      environment.systemPackages = [ ksmProbe ];
-    };
+  nodes.machine = {pkgs, ...}: {
+    virtualisation.memorySize = 4096;
+    environment.systemPackages = [ksmProbe];
+  };
 
   testScript = ''
     def ksmstat(name):
@@ -99,26 +95,32 @@ in
     baseline_sharing = ksmstat("pages_sharing")
     machine.log(f"baseline: pages_shared={baseline_shared} pages_sharing={baseline_sharing}")
 
-    # 1) Two processes, IDENTICAL content: expect cross-process dedup into a
-    #    single unique page. 2 x 256 MiB = 131072 pages -> sharing >= 130000.
+    # 1) Two processes, IDENTICAL content: expect cross-process dedup.
+    #    2 x 256 MiB = 131072 pages -> sharing >= 130000. NOTE: pages_shared
+    #    is NOT 1: KSM caps one physical page at max_page_sharing (default 256)
+    #    mappings to bound rmap/COW-fault cost, so ~512 duplicate nodes exist.
     machine.succeed("systemd-run --collect --unit=ksmA ksm-probe 256 0x42")
     machine.succeed("systemd-run --collect --unit=ksmB ksm-probe 256 0x42")
     wait_for(lambda: ksmstat("pages_sharing") >= baseline_sharing + 130000,
              what="identical probes dedup")
-    assert ksmstat("pages_shared") == baseline_shared + 1
+    shared_one = ksmstat("pages_shared")
+    max_sharing = machine.succeed("cat /sys/kernel/mm/ksm/max_page_sharing").strip()
     saved = (ksmstat("pages_sharing") - baseline_sharing) * 4096
-    machine.log(f"two identical 256MiB probes: pages_shared={ksmstat('pages_shared')} "
+    machine.log(f"two identical 256MiB probes: pages_shared={shared_one} "
+                f"(max_page_sharing={max_sharing} fanout) "
                 f"pages_sharing={ksmstat('pages_sharing')} (~{saved // 2**20} MiB deduped)")
+    assert 100 <= shared_one <= 1000, f"pages_shared={shared_one}, expected ~512 dedup nodes"
 
     # 2) Control: DIFFERENT content must NOT merge with the first set —
-    #    it forms its own dedup set. pages_shared goes 1 -> 2.
+    #    it forms its own dedup set (~256 more nodes, sharing grows ~64k pages).
     machine.succeed("systemd-run --collect --unit=ksmC ksm-probe 256 0x99")
-    wait_for(lambda: ksmstat("pages_shared") >= baseline_shared + 2,
-             what="distinct probe forms separate set")
     wait_for(lambda: ksmstat("pages_sharing") >= baseline_sharing + 195000,
-             what="third probe dedup")
-    machine.log(f"after distinct probe: pages_shared={ksmstat('pages_shared')} "
+             what="distinct probe forms separate set")
+    shared_two = ksmstat("pages_shared")
+    machine.log(f"after distinct probe: pages_shared={shared_two} "
                 f"pages_sharing={ksmstat('pages_sharing')}")
+    assert shared_two >= shared_one + 200, \
+        f"distinct probe added only {shared_two - shared_one} nodes, expected ~256"
 
     # 3) ksmd CPU cost for scanning ~768 MiB of mergeable memory.
     machine.log("ksmd CPU time: " + machine.succeed("ps -C ksmd -o time=").strip())
