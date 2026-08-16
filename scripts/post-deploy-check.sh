@@ -195,7 +195,9 @@ fi
 
 check_local "Attic cache" "8200" "/" "200" 2>/dev/null || true
 
-check_local "Browser History" "8087" "/" "200" 2>/dev/null || true
+# / redirects to the Pocket ID login (302) since OAuth2 is configured —
+# probe /health instead, the same endpoint the agent's ExecStartPre gates on.
+check_local "Browser History" "8087" "/health" "200" 2>/dev/null || true
 
 # Browser History: agent timer must be active for collection
 if systemctl is-active browser-history-agent.timer >/dev/null 2>&1; then
