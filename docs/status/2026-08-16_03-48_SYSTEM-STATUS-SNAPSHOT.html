@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SystemNix Status Snapshot — 2026-08-16 03:48</title>
+    <style>
+      :root {
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+        --radius: 0px;
+        --font-heading: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas, monospace;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { scroll-behavior: smooth; }
+      section[id], [id] { scroll-margin-top: 60px; }
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+      }
+      .layout { display: flex; min-height: calc(100vh - 44px); }
+      .sidebar {
+        width: 220px;
+        border-right: 1px solid var(--border);
+        padding: 2rem 1.25rem;
+        position: sticky;
+        top: 0;
+        height: calc(100vh - 44px);
+        overflow-y: auto;
+        flex-shrink: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        color: var(--text-faint);
+        margin-bottom: 0.75rem;
+      }
+      .sidebar nav { display: flex; flex-direction: column; gap: 0.15rem; }
+      .sidebar a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.85rem;
+        padding: 0.3rem 0.6rem;
+        border-left: 2px solid transparent;
+        transition: color 0.15s, border-color 0.15s;
+      }
+      .sidebar a:hover { color: var(--text); }
+      .sidebar a.active { color: var(--accent); border-left-color: var(--accent); }
+      .main { flex: 1; max-width: 980px; margin: 0 auto; padding: 2.5rem 3rem 4rem; }
+      .hero { padding: 1rem 0 2.5rem; border-bottom: 3px solid var(--text); margin-bottom: 2.5rem; position: relative; }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        background: var(--accent);
+        color: #111;
+        padding: 0.3rem 0.75rem;
+        margin-bottom: 1.1rem;
+      }
+      .hero h1 { font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; letter-spacing: -0.03em; line-height: 1.05; text-transform: uppercase; }
+      .hero-subtitle { color: var(--text-muted); margin-top: 0.9rem; max-width: 60ch; font-size: 1.02rem; }
+      h2 {
+        font-family: var(--font-heading);
+        font-size: 1.35rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.01em;
+        margin: 3rem 0 1.1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.8rem;
+      }
+      h2 .num { font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent); font-weight: 700; letter-spacing: 0.1em; }
+      h3 { font-size: 1.02rem; font-weight: 700; margin: 1.6rem 0 0.6rem; }
+      p { color: var(--text-muted); margin-bottom: 0.8rem; max-width: 86ch; }
+      strong { color: var(--text); }
+      code { font-family: var(--font-mono); font-size: 0.82em; background: var(--surface-sunken); border: 1px solid var(--border); padding: 0.1em 0.4em; }
+      ul.tight { margin: 0.4rem 0 1rem 1.2rem; max-width: 86ch; }
+      ul.tight li { color: var(--text-muted); margin-bottom: 0.45rem; }
+      ul.tight li strong { color: var(--text); }
+      .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+      .stat-card { background: var(--surface-raised); padding: 1.2rem 1.4rem; }
+      .stat-value { font-family: var(--font-heading); font-size: 2.2rem; font-weight: 900; line-height: 1; }
+      .stat-label { font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--text-faint); margin-top: 0.5rem; }
+      .stat-bad .stat-value { color: var(--problem); }
+      .stat-warn .stat-value { color: var(--warning); }
+      .stat-good .stat-value { color: var(--solution); }
+      .card { border: 1px solid var(--border); border-left: 4px solid var(--border-strong); background: var(--surface-raised); padding: 1.1rem 1.4rem; margin-bottom: 1rem; }
+      .card h4 { font-size: 0.95rem; font-weight: 800; text-transform: none; margin-bottom: 0.35rem; }
+      .card p { margin: 0; font-size: 0.9rem; }
+      .card-problem { border-left-color: var(--problem); }
+      .card-problem h4 { color: var(--problem); }
+      .card-solution { border-left-color: var(--solution); }
+      .card-solution h4 { color: var(--solution); }
+      .card-warning { border-left-color: var(--warning); }
+      .card-warning h4 { color: var(--warning); }
+      .issue { border: 1px solid var(--border); background: var(--surface-raised); padding: 1.2rem 1.5rem; margin-bottom: 1.1rem; }
+      .issue h3 { margin: 0.5rem 0 0.3rem; }
+      .issue p { font-size: 0.92rem; }
+      .issue .where { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-faint); margin-bottom: 0.5rem; }
+      .issue-critical { border-left: 4px solid var(--problem); }
+      .issue-important { border-left: 4px solid var(--warning); }
+      .issue-nice { border-left: 4px solid var(--solution); }
+      .severity { display: inline-block; font-family: var(--font-mono); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.2rem 0.55rem; margin-bottom: 0.4rem; }
+      .severity-critical { background: var(--problem); color: #111; }
+      .severity-important { background: var(--warning); color: #111; }
+      .severity-nice { background: var(--solution); color: #111; }
+      .callout { border: 1px solid var(--border); padding: 0.7rem 1rem; margin-top: 0.7rem; font-size: 0.88rem; color: var(--text-muted); }
+      .callout-solution { border-left: 3px solid var(--solution); }
+      .callout-amber { border-left: 3px solid var(--warning); }
+      table { width: 100%; border-collapse: collapse; font-size: 0.86rem; margin: 1rem 0 2rem; }
+      th { font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-faint); text-align: left; padding: 0.6rem 0.8rem; border-bottom: 2px solid var(--border-strong); }
+      td { padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border); color: var(--text-muted); vertical-align: top; }
+      td:first-child { font-family: var(--font-mono); color: var(--text-faint); white-space: nowrap; }
+      .badge { display: inline-block; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.15rem 0.5rem; white-space: nowrap; }
+      .badge-critical { background: var(--problem); color: #111; }
+      .badge-high { background: color-mix(in srgb, var(--problem) 45%, transparent); color: var(--problem); border: 1px solid var(--problem); }
+      .badge-medium { background: color-mix(in srgb, var(--warning) 25%, transparent); color: var(--warning); border: 1px solid var(--warning); }
+      .badge-low { background: transparent; color: var(--text-faint); border: 1px solid var(--border-strong); }
+      .badge-fixed { background: var(--solution); color: #111; }
+      .footer { margin-top: 3.5rem; padding-top: 1.2rem; border-top: 1px solid var(--border-strong); font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); }
+      @media (max-width: 1024px) { .sidebar { display: none; } .main { padding: 1.5rem 1.25rem 3rem; } }
+    </style>
+  </head>
+  <body>
+    <div class="top-bar">
+      <span>STATUS SNAPSHOT</span>
+      <span>2026-08-16 03:48 CEST</span>
+      <span>CRUSH / EVO-X2</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#done">Fully Done</a>
+          <a href="#partial">Partially Done</a>
+          <a href="#notstarted">Not Started</a>
+          <a href="#fucked">Totally Fucked Up</a>
+          <a href="#improve">Improve</a>
+          <a href="#next">Top Next Tasks</a>
+          <a href="#question">Top Question</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="hero-badge">Point-in-time snapshot</div>
+          <h1>SystemNix<br />Status Snapshot</h1>
+          <p class="hero-subtitle">
+            Night-of-2026-08-16 state after four concurrent sessions: zellij SSH persistence shipped,
+            a Go build cascade unblocked two deploys, Discord alert spam root-caused to zero, and
+            73&nbsp;GB reclaimed. Root disk at 93% remains the standing fire.
+          </p>
+        </div>
+
+        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <div class="stat-grid">
+          <div class="stat-card stat-good">
+            <div class="stat-value">39</div>
+            <div class="stat-label">Smoke PASS (4 fail = monitor365 noise)</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">93%</div>
+            <div class="stat-label">Root disk used — top risk</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">73G</div>
+            <div class="stat-label">Reclaimed this night (41G tmpfs + 32G rust-cache)</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">5</div>
+            <div class="stat-label">Alert-spam root causes fixed &amp; verified</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">2</div>
+            <div class="stat-label">Live regressions (bh-agent limit, qs coredumps)</div>
+          </div>
+        </div>
+        <p style="margin-top: 1.2rem">
+          Four sessions ran concurrently tonight (zellij persistence, alert-spam batch,
+          tmpfs/rust-cache reclaim, this report). Working tree carries staged sibling
+          work (KSM test, gatus probes, pre-deploy checks) — the auto-git daemon owns
+          committing it.
+        </p>
+
+        <h2 id="done"><span class="num">A</span>Fully Done</h2>
+        <div class="card card-solution">
+          <h4>SSH sessions auto-attach to persistent zellij — deployed &amp; verified</h4>
+          <p>
+            Fish <code>interactiveShellInit</code> hook in <code>platforms/common/programs/zellij.nix</code>:
+            interactive + <code>$SSH_TTY</code> + not in zellij → <code>exec zellij attach --create main</code>.
+            Verified live: session <code>main</code> exists, guards work (local terminals, non-interactive SSH,
+            nested panes unaffected). Escape hatch: <code>ZELLIJ_NO_AUTO_ATTACH=1</code>. Motivation: Crush
+            instances on evo-x2 survive MacBook death. Committed in <code>66e78231</code>; AGENTS.md gotcha recorded.
+          </p>
+        </div>
+        <div class="card card-solution">
+          <h4>Go build cascade unblocked — two upstream fixes released</h4>
+          <p>
+            <code>go-cqrs-lite</code> <code>dba6f007b</code> (stale cqrs-lint vendorHash — already pushed upstream,
+            just re-locked) and <code>file-and-image-renamer</code> <code>fa890d6</code> (templ-components-src pinned
+            v1.8.1 vs go.mod v1.8.3 → "ambiguous import" on the icons submodule; fix verified by local
+            <code>nix build</code> before push). Both SystemNix inputs re-locked (<code>a60a646e</code>). Deploys
+            were blocked ~40 min on these.
+          </p>
+        </div>
+        <div class="card card-solution">
+          <h4>Discord alert spam: all 5 root causes fixed, deployed, verified live</h4>
+          <p>
+            Sibling session (commit <code>66e78231</code>, report
+            <code>2026-08-16_03-09_DISCORD-ALERT-FIX-BATCH.md</code>): external_url fixed, PUT-in-place rule
+            updates (kills fake RESOLVED/FIRING pairs), nvme <code>avail_spare</code>/<code>percent_used</code> key fix
+            (C5), per-unit service-down alerts, runtime-derived memory thresholds, provisioner convergence with
+            skip-unchanged. All verified against live APIs/metrics/journals.
+          </p>
+        </div>
+        <div class="card card-solution">
+          <h4>73 GB reclaimed: /tmp swept, /rust-cache retired</h4>
+          <p>
+            <code>/tmp</code> 42G → 406M (~41G RAM/zram freed; <code>lsof</code> sweep first, <code>rm</code> deliberate —
+            trashing tmpfs would copy onto the 93% NVMe). <code>/rust-cache</code> partition: stale 32G monitor365
+            target wiped after migration copy verified at <code>/mnt/buildcache/rust/monitor365</code>; mount removed
+            from hardware-configuration. Deployed, unmount verified. Report:
+            <code>2026-08-16_03-44_TMPFS-RUSTCACHE-RECLAIM-DEPLOY.md</code>.
+          </p>
+        </div>
+        <div class="card card-solution">
+          <h4>herdr–Crush compatibility: definitively answered (research)</h4>
+          <p>
+            Four independent checks — master source (22-agent enum, 20 manifests), full commit history
+            (zero crush mentions), issue tracker (3 incidental), shipped binary (zero crush strings) —
+            herdr has NO Crush support. Crush's side is also too thin: only <code>PreToolUse</code> hooks exist;
+            no permission-shown or turn-end event, so <code>blocked</code>/<code>idle</code> states are not bridgeable today.
+          </p>
+        </div>
+
+        <h2 id="partial"><span class="num">B</span>Partially Done</h2>
+        <div class="card card-warning">
+          <h4>iTerm2 ↔ zellij UX polish — designed, awaiting decision</h4>
+          <p>
+            Known friction over SSH: <code>copy_command</code> (wl-copy) is useless in SSH sessions and mouse capture
+            disables iTerm2 native selection/scrollback. Proposed fix: <code>copy_clipboard = "osc52"</code> +
+            <code>mouse_mode = false</code> (one small zellij.nix edit). Alternatives on the table: tmux <code>-CC</code>
+            integration, or herdr trial. <strong>Blocked on user decision</strong> (see Top Question). Effort: S.
+          </p>
+        </div>
+        <div class="card card-warning">
+          <h4>monitor365 smoke noise — TODO entry filed, not fixed</h4>
+          <p>
+            <code>scripts/post-deploy-check.sh</code> probes the deliberately-disabled monitor365 (disabled 2026-08-12,
+            private wireguard-collector dep) → 4-5 permanent FAILs every deploy, masking real regressions, and even
+            runs <code>sudo systemctl start monitor365.service</code> in a loop. TODO_LIST Priority-3 entry added this
+            session. Effort: S.
+          </p>
+        </div>
+        <div class="card card-warning">
+          <h4>Staged sibling work uncommitted</h4>
+          <p>
+            Working tree holds staged changes from the reclaim session: <code>tests/test-ksm.nix</code> (new),
+            gatus-config probes, pre-deploy-check edits, CHANGELOG/TODO_LIST updates, 3 status docs. The auto-git
+            daemon commits these; do not sweep into unrelated commits.
+          </p>
+        </div>
+
+        <h2 id="notstarted"><span class="num">C</span>Not Started</h2>
+        <ul class="tight">
+          <li><strong>Off-site backup</strong> — zero DR coverage for Forgejo/Immich/Twenty/DiscordSync. Flagged since 2026-06-25; Hetzner StorageBox + Borg evaluated, never executed. Still Priority-0.</li>
+          <li><strong>Foreground BTRFS scrub on /</strong> — root FS has never been scrubbed; both /data auto-scrubs were reboot-interrupted. Manual: <code>sudo btrfs scrub start -B /</code>.</li>
+          <li><strong>immich DB backup repair</strong> — pg_dump timer broken, zero photo-DB backups ever (drives <code>backup_all_healthy 0</code>).</li>
+          <li><strong>herdr hands-on trial</strong> — binary installed via flake; never actually run. Would settle the multiplexer decision empirically.</li>
+          <li><strong>zellij osc52 verification on iTerm2</strong> — needs a human on the Mac to confirm clipboard permission tick.</li>
+        </ul>
+
+        <h2 id="fucked"><span class="num">D</span>Totally Fucked Up</h2>
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Critical</span>
+          <h3>Root disk 93% and climbing</h3>
+          <div class="where">/dev/nvme0n1p6 — 648G / 723G, 57G free</div>
+          <p>
+            Was 87% yesterday morning; despite 73 GB reclaimed tonight the trend is upward. At this fill:
+            SLC-cache exhaustion, write amplification, and the documented WDT-crash mode. Nix store is 47 GiB,
+            snapshots hold expired-extent reclamation behind a 14d window, and the leak source is still unidentified.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Next</strong>: <code>du</code>-profiling of / variance vs 08-15, <code>nix-collect-garbage -d</code>,
+            btrbk snapshot size audit — the TODO Priority-0 item is still open for a reason.
+          </div>
+        </div>
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Live at report time</span>
+          <h3>browser-history-agent hit start-limit</h3>
+          <div class="where">browser-history-agent.service — 03:46 CEST</div>
+          <p>
+            The oneshot agent completes cleanly ("no new visits to send"), then immediately re-triggers
+            ("Start request repeated too quickly") → <code>start-limit-hit</code> → OnFailure fired. This is the
+            documented agent race class (4 retries/batch), now manifesting via a re-trigger loop instead of a
+            server-race. Needs <code>reset-failed</code> + trigger-source investigation.
+          </p>
+        </div>
+        <div class="issue issue-important">
+          <span class="severity severity-important">Known / mitigated</span>
+          <h3>Quickshell SIGABRT coredumps every ~10 min</h3>
+          <div class="where">quickshell-0.3.0 — 8 coredumps 02:01→03:35, always in pairs</div>
+          <p>
+            The documented ScriptModel use-after-free (upstream, Qt 6.11.1). Restart=always + StartLimitBurst=30
+            keeps the shell alive; user impact is a blip, but coredumps pile up and pairs suggest the
+            shutdown-overlay second instance may be involved. Upstream fix is the real resolution.
+          </p>
+        </div>
+        <div class="issue issue-important">
+          <span class="severity severity-important">Process debt</span>
+          <h3>Permanent red in the deploy gate</h3>
+          <div class="where">scripts/post-deploy-check.sh</div>
+          <p>
+            Every deploy ends 39 PASS / 4 FAIL where all 4 FAILs are monitor365 probing a service that is
+            deliberately off. Alert fatigue guarantees the day a real 5th failure ships unnoticed. The Pocket-ID
+            SQLITE_BUSY check similarly false-positives on mass-restart contention.
+          </p>
+        </div>
+
+        <h2 id="improve"><span class="num">E</span>What We Should Improve</h2>
+        <ul class="tight">
+          <li><strong>Multi-session write discipline</strong> — four concurrent sessions tonight produced interleaved staged changes, one BuildFlow pre-commit bypass, and cross-session commits by the auto-daemon. Cost: every session spent time attributing foreign diffs. Improve: pathspec-scoped commits always + status-doc headers already help; keep it up.</li>
+          <li><strong>file-and-image-renamer devShell gaps</strong> — <code>go-licenses</code> and <code>vulnix</code> absent from the devShell make its BuildFlow pre-commit permanently red → <code>--no-verify</code> habit. Fix upstream (add to devShell) — S effort, kills a bypass norm.</li>
+          <li><strong>vendorHash canaries everywhere</strong> — the cqrs-lint incident is the Nth silent FOD drift. fir already added hash-drift canaries (commit <code>62f082c</code>); replicate the pattern in go-nix-helpers template so new repos get it free.</li>
+          <li><strong>Smoke-check enablement gating</strong> — checks should derive from <code>services.X.enable</code>, not hardcode. The monitor365 noise item is the instance; solve the class once in the script.</li>
+        </ul>
+
+        <h2 id="next"><span class="num">F</span>Top Next Tasks</h2>
+        <table>
+          <thead>
+            <tr><th>#</th><th>Impact</th><th>Effort</th><th>Task</th><th>Category</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td><span class="badge badge-critical">Critical</span></td><td>M</td><td>Root-disk leak hunt: profile / delta since 08-15, nix-gc, snapshot-extent audit; get under 85%</td><td>Bug</td></tr>
+            <tr><td>2</td><td><span class="badge badge-critical">Critical</span></td><td>M</td><td>browser-history-agent start-limit: reset-failed, find re-trigger source, fix unit triggers</td><td>Bug</td></tr>
+            <tr><td>3</td><td><span class="badge badge-critical">Critical</span></td><td>L</td><td>Off-site backup (Hetzner StorageBox + Borg) — execute the evaluated plan</td><td>Feature</td></tr>
+            <tr><td>4</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td>Foreground BTRFS scrub on / (never scrubbed; /data scrubs reboot-interrupted twice)</td><td>Ops</td></tr>
+            <tr><td>5</td><td><span class="badge badge-high">High</span></td><td>M</td><td>immich pg_dump backup repair — zero photo-DB backups exist</td><td>Bug</td></tr>
+            <tr><td>6</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Gate post-deploy monitor365 probes on service enablement; N-occurrence guard on Pocket-ID SQLITE_BUSY</td><td>Quality</td></tr>
+            <tr><td>7</td><td><span class="badge badge-high">High</span></td><td>S</td><td>zellij SSH UX: osc52 + mouse_mode=false once iTerm2 decision lands</td><td>Feature</td></tr>
+            <tr><td>8</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Run herdr trial on evo-x2 (30 min hands-on) — settles multiplexer choice empirically</td><td>Feature</td></tr>
+            <tr><td>9</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td>File upstream herdr issue: crush.toml screen manifest offer (with captured screens)</td><td>Upstream</td></tr>
+            <tr><td>10</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td>File upstream Crush issue: Notification + turn-end hook events (herdr bridge prerequisite)</td><td>Upstream</td></tr>
+            <tr><td>11</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Add go-licenses + vulnix to fir devShell; stop pre-commit --no-verify habit</td><td>Quality</td></tr>
+            <tr><td>12</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Quickshell coredump pairs: confirm whether shutdown-overlay instance is the second dumper; file upstream repro</td><td>Bug</td></tr>
+            <tr><td>13</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td>browser-history upstream: tag + deploy registration-lock chain (MAX_USERS=1 still a no-op in prod)</td><td>Security</td></tr>
+            <tr><td>14</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Add ManagedOOMPreference=omit to dnsblockd (730 kills/day pre-raise)</td><td>Bug</td></tr>
+            <tr><td>15</td><td><span class="badge badge-low">Low</span></td><td>M</td><td>StartLimitBurst placement eval-time assertion (start-limit-audit.nix)</td><td>Quality</td></tr>
+            <tr><td>16</td><td><span class="badge badge-low">Low</span></td><td>M</td><td>FastFlowLM NPU server systemd integration (design done, unimplemented)</td><td>Feature</td></tr>
+            <tr><td>17</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>GOEXPERIMENT sweep: 21 satellite repos still unpinned (report-goexperiment-gaps.sh)</td><td>Cleanup</td></tr>
+            <tr><td>18</td><td><span class="badge badge-low">Low</span></td><td>L</td><td>buildcache btrfs+zstd conversion (maintenance window)</td><td>Ops</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="question"><span class="num">G</span>Top Question</h2>
+        <div class="issue issue-important">
+          <span class="severity severity-important">Decision needed</span>
+          <h3>Which remote-workflow direction do we commit to?</h3>
+          <p>
+            Three viable paths for the Mac→evo-x2 workflow, all blocked on your call:
+            <strong>(1)</strong> keep zellij + apply the osc52/mouse-mode fix (S effort, keeps current setup),
+            <strong>(2)</strong> tmux -CC for native iTerm2 tabs (M effort, dual multiplexer config),
+            <strong>(3)</strong> herdr trial with <code>--remote</code> (no Crush state support today, but the
+            persistence model matches your actual problem).
+          </p>
+          <p>
+            I could not answer this myself: it hinges on how much you value iTerm2-native selection vs. agent-state
+            visibility vs. config sprawl — and I can't feel the UX from here. If you have 30 minutes, run herdr
+            hands-on first (task #8); the answer usually surfaces in the first session.
+          </p>
+        </div>
+
+        <footer class="footer">
+          Generated 2026-08-16 03:48 CEST &middot; All live claims verified against journal/df/coredumpctl
+          output at report time &middot; Sibling-session results cited from their status docs
+        </footer>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
