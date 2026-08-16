@@ -1,98 +1,379 @@
 {
-  "title": "GPU Metrics — AMD Radeon 8060S",
-  "description": "AMD GPU VRAM, temperature, utilization, and memory bandwidth",
-  "tags": ["gpu", "amd", "evo-x2"],
-  "layout": [
-    { "h": 6, "i": "w1", "moved": false, "static": false, "w": 6, "x": 0, "y": 0 },
-    { "h": 6, "i": "w2", "moved": false, "static": false, "w": 6, "x": 6, "y": 0 },
-    { "h": 6, "i": "w3", "moved": false, "static": false, "w": 12, "x": 0, "y": 6 },
-    { "h": 6, "i": "w4", "moved": false, "static": false, "w": 6, "x": 0, "y": 12 },
-    { "h": 6, "i": "w5", "moved": false, "static": false, "w": 6, "x": 6, "y": 12 }
-  ],
-  "widgets": [
+  "schemaVersion": "v6",
+  "name": "systemnix-gpu",
+  "tags": [
     {
-      "id": "w1",
-      "title": "GPU VRAM Usage",
-      "description": "VRAM used vs total",
-      "panelTypes": "graph",
-      "yAxisUnit": "bytes",
-      "query": {
-        "promql": {
-          "expression": "node_amdgpu_mem_info_vram_used_bytes",
-          "legend": "Used",
-          "step": 60
-        },
-        "queryType": "promql"
-      }
-    },
-    {
-      "id": "w2",
-      "title": "GPU Temperature",
-      "description": "AMD GPU junction temperature",
-      "panelTypes": "graph",
-      "yAxisUnit": "celsius",
-      "query": {
-        "promql": {
-          "expression": "node_amdgpu_gpu_temp_celsius",
-          "legend": "{{card}}",
-          "step": 60
-        },
-        "queryType": "promql"
-      },
-      "thresholds": {
-        "steps": [
-          { "color": "green" },
-          { "color": "yellow", "value": 70 },
-          { "color": "red", "value": 85 }
-        ]
-      }
-    },
-    {
-      "id": "w3",
-      "title": "GPU Utilization",
-      "description": "GPU compute and memory controller busy percentage",
-      "panelTypes": "graph",
-      "yAxisUnit": "percent",
-      "query": {
-        "promql": {
-          "expression": "node_amdgpu_gpu_busy_percent",
-          "legend": "GPU Busy {{card}}",
-          "step": 60
-        },
-        "queryType": "promql"
-      }
-    },
-    {
-      "id": "w4",
-      "title": "Memory Controller Busy",
-      "description": "GPU memory controller utilization",
-      "panelTypes": "graph",
-      "yAxisUnit": "percent",
-      "query": {
-        "promql": {
-          "expression": "node_amdgpu_mem_busy_percent",
-          "legend": "Mem Busy {{card}}",
-          "step": 60
-        },
-        "queryType": "promql"
-      }
-    },
-    {
-      "id": "w5",
-      "title": "VRAM Total",
-      "description": "Total VRAM available",
-      "panelTypes": "value",
-      "query": {
-        "promql": {
-          "expression": "node_amdgpu_mem_info_vram_total_bytes",
-          "step": 300
-        },
-        "queryType": "promql"
-      },
-      "yAxisUnit": "bytes"
+      "key": "owner",
+      "value": "systemnix"
     }
   ],
-  "variables": [],
-  "refresh": "30s",
-  "timeRange": { "from": "now-1h", "to": "now" }
+  "spec": {
+    "display": {
+      "name": "GPU Metrics — AMD Radeon 8060S",
+      "description": "AMD GPU VRAM, temperature, utilization"
+    },
+    "variables": [],
+    "panels": {
+      "ac1b0dde-0a70-5e04-939f-fca8fd7da901": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "GPU Temperature",
+            "description": "°C across all cards"
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "max(node_amdgpu_gpu_temp_celsius)",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "0a21b83c-aaf2-5dde-a9c9-ec0743e45d80": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "VRAM Usage",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "percent",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "(sum(node_amdgpu_mem_info_vram_used_bytes) / sum(node_amdgpu_mem_info_vram_total_bytes)) * 100",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "4070dc07-ac4e-5bc8-82b3-e4b79f4b2631": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "GPU Busy",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "percent",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "max(node_amdgpu_gpu_busy_percent)",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "999e2279-73a0-594d-96ad-1ad17abaf264": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Memory Controller Busy",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "percent",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "max(node_amdgpu_mem_busy_percent)",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "1ef5fa69-d812-5283-84c4-9dca6a7a6478": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Temperature by Card",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "node_amdgpu_gpu_temp_celsius",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": "{{card}} °C"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "5d9e4ce0-b0ad-5203-bb1d-63ea97c2f92a": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "VRAM Used",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "By",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "node_amdgpu_mem_info_vram_used_bytes",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": "{{card}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      }
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 3,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/ac1b0dde-0a70-5e04-939f-fca8fd7da901"
+              }
+            },
+            {
+              "x": 3,
+              "y": 0,
+              "width": 3,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/0a21b83c-aaf2-5dde-a9c9-ec0743e45d80"
+              }
+            },
+            {
+              "x": 6,
+              "y": 0,
+              "width": 3,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/4070dc07-ac4e-5bc8-82b3-e4b79f4b2631"
+              }
+            },
+            {
+              "x": 9,
+              "y": 0,
+              "width": 3,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/999e2279-73a0-594d-96ad-1ad17abaf264"
+              }
+            },
+            {
+              "x": 0,
+              "y": 4,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/1ef5fa69-d812-5283-84c4-9dca6a7a6478"
+              }
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/5d9e4ce0-b0ad-5203-bb1d-63ea97c2f92a"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "duration": "",
+    "refreshInterval": "",
+    "links": []
+  }
 }

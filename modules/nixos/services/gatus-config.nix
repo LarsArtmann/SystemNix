@@ -1,137 +1,138 @@
 # Gatus health check monitoring with Discord alerts and endpoints
 _: {
-  flake.nixosModules.gatus-config = {
-    config,
-    pkgs,
-    lib,
-    ...
-  }: let
-    cfg = config.services.gatus-config;
-    inherit
-      (import ../../../lib/default.nix lib)
-      harden
-      serviceDefaults
-      onFailure
-      serviceTypes
-      mkHttpCheck
-      mkSecretCheck
-      mkOidcGate
-      ports
-      ;
+  flake.nixosModules.gatus-config =
+    {
+      config,
+      pkgs,
+      lib,
+      ...
+    }:
+    let
+      cfg = config.services.gatus-config;
+      inherit (import ../../../lib/default.nix lib)
+        harden
+        serviceDefaults
+        onFailure
+        serviceTypes
+        mkHttpCheck
+        mkSecretCheck
+        mkOidcGate
+        ports
+        ;
 
-    nodePort = config.services.prometheus.exporters.node.port;
+      nodePort = config.services.prometheus.exporters.node.port;
 
-    checkGatusEnv = mkSecretCheck pkgs {
-      name = "gatus-env";
-      secretPath = config.sops.templates."gatus-env".path;
-      message = "gatus: environment file is missing or empty (${
-        config.sops.templates."gatus-env".path
-      }) — Discord alerting will fail";
-    };
+      checkGatusEnv = mkSecretCheck pkgs {
+        name = "gatus-env";
+        secretPath = config.sops.templates."gatus-env".path;
+        message = "gatus: environment file is missing or empty (${
+          config.sops.templates."gatus-env".path
+        }) — Discord alerting will fail";
+      };
 
-    discordAlert = desc: [
-      {
-        type = "discord";
-        inherit desc;
-      }
-    ];
+      discordAlert = desc: [
+        {
+          type = "discord";
+          inherit desc;
+        }
+      ];
 
-    inherit (config.networking) domain;
+      inherit (config.networking) domain;
 
-    # Native OIDC via Pocket ID (Layer 1 SSO). Provision-only: evo-x2 always
-    # runs pocket-id-config.provision, which writes the client secret to the
-    # file below. systemd LoadCredential reads it as root (DynamicUser means the
-    # gatus user does not exist to own files directly) and exposes the value to
-    # the service via $CREDENTIALS_DIRECTORY, where the oidc env writer copies it
-    # into an env file that gatus consumes via config.yaml $VAR interpolation.
-    enableOidc =
-      (config.services.pocket-id-config.enable or false)
-      && (config.services.pocket-id-config.provision.enable or false);
-    clientSecretPath = "${config.services.pocket-id.dataDir}/client-secrets/gatus";
+      # Native OIDC via Pocket ID (Layer 1 SSO). Provision-only: evo-x2 always
+      # runs pocket-id-config.provision, which writes the client secret to the
+      # file below. systemd LoadCredential reads it as root (DynamicUser means the
+      # gatus user does not exist to own files directly) and exposes the value to
+      # the service via $CREDENTIALS_DIRECTORY, where the oidc env writer copies it
+      # into an env file that gatus consumes via config.yaml $VAR interpolation.
+      enableOidc =
+        (config.services.pocket-id-config.enable or false)
+        && (config.services.pocket-id-config.provision.enable or false);
+      clientSecretPath = "${config.services.pocket-id.dataDir}/client-secrets/gatus";
 
-    gatusOidcEnv = pkgs.writeShellApplication {
-      name = "gatus-oidc-env";
-      runtimeInputs = [pkgs.coreutils];
-      text = ''
-        set -eu
-        out="''${RUNTIME_DIRECTORY:-/run/gatus}/oidc.env"
-        if [ -n "''${CREDENTIALS_DIRECTORY:-}" ] && [ -f "''${CREDENTIALS_DIRECTORY}/gatus-oidc-secret" ]; then
-          printf 'GATUS_OIDC_CLIENT_SECRET=%s\n' "$(cat "''${CREDENTIALS_DIRECTORY}/gatus-oidc-secret")" > "$out"
-          chmod 600 "$out"
-        else
-          : > "$out"
-        fi
-      '';
-    };
-  in {
-    options.services.gatus-config = {
-      enable = lib.mkEnableOption "Gatus health check monitoring with pre-configured endpoints";
-      port = serviceTypes.servicePort ports.gatus "HTTP port for Gatus web interface";
-    };
+      gatusOidcEnv = pkgs.writeShellApplication {
+        name = "gatus-oidc-env";
+        runtimeInputs = [ pkgs.coreutils ];
+        text = ''
+          set -eu
+          out="''${RUNTIME_DIRECTORY:-/run/gatus}/oidc.env"
+          if [ -n "''${CREDENTIALS_DIRECTORY:-}" ] && [ -f "''${CREDENTIALS_DIRECTORY}/gatus-oidc-secret" ]; then
+            printf 'GATUS_OIDC_CLIENT_SECRET=%s\n' "$(cat "''${CREDENTIALS_DIRECTORY}/gatus-oidc-secret")" > "$out"
+            chmod 600 "$out"
+          else
+            : > "$out"
+          fi
+        '';
+      };
+    in
+    {
+      options.services.gatus-config = {
+        enable = lib.mkEnableOption "Gatus health check monitoring with pre-configured endpoints";
+        port = serviceTypes.servicePort ports.gatus "HTTP port for Gatus web interface";
+      };
 
-    config = lib.mkIf cfg.enable {
-      services.gatus = {
-        enable = true;
-        environmentFile = config.sops.templates."gatus-env".path;
-        settings = {
-          web.port = cfg.port;
-          storage = {
-            type = "sqlite";
-            path = "/var/lib/gatus/gatus.db";
-            caching = true;
-          };
-          # Native OIDC (Layer 1 SSO) via Pocket ID. Empty when OIDC is off.
-          # allowed-subjects omitted: single-admin IdP, so any authenticated user
-          # (= the admin) may view the dashboard.
-          security = lib.optionalAttrs enableOidc {
-            oidc = {
-              issuer-url = "https://auth.${domain}";
-              client-id = "gatus";
-              client-secret = "$GATUS_OIDC_CLIENT_SECRET";
-              redirect-url = "https://status.${domain}/authorization-code/callback";
-              scopes = [
-                "openid"
-                "profile"
-                "email"
+      config = lib.mkIf cfg.enable {
+        services.gatus = {
+          enable = true;
+          environmentFile = config.sops.templates."gatus-env".path;
+          settings = {
+            web.port = cfg.port;
+            storage = {
+              type = "sqlite";
+              path = "/var/lib/gatus/gatus.db";
+              caching = true;
+            };
+            # Native OIDC (Layer 1 SSO) via Pocket ID. Empty when OIDC is off.
+            # allowed-subjects omitted: single-admin IdP, so any authenticated user
+            # (= the admin) may view the dashboard.
+            security = lib.optionalAttrs enableOidc {
+              oidc = {
+                issuer-url = "https://auth.${domain}";
+                client-id = "gatus";
+                client-secret = "$GATUS_OIDC_CLIENT_SECRET";
+                redirect-url = "https://status.${domain}/authorization-code/callback";
+                scopes = [
+                  "openid"
+                  "profile"
+                  "email"
+                ];
+              };
+            };
+            ui = {
+              title = "evo-x2 Status";
+              header = "System Status";
+              logo = "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/gatus.png";
+              link = "https://dash.${domain}";
+              dark-mode = true;
+              default-sort-by = "group";
+              buttons = [
+                {
+                  name = "Dashboard";
+                  link = "https://dash.${domain}";
+                }
+                {
+                  name = "Forgejo";
+                  link = "https://forgejo.${domain}";
+                }
+                {
+                  name = "SigNoz";
+                  link = "https://signoz.${domain}";
+                }
+                {
+                  name = "Dozzle";
+                  link = "https://logs.${domain}";
+                }
               ];
             };
-          };
-          ui = {
-            title = "evo-x2 Status";
-            header = "System Status";
-            logo = "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/gatus.png";
-            link = "https://dash.${domain}";
-            dark-mode = true;
-            default-sort-by = "group";
-            buttons = [
-              {
-                name = "Dashboard";
-                link = "https://dash.${domain}";
-              }
-              {
-                name = "Forgejo";
-                link = "https://forgejo.${domain}";
-              }
-              {
-                name = "SigNoz";
-                link = "https://signoz.${domain}";
-              }
-              {
-                name = "Dozzle";
-                link = "https://logs.${domain}";
-              }
-            ];
-          };
-          alerting.discord = {
-            webhook-url = "$DISCORD_WEBHOOK_URL";
-            default-alert = {
-              failure-threshold = 3;
-              success-threshold = 2;
-              send-on-resolved = true;
+            alerting.discord = {
+              webhook-url = "$DISCORD_WEBHOOK_URL";
+              default-alert = {
+                failure-threshold = 3;
+                success-threshold = 2;
+                send-on-resolved = true;
+              };
             };
-          };
-          endpoints =
-            [
+            endpoints = [
               (mkHttpCheck {
                 name = "Caddy";
                 group = "Infrastructure";
@@ -199,12 +200,22 @@ _: {
                   "[RESPONSE_TIME] < 1000"
                 ];
               })
+              (mkHttpCheck {
+                name = "Paperless";
+                group = "Documents";
+                url = "http://localhost:${toString config.services.paperless.port}/accounts/login/";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 1000"
+                ];
+                alerts = discordAlert "Paperless down — document management unavailable";
+              })
               {
                 name = "Redis";
                 group = "Infrastructure";
                 url = "tcp://127.0.0.1:${toString ports.redis}";
                 interval = "60s";
-                conditions = ["[CONNECTED] == true"];
+                conditions = [ "[CONNECTED] == true" ];
                 alerts = discordAlert "Redis down — Immich ML pipeline and caching broken";
               }
               (mkHttpCheck {
@@ -238,7 +249,7 @@ _: {
                 group = "Monitoring";
                 url = "http://localhost:${toString nodePort}/metrics";
                 interval = "5m";
-                conditions = ["[BODY] == pat(*system_signoz_alert_rules_healthy 1*)"];
+                conditions = [ "[BODY] == pat(*system_signoz_alert_rules_healthy 1*)" ];
                 alerts = discordAlert "SigNoz alert rules not provisioned — observability gap, no alerts will fire";
               })
               (mkHttpCheck {
@@ -266,7 +277,7 @@ _: {
                 group = "Productivity";
                 url = "tcp://127.0.0.1:${toString config.services.taskchampion-sync-server.port}";
                 interval = "60s";
-                conditions = ["[CONNECTED] == true"];
+                conditions = [ "[CONNECTED] == true" ];
                 alerts = discordAlert "TaskChampion sync server down — task syncing broken";
               }
               (mkHttpCheck {
@@ -302,7 +313,7 @@ _: {
                   query-type = "A";
                 };
                 interval = "60s";
-                conditions = ["[DNS_RCODE] == NOERROR"];
+                conditions = [ "[DNS_RCODE] == NOERROR" ];
                 alerts = discordAlert "Local DNS resolver down — name resolution failing";
               }
               {
@@ -310,7 +321,7 @@ _: {
                 group = "Infrastructure";
                 url = "tcp://127.0.0.1:53";
                 interval = "60s";
-                conditions = ["[CONNECTED] == true"];
+                conditions = [ "[CONNECTED] == true" ];
               }
               (mkHttpCheck {
                 name = "DNS Blocker";
@@ -331,14 +342,14 @@ _: {
                   query-type = "A";
                 };
                 interval = "5m";
-                conditions = ["[DNS_RCODE] == NOERROR"];
+                conditions = [ "[DNS_RCODE] == NOERROR" ];
               }
               {
                 name = "Upstream DNS DoT (Mullvad)";
                 group = "Infrastructure";
                 url = "tcp://dot.mullvad.net:853";
                 interval = "5m";
-                conditions = ["[CONNECTED] == true"];
+                conditions = [ "[CONNECTED] == true" ];
                 alerts = discordAlert "Mullvad DoT upstream unreachable — DNS-over-TLS path broken";
               }
               {
@@ -350,7 +361,7 @@ _: {
                   query-type = "A";
                 };
                 interval = "5m";
-                conditions = ["[BODY] == ${config.services.dns-blocker.blockIP}"];
+                conditions = [ "[BODY] == ${config.services.dns-blocker.blockIP}" ];
                 alerts = discordAlert "DNS blocking not active — ads.google.com resolved without block";
               }
               (mkHttpCheck {
@@ -395,7 +406,7 @@ _: {
                 group = "AI";
                 url = "tcp://127.0.0.1:${toString config.services.livekit.settings.port}";
                 interval = "60s";
-                conditions = ["[CONNECTED] == true"];
+                conditions = [ "[CONNECTED] == true" ];
               }
             ]
             ++ [
@@ -997,10 +1008,7 @@ _: {
                 # With native OIDC enabled, an unauthenticated probe is redirected
                 # to the IdP login (302/303) instead of 200. Accept any non-error
                 # status so the self-health check doesn't false-alarm.
-                conditions =
-                  if enableOidc
-                  then ["[STATUS] < 400"]
-                  else ["[STATUS] == 200"];
+                conditions = if enableOidc then [ "[STATUS] < 400" ] else [ "[STATUS] == 200" ];
               })
               (mkHttpCheck {
                 name = "Textfile Collector Health";
@@ -1137,55 +1145,54 @@ _: {
                 alerts = discordAlert "One or more OIDC client secrets are stale (>90d) — consider rotating";
               })
             ];
+          };
         };
-      };
 
-      systemd.services.gatus = let
-        oidcGate = mkOidcGate {
-          inherit pkgs domain;
-          serviceName = "gatus";
-          includeProvision = true;
-        };
-      in {
-        inherit onFailure;
-        after =
-          [
-            "network-online.target"
-            "dnsblockd.service"
-          ]
-          ++ lib.optionals enableOidc oidcGate.after;
-        wants =
-          [
-            "network-online.target"
-            "dnsblockd.service"
-          ]
-          ++ lib.optionals enableOidc oidcGate.wants;
-        serviceConfig = lib.mkMerge [
-          (harden {
-            MemoryMax = "512M";
-            ReadWritePaths = ["/var/lib/gatus"];
-          })
-          (serviceDefaults {Restart = "on-failure";})
+        systemd.services.gatus =
+          let
+            oidcGate = mkOidcGate {
+              inherit pkgs domain;
+              serviceName = "gatus";
+              includeProvision = true;
+            };
+          in
           {
-            ExecStartPre =
-              [
-                "+${lib.getExe checkGatusEnv}"
-                "${lib.getExe gatusOidcEnv}"
-              ]
-              ++ lib.optionals enableOidc oidcGate.serviceConfig.ExecStartPre;
-            TimeoutStartSec = "3min";
-            RuntimeDirectory = "gatus";
-            LoadCredential = lib.optional enableOidc "gatus-oidc-secret:${clientSecretPath}";
-            # Compose the full EnvironmentFile list: the sops template
-            # (DISCORD_WEBHOOK_URL) plus the runtime-generated OIDC secret file
-            # (the '-' prefix makes a missing file non-fatal when OIDC is off).
-            EnvironmentFile = lib.mkForce [
-              config.sops.templates."gatus-env".path
-              "-/run/gatus/oidc.env"
+            inherit onFailure;
+            after = [
+              "network-online.target"
+              "dnsblockd.service"
+            ]
+            ++ lib.optionals enableOidc oidcGate.after;
+            wants = [
+              "network-online.target"
+              "dnsblockd.service"
+            ]
+            ++ lib.optionals enableOidc oidcGate.wants;
+            serviceConfig = lib.mkMerge [
+              (harden {
+                MemoryMax = "512M";
+                ReadWritePaths = [ "/var/lib/gatus" ];
+              })
+              (serviceDefaults { Restart = "on-failure"; })
+              {
+                ExecStartPre = [
+                  "+${lib.getExe checkGatusEnv}"
+                  "${lib.getExe gatusOidcEnv}"
+                ]
+                ++ lib.optionals enableOidc oidcGate.serviceConfig.ExecStartPre;
+                TimeoutStartSec = "3min";
+                RuntimeDirectory = "gatus";
+                LoadCredential = lib.optional enableOidc "gatus-oidc-secret:${clientSecretPath}";
+                # Compose the full EnvironmentFile list: the sops template
+                # (DISCORD_WEBHOOK_URL) plus the runtime-generated OIDC secret file
+                # (the '-' prefix makes a missing file non-fatal when OIDC is off).
+                EnvironmentFile = lib.mkForce [
+                  config.sops.templates."gatus-env".path
+                  "-/run/gatus/oidc.env"
+                ];
+              }
             ];
-          }
-        ];
+          };
       };
     };
-  };
 }

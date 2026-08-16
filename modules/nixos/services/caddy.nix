@@ -143,6 +143,10 @@ _: {
             };
 
             "immich.${domain}" = protectedVHost "immich" config.services.immich.port;
+            # Paperless keeps its own Django login behind the forward-auth gate
+            # (no remote-user passthrough: the LAN-bypass path would let LAN
+            # clients spoof auth headers). Layer 2 SSO = the house default.
+            "paperless.${domain}" = protectedVHost "paperless" config.services.paperless.port;
             "forgejo.${domain}" = {
               extraConfig = ''
                 ${tlsConfig}

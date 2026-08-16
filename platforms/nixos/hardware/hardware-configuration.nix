@@ -6,9 +6,11 @@
   lib,
   modulesPath,
   ...
-}: let
+}:
+let
   mkFilesystem = import ../../../lib/filesystems.nix lib;
-in {
+in
+{
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
   ];
@@ -22,7 +24,7 @@ in {
         "usbhid"
         "sdhci_pci"
       ];
-      kernelModules = ["amdgpu"];
+      kernelModules = [ "amdgpu" ];
     };
     # Restore critical network drivers (Realtek 2.5G Ethernet + MediaTek WiFi)
     kernelModules = [
@@ -30,7 +32,7 @@ in {
       "mt7925e"
       "r8125"
     ];
-    extraModulePackages = with config.boot.kernelPackages; [r8125];
+    extraModulePackages = with config.boot.kernelPackages; [ r8125 ];
   };
 
   # Required for WiFi/Bluetooth hardware
@@ -95,6 +97,8 @@ in {
       options = [
         "compress=zstd"
         "noatime"
+        "space_cache=v2"
+        "nodiscard"
         "nofail"
         "commit=300"
       ];

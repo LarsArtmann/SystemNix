@@ -1,74 +1,451 @@
 {
-  "title": "Caddy Reverse Proxy — HTTP Metrics",
-  "description": "Request rates, latencies, errors, and upstream health",
-  "tags": ["caddy", "http", "evo-x2"],
-  "layout": [
-    { "h": 6, "i": "w1", "moved": false, "static": false, "w": 12, "x": 0, "y": 0 },
-    { "h": 6, "i": "w2", "moved": false, "static": false, "w": 6, "x": 0, "y": 6 },
-    { "h": 6, "i": "w3", "moved": false, "static": false, "w": 6, "x": 6, "y": 6 },
-    { "h": 6, "i": "w4", "moved": false, "static": false, "w": 12, "x": 0, "y": 12 }
-  ],
-  "widgets": [
+  "schemaVersion": "v6",
+  "name": "systemnix-caddy",
+  "tags": [
     {
-      "id": "w1",
-      "title": "HTTP Requests per Second",
-      "description": "Request rate by host",
-      "panelTypes": "graph",
-      "yAxisUnit": "reqps",
-      "query": {
-        "promql": {
-          "expression": "rate(caddy_http_requests_total[5m])",
-          "legend": "{{host}}",
-          "step": 60
-        },
-        "queryType": "promql"
-      }
-    },
-    {
-      "id": "w2",
-      "title": "HTTP Errors",
-      "description": "Error rate by status code",
-      "panelTypes": "graph",
-      "query": {
-        "promql": {
-          "expression": "rate(caddy_http_requests_total{status_code=~\"5..\"}[5m])",
-          "legend": "{{host}} {{status_code}}",
-          "step": 60
-        },
-        "queryType": "promql"
-      }
-    },
-    {
-      "id": "w3",
-      "title": "Request Duration p95",
-      "description": "95th percentile response time",
-      "panelTypes": "graph",
-      "yAxisUnit": "s",
-      "query": {
-        "promql": {
-          "expression": "histogram_quantile(0.95, rate(caddy_http_request_duration_seconds_bucket[5m]))",
-          "legend": "{{host}}",
-          "step": 60
-        },
-        "queryType": "promql"
-      }
-    },
-    {
-      "id": "w4",
-      "title": "Active Connections",
-      "description": "Caddy active connections gauge",
-      "panelTypes": "graph",
-      "query": {
-        "promql": {
-          "expression": "caddy_http_active_connections",
-          "legend": "connections",
-          "step": 60
-        },
-        "queryType": "promql"
-      }
+      "key": "owner",
+      "value": "systemnix"
     }
   ],
-  "variables": [],
-  "refresh": "30s",
-  "timeRange": { "from": "now-6h", "to": "now" }
+  "spec": {
+    "display": {
+      "name": "Caddy Reverse Proxy — HTTP Metrics",
+      "description": "Request rates, status codes, latency"
+    },
+    "variables": [],
+    "panels": {
+      "a7809082-d0c2-5023-ae7a-693e36eab193": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Requests",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "{count}/s",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum(rate(caddy_http_requests_total[5m]))",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "8cd12494-1bbe-5307-9377-93d914cafba8": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "4xx",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "{count}/s",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum(rate(caddy_http_requests_total{code=~\"4..\"}[5m]))",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "421e2795-a29f-576e-b25e-72028bf7b8b0": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "5xx",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "{count}/s",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum(rate(caddy_http_requests_total{code=~\"5..\"}[5m]))",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "90c3ce59-8bf0-5963-85e5-410ab021f767": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "In-Flight",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "{count}",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum(caddy_http_requests_in_flight)",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "339314ba-c70d-5bf6-9c11-1b7e1f205809": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Requests by Code",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "{count}/s",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum by (code) (rate(caddy_http_requests_total[5m]))",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": "{{code}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "29aa83e8-a8bb-5d9e-904c-974eb8c4a880": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Latency (mean)",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "s",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum(rate(caddy_http_response_duration_seconds_sum[5m])) / sum(rate(caddy_http_response_duration_seconds_count[5m]))",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "a5b45540-4d03-53a3-8aa1-00188a3c3442": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Response Size",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "By/s",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum(rate(caddy_http_response_size_bytes_sum[5m]))",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      }
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 3,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/a7809082-d0c2-5023-ae7a-693e36eab193"
+              }
+            },
+            {
+              "x": 3,
+              "y": 0,
+              "width": 3,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/8cd12494-1bbe-5307-9377-93d914cafba8"
+              }
+            },
+            {
+              "x": 6,
+              "y": 0,
+              "width": 3,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/421e2795-a29f-576e-b25e-72028bf7b8b0"
+              }
+            },
+            {
+              "x": 9,
+              "y": 0,
+              "width": 3,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/90c3ce59-8bf0-5963-85e5-410ab021f767"
+              }
+            },
+            {
+              "x": 0,
+              "y": 4,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/339314ba-c70d-5bf6-9c11-1b7e1f205809"
+              }
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/29aa83e8-a8bb-5d9e-904c-974eb8c4a880"
+              }
+            },
+            {
+              "x": 0,
+              "y": 9,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/a5b45540-4d03-53a3-8aa1-00188a3c3442"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "duration": "",
+    "refreshInterval": "",
+    "links": []
+  }
 }

@@ -2,6 +2,7 @@
   localSubdomains = [
     "auth"
     "immich"
+    "paperless"
     "forgejo"
     "dash"
     "signoz"

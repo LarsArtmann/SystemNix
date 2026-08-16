@@ -212,6 +212,13 @@ in
                 <background_buffer_flush_schedule_pool_size>4</background_buffer_flush_schedule_pool_size>
                 <background_move_pool_size>2</background_move_pool_size>
                 <background_fetches_pool_size>1</background_fetches_pool_size>
+                <prometheus>
+                  <endpoint>/metrics</endpoint>
+                  <port>${toString ports.signoz-clickhouse-metrics}</port>
+                  <metrics>true</metrics>
+                  <events>true</events>
+                  <asynchronous_metrics>true</asynchronous_metrics>
+                </prometheus>
                 <keeper_server>
                   <tcp_port>${toString ports.signoz-clickhouse-keeper}</tcp_port>
                   <server_id>1</server_id>
@@ -249,6 +256,12 @@ in
               inherit onFailure;
               startLimitBurst = 5;
               startLimitIntervalSec = 300;
+              # extraServerConfig lands as an etc file; the nixpkgs module has
+              # no restartTriggers for it, so config edits (e.g. the prometheus
+              # metrics endpoint) deploys silently inert until a manual restart.
+              restartTriggers = [
+                config.environment.etc."clickhouse-server/config.d/200-nixos-module-extra-config.xml".source
+              ];
               serviceConfig = lib.mkMerge [
                 (harden {
                   MemoryMax = "4G";
@@ -354,7 +367,8 @@ in
               restartTriggers = [
                 (lib.getExe provisionScript)
               ]
-              ++ lib.catAttrs "source" (lib.attrValues alerts.rules);
+              ++ lib.catAttrs "source" (lib.attrValues alerts.rules)
+              ++ lib.catAttrs "source" (lib.attrValues alerts.dashboards);
               serviceConfig = lib.mkMerge [
                 (harden {
                   MemoryMax = "512M";
@@ -410,6 +424,12 @@ in
               wantedBy = [ "signoz.target" ];
               startLimitBurst = 5;
               startLimitIntervalSec = 300;
+              # The collector reads its config at startup only — without this
+              # trigger a new collector.yaml deploys silently inert (same trap
+              # class as the signoz.yaml ruleSource=localhost bug).
+              restartTriggers = [
+                config.environment.etc."signoz/collector.yaml".source
+              ];
               preStart = ''
                 ${packages.otelCollector}/bin/signoz-otel-collector migrate bootstrap \
                   --clickhouse-dsn "${cfg.settings.clickhouse.url}" \
@@ -497,6 +517,30 @@ in
                         static_configs = [ { targets = [ "127.0.0.1:${toString ports.emeet-pixyd}" ]; } ];
                         metrics_path = "/metrics";
                       }
+                      {
+                        # The collector's own self-metrics (bound to :8888 by
+                        # the OTel runtime): receiver accepted/sent rates,
+                        # export failures, processor drops, process health.
+                        # Feeds the overview dashboard telemetry panels and the
+                        # Telemetry Collector Down / Export Failures alerts.
+                        job_name = "signoz-collector";
+                        static_configs = [ { targets = [ "127.0.0.1:${toString ports.signoz-collector-metrics}" ]; } ];
+                      }
+                      {
+                        # ClickHouse's own prometheus endpoint (enabled in
+                        # extraServerConfig below): uptime, parts, merges,
+                        # memory, disks — the telemetry store observing itself.
+                        job_name = "clickhouse";
+                        static_configs = [ { targets = [ "127.0.0.1:${toString ports.signoz-clickhouse-metrics}" ]; } ];
+                        metrics_path = "/metrics";
+                      }
+                      {
+                        # Docker engine metrics (metrics-addr in
+                        # default-services.nix): container counts, daemon health.
+                        job_name = "docker-engine";
+                        static_configs = [ { targets = [ "127.0.0.1:${toString ports.docker-engine-metrics}" ]; } ];
+                        metrics_path = "/metrics";
+                      }
                     ];
                   };
                 };
@@ -504,24 +548,78 @@ in
               // lib.optionalAttrs cfg.components.journaldLogs {
                 journald = {
                   directory = "/var/log/journal";
-                  # warning+ only — collecting info-level logs from 14 services
-                  # via `journalctl --follow` burned 96% CPU and 3.78 GB read
-                  # because the OTel receiver serializes every entry to JSON in
-                  # real-time. monitor365-server alone generated 270 MB / 5 min
-                  # at info level.
-                  priority = "warning";
-                  units = [
-                    "signoz.service"
-                    "signoz-collector.service"
-                    "caddy.service"
-                    "immich-server.service"
-                    "forgejo.service"
-                    "pocket-id.service"
-                    "oauth2-proxy.service"
-                    "discordsync.service"
-                    "hermes.service"
-                    "dnsblockd.service"
-                  ];
+                  # Whole-journal collection at info+ (PRIORITY 0-5). The old
+                  # 10-unit warning-only config produced ~100 rows/day of raw
+                  # JSON dumps with no severity/service metadata. Total journal
+                  # volume is ~5 MB/h (~6 entries/s) — measured 2026-08-16,
+                  # 500x below the 2026-08 CPU-burn era (monitor365-server at
+                  # 900 entries/s). journald's own per-unit rate limiting
+                  # (10k/30s) bounds a recurrence; the collector self-scrape
+                  # + export-failure alert watch the pipeline.
+                  all = true;
+                  priority = "info";
+                  # NEVER "beginning": without persistent cursor state a
+                  # restart would re-ingest the entire journal.
+                  start_at = "end";
+                };
+              };
+              processors = {
+                # journald entries arrive as body=Map(every journal field),
+                # no severity, no service.name. Extract the useful shape:
+                # body=MESSAGE, severity from PRIORITY (string "0".."7"),
+                # resource service.name from the unit (containers win).
+                # OTLP logs from instrumented services pass through untouched
+                # (guarded on IsMap(body) + PRIORITY, which only journald has).
+                "transform/journald" =
+                  let
+                    journaldGuard = ''IsMap(body) and body["PRIORITY"] != nil'';
+                    # One OTTL statement per list element — the receiver does
+                    # not split embedded newlines.
+                    severity = prio: num: text: [
+                      ''set(severity_number, ${num}) where ${journaldGuard} and body["PRIORITY"] == "${prio}"''
+                      ''set(severity_text, "${text}") where ${journaldGuard} and body["PRIORITY"] == "${prio}"''
+                    ];
+                  in
+                  {
+                    log_statements = [
+                      {
+                        context = "log";
+                        statements = [
+                          ''set(attributes["systemd_unit"], body["_SYSTEMD_UNIT"]) where ${journaldGuard} and body["_SYSTEMD_UNIT"] != nil''
+                          ''set(attributes["syslog_identifier"], body["SYSLOG_IDENTIFIER"]) where ${journaldGuard} and body["SYSLOG_IDENTIFIER"] != nil''
+                          ''set(attributes["pid"], body["_PID"]) where ${journaldGuard} and body["_PID"] != nil''
+                          ''set(attributes["container_name"], body["CONTAINER_NAME"]) where ${journaldGuard} and body["CONTAINER_NAME"] != nil''
+                          ''set(attributes["code_file"], body["CODE_FILE"]) where ${journaldGuard} and body["CODE_FILE"] != nil''
+                          ''set(attributes["code_func"], body["CODE_FUNC"]) where ${journaldGuard} and body["CODE_FUNC"] != nil''
+                          # service.name precedence: kernel identifier < unit < container
+                          ''set(resource.attributes["service.name"], body["SYSLOG_IDENTIFIER"]) where ${journaldGuard} and body["SYSLOG_IDENTIFIER"] != nil''
+                          ''set(resource.attributes["service.name"], body["_SYSTEMD_UNIT"]) where ${journaldGuard} and body["_SYSTEMD_UNIT"] != nil''
+                          ''set(resource.attributes["service.name"], body["CONTAINER_NAME"]) where ${journaldGuard} and body["CONTAINER_NAME"] != nil''
+                        ]
+                        ++ severity "0" "SEVERITY_NUMBER_FATAL" "FATAL"
+                        ++ severity "1" "SEVERITY_NUMBER_FATAL" "FATAL"
+                        ++ severity "2" "SEVERITY_NUMBER_FATAL" "FATAL"
+                        ++ severity "3" "SEVERITY_NUMBER_ERROR" "ERROR"
+                        ++ severity "4" "SEVERITY_NUMBER_WARN" "WARN"
+                        ++ severity "5" "SEVERITY_NUMBER_INFO" "INFO"
+                        ++ severity "6" "SEVERITY_NUMBER_DEBUG" "DEBUG"
+                        ++ severity "7" "SEVERITY_NUMBER_TRACE" "TRACE"
+                        ++ [
+                          # MUST be last: replaces the map body, after which
+                          # the field accesses above would return nil.
+                          ''set(body, body["MESSAGE"]) where ${journaldGuard} and body["MESSAGE"] != nil''
+                        ];
+                      }
+                    ];
+                  };
+                memory_limiter = {
+                  check_interval = "1s";
+                  limit_mib = 768;
+                  spike_limit_mib = 192;
+                };
+                batch = {
+                  timeout = "5s";
+                  send_batch_size = 8192;
                 };
               };
               exporters = {
@@ -552,10 +650,19 @@ in
                 pipelines = {
                   traces = {
                     receivers = [ "otlp" ];
+                    # memory_limiter MUST be first; batch last.
+                    processors = [
+                      "memory_limiter"
+                      "batch"
+                    ];
                     exporters = [ "clickhousetraces" ];
                   };
                   metrics = {
                     receivers = [ "otlp" ] ++ lib.optional cfg.components.nodeExporter "prometheus";
+                    processors = [
+                      "memory_limiter"
+                      "batch"
+                    ];
                     exporters = [ "signozclickhousemetrics" ];
                   };
                   logs = {
@@ -563,6 +670,11 @@ in
                       "otlp"
                     ]
                     ++ lib.optional cfg.components.journaldLogs "journald";
+                    processors = [
+                      "memory_limiter"
+                      "transform/journald"
+                      "batch"
+                    ];
                     exporters = [ "clickhouselogsexporter" ];
                   };
                 };

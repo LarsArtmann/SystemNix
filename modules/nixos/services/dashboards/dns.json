@@ -1,74 +1,625 @@
 {
-  "title": "DNS Blocking — Ad & Malware Filter",
-  "description": "DNS resolution, blocking status, and upstream health",
-  "tags": ["dns", "security", "evo-x2"],
-  "layout": [
-    { "h": 6, "i": "w1", "moved": false, "static": false, "w": 6, "x": 0, "y": 0 },
-    { "h": 6, "i": "w2", "moved": false, "static": false, "w": 6, "x": 6, "y": 0 },
-    { "h": 6, "i": "w3", "moved": false, "static": false, "w": 6, "x": 0, "y": 6 },
-    { "h": 6, "i": "w4", "moved": false, "static": false, "w": 6, "x": 6, "y": 6 }
-  ],
-  "widgets": [
+  "schemaVersion": "v6",
+  "name": "systemnix-dns",
+  "tags": [
     {
-      "id": "w1",
-      "title": "DNS Query Latency",
-      "description": "Unbound resolution latency",
-      "panelTypes": "graph",
-      "yAxisUnit": "s",
-      "query": {
-        "promql": {
-          "expression": "histogram_quantile(0.95, rate(unbound_response_time_seconds_bucket[5m]))",
-          "legend": "p95",
-          "step": 60
-        },
-        "queryType": "promql"
-      }
-    },
-    {
-      "id": "w2",
-      "title": "DNS Queries by Rcode",
-      "description": "Response codes from DNS resolver",
-      "panelTypes": "graph",
-      "query": {
-        "promql": {
-          "expression": "rate(unbound_response_rcode_total[5m])",
-          "legend": "{{rcode}}",
-          "step": 60
-        },
-        "queryType": "promql"
-      }
-    },
-    {
-      "id": "w3",
-      "title": "Unbound Cache Usage",
-      "description": "Number of entries in DNS cache",
-      "panelTypes": "graph",
-      "query": {
-        "promql": {
-          "expression": "unbound_num_queries",
-          "legend": "queries",
-          "step": 60
-        },
-        "queryType": "promql"
-      }
-    },
-    {
-      "id": "w4",
-      "title": "DNS Blocker Health",
-      "description": "dnsblockd service response time",
-      "panelTypes": "graph",
-      "yAxisUnit": "ms",
-      "query": {
-        "promql": {
-          "expression": "0",
-          "step": 60
-        },
-        "queryType": "promql"
-      },
-      "description": "dnsblockd metrics — placeholder until prometheus exporter is available"
+      "key": "owner",
+      "value": "systemnix"
     }
   ],
-  "variables": [],
-  "refresh": "30s",
-  "timeRange": { "from": "now-6h", "to": "now" }
+  "spec": {
+    "display": {
+      "name": "DNS Blocking — Ad & Malware Filter",
+      "description": "dnsblockd queries, blocks, cache, DNSSEC"
+    },
+    "variables": [],
+    "panels": {
+      "d81a37b1-1347-5831-b6dc-fa87b7e09298": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Block Rate",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "percent",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "dnsblockd_dns_block_rate * 100",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "6afbcabc-17f4-5f0d-8b62-484dc050f1fa": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Queries",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "{count}/s",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum(rate(dnsblockd_dns_queries_total[5m]))",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "729aad3e-f948-51de-aa96-140adf5f1d7b": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Blocked",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "{count}/s",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum(rate(dnsblockd_dns_blocks_total[5m]))",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "336dceb6-a975-5c78-8374-a71540b02258": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Blocklist Entries",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "{count}",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "dnsblockd_dns_blocklist_entries",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "165787c7-7e7d-50dc-a766-2853022b45b8": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Cache Entries",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "{count}",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "dnsblockd_dns_cache_size",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "cc351f91-e4d1-5ae1-af78-a65b062a7e5e": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Server Running",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "dnsblockd_dns_server_running",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "86b41750-d98a-5977-9068-abd51c3acd06": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Queries by Type",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "{count}/s",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum by (dns_qtype) (rate(dnsblockd_dns_queries_total[5m]))",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": "{{dns_qtype}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "a69e1b10-f9e1-5358-8b93-cf038e7569ac": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Cache Hit Rate",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "percent",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum(rate(dnsblockd_dns_cache_hits_total[5m])) / (sum(rate(dnsblockd_dns_cache_hits_total[5m])) + sum(rate(dnsblockd_dns_cache_misses_total[5m])))",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "f7e81ea2-ed1d-5b35-991b-8a0a6b07ffd2": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "DNSSEC Validated",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "{count}/s",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum(rate(dnsblockd_dns_dnssec_validated_total[5m]))",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "768f3a7f-bffa-57b3-ad35-488170acde6b": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Resolve Duration (mean)",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "ms",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "dnsblockd_dns_resolve_duration_ms_sum / dnsblockd_dns_resolve_duration_ms_count",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      }
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 2,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/d81a37b1-1347-5831-b6dc-fa87b7e09298"
+              }
+            },
+            {
+              "x": 2,
+              "y": 0,
+              "width": 2,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/6afbcabc-17f4-5f0d-8b62-484dc050f1fa"
+              }
+            },
+            {
+              "x": 4,
+              "y": 0,
+              "width": 2,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/729aad3e-f948-51de-aa96-140adf5f1d7b"
+              }
+            },
+            {
+              "x": 6,
+              "y": 0,
+              "width": 2,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/336dceb6-a975-5c78-8374-a71540b02258"
+              }
+            },
+            {
+              "x": 8,
+              "y": 0,
+              "width": 2,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/165787c7-7e7d-50dc-a766-2853022b45b8"
+              }
+            },
+            {
+              "x": 10,
+              "y": 0,
+              "width": 2,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/cc351f91-e4d1-5ae1-af78-a65b062a7e5e"
+              }
+            },
+            {
+              "x": 0,
+              "y": 4,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/86b41750-d98a-5977-9068-abd51c3acd06"
+              }
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/a69e1b10-f9e1-5358-8b93-cf038e7569ac"
+              }
+            },
+            {
+              "x": 0,
+              "y": 9,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/f7e81ea2-ed1d-5b35-991b-8a0a6b07ffd2"
+              }
+            },
+            {
+              "x": 6,
+              "y": 9,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/768f3a7f-bffa-57b3-ad35-488170acde6b"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "duration": "",
+    "refreshInterval": "",
+    "links": []
+  }
 }

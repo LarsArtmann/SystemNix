@@ -8,6 +8,7 @@ _: {
     }:
     let
       cfg = config.services.default-services;
+      ports = (import ../../../lib/ports.nix).ports;
     in
     {
       options.services.default-services = {
@@ -32,6 +33,14 @@ _: {
             # falls back to iptables rules for port forwarding, which is
             # the recommended production approach.
             userland-proxy = false;
+            # Container stdout/stderr into the journal: the SigNoz collector
+            # ingests the whole journal (all=true) and maps CONTAINER_NAME
+            # entries to service.name=<container>. Existing containers keep
+            # json-file until recreated (docker compose up / image update).
+            log-driver = "journald";
+            # Engine's own Prometheus endpoint — scraped by the SigNoz
+            # collector (job=docker-engine, feeds the Docker Daemon Down alert).
+            metrics-addr = "127.0.0.1:${toString ports.docker-engine-metrics}";
           };
         };
 

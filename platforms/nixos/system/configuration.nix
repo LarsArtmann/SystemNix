@@ -269,6 +269,7 @@ in
       caddy.enable = true;
       forgejo.enable = true;
       immich.enable = true;
+      paperless.enable = true;
       attic-config = {
         enable = true;
         cachePublicKey = "monitor365:/vu56vS4pTdjoltqqqj80dJ6freEdzEEf4ugdZUPpY8=";
@@ -561,6 +562,17 @@ in
         autodetect = false;
         devices = [
           { device = "/dev/nvme0n1"; }
+          # Toshiba MG08ACA16TE 16TB pool members (mirrored BTRFS at
+          # /mnt/pool, created 2026-08-16 from the dead private-cloud box).
+          # Same USB DAS bridge class as the SanDisks: -d sat is required.
+          {
+            device = "/dev/disk/by-id/ata-TOSHIBA_MG08ACA16TE_72U0A005FWTG";
+            options = "-d sat";
+          }
+          {
+            device = "/dev/disk/by-id/ata-TOSHIBA_MG08ACA16TE_72U0A0ZUFWTG";
+            options = "-d sat";
+          }
           # USB-attached SanDisk SDSSDA240G SSDs. by-id (ata- serial form) is
           # stable across sdb/sdc letter swaps between the two enclosures;
           # -d sat is required — the USB bridge hides the ATA identity at the
@@ -587,7 +599,14 @@ in
         enable = true;
         backups = {
           immich = {
-            directory = "/var/lib/immich/database-backup";
+            # mediaLocation moved to the mirrored pool 2026-08-16; the DB
+            # backup timer writes next to the media it protects.
+            directory = "/mnt/pool/services/immich/database-backup";
+            maxAgeHours = 25;
+          };
+          paperless = {
+            # Daily documentexporter output (01:30 + randomized delay).
+            directory = "/mnt/pool/services/paperless/export";
             maxAgeHours = 25;
           };
           twenty = {

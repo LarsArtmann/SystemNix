@@ -177,8 +177,11 @@ in
     };
     "signoz/rules/ollama-down.json".source = mkRule {
       name = "Ollama Down";
-      description = "Ollama LLM service is not responding — AI inference unavailable";
-      query = ''up{job="ollama"}'';
+      description = "Ollama LLM service unit is not active — AI inference unavailable";
+      # ollama exposes no /metrics endpoint (404) — up{job="ollama"} was a
+      # phantom series that could never fire. The systemd collector's unit
+      # state gauge is the real signal.
+      query = ''node_systemd_unit_state{name="ollama.service",state="active"}'';
       step = 60;
       op = "below";
       target = 1;
@@ -187,8 +190,10 @@ in
     };
     "signoz/rules/docker-down.json".source = mkRule {
       name = "Docker Daemon Down";
-      description = "Docker daemon or container runtime is not responding — all container services affected";
-      query = ''up{job="cadvisor"}'';
+      description = "Docker engine metrics endpoint is unreachable — daemon down or wedged";
+      # Direct engine signal (metrics-addr on 127.0.0.1) — the old
+      # up{job="cadvisor"} proxy kept serving while dockerd idled.
+      query = ''up{job="docker-engine"}'';
       step = 60;
       op = "below";
       target = 1;
@@ -241,11 +246,40 @@ in
       target = 1;
       interval = "1m";
     };
+    "signoz/rules/collector-down.json".source = mkRule {
+      name = "Telemetry Collector Down";
+      description = "SigNoz OTel collector self-metrics endpoint is unreachable — ALL telemetry ingestion (logs/traces/metrics) is at risk";
+      query = ''up{job="signoz-collector"}'';
+      step = 60;
+      op = "below";
+      target = 1;
+      interval = "1m";
+    };
+    "signoz/rules/telemetry-export-failures.json".source = mkRule {
+      name = "Telemetry Export Failures";
+      description = "OTel collector failed to export log records/spans to ClickHouse in the last 10m — data loss in progress (schema drift, CH down, or disk full)";
+      # Regex selector keeps the query valid when a signal has zero failures
+      # (absent series → no match → no false fire).
+      query = ''sum(increase({__name__=~"otelcol_exporter_send_failed_(log_records|spans|metric_points)"}[10m]))'';
+      step = 60;
+      target = 1;
+      interval = "1m";
+      severity = "critical";
+    };
+    "signoz/rules/clickhouse-down.json".source = mkRule {
+      name = "ClickHouse Down";
+      description = "ClickHouse Prometheus endpoint is unreachable — the telemetry store itself is down";
+      query = ''up{job="clickhouse"}'';
+      step = 60;
+      op = "below";
+      target = 1;
+      interval = "1m";
+    };
   };
 
   dashboards = {
     "signoz/dashboards/overview.json".source =
-      "${inputs.self}/modules/nixos/services/dashboards/signoz-overview.json";
+      "${inputs.self}/modules/nixos/services/dashboards/overview.json";
     "signoz/dashboards/gpu.json".source = "${inputs.self}/modules/nixos/services/dashboards/gpu.json";
     "signoz/dashboards/dns.json".source = "${inputs.self}/modules/nixos/services/dashboards/dns.json";
     "signoz/dashboards/docker.json".source =

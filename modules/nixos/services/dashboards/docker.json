@@ -1,91 +1,523 @@
 {
-  "title": "Docker Containers — Resource Usage",
-  "description": "CPU, memory, and network metrics per container",
-  "tags": ["docker", "containers", "evo-x2"],
-  "layout": [
-    { "h": 6, "i": "w1", "moved": false, "static": false, "w": 12, "x": 0, "y": 0 },
-    { "h": 6, "i": "w2", "moved": false, "static": false, "w": 12, "x": 0, "y": 6 },
-    { "h": 6, "i": "w3", "moved": false, "static": false, "w": 6, "x": 0, "y": 12 },
-    { "h": 6, "i": "w4", "moved": false, "static": false, "w": 6, "x": 6, "y": 12 },
-    { "h": 6, "i": "w5", "moved": false, "static": false, "w": 12, "x": 0, "y": 18 }
-  ],
-  "widgets": [
+  "schemaVersion": "v6",
+  "name": "systemnix-docker",
+  "tags": [
     {
-      "id": "w1",
-      "title": "Container CPU Usage",
-      "description": "CPU utilization per container",
-      "panelTypes": "graph",
-      "yAxisUnit": "percent",
-      "query": {
-        "promql": {
-          "expression": "rate(container_cpu_usage_seconds_total{name!=\"\"}[5m]) * 100",
-          "legend": "{{name}}",
-          "step": 60
-        },
-        "queryType": "promql"
-      }
-    },
-    {
-      "id": "w2",
-      "title": "Container Memory Usage",
-      "description": "Memory usage per container",
-      "panelTypes": "graph",
-      "yAxisUnit": "bytes",
-      "query": {
-        "promql": {
-          "expression": "container_memory_usage_bytes{name!=\"\"}",
-          "legend": "{{name}}",
-          "step": 60
-        },
-        "queryType": "promql"
-      }
-    },
-    {
-      "id": "w3",
-      "title": "Container Network RX",
-      "description": "Network receive bytes per container",
-      "panelTypes": "graph",
-      "yAxisUnit": "Bps",
-      "query": {
-        "promql": {
-          "expression": "rate(container_network_receive_bytes_total{name!=\"\"}[5m])",
-          "legend": "{{name}}",
-          "step": 60
-        },
-        "queryType": "promql"
-      }
-    },
-    {
-      "id": "w4",
-      "title": "Container Network TX",
-      "description": "Network transmit bytes per container",
-      "panelTypes": "graph",
-      "yAxisUnit": "Bps",
-      "query": {
-        "promql": {
-          "expression": "rate(container_network_transmit_bytes_total{name!=\"\"}[5m])",
-          "legend": "{{name}}",
-          "step": 60
-        },
-        "queryType": "promql"
-      }
-    },
-    {
-      "id": "w5",
-      "title": "Container Restarts",
-      "description": "Total restarts per container",
-      "panelTypes": "graph",
-      "query": {
-        "promql": {
-          "expression": "container_restart_total{name!=\"\"}",
-          "legend": "{{name}}",
-          "step": 60
-        },
-        "queryType": "promql"
-      }
+      "key": "owner",
+      "value": "systemnix"
     }
   ],
-  "variables": [],
-  "refresh": "30s",
-  "timeRange": { "from": "now-6h", "to": "now" }
+  "spec": {
+    "display": {
+      "name": "Docker Containers — Resource Usage",
+      "description": "Container CPU, memory, network via cAdvisor + engine metrics"
+    },
+    "variables": [],
+    "panels": {
+      "c9655079-e989-5148-ab12-cb207a93c964": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Containers Running",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "{count}",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "engine_daemon_container_states_containers{state=\"running\"}",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "0f7cb1a3-8aa2-59f5-b2b4-32d04584df35": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Containers Paused",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "{count}",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "engine_daemon_container_states_containers{state=\"paused\"}",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "f69397e9-a9ed-544e-ab0f-aaab68351da7": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Containers Stopped",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "{count}",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "engine_daemon_container_states_containers{state=\"stopped\"}",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "391438e3-6ee7-564e-b792-3a96b6d357fb": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Total CPU",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "percent",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum(rate(container_cpu_usage_seconds_total{name!=\"\"}[5m])) * 100",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "717396c7-3486-50e7-88b0-85e4377fa50e": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "CPU per Container",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "percent",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum by (name) (rate(container_cpu_usage_seconds_total{name!=\"\"}[5m])) * 100",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "5edd469c-4637-5cf6-9d4b-398058c96ccf": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Memory per Container",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "By",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum by (name) (container_memory_working_set_bytes{name!=\"\"})",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "702ecccb-23f1-58c9-a9a8-88bc85fe3d88": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Network RX per Container",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "By/s",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum by (name) (rate(container_network_receive_bytes_total{name!=\"\"}[5m]))",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "8eed8bfc-362e-5f70-87c2-4f3cf540abaf": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Network TX per Container",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "By/s",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum by (name) (rate(container_network_transmit_bytes_total{name!=\"\"}[5m]))",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      }
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 3,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/c9655079-e989-5148-ab12-cb207a93c964"
+              }
+            },
+            {
+              "x": 3,
+              "y": 0,
+              "width": 3,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/0f7cb1a3-8aa2-59f5-b2b4-32d04584df35"
+              }
+            },
+            {
+              "x": 6,
+              "y": 0,
+              "width": 3,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/f69397e9-a9ed-544e-ab0f-aaab68351da7"
+              }
+            },
+            {
+              "x": 9,
+              "y": 0,
+              "width": 3,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/391438e3-6ee7-564e-b792-3a96b6d357fb"
+              }
+            },
+            {
+              "x": 0,
+              "y": 4,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/717396c7-3486-50e7-88b0-85e4377fa50e"
+              }
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/5edd469c-4637-5cf6-9d4b-398058c96ccf"
+              }
+            },
+            {
+              "x": 0,
+              "y": 9,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/702ecccb-23f1-58c9-a9a8-88bc85fe3d88"
+              }
+            },
+            {
+              "x": 6,
+              "y": 9,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/8eed8bfc-362e-5f70-87c2-4f3cf540abaf"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "duration": "",
+    "refreshInterval": "",
+    "links": []
+  }
 }

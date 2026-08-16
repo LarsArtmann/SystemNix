@@ -99,6 +99,14 @@ in
                 restartUnits = [ "immich-server.service" ];
               };
             }
+            // {
+              paperless_admin_password = {
+                sopsFile = lib.path.append secretsDir "paperless.yaml";
+                # Root-owned: paperless-scheduler reads it via systemd
+                # LoadCredential (PID 1 reads the file, not the service user).
+                restartUnits = [ "paperless-scheduler.service" ];
+              };
+            }
             // mkSecrets "dnsblockd-certs.yaml" { } [ "dnsblockd_ca_cert" ]
             // {
               dnsblockd_ca_key = {

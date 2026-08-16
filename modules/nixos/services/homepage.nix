@@ -215,6 +215,11 @@ _: {
                 description = "Photo & Video Management";
                 icon = "immich.png";
               })
+              (mkService "Paperless" {
+                href = svcUrl "paperless";
+                description = "Document Management (OCR, Scan, Archive)";
+                icon = "paperless.png";
+              })
               (mkService "DNS Blocker" {
                 href = svcUrl "dnsblock";
                 description = "DNS Block Stats";

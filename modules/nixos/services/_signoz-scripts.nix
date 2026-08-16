@@ -34,7 +34,7 @@
       pkgs.diffutils
     ];
     text = ''
-      echo "signoz-provision: starting (v6 — converge rules + route policies: skip-unchanged, PUT in place, verified deletes)"
+      echo "signoz-provision: starting (v7 — converge rules + route policies + dashboards: skip-unchanged, PUT in place, verified deletes)"
       SIGNOZ_URL="http://${cfg.settings.queryService.host}:${toString cfg.settings.queryService.port}"
       CHANNEL_NAME="Discord Alerts"
       FAILED=0
@@ -332,23 +332,118 @@
         fi
       fi
 
-      # ---------------- Dashboards (best-effort) ----------------
-      # v2 API uses a Perses-compatible schema; current dashboard JSONs are
-      # v1 flat format. SigNoz auto-migrates on startup, so failures here are
-      # warnings only. Rewrite in v2 format later.
-      echo "Deploying dashboards..."
+      # ---------------- Dashboards (converge, native v2) ----------------
+      # Dashboards are native v2 (Perses, schemaVersion v6) JSONs with a
+      # stable slug in .name and tag owner=systemnix. Converge like rules:
+      #   unchanged          → skip (spec roundtrip is byte-identical, verified)
+      #   changed            → PUT in place (uuid preserved)
+      #   zombie duplicates  → the pre-v2 provisioner POSTed a fresh copy per
+      #                         deploy (251 accumulated); anything sharing a
+      #                         managed display name but not our slug is one —
+      #                         DELETE
+      #   removed from nix   → DELETE owned orphans
+      # Dashboard failures are HARD failures — the old best-effort mode let
+      # every dashboard 400 silently for a month (v1 schema vs v2 API).
+      echo "Deploying dashboards (converge, native v2)..."
+      DASH_PATH="/api/v2/dashboards"
+
+      list_all_dashboards() {
+        # paginated full listing → JSON array on stdout
+        local all='[]' offset=0 page_count
+        while :; do
+          http GET "$DASH_PATH?limit=100&offset=$offset"
+          if ! ok; then
+            fail "list dashboards (offset $offset, HTTP $HTTP_STATUS)"
+            return 1
+          fi
+          page_count=$(jq '.data.dashboards | length' "$RESP")
+          all=$(jq -s '.[0] + .[1]' <(printf '%s' "$all") <(jq '.data.dashboards' "$RESP"))
+          [ "$page_count" -lt 100 ] && break
+          offset=$((offset + 100))
+        done
+        printf '%s' "$all"
+      }
+
+      DESIRED_DASH_SLUGS=()
       for dash_file in /etc/signoz/dashboards/*.json; do
-        if [ -f "$dash_file" ]; then
-          echo "  Applying: $(basename "$dash_file")"
-          http POST /api/v2/dashboards "$(cat "$dash_file")"
+        [ -f "$dash_file" ] || continue
+        SLUG=$(jq -r '.name // empty' "$dash_file")
+        DISPLAY=$(jq -r '.spec.display.name // empty' "$dash_file")
+        if [ -z "$SLUG" ] || [ -z "$DISPLAY" ]; then
+          fail "$(basename "$dash_file"): missing .name slug or .spec.display.name"
+          continue
+        fi
+        DESIRED_DASH_SLUGS+=("$SLUG")
+
+        ALL_DASH=$(list_all_dashboards) || continue
+
+        # zombie copies: same display name, different slug (legacy spam)
+        mapfile -t ZOMBIE_IDS < <(jq -r --arg d "$DISPLAY" --arg s "$SLUG" '.[] | select(.spec.display.name == $d and .name != $s) | .id' <<<"$ALL_DASH")
+        for zid in "''${ZOMBIE_IDS[@]}"; do
+          [ -n "$zid" ] || continue
+          echo "  Deleting zombie copy: $DISPLAY ($zid)"
+          http DELETE "$DASH_PATH/$zid"
+          ok || fail "delete zombie dashboard $zid (HTTP $HTTP_STATUS)"
+        done
+
+        mapfile -t IDS < <(jq -r --arg s "$SLUG" '.[] | select(.name == $s) | .id' <<<"$ALL_DASH")
+        DESIRED_SPEC=$(jq -S '.spec' "$dash_file")
+        if [ "''${#IDS[@]}" -eq 1 ] && [ -n "''${IDS[0]}" ]; then
+          http GET "$DASH_PATH/''${IDS[0]}"
           if ok; then
-            echo "  OK dashboard:$(basename "$dash_file" .json) (HTTP $HTTP_STATUS)"
+            LIVE_SPEC=$(jq -S '.data.spec' "$RESP")
+            if [ "$LIVE_SPEC" = "$DESIRED_SPEC" ]; then
+              echo "  Unchanged: $SLUG — skipping"
+              continue
+            fi
+            echo "  Updating in place: $SLUG (''${IDS[0]})"
+            http PUT "$DASH_PATH/''${IDS[0]}" "$(cat "$dash_file")"
+            if ok; then
+              echo "  OK dashboard updated: $SLUG (HTTP $HTTP_STATUS)"
+            else
+              fail "update dashboard $SLUG (HTTP $HTTP_STATUS): $(head -c 300 "$RESP")"
+            fi
           else
-            echo "  WARNING dashboard:$(basename "$dash_file" .json) (HTTP $HTTP_STATUS) — may need v2 schema migration" >&2
-            echo "    Response: $(head -c 300 "$RESP")" >&2
+            fail "get dashboard $SLUG (''${IDS[0]}, HTTP $HTTP_STATUS)"
+          fi
+        else
+          for extra in "''${IDS[@]:1}"; do
+            [ -n "$extra" ] || continue
+            echo "  Deleting duplicate slug copy: $SLUG ($extra)"
+            http DELETE "$DASH_PATH/$extra"
+            ok || fail "delete duplicate $extra (HTTP $HTTP_STATUS)"
+          done
+          echo "  Creating: $SLUG"
+          http POST "$DASH_PATH" "$(cat "$dash_file")"
+          if ok; then
+            echo "  OK dashboard created: $SLUG (HTTP $HTTP_STATUS)"
+          else
+            fail "create dashboard $SLUG (HTTP $HTTP_STATUS): $(head -c 300 "$RESP")"
           fi
         fi
       done
+
+      # orphan pass: delete OWNED (tag owner=systemnix) dashboards no longer desired
+      ALL_DASH=$(list_all_dashboards) || ALL_DASH='[]'
+      mapfile -t ORPHAN_IDS < <(jq -r --argjson names "$(printf '%s\n' "''${DESIRED_DASH_SLUGS[@]}" | jq -R . | jq -s .)" '.[] | select(any(.tags[]?; .key == "owner" and .value == "systemnix")) | select(.name as $n | $names | index($n) | not) | .id' <<<"$ALL_DASH")
+      for oid in "''${ORPHAN_IDS[@]}"; do
+        [ -n "$oid" ] || continue
+        echo "  Deleting orphan dashboard: $oid"
+        http DELETE "$DASH_PATH/$oid"
+        ok || fail "delete orphan dashboard $oid (HTTP $HTTP_STATUS)"
+      done
+
+      # ---------------- Dashboard convergence assertion ----------------
+      echo "Verifying dashboard convergence..."
+      ALL_DASH=$(list_all_dashboards)
+      if [ -n "$ALL_DASH" ]; then
+        OWNED=$(jq -r '[.[] | select(any(.tags[]?; .key == "owner" and .value == "systemnix"))] | length' <<<"$ALL_DASH")
+        if [ "$OWNED" -eq "''${#DESIRED_DASH_SLUGS[@]}" ]; then
+          echo "  OK $OWNED dashboards provisioned, exact desired set"
+        else
+          fail "dashboards did not converge (owned=$OWNED desired=''${#DESIRED_DASH_SLUGS[@]})"
+        fi
+      fi
 
       rm -f "$RESP"
 

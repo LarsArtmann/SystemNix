@@ -30,9 +30,12 @@
     signoz-otlp-http = 4318;
     signoz-cadvisor = 9193;
     signoz-node-exporter = 9100;
+    signoz-collector-metrics = 8888;
     signoz-clickhouse = 9000;
+    signoz-clickhouse-metrics = 9363;
     signoz-clickhouse-keeper = 9181;
     signoz-clickhouse-raft = 9234;
+    docker-engine-metrics = 9390;
 
     taskchampion = 10222;
 
