@@ -416,6 +416,17 @@
         systems.follows = "systems";
       };
     };
+
+    # vision-review-agent — visionreviewd, the event-sourced UI review daemon
+    vision-review-agent = {
+      url = "github:LarsArtmann/vision-review-agent?ref=master";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+        systems.follows = "systems";
+        treefmt-nix.follows = "treefmt-nix";
+      };
+    };
     # md-go-validator — Validate code blocks embedded in Markdown/MDX docs
     md-go-validator = {
       url = "github:LarsArtmann/md-go-validator?ref=master";

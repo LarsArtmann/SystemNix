@@ -62,6 +62,8 @@
 
     discordsync-api = 8085;
 
+    visionreviewd-llama = 8390;
+
     file-and-image-renamer-health = 8086;
 
     browser-history = 8087;
