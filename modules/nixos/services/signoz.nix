@@ -183,7 +183,11 @@ in
                 };
               };
               web = {
-                enabled = false;
+                # Static frontend (flake input -> pnpm/rolldown-vite build ->
+                # $out/share/signoz/web, symlinked to /etc/signoz/web below).
+                # The Go binary templates [[.BaseHref]]/[[.Settings]] into
+                # index.html at startup and serves SPA fallbacks itself.
+                enabled = true;
               };
               alertmanager = {
                 signoz = {
@@ -272,7 +276,11 @@ in
               # construction (startup); without this trigger signoz.yaml
               # changes never apply — the 2026-08-16 ruleSource=localhost bug
               # was exactly this: config deployed, process never restarted.
-              restartTriggers = [ config.environment.etc."signoz/signoz.yaml".source ];
+              # The web dist is also read/indexed at startup only.
+              restartTriggers = [
+                config.environment.etc."signoz/signoz.yaml".source
+                config.environment.etc."signoz/web".source
+              ];
               serviceConfig = lib.mkMerge [
                 {
                   Type = "simple";
@@ -361,7 +369,12 @@ in
               script = lib.getExe provisionScript;
             };
 
-            environment.etc = alerts.rules // alerts.dashboards;
+            environment.etc =
+              alerts.rules
+              // alerts.dashboards
+              // {
+                "signoz/web".source = "${packages.frontend}/share/signoz/web";
+              };
           })
 
           signozMetrics

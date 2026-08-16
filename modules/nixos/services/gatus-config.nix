@@ -219,6 +219,21 @@ _: {
                 alerts = discordAlert "SigNoz observability platform down — no metrics/alerts";
               })
               (mkHttpCheck {
+                name = "SigNoz Web UI";
+                group = "Monitoring";
+                url = "http://localhost:${toString config.services.signoz.settings.queryService.port}/";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  # Liveness + health: the SPA shell is served (the API 404
+                  # page is plain text, not HTML). Deliberately no glob
+                  # metacharacters in the needle.
+                  "[BODY] == pat(*data-react-helmet*)"
+                  "[RESPONSE_TIME] < 1000"
+                ];
+                alerts = discordAlert "SigNoz web UI not serving — https://signoz.home.lan returns 404";
+              })
+              (mkHttpCheck {
                 name = "SigNoz Alert Rules Provisioned";
                 group = "Monitoring";
                 url = "http://localhost:${toString nodePort}/metrics";

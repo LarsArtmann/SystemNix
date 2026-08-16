@@ -32,7 +32,7 @@ let
       pname = finalAttrs.pname;
       pnpm = pkgs.pnpm_10;
       fetcherVersion = 3;
-      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+      hash = "sha256-gbwNnGuSgAEvN+gnZquzF4EYCGO3wwm3X48YvSjq1Uw=";
     };
 
     nativeBuildInputs = [
@@ -138,5 +138,10 @@ let
   };
 in
 {
-  inherit signoz frontend otelCollector schemaMigrator;
+  inherit
+    signoz
+    frontend
+    otelCollector
+    schemaMigrator
+    ;
 }
