@@ -300,3 +300,90 @@ key, Secure Boot keys, bash histories, journal, service configs — all recovere
 ---
 
 *Session scripts (evidence): /tmp/{audit-disks,hunt-k8s-data,zfs-snapshot-hunt,zfs-full-audit,zfs-final-extract,zfs-final-extract2,verify-clone-definitive,check-empty-dirs,clone-sdf1}.sh + logs /tmp/zfs-full-audit.log, /tmp/zfs-final2.log*
+
+---
+
+## H) ADDENDUM 2026-08-16 (late session): "FIND ME 1 MEDIA ITEM" — DEEP RE-VERIFICATION
+
+User challenged the zero-media verdict: *"I viewed them via my Mac on the local LAN most
+likely."* Full re-investigation of every unexamined corner. **Outcome: verdict stands for
+the dead box — and the Mac memory is solved: it was evo-x2's own live immich.**
+
+### H1. Where the apps ACTUALLY stored data (reconstructed from /opt/apps compose + hostconfigs)
+
+- Nov-1-era compose used **named Docker volumes** on sdf2 (`postgres_immich_data`,
+  `postgres_paperless_data`, `immich_data`, redis sidecars); Nov-27+ era used **binds to
+  `/storage/*`** on the pool (verified from all 17 containers' hostconfig.json Binds).
+- `paperless-ngx:2.4.1` + `postgres:15` images confirmed in `/var/lib/docker/image/zfs/
+  repositories.json`; **no immich image was ever pulled to the local docker**.
+
+### H2. Immich DB forensics (the user's direct question — checked, at last, at DB level)
+
+Started `postgres_immich_data/_data` (39 MB, 1265 files, initdb 2025-11-01, clean
+shutdown 2025-11-24 05:32) with postgres 15.19 on a local socket:
+
+- Databases: `postgres`, `immich`. **`immich` has ZERO user tables** — migrations never
+  ran; immich-server never connected even once (it would have migrated on first boot).
+- The 39 MB is pure PG15 system catalog. Nothing else.
+
+Paperless DB (`postgres_paperless_data/_data`, 46 MB, 1599 files) — **paperless DID run**:
+
+- Full 54-table Django schema; 129 migrations all applied in one burst
+  **2025-11-01 20:10:38–40 UTC** (automated fresh install).
+- `documents_document` = **0**, all tag/correspondent/type/note/log tables = **0**,
+  `django_session` = **0** (nobody ever logged in), `auth_user` = `consumer` +
+  `AnonymousUser` only — **no human ever registered, not even the admin account**.
+- A pristine install, never used; cleanly shut down 2025-11-24 05:32 (stack teardown,
+  matching the `docker-compose-2025-11-23_07_07` backup in the repo).
+
+### H3. Journal forensics (window: boot 2025-11-28 10:03 → death 2025-12-22 00:40)
+
+- `CONTAINER_NAME` census: only `loki`, `pgadmin`, `postgres-immich`, `postgres-n8n`.
+  **No immich-server, no paperless container ever logged.**
+- `postgres-immich` first log 2025-12-20 08:39:49 → death: **crash-loop every ~5 s on
+  `/run/secrets/immich-db-password: No such file or directory`** (new container ID each
+  restart — hundreds). Postgres never initialized in the final era; the box died
+  mid-debugging of the sops-secret wiring (matches repo `secrets/*.md` "SOLUTION READY"
+  docs — written, never deployed).
+- Netdata (Dec 14): `docker_postgres-immich` conn refused/timeouts the whole time.
+- Chromium (user `art`) history: **zero immich/paperless/photo URLs ever** — only
+  YouTube, Chinese streaming, nixos.org searches.
+
+### H4. Pool re-sweep (VM, `/tmp/zfs-media-hunt.sh`, results `/tmp/zfs-media-hunt-results.txt`)
+
+- Media/doc extension hunt across ALL datasets incl. every `apps/<hex>` Docker layer
+  (439 layer datasets): only **image-bundled assets** (grafana/n8n/pgadmin UI files).
+  No user media anywhere, live or in **any of the 488 snapshots** (section 9 sweep: zero
+  hits; `datapool/{databases,media,documents}` snapshots all `used=0B` — those datasets
+  never held a single byte of app data at any snapshot point, hourly+daily+monthly,
+  2025-11-25 → 2025-12-21).
+- `/storage/apps/volumes/` empty. `immich_data/_data` (Nov-1 immich upload volume) empty.
+  Paperless named volumes (`paperless_data`, `paperless_media`) were never created.
+
+### H5. THE ANSWER to "I viewed photos via my Mac on the LAN"
+
+**evo-x2 runs a live native immich (SystemNix, immich 3.1.0 + Pocket ID) — and it has the
+library**: `/var/lib/immich` = **17 GB, 11,929 files** (`library/admin/2026/<date>/…`,
+`thumbs/`, `upload/`, `encoded-video/`, `profile/`) — 2199 jpg, 1453 png, 114 mp4,
+82 webp, 39 gif, 7 dng, avif/xmp — plus nightly DB backups (`backups/immich-db-backup-*.sql.gz`,
+40 MB each, timer running). Sample originals: Signal photos from 2026-01-01, wallpapers,
+AI-upscaled art. **That is what the Mac viewed on the LAN. The photos are safe, here.**
+
+### H6. Forensic trap worth remembering (cost real time tonight)
+
+Mounting a **foreign NixOS root** on a NixOS host: `/etc/hostname`, `/etc/os-release`,
+`/etc/systemd/system` are **absolute symlinks** (`→ /etc/static/… → /nix/store/…`) that
+resolve against the **HOST's** store. Reading `/tmp/sdf-mount/etc/…` silently returned
+**evo-x2's** identity (hostname `evo-x2`, `26.11.20260813` build, immich-3.1.0 units)
+while the disk beneath was genuinely `onprem-nixos0-25.11`. Cross-check via
+`/nix/var/nix/profiles/system` and store-dir ctimes on the mounted disk itself before
+believing anything read through `/etc` of a foreign NixOS root.
+
+### H7. Updated verdict
+
+| Question | Answer | Evidence |
+|---|---|---|
+| Any immich media on sdf/HDD? | **No — provable** | DB zero tables (H2), no immich image pulled (H1), upload volume empty (H4), no server logs ever (H3) |
+| Any paperless document? | **No — provable** | 0 rows in every table, no human user ever created (H2), media volumes never created (H4) |
+| What did the Mac view? | **evo-x2's live immich** | 17 GB library on this machine, active service, LAN vHost (H5) |
+| §G-3 (GCP photos?) | Moot for local recovery; Mac browser history for `*.larsartmann.cloud` hosts would settle the Jan–Oct 2025 era if still desired | H3/H5 |

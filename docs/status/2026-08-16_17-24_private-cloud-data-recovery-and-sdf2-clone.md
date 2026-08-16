@@ -138,7 +138,14 @@ Spun up throwaway PostgreSQL 15 on copies of the data dirs (probe scripts `/tmp/
 
 **Photos/documents were NEVER uploaded to this machine.** The whole stack (docker-compose era + RKE2 attempt) was freshly assembled Nov–Dec 2025 and died Dec 21–22 before any real data entered it.
 
-### datapool: 267 MiB total (definitive)
+### datapool: 267 MiB live state / 49.45 GB total incl. snapshot history (corrected)
+
+> **CORRECTION (late 2026-08-16):** the heading originally said "267 MiB total (definitive)" —
+> that number is the **live-state send size only** (`datapool/apps@<newest>`). Summing
+> ALL snapshot-unique space (per-dataset send dry-runs in the final-verification report)
+> the pool holds **~49.45 GB**: 16.1 GiB ZFS benchmark files + ~30 GiB Docker layer blocks
+> kept alive by snapshot history + ~0 user data. The "no user data" conclusion is
+> unaffected (re-verified by full file-level sweep in addendum H of the 19-12 report).
 
 `/tmp/zfs-snapshot-hunt.sh` booted the ZFS VM and ran read-only audits:
 
@@ -149,7 +156,7 @@ Spun up throwaway PostgreSQL 15 on copies of the data dirs (probe scripts `/tmp/
 
 ### What the "100 GB+" actually was (user-confirmed)
 
-Copying the WHOLE HDDs including ALL snapshots — i.e., the send stream included Docker image layer blocks across sanoid snapshot history. All of it rebuildable Docker layer data; today only 267 MiB of it remains on the pool.
+Copying the WHOLE HDDs including ALL snapshots — i.e., the send stream included Docker image layer blocks across sanoid snapshot history. All of it rebuildable Docker layer data; today only 267 MiB of it remains in the **live** state (49.45 GB total with snapshot history).
 
 ### Clone composition (where the 47 GiB actually lives)
 
