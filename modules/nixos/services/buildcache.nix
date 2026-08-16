@@ -61,6 +61,18 @@
       ];
 
       rustProjectDirs = map (project: "rust/${project}") cfg.rustProjects;
+
+      # ID_SERIAL of the cache SSD, parsed from the by-id device path
+      # ("ata-<model>_<serial>-partN"). null for non-by-id devices — the udev
+      # recovery trigger is then skipped (x-systemd.device-bound still
+      # protects the mount).
+      deviceSerialMatch = builtins.match "(ata|scsi|usb|virtio)-(.+)-part[0-9]+" (baseNameOf cfg.device);
+      deviceSerial = if deviceSerialMatch == null then null else builtins.elemAt deviceSerialMatch 1;
+
+      # systemd unit names for the mountpoint's .mount/.automount units
+      # ("/mnt/buildcache" → "mnt-buildcache"). Valid for paths without
+      # dots; systemd-escape of '.' differs.
+      mountUnitName = lib.concatStringsSep "-" (lib.tail (lib.splitString "/" cfg.mountPoint));
     in
     {
       options.services.buildcache = {
@@ -143,6 +155,12 @@
         # nofail: a dead/absent USB drive must never block boot. automount: mount
         # on first access rather than at boot, tolerating late DAS power-up.
         # device-timeout bounds the wait if the enclosure is unplugged.
+        # device-bound: the kernel mount table stores device NUMBERS
+        # (major:minor), not paths — a USB reconnect mints a new number, the
+        # by-id symlink cannot re-point the established mount, and a zombie
+        # EIOs forever (2026-08-16, twice). device-bound makes systemd stop
+        # the mount when the .device unit dies; the automount then re-resolves
+        # the by-id path on next access and mounts the NEW device node.
         fileSystems.${cfg.mountPoint} = mkFilesystem {
           inherit (cfg) device;
           fsType = "ext4";
@@ -154,8 +172,25 @@
             "nofail"
             "x-systemd.automount"
             "x-systemd.device-timeout=10s"
+            "x-systemd.device-bound"
           ];
         };
+
+        # The enclosure is a JMicron JMS567 (152d:0567) — a bridge notorious
+        # for dropping off the bus under load (9 disconnects in 36 min,
+        # 2026-08-16). Two rules make flaps self-healing instead of wedging:
+        #  - power/control=on disables USB runtime autosuspend on the bridge
+        #    (a known JMS567 disconnect trigger)
+        #  - SYSTEMD_WANTS on partition add runs the recovery service the
+        #    moment the SSD reappears, so the remount is immediate rather
+        #    than waiting for the next build access or metrics poll.
+        services.udev.extraRules =
+          ''
+            ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="152d", ATTR{idProduct}=="0567", TEST=="power/control", ATTR{power/control}="on"
+          ''
+          + lib.optionalString (deviceSerial != null) ''
+            ACTION=="add", SUBSYSTEM=="block", ENV{DEVTYPE}=="partition", ENV{ID_SERIAL}=="${deviceSerial}", ENV{SYSTEMD_WANTS}+="buildcache-usb-recovery.service"
+          '';
 
         # Runs on EVERY boot, deliberately: mkdir/chown/chmod are idempotent,
         # and an init-once `.initialized` gate (removed 2026-08-15) made any
@@ -175,6 +210,12 @@
             # While the automount is active the path IS a mountpoint (autofs),
             # and a blocked trigger fails the mkdir instead of falling through.
             ConditionPathIsMountPoint = cfg.mountPoint;
+            # Skip cleanly when the USB SSD is unplugged: the armed autofs
+            # mountpoint still satisfies ConditionPathIsMountPoint, but any
+            # access EIOs (zombie) or blocks 10s then fails (device-timeout),
+            # failing the unit and blocking deploy activation (exit code 4).
+            # The udev recovery service runs init explicitly on replug.
+            ConditionPathExists = cfg.device;
           };
           path = [
             pkgs.coreutils
@@ -203,6 +244,83 @@
               chmod 0755 "${cfg.mountPoint}/$dir"
             done
             echo "buildcache initialized at ${cfg.mountPoint}"
+          '';
+        };
+
+        # Belt-and-braces for x-systemd.device-bound, triggered by udev when
+        # the SSD partition reappears (and by deploy.sh after every switch):
+        # reap any zombie mount left behind (e.g. busy writers forced systemd
+        # into a lazy detach), re-arm the automount, verify REAL I/O — then
+        # re-provision dirs and refresh metrics immediately so Gatus flips
+        # without waiting for the 5-min poll. Also heals the drive-ABSENT case:
+        # daemon-reload does NOT retroactively enforce device-bound on an
+        # existing zombie, so this unit reaps it even with no device present.
+        #
+        # NOTE: deliberately NOT using harden {} — its PrivateTmp/
+        # ProtectSystem options create a slave mount namespace in which
+        # umount(2) cannot affect the HOST mount table; the zombie reaper
+        # would silently no-op. Only non-namespace directives below.
+        systemd.services.buildcache-usb-recovery = {
+          description = "Recover buildcache mount after USB hotplug (zombie reaper + remount)";
+          startLimitBurst = 3;
+          startLimitIntervalSec = 300;
+          inherit onFailure;
+          path = [
+            pkgs.util-linux
+            pkgs.coreutils
+            pkgs.systemd
+          ];
+          serviceConfig = {
+            Type = "oneshot";
+            User = "root";
+            CapabilityBoundingSet = "CAP_SYS_ADMIN";
+            NoNewPrivileges = true;
+            LockPersonality = true;
+            MemoryDenyWriteExecute = true;
+            MemoryMax = "64M";
+            RestrictRealtime = true;
+            RestrictSUIDSGID = true;
+            SystemCallArchitectures = "native";
+          };
+          script = ''
+            set -eu
+            mnt="${cfg.mountPoint}"
+            dev="${cfg.device}"
+
+            # 1. Ask PID 1 to tear down automount + mount (real umount in the
+            #    HOST namespace), then lazily detach any zombie that survives
+            #    (busy CWDs/FDs) whose source device node no longer exists.
+            systemctl stop ${mountUnitName}.automount 2>/dev/null || true
+            systemctl stop ${mountUnitName}.mount 2>/dev/null || true
+            src="$(findmnt -n -t ext4 -o SOURCE -- "$mnt" 2>/dev/null || true)"
+            if [ -n "$src" ] && [ ! -b "$src" ]; then
+              echo "reaping stale buildcache mount (source $src has no device node)"
+              umount -l "$mnt" || true
+            fi
+
+            # 2. Clear failed start state and make sure the automount is armed.
+            systemctl reset-failed ${mountUnitName}.mount 2>/dev/null || true
+            systemctl start ${mountUnitName}.automount 2>/dev/null || true
+
+            # 3. Drive absent: done — zombie (if any) is reaped, automount is
+            #    armed, and the udev SYSTEMD_WANTS rule heals on replug. Do NOT
+            #    probe I/O here: an armed automount with no device blocks ~10s
+            #    (device-timeout) and fails, which would mark this unit failed.
+            if [ ! -b "$dev" ]; then
+              echo "buildcache device absent ($dev) — automount armed, will heal on replug"
+              exit 0
+            fi
+
+            # 4. Trigger the automount by path access and demand REAL I/O,
+            #    not just mount-table presence.
+            if ! timeout 20 ls -A "$mnt" >/dev/null 2>&1; then
+              echo "buildcache still failing I/O after recovery attempt" >&2
+              exit 1
+            fi
+
+            # 5. Re-provision cache dirs and refresh metrics now.
+            systemctl start buildcache-init.service buildcache-metrics.service
+            echo "buildcache recovered: $(findmnt -n -t ext4 -o SOURCE -- "$mnt")"
           '';
         };
 
@@ -240,8 +358,15 @@
             dev="${cfg.wholeDiskDevice}"
             threshold=${toString cfg.usageThresholdPercent}
 
+            # Mount-table presence is not health: a hot-unplugged USB drive
+            # leaves a zombie VFS entry (stale device major:minor) that still
+            # satisfies findmnt while every read returns EIO. Gate on real I/O
+            # so a dead mount reports 0 and Gatus alerts, not phantom green.
             mounted=0
-            if findmnt -n -o TARGET "$mnt" 2>/dev/null | grep -qx "$mnt"; then
+            if
+              findmnt -n -o TARGET "$mnt" 2>/dev/null | grep -qx "$mnt" \
+                && timeout 15 ls -A "$mnt" >/dev/null 2>&1
+            then
               mounted=1
             fi
 

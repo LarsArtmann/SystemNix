@@ -28,14 +28,20 @@ if nix run .#pre-deploy-check; then
   echo ""
   echo "=== Deploying NixOS config to evo-x2 ==="
   set +e
-  nh os switch . 2>&1
+  nh_output="$(nh os switch . 2>&1 | tee /dev/stderr)"
   switch_exit=$?
   set -e
 
   if [ "$switch_exit" -ne 0 ]; then
-    if [ "$switch_exit" -eq 4 ]; then
+    # nh wraps switch-to-configuration's exit 4 (activation completed, but some
+    # units failed) as its OWN exit 1 — the exit code alone cannot distinguish
+    # "activated with failed units" (recoverable) from "activation aborted".
+    # set -o pipefail (top of script) preserves nh's status through the tee
+    # capture; match the wrapped ExitStatus(4) in nh's output to keep the
+    # post-switch recovery path reachable.
+    if [ "$switch_exit" -eq 4 ] || echo "$nh_output" | grep -q "Exited(4)"; then
       echo ""
-      echo "⚠ nh os switch returned exit code 4"
+      echo "⚠ nh os switch: activation completed with failed units (exit code 4)"
       echo "  (some services failed during activation, but config IS activated)"
       echo "  Resetting start-limit-hit and retrying failed units..."
       sudo systemctl reset-failed 2>/dev/null || true
@@ -83,6 +89,14 @@ if nix run .#pre-deploy-check; then
   if systemctl is-enabled --quiet browser-history.service 2>/dev/null; then
     echo "Restarting browser-history.service (reload OAuth2 env file)"
     sudo systemctl restart browser-history.service 2>/dev/null || true
+  fi
+
+  # Reap zombie buildcache mounts + re-verify real I/O after switch. The unit is
+  # ConditionPathExists-gated on the by-id device node: no-ops safely when the
+  # USB SSD is unplugged, heals the mount when it is present.
+  if systemctl cat buildcache-usb-recovery.service >/dev/null 2>&1; then
+    echo "Running buildcache-usb-recovery.service (zombie reaper + remount)"
+    sudo systemctl start buildcache-usb-recovery.service 2>/dev/null || true
   fi
 
   echo ""
