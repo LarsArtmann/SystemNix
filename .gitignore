@@ -219,3 +219,5 @@ cython_debug/
 .coverage
 htmlcov/
 # <<< buildflow-managed (.gitignore) <<<
+
+/nixos.qcow2

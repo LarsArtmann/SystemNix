@@ -2,8 +2,9 @@
 #
 # Excludes:
 #   - apps/ (Docker image layers — 3.44 GB disposable)
-#   - cache/zfs_*_test* (ZFS benchmark files)
+#   - cache/zfs_* (all ZFS benchmark files: zfs_4k_write.*, zfs_*_test*, etc.)
 #   - cache/health_check* (ZFS health benchmark)
+#   - cache/{immich,paperless} (stale Redis AOF/RDB from retired Docker deployments)
 #   - All legacy datasets under datapool/apps/ (Docker layers)
 #
 # Includes hash verification: SHA256 manifest generated on source,
@@ -137,17 +138,19 @@ ssh_cmd 'for ds in $(zfs list -H -o name,mountpoint 2>/dev/null | awk "\$2 != \"
 # ── Generate SHA256 manifest on source ───────────────────────────────
 echo ""
 echo "=== Generating SHA256 manifest on source ==="
-echo "Excluding: apps/, cache/zfs_*_test*, cache/health_check*"
+echo "Excluding: apps/, cache/zfs_*, cache/health_check*, cache/{immich,paperless}"
 
-# Generate manifest for /storage (excluding Docker + benchmarks)
+# Generate manifest for /storage (excluding Docker + benchmarks + stale Redis dumps)
 ssh_cmd bash -s <<'REMOTE'
 set -euo pipefail
 
-# /storage manifest — exclude Docker layers and ZFS benchmarks
+# /storage manifest — exclude Docker layers, ZFS benchmarks, and stale Redis state
 find /storage \
   -not -path '/storage/apps/*' \
   -not -path '/storage/apps' \
-  -not -name 'zfs_*_test*' \
+  -not -path '/storage/cache/immich*' \
+  -not -path '/storage/cache/paperless*' \
+  -not -name 'zfs_*' \
   -not -name 'health_check*' \
   -type f -exec sha256sum {} + 2>/dev/null | \
   sed 's|/storage/||' > /tmp/source-manifest.sha256
@@ -184,7 +187,7 @@ echo ""
 echo "=== Copying /storage (excluding Docker layers + ZFS benchmarks) ==="
 
 "$SSHPASS_BIN" -p zfs ssh $SSH_OPTS -p "$SSH_PORT" root@localhost \
-  "tar cf - -C /storage --exclude='./apps' --exclude='./cache/zfs_*_test*' --exclude='./cache/health_check*' ." |
+  "tar cf - -C /storage --exclude='./apps' --exclude='./cache/zfs_*' --exclude='./cache/health_check*' --exclude='./cache/immich' --exclude='./cache/paperless' ." |
   tar xvf - -C "$BACKUP_DIR" 2>&1 | grep -v '^$' || true
 
 # ── Copy legacy datasets (ONLY datapool root — documents/ + media/) ──
@@ -211,16 +214,18 @@ echo ""
 # Generate destination manifest in the same format
 echo "Generating destination manifest..."
 pushd "$BACKUP_DIR" >/dev/null
-find . -type f -exec sha256sum {} + 2>/dev/null |
+find . -type f -not -name '.source-manifest.sha256' -exec sha256sum {} + 2>/dev/null |
   sed 's| \./| |' | sort >/tmp/dest-manifest.sha256
 popd >/dev/null
 
-# Normalize source manifest for comparison (strip leading /storage/ or legacy/ prefix)
-# Source format: <hash>  /storage/<path>  OR  <hash>  legacy/<path>
-# Dest format:   <hash>  <path>
-# We need to normalize both to: <hash>  <relative-path>
+# Normalize source manifest for comparison
+# Source format (already from find+sed): <hash>  <relative-path>     for /storage/*
+#                                        <hash>  legacy/<relative>   for /mnt/datapool/*
+# Dest format (after tar -C + sed):   <hash>  <relative-path>     for /storage
+#                                        <hash>  legacy/<relative>   for legacy/
+# Identical — no normalization needed. Source normalize is a no-op kept for clarity.
 
-# Normalize source: strip /storage/ prefix and legacy/ prefix
+# Normalize source: strip /storage/ prefix and legacy/ prefix (already absent)
 sort "$MANIFEST" | sed -e 's|  /storage/|  |' -e 's|  legacy/|  |' >/tmp/source-manifest-normalized.sha256
 
 # Normalize dest: strip leading ./
@@ -239,12 +244,12 @@ else
   echo "❌ VERIFICATION FAILED — mismatches found:"
   echo "$DIFF_OUTPUT" | head -30
   echo ""
-  echo "Files in source but not in dest:"
-  comm -23 /tmp/source-manifest-normalized.sha256 /tmp/dest-manifest-normalized.sha256 | wc -l
-  echo "Files in dest but not in source:"
-  comm -13 /tmp/source-manifest-normalized.sha256 /tmp/dest-manifest-normalized.sha256 | wc -l
-  echo "Files with different hashes:"
-  comm -12 /tmp/source-manifest-normalized.sha256 /tmp/dest-manifest-normalized.sha256 | wc -l
+  ONLY_SRC=$(comm -23 /tmp/source-manifest-normalized.sha256 /tmp/dest-manifest-normalized.sha256 | wc -l)
+  ONLY_DST=$(comm -13 /tmp/source-manifest-normalized.sha256 /tmp/dest-manifest-normalized.sha256 | wc -l)
+  MATCHED=$(comm -12 /tmp/source-manifest-normalized.sha256 /tmp/dest-manifest-normalized.sha256 | wc -l)
+  echo "Files in source but not in dest (missing): $ONLY_SRC"
+  echo "Files in dest but not in source (extra):   $ONLY_DST"
+  echo "Files with matching hashes (verified):     $MATCHED"
 fi
 
 # ── Final summary ────────────────────────────────────────────────────
