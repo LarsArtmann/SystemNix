@@ -40,10 +40,20 @@ in
       # Scrollback
       scrollback_lines = 10000;
 
-      # Copy mode
-      copy_command = if pkgs.stdenv.isDarwin then "pbcopy" else "wl-copy";
+      # Copy mode — zellij's NATIVE copy mechanism is OSC52, which tunnels
+      # through SSH to the client terminal's clipboard (iTerm2, Ghostty).
+      # Setting copy_command would REPLACE OSC52 with a local command
+      # (wl-copy — dead inside SSH sessions). Linux therefore sets NO
+      # copy_command; macOS keeps pbcopy (belt-and-braces for local runs).
+      # copy_clipboard selects the DESTINATION (system vs primary), not the
+      # mechanism.
       copy_clipboard = "system";
       copy_on_select = false;
+
+      # Mouse off: iTerm2 is the zellij client for both local Mac sessions
+      # and SSH into evo-x2 — native selection/scrollback/Cmd+C beat zellij's
+      # mouse capture. Pane focus stays keyboard-only (Ctrl+j/k).
+      mouse_mode = false;
 
       # Plugins
       plugins = {
@@ -60,6 +70,10 @@ in
           path = "compact-bar";
         };
       };
+    }
+    // lib.optionalAttrs pkgs.stdenv.isDarwin {
+      # Replaces OSC52 with a local command on macOS
+      copy_command = "pbcopy";
     };
 
     # Use extraConfig for complex keybindings (KDL format)
