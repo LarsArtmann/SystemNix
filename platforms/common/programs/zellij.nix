@@ -292,10 +292,4 @@ in
       };
     };
   };
-
-  programs.fish.interactiveShellInit = lib.mkAfter ''
-    if status is-interactive; and set -q SSH_TTY; and not set -q ZELLIJ; and not set -q ZELLIJ_NO_AUTO_ATTACH
-        exec zellij attach --create main
-    end
-  '';
 }
