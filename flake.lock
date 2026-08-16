@@ -201,11 +201,11 @@
         "systems": "systems_2"
       },
       "locked": {
-        "lastModified": 1786834172,
-        "narHash": "sha256-PLyK/IRlOBD+H9AYYZQIHHV88NpNpTkrS8VJvlXlkHA=",
+        "lastModified": 1786868088,
+        "narHash": "sha256-pAjypBGBy0Rf9kKmNFxD5d2OmcgGV1uYoPdDZ3pFO6k=",
         "owner": "LarsArtmann",
         "repo": "BuildFlow",
-        "rev": "518c6adedd4054c211400f971acfcab54af29c96",
+        "rev": "321aa72b51cce647c0646d1a2fa4dfc744c5aba2",
         "type": "github"
       },
       "original": {
@@ -1588,16 +1588,16 @@
     "go-checker-helpers": {
       "flake": false,
       "locked": {
-        "lastModified": 1785106305,
-        "narHash": "sha256-h0CKNCikJoFOGs2SKYDD4xz+k8xey3yoyvdUXz1Q9Cw=",
+        "lastModified": 1786704083,
+        "narHash": "sha256-YytVJORLUggveURIzfaaf/wymv6S2koh/bgB/5xQ1YA=",
         "owner": "LarsArtmann",
         "repo": "go-checker-helpers",
-        "rev": "316c2a880ce7472738b5d593af4c8d2d789879a8",
+        "rev": "24702306f6fb8af3e9b3823d033ce8ac0217053b",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "refs/tags/v0.2.0",
+        "ref": "refs/tags/v0.2.1",
         "repo": "go-checker-helpers",
         "type": "github"
       }
