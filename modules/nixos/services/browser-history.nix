@@ -28,6 +28,7 @@
     let
       inherit (import ../../../lib/default.nix lib)
         harden
+        mkOidcGate
         onFailure
         ports
         serviceOneshotDefaults
@@ -118,90 +119,106 @@
         })
 
         # ── Pocket ID OAuth2 integration ───────────────────────────────────────────
-        (lib.mkIf (cfg.enable && pocketIdEnabled) {
-          services.browser-history = {
-            oauth2.redirectBase = lib.mkDefault "https://${fqdn}";
-          };
+        (lib.mkIf (cfg.enable && pocketIdEnabled) (
+          let
+            oidcGate = mkOidcGate {
+              inherit pkgs domain;
+              serviceName = "browser-history";
+              includeProvision = true;
+            };
 
-          systemd.services.browser-history = {
-            after = [
-              "pocket-id.service"
-              "pocket-id-provision.service"
-              "browser-history-oidc-setup.service"
-            ];
-            wants = [ "browser-history-oidc-setup.service" ];
+            # Bridges the Pocket ID client secret into an env file.
+            # Uses systemd LoadCredential (like Forgejo) to read the secret from
+            # /var/lib/pocket-id/client-secrets/browser-history inside the hardened
+            # namespace. Writes all OAUTH2_POCKET_ID_* vars to an EnvironmentFile in
+            # the oneshot's own StateDirectory (separate from the server's DynamicUser
+            # StateDirectory, which is inaccessible to other services).
+            # CLIENT_ID, CLIENT_SECRET, and ISSUER are ONLY set via this file, so
+            # when the secret is missing, the server degrades to WebAuthn-only
+            # instead of crash-looping on ProviderConfig.Validate().
+            oidcSetupService = {
+              description = "Browser History — Pocket ID OAuth2 secret provisioning";
+              after = [ "pocket-id-provision.service" ];
+              wants = [ "pocket-id-provision.service" ];
+              before = [ "browser-history.service" ];
+              wantedBy = [ "browser-history.service" ];
+              startLimitBurst = 5;
+              startLimitIntervalSec = 300;
 
-            # SSL_CERT_FILE: OIDC discovery calls auth.${domain} via HTTPS
-            # (through Caddy). Without this, Go on NixOS may not find the
-            # system cert pool (including the dnsblockd-CA that signs internal certs).
-            environment.SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
+              serviceConfig = lib.mkMerge [
+                {
+                  Type = "oneshot";
+                  RemainAfterExit = true;
+                  StateDirectory = "browser-history-oidc";
+                  LoadCredential = [
+                    "pocket-id-secret:${config.services.pocket-id.dataDir}/client-secrets/browser-history"
+                  ];
+                }
+                (harden {
+                  ProtectSystem = "strict";
+                })
+                (serviceOneshotDefaults { })
+              ];
 
-            # "-" prefix = optional: won't fail if the file is missing (graceful
-            # degradation to WebAuthn-only mode). Merges with the sops EnvironmentFile
-            # from the server block above (NixOS list concatenation).
-            serviceConfig.EnvironmentFile = [ "-${oauth2SecretsFile}" ];
-          };
+              path = [
+                pkgs.coreutils
+                pkgs.bash
+              ];
 
-          # Bridges the Pocket ID client secret into an env file.
-          # Uses systemd LoadCredential (like Forgejo) to read the secret from
-          # /var/lib/pocket-id/client-secrets/browser-history inside the hardened
-          # namespace. Writes all OAUTH2_POCKET_ID_* vars to an EnvironmentFile in
-          # the oneshot's own StateDirectory (separate from the server's DynamicUser
-          # StateDirectory, which is inaccessible to other services).
-          # CLIENT_ID, CLIENT_SECRET, and ISSUER are ONLY set via this file, so
-          # when the secret is missing, the server degrades to WebAuthn-only
-          # instead of crash-looping on ProviderConfig.Validate().
-          systemd.services.browser-history-oidc-setup = {
-            description = "Browser History — Pocket ID OAuth2 secret provisioning";
-            after = [ "pocket-id-provision.service" ];
-            wants = [ "pocket-id-provision.service" ];
-            before = [ "browser-history.service" ];
-            wantedBy = [ "browser-history.service" ];
-            startLimitBurst = 5;
-            startLimitIntervalSec = 300;
+              script = ''
+                # Secret is injected via systemd LoadCredential (like Forgejo).
+                # %d resolves to the per-service credentials directory.
+                SECRET_FILE="''${CREDENTIALS_DIRECTORY}/pocket-id-secret"
 
-            serviceConfig = lib.mkMerge [
-              {
-                Type = "oneshot";
-                RemainAfterExit = true;
-                StateDirectory = "browser-history-oidc";
-                LoadCredential = [
-                  "pocket-id-secret:${config.services.pocket-id.dataDir}/client-secrets/browser-history"
-                ];
-              }
-              (harden {
-                ProtectSystem = "strict";
-              })
-              (serviceOneshotDefaults { })
-            ];
+                if [ ! -s "$SECRET_FILE" ]; then
+                  echo "browser-history-oidc-setup: Pocket ID secret not found — starting in WebAuthn-only mode"
+                  rm -f "${oauth2SecretsFile}"
+                  exit 0
+                fi
 
-            path = [
-              pkgs.coreutils
-              pkgs.bash
-            ];
+                install -d -m 0755 "$(dirname "${oauth2SecretsFile}")"
+                {
+                  echo "OAUTH2_POCKET_ID_CLIENT_ID=browser-history"
+                  echo "OAUTH2_POCKET_ID_CLIENT_SECRET=$(cat "$SECRET_FILE")"
+                  echo "OAUTH2_POCKET_ID_ISSUER=https://auth.${domain}"
+                } > "${oauth2SecretsFile}"
+                chmod 600 "${oauth2SecretsFile}"
+                echo "browser-history-oidc-setup: Pocket ID OAuth2 secret written"
+              '';
+            };
+          in
+          {
+            services.browser-history = {
+              oauth2.redirectBase = lib.mkDefault "https://${fqdn}";
+            };
 
-            script = ''
-              # Secret is injected via systemd LoadCredential (like Forgejo).
-              # %d resolves to the per-service credentials directory.
-              SECRET_FILE="''${CREDENTIALS_DIRECTORY}/pocket-id-secret"
+            systemd.services.browser-history = {
+              # The OIDC gate's curl probe (ExecStartPre) waits up to 2min for
+              # auth.${domain}/.well-known/openid-configuration to respond —
+              # required since browser-history v4.7.0 does OIDC discovery at
+              # startup and exits 69 (UNAVAILABLE) if dnsblockd hasn't bound
+              # 127.0.0.1:53 yet (the Go resolver falls through to 9.9.9.9
+              # which has no auth.home.lan → exit code 69).
+              after = oidcGate.after ++ [ "browser-history-oidc-setup.service" ];
+              wants = oidcGate.wants ++ [ "browser-history-oidc-setup.service" ];
 
-              if [ ! -s "$SECRET_FILE" ]; then
-                echo "browser-history-oidc-setup: Pocket ID secret not found — starting in WebAuthn-only mode"
-                rm -f "${oauth2SecretsFile}"
-                exit 0
-              fi
+              # SSL_CERT_FILE: OIDC discovery calls auth.${domain} via HTTPS
+              # (through Caddy). Without this, Go on NixOS may not find the
+              # system cert pool (including the dnsblockd-CA that signs internal certs).
+              environment.SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
 
-              install -d -m 0755 "$(dirname "${oauth2SecretsFile}")"
-              {
-                echo "OAUTH2_POCKET_ID_CLIENT_ID=browser-history"
-                echo "OAUTH2_POCKET_ID_CLIENT_SECRET=$(cat "$SECRET_FILE")"
-                echo "OAUTH2_POCKET_ID_ISSUER=https://auth.${domain}"
-              } > "${oauth2SecretsFile}"
-              chmod 600 "${oauth2SecretsFile}"
-              echo "browser-history-oidc-setup: Pocket ID OAuth2 secret written"
-            '';
-          };
-        })
+              # "-" prefix = optional: won't fail if the file is missing (graceful
+              # degradation to WebAuthn-only mode). Merges with the sops EnvironmentFile
+              # from the server block above (NixOS list concatenation).
+              serviceConfig = lib.mkMerge [
+                { EnvironmentFile = [ "-${oauth2SecretsFile}" ]; }
+                { ExecStartPre = oidcGate.serviceConfig.ExecStartPre; }
+              ];
+            };
+
+            systemd.services.browser-history-oidc-setup = oidcSetupService;
+          }
+        ))
 
         # ── Agent: SystemNix defaults for machines that enable it ──────────────────
         # The agent extracts browser history from local profiles and pushes it
