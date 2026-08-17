@@ -102,7 +102,9 @@ _: {
     in
     {
       options.services.google-sync = {
-        enable = lib.mkEnableOption "Google Drive → HDD pool mirror via rclone" // { default = true; };
+        enable = lib.mkEnableOption "Google Drive → HDD pool mirror via rclone" // {
+          default = true;
+        };
 
         interval = lib.mkOption {
           type = lib.types.str;
@@ -124,18 +126,13 @@ _: {
       };
 
       config = lib.mkIf cfg.enable {
-        sops.secrets = {
-          # Full rclone.conf INI (type/client_id/client_secret/scope/token).
-          # A file (not env vars) because the token blob is JSON — systemd
-          # EnvironmentFile quoting of embedded double quotes is a footgun.
-          # Read-only at runtime: rclone refreshes the access token in memory.
-          # The refresh token persists ONLY if the Google OAuth client is in
-          # production ("In production" publishing status) — testing-mode
-          # clients expire refresh tokens after 7 days.
-          google_sync_rclone_config = {
-            restartUnits = [ "google-sync.service" ];
-          };
-        };
+        # Secret google_sync_rclone_config (full rclone.conf INI) is declared
+        # centrally in sops.nix — mkSecrets "google-sync.yaml", gated on
+        # svcEnabled "google-sync". Consumed below via RCLONE_CONFIG_PATH.
+        # Read-only at runtime: rclone refreshes access tokens in memory.
+        # The refresh token survives ONLY with the OAuth client in
+        # "In production" publishing status — testing-mode clients expire
+        # refresh tokens after 7 days.
 
         systemd.services.google-sync = {
           description = "Google Drive → HDD pool mirror (rclone sync)";

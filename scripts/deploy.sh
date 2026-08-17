@@ -134,6 +134,15 @@ if nix run .#pre-deploy-check; then
     sudo systemctl start buildcache-gc.service 2>/dev/null || true
   fi
 
+  # One-time /data → pool migration (atticd, monitor365, monitor365-archive).
+  # --no-block: the copy can take ~10-45 min; the deploy must not wait on it.
+  # ConditionPathExists-gated: starts instantly as a no-op once migrated.
+  # Failures surface via the unit's onFailure Discord alert + failed-unit list.
+  if systemctl cat data-to-pool-migration.service >/dev/null 2>&1; then
+    echo "Starting data-to-pool-migration.service (no-block, copy + verify + source cleanup)"
+    sudo systemctl start --no-block data-to-pool-migration.service 2>/dev/null || true
+  fi
+
   echo ""
   echo "=== Waiting 10s for services to settle ==="
   sleep 10

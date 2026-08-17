@@ -121,9 +121,11 @@ in
     # Local snapshots of the per-service subvolumes ON the pool itself
     # (23:45, after the NVMe instances, before nix-gc at 00:00). Protects
     # against app-level corruption / accidental deletion on the pool:
-    # immich media, paperless documents. The other service subvols
-    # (monitor365, discordsync, browser-history) are laid out empty for the
-    # planned NVMe->pool migrations and snapshot as no-ops until then.
+    # immich media, paperless documents, atticd NAR storage, monitor365
+    # buffer. monitor365 + atticd were populated by the 2026-08-18
+    # data-to-pool-migration; discordsync + browser-history remain laid out
+    # empty for their planned NVMe->pool migrations and snapshot as no-ops
+    # until then.
     btrbk.instances."pool" = {
       onCalendar = "23:45";
       snapshotOnly = true;
@@ -134,6 +136,7 @@ in
           snapshot_dir = "/mnt/pool/.snapshots";
           subvolume."services/immich" = { };
           subvolume."services/paperless" = { };
+          subvolume."services/atticd" = { };
           subvolume."services/monitor365" = { };
           subvolume."services/discordsync" = { };
           subvolume."services/browser-history" = { };

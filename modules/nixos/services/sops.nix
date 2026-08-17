@@ -270,6 +270,16 @@ in
                 group = "users";
                 restartUnits = [ "dnsblockd.service" ];
               } [ "dnsblockd_auth_token" ]
+            )
+            // lib.optionalAttrs (svcEnabled "google-sync") (
+              # Full rclone.conf INI for the Drive mirror (token is a JSON blob —
+              # a file, not an env var: systemd EnvironmentFile quote-stripping
+              # around embedded double quotes is a footgun). Root-owned: the
+              # sync unit runs as root to write /mnt/pool.
+              mkSecrets "google-sync.yaml" {
+                owner = "root";
+                restartUnits = [ "google-sync.service" ];
+              } [ "google_sync_rclone_config" ]
             );
 
           templates = {

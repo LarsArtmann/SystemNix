@@ -50,12 +50,18 @@
       inherit (import ../../../lib/default.nix lib) ports ioTier;
       domain = config.networking.domain;
 
-      # Agent event buffer lives on /data (separate BTRFS partition, 367 GiB
-      # free) instead of the root @ subvolume. The buffer can grow to 30 GiB
-      # (max_size_mb) and previously consumed 50 GiB on a 94%-full root disk.
-      # /data has nofail so a mount failure won't block boot — the agent just
-      # won't start, which is acceptable for a non-critical monitoring service.
-      agentStoragePath = "/data/monitor365";
+      # Agent event buffer lives on the mirrored HDD pool (subvol reserved at
+      # the 2026-08-16 pool bring-up, populated 2026-08-18 by
+      # data-to-pool-migration.service) instead of the NVMe /data partition.
+      # The buffer can grow to 30 GiB (max_size_mb). /mnt/pool mounts nofail;
+      # a detached DAS fails the agent loudly via RequiresMountsFor instead of
+      # contaminating the root filesystem — acceptable for a non-critical
+      # monitoring service.
+      # NOTE: the migrated files carry the stale uid 966:956 of the
+      # monitor365 user from before the service was disabled. Re-enabling
+      # requires re-chowning this tree if the recreated user gets a different
+      # uid.
+      agentStoragePath = "/mnt/pool/services/monitor365";
 
       systemAgentCfg = config.services.monitor365;
       serverCfg = config.services.monitor365-server;
@@ -337,6 +343,10 @@
             startLimitBurst = 10;
             startLimitIntervalSec = 300;
             serviceConfig.CPUQuota = "200%"; # Cap at 2 cores — prevents CB busy-loop runaway
+            # Detached DAS fails the agent loudly instead of writing the event
+            # buffer onto the root filesystem under the /mnt/pool mountpoint
+            # (same semantics as mkDockerService backup.dir gating).
+            unitConfig.RequiresMountsFor = [ agentStoragePath ];
           };
         })
 

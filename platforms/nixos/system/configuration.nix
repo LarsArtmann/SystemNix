@@ -274,6 +274,10 @@ in
         enable = true;
         cachePublicKey = "monitor365:/vu56vS4pTdjoltqqqj80dJ6freEdzEEf4ugdZUPpY8=";
       };
+      # One-time /data → pool migration (atticd, monitor365, monitor365-archive).
+      # Self-neutralizing: ConditionPathExists skips the unit once all sources
+      # are migrated; started by deploy.sh after every switch.
+      data-to-pool-migration.enable = true;
       pocket-id-config = {
         enable = true;
         provision = {
