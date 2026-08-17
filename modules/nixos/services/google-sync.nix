@@ -102,7 +102,7 @@ _: {
     in
     {
       options.services.google-sync = {
-        enable = lib.mkEnableOption "Google Drive → HDD pool mirror via rclone";
+        enable = lib.mkEnableOption "Google Drive → HDD pool mirror via rclone" // { default = true; };
 
         interval = lib.mkOption {
           type = lib.types.str;
@@ -139,8 +139,7 @@ _: {
 
         systemd.services.google-sync = {
           description = "Google Drive → HDD pool mirror (rclone sync)";
-          after = dnsGate.after;
-          wants = dnsGate.wants;
+          inherit (dnsGate) after wants;
           inherit onFailure;
           unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
           startLimitBurst = 5;
@@ -154,7 +153,7 @@ _: {
               ];
             })
             (serviceOneshotDefaults { })
-            (ioTier.background)
+            ioTier.background
             {
               Type = "oneshot";
               StateDirectory = "google-sync";

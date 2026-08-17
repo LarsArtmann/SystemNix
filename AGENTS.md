@@ -213,6 +213,18 @@ Quickshell is a QtQuick desktop shell replacing Waybar, Dunst, Wlogout, polkit_g
 - **templ-components monolith-era source pins cause ambiguous imports** — a `-src` input pinned to ≤v1.8.1 (pre-extraction, no nested `go.mod`s) + go.mod requiring the extracted sub-modules from the proxy = "found package in multiple modules" FOD failure. Pin to ≥v1.8.3 (extracted state, sub-module `go.mod`s present) — see file-and-image-renamer `fa890d6e`
 - **Consumer subtree lock drift vs upstream's own lock** — a package that builds standalone (`nix build github:LarsArtmann/<repo>/<rev>#default`) but fails in SystemNix with a vendorHash mismatch means SystemNix's lock subtree for that input has drifted from the upstream repo's own flake.lock pins. Fix is SystemNix-side only: `nix flake lock --update-input <repo>` re-syncs the subtree from upstream's lock (seen with projects-management-automation 2026-08-16)
 
+### Google Sync (Drive → HDD pool mirror)
+
+**Module:** `modules/nixos/services/google-sync.nix` (`services.google-sync`) — rclone one-way sync of Google Drive to `/mnt/pool/backups/google-drive` every 5 min (`interval` option). **Deployed DISABLED** until the OAuth token is filled in (placeholder in sops `google_sync_rclone_config`, `platforms/nixos/secrets/google-sync.yaml`); enabling with placeholders crash-loops the unit.
+
+- **Semantics:** Google Drive Desktop "Mirror" mode, minus its instant-deletion data loss: remote deletions park in `/mnt/pool/backups/google-drive-deleted/` (grace, 30d default) via `--backup-dir`. Grace dir MUST stay outside the synced tree — rclone sync deletes local paths absent on the remote (a nested backup-dir deletes itself)
+- **rclone config is a sops FILE, not env vars** — the OAuth token is a JSON blob; systemd `EnvironmentFile` quote-stripping around embedded `"` is a footgun. Passed via `Environment = RCLONE_CONFIG_PATH=<sops path>`; rclone refreshes access tokens in memory (read-only config is fine)
+- **Google OAuth client MUST be in "In production" publishing status** — testing-mode clients expire refresh tokens after 7 days (silent auth death a week after setup). Unverified-but-production is fine for personal use
+- **`--drive-skip-checksum-gphotos` is load-bearing** — photos stored IN Drive get re-encoded server-side without md5 updates; without the flag those files re-download on every sync
+- **`--fast-list` mandatory** for large trees (39k files: 22 min → 4 min listing); Google-native docs export as pdf (`exportFormats` option)
+- **Freshness:** the script touches `/var/lib/google-sync/last_success`; registered in `backup-coordination` (maxAge 25h) → the global `backup_all_healthy` Gatus check alerts. The mirror tree itself is NOT monitorable via backup-coordination (it checks top-level FILES only; a mirror is a dir tree)
+- **Google Photos CANNOT ride this via API** (Library API serves originals only to the uploading app since 2025-03-31; rclone gphotos backend Tier 5, gphotos-sync archived). If a scheduled Takeout export ("Add to Drive" delivery) is enabled, its archives land inside this mirror automatically — immich-go (`nixpkgs`) can ingest them into Immich later
+
 ### Sops + Age
 
 **Encrypting a NEW secret file** — NO sudo needed. The age PUBLIC key in `.sops.yaml` is sufficient:
