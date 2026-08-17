@@ -144,6 +144,20 @@ All private repos use `git+ssh://` URLs. Go tool packages defined in `mkLarsPack
 **`proxyVendor = true`:** `go mod tidy` safe in both phases. **`proxyVendor = false`:** AVOID `overrideModAttrs` with `go mod tidy` — causes "inconsistent vendoring"
 **Versioning:** Published = hardcode semver. Internal = `self.shortRev or self.dirtyShortRev or "dev"` for the **package version** (keeps the store-path name short, e.g. `pkg-ff1f0db`). For full-commit traceability inside the _binary_, add a separate `commit = self.rev` and pass it via ldflags (`-X main.commit=${commit}`) — NEVER use the full `self.rev` as the package `version`, it pollutes every derivation name (40-char hash in nvd/store paths)
 
+### FastFlowLM (AMD XDNA NPU LLM)
+
+Background LLM server (Qwen3.6-35B-A3B MoE, ~3B active, 13.6 GB mmap'd) on the AMD XDNA NPU of evo-x2. OpenAI-compatible at `http://127.0.0.1:52625/v1`. Replaces the hand-patchelf'd `~/.local/share/fastflowlm/` install with a Nix-managed package + socket-activated systemd service.
+
+- **Package**: `pkgs/fastflowlm.nix` — `fetchurl` v1.0.1 tarball + `autoPatchelfHook` + `protobuf_32` (XRT swemu/hwemu libs link against libprotobuf.so.32; resolved via `autoPatchelfIgnoreMissingDeps` because the swemu/hwemu libs are never loaded on real NPU). Wrapper replaces the upstream bash wrapper with a deterministic `$out`-pinned XILINX_XRT.
+- **Module**: `modules/nixos/services/fastflowlm.nix` — socket-activated on `127.0.0.1:52625` (`fastflowlm.socket`) → `systemd-socket-proxyd` proxy (`fastflowlm-proxy.service`) → backend on `127.0.0.1:52626` (`fastflowlm.service`). 1h idle TTL via `fastflowlm-idle.timer` (every 5 min, stops both units when the backend journal has no "TCP connection established" entries for ≥ keepAlive AND the backend has been active for ≥ 10 min). `ioTier.background` (BE/6, 13.6 GB cold read must not starve boot/SSHD on QLC NAND).
+- **WHY socket activation**: the model is 13.6 GB mmap'd from `/data/ai/models/fastflowlm`. Pinned 24/7 it would reserve ~25 GB of the 94 GB CPU-visible pool at idle. Cold load is 1-3 min (acceptable for a background LLM); idle unload frees the RAM.
+- **WHY Gatus MUST NOT probe :52625**: every TCP probe is a permanent keepalive. The `system-health` textfile collector emits `system_service_state_failed` / `system_service_start_limit_hit` for `fastflowlm` so Gatus can alert on actual failure without pinning the model. Wired in `gatus-config.nix`.
+- **NPU access**: service user needs `video` group (`/dev/accel0` is `root:video 0660`) + `LimitMEMLOCK=infinity` (NPU DMA requirement). Existing `hardware.amd-npu` module wires the XRT runtime + udev rules.
+- **Combine with PMA auto-commit**: `modules/nixos/services/projects-management-automation.nix` sets `OPENAI_BASE_URL=http://127.0.0.1:52625/v1` + `OPENAI_MODEL=qwen3.6-moe:35b-a3b` via `extraEnvironment`. The OpenAI provider chain reads these env vars ONLY in go-commit v0.8.0+. The pinned go-commit follows our `go-commit` input — `nix flake update go-commit` activates the wire-up once the Go proxy has propagated v0.8.0 (typically 15-60 min after `git tag` push). Until then, the env vars are ignored and the daemon falls back to heuristic commit messages.
+- **Crates runtime**: `XILINX_XRT` is set to `$out` (the package's store path) so XRT can find `./lib/x86_64-linux-gnu/`. The wrapper creates the multiarch symlinks on first run if absent.
+- **Hand-started process is now obsolete**: delete `~/.local/share/fastflowlm/`, `~/.local/bin/flm`, and the LD_LIBRARY_PATH exports in `~/.bashrc` after the deploy proves stable.
+- **Manual install**: `~/projects/anime-comic-pipeline/docs/npu-fastflowlm-llm-server.md` has the measured resource usage (24.9 GB RSS at idle, 14 t/s decode, ~3 s TTFT) and full operational guide.
+
 ### Quickshell (DankMaterialShell)
 
 Quickshell is a QtQuick desktop shell replacing Waybar, Dunst, Wlogout, polkit_gnome, **and rofi** (launcher, clipboard, keybinds, emoji, calc). Configured via DankMaterialShell's upstream HM module.

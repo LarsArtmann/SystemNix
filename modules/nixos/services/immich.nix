@@ -47,6 +47,7 @@ _: {
                 accelDecode = true;
               };
               image.progressiveJpeg.enabled = true;
+              metadata.faces.import = true;
               passwordLogin.enabled = false;
               oauth = {
                 enabled = true;

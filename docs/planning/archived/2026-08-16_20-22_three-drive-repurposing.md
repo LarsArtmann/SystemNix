@@ -91,3 +91,19 @@ graph LR
 
 1. Approve **Option A** (or pick B/C).
 2. Approve the **destructive wipe** of sdb, sde, sdf (M2/M5) after M1 verification.
+
+---
+
+## Decision Record (2026-08-16 ~21:00, live user decisions — recorded 2026-08-17)
+
+The executed architecture DEVIATES from Option A above, per live user decisions during execution:
+
+1. **btrfs send/receive, NOT borg** — the backup mechanism is btrbk `send/receive` (btrbk-root/btrbk-data targets on the pool) plus per-application dump jobs (forgejo zip, pocket-id sqlite, twenty/manifest pg_dumps). The M3 borg seed/timer was **dropped**.
+2. **Mirror is the SERVICE tier too, not just backups** — immich (`/mnt/pool/services/immich`) and paperless (`/mnt/pool/services/paperless`) serve live data from the pool; own-tools (monitor365/discordsync/browser-history) subvols reserved.
+3. **sdf (WOOACME) and both SanDisks are FROZEN** ("do not touch them; yet") — the M5 offsite-vault role was **dropped**; sdf stays intact (not wiped).
+4. **Offsite leg** — user states important photos/docs already live in Google Photos/Drive; whether 3-2-1 is satisfied or an offsite leg returns is an open decision (TODO_LIST P0).
+5. Pool label is `pool` (not `backup-pool`), mount `/mnt/pool`. Paperless behind SSO subdomain (`paperless.home.lan`, protectedVHost).
+
+**Execution:** completed 2026-08-16 20:00 → 2026-08-17 01:00 (interrupted + resumed). Full record: `docs/status/2026-08-16_21-24_three-drive-repurposing-execution-status.md` (archived) and `docs/status/2026-08-17_00-59_pool-backups-completion-status.md`. M1 forensics relocated to `archive/private-cloud-forensics`; M4 monitoring live (btrfs-verify-pool-backups, backup-coordination); M8 hd-idle undecided.
+
+**Plan CLOSED 2026-08-17** (amended + archived by the docs-health pass). Archiving now.

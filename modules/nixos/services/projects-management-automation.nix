@@ -54,13 +54,17 @@
           group = "users";
           home = "/home/${primaryUser}";
           environmentFile = sopsEnvPath;
-          # FastFlowLM (NPU LLM) is the primary local provider. The OpenAI
-          # provider chain (DefaultChainFromEnv) reads OPENAI_BASE_URL +
-          # OPENAI_MODEL from its environment. The URL is loopback — the
-          # ssrf bypass in go-commit 22f0e4c+ is required (the strict-URL
-          # guard rejects 127.0.0.1 by default). go-nix-helpers pins the
-          # bumped go-commit rev via the projects-management-automation
-          # input follows "go-commit".
+          # FastFlowLM (NPU LLM) is the desired local provider. The OpenAI
+          # chain (DefaultChainFromEnv) reads OPENAI_BASE_URL + OPENAI_MODEL
+          # from its environment — but ONLY in go-commit v0.8.0+. The pinned
+          # go-commit follows our `go-commit` input. As of 2026-08-17, the
+          # Go proxy has not propagated v0.8.0 (tag pushed ~3h ago, still 404),
+          # so SystemNix's go-commit input remains on v0.7.0 to keep the
+          # build hermetic. Until that bump lands, the daemon ignores these
+          # env vars and falls back to heuristic commit messages. Once the
+          # proxy lag clears, `nix flake update go-commit` will pick up v0.8.0
+          # and the NPU LLM wire-up will activate.
+          # go-commit v0.8.0 reference: github.com/LarsArtmann/go-commit/releases/tag/v0.8.0
           extraEnvironment = [
             "OPENAI_API_KEY=local"
             "OPENAI_BASE_URL=http://127.0.0.1:${toString ports.fastflowlm}/v1"
