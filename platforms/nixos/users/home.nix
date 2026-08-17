@@ -300,6 +300,13 @@ in
       RUSTC_WRAPPER = "sccache";
       SCCACHE_DIR = "/mnt/buildcache/sccache";
       SCCACHE_CACHE_SIZE = "32G";
+      # CARGO_HOME since 2026-08-17: was the @cargo NVMe subvolume (snapshot-
+      # excluded via automount). With the subvolume retired, the registry/git
+      # churn moves here — same off-NVMe doctrine as GOCACHE/GOMODCACHE.
+      # Seeded at migration from ~/.cargo (registry, git, advisory dbs, bin,
+      # credentials.toml). ~/.cargo remains as a plain dir only for tools
+      # that hardcode it; cargo itself no longer touches it.
+      CARGO_HOME = "/mnt/buildcache/cargo";
 
       # Wayland specific
       MOZ_ENABLE_WAYLAND = "1";

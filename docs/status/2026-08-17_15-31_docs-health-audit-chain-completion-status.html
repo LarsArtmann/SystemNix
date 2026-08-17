@@ -854,154 +854,550 @@
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="hero-badge">Docs-Health AUDIT &middot; BUILD + HARVEST + VERIFY + ANNOTATE + ARCHIVE</div>
+          <div class="hero-badge">
+            Docs-Health AUDIT &middot; BUILD + HARVEST + VERIFY + ANNOTATE +
+            ARCHIVE
+          </div>
           <h1>Full Annotation Chain Complete — 37/37 Reports Verdicted</h1>
           <p class="hero-subtitle">
-            Every non-archived 2026-08-1* status report now carries an inline verdict on every numbered item.
-            The Aug-12&rarr;15 chain (14 files, ~410 assert-guarded edits this half) closed the audit's largest gap;
+            Every non-archived 2026-08-1* status report now carries an inline
+            verdict on every numbered item. The Aug-12&rarr;15 chain (14 files,
+            ~410 assert-guarded edits this half) closed the audit's largest gap;
             the archive batch rides behind a concurrent session's git lock.
           </p>
         </div>
 
-        <h2 id="summary"><span class="num">00</span>Summary &amp; Health Scores</h2>
+        <h2 id="summary">
+          <span class="num">00</span>Summary &amp; Health Scores
+        </h2>
         <div class="stat-grid">
-          <div class="stat-card"><div class="stat-value">37</div><div class="stat-label">Reports fully annotated</div></div>
-          <div class="stat-card stat-good"><div class="stat-value">416</div><div class="stat-label">Inline verdict edits this half (assert-guarded)</div></div>
-          <div class="stat-card stat-warn"><div class="stat-value">20</div><div class="stat-label">git mv queued behind index.lock</div></div>
-          <div class="stat-card stat-good"><div class="stat-value">5</div><div class="stat-label">TODO_LIST closes + 1 dedupe</div></div>
+          <div class="stat-card">
+            <div class="stat-value">37</div>
+            <div class="stat-label">Reports fully annotated</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">416</div>
+            <div class="stat-label">
+              Inline verdict edits this half (assert-guarded)
+            </div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">20</div>
+            <div class="stat-label">git mv queued behind index.lock</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">5</div>
+            <div class="stat-label">TODO_LIST closes + 1 dedupe</div>
+          </div>
         </div>
         <div class="stat-grid">
-          <div class="stat-card stat-good"><div class="stat-value">8.5</div><div class="stat-label">Accuracy &middot; 10 &minus; 0.5(Med) &minus; 4&times;0.25(Low)</div></div>
-          <div class="stat-card stat-warn"><div class="stat-value">7.25</div><div class="stat-label">Fitness &middot; 10 &minus; 0 &minus; 2&times;0.75 &minus; 2&times;0.5 &minus; 0.25</div></div>
-          <div class="stat-card"><div class="stat-value">0</div><div class="stat-label">Failed asserts after 2 byte-mismatch catches</div></div>
-          <div class="stat-card stat-warn"><div class="stat-value">46m</div><div class="stat-label">index.lock age at report time (14:45&rarrr;)</div></div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">8.5</div>
+            <div class="stat-label">
+              Accuracy &middot; 10 &minus; 0.5(Med) &minus; 4&times;0.25(Low)
+            </div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">7.25</div>
+            <div class="stat-label">
+              Fitness &middot; 10 &minus; 0 &minus; 2&times;0.75 &minus;
+              2&times;0.5 &minus; 0.25
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">0</div>
+            <div class="stat-label">
+              Failed asserts after 2 byte-mismatch catches
+            </div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">46m</div>
+            <div class="stat-label">
+              index.lock age at report time (14:45&rarr;)
+            </div>
+          </div>
         </div>
 
         <div class="card card-solution">
-          <h4>Visible math — Accuracy 8.5/10 (first-principles, no invented baseline)</h4>
-          <p>&minus;0.5 Medium: the prior half's false-annotation incident (a <em>done</em> marker written before the plan-doc edit; caught &amp; fixed in-session, but it existed).
-          &minus;1.0 Low (4 &times; 0.25): honest untracked disclosures that never reached TODO_LIST — fish startup-flapping, disk-diagnose buildcache line, 501-gotcha archive entry, post-deploy dashboard-count assertion.
-          Zero false <em>done</em> markers survived re-verification: every strike in the 14 files this half was checked against code, journal, flake.lock, or TODO_LIST before writing.</p>
+          <h4>
+            Visible math — Accuracy 8.5/10 (first-principles, no invented
+            baseline)
+          </h4>
+          <p>
+            &minus;0.5 Medium: the prior half's false-annotation incident (a
+            <em>done</em> marker written before the plan-doc edit; caught &amp;
+            fixed in-session, but it existed). &minus;1.0 Low (4 &times; 0.25):
+            honest untracked disclosures that never reached TODO_LIST — fish
+            startup-flapping, disk-diagnose buildcache line, 501-gotcha archive
+            entry, post-deploy dashboard-count assertion. Zero false
+            <em>done</em> markers survived re-verification: every strike in the
+            14 files this half was checked against code, journal, flake.lock, or
+            TODO_LIST before writing.
+          </p>
         </div>
         <div class="card card-warning">
-          <h4>Visible math — Fitness 7.25/10 (structural penalties, judgments documented)</h4>
-          <p>&minus;0.75 AGENTS.md ~80KB compression session still owed; &minus;0.75 eleven appendix-only archived reports (standing docs debt);
-          &minus;0.5 archive batch physically incomplete behind the lock (mechanical, watcher armed); &minus;0.5 AGENTS structural-ratio penalty applied at half weight (content judged job-relevant, just bloated — the judgment is documented here per the 20-52 e.5 lesson);
-          &minus;0.25 README/CONTRIBUTING/DOMAIN_LANGUAGE freshness still never checked (scope exclusion, disclosed).
-          No missing components: all five living docs rewritten, gate green, harvest complete.</p>
+          <h4>
+            Visible math — Fitness 7.25/10 (structural penalties, judgments
+            documented)
+          </h4>
+          <p>
+            &minus;0.75 AGENTS.md ~80KB compression session still owed;
+            &minus;0.75 eleven appendix-only archived reports (standing docs
+            debt); &minus;0.5 archive batch physically incomplete behind the
+            lock (mechanical, watcher armed); &minus;0.5 AGENTS structural-ratio
+            penalty applied at half weight (content judged job-relevant, just
+            bloated — the judgment is documented here per the 20-52 e.5 lesson);
+            &minus;0.25 README/CONTRIBUTING/DOMAIN_LANGUAGE freshness still
+            never checked (scope exclusion, disclosed). No missing components:
+            all five living docs rewritten, gate green, harvest complete.
+          </p>
         </div>
 
-        <h2 id="done"><span class="num">01</span>Fully Done (this continuation, 15:0x&ndash;15:3x)</h2>
-        <div class="card card-solution"><h4>14 reports annotated — every numbered item carries a verdict</h4>
-        <p>20-12 buildcache follow-up (80 edits) &middot; 20-35 shutdown-overlay (70) &middot; 20-52 audit-closure (40) &middot; 01-34 monitor-aware desktop (49) &middot;
-        01-44 pareto truth (20 — G7 deliberately left OPEN as owner decision) &middot; 21-46 smartening (63) &middot; 22-05 cache review (6) &middot; 22-25 self-review (64) &middot;
-        plus prior-half 08-12_20-52, 10-00, 12-30, 15-24, 16-20, 18-29, 18-31, 20-31, 13-15 (Decision Record).</p></div>
-        <div class="card card-solution"><h4>Live-system verdicts, evidence-first</h4>
-        <p>overview fix pushed + lock at <code>a9321f02</code> (closed the TODO item as stale-done) &middot; PMA envelope holding (0 watchdog restarts, 1d11h run, 12G peak) &middot;
-        discordsync flowing (Turso outage tracked separately) &middot; browser-history /health 200 at 5-min cadence &middot; smartd 4 devices by-id incl. both MG08s &middot;
-        udev power/control=on for the JMS567 &middot; Memory-Events-Thrash + unit-presence gating shipped &middot; G4 SigNoz dashboard purge confirmed DONE &middot;
-        FastFlowLM module + ports 52625/52626 verified shipped (<code>541a6a1a</code>/<code>25790607</code>).</p></div>
-        <div class="card card-solution"><h4>Planning docs dispositioned</h4>
-        <p>pareto 20-58: execution-verdict appendix appended (T0&ndash;T4 EXECUTED with premise-overturn note; T5+ routed) &middot; fastflowlm 19-22: EXECUTED banner citing both commits &middot;
-        SMART-BUILDCACHE (self-marked EXECUTED) + media-hunt ENDGAME (ABANDONED banner) queued for plain archive.</p></div>
-        <div class="card card-solution"><h4>TODO_LIST refreshed against reality</h4>
-        <p>Closed with evidence: FastFlowLM &times;2, immich-backup (pool cycle all green, 10-28 &sect;a.1), overview-input bump. Deduped: my P3 emergency-reserve item removed in favor of the concurrent session's P0 (plan T14). Pool-metrics/seed-timeout items left to their owning sessions.</p></div>
-        <div class="card card-solution"><h4>Quality gate</h4>
-        <p><code>nix flake check --no-build</code> green (aarch64-darwin skip expected). Zero <code>.nix</code> files touched by the annotation chain — Markdown only.</p></div>
+        <h2 id="done">
+          <span class="num">01</span>Fully Done (this continuation,
+          15:0x&ndash;15:3x)
+        </h2>
+        <div class="card card-solution">
+          <h4>14 reports annotated — every numbered item carries a verdict</h4>
+          <p>
+            20-12 buildcache follow-up (80 edits) &middot; 20-35
+            shutdown-overlay (70) &middot; 20-52 audit-closure (40) &middot;
+            01-34 monitor-aware desktop (49) &middot; 01-44 pareto truth (20 —
+            G7 deliberately left OPEN as owner decision) &middot; 21-46
+            smartening (63) &middot; 22-05 cache review (6) &middot; 22-25
+            self-review (64) &middot; plus prior-half 08-12_20-52, 10-00, 12-30,
+            15-24, 16-20, 18-29, 18-31, 20-31, 13-15 (Decision Record).
+          </p>
+        </div>
+        <div class="card card-solution">
+          <h4>Live-system verdicts, evidence-first</h4>
+          <p>
+            overview fix pushed + lock at <code>a9321f02</code> (closed the TODO
+            item as stale-done) &middot; PMA envelope holding (0 watchdog
+            restarts, 1d11h run, 12G peak) &middot; discordsync flowing (Turso
+            outage tracked separately) &middot; browser-history /health 200 at
+            5-min cadence &middot; smartd 4 devices by-id incl. both MG08s
+            &middot; udev power/control=on for the JMS567 &middot;
+            Memory-Events-Thrash + unit-presence gating shipped &middot; G4
+            SigNoz dashboard purge confirmed DONE &middot; FastFlowLM module +
+            ports 52625/52626 verified shipped
+            (<code>541a6a1a</code>/<code>25790607</code>).
+          </p>
+        </div>
+        <div class="card card-solution">
+          <h4>Planning docs dispositioned</h4>
+          <p>
+            pareto 20-58: execution-verdict appendix appended (T0&ndash;T4
+            EXECUTED with premise-overturn note; T5+ routed) &middot; fastflowlm
+            19-22: EXECUTED banner citing both commits &middot; SMART-BUILDCACHE
+            (self-marked EXECUTED) + media-hunt ENDGAME (ABANDONED banner)
+            queued for plain archive.
+          </p>
+        </div>
+        <div class="card card-solution">
+          <h4>TODO_LIST refreshed against reality</h4>
+          <p>
+            Closed with evidence: FastFlowLM &times;2, immich-backup (pool cycle
+            all green, 10-28 &sect;a.1), overview-input bump. Deduped: my P3
+            emergency-reserve item removed in favor of the concurrent session's
+            P0 (plan T14). Pool-metrics/seed-timeout items left to their owning
+            sessions.
+          </p>
+        </div>
+        <div class="card card-solution">
+          <h4>Quality gate</h4>
+          <p>
+            <code>nix flake check --no-build</code> green (aarch64-darwin skip
+            expected). Zero <code>.nix</code> files touched by the annotation
+            chain — Markdown only.
+          </p>
+        </div>
 
         <h2 id="partial"><span class="num">02</span>Partially Done</h2>
-        <div class="card card-warning"><h4>Archive batch queued, not executed</h4>
-        <p>All 20 <code>git mv</code>s (16 status + 4 planning) are armed in a background watcher that fires the moment <code>.git/index.lock</code> releases
-        (held since 14:45:54 by a concurrent session's pre-commit <code>nix flake check</code>, itself contending with two toplevel builds). Content-wise every file is archive-ready; only the physical move waits.</p></div>
-        <div class="card card-warning"><h4>Two TODO_LIST items deliberately left for owning sessions</h4>
-        <p>pool-metrics (<code>184c6599</code>) and btrbk-seed-timeout (<code>2fbb69f9</code>) items look done but belong to in-flight sessions — noted as drift, not closed (concurrent-commit folding default).</p></div>
+        <div class="card card-warning">
+          <h4>Archive batch queued, not executed</h4>
+          <p>
+            All 20 <code>git mv</code>s (16 status + 4 planning) are armed in a
+            background watcher that fires the moment
+            <code>.git/index.lock</code> releases (held since 14:45:54 by a
+            concurrent session's pre-commit <code>nix flake check</code>, itself
+            contending with two toplevel builds). Content-wise every file is
+            archive-ready; only the physical move waits.
+          </p>
+        </div>
+        <div class="card card-warning">
+          <h4>Two TODO_LIST items deliberately left for owning sessions</h4>
+          <p>
+            pool-metrics (<code>184c6599</code>) and btrbk-seed-timeout
+            (<code>2fbb69f9</code>) items look done but belong to in-flight
+            sessions — noted as drift, not closed (concurrent-commit folding
+            default).
+          </p>
+        </div>
 
-        <h2 id="notstarted"><span class="num">03</span>Not Started (deliberate exclusions)</h2>
-        <div class="card"><h4>Out of the audit's scope, standing debt</h4>
-        <p>11 appendix-only archived reports &middot; AGENTS.md ~80KB compression session &middot; README/CONTRIBUTING/DOMAIN_LANGUAGE freshness pass &middot; docs/research/ triage &middot; HTML snapshot annotation (out of grammar scope).</p></div>
+        <h2 id="notstarted">
+          <span class="num">03</span>Not Started (deliberate exclusions)
+        </h2>
+        <div class="card">
+          <h4>Out of the audit's scope, standing debt</h4>
+          <p>
+            11 appendix-only archived reports &middot; AGENTS.md ~80KB
+            compression session &middot; README/CONTRIBUTING/DOMAIN_LANGUAGE
+            freshness pass &middot; docs/research/ triage &middot; HTML snapshot
+            annotation (out of grammar scope).
+          </p>
+        </div>
 
-        <h2 id="fucked"><span class="num">04</span>Totally Fucked Up (honest ledger)</h2>
+        <h2 id="fucked">
+          <span class="num">04</span>Totally Fucked Up (honest ledger)
+        </h2>
         <div class="issue issue-critical">
           <span class="severity severity-critical">Was real</span>
           <h3>False annotation written in the prior half (d.1)</h3>
-          <div class="where">docs/status/2026-08-17_00-59 annotation &rarr; plan doc</div>
-          <p>A <em>done</em> marker was written before the plan-doc amendment existed; the daemon committed the claim while the work sat undone. Caught and fixed within the session — but for ~1 hour the repo contained a lying marker, from inside the run that exists to kill lying docs.</p>
-          <div class="callout callout-solution"><strong>Fix</strong> Rule adopted: annotate AFTER the edit, never before; ordering held for all 416 subsequent edits.</div>
+          <div class="where">
+            docs/status/2026-08-17_00-59 annotation &rarr; plan doc
+          </div>
+          <p>
+            A <em>done</em> marker was written before the plan-doc amendment
+            existed; the daemon committed the claim while the work sat undone.
+            Caught and fixed within the session — but for ~1 hour the repo
+            contained a lying marker, from inside the run that exists to kill
+            lying docs.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong> Rule adopted: annotate AFTER the edit, never
+            before; ordering held for all 416 subsequent edits.
+          </div>
         </div>
         <div class="issue issue-important">
           <span class="severity severity-important">Environmental</span>
           <h3>Lock starvation stalled the physical archive for 46+ minutes</h3>
-          <div class="where">.git/index.lock &larr; concurrent pre-commit + 2 builds</div>
-          <p>Every git mv queued behind a legitimate lock; the audit content completed but the archive state is split (files annotated in place). Mitigated by the armed watcher, not solved — deploy.sh lock-wait remains a TODO_LIST item.</p>
+          <div class="where">
+            .git/index.lock &larr; concurrent pre-commit + 2 builds
+          </div>
+          <p>
+            Every git mv queued behind a legitimate lock; the audit content
+            completed but the archive state is split (files annotated in place).
+            Mitigated by the armed watcher, not solved — deploy.sh lock-wait
+            remains a TODO_LIST item.
+          </p>
         </div>
         <div class="issue issue-important">
           <span class="severity severity-important">Process</span>
           <h3>My own harvest created a TODO_LIST duplicate</h3>
           <div class="where">TODO_LIST.md emergency-reserve P3 vs P0</div>
-          <p>The prior half added a P3 reserve item; the concurrent session's harvest added a P0 with the plan reference. Mine is deleted (P0 kept). Root cause: harvesting while another session harvests.</p>
+          <p>
+            The prior half added a P3 reserve item; the concurrent session's
+            harvest added a P0 with the plan reference. Mine is deleted (P0
+            kept). Root cause: harvesting while another session harvests.
+          </p>
         </div>
         <div class="issue issue-nice">
           <span class="severity severity-nice">Caught atomically</span>
           <h3>Two byte-mismatch assert failures before any write</h3>
           <div class="where">20-52 ("5th carry now"), 01-44 (same class)</div>
-          <p>Transcription drift between View output and the annotator. The assert-guard failed the whole script before writing — zero partial writes across the chain. The mechanism worked; the transcriptions should have been byte-copied.</p>
+          <p>
+            Transcription drift between View output and the annotator. The
+            assert-guard failed the whole script before writing — zero partial
+            writes across the chain. The mechanism worked; the transcriptions
+            should have been byte-copied.
+          </p>
         </div>
 
         <h2 id="improve"><span class="num">05</span>What We Should Improve</h2>
         <div class="strengths">
-          <div class="strength"><div class="check">+</div><div class="text"><strong>Annotate-after-edit ordering held</strong><span>All 416 edits this half followed edit&rarr;verify&rarr;annotate&rarr;move; zero order inversions (prior half had two).</span></div></div>
-          <div class="strength"><div class="check">+</div><div class="text"><strong>Assert-guarded atomic annotation</strong><span>Every batch either lands whole or not at all; two transcription errors were caught at zero write cost.</span></div></div>
-          <div class="strength"><div class="check">+</div><div class="text"><strong>Owner decisions never closed by proxy</strong><span>G7, MiniMax, go-codec floor, btop filing, trash-loss acknowledgment, reboot policy, commit authority — all marked OPEN owner decision, none silently resolved.</span></div></div>
-          <div class="strength"><div class="check">+</div><div class="text"><strong>Live findings harvested as discovered</strong><span>nix-build-cleanup &rarr; P0 disk crisis; .Trash-1000 still on the cache drive; smartd boot-race unfixed; pma-watchdog unhardened — routed or honestly marked untracked during annotation, not after.</span></div></div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Annotate-after-edit ordering held</strong
+              ><span
+                >All 416 edits this half followed
+                edit&rarr;verify&rarr;annotate&rarr;move; zero order inversions
+                (prior half had two).</span
+              >
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Assert-guarded atomic annotation</strong
+              ><span
+                >Every batch either lands whole or not at all; two transcription
+                errors were caught at zero write cost.</span
+              >
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Owner decisions never closed by proxy</strong
+              ><span
+                >G7, MiniMax, go-codec floor, btop filing, trash-loss
+                acknowledgment, reboot policy, commit authority — all marked
+                OPEN owner decision, none silently resolved.</span
+              >
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Live findings harvested as discovered</strong
+              ><span
+                >nix-build-cleanup &rarr; P0 disk crisis; .Trash-1000 still on
+                the cache drive; smartd boot-race unfixed; pma-watchdog
+                unhardened — routed or honestly marked untracked during
+                annotation, not after.</span
+              >
+            </div>
+          </div>
         </div>
 
-        <h2 id="next"><span class="num">06</span>Top 25 Next (impact-ranked)</h2>
+        <h2 id="next">
+          <span class="num">06</span>Top 25 Next (impact-ranked)
+        </h2>
         <table>
-          <thead><tr><th>#</th><th>Priority</th><th>Item</th><th>State</th></tr></thead>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Priority</th>
+              <th>Item</th>
+              <th>State</th>
+            </tr>
+          </thead>
           <tbody>
-            <tr><td>1</td><td><span class="badge badge-critical">P0</span></td><td>Delete broken pool receive <code>@.20260814T2300</code> BEFORE tonight's 23:00 btrbk run (plan T01)</td><td><span class="badge badge-low">Open</span></td></tr>
-            <tr><td>2</td><td><span class="badge badge-critical">P0</span></td><td>/data corruption recovery — read-only check window, DuckDB safety copy first (plan T04&ndash;T08)</td><td><span class="badge badge-low">Open</span></td></tr>
-            <tr><td>3</td><td><span class="badge badge-critical">P0</span></td><td>Free root below 95% + deploy the stranded monitor365-gating config</td><td><span class="badge badge-low">Open</span></td></tr>
-            <tr><td>4</td><td><span class="badge badge-critical">P0</span></td><td>Off-site 3rd-copy decision (pool live; nothing leaves the house)</td><td><span class="badge badge-low">Owner</span></td></tr>
-            <tr><td>5</td><td><span class="badge badge-critical">P0</span></td><td>dnsblockd <code>ManagedOOMPreference=omit</code> (730 kills/day at old threshold)</td><td><span class="badge badge-low">Open</span></td></tr>
-            <tr><td>6</td><td><span class="badge badge-critical">P0</span></td><td>Scrub-result Gatus coverage for /data + /mnt/pool (fail-closed)</td><td><span class="badge badge-low">Open</span></td></tr>
-            <tr><td>7</td><td><span class="badge badge-critical">P0</span></td><td>Re-provision /btrfs-emergency-reserve + freshness semantics (plan T14)</td><td><span class="badge badge-low">Open</span></td></tr>
-            <tr><td>8</td><td><span class="badge badge-critical">P0</span></td><td>Foreground BTRFS scrub on / (never scrubbed; /data sibling corrupted)</td><td><span class="badge badge-low">Open</span></td></tr>
-            <tr><td>9</td><td><span class="badge badge-critical">P0</span></td><td>Turso plan decision — cloud offsite copy stale since 08-16</td><td><span class="badge badge-low">Owner</span></td></tr>
-            <tr><td>10</td><td><span class="badge badge-high">Mech</span></td><td>Archive git-mv batch (watcher armed; fires on lock release)</td><td><span class="badge badge-fixed">Queued</span></td></tr>
-            <tr><td>11</td><td><span class="badge badge-high">P1</span></td><td>Module-level body-parsing curl <code>--compressed</code> audit</td><td><span class="badge badge-low">Open</span></td></tr>
-            <tr><td>12</td><td><span class="badge badge-high">P1</span></td><td>Hermes slash-command sync timeout regression</td><td><span class="badge badge-low">Open</span></td></tr>
-            <tr><td>13</td><td><span class="badge badge-high">P1</span></td><td>Browser-history registration gate — LIVE 403 + second-login verification</td><td><span class="badge badge-low">Open</span></td></tr>
-            <tr><td>14</td><td><span class="badge badge-high">P1</span></td><td>import_export.go registration-lock hole #3 (upstream)</td><td><span class="badge badge-low">Open</span></td></tr>
-            <tr><td>15</td><td><span class="badge badge-high">P1</span></td><td>forgejo-oidc-setup Caddy-TLS deploy race (DNS gate shipped, TLS gate not)</td><td><span class="badge badge-low">Open</span></td></tr>
-            <tr><td>16</td><td><span class="badge badge-high">P1</span></td><td>Dozzle container recreate (Memory=0 vs 256m config)</td><td><span class="badge badge-low">Open</span></td></tr>
-            <tr><td>17</td><td><span class="badge badge-high">P1</span></td><td>PMA upstream root cause + GIT_AUTHOR quoting (still journal-spamming 08-17)</td><td><span class="badge badge-low">Open</span></td></tr>
-            <tr><td>18</td><td><span class="badge badge-high">P1</span></td><td>G7 monitor365 fate — publish/vendor/remove</td><td><span class="badge badge-low">Owner</span></td></tr>
-            <tr><td>19</td><td><span class="badge badge-high">P2</span></td><td>Paperless admin password handover</td><td><span class="badge badge-low">Owner</span></td></tr>
-            <tr><td>20</td><td><span class="badge badge-high">P2</span></td><td>SigNoz UI browser-test (5 systemnix dashboards, oauth2-proxy round-trip)</td><td><span class="badge badge-low">Owner</span></td></tr>
-            <tr><td>21</td><td><span class="badge badge-high">P2</span></td><td>smartd runtime polling verify + satellite GOEXPERIMENT sweep (21 repos)</td><td><span class="badge badge-low">Open</span></td></tr>
-            <tr><td>22</td><td><span class="badge badge-high">P2</span></td><td>SSD2 Docker data-root bring-up</td><td><span class="badge badge-low">Open</span></td></tr>
-            <tr><td>23</td><td><span class="badge badge-fixed">New</span></td><td>From this pass: /mnt/buildcache/.Trash-1000 still present; smartd boot-race; pma-watchdog hardening; PMA comment attribution — untracked, cheap</td><td><span class="badge badge-low">Untracked</span></td></tr>
-            <tr><td>24</td><td><span class="badge badge-fixed">Docs</span></td><td>AGENTS.md ~80KB compression session + 11 appendix-only archived reports</td><td><span class="badge badge-low">Open</span></td></tr>
-            <tr><td>25</td><td><span class="badge badge-fixed">P3</span></td><td>buildcache VM tests (module + gc) &middot; start-limit-audit &middot; AUTH_VHOSTS derivation</td><td><span class="badge badge-low">Open</span></td></tr>
+            <tr>
+              <td>1</td>
+              <td><span class="badge badge-critical">P0</span></td>
+              <td>
+                Delete broken pool receive <code>@.20260814T2300</code> BEFORE
+                tonight's 23:00 btrbk run (plan T01)
+              </td>
+              <td><span class="badge badge-low">Open</span></td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td><span class="badge badge-critical">P0</span></td>
+              <td>
+                /data corruption recovery — read-only check window, DuckDB
+                safety copy first (plan T04&ndash;T08)
+              </td>
+              <td><span class="badge badge-low">Open</span></td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td><span class="badge badge-critical">P0</span></td>
+              <td>
+                Free root below 95% + deploy the stranded monitor365-gating
+                config
+              </td>
+              <td><span class="badge badge-low">Open</span></td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td><span class="badge badge-critical">P0</span></td>
+              <td>
+                Off-site 3rd-copy decision (pool live; nothing leaves the house)
+              </td>
+              <td><span class="badge badge-low">Owner</span></td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td><span class="badge badge-critical">P0</span></td>
+              <td>
+                dnsblockd <code>ManagedOOMPreference=omit</code> (730 kills/day
+                at old threshold)
+              </td>
+              <td><span class="badge badge-low">Open</span></td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td><span class="badge badge-critical">P0</span></td>
+              <td>
+                Scrub-result Gatus coverage for /data + /mnt/pool (fail-closed)
+              </td>
+              <td><span class="badge badge-low">Open</span></td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td><span class="badge badge-critical">P0</span></td>
+              <td>
+                Re-provision /btrfs-emergency-reserve + freshness semantics
+                (plan T14)
+              </td>
+              <td><span class="badge badge-low">Open</span></td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td><span class="badge badge-critical">P0</span></td>
+              <td>
+                Foreground BTRFS scrub on / (never scrubbed; /data sibling
+                corrupted)
+              </td>
+              <td><span class="badge badge-low">Open</span></td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td><span class="badge badge-critical">P0</span></td>
+              <td>
+                Turso plan decision — cloud offsite copy stale since 08-16
+              </td>
+              <td><span class="badge badge-low">Owner</span></td>
+            </tr>
+            <tr>
+              <td>10</td>
+              <td><span class="badge badge-high">Mech</span></td>
+              <td>
+                Archive git-mv batch (watcher armed; fires on lock release)
+              </td>
+              <td><span class="badge badge-fixed">Queued</span></td>
+            </tr>
+            <tr>
+              <td>11</td>
+              <td><span class="badge badge-high">P1</span></td>
+              <td>
+                Module-level body-parsing curl <code>--compressed</code> audit
+              </td>
+              <td><span class="badge badge-low">Open</span></td>
+            </tr>
+            <tr>
+              <td>12</td>
+              <td><span class="badge badge-high">P1</span></td>
+              <td>Hermes slash-command sync timeout regression</td>
+              <td><span class="badge badge-low">Open</span></td>
+            </tr>
+            <tr>
+              <td>13</td>
+              <td><span class="badge badge-high">P1</span></td>
+              <td>
+                Browser-history registration gate — LIVE 403 + second-login
+                verification
+              </td>
+              <td><span class="badge badge-low">Open</span></td>
+            </tr>
+            <tr>
+              <td>14</td>
+              <td><span class="badge badge-high">P1</span></td>
+              <td>import_export.go registration-lock hole #3 (upstream)</td>
+              <td><span class="badge badge-low">Open</span></td>
+            </tr>
+            <tr>
+              <td>15</td>
+              <td><span class="badge badge-high">P1</span></td>
+              <td>
+                forgejo-oidc-setup Caddy-TLS deploy race (DNS gate shipped, TLS
+                gate not)
+              </td>
+              <td><span class="badge badge-low">Open</span></td>
+            </tr>
+            <tr>
+              <td>16</td>
+              <td><span class="badge badge-high">P1</span></td>
+              <td>Dozzle container recreate (Memory=0 vs 256m config)</td>
+              <td><span class="badge badge-low">Open</span></td>
+            </tr>
+            <tr>
+              <td>17</td>
+              <td><span class="badge badge-high">P1</span></td>
+              <td>
+                PMA upstream root cause + GIT_AUTHOR quoting (still
+                journal-spamming 08-17)
+              </td>
+              <td><span class="badge badge-low">Open</span></td>
+            </tr>
+            <tr>
+              <td>18</td>
+              <td><span class="badge badge-high">P1</span></td>
+              <td>G7 monitor365 fate — publish/vendor/remove</td>
+              <td><span class="badge badge-low">Owner</span></td>
+            </tr>
+            <tr>
+              <td>19</td>
+              <td><span class="badge badge-high">P2</span></td>
+              <td>Paperless admin password handover</td>
+              <td><span class="badge badge-low">Owner</span></td>
+            </tr>
+            <tr>
+              <td>20</td>
+              <td><span class="badge badge-high">P2</span></td>
+              <td>
+                SigNoz UI browser-test (5 systemnix dashboards, oauth2-proxy
+                round-trip)
+              </td>
+              <td><span class="badge badge-low">Owner</span></td>
+            </tr>
+            <tr>
+              <td>21</td>
+              <td><span class="badge badge-high">P2</span></td>
+              <td>
+                smartd runtime polling verify + satellite GOEXPERIMENT sweep (21
+                repos)
+              </td>
+              <td><span class="badge badge-low">Open</span></td>
+            </tr>
+            <tr>
+              <td>22</td>
+              <td><span class="badge badge-high">P2</span></td>
+              <td>SSD2 Docker data-root bring-up</td>
+              <td><span class="badge badge-low">Open</span></td>
+            </tr>
+            <tr>
+              <td>23</td>
+              <td><span class="badge badge-fixed">New</span></td>
+              <td>
+                From this pass: /mnt/buildcache/.Trash-1000 still present;
+                smartd boot-race; pma-watchdog hardening; PMA comment
+                attribution — untracked, cheap
+              </td>
+              <td><span class="badge badge-low">Untracked</span></td>
+            </tr>
+            <tr>
+              <td>24</td>
+              <td><span class="badge badge-fixed">Docs</span></td>
+              <td>
+                AGENTS.md ~80KB compression session + 11 appendix-only archived
+                reports
+              </td>
+              <td><span class="badge badge-low">Open</span></td>
+            </tr>
+            <tr>
+              <td>25</td>
+              <td><span class="badge badge-fixed">P3</span></td>
+              <td>
+                buildcache VM tests (module + gc) &middot; start-limit-audit
+                &middot; AUTH_VHOSTS derivation
+              </td>
+              <td><span class="badge badge-low">Open</span></td>
+            </tr>
           </tbody>
         </table>
 
         <h2 id="question"><span class="num">07</span>The One Question</h2>
         <div class="issue issue-important">
-          <span class="severity severity-important">Unanswered &times;3 sessions</span>
+          <span class="severity severity-important"
+            >Unanswered &times;3 sessions</span
+          >
           <h3>Standing commit instruction?</h3>
-          <div class="where">22-25 &sect;g.2 &rarr; 14-30 &sect;g &rarr; now</div>
-          <p>The rule says "never commit unless you say so", but the auto-git daemon then sweeps finished work with misattributed authorship (twice documented). Should a session commit its own work immediately after a green gate, by default? This decision also unblocks the archive batch if the daemon is ever down when a lock clears.</p>
+          <div class="where">
+            22-25 &sect;g.2 &rarr; 14-30 &sect;g &rarr; now
+          </div>
+          <p>
+            The rule says "never commit unless you say so", but the auto-git
+            daemon then sweeps finished work with misattributed authorship
+            (twice documented). Should a session commit its own work immediately
+            after a green gate, by default? This decision also unblocks the
+            archive batch if the daemon is ever down when a lock clears.
+          </p>
         </div>
 
         <footer class="footer">
-          Generated 2026-08-17 15:31 CEST &middot; All done-verdicts verified against code, journal, flake.lock, or TODO_LIST this session &middot;
-          Health scores first-principles (no invented baseline) &middot; Archive batch armed behind .git/index.lock
+          Generated 2026-08-17 15:31 CEST &middot; All done-verdicts verified
+          against code, journal, flake.lock, or TODO_LIST this session &middot;
+          Health scores first-principles (no invented baseline) &middot; Archive
+          batch armed behind .git/index.lock
         </footer>
       </main>
     </div>
-<script>
+    <script>
       (function () {
         if (!("IntersectionObserver" in window)) return;
         var nav = document.querySelector("[data-nav]");

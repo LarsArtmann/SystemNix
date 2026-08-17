@@ -58,6 +58,10 @@
         "playwright"
         "rust"
         "sccache"
+        # CARGO_HOME since 2026-08-17 (was the @cargo NVMe subvolume until
+        # the automount was retired). Seeded from ~/.cargo at migration:
+        # registry, git checkouts, advisory dbs, bin, credentials.toml.
+        "cargo"
       ];
 
       rustProjectDirs = map (project: "rust/${project}") cfg.rustProjects;
