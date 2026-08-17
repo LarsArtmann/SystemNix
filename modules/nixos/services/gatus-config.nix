@@ -1059,6 +1059,28 @@ _: {
                 ];
                 alerts = discordAlert "Build cache SSD exceeds 85% — the 240 GB drive is filling. Prune: GOCACHE=/mnt/buildcache/go-build go clean -cache; cargo clean in monitor365; pnpm store prune; rm old Playwright browsers.";
               })
+              (mkHttpCheck {
+                name = "Pool Mounted";
+                group = "Filesystem";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*pool_mounted 1*)"
+                ];
+                alerts = discordAlert "Mirrored HDD pool (/mnt/pool) unmounted — immich + paperless data, ALL application backups, and the btrbk safety net are offline. Check: findmnt /mnt/pool, systemctl status mnt-pool.mount. If a DAS member died: the raid1 still serves from the other member; replace the drive and btrfs replace.";
+              })
+              (mkHttpCheck {
+                name = "Pool Usage";
+                group = "Filesystem";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "30m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*pool_usage_over_threshold 0*)"
+                ];
+                alerts = discordAlert "Mirrored HDD pool exceeds 85% — review /mnt/pool usage: backups retention (30d 12w targets, forgejo zips 7d), archive/forensic-snapshots growth.";
+              })
             ]
             ++ lib.optionals config.services.discordsync.enable [
               (mkHttpCheck {

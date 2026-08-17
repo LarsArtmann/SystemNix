@@ -3,213 +3,213 @@
 # twenty.com). Config is per-workspace via GraphQL/UI, not env vars. Access is
 # therefore gated by oauth2-proxy forward-auth (Layer 2 SSO) on crm.<domain>.
 _: {
-  flake.nixosModules.twenty = {
-    config,
-    pkgs,
-    lib,
-    ...
-  }: let
-    cfg = config.services.twenty;
-    inherit (config.networking) domain;
-    libHelpers = import ../../../lib/default.nix lib;
-    inherit
-      (libHelpers)
-      serviceTypes
-      images
-      ports
-      harden
-      ;
-    inherit (libHelpers.mkDockerServiceFactory {inherit pkgs;}) mkDockerService;
+  flake.nixosModules.twenty =
+    {
+      config,
+      pkgs,
+      lib,
+      ...
+    }:
+    let
+      cfg = config.services.twenty;
+      inherit (config.networking) domain;
+      libHelpers = import ../../../lib/default.nix lib;
+      inherit (libHelpers)
+        serviceTypes
+        images
+        ports
+        harden
+        ;
+      inherit (libHelpers.mkDockerServiceFactory { inherit pkgs; }) mkDockerService;
 
-    serverPort = cfg.port;
-    pgUser = "postgres";
-    pgDb = "twenty";
-    serverUrl = "https://crm.${domain}";
+      serverPort = cfg.port;
+      pgUser = "postgres";
+      pgDb = "twenty";
+      serverUrl = "https://crm.${domain}";
 
-    composeFile = pkgs.writeText "twenty-docker-compose.yml" (
-      builtins.toJSON {
-        name = "twenty";
-        services = {
-          server = {
-            image = images.twenty.ref;
-            ports = ["127.0.0.1:${toString serverPort}:3000"];
-            environment = {
-              NODE_PORT = 3000;
-              PG_DATABASE_URL = "postgres://${pgUser}:\${PG_DATABASE_PASSWORD}@db:5432/${pgDb}";
-              SERVER_URL = serverUrl;
-              REDIS_URL = "redis://redis:6379";
-              STORAGE_TYPE = "local";
-              APP_SECRET = "\${APP_SECRET}";
-              NODE_OPTIONS = "--max-old-space-size=768";
+      composeFile = pkgs.writeText "twenty-docker-compose.yml" (
+        builtins.toJSON {
+          name = "twenty";
+          services = {
+            server = {
+              image = images.twenty.ref;
+              ports = [ "127.0.0.1:${toString serverPort}:3000" ];
+              environment = {
+                NODE_PORT = 3000;
+                PG_DATABASE_URL = "postgres://${pgUser}:\${PG_DATABASE_PASSWORD}@db:5432/${pgDb}";
+                SERVER_URL = serverUrl;
+                REDIS_URL = "redis://redis:6379";
+                STORAGE_TYPE = "local";
+                APP_SECRET = "\${APP_SECRET}";
+                NODE_OPTIONS = "--max-old-space-size=768";
+              };
+              volumes = [ "server-local-data:/app/packages/twenty-server/.local-storage" ];
+              depends_on = {
+                db.condition = "service_healthy";
+                redis.condition = "service_healthy";
+              };
+              mem_limit = "1g";
+              memswap_limit = "1g";
+              healthcheck = {
+                test = "curl --fail http://localhost:3000/healthz";
+                interval = "5s";
+                timeout = "5s";
+                retries = 30;
+              };
+              restart = "always";
             };
-            volumes = ["server-local-data:/app/packages/twenty-server/.local-storage"];
-            depends_on = {
-              db.condition = "service_healthy";
-              redis.condition = "service_healthy";
-            };
-            mem_limit = "1g";
-            memswap_limit = "1g";
-            healthcheck = {
-              test = "curl --fail http://localhost:3000/healthz";
-              interval = "5s";
-              timeout = "5s";
-              retries = 30;
-            };
-            restart = "always";
-          };
-          worker = {
-            image = images.twenty.ref;
-            command = [
-              "yarn"
-              "worker:prod"
-            ];
-            environment = {
-              PG_DATABASE_URL = "postgres://${pgUser}:\${PG_DATABASE_PASSWORD}@db:5432/${pgDb}";
-              SERVER_URL = serverUrl;
-              REDIS_URL = "redis://redis:6379";
-              STORAGE_TYPE = "local";
-              APP_SECRET = "\${APP_SECRET}";
-              DISABLE_DB_MIGRATIONS = "true";
-              DISABLE_CRON_JOBS_REGISTRATION = "true";
-              # Cap Node.js heap at 1.5G so V8 GC aggressively reclaims before
-              # hitting the 2G container mem_limit. Without this, the worker
-              # accumulates ~840MB RSS + page cache, making it the #1 target
-              # for systemd-oomd under /system.slice pressure.
-              NODE_OPTIONS = "--max-old-space-size=1536";
-            };
-            mem_limit = "2g";
-            memswap_limit = "2g";
-            volumes = ["server-local-data:/app/packages/twenty-server/.local-storage"];
-            depends_on = {
-              db.condition = "service_healthy";
-              server.condition = "service_healthy";
-            };
-            restart = "always";
-          };
-          db = {
-            image = images.twenty-postgres.ref;
-            environment = {
-              POSTGRES_DB = pgDb;
-              POSTGRES_PASSWORD = "\${PG_DATABASE_PASSWORD}";
-              POSTGRES_USER = pgUser;
-            };
-            volumes = ["db-data:/var/lib/postgresql/data"];
-            mem_limit = "2g";
-            memswap_limit = "2g";
-            healthcheck = {
-              test = "pg_isready -U ${pgUser} -h localhost -d postgres";
-              interval = "5s";
-              timeout = "5s";
-              retries = 10;
-            };
-            restart = "always";
-          };
-          redis = {
-            image = images.twenty-redis.ref;
-            command = [
-              "--maxmemory-policy"
-              "noeviction"
-            ];
-            mem_limit = "256m";
-            memswap_limit = "256m";
-            healthcheck = {
-              test = [
-                "CMD"
-                "redis-cli"
-                "ping"
+            worker = {
+              image = images.twenty.ref;
+              command = [
+                "yarn"
+                "worker:prod"
               ];
-              interval = "5s";
-              timeout = "5s";
-              retries = 10;
+              environment = {
+                PG_DATABASE_URL = "postgres://${pgUser}:\${PG_DATABASE_PASSWORD}@db:5432/${pgDb}";
+                SERVER_URL = serverUrl;
+                REDIS_URL = "redis://redis:6379";
+                STORAGE_TYPE = "local";
+                APP_SECRET = "\${APP_SECRET}";
+                DISABLE_DB_MIGRATIONS = "true";
+                DISABLE_CRON_JOBS_REGISTRATION = "true";
+                # Cap Node.js heap at 1.5G so V8 GC aggressively reclaims before
+                # hitting the 2G container mem_limit. Without this, the worker
+                # accumulates ~840MB RSS + page cache, making it the #1 target
+                # for systemd-oomd under /system.slice pressure.
+                NODE_OPTIONS = "--max-old-space-size=1536";
+              };
+              mem_limit = "2g";
+              memswap_limit = "2g";
+              volumes = [ "server-local-data:/app/packages/twenty-server/.local-storage" ];
+              depends_on = {
+                db.condition = "service_healthy";
+                server.condition = "service_healthy";
+              };
+              restart = "always";
             };
-            restart = "always";
+            db = {
+              image = images.twenty-postgres.ref;
+              environment = {
+                POSTGRES_DB = pgDb;
+                POSTGRES_PASSWORD = "\${PG_DATABASE_PASSWORD}";
+                POSTGRES_USER = pgUser;
+              };
+              volumes = [ "db-data:/var/lib/postgresql/data" ];
+              mem_limit = "2g";
+              memswap_limit = "2g";
+              healthcheck = {
+                test = "pg_isready -U ${pgUser} -h localhost -d postgres";
+                interval = "5s";
+                timeout = "5s";
+                retries = 10;
+              };
+              restart = "always";
+            };
+            redis = {
+              image = images.twenty-redis.ref;
+              command = [
+                "--maxmemory-policy"
+                "noeviction"
+              ];
+              mem_limit = "256m";
+              memswap_limit = "256m";
+              healthcheck = {
+                test = [
+                  "CMD"
+                  "redis-cli"
+                  "ping"
+                ];
+                interval = "5s";
+                timeout = "5s";
+                retries = 10;
+              };
+              restart = "always";
+            };
+          };
+          volumes = {
+            db-data = null;
+            server-local-data = null;
+          };
+        }
+      );
+
+      fixCollation = pkgs.writeShellApplication {
+        name = "twenty-fix-collation";
+        runtimeInputs = [ pkgs.docker ];
+        text = ''
+          echo "Waiting for postgres container to be ready..."
+          for _ in $(seq 1 30); do
+            if docker exec twenty-db-1 pg_isready -U ${pgUser} -d postgres >/dev/null 2>&1; then
+              break
+            fi
+            sleep 2
+          done
+
+          echo "Refreshing collation versions..."
+          for db in $(docker exec twenty-db-1 psql -U ${pgUser} -t -A -c "SELECT datname FROM pg_database WHERE datistemplate = false;"); do
+            echo "  -> $db"
+            docker exec twenty-db-1 psql -U ${pgUser} -d "$db" -c "ALTER DATABASE \"$db\" REFRESH COLLATION VERSION;" 2>&1 || true
+          done
+          echo "Done."
+        '';
+      };
+
+      docker = mkDockerService {
+        name = "twenty";
+        inherit composeFile;
+        envTemplate = config.sops.templates."twenty-env".path;
+        extraServiceConfig = {
+          RestartSec = "10s";
+        };
+        backup = {
+          # Dump lands on the mirrored HDD pool — the NVMe copy is the live
+          # DB, the pool is the safety net (see 3-drive repurposing, 2026-08-16).
+          execStart = "${pkgs.bash}/bin/bash -c '${pkgs.docker-compose}/bin/docker-compose -f ${composeFile} exec -T db pg_dump -U ${pgUser} ${pgDb} > /mnt/pool/backups/twenty/$(date +%%Y%%m%%d_%%H%%M%%S).sql && find /mnt/pool/backups/twenty -name \"*.sql\" -mtime +30 -delete'";
+          schedule = "*-*-* 02:00:00";
+          dir = "/mnt/pool/backups/twenty";
+        };
+      };
+    in
+    {
+      options.services.twenty = {
+        enable = lib.mkEnableOption "Twenty CRM";
+        port = serviceTypes.servicePort ports.twenty "Host port for the Twenty CRM server";
+        imageTag = serviceTypes.dockerImageTag images.twenty.tag;
+      };
+
+      config = lib.mkIf cfg.enable {
+        sops = {
+          secrets.twenty_app_secret = {
+            owner = "root";
+            group = "root";
+            restartUnits = [ "twenty.service" ];
+          };
+          secrets.twenty_db_password = {
+            owner = "root";
+            group = "root";
+            restartUnits = [ "twenty.service" ];
+          };
+          templates."twenty-env" = {
+            content = lib.generators.toKeyValue { } {
+              PG_DATABASE_PASSWORD = config.sops.placeholder.twenty_db_password;
+              APP_SECRET = config.sops.placeholder.twenty_app_secret;
+            };
           };
         };
-        volumes = {
-          db-data = null;
-          server-local-data = null;
-        };
-      }
-    );
 
-    fixCollation = pkgs.writeShellApplication {
-      name = "twenty-fix-collation";
-      runtimeInputs = [pkgs.docker];
-      text = ''
-        echo "Waiting for postgres container to be ready..."
-        for _ in $(seq 1 30); do
-          if docker exec twenty-db-1 pg_isready -U ${pgUser} -d postgres >/dev/null 2>&1; then
-            break
-          fi
-          sleep 2
-        done
-
-        echo "Refreshing collation versions..."
-        for db in $(docker exec twenty-db-1 psql -U ${pgUser} -t -A -c "SELECT datname FROM pg_database WHERE datistemplate = false;"); do
-          echo "  -> $db"
-          docker exec twenty-db-1 psql -U ${pgUser} -d "$db" -c "ALTER DATABASE \"$db\" REFRESH COLLATION VERSION;" 2>&1 || true
-        done
-        echo "Done."
-      '';
-    };
-
-    docker = mkDockerService {
-      name = "twenty";
-      inherit composeFile;
-      envTemplate = config.sops.templates."twenty-env".path;
-      extraServiceConfig = {
-        RestartSec = "10s";
-      };
-      backup = {
-        # Dump lands on the mirrored HDD pool — the NVMe copy is the live
-        # DB, the pool is the safety net (see 3-drive repurposing, 2026-08-16).
-        execStart = "${pkgs.bash}/bin/bash -c '${pkgs.docker-compose}/bin/docker-compose -f ${composeFile} exec -T db pg_dump -U ${pgUser} ${pgDb} > /mnt/pool/backups/twenty/$(date +%%Y%%m%%d_%%H%%M%%S).sql && find /mnt/pool/backups/twenty -name \"*.sql\" -mtime +30 -delete'";
-        schedule = "*-*-* 02:00:00";
-        dir = "/mnt/pool/backups/twenty";
-      };
-    };
-  in {
-    options.services.twenty = {
-      enable = lib.mkEnableOption "Twenty CRM";
-      port = serviceTypes.servicePort ports.twenty "Host port for the Twenty CRM server";
-      imageTag = serviceTypes.dockerImageTag images.twenty.tag;
-    };
-
-    config = lib.mkIf cfg.enable {
-      sops = {
-        secrets.twenty_app_secret = {
-          owner = "root";
-          group = "root";
-          restartUnits = ["twenty.service"];
-        };
-        secrets.twenty_db_password = {
-          owner = "root";
-          group = "root";
-          restartUnits = ["twenty.service"];
-        };
-        templates."twenty-env" = {
-          content = lib.generators.toKeyValue {} {
-            PG_DATABASE_PASSWORD = config.sops.placeholder.twenty_db_password;
-            APP_SECRET = config.sops.placeholder.twenty_app_secret;
-          };
-        };
-      };
-
-      systemd = {
-        tmpfiles.rules = docker.tmpfiles;
-        services =
-          docker.services
-          // {
+        systemd = {
+          tmpfiles.rules = docker.tmpfiles;
+          services = docker.services // {
             twenty-fix-collation = {
               description = "Fix PostgreSQL collation version warnings for Twenty CRM";
-              after = ["twenty.service"];
-              requires = ["docker.service"];
-              wants = ["twenty.service"];
-              wantedBy = ["multi-user.target"];
-              restartTriggers = [(lib.getExe fixCollation)];
-              path = [pkgs.docker];
+              after = [ "twenty.service" ];
+              requires = [ "docker.service" ];
+              wants = [ "twenty.service" ];
+              wantedBy = [ "multi-user.target" ];
+              restartTriggers = [ (lib.getExe fixCollation) ];
+              path = [ pkgs.docker ];
               serviceConfig = lib.mkMerge [
-                (harden {MemoryMax = "512M";})
+                (harden { MemoryMax = "512M"; })
                 {
                   Type = "oneshot";
                   ExecStart = lib.getExe fixCollation;
@@ -218,8 +218,8 @@ _: {
               ];
             };
           };
-        inherit (docker) timers;
+          inherit (docker) timers;
+        };
       };
     };
-  };
 }

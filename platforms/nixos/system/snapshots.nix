@@ -5,7 +5,7 @@
   ...
 }:
 let
-  inherit (import ../../../lib/default.nix lib) harden onFailure;
+  inherit (import ../../../lib/default.nix lib) harden onFailure serviceOneshotDefaults;
   rootDevice = config.fileSystems."/".device;
   primaryUser = config.users.primaryUser;
 
@@ -199,6 +199,83 @@ in
         inherit onFailure;
       };
 
+      # Mirrored-pool Prometheus metrics (mount presence with real-I/O gate,
+      # usage, free/total). Same always-write-the-.prom contract as
+      # buildcache-metrics: a detached DAS flips pool_mounted to 0 and Gatus
+      # alerts instead of serving a stale green file. df on an unmounted
+      # /mnt/pool would report the ROOT filesystem's numbers — the mounted
+      # gate must run before any usage math.
+      pool-metrics = {
+        description = "Mirrored HDD pool Prometheus metrics";
+        startLimitBurst = 3;
+        startLimitIntervalSec = 300;
+        path = [
+          pkgs.util-linux
+          pkgs.coreutils
+          pkgs.gnugrep
+        ];
+        inherit onFailure;
+        serviceConfig = lib.mkMerge [
+          {
+            Type = "oneshot";
+            User = "root";
+          }
+          (harden {
+            ReadWritePaths = [ "/var/lib/prometheus-node-exporter/textfile_collectors" ];
+            MemoryMax = "128M";
+          })
+          (serviceOneshotDefaults { })
+        ];
+        script = ''
+          set -eu
+          OUT="/var/lib/prometheus-node-exporter/textfile_collectors/pool.prom"
+          TMP="''${OUT}.tmp"
+          mnt="/mnt/pool"
+          threshold=85
+
+          mounted=0
+          if
+            findmnt -n -o TARGET "$mnt" 2>/dev/null | grep -qx "$mnt" \
+              && timeout 15 ls -A "$mnt" >/dev/null 2>&1
+          then
+            mounted=1
+          fi
+
+          usage=0
+          over=0
+          free_bytes=0
+          total_bytes=0
+          if [ "$mounted" = 1 ]; then
+            usage="$(df --output=pcent "$mnt" | tail -n1 | tr -dc '0-9')"
+            free_bytes="$(df -B1 --output=avail "$mnt" | tail -n1 | tr -dc '0-9')"
+            total_bytes="$(df -B1 --output=size "$mnt" | tail -n1 | tr -dc '0-9')"
+            if [ "''${usage:-0}" -ge "$threshold" ] 2>/dev/null; then
+              over=1
+            fi
+          fi
+
+          mkdir -p "/var/lib/prometheus-node-exporter/textfile_collectors"
+          cat > "$TMP" <<METRICS
+          # HELP pool_mounted 1 if the mirrored HDD pool is mounted, 0 otherwise
+          # TYPE pool_mounted gauge
+          pool_mounted ''${mounted}
+          # HELP pool_usage_percent Pool filesystem usage percentage (0-100)
+          # TYPE pool_usage_percent gauge
+          pool_usage_percent ''${usage}
+          # HELP pool_usage_over_threshold 1 if usage >= 85%
+          # TYPE pool_usage_over_threshold gauge
+          pool_usage_over_threshold ''${over}
+          # HELP pool_free_bytes Free bytes on the pool filesystem
+          # TYPE pool_free_bytes gauge
+          pool_free_bytes ''${free_bytes}
+          # HELP pool_total_bytes Total bytes on the pool filesystem
+          # TYPE pool_total_bytes gauge
+          pool_total_bytes ''${total_bytes}
+          METRICS
+          mv "$TMP" "$OUT"
+        '';
+      };
+
       # Fail-loud guard for the pool safety net: mount presence, raid1 mirror
       # health (a single dropped member keeps serving but halves redundancy),
       # and freshness of the received NVMe backups on both targets. A silently
@@ -321,6 +398,16 @@ in
         RandomizedDelaySec = "1h";
       };
       wantedBy = [ "timers.target" ];
+    };
+
+    timers.pool-metrics = {
+      description = "Collect mirrored pool metrics every 5 minutes";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnBootSec = "2min";
+        OnUnitActiveSec = "5min";
+        Persistent = true;
+      };
     };
 
     timers."btrfs-verify-pool-backups" = {

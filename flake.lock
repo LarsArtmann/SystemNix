@@ -5788,11 +5788,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786907855,
-        "narHash": "sha256-SzguhVOD4ZTCKtqq9XQe35TtSaJ1edUxcoJ+j+UOwHQ=",
+        "lastModified": 1786923043,
+        "narHash": "sha256-5QnSGrdxNcnPKxhzTMgzSxGqEfyauy31D/S1SRiRU6w=",
         "owner": "LarsArtmann",
         "repo": "vision-review-agent",
-        "rev": "de7c4c6749fa8f066537443e57e205184eb169d2",
+        "rev": "dcd50a0158fe7cc0ab496c203cca84fc3e588321",
         "type": "github"
       },
       "original": {
