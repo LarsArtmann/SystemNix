@@ -35,12 +35,12 @@ Nothing — no file has been written yet. The session ended between "understand"
 
 ## What is NOT STARTED (the actual task)
 
-1. Writing the 5 v2 dashboard JSONs (0/5).
-2. Making the provisioner dashboard loop idempotent (currently POSTs create duplicates — the root cause of 251 garbage dashboards).
-3. Cleanup of the 251 legacy/duplicate dashboards in the live DB.
-4. Eval/build/lint verification (`nix flake check --no-build`, `nix fmt`).
-5. End-to-end verification against the live API (POST a migrated dashboard, GET it back, confirm panels/layouts persist).
-6. AGENTS.md gotcha update (v2 schema notes, duplication trap).
+~~1. Writing the 5 v2 dashboard JSONs (0/5).~~ EXECUTED 2026-08-16 by the SigNoz deep-integration session (`docs/status/2026-08-16_23-27_signoz-deep-integration.md`, commits through `8ffb2762`): all 5 dashboards are native v2 (`schemaVersion: "v6"`, `owner=systemnix` tags) in `modules/nixos/services/dashboards/`, the provisioner CONVERGES via GET+`PUT /api/v2/dashboards` (zombie purge included - the 251 duplicates are gone), and dashboard failures are HARD failures. Annotation 2026-08-17.
+~~2. Making the provisioner dashboard loop idempotent~~ EXECUTED 2026-08-16 by the SigNoz deep-integration session (`docs/status/2026-08-16_23-27_signoz-deep-integration.md`, commits through `8ffb2762`): all 5 dashboards are native v2 (`schemaVersion: "v6"`, `owner=systemnix` tags) in `modules/nixos/services/dashboards/`, the provisioner CONVERGES via GET+`PUT /api/v2/dashboards` (zombie purge included - the 251 duplicates are gone), and dashboard failures are HARD failures. Annotation 2026-08-17.
+~~3. Cleanup of the 251 legacy/duplicate dashboards in the live DB.~~ done - zombie purge executed; see verdict above.
+~~4. Eval/build/lint verification~~ done - deployed and live; flake check green 2026-08-17.
+~~5. End-to-end verification against the live API~~ done - API-verified (`2026-08-16_23-27`); BROWSER eyeballing remains TODO_LIST P2.
+~~6. AGENTS.md gotcha update~~ done - AGENTS.md SigNoz section carries the v2 convergence pattern + duplication trap.
 
 ## What is TOTALLY FUCKED UP — discovered during research (pre-existing, unfixed)
 
@@ -62,39 +62,39 @@ Nothing — no file has been written yet. The session ended between "understand"
 
 ## Next steps (do these in order)
 
-1. Enumerate live metric names once: scrape `:9100` (node), `:9193`/cadvisor, caddy, `dnsblockd /metrics` — one command, save to `/tmp`.
-2. Fix provisioner first (`_signoz-scripts.nix`): for each dashboard file, resolve existing by fixed `name` → `PUT /api/v2/dashboards/<id>` update, else POST; count as FAILED (not warning) on failure; add rule-count-style verification for dashboard count. Decide idempotency contract.
-3. One-time cleanup script/step: delete ALL existing `legacy:true` v5 dashboards and all empty v6 duplicates (the 251).
-4. Write a shared v2 builder in Nix? — No: keep dashboards as plain JSON files (repo convention), but template the boilerplate (Grid layout, full panel specs) by hand in file 1, then clone the pattern for the remaining 4.
-5. Rewrite `signoz-overview.json` → v2 (`evo-x2-overview`): 4 Number panels (CPU/mem/disk/GPU temp, scalar + thresholds), 2 Number (load1, uptime), 7 TimeSeries panels; fix CPU-temp metric to `node_amdgpu_gpu_temp_celsius`.
-6. Rewrite `gpu.json` → v2 (`gpu-metrics-amd-radeon-8060s`): 4 TimeSeries + 1 Number (VRAM total, scalar).
-7. Rewrite `caddy.json` → v2 (`caddy-reverse-proxy`): 4 TimeSeries; verify `status_code`/`host` label names against live `/metrics`.
-8. Rewrite `docker.json` → v2 (`docker-containers-resource-usage`): 5 panels; replace/verify `container_restart_total`.
-9. Rewrite `dns.json` → v2 (`dns-blocking`): rebuild around real `dnsblockd_*` metrics (crashes, blocked/allowed counters if present), drop the `"0"` placeholder panel and all `unbound_*` queries.
-10. Validate each JSON locally: `jq` parse + a small check script for required v2 fields (schemaVersion v6, exactly 1 query per panel, every layout `$ref` resolves, 12-col geometry).
-11. `nix flake check --no-build` + `nix fmt`.
-12. Deploy provisioner fix + dashboards: `nix run .#deploy`, run `signoz-provision`, watch logs for OK dashboard lines.
-13. Verify live: GET each dashboard by name/id — panels map non-empty, layouts non-empty; open UI and eyeball.
-14. Re-run provision to prove idempotency (count stays 5, no duplicates).
-15. Run the cleanup for the 251 legacy entries (if not folded into step 3's script run).
-16. `trash` the unused Grafana-format `overview.json`.
-17. Update AGENTS.md: v2 schema summary pointer, the dashboard-duplication trap, "v1 dashboard POSTs produce empty dashboards", metric-name verification rule.
-18. Consider a Gatus/eval-time guard: script-side JSON schema lint in pre-commit (gatus-pattern-lint precedent) so a v1-format regression fails CI instead of warning at deploy.
-19. Update `_signoz-scripts.nix` header comment ("Rewrite in v2 format later" TODO → done).
-20. Check `docs/gotchas-archive.md` for whether the 501-on-legacy-GET behavior deserves an entry.
-21. Confirm whether SigNoz UI's default threshold colors are hex (`#10b981` etc.) and use those for Number-panel thresholds.
-22. Decide `duration`/`refreshInterval` per dashboard (v1 had 6h/1h + 30s refresh — carry over as `"6h"`/`"30s"`).
-23. Panel keys: use semantic slugs (`cpu-usage`, `vram-usage`) — must match `[a-zA-Z0-9_-]+`.
-24. Post-deploy-check: does `scripts/post-deploy-check.sh` need a SigNoz dashboard-count assertion? (Gatus owns liveness; dashboards are content, arguably in scope for silent-zero regression checks.)
+~~1. Enumerate live metric names once~~ EXECUTED 2026-08-16 by the SigNoz deep-integration session (`docs/status/2026-08-16_23-27_signoz-deep-integration.md`, commits through `8ffb2762`): all 5 dashboards are native v2 (`schemaVersion: "v6"`, `owner=systemnix` tags) in `modules/nixos/services/dashboards/`, the provisioner CONVERGES via GET+`PUT /api/v2/dashboards` (zombie purge included - the 251 duplicates are gone), and dashboard failures are HARD failures. Annotation 2026-08-17.
+~~2. Fix provisioner first~~ EXECUTED 2026-08-16 by the SigNoz deep-integration session (`docs/status/2026-08-16_23-27_signoz-deep-integration.md`, commits through `8ffb2762`): all 5 dashboards are native v2 (`schemaVersion: "v6"`, `owner=systemnix` tags) in `modules/nixos/services/dashboards/`, the provisioner CONVERGES via GET+`PUT /api/v2/dashboards` (zombie purge included - the 251 duplicates are gone), and dashboard failures are HARD failures. Annotation 2026-08-17.
+~~3. One-time cleanup script/step~~ done - see verdict above.
+~~4. Write a shared v2 builder in Nix?~~ done - kept as plain JSONs; generated via the deterministic uuid5 pattern (committing the generator itself remains TODO_LIST P3).
+~~5. Rewrite `signoz-overview.json` → v2~~ done - shipped as `overview.json` (`systemnix-overview`, v6 schema). EXECUTED 2026-08-16 by the SigNoz deep-integration session (`docs/status/2026-08-16_23-27_signoz-deep-integration.md`, commits through `8ffb2762`): all 5 dashboards are native v2 (`schemaVersion: "v6"`, `owner=systemnix` tags) in `modules/nixos/services/dashboards/`, the provisioner CONVERGES via GET+`PUT /api/v2/dashboards` (zombie purge included - the 251 duplicates are gone), and dashboard failures are HARD failures. Annotation 2026-08-17.
+~~6. Rewrite `gpu.json` → v2~~ done. EXECUTED 2026-08-16 by the SigNoz deep-integration session (`docs/status/2026-08-16_23-27_signoz-deep-integration.md`, commits through `8ffb2762`): all 5 dashboards are native v2 (`schemaVersion: "v6"`, `owner=systemnix` tags) in `modules/nixos/services/dashboards/`, the provisioner CONVERGES via GET+`PUT /api/v2/dashboards` (zombie purge included - the 251 duplicates are gone), and dashboard failures are HARD failures. Annotation 2026-08-17.
+~~7. Rewrite `caddy.json` → v2~~ done. EXECUTED 2026-08-16 by the SigNoz deep-integration session (`docs/status/2026-08-16_23-27_signoz-deep-integration.md`, commits through `8ffb2762`): all 5 dashboards are native v2 (`schemaVersion: "v6"`, `owner=systemnix` tags) in `modules/nixos/services/dashboards/`, the provisioner CONVERGES via GET+`PUT /api/v2/dashboards` (zombie purge included - the 251 duplicates are gone), and dashboard failures are HARD failures. Annotation 2026-08-17.
+~~8. Rewrite `docker.json` → v2~~ done. EXECUTED 2026-08-16 by the SigNoz deep-integration session (`docs/status/2026-08-16_23-27_signoz-deep-integration.md`, commits through `8ffb2762`): all 5 dashboards are native v2 (`schemaVersion: "v6"`, `owner=systemnix` tags) in `modules/nixos/services/dashboards/`, the provisioner CONVERGES via GET+`PUT /api/v2/dashboards` (zombie purge included - the 251 duplicates are gone), and dashboard failures are HARD failures. Annotation 2026-08-17.
+~~9. Rewrite `dns.json` → v2~~ done - zero `unbound_*` references remain in the dashboards dir (verified 2026-08-17).
+10. Local schema lint ← open - TODO_LIST P3 ("eval-time dashboard JSON lint"); runtime convergence assertions cover it provisionally.
+~~11. `nix flake check --no-build` + `nix fmt`.~~ done - check green 2026-08-17.
+~~12. Deploy provisioner fix + dashboards~~ done - deployed 2026-08-16.
+~~13. Verify live: GET each dashboard~~ done API-side; UI eyeballing remains TODO_LIST P2.
+~~14. Re-run provision to prove idempotency~~ done - convergence assertion (exact name set, zero dupes) runs on EVERY provision (AGENTS.md SigNoz gotcha).
+~~15. Run the cleanup for the 251 legacy entries~~ done - see verdict above.
+~~16. `trash` the unused Grafana-format `overview.json`.~~ superseded - the filename was REUSED: `overview.json` is now the live v2 `systemnix-overview` dashboard.
+~~17. Update AGENTS.md~~ done - SigNoz gotchas cover convergence, the 251-duplication trap, and hard-failure semantics.
+18. Schema lint in pre-commit/CI ← open - TODO_LIST P3.
+~~19. Update `_signoz-scripts.nix` header comment~~ done - v6 provisioner shipped.
+20. gotchas-archive 501-on-legacy-GET entry ← open, low priority - no legacy dashboards remain, so the behavior is moot in practice.
+~~21. Confirm threshold colors~~ done - shipped dashboards carry working thresholds (API-verified).
+~~22. Decide `duration`/`refreshInterval`~~ done - set in the shipped files.
+~~23. Panel keys: use semantic slugs~~ done - deterministic uuid5-keyed panels shipped.
+24. Post-deploy dashboard-count assertion ← open question - provisionally superseded by the provisioner's own convergence assertion; not tracked as a TODO.
 25. ~~Record outcome in a new status report / close the TODO in `TODO_LIST` if tracked there.~~ done — this report IS the record; the full migration (provisioner fix → purge → 5 rewrites → lint) is tracked in `TODO_LIST.md:52` and the schema lint in `TODO_LIST.md:53`. Live re-verification 2026-08-14 20:15: **251 duplicates still in the DB** (count unchanged), dashboard JSONs still v1, `overview.json` leftover still present — every other next-step remains open.
-26. If PUT-by-name turns out unsupported (name immutability: update requires same name — verify route shape `PUT /api/v2/dashboards/{id}` with `UpdatableDashboardV2`), fall back to delete-by-name-then-create (mirrors rules loop) — decide after reading `pkg/apiserver/signozapiserver/dashboard.go` routes.
-27. Verify `links: []` omission tolerance (`omitzero`) — omit where allowed to minimize payload, include where Go round-trip emits it.
-28. Double-check `variables: []` vs null handling in the final files (null → hard reject).
-29. Sanity-check that `step` as number (seconds) is accepted by the running build (schema says number-or-string; runtime `Step.UnmarshalJSON` — confirm).
-30. Confirm tag shape `[{"key":"tag","value":…}]` matches what the UI expects for filtering (the auto-migrated v6 overview used exactly this — good precedent).
+~~26. PUT-by-name fallback decision~~ resolved - PUT works; the v6 provisioner uses GET+PUT convergence.
+~~27. Verify `links: []` omission tolerance~~ resolved - shipped files parse and round-trip clean.
+~~28. `variables: []` vs null handling~~ resolved - shipped files accepted by the strict parser.
+~~29. `step` as number accepted~~ resolved - live dashboards work.
+~~30. Confirm tag shape~~ resolved - `[{"key":"owner","value":"systemnix"}]` shipped and filterable.
 
 ## Questions for the human (max 3)
 
-1. **Cleanup mandate:** the live SigNoz DB has 251 broken duplicate dashboards (and grows by 5 per deploy). OK to purge ALL current dashboards matching our 5 display names plus every `legacy:true` entry as part of this work — or do you want to inspect/keep any first (e.g. anything you created by hand in the UI)?
-2. **Idempotency contract for dashboards:** fixed DNS-1123 names + PUT-update-in-place (my recommendation), or delete-by-name-then-recreate each run (matches the alert-rules loop)? Both stop the duplication; PUT preserves dashboard IDs/links.
-3. **Scope of metric fixes:** `dns.json` targets dead `unbound_*` metrics and other panels likely reference non-existent metrics (`node_hwmon_temp_celsius`, `container_restart_total`). Rewrite these queries against verified live metrics as part of this migration (recommended), or migrate schema 1:1 and fix queries in a follow-up?
+~~1. **Cleanup mandate**~~ RESOLVED by execution - the 2026-08-16 session purged the 251 (tag-filtered; untagged/user dashboards untouched).
+~~2. **Idempotency contract**~~ RESOLVED - PUT-in-place won (recommendation accepted; preserves IDs).
+~~3. **Scope of metric fixes**~~ RESOLVED - full rewrite against verified live metrics (recommended option; zero `unbound_*` references remain).

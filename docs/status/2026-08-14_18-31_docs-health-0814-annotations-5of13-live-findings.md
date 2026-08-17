@@ -119,53 +119,53 @@ The `systemctl is-active` batch died on sandbox policy. journalctl, docker inspe
 ## f) Up to 50 Things To Get Done Next
 
 ### Immediate (this batch)
-1. Apply the §e 3-6 done-markers in `08-24` twenty (the failed edit — content already proven in §c/§d/§f)
-2. Commit the current batch (08-23, 08-24×2, 08-46, 09-14, 05-48 correction, buildcache inherit fix, this report)
-3. Annotate `09-30` oidc-gate-helpers (reboot-test items open; 7 dismissed post-deploy failures — §f.7/§f.8 investigation)
-4. Annotate `10-00` signoz-perses (research report; v1→v2 migration tracked in TODO_LIST)
-5. Annotate `10-04` registration-lock (release chain open: cqrs-htmx/browser-history tags + flake bump)
-6. Annotate `10-41` oauth2-toctou (upstream fix chain same as 10-04)
-7. Annotate `12-30` ssd-recovery (parallel-session adjacent; DuraWrite sources added at `2bedae34`)
-8. Annotate `12-53` dsn-audit (5-item go-nix review)
-9. Annotate `13-22` vendorhash-iowrap (vendorHash drift sweep + validate-gomemlimit.sh + I/O wrappers, commit `e979e324`)
-10. Annotate `13-44` hermes-registration (patch landed `54781ffe`; deploy partial — verify remainder)
+~~1. Apply the §e 3-6 done-markers in `08-24` twenty~~ done — §e items 3 and 6 carry strikethroughs in the archived file. Annotation 2026-08-17.
+~~2. Commit the current batch~~ done — chain continued (20-31 report committed).
+~~3. Annotate `09-30` oidc-gate-helpers~~ done — archived.
+~~4. Annotate `10-00` signoz-perses~~ done — closed by the 2026-08-17 pass (v2 migration EXECUTED by the 08-16 deep-integration session; 5 systemnix-* dashboards live).
+~~5. Annotate `10-04` registration-lock~~ done — archived (live-gate verification remains TODO_LIST P1).
+~~6. Annotate `10-41` oauth2-toctou~~ done — archived (import_export hole remains TODO_LIST P1).
+~~7. Annotate `12-30` ssd-recovery~~ done — closed by the 2026-08-17 pass (SUPERSEDED banner).
+~~8. Annotate `12-53` dsn-audit~~ done — archived.
+~~9. Annotate `13-22` vendorhash-iowrap~~ done — archived (validate-gomemlimit first-run item remains TODO_LIST P4).
+~~10. Annotate `13-44` hermes-registration~~ done — archived (flake-bump-and-delete-patch item remains TODO_LIST P2).
 
 ### TODO_LIST routing (new this session)
-11. immich backup stale 999h (`backup_healthy=0`) — investigate pg_dump timer, likely failing silently since ~07-03
-12. Recreate dozzle container (runtime Memory=0 vs config 256m — `docker compose up -d --force-recreate dozzle` or next deploy)
-13. BTRFS scrubs interrupted ×2 — consider resuming scrub after uptime stabilizes or accept interruption+restart
-14. Update the disk item: 97% → 87% (post-buildcache-offload); keep cleanup task (still >85% threshold)
-15. Delete stale qmd-cache TODO item (models gone; 184K sqlite remains)
-16. Refresh expires_at item with live-confirmation note (still failing 08-14 16:38)
-17-27. The 11 carried items from 16-20 §f.17-27 (renamer follows, go-cqrs-lite ssh→github, em dashes, alsa-utils, zram ADR, OTel-scheme eval check, committed-templ CI, vendor-hash CI ×3 repos, zram-fill Gatus alert, archived session-37 note)
+~~11. immich backup stale 999h~~ done — fixed across the collector-capability fix (08-15) + pool migration; first full overnight pool cycle GREEN 2026-08-17 (immich-db-backup success, `backup_healthy=1`; `docs/status/2026-08-17_10-28` §a.1).
+12. Recreate dozzle container ← open — TODO_LIST P1.
+~~13. BTRFS scrubs interrupted ×2~~ superseded by events — weekly scrubs complete since (the 2026-08-17 /data scrub ran 6h37m and finished, FINDING the 1.3MB corruption); root-fs scrub remains TODO_LIST P0.
+~~14. Update the disk item: 97% → 87%~~ done — item since re-based to the 95%-era reality in TODO_LIST P0 (pool migration era).
+~~15. Delete stale qmd-cache TODO item~~ done — no qmd item in the current TODO_LIST.
+16. Refresh expires_at item ← open — TODO_LIST P3 "Fix browser-history `expires_at` session reaper error".
+17-27. The 11 carried items from 16-20 §f.17-27 — SHIPPED: em-dash fix, OTel-scheme eval check (`otel-endpoint-audit.nix`), committed-templ CI, zram-fill Gatus alert. OPEN in TODO_LIST: renamer follows (P3), go-cqrs-lite ssh→github (P3), alsa-utils (P5), zram ADR (P3), vendor-hash CI (P6), session-37 note (P6). See the 16-20 annotation for per-item verdicts. Annotation 2026-08-17.
 
 ### Closure
-28. ARCHIVE pass (~22 candidates, 16-20 §f.28)
-29. `nix flake check --no-build` formal gate
-30. Inline health report (Accuracy + Fitness, visible math)
-31. Final attributed commit
-32. AGENTS.md: statix staged-only pre-commit behavior note
+~~28. ARCHIVE pass~~ done.
+~~29. `nix flake check --no-build` formal gate~~ done — green 2026-08-17.
+30. Inline health report ← open at annotation time — owed by the 2026-08-17 docs-health pass (printed at its close).
+~~31. Final attributed commit~~ done — daemon sweeps.
+~~32. AGENTS.md: statix staged-only pre-commit behavior note~~ done — AGENTS.md gotcha "Pre-commit statix lints STAGED `.nix` files only".
 
 ### Structural debt (observed, not this session's scope)
-33. AGENTS.md 72.6KB compression session (carried, §g.3)
-34. 11 appendix-only archived reports (docs-debt TODO)
-35. `docs/planning/` 48+ files triage
-36. `nix flake check --all-systems` Darwin eval intent undocumented
-37. immich backup staleness may deserve a Gatus backup_all_healthy alert check (if absent)
+33. AGENTS.md 72.6KB compression session ← open — TODO_LIST P6 (~80 KB now).
+34. 11 appendix-only archived reports ← open — TODO_LIST P6.
+35. `docs/planning/` 48+ files triage ← open — TODO_LIST P6.
+~~36. `nix flake check --all-systems` Darwin eval intent undocumented~~ done — documented in AGENTS.md ("Build & Deploy": Darwin skip EXPECTED).
+~~37. immich backup staleness may deserve a Gatus `backup_all_healthy` alert check~~ done — `[BODY] == pat(*backup_all_healthy 1*)` check live (gatus-config.nix:1178).
 
 ---
 
 ## g) Questions (Cannot Figure Out Myself)
 
-### 1. The foreign `13-15_ssd-repurposing-options.md` — annotate or leave? (carried, third ask)
+### ~~1. The foreign `13-15_ssd-repurposing-options.md` — annotate or leave?~~ RESOLVED — the owning session finished long ago; the 2026-08-17 docs-health pass annotated it with a Decision Record + archived it.
 
 The parallel session that wrote it also just landed `19c195e9` (buildcache offload) and `2bedae34` (its own doc fix), so it is ACTIVE. It matches the `2026-08-1*` scope. My recommendation stands: leave it for its owning session; a moving target corrupts history. Confirm, or order me to annotate it.
 
-### 2. Immich backups are ~41 days stale — investigate NOW or TODO-only?
+### ~~2. Immich backups are ~41 days stale — investigate NOW or TODO-only?~~ RESOLVED — investigated and fixed across subsequent sessions (collector capability 08-15, pool migration 08-17); overnight cycle GREEN.
 
 `backup_healthy{immich}=0`, age 999h, last timestamp 0. This is photos — the exact class of data the off-site-backup item says is irreplaceable. The failure predates this session and I don't know if the immich pg_dump timer is broken, its DB moved, or the backup-coordination directory config rotted. Investigating means `journalctl -u immich-db-dump*` + timer inspection (~10 min). Do it as part of this docs session (breaks docs scope, but data safety), or strictly TODO_LIST + your attention?
 
-### 3. With 5 of 13 done and load spiking from the parallel build session — continue the batch now, or pause?
+### ~~3. With 5 of 13 done and load spiking from the parallel build session — continue the batch now, or pause?~~ MOOT — the batch completed (20-31, 13/13).
 
 Machine load hit 728 during this session (parallel buildcache/build work). My remaining work is pure Markdown edits + light greps — no builds. Continue straight through the 8 remaining reports, or pause until the parallel session's build storm settles to avoid interleaving more daemon commits into uncommitted batches?
 

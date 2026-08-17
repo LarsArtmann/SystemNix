@@ -10,7 +10,6 @@
   boost183,
   protobuf_32,
 }:
-
 # FastFlowLM — AMD XDNA NPU LLM runtime (ROCm org).
 #
 # v1.0.1 ships a portable Linux tarball that includes:
@@ -55,8 +54,12 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   # The tarball extracts to a flat layout (flm, flm-real, lib/, model_info.json,
-  # model_list.json, xclbins/ at root). Wrap installPhase to copy this tree
-  # into $out as-is.
+  # model_list.json, xclbins/ at root). Keep that tree at $out verbatim — flm-real
+  # resolves xclbins/ and model_*.json relative to its own location, and XRT
+  # resolves lib/x86_64-linux-gnu/ relative to $XILINX_XRT=$out. Only the wrapper
+  # moves: it is installed as $out/bin/flm so lib.getExe / meta.mainProgram = "flm"
+  # are honest (2026-08-17: the flat-only layout made the unit's ExecStart point
+  # at a nonexistent $out/bin/flm → status=203/EXEC → start-limit-hit).
   dontConfigure = true;
   dontBuild = true;
   sourceRoot = ".";
@@ -64,9 +67,12 @@ stdenv.mkDerivation (finalAttrs: {
   installPhase = ''
     runHook preInstall
 
-    mkdir -p $out
+    mkdir -p $out/bin
     cp -r . $out/
     chmod +x $out/flm-real
+    # Drop the upstream bash wrapper (replaced below — it hardcodes /lib64
+    # paths blocked by NixOS stub-ld) and the stdenv env-vars leak from cp -r .
+    rm -f $out/flm $out/env-vars
 
     # FastFlowLM's bundled XRT libs (libxrt_swemu.so.2.21.75, libxrt_hwemu.so.2.21.75)
     # link against libprotobuf.so.32. nixpkgs' protobuf_32 ships libprotobuf.so.32.1.0
@@ -81,31 +87,26 @@ stdenv.mkDerivation (finalAttrs: {
     ln -sf libprotobuf.so.32.1.0 $out/lib/libprotobuf.so.32
     ln -sf libutf8_range.so.32.1.0 $out/lib/libutf8_range.so.32 2>/dev/null || true
 
-    # Replace the upstream bash wrapper with a nix-native one. The wrapper
-    # sets XILINX_XRT to the derivation's output path so XRT can find
-    # ./lib/x86_64-linux-gnu/ (the wrapper creates the multiarch symlinks
-    # on first run if absent).
-    cat > $out/flm <<'WRAPPER'
+    # Replace the upstream bash wrapper with a nix-native one at $out/bin/flm
+    # (nix convention; ExecStart uses lib.getExe). The wrapper sets XILINX_XRT
+    # to the derivation's output path so XRT can find ./lib/x86_64-linux-gnu/
+    # (the multiarch dir ships complete in the tarball — the store is
+    # read-only, so no runtime symlink creation is needed or possible).
+    cat > $out/bin/flm <<'WRAPPER'
     #!/bin/sh
     FLM_HOME="@out@"
     export XILINX_XRT="$FLM_HOME"
     export LD_LIBRARY_PATH="$FLM_HOME/lib:''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-    # XRT constructs library paths as $XILINX_XRT/lib/x86_64-linux-gnu/<lib>.
-    # The symlinks in the tarball already point at the bundled libs under
-    # ./lib/, so the multiarch directory is created on first run by the
-    # bash wrapper logic copied below.
-    MULTIARCH_DIR="$FLM_HOME/lib/x86_64-linux-gnu"
-    if [ ! -d "$MULTIARCH_DIR" ]; then
-      mkdir -p "$MULTIARCH_DIR"
-      for lib in $FLM_HOME/lib/libxrt*.so* $FLM_HOME/lib/libxrt++.so*; do
-        [ -f "$lib" ] || [ -L "$lib" ] || continue
-        ln -sf "../$(basename "$lib")" "$MULTIARCH_DIR/$(basename "$lib")" 2>/dev/null || true
-      done
-    fi
     exec "$FLM_HOME/flm-real" "$@"
     WRAPPER
-    substituteInPlace $out/flm --subst-var out
-    chmod +x $out/flm
+    substituteInPlace $out/bin/flm --subst-var out
+    chmod +x $out/bin/flm
+
+    # Layout self-check: meta.mainProgram promises bin/flm. Guards against
+    # future layout drift reproducing the 203/EXEC deploy failure.
+    test -x $out/bin/flm
+    test -x $out/flm-real
+    test -d $out/lib/x86_64-linux-gnu
 
     runHook postInstall
   '';

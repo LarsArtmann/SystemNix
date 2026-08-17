@@ -1,6 +1,7 @@
 # FastFlowLM NPU LLM Server — SystemNix Integration Plan
 
-Status: PLANNED (design agreed 2026-08-15)
+**Status: EXECUTED 2026-08-15/17 — shipped as `541a6a1a` + `25790607`** (module `modules/nixos/services/fastflowlm.nix`, ports 52625/52626 in `lib/ports.nix`, socket activation via systemd-socket-proxyd). Verdicts per section below were rendered by the 2026-08-17 docs-health pass against the shipped code. Design agreed 2026-08-15.
+
 Reference: `~/projects/anime-comic-pipeline/docs/npu-fastflowlm-llm-server.md` (manual install, measured numbers)
 Target module: `modules/nixos/services/fastflowlm.nix`
 

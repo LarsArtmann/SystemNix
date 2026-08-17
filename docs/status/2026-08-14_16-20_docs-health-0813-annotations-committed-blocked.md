@@ -42,14 +42,14 @@
 
 ## b) PARTIALLY DONE
 
-### 1. Commit of the 08-13 annotation batch — STAGED, BLOCKED
+### ~~1. Commit of the 08-13 annotation batch — STAGED, BLOCKED~~ resolved — commits landed; the chain continued (18-31, 20-31 reports committed).
 
 - All 10 files staged (9 annotations + the 15-24 session report)
 - Pre-commit hook FAILED: statix flags 2 pre-existing `assignment-instead-of-inherit` warnings in `modules/nixos/services/buildcache.nix` (lines 109, 164) — a file this session never touched; the statix gate runs repo-wide, not staged-only
 - gitleaks/deadnix/shellcheck/flake-check all passed inside the hook
 - **Nothing committed** — HEAD still `61a2224b`; the auto-git daemon will sweep this unattributed if left
 
-### 2. buildcache.nix statix fix — LOCATED, NOT APPLIED
+### ~~2. buildcache.nix statix fix — LOCATED, NOT APPLIED~~ applied — `inherit (cfg) device;` (buildcache.nix:165) + `inherit onFailure;` (266) present. Annotation 2026-08-17.
 
 - First `multiedit` failed with mtime guard (the hook's alejandra pass reformatted the file during the failed commit)
 - Lines re-located (`device = cfg.device;` at 109, `onFailure = onFailure;` at 164); the corrected `inherit (cfg) device;` / `inherit onFailure;` edits were NOT yet re-applied when the session was halted
@@ -58,13 +58,13 @@
 
 ## c) NOT STARTED
 
-1. **Annotate the 13 remaining 08-14 reports** (`08-23`, `08-24` smart-audio, `08-24` twenty, `08-46`, `09-14`, `09-30`, `10-00`, `10-04`, `10-41`, `12-30`, `12-53`, `13-22`, `13-44`) — hash research exists in the 15-24 report §f; no edits made
-2. **TODO_LIST additions** for newly verified open items: disk 97% cleanup, renamer `go-nix-helpers.follows`, root `go-cqrs-lite` ssh→github URL, audio.nix 2 em dashes, `alsa-utils`/`pw-cat` for audio testing, zram-only ADR, eval-time OTel-scheme check, CI committed-templ check, vendor-hash CI (crush-daily/PMA/erraudit), Gatus zram-fill alert, archived session-37 GitLab note
-3. **Correct 2 misleading annotations** written this session (see §d.2)
-4. **ARCHIVE pass** — `git mv` resolution-complete reports (~13+ candidates: 08-12 jscpd/10-20/10-48/13-05/14-03/14-17/14-25/14-55/14-59/20-08/23-50×2, 08-13_01-50, plus the 9 freshly-annotated 08-13 files that closed out)
-5. **Quality gate** — canonical `nix flake check --no-build` (a flake check DID pass inside the failed pre-commit, but the formal gate run is owed)
-6. **Inline health report** (Accuracy + Fitness, per-doc table, visible math)
-7. **Final attributed commit**
+~~1. **Annotate the 13 remaining 08-14 reports**~~ done — 11 archived via the 18-31 → 20-31 chain; `10-00` (pre-struck item 25) and `12-30` (SUPERSEDED banner) were closed out by the 2026-08-17 pass.
+~~2. **TODO_LIST additions**~~ done — routed: disk (P0), renamer follows (P3), go-cqrs-lite ssh→github (P3), zram ADR (P3), vendor-hash CI (P6), session-37 note (P6), test-tone tooling (P5); audio.nix em dashes fixed outright (0 in file today); OTel-scheme check + committed-templ CI + zram-fill alert SHIPPED (see f.23/24/26).
+~~3. **Correct 2 misleading annotations** written this session (see §d.2)~~ done — "Correction 08-14" notes present in archived 04-47 §f.20 and 18-36 §f.9.
+~~4. **ARCHIVE pass**~~ done — all 08-12/08-13 reports archived; 08-14 completed 2026-08-17.
+~~5. **Quality gate** — canonical `nix flake check --no-build`~~ done — green 2026-08-17 ("all checks passed").
+6. **Inline health report** ← open at annotation time — owed by the 2026-08-17 docs-health pass (printed at its close).
+~~7. **Final attributed commit**~~ done — via auto-git daemon sweeps (e.g. `46b5ffdb`).
 
 ---
 
@@ -110,64 +110,64 @@ The blocked commit was left blocked; the buildcache fix was left half-applied. N
 ## f) Up to 50 Things To Get Done Next
 
 ### Immediate (unblock the commit)
-1. Apply `buildcache.nix` inherit fixes (lines 109: `inherit (cfg) device;`, 164: `inherit onFailure;`)
-2. Correct the 2 "zero git+ssh" annotations (`04-47` §f.20, `18-36` §f.9) — ssh:// `type: git` nodes remain for the go-cqrs-lite family
-3. Re-run the staged commit for the 08-13 annotation batch (message already drafted)
+~~1. Apply `buildcache.nix` inherit fixes~~ done — `inherit (cfg) device;` :165, `inherit onFailure;` :266.
+~~2. Correct the 2 "zero git+ssh" annotations~~ done — corrections in both archived files.
+~~3. Re-run the staged commit for the 08-13 annotation batch~~ done — chain continued.
 
 ### 08-14 annotation batch (13 files, hash research in 15-24 report §f)
-4. `08-23` boot-failure-qmd-activitywatch
-5. `08-24` smart-audio-daemon-built-deployed-with-gaps
-6. `08-24` twenty-crm-pg-role-investigation
-7. `08-46` monitoring-gap-closures
-8. `09-14` code-quality-audit-docker-hardening
-9. `09-30` oidc-gate-helpers-qmd-cleanup
-10. `10-00` signoz-dashboard-v2-perses-migration
-11. `10-04` registration-lock-oomd-threshold
-12. `10-41` oauth2-gate-toctou-fix
-13. `12-30` ssd-recovery-benchmarking
-14. `12-53` 5-item-go-nix-review-dsn-audit
-15. `13-22` vendorhash-hardening-iowrap-gomemlimit
-16. `13-44` hermes-registration-lifecycle-fixed
+~~4. `08-23` boot-failure-qmd-activitywatch~~ done — archived.
+~~5. `08-24` smart-audio-daemon-built-deployed-with-gaps~~ done — archived (audibility item lives on in TODO_LIST P2).
+~~6. `08-24` twenty-crm-pg-role-investigation~~ done — archived.
+~~7. `08-46` monitoring-gap-closures~~ done — archived (collector-hardening item in TODO_LIST P3).
+~~8. `09-14` code-quality-audit-docker-hardening~~ done — archived (Dozzle hardening item in TODO_LIST P3).
+~~9. `09-30` oidc-gate-helpers-qmd-cleanup~~ done — archived (gate-helper items in TODO_LIST P3).
+~~10. `10-00` signoz-dashboard-v2-perses-migration~~ done — closed by the 2026-08-17 pass (v2 API shipped; dashboard migration executed by the 08-16 deep-integration session).
+~~11. `10-04` registration-lock-oomd-threshold~~ done — archived.
+~~12. `10-41` oauth2-gate-toctou-fix~~ done — archived (import_export gate hole in TODO_LIST P1).
+~~13. `12-30` ssd-recovery-benchmarking~~ done — closed by the 2026-08-17 pass (SUPERSEDED banner).
+~~14. `12-53` 5-item-go-nix-review-dsn-audit~~ done — archived.
+~~15. `13-22` vendorhash-hardening-iowrap-gomemlimit~~ done — archived.
+~~16. `13-44` hermes-registration-lifecycle-fixed~~ done — archived.
 
 ### Living-doc routing (verified-open items found this session)
-17. TODO_LIST: disk 97% cleanup plan (GC deeper than 3d, snapshot expiry audit, largest store paths)
-18. TODO_LIST: add `file-and-image-renamer.inputs.go-nix-helpers.follows` (last Go input missing it)
-19. TODO_LIST: switch root `go-cqrs-lite` flake input from `git+ssh://` to `github:` (NAR-divergence vector, `19-01` §f.38)
-20. TODO_LIST: remove 2 em dashes from `audio.nix` comments (project convention)
-21. TODO_LIST: add `alsa-utils` or `pw-cat` test-tone tooling for audio debugging
-22. TODO_LIST: ADR for zram-only swap decision (fallback strategy)
-23. TODO_LIST: eval-time check that gRPC OTel endpoints carry no `http://` scheme
-24. TODO_LIST: CI check that `*_templ.go` files are committed wherever `*.templ` exists
-25. TODO_LIST: vendor-hash CI for crush-daily, PMA, erraudit (upstream repos)
-26. TODO_LIST: Gatus alert for zram fill > 90%
-27. TODO_LIST: note in archived `2026-05-06_07-10` session-37 report that GitHub is no longer the HaGeZi source
+17. TODO_LIST: disk 97% cleanup plan ← open — evolved into TODO_LIST P0 "Free root below 95%" (root hit 95% on 2026-08-17; pool migration changed the math).
+18. TODO_LIST: add `file-and-image-renamer.inputs.go-nix-helpers.follows` ← open — TODO_LIST P3.
+19. TODO_LIST: switch root `go-cqrs-lite` flake input from `git+ssh://` to `github:` ← open — TODO_LIST P3.
+~~20. TODO_LIST: remove 2 em dashes from `audio.nix` comments~~ done — 0 em dashes in `modules/nixos/desktop/audio.nix` today.
+21. TODO_LIST: add `alsa-utils` or `pw-cat` test-tone tooling ← open — TODO_LIST P5 (blocks the smart-audio audibility verification).
+22. TODO_LIST: ADR for zram-only swap decision ← open — TODO_LIST P3.
+~~23. TODO_LIST: eval-time check that gRPC OTel endpoints carry no `http://` scheme~~ done — `otel-endpoint-audit.nix` shipped (`1f7fc720`): gRPC 4317 ⇒ scheme REQUIRED, host allowlist, port registry.
+~~24. TODO_LIST: CI check that `*_templ.go` files are committed wherever `*.templ` exists~~ done — `scripts/check-templ-committed.sh` in pre-commit + CI; plus go-nix-helpers `checks.templ-committed` eval-time throw.
+25. TODO_LIST: vendor-hash CI for crush-daily, PMA, erraudit ← open — TODO_LIST P6.
+~~26. TODO_LIST: Gatus alert for zram fill > 90%~~ done — `system_zram_fill_over_threshold` + Gatus "ZRAM Fill" check alerts Discord (AGENTS.md ZRAM section).
+27. TODO_LIST: note in archived `2026-05-06_07-10` session-37 report ← open — TODO_LIST P6.
 
 ### Closure
-28. ARCHIVE pass: `git mv` resolution-complete reports to `docs/status/archived/` (~22 candidates: 11 from 08-12 batch + 08-13_01-50 + the 9 annotated this session + whichever 08-14 files close out)
-29. Quality gate: `nix flake check --no-build`
-30. Inline health report (Accuracy + Fitness two-score format, per-doc findings, visible math)
-31. Final attributed commit of archive + remaining changes
+~~28. ARCHIVE pass~~ done.
+~~29. Quality gate: `nix flake check --no-build`~~ done — green 2026-08-17.
+30. Inline health report ← open at annotation time — owed by the 2026-08-17 docs-health pass.
+~~31. Final attributed commit of archive + remaining changes~~ done — daemon sweeps.
 
 ### Structural debt observed
-32. AGENTS.md at ~72.6KB — still >2× the 30KB quality threshold; needs a dedicated compression session
-33. 11 archived reports confirmed appendix-only annotated (docs-debt TODO from prior session, still untracked in TODO_LIST)
-34. `nix flake check --all-systems` Darwin eval (dms-shell Linux-only failure) — still undocumented as intentional
-35. Pre-commit statix gate scope (repo-wide vs staged) — consider scoping to staged files to avoid pre-existing-debt deadlocks
-36. Auto-git daemon sweeps mid-session — commit after every completed file batch, not after phases
+32. AGENTS.md at ~72.6KB ← open — ~80 KB now; TODO_LIST P6 "AGENTS.md compression session".
+33. 11 archived reports confirmed appendix-only annotated ← debt open, now TRACKED — TODO_LIST P6 "Annotate appendix-only ARCHIVED reports" (cites the authoritative lists).
+~~34. `nix flake check --all-systems` Darwin eval~~ done — documented intentional in AGENTS.md ("Build & Deploy": aarch64-darwin skip EXPECTED, do not add --all-systems).
+~~35. Pre-commit statix gate scope~~ resolved — hook lints STAGED `.nix` files only (AGENTS.md gotcha "Pre-commit statix lints STAGED .nix files only"); pre-existing debt no longer blocks commits.
+36. Auto-git daemon sweeps mid-session ← process rule absorbed — per-batch commits are now the documented practice (AGENTS.md Git Workflow). No open action.
 
 ---
 
 ## g) Questions (Cannot Figure Out Myself)
 
-### 1. The foreign SSD report — annotate or leave alone?
+### ~~1. The foreign SSD report — annotate or leave alone?~~ RESOLVED — annotated with a Decision Record + archived by the 2026-08-17 docs-health pass (the parallel session had long finished).
 
 `docs/status/2026-08-14_13-15_ssd-repurposing-options.md` (338 lines) was written by a PARALLEL session (bundled into `61a2224b` by the daemon, still unread). It matches the `2026-08-1*` scope you gave me. Do I read + annotate it like the rest, or is it owned by a live session whose work is still in flight (annotating a moving target corrupts history)?
 
-### 2. Disk is at 97% — aggressive cleanup now, or TODO_LIST only?
+### 2. Disk is at 97% — aggressive cleanup now, or TODO_LIST only? ← OPEN owner decision — routed to TODO_LIST P0 "Free root below 95%" (disk sat at 95% on 2026-08-17). Annotation 2026-08-17.
 
 27G free on 723G; deploys hard-fail at 95%. Automated GC only deletes >3d. A manual `nix-collect-garbage --delete-older-than 1d` freed ~23G last time but is a system-affecting action on your live machine (can trigger rebuilds of in-use paths and I/O on the QLC NAND). Should I run it during the next session, or just record the task and let you decide timing?
 
-### 3. AGENTS.md compression (72.6KB) — schedule its own session now?
+### 3. AGENTS.md compression (72.6KB) — schedule its own session now? ← OPEN owner decision — TODO_LIST P6.
 
 Carried over unanswered from the 15-24 report. It needs a dedicated read-compress-verify pass (target ≤30KB without losing gotcha content) — too large to fold into this audit's tail. Schedule it as the immediate next session after this audit closes, or defer behind the 08-14 annotation batch and archive work?
 

@@ -207,7 +207,12 @@ SLOG accelerates synchronous writes (NFS, iSCSI, databases) by providing a low-l
 
 ## Recommended Configuration
 
-### SSD 1 (ext4, serial 174444471311) — Scratch / Temp Storage
+> **Decision Record (2026-08-17, docs-health pass):** The recommendation below was only partially executed, then superseded by the three-drive repurposing decision (`docs/planning/archived/2026-08-16_20-22_three-drive-repurposing.md`).
+> - **SSD 1 → DEPLOYED as `/mnt/buildcache`** (build-cache role, a subset of the scratch use case) in `19c195e9`/`5e22c678`, deployed 2026-08-14. Live and monitored (`buildcache_*` metrics + Gatus).
+> - **SSD 2 → Docker role NEVER deployed.** The drive is now FROZEN per the three-drive Decision Record; the Docker data-root migration survives as `TODO_LIST.md` Priority 2 ("Move Docker data-root to SSD 2").
+> - **ZFS options (§7, §8) moot** — the ZFS `datapool` was destroyed 2026-08-16 after forensic extraction; the ZFS era is closed (`ROADMAP.md`).
+
+### ~~SSD 1 (ext4, serial 174444471311) — Scratch / Temp Storage~~ → deployed as build cache (`/mnt/buildcache`), 2026-08-14
 
 Mount at `/mnt/scratch` with `noatime,data=writeback`:
 - `nix-shell` build sandboxes (`TMPDIR=/mnt/scratch`)
@@ -218,7 +223,7 @@ Mount at `/mnt/scratch` with `noatime,data=writeback`:
 
 **Why ext4:** Scratch data is disposable. ext4 with `data=writeback` eliminates the journal double-write penalty (136 MB/s → expected ~280 MB/s). No need for checksums or snapshots on disposable data.
 
-### SSD 2 (btrfs, serial 174244451713) — Docker + Nix Auxiliary Store
+### ~~SSD 2 (btrfs, serial 174244451713) — Docker + Nix Auxiliary Store~~ → never deployed; drive frozen; Docker role lives on in TODO_LIST
 
 Mount at `/mnt/ssd-btrfs` (already done) with `compress=zstd,noatime`:
 - Docker data-root (`/mnt/ssd-btrfs/docker`)

@@ -37,6 +37,52 @@ _: {
         }
       ];
 
+      # Public open-source project websites (Firebase Hosting), mirrored from
+      # /home/lars/projects/domains/lars.software.tf — keep in sync when a site
+      # is added there. Probed from evo-x2, so each check verifies the full
+      # external chain: public DNS → Firebase CDN → site content. This catches
+      # outages the LAN-only checks cannot see (unclaimed web.app targets,
+      # missing DNS records, broken deploys).
+      ossWebsites = [
+        "lars.software"
+        "www.lars.software"
+        "status.lars.software" # Better Stack status page (CNAME → statuspage.betteruptime.com)
+        "gogenfilter.lars.software"
+        "gogenfilter.larsartmann.com" # alias CNAME from larsartmann.com.tf
+        "atomicwrite.lars.software"
+        "go-atomic-write.lars.software" # alias of atomicwrite.lars.software
+        "go-output.lars.software"
+        "go-workflow-auditlog.lars.software"
+        "filewatcher.lars.software"
+        "errorfamily.lars.software"
+        "art-dupl.lars.software"
+        "do-auditlog.lars.software"
+        "dynamicmarkdown.lars.software"
+        "templcomponents.lars.software"
+        "branded-id.lars.software"
+        "emeet-pixyd.lars.software"
+        "cleanwizard.lars.software"
+        "cmdguard.lars.software"
+        "md-go-validator.lars.software"
+      ];
+
+      mkWebsiteCheck =
+        host:
+        mkHttpCheck {
+          name = host;
+          group = "Open Source Websites";
+          url = "https://${host}/";
+          interval = "5m";
+          conditions = [
+            "[STATUS] == 200"
+            "[RESPONSE_TIME] < 2000"
+            # Firebase serves an HTML error page even for 404s, so STATUS is the
+            # hard gate; this confirms real site content (docs/SPA shell) came back.
+            "[BODY] == pat(*<html*)"
+          ];
+          alerts = discordAlert "${host} down — public website unreachable (DNS, Firebase Hosting, or certificate issue)";
+        };
+
       inherit (config.networking) domain;
 
       # Native OIDC via Pocket ID (Layer 1 SSO). Provision-only: evo-x2 always
@@ -1193,7 +1239,8 @@ _: {
                 ];
                 alerts = discordAlert "One or more OIDC client secrets are stale (>90d) — consider rotating";
               })
-            ];
+            ]
+            ++ map mkWebsiteCheck ossWebsites;
           };
         };
 

@@ -40,16 +40,16 @@ Not fixed (deliberate): pip/playwright dirs have no GC step — mtime-based prun
 
 ## 4. Remaining open (unchanged backlog)
 
-- VM test for buildcache-gc (P0 #7 — the one P0 not closed; unit-level execution verified instead).
-- Sunday 05:00 first scheduled gc run — **check journal for the hardened (ProtectHome=read-only + hole) prune path**.
-- Satellite GOEXPERIMENT sweep (21 repos), btrfs conversion window, go-codec 1.26.6 floor, sccache hit-ratio metric, gopls consolidation — see TODO_LIST + prior report §f.
-- monitor365/browser-history outages (5 post-deploy FAILs) — pre-existing, out of cache-system scope.
+- VM test for buildcache-gc (P0 #7 — the one P0 not closed; unit-level execution verified instead). ← open — untracked (module VM test queued, TODO_LIST Priority 3)
+~~- Sunday 05:00 first scheduled gc run — **check journal for the hardened (ProtectHome=read-only + hole) prune path**.~~ done — and it FAILED silently (2026-08-16 finding: pnpm resolves store from CWD; bare unit cwd=/` tried `/_tmp_*` under strict ProtectSystem). Fixed with `--store $mnt/pnpm-store` + `WorkingDirectory`; deploy.sh now starts gc post-switch so every deploy verifies the prune path (AGENTS.md)
+- Satellite GOEXPERIMENT sweep (21 repos), btrfs conversion window, go-codec 1.26.6 floor, sccache hit-ratio metric, gopls consolidation — see TODO_LIST + prior report §f. ← open — sweep/btrfs/floor TODO_LIST Priority 2; hit-ratio metric + gopls consolidation untracked
+~~- monitor365/browser-history outages (5 post-deploy FAILs) — pre-existing, out of cache-system scope.~~ done — bh fixed (v4.7.0 era); monitor365 moot (G7); FAIL noise killed by gating
 
 ## 5. Answers to prior open questions (report §g)
 
 1. **Did the ≥85% Discord alert fire?** YES — TRIGGERED 03:37, RESOLVED 21:58, both delivered (gatus journal). Alert delivery is functional; no incident.
-2. go-codec 1.26.6 floor / 3. btop upstream issue — still user decisions, untouched.
+2. go-codec 1.26.6 floor / 3. btop upstream issue — still user decisions, untouched. ← OPEN owner decisions (TODO_LIST Priority 2 / Priority 6)
 
 ---
 
-**Bottom line:** all 6 executable P0 items closed with runtime evidence; 3 real bugs fixed (init trap, pnpm-vs-hardening, tmpfs staging) + 3 hardening improvements; cache system verified healthy at 42% with growth structurally bounded. Deployed 22:08 (40 PASS / 5 FAIL — same pre-existing monitor365/browser-history baseline); the deploy itself ran `buildcache-init` successfully, behaviorally confirming the idempotency fix. Post-deploy: verify Sunday 05:00's hardened gc run in the journal.
+**Bottom line:** all 6 executable P0 items closed with runtime evidence; 3 real bugs fixed (init trap, pnpm-vs-hardening, tmpfs staging) + 3 hardening improvements; cache system verified healthy at 42% with growth structurally bounded. Deployed 22:08 (40 PASS / 5 FAIL — same pre-existing monitor365/browser-history baseline); the deploy itself ran `buildcache-init` successfully, behaviorally confirming the idempotency fix. ~~Post-deploy: verify Sunday 05:00's hardened gc run in the journal.~~ done — verified-and-fixed 2026-08-16 (prune was silently failing; see §4 annotation above)

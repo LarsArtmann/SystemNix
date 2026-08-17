@@ -216,7 +216,7 @@ if [ -s "$METRICS_FILE" ]; then
   # Most system_* textfile metrics are now live (verified 2026-08-10).
   # Remove entries after deploy verification confirms them in /metrics.
   # system_zram_*: new system-health zram-fill metrics (2026-08-16 session).
-  KNOWN_NEW_METRICS="system_zram_swap_fill_percent system_zram_fill_over_threshold system_zram_swap_orig_data_bytes system_zram_swap_disksize_bytes system_zram_mem_used_bytes"
+  KNOWN_NEW_METRICS="system_zram_swap_fill_percent system_zram_fill_over_threshold system_zram_swap_orig_data_bytes system_zram_swap_disksize_bytes system_zram_mem_used_bytes system_service_state_failed"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"
@@ -253,6 +253,59 @@ for pkg in "${GO_PKGS[@]}"; do
     warn "$pkg.goModules — unable to determine status (may not be a buildGoModule)"
   fi
 done
+
+# 12. ExecStart executables exist — 203/EXEC prevention
+# A unit whose ExecStart path doesn't exist fails instantly with status=203/EXEC,
+# restarts to start-limit-hit, and blocks activation with exit 4 (seen live with
+# fastflowlm 2026-08-17: package had flat layout, unit referenced bin/flm).
+# Eval can't check store-path existence — this catches it pre-deploy.
+echo ""
+echo "12. ExecStart executable existence (203/EXEC prevention)"
+EXECSTARTS=$(nix eval --json .#nixosConfigurations.evo-x2.config.systemd.services --apply '
+  builtins.mapAttrs (name: svc:
+    let
+      es = svc.serviceConfig.ExecStart or null;
+      lines = if es == null then [] else if builtins.isList es then es else [ es ];
+    in map (line: { unit = name; line = builtins.toString line; }) lines
+  )' 2>/dev/null | jq -r '.[] | .[] | "\(.unit)\t\(.line)"' 2>/dev/null || echo "")
+if [ -z "$EXECSTARTS" ]; then
+  warn "Could not evaluate ExecStart lines — skipping 203/EXEC check"
+else
+  EXECSTART_MISSING=0
+  while IFS=$'\t' read -r unit line; do
+    # Strip systemd prefix modifiers (-, :, +, !) and take the first token.
+    bin=$(echo "$line" | sed 's/^[-:+!]*//' | awk '{print $1}')
+    # Skip lines with runtime expansion (%H, $VAR, ${...}) or non-absolute paths.
+    case "$bin" in
+    /*) ;;
+    *) continue ;;
+    esac
+    case "$bin" in
+    *%* | *'$'*) continue ;;
+    esac
+    if [ ! -x "$bin" ]; then
+      case "$bin" in
+      /nix/store/*)
+        outRoot=$(echo "$bin" | cut -d/ -f1-4)
+        if [ -d "$outRoot" ]; then
+          fail "$unit: ExecStart binary missing inside BUILT output: $bin (203/EXEC — package layout bug, path can never exist)"
+          EXECSTART_MISSING=$((EXECSTART_MISSING + 1))
+        else
+          warn "$unit: ExecStart binary not built yet: $bin (verify layout after build)"
+        fi
+        ;;
+      *)
+        fail "$unit: ExecStart binary missing: $bin (would fail 203/EXEC)"
+        EXECSTART_MISSING=$((EXECSTART_MISSING + 1))
+        ;;
+      esac
+    fi
+  done <<<"$EXECSTARTS"
+  TOTAL_LINES=$(echo "$EXECSTARTS" | wc -l)
+  if [ "$EXECSTART_MISSING" -eq 0 ]; then
+    pass "All $TOTAL_LINES ExecStart binaries exist"
+  fi
+fi
 
 # Summary
 echo ""

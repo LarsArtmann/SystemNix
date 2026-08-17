@@ -92,11 +92,11 @@ The WDT 08-11 chain, nix-daemon oomd kill, and hermes outage narratives exist in
 
 ## c) NOT STARTED
 
-1. Annotating the remaining 22 reports (see b.1)
-2. ARCHIVE `git mv` pass (see b.2)
-3. `docs/DOMAIN_LANGUAGE.md`, `README.md`, `docs/CONTRIBUTING.md` freshness — not checked (out of the user's stated `2026-08-1*` + 5-living-docs scope)
-4. The 11 appendix-only ARCHIVED reports (tracked as docs-debt TODO, not this session)
-5. Prior audit's planning-doc triage (48+ files in `docs/planning/`) — untouched
+~~1. Annotating the remaining 22 reports (see b.1)~~ done — the follow-up chain (16-20 → 18-31 → 20-31) completed all 13; all 08-13 reports (10/10) and 11 of the 08-14 set are archived. Annotation 2026-08-17.
+~~2. ARCHIVE `git mv` pass (see b.2)~~ done — see `2026-08-14_20-31_docs-health-0814-annotations-complete-13of13.md`.
+3. `docs/DOMAIN_LANGUAGE.md`, `README.md`, `docs/CONTRIBUTING.md` freshness ← still open — never checked in 08-12/08-14/08-17 passes; TODO_LIST Priority 6 freshness item (added 2026-08-17).
+4. The 11 appendix-only ARCHIVED reports ← still open — TODO_LIST Priority 6 docs-debt.
+5. Prior audit's planning-doc triage ← still open — TODO_LIST Priority 6.
 
 ---
 
@@ -145,28 +145,28 @@ I wrote `_Nothing pending — cut into [2026-08] below._` — new work since (in
 ## f) Up to 50 things to get done next
 
 ### Immediate (finish this audit)
-1. Annotate 08-13_04-47 buildflow-templ (items: signoz churn reverted→accepted-baseline, ClickHouse Gatus `43e11db3`, global gitignore `0bd8a272`-era fix, emeet-pixyd `6ee6c3c`, storbi `2322979`, retract `f8ea2f4`)
-2. Annotate 08-13_05-48 comprehensive-fix-sweep (thread-tuning report annotation done §a.9; remaining items: session reaper → TODO, post-deploy /health check → open)
-3. Annotate 08-13_09-06 hdmi-audio (SUPERSEDED by smart-audio — mark the "solved" claims)
-4. Annotate 08-13_15-04 zram (6 sysctl changes done at `0bd8a272`; scrub status / iotop kill / crush cleanup items → mostly open)
-5. Annotate 08-13_15-09 tv-display (niri outputs done; HaGeZi → `88c594cc`; go-cqrs-lite vendorHash `a6300fd`)
-6. Annotate 08-13_16-11 HAGEZI (fix done at `88c594cc`; AGENTS.md note added this session)
-7. Annotate 08-13_18-36 flake-lock-repair (follows `fe891bff`/`82963f04`; wf-recorder overlay done; PMA/crush-daily vendorHash pushed)
-8. Annotate 08-13_19-01 nar-hash-bandaid (daemon-cache insight in AGENTS.md; file-and-image-renamer follows → `fe891bff` audit found it since fixed)
-9. Annotate 08-13_23-39 hdmi-persistence-gap (RESOLVED by smart-audio daemon `8ad493c9`)
-10. Annotate all 08-14 reports (10 files; most items routed to TODO_LIST this session — strike the harvested ones)
-11. ARCHIVE pass: `git mv` the ~13 resolution-complete reports to `docs/status/archived/`
-12. Produce the inline health report (Accuracy + Fitness, per-doc findings table, visible math)
-13. Run `nix flake check --no-build` quality gate
+~~1. Annotate 08-13_04-47 buildflow-templ~~ done — archived (`docs/status/archived/2026-08-13_04-47*`).
+~~2. Annotate 08-13_05-48 comprehensive-fix-sweep~~ done — archived; session-reaper item lives on in TODO_LIST P3 (`expires_at` fix).
+~~3. Annotate 08-13_09-06 hdmi-audio~~ done — archived (superseded by smart-audio).
+~~4. Annotate 08-13_15-04 zram~~ done — archived.
+~~5. Annotate 08-13_15-09 tv-display~~ done — archived.
+~~6. Annotate 08-13_16-11 HAGEZI~~ done — archived.
+~~7. Annotate 08-13_18-36 flake-lock-repair~~ done — archived.
+~~8. Annotate 08-13_19-01 nar-hash-bandaid~~ done — archived.
+~~9. Annotate 08-13_23-39 hdmi-persistence-gap~~ done — archived.
+~~10. Annotate all 08-14 reports (10 files; most items routed to TODO_LIST this session — strike the harvested ones)~~ done by the follow-up chain (20-31 = 13/13) — 11 of the 08-14 files archived; the final 4 docs-health meta-reports + 13-15 + 12-30 were closed by the 2026-08-17 pass.
+~~11. ARCHIVE pass: `git mv` the ~13 resolution-complete reports to `docs/status/archived/`~~ done.
+12. Produce the inline health report ← open at annotation time — owed by the 2026-08-17 docs-health pass (printed at its close). Annotation 2026-08-17.
+~~13. Run `nix flake check --no-build` quality gate~~ done — green 2026-08-17 ("all checks passed").
 
 ### High (from this session's findings)
-14. AGENTS.md 72.6KB — still >2x the 30KB bloat threshold; dedicated compression session (extract narratives → gotchas-archive)
-15. Add WDT-08-11 chain narrative to `docs/gotchas-archive.md`
-16. Add nix-daemon oomd kill chain narrative to gotchas-archive
-17. Add hermes outage narrative to gotchas-archive
-18. Add HaGeZi GitHub-lock incident to gotchas-archive
-19. Annotate the 11 appendix-only ARCHIVED reports (docs-debt TODO)
-20. Triage `docs/planning/` (48+ files, only 1 ever archived)
+14. AGENTS.md 72.6KB ← open — now ~80 KB; TODO_LIST Priority 6 "AGENTS.md compression session".
+15. Add WDT-08-11 chain narrative to `docs/gotchas-archive.md` ← open — TODO_LIST P6 narratives item.
+16. Add nix-daemon oomd kill chain narrative to gotchas-archive ← open — TODO_LIST P6 narratives item.
+17. Add hermes outage narrative to gotchas-archive ← open — TODO_LIST P6 narratives item.
+18. Add HaGeZi GitHub-lock incident to gotchas-archive ← open — TODO_LIST P6 narratives item.
+19. Annotate the 11 appendix-only ARCHIVED reports ← open — TODO_LIST P6.
+20. Triage `docs/planning/` ← open — TODO_LIST P6.
 
 ### Carried (already in TODO_LIST, not re-listed here)
 21-50. See TODO_LIST.md Priorities 0-7 — this audit re-verified and re-routed all of them; nothing new to add without new session work.
@@ -175,15 +175,15 @@ I wrote `_Nothing pending — cut into [2026-08] below._` — new work since (in
 
 ## g) Questions I CANNOT answer myself
 
-### 1. Archive now or after the remaining 22 annotations?
+### ~~1. Archive now or after the remaining 22 annotations?~~ RESOLVED by practice — annotations finished first (20-31, 13/13), then one archive pass; the ordering rule held.
 
 13 reports are resolution-complete as of my pass (08-12 jscpd, 10-20, 10-48, 13-05, 14-03, 14-17, 14-25, 14-55, 14-59, 20-08, 23-50 nar-hash, 13-01-50 + likely 14-08-46). My recommendation: finish ALL annotations first, then one archive pass — the skill says "finish inline annotations BEFORE archiving" and mixing passes caused the 08-12 audit's appendix-only failure. But if you want the clean ones filed now, I can split the pass.
 
-### 2. How should I treat the foreign `2026-08-14_13-15_ssd-repurposing-options.md` report?
+### ~~2. How should I treat the foreign `2026-08-14_13-15_ssd-repurposing-options.md` report?~~ RESOLVED — annotated with a Decision Record (buildcache deployed, SSD2 frozen, ZFS moot) and archived by the 2026-08-17 docs-health pass.
 
 A parallel session wrote it (338 lines) mid-audit and the daemon bundled it into commit `61a2224b`. I have not read it. Include it in my remaining annotation pass (it's in the `2026-08-1*` scope you gave me), or leave it untouched as another session's in-flight work?
 
-### 3. AGENTS.md compression — dedicated session, or is 72.6KB accepted?
+### 3. AGENTS.md compression — dedicated session, or is 72.6KB accepted? ← OPEN owner decision — TODO_LIST Priority 6.
 
 The rubric calls >50KB "severely bloated." Getting under 30KB means moving the service-architecture sections (Browser History, Monitor365, DiscordSync deep-dives ≈ 25KB) into `docs/services/` pages and linking. That's a structural change to the file every session depends on — your call whether to spend a session on it or accept the size as the cost of this repo's density.
 

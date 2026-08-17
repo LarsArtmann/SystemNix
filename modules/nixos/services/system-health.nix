@@ -123,11 +123,18 @@ _: {
           emit_service() {
             local svc="''${1?}"
             local active_val=0
+            local failed_val=0
             local nrestarts=0
             local limit_hit=0
 
             if systemctl is-active --quiet "$svc" 2>/dev/null; then
               active_val=1
+            fi
+
+            # Failed state (crashed / dead-with-error) — distinct from
+            # start-limit-hit below. Inactive (idle/stopped) is NOT failed.
+            if systemctl is-failed --quiet "$svc" 2>/dev/null; then
+              failed_val=1
             fi
 
             nrestarts=$(systemctl_value "$svc" -p NRestarts)
@@ -140,6 +147,7 @@ _: {
             fi
 
             echo "system_service_active{service=\"''${svc}\"} ''${active_val}"
+            echo "system_service_state_failed{service=\"''${svc}\"} ''${failed_val}"
             echo "system_service_nrestarts{service=\"''${svc}\"} ''${nrestarts}"
             echo "system_service_start_limit_hit{service=\"''${svc}\"} ''${limit_hit}"
           }
@@ -373,6 +381,9 @@ _: {
           {
             echo "# HELP system_service_active 1 if systemd service is active, 0 otherwise"
             echo "# TYPE system_service_active gauge"
+
+            echo "# HELP system_service_state_failed 1 if systemd unit is in failed state, 0 otherwise (inactive ≠ failed)"
+            echo "# TYPE system_service_state_failed gauge"
 
             echo "# HELP system_service_nrestarts Number of times the service has restarted since boot"
             echo "# TYPE system_service_nrestarts gauge"

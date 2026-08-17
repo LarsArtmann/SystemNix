@@ -63,6 +63,23 @@ in
         "commit=300"
       ];
     };
+    # /nix on its OWN subvolume so btrbk snapshots of @ (and the pool sends)
+    # exclude the ~47 GiB nix store. Sibling subvolumes are never part of a
+    # snapshot of @ — the store is fully rebuildable and needs no CoW pinning.
+    # Populated by scripts/migrate-nix-subvol.sh BEFORE the first deploy with
+    # this entry; the old /nix dir inside @ is removed post-verification.
+    "/nix" = mkFilesystem {
+      device = "/dev/disk/by-uuid/0b629b65-a1b7-40df-a7dc-9ea5e0b04959";
+      fsType = "btrfs";
+      options = [
+        "subvol=@nix"
+        "compress=zstd"
+        "noatime"
+        "nodiscard"
+        "space_cache=v2"
+        "commit=300"
+      ];
+    };
     "/data" = mkFilesystem {
       device = "/dev/disk/by-uuid/046ea663-da55-48b7-b516-0dcdb87ba710";
       fsType = "btrfs";

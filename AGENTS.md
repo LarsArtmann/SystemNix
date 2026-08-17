@@ -459,7 +459,7 @@ serviceConfig = lib.mkMerge [
 - **ext4 uses bare `discard`** — `discard=async` on ext4 → mount fails → emergency shell.
 - **Non-`nofail` mounts = boot hazard** — Any non-root mount without `nofail` that fails brings down `local-fs.target`.
 - **Compression is filesystem-wide** — `compress=zstd` on any mount applies to ALL subvolumes. Only `subvol`/`subvolid` and VFS options are per-mount.
-- **`/nix` lives inside `@`** — NOT a separate `@nix` subvolume. btrbk snapshots include the full nix store.
+- **`/nix` on its own `@nix` subvolume (migrated 2026-08-17)** — Was a plain dir inside `@`, so btrbk snapshots AND pool sends carried the ~47 GiB nix store (CoW-pinned up to 30d/12w). Store is rebuildable — needs no snapshots. Sibling subvolumes are never part of a snapshot of `@`. Migration: `scripts/migrate-nix-subvol.sh` (reflink rsync, `-H` preserves store hardlinks); old `@/nix` deleted post-verification, space frees as snapshots expire. `/home` still lives inside `@` (intentionally snapshotted).
 - **`rm` doesn't free space when snapshots reference data** — Reclamation happens as btrbk snapshots expire (14d retention).
 - **`compsite` is memory-intensive** — Needs `MemoryMax=2G` minimum on a 47 GiB nix store. Runs every 6h (not 5min).
 - **`/tmp` tmpfs capped at 48 GiB** — Via `systemd.mounts` (static `tmp.mount`). NEVER use `fileSystems."/tmp"` — generates runtime fstab entry → unmount failure.

@@ -371,3 +371,19 @@ flowchart TD
 ---
 
 *Plan snapshot — point-in-time. Living state stays in TODO_LIST.md. Execute top-down after gates G1–G4 answered. Waiting for instructions.*
+
+---
+
+## Appendix) Execution verdicts (docs-health pass, 2026-08-17)
+
+| Tier | Verdict |
+|------|---------|
+| T0–T4 | **EXECUTED 2026-08-15** by `2026-08-15_01-44_pareto-t0-t4-outage-truth-found.md` — with the plan's premise OVERTURNED by live evidence (the "3-day outage" was config-off, not failure). That report carries the per-item verdicts. |
+| T1.1–1.3 | Resolved differently than planned: browser-history fixed upstream (storage/v4.7.0 + mkOidcGate); monitor365 stays off (G7 owner decision, TODO_LIST Priority 1). |
+| T4 release chain | Advanced past the v0.5.1 stop-point (input `4e7604d`); LIVE-binary gate verification remains TODO_LIST Priority 1. |
+| T5 (off-site) | Routed — TODO_LIST Priority 0: pool safety net LIVE (btrbk + all app backups on 2×16 TB mirror); the 3rd-copy-offsite decision remains open. |
+| T6 (disk <80%) | Escalated the WRONG way: root hit 95% (2026-08-17), TODO_LIST Priority 0. |
+| T7+ | Superseded by living TODO_LIST state; surviving work is tracked there. |
+| Gates | G7 OPEN (owner). G2 superseded (delivery proven). G4 DONE (251 zombie dashboards purged 2026-08-16). G3/G5/G6 open in TODO_LIST. |
+
+**Disposition: ARCHIVED** — historical plan; premises corrected by 01-44; all surviving work lives in TODO_LIST.md.

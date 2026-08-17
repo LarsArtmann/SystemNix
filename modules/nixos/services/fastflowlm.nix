@@ -54,6 +54,7 @@ _: {
       # Wait-for-backend script: blocks until :52626 accepts a TCP connection,
       # then exec's systemd-socket-proxyd. The proxy alone forwards into a
       # refused connection mid-cold-load (13.6 GB read, ~1-3 min first token).
+      # Deadline 300s < unit TimeoutStartSec 6min — cold load must fit.
       waitForBackend = pkgs.writeShellApplication {
         name = "fastflowlm-proxy-wait";
         runtimeInputs = [
@@ -63,20 +64,22 @@ _: {
         text = ''
           host="127.0.0.1"
           port="${toString cfg.backendPort}"
-          deadline=$((SECONDS + 180))
+          deadline=$((SECONDS + 300))
           while [ "$SECONDS" -lt "$deadline" ]; do
             if curl -sf --max-time 2 "http://$host:$port/v1/models" >/dev/null 2>&1; then
               exec ${lib.getExe systemd}/bin/systemd-socket-proxyd "$host:$port"
             fi
             sleep 1
           done
-          echo "fastflowlm-proxy: backend $host:$port did not become ready within 180 s" >&2
+          echo "fastflowlm-proxy: backend $host:$port did not become ready within 300 s" >&2
           exit 1
         '';
       };
 
       # TTL checker: stop the backend (and proxy) if no traffic for ≥ keepAlive.
       # Uses journalctl --grep + -n cap (never `journalctl | grep` — the IO trap).
+      # IMPORTANT: never stop fastflowlm.socket — the socket IS the re-activation
+      # mechanism. Stopping it kills the :52625 listener until manual intervention.
       idleCheck = pkgs.writeShellApplication {
         name = "fastflowlm-idle-check";
         runtimeInputs = [
@@ -95,7 +98,7 @@ _: {
           if ${lib.getExe pkgs.systemd}/bin/journalctl -u fastflowlm --since "${cfg.keepAlive} ago" --grep "TCP connection established" -n 1 --output cat 2>/dev/null | grep -q .; then
             exit 0
           fi
-          systemctl stop fastflowlm-proxy.service fastflowlm.socket fastflowlm.service
+          systemctl stop fastflowlm-proxy.service fastflowlm.service
         '';
       };
     in
@@ -193,7 +196,14 @@ _: {
           description = "FastFlowLM NPU LLM server (public socket)";
           wantedBy = [ "sockets.target" ];
           listenStreams = [ "${cfg.host}:${toString cfg.port}" ];
-          socketConfig.Accept = false;
+          # Route activation to the PROXY, not the backend. Without Service= a
+          # socket defaults to triggering fastflowlm.service directly — which
+          # passes the listening fd to flm (nobody accepts it → clients hang
+          # forever) AND skips the proxy's cold-load wait gate entirely.
+          socketConfig = {
+            Accept = false;
+            Service = "fastflowlm-proxy.service";
+          };
         };
 
         systemd.services.fastflowlm-proxy = {
@@ -207,21 +217,28 @@ _: {
               ExecStart = lib.getExe waitForBackend;
               Restart = "on-failure";
               RestartSec = "5";
+              TimeoutStartSec = "6min";
             }
             (harden { })
           ];
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
         };
 
         systemd.services.fastflowlm = {
           description = "FastFlowLM NPU LLM server (backend, mmap'd model)";
-          wantedBy = [ "multi-user.target" ];
+          # Deliberately NOT wantedBy multi-user.target: the whole point of
+          # socket activation is zero processes/RAM/NPU at boot. The backend is
+          # pulled up exclusively by the proxy's after/wants on first
+          # connection, and re-armed after idle-stop by the (still-listening)
+          # socket.
           after = [
             "network-online.target"
             "data.mount"
           ];
           wants = [ "network-online.target" ];
 
-          # Service user needs `video` group for /dev/accel0 (root:video 0660).
+          # Service user needs `video` group for /dev/accel/accel0 (root:video 0660).
           # memlock unlimited is required for NPU DMA.
           serviceConfig = lib.mkMerge [
             {
@@ -232,13 +249,22 @@ _: {
               LimitMEMLOCK = "infinity";
               LimitNOFILE = "65536";
 
-              ExecStart = "${lib.getExe cfg.package} serve ${cfg.model} --host ${cfg.host} --port ${toString cfg.backendPort} --pmode ${cfg.pmode}"
+              # flm-real reads/writes $HOME/.config at startup (XDG paths).
+              # harden {} sets ProtectHome=true, so /home/lars is INACCESSIBLE
+              # (and WorkingDirectory there fails with 200/CHDIR). Redirect HOME
+              # into a private writable StateDirectory instead — keeps the
+              # service fully decoupled from the user's home.
+              StateDirectory = "fastflowlm";
+              WorkingDirectory = "/var/lib/fastflowlm";
+
+              ExecStart =
+                "${lib.getExe cfg.package} serve ${cfg.model} --host ${cfg.host} --port ${toString cfg.backendPort} --pmode ${cfg.pmode}"
                 + (lib.optionalString cfg.loadAsr " --asr 1")
                 + (lib.optionalString cfg.loadEmbed " --embed 1");
 
               Environment = [
+                "HOME=/var/lib/fastflowlm"
                 "FLM_MODEL_PATH=${cfg.modelPath}"
-                "XILINX_XRT=${lib.getExe cfg.package}"
               ];
 
               Restart = "on-failure";
@@ -247,7 +273,6 @@ _: {
               MemoryHigh = "26G";
               MemorySwapMax = "20G";
               TimeoutStartSec = "3min";
-              WorkingDirectory = "/home/${cfg.user}";
             }
             (harden { })
             ioTier.background
@@ -260,8 +285,8 @@ _: {
         };
 
         # TTL: every 5 min, check if the backend has had traffic in the last
-        # keepAlive window — if not, stop both units. Subsequent requests via
-        # :52625 re-socket-activate the backend.
+        # keepAlive window — if not, stop proxy + backend (the socket keeps
+        # listening, so the next :52625 connection re-activates everything).
         systemd.services.fastflowlm-idle = {
           description = "Stop FastFlowLM backend after idle TTL expires";
           serviceConfig = lib.mkMerge [
@@ -271,6 +296,8 @@ _: {
             }
             (harden { })
           ];
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
         };
 
         systemd.timers.fastflowlm-idle = {

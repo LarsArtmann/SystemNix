@@ -26,17 +26,17 @@
 
 | # | Item | What's missing |
 |---|------|----------------|
-| 1 | **T4 release chain** | Tag `v0.5.0` pushed but NOT nix-buildable (stale vendorHashes + missing `subModules` for templ-components). Needs: subModules fix → hash re-harvest → commit → **clean-clone verify** → tag `v0.5.1`. bh flake.nix tree is dirty with blanked hashes (stop-point). |
-| 2 | **T1.1–1.3 service restores** | Resolved DIFFERENTLY than planned: browser-history self-recovered (3 crash-loops 21:13–21:29, stable since — permanent fix rides T4). monitor365 = config-off, blocked on G7 (wireguard-collector is a PRIVATE repo — `gh repo view` proves it — so the nix build can never fetch it from the sandbox). |
-| 3 | **SystemNix deploy batch** | Staged in tree/commits but NOT deployed: activitywatch gate (`6ea92969`), discordsync re-enable + capability fix + bh OTel scheme (`2566b900`). All await `nix run .#deploy` (sudo banned). |
-| 4 | **T5+** | Untouched (off-site backup slice, disk <80%, dnsblockd oomd, hermes bump, deploy reliability…). |
+| 1 | **T4 release chain** | Tag `v0.5.0` pushed but NOT nix-buildable (stale vendorHashes + missing `subModules` for templ-components). Needs: subModules fix → hash re-harvest → commit → **clean-clone verify** → tag `v0.5.1`. bh flake.nix tree is dirty with blanked hashes (stop-point). | ~~chain advanced past this stop-point: deployed input `4e7604d` (storage/v4.7.0 era); templ-components ≥v1.8.3 pin documented in AGENTS.md; LIVE 403 verification remains TODO_LIST Priority 1~~ |
+| 2 | **T1.1–1.3 service restores** | Resolved DIFFERENTLY than planned: browser-history self-recovered (3 crash-loops 21:13–21:29, stable since — permanent fix rides T4). monitor365 = config-off, blocked on G7 (wireguard-collector is a PRIVATE repo — `gh repo view` proves it — so the nix build can never fetch it from the sandbox). | ~~browser-history permanently fixed since (v4.7.0 + mkOidcGate); monitor365 remains G7-open~~ |
+| 3 | **SystemNix deploy batch** | Staged in tree/commits but NOT deployed: activitywatch gate (`6ea92969`), discordsync re-enable + capability fix + bh OTel scheme (`2566b900`). All await `nix run .#deploy` (sudo banned). | ~~deployed since: gate healthy (idle/resumed 2026-08-17), discordsync running + events flowing, collector unblinded (all seven backups green, 10-28 §a.1), OTel errors gone~~ |
+| 4 | **T5+** | Untouched (off-site backup slice, disk <80%, dnsblockd oomd, hermes bump, deploy reliability…). | ~~all routed: off-site P0 (pool live, 3rd copy open), disk P0 (hit 95%), dnsblockd oomd P0, hermes bump P2~~ |
 
 ## c) NOT STARTED (deliberately)
 
-- T5 (StorageBox off-site slice) — gate G3 (order decision) with the user.
-- T6 (disk <80%) — needs sudo for GC/prune; not attempted.
-- T7–T16, T17+ — not reached this session.
-- Post-deploy verification battery (backup_healthy flip, 403 register, second-login rejection) — waits on the deploy.
+- T5 (StorageBox off-site slice) — gate G3 (order decision) with the user. ← open — TODO_LIST Priority 0 (3rd-copy decision; pool safety net live)
+- T6 (disk <80%) — needs sudo for GC/prune; not attempted. ← open — escalated to 95%, TODO_LIST Priority 0
+- T7–T16, T17+ — not reached this session. ← superseded — the source plan is annotated + archived by the 2026-08-17 pass; surviving work lives in TODO_LIST
+- Post-deploy verification battery (backup_healthy flip, 403 register, second-login rejection) — waits on the deploy. ← open in part — backup flip VERIFIED (10-28 §a.1); 403 + second-login remain TODO_LIST Priority 1
 
 ## d) TOTALLY FUCKED UP (honest ledger)
 
@@ -53,24 +53,24 @@
 2. **Contrast-test healthy vs failing cases** — 755-root:root vs 0700-immich `stat` results proved the capability theory in one command.
 3. **`gh repo view --json visibility` is step zero for any git-dep nix workflow.**
 4. **Commit after every edit** — daemon race lost twice this session.
-5. **Gatus optionals-guards disarm monitoring silently** — a config-off service leaves NO trace in Gatus. Post-deploy-check should diff expected-vs-present checks, or the plan's T9.3 escalation should fire on "check vanished", not just "check failing".
-6. **One-shot-per-episode alerting means long outages page exactly once** — escalation on duration (T9.3) is the fix; don't blame the webhook.
+5. **Gatus optionals-guards disarm monitoring silently** — a config-off service leaves NO trace in Gatus. Post-deploy-check should diff expected-vs-present checks, or the plan's T9.3 escalation should fire on "check vanished", not just "check failing". ← open — untracked (phantom-metric validation exists; vanished-check diff does not)
+6. **One-shot-per-episode alerting means long outages page exactly once** — escalation on duration (T9.3) is the fix; don't blame the webhook. ← open — TODO_LIST Priority 3 (post-deploy failure semantics + escalation half)
 
 ## f) NEXT ACTIONS (ranked)
 
-1. Write this report file (done — this is it).
-2. Finish bh flake: `subModules = { "github.com/larsartmann/templ-components" = [ "errorpage" "htmx" "icons" "utils" ]; }` on the server's mkPreparedSource → build both packages → harvest real vendorHashes → commit → push → **clean-clone verify** → tag `v0.5.1`. (Agent unaffected — no templ-components in its module graph.)
-3. SystemNix: `nix flake lock --update-input browser-history` → eval → hand deploy batch to user: activitywatch gate + discordsync re-enable + collector capability + bh v0.5.1 + OTel scheme.
-4. Post-deploy verify: `backup_healthy{immich}=1` within 10 min; 403 on logged-out register; second Pocket-ID login rejected; reaper quiet; aw-watcher alive (needs `systemctl --user reset-failed` from USER).
-5. Answer gates (g) → resume plan at T5.
-6. Update TODO_LIST/CHANGELOG with this session's truth.
+~~1. Write this report file (done — this is it).~~ done
+~~2. Finish bh flake: `subModules = { "github.com/larsartmann/templ-components" = [ "errorpage" "htmx" "icons" "utils" ]; }` on the server's mkPreparedSource → build both packages → harvest real vendorHashes → commit → push → **clean-clone verify** → tag `v0.5.1`. (Agent unaffected — no templ-components in its module graph.)~~ superseded by the v4.7.0-era chain — deployed input `4e7604d`; templ-components pin rules documented in AGENTS.md; live-gate verification remains Priority 1
+~~3. SystemNix: `nix flake lock --update-input browser-history` → eval → hand deploy batch to user: activitywatch gate + discordsync re-enable + collector capability + bh v0.5.1 + OTel scheme.~~ done — all five verified live since (gate healthy, discordsync flowing, backups green, bh healthy, OTel quiet)
+4. Post-deploy verify: `backup_healthy{immich}=1` within 10 min; 403 on logged-out register; second Pocket-ID login rejected; reaper quiet; aw-watcher alive (needs `systemctl --user reset-failed` from USER). ← open in part — backup flip + aw-watcher verified; 403/second-login remain TODO_LIST Priority 1; reaper remains Priority 3
+5. Answer gates (g) → resume plan at T5. ← open — owner decisions pending (G7, G3/G5/G6)
+~~6. Update TODO_LIST/CHANGELOG with this session's truth.~~ done
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF (gates)
 
-- **G7 (NEW):** wireguard-collector is a **PRIVATE** repo — publish to crates.io / make public / vendor into the workspace? Blocks monitor365 + agent + watchdog restore entirely.
-- **G2:** Did you receive ANY Discord alerts Aug 11–14? (Delivery is proven working now; your answer decides process-fix vs re-alert escalation under T9.3.)
-- **Deploy authority:** run the queued deploy batch yourself (`nix run .#deploy`), or approve T12 polkit first?
-- G3 (StorageBox order), G4 (SigNoz dashboard purge), G5 (MiniMax quota), G6 (Turso plan) — unchanged, still open.
+- **G7 (NEW):** wireguard-collector is a **PRIVATE** repo — publish to crates.io / make public / vendor into the workspace? Blocks monitor365 + agent + watchdog restore entirely. ← OPEN owner decision (TODO_LIST Priority 1) — DO NOT CLOSE
+- **G2:** Did you receive ANY Discord alerts Aug 11–14? (Delivery is proven working now; your answer decides process-fix vs re-alert escalation under T9.3.) ~~— superseded: end-to-end delivery proven 2026-08-15 (96% event TRIGGERED/RESOLVED on Discord); the escalation half remains TODO_LIST Priority 3~~
+- **Deploy authority:** run the queued deploy batch yourself (`nix run .#deploy`), or approve T12 polkit first? ~~— moot: the batch was deployed; polkit remains TODO_LIST Priority 3~~
+- G3 (StorageBox order), G4 (SigNoz dashboard purge), G5 (MiniMax quota), G6 (Turso plan) — unchanged, still open. ~~— status 2026-08-17: G3 open (P0 3rd-copy decision), G4 DONE (251 zombie dashboards purged by the v7 provisioner, 2026-08-16), G5 open (carried ×4), G6 open (Turso quota outage, TODO_LIST P0)~~
 
 ---
 

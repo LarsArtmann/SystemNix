@@ -73,22 +73,20 @@ These are primarily ZFS investigation reports (data-gathering, not action-item r
 
 The 9 remaining active reports all have the brainstorm header note, but only 1 has inline strikethroughs (`2026-08-11_09-35` was annotated before being archived). The 08-12 reports describe very recent work where most follow-up items are still genuinely open — so this is less critical, but some items ARE done and should be marked.
 
-### 4. CHANGELOG `[Unreleased]` is now 238 entries — extremely long
-
-The `[Unreleased]` section has grown massive. It should be split into versioned sections. However, SystemNix doesn't tag releases (the last tagged sections are `[2026-07]`, `[2026-06]`, etc.), so there's no natural cut point without a release decision.
+### ~~4. CHANGELOG `[Unreleased]` is now 238 entries — extremely long~~ RESOLVED — monthly cut made: `## [2026-08]` (CHANGELOG.md:63).
 
 ---
 
 ## c) NOT STARTED
 
-1. **No `nix flake check --no-build`** — Not run. The living doc edits are pure Markdown; no Nix evaluation was needed. But I should note the last known-good eval state.
-2. **AGENTS.md not updated** — The 68 KB AGENTS.md was not touched. It has several new gotchas that SHOULD be documented from the 08-11/08-12 sessions (StartLimitBurst in `[Unit]` not `[Service]`, system-health `[not set]` poison values, nix-daemon oomd kill chain, Docker container oomd kills). Some of these were already added by the auto-commit daemon in prior sessions.
-3. **docs/gotchas-archive.md not updated** — The WDT crash chain (2026-08-11) and nix-daemon oomd kill (2026-08-12) are documented in status reports and AGENTS.md but not in the gotchas archive.
-4. **Older planning docs not triaged** — `docs/planning/` has 48+ planning docs from 2025–2026. Only the `2026-08-10_13-53_pareto-execution-plan.md` was archived. The rest were not reviewed.
-5. **docs/DOMAIN_LANGUAGE.md freshness** — Not checked. May have stale terms.
-6. **README.md freshness** — Not checked.
-7. **docs/CONTRIBUTING.md freshness** — Not checked.
-8. **Pre-existing archived reports (before 08-10)** — 5 reports in `docs/status/archived/` from the `2026-08-10_01-*` and `2026-08-10_02-*` timeframe were pre-archived. They got brainstorm notes via the batch script but no inline strikethroughs. These are the #1 failure mode candidates.
+~~1. **No `nix flake check --no-build`**~~ done later — ran green 2026-08-17.
+~~2. **AGENTS.md not updated**~~ done since — AGENTS.md now carries StartLimitBurst `[Unit]` placement, the `[not set]` poison fix, the nix-daemon oomd kill chain, and Docker oomd kill entries, plus a 2026-08-17 HDD-pool section.
+3. **docs/gotchas-archive.md not updated** ← open — both narratives still owed (see f.6/f.7 above; TODO_LIST P6).
+4. **Older planning docs not triaged** ← still open — TODO_LIST Priority 6.
+5. **docs/DOMAIN_LANGUAGE.md freshness** ← open — TODO_LIST P6 freshness item.
+6. **README.md freshness** ← open — TODO_LIST P6 freshness item.
+7. **docs/CONTRIBUTING.md freshness** ← open — TODO_LIST P6 freshness item.
+8. **Pre-existing archived reports (before 08-10)** ← open — same TODO_LIST P6 appendix-only item.
 
 ---
 
@@ -144,47 +142,41 @@ I used a Python script with hardcoded line numbers to edit FEATURES.md, which sh
 
 ### Critical — Fix What I Fucked Up
 
-1. **Add inline strikethroughs to the 10 appendix-only archived reports** — These files currently have the generic "harvested" note but zero per-item resolution. Each needs its numbered items checked and struck through where done.
-2. **Annotate the 4 completely unannotated archived files** — At minimum, add the brainstorm note. Ideally resolve inline items too.
-3. **Add inline strikethroughs to active 08-12 reports** where items are done (especially `2026-08-12_14-03` and `2026-08-12_14-59` which have many done items)
+1. **Add inline strikethroughs to the 10 appendix-only archived reports** ← still open — tracked in TODO_LIST Priority 6 docs-debt ("Annotate appendix-only ARCHIVED reports"), which cites this file's §b.1/§b.2 lists. Annotation 2026-08-17.
+2. **Annotate the 4 completely unannotated archived files** ← still open — same TODO_LIST P6 item. Annotation 2026-08-17.
+~~3. **Add inline strikethroughs to active 08-12 reports** where items are done~~ done — 14 of 15 08-12 reports are annotated + archived in `docs/status/archived/` (this file is the last; annotated + archived 2026-08-17).
 
 ### High Priority — Living Doc Polish
 
-4. **Cut a CHANGELOG `[2026-08]` version section** — 238 `[Unreleased]` entries is unmanageable. Group into a monthly section.
-5. **AGENTS.md bloat reduction** — 68 KB exceeds the "severely bloated" threshold (>50 KB). Extract gotcha narratives to `docs/gotchas-archive.md`, keep only enduring rules.
-6. **Add WDT crash chain (2026-08-11) to `docs/gotchas-archive.md`** — Full incident narrative with StartLimitBurst root cause
-7. **Add nix-daemon oomd kill chain (2026-08-12) to `docs/gotchas-archive.md`** — Socket activation + start-limit interaction
+~~4. **Cut a CHANGELOG `[2026-08]` version section** — 238 `[Unreleased]` entries is unmanageable. Group into a monthly section.~~ done — `## [2026-08] — WDT Crash Chains, oomd Wars & Monitoring Closure` exists (CHANGELOG.md:63).
+5. **AGENTS.md bloat reduction** ← still open — now ~80 KB; TODO_LIST Priority 6 "AGENTS.md compression session".
+6. **Add WDT crash chain (2026-08-11) to `docs/gotchas-archive.md`** ← open — AGENTS.md carries the enduring rule (StartLimitBurst `[Unit]` placement, silently ignored in `[Service]`); the dedicated 08-11 incident narrative is still missing from gotchas-archive (folded into TODO_LIST P6 narratives item). Annotation 2026-08-17.
+7. **Add nix-daemon oomd kill chain (2026-08-12) to `docs/gotchas-archive.md`** ← open — AGENTS.md documents the fix (`ManagedOOMPreference=omit` + `OOMScoreAdjust=-1000`); gotchas-archive narrative still owed (same TODO_LIST P6 item).
 
 ### Medium Priority — Documentation Freshness
 
-8. **Check README.md freshness** — Not verified this session. Feature claims may not match FEATURES.md.
-9. **Check docs/CONTRIBUTING.md freshness** — Not verified. May reference stale patterns.
-10. **Check docs/DOMAIN_LANGUAGE.md freshness** — Not verified. Terms may have drifted.
-11. **Triage older planning docs** — 48+ files in `docs/planning/`. Only 1 was archived this session. Many from 2025 are likely fully resolved or obsolete.
-12. **Triage older research docs** — 12+ files in `docs/research/`. Not reviewed.
+8. **Check README.md freshness** ← open — never verified in the 08-12 or 08-17 docs-health passes (TODO_LIST P6 freshness item). Annotation 2026-08-17.
+9. **Check docs/CONTRIBUTING.md freshness** ← open — same P6 freshness item.
+10. **Check docs/DOMAIN_LANGUAGE.md freshness** ← open — same P6 freshness item.
+11. **Triage older planning docs** ← still open — TODO_LIST Priority 6 "Triage docs/planning/ remaining files".
+12. **Triage older research docs** ← still open — untracked as a distinct item; folded into the TODO_LIST P6 planning/research triage item (2026-08-17).
 
 ### Lower Priority — Verification
 
-13. **Run `nix flake check --no-build`** — Validate that the Markdown edits didn't accidentally touch any `.nix` files (they shouldn't have, but verify)
-14. **Verify FEATURES.md "Known Gaps" count is accurate** — I changed the number from 16 to 15, but didn't recount the actual table rows.
-15. **Verify DMS plugin count** — I changed from 15 to 13 (removed the "+2 community" from the count), but the FEATURES.md text elsewhere still mentions community plugins.
-16. **Spot-check annotation accuracy** — Verify that the commit hashes I cited actually contain the changes claimed. Spot-checked 4 during the session; 20+ remain unverified.
+~~13. **Run `nix flake check --no-build`**~~ done — ran green 2026-08-17 (docs-health pass; "all checks passed", aarch64-darwin omission expected).
+~~14. **Verify FEATURES.md "Known Gaps" count is accurate**~~ done — FEATURES.md fully rebuilt 2026-08-17 with recomputed counts and a fresh Known Gaps section (`46b5ffdb`).
+~~15. **Verify DMS plugin count**~~ done — FEATURES.md:213 now reads "DMS Plugins (13 SystemNix + 2 community)" consistently.
+16. **Spot-check annotation accuracy** — partially done: the 2026-08-17 docs-health pass verified all NEW claims against code before writing (46b5ffdb); the 08-12-era hash citations remain unspot-checked. ← open
 
 ---
 
 ## g) Questions (Cannot Determine Myself)
 
-### 1. Should I cut a `[2026-08]` CHANGELOG section now, or wait?
+### ~~1. Should I cut a `[2026-08]` CHANGELOG section now, or wait?~~ RESOLVED — the monthly cut was made: `## [2026-08] — WDT Crash Chains, oomd Wars & Monitoring Closure` (CHANGELOG.md:63); [Unreleased] holds only current entries.
 
-The `[Unreleased]` section has 238 entries. A monthly cut (`[2026-08]`) would make it scannable, but SystemNix doesn't do formal releases — the existing sections (`[2026-07]`, `[2026-06]`) are month-based, not version-based. Should I follow the existing monthly pattern and cut now?
+### 2. Should I finish annotating the 10 appendix-only archived reports now, or is the header note sufficient? ← OPEN — owner decision; tracked in TODO_LIST Priority 6 docs-debt. Annotation 2026-08-17.
 
-### 2. Should I finish annotating the 10 appendix-only archived reports now, or is the header note sufficient?
-
-The docs-health skill says appendix-only is the #1 failure mode. But these files are archived — they're historical snapshots that few readers will open. Is it worth the time to add per-item strikethroughs to archived files, or should I accept the header note as "good enough" for historical docs and focus on keeping active reports fully annotated?
-
-### 3. Should AGENTS.md be pruned as part of this docs-health session, or is that a separate task?
-
-AGENTS.md is 68 KB (above the "severely bloated" >50 KB threshold). Pruning it would require extracting incident narratives to `docs/gotchas-archive.md` and compressing code examples. This is a significant effort (the file is project context, not a status report) and could introduce drift if done hastily. Should I tackle it now, or treat it as a separate dedicated session?
+### ~~3. Should AGENTS.md be pruned as part of this docs-health session, or is that a separate task?~~ RESOLVED — deferred to a dedicated session; TODO_LIST Priority 6 "AGENTS.md compression session" (now ~80 KB).
 
 ---
 

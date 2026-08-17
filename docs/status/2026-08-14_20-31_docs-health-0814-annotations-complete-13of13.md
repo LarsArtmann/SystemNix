@@ -87,48 +87,44 @@ The exact failure mode from 15-24 §d.5 again — work done, commit deferred. Mi
 ## f) NEXT (up to 50)
 
 ### Immediate
-1. Commit `13-44` annotations
+~~1. Commit `13-44` annotations~~ done — commits landed; chain continued.
 2. **Route new findings to TODO_LIST:**
-   - **aw-watcher-window-wayland start-limit-hit at boot — STILL DEAD** (boot regression, user-visible)
-   - **browser-history release chain: tag `b750ec5`+ → go.mod to v4.8.0 → flake bump → deploy → verify 403s** (the deployed binary has NO registration gate)
-   - `import_export.go` ungated third path — user decision (gate / accept admin-only)
-   - Dozzle runtime container recreate (Memory=0 vs config 256m)
-   - immich backup stale 999h (carried)
-   - `/mnt/buildcache/me/` test photos cleanup (22 files, trivial)
-   - BTRFS scrubs interrupted ×2 (carried)
-   - Disk item update: 97% → 87% (carried)
-   - forgejo-oidc-setup boot race (verified recurring 20:05)
-   - hermes flake input bump → DELETE registration_lifecycle patch (upstream fixed in v0.20.1)
-   - CRB + Kernovia tags (fixes committed, untagged)
-   - Delete stale qmd-cache TODO item (carried)
-   - expires_at live-reconfirmation note (carried)
-3. Carry the 11 items from 16-20 §f.17-27
+   - ~~**aw-watcher-window-wayland start-limit-hit at boot — STILL DEAD**~~ fixed — the wayland-socket gate (`aw-watcher-window-wayland-gate`, `platforms/common/programs/activitywatch.nix:17-37`) now orders startup; closed as DONE in the 2026-08-17 harvest. Annotation 2026-08-17.
+   - browser-history release chain ← open — TODO_LIST P1 "Verify the browser-history registration gate is LIVE in the deployed binary" (input now `4e7604d`/storage-v4.7.0 era; live 403 verification still owed).
+   - `import_export.go` ungated third path ← open — TODO_LIST P1.
+   - Dozzle runtime container recreate ← open — TODO_LIST P1.
+   - ~~immich backup stale 999h (carried)~~ done — collector fix (08-15) + pool migration; overnight cycle GREEN 2026-08-17.
+   - ~~`/mnt/buildcache/me/` test photos cleanup~~ done — directory empty on disk (verified 2026-08-17).
+   - ~~BTRFS scrubs interrupted ×2 (carried)~~ superseded — weekly scrubs complete since; the 2026-08-17 /data scrub ran to completion (and found the 1.3MB corruption). Root-fs scrub remains TODO_LIST P0.
+   - ~~Disk item update: 97% → 87% (carried)~~ done — item re-based to the 95%-era reality (TODO_LIST P0).
+   - forgejo-oidc-setup boot race ← open — TODO_LIST P1.
+   - hermes flake input bump → DELETE registration_lifecycle patch ← open — TODO_LIST P2.
+   - CRB + Kernovia tags ← open — TODO_LIST P6 "Tag CreditReformBilanzampel + Kernovia DSN fixes".
+   - ~~Delete stale qmd-cache TODO item (carried)~~ done — absent from current TODO_LIST.
+   - expires_at live-reconfirmation note ← open — TODO_LIST P3.
+3. Carry the 11 items from 16-20 §f.17-27 — routed/shipped; see the 16-20 annotation (2026-08-17) for per-item verdicts. 4 shipped, 7 open in TODO_LIST.
 
 ### Closure
-4. ARCHIVE pass (grown candidate list)
-5. `nix flake check --no-build` formal run
-6. Inline health report (Accuracy + Fitness, visible math)
-7. Final attributed commit
-8. AGENTS.md: statix staged-only note
+~~4. ARCHIVE pass~~ done — 09-30/10-04/10-41/12-53/13-22/13-44 all archived; 10-00 + 12-30 closed by the 2026-08-17 pass.
+~~5. `nix flake check --no-build` formal run~~ done — green 2026-08-17.
+6. Inline health report ← open at annotation time — owed by the 2026-08-17 docs-health pass (printed at its close).
+~~7. Final attributed commit~~ done — daemon sweeps (e.g. `46b5ffdb`).
+~~8. AGENTS.md: statix staged-only note~~ done — AGENTS.md gotcha present.
 
 ### Structural debt (observed)
-9-27. Carried structural items from 18-31 §f.33-37 (AGENTS compression, appendix-only archives, planning triage, Darwin eval intent, backup_all_healthy Gatus check)
+9-27. Carried structural items from 18-31 §f.33-37 — Darwin intent documented (AGENTS.md) and `backup_all_healthy` Gatus check live (gatus-config.nix:1178); AGENTS compression / appendix-only archives / planning triage remain OPEN in TODO_LIST P6. Annotation 2026-08-17.
 
 ---
 
 ## g) QUESTIONS
 
-### 1. Foreign `13-15_ssd-repurposing-options.md` — 4th carry
-Default applied: left untouched (owning session active — it landed `19c195e9`/`5e22c678`/`e1096f46` tonight). Confirm or order annotation.
+### ~~1. Foreign `13-15_ssd-repurposing-options.md` — 4th carry~~ RESOLVED — annotated with a Decision Record + archived by the 2026-08-17 docs-health pass (owning session long finished).
 
-### 2. immich backup stale ~41 days — TODO-only confirmed?
-Default applied (18-31 §g.2): routed to TODO_LIST only. It's photos — say the word and I investigate the pg_dump timer instead.
+### ~~2. immich backup stale ~41 days — TODO-only confirmed?~~ RESOLVED — fixed across the collector-capability fix + pool migration; overnight cycle GREEN (`docs/status/2026-08-17_10-28` §a.1).
 
-### 3. NEW: aw-watcher-window-wayland is dead since the 20:05 boot
-The ordering fix from the 08-23 session did NOT survive a real boot. ActivityWatch window tracking is broken on the live system right now. Investigate in this session (breaks docs scope, small blast radius) or TODO-only?
+### ~~3. NEW: aw-watcher-window-wayland is dead since the 20:05 boot~~ RESOLVED — the wayland-socket gate shipped (`platforms/common/programs/activitywatch.nix:17-37`); closed as DONE in the 2026-08-17 harvest.
 
-### 4. MiniMax Token Plan quota (carried from 13-44)
-Hermes hit the plan limit draining backlog. Upgrade / pay-as-you-go / wait for reset?
+### 4. MiniMax Token Plan quota ← OPEN owner decision — TODO_LIST P2 ("MiniMax quota decision (carried ×4)").
 
 ---
 

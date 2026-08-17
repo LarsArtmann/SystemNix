@@ -70,54 +70,54 @@ Two earlier iterations were burned on an impossible idea (ext4 refuses `data=wri
 ## f) NEXT — up to 50 things, ordered
 
 **Immediate (unblocks everything):**
-1. Fix `buildcache-init.service`: delete the `CapabilityBoundingSet` override (or add `CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER`), keep `wantedBy`, `nix flake check`, redeploy.
-2. `sudo systemctl reset-failed buildcache-init nix-build-cleanup` before/with that deploy.
-3. Verify init succeeds: `.initialized` stamp exists, dirs owned `lars:users`.
-4. Re-run `nix run .#deploy` to complete activation + post-deploy smoke checks (8 failures last full run need triage — several were pre-existing: Overview 503, unreachable vHosts).
-5. Investigate `nix-build-cleanup.service` failure (not mine, in failed list).
+~~1. Fix `buildcache-init.service`~~ done — §h addendum (CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE granted; unit ran clean).
+~~2. `sudo systemctl reset-failed …`~~ done — deploy completed same evening (§h).
+~~3. Verify init succeeds~~ done — §h.
+~~4. Re-run `nix run .#deploy`~~ done — §h (PMA starvation root-caused + watchdog shipped on the way).
+5. Investigate `nix-build-cleanup.service` failure ← routed — STILL failing 2026-08-17, root cause is the P0 disk crisis: `btrfs-gc-guard` aborts by design at 0% device-unallocated (metadata-ENOSPC protection, journal 08-17 12:48). Fixing the disk (TODO_LIST P0) fixes the unit. Annotation 2026-08-17.
 
 **Reclaim space (disk at 90%+):**
-6. `trash-empty` (~75 GiB) after build verification.
-7. `nix-collect-garbage --delete-older-than 7d`.
-8. Re-check "Root Disk Usage" Gatus alert state after 6+7 (should go green if <85%).
+~~6. `trash-empty`~~ done — §h (with the ~75G claim corrected to ~34.5G actually in place; root → 86%).
+~~7. `nix-collect-garbage --delete-older-than 7d`~~ done — space management continued across sessions; the disk item evolved into TODO_LIST P0 (95% era, 2026-08-17).
+~~8. Re-check "Root Disk Usage" Gatus alert state~~ superseded — disk reality moved (95% on 2026-08-17); alert state now part of TODO_LIST P0.
 
 **Verify the actual purpose (builds on the SSD):**
-9. NEW terminal: `cd ~/projects/SystemNix && go build ./...` → confirm artifacts land in `/mnt/buildcache/go-build` (du before/after).
-10. `cd ~/projects/monitor365 && cargo build` → confirm via `readlink target` + du on `/mnt/buildcache/rust/monitor365`.
-11. `pnpm store path` / `npm config get cache` in new shell → confirm env vars win.
-12. Watch `buildcache_usage_percent` over a day (was 57% after migration; sanity-check growth).
+~~9. Cold `go build` verification~~ done — §h (full `go build ./...` green against the SSD).
+~~10. `cargo build` verification~~ done — §h (rust target symlink write-probe green).
+~~11. `pnpm store path` verification~~ done — §h (found pnpm 11 ignores env vars; store redirected via HM symlink).
+~~12. Watch `buildcache_usage_percent`~~ done — continuous: metrics + two Gatus checks live; usage alerting verified from the 96% event (AGENTS.md Build Cache section).
 
 **Reboot (pending anyway):**
-13. Reboot evo-x2 → verify `/proc/fs/ext4/sdb1/options` shows `data=writeback,commit=120` (plus lazytime), automount works from cold boot, oomd 60%/30s active, registry override active.
-14. After reboot: confirm mount unit (not adoption) owns `/mnt/buildcache`; `x-systemd.idle-timeout` NOT set here — decide if idle-unmount is wanted (probably NOT for a cache: churning mounts hurt).
+~~13. Reboot evo-x2~~ done — rebooted 20:04 the same evening (`2026-08-14_20-31` §a.4: oomd 60%/30s live-verified via oomctl; mount options adopted).
+~~14. Confirm mount unit owns `/mnt/buildcache`~~ done — fstab-owned since the 20:04 reboot; no idle-timeout (correctly, per the report's own reasoning).
 
 **Hardening/cleanup of this feature:**
-15. Remove the 3 `buildcache_*` entries from `KNOWN_NEW_METRICS` (metrics are live).
-16. Remove `.initialized`-condition edge: if mount wiped, init reruns — good; add a Gatus condition or leave as-is (documented).
-17. Add "no failed units" check to `pre-deploy-check.sh`.
-18. Consider a `tests/test-buildcache.nix` VM test (mount + init + metrics file emission) following `test-attic.nix`.
-19. Update `docs/status/2026-08-14_13-15_ssd-repurposing-options.md` with an "IMPLEMENTED" annotation pointing at the module (docs-health: old status reports should reflect outcome).
-20. Add `/mnt/buildcache` mention to `disk-diagnose.sh` inventory script if it lists mounts.
+~~15. Remove the `buildcache_*` entries from `KNOWN_NEW_METRICS`~~ done — zero buildcache hits in `scripts/pre-deploy-check.sh` today. Annotation 2026-08-17.
+~~16. `.initialized`-condition edge~~ resolved — the init-once guard was REMOVED entirely (2026-08-15): init runs idempotently on every boot; documented in AGENTS.md.
+~~17. "no failed units" check~~ done — `pre-deploy-check.sh:100-105` (pass/warn on `systemctl --failed` count).
+18. `tests/test-buildcache.nix` VM test ← open — still absent from `tests/` (2026-08-17); now tracked in TODO_LIST P3. Annotation 2026-08-17.
+~~19. Annotate `13-15` with "IMPLEMENTED"~~ done — 2026-08-17 docs-health pass (Decision Record + archived).
+20. `disk-diagnose.sh` buildcache mention ← open, trivial, untracked — no buildcache reference in the script today. Annotation 2026-08-17.
 
 **SSD 2 + follow-ons (from TODO):**
-21. Docker data-root → SSD 2: rename mount to `/mnt/docker`, add `fileSystems` entry, migrate `/data/docker`, keep SigNoz/ClickHouse volumes on `/data`.
-22. `/rust-cache` p9 reclaim (100 GiB): empty, drop `fileSystems."/rust-cache"`, delete partition, optionally grow adjacent BTRFS.
-23. Off-site backup (Priority 0, untouched since 2026-06-25 — biggest real risk on this machine).
-24. Foreground BTRFS scrub on `/` (never scrubbed).
-25. dnsblockd `ManagedOOMPreference=omit`.
+21. Docker data-root → SSD 2 ← open — TODO_LIST P2 (drive FROZEN per three-drive Decision Record; role survives).
+22. `/rust-cache` p9 reclaim ← open — TODO_LIST P2 (mount+contents removed 2026-08-16; partition deletion remains).
+23. Off-site backup ← open — TODO_LIST P0 (pool safety net LIVE 2026-08-17; 3rd-copy decision remains).
+24. Foreground BTRFS scrub on `/` ← open — TODO_LIST P0 (never scrubbed; /data corruption found 2026-08-17 raises the stakes).
+25. dnsblockd `ManagedOOMPreference=omit` ← open — TODO_LIST P0.
 
 **Pre-existing carryovers visible in this session's outputs:**
-26. Overview service 503 (post-deploy smoke FAIL).
-27. signoz.home.lan 404 auth-gateway WARN; several vHosts unreachable (dozzle/monitor365/searx/crush/taskchampion SKIP) — likely LAN-vs-external check artifact, verify once.
-28. Fish startup 260ms > 200ms threshold WARN.
-29. Quickshell 1 error line in last 1h WARN.
-30. smartd devices: consider adding the two DAS HDDs (sda/sdd `usb-External_USB3.0_DISK00/04`) if they're permanent — currently unmonitored.
+~~26. Overview service 503~~ resolved — root cause was PMA discovery-daemon starvation; `pma-daemon-watchdog` shipped (§h + AGENTS.md PMA section).
+27. signoz 404 / unreachable vHosts — split: the signoz web UI 404 was FIXED 2026-08-16 (`2026-08-16_21-25`); the phantom-vHost class is tracked as TODO_LIST P3 (derive AUTH_VHOSTS from caddy.nix). Annotation 2026-08-17.
+28. Fish startup 260ms WARN ← open, cosmetic, untracked (direnv caching already shipped; threshold question remains).
+29. Quickshell 1-error-line WARN ← open — TODO_LIST P3 ("Identify the residual post-deploy-check WARNs").
+30. smartd DAS HDDs ← config done, runtime verify open — both TOSHIBA MG08s are declared (by-id, `-d sat`); TODO_LIST P2 carries the runtime-verification item. Annotation 2026-08-17.
 
 ## g) QUESTIONS (cannot determine myself)
 
-1. **Reboot timing:** a reboot is now doubly pending (oomd thresholds + registry + ext4 `data=writeback`). It also interrupts whatever is running (golangci-lint was mid-run on the new cache). When do you want it — now after the init fix, or tonight/idle-time?
-2. **`trash-empty` now or after your own build verification?** ~75 GiB on a 90% disk says now; "I want to eyeball a green `go build` first" says wait. Your risk call (trash is on the same nearly-full disk, so it isn't free space yet either way).
-3. **SSD 2 (Docker) — proceed to implement now, or park it until the p9/rust-cache reclaim and reboot are done?** Both orderings are defensible; it's a prioritization call.
+~~1. **Reboot timing**~~ RESOLVED — rebooted 20:04 same evening (§h + `2026-08-14_20-31`).
+~~2. **`trash-empty` timing**~~ RESOLVED — emptied same evening after cold-build verification (§h).
+~~3. **SSD 2 (Docker) — proceed now or park?**~~ RESOLVED — parked, then FROZEN by the three-drive Decision Record (2026-08-16); the role lives on in TODO_LIST P2.
 
 ---
 

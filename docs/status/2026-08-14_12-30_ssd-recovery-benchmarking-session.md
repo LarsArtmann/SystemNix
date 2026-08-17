@@ -193,8 +193,8 @@ Both SSDs received an identical copy via `cp -a` (preserving attributes). Files 
 
 ### 6.4 Visual Verification Paths
 
-- **ext4:** ~~`/mnt/ssd-ext4/me/`~~ now `/mnt/buildcache/me/` — the photos SURVIVED the buildcache repurposing (drive was relabeled, not wiped; verified live 2026-08-14: 22 files present). Trivial cleanup TODO
-- **btrfs:** `/mnt/ssd-btrfs/me/` — currently INACCESSIBLE: SSD 2 is unmounted (earmarked for Docker storage); the `/mnt/ssd-btrfs` directory is a stale empty mountpoint
+- **ext4:** ~~`/mnt/ssd-ext4/me/`~~ now `/mnt/buildcache/me/` — ~~the photos SURVIVED the buildcache repurposing (drive was relabeled, not wiped; verified live 2026-08-14: 22 files present). Trivial cleanup TODO~~ cleaned — directory empty on disk (verified 2026-08-17). Annotation 2026-08-17
+- **btrfs:** `/mnt/ssd-btrfs/me/` — currently INACCESSIBLE: SSD 2 is unmounted (earmarked for Docker storage); the `/mnt/ssd-btrfs` directory is a stale empty mountpoint ← still true 2026-08-17: SSD 2 remains FROZEN per the three-drive Decision Record; its Docker-storage role is TODO_LIST P2
 
 ### 6.5 btrfs Compression on Real Pictures
 
@@ -243,7 +243,7 @@ zstd reference: 1,073,741,824 → 858,810,851 bytes (20.0% compression).
 
 ### 7.4 Results — Large Compressible Data (5 GiB, ~25% compressible)
 
-Test data was generated (5 GiB of mixed text logs + random data) and copied to both SSDs. `compsize` confirmed the compression ratio on btrfs. However, the read/write speed benchmarks were not completed because the ext4 write speed investigation (Section 8) took priority and the test data was cleaned up. This remains a loose end — the 1 GiB semi-compressible test (Section 7.3) provides sufficient data for comparison.
+Test data was generated (5 GiB of mixed text logs + random data) and copied to both SSDs. `compsize` confirmed the compression ratio on btrfs. However, the read/write speed benchmarks were not completed because the ext4 write speed investigation (Section 8) took priority and the test data was cleaned up. This remains a loose end — the 1 GiB semi-compressible test (Section 7.3) provides sufficient data for comparison. ~~Loose end accepted~~ — drive repurposed as buildcache (2026-08-14); the 5 GiB variant will never run. Annotation 2026-08-17
 
 ### 7.5 First Benchmark Bug (Important)
 

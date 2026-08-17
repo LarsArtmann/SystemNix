@@ -21,11 +21,11 @@
 
 ## b) PARTIALLY DONE
 
-1. **ANNOTATE the Aug-12→15 chain (12 files) — NOT yet touched**: 08-12_20-52 docs-health self-review; 08-14 ×9 (signoz-perses-research [item 25 already struck], ssd-benchmarking [SUPERSEDED banner exists], **ssd-repurposing-options [the 5×-carried "foreign" report, still zero annotations]**, docs-health ×5, buildcache ×2, shutdown-overlay); 08-15 ×5 (monitor-aware-desktop, pareto-t0-t4, buildcache-smartening, cache-review ×2). Verbatim item extractions for ALL of them already sit in my working context — the edit pass is what's missing.
-2. **Planning-doc triage partial**: three-drive done (amended+archived); media-hunt ENDGAME already carries its ABANDONED banner (archivable); SMART-BUILDCACHE-OVERHAUL is self-marked EXECUTED (archivable); pareto-outage-recovery partially executed (needs a verdict appendix); fastflowlm plan — a concurrent session just SHIPPED the integration (`541a6a1a`), so its plan needs a done-annotation.
-3. **Quality gate not yet run**: `nix flake check --no-build` (skill VERIFY step 6). All my edits are Markdown except AGENTS/TODO/CHANGELOG/FEATURES/ROADMAP — zero `.nix` touched — but the gate is owed before declaring the audit closed.
-4. **Health report not yet printed** (Accuracy/Fitness two-score summary — the AUDIT step-4 deliverable).
-5. **TODO_LIST freshness already eroding**: concurrent sessions landed `184c6599` (pool metrics + backup coverage — likely closes my pool-usage-alert item), `2fbb69f9` (btrbk seed timeout 24h + bytes-based disk gate — advances the seeds item), `541a6a1a` (FastFlowLM integrated — closes my P7 item). A refresh pass is needed once the annotation chain is done.
+~~1. **ANNOTATE the Aug-12→15 chain (12 files) — NOT yet touched**: 08-12_20-52 docs-health self-review; 08-14 ×9 (signoz-perses-research [item 25 already struck], ssd-benchmarking [SUPERSEDED banner exists], **ssd-repurposing-options [the 5×-carried "foreign" report, still zero annotations]**, docs-health ×5, buildcache ×2, shutdown-overlay); 08-15 ×5 (monitor-aware-desktop, pareto-t0-t4, buildcache-smartening, cache-review ×2). Verbatim item extractions for ALL of them already sit in my working context — the edit pass is what's missing.~~ done — continuation session (15:0x–16:0x): 20-12 (80 edits), 20-35 (70), 20-52 (40), 01-34 (49), 01-44 (20), 21-46 (63), 22-05 (6), 22-25 (64) — every numbered item carries an inline verdict; zero failed asserts after two byte-mismatch catches (20-52 `5th carry now`, 01-44 same class)
+~~2. **Planning-doc triage partial**: three-drive done (amended+archived); media-hunt ENDGAME already carries its ABANDONED banner (archivable); SMART-BUILDCACHE-OVERHAUL is self-marked EXECUTED (archivable); pareto-outage-recovery partially executed (needs a verdict appendix); fastflowlm plan — a concurrent session just SHIPPED the integration (`541a6a1a`), so its plan needs a done-annotation.~~ done — pareto appendix appended (T0–T4 EXECUTED with premise-overturn note, T5+ → TODO_LIST); fastflowlm carries the EXECUTED banner citing `541a6a1a`+`25790607`; media-hunt + SMART-BUILDCACHE queued for plain `git mv`
+~~3. **Quality gate not yet run**: `nix flake check --no-build` (skill VERIFY step 6). All my edits are Markdown except AGENTS/TODO/CHANGELOG/FEATURES/ROADMAP — zero `.nix` touched — but the gate is owed before declaring the audit closed.~~ done — green at 15:0x (aarch64-darwin skip expected)
+~~4. **Health report not yet printed** (Accuracy/Fitness two-score summary — the AUDIT step-4 deliverable).~~ done — printed at chain close (visible math, first-principles, no invented baseline per g.2 default)
+~~5. **TODO_LIST freshness already eroding**: concurrent sessions landed `184c6599` (pool metrics + backup coverage — likely closes my pool-usage-alert item), `2fbb69f9` (btrbk seed timeout 24h + bytes-based disk gate — advances the seeds item), `541a6a1a` (FastFlowLM integrated — closes my P7 item). A refresh pass is needed once the annotation chain is done.~~ done in part — FastFlowLM ×2 + immich-backup + overview-bump closed with verification evidence; duplicate reserve item deduped (P0 kept); pool-metrics/seed-timeout items left for their owning sessions to close (g.3 default: note drift, don't touch in-flight work)
 
 ## c) NOT STARTED
 
@@ -53,19 +53,19 @@
 
 ## f) Up to 50 things we should get done next (this session's fallout, ranked)
 
-1. Annotate + archive `2026-08-14_13-15_ssd-repurposing-options.md` (the 5×-carried foreign report) — decision record: SSD1 became buildcache, SSD2 earmarked Docker, pool superseded the rest
-2. Annotate + archive the 5 docs-health chain reports (08-14 15-24/16-20/18-31/20-31/20-52) — their remaining items are THIS session's c.1/c.2
-3. Annotate + archive 08-12_20-52 (its §f.1-16 items map to the standing docs-debt TODO)
-4. Annotate + archive buildcache pair (08-14 18-29/20-12) — most §f items already routed this session
-5. Annotate + archive shutdown-overlay report (08-14 20-35) — monitor365 half moot, overlay items done/untracked
-6. Annotate + archive the 08-15 quintet (01-34/01-44/21-46/22-05/22-25) — cache-review items already closed by their own successors
-7. Annotate signoz-perses-research (08-14 10-00) fully done by 23-27 session, then archive
-8. Archive media-hunt ENDGAME planning doc (banner exists) + SMART-BUILDCACHE (self-marked EXECUTED)
-9. Verdict-appendix the pareto-outage-recovery plan (T0-T4 executed; T5+ folded into TODO_LIST)
-10. Annotate fastflowlm plan as EXECUTED (`541a6a1a`) and archive
-11. Run `nix flake check --no-build` (quality gate)
-12. Print the two-score health report (Accuracy/Fitness)
-13. TODO_LIST refresh against `184c6599`/`2fbb69f9`/`541a6a1a` (close FastFlowLM, pool-metrics, seed-timeout items if truly done)
+~~1. Annotate + archive `2026-08-14_13-15_ssd-repurposing-options.md` (the 5×-carried foreign report) — decision record: SSD1 became buildcache, SSD2 earmarked Docker, pool superseded the rest~~ done (prior half; archived)
+~~2. Annotate + archive the 5 docs-health chain reports (08-14 15-24/16-20/18-31/20-31/20-52) — their remaining items are THIS session's c.1/c.2~~ annotated (prior half) + 20-52 (this half); git mv queued behind index.lock
+~~3. Annotate + archive 08-12_20-52 (its §f.1-16 items map to the standing docs-debt TODO)~~ annotated (prior half); git mv queued behind index.lock
+~~4. Annotate + archive buildcache pair (08-14 18-29/20-12) — most §f items already routed this session~~ done — 18-29 (prior half), 20-12 (this half, 80 edits)
+~~5. Annotate + archive shutdown-overlay report (08-14 20-35) — monitor365 half moot, overlay items done/untracked~~ done (70 edits, this half)
+~~6. Annotate + archive the 08-15 quintet (01-34/01-44/21-46/22-05/22-25) — cache-review items already closed by their own successors~~ done (49+20+63+6+64 edits; G7 left OPEN per owner-decision rule)
+~~7. Annotate signoz-perses-research (08-14 10-00) fully done by 23-27 session, then archive~~ annotated (prior half, 38 edits); git mv queued
+8. Archive media-hunt ENDGAME planning doc (banner exists) + SMART-BUILDCACHE (self-marked EXECUTED) ← git mv queued behind index.lock
+~~9. Verdict-appendix the pareto-outage-recovery plan (T0-T4 executed; T5+ folded into TODO_LIST)~~ done (appendix appended this half)
+~~10. Annotate fastflowlm plan as EXECUTED (`541a6a1a`) and archive~~ banner written (cites `541a6a1a`+`25790607`; module + ports verified); git mv queued
+~~11. Run `nix flake check --no-build` (quality gate)~~ done — green
+~~12. Print the two-score health report (Accuracy/Fitness)~~ done — printed at chain close
+~~13. TODO_LIST refresh against `184c6599`/`2fbb69f9`/`541a6a1a` (close FastFlowLM, pool-metrics, seed-timeout items if truly done)~~ done in part — FastFlowLM closed w/ evidence; pool-metrics/seed-timeout left to owning sessions (in-flight work, g.3 default)
 14. Verify the concurrent immich.nix/PMA/external-contributions working-tree edits get committed deliberately (not my work — reconcile awareness only)
 15. Commit this report + the plan-doc fix (daemon will sweep; verify message quality)
 16-50. Everything already routed into the rewritten TODO_LIST.md Priorities 0–7 (the harvest IS the backlog; re-listing it here would duplicate — see TODO_LIST.md @ HEAD).
@@ -78,4 +78,4 @@
 
 ---
 
-**Standing state at write time:** living docs fully rewritten + committed (`05789a89`); 23 reports annotated, 19 archived; plan doc amended+archived (the d.1 fix, in tree awaiting daemon sweep); 12 older reports + 3 planning docs awaiting annotation; quality gate + health report pending; working tree carries a concurrent session's immich/PMA/contributions edits (untouched by me).
+**Standing state at chain close (~16:1x):** ALL 2026-08-1* status reports annotated (23 prior half + 14 this half = 37 total); living docs rewritten + committed (`05789a89`); quality gate green; TODO_LIST refreshed (4 closes + 1 dedupe); ~16 `git mv`s QUEUED behind a concurrent session's `.git/index.lock` (its pre-commit `nix flake check` + 2 toplevel builds have held the lock since 14:45) — the archive moves complete when the lock releases. Working tree carries a concurrent session's immich/PMA/contributions edits (untouched by me).

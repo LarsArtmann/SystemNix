@@ -22,19 +22,19 @@
 
 ## b) PARTIALLY DONE 🟡
 
-1. **sccache dir bootstrapping** — `/mnt/buildcache/sccache` was NOT created by deploy: `buildcache-init` is guarded by `ConditionPathExists=!…/.initialized`, which already exists (drive initialized 08-14) → the service skips forever → newly-added `buildcacheDirs` entries are never provisioned. Verified sccache server starts WITHOUT creating the dir (lazy creation on first write — unproven). **Manually mkdir'd at 21:45 as lars:users** — works today, but the init-skip design flaw stands for any FUTURE dir addition. Fix: drop the condition or make init idempotent-unconditional.
-2. **Rust target GC + sccache synergy untested end-to-end** — no cargo build was run to observe a cross-project cache hit or confirm `RUSTC_WRAPPER` doesn't break the first build (wrapper binary resolution, disk cache write path). Unit deployed ≠ mechanism proven.
-3. **buildcache-gc script never executed** — systemctl blocked in session; verified unit files + eval config but not one script run (`bash -n` syntax check also not done). First real run: next Sunday 05:00, or manual `systemctl start buildcache-gc`.
-4. **btop UX** — root cause documented, toggle workaround delivered, but the user's config still can't show automounted disks WITH io graphs. Upstream btop fix (prefer last mtab entry per mountpoint, or resolve autofs → backing mount) not filed.
+~~1. **sccache dir bootstrapping** — `/mnt/buildcache/sccache` was NOT created by deploy: `buildcache-init` is guarded by `ConditionPathExists=!…/.initialized`, which already exists (drive initialized 08-14) → the service skips forever → newly-added `buildcacheDirs` entries are never provisioned. Verified sccache server starts WITHOUT creating the dir (lazy creation on first write — unproven). **Manually mkdir'd at 21:45 as lars:users** — works today, but the init-skip design flaw stands for any FUTURE dir addition. Fix: drop the condition or make init idempotent-unconditional.~~ done — init-once guard REMOVED 2026-08-15; init now runs idempotently on EVERY boot (AGENTS.md; verified by the sccache dir no longer needing hand-creation)
+~~2. **Rust target GC + sccache synergy untested end-to-end** — no cargo build was run to observe a cross-project cache hit or confirm `RUSTC_WRAPPER` doesn't break the first build (wrapper binary resolution, disk cache write path). Unit deployed ≠ mechanism proven.~~ done — sccache proven end-to-end 2026-08-15: clean rebuild 6.1s→2.3s, 12/12 dependency cache hits, store written to the mount
+~~3. **buildcache-gc script never executed** — systemctl blocked in session; verified unit files + eval config but not one script run (`bash -n` syntax check also not done). First real run: next Sunday 05:00, or manual `systemctl start buildcache-gc`.~~ done — executed manually as the unit user 2026-08-15: 12s, freed ~4G (npm 1.4G + pnpm 2.5G/382 pkgs), 44%→41%
+4. **btop UX** — root cause documented, toggle workaround delivered, but the user's config still can't show automounted disks WITH io graphs. Upstream btop fix (prefer last mtab entry per mountpoint, or resolve autofs → backing mount) not filed. ← open — TODO_LIST Priority 6 (upstream issue, verify-then-file)
 
 ## c) NOT STARTED ⬜
 
-1. Satellite GOEXPERIMENT sweep (21 repos) — deliberately deferred, script + list ready.
-2. go-nix-helpers template default (`GOEXPERIMENT=jsonv2` for future repos).
-3. btrfs+zstd conversion (runbook staged; needs maintenance window + sudo).
-4. go-codec `1.26.6` floor alignment (user's mid-flight upgrade, dirty tree respected).
-5. direnv `use_go_env` sniffer retirement (depends on #1).
-6. Gatus check / alert audit for the 96% event (see d.2).
+1. Satellite GOEXPERIMENT sweep (21 repos) — deliberately deferred, script + list ready. ← open — TODO_LIST Priority 2
+2. go-nix-helpers template default (`GOEXPERIMENT=jsonv2` for future repos). ← open — TODO_LIST Priority 2
+3. btrfs+zstd conversion (runbook staged; needs maintenance window + sudo). ← open — TODO_LIST Priority 2
+4. go-codec `1.26.6` floor alignment (user's mid-flight upgrade, dirty tree respected). ← open — TODO_LIST Priority 2 (+ owner decision g.2)
+5. direnv `use_go_env` sniffer retirement (depends on #1). ← open — TODO_LIST Priority 2
+~~6. Gatus check / alert audit for the 96% event (see d.2).~~ done — TRIGGERED 03:37 → RESOLVED 21:58, both delivered to Discord (AGENTS.md verification round)
 
 ## d) TOTALLY FUCKED UP ❌ (honest ledger)
 
@@ -55,68 +55,68 @@
 ## f) NEXT — up to 50, ordered by impact/effort
 
 **P0 — correctness of what shipped (this session's debt):**
-1. Fix `buildcache-init` idempotency (unconditional dir ensure, keep one-shot only for chown-heavy first provisioning) — closes d.1
-2. Run `buildcache-gc` once manually (`sudo systemctl start buildcache-gc`) + read journal — closes b.3
-3. First cargo build with sccache + `sccache --show-stats` (confirm cross-project hit + dir write) — closes b.2
-4. Verify the 96% Gatus/Discord alert fired (Gatus history/UI) — closes d.2; if it didn't fire, alert delivery is broken again → P0 incident
-5. `bash -n` + shellcheck the two new scripts
-6. Clean /tmp litter (jv2test, gocache*.go, sccache-readme.md) — closes d.5
-7. VM test for buildcache-gc (mount temp ext4 image in VM, run unit) — upgrade from manual verify
+~~1. Fix `buildcache-init` idempotency (unconditional dir ensure, keep one-shot only for chown-heavy first provisioning) — closes d.1~~ done — guard removed 2026-08-15, init runs every boot
+~~2. Run `buildcache-gc` once manually (`sudo systemctl start buildcache-gc`) + read journal — closes b.3~~ done — 2026-08-15 manual run, 12s / ~4G freed
+~~3. First cargo build with sccache + `sccache --show-stats` (confirm cross-project hit + dir write) — closes b.2~~ done — 12/12 hits, 6.1s→2.3s rebuild
+~~4. Verify the 96% Gatus/Discord alert fired (Gatus history/UI) — closes d.2; if it didn't fire, alert delivery is broken again → P0 incident~~ done — fired and resolved, both delivered
+~~5. `bash -n` + shellcheck the two new scripts~~ done in part — report-goexperiment-gaps.sh executed successfully (21 satellites found); btrfs-convert is a runbook, deliberately unexecuted
+~~6. Clean /tmp litter (jv2test, gocache*.go, sccache-readme.md) — closes d.5~~ done in part — 3 of 4 gone (tmpfs reboot); `/tmp/jv2test` dies at next reboot
+7. VM test for buildcache-gc (mount temp ext4 image in VM, run unit) — upgrade from manual verify ← open — untracked (module VM test queued separately, TODO_LIST Priority 3)
 
 **P1 — the deferred 20%:**
-8. Satellite sweep repo 1–7 (universal-workflow, timesheets, todo-list-ai-go, testing, smart-configs, CreditReformBilanzampel, GoReleaser-Wizard)
-9. Satellite sweep repo 8–14 (german-business-contract-automation, linter-autoconfigure-sdk, prompt-crusher, superb-gh-milestone-extention, template-arch-lint, template-readme, terraform-diagrams-aggregator)
-10. Satellite sweep repo 15–21 (terraform-to-d2, yt-history-intel, accountability-system, Code-Quality-Agent, go-appkit, StopTube, storbi)
-11. go-nix-helpers: `GOEXPERIMENT=jsonv2` default in devShell/template
-12. btrfs+zstd conversion maintenance window (script ready)
-13. go-codec floor decision (1.26.5 relax vs nixpkgs bump) — see question 2
-14. File btop upstream issue (verify-before-filing first): automounted disks missing in io_mode — see question 3
-15. Retire direnv `use_go_env` GOEXPERIMENT branch after #8–10
-16. Add GOEXPERIMENT to darwin home config if macOS cache parity wanted — see question 2 variant
+8. Satellite sweep repo 1–7 (universal-workflow, timesheets, todo-list-ai-go, testing, smart-configs, CreditReformBilanzampel, GoReleaser-Wizard) ← open — TODO_LIST Priority 2 (sweep item)
+9. Satellite sweep repo 8–14 (german-business-contract-automation, linter-autoconfigure-sdk, prompt-crusher, superb-gh-milestone-extention, template-arch-lint, template-readme, terraform-diagrams-aggregator) ← open — TODO_LIST Priority 2
+10. Satellite sweep repo 15–21 (terraform-to-d2, yt-history-intel, accountability-system, Code-Quality-Agent, go-appkit, StopTube, storbi) ← open — TODO_LIST Priority 2
+11. go-nix-helpers: `GOEXPERIMENT=jsonv2` default in devShell/template ← open — TODO_LIST Priority 2
+12. btrfs+zstd conversion maintenance window (script ready) ← open — TODO_LIST Priority 2
+13. go-codec floor decision (1.26.5 relax vs nixpkgs bump) — see question 2 ← OPEN owner decision — TODO_LIST Priority 2
+14. File btop upstream issue (verify-before-filing first): automounted disks missing in io_mode — see question 3 ← OPEN owner decision — TODO_LIST Priority 6
+15. Retire direnv `use_go_env` GOEXPERIMENT branch after #8–10 ← open — TODO_LIST Priority 2
+16. Add GOEXPERIMENT to darwin home config if macOS cache parity wanted — see question 2 variant ← OPEN owner decision
 
 **P2 — observability & hygiene:**
-17. Gatus alert e2e test (deliberately trip a check, confirm Discord) — systematic version of #4
-18. monitor365/browser-history outages (pre-existing P0 in TODO_LIST — 5 post-deploy FAILs)
-19. btop config: add `/mnt/buildcache` etc. via `disks_filter` include after upstream fix or with io_mode off permanently
-20. `docs/gotchas-archive.md`: full narrative for gopls-defeats-trim + automount/btop mtab dedup
-21. Audit all other `ConditionPathExists=!` init-once guards
-22. Re-check `buildcache_usage_percent` tomorrow under normal gopls load (expect <60%, was 96%/day growth)
-23. Confirm trim-attribution for the 96%→39% drop (trim.txt timestamp + journal) — solidify e.5 story
-24. sccache nightly `--show-stats` textfile collector → Prometheus/Gatus (cache hit ratio metric)
-25. Consider `CARGO_INCREMENTAL=0` global (sccache requirement, currently per-invocation)
-26. ZRAM: assess whether freed NVMe churn changes the 30% zram sizing
-27. Root-disk % trend after cache unification (TODO_LIST "Free disk space" item may improve)
-28. btrfs-convert + go-mod-only restore window → measure real zstd ratio on Go objects
-29. Add `buildcache-gc` to `post-deploy-check.sh` (timer-active assertion)
-30. gopls consolidation: single workspace-level gopls or fewer concurrently-open repos
+~~17. Gatus alert e2e test (deliberately trip a check, confirm Discord) — systematic version of #4~~ done by real event — the 96% incident exercised the full loop (TRIGGERED→RESOLVED, both delivered)
+~~18. monitor365/browser-history outages (pre-existing P0 in TODO_LIST — 5 post-deploy FAILs)~~ done — bh fixed (v4.7.0 + gate); monitor365 moot (G7); FAIL noise killed by gating
+19. btop config: add `/mnt/buildcache` etc. via `disks_filter` include after upstream fix or with io_mode off permanently ← open — untracked (blocked on upstream)
+20. `docs/gotchas-archive.md`: full narrative for gopls-defeats-trim + automount/btop mtab dedup ← open — untracked (not in the 6-narrative TODO_LIST docs-debt item)
+~~21. Audit all other `ConditionPathExists=!` init-once guards~~ done — buildcache was the repo's only such guard (audited, AGENTS.md)
+~~22. Re-check `buildcache_usage_percent` tomorrow under normal gopls load (expect <60%, was 96%/day growth)~~ done — 44%→41% after the gc run (2026-08-15 round)
+23. Confirm trim-attribution for the 96%→39% drop (trim.txt timestamp + journal) — solidify e.5 story ← open — untracked (attribution stays plausible-but-unconfirmed)
+24. sccache nightly `--show-stats` textfile collector → Prometheus/Gatus (cache hit ratio metric) ← open — untracked
+25. Consider `CARGO_INCREMENTAL=0` global (sccache requirement, currently per-invocation) ← open — untracked
+26. ZRAM: assess whether freed NVMe churn changes the 30% zram sizing ← open — untracked (related: zram ADR, TODO_LIST Priority 3)
+27. Root-disk % trend after cache unification (TODO_LIST "Free disk space" item may improve) ← superseded — trend went the OTHER way: root hit 95% (2026-08-17), TODO_LIST Priority 0
+28. btrfs-convert + go-mod-only restore window → measure real zstd ratio on Go objects ← open — untracked (rides the btrfs-convert window)
+~~29. Add `buildcache-gc` to `post-deploy-check.sh` (timer-active assertion)~~ done better — deploy.sh starts `buildcache-gc` post-switch: every deploy verifies the prune path end-to-end (AGENTS.md)
+30. gopls consolidation: single workspace-level gopls or fewer concurrently-open repos ← open — untracked
 
 **P3 — backlog hygiene (from TODO_LIST, unchanged):**
-31. Off-site backup (Hetzner StorageBox + Borg) — oldest P0
-32. monitor365 restart + watchdog-timer revival (part of #18)
-33. `dnsblockd` ManagedOOMPreference=omit
-34. Foreground BTRFS scrub on `/`
-35. aw-watcher fix deploy (queued earlier)
-36. Hermes flake bump + delete `registration_lifecycle` patch
-37. Clean `/mnt/buildcache/me/` test photos
-38. Turso plan decision; MiniMax quota decision (carried ×3)
-39. Darwin deploy (registry override written, undeployed)
-40. BIOS USB-boot disable for DAS hang
-41. smart-audio audibility verification
-42. browser-history OAuth2 e2e test
-43. dnsblockd dashboard auth verify
-44. WebAuthn `.lan` RP ID validation
-45. Orphaned dnsblockd DB trash (724 MB)
-46. SSD2 Docker-storage bring-up (sdb sits empty — the other half of the btop question)
-47. TODO_LIST "retire redundant cache subvolume automounts" reclaim batch
-48. Old `/rust-cache` partition reclamation
-49. nixpkgs 1.26.6 bump watch (unblocks #13)
-50. Drop GOEXPERIMENT global when Go graduates jsonv2 (calendar reminder ~Go 1.27)
+31. Off-site backup (Hetzner StorageBox + Borg) — oldest P0 ← open — TODO_LIST Priority 0 (pool live; 3rd-copy decision)
+~~32. monitor365 restart + watchdog-timer revival (part of #18)~~ superseded — MOOT (G7 deliberate disable)
+33. `dnsblockd` ManagedOOMPreference=omit ← open — TODO_LIST Priority 0
+34. Foreground BTRFS scrub on `/` ← open — TODO_LIST Priority 0
+~~35. aw-watcher fix deploy (queued earlier)~~ done — gate healthy (idle/resumed 2026-08-17)
+36. Hermes flake bump + delete `registration_lifecycle` patch ← open — TODO_LIST Priority 2
+~~37. Clean `/mnt/buildcache/me/` test photos~~ done — directory empty (verified 2026-08-17)
+38. Turso plan decision; MiniMax quota decision (carried ×3) ← open — TODO_LIST Priority 0 (Turso) + Priority 2 (MiniMax, ×4)
+39. Darwin deploy (registry override written, undeployed) ← open — TODO_LIST Priority 2
+40. BIOS USB-boot disable for DAS hang ← open — TODO_LIST Priority 2
+41. smart-audio audibility verification ← open — TODO_LIST Priority 2
+42. browser-history OAuth2 e2e test ← open — TODO_LIST Priority 2
+43. dnsblockd dashboard auth verify ← open — TODO_LIST Priority 2
+44. WebAuthn `.lan` RP ID validation ← open — TODO_LIST Priority 2
+45. Orphaned dnsblockd DB trash (724 MB) ← open — TODO_LIST Priority 2
+46. SSD2 Docker-storage bring-up (sdb sits empty — the other half of the btop question) ← open — TODO_LIST Priority 2
+47. TODO_LIST "retire redundant cache subvolume automounts" reclaim batch ← open — TODO_LIST Priority 2
+48. Old `/rust-cache` partition reclamation ← open in part — contents + mount removed 2026-08-16; partition surgery remains TODO_LIST Priority 2
+49. nixpkgs 1.26.6 bump watch (unblocks #13) ← open — rides the go-codec floor item (TODO_LIST Priority 2)
+50. Drop GOEXPERIMENT global when Go graduates jsonv2 (calendar reminder ~Go 1.27) ← open — untracked (calendar)
 
 ## g) QUESTIONS (cannot determine myself)
 
-1. **Did a Discord alert for buildcache ≥85% actually arrive today?** I cannot read Discord, and the open monitor365 incident says alert delivery may be broken — your answer decides whether #4/#17 escalate to an incident.
-2. **go-codec: relax `go 1.26.6` → `1.26.5` now, or wait for nixpkgs to bump?** It's your mid-flight upgrade (dirty `.go-version`); until resolved that repo fails loudly under `GOTOOLCHAIN=local` — which is the designed signal, but only you know the upgrade's intent.
-3. **File the btop upstream issue?** The io_mode × autofs behavior hides any systemd-automounted disk — fixable upstream (prefer real mount over autofs mtab line). I'd verify-then-file per policy, but filing carries your name.
+~~1. **Did a Discord alert for buildcache ≥85% actually arrive today?** I cannot read Discord, and the open monitor365 incident says alert delivery may be broken — your answer decides whether #4/#17 escalate to an incident.~~ answered — yes: both TRIGGERED (03:37) and RESOLVED (21:58) delivered (AGENTS.md verification round)
+2. **go-codec: relax `go 1.26.6` → `1.26.5` now, or wait for nixpkgs to bump?** It's your mid-flight upgrade (dirty `.go-version`); until resolved that repo fails loudly under `GOTOOLCHAIN=local` — which is the designed signal, but only you know the upgrade's intent. ← OPEN owner decision (TODO_LIST Priority 2)
+3. **File the btop upstream issue?** The io_mode × autofs behavior hides any systemd-automounted disk — fixable upstream (prefer real mount over autofs mtab line). I'd verify-then-file per policy, but filing carries your name. ← OPEN owner decision (TODO_LIST Priority 6)
 
 ---
 **Bottom line:** shipped the full 80% (unification + GC + sccache), deployed and verified; honest ledger contains 1 latent bug (found+mitigated, root fix pending), 1 unverified claim (alert delivery), and 5 not-started backlog items. Disk now 42% (87G) and structurally bounded going forward.
