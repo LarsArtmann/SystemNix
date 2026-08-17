@@ -5,12 +5,13 @@
 # a substituter, avoiding redundant recompilation.
 #
 # Disk safety:
-#   - Storage lives on /data (BTRFS data partition, separate from root)
+#   - Storage lives on the mirrored HDD pool (/mnt/pool/services/atticd,
+#     snapshotted nightly by btrbk-pool) since 2026-08-18 — off the QLC NVMe
 #   - GC runs every 4h, deletes paths older than retention (default 7 days)
 #   - A systemd timer checks storage size every 30min and triggers immediate
 #     GC if over the size threshold (default 20 GB)
-#   - QLC NVMe write endurance is the primary concern — short retention +
-#     size guard prevents unbounded accumulation
+#   - Tradeoff: cache pulls now stream from the HDD pool over the shared USB
+#     DAS link — acceptable for a short-retention CI cache, wrong for hot storage
 #
 # Cache management:
 #   attic login local https://cache.${domain}/ <token>
@@ -72,11 +73,11 @@ _: {
 
         storagePath = lib.mkOption {
           type = lib.types.path;
-          default = "/data/atticd/storage";
+          default = "/mnt/pool/services/atticd/storage";
           description = ''
-            Where Attic stores NAR files. Defaults to /data (BTRFS data
-            partition, separate from root) to protect the NVMe root filesystem
-            from write endurance wear and disk fill.
+            Where Attic stores NAR files. Defaults to the mirrored HDD pool
+            (subvol snapshotted nightly by btrbk-pool) to protect the QLC NVMe
+            from write-endurance wear and disk fill.
           '';
         };
 
@@ -136,14 +137,20 @@ _: {
         # We set ONLY MemoryMax here (nixpkgs doesn't set it). ReadWritePaths
         # is computed by nixpkgs from the storage path automatically.
         # NOTE: atticd is DynamicUser — sops secrets are root-owned (see sops.nix).
-        # /data has nofail — systemd-tmpfiles-setup may run before /data
-        # mounts, creating the storage dir on root (hidden under the mount).
-        # This oneshot runs AFTER the mount is active, creating the real dir.
+        # The pool mounts nofail — systemd-tmpfiles-setup may run before
+        # /mnt/pool is mounted, which would create the storage dir on the
+        # ROOT filesystem (hidden under the mount, contaminating the NVMe).
+        # There is deliberately NO tmpfiles rule for the storage path for the
+        # same reason. This oneshot runs only while the pool is actually
+        # mounted (RequiresMountsFor fails loudly on a detached DAS instead of
+        # writing to the root fs) and creates the real directory. deploy.sh
+        # restarts it after switches — oneshot+RemainAfterExit units ignore
+        # restartTriggers in switch-to-configuration.
         systemd.services.atticd-storage-dir = {
-          description = "Create Attic storage directory on /data";
+          description = "Create Attic storage directory on the HDD pool";
           wantedBy = [ "multi-user.target" ];
           unitConfig = {
-            RequiresMountsFor = "/data";
+            RequiresMountsFor = [ cfg.storagePath ];
           };
           serviceConfig = lib.mkMerge [
             {
@@ -153,7 +160,7 @@ _: {
             }
             (harden {
               MemoryMax = "128M";
-              ReadWritePaths = [ "/data" ];
+              ReadWritePaths = [ "/mnt/pool/services/atticd" ];
             })
             (serviceOneshotDefaults { })
           ];
@@ -169,6 +176,10 @@ _: {
             "atticd-storage-dir.service"
           ];
           wants = [ "atticd-storage-dir.service" ];
+          # Detached DAS fails atticd loudly instead of writing NAR storage
+          # onto the root filesystem under the /mnt/pool mountpoint (same
+          # semantics as the immich/paperless pool gating).
+          unitConfig.RequiresMountsFor = [ cfg.storagePath ];
           # AGENTS.md rule 5: every service sets start-limit bounds + onFailure.
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
@@ -188,14 +199,12 @@ _: {
           ];
         };
 
-        # Ensure the storage directory exists. StateDirectory (set by nixpkgs)
-        # already creates /var/lib/atticd, so we only create the /data storage
-        # path. Owner is root because atticd is a DynamicUser — the nixpkgs module
-        # grants the dynamic user write access via ReadWritePaths + StateDirectory
+        # No tmpfiles rule for the storage path — tmpfiles can run before the
+        # pool mounts and would create the dir on the root filesystem (see
+        # atticd-storage-dir above for the mount-gated creator). Owner is root
+        # because atticd is a DynamicUser — the nixpkgs module grants the
+        # dynamic user write access via ReadWritePaths + StateDirectory
         # semantics. A non-root owner here would fail (user doesn't resolve).
-        systemd.tmpfiles.rules = [
-          "d ${cfg.storagePath} 0755 root root - -"
-        ];
 
         # Prometheus metrics collector — measures storage and emits textfile
         # metrics every 5 min. Separated from the size-guard so that metrics

@@ -489,7 +489,7 @@ _: {
                   "[STATUS] == 200"
                   "[BODY] == pat(*attic_storage_over_threshold 0*)"
                 ];
-                alerts = discordAlert "Attic storage exceeded maxStorageGigabytes — emergency GC triggered. Check /data/atticd/storage size.";
+                alerts = discordAlert "Attic storage exceeded maxStorageGigabytes — emergency GC triggered. Check /mnt/pool/services/atticd/storage size.";
               })
             ]
             ++ lib.optionals (config.services.monitor365-server.enable or false) [

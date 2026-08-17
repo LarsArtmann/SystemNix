@@ -75,9 +75,14 @@ _: {
             }
             (harden {
               MemoryMax = "512M";
-              # btrfs subvolume create needs CAP_SYS_ADMIN (harden defaults to
-              # an empty bounding set — same override as btrfs scrub collectors).
-              CapabilityBoundingSet = "CAP_SYS_ADMIN";
+              # btrfs subvolume create needs CAP_SYS_ADMIN; rsync -a preserving
+              # foreign numeric owners (uid 966 / lars) needs CAP_CHOWN +
+              # CAP_DAC_OVERRIDE + CAP_FOWNER, and reading the 0750 uid-966
+              # source tree needs CAP_DAC_READ_SEARCH (harden defaults to an
+              # empty bounding set — first run shipped CAP_SYS_ADMIN only and
+              # every chown failed with EPERM; the checksum verify caught it
+              # and kept the sources).
+              CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE CAP_DAC_READ_SEARCH";
               ReadWritePaths = [
                 "/data"
                 "/mnt/pool"

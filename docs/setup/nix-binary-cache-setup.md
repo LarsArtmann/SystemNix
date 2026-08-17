@@ -217,7 +217,7 @@ nix build github:LarsArtmann/monitor365#monitor365 --substituters "https://cache
   ```
 
 - **GC interaction**: Attic stores NAR files in its own storage
-  (`/data/atticd/storage/`), independent of the host's `/nix/store`. The
+  (`/mnt/pool/services/atticd/storage/`), independent of the host's `/nix/store`. The
   host's 3-day GC does NOT affect cached paths. Attic has its own GC
   (`garbage-collection.interval = "4 hours"`) with a 7-day default retention.
   GC runs immediately on startup (verified from source: `gc.rs:34-64` — the

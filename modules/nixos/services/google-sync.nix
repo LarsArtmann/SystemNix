@@ -50,6 +50,32 @@ _: {
         hostname = "www.googleapis.com";
       };
 
+      # Fail fast with an actionable message when the sops secret still holds
+      # OAuth placeholders (the module ships disabled for exactly this reason)
+      # or the INI is malformed — otherwise rclone buries the cause in auth
+      # errors and the unit just crash-loops inscrutably.
+      configCheck = pkgs.writeShellApplication {
+        name = "google-sync-config-check";
+        runtimeInputs = [
+          pkgs.rclone
+          pkgs.gnugrep
+        ];
+        text = ''
+          set -euo pipefail
+          cfg="''${RCLONE_CONFIG_PATH:?RCLONE_CONFIG_PATH not set}"
+          if grep -q REPLACE_WITH "$cfg"; then
+            echo "google-sync: $cfg still contains OAuth placeholders." >&2
+            echo "Complete the go-live checklist (TODO_LIST.md P0): create the OAuth" >&2
+            echo "client (publishing status 'In production'), rclone authorize, fill the" >&2
+            echo "sops token, then redeploy." >&2
+            exit 1
+          fi
+          # Parse check: catches truncated/garbage INI before rclone sync drowns
+          # the journal. listremotes is offline (config parse only).
+          rclone listremotes --config "$cfg" | grep -qx "gdrive:"
+        '';
+      };
+
       syncScript = pkgs.writeShellApplication {
         name = "google-sync-run";
         runtimeInputs = [
@@ -102,9 +128,7 @@ _: {
     in
     {
       options.services.google-sync = {
-        enable = lib.mkEnableOption "Google Drive → HDD pool mirror via rclone" // {
-          default = true;
-        };
+        enable = lib.mkEnableOption "Google Drive → HDD pool mirror via rclone";
 
         interval = lib.mkOption {
           type = lib.types.str;
@@ -134,9 +158,43 @@ _: {
         # "In production" publishing status — testing-mode clients expire
         # refresh tokens after 7 days.
 
+        # The mirror dirs MUST exist before google-sync.service starts: systemd
+        # sets up mount namespacing (ReadWritePaths) BEFORE any ExecStartPre, and
+        # a ReadWritePaths entry pointing at a missing path aborts the unit with
+        # status=226/NAMESPACE (live incident 2026-08-18 00:33, the accidentally
+        # deployed force-enable build crash-looped 4x on this). Same shape as
+        # atticd-storage-dir: mount-gated (detached DAS fails loudly instead of
+        # contaminating the root fs) and deliberately NO tmpfiles rule (tmpfiles
+        # can pre-date the pool mount). deploy.sh restarts it after switches —
+        # oneshot+RemainAfterExit ignores restartTriggers.
+        systemd.services.google-sync-dirs = {
+          description = "Create Google Drive mirror directories on the HDD pool";
+          wantedBy = [ "multi-user.target" ];
+          unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = "root";
+              RemainAfterExit = true;
+            }
+            (harden {
+              MemoryMax = "128M";
+              ReadWritePaths = [ "/mnt/pool/backups" ];
+            })
+            (serviceOneshotDefaults { })
+          ];
+          script = ''
+            mkdir -p ${destination} ${graceDir}
+            chmod 0755 ${destination} ${graceDir}
+          '';
+        };
+
         systemd.services.google-sync = {
           description = "Google Drive → HDD pool mirror (rclone sync)";
-          inherit (dnsGate) after wants;
+          after = [ "google-sync-dirs.service" ] ++ dnsGate.after;
+          wants = [ "google-sync-dirs.service" ] ++ dnsGate.wants;
           inherit onFailure;
           unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
           startLimitBurst = 5;
@@ -157,10 +215,7 @@ _: {
               # First seed of a large library can run for hours.
               TimeoutStartSec = "4h";
               Environment = [ "RCLONE_CONFIG_PATH=${config.sops.secrets.google_sync_rclone_config.path}" ];
-              ExecStartPre = [
-                "${pkgs.coreutils}/bin/mkdir -p ${destination} ${graceDir}"
-              ]
-              ++ dnsGate.serviceConfig.ExecStartPre;
+              ExecStartPre = [ (lib.getExe configCheck) ] ++ dnsGate.serviceConfig.ExecStartPre;
               ExecStart = lib.getExe syncScript;
             }
           ];
