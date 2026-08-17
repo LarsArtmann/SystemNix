@@ -69,7 +69,7 @@
 
 ## f) NEXT ITEMS (priority order)
 
-1. Correct Addendum H5 in the 19-12 report (evo-x2 immich = 2026 library, NOT proven to be the Mac's memory; reframe as hypothesis)
+1. ~~Correct Addendum H5 in the 19-12 report (evo-x2 immich = 2026 library, NOT proven to be the Mac's memory; reframe as hypothesis)~~ done — corrected the same evening (see 19-12 §H5 correction note; commit `0d310822`)
 2. Enumerate dead box's REAL units + fstab from its own store path (`f5f5fylq…-nixos-system…`) — settles `storage-backup-ssd*`/`nas` roles
 3. Decode the 13 docker image configs (pull dates, env) — was any immich image ever pulled?
 4. Orphan-layer analysis (412 chains vs 13 images; unreferenced apps/<hex> datasets)
@@ -119,3 +119,29 @@
 ---
 
 **Session state at close:** sdf1/sdf2 ro-mounted · VM down, USB controller rebound · PG probes killed + copies removed · evidence in `/tmp/zfs-media-hunt-results.txt`, `/tmp/hunt*.sh` · reports updated except H5 correction (item f-1).
+
+---
+
+## Resolution (2026-08-17, docs-health pass)
+
+**The hunt was CLOSED by user decision ~20:14 on 2026-08-16 ("I give up") and the drives repurposed** (`docs/planning/2026-08-16_20-22_three-drive-repurposing.md` → executed; MG08s are now the BTRFS backup pool, sdf frozen). Verdicts for the forward-looking items:
+
+| Items | Verdict |
+|-------|---------|
+| f.1 | **done** — H5 corrected (struck above) |
+| f.2–f.20, f.22, f.30, f.37–f.38 (all hunt-continuation archaeology: carving, swap scan, Loki, orphan layers, zfs destroy audit, image-config decode, git/caddy/shell-history/portainer/pgadmin/n8n mining, magic sweeps, Jul–Oct era, distribution manifests, lost+found, bulk_extractor, Signal cache, chain-of-custody) | **Won't do — hunt abandoned by user decision; the pre-wipe frontier is now moot** (sdf never wiped but frozen; pool destroyed+repurposed) |
+| f.21, f.28 (dead-box unit/fstab enumeration) | Won't do — same closure |
+| f.3's decisive question + g.1/g.2/g.3 (Mac hostname, GCP era, carving green light) | Closed — user accepted the zero-media verdict; off-site/3-2-1 question routed to TODO_LIST P0 |
+| f.23–f.25 (user-side memory checks) | Closed by user decision |
+| f.26–f.27 (Syncthing/DNS config mining) | Won't do — closure |
+| f.29 (lost+found) | Won't do — closure |
+| f.31 ("every byte classified" sign-off) | **Superseded** — decommission executed differently (repurpose, not wipe); sign-off moot |
+| f.32 (belt-and-suspenders 49.45G zfs send) | **Won't do** — user accepted; pool destroyed after file-level extraction |
+| f.33 (second copy of irreplaceables) | **Addressed** — the HDD backup pool now holds the forensic archive + all backups (2026-08-17); true off-site remains TODO_LIST P0 |
+| f.34 (AGENTS gotcha: foreign-NixOS /etc symlink escape) | **open — routed** TODO_LIST docs-debt (gotchas-archive narratives) |
+| f.35 (rotate dead-box secrets) | **open (untracked)** — recovered `.env`/JWT secrets should be rotated if reused; flagged |
+| f.36 (30-day manifest re-verify) | **Won't do** — /tmp manifests lost; fresh-manifest regeneration never happened (noted); pool-side archive is the retained copy |
+| f.39 (Signal cache check) | Won't do — closure |
+| f.40 (close out §G) | **done** — this table + the 19-12 resolution |
+
+Archived as resolution-complete (hunt closed; every item carries a verdict above).

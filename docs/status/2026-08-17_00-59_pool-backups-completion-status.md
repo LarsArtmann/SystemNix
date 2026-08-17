@@ -26,17 +26,17 @@
 ## b) PARTIALLY DONE
 
 1. **Seed sends in flight.** `btrbk-root` + `btrbk-data` mid-send (`activating`), catching up from the oldest retained snapshots. Root-side 712G+ total expected on pool; verify tonight ~00:45+.
-2. **monitor365 backup-entry gating written but NOT deployed** — the deploy was blocked by the 95% disk gate (see d.5). Until it lands, `backup_healthy{monitor365}=0` keeps `backup_all_healthy` at 0 → recurring Discord alerts.
+2. **monitor365 backup-entry gating written but NOT deployed** — the deploy was blocked by the 95% disk gate (see d.5). Until it lands, `backup_healthy{monitor365}=0` keeps `backup_all_healthy` at 0 → recurring Discord alerts. _(2026-08-17: the pre/post-deploy-check monitor365 gating itself shipped earlier via the 22-00 overhaul; this config-side entry rides the working tree, deploy tracked in TODO_LIST P0 "free root below 95%")_
 3. **Paperless admin password handover** — generated and in use, but user has not received it yet (below).
 
 ## c) NOT STARTED
 
-1. Plan-doc decision-record amendment (`2026-08-16_20-22_three-drive-repurposing.md` still describes borg + sdf offsite).
-2. AGENTS.md storage section (pool layout, DAS topology, btrbk targets, "do not touch sdf/SanDisks").
-3. TODO_LIST/CHANGELOG entries for the repurposing + backup work.
-4. Boot-resilience test (DAS powered off → boot must stay clean).
-5. Pool-usage Gatus alert (fill-rate early warning).
-6. hd-idle spin-down for the HDDs (undecided).
+1. ~~Plan-doc decision-record amendment (`2026-08-16_20-22_three-drive-repurposing.md` still describes borg + sdf offsite).~~ done — amended + archived 2026-08-17 (docs-health pass)
+2. ~~AGENTS.md storage section (pool layout, DAS topology, btrbk targets, "do not touch sdf/SanDisks").~~ done — "HDD Backup Pool & DAS Topology" section added 2026-08-17
+3. ~~TODO_LIST/CHANGELOG entries for the repurposing + backup work.~~ done — 2026-08-17: CHANGELOG `Three-drive repurposing` entry + full TODO_LIST harvest/rewrite
+4. Boot-resilience test (DAS powered off → boot must stay clean). ← open — TODO_LIST Priority 2
+5. Pool-usage Gatus alert (fill-rate early warning). ← open — TODO_LIST Priority 3
+6. hd-idle spin-down for the HDDs (undecided). ← open — optional, TODO_LIST Priority 3
 
 ## d) TOTALLY FUCKED UP
 
@@ -65,10 +65,10 @@
 4. Remove the stray `/var/lib/paperless` initial-DB remnants from the misconfigured first deploy (verify pool instance healthy first).
 5. Verify smartd is actually polling both TOSHIBA drives at runtime (`smartctl -a` data timestamps / correct rendered config path).
 6. Deliver paperless password (below) → user logs in, changes password in UI.
-7. Amend the plan doc with the decision record (btrfs-send not borg; sdf/SanDisks frozen; Google offsite; backup-tier layout).
-8. Write the AGENTS.md storage section (pool layout, DAS topology, backup tiers, btrbk targets, sdf/SanDisk freeze).
-9. TODO_LIST: own-tools (monitor365/discordsync/browser-history) NVMe→pool migrations into the pre-created subvols; stray `/var/lib/paperless` cleanup; /rust-cache partition deletion batch.
-10. CHANGELOG entry for the repurposing + backup tier.
+7. ~~Amend the plan doc with the decision record (btrfs-send not borg; sdf/SanDisks frozen; Google offsite; backup-tier layout).~~ done 2026-08-17 (docs-health)
+8. ~~Write the AGENTS.md storage section (pool layout, DAS topology, backup tiers, btrbk targets, sdf/SanDisk freeze).~~ done 2026-08-17 (docs-health)
+9. ~~TODO_LIST: own-tools (monitor365/discordsync/browser-history) NVMe→pool migrations into the pre-created subvols; stray `/var/lib/paperless` cleanup; /rust-cache partition deletion batch.~~ done 2026-08-17 — all three live in TODO_LIST (Priority 3 / Priority 2)
+10. ~~CHANGELOG entry for the repurposing + backup tier.~~ done 2026-08-17 (docs-health)
 11. Boot-resilience test: detach DAS → `nixos-rebuild build-vm` or real boot → expect clean boot with failed-but-contained btrbk units, no `/mnt/pool` contamination on root.
 12. Pool-usage Gatus alert (>80% warn) — cheap while near-empty.
 13. Watch tomorrow-morning journal for the first full nightly cycle (btrbk ×3 + verify ×2 + dumps ×5 + exporter).
@@ -85,3 +85,9 @@
 ---
 
 **Standing state at write time:** immich + paperless + all 5 backup jobs healthy on the pool; seeds mid-flight (424G received); root 95%/38G free; tree clean at `26beaf0c`; one config change (monitor365 gating) written but undeployed behind the disk gate.
+
+---
+
+## Resolution (2026-08-17, docs-health pass)
+
+Docs follow-ups (c.1-3, f.7-10) all completed in the 2026-08-17 docs-health session (CHANGELOG entry, AGENTS.md "HDD Backup Pool & DAS Topology" section, TODO_LIST harvest, plan-doc decision record). Operational follow-ups (f.1-6, f.11-16) live in TODO_LIST: seeds/verify-cycle monitoring (P3), paperless stray dir (P3), smartd runtime verification (P2), boot-resilience test (P2), pool-usage alert + hd-idle + coarse pool-backup snapshots (P3/optional), own-tools pool migrations (P3). Open user questions (g.1-3) routed: `/home/hermes` 58G and the paperless password handover are TODO_LIST Priority 2; the disk-gate policy question is folded into the P0 "free root below 95%" item.

@@ -24,9 +24,9 @@
 
 ## b) PARTIALLY DONE
 
-1. **Chain-proof test artifacts still live:** rule `01a00852-8bee-7537-bea3-6066077c8499` (+ its policy) — DELETE both (rule first, then policy by id; API-created policies are NOT auto-cleaned on rule delete).
-2. **Permanent provisioner fix designed, not implemented:** after rule convergence, converge route policies — GET `/api/v1/route_policies` (they're visible now), create-if-absent (name=ruleId, expression `ruleId == "<id>"`, channels), delete orphans **filtered by systemnix tag** (never touch user policies), convergence assertion = exactly one policy per rule. Must go into `_signoz-scripts.nix` + the VM test.
-3. Gatus meta-check: design complete (a.7), code not written (`system-health.nix` collector + `gatus-config.nix` conditions + `pkgs.sqlite` runtimeInput).
+1. **~~Chain-proof test artifacts still live~~ resolved** — deleted by the 06-38 session (CHANGELOG "Test artifacts from the routing-regression diagnosis removed"; live state re-verified 20 rules/20 policies).
+2. **~~Permanent provisioner fix designed, not implemented~~ resolved** — provisioner v6 policy convergence deployed + live-proven by the 06-38 session (recreated 20 wiped policies in 13s; second run idempotent). — GET `/api/v1/route_policies` (they're visible now), create-if-absent (name=ruleId, expression `ruleId == "<id>"`, channels), delete orphans **filtered by systemnix tag** (never touch user policies), convergence assertion = exactly one policy per rule. Must go into `_signoz-scripts.nix` + the VM test.
+3. ~~Gatus meta-check: design complete (a.7), code not written (`system-health.nix` collector + `gatus-config.nix` conditions + `pkgs.sqlite` runtimeInput).~~ resolved — sqlite-direct rewrite shipped by the 06-38 session
 4. Truncation warnings (02:52–03:07) explained: REAL deliveries through stale bindings using the OLD default title (label-dump >256 runes). Our custom short title was live and fine all along — no bug in the templates.
 
 ## c) NOT STARTED (carried queue)
@@ -66,3 +66,9 @@ Unlabeled-value-pat lint; provisioner idempotency VM test (now must cover policy
 ---
 
 **Session verdict:** the standing queue's first item ("watch first real alert render") exposed that there was nothing to watch — the pipeline was dead. Root-caused to route-policy routing in SigNoz's custom dispatcher, fixed live (20 policies), delivery chain machine-proven end-to-end at 04:08:09. Permanent fixes designed but NOT deployed — see f.1–f.4. STOPPING here per instruction.
+
+---
+
+## Resolution (2026-08-17, docs-health pass)
+
+All b-section items resolved by the 06-38 permanent-fix session (struck above; its report is the authoritative record). Carried queue (c): unlabeled-value-pat lint → TODO_LIST P3 (HTML-needle variant); provisioner VM test → P3; dashboards → DONE (23-27, 251→5 native-v2); root-disk relief → P0; overlap policy + send_resolved → untracked. f-list: f.1 done (artifacts cleaned), f.2 done (v6 convergence), f.3 done (external URL + `{{$value}}` fixed), f.4 done (sqlite meta-check), f.5 — dashboards done / pat lint routed / root disk P0, f.6 moot (monitor365 disabled). g.2 — monitor365 moot (disabled), browser-history recovered; disk alert doing its job (P0). g.4 (daily canary) → untracked (delivery proven via probe). Archived as resolution-complete.

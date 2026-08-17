@@ -62,7 +62,7 @@
 
 ## f) NEXT — up to 50, ordered
 
-**Disk crisis (root 92%, 57G free — the through-line):**
+**Disk crisis (root 92%, 57G free — the through-line):** — _2026-08-17: items 1-3 routed TODO_LIST P2 (partition surgery batch), item 4 → P2 (Docker→SSD2), items 5-7 → P0 free-root / untracked_
 1. Partition surgery: delete `nvme0n1p9` (98G), grow adjacent BTRFS partition, `btrfs filesystem resize` — needs a careful adjacency/boot-partition plan (p6=/, p9=?)
 2. `sudo rmdir /rust-cache` leftover root-owned mountpoint
 3. Remove redundant `@cache-home`/`@go`/`@npm`/`@cargo` automounts (hardware-configuration.nix; verify btrbk untouched)
@@ -71,7 +71,7 @@
 6. Run a balance pass after partition grow (chunk redistribution)
 7. Quantify `/nix` store size; consider `nix.gc` aggressive window given 47G store
 
-**Alert/monitoring correctness (post alert-spam fixes):**
+**Alert/monitoring correctness (post alert-spam fixes):** — _2026-08-17: items 8 done (probe alerts verified 06-38), 9 done (recovered; sustained-failures meta-check live), 10 → TODO_LIST P3, 11 untracked, 12 → P3, 13 done (converger proven idempotent)_
 8. Verify sibling `66e78231` fixes live: did any Discord alert fire (correctly or spam) during 03:26–03:39 browser-history downtime?
 9. Verify Gatus browser-history endpoints are green now (no silent gap)
 10. Identify the residual WARN in post-deploy-check (I/O pressure vs quickshell)
@@ -79,26 +79,26 @@
 12. Quickshell journal 1-error-line WARN — triage
 13. Confirm SigNoz provisioner convergence (no fake RESOLVED/FIRING pairs) on next deploy cycle
 
-**post-deploy-check / deploy.sh hygiene:**
+**post-deploy-check / deploy.sh hygiene:** — _2026-08-17: items 14 → TODO_LIST P3 (/health poll; urgency reduced by fast startup), 15 done (22-00 monitor365 SKIP-gating), 16 → P3, 17 → P3_
 14. Poll-with-timeout browser-history `/health` (e-1)
 15. Gate monitor365 probes on enable flag (TODO 51)
 16. Reconsider `deploy.sh` explicit browser-history restart (e-2)
 17. Pocket-ID SQLITE_BUSY: require N occurrences before FAIL (TODO 51 second half — BUSY cleared on its own again this session)
 
-**Upstream Go repos (carried):**
+**Upstream Go repos (carried):** — _2026-08-17: items 18 done (04-32 session tests green), 19-20 untracked upstream, 21 done (storage/v4.7.0 async startup shipped), 22 untracked_
 18. `go test ./...` in browser-history (cqrs-htmx jump shipped build-only)
 19. `go test ./...` in go-cqrs-lite (dba6f007)
 20. `go test ./...` in file-and-image-renamer (fa890d6)
 21. Root-cause browser-history pre-bind CPU burn; upstream fix = bind-early/async-replay (needs semantic decision — see g-3)
 22. Confirm the 4.5-min init isn't growing run-over-run (compare next restart's journal timestamps)
 
-**Session close-out:**
+**Session close-out:** — _2026-08-17: items 23 done (clean commits landed), 24 moot (daemon behavior accepted), 25 done (this docs-health harvest), 26 done (01-34 doc tracked+archived)_
 23. Commit the working tree cleanly — SEPARATE mine (hardware-configuration.nix, TODO_LIST.md, AGENTS.md rust-cache hunk) from sibling's (gatus-config.nix, pre-deploy-check.sh, CHANGELOG.md, AGENTS.md SigNoz hunks, 2 untracked status docs). Pathspec discipline this time — last session swept sibling files twice.
 24. Verify auto-commit daemon behavior vs the above (don't race it)
 25. HARVEST previous report's section (f) into TODO_LIST (docs-health skill) — 3rd session carrying this
 26. Owner session to commit `2026-08-16_01-34_DISCORD-ALERT-SPAM-DIAGNOSIS.md` (still untracked)
 
-**Bigger carried items (unchanged):**
+**Bigger carried items (unchanged):** — _2026-08-17: item 27 moot (monitor365 disabled), 28 → TODO_LIST P2 (hermes bump), 29 → P3 (FastFlowLM), 30 → P3 (start-limit-audit), 31 → P2 (btrfs conversion), 32 dropped (no history rewrite)_
 27. monitor365 restoration — start with the empty-journal mystery (unit not starting vs start-limit)
 28. Hermes: bump past v0.20.1, delete `registration_lifecycle` patch (TODO 45)
 29. FastFlowLM NPU packaging (TODO 52)
@@ -117,3 +117,9 @@
 ---
 
 **Bottom line:** tmpfs relief real (+41G RAM), `/rust-cache` mount fully retired and verified, smoke driven to green, but the disk crisis on `/` is untouched (92%) and the big irreversible step needs your authorization. Four honest failures this session, none damaging; the two systemic ones (insta-fail smoke checks, double-restart downtime) are cheap fixes with outsized deploy-noise payoff.
+
+---
+
+## Resolution (2026-08-17, docs-health pass)
+
+Section-header verdicts above cover the full f-list (routed/done/moot per item). b-section: b.1 partition surgery → TODO_LIST P2; b.2 root disk → P0 (hit 95% on 08-17 before the pool-session's immich removal freed extents); b.3 automount removal → P2. c-section: c.1 partially done (browser-history tests green 04-32; renamer/cqrs-lint untracked), c.2 done (03-09 fixes verified live), c.3 done (probe alert 06-38), c.4 done (root-caused + fixed: go-cqrs-lite keyset pagination, storage/v4.7.0), c.5 → TODO_LIST P3 (residual WARNs), c.6 done (this harvest). g.1 (partition surgery authorization) → standing TODO_LIST P2 manual item; g.2 — monitor365 moot, alert-spam fixed, disk = P0; g.3 — resolved by the async-startup design (readiness gate, bind early). Archived as resolution-complete.

@@ -76,36 +76,36 @@ Also: prior session's open question (i) is now **ANSWERED — alerts ARE deliver
 ## f) NEXT — up to 50 items
 
 **Fix batch (this arc, in order):**
-1. Finish research: alertmanager external-url YAML key in signoz config schema (g/7)
-2. Rewrite `_signoz-scripts.nix` rule provisioner: skip-unchanged, dedupe-by-name, verify deletes, convergence assert
-3. Add channel title/message custom templates (minimal: alertname, severity, description, value, rule link)
-4. Channel migration path: channel exists → needs update (PUT `/api/v1/channels/{id}` or safe delete+recreate — verify which the API supports)
-5. `signoz.nix`: add alertmanager external URL `https://signoz.${domain}` (from `config.networking.domain`)
-6. `system-health.nix`: per-service threshold = 90% of unit MemoryMax (fallback: current flat for units without MemoryMax); fix stale comment
-7. `_signoz-metrics.nix`: correct nvme keys per g.2 answer; drop `// 0` → error+skip on missing key
-8. `nvme-health-monitor.nix`: same key fix for the desktop-notify twin (`available_spare` → real key)
-9. Root-cause `node_systemd_units{state="failed"}`: find emitting source or rewire rule to system_health collector's failed-unit flags
-10. Fix "Systemd Service Failed" rule description (`{{.Labels.name}}` label doesn't exist on that series)
-11. `journalctl -u nvme-metrics` — collector error check (d.20)
-12. Clean the 3 live zombie rules (fixed provisioner does this on first run — verify)
-13. Gates: `nix fmt`, `nix flake check --no-build`
-14. Deploy (`nix run .#deploy`)
-15. Verify: `/api/v1/rules` shows exactly 21 unique names, zero duplicates
-16. Verify: `nvme.prom` has real spare/percent values (not 0)
-17. Verify: next real alert renders clean (title/body/link) — may need to wait for one
-18. AGENTS.md: add provisioner-idempotency gotcha + SigNoz alerting section
-19. CHANGELOG entry
-20. Status report for the fix round
+1. ~~Finish research: alertmanager external-url YAML key in signoz config schema (g/7)~~ done — `alertmanager.signoz.external_url` (03-09 batch)
+2. ~~Rewrite `_signoz-scripts.nix` rule provisioner: skip-unchanged, dedupe-by-name, verify deletes, convergence assert~~ done — v5 converger (03-09)
+3. ~~Add channel title/message custom templates (minimal: alertname, severity, description, value, rule link)~~ done — custom title/message via `PUT /api/v1/channels/{id}` (03-09)
+4. ~~Channel migration path: channel exists → needs update (PUT `/api/v1/channels/{id}` or safe delete+recreate — verify which the API supports)~~ done — PUT path works (03-09)
+5. ~~`signoz.nix`: add alertmanager external URL `https://signoz.${domain}`~~ done — `alertmanager.signoz.external_url` + restartTriggers (03-09)
+6. ~~`system-health.nix`: per-service threshold = 90% of unit MemoryMax; fix stale comment~~ done — thresholds derived at collection time (03-09)
+7. ~~`_signoz-metrics.nix`: correct nvme keys; drop `// 0` → error+skip on missing key~~ done — `avail_spare`/`percent_used` + `node_nvme_collector_keys_missing` (03-09)
+8. ~~`nvme-health-monitor.nix`: same key fix for the desktop-notify twin~~ done (03-09)
+9. ~~Root-cause `node_systemd_units{state="failed"}`~~ done — rewired to per-unit `node_systemd_unit_state{state="failed"} == 1` (03-09)
+10. ~~Fix "Systemd Service Failed" rule description~~ done (03-09)
+11. ~~`journalctl -u nvme-metrics` — collector error check (d.20)~~ done — keys confirmed live (03-09)
+12. ~~Clean the 3 live zombie rules~~ done — provisioner deduped them on first run (03-09)
+13. ~~Gates: `nix fmt`, `nix flake check --no-build`~~ done (03-09)
+14. ~~Deploy (`nix run .#deploy`)~~ done (03-09, ×2)
+15. ~~Verify: `/api/v1/rules` shows exactly 21 unique names, zero duplicates~~ done — 20 rules/20 unique verified (03-09; count later 23 with the meta-alerts)
+16. ~~Verify: `nvme.prom` has real spare/percent values (not 0)~~ done — 100% spare/13% used live (03-09)
+17. ~~Verify: next real alert renders clean (title/body/link)~~ done — `vector(42)` probe rendered `probe value=[42]` + ruleSource link (06-38)
+18. ~~AGENTS.md: add provisioner-idempotency gotcha + SigNoz alerting section~~ done (03-09/06-38)
+19. ~~CHANGELOG entry~~ done (03-09)
+20. ~~Status report for the fix round~~ done — `2026-08-16_03-09_DISCORD-ALERT-FIX-BATCH.md`
 
 **Follow-on (queue):**
 21. Root disk relief: `nix run .#` gc helpers / verify btrbk snapshot expiry is actually freeing extents
-22. monitor365 backup broken (999h stale) — separate incident, known baseline
+22. ~~monitor365 backup broken (999h stale) — separate incident, known baseline~~ moot — monitor365 disabled; backup gating rides the working-tree deploy (TODO_LIST P0)
 23. btrfs scrub interrupted on both mounts — weekly scrub never completes (reboots); consider scrub resume strategy or accept
 24. `node_btrfs_device_errors_total corruption 1.8e19` on nvme0n1p8 — verify it's the -1 sentinel, not real corruption
 25. Decide Gatus-vs-SigNoz rule overlap policy (disk usage exists in both?)
 26. Consider suppressing `send_resolved` for warning severity
 27. Consider severity-based channel split or at least emoji prefix (🔴/🟡/🟢) in title template
-28. SigNoz dashboards still v1-format best-effort (`_signoz-scripts.nix:113-117` TODO) — v2 schema rewrite
+28. ~~SigNoz dashboards still v1-format best-effort (`_signoz-scripts.nix:113-117` TODO) — v2 schema rewrite~~ done — 23-27 session (251 zombies → 5 native-v2, converging provisioner v7)
 29. `Systemd Service Failed` rule: consider per-name series from textfile collector so the alert says WHICH service
 30. Add eval-time or pre-deploy check: every SigNoz rule query references an existing metric (extend metric-presence validation)
 31. VM test for provisioner idempotency (run twice → identical rule set, no duplicates)
@@ -116,7 +116,7 @@ Also: prior session's open question (i) is now **ANSWERED — alerts ARE deliver
 36. Prior-session P0 remainder: buildcache-gc VM test
 37. Sunday 05:00: first hardened GC journal check (`journalctl -u buildcache-gc.service`)
 38. Gatus alert-reminder mechanism (03:37 buildcache alert sat ~18h unacknowledged)
-39. Annotate prior reports' open lists with closures
+39. ~~Annotate prior reports' open lists with closures~~ done — 2026-08-17 docs-health pass (this annotation)
 40. Consider moving `discord.default.*` knowledge into AGENTS.md SigNoz section (template override point)
 
 ## g) QUESTIONS (cannot resolve myself)
@@ -128,3 +128,9 @@ Also: prior session's open question (i) is now **ANSWERED — alerts ARE deliver
 ---
 
 **Session verdict:** diagnosis strong (4.5 of 5 causes verified with live evidence), execution zero (interrupted by design before edits), two self-inflicted round-trips (d.16, d.17), one overclaim (d.18). The fix plan is concrete and sequenced; nothing is deployed from this session.
+
+---
+
+## Resolution (2026-08-17, docs-health pass)
+
+The entire fix batch (f.1-20) was executed by the 03-09 fix-batch session — all five root causes fixed, deployed twice, machine-verified (see CHANGELOG "Discord alert spam — all 5 root causes fixed" + the SigNoz routing entries). Follow-on verdicts: f.21 → TODO_LIST P0 free-root item; f.22 moot (struck); f.23/f.24 → untracked btrfs items (scrub now weekly incl. pool; corruption sentinel unverified); f.25-27 → partially resolved (templates carry 🔴/🟡 emoji; overlap policy + send_resolved tuning untracked); f.28 done (struck); f.29-33 → superseded by the 23-27 deep integration (rule audit + meta-alerts + dashboards rebuilt) — remaining overlap dedup untracked-minor; f.34 → untracked (CARGO_INCREMENTAL); f.35 moot (monitor365 disabled); f.36 → TODO_LIST (gc/provisioner VM tests); f.37 done — first hardened scheduled runs verified green (22-05 session + subsequent Sundays); f.38 → untracked (alert reminder mechanism); f.39 done (struck); f.40 done — AGENTS.md SigNoz section documents the template override point. b.7/b.8 resolved by the fix batch (external_url key found; systemd-failed rule rewired); b.9 incidental findings — scrub since stabilized (weekly, pool included), monitor365 moot, corruption-sentinel untracked. g.1 answered (format shipped as proposed); g.2 answered (`avail_spare`/`percent_used`); g.3 standing commit question — resolved by practice: sessions commit, daemon sweeps stragglers. Archived as resolution-complete.

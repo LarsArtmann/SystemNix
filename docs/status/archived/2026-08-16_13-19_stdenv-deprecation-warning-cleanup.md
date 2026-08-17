@@ -175,22 +175,13 @@ and audit pipeline untouched; I did not run `nix fmt` or `nix flake build`.
 (In rough priority order, filtered to what this session exposed. Not "things
 that would be nice to do" — actual blockers and quick wins.)
 
-1. Replace the placeholder `sha256-AA…` / `sha256-BBB…` in `monitor365/flake.nix`
-   with the real narHash for `wireguard-collector.git v0.4.1`. Compute via
-   `nix-prefetch-git --url https://github.com/LarsArtmann/wireguard-collector.git
-   --rev f11ab7bb1b9c7fd1cd613afd8eca12c89b3af714`. **Build-blocker until done.**
-2. Run `nix flake build .#monitor365-server` to verify the wireguard-collector
-   FOD hash is right and the build actually proceeds.
-3. Run `nix fmt` (treefmt + alejandra) over all four changed repos.
-4. Run `nix flake check --no-build` again after `nix fmt` to confirm no warning
-   re-appeared (treefmt can occasionally re-insert patterns).
-5. Run `nix flake check --no-build` on `dnsblockd`, `emeet-pixyd`, `monitor365`,
-   `DiscordSync` standalone to confirm zero residual warnings.
-6. Stage and commit each repo separately: SystemNix, dnsblockd, emeet-pixyd,
-   monitor365, DiscordSync. With proper attribution. **Do NOT push.**
-7. Bump the upstream flake inputs in SystemNix's `flake.lock` once the four
-   repos have new tags. Should be a single `nix flake lock --update-input X`
-   per repo.
+1. ~~Replace the placeholder `sha256-AA…` / `sha256-BBB…` in `monitor365/flake.nix` with the real narHash for `wireguard-collector.git v0.4.1`.~~ **moot while monitor365 is disabled** (enable = false since 2026-08-12 — the FOD never builds); real hash becomes a prerequisite of the G7 re-enable decision (TODO_LIST)
+2. ~~Run `nix flake build .#monitor365-server` to verify the wireguard-collector FOD hash is right~~ moot — same (package not built while disabled)
+3. ~~Run `nix fmt` (treefmt + alejandra) over all four changed repos.~~ done — swept by the repos' own pipelines/daemon (`7fdf33bd` for SystemNix)
+4. ~~Run `nix flake check --no-build` again after `nix fmt` to confirm no warning re-appeared~~ done — green through the 08-16 deploys
+5. ~~Run `nix flake check --no-build` on `dnsblockd`, `emeet-pixyd`, `monitor365`, `DiscordSync` standalone~~ done at the respective repos (dnsblockd's own report covers its full check)
+6. ~~Stage and commit each repo separately~~ done — auto-git daemon sweeps landed them (`7fdf33bd` et al.)
+7. ~~Bump the upstream flake inputs in SystemNix's `flake.lock` once the four repos have new tags.~~ done — inputs bumped through the 08-16 lock bumps
 8. Add an eval-time assert in SystemNix's `flake.nix` that fails on any
    `pkgs.stdenv.isLinux` / `isDarwin` / `system` access in the closure. Pattern
    similar to `nixpkgsTarballGuard`.
@@ -305,3 +296,9 @@ that would be nice to do" — actual blockers and quick wins.)
    inputs once they're tagged?** I don't have permission to push across your
    other repos, and even committing locally in another repo feels like a
    boundary I should not cross without explicit confirmation.
+
+---
+
+## Resolution (2026-08-17, docs-health pass)
+
+f.1-7 resolved inline above (placeholder-hash items moot while monitor365 is disabled — real hash is a G7 re-enable prerequisite; fmt/check/commit/bump items landed via the daemon + 08-16 lock bumps). Remaining f.8-f.50 verdicts: f.8/f.9/f.17-19/f.38 (eval-time guard, pre-commit grep, lint app, VM test, CI gate) — open, untracked prevention-layer ideas below the value bar (the migration is complete; a regression needs a NEW offender); f.10 (AGENTS.md rule) — folded into this resolution (rule: use `stdenv.hostPlatform.*`, never `stdenv.isLinux`/`pkgs.system`); f.11-14 (zfs + internals + wireguard warnings) — moot/untracked (ZFS era closed 2026-08-16); f.15/f.16 (docs audit, FEATURES section) — untracked minor; f.20-50 (per-file grep verifications, node checks, deploy runs) — superseded by the four green deploys on 08-16/17 (44-45 PASS) and the `e5bdc4a4` eval greens; no further action. g.1 — nixpkgs internals, accepted; g.2 — moot (monitor365 disabled); g.3 — daemon swept the commits. Archived as resolution-complete.

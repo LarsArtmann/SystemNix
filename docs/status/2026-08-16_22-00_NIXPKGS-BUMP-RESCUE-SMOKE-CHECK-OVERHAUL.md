@@ -36,7 +36,7 @@ A concurrent session (drive repurposing, `docs/planning/2026-08-16_20-22_three-d
 1. **curl gzip sweep** — check scripts fixed and verified, but **module-level body-parsing curls NOT yet audited/fixed**: `pocket-id.nix:79,284` (API provisioner, parses with jq), `forgejo-repos.nix:69,90`, `_forgejo-scripts.nix:55,188,541` (Forgejo API). These target Go APIs which may not gzip — unverified risk, not confirmed broken. Effort: S to verify each endpoint's encoding behavior.
 2. **Null-byte warning elimination** — one "command substitution: ignored null byte" warning still appears in the packaged script (line ~233 post-edit). Root cause of THAT specific line not yet identified (gzip fixed the Crush Daily one; another fetch still emits NULs — likely DiscordSync `/api/stats` embedded data, which already carries a `grep -a` note). Cosmetic but signals an unclean parse. Effort: S.
 3. **Verification of the smoke-check fixes through the real deploy path** — `nix run .#post-deploy-check` verified (which builds the wrapped script), but `pre-deploy-check` with `--compressed` hasn't been executed end-to-end yet (next deploy will). Effort: zero (wait for next deploy).
-4. **Session changes uncommitted at report time** — all fixes sit in the working tree alongside the concurrent session's edits. The auto-git daemon will sweep them, but attribution/messages may mix the two sessions' work. (Report itself is committed separately per status-report procedure.)
+4. ~~Session changes uncommitted at report time~~ — resolved: auto-git daemon swept everything (`e350b32e` et al.); report itself committed separately
 
 ## c) NOT STARTED
 
@@ -51,7 +51,7 @@ A concurrent session (drive repurposing, `docs/planning/2026-08-16_20-22_three-d
 *(Nothing from this session's work is broken. Two live operational failures exist, both external to the deploy:)*
 
 1. **DiscordSync ↔ Turso cloud sync is DOWN — Turso free-plan quota exhausted** — journal shows `quota_exceeded … SQL read operations are forbidden (reads are blocked, do you need to upgrade your plan?)`, push+pull failing since ≥21:16, sync circuit breaker tripped at 21:26 (1h backoff, `is_quota_error=true`). Local SQLite serving unaffected (process healthy, thumb-hash backfill in progress). Severity: local-first data safe; cloud offsite copy stale. Root cause: Turso plan limits. Mitigation: none applied — needs a decision (see question 1).
-2. **Immich offline (502 external, unreachable local) — deliberately stopped by the concurrent storage session at 21:13** for the Toshiba MG08 pool migration (`btrfs subvolume create /mnt/pool/services/immich` observed in the journal, sudo from that session's PWD). NOT deploy damage. Gatus was still green at 21:12:58 pre-stop; will alert during the migration window. Ownership/ETA unknown from this session (see question 2).
+2. ~~Immich offline (502 external, unreachable local) — deliberately stopped by the concurrent storage session at 21:13~~ **resolved** — migrated to `/mnt/pool/services/immich`, byte-exact verified, serving again (2026-08-17 00:59 session)
 
 **Self-critique of this session's own mistakes:**
 
@@ -72,8 +72,8 @@ A concurrent session (drive repurposing, `docs/planning/2026-08-16_20-22_three-d
 | # | Task | Impact | Effort | Category |
 |---|------|--------|--------|----------|
 | 1 | Decide DiscordSync/Turso: upgrade plan vs disable cloud sync (local-only) | Critical | S | Decision |
-| 2 | Confirm Immich returns post pool-migration; verify data intact at `/mnt/pool/services/immich` | Critical | M | Ops |
-| 3 | Verify concurrent session's `immich.nix`/`hardware-configuration.nix` edits get deployed (drift check vs running gen) | High | S | Ops |
+| 2 | ~~Confirm Immich returns post pool-migration; verify data intact at `/mnt/pool/services/immich`~~ done — 2026-08-17 00:59 session verified byte-exact (20,705 files / 17,241,720,562 bytes both sides) and immich serving from the pool | Critical | M | Ops |
+| 3 | ~~Verify concurrent session's `immich.nix`/`hardware-configuration.nix` edits get deployed (drift check vs running gen)~~ done — four deploys landed them (44-45 PASS ×4) | High | S | Ops |
 | 4 | Audit module-level body-parsing curls for gzip risk (pocket-id provisioner, forgejo scripts); add `--compressed` where parsed | High | S | Bug |
 | 5 | Identify + fix remaining null-byte warning source in post-deploy-check (~line 233) | Medium | S | Quality |
 | 6 | Runtime-verify wf-recorder screen recording on niri (ffmpeg_8) | Medium | S | Verification |
@@ -82,13 +82,13 @@ A concurrent session (drive repurposing, `docs/planning/2026-08-16_20-22_three-d
 | 9 | Investigate Pocket ID SQLITE_BUSY restart bursts (WAL/`busy_timeout`/provision contention) | Medium | M | Bug |
 | 10 | Identify the quickshell 1-error-line WARN source (correct journal unit) | Low | S | Bug |
 | 11 | Confirm File Renamer 0-operations state is expected (fresh dir?) not split-brain | Medium | S | Verification |
-| 12 | Document lock-node key mapping gotcha (`nixpkgs` vs `nixpkgs_2`) in AGENTS.md | Low | S | Documentation |
+| 12 | ~~Document lock-node key mapping gotcha (`nixpkgs` vs `nixpkgs_2`) in AGENTS.md~~ done 2026-08-17 (docs-health) | Low | S | Documentation |
 | 13 | Add `nix run .#update` app: flake update + `flake check --no-build` gate + switch | Medium | M | Feature |
 | 14 | post-deploy-check: emit machine-readable summary (JSON) for diffable deploys | Low | M | Feature |
 | 15 | Turso: if staying local-only, remove sync env/keys from sops + module | High | S | Cleanup |
 | 16 | Re-run `pre-deploy-check` end-to-end on next deploy (validates `--compressed` metrics scrapes) | Medium | S | Verification |
 | 17 | Monitor365: resolve private-git-dep blocker (publish/vendor wireguard-collector) → re-enable + checks return to enforcing | Medium | L | Feature |
-| 18 | Standing backlog unchanged — see TODO_LIST.md P0–P7 (go-cqrs-lite github input, benchstat pin, renamer follows, zram ADR, etc.) | Medium | — | Mixed |
+| 18 | ~~Standing backlog unchanged — see TODO_LIST.md P0–P7 (go-cqrs-lite github input, benchstat pin, renamer follows, zram ADR, etc.)~~ done — TODO_LIST fully harvested + rewritten 2026-08-17 | Medium | — | Mixed |
 
 ## g) Questions (cannot answer myself)
 
@@ -99,3 +99,9 @@ A concurrent session (drive repurposing, `docs/planning/2026-08-16_20-22_three-d
 ---
 
 *Report procedure note: written as `.md` per explicit user instruction — the status-report skill's canonical format is styled HTML; this is a deliberate one-off override, not a new default. Section (f) is the docs-health HARVEST input; TODO_LIST.md already carries the two closed items, the rest await harvest.*
+
+---
+
+## Resolution (2026-08-17, docs-health pass)
+
+Resolved since writing: f.2/f.3 (immich verified on pool + edits deployed), f.12 (AGENTS gotcha added), f.18 (TODO_LIST rewritten). Routed to TODO_LIST 2026-08-17: f.1/f.15 (Turso — P0 decision), f.4 (module curl gzip audit — P1), f.5/f.10/f.11 (residual WARNs — P3), f.6 (wf-recorder runtime test — P2), f.7/f.8 (AUTH_VHOSTS derivation + fetch() helper — P3), f.9 (Pocket ID SQLITE_BUSY — P3), f.13 (folded into deploy.sh lock-wait item — P3), f.16 (next-deploy pre-deploy re-run — P3), f.17 (monitor365 G7 decision — P1). f.14 (JSON smoke summary) left untracked (low value). Q1 (Turso) and Q2 (immich) answered above; Q3 — build success accepted as sufficient closure bar for the TODO, runtime clip test remains P2.

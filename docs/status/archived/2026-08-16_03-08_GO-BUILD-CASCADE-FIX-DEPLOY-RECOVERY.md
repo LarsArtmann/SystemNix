@@ -88,25 +88,25 @@ Also noticed mid-session: a sibling session reset cqrs-htmx master from `8028bf2
 ## f) Up to 50 things to get done next (impact-sorted)
 
 **Close out this session's loose ends**
-1. Re-run post-deploy-check after 03:10 — confirm pocket-id SQLITE_BUSY FAIL cleared (unverified claim)
-2. Verify Gatus endpoints for browser-history are green post-deploy (no silent alert gap)
-3. Restart browser-history once — confirm the 5-min startup was one-time backfill, not per-boot cost
-4. If per-boot: file upstream (browser-history) — startup shouldn't block port-bind for 5 min, or needs TimeoutStartSec/Gatus grace
-5. Run `go test ./...` in browser-history against pinned revs (close F3 gap for the cqrs-htmx jump)
-6. Run cqrs-lint (`cmd/cqrs-lint`) Go tests
-7. Run file-and-image-renamer Go tests
-8. Split `focus-new-windows.nix` out of `a60a646e` (or land its configuration.nix wiring and note the ride-along) — needs history-rewrite approval
-9. Commit the untracked `docs/status/2026-08-16_01-34_DISCORD-ALERT-SPAM-DIAGNOSIS.md` (owner session's call)
-10. HARVEST this report's (f) into TODO_LIST.md/ROADMAP.md (docs-health) — awaiting instruction
+1. ~~Re-run post-deploy-check after 03:10 — confirm pocket-id SQLITE_BUSY FAIL cleared (unverified claim)~~ done — cleared across all subsequent deploys (44-45 PASS ×4)
+2. ~~Verify Gatus endpoints for browser-history are green post-deploy (no silent alert gap)~~ done — recovered; later covered by the sustained-failures meta-check
+3. ~~Restart browser-history once — confirm the 5-min startup was one-time backfill, not per-boot cost~~ resolved better — storage/v4.7.0 async startup deployed (04-32 arc); startup is seconds
+4. ~~If per-boot: file upstream (browser-history) — startup shouldn't block port-bind for 5 min~~ done — keyset-pagination fix released upstream as `storage/v4.7.0`
+5. ~~Run `go test ./...` in browser-history against pinned revs~~ done — green in the 04-32 session (test-verified against published v4.7.0)
+6. Run cqrs-lint (`cmd/cqrs-lint`) Go tests. ← open (untracked, upstream)
+7. Run file-and-image-renamer Go tests. ← open (untracked, upstream)
+8. ~~Split `focus-new-windows.nix` out of `a60a646e`~~ dropped — history rewrite never authorized (correct default); wiring landed via subsequent commits
+9. ~~Commit the untracked `docs/status/2026-08-16_01-34_DISCORD-ALERT-SPAM-DIAGNOSIS.md`~~ done — tracked + archived 2026-08-17
+10. ~~HARVEST this report's (f) into TODO_LIST.md/ROADMAP.md (docs-health) — awaiting instruction~~ done — 2026-08-17 docs-health pass
 
-**monitor365 outage (pre-existing, 4 smoke FAILs)**
+**monitor365 outage (pre-existing, 4 smoke FAILs)** — _2026-08-17: items 11-15 MOOT — monitor365 deliberately disabled 2026-08-12 (private wireguard-collector); "outage" was config-off, alerting delivery proven, smoke checks auto-SKIP (22-00). Re-enable = TODO_LIST G7._
 11. Diagnose why monitor365-server journal is EMPTY (crashed? unit not starting? start-limit?)
 12. Restore monitor365 server (localhost:3001 /health + /ui/)
 13. Restore monitor365 agent metrics (localhost:9191)
 14. Restore monitor365-server-watchdog timer (pool-deadlock detection offline)
 15. Check whether monitor365 death is the "silence" half of the 01:34 alert-spam story
 
-**Discord alert-spam fixes (from 01:34 doc — diagnosed, unapplied)**
+**Discord alert-spam fixes (from 01:34 doc — diagnosed, unapplied)** — _2026-08-17: items 16-22 ALL DONE by the 03-09 fix-batch session (v5 converger, templates, external URL, derived thresholds, nvme keys, zombie cleanup — see that report + CHANGELOG)_
 16. C1: stop delete+recreate-all provisioning churn in `_signoz-scripts.nix:82-111`
 17. C1b: fix silent `|| true` deletes + stale-list-fetched-once accumulation (3 live duplicate rules)
 18. C2: real Discord message templates instead of alertmanager label dumps
@@ -116,12 +116,12 @@ Also noticed mid-session: a sibling session reset cqrs-htmx master from `8028bf2
 22. Delete the 3 stale duplicate SigNoz rules already live
 
 **Disk & capacity crises**
-23. `/` at 92%: run nix-gc + verify btrbk snapshot expiry is actually reclaiming
-24. /tmp 100%: clear sibling test dirs (`bigtest` 40G etc.) after ownership confirmed
-25. Old `/rust-cache` partition reclamation (TODO_LIST carryover)
-26. Redundant cache-subvolume automounts removal (TODO_LIST carryover)
-27. buildcache btrfs+zstd conversion (script exists: `scripts/buildcache-btrfs-convert.sh`)
-28. Remote backup decision — #1 data-loss risk, flagged since 2026-06-25, all snapshots LOCAL-ONLY
+23. `/` at 92%: run nix-gc + verify btrbk snapshot expiry is actually reclaiming. ← open — TODO_LIST P0 (root 95% on 08-17)
+24. /tmp 100%: clear sibling test dirs (`bigtest` 40G etc.). ← resolved — cleared by the 03-44 session (~41G freed)
+25. Old `/rust-cache` partition reclamation (TODO_LIST carryover). ← open — TODO_LIST Priority 2
+26. Redundant cache-subvolume automounts removal (TODO_LIST carryover). ← open — TODO_LIST Priority 2
+27. buildcache btrfs+zstd conversion (script exists). ← open — TODO_LIST Priority 2
+28. Remote backup decision. ← **advanced** — pool safety net live 2026-08-17; off-site decision = TODO_LIST P0
 
 **Prevention infrastructure (from this session's failure classes)**
 29. Eval-time check: followed-input subtree revs vs upstream's own flake.lock (PMA drift class)
@@ -135,21 +135,21 @@ Also noticed mid-session: a sibling session reset cqrs-htmx master from `8028bf2
 37. Pin-policy: prefer tags over master revs for build inputs (browser-history both pathologies)
 
 **Smaller items noticed in smoke output**
-38. fish startup 1729ms (threshold 200ms) — regression worth profiling
-39. quickshell journal: 1 error line in last hour — inspect
-40. signoz.home.lan auth-gateway 404 WARN — vHost check
-41. dozzle/monitor365/searx/crush/taskchampion vHost SKIPs (unreachable) — DNS/Caddy gap or expected-external-only?
-42. File Renamer dashboard 0 operations WARN — split-brain or fresh install?
-43. Overview 503 in first smoke → recovered after PMA restart — confirm stable, it's `partOf PMA` so every PMA restart bounces it (design smell)
-44. I/O pressure avg10=67.77% reported as "healthy" — threshold review (67% reads high even if under gate)
+38. fish startup 1729ms (threshold 200ms) — regression worth profiling. ← open (untracked)
+39. quickshell journal: 1 error line in last hour — inspect. ← open — TODO_LIST P3
+40. ~~signoz.home.lan auth-gateway 404 WARN — vHost check~~ done — web UI shipped (21-25)
+41. ~~dozzle/monitor365/searx/crush/taskchampion vHost SKIPs (unreachable)~~ done — phantom vhost names fixed (22-00)
+42. File Renamer dashboard 0 operations WARN — split-brain or fresh install? ← open — TODO_LIST P3
+43. Overview 503 in first smoke → recovered after PMA restart — confirm stable. ← known design (partOf PMA bounce; watchdog deployed; untracked)
+44. I/O pressure avg10=67.77% reported as "healthy" — threshold review. ← open (untracked)
 
 **Upstream polish**
-45. browser-history: log "backfill complete" for startup observability
-46. go-cqrs-lite: confirm BuildFlow gate green on master after toolchain pin commit (`ea8fa5072`)
-47. browser-history go.mod: catch up to published cqrs-htmx tags when available (go.work replaces currently hide the version dependency)
-48. pocket-id: investigate SQLITE_BUSY under restart churn (busy_timeout/WAL config)
-49. SystemNix sandbox note: `systemctl`/`curl` banned for this assistant — use `nix run .#post-deploy-check` + journalctl (add to AGENTS.md if durable)
-50. Consider a `deploy --verify-only` mode that runs post-deploy-check without rebuilding (faster triage loops)
+45. browser-history: log "backfill complete" for startup observability. ← superseded — async startup + readiness gate shipped instead (v4.7.0)
+46. go-cqrs-lite: confirm BuildFlow gate green on master after toolchain pin commit. ← open (untracked, upstream)
+47. ~~browser-history go.mod: catch up to published cqrs-htmx tags~~ done — deployed rev `4e7604d` builds against published tags
+48. pocket-id: investigate SQLITE_BUSY under restart churn. ← open — TODO_LIST P3
+49. SystemNix sandbox note: `systemctl`/`curl` banned for this assistant. ← noted (systemctl-ban documented in multiple reports; the wrapper/check-app workaround is established practice)
+50. Consider a `deploy --verify-only` mode. ← open (untracked)
 
 ## g) Questions I cannot answer myself
 
@@ -160,3 +160,9 @@ Also noticed mid-session: a sibling session reset cqrs-htmx master from `8028bf2
 ---
 
 *Format note: written as Markdown per explicit user instruction (skill default is HTML dashboard — override honored, not propagated). Committed via pathspec to avoid repeating this session's swept-file mistake.*
+
+---
+
+## Resolution (2026-08-17, docs-health pass)
+
+Inline verdicts above cover f.1-10, 11-22 (headers), 23-28, 38-50. Prevention block (f.29-37): f.29 untracked (lock-drift eval check); f.30 → TODO_LIST vendor-hash CI item (upstream repos); f.31/f.32 untracked upstream ideas; f.33 untracked (pathspec discipline — practice adopted ad hoc); f.34/f.35 → folded into TODO_LIST P3 pocket-id item + smoke-classification thinking; f.36/f.37 untracked pin-policy items. b-section partials: b.1 resolved (FAILs cleared/moot), b.2/b.3 resolved (browser-history recovered + later fixed at root via storage/v4.7.0), b.4 done (this harvest). c-section: c.1-3 untracked upstream test debt; c.4-5 resolved (disk crisis advanced: pool live, /tmp cleared; root remains TODO_LIST P0); c.6 moot (daemon attribution accepted); c.7 done (01-34 doc tracked). g.1 — dropped (no rewrite; default rule holds); g.2 — resolved by the 03-44 session; g.3 — all three fires since handled: monitor365 moot, alert-spam fixed, disk = standing TODO_LIST P0. Archived as resolution-complete.

@@ -95,16 +95,16 @@
 - **Enclosure health visibility:** USB disconnect events are visible in the kernel log but not metricized; enclosure death is currently invisible until symptoms.
 
 ### f) Next Tasks (prioritized)
-1. Run `e2fsck -f` on the SanDisk partition during next unplug (superblock has error history)
-2. `systemctl start buildcache-gc` or wait for Sun 05:00 (usage 98% → alert will fire)
-3. Swap/replace the JMS567 enclosure (physical — user)
-4. Add USB-disconnect counter metric for `152d:0567` → Gatus alert on flap storms
-5. `pre-deploy-check.sh`: zombie-mount detection (stale major:minor)
-6. Module header comment: document the prevention stack
-7. Consider `usb-storage.quirks=152d:0567:u` (UAS blacklist) if flapping recurs after autosuspend fix
-8. Consider btrfs+zstd conversion (deferred item — turns silent corruption into EIO, ~2x capacity)
-9. Consider `x-systemd.idle-timeout` to unmount when idle (shrinks zombie exposure window)
-10. Monitor365 failures seen in post-deploy smoke (4 FAILs, pre-existing, separate known issue)
+1. Run `e2fsck -f` on the SanDisk partition during next unplug (superblock has error history). ← open — TODO_LIST Priority 2
+2. ~~`systemctl start buildcache-gc` or wait for Sun 05:00 (usage 98% → alert will fire)~~ done — gc ran during the 19-12 session (watermark fired, ~134G freed, 36% after)
+3. Swap/replace the JMS567 enclosure (physical — user). ← open — TODO_LIST Priority 2 (same item as e2fsck window)
+4. Add USB-disconnect counter metric for `152d:0567` → Gatus alert on flap storms. ← open — TODO_LIST Priority 3
+5. `pre-deploy-check.sh`: zombie-mount detection (stale major:minor). ← open — TODO_LIST Priority 3
+6. Module header comment: document the prevention stack. ← open (minor, untracked)
+7. Consider `usb-storage.quirks=152d:0567:u` (UAS blacklist) if flapping recurs after autosuspend fix. ← open (conditional, untracked)
+8. Consider btrfs+zstd conversion (deferred item — turns silent corruption into EIO, ~2x capacity). ← open — TODO_LIST Priority 2
+9. Consider `x-systemd.idle-timeout` to unmount when idle (shrinks zombie exposure window). ← open (untracked)
+10. ~~Monitor365 failures seen in post-deploy smoke (4 FAILs, pre-existing, separate known issue).~~ moot — monitor365 deliberately disabled; smoke checks auto-SKIP since the 22-00 overhaul
 
 ### g) Questions for the User
 1. **Enclosure:** did you replug the SanDisk around 18:3x, or did it reconnect on its own? (Determines whether the flap storm is ongoing or was a one-off session.)
@@ -115,3 +115,9 @@
 
 **Key files:** `modules/nixos/services/buildcache.nix`, `scripts/deploy.sh`, `AGENTS.md`
 **Verification artifacts:** `journalctl -u buildcache-usb-recovery.service` (18:37:47 run), `/var/lib/prometheus-node-exporter/textfile_collectors/buildcache.prom` (real values post-recovery)
+
+---
+
+## Resolution (2026-08-17, docs-health pass)
+
+f-list resolved inline above (f.2 done; f.10 moot; f.1/3 routed Priority 2; f.4/5 routed Priority 3; f.6/7/9 untracked-minor; f.8 routed Priority 2). g questions: g.1 (who replugged) unresolved-but-moot (autosuspend fix + recovery stack deployed); g.2 → the Priority 2 enclosure decision; g.3 → the Priority 2 e2fsck window. The same-day 19-12 follow-up (pnpm prune fix + decontamination) closed this incident's remaining software debt. Archived as resolution-complete.

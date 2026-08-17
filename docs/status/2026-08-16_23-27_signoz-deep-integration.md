@@ -79,8 +79,8 @@
 2. `file_storage` extension for journald cursor persistence — currently `start_at=end` means logs emitted during collector downtime are lost (gap, no duplication).
 3. Eval-time validation of dashboard JSONs (schema/owner-tag/one-query-per-panel) — currently only deploy-time via provisioner hard-fail.
 4. Committing the dashboard generator (`/tmp/gen_dashboards.py` — ephemeral!) to `scripts/`.
-5. Log-ingestion-volume anomaly alert (sudden silence or flood detection).
-6. TODO_LIST.md not updated with the follow-ups in F.
+5. ~~Log-ingestion-volume anomaly alert (sudden silence or flood detection).~~ ← open — TODO_LIST Priority 3
+6. ~~TODO_LIST.md not updated with the follow-ups in F.~~ done 2026-08-17 (docs-health harvest)
 
 ## Category D — Mistakes & Course Corrections (honest)
 
@@ -100,11 +100,11 @@
 ## Category F — Next Tasks (Pareto-ordered)
 
 **High value / small:**
-1. Browser-eyeball the 5 dashboards (user action — layout/UX check only; data verified).
-2. Commit working tree (strategy Q1 below), including dashboards + generator moved to `scripts/gen-signoz-dashboards.py`.
-3. Recreate remaining json-file containers (one `docker compose up -d --force-recreate`-class action per stack) so ALL container logs flow.
-4. Test-fire Telemetry Export Failures (e.g. `systemctl stop clickhouse` for 60s in a maintenance window) → verify Discord delivery.
-5. Migrator-gap guard: provisioner asserts applied-migration IDs ⊆ known list per DB (would catch the A1 class for logs/metrics DBs too).
+1. Browser-eyeball the 5 dashboards (user action — layout/UX check only; data verified). ← open — TODO_LIST Priority 2
+2. Commit working tree (strategy Q1 below), including dashboards + generator moved to `scripts/gen-signoz-dashboards.py`. ← half-done: the tree was committed (`26beaf0c`+); the GENERATOR is still uncommitted (was /tmp-ephemeral, lost) — TODO_LIST Priority 3
+3. Recreate remaining json-file containers (one `docker compose up -d --force-recreate`-class action per stack) so ALL container logs flow. ← open — TODO_LIST Priority 3
+4. Test-fire Telemetry Export Failures (e.g. `systemctl stop clickhouse` for 60s in a maintenance window) → verify Discord delivery. ← open — TODO_LIST Priority 3
+5. Migrator-gap guard: provisioner asserts applied-migration IDs ⊆ known list per DB (would catch the A1 class for logs/metrics DBs too). ← open — TODO_LIST Priority 3
 
 **Medium:**
 6. `file_storage` + cursor persistence for journald receiver (close restart gaps).
@@ -114,9 +114,9 @@
 10. Log-volume anomaly alert (absence > 10min during uptime = pipeline dead).
 
 **Larger / later:**
-11. Investigate the 7 Gatus sustained-error endpoints (pre-existing; I/O-pressure-correlated metric checks — outside this session's scope by directive).
-12. Sweep other services for "UI exists upstream but unshipped" gaps (carry-over).
-13. Retention strategy review: traces 15d default in schema; consider explicit per-signal TTL policy in nix.
+11. Investigate the 7 Gatus sustained-error endpoints (pre-existing; I/O-pressure-correlated metric checks — outside this session's scope by directive). ← largely moot 2026-08-17: the monitor365 family is config-off (checks skip-gated) and browser-history recovered; remaining stragglers tracked via TODO_LIST WARN items
+12. Sweep other services for "UI exists upstream but unshipped" gaps (carry-over). ← open (minor)
+13. Retention strategy review: traces 15d default in schema; consider explicit per-signal TTL policy in nix. ← open
 
 ## Questions for the User
 

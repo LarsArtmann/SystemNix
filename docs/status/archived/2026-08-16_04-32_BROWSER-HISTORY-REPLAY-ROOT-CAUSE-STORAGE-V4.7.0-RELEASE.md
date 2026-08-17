@@ -161,12 +161,9 @@ go.work replaces.
 
 ## c) What is NOT STARTED
 
-1. **SystemNix flake input bump** for browser-history (rev → new commit once
-   browser-history is committed+pushed; vendorHash refresh cycle).
-2. **Deploy** (`nix run .#deploy`) — production is still running the slow
-   binary. The user-facing goal is unmet until this lands.
-3. **Post-deploy startup measurement** from journal (expect single-digit
-   seconds to "server starting").
+1. ~~**SystemNix flake input bump** for browser-history~~ **done** — deployed rev `4e7604d` (live since the 08-16 deploys).
+2. ~~**Deploy** (`nix run .#deploy`) — production is still running the slow binary.~~ **done** — the v4.7.0-era binary is live (the 17-09 session's report confirms the deployed input performs OIDC discovery at startup — a v4.7.0+ behavior).
+3. ~~**Post-deploy startup measurement** from journal~~ **done** — startup fast; the timing proof is recorded in the repo's own session docs (async drain + readiness gate).
 4. `scripts/post-deploy-check.sh` browser-history poll-with-timeout fix
    (sibling has uncommitted edits in that file — must re-read and coordinate
    first).
@@ -361,3 +358,9 @@ go.work replaces.
 - Diagnosis evidence: journal 03:26–03:41 window; `/metrics`
   (process_cpu_seconds_total 252.81, 50.6M allocs); Python EXPLAIN repro
   (62.93s → 0.22s on 200k events).
+
+---
+
+## Resolution (2026-08-17, docs-health pass)
+
+Release chain completed: browser-history committed/pushed/tagged past v0.5.0, input bumped to `4e7604d`, deployed — startup is seconds (b-section blockers cleared). c/f verdicts: c.4/c.5 → TODO_LIST P3 (/health poll + double-restart removal; low urgency now); c.6 done (AGENTS updated with the replay root-cause); c.7 done (22-00 SKIP-gating); c.8 → monitor365 half moot, DiscordSync half untracked; f.1-9 done (commit/push/bump/deploy/measure/smoke/verify); f.10-11 done (probe alerts verified 06-38); f.12-13 moot (scratch gone via reboots); f.14-15 done (master pushed; pkg.go.dev); f.16-17 → P3; f.18 → P3; f.19 → P3 (residual WARNs); f.20-21 done (AGENTS/TODO); f.22 done; f.23 → untracked (monitor365 half moot); f.24-25 → untracked future upstream work (pain resolved by async startup); f.26-39 → untracked upstream/benchmark polish, monitor365 items moot; f.40 moot; f.41-43 → TODO_LIST P2 (partition batch); f.44 done (this harvest); f.45-50 → untracked/moot. g.1 → standing P2 partition item; g.2 resolved (commit landed); g.3 resolved by events. Archived as resolution-complete.

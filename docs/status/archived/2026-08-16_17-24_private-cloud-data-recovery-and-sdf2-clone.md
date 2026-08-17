@@ -200,3 +200,9 @@ All empty dirs in the sdf2 clone were verified empty **on the source too** (`/tm
 Contains custom Secure Boot keys (`PK`, `KEK`, `db`) — if the machine ever rebooted with Secure Boot enabled and custom keys enrolled, these are irreplaceable. Now safely cloned.
 
 **Nothing user-created remains on sdf or the datapool that is not in /data. The drives can be repurposed.**
+
+---
+
+## Resolution (2026-08-17, docs-health pass)
+
+Evidence document — its open items (stale manifests, sdf housekeeping, §I correction) were resolved by the 19-12 final-verification session (§I corrected inline above) and the drive repurposing (sdf unmounted + frozen; MG08s rebuilt as the BTRFS backup pool; forensic clones relocated to `/mnt/pool/archive/private-cloud-forensics`). The final verdict ("nothing user-created remains on sdf or the datapool that is not in /data") was accepted by the user and the drives repurposed. Archived as resolution-complete.

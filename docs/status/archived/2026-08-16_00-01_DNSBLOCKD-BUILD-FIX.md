@@ -32,21 +32,21 @@ Root cause: the committed `styles.css` was still a byte-duplicate of `app.min.cs
 
 | Item | Done | Missing |
 |------|------|---------|
-| SystemNix flake.lock commit | `flake.lock` updated and verified | **Not committed to git** — the `flake.lock` change is sitting in the working tree unstaged. The auto-git daemon may or may not pick it up |
-| SystemNix `blockIP` option naming | Identified that SystemNix has its own `cfg.blockIP` option in `dns-blocker.nix` (separate from dnsblockd's renamed upstream option) | SystemNix's `blockIP` was NOT renamed — it's a SystemNix-local option, not the upstream `services.dnsblockd.blockIP`. No action needed now, but the split-brain between SystemNix's `dns-blocker` module and dnsblockd's own `nixosModules` remains (noted in the self-review doc as "NOT STARTED") |
-| Deploy | Build verified locally | **Not deployed** — `nix run .#deploy` was not run. The fix is proven at the build level but not yet activated on `evo-x2` |
+| SystemNix flake.lock commit | `flake.lock` updated and verified | ~~**Not committed to git**~~ **resolved** — daemon swept it 2026-08-16 |
+| SystemNix `blockIP` option naming | Identified that SystemNix has its own `cfg.blockIP` option in `dns-blocker.nix` (separate from dnsblockd's renamed upstream option) | SystemNix's `blockIP` was NOT renamed — it's a SystemNix-local option, not the upstream `services.dnsblockd.blockIP`. No action needed now, but the split-brain between SystemNix's `dns-blocker` module and dnsblockd's own `nixosModules` remains (**routed to TODO_LIST 2026-08-17**) |
+| Deploy | Build verified locally | ~~**Not deployed**~~ **resolved** — multiple deploys 2026-08-16 (44-45 PASS runs; dnsblockd healthy) |
 
 ---
 
 ## c) NOT STARTED ⬜
 
-1. **Deploy the fix to evo-x2** — build passes but `nh os switch` / `nix run .#deploy` not executed
-2. **Commit `flake.lock` in SystemNix** — the lock file bump is uncommitted
-3. **SystemNix `dns-blocker.nix` split-brain migration** — SystemNix has its own parallel module; the self-review doc recommended migrating to `imports = [ inputs.dnsblockd.nixosModules.default ]` (the DiscordSync/Monitor365 pattern). Not started, deliberate (production DNS, SystemNix has in-flight uncommitted work)
-4. **`StartLimit*`-in-`serviceConfig` lint guard** — the dnsblockd self-review noted this should be a guard in `go-nix-helpers` `go-standard` so every LarsArtmann module gets it for free. Not built.
-5. **VM-test hardening assertions** — no pinned assertion in the VM test for `StartLimit*` in `[Unit]` / `SystemCallFilter=@system-service`; verification is one-off
-6. **`unbound.enable` + `dns_enabled` collision assertion** — both want `:53`; assertion not added to dnsblockd module
-7. **Full `nix flake check -L` on dnsblockd** — go-test, race, lint, vet, cover, check-dups, check-perf, spec-sync, check-alerts not run (no Go source changed, so likely fine, but unproven)
+1. ~~**Deploy the fix to evo-x2** — build passes but `nh os switch` / `nix run .#deploy` not executed~~ done — deployed 2026-08-16 (multiple 44-45 PASS deploys)
+2. ~~**Commit `flake.lock` in SystemNix** — the lock file bump is uncommitted~~ done — daemon swept
+3. **SystemNix `dns-blocker.nix` split-brain migration** ← open — TODO_LIST Priority 3 (2026-08-17)
+4. **`StartLimit*`-in-`serviceConfig` lint guard** in go-nix-helpers `go-standard`. ← open (untracked; the SystemNix-side `start-limit-audit.nix` TODO covers the local half)
+5. **VM-test hardening assertions** (StartLimit in [Unit], SystemCallFilter). ← open (untracked, upstream)
+6. **`unbound.enable` + `dns_enabled` collision assertion**. ← open (untracked, upstream)
+7. **Full `nix flake check -L` on dnsblockd**. ← done at the dnsblockd repo (its own follow-up session ran the full gate suite)
 
 ---
 
@@ -70,11 +70,11 @@ Nothing this session. The prior session (whose working tree I inherited) had a s
 ## f) Up to 50 Things We Should Get Done Next
 
 ### Immediate (this session's loose ends)
-1. Commit `flake.lock` in SystemNix
-2. Deploy the fix to `evo-x2` (`nix run .#deploy`)
-3. Verify `dnsblockd.service` is running and healthy post-deploy
-4. Run `nix run .#post-deploy-check` to verify functional outcomes
-5. Verify DNS resolution works (`dig google.com`, `dig ads.google.com` should be blocked)
+1. ~~Commit `flake.lock` in SystemNix~~ done (daemon)
+2. ~~Deploy the fix to `evo-x2` (`nix run .#deploy`)~~ done (2026-08-16, ×4)
+3. ~~Verify `dnsblockd.service` is running and healthy post-deploy~~ done (post-deploy checks green; DNS resolution check part of every run)
+4. ~~Run `nix run .#post-deploy-check` to verify functional outcomes~~ done (44-45 PASS ×4)
+5. ~~Verify DNS resolution works (`dig google.com`, `dig ads.google.com` should be blocked)~~ done (post-deploy DNS checks green)
 
 ### SystemNix → dnsblockd convergence
 6. Migrate `dns-blocker.nix` to `imports = [ inputs.dnsblockd.nixosModules.default ]` (Monitor365/DiscordSync pattern)
@@ -154,3 +154,9 @@ The AGENTS.md says an auto-git commit daemon runs continuously. But the `flake.l
 ### 3. Is the `styles.css` expanded format actually needed at runtime?
 
 The build verifies `styles.css` byte-equality, but if only `app.min.css` is embedded via `go:embed`, then `styles.css` might be a development-only artifact. If it's not used at runtime, the byte-equality gate on `styles.css` is unnecessary overhead. I don't know whether the Go code embeds `styles.css` or only `app.min.css` — I didn't check the `go:embed` directives.
+
+---
+
+## Resolution (2026-08-17, docs-health pass)
+
+Immediate items (f.1-5, b-table, c.1/2/7) resolved inline above — the fix deployed and verified across four 2026-08-16 deploys. Convergence cluster (f.6-10 = c.3): **routed to TODO_LIST Priority 3** ("Migrate dns-blocker.nix to the upstream dnsblockd module"). Upstream hardening (f.11-17 = c.4-6): open, untracked, upstream-side. Operational verification (f.26-30): covered by the deploys + Gatus. Ecosystem items (f.31-35): untracked/moot (GOTOOLCHAIN cache unification verified by subsequent builds; art-dupl version fix landed with the cache-key work). Quality-gate items (f.36-40): covered by the deploys' pre-commit + flake-check runs. Documentation (f.21-25): dnsblockd AGENTS gotchas landed via its own repo; SystemNix-side notes live in AGENTS.md already. Less-urgent (f.41-50): untracked-minor upstream polish. Questions g.1/g.2 — answered by events (deployed; daemon committed); g.3 (styles.css format question) — resolved in the dnsblockd repo's follow-up. Archived as resolution-complete.

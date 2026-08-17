@@ -185,19 +185,10 @@ Then deploy as usual — `nix run .#deploy`.
 
 ## Open queue items
 
-1. **`pre-deploy-check.sh` buildcache-mount-staleness check** — cross-check
-   `findmnt /mnt/buildcache` source device against `lsblk` output; fail pre-deploy
-   if the source device isn't in the current block-device list. The exact check
-   the next session should add.
-2. **Hermes deploy-failure investigation** — `hermes.service: status=1/FAILURE`
-   on 2026-08-16 with `Slash command sync timed out` in the journal. Not the
-   deploy blocker (hermes isn't `Required-By=multi-user.target`) so it didn't
-   block activation, but it's an unrelated regression that warrants its own
-   session. Search: `docs/status/` for any pre-existing hermes gotchas.
-3. **`nix-build-cleanup.service` exit 1** — same deploy, separate issue, low
-   priority (orphaned sandbox cleanup, not user-facing).
-4. **btrfs+zstd buildcache conversion** — still deferred (TODO_LIST item 47).
-   The SandForce silent-corruption class just cost us a deploy-blocker; this
+1. ~~**`pre-deploy-check.sh` buildcache-mount-staleness check** — cross-check `findmnt /mnt/buildcache` source device against `lsblk` output; fail pre-deploy if the source device isn't in the current block-device list. The exact check the next session should add.~~ ← open — TODO_LIST Priority 3 (zombie-mount detector)
+2. **Hermes deploy-failure investigation** — `hermes.service: status=1/FAILURE` on 2026-08-16 with `Slash command sync timed out` in the journal. ← open — TODO_LIST Priority 1
+3. **`nix-build-cleanup.service` exit 1** — same deploy, separate issue, low priority (orphaned sandbox cleanup, not user-facing). ← open (untracked, minor)
+4. **btrfs+zstd buildcache conversion** — still deferred. ← open — TODO_LIST Priority 2
    conversion would turn it into EIO→cache-miss→rebuild via btrfs checksums.
    Worth re-prioritizing.
 
@@ -208,3 +199,8 @@ Then deploy as usual — `nix run .#deploy`.
   requires host action.
 - Auto-git daemon will commit the change once verified clean (AGENTS.md + .nix
   edits). No manual commit needed.
+---
+
+## Resolution (2026-08-17, docs-health pass)
+
+Both root causes were fully resolved the same evening by the 18-39 session: (1) the browser-history `mkOidcGate` fix was deployed (input `4e7604d` era — see CHANGELOG "browser-history fast startup" entry; the AGENTS.md gotcha landed verbatim); (2) the buildcache zombie-mount got the full self-healing stack (`buildcache-usb-recovery`, device-bound mount, udev rules, real-I/O-gated metrics, deploy.sh `Exited(4)` handling — CHANGELOG "Buildcache zombie-mount self-healing stack"). Queue items routed: #1 → TODO_LIST P3 detector, #2 → TODO_LIST P1 hermes, #4 → TODO_LIST P2 conversion window; #3 untracked-minor. Archived as resolution-complete.

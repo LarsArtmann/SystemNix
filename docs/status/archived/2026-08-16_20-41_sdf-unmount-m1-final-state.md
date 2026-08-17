@@ -41,3 +41,7 @@ udisksctl power-off -b /dev/sdf
 ## Reminder (per plan §6, repeat at green-light time)
 
 After the M5 wipe, unallocated-space recovery from sdf2/sdf3 becomes impossible — the /data forensic clones (`/data/backup-2026-08-11-private-cloud-*`, 13 G) are file-level only. The user accepted this by closing the media hunt.
+
+---
+
+**Resolution (2026-08-17):** the unmount above was executed the same evening; sdf was never wiped (M5 offsite-vault role dropped by user decision — drive FROZEN, see AGENTS.md "HDD Backup Pool & DAS Topology"), and the forensic clones were relocated to `/mnt/pool/archive/private-cloud-forensics` (verified). Purpose of this snapshot fulfilled; archived.

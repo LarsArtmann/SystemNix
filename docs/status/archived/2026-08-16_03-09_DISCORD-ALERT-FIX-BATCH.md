@@ -63,11 +63,11 @@ Root-disk relief (`/` ~90%), monitor365 backup incident, btrfs scrub never compl
 
 ## f) NEXT
 
-1. Watch the first real Discord alert render (b.9 checklist: 🔴/🟡 title, description+value, link)
-2. Fix the gatus meta-check auth (d.15) — Gatus API 401 vs collector
-3. Unlabeled-value-pat lint (e.17)
-4. SigNoz frontend dist packaging (b.10) — or drop links from the message template
-5. Queue items in c)
+1. ~~Watch the first real Discord alert render (b.9 checklist: 🔴/🟡 title, description+value, link)~~ done — `vector(42)` probe rendered `probe value=[42]` + ruleSource link (06-38 session)
+2. ~~Fix the gatus meta-check auth (d.15) — Gatus API 401 vs collector~~ done — rewritten to read gatus's sqlite directly (06-38 session; CHANGELOG "Gatus self-check read a phantom zero forever")
+3. Unlabeled-value-pat lint (e.17). ← open (untracked; the HTML-needle variant is TODO_LIST P3)
+4. ~~SigNoz frontend dist packaging (b.10) — or drop links from the message template~~ done — frontend packaged + shipped (21-25 session); links resolve in-browser
+5. Queue items in c) → routed 2026-08-17: root-disk relief → TODO_LIST P0; monitor365 moot (disabled); btrfs items untracked; dashboards done (23-27); provisioner VM test + metric-presence check → TODO_LIST P3; zram-fill done (06-45); Gatus reminder untracked
 
 ## g) QUESTIONS
 
@@ -78,3 +78,9 @@ Root-disk relief (`/` ~90%), monitor365 backup incident, btrfs scrub never compl
 ---
 
 **Session verdict:** all five root causes fixed, deployed, and verified with live evidence (idempotent second run, preserved ruleIds, real NVMe values, exact 90%-of-MemoryMax thresholds, working external URL key); two latent Gatus pat bugs found and fixed (one pre-existing, days-blind); docs and gates green. Self-inflicted costs: one repeated typo, one shipped-then-caught pat bug, one premature report rewrite. Honest gaps: end-to-end Discord rendering awaits the next real alert; the gatus meta-check's own `|| 0` remains a false-green risk (d.15).
+
+---
+
+## Resolution (2026-08-17, docs-health pass)
+
+f-list resolved inline above (f.1/2/4 done by the 06-38/21-25 sessions; f.3 untracked; f.5 routed). g.1 answered (format kept); g.2 resolved by practice (sessions commit, daemon sweeps); g.3 moot for monitor365 (disabled, checks skip-gated) and resolved for browser-history (recovered + v4.7.0 fast startup). The d.15 false-green risk was closed the same morning by the 06-38 sqlite rewrite. Archived as resolution-complete.

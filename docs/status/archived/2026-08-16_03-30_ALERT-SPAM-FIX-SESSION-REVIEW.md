@@ -50,13 +50,13 @@ Prior report §f items 21–40: root-disk relief (~90%), monitor365 backup incid
 
 ## f) NEXT (priority order)
 
-1. Watch first real Discord alert render (b.11 checklist)
-2. Gatus meta-check auth fix (d.15) — P1, false-green risk
-3. Unlabeled-value-pat lint (e.24) — pre-commit candidate
-4. Provisioner idempotency VM test (d.23)
-5. SigNoz dashboards v2 rewrite OR delete the ghost (d.19)
-6. Root-disk relief (~90% standing crisis)
-7. Prior queue (monitor365 backup, btrfs items, overlap policy, …)
+1. ~~Watch first real Discord alert render (b.11 checklist)~~ done — `vector(42)` probe alert rendered with value + ruleSource link (06-38)
+2. ~~Gatus meta-check auth fix (d.15) — P1, false-green risk~~ done — sqlite-direct rewrite (06-38)
+3. Unlabeled-value-pat lint (e.24) — pre-commit candidate. ← open (untracked; HTML-needle variant in TODO_LIST P3)
+4. Provisioner idempotency VM test (d.23). ← open — TODO_LIST Priority 3
+5. ~~SigNoz dashboards v2 rewrite OR delete the ghost (d.19)~~ done — rewritten native-v2, 251→5 (23-27)
+6. Root-disk relief (~90% standing crisis). ← open — TODO_LIST P0 (root hit 95% on 08-17)
+7. Prior queue (monitor365 backup, btrfs items, overlap policy, …). ← monitor365 moot (disabled); rest routed/untracked (see 03-09 resolution)
 
 ## g) QUESTIONS (still open, cannot resolve myself)
 
@@ -68,3 +68,9 @@ Prior report §f items 21–40: root-disk relief (~90%), monitor365 backup incid
 ---
 
 **Session verdict:** the task ("make Discord alerts stop being garbage") is functionally complete and live-verified end to end except the final visual proof of one real message. Honest costs this session: one repeated documented typo, one shipped-then-caught pat bug, one premature report, one broken audit script. Found more than the brief asked (two latent pat bugs, one ghost system, one false-green meta-check) — the codebase's monitoring layer is measurably more honest than when the session started.
+
+---
+
+## Resolution (2026-08-17, docs-health pass)
+
+f-list resolved inline above. g.1 — resolved by practice (sessions commit; the daemon's bundling accepted); g.2 — format kept; g.3 — moot for monitor365 (disabled) / resolved for browser-history; g.4 — decided by events: rewritten v2 (23-27). Archived as resolution-complete.

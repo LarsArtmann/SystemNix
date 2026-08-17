@@ -54,7 +54,7 @@ zram is the ONLY swap (28 GiB, no disk fallback) — when full, the kernel falls
 ## b) PARTIALLY DONE
 
 1. **Upstream templ enforcement NOT LIVE for consumers** — SystemNix's flake.lock pins go-nix-helpers at `e6d392b9`, one commit BEHIND `eca72e1`. Needs `nix flake lock --update-input go-nix-helpers` here, and each of the ~20 LarsArtmann go-standard consumers needs its own lock bump before `checks.templ-committed` fires there. Not done — release/rollout strategy is a user decision (see questions)
-2. **Nothing deployed** — audit module, zram metrics, Gatus check, pre-commit/CI changes are all repo-only. The Gatus "ZRAM Fill" endpoint will be RED until the first deploy + first collector run (OnBootSec=30s / 2min cadence). Deploy needs sudo; not attempted this session
+2. ~~**Nothing deployed**~~ **resolved** — deployed across the 2026-08-16 deploys; AGENTS.md records live verification ("Live-verified: 19.9% fill → 0, simulated 95% → 1") and the OTel audit + templ checks are active (pre-commit + CI).
 3. **Audit registry maintenance gap** — a NEW service setting `OTEL_EXPORTER_OTLP_ENDPOINT` without an `expectations` entry only gets generic rules. The Go-http-with-scheme class (corrupts otlptracehttp's self-built URL) is ONLY caught when registered. An eval-time "service sets OTel var but is not in expectations" warning would close this — not implemented
 
 ## c) NOT STARTED
@@ -112,3 +112,9 @@ zram is the ONLY swap (28 GiB, no disk fallback) — when full, the kernel falls
 **Files touched this session (SystemNix):** `modules/nixos/services/otel-endpoint-audit.nix` (new), `system-health.nix`, `gatus-config.nix`, `scripts/check-templ-committed.sh` (new), `scripts/pre-deploy-check.sh`, `.githooks/pre-commit`, `.github/workflows/nix-check.yml`, `AGENTS.md`, `CHANGELOG.md`, `TODO_LIST.md`
 **Files touched (go-nix-helpers):** `modules/go-standard.nix`, `test-module.nix`, `CHANGELOG.md` (committed as `eca72e1`)
 **Untouched concurrent-session files:** `_signoz-alerts.nix`, `_signoz-scripts.nix`, `signoz.nix`, `test-ksm.nix`, HTML status docs
+
+---
+
+## Resolution (2026-08-17, docs-health pass)
+
+b.2 resolved (struck above). b.1 → TODO_LIST Priority 6 (go-nix-helpers `eca72e1` consumer rollout + release-vehicle decision). b.3 → untracked (expectations-registry warning idea). c-section: c.1 resolved (deployed); c.2 → P3 (CI negative-path fixture — folded conceptually with the templ CI item); c.3 untracked (manifest compose scannability — documented limitation); c.4 → covered by the b.1 rollout item; c.5 → part of b.1. f-list: f.1 → the b.1 rollout item; f.2 resolved (deploy + live verification); f.3 resolved — TODO_LIST's allowlist rule applies; the `system_zram_*` entries were retired once metrics confirmed live (pre-deploy allowlist pruned per CHANGELOG); f.4 → b.1; f.5 untracked (registry warning); f.6 → P3 (commit the negative eval as a check); f.7 → P3-adjacent (CI fixture); f.8 untracked (manifest blind spot); f.9 → folded into b.1 (release vehicle); f.10 untracked (per-module expectations); f.11 untracked (zram slope alerting); f.12 → TODO_LIST zram ADR item; f.13 → folded into monitor365 G7; f.14 resolved (post-deploy-check needs no zram HTTP surface — confirmed collector-only); f.15 YAGNI (declined by the report itself); f.16 resolved (subsequent deploys composed both diffs cleanly); f.17 untracked (AGENTS procedure line). g.1 resolved (deployed); g.2 → the b.1 decision; g.3 untracked (registry architecture). Archived as resolution-complete.

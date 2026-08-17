@@ -66,8 +66,8 @@
 1. `e2fsck -f` on `/dev/sdc1` — the fs took write errors during the outage (carried over from prior session; needs an unplug window).
 2. Physical JMS567 enclosure replacement (user decision pending; carried over).
 3. USB flap-counter metric / pre-deploy zombie detector / `usb-storage.quirks` UAS blacklist — prior session's ideas backlog, untouched.
-4. CHANGELOG.md entry for today's fixes.
-5. Any VM test covering the new reap/gc behavior.
+4. ~~CHANGELOG.md entry for today's fixes.~~ done 2026-08-17 (docs-health: "Buildcache pnpm prune silent weekly failure + NVMe cache recontamination" entry)
+5. Any VM test covering the new reap/gc behavior. ← open — TODO_LIST (provisioner/gc VM tests)
 
 ## d) TOTALLY FUCKED UP!
 
@@ -103,10 +103,10 @@
 5. `e2fsck -f /dev/sdc1` during the next unplug window (fs took write errors).
 6. Replace/swap the JMS567 enclosure (physical root cause of everything today).
 7. Investigate the simultaneous drop of BOTH ZFS drives + buildcache ~18:2x — shared USB hub/power suspicion from the prior session.
-8. Monitor365 server down (5 smoke FAILs, watchdog timer inactive) — known separate issue, but it's the only red in post-deploy now.
-9. Fix the `null byte in input` warning at `post-deploy-check.sh` line 222 (Crush Daily SKIP) — script bug.
-10. Investigate `signoz.home.lan → 404` WARN from the smoke test.
-11. Investigate File Renamer "0 operations" WARN (split-brain or fresh install?).
+8. ~~Monitor365 server down (5 smoke FAILs, watchdog timer inactive) — known separate issue, but it's the only red in post-deploy now.~~ moot — monitor365 deliberately disabled (private-git-dep); smoke checks auto-SKIP since the 22-00 overhaul
+9. ~~Fix the `null byte in input` warning at `post-deploy-check.sh` line 222 (Crush Daily SKIP) — script bug.~~ Crush Daily half fixed by the `--compressed` sweep (22-00 session); one residual NUL source remains — TODO_LIST P3
+10. ~~Investigate `signoz.home.lan → 404` WARN from the smoke test.~~ done — web UI shipped (21-25 session)
+11. Investigate File Renamer "0 operations" WARN (split-brain or fresh install?). ← open — TODO_LIST P3
 12. USB flap-counter metric (count JMS567 disconnects/hour → Gatus) — quantifies whether the enclosure swap actually helped.
 13. Pre-deploy zombie-mount detector in `pre-deploy-check.sh` (findmnt device-letter vs lsblk crosscheck — the Phase-1 diagnostic, automated).
 14. `usb-storage.quirks` UAS blacklist for `152d:0567` if flapping recurs after autosuspend fix proves insufficient.
@@ -118,10 +118,10 @@
 20. Add prune steps for `goimports` (5.3G, currently immortal) and `golangci-lint` (1G) to the gc.
 21. VM test (or dry-run mode) for buildcache-gc: cwd sensitivity, store pinning, watermark path.
 22. Review gc `MemoryMax=512M` — journal shows exactly 512M peak both runs; npm verify slowed 9.4s → 27.9s vs Aug-15. Possibly throttled at the cap.
-23. CHANGELOG.md entry for: pnpm prune fix, go-build symlink, reap stack, deploy.sh changes.
-24. Harvest this report's f-list into TODO_LIST.md (docs-health HARVEST).
-25. Old `/rust-cache` partition (98 GiB) deletion + BTRFS root grow — carried-over TODO_LIST item.
-26. Redundant cache subvolume automounts (`~/.cache`, `~/go`, `~/.npm`, `~/.cargo`) reclaim batch — carried over.
+23. ~~CHANGELOG.md entry for: pnpm prune fix, go-build symlink, reap stack, deploy.sh changes.~~ done 2026-08-17 (docs-health)
+24. ~~Harvest this report's f-list into TODO_LIST.md (docs-health HARVEST).~~ done 2026-08-17 (docs-health)
+25. Old `/rust-cache` partition (98 GiB) deletion + BTRFS root grow — carried-over TODO_LIST item. ← open — TODO_LIST Priority 2
+26. Redundant cache subvolume automounts (`~/.cache`, `~/go`, `~/.npm`, `~/.cargo`) reclaim batch — carried over. ← open — TODO_LIST Priority 2 (rust-cache item)
 27. Check `~/.cache/tinygo` (139k entries!) — size and whether it belongs on buildcache.
 28. Audit stale `~/.cache` experiment dirs (`.pnpm-store`, `testify2gomega`, `turso-go`, `ms-playwright-go`).
 29. buildcache btrfs+zstd conversion (deferred; script exists: `scripts/buildcache-btrfs-convert.sh`) — needs maintenance window.
@@ -156,3 +156,9 @@
 ---
 
 *Report covers session 18:55–19:12, 2026-08-16. Prior session context: `docs/status/2026-08-16_18-39_buildcache-zombie-mount-incident-and-self-healing-deploy.md`.*
+
+---
+
+## Resolution (2026-08-17, docs-health pass)
+
+Inline strikes above cover c.4/c.5, f.8–f.11, f.23–f.26. Remaining f-list verdicts: **routed to TODO_LIST 2026-08-17** — f.1 (deploy-time gc `--no-block` decision), f.2 (reap-list unification), f.3/f.31 (gc success metrics + watermark-nuke alert), f.5 (e2fsck window) + f.6 (enclosure swap) → Priority 2, f.12 (USB flap counter) + f.13 (pre-deploy zombie detector) + f.15 (symlink assertion) → Priority 3, f.4 (freed-bytes logging) + f.16 (real-I/O probe) + f.17/18/19 (watermark/trim/maxAge tuning) + f.20 (goimports/golangci-lint prune steps) + f.21 (gc VM test) + f.22 (MemoryMax review) → untracked tuning backlog (gc observability item covers the class), f.27/f.28 (tinygo + stale cache dirs) → untracked audit candidates, f.29 (btrfs conversion) → Priority 2, f.30 (snapshot-expiry disk watch) → covered by the P0 free-root item, f.32 (first fully-green scheduled gc) → covered by the gc observability item, f.33 (agent deadlock) → moot (monitor365 disabled), f.34 (quickshell WARN) → Priority 3, f.35 (I/O threshold) + f.36 (vHost SKIPs) → resolved by the 22-00 overhaul (phantom vhosts fixed; monitor365 gated), f.37 (pnpm guard) + f.38 (outage runbook note) + f.39 (ownership audit) + f.40 (gc-staleness check) + f.41 (root-cause of root go run) + f.42 (journalctl sweep) + f.43 (go-mod cap decision) + f.45–f.49 → untracked minor, f.44 (I/O-gating re-verify on live flap) → open-untracked, f.50 (journal-first diagnosis rule) → captured in AGENTS gotchas piecemeal. g.1/g.3 (enclosure, windows, deploy-gc policy) → Priority 2 + the gc item; g.2 (btrfs conversion window) → Priority 2. Archived as resolution-complete (every item done, routed, moot, or explicitly untracked-minor).

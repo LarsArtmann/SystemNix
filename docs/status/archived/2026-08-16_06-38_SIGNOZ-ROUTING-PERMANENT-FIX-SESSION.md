@@ -41,9 +41,9 @@ All 6 executable next-steps from the handoff were completed, deployed live at 04
 
 1. **Provisioner idempotency VM test** (incl. policy convergence + wipe-recovery simulation) — the offline mock is good, the repo-grade `runNixOSTest` is not written.
 2. **Unlabeled-value / spaced-`{{ $value }}` lint** — see §b.2.
-3. **Dashboards ghost** — every deploy still POSTs v1 dashboard JSONs that 400 (`unknown field "title"`, 5× per deploy in the journal). v2 rewrite or delete: pending user decision.
+3. ~~**Dashboards ghost**~~ **resolved** — rewritten native-v2 + 251 zombies purged to exactly 5 by the 23-27 deep-integration session (provisioner v7).
 4. **Permanent daily Discord canary** — proposed, not built.
-5. **The 6 sustained-failure endpoints themselves** (monitor365 agent+server, browser-history `/health`, monitor365 watchdog timer, file-renamer split-brain, signoz vHost 404 warning) — parallel session's arc; all still red at 06:38.
+5. **The 6 sustained-failure endpoints themselves** — _2026-08-17: monitor365×3 moot (service disabled, checks skip-gated); browser-history recovered (v4.7.0); signoz vHost 404 fixed (21-25 web UI); file-renamer 0-ops → TODO_LIST P3._
 6. **Root-disk TODO batch** (p9 partition deletion + grow, redundant cache-subvolume automount removal) — parallel arc, not touched.
 7. **Upstream investigation** — WHY API-created route policies don't survive restart (suspected: policies live only in the in-memory notification manager or are keyed to startup state). Source-level thread identified (`alertmanager/service.go newServer`) but not followed to the storage layer.
 
@@ -146,3 +146,9 @@ Nothing catastrophic this session. The mistakes, ranked:
 ---
 
 *Session ended in WAIT state per directive. No further actions taken after this report.*
+
+---
+
+## Resolution (2026-08-17, docs-health pass)
+
+c-section: c.1 → TODO_LIST P3 (provisioner VM test); c.2 → P3 (lint variants); c.3 resolved (struck above); c.4 untracked (canary); c.5 resolved/moot (struck above); c.6 → P0/P2 (root-disk batch); c.7 untracked (upstream investigation — behavior documented in AGENTS; storage-layer thread unfollowed). b-section: b.1 probe-verified in later sessions (truncation-WARN method; export-failure test-fire remains TODO_LIST P3); b.2 untracked (spaced-`{{$value}}` lint — mkRule now enforces zero spaces, regression surface small); b.3 resolved (gatus reloaded; endpoint went red on real failures — that's how the 6-endpoint truth surfaced); b.4 → folded into the P3 VM-test item (mock harness was /tmp-ephemeral). f-list highlights: f.3 → P3 lint; f.4 → covered by VM-test item; f.6-7 untracked minor; f.8-10 untracked defense-in-depth; f.11-14 decisions — commit rule resolved by practice, canary untracked, dashboards resolved, silence-policy moot; f.15-17 moot (monitor365); f.18 resolved (browser-history arc); f.19 → P3; f.20 resolved (error read later); f.21 resolved (404 = frontend absence → shipped 21-25); f.22-29 → untracked upstream/hardening polish; f.30-33 → P0 free-root / untracked; f.34 resolved (v7 made dashboard failures HARD failures); f.35-36 untracked; f.37 → P3 (deploy.sh lock-wait); f.38 done (04-32 tracked+archived); f.39 untracked (zram trend watch); f.40 moot-monitor365 (allowlist retirement folded into its G7 item); f.41-50 untracked/moot/done-by-later-sessions (f.45 resolved by the 21-25 frontend package). g.1 resolved by practice; g.2 untracked; g.3 resolved (v2 rewrite shipped). Archived as resolution-complete.

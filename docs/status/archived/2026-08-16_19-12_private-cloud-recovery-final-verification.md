@@ -104,6 +104,7 @@ key, Secure Boot keys, bash histories, journal, service configs — all recovere
 
 ## B) PARTIALLY DONE
 
+_2026-08-17 resolution: B.1 (fresh manifests) never regenerated — /tmp manifests lost on reboot; the pool-side forensic archive (`/mnt/pool/archive/private-cloud-forensics`) is the retained copy, fresh-manifest regeneration dropped. B.2 resolved — sdf unmounted 2026-08-16 20:41, drives repurposed (MG08s → backup pool) / frozen (sdf). B.3 resolved — §I corrected inline the same evening (see the CORRECTION note in §I)._  
 ### 1. Verification manifests not persisted with the backups
 - Definitive manifests live in `/tmp` (`def-src.sha256`, `def-dst.sha256`,
   `pool-src.sha256`) — **lost on reboot**
@@ -126,6 +127,7 @@ key, Secure Boot keys, bash histories, journal, service configs — all recovere
 
 ## C) NOT STARTED
 
+_2026-08-17 resolution: C.1 dropped (see B.1). C.2 done — forensic dirs relocated to the pool archive (count+size verified). C.3 done — drives repurposed/frozen (see three-drive plan + AGENTS.md). C.4 closed by user decision (GCP explicitly out of scope; off-site/3-2-1 question routed to TODO_LIST P0). C.5 addressed — the HDD backup pool (2026-08-17) provides the second physical-disk copy for backups; true off-site remains open. C.6 done — `nixos.qcow2` untracked (`4be7e43c`)._
 1. Persisting fresh SHA256 manifests INSIDE each backup dir (gzip'd) for future re-verify
 2. Deleting/merging the old incomplete `/data/backup-2026-08-11-private-cloud/` (72 KiB
    duplicate of what `-hdds` now fully contains)
@@ -395,3 +397,38 @@ believing anything read through `/etc` of a foreign NixOS root.
 | Any paperless document? | **No — provable** | 0 rows in every table, no human user ever created (H2), media volumes never created (H4) |
 | What did the Mac view? | **UNRESOLVED — NOT evo-x2's live immich** (every file postdates the box's death; user rejected the claim, see corrected H5) | Live immich is 2026-only; hunt closed 2026-08-16 without a local answer |
 | §G-3 (GCP photos?) | Moot for local recovery; Mac browser history for `*.larsartmann.cloud` hosts would settle the Jan–Oct 2025 era if still desired | H3/H5 |
+
+---
+
+## Resolution (2026-08-17, docs-health pass)
+
+The hunt was closed by user decision 2026-08-16 ~20:14; the drives were repurposed (MG08s → BTRFS backup pool `/mnt/pool`; sdf frozen). §F verdicts:
+
+| Items | Verdict |
+|-------|---------|
+| F.1–F.6 (manifest persistence, sdf3 verification, §I correction, qcow2, unmount) | done / resolved — see §B/§C resolutions above (F.1 fresh manifests dropped; /tmp evidence lost, pool archive retained) |
+| F.7–F.9 (user decisions: wipe sdf, decommission datapool, SMART if attached) | **decided 2026-08-16** — repurposing plan executed: pool wiped→BTRFS mirror, sdf frozen; smartd watches both MG08s |
+| F.10 (consolidate stale 72 KiB backup dir) | done — all 4 `backup-2026-08-11-private-cloud*` dirs relocated to the pool archive (00-59 §a.2) |
+| F.11 (second copy of backup dirs) | **addressed** — btrbk now sends root+data to the pool; forensic archive lives on the pool. True off-site remains TODO_LIST P0 |
+| F.12–F.14 (extract artifacts, Ollama blobs, journal archive) | Won't do — closure; recovered artifacts enumerated in §J; nothing further extracted |
+| F.15 (AGENTS USB topology) | **done 2026-08-17** — AGENTS.md "HDD Backup Pool & DAS Topology" section |
+| F.16 (clone-whole-disk.sh script) | open, untracked (low value post-closure) |
+| F.17 (mark recovery CLOSED) | **done** — FEATURES/CHANGELOG/ROADMAP updated 2026-08-17 ("ZFS era CLOSED") |
+| F.18–F.19 (GCP revisit, Secure Boot key restore test) | closed by user decision (GCP out of scope); SB-key test open-untracked (keys safely cloned) |
+| F.20–F.21 (postmortem doc, fold /tmp scripts) | postmortem facts live in this report + 17-24; /tmp scripts gone; no separate doc (Won't do) |
+| F.22 (btrbk /data coverage) | done — btrbk sends root+data to pool (verified design) |
+| F.23 (TODO decommission entry) | **done** — TODO_LIST 2026-08-17 (ZFS-VM script retirement; G7 monitor365 decision) |
+| F.24 (SMART on sdd) | partial — smartd watches both MG08s + buildcache; sdd unmonitored (open-untracked) |
+| F.25 (zfs send to file before wipe) | Won't do — user accepted the risk; pool destroyed after file-level extraction |
+| F.26–F.28 (etcd restore, docker volume index, other-machines check) | Won't do — closure |
+| F.29 (test-restore sdf2 into VM) | Won't do — drive frozen, not wiped; clone retained on pool |
+| F.30–F.31 (layout docs, completeness checklist) | done via AGENTS.md storage section / dropped (checklist idea folded into gotchas candidates) |
+| F.32–F.33 (sell hardware, record serials) | open — user action (drives retained: pool in use, sdf frozen) |
+| F.34 (pre-deploy USB passthrough note) | noted in AGENTS storage section (shared USB link warning) |
+| F.35–F.36 (purge /tmp scripts, retro) | moot — /tmp gone on reboot |
+| F.37 (triplicate rule for irreplaceables) | **addressed partially** — pool = copy 2; cloud/offsite copy 3 = TODO_LIST P0 decision |
+| F.38 (backup target design on HDDs) | **done** — the BTRFS pool IS the backup target (btrbk + app dumps) |
+| F.39 (gotchas entry: tar --one-file-system ZFS trap) | **open — routed** TODO_LIST docs-debt |
+| F.40–F.50 (zfs-vm docs note, journal timebox, key fingerprints, key rotation, stale TODO purge, SB enrollment doc, repo EOL tag, PMA tracking, exec summary, 30-day re-verify, celebration) | Won't do / closed — hunt closed, TODO_LIST rewritten 2026-08-17 (F.44 done by that rewrite); key rotation (F.43) flagged open-untracked |
+
+Archived as resolution-complete: every forward item above carries a verdict; the recovery verdict (no user media ever existed) is final.
