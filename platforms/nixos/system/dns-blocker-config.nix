@@ -79,6 +79,16 @@ in
         "${config.networking.local.subnet}"
       ];
       dnsIPv6Enabled = false; # evo-x2 has no global IPv6
+
+      # Reverse-proxy temp-allowed domains so "Continue to site" works
+      # without waiting for the browser's cached block IP to expire.
+      # CA cert/key are trusted via security.pki.certificates below.
+      proxyEnabled = true;
+      proxyConnectTimeout = "10s";
+      proxyUpstreamDNS = [
+        "1.1.1.1:53"
+        "9.9.9.9:53"
+      ];
     };
 
     dnsblockd-cert-trust = {

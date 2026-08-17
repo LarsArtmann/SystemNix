@@ -609,6 +609,7 @@
                 emeet-pixyd
                 file-and-image-renamer
                 crush-daily
+                fastflowlm
                 ;
               freebsd-zfs-vm = import ./pkgs/freebsd-zfs-vm.nix { inherit pkgs; };
             };

@@ -74,5 +74,11 @@
     searxng = 8889;
 
     attic = 8200;
+
+    # FastFlowLM NPU LLM server (OpenAI-compatible) — socket-activated frontend
+    # on 52625, backend on 52626. The proxy unit forwards only when the
+    # backend binds, so 52626 is internal.
+    fastflowlm = 52625;
+    fastflowlm-backend = 52626;
   };
 }

@@ -392,6 +392,14 @@ in
       # AI inference stack — Ollama ROCm, llama.cpp, gpu-python
       ai-stack.enable = true;
 
+      # FastFlowLM NPU LLM server — socket-activated, OpenAI-compatible.
+      # Model is 13.6 GB mmap'd from /data/ai/models/fastflowlm; cold loads
+      # on first request, idle-unloads after 1h. OpenAI-compatible at
+      # http://127.0.0.1:52625/v1. Wired into projects-management-automation
+      # via extraEnvironment (OPENAI_BASE_URL + OPENAI_MODEL) so the auto-
+      # commit daemon uses the local NPU LLM instead of an external API.
+      fastflowlm.enable = true;
+
       file-and-image-renamer = {
         enable = true;
         watchPaths = [
@@ -677,9 +685,18 @@ in
       #   3. Error — getAuthorSignature fails loud instead of silent fallback
       # See modules/nixos/services/projects-management-automation.nix for the
       # env wiring; see go-commit pkg/commit/git/gogit.go for the resolver.
+      # Resumes the auto-commit daemon (disabled 2026-08-12, tracked by
+      # TODO_LIST.md:148 — "PMA daemon: stop committing broken flake.lock").
+      # The 4-layer tarball regression defense is deployed
+      # (CHANGELOG.md:2026-08-12 — registry override + tarball guard +
+      # nix flake lock hygiene + scoped `nix flake update`); the
+      # discovery daemon still runs (Overview, Gatus, etc. depend on it).
+      # The fastflowlm.enable block above provides a local NPU LLM for
+      # commit-message generation via the OpenAI provider chain (go-commit
+      # 22f0e4c+ reads OPENAI_BASE_URL + OPENAI_MODEL from env).
       projects-management-automation = {
         enable = true;
-        mode = "passive"; # git auto-commit disabled (log only); discovery daemon still runs
+        mode = "active"; # git auto-commit ENABLED — discovery daemon co-located
         paths = [ "/home/${config.users.primaryUser}/projects" ];
         excludePaths = [
           "/home/${config.users.primaryUser}/projects/forks"

@@ -54,6 +54,18 @@
           group = "users";
           home = "/home/${primaryUser}";
           environmentFile = sopsEnvPath;
+          # FastFlowLM (NPU LLM) is the primary local provider. The OpenAI
+          # provider chain (DefaultChainFromEnv) reads OPENAI_BASE_URL +
+          # OPENAI_MODEL from its environment. The URL is loopback — the
+          # ssrf bypass in go-commit 22f0e4c+ is required (the strict-URL
+          # guard rejects 127.0.0.1 by default). go-nix-helpers pins the
+          # bumped go-commit rev via the projects-management-automation
+          # input follows "go-commit".
+          extraEnvironment = [
+            "OPENAI_API_KEY=local"
+            "OPENAI_BASE_URL=http://127.0.0.1:${toString ports.fastflowlm}/v1"
+            "OPENAI_MODEL=qwen3.6-moe:35b-a3b"
+          ];
         };
 
         # OTel traces → local SigNoz OTLP/HTTP collector. Uses raw OTel SDK

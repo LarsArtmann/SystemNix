@@ -46,6 +46,7 @@ _: {
                 accel = "vaapi";
                 accelDecode = true;
               };
+              image.progressiveJpeg.enabled = true;
               passwordLogin.enabled = false;
               oauth = {
                 enabled = true;

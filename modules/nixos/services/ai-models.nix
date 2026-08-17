@@ -53,6 +53,8 @@ _: {
             huggingface = "${cfg.baseDir}/cache/huggingface";
             huggingface-hub = "${cfg.baseDir}/cache/huggingface/hub";
             huggingface-transformers = "${cfg.baseDir}/cache/huggingface/transformers";
+            # FastFlowLM model storage — mmap'd at runtime by the NPU runtime.
+            fastflowlm = "${cfg.baseDir}/models/fastflowlm";
           };
         };
       };
@@ -75,6 +77,7 @@ _: {
             cfg.paths.huggingface
             cfg.paths.huggingface-hub
             cfg.paths.huggingface-transformers
+            cfg.paths.fastflowlm
           ]
           ++ [ (mkStateDir cfg.paths.ollama-models "0775" cfg.user cfg.group) ];
 

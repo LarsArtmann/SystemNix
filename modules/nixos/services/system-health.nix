@@ -663,6 +663,7 @@ _: {
             "caddy"
             "dnsblockd"
             "discordsync"
+            "fastflowlm"
             "forgejo"
             "gatus"
             "homepage-dashboard"

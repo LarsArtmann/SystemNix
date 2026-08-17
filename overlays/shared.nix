@@ -47,6 +47,7 @@
     _final: prev:
     prev.lib.optionalAttrs prev.stdenv.hostPlatform.isLinux {
       openseo = prev.callPackage ../pkgs/openseo.nix { };
+      fastflowlm = prev.callPackage ../pkgs/fastflowlm.nix { };
     }
   )
 

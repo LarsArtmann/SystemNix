@@ -820,6 +820,33 @@ _: {
                 alerts = discordAlert "PMA cgroup memory exceeds 90% of its MemoryMax (16G) — a legitimate repo-discovery scan rides MemoryHigh=12G, so this alert means the hard OOM-kill ceiling is in reach. Check: systemctl status projects-management-automation and system_service_memory_bytes in the textfile collector. Full narrative: docs/crash-analysis-2026-08-09.md";
               })
               (mkHttpCheck {
+                name = "FastFlowLM NPU LLM";
+                group = "Monitoring";
+                # MUST NOT probe :52625 — every probe is a TCP connection =
+                # permanent keepalive. Use the system-health metrics at
+                # :9100 instead. Idle is healthy (model unloaded); only
+                # failure + crash-loop alert.
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "2m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*system_service_state_failed{service=\"fastflowlm\"} 0*)"
+                  "[BODY] == pat(*system_service_start_limit_hit{service=\"fastflowlm\"} 0*)"
+                ];
+                alerts = discordAlert "FastFlowLM NPU LLM failed or in start-limit crash-loop — local commit-message generation unavailable. Check: journalctl -u fastflowlm -n 50, /dev/accel0 presence, /data/ai/models/fastflowlm contents";
+              })
+              (mkHttpCheck {
+                name = "FastFlowLM Memory Pressure";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "2m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*system_service_memory_over_threshold{service=\"fastflowlm\"} 0*)"
+                ];
+                alerts = discordAlert "FastFlowLM cgroup memory exceeds 90% of its MemoryMax (32G) — the 13.6 GB model mmap'd from /data plus KV cache is reaching the OOM-kill ceiling. Check: flm-loaded models, /data/ai/models/fastflowlm size, pma discovery worker count";
+              })
+              (mkHttpCheck {
                 name = "Service Restart Metrics";
                 group = "Monitoring";
                 url = "http://localhost:${toString nodePort}/metrics";
