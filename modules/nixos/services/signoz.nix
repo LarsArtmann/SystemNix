@@ -75,7 +75,16 @@ in {
       trace_log = {};
       part_log = {};
       text_log = {};
-      metric_log.flushIntervalMs = 2000;
+      # metric_log is WIDE (one column per server metric, ~274 KB of column
+      # metadata): MODIFY TTL would rewrite metadata past max_query_size
+      # (256 KB) and ClickHouse refuses (QUERY_IS_TOO_LARGE). No config TTL
+      # either — a restart-time TTL application would hit the same guard.
+      # Retention for this family is partition-drop (monthly granularity) in
+      # the converge script; only the flush halving comes from config.
+      metric_log = {
+        flushIntervalMs = 2000;
+        skipTtl = true;
+      };
       asynchronous_metric_log.flushIntervalMs = 2000;
       asynchronous_insert_log = {};
       processors_profile_log = {};
@@ -92,8 +101,9 @@ in {
         # Indentation is stripped to zero by the indented-string parser; XML
         # does not care. The flush override is appended inline on the ttl line.
         ''
-          <${name}>
-            <ttl>event_date + INTERVAL ${toString clickhouseInternalLogTtlDays} DAY DELETE</ttl>${
+          <${name}>${
+            lib.optionalString (!(log ? skipTtl)) "<ttl>event_date + INTERVAL ${toString clickhouseInternalLogTtlDays} DAY DELETE</ttl>"
+          }${
             lib.optionalString (
               log ? flushIntervalMs
             ) "<flush_interval_milliseconds>${toString log.flushIntervalMs}</flush_interval_milliseconds>"
@@ -146,6 +156,7 @@ in {
 
         changed=0
         unchanged=0
+        partition_managed=""
         for family in "''${FAMILIES[@]}"; do
           while IFS= read -r table; do
             [ -z "$table" ] && continue
@@ -153,14 +164,40 @@ in {
               unchanged=$((unchanged + 1))
               continue
             fi
-            echo "system.$table: applying $DAYS-day TTL"
-            clickhouse-client --query "ALTER TABLE system.$table MODIFY TTL event_date + INTERVAL $DAYS DAY DELETE"
-            changed=$((changed + 1))
+            error=$(clickhouse-client --query "ALTER TABLE system.$table MODIFY TTL event_date + INTERVAL $DAYS DAY DELETE" 2>&1) || true
+            if [ -z "$error" ]; then
+              echo "system.$table: applying $DAYS-day TTL"
+              changed=$((changed + 1))
+              continue
+            fi
+            if [[ "$error" =~ QUERY_IS_TOO_LARGE ]]; then
+              # Wide table (column per metric): metadata rewrite is refused.
+              # Fall back to monthly partition drops — whole partitions older
+              # than the retention window are unlinked without any metadata
+              # change and without rewriting surviving parts.
+              echo "system.$table: metadata too large for MODIFY TTL — using monthly partition drops"
+              cutoff=$(date -d "-$DAYS days" +%Y%m)
+              dropped=0
+              while IFS= read -r partition; do
+                [ -z "$partition" ] && continue
+                if [ "$partition" -lt "$cutoff" ]; then
+                  clickhouse-client --query "ALTER TABLE system.$table DROP PARTITION '$partition'"
+                  echo "system.$table: dropped partition $partition"
+                  dropped=$((dropped + 1))
+                fi
+              done < <(clickhouse-client --query "SELECT DISTINCT partition FROM system.parts WHERE database = 'system' AND table = '$table' AND active ORDER BY partition")
+              partition_managed="$partition_managed system.$table($dropped)"
+              continue
+            fi
+            echo "FAIL: ALTER TABLE system.$table MODIFY TTL: $error" >&2
+            exit 1
           done < <(tables_in_family "$family")
         done
 
         # Convergence assertion (fail-closed): after the ALTER pass, no
-        # table in any family may lack the target TTL.
+        # table in any family may lack the target TTL. Wide partition-managed
+        # tables are re-tried (and re-fall-back) on every run — that is their
+        # recurring retention mechanism — so they must NOT appear here.
         missing=""
         for family in "''${FAMILIES[@]}"; do
           while IFS= read -r table; do
@@ -175,7 +212,7 @@ in {
           exit 1
         fi
 
-        echo "clickhouse internal log TTLs converged: $changed altered, $unchanged already at $DAYS days"
+        echo "clickhouse internal log TTLs converged: $changed altered, $unchanged already at $DAYS days, partition-managed:$partition_managed"
       '';
     };
   in {
@@ -422,6 +459,20 @@ in {
               }
             ];
             script = lib.getExe clickhouseLogTtlScript;
+          };
+
+          # Recurring retention: TTL families self-manage via background
+          # TTL merges, but the wide partition-managed tables (metric_log)
+          # only drop old months when this runs — hence a daily timer,
+          # staggered clear of the 01:00-04:00 backup window.
+          systemd.timers.signoz-clickhouse-log-ttl = {
+            description = "Daily ClickHouse internal log retention pass";
+            wantedBy = ["timers.target"];
+            timerConfig = {
+              OnCalendar = "04:20";
+              Persistent = true;
+              Unit = "signoz-clickhouse-log-ttl.service";
+            };
           };
         })
 
