@@ -119,3 +119,15 @@
 ---
 
 *Report format: Markdown per explicit user instruction (skill default is HTML — override noted). Auto-git daemon will commit this; no manual commit made.*
+
+---
+
+## Appendix (21:41): Emergency reserve restored
+
+Item f.2 resolved. First attempt hit the documented oneshot trap: `systemctl start` is a **no-op** on a `Type=oneshot` + `RemainAfterExit=true` unit still "active (exited)" since boot 20:27 (same class as `pocket-id-provision` in AGENTS.md). `sudo systemctl restart btrfs-emergency-reserve` re-provisioned it:
+
+```
+-rw-r--r-- 1 root root 10737418240 Aug 17 21:41 /btrfs-emergency-reserve
+```
+
+`btrfs_emergency_reserve_present` flips to 1 on the next `system-health` collector pass (5-min cycle), auto-resolving the Gatus Discord alert. Note for next time: after manual reserve deletion, the restore command is `restart`, never `start`.
