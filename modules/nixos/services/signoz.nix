@@ -154,9 +154,20 @@ in {
           [[ "$(engine_of "$1")" =~ toIntervalDay\($DAYS\) ]]
         }
 
+        # Permanently read-only tables are crash-recovery leftovers (the
+        # flag cannot be cleared via SQL; TTL merges and ALTERs refuse).
+        # Detected from the ALTER error itself — system.tables has no
+        # readonly column in 26.7 — and reported for a human DROP decision
+        # instead of failing the run.
+        readonly_tables=""
+        is_known_readonly() {
+          [[ "$readonly_tables" =~ system\.$1( |$) ]]
+        }
+
         changed=0
         unchanged=0
         partition_managed=""
+        readonly_skipped=""
         for family in "''${FAMILIES[@]}"; do
           while IFS= read -r table; do
             [ -z "$table" ] && continue
@@ -189,6 +200,11 @@ in {
               partition_managed="$partition_managed system.$table($dropped)"
               continue
             fi
+            if [[ "$error" =~ TABLE_IS_PERMANENTLY_READ_ONLY ]]; then
+              readonly_tables="$readonly_tables system.$table"
+              readonly_skipped="$readonly_skipped system.$table"
+              continue
+            fi
             echo "FAIL: ALTER TABLE system.$table MODIFY TTL: $error" >&2
             exit 1
           done < <(tables_in_family "$family")
@@ -202,6 +218,9 @@ in {
         for family in "''${FAMILIES[@]}"; do
           while IFS= read -r table; do
             [ -z "$table" ] && continue
+            if is_known_readonly "$table"; then
+              continue
+            fi
             if ! has_target_ttl "$table"; then
               missing="$missing system.$table"
             fi
@@ -213,6 +232,9 @@ in {
         fi
 
         echo "clickhouse internal log TTLs converged: $changed altered, $unchanged already at $DAYS days, partition-managed:$partition_managed"
+        if [ -n "$readonly_skipped" ]; then
+          echo "WARNING: permanently read-only tables skipped (crash-recovery leftovers; consider DROP):$readonly_skipped"
+        fi
       '';
     };
   in {
