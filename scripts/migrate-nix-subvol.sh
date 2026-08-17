@@ -1,20 +1,21 @@
 #!/usr/bin/env bash
 # Migrate /nix from a plain directory inside the @ subvolume to a dedicated
-# @nix subvolume, so btrbk snapshots of @ (and the pool backup sends) exclude
-# the ~47 GiB nix store. The store is fully rebuildable; generations keep
-# their own GC roots under /nix/var/nix/profiles, so it needs no snapshots.
+# @nix subvolume, so btrbk snapshots of @ (and pool backup sends) exclude the
+# rebuildable ~47 GiB nix store.
 #
 # Usage: sudo bash scripts/migrate-nix-subvol.sh
 #
-# Steps:
-#   1. Create @nix subvolume (toLEVEL, sibling of @)
-#   2. rsync -aH --reflink=always /nix/ -> @nix/ (hardlinks preserved,
-#      reflink = near-instant on BTRFS, resumable if interrupted)
-#   3. Re-run rsync to catch the delta, then deploy (`nix run .#deploy`)
-#      which mounts /nix from @nix
-#   4. After a verified reboot: delete the old /nix dir inside @
-#      (space is reclaimed as old btrbk snapshots expire: 14d local,
-#      30d/12w on the pool)
+# ORDER MATTERS (2026-08-17 incident): switch-to-configuration mounts NEW
+# fileSystems entries IMMEDIATELY. Deploying the subvol=@nix entry before
+# this script finishes mounts an EMPTY @nix over /nix and shadows the entire
+# store. Recovery from a surviving shell:
+#   /run/wrappers/bin/sudo ... wrappers are DEAD (their targets are store
+#   paths). Use the ld.so one-liner from a root shell, or reboot into the
+#   previous generation from the systemd-boot menu.
+#
+# Copy mechanics: rsync has NO --reflink option (that's cp syntax; rsync
+# gained nothing here). Bulk copy = cp -a --reflink=always (FICLONE, cheap
+# on BTRFS, preserves hardlinks via -a). Delta pass = plain rsync.
 set -euo pipefail
 
 BTRFS_ROOT=/mnt/btrfs-root
@@ -34,24 +35,38 @@ if ! findmnt -n "$BTRFS_ROOT" >/dev/null; then
   }
 fi
 
-if [[ -d "$DST/store" ]]; then
-  echo ":: @nix already exists — running delta sync only"
-else
-  echo ":: Creating subvolume @nix"
-  btrfs subvolume create "$DST"
+if findmnt -n -o FSROOT "$SRC" | grep -q '/@nix'; then
+  echo "ERROR: /nix is currently mounted from the EMPTY @nix subvolume (incident" >&2
+  echo "state). Restore first (umount /nix from a root shell), then re-run." >&2
+  exit 1
 fi
 
-echo ":: Syncing $SRC -> $DST (reflink, hardlinks preserved)"
-rsync -aH --reflink=always --info=progress2 "$SRC/" "$DST/"
+if [[ -e $DST ]] && ! btrfs subvolume show "$DST" >/dev/null 2>&1; then
+  echo "ERROR: $DST exists but is not a subvolume" >&2
+  exit 1
+fi
 
-echo ":: Delta pass (catch files changed during the first pass)"
-rsync -aH --reflink=always --delete "$SRC/" "$DST/"
+if [[ ! -e $DST ]]; then
+  echo ":: Creating subvolume @nix"
+  btrfs subvolume create "$DST"
+elif [[ -n "$(ls -A "$DST" 2>/dev/null)" ]]; then
+  echo ":: Wiping partial @nix contents (staging copies are reflinks — cheap)"
+  find "$DST" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+fi
+
+echo ":: Bulk copy $SRC -> @nix (cp --reflink, hardlinks preserved)"
+# Sockets (/nix/var/nix/daemon-socket) cannot be copied — cp exits nonzero.
+# They are runtime artifacts; the daemon recreates them. Everything else is
+# copied before cp reports the failure, so continue deliberately.
+cp -a --reflink=always "$SRC/." "$DST/" || echo "  (cp hit a socket/uncopyable — expected, continuing)"
+
+echo ":: Delta pass (files changed during the bulk copy)"
+rsync -aH --delete --info=stats1 "$SRC/" "$DST/" || echo "  (rsync hit a socket — expected)"
 
 echo
 echo "Done. Next steps:"
-echo "  1. nix run .#deploy          # mounts /nix from @nix"
-echo "  2. reboot                    # clean slate, everything on the new subvol"
-echo "  3. Verify: findmnt /nix      # FSROOT must be /@nix"
-echo "  4. After a few days of stable boots, remove the old copy:"
+echo "  1. nix run .#deploy   (or just: switch-to-configuration) — mounts @nix at /nix"
+echo "  2. Verify: findmnt -n -o FSROOT /nix   => must print /@nix"
+echo "  3. After a few stable days, remove the old copy inside @:"
 echo "     mount /mnt/btrfs-root && rm -rf /mnt/btrfs-root/@/nix"
 echo "     (space frees gradually as btrbk snapshots referencing it expire)"

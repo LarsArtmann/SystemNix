@@ -118,3 +118,14 @@
 ---
 
 *Point-in-time snapshot. Report written as `.md` per explicit user instruction (overriding this repo's status-report HTML default). Next reader: re-verify §d claims before acting — they were true at 16:33, 2026-08-17.*
+
+---
+
+## Appendix (16:40, same day — post-report event)
+
+The auto-git commit daemon landed commit `e5edf0bd` ("docs: 2026-08-17 FastFlowLM NPU integration + BTRFS subvolume migration + system-health rework") which swept up **everything** in the working tree: this report, the gatus-config.nix change, AND the other sessions' previously-uncommitted work (fastflowlm, system-health, hardware-configuration, pre-deploy-check.sh, docs). Consequences:
+
+1. **§b/1 and §f/1 are stale**: the "blocked by dirty tree" deploy blocker NO LONGER EXISTS — the tree is clean. `nix run .#deploy` is unblocked (still awaiting user instruction per session protocol).
+2. My own commit attempt was aborted by the pre-commit deadnix check on **other sessions' staged files** ("Unused let binding: `mkStateDir`" — fastflowlm/system-health/ai-models area). The daemon committed them anyway; that deadnix debt is now IN the tree, unresolved.
+3. The gatus-config change (20 OSS website checks) is now committed but still NOT deployed — the §f/2 decision (fix broken-3 first vs accept 3 red alerts) remains the gating choice.
+
