@@ -174,15 +174,20 @@ in
 
     services = {
       # btrbk units are Type=oneshot with the global 3min
-      # DefaultTimeoutStartSec — far too short for the initial full send
-      # (~0.7T root + ~0.9T /data over the USB DAS). Daily incrementals
-      # finish in minutes; the ceiling only matters for seeds/repairs.
+      # DefaultTimeoutStartSec — far too short for send phases. Observed
+      # 2026-08-17: the initial catch-up seed sustained only ~17 MB/s
+      # effective through the USB DAS (metadata-heavy nix store + concurrent
+      # weekly scrubs) — 6h covered just ~60% of the root send before
+      # TimeoutStartSec killed it mid-stream. 24h covers seeds; daily
+      # incrementals finish in minutes and never approach the ceiling.
+      # Nightly runs are also naturally serialized: a still-active run makes
+      # the timer fire skip (systemd does not restart a running oneshot).
       btrbk-root = {
         unitConfig.RequiresMountsFor = [
           "/mnt/pool"
           "/mnt/btrfs-root"
         ];
-        serviceConfig.TimeoutStartSec = "6h";
+        serviceConfig.TimeoutStartSec = "24h";
         inherit onFailure;
       };
       btrbk-data = {
@@ -190,7 +195,7 @@ in
           "/mnt/pool"
           "/data"
         ];
-        serviceConfig.TimeoutStartSec = "6h";
+        serviceConfig.TimeoutStartSec = "24h";
         inherit onFailure;
       };
       btrbk-pool = {

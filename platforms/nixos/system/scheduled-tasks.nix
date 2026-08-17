@@ -583,6 +583,10 @@ in
       disk-growth-check = {
         description = "Check /data disk growth trend and alert if >5G/day";
         inherit onFailure;
+        # ReadWritePaths namespace setup hard-fails (status=226/NAMESPACE)
+        # when /var/lib/disk-growth does not exist — create it before the
+        # mount namespace is assembled.
+        preStart = "mkdir -p /var/lib/disk-growth";
         serviceConfig =
           harden {
             MemoryMax = "128M";

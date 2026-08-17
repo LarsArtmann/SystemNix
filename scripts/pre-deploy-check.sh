@@ -123,18 +123,26 @@ fi
 # 8. Disk space on root filesystem
 echo ""
 echo "8. Disk space"
+# Byte-based, not percentage: a % threshold scales absurdly on large disks —
+# 95% of the 723G root still leaves ~36G free, which cannot cause the
+# emergency-shell outcome this check guards against (activation needs ~1-2G).
+# FAIL < 5G (activation headroom + margin), WARN < 15G. Percentage shown for
+# context only. Learned 2026-08-17: snapshot-pinned data (btrbk @ retention)
+# cannot be freed by deletion anyway — only expiry reclaims it.
+ROOT_AVAIL_KB=$(df -Pk / 2>/dev/null | awk 'NR==2{print $4}' || echo "0")
 ROOT_PCT=$(df -P / 2>/dev/null | awk 'NR==2{gsub(/%/,""); print $5}' || echo "0")
+ROOT_AVAIL_GB=$((ROOT_AVAIL_KB / 1024 / 1024))
 BUILDS_DIR="/nix/var/nix/builds"
 STALE_BUILDS=0
 if [ -d "$BUILDS_DIR" ]; then
   STALE_BUILDS=$(find "$BUILDS_DIR" -maxdepth 1 -type d -name 'nix-*' -mmin +60 2>/dev/null | wc -l)
 fi
-if [ "$ROOT_PCT" -ge 95 ]; then
-  fail "Root filesystem at ${ROOT_PCT}% — deploying risks emergency shell. Free space before deploying"
-elif [ "$ROOT_PCT" -ge 85 ]; then
-  warn "Root filesystem at ${ROOT_PCT}% — consider freeing space before deploying"
+if [ "$ROOT_AVAIL_GB" -lt 5 ]; then
+  fail "Root filesystem has only ${ROOT_AVAIL_GB}G free (${ROOT_PCT}%) — deploying risks emergency shell. Free space before deploying"
+elif [ "$ROOT_AVAIL_GB" -lt 15 ]; then
+  warn "Root filesystem has only ${ROOT_AVAIL_GB}G free (${ROOT_PCT}%) — consider freeing space before deploying"
 else
-  pass "Root filesystem at ${ROOT_PCT}% usage"
+  pass "Root filesystem usage ${ROOT_PCT}% (${ROOT_AVAIL_GB}G free)"
 fi
 if [ "$STALE_BUILDS" -gt 0 ]; then
   warn "$STALE_BUILDS stale build sandboxes in /nix/var/nix/builds — run 'nix-build-cleanup' or clean manually"
