@@ -4935,11 +4935,11 @@
         "samber-do-auditlog": "samber-do-auditlog_8"
       },
       "locked": {
-        "lastModified": 1786696827,
-        "narHash": "sha256-J/IB1PTQy2qZL//PMR3Qj5QAy2cNJRqg56LHOEp1V2g=",
+        "lastModified": 1787067914,
+        "narHash": "sha256-JenDjrS2vBxW8RK5UqJG/9OfYTNJOSYgUBNxkXnA/Uo=",
         "owner": "LarsArtmann",
         "repo": "projects-management-automation",
-        "rev": "7aff6aa692cf5697c7cb3d2d92660c763ca9ffd3",
+        "rev": "ce0f638d2a8e156472eefcfb1b47924f4ff95b68",
         "type": "github"
       },
       "original": {
