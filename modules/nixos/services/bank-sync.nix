@@ -10,7 +10,8 @@
 #   - SQLite database on the mirrored HDD pool (/mnt/pool/services/bank-sync,
 #     btrbk-pool snapshotted) instead of the QLC NVMe — same placement
 #     decision as atticd (2026-08-18)
-#   - Wise API key from the sops template "bank-sync-env" (see sops.nix)
+#   - Wise API key + AES-256 event encryption key from the sops template
+#     "bank-sync-env" (see sops.nix)
 #   - Pool-gated storage-dir oneshot + house hardening (harden {},
 #     serviceDefaults, onFailure, start limits, background I/O tier)
 _: {
@@ -18,6 +19,7 @@ _: {
     {
       config,
       lib,
+      pkgs,
       ...
     }:
     let
@@ -41,8 +43,10 @@ _: {
           # SQLite on the mirrored HDD pool, snapshotted nightly by btrbk-pool.
           dataDir = lib.mkDefault "/mnt/pool/services/bank-sync";
 
-          # sops template renders BANK_SYNC_WISE_API_KEY=... (KEY=VALUE env file).
+          # sops template renders BANK_SYNC_WISE_API_KEY=... and
+          # BANK_SYNC_SECURITY_ENCRYPTION_KEY=... (KEY=VALUE env file).
           wiseApiKeyFile = config.sops.templates."bank-sync-env".path;
+          encryptionKeyFile = config.sops.templates."bank-sync-env".path;
         };
 
         # The pool mounts nofail — systemd-tmpfiles could create the dir on the
@@ -81,6 +85,16 @@ _: {
           startLimitIntervalSec = 300;
           inherit onFailure;
           serviceConfig = lib.mkMerge [
+            # House policy: this deployment always encrypts events at rest.
+            # An empty/missing sops key would silently downgrade bank-sync to
+            # UNENCRYPTED (it treats an empty env var as "no key") — fail the
+            # unit instead. Missing YAML keys leave the {{ marker unreplaced,
+            # which bank-sync then rejects loudly at base64 decode.
+            {
+              ExecStartPre = [
+                "${pkgs.gnugrep}/bin/grep -qE '^BANK_SYNC_SECURITY_ENCRYPTION_KEY=..' ${config.sops.templates."bank-sync-env".path}"
+              ];
+            }
             (harden {
               MemoryMax = "512M";
             })

@@ -158,7 +158,10 @@ in
                 owner = "bank-sync";
                 group = "bank-sync";
                 restartUnits = [ "bank-sync.service" ];
-              } [ "wise_api_key" ]
+              } [
+                "wise_api_key"
+                "encryption_key"
+              ]
             )
             // lib.optionalAttrs (svcEnabled "file-and-image-renamer") (
               mkKeyedSecrets "crush-daily.yaml"
@@ -391,6 +394,7 @@ in
               restartUnits = [ "bank-sync.service" ];
               content = lib.generators.toKeyValue { } {
                 BANK_SYNC_WISE_API_KEY = config.sops.placeholder.wise_api_key;
+                BANK_SYNC_SECURITY_ENCRYPTION_KEY = config.sops.placeholder.encryption_key;
               };
             };
           }
