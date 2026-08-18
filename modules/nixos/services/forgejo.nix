@@ -317,13 +317,22 @@ _: {
           serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";
-              User = "forgejo";
-              Group = "forgejo";
-              # Script runs forgejo CLI as forgejo user (no root); the only
-              # cross-user action is chown of the token file to hermes.
+              # Root oneshot (buildcache idiom): must create /run/hermes-forgejo-token,
+              # chown it hermes:hermes, reread the 0400 file on rerun, and runuser →
+              # forgejo for the CLI. harden {} empties the capability bounding set,
+              # so the needed caps are re-added explicitly:
+              #   CAP_CHOWN/CAP_FOWNER/CAP_DAC_OVERRIDE — token file lifecycle
+              #   CAP_SETUID/CAP_SETGID — runuser to the forgejo user
+              User = "root";
+              Group = "root";
+              # 30 readiness tries × (curl --max-time 5 + sleep 1) + CLI ops ≈ 3min budget
+              TimeoutStartSec = "4min";
               RemainAfterExit = true;
             }
-            (harden { })
+            (harden {
+              CapabilityBoundingSet = "CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE CAP_SETUID CAP_SETGID";
+              ReadWritePaths = [ "/run" ];
+            })
           ];
           script = lib.getExe hermesForgejoToken;
         };

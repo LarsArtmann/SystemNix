@@ -313,6 +313,7 @@
       pkgs.coreutils
       pkgs.gnugrep
       pkgs.curl
+      pkgs.util-linux # runuser (service runs as root; CLI runs as forgejo)
     ];
     text = ''
       # Idempotent: create hermes-agent user (unprivileged, no UI login needed),
@@ -330,10 +331,16 @@
       FORGEJO_USER_NAME=hermes-agent
       FORGEJO_USER_EMAIL=hermes-agent@noreply.forgejo.home.lan
 
+      # Fail fast if Forgejo never comes up: --fail treats HTTP errors as errors,
+      # bounded connect/total timeouts prevent a hung curl per iteration.
       for _ in $(seq 1 30); do
-        curl -s -o /dev/null -w "" "${forgejoUrl}/" && break
+        curl -sf --connect-timeout 3 --max-time 5 -o /dev/null "${forgejoUrl}/" && break
         sleep 1
       done
+      curl -sf --connect-timeout 3 --max-time 5 -o /dev/null "${forgejoUrl}/" || {
+        echo "ERROR: Forgejo not reachable at ${forgejoUrl} after 30 attempts" >&2
+        exit 1
+      }
 
       # 1. user (create-or-verify; password is random and never delivered —
       #    the token is the only credential that leaves this box)
@@ -352,7 +359,7 @@
       TOKEN=""
       if [ -s "$TOKEN_FILE" ]; then
         TOKEN=$(cat "$TOKEN_FILE")
-        if curl -sf -H "Authorization: token $TOKEN" "${forgejoUrl}/api/v1/user" >/dev/null 2>&1; then
+        if curl -sf --connect-timeout 3 --max-time 10 -H "Authorization: token $TOKEN" "${forgejoUrl}/api/v1/user" >/dev/null 2>&1; then
           echo "Existing hermes-agent token still valid"
           chown hermes:hermes "$TOKEN_FILE"
           chmod 0400 "$TOKEN_FILE"
