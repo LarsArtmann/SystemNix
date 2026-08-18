@@ -1,0 +1,102 @@
+# Black-Screen Follow-up Execution: Self-Review and Status
+
+**Date:** 2026-08-18 13:51 CEST
+**Session scope:** Execution of the 12:37 self-review's actionable list (its §f items 10-30). This report covers ONLY this run: the eval-time guard, the six code fixes, journal forensics, documentation harvest — and an honest account of the verification stumbles on the way. The 12:37 report covers the original incident work; the 08-15 report covers the root cause.
+
+**Session arc in one line:** All actionable follow-ups from the self-review are now implemented and committed (negative-tested where testable, eval-verified everywhere, NOTHING deployed) — but the flagship guard only works because the negative test saved me from two stacked verification errors (inert module + assertion-blind eval), and a concurrent agent session interleaved its own work into my commits.
+
+---
+
+## a) FULLY DONE
+
+1. **`session-boot-audit` eval-time guard** (`modules/nixos/desktop/session-boot-audit.nix`, new) — self-review §f.10/§e.3. Builds the user-manager dependency graph at eval time from THREE shapes (NixOS-shape units incl. `enable`/`unitConfig`, HM-shape nested `Unit`/`Install` sections incl. top-level `wantedBy`, and raw-text `systemd.user.units` with a systemd-directive parser), seeds the built-in `default→basic→{paths,sockets,timers}` chain, BFS's from `default.target`, and fails `nix flake check` with the FULL offending chain if `graphical-session.target` is reachable via Wants/Requires/BindsTo. Escape hatch: `allowedUnits` (documented exceptions). **Negative-tested against the exact historical bug**: re-injected the `Wants=` that `6ea92969` added on 2026-08-15 → assertion fires with `default.target -> activitywatch -> activitywatch.target -> activitywatch-watcher-aw-watcher-window-wayland -> graphical-session.target` (ran the negative test TWICE — once mid-session, once on the final module — and the clean tree passes in between). Committed in `a34ba608`.
+2. **`niri-drm-healthcheck` pre-login scoping** (`niri-config.nix`) — §f.12. `unitConfig.ConditionEnvironment = "XDG_SESSION_ID"`: the healthcheck has nothing to heal pre-login, and a restart attempted there (lingering boot, SDDM greeter's manager) can only ever (re)start a headless niri. The script's own login-screen guard stays as defense-in-depth.
+3. **`niri_zombie` runtime tripwire** (`niri-config.nix` + `gatus-config.nix`) — §f.24. New metric (niri running AND no graphical session, 2-check grace covering the logout window) + "Niri Zombie Session" Gatus check with recovery + root-cause-pointer Discord alert. Generalized the collector's state-file helper (`read_count`) instead of duplicating it.
+4. **The `XDG_SESSION_ID` assumption loop CLOSED** (self-review §b.3/§e.5, its #1 post-deploy suspect) — promoted from hypothesis to fact with three receipts: `niri-session` imports the FULL client env (`systemctl --user import-environment`, no args) at line 36 BEFORE starting `niri.service` at line 47; pam_systemd sets `XDG_SESSION_ID` in every real session env (live-proven: my own SSH shell carries `XDG_SESSION_ID=12`); the user manager (PID 1375) and the live zombie niri both lack it. The documented one-line revert should NOT be needed.
+5. **Regression dated** (§d.5/§f.26) — `git log -p --follow`: the fatal `Wants = lib.mkAfter ["graphical-session.target"]` entered in **`6ea92969`, 2026-08-15 00:59, "fix(activitywatch): make wayland watcher survive real boots"** — a fix that caused three days of black screens. Appended to the 08-15 report.
+6. **Polkit auth-dialog crash-loop ROOT-CAUSED and fixed** (§f.16) — `niri-flake-polkit` (polkit-kde-agent-1, Qt6/QQC2) ABRT'd at every start with `module "gtk2" is not installed` (restart counter 49, start-limit-hit since 12:47). Root cause: HM `qt.platformTheme.name = "gtk2"` + `qt.style.name = "gtk2"` — Qt5-era plugins that DO NOT EXIST for Qt6, so every unwrapped QQC2 app resolves a missing style module and dies. Flagged as debt by the 2026-04-03 audit (item 17); ignored until it broke auth. Fixed: `platformTheme.name = "gnome"` (qgnomeplatform, honors GTK dark) + `style.name = "fusion"` (built into qtquickcontrols2).
+7. **browser-history-agent start-limit flapping fixed** (§f.18) — verified live: alternating blocked/success timer fires 12:40→13:10 (12:55 run SUCCEEDED — server healthy, `no new visits`, clean exit — then 13:00 `start-limit-hit`). Root cause: SystemNix layering had `Restart=on-failure` + `RestartSec=5min` ≈ the 5-min timer cadence; the restart-retry and the next timer fire land as two start requests in one window, the rejected one re-arms `burst=2/1800s`, and ONE failed run cascades into a self-re-arming block for hours. Fix: `Restart=no` + `startLimitBurst=5/300s` — the timer IS the retry mechanism.
+8. **crush-daily SIGSYS fixed** (§f.17) — `chown -R` in `preStart` ran inside the unit sandbox: upstream `SystemCallFilter ~@privileged` blocks `fchownat` (`@chown ⊂ @privileged`) → "Bad system call" core dump at EVERY boot (receipts 20:03/20:27/06:57); and even unfiltered, the service User cannot chown another user's files (silent EPERM behind `2>/dev/null`). Fix: `ExecStartPre = "+…"` migration script (full-privilege prefix — bypasses User=, caps, syscall filter; same pattern as browser-history's `+wait-server`).
+9. **BTRFS space-pressure phantom green fixed** (spotted while investigating §f.15) — `/` has been at `BTRFS health: CRITICAL (unalloc=4% meta=75%)` (the 2026-06-26 metadata-ENOSPC crash precursor) since the seed churn, while the "BTRFS Chunk Health" Gatus check only asserted the metrics EXIST. The collector now exposes `classify_btrfs_health()` as the single source of truth for both the state log and new composites `btrfs_health_critical`/`btrfs_health_warning`; the check alerts on `btrfs_health_critical 0` with balance/snapshot/reserve remediation.
+10. **btrbk 01:50 forensics** (§f.15, the "signal I ignored" from the prior review) — the `send ioctl failed with -5` was NOT a USB/DAS problem: kernel log shows **csum corruption on the NVMe /data itself** — `root 256 ino 1331118`, ~67 MB offset, 10 csum-fail lines all with IDENTICAL csum `0x8941f998` (drive returned repeated garbage for one small range) → `btrfs send` EIO. Inode sits in a root-only dir (`/data/{docker,containers,monitor365}`) — resolvable only with sudo (`find /data -xdev -inum 1331118`). Journal also shows btrbk deleting pool-side `data.20260721T2330` right after (likely normal 30d retention coinciding, not failure-driven — my TODO wording states the deletion as fact, the causality is unproven). This is the SAME corruption already tracked by the 2026-08-17 master plan (1.35M uncorrectable errors, T04-T08) — forensics appended to the existing TODO P0 entry instead of duplicating. Consequence: tonight's btrbk-data will very likely EIO again on those extents until repaired.
+11. **Deferred-signal triage** — helium SIGTRAP 03:30:56 (poll-thread stack, kill-wave collateral, deferred to TODO), smart-audio/shutdown-overlay start-limit-hits (collateral of the live zombie — deferred to the post-deploy settle check), emeet-pixyd probe WARN (measured ~1/hr now, benign; upstream rate-limit item TODO), browser-history-agent (FIXED, see #7). OnFailure routing was verified WORKING on btrbk-data (notify-failure fired).
+12. **Documentation harvest** (the prior review's §d.3/§d.4 miss — NOT repeated) — TODO_LIST.md (updated header, forensics addendum on the P0 entry, scrub-coverage item CLOSED as verified, new §2.5 black-screen follow-ups section with 6 items), CHANGELOG.md (`[Unreleased]` Added×2 + Fixed×3, detailed), AGENTS.md (5 new/extended gotchas: machine-enforcement + Qt6-gtk2 sub-entries, flake-parts-wrapper trap, drvPath-doesn't-check-assertions trap, `+ExecStartPre` pattern, Restart-racing-timers pattern; scrub-monitoring entry extended with the composites + the send-csum caveat), and the 08-15 report appendix (assumption closure, regression date, executed follow-ups).
+13. **Final verification state** — `nix fmt` clean; `nix flake check --no-build` **all checks passed** on the final tree; all touched script derivations built through `writeShellApplication` (shellcheck in checkPhase): `niri-health-metrics`, `display-watchdog`, `niri-drm-healthcheck`, `btrfs-health`, `crush-daily-migrate-ownership`. Working tree clean; the auto-commit daemon captured everything across 5 commits (`22e4ee3d` docs, `a34ba608` guard+Qt, `d2247eb8` BTRFS booleans [batched with a concurrent session's smartd work], `99301327`/`34217be3` [concurrent session's fastflowlm/data-to-pool + my browser-history/crush-daily]).
+
+## b) PARTIALLY DONE
+
+1. **Everything is committed but NOT DEPLOYED** — deploy remains the user's command. All six fixes + guard + alerts go live only after `nix run .#deploy` (+ reboot for the black-screen fix). The 08-15 §4 post-deploy checklist still governs.
+2. **Runtime verification is zero** (by design — deploy is the user's): the `niri_zombie` metric logic, the btrfs composites, the Qt theme render, the crush-daily `+` migration, and the agent timer behavior are all eval/build-verified only. The live zombie niri (PIDs 2246470/2246526 at session start) is presumably still running.
+3. **`niri-drm-healthcheck` ConditionEnvironment verified at eval level only** — unlike the prior session (which printed the generated `niri.service` unit text for ITS condition), I did not eval-print the healthcheck unit text to confirm the directive landed. `nix flake check` green + option exists is good but one step short of the house standard I inherited.
+4. **Guard cosmetic roughness** — unit-name duplicates in the graph (`gcr-ssh-agent` + `gcr-ssh-agent.service` both appear; raw /etc-overlay text units vs NixOS-shape units). Harmless for detection, noisy in any future debug output. Not fixed.
+5. **Qt platformTheme choice** — "gnome" works but HM emits a deprecation warning on EVERY eval (successor: "adwaita"). I chose the proven-available value over the unverified successor; the warning now rides every `nix flake check` until switched.
+
+## c) NOT STARTED
+
+1. **VM test** (linger + SDDM login → no pre-login niri, exactly one niri post-login) — §f.11. Harvested to TODO §2.5 with a scoped-down partial-test proposal; the eval guard is the interim mitigation.
+2. **aw-watcher gate silence monitoring** (§f.25) — harvested as a user-preference question (see §g).
+3. ** FEATURES.md** — no entry for the new `services.session-boot-audit` option surface (arguably infrastructure, not feature; judgment call I made without flagging it).
+4. **sops assertion null-coercion fix** (latent bug FOUND this session: `nix eval --json …config.assertions` crashes on `modules/sops/templates/default.nix:142` coercing null `owner`) — harvested to TODO §2.5, not fixed (upstream-shaped change, defensive only).
+5. **Live zombie cleanup** — still blocked by systemctl permissions; superseded by deploy+reboot.
+
+## d) TOTALLY FUCKED UP!
+
+1. **I shipped the flagship guard inert and nearly declared victory.** TWO stacked verification errors: (1) I wrote a bare NixOS module into `modules/nixos/desktop/` — the flake-parts wrapper requirement (`flake.nixosModules.<name>`) is visible in EVERY sibling module in those dirs and I didn't look at one before writing; the bare module evaluates silently and contributes NOTHING. (2) My first verification method (`nix eval …toplevel.drvPath`) is structurally INCAPABLE of checking NixOS assertions — I ran it, it passed, and I wrote "Guard eval PASSED". Both wrong at once. Only the negative test (re-injecting the historical bug) exposed the whole stack of failures. Lesson now in AGENTS.md, but the fact remains: I claimed verification I did not have, twice, before earning it.
+2. **Diagnosis order inverted.** When the debug assertion also didn't fire, I suspected my graph collector (unit-shape mismatches) before suspecting module wiring. "Options don't exist on the host" was one `nix eval …config.services.session-boot-audit.enable` away — a command I ran only AFTER two rounds of graph debugging. Check wiring first, then logic.
+3. **A one-dot BFS bug I should never write.** `{ default.target = true; }` creates nested attrs (`default.target` splits on the dot); the root never entered the seen-set, a back-edge assigned it a parent, and `pathTo` recursed to stack overflow. Found by `nix flake check`, not by thinking. This is Nix 101 — the exact class of trap this repo documents for others.
+4. **Premature "root cause: USB/DAS" prior on the btrbk failure — inverted.** I initially framed the 01:50 btrbk investigation around the AGENTS.md USB-link lore; the kernel log said NVMe csum corruption all along. I also asserted btrbk's parent deletion as failure-driven in my first framing; on reflection it's more likely coincidental 30d retention. The TODO wording survived only because I hedged it to "deletion as fact, causality unstated" — but I got the emphasis wrong in my head first.
+5. **Debug scaffolding churn.** SBA-DEBUG assertion added/removed twice (once with a whitespace-mismatched edit), the injected `Wants=` handled THREE times (inject → remove → re-inject → remove). Each handling was a chance to leave test residue in the tree; only the final clean `git status` proves I didn't. Negative tests should be ONE deliberate pass at the end, immediately reverted.
+6. **Attribution hygiene under the auto-commit daemon.** My commits got batched with a concurrent session's unrelated work (fastflowlm socat proxy, smartd removable-flag resilience, data-to-pool heal — authored by another agent, "Assisted-by: Crush:MiniMax-M3" in the bodies). I noticed mid-session and did not flag it to the user until now; `d2247eb8` and `34217be3` mix my files with theirs, which will confuse future archaeology. Also means: the "all checks passed" I reported covers THEIR changes too — I verified MY files, not the batch.
+
+## e) WHAT WE SHOULD IMPROVE!
+
+1. **Negative test FIRST for any guard.** A guard's existence proof is the failure it catches, not the eval it survives. Before writing a guard, write the known-bad input; verify the guard fires; only then trust the green. This session's single most valuable discipline — and it saved a broken guard from shipping.
+2. **Match verification method to claim.** "Assertions hold" ⇒ `nix flake check` (pre-commit/CI path), NEVER `drvPath` eval. "Directive present" ⇒ eval-print the generated unit TEXT (the prior session's standard — I under-applied it for the healthcheck condition). "Script works" ⇒ build it AND behavior-test against stubs where possible (prior session did; I only built).
+3. **Read a sibling before writing a module.** Ten seconds of pattern-matching against `niri-config.nix` would have prevented the inert-module incident. The repo's conventions are IN the tree; my failure to consume them is a process failure, not knowledge failure.
+4. **Suspect wiring before logic.** When something "runs but does nothing": does the option exist on the target? is the module imported? is the enable flag on? Then debug the algorithm.
+5. **One-shot negative tests, immediately reverted** — no interleaved re-injection cycles that risk residue.
+6. **Flag concurrent-session interleaving immediately** — when the tree grows changes I didn't author mid-session, say so at once (the daemon batches commits; archaeology depends on honest in-the-moment attribution).
+7. **Corruption/IO forensics: read the KERNEL log first.** The AGENTS.md USB lore is a prior, not a verdict — `journalctl -k` around the failure names the device and the csum every time.
+
+## f) Up to 50 things to get done next
+
+**P0 — ship this session's work:**
+1. `nix run .#deploy` — ships: black-screen fix (prior session), session-boot-audit, healthcheck condition, zombie tripwire, Qt fix, agent timer fix, crush-daily fix, BTRFS alert — PLUS the concurrent session's fastflowlm socat / smartd / data-to-pool changes riding the same tree (review before shipping if unwanted).
+2. Reboot; pre-login `pgrep -x niri` → empty; SDDM login → desktop in seconds (08-15 §4 checklist governs).
+3. Post-deploy settle check (TODO §2.5): smart-audio, shutdown-overlay, niri-flake-polkit, DMS all recover in the real session; then `nix run .#post-deploy-check`.
+4. Verify `niri_zombie 0` appears in `/metrics` and the Gatus check is green (fail-closed: absence = red).
+5. Verify `btrfs_health_critical` reflects the live unalloc=4% state → expect the new Gatus alert to FIRE (that's correct behavior, not a false positive) — then address the underlying space pressure.
+6. Verify one real crush-daily boot: no "Bad system call", ownership migration log line present.
+7. Verify browser-history-agent timer cadence: no more alternating start-limit-hit lines over a few hours.
+
+**P1 — data protection:**
+8. Decide the btrbk-data nightly-failure stance (see §g Q3): leave failing until master-plan T04-T08, or suspend/adjust until repaired.
+9. Execute master plan T04-T08 (/data corruption repair; forensics addendum now attached to the P0 entry).
+10. Resolve inode 1331118's path (`sudo find /data -xdev -inum 1331118`) and check whether it's disposable (docker/container runtime data likely is).
+11. Address the `/` unalloc=4%/meta=75% CRITICAL: `btrfs-balance-metadata` (needs ≥5 GiB unalloc — currently ~30 GiB per metrics, so viable), snapshot expiry check, or the emergency reserve.
+12. Foreground scrub on `/` (never scrubbed; TODO P0 item predating this session).
+
+**P1 — hardening leftovers:**
+13. VM test: linger-enabled boot → assert NO niri process + `graphical-session.target` inactive (scoped-down partial; TODO §2.5).
+14. Eval-print the healthcheck unit text post-deploy to confirm `ConditionEnvironment` (the verification I skipped).
+15. Switch Qt `platformTheme.name` to `adwaita` after rendering-check (kills the standing deprecation warning) — or pin `gnome` and silence.
+16. Guard polish: dedupe unit names (`foo` vs `foo.service`) in the graph; add a unit test exercising `allowedUnits`.
+17. Fix the sops assertion null-coercion (TODO §2.5; upstream-shaped).
+18. aw-watcher gate monitoring decision (§g Q2).
+19. helium SIGTRAP: verify stability post-reboot; investigate only if it recurs.
+20. emeet-pixyd: upstream rate-limit/downgrade of the absent-device probe WARN.
+21. FEATURES.md entry for `services.session-boot-audit` (if the house decides it's a feature).
+
+**P2 — polish:**
+22. Consider `ConditionEnvironment=XDG_SESSION_ID` on any future user units that touch the compositor (pattern now documented in AGENTS.md — apply on sight, not retroactively).
+23. Add the concurrent-session coordination note to AGENTS.md Git Workflow section (how to attribute batched commits).
+
+## g) Questions I cannot answer myself
+
+1. **When do you want the deploy + reboot — and do you want to review the concurrent session's changes first?** The tree now also contains another agent's fastflowlm socat-proxy rework, smartd removable-flag resilience, and data-to-pool migration changes (batched into the same commits as my work by the auto-commit daemon). Deploying ships ALL of it together. Options: ship everything now, or I split/stash theirs for a separate pass (adds risk of its own).
+2. **Qt platform theme: keep `gnome` or move to `adwaita`?** `gnome` is proven-available (qgnomeplatform) but deprecation-warns on every eval; `adwaita` is the HM-suggested successor I could not render-verify from SSH. The polkit fix works either way — the choice only affects the warning noise and future-proofing.
+3. **btrbk-data nightly stance while the /data corruption is unrepaired:** tonight's run will very likely EIO again on the same extents (the source file is corrupt NOW; CoW snapshots only preserve the OLD good copies). Options: (a) leave it failing (OnFailure already notifies; each failure is visible), (b) suspend btrbk-data until T04-T08 executes (loses pool-side /data backup freshness for the repair window), or (c) I investigate whether btrbk can be pointed at an older common parent that predates the corruption (uncertain it helps — incremental resend still reads current extents). This trades backup continuity against alert noise and further failed-run churn; it's your data-protection posture call.
+
+---
+
+*All work committed; verification ended at the edge of my permissions. The deploy — and the choice of what rides with it — is yours.*
