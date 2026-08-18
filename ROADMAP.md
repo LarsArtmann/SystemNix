@@ -2,7 +2,7 @@
 
 _Long-term direction and raw ideas not yet refined into actionable tasks._
 
-**Updated:** 2026-08-17
+**Updated:** 2026-08-18
 
 For short-term actionable work, see [TODO_LIST.md](./TODO_LIST.md). For current feature status, see [FEATURES.md](./FEATURES.md).
 
@@ -57,6 +57,7 @@ The system has been hardened through multiple crash cycles. The root cause chain
 - **Deploy pipeline reliability** — PMA auto-commit daemon runs unscoped `nix flake update` which triggers the recurring nixpkgs tarball regression. 4-layer defense deployed. Registry override needs reboot to activate
 - **Regression test coverage** — VM test infrastructure exists (`tests/`). Expand beyond current 11 tests to cover: DynamicUser + sops mismatch, deploy.sh start-limit reset, `writeShellApplication` pipefail patterns, StartLimitBurst placement audit
 - **Unified readiness gates** — `mkOidcGate`/`mkDnsGate` cover OIDC + DNS probing; a generalized `mkReadinessGate { type = "http"|"dns"|"tcp" }` would also cover DiscordSync's external-HTTP probe and service-to-service health probes
+- **Observability backend migration (SigNoz → VM ecosystem)** — Researched 2026-08-18, NOT scheduled. Verdict: keep SigNoz today (pain already paid, 2.5 GiB of 94 GiB). Target stack when triggered: VictoriaMetrics + VictoriaLogs + Tempo + Grafana (all stock nixpkgs modules, <1 GiB total) — or VictoriaTraces replacing Tempo+Grafana if it hits v1.0 stable first. **Revisit triggers:** VictoriaTraces v1.0, a NEW SigNoz/ClickHouse incident class, ClickHouse resource pressure, or wanting Grafana for other reasons. Full analysis + migration sketch: `docs/research/observability-signoz-to-victoriametrics.md`
 
 ---
 
