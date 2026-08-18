@@ -99,7 +99,7 @@
           default = [
             "gatus.service"
             "caddy.service"
-            "dns-blocker.service"
+            "dnsblockd.service"
           ];
           description = "systemd units whose recent journal entries are collected as LLM evidence.";
         };
@@ -161,7 +161,6 @@
                 "PAP_DB_PATH=/var/lib/papdashboard/papdashboard.db"
                 "GOMEMLIMIT=384MiB"
               ];
-              TimeoutStartSec = "2min";
             }
             (harden { MemoryMax = "512M"; })
             (serviceDefaults { })

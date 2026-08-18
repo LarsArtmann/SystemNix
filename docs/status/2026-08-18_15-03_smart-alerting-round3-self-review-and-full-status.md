@@ -172,7 +172,7 @@
 27. Cooldown/correlation-window tuning from real storm data
 28. Consider journal evidence for fastflowlm itself (insight failures)
 29. Monitor MemoryMax=512M adequacy (SQLite + Go heap under storm)
-30. ~~Archive/close 02-36, 13-33, 13-38, 14-51 status reports once deployed~~ done (docs-health pass 2026-08-18)
+30. ~~Archive/close 02-36, 13-33, 13-38, 14-51 status reports once deployed~~ done (docs-health pass 2026-08-18 — 02-36 archived; 13-33/13-38/14-51 annotated + deliberately kept live for open items)
 31. AGENTS.md gotcha: "systemd unit ≠ module filename — grep the repo"
 32. Consider `alerts.home.lan` DNS entry conditional (wildcard already covers it)
 

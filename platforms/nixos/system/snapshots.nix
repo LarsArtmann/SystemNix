@@ -141,6 +141,7 @@ in
           subvolume."services/discordsync" = { };
           subvolume."services/browser-history" = { };
           subvolume."services/bank-sync" = { };
+          subvolume."services/activitywatch" = { };
         };
       };
     };
@@ -302,6 +303,14 @@ in
           pkgs.btrfs-progs
           pkgs.util-linux
           pkgs.coreutils
+          pkgs.findutils
+          # gawk is REQUIRED by the mirror-health check below. Without it the
+          # `if btrfs device stats | awk …` condition evaluates false on
+          # "command not found" (pipefail inside `if` is non-fatal) and the
+          # check silently passes — a phantom green observed live 2026-08-18
+          # ("awk: command not found" in the unit journal while the unit
+          # reported the device-stats branch as clean).
+          pkgs.gawk
         ];
         serviceConfig = lib.mkMerge [
           (harden {

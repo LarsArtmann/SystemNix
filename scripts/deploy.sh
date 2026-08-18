@@ -182,6 +182,14 @@ if nix run .#pre-deploy-check; then
     sudo systemctl start --no-block data-to-pool-migration.service 2>/dev/null || true
   fi
 
+  # One-time ActivityWatch data → pool migration with symlink cutover.
+  # Same model as above: --no-block, ConditionPathIsDirectory-gated (skips
+  # once the source is a symlink), onFailure Discord alert on failure.
+  if systemctl cat activitywatch-data-to-pool.service >/dev/null 2>&1; then
+    echo "Starting activitywatch-data-to-pool.service (no-block, copy + verify + symlink cutover)"
+    sudo systemctl start --no-block activitywatch-data-to-pool.service 2>/dev/null || true
+  fi
+
   echo ""
   echo "=== Waiting 10s for services to settle ==="
   sleep 10

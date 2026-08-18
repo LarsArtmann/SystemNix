@@ -95,7 +95,7 @@ Plus one **pre-existing phantom metric** from the original integration commit (`
 9. ~~Update `AGENTS.md` fastflowlm section: bin/flm layout, socket `Service=`, no-boot-autostart, StateDirectory HOME, idle-never-stops-socket, check #12.~~ done at `e70a11b2`
 10. Add gotchas: "deploy.sh from restricted-PATH shells", "flat package layouts vs lib.getExe", "phantom metric same-changeset rule".
 11. ~~Annotate/archive the fastflowlm planning doc (`docs/planning/2026-08-15_19-22_…`) as EXECUTED with deviations (proxy architecture as-built).~~ done (planning doc carries the EXECUTED banner (TODO item closed 2026-08-17))
-12. ~~Check off TODO_LIST.md:175; move residual verification items to TODO_LIST.~~ done (docs-health pass 2026-08-18)
+12. ~~Check off TODO_LIST.md:175; move residual verification items to TODO_LIST.~~ check-off half: the fastflowlm TODOs were already `[x]` at `71256d6f` (08-17 21:40, before this report); harvest half completed 2026-08-18 late session — item 13 resolved (below), item 10 (3 gotcha entries) TODO-harvested after two missed passes
 13. ~~Investigate the `Signal(9)` on deploy #2 (oomd vs watchdogd vs kernel OOM) — journal has the window 16:20–16:40.~~ done (diagnosed 2026-08-18 19-56: global-OOM pile-drive; OOMScoreAdjust=300 + RestartSec=60 deployed)
 
 **P2 — deploy pipeline hardening**

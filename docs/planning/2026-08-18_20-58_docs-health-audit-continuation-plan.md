@@ -1,5 +1,7 @@
 # Docs-Health Audit — Continuation Plan & Working State
 
+> **✅ EXECUTED 2026-08-18 22:16** — all steps D–I completed by the resumed session; full narrative, deviations (31 reports annotated vs the 24 planned; 18 archived), and the honest self-review live in `docs/status/2026-08-18_22-16_docs-health-audit-resumed-harvest-annotate-archive.md`. Residue items (correctness fixes, user-gated questions) are tracked in that report §f/§g and TODO_LIST.
+
 **Created:** 2026-08-18 20:58 CEST
 **Mandate:** View ALL `docs/status/2026-08-1*` (62 files), execute the **docs-health AUDIT** (BUILD + HARVEST + VERIFY + ANNOTATE + ARCHIVE), make TODO_LIST / CHANGELOG / AGENTS / ROADMAP / FEATURES superb, and **archive fully-done + inline-annotated files**.
 **Skill:** `~/.config/crush/skills/docs-health/SKILL.md` — annotation grammar: inline `~~item~~ done at \`hash\`` is MANDATORY (appendix-only = #1 failure mode); open items left untouched (absence of marker = open); annotate-THEN-`git mv`; never renumber; cite hashes.
@@ -12,12 +14,12 @@
 flowchart TD
     A[✅ Skill + refs loaded] --> B[✅ Read all 62 status files]
     B --> C[✅ Read living docs]
-    C --> D[🔄 VERIFY claims vs code ~80%]
-    D --> E[HARVEST → TODO_LIST/ROADMAP/CHANGELOG]
-    E --> F[Annotate 24 reports via python annotator]
-    F --> G[Archive resolved via git mv]
-    G --> H[nix flake check --no-build]
-    H --> I[Print two-score health report]
+    C --> D[✅ VERIFY claims vs code]
+    D --> E[✅ HARVEST → TODO_LIST/ROADMAP/CHANGELOG]
+    E --> F[✅ Annotate 31 reports via python annotator]
+    F --> G[✅ Archive 18 resolved via git mv]
+    G --> H[✅ nix flake check --no-build]
+    H --> I[✅ Print two-score health report]
 ```
 
 ---

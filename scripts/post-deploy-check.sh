@@ -323,6 +323,39 @@ else
   report_skip "Bank-Sync — service disabled (units absent from systemd)"
 fi
 
+# PapDashboard: /api/health proves the hub answers (same URL Gatus probes);
+# the unauthenticated /api/ingest POST is a ROUTE-EXISTS probe — the auth
+# middleware runs BEFORE routing, so 401 = route + middleware alive, while
+# 404 = the deployed binary predates the ingest route (the 2026-08-18 stale
+# flake-pin class: 1076× 405/404 while every liveness check stayed green) and
+# 405 = a method-token mismatch (the lowercase-"post" class). The journal
+# check is the only end-to-end proof that gatus's own POSTs land: 401-only
+# probes can never catch method/body bugs (WARN on absence — ingests only
+# fire on alert transitions, a quiet 30 min is normal).
+papdashboard_enabled=false
+test -e /etc/systemd/system/papdashboard.service && papdashboard_enabled=true
+if $papdashboard_enabled; then
+  if curl -s --compressed --max-time 10 --retry 5 --retry-delay 3 --retry-all-errors -o /dev/null "http://127.0.0.1:8088/api/health" 2>/dev/null; then
+    report_pass "PapDashboard — /api/health answers"
+  else
+    report_fail "PapDashboard — :8088/api/health unreachable (journalctl -u papdashboard -n 30)"
+  fi
+  pap_ingest_code=$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d '{}' "http://127.0.0.1:8088/api/ingest" 2>/dev/null || echo 000)
+  case "$pap_ingest_code" in
+    401) report_pass "PapDashboard — /api/ingest route exists (401 = auth gate hit before routing)" ;;
+    404) report_fail "PapDashboard — /api/ingest 404: deployed binary lacks the ingest route (stale flake pin? nix flake lock --update-input papdashboard)" ;;
+    405) report_fail "PapDashboard — /api/ingest 405: method-token mismatch (check gatus-config.nix method = \"POST\")" ;;
+    *) report_fail "PapDashboard — /api/ingest probe returned $pap_ingest_code (expected 401)" ;;
+  esac
+  if journalctl -u papdashboard --since '-30min' --no-pager 2>/dev/null | grep -q 'path=/api/ingest status=200'; then
+    report_pass "PapDashboard — gatus ingest 200s visible in journal (end-to-end alert path)"
+  else
+    report_warn "PapDashboard — no ingest 200s in the last 30 min (normal when no alert transitioned; re-check after the next Gatus alert)"
+  fi
+else
+  report_skip "PapDashboard — service disabled (units absent from systemd)"
+fi
+
 # --- Functional checks (not just liveness) ---
 echo ""
 echo "=== Functional Checks ==="

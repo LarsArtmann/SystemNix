@@ -297,6 +297,10 @@ in
       # Self-neutralizing: ConditionPathExists skips the unit once all sources
       # are migrated; started by deploy.sh after every switch.
       data-to-pool-migration.enable = true;
+      # One-time ActivityWatch data → pool migration with symlink cutover.
+      # Self-neutralizing: ConditionPathIsDirectory skips the unit once the
+      # source is a symlink; started by deploy.sh after every switch.
+      activitywatch-data-to-pool.enable = true;
       pocket-id-config = {
         enable = true;
         provision = {

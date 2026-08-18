@@ -51,6 +51,30 @@ if ! templ_out=$(scripts/check-templ-committed.sh 2>&1); then
     exit 1
 fi
 
+# Fast guard: moved/deleted markdown files must not leave dangling references.
+# The archive-move class (2026-08-18): `git mv docs/status/X.md
+# docs/status/archived/` left stale `docs/status/X.md` links in TODO_LIST and
+# research docs — the link check belongs IN the move commit, not in a later
+# self-review. Frozen snapshots (archived status reports, planning docs) may
+# keep old paths.
+MOVED_MD=$(git diff --cached --name-status --diff-filter=DR -- '*.md' | awk '/^R/ { print $3 } /^D/ { print $2 }')
+if [ -n "$MOVED_MD" ]; then
+    dangling=""
+    while IFS= read -r old; do
+        [ -n "$old" ] || continue
+        hits=$(git grep -lF -- "$old" -- '*.md' 2>/dev/null | grep -vE '^(docs/status/archived/|docs/planning/)' || true)
+        if [ -n "$hits" ]; then
+            dangling="${dangling}${old} still referenced by:\n${hits}\n"
+        fi
+    done <<< "$MOVED_MD"
+    if [ -n "$dangling" ]; then
+        log_error "Moved/deleted markdown files are still referenced by live docs:"
+        echo -e "$dangling"
+        log_error "Update the references in the same commit (frozen snapshots in docs/status/archived/ and docs/planning/ are exempt)."
+        exit 1
+    fi
+fi
+
 # Fast guard: reject commits with "Unknown Author" identity.
 # Catches the silent fallback bug where PMA daemon produced 6,400 unattributable
 # commits across 145 repos when git config couldn't be resolved.
