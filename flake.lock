@@ -87,11 +87,11 @@
         "wise-go": "wise-go"
       },
       "locked": {
-        "lastModified": 1787084438,
-        "narHash": "sha256-rt47ErD67QaqNyRFN8JGLgmHYHuwmJZy4dc96lRoAAQ=",
+        "lastModified": 1787085711,
+        "narHash": "sha256-uS9OM2W9hse24wub3efJ4go56SJ4CiyG/84wFo3OTlA=",
         "owner": "LarsArtmann",
         "repo": "bank-sync",
-        "rev": "eb5f30b878cfbcdd1ddc1934e43f16c1d8a04b46",
+        "rev": "c49c427d62a66eaa41788cef79f0426f43ca8822",
         "type": "github"
       },
       "original": {
