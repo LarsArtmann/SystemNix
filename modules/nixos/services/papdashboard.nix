@@ -19,8 +19,9 @@
 #
 # The raw Gatus→Discord path stays untouched (no single point of failure):
 # if PapDashboard dies, raw alerts still flow. PapDashboard's outbound is
-# filtered to insights only, so Discord receives "raw alert" + "insight"
-# pairs instead of duplicates.
+# filtered to insights only and targets its OWN webhook (sops
+# papdashboard_insights_webhook_url), so raw alerts and LLM insights land
+# in two separate Discord channels.
 #
 # The UI has no built-in auth (only the ingest API is key-gated) — external
 # access goes through protectedVHost (Layer 2 SSO); LAN access is open.

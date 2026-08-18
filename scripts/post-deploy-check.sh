@@ -342,10 +342,10 @@ if $papdashboard_enabled; then
   fi
   pap_ingest_code=$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d '{}' "http://127.0.0.1:8088/api/ingest" 2>/dev/null || echo 000)
   case "$pap_ingest_code" in
-    401) report_pass "PapDashboard — /api/ingest route exists (401 = auth gate hit before routing)" ;;
-    404) report_fail "PapDashboard — /api/ingest 404: deployed binary lacks the ingest route (stale flake pin? nix flake lock --update-input papdashboard)" ;;
-    405) report_fail "PapDashboard — /api/ingest 405: method-token mismatch (check gatus-config.nix method = \"POST\")" ;;
-    *) report_fail "PapDashboard — /api/ingest probe returned $pap_ingest_code (expected 401)" ;;
+  401) report_pass "PapDashboard — /api/ingest route exists (401 = auth gate hit before routing)" ;;
+  404) report_fail "PapDashboard — /api/ingest 404: deployed binary lacks the ingest route (stale flake pin? nix flake lock --update-input papdashboard)" ;;
+  405) report_fail 'PapDashboard — /api/ingest 405: method-token mismatch (check gatus-config.nix method = "POST")' ;;
+  *) report_fail "PapDashboard — /api/ingest probe returned $pap_ingest_code (expected 401)" ;;
   esac
   if journalctl -u papdashboard --since '-30min' --no-pager 2>/dev/null | grep -q 'path=/api/ingest status=200'; then
     report_pass "PapDashboard — gatus ingest 200s visible in journal (end-to-end alert path)"

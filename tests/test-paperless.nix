@@ -13,18 +13,20 @@
 # Tika/Gotenberg are NOT enabled in this test (configureTika = false) —
 # their closure (chromium + libreoffice) is multi-GB; the nixpkgs modules
 # carry their own coverage, and the gatus endpoints verify them on the host.
-{pkgs}: let
-  paperlessFlakeOutput = (import ../modules/nixos/services/paperless.nix) {};
+{ pkgs }:
+let
+  paperlessFlakeOutput = (import ../modules/nixos/services/paperless.nix) { };
   paperlessNixosModule = paperlessFlakeOutput.flake.nixosModules.paperless;
 
   # Options-only import: the paperless module reads
   # config.services.fastflowlm.model for the AI model name.
   fastflowlmNixosModule =
-    (import ../modules/nixos/services/fastflowlm.nix {}).flake.nixosModules.fastflowlm;
-in {
+    (import ../modules/nixos/services/fastflowlm.nix { }).flake.nixosModules.fastflowlm;
+in
+{
   name = "paperless";
 
-  nodes.machine = {lib, ...}: {
+  nodes.machine = { lib, ... }: {
     imports = [
       paperlessNixosModule
       fastflowlmNixosModule
@@ -34,7 +36,7 @@ in {
 
     virtualisation.memorySize = 4096;
 
-    sops.secrets.paperless_admin_password = {};
+    sops.secrets.paperless_admin_password = { };
 
     services.paperless = {
       enable = true;

@@ -248,6 +248,16 @@ in
                 restartUnits = [ "papdashboard.service" ];
               } [ "papdashboard_api_key" ]
             )
+            // lib.optionalAttrs (svcEnabled "papdashboard") (
+              # Dedicated insights-channel webhook (channel 1539383848549486632) —
+              # raw Gatus alerts keep the shared discord_alert_webhook_url, so
+              # the two streams land in two different Discord channels.
+              mkSecrets "papdashboard-discord.yaml" {
+                owner = "root";
+                group = "root";
+                restartUnits = [ "papdashboard.service" ];
+              } [ "papdashboard_insights_webhook_url" ]
+            )
             // lib.optionalAttrs (svcEnabled "discordsync") (
               mkSecrets "discordsync.yaml"
                 {
@@ -428,11 +438,9 @@ in
               restartUnits = [ "papdashboard.service" ];
               content = lib.generators.toKeyValue { } {
                 PAP_API_KEY = config.sops.placeholder.papdashboard_api_key;
-                # Reuses the shared alert webhook: outbound is filtered to
-                # sourceApp=insight, so Discord receives raw alert + insight
-                # pairs. Switch to a dedicated channel by pointing this at a
-                # new sops key and re-deploying.
-                PAP_DISCORD_WEBHOOK = config.sops.placeholder.discord_alert_webhook_url;
+                # Insights go to their OWN Discord channel; raw Gatus alerts
+                # stay on the shared discord_alert_webhook_url channel.
+                PAP_DISCORD_WEBHOOK = config.sops.placeholder.papdashboard_insights_webhook_url;
               };
             };
           }

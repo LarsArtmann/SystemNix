@@ -117,5 +117,7 @@ sops-nix decrypts ALL secrets atomically. One bad owner → everything fails. Gu
 | `openseo.yaml`         | dataforseo_api_key                                                                                                                                              |
 | `monitor365.yaml`      | cloud_auth_token, server_jwt_secret                                                                                                                             |
 | `signoz.yaml`          | discord_alert_webhook_url                                                                                                                                       |
+| `papdashboard.yaml`    | papdashboard_api_key                                                                                                                                            |
+| `papdashboard-discord.yaml` | papdashboard_insights_webhook_url (insights-channel webhook — separate Discord channel from raw alerts)                                                      |
 | `discordsync.yaml`     | discordsync_discord_token, discordsync_turso_url, discordsync_turso_auth_token                                                                                  |
 | `dns-failover.yaml`    | vrrp_auth_password                                                                                                                                              |
