@@ -34,7 +34,9 @@ if nix run .#pre-deploy-check; then
     if [ -n "$wedged" ]; then
       if [ "${DEPLOY_KILL_WEDGED_STC:-0}" = "1" ]; then
         echo "⚠ Killing wedged switch-to-configuration (PIDs:$wedged, >30 min old):"
-        sudo kill $wedged || true
+        for pid in $wedged; do
+          sudo kill "$pid" || true
+        done
         sleep 2
       else
         echo "❌ switch-to-configuration appears WEDGED (PIDs:$wedged, >30 min old)."

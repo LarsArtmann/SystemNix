@@ -82,3 +82,22 @@
 ---
 
 **Bottom line:** 2 of 3 trees fully migrated and verified (archive 32G, atticd live flip), monitor365 (1.9M files) mid-copy with instrumentation and a 12h ceiling, smartd restored + made crash-resilient, zero data loss at every failure point — every bug I shipped was caught by a gate I'd built, which is the system working, but several were avoidable by testing syntax and measuring scale up front.
+
+---
+
+## ADDENDUM 2026-08-18 ~16:10 — COMPLETE (all three trees migrated; g.1-3 resolved by evidence)
+
+**Final state:** `data-to-pool-migration.service` exited 0 at 16:02 — `complete — all sources migrated, verified and removed`. `ls /data` shows none of the three sources; `/mnt/pool/services/monitor365/` carries the stale uid 966:956 root ownership (permission-denied for the session user — correct; re-chown on service re-enable per the standing caveat). atticd still live on :8200 from the pool throughout.
+
+**g.1 — resolved by evidence, no decision needed.** The verify diff (`>fc........ buffer/seg_000298774886_000298775141.zst`, 1 file of 1,888,382) was NOT source corruption: md5 of the SOURCE was deterministic across two passes (`5273b872…` = `5273b872…`), filefrag showed a single clean extent outside the known corrupt windows, and the pool-side copy held the odd hash. Root cause: the first copy run was SIGTERM'd mid-transfer (deploy restart), leaving a fully-sized but stale file; later runs' quick-check (size+mtime match) never rewrote it. The migration's heal pass (`--ignore-times` forced re-copy + root diagnostics, added after the first failed verify) fixed it; post-heal full re-verify initially flagged only `.d..t...... buffer/` — dir mtime drift caused by the heal write itself — which the next run's plain `-a` copy re-synced before a fully clean verify (31G identical) and source deletion. The /data corruption question for THIS tree is closed: source reads were deterministic; the corrupt windows belong to other regions of /data (unchanged triage scope).
+
+**g.2 — moot:** the concurrent sessions + auto-daemon committed everything in interleaved commits (`34217be3` carries the heal + smartd; `c6f91f33` the fastflowlm template fix); tree verified clean, content spot-checked in HEAD.
+
+**g.3 — keep snapshotting (no action):** `services/monitor365` was already in the committed btrbk-pool list before the question; CoW snapshots of static data are near-free once taken (first-night cost only). Coherent with the other subvols.
+
+**Operational notes from the completion run:**
+- 5 runs total (1 SIGTERM'd by a concurrent deploy's unit restart, 2 verify-failed pre-heal-fix, 1 post-heal dir-mtime iteration, 1 clean). Every restart was cheap after the bulk landed (64 MB delta + one verify walk each) — the idempotent design paid for itself under a hostile concurrent-deploy environment.
+- Memory: verify walks peaked at the old 512M cap (483M swap); raised to 1G — peak then 1G/457M swap. A 1.9M-inode `rsync -c` walk wants ~1.5G headroom.
+- Verify walks took 20-60 min depending on concurrent build IO (same-machine contention is the dominant variable, not the tree).
+- The migration unit self-neutralizes via `ConditionPathExists` (OR-prefixed): the next deploy's post-switch start should SKIP instantly — verified in the post-completion deploy.
+- Freeing /data space is snapshot-gated: 14d of nightly /data snapshots still reference the monitor365 extents, so the NVMe relief accrues over the retention window rather than immediately (relevant to the root-space TODO and the live `btrfs_health_critical` alert).

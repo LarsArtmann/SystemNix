@@ -173,13 +173,16 @@ NODE_EXPORTER_PORT=9100
 MONITOR365_PORT=9191
 
 # Extract metric-like names from gatus pat() patterns.
-# Skips HTML checks (*<html*), text body checks, and comments.
+# Skips HTML checks (*<html*), text body checks, and comments. Body-text
+# patterns like pat(*Paperless-ngx sign in*) extract a leading word that is
+# NOT a metric — Prometheus metric names are lowercase by convention, so
+# dropping any candidate containing uppercase keeps human-text checks out.
 extract_gatus_metrics() {
   grep -v '^[[:space:]]*#' "$GATUS_CONFIG" |
     grep -oE 'pat\(\*[a-zA-Z_][a-zA-Z0-9_]*' |
     sed 's/pat(\*//' |
     sort -u |
-    grep -vE '^<|connected'
+    grep -vE '^<|connected|[A-Z]'
 }
 
 # Fetch metrics from each endpoint separately to avoid false-positive phantom
