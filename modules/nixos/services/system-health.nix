@@ -677,13 +677,19 @@ _: {
             "fastflowlm"
             "forgejo"
             "gatus"
+            "gotenberg"
             "homepage-dashboard"
             "monitor365"
             "monitor365-server"
             "nix-daemon"
+            "paperless-consumer"
+            "paperless-scheduler"
+            "paperless-task-queue"
+            "paperless-web"
             "pocket-id"
             "projects-management-automation"
             "signoz"
+            "tika"
           ];
           description = "Systemd services to monitor for state, restart count, crash-loop detection, and start-limit-hit";
         };

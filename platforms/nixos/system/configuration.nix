@@ -439,7 +439,13 @@ in
       # http://127.0.0.1:52625/v1. Wired into projects-management-automation
       # via extraEnvironment (OPENAI_BASE_URL + OPENAI_MODEL) so the auto-
       # commit daemon uses the local NPU LLM instead of an external API.
-      fastflowlm.enable = true;
+      # loadEmbed also serves embeddinggemma (embed-gemma:300m) on
+      # /v1/embeddings for Paperless AI semantic search (pulled via
+      # `flm pull embed-gemma:300m`).
+      fastflowlm = {
+        enable = true;
+        loadEmbed = true;
+      };
 
       file-and-image-renamer = {
         enable = true;

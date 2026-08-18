@@ -317,8 +317,33 @@ _: {
                   conditions = [
                     "[STATUS] == 200"
                     "[RESPONSE_TIME] < 1000"
+                    # Functional, not just liveness: the real sign-in page
+                    # (not an error/redirect shell) says "Paperless-ngx sign in".
+                    "[BODY] == pat(*Paperless-ngx sign in*)"
                   ];
                   alerts = discordAlert "Paperless down — document management unavailable";
+                })
+                (mkHttpCheck {
+                  name = "Paperless Tika";
+                  group = "Documents";
+                  url = "http://localhost:${toString ports.tika}/";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 2000"
+                  ];
+                  alerts = discordAlert "Paperless Tika parser down — Office/e-mail documents will fail to consume until it recovers";
+                })
+                (mkHttpCheck {
+                  name = "Paperless Gotenberg";
+                  group = "Documents";
+                  url = "http://localhost:${toString ports.gotenberg}/health";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 2000"
+                  ];
+                  alerts = discordAlert "Paperless Gotenberg down — Office-to-PDF conversions will fail until it recovers";
                 })
                 {
                   name = "Redis";

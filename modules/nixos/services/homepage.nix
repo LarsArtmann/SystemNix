@@ -143,7 +143,7 @@ _: {
         })
         (mkService "Paperless" {
           href = svcUrl "paperless";
-          description = "Document Management (OCR, Scan, Archive)";
+          description = "Document Management (OCR, Office/E-Mail, AI, Archive)";
           icon = "paperless.png";
         })
         (mkService "DNS Blocker" {

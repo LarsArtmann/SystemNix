@@ -17,6 +17,8 @@
     redis = 6379;
 
     paperless = 2892;
+    tika = 9998;
+    gotenberg = 3199;
 
     manifest = 2099;
 
