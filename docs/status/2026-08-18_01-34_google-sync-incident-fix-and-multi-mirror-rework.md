@@ -156,3 +156,12 @@ A concurrent session is actively editing `homepage.nix` (FastFlowLM/Google Sync 
 ---
 
 *Artifacts this session: `modules/nixos/services/google-sync.nix` (226 fix + multi-mirror rework), `scripts/deploy.sh` (+google-sync-dirs restart), AGENTS.md (section rework + ReadWritePaths gotcha), CHANGELOG.md (Added+Fixed), TODO_LIST.md (urgent item + 3-remote go-live), prior status report (2 addenda). All eval/build/lint green; fix NOT yet deployed — loop live until item f.1.*
+
+---
+
+## Addendum (2026-08-18 later session — journal + store-path receipts; body above left untouched)
+
+1. **The timer stop at 01:21:28 was the DEPLOY, not a manual stop.** `system-686` (`ycvhzq52`) was switched at 01:21 and its store path contains **no google-sync units at all** (verified: `ls <toplevel>/etc/systemd/system | grep google` on 686/687/688 — all empty). switch-to-configuration stopped the timer because the config that landed was the DISABLED one. The headline above ("crash-loop still running — fix NOT deployed") was stale within 13 minutes of writing: last failure 01:20:35, timer dead 01:21:28.
+2. **The disable half of the fix has been live since 01:21** (system-686; superseded by 687 @ 01:56, 688 `1948qdxh` @ 02:10 — current as of this addendum). "Zero `google-sync-dirs` journal entries" is the EXPECTED state for a disabled service, not evidence of "fix not live" — the oneshot only materializes at go-live (`enable = true`).
+3. **f.25 is moot:** `ycvhzq52` did NOT contain the pre-fix unit. The 00:33 force-enable state never created a profile generation (no link between 685 @ Aug 17 22:51 and 686 @ 01:21) — it was a manually-activated build outside `nix run .#deploy`, exactly the hack class now banned in AGENTS.md.
+4. **g.1 is resolved by history:** the deploy that silenced the loop already ran. Remaining deploy motivation is unrelated to google-sync (niri black-screen fix et al.).

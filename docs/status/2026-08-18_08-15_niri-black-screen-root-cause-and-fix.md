@@ -78,3 +78,15 @@ Also: `AGENTS.md` gotcha entry added under "Desktop".
 ## 5. Reflection
 
 The `Wants=graphical-session.target` was added to fix an ordering nit (comment: "without it, After= is ignored…"), and the blast radius stayed invisible for weeks because the drm-healthcheck kept churning the zombie fast enough to look like "niri crashes a lot" instead of "niri should never have been running". Three independent layers now have to fail before this class recurs.
+
+## Appendix (2026-08-18 13:00 session — self-review execution)
+
+**Assumption loop CLOSED (§b.3 of the self-review).** The `ConditionEnvironment=XDG_SESSION_ID` fix is now fact-backed, not hypothesis:
+
+1. `niri-session` (store path `9z4zv37h…`, `bin/niri-session` line 36) runs `systemctl --user import-environment` with **no arguments** — the entire client environment is imported into the user manager — BEFORE line 47 starts `niri.service`.
+2. pam_systemd sets `XDG_SESSION_ID` in every real session's process environment — live-proven on this box: an SSH session's own shell env carries `XDG_SESSION_ID=12`, while the user manager (PID 1375) does NOT have it (grep count 0), and the live zombie niri's env lacks it.
+3. Therefore: real SDDM login → pam sets the var → niri-session imports it → the condition passes. Linger boot → no import ever ran → the condition fails → no zombie. The "one-line revert" documented in §b.3 should NOT be needed.
+
+**Regression dated (§d.5 of the self-review).** `git log -p --follow` on `platforms/common/programs/activitywatch.nix`: the fatal `Wants = lib.mkAfter ["graphical-session.target"]` entered in **`6ea92969` — 2026-08-15 00:59, "fix(activitywatch): make wayland watcher survive real boots"**. Every SDDM login after that deploy (Aug 15 → Aug 18) hit the black screen; the fix commit was itself an ordering-nit fix whose blast radius stayed invisible for 3 days.
+
+**Follow-ups executed in the 13:00 session** (details in CHANGELOG `[Unreleased]` and TODO_LIST §2.5): eval-time `session-boot-audit` guard (negative-tested against the exact historical bug), healthcheck `ConditionEnvironment` scoping, `niri_zombie` Gatus tripwire, niri-session-manager fail-loud choice documented at `configuration.nix:320`, Qt6 gtk2 polkit root-cause fix, browser-history-agent restart-race fix, crush-daily SIGSYS fix, BTRFS metadata-pressure alert (live CRITICAL unalloc=4% was a phantom green), and the 01:50 btrbk `/data` csum-corruption forensics appended to the TODO_LIST P0 entry (already tracked by the 2026-08-17 corruption master plan).
