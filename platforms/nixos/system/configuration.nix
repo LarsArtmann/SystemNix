@@ -117,6 +117,25 @@ in
     };
 
     systemd = {
+      # smartd boot resilience: after a crash/wedge the USB DAS can
+      # re-enumerate with the kernel's removable flag set — smartd exits
+      # status 16 ("no Directive -d removable") and ALL pool-disk SMART
+      # monitoring is silently gone (live incident, boot 2026-08-18 06:57;
+      # the sysfs flags were back to 0 within hours). smartmontools 7.5
+      # rejects '-d sat,removable' as an unsupported device type, so the fix
+      # is retry-based: restart on failure until enumeration settles.
+      # RestartSec=2min avoids a hot loop while the DAS settles. StartLimit
+      # keys are top-level ([Unit] section) per the systemd 261 rule.
+      services.smartd = {
+        serviceConfig = {
+          Restart = lib.mkDefault "on-failure";
+          RestartSec = "2min";
+        };
+        startLimitBurst = 10;
+        # Typed in seconds — this NixOS option is an int, not a time-span string.
+        startLimitIntervalSec = 600;
+      };
+
       # Portal services must wait for niri compositor to be ready, otherwise they race
       # during live activation (nh os test/switch) when both are restarted simultaneously
       user.units."xdg-desktop-portal-gtk.service.d/after-niri.conf" = {
@@ -299,6 +318,16 @@ in
       focus-new-windows.enable = true;
       shutdown-overlay.enable = true;
       niri-desktop.enable = true;
+      # niri-session-manager (upstream LarsArtmann/niri-session-manager):
+      # WantedBy=graphical-session.target + Requires=niri.service. Deliberately
+      # left UNconditioned (fail-loud): if anything ever starts
+      # graphical-session.target outside a real login again (2026-08-18 class),
+      # niri.service's ConditionEnvironment=XDG_SESSION_ID refuses the start,
+      # the Requires edge fails the manager — visible in the journal — and the
+      # session-boot-audit eval guard names the culprit at eval time. No
+      # OnFailure routing is attached on purpose: the zombie-niri tripwire
+      # (niri_zombie metric + Gatus "Niri Zombie Session") is the detection
+      # layer; a Discord page per 2s restart-cycle would only spam.
       niri-session-manager.enable = true;
       security-hardening.enable = true;
       gatus-config.enable = true;
@@ -569,6 +598,15 @@ in
         gc.enable = true;
       };
 
+      # Boot resilience for smartd: after a crash/wedge the USB DAS can
+      # re-enumerate with the kernel's removable flag set — smartd then exits
+      # status 16 ("no Directive -d removable") and ALL pool-disk SMART
+      # monitoring is silently gone (live incident, boot 2026-08-18 06:57;
+      # flags were back to 0 within hours). smartmontools 7.5 rejects
+      # '-d sat,removable' as an unsupported type, so the fix is retry-based:
+      # restart on failure with a 2-min delay until enumeration settles.
+      # Note: Restart= is only useful for the transient-removable class;
+      # absent devices make smartd exit 16 as well (nofail DAS unplugged).
       smartd = {
         enable = true;
         autodetect = false;

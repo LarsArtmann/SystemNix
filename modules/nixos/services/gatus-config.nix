@@ -646,8 +646,9 @@ _: {
                   "[STATUS] == 200"
                   "[BODY] == pat(*btrfs_device_unallocated_pct*)"
                   "[BODY] == pat(*btrfs_metadata_utilization_pct*)"
+                  "[BODY] == pat(*btrfs_health_critical 0*)"
                 ];
-                alerts = discordAlert "BTRFS chunk allocation critical — device-unallocated <10% or metadata >85%. Nightly GC has been auto-blocked to prevent metadata ENOSPC crash. Free space: grow partition or delete old snapshots.";
+                alerts = discordAlert "BTRFS space health CRITICAL — device-unallocated <5% or metadata pool >90% (metadata-ENOSPC precursor, the 2026-06-26 crash class). nix-gc is auto-blocked below 10% unalloc. Recover: 'sudo systemctl start btrfs-balance-metadata.service' (needs >=5GiB unalloc), expire old btrbk snapshots, or use the 10GiB emergency reserve at /btrfs-emergency-reserve. Live values: btrfs_device_unallocated_pct / btrfs_metadata_utilization_pct.";
               })
               (mkHttpCheck {
                 name = "BTRFS Scrub Health";
@@ -749,6 +750,17 @@ _: {
                   "[BODY] == pat(*niri_crash_loop 0*)"
                 ];
                 alerts = discordAlert "Niri compositor is crash-looping (3+ restarts in 10 min). Check niri journal: journalctl --user -u niri.service -n 50";
+              })
+              (mkHttpCheck {
+                name = "Niri Zombie Session";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*niri_zombie 0*)"
+                ];
+                alerts = discordAlert "Niri is running with NO graphical session (headless zombie) — it will block the next SDDM login with 'A niri session is already running' (2026-08-18 black-screen class). Recover: reboot, or as the user: systemctl --user stop niri.service niri-session-manager.service. Root cause: something pulled graphical-session.target into the user-manager boot transaction — the session-boot-audit eval guard should have caught it at eval time.";
               })
               (mkHttpCheck {
                 name = "TLS Certificate Expiry";

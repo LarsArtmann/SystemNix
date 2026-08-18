@@ -216,7 +216,13 @@ if [ -s "$METRICS_FILE" ]; then
   # Most system_* textfile metrics are now live (verified 2026-08-10).
   # Remove entries after deploy verification confirms them in /metrics.
   # system_zram_*: new system-health zram-fill metrics (2026-08-16 session).
-  KNOWN_NEW_METRICS="system_zram_swap_fill_percent system_zram_fill_over_threshold system_zram_swap_orig_data_bytes system_zram_swap_disksize_bytes system_zram_mem_used_bytes system_service_state_failed"
+  # system_service_state_failed: verified live 2026-08-17 22:54 and removed
+  # from this bypass list in the 2026-08-18 session.
+  # niri_zombie: emitted by the tracked niri-health-metrics script in this
+  # deploy (2026-08-18 zombie-session monitoring) — goes live with this deploy.
+  # btrfs_health_critical: emitted by tracked platforms/nixos/system/btrfs-health.nix
+  # in this deploy (metadata-ENOSPC precursor boolean) — goes live with this deploy.
+  KNOWN_NEW_METRICS="system_zram_swap_fill_percent system_zram_fill_over_threshold system_zram_swap_orig_data_bytes system_zram_swap_disksize_bytes system_zram_mem_used_bytes niri_zombie btrfs_health_critical"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"

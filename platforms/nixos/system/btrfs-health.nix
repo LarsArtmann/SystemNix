@@ -156,6 +156,21 @@ let
       : "''${ALLOC_PCT:=0}"
       : "''${META_PCT:=0}"
 
+      # Health classification — single source of truth, used by BOTH the
+      # metrics emit (btrfs_health_critical/warning booleans for Gatus, which
+      # cannot compare numbers via pat()) and the state log below.
+      # CRITICAL = metadata-ENOSPC precursor (2026-06-26 crash class):
+      # device-unallocated <5% or metadata pool >90% used.
+      classify_btrfs_health() {
+        if [ "$UNALLOC_PCT" -lt 5 ] || [ "$META_PCT" -gt 90 ]; then
+          echo CRITICAL
+        elif [ "$UNALLOC_PCT" -lt 10 ] || [ "$META_PCT" -gt 85 ]; then
+          echo WARNING
+        else
+          echo OK
+        fi
+      }
+
       {
         echo "# HELP btrfs_device_size_bytes Total BTRFS device size"
         echo "# TYPE btrfs_device_size_bytes gauge"
@@ -181,6 +196,24 @@ let
         echo "# HELP btrfs_metadata_utilization_pct BTRFS metadata pool utilization"
         echo "# TYPE btrfs_metadata_utilization_pct gauge"
         echo "btrfs_metadata_utilization_pct $META_PCT"
+
+        # Composite health booleans for Gatus. Absence fails the pat()
+        # conditions fail-closed (collector always writes the file).
+        HEALTH_STATE=$(classify_btrfs_health)
+        echo "# HELP btrfs_health_critical 1 = unalloc<5% or metadata>90% (metadata-ENOSPC precursor, 2026-06-26 crash class)"
+        echo "# TYPE btrfs_health_critical gauge"
+        if [ "$HEALTH_STATE" = "CRITICAL" ]; then
+          echo "btrfs_health_critical 1"
+        else
+          echo "btrfs_health_critical 0"
+        fi
+        echo "# HELP btrfs_health_warning 1 = unalloc<10% or metadata>85%"
+        echo "# TYPE btrfs_health_warning gauge"
+        if [ "$HEALTH_STATE" = "OK" ]; then
+          echo "btrfs_health_warning 0"
+        else
+          echo "btrfs_health_warning 1"
+        fi
 
         # ── Scrub metrics ────────────────────────────────────────────────────
         # Status codes: 0=never 1=running 2=finished 3=interrupted/aborted
@@ -260,13 +293,7 @@ let
       } > "$TMP_FILE"
       mv "$TMP_FILE" "$METRICS_FILE"
 
-      if [ "$UNALLOC_PCT" -lt 5 ] || [ "$META_PCT" -gt 90 ]; then
-        STATE="CRITICAL"
-      elif [ "$UNALLOC_PCT" -lt 10 ] || [ "$META_PCT" -gt 85 ]; then
-        STATE="WARNING"
-      else
-        STATE="OK"
-      fi
+      STATE=$(classify_btrfs_health)
 
       PREV_STATE=$(cat "$STATE_FILE" 2>/dev/null || echo "UNKNOWN")
       echo "$STATE" > "$STATE_FILE"
