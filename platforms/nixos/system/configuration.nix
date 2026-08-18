@@ -512,8 +512,19 @@ in
       # Options (addr/dataDir/wiseApiKeyFile/...) come from the upstream flake
       # module; SystemNix defaults (pool dataDir, sops env, localhost bind)
       # are set in modules/nixos/services/bank-sync.nix.
+      #
+      # DISABLED 2026-08-18: bank-sync.yaml only carries wise_api_key — the
+      # AES encryption_key was never encrypted in, so EVERY deploy fails at
+      # the sops manifest build ("the key 'encryption_key' cannot be found").
+      # The value can only be added with the host's private age key (sudo):
+      #   SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) \
+      #     sops --set '["encryption_key"] "$(openssl rand -base64 32)"' \
+      #     platforms/nixos/secrets/bank-sync.yaml
+      # Then flip to enable = true and deploy. (Same pattern as google-sync:
+      # never ship enabled with a placeholder secret — the sops manifest
+      # hard-fails the build for the WHOLE machine, not just this service.)
       bank-sync = {
-        enable = true;
+        enable = false;
       };
 
       # Overview — local project dashboard (discovers git repos, shows stats/activity)

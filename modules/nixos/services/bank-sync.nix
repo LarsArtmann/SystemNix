@@ -31,7 +31,25 @@ _: {
         onFailure
         ports
         ioTier
+        mkSecretCheck
         ;
+      envTemplate = config.sops.templates."bank-sync-env";
+      # House policy: this deployment always encrypts events at rest. An
+      # empty/missing sops key would silently downgrade bank-sync to
+      # UNENCRYPTED (it treats an empty env var as "no key") — fail the unit
+      # instead. A missing YAML key leaves the {{ marker unreplaced, which
+      # bank-sync then rejects loudly at base64 decode; this check catches
+      # the remaining silent case (key present but empty).
+      checkEncryptionKey = mkSecretCheck pkgs {
+        name = "bank-sync-encryption-key";
+        secretPath = envTemplate.path;
+        message = ''
+          bank-sync: BANK_SYNC_SECURITY_ENCRYPTION_KEY is missing or empty in ${envTemplate.path}
+            Add the 32-byte AES key: sops set platforms/nixos/secrets/bank-sync.yaml '["encryption_key"]', then redeploy.'';
+        extraCheck = ''
+          ${pkgs.gnugrep}/bin/grep -qE '^BANK_SYNC_SECURITY_ENCRYPTION_KEY=..' "$secret_path"
+        '';
+      };
     in
     {
       config = lib.mkIf cfg.enable {
@@ -66,7 +84,12 @@ _: {
               RemainAfterExit = true;
             }
             (harden {
-              ReadWritePaths = [ cfg.dataDir ];
+              # subvolume create needs CAP_SYS_ADMIN, chown CAP_CHOWN;
+              # harden{} defaults to an empty bounding set which would EPERM
+              # both. Write access to the PARENT is required to create the
+              # subvolume (mkdir/chown/chmod on the dir itself is covered).
+              CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_CHOWN CAP_DAC_OVERRIDE";
+              ReadWritePaths = [ (dirOf cfg.dataDir) ];
             })
             (serviceOneshotDefaults { })
           ];
@@ -95,17 +118,8 @@ _: {
           startLimitIntervalSec = 300;
           inherit onFailure;
           serviceConfig = lib.mkMerge [
-            # House policy: this deployment always encrypts events at rest.
-            # An empty/missing sops key would silently downgrade bank-sync to
-            # UNENCRYPTED (it treats an empty env var as "no key") — fail the
-            # unit instead. Missing YAML keys leave the {{ marker unreplaced,
-            # which bank-sync then rejects loudly at base64 decode.
             {
-              ExecStartPre = [
-                "${pkgs.gnugrep}/bin/grep -qE '^BANK_SYNC_SECURITY_ENCRYPTION_KEY=..' ${
-                  config.sops.templates."bank-sync-env".path
-                }"
-              ];
+              ExecStartPre = [ (lib.getExe checkEncryptionKey) ];
             }
             (harden {
               MemoryMax = "512M";

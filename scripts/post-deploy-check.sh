@@ -278,6 +278,42 @@ else
   report_skip "Paperless — service disabled (units absent from systemd)"
 fi
 
+# Bank-Sync: the dashboard BODY proves the templ stack + SQLite read models
+# answer, /metrics proves the sync daemon wired its callback, and a nonzero
+# profile count proves the first Wise sync actually wrote data (catches the
+# empty-token/auth-failure class where the dashboard renders but nothing
+# ever syncs). Port from lib/ports.nix (bank-sync 8097). Fresh deploys may
+# see the profiles WARN while the initial 365d backfill sync is running.
+banksync_enabled=false
+systemctl list-unit-files 'bank-sync.service' --no-legend 2>/dev/null | grep -q bank-sync && banksync_enabled=true
+if $banksync_enabled; then
+  if banksync_body=$(curl -s --compressed --max-time 10 "http://127.0.0.1:8097/" 2>/dev/null); then
+    if echo "$banksync_body" | grep -q "Bank-Sync Dashboard"; then
+      report_pass "Bank-Sync — dashboard answers (templ stack + read models)"
+    else
+      report_fail 'Bank-Sync — :8097 answered but the body lacks "Bank-Sync Dashboard"'
+    fi
+  else
+    report_fail "Bank-Sync — :8097 unreachable (journalctl -u bank-sync -n 30)"
+  fi
+  if banksync_metrics=$(curl -s --compressed --max-time 10 "http://127.0.0.1:8097/metrics" 2>/dev/null); then
+    if echo "$banksync_metrics" | grep -q '^bank_sync_sync_total'; then
+      report_pass "Bank-Sync — /metrics answers"
+    else
+      report_fail "Bank-Sync — /metrics answered but lacks bank_sync_sync_total"
+    fi
+  else
+    report_fail "Bank-Sync — /metrics unreachable"
+  fi
+  if echo "${banksync_metrics:-}" | grep -q '^bank_sync_profiles [1-9]'; then
+    report_pass "Bank-Sync — Wise sync wrote data (profiles > 0)"
+  else
+    report_warn "Bank-Sync — bank_sync_profiles is 0: first sync may still be running, or the Wise token failed (journalctl -u bank-sync -n 50)"
+  fi
+else
+  report_skip "Bank-Sync — service disabled (units absent from systemd)"
+fi
+
 # --- Functional checks (not just liveness) ---
 echo ""
 echo "=== Functional Checks ==="
@@ -517,6 +553,7 @@ check "Homepage (HTTPS)" "https://dash.$DOMAIN/" "200" "<html" 2>/dev/null || tr
 check "Forgejo (HTTPS)" "https://forgejo.$DOMAIN/api/v1/version" "200" "" 2>/dev/null || true
 check "Status (HTTPS)" "https://status.$DOMAIN/" "200" "<html" 2>/dev/null || true
 check "Immich (HTTPS)" "https://immich.$DOMAIN/api/server/ping" "200" "" 2>/dev/null || true
+check "Bank-Sync (HTTPS)" "https://banksync.$DOMAIN/" "200" "Bank-Sync Dashboard" 2>/dev/null || true
 check "Overview (HTTPS)" "https://overview.$DOMAIN/" "200" "<html" 2>/dev/null || true
 
 # --- Auth gateway health (oauth2-proxy / forward-auth) ---

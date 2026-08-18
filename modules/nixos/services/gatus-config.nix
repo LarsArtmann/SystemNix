@@ -1313,6 +1313,22 @@ _: {
                   alerts = discordAlert "Browser History server down — browsing analytics unavailable";
                 })
               ]
+              ++ lib.optionals (config.services.bank-sync.enable or false) [
+                (mkHttpCheck {
+                  name = "Bank-Sync";
+                  group = "Finance";
+                  url = "http://localhost:${toString ports.bank-sync}/";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 1000"
+                    # Functional, not just liveness: the real dashboard (not
+                    # an error shell) carries the page title.
+                    "[BODY] == pat(*Bank-Sync Dashboard*)"
+                  ];
+                  alerts = discordAlert "Bank-Sync down — Wise transaction sync halted, dashboard at banksync.home.lan unreachable. Check: systemctl status bank-sync, journalctl -u bank-sync.";
+                })
+              ]
               ++ lib.optionals (config.services.papdashboard.enable or false) [
                 (mkHttpCheck {
                   name = "PapDashboard";
