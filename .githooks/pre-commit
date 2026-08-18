@@ -81,13 +81,24 @@ if [ -n "$STAGED_NIX" ]; then
   fi
 fi
 
-# Gitleaks
-log_info "Running gitleaks (secret detector)..."
-if gitleaks detect --source . > /tmp/gitleaks.log 2>&1; then
-    log_success "Gitleaks passed! No secrets found."
-elif grep -q "No leaks found\|commits scanned" /tmp/gitleaks.log; then
-    log_success "Gitleaks passed! No secrets found."
+# Gitleaks — scans the NEXT COMMIT's tree (git index), NOT full history:
+# history holds known-leaked blobs pending the filter-repo purge (see AGENTS.md
+# "Secret Leak Incident"); blocking on those would wedge every commit incl. the
+# auto-commit daemon. CI (secret-history-scan.yml) owns the full-history gate.
+# The old block never exited on failure — it was a silent no-op, which is how
+# the 2026-06-11 Resend key leak sailed through (rules-less config + no exit).
+log_info "Running gitleaks (secret detector) on staged tree..."
+GL_STAGED=$(mktemp -d)
+git checkout-index --prefix="$GL_STAGED/" -a
+if gitleaks detect --no-git --source "$GL_STAGED" --config "$(pwd)/.gitleaks.toml" > /tmp/gitleaks.log 2>&1; then
+    log_success "Gitleaks passed! No secrets in staged tree."
+else
+    log_error "Gitleaks BLOCKED the commit: secret found in staged tree."
+    cat /tmp/gitleaks.log
+    rm -rf "$GL_STAGED"
+    exit 1
 fi
+rm -rf "$GL_STAGED"
 
 # Trailing whitespace on staged files only
 log_info "Removing trailing whitespace..."

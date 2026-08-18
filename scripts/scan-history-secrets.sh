@@ -28,6 +28,8 @@ patterns = {
     "OpenAI API key": rb"sk-(?:proj-)?[A-Za-z0-9]{32,}",
     "Anthropic API key": rb"sk-ant-[A-Za-z0-9_\-]{20,}",
     "Context7 API key": rb"ctx7sk[-_][A-Za-z0-9\-]{20,}",
+    "Resend API key": rb"\bre_[A-Za-z0-9_]{30,}",
+    "Synthetic API key": rb"\bsyn_[A-Za-z0-9]{24,}",
     "GitHub token": rb"gh[pousr]_[A-Za-z0-9]{30,}",
     "AWS access key": rb"AKIA[0-9A-Z]{16}",
     "Slack token": rb"xox[baprs]-[A-Za-z0-9\-]{10,}",

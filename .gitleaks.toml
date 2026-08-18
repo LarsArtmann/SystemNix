@@ -1,7 +1,50 @@
 # Gitleaks configuration for SystemNix
-# This file excludes false positives from secret detection
+#
+# RULES MATTER: a config with only [allowlist] runs gitleaks with ZERO rules
+# (defaults are NOT auto-loaded when a config exists) — this file was a complete
+# no-op until 2026-08-18, the day Resend auto-revoked a Pocket ID SMTP key that
+# an agent had pasted into docs/status/2026-06-11_…md (and a Synthetic LLM key
+# sat leaked in five archived status reports). Any [[rules]] addition must keep
+# [extend] useDefault = true.
+
+[extend]
+useDefault = true
+
+# gitleaks has no built-in Resend rule (verified 8.30.1) — the exact class that
+# leaked. Keys look like: re_<33 chars, may contain underscores>.
+[[rules]]
+id = "resend-api-key"
+description = "Resend API key"
+regex = '''\bre_[A-Za-z0-9_]{30,}'''
+keywords = ["re_"]
+
+  # AGENTS.md carries the literal (already-REVOKED) key inside the pending
+  # git-filter-repo --replace-text purge snippet. Remove this allowlist entry
+  # after the history purge is pushed.
+  [[rules.allowlists]]
+  paths = ['''(^|/)AGENTS\.md$''']
+
+# Synthetic LLM gateway keys (syn_<32 hex>) — leaked in 5 status reports
+# 2026-07-29..2026-08-10 (and the Feb 2026 itermexport blob), redacted 2026-08-18.
+[[rules]]
+id = "synthetic-api-key"
+description = "Synthetic API key"
+regex = '''\bsyn_[A-Za-z0-9]{24,}'''
+keywords = ["syn_"]
+
+  # AGENTS.md carries the literal key inside the pending git-filter-repo
+  # --replace-text purge snippet. Remove after the history purge is pushed.
+  [[rules.allowlists]]
+  paths = ['''(^|/)AGENTS\.md$''']
 
 [allowlist]
 description = "Allowlist for known false positives"
 paths = ['''patches\/.*\.patch$''']
-regexes = ['''From [0-9a-f]{40} Mon''', '''YOUR_[A-Z_]+_KEY|YOUR_[A-Z_]+_TOKEN|REDACTED_.*_KEY''']
+regexes = [
+  '''From [0-9a-f]{40} Mon''',
+  '''YOUR_[A-Z_]+_KEY|YOUR_[A-Z_]+_TOKEN|REDACTED_.*_KEY''',
+  # SigNoz upstream commit SHA cited verbatim in research docs
+  '''49749626dc5197479c2da08105a52544f96b7da7''',
+  # Prose ("Immich/Forgejo integration") caught by generic-api-key
+  '''(?i)^immich/(forgejo|twenty)$''',
+]

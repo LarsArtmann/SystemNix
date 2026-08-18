@@ -245,6 +245,39 @@ else
   report_fail "Browser History — agent timer NOT active (history collection offline)"
 fi
 
+# Paperless: the login page BODY proves the full Django + PostgreSQL + redis
+# stack answers, not just the port. In the 2026-08-18 PG bootstrap incident a
+# stale src-version file made the scheduler skip `migrate`, it crash-looped on
+# "relation auth_user does not exist", and every paperless unit failed — a
+# liveness probe alone cannot distinguish that from a slow boot. Tika and
+# Gotenberg prove the Office/E-Mail consume sidecars are up. Ports from
+# lib/ports.nix (paperless 2892, tika 9998, gotenberg 3199).
+paperless_enabled=false
+systemctl list-unit-files 'paperless-web.service' --no-legend 2>/dev/null | grep -q paperless-web && paperless_enabled=true
+if $paperless_enabled; then
+  if paperless_body=$(curl -s --compressed --max-time 10 "http://127.0.0.1:2892/" 2>/dev/null); then
+    if echo "$paperless_body" | grep -q "Paperless-ngx sign in"; then
+      report_pass "Paperless — web login page (Django + PostgreSQL stack answers)"
+    else
+      report_fail 'Paperless — :2892 answered but the body lacks "Paperless-ngx sign in" — partial stack, check paperless-scheduler journal'
+    fi
+  else
+    report_fail "Paperless — :2892 unreachable (journalctl -u 'paperless-*' -n 30)"
+  fi
+  if systemctl is-active tika.service >/dev/null 2>&1; then
+    report_pass "Paperless — Tika OCR sidecar active"
+  else
+    report_fail "Paperless — tika.service NOT active (attachment OCR dead)"
+  fi
+  if curl -s --compressed --max-time 10 "http://127.0.0.1:3199/health" 2>/dev/null | grep -q .; then
+    report_pass "Paperless — Gotenberg health endpoint answers"
+  else
+    report_fail "Paperless — :3199/health unreachable (Office conversion dead)"
+  fi
+else
+  report_skip "Paperless — service disabled (units absent from systemd)"
+fi
+
 # --- Functional checks (not just liveness) ---
 echo ""
 echo "=== Functional Checks ==="
