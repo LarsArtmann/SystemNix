@@ -54,19 +54,33 @@ _: {
           # the new user can write the SQLite DB and read prior reports. The
           # dir is owned by `crush-daily:crush-daily` from historical runs
           # under the system user. systemd's StateDirectory only creates the
-          # dir on first run — it does NOT chown existing data.
-          preStart = lib.mkIf (cfg.runAsUser != null) ''
-            mkdir -p ${lib.escapeShellArg cfg.dataDir}
-            chown -R ${lib.escapeShellArg cfg.runAsUser} ${lib.escapeShellArg cfg.dataDir} 2>/dev/null || true
-            find ${lib.escapeShellArg cfg.dataDir} -type d -exec chmod 0750 {} \; 2>/dev/null || true
-            find ${lib.escapeShellArg cfg.dataDir} -type f -exec chmod 0640 {} \; 2>/dev/null || true
-          '';
-
-          # The upstream module hardcodes User = serviceUser (system user by
-          # default; runAsUser when set). SystemNix only ADDS hardening
-          # (start limits, onFailure, default port) and never overrides
-          # identity — that is done via `services.crush-daily.runAsUser`.
+          # dir on first run — it does not chown existing data.
+          #
+          # The migration MUST run with the ExecStartPre "+" (full-privilege)
+          # prefix: as the service User it SIGSYS'd at every boot (upstream
+          # SystemCallFilter ~@privileged blocks fchownat; verified 2026-08-18
+          # "Bad system call" core dumps) and even unfiltered, a non-root user
+          # cannot chown files owned by another user (silent EPERM).
           serviceConfig = lib.mkMerge [
+            (lib.mkIf (cfg.runAsUser != null) {
+              ExecStartPre = [
+                "+${
+                  pkgs.writeShellApplication {
+                    name = "crush-daily-migrate-ownership";
+                    runtimeInputs = [
+                      pkgs.coreutils
+                      pkgs.findutils
+                    ];
+                    text = ''
+                      mkdir -p ${lib.escapeShellArg cfg.dataDir}
+                      chown -R ${lib.escapeShellArg cfg.runAsUser} ${lib.escapeShellArg cfg.dataDir}
+                      find ${lib.escapeShellArg cfg.dataDir} -type d -exec chmod 0750 {} \;
+                      find ${lib.escapeShellArg cfg.dataDir} -type f -exec chmod 0640 {} \;
+                    '';
+                  }
+                }/bin/crush-daily-migrate-ownership"
+              ];
+            })
             (harden {
               MemoryMax = "1G";
               # ReadOnlyPaths / SupplementaryGroups only needed when running

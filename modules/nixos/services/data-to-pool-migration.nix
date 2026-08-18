@@ -18,6 +18,17 @@
 # partition this migration exists to free (same reasoning as buildcache-gc).
 # Old copies stay recoverable from the nightly /data btrbk snapshots (14d
 # local, 30d+12w pool-side) while they age out.
+#
+# Heal phase (added 2026-08-18 after the first monitor365 verify flagged
+# exactly one `>fc........` file — same size, same mtime, different content,
+# with ZERO kernel csum/EIO errors): a non-empty verify diff triggers a
+# per-file diagnose-and-heal — stat both sides, md5 the SOURCE twice
+# (differing hashes = non-deterministic read = corrupt extent, the /data
+# torn-write class), filefrag the physical extent layout (cross-ref against
+# the known corrupt windows ~595G / ~627-639G), fuser for live writers, then
+# a forced re-copy (--ignore-times bypasses the quick-check) and a single-file
+# re-verify. Only a clean full re-verify afterwards lets the migration
+# proceed to source deletion; anything unhealed keeps the source (failsafe).
 _: {
   flake.nixosModules.data-to-pool-migration =
     {
@@ -63,18 +74,25 @@ _: {
             rsync
             btrfs-progs
             coreutils
+            findutils
             gnugrep
+            psmisc
+            e2fsprogs
           ];
           serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";
               User = "root";
-              # ~63 GB over the shared USB DAS link, worst case including the
-              # checksum verification re-read of both sides.
-              TimeoutStartSec = "4h";
+              # 12h: a multi-million-file monitor365 buffer makes the
+              # rsync file-list build alone run tens of minutes; copy plus
+              # TWO checksum-verify walks can legitimately take hours.
+              TimeoutStartSec = "12h";
             }
             (harden {
-              MemoryMax = "512M";
+              # 1G: the 1.9M-entry verify walk peaked AT the old 512M cap
+              # (483M swap) — headroom is cheaper than a swap-death mid-heal
+              # on a one-shot unit.
+              MemoryMax = "1G";
               # btrfs subvolume create needs CAP_SYS_ADMIN; rsync -a preserving
               # foreign numeric owners (uid 966 / lars) needs CAP_CHOWN +
               # CAP_DAC_OVERRIDE + CAP_FOWNER, and reading the 0750 uid-966
@@ -99,6 +117,39 @@ _: {
             set -u
             failures=0
 
+            # Diagnose + heal ONE differing file. Returns 0 only if the
+            # forced re-copy made source and dest checksum-identical.
+            heal_one() {
+              local srcroot="$1" destroot="$2" rel="$3"
+              local sf="$srcroot/$rel" df="$destroot/$rel"
+              echo "data-to-pool-migration: heal: $rel"
+              stat -c '  src: size=%s mtime=%y inode=%i' "$sf" 2>/dev/null || echo "  src: STAT FAILED"
+              stat -c '  dst: size=%s mtime=%y inode=%i' "$df" 2>/dev/null || echo "  dst: STAT FAILED (absent — will copy fresh)"
+              echo "  md5 src pass1: $(md5sum "$sf" 2>/dev/null | cut -d' ' -f1 || true)"
+              echo "  md5 src pass2: $(md5sum "$sf" 2>/dev/null | cut -d' ' -f1 || true)"
+              echo "  md5 dst:       $(md5sum "$df" 2>/dev/null | cut -d' ' -f1 || true)"
+              filefrag "$sf" 2>/dev/null | sed 's/^/  frag: /' || true
+              filefrag -v "$sf" 2>/dev/null | sed -n '3,10p' | sed 's/^/  extent: /' || true
+              fuser -v "$sf" 2>&1 | sed 's/^/  fuser: /' || true
+              if ! rsync -aHAX --ignore-times --info=stats2 "$sf" "$df"; then
+                echo "data-to-pool-migration: heal COPY FAILED: $rel"
+                return 1
+              fi
+              local reverif=""
+              if ! reverif=$(rsync -aHAXn -c -i "$sf" "$df"); then
+                echo "data-to-pool-migration: heal VERIFY COMMAND FAILED: $rel"
+                return 1
+              fi
+              if [ -n "$reverif" ]; then
+                echo "data-to-pool-migration: heal UNRESOLVED (differs after forced re-copy): $rel"
+                echo "  md5 src pass3: $(md5sum "$sf" 2>/dev/null | cut -d' ' -f1 || true)"
+                echo "  → pass1≠pass2 or pass2≠pass3 = NON-DETERMINISTIC SOURCE READ = corrupt extent"
+                return 1
+              fi
+              echo "data-to-pool-migration: healed: $rel"
+              return 0
+            }
+
             migrate() {
               local src="$1" dest="$2"
               if [ ! -e "$src" ]; then
@@ -111,7 +162,7 @@ _: {
                 failures=1
                 return 0
               fi
-              if ! rsync -aHAX --info=stats1 "$src"/ "$dest"/; then
+              if ! rsync -aHAX --info=stats1,progress2 "$src"/ "$dest"/; then
                 echo "data-to-pool-migration: COPY FAILED: $src (source kept)"
                 failures=1
                 return 0
@@ -125,10 +176,37 @@ _: {
                 return 0
               fi
               if [ -n "$diff" ]; then
-                echo "data-to-pool-migration: VERIFY DIFF FAILED: $src (source kept)"
+                echo "data-to-pool-migration: VERIFY DIFF: $src — attempting targeted heal"
                 printf '%s\n' "$diff" | head -20
-                failures=1
-                return 0
+                local unhealed=0
+                while IFS= read -r line; do
+                  [ -n "$line" ] || continue
+                  case "$line" in
+                    ">f"*|"<f"*)
+                      # itemized flags are 11 chars + a space; the rest is the path
+                      if ! heal_one "$src" "$dest" "''${line:12}"; then
+                        unhealed=1
+                      fi
+                      ;;
+                    *)
+                      echo "data-to-pool-migration: unhandled diff line (treated as unhealed): $line"
+                      unhealed=1
+                      ;;
+                  esac
+                done <<< "$diff"
+                if [ "$unhealed" -ne 0 ]; then
+                  echo "data-to-pool-migration: VERIFY DIFF FAILED: $src — unhealed differences remain (source kept)"
+                  failures=1
+                  return 0
+                fi
+                # Full clean re-verify required after any healing.
+                if ! diff=$(rsync -aHAXn -c -i "$src"/ "$dest"/) || [ -n "$diff" ]; then
+                  echo "data-to-pool-migration: VERIFY DIFF FAILED after heal: $src (source kept)"
+                  printf '%s\n' "$diff" | head -20
+                  failures=1
+                  return 0
+                fi
+                echo "data-to-pool-migration: post-heal full verify clean: $src"
               fi
               # Carry the source top-dir ownership/permissions onto the dest
               # root (numeric: keeps the stale monitor365 uid 966:956 intact).
@@ -162,6 +240,11 @@ _: {
 
             # 2. The data moves. Archive first (largest, irreplaceable DuckDB),
             #    then the empty attic tree, then the monitor365 buffer.
+            #    monitor365 gets a scale probe first: its event buffer may
+            #    hold millions of tiny encrypted chunks — a plain rsync spent
+            #    12+ min in the file-list build alone with zero bytes written
+            #    (twice). The count log makes the next decision factual, and
+            #    --info=progress2 surfaces transfer progress in the journal.
             if ! mkdir -p /mnt/pool/archive; then
               echo "data-to-pool-migration: MKDIR FAILED: /mnt/pool/archive"
               failures=1
@@ -169,6 +252,14 @@ _: {
             migrate /data/monitor365-archive /mnt/pool/archive/monitor365-archive
             if btrfs subvolume show /mnt/pool/services/atticd >/dev/null 2>&1; then
               migrate /data/atticd /mnt/pool/services/atticd
+            fi
+            if [ -e /data/monitor365 ]; then
+              echo "data-to-pool-migration: counting /data/monitor365 (120s cap)..."
+              if monitor365_count=$(timeout 120 find /data/monitor365 -xdev | wc -l); then
+                echo "data-to-pool-migration: /data/monitor365 entries: ''${monitor365_count:-0}"
+              else
+                echo "data-to-pool-migration: count exceeded 120s — multi-million-entry tree, expect a LONG copy"
+              fi
             fi
             migrate /data/monitor365 /mnt/pool/services/monitor365
 

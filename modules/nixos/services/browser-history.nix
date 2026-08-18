@@ -264,14 +264,22 @@
           systemd.services.browser-history-agent = {
             after = [ "browser-history.service" ];
             wants = [ "browser-history.service" ];
-            startLimitBurst = 2;
-            startLimitIntervalSec = 1800;
+            # The 5-min timer IS the retry mechanism. Restart=on-failure with
+            # RestartSec=5min (previous setting) raced the timer: two start
+            # requests land in the same window, the rejected one counts against
+            # the rate limit, and burst=2/1800s turned ONE failed run into a
+            # self-re-arming start-limit-hit that blocked runs for hours
+            # (verified live 2026-08-18: alternating blocked/success timer
+            # fires all day). No Restart + a generous short-window burst lets
+            # the next timer tick always retry.
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
 
             serviceConfig = lib.mkMerge [
               {
                 ExecStartPre = "+${lib.getExe waitServerReady}";
                 TimeoutStartSec = "9min";
-                RestartSec = lib.mkForce "5min";
+                Restart = lib.mkForce "no";
               }
             ];
           };
