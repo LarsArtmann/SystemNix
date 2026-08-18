@@ -216,7 +216,7 @@ The working tree has a change in `configuration.nix` (line 764-767) that I did N
 
 16. **Add fish abbreviation** — `abbr -a llama-server llama-server-rocm` so the wrapper is the default in interactive shells. Prevents users from accidentally running the bare binary.
 17. **Add a `just`/flake command** — `nix run .#ai-status` that shows Ollama status + GPU utilization + VRAM usage in one command.
-18. **Document the fix in FEATURES.md** — "llama-server GPU acceleration" as a DONE feature.
+18. ~~**Document the fix in FEATURES.md** — "llama-server GPU acceleration" as a DONE feature.~~ done (docs-health pass 2026-08-18)
 19. **Add a comment in `lib/rocm.nix`** — Note that `env` must be in `environment.sessionVariables` for interactive use, not just service env.
 
 ### Priority 6 — Deeper investigation
