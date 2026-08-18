@@ -208,6 +208,32 @@ fi
 
 check_local "Attic cache" "8200" "/" "200" 2>/dev/null || true
 
+# FastFlowLM: FULL end-to-end through the public socket-activated port. This is
+# the only check that can catch a dead :52625 (the 2026-08-18 incident: the
+# proxy ExecStart'd a binary nixpkgs doesn't build → exit 127 → start-limit-hit
+# → systemd deactivated the socket; endpoint refused connections for hours
+# while all liveness checks stayed green). Gatus must NOT probe this port
+# (every connection pins the 13.6 GB model for another keepAlive window), so
+# this deploy-time smoke is the sole functional gate. First connection after
+# idle-stop cold-loads the model (1-3 min) — max-time covers it.
+flm_enabled=false
+systemctl list-unit-files 'fastflowlm*' --no-legend 2>/dev/null | grep -q fastflowlm && flm_enabled=true
+
+if $flm_enabled; then
+  # Deliberate connection: re-arms the whole socket→proxy→backend chain.
+  if curl -s --compressed --max-time 240 -o /tmp/.smoke-flm "http://127.0.0.1:52625/v1/models" 2>/dev/null; then
+    if grep -q '"data"' /tmp/.smoke-flm 2>/dev/null; then
+      report_pass "FastFlowLM — /v1/models through socket-activated :52625 (model now pinned ≤ keepAlive)"
+    else
+      report_fail 'FastFlowLM — :52625 answered but /v1/models body lacks "data" — proxy chain up, backend wrong'
+    fi
+  else
+    report_fail "FastFlowLM — :52625 unreachable: socket dead or proxy/backend broken (journalctl -u 'fastflowlm*' -n 50)"
+  fi
+else
+  report_skip "FastFlowLM — service disabled (units absent from systemd)"
+fi
+
 # / redirects to the Pocket ID login (302) since OAuth2 is configured —
 # probe /health instead, the same endpoint the agent's ExecStartPre gates on.
 check_local "Browser History" "8087" "/health" "200" 2>/dev/null || true

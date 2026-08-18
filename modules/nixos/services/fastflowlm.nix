@@ -6,15 +6,27 @@
 #
 # Architecture:
 #
-#   client → 127.0.0.1:52625  fastflowlm.socket          ← stable public port
-#              └─ fastflowlm-proxy.service (socket-activated, systemd-socket-proxyd)
-#                   └─ proxies to 127.0.0.1:52626
+#   client → 127.0.0.1:52625  fastflowlm.socket (Accept=true, inetd-style)
+#              └─ fastflowlm-proxy@.service (one instance per connection)
+#                   └─ waits for 127.0.0.1:52626 to accept, then exec socat
+#                      bridging the connection fd ↔ backend TCP stream
 #                      └─ fastflowlm.service (flm serve)   ← model resident here
 #                           └─ /dev/accel0 (NPU), /data/ai/models/fastflowlm (mmap)
 #
-# Idle TTL: the fastflowlm-idle timer stops both units when the backend journal
-# has no "TCP connection established" entries for ≥ keepAlive (default 1h) AND
-# the backend has been active for ≥ 10 min (don't kill a cold load in progress).
+# WHY no systemd-socket-proxyd: nixpkgs' systemd does not build it (verified
+# 2026-08-18: absent from every systemd 261.1 store output on this machine;
+# the resulting ExecStart exit 127 crashed the proxy into start-limit-hit and
+# systemd deactivated the public socket — :52625 refused connections for
+# hours, invisible to liveness-only checks). The Accept=true + per-connection
+# socat design replaces it with zero resident daemons: flm binds :52626 early
+# but only accepts after the model is loaded, so the KERNEL listen backlog is
+# the cold-load gate — clients queue in TCP, no userspace HTTP polling (1 s
+# probes churned flm's hard 10-connection limit during the 2026-08-18 test).
+#
+# Idle TTL: the fastflowlm-idle timer stops the backend (and any lingering
+# per-connection instances) when the backend journal has no "TCP connection
+# established" entries for ≥ keepAlive (default 1h) AND the backend has been
+# active for ≥ 10 min (don't kill a cold load in progress).
 #
 # WHY socket activation: the model is 13.6 GB mmap'd from /data. Pinned in RAM
 # 24/7, it would reserve ~25 GB of the 94 GB CPU-visible pool at idle. That's
@@ -45,34 +57,34 @@ _: {
         harden
         ports
         ioTier
-        onFailure
-        mkStateDir
         ;
       inherit (config.users) primaryUser;
-      inherit (pkgs) systemd;
 
-      # Wait-for-backend script: blocks until :52626 accepts a TCP connection,
-      # then exec's systemd-socket-proxyd. The proxy alone forwards into a
-      # refused connection mid-cold-load (13.6 GB read, ~1-3 min first token).
-      # Deadline 300s < unit TimeoutStartSec 6min — cold load must fit.
-      waitForBackend = pkgs.writeShellApplication {
-        name = "fastflowlm-proxy-wait";
-        runtimeInputs = [
-          pkgs.coreutils
-          pkgs.curl
-        ];
+      # Per-connection bridge (inetd-style, spawned per client connection by
+      # the Accept=true socket): wait until :52626 accepts a TCP connection,
+      # then exec socat bridging fd 0 (the client connection systemd handed
+      # us) to the backend TCP stream. flm binds :52626 early (~20 s) but
+      # starts its accept loop only after the model is loaded; connections
+      # made in between queue in the kernel backlog — that queue IS the
+      # cold-load hold, which is why this probes with bare TCP connects and
+      # never HTTP (HTTP probes consumed flm's hard 10-connection limit —
+      # live incident 2026-08-18). Deadline 300 s: cold load is 1-3 min worst
+      # case; each refused probe closes instantly and consumes no slot.
+      proxyConn = pkgs.writeShellApplication {
+        name = "fastflowlm-proxy-conn";
+        runtimeInputs = [ pkgs.coreutils ];
         text = ''
           host="127.0.0.1"
           port="${toString cfg.backendPort}"
           deadline=$((SECONDS + 300))
-          while [ "$SECONDS" -lt "$deadline" ]; do
-            if curl -sf --max-time 2 "http://$host:$port/v1/models" >/dev/null 2>&1; then
-              exec ${lib.getExe' systemd "systemd-socket-proxyd"} "$host:$port"
+          until (exec 3<>"/dev/tcp/$host/$port") 2>/dev/null; do
+            if [ "$SECONDS" -ge "$deadline" ]; then
+              echo "fastflowlm-proxy: backend $host:$port not reachable within 300 s" >&2
+              exit 1
             fi
             sleep 1
           done
-          echo "fastflowlm-proxy: backend $host:$port did not become ready within 300 s" >&2
-          exit 1
+          exec ${lib.getExe' pkgs.socat "socat"} - "TCP:$host:$port"
         '';
       };
 
@@ -98,7 +110,7 @@ _: {
           if ${lib.getExe' pkgs.systemd "journalctl"} -u fastflowlm --since "${cfg.keepAlive} ago" --grep "TCP connection established" -n 1 --output cat 2>/dev/null | grep -q .; then
             exit 0
           fi
-          systemctl stop fastflowlm-proxy.service fastflowlm.service
+          systemctl stop 'fastflowlm-proxy@*.service' fastflowlm.service
         '';
       };
     in
@@ -196,30 +208,42 @@ _: {
           description = "FastFlowLM NPU LLM server (public socket)";
           wantedBy = [ "sockets.target" ];
           listenStreams = [ "${cfg.host}:${toString cfg.port}" ];
-          # Route activation to the PROXY, not the backend. Without Service= a
-          # socket defaults to triggering fastflowlm.service directly — which
-          # passes the listening fd to flm (nobody accepts it → clients hang
-          # forever) AND skips the proxy's cold-load wait gate entirely.
+          # inetd-style: systemd itself accepts connections and spawns one
+          # fastflowlm-proxy@.service instance per connection, with the
+          # accepted connection wired to the instance's fd 0/1. Routing
+          # activation directly at fastflowlm.service would hand flm a
+          # listening fd it never accepts (clients hang forever).
           socketConfig = {
-            Accept = false;
-            Service = "fastflowlm-proxy.service";
+            Accept = true;
+            Service = "fastflowlm-proxy@.service";
+            # flm enforces a hard 10-connection limit once its accept loop is
+            # live; cap concurrent clients below it (each instance = 1 real
+            # connection + 1 transient probe connection during cold load).
+            MaxConnections = 8;
           };
         };
 
-        systemd.services.fastflowlm-proxy = {
-          description = "FastFlowLM proxy: forwards public socket → backend (waits for cold load)";
+        systemd.services."fastflowlm-proxy@" = {
+          description = "FastFlowLM per-connection proxy: client fd ↔ backend TCP";
           after = [ "fastflowlm.service" ];
           wants = [ "fastflowlm.service" ];
-          partOf = [ "fastflowlm.service" ];
           serviceConfig = lib.mkMerge [
             {
               Type = "exec";
-              ExecStart = lib.getExe waitForBackend;
-              Restart = "on-failure";
-              RestartSec = "5";
-              TimeoutStartSec = "6min";
+              ExecStart = lib.getExe proxyConn;
+              # The accepted client connection arrives on fd 0/1 (inetd style).
+              StandardInput = "socket";
+              StandardOutput = "socket";
+              # No Restart: instances are per-connection; the socket spawns a
+              # fresh one for the next client. Type=exec is "started" at
+              # exec — TimeoutStartSec cannot fire mid-wait-loop; the loop
+              # carries its own 300 s deadline.
             }
-            (harden { })
+            (harden {
+              # socat holds one TCP stream; the harden default of 512M is
+              # 100x what it needs. Tighten to catch runaway behavior.
+              MemoryMax = "64M";
+            })
           ];
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
