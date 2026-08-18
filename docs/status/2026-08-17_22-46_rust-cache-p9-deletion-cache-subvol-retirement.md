@@ -64,16 +64,16 @@ Two avoidable user round-trips were burned on prescribe-first-check-later mistak
 
 ## f) NEXT TASKS (from this session's blast radius; ~12 real items, not padded to 50)
 
-1. **Close out old shells** (tmux/fish sessions predating 22:20) so `CARGO_HOME`/`npm_config_cache` take effect; then confirm `~/.cargo`/`~/.npm` stop growing.
-2. **Trash the residual `~/.cargo` (581 MiB) and `~/.npm` (103 MiB) plain dirs** once (1) confirms — they sit inside snapshotted `@` and re-churn the NVMe otherwise. (`trash`, not `rm`; registry is regenerable from buildcache.)
+1. ~~**Close out old shells** (tmux/fish sessions predating 22:20) so `CARGO_HOME`/`npm_config_cache` take effect; then confirm `~/.cargo`/`~/.npm` stop growing.~~ done (buildcache live since; leftover dirs hold nothing churning per AGENTS.md)
+2. ~~**Trash the residual `~/.cargo` (581 MiB) and `~/.npm` (103 MiB) plain dirs** once (1) confirms — they sit inside snapshotted `@` and re-churn the NVMe otherwise. (`trash`, not `rm`; registry is regenerable from buildcache.)~~ done at `71256d6f`
 3. **Remove `/mnt/buildcache/go-bin-salvage`** (bins already restored to `~/go/bin`).
-4. **Smoke-test the Rust toolchain end-to-end**: `cargo fetch` in a real project must write to `/mnt/buildcache/cargo`, `golines`/`templ` must run from `~/go/bin`.
+4. ~~**Smoke-test the Rust toolchain end-to-end**: `cargo fetch` in a real project must write to `/mnt/buildcache/cargo`, `golines`/`templ` must run from `~/go/bin`.~~ done (CARGO_HOME seeded 2.7 GiB on buildcache + sccache verified end-to-end)
 5. **Add cargo-registry GC to `buildcache-gc`** (c/1) — e.g. prune `registry/cache/*` and `registry/src/*` older than N days, or adopt `cargo-cache`. Otherwise buildcache grows unbounded in a new dimension.
-6. **Decide `~/.cargo`'s long-term fate**: keep a minimal dir (some tools hardcode `~/.cargo/bin`, `credentials.toml` is already seeded) vs symlink `~/.cargo → /mnt/buildcache/cargo` for env-less processes (the `~/.cache/go-build` precedent). The env-var-only approach leaks via old shells — proven live tonight.
+6. ~~**Decide `~/.cargo`'s long-term fate**: keep a minimal dir (some tools hardcode `~/.cargo/bin`, `credentials.toml` is already seeded) vs symlink `~/.cargo → /mnt/buildcache/cargo` for env-less processes (the `~/.cache/go-build` precedent). The env-var-only approach leaks via old shells — proven live tonight.~~ done at `71256d6f`
 7. **Inspect + resolve `/mnt/btrfs-root/*.regular-dir-bak`** (~50 GiB class, stale since spring) — read-only listing first, then user decision.
-8. **Unallocated-space decision** (g/2): the 100 GiB sits free; nothing needs it today, but it should be a DECISION, not drift.
+8. ~~**Unallocated-space decision** (g/2): the 100 GiB sits free; nothing needs it today, but it should be a DECISION, not drift.~~ done (DECIDED delete-only, left unallocated (TODO_LIST P2 records the user-run commands))
 9. **Add `gptfdisk` (sgdisk) to system packages** or drop a note in AGENTS.md that disk surgery uses `fdisk` — future sessions shouldn't repeat d/1.
-10. **btrbk/scrub sanity pass after partition surgery** (paranoia): confirm tonight's 23:00/23:30 btrbk runs + pool sends succeed on the reshaped disk — the table rewrite happened while both BTRFS filesystems were mounted and in use.
+10. ~~**btrbk/scrub sanity pass after partition surgery** (paranoia): confirm tonight's 23:00/23:30 btrbk runs + pool sends succeed on the reshaped disk — the table rewrite happened while both BTRFS filesystems were mounted and in use.~~ done (first overnight pool cycle green 2026-08-18)
 11. **Root-disk trajectory**: 88% and the session was net-negative on free space. The two big levers stay `/home/hermes` (58 GiB, TODO P2 question) and Docker→SSD2 (TODO P2).
 12. **`docs/gotchas-archive.md`**: add the two runbook lessons (d/1, d/2) as one compact entry — they're cheap, recurring, and exactly the file's purpose.
 

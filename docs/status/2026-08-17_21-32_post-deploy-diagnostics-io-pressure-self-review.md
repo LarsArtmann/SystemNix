@@ -68,9 +68,9 @@
 
 **Urgent — active distress**
 1. Identify the 54 MB/s writer (root `iotop-c -aoP` / `btop` — user has them open; PSI `full` 79% and climbing is the documented BTRFS/QLC storm precursor on this hardware)
-2. Re-provision emergency reserve: `sudo systemctl start btrfs-emergency-reserve` (10 GiB safety net absent since triage)
-3. Investigate/kill the `aw-watcher-window-wayland` 96% CPU peg (restart it; if the peg returns, it's a runaway loop — then fix upstream or wrap with CPUQuota)
-4. Explain the 21:28 discordsync restart (journal around 21:27:5x — crash? OOM? watchdog?) and whether it's related to the load
+2. ~~Re-provision emergency reserve: `sudo systemctl start btrfs-emergency-reserve` (10 GiB safety net absent since triage)~~ done (reserve present, 10 GiB @ Aug 17 21:41)
+3. ~~Investigate/kill the `aw-watcher-window-wayland` 96% CPU peg (restart it; if the peg returns, it's a runaway loop — then fix upstream or wrap with CPUQuota)~~ done at `de2df830`
+4. ~~Explain the 21:28 discordsync restart (journal around 21:27:5x — crash? OOM? watchdog?) and whether it's related to the load~~ done at `0d8a58ca`
 
 **DiscordSync / Turso**
 5. Owner decision: upgrade Turso plan or disable cloud sync cleanly (circuit breaker will log a failure cycle every hour forever)
@@ -91,11 +91,11 @@
 
 **Migration follow-through**
 16. deploy.sh pre-flight: assert mount-target subvolumes exist & are non-empty before `nh os switch` (incident-class guard)
-17. Fix btrbk pool-seed timeout (chunked receive or larger TimeoutStartSec; 6h killed a seed mid-stream)
+17. ~~Fix btrbk pool-seed timeout (chunked receive or larger TimeoutStartSec; 6h killed a seed mid-stream)~~ done at `e5edf0bd`
 18. Delete corrupt pool partial `@.20260814T2300`; verify remaining pool backups parse
-19. Run btrbk catch-up for missed snapshot window
-20. Delete old `@/nix` after 2–3 stable days (frees ~47 GiB as snapshots expire)
-21. Finalize or retire `scripts/migrate-nix-subvol.sh` (unstaged edits from the incident; it served its purpose — the fixed version's history is worth keeping, the script itself arguably not)
+19. ~~Run btrbk catch-up for missed snapshot window~~ done (seeds completed; first overnight cycle green 2026-08-18)
+20. ~~Delete old `@/nix` after 2–3 stable days (frees ~47 GiB as snapshots expire)~~ done (AGENTS.md: old @/nix deleted post-verification)
+21. ~~Finalize or retire `scripts/migrate-nix-subvol.sh` (unstaged edits from the incident; it served its purpose — the fixed version's history is worth keeping, the script itself arguably not)~~ done at `d4a59d4d`
 
 **Hygiene / debt**
 22. Clean the 10 stale build sandboxes in `/nix/var/nix/builds` (pre-deploy warning)
@@ -105,7 +105,7 @@
 26. Monitor365 owner decision (disabled since 08-12; every deploy logs absent-metric warnings — either fix the private crate story or strip expectations from tooling)
 27. Ghostty 164% CPU observation — probably the nvtop/btop spawns; verify it settles
 28. emeet-pixyd video4linux probe WARNs every 2s — log noise on a known-dead device; rate-limit or condition the probe
-29. Docs reconciliation batch: AGENTS.md migration completion + loader-trick recovery knowledge (it saved the incident diagnosis and is only in chat history), the 2 modified status docs, untracked rustfs-evaluation
+29. ~~Docs reconciliation batch: AGENTS.md migration completion + loader-trick recovery knowledge (it saved the incident diagnosis and is only in chat history), the 2 modified status docs, untracked rustfs-evaluation~~ done at `d4a59d4d`
 30. Consider a "post-reboot grace" flag for smoke checks generally (boot storms trip multiple time-windowed checks: Pocket ID busy, I/O pressure, quickshell)
 
 ---

@@ -82,21 +82,21 @@ Plus one **pre-existing phantom metric** from the original integration commit (`
 ## f) NEXT TASKS (prioritized)
 
 **P0 — finish verifying this fix**
-1. Cold-load E2E: `curl 127.0.0.1:52625/v1/models` (accepts 1–3 min cold load), then a chat completion; record TTFT.
-2. Watch `fastflowlm-proxy` wait-gate behavior during cold load (journal).
-3. Idle-TTL test: temporarily set `keepAlive = "5min"` (or wait), verify proxy+service stop, **socket still listening**, second curl re-activates.
-4. Run `nix run .#post-deploy-check` (full smoke suite).
+1. ~~Cold-load E2E: `curl 127.0.0.1:52625/v1/models` (accepts 1–3 min cold load), then a chat completion; record TTFT.~~ done at `99301327`
+2. ~~Watch `fastflowlm-proxy` wait-gate behavior during cold load (journal).~~ done at `99301327`
+3. ~~Idle-TTL test: temporarily set `keepAlive = "5min"` (or wait), verify proxy+service stop, **socket still listening**, second curl re-activates.~~ done (idle-check reworked + live (2026-08-18 19-56 session fixes))
+4. ~~Run `nix run .#post-deploy-check` (full smoke suite).~~ done (full suite green 2026-08-18 (53 PASS / 0 FAIL, 20-52 session))
 5. Remove `system_service_state_failed` from `KNOWN_NEW_METRICS` (metric confirmed live).
-6. Verify Gatus "FastFlowLM" endpoints green (both pat conditions) in the Gatus UI/API.
+6. ~~Verify Gatus "FastFlowLM" endpoints green (both pat conditions) in the Gatus UI/API.~~ done (wired via system-health state metrics; live since 08-18)
 7. Verify `system-health` crash-loop metric (`system_service_start_limit_hit`) still consistent with new emit order.
 
 **P1 — hygiene & durability**
-8. Deliberate git commit documenting the 203 fix + latent-bug fixes (clean attribution; the auto-daemon commit is not self-describing).
-9. Update `AGENTS.md` fastflowlm section: bin/flm layout, socket `Service=`, no-boot-autostart, StateDirectory HOME, idle-never-stops-socket, check #12.
+8. ~~Deliberate git commit documenting the 203 fix + latent-bug fixes (clean attribution; the auto-daemon commit is not self-describing).~~ done at `e70a11b2`
+9. ~~Update `AGENTS.md` fastflowlm section: bin/flm layout, socket `Service=`, no-boot-autostart, StateDirectory HOME, idle-never-stops-socket, check #12.~~ done at `e70a11b2`
 10. Add gotchas: "deploy.sh from restricted-PATH shells", "flat package layouts vs lib.getExe", "phantom metric same-changeset rule".
-11. Annotate/archive the fastflowlm planning doc (`docs/planning/2026-08-15_19-22_…`) as EXECUTED with deviations (proxy architecture as-built).
-12. Check off TODO_LIST.md:175; move residual verification items to TODO_LIST.
-13. Investigate the `Signal(9)` on deploy #2 (oomd vs watchdogd vs kernel OOM) — journal has the window 16:20–16:40.
+11. ~~Annotate/archive the fastflowlm planning doc (`docs/planning/2026-08-15_19-22_…`) as EXECUTED with deviations (proxy architecture as-built).~~ done (planning doc carries the EXECUTED banner (TODO item closed 2026-08-17))
+12. ~~Check off TODO_LIST.md:175; move residual verification items to TODO_LIST.~~ done (docs-health pass 2026-08-18)
+13. ~~Investigate the `Signal(9)` on deploy #2 (oomd vs watchdogd vs kernel OOM) — journal has the window 16:20–16:40.~~ done (diagnosed 2026-08-18 19-56: global-OOM pile-drive; OOMScoreAdjust=300 + RestartSec=60 deployed)
 
 **P2 — deploy pipeline hardening**
 14. deploy.sh PATH prologue (self-contained coreutils/grep).

@@ -187,10 +187,10 @@ The working tree has a change in `configuration.nix` (line 764-767) that I did N
 
 ### Priority 1 — Immediate (close the loop on this fix)
 
-1. **Deploy to evo-x2** — `nix run .#deploy` to apply the session var + wrapper changes
+1. ~~**Deploy to evo-x2** — `nix run .#deploy` to apply the session var + wrapper changes~~ done (deployed via the 2026-08-18 evening deploys (gen 690))
 2. **Runtime-verify VRAM usage** — Run `llama-server-rocm -m <model>.gguf` and check `rocm-smi` shows GPU compute + `node_amdgpu_mem_info_vram_used_bytes` jumps
 3. **Verify GPUActive stays low** — During inference, `grep GPUActive /proc/meminfo` should be LOW (model in VRAM, not GTT)
-4. **Build-verify the wrapper** — `nix build .#nixosConfigurations.evo-x2.config.environment.systemPackages` or build the specific `llama-server-rocm` derivation to confirm `lib.getExe' llama-cpp-rocwmma "llama-server"` resolves
+4. ~~**Build-verify the wrapper** — `nix build .#nixosConfigurations.evo-x2.config.environment.systemPackages` or build the specific `llama-server-rocm` derivation to confirm `lib.getExe' llama-cpp-rocwmma "llama-server"` resolves~~ done (wrapper built + deployed with the 08-18 evening deploys)
 5. **Verify bare `llama-server` claim** — After deploy, test `llama-server` (without `-rocm` suffix) with `HSA_OVERRIDE_GFX_VERSION` in the env. If it works, the AGENTS.md claim is correct. If it falls back to CPU, remove the claim and only recommend the wrapper.
 
 ### Priority 2 — Related gaps in the same class
@@ -204,7 +204,7 @@ The working tree has a change in `configuration.nix` (line 764-767) that I did N
 
 10. **Create `services.rocm-gpu` NixOS module** — A shared module with `options.services.rocm-gpu.enable` that auto-injects `HSA_OVERRIDE_GFX_VERSION`, `HSA_ENABLE_SDMA`, `LD_LIBRARY_PATH`, and `SupplementaryGroups = ["render"]` into any service that opts in. Eliminates the manual `rocmEnv //` merge pattern.
 11. **Add eval-time assertion** — Warn if a systemd service links ROCm libs (check `environment.systemPackages` for `rocmPackages.*`) but doesn't have `HSA_OVERRIDE_GFX_VERSION` in its environment. Catches the class of bug at eval time.
-12. **Add the gap to TODO_LIST.md** — "visionreviewd llama-server needs ROCm env vars" as a tracked item so it doesn't sit for another 136 days.
+12. ~~**Add the gap to TODO_LIST.md** — "visionreviewd llama-server needs ROCm env vars" as a tracked item so it doesn't sit for another 136 days.~~ done (docs-health pass 2026-08-18)
 
 ### Priority 4 — Verification & monitoring
 
@@ -244,8 +244,8 @@ The working tree has a change in `configuration.nix` (line 764-767) that I did N
 ### Priority 9 — Documentation & knowledge
 
 33. **Update the April 4 status report** — Annotate it as "FIXED 2026-08-18" with a pointer to this report.
-34. **Add a gotcha to AGENTS.md** — "ROCm env vars must be in `environment.sessionVariables`, not just service env, for interactive ROCm apps" as a non-obvious gotcha.
-35. **Document the gfx1150 ROCm override** — Add to AGENTS.md that gfx1150 is NOT in ROCm's official support list and `HSA_OVERRIDE_GFX_VERSION=11.5.1` is the workaround.
+34. ~~**Add a gotcha to AGENTS.md** — "ROCm env vars must be in `environment.sessionVariables`, not just service env, for interactive ROCm apps" as a non-obvious gotcha.~~ done at `85f41a62`
+35. ~~**Document the gfx1150 ROCm override** — Add to AGENTS.md that gfx1150 is NOT in ROCm's official support list and `HSA_OVERRIDE_GFX_VERSION=11.5.1` is the workaround.~~ done at `85f41a62`
 36. **Add a verification command to AGENTS.md** — `HSA_OVERRIDE_GFX_VERSION=11.5.1 rocm-smi --showuse` as the quick check for GPU detection.
 
 ### Priority 10 — Long-term architecture
@@ -265,7 +265,7 @@ The working tree has a change in `configuration.nix` (line 764-767) that I did N
 ### Priority 12 — Cleanup & maintenance
 
 45. **Remove the April 4 report from "archive"** — Or annotate it. Archived status reports that describe known-unfixed bugs are misleading.
-46. **Check for other "NOT STARTED" items in old reports** — The April 4 report had 25 items. How many are still open? A `docs-health` sweep would catch this.
+46. ~~**Check for other "NOT STARTED" items in old reports** — The April 4 report had 25 items. How many are still open? A `docs-health` sweep would catch this.~~ done (docs-health pass 2026-08-18)
 47. **Verify `ROCBLAS_USE_HIPBLASLT` is truly gone** — grep confirms no `.nix` file references it. But old status reports do. Ensure no documentation claims it's still in use.
 48. **Check `voice-agents.nix` Whisper container** — It has `HSA_OVERRIDE_GFX_VERSION` but does it have `HSA_ENABLE_SDMA`? The container env should match `rocmEnv` exactly.
 49. **Audit `hermes.nix` ROCm usage** — Hermes has `MemoryMax = "24G"` for "PyTorch + ROCm." Verify it has the full `rocmEnv` and `LD_LIBRARY_PATH`.

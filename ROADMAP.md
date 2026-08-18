@@ -58,6 +58,7 @@ The system has been hardened through multiple crash cycles. The root cause chain
 - **Regression test coverage** — VM test infrastructure exists (`tests/`). Expand beyond current 11 tests to cover: DynamicUser + sops mismatch, deploy.sh start-limit reset, `writeShellApplication` pipefail patterns, StartLimitBurst placement audit
 - **Unified readiness gates** — `mkOidcGate`/`mkDnsGate` cover OIDC + DNS probing; a generalized `mkReadinessGate { type = "http"|"dns"|"tcp" }` would also cover DiscordSync's external-HTTP probe and service-to-service health probes
 - **Observability backend migration (SigNoz → VM ecosystem)** — Researched 2026-08-18, NOT scheduled. Verdict: keep SigNoz today (pain already paid, 2.5 GiB of 94 GiB). Target stack when triggered: VictoriaMetrics + VictoriaLogs + Tempo + Grafana (all stock nixpkgs modules, <1 GiB total) — or VictoriaTraces replacing Tempo+Grafana if it hits v1.0 stable first. **Revisit triggers:** VictoriaTraces v1.0, a NEW SigNoz/ClickHouse incident class, ClickHouse resource pressure, or wanting Grafana for other reasons. Full analysis + migration sketch: `docs/research/observability-signoz-to-victoriametrics.md`
+- **Real OTel instrumentation for own Go services** — overview and PMA carry `OTEL_EXPORTER_OTLP_ENDPOINT` but ship ZERO spans (never instrumented upstream; the env var is a documented noop). Either add otel SDK spans upstream or drop the pretense + audit the expectations registry — and add phantom-telemetry detection (alert when a registered exporter goes span-silent). Applies to every future own-service integration: wired ≠ instrumented (`docs/status/2026-08-18_02-38_otel-coverage-audit-buildflow-overview-pma.md`)
 
 ---
 
@@ -78,7 +79,8 @@ See [TODO_LIST.md](./TODO_LIST.md) Priority 6 for detailed task breakdowns.
 
 - **Jan llama-server respawn** — spawns new `llama-server` every 1-3 min (~1.2GB each). Not a systemd service, no cgroup limits. Needs investigation
 - **Voice agents** — LiveKit + Whisper Docker pipeline disabled. Decide: enable with proper resource limits, or remove
-- **NPU utilization** — AMD XDNA 2 (50 TOPS): FastFlowLM + Qwen3.6-35B-A3B running on it since 2026-08-15 (hand-started, fragile — systemd integration designed in `docs/planning/2026-08-15_19-22_fastflowlm-npu-server-systemd-integration.md`, TODO_LIST). Remaining exploration: ONNX Runtime / Ryzen AI SDK for small-model offloading beyond the LLM slot
+- **NPU utilization** — AMD XDNA 2 (50 TOPS): FastFlowLM + Qwen3.6-35B-A3B systemd-managed on it since 2026-08-17 (socket-activated `Accept=true` + socat bridge, idle TTL — the fragile hand-started era is over). Remaining exploration: ONNX Runtime / Ryzen AI SDK for small-model offloading beyond the LLM slot
+- **Shared `services.rocm-gpu` module** — every GPU consumer hand-merges `rocmEnv // {}` (Ollama got it, gpu-python got it, session vars didn't — 136 days of CPU-fallback llama-server). A module with `options.services.<x>.rocm = true` that auto-injects `HSA_OVERRIDE_GFX_VERSION`/`HSA_ENABLE_SDMA`, the ROCm `LD_LIBRARY_PATH`, and the `render`/`video` groups makes the class structurally impossible (suggested 2026-04-04, still open; `docs/status/2026-08-18_17-42_llama-server-vram-fix-rocm-session-vars.md` §C.5)
 - **Local AI vision models** — file-and-image-renamer can use local llama.cpp provider. Pull vision-capable GGUF model, test on Radeon 8060S via ROCm
 - **Attic cache for AI closures** — Ollama, llama-cpp, and other AI package closures are large (30+ min builds). Attic cache should serve these once configured
 

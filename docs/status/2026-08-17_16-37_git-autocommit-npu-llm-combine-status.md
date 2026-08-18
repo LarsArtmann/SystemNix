@@ -59,29 +59,29 @@
 
 | # | Task | Impact |
 |---|------|--------|
-| 1 | **`nix run .#deploy`** — activates `mode="active"` + FastFlowLM on evo-x2 (the user action; everything else is parked behind it) | Critical |
-| 2 | Poll proxy.golang.org for `v0.8.0` (24-min cache semantics), then `nix flake update go-commit` + PMA input + rebuild | Critical |
-| 3 | Re-apply upstream PMA go.mod → v0.8.0 + vendorHash bump (already authored, needs re-push after proxy clears) | High |
-| 4 | Commit the concurrent-session bug fixes (idleCheck socket fix, `$out/bin` layout, HOME→StateDirectory) + pre-deploy-check §12 | High |
-| 5 | Run the design-doc §6 validation plan: cold load, idle unload, crash restart, GC-safety of package | High |
+| ~~1~~ | ~~**`nix run .#deploy`** — activates `mode="active"` + FastFlowLM on evo-x2 (the user action; everything else is parked behind it)~~ done at `541a6a1a`, `25790607` | ~~Critical~~ |
+| ~~2~~ | ~~Poll proxy.golang.org for `v0.8.0` (24-min cache semantics), then `nix flake update go-commit` + PMA input + rebuild~~ done at `7d58bafa` | ~~Critical~~ |
+| ~~3~~ | ~~Re-apply upstream PMA go.mod → v0.8.0 + vendorHash bump (already authored, needs re-push after proxy clears)~~ done at `7d58bafa` | ~~High~~ |
+| ~~4~~ | ~~Commit the concurrent-session bug fixes (idleCheck socket fix, `$out/bin` layout, HOME→StateDirectory) + pre-deploy-check §12~~ done at `e5edf0bd` | ~~High~~ |
+| ~~5~~ | ~~Run the design-doc §6 validation plan: cold load, idle unload, crash restart, GC-safety of package~~ done at `99301327`, `c6f91f33` | ~~High~~ |
 | 6 | Delete hand-install `~/.local/share/fastflowlm/`, `~/.local/bin/flm`, LD_LIBRARY_PATH exports after deploy proves stable | Medium |
-| 7 | Add `go-commit v0.8.0` Go-proxy-lag gotcha to AGENTS.md (Nix & Nixpkgs section) | Medium |
+| ~~7~~ | ~~Add `go-commit v0.8.0` Go-proxy-lag gotcha to AGENTS.md (Nix & Nixpkgs section)~~ done at `25790607` | ~~Medium~~ |
 | 8 | Verify PMA auto-commit daemon actually produces a commit on the watched tree post-deploy (functional smoke test, not just liveness) | Medium |
 | 9 | Add `systemd integration test` for fastflowlm (socket-activation → cold load → idle unload) | Medium |
-| 10 | Add pre-deploy-check §12 as a permanent eval-time or CI layer | Medium |
+| ~~10~~ | ~~Add pre-deploy-check §12 as a permanent eval-time or CI layer~~ done at `e5edf0bd` | ~~Medium~~ |
 | 11 | Update `docs/gotchas-archive.md` with the 203/EXEC + socket-stop + ProtectHome triple-whammy narrative | Medium |
-| 12 | Decide FastFlowLM homepage tile policy (skip = current; document why) | Low |
+| ~~12~~ | ~~Decide FastFlowLM homepage tile policy (skip = current; document why)~~ done at `0d8a58ca` | ~~Low~~ |
 | 13 | Evaluate `warmCalendar` (pre-load 09:00) once cold-start latency annoys | Low |
 | 14 | Verify immich.nix progressive-JPEG + dns-blocker-config "Continue to site" changes that rode along in commit 541a6a1a | Medium |
 | 15 | Check `docs/external-contributions/` untracked dir — new doc chain from concurrent session | Low |
-| 16 | Update FEATURES.md: FastFlowLM (DONE), PMA active mode (DONE), auto-commit→NPU combine (PARTIAL) | Medium |
-| 17 | Update ROADMAP.md: close "FastFlowLM NPU LLM server" TODO (design complete → shipped) | Medium |
-| 18 | Verify the 3 concurrent fixes didn't break the idle-TTL unit's `After/Wants` graph (proxy → backend) | Medium |
+| ~~16~~ | ~~Update FEATURES.md: FastFlowLM (DONE), PMA active mode (DONE), auto-commit→NPU combine (PARTIAL)~~ done (docs-health pass 2026-08-18) | ~~Medium~~ |
+| ~~17~~ | ~~Update ROADMAP.md: close "FastFlowLM NPU LLM server" TODO (design complete → shipped)~~ done (docs-health pass 2026-08-18) | ~~Medium~~ |
+| ~~18~~ | ~~Verify the 3 concurrent fixes didn't break the idle-TTL unit's `After/Wants` graph (proxy → backend)~~ done at `99301327`, `c6f91f33` | ~~Medium~~ |
 | 19 | Decide whether to keep `OPENAI_API_KEY=local` dormant env vars or strip them until v0.8.0 lands | Low |
 | 20 | Check that Gatus FastFlowLM checks don't fire during normal idle (absence of `system_service_state_failed` = green) | Medium |
 | 21 | Quick `systemd-analyze verify` on the 4 fastflowlm units post-deploy | Medium |
-| 22 | Verify `flm serve` command-line flags actually match module ExecStart (`--host`, `--port`, `--pmode` exist in v1.0.1) | High |
-| 23 | Test the proxy cold-load wait (300s deadline vs 6min TimeoutStartSec) against the real cold-load time (1-3 min measured) | Medium |
+| ~~22~~ | ~~Verify `flm serve` command-line flags actually match module ExecStart (`--host`, `--port`, `--pmode` exist in v1.0.1)~~ done at `99301327` | ~~High~~ |
+| ~~23~~ | ~~Test the proxy cold-load wait (300s deadline vs 6min TimeoutStartSec) against the real cold-load time (1-3 min measured)~~ done at `99301327` | ~~Medium~~ |
 | 24 | Add SIGTERM handling check — flm on idle-stop must release NPU cleanly (no leaked /dev/accel0 handle) | Medium |
 | 25 | After v0.8.0 lands: functional test that PMA commit messages are LLM-generated (not heuristic) | Medium |
 

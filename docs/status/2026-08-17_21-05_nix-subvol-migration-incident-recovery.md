@@ -71,17 +71,17 @@
 
 **Immediate (tonight, blocking):**
 1. Delete corrupt pool subvol: `sudo btrfs subvolume delete /mnt/pool/backups/root/@.20260814T2300`
-2. Start pool catch-up: `sudo systemctl start btrbk-root.service` (sends 0814/0815/0816; monitor journal)
-3. Run the 5-command pivot block (daemon stop → rsync store delta → rsync var → switch → daemon start)
-4. Verify pivot: `findmnt /nix` → `/@nix`; `ls /nix/store | wc -l` ≈ 78,903; `nix store verify --all --no-contents` spot check; `systemctl status nix-daemon`
-5. `nix run .#deploy` from repo → gen 683 + boot entry + profile (normal flow, now safe)
-6. Re-provision emergency reserve: `sudo systemctl start btrfs-emergency-reserve`
+2. ~~Start pool catch-up: `sudo systemctl start btrbk-root.service` (sends 0814/0815/0816; monitor journal)~~ done (seeds completed; first overnight cycle green 2026-08-18)
+3. ~~Run the 5-command pivot block (daemon stop → rsync store delta → rsync var → switch → daemon start)~~ done at `d4a59d4d`
+4. ~~Verify pivot: `findmnt /nix` → `/@nix`; `ls /nix/store | wc -l` ≈ 78,903; `nix store verify --all --no-contents` spot check; `systemctl status nix-daemon`~~ done at `d4a59d4d`
+5. ~~`nix run .#deploy` from repo → gen 683 + boot entry + profile (normal flow, now safe)~~ done (system-683 switched 2026-08-17; generations progressed to 690)
+6. ~~Re-provision emergency reserve: `sudo systemctl start btrfs-emergency-reserve`~~ done (reserve file present, 10 GiB @ Aug 17 21:41)
 
 **Short-term (tomorrow):**
 7. After tonight's 23:00 snapshot lands: delete local 0814, 0813, 0815, 0816 (pool-verified)
-8. Confirm tonight's btrbk 0817 snapshot EXCLUDES @nix extents (first slim snapshot — the whole point)
+8. ~~Confirm tonight's btrbk 0817 snapshot EXCLUDES @nix extents (first slim snapshot — the whole point)~~ done at `d4a59d4d`
 9. `nix store gc` manual pass post-verify (zombie path sweep if any)
-10. Fix `btrbk-root` TimeoutStartSec for catch-up-class runs
+10. ~~Fix `btrbk-root` TimeoutStartSec for catch-up-class runs~~ done at `e5edf0bd`
 11. Verify `fstrim` ran overnight (journalctl) — expect longer run (real deletions happened)
 12. Re-check `btrfs filesystem usage` — target metadata < 90%
 13. Check `system_gatus_meta_scrape_errors`/Gatus didn't fire phantom alerts during the outage window (16:35–19:00); annotate if so
@@ -89,24 +89,24 @@
 15. Mark `docs/planning/2026-08-17_rustfs-evaluation.md` untouched-by-me (it was in git status pre-session — not mine)
 
 **This week:**
-16. After 2–3 stable boots: `sudo rm -rf /mnt/btrfs-root/@/nix` (old dir) — the 102 G unpinned-from-future-snapshots milestone
+16. ~~After 2–3 stable boots: `sudo rm -rf /mnt/btrfs-root/@/nix` (old dir) — the 102 G unpinned-from-future-snapshots milestone~~ done (AGENTS.md: old @/nix deleted post-verification)
 17. Add eval-time/activation guard for unpopulated subvol mounts (see e.1)
 18. deploy.sh pre-flight subvol-population check (see e.2)
-19. btrbk post-receive verification + OnFailure alert routing to Discord (not just journal)
+19. ~~btrbk post-receive verification + OnFailure alert routing to Discord (not just journal)~~ done at `184c6599`
 20. Write gotcha entries: (a) loader trick, (b) power-button shutdown when binaries dead, (c) mount-new-subvol-before-populate incident, (d) docker cp host-write confinement, (e) run0 needs TTY+agent
-21. Reconcile AGENTS.md `/nix` bullet with ACTUAL state once pivot done (remove premature "migrated" claim if pivot slips)
-22. Verify pool-side 0812/0813 still intact post-catch-up (`btrfs subvolume show`, du spot-check)
-23. Cache-subvol reclaim batch (deferred): `@cargo/registry/src` (1.6 G), `@npm`, `@cache-home` — only if disk pressure persists
+21. ~~Reconcile AGENTS.md `/nix` bullet with ACTUAL state once pivot done (remove premature "migrated" claim if pivot slips)~~ done at `d4a59d4d`
+22. ~~Verify pool-side 0812/0813 still intact post-catch-up (`btrfs subvolume show`, du spot-check)~~ done at `e5edf0bd`
+23. ~~Cache-subvol reclaim batch (deferred): `@cargo/registry/src` (1.6 G), `@npm`, `@cache-home` — only if disk pressure persists~~ done at `71256d6f`
 24. Old `/rust-cache` partition (98 GiB raw) deletion + root-partition grow (pre-existing TODO_LIST item)
 25. Revisit `@home` subvol split (flat-layout recommendation from wikis, deferred at install)
-26. Balance check after deletions settle (`btrfs balance status`; the Monday 04:00 `-musage=50` will consolidate)
+26. ~~Balance check after deletions settle (`btrfs balance status`; the Monday 04:00 `-musage=50` will consolidate)~~ done at `d4a59d4d`
 27. Consider `nix.settings.min-free` raise during migration windows (we run min-free 5 G; 97% full breached comfort)
-28. ZRAM fill + memory pressure sanity check post-incident (25 G peak RSS in btrbk runs per journal — heavy)
+28. ~~ZRAM fill + memory pressure sanity check post-incident (25 G peak RSS in btrbk runs per journal — heavy)~~ done at `8ffb2762`
 29. Review the SECOND racing deploy's output (PID 2096307 built to completion — its closure may be a GC-able orphan; check `nix-store --gc --print-orphans` equivalent post-pivot)
 30. Status-report self-review pass (docs/status/2026-08-17_16-33* was modified pre-session — not mine, leave alone)
 
 **Later / backlog alignment:**
-31. Gatus check for "btrbk pool target freshness" (currently only root+data local freshness alert exists — extend to pool sends)
+31. ~~Gatus check for "btrbk pool target freshness" (currently only root+data local freshness alert exists — extend to pool sends)~~ done at `e5edf0bd`
 32. Docs: this incident deserves a `docs/gotchas-archive.md` full narrative entry (timestamps, PIDs, the shadow mechanics, recovery decision tree)
 33. Test the systemd-boot generation-select procedure ONCE calmly (while system healthy) so it's muscle memory — document in gotchas
 34. Pre-create a "surgery mode": `systemctl stop projects-management-automation` (or timer mask) before any filesystem surgery — the auto-deploy daemon is a live wire during migrations
@@ -118,12 +118,12 @@
 40. Kernel `sysrq=1` — consider tightening to a safer mask now that we know it's our last-resort reboot (mask 1 = all; 176 is the safer common set) — or leave as-is deliberately (homelab, single user)
 41. Double-deploy prevention: nh lockfile/nix-daemon queueing means two simultaneous `nh os switch` can interleave builds — consider `flock` in deploy.sh around the whole build+switch
 42. Document that `switch-to-configuration` on the NEW closure is the pivot mechanism deploy can't safely do pre-population — link from the migration script header
-43. Post-pivot: run `nix flake check --no-build` from repo to confirm no eval drift after the day's churn
+43. ~~Post-pivot: run `nix flake check --no-build` from repo to confirm no eval drift after the day's churn~~ done (full flake checks green in subsequent sessions)
 44. Check Forgejo-runner/CI didn't fire builds into the broken window (16:35–19:00) — orphans/cache pollution possible
 45. Monitor next 2-3 btrbk runs for correct parent selection post-snapshot-deletions (btrbk bookkeeping can re-seed if confused — watch for "resume" lines)
 46. The `@.20260814T2300` corrupt copy taught: pool `TimeoutStartSec=6h` interacts with `x-systemd.device-timeout` on USB — document interplay in gotchas if it recurs
-47. User's `/mnt/@` manual mount evaporated mid-session (idle timeout) — standardize on `/mnt/btrfs-root` (automount-managed) in ALL docs/scripts (migration script already does)
-48. Verify `home-manager-lars` activation ran clean on next deploy (the shadow window could have left stale HM state)
+47. ~~User's `/mnt/@` manual mount evaporated mid-session (idle timeout) — standardize on `/mnt/btrfs-root` (automount-managed) in ALL docs/scripts (migration script already does)~~ done (AGENTS.md standardizes on /mnt/btrfs-root)
+48. ~~Verify `home-manager-lars` activation ran clean on next deploy (the shadow window could have left stale HM state)~~ done (subsequent deploys activated HM clean)
 49. If pivot goes smoothly: close out `docs/planning` migration notes; if it doesn't boot-menu rollback remains gens 678-682 — all verified SAFE fstab
 50. Celebrate appropriately. The store survived a mount-over with zero data loss, reflinks made the whole recovery possible, and the pool had a verified-full copy before anything was deleted.
 

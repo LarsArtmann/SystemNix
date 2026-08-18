@@ -80,7 +80,7 @@
 
 | # | Task | Impact |
 |---|------|--------|
-| 1 | Deploy the Gatus change (after tree is clean / other sessions land) | High |
+| ~~1~~ | ~~Deploy the Gatus change (after tree is clean / other sessions land)~~ done at `e5edf0bd` | ~~High~~ |
 | 2 | Decide broken-3 handling BEFORE deploy: fix or accept ~15 min of 3 Discord alerts | High |
 | 3 | `terraform plan` (+ apply) in `/home/lars/projects/domains` — md-go-validator record is staged in .tf, unapplied | High |
 | 4 | Investigate `go-output` 404: is `go-output.web.app` claimed? Re-run website-launch `firebase deploy` in the go-output repo | High |
@@ -96,8 +96,8 @@
 | 14 | Alert-storm mitigation: raise failure-threshold for the OSS group or add an aggregate endpoint | Med |
 | 15 | Audit `status.lars.software` Better Stack page: which monitors feed it? Ghost or alive? | Med |
 | 16 | Decide Gatus status-page vs Better Stack (ties into Q3) | Med |
-| 17 | Verify post-deploy: 20 endpoints visible, exactly 3 red (no surprises) | Med |
-| 18 | Actually execute `gatus-pattern-lint` (full `nix flake check` or pre-commit will) | Low |
+| ~~17~~ | ~~Verify post-deploy: 20 endpoints visible, exactly 3 red (no surprises)~~ done (deployed 2026-08-17/18; endpoints live at gen 690) | ~~Med~~ |
+| ~~18~~ | ~~Actually execute `gatus-pattern-lint` (full `nix flake check` or pre-commit will)~~ done (pre-commit/CI executed full checks in subsequent sessions) | ~~Low~~ |
 | 19 | Add eval-time assertion / test pinning the OSS host list (drift tripwire) | Low |
 | 20 | Consider per-site response-time thresholds (slowest observed: art-dupl 0.57 s; 2 s headroom is fine) | Low |
 | 21 | Gatus UI button for `lars.software` / docs hub | Low |

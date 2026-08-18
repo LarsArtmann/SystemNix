@@ -63,11 +63,11 @@ All numbers below are measured live on the host, not estimated.
 | # | Task | Impact | Effort |
 |---|------|--------|--------|
 | 1 | DROP the 13 read-only zombie tables (**15.65 GiB** reclaim) — pending user answer Q1 | High | 10 min |
-| 2 | Verify IO PSI settled + btrbk 23:30/23:45 jobs completed cleanly tonight (extent churn may slow the pool send) | High | 5 min |
+| ~~2~~ | ~~Verify IO PSI settled + btrbk 23:30/23:45 jobs completed cleanly tonight (extent churn may slow the pool send)~~ done (first overnight pool cycle green 2026-08-18) | ~~High~~ | ~~5 min~~ |
 | 3 | Confirm pocket-id SQLITE_BUSY stopped after IO settles; if it recurs on calm IO, investigate WAL/busy_timeout | High | 15 min |
 | 4 | system-health metric: ClickHouse `system` db bytes on disk + Gatus alert above threshold (~20 GiB) | High | 1 h |
 | 5 | system-health metric: `signoz-clickhouse-log-ttl` last-success age (>26h → alert); fail-closed | High | 30 min |
-| 6 | Re-verify sample rates after 24h (stable 0.5 Hz) and after first timer run | Med | 5 min |
+| ~~6~~ | ~~Re-verify sample rates after 24h (stable 0.5 Hz) and after first timer run~~ done (journal volume stable ~5 MB/h per AGENTS.md) | ~~Med~~ | ~~5 min~~ |
 | 7 | Extend converge script: auto-DROP empty zombie `_N` tables once fully decayed (rows=0 AND age > retention) | Med | 30 min |
 | 8 | Add `--max_execution_time 0` + retry to DROP PARTITION queries (same contention class as MODIFY TTL) | Med | 10 min |
 | 9 | Write `docs/gotchas-archive.md` incident narrative (repo convention for full stories) | Med | 30 min |

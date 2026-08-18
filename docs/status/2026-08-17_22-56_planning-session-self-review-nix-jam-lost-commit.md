@@ -78,16 +78,16 @@ This session ran in two active phases with a 6.5h gap between my turns (16:20 �
 ## f) NEXT (up to 50, impact-sorted)
 
 **Tonight (before/around 23:00):**
-1. T01: delete `/mnt/pool/backups/root/@.20260814T2300` (broken receive) — needs user OK (Q1)
-2. Watch tonight's 23:00 btrbk-root run; verify clean chain resume (or at minimum a loud, clean failure)
-3. Verify whether the fix batch is LIVE (deployed unit has `TimeoutStartSec=24h`; pre-deploy-check byte gate; pool-metrics service exists) — if not, deploy it
+1. ~~T01: delete `/mnt/pool/backups/root/@.20260814T2300` (broken receive) — needs user OK (Q1)~~ done (re-received cleanly by the resumed nightly chain (0812-0815 all present pool-side; overnight cycles green since 2026-08-18))
+2. ~~Watch tonight's 23:00 btrbk-root run; verify clean chain resume (or at minimum a loud, clean failure)~~ done (overnight cycle green 2026-08-18)
+3. ~~Verify whether the fix batch is LIVE (deployed unit has `TimeoutStartSec=24h`; pre-deploy-check byte gate; pool-metrics service exists) — if not, deploy it~~ done (24h timeouts + pool metrics live in snapshots.nix)
 4. Make the 3d retention edit (root+data instances) and bundle into the next deploy — needs exact numbers OK (Q2)
 
 **Tomorrow morning (IO window):**
 5. T05: run find-corrupt2.sh → corrupt-file map (move script into `scripts/` first)
 6. T04: DuckDB safety copy 54G → `/mnt/pool/archive/monitor365-nvme-safety/` + hashes
 7. T09: re-kick btrbk-data seed (after map exists; seed aborts on bad extents otherwise)
-8. T10: verify root seed caught up (@.20260814..17 received, Received UUID set)
+8. ~~T10: verify root seed caught up (@.20260814..17 received, Received UUID set)~~ done (root seed caught up; overnight cycles green since 2026-08-18)
 9. T08: re-scrub /data once recovery done → 0 csum gate
 
 **Recovery chain:**
@@ -95,18 +95,18 @@ This session ran in two active phases with a 6.5h gap between my turns (16:20 �
 11. T07: `btrfs check --mode=low-risk` window (docker down ~60-90min) — needs timing OK (Q3)
 12. T11: final green sweep (verify-pool-backups, backup_all_healthy=1, Gatus dashboard)
 13. Verify monitor365 backup gating live (fixes backup_all_healthy)
-14. T12: scrub Gatus coverage for /data (+ pool) — audit then add
+14. ~~T12: scrub Gatus coverage for /data (+ pool) — audit then add~~ done (verified DONE 2026-08-18 13:00 session (composite + per-mount scrub metrics))
 15. Re-verify reserve state (concurrent session restored it) + T14 freshness semantics (weekly rewrite timer or documented caveat)
 
 **Hygiene/docs:**
-16. Push/repo-sync verification (my `git push` was part of the eaten commit command)
+16. ~~Push/repo-sync verification (my `git push` was part of the eaten commit command)~~ done (eaten commit recovered same session)
 17. T13 remainder: reserve pinning caveat + du-overcount gotcha in AGENTS.md; plan decision record
-18. CHANGELOG entry for pool-backup completion + corruption incident chain
+18. ~~CHANGELOG entry for pool-backup completion + corruption incident chain~~ done (CHANGELOG Unreleased: Three-drive repurposing + corruption forensics entries)
 19. T15: stray `/var/lib/paperless` removal (after pool instance health check)
 20. T16: root snapshot expiry dates → expected reclaim (root still 95%)
 21. Pre-commit hook: skip nix checks for .md-only diffs (+ test, + commit)
 22. btrbk timeout guard: assert TimeoutStartSec ≥ seed scale in eval (so 6h-class misestimates can't recur)
-23. Move find-corrupt2.sh → `scripts/find-corrupt-extents.sh` (committed, documented)
+23. ~~Move find-corrupt2.sh → `scripts/find-corrupt-extents.sh` (committed, documented)~~ done (shipped as scripts/find-corrupted-files.sh)
 24. Status-report annotations: mark 10:28 report items resolved (btrbk-pool verified, smartd verified, reserve restored)
 
 **Backlog (from plan T17 + TODO_LIST, separate sessions):**
