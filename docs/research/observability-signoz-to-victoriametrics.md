@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-18
 **Status:** Researched, NOT scheduled. Keep-SigNoz decision made; revisit on the triggers below.
-**Companion docs:** [status snapshot with measurements](../status/2026-08-18_signoz-vs-victoriametrics-research.md)
+**Companion docs:** [status snapshot with measurements](../status/archived/2026-08-18_signoz-vs-victoriametrics-research.md)
 
 ---
 
