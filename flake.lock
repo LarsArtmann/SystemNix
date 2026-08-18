@@ -1683,11 +1683,11 @@
     "go-commit": {
       "flake": false,
       "locked": {
-        "lastModified": 1786707472,
-        "narHash": "sha256-DtdroZUrma7j4RPk8h/m+9Utg9HHaS7gg2znNET4n0o=",
+        "lastModified": 1786469281,
+        "narHash": "sha256-Oo0VDMexHvPxXblJ3U677qrYgcU4u5eut8uM6x8vud8=",
         "owner": "LarsArtmann",
         "repo": "go-commit",
-        "rev": "e5040b396e892d818012834d3e4cd2da834f89e1",
+        "rev": "73211339b8e6b4b09efc63bf9d7a083f044d1275",
         "type": "github"
       },
       "original": {
