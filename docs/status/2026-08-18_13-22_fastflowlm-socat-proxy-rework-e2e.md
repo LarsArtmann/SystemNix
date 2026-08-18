@@ -1,7 +1,7 @@
 # FastFlowLM Socat Proxy Rework — Cold-Load E2E Exposed a Dead Endpoint (2026-08-18)
 
-**Session window:** ~12:45–13:22 (resumed from `2026-08-17_22-55_fastflowlm-203-exec-fix-and-deploy-recovery.md`)
-**Status at report time:** deploy #2 of the reworked proxy architecture is **mid-flight — "Activating configuration"** (log: `/tmp/deploy-flm3.log`)
+**Session window:** ~12:45–14:30 (resumed from `2026-08-17_22-55_fastflowlm-203-exec-fix-and-deploy-recovery.md`)
+**Status:** deploy #2 activated (exit-4 wrap, units live); a THIRD bug (systemd 261 template-naming rule) found and fixed in deploy #3 — **activation blocked by a wedged switch-to-configuration holding `/run/nixos/switch-to-configuration.lock`** (see addendum §h)
 
 ---
 
@@ -16,9 +16,9 @@ The P0 cold-load E2E test — the one thing yesterday's session never did — **
 3. **Root-caused Bug A (fatal): `systemd-socket-proxyd` absent from nixpkgs** — verified against EVERY systemd 261.1 store output on the machine (the binary is not built by nixpkgs at all). The proxy unit's `ExecStart` line 13 referenced `/nix/store/mc90…-systemd-261.1/bin/systemd-socket-proxyd: No such file or directory` → exit 127 ×5 → `start-limit-hit` → socket deactivated → **:52625 refused connections for ~5 hours (12:48→now) with zero alerts** (Gatus must not probe the port by design; nothing else watched it).
 4. **Root-caused Bug B: probe churn vs flm's hard 10-connection limit** — the wait-gate's 1 s HTTP curl probes during the ~55 s window where flm has bound :52626 but not yet accepting piled up as dead queued connections; flm logged `Connection limit reached (10), rejecting new connection` and reset the genuine client request (`ConnectionResetError 104` at 75.9 s).
 5. **Architecture rework (modules/nixos/services/fastflowlm.nix)** — replaced socket-proxyd entirely:
-   - Socket: `Accept = true` (inetd-style; systemd itself accepts, spawns one `fastflowlm-proxy@.service` per connection, client fd wired to fd 0/1), `Service = "fastflowlm-proxy@.service"`, `MaxConnections = 8` (below flm's hard 10).
+   - Socket: `Accept = true` (inetd-style; systemd itself accepts, spawns one per-connection template instance, client fd wired to fd 0/1), `MaxConnections = 8` (below flm's hard 10). Template originally named `fastflowlm-proxy@.service` with `Service = "fastflowlm-proxy@.service"` — **wrong: see §h bug C, renamed to `fastflowlm@.service` with `Service=` removed**.
    - Per-connection unit: waits for `:52626` **TCP accept** via `/dev/tcp` probes (each refused probe closes instantly, consumes no flm slot), then `exec socat - TCP:127.0.0.1:52626`. **The kernel listen backlog is now the cold-load hold — zero HTTP polling.**
-   - `idleCheck` stops `'fastflowlm-proxy@*.service'` + backend (socket still never stopped); MemoryMax 64M on the bridge unit; `inherit (pkgs) systemd` removed (unused).
+   - `idleCheck` stops `'fastflowlm@*.service'` + backend (socket still never stopped); MemoryMax 64M on the bridge unit; `inherit (pkgs) systemd` removed (unused).
 6. **Fixed a blocking eval bug in the concurrent session's uncommitted change** — `smartd.startLimitIntervalSec = "10min"` is a type error (NixOS option is int/seconds) that aborted the whole toplevel eval. Changed to `600` — surgical, intent-preserving, documented.
 7. **Eval + option-placement verification** — initial `accept = true` at socket top level doesn't exist as an option; moved into `socketConfig.Accept`. Full toplevel eval passes; `nix fmt` clean.
 8. **`system_service_state_failed` removed from `KNOWN_NEW_METRICS`** (pre-deploy-check.sh) — metric confirmed live yesterday 22:54; the temporary deploy bypass is gone, with a comment recording the removal.
@@ -105,4 +105,13 @@ The P0 cold-load E2E test — the one thing yesterday's session never did — **
 
 ---
 
-**Bottom line:** yesterday's "deployed and verified" endpoint was dead on arrival — the never-run E2E test found it in 60 seconds, plus a second latent bug. The rework (inetd-style socat bridge) is deployed-but-unverified at this moment; verification, cleanup, and attribution are queued in f).
+## h) ADDENDUM 14:20 — deploy #2 result, Bug C (template naming), and the wedged-stc deploy outage
+
+1. **Deploy #2 DID activate** (13:43–13:44, exit-4 wrap: `data-to-pool-migration` + `browser-history-agent` failed at switch time — the latter self-heals on its timer). Socket re-armed, socat + template deployed. Note: this activation was actually the **concurrent session's deploy** of the same tree (store `z816788k…`); my own deploy #2 (`855k5chwls…`) had activated cleanly at ~13:13. Two sessions built and switched the same uncommitted tree within 30 min — question g1 is no longer hypothetical.
+2. **Bug C (found live): systemd 261 derives the Accept=true connection unit from the SOCKET's name, and `Service=` overrides on accepting sockets are unsupported.** Symptom: connection → `Failed to load connection service unit: No such file or directory` → socket result `resources` → client reset. Verified in v261.1 `src/core/socket.c`: `socket_verify()` refuses `Service=` when it resolves ("Explicit service configuration for accepting socket units not supported"), and a template value like `fastflowlm-proxy@.service` can't load as a unit → silently IGNORED ("missing the instance name, ignoring") → `socket_load_service_unit()` builds `fastflowlm@<conn>.service` from the socket prefix → no such template → ENOENT. **Fix: template MUST be named `<socket>@.service` — renamed to `fastflowlm@`, dropped `Service=`.** Also removed `fastflowlm-proxy@` from `idleCheck`'s stop glob. E2E through the fixed name still pending (see 4).
+3. **Deploy #3 (renamed template) built clean but could not activate: exit 11 "Could not acquire lock".** Root cause: nixpkgs' new Rust `switch-to-configuration` flocks `/run/nixos/switch-to-configuration.lock`; the 13:43 stc completed ALL work at 13:44:08 (report printed, current-system advanced, all unit jobs done — verified in journals) then **wedged forever** (missed dbus JobRemoved signal is the prime suspect — the binary registers match rules for exactly that), holding the flock. Every subsequent deploy machine-wide dies exit 11 until that PID is killed or reboot. **Remediation shipped:** deploy.sh now detects a >30-min-old stc holding the lock, prints the recovery command, and aborts (opt-in auto-kill via `DEPLOY_KILL_WEDGED_STC=1` — killing root processes on an age heuristic stays a human decision). Current wedged PID: **3351300**.
+4. **State at 14:30:** `:52625` still dead-by-naming (socket listens; per-connection spawn fails) until deploy #3 activates. All non-activation work done: metrics `niri_zombie`/`btrfs_health_critical` verified live + removed from `KNOWN_NEW_METRICS` (btrfs one reads **1 — true positive**, unallocated 4% < 5% threshold), docs annotated, AGENTS.md rewritten, commit staged deliberately.
+
+---
+
+**Bottom line:** yesterday's "deployed and verified" endpoint was dead on arrival — the never-run E2E test found it in 60 seconds, plus two more latent bugs (probe churn; systemd's Accept=true naming rule). One sudo action (`kill 3351300`) stands between the fixed architecture and its activation.

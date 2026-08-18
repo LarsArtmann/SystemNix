@@ -10,6 +10,43 @@ if nix run .#pre-deploy-check; then
   sudo systemctl reset-failed 2>/dev/null || true
   systemctl --user reset-failed 2>/dev/null || true
 
+  # Wedged switch-to-configuration detection (2026-08-18 incident):
+  # nixpkgs' Rust switch-to-configuration can complete all activation work,
+  # print its final report, and then HANG forever (missed dbus JobRemoved
+  # signal) while holding /run/nixos/switch-to-configuration.lock. Every
+  # subsequent deploy then dies with exit 11 "Could not acquire lock" until
+  # the zombie is killed or the machine reboots. Default: detect + print the
+  # recovery command (killing root processes on an age heuristic must stay a
+  # human decision — a legitimately long activation, e.g. restarting a unit
+  # with a 6h TimeoutStartSec, would match a naive age-only check). Opt in to
+  # automatic cleanup with DEPLOY_KILL_WEDGED_STC=1 (kills stc processes
+  # older than 30 min).
+  stc_lock=/run/nixos/switch-to-configuration.lock
+  if [ -e "$stc_lock" ]; then
+    stc_pids=$(pgrep -f 'switch-to-configuration' || true)
+    wedged=""
+    for pid in $stc_pids; do
+      etimes=$(ps -o etimes= -p "$pid" 2>/dev/null | tr -d ' ')
+      if [ -n "$etimes" ] && [ "$etimes" -gt 1800 ]; then
+        wedged="$wedged $pid"
+      fi
+    done
+    if [ -n "$wedged" ]; then
+      if [ "${DEPLOY_KILL_WEDGED_STC:-0}" = "1" ]; then
+        echo "⚠ Killing wedged switch-to-configuration (PIDs:$wedged, >30 min old):"
+        sudo kill $wedged || true
+        sleep 2
+      else
+        echo "❌ switch-to-configuration appears WEDGED (PIDs:$wedged, >30 min old)."
+        echo "   It holds $stc_lock; this deploy will fail with 'Could not acquire lock'."
+        echo "   Verify no deploy is legitimately activating, then either run:"
+        echo "     sudo kill $wedged"
+        echo "   or re-run with:  DEPLOY_KILL_WEDGED_STC=1 nix run .#deploy"
+        exit 11
+      fi
+    fi
+  fi
+
   echo ""
   echo "=== Backing up DMS settings (if user-modified) ==="
   # DMS may replace the HM-managed settings.json symlink with a real file

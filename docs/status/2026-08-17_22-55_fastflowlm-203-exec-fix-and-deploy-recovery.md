@@ -36,6 +36,13 @@ Plus one **pre-existing phantom metric** from the original integration commit (`
    - `fastflowlm.socket` **LISTENING on 127.0.0.1:52625** (checked `/proc/net/tcp`, port 0xCD91).
    - Boot autostart gone: no `multi-user.target.wants/fastflowlm.service`; socket symlinked in `sockets.target.wants`.
    - Backend process correctly **not running** (zero RAM/NPU at idle — the design working).
+
+   > **CORRECTION 2026-08-18:** every bullet above was verification-at-rest of a **dead endpoint**. The
+   > proxy unit's `ExecStart` was `systemd-socket-proxyd`, a binary nixpkgs does not build → exit 127 →
+   > start-limit-hit → systemd deactivated the socket. :52625 refused ALL connections for hours while
+   > every check here stayed green — "socket listening" was true only between socket activation and the
+   > first connection attempt. The first-ever E2E connection (2026-08-18 12:47) exposed it in 60 s.
+   > Superseded by the Accept=true + socat rework: `docs/status/2026-08-18_13-22_fastflowlm-socat-proxy-rework-e2e.md`.
 8. **Formatting/lint** — `nix fmt` clean on all touched files; toplevel eval passes.
 
 ## b) PARTIALLY DONE

@@ -2,6 +2,14 @@
 
 **Status: EXECUTED 2026-08-15/17 — shipped as `541a6a1a` + `25790607`** (module `modules/nixos/services/fastflowlm.nix`, ports 52625/52626 in `lib/ports.nix`, socket activation via systemd-socket-proxyd). Verdicts per section below were rendered by the 2026-08-17 docs-health pass against the shipped code. Design agreed 2026-08-15.
 
+> **CORRECTION 2026-08-18:** the "socket activation via systemd-socket-proxyd" design never worked —
+> `systemd-socket-proxyd` is not built by nixpkgs at all (dead ExecStart → socket deactivated → :52625
+> refused for hours, invisible to liveness checks). As-built since the 2026-08-18 rework: `Accept=true`
+> inetd-style socket + per-connection `fastflowlm@.service` template that execs socat to the backend
+> (kernel backlog = cold-load gate). The template MUST be named after the socket — systemd 261 derives
+> the connection unit from the socket name and ignores `Service=` on accepting sockets. Full narrative:
+> `docs/status/2026-08-18_13-22_fastflowlm-socat-proxy-rework-e2e.md`.
+
 Reference: `~/projects/anime-comic-pipeline/docs/npu-fastflowlm-llm-server.md` (manual install, measured numbers)
 Target module: `modules/nixos/services/fastflowlm.nix`
 
