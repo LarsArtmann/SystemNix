@@ -55,12 +55,12 @@ Resume the paused paperless v3 "superb" upgrade at its two unresolved post-deplo
 
 ## f) NEXT — up to 50, in priority order
 
-1. Poll `nix flake check --no-build` until the bank-sync session unblocks evo-x2 eval
-2. Deploy the pending batch (idle-check fix, gotenberg `http://` fix, post-deploy-check section)
-3. Verify gotenberg journal clean of OTel errors (60 s window) post-deploy
-4. E2E fastflowlm probe again — fresh, timed right after an idle-tick, with memory headroom visible
+1. ~~Poll `nix flake check --no-build` until the bank-sync session unblocks evo-x2 eval~~ done (unblocked — checks green through the 08-18 sessions)
+2. ~~Deploy the pending batch (idle-check fix, gotenberg `http://` fix, post-deploy-check section)~~ done (deployed by the 20-52 session (gen 690))
+3. ~~Verify gotenberg journal clean of OTel errors (60 s window) post-deploy~~ done (gotenberg OTel metrics land in SigNoz, errors gone (CHANGELOG entry))
+4. ~~E2E fastflowlm probe again — fresh, timed right after an idle-tick, with memory headroom visible~~ done (E2E green in the 20-52 deploys)
 5. Verify `/v1/models` response actually contains `qwen3.6-moe:35b-a3b` (gate strength — see e.3)
-6. If OOM recurs on cold load: quantify headroom needed; consider llama-server ceiling (user decision — it's theirs)
+6. ~~If OOM recurs on cold load: quantify headroom needed; consider llama-server ceiling (user decision — it's theirs)~~ done (mitigations deployed (OOMScoreAdjust=300, RestartSec=60); no recurrence since)
 7. Verify PMA auto-commit resumes LLM usage (journal: heuristic-fallback gone)
 8. Verify PapDashboard enricher end-to-end (trigger a test Gatus alert)
 9. `nix build .#checks.x86_64-linux.scripts`
@@ -70,7 +70,7 @@ Resume the paused paperless v3 "superb" upgrade at its two unresolved post-deplo
 13. Paperless: `.docx` consume via Gotenberg
 14. Paperless: `.eml` consume via Tika
 15. Paperless: trash delete → dir → restore round-trip
-16. Gatus: confirm "Paperless", "Paperless Tika", "Paperless Gotenberg" green ≥1 cycle
+16. ~~Gatus: confirm "Paperless", "Paperless Tika", "Paperless Gotenberg" green ≥1 cycle~~ done (all three paperless Gatus checks deployed and green (20-52 smoke 53 PASS))
 17. Ask user the 3 pending questions (see g)
 18. After PG stable ≥1 day: `rm /mnt/pool/services/paperless/db.sqlite3*` (neutralizes migration oneshot)
 19. Decide old-export fate (`/mnt/pool/services/paperless/export`): import or discard
@@ -79,7 +79,7 @@ Resume the paused paperless v3 "superb" upgrade at its two unresolved post-deplo
 22. Consider a fastflowlm idle-check unit test (the script is pure shell — cheap shellcheck + fixture test)
 23. Consider otel-endpoint-audit `url-parser` expectation type (autoexport consumers)
 24. Monitor swap pressure (22/28 GiB) — machine runs hot; revisit zram sizing only if OOMs recur
-25. Update TODO_LIST.md with any of the above that become owned tasks
+25. ~~Update TODO_LIST.md with any of the above that become owned tasks~~ done (docs-health pass 2026-08-18)
 26. Watch pocket-id SQLITE_BUSY recurrence (only if discordsync-style IO storms return)
 
 ## g) QUESTIONS (cannot figure out myself)

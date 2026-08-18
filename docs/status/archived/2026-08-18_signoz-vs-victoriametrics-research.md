@@ -6,6 +6,8 @@
 
 ---
 
+> **Routing (docs-health pass 2026-08-18):** decision + revisit triggers live in ROADMAP.md Theme 4 ("Observability backend migration — SigNoz → VM ecosystem"); companion analysis: `docs/research/observability-signoz-to-victoriametrics.md`. No open action items in this snapshot.
+
 ## Measured reality (evo-x2, 2026-08-18)
 
 | Fact | Value |

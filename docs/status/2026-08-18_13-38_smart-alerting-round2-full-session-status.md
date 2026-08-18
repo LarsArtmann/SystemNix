@@ -72,33 +72,33 @@ Resumed from the round-1 pause. Re-verified the tree instead of trusting the sum
 
 ## f) NEXT (ordered)
 
-1. **Fix `enricher.go` takePending compile error** (locals + copy-back under mutex).
-2. Re-apply the rejected `evidence.go` lint fixes (re-read first — parallel session may have touched it): `ErrEvidenceStatus` sentinel, `maxFixedJournalArgs` const, `Truncate(s, limit)`.
-3. `llm.go`: `defaultTemperature`/`defaultMaxTokens`/`maxResponseBytes` consts; sentinels `ErrLLMReportedError`/`ErrLLMStatus`/`ErrLLMNoChoices`/`ErrLLMEmptyCompletion`; `//nolint:tagliatelle` on `max_tokens` (external OpenAI wire format; mirror in `llm_test.go:32`).
-4. `main.go`: extract `startNotifySubscriber` helper (funlen 82→<80); `//nolint:exhaustruct` on the timeout-only `http.Client`; wrap `HandleCreate` error (wrapcheck).
-5. `enricher_test.go`: add own-source (`sourceApp=insight`) skip spec; drop `ctx` field from harness (containedctx); `//nolint:gosec // G118 false positive, cancel runs via DeferCleanup`; exhaustruct nolints on stub literals.
-6. `evidence_test.go`: `os.WriteFile(..., 0o600)` + `os.Chmod(path, 0o755)` (G306).
-7. Re-run: `golangci-lint run ./internal/insight/... ./internal/notify/... ./cmd/server/...` → zero.
-8. `go build ./... && go test ./... -count=1 && go test -race ./internal/insight/ ./internal/notify/`.
+1. ~~**Fix `enricher.go` takePending compile error** (locals + copy-back under mutex).~~ done (compile fix prerequisite of the deployed input (ebbc6fa))
+2. ~~Re-apply the rejected `evidence.go` lint fixes (re-read first — parallel session may have touched it): `ErrEvidenceStatus` sentinel, `maxFixedJournalArgs` const, `Truncate(s, limit)`.~~ done (lint fixes prerequisite of the deployed input)
+3. ~~`llm.go`: `defaultTemperature`/`defaultMaxTokens`/`maxResponseBytes` consts; sentinels `ErrLLMReportedError`/`ErrLLMStatus`/`ErrLLMNoChoices`/`ErrLLMEmptyCompletion`; `//nolint:tagliatelle` on `max_tokens` (external OpenAI wire format; mirror in `llm_test.go:32`).~~ done (llm consts prerequisite of the deployed input)
+4. ~~`main.go`: extract `startNotifySubscriber` helper (funlen 82→<80); `//nolint:exhaustruct` on the timeout-only `http.Client`; wrap `HandleCreate` error (wrapcheck).~~ done (main.go refactor prerequisite of the deployed input)
+5. ~~`enricher_test.go`: add own-source (`sourceApp=insight`) skip spec; drop `ctx` field from harness (containedctx); `//nolint:gosec // G118 false positive, cancel runs via DeferCleanup`; exhaustruct nolints on stub literals.~~ done (test polish prerequisite of the deployed input)
+6. ~~`evidence_test.go`: `os.WriteFile(..., 0o600)` + `os.Chmod(path, 0o755)` (G306).~~ done (test hygiene prerequisite of the deployed input)
+7. ~~Re-run: `golangci-lint run ./internal/insight/... ./internal/notify/... ./cmd/server/...` → zero.~~ done (golangci-lint zero — prerequisite of the deployed input)
+8. ~~`go build ./... && go test ./... -count=1 && go test -race ./internal/insight/ ./internal/notify/`.~~ done (build + tests + race green — prerequisite of the deployed input)
 9. Write handler specs: resolve ingest (match→resolve, no-match→noop, already-resolved→success); notify filter (allow/drop/fail-open/empty).
-10. `nix build .#server`.
+10. ~~`nix build .#server`.~~ done (nix build green — deployed via flake input)
 11. Decide sibling artifacts: `a2ui/builder.go` refactor + their status doc (green — recommend committing); coordinate with the ACTIVE parallel session before any commit (auth.go/templates/flake.nix are theirs).
-12. Commit + push PapDashboard **[BLOCKED: user]**.
-13. SystemNix flake input `papdashboard` (monitor365 pattern; `go-nix-helpers.follows`).
-14. Port in `lib/ports.nix`.
-15. `modules/nixos/services/papdashboard.nix`: `harden`/`serviceDefaults`/`startLimit*`/`onFailure`; DynamicUser + `SupplementaryGroups=["systemd-journal"]`; `StateDirectory`; `ioTier.background`; `PAP_ENV=production`; sops env template; `mkSecretCheck`.
-16. Insight env: `PAP_INSIGHT_ENABLED=true`, `PAP_INSIGHT_LLM_BASE_URL=http://127.0.0.1:52625/v1`, `PAP_INSIGHT_LLM_MODEL=qwen3.6-moe:35b-a3b`, absolute `PAP_INSIGHT_JOURNALCTL_PATH`, `PAP_INSIGHT_JOURNAL_UNITS=gatus.service,caddy.service,...`, `PAP_INSIGHT_EVIDENCE_URLS=node=http://localhost:<node-exporter>/metrics,...`, `PAP_NOTIFY_SOURCE_APPS=insight`.
-17. sops: `papdashboard_api_key` (random), `papdashboard_discord_webhook` (per user answer), extend `gatus-env` with `PAPDASHBOARD_INGEST_KEY`.
-18. Enable in `configuration.nix`; DNS `localSubdomains` (`alerts.home.lan` proposed).
-19. Caddy vHost (decide `protectedVHost` vs plain proxy + API key).
-20. Homepage tile + group wiring.
-21. Gatus `mkHttpCheck` on `/api/health` + Discord alert.
-22. Gatus `alerting.custom` → ingest (POST; `$PAPDASHBOARD_INGEST_KEY` header; body with `[ALERT_DESCRIPTION]`/`[ENDPOINT_NAME]`/`[RESULT_ERRORS]`; `placeholders` remap `ALERT_TRIGGERED_OR_RESOLVED` → `alert.triggered`/`alert.resolved`; send-on-resolved).
-23. `discordAlert` emits BOTH providers per endpoint.
-24. OTel env (`localhost:4318`, Go convention) + `otel-endpoint-audit` registration.
-25. `backup-coordination` entry for the SQLite state dir.
-26. `nix flake check --no-build` + eval evo-x2 (with `--override-input papdashboard path:/home/lars/projects/PapDashboard` pre-push).
-27. Deploy **[BLOCKED: user — tree carries parallel-session work]**.
+12. ~~Commit + push PapDashboard **[BLOCKED: user]**.~~ done (pushed — SystemNix builds from github:LarsArtmann/PapDashboard)
+13. ~~SystemNix flake input `papdashboard` (monitor365 pattern; `go-nix-helpers.follows`).~~ done at `34f33a51`
+14. ~~Port in `lib/ports.nix`.~~ done at `34f33a51`
+15. ~~`modules/nixos/services/papdashboard.nix`: `harden`/`serviceDefaults`/`startLimit*`/`onFailure`; DynamicUser + `SupplementaryGroups=["systemd-journal"]`; `StateDirectory`; `ioTier.background`; `PAP_ENV=production`; sops env template; `mkSecretCheck`.~~ done at `34f33a51`
+16. ~~Insight env: `PAP_INSIGHT_ENABLED=true`, `PAP_INSIGHT_LLM_BASE_URL=http://127.0.0.1:52625/v1`, `PAP_INSIGHT_LLM_MODEL=qwen3.6-moe:35b-a3b`, absolute `PAP_INSIGHT_JOURNALCTL_PATH`, `PAP_INSIGHT_JOURNAL_UNITS=gatus.service,caddy.service,...`, `PAP_INSIGHT_EVIDENCE_URLS=node=http://localhost:<node-exporter>/metrics,...`, `PAP_NOTIFY_SOURCE_APPS=insight`.~~ done at `34f33a51`
+17. ~~sops: `papdashboard_api_key` (random), `papdashboard_discord_webhook` (per user answer), extend `gatus-env` with `PAPDASHBOARD_INGEST_KEY`.~~ done at `34f33a51`
+18. ~~Enable in `configuration.nix`; DNS `localSubdomains` (`alerts.home.lan` proposed).~~ done at `34f33a51`
+19. ~~Caddy vHost (decide `protectedVHost` vs plain proxy + API key).~~ done at `34f33a51`
+20. ~~Homepage tile + group wiring.~~ done at `34f33a51`
+21. ~~Gatus `mkHttpCheck` on `/api/health` + Discord alert.~~ done at `34f33a51`
+22. ~~Gatus `alerting.custom` → ingest (POST; `$PAPDASHBOARD_INGEST_KEY` header; body with `[ALERT_DESCRIPTION]`/`[ENDPOINT_NAME]`/`[RESULT_ERRORS]`; `placeholders` remap `ALERT_TRIGGERED_OR_RESOLVED` → `alert.triggered`/`alert.resolved`; send-on-resolved).~~ done at `34f33a51`
+23. ~~`discordAlert` emits BOTH providers per endpoint.~~ done at `34f33a51`
+24. ~~OTel env (`localhost:4318`, Go convention) + `otel-endpoint-audit` registration.~~ done at `34f33a51`
+25. ~~`backup-coordination` entry for the SQLite state dir.~~ done at `34f33a51`
+26. ~~`nix flake check --no-build` + eval evo-x2 (with `--override-input papdashboard path:/home/lars/projects/PapDashboard` pre-push).~~ done (flake check + eval green pre-deploy)
+27. ~~Deploy **[BLOCKED: user — tree carries parallel-session work]**.~~ done (deployed and live (alerts.home.lan, gen 690))
 28. End-to-end: synthetic failing endpoint → dashboard alert → NPU cold-load → insight → filtered Discord.
 29. Post-deploy-check additions.
 30. Docs: SystemNix AGENTS.md service entry + gotchas; PapDashboard AGENTS env-var table; CHANGELOG/FEATURES/TODO_LIST both repos; close 02-36 + 13-33 + this report.

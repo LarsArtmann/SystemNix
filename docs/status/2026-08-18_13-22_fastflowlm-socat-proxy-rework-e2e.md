@@ -64,22 +64,22 @@ The P0 cold-load E2E test — the one thing yesterday's session never did — **
 ## f) NEXT TASKS (prioritized, up to 50)
 
 **P0 — verify the deploy in flight**
-1. Confirm deploy #2 activation result (exit 0 vs exit-4-wrapped failure); read `/tmp/deploy-flm3.log`.
-2. Run/inspect `nix run .#post-deploy-check` — expect the new "FastFlowLM — /v1/models through socket-activated :52625" PASS.
-3. True cold-load E2E through the socat bridge: idle-stop the backend first (`systemctl stop fastflowlm.service`), then `python3 /tmp/flm_e2e.py` — verify TCP-backlog holding (client connects, waits ~55–180 s, gets `/v1/models`), no connection-limit churn in journal.
+1. ~~Confirm deploy #2 activation result (exit 0 vs exit-4-wrapped failure); read `/tmp/deploy-flm3.log`.~~ done (deploy #2 + Bug C resolved in addendum h; later deploys clean)
+2. ~~Run/inspect `nix run .#post-deploy-check` — expect the new "FastFlowLM — /v1/models through socket-activated :52625" PASS.~~ done (FastFlowLM socket smoke PASS in the 20-52 suite (53 PASS / 0 FAIL))
+3. ~~True cold-load E2E through the socat bridge: idle-stop the backend first (`systemctl stop fastflowlm.service`), then `python3 /tmp/flm_e2e.py` — verify TCP-backlog holding (client connects, waits ~55–180 s, gets `/v1/models`), no connection-limit churn in journal.~~ done (cold-load E2E through the bridge verified this session + live since)
 4. Chat completion + decode rate measurement (yesterday's script already does this).
-5. Idle-TTL lifecycle: verify `fastflowlm-idle` stops `'fastflowlm-proxy@*'` + backend after 1h quiet, socket still LISTENING (0xCD91), next connection re-activates end-to-end.
+5. ~~Idle-TTL lifecycle: verify `fastflowlm-idle` stops `'fastflowlm-proxy@*'` + backend after 1h quiet, socket still LISTENING (0xCD91), next connection re-activates end-to-end.~~ done (idle lifecycle live; idle-check reworked + verified 2026-08-18 19-56 session)
 6. Verify `niri_zombie` and `btrfs_health_critical` now live in the textfile collectors → **remove both from `KNOWN_NEW_METRICS`** (and re-run pre-deploy-check).
-7. Verify Gatus FastFlowLM endpoints green; confirm the new Niri Zombie + BTRFS checks green too.
+7. ~~Verify Gatus FastFlowLM endpoints green; confirm the new Niri Zombie + BTRFS checks green too.~~ done (Gatus checks green via system-health metrics (flm state, niri_zombie, btrfs_health_critical))
 
 **P1 — hygiene & attribution**
-8. Deliberate commit: "fix(fastflowlm): replace nonexistent systemd-socket-proxyd with Accept=true socat bridge" (+ smoke check + metric-bypass cleanup + smartd int fix).
-9. Rewrite AGENTS.md fastflowlm section: as-built socat architecture, no-boot-autostart, StateDirectory HOME, idle-never-stops-socket, MaxConnections=8 rationale, post-deploy E2E smoke, check #12.
-10. Add AGENTS.md gotchas: (a) nixpkgs systemd lacks systemd-socket-proxyd — never ExecStart it; (b) flm's hard 10-connection limit — never HTTP-probe it during cold load; (c) socket start-limit-hit deactivates the socket itself (endpoint death invisible to liveness checks).
-11. Annotate `docs/status/2026-08-17_22-55_…md` inline: the a)7 "deployed and active" claims described a dead endpoint; link this report.
-12. Correct planning doc banner (`2026-08-15_19-22_…`) and TODO_LIST:185 wording: socket-proxyd → socat as-built.
-13. CHANGELOG entry for the rework.
-14. docs-health HARVEST pass over the 2026-08-17 report (items 1–7 of its P0 are now done/superseded).
+8. ~~Deliberate commit: "fix(fastflowlm): replace nonexistent systemd-socket-proxyd with Accept=true socat bridge" (+ smoke check + metric-bypass cleanup + smartd int fix).~~ done at `99301327`
+9. ~~Rewrite AGENTS.md fastflowlm section: as-built socat architecture, no-boot-autostart, StateDirectory HOME, idle-never-stops-socket, MaxConnections=8 rationale, post-deploy E2E smoke, check #12.~~ done at `c6f91f33`
+10. ~~Add AGENTS.md gotchas: (a) nixpkgs systemd lacks systemd-socket-proxyd — never ExecStart it; (b) flm's hard 10-connection limit — never HTTP-probe it during cold load; (c) socket start-limit-hit deactivates the socket itself (endpoint death invisible to liveness checks).~~ done at `c6f91f33`
+11. ~~Annotate `docs/status/2026-08-17_22-55_…md` inline: the a)7 "deployed and active" claims described a dead endpoint; link this report.~~ done at `99301327`
+12. ~~Correct planning doc banner (`2026-08-15_19-22_…`) and TODO_LIST:185 wording: socket-proxyd → socat as-built.~~ done (planning doc carries the EXECUTED banner; TODO item closed with as-built amendment)
+13. ~~CHANGELOG entry for the rework.~~ done (CHANGELOG Unreleased: FastFlowLM dead public endpoint entry)
+14. ~~docs-health HARVEST pass over the 2026-08-17 report (items 1–7 of its P0 are now done/superseded).~~ done (docs-health pass 2026-08-18)
 15. File nixpkgs issue: request `systemd-socket-proxyd` build (or document the gap locally forever).
 
 **P2 — hardening & carried-over work**
@@ -88,7 +88,7 @@ The P0 cold-load E2E test — the one thing yesterday's session never did — **
 18. Concurrency test: 8+ parallel clients through :52625 (MaxConnections vs flm's 10 — does PMA's worker pattern risk queuing?).
 19. deploy.sh PATH self-hardening (yesterday's e2, still open).
 20. Pre-deploy load/PSI gate (yesterday's e3, still open).
-21. Investigate yesterday's deploy #2 `Signal(9)` (16:20–16:40 journal window).
+21. ~~Investigate yesterday's deploy #2 `Signal(9)` (16:20–16:40 journal window).~~ done (diagnosed by the 19-56 session (global-OOM pile-drive; OOMScoreAdjust=300 + RestartSec=60 deployed))
 22. PMA `OPENAI_BASE_URL=http://127.0.0.1:52625/v1` end-to-end: verify go-commit ≥ v0.8.0 generates commit messages via the local model.
 23. Consider `warmCalendar` pre-load option if cold load proves annoying (original planning §7).
 24. Consider a socket-connection-count metric (continuous endpoint liveness without keepalive — see e4).

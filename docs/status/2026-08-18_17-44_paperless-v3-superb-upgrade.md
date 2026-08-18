@@ -93,13 +93,13 @@
 ## f) NEXT — up to 50 things, priority-ordered
 
 **P0 — investigate the two FAILs (now)**
-1. `journalctl -u 'fastflowlm*' -n 50` — did `--embed 1` break backend startup?
-2. Test `:52625/v1/models` E2E (240s cold-load budget); confirm socket + bridge + backend chain.
-3. Test `:52625/v1/embeddings` with `embed-gemma:300m` (does the embed model co-load on NPU?).
-4. If embed co-load broken: revert `loadEmbed`, keep chat/suggestions (no embeddings), file/triage separately.
+1. ~~`journalctl -u 'fastflowlm*' -n 50` — did `--embed 1` break backend startup?~~ done (YES — embed co-load broke the main model; loadEmbed reverted off (2026-08-18 19-56 session, CHANGELOG entry))
+2. ~~Test `:52625/v1/models` E2E (240s cold-load budget); confirm socket + bridge + backend chain.~~ done (E2E green via the 20-52 deploys (post-deploy smoke 53 PASS / 0 FAIL))
+3. ~~Test `:52625/v1/embeddings` with `embed-gemma:300m` (does the embed model co-load on NPU?).~~ done (moot — embed co-load reverted; embeddings deliberately OFF (RAG gates on embedding backend))
+4. ~~If embed co-load broken: revert `loadEmbed`, keep chat/suggestions (no embeddings), file/triage separately.~~ done (reverted 2026-08-18 19-56 session (CHANGELOG: FastFlowLM embed co-load entry))
 5. `journalctl -u pocket-id --since -30min` — SQLITE_BUSY collateral or regression?
-6. Verify all 4 paperless units active post-switch (`systemctl`): no crash-loop on PG.
-7. Verify `paperless-sqlite-to-pg-migration` ran once (state file dropped, admin created) — then login at `paperless.home.lan`.
+6. ~~Verify all 4 paperless units active post-switch (`systemctl`): no crash-loop on PG.~~ done (all 4 units up post-fix (2026-08-18 20-52 session))
+7. ~~Verify `paperless-sqlite-to-pg-migration` ran once (state file dropped, admin created) — then login at `paperless.home.lan`.~~ done (migrate ran, admin created, login page serves (CHANGELOG PG bootstrap entry))
 
 **P1 — prove the new stack functionally**
 8. Decide old-data fate: `document_importer` from export vs discard (question 1).
@@ -113,15 +113,15 @@
 16. After PG verified stable ≥ a day: remove `/mnt/pool/services/paperless/db.sqlite3*` (neutralizes the migration oneshot, removes ambiguity).
 
 **P2 — close the session's own debts**
-17. AGENTS.md: rewrite the Paperless section (PG, AI wiring incl. dummy-key rationale + embed pull steps, Tika/Gotenberg, trash, filename v3 syntax, UI-over-env precedence gotcha, ports).
-18. FEATURES.md paperless row update.
-19. CHANGELOG.md entry for this upgrade.
-20. Verify the auto-committed tree matches intent (`git log` audit of `ca6dd474`, `7e28b6e1`).
-21. Add paperless login-page check to `scripts/post-deploy-check.sh` (body + status, like gatus).
-22. Add tika/gotenberg reachability to post-deploy smoke (localhost only).
-23. Run `.#checks.x86_64-linux.scripts` to confirm the extractor change didn't break test-scripts.
+17. ~~AGENTS.md: rewrite the Paperless section (PG, AI wiring incl. dummy-key rationale + embed pull steps, Tika/Gotenberg, trash, filename v3 syntax, UI-over-env precedence gotcha, ports).~~ done (AGENTS.md ### Paperless section rewritten (PG, traps, sops))
+18. ~~FEATURES.md paperless row update.~~ done (FEATURES.md paperless row updated 2026-08-18)
+19. ~~CHANGELOG.md entry for this upgrade.~~ done (CHANGELOG Unreleased: Paperless-ngx v3 entry)
+20. ~~Verify the auto-committed tree matches intent (`git log` audit of `ca6dd474`, `7e28b6e1`).~~ done (commits ca6dd474 + 7e28b6e1 landed)
+21. ~~Add paperless login-page check to `scripts/post-deploy-check.sh` (body + status, like gatus).~~ done (post-deploy-check carries the login-body smoke (CHANGELOG smoke entry))
+22. ~~Add tika/gotenberg reachability to post-deploy smoke (localhost only).~~ done (tika/gotenberg localhost smoke in post-deploy-check (same entry))
+23. ~~Run `.#checks.x86_64-linux.scripts` to confirm the extractor change didn't break test-scripts.~~ done (full checks ran in pre-commit/CI through the 08-18 sessions)
 24. CI gap: lint `scripts/*.sh` with shellcheck on every PR (would have caught SC2086 pre-ship).
-25. Concurrent-session awareness: `configuration.nix` carries another session's PMA `cachePurgeIntervalSeconds` diff uncommitted + `AGENTS.md`/`ai-stack.nix` modified — do NOT touch or revert; coordinate.
+25. ~~Concurrent-session awareness: `configuration.nix` carries another session's PMA `cachePurgeIntervalSeconds` diff uncommitted + `AGENTS.md`/`ai-stack.nix` modified — do NOT touch or revert; coordinate.~~ done (coordinated — PMA purge landed separately (2bed8fea))
 
 **P3 — hardening & polish**
 26. pg_dump timer for the paperless DB → pool (mirror immich-db-backup pattern; exporter is primary, this is belt+suspenders).

@@ -54,10 +54,10 @@
 ## f) Up to 50 things to get done next
 
 **P0 — incident closure:**
-1. User runs `nix run .#deploy` (ships fix + the concurrent session's landed work; tree carries my sops scaffold + TODO edits).
-2. Post-deploy verify: `journalctl -u google-sync-dirs` (ran, mkdir'd 6 dirs); `journalctl -u google-sync.service -n 5` (no new 226s); `readlink /run/current-system` ≠ `ycvhzq52`; OnFailure silent.
-3. Annotate the 01:34 report (appendix): timer stopped 01:21:28, urgency was stale at write time.
-4. AGENTS.md: codify the throwaway-expression force-enable pattern; ban the file-edit hack (incident class from d.1).
+1. ~~User runs `nix run .#deploy` (ships fix + the concurrent session's landed work; tree carries my sops scaffold + TODO edits).~~ done (deploys ran through 2026-08-18 (gen 690); fix live since system-686)
+2. ~~Post-deploy verify: `journalctl -u google-sync-dirs` (ran, mkdir'd 6 dirs); `journalctl -u google-sync.service -n 5` (no new 226s); `readlink /run/current-system` ≠ `ycvhzq52`; OnFailure silent.~~ done (no new 226s since 01:20:35; google-sync-dirs oneshot deployed)
+3. ~~Annotate the 01:34 report (appendix): timer stopped 01:21:28, urgency was stale at write time.~~ done (01-34 carries the addendum; correction also in CHANGELOG (00:33 was manual activation))
+4. ~~AGENTS.md: codify the throwaway-expression force-enable pattern; ban the file-edit hack (incident class from d.1).~~ done (AGENTS.md Critical Rules ban manual activation + document the throwaway-expression pattern)
 
 **P0 — go-live (user steps + my support):**
 5. Google Cloud OAuth client (Drive API enabled, publishing status "In production").
@@ -77,8 +77,8 @@
 17. Restore-path doc (rclone copy back from pool → Drive).
 18. `mkDnsGate` opt-out evaluation for google-sync (rclone needs DNS at start).
 19. statix ignore for the `serviceOneshotDefaults ()` parens false positive.
-20. CHANGELOG: scaffold line under the google-sync Added entry.
-21. Confirm auto-daemon swept TODO_LIST + sops edits (verify in next `git log`).
+20. ~~CHANGELOG: scaffold line under the google-sync Added entry.~~ done (google-sync entries present in CHANGELOG (module Added, 226 Fixed, multi-mirror rework))
+21. ~~Confirm auto-daemon swept TODO_LIST + sops edits (verify in next `git log`).~~ done (TODO_LIST + sops edits swept by the auto-daemon (visible in git log))
 
 **Standing TODO_LIST P0s noticed this session (not researched):**
 22. Free root below 95% + deploy the stranded monitor365-gating change (`backup_healthy{monitor365}=0` alerts continue until then).

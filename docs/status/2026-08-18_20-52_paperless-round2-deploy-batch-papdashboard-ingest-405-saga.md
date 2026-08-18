@@ -111,7 +111,7 @@
 23. Consider read-only gatus API token for smoke checks (OIDC blocks programmatic status reads)
 
 **Housekeeping:**
-24. TODO_LIST.md refresh (stale after two sessions of work)
+24. ~~TODO_LIST.md refresh (stale after two sessions of work)~~ done (docs-health pass 2026-08-18)
 25. Watch swap pressure (6-7.5 GiB free on 28 GiB during session — llama-server/PMA dependent)
 26. bank-sync: observe first Wise sync (`bank_sync_profiles > 0`) once their session's service runs
 27. History purge push still pending manual execution (AGENTS "Secret Leak Incident" runbook)

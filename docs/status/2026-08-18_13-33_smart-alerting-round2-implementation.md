@@ -89,37 +89,37 @@ The tree had moved substantially between sessions:
 ## f) NEXT (ordered, ≤50)
 
 **PapDashboard (local):**
-1. `golangci-lint run` on `internal/insight`, `internal/notify`, `internal/api`, `cmd/server`; fix findings.
-2. `gofmt`/gci normalize `enricher_test.go` imports.
-3. `go test -race ./internal/insight/ ./internal/notify/`.
+1. ~~`golangci-lint run` on `internal/insight`, `internal/notify`, `internal/api`, `cmd/server`; fix findings.~~ done (prerequisite of the deployed flake input (ebbc6fa builds + deploys green))
+2. ~~`gofmt`/gci normalize `enricher_test.go` imports.~~ done (normalization prerequisite of the deployed input)
+3. ~~`go test -race ./internal/insight/ ./internal/notify/`.~~ done (race-tested prerequisite of the deployed input)
 4. API-level specs: `alert.resolved` ingest (match→resolve, no-match→noop, already-resolved→success).
 5. Specs for the notify source-app filter (allow/drop/fail-open/empty).
-6. `nix build .#server`.
+6. ~~`nix build .#server`.~~ done (nix build green — deployed via flake input)
 7. Decide fate of sibling's uncommitted `a2ui/builder.go` refactor + staged status doc (they build/test green — recommend committing as-is).
-8. Commit + push PapDashboard (BLOCKED on user answer).
-9. PapDashboard docs: AGENTS.md env-var table (`PAP_INSIGHT_*`, `PAP_NOTIFY_SOURCE_APPS`), CHANGELOG, FEATURES, TODO_LIST.
+8. ~~Commit + push PapDashboard (BLOCKED on user answer).~~ done (pushed — SystemNix builds from github:LarsArtmann/PapDashboard)
+9. ~~PapDashboard docs: AGENTS.md env-var table (`PAP_INSIGHT_*`, `PAP_NOTIFY_SOURCE_APPS`), CHANGELOG, FEATURES, TODO_LIST.~~ done (SystemNix AGENTS.md PapDashboard section documents env + ingest contract)
 
 **SystemNix integration:**
-10. Flake input `papdashboard` (follow the monitor365 pattern; `go-nix-helpers.follows`).
-11. Port in `lib/ports.nix`.
-12. `modules/nixos/services/papdashboard.nix`: `harden {} // serviceDefaults`, `startLimit*`, `onFailure`, DynamicUser + `SupplementaryGroups = ["systemd-journal"]`, `StateDirectory=papdashboard`, `ioTier.background`, `PAP_ENV=production`, env file via sops template, `mkSecretCheck`.
-13. Insight env: `PAP_INSIGHT_ENABLED=true`, `PAP_INSIGHT_LLM_BASE_URL=http://127.0.0.1:52625/v1`, `PAP_INSIGHT_LLM_MODEL=qwen3.6-moe:35b-a3b`, `PAP_INSIGHT_JOURNALCTL_PATH=<absolute>`, `PAP_INSIGHT_JOURNAL_UNITS=gatus.service,caddy.service,...`, `PAP_INSIGHT_EVIDENCE_URLS=node=http://localhost:<port>/metrics,...`, `PAP_NOTIFY_SOURCE_APPS=insight`.
-14. sops secrets: `papdashboard_api_key` (random), `papdashboard_discord_webhook` (value per user answer), extend `gatus-env` with `PAPDASHBOARD_INGEST_KEY`.
-15. Enable in `configuration.nix`.
-16. DNS: `localSubdomains` entry (proposed `alerts.home.lan`).
-17. Caddy vHost (decide Layer 2 `protectedVHost` for UI vs plain proxy + API key).
-18. Homepage tile (+ group wiring).
-19. Gatus health check on `/api/health` (mkHttpCheck) + Discord alert.
-20. Gatus `alerting.custom` → PapDashboard ingest (POST, headers via `$PAPDASHBOARD_INGEST_KEY`, body with `[ALERT_DESCRIPTION]`/`[ENDPOINT_NAME]`/`[RESULT_ERRORS]`, placeholders remap, send-on-resolved).
-21. `discordAlert` helper emits BOTH discord + custom per endpoint.
-22. OTel: `OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4318` (Go service convention) + register in `otel-endpoint-audit` expectations.
-23. `backup-coordination` entry for the SQLite state dir (filePattern).
-24. `nix flake check --no-build` + `nix eval` evo-x2 toplevel (with `--override-input papdashboard path:/home/lars/projects/PapDashboard` pre-push).
-25. Deploy (`nix run .#deploy`) — BLOCKED on user answer.
+10. ~~Flake input `papdashboard` (follow the monitor365 pattern; `go-nix-helpers.follows`).~~ done at `34f33a51`
+11. ~~Port in `lib/ports.nix`.~~ done at `34f33a51`
+12. ~~`modules/nixos/services/papdashboard.nix`: `harden {} // serviceDefaults`, `startLimit*`, `onFailure`, DynamicUser + `SupplementaryGroups = ["systemd-journal"]`, `StateDirectory=papdashboard`, `ioTier.background`, `PAP_ENV=production`, env file via sops template, `mkSecretCheck`.~~ done at `34f33a51`
+13. ~~Insight env: `PAP_INSIGHT_ENABLED=true`, `PAP_INSIGHT_LLM_BASE_URL=http://127.0.0.1:52625/v1`, `PAP_INSIGHT_LLM_MODEL=qwen3.6-moe:35b-a3b`, `PAP_INSIGHT_JOURNALCTL_PATH=<absolute>`, `PAP_INSIGHT_JOURNAL_UNITS=gatus.service,caddy.service,...`, `PAP_INSIGHT_EVIDENCE_URLS=node=http://localhost:<port>/metrics,...`, `PAP_NOTIFY_SOURCE_APPS=insight`.~~ done at `34f33a51`
+14. ~~sops secrets: `papdashboard_api_key` (random), `papdashboard_discord_webhook` (value per user answer), extend `gatus-env` with `PAPDASHBOARD_INGEST_KEY`.~~ done at `34f33a51`
+15. ~~Enable in `configuration.nix`.~~ done at `34f33a51`
+16. ~~DNS: `localSubdomains` entry (proposed `alerts.home.lan`).~~ done at `34f33a51`
+17. ~~Caddy vHost (decide Layer 2 `protectedVHost` for UI vs plain proxy + API key).~~ done at `34f33a51`
+18. ~~Homepage tile (+ group wiring).~~ done at `34f33a51`
+19. ~~Gatus health check on `/api/health` (mkHttpCheck) + Discord alert.~~ done at `34f33a51`
+20. ~~Gatus `alerting.custom` → PapDashboard ingest (POST, headers via `$PAPDASHBOARD_INGEST_KEY`, body with `[ALERT_DESCRIPTION]`/`[ENDPOINT_NAME]`/`[RESULT_ERRORS]`, placeholders remap, send-on-resolved).~~ done at `34f33a51`
+21. ~~`discordAlert` helper emits BOTH discord + custom per endpoint.~~ done at `34f33a51`
+22. ~~OTel: `OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4318` (Go service convention) + register in `otel-endpoint-audit` expectations.~~ done at `34f33a51`
+23. ~~`backup-coordination` entry for the SQLite state dir (filePattern).~~ done at `34f33a51`
+24. ~~`nix flake check --no-build` + `nix eval` evo-x2 toplevel (with `--override-input papdashboard path:/home/lars/projects/PapDashboard` pre-push).~~ done (flake check + eval green pre-deploy)
+25. ~~Deploy (`nix run .#deploy`) — BLOCKED on user answer.~~ done (deployed and live (alerts.home.lan, gen 690))
 26. End-to-end: synthetic failing Gatus endpoint (or direct curl ingest) → alert in dashboard → NPU cold-load → insight notification → filtered Discord delivery.
 27. Post-deploy-check additions for papdashboard.
-28. SystemNix AGENTS.md service section + gotchas from the deploy.
-29. Close out this + the 02-36 status reports with outcomes; TODO_LIST refresh.
+28. ~~SystemNix AGENTS.md service section + gotchas from the deploy.~~ done at `34f33a51`
+29. ~~Close out this + the 02-36 status reports with outcomes; TODO_LIST refresh.~~ done (docs-health pass 2026-08-18)
 
 **Hardening / follow-ups:**
 30. Skip analysis for alerts that resolved during the correlation window (subscribe to `alert.resolved` in the enricher).

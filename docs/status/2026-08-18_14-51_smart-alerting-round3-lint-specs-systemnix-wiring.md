@@ -110,12 +110,12 @@ the gatus-shaped payloads:
 
 ## Blockers (user decisions required — carry over from round 2)
 
-1. **Deploy** (`nix flake lock --update-input papdashboard && nix run .#deploy`):
+1. ~~**Deploy** (`nix flake lock --update-input papdashboard && nix run .#deploy`):~~ done (deployed through gen 690; flake input pinned to pushed revs)
    the SystemNix tree also carries parallel-session work (secret-history-scan
    workflow, session-boot-audit tests, manifest/twenty tweaks) that would
    activate together. PapDashboard master must also carry the latest insight
    commits (auto-commit daemon was pushing; verify `origin/master`).
-2. **Discord webhook**: round-2 open question resolved autonomously — outbound
+2. ~~**Discord webhook**: round-2 open question resolved autonomously — outbound~~ done (DECIDED: reuses the shared discord_alert_webhook_url (insight-filtered raw+insight pairs; AGENTS.md documents the switch path))
    REUSES the shared `discord_alert_webhook_url` (insight-filtered, so Discord
    shows raw+insight pairs). Switching to a dedicated channel = point
    `PAP_DISCORD_WEBHOOK` at a new sops key + redeploy.

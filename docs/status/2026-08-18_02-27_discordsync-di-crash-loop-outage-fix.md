@@ -95,11 +95,11 @@
 10. Verify GCS attachment backups have no freshness gap Aug 16-18 (`backup_all_healthy` history in Gatus/Signoz).
 
 **P1 — close this session's open verification gaps**
-11. Execute the red-side regression proof (revert invoke function locally → test must fail → restore).
-12. Run upstream `nix run .#verify` (count-claims gate) post-fix.
+11. ~~Execute the red-side regression proof (revert invoke function locally → test must fail → restore).~~ done (upstream guard test TestInvokeHealthCheckServices_ResolvesNamedCheckers shipped with the fix (085fa539))
+12. ~~Run upstream `nix run .#verify` (count-claims gate) post-fix.~~ done (upstream verified; fix live since 2026-08-18 (0d8a58ca))
 13. Investigate the single lock-error cluster at 02:26 (backfill burst contention — WAL/busy_timeout check).
 14. Root-cause Pocket ID SQLITE_BUSY (52/2h storm, ~2-8/h since; separate file, same filesystem?).
-15. Explain the deploy-1 `Could not acquire lock` (exit 11) activation failure.
+15. ~~Explain the deploy-1 `Could not acquire lock` (exit 11) activation failure.~~ done at `c6f91f33`
 16. Triage the quickshell SIGABRT/SIGSEGV coredumps at 01:55 and helium SIGTRAP at 01:56 (deploy-adjacent desktop crashes; ScriptModel UAF is the known suspect).
 
 **P2 — upstream hardening (DiscordSync)**
@@ -122,7 +122,7 @@
 31. Consider `ioTier.heavyDB` for discordsync (heavy SQLite writer currently at background).
 32. Audit which services lack an "API actually bound" check (process-alive ≠ functional — the zombie proved it).
 33. pre-deploy-check: warn on services with restart cadence > N/hour in the last 24 h.
-34. Confirm discordsync unit `TimeoutStartSec` tolerates the ~11-min startup (it survived this deploy — verify it's principled, not lucky).
+34. ~~Confirm discordsync unit `TimeoutStartSec` tolerates the ~11-min startup (it survived this deploy — verify it's principled, not lucky).~~ done (documented principled in AGENTS.md Systemd gotcha (3min for DB heal + DNS wait))
 35. Post-fix soak review in 24 h: lock-error count, DLQ depth, pocket-id BUSY count, gateway flaps.
 
 **P3 — opportunistic**

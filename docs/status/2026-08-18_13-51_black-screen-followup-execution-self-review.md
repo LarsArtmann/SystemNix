@@ -61,7 +61,7 @@
 ## f) Up to 50 things to get done next
 
 **P0 — ship this session's work:**
-1. `nix run .#deploy` — ships: black-screen fix (prior session), session-boot-audit, healthcheck condition, zombie tripwire, Qt fix, agent timer fix, crush-daily fix, BTRFS alert — PLUS the concurrent session's fastflowlm socat / smartd / data-to-pool changes riding the same tree (review before shipping if unwanted).
+1. ~~`nix run .#deploy` — ships: black-screen fix (prior session), session-boot-audit, healthcheck condition, zombie tripwire, Qt fix, agent timer fix, crush-daily fix, BTRFS alert — PLUS the concurrent session's fastflowlm socat / smartd / data-to-pool changes riding the same tree (review before shipping if unwanted).~~ done (deploys through gen 690; the full batch shipped (a34ba608 + 34217be3))
 2. Reboot; pre-login `pgrep -x niri` → empty; SDDM login → desktop in seconds (08-15 §4 checklist governs).
 3. Post-deploy settle check (TODO §2.5): smart-audio, shutdown-overlay, niri-flake-polkit, DMS all recover in the real session; then `nix run .#post-deploy-check`.
 4. Verify `niri_zombie 0` appears in `/metrics` and the Gatus check is green (fail-closed: absence = red).
@@ -70,7 +70,7 @@
 7. Verify browser-history-agent timer cadence: no more alternating start-limit-hit lines over a few hours.
 
 **P1 — data protection:**
-8. Decide the btrbk-data nightly-failure stance (see §g Q3): leave failing until master-plan T04-T08, or suspend/adjust until repaired.
+8. ~~Decide the btrbk-data nightly-failure stance (see §g Q3): leave failing until master-plan T04-T08, or suspend/adjust until repaired.~~ done (stance DECIDED 14:45 session: keep failing until T04-T08 (documented in TODO_LIST P0))
 9. Execute master plan T04-T08 (/data corruption repair; forensics addendum now attached to the P0 entry).
 10. Resolve inode 1331118's path (`sudo find /data -xdev -inum 1331118`) and check whether it's disposable (docker/container runtime data likely is).
 11. Address the `/` unalloc=4%/meta=75% CRITICAL: `btrfs-balance-metadata` (needs ≥5 GiB unalloc — currently ~30 GiB per metrics, so viable), snapshot expiry check, or the emergency reserve.
@@ -78,18 +78,18 @@
 
 **P1 — hardening leftovers:**
 13. VM test: linger-enabled boot → assert NO niri process + `graphical-session.target` inactive (scoped-down partial; TODO §2.5).
-14. Eval-print the healthcheck unit text post-deploy to confirm `ConditionEnvironment` (the verification I skipped).
-15. Switch Qt `platformTheme.name` to `adwaita` after rendering-check (kills the standing deprecation warning) — or pin `gnome` and silence.
-16. Guard polish: dedupe unit names (`foo` vs `foo.service`) in the graph; add a unit test exercising `allowedUnits`.
-17. Fix the sops assertion null-coercion (TODO §2.5; upstream-shaped).
+14. ~~Eval-print the healthcheck unit text post-deploy to confirm `ConditionEnvironment` (the verification I skipped).~~ done (healthcheck unit-text verification closed (2026-08-18 15:00 session, TODO header))
+15. ~~Switch Qt `platformTheme.name` to `adwaita` after rendering-check (kills the standing deprecation warning) — or pin `gnome` and silence.~~ done at `34f33a51`
+16. ~~Guard polish: dedupe unit names (`foo` vs `foo.service`) in the graph; add a unit test exercising `allowedUnits`.~~ done at `34f33a51`
+17. ~~Fix the sops assertion null-coercion (TODO §2.5; upstream-shaped).~~ done (fixed 2026-08-18 15:00 session (four null-owner templates set owner=root; CHANGELOG entry))
 18. aw-watcher gate monitoring decision (§g Q2).
 19. helium SIGTRAP: verify stability post-reboot; investigate only if it recurs.
 20. emeet-pixyd: upstream rate-limit/downgrade of the absent-device probe WARN.
-21. FEATURES.md entry for `services.session-boot-audit` (if the house decides it's a feature).
+21. ~~FEATURES.md entry for `services.session-boot-audit` (if the house decides it's a feature).~~ done (docs-health pass 2026-08-18)
 
 **P2 — polish:**
-22. Consider `ConditionEnvironment=XDG_SESSION_ID` on any future user units that touch the compositor (pattern now documented in AGENTS.md — apply on sight, not retroactively).
-23. Add the concurrent-session coordination note to AGENTS.md Git Workflow section (how to attribute batched commits).
+22. ~~Consider `ConditionEnvironment=XDG_SESSION_ID` on any future user units that touch the compositor (pattern now documented in AGENTS.md — apply on sight, not retroactively).~~ done (pattern documented in AGENTS.md (apply on sight))
+23. ~~Add the concurrent-session coordination note to AGENTS.md Git Workflow section (how to attribute batched commits).~~ done (AGENTS.md Critical Rules carry the concurrent-session protocol (attribution, re-read, flagging))
 
 ## g) Questions I cannot answer myself
 

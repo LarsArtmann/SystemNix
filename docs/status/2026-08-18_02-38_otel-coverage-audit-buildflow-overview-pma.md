@@ -177,10 +177,10 @@ browser-history 3.9M, crush-daily 1.9k, file-and-image-renamer 2.
 19. Cross-check collector `otelcol_receiver_accepted_spans` for the same
 
 **Docs (harvest from this report)**
-20. AGENTS.md gotcha: "OTEL_EXPORTER_OTLP_ENDPOINT wired ≠ instrumented —
+20. ~~AGENTS.md gotcha: "OTEL_EXPORTER_OTLP_ENDPOINT wired ≠ instrumented —~~ done (AGENTS.md Prevention layer 10 documents wired != instrumented (noop without SDK call sites))
     overview/PMA exported zero spans 2026-08-18; verify span call sites when
     adding the env var"
-21. TODO_LIST.md: harvest items 1-11, 13-16 from this report
+21. ~~TODO_LIST.md: harvest items 1-11, 13-16 from this report~~ done (docs-health pass 2026-08-18)
 22. CHANGELOG entry when instrumentation ships
 23. BuildFlow: record the no-telemetry decision wherever BuildFlow docs live
     (pending user answer to Q3)

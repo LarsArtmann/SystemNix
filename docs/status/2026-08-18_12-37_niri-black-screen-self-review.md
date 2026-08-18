@@ -54,7 +54,7 @@
 ## f) Up to 50 things to get done next
 
 **P0 — ship and verify this fix:**
-1. User runs `nix run .#deploy` (also ships the earlier google-sync fix already in the tree).
+1. ~~User runs `nix run .#deploy` (also ships the earlier google-sync fix already in the tree).~~ done (deploys through gen 690; black-screen fix shipped)
 2. Reboot; BEFORE login: `pgrep -x niri` → must be empty.
 3. Login at SDDM → desktop appears in seconds; monitor stays on.
 4. If still black: suspect `ConditionEnvironment=XDG_SESSION_ID` first — check `journalctl --user -u niri -b` for "ConditionEnvironment failed" → revert that one line, redeploy.
@@ -62,34 +62,34 @@
 6. Confirm no `niri-drm-healthcheck` "Restarting niri" lines every 2 min in the user journal.
 7. Confirm aw-watcher attaches after login (gate execs when socket appears): `journalctl --user -u activitywatch-watcher-aw-watcher-window-wayland -b`.
 8. Post-deploy smoke: `nix run .#post-deploy-check`.
-9. Commit the working tree (5 modified files + 2 new docs) if the auto-commit daemon hasn't.
+9. ~~Commit the working tree (5 modified files + 2 new docs) if the auto-commit daemon hasn't.~~ done (auto-daemon committed the tree)
 
 **P1 — harden the class:**
-10. Eval-time guard: assert no unit reachable from `default.target` sets `Wants=graphical-session.target` (scan `config.systemd.user` + HM services).
+10. ~~Eval-time guard: assert no unit reachable from `default.target` sets `Wants=graphical-session.target` (scan `config.systemd.user` + HM services).~~ done at `a34ba608`
 11. VM test: linger-enabled user + SDDM login → assert exactly one niri, with outputs; assert no niri pre-login.
-12. Gate or scope `niri-drm-healthcheck.timer` to graphical users (stop running it in the SDDM user manager).
-13. Add `ConditionEnvironment=XDG_SESSION_ID` decision review to `niri-session-manager.service` (or document the deliberate fail-loud choice).
-14. Gatus/pattern check: nothing else in HM land pulls graphical-session.target at boot (audit `home.nix` service set the same way).
+12. ~~Gate or scope `niri-drm-healthcheck.timer` to graphical users (stop running it in the SDDM user manager).~~ done at `a34ba608`
+13. ~~Add `ConditionEnvironment=XDG_SESSION_ID` decision review to `niri-session-manager.service` (or document the deliberate fail-loud choice).~~ done (AGENTS.md documents the fact-backed condition (assumption loop closed))
+14. ~~Gatus/pattern check: nothing else in HM land pulls graphical-session.target at boot (audit `home.nix` service set the same way).~~ done (session-boot-audit scans NixOS-shape, HM-shape, and raw-text units; zero violations on live config)
 
 **P1 — signals I ignored or deferred:**
 15. Investigate the 01:50 btrbk `send ioctl failed with -5` (pool-side receive failure? USB link flap? correlates with all-four-DAS-on-one-link note in AGENTS.md).
-16. Fix `niri-flake-polkit` QML crash-loop ("module gtk2 is not installed" → SEGV/exit-1, restart counter 40) — user-facing auth dialogs fail.
-17. Fix `crush-daily-pre-start` `chown -R lars /var/lib/crush-daily` SIGSYS core dump at boot (seccomp blocks fchownat — needs CAP_CHOWN-ish handling or drop the chown).
-18. Check `browser-history-agent` start-limit-hit (03:29:54, previous boot) — pre-existing, unexplained this session.
+16. ~~Fix `niri-flake-polkit` QML crash-loop ("module gtk2 is not installed" → SEGV/exit-1, restart counter 40) — user-facing auth dialogs fail.~~ done at `34f33a51`
+17. ~~Fix `crush-daily-pre-start` `chown -R lars /var/lib/crush-daily` SIGSYS core dump at boot (seccomp blocks fchownat — needs CAP_CHOWN-ish handling or drop the chown).~~ done at `34217be3`
+18. ~~Check `browser-history-agent` start-limit-hit (03:29:54, previous boot) — pre-existing, unexplained this session.~~ done at `34217be3`
 19. `emeet-pixyd` video4linux probe spam every ~2 s — rate-limit or quiet the missing-device path.
 20. `smart-audio.service` exit-1 at 07:00:47 — collateral of niri churn; verify it self-recovers post-fix, else harden its event-stream death path.
 21. `shutdown-overlay.service` restart counter 40 during the churn — verify it settles post-fix.
 
 **P2 — polish and debt:**
 22. TODO_LIST.md harvest of items 10-21.
-23. CHANGELOG entry for the black-screen fix.
-24. Consider a Gatus alert for "zombie niri" (niri_running=1 AND niri_graphical_session=0 sustained >10 min) — the metrics already exist.
+23. ~~CHANGELOG entry for the black-screen fix.~~ done (CHANGELOG Unreleased: Black-screen class hardening entry)
+24. ~~Consider a Gatus alert for "zombie niri" (niri_running=1 AND niri_graphical_session=0 sustained >10 min) — the metrics already exist.~~ done at `a34ba608`
 25. Consider alerting on "aw-watcher gate never exec'd within N min after graphical session starts" (indefinite wait trades a failure mode for a silence mode).
-26. Date the regression: `git log -p` the activitywatch Wants line; correlate with user-reported onset and deploys; note in the 08-15 report appendix.
+26. ~~Date the regression: `git log -p` the activitywatch Wants line; correlate with user-reported onset and deploys; note in the 08-15 report appendix.~~ done (regression dated in CHANGELOG: Wants= entered in 6ea92969 (2026-08-15 00:59))
 27. Investigate helium SIGTRAP coredump (5/TRAP at 03:30:56) — likely collateral, but unproven.
 28. Review `dms.service` exit-255 crash cadence post-fix (was every 2 min, chained to niri restarts).
 29. Check whether `focus-new-windows.service` should ALSO carry the Condition (currently it just won't start pre-login, which is correct, but undocumented).
-30. Sweeping task: audit all user units with `Wants=` on session-coupled targets for the same boot-transaction hazard (shutdown-overlay, smart-audio, emeet-pixyd are `WantedBy=graphical-session.target` themselves — safe, but confirm no new Wants creep).
+30. ~~Sweeping task: audit all user units with `Wants=` on session-coupled targets for the same boot-transaction hazard (shutdown-overlay, smart-audio, emeet-pixyd are `WantedBy=graphical-session.target` themselves — safe, but confirm no new Wants creep).~~ done at `a34ba608`
 
 ## g) Questions I cannot answer myself
 

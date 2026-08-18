@@ -92,7 +92,7 @@ The PMA auto-commit daemon was **not broken** — 171 commit failures across 11 
 
 **P0 — operational, today**
 1. Restart journald: `sudo systemctl restart systemd-journald` (user; frozen since 13:25:36).
-2. Verify the SystemNix backlog commit lands once the concurrent session pauses; if not, investigate.
+2. ~~Verify the SystemNix backlog commit lands once the concurrent session pauses; if not, investigate.~~ done (backlog commits landed (f-f series through 2026-08-18 evening))
 3. Decide Crush-commit remediation (§g Q1) and execute.
 4. Verify whether PMA commits with `--no-verify` (check PMA config/upstream `noVerify` default); if yes, decide policy.
 

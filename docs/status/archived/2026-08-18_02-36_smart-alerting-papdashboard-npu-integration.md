@@ -73,20 +73,20 @@ Gatus ──fail(threshold 3)──► Discord "raw alert" (unchanged fast path)
 
 ### PapDashboard
 - [ ] Fix the lint/spec issues above; write Ginkgo specs (enricher correlation/cooldown/filter/prompt, evidence truncation, LLM client against httptest, parseAnswer)
-- [ ] `alert.resolved` ingest: sqlc query `FindActiveAlertsBySourceAppAndTitle` (`sqlc generate`), handler case tolerating `ErrAlertAlreadyResolved`, idempotent "ignored" when no match
-- [ ] Notify source-app filter (`PAP_NOTIFY_SOURCE_APPS` allowlist in `StartSubscriber`)
-- [ ] Wire enricher in `cmd/server/main.go` (invoke `*notification.DeciderHandler`, build collectors from config)
-- [ ] `go test ./...`, `golangci-lint run`, `nix build .#server`
+- [x] ~~`alert.resolved` ingest: sqlc query `FindActiveAlertsBySourceAppAndTitle` (`sqlc generate`), handler case tolerating `ErrAlertAlreadyResolved`, idempotent "ignored" when no match~~ done at `34f33a51`, `e3995077`
+- [x] ~~Notify source-app filter (`PAP_NOTIFY_SOURCE_APPS` allowlist in `StartSubscriber`)~~ done at `34f33a51` (PAP_NOTIFY_SOURCE_APPS=insight live)
+- [x] ~~Wire enricher in `cmd/server/main.go` (invoke `*notification.DeciderHandler`, build collectors from config)~~ done at `34f33a51` (insights publish as notifications, live)
+- [x] ~~`go test ./...`, `golangci-lint run`, `nix build .#server`~~ done (prerequisite of the deployed flake input `ebbc6fa`)
 
 ### SystemNix
-- [ ] flake input `papdashboard = github:LarsArtmann/PapDashboard`
-- [ ] `lib/ports.nix` port entry
-- [ ] `modules/nixos/services/papdashboard.nix`: service (harden, StateDirectory, sops `PAP_API_KEY`, `PAP_ENV=production`, insight env wired to FastFlowLM `http://127.0.0.1:52625/v1` + `qwen3.6-moe:35b-a3b`, journalctl abs path, `systemd-journal` supplementary group), Caddy `protectedVHost "notify"`, DNS localSubdomains, Homepage tile, Gatus `/api/health` check, OTel audit if applicable
-- [ ] Gatus `alerting.custom` provider → PapDashboard ingest (placeholders + `placeholders:` override for lowercase `triggered`/`resolved` in the `type` field; `send-on-resolved: true`; extend `discordAlert` helper to emit both providers for every endpoint)
-- [ ] sops: new `papdashboard.yaml` (API key) + extend `gatus-env` template with ingest key
-- [ ] Enable in `configuration.nix`; `nix flake check --no-build` + eval
-- [ ] Deploy + end-to-end: synthetic failing alert → NPU insight → dashboard + Discord
-- [ ] Docs: AGENTS.md section, TODO_LIST, this report closure
+- [x] ~~flake input `papdashboard = github:LarsArtmann/PapDashboard`~~ done at `34f33a51`
+- [x] ~~`lib/ports.nix` port entry~~ done at `34f33a51`
+- [x] ~~`modules/nixos/services/papdashboard.nix`: service (harden, StateDirectory, sops `PAP_API_KEY`, `PAP_ENV=production`, insight env wired to FastFlowLM `http://127.0.0.1:52625/v1` + `qwen3.6-moe:35b-a3b`, journalctl abs path, `systemd-journal` supplementary group), Caddy `protectedVHost "notify"`, DNS localSubdomains, Homepage tile, Gatus `/api/health` check, OTel audit if applicable~~ done at `34f33a51`
+- [x] ~~Gatus `alerting.custom` provider → PapDashboard ingest (placeholders + `placeholders:` override for lowercase `triggered`/`resolved` in the `type` field; `send-on-resolved: true`; extend `discordAlert` helper to emit both providers for every endpoint)~~ done at `34f33a51`
+- [x] ~~sops: new `papdashboard.yaml` (API key) + extend `gatus-env` template with ingest key~~ done at `34f33a51`
+- [x] ~~Enable in `configuration.nix`; `nix flake check --no-build` + eval~~ done at `34f33a51`
+- [x] ~~Deploy + end-to-end: synthetic failing alert → NPU insight → dashboard + Discord~~ done at `34f33a51`
+- [x] ~~Docs: AGENTS.md section, TODO_LIST, this report closure~~ done at `34f33a51`
 
 ## 7. Open questions (BLOCKING)
 
