@@ -117,6 +117,16 @@ _: {
 
             services.niri-drm-healthcheck = {
               description = "Detect niri DRM zombie state and restart niri";
+              # Only run inside a real login session. The user manager only
+              # carries XDG_SESSION_ID after niri-session ran
+              # `systemctl --user import-environment` (pam_systemd sets it for
+              # every session). Pre-login (lingering boot, SDDM greeter
+              # manager) the healthcheck has nothing to heal — a niri restart
+              # attempted there can only ever (re)start a HEADLESS niri, which
+              # is exactly the 2026-08-18 amplifier: the healthcheck
+              # restart-looped the zombie every 2 min. The script keeps its own
+              # login-screen guard as defense-in-depth.
+              unitConfig.ConditionEnvironment = "XDG_SESSION_ID";
               serviceConfig = hardenUser { MemoryMax = "256M"; } // {
                 Type = "oneshot";
                 ExecStart = lib.getExe drmHealthcheck;
@@ -177,17 +187,19 @@ _: {
                           TEXTFILE_DIR="/var/lib/prometheus-node-exporter/textfile_collectors"
                           mkdir -p "$TEXTFILE_DIR"
 
-                          # State file for desktop_died grace period — prevents false alerts
-                          # during niri's 2s auto-restart window (RestartSec=2s, StartLimitBurst=3).
-                          # Requires 2 consecutive checks (~60s) of niri_down + session_up before
-                          # setting desktop_died=1. Same pattern as niri-drm-healthcheck.sh.
+                          # State files for grace periods — prevent false alerts
+                          # during niri's 2s auto-restart window (RestartSec=2s, StartLimitBurst=3)
+                          # and during the logout window (session closes before niri exits).
+                          # Requires 2 consecutive checks (~60s) of the condition before
+                          # setting the flag. Same pattern as niri-drm-healthcheck.sh.
                           STATE_DIR="/var/lib/niri-health-metrics"
                           mkdir -p "$STATE_DIR" 2>/dev/null || true
                           DOWN_COUNT_FILE="$STATE_DIR/down_count"
+                          ZOMBIE_COUNT_FILE="$STATE_DIR/zombie_count"
 
-                          read_down_count() {
-                            if [ -f "$DOWN_COUNT_FILE" ]; then
-                              cat "$DOWN_COUNT_FILE" 2>/dev/null || echo 0
+                          read_count() {
+                            if [ -f "$1" ]; then
+                              cat "$1" 2>/dev/null || echo 0
                             else
                               echo 0
                             fi
@@ -224,7 +236,7 @@ _: {
                           # false positives during niri's 2s auto-restart window.
                           desktop_died=0
                           if [ "$graphical_session" -eq 1 ] && [ "$running" -eq 0 ]; then
-                            count=$(read_down_count)
+                            count=$(read_count "$DOWN_COUNT_FILE")
                             count=$((count + 1))
                             echo "$count" > "$DOWN_COUNT_FILE" 2>/dev/null || true
                             if [ "$count" -ge 2 ]; then
@@ -232,6 +244,28 @@ _: {
                             fi
                           else
                             rm -f "$DOWN_COUNT_FILE" 2>/dev/null || true
+                          fi
+
+                          # "Zombie session" = niri running with NO graphical session:
+                          # a headless compositor. This is the exact 2026-08-18
+                          # incident state — it blocks the next SDDM login with
+                          # "A niri session is already running" (black screen).
+                          # niri.service's ConditionEnvironment should make it
+                          # unreachable; this metric is the tripwire if the class
+                          # ever regresses. Grace: 2 consecutive checks so the
+                          # seconds between logout-session-close and niri's clean
+                          # exit don't page (Restart=on-failure doesn't respawn
+                          # a clean logout exit).
+                          zombie=0
+                          if [ "$running" -eq 1 ] && [ "$graphical_session" -eq 0 ]; then
+                            zcount=$(read_count "$ZOMBIE_COUNT_FILE")
+                            zcount=$((zcount + 1))
+                            echo "$zcount" > "$ZOMBIE_COUNT_FILE" 2>/dev/null || true
+                            if [ "$zcount" -ge 2 ]; then
+                              zombie=1
+                            fi
+                          else
+                            rm -f "$ZOMBIE_COUNT_FILE" 2>/dev/null || true
                           fi
 
                           # "Crash loop" = niri restarted 3+ times in 10 min (StartLimitBurst=3).
@@ -244,6 +278,7 @@ _: {
                             echo "niri_running $running"
                             echo "niri_graphical_session $graphical_session"
                             echo "niri_desktop_died $desktop_died"
+                            echo "niri_zombie $zombie"
                             echo "niri_crash_loop $crash_loop"
                             echo "niri_restarts_10m $restarts"
                             echo "niri_drm_errors_30s $drm_errors"

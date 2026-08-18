@@ -153,6 +153,12 @@ _: {
       config = lib.mkIf cfg.enable {
         systemd.user.services.focus-new-windows = {
           description = "Follow newly opened niri windows to their workspace";
+          # No ConditionEnvironment=XDG_SESSION_ID needed (unlike niri.service
+          # / niri-drm-healthcheck): this unit is ONLY pulled by
+          # graphical-session.target (WantedBy below), which is never in the
+          # user-manager boot transaction (session-boot-audit enforces that).
+          # Pre-login it cannot start, so its Wants=niri.service is inert at
+          # boot; post-login the compositor socket exists and the daemon runs.
           after = [
             "graphical-session.target"
             "niri.service"
