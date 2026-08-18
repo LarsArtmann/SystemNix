@@ -59,7 +59,13 @@ in
         package = pkgs.aw-watcher-utilization;
         settings = {
           aw-watcher-utilization = {
-            poll_time = 5;
+            # Each sample is a ~7.5KB full-system dump (32 per-core CPU
+            # percentages, cumulative counters, loadavg, disk, net, sensors).
+            # At 5s this grew the DB to 13GB in ~8 months and made aw-server
+            # OOM (2026-08-18: repeated global-OOM kills of aw-server at 3.2GB
+            # RSS while scanning the bucket). 300s keeps a coarse time series
+            # at ~1.6MB/day.
+            poll_time = 300;
           };
         };
       };
