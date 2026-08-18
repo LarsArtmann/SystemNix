@@ -36,6 +36,36 @@ pgrep -x niri >/dev/null 2>&1 || {
   exit 0
 }
 
+# ── Login-screen guard (same rationale as display-watchdog.sh) ────────────
+# niri running with NO user graphical session is the lingering-boot /
+# login-screen state: it is headless BY DESIGN there (no seat, no outputs —
+# hence the "error doing early import: DeviceMissing" spam). Restarting
+# cannot attach outputs (the restarted instance is just as headless) and
+# only churns the session every DISPLAY_THRESHOLD checks — the 2026-08-18
+# two-minute restart loop that kept disrupting greeter/logins. Only act
+# when a real graphical session exists.
+has_graphical_session=0
+found=$(
+  loginctl list-sessions --no-legend 2>/dev/null |
+    while read -r sid _rest; do
+      c=$(loginctl show-session "$sid" -p Class --value 2>/dev/null || true)
+      t=$(loginctl show-session "$sid" -p Type --value 2>/dev/null || true)
+      if [ "$c" = "user" ] && { [ "$t" = "wayland" ] || [ "$t" = "x11" ]; }; then
+        echo 1
+      fi
+    done
+) || found=""
+case "$found" in
+*1*) has_graphical_session=1 ;;
+esac
+
+if [ "$has_graphical_session" -eq 0 ]; then
+  echo "niri running but no user graphical session (login screen / SSH-only) — headless is expected, not recovering."
+  reset_count display
+  reset_count journal
+  exit 0
+fi
+
 # ── Check 1: Display signal (highest priority) ─────────────────────────────
 # If niri is running but a connected display has enabled=disabled + dpms=Off,
 # the GPU pipeline is corrupted (e.g., from earlyoom killing GPU processes).
@@ -80,8 +110,13 @@ fi
 # ── Check 2: niri journal DRM errors ───────────────────────────────────────
 JOURNAL_THRESHOLD=3
 
+# wc under pipefail can emit "0\n0" when journalctl fails (e.g. this unit
+# also runs for the SDDM user manager) — normalize instead of trusting it.
 drm_errors=$(journalctl --grep "Permission denied|DeviceMissing" --user -u niri -n 11 --since "30 sec ago" --no-pager --output cat 2>/dev/null |
-  wc -l || echo 0)
+  wc -l) || true
+drm_errors="${drm_errors:-0}"
+drm_errors=$(echo "$drm_errors" | tr -cd '0-9')
+drm_errors="${drm_errors:-0}"
 
 if [ "$drm_errors" -ge 10 ]; then
   count=$(read_count journal)

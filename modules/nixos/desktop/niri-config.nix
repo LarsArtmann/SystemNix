@@ -30,6 +30,7 @@ _: {
           procps
           systemd
           kbd
+          gawk # login-screen guard parses `loginctl list-sessions` with awk
         ];
         text = builtins.readFile ../../../scripts/display-watchdog.sh;
       };
@@ -73,12 +74,26 @@ _: {
                                 ''
                                     [Unit]
                                   StartLimitBurst=3
-                                  StartLimitIntervalSec=60''
+                                  StartLimitIntervalSec=60
+                                  # Defense-in-depth against headless starts: the
+                                  # user manager only has XDG_SESSION_ID in its
+                                  # environment after a real SDDM login ran
+                                  # `systemctl --user import-environment`
+                                  # (NixOS's session wrapper imports it). A
+                                  # lingering boot must NEVER run the compositor
+                                  # — a headless niri blocks the next real login
+                                  # with "A niri session is already running".
+                                  ConditionEnvironment=XDG_SESSION_ID''
                               ]
                               noBindsTo;
                         in
                         unitLimits
-                        + "\nRestart=always\nRestartSec=2s\nOOMScoreAdjust=-1000\nLimitNPROC=infinity\nLimitNOFILE=524288\nIOSchedulingClass=best-effort\nIOSchedulingPriority=3\n"
+                        # Restart=on-failure (not always): a CLEAN exit is the
+                        # logout path (Mod+Shift+Q / session end). Restart=always
+                        # respawns a headless niri after logout, which blocks the
+                        # next SDDM login with "A niri session is already running".
+                        # Crashes (signals, nonzero) still auto-restart.
+                        + "\nRestart=on-failure\nRestartSec=2s\nOOMScoreAdjust=-1000\nLimitNPROC=infinity\nLimitNOFILE=524288\nIOSchedulingClass=best-effort\nIOSchedulingPriority=3\n"
                         + "\n[Install]\nWantedBy=graphical-session.target\n"
                       else
                         baseText;

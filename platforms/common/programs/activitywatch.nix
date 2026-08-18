@@ -17,7 +17,11 @@ let
   aw-watcher-window-wayland-gate = pkgs.writeShellApplication {
     name = "aw-watcher-window-wayland-gate";
     text = ''
-      timeout_s="''${AW_WAYLAND_GATE_TIMEOUT:-60}"
+      timeout_s="''${AW_WAYLAND_GATE_TIMEOUT:-0}"
+      # <=0 (default) waits indefinitely: at a lingering boot there is no
+      # Wayland socket until the user actually logs in via SDDM, which can be
+      # hours later. Failing after a timeout trips StartLimitBurst and leaves
+      # the watcher dead for the whole session.
       waited=0
       while true; do
         sock=""
@@ -33,7 +37,7 @@ let
         if [ -n "$sock" ]; then
           exec env WAYLAND_DISPLAY="$sock" "$@"
         fi
-        if [ "$waited" -ge "$timeout_s" ]; then
+        if [ "$timeout_s" -gt 0 ] && [ "$waited" -ge "$timeout_s" ]; then
           echo "aw-watcher-window-wayland: no wayland socket appeared within ''${timeout_s}s (XDG_RUNTIME_DIR=''${XDG_RUNTIME_DIR:-unset})" >&2
           exit 1
         fi
@@ -69,9 +73,15 @@ in
           "graphical-session.target"
           "niri.service"
         ];
-        # Wants= pulls the target into this unit's start transaction; without
-        # it, After= is ignored whenever the target has no pending job (boot).
-        Wants = lib.mkAfter [ "graphical-session.target" ];
+        # NEVER add Wants=graphical-session.target here. This unit is enabled
+        # via activitywatch.target -> default.target, so Wants= pulls
+        # graphical-session.target into the user-manager BOOT transaction
+        # (lingering starts it before SDDM exists). The target then starts
+        # niri-session-manager (Requires=niri.service) -> a headless zombie
+        # niri, and SDDM's niri-session exits "A niri session is already
+        # running" -> black screen on login (2026-08-18 incident). The gate
+        # wrapper above already waits for the compositor socket, so no Wants
+        # is needed for the deploy-time ordering case either.
         PartOf = lib.mkAfter [ "graphical-session.target" ];
         StartLimitBurst = 5;
         StartLimitIntervalSec = 300;
