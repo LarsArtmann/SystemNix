@@ -459,6 +459,20 @@ in
         color-scheme=dark
       '';
 
+      # Crush provider auth from sops — NEVER store keys in crush's auth store
+      # (~/.local/share/crush/crush.json, machine-owned plaintext state that
+      # agents can read; the 2026-08-18 leak class). crushrc api_key supports
+      # $(command) expansion at load, so the key flows sops → /run/secrets →
+      # process memory without ever touching a writable file. Guarded by
+      # test -r: absent secret (crush-daily disabled) = provider not defined.
+      # NOTE: do not track a real "crush/crushrc" in the ~/.config/crush
+      # dotfiles repo — it would collide with this HM symlink.
+      "crush/crushrc".text = ''
+        if test -r /run/secrets/synthetic_api_key; then
+          provider add synthetic --api-key "$(cat /run/secrets/synthetic_api_key)"
+        fi
+      '';
+
       # Niri session manager — declarative app mappings
       # Prevents duplicate spawns and maps niri app_ids to actual launch commands
       "niri-session-manager/config.toml".text = ''

@@ -154,16 +154,20 @@ in
               } [ "synthetic_api_key" ]
             )
             // lib.optionalAttrs (svcEnabled "bank-sync") (
-              mkSecrets "bank-sync.yaml"
-                {
-                  owner = "bank-sync";
-                  group = "bank-sync";
-                  restartUnits = [ "bank-sync.service" ];
-                }
-                [
-                  "wise_api_key"
-                  "encryption_key"
-                ]
+              # The AES key lives in its own file: bank-sync.yaml holds the
+              # real Wise token and is decryptable only with the host key
+              # (root), so the encryption key was sops-encrypted to the
+              # host age PUBLIC key in a separate file instead.
+              mkSecrets "bank-sync.yaml" {
+                owner = "bank-sync";
+                group = "bank-sync";
+                restartUnits = [ "bank-sync.service" ];
+              } [ "wise_api_key" ]
+              // mkSecrets "bank-sync-encryption.yaml" {
+                owner = "bank-sync";
+                group = "bank-sync";
+                restartUnits = [ "bank-sync.service" ];
+              } [ "encryption_key" ]
             )
             // lib.optionalAttrs (svcEnabled "file-and-image-renamer") (
               mkKeyedSecrets "crush-daily.yaml"

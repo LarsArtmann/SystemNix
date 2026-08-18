@@ -253,9 +253,18 @@ fi
 # Gotenberg prove the Office/E-Mail consume sidecars are up. Ports from
 # lib/ports.nix (paperless 2892, tika 9998, gotenberg 3199).
 paperless_enabled=false
-systemctl list-unit-files 'paperless-web.service' --no-legend 2>/dev/null | grep -q paperless-web && paperless_enabled=true
+test -e /etc/systemd/system/paperless-web.service && paperless_enabled=true
 if $paperless_enabled; then
-  if paperless_body=$(curl -s --compressed --max-time 10 "http://127.0.0.1:2892/" 2>/dev/null); then
+  # --retry: post-deploy-check runs seconds after switch-to-configuration
+  # restarts paperless-webserver (gunicorn); during that window the socket
+  # can answer with an empty/error body before Django is ready. Retrying
+  # keeps the check strict (body MUST eventually contain the sign-in marker)
+  # while tolerating the restart window.
+  # URL: / 302-redirects to /accounts/login/?next=/ — curl without -L only
+  # sees the redirect (its body is empty); probe the login page directly,
+  # same URL Gatus probes. python urllib auto-follows redirects, which masked
+  # this during development — verify smoke checks with curl semantics.
+  if paperless_body=$(curl -s --compressed --max-time 10 --retry 5 --retry-delay 3 --retry-all-errors "http://127.0.0.1:2892/accounts/login/?next=/" 2>/dev/null); then
     if echo "$paperless_body" | grep -q "Paperless-ngx sign in"; then
       report_pass "Paperless — web login page (Django + PostgreSQL stack answers)"
     else
@@ -285,7 +294,7 @@ fi
 # ever syncs). Port from lib/ports.nix (bank-sync 8097). Fresh deploys may
 # see the profiles WARN while the initial 365d backfill sync is running.
 banksync_enabled=false
-systemctl list-unit-files 'bank-sync.service' --no-legend 2>/dev/null | grep -q bank-sync && banksync_enabled=true
+test -e /etc/systemd/system/bank-sync.service && banksync_enabled=true
 if $banksync_enabled; then
   if banksync_body=$(curl -s --compressed --max-time 10 "http://127.0.0.1:8097/" 2>/dev/null); then
     if echo "$banksync_body" | grep -q "Bank-Sync Dashboard"; then
@@ -553,7 +562,10 @@ check "Homepage (HTTPS)" "https://dash.$DOMAIN/" "200" "<html" 2>/dev/null || tr
 check "Forgejo (HTTPS)" "https://forgejo.$DOMAIN/api/v1/version" "200" "" 2>/dev/null || true
 check "Status (HTTPS)" "https://status.$DOMAIN/" "200" "<html" 2>/dev/null || true
 check "Immich (HTTPS)" "https://immich.$DOMAIN/api/server/ping" "200" "" 2>/dev/null || true
-check "Bank-Sync (HTTPS)" "https://banksync.$DOMAIN/" "200" "Bank-Sync Dashboard" 2>/dev/null || true
+# Enable-gated via banksync_enabled (computed in the service-level section
+# above): a disabled bank-sync leaves the Caddy vHost proxying to a dead
+# port, which would false-FAIL every deploy until the service goes live.
+$banksync_enabled && check "Bank-Sync (HTTPS)" "https://banksync.$DOMAIN/" "200" "Bank-Sync Dashboard" 2>/dev/null || true
 check "Overview (HTTPS)" "https://overview.$DOMAIN/" "200" "<html" 2>/dev/null || true
 
 # --- Auth gateway health (oauth2-proxy / forward-auth) ---

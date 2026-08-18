@@ -238,7 +238,13 @@
       url = "github:LarsArtmann/bank-sync?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
-        go-nix-helpers.follows = "go-nix-helpers";
+        # go-nix-helpers is deliberately NOT followed: mkPreparedSource from
+        # a different helper version than the one bank-sync's vendorHash was
+        # validated against produces a different prepared source (replace
+        # directives) and therefore a different vendor tree — FOD hash
+        # mismatch (2026-08-18: followed eca72e10 vs pinned 064a269e
+        # produced 4BsvdHH… vs the expected gRJEQt…). bank-sync must consume
+        # its own locked helper version for reproducible builds.
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";

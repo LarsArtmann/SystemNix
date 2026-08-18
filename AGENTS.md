@@ -240,7 +240,7 @@ Quickshell is a QtQuick desktop shell replacing Waybar, Dunst, Wlogout, polkit_g
 
 - **Dual Discord paths (design):** Gatus keeps its raw fast-path to Discord untouched AND POSTs every trigger/resolve transition to PapDashboard `/api/ingest` via an `alerting.custom` provider (`gatus-config.nix`). PapDashboard's outbound Discord is filtered by `PAP_NOTIFY_SOURCE_APPS=insight`, so Discord receives raw+insight pairs, never duplicates. If PapDashboard dies, raw alerts still flow
 - **Gatus custom-provider traps (verified against gatus 5.36.0 source):** (1) `default-alert` does NOT auto-apply — every endpoint must DECLARE an alert of the provider's type; `withPapIngest` maps a `{type="custom";}` entry onto ALL endpoints (wrap the WHOLE endpoints expression — appended `lib.optionals`/`map` segments count too). (2) `os.ExpandEnv` runs file-wide before YAML parse — `$PAPDASHBOARD_INGEST_KEY` in headers IS expanded. (3) `ALERT_TRIGGERED_OR_RESOLVED` remaps TRIGGERED/RESOLVED → `triggered`/`resolved` via the `placeholders` map, yielding PapDashboard's `alert.triggered`/`alert.resolved` event types. (4) OMIT `alerting.custom` when disabled — a present-but-empty provider fails gatus validation (ErrURLNotSet). (5) The alert YAML field is `description:`, NOT `desc:` (yaml.v3 silently dropped `desc:` — descriptions never reached Discord before 2026-08-18)
-- **Ingest body contract (live-verified):** huma requires `aggregateId` AND `metadata.{correlationId,causationId}` — the full body shape lives in `gatus-config.nix` with a comment; resolve matches unresolved alerts by `(sourceApp, title)`
+- **Ingest body contract (live-verified):** huma requires `aggregateId` AND `metadata.{correlationId,causationId}` — the full body shape lives in `gatus-config.nix` with a comment; resolve matches unresolved alerts by `(sourceApp, title)`. **Rev pin matters (2026-08-18):** the input sat at `e93d2b15`, which PREDATES the `POST /api/ingest` huma registration in `internal/api/api.go` — gatus got **405 on every ingest (1076×)** while raw Discord alerts still flowed (the dual-path design masked the breakage). The bring-up session's "live-verified" was against a LOCAL `-dirty` build, not the deployed rev. Fixed via `nix flake lock --update-input papdashboard` → `ebbc6fa`. Verification WITHOUT the API key: unauthenticated POST `/api/ingest` must return **401** (`missing API key`); a **405** means the deployed binary lacks the route again
 - **Insight enricher:** DynamicUser + `SupplementaryGroups = ["systemd-journal"]` (journalctl evidence reads), LLM = FastFlowLM `http://127.0.0.1:52625/v1` (`qwen3.6-moe:35b-a3b`; socket activation wakes the NPU, cold load 1-3 min, LLM timeout 300s default). Best-effort: enricher failures log and drop, never fatal. Insights publish as ordinary notifications (sourceApp `insight`) — free lifecycle/UI/SSE
 - **Secrets:** sops `papdashboard.yaml` `papdashboard_api_key` (root-owned; DynamicUser reads via EnvironmentFile template `papdashboard-env`), same key rendered into `gatus-env` as `PAPDASHBOARD_INGEST_KEY`. Outbound webhook reuses the shared `discord_alert_webhook_url` (signoz.yaml) — switch to a dedicated channel by pointing `PAP_DISCORD_WEBHOOK` elsewhere
 - **Evidence sources (module options):** `journalUnits` (gatus/caddy/dns-blocker) + `evidenceURLs` (node exporter). Caddy admin :2019 metrics is NOT usable as evidence (bare-localhost Host gets 403)
@@ -279,6 +279,16 @@ SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key)
 - `sops --set` / `sops -d` (modify/decrypt): needs `SOPS_AGE_KEY` env var with the private key — requires `sudo` to read the SSH host key
 - Secrets with service-specific owners MUST be guarded with `lib.optionalAttrs config.services.X.enable` — one bad owner blocks ALL secrets atomically
 - See `.crush/skills/sops-secret-management/SKILL.md` for full workflow
+
+### Crush Provider Keys (never in the auth store)
+
+`~/.local/share/crush/crush.json` is crush's **machine-owned auth store** — plaintext `api_key`s, 0600, readable by any process (and any agent) running as the user. NEVER manage/symlink that file (crush rewrites it at runtime) and NEVER paste its contents into docs/commands. The secure pattern (deployed 2026-08-18 for the `synthetic` provider):
+
+- Keys live in sops → render as `/run/secrets/<name>` (lars:users 0400)
+- HM-managed `~/.config/crush/crushrc` (`platforms/nixos/users/home.nix`) injects them at load: `provider add synthetic --api-key "$(cat /run/secrets/synthetic_api_key)"` — crushrc `api_key` supports `$(command)` expansion; the key goes sops → tmpfs → process memory without ever touching a writable file
+- The provider DEFINITION (base_url etc.) comes from crush's auto-updated catalog (`~/.local/share/crush/providers.json`); only the key needs declaring
+- Do NOT track a real `crush/crushrc` in the `~/.config/crush` dotfiles repo — it collides with the HM symlink
+- Remaining plaintext keys in the auth store (zai, gemini, minimax, kimi-coding, mimo, hyper — none leaked in git): migrate one-by-one through the same pattern when rotating; until then they are local-disk-only and must never be quoted anywhere
 
 ### Secret Leak Incident (2026-08-18) — history purge PENDING manual push
 
@@ -462,6 +472,7 @@ serviceConfig = lib.mkMerge [
 
 ## Critical Rules
 
+- **NEVER commit a secret to a repo — not in status reports, not in commit messages, not in "manual step" command examples, not ANYWHERE.** The ONLY exception: sops-encrypted files (`platforms/*/secrets/`). Agents must never need the raw value: reference `config.sops.secrets.<name>.path`, render via sops templates, or write `<REDACTED — paste key interactively>` placeholders for manual steps. The user holds secret values; the repo never does. Enforced by gitleaks (staged-tree, blocking) + `scripts/scan-history-secrets.sh` (full history) — see the Secret Leak Incident section for what happens otherwise
 - **Use flake commands** — `nix run .#deploy`, never raw `nixos-rebuild`/`darwin-rebuild`
 - **Test first** — `nix flake check --no-build` (syntax) or `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel` (eval)
 - **`trash` not `rm`**, **`git mv` not `mv`**, **2-space indentation**, **`config.allowBroken = false`**, **No OpenZFS on macOS** (kernel panics, ADR-003)
@@ -665,6 +676,7 @@ serviceConfig = lib.mkMerge [
 ### Shell & DevTools
 
 - **curl ≥8.2x advertises `Accept-Encoding` by default — body-parsing curls MUST pass `--compressed`** (2026-08-16 nixpkgs bump). Servers that honor it (crush-daily API middleware, node_exporter `/metrics`, anything behind Caddy `encode`) return `Content-Encoding: gzip`, which plain `curl -s` does NOT decode: greps match nothing, jq fails, and bash warns "ignored null byte in input" (gzip streams contain NULs). Status-code-only checks (`-o /dev/null -w %{http_code}`) are unaffected. Bit the smoke checks twice under different disguises: first DiscordSync `/api/stats` (misdiagnosed as "null bytes in JSON", "fixed" with `grep -a`), then Crush Daily `/api/reports` ("unexpected response" forever against a healthy API). `--compressed` is a no-op on identity responses — safe on every body-parsing curl
+- **python urllib AUTO-FOLLOWS redirects; curl does NOT (no `-L` by default)** — verifying an HTTP body check with python can LIE about curl semantics (2026-08-18): paperless `/` 302-redirects to `/accounts/login/?next=/`; python `urlopen` followed it and showed the login body, while the smoke's curl saw only the empty 302 body and failed. Always validate smoke-check patterns with the SAME tool the check uses (curl), or probe the FINAL URL directly. Same class: `test -e /etc/systemd/system/<unit>.service` is the correct enable-gate for smoke checks — `systemctl is-enabled` returns rc=1 for units pulled in via `requiredBy` only (paperless-web has no own [Install] symlink despite running), and `list-unit-files` matches unit files that exist but aren't deployed-enabled (bank-sync fired its vHost check while disabled)
 - **`writeShellApplication` pipefail + `|| echo 0`** — Produces multi-line output under pipefail. Use `|| true` + `''${var:-0}`.
 - **`writeShellApplication` pipefail + `| sort | head` SIGPIPE** — Append `|| true` to pipeline.
 - **`find -L` for Nix store symlinks** — `find` does NOT follow starting-point symlinks by default.

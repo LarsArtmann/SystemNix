@@ -45,7 +45,7 @@ _: {
         secretPath = envTemplate.path;
         message = ''
           bank-sync: BANK_SYNC_SECURITY_ENCRYPTION_KEY is missing or empty in ${envTemplate.path}
-            Add the 32-byte AES key: sops set platforms/nixos/secrets/bank-sync.yaml '["encryption_key"]', then redeploy.'';
+            Re-create platforms/nixos/secrets/bank-sync-encryption.yaml (sops-encrypt a 32-byte base64 key to the host age public key in .sops.yaml), then redeploy.'';
         extraCheck = ''
           ${pkgs.gnugrep}/bin/grep -qE '^BANK_SYNC_SECURITY_ENCRYPTION_KEY=..' "$secret_path"
         '';
