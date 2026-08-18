@@ -620,11 +620,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786900926,
-        "narHash": "sha256-m5CaJTRD5n7NAPSKr2+lzwgaCfZ8RHcN/r09Lkh/xuI=",
+        "lastModified": 1787009354,
+        "narHash": "sha256-C46jcbbEYL1DaovI/2mHlt2yd05qRlp2hokeJCv9Mvg=",
         "owner": "LarsArtmann",
         "repo": "DiscordSync",
-        "rev": "e71e8086c527a781ccb7ab47a80b0d647a544dc7",
+        "rev": "085fa53915179b61cb6dc7b117dc8183dfe1017c",
         "type": "github"
       },
       "original": {
@@ -1152,17 +1152,17 @@
     "go-atomic-write": {
       "flake": false,
       "locked": {
-        "lastModified": 1786709595,
-        "narHash": "sha256-D8Yc3/7LkH5IWhJ4JGvwj399wHjGgHmIpQKaNjD8KRc=",
+        "lastModified": 1786808405,
+        "narHash": "sha256-KyGxUQCjN70PW8JhYmPgXeGrzevy23+xmdxXO4ZX1lM=",
         "owner": "LarsArtmann",
         "repo": "go-atomic-write",
-        "rev": "01b072f01f45ab1af365039e225129893b56009c",
+        "rev": "9a4218db61767ac8bd45c3c7ee00023c5da6bf02",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
         "repo": "go-atomic-write",
-        "rev": "01b072f01f45ab1af365039e225129893b56009c",
+        "rev": "9a4218db61767ac8bd45c3c7ee00023c5da6bf02",
         "type": "github"
       }
     },

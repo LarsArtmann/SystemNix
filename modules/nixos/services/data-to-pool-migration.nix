@@ -92,6 +92,10 @@ _: {
             ioTier.background
           ];
           script = ''
+            # NOTE: NixOS PREPENDS `set -e` to unit scripts — any unguarded
+            # failing statement aborts the run (observed live: run 1 died at
+            # rm). Every fallible statement outside an if-condition is
+            # explicitly guarded; failures accumulate and keep sources intact.
             set -u
             failures=0
 
@@ -102,7 +106,11 @@ _: {
                 return 0
               fi
               echo "data-to-pool-migration: copying $src → $dest"
-              mkdir -p "$dest"
+              if ! mkdir -p "$dest"; then
+                echo "data-to-pool-migration: MKDIR FAILED: $dest"
+                failures=1
+                return 0
+              fi
               if ! rsync -aHAX --info=stats1 "$src"/ "$dest"/; then
                 echo "data-to-pool-migration: COPY FAILED: $src (source kept)"
                 failures=1
@@ -124,31 +132,51 @@ _: {
               fi
               # Carry the source top-dir ownership/permissions onto the dest
               # root (numeric: keeps the stale monitor365 uid 966:956 intact).
-              chown --reference="$src" "$dest"
-              chmod --reference="$src" "$dest"
+              if ! chown --reference="$src" "$dest" || ! chmod --reference="$src" "$dest"; then
+                echo "data-to-pool-migration: OWNER SYNC FAILED: $dest (source kept)"
+                failures=1
+                return 0
+              fi
               echo "data-to-pool-migration: verified identical ($(du -sh "$src" | cut -f1)): $src"
-              rm -rf -- "$src"
+              if ! rm -rf -- "$src"; then
+                echo "data-to-pool-migration: SOURCE REMOVAL FAILED: $src (data is safe on the pool; remove manually)"
+                failures=1
+                return 0
+              fi
               echo "data-to-pool-migration: source removed: $src"
             }
 
             # 1. Live-service subvol for atticd storage (flip happens in a
             #    follow-up deploy that repoints services.attic-config.storagePath).
-            if ! btrfs subvolume show /mnt/pool/services/atticd >/dev/null 2>&1; then
-              echo "data-to-pool-migration: creating subvolume /mnt/pool/services/atticd"
-              btrfs subvolume create /mnt/pool/services/atticd
+            #    On create failure the atticd migrate is SKIPPED: rsync would
+            #    otherwise silently create a plain dir and lose btrbk-pool
+            #    snapshot isolation.
+            if btrfs subvolume show /mnt/pool/services/atticd >/dev/null 2>&1; then
+              echo "data-to-pool-migration: subvolume already exists: /mnt/pool/services/atticd"
+            elif btrfs subvolume create /mnt/pool/services/atticd; then
+              echo "data-to-pool-migration: created subvolume /mnt/pool/services/atticd"
+            else
+              echo "data-to-pool-migration: SUBVOLUME CREATE FAILED: /mnt/pool/services/atticd — skipping atticd migrate"
+              failures=1
             fi
 
             # 2. The data moves. Archive first (largest, irreplaceable DuckDB),
             #    then the empty attic tree, then the monitor365 buffer.
-            mkdir -p /mnt/pool/archive
+            if ! mkdir -p /mnt/pool/archive; then
+              echo "data-to-pool-migration: MKDIR FAILED: /mnt/pool/archive"
+              failures=1
+            fi
             migrate /data/monitor365-archive /mnt/pool/archive/monitor365-archive
-            migrate /data/atticd /mnt/pool/services/atticd
+            if btrfs subvolume show /mnt/pool/services/atticd >/dev/null 2>&1; then
+              migrate /data/atticd /mnt/pool/services/atticd
+            fi
             migrate /data/monitor365 /mnt/pool/services/monitor365
 
             # 3. Provenance sidecar for the archive copy (house rule: every
-            #    archive gets one at creation time).
+            #    archive gets one at creation time). Non-critical: a failure
+            #    here must not fail the migration.
             if [ -d /mnt/pool/archive/monitor365-archive ] && [ ! -e /mnt/pool/archive/monitor365-archive/README-migration.md ]; then
-              printf '%s\n' \
+              if printf '%s\n' \
                 "# monitor365 archive — migrated from /data/monitor365-archive" \
                 "" \
                 "Migrated $(date -Is) by data-to-pool-migration.service on evo-x2." \
@@ -161,7 +189,11 @@ _: {
                 "only redundancy for this copy (cold data; nightly /data snapshots on" \
                 "the pool keep older copies until their retention expires)." \
                 > /mnt/pool/archive/monitor365-archive/README-migration.md
-              echo "data-to-pool-migration: wrote provenance README"
+              then
+                echo "data-to-pool-migration: wrote provenance README"
+              else
+                echo "data-to-pool-migration: WARNING — could not write provenance README"
+              fi
             fi
 
             if [ "$failures" -ne 0 ]; then

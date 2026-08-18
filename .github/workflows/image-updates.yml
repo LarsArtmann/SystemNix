@@ -1,0 +1,57 @@
+name: image updates
+
+on:
+  schedule:
+    # Daily at 07:00 UTC (staggered after nixpkgs-compat at 06:00)
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+jobs:
+  image-update-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Check lib/images.nix against registries
+        id: update-check
+        continue-on-error: true
+        run: scripts/check-image-updates.sh
+
+      - name: Create issue on failure
+        if: steps.update-check.outcome == 'failure'
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const date = new Date().toISOString().split('T')[0];
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'image-updates',
+              state: 'open'
+            });
+            if (existing.data.length > 0) {
+              console.log('Issue already exists, skipping creation');
+              return;
+            }
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Docker images out of date (${date})`,
+              body: [
+                'The daily image freshness check failed.',
+                '',
+                'One or more images in `lib/images.nix` are behind their latest',
+                'published version or have a stale digest pin. Policy: images are',
+                'always kept on latest (pin tag + digest for reproducibility).',
+                '',
+                '**Action required:**',
+                '1. Run `scripts/check-image-updates.sh` locally to see the drift',
+                '2. Bump tags/digests in `lib/images.nix`',
+                '3. Deploy and verify with `nix run .#post-deploy-check`',
+                '',
+                'Note: DB-backed apps (Twenty) may need migration review before bumping.',
+                '',
+                '[View workflow run](' + context.serverUrl + '/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId + ')'
+              ].join('\n'),
+              labels: ['image-updates', 'bug']
+            });

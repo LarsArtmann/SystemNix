@@ -5,6 +5,8 @@
 
 **ADDENDUM 2026-08-18 00:50 (follow-up session):** the "deployed disabled" claim below was WRONG — the 00:33 deploy shipped the force-enable verification build ENABLED, and the unit crash-looped live with `status=226/NAMESPACE` (see §d.7). Fixed: enable reverted, new `google-sync-dirs` mount-gated dir oneshot + `google-sync-config-check` placeholder ExecStartPre (live-tested), AGENTS.md gotcha added. **Deploy of the fix still pending — the loop is live until the next `nix run .#deploy`.**
 
+**ADDENDUM 2026-08-18 01:30 (user answers → multi-mirror rework):** §g questions answered: scope = shared-with-me AND team drives both matter; Drive = TWO accounts (private ~1.9 TB, Workspace work account low-digit GBs); Photos = wait for mirror stability. Single-remote design scrapped for a `mirrors` option (one rclone remote → one destination per entry; defaults: `gdrive` private My Drive, `gdrive-shared` with `shared_with_me = true`, `gwork` with `team_drive` config). Per-mirror grace subdirs, per-mirror remote-completeness in configCheck, `TimeoutStartSec` 4h → 48h and `MemoryMax` 1G → 2G for the 1.9 TB seed (fast-list holds ~1KB/object). All force-enable build + configCheck (all-present/missing-remote/placeholder) + wiring evals re-verified after the rework.
+
 ---
 
 ## a) FULLY DONE

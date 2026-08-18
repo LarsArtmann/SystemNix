@@ -48,9 +48,276 @@ _: {
       browserHistoryEnabled = config.services.browser-history.enable or false;
       searxEnabled = config.services.searx.enable or false;
       atticEnabled = config.services.attic-config.enable or false;
+      fastflowlmEnabled = config.services.fastflowlm.enable or false;
+      googleSyncEnabled = config.services.google-sync.enable or false;
 
       theme = import ../../../platforms/common/theme.nix;
       colors = theme.colorScheme.palette;
+
+      mkService = name: props: { ${name} = props; };
+
+      # `groups` is the single source of truth for BOTH services.yaml and
+      # the settings.yaml layout (derived below). A static layout attrset
+      # drifts: a layout entry for a conditionally-empty group renders an
+      # orphan empty tab, and a new group without a layout entry silently
+      # falls back to default styling.
+      infraServices = [
+        (mkService "Pocket ID" {
+          href = svcUrl "auth";
+          description = "Passkey OIDC Provider";
+          icon = "pocket-id.png";
+        })
+        (mkService "Caddy" {
+          description = "Reverse Proxy";
+          icon = "caddy.png";
+        })
+        # Note: dnsblockd is intentionally NOT a separate tile here.
+        # The user-facing "DNS Blocker" tile (in Media) already points
+        # at https://dnsblock.<domain>/health with a clickable link
+        # and a visible status dot. The bare daemon exposes only an
+        # internal /metrics endpoint (Prometheus scrapes it directly),
+        # which has no value as a clickable dashboard tile.
+        # PostgreSQL and Redis are decorative tiles: neither exposes a
+        # public HTTP health endpoint (pg_isready is TCP-only; Redis
+        # exports to Prometheus only). Their dependents (Immich, Gatus,
+        # Manifest) will show errors when the DB/cache goes down — that's
+        # the real signal. All service health monitoring is owned by Gatus
+        # (Discord alerting). Homepage tiles are navigation only.
+        (mkService "PostgreSQL" {
+          description = "Database Server";
+          icon = "postgres.png";
+        })
+        (mkService "Redis" {
+          description = "Cache (Immich)";
+          icon = "redis.png";
+        })
+      ]
+      ++ lib.optional hermesEnabled (
+        mkService "Hermes" {
+          description = "AI Agent Gateway (Discord, Cron, Messaging)";
+          icon = "self-hosted-gateway.png";
+        }
+      );
+
+      # Data replication: services whose job is copying data INTO the
+      # machine (Discord, browsers, Google Drive) or serving stored data
+      # back out (Attic). Split from Infrastructure so that group stays
+      # the platform core (auth, proxy, db, cache, gateway).
+      syncServices =
+        lib.optional discordsyncEnabled (
+          mkService "DiscordSync" {
+            href = svcUrl "discordsync";
+            description = "Discord Backup Bot (Messages, Attachments, Reactions)";
+            icon = "discord.png";
+          }
+        )
+        ++ lib.optional browserHistoryEnabled (
+          mkService "Browser History" {
+            href = svcUrl "history";
+            description = "Browsing Analytics & Productivity Insights";
+          }
+        )
+        ++ lib.optional atticEnabled (
+          mkService "Attic Cache" {
+            href = svcUrl "cache";
+            description = "Self-hosted Nix Binary Cache (CI build artifacts)";
+            icon = "nixos.png";
+          }
+        )
+        # No vHost: the sync is a 5-min rclone timer landing on the HDD
+        # pool. Freshness is alerted via backup-coordination (Gatus),
+        # which is why this tile has no href.
+        ++ lib.optional googleSyncEnabled (
+          mkService "Google Sync" {
+            description = "Google Drive → HDD Pool Mirror (rclone)";
+            icon = "google-drive.png";
+          }
+        );
+
+      mediaServices = [
+        (mkService "Immich" {
+          href = svcUrl "immich";
+          description = "Photo & Video Management";
+          icon = "immich.png";
+        })
+        (mkService "Paperless" {
+          href = svcUrl "paperless";
+          description = "Document Management (OCR, Scan, Archive)";
+          icon = "paperless.png";
+        })
+        (mkService "DNS Blocker" {
+          href = svcUrl "dnsblock";
+          description = "DNS Block Stats";
+          icon = "blocky.png";
+        })
+      ];
+
+      devServices = [
+        (mkService "Forgejo" {
+          href = svcUrl "forgejo";
+          description = "Git Forge (GitHub Sync)";
+          icon = "forgejo.png";
+        })
+      ]
+      ++ lib.optional overviewEnabled (
+        mkService "Overview" {
+          href = svcUrl "overview";
+          description = "Project Dashboard (Git Repos, Stats, Activity)";
+          icon = "code.png";
+        }
+      );
+
+      aiServices =
+        lib.optional crushDailyEnabled (
+          mkService "Crush Daily" {
+            href = svcUrl "daily";
+            description = "AI-Powered Development Insights";
+            icon = "openai.png";
+          }
+        )
+        ++ lib.optional manifestEnabled (
+          mkService "Manifest" {
+            href = svcUrl "manifest";
+            description = "LLM Gateway (Autofix, Fallbacks, Cost Tracking)";
+            icon = "openai.png";
+          }
+        )
+        ++ lib.optional ollamaEnabled (
+          mkService "Ollama" {
+            description = "Local AI Inference";
+            icon = "ollama.png";
+          }
+        )
+        # Decorative tile like Ollama: socket-activated on 127.0.0.1
+        # only (no vHost). Gatus alerts on its state via system-health
+        # metrics; a direct probe would pin the 13.6 GB model in RAM.
+        ++ lib.optional fastflowlmEnabled (
+          mkService "FastFlowLM" {
+            description = "NPU LLM Server (Qwen3.6 MoE, OpenAI-compatible)";
+            icon = "amd.png";
+          }
+        )
+        ++ lib.optionals voiceAgentsEnabled [
+          (mkService "LiveKit" {
+            href = svcUrl "voice";
+            description = "Real-Time Voice Infrastructure";
+            icon = "voip-info.png";
+          })
+          (mkService "Whisper ASR" {
+            href = svcUrl "whisper";
+            description = "Speech-to-Text (Gradio)";
+            icon = "web-whisper.png";
+          })
+        ];
+
+      monitoringServices =
+        lib.optional gatusEnabled (
+          mkService "Gatus" {
+            href = svcUrl "status";
+            description = "Uptime & Health Check Dashboard";
+            icon = "gatus.png";
+          }
+        )
+        ++ lib.optional signozEnabled (
+          mkService "SigNoz" {
+            href = svcUrl "signoz";
+            description = "Observability Platform (Traces, Metrics, Logs)";
+            icon = "signoz.png";
+          }
+        )
+        ++ lib.optional dozzleEnabled (
+          mkService "Dozzle" {
+            href = svcUrl "logs";
+            description = "Docker Log Viewer";
+            icon = "docker.png";
+          }
+        )
+        ++ [
+          (mkService "Node Exporter" {
+            description = "System Metrics (CPU, RAM, Disk, Network)";
+            icon = "prometheus.png";
+          })
+        ]
+        ++ lib.optional signozEnabled (
+          mkService "cAdvisor" {
+            description = "Container Metrics";
+            icon = "docker.png";
+          }
+        )
+        ++ [
+          (mkService "dnsblockd" {
+            # Tile exists for parity with other infra services (Node Exporter,
+            # cAdvisor, EMEET PIXY) that expose a metrics-only health check.
+            description = "Block-page HTTP server (localhost-only)";
+            icon = "blocky.png";
+          })
+          (mkService "EMEET PIXY" {
+            description = "Webcam Auto-Management Daemon";
+            icon = "camera-ui.png";
+          })
+        ]
+        ++ lib.optional monitor365Enabled (
+          mkService "Monitor365" {
+            href = svcUrl "monitor";
+            description = "Device Monitoring Agent";
+            icon = "uptime-kuma.png";
+          }
+        );
+
+      productivityServices =
+        lib.optional twentyEnabled (
+          mkService "Twenty CRM" {
+            href = svcUrl "crm";
+            description = "Customer Relationship Management";
+            icon = "espocrm.png";
+          }
+        )
+        ++ lib.optional fileAndImageRenamerEnabled (
+          mkService "File Renamer" {
+            href = svcUrl "renamer";
+            description = "AI-Powered File & Image Renaming";
+            # filebot.png: bundled icon pack has no 'mdi-*' mdi-style icons;
+            # filebot is the canonical self-hosted file-rename tool icon.
+            icon = "filebot.png";
+          }
+        )
+        ++ [
+          (mkService "Taskwarrior" {
+            href = svcUrl "tasks";
+            description = "Task Sync Server (TaskChampion)";
+            icon = "taskcafe.png";
+          })
+          # The "Homepage" self-tile was removed: clicking it while
+          # already on the dashboard is a no-op (`target = "_self"`
+          # would just reload). The dashboard IS the entry point,
+          # so a tile pointing to itself adds no value.
+          (mkService "OpenSEO" {
+            href = svcUrl "seo";
+            description = "SEO Suite (Rank Tracking, Keywords, Backlinks)";
+            icon = "google-search-console.png";
+          })
+        ]
+        ++ lib.optional searxEnabled (
+          mkService "SearXNG" {
+            href = svcUrl "search";
+            description = "Privacy Metasearch Engine";
+            icon = "searxng.png";
+          }
+        );
+
+      groups = [
+        { Infrastructure = infraServices; }
+      ]
+      ++ lib.optional (syncServices != [ ]) { "Sync & Backup" = syncServices; }
+      ++ [
+        { Media = mediaServices; }
+        { Development = devServices; }
+      ]
+      ++ lib.optional (aiServices != [ ]) { AI = aiServices; }
+      ++ [
+        { Monitoring = monitoringServices; }
+        { Productivity = productivityServices; }
+      ];
     in
     {
       options.services.homepage = {
@@ -119,270 +386,23 @@ _: {
                 hideInternetSearch = false;
                 showSearchSuggestions = true;
               };
-              layout = {
-                Infrastructure = {
-                  style = "row";
-                  columns = 4;
-                };
-                Media = {
-                  style = "row";
-                  columns = 4;
-                };
-                Development = {
-                  style = "row";
-                  columns = 4;
-                };
-                AI = {
-                  style = "row";
-                  columns = 4;
-                };
-                Monitoring = {
-                  style = "row";
-                  columns = 4;
-                };
-                Productivity = {
-                  style = "row";
-                  columns = 4;
-                };
-              };
+              # Derived from `groups` (module let) so services.yaml and
+              # the layout can never drift (orphan empty tabs, missing
+              # entries for new groups).
+              layout = lib.listToAttrs (
+                map (
+                  g:
+                  lib.nameValuePair (lib.head (lib.attrNames g)) {
+                    style = "row";
+                    columns = 4;
+                  }
+                ) groups
+              );
             };
 
         environment.etc."homepage/services.yaml".source =
-          let
-            mkService = name: props: { ${name} = props; };
-
-            infraServices = [
-              (mkService "Pocket ID" {
-                href = svcUrl "auth";
-                description = "Passkey OIDC Provider";
-                icon = "pocket-id.png";
-              })
-              (mkService "Caddy" {
-                description = "Reverse Proxy";
-                icon = "caddy.png";
-              })
-              # Note: dnsblockd is intentionally NOT a separate tile here.
-              # The user-facing "DNS Blocker" tile (in Media) already points
-              # at https://dnsblock.<domain>/health with a clickable link
-              # and a visible status dot. The bare daemon exposes only an
-              # internal /metrics endpoint (Prometheus scrapes it directly),
-              # which has no value as a clickable dashboard tile.
-              # PostgreSQL and Redis are decorative tiles: neither exposes a
-              # public HTTP health endpoint (pg_isready is TCP-only; Redis
-              # exports to Prometheus only). Their dependents (Immich, Gatus,
-              # Manifest) will show errors when the DB/cache goes down — that's
-              # the real signal. All service health monitoring is owned by Gatus
-              # (Discord alerting). Homepage tiles are navigation only.
-              (mkService "PostgreSQL" {
-                description = "Database Server";
-                icon = "postgres.png";
-              })
-              (mkService "Redis" {
-                description = "Cache (Immich)";
-                icon = "redis.png";
-              })
-            ]
-            ++ lib.optional hermesEnabled (
-              mkService "Hermes" {
-                description = "AI Agent Gateway (Discord, Cron, Messaging)";
-                icon = "self-hosted-gateway.png";
-              }
-            )
-            ++ lib.optional discordsyncEnabled (
-              mkService "DiscordSync" {
-                href = svcUrl "discordsync";
-                description = "Discord Backup Bot (Messages, Attachments, Reactions)";
-                icon = "discord.png";
-              }
-            )
-            ++ lib.optional browserHistoryEnabled (
-              mkService "Browser History" {
-                href = svcUrl "history";
-                description = "Browsing Analytics & Productivity Insights";
-              }
-            )
-            ++ lib.optional atticEnabled (
-              mkService "Attic Cache" {
-                href = svcUrl "cache";
-                description = "Self-hosted Nix Binary Cache (CI build artifacts)";
-                icon = "nixos.png";
-              }
-            );
-
-            mediaServices = [
-              (mkService "Immich" {
-                href = svcUrl "immich";
-                description = "Photo & Video Management";
-                icon = "immich.png";
-              })
-              (mkService "Paperless" {
-                href = svcUrl "paperless";
-                description = "Document Management (OCR, Scan, Archive)";
-                icon = "paperless.png";
-              })
-              (mkService "DNS Blocker" {
-                href = svcUrl "dnsblock";
-                description = "DNS Block Stats";
-                icon = "blocky.png";
-              })
-            ];
-
-            devServices = [
-              (mkService "Forgejo" {
-                href = svcUrl "forgejo";
-                description = "Git Forge (GitHub Sync)";
-                icon = "forgejo.png";
-              })
-            ]
-            ++ lib.optional overviewEnabled (
-              mkService "Overview" {
-                href = svcUrl "overview";
-                description = "Project Dashboard (Git Repos, Stats, Activity)";
-                icon = "code.png";
-              }
-            );
-
-            aiServices =
-              lib.optional crushDailyEnabled (
-                mkService "Crush Daily" {
-                  href = svcUrl "daily";
-                  description = "AI-Powered Development Insights";
-                  icon = "openai.png";
-                }
-              )
-              ++ lib.optional manifestEnabled (
-                mkService "Manifest" {
-                  href = svcUrl "manifest";
-                  description = "Smart LLM Router (Cost Optimization)";
-                  icon = "openai.png";
-                }
-              )
-              ++ lib.optional ollamaEnabled (
-                mkService "Ollama" {
-                  description = "Local AI Inference";
-                  icon = "ollama.png";
-                }
-              )
-              ++ lib.optionals voiceAgentsEnabled [
-                (mkService "LiveKit" {
-                  href = svcUrl "voice";
-                  description = "Real-Time Voice Infrastructure";
-                  icon = "voip-info.png";
-                })
-                (mkService "Whisper ASR" {
-                  href = svcUrl "whisper";
-                  description = "Speech-to-Text (Gradio)";
-                  icon = "web-whisper.png";
-                })
-              ];
-
-            monitoringServices =
-              lib.optional gatusEnabled (
-                mkService "Gatus" {
-                  href = svcUrl "status";
-                  description = "Uptime & Health Check Dashboard";
-                  icon = "gatus.png";
-                }
-              )
-              ++ lib.optional signozEnabled (
-                mkService "SigNoz" {
-                  href = svcUrl "signoz";
-                  description = "Observability Platform (Traces, Metrics, Logs)";
-                  icon = "signoz.png";
-                }
-              )
-              ++ lib.optional dozzleEnabled (
-                mkService "Dozzle" {
-                  href = svcUrl "logs";
-                  description = "Docker Log Viewer";
-                  icon = "docker.png";
-                }
-              )
-              ++ [
-                (mkService "Node Exporter" {
-                  description = "System Metrics (CPU, RAM, Disk, Network)";
-                  icon = "prometheus.png";
-                })
-              ]
-              ++ lib.optional signozEnabled (
-                mkService "cAdvisor" {
-                  description = "Container Metrics";
-                  icon = "docker.png";
-                }
-              )
-              ++ [
-                (mkService "dnsblockd" {
-                  # Tile exists for parity with other infra services (Node Exporter,
-                  # cAdvisor, EMEET PIXY) that expose a metrics-only health check.
-                  description = "Block-page HTTP server (localhost-only)";
-                  icon = "blocky.png";
-                })
-                (mkService "EMEET PIXY" {
-                  description = "Webcam Auto-Management Daemon";
-                  icon = "camera-ui.png";
-                })
-              ]
-              ++ lib.optional monitor365Enabled (
-                mkService "Monitor365" {
-                  href = svcUrl "monitor";
-                  description = "Device Monitoring Agent";
-                  icon = "uptime-kuma.png";
-                }
-              );
-
-            productivityServices =
-              lib.optional twentyEnabled (
-                mkService "Twenty CRM" {
-                  href = svcUrl "crm";
-                  description = "Customer Relationship Management";
-                  icon = "espocrm.png";
-                }
-              )
-              ++ lib.optional fileAndImageRenamerEnabled (
-                mkService "File Renamer" {
-                  href = svcUrl "renamer";
-                  description = "AI-Powered File & Image Renaming";
-                  # filebot.png: bundled icon pack has no 'mdi-*' mdi-style icons;
-                  # filebot is the canonical self-hosted file-rename tool icon.
-                  icon = "filebot.png";
-                }
-              )
-              ++ [
-                (mkService "Taskwarrior" {
-                  href = svcUrl "tasks";
-                  description = "Task Sync Server (TaskChampion)";
-                  icon = "taskcafe.png";
-                })
-                # The "Homepage" self-tile was removed: clicking it while
-                # already on the dashboard is a no-op (`target = "_self"`
-                # would just reload). The dashboard IS the entry point,
-                # so a tile pointing to itself adds no value.
-                (mkService "OpenSEO" {
-                  href = svcUrl "seo";
-                  description = "SEO Suite (Rank Tracking, Keywords, Backlinks)";
-                  icon = "google-search-console.png";
-                })
-              ]
-              ++ lib.optional searxEnabled (
-                mkService "SearXNG" {
-                  href = svcUrl "search";
-                  description = "Privacy Metasearch Engine";
-                  icon = "searxng.png";
-                }
-              );
-
-            groups = [
-              { Infrastructure = infraServices; }
-              { Media = mediaServices; }
-              { Development = devServices; }
-            ]
-            ++ lib.optional (aiServices != [ ]) { AI = aiServices; }
-            ++ [
-              { Monitoring = monitoringServices; }
-              { Productivity = productivityServices; }
-            ];
-          in
-          (pkgs.formats.yaml { }).generate "homepage-services.yaml" groups;
+          (pkgs.formats.yaml { }).generate "homepage-services.yaml"
+            groups;
 
         systemd.tmpfiles.rules = [
           (mkStateDir stateDir "0755" "homepage" "homepage")
@@ -468,6 +488,9 @@ _: {
                 ];
               }
               {
+                # searxEnabled gate: without it the bookmark points at
+                # search.<domain> even when SearXNG is disabled (dead
+                # link). The search widget above handles this correctly.
                 Search = [
                   {
                     DuckDuckGo = [
@@ -487,16 +510,16 @@ _: {
                       }
                     ];
                   }
-                  {
-                    SearXNG = [
-                      {
-                        abbr = "SX";
-                        href = svcUrl "search";
-                        description = "Self-hosted metasearch";
-                      }
-                    ];
-                  }
-                ];
+                ]
+                ++ lib.optional searxEnabled {
+                  SearXNG = [
+                    {
+                      abbr = "SX";
+                      href = svcUrl "search";
+                      description = "Self-hosted metasearch";
+                    }
+                  ];
+                };
               }
             ]
           }"
@@ -545,14 +568,17 @@ _: {
               }
               {
                 # /data is a separate BTRFS partition (per AGENTS.md):
-                # Docker volumes, Immich DB, AI models. Losing this disk
-                # is the #1 data-loss risk — monitor it explicitly. Disk
-                # widget reports usage of the mountpoint passed in.
+                # Docker volumes, Immich DB, AI models. /mnt/pool is the
+                # 2×16TB BTRFS RAID1 HDD pool receiving ALL backups
+                # (btrbk sends, forgejo/pocket-id dumps, Docker pg_dumps,
+                # Drive mirror): the highest-stakes mount on the box.
+                # Disk widget reports usage of the mountpoint passed in.
                 resources = {
                   label = "Storage";
                   disk = [
                     "/"
                     "/data"
+                    "/mnt/pool"
                   ];
                   expanded = true;
                 };

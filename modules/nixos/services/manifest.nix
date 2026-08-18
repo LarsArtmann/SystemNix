@@ -1,4 +1,4 @@
-# Manifest smart LLM router with Ollama integration and DB backups
+# Manifest LLM gateway (routing, fallbacks, Autofix, cost tracking) with DB backups
 _: {
   flake.nixosModules.manifest =
     {
@@ -49,7 +49,11 @@ _: {
                   "CMD"
                   "node"
                   "-e"
-                  "const p=process.env.PORT||'${toString manifestPort}';fetch(`http://127.0.0.1:\${p}/api/v1/health`).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+                  # No JS template literals here: docker-compose substitutes
+                  # ${...} with its OWN env vars (unset -> empty), which ate
+                  # the port and made every probe fail since 6.6.1. Use
+                  # string concatenation instead.
+                  "const p=process.env.PORT||'${toString manifestPort}';fetch('http://127.0.0.1:'+p+'/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
                 ];
                 interval = "30s";
                 timeout = "5s";
@@ -132,7 +136,7 @@ _: {
     in
     {
       options.services.manifest = {
-        enable = lib.mkEnableOption "Manifest LLM router";
+        enable = lib.mkEnableOption "Manifest LLM gateway";
         port = serviceTypes.servicePort ports.manifest "Host port for the Manifest dashboard";
         imageTag = serviceTypes.dockerImageTag images.manifest.tag;
       };
