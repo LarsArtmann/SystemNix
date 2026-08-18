@@ -140,6 +140,7 @@ in
           subvolume."services/monitor365" = { };
           subvolume."services/discordsync" = { };
           subvolume."services/browser-history" = { };
+          subvolume."services/bank-sync" = { };
         };
       };
     };

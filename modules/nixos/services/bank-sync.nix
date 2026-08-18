@@ -71,9 +71,19 @@ _: {
             (serviceOneshotDefaults { })
           ];
           script = ''
-            mkdir -p ${toString cfg.dataDir}
-            chown bank-sync:bank-sync ${toString cfg.dataDir}
-            chmod 0750 ${toString cfg.dataDir}
+            dir=${toString cfg.dataDir}
+            if [ ! -e "$dir" ]; then
+              # Subvolume (not plain dir) so btrbk-pool can snapshot it —
+              # mirrors the atticd pool placement. Falls back to a plain dir
+              # only on non-btrfs filesystems.
+              if ! ${pkgs.btrfs-progs}/bin/btrfs subvolume create "$dir"; then
+                mkdir -p "$dir"
+              fi
+            else
+              mkdir -p "$dir"
+            fi
+            chown bank-sync:bank-sync "$dir"
+            chmod 0750 "$dir"
           '';
         };
 
@@ -92,7 +102,9 @@ _: {
             # which bank-sync then rejects loudly at base64 decode.
             {
               ExecStartPre = [
-                "${pkgs.gnugrep}/bin/grep -qE '^BANK_SYNC_SECURITY_ENCRYPTION_KEY=..' ${config.sops.templates."bank-sync-env".path}"
+                "${pkgs.gnugrep}/bin/grep -qE '^BANK_SYNC_SECURITY_ENCRYPTION_KEY=..' ${
+                  config.sops.templates."bank-sync-env".path
+                }"
               ];
             }
             (harden {

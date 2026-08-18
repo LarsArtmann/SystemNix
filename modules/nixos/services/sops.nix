@@ -154,14 +154,16 @@ in
               } [ "synthetic_api_key" ]
             )
             // lib.optionalAttrs (svcEnabled "bank-sync") (
-              mkSecrets "bank-sync.yaml" {
-                owner = "bank-sync";
-                group = "bank-sync";
-                restartUnits = [ "bank-sync.service" ];
-              } [
-                "wise_api_key"
-                "encryption_key"
-              ]
+              mkSecrets "bank-sync.yaml"
+                {
+                  owner = "bank-sync";
+                  group = "bank-sync";
+                  restartUnits = [ "bank-sync.service" ];
+                }
+                [
+                  "wise_api_key"
+                  "encryption_key"
+                ]
             )
             // lib.optionalAttrs (svcEnabled "file-and-image-renamer") (
               mkKeyedSecrets "crush-daily.yaml"
