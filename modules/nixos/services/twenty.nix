@@ -190,6 +190,12 @@ _: {
             restartUnits = [ "twenty.service" ];
           };
           templates."twenty-env" = {
+            # Explicit root ownership (uid/gid default 0): sops-nix
+            # interpolates `owner` into assertion messages even when they
+            # pass — null crashes `nix eval --json …config.assertions`.
+            owner = "root";
+            group = "root";
+            mode = "0400";
             content = lib.generators.toKeyValue { } {
               PG_DATABASE_PASSWORD = config.sops.placeholder.twenty_db_password;
               APP_SECRET = config.sops.placeholder.twenty_app_secret;

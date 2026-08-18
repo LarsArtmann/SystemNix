@@ -50,6 +50,7 @@ _: {
       atticEnabled = config.services.attic-config.enable or false;
       fastflowlmEnabled = config.services.fastflowlm.enable or false;
       googleSyncEnabled = config.services.google-sync.enable or false;
+      papdashboardEnabled = config.services.papdashboard.enable or false;
 
       theme = import ../../../platforms/common/theme.nix;
       colors = theme.colorScheme.palette;
@@ -216,6 +217,13 @@ _: {
             href = svcUrl "status";
             description = "Uptime & Health Check Dashboard";
             icon = "gatus.png";
+          }
+        )
+        ++ lib.optional papdashboardEnabled (
+          mkService "PapDashboard" {
+            href = svcUrl "alerts";
+            description = "Alert Hub with NPU Insights";
+            icon = "alertmanager.png";
           }
         )
         ++ lib.optional signozEnabled (

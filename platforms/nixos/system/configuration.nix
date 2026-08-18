@@ -381,6 +381,14 @@ in
         enable = true; # Browser history intelligence server
       };
 
+      # PapDashboard — alert hub: Gatus ingests trigger/resolve events, the
+      # insight enricher correlates storms, pulls journal + metrics evidence,
+      # and asks FastFlowLM (NPU) for root-cause analysis. Outbound Discord
+      # is filtered to insights only (raw Gatus alerts still flow directly).
+      papdashboard = {
+        enable = true;
+      };
+
       browser-history-agent = {
         enable = true; # Extract local browser history → push to server
         serverUrl = "https://history.${config.networking.domain}";

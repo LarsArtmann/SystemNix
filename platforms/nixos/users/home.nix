@@ -607,12 +607,14 @@ in
   # NEVER use gtk2 here: the gtk2 Qt platform/theme plugins are Qt5-only —
   # on Qt6 every QQC2 app then aborts with `module "gtk2" is not installed`
   # (2026-08-18: niri-flake-polkit crash-looped 49x, auth dialogs dead; an
-  # earlier user-sudo prompt storm surfaced it). "gnome" platform theme
-  # (qgnomeplatform) honors the GTK dark preference; "fusion" is a built-in
-  # QQC2 style that always resolves.
+  # earlier user-sudo prompt storm surfaced it). "adwaita" platform theme
+  # (qadwaitadecorations — the maintained successor of the archived
+  # qgnomeplatform, same FedoraQt lineage) honors the GTK dark preference;
+  # "fusion" is a built-in QQC2 style that always resolves and stays
+  # look-neutral (Adwaita *style* would fight the Catppuccin Mocha palette).
   qt = {
     enable = true;
-    platformTheme.name = "gnome";
+    platformTheme.name = "adwaita";
     style = {
       name = "fusion";
       package = pkgs.qt6.qtbase;

@@ -157,6 +157,12 @@ _: {
                 restartUnits = [ "manifest.service" ];
               });
           templates."manifest-env" = {
+            # Explicit root ownership (uid/gid default 0): sops-nix
+            # interpolates `owner` into assertion messages even when they
+            # pass — null crashes `nix eval --json …config.assertions`.
+            owner = "root";
+            group = "root";
+            mode = "0400";
             content = lib.generators.toKeyValue { } {
               AUTH_SECRET = config.sops.placeholder.manifest_auth_secret;
               ENCRYPTION_KEY = config.sops.placeholder.manifest_encryption_key;

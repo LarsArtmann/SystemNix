@@ -206,7 +206,13 @@ in
                 ]
             )
             //
-              lib.optionalAttrs (svcEnabled "signoz" || svcEnabled "gatus-config" || svcEnabled "discordsync")
+              lib.optionalAttrs
+                (
+                  svcEnabled "signoz"
+                  || svcEnabled "gatus-config"
+                  || svcEnabled "discordsync"
+                  || svcEnabled "papdashboard"
+                )
                 (
                   mkSecrets "signoz.yaml" {
                     owner = "root";
@@ -215,9 +221,17 @@ in
                       "signoz-provision.service"
                       "gatus.service"
                     ]
-                    ++ lib.optional (svcEnabled "discordsync") "discordsync.service";
+                    ++ lib.optional (svcEnabled "discordsync") "discordsync.service"
+                    ++ lib.optional (svcEnabled "papdashboard") "papdashboard.service";
                   } [ "discord_alert_webhook_url" ]
                 )
+            // lib.optionalAttrs (svcEnabled "papdashboard") (
+              mkSecrets "papdashboard.yaml" {
+                owner = "root";
+                group = "root";
+                restartUnits = [ "papdashboard.service" ];
+              } [ "papdashboard_api_key" ]
+            )
             // lib.optionalAttrs (svcEnabled "discordsync") (
               mkSecrets "discordsync.yaml"
                 {
@@ -367,8 +381,30 @@ in
               owner = "root";
               group = "root";
               restartUnits = [ "gatus.service" ];
+              content = lib.generators.toKeyValue { } (
+                {
+                  DISCORD_WEBHOOK_URL = config.sops.placeholder.discord_alert_webhook_url;
+                }
+                // lib.optionalAttrs (svcEnabled "papdashboard") {
+                  # Bearer key for the PapDashboard ingest custom alerting provider.
+                  PAPDASHBOARD_INGEST_KEY = config.sops.placeholder.papdashboard_api_key;
+                }
+              );
+            };
+          }
+          // lib.optionalAttrs (svcEnabled "papdashboard") {
+            "papdashboard-env" = {
+              owner = "root";
+              group = "root";
+              mode = "0400";
+              restartUnits = [ "papdashboard.service" ];
               content = lib.generators.toKeyValue { } {
-                DISCORD_WEBHOOK_URL = config.sops.placeholder.discord_alert_webhook_url;
+                PAP_API_KEY = config.sops.placeholder.papdashboard_api_key;
+                # Reuses the shared alert webhook: outbound is filtered to
+                # sourceApp=insight, so Discord receives raw alert + insight
+                # pairs. Switch to a dedicated channel by pointing this at a
+                # new sops key and re-deploying.
+                PAP_DISCORD_WEBHOOK = config.sops.placeholder.discord_alert_webhook_url;
               };
             };
           }
@@ -390,6 +426,13 @@ in
           }
           // lib.optionalAttrs (svcEnabled "dns-failover") {
             "dns-failover-env" = {
+              # Explicit owner: sops-nix's template assertions interpolate
+              # `owner` into the message even when the assertion PASSES —
+              # a null owner crashes `nix eval --json …config.assertions`.
+              # uid/gid default to 0, so root:root preserves semantics.
+              owner = "root";
+              group = "root";
+              mode = "0400";
               content = lib.generators.toKeyValue { } {
                 VRRP_AUTH_PASSWORD = config.sops.placeholder.vrrp_auth_password;
               };
@@ -436,6 +479,9 @@ in
             # primaryUser so the DMS DnsStatsWidget can read it for its Bearer
             # header. The template (root-owned) feeds the systemd EnvironmentFile.
             "dnsblockd-auth-env" = {
+              owner = "root";
+              group = "root";
+              mode = "0400";
               restartUnits = [ "dnsblockd.service" ];
               content = lib.generators.toKeyValue { } {
                 DNSBLOCKD_AUTH_TOKEN = config.sops.placeholder.dnsblockd_auth_token;

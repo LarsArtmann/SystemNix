@@ -1,6 +1,7 @@
 {
   pkgs,
   inputs,
+  system,
   ...
 }:
 let
@@ -31,5 +32,6 @@ in
   ksm = makeTest (import ./test-ksm.nix { inherit pkgs; });
   port-uniqueness = makeTest (import ./test-port-uniqueness.nix { inherit pkgs; });
   browser-history = makeTest (import ./test-browser-history.nix { inherit pkgs inputs; });
+  session-boot-audit = import ./test-session-boot-audit.nix { inherit pkgs inputs system; };
 }
 // (import ./test-scripts.nix { inherit pkgs; })

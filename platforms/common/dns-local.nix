@@ -18,6 +18,7 @@
     "overview"
     "renamer"
     "history"
+    "alerts"
     "dnsblock"
     "dnsblockd"
     "search"

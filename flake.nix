@@ -160,6 +160,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # PapDashboard — event-sourced alert hub with NPU insight enricher (Go)
+    papdashboard = {
+      url = "github:LarsArtmann/PapDashboard?ref=master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # NixOS hardware profiles (Raspberry Pi, etc.)
     nixos-hardware = {
       url = "github:NixOS/nixos-hardware";

@@ -57,7 +57,7 @@ Every change passes through 5 pipeline layers. Each catches a different class of
 |-------|----------------|-------|-----------|
 | **Eval-time (Nix)** | Port collisions, filesystem contamination, tarball regression, missing TimeoutStartSec, OTel endpoint contract violations | `flake.nix`, `lib/`, `modules/nixos/services/*-audit.nix`, `timeout-audit.nix`, `otel-endpoint-audit.nix` | `builtins.throw`, `config.assertions`, `systemd.settings.Manager` |
 | **Pre-commit** | Secrets, dead code, lint, formatting, tarball, Gatus pat() syntax, Unknown Author, GOTOOLCHAIN=auto, uncommitted `*_templ.go` | `.githooks/pre-commit` | gitleaks, deadnix, statix, alejandra, `nix flake check`, grep guards, `scripts/check-templ-committed.sh` |
-| **CI (GitHub Actions)** | Same linters + VM tests + flake input hygiene + daily nixpkgs compat | `.github/workflows/` | `nix-check.yml` (push/PR), `nixpkgs-compat.yml` (daily schedule) |
+| **CI (GitHub Actions)** | Same linters + VM tests + flake input hygiene + daily nixpkgs compat + full-history secret scan (gzip-aware) | `.github/workflows/` | `nix-check.yml` (push/PR), `nixpkgs-compat.yml` (daily schedule), `secret-history-scan.yml` (push + weekly) |
 | **Pre-deploy** | Mount safety, ExecStart-in-harden, disk space, port conflicts, **phantom metrics** | `scripts/pre-deploy-check.sh` | 10 numbered checks including metric presence validation |
 | **Post-deploy** | Service liveness, functional outcomes, data presence, **auth gateway health** | `scripts/post-deploy-check.sh` | HTTP smoke tests, SigNoz impersonation check, auth vHost 500/502 detection |
 
@@ -231,6 +231,18 @@ Quickshell is a QtQuick desktop shell replacing Waybar, Dunst, Wlogout, polkit_g
 - **Freshness:** the script touches `/var/lib/google-sync/last_success`; registered in `backup-coordination` (maxAge 25h) → the global `backup_all_healthy` Gatus check alerts. The mirror tree itself is NOT monitorable via backup-coordination (it checks top-level FILES only; a mirror is a dir tree)
 - **Google Photos CANNOT ride this via API** (Library API serves originals only to the uploading app since 2025-03-31; rclone gphotos backend Tier 5, gphotos-sync archived). If a scheduled Takeout export ("Add to Drive" delivery) is enabled, its archives land inside this mirror automatically — immich-go (`nixpkgs`) can ingest them into Immich later
 
+### PapDashboard (Smart Alerting Hub)
+
+**Module:** `modules/nixos/services/papdashboard.nix` (`services.papdashboard`) — alert lifecycle hub + NPU insight enricher at `alerts.home.lan` (Layer 2 `protectedVHost`; the UI has no built-in auth, only the ingest API is key-gated). Port 8088 in `lib/ports.nix`.
+
+- **Dual Discord paths (design):** Gatus keeps its raw fast-path to Discord untouched AND POSTs every trigger/resolve transition to PapDashboard `/api/ingest` via an `alerting.custom` provider (`gatus-config.nix`). PapDashboard's outbound Discord is filtered by `PAP_NOTIFY_SOURCE_APPS=insight`, so Discord receives raw+insight pairs, never duplicates. If PapDashboard dies, raw alerts still flow
+- **Gatus custom-provider traps (verified against gatus 5.36.0 source):** (1) `default-alert` does NOT auto-apply — every endpoint must DECLARE an alert of the provider's type; `withPapIngest` maps a `{type="custom";}` entry onto ALL endpoints (wrap the WHOLE endpoints expression — appended `lib.optionals`/`map` segments count too). (2) `os.ExpandEnv` runs file-wide before YAML parse — `$PAPDASHBOARD_INGEST_KEY` in headers IS expanded. (3) `ALERT_TRIGGERED_OR_RESOLVED` remaps TRIGGERED/RESOLVED → `triggered`/`resolved` via the `placeholders` map, yielding PapDashboard's `alert.triggered`/`alert.resolved` event types. (4) OMIT `alerting.custom` when disabled — a present-but-empty provider fails gatus validation (ErrURLNotSet). (5) The alert YAML field is `description:`, NOT `desc:` (yaml.v3 silently dropped `desc:` — descriptions never reached Discord before 2026-08-18)
+- **Ingest body contract (live-verified):** huma requires `aggregateId` AND `metadata.{correlationId,causationId}` — the full body shape lives in `gatus-config.nix` with a comment; resolve matches unresolved alerts by `(sourceApp, title)`
+- **Insight enricher:** DynamicUser + `SupplementaryGroups = ["systemd-journal"]` (journalctl evidence reads), LLM = FastFlowLM `http://127.0.0.1:52625/v1` (`qwen3.6-moe:35b-a3b`; socket activation wakes the NPU, cold load 1-3 min, LLM timeout 300s default). Best-effort: enricher failures log and drop, never fatal. Insights publish as ordinary notifications (sourceApp `insight`) — free lifecycle/UI/SSE
+- **Secrets:** sops `papdashboard.yaml` `papdashboard_api_key` (root-owned; DynamicUser reads via EnvironmentFile template `papdashboard-env`), same key rendered into `gatus-env` as `PAPDASHBOARD_INGEST_KEY`. Outbound webhook reuses the shared `discord_alert_webhook_url` (signoz.yaml) — switch to a dedicated channel by pointing `PAP_DISCORD_WEBHOOK` elsewhere
+- **Evidence sources (module options):** `journalUnits` (gatus/caddy/dns-blocker) + `evidenceURLs` (node exporter). Caddy admin :2019 metrics is NOT usable as evidence (bare-localhost Host gets 403)
+- Session narrative + smoke-test evidence: `docs/status/2026-08-18_14-51_smart-alerting-round3-lint-specs-systemnix-wiring.md`
+
 ### Sops + Age
 
 **Encrypting a NEW secret file** — NO sudo needed. The age PUBLIC key in `.sops.yaml` is sufficient:
@@ -252,6 +264,41 @@ SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key)
 - `sops --set` / `sops -d` (modify/decrypt): needs `SOPS_AGE_KEY` env var with the private key — requires `sudo` to read the SSH host key
 - Secrets with service-specific owners MUST be guarded with `lib.optionalAttrs config.services.X.enable` — one bad owner blocks ALL secrets atomically
 - See `.crush/skills/sops-secret-management/SKILL.md` for full workflow
+
+### Secret Leak Incident (2026-08-18) — history purge PENDING manual push
+
+External report (security researcher) + own audit found in PUBLIC git history:
+
+| Secret | Where | Action |
+| ------ | ----- | ------ |
+| Google Gemini `AIzaSyAV…LU4k` (39ch) | `iTerm2 State.itermexport` (gzip binary plist, added `fc6d98f7` 2026-02-09, removed `62af408b` 2026-03-26) — was `GENAI_API_KEY` typed inline in iTerm2 shell history for the Rolls-Royce `Google-Cloud-IaC-Automation/tools/genai-viz` project | **VERIFIED LIVE 2026-08-18** (HTTP 200, Gemini 2.5 Flash). **NOT visible in AI Studio** → gcloud/console-created key, owned by GCP project **number `453958689374`** (leaked via YouTube-API disabled-error). Engagement history shows scratch project `ultra-alloy-482013-g3` (`gcloud projects delete` attempted ×2, likely blocked by billing lien) as candidate owner. evo-x2 gcloud: `lartyhd@gmail.com` (active) has NO access; `lars@helpless.ai` needs `gcloud auth login` re-auth. Not in any public GitHub code search. Delete via console.cloud.google.com → owning project → APIs & Services → Credentials (key ends `LU4k`), or if RR-org-owned: email RR IT with project number |
+| Groq `gsk_3bRy…`, `gsk_P1ML…`, `gsk_T1gB…` (3 keys — reporter only found 2) | same itermexport | **VERIFIED DEAD 2026-08-18** (HTTP 401 invalid_api_key, all 3) — no action needed |
+| Context7 `ctx7sk-a5b19…` (still LIVE — key present 61× in local `.crush/crush.db-wal`) | `docs/status/2026-01-14_04-10_CRUSH-NIX-MIGRATION-SUCCESS.md` old versions (2 blobs) | **VERIFIED LIVE 2026-08-18** (HTTP 200 on context7.com/api/v1/search) — rotate at context7.com dashboard, update MCP config (`.crush/` session db retains old value harmlessly once key is dead) |
+| SSH host keys (PEM) | 5× `nixos.qcow2` ZFS-rescue VM disks (~53 MB) | Purged with history — verified `OPENSSH PRIVATE KEY` format (VM's own SSH keys), NOT Google service-account keys. Low sensitivity |
+| `AKIAIOSFODNN7EXAMPLE` | docs/verification doc | FALSE POSITIVE — AWS docs example key, allowlisted |
+
+**Full Google-secret taxonomy scan (2026-08-18, gzip-aware, all 12.9k blobs):** beyond the single Gemini key (9 occurrences within the ONE itermexport blob) there are ZERO other Google credentials in history — no OAuth client secrets (`GOCSPX-`), no refresh tokens (`1//`), no access tokens (`ya29.`), no client IDs (`.apps.googleusercontent.com`), no service-account emails/JSONs, no org/folder IDs.
+
+**gitleaks is BLIND to compressed blobs**: it reported "no leaks found" over all 4112 commits while the gzip'd itermexport sat in public view — gitleaks regexes scan literal blob bytes and never inflate gzip. It also lacks a Context7 rule. `scripts/scan-history-secrets.sh` (gzip-aware python scanner, masked output, exit 1 on hit) is the authoritative detector; wired into CI (`secret-history-scan.yml`) and runnable manually.
+
+**State (2026-08-18):** purge verified once against the 2026-08-18 history; user opted to push MANUALLY. Because the auto-commit daemon keeps advancing master on OLD history, do NOT push a stale purge clone — re-clone + re-filter AT PUSH TIME (takes ~10s), then push and IMMEDIATELY resync the working repo (the daemon must never push old-history master back over the rewrite):
+
+```bash
+trash /tmp/systemnix-purge
+git clone --no-local /home/lars/projects/SystemNix /tmp/systemnix-purge
+cd /tmp/systemnix-purge
+printf 'ctx7sk-a5b195d3-2696-485d-980c-55d26d5913b5==>REDACTED-CONTEXT7-KEY\n' > /tmp/purge-replacements.txt
+nix run nixpkgs#git-filter-repo -- --force --invert-paths --path 'iTerm2 State.itermexport' --path 'nixos.qcow2' --replace-text /tmp/purge-replacements.txt
+bash /home/lars/projects/SystemNix/scripts/scan-history-secrets.sh .   # must print OK
+rm /tmp/purge-replacements.txt
+git remote add origin git@github.com:LarsArtmann/SystemNix.git
+git push --force origin master 'refs/tags/*:refs/tags/*'
+cd /home/lars/projects/SystemNix
+git fetch origin && git update-ref refs/heads/master origin/master   # tree-identical for existing content, worktree untouched
+git gc --prune=now                                                   # evict old objects locally
+```
+
+After push: macOS clone needs the same resync; ask GitHub support to GC cached commits (old SHAs stay fetchable until then); resolve the secret-scanning alerts (scanning + push protection ENABLED 2026-08-18) once keys are rotated. Rotation is the real fix regardless of purge — the old commit survives in forks/caches.
 
 ### Hermes
 
@@ -404,6 +451,7 @@ serviceConfig = lib.mkMerge [
 - **Docker images are ALWAYS on latest** (user directive) — pin `tag` + `digest` for reproducibility (postgres-sidecar pattern), never float. `scripts/check-image-updates.sh` validates `lib/images.nix` against Docker Hub (digest drift for pinned, semver for app images); `.github/workflows/image-updates.yml` runs it daily and opens an issue on drift. Floating unpinned tags are skipped by design — convert them to digests when they matter. DB-backed apps (Twenty) get migration review before major/minor-cascade bumps
 - **Never silently substitute placeholder identity in git commits** — if `user.name`/`user.email` cannot be resolved, FAIL LOUD. Hardcoded `"Unknown Author"`/`"unknown@example.com"` fallbacks masked broken git config and produced ~6,400 unattributable commits. SystemNix's `services.projects-management-automation` sets `gitIdentity` which translates to `GIT_AUTHOR_*`/`GIT_COMMITTER_*` env vars on the daemon — env precedence beats config lookup, so the daemon always has a valid identity. See `docs/gotchas-archive.md` for the full incident.
 - **Never force-enable a disabled service in the working tree "just to verify", and never manually activate a built toplevel** (`sudo ./result/switch-to-configuration …` or any activation outside `nix run .#deploy`) — a manual activation leaves NO profile generation (the 2026-08-18 00:33 google-sync 226 crash-loop ran for 47 min with zero generation trail; deploy.sh post-switch steps are also skipped). The SAFE verification pattern is a throwaway expression that never touches the tree: `nix build --impure --no-link --print-out-paths --expr 'let f = builtins.getFlake (toString /home/lars/projects/SystemNix); sys = f.nixosConfigurations.evo-x2.extendModules { modules = [{ services.X.enable = true; }]; }; in builtins.head sys.config.systemd.services.X.serviceConfig.ExecStartPre'` — if it fails with "string has context with the output 'out'", the error names the store paths; build the leaked `.drv^out` directly and run the real artifact
+- **Concurrent agent sessions share this tree — attribute honestly, expect mid-edit races** — the auto-commit daemon batches MULTIPLE sessions' work into shared commits (2026-08-18: fastflowlm/smartd/data-to-pool rode the black-screen-followup commits). Rules: (1) when the tree grows changes you didn't author, flag it to the user immediately, don't silently co-verify them; (2) your "flake check passed" only covers YOUR files — the batch may break after the other session's next edit; (3) mid-session file modifications (`file modified since read` from edit tools, shifting line numbers) = another session is active: re-read before every edit, keep negative-test neuter/restore cycles ATOMIC (single shell command), and verify evals of shared surfaces (evo-x2, flake check) only at quiescent moments — a NEW module file on disk that is not yet `git add`ed makes EVERY evo-x2 eval fail with "attribute missing" (the tracked-files trap) until the owning session adds it
 
 ---
 

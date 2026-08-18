@@ -71,6 +71,8 @@
 
     browser-history = 8087;
 
+    papdashboard = 8088;
+
     searxng = 8889;
 
     attic = 8200;

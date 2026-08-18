@@ -248,6 +248,12 @@ _: {
           // lib.optionalAttrs config.services.discordsync.enable {
             "discordsync.${domain}" = protectedVHost "discordsync" ports.discordsync-api;
           }
+          # PapDashboard — alert hub UI. Layer 2: the app itself has no UI auth
+          # (only the ingest API is key-gated); Gatus posts to the localhost port
+          # directly and never traverses Caddy.
+          // lib.optionalAttrs config.services.papdashboard.enable {
+            "alerts.${domain}" = protectedVHost "alerts" ports.papdashboard;
+          }
           // lib.optionalAttrs config.services.overview.enable {
             "overview.${domain}" = protectedVHost "overview" ports.overview;
           }

@@ -220,4 +220,4 @@ cython_debug/
 htmlcov/
 # <<< buildflow-managed (.gitignore) <<<
 
-/nixos.qcow2
+*.qcow2

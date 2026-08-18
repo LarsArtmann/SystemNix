@@ -198,8 +198,24 @@
         ++ (lib.concatMap collectHmUnits hmKinds)
         ++ (collectRawUnits config.systemd.user.units);
 
+      # Canonical spelling: `foo` (NixOS/HM option key) and `foo.service`
+      # (raw systemd.user.units key) are the SAME generated unit. Without
+      # this, a split-spelled unit puts its install edge on one node and its
+      # pull edge on the other — the chain breaks and the guard misses it
+      # (the exact false-negative class the CI negative test locks in).
+      # Stripping only .service never merges distinct .target/.socket kinds,
+      # and reachability is monotone under merging: the guard can only
+      # become MORE sensitive, never blind.
+      canonical = name: lib.removeSuffix ".service" name;
+
+      canonicalUnits = map (u: {
+        name = canonical u.name;
+        deps = map canonical u.deps;
+        installs = map canonical u.installs;
+      }) allUnits;
+
       # A unit in allowedUnits may keep its pull edge (documented exception).
-      allowed = cfg.allowedUnits;
+      allowed = map canonical cfg.allowedUnits;
 
       pullEdges = builtins.foldl' (
         acc: unit:
@@ -211,14 +227,14 @@
               dep: !(builtins.elem unit.name allowed && builtins.elem dep sessionTargets)
             ) unit.deps);
         }
-      ) { } allUnits;
+      ) { } canonicalUnits;
 
       installEdges = builtins.foldl' (
         acc: unit:
         builtins.foldl' (
           acc2: target: acc2 // { ${target} = (acc2.${target} or [ ]) ++ [ unit.name ]; }
         ) acc unit.installs
-      ) { } allUnits;
+      ) { } canonicalUnits;
 
       # Built-in user-manager target chain (systemd upstream, stable for years):
       # default.target Wants basic.target Wants {paths,sockets,timers}.target.
