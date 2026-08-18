@@ -145,7 +145,7 @@ else
   pass "Root filesystem usage ${ROOT_PCT}% (${ROOT_AVAIL_GB}G free)"
 fi
 if [ "$STALE_BUILDS" -gt 0 ]; then
-  warn "$STALE_BUILDS stale build sandboxes in /nix/var/nix/builds — run 'nix-build-cleanup' or clean manually"
+  warn "$STALE_BUILDS stale build sandboxes in /nix/var/nix/builds — run 'sudo systemctl start nix-build-cleanup.service' (the same unit the 4h timer fires; removes only sandboxes untouched >1h — do NOT rm -rf blindly, live builds sit there)"
 fi
 
 # 9. Port availability — check that ports assigned to enabled services are free
