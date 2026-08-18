@@ -215,7 +215,7 @@ A batch job is backfilling cross-project insights for 31 dates that had **zero**
 - **Binary:** `/tmp/crush-daily-fixed` (75MB, GOEXPERIMENT=jsonv2)
 - **Config:** `/nix/store/cc8bz4bmr1hk1q6a6paxgiflvjgyzp5a-crush-daily.yaml`
 - **Database:** `/var/lib/crush-daily/crush-daily.db`
-- **API key:** `syn_cb0b1ea7b4c355c7e097726958df8c42`
+- **API key:** `REDACTED-SYNTHETIC-KEY-LEAKED-IN-DOCS-ROTATE`
 - **Batch started:** ~15:31, running ~4.5 hours
 
 ### Batch Results So Far

@@ -4,6 +4,7 @@
   monitor365,
   file-and-image-renamer,
   crush-daily,
+  bank-sync,
   overview,
   discordsync,
   ...
@@ -209,6 +210,7 @@ in
   netwatchOverlay
   file-and-image-renamer.overlays.default
   crush-daily.overlays.default
+  bank-sync.overlays.default
   overview.overlays.default
   discordsync.overlays.default
   bunMemoryLimitOverlay

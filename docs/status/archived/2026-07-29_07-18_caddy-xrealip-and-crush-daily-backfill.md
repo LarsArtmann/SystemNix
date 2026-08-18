@@ -118,7 +118,7 @@ I ran insights for 45 dates sequentially without checking if the Synthetic API s
 
 ### 2. First backfill script attempt used the WRONG API key
 
-The initial script hardcoded `CRUSH_DAILY_LLM_API_KEY = "synthetic"` (a literal string), which is NOT the real Synthetic API key. The service uses `syn_cb0b1ea7b4c355c7e097726958df8c42` from the sops-rendered env file. The first run of all 45 dates collected correctly but ALL insights failed with `"Invalid API Key"`. I had to manually discover and fix this. The final script reads from `/run/secrets/rendered/crush-daily-env`, but the initial waste was avoidable.
+The initial script hardcoded `CRUSH_DAILY_LLM_API_KEY = "synthetic"` (a literal string), which is NOT the real Synthetic API key. The service uses `REDACTED-SYNTHETIC-KEY-LEAKED-IN-DOCS-ROTATE` from the sops-rendered env file. The first run of all 45 dates collected correctly but ALL insights failed with `"Invalid API Key"`. I had to manually discover and fix this. The final script reads from `/run/secrets/rendered/crush-daily-env`, but the initial waste was avoidable.
 
 ### 3. Didn't notice 2026-06-24 is missing from the event store
 

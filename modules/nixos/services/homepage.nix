@@ -51,6 +51,7 @@ _: {
       fastflowlmEnabled = config.services.fastflowlm.enable or false;
       googleSyncEnabled = config.services.google-sync.enable or false;
       papdashboardEnabled = config.services.papdashboard.enable or false;
+      bankSyncEnabled = config.services.bank-sync.enable or false;
 
       theme = import ../../../platforms/common/theme.nix;
       colors = theme.colorScheme.palette;
@@ -132,6 +133,15 @@ _: {
           mkService "Google Sync" {
             description = "Google Drive → HDD Pool Mirror (rclone)";
             icon = "google-drive.png";
+          }
+        )
+        ++ lib.optional bankSyncEnabled (
+          mkService "Bank Sync" {
+            href = svcUrl "banksync";
+            description = "Wise Transactions → SQLite (Event-Sourced)";
+            # The bundled icon pack has no bank.png — google-finance is the
+            # closest available finance glyph.
+            icon = "google-finance.png";
           }
         );
 

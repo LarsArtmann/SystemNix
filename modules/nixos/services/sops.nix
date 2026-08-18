@@ -153,6 +153,13 @@ in
                 restartUnits = [ "crush-daily.service" ];
               } [ "synthetic_api_key" ]
             )
+            // lib.optionalAttrs (svcEnabled "bank-sync") (
+              mkSecrets "bank-sync.yaml" {
+                owner = "bank-sync";
+                group = "bank-sync";
+                restartUnits = [ "bank-sync.service" ];
+              } [ "wise_api_key" ]
+            )
             // lib.optionalAttrs (svcEnabled "file-and-image-renamer") (
               mkKeyedSecrets "crush-daily.yaml"
                 {
@@ -373,6 +380,17 @@ in
               restartUnits = [ "crush-daily.service" ];
               content = lib.generators.toKeyValue { } {
                 CRUSH_DAILY_LLM_API_KEY = config.sops.placeholder.synthetic_api_key;
+              };
+            };
+          }
+          // lib.optionalAttrs (svcEnabled "bank-sync") {
+            "bank-sync-env" = {
+              owner = "bank-sync";
+              group = "bank-sync";
+              mode = "0400";
+              restartUnits = [ "bank-sync.service" ];
+              content = lib.generators.toKeyValue { } {
+                BANK_SYNC_WISE_API_KEY = config.sops.placeholder.wise_api_key;
               };
             };
           }

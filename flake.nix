@@ -233,6 +233,18 @@
       };
     };
 
+    # bank-sync — Wise/Qonto bank transaction sync into SQLite + dashboard
+    bank-sync = {
+      url = "github:LarsArtmann/bank-sync?ref=master";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        go-nix-helpers.follows = "go-nix-helpers";
+        flake-parts.follows = "flake-parts";
+        treefmt-nix.follows = "treefmt-nix";
+        systems.follows = "systems";
+      };
+    };
+
     # Shared Go libraries — single source of truth for all Go tool repos.
     # IMPORTANT: These are `flake = false` tarballs. They must NOT be
     # `follows`-overridden into Go tool flakes — the override changes vendored

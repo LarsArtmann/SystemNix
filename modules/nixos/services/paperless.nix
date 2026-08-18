@@ -121,12 +121,17 @@ _: {
           # default 120s timeout would abort the first AI request after an
           # idle unload. 300s mirrors the papdashboard insight enricher.
           PAPERLESS_AI_LLM_REQUEST_TIMEOUT = 300;
-          # Semantic search / RAG chat need an embedding endpoint; served
-          # by FastFlowLM once loadEmbed is enabled and the model is pulled
-          # (`flm pull embed-gemma:300m` into /data/ai/models/fastflowlm).
-          PAPERLESS_AI_LLM_EMBEDDING_BACKEND = "openai-like";
-          PAPERLESS_AI_LLM_EMBEDDING_ENDPOINT = llmEndpoint;
-          PAPERLESS_AI_LLM_EMBEDDING_MODEL = "embed-gemma:300m";
+          # NOTE: no PAPERLESS_AI_LLM_EMBEDDING_* settings — embeddings/RAG
+          # chat stay OFF until a dedicated embed-only FastFlowLM instance
+          # exists. Co-loading embed-gemma via `--embed 1` in the MAIN flm
+          # process breaks the Qwen model load (xrt buffer-object ENOMEM,
+          # live-verified 2026-08-18: embed loads, then the 13.6 GB model
+          # fails mmap and the server starts WITHOUT the default model).
+          # Paperless degrades cleanly: llm_index_enabled =
+          # ai_enabled AND llm_embedding_backend — unset backend disables
+          # RAG indexing while AI classification/tagging keeps working.
+          # Re-enable by serving embed-gemma on its own port and setting
+          # PAPERLESS_AI_LLM_EMBEDDING_{BACKEND,ENDPOINT,MODEL}.
         };
       };
 
@@ -202,23 +207,27 @@ _: {
           };
 
         # One-time SQLite → PostgreSQL engine migration (2026-08-18 switch
-        # to database.createLocally): the nixpkgs scheduler preStart skips
-        # manage_superuser whenever ${dataDir}/superuser-state matches the
-        # current admin password — a file that survives the engine switch
-        # and would leave the FRESH postgres database without any superuser
-        # (no login possible). Drop it while the legacy db.sqlite3 is still
-        # present so the bootstrap re-runs once against postgres. Self-
-        # neutralizing: removing db.sqlite3 after verification makes the
-        # Condition skip forever; re-running while it exists is harmless
-        # (manage_superuser no-ops once the admin exists, preStart
-        # rewrites the state file).
+        # to database.createLocally). The nixpkgs scheduler preStart gates
+        # BOTH `manage.py migrate` and `manage_superuser` on state files in
+        # dataDir that survive the engine switch: src-version (same package
+        # version ⇒ migrate SKIPPED ⇒ the fresh postgres DB never gets its
+        # tables) and superuser-state (admin bootstrap SKIPPED ⇒ no login).
+        # Live incident 2026-08-18: scheduler crash-looped with
+        # `UndefinedTable: relation "auth_user" does not exist` and dragged
+        # web/consumer/task-queue down as dependencies. Drop BOTH files
+        # while the legacy db.sqlite3 is still present so the bootstrap
+        # re-runs once against postgres. Self-neutralizing: removing
+        # db.sqlite3 after verification makes the Condition skip forever;
+        # re-running while it exists is harmless (migrate is idempotent,
+        # manage_superuser no-ops once the admin exists, preStart rewrites
+        # the state files).
         paperless-sqlite-to-pg-migration = {
           description = "Paperless SQLite-to-PostgreSQL migration bootstrap";
           unitConfig.ConditionPathExists = ["${dataDir}/db.sqlite3"];
           before = ["paperless-scheduler.service"];
           wantedBy = ["paperless-scheduler.service"];
           serviceConfig.Type = "oneshot";
-          script = "rm -f '${dataDir}/superuser-state'";
+          script = "rm -f '${dataDir}/superuser-state' '${dataDir}/src-version'";
         };
 
         # Tika (Java + tesseract subprocess for OCR'd attachments) and
@@ -243,6 +252,16 @@ _: {
           inherit onFailure;
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
+          # Gotenberg 8.36 ships an always-on OTel autoexport metrics
+          # uploader whose compiled-in default endpoint is
+          # https://localhost:4318 — a TLS error against our plaintext
+          # collector every 60s (live 2026-08-18). Gotenberg's autoexport
+          # path parses the endpoint as a URL, so unlike code-configured
+          # Go otlptracehttp (bare host:port) it REQUIRES the scheme:
+          # schemeless "localhost:4318" parses as scheme "localhost" and
+          # posts to https:///v1/metrics ("no Host in request URL").
+          # http:// explicitly selects the plaintext OTLP/HTTP receiver.
+          environment.OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:${toString ports.signoz-otlp-http}";
           serviceConfig = lib.mkMerge [
             ioTier.background
             {

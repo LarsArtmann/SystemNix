@@ -283,7 +283,7 @@ Manual re-run required
 
 ```bash
 # Generate insights for a single date
-export GOEXPERIMENT=jsonv2 HOME=/home/lars CRUSH_DAILY_LLM_API_KEY=syn_cb0b1ea7b4c355c7e097726958df8c42
+export GOEXPERIMENT=jsonv2 HOME=/home/lars CRUSH_DAILY_LLM_API_KEY=REDACTED-SYNTHETIC-KEY-LEAKED-IN-DOCS-ROTATE
 /tmp/crush-daily-fixed insights --date 2026-06-11 --config /nix/store/cc8bz4bmr1hk1q6a6paxgiflvjgyzp5a-crush-daily.yaml
 
 # Regenerate HTML report

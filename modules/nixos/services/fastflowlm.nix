@@ -106,15 +106,31 @@ _: {
         name = "fastflowlm-idle-check";
         runtimeInputs = [
           pkgs.coreutils
+          pkgs.gawk
+          pkgs.gnugrep
           pkgs.systemd
         ];
         text = ''
           if ! systemctl is-active --quiet fastflowlm.service; then
             exit 0
           fi
-          # ActiveEnterTimestampMonotonic is in microseconds; 600000000 = 10 min.
+          # Any live per-connection instance = active traffic. This is the
+          # ONLY reliable cold-load guard: during a cold load the backend
+          # does not run its accept loop, so connections sit in the kernel
+          # backlog and the backend journal has NO "TCP connection
+          # established" lines — the journal check below is blind to them.
+          # (2026-08-18 live incident: idle-check killed a backend 2.5 min
+          # into a cold load this way, SIGTERMing the queued client's socat.)
+          if systemctl list-units 'fastflowlm@*.service' --state=active --no-legend 2>/dev/null | grep -q .; then
+            exit 0
+          fi
+          # ActiveEnterTimestampMonotonic is an ABSOLUTE monotonic timestamp,
+          # not an age — comparing it against a constant guards nothing on a
+          # host with >10 min uptime (the pre-2026-08-18 bug). Measure the
+          # actual age against the monotonic clock now; 600000000 µs = 10 min.
+          now_us=$(awk '{printf "%d", $1 * 1000000}' /proc/uptime)
           active_us=$(systemctl show fastflowlm.service -p ActiveEnterTimestampMonotonic --value)
-          if [ -z "$active_us" ] || [ "$active_us" -lt 600000000 ]; then
+          if [ -z "$active_us" ] || [ $((now_us - active_us)) -lt 600000000 ]; then
             exit 0
           fi
           if ${lib.getExe' pkgs.systemd "journalctl"} -u fastflowlm --since "${cfg.keepAlive} ago" --grep "TCP connection established" -n 1 --output cat 2>/dev/null | grep -q .; then
@@ -306,8 +322,22 @@ _: {
                 "FLM_MODEL_PATH=${cfg.modelPath}"
               ];
 
+              # Restart backoff after OOM kills: a 5s restart of a 22.5 GB
+              # cold load pile-drives an already-exhausted machine (4 OOM
+              # kills in 6 min during a deploy, 2026-08-18; each retry
+              # faulted 22 GB from disk into a full RAM). The triggering
+              # socket connection queues in the kernel backlog meanwhile —
+              # 60s costs one delayed request instead of an I/O storm.
               Restart = "on-failure";
-              RestartSec = "5";
+              RestartSec = "60";
+              # Preferred global-OOM victim: this unit is stateless,
+              # socket-activated and self-heals on the next connection.
+              # Without the boost the kernel slaughtered user-session
+              # services instead (pipewire-pulse, dbus-broker, dconf died
+              # in the 2026-08-18 storm at oom_score_adj=200 while flm's
+              # cold load was the actual pressure source). 300 > user
+              # slice's 200 so flm is always chosen first.
+              OOMScoreAdjust = 300;
               MemoryMax = "32G";
               MemoryHigh = "26G";
               MemorySwapMax = "20G";

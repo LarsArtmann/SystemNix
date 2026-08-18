@@ -254,6 +254,14 @@ _: {
           // lib.optionalAttrs config.services.papdashboard.enable {
             "alerts.${domain}" = protectedVHost "alerts" ports.papdashboard;
           }
+          # bank-sync dashboard — read-only financial data with no built-in
+          # auth: protectedVHost (LAN bypass + external oauth2 forward-auth)
+          # is the minimum acceptable exposure for money data. Gated with the
+          # `or false` trick because services.bank-sync options come from the
+          # upstream flake module (imported on evo-x2 only).
+          // lib.optionalAttrs (config.services.bank-sync.enable or false) {
+            "banksync.${domain}" = protectedVHost "banksync" ports.bank-sync;
+          }
           // lib.optionalAttrs config.services.overview.enable {
             "overview.${domain}" = protectedVHost "overview" ports.overview;
           }

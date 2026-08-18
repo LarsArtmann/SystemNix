@@ -23,5 +23,6 @@
     "dnsblockd"
     "search"
     "cache"
+    "banksync"
   ];
 }

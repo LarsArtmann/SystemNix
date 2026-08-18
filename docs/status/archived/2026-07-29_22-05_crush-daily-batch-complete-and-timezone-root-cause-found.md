@@ -231,7 +231,7 @@ CrossProjectInsightsGenerated: 42
 
 ```bash
 # Retry failed/missing dates
-export GOEXPERIMENT=jsonv2 HOME=/home/lars CRUSH_DAILY_LLM_API_KEY=syn_cb0b1ea7b4c355c7e097726958df8c42
+export GOEXPERIMENT=jsonv2 HOME=/home/lars CRUSH_DAILY_LLM_API_KEY=REDACTED-SYNTHETIC-KEY-LEAKED-IN-DOCS-ROTATE
 for d in 2026-06-11 2026-06-13 2026-06-14 2026-06-22 2026-07-09 2026-07-19 2026-07-20 2026-07-21 2026-07-24 2026-07-25; do
   /tmp/crush-daily-fixed insights --date "$d" --config /nix/store/cc8bz4bmr1hk1q6a6paxgiflvjgyzp5a-crush-daily.yaml
   sleep 5

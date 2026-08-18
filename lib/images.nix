@@ -22,7 +22,7 @@ in
   };
   twenty = rec {
     image = "twentycrm/twenty";
-    tag = "v2.7.3";
+    tag = "v2.32.0";
     ref = mkRef { inherit image tag; };
   };
   twenty-postgres = rec {

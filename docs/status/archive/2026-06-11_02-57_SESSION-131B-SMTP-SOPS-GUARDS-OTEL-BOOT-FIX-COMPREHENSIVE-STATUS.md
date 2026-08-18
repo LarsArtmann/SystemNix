@@ -77,10 +77,10 @@ All 30+ services that were restored in the GPU crash recovery are still running:
 ### Pocket ID SMTP
 
 - **Done:** Nix config complete — SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_FROM, SMTP_PASSWORD secret reference all wired. Sops secret `pocket_id_smtp_password` added to config.
-- **Missing:** The Resend API key (`re_bzp5m1gB_...`) needs to be added to the sops-encrypted file on evo-x2. I cannot do this from the sandbox because sops needs the SSH host key to decrypt. **Manual step required on evo-x2:**
+- **Missing:** The Resend API key (`REDACTED-RESEND-KEY`) needs to be added to the sops-encrypted file on evo-x2. I cannot do this from the sandbox because sops needs the SSH host key to decrypt. **Manual step required on evo-x2:**
   ```bash
   sudo env SOPS_AGE_SSH_PRIVATE_KEY_FILE=/etc/ssh/ssh_host_ed25519_key \
-    sops --set '["pocket_id_smtp_password"] "re_bzp5m1gB_57d8cvq8oGaG2w9xNgXEG8u4"' \
+    sops --set '["pocket_id_smtp_password"] "REDACTED-RESEND-KEY-REVOKED-BY-RESEND-2026-08"' \
     platforms/nixos/secrets/pocket-id.yaml
   ```
 

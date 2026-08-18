@@ -24,7 +24,7 @@ This session continued from a prior session that had:
 **Conclusion:** The sops setup was never the problem. No redesign needed.
 
 **Evidence:**
-- Both `synthetic_api_key` secrets decrypt to the real key: `syn_cb0b1ea7b4c3...` (36 bytes, verified at runtime)
+- Both `synthetic_api_key` secrets decrypt to the real key: `REDACTED-SYNTHETIC-KEY-ELIDED` (36 bytes, verified at runtime)
 - The previous session's "placeholder" claim (`"synthetic_api_key"` at `sops.nix:158`) was **wrong** — that string is the YAML *key name* in `mkKeyedSecrets`, not the decrypted value
 - The renamer's `_FILE` pattern (`SYNTHETIC_API_KEY_FILE=/run/secrets/...`) is actually **more secure** than crush-daily's env-file template — the key never appears in `/proc/<pid>/environ`
 - The Go binary (`pkg/config/config.go`) correctly handles `SYNTHETIC_API_KEY_FILE` via `loadSecretFromEnv()` — reads file, trims whitespace, returns key
@@ -168,7 +168,7 @@ The prior session's status report (`docs/status/2026-08-10_08-59_renamer-stale-n
 
 > "API key in sops is still placeholder (`synthetic_api_key`)"
 
-This was **factually incorrect**. `"synthetic_api_key"` at `sops.nix:158` is the YAML *key name* in `mkKeyedSecrets`, not the decrypted value. The actual decrypted value is `syn_cb0b1ea7b4c3...` (36 bytes) — a real, valid Synthetic.new API key. I verified this by reading the file at `/run/secrets/file_renamer_synthetic_api_key`.
+This was **factually incorrect**. `"synthetic_api_key"` at `sops.nix:158` is the YAML *key name* in `mkKeyedSecrets`, not the decrypted value. The actual decrypted value is `REDACTED-SYNTHETIC-KEY-ELIDED` (36 bytes) — a real, valid Synthetic.new API key. I verified this by reading the file at `/run/secrets/file_renamer_synthetic_api_key`.
 
 **Impact:** This misdiagnosis would have led someone to "fix" a non-existent problem by replacing a real key with a real key, wasting time and potentially introducing errors.
 

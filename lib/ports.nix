@@ -60,6 +60,8 @@
 
     crush-daily = 8081;
 
+    bank-sync = 8097;
+
     overview = 8083;
     pma-health = 9190;
 
