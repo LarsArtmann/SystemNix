@@ -60,6 +60,7 @@ _: {
         ensurePasswordFile
         adminSetup
         tokenGen
+        hermesForgejoToken
         genRunnerToken
         registerRunner
         oidcSetupScript
@@ -301,6 +302,30 @@ _: {
               RandomizedDelaySec = "15m";
             };
           };
+        };
+
+        # --- Hermes Agent read-only access (added 2026-08-19, PR: forgejo-hermes-agent) ---
+        systemd.services.forgejo-hermes-token = {
+          description = "Provision hermes-agent Forgejo user + read-only token";
+          after = [
+            "forgejo.service"
+            "forgejo-generate-token.service"
+          ];
+          wants = [ "forgejo-generate-token.service" ];
+          wantedBy = [ "forgejo.service" ];
+          restartTriggers = [ (lib.getExe hermesForgejoToken) ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = "forgejo";
+              Group = "forgejo";
+              # Script runs forgejo CLI as forgejo user (no root); the only
+              # cross-user action is chown of the token file to hermes.
+              RemainAfterExit = true;
+            }
+            (harden { })
+          ];
+          script = lib.getExe hermesForgejoToken;
         };
 
         systemd.services.forgejo-generate-token = {

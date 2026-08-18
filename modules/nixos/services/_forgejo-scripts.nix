@@ -307,6 +307,80 @@
     '';
   };
 
+  hermesForgejoToken = pkgs.writeShellApplication {
+    name = "forgejo-hermes-token";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.gnugrep
+      pkgs.curl
+    ];
+    text = ''
+      # Idempotent: create hermes-agent user (unprivileged, no UI login needed),
+      # mint a read:repository-scoped token, deliver it hermes-readable.
+      #
+      # NOT --restricted: restricted users cannot see other users' PUBLIC repos,
+      # which would defeat the purpose. Least privilege here = normal user that
+      # owns nothing + token scoped to read:repository (sees exactly what an
+      # anonymous visitor sees, plus any private repo explicitly granted later).
+      set -euo pipefail
+
+      FORGEJO=${lib.getExe forgejoPkg}
+      export FORGEJO_WORK_DIR=${stateDir}
+      TOKEN_FILE=/run/hermes-forgejo-token
+      FORGEJO_USER_NAME=hermes-agent
+      FORGEJO_USER_EMAIL=hermes-agent@noreply.forgejo.home.lan
+
+      for _ in $(seq 1 30); do
+        curl -s -o /dev/null -w "" "${forgejoUrl}/" && break
+        sleep 1
+      done
+
+      # 1. user (create-or-verify; password is random and never delivered —
+      #    the token is the only credential that leaves this box)
+      if ! runuser -u forgejo -- "$FORGEJO" admin user list 2>/dev/null | grep -q "$FORGEJO_USER_NAME"; then
+        echo "Creating Forgejo user: $FORGEJO_USER_NAME"
+        runuser -u forgejo -- "$FORGEJO" admin user create \
+          --username "$FORGEJO_USER_NAME" \
+          --email "$FORGEJO_USER_EMAIL" \
+          --random-password \
+          --must-change-password=false
+      else
+        echo "User $FORGEJO_USER_NAME already exists"
+      fi
+
+      # 2. token — reuse if still valid, else mint a new one
+      TOKEN=""
+      if [ -s "$TOKEN_FILE" ]; then
+        TOKEN=$(cat "$TOKEN_FILE")
+        if curl -sf -H "Authorization: token $TOKEN" "${forgejoUrl}/api/v1/user" >/dev/null 2>&1; then
+          echo "Existing hermes-agent token still valid"
+          chown hermes:hermes "$TOKEN_FILE"
+          chmod 0400 "$TOKEN_FILE"
+          exit 0
+        fi
+        echo "Existing token invalid; regenerating"
+      fi
+
+      TOKEN=$(runuser -u forgejo -- "$FORGEJO" admin user generate-access-token \
+        --username "$FORGEJO_USER_NAME" \
+        --token-name "hermes-agent-$(date +%s)" \
+        --scopes read:repository \
+        --raw 2>/dev/null) || TOKEN=""
+
+      if ! echo "$TOKEN" | grep -qE '^[0-9a-f]{40}$'; then
+        echo "ERROR: token generation failed for hermes-agent" >&2
+        exit 1
+      fi
+
+      # 3. deliver: /run is tmpfs; 0400 hermes-owned = only the agent can read it
+      umask 377
+      printf '%s' "$TOKEN" > "$TOKEN_FILE"
+      chown hermes:hermes "$TOKEN_FILE"
+      chmod 0400 "$TOKEN_FILE"
+      echo "hermes-agent token delivered to $TOKEN_FILE"
+    '';
+  };
+
   tokenGen = pkgs.writeShellApplication {
     name = "forgejo-token-gen";
     runtimeInputs = [
