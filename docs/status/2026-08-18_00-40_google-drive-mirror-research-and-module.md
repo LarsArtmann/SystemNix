@@ -108,8 +108,8 @@
 **Hardening follow-ups (me):**
 11. ~~Placeholder-token eval-time assertion (e)1~~ DONE (follow-up session, runtime form): `google-sync-config-check` ExecStartPre greps REPLACE_WITH + `rclone listremotes` parse check — eval-time is impossible on sops-encrypted content; live-tested against synthetic configs
 12. Extend pre-deploy-check with a google-sync section (mount present, secret non-placeholder when enabled) — PARTIALLY covered: RequiresMountsFor gates the mount, configCheck gates the placeholder; a pre-deploy-check section would still be nice-to-have
-13. Consider `--drive-shared-with-me` decision + document
-14. Consider `--drive-team-drive` if Workspace is ever in scope
+13. ~~Consider `--drive-shared-with-me` decision + document~~ done (DECIDED: shared-with-me is its own remote with shared_with_me=true (AGENTS.md Google Sync section))
+14. ~~Consider `--drive-team-drive` if Workspace is ever in scope~~ done (DECIDED: team_drive config-section approach documented — no module changes needed)
 15. Suffix pattern check: confirm `.del_<stamp>` files expire correctly after 30d (find -mtime)
 16. Add rclone `--log-file` rotation consideration (journal-only now; 5-min INFO lines are fine)
 17. Document restore path (pool → Drive is NOT synced back; restore = manual rclone copy)

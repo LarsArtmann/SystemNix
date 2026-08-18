@@ -88,8 +88,8 @@
 **Archive hygiene**
 24. README/provenance into `/mnt/pool/archive/desktop-u51ngkt` (source disk, serial, date, method, verify status)
 25. `compsite` measurement (logical 178G vs physical)
-26. Confirm btrbk-pool snapshot coverage of `archive/` subvol path (services/* is snapshotted; archive/ coverage unverified — 178G could balloon pool snapshots if covered, or be unprotected if not)
-27. Consider excluding archive/ from pool snapshots (cold data, RAID1 already) or giving it own retention
+26. ~~Confirm btrbk-pool snapshot coverage of `archive/` subvol path (services/* is snapshotted; archive/ coverage unverified — 178G could balloon pool snapshots if covered, or be unprotected if not)~~ done (DECIDED: archive/ is NOT btrbk-pool snapshotted — RAID1 is its only redundancy (AGENTS.md pool section))
+27. ~~Consider excluding archive/ from pool snapshots (cold data, RAID1 already) or giving it own retention~~ done (DECIDED: excluded from pool snapshots deliberately (AGENTS.md))
 28. Archive permissions hardening (root-owned 0600? contains live tokens + credentials)
 29. Review `IdeaProjects/DeepBackup` for useful code
 30. Review Desktop/Downloads keepers; prune junk from archive
@@ -99,7 +99,7 @@
 34. Confirm BitLocker password is in the password manager (moot post-wipe, needed until then)
 
 **Docs & memory**
-35. AGENTS.md: pool archive entry (`archive/desktop-u51ngkt`) + contents/secrets warning
+35. ~~AGENTS.md: pool archive entry (`archive/desktop-u51ngkt`) + contents/secrets warning~~ done (AGENTS.md pool section documents archive/ + BitLocker rescue + secrets warning)
 36. docs: BitLocker rescue workflow (dislocker + ro ntfs3 + rsync pattern, bridge-sysfs gotcha)
 37. Archive rescue script pattern into `scripts/` if deemed reusable
 38. Update 3-drive repurposing plan doc with Samsung's new status

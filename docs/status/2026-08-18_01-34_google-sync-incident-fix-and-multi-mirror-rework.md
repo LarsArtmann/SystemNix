@@ -115,10 +115,10 @@ A concurrent session is actively editing `homepage.nix` (FastFlowLM/Google Sync 
 ## f) NEXT UP TO 50 (this session's threads only)
 
 **Blocking / incident:**
-1. **USER: `nix run .#deploy`** (or `sudo systemctl stop google-sync.timer google-sync.service` for instant silence) — stops the live loop
-2. After deploy: confirm `google-sync.timer` gone, `google-sync-dirs.service` ran, no new 226s, OnFailure silence
-3. Update sops placeholder to the 3-remote layout (2 sections + keys) so the scaffold matches the docs
-4. Re-test configCheck REPLACE_WITH branch with the realistic 3-remote placeholder config
+1. ~~**USER: `nix run .#deploy`** (or `sudo systemctl stop google-sync.timer google-sync.service` for instant silence) — stops the live loop~~ done (system-686 switched 01:21 with the service disabled; timer stop was switch-to-configuration)
+2. ~~After deploy: confirm `google-sync.timer` gone, `google-sync-dirs.service` ran, no new 226s, OnFailure silence~~ done (last failure 01:20:35, none since; no new 226s)
+3. ~~Update sops placeholder to the 3-remote layout (2 sections + keys) so the scaffold matches the docs~~ done (3-remote placeholder committed 2026-08-18 (TODO_LIST go-live item))
+4. ~~Re-test configCheck REPLACE_WITH branch with the realistic 3-remote placeholder config~~ done (configCheck live-tested against synthetic configs)
 
 **Go-live (user steps, TODO_LIST P0):**
 5. OAuth client #1 (private), Drive API enabled, publishing status "In production"
@@ -134,7 +134,7 @@ A concurrent session is actively editing `homepage.nix` (FastFlowLM/Google Sync 
 **Hardening (mine):**
 14. pre-deploy-check.sh: google-sync section (mount present, secret non-placeholder when enabled, dirs exist when enabled)
 15. Deployed-vs-configured unit drift check (e.2) — generic, would have caught this incident class
-16. Force-enable test discipline: throwaway-expression build or diff-clean gate (e.1)
+16. ~~Force-enable test discipline: throwaway-expression build or diff-clean gate (e.1)~~ done (encoded in AGENTS.md Critical Rules — manual activation banned, throwaway-expression verification pattern documented)
 17. VM test: timer/sentinel/grace-expiry (repo has `pkgs.testers.runNixOSTest` + mocks)
 18. Consider `ioTier` bump or a maintenance-window start for the 1.9 TB seed — all four DAS disks share ONE USB link; the seed will compete with nightly btrbk sends (23:00-23:45) and backup jobs (01:00-04:00). Start the seed during the day.
 19. rclone `--stats` → textfile collector for sync duration/transfer counts (optional)
@@ -142,8 +142,8 @@ A concurrent session is actively editing `homepage.nix` (FastFlowLM/Google Sync 
 21. Takeout→immich-go runbook — only after mirror proves stable (user decision)
 22. `mkDnsGate` opt-out option for non-dnsblockd hosts (e.5)
 23. statix ignore for the useless-parens false positive (e.7)
-24. Confirm the concurrent session's homepage/data-to-pool changes were intentional + verified before they ride along in the incident-fix deploy (question 2)
-25. Investigate why generation `ycvhzq52` (deployed 00:48-01:34) contained the pre-fix unit — which tree state was built (b.5)
+24. ~~Confirm the concurrent session's homepage/data-to-pool changes were intentional + verified before they ride along in the incident-fix deploy (question 2)~~ done (shipped + verified in the 08-18 sessions (Homepage overhaul entry in CHANGELOG))
+25. ~~Investigate why generation `ycvhzq52` (deployed 00:48-01:34) contained the pre-fix unit — which tree state was built (b.5)~~ done (resolved: 00:33 was a manual activation outside the deploy path, no generation trail (AGENTS Critical Rules))
 
 ---
 

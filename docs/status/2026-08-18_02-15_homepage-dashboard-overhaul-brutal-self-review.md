@@ -73,8 +73,8 @@
 8. Consider splitting Monitoring (7 tiles): user-facing dashboards vs metrics backends (Node Exporter/cAdvisor/dnsblockd/EMEET PIXY)
 9. Deploy serialization (flock or convention) — see d/3
 10. Watch Pocket ID for SQLITE_BUSY recurrence; if it recurs outside I/O storms → WAL/busy_timeout investigation
-11. Re-run deploy.sh cleanly when no concurrent session is active (deterministic post-switch steps)
-12. Verify the auto-commit daemon committed homepage.nix + CHANGELOG + AGENTS.md
+11. ~~Re-run deploy.sh cleanly when no concurrent session is active (deterministic post-switch steps)~~ done (clean deploys ran 2026-08-18 (20-52 session, 53 PASS / 0 FAIL))
+12. ~~Verify the auto-commit daemon committed homepage.nix + CHANGELOG + AGENTS.md~~ done (committed in 0d8a58ca (homepage overhaul sweep))
 13. Add a NixOS VM test for the homepage module (groups derivation, conditional tiles) if tests/default.nix lacks one
 14. When Google Sync goes live (OAuth token): verify the tile appears automatically + consider whether it deserves a href (status endpoint?)
 15. Evaluate homepage-dashboard newer releases for built-in theme support that could replace the custom.css override
@@ -83,12 +83,12 @@
 18. The I/O-pressure WARN (avg10=90%+) during checks — schedule heavy builds away from deploys (BFQ tiers already exist; timing is the gap)
 19. Quickshell 1 error line in last hour (WARN in post-deploy) — glance at journal, likely benign
 20. Consider adding `/mnt/buildcache` to Storage widget? (probably NOT — it's a rebuildable cache; but decide explicitly)
-21. Document the "decorative tile" convention (no href ⇒ Gatus owns its health) next to the module — half-done via comments, could be one paragraph in AGENTS.md services section
+21. ~~Document the "decorative tile" convention (no href ⇒ Gatus owns its health) next to the module — half-done via comments, could be one paragraph in AGENTS.md services section~~ done (decorative-tile convention documented (CHANGELOG entry + AGENTS rule 10: no siteMonitor, Gatus owns health))
 22. Bookmark groups could gain a "System" group (Grafana-less quick links: nix store path browser? nh? docs?) — low value, skip unless wanted
 23. Check whether homepage-dashboard supports `statusStyle`/ping without siteMonitor semantics for LAN-only tiles (read upstream docs before deciding)
 24. Add CHANGELOG "Changed" cross-link from the homepage docs/status archived reports index if one exists (docs hygiene)
 25. Re-verify dashboard visually in the browser (I verified API + files, never the rendered page — user is the only one who can)
-26. If concurrent sessions become common: agree on a working-tree protocol (one writer, or per-branch) — this session coexisted safely with a parallel edit (Manifest description), but that was luck-adjacent
+26. ~~If concurrent sessions become common: agree on a working-tree protocol (one writer, or per-branch) — this session coexisted safely with a parallel edit (Manifest description), but that was luck-adjacent~~ done (AGENTS.md Critical Rules now carry the concurrent-session protocol (re-read before edit, flag foreign work))
 
 ---
 
