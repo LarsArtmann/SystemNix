@@ -20,8 +20,13 @@
 #
 # The user activitywatch.target is stopped for a consistent SQLite copy (a
 # live rsync of a DB under writes is not a valid snapshot) and restarted from
-# the new location afterwards. Root reaches the user manager via the uid-1000
-# runtime dir — evo-x2 is a single-user machine (lars = uid 1000).
+# the new location afterwards. Root reaches the user manager via
+# `systemctl --machine=lars@.host --user` — systemd ≥254 IGNORES a foreign
+# $XDG_RUNTIME_DIR for `--user` (sd-bus refuses uid-mismatched runtime dirs;
+# the direct call dies "Operation not permitted", live 2026-08-19), so the
+# machined local transport is the only supported root→user-bus path. The
+# direct call stays as a fallback for a hypothetical machined-less host.
+# evo-x2 is a single-user machine (lars = uid 1000).
 #
 # Safety model (house pattern): rsync -aHAX → checksum dry-run must report
 # ZERO differences → chown/chmod --reference → only then rm -rf the source.
@@ -67,6 +72,7 @@
             rsync
             btrfs-progs
             coreutils
+            procps
           ];
           serviceConfig = lib.mkMerge [
             {
@@ -106,12 +112,22 @@
             dest="/mnt/pool/services/activitywatch"
 
             user_systemd() {
+              # machined transport first (see header): systemd ignores a foreign
+              # XDG_RUNTIME_DIR for --user, so the direct call only works when
+              # systemd is old enough to still honor it.
+              if systemctl --machine=lars@.host --user "$@" 2>/dev/null; then
+                return 0
+              fi
               XDG_RUNTIME_DIR=/run/user/1000 systemctl --user "$@"
             }
 
             if ! user_systemd stop activitywatch.target; then
-              echo "activitywatch-data-to-pool: USER UNIT STOP FAILED — is the user manager running? (source kept)"
-              failures=1
+              if pgrep -x aw-server >/dev/null 2>&1; then
+                echo "activitywatch-data-to-pool: USER UNIT STOP FAILED with aw-server still running — cannot take a consistent copy (source kept)"
+                failures=1
+              else
+                echo "activitywatch-data-to-pool: user manager unreachable but no aw-server process — nothing to quiesce"
+              fi
             fi
 
             if btrfs subvolume show "$dest" >/dev/null 2>&1; then
