@@ -234,6 +234,20 @@ else
   report_skip "FastFlowLM — service disabled (units absent from systemd)"
 fi
 
+# llama.cpp RAG stack (llama-rag module): the /health endpoint proves the
+# model loaded and the server is serving (llama-server exits nonzero when the
+# GGUF is missing). The RAG endpoints themselves are exercised functionally
+# below.
+llama_rag_enabled=false
+systemctl list-unit-files 'llama-*' --no-legend 2>/dev/null | grep -q llama-embeddings && llama_rag_enabled=true
+
+if $llama_rag_enabled; then
+  check_local "llama.cpp Embeddings" "8848" "/health" "200" "ok" 2>/dev/null || true
+  check_local "llama.cpp Reranker" "8849" "/health" "200" "ok" 2>/dev/null || true
+else
+  report_skip "llama.cpp RAG — service disabled (units absent from systemd)"
+fi
+
 # / redirects to the Pocket ID login (302) since OAuth2 is configured —
 # probe /health instead, the same endpoint the agent's ExecStartPre gates on.
 check_local "Browser History" "8087" "/health" "200" 2>/dev/null || true
@@ -453,6 +467,38 @@ if signoz_rules=$(curl -s --compressed --max-time 5 "http://localhost:8080/api/v
 else
   echo -e "${YELLOW}SKIP${NC} SigNoz rules endpoint not reachable"
   SKIP=$((SKIP + 1))
+fi
+
+# llama.cpp RAG stack functional probes (enable-gated like the liveness checks
+# above). POST /v1/embeddings returns a 1024-dim vector; POST /v1/rerank must
+# rank the correct document first. These catch a "healthy but wrong model"
+# regression (model swapped without the alias changing).
+if $llama_rag_enabled; then
+  if curl -s --compressed --max-time 30 -o /tmp/.smoke-lmemb -w "%{http_code}" \
+      -H "Content-Type: application/json" \
+      -d '{"input":"test document"}' \
+      "http://localhost:8848/v1/embeddings" 2>/dev/null | grep -q "200"; then
+    if jq -e '.data[0].embedding | length == 1024' /tmp/.smoke-lmemb >/dev/null 2>&1; then
+      report_pass "llama.cpp Embeddings — /v1/embeddings returns a 1024-dim vector"
+    else
+      report_fail "llama.cpp Embeddings — /v1/embeddings answered but embedding shape is wrong (expected 1024)"
+    fi
+  else
+    report_fail "llama.cpp Embeddings — /v1/embeddings unreachable (journalctl -u llama-embeddings -n 30)"
+  fi
+
+  if curl -s --compressed --max-time 30 -o /tmp/.smoke-lmrr -w "%{http_code}" \
+      -H "Content-Type: application/json" \
+      -d '{"model":"bge-reranker-v2-m3","query":"what is the capital of france","documents":["paris is the capital of france","london is the capital of england"]}' \
+      "http://localhost:8849/v1/rerank" 2>/dev/null | grep -q "200"; then
+    if jq -e '.results[0].index == 0' /tmp/.smoke-lmrr >/dev/null 2>&1; then
+      report_pass "llama.cpp Reranker — /v1/rerank ranks the correct document first"
+    else
+      report_fail "llama.cpp Reranker — /v1/rerank answered but did not rank the correct document first"
+    fi
+  else
+    report_fail "llama.cpp Reranker — /v1/rerank unreachable (journalctl -u llama-reranker -n 30)"
+  fi
 fi
 
 # Monitor365: FULL agent↔server connectivity verification.

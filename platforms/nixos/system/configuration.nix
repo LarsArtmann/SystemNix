@@ -458,7 +458,8 @@ in
       # Replaces the previous plan to use Ollama for embeddings — Ollama does
       # NOT support reranking (issue #3368). Using llama-server for both keeps
       # the RAG stack on a single Nix-native engine, zero Docker.
-      # Model GGUFs must be placed in /data/ai/models/gguf/ before starting.
+      # Model GGUFs are auto-fetched into /data/ai/models/gguf/ at activation
+      # by the llama-rag-model-fetch oneshot.
       llama-rag.enable = true;
 
       file-and-image-renamer = {

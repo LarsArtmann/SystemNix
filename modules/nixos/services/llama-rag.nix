@@ -58,10 +58,10 @@ _: {
         CPUQuota = "200%";
       };
 
-      # Deterministic per-model download URLs. The fetch oneShot downloads
-      # each file into modelDir at activation (and into the NVMe-trash for the
-      # previous version when the URL changes — a partial relocation heals by
-      # re-downloading, there is no conflict with a moving fastflowlm model).
+      # Deterministic per-model download specs. The fetch oneShot installs
+      # each file into modelDir (same filesystem → atomic rename from .part),
+      # verifies the GGUF magic, and stamps the source URL next to the model
+      # (a URL change re-fetches; a truncated/partial file is re-downloaded).
       modelFetches = [
         {
           url = "https://huggingface.co/gpustack/bge-m3-GGUF/resolve/main/bge-m3-FP16.gguf";
@@ -73,42 +73,41 @@ _: {
         }
       ];
 
-      # Compact but readable bash: loop the URL pairs, sniff the first 4 KiB,
-      # refuse mismatches, then curl --fail silently.
       fetchScript = pkgs.writeShellScript "llama-rag-model-fetch.sh" ''
-        set -euo pipefail
-        outdir=''${1:-${cfg.modelDir}}
-        pfx=/run/llama-rag-model-fetch
-        mkdir -p "$pfx"
-        for spec in ${builtins.toString (map (m: "'${m.url}' '${m.file}'") modelFetches)}; do
-          set -- $spec
-          url="$1"; file="$2"
-          target="$outdir/$file"
-          if [ -e "$target" ]; then
-            magic="$(head -c 4 "$target" 2>/dev/null)" || true
-            if [ "$magic" = "GGUF" ]; then
-              echo "llama-rag: OK $target (present)"
-              continue
+          set -euo pipefail
+          fetch_one() {
+            local url="$1" file="$2"
+            local target="${cfg.modelDir}/$file"
+            local part="$target.part"
+            local stamp="$target.source"
+            if [ -e "$target" ]; then
+              local magic
+              magic="$(head -c 4 "$target" 2>/dev/null)" || true
+              if [ "$magic" = "GGUF" ] && [ "$(cat "$stamp" 2>/dev/null || true)" = "$url" ]; then
+                echo "llama-rag: $file present and current"
+                return 0
+              fi
+              echo "llama-rag: $file stale (magic or source URL changed) — re-fetching"
             fi
-            echo "llama-rag: stale/corrupt $target (magic '${magic:-}') — re-fetching"
-            rm -f -- "$target"
-          fi
-          echo "llama-rag: downloading $url"
-          tmpfile="$pfx/$file.part"
-          if curl -fsSL --retry 3 --retry-delay 5 -o "$tmpfile" "$url"; then
-            other="$pfx/$file.prev"
-            if [ -e "$target" ]; then mv -f -- "$target" "$other"; fi
-            chmod 644 "$tmpfile"
-            if mv -f -- "$tmpfile" "$target"; then
-              echo "llama-rag: installed $target"
-              if [ -e "$other" ]; then rm -f -- "$other"; fi
+            echo "llama-rag: downloading $file from $url"
+            if ! curl -fLsS --retry 3 --retry-delay 5 --connect-timeout 30 -o "$part" "$url"; then
+              echo "llama-rag: FAILED to download $url" >&2
+              rm -f -- "$part"
+              return 1
             fi
-          else
-            echo "llama-rag: download FAILED for $url" >&2
-            rm -f -- "$tmpfile"
-            exit 1
-          fi
-        done
+            local magic
+            magic="$(head -c 4 "$part" 2>/dev/null)" || true
+            if [ "$magic" != "GGUF" ]; then
+              echo "llama-rag: downloaded $file is not GGUF — aborting" >&2
+              rm -f -- "$part"
+              return 1
+            fi
+            mv -f -- "$part" "$target"
+            printf '%s' "$url" > "$stamp"
+            echo "llama-rag: installed $file"
+          }
+        ${lib.concatMapStrings (m: "fetch_one '${m.url}' '${m.file}'\n") modelFetches}
+          echo "llama-rag: all models ready"
       '';
 
       embeddingsExecStart =
@@ -129,11 +128,9 @@ _: {
     in
     {
       options.services.llama-rag = {
-        enable =
-          lib.mkEnableOption "llama.cpp RAG stack (embeddings + reranking, ROCm GPU)"
-          // {
-            default = false;
-          };
+        enable = lib.mkEnableOption "llama.cpp RAG stack (embeddings + reranking, ROCm GPU)" // {
+          default = false;
+        };
 
         modelDir = lib.mkOption {
           type = lib.types.str;
@@ -223,6 +220,8 @@ _: {
         systemd.services.llama-rag-model-fetch = {
           description = "Fetch llama.cpp RAG GGUF models (bge-m3 + bge-reranker-v2-m3)";
           wantedBy = [ "multi-user.target" ];
+          after = [ "network-online.target" ];
+          wants = [ "network-online.target" ];
           before = [
             "llama-embeddings.service"
             "llama-reranker.service"
@@ -236,8 +235,9 @@ _: {
             Type = "oneshot";
             User = cfg.user;
             Group = cfg.group;
-            ExecStart = "${fetchScript} ${cfg.modelDir}";
-            # 2 × ~0.6-1.2 GB downloads; the INI is remote and can be slow.
+            ExecStart = "${fetchScript}";
+            # Two ~1.2 GB downloads from HuggingFace; slow links need headroom
+            # (the global 3min default cannot cover a cold first fetch).
             TimeoutStartSec = "20min";
           };
           startLimitBurst = 3;
