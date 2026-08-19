@@ -7,7 +7,7 @@ let
   inherit (import ../../../lib/default.nix lib) ioTier;
 
   # Ceiling for active GPU buffer object allocations — ML model loading needs this high.
-  # 29360128 pages × 4096 = 112 GiB (exceeds ~94 GiB visible, but it's a ceiling not a reservation)
+  # 29360128 pages × 4096 = 112 GiB (exceeds ~110 GiB visible, but it's a ceiling not a reservation)
   ttmPagesLimit = 29360128;
 
   # Pool cache for freed BO pages — pages retained for GPU reuse instead of returned to kernel.
@@ -153,7 +153,7 @@ in
   ];
 
   # TTM memory pool configuration for GPU workloads
-  # System has 128 GiB physical RAM but only ~94 GiB visible to Linux (34 GiB BIOS VRAM carveout).
+  # System has 128 GiB physical RAM but only ~110 GiB visible to Linux (18 GiB BIOS VRAM carveout).
   # pages_limit = max pages TTM allocator can grab (ceiling, not reservation)
   # page_pool_size = max pages TTM pool caches for reuse after BO free
   # Split (2026-07-12): page_pool_size reduced from 112 GiB → 24 GiB to fix the GPUActive black hole.
@@ -165,8 +165,8 @@ in
     options ttm page_pool_size=${toString ttmPagePoolSize}
   '';
 
-  # VM sysctl tuning for AI/ML workloads (AMD Ryzen AI MAX+ 395 — 128 GiB physical, ~94 GiB visible
-  # to Linux after 34 GiB BIOS VRAM carveout. GPU/CPU share same RAM via GTT on this unified-memory APU)
+  # VM sysctl tuning for AI/ML workloads (AMD Ryzen AI MAX+ 395 — 128 GiB physical, ~110 GiB visible
+  # to Linux after 18 GiB BIOS VRAM carveout. GPU/CPU share same RAM via GTT on this unified-memory APU)
   #
   # ZRAM-FIRST RECLAIM STRATEGY (2026-08-13):
   # This machine has zram as its ONLY swap (no disk swap). zram compresses in RAM
@@ -411,8 +411,8 @@ in
   systemd.services.fstrim.serviceConfig = ioTier.maintenance;
 
   # ZRAM: compressed swap on unified memory APU. This is the ONLY swap — no disk swap.
-  # ~30% of 94 GiB visible RAM = ~28 GiB virtual device. At ~3.2x zstd compression,
-  # 28 GiB of swap costs ~8.7 GiB of physical RAM while holding ~90 GiB of original data.
+  # ~30% of ~110 GiB visible RAM = ~33 GiB virtual device. At ~3.2x zstd compression,
+  # 33 GiB of swap costs ~10.3 GiB of physical RAM while holding ~106 GiB of original data.
   # GPU and CPU share this RAM, so AI workloads compete directly with system processes.
   #
   # swappiness=150 (set above) makes the kernel prefer zram swap over page cache reclaim.
@@ -428,7 +428,7 @@ in
   # headroom. When zram fills completely with no disk swap fallback, the kernel falls
   # back to aggressive page cache eviction — which means BTRFS disk I/O. Larger zram =
   # more headroom before hitting that cliff. At 3.2x ratio, the extra 12 GiB costs only
-  # ~3.7 GiB physical RAM — a good trade on a 94 GiB system.
+  # ~3.7 GiB physical RAM — a good trade on a 110 GiB system.
   #
   # level=1 (not the kernel default of 3): zram compresses individual 4 KiB
   # pages synchronously in the reclaim path. At 4 KiB block sizes, higher zstd
