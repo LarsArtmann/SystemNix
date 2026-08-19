@@ -307,17 +307,20 @@
     '';
   };
 
+  # Runs AS the forgejo user (tokenGen idiom): the CLI talks to the DB
+  # directly, no runuser/PAM needed (runuser cannot init a PAM session inside
+  # harden {}, documented gotcha). The staged token is delivered to /run by
+  # hermesForgejoTokenDeliver via the unit's "+"-prefixed ExecStartPost.
   hermesForgejoToken = pkgs.writeShellApplication {
     name = "forgejo-hermes-token";
     runtimeInputs = [
       pkgs.coreutils
       pkgs.gnugrep
       pkgs.curl
-      pkgs.util-linux # runuser (service runs as root; CLI runs as forgejo)
     ];
     text = ''
       # Idempotent: create hermes-agent user (unprivileged, no UI login needed),
-      # mint a read:repository-scoped token, deliver it hermes-readable.
+      # mint a read:repository-scoped token, stage it for hermes delivery.
       #
       # NOT --restricted: restricted users cannot see other users' PUBLIC repos,
       # which would defeat the purpose. Least privilege here = normal user that
@@ -327,7 +330,10 @@
 
       FORGEJO=${lib.getExe forgejoPkg}
       export FORGEJO_WORK_DIR=${stateDir}
-      TOKEN_FILE=/run/hermes-forgejo-token
+      # Persisted forgejo-only staging file: survives reboots so the reuse path
+      # works and tokens do not accumulate. The /run copy is (re)installed by
+      # ExecStartPost on every run.
+      STAGED_TOKEN_FILE=${stateDir}/hermes-agent.token
       FORGEJO_USER_NAME=hermes-agent
       FORGEJO_USER_EMAIL=hermes-agent@noreply.forgejo.home.lan
 
@@ -343,10 +349,12 @@
       }
 
       # 1. user (create-or-verify; password is random and never delivered —
-      #    the token is the only credential that leaves this box)
-      if ! runuser -u forgejo -- "$FORGEJO" admin user list 2>/dev/null | grep -q "$FORGEJO_USER_NAME"; then
+      #    the token is the only credential that leaves this box).
+      #    Match by EMAIL: forgejo enforces unique emails, and the username is
+      #    a substring of it (plain username grep would false-positive).
+      if ! "$FORGEJO" admin user list 2>/dev/null | grep -q "$FORGEJO_USER_EMAIL"; then
         echo "Creating Forgejo user: $FORGEJO_USER_NAME"
-        runuser -u forgejo -- "$FORGEJO" admin user create \
+        "$FORGEJO" admin user create \
           --username "$FORGEJO_USER_NAME" \
           --email "$FORGEJO_USER_EMAIL" \
           --random-password \
@@ -355,20 +363,28 @@
         echo "User $FORGEJO_USER_NAME already exists"
       fi
 
-      # 2. token — reuse if still valid, else mint a new one
+      # 2. token — reuse if still valid, else mint a new one.
+      #    The validity probe MUST stay in the repository scope category:
+      #    GET /api/v1/user requires the "user" scope (403 for a
+      #    read:repository-only token), and GET /api/v1/user/repos requires
+      #    BOTH user and repository categories (group middleware composes
+      #    AND-style; verified against forgejo 15.0.6 routers/api/v1/api.go +
+      #    modules/web/route.go). GET /api/v1/repos/search sits in the
+      #    repository-scoped group only: 200 for this token, 401 once revoked
+      #    (invalid tokens are rejected by the auth middleware before routing).
       TOKEN=""
-      if [ -s "$TOKEN_FILE" ]; then
-        TOKEN=$(cat "$TOKEN_FILE")
-        if curl -sf --connect-timeout 3 --max-time 10 -H "Authorization: token $TOKEN" "${forgejoUrl}/api/v1/user" >/dev/null 2>&1; then
+      if [ -s "$STAGED_TOKEN_FILE" ]; then
+        TOKEN=$(cat "$STAGED_TOKEN_FILE")
+        if curl -sf --connect-timeout 3 --max-time 10 \
+          -H "Authorization: token $TOKEN" \
+          "${forgejoUrl}/api/v1/repos/search?limit=1" >/dev/null 2>&1; then
           echo "Existing hermes-agent token still valid"
-          chown hermes:hermes "$TOKEN_FILE"
-          chmod 0400 "$TOKEN_FILE"
           exit 0
         fi
         echo "Existing token invalid; regenerating"
       fi
 
-      TOKEN=$(runuser -u forgejo -- "$FORGEJO" admin user generate-access-token \
+      TOKEN=$("$FORGEJO" admin user generate-access-token \
         --username "$FORGEJO_USER_NAME" \
         --token-name "hermes-agent-$(date +%s)" \
         --scopes read:repository \
@@ -379,12 +395,29 @@
         exit 1
       fi
 
-      # 3. deliver: /run is tmpfs; 0400 hermes-owned = only the agent can read it
-      umask 377
-      printf '%s' "$TOKEN" > "$TOKEN_FILE"
-      chown hermes:hermes "$TOKEN_FILE"
-      chmod 0400 "$TOKEN_FILE"
-      echo "hermes-agent token delivered to $TOKEN_FILE"
+      # 3. stage forgejo-only; ExecStartPost installs the hermes copy at
+      #    /run/hermes-forgejo-token (0400 hermes:hermes, tmpfs)
+      printf '%s' "$TOKEN" > "$STAGED_TOKEN_FILE"
+      chmod 0400 "$STAGED_TOKEN_FILE"
+      echo "hermes-agent token staged at $STAGED_TOKEN_FILE"
+    '';
+  };
+
+  # Installed by forgejo-hermes-token's "+"-prefixed ExecStartPost: runs with
+  # FULL privileges (outside harden {}), where chown to the hermes user works
+  # without capabilities on the sandboxed main process (gitea-runner's
+  # +forgejo-gen-runner-token idiom).
+  hermesForgejoTokenDeliver = pkgs.writeShellApplication {
+    name = "forgejo-hermes-token-deliver";
+    runtimeInputs = [ pkgs.coreutils ];
+    text = ''
+      set -euo pipefail
+      install \
+        -o ${config.services.hermes.user} \
+        -g ${config.services.hermes.group} \
+        -m 0400 \
+        ${stateDir}/hermes-agent.token \
+        /run/hermes-forgejo-token
     '';
   };
 
