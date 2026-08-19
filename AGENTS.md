@@ -258,6 +258,16 @@ Quickshell is a QtQuick desktop shell replacing Waybar, Dunst, Wlogout, polkit_g
 - **Monitoring:** Gatus login-page body check (`pat(*Paperless-ngx sign in*)` — functional, not just 200) + Tika `:9998/` + Gotenberg `:3199/health`, all Discord-alerting; 6 services in system-health `monitoredServices`; deploy smoke in `post-deploy-check.sh` (login body + both sidecars)
 - **Old SQLite data:** pre-PG export sits in `/mnt/pool/services/paperless/export`; recover via `document_importer` if wanted (user decision pending). Old traps still true: flakes only see TRACKED files (`git add` new modules at write time); hardened oneshots get scratch space from `mktemp -d`, never host paths under `ReadWritePaths` (status 226)
 
+### llama-rag (RAG embeddings + reranker on GPU)
+
+**Module:** `modules/nixos/services/llama-rag.nix` (`services.llama-rag`) — two always-on llama-server instances (ROCm, gfx1150): `llama-embeddings` (bge-m3, `:8848`, `--embedding`) and `llama-reranker` (bge-reranker-v2-m3, `:8849`, `--reranking --pooling rank`). Ports `llama-embeddings`/`llama-reranker` in `lib/ports.nix`.
+
+- **Models are AUTO-FETCHED, never manual:** the `llama-rag-model-fetch` oneshot (before + required-by both servers, network-online-gated, `TimeoutStartSec=20min`) downloads both GGUFs from gpustack's verified conversions (`gpustack/bge-m3-GGUF`, `gpustack/bge-reranker-v2-m3-GGUF`, FP16, ~1.2 GB each) into `/data/ai/models/gguf/` via `.part` + same-fs atomic rename. It verifies the `GGUF` magic and writes a `<model>.source` stamp — a changed URL re-fetches, a truncated file heals. Re-runs are no-ops when current. deploy.sh restarts it (provisioner list)
+- **Why this exists (2026-08-19 incident):** the module originally shipped with "place GGUFs manually before starting" — nobody did, both services crash-looped to `start-limit-hit` on `failed to open GGUF` at every deploy (silent partial degradation: Paperless AI just disables RAG when the embedding endpoint is down). Declarative provisioning beats manual runbook steps
+- **`Requires=` the fetch unit:** if HuggingFace is unreachable at boot, the servers do NOT start (no crash-loop) — Gatus alerts on the dead `/health` endpoints instead
+- **Verified functional semantics:** `/v1/embeddings` returns 1024-dim vectors; `/v1/rerank` ranks correctly (both probed in post-deploy-check). bge-m3 dims are 1024 — if the model is ever swapped, update the smoke check's dimension assertion
+- **Monitoring:** Gatus `/health` checks on both ports (Discord-alerting) + 4 post-deploy smoke checks (2 liveness + 2 functional). Paperless consumes the embeddings endpoint via `PAPERLESS_AI_LLM_EMBEDDING_*` (see Paperless section)
+
 ### Sops + Age
 
 **Encrypting a NEW secret file** — NO sudo needed. The age PUBLIC key in `.sops.yaml` is sufficient:

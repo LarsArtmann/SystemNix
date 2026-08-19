@@ -87,7 +87,7 @@ _: {
                 echo "llama-rag: $file present and current"
                 return 0
               fi
-              echo "llama-rag: $file stale (magic or source URL changed) — re-fetching"
+              echo "llama-rag: $file stale (magic or source changed), re-fetching"
             fi
             echo "llama-rag: downloading $file from $url"
             if ! curl -fLsS --retry 3 --retry-delay 5 --connect-timeout 30 -o "$part" "$url"; then
@@ -98,7 +98,7 @@ _: {
             local magic
             magic="$(head -c 4 "$part" 2>/dev/null)" || true
             if [ "$magic" != "GGUF" ]; then
-              echo "llama-rag: downloaded $file is not GGUF — aborting" >&2
+              echo "llama-rag: downloaded $file is not GGUF, aborting" >&2
               rm -f -- "$part"
               return 1
             fi
