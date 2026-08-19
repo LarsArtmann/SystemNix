@@ -112,10 +112,6 @@ _: {
       '';
 
       embeddingsExecStart =
-        # --host/--port must stay on the standard OpenAI-compatible listener
-        # so /health answers. Guard: refuse to start into a model-less state —
-        # an absent/corrupt GGUF exits fast (the model-fetch oneshot should
-        # have installed it; if it failed the service must not crash-loop).
         "${llamaServer} --embedding"
         + " -m ${cfg.modelDir}/${cfg.embeddingsModel}"
         + " --alias ${cfg.embeddingsAlias}"
@@ -224,13 +220,39 @@ _: {
           }
         ];
 
+        systemd.services.llama-rag-model-fetch = {
+          description = "Fetch llama.cpp RAG GGUF models (bge-m3 + bge-reranker-v2-m3)";
+          wantedBy = [ "multi-user.target" ];
+          before = [
+            "llama-embeddings.service"
+            "llama-reranker.service"
+          ];
+          path = [
+            pkgs.curl
+            pkgs.coreutils
+          ];
+          unitConfig.ConditionPathIsDirectory = cfg.modelDir;
+          serviceConfig = {
+            Type = "oneshot";
+            User = cfg.user;
+            Group = cfg.group;
+            ExecStart = "${fetchScript} ${cfg.modelDir}";
+            # 2 × ~0.6-1.2 GB downloads; the INI is remote and can be slow.
+            TimeoutStartSec = "20min";
+          };
+          startLimitBurst = 3;
+          startLimitIntervalSec = 300;
+        };
+
         systemd.services.llama-embeddings = {
           description = "llama.cpp embeddings server (bge-m3, ROCm GPU)";
           after = [
             "network-online.target"
+            "llama-rag-model-fetch.service"
           ];
           wants = [ "network-online.target" ];
           wantedBy = [ "multi-user.target" ];
+          requires = [ "llama-rag-model-fetch.service" ];
 
           environment = rocm.env // {
             LD_LIBRARY_PATH = ldLibPath;
@@ -253,9 +275,11 @@ _: {
           description = "llama.cpp reranking server (bge-reranker-v2-m3, ROCm GPU)";
           after = [
             "network-online.target"
+            "llama-rag-model-fetch.service"
           ];
           wants = [ "network-online.target" ];
           wantedBy = [ "multi-user.target" ];
+          requires = [ "llama-rag-model-fetch.service" ];
 
           environment = rocm.env // {
             LD_LIBRARY_PATH = ldLibPath;
