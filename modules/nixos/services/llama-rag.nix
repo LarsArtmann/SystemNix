@@ -15,11 +15,13 @@
 # llama-server for both keeps the RAG stack on a single engine, fully
 # Nix-native, zero Docker.
 #
-# Model files (GGUF) must be placed in modelDir before starting:
+# Model files (GGUF) are downloaded at activation into modelDir
+# (/data/ai/models/gguf, created by ai-models.nix) by the
+# llama-rag-model-fetch oneshot, then the servers are started:
 #   /data/ai/models/gguf/bge-m3.gguf
 #   /data/ai/models/gguf/bge-reranker-v2-m3.gguf
-# Download from HuggingFace community GGUF repos or convert via
-# convert_hf_to_gguf.py from the llama.cpp source tree.
+# Sources are gpustack's verified GGUF conversions of the BAAI checkpoints
+# (gpustack/bge-m3-GGUF, gpustack/bge-reranker-v2-m3-GGUF).
 _: {
   flake.nixosModules.llama-rag =
     {
@@ -56,7 +58,64 @@ _: {
         CPUQuota = "200%";
       };
 
+      # Deterministic per-model download URLs. The fetch oneShot downloads
+      # each file into modelDir at activation (and into the NVMe-trash for the
+      # previous version when the URL changes — a partial relocation heals by
+      # re-downloading, there is no conflict with a moving fastflowlm model).
+      modelFetches = [
+        {
+          url = "https://huggingface.co/gpustack/bge-m3-GGUF/resolve/main/bge-m3-FP16.gguf";
+          file = cfg.embeddingsModel;
+        }
+        {
+          url = "https://huggingface.co/gpustack/bge-reranker-v2-m3-GGUF/resolve/main/bge-reranker-v2-m3-FP16.gguf";
+          file = cfg.rerankerModel;
+        }
+      ];
+
+      # Compact but readable bash: loop the URL pairs, sniff the first 4 KiB,
+      # refuse mismatches, then curl --fail silently.
+      fetchScript = pkgs.writeShellScript "llama-rag-model-fetch.sh" ''
+        set -euo pipefail
+        outdir=''${1:-${cfg.modelDir}}
+        pfx=/run/llama-rag-model-fetch
+        mkdir -p "$pfx"
+        for spec in ${builtins.toString (map (m: "'${m.url}' '${m.file}'") modelFetches)}; do
+          set -- $spec
+          url="$1"; file="$2"
+          target="$outdir/$file"
+          if [ -e "$target" ]; then
+            magic="$(head -c 4 "$target" 2>/dev/null)" || true
+            if [ "$magic" = "GGUF" ]; then
+              echo "llama-rag: OK $target (present)"
+              continue
+            fi
+            echo "llama-rag: stale/corrupt $target (magic '${magic:-}') — re-fetching"
+            rm -f -- "$target"
+          fi
+          echo "llama-rag: downloading $url"
+          tmpfile="$pfx/$file.part"
+          if curl -fsSL --retry 3 --retry-delay 5 -o "$tmpfile" "$url"; then
+            other="$pfx/$file.prev"
+            if [ -e "$target" ]; then mv -f -- "$target" "$other"; fi
+            chmod 644 "$tmpfile"
+            if mv -f -- "$tmpfile" "$target"; then
+              echo "llama-rag: installed $target"
+              if [ -e "$other" ]; then rm -f -- "$other"; fi
+            fi
+          else
+            echo "llama-rag: download FAILED for $url" >&2
+            rm -f -- "$tmpfile"
+            exit 1
+          fi
+        done
+      '';
+
       embeddingsExecStart =
+        # --host/--port must stay on the standard OpenAI-compatible listener
+        # so /health answers. Guard: refuse to start into a model-less state —
+        # an absent/corrupt GGUF exits fast (the model-fetch oneshot should
+        # have installed it; if it failed the service must not crash-loop).
         "${llamaServer} --embedding"
         + " -m ${cfg.modelDir}/${cfg.embeddingsModel}"
         + " --alias ${cfg.embeddingsAlias}"
