@@ -1399,6 +1399,32 @@ _: {
                   alerts = discordAlert "One or more OIDC client secrets are stale (>90d) — consider rotating";
                 })
               ]
+              ++ lib.optionals (config.services.systemd-graph.enable or false) [
+                (mkHttpCheck {
+                  name = "systemd-graph";
+                  group = "Review Tools";
+                  url = "https://graph.home.lan/";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 2000"
+                  ];
+                  alerts = discordAlert "systemd-graph UI down — graph.home.lan unreachable";
+                })
+              ]
+              ++ lib.optionals (config.services.systemd-timer-monitor.enable or false) [
+                (mkHttpCheck {
+                  name = "systemd-timer-monitor";
+                  group = "Review Tools";
+                  url = "https://timers.home.lan/";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*<!DOCTYPE html*)"
+                  ];
+                  alerts = discordAlert "systemd-timer-monitor report down — timers.home.lan unreachable or stale";
+                })
+              ]
               ++ map mkWebsiteCheck ossWebsites
             );
           };

@@ -606,6 +606,10 @@ check "Immich (HTTPS)" "https://immich.$DOMAIN/api/server/ping" "200" "" 2>/dev/
 $banksync_enabled && check "Bank-Sync (HTTPS)" "https://banksync.$DOMAIN/" "200" "Bank-Sync Dashboard" 2>/dev/null || true
 check "Overview (HTTPS)" "https://overview.$DOMAIN/" "200" "<html" 2>/dev/null || true
 
+# Enable-gated review tools (LAN-only, no auth)
+test -e /etc/systemd/system/systemd-graph.service && check "systemd-graph (HTTPS)" "https://graph.$DOMAIN/" "200" "" 2>/dev/null || true
+test -e /etc/systemd/system/systemd-timer-monitor-audit.service && check "systemd-timer-monitor (HTTPS)" "https://timers.$DOMAIN/" "200" "<html" 2>/dev/null || true
+
 # --- Auth gateway health (oauth2-proxy / forward-auth) ---
 # Catches P9: oauth2-proxy returning 500 on protected vHosts.
 # From LAN, protected vHosts should return 200 (LAN bypass) or redirect (302/303).
