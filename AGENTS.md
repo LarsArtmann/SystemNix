@@ -164,6 +164,25 @@ Background LLM server (Qwen3.6-35B-A3B MoE, ~3B active, 13.6 GB mmap'd) on the A
 - **Hand-started process is now obsolete**: delete `~/.local/share/fastflowlm/`, `~/.local/bin/flm`, and the LD_LIBRARY_PATH exports in `~/.bashrc` after the deploy proves stable.
 - **Manual install**: `~/projects/anime-comic-pipeline/docs/npu-fastflowlm-llm-server.md` has the measured resource usage (24.9 GB RSS at idle, 14 t/s decode, ~3 s TTFT) and full operational guide.
 
+### llama-rag (Embeddings + Reranking on GPU)
+
+**Module:** `modules/nixos/services/llama-rag.nix` (`services.llama-rag`) — two lightweight `llama-server` instances on the GPU (ROCm) for retrieval-augmented generation. Completes the three-tier AI stack:
+
+| Role | Engine | Port | Hardware | Module |
+|------|--------|------|----------|--------|
+| Chat LLM | FastFlowLM | 52625 (socket-activated) | NPU | `fastflowlm.nix` |
+| Embeddings | llama-server (`--embedding`) | 8848 | GPU (ROCm) | `llama-rag.nix` |
+| Reranking | llama-server (`--reranking --pooling rank`) | 8849 | GPU (ROCm) | `llama-rag.nix` |
+
+- **Why llama-server, not Ollama or TEI:** Ollama does NOT support reranking (issue #3368, open since Mar 2024 — no `/rerank` endpoint, zero rerank code). TEI is Docker-only with no gfx1150 ROCm support. `llama.cpp` has had native reranking since PR #9510 (Sept 2024): `--reranking` enables the `/v1/rerank` endpoint, `--pooling rank` selects cross-encoder pooling. Both engines are already packaged as `llama-cpp-rocwmma` in `ai-stack.nix` — zero new packages, zero Docker
+- **Why two instances:** `--embedding` and `--reranking` are independent server modes (verified via `llama-server --help` on nixpkgs build). One instance serves `/v1/embeddings` (bge-m3), the other serves `/v1/rerank` (bge-reranker-v2-m3). Both are ~568M params: cold load ~1s, VRAM ~1-2 GB each
+- **Model download:** The `llama-rag-model-fetch` oneshot downloads GGUFs from HuggingFace (`gpustack/bge-m3-GGUF`, `gpustack/bge-reranker-v2-m3-GGUF`) into `/data/ai/models/gguf/`. Verifies GGUF magic bytes, stamps source URL for staleness detection, atomic rename from `.part`. `ConditionPathIsDirectory` on modelDir skips if `/data` isn't mounted. Both server services `requires` the fetch — they won't start without models
+- **Flags verified** (llama-cpp-10408 in nixpkgs): `--embedding`, `--reranking`, `--pooling {none,mean,cls,last,rank}`, `--alias STRING` all present. No `--rerank-bge-v2-m3-default` preset in this version — explicit `--reranking --pooling rank` is used instead
+- **Paperless AI integration:** `PAPERLESS_AI_LLM_EMBEDDING_*` env vars in `paperless.nix` point to `:8848/v1` with model alias `bge-m3`. Dummy API key `llama-server-no-auth` (llama-server ignores Authorization). Replaces the previous "NO embedding settings" caveat — RAG semantic search is now active when both `paperless` and `llama-rag` are enabled
+- **FastFlowLM `--embed 1` remains broken:** Co-loading embed-gemma with the Qwen 13.6 GB model still fails (xrt ENOMEM). The `loadEmbed` option in `fastflowlm.nix` is now permanently obsolete — embeddings are served by llama-rag, not FastFlowLM. Can be removed in a future cleanup
+- **Causal-LM rerankers (Qwen3-Reranker) have a near-zero score bug** in llama.cpp (PR #25448 unmerged). Must use BERT/XLM-RoBERTa-family rerankers like `bge-reranker-v2-m3`
+- **Monitoring:** Gatus health checks on `:8848/health` and `:8849/health` (60s interval, <1s response time, Discord-alerting)
+
 ### Quickshell (DankMaterialShell)
 
 Quickshell is a QtQuick desktop shell replacing Waybar, Dunst, Wlogout, polkit_gnome, **and rofi** (launcher, clipboard, keybinds, emoji, calc). Configured via DankMaterialShell's upstream HM module.
