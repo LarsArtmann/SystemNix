@@ -43,6 +43,10 @@
     govalid = prev.callPackage ../pkgs/govalid.nix { };
   })
 
+  (_final: prev: {
+    systemd-timer-monitor = prev.callPackage ../pkgs/systemd-timer-monitor.nix { };
+  })
+
   (
     _final: prev:
     prev.lib.optionalAttrs prev.stdenv.hostPlatform.isLinux {

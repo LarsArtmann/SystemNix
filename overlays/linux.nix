@@ -18,6 +18,11 @@ let
     netwatch = prev.callPackage ../pkgs/netwatch.nix { };
   };
 
+  systemdGraphOverlay = _final: prev: {
+    systemd-graph-webui = prev.callPackage ../pkgs/systemd-graph/webui.nix { };
+    systemd-graph = prev.callPackage ../pkgs/systemd-graph { };
+  };
+
   # niri-flake's make-niri pins libdisplay-info_0_2 via callPackage.
   # nixpkgs removed the libdisplay-info_0_2 alias (throws).
   # niri's Cargo.lock now uses libdisplay-info-sys 0.3.0 Rust crate,
@@ -214,4 +219,5 @@ in
   overview.overlays.default
   discordsync.overlays.default
   bunMemoryLimitOverlay
+  systemdGraphOverlay
 ]

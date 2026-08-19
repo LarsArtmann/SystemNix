@@ -336,6 +336,10 @@ in
       security-hardening.enable = true;
       gatus-config.enable = true;
       multi-wm.enable = true;
+      # Review-only systemd tooling (LAN bypass, no auth) — disabled by
+      # default, opt-in for ops review. See modules/nixos/services/.
+      systemd-graph.enable = true;
+      systemd-timer-monitor.enable = true;
       browser-policies = {
         enable = true;
         chromiumExtensions =
