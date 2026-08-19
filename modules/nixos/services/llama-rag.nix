@@ -33,7 +33,6 @@ _: {
       libHelpers = import ../../../lib/default.nix lib;
       inherit (libHelpers)
         harden
-        serviceDefaults
         ports
         ioTier
         ;
@@ -56,6 +55,22 @@ _: {
         MemoryMax = cfg.memoryMax;
         CPUQuota = "200%";
       };
+
+      embeddingsExecStart =
+        "${llamaServer} --embedding"
+        + " -m ${cfg.modelDir}/${cfg.embeddingsModel}"
+        + " --alias ${cfg.embeddingsAlias}"
+        + " --host ${cfg.host}"
+        + " --port ${toString cfg.embeddingsPort}"
+        + " --ctx-size ${toString cfg.ctxSize}";
+
+      rerankerExecStart =
+        "${llamaServer} --reranking --pooling rank"
+        + " -m ${cfg.modelDir}/${cfg.rerankerModel}"
+        + " --alias ${cfg.rerankerAlias}"
+        + " --host ${cfg.host}"
+        + " --port ${toString cfg.rerankerPort}"
+        + " --ctx-size ${toString cfg.ctxSize}";
     in
     {
       options.services.llama-rag = {
@@ -67,7 +82,7 @@ _: {
 
         modelDir = lib.mkOption {
           type = lib.types.str;
-          default = config.services.ai-models.paths.gguf or "/data/ai/models/gguf";
+          default = "/data/ai/models/gguf";
           description = "Directory containing GGUF model files. Created by ai-models.nix.";
         };
 
@@ -166,15 +181,7 @@ _: {
           serviceConfig = lib.mkMerge [
             commonServiceConfig
             {
-              ExecStart = concatArgs [
-                llamaServer
-                "--embedding"
-                "-m ${cfg.modelDir}/${cfg.embeddingsModel}"
-                "--alias ${cfg.embeddingsAlias}"
-                "--host ${cfg.host}"
-                "--port ${toString cfg.embeddingsPort}"
-                "--ctx-size ${toString cfg.ctxSize}"
-              ];
+              ExecStart = embeddingsExecStart;
             }
             (harden { })
             ioTier.background
@@ -200,16 +207,7 @@ _: {
           serviceConfig = lib.mkMerge [
             commonServiceConfig
             {
-              ExecStart = concatArgs [
-                llamaServer
-                "--reranking"
-                "--pooling rank"
-                "-m ${cfg.modelDir}/${cfg.rerankerModel}"
-                "--alias ${cfg.rerankerAlias}"
-                "--host ${cfg.host}"
-                "--port ${toString cfg.rerankerPort}"
-                "--ctx-size ${toString cfg.ctxSize}"
-              ];
+              ExecStart = rerankerExecStart;
             }
             (harden { })
             ioTier.background
