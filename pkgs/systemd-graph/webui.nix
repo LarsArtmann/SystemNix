@@ -35,22 +35,14 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     hash = "sha256-zZQ2/PqdeK1F/KV+NiKieCbmmzi9x4zpOteQuQTCCxU=";
   };
 
-  # Skip Nix's automatic pnpm build hook (`pnpmBuildHook`) — invoke pnpm
-  # directly. We only need `pnpm build` (vite build), not the test/lint/dev
-  # scripts the default hook might try to run.
-  #
-  # pnpm 11's default `verify-deps-before-run=true` re-queries the registry
-  # for supply-chain metadata, which fails inside the Nix sandbox (DNS for
-  # registry.npmjs.org is blocked). The deps are already in the offline
-  # store from fetchPnpmDeps, so the verification is redundant. `--config.*`
-  # flags override .npmrc / pnpm-lock.yaml settings for this invocation only.
+  # pnpmConfigHook (in nativeBuildInputs) runs in postConfigure and handles
+  # `pnpm install --offline --ignore-scripts --frozen-lockfile` with the
+  # correct pnpm 11 settings (trust_lockfile, store-dir from pnpmDeps).
+  # We must NOT set dontConfigure — that skips postConfigureHooks and the
+  # hook never fires, leaving deps uninstalled.
   buildPhase = ''
     runHook preBuild
 
-    pnpm install --frozen-lockfile \
-      --config.verify-deps-before-run=false \
-      --config.manage-package-manager-versions=false \
-      --config.auto-install-peers=false
     pnpm build
 
     runHook postBuild
@@ -64,8 +56,6 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
     runHook postInstall
   '';
-
-  dontConfigure = true;
 
   meta = with lib; {
     description = "Pre-built React SPA for systemd-graph";

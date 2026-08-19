@@ -41,10 +41,16 @@ buildGo126Module {
   subPackages = [ "cmd/server" ];
 
   # Single direct dep: godbus/dbus/v5. vendor tree is tiny.
-  vendorHash = "";
+  vendorHash = "sha256-Ac63bZlBvCrhS7b8mk7aJdApI8UGtJxnZG35L37roGY=";
 
   # systemd-graph has no Go test suite.
   doCheck = false;
+
+  # buildGoModule names the binary after the source dir (cmd/server → "server").
+  # Rename to match meta.mainProgram so lib.getExe resolves correctly.
+  postInstall = ''
+    mv $out/bin/server $out/bin/systemd-graph
+  '';
 
   meta = with lib; {
     description = "Live web UI for the systemd unit dependency graph (D-Bus driven, React SPA)";

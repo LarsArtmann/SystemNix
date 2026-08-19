@@ -55,6 +55,7 @@ _: {
           after = [ "dbus.service" "network-online.target" ];
           wants = [ "dbus.service" "network-online.target" ];
           inherit onFailure;
+          restartTriggers = [ cfg.package ];
 
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
