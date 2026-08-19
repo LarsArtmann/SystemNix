@@ -297,7 +297,12 @@ banksync_enabled=false
 test -e /etc/systemd/system/bank-sync.service && banksync_enabled=true
 if $banksync_enabled; then
   if banksync_body=$(curl -s --compressed --max-time 10 "http://127.0.0.1:8097/" 2>/dev/null); then
-    if echo "$banksync_body" | grep -q "Bank-Sync Dashboard"; then
+    # grep a herestring, NEVER `echo "$body" | grep -q`: under set -o
+    # pipefail a body larger than the 64KiB pipe buffer makes the echo
+    # writer die on SIGPIPE (141) the moment grep -q exits at its first
+    # match — a false "body lacks" FAIL (caught live 2026-08-19 when the
+    # templ-components dashboard grew the page to ~106KiB).
+    if grep -q "Bank-Sync Dashboard" <<<"$banksync_body"; then
       report_pass "Bank-Sync — dashboard answers (templ stack + read models)"
     else
       report_fail 'Bank-Sync — :8097 answered but the body lacks "Bank-Sync Dashboard"'

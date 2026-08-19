@@ -12,6 +12,9 @@
 #     decision as atticd (2026-08-18)
 #   - Wise API key + AES-256 event encryption key from the sops template
 #     "bank-sync-env" (see sops.nix)
+#   - Optional Wise SCA one-time-token drop-in (EnvironmentFile "-"-prefixed,
+#     absent by default — see docs/services/bank-sync-sca.md for the 90-day
+#     renewal runbook)
 #   - Pool-gated storage-dir oneshot + house hardening (harden {},
 #     serviceDefaults, onFailure, start limits, background I/O tier)
 _: {
@@ -125,6 +128,15 @@ _: {
           serviceConfig = lib.mkMerge [
             {
               ExecStartPre = [ (lib.getExe checkEncryptionKey) ];
+              # Wise Strong Customer Authentication (SCA) one-time token (OTT).
+              # Wise gates SCA-protected endpoints (balance statements for
+              # UK/EEA profiles) behind a 403 challenge roughly every 90 days;
+              # approval happens in the Wise app and the OTT is single-use, so
+              # it must never live in sops or the nix store. The leading "-"
+              # makes the absent file a no-op; systemd reads EnvironmentFile
+              # as PID 1, so the drop-in can be root-owned 0400. mkMerge
+              # appends to upstream's EnvironmentFile list.
+              EnvironmentFile = [ "-/var/lib/bank-sync-sca/token.env" ];
             }
             (harden {
               MemoryMax = "512M";
