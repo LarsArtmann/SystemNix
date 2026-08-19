@@ -231,7 +231,7 @@ When an alert fires, find the service name below and follow the steps.
 
 ### GPUActive exceeds 60G — GTT buffer objects consuming excessive RAM
 
-- **Impact:** GPUActive (GTT buffer objects) is the #1 RAM consumer on Strix Halo. At 60G+, only ~34G remains for all system processes.
+- **Impact:** GPUActive (GTT buffer objects) is the #1 RAM consumer on Strix Halo. At 60G+, only ~50G remains for all system processes.
 - **Root cause:** Helium/Electron renderers, Quickshell Qt buffers, or Wayland compositor surfaces allocating GTT memory that cannot be reclaimed (GPUReclaim=0).
 - **Diagnosis:**
   ```bash

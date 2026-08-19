@@ -32,6 +32,7 @@ _: {
       cfg = config.services.paperless;
       dataDir = cfg.dataDir;
       llmEndpoint = "http://127.0.0.1:${toString ports.fastflowlm}/v1";
+      embeddingEndpoint = "http://127.0.0.1:${toString ports.llama-embeddings}/v1";
     in
     {
       config = lib.mkIf cfg.enable {

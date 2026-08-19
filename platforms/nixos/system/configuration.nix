@@ -453,6 +453,14 @@ in
       # Serve embed-gemma on a dedicated instance instead when needed.
       fastflowlm.enable = true;
 
+      # llama.cpp RAG stack — embeddings (bge-m3) + reranking (bge-reranker-v2-m3)
+      # on the GPU (ROCm). Two lightweight llama-server instances, always-on.
+      # Replaces the previous plan to use Ollama for embeddings — Ollama does
+      # NOT support reranking (issue #3368). Using llama-server for both keeps
+      # the RAG stack on a single Nix-native engine, zero Docker.
+      # Model GGUFs must be placed in /data/ai/models/gguf/ before starting.
+      llama-rag.enable = true;
+
       file-and-image-renamer = {
         enable = true;
         watchPaths = [
