@@ -159,12 +159,18 @@ if [ -n "$STAGED_NIX" ]; then
         log_success "Statix passed! No antipatterns found."
     fi
 
-    log_info "Formatting staged .nix files with alejandra..."
+    log_info "Formatting staged .nix files with the pinned formatter (nix fmt)..."
+    # MUST be the flake-pinned formatter (nix fmt = treefmt-full-flake from
+    # flake.lock), NOT unpinned `nixpkgs#alejandra`: the registry floats to
+    # nixos-unstable whose alejandra style diverges from the pinned one and
+    # injects whole-file reformats that the repo formatter (and CI's
+    # `nix fmt -- --ci`) immediately revert — a formatter split-brain that
+    # ships churn in commits (hit on PR #139, 2026-08-19).
+    if ! echo "$STAGED_NIX" | xargs nix fmt --; then
+        log_error "nix fmt failed on staged files — leaving them unformatted."
+    fi
     echo "$STAGED_NIX" | while read -r f; do
-        if [ -f "$f" ]; then
-            nix shell nixpkgs#alejandra --command alejandra "$f" 2>/dev/null || true
-            git add "$f" 2>/dev/null || true
-        fi
+        git add "$f" 2>/dev/null || true
     done
     log_success "Staged .nix files formatted."
 else

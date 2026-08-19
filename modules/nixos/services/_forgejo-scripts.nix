@@ -13,6 +13,12 @@
   runnerLabels,
   runnerConfigFile,
 }:
+let
+  # 'or {}' so a standalone nixosModules.forgejo consumer that does not import
+  # nixosModules.hermes evaluates without error (the deliver script and unit
+  # are only wired when hermes is enabled — see forgejo.nix).
+  hermesCfg = config.services.hermes or { };
+in
 {
   mirrorGithubScript = pkgs.writeShellApplication {
     name = "forgejo-mirror-github";
@@ -352,7 +358,11 @@
       #    the token is the only credential that leaves this box).
       #    Match by EMAIL: forgejo enforces unique emails, and the username is
       #    a substring of it (plain username grep would false-positive).
-      if ! "$FORGEJO" admin user list 2>/dev/null | grep -q "$FORGEJO_USER_EMAIL"; then
+      USER_LIST=$("$FORGEJO" admin user list) || {
+        echo "ERROR: forgejo admin user list failed" >&2
+        exit 1
+      }
+      if ! printf '%s' "$USER_LIST" | grep -q "$FORGEJO_USER_EMAIL"; then
         echo "Creating Forgejo user: $FORGEJO_USER_NAME"
         "$FORGEJO" admin user create \
           --username "$FORGEJO_USER_NAME" \
@@ -388,7 +398,7 @@
         --username "$FORGEJO_USER_NAME" \
         --token-name "hermes-agent-$(date +%s)" \
         --scopes read:repository \
-        --raw 2>/dev/null) || TOKEN=""
+        --raw) || TOKEN=""
 
       if ! echo "$TOKEN" | grep -qE '^[0-9a-f]{40}$'; then
         echo "ERROR: token generation failed for hermes-agent" >&2
@@ -397,8 +407,13 @@
 
       # 3. stage forgejo-only; ExecStartPost installs the hermes copy at
       #    /run/hermes-forgejo-token (0400 hermes:hermes, tmpfs)
-      printf '%s' "$TOKEN" > "$STAGED_TOKEN_FILE"
-      chmod 0400 "$STAGED_TOKEN_FILE"
+      #    Atomic install: the existing 0400 file is read-only even for the
+      #    forgejo owner, so a bare redirect would EACCES on regeneration.
+      TMP_TOKEN_FILE=$(mktemp "$STAGED_TOKEN_FILE.XXXXXX")
+      trap 'rm -f "$TMP_TOKEN_FILE"' EXIT
+      printf '%s' "$TOKEN" > "$TMP_TOKEN_FILE"
+      install -m 0400 "$TMP_TOKEN_FILE" "$STAGED_TOKEN_FILE"
+      rm -f "$TMP_TOKEN_FILE"
       echo "hermes-agent token staged at $STAGED_TOKEN_FILE"
     '';
   };
@@ -407,14 +422,17 @@
   # FULL privileges (outside harden {}), where chown to the hermes user works
   # without capabilities on the sandboxed main process (gitea-runner's
   # +forgejo-gen-runner-token idiom).
+  # hermesCfg (defined in the let binding above) falls back to {} when the
+  # hermes module is absent, so this script still builds for standalone forgejo.
+  inherit hermesCfg;
   hermesForgejoTokenDeliver = pkgs.writeShellApplication {
     name = "forgejo-hermes-token-deliver";
     runtimeInputs = [ pkgs.coreutils ];
     text = ''
       set -euo pipefail
       install \
-        -o ${config.services.hermes.user} \
-        -g ${config.services.hermes.group} \
+        -o ${hermesCfg.user or "hermes"} \
+        -g ${hermesCfg.group or "hermes"} \
         -m 0400 \
         ${stateDir}/hermes-agent.token \
         /run/hermes-forgejo-token
