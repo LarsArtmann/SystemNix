@@ -124,17 +124,16 @@ _: {
             # default 120s timeout would abort the first AI request after an
             # idle unload. 300s mirrors the papdashboard insight enricher.
             PAPERLESS_AI_LLM_REQUEST_TIMEOUT = 300;
-            # NOTE: no PAPERLESS_AI_LLM_EMBEDDING_* settings — embeddings/RAG
-            # chat stay OFF until a dedicated embed-only FastFlowLM instance
-            # exists. Co-loading embed-gemma via `--embed 1` in the MAIN flm
-            # process breaks the Qwen model load (xrt buffer-object ENOMEM,
-            # live-verified 2026-08-18: embed loads, then the 13.6 GB model
-            # fails mmap and the server starts WITHOUT the default model).
-            # Paperless degrades cleanly: llm_index_enabled =
-            # ai_enabled AND llm_embedding_backend — unset backend disables
-            # RAG indexing while AI classification/tagging keeps working.
-            # Re-enable by serving embed-gemma on its own port and setting
-            # PAPERLESS_AI_LLM_EMBEDDING_{BACKEND,ENDPOINT,MODEL}.
+            # --- Embeddings (RAG semantic search) on llama-server (GPU) -------
+            # Served by the llama-rag module's embeddings instance (bge-m3)
+            # at :8848. llama-server is OpenAI-compatible and ignores the
+            # Authorization header, so a dummy API key satisfies llama-index's
+            # "key required" guard. The embedding model alias is set via
+            # --alias on the llama-server side (see llama-rag.nix).
+            PAPERLESS_AI_LLM_EMBEDDING_BACKEND = "openai-like";
+            PAPERLESS_AI_LLM_EMBEDDING_ENDPOINT = embeddingEndpoint;
+            PAPERLESS_AI_LLM_EMBEDDING_MODEL = config.services.llama-rag.embeddingsAlias;
+            PAPERLESS_AI_LLM_EMBEDDING_API_KEY = "llama-server-no-auth";
           };
         };
 

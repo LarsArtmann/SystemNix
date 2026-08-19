@@ -65,6 +65,9 @@ in
     env = machine.succeed("systemctl show paperless-web --property=Environment")
     assert "PAPERLESS_AI_LLM_ENDPOINT=http://127.0.0.1:52625/v1" in env, "AI endpoint missing from unit env"
     assert "PAPERLESS_AI_LLM_MODEL=qwen3.6-moe:35b-a3b" in env, "AI model missing from unit env"
+    assert "PAPERLESS_AI_LLM_EMBEDDING_BACKEND=openai-like" in env, "embedding backend missing from unit env"
+    assert "PAPERLESS_AI_LLM_EMBEDDING_ENDPOINT=http://127.0.0.1:8848/v1" in env, "embedding endpoint missing from unit env"
+    assert "PAPERLESS_AI_LLM_EMBEDDING_MODEL=bge-m3" in env, "embedding model missing from unit env"
     assert "PAPERLESS_TRASH_DIR=/var/lib/paperless/trash" in env, "trash dir setting missing from unit env"
     assert "PAPERLESS_FILENAME_FORMAT={{ created_year }}/{{ correspondent }}/{{ title }}" in env, "filename format missing from unit env"
     assert "PAPERLESS_DBHOST=/run/postgresql" in env, "postgres backend missing from unit env"

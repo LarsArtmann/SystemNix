@@ -39,12 +39,14 @@ _: {
           mkdir -p "${stateDir}"
           # Run as root for accurate failed-unit counts (most reads work as
           # the service user too). The script is read-only: --quiet suppresses
-          # stdout, non-zero exit on issues (cron-style alerting hook).
+          # stdout. Exit code 1 = "issues found" (expected for a monitoring
+          # tool) — the report is always written before the exit. Suppress the
+          # non-zero exit so systemd doesn't mark the oneshot as failed.
           systemd-audit \
             --quiet \
             --timeout 30 \
             -o "${reportPath}" \
-            --json "${jsonPath}"
+            --json "${jsonPath}" || true
           # Refresh mtime for liveness checks (Caddy file_server serves the
           # latest snapshot on every request; mtime is the freshness signal).
           : > "${stateDir}/.last-run"

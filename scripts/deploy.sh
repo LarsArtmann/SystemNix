@@ -157,6 +157,15 @@ if nix run .#pre-deploy-check; then
     sudo systemctl restart browser-history.service 2>/dev/null || true
   fi
 
+  # Trigger the systemd-timer-monitor audit so the report is fresh after deploy.
+  # The timer-driven oneshot (OnBootSec=2min) may not fire immediately after
+  # activation. Using `start` (not `restart`) — it's a plain oneshot without
+  # RemainAfterExit, so `start` runs it once and the timer picks up from there.
+  if systemctl is-enabled --quiet systemd-timer-monitor-audit.service 2>/dev/null; then
+    echo "Starting systemd-timer-monitor-audit.service (fresh report after deploy)"
+    sudo systemctl start systemd-timer-monitor-audit.service 2>/dev/null || true
+  fi
+
   # Reap zombie buildcache mounts + re-verify real I/O after switch. The unit is
   # ConditionPathExists-gated on the by-id device node: no-ops safely when the
   # USB SSD is unplugged, heals the mount when it is present.
