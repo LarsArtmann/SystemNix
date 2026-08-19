@@ -33,6 +33,7 @@ _: {
         runtimeInputs = [
           pkgs.systemd-timer-monitor
           pkgs.coreutils
+          pkgs.python3
         ];
         text = ''
           set -eu

@@ -534,6 +534,30 @@ _: {
                   alerts = discordAlert "Ollama LLM inference down — local AI unavailable";
                 })
               ]
+              ++ lib.optionals (config.services.llama-rag.enable or false) [
+                (mkHttpCheck {
+                  name = "llama.cpp Embeddings";
+                  group = "AI";
+                  url = "http://localhost:${toString config.services.llama-rag.embeddingsPort}/health";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 1000"
+                  ];
+                  alerts = discordAlert "llama.cpp embeddings server down — RAG indexing and semantic search unavailable";
+                })
+                (mkHttpCheck {
+                  name = "llama.cpp Reranker";
+                  group = "AI";
+                  url = "http://localhost:${toString config.services.llama-rag.rerankerPort}/health";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 1000"
+                  ];
+                  alerts = discordAlert "llama.cpp reranker down — RAG reranking unavailable, search quality degraded";
+                })
+              ]
               ++ lib.optionals config.services.voice-agents.enable [
                 (mkHttpCheck {
                   name = "Whisper ASR";
