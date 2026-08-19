@@ -36,13 +36,21 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   };
 
   # Skip Nix's automatic pnpm build hook (`pnpmBuildHook`) — invoke pnpm
-  # directly with `--frozen-lockfile` so the lockfile in the source is
-  # authoritative. We only need `pnpm build` (vite build), not the
-  # test/lint/dev scripts the default hook might try to run.
+  # directly. We only need `pnpm build` (vite build), not the test/lint/dev
+  # scripts the default hook might try to run.
+  #
+  # pnpm 11's default `verify-deps-before-run=true` re-queries the registry
+  # for supply-chain metadata, which fails inside the Nix sandbox (DNS for
+  # registry.npmjs.org is blocked). The deps are already in the offline
+  # store from fetchPnpmDeps, so the verification is redundant. `--config.*`
+  # flags override .npmrc / pnpm-lock.yaml settings for this invocation only.
   buildPhase = ''
     runHook preBuild
 
-    pnpm install --frozen-lockfile
+    pnpm install --frozen-lockfile \
+      --config.verify-deps-before-run=false \
+      --config.manage-package-manager-versions=false \
+      --config.auto-install-peers=false
     pnpm build
 
     runHook postBuild
