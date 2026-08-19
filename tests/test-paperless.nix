@@ -18,10 +18,13 @@ let
   paperlessFlakeOutput = (import ../modules/nixos/services/paperless.nix) { };
   paperlessNixosModule = paperlessFlakeOutput.flake.nixosModules.paperless;
 
-  # Options-only import: the paperless module reads
-  # config.services.fastflowlm.model for the AI model name.
+  # Options-only imports: the paperless module reads
+  # config.services.fastflowlm.model (AI model name) and
+  # config.services.llama-rag.embeddingsAlias (embedding model name).
   fastflowlmNixosModule =
     (import ../modules/nixos/services/fastflowlm.nix { }).flake.nixosModules.fastflowlm;
+  llamaRagNixosModule =
+    (import ../modules/nixos/services/llama-rag.nix { }).flake.nixosModules.llama-rag;
 in
 {
   name = "paperless";
@@ -30,6 +33,7 @@ in
     imports = [
       paperlessNixosModule
       fastflowlmNixosModule
+      llamaRagNixosModule
       ./mock-sops.nix
       ./test-helpers.nix
     ];
