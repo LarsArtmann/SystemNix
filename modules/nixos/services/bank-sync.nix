@@ -84,11 +84,13 @@ _: {
               RemainAfterExit = true;
             }
             (harden {
-              # subvolume create needs CAP_SYS_ADMIN, chown CAP_CHOWN;
-              # harden{} defaults to an empty bounding set which would EPERM
-              # both. Write access to the PARENT is required to create the
-              # subvolume (mkdir/chown/chmod on the dir itself is covered).
-              CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_CHOWN CAP_DAC_OVERRIDE";
+              # subvolume create needs CAP_SYS_ADMIN, chown CAP_CHOWN; chmod
+              # AFTER chown (and on every re-run) targets a dir owned by
+              # bank-sync, which requires CAP_FOWNER; harden{} defaults to an
+              # empty bounding set which would EPERM all of them. Write access
+              # to the PARENT is required to create the subvolume
+              # (mkdir/chown/chmod on the dir itself is covered).
+              CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
               ReadWritePaths = [ (dirOf cfg.dataDir) ];
             })
             (serviceOneshotDefaults { })
@@ -105,8 +107,11 @@ _: {
             else
               mkdir -p "$dir"
             fi
-            chown bank-sync:bank-sync "$dir"
+            # chmod while root still owns a freshly created subvolume, chown
+            # last — re-runs (dir already bank-sync-owned) rely on CAP_FOWNER
+            # for the chmod, see the bounding set above.
             chmod 0750 "$dir"
+            chown bank-sync:bank-sync "$dir"
           '';
         };
 
