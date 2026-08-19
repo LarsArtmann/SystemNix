@@ -52,6 +52,8 @@ _: {
       googleSyncEnabled = config.services.google-sync.enable or false;
       papdashboardEnabled = config.services.papdashboard.enable or false;
       bankSyncEnabled = config.services.bank-sync.enable or false;
+      systemdGraphEnabled = config.services.systemd-graph.enable or false;
+      systemdTimerMonitorEnabled = config.services.systemd-timer-monitor.enable or false;
 
       theme = import ../../../platforms/common/theme.nix;
       colors = theme.colorScheme.palette;
@@ -323,6 +325,22 @@ _: {
           }
         );
 
+      reviewToolsServices =
+        lib.optional systemdGraphEnabled (
+          mkService "systemd-graph" {
+            href = svcUrl "graph";
+            description = "Live systemd Dependency Graph";
+            icon = "mdi-graph-outline";
+          }
+        )
+        ++ lib.optional systemdTimerMonitorEnabled (
+          mkService "systemd-timer-monitor" {
+            href = svcUrl "timers";
+            description = "Systemd Services & Timers Audit";
+            icon = "mdi-timer-outline";
+          }
+        );
+
       groups = [
         { Infrastructure = infraServices; }
       ]
@@ -335,7 +353,8 @@ _: {
       ++ [
         { Monitoring = monitoringServices; }
         { Productivity = productivityServices; }
-      ];
+      ]
+      ++ lib.optional (reviewToolsServices != [ ]) { "Review Tools" = reviewToolsServices; };
     in
     {
       options.services.homepage = {
