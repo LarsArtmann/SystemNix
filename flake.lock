@@ -89,11 +89,11 @@
         "wise-go": "wise-go"
       },
       "locked": {
-        "lastModified": 1787150304,
-        "narHash": "sha256-s8oTdqWAT0Gtwa+9CsGzOGG2S4Fg0BMCsgU5K54wbcg=",
+        "lastModified": 1787152069,
+        "narHash": "sha256-ZomQ/7Kb2DvABYiTK66uTnZXakn6nzlw7+D84AGVshI=",
         "owner": "LarsArtmann",
         "repo": "bank-sync",
-        "rev": "76dacff06a1f94309e3eeda3f2da588760739cec",
+        "rev": "b183c8fdd6a24f78ab3a0ce3678e006940d5e356",
         "type": "github"
       },
       "original": {
@@ -6244,11 +6244,11 @@
     "wise-go": {
       "flake": false,
       "locked": {
-        "lastModified": 1787108898,
-        "narHash": "sha256-Syk1/7HbVGLIhjqnV1VX2d7QYKkKsKDqEQ3+2Nczn6Q=",
+        "lastModified": 1787151328,
+        "narHash": "sha256-av5SkMvTbw0YA8zHevxHIL+EyBV8B+tUaaXTxNrJpX4=",
         "ref": "master",
-        "rev": "47655fd0396f0a045bb78f4ebfe5fb657a9ce7cb",
-        "revCount": 109,
+        "rev": "8a33cb3cf057fdc650e9887277087e1b20e0395b",
+        "revCount": 112,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/wise-go"
       },
