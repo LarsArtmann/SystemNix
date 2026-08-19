@@ -89,11 +89,11 @@
         "wise-go": "wise-go"
       },
       "locked": {
-        "lastModified": 1787157245,
-        "narHash": "sha256-T4R2oeyqv2ur4+nFWElRd0nZyY96Gpo1b539moK71gM=",
+        "lastModified": 1787158269,
+        "narHash": "sha256-Mv3YieoolCG4QuTukT7z6rtXAjGDhOkubvqYab0AlaY=",
         "owner": "LarsArtmann",
         "repo": "bank-sync",
-        "rev": "0a6a4b2a8ed32d2222c400949f8fdb8bb06fbc46",
+        "rev": "3970f4911131325d59b95127aa52f2ed6c1ed343",
         "type": "github"
       },
       "original": {
@@ -5775,11 +5775,11 @@
     "templ-components": {
       "flake": false,
       "locked": {
-        "lastModified": 1786973419,
-        "narHash": "sha256-LT9+p7mpBto38PQWGKVdQF1QtevNcM2bW9DsInkeOII=",
+        "lastModified": 1787157100,
+        "narHash": "sha256-xFnLcv5OsK/Ux1ZHeEtmGunz+Oh1tOg18z5GfBmks6g=",
         "ref": "master",
-        "rev": "15679eb49c43fd70c48d9cfef5712512bf0b14a5",
-        "revCount": 1070,
+        "rev": "f643334102eadb047b005b13da048a5dd302d591",
+        "revCount": 1071,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/templ-components"
       },
