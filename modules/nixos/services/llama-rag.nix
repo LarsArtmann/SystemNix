@@ -175,7 +175,6 @@ _: {
 
           environment = rocm.env // {
             LD_LIBRARY_PATH = ldLibPath;
-            OTEL_EXPORTER_OTLP_ENDPOINT = lib.mkDefault "localhost:${toString ports.signoz-otlp-http}";
           };
 
           serviceConfig = lib.mkMerge [
@@ -201,7 +200,6 @@ _: {
 
           environment = rocm.env // {
             LD_LIBRARY_PATH = ldLibPath;
-            OTEL_EXPORTER_OTLP_ENDPOINT = lib.mkDefault "localhost:${toString ports.signoz-otlp-http}";
           };
 
           serviceConfig = lib.mkMerge [

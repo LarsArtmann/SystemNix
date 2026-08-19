@@ -132,7 +132,7 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 | **CPU**     | AMD Ryzen AI Max+ 395 (Strix Halo), amd_pstate=guided                                                    |
 | **GPU**     | AMD integrated (amdgpu), Mesa latest, ROCm compute stack                                                 |
 | **NPU**     | AMD XDNA via nix-amd-npu, XRT runtime                                                                    |
-| **Memory**  | 128GB physical (~94 GiB visible after GPU VRAM carveout), ZRAM swap (~16 GiB), tuned for AI/ML workloads |
+| **Memory**  | 128GB physical (~110 GiB visible after GPU VRAM carveout), ZRAM swap (~33 GiB), tuned for AI/ML workloads |
 | **Storage** | BTRFS root (zstd) + `/data` (zstd:3), btrbk snapshots (daily)                                            |
 | **Boot**    | systemd-boot (50 generations), latest Linux kernel                                                       |
 | **Network** | Realtek 2.5G Ethernet, MediaTek WiFi                                                                     |

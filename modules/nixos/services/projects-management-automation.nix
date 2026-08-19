@@ -113,7 +113,7 @@
       #     PMA every ~5 min). Pre-incident config ran scans fine under a 16G
       #     max, so 12G high gives the scan headroom while 16G max keeps the
       #     hard bound that prevents the 2026-08-09 system freeze (16G of
-      #     94G RAM cannot exhaust the machine alone).
+      #     110G RAM cannot exhaust the machine alone).
       #   ManagedOOMPreference=omit: exempts PMA from systemd-oomd's
       #     memory-pressure killer. Discovery of 260+ repos legitimately
       #     causes >50% pressure for >20s (oomd's DefaultMemoryPressureLimit

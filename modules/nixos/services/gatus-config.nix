@@ -1018,7 +1018,7 @@ _: {
                     "[STATUS] == 200"
                     "[BODY] == pat(*system_gpu_active_over_threshold 0*)"
                   ];
-                  alerts = discordAlert "GPUActive exceeds 60G — GTT buffer objects consuming excessive RAM. Check /proc/meminfo GPUActive. Risk of OOM cascade on Strix Halo.";
+                  alerts = discordAlert "GPUActive exceeds 60G — GTT buffer objects consuming excessive RAM. Check /proc/meminfo GPUActive. Risk of OOM cascade on Strix Halo (18 GiB VRAM carveout means more workloads spill to GTT).";
                 })
                 (mkHttpCheck {
                   name = "User Slice Memory";
