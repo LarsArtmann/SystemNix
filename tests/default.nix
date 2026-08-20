@@ -33,6 +33,7 @@ in
   port-uniqueness = makeTest (import ./test-port-uniqueness.nix { inherit pkgs; });
   browser-history = makeTest (import ./test-browser-history.nix { inherit pkgs inputs; });
   paperless = makeTest (import ./test-paperless.nix { inherit pkgs; });
+  hermes = makeTest (import ./test-hermes.nix { inherit pkgs inputs; });
   session-boot-audit = import ./test-session-boot-audit.nix { inherit pkgs inputs system; };
 }
 // (import ./test-scripts.nix { inherit pkgs; })

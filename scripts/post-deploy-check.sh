@@ -342,6 +342,40 @@ else
   report_skip "Bank-Sync — service disabled (units absent from systemd)"
 fi
 
+# Hermes: the read-only projects bind and the dubious-ownership gitconfig
+# live ONLY inside the gateway's mount namespace — unit state and the unit
+# file alone cannot prove they reached the running process. The gateway PID's
+# mountinfo (world-readable) proves the ro bind; the deployed unit's
+# Environment= lines prove GIT_CONFIG_GLOBAL shipped (systemd writes them
+# verbatim into /etc/systemd/system/hermes.service). A missing GIT_CONFIG_GLOBAL
+# would leave ALL git ops on the bind broken with "dubious ownership" —
+# silent to every liveness probe (the D2 class).
+hermes_enabled=false
+test -e /etc/systemd/system/hermes.service && hermes_enabled=true
+if $hermes_enabled; then
+  if hermes_pid=$(pgrep -f 'hermes gateway run' | head -1) && [ -n "$hermes_pid" ]; then
+    if grep -q ' /home/hermes/workspace/projects ro,' "/proc/$hermes_pid/mountinfo" 2>/dev/null; then
+      report_pass "Hermes — RO projects bind mounted in gateway namespace"
+    else
+      report_fail "Hermes — gateway is running WITHOUT the read-only projects bind (check BindReadOnlyPaths / journalctl -u hermes -n 30)"
+    fi
+    if grep -q '^Environment=GIT_CONFIG_GLOBAL=' /etc/systemd/system/hermes.service; then
+      hermes_gitconfig=$(grep -oP "^Environment=GIT_CONFIG_GLOBAL=\K\S+" /etc/systemd/system/hermes.service)
+      if test -f "$hermes_gitconfig" && git config --file "$hermes_gitconfig" --get-all safe.directory | grep -q 'workspace/projects'; then
+        report_pass "Hermes — git dubious-ownership allow-list deployed"
+      else
+        report_fail "Hermes — GIT_CONFIG_GLOBAL set but the file is missing or lacks safe.directory"
+      fi
+    else
+      report_fail "Hermes — GIT_CONFIG_GLOBAL missing from the deployed unit: git on the projects bind fails with dubious ownership"
+    fi
+  else
+    report_fail "Hermes — gateway process not found (journalctl -u hermes -n 50)"
+  fi
+else
+  report_skip "Hermes — service disabled (unit absent from systemd)"
+fi
+
 # PapDashboard: /api/health proves the hub answers (same URL Gatus probes);
 # the unauthenticated /api/ingest POST is a ROUTE-EXISTS probe — the auth
 # middleware runs BEFORE routing, so 401 = route + middleware alive, while

@@ -173,6 +173,45 @@
         '';
       };
 
+      # Delivered once into the writable workspace (NOT tmpfiles `f`, which
+      # would clobber agent edits every boot): the agent gets its operating
+      # rules for the projects mirror without discovering them by failing.
+      workspaceAgentsDoc = pkgs.writeText "hermes-workspace-AGENTS.md" ''
+        # Hermes Workspace Guide
+
+        - `./projects/` is a READ-ONLY live mirror of the primary user's
+          checkouts on the host. The kernel blocks every write — `touch`,
+          `git commit`, formatters: all EROFS. Do not fight it.
+        - To work on code, CLONE first: `git clone ./projects/<repo> ./<repo>`
+          and work inside the clone. The mirror is a reference, never a
+          workspace.
+        - `git` works read-only directly on `./projects/...` (dubious-ownership
+          is allow-listed via GIT_CONFIG_GLOBAL). In YOUR clones set identity
+          per-repo (`git config user.name …`, `user.email …`) — the global
+          config is a read-only system file, `--global` writes will fail.
+        - Writes outside /home/hermes are hard-blocked
+          (HERMES_WRITE_SAFE_ROOT); /tmp in your sessions is private and
+          ephemeral.
+        - Private (0700) directories inside ./projects stay unreadable to
+          you — intentional, do not report it as a bug.
+        - Disk is finite: remove clones you no longer need.
+      '';
+
+      workspaceDocInstall = pkgs.writeShellApplication {
+        name = "hermes-workspace-doc";
+        runtimeInputs = [
+          pkgs.coreutils
+        ];
+        text = ''
+          DOC="${cfg.stateDir}/workspace/AGENTS.md"
+          # Once-only: agent edits to the doc survive deploys by design.
+          if [ ! -f "$DOC" ]; then
+            install -m 0644 ${workspaceAgentsDoc} "$DOC"
+            echo "hermes-workspace: installed AGENTS.md"
+          fi
+        '';
+      };
+
       # Repos on the read-only projects bind are owned by the primary user
       # while the gateway runs as hermes; git >= 2.35.2 refuses ALL
       # operations on such repos ("detected dubious ownership") unless the
@@ -421,6 +460,9 @@
               BindReadOnlyPaths = [
                 "${toString cfg.projectsDir}:${cfg.stateDir}/workspace/projects"
               ];
+              # Deliver the workspace AGENTS.md once (runs as the service
+              # user — the workspace dir is hermes-owned).
+              ExecStartPre = [ "${lib.getExe workspaceDocInstall}" ];
             })
             (serviceDefaults { RestartSec = cfg.restartSec; })
             (harden {
