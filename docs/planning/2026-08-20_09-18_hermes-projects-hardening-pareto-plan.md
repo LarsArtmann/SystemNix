@@ -1,5 +1,7 @@
 # Hermes Projects Access — Hardening & Completion Plan (Pareto)
 
+> **EXECUTED 2026-08-20 ~10:45** (session report: `docs/status/2026-08-20_10-45_hermes-hardening-plan-executed.md`): T1–T6, T8–T13.1, T15 DONE and deployed/verified (VM test green, Gatus green, smoke 65/0). T1/D1 was fixed by a concurrent session (`962d433d`) — and the "dormant" landmine turned out to be a REAL outage (09:18→09:35). Remaining: U1 (user Discord E2E), T7 (GATE Q2), T14 (GATES Q1+Q3), T13.2 (time-gated ≥2026-09-03).
+
 **Created:** 2026-08-20 09:18 · **Source:** `docs/status/2026-08-20_09-15_hermes-projects-readonly-access-status.md` (§a–g) · **Scope:** ALL follow-up work from the 2026-08-20 session that shipped `services.hermes.projectsDir` (RO bind mount). NOT a general SystemNix backlog plan — unrelated TODO_LIST items are out of scope.
 
 **Format note:** user requested `.md` + mermaid — overrides the pareto-planning skill's HTML default.
