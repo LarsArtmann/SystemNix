@@ -164,12 +164,6 @@ _: {
           description = "Also load whisper-v3 for ASR (--asr 1).";
         };
 
-        loadEmbed = lib.mkOption {
-          type = lib.types.bool;
-          default = false;
-          description = "Also load embeddinggemma for embeddings (--embed 1).";
-        };
-
         pmode = lib.mkOption {
           type = lib.types.enum [
             "powersaver"
@@ -314,8 +308,7 @@ _: {
 
               ExecStart =
                 "${lib.getExe cfg.package} serve ${cfg.model} --host ${cfg.host} --port ${toString cfg.backendPort} --pmode ${cfg.pmode}"
-                + (lib.optionalString cfg.loadAsr " --asr 1")
-                + (lib.optionalString cfg.loadEmbed " --embed 1");
+                + (lib.optionalString cfg.loadAsr " --asr 1");
 
               Environment = [
                 "HOME=/var/lib/fastflowlm"
