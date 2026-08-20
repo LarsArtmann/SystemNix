@@ -168,11 +168,13 @@ if [ -n "$STAGED_NIX" ]; then
     # ships churn in commits (hit on PR #139, 2026-08-19).
     if ! echo "$STAGED_NIX" | xargs nix fmt --; then
         log_error "nix fmt failed on staged files — leaving them unformatted."
+        all_passed=false
+    else
+        echo "$STAGED_NIX" | while read -r f; do
+            git add "$f" 2>/dev/null || true
+        done
+        log_success "Staged .nix files formatted."
     fi
-    echo "$STAGED_NIX" | while read -r f; do
-        git add "$f" 2>/dev/null || true
-    done
-    log_success "Staged .nix files formatted."
 else
     log_info "No staged .nix files — skipping Nix linters."
 fi
