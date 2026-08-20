@@ -678,6 +678,7 @@ _: {
             "forgejo"
             "gatus"
             "gotenberg"
+            "hermes"
             "homepage-dashboard"
             "llama-embeddings"
             "llama-reranker"

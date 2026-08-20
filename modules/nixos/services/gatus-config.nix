@@ -1023,6 +1023,33 @@ _: {
                   alerts = discordAlert "FastFlowLM cgroup memory exceeds 90% of its MemoryMax (32G) — the 13.6 GB model mmap'd from /data plus KV cache is reaching the OOM-kill ceiling. Check: flm-loaded models, /data/ai/models/fastflowlm size, pma discovery worker count";
                 })
                 (mkHttpCheck {
+                  name = "Hermes Agent Gateway";
+                  group = "Monitoring";
+                  # No HTTP probe: the gateway's only listener is Discord/
+                  # platform webhooks, not a health endpoint. Unit-state
+                  # metrics from system-health are the liveness signal
+                  # (fail-closed: absent metrics fail the pat()s).
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_service_state_failed{service=\"hermes\"} 0*)"
+                    "[BODY] == pat(*system_service_start_limit_hit{service=\"hermes\"} 0*)"
+                  ];
+                  alerts = discordAlert "Hermes agent gateway failed or in start-limit crash-loop — Discord bot and AI gateway are DOWN. Check: journalctl -u hermes -n 50 (ExecStartPre perms/migration, upstream connectivity, config errors)";
+                })
+                (mkHttpCheck {
+                  name = "Hermes Memory Pressure";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_service_memory_over_threshold{service=\"hermes\"} 0*)"
+                  ];
+                  alerts = discordAlert "Hermes cgroup memory exceeds 90% of its MemoryMax (24G) — PyTorch/ROCm mappings plus active agent sessions are reaching the OOM-kill ceiling. Check: journalctl -u hermes -n 50, active sessions, /home/hermes growth";
+                })
+                (mkHttpCheck {
                   name = "Service Restart Metrics";
                   group = "Monitoring";
                   url = "http://localhost:${toString nodePort}/metrics";
