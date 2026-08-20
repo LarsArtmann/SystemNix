@@ -353,8 +353,13 @@ fi
 hermes_enabled=false
 test -e /etc/systemd/system/hermes.service && hermes_enabled=true
 if $hermes_enabled; then
-  if hermes_pid=$(pgrep -f 'hermes gateway run' | head -1) && [ -n "$hermes_pid" ]; then
-    if grep -q ' /home/hermes/workspace/projects ro,' "/proc/$hermes_pid/mountinfo" 2>/dev/null; then
+  # Derive stateDir from the DEPLOYED unit file (module option) — never
+  # hardcode /home/hermes; another host may set services.hermes.stateDir.
+  hermes_state=$(grep -oP '^WorkingDirectory=\K.*' /etc/systemd/system/hermes.service)
+  if [ -z "$hermes_state" ]; then
+    report_fail "Hermes — cannot derive stateDir from deployed unit (WorkingDirectory missing)"
+  elif hermes_pid=$(pgrep -f 'hermes gateway run' | head -1) && [ -n "$hermes_pid" ]; then
+    if grep -q " ${hermes_state}/workspace/projects ro," "/proc/$hermes_pid/mountinfo" 2>/dev/null; then
       report_pass "Hermes — RO projects bind mounted in gateway namespace"
     else
       report_fail "Hermes — gateway is running WITHOUT the read-only projects bind (check BindReadOnlyPaths / journalctl -u hermes -n 30)"
@@ -368,6 +373,17 @@ if $hermes_enabled; then
       fi
     else
       report_fail "Hermes — GIT_CONFIG_GLOBAL missing from the deployed unit: git on the projects bind fails with dubious ownership"
+    fi
+    # The workspace AGENTS.md itself is unobservable from this user
+    # (<stateDir> is 2770 hermes-only). The v2 install script logs
+    # unconditionally on every start, proving the ExecStartPre ran and what
+    # it decided (installed / upgraded / preserved). NOTE: journalctl's own
+    # --grep, NOT a pipe — under `set -o pipefail` a `journalctl | grep -q`
+    # on the multi-MB journal SIGPIPEs (141) and false-fails the check.
+    if journalctl -u hermes -b --no-pager --grep "hermes-workspace:" >/dev/null 2>&1; then
+      report_pass "Hermes — workspace AGENTS.md install ran this boot"
+    else
+      report_fail "Hermes — workspace doc ExecStartPre left no journal line this boot (journalctl -u hermes -b | grep hermes-workspace)"
     fi
   else
     report_fail "Hermes — gateway process not found (journalctl -u hermes -n 50)"
@@ -400,7 +416,9 @@ if $papdashboard_enabled; then
   405) report_fail 'PapDashboard — /api/ingest 405: method-token mismatch (check gatus-config.nix method = "POST")' ;;
   *) report_fail "PapDashboard — /api/ingest probe returned $pap_ingest_code (expected 401)" ;;
   esac
-  if journalctl -u papdashboard --since '-30min' --no-pager 2>/dev/null | grep -q 'path=/api/ingest status=200'; then
+  # journalctl's own --grep (PCRE): a `journalctl | grep -q` pipe here would
+  # SIGPIPE (141) under pipefail once the journal exceeds the pipe buffer.
+  if journalctl -u papdashboard --since '-30min' --no-pager --grep 'path=/api/ingest status=200' >/dev/null 2>&1; then
     report_pass "PapDashboard — gatus ingest 200s visible in journal (end-to-end alert path)"
   else
     report_warn "PapDashboard — no ingest 200s in the last 30 min (normal when no alert transitioned; re-check after the next Gatus alert)"

@@ -1,5 +1,7 @@
 # Hermes Projects Access — Status & Brutal Self-Review
 
+> **RESOLVED 2026-08-20 (see `docs/status/2026-08-20_10-45_hermes-hardening-plan-execution-status.md` and the follow-up session report):** every P0/P1 harvested here was executed via the pareto plan. Gate outcomes (user, 2026-08-20): Q1 = yes read-only PAT (scaffolded, placeholder awaiting the user's token), Q2 = defer (workspace stays on `@`), Q3 = permanently read-only. Additional fix from the follow-up session: the perms walk's `chmod 0660` had been stripping exec bits from the agent's LSP binaries since 2026-08-16 — now exec-preserving + healed.
+
 **Session:** 2026-08-20 ~09:00–09:15 · **Scope:** `services.hermes.projectsDir` (read-only projects access for the Hermes agent) · **Deploy:** system-69x era, 63 PASS / 0 FAIL
 **Format note:** user requested `.md` (overrides the status-report skill's HTML default).
 

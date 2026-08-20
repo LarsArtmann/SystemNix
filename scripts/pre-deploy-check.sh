@@ -223,6 +223,8 @@ if [ -s "$METRICS_FILE" ]; then
   # niri_zombie: verified live 2026-08-18 14:15 (niri.prom) and removed.
   # btrfs_health_critical: verified live 2026-08-18 14:15 (btrfs.prom) and
   # removed — note it correctly reports 1 (unallocated 4% < 5% threshold).
+  # system_any_service_restart_churn: verified live 2026-08-20 (deployed with
+  # the hermes churn work) and removed from this bypass list.
   KNOWN_NEW_METRICS="system_zram_swap_fill_percent system_zram_fill_over_threshold system_zram_swap_orig_data_bytes system_zram_swap_disksize_bytes system_zram_mem_used_bytes"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then

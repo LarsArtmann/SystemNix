@@ -1,6 +1,8 @@
 # Hermes Projects Access — Hardening & Completion Plan (Pareto)
 
 > **EXECUTED 2026-08-20 ~10:45** (session report: `docs/status/2026-08-20_10-45_hermes-hardening-plan-execution-status.md`): T1–T6, T8–T13.1, T15 DONE and deployed/verified (VM test green, Gatus green, smoke 65/0). T1/D1 was fixed by a concurrent session (`962d433d`) — and the "dormant" landmine turned out to be a REAL outage (09:18→09:35). Remaining: U1 (user Discord E2E), T7 (GATE Q2), T14 (GATES Q1+Q3), T13.2 (time-gated ≥2026-09-03).
+>
+> **GATES ANSWERED 2026-08-20 ~12:30 (follow-up session):** **Q1 = YES** (read-only fine-grained PAT — T14 scaffolded: sops placeholder + credential helper + `hermes-github-verify` canary, awaiting the user's real token), **Q2 = DEFER** (T7 skipped by user decision; TODO_LIST carries the revisit trigger), **Q3 = PERMANENTLY READ-ONLY** (locked into runbook + module option doc). The follow-up session also fixed the LSP exec-bit strip (§ Landmine History, runbook) and added restart-churn monitoring.
 
 **Created:** 2026-08-20 09:18 · **Source:** `docs/status/2026-08-20_09-15_hermes-projects-readonly-access-status.md` (§a–g) · **Scope:** ALL follow-up work from the 2026-08-20 session that shipped `services.hermes.projectsDir` (RO bind mount). NOT a general SystemNix backlog plan — unrelated TODO_LIST items are out of scope.
 

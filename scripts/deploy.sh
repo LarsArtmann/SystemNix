@@ -92,6 +92,22 @@ if nix run .#pre-deploy-check; then
   done
 
   echo ""
+  echo "=== Hermes active-session check ==="
+  # A deploy restarts hermes, draining any in-flight agent sessions (the
+  # 2026-08-20 session interrupted live agent turns 3 times). Non-blocking
+  # WARN: the deploy proceeds — but the operator should know what they are
+  # about to interrupt. Covers interactive turns (tool_executor activity)
+  # and cron/scheduler work in the last 10 minutes.
+  if systemctl is-active --quiet hermes.service 2>/dev/null; then
+    activity=$(journalctl -u hermes --since "-10min" --no-pager 2>/dev/null | grep -cE "agent\.tool_executor|scheduler|Executing cron" || true)
+    if [ "${activity:-0}" -gt 0 ]; then
+      echo "⚠ hermes shows agent activity ($activity lines in last 10 min) — the deploy will restart it and drain in-flight sessions"
+    else
+      echo "  hermes idle (no agent activity in last 10 min)"
+    fi
+  fi
+
+  echo ""
   echo "=== Deploying NixOS config to evo-x2 ==="
   set +e
   nh_output="$(nh os switch . 2>&1 | tee /dev/stderr)"
@@ -142,7 +158,7 @@ if nix run .#pre-deploy-check; then
   # after their first run. switch-to-configuration does NOT restart them even
   # when restartTriggers change. This means provisioning fixes deployed to the
   # Nix store never re-run without an explicit restart.
-  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir bank-sync-storage-dir google-sync-dirs llama-rag-model-fetch; do
+  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir bank-sync-storage-dir google-sync-dirs llama-rag-model-fetch hermes-github-verify; do
     if systemctl is-enabled --quiet "$provisioner.service" 2>/dev/null; then
       echo "Restarting provisioner: $provisioner.service"
       sudo systemctl restart "$provisioner.service" 2>/dev/null || true

@@ -258,6 +258,16 @@
       };
     };
 
+    # qmd — on-device hybrid search (BM25 + vector embeddings + LLM rerank)
+    # for markdown and code; global CLI + MCP server (stdio/HTTP) for Crush.
+    # nixpkgs is deliberately NOT followed: upstream's nodeModules FOD hash
+    # was validated with upstream's own nixpkgs bun — a different bun version
+    # can install a different node_modules tree and break the FOD hash.
+    # Update by bumping the tag (and re-verifying the CLI + `qmd mcp`).
+    qmd = {
+      url = "github:tobi/qmd/v2.8.3";
+    };
+
     # Shared Go libraries — single source of truth for all Go tool repos.
     # IMPORTANT: These are `flake = false` tarballs. They must NOT be
     # `follows`-overridden into Go tool flakes — the override changes vendored
