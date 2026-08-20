@@ -234,6 +234,20 @@ else
   report_skip "FastFlowLM — service disabled (units absent from systemd)"
 fi
 
+# llama.cpp RAG stack (llama-rag module): the /health endpoint proves the
+# model loaded and the server is serving (llama-server exits nonzero when the
+# GGUF is missing). The RAG endpoints themselves are exercised functionally
+# below.
+llama_rag_enabled=false
+systemctl list-unit-files 'llama-*' --no-legend 2>/dev/null | grep -q llama-embeddings && llama_rag_enabled=true
+
+if $llama_rag_enabled; then
+  check_local "llama.cpp Embeddings" "8848" "/health" "200" "ok" 2>/dev/null || true
+  check_local "llama.cpp Reranker" "8849" "/health" "200" "ok" 2>/dev/null || true
+else
+  report_skip "llama.cpp RAG — service disabled (units absent from systemd)"
+fi
+
 # / redirects to the Pocket ID login (302) since OAuth2 is configured —
 # probe /health instead, the same endpoint the agent's ExecStartPre gates on.
 check_local "Browser History" "8087" "/health" "200" 2>/dev/null || true
@@ -297,7 +311,12 @@ banksync_enabled=false
 test -e /etc/systemd/system/bank-sync.service && banksync_enabled=true
 if $banksync_enabled; then
   if banksync_body=$(curl -s --compressed --max-time 10 "http://127.0.0.1:8097/" 2>/dev/null); then
-    if echo "$banksync_body" | grep -q "Bank-Sync Dashboard"; then
+    # grep a herestring, NEVER `echo "$body" | grep -q`: under set -o
+    # pipefail a body larger than the 64KiB pipe buffer makes the echo
+    # writer die on SIGPIPE (141) the moment grep -q exits at its first
+    # match — a false "body lacks" FAIL (caught live 2026-08-19 when the
+    # templ-components dashboard grew the page to ~106KiB).
+    if grep -q "Bank-Sync Dashboard" <<<"$banksync_body"; then
       report_pass "Bank-Sync — dashboard answers (templ stack + read models)"
     else
       report_fail 'Bank-Sync — :8097 answered but the body lacks "Bank-Sync Dashboard"'
@@ -450,6 +469,38 @@ else
   SKIP=$((SKIP + 1))
 fi
 
+# llama.cpp RAG stack functional probes (enable-gated like the liveness checks
+# above). POST /v1/embeddings returns a 1024-dim vector; POST /v1/rerank must
+# rank the correct document first. These catch a "healthy but wrong model"
+# regression (model swapped without the alias changing).
+if $llama_rag_enabled; then
+  if curl -s --compressed --max-time 30 -o /tmp/.smoke-lmemb -w "%{http_code}" \
+    -H "Content-Type: application/json" \
+    -d '{"input":"test document"}' \
+    "http://localhost:8848/v1/embeddings" 2>/dev/null | grep -q "200"; then
+    if jq -e '.data[0].embedding | length == 1024' /tmp/.smoke-lmemb >/dev/null 2>&1; then
+      report_pass "llama.cpp Embeddings — /v1/embeddings returns a 1024-dim vector"
+    else
+      report_fail "llama.cpp Embeddings — /v1/embeddings answered but embedding shape is wrong (expected 1024)"
+    fi
+  else
+    report_fail "llama.cpp Embeddings — /v1/embeddings unreachable (journalctl -u llama-embeddings -n 30)"
+  fi
+
+  if curl -s --compressed --max-time 30 -o /tmp/.smoke-lmrr -w "%{http_code}" \
+    -H "Content-Type: application/json" \
+    -d '{"model":"bge-reranker-v2-m3","query":"what is the capital of france","documents":["paris is the capital of france","london is the capital of england"]}' \
+    "http://localhost:8849/v1/rerank" 2>/dev/null | grep -q "200"; then
+    if jq -e '.results[0].index == 0' /tmp/.smoke-lmrr >/dev/null 2>&1; then
+      report_pass "llama.cpp Reranker — /v1/rerank ranks the correct document first"
+    else
+      report_fail "llama.cpp Reranker — /v1/rerank answered but did not rank the correct document first"
+    fi
+  else
+    report_fail "llama.cpp Reranker — /v1/rerank unreachable (journalctl -u llama-reranker -n 30)"
+  fi
+fi
+
 # Monitor365: FULL agent↔server connectivity verification.
 # Checks BOTH sides: (1) agent metrics endpoint responding (process alive),
 # (2) server sees the agent as a connected device. If the agent is dead,
@@ -600,6 +651,10 @@ check "Immich (HTTPS)" "https://immich.$DOMAIN/api/server/ping" "200" "" 2>/dev/
 # port, which would false-FAIL every deploy until the service goes live.
 $banksync_enabled && check "Bank-Sync (HTTPS)" "https://banksync.$DOMAIN/" "200" "Bank-Sync Dashboard" 2>/dev/null || true
 check "Overview (HTTPS)" "https://overview.$DOMAIN/" "200" "<html" 2>/dev/null || true
+
+# Enable-gated review tools (LAN-only, no auth)
+test -e /etc/systemd/system/systemd-graph.service && check "systemd-graph (HTTPS)" "https://graph.$DOMAIN/" "200" "" 2>/dev/null || true
+test -e /etc/systemd/system/systemd-timer-monitor-audit.service && check "systemd-timer-monitor (HTTPS)" "https://timers.$DOMAIN/" "200" "<html" 2>/dev/null || true
 
 # --- Auth gateway health (oauth2-proxy / forward-auth) ---
 # Catches P9: oauth2-proxy returning 500 on protected vHosts.

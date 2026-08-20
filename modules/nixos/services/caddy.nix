@@ -292,6 +292,37 @@ _: {
                 ${proxyTo ports.attic}
               '';
             };
+          }
+          # systemd-graph — LAN-bypass plain reverse_proxy (review-only tool).
+          # No auth: the D-Bus-derived graph is read-only public information.
+          // lib.optionalAttrs (config.services.systemd-graph.enable or false) {
+            "graph.${domain}" = {
+              extraConfig = ''
+                ${tlsConfig}
+                ${commonConfig}
+                ${proxyTo ports.systemd-graph}
+              '';
+            };
+          }
+          # systemd-timer-monitor — static HTML/JSON served by file_server
+          # (no upstream daemon, the audit timer writes files into the state dir).
+          // lib.optionalAttrs (config.services.systemd-timer-monitor.enable or false) {
+            "timers.${domain}" = {
+              extraConfig = ''
+                ${tlsConfig}
+                ${commonConfig}
+                root * /var/lib/systemd-timer-monitor
+                file_server
+                # The audit script always writes report.html + status.json
+                # together; serve them by their canonical names so curl users
+                # and the homepage link both land on the HTML report.
+                @report path / /index.html /report.html /report
+                handle @report {
+                  rewrite * /report.html
+                  file_server
+                }
+              '';
+            };
           };
         };
 

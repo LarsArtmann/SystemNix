@@ -135,7 +135,7 @@ _: {
             '';
           })
           # Wrapper that bakes in LD_LIBRARY_PATH for ROCm runtime libs so the
-          # standalone llama.cpp server uses the dedicated VRAM (34 GiB BIOS
+          # standalone llama.cpp server uses the dedicated VRAM (18 GiB BIOS
           # carveout) on Strix Halo. Without this + the session-level HSA env
           # vars below, llama-server cannot detect gfx1150 and falls back to
           # CPU — zero VRAM usage, model loaded into GTT/system RAM instead.
@@ -155,7 +155,7 @@ _: {
         # (llama-server, hipblas-bench, custom HIP code) launched from an
         # interactive shell detects the gfx1150 GPU. Without HSA_OVERRIDE_GFX_VERSION,
         # ROCm does not officially support gfx1150 (RDNA 3.5 / Strix Halo) and
-        # silently falls back to CPU — the 34 GiB VRAM carveout stays unused.
+        # silently falls back to CPU — the 18 GiB VRAM carveout stays unused.
         # HSA_ENABLE_SDMA=0 avoids SDMA hang bugs on gfx11 APUs.
         environment.sessionVariables = rocmEnv // {
           OLLAMA_HOST = "127.0.0.1:${toString ports.ollama}";

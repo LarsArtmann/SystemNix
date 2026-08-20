@@ -65,7 +65,7 @@ Helium/Electron renderers grow unbounded in user-1000.slice
 
 **Key indicators:**
 - `user-1000.slice` MemoryCurrent was near MemoryMax (64G)
-- GPUActive was >50G (consuming most of the ~94G visible RAM)
+- GPUActive was >50G (consuming most of the ~110G visible RAM)
 - zram swap was at 100% capacity
 - No clean shutdown messages in journal
 

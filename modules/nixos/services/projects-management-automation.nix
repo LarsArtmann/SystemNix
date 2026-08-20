@@ -116,7 +116,7 @@
         #     PMA every ~5 min). Pre-incident config ran scans fine under a 16G
         #     max, so 12G high gives the scan headroom while 16G max keeps the
         #     hard bound that prevents the 2026-08-09 system freeze (16G of
-        #     94G RAM cannot exhaust the machine alone).
+        #     110G RAM cannot exhaust the machine alone).
         #   ManagedOOMPreference=omit: exempts PMA from systemd-oomd's
         #     memory-pressure killer. Discovery of 260+ repos legitimately
         #     causes >50% pressure for >20s (oomd's DefaultMemoryPressureLimit
@@ -138,13 +138,30 @@
             MemorySwapMax = lib.mkForce "0";
             CPUQuota = lib.mkForce "200%";
             ManagedOOMPreference = "omit";
-            # Override upstream's unquoted GIT_*_NAME env entries.
-            # Upstream emits "GIT_AUTHOR_NAME=Lars Artmann" as a raw
-            # Environment= list item; systemd parses the space as a delimiter
-            # and drops "Artmann". These quoted versions fix that.
-            Environment = [
-              ''GIT_AUTHOR_NAME="Lars Artmann"''
-              ''GIT_COMMITTER_NAME="Lars Artmann"''
+            # The daemon commits across 260+ repos whose pre-commit hooks
+            # require repo-specific toolchains (bash, nix, gitleaks,
+            # golangci-lint, dprint, ...) that no service PATH can carry.
+            # Its PATH (pma, git, coreutils, findutils, grep, sed, systemd)
+            # lacks even bash, so every "#!/usr/bin/env bash" hook fails to
+            # exec and each `git commit` exits 1 — the daemon then regenerates
+            # commit messages via LLM and retries forever (live 2026-08-19,
+            # PMA ce0f638). Env-config (GIT_CONFIG_*) beats repo and global
+            # config files, so pointing core.hooksPath at an empty directory
+            # disables repo hooks FOR THE DAEMON ONLY; interactive commits
+            # keep full hooks. Secret-safety backstop: GitHub push protection
+            # + secret-history-scan CI gate every push.
+            # Root fix belongs upstream (PMA committer should skip hooks
+            # explicitly); the identity entries are mkAfter so they win the
+            # systemd Environment= later-wins ordering over upstream's raw,
+            # space-broken "GIT_AUTHOR_NAME=Lars Artmann" items.
+            Environment = lib.mkAfter [
+              ''"GIT_AUTHOR_NAME=Lars Artmann"''
+              ''"GIT_AUTHOR_EMAIL=git@lars.software"''
+              ''"GIT_COMMITTER_NAME=Lars Artmann"''
+              ''"GIT_COMMITTER_EMAIL=git@lars.software"''
+              "GIT_CONFIG_COUNT=1"
+              "GIT_CONFIG_KEY_0=core.hooksPath"
+              "GIT_CONFIG_VALUE_0=/var/empty"
             ];
           }
           ioTier.build

@@ -534,6 +534,30 @@ _: {
                   alerts = discordAlert "Ollama LLM inference down — local AI unavailable";
                 })
               ]
+              ++ lib.optionals (config.services.llama-rag.enable or false) [
+                (mkHttpCheck {
+                  name = "llama.cpp Embeddings";
+                  group = "AI";
+                  url = "http://localhost:${toString config.services.llama-rag.embeddingsPort}/health";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 1000"
+                  ];
+                  alerts = discordAlert "llama.cpp embeddings server down — RAG indexing and semantic search unavailable";
+                })
+                (mkHttpCheck {
+                  name = "llama.cpp Reranker";
+                  group = "AI";
+                  url = "http://localhost:${toString config.services.llama-rag.rerankerPort}/health";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 1000"
+                  ];
+                  alerts = discordAlert "llama.cpp reranker down — RAG reranking unavailable, search quality degraded";
+                })
+              ]
               ++ lib.optionals config.services.voice-agents.enable [
                 (mkHttpCheck {
                   name = "Whisper ASR";
@@ -1018,7 +1042,7 @@ _: {
                     "[STATUS] == 200"
                     "[BODY] == pat(*system_gpu_active_over_threshold 0*)"
                   ];
-                  alerts = discordAlert "GPUActive exceeds 60G — GTT buffer objects consuming excessive RAM. Check /proc/meminfo GPUActive. Risk of OOM cascade on Strix Halo.";
+                  alerts = discordAlert "GPUActive exceeds 60G — GTT buffer objects consuming excessive RAM. Check /proc/meminfo GPUActive. Risk of OOM cascade on Strix Halo (18 GiB VRAM carveout means more workloads spill to GTT).";
                 })
                 (mkHttpCheck {
                   name = "User Slice Memory";
@@ -1373,6 +1397,32 @@ _: {
                     "[BODY] == pat(*secret_rotation_all_fresh 1*)"
                   ];
                   alerts = discordAlert "One or more OIDC client secrets are stale (>90d) — consider rotating";
+                })
+              ]
+              ++ lib.optionals (config.services.systemd-graph.enable or false) [
+                (mkHttpCheck {
+                  name = "systemd-graph";
+                  group = "Review Tools";
+                  url = "https://graph.home.lan/";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 2000"
+                  ];
+                  alerts = discordAlert "systemd-graph UI down — graph.home.lan unreachable";
+                })
+              ]
+              ++ lib.optionals (config.services.systemd-timer-monitor.enable or false) [
+                (mkHttpCheck {
+                  name = "systemd-timer-monitor";
+                  group = "Review Tools";
+                  url = "https://timers.home.lan/";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*<!DOCTYPE html*)"
+                  ];
+                  alerts = discordAlert "systemd-timer-monitor report down — timers.home.lan unreachable or stale";
                 })
               ]
               ++ map mkWebsiteCheck ossWebsites

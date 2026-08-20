@@ -86,5 +86,18 @@
     # backend binds, so 52626 is internal.
     fastflowlm = 52625;
     fastflowlm-backend = 52626;
+
+    # Review-only systemd tooling — exposed on LAN for ops review, no auth.
+    # systemd-graph serves the live D-Bus-driven dependency graph UI.
+    # systemd-timer-monitor is a static HTML report refreshed by a timer
+    # (no port needed; served as a static dir by Caddy via the file_server).
+    systemd-graph = 8847;
+
+    # llama.cpp RAG servers (ROCm GPU) — embeddings + reranking for
+    # Paperless AI and broader RAG pipelines. Two separate instances
+    # because llama.cpp's --embedding and --reranking modes are mutually
+    # exclusive per server instance.
+    llama-embeddings = 8848;
+    llama-reranker = 8849;
   };
 }

@@ -188,6 +188,26 @@ in
       interval = "1m";
       severity = "warning";
     };
+    "signoz/rules/llama-embeddings-down.json".source = mkRule {
+      name = "llama.cpp Embeddings Down";
+      description = "llama.cpp embeddings server is not active — RAG indexing and semantic search unavailable";
+      query = ''node_systemd_unit_state{name="llama-embeddings.service",state="active"}'';
+      step = 60;
+      op = "below";
+      target = 1;
+      interval = "1m";
+      severity = "warning";
+    };
+    "signoz/rules/llama-reranker-down.json".source = mkRule {
+      name = "llama.cpp Reranker Down";
+      description = "llama.cpp reranker is not active — RAG reranking unavailable, search quality degraded";
+      query = ''node_systemd_unit_state{name="llama-reranker.service",state="active"}'';
+      step = 60;
+      op = "below";
+      target = 1;
+      interval = "1m";
+      severity = "warning";
+    };
     "signoz/rules/docker-down.json".source = mkRule {
       name = "Docker Daemon Down";
       description = "Docker engine metrics endpoint is unreachable — daemon down or wedged";

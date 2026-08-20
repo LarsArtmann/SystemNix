@@ -258,6 +258,10 @@ in
     # System packages for audio/video codec support
     environment.systemPackages = [
       pkgs.libopus # Opus audio codec for Discord voice support
+      # Android platform tools (adb/fastboot). The programs.adb module was
+      # removed from nixpkgs: systemd 258 ships the android udev rules with
+      # uaccess tags, granting the active seat user device ACLs directly.
+      pkgs.android-tools
     ];
 
     fonts.fontconfig.defaultFonts = {
@@ -336,6 +340,10 @@ in
       security-hardening.enable = true;
       gatus-config.enable = true;
       multi-wm.enable = true;
+      # Review-only systemd tooling (LAN bypass, no auth) — disabled by
+      # default, opt-in for ops review. See modules/nixos/services/.
+      systemd-graph.enable = true;
+      systemd-timer-monitor.enable = true;
       browser-policies = {
         enable = true;
         chromiumExtensions =
@@ -443,11 +451,18 @@ in
       # http://127.0.0.1:52625/v1. Wired into projects-management-automation
       # via extraEnvironment (OPENAI_BASE_URL + OPENAI_MODEL) so the auto-
       # commit daemon uses the local NPU LLM instead of an external API.
-      # loadEmbed (--embed 1) is BROKEN with the main model: embed loads,
-      # then the Qwen 13.6 GB model fails its xrt buffer-object allocation
-      # (ENOMEM) and flm starts WITHOUT the default model (2026-08-18).
-      # Serve embed-gemma on a dedicated instance instead when needed.
+      # Embeddings are served by llama-rag (below), not FastFlowLM —
+      # co-loading embed-gemma via --embed 1 was broken (xrt ENOMEM).
       fastflowlm.enable = true;
+
+      # llama.cpp RAG stack — embeddings (bge-m3) + reranking (bge-reranker-v2-m3)
+      # on the GPU (ROCm). Two lightweight llama-server instances, always-on.
+      # Replaces the previous plan to use Ollama for embeddings — Ollama does
+      # NOT support reranking (issue #3368). Using llama-server for both keeps
+      # the RAG stack on a single Nix-native engine, zero Docker.
+      # Model GGUFs are auto-fetched into /data/ai/models/gguf/ at activation
+      # by the llama-rag-model-fetch oneshot.
+      llama-rag.enable = true;
 
       file-and-image-renamer = {
         enable = true;
@@ -498,6 +513,11 @@ in
       # Hermes AI Agent Gateway (Discord, cron jobs, messaging)
       hermes = {
         enable = true;
+        # Read-only view of the primary user's projects, mounted at
+        # /home/hermes/workspace/projects. The agent reads the real code and
+        # clones into its writable workspace to make changes (upstream
+        # worktree isolation) — it can never modify lars' checkouts.
+        projectsDir = "/home/${config.users.primaryUser}/projects";
       };
 
       # Crush Daily — AI-powered development insights from Crush databases

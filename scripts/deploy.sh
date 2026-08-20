@@ -142,7 +142,7 @@ if nix run .#pre-deploy-check; then
   # after their first run. switch-to-configuration does NOT restart them even
   # when restartTriggers change. This means provisioning fixes deployed to the
   # Nix store never re-run without an explicit restart.
-  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir bank-sync-storage-dir google-sync-dirs; do
+  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir bank-sync-storage-dir google-sync-dirs llama-rag-model-fetch; do
     if systemctl is-enabled --quiet "$provisioner.service" 2>/dev/null; then
       echo "Restarting provisioner: $provisioner.service"
       sudo systemctl restart "$provisioner.service" 2>/dev/null || true
@@ -155,6 +155,15 @@ if nix run .#pre-deploy-check; then
   if systemctl is-enabled --quiet browser-history.service 2>/dev/null; then
     echo "Restarting browser-history.service (reload OAuth2 env file)"
     sudo systemctl restart browser-history.service 2>/dev/null || true
+  fi
+
+  # Trigger the systemd-timer-monitor audit so the report is fresh after deploy.
+  # The timer-driven oneshot (OnBootSec=2min) may not fire immediately after
+  # activation. Using `start` (not `restart`) — it's a plain oneshot without
+  # RemainAfterExit, so `start` runs it once and the timer picks up from there.
+  if systemctl is-enabled --quiet systemd-timer-monitor-audit.service 2>/dev/null; then
+    echo "Starting systemd-timer-monitor-audit.service (fresh report after deploy)"
+    sudo systemctl start systemd-timer-monitor-audit.service 2>/dev/null || true
   fi
 
   # Reap zombie buildcache mounts + re-verify real I/O after switch. The unit is

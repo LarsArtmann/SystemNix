@@ -24,5 +24,7 @@
     "search"
     "cache"
     "banksync"
+    "graph"
+    "timers"
   ];
 }

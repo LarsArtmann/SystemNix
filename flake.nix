@@ -621,6 +621,7 @@
                 govalid
                 jscpd
                 sqlc
+                systemd-timer-monitor
                 ;
             }
             // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
@@ -630,6 +631,8 @@
                 dnsblockd
                 monitor365
                 netwatch
+                systemd-graph
+                systemd-graph-webui
                 emeet-pixyd
                 file-and-image-renamer
                 crush-daily

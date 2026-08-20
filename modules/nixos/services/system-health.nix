@@ -679,6 +679,8 @@ _: {
             "gatus"
             "gotenberg"
             "homepage-dashboard"
+            "llama-embeddings"
+            "llama-reranker"
             "monitor365"
             "monitor365-server"
             "nix-daemon"

@@ -1,4 +1,7 @@
 # Hermes AI Agent Gateway: Discord bot, cron scheduler, messaging
+# Projects access: services.hermes.projectsDir bind-mounts the primary
+# user's projects tree READ-ONLY into the agent sandbox — see the option
+# and the BindReadOnlyPaths wiring below for the rationale.
 { inputs, ... }: {
   flake.nixosModules.hermes =
     {
@@ -134,22 +137,30 @@
         '';
       };
 
-      # Grant hermes (via 'users' group) read+execute access to the primary
-      # user's home so it can navigate to shared project directories. Uses ACLs
-      # instead of broad chmod to avoid making the entire home directory
-      # writable. Only read+execute (r-x) is granted, not write. Runs as root
-      # via the ExecStartPre `+` prefix (cannot be expressed via tmpfiles).
-      aclSetupScript = pkgs.writeShellApplication {
-        name = "hermes-acl-setup";
+      # The original approach granted `g:hermes:r-x` on the primary user's
+      # home via ACL "so it can navigate to shared project directories".
+      # That grant died silently in practice: any later `chmod` on an ACL'd
+      # directory rewrites the ACL *mask*, which disables every named entry
+      # while `getfacl` still shows the grant (observed live: `mask::---`).
+      # Worse, setfacl's mask recalculation would re-enable `group::r-x` for
+      # ALL members of `users`, not just hermes. Replaced by the read-only
+      # bind mount (projectsDir). This oneshot converges the stale grant
+      # away; it is a no-op once removed. Runs as root via the ExecStartPre
+      # `+` prefix (cannot be expressed via tmpfiles).
+      aclRevokeScript = pkgs.writeShellApplication {
+        name = "hermes-acl-revoke";
         runtimeInputs = [
           pkgs.acl
           pkgs.coreutils
           pkgs.getent
+          pkgs.gnugrep
         ];
         text = ''
           primaryHome=$(getent passwd ${config.users.primaryUser} 2>/dev/null | cut -d: -f6)
-          if [ -n "$primaryHome" ] && [ -d "$primaryHome" ]; then
-            setfacl -m "g:${cfg.group}:r-x" "$primaryHome" 2>/dev/null || chmod g+rx "$primaryHome"
+          [ -n "$primaryHome" ] && [ -d "$primaryHome" ] || exit 0
+          if getfacl -p "$primaryHome" 2>/dev/null | grep -q "^group:${cfg.group}:"; then
+            setfacl -x "g:${cfg.group}" "$primaryHome"
+            echo "hermes-acl-revoke: removed stale g:${cfg.group} ACL from $primaryHome"
           fi
         '';
       };
@@ -217,6 +228,26 @@
         restartSec = serviceTypes.restartDelay "5";
 
         timeoutStopSec = serviceTypes.stopTimeout "120";
+
+        # Host directory exposed to the agent READ-ONLY inside its sandbox at
+        # <stateDir>/workspace/projects. null = no bind. Read-only by design:
+        # the agent reads the real code and makes changes by cloning into its
+        # writable workspace (upstream's recommended worktree isolation), so a
+        # compromised or prompt-injected agent can never modify the primary
+        # user's checkouts — enforced by the kernel (MS_RDONLY bind mount),
+        # not by hermes' own write guards.
+        projectsDir = lib.mkOption {
+          type = lib.types.nullOr lib.types.path;
+          default = null;
+          example = "/home/lars/projects";
+          description = ''
+            Host projects directory bind-mounted read-only into the hermes
+            sandbox at <stateDir>/workspace/projects. Set by the host, never
+            writable by the agent. Requires only world-read permissions on
+            the mounted tree; 0700-private subdirectories inside stay
+            unreadable to the agent.
+          '';
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -225,10 +256,11 @@
         users.users.${cfg.user} = {
           isSystemUser = true;
           inherit (cfg) group;
-          extraGroups = [
-            "users"
-            "render"
-          ];
+          # `render` = GPU access for TTS/voice extras. The former `users`
+          # membership existed only for the (mask-fragile) home-ACL traversal
+          # grant; projects access now rides the read-only bind mount, which
+          # only needs world-read perms on the mounted tree.
+          extraGroups = [ "render" ];
           home = cfg.stateDir;
           createHome = true;
           description = "Hermes AI Agent Gateway service user";
@@ -237,21 +269,29 @@
         environment.systemPackages = [ hermesPkg ];
 
         # Directory creation and ownership handled declaratively via tmpfiles.
-        # The `setfacl` (ACL grant on primary user's home) and recursive file
-        # permission fix-up run via ExecStartPre (aclSetupScript +
-        # fixPermissionsScript) — they cannot be expressed as tmpfiles rules.
+        # The stale-ACL revoke and recursive file permission fix-up run via
+        # ExecStartPre (aclRevokeScript + fixPermissionsScript) — they cannot
+        # be expressed as tmpfiles rules.
         systemd.tmpfiles.rules =
-          map (path: mkStateDir path "2770" cfg.user cfg.group) [
-            cfg.stateDir
-            "${cfg.stateDir}/sessions"
-            "${cfg.stateDir}/skills"
-            "${cfg.stateDir}/memories"
-            "${cfg.stateDir}/cron"
-            "${cfg.stateDir}/cache"
-            "${cfg.stateDir}/logs"
-            "${cfg.stateDir}/logs/curator"
-            "${cfg.stateDir}/workspace"
-          ]
+          map (path: mkStateDir path "2770" cfg.user cfg.group) (
+            [
+              cfg.stateDir
+              "${cfg.stateDir}/sessions"
+              "${cfg.stateDir}/skills"
+              "${cfg.stateDir}/memories"
+              "${cfg.stateDir}/cron"
+              "${cfg.stateDir}/cache"
+              "${cfg.stateDir}/logs"
+              "${cfg.stateDir}/logs/curator"
+              "${cfg.stateDir}/workspace"
+            ]
+            ++ lib.optionals (cfg.projectsDir != null) [
+              # Mount point for the read-only projects bind
+              # (BindReadOnlyPaths below). Pre-created so the bind cannot
+              # race a missing destination; the mount overlays it.
+              "${cfg.stateDir}/workspace/projects"
+            ]
+          )
           ++ [
             "f ${cfg.stateDir}/.managed 0644 ${cfg.user} ${cfg.group} -"
           ];
@@ -273,6 +313,13 @@
           startLimitIntervalSec = 600;
           startLimitBurst = 5;
 
+          unitConfig = lib.mkIf (cfg.projectsDir != null) {
+            # Order against (and require) the mount backing projectsDir — a
+            # no-op while it lives on the root fs, but fails loudly instead of
+            # binding a dead path if it ever moves onto removable storage.
+            RequiresMountsFor = [ (toString cfg.projectsDir) ];
+          };
+
           path = [
             hermesPkg
             pkgs.bash
@@ -287,7 +334,7 @@
               User = cfg.user;
               Group = cfg.group;
               ExecStartPre = [
-                "+${lib.getExe aclSetupScript}"
+                "+${lib.getExe aclRevokeScript}"
                 "+${lib.getExe fixPermissionsScript}"
                 "+${lib.getExe migrateScript}"
                 "${lib.getExe mergeEnvScript}"
@@ -303,13 +350,29 @@
                 # OTLP tracing — Python SDK expects full URL with scheme.
                 # Noop until upstream Hermes adds opentelemetry-sdk instrumentation.
                 "OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:${toString ports.signoz-otlp-http}"
+              ]
+              ++ lib.optionals (cfg.projectsDir != null) [
+                # Land the agent's terminal in the writable workspace, beside
+                # the read-only ./projects bind (see BindReadOnlyPaths). An
+                # explicit terminal.cwd in runtime config.yaml (settings UI)
+                # still overrides this — intended precedence: explicit user
+                # choice beats the system default. Startup prints a cosmetic
+                # "TERMINAL_CWD found in .env" deprecation warning; it is
+                # expected and harmless (we never write .env).
+                "TERMINAL_CWD=${cfg.stateDir}/workspace"
+                # Upstream write_file/patch sandbox: targets outside the
+                # hermes state root are hard-blocked BEFORE touching disk.
+                # The RO bind would EROFS anyway; this yields a clean
+                # agent-facing denial. stateDir covers HERMES_HOME, so cron
+                # jobs, skills, and profile state stay writable.
+                "HERMES_WRITE_SAFE_ROOT=${cfg.stateDir}"
               ];
               EnvironmentFile = [ sopsEnvPath ];
               RestartForceExitStatus = 75;
               KillMode = "mixed";
               KillSignal = "SIGTERM";
               TimeoutStopSec = cfg.timeoutStopSec;
-              # State migration (535 MB) + ACL setup + permission fix can exceed
+              # State migration (535 MB) + ACL revoke + permission fix can exceed
               # systemd's default 90s during system switches. 3 min covers
               # worst observed case (~96s on cold I/O).
               TimeoutStartSec = "3min";
@@ -318,6 +381,18 @@
               StandardError = "journal";
               UMask = "0026";
             }
+            (lib.optionalAttrs (cfg.projectsDir != null) {
+              # Read-only bind of the primary user's projects into the agent
+              # sandbox. Kernel-enforced (MS_RDONLY): even a compromised agent
+              # cannot write. Set up by PID 1 as root, so it does NOT depend
+              # on traversing the 0700 primary home — unlike the old ACL
+              # grant, which any later `chmod` on the home dir silently
+              # masked away. Unprefixed source: if projectsDir disappears the
+              # unit fails loudly instead of running with a missing bind.
+              BindReadOnlyPaths = [
+                "${toString cfg.projectsDir}:${cfg.stateDir}/workspace/projects"
+              ];
+            })
             (serviceDefaults { RestartSec = cfg.restartSec; })
             (harden {
               MemoryMax = "24G"; # PyTorch + ROCm + HIP libraries require significant GPU memory mapping
