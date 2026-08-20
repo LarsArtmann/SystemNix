@@ -13,6 +13,12 @@
   runnerLabels,
   runnerConfigFile,
 }:
+let
+  # 'or {}' so a standalone nixosModules.forgejo consumer that does not import
+  # nixosModules.hermes evaluates without error (the deliver script and unit
+  # are only wired when hermes is enabled — see forgejo.nix).
+  hermesCfg = config.services.hermes or { };
+in
 {
   mirrorGithubScript = pkgs.writeShellApplication {
     name = "forgejo-mirror-github";
@@ -304,6 +310,132 @@
           --password "$ADMIN_PASS" \
           --must-change-password=false 2>/dev/null || true
       fi
+    '';
+  };
+
+  # Runs AS the forgejo user (tokenGen idiom): the CLI talks to the DB
+  # directly, no runuser/PAM needed (runuser cannot init a PAM session inside
+  # harden {}, documented gotcha). The staged token is delivered to /run by
+  # hermesForgejoTokenDeliver via the unit's "+"-prefixed ExecStartPost.
+  hermesForgejoToken = pkgs.writeShellApplication {
+    name = "forgejo-hermes-token";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.gnugrep
+      pkgs.curl
+    ];
+    text = ''
+      # Idempotent: create hermes-agent user (unprivileged, no UI login needed),
+      # mint a read:repository-scoped token, stage it for hermes delivery.
+      #
+      # NOT --restricted: restricted users cannot see other users' PUBLIC repos,
+      # which would defeat the purpose. Least privilege here = normal user that
+      # owns nothing + token scoped to read:repository (sees exactly what an
+      # anonymous visitor sees, plus any private repo explicitly granted later).
+      set -euo pipefail
+
+      FORGEJO=${lib.getExe forgejoPkg}
+      export FORGEJO_WORK_DIR=${stateDir}
+      # Persisted forgejo-only staging file: survives reboots so the reuse path
+      # works and tokens do not accumulate. The /run copy is (re)installed by
+      # ExecStartPost on every run.
+      STAGED_TOKEN_FILE=${stateDir}/hermes-agent.token
+      FORGEJO_USER_NAME=hermes-agent
+      FORGEJO_USER_EMAIL=hermes-agent@noreply.forgejo.home.lan
+
+      # Fail fast if Forgejo never comes up: --fail treats HTTP errors as errors,
+      # bounded connect/total timeouts prevent a hung curl per iteration.
+      for _ in $(seq 1 30); do
+        curl -sf --connect-timeout 3 --max-time 5 -o /dev/null "${forgejoUrl}/" && break
+        sleep 1
+      done
+      curl -sf --connect-timeout 3 --max-time 5 -o /dev/null "${forgejoUrl}/" || {
+        echo "ERROR: Forgejo not reachable at ${forgejoUrl} after 30 attempts" >&2
+        exit 1
+      }
+
+      # 1. user (create-or-verify; password is random and never delivered —
+      #    the token is the only credential that leaves this box).
+      #    Match by EMAIL: forgejo enforces unique emails, and the username is
+      #    a substring of it (plain username grep would false-positive).
+      USER_LIST=$("$FORGEJO" admin user list) || {
+        echo "ERROR: forgejo admin user list failed" >&2
+        exit 1
+      }
+      if ! printf '%s' "$USER_LIST" | grep -q "$FORGEJO_USER_EMAIL"; then
+        echo "Creating Forgejo user: $FORGEJO_USER_NAME"
+        "$FORGEJO" admin user create \
+          --username "$FORGEJO_USER_NAME" \
+          --email "$FORGEJO_USER_EMAIL" \
+          --random-password \
+          --must-change-password=false
+      else
+        echo "User $FORGEJO_USER_NAME already exists"
+      fi
+
+      # 2. token — reuse if still valid, else mint a new one.
+      #    The validity probe MUST stay in the repository scope category:
+      #    GET /api/v1/user requires the "user" scope (403 for a
+      #    read:repository-only token), and GET /api/v1/user/repos requires
+      #    BOTH user and repository categories (group middleware composes
+      #    AND-style; verified against forgejo 15.0.6 routers/api/v1/api.go +
+      #    modules/web/route.go). GET /api/v1/repos/search sits in the
+      #    repository-scoped group only: 200 for this token, 401 once revoked
+      #    (invalid tokens are rejected by the auth middleware before routing).
+      TOKEN=""
+      if [ -s "$STAGED_TOKEN_FILE" ]; then
+        TOKEN=$(cat "$STAGED_TOKEN_FILE")
+        if curl -sf --connect-timeout 3 --max-time 10 \
+          -H "Authorization: token $TOKEN" \
+          "${forgejoUrl}/api/v1/repos/search?limit=1" >/dev/null 2>&1; then
+          echo "Existing hermes-agent token still valid"
+          exit 0
+        fi
+        echo "Existing token invalid; regenerating"
+      fi
+
+      TOKEN=$("$FORGEJO" admin user generate-access-token \
+        --username "$FORGEJO_USER_NAME" \
+        --token-name "hermes-agent-$(date +%s)" \
+        --scopes read:repository \
+        --raw) || TOKEN=""
+
+      if ! echo "$TOKEN" | grep -qE '^[0-9a-f]{40}$'; then
+        echo "ERROR: token generation failed for hermes-agent" >&2
+        exit 1
+      fi
+
+      # 3. stage forgejo-only; ExecStartPost installs the hermes copy at
+      #    /run/hermes-forgejo-token (0400 hermes:hermes, tmpfs)
+      #    Atomic install: the existing 0400 file is read-only even for the
+      #    forgejo owner, so a bare redirect would EACCES on regeneration.
+      TMP_TOKEN_FILE=$(mktemp "$STAGED_TOKEN_FILE.XXXXXX")
+      trap 'rm -f "$TMP_TOKEN_FILE"' EXIT
+      printf '%s' "$TOKEN" > "$TMP_TOKEN_FILE"
+      install -m 0400 "$TMP_TOKEN_FILE" "$STAGED_TOKEN_FILE"
+      rm -f "$TMP_TOKEN_FILE"
+      echo "hermes-agent token staged at $STAGED_TOKEN_FILE"
+    '';
+  };
+
+  # Installed by forgejo-hermes-token's "+"-prefixed ExecStartPost: runs with
+  # FULL privileges (outside harden {}), where chown to the hermes user works
+  # without capabilities on the sandboxed main process (gitea-runner's
+  # +forgejo-gen-runner-token idiom).
+  # hermesCfg (defined in the let binding above) falls back to {} when the
+  # hermes module is absent, so this script still builds for standalone forgejo.
+  inherit hermesCfg;
+  hermesForgejoTokenDeliver = pkgs.writeShellApplication {
+    name = "forgejo-hermes-token-deliver";
+    runtimeInputs = [ pkgs.coreutils ];
+    text = ''
+      set -euo pipefail
+      install \
+        -o ${hermesCfg.user or "hermes"} \
+        -g ${hermesCfg.group or "hermes"} \
+        -m 0400 \
+        ${stateDir}/hermes-agent.token \
+        /run/hermes-forgejo-token
     '';
   };
 

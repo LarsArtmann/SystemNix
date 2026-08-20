@@ -1,6 +1,6 @@
 # Status Report: RAG Embedding + Reranker Architecture Decision
 
-**Date:** 2026-08-19 17:36  
+**Date:** 2026-08-19 17:36
 **Session focus:** Evaluating whether to add HuggingFace Text Embeddings Inference (TEI) permanently, and finding the best reranker-capable serving stack for the homelab
 
 ---

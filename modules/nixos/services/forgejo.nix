@@ -60,6 +60,9 @@ _: {
         ensurePasswordFile
         adminSetup
         tokenGen
+        hermesForgejoToken
+        hermesForgejoTokenDeliver
+        hermesCfg
         genRunnerToken
         registerRunner
         oidcSetupScript
@@ -266,7 +269,7 @@ _: {
                 ReadWritePaths = [ forgejoBackupDir ];
               })
               (serviceOneshotDefaults { })
-              (ioTier.background)
+              ioTier.background
               {
                 Type = "oneshot";
                 User = "forgejo";
@@ -301,6 +304,53 @@ _: {
               RandomizedDelaySec = "15m";
             };
           };
+        };
+
+        # --- Hermes Agent read-only access (added 2026-08-19, PR: forgejo-hermes-agent) ---
+        # mkIf hermes: the token is chown'd to the hermes user in ExecStartPost,
+        # which only exists when the hermes service is enabled.
+        # hermesCfg (from _forgejo-scripts.nix) uses 'or {}' so a standalone
+        # nixosModules.forgejo consumer without nixosModules.hermes evaluates cleanly.
+        systemd.services.forgejo-hermes-token = lib.mkIf (hermesCfg.enable or false) {
+          description = "Provision hermes-agent Forgejo user + read-only token";
+          after = [
+            "forgejo.service"
+            "forgejo-generate-token.service"
+          ];
+          wants = [ "forgejo.service" ];
+          wantedBy = [ "forgejo.service" ];
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+          inherit onFailure;
+          restartTriggers = [
+            (lib.getExe hermesForgejoToken)
+            (lib.getExe hermesForgejoTokenDeliver)
+          ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              # forgejo-user idiom (tokenGen): CLI runs directly, no runuser —
+              # PAM cannot open a session inside harden {} (documented gotcha,
+              # 2026-07-17 forgejo-oidc-setup incident). The only root step is
+              # the delivery below.
+              User = "forgejo";
+              Group = "forgejo";
+              # 30 readiness tries × (curl --max-time 5 + sleep 1) + CLI ops ≈ 3min budget
+              TimeoutStartSec = "4min";
+              RemainAfterExit = true;
+              # "+" = full-privilege escape hatch (gitea-runner's
+              # +forgejo-gen-runner-token idiom): installs the staged token as
+              # hermes:hermes 0400 into /run. Runs after ExecStart on every
+              # successful start — i.e. on boot and on explicit restart of this
+              # unit (deploy.sh restarts it post-switch). It does NOT rerun on a
+              # plain forgejo.service restart because RemainAfterExit keeps this
+              # unit active and wantedBy skips already-active units.
+              ExecStartPost = [ ("+" + lib.getExe hermesForgejoTokenDeliver) ];
+            }
+            (harden { })
+            (serviceOneshotDefaults { })
+          ];
+          script = lib.getExe hermesForgejoToken;
         };
 
         systemd.services.forgejo-generate-token = {

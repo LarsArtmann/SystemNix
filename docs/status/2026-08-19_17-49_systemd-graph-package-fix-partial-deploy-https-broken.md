@@ -58,7 +58,7 @@ Fixed all three systemd-graph package build blockers (pnpm hook, vendorHash, bin
 
 ### 1. The Root Cause of the Webui Build Failure (Previous Session)
 
-**The bug was `dontConfigure = true`.** The previous session added `pnpmConfigHook` to `nativeBuildInputs` (correct) but then set `dontConfigure = true` (wrong) and hand-rolled `pnpm install` in `buildPhase` (fighting the hook). 
+**The bug was `dontConfigure = true`.** The previous session added `pnpmConfigHook` to `nativeBuildInputs` (correct) but then set `dontConfigure = true` (wrong) and hand-rolled `pnpm install` in `buildPhase` (fighting the hook).
 
 `pnpmConfigHook` is registered in `postConfigureHooks` — it fires during the **configure** phase, not the build phase. Setting `dontConfigure = true` skips the entire configure phase, so `pnpmConfigHook` **never ran**. The hand-rolled `pnpm install` in buildPhase then tried to install deps manually, but:
 
