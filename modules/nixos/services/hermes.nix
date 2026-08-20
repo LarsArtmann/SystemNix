@@ -173,6 +173,22 @@
         '';
       };
 
+      # Repos on the read-only projects bind are owned by the primary user
+      # while the gateway runs as hermes; git >= 2.35.2 refuses ALL
+      # operations on such repos ("detected dubious ownership") unless the
+      # repo root is allow-listed in a PROTECTED config scope (system/global
+      # only, never repo-local — GIT_CONFIG_GLOBAL counts as global).
+      # Entries: the mount root itself (exact) plus <root>/* (covers every
+      # repo beneath it at any depth, per `git help config` safe.directory).
+      # The store path is read-only, so the agent cannot amend it; identity
+      # for commits in clones must be set repo-locally (documented in the
+      # workspace AGENTS.md).
+      hermesGitConfig = pkgs.writeText "hermes-gitconfig" ''
+        [safe]
+        	directory = ${cfg.stateDir}/workspace/projects
+        	directory = ${cfg.stateDir}/workspace/projects/*
+      '';
+
       migrateScript = pkgs.writeShellApplication {
         name = "hermes-migrate-state";
         runtimeInputs = [
@@ -374,6 +390,11 @@
                 # agent-facing denial. stateDir covers HERMES_HOME, so cron
                 # jobs, skills, and profile state stay writable.
                 "HERMES_WRITE_SAFE_ROOT=${cfg.stateDir}"
+                # Un-breaks git on the RO bind (foreign-owned repos): see
+                # hermesGitConfig above. Read-only store file, so it also
+                # SHADOWS any $HOME/.gitconfig — identity etc. must be
+                # repo-local in clones.
+                "GIT_CONFIG_GLOBAL=${hermesGitConfig}"
               ];
               EnvironmentFile = [ sopsEnvPath ];
               RestartForceExitStatus = 75;
