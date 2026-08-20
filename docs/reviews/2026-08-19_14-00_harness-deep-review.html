@@ -65,9 +65,18 @@
           ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
           Menlo, Consolas, monospace;
       }
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      html { scroll-behavior: smooth; }
-      section[id], [id] { scroll-margin-top: 60px; }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
 
       body {
         background: var(--surface);
@@ -111,7 +120,11 @@
         overflow-y: auto;
         display: none;
       }
-      .sidebar nav { display: flex; flex-direction: column; gap: 0; }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
       .sidebar .label {
         font-family: var(--font-mono);
         font-size: 0.68rem;
@@ -133,30 +146,65 @@
         line-height: 1.4;
         font-weight: 500;
       }
-      .sidebar a:hover, .sidebar a.active {
+      .sidebar a:hover,
+      .sidebar a.active {
         color: var(--accent);
         border-left-color: var(--accent);
         background: color-mix(in srgb, var(--accent) 8%, transparent);
       }
-      .main { flex: 1; min-width: 0; }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
 
-      h1, h2, h3, h4 {
+      h1,
+      h2,
+      h3,
+      h4 {
         font-family: var(--font-heading);
         font-weight: 800;
         letter-spacing: -0.02em;
       }
-      h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.1; margin: 0 0 0.6rem; }
-      h2 { font-size: 1.4rem; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem;
-           border-bottom: 2px solid var(--border-strong);
-           display: flex; align-items: baseline; gap: 0.6rem; }
-      h2 .num { font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent);
-                font-weight: 700; letter-spacing: 0.06em; }
-      h3 { font-size: 1.1rem; margin: 0 0 0.4rem; font-weight: 700; }
-      h4 { font-size: 0.98rem; margin: 0 0 0.3rem; font-weight: 700; }
-      p { margin: 0 0 1rem; }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
 
-      .hero { padding: 1.5rem 0; margin-bottom: 1.5rem;
-              border-bottom: 2px solid var(--border-strong); }
+      .hero {
+        padding: 1.5rem 0;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
       .hero-badge {
         display: inline-block;
         font-family: var(--font-mono);
@@ -169,151 +217,500 @@
         padding: 0.3rem 0.7rem;
         margin-bottom: 0.9rem;
       }
-      .hero-subtitle { font-size: 1.05rem; color: var(--text-muted); max-width: 70ch; margin: 0; }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
 
-      .hero-shapes { position: relative; height: 80px; margin-bottom: 1rem; }
-      .hero-shapes .circle { position: absolute; top: 0; left: 0;
-        width: 56px; height: 56px; background: var(--problem); border-radius: 50%; }
-      .hero-shapes .square { position: absolute; top: 24px; left: 72px;
-        width: 48px; height: 48px; background: var(--solution); }
-      .hero-shapes .tri { position: absolute; top: 8px; left: 140px; width: 0; height: 0;
-        border-left: 28px solid transparent; border-right: 28px solid transparent;
-        border-bottom: 48px solid var(--warning); }
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
 
-      .card { background: var(--surface-raised); border: 1px solid var(--border);
-              padding: 1.1rem 1.3rem; margin-bottom: 1rem; border-left: 4px solid var(--border-strong); }
-      .card-problem { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised)); }
-      .card-solution { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised)); }
-      .card-warning { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised)); }
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
 
-      .issue { background: var(--surface-raised); border: 1px solid var(--border);
-               padding: 1.1rem 1.3rem; margin-bottom: 1rem; border-left: 4px solid var(--border-strong); }
-      .issue-critical { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised)); }
-      .issue-important { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised)); }
-      .issue-nice { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised)); }
-      .issue h3 { margin-bottom: 0.3rem; }
-      .issue .where { font-family: var(--font-mono); font-size: 0.78rem;
-                      color: var(--text-faint); margin: 0.2rem 0 0.6rem; }
-      .issue p:last-child { margin-bottom: 0; }
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
 
-      .severity { display: inline-block; font-family: var(--font-mono); font-size: 0.62rem;
-                  font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-                  padding: 0.2rem 0.55rem; margin-bottom: 0.6rem; color: var(--surface); }
-      .severity-critical { background: var(--problem); }
-      .severity-important { background: var(--warning); }
-      .severity-nice { background: var(--solution); }
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
 
-      .badge { display: inline-block; font-family: var(--font-mono); font-size: 0.62rem;
-               font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-               padding: 0.18rem 0.5rem; border: 1px solid var(--border-strong); color: var(--text-muted); }
-      .badge-critical { color: var(--problem); border-color: var(--problem); }
-      .badge-high { color: var(--warning); border-color: var(--warning); }
-      .badge-medium { color: var(--accent); border-color: var(--accent); }
-      .badge-low { color: var(--text-muted); }
-      .badge-fixed { color: var(--solution); border-color: var(--solution); }
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
 
-      .callout { margin: 0.8rem 0 0; padding: 0.7rem 0.9rem;
-                 border-left: 3px solid var(--border-strong);
-                 background: color-mix(in srgb, var(--text) 5%, transparent);
-                 font-size: 0.9rem; }
-      .callout strong { display: inline-block; margin-right: 0.4rem; }
-      .callout-solution { border-left-color: var(--solution);
-                          background: color-mix(in srgb, var(--solution) 10%, transparent); }
-      .callout-warning { border-left-color: var(--warning);
-                         background: color-mix(in srgb, var(--warning) 10%, transparent); }
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
 
-      .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                   gap: 0.75rem; margin: 1rem 0 1.5rem; }
-      .stat-card { background: var(--surface-raised); border: 1px solid var(--border);
-                   padding: 1.1rem 1rem; position: relative; }
-      .stat-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0;
-                           height: 2px; background: var(--border-strong); }
-      .stat-bad::before { background: var(--problem); }
-      .stat-good::before { background: var(--solution); }
-      .stat-warn::before { background: var(--warning); }
-      .stat-value { font-family: var(--font-heading); font-size: 2rem; font-weight: 800;
-                    line-height: 1; letter-spacing: -0.03em; color: var(--text); }
-      .stat-bad .stat-value { color: var(--problem); }
-      .stat-good .stat-value { color: var(--solution); }
-      .stat-warn .stat-value { color: var(--warning); }
-      .stat-label { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 600;
-                    text-transform: uppercase; letter-spacing: 0.1em;
-                    color: var(--text-faint); margin-top: 0.5rem; }
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before {
+        background: var(--warning);
+      }
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value {
+        color: var(--problem);
+      }
+      .stat-good .stat-value {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value {
+        color: var(--warning);
+      }
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
 
-      .strengths { display: grid; gap: 0.5rem; margin: 1rem 0 1.5rem; }
-      .strength { display: grid; grid-template-columns: auto 1fr; gap: 0.8rem;
-                  padding: 0.7rem 0; border-bottom: 1px solid var(--border); }
-      .strength .check { font-family: var(--font-mono); font-weight: 700;
-                         color: var(--solution); font-size: 1.1rem; line-height: 1.4; }
-      .strength .text strong { display: block; margin-bottom: 0.15rem; }
-      .strength .text span { color: var(--text-muted); font-size: 0.9rem; }
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
 
-      .table-wrap { overflow-x: auto; }
-      table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: 0.9rem; }
-      th { text-align: left; padding: 0.6rem 0.9rem; background: var(--surface-raised);
-           color: var(--text-faint); font-family: var(--font-mono); font-size: 0.66rem;
-           font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-           border-bottom: 1px solid var(--border-strong); }
-      td { padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--border); }
-      tr:hover td { background: var(--surface-raised); }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
 
-      pre { background: var(--surface-sunken); border: 1px solid var(--border);
-            padding: 1rem 1.2rem; margin: 1rem 0; font-family: var(--font-mono);
-            font-size: 0.82rem; line-height: 1.65; overflow-x: auto; }
-      code { font-family: var(--font-mono); }
-      p code, li code, td code { font-size: 0.88em; background: var(--surface-sunken);
-                                padding: 0.1rem 0.35rem; }
-      .tok-keyword { color: var(--accent); }
-      .tok-type { color: var(--warning); }
-      .tok-string { color: var(--solution); }
-      .tok-comment { color: var(--text-faint); font-style: italic; }
-      .tok-func { color: #74a9ff; }
-      .tok-number { color: var(--accent); }
-      .tok-builtin { color: #4dd9ff; }
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--accent);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: var(--solution);
+      }
+      .tok-comment {
+        color: var(--text-faint);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #74a9ff;
+      }
+      .tok-number {
+        color: var(--accent);
+      }
+      .tok-builtin {
+        color: #4dd9ff;
+      }
 
-      .dep-tree { background: var(--surface-sunken); border: 1px solid var(--border);
-                  padding: 1rem 1.2rem; margin: 1rem 0; font-family: var(--font-mono);
-                  font-size: 0.82rem; line-height: 1.7; white-space: pre; overflow-x: auto; }
-      .diagram { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
-                 padding: 1rem; margin: 1rem 0; background: var(--surface-raised);
-                 border: 1px solid var(--border); }
-      .node { display: inline-block; padding: 0.35rem 0.7rem; font-family: var(--font-mono);
-              font-size: 0.8rem; font-weight: 600; background: var(--surface-sunken);
-              border: 1px solid var(--border-strong); }
-      .node-core { background: var(--accent); color: var(--surface); border-color: var(--accent); }
-      .node-problem { background: var(--problem); color: var(--surface); border-color: var(--problem); }
-      .node-good { background: var(--solution); color: var(--surface); border-color: var(--solution); }
-      .arrow { color: var(--text-faint); font-family: var(--font-mono); }
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border-strong);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+        border-color: var(--accent);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+        border-color: var(--problem);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+        border-color: var(--solution);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
 
-      .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin: 1rem 0; }
-      .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1rem 0; }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
 
-      .toc { background: var(--surface-raised); border: 1px solid var(--border);
-             border-left: 3px solid var(--accent); padding: 1rem 1.3rem; margin: 1rem 0 1.5rem; }
-      .toc h3 { margin-bottom: 0.5rem; }
-      .toc ul { list-style: none; padding: 0; }
-      .toc li { margin: 0.25rem 0; }
-      .toc a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; }
-      .toc a:hover { color: var(--accent); }
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
 
-      .migration-step { display: grid; grid-template-columns: 48px 1fr; gap: 1rem;
-                        margin: 1rem 0; padding: 1rem; background: var(--surface-raised);
-                        border: 1px solid var(--border); border-left: 3px solid var(--accent); }
-      .migration-num { font-family: var(--font-mono); font-weight: 800; font-size: 1.5rem;
-                       color: var(--accent); line-height: 1; }
-      .migration-content h4 { margin-bottom: 0.2rem; }
-      .migration-content p { margin-bottom: 0; color: var(--text-muted); font-size: 0.92rem; }
+      .migration-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
 
-      .footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border);
-                font-size: 0.8rem; color: var(--text-faint); font-family: var(--font-mono); }
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
 
-      @media (min-width: 1024px) { .sidebar { display: block; } }
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
       @media (max-width: 768px) {
-        .layout { flex-direction: column; padding: 1rem; }
-        .top-bar { padding: 0.6rem 1rem; flex-wrap: wrap; gap: 0.3rem; }
-        .grid-2, .grid-3 { grid-template-columns: 1fr; }
-        .stat-grid { grid-template-columns: repeat(2, 1fr); }
-        .migration-step { grid-template-columns: 1fr; }
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>
@@ -369,7 +766,9 @@
             <li><a href="#about">About the Project</a></li>
             <li><a href="#strengths">What's Excellent</a></li>
             <li><a href="#findings">Findings (numbered)</a></li>
-            <li><a href="#risk-archive">Risk Register (copied from the ADRs)</a></li>
+            <li>
+              <a href="#risk-archive">Risk Register (copied from the ADRs)</a>
+            </li>
             <li><a href="#splitbrain">Split-Brain Audit</a></li>
             <li><a href="#ghosts">Ghost System Audit</a></li>
             <li><a href="#scope">Scope-Creep Audit</a></li>
@@ -411,31 +810,33 @@
         </div>
 
         <p>
-          The headline: <strong>Harness is the rare tool that admits what it has
-          not shipped yet</strong>. Multiple ADRs explicitly catalogue deferred
-          items, open issues, and shipped-with-known-gaps sections (most
-          pointedly <a href="#adr-0013">ADR-0013</a> and the "Revision note"
-          embedded inside it). The architecture itself is good — narrowly
-          conceptual, dependency-coherent, with three load-bearing decisions
-          (ADR-0003 native multiplexer, ADR-0005 daemon-self-supervises, ADR-0007
+          The headline:
+          <strong
+            >Harness is the rare tool that admits what it has not shipped
+            yet</strong
+          >. Multiple ADRs explicitly catalogue deferred items, open issues, and
+          shipped-with-known-gaps sections (most pointedly
+          <a href="#adr-0013">ADR-0013</a> and the "Revision note" embedded
+          inside it). The architecture itself is good — narrowly conceptual,
+          dependency-coherent, with three load-bearing decisions (ADR-0003
+          native multiplexer, ADR-0005 daemon-self-supervises, ADR-0007
           ring+log) that reinforce each other instead of competing.
         </p>
 
         <p>
-          The risks cluster in three places: (a) the daemon is a single point
-          of failure for every agent on the box; (b) the scheduler
-          (ADR-0013) lacks run history and missed-window recovery, which is
-          the difference between "a cockpit" and "a timer with cosmetics"; and
-          (c) the chatroom + distillation story (ADR-0011/0012/0015) is
-          building real flywheel machinery before the run-history gap is
-          closed, which inverts the priority order.
+          The risks cluster in three places: (a) the daemon is a single point of
+          failure for every agent on the box; (b) the scheduler (ADR-0013) lacks
+          run history and missed-window recovery, which is the difference
+          between "a cockpit" and "a timer with cosmetics"; and (c) the chatroom
+          + distillation story (ADR-0011/0012/0015) is building real flywheel
+          machinery before the run-history gap is closed, which inverts the
+          priority order.
         </p>
 
         <p>
           None of this is unrecoverable. The ADRs are the recovery plan: each
           shipped-with-known-gap section is the punch list. The fix is to
-          promote those deferred items to commits, not to revisit the
-          decisions.
+          promote those deferred items to commits, not to revisit the decisions.
         </p>
 
         <!-- ==================== 01 ABOUT ==================== -->
@@ -443,25 +844,68 @@
 
         <div class="card">
           <h3>What the docs say</h3>
-          <p><em>Systemctl for your agents</em> — a long-lived Go daemon that
-          supervises AI agent CLIs (Claude Code, Crush, Codex) and exposes
-          them via a keyboard-driven Bubble Tea dashboard, with the same
-          cockpit reachable over SSH through Wish.</p>
+          <p>
+            <em>Systemctl for your agents</em> — a long-lived Go daemon that
+            supervises AI agent CLIs (Claude Code, Crush, Codex) and exposes
+            them via a keyboard-driven Bubble Tea dashboard, with the same
+            cockpit reachable over SSH through Wish.
+          </p>
 
           <ul>
-            <li><strong>Source</strong>: <code>gitea.stump.rocks/stump.wtf/harness</code> (not on GitHub public)</li>
-            <li><strong>Documentation site</strong>: <code>stump-wtf.github.io/harness/</code></li>
-            <li><strong>Owner</strong>: Joe (<code>joestump</code> — decisions 9–16 list them as decider)</li>
-            <li><strong>Distribute</strong>: Homebrew tap + <code>go install</code>; single Go binary with daemon / TUI / CLI subcommands</li>
-            <li><strong>Decision literature</strong>: 16 ADRs and 10 specs, all markdown, all with considered options and rejected options</li>
-            <li><strong>Adjacent repos</strong>: <code>stump.wtf/agent-trace</code> (trajectory parsing, extracted from <code>cosmtrek/mindwalk</code>)</li>
+            <li>
+              <strong>Source</strong>:
+              <code>gitea.stump.rocks/stump.wtf/harness</code> (not on GitHub
+              public)
+            </li>
+            <li>
+              <strong>Documentation site</strong>:
+              <code>stump-wtf.github.io/harness/</code>
+            </li>
+            <li>
+              <strong>Owner</strong>: Joe (<code>joestump</code> — decisions
+              9–16 list them as decider)
+            </li>
+            <li>
+              <strong>Distribute</strong>: Homebrew tap +
+              <code>go install</code>; single Go binary with daemon / TUI / CLI
+              subcommands
+            </li>
+            <li>
+              <strong>Decision literature</strong>: 16 ADRs and 10 specs, all
+              markdown, all with considered options and rejected options
+            </li>
+            <li>
+              <strong>Adjacent repos</strong>:
+              <code>stump.wtf/agent-trace</code> (trajectory parsing, extracted
+              from <code>cosmtrek/mindwalk</code>)
+            </li>
           </ul>
         </div>
 
         <h3>What the ADRs reveal that the homepage does not</h3>
         <ul>
-          <li><strong>Status fields are inconsistent</strong> across ADRs. Most say <code>Proposed</code>, two say <code>Accepted</code> (ADR-0013, ADR-0014), and the doc-site render shows <code>unknown</code> for 10/16. ADR-0011 references a Gitea PR (#112, #122) for the actual code — the ADR is the proposal; the code is what shipped. Either the status logic should map all "proposal with code merged" to <code>Accepted</code>, or there should be a single "as-built" annotation per ADR.</li>
-          <li><strong>The shape of <code>harnessd</code></strong> is fully conceptualised (ADR-0001 sets the binary shape, ADR-0002 the split, ADR-0003 the multiplexer, ADR-0004 the transport, ADR-0005 the supervision, ADR-0007 the persistence). There is no published <code>internal/</code> layout decision, which means a newcomer has to read seven ADRs to know where <code>core/</code>, <code>supervisor/</code>, <code>proxy/</code>, <code>tui/</code>, <code>config/</code>, <code>agent-trace-bridge/</code>, etc. live. A single one-page "codebase map" ADR would pay for itself in onboarding.</li>
+          <li>
+            <strong>Status fields are inconsistent</strong> across ADRs. Most
+            say <code>Proposed</code>, two say <code>Accepted</code> (ADR-0013,
+            ADR-0014), and the doc-site render shows <code>unknown</code> for
+            10/16. ADR-0011 references a Gitea PR (#112, #122) for the actual
+            code — the ADR is the proposal; the code is what shipped. Either the
+            status logic should map all "proposal with code merged" to
+            <code>Accepted</code>, or there should be a single "as-built"
+            annotation per ADR.
+          </li>
+          <li>
+            <strong>The shape of <code>harnessd</code></strong> is fully
+            conceptualised (ADR-0001 sets the binary shape, ADR-0002 the split,
+            ADR-0003 the multiplexer, ADR-0004 the transport, ADR-0005 the
+            supervision, ADR-0007 the persistence). There is no published
+            <code>internal/</code> layout decision, which means a newcomer has
+            to read seven ADRs to know where <code>core/</code>,
+            <code>supervisor/</code>, <code>proxy/</code>, <code>tui/</code>,
+            <code>config/</code>, <code>agent-trace-bridge/</code>, etc. live. A
+            single one-page "codebase map" ADR would pay for itself in
+            onboarding.
+          </li>
         </ul>
 
         <!-- ==================== 02 STRENGTHS ==================== -->
@@ -470,45 +914,94 @@
         <div class="strengths">
           <div class="strength">
             <div class="check">+</div>
-            <div class="text"><strong>Decisions record reasoning, not just outcomes</strong>
-              <span>Every ADR includes "Considered options" and "Rejected options — why." This is the hardest discipline to maintain at scope and the project has maintained it. A new maintainer can reverse-engineer why the daemon is one process (ADR-0002) or why schedule is a key on a harness (ADR-0013) without grepping git history.
+            <div class="text">
+              <strong>Decisions record reasoning, not just outcomes</strong>
+              <span
+                >Every ADR includes "Considered options" and "Rejected options —
+                why." This is the hardest discipline to maintain at scope and
+                the project has maintained it. A new maintainer can
+                reverse-engineer why the daemon is one process (ADR-0002) or why
+                schedule is a key on a harness (ADR-0013) without grepping git
+                history.
               </span>
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
-            <div class="text"><strong>Coherent dependency choice</strong>
-              <span>ADR-0001 maps <em>every</em> dependency to a structural need (PTY, emulator, SSH, UI, styles). The result is a tree where removal of any one package has an obvious second-order effect — that's rare, and it kept the door open for ADR-0016's decision to add Cobra+Viper explicitly <em>and</em> count the cost.</span>
+            <div class="text">
+              <strong>Coherent dependency choice</strong>
+              <span
+                >ADR-0001 maps <em>every</em> dependency to a structural need
+                (PTY, emulator, SSH, UI, styles). The result is a tree where
+                removal of any one package has an obvious second-order effect —
+                that's rare, and it kept the door open for ADR-0016's decision
+                to add Cobra+Viper explicitly <em>and</em> count the cost.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
-            <div class="text"><strong>Security model is real, not decorative</strong>
-              <span>ADR-0008 explicitly acknowledges the irreducible risk ("attach = terminal access"), defaults to off for remote, keeps the SSH-only auth path, and refuses to invent crypto. The "no secrets in <code>HARNESS_*</code>" rule (ADR-0016) is the right cut.</span>
+            <div class="text">
+              <strong>Security model is real, not decorative</strong>
+              <span
+                >ADR-0008 explicitly acknowledges the irreducible risk ("attach
+                = terminal access"), defaults to off for remote, keeps the
+                SSH-only auth path, and refuses to invent crypto. The "no
+                secrets in <code>HARNESS_*</code>" rule (ADR-0016) is the right
+                cut.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
-            <div class="text"><strong>The <code>Backend</code> escape hatch</strong>
-              <span>ADR-0003 defines a <code>Backend</code> interface and ships <code>native</code> as the default and <code>tmux</code> as the optional fallback. This is exactly the right shape for a project whose biggest technical risk is a young virtual-terminal emulator. The reclaimable egress keeps the schedule live if <code>x/vt</code> bites on a real program.</span>
+            <div class="text">
+              <strong>The <code>Backend</code> escape hatch</strong>
+              <span
+                >ADR-0003 defines a <code>Backend</code> interface and ships
+                <code>native</code> as the default and <code>tmux</code> as the
+                optional fallback. This is exactly the right shape for a project
+                whose biggest technical risk is a young virtual-terminal
+                emulator. The reclaimable egress keeps the schedule live if
+                <code>x/vt</code> bites on a real program.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
-            <div class="text"><strong>Config schema preserved as file-of-record</strong>
-              <span>ADR-0006 chose the TOML stays-the-truth side of the schema authority argument and ADR-0009 carved out projects as transient registration without polluting the global file. Together they keep the file portable, git-trackable, and editable by hand <em>and</em> by the TUI — the user's drei split.</span>
+            <div class="text">
+              <strong>Config schema preserved as file-of-record</strong>
+              <span
+                >ADR-0006 chose the TOML stays-the-truth side of the schema
+                authority argument and ADR-0009 carved out projects as transient
+                registration without polluting the global file. Together they
+                keep the file portable, git-trackable, and editable by hand
+                <em>and</em> by the TUI — the user's drei split.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
-            <div class="text"><strong>Honest revision notes</strong>
-              <span>ADR-0013's mid-document "Revision note (2026-08-13)" revises the decision without papering over the one it replaced. The original 1A+2A argument is preserved under "Pros and Cons." This is how ADRs are supposed to evolve; most teams fake it.</span>
+            <div class="text">
+              <strong>Honest revision notes</strong>
+              <span
+                >ADR-0013's mid-document "Revision note (2026-08-13)" revises
+                the decision without papering over the one it replaced. The
+                original 1A+2A argument is preserved under "Pros and Cons." This
+                is how ADRs are supposed to evolve; most teams fake it.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
-            <div class="text"><strong>Distiller-as-harness is the right pattern</strong>
-              <span>ADR-0012 frames cross-harness distillation as a supervised process that uses the facade to read, not a daemon subsystem that reaches into a model. The daemon keeps the "I hold no secrets" invariant from ADR-0008, and every auth path inherits the harness lifecycle machinery.</span>
+            <div class="text">
+              <strong>Distiller-as-harness is the right pattern</strong>
+              <span
+                >ADR-0012 frames cross-harness distillation as a supervised
+                process that uses the facade to read, not a daemon subsystem
+                that reaches into a model. The daemon keeps the "I hold no
+                secrets" invariant from ADR-0008, and every auth path inherits
+                the harness lifecycle machinery.</span
+              >
             </div>
           </div>
         </div>
@@ -517,562 +1010,767 @@
         <h2 id="findings"><span class="num">03</span>Findings</h2>
 
         <div class="issue issue-critical">
-          <span class="severity severity-critical">F01 — Critical / Phase-1 must-fix</span>
-          <h3>Scheduled-harness restart race vs <code>enabled</code> exclusion</h3>
-          <div class="where">ADR-0013 — "Consequences" / Deferred list, issue #159 referenced</div>
-          <p>The shipped scheduler fires through <code>Manager.Start</code>, which persists
-          <code>enabled = true</code>. An unclean daemon exit mid-run can autostart a
-          scheduled one-shot <em>off-schedule</em> on the next boot, defeating the
-          deliberate parser exclusion at <code>schedule</code> × <code>enabled = true</code>.</p>
-          <p>Fix: a supervisor-level "start without persisting intent" primitive
-          (e.g. <code>Manager.fire(harnessID)</code> distinct from <code>Manager.Start</code>),
-          plus a state.json marker (<code>last_fired_at</code>) so the next boot
-          can detect a missed window and either skip or replay cleanly.</p>
+          <span class="severity severity-critical"
+            >F01 — Critical / Phase-1 must-fix</span
+          >
+          <h3>
+            Scheduled-harness restart race vs <code>enabled</code> exclusion
+          </h3>
+          <div class="where">
+            ADR-0013 — "Consequences" / Deferred list, issue #159 referenced
+          </div>
+          <p>
+            The shipped scheduler fires through <code>Manager.Start</code>,
+            which persists <code>enabled = true</code>. An unclean daemon exit
+            mid-run can autostart a scheduled one-shot <em>off-schedule</em> on
+            the next boot, defeating the deliberate parser exclusion at
+            <code>schedule</code> × <code>enabled = true</code>.
+          </p>
+          <p>
+            Fix: a supervisor-level "start without persisting intent" primitive
+            (e.g. <code>Manager.fire(harnessID)</code> distinct from
+            <code>Manager.Start</code>), plus a state.json marker
+            (<code>last_fired_at</code>) so the next boot can detect a missed
+            window and either skip or replay cleanly.
+          </p>
         </div>
 
         <div class="issue issue-critical">
-          <span class="severity severity-critical">F02 — Critical / Phase-1 must-fix</span>
+          <span class="severity severity-critical"
+            >F02 — Critical / Phase-1 must-fix</span
+          >
           <h3>No run history; "did last night's run pass?" is unanswerable</h3>
-          <div class="where">ADR-0013 — Deferred: "Run history and per-run logs"</div>
-          <p>ADR-0013's own context promises that "did the 3am agent run fire, and
-          did it pass?" is the headline question a cockpit answers. The shipped
-          scheduler answers <em>did the single continuous scrollback ever end with a
-          zero exit?</em> — only if you scroll to the bottom. That is the largest
-          gap in the system and the one that most undermines the premise.</p>
-          <p>Fix: bounded ring of <code>{ run_id, started_at, ended_at, exit_code,
-          outcome, trigger }</code> per harness + one log file per run pruned to
-          <code>keep_runs</code>. Surface in <code>harness list</code> as a column
-          (or "last 5 runs" pill) and in <code>harness describe</code>.</p>
+          <div class="where">
+            ADR-0013 — Deferred: "Run history and per-run logs"
+          </div>
+          <p>
+            ADR-0013's own context promises that "did the 3am agent run fire,
+            and did it pass?" is the headline question a cockpit answers. The
+            shipped scheduler answers
+            <em
+              >did the single continuous scrollback ever end with a zero
+              exit?</em
+            >
+            — only if you scroll to the bottom. That is the largest gap in the
+            system and the one that most undermines the premise.
+          </p>
+          <p>
+            Fix: bounded ring of
+            <code
+              >{ run_id, started_at, ended_at, exit_code, outcome, trigger
+              }</code
+            >
+            per harness + one log file per run pruned to <code>keep_runs</code>.
+            Surface in <code>harness list</code> as a column (or "last 5 runs"
+            pill) and in <code>harness describe</code>.
+          </p>
         </div>
 
         <div class="issue issue-critical">
-          <span class="severity severity-critical">F03 — Critical / Phase-1 must-fix</span>
+          <span class="severity severity-critical"
+            >F03 — Critical / Phase-1 must-fix</span
+          >
           <h3>Clock correctness is unspecified across suspend/resume</h3>
-          <div class="where">ADR-0013 — Deferred: "Suspend-safe wall-clock evaluation"</div>
-          <p>The shipped scheduler delegates timing to <code>robfig/cron/v3</code>, which
-          arms a single timer to the next due entry. On a laptop that suspends
-          overnight, the armed timer fires once on resume (catch-up), which for a
-          5-field <code>min hour dom mon dow</code> spec is fine but for a
-          suspend-resilient cron is not. The requirement stated in the original
-          draft — re-evaluate against wall-clock on a short tick — has not been
-          verified against <code>robfig/cron</code>'s behaviour.</p>
-          <p>Fix: write the missing acceptance test
-          (<em>"schedule survives overnight suspend"</em>) and capture
-          <code>cron.Next(t)</code> vs <code>time.Now()</code> immediately post
-          resume. If they diverge by >5s, swap the scheduler implementation for
-          one that re-evaluates on a short tick.</p>
+          <div class="where">
+            ADR-0013 — Deferred: "Suspend-safe wall-clock evaluation"
+          </div>
+          <p>
+            The shipped scheduler delegates timing to
+            <code>robfig/cron/v3</code>, which arms a single timer to the next
+            due entry. On a laptop that suspends overnight, the armed timer
+            fires once on resume (catch-up), which for a 5-field
+            <code>min hour dom mon dow</code> spec is fine but for a
+            suspend-resilient cron is not. The requirement stated in the
+            original draft — re-evaluate against wall-clock on a short tick —
+            has not been verified against <code>robfig/cron</code>'s behaviour.
+          </p>
+          <p>
+            Fix: write the missing acceptance test (<em
+              >"schedule survives overnight suspend"</em
+            >) and capture <code>cron.Next(t)</code> vs
+            <code>time.Now()</code> immediately post resume. If they diverge by
+            >5s, swap the scheduler implementation for one that re-evaluates on
+            a short tick.
+          </p>
         </div>
 
         <div class="issue issue-critical">
-          <span class="severity severity-critical">F04 — Critical / Phase-1 must-fix</span>
-          <h3>Daemon crash takes every harness with it; no re-arming for the live PTYs</h3>
-          <div class="where">ADR-0002 + ADR-0005 — both flag this as the headline risk</div>
-          <p>If <code>harnessd</code> crashes, all harnesses die. The mitigation is
-          keep-the-daemon-tiny + <code>Restart=on-failure</code>, and the advanced
-          "per-harness reaper" was explicitly deferred. Given the cost humans
-          pay when the daemon dies mid-session (lost scrollback, lost
-          in-progress prompts, agent CLI re-spawn cost on slow backends), the
-          "v2 consideration, noted not committed" framing has aged poorly.</p>
-          <p>Fix options, in order of cost:
-          (1) ship a <code>harnessd-reaper</code> companion that retains the live PTYs
-          if the daemon dies (forking+recovery is heavy);
-          (2) ship a process-group reaper so harnesses can be re-parented across
-          restarts;
-          (3) document the explicit "daemon crash = blanket stop" as a known
-          limitation and surface a banner in the TUI on every reattach.</p>
+          <span class="severity severity-critical"
+            >F04 — Critical / Phase-1 must-fix</span
+          >
+          <h3>
+            Daemon crash takes every harness with it; no re-arming for the live
+            PTYs
+          </h3>
+          <div class="where">
+            ADR-0002 + ADR-0005 — both flag this as the headline risk
+          </div>
+          <p>
+            If <code>harnessd</code> crashes, all harnesses die. The mitigation
+            is keep-the-daemon-tiny + <code>Restart=on-failure</code>, and the
+            advanced "per-harness reaper" was explicitly deferred. Given the
+            cost humans pay when the daemon dies mid-session (lost scrollback,
+            lost in-progress prompts, agent CLI re-spawn cost on slow backends),
+            the "v2 consideration, noted not committed" framing has aged poorly.
+          </p>
+          <p>
+            Fix options, in order of cost: (1) ship a
+            <code>harnessd-reaper</code> companion that retains the live PTYs if
+            the daemon dies (forking+recovery is heavy); (2) ship a
+            process-group reaper so harnesses can be re-parented across
+            restarts; (3) document the explicit "daemon crash = blanket stop" as
+            a known limitation and surface a banner in the TUI on every
+            reattach.
+          </p>
         </div>
 
         <div class="issue issue-important">
-          <span class="severity severity-important">F05 — Important / Phase-2</span>
-          <h3>Trajectory harvesting defaults must be reviewed against the 1.1 GB corpus</h3>
+          <span class="severity severity-important"
+            >F05 — Important / Phase-2</span
+          >
+          <h3>
+            Trajectory harvesting defaults must be reviewed against the 1.1 GB
+            corpus
+          </h3>
           <div class="where">ADR-0011 + ADR-0012</div>
-          <p>ADR-0012 names a "~1.1 GB across 1,738 transcripts" corpus that grows
-          daily. ADR-0008 acknowledges that harvested transcripts may contain
-          secrets a harnessed program printed itself. ADR-0011 makes harvesting
-          opt-in per harness but does not name a default — defaults are
-          user-hostile here. The TUI prompt for <code>harvest_trajectory</code>
-          should default to <code>false</code> for any harness that touches
-          tokens, and the daemon should refuse to enable harvesting for a
-          harness with an <code>env_file</code> unless the user explicitly
-          confirms.</p>
+          <p>
+            ADR-0012 names a "~1.1 GB across 1,738 transcripts" corpus that
+            grows daily. ADR-0008 acknowledges that harvested transcripts may
+            contain secrets a harnessed program printed itself. ADR-0011 makes
+            harvesting opt-in per harness but does not name a default — defaults
+            are user-hostile here. The TUI prompt for
+            <code>harvest_trajectory</code> should default to
+            <code>false</code> for any harness that touches tokens, and the
+            daemon should refuse to enable harvesting for a harness with an
+            <code>env_file</code> unless the user explicitly confirms.
+          </p>
         </div>
 
         <div class="issue issue-important">
-          <span class="severity severity-important">F06 — Important / Phase-2</span>
-          <h3>Cross-harness distillation + learned-tier search: missing a corpus cap</h3>
+          <span class="severity severity-important"
+            >F06 — Important / Phase-2</span
+          >
+          <h3>
+            Cross-harness distillation + learned-tier search: missing a corpus
+            cap
+          </h3>
           <div class="where">ADR-0012 — "Context is the scarce resource"</div>
-          <p>ADR-0012 names the 200-skill ceiling ("Correct at 15 skills; fatal at
-          200") and rejects embeddings and the LSA deferred path. But the corpus
-          cap is <em>retrieval</em>-driven: the only mechanisms that shrink the
-          index are the supersede rule and the "zero retrievals in N weeks
-          since promotion" rule. There is no authoring-side guard. A wrong
-          distiller over a noisy week can promote 30 skills in a row.</p>
-          <p>Fix: a hard weekly cap on promotions (<code>max_promotions_per_week =
-          N</code>), a confidence threshold from <code>classify</code>'s cluster
-          size that must be met before authoring, and a quarantine workflow
-          that holds unpromoted-but-promotable skills for a human review queue.</p>
+          <p>
+            ADR-0012 names the 200-skill ceiling ("Correct at 15 skills; fatal
+            at 200") and rejects embeddings and the LSA deferred path. But the
+            corpus cap is <em>retrieval</em>-driven: the only mechanisms that
+            shrink the index are the supersede rule and the "zero retrievals in
+            N weeks since promotion" rule. There is no authoring-side guard. A
+            wrong distiller over a noisy week can promote 30 skills in a row.
+          </p>
+          <p>
+            Fix: a hard weekly cap on promotions (<code
+              >max_promotions_per_week = N</code
+            >), a confidence threshold from <code>classify</code>'s cluster size
+            that must be met before authoring, and a quarantine workflow that
+            holds unpromoted-but-promotable skills for a human review queue.
+          </p>
         </div>
 
         <div class="issue issue-important">
-          <span class="severity severity-important">F07 — Important / Phase-2</span>
-          <h3><code>Backend</code> escape hatch lives only at the harness level, not the project</h3>
+          <span class="severity severity-important"
+            >F07 — Important / Phase-2</span
+          >
+          <h3>
+            <code>Backend</code> escape hatch lives only at the harness level,
+            not the project
+          </h3>
           <div class="where">ADR-0003 + ADR-0009</div>
-          <p><code>backend = "tmux" | "native"</code> is a per-harness knob. Projects
-          (ADR-0009) can declare many harnesses at once. There is no
-          <code>project.backend</code> default. If a user hits an emulator-level
-          bug in <code>x/vt</code>, every harness in a project must be edited.</p>
-          <p>Fix: add <code>[project] backend = "tmux"</code> as a default with
-          per-harness override, so a regression can be scoped without rewriting
-          any harness table.</p>
+          <p>
+            <code>backend = "tmux" | "native"</code> is a per-harness knob.
+            Projects (ADR-0009) can declare many harnesses at once. There is no
+            <code>project.backend</code> default. If a user hits an
+            emulator-level bug in <code>x/vt</code>, every harness in a project
+            must be edited.
+          </p>
+          <p>
+            Fix: add <code>[project] backend = "tmux"</code> as a default with
+            per-harness override, so a regression can be scoped without
+            rewriting any harness table.
+          </p>
         </div>
 
         <div class="issue issue-important">
-          <span class="severity severity-important">F08 — Important / Phase-2</span>
-          <h3><code>HARNESS_REDUCED_MOTION</code> reserved but not implemented</h3>
-          <div class="where">ADR-0016 — cross-references SPEC-0009 REQ "Reduced Motion"</div>
-          <p>ADR-0016 cleanly reserves the variable as the env override for a
-          future chatroom toggle ("Reduced Motion"). Until the chatroom ships
-          and the env is wired, the variable is dead. Either land it with the
-          chatroom (ADR-0015) or document the reservation explicitly with a
-          "do not use until v1.2" note in the error message.</p>
+          <span class="severity severity-important"
+            >F08 — Important / Phase-2</span
+          >
+          <h3>
+            <code>HARNESS_REDUCED_MOTION</code> reserved but not implemented
+          </h3>
+          <div class="where">
+            ADR-0016 — cross-references SPEC-0009 REQ "Reduced Motion"
+          </div>
+          <p>
+            ADR-0016 cleanly reserves the variable as the env override for a
+            future chatroom toggle ("Reduced Motion"). Until the chatroom ships
+            and the env is wired, the variable is dead. Either land it with the
+            chatroom (ADR-0015) or document the reservation explicitly with a
+            "do not use until v1.2" note in the error message.
+          </p>
         </div>
 
         <div class="issue issue-nice">
           <span class="severity severity-nice">F09 — Nice / Phase-3</span>
           <h3>Cobra+Viper are 14 modules including a dead YAML parser</h3>
           <div class="where">ADR-0016 — Consequences</div>
-          <p>ADR-0016 counted the cost — 52 → 66 modules — and accepted it. The
-          second TOML parser (<code>pelletier/go-toml</code>, pulled in by Viper)
-          is a latent split-brain: it's nowhere in <code>internal/config</code>'s
-          import graph but a future contributor who adds a Viper-based TOML
-          file path will reintroduce the conflict. A <code>go mod why -m
-          pelletier/go-toml</code> carved into a comment in <code>config.go</code>
-          is the cheapest insurance.</p>
+          <p>
+            ADR-0016 counted the cost — 52 → 66 modules — and accepted it. The
+            second TOML parser (<code>pelletier/go-toml</code>, pulled in by
+            Viper) is a latent split-brain: it's nowhere in
+            <code>internal/config</code>'s import graph but a future contributor
+            who adds a Viper-based TOML file path will reintroduce the conflict.
+            A <code>go mod why -m pelletier/go-toml</code> carved into a comment
+            in <code>config.go</code> is the cheapest insurance.
+          </p>
         </div>
 
         <div class="issue issue-nice">
           <span class="severity severity-nice">F10 — Nice / Phase-3</span>
           <h3>Wish's host-key ergonomics are inherited, not owned</h3>
           <div class="where">ADR-0004 + ADR-0008</div>
-          <p>The ADR pair keeps secure defaults (<code>0600</code> socket, keys allowlist,
-          no password path) but the SSH host-key management is hand-waved
-          forward to <code>charmbracelet/keygen</code> + optional <code>melt</code>
-          seed-word backup. From the docs there is no shipped "first-run
-          experience" for host-key generation and rotation. A returning user
-          who reinstalls the binary may face a host-key-changed warning without
-          a clear next step.</p>
-          <p>Fix: ship a <code>harness server init</code> verb that generates the
-          host key, optionally prints a seed phrase, and writes a fingerprint
-          line that the user pastes into their docfile of SSH host keys.</p>
+          <p>
+            The ADR pair keeps secure defaults (<code>0600</code> socket, keys
+            allowlist, no password path) but the SSH host-key management is
+            hand-waved forward to <code>charmbracelet/keygen</code> + optional
+            <code>melt</code> seed-word backup. From the docs there is no
+            shipped "first-run experience" for host-key generation and rotation.
+            A returning user who reinstalls the binary may face a
+            host-key-changed warning without a clear next step.
+          </p>
+          <p>
+            Fix: ship a <code>harness server init</code> verb that generates the
+            host key, optionally prints a seed phrase, and writes a fingerprint
+            line that the user pastes into their docfile of SSH host keys.
+          </p>
         </div>
 
         <div class="issue issue-nice">
           <span class="severity severity-nice">F11 — Nice / Phase-3</span>
           <h3>The chatroom is a new view, not a view of a session</h3>
           <div class="where">ADR-0015</div>
-          <p>ADR-0015 builds the chatroom as a new dashboard mode keyed off
-          <code>tail.DefaultAdapters()</code>. The "key" turns the chatroom on for
-          <em>every harness with a trajectory</em>, even ones running with
-          <code>harvest_trajectory = false</code>, because <code>tail</code> reads
-          the source files directly. <code>harvest_trajectory</code> gates the
-          MCP facade (ADR-0010); it does <em>not</em> gate the chatroom read.
-          That's a real privacy gap: a harness explicitly opted out of
-          harvesting is still included in the chatroom aggregate.</p>
-          <p>Fix: in <code>internal/tui/chatroom</code>, filter the
-          <code>tail.DefaultAdapters()</code> set against
-          <code>core.Harness.HarvestTrajectory</code> before subscribing. Same
-          <code>mcp_allow</code>-style default-to-deny rule applies.</p>
+          <p>
+            ADR-0015 builds the chatroom as a new dashboard mode keyed off
+            <code>tail.DefaultAdapters()</code>. The "key" turns the chatroom on
+            for <em>every harness with a trajectory</em>, even ones running with
+            <code>harvest_trajectory = false</code>, because
+            <code>tail</code> reads the source files directly.
+            <code>harvest_trajectory</code> gates the MCP facade (ADR-0010); it
+            does <em>not</em> gate the chatroom read. That's a real privacy gap:
+            a harness explicitly opted out of harvesting is still included in
+            the chatroom aggregate.
+          </p>
+          <p>
+            Fix: in <code>internal/tui/chatroom</code>, filter the
+            <code>tail.DefaultAdapters()</code> set against
+            <code>core.Harness.HarvestTrajectory</code> before subscribing. Same
+            <code>mcp_allow</code>-style default-to-deny rule applies.
+          </p>
         </div>
 
         <div class="issue issue-nice">
           <span class="severity severity-nice">F12 — Nice / Phase-3</span>
           <h3>"Reduced motion" toggle is documented but unreachable</h3>
           <div class="where">ADR-0016 — "More Information"</div>
-          <p>Re-mentioning F08 from a different angle: SPEC-0009's "REQ Reduced
-          Motion" was deferred with a pointer to this reservation. Either the
-          chatroom ships reduced motion or the SPEC req is reclassified as
-          out-of-scope (with a reason). Leaving it dangling is a split between
-          promised behaviour and shipped behaviour.</p>
+          <p>
+            Re-mentioning F08 from a different angle: SPEC-0009's "REQ Reduced
+            Motion" was deferred with a pointer to this reservation. Either the
+            chatroom ships reduced motion or the SPEC req is reclassified as
+            out-of-scope (with a reason). Leaving it dangling is a split between
+            promised behaviour and shipped behaviour.
+          </p>
         </div>
 
         <div class="card card-warning">
           <h3>Open observations</h3>
           <ul>
-            <li><strong><code>cmd/harness/main.go</code> still uses <code>flag</code></strong>. ADR-0016 states the rewrite is coming. Until then, <code>parseInterleaved</code> exists for a real reason — the standard library's <code>flag</code> halts at the first positional. There is no tests-stampede guarantee in the ADR's migration plan; adding characterization tests on every verb <em>before</em> the swap is the cheapest insurance.</li>
-            <li><strong>Drop-in harness.d schema</strong> is documented in configuration but not anchored to a spec or ADR. If a future "config-as-fleet" proposal arrives, drop-ins are where the friction will be felt.</li>
-            <li><strong>The "Reduced motion" claim is in two places</strong> (ADR-0016 + SPEC-0009) and is implemented in zero places. A spec-table column "Status" would catch this category before it rots.</li>
+            <li>
+              <strong
+                ><code>cmd/harness/main.go</code> still uses
+                <code>flag</code></strong
+              >. ADR-0016 states the rewrite is coming. Until then,
+              <code>parseInterleaved</code> exists for a real reason — the
+              standard library's <code>flag</code> halts at the first
+              positional. There is no tests-stampede guarantee in the ADR's
+              migration plan; adding characterization tests on every verb
+              <em>before</em> the swap is the cheapest insurance.
+            </li>
+            <li>
+              <strong>Drop-in harness.d schema</strong> is documented in
+              configuration but not anchored to a spec or ADR. If a future
+              "config-as-fleet" proposal arrives, drop-ins are where the
+              friction will be felt.
+            </li>
+            <li>
+              <strong>The "Reduced motion" claim is in two places</strong>
+              (ADR-0016 + SPEC-0009) and is implemented in zero places. A
+              spec-table column "Status" would catch this category before it
+              rots.
+            </li>
           </ul>
         </div>
 
         <!-- ==================== 04 RISK ARCHIVE ==================== -->
-        <h2 id="risk-archive"><span class="num">04</span>Risk Register — what the ADRs already promised to revisit</h2>
+        <h2 id="risk-archive">
+          <span class="num">04</span>Risk Register — what the ADRs already
+          promised to revisit
+        </h2>
 
-        <p>The ADRs are unusually self-aware. The following risks are called out
-        <em>verbatim</em> in ADR text, with a fix direction. F01–F04 above are
-        the subset with no shipped mitigation.</p>
+        <p>
+          The ADRs are unusually self-aware. The following risks are called out
+          <em>verbatim</em> in ADR text, with a fix direction. F01–F04 above are
+          the subset with no shipped mitigation.
+        </p>
 
         <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Risk</th>
-              <th>ADR</th>
-              <th>Direction given in ADR</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Scheduler can miss a window if daemon is down</td>
-              <td>ADR-0013</td>
-              <td>Missed-window recording + <code>catch_up</code> (deferred)</td>
-              <td><span class="badge badge-high">Open</span></td>
-            </tr>
-            <tr>
-              <td>No run history / per-run logs</td>
-              <td>ADR-0013</td>
-              <td>Bounded ring + <code>keep_runs</code> (deferred)</td>
-              <td><span class="badge badge-high">Open</span></td>
-            </tr>
-            <tr>
-              <td>Scheduled harness autostarts on unclean exit</td>
-              <td>ADR-0013 / issue #159</td>
-              <td>Supervisor-level "fire without persisting intent"</td>
-              <td><span class="badge badge-critical">Open — F01</span></td>
-            </tr>
-            <tr>
-              <td>Suspend/resume correctness on laptop-class hosts</td>
-              <td>ADR-0013</td>
-              <td>Re-evaluate on short tick (deferred)</td>
-              <td><span class="badge badge-high">Open — F03</span></td>
-            </tr>
-            <tr>
-              <td>Hung scheduled agent owns its schedule</td>
-              <td>ADR-0013</td>
-              <td><code>timeout</code> with 1h default (deferred)</td>
-              <td><span class="badge badge-medium">Open</span></td>
-            </tr>
-            <tr>
-              <td>Daemon crash kills all harnesses</td>
-              <td>ADR-0002/0005</td>
-              <td>Per-harness reaper (v2, not committed)</td>
-              <td><span class="badge badge-critical">Open — F04</span></td>
-            </tr>
-            <tr>
-              <td><code>x/vt</code> is young and experimental</td>
-              <td>ADR-0003</td>
-              <td><code>Backend</code> interface + tmux escape hatch</td>
-              <td><span class="badge badge-low">Mitigated — design</span></td>
-            </tr>
-            <tr>
-              <td>Two clients attaching at different sizes</td>
-              <td>ADR-0003</td>
-              <td>Smallest wins; per-harness pin (deferred)</td>
-              <td><span class="badge badge-medium">Mitigated</span></td>
-            </tr>
-            <tr>
-              <td>Trajectory harvesting leaks secrets</td>
-              <td>ADR-0008 / ADR-0012</td>
-              <td>Opt-in per harness</td>
-              <td><span class="badge badge-medium">Open — F05</span></td>
-            </tr>
-            <tr>
-              <td>MCP write scoping generalises "can drive the agent" to fleet</td>
-              <td>ADR-0010</td>
-              <td>Acknowledged gap; route via Switchboard (not built)</td>
-              <td><span class="badge badge-medium">Open by design</span></td>
-            </tr>
-            <tr>
-              <td>Prompt injection reaching any harness reaches the fleet</td>
-              <td>ADR-0010</td>
-              <td>Acknowledged; mitigations off the fleet path</td>
-              <td><span class="badge badge-medium">Accepted risk</span></td>
-            </tr>
-            <tr>
-              <td>Per-key SSH scoping</td>
-              <td>ADR-0008</td>
-              <td>Deferred; per-harness read-only attach more useful</td>
-              <td><span class="badge badge-low">Deferred by design</span></td>
-            </tr>
-            <tr>
-              <td>Project registrations lost on daemon restart</td>
-              <td>ADR-0009</td>
-              <td>Project autostart persistence (deferred)</td>
-              <td><span class="badge badge-medium">Open</span></td>
-            </tr>
-            <tr>
-              <td>Adapter trajectory locations rotate silently</td>
-              <td>ADR-0011</td>
-              <td>Acceptance test per upstream tool (deferred)</td>
-              <td><span class="badge badge-medium">Open</span></td>
-            </tr>
-            <tr>
-              <td>Viper discards <code>toml.MetaData</code></td>
-              <td>ADR-0016</td>
-              <td>Two readers coexist (BurntSushi for tables)</td>
-              <td><span class="badge badge-low">Mitigated</span></td>
-            </tr>
-            <tr>
-              <td>14 new dependencies in one ADR</td>
-              <td>ADR-0016</td>
-              <td>Paid once, not recurrent</td>
-              <td><span class="badge badge-low">Accepted</span></td>
-            </tr>
-          </tbody>
-        </table>
+          <table>
+            <thead>
+              <tr>
+                <th>Risk</th>
+                <th>ADR</th>
+                <th>Direction given in ADR</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Scheduler can miss a window if daemon is down</td>
+                <td>ADR-0013</td>
+                <td>
+                  Missed-window recording + <code>catch_up</code> (deferred)
+                </td>
+                <td><span class="badge badge-high">Open</span></td>
+              </tr>
+              <tr>
+                <td>No run history / per-run logs</td>
+                <td>ADR-0013</td>
+                <td>Bounded ring + <code>keep_runs</code> (deferred)</td>
+                <td><span class="badge badge-high">Open</span></td>
+              </tr>
+              <tr>
+                <td>Scheduled harness autostarts on unclean exit</td>
+                <td>ADR-0013 / issue #159</td>
+                <td>Supervisor-level "fire without persisting intent"</td>
+                <td><span class="badge badge-critical">Open — F01</span></td>
+              </tr>
+              <tr>
+                <td>Suspend/resume correctness on laptop-class hosts</td>
+                <td>ADR-0013</td>
+                <td>Re-evaluate on short tick (deferred)</td>
+                <td><span class="badge badge-high">Open — F03</span></td>
+              </tr>
+              <tr>
+                <td>Hung scheduled agent owns its schedule</td>
+                <td>ADR-0013</td>
+                <td><code>timeout</code> with 1h default (deferred)</td>
+                <td><span class="badge badge-medium">Open</span></td>
+              </tr>
+              <tr>
+                <td>Daemon crash kills all harnesses</td>
+                <td>ADR-0002/0005</td>
+                <td>Per-harness reaper (v2, not committed)</td>
+                <td><span class="badge badge-critical">Open — F04</span></td>
+              </tr>
+              <tr>
+                <td><code>x/vt</code> is young and experimental</td>
+                <td>ADR-0003</td>
+                <td><code>Backend</code> interface + tmux escape hatch</td>
+                <td><span class="badge badge-low">Mitigated — design</span></td>
+              </tr>
+              <tr>
+                <td>Two clients attaching at different sizes</td>
+                <td>ADR-0003</td>
+                <td>Smallest wins; per-harness pin (deferred)</td>
+                <td><span class="badge badge-medium">Mitigated</span></td>
+              </tr>
+              <tr>
+                <td>Trajectory harvesting leaks secrets</td>
+                <td>ADR-0008 / ADR-0012</td>
+                <td>Opt-in per harness</td>
+                <td><span class="badge badge-medium">Open — F05</span></td>
+              </tr>
+              <tr>
+                <td>
+                  MCP write scoping generalises "can drive the agent" to fleet
+                </td>
+                <td>ADR-0010</td>
+                <td>Acknowledged gap; route via Switchboard (not built)</td>
+                <td><span class="badge badge-medium">Open by design</span></td>
+              </tr>
+              <tr>
+                <td>Prompt injection reaching any harness reaches the fleet</td>
+                <td>ADR-0010</td>
+                <td>Acknowledged; mitigations off the fleet path</td>
+                <td><span class="badge badge-medium">Accepted risk</span></td>
+              </tr>
+              <tr>
+                <td>Per-key SSH scoping</td>
+                <td>ADR-0008</td>
+                <td>Deferred; per-harness read-only attach more useful</td>
+                <td><span class="badge badge-low">Deferred by design</span></td>
+              </tr>
+              <tr>
+                <td>Project registrations lost on daemon restart</td>
+                <td>ADR-0009</td>
+                <td>Project autostart persistence (deferred)</td>
+                <td><span class="badge badge-medium">Open</span></td>
+              </tr>
+              <tr>
+                <td>Adapter trajectory locations rotate silently</td>
+                <td>ADR-0011</td>
+                <td>Acceptance test per upstream tool (deferred)</td>
+                <td><span class="badge badge-medium">Open</span></td>
+              </tr>
+              <tr>
+                <td>Viper discards <code>toml.MetaData</code></td>
+                <td>ADR-0016</td>
+                <td>Two readers coexist (BurntSushi for tables)</td>
+                <td><span class="badge badge-low">Mitigated</span></td>
+              </tr>
+              <tr>
+                <td>14 new dependencies in one ADR</td>
+                <td>ADR-0016</td>
+                <td>Paid once, not recurrent</td>
+                <td><span class="badge badge-low">Accepted</span></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <!-- ==================== 05 SPLIT-BRAIN ==================== -->
         <h2 id="splitbrain"><span class="num">05</span>Split-Brain Audit</h2>
 
-        <p>Searching for places where two decisions or surfaces disagree about
-        the same concept. Most are documented and intentional (the Backend
-        escape hatch, the project-vs-profile dichotomy), but a few are real.</p>
+        <p>
+          Searching for places where two decisions or surfaces disagree about
+          the same concept. Most are documented and intentional (the Backend
+          escape hatch, the project-vs-profile dichotomy), but a few are real.
+        </p>
 
         <div class="grid-2">
           <div class="card card-solution">
             <h4>S01 — Intentional · Backend</h4>
-            <p>Two <code>Backend</code> implementations (<code>native</code>, <code>tmux</code>) per
-            ADR-0003. Single source of truth: the <code>Backend</code> interface.
-            <strong>Good.</strong></p>
+            <p>
+              Two <code>Backend</code> implementations (<code>native</code>,
+              <code>tmux</code>) per ADR-0003. Single source of truth: the
+              <code>Backend</code> interface. <strong>Good.</strong>
+            </p>
           </div>
           <div class="card card-solution">
             <h4>S02 — Intentional · project vs profile</h4>
-            <p>ADR-0006 (profiles, durable, global, non-destructive) vs
-            ADR-0009 (projects, ephemeral, repo-scoped, destructive). Two
-            verbs, two lifecycles, kept deliberately separate.
-            <strong>Good.</strong></p>
+            <p>
+              ADR-0006 (profiles, durable, global, non-destructive) vs ADR-0009
+              (projects, ephemeral, repo-scoped, destructive). Two verbs, two
+              lifecycles, kept deliberately separate. <strong>Good.</strong>
+            </p>
           </div>
           <div class="card card-solution">
-            <h4>S03 — Intentional · scheduled one-shots vs resident harnesses</h4>
-            <p>ADR-0013 chose <em>not</em> a separate <code>[job.*]</code> table. The
-            cost is real (consumers branch on <code>Schedule != ""</code>) but
-            documented in ADR-0013's "Consequences." <strong>Accepted.</strong></p>
+            <h4>
+              S03 — Intentional · scheduled one-shots vs resident harnesses
+            </h4>
+            <p>
+              ADR-0013 chose <em>not</em> a separate <code>[job.*]</code> table.
+              The cost is real (consumers branch on <code>Schedule != ""</code>)
+              but documented in ADR-0013's "Consequences."
+              <strong>Accepted.</strong>
+            </p>
           </div>
           <div class="card card-warning">
             <h4>S04 — Real · enabled vs Schedule intent</h4>
-            <p>ADR-0006 made <code>enabled</code> the autostart on-boot flag. ADR-0013
-            forbids <code>schedule</code> + <code>enabled</code>. ADR-0014 adds
-            reload-introduced harnesses start per <code>enabled</code>. The
-            persistence layer (state.json's <code>runtime Enabled</code>) and
-            the config layer (<code>enabled</code>) split into two distinct
-            concepts (ADR-0014 spells this out), but no diagram or table maps
-            the matrix. <strong>F01 is the unresolved corner.</strong></p>
+            <p>
+              ADR-0006 made <code>enabled</code> the autostart on-boot flag.
+              ADR-0013 forbids <code>schedule</code> + <code>enabled</code>.
+              ADR-0014 adds reload-introduced harnesses start per
+              <code>enabled</code>. The persistence layer (state.json's
+              <code>runtime Enabled</code>) and the config layer
+              (<code>enabled</code>) split into two distinct concepts (ADR-0014
+              spells this out), but no diagram or table maps the matrix.
+              <strong>F01 is the unresolved corner.</strong>
+            </p>
           </div>
           <div class="card card-warning">
             <h4>S05 — Real · trajectory gating</h4>
-            <p>ADR-0010 gates the MCP-facade trajectory tools on
-            <code>harvest_trajectory</code>. ADR-0015's chatroom uses
-            <code>tail.DefaultAdapters()</code>, which reads source files
-            regardless of <code>harvest_trajectory</code>. <strong>F11.</strong></p>
+            <p>
+              ADR-0010 gates the MCP-facade trajectory tools on
+              <code>harvest_trajectory</code>. ADR-0015's chatroom uses
+              <code>tail.DefaultAdapters()</code>, which reads source files
+              regardless of <code>harvest_trajectory</code>.
+              <strong>F11.</strong>
+            </p>
           </div>
           <div class="card card-warning">
             <h4>S06 — Implicit · logs location vs state location</h4>
-            <p>ADR-0007 splits per-harness logs from the daemon-global state file
-            (different paths under <code>$XDG_STATE_HOME/harnessd</code>). It
-            works but the docs and one example only mention one of them. A
-            single-page "filesystem layout" appendix would pay for itself.
-            <strong>Documentation drift, not code drift.</strong></p>
+            <p>
+              ADR-0007 splits per-harness logs from the daemon-global state file
+              (different paths under <code>$XDG_STATE_HOME/harnessd</code>). It
+              works but the docs and one example only mention one of them. A
+              single-page "filesystem layout" appendix would pay for itself.
+              <strong>Documentation drift, not code drift.</strong>
+            </p>
           </div>
           <div class="card card-problem">
             <h4>S07 — Real · config authority</h4>
-            <p>ADR-0006 says the TOML is the source of truth; TUI edits write
-            back via Huh forms. ADR-0009 says projects <em>never</em> write to
-            the global file. ADR-0009's project file is repo-local. The
-            authority claim is true for the global file but the TUI's edit
-            flow does not have a "this edit was in a project file, hydrate
-            it" path documented. With the TUI's <code>e</code>dit key on a
-            project harness, what wins? <strong>F12's data point.</strong></p>
+            <p>
+              ADR-0006 says the TOML is the source of truth; TUI edits write
+              back via Huh forms. ADR-0009 says projects <em>never</em> write to
+              the global file. ADR-0009's project file is repo-local. The
+              authority claim is true for the global file but the TUI's edit
+              flow does not have a "this edit was in a project file, hydrate it"
+              path documented. With the TUI's <code>e</code>dit key on a project
+              harness, what wins? <strong>F12's data point.</strong>
+            </p>
           </div>
           <div class="card card-warning">
             <h4>S08 — Subtle · restart policy overloading <code>no</code></h4>
-            <p>ADR-0006/ADR-0011/ADR-0013: <code>restart = "no"</code> is the prompt-harness
-            default <em>and</em> the scheduled-harness requirement. A genuinely
-            resident prompt loop (rare but reasonable — "always ask me to review
-            code") cannot declare itself with <code>prompt</code> and a
-            <code>restart</code> policy at the same time. Not a contradiction,
-            but a schema-level minimum radius worth knowing. <strong>Document,
-            don't change.</strong></p>
+            <p>
+              ADR-0006/ADR-0011/ADR-0013: <code>restart = "no"</code> is the
+              prompt-harness default <em>and</em> the scheduled-harness
+              requirement. A genuinely resident prompt loop (rare but reasonable
+              — "always ask me to review code") cannot declare itself with
+              <code>prompt</code> and a <code>restart</code> policy at the same
+              time. Not a contradiction, but a schema-level minimum radius worth
+              knowing. <strong>Document, don't change.</strong>
+            </p>
           </div>
         </div>
 
         <!-- ==================== 06 GHOST SYSTEMS ==================== -->
         <h2 id="ghosts"><span class="num">06</span>Ghost System Audit</h2>
 
-        <p>"Ghost system" = a thing described in the ADRs as either built or
-        being-built, whose existence and value are real but whose code,
-        tests, and shipping channel are not visible from the public surface.
-        If you can't find it from the README + docs + ADR-0015's
-        "Confirmation" list, it's at risk of becoming a phantom.</p>
+        <p>
+          "Ghost system" = a thing described in the ADRs as either built or
+          being-built, whose existence and value are real but whose code, tests,
+          and shipping channel are not visible from the public surface. If you
+          can't find it from the README + docs + ADR-0015's "Confirmation" list,
+          it's at risk of becoming a phantom.
+        </p>
 
         <div class="grid-2">
           <div class="card card-solution">
             <h4>G01 — agent-trace (real, external)</h4>
-            <p><code>stump.wtf/agent-trace</code>, extracted from
-            <code>cosmtrek/mindwalk</code>. ADR-0011 names the three
-            packages (<code>tail</code>, <code>classify</code>, <code>otel</code>).
-            Real, used, with accepted unit tests in its own repo per the
-            implementation note. <strong>Strong integration.</strong></p>
+            <p>
+              <code>stump.wtf/agent-trace</code>, extracted from
+              <code>cosmtrek/mindwalk</code>. ADR-0011 names the three packages
+              (<code>tail</code>, <code>classify</code>, <code>otel</code>).
+              Real, used, with accepted unit tests in its own repo per the
+              implementation note. <strong>Strong integration.</strong>
+            </p>
           </div>
           <div class="card card-problem">
             <h4>G02 — run-history file (ADR-0013 promised, not shipped)</h4>
-            <p>ADR-0013 lists "Run history and per-run logs" under Deferred.
-            The TUI does not render it. The CLI does not have a
-            <code>runs</code> subcommand. The feature does not exist in code.
-            F02 is exactly this ghost. <strong>Build it.</strong></p>
+            <p>
+              ADR-0013 lists "Run history and per-run logs" under Deferred. The
+              TUI does not render it. The CLI does not have a
+              <code>runs</code> subcommand. The feature does not exist in code.
+              F02 is exactly this ghost. <strong>Build it.</strong>
+            </p>
           </div>
           <div class="card card-problem">
             <h4>G03 — wishlist / promwish (ADR-0004 references, "not v1")</h4>
-            <p>ADR-0004 names <code>wishlist</code> ("the SSH directory") and
-            <code>promwish</code> as future directions. Not explicitly built.
-            If the project leans on <code>promwish</code>-style metrics later
-            in a status report, treat it as future, not current. <strong>Not a
-            bug; a labelling issue.</strong></p>
+            <p>
+              ADR-0004 names <code>wishlist</code> ("the SSH directory") and
+              <code>promwish</code> as future directions. Not explicitly built.
+              If the project leans on <code>promwish</code>-style metrics later
+              in a status report, treat it as future, not current.
+              <strong>Not a bug; a labelling issue.</strong>
+            </p>
           </div>
           <div class="card card-warning">
-            <h4>G04 — chatroom view (ADR-0015 proposed, integration ambiguous)</h4>
-            <p>ADR-0015 says "New chatroom view within Harness TUI" — the
-            internal layout choice is "deferred to implementation" with the
-            note that <code>internal/tui</code> is currently flat. ADR-0015
-            references SPEC-0009; SPEC-0009 references ADR-0015. A circular
-            reference with no shipped code on either side. <strong>Build one
-            or both ends.</strong></p>
+            <h4>
+              G04 — chatroom view (ADR-0015 proposed, integration ambiguous)
+            </h4>
+            <p>
+              ADR-0015 says "New chatroom view within Harness TUI" — the
+              internal layout choice is "deferred to implementation" with the
+              note that <code>internal/tui</code> is currently flat. ADR-0015
+              references SPEC-0009; SPEC-0009 references ADR-0015. A circular
+              reference with no shipped code on either side.
+              <strong>Build one or both ends.</strong>
+            </p>
           </div>
           <div class="card card-problem">
             <h4>G05 — Switchboard (ADR-0010 names, not built)</h4>
-            <p>ADR-0010 explicitly names "Switchboard" as the place where MCP
-            write-capable harnesses should be routed for guardrails. The
-            ADR's "more information" admits "Switchboard gates inbound work
-            routing, not an agent calling <code>harness_stop</code> on a
-            sibling." Switchboard is not in the codebase per the public
-            surface. <strong>Either build it or remove the name from the
-            docs.</strong></p>
+            <p>
+              ADR-0010 explicitly names "Switchboard" as the place where MCP
+              write-capable harnesses should be routed for guardrails. The ADR's
+              "more information" admits "Switchboard gates inbound work routing,
+              not an agent calling <code>harness_stop</code> on a sibling."
+              Switchboard is not in the codebase per the public surface.
+              <strong>Either build it or remove the name from the docs.</strong>
+            </p>
           </div>
           <div class="card card-warning">
             <h4>G06 — "House pattern" overlap (ADR-0016)</h4>
-            <p>ADR-0016 cites two sibling repos (<code>msgbrowse</code>,
-            <code>joe-links</code>) as prior art that converged on the same
-            decision. The citations are useful provenance, but they imply a
-            house-style standard that isn't written down anywhere discoverable.
-            A one-page "House Patterns" note that links the four would help.
-            <strong>Documentation, not code.</strong></p>
+            <p>
+              ADR-0016 cites two sibling repos (<code>msgbrowse</code>,
+              <code>joe-links</code>) as prior art that converged on the same
+              decision. The citations are useful provenance, but they imply a
+              house-style standard that isn't written down anywhere
+              discoverable. A one-page "House Patterns" note that links the four
+              would help. <strong>Documentation, not code.</strong>
+            </p>
           </div>
           <div class="card card-problem">
             <h4>G07 — <code>harness server init</code> (F10 candidate)</h4>
-            <p>ADR-0008 lists host-key generation as "not v1 committed" but
-            referenced as part of <code>charmbracelet/keygen</code>. No
-            shipped first-run experience. A first-time user turning on
-            <code>[server]</code> hits a missing-step. <strong>Close the
-            ghost.</strong></p>
+            <p>
+              ADR-0008 lists host-key generation as "not v1 committed" but
+              referenced as part of <code>charmbracelet/keygen</code>. No
+              shipped first-run experience. A first-time user turning on
+              <code>[server]</code> hits a missing-step.
+              <strong>Close the ghost.</strong>
+            </p>
           </div>
         </div>
 
         <!-- ==================== 07 SCOPE CREEP ==================== -->
         <h2 id="scope"><span class="num">07</span>Scope-Creep Audit</h2>
 
-        <p>The ADR trail makes the scope creep legible: every "Proposed"
-        feature that crossed the "single Go binary doing one job" line is
-        named, with reasoning. Most of the creep is honest and reversible.
-        The two flagged items below are the only ones where scope creep is
-        not yet contained.</p>
+        <p>
+          The ADR trail makes the scope creep legible: every "Proposed" feature
+          that crossed the "single Go binary doing one job" line is named, with
+          reasoning. Most of the creep is honest and reversible. The two flagged
+          items below are the only ones where scope creep is not yet contained.
+        </p>
 
         <div class="card card-problem">
-          <h4>SC1 — Chatroom + distillation + learned-tier assembled before run-history</h4>
-          <p>The flywheel stack — trajectory harvest (ADR-0011), facade tools
-          (ADR-0010), distillation (ADR-0012), chatroom (ADR-0015) — is being
-          built in roughly that order. The distillable signal <em>without</em>
-          run history is a partial signal: a sweeper that always runs to
-          completion before its next start contributes to the learned-tier,
-          while a sweeper that exited 1 with no log around it doesn't.
-          Building the flywheel before the per-run log would be a layering
-          inversion.</p>
-          <p><strong>Recommendation:</strong> promote F02 (run history) above
-          the chatroom in the issue tracker. The order should be: run
-          history → harvested trajectory → facade tools → chatroom.
-          Currently it's: facade → trajectory → distillation → chatroom,
-          with run history deferred.</p>
+          <h4>
+            SC1 — Chatroom + distillation + learned-tier assembled before
+            run-history
+          </h4>
+          <p>
+            The flywheel stack — trajectory harvest (ADR-0011), facade tools
+            (ADR-0010), distillation (ADR-0012), chatroom (ADR-0015) — is being
+            built in roughly that order. The distillable signal
+            <em>without</em> run history is a partial signal: a sweeper that
+            always runs to completion before its next start contributes to the
+            learned-tier, while a sweeper that exited 1 with no log around it
+            doesn't. Building the flywheel before the per-run log would be a
+            layering inversion.
+          </p>
+          <p>
+            <strong>Recommendation:</strong> promote F02 (run history) above the
+            chatroom in the issue tracker. The order should be: run history →
+            harvested trajectory → facade tools → chatroom. Currently it's:
+            facade → trajectory → distillation → chatroom, with run history
+            deferred.
+          </p>
         </div>
 
         <div class="card card-warning">
           <h4>SC2 — Cobra+Viper added to a deliberately small tree</h4>
-          <p>ADR-0001 chose the small-dependency Charm stack and explicitly
-          counted at decision time. ADR-0016 added 14 modules including a
-          second TOML parser and an unused YAML parser. The cost was named
-          and paid. <strong>Not a bug, just a precedent.</strong> The next
-          ADR that proposes a similar addition needs to count explicitly.
-          Adding another HTTP server framework for any chatroom-side
-          feature would be the wrong precedent.</p>
+          <p>
+            ADR-0001 chose the small-dependency Charm stack and explicitly
+            counted at decision time. ADR-0016 added 14 modules including a
+            second TOML parser and an unused YAML parser. The cost was named and
+            paid. <strong>Not a bug, just a precedent.</strong> The next ADR
+            that proposes a similar addition needs to count explicitly. Adding
+            another HTTP server framework for any chatroom-side feature would be
+            the wrong precedent.
+          </p>
         </div>
 
         <div class="card card-solution">
           <h4>SC3 — Backend abstraction pays for itself</h4>
-          <p>The native-vs-tmux Backend interface was the right precaution
-          against <code>x/vt</code> immaturity. That single decision has
-          already absorbed scope (resize policy per ADR-0003, copy-mode
-          deferred) without swallowing scope. Worth holding up as the
-          success-case model for future risk-receiver interfaces.</p>
+          <p>
+            The native-vs-tmux Backend interface was the right precaution
+            against <code>x/vt</code> immaturity. That single decision has
+            already absorbed scope (resize policy per ADR-0003, copy-mode
+            deferred) without swallowing scope. Worth holding up as the
+            success-case model for future risk-receiver interfaces.
+          </p>
         </div>
 
         <!-- ==================== 08 TESTING ==================== -->
         <h2 id="testing"><span class="num">08</span>Testing Posture</h2>
 
-        <p>The site does not surface a tests/ directory, a CI badge, or a
-        coverage report from the public docs. The ADRs name acceptance tests
-        per ADR ("this is testable", "these scenarios are required"), but
-        there's no central test inventory.</p>
+        <p>
+          The site does not surface a tests/ directory, a CI badge, or a
+          coverage report from the public docs. The ADRs name acceptance tests
+          per ADR ("this is testable", "these scenarios are required"), but
+          there's no central test inventory.
+        </p>
 
         <div class="card card-warning">
-          <h4>T01 — Single shared acceptance harness would centralise ADR promises</h4>
-          <p>Every ADR named a set of acceptance tests in its "Confirmation"
-          section. ADR-0010 alone lists 4 acceptance tests for the broker;
-          ADR-0012 lists 7. There is no evidence of where these live.</p>
-          <p><strong>Suggestion:</strong> one shared
-          <code>test/acceptance_test.go</code> with one named subtest per
-          ADR's promise, each described with the ADR number in a comment.
-          Cheap to do, highest leverage for outsiders trying to verify
-          shipped behaviour matches promised behaviour.</p>
+          <h4>
+            T01 — Single shared acceptance harness would centralise ADR promises
+          </h4>
+          <p>
+            Every ADR named a set of acceptance tests in its "Confirmation"
+            section. ADR-0010 alone lists 4 acceptance tests for the broker;
+            ADR-0012 lists 7. There is no evidence of where these live.
+          </p>
+          <p>
+            <strong>Suggestion:</strong> one shared
+            <code>test/acceptance_test.go</code> with one named subtest per
+            ADR's promise, each described with the ADR number in a comment.
+            Cheap to do, highest leverage for outsiders trying to verify shipped
+            behaviour matches promised behaviour.
+          </p>
         </div>
 
         <div class="card card-warning">
-          <h4>T02 — <code>x/vt</code> corpus-of-trajectories test is gold, not actually shipped</h4>
-          <p>ADR-0003 names a "corpus of real agent-CLI sessions (Claude Code,
-          Crush) as a golden test set" for the emulator. The <code>x/vcr</code>
-          tooling is mentioned. There is no published fixtures/ directory or
-          sample script in the public docs. <strong>One of these is the most
-          valuable tests you can ship for a virtual terminal emulator.</strong></p>
+          <h4>
+            T02 — <code>x/vt</code> corpus-of-trajectories test is gold, not
+            actually shipped
+          </h4>
+          <p>
+            ADR-0003 names a "corpus of real agent-CLI sessions (Claude Code,
+            Crush) as a golden test set" for the emulator. The
+            <code>x/vcr</code> tooling is mentioned. There is no published
+            fixtures/ directory or sample script in the public docs.
+            <strong
+              >One of these is the most valuable tests you can ship for a
+              virtual terminal emulator.</strong
+            >
+          </p>
         </div>
 
         <div class="card card-warning">
           <h4>T03 — Cron/scheduler determinism needs property tests</h4>
-          <p>ADR-0013's deferred list — DST, timezone, suspend/resume, wall
-          clock jumps — is the exact surface where <em>property-based</em>
-          tests shine (fire a bunch of random intervals, simulate forward by
-          N hours, verify expected next-firing). Characterising
-          <code>robfig/cron</code> with this style before swapping it would
-          make F03 verifiable in 30 lines.</p>
+          <p>
+            ADR-0013's deferred list — DST, timezone, suspend/resume, wall clock
+            jumps — is the exact surface where <em>property-based</em>
+            tests shine (fire a bunch of random intervals, simulate forward by N
+            hours, verify expected next-firing). Characterising
+            <code>robfig/cron</code> with this style before swapping it would
+            make F03 verifiable in 30 lines.
+          </p>
         </div>
 
         <div class="card card-nice">
           <h4>T04 — Configuration precedence is testable as a single table</h4>
-          <p>ADR-0016 ends with a precise list of "Confirmation" acceptance
-          tests that are already a table in disguise. Building that as a Go
-          subtest matrix with one row per combo would catch regressions in
-          a parse-and-bind pass that's notoriously easy to break.</p>
+          <p>
+            ADR-0016 ends with a precise list of "Confirmation" acceptance tests
+            that are already a table in disguise. Building that as a Go subtest
+            matrix with one row per combo would catch regressions in a
+            parse-and-bind pass that's notoriously easy to break.
+          </p>
         </div>
 
         <div class="card card-nice">
-          <h4>T05 — <code>parseInterleaved</code> characterization tests first</h4>
-          <p>ADR-0016 names three ambiguous positional/flag cases the migration
-          must preserve. None is in the public doc as a test. Characterising
-          them before the Cobra swap is the difference between a Friday merge
-          and a Monday revert.</p>
+          <h4>
+            T05 — <code>parseInterleaved</code> characterization tests first
+          </h4>
+          <p>
+            ADR-0016 names three ambiguous positional/flag cases the migration
+            must preserve. None is in the public doc as a test. Characterising
+            them before the Cobra swap is the difference between a Friday merge
+            and a Monday revert.
+          </p>
         </div>
 
         <!-- ==================== 09 ARCHITECTURE MAPPING ==================== -->
-        <h2 id="architecture"><span class="num">09</span>Architecture Mapping (how I'd draw it)</h2>
+        <h2 id="architecture">
+          <span class="num">09</span>Architecture Mapping (how I'd draw it)
+        </h2>
 
-        <p>The ADRs paint the picture cleanly; here is one way to compress
-        sixteen decisions into a single diagram the homepage could ship.</p>
+        <p>
+          The ADRs paint the picture cleanly; here is one way to compress
+          sixteen decisions into a single diagram the homepage could ship.
+        </p>
 
         <div class="diagram">
           <span class="node node-core">harnessd</span>
@@ -1106,7 +1804,9 @@
         <div class="diagram">
           <span class="node">harness.toml</span>
           <span class="arrow">→</span>
-          <span class="node node-core">config (BurntSushi for tables, Viper for scalars)</span>
+          <span class="node node-core"
+            >config (BurntSushi for tables, Viper for scalars)</span
+          >
           <span class="arrow">→</span>
           <span class="node">fsnotify reload</span>
         </div>
@@ -1138,139 +1838,182 @@
         <h3>Where the surface area lives</h3>
 
         <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Surface</th>
-              <th>Concerns (who owns)</th>
-              <th>ADR</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>Daemon</strong></td>
-              <td>Process + supervisor + scrollback + state + scheduler + MCP broker</td>
-              <td>0002, 0005, 0007, 0010, 0013</td>
-            </tr>
-            <tr>
-              <td><strong>TUI client</strong></td>
-              <td>Dashboard preview, attach embed, palette, help</td>
-              <td>0015 (chatroom), inferred</td>
-            </tr>
-            <tr>
-              <td><strong>CLI client</strong></td>
-              <td>list, start, stop, attach, logs, doctor, reload, use-profile, up, down, ps</td>
-              <td>0006, 0009, 0016</td>
-            </tr>
-            <tr>
-              <td><strong>Remote (Wish/SSH)</strong></td>
-              <td>Same TUI, served over SSH, key allowlist, no shell</td>
-              <td>0004, 0008</td>
-            </tr>
-            <tr>
-              <td><strong>Config</strong></td>
-              <td>TOML (intentional) + Cobra/Viper (process)</td>
-              <td>0006, 0016</td>
-            </tr>
-            <tr>
-              <td><strong>Adapters</strong></td>
-              <td>claude-code, crush, codex, generic — execute + skill path + trajectory path</td>
-              <td>0011</td>
-            </tr>
-            <tr>
-              <td><strong>MCP server (broker)</strong></td>
-              <td>One endpoint, N upstreams, namespaced tools, prompt side-load</td>
-              <td>0010</td>
-            </tr>
-            <tr>
-              <td><strong>MCP server (facade)</strong></td>
-              <td>Control ops + trajectory read tools, scoped per harness</td>
-              <td>0010</td>
-            </tr>
-            <tr>
-              <td><strong>Distiller (harness)</strong></td>
-              <td>Reads trajectories, writes SKILL.md, FTS5-backed search</td>
-              <td>0012</td>
-            </tr>
-            <tr>
-              <td><strong>External repo</strong></td>
-              <td><code>agent-trace</code> (tail/classify/otel)</td>
-              <td>0011</td>
-            </tr>
-          </tbody>
-        </table>
+          <table>
+            <thead>
+              <tr>
+                <th>Surface</th>
+                <th>Concerns (who owns)</th>
+                <th>ADR</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Daemon</strong></td>
+                <td>
+                  Process + supervisor + scrollback + state + scheduler + MCP
+                  broker
+                </td>
+                <td>0002, 0005, 0007, 0010, 0013</td>
+              </tr>
+              <tr>
+                <td><strong>TUI client</strong></td>
+                <td>Dashboard preview, attach embed, palette, help</td>
+                <td>0015 (chatroom), inferred</td>
+              </tr>
+              <tr>
+                <td><strong>CLI client</strong></td>
+                <td>
+                  list, start, stop, attach, logs, doctor, reload, use-profile,
+                  up, down, ps
+                </td>
+                <td>0006, 0009, 0016</td>
+              </tr>
+              <tr>
+                <td><strong>Remote (Wish/SSH)</strong></td>
+                <td>Same TUI, served over SSH, key allowlist, no shell</td>
+                <td>0004, 0008</td>
+              </tr>
+              <tr>
+                <td><strong>Config</strong></td>
+                <td>TOML (intentional) + Cobra/Viper (process)</td>
+                <td>0006, 0016</td>
+              </tr>
+              <tr>
+                <td><strong>Adapters</strong></td>
+                <td>
+                  claude-code, crush, codex, generic — execute + skill path +
+                  trajectory path
+                </td>
+                <td>0011</td>
+              </tr>
+              <tr>
+                <td><strong>MCP server (broker)</strong></td>
+                <td>
+                  One endpoint, N upstreams, namespaced tools, prompt side-load
+                </td>
+                <td>0010</td>
+              </tr>
+              <tr>
+                <td><strong>MCP server (facade)</strong></td>
+                <td>Control ops + trajectory read tools, scoped per harness</td>
+                <td>0010</td>
+              </tr>
+              <tr>
+                <td><strong>Distiller (harness)</strong></td>
+                <td>Reads trajectories, writes SKILL.md, FTS5-backed search</td>
+                <td>0012</td>
+              </tr>
+              <tr>
+                <td><strong>External repo</strong></td>
+                <td><code>agent-trace</code> (tail/classify/otel)</td>
+                <td>0011</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <h3>Architectural concerns worth surfacing</h3>
 
         <div class="card card-warning">
           <h4>A1 — Single binary, single process, single point of failure</h4>
-          <p>ADR-0001 commits to a single Go binary. ADR-0002 makes the daemon
-          the supervisor. ADR-0005 acknowledges the consequence ("if harnessd
-          crashes, every harness dies with it"). The architectural story is
-          honestly two-tiered, but the <em>recovery</em> story between
-          tiers is F04 (unaddressed). The architecture is sound; the
-          operational runtime needs its own hardening pass.</p>
+          <p>
+            ADR-0001 commits to a single Go binary. ADR-0002 makes the daemon
+            the supervisor. ADR-0005 acknowledges the consequence ("if harnessd
+            crashes, every harness dies with it"). The architectural story is
+            honestly two-tiered, but the <em>recovery</em> story between tiers
+            is F04 (unaddressed). The architecture is sound; the operational
+            runtime needs its own hardening pass.
+          </p>
         </div>
 
         <div class="card card-nice">
           <h4>A2 — Two config readers: a feature, not a sin</h4>
-          <p>ADR-0016 explicitly accepts a two-reader config model
-          (Viper+BurntSushi) in exchange for line-numbered errors. The seam
-          is the deliberate consequence. A code comment in <code>internal/config/config.go</code>
-          that says "this is the seam, do not unify without ADR amendment"
-          turns a future reader's instinct into a project decision.</p>
+          <p>
+            ADR-0016 explicitly accepts a two-reader config model
+            (Viper+BurntSushi) in exchange for line-numbered errors. The seam is
+            the deliberate consequence. A code comment in
+            <code>internal/config/config.go</code> that says "this is the seam,
+            do not unify without ADR amendment" turns a future reader's instinct
+            into a project decision.
+          </p>
         </div>
 
         <div class="card card-warning">
           <h4>A3 — Two sources of harness definitions, deliberately split</h4>
-          <p>Global TOML (ADR-0006) + project repos (ADR-0009). The two
-          surfaces are intentionally separate but their reconciliation on
-          conflict and on TUI <code>e</code>dit has no published algorithm.
-          <strong>S07</strong> above.</p>
+          <p>
+            Global TOML (ADR-0006) + project repos (ADR-0009). The two surfaces
+            are intentionally separate but their reconciliation on conflict and
+            on TUI <code>e</code>dit has no published algorithm.
+            <strong>S07</strong> above.
+          </p>
         </div>
 
         <div class="card card-solution">
           <h4>A4 — Three "kill the next reader" footguns are well-flagged</h4>
           <ul>
-            <li>ADR-0005 spells out the "two bosses" anti-pattern of per-harness init units.</li>
+            <li>
+              ADR-0005 spells out the "two bosses" anti-pattern of per-harness
+              init units.
+            </li>
             <li>ADR-0006 records why "directory-per-profile" was rejected.</li>
-            <li>ADR-0013 records why a separate <code>[job.*]</code> table was rejected.</li>
+            <li>
+              ADR-0013 records why a separate <code>[job.*]</code> table was
+              rejected.
+            </li>
           </ul>
-          <p>Each is a temptation the maintainer will face. The decisions are
-          recorded where they'll be looked for. <strong>Excellent
-          practice.</strong></p>
+          <p>
+            Each is a temptation the maintainer will face. The decisions are
+            recorded where they'll be looked for.
+            <strong>Excellent practice.</strong>
+          </p>
         </div>
 
         <!-- ==================== 10 PLAN ==================== -->
-        <h2 id="plan"><span class="num">10</span>Prioritised Improvement Plan</h2>
+        <h2 id="plan">
+          <span class="num">10</span>Prioritised Improvement Plan
+        </h2>
 
-        <p>Sorted by impact-per-effort. Each step is sized to be a single
-        PR or a single issue thread.</p>
+        <p>
+          Sorted by impact-per-effort. Each step is sized to be a single PR or a
+          single issue thread.
+        </p>
 
         <div class="migration-step">
           <div class="migration-num">01</div>
           <div class="migration-content">
             <h4>Ship run history + per-run logs (F02, largest)</h4>
-            <p>A bounded ring of <code>{ run_id, started_at, ended_at, exit_code,
-            outcome, trigger }</code> persisted in <code>state.json</code>; one
-            log file per run pruned by <code>keep_runs</code>. Surface in
-            <code>harness list</code> as a column and in <code>harness describe</code>
-            as the canonical last-5-runs pill. Implement the deferred schema
-            from ADR-0013. <strong>Largest impact — the cockpit-without-history
-            is the advertisement-vs-reality gap.</strong></p>
+            <p>
+              A bounded ring of
+              <code
+                >{ run_id, started_at, ended_at, exit_code, outcome, trigger
+                }</code
+              >
+              persisted in <code>state.json</code>; one log file per run pruned
+              by <code>keep_runs</code>. Surface in <code>harness list</code> as
+              a column and in <code>harness describe</code> as the canonical
+              last-5-runs pill. Implement the deferred schema from ADR-0013.
+              <strong
+                >Largest impact — the cockpit-without-history is the
+                advertisement-vs-reality gap.</strong
+              >
+            </p>
           </div>
         </div>
 
         <div class="migration-step">
           <div class="migration-num">02</div>
           <div class="migration-content">
-            <h4>Resolve <code>enabled</code> × <code>schedule</code> persistence (F01)</h4>
-            <p>Add <code>Manager.fire(harnessID)</code> distinct from
-            <code>Manager.Start</code>; persist <code>last_fired_at</code> in
-            <code>state.json</code>; on boot, detect the missed window and skip
-            (or queue, with a config flag). Closes issue #159 referenced in
-            ADR-0013.</p>
+            <h4>
+              Resolve <code>enabled</code> × <code>schedule</code> persistence
+              (F01)
+            </h4>
+            <p>
+              Add <code>Manager.fire(harnessID)</code> distinct from
+              <code>Manager.Start</code>; persist <code>last_fired_at</code> in
+              <code>state.json</code>; on boot, detect the missed window and
+              skip (or queue, with a config flag). Closes issue #159 referenced
+              in ADR-0013.
+            </p>
           </div>
         </div>
 
@@ -1278,11 +2021,13 @@
           <div class="migration-num">03</div>
           <div class="migration-content">
             <h4>Suspend-safe scheduler + acceptance test (F03)</h4>
-            <p>Add the property-based test "schedule survives overnight
-            suspend" that ADR-0013 names in its Confirmation list. If
-            <code>robfig/cron</code> fails the test, swap to a per-tick
-            evaluator. Use <code>Now().Add(8h).Sub(LastTick)</code> rather
-            than armed long timers.</p>
+            <p>
+              Add the property-based test "schedule survives overnight suspend"
+              that ADR-0013 names in its Confirmation list. If
+              <code>robfig/cron</code> fails the test, swap to a per-tick
+              evaluator. Use <code>Now().Add(8h).Sub(LastTick)</code> rather
+              than armed long timers.
+            </p>
           </div>
         </div>
 
@@ -1290,10 +2035,12 @@
           <div class="migration-num">04</div>
           <div class="migration-content">
             <h4>Daemon-crash blast-radius banner (F04, partial)</h4>
-            <p>Until the per-harness reaper lands, surface a TUI banner on
-            every reattach that started within 60s of daemon uptime: "all
-            harnesses were restarted by daemon crash; scrollback is fresh."
-            Cheap, honest, documents the limitation.</p>
+            <p>
+              Until the per-harness reaper lands, surface a TUI banner on every
+              reattach that started within 60s of daemon uptime: "all harnesses
+              were restarted by daemon crash; scrollback is fresh." Cheap,
+              honest, documents the limitation.
+            </p>
           </div>
         </div>
 
@@ -1301,12 +2048,14 @@
           <div class="migration-num">05</div>
           <div class="migration-content">
             <h4>Trajectory-gating default (F05)</h4>
-            <p>In the TUI's <code>harvest_trajectory</code> flow: default
-            <code>false</code> when the harness has an <code>env_file</code>;
-            default <code>false</code> for any harness created via the
-            <code>n</code>ew flow; require an explicit confirmation phrase
-            for <code>true</code>. Closes the silent opt-in flagged in
-            ADR-0011 + ADR-0012.</p>
+            <p>
+              In the TUI's <code>harvest_trajectory</code> flow: default
+              <code>false</code> when the harness has an <code>env_file</code>;
+              default <code>false</code> for any harness created via the
+              <code>n</code>ew flow; require an explicit confirmation phrase for
+              <code>true</code>. Closes the silent opt-in flagged in ADR-0011 +
+              ADR-0012.
+            </p>
           </div>
         </div>
 
@@ -1314,10 +2063,12 @@
           <div class="migration-num">06</div>
           <div class="migration-content">
             <h4>Distillation corpus cap + quarantine (F06)</h4>
-            <p><code>max_promotions_per_week</code> hard limit; confidence
-            threshold from <code>classify</code> cluster size; quarantine
-            queue surface in the TUI dashboard. Keeps the learned-tier from
-            filling with author hallucination.</p>
+            <p>
+              <code>max_promotions_per_week</code> hard limit; confidence
+              threshold from <code>classify</code> cluster size; quarantine
+              queue surface in the TUI dashboard. Keeps the learned-tier from
+              filling with author hallucination.
+            </p>
           </div>
         </div>
 
@@ -1325,9 +2076,11 @@
           <div class="migration-num">07</div>
           <div class="migration-content">
             <h4>Project-level backend default (F07)</h4>
-            <p><code>[project] backend = "tmux" | "native"</code> with
-            per-harness override. One-line schema addition. Pays for itself
-            the day <code>x/vt</code> bites on a user.</p>
+            <p>
+              <code>[project] backend = "tmux" | "native"</code> with
+              per-harness override. One-line schema addition. Pays for itself
+              the day <code>x/vt</code> bites on a user.
+            </p>
           </div>
         </div>
 
@@ -1335,10 +2088,12 @@
           <div class="migration-num">08</div>
           <div class="migration-content">
             <h4>First-run SSH server init (F10)</h4>
-            <p><code>harness server init</code>: generates the host key with
-            <code>keygen</code>, optionally prints a <code>melt</code> seed
-            phrase, writes the fingerprint comment for dotfile tracking.
-            Closes the ghost G07.</p>
+            <p>
+              <code>harness server init</code>: generates the host key with
+              <code>keygen</code>, optionally prints a <code>melt</code> seed
+              phrase, writes the fingerprint comment for dotfile tracking.
+              Closes the ghost G07.
+            </p>
           </div>
         </div>
 
@@ -1346,10 +2101,12 @@
           <div class="migration-num">09</div>
           <div class="migration-content">
             <h4>Chatroom honour <code>harvest_trajectory</code> (F11)</h4>
-            <p>In <code>internal/tui/chatroom</code>, filter the subscribed
-            adapter set against <code>core.Harness.HarvestTrajectory</code>
-            before subscribing to <code>tail.DefaultAdapters()</code>.
-            Closes a real privacy gap.</p>
+            <p>
+              In <code>internal/tui/chatroom</code>, filter the subscribed
+              adapter set against
+              <code>core.Harness.HarvestTrajectory</code> before subscribing to
+              <code>tail.DefaultAdapters()</code>. Closes a real privacy gap.
+            </p>
           </div>
         </div>
 
@@ -1357,10 +2114,12 @@
           <div class="migration-num">10</div>
           <div class="migration-content">
             <h4>Test inventory with ADR anchors (T01)</h4>
-            <p>One shared <code>test/acceptance_test.go</code> with one named
-            subtest per ADR's "Confirmation" promise, each comment-tagged
-            with the ADR number. Closes the largest documentation/test gap
-            across 10 ADRs.</p>
+            <p>
+              One shared <code>test/acceptance_test.go</code> with one named
+              subtest per ADR's "Confirmation" promise, each comment-tagged with
+              the ADR number. Closes the largest documentation/test gap across
+              10 ADRs.
+            </p>
           </div>
         </div>
 
@@ -1368,11 +2127,12 @@
           <div class="migration-num">11</div>
           <div class="migration-content">
             <h4><code>x/vt</code> trajectory-corpus fixtures (T02)</h4>
-            <p>One Playwright-style fixture per supported agent CLI: a
-            captured Claude Code session, a captured Crush session, a
-            captured Codex session. Use <code>x/vcr</code>. This is the
-            gold-standard test for the project's largest single
-            technical risk.</p>
+            <p>
+              One Playwright-style fixture per supported agent CLI: a captured
+              Claude Code session, a captured Crush session, a captured Codex
+              session. Use <code>x/vcr</code>. This is the gold-standard test
+              for the project's largest single technical risk.
+            </p>
           </div>
         </div>
 
@@ -1380,65 +2140,91 @@
           <div class="migration-num">12</div>
           <div class="migration-content">
             <h4>Switchboard direction (or delete the name) — G05</h4>
-            <p>ADR-0010 name-drops Switchboard. If it never ships,
-            delete the reference and update the ADR's "Acknowledged gap"
-            note to remove the prospect. If it is being built, link the
-            repo.</p>
+            <p>
+              ADR-0010 name-drops Switchboard. If it never ships, delete the
+              reference and update the ADR's "Acknowledged gap" note to remove
+              the prospect. If it is being built, link the repo.
+            </p>
           </div>
         </div>
 
         <!-- ==================== 11 QUESTIONS ==================== -->
-        <h2 id="questions"><span class="num">11</span>Open questions worth asking</h2>
+        <h2 id="questions">
+          <span class="num">11</span>Open questions worth asking
+        </h2>
 
         <ol>
-          <li><strong>What is the as-built <code>internal/</code> layout?</strong>
+          <li>
+            <strong>What is the as-built <code>internal/</code> layout?</strong>
             The seven core ADRs imply a structure but no ADR anchors it.
-            Answering ships a "codebase map" page that doubles as
-            onboarding.</li>
+            Answering ships a "codebase map" page that doubles as onboarding.
+          </li>
 
-          <li><strong>Where do the Acceptance tests live for each ADR?</strong>
-            The Confirmation sections promise behaviour; the public docs
-            don't link them. The answer is the single best test-coverage
-            improvement available.</li>
+          <li>
+            <strong>Where do the Acceptance tests live for each ADR?</strong>
+            The Confirmation sections promise behaviour; the public docs don't
+            link them. The answer is the single best test-coverage improvement
+            available.
+          </li>
 
-          <li><strong>Where is Switchboard?</strong>
-            ADR-0010 names it. The public surface doesn't show it. Either
-            link it or remove the name.</li>
+          <li>
+            <strong>Where is Switchboard?</strong> ADR-0010 names it. The public
+            surface doesn't show it. Either link it or remove the name.
+          </li>
 
-          <li><strong>What is the current state.json schema (versioned)?</strong>
-            ADR-0014 calls it out, ADR-0007 leaves versioning implicit. A
-            pinned schema is the difference between "we can migrate" and
-            "we'll find out."</li>
+          <li>
+            <strong>What is the current state.json schema (versioned)?</strong>
+            ADR-0014 calls it out, ADR-0007 leaves versioning implicit. A pinned
+            schema is the difference between "we can migrate" and "we'll find
+            out."
+          </li>
 
-          <li><strong>Are <em>scheduled</em> harnesses surviving a daemon reboot?</strong>
-            ADR-0013 + ADR-0007 + ADR-0014 together imply "no, run history
-            is the only durable record." Confirm or rebut; F01 depends on
-            it.</li>
+          <li>
+            <strong
+              >Are <em>scheduled</em> harnesses surviving a daemon
+              reboot?</strong
+            >
+            ADR-0013 + ADR-0007 + ADR-0014 together imply "no, run history is
+            the only durable record." Confirm or rebut; F01 depends on it.
+          </li>
 
-          <li><strong>Is there a public screenshot or recording of the chatroom?</strong>
-            If yes, link it. If no, build one with hyperframes before
-            promoting the TUI version.</li>
+          <li>
+            <strong
+              >Is there a public screenshot or recording of the
+              chatroom?</strong
+            >
+            If yes, link it. If no, build one with hyperframes before promoting
+            the TUI version.
+          </li>
 
-          <li><strong>Does the chatroom need a separate ADR for the OSC52 paste
-            story?</strong>
-            Bubble Tea's paste path through an embedded <code>vt</code> is
-            a known quirk class. Worth one sentence.</li>
+          <li>
+            <strong
+              >Does the chatroom need a separate ADR for the OSC52 paste
+              story?</strong
+            >
+            Bubble Tea's paste path through an embedded <code>vt</code> is a
+            known quirk class. Worth one sentence.
+          </li>
 
-          <li><strong>Where does <code>Schrödinger</code>'s "wishlist," <code>promwish</code>,
-            and <code>soft-serve</code> fit in the roadmap?</strong>
-            ADR-0004 names all three. A separate roadmap note would
-            clarify which is "sketch," which is "next," which is "out."</li>
+          <li>
+            <strong
+              >Where does <code>Schrödinger</code>'s "wishlist,"
+              <code>promwish</code>, and <code>soft-serve</code> fit in the
+              roadmap?</strong
+            >
+            ADR-0004 names all three. A separate roadmap note would clarify
+            which is "sketch," which is "next," which is "out."
+          </li>
         </ol>
 
         <div class="footer">
           Report: Deep review of <code>stump.wtf/harness</code> ADRs and specs
           as of 2026-08-19. Generated against public docs at
-          <code>stump-wtf.github.io/harness/</code>. Internal source tree is
-          not publicly accessible; review draws entirely from the ADRs, the
-          spec stubs, and the user-facing documentation. Findings are
-          grounded in text quoted directly from the ADRs above.
+          <code>stump-wtf.github.io/harness/</code>. Internal source tree is not
+          publicly accessible; review draws entirely from the ADRs, the spec
+          stubs, and the user-facing documentation. Findings are grounded in
+          text quoted directly from the ADRs above.
         </div>
-
       </main>
     </div>
 
@@ -1465,7 +2251,7 @@
               }
             });
           },
-          { rootMargin: "-40% 0px -55% 0px" }
+          { rootMargin: "-40% 0px -55% 0px" },
         );
         map.forEach((_, sec) => io.observe(sec));
       })();

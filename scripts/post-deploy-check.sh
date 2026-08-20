@@ -475,9 +475,9 @@ fi
 # regression (model swapped without the alias changing).
 if $llama_rag_enabled; then
   if curl -s --compressed --max-time 30 -o /tmp/.smoke-lmemb -w "%{http_code}" \
-      -H "Content-Type: application/json" \
-      -d '{"input":"test document"}' \
-      "http://localhost:8848/v1/embeddings" 2>/dev/null | grep -q "200"; then
+    -H "Content-Type: application/json" \
+    -d '{"input":"test document"}' \
+    "http://localhost:8848/v1/embeddings" 2>/dev/null | grep -q "200"; then
     if jq -e '.data[0].embedding | length == 1024' /tmp/.smoke-lmemb >/dev/null 2>&1; then
       report_pass "llama.cpp Embeddings — /v1/embeddings returns a 1024-dim vector"
     else
@@ -488,9 +488,9 @@ if $llama_rag_enabled; then
   fi
 
   if curl -s --compressed --max-time 30 -o /tmp/.smoke-lmrr -w "%{http_code}" \
-      -H "Content-Type: application/json" \
-      -d '{"model":"bge-reranker-v2-m3","query":"what is the capital of france","documents":["paris is the capital of france","london is the capital of england"]}' \
-      "http://localhost:8849/v1/rerank" 2>/dev/null | grep -q "200"; then
+    -H "Content-Type: application/json" \
+    -d '{"model":"bge-reranker-v2-m3","query":"what is the capital of france","documents":["paris is the capital of france","london is the capital of england"]}' \
+    "http://localhost:8849/v1/rerank" 2>/dev/null | grep -q "200"; then
     if jq -e '.results[0].index == 0' /tmp/.smoke-lmrr >/dev/null 2>&1; then
       report_pass "llama.cpp Reranker — /v1/rerank ranks the correct document first"
     else
