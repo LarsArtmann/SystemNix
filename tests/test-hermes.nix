@@ -39,9 +39,15 @@ let
         ./test-helpers.nix
       ];
 
-      # mock-sops provides the sops.templates OPTION, but nothing renders
-      # the file. The unit's EnvironmentFile is unprefixed, so a missing
-      # file would fail the unit before any assertion runs.
+      # mock-sops provides the sops.templates OPTION, but the module reads
+      # templates."hermes-env".path, which must EXIST (on the real host a
+      # secrets module defines it). Mock it and create the rendered file:
+      # the unit's EnvironmentFile is unprefixed, so a missing file would
+      # fail the unit before any assertion runs.
+      sops.templates."hermes-env" = {
+        content = "HERMES_VM_TEST=1";
+        path = "/run/secrets-rendered/hermes-env";
+      };
       systemd.tmpfiles.rules = [
         "f /run/secrets-rendered/hermes-env 0400 root root -"
       ];
