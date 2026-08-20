@@ -187,6 +187,7 @@ in {
         "render"
         "lp"
         "scanner"
+        "adbusers"
       ];
       # INFO: Set password manually with `passwd lars` after installation
       # NOTE: After SSH hardening, password auth will be disabled - you MUST set up SSH keys
@@ -211,6 +212,9 @@ in {
 
       # Enable Fish shell system-wide
       fish.enable = true;
+
+      # Android platform tools (adb/fastboot) + udev rules for phone access
+      adb.enable = true;
 
       # SearXNG as default Chromium/Helium search engine.
       # LAN access bypasses oauth2-proxy forward-auth via protectedVHost.
