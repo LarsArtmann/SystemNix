@@ -131,9 +131,17 @@
           fi
 
           echo "hermes-perms: fixing ownership and permissions in ${cfg.stateDir}"
-          chown -R ${cfg.user}:${cfg.group} ${cfg.stateDir}
-          find ${cfg.stateDir} -type d -exec chmod 2770 {} + 2>/dev/null || true
-          find ${cfg.stateDir} -type f -exec chmod 0660 {} + 2>/dev/null || true
+          # Never chown -R the whole stateDir: the read-only projects bind
+          # mount (<stateDir>/workspace/projects) turns the recursive chown
+          # into EROFS failures, and set -e converts those into a
+          # crash-looping ExecStartPre (2026-08-20 start-limit-hit incident).
+          # Chown the root explicitly, then walk with find: prune the bind
+          # target, stay on one filesystem (-xdev), and tolerate per-entry
+          # failures so a foreign mount can never kill the unit again.
+          chown ${cfg.user}:${cfg.group} ${cfg.stateDir}
+          find ${cfg.stateDir} -xdev -path '${cfg.stateDir}/workspace/projects' -prune -o -exec chown ${cfg.user}:${cfg.group} {} + 2>/dev/null || true
+          find ${cfg.stateDir} -xdev -path '${cfg.stateDir}/workspace/projects' -prune -o -type d -exec chmod 2770 {} + 2>/dev/null || true
+          find ${cfg.stateDir} -xdev -path '${cfg.stateDir}/workspace/projects' -prune -o -type f -exec chmod 0660 {} + 2>/dev/null || true
         '';
       };
 
