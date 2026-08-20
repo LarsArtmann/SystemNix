@@ -187,7 +187,6 @@ in {
         "render"
         "lp"
         "scanner"
-        "adbusers"
       ];
       # INFO: Set password manually with `passwd lars` after installation
       # NOTE: After SSH hardening, password auth will be disabled - you MUST set up SSH keys
@@ -212,9 +211,6 @@ in {
 
       # Enable Fish shell system-wide
       fish.enable = true;
-
-      # Android platform tools (adb/fastboot) + udev rules for phone access
-      adb.enable = true;
 
       # SearXNG as default Chromium/Helium search engine.
       # LAN access bypasses oauth2-proxy forward-auth via protectedVHost.
@@ -260,6 +256,10 @@ in {
     # System packages for audio/video codec support
     environment.systemPackages = [
       pkgs.libopus # Opus audio codec for Discord voice support
+      # Android platform tools (adb/fastboot). The programs.adb module was
+      # removed from nixpkgs: systemd 258 ships the android udev rules with
+      # uaccess tags, granting the active seat user device ACLs directly.
+      pkgs.android-tools
     ];
 
     fonts.fontconfig.defaultFonts = {
