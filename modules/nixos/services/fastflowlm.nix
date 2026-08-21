@@ -38,7 +38,8 @@
 # established" entries for ≥ keepAlive (default 1h) AND the backend has been
 # active for ≥ 10 min (don't kill a cold load in progress).
 #
-# WHY socket activation: the model is 13.6 GB mmap'd from /data. Pinned in RAM
+# WHY socket activation: the model is 21.6 GB mmap'd from /data (v1.0.2
+# re-quantized weights). Pinned in RAM
 # 24/7, it would reserve ~25 GB of the 94 GB CPU-visible pool at idle. That's
 # only affordable when the model is actually in use. Cold load is 1-3 min
 # (acceptable for a background LLM); if it isn't, the warmCalendar option
@@ -221,7 +222,7 @@ _: {
           }
           {
             assertion = cfg.host == "127.0.0.1" || cfg.host == "::1";
-            message = "services.fastflowlm.host must be loopback. The NPU model is 13.6 GB mmap'd; expose via reverse proxy if you need remote access.";
+            message = "services.fastflowlm.host must be loopback. The NPU model is 21.6 GB mmap'd; expose via reverse proxy if you need remote access.";
           }
         ];
 

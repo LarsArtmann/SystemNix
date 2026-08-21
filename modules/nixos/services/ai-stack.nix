@@ -82,7 +82,7 @@ _: {
             OLLAMA_KV_CACHE_TYPE = "q8_0";
             OLLAMA_KEEP_ALIVE = "1h";
             OLLAMA_MAX_LOADED_MODELS = "1";
-            OLLAMA_GPU_OVERHEAD = "8589934592";
+            OLLAMA_GPU_OVERHEAD = "1073741824";
             PYTORCH_CUDA_ALLOC_CONF = "per_process_memory_fraction:0.45";
           };
         };
