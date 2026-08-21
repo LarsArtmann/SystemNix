@@ -8,7 +8,13 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 
 ## [Unreleased]
 
+### Added
+
+- **`btrbk-pool-clean` (2026-08-21): automated garbled-receive GC for the pool backup targets** — `btrbk clean` runs nightly at 23:50 (after the 23:00/23:30/23:45 btrbk windows; `After=` ordering holds it behind still-running seeds so it never races a live receive) and is enqueued `--no-block` at every deploy. A garbled (interrupted-receive) target subvolume with a snapshot's name BLOCKS btrbk from ever re-sending that snapshot ("exists, but is not a receive target" → skipped backup) — under keep-forever root retention that would be a permanent history gap. First run deleted the three seed-era strays (root `@.20260814/15T2300`, data `data.20260721T2330`) and unblocked the automatic nightly re-send of Aug 14/15 from still-present local snapshots, healing the root chain to a continuous Aug 12→21 daily history
+
 ### Changed
+
+- **Backup retention asymmetry (2026-08-21)**: local root snapshots quartered (`snapshot_preserve 14d 4w` → `3d 1w`, min `7d`→`2d`; extent pinning relief for the space-tight QLC NVMe — local tier only needs rollback + incremental-send-parent duty) while pool-side root receives are kept FOREVER (`target_preserve_min = "all"`; CoW extent sharing makes snapshot count ~free on the 16T RAID1 pool, revisit at ~50% usage). `/data` retention unchanged (local 14d 4w / pool 30d 12w)
 
 - **Hermes upstream bump v0.19→v0.20.4 (`63c6d9a4`, 2026-08-21) + downstream patch retirement** — flake input re-locked from `ca84f13b` (Aug 16) to newest main (v2026.8.18 tag + ~1 day, 1073-commit window); package, VM test, and live gateway verified. The downstream `registration_lifecycle` extraction/PYTHONPATH patch is DELETED — upstream ships the module in `[tool.setuptools] py-modules` since v0.20.1, proven by an import against the sealed uv2nix venv (second source of truth gone). TERMINAL_CWD env-bridge semantics re-verified for the new rev: upstream `31561e37` reads the `.env` FILE for its deprecation warning and explicitly blesses process-env `TERMINAL_CWD` ("runtime config bridges ... legitimately set TERMINAL_CWD") — the old cosmetic startup warning is gone, by design. Extras audit: all 18 enabled groups still exist upstream (26 unenabled groups documented in AGENTS.md); the `feat(relay)!` breaking change (PR #77915) confirmed irrelevant — SystemNix uses no relay plugin config.
 

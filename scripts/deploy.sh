@@ -197,6 +197,13 @@ if nix run .#pre-deploy-check; then
     sudo systemctl restart browser-history.service 2>/dev/null || true
   fi
 
+  # Heal garbled btrbk receive targets at deploy time (before the next nightly
+  # window) — see snapshots.nix btrbk-pool-clean for why this must not race a
+  # live send. --no-block: the unit's After= ordering makes it WAIT behind any
+  # still-running 24h btrbk seed; a blocking restart would hang the deploy.
+  echo "Enqueueing btrbk-pool-clean.service (garbled-receive GC)"
+  sudo systemctl start --no-block btrbk-pool-clean.service 2>/dev/null || true
+
   # Trigger the systemd-timer-monitor audit so the report is fresh after deploy.
   # The timer-driven oneshot (OnBootSec=2min) may not fire immediately after
   # activation. Using `start` (not `restart`) — it's a plain oneshot without

@@ -466,6 +466,16 @@ _: {
                 launchURL = "https://history.${domain}";
                 callbackURLs = [ "https://history.${domain}/auth/oauth/pocket-id/callback" ];
               }
+              {
+                # Native OIDC in dnsblockd itself (cqrs-htmx/usermgmt/oauth2
+                # provider, authorization-code + PKCE S256). Binds dashboard
+                # audit entries to the signed-in identity.
+                name = "dnsblockd";
+                clientId = "dnsblockd";
+                launchURL = "https://dnsblock.${domain}";
+                callbackURLs = [ "https://dnsblock.${domain}/auth/oidc/callback" ];
+                pkceEnabled = true;
+              }
             ];
             description = "OIDC clients to create declaratively";
           };

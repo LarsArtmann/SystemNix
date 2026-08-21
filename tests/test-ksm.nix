@@ -12,7 +12,8 @@
 # The probe allocates anonymous memory, fills every 4 KiB page with the same
 # pattern, madvise(MADV_MERGEABLE)s it, and sleeps. This is exactly what QEMU
 # does for guest RAM (memory-backend merge=on) — the workload KSM was built for.
-{pkgs}: let
+{ pkgs }:
+let
   ksmProbe = pkgs.stdenv.mkDerivation {
     name = "ksm-probe";
     src = pkgs.writeText "ksm-probe.c" ''
@@ -59,12 +60,13 @@
       runHook postInstall
     '';
   };
-in {
+in
+{
   name = "ksm";
 
   nodes.machine = _: {
     virtualisation.memorySize = 4096;
-    environment.systemPackages = [ksmProbe];
+    environment.systemPackages = [ ksmProbe ];
   };
 
   testScript = ''

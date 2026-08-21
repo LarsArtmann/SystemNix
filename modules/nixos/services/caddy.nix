@@ -199,7 +199,17 @@ _: {
             };
             "daily.${domain}" = protectedVHost "daily" config.services.crush-daily.port;
 
-            "dnsblock.${domain}" = protectedVHost "dnsblock" config.services.dns-blocker.statsPort;
+            # dnsblockd has NATIVE OIDC auth since the SSO feature (Pocket ID,
+            # authorization-code + PKCE) — plain TLS proxy like Forgejo/Gatus;
+            # oauth2-proxy forward-auth would fight the OIDC callback flow.
+            # dnsblockd's own token gate remains the inner defense layer.
+            "dnsblock.${domain}" = {
+              extraConfig = ''
+                ${tlsConfig}
+                ${commonConfig}
+                ${proxyTo config.services.dns-blocker.statsPort}
+              '';
+            };
             "dnsblockd.${domain}" = {
               extraConfig = ''
                 ${tlsConfig}

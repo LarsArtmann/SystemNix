@@ -80,6 +80,14 @@ in
       ];
       dnsIPv6Enabled = false; # evo-x2 has no global IPv6
 
+      # Native OIDC SSO for the dashboard via Pocket ID (passkeys).
+      # Client secret is bridged by the dnsblockd-oidc-secret oneshot from
+      # Pocket ID's client-secrets provisioning; audit entries record the
+      # signed-in identity. The auth token stays valid for API clients.
+      oidcIssuerURL = "https://auth.${domain}";
+      oidcClientID = "dnsblockd";
+      oidcRedirectURL = "https://dnsblock.${domain}/auth/oidc/callback";
+
       # Reverse-proxy temp-allowed domains so "Continue to site" works
       # without waiting for the browser's cached block IP to expire.
       # CA cert/key are trusted via security.pki.certificates below.

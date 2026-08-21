@@ -517,5 +517,18 @@ in
       };
       wantedBy = [ "timers.target" ];
     };
+
+    # 23:50 = after all three btrbk windows (23:00/23:30/23:45). The service's
+    # After= ordering additionally holds the start while any btrbk run is still
+    # active (e.g. a 24h seed), so clean never races a live receive.
+    timers.btrbk-pool-clean = {
+      description = "Nightly btrbk clean (garbled-receive GC) after all btrbk runs";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = "23:50";
+        Persistent = true;
+        AccuracySec = "5min";
+      };
+    };
   };
 }

@@ -7,7 +7,8 @@
 #   - Value-assertion failures (pat(*metric 0*) when value is non-zero)
 #
 # Uses a mock HTTP server serving canned Prometheus-format /metrics output.
-{pkgs}: let
+{ pkgs }:
+let
   # Canned /metrics output matching SystemNix textfile + node_exporter metrics.
   mockMetrics = pkgs.writeText "mock-metrics.prom" ''
     # HELP system_signoz_alert_rules_healthy SigNoz alert rules provisioned
@@ -62,7 +63,7 @@
 
   mockMetricsServer = pkgs.writeShellApplication {
     name = "mock-metrics-server";
-    runtimeInputs = [pkgs.python3];
+    runtimeInputs = [ pkgs.python3 ];
     text = ''
       python3 -c '
       import http.server
@@ -85,12 +86,13 @@
       '
     '';
   };
-in {
+in
+{
   name = "gatus-patterns";
 
-  nodes.machine = {lib, ...}: {
+  nodes.machine = { lib, ... }: {
     systemd.services.mock-metrics = {
-      wantedBy = ["multi-user.target"];
+      wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         ExecStart = lib.getExe mockMetricsServer;
         Restart = "always";

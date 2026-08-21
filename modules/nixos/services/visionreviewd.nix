@@ -17,31 +17,34 @@
 #       configFile = "/etc/visionreviewd/config.json";
 #       llamaServer.enable = true;  # pulls ~9-10 GB on first start
 #     };
-{inputs, ...}: {
-  flake.nixosModules.visionreviewd = {
-    lib,
-    pkgs,
-    ...
-  }: let
-    inherit (import ../../../lib/default.nix lib) ports;
+{ inputs, ... }: {
+  flake.nixosModules.visionreviewd =
+    {
+      lib,
+      pkgs,
+      ...
+    }:
+    let
+      inherit (import ../../../lib/default.nix lib) ports;
 
-    # Absent until the input revision ships the module (see header note).
-    upstream = inputs.vision-review-agent.nixosModules.visionreviewd or null;
-  in {
-    imports = lib.optionals (upstream != null) [upstream];
+      # Absent until the input revision ships the module (see header note).
+      upstream = inputs.vision-review-agent.nixosModules.visionreviewd or null;
+    in
+    {
+      imports = lib.optionals (upstream != null) [ upstream ];
 
-    # optionalAttrs (not mkIf): mkIf still emits a definition envelope that
-    # the module system type-checks against the (nonexistent) option —
-    # breaking eval while the input predates the module. optionalAttrs
-    # produces a literal `config = {}` — nothing to check, nothing to merge.
-    config = lib.optionalAttrs (upstream != null) {
-      services.vision-review-agent = {
-        # Upstream flake exposes its package as `default` (no .visionreviewd attr).
-        package =
-          lib.mkDefault
-          inputs.vision-review-agent.packages.${pkgs.stdenv.hostPlatform.system}.default;
-        llamaServer.port = lib.mkDefault ports.visionreviewd-llama;
+      # optionalAttrs (not mkIf): mkIf still emits a definition envelope that
+      # the module system type-checks against the (nonexistent) option —
+      # breaking eval while the input predates the module. optionalAttrs
+      # produces a literal `config = {}` — nothing to check, nothing to merge.
+      config = lib.optionalAttrs (upstream != null) {
+        services.vision-review-agent = {
+          # Upstream flake exposes its package as `default` (no .visionreviewd attr).
+          package =
+            lib.mkDefault
+              inputs.vision-review-agent.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          llamaServer.port = lib.mkDefault ports.visionreviewd-llama;
+        };
       };
     };
-  };
 }
