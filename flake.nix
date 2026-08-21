@@ -732,14 +732,22 @@
                 echo "  + = literal character (NOT one-or-more quantifier)"
                 exit 1
               fi
-              # pat() globs the WHOLE /metrics body, HELP comments included: a
-              # value assertion pat(*<metric> <0|1>*) silently matches the metric's
-              # own "# HELP <metric> 1 if ..." comment and stays green at any value
+              # pat() globs the WHOLE /metrics body, HELP comments included: an
+              # asserted-1 condition pat(*<metric> 1*) silently matches the metric's
+              # own "# HELP <metric> 1 if ..." comment and stays green at ANY value
               # (phantom green, live on buildcache/pool/lan-nic/signoz 2026-08-22).
-              # Only newline-anchored presence (*\n<metric> *) or absent-value
-              # (!= pat(*<metric> 0\n*)) forms are allowed.
-              if grep -v '^[[:space:]]*#' ${./modules/nixos/services/gatus-config.nix} | grep -nE 'pat\(\*[a-z_0-9]+ [01]\*\)'; then
-                echo "FAIL: bare pat(*<metric> <value>*) conditions match the metric's own HELP comment."
+              # Asserted-0 conditions are unaffected ("0 otherwise" never contains
+              # "<metric> 0" as a substring). Allowlisted: metrics whose HELP text
+              # does not embed "<name> 1" or which emit no HELP at all — migrate
+              # them to the anchored form and shrink this list.
+              cp ${./modules/nixos/services/gatus-config.nix} lint-src.nix
+              chmod +w lint-src.nix
+              for m in btrfs_scrub_error_free btrfs_emergency_reserve_present backup_all_healthy secret_rotation_all_fresh; do
+                grep -v "pat(\*''${m} 1\*)" lint-src.nix > lint-src.nix.next || true
+                mv lint-src.nix.next lint-src.nix
+              done
+              if grep -v '^[[:space:]]*#' lint-src.nix | grep -nE 'pat\(\*[a-z_0-9]+ 1\*\)'; then
+                echo "FAIL: bare pat(*<metric> 1*) conditions match the metric's own HELP comment."
                 echo "Use:  [BODY] != pat(*<metric> 0\\n*)  +  [BODY] == pat(*\\n<metric> *)"
                 exit 1
               fi
