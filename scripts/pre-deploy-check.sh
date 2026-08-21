@@ -215,7 +215,7 @@ fi
 # service already fails its own health checks elsewhere.
 GATUS_SERVICE_METRIC_PORTS=$(grep -oE 'localhost:\$\{toString ports\.[a-zA-Z0-9_-]+\}/metrics' "$GATUS_CONFIG" 2>/dev/null | sed -E 's/.*ports\.([a-zA-Z0-9_-]+)\}.*/\1/' | sort -u)
 for port_name in $GATUS_SERVICE_METRIC_PORTS; do
-  port_num=$(grep -oE "^[[:space:]]*${port_name} = [0-9]+;" lib/ports.nix | grep -oE '[0-9]+' | head -1)
+  port_num=$(sed -nE "s/^[[:space:]]*${port_name} = ([0-9]+);.*/\1/p" lib/ports.nix | head -1)
   if [ -n "$port_num" ] && curl -sf --compressed --max-time 5 "http://127.0.0.1:${port_num}/metrics" >>"$METRICS_FILE" 2>/dev/null; then
     pass "Service metrics '${port_name}' (port ${port_num}) responding"
   else
@@ -243,7 +243,15 @@ if [ -s "$METRICS_FILE" ]; then
   # removed — note it correctly reports 1 (unallocated 4% < 5% threshold).
   # system_any_service_restart_churn: verified live 2026-08-20 (deployed with
   # the hermes churn work) and removed from this bypass list.
-  KNOWN_NEW_METRICS="system_zram_swap_fill_percent system_zram_fill_over_threshold system_zram_swap_orig_data_bytes system_zram_swap_disksize_bytes system_zram_mem_used_bytes"
+  # discordsync_projection_dlq_legacy_depth (2026-08-21): the gatus M07 mirror
+  # (c9f3c2bf) references this metric from DiscordSync upstream HEAD
+  # (metrics_db.go:111), but the tree still pins discordsync 085fa53 which only
+  # emits projection_dlq_depth. Real once the discordsync flake input is
+  # bumped to >= the rev adding _legacy_depth — verify in :8085/metrics after
+  # that deploy, then remove from this list. NOTE: until the bump, the gatus
+  # "DiscordSync Legacy DLQ Empty" endpoint stays RED (pat misses) and fires
+  # its Discord alert — bump discordsync or disable the endpoint.
+  KNOWN_NEW_METRICS="system_zram_swap_fill_percent system_zram_fill_over_threshold system_zram_swap_orig_data_bytes system_zram_swap_disksize_bytes system_zram_mem_used_bytes discordsync_projection_dlq_legacy_depth"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"
