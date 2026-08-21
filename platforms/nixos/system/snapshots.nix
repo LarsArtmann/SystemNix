@@ -222,6 +222,73 @@ in
         inherit onFailure;
       };
 
+      # ── btrbk clean: GC for garbled receive targets ────────────────────────
+      # `btrbk clean` is btrbk's sanctioned garbage collector for incomplete
+      # (interrupted-receive) target subvolumes. It deletes ONLY subvolumes
+      # whose receive never committed (no received_uuid) — never complete
+      # backups, never sources — and is REQUIRED after any interrupted send:
+      # a garbled target subvolume with the target name BLOCKS btrbk from
+      # re-sending that snapshot ("exists, but is not a receive target" →
+      # "Skipping backup" → permanent history gap under keep-forever target
+      # retention). Live case 2026-08-21: root @.20260814/15T2300 (Aug 17
+      # seed-era TimeoutStartSec interruptions; local sources still existed →
+      # clean unblocked the automatic nightly re-send, healing the chain) and
+      # data.20260721T2330 (source long pruned → garbage removal only; the
+      # /data seed itself still aborts on the known EIO inode, TODO P0).
+      # Timer 23:50 = after all three btrbk windows; After= holds the start
+      # while a long seed (24h TimeoutStartSec) is still streaming, so clean
+      # never races a live receive. deploy.sh starts it --no-block post-switch
+      # so deploy-time heals land before the next nightly window.
+      btrbk-pool-clean = {
+        description = "btrbk clean: delete incomplete (garbled) receive targets on the pool";
+        unitConfig = {
+          RequiresMountsFor = [ "/mnt/pool" ];
+          After = [
+            "btrbk-root.service"
+            "btrbk-data.service"
+            "btrbk-pool.service"
+          ];
+        };
+        path = [
+          pkgs.btrbk
+          pkgs.btrfs-progs
+          pkgs.coreutils
+        ];
+        startLimitBurst = 3;
+        startLimitIntervalSec = 3600;
+        inherit onFailure;
+        serviceConfig = lib.mkMerge [
+          {
+            Type = "oneshot";
+            # Runs as the btrbk user: the sudo allowlist (backend
+            # btrfs-progs-sudo) already covers subvolume list/show/delete —
+            # the same commands nightly pruning uses. Deliberately NOT
+            # harden {}: NoNewPrivileges would break the setuid sudo
+            # wrapper, and User=btrbk must keep its sudo identity.
+            User = "btrbk";
+            Group = "btrbk";
+            StateDirectory = "btrbk";
+            Nice = 10;
+            IOSchedulingClass = "best-effort";
+            TimeoutStartSec = "30min";
+          }
+          (serviceOneshotDefaults { })
+        ];
+        script = ''
+          # Aggregate failures: one bad config must never mask the others.
+          export PATH=/run/wrappers/bin:$PATH
+          failed=0
+          for conf in root data pool; do
+            echo ":: btrbk clean ($conf)"
+            if ! btrbk -c /etc/btrbk/$conf.conf clean; then
+              echo "ERROR: btrbk clean failed for $conf.conf" >&2
+              failed=1
+            fi
+          done
+          exit $failed
+        '';
+      };
+
       # Mirrored-pool Prometheus metrics (mount presence with real-I/O gate,
       # usage, free/total). Same always-write-the-.prom contract as
       # buildcache-metrics: a detached DAS flips pool_mounted to 0 and Gatus
