@@ -304,6 +304,11 @@ _: {
             ];
             oidc_session_ttl = "12h";
           }
+          // lib.optionalAttrs (cfg.oidcButtonText != "") {
+            # Provider-specific SSO button label (dnsblockd ≥ this version
+            # falls back to "Sign in with SSO" when unset).
+            oidc_button_text = cfg.oidcButtonText;
+          }
         )
       );
     in
@@ -592,6 +597,16 @@ _: {
             External SSO callback URL, e.g.
             "https://dnsblock.example.com/auth/oidc/callback" (required when
             oidcIssuerURL is set).
+          '';
+        };
+
+        oidcButtonText = mkOption {
+          type = types.str;
+          default = "";
+          description = ''
+            Optional provider-specific label for the SSO login button (e.g.
+            "Sign in with Pocket ID"). Empty uses dnsblockd's generic
+            "Sign in with SSO" default.
           '';
         };
 
