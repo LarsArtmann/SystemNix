@@ -222,6 +222,14 @@ _: {
             serviceConfig = lib.mkMerge [
               (harden {
                 MemoryMax = "64M";
+                # The textfile dir is a sticky 1777 shared directory. A stale
+                # .prom owned by another user (e.g. a manual test run as the
+                # desktop user) makes the atomic rename-over fail with EPERM
+                # under an empty CapabilityBoundingSet — which would kill the
+                # guard exactly when it is most needed. CAP_FOWNER +
+                # CAP_DAC_OVERRIDE let the guard reclaim the file (same
+                # pattern as bank-sync/buildcache textfile writers).
+                CapabilityBoundingSet = "CAP_FOWNER CAP_DAC_OVERRIDE";
               })
               (serviceOneshotDefaults { })
               {
