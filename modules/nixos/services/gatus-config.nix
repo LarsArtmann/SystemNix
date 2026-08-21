@@ -1020,7 +1020,7 @@ _: {
                     "[STATUS] == 200"
                     "[BODY] == pat(*system_service_memory_over_threshold{service=\"fastflowlm\"} 0*)"
                   ];
-                  alerts = discordAlert "FastFlowLM cgroup memory exceeds 90% of its MemoryMax (32G) — the 13.6 GB model mmap'd from /data plus KV cache is reaching the OOM-kill ceiling. Check: flm-loaded models, /data/ai/models/fastflowlm size, pma discovery worker count";
+                  alerts = discordAlert "FastFlowLM cgroup memory exceeds 90% of its MemoryMax (40G) — the 21.6 GB model mmap'd from /data plus KV cache is reaching the OOM-kill ceiling. Check: flm-loaded models, /data/ai/models/fastflowlm size, pma discovery worker count";
                 })
                 (mkHttpCheck {
                   name = "Hermes Agent Gateway";

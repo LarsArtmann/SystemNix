@@ -78,18 +78,19 @@ _: {
       # made in between queue in the kernel backlog — that queue IS the
       # cold-load hold, which is why this probes with bare TCP connects and
       # never HTTP (HTTP probes consumed flm's hard 10-connection limit —
-      # live incident 2026-08-18). Deadline 300 s: cold load is 1-3 min worst
-      # case; each refused probe closes instantly and consumes no slot.
+      # live incident 2026-08-18). Deadline 480 s (2026-08-21): v1.0.2
+      # re-quantized weights grew the mmap from 13.6 GB to 21.6 GB — worst-case
+      # cold read is now ~5 min; each refused probe closes instantly and consumes no slot.
       proxyConn = pkgs.writeShellApplication {
         name = "fastflowlm-proxy-conn";
         runtimeInputs = [ pkgs.coreutils ];
         text = ''
           host="127.0.0.1"
           port="${toString cfg.backendPort}"
-          deadline=$((SECONDS + 300))
+          deadline=$((SECONDS + 480))
           until (exec 3<>"/dev/tcp/$host/$port") 2>/dev/null; do
             if [ "$SECONDS" -ge "$deadline" ]; then
-              echo "fastflowlm-proxy: backend $host:$port not reachable within 300 s" >&2
+              echo "fastflowlm-proxy: backend $host:$port not reachable within 480 s" >&2
               exit 1
             fi
             sleep 1
@@ -340,8 +341,13 @@ _: {
               # cold load was the actual pressure source). 300 > user
               # slice's 200 so flm is always chosen first.
               OOMScoreAdjust = 300;
-              MemoryMax = "32G";
-              MemoryHigh = "26G";
+              # Ceilings re-sized for v1.0.2 (2026-08-21): the re-quantized
+              # model.q4nx grew 13.6 GB → 21.6 GB. The OLD 13.6 G model already
+              # peaked at 26G (model + KV + runtime), so 32G/26G would have
+              # cgroup-OOM-killed the 21.6 G load on arrival. 40G hard / 32G
+              # reclaim — costs nothing while idle (socket-activated).
+              MemoryMax = "40G";
+              MemoryHigh = "32G";
               MemorySwapMax = "20G";
               TimeoutStartSec = "3min";
             }

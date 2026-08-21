@@ -221,7 +221,9 @@ systemctl list-unit-files 'fastflowlm*' --no-legend 2>/dev/null | grep -q fastfl
 
 if $flm_enabled; then
   # Deliberate connection: re-arms the whole socket→proxy→backend chain.
-  if curl -s --compressed --max-time 240 -o /tmp/.smoke-flm "http://127.0.0.1:52625/v1/models" 2>/dev/null; then
+  # max-time 480: v1.0.2 weights are 21.6 GB (was 13.6) — worst-case cold load
+  # through the kernel backlog is now ~5 min.
+  if curl -s --compressed --max-time 480 -o /tmp/.smoke-flm "http://127.0.0.1:52625/v1/models" 2>/dev/null; then
     if grep -q '"data"' /tmp/.smoke-flm 2>/dev/null; then
       report_pass "FastFlowLM — /v1/models through socket-activated :52625 (model now pinned ≤ keepAlive)"
     else
