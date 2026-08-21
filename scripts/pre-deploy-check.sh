@@ -251,7 +251,15 @@ if [ -s "$METRICS_FILE" ]; then
   # that deploy, then remove from this list. NOTE: until the bump, the gatus
   # "DiscordSync Legacy DLQ Empty" endpoint stays RED (pat misses) and fires
   # its Discord alert — bump discordsync or disable the endpoint.
-  KNOWN_NEW_METRICS="system_zram_swap_fill_percent system_zram_fill_over_threshold system_zram_swap_orig_data_bytes system_zram_swap_disksize_bytes system_zram_mem_used_bytes discordsync_projection_dlq_legacy_depth"
+  # bank_sync_* (2026-08-22): the gatus "Bank-Sync Sync Health" probe
+  # (2026-08-21 session) references the sync_errors/last_sync metrics from
+  # bank-sync's own :8097/metrics exporter, but the RUNNING bank-sync predates
+  # the exporter. The locked flake input (5d7866f) verifiably emits both
+  # (internal/server/metrics.go:257,299 — verified against the locked rev
+  # 2026-08-22), so they appear post-switch. post-deploy-check.sh already
+  # asserts them (Bank-Sync section, :8097/metrics) — after the first deploy
+  # confirms, remove from this list.
+  KNOWN_NEW_METRICS="system_zram_swap_fill_percent system_zram_fill_over_threshold system_zram_swap_orig_data_bytes system_zram_swap_disksize_bytes system_zram_mem_used_bytes discordsync_projection_dlq_legacy_depth bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"
