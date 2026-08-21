@@ -1346,6 +1346,39 @@ _: {
                   ];
                   alerts = discordAlert "DiscordSync backup bot down — Discord messages not being captured";
                 })
+                # M07 alert mirrors (DiscordSync plan F40): an independent
+                # second layer on top of the Prometheus rules in DiscordSync's
+                # monitoring/alerts.yml. /metrics is auth-exempt on localhost.
+                # gatus body patterns can only express "== 0" (prefix match on
+                # the value line), so each check pins a sticky zero-state.
+                # Deliberately NOT mirrored: DB-growth (500 MB/day rate) and
+                # sync-failure COUNT (>5) alerts; a gatus absolute-byte ceiling
+                # or a zero-failure check would false-fire on transients.
+                # Those stay Prometheus-only.
+                (mkHttpCheck {
+                  name = "DiscordSync Legacy DLQ Empty";
+                  group = "Infrastructure";
+                  url = "http://localhost:${toString ports.discordsync-api}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    # HELP/TYPE lines continue with prose ("Entries...", "gauge"),
+                    # so only the value line can match "<metric name> 0".
+                    "[BODY] == pat(*discordsync_projection_dlq_legacy_depth 0*)"
+                  ];
+                  alerts = discordAlert "DiscordSync legacy DLQ non-empty: unrecovered pre-v4.3 dead letters (Jul 3-6 silent-loss incident class). Recover via event-store replay (plan M09)";
+                })
+                (mkHttpCheck {
+                  name = "DiscordSync Turso Sync Active";
+                  group = "Infrastructure";
+                  url = "http://localhost:${toString ports.discordsync-api}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*discordsync_turso_local_only_mode 0*)"
+                  ];
+                  alerts = discordAlert "DiscordSync in Turso local-only mode: cloud mirror paused (quota exhausted or sync gave up). Local archive intact, mirror is stale";
+                })
               ]
               ++ lib.optionals (config.services.file-and-image-renamer.enable or false) [
                 (mkHttpCheck {
