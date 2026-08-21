@@ -749,6 +749,7 @@
               if grep -v '^[[:space:]]*#' lint-src.nix | grep -nE 'pat\(\*[a-z_0-9]+ 1\*\)'; then
                 echo "FAIL: bare pat(*<metric> 1*) conditions match the metric's own HELP comment."
                 echo "Use:  [BODY] != pat(*<metric> 0\\n*)  +  [BODY] == pat(*\\n<metric> *)"
+                echo "Incident: 2026-08-22 DAS USB drop (buildcache/pool stayed green through a live outage) — docs/status/2026-08-22_01-46_das-usb-drop-gatus-phantom-green-fix.md"
                 exit 1
               fi
               touch $out
