@@ -205,6 +205,24 @@ else
   warn "Monitor365 metrics (port ${MONITOR365_PORT}) not responding — monitor365 metrics will be skipped"
 fi
 
+# Per-service /metrics endpoints that gatus pats() probe DIRECTLY (bank-sync
+# :8097, discordsync-api :8085, …). Without fetching these, every gatus body
+# check against a service's own /metrics registers as a phantom metric and
+# blocks deploys even though the live service verifiably emits it (observed
+# 2026-08-21: the bank-sync/discordsync gatus probes blocked all deploys).
+# URLs in gatus-config.nix are Nix-interpolated (${toString ports.<name>}),
+# so resolve each name against lib/ports.nix. Non-fatal per endpoint: a down
+# service already fails its own health checks elsewhere.
+GATUS_SERVICE_METRIC_PORTS=$(grep -oE 'localhost:\$\{toString ports\.[a-zA-Z0-9_-]+\}/metrics' "$GATUS_CONFIG" 2>/dev/null | sed -E 's/.*ports\.([a-zA-Z0-9_-]+)\}.*/\1/' | sort -u)
+for port_name in $GATUS_SERVICE_METRIC_PORTS; do
+  port_num=$(grep -oE "^[[:space:]]*${port_name} = [0-9]+;" lib/ports.nix | grep -oE '[0-9]+' | head -1)
+  if [ -n "$port_num" ] && curl -sf --compressed --max-time 5 "http://127.0.0.1:${port_num}/metrics" >>"$METRICS_FILE" 2>/dev/null; then
+    pass "Service metrics '${port_name}' (port ${port_num}) responding"
+  else
+    warn "Service metrics '${port_name}' (port ${port_num:-unresolved}) not responding — its gatus pats will flag absent"
+  fi
+done
+
 # Metrics known to come from Monitor365's endpoint (not node exporter textfile).
 # When Monitor365 is down, these are absent for infrastructure reasons, not
 # because they're phantom metrics in the config.
