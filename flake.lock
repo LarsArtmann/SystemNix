@@ -487,6 +487,23 @@
       "locked": {
         "lastModified": 1786133653,
         "narHash": "sha256-DU4RLb/G+C8KnUhZQqMuZrltyhTI/4vCOg5Bh/5HLL8=",
+        "ref": "refs/tags/v4.7.0",
+        "rev": "1de7db63a279030495458e332310a9ba4a3b2970",
+        "revCount": 1929,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/cqrs-htmx"
+      },
+      "original": {
+        "ref": "refs/tags/v4.7.0",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/cqrs-htmx"
+      }
+    },
+    "cqrs-htmx_5": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1786133653,
+        "narHash": "sha256-DU4RLb/G+C8KnUhZQqMuZrltyhTI/4vCOg5Bh/5HLL8=",
         "ref": "master",
         "rev": "1de7db63a279030495458e332310a9ba4a3b2970",
         "revCount": 1929,
@@ -700,6 +717,7 @@
     "dnsblockd": {
       "inputs": {
         "art-dupl-src": "art-dupl-src_2",
+        "cqrs-htmx": "cqrs-htmx_4",
         "flake-parts": [
           "flake-parts"
         ],
@@ -717,11 +735,11 @@
         "templ-components": "templ-components_5"
       },
       "locked": {
-        "lastModified": 1786957641,
-        "narHash": "sha256-qkMye0qMrPD+kSjkniOhrGM6rRyQrlyHcKPgmN5BYwk=",
+        "lastModified": 1787350975,
+        "narHash": "sha256-WnmxSkbhmaOMrgGTdd8Z1kAxUNa4/NzvOfhc4Fhqg1M=",
         "owner": "LarsArtmann",
         "repo": "dnsblockd",
-        "rev": "d95c5014de9bd3a328c1cce1c9e70c2b58fb2188",
+        "rev": "52878112d07e554bc0a8c9cb54a270153116b484",
         "type": "github"
       },
       "original": {
@@ -5058,7 +5076,7 @@
     },
     "overview": {
       "inputs": {
-        "cqrs-htmx": "cqrs-htmx_4",
+        "cqrs-htmx": "cqrs-htmx_5",
         "flake-parts": [
           "flake-parts"
         ],
@@ -5952,16 +5970,16 @@
     "templ-components_5": {
       "flake": false,
       "locked": {
-        "lastModified": 1786921635,
-        "narHash": "sha256-Phutsci1BD5XTE0fBY7PDg1PAfUcWBM+96eJ1S5znKE=",
-        "ref": "refs/tags/v1.8.4",
-        "rev": "4e71110ef8b980cf675bc437bc4e1ed5c2286169",
-        "revCount": 1066,
+        "lastModified": 1787339812,
+        "narHash": "sha256-NGUoHnN++vkHeAgKobbIMHeKducxxdBPz/Ob0UKlie0=",
+        "ref": "refs/tags/v1.9.0",
+        "rev": "4951c079ac795e5e5a2507e536d5b13e039282b9",
+        "revCount": 1082,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/templ-components"
       },
       "original": {
-        "ref": "refs/tags/v1.8.4",
+        "ref": "refs/tags/v1.9.0",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/templ-components"
       }
