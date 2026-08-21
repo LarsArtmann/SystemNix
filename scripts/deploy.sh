@@ -49,6 +49,30 @@ if nix run .#pre-deploy-check; then
     fi
   fi
 
+  # Concurrent-activation detection (2026-08-21, generalizes the 2026-08-20
+  # session's deploy #1 collision): a YOUNG (<30 min) live switch-to-configuration
+  # means another deploy/activation is running RIGHT NOW. Aborting HERE avoids
+  # burning the full build only to die with exit 11 at the switch step. A young
+  # stc alone is not evidence of a wedge — it is evidence of CONCURRENCY, so
+  # unlike the wedged case there is nothing to kill: just wait it out.
+  if [ -e "$stc_lock" ]; then
+    young_stc=""
+    for pid in $(pgrep -f 'switch-to-configuration' || true); do
+      etimes=$(ps -o etimes= -p "$pid" 2>/dev/null | tr -d ' ')
+      if [ -n "$etimes" ] && [ "$etimes" -le 1800 ]; then
+        young_stc="$young_stc $pid"
+      fi
+    done
+    if [ -n "$young_stc" ]; then
+      echo "❌ A concurrent activation is running (switch-to-configuration PIDs:$young_stc, <30 min old)."
+      echo "   Two deployments cannot hold ${stc_lock} — this one would abort at the switch step."
+      echo "   Wait for the other deploy to finish (or DEPLOY_FORCE_CONCURRENT=1 to try anyway):"
+      if [ "${DEPLOY_FORCE_CONCURRENT:-0}" != "1" ]; then
+        exit 11
+      fi
+    fi
+  fi
+
   echo ""
   echo "=== Backing up DMS settings (if user-modified) ==="
   # DMS may replace the HM-managed settings.json symlink with a real file

@@ -7,7 +7,13 @@
 # Five components:
 #   1. btrfs-health.service — collects Prometheus metrics every 5 min
 #   2. ExecStartPre guard on nix-gc + nix-build-cleanup — aborts reclamation
-#      when device-unallocated < 10% (the deadlock threshold)
+#      when device-unallocated is below an absolute GiB floor (metadata
+#      churn headroom) or metadata utilization is >90% (the real ENOSPC
+#      precursor). NEVER gate on a % of the device: 10% of a 723 GiB device
+#      is 72 GiB — a level GC itself cannot restore (deleting files frees
+#      extents WITHIN allocated chunks; only balance returns chunks), so a
+#      %-gate deadlocks exactly when reclamation is most needed (live
+#      2026-08-17..21: GC blocked 5 nights at 3% unalloc = 21 GiB idle).
 #   3. btrfs-balance-metadata.timer — weekly metadata chunk consolidation
 #   4. btrfs-balance-data.timer — weekly bounded data chunk consolidation
 #   5. btrfs-emergency-reserve.service — 10 GiB fallocated recovery reserve
@@ -29,8 +35,13 @@ let
   textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
   stateDir = "/var/lib/btrfs-health";
 
-  # Below this % of device-unallocated, GC is blocked (metadata ENOSPC risk).
-  gcBlockThreshold = 10;
+  # GC needs a few GiB of device-unallocated for its metadata (extent-tree)
+  # churn — the same 5 GiB floor the balance jobs in this module use.
+  gcMinUnallocBytes = 5 * 1024 * 1024 * 1024;
+
+  # Metadata utilization above this is the actual 2026-06-26 crash precursor:
+  # block GC before metadata-pool ENOSPC, independent of unallocated bytes.
+  gcMetaBlockPct = 90;
 
   # ── Shared parser: btrfs filesystem usage → KEY=VALUE pairs on stdout ──────
   # Used by both the metrics collector and the GC guard.
@@ -112,19 +123,25 @@ let
     text = ''
       set -uo pipefail
       eval "$(btrfs-chunk-check / 2>/dev/null)"
+      : "''${UNALLOC_BYTES:=0}"
       : "''${UNALLOC_PCT:=100}"
       : "''${META_PCT:=0}"
 
-      if [ "$UNALLOC_PCT" -lt ${toString gcBlockThreshold} ]; then
-        echo "BTRFS GUARD: ABORT — device-unallocated at ''${UNALLOC_PCT}% (threshold ${toString gcBlockThreshold}%). GC would cause metadata ENOSPC deadlock." >&2
-        echo "Free space first: grow partition, delete old snapshots, or run 'btrfs balance start -musage=50 /'" >&2
+      if [ "$UNALLOC_BYTES" -lt ${toString gcMinUnallocBytes} ]; then
+        echo "BTRFS GUARD: ABORT — device-unallocated at ''${UNALLOC_BYTES} bytes (''${UNALLOC_PCT}%), below the ${toString gcMinUnallocBytes}-byte floor. GC metadata churn risks ENOSPC." >&2
+        echo "Free chunk headroom first (in order): expire old btrbk snapshots (''${UNALLOC_PCT}% unalloc means freed extents sit in full chunks until balance), then 'sudo systemctl start btrfs-balance-metadata.service', or consume the 10 GiB reserve: rm /btrfs-emergency-reserve" >&2
+        exit 1
+      fi
+
+      if [ "$META_PCT" -gt ${toString gcMetaBlockPct} ]; then
+        echo "BTRFS GUARD: ABORT — metadata utilization at ''${META_PCT}% (> ${toString gcMetaBlockPct}%), the 2026-06-26 ENOSPC precursor. Run 'sudo systemctl start btrfs-balance-metadata.service' BEFORE reclaiming." >&2
         exit 1
       fi
 
       if [ "$META_PCT" -gt 85 ]; then
         echo "BTRFS GUARD: WARNING — metadata at ''${META_PCT}% — GC proceeding but may increase metadata pressure" >&2
       else
-        echo "BTRFS GUARD: OK — device-unallocated=''${UNALLOC_PCT}% metadata=''${META_PCT}%"
+        echo "BTRFS GUARD: OK — device-unallocated=''${UNALLOC_PCT}% (''${UNALLOC_BYTES} bytes) metadata=''${META_PCT}%"
       fi
     '';
   };

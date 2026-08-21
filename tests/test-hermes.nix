@@ -23,6 +23,10 @@
 #      within a version, v1 files upgrade to v2 (old content replaced)
 #   8. hermes-github-verify: skip-cleanly when the token env is unset;
 #      unit absent on the bare node (projectsDir = null)
+#   9. ~/.ssh perms converge: the exec-preserving walk prunes ~/.ssh and
+#      a dedicated converge heals group-writable ssh config on EVERY
+#      restart (OpenSSH 'Bad owner or permissions', live 2026-08-21) —
+#      both on the full-walk path and on the fast-path exit
 #
 # The gateway is replaced by `sleep infinity` via mkForce so the unit runs
 # its full ExecStartPre chain and holds its mount namespace open for
@@ -30,13 +34,14 @@
 {
   pkgs,
   inputs,
-}: let
+}:
+let
   hermesFlakeOutput = (import ../modules/nixos/services/hermes.nix) {
     inherit inputs;
   };
   hermesNixosModule = hermesFlakeOutput.flake.nixosModules.hermes;
 
-  common = {lib, ...}: {
+  common = { lib, ... }: {
     imports = [
       hermesNixosModule
       ./mock-sops.nix
@@ -75,12 +80,13 @@
     # on. The limiter itself is not under test here.
     systemd.services.hermes.startLimitBurst = lib.mkForce 20;
   };
-in {
+in
+{
   name = "hermes";
 
   nodes = {
-    bound = {...}: {
-      imports = [common];
+    bound = { ... }: {
+      imports = [ common ];
 
       services.hermes = {
         enable = true;
@@ -98,11 +104,11 @@ in {
       # deterministically: inside the sandboxed nix build, slirp host-side
       # DNS is not guaranteed. /etc/hosts resolves it without network; the
       # verify script hits the unset-token skip branch before any git use.
-      networking.hosts."192.0.2.1" = ["github.com"];
+      networking.hosts."192.0.2.1" = [ "github.com" ];
     };
 
-    bare = {...}: {
-      imports = [common];
+    bare = { ... }: {
+      imports = [ common ];
 
       services.hermes.enable = true;
     };
@@ -190,6 +196,26 @@ in {
     bound.systemctl("restart hermes")
     bound.wait_for_unit("hermes.service")
     assert bound.succeed("journalctl -u hermes --no-pager | grep -c 'restored execute bit on' || true").strip() == "1"
+
+    # 6b. ssh perms converge (regression: live 2026-08-21 'Bad owner or
+    #     permissions on /home/hermes/.ssh/config'). The old walk made
+    #     agent-created ssh config 0660 group-writable; OpenSSH refuses
+    #     such files. Case A: drift stateDir AND .ssh -> the FULL walk
+    #     runs and must leave .ssh owner-only (prune + final converge).
+    bound.succeed(
+        "runuser -u hermes -- sh -c 'mkdir -p /home/hermes/.ssh && printf sshcfg > /home/hermes/.ssh/config && chmod 2770 /home/hermes/.ssh && chmod 0660 /home/hermes/.ssh/config'"
+    )
+    bound.succeed("chmod 0755 /home/hermes")
+    bound.systemctl("restart hermes")
+    bound.wait_for_unit("hermes.service")
+    assert bound.succeed("stat -c %a /home/hermes/.ssh/config").strip() == "600"
+    assert bound.succeed("stat -c %a /home/hermes/.ssh").strip() == "700"
+    # Case B: stateDir healthy -> fast-path exit; .ssh drift alone must
+    # still converge (the exact live-host scenario)
+    bound.succeed("chmod 0660 /home/hermes/.ssh/config")
+    bound.systemctl("restart hermes")
+    bound.wait_for_unit("hermes.service")
+    assert bound.succeed("stat -c %a /home/hermes/.ssh/config").strip() == "600"
 
     # 7. workspace AGENTS.md v2: marker on line 1; agent edits survive
     #    restarts within a version; a v1 marker upgrades (content replaced)

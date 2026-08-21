@@ -168,5 +168,7 @@ grep workspace/projects /proc/<pid>/mountinfo   # verify the ro bind
 - Workspace rules: `<stateDir>/workspace/AGENTS.md` (delivered once)
 - VM test: `tests/test-hermes.nix` (`nix build .#checks.x86_64-linux.hermes`)
 - Post-deploy smoke: hermes section in `scripts/post-deploy-check.sh`
-- Upstream patch note: `registration_lifecycle.py` py-modules gap (module
-  header comment) — delete the override when upstream fixes it.
+- Upstream patch note (RESOLVED 2026-08-21): upstream ships
+  `registration_lifecycle.py` in py-modules since v0.20.1 — the
+  downstream extraction/PYTHONPATH override was deleted from
+  `hermes.nix` after verifying the import inside the sealed venv.

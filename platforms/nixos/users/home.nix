@@ -5,7 +5,8 @@
   nix-ssh-config,
   colorScheme,
   ...
-}: let
+}:
+let
   theme = import ../../common/theme.nix;
   colors = colorScheme.palette;
   inherit (import ../../../lib/default.nix lib) wrapWithMemoryLimit;
@@ -98,7 +99,8 @@
       setsid --fork xdg-open "''${args[@]}" </dev/null >/dev/null 2>&1
     '';
   };
-in {
+in
+{
   imports = [
     ../../common/home-base.nix
     ../programs/shells.nix # NixOS shell configuration
@@ -151,12 +153,10 @@ in {
     kitty = {
       enable = true;
       package = pkgs.kitty.overrideAttrs (old: {
-        postInstall =
-          (old.postInstall or "")
-          + ''
-            substituteInPlace $out/lib/kitty/kitty/constants.py \
-              --replace "kitty_run_data.get('bundle_exe_dir')" "None  # Nix: use PATH lookup for GC resilience"
-          '';
+        postInstall = (old.postInstall or "") + ''
+          substituteInPlace $out/lib/kitty/kitty/constants.py \
+            --replace "kitty_run_data.get('bundle_exe_dir')" "None  # Nix: use PATH lookup for GC resilience"
+        '';
       });
       font = {
         name = theme.font.mono;
@@ -246,7 +246,7 @@ in {
       ".local/share/pnpm/store".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/pnpm-store";
     };
     # Jan AI: symlink data folder to centralized /data/ai/models/jan
-    activation.jan-data-link = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    activation.jan-data-link = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       JAN_DATA="$HOME/.config/Jan/data"
       JAN_TARGET="/data/ai/models/jan"
       if [ -d "$JAN_TARGET" ]; then
@@ -357,31 +357,31 @@ in {
         name = "go-test";
         maxMemory = "4G";
         command = lib.getExe pkgs.go;
-        extraArgs = ["test"];
+        extraArgs = [ "test" ];
       })
       (wrapWithMemoryLimit pkgs {
         name = "go-build";
         maxMemory = "4G";
         command = lib.getExe pkgs.go;
-        extraArgs = ["build"];
+        extraArgs = [ "build" ];
       })
       (wrapWithMemoryLimit pkgs {
         name = "cargo-test";
         maxMemory = "8G";
         command = lib.getExe pkgs.cargo;
-        extraArgs = ["test"];
+        extraArgs = [ "test" ];
       })
       (wrapWithMemoryLimit pkgs {
         name = "cargo-build";
         maxMemory = "8G";
         command = lib.getExe pkgs.cargo;
-        extraArgs = ["build"];
+        extraArgs = [ "build" ];
       })
       (wrapWithMemoryLimit pkgs {
         name = "pnpm-test";
         maxMemory = "4G";
         command = lib.getExe pkgs.pnpm;
-        extraArgs = ["test"];
+        extraArgs = [ "test" ];
       })
 
       # Cursor themes
@@ -534,58 +534,58 @@ in {
       enable = true;
       defaultApplications = {
         # Web browsing
-        "text/html" = ["helium.desktop"];
-        "application/xhtml+xml" = ["helium.desktop"];
-        "x-scheme-handler/http" = ["helium.desktop"];
-        "x-scheme-handler/https" = ["helium.desktop"];
+        "text/html" = [ "helium.desktop" ];
+        "application/xhtml+xml" = [ "helium.desktop" ];
+        "x-scheme-handler/http" = [ "helium.desktop" ];
+        "x-scheme-handler/https" = [ "helium.desktop" ];
 
         # Terminal
-        "x-scheme-handler/terminal" = ["com.mitchellh.ghostty.desktop"];
-        "application/x-terminal-emulator" = ["com.mitchellh.ghostty.desktop"];
+        "x-scheme-handler/terminal" = [ "com.mitchellh.ghostty.desktop" ];
+        "application/x-terminal-emulator" = [ "com.mitchellh.ghostty.desktop" ];
 
         # File manager
-        "inode/directory" = ["org.gnome.Nautilus.desktop"];
+        "inode/directory" = [ "org.gnome.Nautilus.desktop" ];
 
         # Text / code files
-        "text/plain" = ["zed.desktop"];
-        "text/markdown" = ["zed.desktop"];
-        "text/x-yaml" = ["zed.desktop"];
-        "application/json" = ["zed.desktop"];
-        "application/x-yaml" = ["zed.desktop"];
+        "text/plain" = [ "zed.desktop" ];
+        "text/markdown" = [ "zed.desktop" ];
+        "text/x-yaml" = [ "zed.desktop" ];
+        "application/json" = [ "zed.desktop" ];
+        "application/x-yaml" = [ "zed.desktop" ];
 
         # Images
-        "image/avif" = ["helium.desktop"];
-        "image/bmp" = ["helium.desktop"];
-        "image/gif" = ["helium.desktop"];
-        "image/heif" = ["helium.desktop"];
-        "image/jpeg" = ["helium.desktop"];
-        "image/png" = ["helium.desktop"];
-        "image/svg+xml" = ["helium.desktop"];
-        "image/tiff" = ["helium.desktop"];
-        "image/webp" = ["helium.desktop"];
-        "image/x-icon" = ["helium.desktop"];
+        "image/avif" = [ "helium.desktop" ];
+        "image/bmp" = [ "helium.desktop" ];
+        "image/gif" = [ "helium.desktop" ];
+        "image/heif" = [ "helium.desktop" ];
+        "image/jpeg" = [ "helium.desktop" ];
+        "image/png" = [ "helium.desktop" ];
+        "image/svg+xml" = [ "helium.desktop" ];
+        "image/tiff" = [ "helium.desktop" ];
+        "image/webp" = [ "helium.desktop" ];
+        "image/x-icon" = [ "helium.desktop" ];
 
         # Audio — mpv (browsers handle audio files poorly; mpv works via `open`
         # from SSH too)
-        "audio/aac" = ["mpv.desktop"];
-        "audio/flac" = ["mpv.desktop"];
-        "audio/mpeg" = ["mpv.desktop"];
-        "audio/mp4" = ["mpv.desktop"];
-        "audio/ogg" = ["mpv.desktop"];
-        "audio/opus" = ["mpv.desktop"];
-        "audio/wav" = ["mpv.desktop"];
-        "audio/webm" = ["mpv.desktop"];
-        "audio/x-flac" = ["mpv.desktop"];
-        "audio/x-matroska" = ["mpv.desktop"];
-        "audio/x-wav" = ["mpv.desktop"];
+        "audio/aac" = [ "mpv.desktop" ];
+        "audio/flac" = [ "mpv.desktop" ];
+        "audio/mpeg" = [ "mpv.desktop" ];
+        "audio/mp4" = [ "mpv.desktop" ];
+        "audio/ogg" = [ "mpv.desktop" ];
+        "audio/opus" = [ "mpv.desktop" ];
+        "audio/wav" = [ "mpv.desktop" ];
+        "audio/webm" = [ "mpv.desktop" ];
+        "audio/x-flac" = [ "mpv.desktop" ];
+        "audio/x-matroska" = [ "mpv.desktop" ];
+        "audio/x-wav" = [ "mpv.desktop" ];
 
         # Videos
-        "video/mp4" = ["helium.desktop"];
-        "video/ogg" = ["helium.desktop"];
-        "video/quicktime" = ["helium.desktop"];
-        "video/webm" = ["helium.desktop"];
-        "video/x-matroska" = ["helium.desktop"];
-        "video/x-msvideo" = ["helium.desktop"];
+        "video/mp4" = [ "helium.desktop" ];
+        "video/ogg" = [ "helium.desktop" ];
+        "video/quicktime" = [ "helium.desktop" ];
+        "video/webm" = [ "helium.desktop" ];
+        "video/x-matroska" = [ "helium.desktop" ];
+        "video/x-msvideo" = [ "helium.desktop" ];
       };
     };
   };
@@ -600,7 +600,7 @@ in {
     theme = {
       name = theme.gtkThemeName;
       package = pkgs.catppuccin-gtk.override {
-        accents = [theme.accent];
+        accents = [ theme.accent ];
         size = lib.strings.toLower theme.density;
         inherit (theme) variant;
       };

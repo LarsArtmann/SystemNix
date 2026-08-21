@@ -2,7 +2,7 @@
 
 _A brutally honest audit of every feature the project actually has._
 
-**Generated:** 2026-05-03 | **Updated:** 2026-08-17 | **Scope:** Full codebase scan
+**Generated:** 2026-05-03 | **Updated:** 2026-08-21 | **Scope:** Full codebase scan
 
 ---
 
@@ -105,7 +105,7 @@ _A brutally honest audit of every feature the project actually has._
 | FastFlowLM (NPU LLM server)      | ✅         | `fastflowlm.nix`   | Qwen3.6-35B-A3B MoE (~3B active, 13.6 GB mmap) on the AMD XDNA2 NPU; OpenAI-compatible `127.0.0.1:52625/v1`. Socket-activated: `Accept=true` inetd socket + per-connection `fastflowlm@.service` socat bridge to backend :52626 (systemd-socket-proxyd does NOT exist in nixpkgs — the original design died exit 127 for ~5 h). `MaxConnections=8` (flm hard limit 10), 1h idle TTL via journal-based idle check, `ioTier.background`, `OOMScoreAdjust=300`. Package `pkgs/fastflowlm.nix` (autoPatchelf + protobuf_32, deterministic XILINX_XRT wrapper). E2E smoke in post-deploy-check is the ONLY functional gate (cold-pins the model); Gatus must NOT probe the port (TCP keepalives pin 13.6 GB in RAM) — system-health service-state metrics instead |
 | ComfyUI (image generation)       | ❌ Removed | —                  | Disabled — prefer using AI models via code directly                                                                                                                                                |
 | Voice agents (LiveKit + Whisper) | 🔧         | `voice-agents.nix` | Docker ROCm Whisper, Caddy reverse proxy, UDP 50000-51000 — disabled in config                                                                                                                     |
-| Hermes AI gateway                | ✅     | `hermes.nix`       | v0.19+ (default-branch tracking) — Discord bot, cron, messaging, edge-tts, exa, firecrawl, fal — system service, sops secrets, 4G memory limit, USR1 reload, multi-provider LLM wiring (GLM, MiniMax, Xiaomi, Synthetic, FAL). Downstream `registration_lifecycle` PYTHONPATH patch (upstream `py-modules` list omits it — crash-loops without the patch) |
+| Hermes AI gateway                | ✅     | `hermes.nix`       | v0.19+ (default-branch tracking) — Discord bot, cron, messaging, edge-tts, exa, firecrawl, fal — system service, sops secrets, 4G memory limit, USR1 reload, multi-provider LLM wiring (GLM, MiniMax, Xiaomi, Synthetic, FAL). Downstream `registration_lifecycle` PYTHONPATH patch (upstream `py-modules` list omits it — crash-loops without the patch). **2026-08-20 hardening round:** read-only projects bind (`BindReadOnlyPaths` + `GIT_CONFIG_GLOBAL` safe.directory store + `TERMINAL_CWD`/`HERMES_WRITE_SAFE_ROOT` confinement), exec-preserving perms walk + `hermes-lsp-bin-heal` (restores LSP exec bits), versioned workspace AGENTS.md (`<!-- systemnix-workspace-doc: vN -->` marker install), read-only GitHub PAT scaffolding (sops placeholder + `hermes-git-credential` helper + `hermes-github-verify` canary, inert until PAT go-live), Gatus liveness/memory checks via system-health (`hermes` in monitoredServices), restart-churn metric (`system_service_restart_churn`), 82-assertion VM test (`tests/test-hermes.nix`) |
 
 ### Desktop & System Services
 
@@ -498,7 +498,7 @@ The justfile was **removed** in favor of direct Nix flake commands. Scripts are 
 | ZFS era CLOSED    | `datapool` (2×16 TB) DESTROYED 2026-08-16 and rebuilt as the BTRFS RAID1 backup pool after full forensic extraction (373,491/373,491 files verified; zero user media ever existed on the box — see CHANGELOG). ZFS-VM scripts (`scripts/zfs-vm-*.sh`) are stale remnants awaiting retirement. Source: `docs/status/2026-08-16_19-12_private-cloud-recovery-final-verification.md` | Low      |
 | ~~PMA upstream fix~~  | **Resolved** — `isNothingToCommit()` TOCTOU fix confirmed already in upstream (`committer.go:289`). PMA re-enabled with `ManagedOOMPreference=omit` + split-mode. Flake input bumped | —        |
 | ~~SigNoz dashboards~~ | **Resolved 2026-08-16** — 251 zombie dashboards purged to exactly 5 native-v2 (Perses v6) dashboards; provisioner converges (skip/PUT/zombie-cleanup/hard-fail). Follow-ups (eval-time JSON lint, generator script in `scripts/`) in TODO_LIST | —        |
-| Hermes packaging  | Downstream `registration_lifecycle` PYTHONPATH patch is a hidden second source of truth for the uv2nix venv. Remove when upstream `pyproject.toml` adds the module to `py-modules` | Low      |
+| ~~Hermes packaging~~ | **Resolved 2026-08-21** — upstream ships `registration_lifecycle` in py-modules (since v0.20.1); import verified against the sealed uv2nix venv at `63c6d9a4` and the downstream PYTHONPATH patch DELETED from `hermes.nix` | —        |
 | ~~`// ioTier.*` anti-pattern~~ | Fixed 2026-08-10 — all 4 services converted to `lib.mkMerge [ ... ioTier.* ]` | —        |
 
 ---

@@ -242,6 +242,18 @@ llama_rag_enabled=false
 systemctl list-unit-files 'llama-*' --no-legend 2>/dev/null | grep -q llama-embeddings && llama_rag_enabled=true
 
 if $llama_rag_enabled; then
+  # Warmup tolerance: a deploy restart makes llama-server reload its GGUF
+  # (~70s observed for the reranker on ROCm) and it answers /health with
+  # 503 until the model is ready. Wait up to 2 min per port before the
+  # one-shot checks below declare failure (Gatus covers continuous
+  # health; this only needs to catch config regressions post-warmup).
+  for port in 8848 8849; do
+    for _attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
+      code=$(curl -s --compressed -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:$port/health" 2>/dev/null || true)
+      [ "$code" = "200" ] && break
+      sleep 10
+    done
+  done
   check_local "llama.cpp Embeddings" "8848" "/health" "200" "ok" 2>/dev/null || true
   check_local "llama.cpp Reranker" "8849" "/health" "200" "ok" 2>/dev/null || true
 else
@@ -310,22 +322,35 @@ fi
 banksync_enabled=false
 test -e /etc/systemd/system/bank-sync.service && banksync_enabled=true
 if $banksync_enabled; then
-  if banksync_body=$(curl -s --compressed --max-time 10 "http://127.0.0.1:8097/" 2>/dev/null); then
+  # Restart-race-proof fetch: activation may still be (re)starting
+  # bank-sync when this runs — the 10s settle sleep in deploy.sh is not
+  # always enough under post-build I/O contention, and a mid-restart
+  # answer (connection refused / empty body / error page) must not
+  # produce a FAIL. Retry up to 6x5s before declaring failure.
+  banksync_body=""
+  banksync_dashboard_ok=false
+  for _attempt in 1 2 3 4 5 6; do
+    banksync_body=$(curl -s --compressed --max-time 10 "http://127.0.0.1:8097/" 2>/dev/null || true)
     # grep a herestring, NEVER `echo "$body" | grep -q`: under set -o
     # pipefail a body larger than the 64KiB pipe buffer makes the echo
     # writer die on SIGPIPE (141) the moment grep -q exits at its first
     # match — a false "body lacks" FAIL (caught live 2026-08-19 when the
     # templ-components dashboard grew the page to ~106KiB).
     if grep -q "Bank-Sync Dashboard" <<<"$banksync_body"; then
-      report_pass "Bank-Sync — dashboard answers (templ stack + read models)"
-    else
-      report_fail 'Bank-Sync — :8097 answered but the body lacks "Bank-Sync Dashboard"'
+      banksync_dashboard_ok=true
+      break
     fi
+    sleep 5
+  done
+  if $banksync_dashboard_ok; then
+    report_pass "Bank-Sync — dashboard answers (templ stack + read models)"
+  elif [ -z "$banksync_body" ]; then
+    report_fail "Bank-Sync — :8097 unreachable after 6 attempts (journalctl -u bank-sync -n 30)"
   else
-    report_fail "Bank-Sync — :8097 unreachable (journalctl -u bank-sync -n 30)"
+    report_fail 'Bank-Sync — :8097 answered but the body lacks "Bank-Sync Dashboard"'
   fi
   if banksync_metrics=$(curl -s --compressed --max-time 10 "http://127.0.0.1:8097/metrics" 2>/dev/null); then
-    if echo "$banksync_metrics" | grep -q '^bank_sync_sync_total'; then
+    if grep -q '^bank_sync_sync_total' <<<"$banksync_metrics"; then
       report_pass "Bank-Sync — /metrics answers"
     else
       report_fail "Bank-Sync — /metrics answered but lacks bank_sync_sync_total"
@@ -333,7 +358,7 @@ if $banksync_enabled; then
   else
     report_fail "Bank-Sync — /metrics unreachable"
   fi
-  if echo "${banksync_metrics:-}" | grep -q '^bank_sync_profiles [1-9]'; then
+  if grep -q '^bank_sync_profiles [1-9]' <<<"${banksync_metrics:-}"; then
     report_pass "Bank-Sync — Wise sync wrote data (profiles > 0)"
   else
     report_warn "Bank-Sync — bank_sync_profiles is 0: first sync may still be running, or the Wise token failed (journalctl -u bank-sync -n 50)"

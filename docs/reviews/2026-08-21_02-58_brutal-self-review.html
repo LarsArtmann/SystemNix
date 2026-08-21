@@ -1,0 +1,1634 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SystemNix Brutal Self-Review — 2026-08-21</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS DARK — Dashboard template
+         Design language: form follows function. Primary colors on graphite.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Dark) --- */
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+
+        /* --- Semantic layer (shared vocabulary with editorial template) --- */
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 15%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 20%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px; /* Bauhaus default: sharp corners */
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      /* Sticky-header offset for anchor jumps */
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges (used inside issue cards) --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges (used in tables) --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+
+      /* --- Callouts (used inside issues or standalone) --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+
+      /* --- Stat cards / scorecards (aliased vocabulary) --- */
+      .stat-grid,
+      .scorecard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card,
+      .score-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before,
+      .score-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad,
+      .score-bad {
+        /* default top bar already set */
+      }
+      .stat-bad::before,
+      .score-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before,
+      .score-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before,
+      .score-warn::before {
+        background: var(--warning);
+      }
+      .stat-value,
+      .score {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value,
+      .score-bad .score {
+        color: var(--problem);
+      }
+      .stat-good .stat-value,
+      .score-good .score {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value,
+      .score-warn .score {
+        color: var(--warning);
+      }
+      .stat-label,
+      .score-card .label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+
+      /* --- Strengths list --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--accent);
+      } /* func, type, struct, if, return */
+      .tok-type {
+        color: var(--warning);
+      } /* int, string, bool, error */
+      .tok-string {
+        color: var(--solution);
+      } /* "quoted strings" */
+      .tok-comment {
+        color: var(--text-faint);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #74a9ff;
+      } /* function names */
+      .tok-number {
+        color: var(--accent);
+      } /* 42, 3.14 */
+      .tok-generic {
+        color: var(--problem);
+      } /* T, ID in generics */
+      .tok-builtin {
+        color: #4dd9ff;
+      } /* make, len, append */
+      .tok-punct {
+        color: var(--text-muted);
+      } /* { } ( ) ; = : */
+      .tok-attr {
+        color: var(--accent);
+      } /* Nix attribute names */
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border-strong);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+        border-color: var(--accent);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+        border-color: var(--problem);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+        border-color: var(--solution);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids (responsive) --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC (alternative to sidebar) --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid,
+        .scorecard {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-bar">
+      <span>Brutal Self-Review · Repo-Wide</span>
+      <span>2026-08-21 02:58 CEST</span>
+      <span>evo-x2 · HEAD 083bae9b · flake check green</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#questions">The Eleven Questions</a>
+          <a href="#fires">Live Fires</a>
+          <a href="#rot">Stale Truths</a>
+          <a href="#ghosts">Ghosts &amp; Split Brains</a>
+          <a href="#tests">Testing</a>
+          <a href="#good">What Works</a>
+          <a href="#plan">Prioritized Plan</a>
+          <a href="#open">Open Questions</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="hero-shapes">
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="hero-badge">Brutal Self-Review</div>
+          <h1>The machine was screaming; nobody was listening</h1>
+          <p class="hero-subtitle">
+            A repo-wide review of SystemNix on 2026-08-21. Every claim below was
+            verified against the live system, the journal, or the tree during
+            this session — including the uncomfortable ones about our own review
+            process. One live deadlock was found and fixed in-session; several
+            stale "truths" were re-measured and closed; the rest is a ranked
+            plan.
+          </p>
+        </div>
+
+        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <div class="stat-grid">
+          <div class="stat-card stat-bad">
+            <div class="stat-value">96%</div>
+            <div class="stat-label">Root disk (33G free of 723G)</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">5</div>
+            <div class="stat-label">Consecutive nights nix-gc failed</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">1</div>
+            <div class="stat-label">
+              Deadlock fixed &amp; live-verified this session
+            </div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">5</div>
+            <div class="stat-label">Stale truths re-verified &amp; closed</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">2450</div>
+            <div class="stat-label">
+              Forgejo mirror errors / day (unmonitored)
+            </div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">4</div>
+            <div class="stat-label">Prior-review promises still unexecuted</div>
+          </div>
+        </div>
+
+        <div class="card-problem card">
+          <h3>The headline</h3>
+          <p>
+            Root sat at <strong>96% full</strong> while the system's only
+            automated space-recovery tool (<code>nix-gc</code>) had been
+            <strong>aborting every night since 2026-08-17</strong> — blocked by
+            our own <code>btrfs-gc-guard</code> because device-unallocated was
+            "only" 3%… which is <strong>21.7 GiB of idle headroom</strong>. The
+            guard demanded 10% of a 723 GiB device (72 GiB) — a level garbage
+            collection can <em>never</em> restore, because deleting files frees
+            extents <em>within</em> allocated chunks; only balance returns
+            chunks. We built a deadlock, deployed it as protection, and then
+            wrote four days of feature reports while it strangled the machine.
+            The system alerted the whole time (nightly OnFailure notifications +
+            a live Gatus BTRFS CRITICAL alert). Nobody acted. That is the
+            finding everything else orbits:
+            <strong
+              >we generate alerts and reports faster than we generate
+              remediation.</strong
+            >
+          </p>
+        </div>
+
+        <h2 id="questions"><span class="num">01</span>The Eleven Questions</h2>
+
+        <h3>1. What did we forget?</h3>
+        <div class="card-problem card">
+          <p>
+            <strong>The P0 that stopped being interesting.</strong> "Free root
+            below 95%" has been the top TODO since 2026-08-17. Since then:
+            hermes hardening, qmd reintegration, PapDashboard, session-boot
+            guards — four days of P1/P2 work while the P0 worsened to 96% and
+            its primary lever (GC) quietly died on night one. We also forgot the
+            review-follow-through items our own 2026-08-20 report promised as
+            "immediately actionable": workspace-usage metric, deploy.sh
+            concurrent-activation check (done this session), gotchas entries
+            (done this session), CHANGELOG/FEATURES hermes entries (CHANGELOG
+            done this session; FEATURES not).
+          </p>
+        </div>
+
+        <h3>2. What is stupid that we do anyway?</h3>
+        <div class="card-problem card">
+          <p>
+            <strong
+              >Gating a recovery action on a threshold the action cannot
+              satisfy.</strong
+            >
+            The GC guard is the flagship example (now fixed), but the pattern
+            matters: a guard must be gated on the resource it actually consumes
+            (a few GiB of metadata churn room), or it locks the door and
+            swallows the key. Runner-up:
+            <strong>alerts without remediation paths</strong> — nix-gc's
+            OnFailure has fired 5 nights into a desktop notification void; the
+            Gatus CRITICAL alert repeats a runbook nobody ran.
+          </p>
+        </div>
+
+        <h3>3. What could we have done better?</h3>
+        <div class="card-warning card">
+          <p>
+            <strong>Monitoring is our least-tested layer.</strong>
+            gatus-config.nix (1,525 lines), system-health.nix (863), the SigNoz
+            provisioner stack (~1,100 across three files), dnsblockd (714),
+            pocket-id (684), homepage (674), buildcache recovery (553),
+            btrfs-health guard/collector — <strong>zero tests</strong>. Every
+            phantom-green incident we've documented (buildcache zombie mount,
+            gatus sqlite self-check, BTRFS chunk check) lived in exactly this
+            untested stratum. The thing that watches everything is watched by
+            nothing.
+          </p>
+        </div>
+
+        <h3>4. What could we still improve?</h3>
+        <div class="card-solution card">
+          <p>
+            See the <a href="#plan">prioritized plan</a> — 14 steps ranked by
+            effort × impact, split into user-sudo actions, my no-gate actions,
+            and backlog. The theme: convert review findings into closed loops
+            (tests, auto-remediation, or explicitly-dropped items) instead of
+            new reports.
+          </p>
+        </div>
+
+        <h3>5. Did I lie to you?</h3>
+        <div class="card-solution card">
+          <p>
+            <strong
+              >Not in this report — everything here was verified live this
+              session</strong
+            >
+            (journal greps, re-measured directories, built-and-executed
+            scripts). But honesty requires noting two lies I caught
+            <em>myself</em> almost telling: (a) I initially blamed the forgejo
+            mirror errors on a PrivateTmp change from commit 26beaf0c — checking
+            showed that comment belongs to the <em>backup oneshot</em>, not the
+            main unit; the hypothesis is dead and the report says "cause
+            unknown". (b) I almost reported "5 nightly GC failures" from a
+            since-clause that only covered Aug 14+ — the count and first-failure
+            date were re-verified from the journal directly. Prior reports in
+            this repo have contained unverified claims (see Stale Truths below);
+            the only defense is measuring before writing.
+          </p>
+        </div>
+
+        <h3>6. How can we be less stupid?</h3>
+        <div class="card-solution card">
+          <p>
+            <strong>Three rules:</strong> (1) Every guard on a recovery action
+            must use a threshold the action itself can re-satisfy — or it
+            deadlocks at the moment of need (now in AGENTS.md +
+            gotchas-archive). (2) Every alert ships with a runbook
+            <em>and an owner</em>; alerts without either get muted after a week
+            — an unacted alert is training us to ignore alerts. (3)
+            Point-in-time claims in TODO/reports get re-measured before anyone
+            acts on them — the global AGENTS.md has said this all along; today
+            it caught two of our own (the 58G hermes claim, the "stranded"
+            monitor365 change).
+          </p>
+        </div>
+
+        <h3>7. Ghost systems — integrated or dead?</h3>
+        <div class="card-warning card">
+          <p>
+            <code>visionreviewd</code>: a module that flake-check evaluates on
+            every run, enabled on <strong>no host anywhere</strong> — dead code
+            costing eval time and carrying bitrot risk. Either wire it or delete
+            it (decision item in the plan).
+            <code>minecraft</code>/<code>voice-agents</code>/<code
+              >monitor365</code
+            >
+            are deliberate disabled options with documented blockers — not
+            ghosts. Filesystem ghosts found:
+            <code>~/.cache.pre-subvol</code> (2.1G, migration leftover),
+            <code>~/backups/activitywatch-sqlite-preDecimation-13GB.db</code>
+            (13G, "delete after settling" — it settled),
+            <code>~/tmp</code> (12G, unexamined). Darwin is the biggest ghost of
+            all: its registry fix is written but undeployed, flake check skips
+            aarch64-darwin, and the macOS half of this repo drifts untested by
+            design — a conscious decision nobody has consciously made recently.
+          </p>
+        </div>
+
+        <h3>8. Are we in the scope-creep trap?</h3>
+        <div class="card-warning card">
+          <p>
+            <strong>Yes, by recency bias.</strong> TODO priorities 2.5 and 3
+            contain SigNoz log-pipeline polish, dashboard generators, and Caddy
+            access-log ingestion — all added while a P0 disk deadlock ran.
+            AGENTS.md itself is 791 lines against a charter of "concise,
+            enduring context"; incident narratives keep accreting there instead
+            of gotchas-archive. The documentation machine has outrun the doing
+            machine: 8 status reports in 3 days, TODO items "carried ×4".
+          </p>
+        </div>
+
+        <h3>9. Did we remove something that was useful?</h3>
+        <div class="card-solution card">
+          <p>
+            No harmful removals found. The major retirements (Waybar, rofi,
+            awww, cliphist, the qmd HTTP daemon, the @go/@npm/@cargo subvolumes)
+            all have documented successors and were re-verified in their
+            sessions.
+          </p>
+        </div>
+
+        <h3>10. Did we create any split brains?</h3>
+        <div class="card-warning card">
+          <p>
+            Known-and-documented: the manual <code>ossWebsites</code> list vs
+            terraform, AUTH_VHOSTS vs caddy.nix. Found this session: AGENTS.md
+            claimed flake.nix at "~680 lines" (reality: 943 — fixed);
+            TODO_LIST's "stranded monitor365 change" vs a clean tree (it had
+            landed <em>and</em> deployed — fixed); TODO_LIST's "hermes 58G" vs a
+            3.2M reality (closed). The oldest standing one:
+            <strong
+              >master is 6+ commits ahead with the push held since
+              2026-08-18</strong
+            >
+            pending a history-purge decision that key rotation already made moot
+            — the repo lives in don't-push limbo while the auto-commit daemon
+            keeps advancing the divergence.
+          </p>
+        </div>
+
+        <h3>11. How are we doing on tests?</h3>
+        <div class="card-warning card">
+          <p>
+            <strong
+              >The eval-guard layer is world-class; the runtime-monitoring layer
+              is untested.</strong
+            >
+            18 test files cover: port-uniqueness, exec-start-paths,
+            session-boot-audit (eval), hermes, paperless, attic,
+            browser-history, searxng, caddy-auth, oauth2-proxy, ksm,
+            mkFilesystem, pma-identity (VM), scripts, gatus patterns (lint).
+            Nothing covers the collectors, provisioners, or the guard logic —
+            the exact code where this session found a 5-day-old deadlock. Start
+            where it hurts: synthetic btrfs-chunk-check fixtures for the guard,
+            /proc//sys fixtures for system-health, jq-projection tests for the
+            SigNoz provisioner.
+          </p>
+        </div>
+
+        <h2 id="fires"><span class="num">02</span>Live Fires</h2>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Fixed this session</span>
+          <h3>The btrfs-gc-guard deadlock (2026-08-17 → 08-21)</h3>
+          <div class="where">
+            platforms/nixos/system/btrfs-health.nix · nix-gc.service
+            ExecStartPre
+          </div>
+          <p>
+            <strong>Evidence:</strong> journal shows
+            <code>nix-gc.service: status=1/FAILURE</code> at 00:00 every night
+            since Aug 17 ("<code
+              >BTRFS GUARD: ABORT — device-unallocated at 3%</code
+            >" — 3% of 723 GiB = 21.7 GiB idle); 44 system generations
+            accumulated Aug 16→21 (exactly the failure window — the oldest kept
+            gen dates to the last successful GC);
+            <code>nix-build-cleanup</code> blocked by the same guard; root at
+            96%; forgejo slow-SQL (23–42s mirror-table UPDATEs) as IO-pressure
+            collateral.
+          </p>
+          <p>
+            <strong>Fix (verified):</strong> guard now gates on
+            <code>UNALLOC_BYTES &lt; 5 GiB</code> (the same floor this module's
+            balance jobs use) + <code>META_PCT &gt; 90</code> hard block, with a
+            runbook-bearing abort message. The shipped script was built and
+            executed against four synthetic chunk-check outputs (live→OK rc0,
+            3GiB→ABORT, META 95%→ABORT, META 87%→WARN) <em>and</em> against the
+            real filesystem: current state (2% unalloc = 20.4 GiB, META 82%)
+            passes → after the next deploy, GC runs and auto-prunes generations
+            &gt;3d. Generation retention needs no separate fix — it was a
+            symptom.
+          </p>
+          <div class="callout callout-warning">
+            <strong>Deploy needed:</strong> the fix is in the tree, not yet
+            activated (this session has no sudo). Until deployed, nightly GC
+            keeps aborting. User: <code>nix run .#deploy</code>.
+          </div>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Open · P1</span>
+          <h3>Forgejo mirror syncs: 2,450 errors/day, unmonitored</h3>
+          <div class="where">
+            forgejo.service journal · since 2026-08-18 15:28 (forgejo 15.0.6)
+          </div>
+          <p>
+            Every mirror cycle logs
+            <code
+              >AddAuthCredentialHelperForRemote Error open
+              /tmp/forgejo-clone-credentials-N</code
+            >
+            per repo (~93 mirrors). Verified <strong>not fatal</strong>: mirrors
+            still complete (journal shows the post-sync
+            <code>UPDATE mirror</code>; all affected repos are public and sync
+            unauthenticated). But a
+            <strong>private mirror would fail silently</strong>, the journal
+            pollution is real, and nothing watches mirror health. Cause unknown
+            — onset correlates with the Aug 18 15:28 deploy; the PrivateTmp
+            hypothesis was checked and <em>disproved</em> (that comment is on
+            the backup oneshot). TODO filed with the investigation path.
+          </p>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">User actions · sudo</span>
+          <h3>Root at 96% — the reclaim list</h3>
+          <div class="where">
+            / = 723G · free 33G · /nix 158G · /home/lars 156G
+          </div>
+          <p>
+            After the guard fix deploys and GC runs: tens of GB from &gt;3d-old
+            store paths + 44→~10 generations. User levers in parallel:
+            <code
+              >trash ~/backups/activitywatch-sqlite-preDecimation-13GB.db</code
+            >
+            (13G, settle period long past), audit <code>~/tmp</code> (12G),
+            trash <code>~/.cache.pre-subvol</code> (2.1G). Note CoW: /home
+            deletions free df-space only as btrbk snapshots expire (14d/12w
+            retention) — deleting 27G of junk yields df-space gradually, but
+            stops the bleed now. If a deploy is ever blocked on space:
+            <code>rm /btrfs-emergency-reserve</code> = instant 10 GiB.
+          </p>
+        </div>
+
+        <h2 id="rot">
+          <span class="num">03</span>Stale Truths &amp; Docs Rot (closed this
+          session)
+        </h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Claim</th>
+                <th>Where</th>
+                <th>Reality (re-verified)</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>/home/hermes</code> is 58G, user question pending</td>
+                <td>TODO_LIST P0</td>
+                <td><strong>3.2M</strong> — claim obsolete</td>
+                <td><span class="badge badge-fixed">closed</span></td>
+              </tr>
+              <tr>
+                <td>
+                  monitor365-gating change "stranded in working tree undeployed"
+                </td>
+                <td>TODO_LIST P0</td>
+                <td>
+                  landed <em>and</em> deployed
+                  (<code>configuration.nix:744</code>)
+                </td>
+                <td><span class="badge badge-fixed">closed</span></td>
+              </tr>
+              <tr>
+                <td>flake.nix "thin entry point (~680 lines)"</td>
+                <td>AGENTS.md architecture map</td>
+                <td>943 lines</td>
+                <td><span class="badge badge-fixed">fixed</span></td>
+              </tr>
+              <tr>
+                <td>nix-gc "auto-blocked below 10% unalloc"</td>
+                <td>Gatus alert text</td>
+                <td>now 5 GiB floor / META&gt;90</td>
+                <td><span class="badge badge-fixed">fixed</span></td>
+              </tr>
+              <tr>
+                <td>hermes session entries missing</td>
+                <td>CHANGELOG/FEATURES</td>
+                <td>confirmed absent</td>
+                <td>
+                  <span class="badge badge-fixed">CHANGELOG done</span> ·
+                  <span class="badge badge-high">FEATURES open</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="ghosts">
+          <span class="num">04</span>Ghosts &amp; Split Brains (open)
+        </h2>
+        <div class="grid-2">
+          <div class="card-warning card">
+            <h4>visionreviewd — dead module</h4>
+            <p>
+              Evaluated by every flake check, enabled on no host. Wire it or
+              delete it.
+            </p>
+          </div>
+          <div class="card-warning card">
+            <h4>Darwin — the untested half</h4>
+            <p>
+              Registry fix undeployed; aarch64-darwin skipped by check. Deploy
+              or explicitly descope.
+            </p>
+          </div>
+          <div class="card-warning card">
+            <h4>Push limbo</h4>
+            <p>
+              6+ unpushed commits; purge decision mooted by key rotation. Push
+              or formally drop the hold.
+            </p>
+          </div>
+          <div class="card-warning card">
+            <h4>AGENTS.md at 791 lines</h4>
+            <p>
+              Incident narratives belong in gotchas-archive; keep the main file
+              high-signal.
+            </p>
+          </div>
+        </div>
+
+        <h2 id="tests">
+          <span class="num">05</span>Testing: the inverted pyramid
+        </h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Surface</th>
+                <th>Lines</th>
+                <th>Role</th>
+                <th>Tests</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>gatus-config.nix</td>
+                <td>1,525</td>
+                <td>All health alerting</td>
+                <td>
+                  <span class="badge badge-critical">pattern lint only</span>
+                </td>
+              </tr>
+              <tr>
+                <td>system-health.nix</td>
+                <td>863</td>
+                <td>Every textfile metric Gatus consumes</td>
+                <td><span class="badge badge-critical">none</span></td>
+              </tr>
+              <tr>
+                <td>signoz provisioner stack</td>
+                <td>~1,100</td>
+                <td>Alert/dashboard convergence</td>
+                <td><span class="badge badge-critical">none</span></td>
+              </tr>
+              <tr>
+                <td>dns-blocker.nix</td>
+                <td>714</td>
+                <td>Sole DNS resolver</td>
+                <td><span class="badge badge-critical">none</span></td>
+              </tr>
+              <tr>
+                <td>pocket-id.nix</td>
+                <td>684</td>
+                <td>SSO backbone provisioner</td>
+                <td><span class="badge badge-critical">none</span></td>
+              </tr>
+              <tr>
+                <td>btrfs-health.nix guard</td>
+                <td>~40 (script)</td>
+                <td>Gated the whole machine (deadlocked it this week)</td>
+                <td>
+                  <span class="badge badge-critical">none</span>
+                  <span class="badge badge-fixed"
+                    >synthetic-test method proven this session</span
+                  >
+                </td>
+              </tr>
+              <tr>
+                <td>Eval guards (8 modules)</td>
+                <td>—</td>
+                <td>Port/exec/boot/OTel/timeout/chown audits</td>
+                <td>
+                  <span class="badge badge-fixed"
+                    >self-testing, negative-tested</span
+                  >
+                </td>
+              </tr>
+              <tr>
+                <td>VM tests (10 files)</td>
+                <td>—</td>
+                <td>hermes, paperless, attic, caddy-auth…</td>
+                <td><span class="badge badge-fixed">green</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="good">
+          <span class="num">06</span>What Is Genuinely Good (preserve)
+        </h2>
+        <div class="strengths">
+          <div class="strength">
+            <div class="check">✓</div>
+            <div class="text">
+              <strong>The five prevention layers</strong
+              ><span
+                >Eval-time throws → pre-commit → CI (incl. daily nixpkgs compat
+                + full-history secret scan) → pre-deploy (10 checks) →
+                post-deploy (67-PASS smoke). This architecture caught real bugs
+                repeatedly and is the repo's crown jewel.</span
+              >
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">✓</div>
+            <div class="text">
+              <strong>flake check green right now</strong
+              ><span
+                >Verified this session over the whole tree, concurrent-session
+                WIP included.</span
+              >
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">✓</div>
+            <div class="text">
+              <strong>Port hygiene holds</strong
+              ><span
+                >The hardcoded-port sweep found one candidate (twenty.nix:3000)
+                and it is correct container-internal wiring. lib/ports.nix
+                discipline is real.</span
+              >
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">✓</div>
+            <div class="text">
+              <strong>Honest incident culture</strong
+              ><span
+                >gotchas-archive entries name their own process failures. That
+                culture made this review possible — keep it, feed it.</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <h2 id="plan"><span class="num">07</span>Prioritized Plan</h2>
+
+        <div class="migration-step">
+          <div class="migration-num">1</div>
+          <div class="migration-content">
+            <h4>
+              Deploy the guard fix
+              <span class="badge badge-critical"
+                >user · minutes · unblocks nightly GC</span
+              >
+            </h4>
+            <p>
+              <code>nix run .#deploy</code> — then watch
+              <code>journalctl -u nix-gc.service</code> at next 00:00: expect
+              GUARD: OK, GC success, generations pruned to 3d.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">2</div>
+          <div class="migration-content">
+            <h4>
+              Reclaim home junk
+              <span class="badge badge-critical">user · minutes · ~27G</span>
+            </h4>
+            <p>
+              trash the 13G activitywatch pre-surgery backup, audit ~/tmp (12G),
+              trash ~/.cache.pre-subvol (2.1G).
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">3</div>
+          <div class="migration-content">
+            <h4>
+              Forgejo mirror root-cause
+              <span class="badge badge-high">either of us · ~1h</span>
+            </h4>
+            <p>
+              Diff the Aug 18 15:28 deploy's forgejo path; fix or file upstream
+              (15.0.6); add a mirror-health metric. TODO filed with evidence.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">4</div>
+          <div class="migration-content">
+            <h4>
+              Guard regression test
+              <span class="badge badge-medium">me · ~1h</span>
+            </h4>
+            <p>
+              Codify this session's synthetic chunk-check harness into a flake
+              check (4 scenarios) so the %-gate class can't return.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">5</div>
+          <div class="migration-content">
+            <h4>
+              FEATURES.md hermes entries
+              <span class="badge badge-medium">me · 15min</span>
+            </h4>
+            <p>
+              The other half of the prior session's admitted miss (CHANGELOG
+              half done this session).
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">6</div>
+          <div class="migration-content">
+            <h4>
+              Monitor tests, phase 1
+              <span class="badge badge-medium">me · half-day</span>
+            </h4>
+            <p>
+              system-health collector fixtures + guard test (step 4). Phase 2:
+              SigNoz provisioner jq-projection tests.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">7</div>
+          <div class="migration-content">
+            <h4>
+              visionreviewd: wire or delete
+              <span class="badge badge-medium">user decision · 10min</span>
+            </h4>
+            <p>
+              Dead module on all hosts. If it has a future, name the host; else
+              delete.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">8</div>
+          <div class="migration-content">
+            <h4>
+              Darwin: deploy or descope
+              <span class="badge badge-medium">user decision</span>
+            </h4>
+            <p>
+              Either run <code>nix run .#deploy</code> on the MacBook (registry
+              fix lands) or write the descope decision into AGENTS.md.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">9</div>
+          <div class="migration-content">
+            <h4>
+              End the push limbo
+              <span class="badge badge-medium">user decision</span>
+            </h4>
+            <p>
+              Keys are rotated; the hold buys nothing. Push (fresh purge runbook
+              in AGENTS.md if flipping) or drop the item.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">10</div>
+          <div class="migration-content">
+            <h4>
+              Prior promises still open
+              <span class="badge badge-medium">me</span>
+            </h4>
+            <p>
+              Workspace-usage metric + Gatus threshold (deferred with Q2, but
+              root at 96% argues for now); alert-policy answer for the
+              hermes-github-verify canary.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">11</div>
+          <div class="migration-content">
+            <h4>
+              AGENTS.md diet <span class="badge badge-low">me · backlog</span>
+            </h4>
+            <p>
+              Move incident narratives to gotchas-archive; target &lt;500 lines
+              of enduring rules.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">12</div>
+          <div class="migration-content">
+            <h4>
+              Standing P0s this review did not touch
+              <span class="badge badge-low">user</span>
+            </h4>
+            <p>
+              /data corruption repair (T04–T08), Google Sync OAuth go-live,
+              hermes PAT go-live, Turso decision, offsite 3rd-copy decision —
+              all pre-existing, all still real.
+            </p>
+          </div>
+        </div>
+
+        <h2 id="open"><span class="num">08</span>Open Questions (user)</h2>
+        <div class="card-warning card">
+          <p>
+            <strong>1 — Deploy now?</strong> The guard fix + doc updates are
+            committed to the tree (daemon will batch); a concurrent session's
+            hermes WIP is also present. Deploying mid-WIP is normal here, but
+            it's your call. <br /><strong
+              >2 — visionreviewd, Darwin, push-hold:</strong
+            >
+            three decisions above that I can't make. <br /><strong
+              >3 — META at 82%:</strong
+            >
+            the live fs metadata utilization sits just under the 85% warn line.
+            After the deploy, if the weekly metadata balance doesn't pull it
+            down, a manual
+            <code>sudo systemctl start btrfs-balance-metadata.service</code> is
+            cheap insurance.
+          </p>
+        </div>
+
+        <div class="footer">
+          SystemNix brutal self-review · 2026-08-21 02:58 CEST · evidence:
+          journal (nix-gc, forgejo), df/du re-measurement, built-and-executed
+          guard script, flake check green · prior review:
+          docs/status/2026-08-20_23-25 (hermes-scoped) · fixes this session:
+          btrfs-health.nix guard, gatus-config.nix alert text, deploy.sh
+          concurrent-activation guard, TODO_LIST (3 items), AGENTS.md (2),
+          CHANGELOG, gotchas-archive (2 entries)
+        </div>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        var nav = document.querySelector("[data-nav]");
+        if (!nav || !("IntersectionObserver" in window)) return;
+        var links = Array.prototype.slice.call(
+          nav.querySelectorAll("a[href^='#']"),
+        );
+        var map = {};
+        links.forEach(function (l) {
+          var el = document.getElementById(l.getAttribute("href").slice(1));
+          if (el) map[el.id] = l;
+        });
+        var obs = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                links.forEach(function (l) {
+                  l.classList.remove("active");
+                });
+                if (map[e.target.id]) map[e.target.id].classList.add("active");
+              }
+            });
+          },
+          { rootMargin: "-20% 0px -70% 0px" },
+        );
+        Object.keys(map).forEach(function (id) {
+          obs.observe(document.getElementById(id));
+        });
+      })();
+    </script>
+  </body>
+</html>
