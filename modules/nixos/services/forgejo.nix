@@ -20,6 +20,7 @@ _: {
         ports
         ioTier
         mkDnsGate
+        mkOidcGate
         ;
       forgejoPort = config.services.forgejo.settings.server.HTTP_PORT;
       forgejoUrl = "http://localhost:${toString forgejoPort}";
@@ -71,6 +72,18 @@ _: {
         serviceName = "forgejo-oidc";
         hostname = "auth.home.lan";
         maxAttempts = 30;
+      };
+
+      # DNS resolving is not enough: on the 2026-08-22 crash-recovery boot
+      # forgejo-oidc-setup failed 39s after boot with "dial tcp
+      # 192.168.1.150:443: connection refused" — auth.home.lan resolved fine
+      # (dnsblockd was up) but Caddy had not bound :443 yet. The OIDC gate
+      # polls the discovery endpoint (DNS → TLS → HTTP) for up to 120s,
+      # matching the gatus/oauth2-proxy/browser-history pattern.
+      forgejoOidcGate = mkOidcGate {
+        inherit pkgs;
+        domain = config.networking.domain;
+        serviceName = "forgejo-oidc-setup";
       };
     in
     {
@@ -327,12 +340,12 @@ _: {
             "forgejo.service"
             "pocket-id-provision.service"
             "dnsblockd.service"
-          ];
+          ] ++ forgejoOidcGate.after;
           wants = [
             "forgejo.service"
             "pocket-id-provision.service"
             "dnsblockd.service"
-          ];
+          ] ++ forgejoOidcGate.wants;
           wantedBy = [ "forgejo.service" ];
           restartTriggers = [ (lib.getExe oidcSetupScript) ];
           serviceConfig = lib.mkMerge [
@@ -344,7 +357,7 @@ _: {
               LoadCredential = [
                 "forgejo-oidc-client-secret:${config.services.pocket-id.dataDir}/client-secrets/forgejo"
               ];
-              ExecStartPre = forgejoDnsGate.serviceConfig.ExecStartPre;
+              ExecStartPre = forgejoDnsGate.serviceConfig.ExecStartPre ++ forgejoOidcGate.serviceConfig.ExecStartPre;
               TimeoutStartSec = "3min";
             }
             (harden { })

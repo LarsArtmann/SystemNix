@@ -507,6 +507,13 @@ in
         enable = true;
       };
 
+      # 2026-08-22 kernel-freeze prevention: stops the FastFlowLM backend
+      # when MemAvailable/zram enter the pre-freeze zone (see module header
+      # for the full incident narrative).
+      memory-emergency-guard = {
+        enable = true;
+      };
+
       twenty = {
         enable = true;
       };

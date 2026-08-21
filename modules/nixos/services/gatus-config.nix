@@ -1023,6 +1023,42 @@ _: {
                   alerts = discordAlert "FastFlowLM cgroup memory exceeds 90% of its MemoryMax (40G) — the 21.6 GB model mmap'd from /data plus KV cache is reaching the OOM-kill ceiling. Check: flm-loaded models, /data/ai/models/fastflowlm size, pma discovery worker count";
                 })
                 (mkHttpCheck {
+                  name = "LAN NIC Present";
+                  group = "Monitoring";
+                  # 2026-08-22: after a hard crash the RTL8125 fell off the
+                  # PCIe bus — PCI enumeration showed no 10ec:8125 at all,
+                  # r8125 had nothing to probe, eno1 never got its static IP
+                  # and SSH was dead until a second reboot. The metric is
+                  # emitted unconditionally by system-health (fail-closed:
+                  # absent metric fails the pat()). If this fires, a warm
+                  # reboot is NOT reliable — power-cycle the machine.
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_lan_nic_present 1*)"
+                  ];
+                  alerts = discordAlert "LAN NIC (eno1 / RTL8125) is ABSENT from the bus — wired networking is DOWN (static IP + SSH unreachable). A warm reboot does NOT retrain it: POWER-CYCLE the machine (shut down, wait 10s, power on). Check: ls /sys/class/net/eno1, journalctl -k -b -1 | grep 10ec:8125, lspci | grep -i network";
+                })
+                (mkHttpCheck {
+                  name = "Memory Emergency Guard";
+                  group = "Monitoring";
+                  # The 2026-08-22 freeze: zram 100% full made flm's 25 GB
+                  # model unevictable, nightly GC/backup I/O + zram refault
+                  # CPU burn froze the kernel at 00:27. The guard stops the
+                  # flm backend when MemAvailable <10% AND zram >=92% (or
+                  # <5% absolute) — this check alerts when the guard FIRED
+                  # (within the last 30 min) or died (absent metrics).
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*memory_emergency_guard_avail_percent*)"
+                    "[BODY] == pat(*memory_emergency_guard_last_trip_recent 0*)"
+                  ];
+                  alerts = discordAlert "Memory emergency guard TRIPPED (or the guard died): MemAvailable entered the pre-freeze zone and FastFlowLM was force-stopped to prevent a kernel freeze (2026-08-22 incident class). flm self-heals on next connection (1-3 min cold load). Check: journalctl -u memory-emergency-guard -n 20, memory_emergency_guard_avail_percent / _zram_fill_percent in the textfile collector, what is holding RAM (ps aux --sort=-%mem | head)";
+                })
+                (mkHttpCheck {
                   name = "Hermes Agent Gateway";
                   group = "Monitoring";
                   # No HTTP probe: the gateway's only listener is Discord/

@@ -350,6 +350,17 @@ _: {
             fi
           fi
 
+          # === LAN NIC presence (bus-level disappearance) ===
+          # 2026-08-22: after a hard crash the RTL8125 NIC was absent from
+          # PCI enumeration entirely; r8125 had nothing to probe and the
+          # static-IP stack (networking.interfaces.eno1) never ran — no IP,
+          # SSH dead. Emitted unconditionally so absence fails Gatus pat()
+          # fail-closed (never a phantom green).
+          LAN_NIC_PRESENT=1
+          if [ -n "${cfg.lanInterface}" ] && [ ! -e "/sys/class/net/${cfg.lanInterface}" ]; then
+            LAN_NIC_PRESENT=0
+          fi
+
           # === systemd-oomd kills tracking ===
           # systemd-oomd kills (nix-daemon, Twenty worker) went completely
           # undetected. This counts kill events from the journal since boot
@@ -592,6 +603,10 @@ _: {
               echo "system_zram_fill_over_threshold ''${ZRAM_OVER}"
             fi
 
+            echo "# HELP system_lan_nic_present 1 if the primary LAN NIC (${cfg.lanInterface}) exists in /sys/class/net, 0 if it fell off the bus"
+            echo "# TYPE system_lan_nic_present gauge"
+            echo "system_lan_nic_present ''${LAN_NIC_PRESENT}"
+
             echo "# HELP system_service_crash_loop 1 if service restarted >=${toString crashLoopRestartThreshold} times since last collection, 0 otherwise"
             echo "# TYPE system_service_crash_loop gauge"
 
@@ -675,6 +690,17 @@ _: {
           mv "$TMP" "$OUT"
         '';
       };
+      lanNicWatchdog = pkgs.writeShellApplication {
+        name = "lan-nic-watchdog-check";
+        text = ''
+          IF="${cfg.lanInterface}"
+          if [ ! -e "/sys/class/net/$IF" ]; then
+            echo "LAN NIC '$IF' ABSENT — the PCIe device fell off the bus (2026-08-22: after a hard crash the RTL8125 [10ec:8125] was missing from PCI enumeration entirely; the SDHCI reader shifted into its slot c1:00.0). A warm reboot does NOT reliably retrain it: POWER-CYCLE the machine (shut down, wait ~10s, power on). Until then there is NO wired networking — the static LAN IP is unreachable and SSH is dead." >&2
+            exit 1
+          fi
+          echo "LAN NIC '$IF' present"
+        '';
+      };
     in
     {
       options.services.system-health = {
@@ -700,6 +726,7 @@ _: {
             "gotenberg"
             "hermes"
             "homepage-dashboard"
+            "lan-nic-watchdog"
             "llama-embeddings"
             "llama-reranker"
             "monitor365"
@@ -777,6 +804,20 @@ _: {
           description = "Collect zram swap fill metrics from /sys/block/zram0/mm_stat (auto-disabled without zramSwap)";
         };
 
+        lanInterface = lib.mkOption {
+          type = lib.types.str;
+          default = "eno1";
+          description = ''
+            Primary LAN NIC to watch for bus-level disappearance. When the
+            interface is absent from /sys/class/net, system_lan_nic_present
+            emits 0 and the lan-nic-watchdog unit fails (2026-08-22: after a
+            hard crash the RTL8125 fell off the PCIe bus entirely — PCI
+            enumeration showed no 10ec:8125, the SDHCI reader shifted into
+            its slot, and a WARM reboot did not retrain it; only the second
+            reboot brought it back). Set to "" to disable.
+          '';
+        };
+
         signoz.port = lib.mkOption {
           type = lib.types.int;
           default = 8080;
@@ -852,6 +893,36 @@ _: {
             timerConfig = {
               OnBootSec = "30s";
               OnUnitActiveSec = cfg.interval;
+            };
+          };
+
+          # Fails loudly (systemctl --failed + notify-failure) when the LAN
+          # NIC is absent — either at boot (PCIe vanish after hard crash,
+          # 2026-08-22) or at runtime (the DAS USB link dropped the same
+          # night while running). The Gatus check on system_lan_nic_present
+          # is the alerting path; this unit makes the failure visible on the
+          # host itself.
+          services.lan-nic-watchdog = lib.mkIf (cfg.lanInterface != "") {
+            description = "LAN NIC presence watchdog (fails when ${cfg.lanInterface} falls off the bus — power-cycle required)";
+            inherit onFailure;
+            serviceConfig = lib.mkMerge [
+              (harden {
+                MemoryMax = "32M";
+              })
+              (serviceOneshotDefaults { })
+              {
+                Type = "oneshot";
+                ExecStart = lib.getExe lanNicWatchdog;
+              }
+            ];
+          };
+
+          timers.lan-nic-watchdog = lib.mkIf (cfg.lanInterface != "") {
+            description = "Check LAN NIC presence every 10 minutes (first check 90s after boot)";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnBootSec = "90s";
+              OnUnitActiveSec = "10min";
             };
           };
         };
