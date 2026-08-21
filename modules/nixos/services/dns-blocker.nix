@@ -794,10 +794,8 @@ _: {
                     # from 600M base), but MemoryMax kills first. Fix upstream by
                     # dropping high-cardinality labels from telemetry.go.
                     Environment = [ "GOMEMLIMIT=3GiB" ];
-                    EnvironmentFile = [
-                      "/run/secrets/rendered/dnsblockd-auth-env"
-                    ]
-                    ++ lib.optionals (cfg.oidcIssuerURL != "") [ oidcEnvFile ];
+                    EnvironmentFile =
+                    lib.optionals (cfg.oidcIssuerURL != "") [ oidcEnvFile ];
                     ExecStartPre = [
                       "+-${lib.getExe initScript}"
                       "${lib.getExe secretCheck}"

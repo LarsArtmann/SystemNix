@@ -32,11 +32,11 @@
 # Output: a single derivation exposing `flm` (the wrapper) on $PATH.
 stdenv.mkDerivation (finalAttrs: {
   pname = "fastflowlm";
-  version = "1.0.1";
+  version = "1.0.2";
 
   src = fetchurl {
     url = "https://github.com/ROCm/FastFlowLM/releases/download/v${finalAttrs.version}/fastflowlm_${finalAttrs.version}_linux.tar.gz";
-    hash = "sha256-vTk2yyyLCZpLkLTSC9j2KuZpOlQg464JWVEgGyv70co=";
+    hash = "sha256-em+KMNs86DLMVGyJzmvG5oYon5OnX0V/rldc+jOkYEo=";
   };
 
   nativeBuildInputs = [

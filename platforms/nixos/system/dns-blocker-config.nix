@@ -83,7 +83,9 @@ in
       # Native OIDC SSO for the dashboard via Pocket ID (passkeys).
       # Client secret is bridged by the dnsblockd-oidc-secret oneshot from
       # Pocket ID's client-secrets provisioning; audit entries record the
-      # signed-in identity. The auth token stays valid for API clients.
+      # signed-in identity. The Bearer token was RETIRED 2026-08-21: SSO is
+      # the only dashboard credential (decision: no LAN bypass — one passkey
+      # per 12h everywhere; DMS widget waits for Pocket ID machine creds).
       oidcIssuerURL = "https://auth.${domain}";
       oidcClientID = "dnsblockd";
       oidcRedirectURL = "https://dnsblock.${domain}/auth/oidc/callback";

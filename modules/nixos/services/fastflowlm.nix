@@ -321,8 +321,17 @@ _: {
               # faulted 22 GB from disk into a full RAM). The triggering
               # socket connection queues in the kernel backlog meanwhile —
               # 60s costs one delayed request instead of an I/O storm.
+              # Exponential backoff (2026-08-21): flat 60s still re-payed the
+              # 22.5 GB cold load every 2-3 min while oomd kept killing the
+              # backend under sustained slice pressure (18:09-18:25: 8 kills,
+              # ~180 GB reads in 20 min; start-limit then wedged activation).
+              # Delay doubles per retry (60→120→240→480→900s) and resets after
+              # a healthy run — pressure storms space out to 15 min, giving
+              # the machine time to recover instead of feeding it I/O bombs.
               Restart = "on-failure";
               RestartSec = "60";
+              RestartSteps = 5;
+              RestartMaxDelaySec = "15min";
               # Preferred global-OOM victim: this unit is stateless,
               # socket-activated and self-heals on the next connection.
               # Without the boost the kernel slaughtered user-session

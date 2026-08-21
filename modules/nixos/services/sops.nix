@@ -326,13 +326,6 @@ in
                 restartUnits = [ "browser-history.service" ];
               } [ "browser_history_agent_token" ]
             )
-            // lib.optionalAttrs (svcEnabled "dns-blocker") (
-              mkSecrets "dnsblockd-auth.yaml" {
-                owner = primaryUser;
-                group = "users";
-                restartUnits = [ "dnsblockd.service" ];
-              } [ "dnsblockd_auth_token" ]
-            )
             // lib.optionalAttrs (svcEnabled "google-sync") (
               # Full rclone.conf INI for the Drive mirror (token is a JSON blob —
               # a file, not an env var: systemd EnvironmentFile quote-stripping
@@ -530,22 +523,9 @@ in
             };
           }
           // lib.optionalAttrs (svcEnabled "dns-blocker") {
-            # dnsblockd reads DNSBLOCKD_AUTH_TOKEN via koanf env provider,
-            # which overrides the auth_token config key. This keeps the token
-            # out of the nix-store YAML (world-readable) and gates the
-            # dashboard's /stats endpoint behind token auth.
-            # The raw secret (/run/secrets/dnsblockd_auth_token) is owned by
-            # primaryUser so the DMS DnsStatsWidget can read it for its Bearer
-            # header. The template (root-owned) feeds the systemd EnvironmentFile.
-            "dnsblockd-auth-env" = {
-              owner = "root";
-              group = "root";
-              mode = "0400";
-              restartUnits = [ "dnsblockd.service" ];
-              content = lib.generators.toKeyValue { } {
-                DNSBLOCKD_AUTH_TOKEN = config.sops.placeholder.dnsblockd_auth_token;
-              };
-            };
+            # Retired 2026-08-21: the Bearer token (DNSBLOCKD_AUTH_TOKEN) was
+            # dropped in favor of OIDC SSO as the only dashboard credential.
+            # When Pocket ID grows machine credentials, provision them here.
           };
         };
       };
