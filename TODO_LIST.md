@@ -1,6 +1,6 @@
 # SystemNix TODO List
 
-**Updated:** 2026-08-20 09:15 (hermes projects-readonly-bind session: +chown-landmine P0, +git-ownership P0, +monitoring/workspace/VM-test/creds P1s harvested from `docs/status/2026-08-20_09-15_hermes-projects-readonly-access-status.md`)
+**Updated:** 2026-08-21 05:35 (pixel6 recovery sessions: +new Priority 2.6 section — 62.7 GB extracted to pool, adb access re-broken on replug, Navidrome decision)
 
 ---
 
@@ -80,6 +80,29 @@
 - [ ] **helium SIGTRAP coredump (5/TRAP 03:30:56, boot -1)** — poll-thread stack, likely collateral of the kill wave; verify helium stability post-reboot before spending time
 - [ ] **aw-watcher gate monitoring preference (user decision)** — the gate now waits indefinitely for a wayland socket (trades failure for silence). Option: Gatus alert if the watcher hasn't attached within N min of `niri_graphical_session 1`. Best-effort tracking noise vs silent gap — preference call
 - [ ] **emeet-pixyd: rate-limit the absent-device probe WARN** — upstream (LarsArtmann/emeet-pixyd): the `/sys/class/video4linux/video1/uevent` WARN re-fires per scan cycle when the webcam is absent. Measured benign 2026-08-18 (~1/hr now); quiet it or downgrade to DEBUG upstream
+
+## Priority 2.6: Pixel 6 Phone Recovery follow-ups (2026-08-20/21 sessions)
+
+_Extraction DONE: ~62.7 GB / 17.5k files verified on `/mnt/pool/backups/pixel6/2026-08-20/` (591/591 UCR call WAVs triple-verified, Signal backup byte-exact, full shared-storage pull, UCR APK, index.csv + SHA256SUMS, pool README). Phone 100% untouched (read-only mandate). **Source:** `docs/status/2026-08-20_09-46_pixel6-full-phone-recovery-to-hdd-pool.md` + `2026-08-21_05-19_pixel6-recovery-followup-day2.md`_
+
+- [ ] **Udev rule for Google USB vendor 18d1 (adb access BROKEN again since overnight replug)** — systemd 258 `uaccess` tag lands ONLY on graphical seat sessions; evo-x2 runs TTY/SSH sessions → no ACL on `/dev/bus/usb/*`. Yesterday's manual `setfacl` fix was node-specific and expired on replug exactly as predicted. Durable fix: `services.udev.extraRules` (`MODE="0660", GROUP="users"` for vendor `18d1`, or uaccess+logind-session doc note) in `boot.nix` or a tiny module + deploy. Single blocker for every remaining phone-side pull. **Also:** add `pkgs.android-tools` to system packages (kill per-call `nix shell` overhead)
+- [ ] **User: install "SMS Backup & Restore" → export SMS/call logs/contacts XML** — Android 17 removed shell `content query` access (tested; fails). User installs app (Play Store, whitelisted for SMS/call-log perms), grants perms, destination = Phone storage, Back Up NOW. Then agent pulls the XMLs (read-only) + verifies counts. Bonus: call-log XML resolves the 428 anonymous-number WAVs to contact names
+- [ ] **User: WhatsApp "Back up now" → re-pull fresh msgstore** — captured `Android/media/com.whatsapp` msgstore is only as fresh as the phone's last local backup; a fresh in-app backup + re-pull makes the chat DB current as of extraction day
+- [ ] **Enrich `universal-call-recorder/index.csv` with call-log contact names** — join the 428 bare-number recordings (number+timestamp from filename) against the SMS B&R call-log XML → named rows. Depends on the XML pull above
+- [ ] **SHA256SUMS for Signal + WhatsApp + Cube ACR sets** — only the UCR WAVs have an integrity manifest; bitrot in the others would be silent. Same `sha256sum` pattern as `universal-call-recorder/SHA256SUMS`
+- [ ] **Full ffprobe sweep over all 591 UCR WAVs** — only 5 spot-checked; a truncated/corrupt file in the emotional archive should be caught now, not on playback day
+- [ ] **Add `backups/pixel6` to btrbk-pool snapshot set + backup-coordination freshness** — pool snapshots currently cover `services/*` only; the irreplaceable phone archive has no snapshot/protection layer. Also register last-success freshness (Gatus `backup_all_healthy` family)
+- [ ] **Manual `btrfs scrub` on the pool** — ~66 GB of new data since the pool's last scrub; verify checksums on fresh writes
+- [ ] **`SIGNAL_RECOVERY_KEY.txt` placement decision (USER)** — plaintext passphrase sits BESIDE the encrypted backup on the pool (user-created 2026-08-21). Works, but defeats the encryption if the share ever leaks. Options: password manager + delete file (recommended), sops, or accept + document in pool README threat model. Agent won't touch it without a decision
+- [ ] **Recover `/tmp/pixel6-*.sh` transfer scripts into `scripts/`** — the working per-directory tar+pull logic (stall detection, count verification, stdin-safe loops) is in `/tmp` and may already be lost to reboot; if lost, reconstruct from the status reports (the runbook value is the 4 failure lessons: stall-watch, toybox-tar desync on denied files, adb-pull aborts at first denial, fd-3 stdin)
+- [ ] **WAV→FLAC mirror of UCR archive** — 54 GB → ~18 GB lossless (keep originals); tag during conversion (contact=artist, year/month=album) so ANY music server can organize it
+- [ ] **Navidrome audio-archive module (DECIDED: Navidrome over Jellyfin, deep-dive 2026-08-21)** — 4-10× lighter, FTS5 full-text search, custom `Tags.*` (transcript snippets!), native Subsonic API (Symfonium/Tempo on the phone), single Go binary. Module: port in `lib/ports.nix`, Layer 2 `protectedVHost`, Gatus check, IO tiering. PREREQ: FLAC+tag conversion above (Navidrome is tags-only, refuses folder browsing)
+- [ ] **Whisper transcription batch (GPU) over the 591 calls** — whisper.cpp/ROCm on evo-x2; feeds transcript column into index.csv, RAG (llama-rag `:8848`/`:8849` already run), and full-text "what did we say" search — the killer feature no music server has
+- [ ] **Call analytics + prefix decode** — decode UCR filename prefixes (0/1/3/5 = direction?) definitively; per-contact frequency/relationship timeline from filenames + Cube ACR JSON metadata
+- [ ] **Immich ingestion of DCIM + WhatsApp media** — phone photos into the existing Immich (immich-go / direct library import)
+- [ ] **Human-friendly renamed mirror tree** — `2022-01-28_Luana-Mencarelli.wav` hardlink mirror (no extra space) for non-technical browsing
+- [ ] **Phone care while it remains a primary copy** — 95% storage full (Signal backups could fail at 100%), keep charge ≥50% until pool snapshot+scrum verify lands. User-only; agent never deletes anything on the phone
+- [ ] **Pool README day-2 update** — fold in `SIGNAL_RECOVERY_KEY.txt`, pending XMLs, Navidrome/FLAC plans; cross-link TODO items
 
 ## Priority 3: Infrastructure
 
