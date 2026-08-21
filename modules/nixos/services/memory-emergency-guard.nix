@@ -119,8 +119,12 @@ _: {
             if [ "$last_trip" -gt 0 ] && [ "$age" -lt ${toString cfg.actionCooldownSeconds} ]; then
               echo "MEMORY EMERGENCY still active (''${reason}) but action cooldown active (''${age}s < ${toString cfg.actionCooldownSeconds}s) — skipping repeat stop"
             else
-              echo "MEMORY EMERGENCY: ''${reason} — stopping ${lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits} to prevent kernel freeze (2026-08-22 incident class). flm self-heals on next connection (1-3 min cold load)." >&2
-              systemctl stop ${lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits} 2>/dev/null || true
+              echo "MEMORY EMERGENCY: ''${reason} — stopping ${
+                lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
+              } to prevent kernel freeze (2026-08-22 incident class). flm self-heals on next connection (1-3 min cold load)." >&2
+              systemctl stop ${
+                lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
+              } 2>/dev/null || true
               echo "$now" > "$LAST_TRIP_FILE"
               tripped_total=$((tripped_total + 1))
               echo "$tripped_total" > "$COUNT_FILE"

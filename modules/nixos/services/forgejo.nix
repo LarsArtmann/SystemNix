@@ -340,12 +340,14 @@ _: {
             "forgejo.service"
             "pocket-id-provision.service"
             "dnsblockd.service"
-          ] ++ forgejoOidcGate.after;
+          ]
+          ++ forgejoOidcGate.after;
           wants = [
             "forgejo.service"
             "pocket-id-provision.service"
             "dnsblockd.service"
-          ] ++ forgejoOidcGate.wants;
+          ]
+          ++ forgejoOidcGate.wants;
           wantedBy = [ "forgejo.service" ];
           restartTriggers = [ (lib.getExe oidcSetupScript) ];
           serviceConfig = lib.mkMerge [
@@ -357,7 +359,8 @@ _: {
               LoadCredential = [
                 "forgejo-oidc-client-secret:${config.services.pocket-id.dataDir}/client-secrets/forgejo"
               ];
-              ExecStartPre = forgejoDnsGate.serviceConfig.ExecStartPre ++ forgejoOidcGate.serviceConfig.ExecStartPre;
+              ExecStartPre =
+                forgejoDnsGate.serviceConfig.ExecStartPre ++ forgejoOidcGate.serviceConfig.ExecStartPre;
               TimeoutStartSec = "3min";
             }
             (harden { })
