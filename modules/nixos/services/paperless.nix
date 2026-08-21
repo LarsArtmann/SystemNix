@@ -120,10 +120,11 @@ _: {
             PAPERLESS_AI_LLM_ENDPOINT = llmEndpoint;
             PAPERLESS_AI_LLM_MODEL = config.services.fastflowlm.model;
             PAPERLESS_AI_LLM_API_KEY = "fastflowlm-local-no-auth";
-            # Socket activation cold-loads the 13.6 GB model in 1-3 min; the
+            # Socket activation cold-loads the 21.6 GB model in 2-5 min; the
             # default 120s timeout would abort the first AI request after an
-            # idle unload. 300s mirrors the papdashboard insight enricher.
-            PAPERLESS_AI_LLM_REQUEST_TIMEOUT = 300;
+            # idle unload. 480s matches the fastflowlm proxy deadline (v1.0.2
+            # weights grew 13.6 GB → 21.6 GB — 300s sat exactly at the boundary).
+            PAPERLESS_AI_LLM_REQUEST_TIMEOUT = 480;
             # --- Embeddings (RAG semantic search) on llama-server (GPU) -------
             # Served by the llama-rag module's embeddings instance (bge-m3)
             # at :8848. llama-server is OpenAI-compatible and ignores the

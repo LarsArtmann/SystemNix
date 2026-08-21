@@ -26,8 +26,9 @@
 # The UI has no built-in auth (only the ingest API is key-gated) — external
 # access goes through protectedVHost (Layer 2 SSO); LAN access is open.
 #
-# FastFlowLM cold-loads 1-3 min on first insight request (socket activation
-# on :52625 wakes the model) — hence the generous default LLM timeout.
+# FastFlowLM cold-loads 2-5 min on first insight request (socket activation
+# on :52625 wakes the model; v1.0.2 weights are 21.6 GB) — hence the generous
+# default LLM timeout (upstream 300s default is marginal at the boundary).
 {
   inputs,
   ...
