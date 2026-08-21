@@ -356,8 +356,9 @@ _: {
           # static-IP stack (networking.interfaces.eno1) never ran — no IP,
           # SSH dead. Emitted unconditionally so absence fails Gatus pat()
           # fail-closed (never a phantom green).
+          LAN_IF="${cfg.lanInterface}"
           LAN_NIC_PRESENT=1
-          if [ -n "${cfg.lanInterface}" ] && [ ! -e "/sys/class/net/${cfg.lanInterface}" ]; then
+          if [ -n "$LAN_IF" ] && [ ! -e "/sys/class/net/$LAN_IF" ]; then
             LAN_NIC_PRESENT=0
           fi
 

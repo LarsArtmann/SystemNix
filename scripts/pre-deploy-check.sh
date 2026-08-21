@@ -259,6 +259,15 @@ if [ -s "$METRICS_FILE" ]; then
   # 2026-08-22), so they appear post-switch. post-deploy-check.sh already
   # asserts them (Bank-Sync section, :8097/metrics) — after the first deploy
   # confirms, remove from this list.
+  # system_lan_nic_present (2026-08-22): emitted by the tree's system-health
+  # collector (modules/nixos/services/system-health.nix:606-608, primary-LAN-
+  # NIC-fell-off-the-bus gauge) but NOT by the deployed collector binary
+  # (verified: string absent from the active store path and from the live
+  # system_health.prom). Appears post-switch; gatus pats 1 — remove from this
+  # list after deploy verification. NOTE: presence flapped across consecutive
+  # pre-deploy runs minutes apart on 2026-08-22 (present twice, then absent) —
+  # consistent with a concurrent deploy/rollback of system-health, but if it
+  # flaps again post-deploy, suspect the NIC check itself.
   KNOWN_NEW_METRICS="system_zram_swap_fill_percent system_zram_fill_over_threshold system_zram_swap_orig_data_bytes system_zram_swap_disksize_bytes system_zram_mem_used_bytes discordsync_projection_dlq_legacy_depth bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds system_lan_nic_present"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
