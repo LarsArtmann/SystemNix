@@ -87,10 +87,13 @@ in
         # The pool (below) is the real history tier.
         snapshot_preserve_min = "2d";
         snapshot_preserve = "3d 1w";
-        # Received copies on the pool keep longer retention than the local
-        # snapshots — the pool is the safety net, not scratch space.
-        target_preserve_min = "7d";
-        target_preserve = "30d 12w";
+        # Pool = FOREVER (user decision 2026-08-21): target_preserve_min = "all"
+        # disables automatic deletion of received backups entirely. Space cost
+        # stays near raw data churn — received subvolumes share extents via CoW
+        # on the pool (snapshot count is ~free; every DELETED byte on the NVMe
+        # is pinned pool-side forever, which is the point). 16T RAID1 headroom
+        # makes this viable for years; revisit only if pool usage crosses ~50%.
+        target_preserve_min = "all";
         volume."/mnt/btrfs-root" = {
           snapshot_dir = "/mnt/btrfs-root/.snapshots";
           subvolume."@" = {
