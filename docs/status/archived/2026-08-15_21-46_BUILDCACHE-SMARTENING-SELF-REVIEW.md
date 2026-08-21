@@ -34,7 +34,7 @@
 3. btrfs+zstd conversion (runbook staged; needs maintenance window + sudo). ← open — TODO_LIST Priority 2
 4. go-codec `1.26.6` floor alignment (user's mid-flight upgrade, dirty tree respected). ← open — TODO_LIST Priority 2 (+ owner decision g.2)
 5. direnv `use_go_env` sniffer retirement (depends on #1). ← open — TODO_LIST Priority 2
-~~6. Gatus check / alert audit for the 96% event (see d.2).~~ done — TRIGGERED 03:37 → RESOLVED 21:58, both delivered to Discord (AGENTS.md verification round)
+   ~~6. Gatus check / alert audit for the 96% event (see d.2).~~ done — TRIGGERED 03:37 → RESOLVED 21:58, both delivered to Discord (AGENTS.md verification round)
 
 ## d) TOTALLY FUCKED UP ❌ (honest ledger)
 
@@ -119,4 +119,5 @@
 3. **File the btop upstream issue?** The io_mode × autofs behavior hides any systemd-automounted disk — fixable upstream (prefer real mount over autofs mtab line). I'd verify-then-file per policy, but filing carries your name. ← OPEN owner decision (TODO_LIST Priority 6)
 
 ---
+
 **Bottom line:** shipped the full 80% (unification + GC + sccache), deployed and verified; honest ledger contains 1 latent bug (found+mitigated, root fix pending), 1 unverified claim (alert delivery), and 5 not-started backlog items. Disk now 42% (87G) and structurally bounded going forward.

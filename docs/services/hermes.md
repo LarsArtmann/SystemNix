@@ -11,12 +11,12 @@ service. Module: `modules/nixos/services/hermes.nix`; upstream flake input:
 
 ## Module Options
 
-| Option | Default | Meaning |
-|--------|---------|---------|
-| `enable` | false | Install + start the gateway |
-| `projectsDir` | `null` | Host directory bind-mounted READ-ONLY at `<stateDir>/workspace/projects`. `null` = no bind, no projects env vars |
-| `user` / `group` / `stateDir` | `hermes`/`hermes`/`/home/hermes` | Service identity |
-| `restartSec` / `timeoutStopSec` | `5` / `120` | Restart/stop pacing |
+| Option                          | Default                          | Meaning                                                                                                          |
+| ------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `enable`                        | false                            | Install + start the gateway                                                                                      |
+| `projectsDir`                   | `null`                           | Host directory bind-mounted READ-ONLY at `<stateDir>/workspace/projects`. `null` = no bind, no projects env vars |
+| `user` / `group` / `stateDir`   | `hermes`/`hermes`/`/home/hermes` | Service identity                                                                                                 |
+| `restartSec` / `timeoutStopSec` | `5` / `120`                      | Restart/stop pacing                                                                                              |
 
 ## Projects Access Model (the whole point)
 
@@ -107,8 +107,8 @@ policy change.
   agent's first failed clone.
 
 **Go-live (user, one command)**: create a fine-grained PAT
-  (github.com → Settings → Developer settings → Fine-grained tokens:
-  Contents: Read-only, scoped to the LarsArtmann private repos), then
+(github.com → Settings → Developer settings → Fine-grained tokens:
+Contents: Read-only, scoped to the LarsArtmann private repos), then
 
 ```bash
 SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) \

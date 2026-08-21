@@ -567,7 +567,6 @@ Update Task 1.3 section to note the correction:
 - **Impact**: High - Fixes GPU access for Ollama service (CRITICAL)
 
 ```
-
 ---
 
 ## 📊 Comparison Summary
@@ -611,7 +610,6 @@ systemd.services._ (system services)
 ❌ Variables NOT visible (different systemd instance)
 
 ````
-
 **Proof from NixOS Configs:**
 ```nix
 # From github.com/balsoft/nixos-config - must explicitly copy

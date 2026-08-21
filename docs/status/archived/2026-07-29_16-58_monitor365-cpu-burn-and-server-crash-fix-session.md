@@ -16,39 +16,39 @@ This session: discovered the server crash-loop via log analysis, fixed the root 
 
 ## a) FULLY DONE
 
-| # | Task | What Was Done | Verified |
-|---|------|---------------|----------|
-| T2 | Verify go-commit master safety | Confirmed `git config` CLI fix IS on go-commit master (`fd9a9664`). `pkg/commit/git/gogit.go` uses `exec.CommandContext("git", "config", key)` which merges all config scopes. Unpin from `refs/tags/v0.4.0` to `ref=master` is **SAFE**. | Read gogit.go:85-123. Fix present. |
-| T3 | Push monitor365 busy-loop fix | Already done by previous session. Commit `f72cf1073` on `origin/master`. | flake.lock resolved to `f72cf1073`. |
-| T4 | Update flake.lock + build-verify | Lockfile updated to `f72cf1073`, then re-updated to `b900d3454` after COALESCE fix. `nix flake check --no-build` passes. `nix build .#monitor365` passes (libspa-sys `[patch.crates-io]` works). | Build exit 0, flake check passes. |
+| #     | Task                              | What Was Done                                                                                                                                                                                                                                                                                                                                                                                                                                     | Verified                                                                                                  |
+| ----- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| T2    | Verify go-commit master safety    | Confirmed `git config` CLI fix IS on go-commit master (`fd9a9664`). `pkg/commit/git/gogit.go` uses `exec.CommandContext("git", "config", key)` which merges all config scopes. Unpin from `refs/tags/v0.4.0` to `ref=master` is **SAFE**.                                                                                                                                                                                                         | Read gogit.go:85-123. Fix present.                                                                        |
+| T3    | Push monitor365 busy-loop fix     | Already done by previous session. Commit `f72cf1073` on `origin/master`.                                                                                                                                                                                                                                                                                                                                                                          | flake.lock resolved to `f72cf1073`.                                                                       |
+| T4    | Update flake.lock + build-verify  | Lockfile updated to `f72cf1073`, then re-updated to `b900d3454` after COALESCE fix. `nix flake check --no-build` passes. `nix build .#monitor365` passes (libspa-sys `[patch.crates-io]` works).                                                                                                                                                                                                                                                  | Build exit 0, flake check passes.                                                                         |
 | T7+T8 | Investigate + fix sync root cause | **REAL ROOT CAUSE FOUND:** Server crash-looping with `Bootstrap failed: database error: Invalid column type Null at index: 9, name: version`. Legacy projection replay rows have NULL in `tenants.version`. COALESCE wrappers were removed after 2026-07-22 alias-shadow fix. **Fix (upstream `b900d3454`):** Restored `COALESCE(tenants.version, 0) AS version` with qualified table prefix in `tenant.rs` and `users.version` in `user/mod.rs`. | Server logs show 200 responses on `/api/v1/events/upload/binary`. Agent metrics show 55K events uploaded. |
-| T9 | CPUQuota in harden() | Already done by previous session. `lib/systemd.nix` defaults `CPUQuota = "200%"`. Uses `mkDefault'` for override support. | `nix flake check --no-build` passes. |
-| T10 | CPUQuota for AI services | Verified all AI services have overrides: ollama 400%, hermes 400%, immich-ml 300%, minecraft 300%. **Found gap: whisper-asr was missing.** Added `CPUQuota = "300%"` to `voice-agents.nix`. | flake check passes. |
-| T11 | Per-service CPU alerting | Already done by previous session. Extended in this session: added `system_any_service_cpu_over_threshold` summary metric to generalize the alert beyond just monitor365. Gatus check renamed to "CPU Runaway (Any Service)". | Metric visible in node_exporter output: `system_any_service_cpu_over_threshold 0`. |
-| T13 | Update AGENTS.md | Added 6 new gotcha entries: (1) CB+early-flush busy-loop, (2) COALESCE version NULL crash, (3) CPUQuota defense-in-depth, (4) per-service CPU alerting, (5) monitor365+go-commit unpinned to master, (6) updated libspa-sys entry from FIXED to RESOLVED. Updated system-health entry with CPU tracking info. | AGENTS.md edited. |
-| T15 | End-to-end verification | Deploy succeeded. Post-deploy smoke test: 28 PASS, 1 FAIL (SigNoz, pre-existing), 2 SKIP (DiscordSync, expected). Monitor365 API/UI PASS. Agent connected PASS. | `nix run .#deploy` output. |
+| T9    | CPUQuota in harden()              | Already done by previous session. `lib/systemd.nix` defaults `CPUQuota = "200%"`. Uses `mkDefault'` for override support.                                                                                                                                                                                                                                                                                                                         | `nix flake check --no-build` passes.                                                                      |
+| T10   | CPUQuota for AI services          | Verified all AI services have overrides: ollama 400%, hermes 400%, immich-ml 300%, minecraft 300%. **Found gap: whisper-asr was missing.** Added `CPUQuota = "300%"` to `voice-agents.nix`.                                                                                                                                                                                                                                                       | flake check passes.                                                                                       |
+| T11   | Per-service CPU alerting          | Already done by previous session. Extended in this session: added `system_any_service_cpu_over_threshold` summary metric to generalize the alert beyond just monitor365. Gatus check renamed to "CPU Runaway (Any Service)".                                                                                                                                                                                                                      | Metric visible in node_exporter output: `system_any_service_cpu_over_threshold 0`.                        |
+| T13   | Update AGENTS.md                  | Added 6 new gotcha entries: (1) CB+early-flush busy-loop, (2) COALESCE version NULL crash, (3) CPUQuota defense-in-depth, (4) per-service CPU alerting, (5) monitor365+go-commit unpinned to master, (6) updated libspa-sys entry from FIXED to RESOLVED. Updated system-health entry with CPU tracking info.                                                                                                                                     | AGENTS.md edited.                                                                                         |
+| T15   | End-to-end verification           | Deploy succeeded. Post-deploy smoke test: 28 PASS, 1 FAIL (SigNoz, pre-existing), 2 SKIP (DiscordSync, expected). Monitor365 API/UI PASS. Agent connected PASS.                                                                                                                                                                                                                                                                                   | `nix run .#deploy` output.                                                                                |
 
 ---
 
 ## b) PARTIALLY DONE
 
-| # | Task | What's Done | What Remains |
-|---|------|-------------|--------------|
-| T14 | Upstream CB improvements | NOT done (correctly deferred as P3). The busy-loop fix + CPUQuota + alerting are sufficient defenses. CB improvements (cap counter, exponential probe) would reduce wasted work during outages but aren't urgent. | If desired: cap `consecutive_failures` at threshold*2, add exponential probe interval (60s->5min->15min->1h), add tests. |
-| Upstream tests | COALESCE fix committed and pushed, but no regression tests added upstream. | Add a test in monitor365 that creates a tenant with NULL version and verifies `list_tenants()` returns it with version=0. The alias_shadow_tests.rs file already exists — this would be a natural addition. |
+| #              | Task                                                                       | What's Done                                                                                                                                                                                                       | What Remains                                                                                                             |
+| -------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| T14            | Upstream CB improvements                                                   | NOT done (correctly deferred as P3). The busy-loop fix + CPUQuota + alerting are sufficient defenses. CB improvements (cap counter, exponential probe) would reduce wasted work during outages but aren't urgent. | If desired: cap `consecutive_failures` at threshold*2, add exponential probe interval (60s->5min->15min->1h), add tests. |
+| Upstream tests | COALESCE fix committed and pushed, but no regression tests added upstream. | Add a test in monitor365 that creates a tenant with NULL version and verifies `list_tenants()` returns it with version=0. The alias_shadow_tests.rs file already exists — this would be a natural addition.       |                                                                                                                          |
 
 ---
 
 ## c) NOT STARTED
 
-| # | Task | Why | Impact |
-|---|------|-----|--------|
-| — | `nix fmt` / `alejandra` on changed files | Forgot to run the formatter. The pre-commit hook should handle it on next commit, but the working tree may have unformatted Nix files. | Low — cosmetic, auto-commit daemon will trigger the hook. |
-| — | Update the planning doc status | The planning doc (`docs/planning/2026-07-29_15-05_...`) is still marked "Planning". Should be annotated as executed. | Low — documentation hygiene. |
-| — | Verify CPUQuota is actually applied on running services | Did NOT run `systemctl show monitor365 -p CPUQuotaPerSecUSec` or similar to confirm the 200% cap is live. The config was deployed, but I only verified via `nix flake check` and the deploy completing. | Medium — if CPUQuota isn't actually applied, the defense-in-depth is illusory. |
-| — | Investigate the "status is already online" warning | Server logs show `failed to set device online status during ingest error=status is already online` on every event upload. This is a WARN, not an ERROR, and events ARE being accepted (200 status). But it indicates a minor state machine issue in the server. | Low — events are flowing, this is cosmetic. |
-| — | Verify whisper-asr is actually enabled | I added `CPUQuota = "300%"` to the whisper-asr service config, but I didn't check if `services.voice-agents.enable` is true on evo-x2. If it's disabled, the change has zero runtime effect. | Low — if disabled, no harm; if enabled, it's correct. |
-| — | Check if the 200% CPUQuota default breaks any oneshot services | `harden {}` is used by oneshot services too. CPUQuota on a oneshot that does compilation or heavy work could cause it to run slower than expected. | Medium — could cause slow provisioning or build steps. |
+| # | Task                                                           | Why                                                                                                                                                                                                                                                             | Impact                                                                         |
+| - | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| — | `nix fmt` / `alejandra` on changed files                       | Forgot to run the formatter. The pre-commit hook should handle it on next commit, but the working tree may have unformatted Nix files.                                                                                                                          | Low — cosmetic, auto-commit daemon will trigger the hook.                      |
+| — | Update the planning doc status                                 | The planning doc (`docs/planning/2026-07-29_15-05_...`) is still marked "Planning". Should be annotated as executed.                                                                                                                                            | Low — documentation hygiene.                                                   |
+| — | Verify CPUQuota is actually applied on running services        | Did NOT run `systemctl show monitor365 -p CPUQuotaPerSecUSec` or similar to confirm the 200% cap is live. The config was deployed, but I only verified via `nix flake check` and the deploy completing.                                                         | Medium — if CPUQuota isn't actually applied, the defense-in-depth is illusory. |
+| — | Investigate the "status is already online" warning             | Server logs show `failed to set device online status during ingest error=status is already online` on every event upload. This is a WARN, not an ERROR, and events ARE being accepted (200 status). But it indicates a minor state machine issue in the server. | Low — events are flowing, this is cosmetic.                                    |
+| — | Verify whisper-asr is actually enabled                         | I added `CPUQuota = "300%"` to the whisper-asr service config, but I didn't check if `services.voice-agents.enable` is true on evo-x2. If it's disabled, the change has zero runtime effect.                                                                    | Low — if disabled, no harm; if enabled, it's correct.                          |
+| — | Check if the 200% CPUQuota default breaks any oneshot services | `harden {}` is used by oneshot services too. CPUQuota on a oneshot that does compilation or heavy work could cause it to run slower than expected.                                                                                                              | Medium — could cause slow provisioning or build steps.                         |
 
 ---
 
@@ -87,6 +87,7 @@ This session: discovered the server crash-loop via log analysis, fixed the root 
 ## f) Next 50 Things To Do
 
 ### Immediate (verify this session's work)
+
 1. Run `systemctl show monitor365 -p CPUQuotaPerSecUSec` — verify the 200% cap is live
 2. Run `systemctl show ollama -p CPUQuotaPerSecUSec` — verify the 400% override is live
 3. Run `nix fmt` — format all changed files
@@ -99,6 +100,7 @@ This session: discovered the server crash-loop via log analysis, fixed the root 
 10. Investigate the SigNoz "ZERO alert rules" failure — when did it last work?
 
 ### Upstream monitor365 improvements
+
 11. Add regression test: "NULL version in tenants -> list_tenants returns version=0"
 12. Add regression test: "NULL version in users -> list_users returns version=0"
 13. Investigate the "status is already online" warning during event ingest
@@ -110,6 +112,7 @@ This session: discovered the server crash-loop via log analysis, fixed the root 
 19. Consider backfilling NULL version values with `UPDATE tenants SET version = 0 WHERE version IS NULL` in schema migration
 
 ### SystemNix hardening
+
 20. Verify ALL `harden {}` calls don't break with the new CPUQuota default
 21. Audit for services that legitimately need >200% CPU: any Docker build, nix-build, media transcoding
 22. Check if `nix run .#deploy` itself is CPU-throttled (it runs as a user process, not a service)
@@ -119,6 +122,7 @@ This session: discovered the server crash-loop via log analysis, fixed the root 
 26. Generalize the CPU alert to cover HM user services too (not just system services)
 
 ### Monitoring improvements
+
 27. Add CPU alert for hermes (PyTorch inference can burn CPU)
 28. Add CPU alert for ollama (model loading spikes)
 29. Add a second threshold tier (warn at 100%, critical at 200%) via SigNoz alert rules
@@ -129,6 +133,7 @@ This session: discovered the server crash-loop via log analysis, fixed the root 
 34. Consider a "sync healthy" composite check (agent connected + events flowing + CB closed)
 
 ### Documentation
+
 35. Update AGENTS.md: the `system-health` module now also tracks per-service CPU%
 36. Update AGENTS.md: document the `system_any_service_cpu_over_threshold` metric
 37. Document the 5-minute blind spot in CPU tracking after boot/deploy
@@ -137,6 +142,7 @@ This session: discovered the server crash-loop via log analysis, fixed the root 
 40. Consider adding a "lessons learned" section to the feedback doc in monitor365
 
 ### Cleanup
+
 41. Remove the old session status report's "questions I cannot answer" section (answered now)
 42. Check if the monitor365 daily event limit override (1B) is still needed or can be lowered
 43. Verify the 596M backlog is actually draining (check in a few hours)

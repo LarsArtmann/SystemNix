@@ -18,49 +18,49 @@ This session implemented the `llama-rag` module, wired it into Paperless AI, add
 
 ### Module creation
 
-| File | Status | Commits |
-|------|--------|---------|
-| `lib/ports.nix` | ✅ `llama-embeddings = 8848`, `llama-reranker = 8849` added | `9218a1ac` |
-| `modules/nixos/services/llama-rag.nix` | ✅ Full module: two llama-server instances, model auto-fetch oneshot, assertions, ROCm env, harden+ioTier | `393d2123`, `321f599e`, `7db09df5` |
-| `platforms/nixos/system/configuration.nix` | ✅ `llama-rag.enable = true` | `ce91825a` |
+| File                                       | Status                                                                                                    | Commits                            |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `lib/ports.nix`                            | ✅ `llama-embeddings = 8848`, `llama-reranker = 8849` added                                               | `9218a1ac`                         |
+| `modules/nixos/services/llama-rag.nix`     | ✅ Full module: two llama-server instances, model auto-fetch oneshot, assertions, ROCm env, harden+ioTier | `393d2123`, `321f599e`, `7db09df5` |
+| `platforms/nixos/system/configuration.nix` | ✅ `llama-rag.enable = true`                                                                              | `ce91825a`                         |
 
 ### Paperless AI wiring
 
-| File | Status | Commits |
-|------|--------|---------|
+| File                                   | Status                                                                                | Commits    |
+| -------------------------------------- | ------------------------------------------------------------------------------------- | ---------- |
 | `modules/nixos/services/paperless.nix` | ✅ `PAPERLESS_AI_LLM_EMBEDDING_*` env vars pointing to `:8848/v1` with model `bge-m3` | `cea4f323` |
-| `tests/test-paperless.nix` | ✅ Embedding env var assertions + llama-rag module import | `83e2b2c2` |
+| `tests/test-paperless.nix`             | ✅ Embedding env var assertions + llama-rag module import                             | `83e2b2c2` |
 
 ### Health monitoring
 
-| File | Status | Commits |
-|------|--------|---------|
-| `modules/nixos/services/gatus-config.nix` | ✅ Health checks on `:8848/health` and `:8849/health` (60s, <1s RT, Discord alerts) | `cb812981` |
-| `modules/nixos/services/system-health.nix` | ✅ `llama-embeddings` + `llama-reranker` added to `monitoredServices` | `072173f2` |
+| File                                       | Status                                                                              | Commits    |
+| ------------------------------------------ | ----------------------------------------------------------------------------------- | ---------- |
+| `modules/nixos/services/gatus-config.nix`  | ✅ Health checks on `:8848/health` and `:8849/health` (60s, <1s RT, Discord alerts) | `cb812981` |
+| `modules/nixos/services/system-health.nix` | ✅ `llama-embeddings` + `llama-reranker` added to `monitoredServices`               | `072173f2` |
 
 ### Deploy wiring (done by concurrent session)
 
-| File | Status | Commits |
-|------|--------|---------|
-| `scripts/deploy.sh` | ✅ `llama-rag-model-fetch` in provisioner restart list | `321f599e` |
+| File                           | Status                                                                                                             | Commits    |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------ | ---------- |
+| `scripts/deploy.sh`            | ✅ `llama-rag-model-fetch` in provisioner restart list                                                             | `321f599e` |
 | `scripts/post-deploy-check.sh` | ✅ Liveness (`/health`) + functional (`/v1/embeddings` 1024-dim vector + `/v1/rerank` correct ranking) smoke tests | `321f599e` |
 
 ### Documentation
 
-| File | Status | Commits |
-|------|--------|---------|
-| `AGENTS.md` | ✅ New `llama-rag` section (three-tier AI stack table, flags verified, model download, Paperless integration, FastFlowLM `--embed 1` note). Paperless section updated (replaced "NO embedding settings" with embedding env vars). | `04b37358`, `58f917cb`, `46b7f1ab` |
-| `docs/status/2026-08-19_17-36_rag-embedding-reranker-architecture-decision.md` | ✅ Architecture decision record | `276475a2` |
+| File                                                                           | Status                                                                                                                                                                                                                            | Commits                            |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `AGENTS.md`                                                                    | ✅ New `llama-rag` section (three-tier AI stack table, flags verified, model download, Paperless integration, FastFlowLM `--embed 1` note). Paperless section updated (replaced "NO embedding settings" with embedding env vars). | `04b37358`, `58f917cb`, `46b7f1ab` |
+| `docs/status/2026-08-19_17-36_rag-embedding-reranker-architecture-decision.md` | ✅ Architecture decision record                                                                                                                                                                                                   | `276475a2`                         |
 
 ### Verification
 
-| Check | Result |
-|-------|--------|
-| `nix flake check --no-build` | ✅ All checks passed |
-| `nix eval` evo-x2 toplevel | ✅ Evaluates (assertions pass) |
-| `nix eval` paperless test | ✅ Test drv builds |
+| Check                        | Result                                                                                                       |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `nix flake check --no-build` | ✅ All checks passed                                                                                         |
+| `nix eval` evo-x2 toplevel   | ✅ Evaluates (assertions pass)                                                                               |
+| `nix eval` paperless test    | ✅ Test drv builds                                                                                           |
 | Paperless env vars evaluated | ✅ `endpoint=http://127.0.0.1:8848/v1`, `model=bge-m3`, `backend=openai-like`, `apiKey=llama-server-no-auth` |
-| `llama-server --help` flags | ✅ `--embedding`, `--reranking`, `--pooling rank`, `--alias` all confirmed on nixpkgs `llama-cpp-10408` |
+| `llama-server --help` flags  | ✅ `--embedding`, `--reranking`, `--pooling rank`, `--alias` all confirmed on nixpkgs `llama-cpp-10408`      |
 
 ---
 
@@ -127,6 +127,7 @@ A VM test verifying the reranker service starts and responds to `/v1/rerank` wit
 ### 5. Deploy and live verification
 
 No deploy has been run. The GGUF models will auto-download on first boot via `llama-rag-model-fetch`. Needs:
+
 - `nix run .#deploy`
 - Verify `llama-rag-model-fetch` completes (downloads ~2.4 GB from HuggingFace)
 - Verify `llama-embeddings` and `llama-reranker` start and respond

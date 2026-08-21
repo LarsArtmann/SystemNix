@@ -9,7 +9,7 @@
 
 | Metric         | Before      | After       | Status                   |
 | -------------- | ----------- | ----------- | ------------------------ |
-| Disk Usage     | 212GB (93%) | 215GB (95%) | ⚠️ Still critical        |
+| Disk Usage     | 212GB (93%) | 215GB (95%) | ⚠️ Still critical         |
 | Free Space     | 17GB        | 14GB        | ❌ Need 20GB+ for builds |
 | Library/Caches | 14GB        | 8.2GB       | ✅ Cleaned ~6GB          |
 | Nix Store      | 20GB        | 20GB        | ❌ Needs optimization    |

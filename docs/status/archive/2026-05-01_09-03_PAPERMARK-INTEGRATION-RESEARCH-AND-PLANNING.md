@@ -28,7 +28,7 @@ Additionally, there are **3 uncommitted changes** from Session 10's mkGoTool ref
 | **Required secrets**       | ✅ Done | NEXTAUTH_SECRET, POSTGRES_PASSWORD, S3 credentials, OAuth credentials (Google/GitHub)                                                  |
 | **Caddy integration**      | ✅ Done | `papermark.${domain}` with forward auth (same pattern as Twenty/Immich)                                                                |
 | **Implementation pattern** | ✅ Done | Follow `twenty.nix` — Docker Compose managed by systemd service, sops for secrets                                                      |
-| **Database migrations**    | ✅ Done | `pnpm dlx prisma db push --skip-generate` in Docker entrypoint                                                                              |
+| **Database migrations**    | ✅ Done | `pnpm dlx prisma db push --skip-generate` in Docker entrypoint                                                                         |
 | **Health check**           | ✅ Done | `GET /api/health` on port 3000                                                                                                         |
 | **Backup pattern**         | ✅ Done | Daily `pg_dump` via systemd timer (same as Immich/Twenty)                                                                              |
 | **GCS S3 interop**         | ✅ Done | Fully supported via HMAC keys. Endpoint: `https://storage.googleapis.com`. No multipart upload support but Papermark doesn't need it.  |
@@ -154,48 +154,48 @@ All unchanged from Session 10. Zero progress.
 
 ### Immediate (this session)
 
-| #   | Task                                              | Est. | Dependency     |
-| --- | ------------------------------------------------- | ---- | -------------- |
-| 1   | **Commit 3 uncommitted mkGoTool changes**         | 2m   | None           |
-| 2   | **User decides: Garage or RustFS**                | 0m   | User decision  |
-| 3   | **Create `modules/nixos/services/papermark.nix`** | 30m  | Decision on #2 |
-| 4   | **Add Papermark secrets to sops.nix**             | 10m  | None           |
-| 5   | **Wire Papermark into flake.nix**                 | 5m   | #3             |
-| 6   | **Add Caddy vhost for Papermark**                 | 5m   | None           |
-| 7   | **Enable Papermark in configuration.nix**         | 2m   | #3, #5         |
-| 8   | **Run `just test-fast` to validate**              | 5m   | All above      |
-| 9   | **Update AGENTS.md with Papermark docs**          | 5m   | All above      |
+| # | Task                                              | Est. | Dependency     |
+| - | ------------------------------------------------- | ---- | -------------- |
+| 1 | **Commit 3 uncommitted mkGoTool changes**         | 2m   | None           |
+| 2 | **User decides: Garage or RustFS**                | 0m   | User decision  |
+| 3 | **Create `modules/nixos/services/papermark.nix`** | 30m  | Decision on #2 |
+| 4 | **Add Papermark secrets to sops.nix**             | 10m  | None           |
+| 5 | **Wire Papermark into flake.nix**                 | 5m   | #3             |
+| 6 | **Add Caddy vhost for Papermark**                 | 5m   | None           |
+| 7 | **Enable Papermark in configuration.nix**         | 2m   | #3, #5         |
+| 8 | **Run `just test-fast` to validate**              | 5m   | All above      |
+| 9 | **Update AGENTS.md with Papermark docs**          | 5m   | All above      |
 
 ### Storage Backend (depends on decision)
 
-| #   | Task                                                             | Est. | Dependency    |
-| --- | ---------------------------------------------------------------- | ---- | ------------- |
-| 10  | **If Garage: configure `services.garage` in flake-parts module** | 20m  | Garage chosen |
-| 11  | **If Garage: bucket + key init via postStart**                   | 15m  | #10           |
-| 12  | **If RustFS: add to Papermark docker-compose**                   | 10m  | RustFS chosen |
-| 13  | **Wire S3 endpoint into Papermark env**                          | 5m   | #10 or #12    |
+| #  | Task                                                             | Est. | Dependency    |
+| -- | ---------------------------------------------------------------- | ---- | ------------- |
+| 10 | **If Garage: configure `services.garage` in flake-parts module** | 20m  | Garage chosen |
+| 11 | **If Garage: bucket + key init via postStart**                   | 15m  | #10           |
+| 12 | **If RustFS: add to Papermark docker-compose**                   | 10m  | RustFS chosen |
+| 13 | **Wire S3 endpoint into Papermark env**                          | 5m   | #10 or #12    |
 
 ### Short-term (next session, requires evo-x2)
 
-| #   | Task                                               | Est. | Dependency    |
-| --- | -------------------------------------------------- | ---- | ------------- |
-| 14  | **Push all commits to origin**                     | 1m   | Network       |
-| 15  | **Create `papermark.yaml` sops secrets on evo-x2** | 10m  | evo-x2 access |
-| 16  | **`just switch` on evo-x2**                        | 45m+ | evo-x2 access |
-| 17  | **Verify Papermark health endpoint**               | 3m   | #16           |
-| 18  | **Configure OAuth provider (Google/GitHub)**       | 10m  | #16           |
-| 19  | **Test document upload via S3 storage**            | 5m   | #16 + storage |
+| #  | Task                                               | Est. | Dependency    |
+| -- | -------------------------------------------------- | ---- | ------------- |
+| 14 | **Push all commits to origin**                     | 1m   | Network       |
+| 15 | **Create `papermark.yaml` sops secrets on evo-x2** | 10m  | evo-x2 access |
+| 16 | **`just switch` on evo-x2**                        | 45m+ | evo-x2 access |
+| 17 | **Verify Papermark health endpoint**               | 3m   | #16           |
+| 18 | **Configure OAuth provider (Google/GitHub)**       | 10m  | #16           |
+| 19 | **Test document upload via S3 storage**            | 5m   | #16 + storage |
 
 ### Medium-term (quality of life)
 
-| #   | Task                                                    | Est. | Dependency         |
-| --- | ------------------------------------------------------- | ---- | ------------------ |
-| 20  | **P5: Deploy all pending changes to evo-x2**            | 45m+ | evo-x2 access      |
-| 21  | **P1: Move Taskwarrior encryption to sops**             | 10m  | evo-x2             |
-| 22  | **P1: Pin Docker digests for Voice Agents + PhotoMap**  | 10m  | evo-x2             |
-| 23  | **P6: Hermes health check endpoint**                    | 20m  | Hermes code change |
-| 24  | **P5: Pi 3 SD image build + DNS failover test**         | 60m+ | Pi 3 hardware      |
-| 25  | **Archive old status docs (30+ files in docs/status/)** | 5m   | None               |
+| #  | Task                                                    | Est. | Dependency         |
+| -- | ------------------------------------------------------- | ---- | ------------------ |
+| 20 | **P5: Deploy all pending changes to evo-x2**            | 45m+ | evo-x2 access      |
+| 21 | **P1: Move Taskwarrior encryption to sops**             | 10m  | evo-x2             |
+| 22 | **P1: Pin Docker digests for Voice Agents + PhotoMap**  | 10m  | evo-x2             |
+| 23 | **P6: Hermes health check endpoint**                    | 20m  | Hermes code change |
+| 24 | **P5: Pi 3 SD image build + DNS failover test**         | 60m+ | Pi 3 hardware      |
+| 25 | **Archive old status docs (30+ files in docs/status/)** | 5m   | None               |
 
 ---
 

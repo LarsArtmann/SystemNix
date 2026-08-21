@@ -70,6 +70,7 @@
 ## f) NEXT — up to 50 items, ordered
 
 **Immediate (tonight, blocking):**
+
 1. Delete corrupt pool subvol: `sudo btrfs subvolume delete /mnt/pool/backups/root/@.20260814T2300`
 2. ~~Start pool catch-up: `sudo systemctl start btrbk-root.service` (sends 0814/0815/0816; monitor journal)~~ done (seeds completed; first overnight cycle green 2026-08-18)
 3. ~~Run the 5-command pivot block (daemon stop → rsync store delta → rsync var → switch → daemon start)~~ done at `d4a59d4d`

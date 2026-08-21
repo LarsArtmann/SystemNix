@@ -5,7 +5,6 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 1. **Verified `pkgs.templ` exists** — `nix eval nixpkgs#templ.meta.name` → `templ-0.3.1020`, "Language for writing HTML user interfaces in Go" (a-h/templ CLI). This was critical because `base.nix` uses `with pkgs;` which silently falls through on missing attrs.

@@ -197,33 +197,33 @@ Mounted at `/tmp/sdcard-p1` and `/tmp/sdcard-p5`. **Still mounted — should unm
 
 ## F) Top 25 Next Actions (Impact × Effort)
 
-| #   | Action                                                            | Impact | Effort  | Category       |
-| --- | ----------------------------------------------------------------- | ------ | ------- | -------------- |
-| 1   | **Unmount SD card** (`umount /tmp/sdcard-p1 /tmp/sdcard-p5`)      | Now    | 0       | Immediate      |
-| 2   | **Archive 100+ stale status docs** to `docs/status/archive/`      | High   | Low     | Hygiene        |
-| 3   | **Drop orphaned Hyprland stash** (`stash@{2}`)                    | Low    | 0       | Hygiene        |
-| 4   | **Review/apply vendorHash stash** (`stash@{0}`)                   | Medium | Low     | EMEET PIXY     |
-| 5   | **Enable `services.udisks2`** for auto-mounting USB/SD            | High   | Low     | NixOS          |
-| 6   | **Investigate `just test` race** — pin down root cause            | Medium | Medium  | Reliability    |
-| 7   | **Convert niri session restore** to proper NixOS module options   | High   | Medium  | Architecture   |
-| 8   | **Add Waybar module** for session restore stats                   | Medium | Low     | Niri           |
-| 9   | **Write uevent_linux tests** for emeet-pixyd                      | Medium | Medium  | Testing        |
-| 10  | **Migrate Twenty to sops-nix** secrets                            | Medium | Low     | Security       |
-| 11  | **Standardize service deployment** — native NixOS vs Docker       | High   | High    | Architecture   |
-| 12  | **Verify SigNoz** is collecting traces/metrics/logs               | Medium | Low     | Monitoring     |
-| 13  | **Check Photomap** service status and fix if broken               | Medium | Low     | Services       |
-| 14  | **Check Authelia** SSO deployment status                          | High   | Low     | Security       |
-| 15  | **Verify AMD NPU** driver is functional with test workload        | Medium | Medium  | Hardware       |
-| 16  | **Check Unsloth Studio** integration status                       | Low    | Low     | AI             |
-| 17  | **Add CI pipeline** — at minimum `just test-fast` on push         | High   | Medium  | DevOps         |
-| 18  | **Write ADR for niri session restore** design decisions           | Low    | Low     | Documentation  |
-| 19  | **Explore `niri msg event-stream`** for real-time save trigger    | Medium | High    | Niri           |
-| 20  | **Update AGENTS.md** with voice-agents and Twenty sections        | Medium | Low     | Documentation  |
-| 21  | **Create `docs/status/CURRENT.md`** symlink to latest report      | Low    | 0       | Hygiene        |
-| 22  | **Review Darwin builds** — ensure `aarch64-darwin` still compiles | Medium | Medium  | Cross-platform |
-| 23  | **Add niri fullscreen restore** — watch upstream issue #1843      | Medium | Blocked | Niri           |
-| 24  | **Setup Taskwarrior backup automation** via systemd timer         | Medium | Low     | Automation     |
-| 25  | **Evaluate if NOOBS SD card should be reflashed** or reformatted  | Low    | Low     | Hardware       |
+| #  | Action                                                            | Impact | Effort  | Category       |
+| -- | ----------------------------------------------------------------- | ------ | ------- | -------------- |
+| 1  | **Unmount SD card** (`umount /tmp/sdcard-p1 /tmp/sdcard-p5`)      | Now    | 0       | Immediate      |
+| 2  | **Archive 100+ stale status docs** to `docs/status/archive/`      | High   | Low     | Hygiene        |
+| 3  | **Drop orphaned Hyprland stash** (`stash@{2}`)                    | Low    | 0       | Hygiene        |
+| 4  | **Review/apply vendorHash stash** (`stash@{0}`)                   | Medium | Low     | EMEET PIXY     |
+| 5  | **Enable `services.udisks2`** for auto-mounting USB/SD            | High   | Low     | NixOS          |
+| 6  | **Investigate `just test` race** — pin down root cause            | Medium | Medium  | Reliability    |
+| 7  | **Convert niri session restore** to proper NixOS module options   | High   | Medium  | Architecture   |
+| 8  | **Add Waybar module** for session restore stats                   | Medium | Low     | Niri           |
+| 9  | **Write uevent_linux tests** for emeet-pixyd                      | Medium | Medium  | Testing        |
+| 10 | **Migrate Twenty to sops-nix** secrets                            | Medium | Low     | Security       |
+| 11 | **Standardize service deployment** — native NixOS vs Docker       | High   | High    | Architecture   |
+| 12 | **Verify SigNoz** is collecting traces/metrics/logs               | Medium | Low     | Monitoring     |
+| 13 | **Check Photomap** service status and fix if broken               | Medium | Low     | Services       |
+| 14 | **Check Authelia** SSO deployment status                          | High   | Low     | Security       |
+| 15 | **Verify AMD NPU** driver is functional with test workload        | Medium | Medium  | Hardware       |
+| 16 | **Check Unsloth Studio** integration status                       | Low    | Low     | AI             |
+| 17 | **Add CI pipeline** — at minimum `just test-fast` on push         | High   | Medium  | DevOps         |
+| 18 | **Write ADR for niri session restore** design decisions           | Low    | Low     | Documentation  |
+| 19 | **Explore `niri msg event-stream`** for real-time save trigger    | Medium | High    | Niri           |
+| 20 | **Update AGENTS.md** with voice-agents and Twenty sections        | Medium | Low     | Documentation  |
+| 21 | **Create `docs/status/CURRENT.md`** symlink to latest report      | Low    | 0       | Hygiene        |
+| 22 | **Review Darwin builds** — ensure `aarch64-darwin` still compiles | Medium | Medium  | Cross-platform |
+| 23 | **Add niri fullscreen restore** — watch upstream issue #1843      | Medium | Blocked | Niri           |
+| 24 | **Setup Taskwarrior backup automation** via systemd timer         | Medium | Low     | Automation     |
+| 25 | **Evaluate if NOOBS SD card should be reflashed** or reformatted  | Low    | Low     | Hardware       |
 
 ---
 

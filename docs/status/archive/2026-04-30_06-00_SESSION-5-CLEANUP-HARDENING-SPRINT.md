@@ -81,45 +81,45 @@ Fix: `PartOf` + `Restart=always` + `StartLimitBurst=3`.
 
 ## E) WHAT WE SHOULD IMPROVE 📈
 
-| #   | Area                                                 | Detail                                                                                    |
-| --- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| 1   | **Deploy cadence**                                   | 60+ commits undeployed. Need to deploy soon.                                              |
-| 2   | **serviceDefaults migration**                        | 9 more services to wire. Each is a ~5 min task.                                           |
-| 3   | **Health check depth**                               | Could add: Ollama status, Docker container health, BTRFS scrub status, ZRAM swap pressure |
-| 4   | **CI should run health check**                       | Add `just health` to CI pipeline for NixOS-specific checks                                |
-| 5   | **`builtins.replaceStrings` for niri unit patching** | Fragile — upstream formatting change silently breaks it. Need upstream fix or assertion.  |
+| # | Area                                                 | Detail                                                                                    |
+| - | ---------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| 1 | **Deploy cadence**                                   | 60+ commits undeployed. Need to deploy soon.                                              |
+| 2 | **serviceDefaults migration**                        | 9 more services to wire. Each is a ~5 min task.                                           |
+| 3 | **Health check depth**                               | Could add: Ollama status, Docker container health, BTRFS scrub status, ZRAM swap pressure |
+| 4 | **CI should run health check**                       | Add `just health` to CI pipeline for NixOS-specific checks                                |
+| 5 | **`builtins.replaceStrings` for niri unit patching** | Fragile — upstream formatting change silently breaks it. Need upstream fix or assertion.  |
 
 ---
 
 ## F) TOP 25 THINGS TO DO NEXT 🎯
 
-| #   | Task                                         | Category    | Est. | Blocker?          |
-| --- | -------------------------------------------- | ----------- | ---- | ----------------- |
-| 1   | **Deploy on evo-x2** — `just switch`         | P5-DEPLOY   | 45m  | Needs evo-x2      |
-| 2   | **Verify niri restarts after deploy**        | P5-VERIFY   | 2m   | Needs deploy      |
-| 3   | **Verify Ollama**                            | P5-VERIFY   | 5m   | Needs evo-x2      |
-| 4   | **Verify SigNoz**                            | P5-VERIFY   | 5m   | Needs evo-x2      |
-| 5   | **Move Taskwarrior encryption to sops**      | P1-SECURITY | 10m  | Needs evo-x2      |
-| 6   | **Pin Docker digests**                       | P1-SECURITY | 10m  | Needs evo-x2      |
-| 7   | **Secure VRRP auth_pass**                    | P1-SECURITY | 8m   | Needs evo-x2      |
-| 8   | **Migrate 9 services to serviceDefaults**    | REFACTOR    | 45m  | None              |
-| 9   | **Add niri unit patch assertion**            | RELIABILITY | 15m  | None              |
-| 10  | **Verify ComfyUI**                           | P5-VERIFY   | 5m   | Needs evo-x2      |
-| 11  | **Verify Steam**                             | P5-VERIFY   | 5m   | Needs evo-x2      |
-| 12  | **Verify Caddy HTTPS**                       | P5-VERIFY   | 3m   | Needs evo-x2      |
-| 13  | **Check Authelia SSO**                       | P5-VERIFY   | 3m   | Needs evo-x2      |
-| 14  | **Verify AMD NPU**                           | P5-VERIFY   | 10m  | Needs evo-x2      |
-| 15  | **Build Pi 3 SD image**                      | P5-DEPLOY   | 30m  | Needs Pi 3        |
-| 16  | **Add health check to CI**                   | P7-TOOLING  | 15m  | None              |
-| 17  | **Hermes health check**                      | P6-SERVICE  | 30m  | Needs Hermes code |
-| 18  | **SigNoz missing metrics**                   | P6-SERVICE  | 30m  | Needs evo-x2      |
-| 19  | **Add NixOS VM test**                        | P9-TESTING  | 2h   | Research          |
-| 20  | **Add Waybar session restore stats**         | P9-FEATURE  | 1h   | None              |
-| 21  | **Create homeModules pattern**               | P9-ARCH     | 2h   | Research          |
-| 22  | **Binary cache (Cachix)**                    | P9-PERF     | 1h   | Research          |
-| 23  | **Configure LAN devices for DNS VIP**        | P5-DEPLOY   | 10m  | Network access    |
-| 24  | **Add Ollama/Docker/BTRFS checks to health** | NEW-TOOLING | 30m  | None              |
-| 25  | **Authelia SMTP notifications**              | P6-SERVICE  | 15m  | Needs SMTP creds  |
+| #  | Task                                         | Category    | Est. | Blocker?          |
+| -- | -------------------------------------------- | ----------- | ---- | ----------------- |
+| 1  | **Deploy on evo-x2** — `just switch`         | P5-DEPLOY   | 45m  | Needs evo-x2      |
+| 2  | **Verify niri restarts after deploy**        | P5-VERIFY   | 2m   | Needs deploy      |
+| 3  | **Verify Ollama**                            | P5-VERIFY   | 5m   | Needs evo-x2      |
+| 4  | **Verify SigNoz**                            | P5-VERIFY   | 5m   | Needs evo-x2      |
+| 5  | **Move Taskwarrior encryption to sops**      | P1-SECURITY | 10m  | Needs evo-x2      |
+| 6  | **Pin Docker digests**                       | P1-SECURITY | 10m  | Needs evo-x2      |
+| 7  | **Secure VRRP auth_pass**                    | P1-SECURITY | 8m   | Needs evo-x2      |
+| 8  | **Migrate 9 services to serviceDefaults**    | REFACTOR    | 45m  | None              |
+| 9  | **Add niri unit patch assertion**            | RELIABILITY | 15m  | None              |
+| 10 | **Verify ComfyUI**                           | P5-VERIFY   | 5m   | Needs evo-x2      |
+| 11 | **Verify Steam**                             | P5-VERIFY   | 5m   | Needs evo-x2      |
+| 12 | **Verify Caddy HTTPS**                       | P5-VERIFY   | 3m   | Needs evo-x2      |
+| 13 | **Check Authelia SSO**                       | P5-VERIFY   | 3m   | Needs evo-x2      |
+| 14 | **Verify AMD NPU**                           | P5-VERIFY   | 10m  | Needs evo-x2      |
+| 15 | **Build Pi 3 SD image**                      | P5-DEPLOY   | 30m  | Needs Pi 3        |
+| 16 | **Add health check to CI**                   | P7-TOOLING  | 15m  | None              |
+| 17 | **Hermes health check**                      | P6-SERVICE  | 30m  | Needs Hermes code |
+| 18 | **SigNoz missing metrics**                   | P6-SERVICE  | 30m  | Needs evo-x2      |
+| 19 | **Add NixOS VM test**                        | P9-TESTING  | 2h   | Research          |
+| 20 | **Add Waybar session restore stats**         | P9-FEATURE  | 1h   | None              |
+| 21 | **Create homeModules pattern**               | P9-ARCH     | 2h   | Research          |
+| 22 | **Binary cache (Cachix)**                    | P9-PERF     | 1h   | Research          |
+| 23 | **Configure LAN devices for DNS VIP**        | P5-DEPLOY   | 10m  | Network access    |
+| 24 | **Add Ollama/Docker/BTRFS checks to health** | NEW-TOOLING | 30m  | None              |
+| 25 | **Authelia SMTP notifications**              | P6-SERVICE  | 15m  | Needs SMTP creds  |
 
 ---
 

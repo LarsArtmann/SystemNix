@@ -201,33 +201,33 @@ Every time an upstream Go dep changes, the vendorHash in `overlays/shared.nix` m
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| #   | Task                                        | Impact | Effort | Why                                   |
-| --- | ------------------------------------------- | ------ | ------ | ------------------------------------- |
-| 1   | **`just switch` — Deploy**                  | HIGH   | 5min   | 6 commits undeployed, all tested      |
-| 2   | **Disk GC + monitoring**                    | HIGH   | 30min  | 94% disk, no alerting                 |
-| 3   | **Move 4 vendorHash upstream**              | HIGH   | 2h     | Every dep update breaks builds        |
-| 4   | **Add disk space Gatus alert**              | HIGH   | 15min  | Silent disk-full risk                 |
-| 5   | **Add swap/RAM Gatus alert**                | HIGH   | 15min  | gopls OOM risk                        |
-| 6   | **Rebuild TODO_LIST.md**                    | MED    | 30min  | Stale since session 75                |
-| 7   | **Audit FEATURES.md**                       | MED    | 1h     | Verify against actual code            |
-| 8   | **BTRFS /data snapshot migration**          | MED    | 1h     | `/data` unprotected by snapshots      |
-| 9   | **Fix upstream pre-commit hooks**           | MED    | 2h     | `--no-verify` on every commit         |
-| 10  | **Flake inputs audit (47 → ?)**             | MED    | 2h     | Reduce lock file churn                |
-| 11  | **crates.io upstream fix**                  | MED    | 1h     | File nixpkgs issue / patch fetchCrate |
-| 12  | **nix-colors integration**                  | MED    | 6h     | 17+ hardcoded colors                  |
-| 13  | **Deploy Dozzle**                           | LOW    | 30min  | Docker log tailing                    |
-| 14  | **Wire Pi 3 DNS failover**                  | LOW    | 4h     | Hardware sitting idle                 |
-| 15  | **Hermes secondary LLM**                    | LOW    | 2h     | Single-provider risk                  |
-| 16  | **Hermes SSH deploy key**                   | LOW    | 30min  | Git operations fail in sandbox        |
-| 17  | **Create shared flake-parts template**      | LOW    | 3h     | Reduce boilerplate across repos       |
-| 18  | **Fix `file-and-image-renamer` Go version** | LOW    | 30min  | Disabled due to 1.26.2 vs 1.26.3      |
-| 19  | **Fix `photomap` Podman permissions**       | LOW    | 1h     | Disabled service                      |
-| 20  | **SigNoz per-threshold channel routing**    | LOW    | 1h     | All alerts → same channel             |
-| 21  | **Consolidate voice-agents Caddy vHost**    | LOW    | 30min  | Not following caddy.nix pattern       |
-| 22  | **`just status` command**                   | LOW    | 2h     | Manual status reports                 |
-| 23  | **Convert go-auto-upgrade `path:` → SSH**   | LOW    | 15min  | Non-portable input type               |
-| 24  | **Verify boot time (~35s target)**          | LOW    | 5min   | Measure after deploy                  |
-| 25  | **Archive old docs/status/ reports**        | LOW    | 15min  | 420+ files, most outdated             |
+| #  | Task                                        | Impact | Effort | Why                                   |
+| -- | ------------------------------------------- | ------ | ------ | ------------------------------------- |
+| 1  | **`just switch` — Deploy**                  | HIGH   | 5min   | 6 commits undeployed, all tested      |
+| 2  | **Disk GC + monitoring**                    | HIGH   | 30min  | 94% disk, no alerting                 |
+| 3  | **Move 4 vendorHash upstream**              | HIGH   | 2h     | Every dep update breaks builds        |
+| 4  | **Add disk space Gatus alert**              | HIGH   | 15min  | Silent disk-full risk                 |
+| 5  | **Add swap/RAM Gatus alert**                | HIGH   | 15min  | gopls OOM risk                        |
+| 6  | **Rebuild TODO_LIST.md**                    | MED    | 30min  | Stale since session 75                |
+| 7  | **Audit FEATURES.md**                       | MED    | 1h     | Verify against actual code            |
+| 8  | **BTRFS /data snapshot migration**          | MED    | 1h     | `/data` unprotected by snapshots      |
+| 9  | **Fix upstream pre-commit hooks**           | MED    | 2h     | `--no-verify` on every commit         |
+| 10 | **Flake inputs audit (47 → ?)**             | MED    | 2h     | Reduce lock file churn                |
+| 11 | **crates.io upstream fix**                  | MED    | 1h     | File nixpkgs issue / patch fetchCrate |
+| 12 | **nix-colors integration**                  | MED    | 6h     | 17+ hardcoded colors                  |
+| 13 | **Deploy Dozzle**                           | LOW    | 30min  | Docker log tailing                    |
+| 14 | **Wire Pi 3 DNS failover**                  | LOW    | 4h     | Hardware sitting idle                 |
+| 15 | **Hermes secondary LLM**                    | LOW    | 2h     | Single-provider risk                  |
+| 16 | **Hermes SSH deploy key**                   | LOW    | 30min  | Git operations fail in sandbox        |
+| 17 | **Create shared flake-parts template**      | LOW    | 3h     | Reduce boilerplate across repos       |
+| 18 | **Fix `file-and-image-renamer` Go version** | LOW    | 30min  | Disabled due to 1.26.2 vs 1.26.3      |
+| 19 | **Fix `photomap` Podman permissions**       | LOW    | 1h     | Disabled service                      |
+| 20 | **SigNoz per-threshold channel routing**    | LOW    | 1h     | All alerts → same channel             |
+| 21 | **Consolidate voice-agents Caddy vHost**    | LOW    | 30min  | Not following caddy.nix pattern       |
+| 22 | **`just status` command**                   | LOW    | 2h     | Manual status reports                 |
+| 23 | **Convert go-auto-upgrade `path:` → SSH**   | LOW    | 15min  | Non-portable input type               |
+| 24 | **Verify boot time (~35s target)**          | LOW    | 5min   | Measure after deploy                  |
+| 25 | **Archive old docs/status/ reports**        | LOW    | 15min  | 420+ files, most outdated             |
 
 ---
 

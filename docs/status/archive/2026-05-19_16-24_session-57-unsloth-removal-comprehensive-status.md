@@ -95,33 +95,33 @@ The SystemNix monorepo is in **strong shape** — 112 Nix files, 36 service modu
 
 ## f) Top #25 Things We Should Get Done Next
 
-| #   | Task                                                                                                             | Impact      | Effort   | Category       |
-| --- | ---------------------------------------------------------------------------------------------------------------- | ----------- | -------- | -------------- |
-| 1   | **Complete Forgejo migration** — update DNS records, Authelia OIDC, Homepage dashboard from "gitea" to "forgejo" | 🔴 Critical | 30 min   | Bug fix        |
-| 2   | **Commit all accumulated changes** — 12+ files uncommitted                                                       | 🔴 Critical | 5 min    | Hygiene        |
-| 3   | **Verify Forgejo + Authelia OIDC flow works end-to-end**                                                         | 🔴 High     | 15 min   | Verification   |
-| 4   | **Reclaim /data/unsloth/ 28GB** on evo-x2 disk                                                                   | 🟡 Medium   | 5 min    | Cleanup        |
-| 5   | **Deduplicate evo-x2 dns-blocker-config.nix** with shared dns-resolver module                                    | 🟡 Medium   | 20 min   | Code quality   |
-| 6   | **Update AGENTS.md** — rename all "Gitea" references to "Forgejo", update service module list                    | 🟡 Medium   | 15 min   | Docs           |
-| 7   | **Verify Voice agents** end-to-end (Whisper + LiveKit + ROCm)                                                    | 🟡 Medium   | 30 min   | Verification   |
-| 8   | **Verify Twenty CRM** is functional or document why it's not                                                     | 🟡 Medium   | 15 min   | Verification   |
-| 9   | **Add Gatus endpoints** for Voice agents, Hermes, Manifest                                                       | 🟡 Medium   | 15 min   | Monitoring     |
-| 10  | **Move Authelia OIDC client_secret from bcrypt to sops**                                                         | 🟡 Medium   | 20 min   | Security       |
-| 11  | **Move Gitea/Forgejo admin password to sops**                                                                    | 🟡 Medium   | 10 min   | Security       |
-| 12  | **Audit and remove dead modules** (ComfyUI if confirmed unused, Multi-WM/Sway if bitrotted)                      | 🟡 Medium   | 30 min   | Cleanup        |
-| 13  | **Centralize Twenty secrets** in sops.nix                                                                        | 🟢 Low      | 15 min   | Security       |
-| 14  | **Run `just update`** to refresh flake.lock with latest upstream                                                 | 🟢 Low      | 10 min   | Maintenance    |
-| 15  | **Add nixosTests** for critical services (Caddy, DNS, Forgejo)                                                   | 🟢 Low      | 2h       | Testing        |
-| 16  | **Implement cloud backup** (B2/R2 pricing research done)                                                         | 🟢 Low      | 2h       | Reliability    |
-| 17  | **Provision Pi 3 + USB SSD** for DNS failover cluster                                                            | 🟢 Low      | Physical | Infrastructure |
-| 18  | **Enable Forgejo federation** (guide exists)                                                                     | 🟢 Low      | 30 min   | Feature        |
-| 19  | **Create Incus VM for AI workloads** — isolate Ollama, ComfyUI GPU bugs                                          | 🟢 Low      | 2h       | Security       |
-| 20  | **Enable AppArmor profiles** for hardened services                                                               | 🟢 Low      | 1h       | Security       |
-| 21  | **Add Signoz dashboards** for GPU metrics, Niri health, service correlations                                     | 🟢 Low      | 1h       | Observability  |
-| 22  | **Script health check runner** — one command to verify all services                                              | 🟢 Low      | 30 min   | DX             |
-| 23  | **Clean archive docs** — update stale "gitea" references in docs/status/archive/                                 | 🟢 Low      | 30 min   | Docs           |
-| 24  | **Validate monitor365 value** — skeleton deployment, is it worth keeping?                                        | 🟢 Low      | 15 min   | Audit          |
-| 25  | **Boot performance optimization** — implement remaining items from boot-performance-analysis.md                  | 🟢 Low      | 1h       | Performance    |
+| #  | Task                                                                                                             | Impact      | Effort   | Category       |
+| -- | ---------------------------------------------------------------------------------------------------------------- | ----------- | -------- | -------------- |
+| 1  | **Complete Forgejo migration** — update DNS records, Authelia OIDC, Homepage dashboard from "gitea" to "forgejo" | 🔴 Critical | 30 min   | Bug fix        |
+| 2  | **Commit all accumulated changes** — 12+ files uncommitted                                                       | 🔴 Critical | 5 min    | Hygiene        |
+| 3  | **Verify Forgejo + Authelia OIDC flow works end-to-end**                                                         | 🔴 High     | 15 min   | Verification   |
+| 4  | **Reclaim /data/unsloth/ 28GB** on evo-x2 disk                                                                   | 🟡 Medium   | 5 min    | Cleanup        |
+| 5  | **Deduplicate evo-x2 dns-blocker-config.nix** with shared dns-resolver module                                    | 🟡 Medium   | 20 min   | Code quality   |
+| 6  | **Update AGENTS.md** — rename all "Gitea" references to "Forgejo", update service module list                    | 🟡 Medium   | 15 min   | Docs           |
+| 7  | **Verify Voice agents** end-to-end (Whisper + LiveKit + ROCm)                                                    | 🟡 Medium   | 30 min   | Verification   |
+| 8  | **Verify Twenty CRM** is functional or document why it's not                                                     | 🟡 Medium   | 15 min   | Verification   |
+| 9  | **Add Gatus endpoints** for Voice agents, Hermes, Manifest                                                       | 🟡 Medium   | 15 min   | Monitoring     |
+| 10 | **Move Authelia OIDC client_secret from bcrypt to sops**                                                         | 🟡 Medium   | 20 min   | Security       |
+| 11 | **Move Gitea/Forgejo admin password to sops**                                                                    | 🟡 Medium   | 10 min   | Security       |
+| 12 | **Audit and remove dead modules** (ComfyUI if confirmed unused, Multi-WM/Sway if bitrotted)                      | 🟡 Medium   | 30 min   | Cleanup        |
+| 13 | **Centralize Twenty secrets** in sops.nix                                                                        | 🟢 Low      | 15 min   | Security       |
+| 14 | **Run `just update`** to refresh flake.lock with latest upstream                                                 | 🟢 Low      | 10 min   | Maintenance    |
+| 15 | **Add nixosTests** for critical services (Caddy, DNS, Forgejo)                                                   | 🟢 Low      | 2h       | Testing        |
+| 16 | **Implement cloud backup** (B2/R2 pricing research done)                                                         | 🟢 Low      | 2h       | Reliability    |
+| 17 | **Provision Pi 3 + USB SSD** for DNS failover cluster                                                            | 🟢 Low      | Physical | Infrastructure |
+| 18 | **Enable Forgejo federation** (guide exists)                                                                     | 🟢 Low      | 30 min   | Feature        |
+| 19 | **Create Incus VM for AI workloads** — isolate Ollama, ComfyUI GPU bugs                                          | 🟢 Low      | 2h       | Security       |
+| 20 | **Enable AppArmor profiles** for hardened services                                                               | 🟢 Low      | 1h       | Security       |
+| 21 | **Add Signoz dashboards** for GPU metrics, Niri health, service correlations                                     | 🟢 Low      | 1h       | Observability  |
+| 22 | **Script health check runner** — one command to verify all services                                              | 🟢 Low      | 30 min   | DX             |
+| 23 | **Clean archive docs** — update stale "gitea" references in docs/status/archive/                                 | 🟢 Low      | 30 min   | Docs           |
+| 24 | **Validate monitor365 value** — skeleton deployment, is it worth keeping?                                        | 🟢 Low      | 15 min   | Audit          |
+| 25 | **Boot performance optimization** — implement remaining items from boot-performance-analysis.md                  | 🟢 Low      | 1h       | Performance    |
 
 ---
 

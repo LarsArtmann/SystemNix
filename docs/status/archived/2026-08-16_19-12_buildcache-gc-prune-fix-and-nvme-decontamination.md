@@ -8,24 +8,24 @@
 
 ## Executive Summary
 
-| | |
-|---|---|
-| **Question answered** | Logging was in the journal all along (`journalctl -u buildcache-gc`); oneshot units don't print to the invoking terminal |
-| **204G → 70G explained** | The ≥90% watermark guard fired `go clean -cache` (~134 GB freed); everything kept is deliberate (see table) |
-| **Real bug #1 found & fixed** | `pnpm store prune` had been silently failing EVERY WEEK with EACCES since the gc unit was created — non-fatal error path hid it |
+|                               |                                                                                                                                                                                     |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Question answered**         | Logging was in the journal all along (`journalctl -u buildcache-gc`); oneshot units don't print to the invoking terminal                                                            |
+| **204G → 70G explained**      | The ≥90% watermark guard fired `go clean -cache` (~134 GB freed); everything kept is deliberate (see table)                                                                         |
+| **Real bug #1 found & fixed** | `pnpm store prune` had been silently failing EVERY WEEK with EACCES since the gc unit was created — non-fatal error path hid it                                                     |
 | **Real bug #2 found & fixed** | The 2026-08-16 USB outage displaced the HM cache symlinks; env-less processes rebuilt ~8.5 GB of caches directly onto the QLC NVMe — the exact I/O class this SSD exists to prevent |
-| **Deployed & verified live** | pnpm prune clean exit, HM activation installed all 3 symlinks, post-deploy GC run green, all debris reaped |
-| **Not mine / pre-existing** | 5 post-deploy smoke FAILs — all Monitor365 (known separate issue) |
+| **Deployed & verified live**  | pnpm prune clean exit, HM activation installed all 3 symlinks, post-deploy GC run green, all debris reaped                                                                          |
+| **Not mine / pre-existing**   | 5 post-deploy smoke FAILs — all Monitor365 (known separate issue)                                                                                                                   |
 
 ### The 70G that remains (deliberate)
 
-| Dir | Size | Why kept |
-|---|---|---|
-| rust | 45G | target dirs of projects touched <14d (`maxAgeDays`); incremental state sccache doesn't cover |
-| go-mod | 13G | `go clean -cache` ≠ `-modcache`; refill = re-download everything |
-| goimports | 5.3G | no GC step exists; regenerates in minutes if lost |
-| go-build | 1.3G | already rebuilding since the clean — this is the hot cache |
-| npm/golangci-lint/playwright/pip/sccache | ~4.5G | no GC steps; slow-growing; sccache self-LRUs at 32G |
+| Dir                                      | Size  | Why kept                                                                                     |
+| ---------------------------------------- | ----- | -------------------------------------------------------------------------------------------- |
+| rust                                     | 45G   | target dirs of projects touched <14d (`maxAgeDays`); incremental state sccache doesn't cover |
+| go-mod                                   | 13G   | `go clean -cache` ≠ `-modcache`; refill = re-download everything                             |
+| goimports                                | 5.3G  | no GC step exists; regenerates in minutes if lost                                            |
+| go-build                                 | 1.3G  | already rebuilding since the clean — this is the hot cache                                   |
+| npm/golangci-lint/playwright/pip/sccache | ~4.5G | no GC steps; slow-growing; sccache self-LRUs at 32G                                          |
 
 ---
 
@@ -78,10 +78,12 @@
 ## e) WHAT WE SHOULD IMPROVE! (self-review)
 
 **What did I forget?**
+
 - I never looked at WHY `~/.cache/tinygo` has 139,622 entries or whether the other stale dirs (`.pnpm-store` from May, `testify2gomega`, `turso-go`) matter. Noticed, not investigated — out of session scope.
 - I didn't check `~/.local/share/pnpm/{bin,.tools}` for stray state while I was in there.
 
 **What could I have done better?**
+
 - Diagnosed with the journal FIRST, before any `du`/hypothesis — it contained the whole story (EACCES + watermark trigger) in 15 lines. I instead started with usage breakdowns. Cheaper path existed.
 - The rm-debris step should have been a single sudo-scoped command from the start.
 - Introduced a deploy-blocking risk (synchronous gc) without flagging the tradeoff to the user first — it's the kind of "works today, bites during the next 98% incident" decision that deserves a `--no-block` from day one.
@@ -94,7 +96,7 @@
 
 ## f) Up to 50 things to get done next
 
-*Ordered roughly by impact; items 1–10 are this session's direct fallout.*
+_Ordered roughly by impact; items 1–10 are this session's direct fallout._
 
 1. Decide + execute `--no-block` (or drop) for the post-switch gc start in deploy.sh — remove the deploy-blocking risk I introduced.
 2. Unify the reap lists: extract `goimports go go-build` (+ debris set) into one shared source consumed by both the recovery service and deploy.sh.
@@ -155,7 +157,7 @@
 
 ---
 
-*Report covers session 18:55–19:12, 2026-08-16. Prior session context: `docs/status/2026-08-16_18-39_buildcache-zombie-mount-incident-and-self-healing-deploy.md`.*
+_Report covers session 18:55–19:12, 2026-08-16. Prior session context: `docs/status/2026-08-16_18-39_buildcache-zombie-mount-incident-and-self-healing-deploy.md`._
 
 ---
 

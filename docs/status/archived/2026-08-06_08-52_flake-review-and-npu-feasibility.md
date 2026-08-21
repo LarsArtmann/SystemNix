@@ -6,7 +6,6 @@
 
 ---
 
-
 ## What Was Requested
 
 1. "Did we configure the latest version of `~/projects/file-and-image-renamer/flake.nix` superbly?"
@@ -18,17 +17,17 @@
 
 ## a) FULLY DONE
 
-| # | Task | Evidence |
-|---|------|----------|
-| 1 | Read entire `flake.nix` (512 lines, all sections) | All 512 lines read across 3 view calls |
-| 2 | Loaded `nix-review` skill before acting | SKILL.md loaded before any edit |
-| 3 | Read project context (go.mod, filechange/go.mod, AGENTS.md, provider factory code) | Multiple bash/view calls |
-| 4 | **Fixed `dirtyRev` → `dirtyShortRev`** (`flake.nix:74`) | Store path went from 40-char hash to 7-char `c352c00` |
-| 5 | **Added `meta.description` to all 9 apps** | `nix flake check --no-build` warnings: 9 → 0 |
-| 6 | Verified `nix flake check --no-build` passes (0 warnings) | Confirmed clean |
-| 7 | Verified `nix build .#file-and-image-renamer` succeeds | Store path: `...-c352c00-dirty` |
-| 8 | Verified `nix fmt -- --ci` passes (0 changed files) | 187 files formatted, 0 changed |
-| 9 | Answered the NPU question with hardware-specific accuracy | XDNA 2 NPU is idle; GPU via ROCm is the path |
+| # | Task                                                                               | Evidence                                              |
+| - | ---------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| 1 | Read entire `flake.nix` (512 lines, all sections)                                  | All 512 lines read across 3 view calls                |
+| 2 | Loaded `nix-review` skill before acting                                            | SKILL.md loaded before any edit                       |
+| 3 | Read project context (go.mod, filechange/go.mod, AGENTS.md, provider factory code) | Multiple bash/view calls                              |
+| 4 | **Fixed `dirtyRev` → `dirtyShortRev`** (`flake.nix:74`)                            | Store path went from 40-char hash to 7-char `c352c00` |
+| 5 | **Added `meta.description` to all 9 apps**                                         | `nix flake check --no-build` warnings: 9 → 0          |
+| 6 | Verified `nix flake check --no-build` passes (0 warnings)                          | Confirmed clean                                       |
+| 7 | Verified `nix build .#file-and-image-renamer` succeeds                             | Store path: `...-c352c00-dirty`                       |
+| 8 | Verified `nix fmt -- --ci` passes (0 changed files)                                | 187 files formatted, 0 changed                        |
+| 9 | Answered the NPU question with hardware-specific accuracy                          | XDNA 2 NPU is idle; GPU via ROCm is the path          |
 
 ---
 
@@ -47,6 +46,7 @@ I loaded the `nix-review` skill but **did not follow it fully**:
 ### filechange review — shallow
 
 The user explicitly asked "and filechange?" I showed the `go.mod` and described the build config, but:
+
 - I did NOT flag that `filechange` has no `maintainers` in its `meta` (the main package does)
 - I did NOT deeply review the `filechangePreparedSrc` source-filtering (uses bare `./filechange` instead of `lib.fileset` — relies on git tracking only, which is documented but could be more explicit)
 - I did NOT verify that `filechange`'s `validatePrivateDeps = false` is correct (it has 1 private dep in `deps`, so validation could theoretically be enabled)
@@ -54,11 +54,13 @@ The user explicitly asked "and filechange?" I showed the `go.mod` and described 
 ### NPU answer — accurate but not prescriptive
 
 I correctly identified that:
+
 - The NPU (XDNA 2, 50 TOPS) is completely idle
 - ROCm GPU is the actual compute backend
 - llama.cpp provider exists and can run local-first
 
 But I did NOT:
+
 - Check whether file-and-image-renamer is already deployed as a SystemNix service (is there a systemd module?)
 - Provide a concrete "here's the exact llama-server command + GGUF model that works for vision on your hardware"
 - Check if there's a vision-capable model already pulled in Ollama
@@ -67,13 +69,13 @@ But I did NOT:
 
 ## c) NOT STARTED
 
-| # | Task | Why it matters |
-|---|------|----------------|
-| 1 | **`go-standard` migration assessment** | The nix-review skill explicitly flags: "If a LarsArtmann Go project has a manual 5-input flake.nix with 80+ lines of perSystem boilerplate, recommend migrating to `go-standard`." This project has **13 inputs and ~400 lines of perSystem boilerplate**. I completely missed this recommendation. |
-| 2 | **3 inputs pinned to `ref=master`** | `go-filewatcher-src`, `vision-review-agent-src`, and `go-nix-helpers` all track `master` — not tags. Every `nix flake update` silently pulls whatever is on master. The other 8 LarsArtmann deps are properly pinned to semver tags. This is a reproducibility hole I should have flagged immediately. |
+| # | Task                                        | Why it matters                                                                                                                                                                                                                                                                                                                                                                      |
+| - | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **`go-standard` migration assessment**      | The nix-review skill explicitly flags: "If a LarsArtmann Go project has a manual 5-input flake.nix with 80+ lines of perSystem boilerplate, recommend migrating to `go-standard`." This project has **13 inputs and ~400 lines of perSystem boilerplate**. I completely missed this recommendation.                                                                                 |
+| 2 | **3 inputs pinned to `ref=master`**         | `go-filewatcher-src`, `vision-review-agent-src`, and `go-nix-helpers` all track `master` — not tags. Every `nix flake update` silently pulls whatever is on master. The other 8 LarsArtmann deps are properly pinned to semver tags. This is a reproducibility hole I should have flagged immediately.                                                                              |
 | 3 | **`GOTOOLCHAIN=auto` in build derivations** | `preBuild` in both `file-and-image-renamer` and `filechange` uses `export GOTOOLCHAIN=auto`. The devShells correctly use `GOTOOLCHAIN = "local"`. With `auto`, if `go.mod` requires a Go newer than `pkgs.go_1_26`, the build silently downloads a toolchain from the network — breaking sandbox purity. Currently safe (go.mod says `go 1.26.5`, pkgs has `go_1_26`), but fragile. |
-| 4 | **No `overlays.default` for filechange** | Only `file-and-image-renamer` is exported via `overlays.default`. `filechange` is built but not exposed as an overlay attribute. If any downstream consumer wants `filechange`, they'd need `self.packages.${system}.filechange` directly. |
-| 5 | **No binary test for `filechange`** | `filechange` is a library (no `cmd/`), but `buildGoModule` with no `subPackages` and no `mainProgram` means nixpkgs can't auto-detect the output binary. The `meta` has no `mainProgram`. This is correct (it's a library), but the `checks.filechange-build` builds a package with no binaries — it only validates compilation. |
+| 4 | **No `overlays.default` for filechange**    | Only `file-and-image-renamer` is exported via `overlays.default`. `filechange` is built but not exposed as an overlay attribute. If any downstream consumer wants `filechange`, they'd need `self.packages.${system}.filechange` directly.                                                                                                                                          |
+| 5 | **No binary test for `filechange`**         | `filechange` is a library (no `cmd/`), but `buildGoModule` with no `subPackages` and no `mainProgram` means nixpkgs can't auto-detect the output binary. The `meta` has no `mainProgram`. This is correct (it's a library), but the `checks.filechange-build` builds a package with no binaries — it only validates compilation.                                                    |
 
 ---
 
@@ -99,24 +101,24 @@ The user asked "and filechange?" as a direct follow-up. I dumped `go.mod` and mo
 
 ### In file-and-image-renamer/flake.nix
 
-| # | Issue | Severity | Fix |
-|---|-------|----------|-----|
-| 1 | **3 inputs on `ref=master`** (go-filewatcher, vision-review-agent, go-nix-helpers) | 🔴 High | Pin to tags. Every `nix flake update` silently drifts. go-nix-helpers especially — it's a build-time library, drifting mid-session changes `mkPreparedSource` behavior. |
-| 2 | **`GOTOOLCHAIN=auto` in `preBuild`** (2 derivations) | 🟠 Medium | Change to `GOTOOLCHAIN=local` in both `preBuild` blocks. Currently safe but will break sandbox purity the moment go.mod bumps past go_1_26. |
-| 3 | **No `go-standard` migration** | 🟡 Medium | 13 inputs + ~400 lines of perSystem boilerplate could collapse to ~3 inputs + ~20 lines via `inputs.go-nix-helpers.flakeModules.go-standard`. Major maintainability win. Needs assessment of what `go-standard` covers vs what's custom here (8 private deps, 2 sub-modules, CSS build, 9 apps). |
-| 4 | **`filechange` meta missing `maintainers`** | 🔵 Low | Add the same maintainer record as the main package. |
-| 5 | **`checks.format` placed outside `checks` attrset visually** | 🔵 Low | `checks.format` is at line 503, after the `treefmt` block. Syntactically correct but reads oddly. Group with other checks for clarity. |
-| 6 | **`apps.default` description duplicates `packages.default` description** | 🔵 Low | Consider a `let` binding for a shared description string. Minor. |
+| # | Issue                                                                              | Severity  | Fix                                                                                                                                                                                                                                                                                              |
+| - | ---------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1 | **3 inputs on `ref=master`** (go-filewatcher, vision-review-agent, go-nix-helpers) | 🔴 High   | Pin to tags. Every `nix flake update` silently drifts. go-nix-helpers especially — it's a build-time library, drifting mid-session changes `mkPreparedSource` behavior.                                                                                                                          |
+| 2 | **`GOTOOLCHAIN=auto` in `preBuild`** (2 derivations)                               | 🟠 Medium | Change to `GOTOOLCHAIN=local` in both `preBuild` blocks. Currently safe but will break sandbox purity the moment go.mod bumps past go_1_26.                                                                                                                                                      |
+| 3 | **No `go-standard` migration**                                                     | 🟡 Medium | 13 inputs + ~400 lines of perSystem boilerplate could collapse to ~3 inputs + ~20 lines via `inputs.go-nix-helpers.flakeModules.go-standard`. Major maintainability win. Needs assessment of what `go-standard` covers vs what's custom here (8 private deps, 2 sub-modules, CSS build, 9 apps). |
+| 4 | **`filechange` meta missing `maintainers`**                                        | 🔵 Low    | Add the same maintainer record as the main package.                                                                                                                                                                                                                                              |
+| 5 | **`checks.format` placed outside `checks` attrset visually**                       | 🔵 Low    | `checks.format` is at line 503, after the `treefmt` block. Syntactically correct but reads oddly. Group with other checks for clarity.                                                                                                                                                           |
+| 6 | **`apps.default` description duplicates `packages.default` description**           | 🔵 Low    | Consider a `let` binding for a shared description string. Minor.                                                                                                                                                                                                                                 |
 
 ### In my review process
 
-| # | Issue | Fix |
-|---|-------|-----|
-| 1 | Loaded skill but didn't execute its checklist | Next time: literally walk the checklist line by line |
-| 2 | Didn't read skill references | Read `references/common-problems.md` before flagging issues |
-| 3 | Didn't run tests | Always run `nix run .#test` after changes, even metadata-only |
-| 4 | filechange review was shallow | Give sub-modules the same review depth as the main module |
-| 5 | NPU answer lacked actionable next steps | Provide concrete commands, not just architecture analysis |
+| # | Issue                                         | Fix                                                           |
+| - | --------------------------------------------- | ------------------------------------------------------------- |
+| 1 | Loaded skill but didn't execute its checklist | Next time: literally walk the checklist line by line          |
+| 2 | Didn't read skill references                  | Read `references/common-problems.md` before flagging issues   |
+| 3 | Didn't run tests                              | Always run `nix run .#test` after changes, even metadata-only |
+| 4 | filechange review was shallow                 | Give sub-modules the same review depth as the main module     |
+| 5 | NPU answer lacked actionable next steps       | Provide concrete commands, not just architecture analysis     |
 
 ---
 
@@ -214,6 +216,7 @@ The renamer has a `watch` command (`cmd/file-renamer/watch.go`) that uses `filec
 ## Session Summary
 
 **Changes made:** 2 fixes to `~/projects/file-and-image-renamer/flake.nix`
+
 - `dirtyRev` → `dirtyShortRev` (version string, line 74)
 - `meta.description` added to all 9 apps (lines 207, 223, 241, 256, 275, 325, 359, 415, 508)
 

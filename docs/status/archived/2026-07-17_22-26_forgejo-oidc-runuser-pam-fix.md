@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Summary
 
 Forgejo at `https://forgejo.home.lan/user/login` showed an **empty login segment** — no password form (correct: `ENABLE_INTERNAL_SIGNIN = false`) and no "Sign in with PocketID" button (wrong: OIDC auth source was never registered in Forgejo's DB).

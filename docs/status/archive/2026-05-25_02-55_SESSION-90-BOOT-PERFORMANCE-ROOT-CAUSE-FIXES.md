@@ -22,11 +22,11 @@ The boot breakdown was: firmware 33s + loader 4s + kernel 2s + **initrd 2m 34s**
 
 | Metric              | Value                  | Status                    |
 | ------------------- | ---------------------- | ------------------------- |
-| RAM                 | 46/62 GiB used (74%)   | ⚠️ Elevated               |
-| Swap                | 8.5/16 GiB used (53%)  | ⚠️ High for 1h uptime     |
+| RAM                 | 46/62 GiB used (74%)   | ⚠️ Elevated                |
+| Swap                | 8.5/16 GiB used (53%)  | ⚠️ High for 1h uptime      |
 | Root disk           | 504/512 GB used (100%) | 🔴 **CRITICAL**           |
-| /data disk          | 854/1024 GB used (84%) | ⚠️ Growing                |
-| Load avg            | 4.28 / 5.79 / 12.95    | ⚠️ Elevated               |
+| /data disk          | 854/1024 GB used (84%) | ⚠️ Growing                 |
+| Load avg            | 4.28 / 5.79 / 12.95    | ⚠️ Elevated                |
 | OOM kills this boot | 0                      | ✅ (fixed in session 89)  |
 | Boot time           | 4m 22s                 | 🔴 (fixes pending deploy) |
 | last boot (normal)  | 32s                    | ✅ (boot -1, -2)          |
@@ -123,7 +123,7 @@ The `card*` wildcard matched child devices (card1-DP-1, card1-DP-2, card1-HDMI-A
 **File:** `modules/nixos/services/signoz.nix`
 **Change:** `extract()` function now returns `"0"` when grep finds no match, instead of empty string causing Prometheus textfile parse errors.
 
-**Before:** `node_nvme_available_spare_percent{device="nvme0n1"} ` (empty value → parse error)
+**Before:** `node_nvme_available_spare_percent{device="nvme0n1"}` (empty value → parse error)
 **After:** `node_nvme_available_spare_percent{device="nvme0n1"} 0`
 
 ### 7. Build Validation — Passed ✅
@@ -231,33 +231,33 @@ This is the third consecutive status report flagging root disk at 100%. No meani
 
 Sorted by impact × effort (highest first):
 
-| #   | Task                                                                        | Impact      | Effort | Category     |
-| --- | --------------------------------------------------------------------------- | ----------- | ------ | ------------ |
-| 1   | **Deploy all boot fixes** (`just switch` + reboot)                          | 🔴 Critical | 5min   | Deploy       |
-| 2   | **Root disk cleanup** — garbage collect, journal vacuum, docker prune       | 🔴 Critical | 30min  | Ops          |
-| 3   | **Verify boot time** after deploy (target: <45s)                            | 🔴 Critical | 5min   | Verify       |
-| 4   | **Fix monitor365-server** user service failures                             | 🟡 High     | 1h     | Bug          |
-| 5   | **Fix activitywatch-watcher** service failure                               | 🟡 High     | 30min  | Bug          |
-| 6   | **Fix oauth2-proxy** intermittent startup failure                           | 🟡 High     | 1h     | Bug          |
-| 7   | **Set `vm.overcommit_memory = 1`** for Redis                                | 🟡 High     | 5min   | Config       |
-| 8   | **Archive old status reports** (keep last 10)                               | 🟡 Medium   | 15min  | Housekeeping |
-| 9   | **Add disk space alert** to Gatus                                           | 🟡 Medium   | 30min  | Monitoring   |
-| 10  | **Add boot time tracking** (systemd-analyze in timer)                       | 🟡 Medium   | 30min  | Monitoring   |
-| 11  | **Fix dnsblockd-cert-import** user service failure                          | 🟡 Medium   | 30min  | Bug          |
-| 12  | **Run /data BTRFS migration** (`just snapshot-migrate-data`)                | 🟡 Medium   | 1h     | Ops          |
-| 13  | **Enforce service target convention** via NixOS assertion                   | 🟢 Low      | 30min  | Code quality |
-| 14  | **Auto-gate Caddy vHosts** behind service enable flags                      | 🟢 Low      | 2h     | Refactor     |
-| 15  | **Auto-gate Gatus endpoints** behind service enable flags                   | 🟢 Low      | 1h     | Refactor     |
-| 16  | **Fix IPv6 tempaddr errors** on Docker veths                                | 🟢 Low      | 30min  | Config       |
-| 17  | **Investigate firmware 33s** — check BIOS fast boot options                 | 🟢 Low      | 15min  | Perf         |
-| 18  | **Pi 3 DNS hardware provisioning**                                          | 🟢 Low      | 4h+    | Infra        |
-| 19  | **Redis authentication** — set a password                                   | 🟢 Low      | 15min  | Security     |
-| 20  | **Photomap service** — verify/test status                                   | 🟢 Low      | 1h     | Verify       |
-| 21  | **Steam module** — verify/test status                                       | 🟢 Low      | 30min  | Verify       |
-| 22  | **Clean up `docs/adr/`** — ADR-005 has duplicate naming                     | 🟢 Low      | 15min  | Housekeeping |
-| 23  | **Bluetooth hci0 wmt error** — investigate RTL driver issue                 | 🟢 Low      | 2h     | Bug          |
-| 24  | **SigNoz container DNS timing** — psql "db" host resolution on first start  | 🟢 Low      | 1h     | Bug          |
-| 25  | **Pre-commit hook staging behavior** — investigate auto-staging all changes | 🟢 Low      | 1h     | Tooling      |
+| #  | Task                                                                        | Impact      | Effort | Category     |
+| -- | --------------------------------------------------------------------------- | ----------- | ------ | ------------ |
+| 1  | **Deploy all boot fixes** (`just switch` + reboot)                          | 🔴 Critical | 5min   | Deploy       |
+| 2  | **Root disk cleanup** — garbage collect, journal vacuum, docker prune       | 🔴 Critical | 30min  | Ops          |
+| 3  | **Verify boot time** after deploy (target: <45s)                            | 🔴 Critical | 5min   | Verify       |
+| 4  | **Fix monitor365-server** user service failures                             | 🟡 High     | 1h     | Bug          |
+| 5  | **Fix activitywatch-watcher** service failure                               | 🟡 High     | 30min  | Bug          |
+| 6  | **Fix oauth2-proxy** intermittent startup failure                           | 🟡 High     | 1h     | Bug          |
+| 7  | **Set `vm.overcommit_memory = 1`** for Redis                                | 🟡 High     | 5min   | Config       |
+| 8  | **Archive old status reports** (keep last 10)                               | 🟡 Medium   | 15min  | Housekeeping |
+| 9  | **Add disk space alert** to Gatus                                           | 🟡 Medium   | 30min  | Monitoring   |
+| 10 | **Add boot time tracking** (systemd-analyze in timer)                       | 🟡 Medium   | 30min  | Monitoring   |
+| 11 | **Fix dnsblockd-cert-import** user service failure                          | 🟡 Medium   | 30min  | Bug          |
+| 12 | **Run /data BTRFS migration** (`just snapshot-migrate-data`)                | 🟡 Medium   | 1h     | Ops          |
+| 13 | **Enforce service target convention** via NixOS assertion                   | 🟢 Low      | 30min  | Code quality |
+| 14 | **Auto-gate Caddy vHosts** behind service enable flags                      | 🟢 Low      | 2h     | Refactor     |
+| 15 | **Auto-gate Gatus endpoints** behind service enable flags                   | 🟢 Low      | 1h     | Refactor     |
+| 16 | **Fix IPv6 tempaddr errors** on Docker veths                                | 🟢 Low      | 30min  | Config       |
+| 17 | **Investigate firmware 33s** — check BIOS fast boot options                 | 🟢 Low      | 15min  | Perf         |
+| 18 | **Pi 3 DNS hardware provisioning**                                          | 🟢 Low      | 4h+    | Infra        |
+| 19 | **Redis authentication** — set a password                                   | 🟢 Low      | 15min  | Security     |
+| 20 | **Photomap service** — verify/test status                                   | 🟢 Low      | 1h     | Verify       |
+| 21 | **Steam module** — verify/test status                                       | 🟢 Low      | 30min  | Verify       |
+| 22 | **Clean up `docs/adr/`** — ADR-005 has duplicate naming                     | 🟢 Low      | 15min  | Housekeeping |
+| 23 | **Bluetooth hci0 wmt error** — investigate RTL driver issue                 | 🟢 Low      | 2h     | Bug          |
+| 24 | **SigNoz container DNS timing** — psql "db" host resolution on first start  | 🟢 Low      | 1h     | Bug          |
+| 25 | **Pre-commit hook staging behavior** — investigate auto-staging all changes | 🟢 Low      | 1h     | Tooling      |
 
 ---
 

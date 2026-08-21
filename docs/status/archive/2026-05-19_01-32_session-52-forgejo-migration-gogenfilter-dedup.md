@@ -179,48 +179,48 @@ SystemNix is in **strong operational shape** with two major changes staged since
 
 ### P0 — Immediate (Do Now)
 
-| #   | Task                                                    | Effort | Impact                                                  |
-| --- | ------------------------------------------------------- | ------ | ------------------------------------------------------- |
-| 1   | **Commit + deploy Forgejo migration + gogenfilter fix** | 10 min | 15-file migration + lockfile cleanup live on production |
-| 2   | **Add `forgejo_token` to sops secrets.yaml on evo-x2**  | 5 min  | Forgejo can't start without this secret                 |
-| 3   | **Verify Forgejo starts clean after deploy**            | 5 min  | SQLite migration, web UI, OIDC, push mirrors            |
-| 4   | **Verify all services clean** — `systemctl --failed`    | 2 min  | Confidence after major migration                        |
+| # | Task                                                    | Effort | Impact                                                  |
+| - | ------------------------------------------------------- | ------ | ------------------------------------------------------- |
+| 1 | **Commit + deploy Forgejo migration + gogenfilter fix** | 10 min | 15-file migration + lockfile cleanup live on production |
+| 2 | **Add `forgejo_token` to sops secrets.yaml on evo-x2**  | 5 min  | Forgejo can't start without this secret                 |
+| 3 | **Verify Forgejo starts clean after deploy**            | 5 min  | SQLite migration, web UI, OIDC, push mirrors            |
+| 4 | **Verify all services clean** — `systemctl --failed`    | 2 min  | Confidence after major migration                        |
 
 ### P1 — This Week
 
-| #   | Task                                                            | Effort | Impact                                |
-| --- | --------------------------------------------------------------- | ------ | ------------------------------------- |
-| 5   | **Migrate Authelia OIDC `client_secret` to sops**               | 30 min | Rotatable secret, not hardcoded       |
-| 6   | **Migrate Forgejo admin password to sops**                      | 30 min | Remove plaintext file                 |
-| 7   | **Migrate Twenty secrets to central sops.nix** + pin Docker tag | 30 min | Centralized secrets, reproducible     |
-| 8   | **Investigate `whisper-asr.service` failure**                   | 30 min | Fix pre-existing broken service       |
-| 9   | **OpenSEO end-to-end verification**                             | 15 min | Confirm service works                 |
-| 10  | **Monitor365 verification**                                     | 5 min  | Confirm agent works with renamed keys |
-| 11  | **Update TODO_LIST.md + FEATURES.md**                           | 30 min | Accurate tracking                     |
+| #  | Task                                                            | Effort | Impact                                |
+| -- | --------------------------------------------------------------- | ------ | ------------------------------------- |
+| 5  | **Migrate Authelia OIDC `client_secret` to sops**               | 30 min | Rotatable secret, not hardcoded       |
+| 6  | **Migrate Forgejo admin password to sops**                      | 30 min | Remove plaintext file                 |
+| 7  | **Migrate Twenty secrets to central sops.nix** + pin Docker tag | 30 min | Centralized secrets, reproducible     |
+| 8  | **Investigate `whisper-asr.service` failure**                   | 30 min | Fix pre-existing broken service       |
+| 9  | **OpenSEO end-to-end verification**                             | 15 min | Confirm service works                 |
+| 10 | **Monitor365 verification**                                     | 5 min  | Confirm agent works with renamed keys |
+| 11 | **Update TODO_LIST.md + FEATURES.md**                           | 30 min | Accurate tracking                     |
 
 ### P2 — This Month
 
-| #   | Task                                               | Effort | Impact                      |
-| --- | -------------------------------------------------- | ------ | --------------------------- |
-| 12  | **Per-threshold SigNoz channel routing**           | 2h     | Better alert prioritization |
-| 13  | **Deploy Dozzle** (`logs.home.lan`)                | 1h     | Easy Docker log access      |
-| 14  | **Consolidate voice-agents Caddy vHost**           | 1h     | Architecture consistency    |
-| 15  | **Add SigNoz dashboards for new services**         | 2h     | Full observability          |
-| 16  | **GitHub Actions CI**                              | 2h     | `nix flake check` on push   |
-| 17  | **Convert go-auto-upgrade `path:` to SSH URLs**    | 1h     | Portable flake              |
-| 18  | **Add `lib.mkForce false` justification comments** | 1h     | Security audit trail        |
+| #  | Task                                               | Effort | Impact                      |
+| -- | -------------------------------------------------- | ------ | --------------------------- |
+| 12 | **Per-threshold SigNoz channel routing**           | 2h     | Better alert prioritization |
+| 13 | **Deploy Dozzle** (`logs.home.lan`)                | 1h     | Easy Docker log access      |
+| 14 | **Consolidate voice-agents Caddy vHost**           | 1h     | Architecture consistency    |
+| 15 | **Add SigNoz dashboards for new services**         | 2h     | Full observability          |
+| 16 | **GitHub Actions CI**                              | 2h     | `nix flake check` on push   |
+| 17 | **Convert go-auto-upgrade `path:` to SSH URLs**    | 1h     | Portable flake              |
+| 18 | **Add `lib.mkForce false` justification comments** | 1h     | Security audit trail        |
 
 ### P3 — Next Quarter
 
-| #   | Task                                         | Effort | Impact                          |
-| --- | -------------------------------------------- | ------ | ------------------------------- |
-| 19  | **Provision Pi 3 DNS failover cluster**      | 4h     | HA DNS                          |
-| 20  | **Distributed Darwin builds**                | 2h     | Unblocks MacBook at 95% disk    |
-| 21  | **Enable Linux audit framework (auditd)**    | 2h     | Security hardening              |
-| 22  | **Cachix binary cache**                      | 2h     | Faster rebuilds                 |
-| 23  | **Harden unsloth-studio** or remove module   | 30 min | Zero containment on GPU process |
-| 24  | **Create shared flake-parts Go template**    | 2h     | Standardize all Go repo flakes  |
-| 25  | **Eliminate ollama/engine binary collision** | 30 min | Clean build output              |
+| #  | Task                                         | Effort | Impact                          |
+| -- | -------------------------------------------- | ------ | ------------------------------- |
+| 19 | **Provision Pi 3 DNS failover cluster**      | 4h     | HA DNS                          |
+| 20 | **Distributed Darwin builds**                | 2h     | Unblocks MacBook at 95% disk    |
+| 21 | **Enable Linux audit framework (auditd)**    | 2h     | Security hardening              |
+| 22 | **Cachix binary cache**                      | 2h     | Faster rebuilds                 |
+| 23 | **Harden unsloth-studio** or remove module   | 30 min | Zero containment on GPU process |
+| 24 | **Create shared flake-parts Go template**    | 2h     | Standardize all Go repo flakes  |
+| 25 | **Eliminate ollama/engine binary collision** | 30 min | Clean build output              |
 
 ---
 

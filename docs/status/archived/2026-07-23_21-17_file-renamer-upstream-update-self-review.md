@@ -5,7 +5,6 @@
 
 ---
 
-
 ## (A) FULLY DONE
 
 1. **Upstream pin verified at `b181444`** — flake.lock was already at latest (auto-committed by hook). No manual update needed. Confirmed via `nix flake metadata`.
@@ -85,6 +84,7 @@
 ## (F) NEXT 50 THINGS TO DO
 
 ### Immediate (blocks deploy)
+
 1. Deploy: `nix run .#deploy`
 2. Clear dead-letter queue: `echo '[]' > ~/.file-renamer/dead-letter.json`
 3. Run post-deploy check: `nix run .#post-deploy-check`
@@ -92,6 +92,7 @@
 5. Trash stale `~/.zai_api_key`
 
 ### High priority (should do today)
+
 6. Add `restartTriggers` to file-and-image-renamer watcher service (package path)
 7. Add `restartTriggers` to file-and-image-renamer health dashboard service (package path)
 8. Add `restartTriggers` for sops secret rotation on both services
@@ -100,6 +101,7 @@
 11. Verify the Synthetic API key actually works end-to-end (the watcher hasn't successfully renamed anything yet with the new config)
 
 ### Medium priority (this week)
+
 12. Add dead-letter queue max-size limit upstream (e.g., 500 entries, FIFO eviction)
 13. Add dead-letter queue TTL upstream (e.g., auto-expire after 7 days)
 14. Add dead-letter "retry all" button to health dashboard upstream
@@ -114,6 +116,7 @@
 23. Add the file-renamer health dashboard to Homepage tiles if not already there
 
 ### Low priority (nice to have)
+
 24. Consider deprecating `apiKeyFile` option entirely if Synthetic-only is permanent
 25. Consider deprecating `model` option (GLM-specific) if Synthetic-only is permanent
 26. Document the Synthetic-only mode decision in AGENTS.md
@@ -128,6 +131,7 @@
 35. Consider whether the `result` symlink should be cleaned up (leftover from this session's build)
 
 ### Documentation
+
 36. Update `docs/status/2026-07-23_10-45_file-renamer-auth-fallback-fix.md` to note the upstream redesign
 37. Update `.crush/skills/sops-secret-management/SKILL.md` with any new learnings
 38. Add the `charm.land/fantasy` dependency to the AGENTS.md provider architecture section
@@ -135,6 +139,7 @@
 40. Consider whether the 3 redundant flake.lock commits warrant a `.gitignore` or hook change
 
 ### Testing & verification
+
 41. Write an integration test that exercises the full rename pipeline (image → AI → renamed file)
 42. Test what happens when BOTH providers fail (GLM auth error + Synthetic network error)
 43. Test the circuit breaker behavior under sustained failures

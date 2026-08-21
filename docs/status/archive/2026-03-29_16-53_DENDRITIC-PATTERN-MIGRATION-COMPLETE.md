@@ -222,33 +222,33 @@ The dendritic migration did not introduce any new issues. Previous issues remain
 
 ## F) Top 25 Things to Do Next 📋
 
-| #   | Task                                         | Effort     | Impact            | Category      |
-| --- | -------------------------------------------- | ---------- | ----------------- | ------------- |
-| 1   | Migrate remaining services to dendritic      | ~100 lines | Architecture      | Dendritic     |
-| 2   | Add import-tree auto-discovery               | ~10 lines  | Maintainability   | Dendritic     |
-| 3   | Migrate common packages to dendritic         | ~50 lines  | Architecture      | Dendritic     |
-| 4   | Migrate Darwin config to dendritic           | ~80 lines  | Architecture      | Dendritic     |
-| 5   | Enable NixOS firewall (deny-by-default)      | ~20 lines  | Critical security | Security      |
-| 6   | Bind Immich to localhost                     | 2 lines    | Critical security | Security      |
-| 7   | Backup Immich media to external storage      | ~30 lines  | Data loss         | Backup        |
-| 8   | Add off-disk backup (restic/borg)            | ~40 lines  | Data loss         | Backup        |
-| 9   | Enable fail2ban for SSH                      | 1 line     | Brute-force       | Security      |
-| 10  | Fix dnsblockd port conflict with Caddy       | ~10 lines  | Broken service    | Bugfix        |
-| 11  | Enable Immich GPU acceleration (ROCm)        | ~5 lines   | ML performance    | Performance   |
-| 12  | Add systemd restart policies                 | ~15 lines  | Reliability       | Reliability   |
-| 13  | Enable SSD TRIM                              | 1 line     | SSD health        | Maintenance   |
-| 14  | Enable SMART disk monitoring                 | 3 lines    | Disk health       | Maintenance   |
-| 15  | Add automatic Nix GC timer                   | 5 lines    | Disk space        | Maintenance   |
-| 16  | Remove `max_cstate=1` kernel param           | 1 line     | Power             | Performance   |
-| 17  | Fix Hyprland `$mod,G` bind conflict          | 1 line     | UX                | Bugfix        |
-| 18  | Delete dead Technitium files                 | 2 files    | Hygiene           | Cleanup       |
-| 19  | Deduplicate Go overlay in flake.nix          | ~20 lines  | Maintainability   | Cleanup       |
-| 20  | Fix justfile for NixOS platform              | ~50 lines  | DevEx             | Tooling       |
-| 21  | Add disk space alerts                        | ~15 lines  | Monitoring        | Observability |
-| 22  | Fix `immich.lan` DNS to LAN IP               | 2 lines    | Accessibility     | Bugfix        |
-| 23  | Change Gitea ROOT_URL to gitea.lan           | 2 lines    | Proper URLs       | Bugfix        |
-| 24  | Tune PostgreSQL for Immich                   | ~10 lines  | Performance       | Performance   |
-| 25  | Document dendritic architecture in AGENTS.md | ~50 lines  | Documentation     | Docs          |
+| #  | Task                                         | Effort     | Impact            | Category      |
+| -- | -------------------------------------------- | ---------- | ----------------- | ------------- |
+| 1  | Migrate remaining services to dendritic      | ~100 lines | Architecture      | Dendritic     |
+| 2  | Add import-tree auto-discovery               | ~10 lines  | Maintainability   | Dendritic     |
+| 3  | Migrate common packages to dendritic         | ~50 lines  | Architecture      | Dendritic     |
+| 4  | Migrate Darwin config to dendritic           | ~80 lines  | Architecture      | Dendritic     |
+| 5  | Enable NixOS firewall (deny-by-default)      | ~20 lines  | Critical security | Security      |
+| 6  | Bind Immich to localhost                     | 2 lines    | Critical security | Security      |
+| 7  | Backup Immich media to external storage      | ~30 lines  | Data loss         | Backup        |
+| 8  | Add off-disk backup (restic/borg)            | ~40 lines  | Data loss         | Backup        |
+| 9  | Enable fail2ban for SSH                      | 1 line     | Brute-force       | Security      |
+| 10 | Fix dnsblockd port conflict with Caddy       | ~10 lines  | Broken service    | Bugfix        |
+| 11 | Enable Immich GPU acceleration (ROCm)        | ~5 lines   | ML performance    | Performance   |
+| 12 | Add systemd restart policies                 | ~15 lines  | Reliability       | Reliability   |
+| 13 | Enable SSD TRIM                              | 1 line     | SSD health        | Maintenance   |
+| 14 | Enable SMART disk monitoring                 | 3 lines    | Disk health       | Maintenance   |
+| 15 | Add automatic Nix GC timer                   | 5 lines    | Disk space        | Maintenance   |
+| 16 | Remove `max_cstate=1` kernel param           | 1 line     | Power             | Performance   |
+| 17 | Fix Hyprland `$mod,G` bind conflict          | 1 line     | UX                | Bugfix        |
+| 18 | Delete dead Technitium files                 | 2 files    | Hygiene           | Cleanup       |
+| 19 | Deduplicate Go overlay in flake.nix          | ~20 lines  | Maintainability   | Cleanup       |
+| 20 | Fix justfile for NixOS platform              | ~50 lines  | DevEx             | Tooling       |
+| 21 | Add disk space alerts                        | ~15 lines  | Monitoring        | Observability |
+| 22 | Fix `immich.lan` DNS to LAN IP               | 2 lines    | Accessibility     | Bugfix        |
+| 23 | Change Gitea ROOT_URL to gitea.lan           | 2 lines    | Proper URLs       | Bugfix        |
+| 24 | Tune PostgreSQL for Immich                   | ~10 lines  | Performance       | Performance   |
+| 25 | Document dendritic architecture in AGENTS.md | ~50 lines  | Documentation     | Docs          |
 
 ---
 

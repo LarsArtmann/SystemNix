@@ -8,7 +8,6 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 1. **Root cause identified.** Commit `3b4c971c` (auto lockfile bump) rewrote `nodes.nixpkgs` from `type: github` → `type: tarball` (channels.nixos.org). The eval-time `nixpkgsTarballGuard` in `flake.nix:512` correctly caught it and hard-failed ALL flake operations. The guard did its job.
@@ -74,6 +73,7 @@
 ## f) Up to 50 Things We Should Get Done Next
 
 ### Critical (regression prevention)
+
 1. **Add a pre-commit hook** that rejects `flake.lock` if `nodes.nixpkgs.original.type != "github"`. This is the #1 fix — prevents the bad commit from ever landing.
 2. **Write `scripts/fix-nixpkgs-tarball.sh`** — automated recovery: finds last github-type nixpkgs node in git history, restores it, fetches source.
 3. **Audit `nixpkgs_2` and ALL nixpkgs-following inputs** in flake.lock for tarball regression. The guard only checks the primary node.
@@ -81,35 +81,42 @@
 5. **Run `nix run .#deploy`** to confirm the system builds end-to-end after this fix (the user's original goal).
 
 ### High priority (infra health)
+
 6. **Fix `cache.home.lan` DNS resolution** — the Attic binary cache is unreachable. Investigate dnsblockd local zones. This blocks `--no-build` evaluation and slows all builds.
 7. **Add `cache.home.lan` to dnsblockd `localSubdomains`** if it's supposed to resolve locally.
 8. **Verify the Attic cache is actually running** — `cache.home.lan` might be down entirely, not just a DNS issue.
 
 ### Verification & testing
+
 9. **Run full `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel`** once hermes-source is buildable, to confirm no other eval-time issues lurk.
 10. **Verify all 9 input bumps from `3b4c971c` are correct** — especially `nixpkgs_2` and `go-output` (version change v0.36→v0.37).
 11. **Check if the nixpkgs rev rollback (`3497aa5c9457` → `643809054d65`) lost any package version** that the newer bumps depend on. The 9 bumped inputs were tested against the NEWER nixpkgs, not the older one I restored.
 
 ### Guard improvements
+
 12. **Extend `nixpkgsTarballGuard` to check ALL nixpkgs-type nodes**, not just `nodes.nixpkgs`. Iterate `lockFile.nodes` and assert every node whose `original.owner == "NixOS" && original.repo == "nixpkgs"` has `type == "github"`.
 13. **Make the guard message actionable** — include the exact `jq` command to fix it: `jq '.nodes.nixpkgs.original.type = "github"'`.
 14. **Add a guard for `nix flake update` all-inputs** — a wrapper script or alias that refuses bare `nix flake update` without `--update-input`.
 
 ### Documentation
+
 15. **Update the gotcha entry** for the tarball regression to reference commit `3b4c971c` as a recurrence example (the existing docs describe it but don't show it happening via the auto-git daemon).
 16. **Document the auto-git daemon's lockfile update behavior** in AGENTS.md — it's a known recurring trigger.
 17. **Add `nixpkgs_2` to the gotcha** — secondary nixpkgs inputs are also vulnerable to the registry rewrite.
 
 ### Code quality
+
 18. **The `nixpkgsTarballGuard` uses `builtins.seq` for eagerness** — verify this actually forces evaluation in all code paths (flake-parts might lazy-evaluate past it).
 19. **Consider a `flake.lock` schema validator** (statix custom rule or a nix-linter check) that validates ALL node types.
 
 ### Deploy & operations
+
 20. **Run `nix run .#post-deploy-check`** after a successful deploy to verify functional outcomes.
 21. **Check `nix gc` timing** — the reverted nixpkgs source was fetched without `--add-root`, so it could be GC'd. Add a root or verify it persists.
 22. **Verify direnv actually reloads** in a new shell (I verified eval but not the actual direnv reload experience).
 
 ### Lower priority
+
 23. **Review whether the auto-git daemon should commit lockfiles at all** — lockfile changes are high-risk (FOD, eval barriers) and low-value for auto-commit.
 24. **Add a `just`/flake task** `nix flake check --no-build` wrapper that skips known-unrealizable sources (hermes) for faster CI feedback.
 25. **Consider pinning nixpkgs to a specific rev** instead of a branch ref (`nixos-unstable`) to eliminate the registry rewrite surface entirely. Trade-off: no auto-updates.

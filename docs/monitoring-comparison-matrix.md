@@ -13,18 +13,18 @@ This comparison matrix evaluates Netdata and ntopng for network and system monit
 
 ## Feature Comparison Matrix
 
-| Feature Category             | Netdata               | ntopng            | Winner      |
-| ---------------------------- | --------------------- | ----------------- | ----------- |
-| **System Monitoring**        | ✅ Excellent          | ❌ None           | **Netdata** |
+| Feature Category             | Netdata              | ntopng            | Winner      |
+| ---------------------------- | -------------------- | ----------------- | ----------- |
+| **System Monitoring**        | ✅ Excellent         | ❌ None           | **Netdata** |
 | **Network Traffic Analysis** | ⚠️ Basic              | ✅ Excellent      | **ntopng**  |
-| **Real-time Monitoring**     | ✅ Excellent          | ✅ Excellent      | **Tie**     |
+| **Real-time Monitoring**     | ✅ Excellent         | ✅ Excellent      | **Tie**     |
 | **Historical Data**          | ⚠️ Limited (RAM/disk) | ✅ Excellent (DB) | **ntopng**  |
-| **Setup Complexity**         | ✅ Simple             | ⚠️ Moderate       | **Netdata** |
-| **Resource Usage**           | ✅ Low                | ⚠️ Moderate-High  | **Netdata** |
-| **Web Interface**            | ✅ Excellent          | ✅ Excellent      | **Tie**     |
-| **Security Analysis**        | ❌ None               | ✅ Excellent      | **ntopng**  |
-| **API Access**               | ✅ Excellent          | ✅ Good           | **Netdata** |
-| **Development Integration**  | ✅ Excellent          | ⚠️ Good           | **Netdata** |
+| **Setup Complexity**         | ✅ Simple            | ⚠️ Moderate        | **Netdata** |
+| **Resource Usage**           | ✅ Low               | ⚠️ Moderate-High   | **Netdata** |
+| **Web Interface**            | ✅ Excellent         | ✅ Excellent      | **Tie**     |
+| **Security Analysis**        | ❌ None              | ✅ Excellent      | **ntopng**  |
+| **API Access**               | ✅ Excellent         | ✅ Good           | **Netdata** |
+| **Development Integration**  | ✅ Excellent         | ⚠️ Good            | **Netdata** |
 
 ## Detailed Feature Analysis
 

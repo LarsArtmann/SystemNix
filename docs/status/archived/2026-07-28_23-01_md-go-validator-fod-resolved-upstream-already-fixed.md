@@ -83,7 +83,7 @@
    - `git log --oneline -10` in the upstream repo
    - `grep <dependency> go.mod` in the upstream repo
    - `nix eval --raw .#inputs.<pkg>.rev` in SystemNix
-   The fix may already be shipped. Band-aids are debt — only incur them when the upstream fix is genuinely unavailable.
+     The fix may already be shipped. Band-aids are debt — only incur them when the upstream fix is genuinely unavailable.
 
 3. **The `stripPrebuiltGoBinaries` helper was over-engineered.** It switched vendor modes, rewrote replace directives, stripped binaries via `modPostBuild`. All of this was unnecessary because the real fix was a one-line dependency bump. When a fix requires 45 lines of Nix hackery, that's a signal to step back and ask "is there a simpler path?"
 

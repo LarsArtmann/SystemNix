@@ -110,33 +110,33 @@ The only notable issue was the initial `github:LarsArtmann/todo-list-ai` URL ret
 
 ## F) Top 25 Things to Do Next
 
-| #   | Task                                                                       | Impact | Effort |
-| --- | -------------------------------------------------------------------------- | ------ | ------ |
-| 1   | `just switch` on NixOS to verify todo-list-ai actually builds and installs | High   | Low    |
-| 2   | `just switch` on Darwin to verify cross-platform compatibility             | High   | Low    |
-| 3   | Run `todo-list-ai --provider mock --dir ~/projects/SystemNix` to test CLI  | High   | Low    |
-| 4   | Add GitHub Actions CI with `nix flake check --no-build`                    | High   | Medium |
-| 5   | Periodic full build test (`nix build .#nixosConfigurations.evo-x2`)        | High   | High   |
-| 6   | Audit all 31 service modules for consistency                               | Medium | Medium |
-| 7   | Wire todo-list-ai API keys via sops for non-interactive scans              | Medium | Low    |
-| 8   | Add todo-list-ai config to Home Manager (`.todo-list-ai.json`)             | Low    | Low    |
-| 9   | Provision Pi 3 for DNS failover cluster                                    | High   | High   |
-| 10  | Test VRRP failover between evo-x2 and Pi 3                                 | High   | Medium |
-| 11  | Add nix-auto-update automation (Renovate or github-actions)                | Medium | Medium |
-| 12  | Audit flake.lock staleness — when were inputs last updated?                | Medium | Low    |
-| 13  | Clean up/archive old status docs (43 → keep last 10)                       | Low    | Low    |
-| 14  | Review justfile for dead recipes (1970 lines)                              | Low    | Medium |
-| 15  | Add `nix flake check` pre-commit hook                                      | Medium | Low    |
-| 16  | Test monitor365 service on real hardware                                   | Medium | Low    |
-| 17  | Wire Immich Bull Board patch                                               | Low    | Low    |
-| 18  | Add Ollama GPU acceleration testing                                        | Medium | Medium |
-| 19  | Verify all sops secrets are current and decryptable                        | Medium | Low    |
-| 20  | Homepage dashboard — add all services to dashboard                         | Low    | Low    |
-| 21  | Document which packages are Darwin/NixOS/cross-platform in AGENTS.md       | Low    | Low    |
-| 22  | Add `just health-dashboard` recipe for comprehensive system overview       | Low    | Medium |
-| 23  | Consider merging small service modules (e.g., display-manager + audio)     | Low    | Medium |
-| 24  | Test Photomap service end-to-end                                           | Medium | Medium |
-| 25  | Review Twenty CRM service status                                           | Medium | Low    |
+| #  | Task                                                                       | Impact | Effort |
+| -- | -------------------------------------------------------------------------- | ------ | ------ |
+| 1  | `just switch` on NixOS to verify todo-list-ai actually builds and installs | High   | Low    |
+| 2  | `just switch` on Darwin to verify cross-platform compatibility             | High   | Low    |
+| 3  | Run `todo-list-ai --provider mock --dir ~/projects/SystemNix` to test CLI  | High   | Low    |
+| 4  | Add GitHub Actions CI with `nix flake check --no-build`                    | High   | Medium |
+| 5  | Periodic full build test (`nix build .#nixosConfigurations.evo-x2`)        | High   | High   |
+| 6  | Audit all 31 service modules for consistency                               | Medium | Medium |
+| 7  | Wire todo-list-ai API keys via sops for non-interactive scans              | Medium | Low    |
+| 8  | Add todo-list-ai config to Home Manager (`.todo-list-ai.json`)             | Low    | Low    |
+| 9  | Provision Pi 3 for DNS failover cluster                                    | High   | High   |
+| 10 | Test VRRP failover between evo-x2 and Pi 3                                 | High   | Medium |
+| 11 | Add nix-auto-update automation (Renovate or github-actions)                | Medium | Medium |
+| 12 | Audit flake.lock staleness — when were inputs last updated?                | Medium | Low    |
+| 13 | Clean up/archive old status docs (43 → keep last 10)                       | Low    | Low    |
+| 14 | Review justfile for dead recipes (1970 lines)                              | Low    | Medium |
+| 15 | Add `nix flake check` pre-commit hook                                      | Medium | Low    |
+| 16 | Test monitor365 service on real hardware                                   | Medium | Low    |
+| 17 | Wire Immich Bull Board patch                                               | Low    | Low    |
+| 18 | Add Ollama GPU acceleration testing                                        | Medium | Medium |
+| 19 | Verify all sops secrets are current and decryptable                        | Medium | Low    |
+| 20 | Homepage dashboard — add all services to dashboard                         | Low    | Low    |
+| 21 | Document which packages are Darwin/NixOS/cross-platform in AGENTS.md       | Low    | Low    |
+| 22 | Add `just health-dashboard` recipe for comprehensive system overview       | Low    | Medium |
+| 23 | Consider merging small service modules (e.g., display-manager + audio)     | Low    | Medium |
+| 24 | Test Photomap service end-to-end                                           | Medium | Medium |
+| 25 | Review Twenty CRM service status                                           | Medium | Low    |
 
 ---
 

@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-10 08:47
 **Session goal:** Execute docs-health AUDIT mode — update all 4 living docs (TODO_LIST, FEATURES, ROADMAP, CHANGELOG), annotate and archive all fully-resolved non-archived 2026-08 status reports
-**Trigger:** User said "View ALL **/2026-08-* files! Execute the **docs-health SKILL**! PROPERLY! FUCKING SUPERBLY!!!"
+**Trigger:** User said "View ALL *_/2026-08-_ files! Execute the **docs-health SKILL**! PROPERLY! FUCKING SUPERBLY!!!"
 
 ---
 
@@ -11,6 +11,7 @@
 ### 1. All 4 Living Docs Updated
 
 **TODO_LIST.md:**
+
 - Header updated to 2026-08-10 with summary of last sessions
 - Removed 6 completed `[x]` items (dnsblockd-CA on Mac, extension ID verification, DMS wallpaper management, DMS settings.json backup, post-deploy-check double-000/runtimeInputs/shellcheck) — per skill rule: done items go to CHANGELOG, never stay in TODO_LIST
 - Added 18 new items harvested from non-archived reports across Priorities 1, 3, 4, 8
@@ -18,6 +19,7 @@
 - Updated deploy pending item to reflect current state (I/O scheduling, PMA fix, scripts review)
 
 **FEATURES.md:**
+
 - Date updated to 2026-08-10
 - Gatus count corrected: 79 → 78 (using stricter grep pattern `^\s*name =`)
 - VM test count corrected: 2 → 10 (7 in `tests/default.nix` + 3 in `tests/test-scripts.nix`)
@@ -27,12 +29,14 @@
 - Updated Known Gaps count: 12 → 16 (note: actual count may be off — see section d)
 
 **ROADMAP.md:**
+
 - Date updated to 2026-08-10
 - Theme 1: Added PMA page-cache death-loop root cause + memory.events metric recommendation
 - Theme 3: Updated I/O throttling (BFQ tiers deployed, remaining work specified) + added ZFS external drive access
 - Theme 4: Added SigNoz dashboard v1→v2 migration + node_exporter textfile phantom metrics
 
 **CHANGELOG.md [Unreleased]:**
+
 - Added 15 new entries: BFQ I/O Priority Tiers, GOMEMLIMIT on Go services, DiscordSync DB-heal oneshot, scripts comprehensive review (~60 bugs), PMA death-loop 3-layer fix, post-deploy check hardening, I/O pressure check, port-uniqueness VM test, disk-common.sh + lib.sh safe helpers, ZFS VFIO success
 - Added 5 new Changed entries: auto-optimise-store disabled, SigNoz flake pin removal, cadvisor port fix, SigNoz v2 dashboard API, Crush ionice wrapper
 
@@ -60,6 +64,7 @@ Both ZFS reports (`05-49_zfs-vm-investigation-and-strategy.md` and `06-44_zfs-vf
 ### 2. Living Doc Count Verification — Partial
 
 I verified some counts (modules 49, Gatus 78, sops 14, Go services with GOMEMLIMIT 6, ioTier usage 8, `// ioTier` anti-pattern 4). But I did NOT verify:
+
 - DMS plugin count precisely (14 dirs includes `_template` — real count is 13 SystemNix + 2 community = 15, which matches the doc, but I didn't confirm the `_template` is excluded from the count)
 - Whether the `test-scripts.nix` 3 tests are actually registered as flake checks (I assumed from the `//` merge syntax)
 - Whether the FEATURES.md Known Gaps count (16) is accurate (see section d)
@@ -67,6 +72,7 @@ I verified some counts (modules 49, Gatus 78, sops 14, Go services with GOMEMLIM
 ### 3. CHANGELOG Entries — Computed but Not All Verified Against Code
 
 I wrote CHANGELOG entries based on what the status reports CLAIMED was done, not by independently verifying each claim against the codebase. For example:
+
 - "GOMEMLIMIT on 6 Go services" — I verified the grep count (6 files) but didn't check the actual values are correct
 - "DiscordSync DB-heal oneshot" — I verified the concept exists but didn't read the service definition
 - "Crush ionice wrapper" — I verified ioTier usage count but didn't read the wrapper script
@@ -119,6 +125,7 @@ This is the THIRD time this exact failure mode has occurred in this project's do
 ### 2. FEATURES.md Known Gaps Count Is Probably Wrong
 
 I changed the count from 12 to 16 without actually counting the rows. Let me count now:
+
 1. Raspberry Pi 3
 2. ~~PhotoMap AI~~ (removed — doesn't count)
 3. Multi-WM (Sway)
@@ -181,8 +188,8 @@ The original FEATURES.md used `grep -c 'name ='` (gives 81). I changed it to `gr
 ---
 
 ## f) Up to 50 Things to Get Done Next
-> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
 
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
 
 ### Critical — Fix What I Fucked Up
 

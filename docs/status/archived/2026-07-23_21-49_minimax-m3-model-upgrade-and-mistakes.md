@@ -7,7 +7,6 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 1. **Changed `defaultMinimaxModel`** in `go-commit/pkg/commit/providers/minimax.go:4` from `"MiniMax-M2.7-highspeed"` to `"MiniMax-M3"`
@@ -53,6 +52,7 @@ This is **completely wrong**. The change was a **one-line model name bump** (`Mi
 **Why it happened:** The PMA daemon was still running the OLD binary (M2.7-highspeed) when it committed the change that upgrades to M3. The old model generated a hallucinated commit message that didn't describe the actual diff.
 
 **Why I didn't fix it:** I noticed the auto-commit happened (working tree clean, `git status` showed nothing to commit) and just moved on without checking whether the commit message was accurate. I should have:
+
 1. Checked the commit message
 2. `git commit --amend -m "feat(providers): upgrade default minimax model from MiniMax-M2.7-highspeed to MiniMax-M3"`
 3. Force-pushed the tag
@@ -64,12 +64,14 @@ This is especially embarrassing because the ENTIRE POINT of this session was imp
 I never verified that `MiniMax-M3` is a valid model identifier for `api.minimax.io/v1/chat/completions`. The user said "update to MiniMax-M3" and I blindly did it. If the model name is wrong (e.g., the real name is `minimax-m3` or `MiniMax-M3-highspeed` or `abab6.5s-chat`), **every PMA auto-commit will fail** until the model is corrected.
 
 I should have:
+
 1. Tested with a real API call: `curl -X POST https://api.minimax.io/v1/chat/completions -H "Authorization: Bearer $MINIMAX_API_KEY" -d '{"model":"MiniMax-M3","messages":[...]}'`
 2. Or checked MiniMax API docs at `https://www.minimax.io/docs/`
 
 ### 3. Did NOT check if MiniMax-M3 needs different API parameters
 
 MiniMax-M3 might have different:
+
 - `max_tokens` limits (currently hardcoded `1000`)
 - `temperature` ranges (currently `0.3`)
 - Rate limits or pricing
@@ -97,6 +99,7 @@ I tagged `v0.4.1` on the auto-commit `138f759` without checking whether the comm
 ## f) Up to 50 Things to Do Next
 
 ### Critical (verify the change actually works)
+
 1. **Verify `MiniMax-M3` is a valid MiniMax API model** — make a test API call
 2. **Run `nix build .#projects-management-automation` or equivalent** — verify the package compiles with the new go-commit source via mkPreparedSource
 3. **Check if vendorHash needs updating** — the go.sum may have changed between v0.4.0 and v0.4.1
@@ -104,21 +107,25 @@ I tagged `v0.4.1` on the auto-commit `138f759` without checking whether the comm
 5. **Run `nix run .#post-deploy-check`** — verify the PMA daemon is still functional after deploy
 
 ### Documentation
+
 6. **Update AGENTS.md gotcha table** — change `refs/tags/v0.4.0` to `refs/tags/v0.4.1` in the go-git `repo.Config()` row
 7. **Add a gotcha about the bad auto-commit** — document that the PMA daemon generated a misleading commit message for its own model upgrade
 8. **Consider documenting MiniMax model version history** — track which models have been used and why
 
 ### Commit hygiene
+
 9. **Amend the go-commit v0.4.1 commit message** — if the tag hasn't been widely consumed yet, re-tag with a correct message
 10. **Push SystemNix commits** to origin/master (currently 2 ahead)
 
 ### PMA / commit quality
+
 11. **Add a commit-message quality audit** — periodically review PMA-generated commits for accuracy
 12. **Consider adding a validation step** — reject auto-commits whose messages don't match the diff content
 13. **Monitor PMA logs after M3 deploy** — verify the new model generates better commit messages than M2.7
 14. **Compare M3 vs M2.7 commit quality** — collect samples before/after the switch
 
 ### Model/API improvements
+
 15. **Check MiniMax-M3 pricing** — verify cost per 1M tokens is acceptable
 16. **Check MiniMax-M3 context window** — may need to adjust `max_tokens`
 17. **Check MiniMax-M3 temperature behavior** — may need different settings for commit generation
@@ -126,12 +133,14 @@ I tagged `v0.4.1` on the auto-commit `138f759` without checking whether the comm
 19. **Test MiniMax-M3 with large diffs** — verify it handles big code changes well
 
 ### SystemNix operational
+
 20. **Run `nix run .#pre-deploy-check`** before deploying
 21. **Verify Gatus still monitors PMA** — the daemon should still be healthy after the model change
 22. **Check if other services use go-commit** — any other consumer of the flake input
 23. **Verify PMA discovery daemon still works** — the shared socket for Overview
 
 ### Architecture / code quality
+
 24. **Consider making the model configurable via env var** — `MINIMAX_MODEL` instead of a hardcoded constant
 25. **Add integration test for MiniMax API** — a smoke test that verifies the model name is valid
 26. **Consider fallback model handling** — what if M3 is deprecated in the future?
@@ -139,36 +148,43 @@ I tagged `v0.4.1` on the auto-commit `138f759` without checking whether the comm
 28. **Review go-commit's `defaultTemperature = 0.3`** — is this optimal for M3?
 
 ### Broader SystemNix
+
 29. **Review all hardcoded model names across SystemNix** — audit for staleness (Synthetic, GLM, OpenRouter, etc.)
 30. **Check if MiniMax API has rate limits** — M3 might have different limits than M2.7
 31. **Review PMA memory limit (8G)** — does M3 use more memory than M2.7?
 32. **Consider adding MiniMax API response logging** — for debugging future model issues
 
 ### Security
+
 33. **Verify no secrets are leaked in the diff sent to MiniMax** — re-confirm the data flow (diffs go to MiniMax)
 34. **Review MiniMax data retention policy** — does MiniMax store/training on the diffs we send?
 
 ### Testing
+
 35. **Add a unit test that verifies the model name matches expected format** — catch typos
 36. **Add a test that the minimax provider sends the correct model in the HTTP request body**
 37. **Consider a nightly integration test** that calls MiniMax with a test prompt
 
 ### Cleanup
+
 38. **Remove old model references** — search entire SystemNix + go-commit for any remaining `M2.7` references
 39. **Clean up any stale docs** referencing M2.7 in status reports (non-destructive annotation)
 40. **Review the go-commit changelog** — add a v0.4.1 entry if a CHANGELOG.md exists
 
 ### Monitoring
+
 41. **Add a Gatus alert for PMA commit failures** — if the new model name is wrong, auto-commits will fail
 42. **Check journalctl for PMA errors after deploy** — `journalctl -u projects-management-automation -n 100`
 43. **Verify the next PMA auto-commit works** — watch for the first commit after M3 is live
 
 ### Process
+
 44. **Create a model-upgrade checklist** — standardize the process for future AI model changes
 45. **Document the verification steps** — what to check when changing any AI model in the stack
 46. **Review all AI services in SystemNix** — audit model versions for all services (Ollama, Hermes, Crush Daily, etc.)
 
 ### Future
+
 47. **Consider multi-model racing** — go-commit already races providers; consider racing models within a provider
 48. **Evaluate other MiniMax models** — MiniMax may have specialized coding models
 49. **Consider adding a model version to the commit message trailer** — traceability for which model wrote which commit

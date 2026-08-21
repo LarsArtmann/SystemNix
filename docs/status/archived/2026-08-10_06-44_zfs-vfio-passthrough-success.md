@@ -155,8 +155,8 @@
 ---
 
 ## f) NEXT STEPS (up to 50)
-> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
 
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
 
 ### Immediate — Access & Data (highest impact first)
 
@@ -294,9 +294,9 @@ datapool (mirror, 14.5 TB usable, 21.4 GB used)
 
 ### Files Changed This Session
 
-| File | Status | Purpose |
-|------|--------|---------|
-| `systems/zfs-vm.nix` | Modified (git-staged) | NixOS VM with ZFS + VFIO PCIe passthrough |
-| `pkgs/freebsd-zfs-vm.nix` | Created (git-staged) | FreeBSD 14.2 QEMU launcher (untested) |
-| `flake.nix` | Modified (git-staged) | Wired `nixosConfigurations.zfs-vm` + `packages.freebsd-zfs-vm` |
-| `docs/status/2026-08-10_05-49_zfs-vm-investigation-and-strategy.md` | Created (git-staged) | First status report |
+| File                                                                | Status                | Purpose                                                        |
+| ------------------------------------------------------------------- | --------------------- | -------------------------------------------------------------- |
+| `systems/zfs-vm.nix`                                                | Modified (git-staged) | NixOS VM with ZFS + VFIO PCIe passthrough                      |
+| `pkgs/freebsd-zfs-vm.nix`                                           | Created (git-staged)  | FreeBSD 14.2 QEMU launcher (untested)                          |
+| `flake.nix`                                                         | Modified (git-staged) | Wired `nixosConfigurations.zfs-vm` + `packages.freebsd-zfs-vm` |
+| `docs/status/2026-08-10_05-49_zfs-vm-investigation-and-strategy.md` | Created (git-staged)  | First status report                                            |

@@ -218,54 +218,54 @@ The GMKtec EVO-X2 NVMe device takes 2m50s to be detected by the kernel. Suspecte
 
 ### Critical (Deploy & Verify)
 
-| #   | Task                                                                                   | Effort | Impact                              |
-| --- | -------------------------------------------------------------------------------------- | ------ | ----------------------------------- |
-| 1   | **Deploy session 129 changes** (`just switch`) and verify Pocket ID provision works    | 15min  | HIGH — confirms auth fixes          |
-| 2   | **Test Pocket ID provision end-to-end** after deploy: admin user, OIDC clients, avatar | 10min  | HIGH — validates 3 sessions of work |
-| 3   | ~~Regenerate Discordsync Discord bot token~~ **DONE** — token regenerated              | —      | —                                   |
-| 4   | **Run `just verify`** post-deploy to check all services                                | 5min   | MEDIUM — catches regressions        |
+| # | Task                                                                                   | Effort | Impact                              |
+| - | -------------------------------------------------------------------------------------- | ------ | ----------------------------------- |
+| 1 | **Deploy session 129 changes** (`just switch`) and verify Pocket ID provision works    | 15min  | HIGH — confirms auth fixes          |
+| 2 | **Test Pocket ID provision end-to-end** after deploy: admin user, OIDC clients, avatar | 10min  | HIGH — validates 3 sessions of work |
+| 3 | ~~Regenerate Discordsync Discord bot token~~ **DONE** — token regenerated              | —      | —                                   |
+| 4 | **Run `just verify`** post-deploy to check all services                                | 5min   | MEDIUM — catches regressions        |
 
 ### High Value (Security & Resilience)
 
-| #   | Task                                                                                                                  | Effort | Impact                                             |
-| --- | --------------------------------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------- |
-| 5   | **Migrate `/data` to BTRFS subvolume** — `just snapshot-migrate-data`                                                 | 30min  | HIGH — enables snapshots for Docker/Immich/AI data |
-| 6   | **Add swap-pressure Gatus alert** — alert when swap > 50% with RAM > 50% free                                         | 15min  | MEDIUM — catches stale process leaks               |
-| 7   | **Add periodic swap cleanup timer** — `swapoff -a && swapon -a` weekly                                                | 10min  | LOW — prevents swap accumulation                   |
-| 8   | **Add Homepage `mkGroup`/`mkService` output test** — compare YAML before/after                                        | 15min  | MEDIUM — verifies refactor correctness             |
-| 9   | ~~Investigate NVMe boot delay~~ **FIX COMMITTED** — `nvme_core.default_ps_max_latency_us=0` (pending deploy + reboot) | —      | —                                                  |
-| 9a  | **Reboot evo-x2** and verify NVMe detection with `systemd-analyze blame \| grep nvme`                                 | 5min   | HIGH — confirms 2m50s fix                          |
+| #  | Task                                                                                                                  | Effort | Impact                                             |
+| -- | --------------------------------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------- |
+| 5  | **Migrate `/data` to BTRFS subvolume** — `just snapshot-migrate-data`                                                 | 30min  | HIGH — enables snapshots for Docker/Immich/AI data |
+| 6  | **Add swap-pressure Gatus alert** — alert when swap > 50% with RAM > 50% free                                         | 15min  | MEDIUM — catches stale process leaks               |
+| 7  | **Add periodic swap cleanup timer** — `swapoff -a && swapon -a` weekly                                                | 10min  | LOW — prevents swap accumulation                   |
+| 8  | **Add Homepage `mkGroup`/`mkService` output test** — compare YAML before/after                                        | 15min  | MEDIUM — verifies refactor correctness             |
+| 9  | ~~Investigate NVMe boot delay~~ **FIX COMMITTED** — `nvme_core.default_ps_max_latency_us=0` (pending deploy + reboot) | —      | —                                                  |
+| 9a | **Reboot evo-x2** and verify NVMe detection with `systemd-analyze blame \| grep nvme`                                 | 5min   | HIGH — confirms 2m50s fix                          |
 
 ### Architecture & Quality
 
-| #   | Task                                                                                         | Effort | Impact                                   |
-| --- | -------------------------------------------------------------------------------------------- | ------ | ---------------------------------------- |
-| 10  | **Add service-level NixOS VM tests** — start with Forgejo, Immich, Pocket ID                 | 2hr    | HIGH — catches regressions before deploy |
-| 11  | **Investigate Dozzle module eval failure** — root cause the `nix flake check` issue          | 30min  | LOW — enables proper module pattern      |
-| 12  | **Create Hermes setup automation** — `just hermes-setup` for API key + SSH key               | 20min  | MEDIUM — eliminates manual sops edits    |
-| 13  | **Archive old status reports** — move pre-June reports to `docs/status/archive/`             | 10min  | LOW — cleans up repo                     |
-| 14  | **Add per-service `startLimitBurst`** audit — ensure all services have crash-loop protection | 20min  | MEDIUM — prevents OOM cascades           |
-| 15  | **Centralize Caddy vhost pattern** — all vhosts use `protectedVHost` or `vHost` helper       | 15min  | LOW — consistency                        |
+| #  | Task                                                                                         | Effort | Impact                                   |
+| -- | -------------------------------------------------------------------------------------------- | ------ | ---------------------------------------- |
+| 10 | **Add service-level NixOS VM tests** — start with Forgejo, Immich, Pocket ID                 | 2hr    | HIGH — catches regressions before deploy |
+| 11 | **Investigate Dozzle module eval failure** — root cause the `nix flake check` issue          | 30min  | LOW — enables proper module pattern      |
+| 12 | **Create Hermes setup automation** — `just hermes-setup` for API key + SSH key               | 20min  | MEDIUM — eliminates manual sops edits    |
+| 13 | **Archive old status reports** — move pre-June reports to `docs/status/archive/`             | 10min  | LOW — cleans up repo                     |
+| 14 | **Add per-service `startLimitBurst`** audit — ensure all services have crash-loop protection | 20min  | MEDIUM — prevents OOM cascades           |
+| 15 | **Centralize Caddy vhost pattern** — all vhosts use `protectedVHost` or `vHost` helper       | 15min  | LOW — consistency                        |
 
 ### Features & Enhancements
 
-| #   | Task                                                                     | Effort | Impact                               |
-| --- | ------------------------------------------------------------------------ | ------ | ------------------------------------ |
-| 16  | **Re-enable file-and-image-renamer** when Go 1.26.3 lands in nixpkgs     | 5min   | MEDIUM — AI file renaming            |
-| 17  | **Add btdu** for BTRFS-aware disk analysis (recommended in this session) | 5min   | LOW — accurate Btrfs space reporting |
-| 18  | **Add compsize** for Btrfs compression ratio reporting                   | 5min   | LOW — compression visibility         |
-| 19  | **Fix PhotoMap podman permissions** — investigate and re-enable          | 30min  | LOW — AI photo visualization         |
-| 20  | **Add auditd** when NixOS 26.05 bug is resolved                          | 5min   | LOW — security compliance            |
-| 21  | **Darwin cleanup strategy** — automated GC + build cache management      | 60min  | MEDIUM — prevents disk exhaustion    |
+| #  | Task                                                                     | Effort | Impact                               |
+| -- | ------------------------------------------------------------------------ | ------ | ------------------------------------ |
+| 16 | **Re-enable file-and-image-renamer** when Go 1.26.3 lands in nixpkgs     | 5min   | MEDIUM — AI file renaming            |
+| 17 | **Add btdu** for BTRFS-aware disk analysis (recommended in this session) | 5min   | LOW — accurate Btrfs space reporting |
+| 18 | **Add compsize** for Btrfs compression ratio reporting                   | 5min   | LOW — compression visibility         |
+| 19 | **Fix PhotoMap podman permissions** — investigate and re-enable          | 30min  | LOW — AI photo visualization         |
+| 20 | **Add auditd** when NixOS 26.05 bug is resolved                          | 5min   | LOW — security compliance            |
+| 21 | **Darwin cleanup strategy** — automated GC + build cache management      | 60min  | MEDIUM — prevents disk exhaustion    |
 
 ### Documentation
 
-| #   | Task                                                                                       | Effort | Impact                                 |
-| --- | ------------------------------------------------------------------------------------------ | ------ | -------------------------------------- |
-| 22  | **Update FEATURES.md** — last updated 2026-06-03, missing session 129 changes              | 15min  | MEDIUM — accurate feature inventory    |
-| 23  | **Update TODO_LIST.md** — mark session 129 items, add new verification tasks               | 10min  | MEDIUM — accurate task tracking        |
-| 24  | **Create Pocket ID API reference** — document discovered endpoints and auth model          | 30min  | MEDIUM — prevents future API confusion |
-| 25  | **Update AGENTS.md** with session 129 learnings (ALLOWED_HOSTS, mkGroup/mkService pattern) | 10min  | LOW — helps future sessions            |
+| #  | Task                                                                                       | Effort | Impact                                 |
+| -- | ------------------------------------------------------------------------------------------ | ------ | -------------------------------------- |
+| 22 | **Update FEATURES.md** — last updated 2026-06-03, missing session 129 changes              | 15min  | MEDIUM — accurate feature inventory    |
+| 23 | **Update TODO_LIST.md** — mark session 129 items, add new verification tasks               | 10min  | MEDIUM — accurate task tracking        |
+| 24 | **Create Pocket ID API reference** — document discovered endpoints and auth model          | 30min  | MEDIUM — prevents future API confusion |
+| 25 | **Update AGENTS.md** with session 129 learnings (ALLOWED_HOSTS, mkGroup/mkService pattern) | 10min  | LOW — helps future sessions            |
 
 ---
 

@@ -45,48 +45,48 @@
 
 ### P1 — High Impact, Moderate Effort
 
-| #   | Task                                                                 | Why                                                                 | Effort | Risk                         |
-| --- | -------------------------------------------------------------------- | ------------------------------------------------------------------- | ------ | ---------------------------- |
-| 1   | Migrate `homepage.nix` to `services.homepage-dashboard` NixOS module | Custom systemd service when nixpkgs has a native module             | Medium | Medium (config mapping)      |
-| 2   | Replace `immich-db-backup` with `services.postgresqlBackup`          | Custom backup service when NixOS has built-in                       | Low    | Medium (different semantics) |
-| 3   | Fix 6 pre-existing deadnix warnings                                  | `poetry` unused, `cfg` unused, `addIPScript` unused, overlay params | Low    | Low                          |
-| 4   | Extract overlays from `flake.nix` to `overlays/` directory           | 170 lines of overlays inline in flake.nix, triple-duplicated        | Medium | Low                          |
-| 5   | Expose overlays via `flake.overlays` output                          | No flake.overlays defined — can't consume downstream                | Low    | Low                          |
+| # | Task                                                                 | Why                                                                 | Effort | Risk                         |
+| - | -------------------------------------------------------------------- | ------------------------------------------------------------------- | ------ | ---------------------------- |
+| 1 | Migrate `homepage.nix` to `services.homepage-dashboard` NixOS module | Custom systemd service when nixpkgs has a native module             | Medium | Medium (config mapping)      |
+| 2 | Replace `immich-db-backup` with `services.postgresqlBackup`          | Custom backup service when NixOS has built-in                       | Low    | Medium (different semantics) |
+| 3 | Fix 6 pre-existing deadnix warnings                                  | `poetry` unused, `cfg` unused, `addIPScript` unused, overlay params | Low    | Low                          |
+| 4 | Extract overlays from `flake.nix` to `overlays/` directory           | 170 lines of overlays inline in flake.nix, triple-duplicated        | Medium | Low                          |
+| 5 | Expose overlays via `flake.overlays` output                          | No flake.overlays defined — can't consume downstream                | Low    | Low                          |
 
 ### P2 — Medium Impact
 
-| #   | Task                                                              | Why                                                                      | Effort | Risk   |
-| --- | ----------------------------------------------------------------- | ------------------------------------------------------------------------ | ------ | ------ |
-| 6   | Convert `test-home-manager.sh` to `flake.checks` derivation       | Shell script could be Nix test                                           | Medium | Low    |
-| 7   | Convert `test-shell-aliases.sh` to `flake.checks` derivation      | Cross-shell alias validation as Nix test                                 | Medium | Low    |
-| 8   | Convert `ai-integration-test.sh` to `flake.checks` derivation     | Ollama/GPU readiness test                                                | Medium | Low    |
-| 9   | Replace `perSystem` pkgs override with flake-parts nixpkgs module | Current `_module.args.pkgs` fights flake-parts                           | Medium | Medium |
-| 10  | Add `nixosTest` for DNS blocker module                            | VM test verifying unbound + dnsblockd work together                      | High   | Low    |
-| 11  | Add `nixosTest` for Caddy vhost generation                        | Verify reverse proxy config                                              | Medium | Low    |
-| 12  | Deduplicate `dnsblockd`/`dnsblockd-processor` package definitions | Same package defined in BOTH `perSystem.packages` AND `dnsblockdOverlay` | Low    | Low    |
+| #  | Task                                                              | Why                                                                      | Effort | Risk   |
+| -- | ----------------------------------------------------------------- | ------------------------------------------------------------------------ | ------ | ------ |
+| 6  | Convert `test-home-manager.sh` to `flake.checks` derivation       | Shell script could be Nix test                                           | Medium | Low    |
+| 7  | Convert `test-shell-aliases.sh` to `flake.checks` derivation      | Cross-shell alias validation as Nix test                                 | Medium | Low    |
+| 8  | Convert `ai-integration-test.sh` to `flake.checks` derivation     | Ollama/GPU readiness test                                                | Medium | Low    |
+| 9  | Replace `perSystem` pkgs override with flake-parts nixpkgs module | Current `_module.args.pkgs` fights flake-parts                           | Medium | Medium |
+| 10 | Add `nixosTest` for DNS blocker module                            | VM test verifying unbound + dnsblockd work together                      | High   | Low    |
+| 11 | Add `nixosTest` for Caddy vhost generation                        | Verify reverse proxy config                                              | Medium | Low    |
+| 12 | Deduplicate `dnsblockd`/`dnsblockd-processor` package definitions | Same package defined in BOTH `perSystem.packages` AND `dnsblockdOverlay` | Low    | Low    |
 
 ### P3 — Nice to Have
 
-| #   | Task                                                                             | Why                                                 | Effort  | Risk   |
-| --- | -------------------------------------------------------------------------------- | --------------------------------------------------- | ------- | ------ |
-| 13  | Replace `scripts/storage-cleanup.sh` with `systemd.tmpfiles.rules`               | Imperative cleanup → declarative                    | High    | Medium |
-| 14  | Replace `scripts/cleanup.sh` with `nix.gc` + `systemd.timers`                    | Manual script → Nix-native                          | High    | Medium |
-| 15  | Replace `scripts/maintenance.sh` with `systemd` services                         | Same as above                                       | High    | Medium |
-| 16  | Replace `scripts/optimize.sh` with `auto-optimise-store = true` (already set!)   | Script is literally unnecessary                     | Low     | Low    |
-| 17  | Make `performance-monitor.sh` a `systemd` service + timer                        | Currently manual                                    | Medium  | Low    |
-| 18  | Add `services.netdata` NixOS module instead of manual justfile recipes           | `netdata-start`/`netdata-stop` could be declarative | Low     | Low    |
-| 19  | Add `meta.description` to all flake apps                                         | Warning: app lacks attribute 'meta.description'     | Low     | None   |
-| 20  | Remove `config.allowBroken = false` from flake.nix (it's the default)            | Dead config                                         | Trivial | None   |
-| 21  | Consolidate Docker/OCI container management into `virtualisation.oci-containers` | Only photomap uses Docker but pattern is correct    | Low     | Low    |
+| #  | Task                                                                             | Why                                                 | Effort  | Risk   |
+| -- | -------------------------------------------------------------------------------- | --------------------------------------------------- | ------- | ------ |
+| 13 | Replace `scripts/storage-cleanup.sh` with `systemd.tmpfiles.rules`               | Imperative cleanup → declarative                    | High    | Medium |
+| 14 | Replace `scripts/cleanup.sh` with `nix.gc` + `systemd.timers`                    | Manual script → Nix-native                          | High    | Medium |
+| 15 | Replace `scripts/maintenance.sh` with `systemd` services                         | Same as above                                       | High    | Medium |
+| 16 | Replace `scripts/optimize.sh` with `auto-optimise-store = true` (already set!)   | Script is literally unnecessary                     | Low     | Low    |
+| 17 | Make `performance-monitor.sh` a `systemd` service + timer                        | Currently manual                                    | Medium  | Low    |
+| 18 | Add `services.netdata` NixOS module instead of manual justfile recipes           | `netdata-start`/`netdata-stop` could be declarative | Low     | Low    |
+| 19 | Add `meta.description` to all flake apps                                         | Warning: app lacks attribute 'meta.description'     | Low     | None   |
+| 20 | Remove `config.allowBroken = false` from flake.nix (it's the default)            | Dead config                                         | Trivial | None   |
+| 21 | Consolidate Docker/OCI container management into `virtualisation.oci-containers` | Only photomap uses Docker but pattern is correct    | Low     | Low    |
 
 ### P4 — Architecture / Deep Refactoring
 
-| #   | Task                                                                                                                      | Why                                                        | Effort | Risk   |
-| --- | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------ | ------ |
-| 22  | Move from inline `home-manager` module wiring in flake.nix to `home-manager.nixosModules.home-manager` with shared config | 80+ lines of HM config duplicated between darwin and NixOS | High   | High   |
-| 23  | Investigate `flake-parts` perSystem `nixpkgs` module to replace `_module.args.pkgs`                                       | Current pattern is anti-pattern per flake-parts docs       | Medium | Medium |
-| 24  | Create `lib/` directory for shared Nix functions (e.g., `svcUrl`, port helpers)                                           | Repeated patterns across service modules                   | Medium | Low    |
-| 25  | Add `nixosTest` for Authelia OIDC config end-to-end                                                                       | Verify SSO integration works                               | High   | Low    |
+| #  | Task                                                                                                                      | Why                                                        | Effort | Risk   |
+| -- | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------ | ------ |
+| 22 | Move from inline `home-manager` module wiring in flake.nix to `home-manager.nixosModules.home-manager` with shared config | 80+ lines of HM config duplicated between darwin and NixOS | High   | High   |
+| 23 | Investigate `flake-parts` perSystem `nixpkgs` module to replace `_module.args.pkgs`                                       | Current pattern is anti-pattern per flake-parts docs       | Medium | Medium |
+| 24 | Create `lib/` directory for shared Nix functions (e.g., `svcUrl`, port helpers)                                           | Repeated patterns across service modules                   | Medium | Low    |
+| 25 | Add `nixosTest` for Authelia OIDC config end-to-end                                                                       | Verify SSO integration works                               | High   | Low    |
 
 ---
 

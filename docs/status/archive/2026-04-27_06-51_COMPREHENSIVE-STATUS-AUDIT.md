@@ -137,45 +137,45 @@ Tasks verified against actual code in this session. All evidence double-checked.
 
 All 13 tasks require physical access to evo-x2:
 
-| #   | Task                                         | Est. |
-| --- | -------------------------------------------- | ---- |
-| 41  | `just switch` — deploy all pending changes   | 45m+ |
-| 42  | Verify Ollama works                          | 5m   |
-| 43  | Verify Steam works                           | 5m   |
-| 44  | Verify ComfyUI works                         | 5m   |
-| 45  | Verify Caddy HTTPS block page                | 3m   |
-| 46  | Verify SigNoz collecting metrics/logs/traces | 5m   |
-| 47  | Check Authelia SSO status                    | 3m   |
-| 48  | Check PhotoMap service status                | 3m   |
-| 49  | Verify AMD NPU with test workload            | 10m  |
-| 50  | Build Pi 3 SD image                          | 30m+ |
-| 51  | Flash SD + boot Pi 3                         | 15m  |
-| 52  | Test DNS failover                            | 10m  |
-| 53  | Configure LAN devices for DNS VIP            | 10m  |
+| #  | Task                                         | Est. |
+| -- | -------------------------------------------- | ---- |
+| 41 | `just switch` — deploy all pending changes   | 45m+ |
+| 42 | Verify Ollama works                          | 5m   |
+| 43 | Verify Steam works                           | 5m   |
+| 44 | Verify ComfyUI works                         | 5m   |
+| 45 | Verify Caddy HTTPS block page                | 3m   |
+| 46 | Verify SigNoz collecting metrics/logs/traces | 5m   |
+| 47 | Check Authelia SSO status                    | 3m   |
+| 48 | Check PhotoMap service status                | 3m   |
+| 49 | Verify AMD NPU with test workload            | 10m  |
+| 50 | Build Pi 3 SD image                          | 30m+ |
+| 51 | Flash SD + boot Pi 3                         | 15m  |
+| 52 | Test DNS failover                            | 10m  |
+| 53 | Configure LAN devices for DNS VIP            | 10m  |
 
 ### P9 — FUTURE / RESEARCH (2/12 investigated = 17%)
 
 All 10 uninvestigated tasks are research/architecture items with no immediate action:
 
-| #   | Task                                          | Category |
-| --- | --------------------------------------------- | -------- |
-| 86  | homeModules pattern for HM via flake-parts    | ARCH     |
-| 87  | Package ComfyUI as proper Nix derivation      | ARCH     |
-| 88  | Investigate lldap/Kanidm for unified auth     | ARCH     |
-| 89  | Migrate Pi 3 from linux-rpi to nixos-hardware | ARCH     |
-| 91  | Add NixOS VM tests for critical services      | TESTING  |
-| 92  | Investigate binary cache (Cachix)             | PERF     |
-| 93  | Add Waybar module for session restore stats   | FEATURE  |
-| 94  | Add real-time save via niri event-stream      | FEATURE  |
-| 95  | Add integration tests for session restore     | TESTING  |
-| 96  | File nixpkgs issue for hipblaslt Tensile      | UPSTREAM |
+| #  | Task                                          | Category |
+| -- | --------------------------------------------- | -------- |
+| 86 | homeModules pattern for HM via flake-parts    | ARCH     |
+| 87 | Package ComfyUI as proper Nix derivation      | ARCH     |
+| 88 | Investigate lldap/Kanidm for unified auth     | ARCH     |
+| 89 | Migrate Pi 3 from linux-rpi to nixos-hardware | ARCH     |
+| 91 | Add NixOS VM tests for critical services      | TESTING  |
+| 92 | Investigate binary cache (Cachix)             | PERF     |
+| 93 | Add Waybar module for session restore stats   | FEATURE  |
+| 94 | Add real-time save via niri event-stream      | FEATURE  |
+| 95 | Add integration tests for session restore     | TESTING  |
+| 96 | File nixpkgs issue for hipblaslt Tensile      | UPSTREAM |
 
 ### Service-Specific Blocked Tasks
 
-| #   | Task                           | Blocker      |
-| --- | ------------------------------ | ------------ |
-| 67  | Immich backup restore test     | Needs evo-x2 |
-| 68  | Twenty CRM backup restore test | Needs evo-x2 |
+| #  | Task                           | Blocker      |
+| -- | ------------------------------ | ------------ |
+| 67 | Immich backup restore test     | Needs evo-x2 |
+| 68 | Twenty CRM backup restore test | Needs evo-x2 |
 
 ---
 
@@ -257,33 +257,33 @@ All 10 uninvestigated tasks are research/architecture items with no immediate ac
 
 Ranked by impact and unblocked status.
 
-| #   | Priority | Action                                                            | Est. | Blocked?   | Category |
-| --- | -------- | ----------------------------------------------------------------- | ---- | ---------- | -------- |
-| 1   | 🔴 P0    | Fix `nix-ssh-config` duplicate `environment.etc` build error      | 30m  | Upstream   | BLOCKER  |
-| 2   | 🔴 P0    | `just switch` on evo-x2 — deploy all 67+ pending commits          | 45m  | evo-x2     | DEPLOY   |
-| 3   | 🔴 P1    | Verify full build succeeds end-to-end after nix-ssh-config fix    | 10m  | #1         | VERIFY   |
-| 4   | 🔴 P1    | Move Taskwarrior encryption to sops-nix (#7)                      | 10m  | evo-x2     | SECURITY |
-| 5   | 🔴 P1    | Pin Docker digest for Voice Agents (#9)                           | 5m   | evo-x2     | SECURITY |
-| 6   | 🔴 P1    | Pin Docker digest for PhotoMap (#10)                              | 5m   | evo-x2     | SECURITY |
-| 7   | 🔴 P1    | Secure VRRP auth_pass with sops-nix (#11)                         | 8m   | evo-x2     | SECURITY |
-| 8   | 🟡 P2    | Verify Ollama, Steam, ComfyUI, Caddy after deploy (#42-45)        | 20m  | evo-x2     | VERIFY   |
-| 9   | 🟡 P2    | Verify SigNoz collecting metrics/logs/traces (#46)                | 5m   | evo-x2     | VERIFY   |
-| 10  | 🟡 P2    | Check Authelia SSO + PhotoMap status (#47-48)                     | 6m   | evo-x2     | VERIFY   |
-| 11  | 🟡 P2    | Verify AMD NPU with test workload (#49)                           | 10m  | evo-x2     | VERIFY   |
-| 12  | 🟡 P2    | Create `just cache-check` command (dry-run + fetch ratio)         | 20m  | No         | TOOLING  |
-| 13  | 🟡 P2    | Document nixpkgs pinning + overlay safety policy in AGENTS.md     | 15m  | No         | DOCS     |
-| 14  | 🟡 P2    | Fix `with lib;` in signoz.nix, dnsblockd-processor, monitor365    | 5m   | No         | QUALITY  |
-| 15  | 🟢 P3    | Isolate unbound DoQ into separate derivation (not global overlay) | 60m  | No         | ARCH     |
-| 16  | 🟢 P3    | Build Pi 3 SD image + test DNS failover (#50-52)                  | 55m  | evo-x2+Pi  | DEPLOY   |
-| 17  | 🟢 P3    | Hermes health check endpoint (#62)                                | 60m  | Hermes     | SERVICE  |
-| 18  | 🟢 P3    | SigNoz missing metrics investigation (#65)                        | 30m  | evo-x2     | OBSERV   |
-| 19  | 🟢 P3    | Authelia SMTP notifications (#66)                                 | 15m  | SMTP creds | UX       |
-| 20  | 🟢 P3    | Immich + Twenty backup restore tests (#67-68)                     | 30m  | evo-x2     | RELIAB   |
-| 21  | 🟢 P3    | Remove `disableTestsOverlay` when valkey test fixed upstream      | 5m   | Upstream   | CLEANUP  |
-| 22  | 🟢 P3    | Add `meta.mainProgram` to remaining custom packages               | 10m  | No         | QUALITY  |
-| 23  | 🔵 P4    | Investigate binary cache (Cachix) for custom packages (#92)       | 60m  | No         | PERF     |
-| 24  | 🔵 P4    | Add NixOS VM tests for critical services (#91)                    | 120m | No         | TESTING  |
-| 25  | 🔵 P4    | Add `just update-nixpkgs` that verifies Hydra cache hits          | 30m  | No         | TOOLING  |
+| #  | Priority | Action                                                            | Est. | Blocked?   | Category |
+| -- | -------- | ----------------------------------------------------------------- | ---- | ---------- | -------- |
+| 1  | 🔴 P0    | Fix `nix-ssh-config` duplicate `environment.etc` build error      | 30m  | Upstream   | BLOCKER  |
+| 2  | 🔴 P0    | `just switch` on evo-x2 — deploy all 67+ pending commits          | 45m  | evo-x2     | DEPLOY   |
+| 3  | 🔴 P1    | Verify full build succeeds end-to-end after nix-ssh-config fix    | 10m  | #1         | VERIFY   |
+| 4  | 🔴 P1    | Move Taskwarrior encryption to sops-nix (#7)                      | 10m  | evo-x2     | SECURITY |
+| 5  | 🔴 P1    | Pin Docker digest for Voice Agents (#9)                           | 5m   | evo-x2     | SECURITY |
+| 6  | 🔴 P1    | Pin Docker digest for PhotoMap (#10)                              | 5m   | evo-x2     | SECURITY |
+| 7  | 🔴 P1    | Secure VRRP auth_pass with sops-nix (#11)                         | 8m   | evo-x2     | SECURITY |
+| 8  | 🟡 P2    | Verify Ollama, Steam, ComfyUI, Caddy after deploy (#42-45)        | 20m  | evo-x2     | VERIFY   |
+| 9  | 🟡 P2    | Verify SigNoz collecting metrics/logs/traces (#46)                | 5m   | evo-x2     | VERIFY   |
+| 10 | 🟡 P2    | Check Authelia SSO + PhotoMap status (#47-48)                     | 6m   | evo-x2     | VERIFY   |
+| 11 | 🟡 P2    | Verify AMD NPU with test workload (#49)                           | 10m  | evo-x2     | VERIFY   |
+| 12 | 🟡 P2    | Create `just cache-check` command (dry-run + fetch ratio)         | 20m  | No         | TOOLING  |
+| 13 | 🟡 P2    | Document nixpkgs pinning + overlay safety policy in AGENTS.md     | 15m  | No         | DOCS     |
+| 14 | 🟡 P2    | Fix `with lib;` in signoz.nix, dnsblockd-processor, monitor365    | 5m   | No         | QUALITY  |
+| 15 | 🟢 P3    | Isolate unbound DoQ into separate derivation (not global overlay) | 60m  | No         | ARCH     |
+| 16 | 🟢 P3    | Build Pi 3 SD image + test DNS failover (#50-52)                  | 55m  | evo-x2+Pi  | DEPLOY   |
+| 17 | 🟢 P3    | Hermes health check endpoint (#62)                                | 60m  | Hermes     | SERVICE  |
+| 18 | 🟢 P3    | SigNoz missing metrics investigation (#65)                        | 30m  | evo-x2     | OBSERV   |
+| 19 | 🟢 P3    | Authelia SMTP notifications (#66)                                 | 15m  | SMTP creds | UX       |
+| 20 | 🟢 P3    | Immich + Twenty backup restore tests (#67-68)                     | 30m  | evo-x2     | RELIAB   |
+| 21 | 🟢 P3    | Remove `disableTestsOverlay` when valkey test fixed upstream      | 5m   | Upstream   | CLEANUP  |
+| 22 | 🟢 P3    | Add `meta.mainProgram` to remaining custom packages               | 10m  | No         | QUALITY  |
+| 23 | 🔵 P4    | Investigate binary cache (Cachix) for custom packages (#92)       | 60m  | No         | PERF     |
+| 24 | 🔵 P4    | Add NixOS VM tests for critical services (#91)                    | 120m | No         | TESTING  |
+| 25 | 🔵 P4    | Add `just update-nixpkgs` that verifies Hydra cache hits          | 30m  | No         | TOOLING  |
 
 ---
 

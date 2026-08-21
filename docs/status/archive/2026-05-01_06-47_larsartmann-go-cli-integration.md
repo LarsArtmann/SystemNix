@@ -118,53 +118,53 @@ Integrated 16 LarsArtmann Go CLI tools into SystemNix as cross-platform Nix over
 
 ### Immediate — Unblock 3 more packages (2-3 hours)
 
-| #   | Task                                                                                                          | Impact      | Effort |
-| --- | ------------------------------------------------------------------------------------------------------------- | ----------- | ------ |
-| 1   | Add `go mod tidy` via `modPostBuild` for auto-deduplicate, go-functional-fixer, terraform-diagrams-aggregator | +3 packages | Low    |
-| 2   | Fix code-duplicate-analyzer upstream (`:=` → `=` in config.go:294,298)                                        | +1 package  | Low    |
-| 3   | Fix template-readme upstream (`:=` → `=` in v3_validator.go:266,272,341)                                      | +1 package  | Low    |
-| 4   | Investigate buildflow internal module resolution (debug with `ls` in build phase)                             | +1 package  | Medium |
-| 5   | Investigate PMA internal module resolution                                                                    | +1 package  | Medium |
+| # | Task                                                                                                          | Impact      | Effort |
+| - | ------------------------------------------------------------------------------------------------------------- | ----------- | ------ |
+| 1 | Add `go mod tidy` via `modPostBuild` for auto-deduplicate, go-functional-fixer, terraform-diagrams-aggregator | +3 packages | Low    |
+| 2 | Fix code-duplicate-analyzer upstream (`:=` → `=` in config.go:294,298)                                        | +1 package  | Low    |
+| 3 | Fix template-readme upstream (`:=` → `=` in v3_validator.go:266,272,341)                                      | +1 package  | Low    |
+| 4 | Investigate buildflow internal module resolution (debug with `ls` in build phase)                             | +1 package  | Medium |
+| 5 | Investigate PMA internal module resolution                                                                    | +1 package  | Medium |
 
 ### Short-term — Make tools usable (1-2 hours)
 
-| #   | Task                                                            | Impact | Effort |
-| --- | --------------------------------------------------------------- | ------ | ------ |
-| 6   | Add all 8 working tools to `platforms/common/packages/base.nix` | High   | Low    |
-| 7   | Update AGENTS.md with mkGoTool architecture and new tools       | High   | Low    |
-| 8   | Test all tools on macOS (aarch64-darwin)                        | Medium | Low    |
-| 9   | Add `just` commands for each tool                               | Medium | Low    |
-| 10  | Verify `nix run .#<tool>` works for all 8                       | Low    | Low    |
+| #  | Task                                                            | Impact | Effort |
+| -- | --------------------------------------------------------------- | ------ | ------ |
+| 6  | Add all 8 working tools to `platforms/common/packages/base.nix` | High   | Low    |
+| 7  | Update AGENTS.md with mkGoTool architecture and new tools       | High   | Low    |
+| 8  | Test all tools on macOS (aarch64-darwin)                        | Medium | Low    |
+| 9  | Add `just` commands for each tool                               | Medium | Low    |
+| 10 | Verify `nix run .#<tool>` works for all 8                       | Low    | Low    |
 
 ### Medium-term — Architecture improvements (3-5 hours)
 
-| #   | Task                                                                  | Impact | Effort |
-| --- | --------------------------------------------------------------------- | ------ | ------ |
-| 11  | Evaluate `gomod2nix` as replacement for manual vendor hash management | High   | Medium |
-| 12  | Add `modPostBuild` support to `mkGoTool` for tidy-needing packages    | Medium | Low    |
-| 13  | Investigate `GOPROXY=off` approach to eliminate SSH issues            | High   | Medium |
-| 14  | Add health check script that builds all tools and reports status      | Medium | Low    |
-| 15  | Create a test derivation that runs each tool with `--help`            | Medium | Low    |
+| #  | Task                                                                  | Impact | Effort |
+| -- | --------------------------------------------------------------------- | ------ | ------ |
+| 11 | Evaluate `gomod2nix` as replacement for manual vendor hash management | High   | Medium |
+| 12 | Add `modPostBuild` support to `mkGoTool` for tidy-needing packages    | Medium | Low    |
+| 13 | Investigate `GOPROXY=off` approach to eliminate SSH issues            | High   | Medium |
+| 14 | Add health check script that builds all tools and reports status      | Medium | Low    |
+| 15 | Create a test derivation that runs each tool with `--help`            | Medium | Low    |
 
 ### Long-term — Robustness (2-4 hours)
 
-| #   | Task                                                               | Impact     | Effort |
-| --- | ------------------------------------------------------------------ | ---------- | ------ |
-| 16  | Fix terraform-to-d2 upstream (update go-composable-business-types) | +1 package | Medium |
-| 17  | Add `flake check` CI that validates all packages build             | High       | Medium |
-| 18  | Investigate Go workspace support in nixpkgs `buildGoModule`        | Medium     | Medium |
-| 19  | Extract `pkgs/lib/` into a reusable flake for other repos          | Low        | Medium |
-| 20  | Add `nix run .#tool` apps for each tool                            | Low        | Low    |
+| #  | Task                                                               | Impact     | Effort |
+| -- | ------------------------------------------------------------------ | ---------- | ------ |
+| 16 | Fix terraform-to-d2 upstream (update go-composable-business-types) | +1 package | Medium |
+| 17 | Add `flake check` CI that validates all packages build             | High       | Medium |
+| 18 | Investigate Go workspace support in nixpkgs `buildGoModule`        | Medium     | Medium |
+| 19 | Extract `pkgs/lib/` into a reusable flake for other repos          | Low        | Medium |
+| 20 | Add `nix run .#tool` apps for each tool                            | Low        | Low    |
 
 ### Cleanup (1 hour)
 
-| #   | Task                                                                       | Impact | Effort |
-| --- | -------------------------------------------------------------------------- | ------ | ------ |
-| 21  | Remove unused `writeText` from package files (if any remain)               | Low    | Low    |
-| 22  | Verify `golangci-lint-auto-configure` still builds (uses separate overlay) | Low    | Low    |
-| 23  | Clean up any remaining `GIT_CONFIG_GLOBAL` references                      | Low    | Low    |
-| 24  | Add `meta.mainProgram` verification                                        | Low    | Low    |
-| 25  | Document the `go-replaces` update workflow for adding new tools            | Medium | Low    |
+| #  | Task                                                                       | Impact | Effort |
+| -- | -------------------------------------------------------------------------- | ------ | ------ |
+| 21 | Remove unused `writeText` from package files (if any remain)               | Low    | Low    |
+| 22 | Verify `golangci-lint-auto-configure` still builds (uses separate overlay) | Low    | Low    |
+| 23 | Clean up any remaining `GIT_CONFIG_GLOBAL` references                      | Low    | Low    |
+| 24 | Add `meta.mainProgram` verification                                        | Low    | Low    |
+| 25 | Document the `go-replaces` update workflow for adding new tools            | Medium | Low    |
 
 ---
 

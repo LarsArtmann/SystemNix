@@ -120,33 +120,33 @@ Tree is clean. 13 commits since session 29, spanning: Manifest LLM router integr
 
 ## f) Top 25 Things We Should Get Done Next
 
-| #   | Priority | Item                                                                             | Effort  | Impact                       |
-| --- | -------- | -------------------------------------------------------------------------------- | ------- | ---------------------------- |
-| 1   | P0       | **Create `manifest.yaml` sops secrets** on evo-x2                                | 5 min   | Unblocks Manifest            |
-| 2   | P0       | **Deploy to evo-x2** (`just switch`) — 4 sessions of changes                     | 10 min  | Activates ALL recent work    |
-| 3   | P0       | **Root disk cleanup** — `nix-collect-garbage -d && docker system prune -af`      | 10 min  | Prevents disk-full crash     |
-| 4   | P1       | **Fix service-health-check** — verify it passes after deploy (photomap disabled) | 5 min   | Stops notification spam      |
-| 5   | P1       | **Verify all services healthy after deploy**                                     | 10 min  | Confidence in system state   |
-| 6   | P1       | **Migrate 13 remaining modules to `serviceDefaults{}`**                          | 30 min  | Eliminates #1 DRY violation  |
-| 7   | P1       | **Pin Docker image versions** — Twenty, Manifest                                 | 10 min  | Reproducible deploys         |
-| 8   | P1       | **Move rpi3 VRRP password to sops**                                              | 10 min  | Security fix                 |
-| 9   | P1       | **Clean up commented-out imports in configuration.nix**                          | 5 min   | Removes dead noise           |
-| 10  | P1       | **Fix 21 files with stale justfile references** in docs/                         | 30 min  | Doc accuracy                 |
-| 11  | P2       | **Extract Catppuccin colors to shared lib**                                      | 30 min  | 140 values → 1 source        |
-| 12  | P2       | **Split signoz.nix** (746 lines) into sub-modules                                | 45 min  | Maintainability              |
-| 13  | P2       | **Adopt lib/types.nix across services** or inline into hermes                    | 20 min  | Reduce dead helper code      |
-| 14  | P2       | **Update SigNoz versions** — currently v0.117.1/v0.144.2                         | 30 min  | Security + features          |
-| 15  | P2       | **Create FEATURES.md** — full feature inventory from code                        | 30 min  | Project documentation        |
-| 16  | P2       | **Create TODO_LIST.md** — comprehensive, verified against code                   | 30 min  | Project tracking             |
-| 17  | P2       | **Archive 2025 planning docs** (23 files)                                        | 10 min  | Reduce noise in docs/        |
-| 18  | P2       | **Delete stale private-cloud-planning/** or update                               | 10 min  | Misleading docs              |
-| 19  | P2       | **Add post-deploy health check to justfile** (`just deploy-check`)               | 15 min  | Catches failures immediately |
-| 20  | P2       | **Add Docker health checks to Twenty module**                                    | 10 min  | Service reliability          |
-| 21  | P3       | **Provision Pi 3 hardware** for DNS failover                                     | 2 hours | High-availability DNS        |
-| 22  | P3       | **Enable AppArmor** in security-hardening.nix                                    | 30 min  | Mandatory access control     |
-| 23  | P3       | **Add auditd back** when NixOS 26.05 bug #483085 is fixed                        | 10 min  | Security hardening           |
-| 24  | P3       | **Consider building Manifest from source** (NestJS → Nix derivation)             | 4 hours | Full Nix-native              |
-| 25  | P3       | **Archive session-artifact status reports** — keep only 3 most recent            | 10 min  | Clean docs/status/           |
+| #  | Priority | Item                                                                             | Effort  | Impact                       |
+| -- | -------- | -------------------------------------------------------------------------------- | ------- | ---------------------------- |
+| 1  | P0       | **Create `manifest.yaml` sops secrets** on evo-x2                                | 5 min   | Unblocks Manifest            |
+| 2  | P0       | **Deploy to evo-x2** (`just switch`) — 4 sessions of changes                     | 10 min  | Activates ALL recent work    |
+| 3  | P0       | **Root disk cleanup** — `nix-collect-garbage -d && docker system prune -af`      | 10 min  | Prevents disk-full crash     |
+| 4  | P1       | **Fix service-health-check** — verify it passes after deploy (photomap disabled) | 5 min   | Stops notification spam      |
+| 5  | P1       | **Verify all services healthy after deploy**                                     | 10 min  | Confidence in system state   |
+| 6  | P1       | **Migrate 13 remaining modules to `serviceDefaults{}`**                          | 30 min  | Eliminates #1 DRY violation  |
+| 7  | P1       | **Pin Docker image versions** — Twenty, Manifest                                 | 10 min  | Reproducible deploys         |
+| 8  | P1       | **Move rpi3 VRRP password to sops**                                              | 10 min  | Security fix                 |
+| 9  | P1       | **Clean up commented-out imports in configuration.nix**                          | 5 min   | Removes dead noise           |
+| 10 | P1       | **Fix 21 files with stale justfile references** in docs/                         | 30 min  | Doc accuracy                 |
+| 11 | P2       | **Extract Catppuccin colors to shared lib**                                      | 30 min  | 140 values → 1 source        |
+| 12 | P2       | **Split signoz.nix** (746 lines) into sub-modules                                | 45 min  | Maintainability              |
+| 13 | P2       | **Adopt lib/types.nix across services** or inline into hermes                    | 20 min  | Reduce dead helper code      |
+| 14 | P2       | **Update SigNoz versions** — currently v0.117.1/v0.144.2                         | 30 min  | Security + features          |
+| 15 | P2       | **Create FEATURES.md** — full feature inventory from code                        | 30 min  | Project documentation        |
+| 16 | P2       | **Create TODO_LIST.md** — comprehensive, verified against code                   | 30 min  | Project tracking             |
+| 17 | P2       | **Archive 2025 planning docs** (23 files)                                        | 10 min  | Reduce noise in docs/        |
+| 18 | P2       | **Delete stale private-cloud-planning/** or update                               | 10 min  | Misleading docs              |
+| 19 | P2       | **Add post-deploy health check to justfile** (`just deploy-check`)               | 15 min  | Catches failures immediately |
+| 20 | P2       | **Add Docker health checks to Twenty module**                                    | 10 min  | Service reliability          |
+| 21 | P3       | **Provision Pi 3 hardware** for DNS failover                                     | 2 hours | High-availability DNS        |
+| 22 | P3       | **Enable AppArmor** in security-hardening.nix                                    | 30 min  | Mandatory access control     |
+| 23 | P3       | **Add auditd back** when NixOS 26.05 bug #483085 is fixed                        | 10 min  | Security hardening           |
+| 24 | P3       | **Consider building Manifest from source** (NestJS → Nix derivation)             | 4 hours | Full Nix-native              |
+| 25 | P3       | **Archive session-artifact status reports** — keep only 3 most recent            | 10 min  | Clean docs/status/           |
 
 ---
 

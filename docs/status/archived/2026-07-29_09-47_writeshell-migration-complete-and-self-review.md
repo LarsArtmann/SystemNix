@@ -6,21 +6,20 @@
 
 ---
 
-
 ## A) FULLY DONE
 
 ### Migration of all 8 shell script derivations
 
-| # | File | Script(s) | `runtimeInputs` added | Notes |
-|---|------|-----------|----------------------|-------|
-| 1 | `modules/nixos/services/openseo.nix` | `openseo-stage` | `coreutils`, `findutils` | Uses `find`, `mkdir`, `rm`, `ln`, `cp`, `basename` |
-| 2 | `modules/nixos/services/openseo.nix` | `openseo-migrate` | _(none — `wrangler` is store-path-absolute, `cd` is builtin)_ | |
-| 3 | `modules/nixos/services/openseo.nix` | `openseo-serve` | _(none — `vite` is store-path-absolute, `cd` is builtin)_ | |
-| 4 | `modules/nixos/services/openseo.nix` | `openseo-validate` | _(none — pure bash: `${!var:-}`, `echo`, `exit`)_ | Complex Nix escaping preserved (`''${!var:-}`, `''$var`) |
-| 5 | `templates/go-flake-parts/flake.nix` | `run-test` app | `goPkg` | **Fixed latent bug:** `program = <derivation>` (directory, not executable) → `program = lib.getExe (...)` |
-| 6 | `templates/go-flake-parts/flake.nix` | `run-lint` app | `golangci-lint` | Same `lib.getExe` fix |
-| 7 | `overlays/linux.nix` | `bun` memlimit wrapper | `systemd` | Replaces system-wide `bun` with memory-capped wrapper |
-| 8 | `modules/nixos/services/monitor365.nix` | `monitor365-duckdb-heal` | `coreutils`, `findutils` | Was inline `writeShellScript` (not `Bin`) — converted to named `let` binding + `lib.getExe` reference. **Rewrote `ls -t | head` → `find -printf | sort -rn | cut` to pass shellcheck SC2012** |
+| # | File                                    | Script(s)                | `runtimeInputs` added                                         | Notes                                                                                                                   |
+| - | --------------------------------------- | ------------------------ | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 1 | `modules/nixos/services/openseo.nix`    | `openseo-stage`          | `coreutils`, `findutils`                                      | Uses `find`, `mkdir`, `rm`, `ln`, `cp`, `basename`                                                                      |
+| 2 | `modules/nixos/services/openseo.nix`    | `openseo-migrate`        | _(none — `wrangler` is store-path-absolute, `cd` is builtin)_ |                                                                                                                         |
+| 3 | `modules/nixos/services/openseo.nix`    | `openseo-serve`          | _(none — `vite` is store-path-absolute, `cd` is builtin)_     |                                                                                                                         |
+| 4 | `modules/nixos/services/openseo.nix`    | `openseo-validate`       | _(none — pure bash: `${!var:-}`, `echo`, `exit`)_             | Complex Nix escaping preserved (`''${!var:-}`, `''$var`)                                                                |
+| 5 | `templates/go-flake-parts/flake.nix`    | `run-test` app           | `goPkg`                                                       | **Fixed latent bug:** `program = <derivation>` (directory, not executable) → `program = lib.getExe (...)`               |
+| 6 | `templates/go-flake-parts/flake.nix`    | `run-lint` app           | `golangci-lint`                                               | Same `lib.getExe` fix                                                                                                   |
+| 7 | `overlays/linux.nix`                    | `bun` memlimit wrapper   | `systemd`                                                     | Replaces system-wide `bun` with memory-capped wrapper                                                                   |
+| 8 | `modules/nixos/services/monitor365.nix` | `monitor365-duckdb-heal` | `coreutils`, `findutils`                                      | Was inline `writeShellScript` (not `Bin`) — converted to named `let` binding + `lib.getExe` reference. **Rewrote `ls -t |
 
 ### Verification performed
 
@@ -67,7 +66,7 @@ The original `monitor365-duckdb-heal` was a `writeShellScript` (raw, no `set -eu
 
 ### D3. The TODO said "7 scripts" — I found 8
 
-The TODO_LIST entry read: *"7 scripts in openseo/templates/monitor365 use hardcoded paths."* Actual count: **8** (the `bun` wrapper in `overlays/linux.nix` was not mentioned in the TODO but matched the same anti-pattern). I converted it anyway, which is correct. But the count discrepancy suggests the TODO was written from an incomplete audit. Not an error on my part, but worth noting.
+The TODO_LIST entry read: _"7 scripts in openseo/templates/monitor365 use hardcoded paths."_ Actual count: **8** (the `bun` wrapper in `overlays/linux.nix` was not mentioned in the TODO but matched the same anti-pattern). I converted it anyway, which is correct. But the count discrepancy suggests the TODO was written from an incomplete audit. Not an error on my part, but worth noting.
 
 ### D4. Template `program = <derivation>` — was it actually broken?
 

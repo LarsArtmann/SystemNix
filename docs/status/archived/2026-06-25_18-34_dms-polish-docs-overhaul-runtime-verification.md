@@ -8,7 +8,6 @@
 
 ---
 
-
 ## Executive Summary
 
 Completed a comprehensive follow-up to the DMS wallpaper migration, executing 38 of 57 planned tasks from the backlog. All changes are **deployed and verified at runtime**. The DMS desktop shell (13 plugins, wallpaper management, notifications, lock screen) is fully operational. awww is completely retired. matugen dynamic theming is disabled in favor of Catppuccin Mocha.
@@ -87,7 +86,7 @@ ef998420 refactor(desktop): retire awww wallpaper daemon, migrate to DMS-native 
 | **matugen disable**            | `enableDynamicTheming = false` removes the matugen _package_ from the Nix closure, but DMS still tries to spawn matugen at runtime (38 warnings: "Matugen worker failed with exit code: 1"). The package is gone so it CAN'T override Catppuccin, but the warnings are noise. | Set `DMS_DISABLE_MATUGEN=1` env var in DMS systemd service to suppress the runtime matugen calls entirely |
 | **DMS settings.json tradeoff** | Documented in AGENTS.md gotchas table. `plugin_settings.json` is declarative (Nix symlink), `settings.json` is user-mutable.                                                                                                                                                  | No code change needed — this is an inherent tradeoff of declarative config                                |
 | **niri keybinds**              | dunstctl removed, swaylock → dms-lock, wallpaper → DMS IPC. Rofi intentionally kept for launcher/clipboard/emoji/calc.                                                                                                                                                        | Complete — no further action                                                                              |
-| **dms-lock wrapper**           | Created with `dms ipc lock lock                                                                                                                                                                                                                                               |                                                                                                           | swaylock` fallback. Working via Mod+Shift+Escape. | Untested in real suspend scenario (needs reboot first) |
+| **dms-lock wrapper**           | Created with `dms ipc lock lock                                                                                                                                                                                                                                               |                                                                                                           |
 | **Monitor365**                 | Root cause identified: upstream Rust panic in Axum 0.7 route syntax (`:param` → `{param}`). Cannot fix from SystemNix.                                                                                                                                                        | Needs fix in `github:LarsArtmann/monitor365` source repo                                                  |
 | **Gatus health checks**        | Audited: 5 endpoints DOWN. 2 expected (Ollama no autostart, Monitor365 upstream bug). 3 need investigation (Crush Daily, Memory Pressure, SigNoz).                                                                                                                            | Investigate the 3 unexpected DOWN endpoints                                                               |
 
@@ -176,43 +175,43 @@ ef998420 refactor(desktop): retire awww wallpaper daemon, migrate to DMS-native 
 
 ### Critical / High Impact
 
-| #   | Task                                                                           | Impact                                                | Effort | Depends On |
-| --- | ------------------------------------------------------------------------------ | ----------------------------------------------------- | ------ | ---------- |
-| 1   | **Set `DMS_DISABLE_MATUGEN=1`** in DMS systemd Environment                     | Eliminates 38+ journal warnings                       | 5m     | —          |
-| 2   | **Root disk cleanup** — `nix-collect-garbage -d` (95% full!)                   | Prevents disk emergency                               | 10m    | —          |
-| 3   | **Reboot evo-x2** — clears stale polkit-gnome, applies generation              | System stability                                      | 12m    | #2         |
-| 4   | **Investigate swap usage** (8G/9.4G = 85%)                                     | Identify memory leak                                  | 10m    | —          |
-| 5   | **Fix SigNoz service** — query logger dir creation failure                     | Restores observability                                | 30m    | —          |
-| 6   | **Investigate 3 unexpected Gatus DOWN** (Crush Daily, Memory Pressure, SigNoz) | Service health accuracy                               | 20m    | —          |
-| 7   | **BTRFS /data subvolume migration** — create @data subvol, update fstab, rsync | Enables snapshot protection for Docker/Immich/AI data | 1h+    | #3         |
-| 8   | **Cloud backup implementation** — BorgBackup to Hetzner StorageBox             | Disaster recovery                                     | 4h     | —          |
+| # | Task                                                                           | Impact                                                | Effort | Depends On |
+| - | ------------------------------------------------------------------------------ | ----------------------------------------------------- | ------ | ---------- |
+| 1 | **Set `DMS_DISABLE_MATUGEN=1`** in DMS systemd Environment                     | Eliminates 38+ journal warnings                       | 5m     | —          |
+| 2 | **Root disk cleanup** — `nix-collect-garbage -d` (95% full!)                   | Prevents disk emergency                               | 10m    | —          |
+| 3 | **Reboot evo-x2** — clears stale polkit-gnome, applies generation              | System stability                                      | 12m    | #2         |
+| 4 | **Investigate swap usage** (8G/9.4G = 85%)                                     | Identify memory leak                                  | 10m    | —          |
+| 5 | **Fix SigNoz service** — query logger dir creation failure                     | Restores observability                                | 30m    | —          |
+| 6 | **Investigate 3 unexpected Gatus DOWN** (Crush Daily, Memory Pressure, SigNoz) | Service health accuracy                               | 20m    | —          |
+| 7 | **BTRFS /data subvolume migration** — create @data subvol, update fstab, rsync | Enables snapshot protection for Docker/Immich/AI data | 1h+    | #3         |
+| 8 | **Cloud backup implementation** — BorgBackup to Hetzner StorageBox             | Disaster recovery                                     | 4h     | —          |
 
 ### Medium Impact
 
-| #   | Task                                                                              | Impact                    | Effort | Depends On |
-| --- | --------------------------------------------------------------------------------- | ------------------------- | ------ | ---------- |
-| 9   | **Verify DMS lock screen** on real suspend (Mod+Shift+S)                          | Critical untested path    | 5m     | #3         |
-| 10  | **Hermes: add OpenAI API key** to sops                                            | Enables fallback LLM      | 5m     | —          |
-| 11  | **Hermes: install SSH deploy key**                                                | Enables git access        | 5m     | —          |
-| 12  | **Hermes: set fallback model**                                                    | Configures fallback       | 2m     | #10        |
-| 13  | **Fix Monitor365 upstream** — Axum 0.7 route syntax panic                         | Restores monitoring agent | 30m    | —          |
-| 14  | **Declarative Catppuccin accent for DMS** — login service or settings.json        | Theme survives reboot     | 1h     | #1         |
-| 15  | **DMS plugin development guide** — document Process+StdioCollector+Timer patterns | DX for future plugins     | 1h     | —          |
-| 16  | **NixOS test for DMS plugin loading** — automated QML validation                  | Prevent broken plugins    | 4h     | —          |
+| #  | Task                                                                              | Impact                    | Effort | Depends On |
+| -- | --------------------------------------------------------------------------------- | ------------------------- | ------ | ---------- |
+| 9  | **Verify DMS lock screen** on real suspend (Mod+Shift+S)                          | Critical untested path    | 5m     | #3         |
+| 10 | **Hermes: add OpenAI API key** to sops                                            | Enables fallback LLM      | 5m     | —          |
+| 11 | **Hermes: install SSH deploy key**                                                | Enables git access        | 5m     | —          |
+| 12 | **Hermes: set fallback model**                                                    | Configures fallback       | 2m     | #10        |
+| 13 | **Fix Monitor365 upstream** — Axum 0.7 route syntax panic                         | Restores monitoring agent | 30m    | —          |
+| 14 | **Declarative Catppuccin accent for DMS** — login service or settings.json        | Theme survives reboot     | 1h     | #1         |
+| 15 | **DMS plugin development guide** — document Process+StdioCollector+Timer patterns | DX for future plugins     | 1h     | —          |
+| 16 | **NixOS test for DMS plugin loading** — automated QML validation                  | Prevent broken plugins    | 4h     | —          |
 
 ### Lower Priority / Polish
 
-| #   | Task                                                                          | Impact                      | Effort | Depends On |
-| --- | ----------------------------------------------------------------------------- | --------------------------- | ------ | ---------- |
-| 17  | **DMS bar widget ordering** — configure left/right via DMS settings           | Customization               | 12m    | #3         |
-| 18  | **Ollama model download progress** in plugin                                  | See active downloads        | 2h     | —          |
-| 19  | **Port ImmichMemory widget** as DMS plugin                                    | Photo of the day            | 2h     | —          |
-| 20  | **Migrate rofi → DMS launcher** (if mature enough)                            | One less process            | 4h     | #3         |
-| 21  | **DMS theme overlay** — inject Catppuccin via DMS theme system                | Visual consistency          | 4h     | #1         |
-| 22  | **Upstream: aw-watcher-utilization** PR (poetry-core migration)               | Removes custom overlay      | 2h     | —          |
-| 23  | **Upstream: KeePassXC Chromium manifests** PR                                 | Removes custom manifest gen | 1h     | —          |
-| 24  | **Upstream: taskwarrior3 build flags** PR                                     | Removes custom override     | 1h     | —          |
-| 25  | **Disabled service triage** — remove photomap (decided), clean up DiscordSync | Reduces maintenance         | 30m    | —          |
+| #  | Task                                                                          | Impact                      | Effort | Depends On |
+| -- | ----------------------------------------------------------------------------- | --------------------------- | ------ | ---------- |
+| 17 | **DMS bar widget ordering** — configure left/right via DMS settings           | Customization               | 12m    | #3         |
+| 18 | **Ollama model download progress** in plugin                                  | See active downloads        | 2h     | —          |
+| 19 | **Port ImmichMemory widget** as DMS plugin                                    | Photo of the day            | 2h     | —          |
+| 20 | **Migrate rofi → DMS launcher** (if mature enough)                            | One less process            | 4h     | #3         |
+| 21 | **DMS theme overlay** — inject Catppuccin via DMS theme system                | Visual consistency          | 4h     | #1         |
+| 22 | **Upstream: aw-watcher-utilization** PR (poetry-core migration)               | Removes custom overlay      | 2h     | —          |
+| 23 | **Upstream: KeePassXC Chromium manifests** PR                                 | Removes custom manifest gen | 1h     | —          |
+| 24 | **Upstream: taskwarrior3 build flags** PR                                     | Removes custom override     | 1h     | —          |
+| 25 | **Disabled service triage** — remove photomap (decided), clean up DiscordSync | Reduces maintenance         | 30m    | —          |
 
 ---
 

@@ -298,48 +298,48 @@ SystemNix manages two machines: **Lars-MacBook-Air** (aarch64-darwin) and **evo-
 
 ### Priority 0 — Critical (Do Today)
 
-| #   | Task                                                                                                                | Effort  | Impact                          |
-| --- | ------------------------------------------------------------------------------------------------------------------- | ------- | ------------------------------- |
-| 1   | **Push 6 unpushed commits to origin/master**                                                                        | 1 min   | Unblocks remote builds          |
-| 2   | **Re-add crush-config Home Manager deployment** in `platforms/darwin/home.nix` and `platforms/nixos/users/home.nix` | 10 min  | Syncs AI config across machines |
-| 3   | **Deploy to evo-x2** — `nixos-rebuild switch` to get SSH fix + AI stack + security updates                          | 30 min  | Gets all recent fixes running   |
-| 4   | **Fix sops-nix decryption** — Debug age/GPG key issues on evo-x2                                                    | 2 hours | Unblocks grafana, gitea, certs  |
-| 5   | **Resolve Caddy vs dnsblockd port 80 conflict** — Either move dnsblockd to different port or reconfigure Caddy      | 1 hour  | Fixes DNS blocking              |
+| # | Task                                                                                                                | Effort  | Impact                          |
+| - | ------------------------------------------------------------------------------------------------------------------- | ------- | ------------------------------- |
+| 1 | **Push 6 unpushed commits to origin/master**                                                                        | 1 min   | Unblocks remote builds          |
+| 2 | **Re-add crush-config Home Manager deployment** in `platforms/darwin/home.nix` and `platforms/nixos/users/home.nix` | 10 min  | Syncs AI config across machines |
+| 3 | **Deploy to evo-x2** — `nixos-rebuild switch` to get SSH fix + AI stack + security updates                          | 30 min  | Gets all recent fixes running   |
+| 4 | **Fix sops-nix decryption** — Debug age/GPG key issues on evo-x2                                                    | 2 hours | Unblocks grafana, gitea, certs  |
+| 5 | **Resolve Caddy vs dnsblockd port 80 conflict** — Either move dnsblockd to different port or reconfigure Caddy      | 1 hour  | Fixes DNS blocking              |
 
 ### Priority 1 — High Impact (This Week)
 
-| #   | Task                                                                                                              | Effort  | Impact                     |
-| --- | ----------------------------------------------------------------------------------------------------------------- | ------- | -------------------------- |
-| 6   | **Fix static IP** — Either set `useDHCP = true` or align config with reality (192.168.1.161)                      | 15 min  | Consistent networking      |
-| 7   | **Verify Ollama GPU acceleration** — After deploy, run `ollama run llama3` and check `rocm-smi`                   | 30 min  | Confirms AI stack works    |
-| 8   | **Remove duplicate `ollama` CPU package** from `ai-stack.nix` systemPackages                                      | 2 min   | Eliminates confusion       |
-| 9   | **Fix `scheduled-tasks.nix` WorkingDirectory** — Change `/home/lars/Setup-Mac` to `/home/lars/projects/SystemNix` | 2 min   | Fixes scheduled tasks      |
-| 10  | **Build and test SigNoz end-to-end** on evo-x2                                                                    | 3 hours | Gets observability running |
+| #  | Task                                                                                                              | Effort  | Impact                     |
+| -- | ----------------------------------------------------------------------------------------------------------------- | ------- | -------------------------- |
+| 6  | **Fix static IP** — Either set `useDHCP = true` or align config with reality (192.168.1.161)                      | 15 min  | Consistent networking      |
+| 7  | **Verify Ollama GPU acceleration** — After deploy, run `ollama run llama3` and check `rocm-smi`                   | 30 min  | Confirms AI stack works    |
+| 8  | **Remove duplicate `ollama` CPU package** from `ai-stack.nix` systemPackages                                      | 2 min   | Eliminates confusion       |
+| 9  | **Fix `scheduled-tasks.nix` WorkingDirectory** — Change `/home/lars/Setup-Mac` to `/home/lars/projects/SystemNix` | 2 min   | Fixes scheduled tasks      |
+| 10 | **Build and test SigNoz end-to-end** on evo-x2                                                                    | 3 hours | Gets observability running |
 
 ### Priority 2 — Quality of Life (Next 2 Weeks)
 
-| #   | Task                                                                              | Effort  | Impact                       |
-| --- | --------------------------------------------------------------------------------- | ------- | ---------------------------- |
-| 11  | **Add NixOS CI builder** — Either self-hosted runner or use QEMU                  | 4 hours | Catches NixOS build failures |
-| 12  | **Create port registry** — Document all service ports (80, 443, 3000, 8888, etc.) | 1 hour  | Prevents future conflicts    |
-| 13  | **Consolidate/archive scripts** — Move unused scripts to `scripts/archive/`       | 1 hour  | Reduces clutter              |
-| 14  | **Archive old status docs** — Move pre-2026 docs to `docs/status/archive/`        | 30 min  | Reduces noise                |
-| 15  | **Add smoke-test justfile recipe** — Post-deploy service health checks            | 2 hours | Catches deployment issues    |
-| 16  | **Tag nix-ssh-config v1.0.0**                                                     | 5 min   | Marks stability              |
-| 17  | **Update AGENTS.md** — Remove stale claims about crush-config and Ghost Systems   | 30 min  | Accurate documentation       |
-| 18  | **Add dnsblockd watchdog** — Auto-restart on crash                                | 30 min  | Service reliability          |
+| #  | Task                                                                              | Effort  | Impact                       |
+| -- | --------------------------------------------------------------------------------- | ------- | ---------------------------- |
+| 11 | **Add NixOS CI builder** — Either self-hosted runner or use QEMU                  | 4 hours | Catches NixOS build failures |
+| 12 | **Create port registry** — Document all service ports (80, 443, 3000, 8888, etc.) | 1 hour  | Prevents future conflicts    |
+| 13 | **Consolidate/archive scripts** — Move unused scripts to `scripts/archive/`       | 1 hour  | Reduces clutter              |
+| 14 | **Archive old status docs** — Move pre-2026 docs to `docs/status/archive/`        | 30 min  | Reduces noise                |
+| 15 | **Add smoke-test justfile recipe** — Post-deploy service health checks            | 2 hours | Catches deployment issues    |
+| 16 | **Tag nix-ssh-config v1.0.0**                                                     | 5 min   | Marks stability              |
+| 17 | **Update AGENTS.md** — Remove stale claims about crush-config and Ghost Systems   | 30 min  | Accurate documentation       |
+| 18 | **Add dnsblockd watchdog** — Auto-restart on crash                                | 30 min  | Service reliability          |
 
 ### Priority 3 — Architecture (Next Month)
 
-| #   | Task                                                                                | Effort | Impact                         |
-| --- | ----------------------------------------------------------------------------------- | ------ | ------------------------------ |
-| 19  | **Integrate Ghost Systems type safety** — Wire Types.nix, State.nix, Validation.nix | 1 week | Compile-time config validation |
-| 20  | **Create Hetzner NixOS configs** — Infrastructure-as-code for cloud servers         | 3 days | Managed cloud infra            |
-| 21  | **Implement NixOS VM tests** — Automated integration testing                        | 3 days | Prevents regressions           |
-| 22  | **PyTorch ROCm integration** — Native GPU PyTorch for Unsloth                       | 2 days | Full AI stack                  |
-| 23  | **AMD NPU integration** — Wire nix-amd-npu to actual workloads                      | 3 days | Uses all hardware              |
-| 24  | **ZFS snapshot policy** — Configure automated snapshots on evo-x2                   | 1 day  | Data protection                |
-| 25  | **Monitoring alerting** — Configure Grafana alerts + notifications                  | 1 day  | Proactive issue detection      |
+| #  | Task                                                                                | Effort | Impact                         |
+| -- | ----------------------------------------------------------------------------------- | ------ | ------------------------------ |
+| 19 | **Integrate Ghost Systems type safety** — Wire Types.nix, State.nix, Validation.nix | 1 week | Compile-time config validation |
+| 20 | **Create Hetzner NixOS configs** — Infrastructure-as-code for cloud servers         | 3 days | Managed cloud infra            |
+| 21 | **Implement NixOS VM tests** — Automated integration testing                        | 3 days | Prevents regressions           |
+| 22 | **PyTorch ROCm integration** — Native GPU PyTorch for Unsloth                       | 2 days | Full AI stack                  |
+| 23 | **AMD NPU integration** — Wire nix-amd-npu to actual workloads                      | 3 days | Uses all hardware              |
+| 24 | **ZFS snapshot policy** — Configure automated snapshots on evo-x2                   | 1 day  | Data protection                |
+| 25 | **Monitoring alerting** — Configure Grafana alerts + notifications                  | 1 day  | Proactive issue detection      |
 
 ---
 

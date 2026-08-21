@@ -54,6 +54,7 @@
 ## f) Up to 50 things to get done next
 
 **P0 — ship and verify this fix:**
+
 1. ~~User runs `nix run .#deploy` (also ships the earlier google-sync fix already in the tree).~~ done (deploys through gen 690; black-screen fix shipped)
 2. Reboot; BEFORE login: `pgrep -x niri` → must be empty.
 3. Login at SDDM → desktop appears in seconds; monitor stays on.
@@ -99,4 +100,4 @@
 
 ---
 
-*Fix verified to the edge of my permissions; the deploy is yours.*
+_Fix verified to the edge of my permissions; the deploy is yours._

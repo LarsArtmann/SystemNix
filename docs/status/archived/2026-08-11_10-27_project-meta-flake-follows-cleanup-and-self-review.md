@@ -63,7 +63,7 @@
    - It currently tracks `master` and is a build-time library consumed by many Go tools. AGENTS.md history notes this is a reproducibility risk.
 
 5. **Improve the `go-nix-helpers` flake input comment.**
-   - Current comment explains *why* it must remain a flake, but does not explain *that* upstream `project-meta` (and potentially others) consume `flakeModules.go-standard` from it. Could be clearer.
+   - Current comment explains _why_ it must remain a flake, but does not explain _that_ upstream `project-meta` (and potentially others) consume `flakeModules.go-standard` from it. Could be clearer.
 
 6. **Add a lint check that fails on stale follows overrides.**
    - Could be a small `nix flake check` pre-step or a script that greps `flake.nix` against `nix flake metadata` input lists.
@@ -185,7 +185,7 @@
 ## g) Questions I cannot answer myself
 
 1. **Should I proactively audit and clean up the other LarsArtmann Go tool inputs (`library-policy`, `crush-daily`, `mr-sync`, `overview`, `discordsync`, `browser-history`, etc.) for the same `systems`/`treefmt-nix` follows-override staleness right now, or only react when they produce warnings?**
-   I can check whether they *currently* warn, but I cannot decide the project's preferred maintenance posture (aggressive cleanup vs. reactive).
+   I can check whether they _currently_ warn, but I cannot decide the project's preferred maintenance posture (aggressive cleanup vs. reactive).
 
 2. **Do you want `project-meta` to be explicitly added to `environment.systemPackages` or is it sufficient that it flows through `larsPackages` / `specialArgs`?**
    Historical status reports noted `project-meta` was missing from the system closure. I did not verify this in the current tree; the answer depends on whether the package is intended as a user-facing CLI on evo-x2 and macOS.
@@ -215,4 +215,4 @@ $ git diff --stat
 
 ---
 
-*Report written at 2026-08-11 10:27 CEST. Next step: harvest items 1–10 into `TODO_LIST.md` if session continues.*
+_Report written at 2026-08-11 10:27 CEST. Next step: harvest items 1–10 into `TODO_LIST.md` if session continues._

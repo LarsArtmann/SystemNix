@@ -7,7 +7,6 @@
 
 ---
 
-
 ## What Was Done
 
 ### 1. Direnv Per-Command Caching Hook (FULLY DONE)
@@ -19,6 +18,7 @@
 **The HM bypass trick:** HM's generated `config.fish` has `if not functions -q __direnv_export_eval; direnv hook fish | source; end` at the end. Our `interactiveShellInit` runs BEFORE that check (interactive init is placed earlier in the generated config), so HM sees the function exists and skips its own hook entirely.
 
 **Correctness verified (3 scenarios):**
+
 - Cache hit (no changes): direnv skipped, **0.7ms**
 - `flake.lock` touched: direnv re-runs, detects change, reloads env
 - PWD change (cd): direnv re-runs for new directory
@@ -26,20 +26,22 @@
 
 **Measured impact:**
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| Per-command (cache hit) | **46ms** | **0.7ms** | **65x faster** |
-| Per-command (cache miss, after change) | 46ms | 720ms | Slower* |
-| Fish startup | 67ms | **48ms** | 1.4x faster |
+| Metric                                 | Before   | After     | Improvement    |
+| -------------------------------------- | -------- | --------- | -------------- |
+| Per-command (cache hit)                | **46ms** | **0.7ms** | **65x faster** |
+| Per-command (cache miss, after change) | 46ms     | 720ms     | Slower*        |
+| Fish startup                           | 67ms     | **48ms**  | 1.4x faster    |
 
 *Cache miss is slower because it runs the full direnv+nix-direnv reload instead of direnv's internal mtime check. But this only fires when `.envrc`/`flake.lock`/`flake.nix`/`shell.nix`/`default.nix`/`.env` actually change — the same work direnv did before, just less frequently.
 
 **Files changed:**
+
 - `platforms/common/programs/fish.nix` — caching direnv hook replacing HM's stock integration
 
 ### 2. Redundant Starship Source Removed (FULLY DONE)
 
 **Problem:** Starship was sourced **twice**:
+
 1. `platforms/nixos/programs/shells.nix` line 34-35: `starship init fish | source` (in `shellInit`)
 2. HM `programs.starship.enableFishIntegration = true` → auto-generates the same `starship init fish | source` in `interactiveShellInit`
 
@@ -54,6 +56,7 @@
 **Verified:** `~/.cache/fish-init/carapace-1.7.1.fish` (66948 bytes, 1609 lines) generated on first run, sourced from cache on subsequent runs.
 
 **Files changed:**
+
 - `platforms/nixos/programs/shells.nix` — carapace caching block replacing direct source
 
 ### 4. Smart Direnv Library (DONE — by auto-git daemon)
@@ -63,6 +66,7 @@ The `.envrc` `_nix_add_gcroot` override from the previous session was migrated i
 A Python migration script (`scripts/migrate-envrc.py`) was created to migrate other project `.envrc` files to the new pattern.
 
 **Files changed:**
+
 - `platforms/common/programs/direnv.nix` — installs `direnv-smart-lib.sh`
 - `platforms/common/programs/direnv-smart-lib.sh` — GC root override + `use_go_env` helper
 - `.envrc` — simplified to `use flake` + `use_go_env`

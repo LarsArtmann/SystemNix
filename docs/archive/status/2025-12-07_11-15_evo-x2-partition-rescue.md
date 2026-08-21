@@ -61,13 +61,13 @@ Applied best-practice mount options for the new Btrfs root:
 
 ## 📋 Next Steps (Immediate)
 
-1.  **Sync:** Push changes from Mac -> Pull on Evo-X2.
-2.  **Verify:** Check UUIDs match hardware.
-3.  **Apply:** Run `sudo nixos-rebuild switch --flake .#evo-x2`.
-4.  **Reboot:** Confirm network connectivity and boot success.
+1. **Sync:** Push changes from Mac -> Pull on Evo-X2.
+2. **Verify:** Check UUIDs match hardware.
+3. **Apply:** Run `sudo nixos-rebuild switch --flake .#evo-x2`.
+4. **Reboot:** Confirm network connectivity and boot success.
 
 ## 🔮 Future Improvements
 
-1.  **Disko:** Implement declarative partitioning to avoid manual `gparted` work.
-2.  **Subvolumes:** Refactor Btrfs to use `@home`, `@nix`, `@log` separation for atomic rollbacks.
-3.  **Security:** Implement `sops-nix` for secret management.
+1. **Disko:** Implement declarative partitioning to avoid manual `gparted` work.
+2. **Subvolumes:** Refactor Btrfs to use `@home`, `@nix`, `@log` separation for atomic rollbacks.
+3. **Security:** Implement `sops-nix` for secret management.

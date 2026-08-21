@@ -259,33 +259,33 @@ FEATURES.md claims ZRAM is "50% of RAM (64GB)" — actual is 10% (~12.8 GB). 4 r
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| #   | Priority | Task                                                              | Est. | Impact                   |
-| --- | -------- | ----------------------------------------------------------------- | ---- | ------------------------ |
-| 1   | **P0**   | `just switch` + reboot — deploy ALL 19+ undeployed commits        | 30m  | Prevents repeat crash    |
-| 2   | **P0**   | Verify watchdog rewrites work after deploy                        | 10m  | Confirms crash fix       |
-| 3   | **P0**   | Verify ZRAM increased to 10% after reboot                         | 2m   | Confirms swap headroom   |
-| 4   | **P0**   | Verify Jan no longer auto-starts after reboot                     | 2m   | Confirms skip_apps       |
-| 5   | **P0**   | Add `GOMEMLIMIT=1GiB` to gopls via Nix config                     | 15m  | Caps gopls memory        |
-| 6   | **P0**   | Fix `nix fmt` / shfmt script damage — exclude `.sh` or fix config | 15m  | Prevents silent breakage |
-| 7   | **P0**   | Investigate service-health-check failures (every 15 min)          | 20m  | Stops alert spam         |
-| 8   | **P1**   | Configure secondary LLM provider for Hermes                       | 30m  | Hermes resilience        |
-| 9   | **P1**   | Verify Hermes firecrawl/edge-tts/fal/exa at runtime               | 15m  | Confirms extras work     |
-| 10  | **P1**   | Hermes git remote access (SSH deploy key)                         | 30m  | Repo access              |
-| 11  | **P1**   | Resolve port 3001 conflict (monitor365 vs openseo)                | 10m  | Prevents bind failure    |
-| 12  | **P1**   | Docker MemoryMax for SigNoz/Twenty (not just Homepage)            | 20m  | Prevents memory runaway  |
-| 13  | **P1**   | Investigate OpenSEO auth — can `local_auth` work?                 | 20m  | Security                 |
-| 14  | **P1**   | Move Forgejo admin password to sops                               | 15m  | Security                 |
-| 15  | **P1**   | Consolidate watchdog state management into shared lib             | 45m  | DRY, fewer bugs          |
-| 16  | **P1**   | Add memory/swap alerting to Gatus (80% mem, 50% swap)             | 30m  | Early warning            |
-| 17  | **P2**   | Fix FEATURES.md — ZRAM, boot time, phantom scripts                | 15m  | Doc accuracy             |
-| 18  | **P2**   | Update TODO_LIST.md with current state                            | 15m  | Doc accuracy             |
-| 19  | **P2**   | Check SigNoz provision logs — verify dashboards/rules             | 30m  | Observability            |
-| 20  | **P2**   | Test Discord alert channel                                        | 10m  | Alerting verification    |
-| 21  | **P2**   | Deploy Dozzle at `logs.home.lan`                                  | 45m  | Real-time Docker logs    |
-| 22  | **P3**   | Flake inputs audit — 47 inputs, find stale                        | 2h   | Dependency hygiene       |
-| 23  | **P3**   | Provision Pi 3 for DNS failover cluster                           | 4h   | DNS resilience           |
-| 24  | **P3**   | Investigate boot time: 1m44s initrd (post-serial8250)             | 60m  | Faster reboots           |
-| 25  | **P4**   | Darwin config parity check                                        | 2h   | Cross-platform health    |
+| #  | Priority | Task                                                              | Est. | Impact                   |
+| -- | -------- | ----------------------------------------------------------------- | ---- | ------------------------ |
+| 1  | **P0**   | `just switch` + reboot — deploy ALL 19+ undeployed commits        | 30m  | Prevents repeat crash    |
+| 2  | **P0**   | Verify watchdog rewrites work after deploy                        | 10m  | Confirms crash fix       |
+| 3  | **P0**   | Verify ZRAM increased to 10% after reboot                         | 2m   | Confirms swap headroom   |
+| 4  | **P0**   | Verify Jan no longer auto-starts after reboot                     | 2m   | Confirms skip_apps       |
+| 5  | **P0**   | Add `GOMEMLIMIT=1GiB` to gopls via Nix config                     | 15m  | Caps gopls memory        |
+| 6  | **P0**   | Fix `nix fmt` / shfmt script damage — exclude `.sh` or fix config | 15m  | Prevents silent breakage |
+| 7  | **P0**   | Investigate service-health-check failures (every 15 min)          | 20m  | Stops alert spam         |
+| 8  | **P1**   | Configure secondary LLM provider for Hermes                       | 30m  | Hermes resilience        |
+| 9  | **P1**   | Verify Hermes firecrawl/edge-tts/fal/exa at runtime               | 15m  | Confirms extras work     |
+| 10 | **P1**   | Hermes git remote access (SSH deploy key)                         | 30m  | Repo access              |
+| 11 | **P1**   | Resolve port 3001 conflict (monitor365 vs openseo)                | 10m  | Prevents bind failure    |
+| 12 | **P1**   | Docker MemoryMax for SigNoz/Twenty (not just Homepage)            | 20m  | Prevents memory runaway  |
+| 13 | **P1**   | Investigate OpenSEO auth — can `local_auth` work?                 | 20m  | Security                 |
+| 14 | **P1**   | Move Forgejo admin password to sops                               | 15m  | Security                 |
+| 15 | **P1**   | Consolidate watchdog state management into shared lib             | 45m  | DRY, fewer bugs          |
+| 16 | **P1**   | Add memory/swap alerting to Gatus (80% mem, 50% swap)             | 30m  | Early warning            |
+| 17 | **P2**   | Fix FEATURES.md — ZRAM, boot time, phantom scripts                | 15m  | Doc accuracy             |
+| 18 | **P2**   | Update TODO_LIST.md with current state                            | 15m  | Doc accuracy             |
+| 19 | **P2**   | Check SigNoz provision logs — verify dashboards/rules             | 30m  | Observability            |
+| 20 | **P2**   | Test Discord alert channel                                        | 10m  | Alerting verification    |
+| 21 | **P2**   | Deploy Dozzle at `logs.home.lan`                                  | 45m  | Real-time Docker logs    |
+| 22 | **P3**   | Flake inputs audit — 47 inputs, find stale                        | 2h   | Dependency hygiene       |
+| 23 | **P3**   | Provision Pi 3 for DNS failover cluster                           | 4h   | DNS resilience           |
+| 24 | **P3**   | Investigate boot time: 1m44s initrd (post-serial8250)             | 60m  | Faster reboots           |
+| 25 | **P4**   | Darwin config parity check                                        | 2h   | Cross-platform health    |
 
 ---
 
@@ -305,14 +305,14 @@ Additionally: `llama-server` (1 GiB, GPU-loaded from Jan) is still running from 
 | ---------------------- | ------------------------------------------------------ | ------ |
 | **Branch**             | master, up to date with origin                         | ✅     |
 | **Build**              | `just test-fast` passes, zero warnings                 | ✅     |
-| **Undeployed commits** | 19+ (Sessions 76–79)                                   | ⚠️     |
+| **Undeployed commits** | 19+ (Sessions 76–79)                                   | ⚠️      |
 | **.nix files**         | 112                                                    | —      |
 | **Service modules**    | 33 registered in flake.nix                             | —      |
 | **Flake inputs**       | 47                                                     | —      |
 | **SigNoz alert rules** | 17 (swap-critical added)                               | ✅     |
 | **Gatus endpoints**    | 26 (Hermes + EMEET PIXY added)                         | ✅     |
 | **Docker tags pinned** | 3/3 (twenty, manifest, openseo)                        | ✅     |
-| **Port registry**      | 26 ports, 1 conflict documented                        | ⚠️     |
+| **Port registry**      | 26 ports, 1 conflict documented                        | ⚠️      |
 | **Security debt**      | OpenSEO no auth, Forgejo plaintext, Authelia hardcoded | 🔴     |
 
 ### Live Metrics (Session 79, 12:36)

@@ -157,33 +157,33 @@ Wallpaper fix from earlier this session is **deployed and working**. The awww da
 
 ## f) Top #25 Next Actions
 
-| #   | Action                                                                                    | Impact | Effort  | Est.   |
-| --- | ----------------------------------------------------------------------------------------- | ------ | ------- | ------ |
-| 1   | **Start awww services via systemd** (`systemctl --user start awww-daemon awww-wallpaper`) | High   | Trivial | 1min   |
-| 2   | **Add `Environment=WAYLAND_DISPLAY`** to awww-daemon service                              | High   | Trivial | 2min   |
-| 3   | **Add `ExecStartPost` health check** to awww-daemon (verify socket created)               | Medium | Low     | 5min   |
-| 4   | **Pin Docker images by digest** (whisper, twenty, photomap)                               | High   | Low     | 15min  |
-| 5   | **Add SIGNOZ_TOKENIZER_JWT_SECRET** via sops                                              | High   | Low     | 10min  |
-| 6   | **Update Gitea GitHub mirror token**                                                      | High   | Trivial | 2min   |
-| 7   | **Create `lib/systemd/podman.nix`** hardening profile                                     | Medium | Low     | 10min  |
-| 8   | **Create `lib/systemd/health-check.nix`** shared curl helper                              | Medium | Low     | 10min  |
-| 9   | **Disk usage audit** — find large dirs/files on root and /data                            | Medium | Low     | 10min  |
-| 10  | **Nix GC + Docker prune timer**                                                           | Medium | Low     | 15min  |
-| 11  | **Verify SigNoz dashboards/alerts** provisioned correctly                                 | Medium | Low     | 10min  |
-| 12  | **Add signoz alert for service crash loops**                                              | Medium | Medium  | 15min  |
-| 13  | **Update homepage dashboard** for new/changed services                                    | Low    | Low     | 10min  |
-| 14  | **Test Caddy TLS cert renewal**                                                           | Medium | Low     | 5min   |
-| 15  | **Verify whisper-asr GPU passthrough**                                                    | Medium | Low     | 5min   |
-| 16  | **Verify Twenty CRM v2.x data integrity**                                                 | Medium | Medium  | 20min  |
-| 17  | **Review swap usage** — 8.2GB seems high                                                  | Low    | Low     | 10min  |
-| 18  | **BTRFS scrub timer** for data integrity                                                  | Medium | Low     | 10min  |
-| 19  | **Consolidate StartLimitBurst/IntervalSec** into serviceDefaults helper                   | Low    | Low     | 10min  |
-| 20  | **Audit all sops secrets** — check for rotation needs                                     | Medium | Medium  | 20min  |
-| 21  | **Build Pi 3 SD image** for DNS failover                                                  | High   | High    | 30min+ |
-| 22  | **Migrate Taskwarrior encryption to sops**                                                | Medium | Low     | 10min  |
-| 23  | **Secure VRRP auth_pass with sops**                                                       | Medium | Low     | 8min   |
-| 24  | **Create integration tests** for hardening lib                                            | High   | High    | 30min  |
-| 25  | **Add `just wallpaper-status`** recipe to justfile                                        | Low    | Trivial | 5min   |
+| #  | Action                                                                                    | Impact | Effort  | Est.   |
+| -- | ----------------------------------------------------------------------------------------- | ------ | ------- | ------ |
+| 1  | **Start awww services via systemd** (`systemctl --user start awww-daemon awww-wallpaper`) | High   | Trivial | 1min   |
+| 2  | **Add `Environment=WAYLAND_DISPLAY`** to awww-daemon service                              | High   | Trivial | 2min   |
+| 3  | **Add `ExecStartPost` health check** to awww-daemon (verify socket created)               | Medium | Low     | 5min   |
+| 4  | **Pin Docker images by digest** (whisper, twenty, photomap)                               | High   | Low     | 15min  |
+| 5  | **Add SIGNOZ_TOKENIZER_JWT_SECRET** via sops                                              | High   | Low     | 10min  |
+| 6  | **Update Gitea GitHub mirror token**                                                      | High   | Trivial | 2min   |
+| 7  | **Create `lib/systemd/podman.nix`** hardening profile                                     | Medium | Low     | 10min  |
+| 8  | **Create `lib/systemd/health-check.nix`** shared curl helper                              | Medium | Low     | 10min  |
+| 9  | **Disk usage audit** — find large dirs/files on root and /data                            | Medium | Low     | 10min  |
+| 10 | **Nix GC + Docker prune timer**                                                           | Medium | Low     | 15min  |
+| 11 | **Verify SigNoz dashboards/alerts** provisioned correctly                                 | Medium | Low     | 10min  |
+| 12 | **Add signoz alert for service crash loops**                                              | Medium | Medium  | 15min  |
+| 13 | **Update homepage dashboard** for new/changed services                                    | Low    | Low     | 10min  |
+| 14 | **Test Caddy TLS cert renewal**                                                           | Medium | Low     | 5min   |
+| 15 | **Verify whisper-asr GPU passthrough**                                                    | Medium | Low     | 5min   |
+| 16 | **Verify Twenty CRM v2.x data integrity**                                                 | Medium | Medium  | 20min  |
+| 17 | **Review swap usage** — 8.2GB seems high                                                  | Low    | Low     | 10min  |
+| 18 | **BTRFS scrub timer** for data integrity                                                  | Medium | Low     | 10min  |
+| 19 | **Consolidate StartLimitBurst/IntervalSec** into serviceDefaults helper                   | Low    | Low     | 10min  |
+| 20 | **Audit all sops secrets** — check for rotation needs                                     | Medium | Medium  | 20min  |
+| 21 | **Build Pi 3 SD image** for DNS failover                                                  | High   | High    | 30min+ |
+| 22 | **Migrate Taskwarrior encryption to sops**                                                | Medium | Low     | 10min  |
+| 23 | **Secure VRRP auth_pass with sops**                                                       | Medium | Low     | 8min   |
+| 24 | **Create integration tests** for hardening lib                                            | High   | High    | 30min  |
+| 25 | **Add `just wallpaper-status`** recipe to justfile                                        | Low    | Trivial | 5min   |
 
 ---
 
@@ -201,15 +201,15 @@ Home Manager has `systemd.user.startServices` (default: `sd-switch` or `true` in
 
 ## Current System State
 
-| Area                 | Status             | Detail                                           |
-| -------------------- | ------------------ | ------------------------------------------------ |
-| NixOS build          | ✅ Clean           | `just test` passes                               |
-| System services (19) | ✅ All running     | Verified session 13                              |
+| Area                 | Status            | Detail                                           |
+| -------------------- | ----------------- | ------------------------------------------------ |
+| NixOS build          | ✅ Clean          | `just test` passes                               |
+| System services (19) | ✅ All running    | Verified session 13                              |
 | awww-daemon          | ⚠️ Manual PID      | Running but not via systemd — dies on shell exit |
-| awww-wallpaper       | ✅ Displaying      | DP-2, 3072×1728, scale 1.25                      |
-| Mod+W keybind        | ✅ Deployed        | Will work while daemon lives                     |
+| awww-wallpaper       | ✅ Displaying     | DP-2, 3072×1728, scale 1.25                      |
+| Mod+W keybind        | ✅ Deployed       | Will work while daemon lives                     |
 | Disk root            | ⚠️ 88% (443G/512G) | 64G free — needs audit                           |
 | Disk /data           | ⚠️ 86% (685G/800G) | 116G free — needs audit                          |
 | Swap                 | ⚠️ 8.2G/41G        | Elevated                                         |
-| RAM                  | 40G/62G used       | 21G available                                    |
-| Git                  | 2 ahead of origin  | Not pushed                                       |
+| RAM                  | 40G/62G used      | 21G available                                    |
+| Git                  | 2 ahead of origin | Not pushed                                       |

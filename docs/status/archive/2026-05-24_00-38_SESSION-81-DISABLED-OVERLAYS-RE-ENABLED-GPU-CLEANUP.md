@@ -90,12 +90,12 @@ The `gpu-recovery.service` systemd unit was already removed from niri-config.nix
 
 ### Upstream Repo Commits (NOT YET COMMITTED/PUSHED)
 
-| Repo                             | Modified Files                                                                | Status                               |
-| -------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------ |
+| Repo                             | Modified Files                                                                | Status                              |
+| -------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------- |
 | `go-structure-linter`            | `flake.nix`                                                                   | ⚠️ Uncommitted — needs commit + push |
 | `library-policy`                 | `flake.nix`, `flake.lock`, `mkPreparedSource.nix`, `nix/packages/default.nix` | ⚠️ Uncommitted — needs commit + push |
 | `projects-management-automation` | `flake.nix`, `flake.lock`, `go.mod`, `go.sum`                                 | ⚠️ Uncommitted — needs commit + push |
-| `buildflow`                      | None                                                                          | ✅ No changes needed                 |
+| `buildflow`                      | None                                                                          | ✅ No changes needed                |
 
 ### SystemNix flake.lock Update
 
@@ -166,48 +166,48 @@ Tried `subModules = { "github.com/larsartmann/branching-flow" = [ "pkg/stats" ];
 
 ### Critical (blocking deployment)
 
-| #   | Task                                                      | Effort | Why                               |
-| --- | --------------------------------------------------------- | ------ | --------------------------------- |
-| 1   | Commit + push changes in `go-structure-linter`            | 2 min  | Blocks flake.lock update          |
-| 2   | Commit + push changes in `library-policy`                 | 2 min  | Blocks flake.lock update          |
-| 3   | Commit + push changes in `projects-management-automation` | 2 min  | Blocks flake.lock update          |
-| 4   | `nix flake lock --update-input` for all 3 repos           | 2 min  | Gets new versions into flake.lock |
-| 5   | `just switch` on evo-x2                                   | 5 min  | Deploy everything                 |
+| # | Task                                                      | Effort | Why                               |
+| - | --------------------------------------------------------- | ------ | --------------------------------- |
+| 1 | Commit + push changes in `go-structure-linter`            | 2 min  | Blocks flake.lock update          |
+| 2 | Commit + push changes in `library-policy`                 | 2 min  | Blocks flake.lock update          |
+| 3 | Commit + push changes in `projects-management-automation` | 2 min  | Blocks flake.lock update          |
+| 4 | `nix flake lock --update-input` for all 3 repos           | 2 min  | Gets new versions into flake.lock |
+| 5 | `just switch` on evo-x2                                   | 5 min  | Deploy everything                 |
 
 ### High Priority
 
-| #   | Task                                                                              | Effort | Why                                         |
-| --- | --------------------------------------------------------------------------------- | ------ | ------------------------------------------- |
-| 6   | Smoke test all 4 binaries: `buildflow --help`, `go-structure-linter --help`, etc. | 5 min  | Verify they actually work                   |
-| 7   | Publish `branching-flow` with `pkg/stats` as proper Go module                     | 15 min | Eliminates PMA `overrideModAttrs` hack      |
-| 8   | Remove `overrideModAttrs` from PMA after branching-flow publish                   | 5 min  | Clean up the tidy workaround                |
-| 9   | Add `go-error-family` follows to branching-flow input in SystemNix                | 2 min  | Completeness — branching-flow depends on it |
-| 10  | Centralize `mkPreparedSource.nix` into a shared flake input                       | 30 min | Stop copy-pasting between repos             |
+| #  | Task                                                                              | Effort | Why                                         |
+| -- | --------------------------------------------------------------------------------- | ------ | ------------------------------------------- |
+| 6  | Smoke test all 4 binaries: `buildflow --help`, `go-structure-linter --help`, etc. | 5 min  | Verify they actually work                   |
+| 7  | Publish `branching-flow` with `pkg/stats` as proper Go module                     | 15 min | Eliminates PMA `overrideModAttrs` hack      |
+| 8  | Remove `overrideModAttrs` from PMA after branching-flow publish                   | 5 min  | Clean up the tidy workaround                |
+| 9  | Add `go-error-family` follows to branching-flow input in SystemNix                | 2 min  | Completeness — branching-flow depends on it |
+| 10 | Centralize `mkPreparedSource.nix` into a shared flake input                       | 30 min | Stop copy-pasting between repos             |
 
 ### Medium Priority
 
-| #   | Task                                                                           | Effort | Why                                     |
-| --- | ------------------------------------------------------------------------------ | ------ | --------------------------------------- |
-| 11  | Fix `library-policy` buildTags → use `env.GOEXPERIMENT` instead                | 10 min | Build tags are wrong, works by accident |
-| 12  | Add version `ldflags` to `library-policy` production build                     | 5 min  | All other repos have it                 |
-| 13  | Standardize Go version in devShells (`go` vs `go_1_26`)                        | 10 min | Inconsistent across repos               |
-| 14  | Add `golangci-lint` + `go-error-family` follows to `go-structure-linter` input | 2 min  | Completeness                            |
-| 15  | Audit all Go repos for stale `_local_deps` / vendor hash issues                | 30 min | Proactive maintenance                   |
-| 16  | Clean up `docs/status/` — 100+ files, should archive old ones                  | 15 min | Clutter                                 |
-| 17  | Delete `GOFLAGS = "-mod=mod"` from PMA if still there                          | 1 min  | Dead config                             |
+| #  | Task                                                                           | Effort | Why                                     |
+| -- | ------------------------------------------------------------------------------ | ------ | --------------------------------------- |
+| 11 | Fix `library-policy` buildTags → use `env.GOEXPERIMENT` instead                | 10 min | Build tags are wrong, works by accident |
+| 12 | Add version `ldflags` to `library-policy` production build                     | 5 min  | All other repos have it                 |
+| 13 | Standardize Go version in devShells (`go` vs `go_1_26`)                        | 10 min | Inconsistent across repos               |
+| 14 | Add `golangci-lint` + `go-error-family` follows to `go-structure-linter` input | 2 min  | Completeness                            |
+| 15 | Audit all Go repos for stale `_local_deps` / vendor hash issues                | 30 min | Proactive maintenance                   |
+| 16 | Clean up `docs/status/` — 100+ files, should archive old ones                  | 15 min | Clutter                                 |
+| 17 | Delete `GOFLAGS = "-mod=mod"` from PMA if still there                          | 1 min  | Dead config                             |
 
 ### Lower Priority
 
-| #   | Task                                                             | Effort | Why                                   |
-| --- | ---------------------------------------------------------------- | ------ | ------------------------------------- |
-| 18  | Add GitHub Actions CI to all Go repos (nix build check)          | 1 hr   | Catch breakage early                  |
-| 19  | `nix flake check` on all repos                                   | 10 min | Validate all repos                    |
-| 20  | Create `just update-vendor-hash` recipe for Go repos             | 15 min | Automate the vendor hash update cycle |
-| 21  | Update `AGENTS.md` with new mkPreparedSource patterns            | 10 min | Documentation                         |
-| 22  | Review `display-watchdog.sh` for other dead code                 | 10 min | May have other stale references       |
-| 23  | Check if `niri-drm-healthcheck.sh` still references gpu-recovery | 5 min  | Consistency                           |
-| 24  | Run `just test` (full build) on SystemNix                        | 20 min | More thorough than test-fast          |
-| 25  | Archive `docs/status/` files older than 2 weeks                  | 10 min | Housekeeping                          |
+| #  | Task                                                             | Effort | Why                                   |
+| -- | ---------------------------------------------------------------- | ------ | ------------------------------------- |
+| 18 | Add GitHub Actions CI to all Go repos (nix build check)          | 1 hr   | Catch breakage early                  |
+| 19 | `nix flake check` on all repos                                   | 10 min | Validate all repos                    |
+| 20 | Create `just update-vendor-hash` recipe for Go repos             | 15 min | Automate the vendor hash update cycle |
+| 21 | Update `AGENTS.md` with new mkPreparedSource patterns            | 10 min | Documentation                         |
+| 22 | Review `display-watchdog.sh` for other dead code                 | 10 min | May have other stale references       |
+| 23 | Check if `niri-drm-healthcheck.sh` still references gpu-recovery | 5 min  | Consistency                           |
+| 24 | Run `just test` (full build) on SystemNix                        | 20 min | More thorough than test-fast          |
+| 25 | Archive `docs/status/` files older than 2 weeks                  | 10 min | Housekeeping                          |
 
 ---
 

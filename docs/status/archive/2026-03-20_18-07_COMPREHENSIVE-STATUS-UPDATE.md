@@ -109,33 +109,33 @@ The SystemNix project is in a mature production state with 84 Nix files and 59 s
 
 ## f) TOP 25 THINGS WE SHOULD GET DONE NEXT
 
-| #   | Priority | Task                                                             | Status        | Notes                                             |
-| --- | -------- | ---------------------------------------------------------------- | ------------- | ------------------------------------------------- |
-| 1   | P0       | ~~Fix oxfmt panic on gomod2nix.toml~~                            | ✅ FIXED      | Added .prettierignore, uninstalled BuildFlow hook |
-| 2   | P0       | Add flake `apps` for `health`, `switch`, `check` commands        | NOT STARTED   | Replaces `just` dependency for core tasks         |
-| 3   | P0       | Deduplicate Go 1.26.1 overlay in flake.nix                       | NOT STARTED   | Currently in 3 places                             |
-| 4   | P0       | Wait for XRT/Boost fix to re-enable AMD NPU                      | BLOCKED       | Upstream issue                                    |
-| 5   | P1       | Archive old `docs/status/` files (pre-2026-03-01)                | NOT STARTED   | 100+ files to compress                            |
-| 6   | P1       | Move Python benchmark scripts to `scripts/ai/`                   | NOT STARTED   | `download_glm_model.py`, `test_speed.py`          |
-| 7   | P1       | Execute Homebrew ARM migration on Darwin                         | NOT STARTED   | `/usr/local` → `/opt/homebrew`                    |
-| 8   | P1       | Convert `scripts/cleanup.sh` to Nix derivation                   | NOT STARTED   | 484KB of shell scripts to Nixify                  |
-| 9   | P2       | Add `direnv` integration                                         | NOT STARTED   | `.envrc` with automatic activation                |
-| 10  | P2       | Resolve ActivityWatch input watcher permissions                  | PARTIAL       | 4/5 buckets working                               |
-| 11  | P2       | Extract `nix-error-lib` as standalone flake                      | NOT STARTED   | Error management system                           |
-| 12  | P2       | Extract `nix-types-lib` as standalone flake                      | NOT STARTED   | Type safety system                                |
-| 13  | P2       | Add GitHub Actions CI for both platforms                         | NOT STARTED   | Beyond pre-commit                                 |
-| 14  | P2       | Complete Niri configuration                                      | NOT STARTED   | Currently stub-only                               |
-| 15  | P2       | Align `stateVersion` between home-base.nix and configuration.nix | UNKNOWN       | Potential drift                                   |
-| 16  | P2       | Re-evaluate ublock-filters.nix status                            | UNKNOWN       | May be dead code                                  |
-| 17  | P3       | Update TODO_LIST.md with completed items                         | STALE         | Last update: 2026-02-10                           |
-| 18  | P3       | Update TODO-STATUS.md code-level task states                     | STALE         | Last update: 2026-01-13                           |
-| 19  | P3       | Fix `netbandwidth` Waybar module (shows IP, not bandwidth)       | BUG           | Display issue                                     |
-| 20  | P3       | Add VS Code Nix LSP integration                                  | NOT STARTED   | Editor tooling                                    |
-| 21  | P3       | Delete stale `copilot/fix-*` remote branches                     | CLEANUP       | Git hygiene                                       |
-| 22  | P3       | Document `allowBroken = false` requirement                       | DOCUMENTATION | Explains invariant                                |
-| 23  | P3       | Implement `just organize` for auto-cleanup                       | CONCEPT       | Repository hygiene                                |
-| 24  | P3       | Add `deadnix` checks to CI pipeline                              | NOT STARTED   | Already in pre-commit                             |
-| 25  | P3       | Test NixOS Bluetooth on physical EVO-X2 hardware                 | NOT TESTED    | Field testing                                     |
+| #  | Priority | Task                                                             | Status        | Notes                                             |
+| -- | -------- | ---------------------------------------------------------------- | ------------- | ------------------------------------------------- |
+| 1  | P0       | ~~Fix oxfmt panic on gomod2nix.toml~~                            | ✅ FIXED      | Added .prettierignore, uninstalled BuildFlow hook |
+| 2  | P0       | Add flake `apps` for `health`, `switch`, `check` commands        | NOT STARTED   | Replaces `just` dependency for core tasks         |
+| 3  | P0       | Deduplicate Go 1.26.1 overlay in flake.nix                       | NOT STARTED   | Currently in 3 places                             |
+| 4  | P0       | Wait for XRT/Boost fix to re-enable AMD NPU                      | BLOCKED       | Upstream issue                                    |
+| 5  | P1       | Archive old `docs/status/` files (pre-2026-03-01)                | NOT STARTED   | 100+ files to compress                            |
+| 6  | P1       | Move Python benchmark scripts to `scripts/ai/`                   | NOT STARTED   | `download_glm_model.py`, `test_speed.py`          |
+| 7  | P1       | Execute Homebrew ARM migration on Darwin                         | NOT STARTED   | `/usr/local` → `/opt/homebrew`                    |
+| 8  | P1       | Convert `scripts/cleanup.sh` to Nix derivation                   | NOT STARTED   | 484KB of shell scripts to Nixify                  |
+| 9  | P2       | Add `direnv` integration                                         | NOT STARTED   | `.envrc` with automatic activation                |
+| 10 | P2       | Resolve ActivityWatch input watcher permissions                  | PARTIAL       | 4/5 buckets working                               |
+| 11 | P2       | Extract `nix-error-lib` as standalone flake                      | NOT STARTED   | Error management system                           |
+| 12 | P2       | Extract `nix-types-lib` as standalone flake                      | NOT STARTED   | Type safety system                                |
+| 13 | P2       | Add GitHub Actions CI for both platforms                         | NOT STARTED   | Beyond pre-commit                                 |
+| 14 | P2       | Complete Niri configuration                                      | NOT STARTED   | Currently stub-only                               |
+| 15 | P2       | Align `stateVersion` between home-base.nix and configuration.nix | UNKNOWN       | Potential drift                                   |
+| 16 | P2       | Re-evaluate ublock-filters.nix status                            | UNKNOWN       | May be dead code                                  |
+| 17 | P3       | Update TODO_LIST.md with completed items                         | STALE         | Last update: 2026-02-10                           |
+| 18 | P3       | Update TODO-STATUS.md code-level task states                     | STALE         | Last update: 2026-01-13                           |
+| 19 | P3       | Fix `netbandwidth` Waybar module (shows IP, not bandwidth)       | BUG           | Display issue                                     |
+| 20 | P3       | Add VS Code Nix LSP integration                                  | NOT STARTED   | Editor tooling                                    |
+| 21 | P3       | Delete stale `copilot/fix-*` remote branches                     | CLEANUP       | Git hygiene                                       |
+| 22 | P3       | Document `allowBroken = false` requirement                       | DOCUMENTATION | Explains invariant                                |
+| 23 | P3       | Implement `just organize` for auto-cleanup                       | CONCEPT       | Repository hygiene                                |
+| 24 | P3       | Add `deadnix` checks to CI pipeline                              | NOT STARTED   | Already in pre-commit                             |
+| 25 | P3       | Test NixOS Bluetooth on physical EVO-X2 hardware                 | NOT TESTED    | Field testing                                     |
 
 ---
 

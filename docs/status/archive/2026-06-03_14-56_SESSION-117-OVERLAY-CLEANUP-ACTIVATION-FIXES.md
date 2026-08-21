@@ -162,7 +162,7 @@ These are complete, tested, wired, and working:
 | `golangci-lint-auto-configure` sed patches | ✅ Removed      | —                                                                                                                                                     |
 | `hierarchical-errors` vendorHash override  | ✅ Removed      | —                                                                                                                                                     |
 | `go-structure-linter`                      | ❌ Still broken | Private `template-LICENSE/types` dep, `go mod tidy` fails in sandbox. Overlay commented out. Package removed from base.nix. Flake input still exists. |
-| Remaining `vendorHash` overrides           | ⚠️ 5 remain     | library-policy, mr-sync, go-auto-upgrade, branching-flow, art-dupl — needed because `inputs.follows` pins shared deps at different versions           |
+| Remaining `vendorHash` overrides           | ⚠️ 5 remain      | library-policy, mr-sync, go-auto-upgrade, branching-flow, art-dupl — needed because `inputs.follows` pins shared deps at different versions           |
 
 ### SigNoz Alerting — Functional but Incomplete
 
@@ -203,37 +203,37 @@ These are complete, tested, wired, and working:
 
 ### Infrastructure
 
-| #   | Item                                                            | Effort | Impact                                        |
-| --- | --------------------------------------------------------------- | ------ | --------------------------------------------- |
-| 1   | Provision Raspberry Pi 3 for DNS failover cluster               | 2-4h   | High — eliminates single DNS point of failure |
-| 2   | Wire Pi 3 as secondary DNS in dns-failover.nix                  | 1h     | High — part of #1                             |
-| 3   | Deploy Dozzle (Docker container log tailing at `logs.home.lan`) | 30min  | Medium — operational visibility               |
-| 4   | nix-colors integration: migrate 17+ hardcoded colors            | 6h     | Medium — consistency                          |
-| 5   | Create `just status` command for automated status generation    | 2h     | Medium — DX                                   |
+| # | Item                                                            | Effort | Impact                                        |
+| - | --------------------------------------------------------------- | ------ | --------------------------------------------- |
+| 1 | Provision Raspberry Pi 3 for DNS failover cluster               | 2-4h   | High — eliminates single DNS point of failure |
+| 2 | Wire Pi 3 as secondary DNS in dns-failover.nix                  | 1h     | High — part of #1                             |
+| 3 | Deploy Dozzle (Docker container log tailing at `logs.home.lan`) | 30min  | Medium — operational visibility               |
+| 4 | nix-colors integration: migrate 17+ hardcoded colors            | 6h     | Medium — consistency                          |
+| 5 | Create `just status` command for automated status generation    | 2h     | Medium — DX                                   |
 
 ### Testing & CI
 
-| #   | Item                                                              | Effort | Impact                   |
-| --- | ----------------------------------------------------------------- | ------ | ------------------------ |
-| 6   | Add nixosTests for each service module (34 modules without tests) | 4-20h  | High — catch regressions |
-| 7   | Wire nixosTests into GitHub Actions                               | 15min  | Medium — CI              |
-| 8   | Add `just test` to GitHub Actions (full build)                    | 1h     | High — CI                |
-| 9   | Darwin CI                                                         | 2h     | Medium — cross-platform  |
+| # | Item                                                              | Effort | Impact                   |
+| - | ----------------------------------------------------------------- | ------ | ------------------------ |
+| 6 | Add nixosTests for each service module (34 modules without tests) | 4-20h  | High — catch regressions |
+| 7 | Wire nixosTests into GitHub Actions                               | 15min  | Medium — CI              |
+| 8 | Add `just test` to GitHub Actions (full build)                    | 1h     | High — CI                |
+| 9 | Darwin CI                                                         | 2h     | Medium — cross-platform  |
 
 ### Documentation
 
-| #   | Item                                                                      | Effort | Impact                              |
-| --- | ------------------------------------------------------------------------- | ------ | ----------------------------------- |
-| 10  | Create shared flake-parts template (mkGoPackage, checks, devshells)       | 3h     | Medium — standardize Go repos       |
-| 11  | Convert go-auto-upgrade `path:` inputs to SSH URLs                        | 1h     | Low — correctness                   |
-| 12  | Bring Darwin home.nix to parity with NixOS (terminal, editor, theme, xdg) | 4h     | Medium — if Darwin is actively used |
+| #  | Item                                                                      | Effort | Impact                              |
+| -- | ------------------------------------------------------------------------- | ------ | ----------------------------------- |
+| 10 | Create shared flake-parts template (mkGoPackage, checks, devshells)       | 3h     | Medium — standardize Go repos       |
+| 11 | Convert go-auto-upgrade `path:` inputs to SSH URLs                        | 1h     | Low — correctness                   |
+| 12 | Bring Darwin home.nix to parity with NixOS (terminal, editor, theme, xdg) | 4h     | Medium — if Darwin is actively used |
 
 ### Upstream Contributions
 
-| #   | Item                                                                                   | Effort | Impact                         |
-| --- | -------------------------------------------------------------------------------------- | ------ | ------------------------------ |
-| 13  | Fix `go-structure-linter` upstream — expose `template-LICENSE/types` via `_local_deps` | 1h     | Medium — unblocks tool         |
-| 14  | Contribute `go-finding` API stability fixes upstream                                   | 2h     | Medium — prevent future breaks |
+| #  | Item                                                                                   | Effort | Impact                         |
+| -- | -------------------------------------------------------------------------------------- | ------ | ------------------------------ |
+| 13 | Fix `go-structure-linter` upstream — expose `template-LICENSE/types` via `_local_deps` | 1h     | Medium — unblocks tool         |
+| 14 | Contribute `go-finding` API stability fixes upstream                                   | 2h     | Medium — prevent future breaks |
 
 ---
 
@@ -336,58 +336,58 @@ Sorted by impact × urgency (Pareto ranking):
 
 ### P0: Deploy & Verify (Immediate)
 
-| #   | Task                                                            | Effort | Why                                                                         |
-| --- | --------------------------------------------------------------- | ------ | --------------------------------------------------------------------------- |
-| 1   | **Deploy uncommitted changes** (`just switch`)                  | 5min   | 2 commits ahead of origin — overlay cleanup + activation fixes sitting idle |
-| 2   | **Push to origin** (`git push`)                                 | 1min   | Branch is 1 commit ahead                                                    |
-| 3   | **Verify activation** — check all 3 previously-failing services | 10min  | Confirm portal-gtk, home-manager-lars, dnsblockd all start cleanly          |
+| # | Task                                                            | Effort | Why                                                                         |
+| - | --------------------------------------------------------------- | ------ | --------------------------------------------------------------------------- |
+| 1 | **Deploy uncommitted changes** (`just switch`)                  | 5min   | 2 commits ahead of origin — overlay cleanup + activation fixes sitting idle |
+| 2 | **Push to origin** (`git push`)                                 | 1min   | Branch is 1 commit ahead                                                    |
+| 3 | **Verify activation** — check all 3 previously-failing services | 10min  | Confirm portal-gtk, home-manager-lars, dnsblockd all start cleanly          |
 
 ### P1: Resilience (This Week)
 
-| #   | Task                                                                               | Effort | Why                                       |
-| --- | ---------------------------------------------------------------------------------- | ------ | ----------------------------------------- |
-| 4   | **Add `/data` disk growth trend alerting** — Gatus check for >90% with daily delta | 1h     | Prevents repeat of May 30 disk-full crash |
-| 5   | **ClickHouse data retention policy** — TTL for SigNoz traces/metrics (30d default) | 2h     | Largest contributor to disk growth        |
-| 6   | **Automated stale process cleanup** — systemd timer killing gopls >24h old         | 1h     | Root cause of swap exhaustion             |
-| 7   | **Investigate Monitor365 crash-loop** — user service broken since boot             | 30min  | P1 service failure                        |
+| # | Task                                                                               | Effort | Why                                       |
+| - | ---------------------------------------------------------------------------------- | ------ | ----------------------------------------- |
+| 4 | **Add `/data` disk growth trend alerting** — Gatus check for >90% with daily delta | 1h     | Prevents repeat of May 30 disk-full crash |
+| 5 | **ClickHouse data retention policy** — TTL for SigNoz traces/metrics (30d default) | 2h     | Largest contributor to disk growth        |
+| 6 | **Automated stale process cleanup** — systemd timer killing gopls >24h old         | 1h     | Root cause of swap exhaustion             |
+| 7 | **Investigate Monitor365 crash-loop** — user service broken since boot             | 30min  | P1 service failure                        |
 
 ### P2: CI & Testing (This Week)
 
-| #   | Task                                                                          | Effort | Why                                             |
-| --- | ----------------------------------------------------------------------------- | ------ | ----------------------------------------------- |
-| 8   | **Add GitHub Actions CI** — `just test-fast` + `just hash-check` on PRs/push  | 1h     | Single highest-impact DX improvement            |
-| 9   | **Add `just test` to CI** — full build on merge to master                     | 30min  | Catches vendor hash drift, eval-only issues     |
-| 10  | **Add nixosTest for dnsblockd module** — verify service starts with mock sops | 2h     | Most complex custom service, zero test coverage |
+| #  | Task                                                                          | Effort | Why                                             |
+| -- | ----------------------------------------------------------------------------- | ------ | ----------------------------------------------- |
+| 8  | **Add GitHub Actions CI** — `just test-fast` + `just hash-check` on PRs/push  | 1h     | Single highest-impact DX improvement            |
+| 9  | **Add `just test` to CI** — full build on merge to master                     | 30min  | Catches vendor hash drift, eval-only issues     |
+| 10 | **Add nixosTest for dnsblockd module** — verify service starts with mock sops | 2h     | Most complex custom service, zero test coverage |
 
 ### P3: Code Quality (Next 2 Weeks)
 
-| #   | Task                                                                    | Effort | Why                                  |
-| --- | ----------------------------------------------------------------------- | ------ | ------------------------------------ |
-| 11  | **Delete orphan modules** — `ai-stack.nix`, `default-services.nix`      | 15min  | Dead code, confusing for AI sessions |
-| 12  | **Fix port 8050 conflict** — reassign photomap or dnsblockd             | 15min  | Latent bomb                          |
-| 13  | **Clean up `go-structure-linter` flake input** — remove or fix upstream | 1h     | Dead input, confusing                |
-| 14  | **Audit flake inputs** — 48 inputs, some may be stale/unused            | 2h     | Reduces eval time, attack surface    |
-| 15  | **Add `just status` command** — automated status report                 | 2h     | DX, replaces manual status sessions  |
+| #  | Task                                                                    | Effort | Why                                  |
+| -- | ----------------------------------------------------------------------- | ------ | ------------------------------------ |
+| 11 | **Delete orphan modules** — `ai-stack.nix`, `default-services.nix`      | 15min  | Dead code, confusing for AI sessions |
+| 12 | **Fix port 8050 conflict** — reassign photomap or dnsblockd             | 15min  | Latent bomb                          |
+| 13 | **Clean up `go-structure-linter` flake input** — remove or fix upstream | 1h     | Dead input, confusing                |
+| 14 | **Audit flake inputs** — 48 inputs, some may be stale/unused            | 2h     | Reduces eval time, attack surface    |
+| 15 | **Add `just status` command** — automated status report                 | 2h     | DX, replaces manual status sessions  |
 
 ### P4: Architecture (Next Month)
 
-| #   | Task                                                                                    | Effort | Why                              |
-| --- | --------------------------------------------------------------------------------------- | ------ | -------------------------------- |
-| 16  | **Separate `/data` subvolume for observability** — prevent ClickHouse from filling root | 2h     | Long-term disk safety            |
-| 17  | **Provision Pi 3 for DNS failover** — eliminate single DNS point of failure             | 4h     | Infrastructure resilience        |
-| 18  | **nix-colors integration** — migrate 17+ hardcoded colors                               | 6h     | Consistency, maintainability     |
-| 19  | **Darwin home.nix parity** — if actively used                                           | 4h     | DX parity                        |
-| 20  | **Shared flake-parts template** — mkGoPackage, checks, devshells for all Go repos       | 3h     | Standardization across 10+ repos |
+| #  | Task                                                                                    | Effort | Why                              |
+| -- | --------------------------------------------------------------------------------------- | ------ | -------------------------------- |
+| 16 | **Separate `/data` subvolume for observability** — prevent ClickHouse from filling root | 2h     | Long-term disk safety            |
+| 17 | **Provision Pi 3 for DNS failover** — eliminate single DNS point of failure             | 4h     | Infrastructure resilience        |
+| 18 | **nix-colors integration** — migrate 17+ hardcoded colors                               | 6h     | Consistency, maintainability     |
+| 19 | **Darwin home.nix parity** — if actively used                                           | 4h     | DX parity                        |
+| 20 | **Shared flake-parts template** — mkGoPackage, checks, devshells for all Go repos       | 3h     | Standardization across 10+ repos |
 
 ### P5: Polish & Future
 
-| #   | Task                                                                         | Effort | Why                    |
-| --- | ---------------------------------------------------------------------------- | ------ | ---------------------- |
-| 21  | **Deploy Dozzle** — Docker container log tailing at `logs.home.lan`          | 30min  | Operational visibility |
-| 22  | **Add per-threshold SigNoz channel routing** — critical→Discord, warning→log | 1h     | Alert hygiene          |
-| 23  | **Configure Hermes secondary LLM provider** — OpenRouter/OpenAI fallback     | 30min  | Reliability            |
-| 24  | **Add nixosTests for critical services** — caddy auth chain, forgejo, immich | 8h     | Regression prevention  |
-| 25  | **Automated secret rotation** — sops + age key rotation                      | 4h     | Security hygiene       |
+| #  | Task                                                                         | Effort | Why                    |
+| -- | ---------------------------------------------------------------------------- | ------ | ---------------------- |
+| 21 | **Deploy Dozzle** — Docker container log tailing at `logs.home.lan`          | 30min  | Operational visibility |
+| 22 | **Add per-threshold SigNoz channel routing** — critical→Discord, warning→log | 1h     | Alert hygiene          |
+| 23 | **Configure Hermes secondary LLM provider** — OpenRouter/OpenAI fallback     | 30min  | Reliability            |
+| 24 | **Add nixosTests for critical services** — caddy auth chain, forgejo, immich | 8h     | Regression prevention  |
+| 25 | **Automated secret rotation** — sops + age key rotation                      | 4h     | Security hygiene       |
 
 ---
 

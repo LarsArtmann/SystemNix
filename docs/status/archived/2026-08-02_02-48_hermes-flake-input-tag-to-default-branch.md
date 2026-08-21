@@ -5,7 +5,6 @@
 
 ---
 
-
 ## Context
 
 User asked why `hermes-agent-0.19.0` never gets cached. The investigation revealed three compounding reasons, then pivoted to fixing the flake input URL from a pinned tag (`v2026.7.20`) to default-branch tracking (bare `github:NousResearch/hermes-agent`).
@@ -16,7 +15,7 @@ User asked why `hermes-agent-0.19.0` never gets cached. The investigation reveal
 
 1. **Diagnosed the caching failure (3 root causes):**
    - **Not pushed to Attic:** The `monitor365` Attic cache only receives what Forgejo Actions CI builds and pushes (mkLarsPackages outputs in the Monitor365 repo). Nobody runs `attic push` against `hermes-agent`. No CI workflow for it exists in SystemNix.
-   - **Local `override` breaks substitutability:** `hermes.nix:31-52` calls `base.hermes-agent.override { extraDependencyGroups = [ ...18 groups... ]; }`. This changes the dependency closure → different store hash. Even if cache.nixos.org or NousResearch's own cache had `hermes-agent`, it would have a *different* hash. Nix only substitutes exact-derivation matches.
+   - **Local `override` breaks substitutability:** `hermes.nix:31-52` calls `base.hermes-agent.override { extraDependencyGroups = [ ...18 groups... ]; }`. This changes the dependency closure → different store hash. Even if cache.nixos.org or NousResearch's own cache had `hermes-agent`, it would have a _different_ hash. Nix only substitutes exact-derivation matches.
    - **Not in nixpkgs:** `hermes-agent` (NousResearch) is NOT packaged in nixpkgs. The only `hermes` in nixpkgs is `hermes-nvim` (unrelated Neovim plugin). Distributed exclusively via flakes (official `github:NousResearch/hermes-agent` or community `github:0xrsydn/nix-hermes-agent`).
 
 2. **Documented `extraDependencyGroups`:** Explained how the override parameter works — maps to `pyproject.toml` `[project.optional-dependencies]` keys via uv2nix's `mkVirtualEnv`. Upstream always installs `["all"]` (core features), then appends whatever groups you pass. SystemNix adds 18 provider/integration extras (anthropic, messaging, firecrawl, edge-tts, fal, etc.) without which hermes can't reach any LLM or chat platform.
@@ -82,12 +81,14 @@ User asked why `hermes-agent-0.19.0` never gets cached. The investigation reveal
 ## f) NEXT TASKS (UP TO 50)
 
 ### Immediate (this session's loose ends)
+
 1. Commit the `flake.nix` + `flake.lock` hermes-agent change
 2. Update AGENTS.md hermes section: fix stale `extraDependencyGroups` list (6 → 18 groups, or remove the list)
 3. Run `nix build` on hermes-agent to verify 0.19.1 builds cleanly (not just evals)
 4. Add a gotcha to AGENTS.md: hermes-agent is not in nixpkgs; flake input tracks default branch; flake.lock pins exact commit
 
 ### Caching (the original problem)
+
 5. Create the `platforms/nixos/secrets/attic.yaml` sops secret file (RS256 key) — unblocks full system eval
 6. Complete attic setup steps 4-9 from `docs/setup/nix-binary-cache-setup.md`
 7. Push the hermes closure to Attic after first successful build
@@ -96,6 +97,7 @@ User asked why `hermes-agent-0.19.0` never gets cached. The investigation reveal
 10. Evaluate whether the 20 GB attic storage cap + 7-day retention is sufficient for the hermes closure size
 
 ### Hermes packaging
+
 11. Audit whether all 18 `extraDependencyGroups` are actually needed (some may be unused — e.g., `dingtalk`, `feishu` if those platforms aren't used)
 12. Check if `voice` extra works on evo-x2 (AGENTS.md says it has "complex native deps")
 13. Check if `matrix` extra works (AGENTS.md says it "needs python-olm, Linux-only" — evo-x2 is Linux, so it should)
@@ -103,6 +105,7 @@ User asked why `hermes-agent-0.19.0` never gets cached. The investigation reveal
 15. Verify hermes 0.19.1 changelog for breaking changes vs 0.19.0
 
 ### Attic cache hardening
+
 16. Verify attic GC actually reaps paths on restart (the size-guard caveat in `attic.nix:162-167`)
 17. Add Gatus health check for attic (`GET /` — already configured, verify it works post-deploy)
 18. Monitor attic disk usage after first push (20 GB cap on /data partition)
@@ -110,35 +113,41 @@ User asked why `hermes-agent-0.19.0` never gets cached. The investigation reveal
 20. Add attic to the backup-coordination module if the cache metadata (SQLite) needs backup
 
 ### Documentation
+
 21. Document the hermes caching strategy in AGENTS.md once attic push is operational
 22. Add hermes-agent to the "not in nixpkgs" gotcha table
 23. Update `docs/setup/nix-binary-cache-setup.md` if the workflow changes
 24. Consider a `docs/services/hermes.md` with the packaging architecture (uv2nix, extraDependencyGroups, override pattern)
 
 ### Monitoring
+
 25. Add a Gatus check for the hermes gateway service (if one doesn't exist)
 26. Verify hermes OTel tracing endpoint format (Python: `http://localhost:4318` with scheme)
 27. Check if hermes 0.19.1 has new health endpoints worth monitoring
 
 ### Flake hygiene
+
 28. Audit all other third-party flake inputs for unnecessary tag pins (same logic as hermes)
 29. Check if `wallpapers-src` (flake=false, ref=master) should track default branch
 30. Verify `nix flake update --all` doesn't break after the hermes change
 31. Consider `nix flake update` cadence — is there a schedule or is it ad-hoc?
 
 ### Build verification
+
 32. Run `nix flake check --no-build` to validate syntax across all modules
 33. Run the pre-deploy check (`nix run .#pre-deploy-check`) once attic.yaml exists
 34. Deploy and run post-deploy smoke test for hermes
 35. Monitor hermes service startup after deploy (it has heavy Python deps)
 
 ### AGENTS.md maintenance
+
 36. Reconcile the hermes "Active pip extras" line with the actual 18 groups
 37. Add the `flake.lock` reproducibility lesson to the gotcha table
 38. Document that hermes-agent uses uv2nix (not buildPythonApplication) — different caching characteristics
 39. Note that hermes override breaks substitutability (the fundamental caching issue)
 
 ### Future considerations
+
 40. Consider vendoring hermes-agent into nixpkgs (upstream PR) for cache.nixos.org substitution
 41. Evaluate the community flake `github:0xrsydn/nix-hermes-agent` as an alternative
 42. Consider a scheduled `nix flake update hermes-agent` + auto-build CI job

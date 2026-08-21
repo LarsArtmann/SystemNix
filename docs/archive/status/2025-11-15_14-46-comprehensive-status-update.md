@@ -420,18 +420,18 @@ behavior = "always";   # enum: always | auto | never
 
 ### Top 10 Improvements Needed (Sorted by Impact)
 
-| #   | Improvement                       | Impact | Effort | Ratio | Priority    |
-| --- | --------------------------------- | ------ | ------ | ----- | ----------- |
-| 1   | Integrate 8 ghost systems         | 51%    | 4h     | 12.75 | 🔥 CRITICAL |
-| 2   | Eliminate user config split brain | 5%     | 1.5h   | 3.33  | 🔥 HIGH     |
-| 3   | Eliminate path config split brain | 3%     | 1h     | 3.0   | 🔥 HIGH     |
-| 4   | Split system.nix (397→3 files)    | 4%     | 3h     | 1.33  | ⚡ MEDIUM   |
-| 5   | Enable SystemAssertions           | 3%     | 1h     | 3.0   | ⚡ MEDIUM   |
-| 6   | Enable ModuleAssertions           | 2%     | 1h     | 2.0   | ⚡ MEDIUM   |
-| 7   | Replace bools with State enum     | 3%     | 2h     | 1.5   | ⚡ MEDIUM   |
-| 8   | Replace debug with LogLevel enum  | 2%     | 1.5h   | 1.33  | ⚡ MEDIUM   |
-| 9   | Split BehaviorDrivenTests.nix     | 2%     | 2h     | 1.0   | ⏸️ LOW      |
-| 10  | Split ErrorManagement.nix         | 2%     | 2h     | 1.0   | ⏸️ LOW      |
+| #  | Improvement                       | Impact | Effort | Ratio | Priority    |
+| -- | --------------------------------- | ------ | ------ | ----- | ----------- |
+| 1  | Integrate 8 ghost systems         | 51%    | 4h     | 12.75 | 🔥 CRITICAL |
+| 2  | Eliminate user config split brain | 5%     | 1.5h   | 3.33  | 🔥 HIGH     |
+| 3  | Eliminate path config split brain | 3%     | 1h     | 3.0   | 🔥 HIGH     |
+| 4  | Split system.nix (397→3 files)    | 4%     | 3h     | 1.33  | ⚡ MEDIUM   |
+| 5  | Enable SystemAssertions           | 3%     | 1h     | 3.0   | ⚡ MEDIUM   |
+| 6  | Enable ModuleAssertions           | 2%     | 1h     | 2.0   | ⚡ MEDIUM   |
+| 7  | Replace bools with State enum     | 3%     | 2h     | 1.5   | ⚡ MEDIUM   |
+| 8  | Replace debug with LogLevel enum  | 2%     | 1.5h   | 1.33  | ⚡ MEDIUM   |
+| 9  | Split BehaviorDrivenTests.nix     | 2%     | 2h     | 1.0   | ⏸️ LOW       |
+| 10 | Split ErrorManagement.nix         | 2%     | 2h     | 1.0   | ⏸️ LOW       |
 
 ### Architectural Improvements
 
@@ -473,31 +473,31 @@ behavior = "always";   # enum: always | auto | never
 
 | #                                         | Task                                            | Effort | Value | Phase | Status | Dependencies |
 | ----------------------------------------- | ----------------------------------------------- | ------ | ----- | ----- | ------ | ------------ |
-| **🔥 TIER 1: CRITICAL (Do First)**        |
+| **🔥 TIER 1: CRITICAL (Do First)**        |                                                 |        |       |       |        |              |
 | 1                                         | Import core/Types.nix in flake.nix              | 1h     | 15%   | 1%    | ❌     | None         |
 | 2                                         | Import core/State.nix in flake.nix              | 1h     | 12%   | 1%    | ❌     | #1           |
 | 3                                         | Import core/Validation.nix in flake.nix         | 1h     | 12%   | 1%    | ❌     | #1           |
 | 4                                         | Enable TypeSafetySystem.nix                     | 1.5h   | 12%   | 1%    | ❌     | #1-3         |
-| **⚡ TIER 2: HIGH PRIORITY (Do Second)**  |
+| **⚡ TIER 2: HIGH PRIORITY (Do Second)**  |                                                 |        |       |       |        |              |
 | 5                                         | Consolidate user config (eliminate split brain) | 1.5h   | 5%    | 4%    | ❌     | #1-4         |
 | 6                                         | Consolidate path config (eliminate split brain) | 1h     | 3%    | 4%    | ❌     | #2           |
 | 7                                         | Enable SystemAssertions.nix                     | 1h     | 3%    | 4%    | ❌     | #1, #4       |
 | 8                                         | Enable ModuleAssertions.nix                     | 1h     | 2%    | 4%    | ❌     | #1, #4       |
-| **🚀 TIER 3: MEDIUM PRIORITY (Do Third)** |
+| **🚀 TIER 3: MEDIUM PRIORITY (Do Third)** |                                                 |        |       |       |        |              |
 | 9                                         | Split system.nix into 3 files                   | 3h     | 4%    | 20%   | ❌     | #1-8         |
 | 10                                        | Define State enum in core/Types.nix             | 15min  | 1%    | 20%   | ❌     | #1           |
 | 11                                        | Replace enable bools with State enum            | 2h     | 3%    | 20%   | ❌     | #10          |
 | 12                                        | Define LogLevel enum in core/Types.nix          | 15min  | 1%    | 20%   | ❌     | #1           |
 | 13                                        | Replace debug bools with LogLevel enum          | 1.5h   | 2%    | 20%   | ❌     | #12          |
 | 14                                        | Add ConfigAssertions integration                | 1.5h   | 3%    | 20%   | ❌     | #1, #4       |
-| **📦 TIER 4: CLEANUP (Do Fourth)**        |
+| **📦 TIER 4: CLEANUP (Do Fourth)**        |                                                 |        |       |       |        |              |
 | 15                                        | Split BehaviorDrivenTests.nix                   | 2h     | 2%    | 20%   | ❌     | #1-8         |
 | 16                                        | Split ErrorManagement.nix                       | 2h     | 2%    | 20%   | ❌     | #1-8         |
 | 17                                        | Create system/defaults.nix                      | 30min  | 1%    | 20%   | ❌     | #9           |
 | 18                                        | Create system/activation.nix                    | 30min  | 1%    | 20%   | ❌     | #9           |
 | 19                                        | Create system/checks.nix                        | 30min  | 1%    | 20%   | ❌     | #9           |
 | 20                                        | Create testing/unit/ structure                  | 30min  | 1%    | 20%   | ❌     | #15          |
-| **📝 TIER 5: DOCUMENTATION (Do Fifth)**   |
+| **📝 TIER 5: DOCUMENTATION (Do Fifth)**   |                                                 |        |       |       |        |              |
 | 21                                        | Document ghost systems integration              | 1h     | 1%    | Docs  | ❌     | #1-4         |
 | 22                                        | Document split brain elimination                | 1h     | 1%    | Docs  | ❌     | #5-6         |
 | 23                                        | Document enum conversion rationale              | 1h     | 1%    | Docs  | ❌     | #11, #13     |

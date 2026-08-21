@@ -41,32 +41,32 @@
 
 ### Production Services (Enabled & Working)
 
-| Service              | Module                       | Status                                                                                                  |
-| -------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Caddy reverse proxy  | `caddy.nix`                  | ✅ 10 vhosts, TLS via sops, forward auth, metrics                                                       |
-| Authelia SSO/IdP     | `authelia.nix`               | ✅ TOTP + WebAuthn, OIDC (Immich + Forgejo clients), 2FA                                                |
-| Forgejo git forge    | `forgejo.nix`                | ✅ Phase 1 code migrated from Gitea. **Phase 2 data migration pending.**                                |
-| Immich photo/video   | `immich.nix`                 | ✅ Full stack, OIDC auth via Authelia                                                                   |
-| SigNoz observability | `signoz.nix`                 | ✅ Built from source. Traces + metrics + logs. AMD GPU + NVMe metrics.                                  |
-| Gatus health monitor | `gatus-config.nix`           | ✅ 26+ endpoints, SQLite, Discord alerting                                                              |
-| Homepage dashboard   | `homepage.nix`               | ✅ Service dashboard                                                                                    |
-| TaskChampion sync    | `taskchampion.nix`           | ✅ Zero-setup cross-platform sync                                                                       |
-| Hermes AI gateway    | `hermes.nix`                 | ✅ Discord bot, cron, GPU-capable. v2026.5.7                                                            |
-| Dual-WAN ECMP+MPTCP  | `dual-wan.nix`               | ✅ Route health monitor, WiFi failover, MPTCP endpoints                                                 |
-| AI model storage     | `ai-models.nix`              | ✅ Centralized `/data/ai/` with 18 directories                                                          |
-| Ollama AI            | `ai-stack.nix`               | ✅ GPU defense (max 1 model, 45% fraction, 8GiB overhead, OOMScore 500)                                 |
-| NVMe health monitor  | `nvme-health-monitor.nix`    | ✅ SMART metrics, desktop notifications                                                                 |
-| Disk monitor         | `disk-monitor.nix`           | ✅ BTRFS usage alerts                                                                                   |
-| EMEET PIXY webcam    | `emeet-pixyd`                | ✅ Face tracking, auto-call detection, Waybar integration                                               |
-| OpenSEO              | `openseo.nix`                | ✅ Self-hosted SEO suite, Docker Compose                                                                |
-| Manifest LLM router  | `manifest.nix`               | ✅ Smart AI model routing, Docker Compose                                                               |
-| Twenty CRM           | `twenty.nix`                 | ✅ Docker Compose, PostgreSQL + Redis                                                                   |
+| Service              | Module                       | Status                                                                                                 |
+| -------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Caddy reverse proxy  | `caddy.nix`                  | ✅ 10 vhosts, TLS via sops, forward auth, metrics                                                      |
+| Authelia SSO/IdP     | `authelia.nix`               | ✅ TOTP + WebAuthn, OIDC (Immich + Forgejo clients), 2FA                                               |
+| Forgejo git forge    | `forgejo.nix`                | ✅ Phase 1 code migrated from Gitea. **Phase 2 data migration pending.**                               |
+| Immich photo/video   | `immich.nix`                 | ✅ Full stack, OIDC auth via Authelia                                                                  |
+| SigNoz observability | `signoz.nix`                 | ✅ Built from source. Traces + metrics + logs. AMD GPU + NVMe metrics.                                 |
+| Gatus health monitor | `gatus-config.nix`           | ✅ 26+ endpoints, SQLite, Discord alerting                                                             |
+| Homepage dashboard   | `homepage.nix`               | ✅ Service dashboard                                                                                   |
+| TaskChampion sync    | `taskchampion.nix`           | ✅ Zero-setup cross-platform sync                                                                      |
+| Hermes AI gateway    | `hermes.nix`                 | ✅ Discord bot, cron, GPU-capable. v2026.5.7                                                           |
+| Dual-WAN ECMP+MPTCP  | `dual-wan.nix`               | ✅ Route health monitor, WiFi failover, MPTCP endpoints                                                |
+| AI model storage     | `ai-models.nix`              | ✅ Centralized `/data/ai/` with 18 directories                                                         |
+| Ollama AI            | `ai-stack.nix`               | ✅ GPU defense (max 1 model, 45% fraction, 8GiB overhead, OOMScore 500)                                |
+| NVMe health monitor  | `nvme-health-monitor.nix`    | ✅ SMART metrics, desktop notifications                                                                |
+| Disk monitor         | `disk-monitor.nix`           | ✅ BTRFS usage alerts                                                                                  |
+| EMEET PIXY webcam    | `emeet-pixyd`                | ✅ Face tracking, auto-call detection, Waybar integration                                              |
+| OpenSEO              | `openseo.nix`                | ✅ Self-hosted SEO suite, Docker Compose                                                               |
+| Manifest LLM router  | `manifest.nix`               | ✅ Smart AI model routing, Docker Compose                                                              |
+| Twenty CRM           | `twenty.nix`                 | ✅ Docker Compose, PostgreSQL + Redis                                                                  |
 | Voice agents         | `voice-agents.nix`           | ⚠️ LiveKit + Whisper ASR. **Missing `sops.secrets.livekit_keys` declaration** — may fail at build time. |
-| Niri desktop         | `niri-config.nix`            | ✅ DRM healthcheck, GPU recovery, session metrics                                                       |
-| Security hardening   | `security-hardening.nix`     | ✅ fail2ban, ClamAV, polkit                                                                             |
-| Steam gaming         | `steam.nix`                  | ✅ Proton, gamemode, gamescope                                                                          |
-| Forgejo repos mirror | `forgejo-repos.nix`          | ✅ Declarative GitHub→Forgejo sync (dnsblockd, BuildFlow)                                               |
-| File & image renamer | `file-and-image-renamer.nix` | ✅ AI screenshot renaming, user service                                                                 |
+| Niri desktop         | `niri-config.nix`            | ✅ DRM healthcheck, GPU recovery, session metrics                                                      |
+| Security hardening   | `security-hardening.nix`     | ✅ fail2ban, ClamAV, polkit                                                                            |
+| Steam gaming         | `steam.nix`                  | ✅ Proton, gamemode, gamescope                                                                         |
+| Forgejo repos mirror | `forgejo-repos.nix`          | ✅ Declarative GitHub→Forgejo sync (dnsblockd, BuildFlow)                                              |
+| File & image renamer | `file-and-image-renamer.nix` | ✅ AI screenshot renaming, user service                                                                |
 
 ### Desktop & UX
 
@@ -136,10 +136,10 @@
 
 ### 4. Voice Agents
 
-| Aspect                | Status                                                                                                                                                                   |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| LiveKit + Whisper ASR | ✅ Module code complete                                                                                                                                                  |
-| ROCm GPU support      | ✅ Configured                                                                                                                                                            |
+| Aspect                | Status                                                                                                                                                                  |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| LiveKit + Whisper ASR | ✅ Module code complete                                                                                                                                                 |
+| ROCm GPU support      | ✅ Configured                                                                                                                                                           |
 | Sops secrets          | ⚠️ References `config.sops.placeholder.livekit_keys` but no `sops.secrets.livekit_keys` declared in the module — needs to be declared in `sops.nix` or the module itself |
 
 ### 5. PhotoMap
@@ -236,48 +236,48 @@ SigNoz ClickHouse runs as single-node Keeper with 4G memory cap. No replication,
 
 ### P0 — Do Now (Blocks other work)
 
-| #   | Task                                                                               | Effort | Impact                               |
-| --- | ---------------------------------------------------------------------------------- | ------ | ------------------------------------ |
-| 1   | **Run `scripts/rename-sops-gitea-to-forgejo.sh` on evo-x2**                        | 5 min  | Unblocks Forgejo deployment          |
-| 2   | **Forgejo Phase 2: Data migration** (stop gitea → backup → rename → `just switch`) | 30 min | Production git forge on Forgejo      |
-| 3   | **Fix forgejo-mirror-github jq variable mismatch** (`clone_url` → `clone_addr`)    | 5 min  | GitHub mirror sync works             |
-| 4   | **Fix voice-agents missing `sops.secrets.livekit_keys`**                           | 5 min  | Build doesn't fail                   |
-| 5   | **Deploy keepalived on evo-x2** (`just switch` — config is ready)                  | 10 min | VIP `.53` works, DNS failover active |
+| # | Task                                                                               | Effort | Impact                               |
+| - | ---------------------------------------------------------------------------------- | ------ | ------------------------------------ |
+| 1 | **Run `scripts/rename-sops-gitea-to-forgejo.sh` on evo-x2**                        | 5 min  | Unblocks Forgejo deployment          |
+| 2 | **Forgejo Phase 2: Data migration** (stop gitea → backup → rename → `just switch`) | 30 min | Production git forge on Forgejo      |
+| 3 | **Fix forgejo-mirror-github jq variable mismatch** (`clone_url` → `clone_addr`)    | 5 min  | GitHub mirror sync works             |
+| 4 | **Fix voice-agents missing `sops.secrets.livekit_keys`**                           | 5 min  | Build doesn't fail                   |
+| 5 | **Deploy keepalived on evo-x2** (`just switch` — config is ready)                  | 10 min | VIP `.53` works, DNS failover active |
 
 ### P1 — Do This Week
 
-| #   | Task                                                                           | Effort   | Impact                    |
-| --- | ------------------------------------------------------------------------------ | -------- | ------------------------- |
-| 6   | **Forgejo Phase 3: Cleanup** (remove old gitea modules, update docs)           | 15 min   | Clean codebase            |
-| 7   | **Verify keepalived + VIP `.53`** from MacBook after deployment                | 10 min   | DNS failover validated    |
-| 8   | **Add ClickHouse backup strategy** (daily SQL dump to `/data/ai/cache/` or S3) | 2 hours  | Data loss prevention      |
-| 9   | **Update MacBook DNS to `.53`** once VIP confirmed working                     | 2 min    | MacBook uses failover DNS |
-| 10  | **Provision Pi 3 hardware** for DNS failover cluster                           | 4+ hours | Eliminates DNS SPOF       |
+| #  | Task                                                                           | Effort   | Impact                    |
+| -- | ------------------------------------------------------------------------------ | -------- | ------------------------- |
+| 6  | **Forgejo Phase 3: Cleanup** (remove old gitea modules, update docs)           | 15 min   | Clean codebase            |
+| 7  | **Verify keepalived + VIP `.53`** from MacBook after deployment                | 10 min   | DNS failover validated    |
+| 8  | **Add ClickHouse backup strategy** (daily SQL dump to `/data/ai/cache/` or S3) | 2 hours  | Data loss prevention      |
+| 9  | **Update MacBook DNS to `.53`** once VIP confirmed working                     | 2 min    | MacBook uses failover DNS |
+| 10 | **Provision Pi 3 hardware** for DNS failover cluster                           | 4+ hours | Eliminates DNS SPOF       |
 
 ### P2 — Do This Month
 
-| #   | Task                                                                         | Effort    | Impact                      |
-| --- | ---------------------------------------------------------------------------- | --------- | --------------------------- |
-| 11  | **Migrate Authelia notifier from filesystem to SMTP**                        | 1-2 hours | Password reset self-service |
-| 12  | **Move Authelia OIDC client secret to sops**                                 | 30 min    | Proper secret rotation      |
-| 13  | **Clean up rpi3-dns overlays** (remove emeet-pixyd, monitor365, openaudible) | 15 min    | Faster evaluation           |
-| 14  | **Fix `pythonTest` overlay to use default Python** instead of hardcoded 3.13 | 15 min    | Future-proof                |
-| 15  | **Fix `todoListAiFixedHash` to auto-detect** or document update procedure    | 30 min    | Reduce breakage             |
-| 16  | **Deploy Dozzle at `logs.home.lan`**                                         | 30 min    | Container log visibility    |
-| 17  | **Rename vhost `gitea.home.lan` → `forgejo.home.lan`** (optional)            | 30 min    | Semantic clarity            |
-| 18  | **Consolidate voice-agents Caddy vHost**                                     | 15 min    | Cleaner routing             |
+| #  | Task                                                                         | Effort    | Impact                      |
+| -- | ---------------------------------------------------------------------------- | --------- | --------------------------- |
+| 11 | **Migrate Authelia notifier from filesystem to SMTP**                        | 1-2 hours | Password reset self-service |
+| 12 | **Move Authelia OIDC client secret to sops**                                 | 30 min    | Proper secret rotation      |
+| 13 | **Clean up rpi3-dns overlays** (remove emeet-pixyd, monitor365, openaudible) | 15 min    | Faster evaluation           |
+| 14 | **Fix `pythonTest` overlay to use default Python** instead of hardcoded 3.13 | 15 min    | Future-proof                |
+| 15 | **Fix `todoListAiFixedHash` to auto-detect** or document update procedure    | 30 min    | Reduce breakage             |
+| 16 | **Deploy Dozzle at `logs.home.lan`**                                         | 30 min    | Container log visibility    |
+| 17 | **Rename vhost `gitea.home.lan` → `forgejo.home.lan`** (optional)            | 30 min    | Semantic clarity            |
+| 18 | **Consolidate voice-agents Caddy vHost**                                     | 15 min    | Cleaner routing             |
 
 ### P3 — Nice To Have
 
-| #   | Task                                                      | Effort    | Impact                   |
-| --- | --------------------------------------------------------- | --------- | ------------------------ |
-| 19  | **Auditd/AppArmor setup**                                 | 4+ hours  | Mandatory access control |
-| 20  | **Distributed builds** (MacBook → evo-x2)                 | 2 hours   | MacBook disk relief      |
-| 21  | **Fix Hermes upstream npmDepsHash** (contribute upstream) | 1-2 hours | Remove local workaround  |
-| 22  | **Organize `docs/status/` by year/month**                 | 1 hour    | Navigability             |
-| 23  | **Create shared flake-parts template** for new services   | 2 hours   | Faster module creation   |
-| 24  | **Convert go-auto-upgrade `path:` inputs to SSH URLs**    | 30 min    | Portability              |
-| 25  | **Add benchmark scripts** for system performance tracking | 2 hours   | Observability gap        |
+| #  | Task                                                      | Effort    | Impact                   |
+| -- | --------------------------------------------------------- | --------- | ------------------------ |
+| 19 | **Auditd/AppArmor setup**                                 | 4+ hours  | Mandatory access control |
+| 20 | **Distributed builds** (MacBook → evo-x2)                 | 2 hours   | MacBook disk relief      |
+| 21 | **Fix Hermes upstream npmDepsHash** (contribute upstream) | 1-2 hours | Remove local workaround  |
+| 22 | **Organize `docs/status/` by year/month**                 | 1 hour    | Navigability             |
+| 23 | **Create shared flake-parts template** for new services   | 2 hours   | Faster module creation   |
+| 24 | **Convert go-auto-upgrade `path:` inputs to SSH URLs**    | 30 min    | Portability              |
+| 25 | **Add benchmark scripts** for system performance tracking | 2 hours   | Observability gap        |
 
 ---
 

@@ -149,33 +149,33 @@ System remains severely overloaded (load avg 21.99–31.66) with 45Gi/62Gi memor
 
 ## f) Top #25 Things We Should Get Done Next! 🎯
 
-| #   | Task                                         | Why                                         | Effort   | Impact       |
-| --- | -------------------------------------------- | ------------------------------------------- | -------- | ------------ |
-| 1   | **Investigate system overload**              | Load avg 31.66 — system severely overloaded | 10 min   | 🔴 Critical  |
-| 2   | **Run `just clean` + `nix-collect-garbage`** | Root disk at 87% — prevent build failures   | 15 min   | 🔴 High      |
-| 3   | **Archive status reports >2 weeks old**      | 58+ reports accumulating                    | 10 min   | 🟡 Low       |
-| 4   | **Verify Darwin build from MacBook**         | Latent issues possible since Session 36     | 30 min   | 🟡 Medium    |
-| 5   | **Set up Cachix**                            | Massive rebuild time savings                | 2 hours  | 🔴 Very High |
-| 6   | **GitHub Actions CI**                        | Prevent breakage on push                    | 1 hour   | 🔴 Very High |
-| 7   | **photomap decision**                        | Dead commented code + stale module          | 10 min   | 🟡 Medium    |
-| 8   | **Create `mk-pnpm-package.nix` helper**      | Reuse jscpd pattern                         | 1 hour   | 🟡 Medium    |
-| 9   | **Write upstream fix playbook**              | Document vendor hash cascade learnings      | 30 min   | 🟡 Medium    |
-| 10  | **Go.sum transitive merge audit**            | Prevent future cascade failures             | 1 hour   | 🔴 High      |
-| 11  | **Dependency graph visualization**           | Auto-detect stale hashes                    | 2 hours  | 🔴 High      |
-| 12  | **Automated vendor hash updater**            | One command for all updates                 | 3 hours  | 🔴 Very High |
-| 13  | **rpi3-dns hardware provisioning**           | Eliminate DNS SPOF                          | Hardware | 🔴 High      |
-| 14  | **SigNoz per-threshold routing**             | Critical→DM, warning→channel                | 1 hour   | 🟡 Medium    |
-| 15  | **Distributed Darwin builds**                | MacBook disk at 90-95%                      | 2 hours  | 🔴 High      |
-| 16  | **Migrate justfile → flake.nix**             | AGENTS.md policy                            | 4 hours  | 🟢 Low       |
-| 17  | **Standardize ADR numbering**                | Consistency                                 | 15 min   | 🟢 Low       |
-| 18  | **AppArmor enablement**                      | Currently disabled                          | 2 hours  | 🟡 Medium    |
-| 19  | **Auditd re-enablement**                     | Track nixpkgs #483085                       | Ongoing  | 🟡 Medium    |
-| 20  | **Consolidate voice-agents Caddy vHost**     | Consistency with other services             | 30 min   | 🟢 Low       |
-| 21  | **Move dns-failover authPassword to sops**   | Plaintext password in module                | 30 min   | 🟡 Medium    |
-| 22  | **Add per-service health check endpoints**   | Self-reporting beyond Gatus                 | 3 hours  | 🟡 Medium    |
-| 23  | **Contribute jscpd upstream fix**            | Give back to nixpkgs                        | 2 hours  | 🟢 Low       |
-| 24  | **DNS-over-QUIC re-evaluation**              | Currently disabled for build time           | 1 hour   | 🟢 Low       |
-| 25  | **Benchmark/performance scripts**            | Referenced in FEATURES.md but never created | 2 hours  | 🟢 Low       |
+| #  | Task                                         | Why                                         | Effort   | Impact       |
+| -- | -------------------------------------------- | ------------------------------------------- | -------- | ------------ |
+| 1  | **Investigate system overload**              | Load avg 31.66 — system severely overloaded | 10 min   | 🔴 Critical  |
+| 2  | **Run `just clean` + `nix-collect-garbage`** | Root disk at 87% — prevent build failures   | 15 min   | 🔴 High      |
+| 3  | **Archive status reports >2 weeks old**      | 58+ reports accumulating                    | 10 min   | 🟡 Low       |
+| 4  | **Verify Darwin build from MacBook**         | Latent issues possible since Session 36     | 30 min   | 🟡 Medium    |
+| 5  | **Set up Cachix**                            | Massive rebuild time savings                | 2 hours  | 🔴 Very High |
+| 6  | **GitHub Actions CI**                        | Prevent breakage on push                    | 1 hour   | 🔴 Very High |
+| 7  | **photomap decision**                        | Dead commented code + stale module          | 10 min   | 🟡 Medium    |
+| 8  | **Create `mk-pnpm-package.nix` helper**      | Reuse jscpd pattern                         | 1 hour   | 🟡 Medium    |
+| 9  | **Write upstream fix playbook**              | Document vendor hash cascade learnings      | 30 min   | 🟡 Medium    |
+| 10 | **Go.sum transitive merge audit**            | Prevent future cascade failures             | 1 hour   | 🔴 High      |
+| 11 | **Dependency graph visualization**           | Auto-detect stale hashes                    | 2 hours  | 🔴 High      |
+| 12 | **Automated vendor hash updater**            | One command for all updates                 | 3 hours  | 🔴 Very High |
+| 13 | **rpi3-dns hardware provisioning**           | Eliminate DNS SPOF                          | Hardware | 🔴 High      |
+| 14 | **SigNoz per-threshold routing**             | Critical→DM, warning→channel                | 1 hour   | 🟡 Medium    |
+| 15 | **Distributed Darwin builds**                | MacBook disk at 90-95%                      | 2 hours  | 🔴 High      |
+| 16 | **Migrate justfile → flake.nix**             | AGENTS.md policy                            | 4 hours  | 🟢 Low       |
+| 17 | **Standardize ADR numbering**                | Consistency                                 | 15 min   | 🟢 Low       |
+| 18 | **AppArmor enablement**                      | Currently disabled                          | 2 hours  | 🟡 Medium    |
+| 19 | **Auditd re-enablement**                     | Track nixpkgs #483085                       | Ongoing  | 🟡 Medium    |
+| 20 | **Consolidate voice-agents Caddy vHost**     | Consistency with other services             | 30 min   | 🟢 Low       |
+| 21 | **Move dns-failover authPassword to sops**   | Plaintext password in module                | 30 min   | 🟡 Medium    |
+| 22 | **Add per-service health check endpoints**   | Self-reporting beyond Gatus                 | 3 hours  | 🟡 Medium    |
+| 23 | **Contribute jscpd upstream fix**            | Give back to nixpkgs                        | 2 hours  | 🟢 Low       |
+| 24 | **DNS-over-QUIC re-evaluation**              | Currently disabled for build time           | 1 hour   | 🟢 Low       |
+| 25 | **Benchmark/performance scripts**            | Referenced in FEATURES.md but never created | 2 hours  | 🟢 Low       |
 
 ---
 

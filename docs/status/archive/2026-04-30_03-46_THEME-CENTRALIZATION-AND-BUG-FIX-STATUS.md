@@ -119,33 +119,33 @@ at ...ssh.nix:167:5
 
 Sorted by impact × effort (high impact / low effort first):
 
-| #   | Task                                                                                   | Impact      | Effort  | Status           |
-| --- | -------------------------------------------------------------------------------------- | ----------- | ------- | ---------------- |
-| 1   | Fix nix-ssh-config duplicate `environment.etc` (upstream)                              | 🔴 Critical | Low     | Not started      |
-| 2   | Migrate rofi.nix to colorScheme.palette (15 values)                                    | High        | Low     | Not started      |
-| 3   | Migrate yazi.nix to colorScheme.palette (71 values)                                    | High        | Low     | Not started      |
-| 4   | Migrate waybar.nix CSS to colorScheme.palette (32 values)                              | High        | Medium  | Not started      |
-| 5   | Migrate wlogout.nix to colorScheme.palette (31 values)                                 | High        | Medium  | Not started      |
-| 6   | Migrate foot terminal colors to colorScheme.palette (19 values)                        | Medium      | Low     | Not started      |
-| 7   | Fix waybar weather JSON escaping (wttr.in injection)                                   | Medium      | Low     | Not started      |
-| 8   | Fix niri session restore: quote `$ws_names` for loop                                   | Medium      | Low     | Not started      |
-| 9   | Fix signoz `${pct%?}` assumption of `%` suffix                                         | Low         | Low     | Not started      |
-| 10  | Add gitea API error handling to mirror scripts                                         | Medium      | Medium  | Not started      |
-| 11  | Create shared `lib/colors.nix` to deduplicate color binding                            | Medium      | Low     | Not started      |
-| 12  | Create Catppuccin CSS generator function                                               | Medium      | Medium  | Not started      |
-| 13  | Define HM `theme.colors` option instead of extraSpecialArgs                            | High        | High    | Not started      |
-| 14  | Fix fzf.nix `label:` color (uses `#a6adc8` — not in base16 palette)                    | Low         | Trivial | Partial          |
-| 15  | Waybar clipboard script: `#89b4fa` hardcoded in rofi theme-str                         | Low         | Trivial | Not started      |
-| 16  | Niri shadow color `#00000060` → make configurable                                      | Low         | Trivial | Not started      |
-| 17  | Homepage custom.css: still uses hardcoded hex (by design — NixOS module, no HM access) | Low         | Medium  | Accepted         |
-| 18  | Add `--no-verify` note to AGENTS.md for nix-ssh-config workaround                      | Low         | Trivial | Not started      |
-| 19  | Verify Darwin HM gets colorScheme after our fix (build test)                           | Medium      | Medium  | Partial          |
-| 20  | Run `statix` and `deadnix` after nix-ssh-config is fixed                               | Medium      | Low     | Blocked          |
-| 21  | Add waybar media album HTML entity escaping                                            | Low         | Low     | Not started      |
-| 22  | Extract niri-wrapped shell scripts to writeShellApplication                            | Low         | Medium  | Not started      |
-| 23  | Centralize all `JetBrainsMono Nerd Font` font references to theme.nix                  | Low         | Medium  | Not started      |
-| 24  | Investigate ai-stack.nix intentionally disabled?                                       | Medium      | Trivial | Needs user input |
-| 25  | Create integration test for colorScheme propagation                                    | High        | High    | Not started      |
+| #  | Task                                                                                   | Impact      | Effort  | Status           |
+| -- | -------------------------------------------------------------------------------------- | ----------- | ------- | ---------------- |
+| 1  | Fix nix-ssh-config duplicate `environment.etc` (upstream)                              | 🔴 Critical | Low     | Not started      |
+| 2  | Migrate rofi.nix to colorScheme.palette (15 values)                                    | High        | Low     | Not started      |
+| 3  | Migrate yazi.nix to colorScheme.palette (71 values)                                    | High        | Low     | Not started      |
+| 4  | Migrate waybar.nix CSS to colorScheme.palette (32 values)                              | High        | Medium  | Not started      |
+| 5  | Migrate wlogout.nix to colorScheme.palette (31 values)                                 | High        | Medium  | Not started      |
+| 6  | Migrate foot terminal colors to colorScheme.palette (19 values)                        | Medium      | Low     | Not started      |
+| 7  | Fix waybar weather JSON escaping (wttr.in injection)                                   | Medium      | Low     | Not started      |
+| 8  | Fix niri session restore: quote `$ws_names` for loop                                   | Medium      | Low     | Not started      |
+| 9  | Fix signoz `${pct%?}` assumption of `%` suffix                                         | Low         | Low     | Not started      |
+| 10 | Add gitea API error handling to mirror scripts                                         | Medium      | Medium  | Not started      |
+| 11 | Create shared `lib/colors.nix` to deduplicate color binding                            | Medium      | Low     | Not started      |
+| 12 | Create Catppuccin CSS generator function                                               | Medium      | Medium  | Not started      |
+| 13 | Define HM `theme.colors` option instead of extraSpecialArgs                            | High        | High    | Not started      |
+| 14 | Fix fzf.nix `label:` color (uses `#a6adc8` — not in base16 palette)                    | Low         | Trivial | Partial          |
+| 15 | Waybar clipboard script: `#89b4fa` hardcoded in rofi theme-str                         | Low         | Trivial | Not started      |
+| 16 | Niri shadow color `#00000060` → make configurable                                      | Low         | Trivial | Not started      |
+| 17 | Homepage custom.css: still uses hardcoded hex (by design — NixOS module, no HM access) | Low         | Medium  | Accepted         |
+| 18 | Add `--no-verify` note to AGENTS.md for nix-ssh-config workaround                      | Low         | Trivial | Not started      |
+| 19 | Verify Darwin HM gets colorScheme after our fix (build test)                           | Medium      | Medium  | Partial          |
+| 20 | Run `statix` and `deadnix` after nix-ssh-config is fixed                               | Medium      | Low     | Blocked          |
+| 21 | Add waybar media album HTML entity escaping                                            | Low         | Low     | Not started      |
+| 22 | Extract niri-wrapped shell scripts to writeShellApplication                            | Low         | Medium  | Not started      |
+| 23 | Centralize all `JetBrainsMono Nerd Font` font references to theme.nix                  | Low         | Medium  | Not started      |
+| 24 | Investigate ai-stack.nix intentionally disabled?                                       | Medium      | Trivial | Needs user input |
+| 25 | Create integration test for colorScheme propagation                                    | High        | High    | Not started      |
 
 ---
 

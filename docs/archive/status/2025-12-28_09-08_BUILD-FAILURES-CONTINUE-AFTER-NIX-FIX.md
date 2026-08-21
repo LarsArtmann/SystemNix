@@ -52,15 +52,15 @@
 
 ## 📅 TIMELINE OF EVENTS
 
-| Date   | Event                                   | Impact              |
-| ------ | --------------------------------------- | ------------------- |
-| Dec 21 | Last successful build (generation 206)  | ✅ System working   |
-| Dec 23 | iTerm2 recovery changes                 | ❓ Possible issue?  |
-| Dec 23 | Emergency recovery guide created        | 📝 Documentation    |
-| Dec 24 | Sandbox paths research                  | 📝 Research         |
+| Date   | Event                                   | Impact             |
+| ------ | --------------------------------------- | ------------------ |
+| Dec 21 | Last successful build (generation 206)  | ✅ System working  |
+| Dec 23 | iTerm2 recovery changes                 | ❓ Possible issue? |
+| Dec 23 | Emergency recovery guide created        | 📝 Documentation   |
+| Dec 24 | Sandbox paths research                  | 📝 Research        |
 | Dec 26 | Comprehensive sandbox paths             | ⚠️ Potential issue? |
-| Dec 28 | Nix version mismatch identified & fixed | ✅ Problem solved   |
-| Dec 28 | Tests show builds STILL failing         | ❌ New problem?     |
+| Dec 28 | Nix version mismatch identified & fixed | ✅ Problem solved  |
+| Dec 28 | Tests show builds STILL failing         | ❌ New problem?    |
 
 ---
 

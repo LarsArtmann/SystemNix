@@ -6,13 +6,13 @@
 
 ## Executive Summary
 
-| Category | Count |
-|---|---|
-| FULLY DONE | 5 |
-| PARTIALLY DONE | 3 |
-| NOT STARTED | 3 |
-| TOTALLY FUCKED UP | 2 |
-| Next-task candidates | 28 |
+| Category             | Count |
+| -------------------- | ----- |
+| FULLY DONE           | 5     |
+| PARTIALLY DONE       | 3     |
+| NOT STARTED          | 3     |
+| TOTALLY FUCKED UP    | 2     |
+| Next-task candidates | 28    |
 
 **Headline:** The deploy blocker (`bank-sync-storage-dir.service` chmod EPERM) and the long-crash-looping `activitywatch-data-to-pool.service` are both FIXED and verified live. Zero failed units system-wide as of 03:29. **But** this session caught itself making one likely-wrong external-blame claim (Wise 403 — evidence now points at OUR side, see d-1) and one unexplained transient smoke failure it waved off as "transient" (d-2).
 
@@ -76,6 +76,7 @@
 ## f) NEXT — ranked, session-scoped + directly observed
 
 **P0 — broken right now:**
+
 1. Wise 403 deep-dive in `/home/lars/projects/bank-sync`: why does the running binary emit `statement.json` requests WITHOUT `type=`? Is the `4c008d90` param actually consumed by the deployed rev? Then fix upstream + flake bump (per house rule: fix bugs upstream, not in SystemNix).
 2. Confirm whether the running bank-sync binary is pre- or post-`c888f497`; restart the service once the fix is confirmed deployed (it has not been restarted in days).
 3. Add `startLimitBurst`/`startLimitIntervalSec`/`onFailure` to `bank-sync-storage-dir` (house rule 5; missed this session).
@@ -103,7 +104,7 @@
 19. `vendorHash freshness` check reports "unable to determine status" for 6 Go packages (check #11 limitation) — extend the check or drop the noise.
 20. Dead Resend key still in sops `pocket-id.yaml` per incident table (Pocket ID email broken until rotated) — user-held action, listed for completeness.
 
-*(19 further candidates exist in TODO_LIST/AGENTS.md backlog but are outside this session's observed scope — deliberately not padded to 50.)*
+_(19 further candidates exist in TODO_LIST/AGENTS.md backlog but are outside this session's observed scope — deliberately not padded to 50.)_
 
 ---
 
@@ -115,4 +116,4 @@
 
 ---
 
-*Report written 2026-08-19 03:29 CEST. Working tree: AGENTS.md modified (gotcha entries), report file new — auto-commit daemon will batch. Not committed manually per house rule (no explicit commit request).*
+_Report written 2026-08-19 03:29 CEST. Working tree: AGENTS.md modified (gotcha entries), report file new — auto-commit daemon will batch. Not committed manually per house rule (no explicit commit request)._

@@ -7,7 +7,6 @@
 
 ---
 
-
 ## TL;DR
 
 **I shipped a P0 bug to production.** The bookmarks `bookmarks.yaml` I wrote in the
@@ -38,13 +37,13 @@ page in a browser.
    and compared. The upstream skeleton has:
    ```yaml
    - Github:
-       - abbr: GH          # ← LIST ITEM (note the leading "-")
+       - abbr: GH # ← LIST ITEM (note the leading "-")
          href: https://...
    ```
    My broken output had:
    ```yaml
    - Pocket-ID:
-       abbr: PI            # ← BARE OBJECT (no leading "-")
+       abbr: PI # ← BARE OBJECT (no leading "-")
        href: https://...
    ```
    The bare object shape makes Homepage iterate the object's VALUES as if
@@ -100,9 +99,9 @@ page in a browser.
    verifies Nix evaluation. `nix build` verifies the derivation builds. Neither
    exercises Homepage's Next.js runtime parsing of the YAML. I knew this
    abstractly but acted as if eval==works. This is the same class of error
-   the AGENTS.md gotcha "OTel endpoint format" warns about: *"This is NOT
+   the AGENTS.md gotcha "OTel endpoint format" warns about: _"This is NOT
    caught by nix eval — it validates string rendering, not API contract
-   correctness."*
+   correctness."_
 
 3. **Did not read the upstream schema example carefully.** The Homepage
    docs page I fetched (`/configs/bookmarks/`) literally shows the list
@@ -116,9 +115,9 @@ page in a browser.
    if it were objective truth.
 
 5. **Repeated the exact memory-maintenance failure I had just confessed.**
-   The 16:20 report explicitly says: *"I noticed a new recurring bug class
+   The 16:20 report explicitly says: _"I noticed a new recurring bug class
    (`mdi-*` icons don't exist in the pack) but did not record it in the
-   Non-Obvious Gotchas table. This is a memory-maintenance failure."* I
+   Non-Obvious Gotchas table. This is a memory-maintenance failure."_ I
    then immediately failed to record the bookmark schema gotcha too.
 
 ## e) WHAT WE SHOULD IMPROVE
@@ -177,6 +176,7 @@ page in a browser.
 ## f) Up to 50 things we should get done next
 
 ### Immediate (blocking a working dashboard)
+
 1. **Deploy the fix** — `nix run .#deploy`
 2. **Browser-verify** `https://dash.home.lan` renders without exceptions
 3. **Run `nix run .#post-deploy-check`**
@@ -184,6 +184,7 @@ page in a browser.
 5. **Verify bookmarks links work** (click each, confirm navigation)
 
 ### Correctness / hardening
+
 6. **Add the bookmark schema gotcha to `AGENTS.md`** Non-Obvious Gotchas table
 7. **Add the `mdi-*` icon gotcha to `AGENTS.md`** (2 sessions overdue)
 8. **Audit widgets.yaml against upstream examples** character-for-character
@@ -197,6 +198,7 @@ page in a browser.
 16. **Grep whole repo for `mdi-`** icon references
 
 ### Testing / CI (prevent recurrence)
+
 17. **Write a Homepage YAML schema validator** (a Nix check or shell script)
 18. **Add a pre-deploy check** that fetches the Homepage page and asserts no `error` string
 19. **Add a test that every bookmark entry is a list-of-one-object**
@@ -206,6 +208,7 @@ page in a browser.
 23. **Add a lint rule** that bookmarks/service YAML structure matches upstream
 
 ### Features (from prior report, still valid)
+
 24. **Weather widget (Open-Meteo)** — no API key needed
 25. **Glances info widget** — better BTRFS support than `resources`
 26. **Gatus service widget** on the Gatus tile

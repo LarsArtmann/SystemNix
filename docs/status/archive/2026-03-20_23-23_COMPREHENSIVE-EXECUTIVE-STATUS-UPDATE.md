@@ -12,16 +12,16 @@
 
 ## 📊 QUICK METRICS DASHBOARD
 
-| Metric                  | Value      | Status           |
-| ----------------------- | ---------- | ---------------- |
-| **Nix Files**           | 90         | ✅ Active        |
-| **Documentation Files** | 400        | ✅ Comprehensive |
-| **Shell Scripts**       | 48         | ✅ Functional    |
-| **TODOs Completed**     | 44         | ⚠️ Low           |
-| **TODOs Pending**       | 492        | 🔴 High          |
-| **Darwin Modules**      | 5          | ✅ Stable        |
-| **NixOS Modules**       | 6          | ✅ Functional    |
-| **Common Modules**      | 30         | ✅ Shared        |
+| Metric                  | Value     | Status           |
+| ----------------------- | --------- | ---------------- |
+| **Nix Files**           | 90        | ✅ Active        |
+| **Documentation Files** | 400       | ✅ Comprehensive |
+| **Shell Scripts**       | 48        | ✅ Functional    |
+| **TODOs Completed**     | 44        | ⚠️ Low            |
+| **TODOs Pending**       | 492       | 🔴 High          |
+| **Darwin Modules**      | 5         | ✅ Stable        |
+| **NixOS Modules**       | 6         | ✅ Functional    |
+| **Common Modules**      | 30        | ✅ Shared        |
 | **Flake Check**         | ⏱️ Running | 🟡 Pending       |
 
 ---

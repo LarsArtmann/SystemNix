@@ -73,14 +73,14 @@ Nothing blown up this session.
 
 ## F) Top Things to Do Next
 
-| #   | Priority | Item                                                                    | Effort  |
-| --- | -------- | ----------------------------------------------------------------------- | ------- |
-| 1   | P0       | Run `just switch` to deploy the Immich fix                              | 5 min   |
-| 2   | P1       | Add internal CA to system trust store (`security.pki.certificateFiles`) | Low     |
-| 3   | P1       | Remove `NODE_TLS_REJECT_UNAUTHORIZED=0` once CA is trusted              | Trivial |
-| 4   | P2       | Verify Gitea OAuth works (same cert chain)                              | Low     |
-| 5   | P2       | Configure Authelia SMTP notifier for real emails                        | Medium  |
-| 6   | P3       | Check other OIDC clients for same TLS trust issue                       | Low     |
+| # | Priority | Item                                                                    | Effort  |
+| - | -------- | ----------------------------------------------------------------------- | ------- |
+| 1 | P0       | Run `just switch` to deploy the Immich fix                              | 5 min   |
+| 2 | P1       | Add internal CA to system trust store (`security.pki.certificateFiles`) | Low     |
+| 3 | P1       | Remove `NODE_TLS_REJECT_UNAUTHORIZED=0` once CA is trusted              | Trivial |
+| 4 | P2       | Verify Gitea OAuth works (same cert chain)                              | Low     |
+| 5 | P2       | Configure Authelia SMTP notifier for real emails                        | Medium  |
+| 6 | P3       | Check other OIDC clients for same TLS trust issue                       | Low     |
 
 ---
 

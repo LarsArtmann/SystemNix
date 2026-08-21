@@ -6,12 +6,12 @@
 
 ---
 
-
 ## Context
 
 User asked to set up BTRFS balance automation and a configurable reserve in Nix, after a conversation about device-unallocated space on their 722 GiB BTRFS filesystem (currently at ~5 GiB unallocated after a manual data balance).
 
 The existing `btrfs-health.nix` module had:
+
 - Prometheus metrics (5-min interval)
 - GC guard (blocks nix-gc when device-unallocated < 10%)
 - Scrub metrics
@@ -95,6 +95,7 @@ The space is only reclaimed when the snapshot expires (14 days later). By then, 
 **The reserve works as a BUFFER** (holding 10 GiB to prevent reaching 100%), but **fails as an EMERGENCY RELEASE** (deleting it for instant space). The latter was the primary design goal.
 
 **Fix options:**
+
 - Put the reserve on a subvolume that is NOT snapshotted (e.g., one of the `@cache-*` subvolumes, or a new `@reserve` subvolume excluded from btrbk)
 - Write random data instead of `fallocate` (avoids compression, but doesn't solve the snapshot reference issue)
 - Use `chattr +C` (NOCOW) — does NOT help with snapshot references
@@ -145,6 +146,7 @@ Both balance scripts contain `MOUNT="${""}/"` — an empty Nix string interpolat
 ## f) Up to 50 Things to Get Done Next
 
 ### BTRFS (fix the bugs from this session)
+
 1. **Fix BUG 1:** Create `@emergency-reserve` subvolume excluded from btrbk, move reserve file there
 2. **Fix BUG 2:** `chattr +C` or `dd if=/dev/urandom` for the reserve file to guarantee real space allocation
 3. **Fix BUG 3:** Clean up `${""}/` → `/` in both balance scripts
@@ -157,6 +159,7 @@ Both balance scripts contain `MOUNT="${""}/"` — an empty Nix string interpolat
 10. Consider adding `/data` to balance scope (currently only `/` is balanced; `/data` has its own chunk allocation)
 
 ### Deployment
+
 11. Deploy this config to evo-x2 (`nix run .#deploy`)
 12. Verify emergency reserve created successfully after first boot
 13. Verify balance timers are loaded (`systemctl list-timers btrfs-*`)
@@ -164,6 +167,7 @@ Both balance scripts contain `MOUNT="${""}/"` — an empty Nix string interpolat
 15. Add `deploy.sh` explicit start for `btrfs-emergency-reserve` on first deploy
 
 ### Monitoring
+
 16. Add Gatus alert for balance failure (currently only `onFailure` → desktop notification)
 17. Add Gatus check for balance staleness (alert if no successful balance in 8+ days)
 18. Add Grafana/SigNoz panel for BTRFS unallocated space history trend
@@ -171,12 +175,14 @@ Both balance scripts contain `MOUNT="${""}/"` — an empty Nix string interpolat
 20. Consider alerting when emergency reserve is consumed (transition from present → absent)
 
 ### Existing BTRFS Issues (from AGENTS.md, still open)
+
 21. `/nix` not a separate subvolume — btrbk snapshots include the full nix store (deferred to next reinstall)
 22. No remote backup — all snapshots are LOCAL-ONLY (#1 data loss risk)
 23. BTRFS metadata ratio is 2.00 (DUP) — consider converting to single on single-device systems for space efficiency
 24. QLC NAND `discard=async` still removed — verify `fstrim.timer` is sufficient
 
 ### Code Quality
+
 25. Extract the balance scripts into a shared library (both share the "already running" guard + chunk-check pattern)
 26. Add integration test that validates balance guard logic (mock `btrfs balance status` output)
 27. Consider `btrfs balance filter` with `-v` (verbose) for better logging
@@ -184,6 +190,7 @@ Both balance scripts contain `MOUNT="${""}/"` — an empty Nix string interpolat
 29. Add the BTRFS balance/reserve gotchas to the AGENTS.md gotcha table as dedicated rows
 
 ### Future Hardening
+
 30. Add automated partition growth when device-unallocated consistently < 5% (requires free partition space — currently the disk is fully partitioned)
 31. Investigate BTRFS `block-group-tree` feature (newer kernel) for more efficient chunk management
 32. Consider converting metadata profile from DUP to single on this single-device system (saves ~50% metadata allocation)
@@ -193,6 +200,7 @@ Both balance scripts contain `MOUNT="${""}/"` — an empty Nix string interpolat
 36. Consider `btrfs-usage-breakdown` service that logs per-subvolume usage monthly
 
 ### General SystemNix
+
 37. Verify all existing `onFailure` handlers actually fire (test with `systemctl fail <service>`)
 38. Audit all systemd services for `startLimitBurst` consistency
 39. Consider adding `systemd-analyze calendar` verification for all custom timers at eval time
@@ -202,6 +210,7 @@ Both balance scripts contain `MOUNT="${""}/"` — an empty Nix string interpolat
 43. Add documentation for manual recovery procedures in `docs/troubleshooting/btrfs-maintenance.md`
 
 ### Testing
+
 44. Write a VM test that creates a BTRFS filesystem, fills it, and verifies balance reclaims space
 45. Write a test that verifies the emergency reserve provides instant free space (would catch BUG 1)
 46. Test balance with `-dusage=90` vs `-dusage=50` to see which reclaims more on a 93% full filesystem
@@ -209,6 +218,7 @@ Both balance scripts contain `MOUNT="${""}/"` — an empty Nix string interpolat
 48. Test that `Persistent = true` timers fire after a missed schedule (e.g., system was off on Monday)
 
 ### Documentation
+
 49. Update `docs/troubleshooting/btrfs-metadata-enospc-recovery.md` with the new automated balance prevention
 50. Write a `docs/runbooks/btrfs-emergency-response.md` for the manual steps when the system hits ENOSPC despite all automation
 
@@ -219,6 +229,7 @@ Both balance scripts contain `MOUNT="${""}/"` — an empty Nix string interpolat
 ### Q1: Where should the emergency reserve file live to avoid BTRFS snapshot reference issues?
 
 The reserve at `/btrfs-emergency-reserve` (in `@` root subvolume) is snapshotted daily by btrbk, which means deleting it won't free space until the snapshot expires (14 days). Options I see:
+
 - Create a new `@emergency-reserve` subvolume excluded from btrbk
 - Put it on one of the existing `@cache-*` subvolumes (e.g., `@cache-home`)
 - Put it on `/data` (also snapshotted, same problem)

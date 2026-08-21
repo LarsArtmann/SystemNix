@@ -101,8 +101,8 @@ SIZE:    40.6 GiB → 40.7 GiB (+54.7 MiB)
 
 ### Upstream Uncommitted Changes
 
-| Repo                | Files                                    | Status                    | Risk                                               |
-| ------------------- | ---------------------------------------- | ------------------------- | -------------------------------------------------- |
+| Repo                | Files                                    | Status                   | Risk                                               |
+| ------------------- | ---------------------------------------- | ------------------------ | -------------------------------------------------- |
 | buildflow           | `flake.nix` (vendorHash), `TODO_LIST.md` | ⚠️ Uncommitted            | Low — vendorHash matches current SystemNix overlay |
 | go-filewatcher      | `flake.lock` (nixpkgs drift)             | ⚠️ Uncommitted            | Low — cosmetic                                     |
 | go-structure-linter | `internal/rules/.gitignore`              | ⚠️ Uncommitted            | Low — unrelated                                    |
@@ -124,19 +124,19 @@ a65bbdc2 chore(flake.lock): update branching-flow to fix vendor hash
 
 ## C) NOT STARTED
 
-| #   | Item                                                      | Description                                  |
-| --- | --------------------------------------------------------- | -------------------------------------------- |
-| 1   | Reboot to activate                                        | Configuration is in bootloader, needs reboot |
-| 2   | Smoke test all 10 Go binaries on evo-x2                   | Verify they work in the NixOS env            |
-| 3   | Push SystemNix to origin                                  | 4 commits unpushed                           |
-| 4   | Commit buildflow's vendorHash update                      | Matches overlay but repo's own hash is stale |
-| 5   | Publish `branching-flow/pkg/stats` as proper Go module    | Eliminates PMA `overrideModAttrs` hack       |
-| 6   | Centralize `mkPreparedSource.nix` into shared flake input | Copy-pasted into 5+ repos                    |
-| 7   | Add `go-error-family` follows to branching-flow input     | branching-flow depends on it                 |
-| 8   | Fix `boot.zfs.forceImportRoot` warning in rpi3-dns        | Silences eval warning                        |
-| 9   | Add version ldflags to library-policy production build    | Other repos have it                          |
-| 10  | Archive old `docs/status/` files                          | 113+ files                                   |
-| 11  | Audit all scripts for `systemctl reboot` calls            | User rejected auto-reboot pattern            |
+| #  | Item                                                      | Description                                  |
+| -- | --------------------------------------------------------- | -------------------------------------------- |
+| 1  | Reboot to activate                                        | Configuration is in bootloader, needs reboot |
+| 2  | Smoke test all 10 Go binaries on evo-x2                   | Verify they work in the NixOS env            |
+| 3  | Push SystemNix to origin                                  | 4 commits unpushed                           |
+| 4  | Commit buildflow's vendorHash update                      | Matches overlay but repo's own hash is stale |
+| 5  | Publish `branching-flow/pkg/stats` as proper Go module    | Eliminates PMA `overrideModAttrs` hack       |
+| 6  | Centralize `mkPreparedSource.nix` into shared flake input | Copy-pasted into 5+ repos                    |
+| 7  | Add `go-error-family` follows to branching-flow input     | branching-flow depends on it                 |
+| 8  | Fix `boot.zfs.forceImportRoot` warning in rpi3-dns        | Silences eval warning                        |
+| 9  | Add version ldflags to library-policy production build    | Other repos have it                          |
+| 10 | Archive old `docs/status/` files                          | 113+ files                                   |
+| 11 | Audit all scripts for `systemctl reboot` calls            | User rejected auto-reboot pattern            |
 
 ---
 
@@ -194,48 +194,48 @@ Tried: updating dep key to `/v2`, updating PMA go.mod to `/v2`, sed postPatch �
 
 ### Critical (activation)
 
-| #   | Task                                        | Effort | Why                         |
-| --- | ------------------------------------------- | ------ | --------------------------- |
-| 1   | Reboot evo-x2 to activate new configuration | 2 min  | Everything is in bootloader |
-| 2   | Smoke test all 10 Go binaries after reboot  | 5 min  | Verify they work            |
-| 3   | Push SystemNix to origin                    | 1 min  | 4 commits unpushed          |
+| # | Task                                        | Effort | Why                         |
+| - | ------------------------------------------- | ------ | --------------------------- |
+| 1 | Reboot evo-x2 to activate new configuration | 2 min  | Everything is in bootloader |
+| 2 | Smoke test all 10 Go binaries after reboot  | 5 min  | Verify they work            |
+| 3 | Push SystemNix to origin                    | 1 min  | 4 commits unpushed          |
 
 ### High Priority
 
-| #   | Task                                      | Effort | Why                                                |
-| --- | ----------------------------------------- | ------ | -------------------------------------------------- |
-| 4   | Commit buildflow vendorHash update + push | 2 min  | Repo's own hash is stale                           |
-| 5   | Audit ALL scripts for `systemctl reboot`  | 5 min  | User rejected auto-reboot pattern                  |
-| 6   | Add `just verify-packages` recipe         | 10 min | Catch stale vendor hashes after flake.lock updates |
-| 7   | Fix `boot.zfs.forceImportRoot` warning    | 2 min  | Silences eval warning                              |
-| 8   | Commit go-structure-linter changes + push | 2 min  | go_1_26 → go standardization                       |
-| 9   | Push library-policy test changes          | 2 min  | Uncommitted test refactoring                       |
+| # | Task                                      | Effort | Why                                                |
+| - | ----------------------------------------- | ------ | -------------------------------------------------- |
+| 4 | Commit buildflow vendorHash update + push | 2 min  | Repo's own hash is stale                           |
+| 5 | Audit ALL scripts for `systemctl reboot`  | 5 min  | User rejected auto-reboot pattern                  |
+| 6 | Add `just verify-packages` recipe         | 10 min | Catch stale vendor hashes after flake.lock updates |
+| 7 | Fix `boot.zfs.forceImportRoot` warning    | 2 min  | Silences eval warning                              |
+| 8 | Commit go-structure-linter changes + push | 2 min  | go_1_26 → go standardization                       |
+| 9 | Push library-policy test changes          | 2 min  | Uncommitted test refactoring                       |
 
 ### Medium Priority
 
-| #   | Task                                                      | Effort | Why                                  |
-| --- | --------------------------------------------------------- | ------ | ------------------------------------ |
-| 10  | Centralize `mkPreparedSource.nix` into shared flake input | 30 min | Stop copy-pasting between 5+ repos   |
-| 11  | Publish `branching-flow/pkg/stats` as proper Go module    | 15 min | Eliminates PMA overrideModAttrs hack |
-| 12  | Add `go-error-family` follows to branching-flow input     | 2 min  | branching-flow depends on it         |
-| 13  | Add version ldflags to library-policy production build    | 5 min  | All other repos have it              |
-| 14  | Audit all Go repos for stale GOFLAGS / go_1_26            | 15 min | Dead config cleanup                  |
-| 15  | Clean up `docs/status/` — 113+ files                      | 15 min | Clutter                              |
+| #  | Task                                                      | Effort | Why                                  |
+| -- | --------------------------------------------------------- | ------ | ------------------------------------ |
+| 10 | Centralize `mkPreparedSource.nix` into shared flake input | 30 min | Stop copy-pasting between 5+ repos   |
+| 11 | Publish `branching-flow/pkg/stats` as proper Go module    | 15 min | Eliminates PMA overrideModAttrs hack |
+| 12 | Add `go-error-family` follows to branching-flow input     | 2 min  | branching-flow depends on it         |
+| 13 | Add version ldflags to library-policy production build    | 5 min  | All other repos have it              |
+| 14 | Audit all Go repos for stale GOFLAGS / go_1_26            | 15 min | Dead config cleanup                  |
+| 15 | Clean up `docs/status/` — 113+ files                      | 15 min | Clutter                              |
 
 ### Lower Priority
 
-| #   | Task                                            | Effort | Why                          |
-| --- | ----------------------------------------------- | ------ | ---------------------------- |
-| 16  | Add GitHub Actions CI to all Go repos           | 1 hr   | Catch build breakage early   |
-| 17  | `nix flake check` on all repos                  | 10 min | Validate all repos           |
-| 18  | Create `just update-vendor-hash` recipe         | 15 min | Automate vendor hash cycle   |
-| 19  | Delete `result` symlink in buildflow repo       | 1 min  | Build artifact in repo root  |
-| 20  | Run `just test` (full build) on SystemNix       | 20 min | More thorough than test-fast |
-| 21  | Archive `docs/status/` files older than 2 weeks | 10 min | Housekeeping                 |
-| 22  | Update AGENTS.md with no-auto-reboot rule       | 5 min  | Documentation                |
-| 23  | Check go-filewatcher consumers for /v2 imports  | 10 min | May affect other repos       |
-| 24  | Add pre-push hook to verify Go packages build   | 15 min | Prevent stale hashes         |
-| 25  | Create D2 architecture diagram of Go dep graph  | 20 min | Visualize dependency chain   |
+| #  | Task                                            | Effort | Why                          |
+| -- | ----------------------------------------------- | ------ | ---------------------------- |
+| 16 | Add GitHub Actions CI to all Go repos           | 1 hr   | Catch build breakage early   |
+| 17 | `nix flake check` on all repos                  | 10 min | Validate all repos           |
+| 18 | Create `just update-vendor-hash` recipe         | 15 min | Automate vendor hash cycle   |
+| 19 | Delete `result` symlink in buildflow repo       | 1 min  | Build artifact in repo root  |
+| 20 | Run `just test` (full build) on SystemNix       | 20 min | More thorough than test-fast |
+| 21 | Archive `docs/status/` files older than 2 weeks | 10 min | Housekeeping                 |
+| 22 | Update AGENTS.md with no-auto-reboot rule       | 5 min  | Documentation                |
+| 23 | Check go-filewatcher consumers for /v2 imports  | 10 min | May affect other repos       |
+| 24 | Add pre-push hook to verify Go packages build   | 15 min | Prevent stale hashes         |
+| 25 | Create D2 architecture diagram of Go dep graph  | 20 min | Visualize dependency chain   |
 
 ---
 

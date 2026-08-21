@@ -4,7 +4,6 @@ _2026-08-02 01:35 CEST_
 
 ---
 
-
 ## Context
 
 This report covers the independent review of the Attic binary cache work
@@ -22,24 +21,24 @@ audited AGENTS.md convention compliance.
 
 ### Bugs found and fixed (this session)
 
-| # | Bug | Severity | Fix applied |
-|---|-----|----------|-------------|
-| RS1 | sops provided `ATTIC_SERVER_TOKEN_HS256_SECRET_BASE64`; nixpkgs atticd module requires **RS256** (RSA PEM PKCS1). Name AND value type both wrong. | **SHOWSTOPPER** — atticd crash-loops, can't sign JWT tokens | `sops.nix`: renamed key + template to `..._rs256_...`. Setup guide Step 1: `openssl rand` → `openssl genrsa -traditional 4096 \| base64 -w0` |
+| #   | Bug                                                                                                                                                                                             | Severity                                                    | Fix applied                                                                                                                                          |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RS1 | sops provided `ATTIC_SERVER_TOKEN_HS256_SECRET_BASE64`; nixpkgs atticd module requires **RS256** (RSA PEM PKCS1). Name AND value type both wrong.                                               | **SHOWSTOPPER** — atticd crash-loops, can't sign JWT tokens | `sops.nix`: renamed key + template to `..._rs256_...`. Setup guide Step 1: `openssl rand` → `openssl genrsa -traditional 4096 \| base64 -w0`         |
 | RS2 | sops `owner = "atticd"` on secret + template, but atticd is **DynamicUser** (doesn't exist at decrypt time). `sops-install-secrets` can't resolve the user → blocks **ALL** secrets atomically. | **SHOWSTOPPER** — entire secret layer fails, not just attic | `sops.nix`: owner → `root:root` (systemd reads EnvironmentFile as PID 1, injects vars into process). `attic.nix`: tmpfiles rules owner → `root:root` |
-| RS3 | No Gatus health check — AGENTS.md rule 9: "Every new service MUST be monitored" | Convention violation | Added "Attic Binary Cache" endpoint to `gatus-config.nix` (`GET /`, 60s, Discord alert) |
-| RS4 | No `startLimitBurst`/`startLimitIntervalSec` — AGENTS.md rule 5 mandate | Convention violation | `atticd` → `5`/`300`; `atticd-size-guard` → `3`/`300` |
-| RS5 | `onFailure` imported but never wired; `atticd-size-guard` used raw `serviceConfig` instead of `harden`+`serviceOneshotDefaults` | Convention violation | Wired `onFailure`; switched size-guard to `serviceOneshotDefaults {}` + `harden {}` |
+| RS3 | No Gatus health check — AGENTS.md rule 9: "Every new service MUST be monitored"                                                                                                                 | Convention violation                                        | Added "Attic Binary Cache" endpoint to `gatus-config.nix` (`GET /`, 60s, Discord alert)                                                              |
+| RS4 | No `startLimitBurst`/`startLimitIntervalSec` — AGENTS.md rule 5 mandate                                                                                                                         | Convention violation                                        | `atticd` → `5`/`300`; `atticd-size-guard` → `3`/`300`                                                                                                |
+| RS5 | `onFailure` imported but never wired; `atticd-size-guard` used raw `serviceConfig` instead of `harden`+`serviceOneshotDefaults`                                                                 | Convention violation                                        | Wired `onFailure`; switched size-guard to `serviceOneshotDefaults {}` + `harden {}`                                                                  |
 
 ### Files changed (this session, 6 files, +176/-37 lines)
 
-| File | Change |
-|------|--------|
-| `modules/nixos/services/sops.nix` | RS256 env var name fix; DynamicUser → root owner for both secret + template |
-| `modules/nixos/services/attic.nix` | JWT comment fix; startLimit + onFailure; serviceOneshotDefaults for size-guard; tmpfiles owner fix; GC-on-restart caveat documented |
-| `modules/nixos/services/gatus-config.nix` | Added "Attic Binary Cache" health check |
-| `docs/setup/nix-binary-cache-setup.md` | Step 1 (RS256 keygen), Step 2 (key name), Step 4 (atticd-atticadm make-token flow) rewritten |
-| `docs/status/2026-08-02_00-50_nix-binary-cache-ci.md` | Appended "Independent Review" appendix documenting all findings |
-| `AGENTS.md` | Added attic-specific gotcha row (RS256 + DynamicUser pattern) |
+| File                                                  | Change                                                                                                                              |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `modules/nixos/services/sops.nix`                     | RS256 env var name fix; DynamicUser → root owner for both secret + template                                                         |
+| `modules/nixos/services/attic.nix`                    | JWT comment fix; startLimit + onFailure; serviceOneshotDefaults for size-guard; tmpfiles owner fix; GC-on-restart caveat documented |
+| `modules/nixos/services/gatus-config.nix`             | Added "Attic Binary Cache" health check                                                                                             |
+| `docs/setup/nix-binary-cache-setup.md`                | Step 1 (RS256 keygen), Step 2 (key name), Step 4 (atticd-atticadm make-token flow) rewritten                                        |
+| `docs/status/2026-08-02_00-50_nix-binary-cache-ci.md` | Appended "Independent Review" appendix documenting all findings                                                                     |
+| `AGENTS.md`                                           | Added attic-specific gotcha row (RS256 + DynamicUser pattern)                                                                       |
 
 ### Verification performed
 
@@ -65,14 +64,14 @@ hardening (`ProtectSystem = "strict"`, `ProtectProc = "invisible"`,
 priority** (not `mkDefault`). SystemNix's `harden {}` uses `mkDefault'` for
 most values. Result via `nix eval`:
 
-| Option | nixpkgs value | My harden value | Winner |
-|--------|---------------|-----------------|--------|
-| `ProtectSystem` | `"strict"` | `mkDefault "full"` | **nixpkgs** (stricter — fine) |
-| `ReadWritePaths` | `["/data/atticd/storage"]` | `mkDefault ["/var/lib/atticd" "/data/atticd/storage"]` | **nixpkgs** (mine is dead code) |
-| `CapabilityBoundingSet` | `[""]` | `mkDefault ""` | nixpkgs (same value) |
-| `ProtectHome` | `true` | `mkDefault true` | nixpkgs (same value) |
-| `MemoryMax` | (not set) | `mkDefault "2G"` | **mine** ✓ |
-| `CPUQuota` | (not set) | `mkDefault "200%"` | **mine** ✓ |
+| Option                  | nixpkgs value              | My harden value                                        | Winner                          |
+| ----------------------- | -------------------------- | ------------------------------------------------------ | ------------------------------- |
+| `ProtectSystem`         | `"strict"`                 | `mkDefault "full"`                                     | **nixpkgs** (stricter — fine)   |
+| `ReadWritePaths`        | `["/data/atticd/storage"]` | `mkDefault ["/var/lib/atticd" "/data/atticd/storage"]` | **nixpkgs** (mine is dead code) |
+| `CapabilityBoundingSet` | `[""]`                     | `mkDefault ""`                                         | nixpkgs (same value)            |
+| `ProtectHome`           | `true`                     | `mkDefault true`                                       | nixpkgs (same value)            |
+| `MemoryMax`             | (not set)                  | `mkDefault "2G"`                                       | **mine** ✓                      |
+| `CPUQuota`              | (not set)                  | `mkDefault "200%"`                                     | **mine** ✓                      |
 
 **Impact:** Not harmful (nixpkgs hardening is stricter). But `ReadWritePaths`
 in my `harden {}` call is **misleading dead code** — it looks like I'm
@@ -262,6 +261,7 @@ the work.
 ## F) Up to 50 Things to Do Next
 
 ### Critical path (bring cache online)
+
 1. Generate RS256 JWT secret: `openssl genrsa -traditional 4096 | base64 -w0`
 2. Create `platforms/nixos/secrets/attic.yaml` with sops (needs age key)
 3. Deploy SystemNix: `nix run .#deploy`
@@ -282,6 +282,7 @@ the work.
 18. Test substituter from evo-x2: `nix build .#monitor365 --substituters ... -v`
 
 ### Code fixes (this repo)
+
 19. Remove dead-code `ProtectSystem`/`ReadWritePaths` from attic.nix `harden {}` (or document as no-ops)
 20. Add `--accept-flake-config` to monitor365 workflow nix commands (so CI reuses cache)
 21. ~~Verify `/api/v1/server-info` returns 200 unauthenticated~~ RESOLVED: endpoint does NOT EXIST in attic source. Gatus check changed to `GET /` (placeholder HTML, always 200 when server is up). Verified via sourcegraph audit of `server/src/api/` routes.
@@ -293,6 +294,7 @@ the work.
 27. Add `restartTriggers` on atticd referencing the sops template (ensures restart on secret rotation)
 
 ### Monitor365 repo
+
 28. Uncomment `extra-trusted-public-keys` placeholder after cache creation
 29. Add `--accept-flake-config` to all `nix build` commands in workflow
 30. Consider adding a `ci.yml` workflow (check/clippy/test/fmt) as E1 suggests
@@ -300,6 +302,7 @@ the work.
 32. Evaluate `attic watch-store` mode (auto-push anything built locally)
 
 ### Hardening & monitoring
+
 33. Verify Attic storage write permissions under DynamicUser
 34. Increase Forgejo runner MemoryMax from 4G to 8-16G for Rust builds
 35. Add Attic disk usage monitoring (Prometheus textfile for `/data/atticd/storage`)
@@ -309,12 +312,14 @@ the work.
 39. Track cache hit/miss rate over time (Attic metrics → SigNoz)
 
 ### Multi-project caching
+
 40. Create cache for SystemNix itself: `attic cache create systemnix`
 41. Create cache for dnsblockd
 42. Document the "new project" cache setup pattern
 43. Evaluate shared "nixpkgs-overrides" cache for custom overlays
 
 ### Architecture
+
 44. Evaluate PostgreSQL backend (share immich's PG instance) if SQLite bottlenecks
 45. Set up per-project cache retention (monitor365: 7d, systemnix: 3d)
 46. Consider Cloudflare R2 (zero egress) if cache outgrows local disk
@@ -322,6 +327,7 @@ the work.
 48. Add cache warming runbook for after nixpkgs bumps
 
 ### Documentation
+
 49. Document the RS256 + DynamicUser pattern in a "NixOS module wrapping guide"
 50. Create architecture diagram for CI → cache → deploy flow
 
@@ -355,18 +361,18 @@ with a 30-second disk check.**
 
 Evidence gathered (2026-08-02):
 
-| Item | Value |
-|------|-------|
-| `/data` total | 1.1 TB |
-| `/data` free (statfs) | **367 GB** |
-| `/data` BTRFS unallocated | 295 GB |
-| `/data/.snapshots` exclusive | **0 bytes** (pure CoW — `btrfs filesystem du` confirms) |
-| `/data/models` (AI) | 322 GB |
-| `/data/ai` | 225 GB |
-| `/data/llamacpp-models` | 114 GB |
-| `/data/SteamLibrary` | 107 GB |
-| Docker data-root | `/data/docker` (`default-services.nix:29`) — root-only, can't `du` |
-| Immich | Runs in Docker → volumes under `/data/docker/volumes/` |
+| Item                         | Value                                                              |
+| ---------------------------- | ------------------------------------------------------------------ |
+| `/data` total                | 1.1 TB                                                             |
+| `/data` free (statfs)        | **367 GB**                                                         |
+| `/data` BTRFS unallocated    | 295 GB                                                             |
+| `/data/.snapshots` exclusive | **0 bytes** (pure CoW — `btrfs filesystem du` confirms)            |
+| `/data/models` (AI)          | 322 GB                                                             |
+| `/data/ai`                   | 225 GB                                                             |
+| `/data/llamacpp-models`      | 114 GB                                                             |
+| `/data/SteamLibrary`         | 107 GB                                                             |
+| Docker data-root             | `/data/docker` (`default-services.nix:29`) — root-only, can't `du` |
+| Immich                       | Runs in Docker → volumes under `/data/docker/volumes/`             |
 
 20 GB = **5.5% of free space**. For a single-project Nix binary cache
 (monitor365, Rust) with 7-day retention, 4-hour GC, and content-addressed

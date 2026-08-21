@@ -2,23 +2,23 @@
 
 - **Date:** 2026-08-20 09:45 CEST
 - **Scope:** This session's work only (triggered by the 08:58 Discord turn loss on session `20260818_201750_bc685bb8`)
-- **Verdict:** All infrastructure fixed, deployed, and verified. The original *user request* (mnemosyne ingestion) is still NOT done. Memory-pressure root cause is mitigated, not solved.
+- **Verdict:** All infrastructure fixed, deployed, and verified. The original _user request_ (mnemosyne ingestion) is still NOT done. Memory-pressure root cause is mitigated, not solved.
 
 ---
 
 ## Timeline of this session
 
-| Time | Event |
-|---|---|
-| 08:58:49 | Turn aborted: `append_message failed: TrackedConnection returned NULL without setting an exception` → `reason=session_persistence_failed` |
-| 09:0x | Diagnosis: state.db healthy (`quick_check: ok`, 2301 sessions, 31584 msgs). Real cause = memory pressure: zram swap 100% full (28.2/28.2G), OOM kill 08:15, gateway cgroup peaked at its `MemoryMax=24G` |
-| 09:0x | Found mnemosyne MCP crash-looping since **Aug 18 20:55** (1,875 spawn attempts): `command: python3` but gateway systemd PATH has no `python3` → `FileNotFoundError` |
-| 09:09 | Fixed config.yaml → `/run/current-system/sw/bin/python3`; gateway restarted (also by memory pressure); mnemosyne clean start since |
-| 09:1x | Added 16G emergency swap on `/mnt/buildcache` (ext4; btrfs root unsuitable due to snapshots) |
+| Time        | Event                                                                                                                                                                                                                            |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 08:58:49    | Turn aborted: `append_message failed: TrackedConnection returned NULL without setting an exception` → `reason=session_persistence_failed`                                                                                        |
+| 09:0x       | Diagnosis: state.db healthy (`quick_check: ok`, 2301 sessions, 31584 msgs). Real cause = memory pressure: zram swap 100% full (28.2/28.2G), OOM kill 08:15, gateway cgroup peaked at its `MemoryMax=24G`                         |
+| 09:0x       | Found mnemosyne MCP crash-looping since **Aug 18 20:55** (1,875 spawn attempts): `command: python3` but gateway systemd PATH has no `python3` → `FileNotFoundError`                                                              |
+| 09:09       | Fixed config.yaml → `/run/current-system/sw/bin/python3`; gateway restarted (also by memory pressure); mnemosyne clean start since                                                                                               |
+| 09:1x       | Added 16G emergency swap on `/mnt/buildcache` (ext4; btrfs root unsuitable due to snapshots)                                                                                                                                     |
 | 09:13–09:23 | User reset GLM token + ran `nix run .#deploy`. Deploy's new read-only bind (`/home/lars/projects` → `/home/hermes/workspace/projects`) broke `hermes-fix-permissions` (`chown -R` → EROFS → crash-loop ×6 → **start-limit-hit**) |
-| 09:21–09:23 | Bridged gap with a manual detached gateway (one failed attempt: inherited bad `XDG_STATE_HOME`; fixed on second try; Discord connected) |
-| 09:29–09:36 | Fixed `hermes.nix` (find `-xdev` + `-prune` of bind target + failure tolerance); deployed via `nh os switch` as lars. Commit `962d433d` (authored by repo automation) |
-| 09:37–09:45 | Full verification: unit active/running under systemd, Discord connected, mnemosyne alive, GLM chat round-trips "OK", workspace bind visible in gateway, 0 failed units |
+| 09:21–09:23 | Bridged gap with a manual detached gateway (one failed attempt: inherited bad `XDG_STATE_HOME`; fixed on second try; Discord connected)                                                                                          |
+| 09:29–09:36 | Fixed `hermes.nix` (find `-xdev` + `-prune` of bind target + failure tolerance); deployed via `nh os switch` as lars. Commit `962d433d` (authored by repo automation)                                                            |
+| 09:37–09:45 | Full verification: unit active/running under systemd, Discord connected, mnemosyne alive, GLM chat round-trips "OK", workspace bind visible in gateway, 0 failed units                                                           |
 
 ---
 
@@ -38,8 +38,8 @@
 
 1. **Memory pressure** — symptom mitigated (disk swap), cause untouched: zram still 100% full; ~73G RAM used; 2 llama-servers (~10G + ~25G shared) + 27G `shared` (tmpfs/shmem) unexamined. Nothing identified to reduce consumption.
 2. **Emergency swap persistence** — active now, gone on reboot. No `swapDevices` flake entry added (I was already deploying and didn't include it — should have).
-3. **Hermes environment hygiene** — `.env`/auth now good for GLM, but doctor still reports: config v18→v37 outdated, deprecated `TERMINAL_CWD` + `display.tool_progress_overrides`, "Venv entry point not found", Node.js missing *under the hermes user*, web/x_search tools unconfigured (EXA/TAVILY/XAI keys), Skills Hub not initialized, no GITHUB_TOKEN.
-4. **Gateway observability** — I verified a healthy snapshot; no continuous watch on mnemosyne MCP "parked" state (it fails *silently* — that's how it went unnoticed for 2 days), zram fill, or `session_persistence_failed` events.
+3. **Hermes environment hygiene** — `.env`/auth now good for GLM, but doctor still reports: config v18→v37 outdated, deprecated `TERMINAL_CWD` + `display.tool_progress_overrides`, "Venv entry point not found", Node.js missing _under the hermes user_, web/x_search tools unconfigured (EXA/TAVILY/XAI keys), Skills Hub not initialized, no GITHUB_TOKEN.
+4. **Gateway observability** — I verified a healthy snapshot; no continuous watch on mnemosyne MCP "parked" state (it fails _silently_ — that's how it went unnoticed for 2 days), zram fill, or `session_persistence_failed` events.
 
 ## c) NOT STARTED
 
@@ -47,7 +47,7 @@
 2. **state.db maintenance** — 801MB / 2301 sessions; historical "database is locked >60s" cron-turn losses (Aug 4–10 pattern, overnight VACUUM/checkpoint). No archiving, no VACUUM scheduling change.
 3. **fastflowlm ("flm") investigation** — it was OOM-killed twice (08:15) and apparently juggled my swap at 09:12 (ghost `/swapfile-emergency` path in `/proc/swaps` for the ext4 file actually at `/mnt/buildcache/swapfile-emergency`). Its role/ownership of swap management unexamined.
 4. **Alerting/monitoring for this failure class** — zram-fill and persistence-failure metrics exist (`system_zram_fill_over_threshold`) but I didn't verify alert routing fires anywhere human-visible.
-5. **Pre-deploy hardening in the repo** — nothing stops the *next* `chown -R`-into-read-only-bind bug in another module (no check, no test).
+5. **Pre-deploy hardening in the repo** — nothing stops the _next_ `chown -R`-into-read-only-bind bug in another module (no check, no test).
 
 ## d) TOTALLY FUCKED UP
 
@@ -73,6 +73,7 @@ Nothing irreversibly broken. Honest near-misses:
 ## f) NEXT — up to 50 tasks
 
 **Hermes agent (the point of all this)**
+
 1. Resend the mnemosyne ingestion request to Hermes (lost turn) — ingest `/home/hermes` docs/memories/config
 2. Ingest `/home/lars/projects` (readable now at `/home/hermes/workspace/projects`) into mnemosyne
 3. Ingest state.db session history (16k+ message lines mentioned as unindexed)
@@ -140,7 +141,7 @@ Nothing irreversibly broken. Honest near-misses:
 
 1. **Ingestion sensitivity:** When indexing `/home/lars/projects` into mnemosyne, are there files/dirs that must be excluded (project `.env`s, secrets, client data), or is everything fair game? I can build an exclusion list, but the privacy call is yours.
 2. **Swap ownership:** Should emergency disk swap be a declarative flake `swapDevices` entry (mine to persist), or does fastflowlm own runtime swap management? Both acted this morning; one must win or we get ghost paths forever.
-3. **Memory priorities:** Is the ~73G usage (2 llama-servers ~11–25G, 27G shared) the intended steady state for this box? i.e., should I optimize to *reduce* RAM pressure, or is adding swap capacity the accepted answer?
+3. **Memory priorities:** Is the ~73G usage (2 llama-servers ~11–25G, 27G shared) the intended steady state for this box? i.e., should I optimize to _reduce_ RAM pressure, or is adding swap capacity the accepted answer?
 
 ---
 

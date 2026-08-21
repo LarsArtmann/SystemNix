@@ -120,33 +120,33 @@
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| #   | Priority | Task                                                                                     | Effort  |
-| --- | -------- | ---------------------------------------------------------------------------------------- | ------- |
-| 1   | **P0**   | `just switch` to deploy Hermes declarative module (with WatchdogSec fix)                 | 5 min   |
-| 2   | **P0**   | `nix profile remove hermes-agent` cleanup                                                | 1 min   |
-| 3   | **P0**   | Smoke test: verify hermes-gateway starts, Discord bot connects, cron jobs run            | 10 min  |
-| 4   | **P1**   | Commit sops.nix + dns-blocker.nix + hermes.nix changes                                   | 2 min   |
-| 5   | **P1**   | Commit emeet-pixyd UI resilience changes (4 files)                                       | 2 min   |
-| 6   | **P1**   | Add `hermes-gateway.service` to SigNoz journald receiver units                           | 5 min   |
-| 7   | **P1**   | Add Hermes-down alert rule to SigNoz                                                     | 5 min   |
-| 8   | **P1**   | Migrate remaining Hermes providers to `key_env` in config.yaml                           | 10 min  |
-| 9   | **P1**   | Add sops-nix ordering dependency to Hermes HM service (`After=` for sops secrets)        | 5 min   |
-| 10  | **P2**   | Make `~/.hermes/config.yaml` declarative via Home Manager                                | 15 min  |
-| 11  | **P2**   | Add Hermes status to SigNoz overview dashboard                                           | 10 min  |
-| 12  | **P2**   | Investigate removing `unsafe-eval` from emeet-pixyd CSP                                  | 20 min  |
-| 13  | **P2**   | Check if Hermes has a healthcheck/status endpoint we can monitor                         | 10 min  |
-| 14  | **P2**   | Run full `just test` (slow build validation)                                             | 30 min  |
-| 15  | **P2**   | Prune old status reports from `docs/status/`                                             | 5 min   |
-| 16  | **P2**   | Add flake.lock staleness alert (CI check or systemd timer)                               | 15 min  |
-| 17  | **P3**   | Audit Hermes cron jobs for correctness with declarative service                          | 10 min  |
-| 18  | **P3**   | Validate darwin config builds                                                            | 10 min  |
-| 19  | **P3**   | Add deployment rollback procedure to AGENTS.md                                           | 10 min  |
-| 20  | **P3**   | Document Hermes cleanup steps in AGENTS.md                                               | 5 min   |
-| 21  | **P3**   | Secrets audit: verify all 5 hermes sops keys are active                                  | 10 min  |
-| 22  | **P3**   | Add `just hermes-health` command for quick status check                                  | 5 min   |
-| 23  | **P3**   | Consider adding Hermes to Homepage dashboard                                             | 10 min  |
-| 24  | **P4**   | Review Hermes `MemoryMax=4G` — monitor actual memory usage                               | ongoing |
-| 25  | **P4**   | If Hermes adds `sd_notify`: re-add `WatchdogSec` with `Type=notify` + `NotifyAccess=all` | 10 min  |
+| #  | Priority | Task                                                                                     | Effort  |
+| -- | -------- | ---------------------------------------------------------------------------------------- | ------- |
+| 1  | **P0**   | `just switch` to deploy Hermes declarative module (with WatchdogSec fix)                 | 5 min   |
+| 2  | **P0**   | `nix profile remove hermes-agent` cleanup                                                | 1 min   |
+| 3  | **P0**   | Smoke test: verify hermes-gateway starts, Discord bot connects, cron jobs run            | 10 min  |
+| 4  | **P1**   | Commit sops.nix + dns-blocker.nix + hermes.nix changes                                   | 2 min   |
+| 5  | **P1**   | Commit emeet-pixyd UI resilience changes (4 files)                                       | 2 min   |
+| 6  | **P1**   | Add `hermes-gateway.service` to SigNoz journald receiver units                           | 5 min   |
+| 7  | **P1**   | Add Hermes-down alert rule to SigNoz                                                     | 5 min   |
+| 8  | **P1**   | Migrate remaining Hermes providers to `key_env` in config.yaml                           | 10 min  |
+| 9  | **P1**   | Add sops-nix ordering dependency to Hermes HM service (`After=` for sops secrets)        | 5 min   |
+| 10 | **P2**   | Make `~/.hermes/config.yaml` declarative via Home Manager                                | 15 min  |
+| 11 | **P2**   | Add Hermes status to SigNoz overview dashboard                                           | 10 min  |
+| 12 | **P2**   | Investigate removing `unsafe-eval` from emeet-pixyd CSP                                  | 20 min  |
+| 13 | **P2**   | Check if Hermes has a healthcheck/status endpoint we can monitor                         | 10 min  |
+| 14 | **P2**   | Run full `just test` (slow build validation)                                             | 30 min  |
+| 15 | **P2**   | Prune old status reports from `docs/status/`                                             | 5 min   |
+| 16 | **P2**   | Add flake.lock staleness alert (CI check or systemd timer)                               | 15 min  |
+| 17 | **P3**   | Audit Hermes cron jobs for correctness with declarative service                          | 10 min  |
+| 18 | **P3**   | Validate darwin config builds                                                            | 10 min  |
+| 19 | **P3**   | Add deployment rollback procedure to AGENTS.md                                           | 10 min  |
+| 20 | **P3**   | Document Hermes cleanup steps in AGENTS.md                                               | 5 min   |
+| 21 | **P3**   | Secrets audit: verify all 5 hermes sops keys are active                                  | 10 min  |
+| 22 | **P3**   | Add `just hermes-health` command for quick status check                                  | 5 min   |
+| 23 | **P3**   | Consider adding Hermes to Homepage dashboard                                             | 10 min  |
+| 24 | **P4**   | Review Hermes `MemoryMax=4G` — monitor actual memory usage                               | ongoing |
+| 25 | **P4**   | If Hermes adds `sd_notify`: re-add `WatchdogSec` with `Type=notify` + `NotifyAccess=all` | 10 min  |
 
 ---
 

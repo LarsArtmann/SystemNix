@@ -186,48 +186,48 @@ The `nvme-health-monitor.nix` module (staged) handles desktop notifications but 
 
 ### Critical (Do First)
 
-| #   | Task                                                                         | Impact       | Effort |
-| --- | ---------------------------------------------------------------------------- | ------------ | ------ |
-| 1   | **Fix VRRP password security regression** — restore sops approach from S47   | Security     | 30 min |
-| 2   | **Wire nvme-metrics.sh to systemd timer** — Gatus checks phantom metrics     | Monitoring   | 30 min |
-| 3   | **Deploy staged changes** — `just switch` on evo-x2 to activate S49+S50 work | Deployment   | 15 min |
-| 4   | **Verify VRRP auto-provision** — confirm sops secret appears correctly       | Verification | 10 min |
+| # | Task                                                                         | Impact       | Effort |
+| - | ---------------------------------------------------------------------------- | ------------ | ------ |
+| 1 | **Fix VRRP password security regression** — restore sops approach from S47   | Security     | 30 min |
+| 2 | **Wire nvme-metrics.sh to systemd timer** — Gatus checks phantom metrics     | Monitoring   | 30 min |
+| 3 | **Deploy staged changes** — `just switch` on evo-x2 to activate S49+S50 work | Deployment   | 15 min |
+| 4 | **Verify VRRP auto-provision** — confirm sops secret appears correctly       | Verification | 10 min |
 
 ### High Priority
 
-| #   | Task                                                                       | Impact        | Effort |
-| --- | -------------------------------------------------------------------------- | ------------- | ------ |
-| 5   | **Refresh TODO_LIST.md** — remove stale items, add current priorities      | Documentation | 30 min |
-| 6   | **Investigate whisper-asr failure** — pre-existing broken service          | Reliability   | 1-2 hr |
-| 7   | **Consolidate voice-agents Caddy vHost** into caddy.nix pattern            | Consistency   | 30 min |
-| 8   | **Add per-threshold SigNoz alert routing** (critical→Discord, warning→log) | Observability | 1 hr   |
-| 9   | **Migrate Authelia OIDC client_secret to sops**                            | Security      | 30 min |
-| 10  | **Migrate Gitea admin password to sops**                                   | Security      | 30 min |
-| 11  | **Migrate Twenty secrets to central sops**                                 | Security      | 1 hr   |
+| #  | Task                                                                       | Impact        | Effort |
+| -- | -------------------------------------------------------------------------- | ------------- | ------ |
+| 5  | **Refresh TODO_LIST.md** — remove stale items, add current priorities      | Documentation | 30 min |
+| 6  | **Investigate whisper-asr failure** — pre-existing broken service          | Reliability   | 1-2 hr |
+| 7  | **Consolidate voice-agents Caddy vHost** into caddy.nix pattern            | Consistency   | 30 min |
+| 8  | **Add per-threshold SigNoz alert routing** (critical→Discord, warning→log) | Observability | 1 hr   |
+| 9  | **Migrate Authelia OIDC client_secret to sops**                            | Security      | 30 min |
+| 10 | **Migrate Gitea admin password to sops**                                   | Security      | 30 min |
+| 11 | **Migrate Twenty secrets to central sops**                                 | Security      | 1 hr   |
 
 ### Medium Priority
 
-| #   | Task                                                                      | Impact        | Effort   |
-| --- | ------------------------------------------------------------------------- | ------------- | -------- |
-| 12  | **Deploy Dozzle** — Docker log tailing at `logs.home.lan`                 | Observability | 1 hr     |
-| 13  | **Add pre-commit hook for follows regression** — prevent lockfile bloat   | Process       | 1 hr     |
-| 14  | **Fix `gogenfilter_2` duplicate** — eliminate last controllable lock node | Optimization  | External |
-| 15  | **Remove dead `METRICS_FILE` variable** in nvme-health-monitor.nix        | Cleanup       | 5 min    |
-| 16  | **Update `dns-failover.nix` option docstring** — fix stale sops reference | Documentation | 5 min    |
-| 17  | **Auto-archive old status reports** — 30-day policy                       | Process       | 30 min   |
-| 18  | **Investigate photomap podman permission issue** — disabled service       | Reliability   | 1-2 hr   |
+| #  | Task                                                                      | Impact        | Effort   |
+| -- | ------------------------------------------------------------------------- | ------------- | -------- |
+| 12 | **Deploy Dozzle** — Docker log tailing at `logs.home.lan`                 | Observability | 1 hr     |
+| 13 | **Add pre-commit hook for follows regression** — prevent lockfile bloat   | Process       | 1 hr     |
+| 14 | **Fix `gogenfilter_2` duplicate** — eliminate last controllable lock node | Optimization  | External |
+| 15 | **Remove dead `METRICS_FILE` variable** in nvme-health-monitor.nix        | Cleanup       | 5 min    |
+| 16 | **Update `dns-failover.nix` option docstring** — fix stale sops reference | Documentation | 5 min    |
+| 17 | **Auto-archive old status reports** — 30-day policy                       | Process       | 30 min   |
+| 18 | **Investigate photomap podman permission issue** — disabled service       | Reliability   | 1-2 hr   |
 
 ### Lower Priority
 
-| #   | Task                                                                    | Impact               | Effort   |
-| --- | ----------------------------------------------------------------------- | -------------------- | -------- |
-| 19  | **Extract monitor365 data** — 709 lines could use signoz-alerts pattern | Maintainability      | 2 hr     |
-| 20  | **Provision Pi 3 for DNS failover cluster**                             | Resilience           | Hardware |
-| 21  | **Create shared flake-parts template** for Go repos                     | Standardization      | External |
-| 22  | **Add Darwin disk cleanup automation**                                  | Stability            | 1 hr     |
-| 23  | **Implement incremental testing** — faster feedback loop                | Developer Experience | 2 hr     |
-| 24  | **Review/refresh FEATURES.md** — generated 2026-05-03, may be stale     | Documentation        | 1 hr     |
-| 25  | **Consider CI/CD** — at minimum, pre-push format + check                | Process              | 4 hr     |
+| #  | Task                                                                    | Impact               | Effort   |
+| -- | ----------------------------------------------------------------------- | -------------------- | -------- |
+| 19 | **Extract monitor365 data** — 709 lines could use signoz-alerts pattern | Maintainability      | 2 hr     |
+| 20 | **Provision Pi 3 for DNS failover cluster**                             | Resilience           | Hardware |
+| 21 | **Create shared flake-parts template** for Go repos                     | Standardization      | External |
+| 22 | **Add Darwin disk cleanup automation**                                  | Stability            | 1 hr     |
+| 23 | **Implement incremental testing** — faster feedback loop                | Developer Experience | 2 hr     |
+| 24 | **Review/refresh FEATURES.md** — generated 2026-05-03, may be stale     | Documentation        | 1 hr     |
+| 25 | **Consider CI/CD** — at minimum, pre-push format + check                | Process              | 4 hr     |
 
 ---
 
@@ -257,16 +257,16 @@ This matters because the current approach is a security regression and the repor
 
 8 files staged, 428 insertions, 31 deletions:
 
-| File                                             | Change                                                  | Status                                   |
-| ------------------------------------------------ | ------------------------------------------------------- | ---------------------------------------- |
-| `docs/status/2026-05-18_DAY_SUMMARY.md`          | New — Session 36–49 day summary                         | ✅ Good                                  |
-| `flake.nix`                                      | Added nvme-health-monitor to serviceModules             | ✅ Good                                  |
+| File                                             | Change                                                  | Status                                  |
+| ------------------------------------------------ | ------------------------------------------------------- | --------------------------------------- |
+| `docs/status/2026-05-18_DAY_SUMMARY.md`          | New — Session 36–49 day summary                         | ✅ Good                                 |
+| `flake.nix`                                      | Added nvme-health-monitor to serviceModules             | ✅ Good                                 |
 | `modules/nixos/services/gatus-config.nix`        | Added NVMe SMART metrics endpoint                       | ⚠️ Checks metrics that don't exist yet   |
 | `modules/nixos/services/nvme-health-monitor.nix` | New — NVMe health monitoring with desktop notifications | ⚠️ Dead variable, no metrics integration |
-| `modules/nixos/services/sops.nix`                | Removed VRRP password + template + activation script    | 🔴 Security regression                   |
-| `platforms/nixos/system/configuration.nix`       | Enabled nvme-health-monitor                             | ✅ Good                                  |
-| `platforms/nixos/system/dns-blocker-config.nix`  | VRRP password → hardcoded writeText                     | 🔴 Security regression                   |
-| `scripts/nvme-metrics.sh`                        | Formatting fix (`} > "$TMP"` → `} >"$TMP"`)             | ✅ Good                                  |
+| `modules/nixos/services/sops.nix`                | Removed VRRP password + template + activation script    | 🔴 Security regression                  |
+| `platforms/nixos/system/configuration.nix`       | Enabled nvme-health-monitor                             | ✅ Good                                 |
+| `platforms/nixos/system/dns-blocker-config.nix`  | VRRP password → hardcoded writeText                     | 🔴 Security regression                  |
+| `scripts/nvme-metrics.sh`                        | Formatting fix (`} > "$TMP"` → `} >"$TMP"`)             | ✅ Good                                 |
 
 ---
 

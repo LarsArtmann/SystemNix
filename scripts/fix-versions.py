@@ -6,6 +6,7 @@ Usage:
   python3 fix-versions.py --dry-run    # Preview changes
   python3 fix-versions.py              # Apply changes
 """
+
 from __future__ import annotations
 
 import argparse
@@ -34,7 +35,10 @@ def get_latest_semver(repo_path: str) -> str | None:
     try:
         result = subprocess.run(
             ["git", "tag", "-l", "--sort=-version:refname"],
-            cwd=repo_path, capture_output=True, text=True, timeout=5,
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         for tag in result.stdout.strip().split("\n"):
             tag = tag.strip()
@@ -63,12 +67,14 @@ def find_affected_files(repo_path: Path) -> list[tuple[Path, list[tuple[int, str
         for i, line in enumerate(content.split("\n"), 1):
             if "version" not in line:
                 continue
-            has_self_ref = bool(re.search(
-                r'self\.(rev|shortRev|dirtyRev|dirtyShortRev)|'
-                r'inputs\.self\.(rev|shortRev|dirtyRev|dirtyShortRev)|'
-                r'builtins\.substring.*self\.rev',
-                line,
-            ))
+            has_self_ref = bool(
+                re.search(
+                    r"self\.(rev|shortRev|dirtyRev|dirtyShortRev)|"
+                    r"inputs\.self\.(rev|shortRev|dirtyRev|dirtyShortRev)|"
+                    r"builtins\.substring.*self\.rev",
+                    line,
+                )
+            )
             if has_self_ref:
                 matches.append((i, line))
 
@@ -82,7 +88,7 @@ def fix_line(line: str, version: str) -> str:
 
     # Match: version = <expr>;
     # We replace everything between 'version = ' and the trailing ';'
-    m = re.match(r'^(\s*version\s*=\s*)(.+)(;\s*)$', line)
+    m = re.match(r"^(\s*version\s*=\s*)(.+)(;\s*)$", line)
     if not m:
         return line
 
@@ -91,12 +97,14 @@ def fix_line(line: str, version: str) -> str:
     suffix = m.group(3)
 
     # Check if the value contains the anti-pattern
-    has_anti = bool(re.search(
-        r'self\.(rev|shortRev|dirtyRev|dirtyShortRev)|'
-        r'inputs\.self\.(rev|shortRev|dirtyRev|dirtyShortRev)|'
-        r'builtins\.substring',
-        old_value,
-    ))
+    has_anti = bool(
+        re.search(
+            r"self\.(rev|shortRev|dirtyRev|dirtyShortRev)|"
+            r"inputs\.self\.(rev|shortRev|dirtyRev|dirtyShortRev)|"
+            r"builtins\.substring",
+            old_value,
+        )
+    )
 
     if not has_anti:
         return line
@@ -107,10 +115,10 @@ def fix_line(line: str, version: str) -> str:
 def fix_ldflags_line(line: str, version: str) -> str:
     """Fix inline ldflags like -X main.version=${self.rev or ...}."""
     # Replace ${self.rev or self.dirtyRev or "dev"} with the version variable reference
-    if re.search(r'-X\s+\S+\.version=\$\{self\.(?:rev|shortRev)', line):
+    if re.search(r"-X\s+\S+\.version=\$\{self\.(?:rev|shortRev)", line):
         return re.sub(
             r'\$\{self\.(?:rev|shortRev)\s+or\s+self\.(?:dirtyRev|dirtyShortRev)\s+or\s+"[^"]*"\}',
-            '${version}',
+            "${version}",
             line,
         )
     return line
@@ -178,7 +186,7 @@ def main():
             continue
 
         version = VERSION_OVERRIDES.get(entry.name) or get_latest_semver(str(entry)) or "0.1.0"
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"  {entry.name}  →  {version}")
 
         if process_project(entry, args.dry_run, affected, version):
@@ -186,7 +194,7 @@ def main():
         else:
             skipped_projects.append(entry.name)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("DRY RUN SUMMARY" if args.dry_run else "CHANGES APPLIED")
     print(f"  Fixed: {len(changed_projects)} projects")
     for name, ver in changed_projects:

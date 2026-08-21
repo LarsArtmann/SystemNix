@@ -84,6 +84,7 @@
 ## f) NEXT UP TO 50 (priority order)
 
 **Critical path (this evening):**
+
 1. Land the deploy (in flight) — verify gen > 696 activates.
 2. Verify fallback live: journal clean of `no aggregate`/`dashboard query`, `total_new > 0`, dashboard shows transfers.
 3. User does the Wise-app statement view (or approval) → restart bank-sync → verify full-fidelity statements resume + no more SCA lines.
@@ -130,4 +131,4 @@
 
 **Session scorecard:** 7 shipped fixes/features (3 journal bugs, daemon unblock, wise-go release, bank-sync fallback ×2 commits, vendorHash), 1 deploy in flight, ~15 round trips burned on fixtures/tooling (owned above), 0 secrets touched, 0 reverts.
 
-*Generated 17:43 by the bank-sync/SCA session. Deploy shell 171 still running — next action after this report: check `job_output 171`, then verify fallback live.*
+_Generated 17:43 by the bank-sync/SCA session. Deploy shell 171 still running — next action after this report: check `job_output 171`, then verify fallback live._

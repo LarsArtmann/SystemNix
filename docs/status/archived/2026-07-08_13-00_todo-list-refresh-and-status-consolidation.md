@@ -8,7 +8,6 @@
 
 ---
 
-
 ## Executive Summary
 
 This session consolidated **11 status reports** from July 1-8 (~8,200 lines read) into a single coherent picture, then **fully rewrote TODO_LIST.md** to reflect the current state. The TODO_LIST grew from 204 lines / 62 open tasks to **280 lines / 79 open tasks**, capturing 5 missed sessions (154-158) and 5 new P0 items discovered during verification.
@@ -28,25 +27,25 @@ This session consolidated **11 status reports** from July 1-8 (~8,200 lines read
 
 ### This Session
 
-| #   | Work Item                                                           | Details                                                                                                                                                     | Evidence                                       |
-| --- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| 1   | **Read all 11 July 2026 status reports in full**                    | 11 files, ~8,200 lines covering sessions 153-158 (2026-07-01 to 2026-07-08)                                                                                 | 4 sequential View calls covering all files     |
-| 2   | **Verified 12 larsPackages for binary existence in system closure** | Iterated every tool in `lars-packages.nix` against `/run/current-system/sw/bin/` and `nix-store --query --requisites /run/current-system`                   | 10/12 have binaries; `project-meta` missing    |
-| 3   | **Verified live system state**                                      | Disk 86% (was 97%), memory 56 GiB used / 93 GiB total (was 62 GiB), swap 4.5 GiB (was 7.3 GiB), GPUActive 30.7 GiB (was 51+ GiB), uptime 1h53m (fresh boot) | `df -h`, `free -h`, `/proc/meminfo`            |
-| 4   | **Confirmed `discard=async` still active on running system**        | 8 BTRFS mounts use `discard=async` despite fix being in `hardware-configuration.nix`. Root cause of 2026-07-08 watchdog reset                               | `/proc/mounts \| grep discard`                 |
-| 5   | **Confirmed `buildflow` binary works after fix**                    | `buildflow version 0c3db8a (commit 0c3db8a4bf7cca079b73f1624a1e4940abdc135e)` + `go: go1.26.4-X:jsonv2`                                                     | `/run/current-system/sw/bin/buildflow version` |
-| 6   | **Produced consolidated feedback on all reports**                   | Identified recurring themes (undeployed commits, disk pressure, GPUActive, no off-site backup), what's resolved vs. still open, 30 prioritized improvements | Delivered in prior turn                        |
-| 7   | **Rewrote TODO_LIST.md header**                                     | Added `Last deploy` + `Last commit` metadata; date 2026-07-02 → 2026-07-08                                                                                  | Lines 3-5                                      |
-| 8   | **Added 5 new P0 Critical items**                                   | NVMe deploy, off-site backup, project-meta investigation, BTRFS scrub, smartctl                                                                             | Lines 11-17                                    |
-| 9   | **Added 5 post-deploy verification items**                          | Reboot, Pocket ID email, crush-daily verify, Monitor365 /ui/ verify, DiscordSync SSO verify, Overview verify, post-deploy smoke test verify                 | Lines 19-28                                    |
-| 10  | **Added new "Documentation Gaps" P1 section**                       | 3 missing AGENTS.md gotchas: `discard=async` QLC, `buildGoModule` env filtering, `buildGoDir` silent-swallow                                                | Lines 81-85                                    |
-| 11  | **Added Mac CA installation to manual steps**                       | `dnsblockd-CA` install via `sudo security add-trusted-cert` — was missing from TODO                                                                         | Line 91                                        |
-| 12  | **Added 2 new P3 Infrastructure items**                             | GPUActive monitoring, TTM `page_pool_size` reduction (both flagged in Jul 2 RAM audit but never added)                                                      | Lines 97-98                                    |
-| 13  | **Marked resolved items as completed with cross-references**        | `Reset Monitor365 failed state` and `Audit Gatus health checks` both kept `[x]` but annotated with "Superseded by sessions 154-158"                         | Lines 23, 78                                   |
-| 14  | **Added 5 new "Completed (session N)" blocks**                      | Sessions 158, 157, 156, 155, 154 — each with detailed work items + commit references                                                                        | Lines 223-280                                  |
-| 15  | **Fixed chronological order of Completed sections**                 | Reordered so newest (158) is at bottom, oldest (122) is at top — standard changelog convention                                                              | Lines 162-280                                  |
-| 16  | **Removed structural duplication introduced mid-edit**              | First edit created duplicate 158→153 blocks; caught via `grep -n "^## Completed"` check, cleaned up with `sed -i '281,$d'`                                  | Final file 280 lines, no dupes                 |
-| 17  | **Fixed text duplication artifact**                                 | `4d75e83b`.`. Committed as ...` had a duplicated suffix from edit overlap — removed via targeted edit                                                       | Line 280                                       |
+| #  | Work Item                                                           | Details                                                                                                                                                     | Evidence                                       |
+| -- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| 1  | **Read all 11 July 2026 status reports in full**                    | 11 files, ~8,200 lines covering sessions 153-158 (2026-07-01 to 2026-07-08)                                                                                 | 4 sequential View calls covering all files     |
+| 2  | **Verified 12 larsPackages for binary existence in system closure** | Iterated every tool in `lars-packages.nix` against `/run/current-system/sw/bin/` and `nix-store --query --requisites /run/current-system`                   | 10/12 have binaries; `project-meta` missing    |
+| 3  | **Verified live system state**                                      | Disk 86% (was 97%), memory 56 GiB used / 93 GiB total (was 62 GiB), swap 4.5 GiB (was 7.3 GiB), GPUActive 30.7 GiB (was 51+ GiB), uptime 1h53m (fresh boot) | `df -h`, `free -h`, `/proc/meminfo`            |
+| 4  | **Confirmed `discard=async` still active on running system**        | 8 BTRFS mounts use `discard=async` despite fix being in `hardware-configuration.nix`. Root cause of 2026-07-08 watchdog reset                               | `/proc/mounts \| grep discard`                 |
+| 5  | **Confirmed `buildflow` binary works after fix**                    | `buildflow version 0c3db8a (commit 0c3db8a4bf7cca079b73f1624a1e4940abdc135e)` + `go: go1.26.4-X:jsonv2`                                                     | `/run/current-system/sw/bin/buildflow version` |
+| 6  | **Produced consolidated feedback on all reports**                   | Identified recurring themes (undeployed commits, disk pressure, GPUActive, no off-site backup), what's resolved vs. still open, 30 prioritized improvements | Delivered in prior turn                        |
+| 7  | **Rewrote TODO_LIST.md header**                                     | Added `Last deploy` + `Last commit` metadata; date 2026-07-02 → 2026-07-08                                                                                  | Lines 3-5                                      |
+| 8  | **Added 5 new P0 Critical items**                                   | NVMe deploy, off-site backup, project-meta investigation, BTRFS scrub, smartctl                                                                             | Lines 11-17                                    |
+| 9  | **Added 5 post-deploy verification items**                          | Reboot, Pocket ID email, crush-daily verify, Monitor365 /ui/ verify, DiscordSync SSO verify, Overview verify, post-deploy smoke test verify                 | Lines 19-28                                    |
+| 10 | **Added new "Documentation Gaps" P1 section**                       | 3 missing AGENTS.md gotchas: `discard=async` QLC, `buildGoModule` env filtering, `buildGoDir` silent-swallow                                                | Lines 81-85                                    |
+| 11 | **Added Mac CA installation to manual steps**                       | `dnsblockd-CA` install via `sudo security add-trusted-cert` — was missing from TODO                                                                         | Line 91                                        |
+| 12 | **Added 2 new P3 Infrastructure items**                             | GPUActive monitoring, TTM `page_pool_size` reduction (both flagged in Jul 2 RAM audit but never added)                                                      | Lines 97-98                                    |
+| 13 | **Marked resolved items as completed with cross-references**        | `Reset Monitor365 failed state` and `Audit Gatus health checks` both kept `[x]` but annotated with "Superseded by sessions 154-158"                         | Lines 23, 78                                   |
+| 14 | **Added 5 new "Completed (session N)" blocks**                      | Sessions 158, 157, 156, 155, 154 — each with detailed work items + commit references                                                                        | Lines 223-280                                  |
+| 15 | **Fixed chronological order of Completed sections**                 | Reordered so newest (158) is at bottom, oldest (122) is at top — standard changelog convention                                                              | Lines 162-280                                  |
+| 16 | **Removed structural duplication introduced mid-edit**              | First edit created duplicate 158→153 blocks; caught via `grep -n "^## Completed"` check, cleaned up with `sed -i '281,$d'`                                  | Final file 280 lines, no dupes                 |
+| 17 | **Fixed text duplication artifact**                                 | `4d75e83b`.`. Committed as ...` had a duplicated suffix from edit overlap — removed via targeted edit                                                       | Line 280                                       |
 
 ### Verification
 
@@ -96,16 +95,16 @@ I added it to P2 (Manual Steps) but it's more accurately a P1 (Blocks all *.home
 
 ## c) NOT STARTED ⏸️
 
-| #   | Item                                                               | Why Not                                                                |
-| --- | ------------------------------------------------------------------ | ---------------------------------------------------------------------- |
-| 1   | **Commit TODO_LIST.md**                                            | Per "respect existing changes" rule — user may have other plans        |
-| 2   | **Fix `post-deploy-check.sh` path issue**                          | Known broken but session was scoped to TODO_LIST.md, not deploy script |
-| 3   | **Add the 3 new AGENTS.md gotchas**                                | Session scope was TODO_LIST.md only                                    |
-| 4   | **Investigate `project-meta` silent build failure**                | Needs deeper dive into the flake output — separate task                |
-| 5   | **Push SystemNix `8603e730` to origin**                            | Pre-existing from session 158, not this session's scope                |
-| 6   | **Verify `GOPROXY`/`GOPRIVATE` in BuildFlow's 5 `*-bin` packages** | Not investigated — needs build attempt                                 |
-| 7   | **Audit all `buildGoModule` env attrs in SystemNix + BuildFlow**   | Not investigated — would require grep + manual review                  |
-| 8   | **Update BuildFlow's pre-commit hook generator**                   | Not investigated — needs source code review                            |
+| # | Item                                                               | Why Not                                                                |
+| - | ------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| 1 | **Commit TODO_LIST.md**                                            | Per "respect existing changes" rule — user may have other plans        |
+| 2 | **Fix `post-deploy-check.sh` path issue**                          | Known broken but session was scoped to TODO_LIST.md, not deploy script |
+| 3 | **Add the 3 new AGENTS.md gotchas**                                | Session scope was TODO_LIST.md only                                    |
+| 4 | **Investigate `project-meta` silent build failure**                | Needs deeper dive into the flake output — separate task                |
+| 5 | **Push SystemNix `8603e730` to origin**                            | Pre-existing from session 158, not this session's scope                |
+| 6 | **Verify `GOPROXY`/`GOPRIVATE` in BuildFlow's 5 `*-bin` packages** | Not investigated — needs build attempt                                 |
+| 7 | **Audit all `buildGoModule` env attrs in SystemNix + BuildFlow**   | Not investigated — would require grep + manual review                  |
+| 8 | **Update BuildFlow's pre-commit hook generator**                   | Not investigated — needs source code review                            |
 
 ---
 
@@ -128,7 +127,7 @@ Result: file had **duplicate** 158→153 blocks at lines 223-333. I only noticed
 
 ### 2. The text duplication artifact on line 280
 
-`4d75e83b`.`. Committed as `7b7b20f3`and`4d75e83b`.` — leftover from an edit overlap. Caught via tail inspection, fixed with targeted edit. Same root cause as #1 (incremental editing without plan).
+`4d75e83b`.`. Committed as`7b7b20f3`and`4d75e83b`.` — leftover from an edit overlap. Caught via tail inspection, fixed with targeted edit. Same root cause as #1 (incremental editing without plan).
 
 ### 3. I didn't grep for the existing P3 TTM TODO
 

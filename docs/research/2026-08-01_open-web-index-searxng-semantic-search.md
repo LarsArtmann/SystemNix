@@ -23,13 +23,13 @@ An open-sourced web search index created by the **OpenWebSearch.eu** consortium 
 
 ## Data Formats
 
-| Format | Extension | Contains |
-|--------|-----------|----------|
-| **CIFF** (Common Index File Format) | `.ciff.gz` | The searchable inverted index (keyword-based) |
-| **Apache Parquet** | `.parquet` | Rich metadata per page: title, cleaned text, URL, language, MIME, outgoing links, GenAI consent flag (`ows_genai`), etc. |
-| **WARC** (Web ARChive) | `.warc.gz` | Raw crawl data |
-| **JSON** | `.json` | Dataset changelogs, schema metadata |
-| **Embeddings** (planned) | `emb` | Vector embeddings - **not yet available** |
+| Format                              | Extension  | Contains                                                                                                                 |
+| ----------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **CIFF** (Common Index File Format) | `.ciff.gz` | The searchable inverted index (keyword-based)                                                                            |
+| **Apache Parquet**                  | `.parquet` | Rich metadata per page: title, cleaned text, URL, language, MIME, outgoing links, GenAI consent flag (`ows_genai`), etc. |
+| **WARC** (Web ARChive)              | `.warc.gz` | Raw crawl data                                                                                                           |
+| **JSON**                            | `.json`    | Dataset changelogs, schema metadata                                                                                      |
+| **Embeddings** (planned)            | `emb`      | Vector embeddings - **not yet available**                                                                                |
 
 Folder structure: `year={YYYY}/month={MM}/day={DD}/language={LANG}/index.ciff.gz` + `metadata-{num}.parquet`
 
@@ -39,7 +39,7 @@ Folder structure: `year={YYYY}/month={MM}/day={DD}/language={LANG}/index.ciff.gz
 
 The OWI data model explicitly defines a resource type called `owie` ("contains vector-embeddings (**not yet available**)"). The `subResourceType` field includes `emb` ("contains embeddings") and `<algorithm>` ("contains the algorithm"), but these are not yet populated.
 
-CERN names embeddings as a future capability: *"The OWI facilitates AI capabilities, allowing web search data to be used for training large language models (LLMs), generating embeddings and powering chatbots."*
+CERN names embeddings as a future capability: _"The OWI facilitates AI capabilities, allowing web search data to be used for training large language models (LLMs), generating embeddings and powering chatbots."_
 
 The parquet metadata includes an `ows_genai` field (`True`/`False`) indicating whether each page's content is permitted for Generative AI use - the consent/legal groundwork is built in.
 
@@ -54,6 +54,7 @@ These were funded through OpenWebSearch.eu open calls. None expose a public sear
 ### VERITAS (DEXAI, Czechia) - Embeddings + RAG
 
 The most direct example of embeddings over OWI data:
+
 - Filtered **30 days of OWI crawl data**, extracted news content
 - **Indexed using a semantic embedding model** - converts text passages into numerical vectors capturing meaning
 - Queries vectorized and matched against the index via similarity search
@@ -85,7 +86,7 @@ The most direct example of embeddings over OWI data:
 
 ## SearXNG Integration Status
 
-**GitHub Issue [searxng/searxng#5327](https://github.com/searxng/searxng/issues/5327):** "Make use of 'The Open Web Index'" - opened October 15, 2025 by **return42** (a SearXNG core maintainer). Labeled as both "Open WEB Index" and "engine request." The issue explicitly invites discussion: *"Please discuss suggestions here on how 'The Open Web Index' could be made usable in SearXNG."*
+**GitHub Issue [searxng/searxng#5327](https://github.com/searxng/searxng/issues/5327):** "Make use of 'The Open Web Index'" - opened October 15, 2025 by **return42** (a SearXNG core maintainer). Labeled as both "Open WEB Index" and "engine request." The issue explicitly invites discussion: _"Please discuss suggestions here on how 'The Open Web Index' could be made usable in SearXNG."_
 
 **No code, PRs, or implementation exist.** No SearXNG engine plugin for OWI has been built.
 
@@ -95,15 +96,15 @@ The reference search engine built for OWI is **MOSAIC** (Modular Search Applicat
 
 ## OWI Tooling Ecosystem
 
-| Tool | Purpose |
-|------|---------|
-| **owilix** | CLI tool ("git for OWI") to pull, slice, and query OWI data shards via DuckDB SQL |
-| **OWI Book Tutorials 6 & 7** | Show how to push OWI data into **OpenSearch** (which natively supports kNN vector search) |
-| **MOSAIC** | Prototype search engine for OWI data with REST API and web interface |
-| **Resilipipe** | WARC processing pipeline for the OWI |
-| **TIRA/TIREx** | Evaluation platform for search components on OWI data |
-| **Tutorial 14** | LLM fine-tuning using OWI data on the LUMI supercomputer |
-| **WOWS-Eval** | Annual shared task for RAG/retrieval experiments over OWI data ([github.com/OpenWebSearch/wows-code](https://github.com/OpenWebSearch/wows-code)) |
+| Tool                         | Purpose                                                                                                                                           |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **owilix**                   | CLI tool ("git for OWI") to pull, slice, and query OWI data shards via DuckDB SQL                                                                 |
+| **OWI Book Tutorials 6 & 7** | Show how to push OWI data into **OpenSearch** (which natively supports kNN vector search)                                                         |
+| **MOSAIC**                   | Prototype search engine for OWI data with REST API and web interface                                                                              |
+| **Resilipipe**               | WARC processing pipeline for the OWI                                                                                                              |
+| **TIRA/TIREx**               | Evaluation platform for search components on OWI data                                                                                             |
+| **Tutorial 14**              | LLM fine-tuning using OWI data on the LUMI supercomputer                                                                                          |
+| **WOWS-Eval**                | Annual shared task for RAG/retrieval experiments over OWI data ([github.com/OpenWebSearch/wows-code](https://github.com/OpenWebSearch/wows-code)) |
 
 ---
 
@@ -142,36 +143,37 @@ No project currently provides a **native SearXNG engine plugin** that performs v
 
 ### Most relevant for SearXNG integration
 
-| Project | Stars | What it does |
-|---------|-------|-------------|
-| [harvard-lil/warc-gpt](https://github.com/harvard-lil/warc-gpt) | 275 | RAG pipeline for WARC files: text extraction → embeddings → ChromaDB → REST API (`/api/search` for vector search). Works with Ollama for local inference. Most mature WARC-to-vector project. |
-| [NikhilJ-05/Web-Scrapper-for-AI-agents](https://github.com/NikhilJ-05/Web-Scrapper-for-AI-agents) (Orion) | 0 | **Closest to "SearXNG + semantic search."** Uses SearXNG as live backend, async-scrapes results, builds a parallel Qdrant vector KB with BGE embeddings (1024-dim). Two-phase: returns live results immediately, ingests to KB in background. `<100ms` semantic search on indexed data. |
-| [yacy/yacy_expert](https://github.com/yacy/yacy_expert) | 694 | Bridges YaCy's decentralized web crawl index with FAISS vector RAG. BERT embeddings + llama.cpp. YaCy is already a SearXNG engine backend, so the FAISS search server (using YaCy's API format) could theoretically be exposed as a semantic YaCy endpoint. |
-| [MultiX0/froxy](https://github.com/MultiX0/froxy) | 21 | Full semantic search engine: Go crawler → FastEmbed → Qdrant → Next.js UI. Includes "Froxy Apex" (Perplexity-style AI answers via Llama 3.1 via Groq). |
+| Project                                                                                                   | Stars | What it does                                                                                                                                                                                                                                                                            |
+| --------------------------------------------------------------------------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [harvard-lil/warc-gpt](https://github.com/harvard-lil/warc-gpt)                                           | 275   | RAG pipeline for WARC files: text extraction → embeddings → ChromaDB → REST API (`/api/search` for vector search). Works with Ollama for local inference. Most mature WARC-to-vector project.                                                                                           |
+| [NikhilJ-05/Web-Scrapper-for-AI-agents](https://github.com/NikhilJ-05/Web-Scrapper-for-AI-agents) (Orion) | 0     | **Closest to "SearXNG + semantic search."** Uses SearXNG as live backend, async-scrapes results, builds a parallel Qdrant vector KB with BGE embeddings (1024-dim). Two-phase: returns live results immediately, ingests to KB in background. `<100ms` semantic search on indexed data. |
+| [yacy/yacy_expert](https://github.com/yacy/yacy_expert)                                                   | 694   | Bridges YaCy's decentralized web crawl index with FAISS vector RAG. BERT embeddings + llama.cpp. YaCy is already a SearXNG engine backend, so the FAISS search server (using YaCy's API format) could theoretically be exposed as a semantic YaCy endpoint.                             |
+| [MultiX0/froxy](https://github.com/MultiX0/froxy)                                                         | 21    | Full semantic search engine: Go crawler → FastEmbed → Qdrant → Next.js UI. Includes "Froxy Apex" (Perplexity-style AI answers via Llama 3.1 via Groq).                                                                                                                                  |
 
 ### Web crawl → vector DB pipelines (no SearXNG link)
 
-| Project | Stars | What it does |
-|---------|-------|-------------|
-| [commoncrawl/cc-vec](https://github.com/commoncrawl/cc-vec) | 6 | **Official** Common Crawl tool for indexing into vector stores. CLI + Python lib + MCP server. Supports Ollama/nomic-embed-text for local embeddings. Uses AWS Athena to query CC metadata index. |
-| [m-spangenberg/demo-semantic-crawl](https://github.com/m-spangenberg/demo-semantic-crawl) | 0 | 14-step pipeline: Common Crawl → chunk → Sentence Transformers (all-MiniLM-L6-v2) → BERTopic → NER (SpaCy) → Qdrant. Most complete NLP-enriched crawl pipeline. |
+| Project                                                                                   | Stars | What it does                                                                                                                                                                                      |
+| ----------------------------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [commoncrawl/cc-vec](https://github.com/commoncrawl/cc-vec)                               | 6     | **Official** Common Crawl tool for indexing into vector stores. CLI + Python lib + MCP server. Supports Ollama/nomic-embed-text for local embeddings. Uses AWS Athena to query CC metadata index. |
+| [m-spangenberg/demo-semantic-crawl](https://github.com/m-spangenberg/demo-semantic-crawl) | 0     | 14-step pipeline: Common Crawl → chunk → Sentence Transformers (all-MiniLM-L6-v2) → BERTopic → NER (SpaCy) → Qdrant. Most complete NLP-enriched crawl pipeline.                                   |
 
 ### SearXNG-adjacent (not true vector search)
 
-| Project | Stars | What it does |
-|---------|-------|-------------|
-| [jcrabapple/searxng-ai](https://github.com/jcrabapple/searxng-ai) | 2 | SearXNG fork adding AI summaries from search results (OpenAI-compatible APIs including Ollama). **No embedding-based retrieval** — just LLM summaries on top of keyword results. |
+| Project                                                           | Stars | What it does                                                                                                                                                                     |
+| ----------------------------------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [jcrabapple/searxng-ai](https://github.com/jcrabapple/searxng-ai) | 2     | SearXNG fork adding AI summaries from search results (OpenAI-compatible APIs including Ollama). **No embedding-based retrieval** — just LLM summaries on top of keyword results. |
 
 ### Other open source web search engines (keyword, not semantic)
 
-| Project | Stars | Notes |
-|---------|-------|-------|
-| [StractOrg/stract](https://github.com/StractOrg/stract) | 2.4k | Full Rust web search engine on Tantivy (inverted index). **ARCHIVED April 2026.** Used Common Crawl. Funded by NLnet/NGI Zero. |
-| [mwmbl/mwmbl](https://github.com/mwmbl/mwmbl) | 1.8k | Non-profit community-crawled search engine. Novel hash-map index. Keyword-based. |
+| Project                                                 | Stars | Notes                                                                                                                          |
+| ------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------ |
+| [StractOrg/stract](https://github.com/StractOrg/stract) | 2.4k  | Full Rust web search engine on Tantivy (inverted index). **ARCHIVED April 2026.** Used Common Crawl. Funded by NLnet/NGI Zero. |
+| [mwmbl/mwmbl](https://github.com/mwmbl/mwmbl)           | 1.8k  | Non-profit community-crawled search engine. Novel hash-map index. Keyword-based.                                               |
 
 ### Gap analysis
 
 The gap is clear: **no project provides a native SearXNG engine plugin that does vector/semantic search over a locally-indexed web corpus.** The closest patterns are:
+
 1. **Orion** — uses SearXNG as its live search source, then builds a parallel vector KB
 2. **searxng-ai** — adds AI summaries to SearXNG but lacks embedding-based retrieval
 3. **YaCy Expert** — uses YaCy's API format (which SearXNG supports), but requires running YaCy
@@ -186,32 +188,32 @@ SearXNG has **no CLIP/vector image engine**. Its image search is pure metasearch
 
 ### Tier 1: Production-grade CLIP image search
 
-| Project | Stars | What it does |
-|---------|-------|-------------|
-| [rom1504/clip-retrieval](https://github.com/rom1504/clip-retrieval) | 2.8k | **The reference project.** Full pipeline: CLIP embeddings (1500 img/s on a 3080) → FAISS index → Flask KNN backend (50ms latency, ~20 q/s) → web UI. Powers [LAION-5B search](https://rom1504.github.io/clip-retrieval/) (5.85B image-text pairs). Includes NSFW filtering, aesthetic scoring, near-duplicate dedup. |
-| [rom1504/img2dataset](https://github.com/rom1504/img2dataset) | 2.5k+ | Companion downloader: 100M image URLs → structured dataset in 20h on one machine. Takes URLs from Common Crawl, LAION, or any URL list. |
-| [criteo/autofaiss](https://github.com/criteo/autofaiss) | 1k+ | Auto-builds FAISS KNN indices: 200M vectors (1 TB) in 3h, 15 GB RAM, 10ms latency. Supports Spark for distributed index building. |
+| Project                                                             | Stars | What it does                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [rom1504/clip-retrieval](https://github.com/rom1504/clip-retrieval) | 2.8k  | **The reference project.** Full pipeline: CLIP embeddings (1500 img/s on a 3080) → FAISS index → Flask KNN backend (50ms latency, ~20 q/s) → web UI. Powers [LAION-5B search](https://rom1504.github.io/clip-retrieval/) (5.85B image-text pairs). Includes NSFW filtering, aesthetic scoring, near-duplicate dedup. |
+| [rom1504/img2dataset](https://github.com/rom1504/img2dataset)       | 2.5k+ | Companion downloader: 100M image URLs → structured dataset in 20h on one machine. Takes URLs from Common Crawl, LAION, or any URL list.                                                                                                                                                                              |
+| [criteo/autofaiss](https://github.com/criteo/autofaiss)             | 1k+   | Auto-builds FAISS KNN indices: 200M vectors (1 TB) in 3h, 15 GB RAM, 10ms latency. Supports Spark for distributed index building.                                                                                                                                                                                    |
 
 ### Tier 2: Self-hosted semantic image search engines
 
-| Project | Stars | What it does |
-|---------|-------|-------------|
-| [hv0905/NekoImageGallery](https://github.com/hv0905/NekoImageGallery) | 193 | CLIP (ViT-L/14, 768-dim) + Qdrant + OCR (PaddleOCR + BERT). Docker, GPU/CPU/ARM variants. Closest to a self-hosted "Google Photos" semantic search. Has admin API for image upload/indexing and local directory indexing. |
-| [flaribbit/imgfind](https://github.com/flaribbit/imgfind) | 153 | **Rust + candle + CLIP.** Local image search by text description. Interesting for performance-oriented implementations. |
-| [kingyiusuen/clip-image-search](https://github.com/kingyiusuen/clip-image-search) | 268 | CLIP + Elasticsearch k-NN + AWS Lambda + Streamlit frontend. Cloud reference architecture, indexes 25K Unsplash images. |
-| [soulteary/simple-image-search-engine](https://github.com/soulteary/simple-image-search-engine) | 155 | CLIP + Redis Vector Search. 3-step tutorial for image-to-image and text-to-image search. Docker-based. |
-| [stg7/clipse](https://github.com/stg7/clipse) | 6 | Minimalist academic CLIP search engine. Has benchmarking paper ([arXiv:2504.17643](https://arxiv.org/abs/2504.17643)). |
+| Project                                                                                         | Stars | What it does                                                                                                                                                                                                              |
+| ----------------------------------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [hv0905/NekoImageGallery](https://github.com/hv0905/NekoImageGallery)                           | 193   | CLIP (ViT-L/14, 768-dim) + Qdrant + OCR (PaddleOCR + BERT). Docker, GPU/CPU/ARM variants. Closest to a self-hosted "Google Photos" semantic search. Has admin API for image upload/indexing and local directory indexing. |
+| [flaribbit/imgfind](https://github.com/flaribbit/imgfind)                                       | 153   | **Rust + candle + CLIP.** Local image search by text description. Interesting for performance-oriented implementations.                                                                                                   |
+| [kingyiusuen/clip-image-search](https://github.com/kingyiusuen/clip-image-search)               | 268   | CLIP + Elasticsearch k-NN + AWS Lambda + Streamlit frontend. Cloud reference architecture, indexes 25K Unsplash images.                                                                                                   |
+| [soulteary/simple-image-search-engine](https://github.com/soulteary/simple-image-search-engine) | 155   | CLIP + Redis Vector Search. 3-step tutorial for image-to-image and text-to-image search. Docker-based.                                                                                                                    |
+| [stg7/clipse](https://github.com/stg7/clipse)                                                   | 6     | Minimalist academic CLIP search engine. Has benchmarking paper ([arXiv:2504.17643](https://arxiv.org/abs/2504.17643)).                                                                                                    |
 
 ### Vector DB / infrastructure components
 
-| Component | Repository | Notes |
-|-----------|-----------|-------|
-| **Qdrant** | [qdrant/qdrant](https://github.com/qdrant/qdrant) | Vector DB with HNSW indexing — used by most self-hosted projects above |
-| **Milvus** | [milvus-io/milvus](https://github.com/milvus-io/milvus) | Cloud-native vector DB — has [text-to-image search tutorial](https://milvus.io/docs/text_image_search.md) |
-| **OpenSearch** | [opensearch.org](https://opensearch.org/) | Has [text_image_embedding processor](https://docs.opensearch.org/latest/ingest-pipelines/processors/text-image-embedding/) for multimodal neural search |
-| **txtai** | [neuml/txtai](https://github.com/neuml/txtai) | All-in-one embeddings framework with [image similarity search](https://github.com/neuml/txtai) using CLIP |
-| **Vald** | [vdaas/vald](https://github.com/vdaas/vald) | 1.7k stars. Kubernetes-native distributed vector search engine |
-| **FAISS** | (via autofaiss) | The underlying ANN library used by clip-retrieval for billion-scale search |
+| Component      | Repository                                              | Notes                                                                                                                                                   |
+| -------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Qdrant**     | [qdrant/qdrant](https://github.com/qdrant/qdrant)       | Vector DB with HNSW indexing — used by most self-hosted projects above                                                                                  |
+| **Milvus**     | [milvus-io/milvus](https://github.com/milvus-io/milvus) | Cloud-native vector DB — has [text-to-image search tutorial](https://milvus.io/docs/text_image_search.md)                                               |
+| **OpenSearch** | [opensearch.org](https://opensearch.org/)               | Has [text_image_embedding processor](https://docs.opensearch.org/latest/ingest-pipelines/processors/text-image-embedding/) for multimodal neural search |
+| **txtai**      | [neuml/txtai](https://github.com/neuml/txtai)           | All-in-one embeddings framework with [image similarity search](https://github.com/neuml/txtai) using CLIP                                               |
+| **Vald**       | [vdaas/vald](https://github.com/vdaas/vald)             | 1.7k stars. Kubernetes-native distributed vector search engine                                                                                          |
+| **FAISS**      | (via autofaiss)                                         | The underlying ANN library used by clip-retrieval for billion-scale search                                                                              |
 
 ### Build path for semantic image search (evo-x2)
 

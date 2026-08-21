@@ -8,24 +8,24 @@ All 18 improvements from the backlog have been implemented in `platforms/nixos/p
 
 **Completed items (from "Not Started" and "Should Improve" lists):**
 
-| #   | Improvement                                                                                                                 | Status  |
-| --- | --------------------------------------------------------------------------------------------------------------------------- | ------- |
-| 1   | **JSON validation in save** — validates `windows.json` and `workspaces.json` with `jq` before saving; discards corrupt data | ✅ Done |
-| 2   | **JSON validation in restore** — validates all JSON files before parsing; falls back gracefully if corrupt                  | ✅ Done |
-| 3   | **Floating state restore** — saves `is_floating` from niri IPC, restores via `niri msg action move-window-to-floating`      | ✅ Done |
-| 4   | **Column width restore** — saves `layout.tile_size[0]`, restores as percentage via `niri msg action set-column-width "N%"`  | ✅ Done |
-| 5   | **Focused window tracking** — uses `focus_timestamp` to find last-focused window, refocuses its workspace after restore     | ✅ Done |
-| 6   | **Running app dedup** — checks `pgrep -x $app_id` before spawning non-kitty apps; skips if already running                  | ✅ Done |
-| 7   | **Desktop notification on restore** — `notify-send "Session Restored" "Restored N windows from crash recovery"`             | ✅ Done |
-| 8   | **Save failure notification** — `OnFailure=niri-session-save-failure.service` triggers critical `notify-send`               | ✅ Done |
-| 9   | **Journal logging** — save logs `"saved N windows"` and restore logs `"restored N windows"` to stderr (captured by journal) | ✅ Done |
-| 10  | **Dynamic wallpaper dir** — uses `config.home.homeDirectory` instead of hardcoded path                                      | ✅ Done |
-| 11  | **Screenshot dir auto-create** — `mkdir -p ~/Pictures/screenshots` prepended to all screenshot keybinds                     | ✅ Done |
-| 12  | **AGENTS.md documentation** — full "Niri Session Save/Restore" section added with architecture, commands, and config        | ✅ Done |
-| 13  | **justfile commands** — `just session-status` and `just session-restore` added                                              | ✅ Done |
-| 14  | **Configurable fallback apps** — `fallbackApps` list in `let` block (not hardcoded in script)                               | ✅ Done |
-| 15  | **Configurable poll interval** — `sessionSaveInterval` variable, default `"60s"`                                            | ✅ Done |
-| 16  | **Configurable max session age** — `maxSessionAgeDays` variable, default `7`                                                | ✅ Done |
+| #  | Improvement                                                                                                                 | Status  |
+| -- | --------------------------------------------------------------------------------------------------------------------------- | ------- |
+| 1  | **JSON validation in save** — validates `windows.json` and `workspaces.json` with `jq` before saving; discards corrupt data | ✅ Done |
+| 2  | **JSON validation in restore** — validates all JSON files before parsing; falls back gracefully if corrupt                  | ✅ Done |
+| 3  | **Floating state restore** — saves `is_floating` from niri IPC, restores via `niri msg action move-window-to-floating`      | ✅ Done |
+| 4  | **Column width restore** — saves `layout.tile_size[0]`, restores as percentage via `niri msg action set-column-width "N%"`  | ✅ Done |
+| 5  | **Focused window tracking** — uses `focus_timestamp` to find last-focused window, refocuses its workspace after restore     | ✅ Done |
+| 6  | **Running app dedup** — checks `pgrep -x $app_id` before spawning non-kitty apps; skips if already running                  | ✅ Done |
+| 7  | **Desktop notification on restore** — `notify-send "Session Restored" "Restored N windows from crash recovery"`             | ✅ Done |
+| 8  | **Save failure notification** — `OnFailure=niri-session-save-failure.service` triggers critical `notify-send`               | ✅ Done |
+| 9  | **Journal logging** — save logs `"saved N windows"` and restore logs `"restored N windows"` to stderr (captured by journal) | ✅ Done |
+| 10 | **Dynamic wallpaper dir** — uses `config.home.homeDirectory` instead of hardcoded path                                      | ✅ Done |
+| 11 | **Screenshot dir auto-create** — `mkdir -p ~/Pictures/screenshots` prepended to all screenshot keybinds                     | ✅ Done |
+| 12 | **AGENTS.md documentation** — full "Niri Session Save/Restore" section added with architecture, commands, and config        | ✅ Done |
+| 13 | **justfile commands** — `just session-status` and `just session-restore` added                                              | ✅ Done |
+| 14 | **Configurable fallback apps** — `fallbackApps` list in `let` block (not hardcoded in script)                               | ✅ Done |
+| 15 | **Configurable poll interval** — `sessionSaveInterval` variable, default `"60s"`                                            | ✅ Done |
+| 16 | **Configurable max session age** — `maxSessionAgeDays` variable, default `7`                                                | ✅ Done |
 
 **Research findings:**
 

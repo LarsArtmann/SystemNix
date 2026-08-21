@@ -5,42 +5,46 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 ### 1. DNS Stability Root Cause + Fix Deployed (dnsblockd OOM)
+
 - **Root cause found:** dnsblockd OOM-killed ~hourly (20+ kills in 7 days). Each kill = ~10s DNS outage. Three OTEL instruments use unbounded-cardinality labels (`dns_domain`, `http_path`, `proxy_domain`) that retain one in-memory time series per unique value forever — no eviction, no cardinality cap.
 - **Secondary cause:** DNS observer dispatches tracking writes synchronously per-query (no semaphore), unlike the HTTP path which has a 32-slot bounded semaphore.
 - **Mitigation deployed:** `MemoryMax` 1G → 2G + `GOMEMLIMIT=1500MiB` in `dns-blocker.nix`. Forces Go GC to run below MemoryMax.
 - **Deploy verified:** 29 PASS, 0 FAIL, 2 SKIP. All external vHost checks pass. `getent hosts dash.home.lan` → `192.168.1.150`. 0 OOM-kills since deploy.
 
 ### 2. resolv.conf Restored
+
 - The user had manually replaced the Nix-managed symlink with a regular file containing `nameserver 9.9.9.9` BEFORE `127.0.0.1`. glibc accepts the first NXDOMAIN (Quad9 for `*.home.lan`) and never queries dnsblockd.
 - Deploy restored the Nix-managed symlink: only `nameserver 127.0.0.1`.
 
 ### 3. DiscordSync chattr Fixed
+
 - Upstream module ships `chattr -R +C ... 2>/dev/null || true` as ExecStartPre — systemd treats shell syntax as literal file arguments. Also missing `+` prefix (runs as service user → permission denied).
 - Fixed with `lib.mkForce` in `discordsync.nix` — replaces upstream ExecStartPre entirely.
 
 ### 4. 7 Feedback Files Written Across 7 Repos
 
-| Repo | File | Severity | Bug |
-|---|---|---|---|
-| **dnsblockd** | `otel-cardinality-memory-leak-and-dns-observer-backpressure.md` (20KB) | Critical | Unbounded OTEL labels + synchronous DNS tracking dispatch |
-| **DiscordSync** | `chattr-execstartpre-shell-syntax-bug.md` | Critical | Shell syntax in non-shell ExecStartPre |
-| **monitor365** | `hardcoded-10k-event-limit-blocks-backlog.md` | High | 10K/day limit makes 597M backlog take 163 years to drain |
-| **PMA** | `type-notify-without-sd-notify-crash-loop.md` | Critical | Type=notify set but Go binary never calls sd_notify |
-| **mr-sync** | `outputs-signature-missing-ellipsis.md` | Medium | outputs function missing `...` breaks flake eval |
-| **crush-daily** | `test-dsns-missing-file-prefix.md` | Low | Test DSNs missing `file:` prefix (masks prod-only bugs) |
-| **file-and-image-renamer** | `init-service-or-warn-nil-swallow-antipattern.md` | Medium | initServiceOrWarn swallows errors, returns nil → panics |
+| Repo                       | File                                                                   | Severity | Bug                                                       |
+| -------------------------- | ---------------------------------------------------------------------- | -------- | --------------------------------------------------------- |
+| **dnsblockd**              | `otel-cardinality-memory-leak-and-dns-observer-backpressure.md` (20KB) | Critical | Unbounded OTEL labels + synchronous DNS tracking dispatch |
+| **DiscordSync**            | `chattr-execstartpre-shell-syntax-bug.md`                              | Critical | Shell syntax in non-shell ExecStartPre                    |
+| **monitor365**             | `hardcoded-10k-event-limit-blocks-backlog.md`                          | High     | 10K/day limit makes 597M backlog take 163 years to drain  |
+| **PMA**                    | `type-notify-without-sd-notify-crash-loop.md`                          | Critical | Type=notify set but Go binary never calls sd_notify       |
+| **mr-sync**                | `outputs-signature-missing-ellipsis.md`                                | Medium   | outputs function missing `...` breaks flake eval          |
+| **crush-daily**            | `test-dsns-missing-file-prefix.md`                                     | Low      | Test DSNs missing `file:` prefix (masks prod-only bugs)   |
+| **file-and-image-renamer** | `init-service-or-warn-nil-swallow-antipattern.md`                      | Medium   | initServiceOrWarn swallows errors, returns nil → panics   |
 
 Each file was verified against actual source code (exact file:line references, code snippets, confirmed whether the bug was already fixed or still present). Projects where the bugs were already fixed (go-commit git-config, crush-daily errgroup/timezone, monitor365 COALESCE/circuit-breaker) were NOT written — no point reporting fixed issues.
 
 ### 5. AGENTS.md Updated (SystemNix)
+
 - 3 new gotcha entries: dnsblockd OOM memory leak, manual resolv.conf 9.9.9.9 addition, DiscordSync upstream chattr shell-syntax bug.
 - Memory cap verification value updated from 64G → 90G.
 
 ### 6. Prior Status Report Written
+
 - `docs/status/2026-08-04_01-20_crash-recovery-deploy-results-and-issues.md` (earlier this session)
 
 ---
@@ -48,15 +52,18 @@ Each file was verified against actual source code (exact file:line references, c
 ## b) PARTIALLY DONE
 
 ### 1. dnsblockd Memory Leak — Mitigated, NOT Fixed
+
 - GOMEMLIMIT + 2G MemoryMax reduces OOM frequency but does not eliminate the leak. OTEL series are reachable (held by Prometheus registry) — GC cannot collect them. Over days/weeks of uptime, memory will still creep toward 2G.
 - **The real fix** is upstream in dnsblockd: drop/bucket the high-cardinality OTEL labels. Feedback file written but no code changes made to dnsblockd.
 
 ### 2. DiscordSync Service Health — chattr Fixed, Turso Sync Still Failing
+
 - The chattr crash-loop is fixed. The dbHeal cascade runs correctly.
 - BUT DiscordSync now fails on `turso: error: sync engine operation failed: database sync engine error: unexpected EOF`. The dbHeal cascade created a fresh local DB; Turso cloud sync can't re-initialize. Service is still crash-looping on this error.
 - Needs root access to investigate (`sudo`/`systemctl` blocked for assistant).
 
 ### 3. Feedback Files Written But NOT Committed
+
 - Only the feedback `.md` files were written to disk. The auto-commit daemon may pick them up, but they are currently uncommitted in their respective repos:
   - `dnsblockd`: 2 files modified (FEATURES.md, TODO_LIST.md — pre-existing, not ours) + untracked feedback file
   - `DiscordSync`: 2 files modified (pre-existing) + untracked feedback file
@@ -64,6 +71,7 @@ Each file was verified against actual source code (exact file:line references, c
   - `monitor365`, `PMA`, `mr-sync`, `crush-daily`: untracked feedback files (auto-commit daemon may have already committed these)
 
 ### 4. crush-daily Has a Typo Directory (`docs/feeback/`)
+
 - Pre-existing typo: `docs/feeback/new/` (missing 'd') exists alongside the correct `docs/feedback/new/`. The typo dir is empty but should be cleaned up or renamed.
 
 ---
@@ -87,7 +95,9 @@ Each file was verified against actual source code (exact file:line references, c
 ## d) TOTALLY FUCKED UP
 
 ### 1. Wrote Feedback for Already-Fixed Bugs (Partially Caught)
+
 I initially planned 8 feedback files. During research, I discovered that 4 of the planned bugs were ALREADY FIXED upstream:
+
 - **go-commit:** `git config` via exec.Command — FIXED (commit `fd9a9664`). Verified in `pkg/commit/git/gogit.go:91-108`. Skipped.
 - **crush-daily errgroup:** Uses plain `errgroup.Group` with manual error collection — FIXED (commit `868fe33`). Verified in `internal/insights/insights.go:201`. Skipped.
 - **crush-daily Yesterday():** Uses `time.Date()` for local midnight — FIXED. Verified in `internal/collector/collector.go:437-445`. Skipped.
@@ -96,15 +106,19 @@ I initially planned 8 feedback files. During research, I discovered that 4 of th
 I caught these during the research phase and did NOT write feedback for them. Good. But the fact that I had them on my initial todo list means I was relying on the AGENTS.md gotcha table (which documents the fix history) rather than checking the current code state first. I should have verified code state BEFORE building the todo list.
 
 ### 2. Did NOT Push Any Feedback Files
+
 The feedback files are sitting on disk uncommitted/unpushed in 7 different repos. If the auto-commit daemon doesn't pick them up (some repos may not have it configured), they'll rot. I should have committed and pushed each one, or at least verified the auto-commit daemon would handle them.
 
 ### 3. Did NOT Fix Any Upstream Code
+
 I wrote 7 feedback files describing bugs with exact fixes (including code snippets), but did NOT apply ANY of the fixes. The feedback files are detailed enough to be actionable, but writing a `.md` file is not the same as fixing the bug. For bugs that are a 1-line fix (mr-sync `...`, crush-daily `file:` prefix), I should have just fixed them.
 
 ### 4. Did NOT Verify DiscordSync Service Health After chattr Fix
+
 The post-deploy smoke test SKIPped DiscordSync (expected during startup backfill). I declared success without verifying that the service actually stays running after the backfill completes. In reality, it crash-loops on the Turso sync error. I should have set up a deferred check or monitored the journal for 10+ minutes.
 
 ### 5. Did NOT Investigate the Generation Mismatch
+
 Deployed generation (`ki7kj...`) differs from evaluated generation (`x8fb3...`). I noted it as "cosmetic — doc commit after deploy" but did NOT verify this claim. If the mismatch is from something other than the doc commit, the deployed config may not include all fixes.
 
 ---
@@ -122,6 +136,7 @@ Deployed generation (`ki7kj...`) differs from evaluated generation (`x8fb3...`).
 ## f) Up to 50 Things We Should Get Done Next
 
 ### Critical (P0)
+
 1. **Fix DiscordSync Turso sync failure** — service is crash-looping. Needs root access to diagnose.
 2. **Apply the mr-sync `...` fix** — 1-line fix, commit, push, unpin in SystemNix.
 3. **Apply the crush-daily test DSN `file:` fix** — mechanical fix, 8 lines.
@@ -130,6 +145,7 @@ Deployed generation (`ki7kj...`) differs from evaluated generation (`x8fb3...`).
 6. **Monitor dnsblockd memory for 24h** — verify GOMEMLIMIT+2G stops OOM pattern.
 
 ### High Priority (P1)
+
 7. **Apply the dnsblockd OTEL label fix** — drop or bucket `dns_domain`, `http_path`, `proxy_domain` in `telemetry.go`.
 8. **Fix the dnsblockd DNS observer dispatch** — add semaphore + async dispatch (pattern from HTTP middleware).
 9. **Push 3 unpushed SystemNix commits** (`9bf6fc47`, `fa43db84`, `095e763a`).
@@ -139,6 +155,7 @@ Deployed generation (`ki7kj...`) differs from evaluated generation (`x8fb3...`).
 13. **Re-deploy to sync generation** — deployed ≠ evaluated.
 
 ### Medium Priority (P2)
+
 14. **Fix crush-daily typo directory** — `docs/feeback/` → remove or rename.
 15. **Apply the file-and-image-renamer `initServiceOrFail` fix** — add for required deps.
 16. **Apply the monitor365 configurable event limit** — add config option for `max_events_per_day`.
@@ -153,6 +170,7 @@ Deployed generation (`ki7kj...`) differs from evaluated generation (`x8fb3...`).
 25. **Test DNS failover** — stop dnsblockd on evo-x2, verify rpi3-dns picks up via VRRP.
 
 ### Lower Priority (P3)
+
 26. **Audit all upstream NixOS modules** for ExecStartPre shell-syntax bugs.
 27. **Add cardinality regression test** to dnsblockd — scrape `/metrics`, assert bounded label count.
 28. **Consider dnsblockd `tracking_mode = "MINIMAL"`** — only track blocks, not resolves.
@@ -184,26 +202,32 @@ Deployed generation (`ki7kj...`) differs from evaluated generation (`x8fb3...`).
 ## g) Questions for User
 
 ### Q1: Should I Fix the Trivial Bugs Directly Instead of Leaving Feedback Files?
+
 The mr-sync `...` fix (1 line), the crush-daily test DSN `file:` prefix (8 lines), and the PMA `Type=exec` (2 lines) are trivial mechanical fixes. Should I:
+
 - **A) Go fix them now** — commit and push in each repo, then bump flake inputs in SystemNix.
 - **B) Leave the feedback files** — you'll review and decide when to apply them.
 - **C) Fix some but not others** — which ones?
 
 ### Q2: DiscordSync Turso Sync — How to Handle?
+
 DiscordSync is crash-looping on Turso `unexpected EOF` after the dbHeal cascade created a fresh DB. This needs root access to diagnose. Should I:
+
 - **A) Wait for you to investigate** — you have sudo access.
 - **B) Disable Turso sync in the config** — run local-only until sorted.
 - **C) Write a Turso re-initialization ExecStartPre** — delete local sync state so Turso re-syncs from scratch.
 
 ### Q3: dnsblockd OTEL Fix — Fix Now or Monitor First?
+
 The GOMEMLIMIT+2G mitigation is deployed but the real fix is dropping high-cardinality OTEL labels in dnsblockd's Go code. Should I:
+
 - **A) Fix it now** — go to dnsblockd repo, drop the labels, test, bump flake input.
 - **B) Monitor 24h first** — see if the mitigation holds, then decide.
 - **C) Just raise MemoryMax to 4G** — throw RAM at it (you have 93G), defer the code fix.
 
 ---
 
-*Status generated 2026-08-04 05:09. System: evo-x2, NixOS 26.11 unstable, kernel 7.1.5, 93 GB RAM. dnsblockd 0 OOM-kills since deploy (~3h ago). DiscordSync crash-looping on Turso EOF. 7 feedback files written across 7 repos.*
+_Status generated 2026-08-04 05:09. System: evo-x2, NixOS 26.11 unstable, kernel 7.1.5, 93 GB RAM. dnsblockd 0 OOM-kills since deploy (~3h ago). DiscordSync crash-looping on Turso EOF. 7 feedback files written across 7 repos._
 
 ---
 

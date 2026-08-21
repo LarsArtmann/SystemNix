@@ -576,7 +576,7 @@ $ nix-store --verify --check-contents
 | ssh.nix undefined variable `config`       | Scope Error        | Added function arguments      | 5 minutes   |
 | lm_sensors not available on Darwin        | Platform Error     | Moved to Linux-only           | 5 minutes   |
 | crush.nix path does not exist             | Cache Error        | Disabled file + flake update  | 15 minutes  |
-| **TOTAL**                                 | **6 errors**       | **70 minutes**                |
+| **TOTAL**                                 | **6 errors**       | **70 minutes**                |             |
 
 ---
 

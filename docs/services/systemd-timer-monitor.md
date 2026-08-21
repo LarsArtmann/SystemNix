@@ -49,7 +49,7 @@ Caddy's `file_server`.
 
 ## Module Options
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `enable` | `false` | Enable the service |
+| Option     | Default  | Description                   |
+| ---------- | -------- | ----------------------------- |
+| `enable`   | `false`  | Enable the service            |
 | `interval` | `"5min"` | How often to re-run the audit |

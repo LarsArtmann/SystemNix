@@ -69,21 +69,21 @@
 
 ### Phase 1: Stabilization (Immediate)
 
-1.  **Verify Lockfile**: Ensure `nix flake update` completes successfully with SSH keys (Running now).
-2.  **Commit Architecture Fix**: Commit the flake consolidation to git.
-3.  **Test Base System**: Run `just test` to verify the consolidated flake builds.
+1. **Verify Lockfile**: Ensure `nix flake update` completes successfully with SSH keys (Running now).
+2. **Commit Architecture Fix**: Commit the flake consolidation to git.
+3. **Test Base System**: Run `just test` to verify the consolidated flake builds.
 
 ### Phase 2: Home Manager Recovery (High Priority)
 
-4.  **Debug homeDirectory**: Investigate why `UserConfig` returns null for home directory.
-5.  **Re-enable Home Manager**: Uncomment integration in `flake.nix`.
-6.  **Fix Shell Configs**: Re-enable bash/zsh/fish in `home.nix` once HM is stable.
+4. **Debug homeDirectory**: Investigate why `UserConfig` returns null for home directory.
+5. **Re-enable Home Manager**: Uncomment integration in `flake.nix`.
+6. **Fix Shell Configs**: Re-enable bash/zsh/fish in `home.nix` once HM is stable.
 
 ### Phase 3: Btop Wallpaper (Feature)
 
-7.  **Enable Ghost Module**: Uncomment `ghost-btop-wallpaper.nix`.
-8.  **Verify Launchd**: Check if the agent starts correctly on macOS.
-9.  **Test Transparency**: Verify Kitty transparency settings.
+7. **Enable Ghost Module**: Uncomment `ghost-btop-wallpaper.nix`.
+8. **Verify Launchd**: Check if the agent starts correctly on macOS.
+9. **Test Transparency**: Verify Kitty transparency settings.
 
 ### Phase 4: Cross-Platform (Strategic)
 

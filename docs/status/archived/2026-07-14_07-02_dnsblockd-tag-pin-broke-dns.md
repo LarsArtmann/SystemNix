@@ -6,7 +6,6 @@ Gen 516 deploy (`nh os switch`) removed unbound and relied on dnsblockd's "embed
 
 ---
 
-
 ## a) FULLY DONE
 
 1. **Root cause identified:** dnsblockd flake input was `refs/tags/v0.2.0` (commit `ad14663`). The embedded sdns recursive resolver was added in commits _after_ v0.2.0 tag — it only exists on master. The Nix module (`076dc778` "migrate from unbound to dnsblockd") was written for a feature that doesn't exist in the pinned binary.

@@ -1,16 +1,17 @@
 # Status Report: Renamer System Service Conversion & Sops Investigation
 
-**Date:** 2026-08-10 13:45 CEST  
-**Session scope:** Investigate sops redesign question → fix root cause → deploy  
+**Date:** 2026-08-10 13:45 CEST\
+**Session scope:** Investigate sops redesign question → fix root cause → deploy\
 **Machine:** evo-x2 (NixOS 26.11, nixos-unstable @ f13ff45)
 
 ---
 
 ## Context
 
-User asked: *"Why does https://renamer.home.lan/ seem so old?"* and *"Can and SHOULD we redesign our sops nix setup? synthetic_api_key has only 1 per account and it works for crush so why does it NOT work for file-and-image-renamer?"*
+User asked: _"Why does https://renamer.home.lan/ seem so old?"_ and _"Can and SHOULD we redesign our sops nix setup? synthetic_api_key has only 1 per account and it works for crush so why does it NOT work for file-and-image-renamer?"_
 
 This session continued from a prior session that had:
+
 - Diagnosed 3 root causes (dead watcher, placeholder API key claim, stale binary)
 - Fixed the nixpkgs tarball regression (nixos-hardware follows)
 - Written a status report but NOT deployed
@@ -24,17 +25,18 @@ This session continued from a prior session that had:
 **Conclusion:** The sops setup was never the problem. No redesign needed.
 
 **Evidence:**
+
 - Both `synthetic_api_key` secrets decrypt to the real key: `REDACTED-SYNTHETIC-KEY-ELIDED` (36 bytes, verified at runtime)
-- The previous session's "placeholder" claim (`"synthetic_api_key"` at `sops.nix:158`) was **wrong** — that string is the YAML *key name* in `mkKeyedSecrets`, not the decrypted value
+- The previous session's "placeholder" claim (`"synthetic_api_key"` at `sops.nix:158`) was **wrong** — that string is the YAML _key name_ in `mkKeyedSecrets`, not the decrypted value
 - The renamer's `_FILE` pattern (`SYNTHETIC_API_KEY_FILE=/run/secrets/...`) is actually **more secure** than crush-daily's env-file template — the key never appears in `/proc/<pid>/environ`
 - The Go binary (`pkg/config/config.go`) correctly handles `SYNTHETIC_API_KEY_FILE` via `loadSecretFromEnv()` — reads file, trims whitespace, returns key
 
 **Sops pattern comparison (both valid, different tradeoffs):**
 
-| Service | Pattern | Key in environ? | Key in file? |
-|---------|---------|-----------------|--------------|
-| crush-daily | sops template → `CRUSH_DAILY_LLM_API_KEY=...` via `EnvironmentFile` | Yes (in process env) | No |
-| file-and-image-renamer | sops secret → `SYNTHETIC_API_KEY_FILE=/run/secrets/...` | No (only file path) | Yes (mode 0400) |
+| Service                | Pattern                                                             | Key in environ?      | Key in file?    |
+| ---------------------- | ------------------------------------------------------------------- | -------------------- | --------------- |
+| crush-daily            | sops template → `CRUSH_DAILY_LLM_API_KEY=...` via `EnvironmentFile` | Yes (in process env) | No              |
+| file-and-image-renamer | sops secret → `SYNTHETIC_API_KEY_FILE=/run/secrets/...`             | No (only file path)  | Yes (mode 0400) |
 
 Both are correct. The renamer pattern is arguably better (key not in process environment).
 
@@ -43,11 +45,13 @@ Both are correct. The renamer pattern is arguably better (key not in process env
 **File:** `modules/nixos/services/file-and-image-renamer.nix`
 
 **Before:** Watcher was a Home Manager user service with:
+
 - `WantedBy = [ "graphical-session.target" ]`
 - `PartOf = [ "graphical-session.target" ]`
 - `After = [ "network.target" "graphical-session.target" ]`
 
 **After:** System service with:
+
 - `wantedBy = [ "multi-user.target" ]`
 - `after = [ "network.target" ]`
 - `harden { ProtectHome = "read-only"; ReadWritePaths = [ dataDir watchDirectory ] ++ watchPaths; }`
@@ -75,6 +79,7 @@ Both are correct. The renamer pattern is arguably better (key not in process env
 - History entry: `success: true`, `quality_level: POOR` (original name), `was_skipped: false`
 
 **Both processes running:**
+
 ```
 PID 1383819: file-renamer health --addr 127.0.0.1:8086
 PID 1384079: file-renamer watch
@@ -84,9 +89,9 @@ PID 1384079: file-renamer watch
 
 ### 5. Upstream Fixes Pushed
 
-| Repo | Commit | Fix |
-|------|--------|-----|
-| `go-cqrs-lite` | `9d92d91` | `cqrs-lint` vendorHash updated for nixpkgs Go version bump |
+| Repo                             | Commit              | Fix                                                                      |
+| -------------------------------- | ------------------- | ------------------------------------------------------------------------ |
+| `go-cqrs-lite`                   | `9d92d91`           | `cqrs-lint` vendorHash updated for nixpkgs Go version bump               |
 | `projects-management-automation` | `a383c381` (pushed) | Unpushed commit with correct vendorHash + project-discovery-sdk dep bump |
 
 Both flake inputs updated in SystemNix `flake.lock`.
@@ -105,6 +110,7 @@ nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel → store pat
 ### 1. Deploy Exit Code 4 — Config IS Active But Deploy Script Aborted
 
 The deploy script (`scripts/deploy.sh`) aborted after `nh os switch` returned exit code 4, meaning:
+
 - Pre-deploy check ran ✓
 - `nh os switch` activated the config ✓ (new generation is live, services started)
 - Post-deploy check did NOT run (script aborted)
@@ -124,7 +130,7 @@ The `mkKeyedSecrets` pattern at `sops.nix:148-159` maps a Nix attrset name to a 
 }
 ```
 
-This means: "Create sops secret `file_renamer_synthetic_api_key` from YAML key `synthetic_api_key`". The previous session misread `"synthetic_api_key"` as the *value* rather than the *key name*. This naming pattern is functional but confusing — the comment on line 156-157 helps, but the pattern itself is non-obvious.
+This means: "Create sops secret `file_renamer_synthetic_api_key` from YAML key `synthetic_api_key`". The previous session misread `"synthetic_api_key"` as the _value_ rather than the _key name_. This naming pattern is functional but confusing — the comment on line 156-157 helps, but the pattern itself is non-obvious.
 
 ### 3. flake.nix Uncommitted Formatting Changes
 
@@ -168,7 +174,7 @@ The prior session's status report (`docs/status/2026-08-10_08-59_renamer-stale-n
 
 > "API key in sops is still placeholder (`synthetic_api_key`)"
 
-This was **factually incorrect**. `"synthetic_api_key"` at `sops.nix:158` is the YAML *key name* in `mkKeyedSecrets`, not the decrypted value. The actual decrypted value is `REDACTED-SYNTHETIC-KEY-ELIDED` (36 bytes) — a real, valid Synthetic.new API key. I verified this by reading the file at `/run/secrets/file_renamer_synthetic_api_key`.
+This was **factually incorrect**. `"synthetic_api_key"` at `sops.nix:158` is the YAML _key name_ in `mkKeyedSecrets`, not the decrypted value. The actual decrypted value is `REDACTED-SYNTHETIC-KEY-ELIDED` (36 bytes) — a real, valid Synthetic.new API key. I verified this by reading the file at `/run/secrets/file_renamer_synthetic_api_key`.
 
 **Impact:** This misdiagnosis would have led someone to "fix" a non-existent problem by replacing a real key with a real key, wasting time and potentially introducing errors.
 
@@ -185,6 +191,7 @@ Both were caused by the nixpkgs version change (January → August 2026 = differ
 ### 3. Prior Session's Root Cause Analysis Was Incomplete
 
 The prior session identified 3 root causes:
+
 1. Dead watcher (graphical-session binding) ✓ correct
 2. Placeholder API key ✗ WRONG (was real key)
 3. Stale binary ✓ correct
@@ -304,17 +311,17 @@ I pushed vendorHash fixes to `go-cqrs-lite` (commit `9d92d91`) and pushed an alr
 
 ## Session Metrics
 
-| Metric | Value |
-|--------|-------|
-| Files modified (SystemNix) | 2 (`file-and-image-renamer.nix`, `flake.lock`) |
-| Files modified (upstream) | 1 (`go-cqrs-lite/flake.nix`) |
-| Upstream repos pushed | 2 (`go-cqrs-lite`, `projects-management-automation`) |
-| Failed deploys | 2 (vendorHash mismatches) |
-| Successful deploys | 1 |
-| Test images renamed | 2 (`test-screenshot-for-renamer.png` skipped, `untitled.png` → `solid-blue-background.png`) |
-| API calls verified | 1 (glm-4.6v, 764 tokens, $0.0004) |
-| Root causes fixed | 1 (watcher graphical-session binding) |
-| Root causes disproved | 1 (placeholder API key — was real key) |
+| Metric                     | Value                                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------------- |
+| Files modified (SystemNix) | 2 (`file-and-image-renamer.nix`, `flake.lock`)                                              |
+| Files modified (upstream)  | 1 (`go-cqrs-lite/flake.nix`)                                                                |
+| Upstream repos pushed      | 2 (`go-cqrs-lite`, `projects-management-automation`)                                        |
+| Failed deploys             | 2 (vendorHash mismatches)                                                                   |
+| Successful deploys         | 1                                                                                           |
+| Test images renamed        | 2 (`test-screenshot-for-renamer.png` skipped, `untitled.png` → `solid-blue-background.png`) |
+| API calls verified         | 1 (glm-4.6v, 764 tokens, $0.0004)                                                           |
+| Root causes fixed          | 1 (watcher graphical-session binding)                                                       |
+| Root causes disproved      | 1 (placeholder API key — was real key)                                                      |
 
 ---
 

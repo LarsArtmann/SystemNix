@@ -46,7 +46,7 @@ and left debug scratch behind. Details below.
    lock bump):
    - ruff lint error: extraneous `f` prefix on a placeholder-less string (blocked the test BUILD)
    - `start-limit-hit`: the test restarts hermes 7×, but the module's
-     `startLimitBurst = 5` / 600s counts *successful* restarts too → 6th
+     `startLimitBurst = 5` / 600s counts _successful_ restarts too → 6th
      start onward rate-limited. Fixed with `startLimitBurst = lib.mkForce 20`
      in the test config (the limiter is not what this test exercises).
    - sandbox DNS: the new `hermes-github-verify` unit's DNS gate
@@ -69,13 +69,13 @@ and left debug scratch behind. Details below.
 
 ## b) PARTIALLY DONE
 
-1. **"Latest" pin-policy decision** — I autonomously chose *newest main*
-   (status quo of the unpinned input) over *latest release tag*. Deployed is
+1. **"Latest" pin-policy decision** — I autonomously chose _newest main_
+   (status quo of the unpinned input) over _latest release tag_. Deployed is
    main@`63c6d9a4` = v2026.8.18 **plus ~1 day of post-tag commits**. Works,
    verified, but this is a stability tradeoff the user never explicitly
    chose. Open: confirm or switch to `?ref=v2026.8.18`. (S effort)
-2. **RE-VERIFY depth** — I verified *symbol presence* upstream, not
-   *behavior*. Two commits in the upgrade window touch cwd/dotenv handling
+2. **RE-VERIFY depth** — I verified _symbol presence_ upstream, not
+   _behavior_. Two commits in the upgrade window touch cwd/dotenv handling
    (`31561e37` "read deprecated cwd settings from dotenv", `a93f1b2` "warn
    for all deprecated dotenv cwd entries") — adjacent to the TERMINAL_CWD
    semantics the RE-VERIFY comment exists to protect. VM test covers the env
@@ -175,35 +175,35 @@ screwups, worst first:
 
 ## f) Next tasks (ranked)
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | Investigate Bank-Sync post-deploy body-mismatch FAIL (known classes: `--compressed`, SIGPIPE `echo\|grep -q` on >64KiB) — make deterministic | High | M | Bug |
-| 2 | Confirm pin policy: track main vs `?ref=` release tags for hermes-agent | High | S | Decision |
-| 3 | Delete now-no-op `registration_lifecycle` patch from `hermes.nix` (upstream ships it in py-modules) — coordinate with the hermes-hardening session | High | S | Cleanup |
-| 4 | Update AGENTS.md hermes section: patch obsolete, current rev `63c6d9a4`, verification re-dated | High | S | Documentation |
-| 5 | Verify `hermes-github-verify` real-token path ran on the live host (journal: `private-repo read auth OK`); confirm PAT scope covers the verify URL repo | High | S | Verification |
-| 6 | Grep live hermes journal for cwd/dotenv deprecation warnings after the `31561e37`/`a93f1b2` commits; read both commits for TERMINAL_CWD behavior drift | Medium | S | Verification |
-| 7 | Add post-deploy hermes functional smoke: journal contains Discord-gateway "connected" line within N minutes (no HTTP endpoint exists) | Medium | S | Feature |
-| 8 | Confirm on live host: LSP heal fired (`restored execute bit on N LSP binaries`) and workspace AGENTS.md upgraded to v2 marker | Medium | S | Verification |
-| 9 | Check upstream pyproject for NEW optional-dependency groups vs our 18-group override (extras drift) | Medium | S | Quality |
-| 10 | Clean up /tmp scratch: `hermes-check` clone, `hermes-debug*.py`, `hermes-test-full*.log` | Low | S | Cleanup |
-| 11 | Extract the VM-test `/etc/hosts` DNS trick into `tests/test-helpers.nix` (reusable for every DNS-gated unit) | Medium | S | Quality |
-| 12 | Audit other VM tests for restart-count vs `startLimitBurst` collisions (same class I hit) | Medium | S | Quality |
-| 13 | Replace `sleep infinity` ExecStart in test-hermes with a cheap real-binary exec so CI proves the venv imports at least once | Medium | M | Quality |
-| 14 | Recheck `mini_swe_runner` py-modules status upstream (AGENTS.md says unneeded; verify still true) | Low | S | Verification |
-| 15 | Review the upstream `feat(relay)!: native plugin init` breaking change — confirm our config doesn't use the old opt-in relay plugin path | Medium | S | Verification |
-| 16 | Update stale `flake.nix` comment "Upstream (v2026.7.20+) uses fetcherVersion=2" → v0.20.4 | Low | S | Documentation |
-| 17 | Verify docs/services/hermes.md documents the new `hermes-github-verify` unit (other session changed 67 lines — check completeness) | Medium | S | Documentation |
-| 18 | Publish hermes 0.20.4 build to attic cache (huge Python build; daily nixpkgs-compat CI would otherwise rebuild) | Medium | S | Infra |
-| 19 | Check the second, unidentified post-deploy FAIL from the first run (only Bank-Sync was ever seen) — read the full deploy log pattern in scripts | Low | S | Bug |
-| 20 | Note rollback pointer: previous generation runs hermes `ca84f13b` (Aug 16) — usable if v0.20.4 misbehaves | Low | S | Ops |
-| 21 | Review the `tools.registry` warnings in the live hermes journal (`check_bfl_requirements`, kanban-mode checks returning False) — benign config state or misconfig? | Low | S | Verification |
-| 22 | Confirm the auto-commit daemon attributed the lock bump + test fixes sanely (it batches multiple sessions — check the batched commit message for secret-free, accurate attribution) | Medium | S | Ops |
-| 23 | Consider a periodic hermes bump reminder/workflow (upstream ~250 commits/day; lock will rot in days) | Medium | M | Infra |
-| 24 | Verify hermes-agent's new transitive `home-manager` input follows our nixpkgs correctly in all lock paths (eval passed, but check the lock subtree once) | Low | S | Verification |
-| 25 | Run `scripts/scan-history-secrets.sh` once after the daemon commits this batch (new sops file + deploy churn — cheap insurance) | Low | S | Security |
-| 26 | When v0.21.0 ships (curated notes for everything since v0.20.0), re-read notes for behavior changes our wiring depends on | Medium | S | Verification |
-| 27 | Verify the 2 pre-existing WARNs in post-deploy output unrelated to hermes (quickshell 1 error line in last 1h) — noticed, never looked at | Low | S | Bug |
+| #  | Task                                                                                                                                                                                | Impact | Effort | Category      |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
+| 1  | Investigate Bank-Sync post-deploy body-mismatch FAIL (known classes: `--compressed`, SIGPIPE `echo\|grep -q` on >64KiB) — make deterministic                                        | High   | M      | Bug           |
+| 2  | Confirm pin policy: track main vs `?ref=` release tags for hermes-agent                                                                                                             | High   | S      | Decision      |
+| 3  | Delete now-no-op `registration_lifecycle` patch from `hermes.nix` (upstream ships it in py-modules) — coordinate with the hermes-hardening session                                  | High   | S      | Cleanup       |
+| 4  | Update AGENTS.md hermes section: patch obsolete, current rev `63c6d9a4`, verification re-dated                                                                                      | High   | S      | Documentation |
+| 5  | Verify `hermes-github-verify` real-token path ran on the live host (journal: `private-repo read auth OK`); confirm PAT scope covers the verify URL repo                             | High   | S      | Verification  |
+| 6  | Grep live hermes journal for cwd/dotenv deprecation warnings after the `31561e37`/`a93f1b2` commits; read both commits for TERMINAL_CWD behavior drift                              | Medium | S      | Verification  |
+| 7  | Add post-deploy hermes functional smoke: journal contains Discord-gateway "connected" line within N minutes (no HTTP endpoint exists)                                               | Medium | S      | Feature       |
+| 8  | Confirm on live host: LSP heal fired (`restored execute bit on N LSP binaries`) and workspace AGENTS.md upgraded to v2 marker                                                       | Medium | S      | Verification  |
+| 9  | Check upstream pyproject for NEW optional-dependency groups vs our 18-group override (extras drift)                                                                                 | Medium | S      | Quality       |
+| 10 | Clean up /tmp scratch: `hermes-check` clone, `hermes-debug*.py`, `hermes-test-full*.log`                                                                                            | Low    | S      | Cleanup       |
+| 11 | Extract the VM-test `/etc/hosts` DNS trick into `tests/test-helpers.nix` (reusable for every DNS-gated unit)                                                                        | Medium | S      | Quality       |
+| 12 | Audit other VM tests for restart-count vs `startLimitBurst` collisions (same class I hit)                                                                                           | Medium | S      | Quality       |
+| 13 | Replace `sleep infinity` ExecStart in test-hermes with a cheap real-binary exec so CI proves the venv imports at least once                                                         | Medium | M      | Quality       |
+| 14 | Recheck `mini_swe_runner` py-modules status upstream (AGENTS.md says unneeded; verify still true)                                                                                   | Low    | S      | Verification  |
+| 15 | Review the upstream `feat(relay)!: native plugin init` breaking change — confirm our config doesn't use the old opt-in relay plugin path                                            | Medium | S      | Verification  |
+| 16 | Update stale `flake.nix` comment "Upstream (v2026.7.20+) uses fetcherVersion=2" → v0.20.4                                                                                           | Low    | S      | Documentation |
+| 17 | Verify docs/services/hermes.md documents the new `hermes-github-verify` unit (other session changed 67 lines — check completeness)                                                  | Medium | S      | Documentation |
+| 18 | Publish hermes 0.20.4 build to attic cache (huge Python build; daily nixpkgs-compat CI would otherwise rebuild)                                                                     | Medium | S      | Infra         |
+| 19 | Check the second, unidentified post-deploy FAIL from the first run (only Bank-Sync was ever seen) — read the full deploy log pattern in scripts                                     | Low    | S      | Bug           |
+| 20 | Note rollback pointer: previous generation runs hermes `ca84f13b` (Aug 16) — usable if v0.20.4 misbehaves                                                                           | Low    | S      | Ops           |
+| 21 | Review the `tools.registry` warnings in the live hermes journal (`check_bfl_requirements`, kanban-mode checks returning False) — benign config state or misconfig?                  | Low    | S      | Verification  |
+| 22 | Confirm the auto-commit daemon attributed the lock bump + test fixes sanely (it batches multiple sessions — check the batched commit message for secret-free, accurate attribution) | Medium | S      | Ops           |
+| 23 | Consider a periodic hermes bump reminder/workflow (upstream ~250 commits/day; lock will rot in days)                                                                                | Medium | M      | Infra         |
+| 24 | Verify hermes-agent's new transitive `home-manager` input follows our nixpkgs correctly in all lock paths (eval passed, but check the lock subtree once)                            | Low    | S      | Verification  |
+| 25 | Run `scripts/scan-history-secrets.sh` once after the daemon commits this batch (new sops file + deploy churn — cheap insurance)                                                     | Low    | S      | Security      |
+| 26 | When v0.21.0 ships (curated notes for everything since v0.20.0), re-read notes for behavior changes our wiring depends on                                                           | Medium | S      | Verification  |
+| 27 | Verify the 2 pre-existing WARNs in post-deploy output unrelated to hermes (quickshell 1 error line in last 1h) — noticed, never looked at                                           | Low    | S      | Bug           |
 
 ## g) Questions I cannot answer myself
 
@@ -225,7 +225,7 @@ screwups, worst first:
 
 ---
 
-*Point-in-time snapshot. Written at the user's request as `.md` in
+_Point-in-time snapshot. Written at the user's request as `.md` in
 `docs/status/` (overrides the skill's HTML default per explicit
 instruction). Not manually committed — the auto-commit daemon batches this
-tree. Section (f) is pending docs-health HARVEST into TODO_LIST.md.*
+tree. Section (f) is pending docs-health HARVEST into TODO_LIST.md._

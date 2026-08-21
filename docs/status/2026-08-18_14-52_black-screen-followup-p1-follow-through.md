@@ -50,6 +50,7 @@
 **P0 — unchanged, user-gated (from 13:51 §f.1-7):** deploy (+ review/accept the concurrent sessions' papdashboard + fastflowlm + smartd + data-to-pool riders), reboot, 08-15 §4 checklist, settle check (now including the adwaita render check), `niri_zombie 0` + `btrfs_health_critical` alert expectations, crush-daily boot, agent cadence.
 
 **P1:**
+
 1. File the sops-nix upstream issue (diagnosis in §a.2; `verify-before-filing` discipline; PR is likely `builtins.toString` on three interpolations).
 2. Master plan T04-T08 — /data corruption repair; runbook now in TODO_LIST P0 (stance decided, option (c) eliminated).
 3. VM test runtime half (TODO §2.5).
@@ -64,4 +65,4 @@
 
 ---
 
-*Everything executable without deploy/sudo is done and verified; the tree is deploy-ready pending your call. The guard now fails CI if it ever goes blind — the strongest thing this session shipped.*
+_Everything executable without deploy/sudo is done and verified; the tree is deploy-ready pending your call. The guard now fails CI if it ever goes blind — the strongest thing this session shipped._

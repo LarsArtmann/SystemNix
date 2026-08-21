@@ -4,19 +4,19 @@
 
 ## Drive Context
 
-| | Detail |
-|---|---|
-| **Model** | SanDisk SDSSDA240G (SSD Plus line) |
-| **Controller** | SandForce (DRAM-less, DuraWrite compression, AES-128) |
-| **Capacity** | 240 GB each (223.6 GiB) |
-| **Endurance** | 60 TBW (terabytes written over lifetime) — ~55 GB/day over 3 years |
-| **Current health** | SMART PASSED, 0 bad blocks, 100% reserve space, 0 GiB written |
-| **Age** | ~15,852 power-on hours (~1.8 years 24/7), 10+ years since manufacture |
-| **Attachment** | USB 3.0 enclosures (USB3.0 DISK01/DISK02 bridge chips) |
-| **Write cache** | Kernel reports `write through` (correct for DRAM-less SandForce) |
-| **Power loss history** | 34 of 35 power cycles were unexpected |
-| **Formatted as** | SSD 1 (serial 174444471311) = ext4, SSD 2 (serial 174244451713) = btrfs+compress=zstd |
-| **Benchmarked speed** | ext4 write 136 MB/s, btrfs write 342 MB/s, both read ~410 MB/s |
+|                        | Detail                                                                                |
+| ---------------------- | ------------------------------------------------------------------------------------- |
+| **Model**              | SanDisk SDSSDA240G (SSD Plus line)                                                    |
+| **Controller**         | SandForce (DRAM-less, DuraWrite compression, AES-128)                                 |
+| **Capacity**           | 240 GB each (223.6 GiB)                                                               |
+| **Endurance**          | 60 TBW (terabytes written over lifetime) — ~55 GB/day over 3 years                    |
+| **Current health**     | SMART PASSED, 0 bad blocks, 100% reserve space, 0 GiB written                         |
+| **Age**                | ~15,852 power-on hours (~1.8 years 24/7), 10+ years since manufacture                 |
+| **Attachment**         | USB 3.0 enclosures (USB3.0 DISK01/DISK02 bridge chips)                                |
+| **Write cache**        | Kernel reports `write through` (correct for DRAM-less SandForce)                      |
+| **Power loss history** | 34 of 35 power cycles were unexpected                                                 |
+| **Formatted as**       | SSD 1 (serial 174444471311) = ext4, SSD 2 (serial 174244451713) = btrfs+compress=zstd |
+| **Benchmarked speed**  | ext4 write 136 MB/s, btrfs write 342 MB/s, both read ~410 MB/s                        |
 
 ---
 
@@ -54,18 +54,19 @@
 **Fit: Excellent**
 
 Use for ephemeral data that can be rebuilt or re-downloaded:
+
 - `nix-shell` build sandboxes (`TMPDIR=/mnt/scratch`)
 - Download staging area
 - Transcode working directory
 - `ccache` / `cargo` cache that can be rebuilt
 - Compiler output directories (`target/`, `build/`)
 
-| Aspect | Assessment |
-|---|---|
-| Endurance impact | High writes, but data is ephemeral — if drive dies, rebuild |
-| Performance benefit | Fast writes speed up builds and transcodes |
-| Data loss risk | Low impact — data is disposable by definition |
-| Recommendation | **Top choice for SSD 1 (ext4)** |
+| Aspect              | Assessment                                                  |
+| ------------------- | ----------------------------------------------------------- |
+| Endurance impact    | High writes, but data is ephemeral — if drive dies, rebuild |
+| Performance benefit | Fast writes speed up builds and transcodes                  |
+| Data loss risk      | Low impact — data is disposable by definition               |
+| Recommendation      | **Top choice for SSD 1 (ext4)**                             |
 
 **Setup:** Mount ext4 with `noatime,data=writeback` (data is disposable, journal overhead is waste). Run `fstrim.timer`.
 
@@ -75,12 +76,12 @@ Use for ephemeral data that can be rebuilt or re-downloaded:
 
 240 GB comfortably fits a full NixOS store (typical: 20-80 GB, worst case ~180 GB with many generations). Mount `noatime`.
 
-| Aspect | Assessment |
-|---|---|
-| Endurance impact | Low writes (read-mostly after populate) |
+| Aspect              | Assessment                                            |
+| ------------------- | ----------------------------------------------------- |
+| Endurance impact    | Low writes (read-mostly after populate)               |
 | Performance benefit | Faster `nix build` and `nix-shell` when store is warm |
-| Data loss risk | Low impact — store rebuilds from cache.nixos.org |
-| Recommendation | **Top choice for SSD 2 (btrfs)** |
+| Data loss risk      | Low impact — store rebuilds from cache.nixos.org      |
+| Recommendation      | **Top choice for SSD 2 (btrfs)**                      |
 
 **Setup:** Could act as a local binary cache proxy or a warm copy of frequently-used store paths. btrfs `compress=zstd` helps with compressible package data (binaries, text configs).
 
@@ -90,13 +91,13 @@ Use for ephemeral data that can be rebuilt or re-downloaded:
 
 240 GB fits dozens of containers (typical: 8-20 GB for images + build cache). Fast layer operations and image pulls.
 
-| Aspect | Assessment |
-|---|---|
-| Endurance impact | Moderate writes (build churn, image pulls, layer operations) |
-| Performance benefit | Fast container starts, image pulls, layer operations |
-| Data loss risk | Medium — container rebuild if drive dies, but images are re-pullable |
-| Inode risk | ext4 pre-allocates 14M inodes — sufficient. btrfs allocates dynamically. |
-| Recommendation | **Good for SSD 2 (btrfs)** alongside nix store |
+| Aspect              | Assessment                                                               |
+| ------------------- | ------------------------------------------------------------------------ |
+| Endurance impact    | Moderate writes (build churn, image pulls, layer operations)             |
+| Performance benefit | Fast container starts, image pulls, layer operations                     |
+| Data loss risk      | Medium — container rebuild if drive dies, but images are re-pullable     |
+| Inode risk          | ext4 pre-allocates 14M inodes — sufficient. btrfs allocates dynamically. |
+| Recommendation      | **Good for SSD 2 (btrfs)** alongside nix store                           |
 
 **Setup:** Move Docker data-root to `/mnt/ssd-btrfs/docker` via `services.docker.storageOpt` or daemon config. btrfs snapshots give rollback safety for container state.
 
@@ -106,13 +107,13 @@ Use for ephemeral data that can be rebuilt or re-downloaded:
 
 Fast rsync/restic/borg target for config backups, git repo mirrors, small dataset snapshots. 240 GB is plenty for config/repo backups (typically 1-10 GB).
 
-| Aspect | Assessment |
-|---|---|
-| Endurance impact | Low writes (scheduled, usually daily) |
-| Performance benefit | Fast backup and restore operations |
-| Data loss risk | Low — this is a backup, not the only copy |
-| Retention | Must remain powered — NAND loses charge when unpowered |
-| Recommendation | **Good secondary use for either drive** |
+| Aspect              | Assessment                                             |
+| ------------------- | ------------------------------------------------------ |
+| Endurance impact    | Low writes (scheduled, usually daily)                  |
+| Performance benefit | Fast backup and restore operations                     |
+| Data loss risk      | Low — this is a backup, not the only copy              |
+| Retention           | Must remain powered — NAND loses charge when unpowered |
+| Recommendation      | **Good secondary use for either drive**                |
 
 **Setup:** Use as a `restic` or `borg` repository target. Keep powered 24/7. Do NOT unplug and shelve — unpowered NAND loses data in 1-3 years.
 
@@ -122,13 +123,13 @@ Fast rsync/restic/borg target for config backups, git repo mirrors, small datase
 
 Isolates log floods from the OS disk. 240 GB gives years of retention headroom. Logs don't need SSD speed, but the isolation is useful.
 
-| Aspect | Assessment |
-|---|---|
-| Endurance impact | Low-moderate writes (journald, service logs) |
-| Performance benefit | Minimal — logs are rarely read |
-| Data loss risk | Low — logs are not critical data |
-| Value | Low — logs don't benefit from SSD speed, only isolation |
-| Recommendation | **Possible but low-value** |
+| Aspect              | Assessment                                              |
+| ------------------- | ------------------------------------------------------- |
+| Endurance impact    | Low-moderate writes (journald, service logs)            |
+| Performance benefit | Minimal — logs are rarely read                          |
+| Data loss risk      | Low — logs are not critical data                        |
+| Value               | Low — logs don't benefit from SSD speed, only isolation |
+| Recommendation      | **Possible but low-value**                              |
 
 **Setup:** Mount with `noatime`. Cap journald: `SystemMaxUse=500M`, `SyncIntervalSec=5m`, `Compress=yes`. Set log rotation.
 
@@ -138,13 +139,13 @@ Isolates log floods from the OS disk. 240 GB gives years of retention headroom. 
 
 Better than zram overflow for page-in latency. Only used under RAM pressure — evo-x2 has 128 GB RAM so swap is rarely hit.
 
-| Aspect | Assessment |
-|---|---|
-| Endurance impact | Bursty writes (only under RAM pressure) |
-| Performance benefit | Better than HDD swap for page-in latency |
-| Data loss risk | None — swap data is by definition disposable |
-| Value | Very low — evo-x2 has 128 GB RAM + 30 GB zram. Swap almost never used |
-| Recommendation | **Optional secondary role (small partition)** |
+| Aspect              | Assessment                                                            |
+| ------------------- | --------------------------------------------------------------------- |
+| Endurance impact    | Bursty writes (only under RAM pressure)                               |
+| Performance benefit | Better than HDD swap for page-in latency                              |
+| Data loss risk      | None — swap data is by definition disposable                          |
+| Value               | Very low — evo-x2 has 128 GB RAM + 30 GB zram. Swap almost never used |
+| Recommendation      | **Optional secondary role (small partition)**                         |
 
 **Setup:** 8-16 GB swap partition, not the whole drive. Low priority.
 
@@ -154,13 +155,13 @@ Better than zram overflow for page-in latency. Only used under RAM pressure — 
 
 L2ARC is a second-level read cache between RAM and the HDD pool. It needs low-latency reads to be effective.
 
-| Aspect | Assessment |
-|---|---|
-| Endurance impact | Moderate (continuous cache cycling, ~0.7 TB/day at default feed rate) |
-| Performance benefit | **Negligible** — USB 3.0 adds 503 us random read latency. L2ARC needs <100 us. |
-| Data loss risk | None — L2ARC is read-only, harmless if drive dies |
-| RAM cost | L2ARC costs ARC RAM (~1.6 GB per 1 TB L2ARC). evo-x2 has 128 GB RAM so this is fine. |
-| Recommendation | **No** — USB latency defeats the purpose. DAS already has 2x14TB HDDs + 128 GB ARC. |
+| Aspect              | Assessment                                                                           |
+| ------------------- | ------------------------------------------------------------------------------------ |
+| Endurance impact    | Moderate (continuous cache cycling, ~0.7 TB/day at default feed rate)                |
+| Performance benefit | **Negligible** — USB 3.0 adds 503 us random read latency. L2ARC needs <100 us.       |
+| Data loss risk      | None — L2ARC is read-only, harmless if drive dies                                    |
+| RAM cost            | L2ARC costs ARC RAM (~1.6 GB per 1 TB L2ARC). evo-x2 has 128 GB RAM so this is fine. |
+| Recommendation      | **No** — USB latency defeats the purpose. DAS already has 2x14TB HDDs + 128 GB ARC.  |
 
 **Why not:** The whole point of L2ARC is to be faster than HDDs (6-10 ms) but slower than RAM (nanoseconds). At 503 us random read latency via USB, it's faster than HDDs but the USB bridge adds enough overhead that the benefit is marginal compared to the 128 GB ARC already in place.
 
@@ -170,12 +171,12 @@ L2ARC is a second-level read cache between RAM and the HDD pool. It needs low-la
 
 SLOG accelerates synchronous writes (NFS, iSCSI, databases) by providing a low-latency write target for the ZIL.
 
-| Aspect | Assessment |
-|---|---|
-| Endurance impact | High (sync writes hit the SLOG, then the pool) |
-| Performance benefit | None — USB latency (503 us) is worse than writing directly to the HDD pool |
-| Data loss risk | **High** — no power-loss protection. USB bridge prevents FLUSH_CACHE barriers. 34 dirty shutdowns. |
-| Recommendation | **No** — data corruption risk on power loss. Consumer drive without PLP. |
+| Aspect              | Assessment                                                                                         |
+| ------------------- | -------------------------------------------------------------------------------------------------- |
+| Endurance impact    | High (sync writes hit the SLOG, then the pool)                                                     |
+| Performance benefit | None — USB latency (503 us) is worse than writing directly to the HDD pool                         |
+| Data loss risk      | **High** — no power-loss protection. USB bridge prevents FLUSH_CACHE barriers. 34 dirty shutdowns. |
+| Recommendation      | **No** — data corruption risk on power loss. Consumer drive without PLP.                           |
 
 **Why not:** SLOG needs: (1) low latency (<100 us), (2) power-loss protection (capacitor/supercap), (3) high write endurance. This drive has none of these. Using it as SLOG risks data corruption on power loss because the kernel can't guarantee writes are flushed to NAND before a crash.
 
@@ -185,21 +186,21 @@ SLOG accelerates synchronous writes (NFS, iSCSI, databases) by providing a low-l
 
 240 GB fits several lightweight Linux VMs or 1-2 heavier ones. But the write workload is the most endurance-intensive common use case.
 
-| Aspect | Assessment |
-|---|---|
-| Endurance impact | Very high (guest memory dumps, boot storms, updates) — 60 TBW would be consumed in months |
-| Performance benefit | USB latency (503 us random read) is too high for good VM performance |
-| Data loss risk | Medium — VM state is lost if drive dies, but VMs should be snapshotted to bulk storage |
-| Recommendation | **No** — USB latency + 60 TBW + old drive = poor performance and reliability |
+| Aspect              | Assessment                                                                                |
+| ------------------- | ----------------------------------------------------------------------------------------- |
+| Endurance impact    | Very high (guest memory dumps, boot storms, updates) — 60 TBW would be consumed in months |
+| Performance benefit | USB latency (503 us random read) is too high for good VM performance                      |
+| Data loss risk      | Medium — VM state is lost if drive dies, but VMs should be snapshotted to bulk storage    |
+| Recommendation      | **No** — USB latency + 60 TBW + old drive = poor performance and reliability              |
 
 ### 10. Cold / Offline Backup Archive
 
 **Fit: Disqualified**
 
-| Aspect | Assessment |
-|---|---|
+| Aspect         | Assessment                                                                      |
+| -------------- | ------------------------------------------------------------------------------- |
 | Data retention | **Severe data loss after 1-3 years unpowered** — NAND flash slowly loses charge |
-| Recommendation | **Never** — use HDDs or tape for offline archives |
+| Recommendation | **Never** — use HDDs or tape for offline archives                               |
 
 **Why not:** Multiple studies (Tom's Hardware,_HWLab) have found severe data loss on SSDs shelved for 1-3 years. Flash memory requires periodic power to refresh charge. HDDs and tape do not have this problem.
 
@@ -208,6 +209,7 @@ SLOG accelerates synchronous writes (NFS, iSCSI, databases) by providing a low-l
 ## Recommended Configuration
 
 > **Decision Record (2026-08-17, docs-health pass):** The recommendation below was only partially executed, then superseded by the three-drive repurposing decision (`docs/planning/archived/2026-08-16_20-22_three-drive-repurposing.md`).
+>
 > - **SSD 1 → DEPLOYED as `/mnt/buildcache`** (build-cache role, a subset of the scratch use case) in `19c195e9`/`5e22c678`, deployed 2026-08-14. Live and monitored (`buildcache_*` metrics + Gatus).
 > - **SSD 2 → Docker role NEVER deployed.** The drive is now FROZEN per the three-drive Decision Record; the Docker data-root migration survives as `TODO_LIST.md` Priority 2 ("Move Docker data-root to SSD 2").
 > - **ZFS options (§7, §8) moot** — the ZFS `datapool` was destroyed 2026-08-16 after forensic extraction; the ZFS era is closed (`ROADMAP.md`).
@@ -215,6 +217,7 @@ SLOG accelerates synchronous writes (NFS, iSCSI, databases) by providing a low-l
 ### ~~SSD 1 (ext4, serial 174444471311) — Scratch / Temp Storage~~ → deployed as build cache (`/mnt/buildcache`), 2026-08-14
 
 Mount at `/mnt/scratch` with `noatime,data=writeback`:
+
 - `nix-shell` build sandboxes (`TMPDIR=/mnt/scratch`)
 - Download staging area
 - Transcode working directory
@@ -226,6 +229,7 @@ Mount at `/mnt/scratch` with `noatime,data=writeback`:
 ### ~~SSD 2 (btrfs, serial 174244451713) — Docker + Nix Auxiliary Store~~ → never deployed; drive frozen; Docker role lives on in TODO_LIST
 
 Mount at `/mnt/ssd-btrfs` (already done) with `compress=zstd,noatime`:
+
 - Docker data-root (`/mnt/ssd-btrfs/docker`)
 - Nix auxiliary store / binary cache proxy
 - btrfs snapshots for container state rollback
@@ -244,33 +248,33 @@ Mount at `/mnt/ssd-btrfs` (already done) with `compress=zstd,noatime`:
 
 ## What NOT to Do
 
-| Don't | Why |
-|---|---|
-| Put irreplaceable data on these drives | 10+ year old hardware, sudden failure possible |
-| Use as ZFS SLOG | USB prevents FLUSH barriers, no PLP, 34 dirty shutdowns |
-| Use as ZFS L2ARC | USB latency (503 us) defeats the purpose (<100 us needed) |
-| Use for VM disk images | 60 TBW consumed in months, USB latency too high |
-| Use for databases with frequent writes | 60 TBW + USB latency + no PLP |
-| Use as cold/offline backup | NAND loses charge unpowered — data loss in 1-3 years |
-| Use without `fstrim.timer` | TRIM extends SandForce controller life and maintains write performance |
-| Expect high reliability | SandForce SF-2000 has known age-related failure modes (BSOD, controller death, firmware bugs) |
+| Don't                                  | Why                                                                                           |
+| -------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Put irreplaceable data on these drives | 10+ year old hardware, sudden failure possible                                                |
+| Use as ZFS SLOG                        | USB prevents FLUSH barriers, no PLP, 34 dirty shutdowns                                       |
+| Use as ZFS L2ARC                       | USB latency (503 us) defeats the purpose (<100 us needed)                                     |
+| Use for VM disk images                 | 60 TBW consumed in months, USB latency too high                                               |
+| Use for databases with frequent writes | 60 TBW + USB latency + no PLP                                                                 |
+| Use as cold/offline backup             | NAND loses charge unpowered — data loss in 1-3 years                                          |
+| Use without `fstrim.timer`             | TRIM extends SandForce controller life and maintains write performance                        |
+| Expect high reliability                | SandForce SF-2000 has known age-related failure modes (BSOD, controller death, firmware bugs) |
 
 ---
 
 ## Summary Ranking
 
-| Rank | Use Case | Fit | Endurance | Data Loss Risk | USB Latency Impact |
-|---|---|---|---|---|---|
-| 1 | Scratch / temp build storage | Excellent | High writes (disposable) | Low (ephemeral) | Low (sequential) |
-| 2 | Nix store mirror (read-only) | Excellent | Low writes | Low (rebuildable) | Low (read-mostly) |
-| 3 | Docker / container storage | Good | Moderate writes | Medium (rebuildable) | Low-moderate |
-| 4 | Powered backup target | Good | Low writes | Low (backup copy) | Low (sequential) |
-| 5 | Log storage | Fair | Low-moderate | Low | None |
-| 6 | Swap (secondary) | Marginal | Bursty | None | Moderate (random) |
-| 7 | ZFS L2ARC | Poor | Moderate | None | **Kills it** (503 us) |
-| 8 | ZFS SLOG | Dangerous | High | **High** (no PLP) | **Kills it** (503 us) |
-| 9 | VM disk images | Poor | Very high | Medium | High (random R/W) |
-| 10 | Cold/offline backup | Disqualified | None | **Extreme** (charge loss) | N/A |
+| Rank | Use Case                     | Fit          | Endurance                | Data Loss Risk            | USB Latency Impact    |
+| ---- | ---------------------------- | ------------ | ------------------------ | ------------------------- | --------------------- |
+| 1    | Scratch / temp build storage | Excellent    | High writes (disposable) | Low (ephemeral)           | Low (sequential)      |
+| 2    | Nix store mirror (read-only) | Excellent    | Low writes               | Low (rebuildable)         | Low (read-mostly)     |
+| 3    | Docker / container storage   | Good         | Moderate writes          | Medium (rebuildable)      | Low-moderate          |
+| 4    | Powered backup target        | Good         | Low writes               | Low (backup copy)         | Low (sequential)      |
+| 5    | Log storage                  | Fair         | Low-moderate             | Low                       | None                  |
+| 6    | Swap (secondary)             | Marginal     | Bursty                   | None                      | Moderate (random)     |
+| 7    | ZFS L2ARC                    | Poor         | Moderate                 | None                      | **Kills it** (503 us) |
+| 8    | ZFS SLOG                     | Dangerous    | High                     | **High** (no PLP)         | **Kills it** (503 us) |
+| 9    | VM disk images               | Poor         | Very high                | Medium                    | High (random R/W)     |
+| 10   | Cold/offline backup          | Disqualified | None                     | **Extreme** (charge loss) | N/A                   |
 
 ---
 
@@ -314,16 +318,16 @@ services.fstrim.enable = true;
 
 ## Endurance Budget
 
-| Workload | Writes/day | 60 TBW lifespan |
-|---|---|---|
-| Read-only (nix store, Docker images) | ~0.5 GB/day | ~300+ years |
-| Scratch builds (nix-shell, cargo, ccache) | ~5-10 GB/day | ~16-33 years |
-| Docker build churn (daily image rebuilds) | ~2-5 GB/day | ~33-82 years |
-| Log storage (journald + service logs) | ~1-3 GB/day | ~55-164 years |
-| Powered backup target (daily rsync) | ~1-5 GB/day | ~33-164 years |
-| VM disk images (continuous R/W) | ~20-50 GB/day | ~3-8 years |
-| Database writes (continuous) | ~10-30 GB/day | ~5-16 years |
-| SLOG (sync writes) | ~50-100 GB/day | ~1.5-3 years |
+| Workload                                  | Writes/day     | 60 TBW lifespan |
+| ----------------------------------------- | -------------- | --------------- |
+| Read-only (nix store, Docker images)      | ~0.5 GB/day    | ~300+ years     |
+| Scratch builds (nix-shell, cargo, ccache) | ~5-10 GB/day   | ~16-33 years    |
+| Docker build churn (daily image rebuilds) | ~2-5 GB/day    | ~33-82 years    |
+| Log storage (journald + service logs)     | ~1-3 GB/day    | ~55-164 years   |
+| Powered backup target (daily rsync)       | ~1-5 GB/day    | ~33-164 years   |
+| VM disk images (continuous R/W)           | ~20-50 GB/day  | ~3-8 years      |
+| Database writes (continuous)              | ~10-30 GB/day  | ~5-16 years     |
+| SLOG (sync writes)                        | ~50-100 GB/day | ~1.5-3 years    |
 
 **Note:** These are endurance-only calculations. The drives are 10+ years old — hardware failure is more likely than NAND wear-out. The SandForce controller, firmware, and PCB components age regardless of write load.
 

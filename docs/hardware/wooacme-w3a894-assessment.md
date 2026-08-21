@@ -22,19 +22,19 @@ This drive was recovered from a previous NixOS machine (hostname `evo-x2`, prima
 
 The enclosure uses a **Realtek RTL9210B-CG** USB-to-SATA bridge, negotiating at **SuperSpeed Plus Gen 2 (10 Gbps)** with the **UAS (USB Attached SCSI)** protocol — the best-case USB storage protocol.
 
-| Property | Value |
-|----------|-------|
-| Model | W3A894-512GB |
-| Manufacturer | WOOACME (Wooacme Limited, Hong Kong / Yiwu Maihai E-Commerce Co., Ltd.) |
-| Serial | WX2511WX00357 |
-| Firmware | X0719A0 |
-| Capacity | 512 GB (476.9 GiB) |
-| Native interface | SATA III (6.0 Gb/s), ACS-2 |
-| Connected via | USB 3.2 Gen 2, Realtek RTL9210B-CG, UAS |
-| Form factor | 2.5" |
-| Sector size | 512 bytes (logical and physical) |
-| APM level | 254 (maximum performance) |
-| ATA Security | Disabled, NOT FROZEN |
+| Property         | Value                                                                   |
+| ---------------- | ----------------------------------------------------------------------- |
+| Model            | W3A894-512GB                                                            |
+| Manufacturer     | WOOACME (Wooacme Limited, Hong Kong / Yiwu Maihai E-Commerce Co., Ltd.) |
+| Serial           | WX2511WX00357                                                           |
+| Firmware         | X0719A0                                                                 |
+| Capacity         | 512 GB (476.9 GiB)                                                      |
+| Native interface | SATA III (6.0 Gb/s), ACS-2                                              |
+| Connected via    | USB 3.2 Gen 2, Realtek RTL9210B-CG, UAS                                 |
+| Form factor      | 2.5"                                                                    |
+| Sector size      | 512 bytes (logical and physical)                                        |
+| APM level        | 254 (maximum performance)                                               |
+| ATA Security     | Disabled, NOT FROZEN                                                    |
 
 WOOACME does not publish a datasheet, TBW rating, controller model, or NAND type. The drive is not in the smartctl database. Public benchmark data (PassMark, Nero Score) confirms entry-level SATA III performance consistent with our measurements.
 
@@ -46,60 +46,60 @@ WOOACME does not publish a datasheet, TBW rating, controller model, or NAND type
 
 ### Core Health Indicators
 
-| Attribute | ID | Raw Value | Assessment |
-|-----------|----|-----------|------------|
-| Raw Read Error Rate | 1 | 0 | No read errors |
-| Reallocated Sector Count | 5 | 0 | No remapped blocks |
-| Current Pending Sector | 197 | 0 | No unreadable sectors |
-| Offline Uncorrectable | 198 | 0 | No uncorrectable reads |
-| UDMA CRC Error Count | 199 | 0 | SATA/USB link clean |
-| Program Fail Count (chip) | 175 | 0 | Zero program failures |
-| Erase Fail Count (chip) | 176 | 0 | Zero erase failures |
-| Program Fail Count (total) | 181 | 0 | Zero program failures |
-| Erase Fail Count (total) | 182 | 0 | Zero erase failures |
-| Used Reserved Block Count | 178 | 0 | No spare blocks consumed |
-| Available Reserved Space | 232 | 100% | Full spare block pool |
-| Wear Leveling Count | 177 | 0 | — |
+| Attribute                  | ID  | Raw Value | Assessment               |
+| -------------------------- | --- | --------- | ------------------------ |
+| Raw Read Error Rate        | 1   | 0         | No read errors           |
+| Reallocated Sector Count   | 5   | 0         | No remapped blocks       |
+| Current Pending Sector     | 197 | 0         | No unreadable sectors    |
+| Offline Uncorrectable      | 198 | 0         | No uncorrectable reads   |
+| UDMA CRC Error Count       | 199 | 0         | SATA/USB link clean      |
+| Program Fail Count (chip)  | 175 | 0         | Zero program failures    |
+| Erase Fail Count (chip)    | 176 | 0         | Zero erase failures      |
+| Program Fail Count (total) | 181 | 0         | Zero program failures    |
+| Erase Fail Count (total)   | 182 | 0         | Zero erase failures      |
+| Used Reserved Block Count  | 178 | 0         | No spare blocks consumed |
+| Available Reserved Space   | 232 | 100%      | Full spare block pool    |
+| Wear Leveling Count        | 177 | 0         | —                        |
 
 **Verdict:** Zero hardware-level failures across every measurable dimension. The NAND has not required any remapping, and the full spare block pool is intact.
 
 ### Usage Statistics
 
-| Attribute | ID | Raw Value | Notes |
-|-----------|----|-----------|-------|
-| Power-On Hours | 9 | 5,623 (~234 days) | Moderate lifetime use |
-| Power Cycle Count | 12 | 81 | Low |
-| Power-Off Retract Count | 192 | 17 | Unsafe shutdowns — power surge evidence |
-| Temperature (current) | 194 | 31 °C | Cool |
-| Temperature (lifetime min/max) | SCT | 30 / 54 °C | Never exceeded 54 °C — well within spec |
+| Attribute                      | ID  | Raw Value         | Notes                                   |
+| ------------------------------ | --- | ----------------- | --------------------------------------- |
+| Power-On Hours                 | 9   | 5,623 (~234 days) | Moderate lifetime use                   |
+| Power Cycle Count              | 12  | 81                | Low                                     |
+| Power-Off Retract Count        | 192 | 17                | Unsafe shutdowns — power surge evidence |
+| Temperature (current)          | 194 | 31 °C             | Cool                                    |
+| Temperature (lifetime min/max) | SCT | 30 / 54 °C        | Never exceeded 54 °C — well within spec |
 
 ### Vendor-Specific Attributes (Undocumented)
 
 These attributes are not in the smartctl database and WOOACME does not document them. Values are recorded but cannot be definitively interpreted:
 
-| ID | Raw Value | Possible meaning (speculation) |
-|----|-----------|-------------------------------|
-| 160 | 0 | Uncorrectable error count (?) |
-| 161 | 100 | Initial bad blocks / remaining life % (Pre-fail type) |
-| 163 | 151 | Total erase count (?) |
-| 164 | 320,169 | Average erase count or total ECC events (?) |
-| 165 | 518 | Max erase count (?) |
-| 166 | 1 | Min erase count (?) |
-| 167 | 218 | Wear leveling delta (?) |
-| 168 | 5,050 | Unknown |
-| 169 | 96 | Remaining life percentage (?) — consistent with 4% used |
-| 245 | 579,262 | Unknown |
+| ID  | Raw Value | Possible meaning (speculation)                          |
+| --- | --------- | ------------------------------------------------------- |
+| 160 | 0         | Uncorrectable error count (?)                           |
+| 161 | 100       | Initial bad blocks / remaining life % (Pre-fail type)   |
+| 163 | 151       | Total erase count (?)                                   |
+| 164 | 320,169   | Average erase count or total ECC events (?)             |
+| 165 | 518       | Max erase count (?)                                     |
+| 166 | 1         | Min erase count (?)                                     |
+| 167 | 218       | Wear leveling delta (?)                                 |
+| 168 | 5,050     | Unknown                                                 |
+| 169 | 96        | Remaining life percentage (?) — consistent with 4% used |
+| 245 | 579,262   | Unknown                                                 |
 
 **None are flagged as failing** (all: VALUE=100, WORST=100, THRESH=50, FAIL=—). The Pre-fail flag on attribute 161 (value 100, threshold 50) shows no degradation.
 
 ### SATA Physical Layer
 
-| Event | Count | Notes |
-|-------|-------|-------|
-| ICRC errors | 0 | No integrity failures on the SATA/USB link |
-| R_ERR (data FIS) | 0 | No data FIS rejections |
-| R_ERR (non-data FIS) | 0 | No control FIS rejections |
-| COMRESET events | 1 | One bus reset — likely from the power surge or USB reconnect |
+| Event                | Count | Notes                                                        |
+| -------------------- | ----- | ------------------------------------------------------------ |
+| ICRC errors          | 0     | No integrity failures on the SATA/USB link                   |
+| R_ERR (data FIS)     | 0     | No data FIS rejections                                       |
+| R_ERR (non-data FIS) | 0     | No control FIS rejections                                    |
+| COMRESET events      | 1     | One bus reset — likely from the power surge or USB reconnect |
 
 ### SMART Error Log
 
@@ -115,15 +115,15 @@ These attributes are not in the smartctl database and WOOACME does not document 
 
 This is the most reliable data source for lifetime usage, as it comes directly from the controller's accounting:
 
-| Statistic | Value | Interpretation |
-|-----------|-------|----------------|
-| Lifetime Power-On Resets | 81 | Matches power cycle count |
-| Power-on Hours | 5,623 | ~234 days |
-| **Logical Sectors Written** | **1,127,176,837** | **~577 GB total host writes** |
-| Logical Sectors Read | 2,564,526,350 | ~1,313 GB total host reads |
-| Number of Write Commands | 1,051,951,022 | ~1.05 billion write operations |
-| Number of Read Commands | 46,928,564 | ~47 million read operations |
-| **Percentage Used Endurance Indicator** | **4%** | **96% of rated write life remaining** |
+| Statistic                               | Value             | Interpretation                        |
+| --------------------------------------- | ----------------- | ------------------------------------- |
+| Lifetime Power-On Resets                | 81                | Matches power cycle count             |
+| Power-on Hours                          | 5,623             | ~234 days                             |
+| **Logical Sectors Written**             | **1,127,176,837** | **~577 GB total host writes**         |
+| Logical Sectors Read                    | 2,564,526,350     | ~1,313 GB total host reads            |
+| Number of Write Commands                | 1,051,951,022     | ~1.05 billion write operations        |
+| Number of Read Commands                 | 46,928,564        | ~47 million read operations           |
+| **Percentage Used Endurance Indicator** | **4%**            | **96% of rated write life remaining** |
 
 **Read/write asymmetry:** The drive received 22x more write commands than read commands (1.05B vs 47M), but fewer total sectors written than read (577 GB vs 1,313 GB). This pattern is consistent with a system that frequently wrote small blocks (journaling, database WAL, nix builds) and occasionally read large files.
 
@@ -177,11 +177,11 @@ All benchmarks use `fio` with `direct=1` (O_DIRECT, bypassing page cache), `liba
 
 ### Throughput Results
 
-| Test | WOOACME (USB) | NVMe NQ790 (live) | Gap |
-|------|---------------|---------------------|-----|
-| Seq Read 1M QD1 | 291 MB/s | 493 MB/s | 1.7x |
-| Seq Read 1M QD32 | 491 MB/s | — | — |
-| Rand Read 4K QD1 | 31.6 MB/s (8,094 IOPS) | 10.1 MB/s (2,586 IOPS)* | 0.3x* |
+| Test              | WOOACME (USB)           | NVMe NQ790 (live)       | Gap   |
+| ----------------- | ----------------------- | ----------------------- | ----- |
+| Seq Read 1M QD1   | 291 MB/s                | 493 MB/s                | 1.7x  |
+| Seq Read 1M QD32  | 491 MB/s                | —                       | —     |
+| Rand Read 4K QD1  | 31.6 MB/s (8,094 IOPS)  | 10.1 MB/s (2,586 IOPS)* | 0.3x* |
 | Rand Read 4K QD32 | 88.0 MB/s (22,528 IOPS) | 18.3 MB/s (4,685 IOPS)* | 0.2x* |
 
 > *The NVMe appears slower on random reads because it is under heavy system load during these tests. An idle NVMe benchmark would show 800K+ IOPS. The WOOACME numbers benefited from a warm read cache and low system contention during its test window. These results illustrate real-world conditions on a loaded system, not spec-sheet performance.
@@ -192,31 +192,31 @@ Latency percentiles are critical for understanding real-world feel and tail beha
 
 **WOOACME — Random Read 4K QD1:**
 
-| Percentile | Latency |
-|------------|---------|
-| Average | 123 us |
-| p50 | ~100 us |
-| p95 | ~250 us |
-| p99 | ~500 us |
-| Max | 5,441 us (5.4 ms) |
+| Percentile | Latency           |
+| ---------- | ----------------- |
+| Average    | 123 us            |
+| p50        | ~100 us           |
+| p95        | ~250 us           |
+| p99        | ~500 us           |
+| Max        | 5,441 us (5.4 ms) |
 
 **WOOACME — Random Read 4K QD32:**
 
-| Percentile | Latency |
-|------------|---------|
-| Average | 1,378 us (1.4 ms) |
-| p50 | ~750 us |
-| Max | 98,986 us (**99 ms**) |
+| Percentile | Latency               |
+| ---------- | --------------------- |
+| Average    | 1,378 us (1.4 ms)     |
+| p50        | ~750 us               |
+| Max        | 98,986 us (**99 ms**) |
 
 The 99 ms tail latency at QD32 is the USB bridge's worst case — UAS command queueing under load introduces significant jitter. This is inherent to USB-attached storage and cannot be fixed.
 
 **NVMe NQ790 — Random Read 4K QD1 (under system load):**
 
-| Percentile | Latency |
-|------------|---------|
-| Average | 387 us |
-| p50 | ~250 us |
-| Max | 168,414 us (168 ms) |
+| Percentile | Latency             |
+| ---------- | ------------------- |
+| Average    | 387 us              |
+| p50        | ~250 us             |
+| Max        | 168,414 us (168 ms) |
 
 The NVMe's 168 ms max is caused by system I/O contention (BTRFS, services, nix store), not the drive itself. The bimodal latency distribution (12% of I/O at 10 us, 46% at 250 us) shows the drive is fast when uncontended but frequently delayed by competing system I/O.
 
@@ -232,24 +232,24 @@ This is the most critical section for determining viable use cases.
 
 ### The Numbers
 
-| Metric | Value | Source |
-|--------|-------|--------|
-| Percentage endurance used | **4%** | Device Statistics log (GP 0x04) |
-| Total host writes | **577 GB** | Device Statistics: 1,127,176,837 sectors x 512 bytes |
-| Implied total endurance | **~14.4 TB** | 577 GB / 0.04 |
-| Power-on hours consumed | 5,623 | SMART attribute 9 |
+| Metric                    | Value        | Source                                               |
+| ------------------------- | ------------ | ---------------------------------------------------- |
+| Percentage endurance used | **4%**       | Device Statistics log (GP 0x04)                      |
+| Total host writes         | **577 GB**   | Device Statistics: 1,127,176,837 sectors x 512 bytes |
+| Implied total endurance   | **~14.4 TB** | 577 GB / 0.04                                        |
+| Power-on hours consumed   | 5,623        | SMART attribute 9                                    |
 
 ### Context
 
 ~14 TB TBW is **extremely low** for a 512 GB drive. For comparison:
 
-| Drive (512GB class) | Type | Rated TBW |
-|---------------------|------|-----------|
-| Samsung 870 EVO | TLC | 300 TBW |
-| Crucial MX500 | TLC | 360 TBW |
-| Samsung 870 QVO | QLC | 180 TBW |
-| WD Green (budget) | TLC | 80 TBW |
-| **WOOACME W3A894** | **Unknown** | **~14 TBW (implied)** |
+| Drive (512GB class) | Type        | Rated TBW             |
+| ------------------- | ----------- | --------------------- |
+| Samsung 870 EVO     | TLC         | 300 TBW               |
+| Crucial MX500       | TLC         | 360 TBW               |
+| Samsung 870 QVO     | QLC         | 180 TBW               |
+| WD Green (budget)   | TLC         | 80 TBW                |
+| **WOOACME W3A894**  | **Unknown** | **~14 TBW (implied)** |
 
 This extremely low endurance explains why WOOACME does not publish a TBW rating. The drive consumed 4% of its write life with only 577 GB of host writes over 234 days of typical desktop/server use.
 
@@ -257,12 +257,12 @@ This extremely low endurance explains why WOOACME does not publish a TBW rating.
 
 If used as a nightly backup target:
 
-| Backup frequency | Data per backup | Annual writes | Time to 100% endurance |
-|-----------------|-----------------|---------------|----------------------|
-| Daily (50 GB/night) | 50 GB | 18.3 TB/year | **~9 months** |
-| Daily (10 GB/night) | 10 GB | 3.7 TB/year | **~4 years** |
-| Weekly (50 GB/week) | 50 GB | 2.6 TB/year | **~5.5 years** |
-| Weekly (10 GB/week) | 10 GB | 0.5 TB/year | **~28 years** |
+| Backup frequency    | Data per backup | Annual writes | Time to 100% endurance |
+| ------------------- | --------------- | ------------- | ---------------------- |
+| Daily (50 GB/night) | 50 GB           | 18.3 TB/year  | **~9 months**          |
+| Daily (10 GB/night) | 10 GB           | 3.7 TB/year   | **~4 years**           |
+| Weekly (50 GB/week) | 50 GB           | 2.6 TB/year   | **~5.5 years**         |
+| Weekly (10 GB/week) | 10 GB           | 0.5 TB/year   | **~28 years**          |
 
 > **Caveat:** The 14 TB estimate assumes the endurance indicator scales linearly with host writes, which is approximate. Write amplification on DRAM-less SSDs can be 2-4x, meaning NAND writes are significantly higher than host writes. Sequential writes (typical for backups) have lower WA than random writes, which helps. The true remaining life could be somewhat better or worse than these projections.
 
@@ -276,34 +276,34 @@ The drive contains a recoverable NixOS installation from the previous machine. T
 
 ### Worth Recovering
 
-| Path | Size | Content |
-|------|------|---------|
-| `/home/art/projects/private-cloud` | 261 MB | NixOS infra repo (`git@github.com:LarsArtmann/private-cloud.git`) |
-| `/home/art/.gnupg` | 100 KB | GPG private keys |
-| `/home/art/.ssh` | 24 KB | SSH keys |
-| `/home/art/.config` | 1.4 GB | Application configs (may contain credentials/tokens) |
-| `/home/art/.claude` + `.claude.json` | 124 KB | Claude AI config |
-| `/home/art/.crush` | 88 KB | Crush config |
-| `/home/art/.bash_history` | 12 KB | Shell history |
-| `/home/art/k8s-networking-analysis-report.md` | 7 KB | Analysis document |
-| `/home/art/facter.json` | 108 KB | Hardware report from old machine |
-| `/home/syncthing/config.xml` | 6.5 KB | Syncthing config (contains API key) |
-| `/etc/nixos/*.nix` | ~50 KB | NixOS configuration files + deployment scripts |
-| `/etc/nixos/security-trivy.nix` | 3.6 KB | Security scanner config |
-| `/etc/nixos/github-runner-token-renewal.nix` | 9.6 KB | GitHub Actions runner automation |
+| Path                                          | Size   | Content                                                           |
+| --------------------------------------------- | ------ | ----------------------------------------------------------------- |
+| `/home/art/projects/private-cloud`            | 261 MB | NixOS infra repo (`git@github.com:LarsArtmann/private-cloud.git`) |
+| `/home/art/.gnupg`                            | 100 KB | GPG private keys                                                  |
+| `/home/art/.ssh`                              | 24 KB  | SSH keys                                                          |
+| `/home/art/.config`                           | 1.4 GB | Application configs (may contain credentials/tokens)              |
+| `/home/art/.claude` + `.claude.json`          | 124 KB | Claude AI config                                                  |
+| `/home/art/.crush`                            | 88 KB  | Crush config                                                      |
+| `/home/art/.bash_history`                     | 12 KB  | Shell history                                                     |
+| `/home/art/k8s-networking-analysis-report.md` | 7 KB   | Analysis document                                                 |
+| `/home/art/facter.json`                       | 108 KB | Hardware report from old machine                                  |
+| `/home/syncthing/config.xml`                  | 6.5 KB | Syncthing config (contains API key)                               |
+| `/etc/nixos/*.nix`                            | ~50 KB | NixOS configuration files + deployment scripts                    |
+| `/etc/nixos/security-trivy.nix`               | 3.6 KB | Security scanner config                                           |
+| `/etc/nixos/github-runner-token-renewal.nix`  | 9.6 KB | GitHub Actions runner automation                                  |
 
 ### Safe to Discard
 
-| Path | Size | Reason |
-|------|------|--------|
-| `/var` | 48 GB | Docker images, journals, system state from dead machine |
-| `/nix` | 22 GB | Stale nix store (rebuildable) |
-| `/home/art/.ollama` | 6.3 GB | Models (re-downloadable) |
-| `/home/art/.cache` | 3.7 GB | Build caches |
-| `/home/art/go/` | 1 GB | Go module cache |
-| `/home/art/.npm` | 26 MB | pnpm cache |
-| `/storage*` (x5 dirs) | 140 MB | Empty NAS scaffolding |
-| `/nas` | 16 KB | Empty mount points |
+| Path                  | Size   | Reason                                                  |
+| --------------------- | ------ | ------------------------------------------------------- |
+| `/var`                | 48 GB  | Docker images, journals, system state from dead machine |
+| `/nix`                | 22 GB  | Stale nix store (rebuildable)                           |
+| `/home/art/.ollama`   | 6.3 GB | Models (re-downloadable)                                |
+| `/home/art/.cache`    | 3.7 GB | Build caches                                            |
+| `/home/art/go/`       | 1 GB   | Go module cache                                         |
+| `/home/art/.npm`      | 26 MB  | pnpm cache                                              |
+| `/storage*` (x5 dirs) | 140 MB | Empty NAS scaffolding                                   |
+| `/nas`                | 16 KB  | Empty mount points                                      |
 
 ### Flake Comparison (old vs current private-cloud)
 
@@ -319,18 +319,18 @@ No unique work exists on the old drive that isn't in the current repo's git hist
 
 ## 8. Use Case Evaluation
 
-| Use Case | Viability | Rationale |
-|----------|-----------|-----------|
-| **Periodic manual backup (weekly, small data)** | Viable | Low write volume preserves endurance; speed is adequate for ~10 GB |
-| **Read-only cold storage** | Viable | Zero write endurance cost; drive is fully readable |
-| **Sneakernet / file transfer** | Viable | One-time writes, then read; USB portability is the advantage |
-| **Bootable rescue Linux** | Viable | Read-mostly after initial setup; small footprint |
-| **Automated nightly backup (large data)** | Marginal | Would consume endurance in <1 year at 50 GB/night |
-| **Nix store / build cache** | Not viable | 4K random write IOPS too low; endurance consumed rapidly |
-| **Docker / container storage** | Not viable | Random I/O bottleneck + endurance burn |
-| **BTRFS subvolume (active CoW)** | Not viable | CoW write amplification on budget NAND = endurance death spiral |
-| **Swap** | Not viable | USB disconnect = kernel hang; random write heavy |
-| **Active service data** | Not viable | USB latency tail (99 ms) + low random IOPS |
+| Use Case                                        | Viability  | Rationale                                                          |
+| ----------------------------------------------- | ---------- | ------------------------------------------------------------------ |
+| **Periodic manual backup (weekly, small data)** | Viable     | Low write volume preserves endurance; speed is adequate for ~10 GB |
+| **Read-only cold storage**                      | Viable     | Zero write endurance cost; drive is fully readable                 |
+| **Sneakernet / file transfer**                  | Viable     | One-time writes, then read; USB portability is the advantage       |
+| **Bootable rescue Linux**                       | Viable     | Read-mostly after initial setup; small footprint                   |
+| **Automated nightly backup (large data)**       | Marginal   | Would consume endurance in <1 year at 50 GB/night                  |
+| **Nix store / build cache**                     | Not viable | 4K random write IOPS too low; endurance consumed rapidly           |
+| **Docker / container storage**                  | Not viable | Random I/O bottleneck + endurance burn                             |
+| **BTRFS subvolume (active CoW)**                | Not viable | CoW write amplification on budget NAND = endurance death spiral    |
+| **Swap**                                        | Not viable | USB disconnect = kernel hang; random write heavy                   |
+| **Active service data**                         | Not viable | USB latency tail (99 ms) + low random IOPS                         |
 
 ---
 
@@ -341,6 +341,7 @@ No unique work exists on the old drive that isn't in the current repo's git hist
 **Use it as a periodic manual backup drive for critical irreplaceable data only.**
 
 Specifically:
+
 - Projects (`~/projects/` — SystemNix, private-cloud, all repos)
 - Sops secrets and encryption keys
 - Critical configs and GPG/SSH keys
@@ -388,19 +389,21 @@ Specifically:
 
 This drive does **not** provide offsite backup. It protects against NVMe failure only. The full 3-2-1 backup gap remains:
 
-| Layer | Protects against | Status |
-|-------|-----------------|--------|
-| BTRFS snapshots (btrbk) | Accidental deletion, bad deploy | Active (daily, 14d retention) |
-| **This USB drive (periodic)** | **NVMe hardware failure** | **Recommended (weekly manual)** |
-| Offsite (cloud / rotation) | Site loss (theft, fire, surge) | **Still missing — prioritize** |
+| Layer                         | Protects against                | Status                          |
+| ----------------------------- | ------------------------------- | ------------------------------- |
+| BTRFS snapshots (btrbk)       | Accidental deletion, bad deploy | Active (daily, 14d retention)   |
+| **This USB drive (periodic)** | **NVMe hardware failure**       | **Recommended (weekly manual)** |
+| Offsite (cloud / rotation)    | Site loss (theft, fire, surge)  | **Still missing — prioritize**  |
 
 For offsite, consider:
+
 - **rsync.net** or **Backblaze B2** for automated cloud backup of critical data (~$0.50-1/GB/month for small datasets)
 - **Periodic USB drive rotation** — take this drive offsite monthly, swap with a second drive
 
 ### What to actually buy (if spending money)
 
 If the budget allows (~$50-80), a **1-2 TB external HDD** (e.g., WD Elements, Seagate Expansion) provides:
+
 - 100x higher endurance (HDD has no write limit)
 - 4x capacity
 - Similar sequential speed (~100-150 MB/s, adequate for backups)

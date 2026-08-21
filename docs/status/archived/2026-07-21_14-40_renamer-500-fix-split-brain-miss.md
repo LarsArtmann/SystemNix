@@ -8,45 +8,45 @@ _Session scope: Diagnose and fix `https://renamer.home.lan/` returning HTTP 500 
 
 ## a) FULLY DONE
 
-| # | Item | Evidence |
-|---|------|----------|
-| 1 | **Root-cause diagnosis** — captured live panic stack from `journalctl -u file-and-image-renamer-health.service`. Stack: `sync.(*RWMutex).RLock → history.(*Log).GetStats → healthd.(*Server).handleStatus`. Confirmed nil receiver on `*history.Log`. | Stack trace in session log |
-| 2 | **Identified init failure** — `WARN Failed to create history log error="open /home/lars/.renamer-history.json: read-only file system"`. The health service runs under `ProtectHome = "read-only"` with only `cfg.dataDir` writable; binary defaults to `~/.renamer-history.json`. | journalctl, line preserved |
-| 3 | **Scope check** — confirmed `hashdb.DefaultConfig()` has the **same bug** (defaults to `~/.file-renamer-hashes.db`). Both stores affected, not just history. | `pkg/hashdb/hashdb.go:18,63` |
-| 4 | **Upstream fix layer 1 — env-var config** — `pkg/history/history.go` + `pkg/hashdb/hashdb.go` now honor `HISTORY_FILE_PATH` / `HASHDB_PATH` env vars via existing `utils.LoadPathFromEnv` helper. New exported constants `history.PathEnvVar`, `hashdb.PathEnvVar`. | Upstream commit `ca95be5` |
-| 5 | **Upstream fix layer 2 — nil-safety (defense in depth)** — New file `pkg/healthd/safe_accessors.go` adds `safeHashStats`, `safeHistoryStats`, `safeHistoryEntries`. All 6 handler/dashboard call sites routed through them (`server_handlers.go`, `dashboard_data.go`). Future init failures degrade to zeroed stats + WARN log instead of panic. | Upstream commit `ca95be5` |
-| 6 | **Upstream fix layer 3 — regression tests** — `pkg/healthd/nil_deps_test.go` covers nil-deps no-panic behavior + preserved JSON shape for `/metrics` and `/status`. Pass locally. | `go test ./pkg/healthd/... ✅` |
-| 7 | **Upstream validation** — full test suite passes, `go vet` clean, `golangci-lint` clean (after auto-fix). BuildFlow pre-commit hook passed (warnings unrelated/pre-existing). | BuildFlow output in session |
-| 8 | **Upstream push** — committed with proper conventional-commit message, pushed to `origin/master`. New rev: `ca95be537361962229ca7a32cebe430ed94da315`. | `git push` confirmed |
-| 9 | **SystemNix flake bump** — `nix flake lock --update-input file-and-image-renamer` updated `flake.lock` to `ca95be5`. | `flake.lock` diff |
-| 10 | **SystemNix module wiring** — `modules/nixos/services/file-and-image-renamer.nix` health service now sets `HISTORY_FILE_PATH=${cfg.dataDir}/history.json` and `HASHDB_PATH=${cfg.dataDir}/hashes.db` in `Environment`. Inline comment explains the gotcha. | Module diff |
-| 11 | **Validation** — `nix flake check --no-build` passes. `nix eval` confirms the systemd unit emits the env vars correctly. | Check output |
-| 12 | **Deploy** — `nix run .#deploy` succeeded. New PID `966864` started at 14:06:04. | Deploy log |
-| 13 | **End-to-end verification (endpoint liveness)** — `https://renamer.home.lan/` and `/status` return HTTP 200 through Caddy. All 4 health checks green (`hash_database`, `history_log`, `disk_space`, `process_age`). Zero panics in journal since restart. | fetch + journalctl |
+| #  | Item                                                                                                                                                                                                                                                                                                                                              | Evidence                       |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| 1  | **Root-cause diagnosis** — captured live panic stack from `journalctl -u file-and-image-renamer-health.service`. Stack: `sync.(*RWMutex).RLock → history.(*Log).GetStats → healthd.(*Server).handleStatus`. Confirmed nil receiver on `*history.Log`.                                                                                             | Stack trace in session log     |
+| 2  | **Identified init failure** — `WARN Failed to create history log error="open /home/lars/.renamer-history.json: read-only file system"`. The health service runs under `ProtectHome = "read-only"` with only `cfg.dataDir` writable; binary defaults to `~/.renamer-history.json`.                                                                 | journalctl, line preserved     |
+| 3  | **Scope check** — confirmed `hashdb.DefaultConfig()` has the **same bug** (defaults to `~/.file-renamer-hashes.db`). Both stores affected, not just history.                                                                                                                                                                                      | `pkg/hashdb/hashdb.go:18,63`   |
+| 4  | **Upstream fix layer 1 — env-var config** — `pkg/history/history.go` + `pkg/hashdb/hashdb.go` now honor `HISTORY_FILE_PATH` / `HASHDB_PATH` env vars via existing `utils.LoadPathFromEnv` helper. New exported constants `history.PathEnvVar`, `hashdb.PathEnvVar`.                                                                               | Upstream commit `ca95be5`      |
+| 5  | **Upstream fix layer 2 — nil-safety (defense in depth)** — New file `pkg/healthd/safe_accessors.go` adds `safeHashStats`, `safeHistoryStats`, `safeHistoryEntries`. All 6 handler/dashboard call sites routed through them (`server_handlers.go`, `dashboard_data.go`). Future init failures degrade to zeroed stats + WARN log instead of panic. | Upstream commit `ca95be5`      |
+| 6  | **Upstream fix layer 3 — regression tests** — `pkg/healthd/nil_deps_test.go` covers nil-deps no-panic behavior + preserved JSON shape for `/metrics` and `/status`. Pass locally.                                                                                                                                                                 | `go test ./pkg/healthd/... ✅` |
+| 7  | **Upstream validation** — full test suite passes, `go vet` clean, `golangci-lint` clean (after auto-fix). BuildFlow pre-commit hook passed (warnings unrelated/pre-existing).                                                                                                                                                                     | BuildFlow output in session    |
+| 8  | **Upstream push** — committed with proper conventional-commit message, pushed to `origin/master`. New rev: `ca95be537361962229ca7a32cebe430ed94da315`.                                                                                                                                                                                            | `git push` confirmed           |
+| 9  | **SystemNix flake bump** — `nix flake lock --update-input file-and-image-renamer` updated `flake.lock` to `ca95be5`.                                                                                                                                                                                                                              | `flake.lock` diff              |
+| 10 | **SystemNix module wiring** — `modules/nixos/services/file-and-image-renamer.nix` health service now sets `HISTORY_FILE_PATH=${cfg.dataDir}/history.json` and `HASHDB_PATH=${cfg.dataDir}/hashes.db` in `Environment`. Inline comment explains the gotcha.                                                                                        | Module diff                    |
+| 11 | **Validation** — `nix flake check --no-build` passes. `nix eval` confirms the systemd unit emits the env vars correctly.                                                                                                                                                                                                                          | Check output                   |
+| 12 | **Deploy** — `nix run .#deploy` succeeded. New PID `966864` started at 14:06:04.                                                                                                                                                                                                                                                                  | Deploy log                     |
+| 13 | **End-to-end verification (endpoint liveness)** — `https://renamer.home.lan/` and `/status` return HTTP 200 through Caddy. All 4 health checks green (`hash_database`, `history_log`, `disk_space`, `process_age`). Zero panics in journal since restart.                                                                                         | fetch + journalctl             |
 
 ---
 
 ## b) PARTIALLY DONE
 
-| # | Item | What's missing |
-|---|------|----------------|
+| # | Item                                           | What's missing                                                                                                                                                                                                 |
+| - | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | **End-to-end verification (data correctness)** | I verified the dashboard returns 200 and renders — but I did NOT verify it shows **correct data**. It returns `total_operations: 0` because of the split-brain bug (see §d). The "200 OK" was a false victory. |
-| 2 | **State migration** | Existing `~/.renamer-history.json` (14,714 bytes of real history) and `~/.file-renamer-hashes.db` (32,768 bytes) were NOT migrated to the new `dataDir` locations. The dashboard silently ignores them. |
-| 3 | **Watcher-side wiring** | The watcher (HM user service) was NOT updated to use the new env vars. It still writes to the default `$HOME` paths. This is the root cause of the split-brain (see §d). |
+| 2 | **State migration**                            | Existing `~/.renamer-history.json` (14,714 bytes of real history) and `~/.file-renamer-hashes.db` (32,768 bytes) were NOT migrated to the new `dataDir` locations. The dashboard silently ignores them.        |
+| 3 | **Watcher-side wiring**                        | The watcher (HM user service) was NOT updated to use the new env vars. It still writes to the default `$HOME` paths. This is the root cause of the split-brain (see §d).                                       |
 
 ---
 
 ## c) NOT STARTED
 
-| # | Item |
-|---|------|
+| # | Item                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| - | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | **AGENTS.md update** — Global AGENTS.md mandates "Update project AGENTS.md PROACTIVELY when you learn". Three new pieces of knowledge were learned this session and NONE were recorded: (a) the `initServiceOrWarn` nil-swallow anti-pattern; (b) the env-var override pattern (`HISTORY_FILE_PATH`, `HASHDB_PATH`); (c) the SystemNix module now wires these env vars. The existing `harden {} + /home = silent data-access failure` gotcha entry should be expanded with this concrete instance. |
-| 2 | **Audit other services for the same class of bug** — Any system service running under `harden { ProtectHome = "read-only"; }` that calls a binary defaulting to a `$HOME` state file has the same failure mode. Not checked this session. |
-| 3 | **Gatus check verification** — The Gatus "renamer" endpoint (`/status`) was failing before; should now be passing. Not explicitly confirmed in Gatus UI. |
-| 4 | **Homepage tile verification** — Homepage has a renamer tile pointing at `/status`. Not verified post-deploy. |
-| 5 | **Removal of stale state files** — `~/.renamer-history.json` and `~/.file-renamer-hashes.db` (the old default-path files) still exist on disk alongside the new `dataDir` versions. |
-| 6 | **Stale `health-status.json` location** — There is a `~/.file-renamer/health-status.json` (6,596 bytes, 14:41) whose origin I did not investigate. May be unrelated, may be another split-brain vector. |
-| 7 | **Unrelated auto-fix in upstream** — BuildFlow pre-commit hook auto-applied `* text=auto eol=lf` to upstream `.gitattributes`. Left unstaged upstream. User not explicitly alerted beyond a single mention. |
+| 2 | **Audit other services for the same class of bug** — Any system service running under `harden { ProtectHome = "read-only"; }` that calls a binary defaulting to a `$HOME` state file has the same failure mode. Not checked this session.                                                                                                                                                                                                                                                          |
+| 3 | **Gatus check verification** — The Gatus "renamer" endpoint (`/status`) was failing before; should now be passing. Not explicitly confirmed in Gatus UI.                                                                                                                                                                                                                                                                                                                                           |
+| 4 | **Homepage tile verification** — Homepage has a renamer tile pointing at `/status`. Not verified post-deploy.                                                                                                                                                                                                                                                                                                                                                                                      |
+| 5 | **Removal of stale state files** — `~/.renamer-history.json` and `~/.file-renamer-hashes.db` (the old default-path files) still exist on disk alongside the new `dataDir` versions.                                                                                                                                                                                                                                                                                                                |
+| 6 | **Stale `health-status.json` location** — There is a `~/.file-renamer/health-status.json` (6,596 bytes, 14:41) whose origin I did not investigate. May be unrelated, may be another split-brain vector.                                                                                                                                                                                                                                                                                            |
+| 7 | **Unrelated auto-fix in upstream** — BuildFlow pre-commit hook auto-applied `* text=auto eol=lf` to upstream `.gitattributes`. Left unstaged upstream. User not explicitly alerted beyond a single mention.                                                                                                                                                                                                                                                                                        |
 
 ---
 
@@ -57,6 +57,7 @@ _Session scope: Diagnose and fix `https://renamer.home.lan/` returning HTTP 500 
 **This is the critical miss of the session and I almost shipped it without noticing.**
 
 **What happened:**
+
 - The watcher (HM user service, `file-and-image-renamer`) does NOT set `HISTORY_FILE_PATH` or `HASHDB_PATH` env vars. It uses the binary defaults: `~/.renamer-history.json` and `~/.file-renamer-hashes.db`. The watcher has full `$HOME` access (it's a user service without `ProtectHome`), so the defaults work fine there.
 - The health service (system service, `file-and-image-renamer-health`) NOW sets `HISTORY_FILE_PATH=~/.file-renamer/history.json` and `HASHDB_PATH=~/.file-renamer/hashes.db`.
 - **These are two different files.** The dashboard reads empty files; the watcher writes to the real files.
@@ -73,6 +74,7 @@ _Session scope: Diagnose and fix `https://renamer.home.lan/` returning HTTP 500 
 The 200 response I "verified" returns `total_operations: 0` — but the watcher has been renaming files for weeks (14 KB of history). **My fix made the dashboard light up green while silently showing zero data.**
 
 **Why I missed it:**
+
 1. I checked `journalctl` for panics (none) and `fetch` for HTTP 200 (yes) and declared victory.
 2. I did NOT compare the dashboard's reported numbers against the on-disk reality. A 5-second `ls -la` would have caught it. I only ran that `ls` just now, after the user prompted self-reflection.
 3. I did NOT think about the data flow: who writes history, who reads it, are they the same file? I treated the health service as an island.
@@ -213,24 +215,24 @@ Diagnosed and fixed the renamer HTTP 500 (nil-pointer panic from read-only-home 
 
 ## Item Resolution (2026-07-30)
 
-| # | Status | Resolution |
-|---|--------|------------|
-| 1-4 | DONE | Split-brain fixed in `b0c76b58` — watcher and health service unified on `dataDir` state |
-| 5 | DONE | AGENTS.md updated with `initServiceOrWarn` nil-swallow + env-var override + split-brain gotchas |
-| 6 | DONE | AGENTS.md `harden {} + /home` entry expanded with this instance |
-| 7 | DONE | post-deploy-check asserts `history.total_operations > 0` |
-| 8 | REJECTED | Data consistency cross-check — over-engineering for single-admin |
-| 9 | DONE | protect-home-audit pre-commit hook covers this |
-| 10 | DONE | Gatus renamer check passing |
-| 11 | DONE | Homepage tile verified |
-| 12 | DONE | health-status.json path documented in AGENTS.md (latent, works because dataDir default) |
-| 13 | DONE | Upstream redesigned with charm.land/fantasy — env vars sufficient |
-| 14 | DONE | Upstream `safe_accessors.go` wraps all call sites with nil-safe accessors |
-| 15 | DONE | Upstream tests pass (26 packages) |
-| 16 | DONE | .gitattributes committed separately upstream |
-| 17-20 | REJECTED | Polish items — nix fmt runs via pre-commit, comments verified |
-| 21 | DONE | AGENTS.md documents the env-var override pattern |
-| 22-25 | REJECTED | Pre-existing/unrelated items — not actionable from this report |
-| 26-28 | DONE | Upstream redesigned; `LoadPathFromEnv` and fantasy provider abstraction replace these |
-| 29 | REJECTED | Module-level assertion for ProtectHome — over-engineering |
-| 30 | DONE | `nix flake check --no-build` passes |
+| #     | Status   | Resolution                                                                                      |
+| ----- | -------- | ----------------------------------------------------------------------------------------------- |
+| 1-4   | DONE     | Split-brain fixed in `b0c76b58` — watcher and health service unified on `dataDir` state         |
+| 5     | DONE     | AGENTS.md updated with `initServiceOrWarn` nil-swallow + env-var override + split-brain gotchas |
+| 6     | DONE     | AGENTS.md `harden {} + /home` entry expanded with this instance                                 |
+| 7     | DONE     | post-deploy-check asserts `history.total_operations > 0`                                        |
+| 8     | REJECTED | Data consistency cross-check — over-engineering for single-admin                                |
+| 9     | DONE     | protect-home-audit pre-commit hook covers this                                                  |
+| 10    | DONE     | Gatus renamer check passing                                                                     |
+| 11    | DONE     | Homepage tile verified                                                                          |
+| 12    | DONE     | health-status.json path documented in AGENTS.md (latent, works because dataDir default)         |
+| 13    | DONE     | Upstream redesigned with charm.land/fantasy — env vars sufficient                               |
+| 14    | DONE     | Upstream `safe_accessors.go` wraps all call sites with nil-safe accessors                       |
+| 15    | DONE     | Upstream tests pass (26 packages)                                                               |
+| 16    | DONE     | .gitattributes committed separately upstream                                                    |
+| 17-20 | REJECTED | Polish items — nix fmt runs via pre-commit, comments verified                                   |
+| 21    | DONE     | AGENTS.md documents the env-var override pattern                                                |
+| 22-25 | REJECTED | Pre-existing/unrelated items — not actionable from this report                                  |
+| 26-28 | DONE     | Upstream redesigned; `LoadPathFromEnv` and fantasy provider abstraction replace these           |
+| 29    | REJECTED | Module-level assertion for ProtectHome — over-engineering                                       |
+| 30    | DONE     | `nix flake check --no-build` passes                                                             |

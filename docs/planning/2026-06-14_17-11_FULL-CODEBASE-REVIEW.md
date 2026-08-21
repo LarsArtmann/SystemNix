@@ -306,43 +306,43 @@ Duplicates `["notify-failure@%n.service"]` instead of importing from lib.
 
 ### 🔴 1% → 51% Impact (Do First)
 
-| #   | Task                                            | Effort | Impact                     |
-| --- | ----------------------------------------------- | ------ | -------------------------- |
-| 1   | Define `systemd.targets.signoz` in signoz.nix   | 2min   | Services auto-start        |
-| 2   | Move VRRP password to sops secret               | 15min  | Security fix               |
-| 3   | Fix `pma-env` sops template nesting             | 5min   | PMA works without Hermes   |
-| 4   | Fix `mkPackageOverlay` dead code                | 2min   | Code clarity               |
-| 5   | Fix `gatus-env` sops gate (signoz→gatus-config) | 5min   | Gatus works without SigNoz |
-| 6   | Fix `discordsync.nix` Restart override          | 5min   | Correct restart behavior   |
+| # | Task                                            | Effort | Impact                     |
+| - | ----------------------------------------------- | ------ | -------------------------- |
+| 1 | Define `systemd.targets.signoz` in signoz.nix   | 2min   | Services auto-start        |
+| 2 | Move VRRP password to sops secret               | 15min  | Security fix               |
+| 3 | Fix `pma-env` sops template nesting             | 5min   | PMA works without Hermes   |
+| 4 | Fix `mkPackageOverlay` dead code                | 2min   | Code clarity               |
+| 5 | Fix `gatus-env` sops gate (signoz→gatus-config) | 5min   | Gatus works without SigNoz |
+| 6 | Fix `discordsync.nix` Restart override          | 5min   | Correct restart behavior   |
 
 ### 🟠 4% → 64% Impact (Do Second)
 
-| #   | Task                                            | Effort | Impact                     |
-| --- | ----------------------------------------------- | ------ | -------------------------- |
-| 7   | Move zellij.nix, yazi.nix to `common/programs/` | 20min  | Correct layering           |
-| 8   | Extract Zed config to `common/programs/zed.nix` | 20min  | Remove 70-line duplication |
-| 9   | Add `monitor365` port to `ports.nix`            | 10min  | Fix port collision         |
-| 10  | Add missing `onFailure` to 6 services           | 30min  | Failure notifications      |
-| 11  | Add missing `startLimitBurst` to 3 services     | 10min  | Prevent crash loops        |
-| 12  | Delete old status reports (keep last 20)        | 15min  | -14MB repo bloat           |
-| 13  | Move `legacy/` to git history (delete)          | 5min   | Remove dead code           |
-| 14  | Add `.idea/` to `.gitignore`, untrack           | 5min   | Remove IDE noise           |
-| 15  | Delete dead scripts                             | 10min  | Remove confusion           |
+| #  | Task                                            | Effort | Impact                     |
+| -- | ----------------------------------------------- | ------ | -------------------------- |
+| 7  | Move zellij.nix, yazi.nix to `common/programs/` | 20min  | Correct layering           |
+| 8  | Extract Zed config to `common/programs/zed.nix` | 20min  | Remove 70-line duplication |
+| 9  | Add `monitor365` port to `ports.nix`            | 10min  | Fix port collision         |
+| 10 | Add missing `onFailure` to 6 services           | 30min  | Failure notifications      |
+| 11 | Add missing `startLimitBurst` to 3 services     | 10min  | Prevent crash loops        |
+| 12 | Delete old status reports (keep last 20)        | 15min  | -14MB repo bloat           |
+| 13 | Move `legacy/` to git history (delete)          | 5min   | Remove dead code           |
+| 14 | Add `.idea/` to `.gitignore`, untrack           | 5min   | Remove IDE noise           |
+| 15 | Delete dead scripts                             | 10min  | Remove confusion           |
 
 ### 🟡 20% → 80% Impact (Do Third)
 
-| #   | Task                                                      | Effort | Impact              |
-| --- | --------------------------------------------------------- | ------ | ------------------- |
-| 16  | Extract shared constants (timezone, domain, stateVersion) | 30min  | DRY config          |
-| 17  | Make Pocket-ID SMTP configurable                          | 20min  | Flexibility         |
-| 18  | Harden `signoz-provision` and `gitea-runner`              | 30min  | Security            |
-| 19  | Move hardcoded image SHAs to `lib/images.nix`             | 15min  | Centralized pinning |
-| 20  | Fix `home.stateVersion` mismatch                          | 5min   | Consistency         |
-| 21  | Add `harden` to `twenty-fix-collation`                    | 5min   | Security            |
-| 22  | Migrate tests to `make-test.nix`                          | 10min  | Future-proof        |
-| 23  | Add package build to CI                                   | 30min  | Catch build breaks  |
-| 24  | Fix `EDITOR`/`VISUAL` inconsistency                       | 5min   | Consistency         |
-| 25  | Unify DNS subdomain lists between failover nodes          | 15min  | Correct failover    |
+| #  | Task                                                      | Effort | Impact              |
+| -- | --------------------------------------------------------- | ------ | ------------------- |
+| 16 | Extract shared constants (timezone, domain, stateVersion) | 30min  | DRY config          |
+| 17 | Make Pocket-ID SMTP configurable                          | 20min  | Flexibility         |
+| 18 | Harden `signoz-provision` and `gitea-runner`              | 30min  | Security            |
+| 19 | Move hardcoded image SHAs to `lib/images.nix`             | 15min  | Centralized pinning |
+| 20 | Fix `home.stateVersion` mismatch                          | 5min   | Consistency         |
+| 21 | Add `harden` to `twenty-fix-collation`                    | 5min   | Security            |
+| 22 | Migrate tests to `make-test.nix`                          | 10min  | Future-proof        |
+| 23 | Add package build to CI                                   | 30min  | Catch build breaks  |
+| 24 | Fix `EDITOR`/`VISUAL` inconsistency                       | 5min   | Consistency         |
+| 25 | Unify DNS subdomain lists between failover nodes          | 15min  | Correct failover    |
 
 ---
 

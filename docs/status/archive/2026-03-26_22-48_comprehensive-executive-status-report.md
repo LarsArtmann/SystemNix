@@ -16,7 +16,7 @@ Reviewed **15 commits from today** and assessed overall project state. The vimjo
 | ------------------ | ----- | ------------------- |
 | Total Nix files    | 92    | ✅                  |
 | flake.nix lines    | 332   | ✅ Reduced from 486 |
-| Status reports     | 115   | ⚠️ Accumulated      |
+| Status reports     | 115   | ⚠️ Accumulated       |
 | TODOs in Nix files | 4     | ✅ Low              |
 | Git status         | Clean | ✅                  |
 | Flake syntax       | Valid | ✅                  |
@@ -303,48 +303,48 @@ flake-parts.lib.mkFlake { inherit inputs; } (
 
 ### Priority 0: Critical (Do Now)
 
-| #   | Task                                    | Effort | Why              |
-| --- | --------------------------------------- | ------ | ---------------- |
-| 1   | Remove dead helpers in niri-wrapped.nix | 5m     | Code cleanliness |
-| 2   | Test niri-wrapped on evo-x2             | 1h     | Verify it works  |
-| 3   | Archive old status reports (>30 days)   | 15m    | Reduce noise     |
+| # | Task                                    | Effort | Why              |
+| - | --------------------------------------- | ------ | ---------------- |
+| 1 | Remove dead helpers in niri-wrapped.nix | 5m     | Code cleanliness |
+| 2 | Test niri-wrapped on evo-x2             | 1h     | Verify it works  |
+| 3 | Archive old status reports (>30 days)   | 15m    | Reduce noise     |
 
 ### Priority 1: High (This Week)
 
-| #   | Task                                 | Effort | Why                  |
-| --- | ------------------------------------ | ------ | -------------------- |
-| 4   | Fix Home Manager warnings (gtk, xdg) | 30m    | Clean builds         |
-| 5   | Apply wrapper pattern to ghostty     | 2h     | Declarative terminal |
-| 6   | Create wrapper pattern ADR           | 30m    | Document decisions   |
-| 7   | Implement Quake Terminal dropdown    | 2h     | Productivity         |
-| 8   | Add GPU temperature to Waybar        | 1.5h   | Monitoring           |
+| # | Task                                 | Effort | Why                  |
+| - | ------------------------------------ | ------ | -------------------- |
+| 4 | Fix Home Manager warnings (gtk, xdg) | 30m    | Clean builds         |
+| 5 | Apply wrapper pattern to ghostty     | 2h     | Declarative terminal |
+| 6 | Create wrapper pattern ADR           | 30m    | Document decisions   |
+| 7 | Implement Quake Terminal dropdown    | 2h     | Productivity         |
+| 8 | Add GPU temperature to Waybar        | 1.5h   | Monitoring           |
 
 ### Priority 2: Medium (This Month)
 
-| #   | Task                                    | Effort | Why                   |
-| --- | --------------------------------------- | ------ | --------------------- |
-| 9   | Research flake-parts module composition | 4h     | Unblock mkMerge issue |
-| 10  | Apply wrapper pattern to fuzzel         | 1h     | Declarative launcher  |
-| 11  | Implement privacy mode toggle           | 2h     | Privacy               |
-| 12  | Add screenshot + OCR script             | 2h     | Productivity          |
-| 13  | Fix audit kernel module on NixOS        | 2h     | Compliance            |
-| 14  | Fix sandbox override on Darwin          | 1h     | Security              |
+| #  | Task                                    | Effort | Why                   |
+| -- | --------------------------------------- | ------ | --------------------- |
+| 9  | Research flake-parts module composition | 4h     | Unblock mkMerge issue |
+| 10 | Apply wrapper pattern to fuzzel         | 1h     | Declarative launcher  |
+| 11 | Implement privacy mode toggle           | 2h     | Privacy               |
+| 12 | Add screenshot + OCR script             | 2h     | Productivity          |
+| 13 | Fix audit kernel module on NixOS        | 2h     | Compliance            |
+| 14 | Fix sandbox override on Darwin          | 1h     | Security              |
 
 ### Priority 3: Lower (This Quarter)
 
-| #   | Task                                  | Effort | Why           |
-| --- | ------------------------------------- | ------ | ------------- |
-| 15  | Configure BlockBlock on macOS         | 1h     | Security      |
-| 16  | Configure Oversight on macOS          | 1h     | Security      |
-| 17  | Implement color picker script         | 1.5h   | Productivity  |
-| 18  | Add clipboard history viewer          | 2h     | Productivity  |
-| 19  | Create niri-wrapped integration test  | 2h     | Reliability   |
-| 20  | Optimize GitHub Actions               | 4h     | CI/CD         |
-| 21  | Implement automated flake updates     | 4h     | Maintenance   |
-| 22  | Complete TypeSafetySystem integration | 16h    | Reliability   |
-| 23  | Document testing approach             | 2h     | Documentation |
-| 24  | Update architecture diagrams          | 4h     | Documentation |
-| 25  | Create program discovery system       | 4h     | Automation    |
+| #  | Task                                  | Effort | Why           |
+| -- | ------------------------------------- | ------ | ------------- |
+| 15 | Configure BlockBlock on macOS         | 1h     | Security      |
+| 16 | Configure Oversight on macOS          | 1h     | Security      |
+| 17 | Implement color picker script         | 1.5h   | Productivity  |
+| 18 | Add clipboard history viewer          | 2h     | Productivity  |
+| 19 | Create niri-wrapped integration test  | 2h     | Reliability   |
+| 20 | Optimize GitHub Actions               | 4h     | CI/CD         |
+| 21 | Implement automated flake updates     | 4h     | Maintenance   |
+| 22 | Complete TypeSafetySystem integration | 16h    | Reliability   |
+| 23 | Document testing approach             | 2h     | Documentation |
+| 24 | Update architecture diagrams          | 4h     | Documentation |
+| 25 | Create program discovery system       | 4h     | Automation    |
 
 ---
 
@@ -423,9 +423,9 @@ The vimjoyer pattern uses `import-tree` to automatically import modules from a d
 
 ### Configuration Systems
 
-| System                        | Status                 |
-| ----------------------------- | ---------------------- |
-| nix-darwin (Lars-MacBook-Air) | ✅ Building            |
+| System                        | Status                |
+| ----------------------------- | --------------------- |
+| nix-darwin (Lars-MacBook-Air) | ✅ Building           |
 | NixOS (evo-x2)                | ⚠️ Not tested recently |
 
 ---

@@ -101,12 +101,12 @@ Fish, Zsh, Bash, Starship, Git, Tmux, Fzf, Taskwarrior, KeePassXC, SSH config �
 
 ### Quality Gates
 
-| Check                        | Result                              |
-| ---------------------------- | ----------------------------------- |
-| `nix flake check --no-build` | ✅ PASS (all 39 modules evaluated)  |
-| `statix check .`             | ✅ CLEAN                            |
+| Check                        | Result                             |
+| ---------------------------- | ---------------------------------- |
+| `nix flake check --no-build` | ✅ PASS (all 39 modules evaluated) |
+| `statix check .`             | ✅ CLEAN                           |
 | `deadnix`                    | ⚠️ 3 minor warnings (see section d) |
-| Formatting (alejandra)       | ✅ PASS                             |
+| Formatting (alejandra)       | ✅ PASS                            |
 
 ### Documentation
 
@@ -258,43 +258,43 @@ The architecture section lists specific services but is missing gatus, minecraft
 
 ### Immediate (can do now)
 
-| #   | Task                                                                       | Est. | Impact                |
-| --- | -------------------------------------------------------------------------- | ---- | --------------------- |
-| 1   | Fix 3 deadnix warnings (darwin/home.nix, netwatch.nix, flake.nix)          | 5m   | Code quality          |
-| 2   | Wire gatus module into flake.nix + configuration.nix                       | 30m  | New monitoring        |
-| 3   | Consolidate 70+ status reports → archive                                   | 15m  | Clarity               |
-| 4   | Update MASTER_TODO_PLAN.md with session 22-24 completions                  | 30m  | Accuracy              |
-| 5   | Update FEATURES.md — remove ghost script entries, fix module count         | 30m  | Accuracy              |
-| 6   | Update AGENTS.md service list (add gatus, minecraft, twenty, disk-monitor) | 15m  | Accuracy              |
-| 7   | Create `mkHardenedService` lib helper                                      | 1h   | DRY across 20 modules |
-| 8   | Adopt `lib/types.nix` in more service modules                              | 2h   | Type safety           |
+| # | Task                                                                       | Est. | Impact                |
+| - | -------------------------------------------------------------------------- | ---- | --------------------- |
+| 1 | Fix 3 deadnix warnings (darwin/home.nix, netwatch.nix, flake.nix)          | 5m   | Code quality          |
+| 2 | Wire gatus module into flake.nix + configuration.nix                       | 30m  | New monitoring        |
+| 3 | Consolidate 70+ status reports → archive                                   | 15m  | Clarity               |
+| 4 | Update MASTER_TODO_PLAN.md with session 22-24 completions                  | 30m  | Accuracy              |
+| 5 | Update FEATURES.md — remove ghost script entries, fix module count         | 30m  | Accuracy              |
+| 6 | Update AGENTS.md service list (add gatus, minecraft, twenty, disk-monitor) | 15m  | Accuracy              |
+| 7 | Create `mkHardenedService` lib helper                                      | 1h   | DRY across 20 modules |
+| 8 | Adopt `lib/types.nix` in more service modules                              | 2h   | Type safety           |
 
 ### Needs evo-x2 Access
 
-| #   | Task                                               | Est. | Impact        |
-| --- | -------------------------------------------------- | ---- | ------------- |
-| 9   | `just switch` — deploy all pending changes         | 45m+ | Everything    |
-| 10  | Move Taskwarrior encryption to sops                | 10m  | Security      |
-| 11  | Pin Docker image digests (Voice Agents + PhotoMap) | 10m  | Security      |
-| 12  | Secure VRRP auth_pass with sops                    | 8m   | Security      |
-| 13  | Verify Ollama + ROCm after rebuild                 | 5m   | AI stack      |
-| 14  | Verify SigNoz collecting all metrics               | 10m  | Observability |
-| 15  | Verify Voice Agents Whisper pipeline               | 10m  | AI stack      |
-| 16  | Test Immich backup restore                         | 10m  | Data safety   |
-| 17  | Test Twenty CRM backup restore                     | 10m  | Data safety   |
-| 18  | Configure SMTP for Authelia notifications          | 15m  | Security UX   |
-| 19  | Verify all 10 service metric endpoints in SigNoz   | 30m  | Observability |
+| #  | Task                                               | Est. | Impact        |
+| -- | -------------------------------------------------- | ---- | ------------- |
+| 9  | `just switch` — deploy all pending changes         | 45m+ | Everything    |
+| 10 | Move Taskwarrior encryption to sops                | 10m  | Security      |
+| 11 | Pin Docker image digests (Voice Agents + PhotoMap) | 10m  | Security      |
+| 12 | Secure VRRP auth_pass with sops                    | 8m   | Security      |
+| 13 | Verify Ollama + ROCm after rebuild                 | 5m   | AI stack      |
+| 14 | Verify SigNoz collecting all metrics               | 10m  | Observability |
+| 15 | Verify Voice Agents Whisper pipeline               | 10m  | AI stack      |
+| 16 | Test Immich backup restore                         | 10m  | Data safety   |
+| 17 | Test Twenty CRM backup restore                     | 10m  | Data safety   |
+| 18 | Configure SMTP for Authelia notifications          | 15m  | Security UX   |
+| 19 | Verify all 10 service metric endpoints in SigNoz   | 30m  | Observability |
 
 ### Bigger Initiatives
 
-| #   | Task                                                           | Est. | Impact        |
-| --- | -------------------------------------------------------------- | ---- | ------------- |
-| 20  | Hermes health check endpoint                                   | 2h   | Observability |
-| 21  | Pi 3 provisioning — build, flash, boot, DNS failover test      | 2h   | HA DNS        |
-| 22  | Investigate Cachix binary cache for cross-machine sharing      | 2h   | Build speed   |
-| 23  | NixOS VM tests for critical services (Caddy, Authelia, Immich) | 4h+  | Reliability   |
-| 24  | Research auditd/AppArmor alternatives or track upstream bug    | 1h   | Security      |
-| 25  | Waybar module for niri session restore statistics              | 1h   | UX            |
+| #  | Task                                                           | Est. | Impact        |
+| -- | -------------------------------------------------------------- | ---- | ------------- |
+| 20 | Hermes health check endpoint                                   | 2h   | Observability |
+| 21 | Pi 3 provisioning — build, flash, boot, DNS failover test      | 2h   | HA DNS        |
+| 22 | Investigate Cachix binary cache for cross-machine sharing      | 2h   | Build speed   |
+| 23 | NixOS VM tests for critical services (Caddy, Authelia, Immich) | 4h+  | Reliability   |
+| 24 | Research auditd/AppArmor alternatives or track upstream bug    | 1h   | Security      |
+| 25 | Waybar module for niri session restore statistics              | 1h   | UX            |
 
 ---
 
@@ -319,7 +319,7 @@ Should I complete the wiring (add flake input, import, enable), or is this inten
 | ---------------------------- | ----------------------------- |
 | `nix flake check --no-build` | ✅ PASS                       |
 | `statix check .`             | ✅ CLEAN                      |
-| `deadnix`                    | ⚠️ 3 warnings (unused params) |
+| `deadnix`                    | ⚠️ 3 warnings (unused params)  |
 | Formatting                   | ✅ PASS                       |
 | Working tree                 | ✅ CLEAN                      |
 | Branch sync                  | ✅ `master` = `origin/master` |

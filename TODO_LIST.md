@@ -228,19 +228,19 @@
 
 **All 11 items below are automated in `scripts/post-deploy-check.sh`.** Run `nix run .#post-deploy-check` after every deploy.
 
-| # | Item | Automated Check |
-|---|------|----------------|
-| 1 | Post-deploy check | Self (the script itself) |
-| 2 | Pocket ID — SQLITE_BUSY/panic scan | `journalctl -u pocket-id --since -30min` grep |
-| 3 | SearXNG — functional search | `curl --compressed /search?q=test` grep for `<article\|result-default` |
-| 4 | Attic cache | `check_local 8200` |
-| 5 | BTRFS — commit=300 + fstrim | `grep commit=300 /proc/mounts` + `systemctl is-enabled fstrim.timer` |
-| 6 | Shell — fish startup + direnv | `date +%s%N` around `fish -i -c exit` + direnv lib check |
-| 7 | Desktop — DMS wallpaper + quickshell | `dms ipc call wallpaper get` + `journalctl --user -u quickshell -p err` |
-| 8 | Registry — nixpkgs github vs tarball | `nix registry list \| grep nixpkgs` |
-| 9 | Monitor365 — auto-SKIP when disabled | `systemctl list-unit-files 'monitor365*'` presence gate |
-| 10 | DNS — resolution + memory | `getent hosts` + `systemctl show -p MemoryCurrent dnsblockd` |
-| 11 | Browser History — liveness + agent timer | `check_local 8087` + `systemctl is-active browser-history-agent.timer` |
+| #  | Item                                     | Automated Check                                                         |
+| -- | ---------------------------------------- | ----------------------------------------------------------------------- |
+| 1  | Post-deploy check                        | Self (the script itself)                                                |
+| 2  | Pocket ID — SQLITE_BUSY/panic scan       | `journalctl -u pocket-id --since -30min` grep                           |
+| 3  | SearXNG — functional search              | `curl --compressed /search?q=test` grep for `<article\|result-default`  |
+| 4  | Attic cache                              | `check_local 8200`                                                      |
+| 5  | BTRFS — commit=300 + fstrim              | `grep commit=300 /proc/mounts` + `systemctl is-enabled fstrim.timer`    |
+| 6  | Shell — fish startup + direnv            | `date +%s%N` around `fish -i -c exit` + direnv lib check                |
+| 7  | Desktop — DMS wallpaper + quickshell     | `dms ipc call wallpaper get` + `journalctl --user -u quickshell -p err` |
+| 8  | Registry — nixpkgs github vs tarball     | `nix registry list \| grep nixpkgs`                                     |
+| 9  | Monitor365 — auto-SKIP when disabled     | `systemctl list-unit-files 'monitor365*'` presence gate                 |
+| 10 | DNS — resolution + memory                | `getent hosts` + `systemctl show -p MemoryCurrent dnsblockd`            |
+| 11 | Browser History — liveness + agent timer | `check_local 8087` + `systemctl is-active browser-history-agent.timer`  |
 
 ---
 

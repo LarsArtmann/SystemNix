@@ -39,18 +39,18 @@ Of the 30+ items in the original status report, **7 were already fixed**, **14 w
 
 ## Still Outstanding
 
-| #   | Issue                                                                     | Priority | Effort |
-| --- | ------------------------------------------------------------------------- | -------- | ------ |
-| 1   | **bash.initExtra deprecated** (HM 26.05) — in shells.nix (both platforms) | LOW      | 30min  |
-| 2   | **vm.overcommit_memory=1** not set for AI workloads                       | MEDIUM   | 15min  |
-| 3   | **OMP_NUM_THREADS** not set for AI workloads                              | MEDIUM   | 15min  |
-| 4   | **systemd.oomd** not configured for AI services                           | MEDIUM   | 2h     |
-| 5   | **Duplicate xkb** in multi-wm.nix + display-manager.nix                   | LOW      | 5min   |
-| 6   | **SigNoz module** — built but untested on hardware                        | LOW      | 3-4h   |
-| 7   | **Unsloth Studio** — GPU detection untested on evo-x2                     | HIGH     | 2h     |
-| 8   | **llama.cpp rocWMMA** — never benchmarked                                 | MEDIUM   | 4h     |
-| 9   | **vLLM integration** — not started                                        | LOW      | 4-8h   |
-| 10  | **Documentation cleanup** — 140+ status files                             | LOW      | 4h     |
+| #  | Issue                                                                     | Priority | Effort |
+| -- | ------------------------------------------------------------------------- | -------- | ------ |
+| 1  | **bash.initExtra deprecated** (HM 26.05) — in shells.nix (both platforms) | LOW      | 30min  |
+| 2  | **vm.overcommit_memory=1** not set for AI workloads                       | MEDIUM   | 15min  |
+| 3  | **OMP_NUM_THREADS** not set for AI workloads                              | MEDIUM   | 15min  |
+| 4  | **systemd.oomd** not configured for AI services                           | MEDIUM   | 2h     |
+| 5  | **Duplicate xkb** in multi-wm.nix + display-manager.nix                   | LOW      | 5min   |
+| 6  | **SigNoz module** — built but untested on hardware                        | LOW      | 3-4h   |
+| 7  | **Unsloth Studio** — GPU detection untested on evo-x2                     | HIGH     | 2h     |
+| 8  | **llama.cpp rocWMMA** — never benchmarked                                 | MEDIUM   | 4h     |
+| 9  | **vLLM integration** — not started                                        | LOW      | 4-8h   |
+| 10 | **Documentation cleanup** — 140+ status files                             | LOW      | 4h     |
 
 ## Items No Longer Applicable
 

@@ -64,11 +64,11 @@
 
 ### Lib Consistency (Phase 4: Tasks 31-36)
 
-| #   | What                                            | Evidence                 |
-| --- | ----------------------------------------------- | ------------------------ |
-| 31  | systemdServiceIdentity decision                 | Kept — used by hermes    |
-| 33  | All modules use `lib/default.nix` single import | Audited, confirmed       |
-| 34  | servicePort in voice-agents                     | Replaced manual mkOption |
+| #  | What                                            | Evidence                 |
+| -- | ----------------------------------------------- | ------------------------ |
+| 31 | systemdServiceIdentity decision                 | Kept — used by hermes    |
+| 33 | All modules use `lib/default.nix` single import | Audited, confirmed       |
+| 34 | servicePort in voice-agents                     | Replaced manual mkOption |
 
 ### Script Quality (Phase 5: Tasks 37-42)
 
@@ -81,19 +81,19 @@
 
 ### SigNoz Dashboards (Phase 6: Tasks 48-51)
 
-| #   | What                        | Evidence                                                      |
-| --- | --------------------------- | ------------------------------------------------------------- |
-| 48  | GPU metrics dashboard       | `dashboards/gpu.json` (VRAM, temp, busy, memory controller)   |
-| 49  | DNS blocking dashboard      | `dashboards/dns.json` (queries, rcode, cache, blocker health) |
-| 50  | Docker containers dashboard | `dashboards/docker.json` (CPU, memory, network, restarts)     |
-| 51  | Service Failure Spike alert | `signoz/rules/service-failed-spike.json` (3+ failures in 10m) |
+| #  | What                        | Evidence                                                      |
+| -- | --------------------------- | ------------------------------------------------------------- |
+| 48 | GPU metrics dashboard       | `dashboards/gpu.json` (VRAM, temp, busy, memory controller)   |
+| 49 | DNS blocking dashboard      | `dashboards/dns.json` (queries, rcode, cache, blocker health) |
+| 50 | Docker containers dashboard | `dashboards/docker.json` (CPU, memory, network, restarts)     |
+| 51 | Service Failure Spike alert | `signoz/rules/service-failed-spike.json` (3+ failures in 10m) |
 
 ### Security (Phase 7: Tasks 53-54)
 
-| #   | What                               | Evidence                                                         |
-| --- | ---------------------------------- | ---------------------------------------------------------------- |
-| 53  | Gatus TLS certificate expiry check | `[CERTIFICATE_EXPIRATION] > 168h` on auth.home.lan               |
-| 54  | Caddy metrics dashboard            | `dashboards/caddy.json` (request rate, errors, p95, connections) |
+| #  | What                               | Evidence                                                         |
+| -- | ---------------------------------- | ---------------------------------------------------------------- |
+| 53 | Gatus TLS certificate expiry check | `[CERTIFICATE_EXPIRATION] > 168h` on auth.home.lan               |
+| 54 | Caddy metrics dashboard            | `dashboards/caddy.json` (request rate, errors, p95, connections) |
 
 ### Documentation (Phase 8: Tasks 55-61)
 
@@ -107,12 +107,12 @@
 
 ### Infrastructure (Phase 9: Tasks 62-65)
 
-| #   | What                            | Evidence                                              |
-| --- | ------------------------------- | ----------------------------------------------------- |
-| 62  | `just test` recipe              | Full `nix flake check --all-systems` + `nh os test .` |
-| 63  | `just test-hm` recipe           | Home Manager integration tests                        |
-| 64  | `just test-aliases` recipe      | Shell alias tests (fish/zsh/bash)                     |
-| 65  | `mkGraphicalUserService` helper | `lib/graphical-user-service.nix`                      |
+| #  | What                            | Evidence                                              |
+| -- | ------------------------------- | ----------------------------------------------------- |
+| 62 | `just test` recipe              | Full `nix flake check --all-systems` + `nh os test .` |
+| 63 | `just test-hm` recipe           | Home Manager integration tests                        |
+| 64 | `just test-aliases` recipe      | Shell alias tests (fish/zsh/bash)                     |
+| 65 | `mkGraphicalUserService` helper | `lib/graphical-user-service.nix`                      |
 
 ### Flake Fixes (Session 74-75)
 
@@ -267,63 +267,63 @@ We have 2 unpushed commits sitting on master. The entire Phase 1 (deploy + verif
 
 ### Critical (deploy what we have)
 
-| #   | Task                                                                        | Effort | Impact |
-| --- | --------------------------------------------------------------------------- | ------ | ------ |
-| 1   | **`git push` + `just switch`** — deploy all session 73-75 changes to evo-x2 | 15min  | 🔴     |
-| 2   | **Reboot** — kernel 7.0.1→7.0.6                                             | 5min   | 🔴     |
-| 3   | **Verify services** — `systemctl --failed`, check SigNoz/Gatus provision    | 10min  | 🔴     |
-| 4   | **Test Discord alerts** — confirm webhook delivery                          | 5min   | 🔴     |
+| # | Task                                                                        | Effort | Impact |
+| - | --------------------------------------------------------------------------- | ------ | ------ |
+| 1 | **`git push` + `just switch`** — deploy all session 73-75 changes to evo-x2 | 15min  | 🔴     |
+| 2 | **Reboot** — kernel 7.0.1→7.0.6                                             | 5min   | 🔴     |
+| 3 | **Verify services** — `systemctl --failed`, check SigNoz/Gatus provision    | 10min  | 🔴     |
+| 4 | **Test Discord alerts** — confirm webhook delivery                          | 5min   | 🔴     |
 
 ### High Value (monitoring completeness)
 
-| #   | Task                                                                        | Effort | Impact |
-| --- | --------------------------------------------------------------------------- | ------ | ------ |
-| 5   | **Add alerts for critical services** — Immich, Gitea, Homepage, Hermes down | 30min  | 🟡     |
-| 6   | **Add TLS cert checks** for all 11 `*.home.lan` vhosts (not just auth)      | 15min  | 🟡     |
-| 7   | **Create system overview dashboard** — CPU, RAM, disk, network trends       | 30min  | 🟡     |
-| 8   | **Add per-threshold channel routing** — critical→Discord, warning→log       | 15min  | 🟡     |
+| # | Task                                                                        | Effort | Impact |
+| - | --------------------------------------------------------------------------- | ------ | ------ |
+| 5 | **Add alerts for critical services** — Immich, Gitea, Homepage, Hermes down | 30min  | 🟡     |
+| 6 | **Add TLS cert checks** for all 11 `*.home.lan` vhosts (not just auth)      | 15min  | 🟡     |
+| 7 | **Create system overview dashboard** — CPU, RAM, disk, network trends       | 30min  | 🟡     |
+| 8 | **Add per-threshold channel routing** — critical→Discord, warning→log       | 15min  | 🟡     |
 
 ### Code Quality (DRY & consistency)
 
-| #   | Task                                                                        | Effort | Impact |
-| --- | --------------------------------------------------------------------------- | ------ | ------ |
-| 9   | **Adopt `mkGraphicalUserService`** in all 7 user services                   | 30min  | 🟢     |
-| 10  | **Migrate gitea inline scripts** to `writeShellApplication`                 | 30min  | 🟢     |
-| 11  | **Consolidate voice-agents Caddy vHost** into caddy.nix pattern             | 15min  | 🟢     |
-| 12  | **Adopt `hardenUser`** in remaining 4 niri-wrapped user services            | 15min  | 🟢     |
-| 13  | **Wrap deploy/dns-diagnostics/validate scripts** in `writeShellApplication` | 15min  | 🟢     |
+| #  | Task                                                                        | Effort | Impact |
+| -- | --------------------------------------------------------------------------- | ------ | ------ |
+| 9  | **Adopt `mkGraphicalUserService`** in all 7 user services                   | 30min  | 🟢     |
+| 10 | **Migrate gitea inline scripts** to `writeShellApplication`                 | 30min  | 🟢     |
+| 11 | **Consolidate voice-agents Caddy vHost** into caddy.nix pattern             | 15min  | 🟢     |
+| 12 | **Adopt `hardenUser`** in remaining 4 niri-wrapped user services            | 15min  | 🟢     |
+| 13 | **Wrap deploy/dns-diagnostics/validate scripts** in `writeShellApplication` | 15min  | 🟢     |
 
 ### Security
 
-| #   | Task                                                                  | Effort | Impact |
-| --- | --------------------------------------------------------------------- | ------ | ------ |
-| 14  | **Move dns-failover VRRP password to sops** — blocked on age identity | 15min  | 🟡     |
-| 15  | **Audit all sops secrets** — verify no plaintext credentials remain   | 20min  | 🟡     |
+| #  | Task                                                                  | Effort | Impact |
+| -- | --------------------------------------------------------------------- | ------ | ------ |
+| 14 | **Move dns-failover VRRP password to sops** — blocked on age identity | 15min  | 🟡     |
+| 15 | **Audit all sops secrets** — verify no plaintext credentials remain   | 20min  | 🟡     |
 
 ### Features
 
-| #   | Task                                                               | Effort | Impact |
-| --- | ------------------------------------------------------------------ | ------ | ------ |
-| 16  | **Deploy Dozzle** at `logs.home.lan` — container log tailing       | 1h     | 🟢     |
-| 17  | **nix-colors integration** — single-source-of-truth theming        | 6h     | 🟢     |
-| 18  | **Create SigNoz log-based alert** — journald error spike detection | 30min  | 🟢     |
+| #  | Task                                                               | Effort | Impact |
+| -- | ------------------------------------------------------------------ | ------ | ------ |
+| 16 | **Deploy Dozzle** at `logs.home.lan` — container log tailing       | 1h     | 🟢     |
+| 17 | **nix-colors integration** — single-source-of-truth theming        | 6h     | 🟢     |
+| 18 | **Create SigNoz log-based alert** — journald error spike detection | 30min  | 🟢     |
 
 ### External Repos
 
-| #   | Task                                           | Effort | Impact |
-| --- | ---------------------------------------------- | ------ | ------ |
-| 19  | **Fix BuildFlow vendorHash** (fakeHash → real) | 30min  | 🟢     |
-| 20  | **Fix PMA vendorHash** (null → real)           | 30min  | 🟢     |
-| 21  | **Convert go-auto-upgrade path: → SSH URL**    | 15min  | 🟢     |
-| 22  | **Create flake.nix for hierarchical-errors**   | 1h     | 🟢     |
-| 23  | **Create shared flake-parts Go template**      | 2h     | 🟢     |
+| #  | Task                                           | Effort | Impact |
+| -- | ---------------------------------------------- | ------ | ------ |
+| 19 | **Fix BuildFlow vendorHash** (fakeHash → real) | 30min  | 🟢     |
+| 20 | **Fix PMA vendorHash** (null → real)           | 30min  | 🟢     |
+| 21 | **Convert go-auto-upgrade path: → SSH URL**    | 15min  | 🟢     |
+| 22 | **Create flake.nix for hierarchical-errors**   | 1h     | 🟢     |
+| 23 | **Create shared flake-parts Go template**      | 2h     | 🟢     |
 
 ### Hardware
 
-| #   | Task                                        | Effort   | Impact |
-| --- | ------------------------------------------- | -------- | ------ |
-| 24  | **Provision Pi 3** for DNS failover cluster | Hardware | 🔵     |
-| 25  | **Wire Pi 3 as secondary DNS**              | 30min    | 🔵     |
+| #  | Task                                        | Effort   | Impact |
+| -- | ------------------------------------------- | -------- | ------ |
+| 24 | **Provision Pi 3** for DNS failover cluster | Hardware | 🔵     |
+| 25 | **Wire Pi 3 as secondary DNS**              | 30min    | 🔵     |
 
 ---
 

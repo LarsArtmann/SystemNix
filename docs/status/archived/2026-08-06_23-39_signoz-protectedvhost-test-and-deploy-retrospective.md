@@ -6,7 +6,6 @@
 
 ---
 
-
 ## What This Session Actually Did
 
 1. Re-ran the VM test after the `--adapter caddyfile` fix from the previous session
@@ -25,43 +24,43 @@
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-|---|---|
-| SigNoz switched to `protectedVHost` | Deployed Caddy config shows `@external` + conditional forward_auth + bare handle LAN bypass |
-| Caddy auth VM test (`tests/test-caddy-auth.nix`) | 6/6 assertions pass, registered in `tests/default.nix` |
-| `--adapter caddyfile` fix | Caddy starts cleanly, parses Caddyfile syntax |
-| IPv6 loopback fix (`127.0.0.1` not `localhost`) | All test curls use explicit IPv4 |
-| `nix fmt` | 1 file reformatted (mockBackend lambda) |
-| `nix flake check --no-build` | All checks passed |
-| Deploy | 31/31 smoke tests pass |
-| SigNoz LAN access verified | `fetch` returns SvelteKit SPA HTML |
-| Post-deploy smoke test | SigNoz impersonation mode active, 20 alert rules provisioned, all vHost checks pass |
-| AGENTS.md updated | SSO table, gotchas, callouts all reflect Layer 2 protectedVHost |
-| signoz.nix comments updated | Header + impersonation script comments describe Layer 2 |
+| Item                                             | Evidence                                                                                    |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| SigNoz switched to `protectedVHost`              | Deployed Caddy config shows `@external` + conditional forward_auth + bare handle LAN bypass |
+| Caddy auth VM test (`tests/test-caddy-auth.nix`) | 6/6 assertions pass, registered in `tests/default.nix`                                      |
+| `--adapter caddyfile` fix                        | Caddy starts cleanly, parses Caddyfile syntax                                               |
+| IPv6 loopback fix (`127.0.0.1` not `localhost`)  | All test curls use explicit IPv4                                                            |
+| `nix fmt`                                        | 1 file reformatted (mockBackend lambda)                                                     |
+| `nix flake check --no-build`                     | All checks passed                                                                           |
+| Deploy                                           | 31/31 smoke tests pass                                                                      |
+| SigNoz LAN access verified                       | `fetch` returns SvelteKit SPA HTML                                                          |
+| Post-deploy smoke test                           | SigNoz impersonation mode active, 20 alert rules provisioned, all vHost checks pass         |
+| AGENTS.md updated                                | SSO table, gotchas, callouts all reflect Layer 2 protectedVHost                             |
+| signoz.nix comments updated                      | Header + impersonation script comments describe Layer 2                                     |
 
 ## b) PARTIALLY DONE
 
-| Item | Status | What remains |
-|---|---|---|
-| **Gatus health check for SigNoz post-deploy** | Gatus was passing BEFORE deploy (probes from 127.0.0.1 which hits LAN bypass). Post-deploy Gatus status was NOT explicitly checked. The smoke test checks SigNoz impersonation mode and alert rules, but does not query Gatus for the SigNoz endpoint health status. | Verify `journalctl -u gatus` or Gatus UI shows SigNoz as healthy |
-| **External access verification** | The protectedVHost pattern means external clients should hit oauth2-proxy forward-auth. This was NOT tested — no way to test from inside the LAN without simulating an external IP. | Only verifiable from outside the LAN or with a crafted request that spoofs `X-Forwarded-For` (but Caddy uses `remote_ip` not XFF, so this is hard to test) |
+| Item                                          | Status                                                                                                                                                                                                                                                               | What remains                                                                                                                                               |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Gatus health check for SigNoz post-deploy** | Gatus was passing BEFORE deploy (probes from 127.0.0.1 which hits LAN bypass). Post-deploy Gatus status was NOT explicitly checked. The smoke test checks SigNoz impersonation mode and alert rules, but does not query Gatus for the SigNoz endpoint health status. | Verify `journalctl -u gatus` or Gatus UI shows SigNoz as healthy                                                                                           |
+| **External access verification**              | The protectedVHost pattern means external clients should hit oauth2-proxy forward-auth. This was NOT tested — no way to test from inside the LAN without simulating an external IP.                                                                                  | Only verifiable from outside the LAN or with a crafted request that spoofs `X-Forwarded-For` (but Caddy uses `remote_ip` not XFF, so this is hard to test) |
 
 ## c) NOT STARTED
 
-| Item | Why it matters |
-|---|---|
-| **External forward-auth path test** | The VM test verifies the LAN bypass works, but does NOT verify that external requests are correctly forwarded to oauth2-proxy and redirected on 401. The mock oauth2-proxy returns 401, but no test sends a request with a non-LAN source IP to verify the redirect. This is a gap in the test coverage. |
-| **SigNoz SSE/streaming through protectedVHost** | SigNoz uses SSE for live log tailing. Caddy's reverse_proxy handles SSE by default, but `protectedVHost` adds `forward_auth` for external requests. SSE + forward_auth could have issues (auth check on long-lived connection). Not tested. LAN bypass means SSE works for LAN users regardless. |
-| **Gatus config update for SigNoz** | The Gatus health check for SigNoz was NOT reviewed. If it was previously probing through the unconditional forward-auth path (which returned 500), it may have been configured with `[STATUS] < 400` or similar workaround. Post-protectedVHost, Gatus probes from localhost → LAN bypass → direct access → should work cleanly. But the Gatus config was not inspected to confirm. |
-| **Commit message quality on empty commit** | Commit `ab6b346c` has an EMPTY message — it contains the caddy.nix + signoz.nix protectedVHost changes. The auto-git daemon committed it without a message. This is a git history quality issue. |
+| Item                                            | Why it matters                                                                                                                                                                                                                                                                                                                                                                      |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **External forward-auth path test**             | The VM test verifies the LAN bypass works, but does NOT verify that external requests are correctly forwarded to oauth2-proxy and redirected on 401. The mock oauth2-proxy returns 401, but no test sends a request with a non-LAN source IP to verify the redirect. This is a gap in the test coverage.                                                                            |
+| **SigNoz SSE/streaming through protectedVHost** | SigNoz uses SSE for live log tailing. Caddy's reverse_proxy handles SSE by default, but `protectedVHost` adds `forward_auth` for external requests. SSE + forward_auth could have issues (auth check on long-lived connection). Not tested. LAN bypass means SSE works for LAN users regardless.                                                                                    |
+| **Gatus config update for SigNoz**              | The Gatus health check for SigNoz was NOT reviewed. If it was previously probing through the unconditional forward-auth path (which returned 500), it may have been configured with `[STATUS] < 400` or similar workaround. Post-protectedVHost, Gatus probes from localhost → LAN bypass → direct access → should work cleanly. But the Gatus config was not inspected to confirm. |
+| **Commit message quality on empty commit**      | Commit `ab6b346c` has an EMPTY message — it contains the caddy.nix + signoz.nix protectedVHost changes. The auto-git daemon committed it without a message. This is a git history quality issue.                                                                                                                                                                                    |
 
 ## d) TOTALLY FUCKED UP
 
-| Item | What went wrong | Impact |
-|---|---|---|
-| **Empty commit message (`ab6b346c`)** | The auto-git daemon committed the caddy.nix protectedVHost change with an empty commit message. This is unprofessional and makes git history harder to navigate. | Low technical impact, high hygiene impact. Can't be fixed without history rewrite (which is banned by project rules — never `git reset`). |
+| Item                                               | What went wrong                                                                                                                                                                                                                                                                                         | Impact                                                                                                                                                                                                      |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Empty commit message (`ab6b346c`)**              | The auto-git daemon committed the caddy.nix protectedVHost change with an empty commit message. This is unprofessional and makes git history harder to navigate.                                                                                                                                        | Low technical impact, high hygiene impact. Can't be fixed without history rewrite (which is banned by project rules — never `git reset`).                                                                   |
 | **Previous session's wrong approach (`edc653d4`)** | The previous session switched SigNoz to a completely open no-auth plain proxy. This left SigNoz (running in root-admin impersonation mode) with zero auth protection if port 443 was forwarded. This session corrected it to `protectedVHost`, but the bad commit is still in history and WAS deployed. | The window of exposure was real but short (hours). If port 443 is not forwarded to the internet (LAN-only), impact was zero. But the approach was wrong — should have been `protectedVHost` from the start. |
-| **Two test iterations needed for basic issues** | The `--adapter caddyfile` flag and the `localhost` → `127.0.0.1` issue are both basic Caddy/networking fundamentals. A more careful initial test would have caught both on the first run. | Wasted build cycles. Each VM test build takes ~30-60s. Two unnecessary iterations. |
+| **Two test iterations needed for basic issues**    | The `--adapter caddyfile` flag and the `localhost` → `127.0.0.1` issue are both basic Caddy/networking fundamentals. A more careful initial test would have caught both on the first run.                                                                                                               | Wasted build cycles. Each VM test build takes ~30-60s. Two unnecessary iterations.                                                                                                                          |
 
 ## e) WHAT WE SHOULD IMPROVE
 

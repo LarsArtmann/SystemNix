@@ -8,19 +8,19 @@
 
 ## Session Summary
 
-| What | Result |
-|------|--------|
-| VERIFY completed | bank-sync re-enabled live (`e3995077`), CHANGELOG/FEATURES/ROADMAP gaps confirmed against code/config |
-| TODO_LIST.md | 12 items harvested (P1×3, P2×1, P3×8), 9 deleted (7 done `[x]` + 2 stale), header rewritten, 4 paths fixed |
-| CHANGELOG.md | 2 missing `[Unreleased]` entries added (Gatus OSS websites ×20 — Added; llama-server ROCm session-vars 136-day fix — Fixed) |
-| FEATURES.md | 4 new rows (PapDashboard, bank-sync, google-sync, FastFlowLM as-built), session-boot-audit row, Gatus endpoint count, llama.cpp GPU note |
-| ROADMAP.md | `services.rocm-gpu` shared module + OTel-instrumentation theme added; stale NPU "hand-started" claim fixed |
-| ANNOTATE | **31 reports annotated, ~240 item-level verdicts** (inline `~~…~~ done at \`hash\`` / `done (evidence)` / Won't-implement), evidence gathered from `git log -S`, module greps, live system state — not report-trust |
-| ARCHIVE | **18 reports `git mv`'d to `docs/status/archived/`** (the 16 old-chain files whose 08-17 moves were blocked by index.lock + 02-36 + the signoz-vs-VM research snapshot) |
-| Side fixes | stale gotcha row (`/nix` subvolume — contradicted the completed migration), duplicate reserve TODO, stale smartd TODO, 1 broken research-doc link |
-| Quality gate | `nix flake check --no-build` — **all checks passed** |
-| Health report | printed inline (2-score Accuracy/Fitness) — see §d for the honest math critique |
-| Tree state | auto-commit daemon swept everything (`c1e32c8e` → `0308bc9c`); working tree clean at report time |
+| What             | Result                                                                                                                                                                                                          |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| VERIFY completed | bank-sync re-enabled live (`e3995077`), CHANGELOG/FEATURES/ROADMAP gaps confirmed against code/config                                                                                                           |
+| TODO_LIST.md     | 12 items harvested (P1×3, P2×1, P3×8), 9 deleted (7 done `[x]` + 2 stale), header rewritten, 4 paths fixed                                                                                                      |
+| CHANGELOG.md     | 2 missing `[Unreleased]` entries added (Gatus OSS websites ×20 — Added; llama-server ROCm session-vars 136-day fix — Fixed)                                                                                     |
+| FEATURES.md      | 4 new rows (PapDashboard, bank-sync, google-sync, FastFlowLM as-built), session-boot-audit row, Gatus endpoint count, llama.cpp GPU note                                                                        |
+| ROADMAP.md       | `services.rocm-gpu` shared module + OTel-instrumentation theme added; stale NPU "hand-started" claim fixed                                                                                                      |
+| ANNOTATE         | **31 reports annotated, ~240 item-level verdicts** (inline `~~…~~ done at \`hash\``/`done (evidence)`/ Won't-implement), evidence gathered from`git log -S`, module greps, live system state — not report-trust |
+| ARCHIVE          | **18 reports `git mv`'d to `docs/status/archived/`** (the 16 old-chain files whose 08-17 moves were blocked by index.lock + 02-36 + the signoz-vs-VM research snapshot)                                         |
+| Side fixes       | stale gotcha row (`/nix` subvolume — contradicted the completed migration), duplicate reserve TODO, stale smartd TODO, 1 broken research-doc link                                                               |
+| Quality gate     | `nix flake check --no-build` — **all checks passed**                                                                                                                                                            |
+| Health report    | printed inline (2-score Accuracy/Fitness) — see §d for the honest math critique                                                                                                                                 |
+| Tree state       | auto-commit daemon swept everything (`c1e32c8e` → `0308bc9c`); working tree clean at report time                                                                                                                |
 
 ---
 
@@ -50,7 +50,7 @@
 
 ## d) TOTALLY FUCKED UP! 🔴
 
-1. **Annotation-marker placement bug (16-37)** — first live run of the table annotator appended `done at \`hash\`` to the IMPACT column instead of the Task column (`struck[1]` vs `struck[0]`). Caught by output review, file restored via `git checkout --` (my own uncommitted edit only), script fixed, re-run clean. Root cause: no dry-run on a scratch copy before first mutation.
+1. **Annotation-marker placement bug (16-37)** — first live run of the table annotator appended `done at \`hash\``to the IMPACT column instead of the Task column (`struck[1]`vs`struck[0]`). Caught by output review, file restored via`git checkout --` (my own uncommitted edit only), script fixed, re-run clean. Root cause: no dry-run on a scratch copy before first mutation.
 2. **Garbled health-report math** — I printed "13 Medium × 0.5 = 6.5, floor-adjusted to 5.75 by grouping the 6 FEATURES gaps as 3 findings" — incoherent arithmetic dressed as precision. The skill demands visible honest math or qualitative honesty; I produced noise. Correct statement: as-found ≈ 6 Medium + 2 Low ≈ Accuracy ~6.5/10, Fitness ~7/10; post-fix ≈ 9.5 / 8.5 with the residuals named (AGENTS size, 11 appendix-only archives, presence-based pool claim).
 3. **Three stale-read edit failures** — my python heredocs mutated files behind the edit tool's back, then edit/multiedit refused (correctly). Worked around via python/sed — meaning ONE session used three different mutation mechanisms on the same files (edit tool, python scripts, sed -i), plus python SyntaxWarnings from sloppy heredoc escapes. Tooling hygiene fail; each workaround was a wasted round trip.
 4. **Hash-attribution looseness** — 13-33/13-38 items cited `34f33a51` (the SystemNix papdashboard module commit) broadly; upstream PapDashboard-repo work (lint fixes, specs) was annotated "done (prerequisite of the deployed input)" — honest — but the boundary between "shipped in SystemNix commit X" vs "shipped upstream, deployed via flake input" is applied inconsistently across files.
@@ -63,12 +63,13 @@
 2. **One mutation mechanism per file per session** — pick python OR the edit tool; mixing them invalidates staleness tracking and costs round trips.
 3. **Archive step checklist** — `git mv` + immediate repo-wide link grep + auto-fix, as one atomic scripted step.
 4. **Health-report template with strict arithmetic** — findings counted first, subtraction computed once, no narrative "adjustments".
-5. **Hash discipline rule** — `done at \`hash\`` only for work shipped in THAT repo; upstream work gets "done (upstream `<repo>`, deployed via `<flake-input>`)".
+5. **Hash discipline rule** — `done at \`hash\``only for work shipped in THAT repo; upstream work gets "done (upstream`<repo>`, deployed via`<flake-input>`)".
 6. **Evidence tier above `ls` for data-integrity items** — anything touching btrbk/pool state needs Received-UUID/journal evidence, not file presence.
 
 ## f) NEXT — up to 50 (impact-sorted, session residue only)
 
 **Correctness of THIS pass:**
+
 1. Verify `@.20260814T2300` Received UUID: `sudo btrfs subvolume show /mnt/pool/backups/root/@.20260814T2300` (user-run; confirms or refutes my "re-received cleanly" claim)
 2. Read last night's `btrfs-verify-pool-backups` journal (same validation, second source)
 3. Harvest 17-42 §F 6/9/49 → TODO items (visionreviewd/hermes `rocmEnv` audit; runtime llama-server verify)
@@ -120,4 +121,4 @@
 
 ---
 
-*Point-in-time snapshot. All ~240 annotations cite commit hashes or verification evidence gathered 2026-08-18 21:00–22:15. The auto-commit daemon will sweep this file; nothing here is user-blocked except §g.*
+_Point-in-time snapshot. All ~240 annotations cite commit hashes or verification evidence gathered 2026-08-18 21:00–22:15. The auto-commit daemon will sweep this file; nothing here is user-blocked except §g._

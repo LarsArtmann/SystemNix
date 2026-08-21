@@ -19,12 +19,12 @@ All code, data, DNS, TLS, OIDC, monitoring, health checks, and documentation mig
 
 ### Bugs Fixed This Session (4)
 
-| #   | Bug                                      | Root Cause                                                                                                                                   | Fix                                                           | Commit     |
-| --- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ---------- |
-| 1   | `WatchdogSec=30` kills Forgejo           | Forgejo sends READY=1 only, not WATCHDOG=1                                                                                                   | Removed WatchdogSec                                           | `b63ceca0` |
-| 2   | Health check checks dead `gitea` service | Script had 3 wrong names, missed 9 services                                                                                                  | Rewrote with 34 correct names                                 | `b22abfe7` |
-| 3   | Runner token never regenerated           | `[ -f "$TOKEN_FILE" ] && exit 0` skipped when stale file existed                                                                             | Removed short-circuit — always regenerate                     | `e0728ece` |
-| 4   | **Runner can't read token file**         | Token at `/var/lib/forgejo/.runner-token` owned by `forgejo:forgejo` mode 0600. Runner uses `DynamicUser=true` (random UID) — can't read it. | Write token to `/run/forgejo-runner-token` (tmpfs, mode 0644) | `7bbba62e` |
+| # | Bug                                      | Root Cause                                                                                                                                   | Fix                                                           | Commit     |
+| - | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ---------- |
+| 1 | `WatchdogSec=30` kills Forgejo           | Forgejo sends READY=1 only, not WATCHDOG=1                                                                                                   | Removed WatchdogSec                                           | `b63ceca0` |
+| 2 | Health check checks dead `gitea` service | Script had 3 wrong names, missed 9 services                                                                                                  | Rewrote with 34 correct names                                 | `b22abfe7` |
+| 3 | Runner token never regenerated           | `[ -f "$TOKEN_FILE" ] && exit 0` skipped when stale file existed                                                                             | Removed short-circuit — always regenerate                     | `e0728ece` |
+| 4 | **Runner can't read token file**         | Token at `/var/lib/forgejo/.runner-token` owned by `forgejo:forgejo` mode 0600. Runner uses `DynamicUser=true` (random UID) — can't read it. | Write token to `/run/forgejo-runner-token` (tmpfs, mode 0644) | `7bbba62e` |
 
 ### Project Infrastructure — All Healthy
 
@@ -53,15 +53,15 @@ All code, data, DNS, TLS, OIDC, monitoring, health checks, and documentation mig
 
 ## C) NOT STARTED ⏳
 
-| #   | Item                                                     | Priority |
-| --- | -------------------------------------------------------- | -------- |
-| 1   | Pi 3 hardware provisioning                               | MED      |
-| 2   | Forgejo federation testing                               | LOW      |
-| 3   | Extract hardcoded ports (voice-agents, signoz, homepage) | MED      |
-| 4   | `scripts/lib.sh` missing `set -euo pipefail`             | LOW      |
-| 5   | Archive old docs                                         | LOW      |
-| 6   | Post-switch health check automation                      | MED      |
-| 7   | `assets/avatar.png` 4.2MB in git                         | LOW      |
+| # | Item                                                     | Priority |
+| - | -------------------------------------------------------- | -------- |
+| 1 | Pi 3 hardware provisioning                               | MED      |
+| 2 | Forgejo federation testing                               | LOW      |
+| 3 | Extract hardcoded ports (voice-agents, signoz, homepage) | MED      |
+| 4 | `scripts/lib.sh` missing `set -euo pipefail`             | LOW      |
+| 5 | Archive old docs                                         | LOW      |
+| 6 | Post-switch health check automation                      | MED      |
+| 7 | `assets/avatar.png` 4.2MB in git                         | LOW      |
 
 ---
 
@@ -93,33 +93,33 @@ All code, data, DNS, TLS, OIDC, monitoring, health checks, and documentation mig
 
 ## F) TOP 25 THINGS TO DO NEXT 🎯
 
-| #   | Task                                                         | Impact   | Effort |
-| --- | ------------------------------------------------------------ | -------- | ------ |
-| 1   | **Deploy to evo-x2** (`just switch`)                         | CRITICAL | 1min   |
-| 2   | **Verify all services active**                               | HIGH     | 2min   |
-| 3   | **Test Forgejo web UI**                                      | HIGH     | 5min   |
-| 4   | **Verify runner connected**                                  | HIGH     | 1min   |
-| 5   | **Test push mirrors**                                        | HIGH     | 10min  |
-| 6   | **Remove old backup** `/var/lib/gitea.pre-forgejo-migration` | MED      | 1min   |
-| 7   | **Remove stale token** `/var/lib/forgejo/.runner-token`      | MED      | 1min   |
-| 8   | **Extract LiveKit port** to module option                    | MED      | 15min  |
-| 9   | **Extract hardcoded ports** in signoz.nix                    | MED      | 15min  |
-| 10  | **Extract hardcoded port** in homepage.nix                   | MED      | 5min   |
-| 11  | **Add post-switch health check** to justfile                 | MED      | 30min  |
-| 12  | **Archive migration doc**                                    | LOW      | 2min   |
-| 13  | **Add `set -euo pipefail`** to lib.sh                        | LOW      | 2min   |
-| 14  | **Fix unquoted variables** in usb-diagnostic.sh              | LOW      | 5min   |
-| 15  | **Compress avatar.png**                                      | LOW      | 5min   |
-| 16  | **Provision Pi 3**                                           | MED      | 2hr    |
-| 17  | **Archive old status docs**                                  | LOW      | 10min  |
-| 18  | **Add Forgejo backup verification**                          | MED      | 15min  |
-| 19  | **Test Forgejo federation**                                  | LOW      | 1hr    |
-| 20  | **Review Gatus endpoint coverage**                           | MED      | 15min  |
-| 21  | **Update AGENTS.md** — remove resolved gotchas               | LOW      | 10min  |
-| 22  | **Add repo count metric** to Gatus                           | LOW      | 15min  |
-| 23  | **Test dual-WAN failover**                                   | MED      | 20min  |
-| 24  | **Audit tmpfiles rules**                                     | LOW      | 15min  |
-| 25  | **Fix dead image link** in nix-visualize-integration.md      | LOW      | 5min   |
+| #  | Task                                                         | Impact   | Effort |
+| -- | ------------------------------------------------------------ | -------- | ------ |
+| 1  | **Deploy to evo-x2** (`just switch`)                         | CRITICAL | 1min   |
+| 2  | **Verify all services active**                               | HIGH     | 2min   |
+| 3  | **Test Forgejo web UI**                                      | HIGH     | 5min   |
+| 4  | **Verify runner connected**                                  | HIGH     | 1min   |
+| 5  | **Test push mirrors**                                        | HIGH     | 10min  |
+| 6  | **Remove old backup** `/var/lib/gitea.pre-forgejo-migration` | MED      | 1min   |
+| 7  | **Remove stale token** `/var/lib/forgejo/.runner-token`      | MED      | 1min   |
+| 8  | **Extract LiveKit port** to module option                    | MED      | 15min  |
+| 9  | **Extract hardcoded ports** in signoz.nix                    | MED      | 15min  |
+| 10 | **Extract hardcoded port** in homepage.nix                   | MED      | 5min   |
+| 11 | **Add post-switch health check** to justfile                 | MED      | 30min  |
+| 12 | **Archive migration doc**                                    | LOW      | 2min   |
+| 13 | **Add `set -euo pipefail`** to lib.sh                        | LOW      | 2min   |
+| 14 | **Fix unquoted variables** in usb-diagnostic.sh              | LOW      | 5min   |
+| 15 | **Compress avatar.png**                                      | LOW      | 5min   |
+| 16 | **Provision Pi 3**                                           | MED      | 2hr    |
+| 17 | **Archive old status docs**                                  | LOW      | 10min  |
+| 18 | **Add Forgejo backup verification**                          | MED      | 15min  |
+| 19 | **Test Forgejo federation**                                  | LOW      | 1hr    |
+| 20 | **Review Gatus endpoint coverage**                           | MED      | 15min  |
+| 21 | **Update AGENTS.md** — remove resolved gotchas               | LOW      | 10min  |
+| 22 | **Add repo count metric** to Gatus                           | LOW      | 15min  |
+| 23 | **Test dual-WAN failover**                                   | MED      | 20min  |
+| 24 | **Audit tmpfiles rules**                                     | LOW      | 15min  |
+| 25 | **Fix dead image link** in nix-visualize-integration.md      | LOW      | 5min   |
 
 ---
 

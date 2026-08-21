@@ -30,22 +30,22 @@
 
 Each task ≤12 min. Total estimated time: ~51 minutes.
 
-| #   | Task                                                                                      | Impact   | Effort | Status |
-| --- | ----------------------------------------------------------------------------------------- | -------- | ------ | ------ |
-| 1   | Create sops secrets file `platforms/nixos/secrets/openseo.yaml` with `DATAFORSEO_API_KEY` | Critical | 2min   | ☐      |
-| 2   | Register secrets in `sops.nix` — add `mkSecrets` + sops template `openseo-env`            | Critical | 5min   | ☐      |
-| 3   | Create `modules/nixos/services/openseo.nix` — full flake-parts module                     | Critical | 12min  | ☐      |
-| 4   | Add `openseo.nix` to `flake.nix` imports                                                  | Critical | 2min   | ☐      |
-| 5   | Add `inputs.self.nixosModules.openseo` to evo-x2 modules list in `flake.nix`              | Critical | 1min   | ☐      |
-| 6   | Enable `services.openseo.enable = true` in `configuration.nix`                            | Critical | 1min   | ☐      |
-| 7   | Add `seo.home.lan` virtual host in `caddy.nix` with forward auth                          | High     | 3min   | ☐      |
-| 8   | Add OpenSEO endpoint to `gatus-config.nix` monitoring                                     | Medium   | 2min   | ☐      |
-| 9   | Add OpenSEO to Homepage dashboard in `homepage.nix`                                       | Medium   | 3min   | ☐      |
-| 10  | Add OpenSEO docs to `AGENTS.md`                                                           | Medium   | 5min   | ☐      |
-| 11  | Add justfile recipes: `openseo-status`, `openseo-restart`, `openseo-logs`                 | Low      | 3min   | ☐      |
-| 12  | Run `just test-fast` to validate syntax                                                   | High     | 2min   | ☐      |
-| 13  | Run `just switch` — deploy and verify container starts + UI loads                         | High     | 5min   | ☐      |
-| 14  | Configure initial domains in OpenSEO UI for rank tracking                                 | High     | 5min   | ☐      |
+| #  | Task                                                                                      | Impact   | Effort | Status |
+| -- | ----------------------------------------------------------------------------------------- | -------- | ------ | ------ |
+| 1  | Create sops secrets file `platforms/nixos/secrets/openseo.yaml` with `DATAFORSEO_API_KEY` | Critical | 2min   | ☐      |
+| 2  | Register secrets in `sops.nix` — add `mkSecrets` + sops template `openseo-env`            | Critical | 5min   | ☐      |
+| 3  | Create `modules/nixos/services/openseo.nix` — full flake-parts module                     | Critical | 12min  | ☐      |
+| 4  | Add `openseo.nix` to `flake.nix` imports                                                  | Critical | 2min   | ☐      |
+| 5  | Add `inputs.self.nixosModules.openseo` to evo-x2 modules list in `flake.nix`              | Critical | 1min   | ☐      |
+| 6  | Enable `services.openseo.enable = true` in `configuration.nix`                            | Critical | 1min   | ☐      |
+| 7  | Add `seo.home.lan` virtual host in `caddy.nix` with forward auth                          | High     | 3min   | ☐      |
+| 8  | Add OpenSEO endpoint to `gatus-config.nix` monitoring                                     | Medium   | 2min   | ☐      |
+| 9  | Add OpenSEO to Homepage dashboard in `homepage.nix`                                       | Medium   | 3min   | ☐      |
+| 10 | Add OpenSEO docs to `AGENTS.md`                                                           | Medium   | 5min   | ☐      |
+| 11 | Add justfile recipes: `openseo-status`, `openseo-restart`, `openseo-logs`                 | Low      | 3min   | ☐      |
+| 12 | Run `just test-fast` to validate syntax                                                   | High     | 2min   | ☐      |
+| 13 | Run `just switch` — deploy and verify container starts + UI loads                         | High     | 5min   | ☐      |
+| 14 | Configure initial domains in OpenSEO UI for rank tracking                                 | High     | 5min   | ☐      |
 
 ---
 

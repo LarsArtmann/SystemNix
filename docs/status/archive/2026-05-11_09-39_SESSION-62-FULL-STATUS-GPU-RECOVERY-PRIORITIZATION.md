@@ -29,7 +29,7 @@ SystemNix is in a **degraded state** following a GPU memory exhaustion event ~13
 | **GPU VRAM**        | 73 GiB total                   | 🔴 WEDGED — driver state broken since 20:29 yesterday |
 | **Root disk**       | 462G / 512G (93%)              | 🔴 Critical — 50G free, Nix store is massive          |
 | **/data disk**      | 687G / 1.0T (68%)              | ✅ Healthy                                            |
-| **Load**            | 3.83 / 8.31 / 18.66 (falling)  | ⚠️ Elevated — settling from GPU chaos                 |
+| **Load**            | 3.83 / 8.31 / 18.66 (falling)  | ⚠️ Elevated — settling from GPU chaos                  |
 | **Niri**            | Restart count 638+             | 🔴 CRASH LOOP — killed every ~67s by DRM healthcheck  |
 | **Display (DP-2)**  | connected, disabled, dpms: Off | 🔴 NO OUTPUT — monitor sleeping                       |
 | **Docker**          | 11 containers running          | ✅ All healthy                                        |
@@ -141,49 +141,49 @@ SystemNix is in a **degraded state** following a GPU memory exhaustion event ~13
 
 ## b) PARTIALLY DONE ⚠️
 
-| #   | Item                      | Status | Details                                                                                                                                                      |
-| --- | ------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | **GPU crash resilience**  | 60%    | Per-service fractions done. But: no cgroup-based GPU priority for niri, DRM healthcheck causes crash loops instead of recovery, no auto-reboot on wedged GPU |
-| 2   | **DNS failover cluster**  | 40%    | Module written, config ready. Pi 3 hardware not provisioned. Keepalived VRRP untested.                                                                       |
-| 3   | **earlyoom config**       | 70%    | niri in `--avoid` list, Ollama in `--prefer` list. But OOMScoreAdjust for niri is -900 (should be -1000), ollama has no OOMScoreAdjust override              |
-| 4   | **Boot performance**      | 50%    | Analyzed, documented. No real optimization done. evo-x2 still boots slow.                                                                                    |
-| 5   | **Nix store cleanup**     | 30%    | `just clean` exists but root disk is 93% full (462G/512G). Auto-GC configured but store keeps growing.                                                       |
-| 6   | **Deer Flow integration** | 20%    | Running in Docker but no NixOS module, no Caddy vhost, no sops secrets. Completely manual.                                                                   |
-| 7   | **Module test coverage**  | 10%    | `just test-fast` checks Nix syntax only. No VM tests, no service start validation, no integration tests.                                                     |
-| 8   | **MPTCP dual-WAN**        | 50%    | Module written and enabled. WiFi works. But untested with actual second WAN — no real failover validation.                                                   |
-| 9   | **Photomap**              | 30%    | Module exists but disabled (podman config permission issue). Not behind Caddy.                                                                               |
+| # | Item                      | Status | Details                                                                                                                                                      |
+| - | ------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1 | **GPU crash resilience**  | 60%    | Per-service fractions done. But: no cgroup-based GPU priority for niri, DRM healthcheck causes crash loops instead of recovery, no auto-reboot on wedged GPU |
+| 2 | **DNS failover cluster**  | 40%    | Module written, config ready. Pi 3 hardware not provisioned. Keepalived VRRP untested.                                                                       |
+| 3 | **earlyoom config**       | 70%    | niri in `--avoid` list, Ollama in `--prefer` list. But OOMScoreAdjust for niri is -900 (should be -1000), ollama has no OOMScoreAdjust override              |
+| 4 | **Boot performance**      | 50%    | Analyzed, documented. No real optimization done. evo-x2 still boots slow.                                                                                    |
+| 5 | **Nix store cleanup**     | 30%    | `just clean` exists but root disk is 93% full (462G/512G). Auto-GC configured but store keeps growing.                                                       |
+| 6 | **Deer Flow integration** | 20%    | Running in Docker but no NixOS module, no Caddy vhost, no sops secrets. Completely manual.                                                                   |
+| 7 | **Module test coverage**  | 10%    | `just test-fast` checks Nix syntax only. No VM tests, no service start validation, no integration tests.                                                     |
+| 8 | **MPTCP dual-WAN**        | 50%    | Module written and enabled. WiFi works. But untested with actual second WAN — no real failover validation.                                                   |
+| 9 | **Photomap**              | 30%    | Module exists but disabled (podman config permission issue). Not behind Caddy.                                                                               |
 
 ---
 
 ## c) NOT STARTED 📋
 
-| #   | Item                                                                                                      | Impact   | Effort |
-| --- | --------------------------------------------------------------------------------------------------------- | -------- | ------ |
-| 1   | **niri GPU cgroup priority** — Guarantee compositor gets GPU time over AI workloads                       | Critical | Medium |
-| 2   | **Auto-reboot on GPU wedge** — Detect amdgpu stuck state, reboot automatically                            | High     | Low    |
-| 3   | **NixOS VM tests** — Test that services actually start, ports bind, caddy routes work                     | High     | High   |
-| 4   | **Features.md / TODO_LIST.md** — No formal feature inventory exists                                       | Medium   | Low    |
-| 5   | **Secrets rotation** — No automated key rotation for sops, SSH, or service tokens                         | Medium   | Medium |
-| 6   | **Backup automation** — No automated backup for Gitea, Immich DB, or config state                         | Medium   | Medium |
-| 7   | **Pi 3 provisioning** — Hardware exists, no SD image built or deployed                                    | Medium   | Low    |
-| 8   | **IPv6 proper support** — Currently disabled everywhere (Unbound, DNS). Should be fixed properly.         | Low      | Medium |
-| 9   | **Darwin full parity** — macOS lacks many NixOS-specific services/config                                  | Low      | High   |
-| 10  | **docs/ cleanup** — 60+ top-level docs files, many outdated. Should archive.                              | Low      | Low    |
-| 11  | **Pre-commit hooks** — `pre-commit-run` exists but no validation of shell scripts or Nix formatting in CI | Low      | Low    |
+| #  | Item                                                                                                      | Impact   | Effort |
+| -- | --------------------------------------------------------------------------------------------------------- | -------- | ------ |
+| 1  | **niri GPU cgroup priority** — Guarantee compositor gets GPU time over AI workloads                       | Critical | Medium |
+| 2  | **Auto-reboot on GPU wedge** — Detect amdgpu stuck state, reboot automatically                            | High     | Low    |
+| 3  | **NixOS VM tests** — Test that services actually start, ports bind, caddy routes work                     | High     | High   |
+| 4  | **Features.md / TODO_LIST.md** — No formal feature inventory exists                                       | Medium   | Low    |
+| 5  | **Secrets rotation** — No automated key rotation for sops, SSH, or service tokens                         | Medium   | Medium |
+| 6  | **Backup automation** — No automated backup for Gitea, Immich DB, or config state                         | Medium   | Medium |
+| 7  | **Pi 3 provisioning** — Hardware exists, no SD image built or deployed                                    | Medium   | Low    |
+| 8  | **IPv6 proper support** — Currently disabled everywhere (Unbound, DNS). Should be fixed properly.         | Low      | Medium |
+| 9  | **Darwin full parity** — macOS lacks many NixOS-specific services/config                                  | Low      | High   |
+| 10 | **docs/ cleanup** — 60+ top-level docs files, many outdated. Should archive.                              | Low      | Low    |
+| 11 | **Pre-commit hooks** — `pre-commit-run` exists but no validation of shell scripts or Nix formatting in CI | Low      | Low    |
 
 ---
 
 ## d) TOTALLY FUCKED UP 💥
 
-| #   | Issue                                     | Severity | Root Cause                                                                                                                                                                                                                                 |
-| --- | ----------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | **🔴 GPU DRIVER WEDGED**                  | Critical | amdgpu OOM at 20:29 yesterday. Driver stuck in broken state. Niri SIGKILL'd 638 times. Monitor gets NO signal. **Requires reboot.**                                                                                                        |
-| 2   | **🔴 Root disk 93% full**                 | Critical | 462G/512G used. Only 37G free. Nix store is massive. Risk of build failures and system instability.                                                                                                                                        |
-| 3   | **🔴 DRM healthcheck makes things worse** | High     | `niri-drm-healthcheck.timer` runs every 60s, SIGKILLs niri when GPU is wedged → restart loop. Should detect "GPU truly wedged" and trigger reboot instead of kill loop.                                                                    |
-| 4   | **🔴 No GPU priority for niri**           | Critical | When Ollama/ComfyUI eat GPU memory, niri starves. AMD iGPU has no MPS-style scheduling. Only mitigation is memory fractions, which aren't enough when driver state corrupts.                                                               |
-| 5   | **⚠️ Ollama has no OOMScoreAdjust**       | Medium   | Ollama's `MemoryMax = "32G"` limits RAM but not GPU VRAM. No `OOMScoreAdjust = 500` to make it first to die. earlyoom prefers it (`--prefer`), but kernel OOM won't distinguish.                                                           |
-| 6   | **⚠️ Ollama still has MemoryMax=32G**     | Medium   | The per-runner `per_process_memory_fraction:0.45` caps GPU at ~33G. But systemd `MemoryMax=32G` caps system RAM. Two runners × 33G GPU + 32G RAM = 130G demand on a 73G GPU / 64G RAM machine. The `MemoryMax` should be lower or dynamic. |
-| 7   | **⚠️ load average peaked at 33.70**       | Medium   | System was under extreme load from niri restart storm. 19 user sessions active. Should auto-remediate.                                                                                                                                     |
+| # | Issue                                     | Severity | Root Cause                                                                                                                                                                                                                                 |
+| - | ----------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1 | **🔴 GPU DRIVER WEDGED**                  | Critical | amdgpu OOM at 20:29 yesterday. Driver stuck in broken state. Niri SIGKILL'd 638 times. Monitor gets NO signal. **Requires reboot.**                                                                                                        |
+| 2 | **🔴 Root disk 93% full**                 | Critical | 462G/512G used. Only 37G free. Nix store is massive. Risk of build failures and system instability.                                                                                                                                        |
+| 3 | **🔴 DRM healthcheck makes things worse** | High     | `niri-drm-healthcheck.timer` runs every 60s, SIGKILLs niri when GPU is wedged → restart loop. Should detect "GPU truly wedged" and trigger reboot instead of kill loop.                                                                    |
+| 4 | **🔴 No GPU priority for niri**           | Critical | When Ollama/ComfyUI eat GPU memory, niri starves. AMD iGPU has no MPS-style scheduling. Only mitigation is memory fractions, which aren't enough when driver state corrupts.                                                               |
+| 5 | **⚠️ Ollama has no OOMScoreAdjust**        | Medium   | Ollama's `MemoryMax = "32G"` limits RAM but not GPU VRAM. No `OOMScoreAdjust = 500` to make it first to die. earlyoom prefers it (`--prefer`), but kernel OOM won't distinguish.                                                           |
+| 6 | **⚠️ Ollama still has MemoryMax=32G**      | Medium   | The per-runner `per_process_memory_fraction:0.45` caps GPU at ~33G. But systemd `MemoryMax=32G` caps system RAM. Two runners × 33G GPU + 32G RAM = 130G demand on a 73G GPU / 64G RAM machine. The `MemoryMax` should be lower or dynamic. |
+| 7 | **⚠️ load average peaked at 33.70**        | Medium   | System was under extreme load from niri restart storm. 19 user sessions active. Should auto-remediate.                                                                                                                                     |
 
 ---
 
@@ -223,53 +223,53 @@ SystemNix is in a **degraded state** following a GPU memory exhaustion event ~13
 
 ### Tier 1: Stop the Bleeding (do NOW)
 
-| #   | Task                                                                                   | Effort | Impact                                             |
-| --- | -------------------------------------------------------------------------------------- | ------ | -------------------------------------------------- |
-| 1   | **Reboot evo-x2** to fix wedged amdgpu driver                                          | 5min   | Critical — restores desktop                        |
-| 2   | **Raise niri OOMScoreAdjust to -1000** in niri-config.nix                              | 2min   | Critical — kernel OOM spares compositor            |
-| 3   | **Add OOMScoreAdjust=500 to Ollama** in ai-stack.nix                                   | 2min   | Critical — Ollama dies first under memory pressure |
-| 4   | **Fix DRM healthcheck** to detect wedged GPU → reboot instead of SIGKILL loop          | 30min  | High — prevents 638-restart crash cascades         |
-| 5   | **Nix store cleanup** — `nix-collect-garbage -d`, remove old generations, clean Docker | 15min  | High — root at 93% is dangerous                    |
+| # | Task                                                                                   | Effort | Impact                                             |
+| - | -------------------------------------------------------------------------------------- | ------ | -------------------------------------------------- |
+| 1 | **Reboot evo-x2** to fix wedged amdgpu driver                                          | 5min   | Critical — restores desktop                        |
+| 2 | **Raise niri OOMScoreAdjust to -1000** in niri-config.nix                              | 2min   | Critical — kernel OOM spares compositor            |
+| 3 | **Add OOMScoreAdjust=500 to Ollama** in ai-stack.nix                                   | 2min   | Critical — Ollama dies first under memory pressure |
+| 4 | **Fix DRM healthcheck** to detect wedged GPU → reboot instead of SIGKILL loop          | 30min  | High — prevents 638-restart crash cascades         |
+| 5 | **Nix store cleanup** — `nix-collect-garbage -d`, remove old generations, clean Docker | 15min  | High — root at 93% is dangerous                    |
 
 ### Tier 2: Hardening (do this session)
 
-| #   | Task                                                                                    | Effort | Impact                                      |
-| --- | --------------------------------------------------------------------------------------- | ------ | ------------------------------------------- |
-| 6   | **Add auto-reboot on GPU hang** to gpu-recovery.sh                                      | 30min  | High — prevents manual intervention         |
-| 7   | **Review Ollama MemoryMax** — lower to 24G or add per-runner RAM accounting             | 15min  | High — prevents RAM+GPU double exhaustion   |
-| 8   | **Add earlyoom memory threshold for GPU** — if amdgpu reports errors, kill Ollama first | 20min  | Medium — proactive defense                  |
-| 9   | **Limit Ollama concurrent models** — set `OLLAMA_MAX_LOADED_MODELS=1`                   | 2min   | High — prevents dual-runner OOM permanently |
+| # | Task                                                                                    | Effort | Impact                                      |
+| - | --------------------------------------------------------------------------------------- | ------ | ------------------------------------------- |
+| 6 | **Add auto-reboot on GPU hang** to gpu-recovery.sh                                      | 30min  | High — prevents manual intervention         |
+| 7 | **Review Ollama MemoryMax** — lower to 24G or add per-runner RAM accounting             | 15min  | High — prevents RAM+GPU double exhaustion   |
+| 8 | **Add earlyoom memory threshold for GPU** — if amdgpu reports errors, kill Ollama first | 20min  | Medium — proactive defense                  |
+| 9 | **Limit Ollama concurrent models** — set `OLLAMA_MAX_LOADED_MODELS=1`                   | 2min   | High — prevents dual-runner OOM permanently |
 
 ### Tier 3: Infrastructure (do this week)
 
-| #   | Task                                                                              | Effort | Impact                          |
-| --- | --------------------------------------------------------------------------------- | ------ | ------------------------------- |
-| 10  | **Pi 3 DNS failover deployment** — build image, flash, test VRRP                  | 2hr    | High — DNS HA                   |
-| 11  | **Backup automation** — Gitea repos, Immich DB, sops keys via scheduled-tasks.nix | 2hr    | High — disaster recovery        |
-| 12  | **docs/ cleanup** — archive 60+ stale docs, keep active references only           | 1hr    | Medium — reduces noise          |
-| 13  | **NixOS VM test for caddy** — verify reverse proxy routes work at build time      | 2hr    | Medium — catches config errors  |
-| 14  | **Deer Flow NixOS module** — wrap Docker compose in flake-parts module            | 1hr    | Medium — declarative management |
+| #  | Task                                                                              | Effort | Impact                          |
+| -- | --------------------------------------------------------------------------------- | ------ | ------------------------------- |
+| 10 | **Pi 3 DNS failover deployment** — build image, flash, test VRRP                  | 2hr    | High — DNS HA                   |
+| 11 | **Backup automation** — Gitea repos, Immich DB, sops keys via scheduled-tasks.nix | 2hr    | High — disaster recovery        |
+| 12 | **docs/ cleanup** — archive 60+ stale docs, keep active references only           | 1hr    | Medium — reduces noise          |
+| 13 | **NixOS VM test for caddy** — verify reverse proxy routes work at build time      | 2hr    | Medium — catches config errors  |
+| 14 | **Deer Flow NixOS module** — wrap Docker compose in flake-parts module            | 1hr    | Medium — declarative management |
 
 ### Tier 4: Quality (do this month)
 
-| #   | Task                                                                       | Effort | Impact                     |
-| --- | -------------------------------------------------------------------------- | ------ | -------------------------- |
-| 15  | **Photomap fix and re-enable** — resolve podman permissions                | 1hr    | Medium — photo exploration |
-| 16  | **Secrets rotation automation** — sops key rotation, service token refresh | 3hr    | Medium — security hygiene  |
-| 17  | **Create FEATURES.md** — formal feature inventory with status indicators   | 1hr    | Medium — project tracking  |
-| 18  | **Reduce flake.nix to <400 lines** — extract input groups, module lists    | 2hr    | Medium — maintainability   |
-| 19  | **Add shellcheck to justfile** — `just validate-scripts` recipe            | 30min  | Low — catches script bugs  |
-| 20  | **IPv6 proper fix** — enable where needed, disable only where broken       | 2hr    | Low — network correctness  |
+| #  | Task                                                                       | Effort | Impact                     |
+| -- | -------------------------------------------------------------------------- | ------ | -------------------------- |
+| 15 | **Photomap fix and re-enable** — resolve podman permissions                | 1hr    | Medium — photo exploration |
+| 16 | **Secrets rotation automation** — sops key rotation, service token refresh | 3hr    | Medium — security hygiene  |
+| 17 | **Create FEATURES.md** — formal feature inventory with status indicators   | 1hr    | Medium — project tracking  |
+| 18 | **Reduce flake.nix to <400 lines** — extract input groups, module lists    | 2hr    | Medium — maintainability   |
+| 19 | **Add shellcheck to justfile** — `just validate-scripts` recipe            | 30min  | Low — catches script bugs  |
+| 20 | **IPv6 proper fix** — enable where needed, disable only where broken       | 2hr    | Low — network correctness  |
 
 ### Tier 5: Nice to Have
 
-| #   | Task                                                                                   | Effort | Impact                           |
-| --- | -------------------------------------------------------------------------------------- | ------ | -------------------------------- |
-| 21  | **NixOS module template** — generate boilerplate for new services                      | 2hr    | Low — developer velocity         |
-| 22  | **Consolidate legacy/** — archive or properly integrate old dotfiles                   | 1hr    | Low — cleanliness                |
-| 23  | **Darwin parity** — bring macOS config closer to NixOS feature set                     | 4hr+   | Low — cross-platform consistency |
-| 24  | **Integrate shell tests into just test** — test-home-manager.sh, test-shell-aliases.sh | 30min  | Low — single validation command  |
-| 25  | **Monitor365 re-enable** — investigate RAM usage, optimize or tune thresholds          | 1hr    | Low — device monitoring          |
+| #  | Task                                                                                   | Effort | Impact                           |
+| -- | -------------------------------------------------------------------------------------- | ------ | -------------------------------- |
+| 21 | **NixOS module template** — generate boilerplate for new services                      | 2hr    | Low — developer velocity         |
+| 22 | **Consolidate legacy/** — archive or properly integrate old dotfiles                   | 1hr    | Low — cleanliness                |
+| 23 | **Darwin parity** — bring macOS config closer to NixOS feature set                     | 4hr+   | Low — cross-platform consistency |
+| 24 | **Integrate shell tests into just test** — test-home-manager.sh, test-shell-aliases.sh | 30min  | Low — single validation command  |
+| 25 | **Monitor365 re-enable** — investigate RAM usage, optimize or tune thresholds          | 1hr    | Low — device monitoring          |
 
 ---
 

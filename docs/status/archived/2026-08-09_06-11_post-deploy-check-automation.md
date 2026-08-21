@@ -17,23 +17,23 @@ The user had a **manual Deploy Verification Checklist** (11 items) that had to b
 
 **File:** `scripts/post-deploy-check.sh` — went from ~40 checks to ~53 checks.
 
-| Checklist Item | How Automated | Pattern Used |
-|---|---|---|
-| Pocket ID journal scan | `journalctl -u pocket-id --since -30min` → file → grep `SQLITE_BUSY\|panic` | File-based grep (avoids pipefail SIGPIPE) |
-| SearXNG functional search | `curl /search?q=test` → file → grep `article\|result-default` | File-based grep |
-| Attic cache | `check_local 8200 / 200` | Existing `check_local()` helper |
-| Browser History liveness | `check_local 8087 / 200` | Existing `check_local()` helper |
-| Browser History agent timer | `systemctl is-active browser-history-agent.timer` | New `report_pass/fail` helpers |
-| Monitor365 watchdog timer | `systemctl is-active monitor365-server-watchdog.timer` | New `report_pass/fail` helpers |
-| DNS resolution | `getent hosts dash.$DOMAIN` | New `report_pass/fail` helpers |
-| DNS memory | `systemctl show -p MemoryCurrent dnsblockd` (<2G threshold) | New `report_pass/fail` helpers |
-| BTRFS commit=300 | `grep commit=300 /proc/mounts` | New `report_pass/fail` helpers |
-| BTRFS fstrim timer | `systemctl is-enabled fstrim.timer` | New `report_pass/fail` helpers |
-| Registry state | `nix registry list \| grep nixpkgs` (tarball regression guard) | New `report_pass/fail` helpers |
-| Shell startup timing | `date +%s%N` around `fish -i -c exit` (200ms threshold) | New `report_pass/fail` helpers |
-| Shell direnv lib | Check `~/.config/direnv/lib/zz-smart-nix.sh` exists | New `report_pass/fail` helpers |
-| Desktop DMS wallpaper IPC | `dms ipc call wallpaper get` | New `report_pass/fail` helpers |
-| Desktop quickshell journal | `journalctl --user -u quickshell --since -1hour -p err` | New `report_pass/fail` helpers |
+| Checklist Item              | How Automated                                                               | Pattern Used                              |
+| --------------------------- | --------------------------------------------------------------------------- | ----------------------------------------- |
+| Pocket ID journal scan      | `journalctl -u pocket-id --since -30min` → file → grep `SQLITE_BUSY\|panic` | File-based grep (avoids pipefail SIGPIPE) |
+| SearXNG functional search   | `curl /search?q=test` → file → grep `article\|result-default`               | File-based grep                           |
+| Attic cache                 | `check_local 8200 / 200`                                                    | Existing `check_local()` helper           |
+| Browser History liveness    | `check_local 8087 / 200`                                                    | Existing `check_local()` helper           |
+| Browser History agent timer | `systemctl is-active browser-history-agent.timer`                           | New `report_pass/fail` helpers            |
+| Monitor365 watchdog timer   | `systemctl is-active monitor365-server-watchdog.timer`                      | New `report_pass/fail` helpers            |
+| DNS resolution              | `getent hosts dash.$DOMAIN`                                                 | New `report_pass/fail` helpers            |
+| DNS memory                  | `systemctl show -p MemoryCurrent dnsblockd` (<2G threshold)                 | New `report_pass/fail` helpers            |
+| BTRFS commit=300            | `grep commit=300 /proc/mounts`                                              | New `report_pass/fail` helpers            |
+| BTRFS fstrim timer          | `systemctl is-enabled fstrim.timer`                                         | New `report_pass/fail` helpers            |
+| Registry state              | `nix registry list \| grep nixpkgs` (tarball regression guard)              | New `report_pass/fail` helpers            |
+| Shell startup timing        | `date +%s%N` around `fish -i -c exit` (200ms threshold)                     | New `report_pass/fail` helpers            |
+| Shell direnv lib            | Check `~/.config/direnv/lib/zz-smart-nix.sh` exists                         | New `report_pass/fail` helpers            |
+| Desktop DMS wallpaper IPC   | `dms ipc call wallpaper get`                                                | New `report_pass/fail` helpers            |
+| Desktop quickshell journal  | `journalctl --user -u quickshell --since -1hour -p err`                     | New `report_pass/fail` helpers            |
 
 ### 2. Added `report_pass/report_fail/report_skip/report_warn` helper functions
 
@@ -71,6 +71,7 @@ The new automation immediately proved its value by catching problems that were p
 **Root cause:** Line 32: `response=$(curl -s -o /tmp/.smoke-body -w "%{http_code}" --max-time 10 "$url" 2>/dev/null || echo "000")`
 
 When curl fails to connect (connection refused), it:
+
 1. Outputs `000` via `%{http_code}` format string
 2. Exits non-zero (connection failure)
 3. The `|| echo "000"` appends ANOTHER `000`
@@ -78,6 +79,7 @@ When curl fails to connect (connection refused), it:
 Result: `status` becomes `000000`, not `000`. The `if [ "$status" = "000" ]` check on line 35 **never matches**, so unreachable services produce `expected HTTP 200, got 000000` instead of the clean `$url unreachable` message.
 
 **Visible in this run:**
+
 - `Monitor365 API (localhost:3001) — expected HTTP 200, got 000000`
 - `Browser History (localhost:8087) — expected HTTP 200, got 000000`
 - Auth gateway vHosts returning `000000` (dozzle, monitor365, searx, crush, taskchampion)
@@ -88,16 +90,16 @@ Result: `status` becomes `000000`, not `000`. The `if [ "$status" = "000" ]` che
 
 The flake app declares `[ pkgs.curl pkgs.jq ]` but the script now also uses:
 
-| Binary | Nix package | Source |
-|---|---|---|
-| `systemctl` | `pkgs.systemd` | systemd state checks (timers, memory) |
-| `journalctl` | `pkgs.systemd` | journal scans (Pocket ID, quickshell) |
-| `getent` | `pkgs.glibc` | DNS resolution check |
-| `nix` | `pkgs.nix` | registry check |
-| `fish` | `pkgs.fish` | shell startup timing |
-| `date` | `pkgs.coreutils` | shell timing measurement |
-| `wc` | `pkgs.coreutils` | quickshell error line count |
-| `grep` | `pkgs.gnugrep` | all file-based greps |
+| Binary       | Nix package      | Source                                |
+| ------------ | ---------------- | ------------------------------------- |
+| `systemctl`  | `pkgs.systemd`   | systemd state checks (timers, memory) |
+| `journalctl` | `pkgs.systemd`   | journal scans (Pocket ID, quickshell) |
+| `getent`     | `pkgs.glibc`     | DNS resolution check                  |
+| `nix`        | `pkgs.nix`       | registry check                        |
+| `fish`       | `pkgs.fish`      | shell startup timing                  |
+| `date`       | `pkgs.coreutils` | shell timing measurement              |
+| `wc`         | `pkgs.coreutils` | quickshell error line count           |
+| `grep`       | `pkgs.gnugrep`   | all file-based greps                  |
 
 On NixOS these are all on the system PATH, so the script works when run via `nix run .#post-deploy-check` or directly. But `writeShellApplication` with explicit `runtimeInputs` exists for hermetic correctness — the script should declare every binary it uses. Missing declarations means the script silently depends on system PATH.
 
@@ -182,6 +184,7 @@ Lines 381-399 use a different pattern (`curl -o /dev/null -w "%{http_code}" ... 
 ## F) Up to 50 Things to Get Done Next
 
 #### Bugs Found This Session
+
 1. ~~**Fix `check()` double-`000` bug** — `|| echo "000"` → `|| true` on line 32~~ done at `5a798cb6`
 2. ~~**Fix auth gateway double-`000` bug** — same fix on line 381~~ done at `5a798cb6`
 3. **Investigate Pocket ID SQLITE_BUSY** — alarm lease renewal deadlock, possibly a 2.12.0 regression
@@ -190,6 +193,7 @@ Lines 381-399 use a different pattern (`curl -o /dev/null -w "%{http_code}" ... 
 6. **Investigate signoz.home.lan → 404** — auth gateway returning 404 instead of 200/302
 
 #### Improvements to post-deploy-check.sh
+
 7. ~~**Declare all runtimeInputs** — `systemd`, `glibc.bin`, `coreutils`, `gnugrep`, `findutils`~~ done at `5a798cb6`
 8. ~~**Run shellcheck on the script** — add to pre-commit hooks~~ done — shellcheck in pre-commit hook
 9. **Add shellcheck to CI** — `.github/workflows/nix-check.yml`
@@ -212,12 +216,14 @@ Lines 381-399 use a different pattern (`curl -o /dev/null -w "%{http_code}" ... 
 26. **Add Pocket ID metrics check** — `http://localhost:9464/metrics` (port 9464 in ports.nix)
 
 #### Documentation
+
 27. **Update AGENTS.md** — note Deploy Verification Checklist is fully automated
 28. **Delete or annotate the manual checklist** — prevent split-brain
 29. **Document the report_pass/fail/skip/warn helpers** — in the script header comment
 30. **Update deploy.sh comment** — reference the automated checks
 
 #### Issues From Prior Session (Still Open)
+
 31. **Add `dms` package to `dms-wallpaper-init` runtimeInputs** — `niri-wrapped.nix:88-91`
 32. **Analyze DMS `settings.json.bak`** — 22KB, 530 keys vs 19 declarative; identify user customizations
 33. **Decide extension auto-update vs version-pinning** — `minimum_version_only` option
@@ -225,6 +231,7 @@ Lines 381-399 use a different pattern (`curl -o /dev/null -w "%{http_code}" ... 
 35. **Deploy updated deploy.sh** — backup logic committed but not deployed
 
 #### Structural Improvements
+
 36. **Extract common check patterns** — a library file (`scripts/lib.sh` already exists, extend it)
 37. **Add JSON output mode** — `--json` flag for CI/machine consumption
 38. **Add per-section exit codes** — so deploy.sh can decide which failures are blocking

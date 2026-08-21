@@ -7,24 +7,23 @@
 
 ---
 
-
 ## a) FULLY DONE
 
-| #   | Task                                                      | Verification                                                                                                                                                                                                                                                                                                                                                                       | Commit                          |
-| --- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| 1   | **Flake check passed** (`nix flake check --no-build`)     | All modules evaluate, 0 errors                                                                                                                                                                                                                                                                                                                                                     | —                               |
-| 2   | **Homepage package built** with `enableLocalIcons = true` | 4276 icons bundled in `public/icons/`. All 25 service icon names verified to exist as `.png` files                                                                                                                                                                                                                                                                                 | —                               |
-| 3   | **Discordsync build blocker resolved**                    | `nix build` of discordsync derivation succeeded (exit 0). The blocker was transient — a concurrent commit (`61632637`) updated the vendorHash for go-cqrs-lite v4 migration                                                                                                                                                                                                        | —                               |
-| 4   | **Prior-session changes reviewed** for correctness        | boot.nix TTM pool 112→24 GiB (fixes GPUActive black hole), overlays/linux.nix Pocket ID v2.10.0 (Francis actor framework), pocket-id.nix TimeoutStartSec 180s — all sound, all committed                                                                                                                                                                                           | `ab8f291a`                      |
-| 5   | **Homepage polish: cputemp + network widgets**            | Added `cputemp = true; network = true;` to resources widget in homepage.nix:420-421                                                                                                                                                                                                                                                                                                | absorbed into concurrent commit |
-| 6   | **Homepage polish: target=\_self on Homepage tile**       | Homepage tile no longer opens itself in a new tab (homepage.nix:364)                                                                                                                                                                                                                                                                                                               | absorbed into concurrent commit |
-| 7   | **File Renamer icon verified**                            | `mdi-file-rename-outline` is a valid Material Design Icons reference rendered via react-icons — NOT from dashboard-icons pack, but homepage-dashboard supports both icon systems natively                                                                                                                                                                                          | —                               |
-| 8   | **`nix fmt` run**                                         | 26 files reformatted (mostly HTML docs + flake.lock). treefmt + alejandra + prettier                                                                                                                                                                                                                                                                                               | —                               |
-| 9   | **System deployed** via `nix run .#deploy`                | New generation `3rzspdbl8` active. Pre-deploy checks passed (12 passed, 3 warnings, 0 failures). `nh os switch` reported exit code 4 (two services failed to start during activation: monitor365-server, openseo — both pre-existing). The new generation IS active per `/run/current-system` symlink verification                                                                 | —                               |
-| 10  | **Icons verified live (no 404s)**                         | Python urllib test against `http://127.0.0.1:8082/icons/{name}.png` — all 6 sampled icons returned HTTP 200 `image/png`: pocket-id, blocky, openai, self-hosted-gateway, immich, homepage                                                                                                                                                                                          | —                               |
-| 11  | **Immich health check verified**                          | `http://127.0.0.1:2283/api/server/ping` returns HTTP 200 `{"res":"pong"}` — the new endpoint works. Status dot will be green                                                                                                                                                                                                                                                       | —                               |
-| 12  | **Post-deploy smoke test fixed and run**                  | Discovered ALL `check_local` calls in `scripts/post-deploy-check.sh` had empty string for port parameter — every local service check was hitting `http://localhost:` (no port) and failing. Added actual port numbers from `lib/ports.nix`. Also fixed Immich path from `/api/server-info/ping` → `/api/server/ping`. Result: **18 PASS, 2 FAIL, 2 SKIP** (was 14 FAIL before fix) | `a157e7b3`                      |
-| 13  | **Changes committed**                                     | My commit: `a157e7b3` (post-deploy-check.sh + flake.lock). Prior session's commit: `ab8f291a` (homepage + boot.nix + pocket-id + overlays). Concurrent commits: `1bb365f1` (flake input updates), `61632637` (discordsync vendorHash)                                                                                                                                              | `a157e7b3`                      |
+| #  | Task                                                      | Verification                                                                                                                                                                                                                                                                                                                                                                       | Commit                          |
+| -- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| 1  | **Flake check passed** (`nix flake check --no-build`)     | All modules evaluate, 0 errors                                                                                                                                                                                                                                                                                                                                                     | —                               |
+| 2  | **Homepage package built** with `enableLocalIcons = true` | 4276 icons bundled in `public/icons/`. All 25 service icon names verified to exist as `.png` files                                                                                                                                                                                                                                                                                 | —                               |
+| 3  | **Discordsync build blocker resolved**                    | `nix build` of discordsync derivation succeeded (exit 0). The blocker was transient — a concurrent commit (`61632637`) updated the vendorHash for go-cqrs-lite v4 migration                                                                                                                                                                                                        | —                               |
+| 4  | **Prior-session changes reviewed** for correctness        | boot.nix TTM pool 112→24 GiB (fixes GPUActive black hole), overlays/linux.nix Pocket ID v2.10.0 (Francis actor framework), pocket-id.nix TimeoutStartSec 180s — all sound, all committed                                                                                                                                                                                           | `ab8f291a`                      |
+| 5  | **Homepage polish: cputemp + network widgets**            | Added `cputemp = true; network = true;` to resources widget in homepage.nix:420-421                                                                                                                                                                                                                                                                                                | absorbed into concurrent commit |
+| 6  | **Homepage polish: target=\_self on Homepage tile**       | Homepage tile no longer opens itself in a new tab (homepage.nix:364)                                                                                                                                                                                                                                                                                                               | absorbed into concurrent commit |
+| 7  | **File Renamer icon verified**                            | `mdi-file-rename-outline` is a valid Material Design Icons reference rendered via react-icons — NOT from dashboard-icons pack, but homepage-dashboard supports both icon systems natively                                                                                                                                                                                          | —                               |
+| 8  | **`nix fmt` run**                                         | 26 files reformatted (mostly HTML docs + flake.lock). treefmt + alejandra + prettier                                                                                                                                                                                                                                                                                               | —                               |
+| 9  | **System deployed** via `nix run .#deploy`                | New generation `3rzspdbl8` active. Pre-deploy checks passed (12 passed, 3 warnings, 0 failures). `nh os switch` reported exit code 4 (two services failed to start during activation: monitor365-server, openseo — both pre-existing). The new generation IS active per `/run/current-system` symlink verification                                                                 | —                               |
+| 10 | **Icons verified live (no 404s)**                         | Python urllib test against `http://127.0.0.1:8082/icons/{name}.png` — all 6 sampled icons returned HTTP 200 `image/png`: pocket-id, blocky, openai, self-hosted-gateway, immich, homepage                                                                                                                                                                                          | —                               |
+| 11 | **Immich health check verified**                          | `http://127.0.0.1:2283/api/server/ping` returns HTTP 200 `{"res":"pong"}` — the new endpoint works. Status dot will be green                                                                                                                                                                                                                                                       | —                               |
+| 12 | **Post-deploy smoke test fixed and run**                  | Discovered ALL `check_local` calls in `scripts/post-deploy-check.sh` had empty string for port parameter — every local service check was hitting `http://localhost:` (no port) and failing. Added actual port numbers from `lib/ports.nix`. Also fixed Immich path from `/api/server-info/ping` → `/api/server/ping`. Result: **18 PASS, 2 FAIL, 2 SKIP** (was 14 FAIL before fix) | `a157e7b3`                      |
+| 13 | **Changes committed**                                     | My commit: `a157e7b3` (post-deploy-check.sh + flake.lock). Prior session's commit: `ab8f291a` (homepage + boot.nix + pocket-id + overlays). Concurrent commits: `1bb365f1` (flake input updates), `61632637` (discordsync vendorHash)                                                                                                                                              | `a157e7b3`                      |
 
 ### Post-Deploy Check Results (Final)
 
@@ -128,83 +127,83 @@ SKIP  DiscordSync stats (unexpected response)
 
 ### P0 — Critical fixes
 
-| #   | Task                                                                                                                       | Effort | Impact                                 |
-| --- | -------------------------------------------------------------------------------------------------------------------------- | ------ | -------------------------------------- |
-| 1   | **Pin monitor365 flake input** to revCount 2194 (known-good SQLite schema). The current 2228 has the `CREATE SEQUENCE` bug | 5 min  | Critical — service is down             |
-| 2   | **Investigate openseo failure** — read `journalctl -u openseo` and diagnose why it's failing                               | 10 min | High — service is down                 |
-| 3   | **Add AGENTS.md gotcha** for the post-deploy-check empty-port bug                                                          | 3 min  | Medium — prevents future confusion     |
-| 4   | **Verify DiscordSync health endpoint** — confirm `/api/stats` vs `/healthz` is correct                                     | 5 min  | Medium — post-deploy check reliability |
-| 5   | **Run `switch-to-configuration test`** to get per-unit activation errors for monitor365 + openseo                          | 5 min  | Medium — diagnostic clarity            |
+| # | Task                                                                                                                       | Effort | Impact                                 |
+| - | -------------------------------------------------------------------------------------------------------------------------- | ------ | -------------------------------------- |
+| 1 | **Pin monitor365 flake input** to revCount 2194 (known-good SQLite schema). The current 2228 has the `CREATE SEQUENCE` bug | 5 min  | Critical — service is down             |
+| 2 | **Investigate openseo failure** — read `journalctl -u openseo` and diagnose why it's failing                               | 10 min | High — service is down                 |
+| 3 | **Add AGENTS.md gotcha** for the post-deploy-check empty-port bug                                                          | 3 min  | Medium — prevents future confusion     |
+| 4 | **Verify DiscordSync health endpoint** — confirm `/api/stats` vs `/healthz` is correct                                     | 5 min  | Medium — post-deploy check reliability |
+| 5 | **Run `switch-to-configuration test`** to get per-unit activation errors for monitor365 + openseo                          | 5 min  | Medium — diagnostic clarity            |
 
 ### P1 — Homepage polish
 
-| #   | Task                                                                                                    | Effort | Impact                             |
-| --- | ------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------- |
-| 6   | **Add icon validation script** — grep icon names from homepage.nix, validate against icon pack          | 20 min | High — prevents 404 regressions    |
-| 7   | **Make `enableLocalIcons = true` the default** in the SystemNix homepage module (not per-call override) | 10 min | Medium — robustness                |
-| 8   | **Review Homepage `MemoryMax = 384M`** with 4276 bundled icons                                          | 5 min  | Low — may be fine                  |
-| 9   | **Add layout tabs** to reduce scrolling with 25+ services                                               | 15 min | Medium — UX                        |
-| 10  | **Audit remaining siteMonitor URLs** — Forgejo, Gatus, Dozzle, Taskwarrior endpoints may be stale       | 15 min | Medium — accuracy                  |
-| 11  | **Add PostgreSQL/Redis/Unbound status indicators** — they have no siteMonitor (HTTP-only limitation)    | 20 min | Low — homepage can't do TCP checks |
-| 12  | **Add bookmarks** — external links (GitHub, NixOS wiki, Grafana)                                        | 10 min | Low — UX                           |
-| 13  | **Tune column counts** per group — some have 2-3 tiles in a 4-column layout                             | 5 min  | Low — visual polish                |
-| 14  | **Consider `fiveColumns: true`** for wide displays                                                      | 2 min  | Low — visual                       |
-| 15  | **Add `cardBlur: md`** for visual polish                                                                | 2 min  | Low — visual                       |
-| 16  | **PWA configuration** — make dashboard installable on mobile                                            | 15 min | Low — convenience                  |
+| #  | Task                                                                                                    | Effort | Impact                             |
+| -- | ------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------- |
+| 6  | **Add icon validation script** — grep icon names from homepage.nix, validate against icon pack          | 20 min | High — prevents 404 regressions    |
+| 7  | **Make `enableLocalIcons = true` the default** in the SystemNix homepage module (not per-call override) | 10 min | Medium — robustness                |
+| 8  | **Review Homepage `MemoryMax = 384M`** with 4276 bundled icons                                          | 5 min  | Low — may be fine                  |
+| 9  | **Add layout tabs** to reduce scrolling with 25+ services                                               | 15 min | Medium — UX                        |
+| 10 | **Audit remaining siteMonitor URLs** — Forgejo, Gatus, Dozzle, Taskwarrior endpoints may be stale       | 15 min | Medium — accuracy                  |
+| 11 | **Add PostgreSQL/Redis/Unbound status indicators** — they have no siteMonitor (HTTP-only limitation)    | 20 min | Low — homepage can't do TCP checks |
+| 12 | **Add bookmarks** — external links (GitHub, NixOS wiki, Grafana)                                        | 10 min | Low — UX                           |
+| 13 | **Tune column counts** per group — some have 2-3 tiles in a 4-column layout                             | 5 min  | Low — visual polish                |
+| 14 | **Consider `fiveColumns: true`** for wide displays                                                      | 2 min  | Low — visual                       |
+| 15 | **Add `cardBlur: md`** for visual polish                                                                | 2 min  | Low — visual                       |
+| 16 | **PWA configuration** — make dashboard installable on mobile                                            | 15 min | Low — convenience                  |
 
 ### P2 — Post-deploy check improvements
 
-| #   | Task                                                                                                                     | Effort | Impact                          |
-| --- | ------------------------------------------------------------------------------------------------------------------------ | ------ | ------------------------------- |
-| 17  | **Make `check_local` FAIL on empty port** — add validation: `if [ -z "$port" ]; then echo "BUG: empty port"; exit 1; fi` | 3 min  | High — prevents silent failures |
-| 18  | **Add SigNoz local check** — currently only checked via impersonation mode probe, not a direct health endpoint           | 5 min  | Medium                          |
-| 19  | **Add DNS resolver check** — `dig @127.0.0.1 google.com` to verify unbound is working                                    | 3 min  | Medium                          |
-| 20  | **Add wildcard DNS check** — verify `*.home.lan` resolves (from prior session's DNS work)                                | 3 min  | Medium                          |
-| 21  | **Add BTRFS health check** — verify `btrfs-health.service` is active                                                     | 3 min  | Medium                          |
-| 22  | **Add Gatus config validation** — verify all monitored endpoints are reachable                                           | 10 min | Low                             |
-| 23  | **Add Caddy vHost count check** — compare expected vHosts vs configured                                                  | 10 min | Low                             |
-| 24  | **Add Docker container health check** — verify all containers are running                                                | 5 min  | Medium                          |
-| 25  | **Parameterize ports** — read from `lib/ports.nix` instead of hardcoding in the script                                   | 15 min | Medium — DRY                    |
+| #  | Task                                                                                                                     | Effort | Impact                          |
+| -- | ------------------------------------------------------------------------------------------------------------------------ | ------ | ------------------------------- |
+| 17 | **Make `check_local` FAIL on empty port** — add validation: `if [ -z "$port" ]; then echo "BUG: empty port"; exit 1; fi` | 3 min  | High — prevents silent failures |
+| 18 | **Add SigNoz local check** — currently only checked via impersonation mode probe, not a direct health endpoint           | 5 min  | Medium                          |
+| 19 | **Add DNS resolver check** — `dig @127.0.0.1 google.com` to verify unbound is working                                    | 3 min  | Medium                          |
+| 20 | **Add wildcard DNS check** — verify `*.home.lan` resolves (from prior session's DNS work)                                | 3 min  | Medium                          |
+| 21 | **Add BTRFS health check** — verify `btrfs-health.service` is active                                                     | 3 min  | Medium                          |
+| 22 | **Add Gatus config validation** — verify all monitored endpoints are reachable                                           | 10 min | Low                             |
+| 23 | **Add Caddy vHost count check** — compare expected vHosts vs configured                                                  | 10 min | Low                             |
+| 24 | **Add Docker container health check** — verify all containers are running                                                | 5 min  | Medium                          |
+| 25 | **Parameterize ports** — read from `lib/ports.nix` instead of hardcoding in the script                                   | 15 min | Medium — DRY                    |
 
 ### P3 — System health
 
-| #   | Task                                                                                                                   | Effort | Impact                            |
-| --- | ---------------------------------------------------------------------------------------------------------------------- | ------ | --------------------------------- |
-| 26  | **Verify GPUActive dropped** after TTM pool fix — check `/proc/meminfo` for `GPUActive:` value                         | 2 min  | High — validates the boot.nix fix |
-| 27  | **Verify Pocket ID stability** — confirm it's no longer crash-looping after v2.10.0 + TTM fix                          | 5 min  | High                              |
-| 28  | **Review disk space strategy** — 723 GB at 94% is chronic. Consider larger drive or aggressive GC                      | 30 min | High                              |
-| 29  | **Clean `/nix/var/nix/builds/`** — 18 stale sandboxes reported by pre-deploy check                                     | 5 min  | Low                               |
-| 30  | **Review BTRFS snapshot retention** — 14d+4w snapshots may be holding significant space                                | 10 min | Medium                            |
-| 31  | **Check journal vacuum** — 8 GiB of journals. Configure `systemd.journald.maxFileSec` or similar                       | 10 min | Medium                            |
-| 32  | **Add disk usage Gatus alert** — alert when disk > 90% (before the 95% hard threshold)                                 | 10 min | Medium                            |
-| 33  | **Consider moving Go cache to a separate partition** — `/home/lars/.cache/go-build` on a BTRFS subvolume with `nofail` | 20 min | Medium                            |
-| 34  | **Audit all MemoryMax values** — homepage 384M may need bumping with icons; monitor others                             | 15 min | Low                               |
-| 35  | **Verify oomd configuration** — confirm `MemoryHigh=56G; MemoryMax=64G` on user slice is effective                     | 5 min  | Medium                            |
+| #  | Task                                                                                                                   | Effort | Impact                            |
+| -- | ---------------------------------------------------------------------------------------------------------------------- | ------ | --------------------------------- |
+| 26 | **Verify GPUActive dropped** after TTM pool fix — check `/proc/meminfo` for `GPUActive:` value                         | 2 min  | High — validates the boot.nix fix |
+| 27 | **Verify Pocket ID stability** — confirm it's no longer crash-looping after v2.10.0 + TTM fix                          | 5 min  | High                              |
+| 28 | **Review disk space strategy** — 723 GB at 94% is chronic. Consider larger drive or aggressive GC                      | 30 min | High                              |
+| 29 | **Clean `/nix/var/nix/builds/`** — 18 stale sandboxes reported by pre-deploy check                                     | 5 min  | Low                               |
+| 30 | **Review BTRFS snapshot retention** — 14d+4w snapshots may be holding significant space                                | 10 min | Medium                            |
+| 31 | **Check journal vacuum** — 8 GiB of journals. Configure `systemd.journald.maxFileSec` or similar                       | 10 min | Medium                            |
+| 32 | **Add disk usage Gatus alert** — alert when disk > 90% (before the 95% hard threshold)                                 | 10 min | Medium                            |
+| 33 | **Consider moving Go cache to a separate partition** — `/home/lars/.cache/go-build` on a BTRFS subvolume with `nofail` | 20 min | Medium                            |
+| 34 | **Audit all MemoryMax values** — homepage 384M may need bumping with icons; monitor others                             | 15 min | Low                               |
+| 35 | **Verify oomd configuration** — confirm `MemoryHigh=56G; MemoryMax=64G` on user slice is effective                     | 5 min  | Medium                            |
 
 ### P4 — Code quality
 
-| #   | Task                                                                                                     | Effort | Impact |
-| --- | -------------------------------------------------------------------------------------------------------- | ------ | ------ |
-| 36  | **Extract `mkService` helper** from homepage.nix — it's inline, could be shared                          | 15 min | Low    |
-| 37  | **Add homepage integration test** — verify generated YAML has expected structure                         | 30 min | Low    |
-| 38  | **Scope treefmt to relevant directories** — stop reformatting all HTML docs on every `nix fmt`           | 10 min | Medium |
-| 39  | **Add concurrent-commit detection** — pre-commit hook that warns if HEAD changed since session start     | 20 min | Medium |
-| 40  | **Document icon naming conventions** in AGENTS.md — `.png` vs `mdi-` vs `si-` prefixes                   | 10 min | Low    |
-| 41  | **Add `enableLocalIcons` to SystemNix homepage module options** — make it configurable, default true     | 15 min | Medium |
-| 42  | **Review all `check_local` endpoints** in post-deploy-check for correctness                              | 15 min | Medium |
-| 43  | **Add CI step** that curls all siteMonitor URLs after deploy                                             | 30 min | Low    |
-| 44  | **Consider NixOS test** for homepage config generation                                                   | 45 min | Low    |
-| 45  | **Add deploy.sh improvement** — distinguish exit code 4 (some units failed) from real activation failure | 15 min | Medium |
+| #  | Task                                                                                                     | Effort | Impact |
+| -- | -------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 36 | **Extract `mkService` helper** from homepage.nix — it's inline, could be shared                          | 15 min | Low    |
+| 37 | **Add homepage integration test** — verify generated YAML has expected structure                         | 30 min | Low    |
+| 38 | **Scope treefmt to relevant directories** — stop reformatting all HTML docs on every `nix fmt`           | 10 min | Medium |
+| 39 | **Add concurrent-commit detection** — pre-commit hook that warns if HEAD changed since session start     | 20 min | Medium |
+| 40 | **Document icon naming conventions** in AGENTS.md — `.png` vs `mdi-` vs `si-` prefixes                   | 10 min | Low    |
+| 41 | **Add `enableLocalIcons` to SystemNix homepage module options** — make it configurable, default true     | 15 min | Medium |
+| 42 | **Review all `check_local` endpoints** in post-deploy-check for correctness                              | 15 min | Medium |
+| 43 | **Add CI step** that curls all siteMonitor URLs after deploy                                             | 30 min | Low    |
+| 44 | **Consider NixOS test** for homepage config generation                                                   | 45 min | Low    |
+| 45 | **Add deploy.sh improvement** — distinguish exit code 4 (some units failed) from real activation failure | 15 min | Medium |
 
 ### P5 — Documentation
 
-| #   | Task                                                                                             | Effort | Impact |
-| --- | ------------------------------------------------------------------------------------------------ | ------ | ------ |
-| 46  | **Update AGENTS.md** with post-deploy-check port bug gotcha                                      | 3 min  | Medium |
-| 47  | **Update FEATURES.md** with homepage dashboard current state                                     | 5 min  | Low    |
-| 48  | **Document the concurrent-agent risk** in AGENTS.md or CONTRIBUTING.md                           | 10 min | Medium |
-| 49  | **Review and update TODO_LIST.md** — remove completed items, add new ones from this session      | 10 min | Low    |
-| 50  | **Write a monitor365 pinning runbook** — document the exact revision and why, for future updates | 10 min | Medium |
+| #  | Task                                                                                             | Effort | Impact |
+| -- | ------------------------------------------------------------------------------------------------ | ------ | ------ |
+| 46 | **Update AGENTS.md** with post-deploy-check port bug gotcha                                      | 3 min  | Medium |
+| 47 | **Update FEATURES.md** with homepage dashboard current state                                     | 5 min  | Low    |
+| 48 | **Document the concurrent-agent risk** in AGENTS.md or CONTRIBUTING.md                           | 10 min | Medium |
+| 49 | **Review and update TODO_LIST.md** — remove completed items, add new ones from this session      | 10 min | Low    |
+| 50 | **Write a monitor365 pinning runbook** — document the exact revision and why, for future updates | 10 min | Medium |
 
 ---
 

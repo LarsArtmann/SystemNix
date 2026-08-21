@@ -123,11 +123,11 @@ System rebooted ~26 min ago following a GPU crash (amdgpu unbind during OOM pres
 
 | Metric              | Value                      | Status                |
 | ------------------- | -------------------------- | --------------------- |
-| **RAM used**        | 46Gi / 62Gi (74%)          | ⚠️ Heavy              |
+| **RAM used**        | 46Gi / 62Gi (74%)          | ⚠️ Heavy               |
 | **Swap used**       | 5.8Gi / 13Gi (45%)         | 🟡 Better than before |
 | **Load avg**        | 8.82 / 9.90 / 8.12         | 🟡 Moderate           |
 | **gopls instances** | 13 processes, ~6.6 GiB RSS | 🔴 Massive waste      |
-| **Disk**            | 90% (53G free / 512G)      | ⚠️ Needs attention    |
+| **Disk**            | 90% (53G free / 512G)      | ⚠️ Needs attention     |
 
 **13 gopls instances** are the single biggest memory waste. Each consumes 300-830 MB RSS. This is caused by having many Go projects open simultaneously in editors. This directly contributed to the OOM crash that triggered the GPU recovery incident.
 
@@ -170,33 +170,33 @@ After GC freed 7.5 GiB, disk crept back up from 88% → 90%. 53 GiB free but wit
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| #   | Priority | Task                                                                                          | Impact      | Effort |
-| --- | -------- | --------------------------------------------------------------------------------------------- | ----------- | ------ |
-| 1   | P0       | **Configure gopls memory limits** or close unused editor sessions — 6.6 GiB waste causing OOM | 🔴 Critical | Low    |
-| 2   | P0       | **Verify hermes firecrawl/edge-tts/fal/exa tools work at runtime** — import != functional     | High        | Medium |
-| 3   | P0       | **Configure secondary LLM provider** for hermes (OpenRouter/OpenAI fallback)                  | High        | Medium |
-| 4   | P1       | **Fix hermes git remote access** — SSH deploy key for sandbox                                 | Medium      | Medium |
-| 5   | P1       | **Fix hermes sudo access** — relax NoNewPrivileges or provide alternative                     | Medium      | Medium |
-| 6   | P1       | **Investigate initrd TPM timeout** — can it be disabled in BIOS? 1m 44s wasted                | High        | Low    |
-| 7   | P1       | **Add memory/swap alerting** to SigNoz or Gatus                                               | High        | Medium |
-| 8   | P1       | **Audit Docker container memory limits** — deer-flow-frontend at 1.4 GiB                      | Medium      | Low    |
-| 9   | P1       | **Disk growth monitoring** — 90% and climbing, set up automated alert                         | Medium      | Low    |
-| 10  | P2       | **Check SigNoz provision logs** — verify dashboards + rules created                           | Medium      | Low    |
-| 11  | P2       | **Test Discord alert channel**                                                                | Medium      | Low    |
-| 12  | P2       | **Verify Gatus endpoints** — status.home.lan healthy                                          | Medium      | Low    |
-| 13  | P2       | **Add SigNoz channel routing** (critical→Discord, warning→log)                                | Medium      | Medium |
-| 14  | P2       | **Consolidate voice-agents Caddy vHost** into caddy.nix pattern                               | Medium      | Low    |
-| 15  | P2       | **Deploy Dozzle** at logs.home.lan for Docker log tailing                                     | Medium      | Low    |
-| 16  | P2       | **Provision Pi 3** for DNS failover cluster                                                   | High        | High   |
-| 17  | P2       | **Wire Pi 3 as secondary DNS**                                                                | High        | Medium |
-| 18  | P3       | **Flake inputs audit** — 74 inputs, find stale ones                                           | Low         | Medium |
-| 19  | P3       | **nix-colors integration** — migrate 17+ hardcoded colors                                     | Low         | High   |
-| 20  | P3       | **Create `just status` command** for automated reports                                        | Low         | Low    |
-| 21  | P3       | **Convert go-auto-upgrade `path:` inputs to SSH URLs**                                        | Low         | Low    |
-| 22  | P3       | **Create shared flake-parts template** (mkGoPackage, checks, devshells)                       | Medium      | High   |
-| 23  | P3       | **`file-and-image-renamer`** — bump Go or find alternative                                    | Low         | Medium |
-| 24  | P4       | **Service startup parallelism** — reduce 1m 31s userspace time                                | Medium      | High   |
-| 25  | P4       | **Darwin config parity check** — ensure macOS config hasn't drifted                           | Low         | Medium |
+| #  | Priority | Task                                                                                          | Impact      | Effort |
+| -- | -------- | --------------------------------------------------------------------------------------------- | ----------- | ------ |
+| 1  | P0       | **Configure gopls memory limits** or close unused editor sessions — 6.6 GiB waste causing OOM | 🔴 Critical | Low    |
+| 2  | P0       | **Verify hermes firecrawl/edge-tts/fal/exa tools work at runtime** — import != functional     | High        | Medium |
+| 3  | P0       | **Configure secondary LLM provider** for hermes (OpenRouter/OpenAI fallback)                  | High        | Medium |
+| 4  | P1       | **Fix hermes git remote access** — SSH deploy key for sandbox                                 | Medium      | Medium |
+| 5  | P1       | **Fix hermes sudo access** — relax NoNewPrivileges or provide alternative                     | Medium      | Medium |
+| 6  | P1       | **Investigate initrd TPM timeout** — can it be disabled in BIOS? 1m 44s wasted                | High        | Low    |
+| 7  | P1       | **Add memory/swap alerting** to SigNoz or Gatus                                               | High        | Medium |
+| 8  | P1       | **Audit Docker container memory limits** — deer-flow-frontend at 1.4 GiB                      | Medium      | Low    |
+| 9  | P1       | **Disk growth monitoring** — 90% and climbing, set up automated alert                         | Medium      | Low    |
+| 10 | P2       | **Check SigNoz provision logs** — verify dashboards + rules created                           | Medium      | Low    |
+| 11 | P2       | **Test Discord alert channel**                                                                | Medium      | Low    |
+| 12 | P2       | **Verify Gatus endpoints** — status.home.lan healthy                                          | Medium      | Low    |
+| 13 | P2       | **Add SigNoz channel routing** (critical→Discord, warning→log)                                | Medium      | Medium |
+| 14 | P2       | **Consolidate voice-agents Caddy vHost** into caddy.nix pattern                               | Medium      | Low    |
+| 15 | P2       | **Deploy Dozzle** at logs.home.lan for Docker log tailing                                     | Medium      | Low    |
+| 16 | P2       | **Provision Pi 3** for DNS failover cluster                                                   | High        | High   |
+| 17 | P2       | **Wire Pi 3 as secondary DNS**                                                                | High        | Medium |
+| 18 | P3       | **Flake inputs audit** — 74 inputs, find stale ones                                           | Low         | Medium |
+| 19 | P3       | **nix-colors integration** — migrate 17+ hardcoded colors                                     | Low         | High   |
+| 20 | P3       | **Create `just status` command** for automated reports                                        | Low         | Low    |
+| 21 | P3       | **Convert go-auto-upgrade `path:` inputs to SSH URLs**                                        | Low         | Low    |
+| 22 | P3       | **Create shared flake-parts template** (mkGoPackage, checks, devshells)                       | Medium      | High   |
+| 23 | P3       | **`file-and-image-renamer`** — bump Go or find alternative                                    | Low         | Medium |
+| 24 | P4       | **Service startup parallelism** — reduce 1m 31s userspace time                                | Medium      | High   |
+| 25 | P4       | **Darwin config parity check** — ensure macOS config hasn't drifted                           | Low         | Medium |
 
 ---
 
@@ -217,19 +217,19 @@ Investigation needed:
 
 ## System Vital Signs
 
-| Metric              | Value                                                  | Status             |
-| ------------------- | ------------------------------------------------------ | ------------------ |
+| Metric              | Value                                                  | Status            |
+| ------------------- | ------------------------------------------------------ | ----------------- |
 | **Root disk**       | 90% (53G free / 512G)                                  | ⚠️ Needs attention |
 | **Memory**          | 46Gi/62Gi (74%)                                        | ⚠️ Heavy           |
-| **Swap**            | 5.8Gi/13Gi (45%)                                       | 🟡 Recovering      |
-| **Load avg**        | 8.82 / 9.90 / 8.12                                     | 🟡 Moderate        |
-| **Uptime**          | 26 min                                                 | ✅ Fresh boot      |
-| **gopls instances** | 13 processes, ~6.6 GiB                                 | 🔴 Memory waste    |
-| **Build test**      | `just test-fast` passes                                | ✅                 |
-| **.nix files**      | 111 files, 14,833 lines                                | —                  |
-| **Service modules** | 35                                                     | —                  |
-| **Flake inputs**    | 74 (in lock file)                                      | —                  |
-| **Branch**          | master, up to date with origin                         | ✅                 |
+| **Swap**            | 5.8Gi/13Gi (45%)                                       | 🟡 Recovering     |
+| **Load avg**        | 8.82 / 9.90 / 8.12                                     | 🟡 Moderate       |
+| **Uptime**          | 26 min                                                 | ✅ Fresh boot     |
+| **gopls instances** | 13 processes, ~6.6 GiB                                 | 🔴 Memory waste   |
+| **Build test**      | `just test-fast` passes                                | ✅                |
+| **.nix files**      | 111 files, 14,833 lines                                | —                 |
+| **Service modules** | 35                                                     | —                 |
+| **Flake inputs**    | 74 (in lock file)                                      | —                 |
+| **Branch**          | master, up to date with origin                         | ✅                |
 | **Boot time**       | 3m 54s (firmware 32s + initrd 1m44s + userspace 1m31s) | ⚠️                 |
 
 ## Services Status

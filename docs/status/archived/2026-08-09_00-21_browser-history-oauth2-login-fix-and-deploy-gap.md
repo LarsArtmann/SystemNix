@@ -8,7 +8,6 @@
 
 ---
 
-
 ## Executive Summary
 
 User reported that `https://history.home.lan/register` had no "Login with Pocket ID" button. Investigation revealed a **multi-layer failure**: (1) the OIDC setup oneshot ran before pocket-id-provision succeeded and was never re-triggered, (2) the deploy script lacked `browser-history-oidc-setup` in its provisioner restart list, and (3) even after OAuth2 was configured, the upstream `cqrs-htmx/usermgmt` library returned JSON instead of an HTTP 302 redirect, making the login link display raw JSON in the browser. All three issues were fixed across 3 repos (cqrs-htmx, browser-history, SystemNix), deployed, and verified.
@@ -22,6 +21,7 @@ User reported that `https://history.home.lan/register` had no "Login with Pocket
 **Problem:** `browser-history-oidc-setup.service` ran at boot (21:49) while `pocket-id-provision.service` was still failing. It waited 120s for the secret file, gave up, and started browser-history in WebAuthn-only mode. After the provision fix (22:08), the oneshot was never re-triggered because it was NOT in the deploy script's provisioner restart list.
 
 **Evidence:**
+
 - `journalctl -u browser-history-oidc-setup.service` at 21:51: "Pocket ID secret not found — starting in WebAuthn-only mode"
 - `/var/lib/browser-history/oauth2-secrets.env` did NOT exist
 - No "Login with Pocket ID" button rendered (server had `oauth2Providers = []`)
@@ -35,17 +35,18 @@ User reported that `https://history.home.lan/register` had no "Login with Pocket
 **Fix:** Changed `writeJSON(w, http.StatusOK, resp)` → `http.Redirect(w, r, resp.RedirectURL, http.StatusFound)` in `oauth2_http.go:35`.
 
 **Files changed:**
+
 - `cqrs-htmx/usermgmt/oauth2_http.go` — 1-line fix (line 35)
 - `cqrs-htmx/usermgmt/oauth2_http_test.go` — 3 tests updated (TestHandler_OAuth2Begin_Success, TestHandler_OAuth2Callback_Success, TestHandler_OAuth2Callback_SuccessRedirect), removed unused `encoding/json/v2` import
 - All 16 OAuth2 tests pass
 
 ### 3. Full Dependency Chain Updated and Deployed
 
-| Repo | Change | Commit/Tag |
-|------|--------|------------|
-| cqrs-htmx | OAuth2 redirect fix + test updates | `c26a0540`, tagged `usermgmt/v4.7.1` |
-| browser-history | cqrs-htmx flake input bumped to `c26a0540` | `42a58786` |
-| SystemNix | `scripts/deploy.sh` fix, browser-history + buildflow flake inputs updated, hermes-agent re-lock, nixpkgs tarball fix | uncommitted (auto-daemon + manual) |
+| Repo            | Change                                                                                                               | Commit/Tag                           |
+| --------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| cqrs-htmx       | OAuth2 redirect fix + test updates                                                                                   | `c26a0540`, tagged `usermgmt/v4.7.1` |
+| browser-history | cqrs-htmx flake input bumped to `c26a0540`                                                                           | `42a58786`                           |
+| SystemNix       | `scripts/deploy.sh` fix, browser-history + buildflow flake inputs updated, hermes-agent re-lock, nixpkgs tarball fix | uncommitted (auto-daemon + manual)   |
 
 ### 4. Verification
 
@@ -60,17 +61,21 @@ User reported that `https://history.home.lan/register` had no "Login with Pocket
 ## b) PARTIALLY DONE
 
 ### 1. AGENTS.md Updates — NOT DONE
+
 The following gotchas were identified but NOT yet written to AGENTS.md:
+
 - Pocket ID SQLite BUSY / provisioning curl timeout gotcha
 - `browser-history-oidc-setup` deploy script ordering dependency
 - OAuth2 begin endpoint redirect (was JSON, now 302)
 
 ### 2. Pocket ID Provision Service Hardening — NOT DONE
+
 - `api_get` still has `--max-time 10` (should be 30s for consistency)
 - `TimeoutStartSec = "3min"` not added to `pocket-id-provision.service`
 - No `--retry` on curl calls for transient SQLITE_BUSY errors
 
 ### 3. End-to-End OAuth2 Login Test — NOT DONE
+
 Verified the endpoint returns 302 and OAuth2 is configured, but did not complete the full browser flow (Pocket ID authenticate → callback → session cookie → dashboard).
 
 ---
@@ -78,6 +83,7 @@ Verified the endpoint returns 302 and OAuth2 is configured, but did not complete
 ## c) NOT STARTED
 
 ### From Previous Session's Remaining Items
+
 1. **Auth gateway health warnings** — 6 vHosts (dozzle, monitor365, searx, crush, taskchampion, signoz) returning `000000` in post-deploy check. Not investigated.
 2. **`cache.home.lan` DNS resolution failure** during builds — Not investigated.
 3. **DiscordSync API not ready during post-deploy** — Skip is expected (API binds after thumb-hash backfill), but this consistently delays post-deploy checks.
@@ -88,18 +94,23 @@ Verified the endpoint returns 302 and OAuth2 is configured, but did not complete
 ## d) TOTALLY FUCKED UP
 
 ### 1. `lib.fakeHash` Fiasco
+
 Set `vendorHash = lib.fakeHash` to trigger a hash mismatch and get the real hash. But `mkPreparedSource` overrides dependency versions with nix store paths, so the vendor contents were IDENTICAL and the hash was the same. Wasted a build cycle. Should have just built directly — the vendor hash doesn't change when the cqrs-htmx rev changes because `mkPreparedSource` pins deps via store paths, not go.mod versions.
 
 ### 2. First Deploy Built Nothing
+
 After updating flake.lock, ran `nix run .#deploy`. The `nh os switch` failed silently (exit code 1) due to a buildflow vendorHash mismatch. The deploy script's `set +e` swallowed this, and the old `0a10a23` binary kept running. The post-deploy "all checks passed" was misleading — it checked liveness, not that the new binary was deployed. I should have checked the running binary version after the first deploy, not assumed it worked.
 
 ### 3. nixpkgs Tarball Regression (Recurring)
+
 The nixpkgs tarball lock regression hit AGAIN during this session. `scripts/fix-nixpkgs-lock.sh` fixed it, but this is the Nth recurrence. The fix in `configuration.nix` (local empty flake-registry + correct-format registry overrides) should prevent it, but something keeps re-introducing the tarball type. This needs deeper investigation.
 
 ### 4. hermes-agent Stale Store Path
+
 After fixing the nixpkgs tarball, `nix flake check` failed with `path '4mkggi647v4d0z8q5rdgqjkwnbpmg9sz-source' is not valid` for hermes-agent. Fixed with `nix flake update hermes-agent`. This is a recurring pattern — flake.lock references store paths that get GC'd.
 
 ### 5. Missing `browser-history-oidc-setup` in Deploy Script Was a Design Blind Spot
+
 The deploy script restarts 8 provisioner oneshots. `browser-history-oidc-setup` was missing from this list since it was added. Every deploy that didn't change the binary but DID change provisioning state would leave browser-history in a stale OAuth2 config. This was a systemic gap in the deploy script's coverage, not just a one-off omission.
 
 ---
@@ -212,12 +223,15 @@ The deploy script restarts 8 provisioner oneshots. `browser-history-oidc-setup` 
 ## g) Questions (Cannot Determine Myself)
 
 ### Q1: Browser History OAuth2 user provisioning model
+
 When a user logs in via Pocket ID for the first time, does browser-history auto-create a user account (like Forgejo's `ENABLE_AUTO_REGISTRATION`), or must the user first register via `/register` and then link their Pocket ID account? I cannot determine this from the Nix config alone — it depends on the `cqrs-htmx/usermgmt` `FinishOAuthLogin` implementation, which I didn't read in full.
 
 ### Q2: Should `browser-history-oidc-setup` use `PartOf` or `BindsTo`?
+
 Adding `PartOf = [ "browser-history.service" ]` would make it restart when browser-history restarts. But `BindsTo` would be stronger (stops the oneshot when browser-history stops). I'm not sure which is semantically correct for a provisioning oneshot that should run BEFORE the main service, not alongside it. The current `wantedBy` + `before` ordering works but doesn't handle re-triggering.
 
 ### Q3: Is the `BeginOAuthLoginResponse` struct part of the public API?
+
 I changed the handler to use `http.Redirect` instead of returning the struct as JSON. But the struct and the `BeginOAuthLogin` service method still exist. Should I deprecate/remove the struct, or is it part of the published `usermgmt/v4` API that other consumers might depend on? I can't check all consumers of `cqrs-htmx/usermgmt` from this repo.
 
 ---

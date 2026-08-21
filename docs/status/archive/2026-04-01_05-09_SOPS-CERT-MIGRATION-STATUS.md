@@ -9,16 +9,16 @@
 
 ## A. FULLY DONE (8 items)
 
-| #   | Task                                                                                                                                                                                             | Commit    | Files Changed                                                            |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- | ------------------------------------------------------------------------ |
-| 1   | **Create sops-encrypted cert file** — `dnsblockd-certs.yaml` with CA cert, CA key, server cert, server key encrypted with age                                                                    | `c588847` | `platforms/nixos/secrets/dnsblockd-certs.yaml` (new)                     |
-| 2   | **Store plain CA cert for eval-time access** — needed by `security.pki.certificateFiles`, Firefox policies, NSS import                                                                           | `5deab04` | `platforms/nixos/secrets/dnsblockd-ca.crt`, `dnsblockd-server.crt` (new) |
-| 3   | **Declare 4 sops secrets with ownership** — `dnsblockd_ca_cert` (root), `dnsblockd_ca_key` (root, mode 0400), `dnsblockd_server_cert` (caddy), `dnsblockd_server_key` (caddy, mode 0400)         | `7a4d32f` | `modules/nixos/services/sops.nix` (+23 lines)                            |
-| 4   | **Update dns-blocker.nix** — replaced `pkgs.dnsblockd-cert` with plain cert file + sops runtime paths                                                                                            | `0d82e8a` | `platforms/nixos/modules/dns-blocker.nix` (5 edits)                      |
-| 5   | **Update caddy.nix** — replaced `pkgs.dnsblockd-cert` with sops-decrypted server cert/key paths                                                                                                  | `7e4518d` | `modules/nixos/services/caddy.nix` (full rewrite)                        |
-| 6   | **Remove dnsblockd-cert from overlay** — no longer consumed by any module                                                                                                                        | `3e2d27d` | `flake.nix` (-1 line)                                                    |
-| 7   | **Verify build** — `nix flake check --no-build` passes, `nixos-rebuild build --flake .#evo-x2` succeeds                                                                                          | —         | —                                                                        |
-| 8   | **Verify generated config** — dnsblockd.service uses `/run/secrets/dnsblockd_ca_cert` + `_key`; caddy uses `/run/secrets/dnsblockd_server_cert` + `_key`; CA cert present in system trust bundle | —         | —                                                                        |
+| # | Task                                                                                                                                                                                             | Commit    | Files Changed                                                            |
+| - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- | ------------------------------------------------------------------------ |
+| 1 | **Create sops-encrypted cert file** — `dnsblockd-certs.yaml` with CA cert, CA key, server cert, server key encrypted with age                                                                    | `c588847` | `platforms/nixos/secrets/dnsblockd-certs.yaml` (new)                     |
+| 2 | **Store plain CA cert for eval-time access** — needed by `security.pki.certificateFiles`, Firefox policies, NSS import                                                                           | `5deab04` | `platforms/nixos/secrets/dnsblockd-ca.crt`, `dnsblockd-server.crt` (new) |
+| 3 | **Declare 4 sops secrets with ownership** — `dnsblockd_ca_cert` (root), `dnsblockd_ca_key` (root, mode 0400), `dnsblockd_server_cert` (caddy), `dnsblockd_server_key` (caddy, mode 0400)         | `7a4d32f` | `modules/nixos/services/sops.nix` (+23 lines)                            |
+| 4 | **Update dns-blocker.nix** — replaced `pkgs.dnsblockd-cert` with plain cert file + sops runtime paths                                                                                            | `0d82e8a` | `platforms/nixos/modules/dns-blocker.nix` (5 edits)                      |
+| 5 | **Update caddy.nix** — replaced `pkgs.dnsblockd-cert` with sops-decrypted server cert/key paths                                                                                                  | `7e4518d` | `modules/nixos/services/caddy.nix` (full rewrite)                        |
+| 6 | **Remove dnsblockd-cert from overlay** — no longer consumed by any module                                                                                                                        | `3e2d27d` | `flake.nix` (-1 line)                                                    |
+| 7 | **Verify build** — `nix flake check --no-build` passes, `nixos-rebuild build --flake .#evo-x2` succeeds                                                                                          | —         | —                                                                        |
+| 8 | **Verify generated config** — dnsblockd.service uses `/run/secrets/dnsblockd_ca_cert` + `_key`; caddy uses `/run/secrets/dnsblockd_server_cert` + `_key`; CA cert present in system trust bundle | —         | —                                                                        |
 
 ### Architecture After Migration
 
@@ -52,30 +52,30 @@ In nix store (eval-time):
 
 ## B. PARTIALLY DONE (1 item)
 
-| #   | Task                     | Status                                                                | Remaining                                                                                             |
-| --- | ------------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| 1   | **On-target deployment** | Build succeeds but `nixos-rebuild switch` not yet run (requires root) | Run `sudo nixos-rebuild switch --flake .#evo-x2` and verify dnsblockd + caddy start with sops secrets |
+| # | Task                     | Status                                                                | Remaining                                                                                             |
+| - | ------------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| 1 | **On-target deployment** | Build succeeds but `nixos-rebuild switch` not yet run (requires root) | Run `sudo nixos-rebuild switch --flake .#evo-x2` and verify dnsblockd + caddy start with sops secrets |
 
 ---
 
 ## C. NOT STARTED
 
-| #   | Task                                                                                               | Priority | Effort | Notes                                                                        |
-| --- | -------------------------------------------------------------------------------------------------- | -------- | ------ | ---------------------------------------------------------------------------- |
-| 1   | Delete `pkgs/dnsblockd-cert.nix` — dead code, no longer referenced                                 | HIGH     | 1 min  | File exists but is never imported; security doc should note it as historical |
-| 2   | Remove `dnsblockd-server.crt` from secrets/ — public cert already in sops, plain copy is redundant | MED      | 1 min  | Only `dnsblockd-ca.crt` is needed as plain file (eval-time)                  |
-| 3   | Consolidate NixOS module imports — use `default.nix` to aggregate 11 service modules               | MED      | 15 min | Reduces boilerplate in flake.nix from 11 lines to 1                          |
-| 4   | Deduplicate dnsblockd/dnsblockd-processor builds — built in overlay AND perSystem.packages         | MED      | 10 min | Remove from `perSystem.packages` or overlay                                  |
-| 5   | Add `follows = "nixpkgs"` to nix-colors input                                                      | LOW      | 1 min  | Prevents pulling separate nixpkgs closure                                    |
-| 6   | Delete unused `pkgs/gomod2nix.toml`                                                                | LOW      | 1 min  | Never referenced in any build                                                |
-| 7   | Wire dnsblockd-processor into systemd timer for automated blocklist updates                        | MED      | 20 min | Blocklists are currently frozen at build time                                |
-| 8   | Add NixOS test for dnsblockd HTTP block page                                                       | MED      | 30 min | No automated testing for dns-blocker module                                  |
-| 9   | Centralize IP config into a single module                                                          | MED      | 25 min | `192.168.1.150` still hardcoded in multiple files                            |
-| 10  | Configure automatic garbage collection schedule                                                    | LOW      | 10 min | Currently manual `just clean`                                                |
-| 11  | Fix auditd/AppArmor conflict (security-hardening.nix TODOs)                                        | LOW      | 30 min | Blocked by nixpkgs#483085                                                    |
-| 12  | Fix dnsblockd-processor Go lint warnings (gosec G304, cyclomatic)                                  | LOW      | 15 min | 5 warnings total                                                             |
-| 13  | Add display brightness keybinding for laptops                                                      | LOW      | 10 min | P3 from previous session                                                     |
-| 14  | Add immich backup verification to justfile                                                         | LOW      | 15 min | P3 from previous session                                                     |
+| #  | Task                                                                                               | Priority | Effort | Notes                                                                        |
+| -- | -------------------------------------------------------------------------------------------------- | -------- | ------ | ---------------------------------------------------------------------------- |
+| 1  | Delete `pkgs/dnsblockd-cert.nix` — dead code, no longer referenced                                 | HIGH     | 1 min  | File exists but is never imported; security doc should note it as historical |
+| 2  | Remove `dnsblockd-server.crt` from secrets/ — public cert already in sops, plain copy is redundant | MED      | 1 min  | Only `dnsblockd-ca.crt` is needed as plain file (eval-time)                  |
+| 3  | Consolidate NixOS module imports — use `default.nix` to aggregate 11 service modules               | MED      | 15 min | Reduces boilerplate in flake.nix from 11 lines to 1                          |
+| 4  | Deduplicate dnsblockd/dnsblockd-processor builds — built in overlay AND perSystem.packages         | MED      | 10 min | Remove from `perSystem.packages` or overlay                                  |
+| 5  | Add `follows = "nixpkgs"` to nix-colors input                                                      | LOW      | 1 min  | Prevents pulling separate nixpkgs closure                                    |
+| 6  | Delete unused `pkgs/gomod2nix.toml`                                                                | LOW      | 1 min  | Never referenced in any build                                                |
+| 7  | Wire dnsblockd-processor into systemd timer for automated blocklist updates                        | MED      | 20 min | Blocklists are currently frozen at build time                                |
+| 8  | Add NixOS test for dnsblockd HTTP block page                                                       | MED      | 30 min | No automated testing for dns-blocker module                                  |
+| 9  | Centralize IP config into a single module                                                          | MED      | 25 min | `192.168.1.150` still hardcoded in multiple files                            |
+| 10 | Configure automatic garbage collection schedule                                                    | LOW      | 10 min | Currently manual `just clean`                                                |
+| 11 | Fix auditd/AppArmor conflict (security-hardening.nix TODOs)                                        | LOW      | 30 min | Blocked by nixpkgs#483085                                                    |
+| 12 | Fix dnsblockd-processor Go lint warnings (gosec G304, cyclomatic)                                  | LOW      | 15 min | 5 warnings total                                                             |
+| 13 | Add display brightness keybinding for laptops                                                      | LOW      | 10 min | P3 from previous session                                                     |
+| 14 | Add immich backup verification to justfile                                                         | LOW      | 15 min | P3 from previous session                                                     |
 
 ---
 
@@ -124,43 +124,43 @@ Nothing broke this session. All changes compiled and validated on first attempt.
 
 ### Critical / High Impact (do first)
 
-| #   | Task                                                                                                                    | Effort | Impact                                                |
-| --- | ----------------------------------------------------------------------------------------------------------------------- | ------ | ----------------------------------------------------- |
-| 1   | **Deploy to evo-x2** — `sudo nixos-rebuild switch --flake .#evo-x2` and verify dnsblockd + caddy work with sops secrets | 5 min  | CRITICAL — all changes are theoretical until deployed |
-| 2   | **Delete `pkgs/dnsblockd-cert.nix`** — dead code, documents insecure pattern                                            | 1 min  | Removes security risk documentation                   |
-| 3   | **Move plain certs out of secrets/** — `platforms/nixos/certs/dnsblockd-ca.crt`                                         | 5 min  | Cleaner separation of public vs secret                |
-| 4   | **Remove `dnsblockd-server.crt` from plain files** — redundant, only needed in sops                                     | 1 min  | Reduces confusion                                     |
-| 5   | **Add sops service ordering** — ensure caddy/dnsblockd start after sops decrypts                                        | 5 min  | Prevents race condition on first boot                 |
-| 6   | **Rename `dnsblockd-cert-import` → `dnsblockd-ca-nss-import`**                                                          | 2 min  | Accurate naming                                       |
+| # | Task                                                                                                                    | Effort | Impact                                                |
+| - | ----------------------------------------------------------------------------------------------------------------------- | ------ | ----------------------------------------------------- |
+| 1 | **Deploy to evo-x2** — `sudo nixos-rebuild switch --flake .#evo-x2` and verify dnsblockd + caddy work with sops secrets | 5 min  | CRITICAL — all changes are theoretical until deployed |
+| 2 | **Delete `pkgs/dnsblockd-cert.nix`** — dead code, documents insecure pattern                                            | 1 min  | Removes security risk documentation                   |
+| 3 | **Move plain certs out of secrets/** — `platforms/nixos/certs/dnsblockd-ca.crt`                                         | 5 min  | Cleaner separation of public vs secret                |
+| 4 | **Remove `dnsblockd-server.crt` from plain files** — redundant, only needed in sops                                     | 1 min  | Reduces confusion                                     |
+| 5 | **Add sops service ordering** — ensure caddy/dnsblockd start after sops decrypts                                        | 5 min  | Prevents race condition on first boot                 |
+| 6 | **Rename `dnsblockd-cert-import` → `dnsblockd-ca-nss-import`**                                                          | 2 min  | Accurate naming                                       |
 
 ### Medium Impact (do soon)
 
-| #   | Task                                                                               | Effort | Impact                               |
-| --- | ---------------------------------------------------------------------------------- | ------ | ------------------------------------ |
-| 7   | **Consolidate service module imports via default.nix**                             | 15 min | Reduces flake.nix boilerplate        |
-| 8   | **Deduplicate dnsblockd builds** — remove from perSystem.packages or overlay       | 10 min | Faster builds                        |
-| 9   | **Add `follows = "nixpkgs"` to nix-colors**                                        | 1 min  | Smaller closure                      |
-| 10  | **Wire dnsblockd-processor into systemd timer** for automated blocklist updates    | 20 min | Fresh blocklists without rebuilds    |
-| 11  | **Centralize IP config** — single module with `config.networking.lanIP` or similar | 25 min | No more hardcoded IPs                |
-| 12  | **Add NixOS test for dns-blocker module**                                          | 30 min | Catch regressions early              |
-| 13  | **Add cert rotation justfile recipe**                                              | 10 min | Documented process for key rotation  |
-| 14  | **Update AGENTS.md** with sops cert architecture                                   | 15 min | Future sessions have correct context |
-| 15  | **Fix dnsblockd-processor Go lint warnings**                                       | 15 min | Clean `golangci-lint` output         |
+| #  | Task                                                                               | Effort | Impact                               |
+| -- | ---------------------------------------------------------------------------------- | ------ | ------------------------------------ |
+| 7  | **Consolidate service module imports via default.nix**                             | 15 min | Reduces flake.nix boilerplate        |
+| 8  | **Deduplicate dnsblockd builds** — remove from perSystem.packages or overlay       | 10 min | Faster builds                        |
+| 9  | **Add `follows = "nixpkgs"` to nix-colors**                                        | 1 min  | Smaller closure                      |
+| 10 | **Wire dnsblockd-processor into systemd timer** for automated blocklist updates    | 20 min | Fresh blocklists without rebuilds    |
+| 11 | **Centralize IP config** — single module with `config.networking.lanIP` or similar | 25 min | No more hardcoded IPs                |
+| 12 | **Add NixOS test for dns-blocker module**                                          | 30 min | Catch regressions early              |
+| 13 | **Add cert rotation justfile recipe**                                              | 10 min | Documented process for key rotation  |
+| 14 | **Update AGENTS.md** with sops cert architecture                                   | 15 min | Future sessions have correct context |
+| 15 | **Fix dnsblockd-processor Go lint warnings**                                       | 15 min | Clean `golangci-lint` output         |
 
 ### Lower Impact (backlog)
 
-| #   | Task                                                             | Effort | Impact                  |
-| --- | ---------------------------------------------------------------- | ------ | ----------------------- |
-| 16  | **Delete `pkgs/gomod2nix.toml`** — unused                        | 1 min  | Cleanup                 |
-| 17  | **Configure automatic garbage collection**                       | 10 min | Less manual maintenance |
-| 18  | **Fix auditd/AppArmor conflict** (blocked by nixpkgs#483085)     | 30 min | Security hardening      |
-| 19  | **Add display brightness keybinding for laptops**                | 10 min | Usability               |
-| 20  | **Add immich backup verification to justfile**                   | 15 min | Data safety             |
-| 21  | **Add docs/status/README.md index**                              | 10 min | Navigation              |
-| 22  | **Remove darwin-only inputs from Linux builds**                  | 20 min | Smaller eval on evo-x2  |
-| 23  | **Add niri keybinding cheatsheet to docs**                       | 15 min | Usability               |
-| 24  | **Test photomap service after all cert changes**                 | 5 min  | Verify nothing broke    |
-| 25  | **Add healthcheck endpoints to dnsblockd** (already has /health) | 10 min | Monitoring integration  |
+| #  | Task                                                             | Effort | Impact                  |
+| -- | ---------------------------------------------------------------- | ------ | ----------------------- |
+| 16 | **Delete `pkgs/gomod2nix.toml`** — unused                        | 1 min  | Cleanup                 |
+| 17 | **Configure automatic garbage collection**                       | 10 min | Less manual maintenance |
+| 18 | **Fix auditd/AppArmor conflict** (blocked by nixpkgs#483085)     | 30 min | Security hardening      |
+| 19 | **Add display brightness keybinding for laptops**                | 10 min | Usability               |
+| 20 | **Add immich backup verification to justfile**                   | 15 min | Data safety             |
+| 21 | **Add docs/status/README.md index**                              | 10 min | Navigation              |
+| 22 | **Remove darwin-only inputs from Linux builds**                  | 20 min | Smaller eval on evo-x2  |
+| 23 | **Add niri keybinding cheatsheet to docs**                       | 15 min | Usability               |
+| 24 | **Test photomap service after all cert changes**                 | 5 min  | Verify nothing broke    |
+| 25 | **Add healthcheck endpoints to dnsblockd** (already has /health) | 10 min | Monitoring integration  |
 
 ---
 

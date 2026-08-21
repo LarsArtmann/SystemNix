@@ -36,11 +36,11 @@ grep -n "nix-visualize" flake.nix
 **Result:**
 
 ```
-    # Add nix-visualize for Nix configuration visualization
-    nix-visualize = {
-      url = "github:craigmbooth/nix-visualize";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+# Add nix-visualize for Nix configuration visualization
+nix-visualize = {
+  url = "github:craigmbooth/nix-visualize";
+  inputs.nixpkgs.follows = "nixpkgs";
+};
 ```
 
 **Status:** ✅ PASS
@@ -62,8 +62,8 @@ just --list | grep dep-graph
 **Result:**
 
 ```
-    dep-graph                                      # Generate Nix configuration dependency graph (NixOS)
-    dep-graph-stats                                # Show dependency graph statistics
+dep-graph                                      # Generate Nix configuration dependency graph (NixOS)
+dep-graph-stats                                # Show dependency graph statistics
 ```
 
 **Status:** ✅ PASS

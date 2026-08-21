@@ -74,7 +74,7 @@
 
 | Criterion              | Option A (Homebrew) | Option B (Override) | Option C (Python 3.12)    |
 | ---------------------- | ------------------- | ------------------- | ------------------------- |
-| Time to implement      | 5 min ✅            | 30-60 min ⚠️        | 1-2 hours ❌              |
+| Time to implement      | 5 min ✅            | 30-60 min ⚠️         | 1-2 hours ❌              |
 | Maintenance burden     | None ✅             | High ❌             | Very High ❌              |
 | Risk of future breaks  | Low ✅              | High ❌             | Very High ❌              |
 | 5-year sustainability  | Excellent ✅        | Poor ❌             | Terrible ❌               |

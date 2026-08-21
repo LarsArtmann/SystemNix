@@ -371,9 +371,9 @@ fi
 
 | Shell   | Avg Time | Speed vs Bash    | Speed vs Fish | Variance     | Target Status |
 | ------- | -------- | ---------------- | ------------- | ------------ | ------------- |
-| 🅱️ Bash | 43ms     | 1.00x (baseline) | 3ms           | ✅ EXCELLENT |
-| 🅼️ Zsh   | 49ms     | 1.14x slower     | 10ms          | ✅ EXCELLENT |
-| 🐟 Fish | 76ms     | 1.76x slower     | 169ms         | ✅ EXCELLENT |
+| 🅱️ Bash  | 43ms     | 1.00x (baseline) | 3ms           | ✅ EXCELLENT |               |
+| 🅼️ Zsh   | 49ms     | 1.14x slower     | 10ms          | ✅ EXCELLENT |               |
+| 🐟 Fish | 76ms     | 1.76x slower     | 169ms         | ✅ EXCELLENT |               |
 
 **Key Findings:**
 

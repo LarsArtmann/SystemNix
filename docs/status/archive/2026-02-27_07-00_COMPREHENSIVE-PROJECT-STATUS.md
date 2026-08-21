@@ -13,15 +13,15 @@
 
 SystemNix is a **production-ready, cross-platform Nix configuration system** managing both macOS (nix-darwin) and NixOS with declarative configuration, type safety, and Home Manager integration. The project is **actively maintained** with recent fixes for Go 1.26 compatibility and automated patch management for CRUSH AI tool.
 
-| Metric            | Value           | Status                          |
-| ----------------- | --------------- | ------------------------------- |
-| **Build Status**  | ✅ Passing      | Darwin & NixOS configs evaluate |
-| **Flake Check**   | ✅ Clean        | No eval errors                  |
+| Metric            | Value          | Status                          |
+| ----------------- | -------------- | ------------------------------- |
+| **Build Status**  | ✅ Passing     | Darwin & NixOS configs evaluate |
+| **Flake Check**   | ✅ Clean       | No eval errors                  |
 | **Health Check**  | ⚠️ Minor Issues | Git config not linked           |
-| **TODO Count**    | ~611 items      | Being triaged                   |
-| **Documentation** | 348 files       | Comprehensive                   |
-| **Nix Files**     | 85              | Well-structured                 |
-| **Shell Scripts** | 42              | Organized in scripts/           |
+| **TODO Count**    | ~611 items     | Being triaged                   |
+| **Documentation** | 348 files      | Comprehensive                   |
+| **Nix Files**     | 85             | Well-structured                 |
+| **Shell Scripts** | 42             | Organized in scripts/           |
 
 ---
 

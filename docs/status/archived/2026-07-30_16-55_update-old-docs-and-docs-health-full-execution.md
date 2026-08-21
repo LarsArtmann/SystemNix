@@ -34,16 +34,16 @@
 
 1. **~8 annotated files have appendix-only resolution notes where the OPENING is stale.** This is the #1 highest-rated failure mode from the update-old-docs skill ("appendix-only is insufficient when the file's opening contains load-bearing stale claims"). The reader forms a wrong impression from the opening before reaching the appendix. Affected files:
 
-   | File | Stale opening claim |
-   |------|---------------------|
-   | `2026-07-29_09-24_comprehensive-todo-execution-self-review.md` | "NOTHING was deployed or runtime-verified" |
-   | `2026-07-29_09-24_discordsync-turso-403-crash-loop-monitoring-self-review.md` | "NOT RESOLVED / blocked on backend decision" |
-   | `2026-07-29_14-04_turso-quota-efficiency-fix-and-self-review.md` | "DiscordSync is still DOWN" |
-   | `2026-07-29_14-55_monitor365-cpu-busy-loop-fix-and-flake-input-normalization.md` | "agent STILL burning 295% CPU" |
-   | `2026-07-29_15-44_monitor365-cpu-burn-fix-session-progress.md` | (mid-execution snapshot, opening assumes wrong root cause) |
-   | `2026-07-29_15-49_mr-sync-checkflags-go-cqrs-lite-ssh-to-github-go-atomic-write-fix.md` | "NOTHING is pushed to GitHub" |
-   | `2026-07-29_15-51_crush-daily-cross-project-insights-backfill-and-resilience-fixes.md` | "4 of 31 complete" |
-   | `2026-07-29_19-55_crush-daily-backfill-batch-progress-and-session-review.md` | "20 of 31 complete" |
+   | File                                                                                    | Stale opening claim                                        |
+   | --------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+   | `2026-07-29_09-24_comprehensive-todo-execution-self-review.md`                          | "NOTHING was deployed or runtime-verified"                 |
+   | `2026-07-29_09-24_discordsync-turso-403-crash-loop-monitoring-self-review.md`           | "NOT RESOLVED / blocked on backend decision"               |
+   | `2026-07-29_14-04_turso-quota-efficiency-fix-and-self-review.md`                        | "DiscordSync is still DOWN"                                |
+   | `2026-07-29_14-55_monitor365-cpu-busy-loop-fix-and-flake-input-normalization.md`        | "agent STILL burning 295% CPU"                             |
+   | `2026-07-29_15-44_monitor365-cpu-burn-fix-session-progress.md`                          | (mid-execution snapshot, opening assumes wrong root cause) |
+   | `2026-07-29_15-49_mr-sync-checkflags-go-cqrs-lite-ssh-to-github-go-atomic-write-fix.md` | "NOTHING is pushed to GitHub"                              |
+   | `2026-07-29_15-51_crush-daily-cross-project-insights-backfill-and-resilience-fixes.md`  | "4 of 31 complete"                                         |
+   | `2026-07-29_19-55_crush-daily-backfill-batch-progress-and-session-review.md`            | "20 of 31 complete"                                        |
 
    Each has a resolution appendix at the bottom, but the stale opening claim is still the first thing a reader sees. **Fix: add inline blockquote corrections immediately after each file's TL;DR/Verdict/Outcome line**, like the SigNoz jq fix file (which I DID get right).
 

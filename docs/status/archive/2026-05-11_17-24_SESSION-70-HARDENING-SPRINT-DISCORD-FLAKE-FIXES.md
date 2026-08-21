@@ -83,10 +83,10 @@ Deleted 105 lines of local package definitions.
 
 ### lib/ Shared Infrastructure
 
-| Helper                                | Adopters                  | Status          |
-| ------------------------------------- | ------------------------- | --------------- |
-| `harden {}`                           | 22 modules, 29 call sites | ✅ Mature       |
-| `serviceDefaults {}`                  | 22 modules                | ✅ Mature       |
+| Helper                                | Adopters                  | Status         |
+| ------------------------------------- | ------------------------- | -------------- |
+| `harden {}`                           | 22 modules, 29 call sites | ✅ Mature      |
+| `serviceDefaults {}`                  | 22 modules                | ✅ Mature      |
 | `serviceTypes.systemdServiceIdentity` | 1 module (hermes)         | ⚠️ Low adoption |
 | `serviceTypes.servicePort`            | 2 modules (gatus, hermes) | ⚠️ Low adoption |
 
@@ -120,8 +120,8 @@ flake.nix is still ~850 lines. The overlay extraction to `overlays/` directory w
 
 ### Remaining Hardening Targets
 
-| Module                     | Service Type | Can Harden?                                         | Priority |
-| -------------------------- | ------------ | --------------------------------------------------- | -------- |
+| Module                     | Service Type | Can Harden?                                        | Priority |
+| -------------------------- | ------------ | -------------------------------------------------- | -------- |
 | monitor365.nix             | User service | ⚠️ Limited benefit (system-only directives ignored) | Low      |
 | file-and-image-renamer.nix | User service | ⚠️ Same as above                                    | Low      |
 | niri-drm-healthcheck       | User service | ⚠️ Same as above                                    | Low      |
@@ -189,48 +189,48 @@ For user services (monitor365, file-and-image-renamer, niri-drm-healthcheck), cr
 
 ### Critical — Deploy First
 
-| #   | Task                                                       | Impact      | Effort |
-| --- | ---------------------------------------------------------- | ----------- | ------ |
-| 1   | **Deploy all 18 commits** (`just switch` + reboot)         | 🔴 Critical | 15 min |
-| 2   | **Verify Discord notifications fire** (trigger test alert) | 🔴 Critical | 10 min |
-| 3   | **Verify all services start clean** after reboot           | 🔴 Critical | 10 min |
+| # | Task                                                       | Impact      | Effort |
+| - | ---------------------------------------------------------- | ----------- | ------ |
+| 1 | **Deploy all 18 commits** (`just switch` + reboot)         | 🔴 Critical | 15 min |
+| 2 | **Verify Discord notifications fire** (trigger test alert) | 🔴 Critical | 10 min |
+| 3 | **Verify all services start clean** after reboot           | 🔴 Critical | 10 min |
 
 ### High Priority — Monitoring Completeness
 
-| #   | Task                                                                              | Impact  | Effort |
-| --- | --------------------------------------------------------------------------------- | ------- | ------ |
-| 4   | Replace Gatus sed hack with sops template approach                                | 🟡 High | 30 min |
-| 5   | Add SigNoz alert rule for Ollama down                                             | 🟡 High | 15 min |
-| 6   | Add SigNoz alert rule for Docker daemon down                                      | 🟡 High | 15 min |
-| 7   | Test alert firing end-to-end (GPU VRAM → Discord)                                 | 🟡 High | 20 min |
-| 8   | Create `hardenUser {}` for user-service-compatible directives                     | 🟡 High | 30 min |
-| 9   | Apply `hardenUser {}` to monitor365, file-and-image-renamer, niri-drm-healthcheck | 🟡 High | 20 min |
+| # | Task                                                                              | Impact  | Effort |
+| - | --------------------------------------------------------------------------------- | ------- | ------ |
+| 4 | Replace Gatus sed hack with sops template approach                                | 🟡 High | 30 min |
+| 5 | Add SigNoz alert rule for Ollama down                                             | 🟡 High | 15 min |
+| 6 | Add SigNoz alert rule for Docker daemon down                                      | 🟡 High | 15 min |
+| 7 | Test alert firing end-to-end (GPU VRAM → Discord)                                 | 🟡 High | 20 min |
+| 8 | Create `hardenUser {}` for user-service-compatible directives                     | 🟡 High | 30 min |
+| 9 | Apply `hardenUser {}` to monitor365, file-and-image-renamer, niri-drm-healthcheck | 🟡 High | 20 min |
 
 ### Medium Priority — Architecture & Quality
 
-| #   | Task                                                          | Impact    | Effort |
-| --- | ------------------------------------------------------------- | --------- | ------ |
-| 10  | Extract overlays from flake.nix → `overlays/` directory       | 🟢 Medium | 1 hr   |
-| 11  | Decide on `systemdServiceIdentity` future (keep/split/remove) | 🟢 Medium | 15 min |
-| 12  | Migrate SigNoz rules from v1 → v2 API schema                  | 🟢 Medium | 1 hr   |
-| 13  | Add per-service SigNoz dashboards (GPU, DNS, Docker)          | 🟢 Medium | 2 hr   |
-| 14  | Create `TODO_LIST.md` from all planning docs                  | 🟢 Medium | 30 min |
-| 15  | Add DNS blocking effectiveness check to Gatus                 | 🟢 Medium | 20 min |
-| 16  | Wire remaining Gatus endpoints with per-endpoint alert config | 🟢 Medium | 30 min |
+| #  | Task                                                          | Impact    | Effort |
+| -- | ------------------------------------------------------------- | --------- | ------ |
+| 10 | Extract overlays from flake.nix → `overlays/` directory       | 🟢 Medium | 1 hr   |
+| 11 | Decide on `systemdServiceIdentity` future (keep/split/remove) | 🟢 Medium | 15 min |
+| 12 | Migrate SigNoz rules from v1 → v2 API schema                  | 🟢 Medium | 1 hr   |
+| 13 | Add per-service SigNoz dashboards (GPU, DNS, Docker)          | 🟢 Medium | 2 hr   |
+| 14 | Create `TODO_LIST.md` from all planning docs                  | 🟢 Medium | 30 min |
+| 15 | Add DNS blocking effectiveness check to Gatus                 | 🟢 Medium | 20 min |
+| 16 | Wire remaining Gatus endpoints with per-endpoint alert config | 🟢 Medium | 30 min |
 
 ### Lower Priority — Nice to Have
 
-| #   | Task                                                              | Impact | Effort |
-| --- | ----------------------------------------------------------------- | ------ | ------ |
-| 17  | Pi 3 DNS failover hardware provisioning                           | 🔵 Low | 4 hr   |
-| 18  | Gatus TLS certificate expiry alerting                             | 🔵 Low | 30 min |
-| 19  | Create ADR for Discord notification architecture                  | 🔵 Low | 30 min |
-| 20  | Archive docs/status/ sessions 45–62                               | 🔵 Low | 15 min |
-| 21  | Add `just test` (full build) to CI or pre-push hook               | 🔵 Low | 1 hr   |
-| 22  | SigNoz log-based alert rules (journald → alert on error patterns) | 🔵 Low | 1 hr   |
-| 23  | Caddy reverse proxy metrics dashboard in SigNoz                   | 🔵 Low | 1 hr   |
-| 24  | Harden ClickHouse service (no MemoryMax, no harden currently)     | 🔵 Low | 30 min |
-| 25  | Consolidate AGENTS.md monitoring sections (GPU defense, alerting) | 🔵 Low | 20 min |
+| #  | Task                                                              | Impact | Effort |
+| -- | ----------------------------------------------------------------- | ------ | ------ |
+| 17 | Pi 3 DNS failover hardware provisioning                           | 🔵 Low | 4 hr   |
+| 18 | Gatus TLS certificate expiry alerting                             | 🔵 Low | 30 min |
+| 19 | Create ADR for Discord notification architecture                  | 🔵 Low | 30 min |
+| 20 | Archive docs/status/ sessions 45–62                               | 🔵 Low | 15 min |
+| 21 | Add `just test` (full build) to CI or pre-push hook               | 🔵 Low | 1 hr   |
+| 22 | SigNoz log-based alert rules (journald → alert on error patterns) | 🔵 Low | 1 hr   |
+| 23 | Caddy reverse proxy metrics dashboard in SigNoz                   | 🔵 Low | 1 hr   |
+| 24 | Harden ClickHouse service (no MemoryMax, no harden currently)     | 🔵 Low | 30 min |
+| 25 | Consolidate AGENTS.md monitoring sections (GPU defense, alerting) | 🔵 Low | 20 min |
 
 ---
 
@@ -257,26 +257,26 @@ The answer depends on the user's risk tolerance and schedule.
 
 ## Commits Since Session 66 (Generation 313)
 
-| #   | Commit     | Description                                                                        |
-| --- | ---------- | ---------------------------------------------------------------------------------- |
-| 1   | `93e18cf6` | fix(monitoring): improve Gatus health checks, boot stability, DNS resilience       |
-| 2   | `d8375175` | fix(monitoring): add upstream DNS check, clean stale imports, reduce DNS log noise |
-| 3   | `59985ac4` | feat(monitoring): add GPU VRAM and Niri compositor alert rules to SigNoz           |
-| 4   | `3e2c16c5` | fix(gatus): remove bogus TLS client config from ComfyUI HTTP check                 |
-| 5   | `821f46c5` | fix(monitoring): wire failure notifications to caddy, hermes, and signoz           |
-| 6   | `13b8c12f` | refactor(hermes): adopt systemdServiceIdentity from lib/types.nix                  |
-| 7   | `d1f2652b` | feat(nix): wire 5 Go tooling projects as flake inputs with overlays                |
-| 8   | `bce40ad0` | chore: update flake.lock for new Go tooling inputs                                 |
-| 9   | `25d88350` | docs(planning): add Go flake standardization plan, Dozzle eval                     |
-| 10  | `667307db` | docs(status): session 69                                                           |
-| 11  | `79b2f579` | docs(status): session 68                                                           |
-| 12  | `83abe43b` | docs(status): session 67                                                           |
-| 13  | `7a8a1912` | feat(monitoring): add Discord notification channels for SigNoz and Gatus           |
-| 14  | `131baa1b` | fix(gatus): use explicit static config path in ExecStartPre                        |
-| 15  | `732d59b8` | docs(status): session 70 — Discord notifications, monitoring maturity              |
-| 16  | `d0ecd585` | docs(status): session 70 — full ecosystem post-standardization audit               |
-| 17  | `a6cd7555` | fix(monitoring): wire onFailure to 9 services, fix flake overlay references        |
-| 18  | `3dac3f9d` | chore(deps): migrate golangci-lint-auto-configure and mr-sync to flake overlays    |
+| #  | Commit     | Description                                                                        |
+| -- | ---------- | ---------------------------------------------------------------------------------- |
+| 1  | `93e18cf6` | fix(monitoring): improve Gatus health checks, boot stability, DNS resilience       |
+| 2  | `d8375175` | fix(monitoring): add upstream DNS check, clean stale imports, reduce DNS log noise |
+| 3  | `59985ac4` | feat(monitoring): add GPU VRAM and Niri compositor alert rules to SigNoz           |
+| 4  | `3e2c16c5` | fix(gatus): remove bogus TLS client config from ComfyUI HTTP check                 |
+| 5  | `821f46c5` | fix(monitoring): wire failure notifications to caddy, hermes, and signoz           |
+| 6  | `13b8c12f` | refactor(hermes): adopt systemdServiceIdentity from lib/types.nix                  |
+| 7  | `d1f2652b` | feat(nix): wire 5 Go tooling projects as flake inputs with overlays                |
+| 8  | `bce40ad0` | chore: update flake.lock for new Go tooling inputs                                 |
+| 9  | `25d88350` | docs(planning): add Go flake standardization plan, Dozzle eval                     |
+| 10 | `667307db` | docs(status): session 69                                                           |
+| 11 | `79b2f579` | docs(status): session 68                                                           |
+| 12 | `83abe43b` | docs(status): session 67                                                           |
+| 13 | `7a8a1912` | feat(monitoring): add Discord notification channels for SigNoz and Gatus           |
+| 14 | `131baa1b` | fix(gatus): use explicit static config path in ExecStartPre                        |
+| 15 | `732d59b8` | docs(status): session 70 — Discord notifications, monitoring maturity              |
+| 16 | `d0ecd585` | docs(status): session 70 — full ecosystem post-standardization audit               |
+| 17 | `a6cd7555` | fix(monitoring): wire onFailure to 9 services, fix flake overlay references        |
+| 18 | `3dac3f9d` | chore(deps): migrate golangci-lint-auto-configure and mr-sync to flake overlays    |
 
 ---
 

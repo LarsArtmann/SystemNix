@@ -13,7 +13,7 @@
 2. **Contents mapped.** Complete Windows boot disk of `DESKTOP-U51NGKT`: EFI (100M) / MSR (16M) / **BitLocker v2** C: (930.9G, label dated 2022-03-26) / NTFS recovery (509M).
 3. **BitLocker unlock** — user-executed via provided dislocker instructions (`dislocker-fuse -u` + `mount -o loop,ro -t ntfs3`). Plaintext at `/mnt/win`, read-only.
 4. **Plaintext rescue copy COMPLETE & VERIFIED.** 178 GiB logical, **550,573 entries (444,350 files, 106,157 dirs, 66 symlinks)**, copied in 20m24s at ~148 MB/s. Final rsync itemize dry-run: **0 differences**; independently re-verified by a second dry-run outside the script (`grep -cv` = 0). Excludes: `Windows/`, `Recovery/`, `PerfLogs/`, pagefile (5.1G), hiberfil (34G), swapfile, Recycle Bins, `System Volume Information/`, `$WinREAgent/` — all anchored at volume root.
-5. **Size reconciled.** 240G volume-used − ~65G exclusions ≈ 176G expected ≈ 178G copied ✓. 178G is *logical* (`du`); physical pool footprint smaller under zstd:3 (unmeasured — `compsize` needs root).
+5. **Size reconciled.** 240G volume-used − ~65G exclusions ≈ 176G expected ≈ 178G copied ✓. 178G is _logical_ (`du`); physical pool footprint smaller under zstd:3 (unmeasured — `compsize` needs root).
 6. **Content survey of the interesting parts.** `Users/l-art` (32G: IdeaProjects/DeepBackup, Desktop 1.1G, Downloads 890M, AppData 24G); `tools/MultiMC` incl. **`accounts.json` with live Microsoft session tokens** and Minecraft worlds; JetBrains `c.kdbx` credential DBs; no `.ssh`, no wallet files; ProgramData Duplicati/ssh dirs empty.
 7. **`/data` re-audited** (after user correction): `ai/` 267G, `models/` 210G, `llamacpp-models/` 92G, `SteamLibrary/` 106G, `monitor365-archive/` 32G, plus EMPTY `atticd/ docker/ containers/ cache/ monitor365/` (permissions may mask true content — measured without root). **Immich is NOT on /data** — already at `/mnt/pool/services/immich` (`modules/nixos/services/immich.nix:31`).
 8. **Hardware context delivered.** 970 EVO Plus vs Lexar NQ790 (bridge-capped ~1GB/s here, but TLC sustained-read beats QLC on long model loads); 970 EVO vs EVO Plus vs 970 Pro lineage (no "EVO Pro" exists).
@@ -43,7 +43,7 @@
    - `--itemize` is not a valid long option in rsync 3.4.4 (`-i` is; rsync rejects unambiguous abbreviations)
    - stats output written to the same temp file as the itemize diff → `-s` test always true
    - blank lines in stats output not stripped by the grep filter → whitespace-only "differences"
-   Root cause: I never dry-tested the harness against synthetic input until fix #3 (where a `printf | grep | wc -c` = 0 test caught it instantly). User ran the script 4 times total for one real copy.
+     Root cause: I never dry-tested the harness against synthetic input until fix #3 (where a `printf | grep | wc -c` = 0 test caught it instantly). User ran the script 4 times total for one real copy.
 4. **Stale-knowledge assertion.** Claimed "/data is largely Immich/photos" — contradicted by our own AGENTS.md (Immich lives on the pool since bring-up). Corrected only after user pushback. Lesson: consult known-state docs before asserting current layout.
 
 ## e) WHAT WE SHOULD IMPROVE (process, from this session)
@@ -59,6 +59,7 @@
 ## f) NEXT UP TO 50 THINGS
 
 **Decision & drive prep**
+
 1. User decides repurposing (games+models? other high-disk workload?)
 2. `sudo smartctl -d sat -a /dev/sde` — wear/endurance check before internal use
 3. Decide: plaintext rescue sufficient, or ALSO want ciphertext dd image? → unlocks wipe decision
@@ -121,4 +122,4 @@
 
 ---
 
-**Bottom line:** The 12-year-risk item is closed — DESKTOP-U51NGKT's data is rescued, verified byte-consistent, and resting on the RAID1 pool. The session's failures were all in *my* tooling (guards, harness), not in the data path; three lessons distilled in section e. Open thread: what the Samsung becomes next.
+**Bottom line:** The 12-year-risk item is closed — DESKTOP-U51NGKT's data is rescued, verified byte-consistent, and resting on the RAID1 pool. The session's failures were all in _my_ tooling (guards, harness), not in the data path; three lessons distilled in section e. Open thread: what the Samsung becomes next.

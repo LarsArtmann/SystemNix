@@ -11,29 +11,29 @@
 
 ### This Session (25)
 
-| #   | Change                                                                                                                                                            | Files                                                                     |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| 1   | **Disable Unsloth Studio** — removed stale references from caddy, homepage, DNS blocker (evo-x2 + rpi3)                                                           | `caddy.nix`, `homepage.nix`, `dns-blocker-config.nix`, `rpi3/default.nix` |
-| 2   | **Fix `lib/systemd.nix` curried signature** — made it `{lib, ...}: { overrides... }: { ... }` so `harden {}` call pattern works with `lib.mkDefault`              | `lib/systemd.nix`                                                         |
-| 3   | **Fix `hermes.nix` scoping** — moved `harden` import from outer `let` (no `lib`) into module function scope                                                       | `modules/nixos/services/hermes.nix`                                       |
-| 4   | **Fix `file-and-image-renamer.nix`** — reverted incorrect `harden/serviceDefaults` usage (it's a `systemd.user.services` module, `harden` is for system services) | `modules/nixos/services/file-and-image-renamer.nix`                       |
-| 5   | **Updated all 16 service modules** — changed `import ../../../lib/systemd.nix` → `import ../../../lib/systemd.nix {inherit lib;}` to match curried signature      | 16 files                                                                  |
-| 6   | **Updated `lib/default.nix`** — pass `{inherit lib;}` to curried harden function                                                                                  | `lib/default.nix`                                                         |
+| # | Change                                                                                                                                                            | Files                                                                     |
+| - | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| 1 | **Disable Unsloth Studio** — removed stale references from caddy, homepage, DNS blocker (evo-x2 + rpi3)                                                           | `caddy.nix`, `homepage.nix`, `dns-blocker-config.nix`, `rpi3/default.nix` |
+| 2 | **Fix `lib/systemd.nix` curried signature** — made it `{lib, ...}: { overrides... }: { ... }` so `harden {}` call pattern works with `lib.mkDefault`              | `lib/systemd.nix`                                                         |
+| 3 | **Fix `hermes.nix` scoping** — moved `harden` import from outer `let` (no `lib`) into module function scope                                                       | `modules/nixos/services/hermes.nix`                                       |
+| 4 | **Fix `file-and-image-renamer.nix`** — reverted incorrect `harden/serviceDefaults` usage (it's a `systemd.user.services` module, `harden` is for system services) | `modules/nixos/services/file-and-image-renamer.nix`                       |
+| 5 | **Updated all 16 service modules** — changed `import ../../../lib/systemd.nix` → `import ../../../lib/systemd.nix {inherit lib;}` to match curried signature      | 16 files                                                                  |
+| 6 | **Updated `lib/default.nix`** — pass `{inherit lib;}` to curried harden function                                                                                  | `lib/default.nix`                                                         |
 
 ### Session 24 (Previous — Committed, Had Bugs)
 
-| #   | Change                                                                  | Status                                     |
-| --- | ----------------------------------------------------------------------- | ------------------------------------------ |
-| 1   | Created `lib/default.nix` entry point                                   | ✓ Done                                     |
-| 2   | Added `harden {}` to authelia, caddy, monitor365, gitea-repos, photomap | ✓ Done                                     |
-| 3   | Added `serviceDefaults {}` to homepage, file-and-image-renamer          | ⚠️ Partial (renamer reverted this session) |
-| 4   | Removed `__GLX_VENDOR_LIBRARY_NAME` from amd-gpu.nix                    | ✓ Done                                     |
-| 5   | Fixed dns-blocker.nix `\n` newline bug                                  | ✓ Done                                     |
-| 6   | Fixed `modernize.nix` sha256→hash                                       | ✓ Done                                     |
-| 7   | Removed dead code in `netwatch.nix`, `darwin/home.nix`                  | ✓ Done                                     |
-| 8   | Merged 3 separate `services.*` blocks in `boot.nix`                     | ✓ Done                                     |
-| 9   | Removed unused niri wallpaper binding                                   | ✓ Done                                     |
-| 10  | Updated AGENTS.md                                                       | ✓ Done                                     |
+| #  | Change                                                                  | Status                                    |
+| -- | ----------------------------------------------------------------------- | ----------------------------------------- |
+| 1  | Created `lib/default.nix` entry point                                   | ✓ Done                                    |
+| 2  | Added `harden {}` to authelia, caddy, monitor365, gitea-repos, photomap | ✓ Done                                    |
+| 3  | Added `serviceDefaults {}` to homepage, file-and-image-renamer          | ⚠️ Partial (renamer reverted this session) |
+| 4  | Removed `__GLX_VENDOR_LIBRARY_NAME` from amd-gpu.nix                    | ✓ Done                                    |
+| 5  | Fixed dns-blocker.nix `\n` newline bug                                  | ✓ Done                                    |
+| 6  | Fixed `modernize.nix` sha256→hash                                       | ✓ Done                                    |
+| 7  | Removed dead code in `netwatch.nix`, `darwin/home.nix`                  | ✓ Done                                    |
+| 8  | Merged 3 separate `services.*` blocks in `boot.nix`                     | ✓ Done                                    |
+| 9  | Removed unused niri wallpaper binding                                   | ✓ Done                                    |
+| 10 | Updated AGENTS.md                                                       | ✓ Done                                    |
 
 ### Evergreen (Across All Sessions)
 
@@ -66,18 +66,18 @@
 
 ## C. NOT STARTED
 
-| #   | Item                                                                           | Priority | Effort   | Impact                     |
-| --- | ------------------------------------------------------------------------------ | -------- | -------- | -------------------------- |
-| 1   | Shared `primaryUser` option (replace 14 hardcoded `"lars"` references)         | P1       | Medium   | High — DRY, portability    |
-| 2   | Split `signoz.nix` (741 lines) into sub-modules                                | P2       | High     | Medium — readability       |
-| 3   | Fix `taskwarrior.nix` — uses `systemd.user` unguarded on Darwin                | P2       | Low      | High — Darwin breakage     |
-| 4   | Fix `nix-settings.nix` — `sandbox = true` may break Darwin                     | P2       | Low      | Medium — Darwin breakage   |
-| 5   | Adopt `colorScheme.palette` in 4 desktop modules                               | P3       | Medium   | Low — aesthetics           |
-| 6   | Fix starship disabled-but-enabled modules                                      | P3       | Low      | Low                        |
-| 7   | `lib/default.nix` adoption — refactor all modules to import from central entry | P3       | Medium   | Low — consistency          |
-| 8   | DNS failover Pi 3 provisioning                                                 | P3       | External | High — when hardware ready |
-| 9   | Status report archiving (keep last 5, archive rest)                            | P3       | Low      | Low                        |
-| 10  | Add `harden {}` to remaining 15 service modules (where applicable)             | P3       | Medium   | Medium                     |
+| #  | Item                                                                           | Priority | Effort   | Impact                     |
+| -- | ------------------------------------------------------------------------------ | -------- | -------- | -------------------------- |
+| 1  | Shared `primaryUser` option (replace 14 hardcoded `"lars"` references)         | P1       | Medium   | High — DRY, portability    |
+| 2  | Split `signoz.nix` (741 lines) into sub-modules                                | P2       | High     | Medium — readability       |
+| 3  | Fix `taskwarrior.nix` — uses `systemd.user` unguarded on Darwin                | P2       | Low      | High — Darwin breakage     |
+| 4  | Fix `nix-settings.nix` — `sandbox = true` may break Darwin                     | P2       | Low      | Medium — Darwin breakage   |
+| 5  | Adopt `colorScheme.palette` in 4 desktop modules                               | P3       | Medium   | Low — aesthetics           |
+| 6  | Fix starship disabled-but-enabled modules                                      | P3       | Low      | Low                        |
+| 7  | `lib/default.nix` adoption — refactor all modules to import from central entry | P3       | Medium   | Low — consistency          |
+| 8  | DNS failover Pi 3 provisioning                                                 | P3       | External | High — when hardware ready |
+| 9  | Status report archiving (keep last 5, archive rest)                            | P3       | Low      | Low                        |
+| 10 | Add `harden {}` to remaining 15 service modules (where applicable)             | P3       | Medium   | Medium                     |
 
 ---
 
@@ -123,43 +123,43 @@
 
 ### P1 — High Impact, Low Effort (Do First)
 
-| #   | Task                                                                                                                         | Effort | Impact | Files     |
-| --- | ---------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | --------- |
-| 1   | **Create shared `primaryUser` option** — Add `options.users.primaryUser` module, replace 14 hardcoded `"lars"`               | Medium | High   | 12+ files |
-| 2   | **Fix `taskwarrior.nix` Darwin guard** — Wrap `systemd.user` in `pkgs.stdenv.isLinux`                                        | Low    | High   | 1 file    |
-| 3   | **Fix `nix-settings.nix` Darwin sandbox** — Guard `sandbox = true` with `isLinux`                                            | Low    | Medium | 1 file    |
-| 4   | **Add `harden {}` to remaining applicable services** — gitea, immich, signoz, minecraft, comfyui, twenty, voice-agents, sops | Medium | Medium | 8 files   |
-| 5   | **Archive old status reports** — Move 75+ old reports to `docs/archive/status/`                                              | Low    | Low    | Cleanup   |
+| # | Task                                                                                                                         | Effort | Impact | Files     |
+| - | ---------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | --------- |
+| 1 | **Create shared `primaryUser` option** — Add `options.users.primaryUser` module, replace 14 hardcoded `"lars"`               | Medium | High   | 12+ files |
+| 2 | **Fix `taskwarrior.nix` Darwin guard** — Wrap `systemd.user` in `pkgs.stdenv.isLinux`                                        | Low    | High   | 1 file    |
+| 3 | **Fix `nix-settings.nix` Darwin sandbox** — Guard `sandbox = true` with `isLinux`                                            | Low    | Medium | 1 file    |
+| 4 | **Add `harden {}` to remaining applicable services** — gitea, immich, signoz, minecraft, comfyui, twenty, voice-agents, sops | Medium | Medium | 8 files   |
+| 5 | **Archive old status reports** — Move 75+ old reports to `docs/archive/status/`                                              | Low    | Low    | Cleanup   |
 
 ### P2 — Medium Impact, Medium Effort
 
-| #   | Task                                                                                             | Effort | Impact | Files     |
-| --- | ------------------------------------------------------------------------------------------------ | ------ | ------ | --------- |
-| 6   | **Adopt `colorScheme.palette`** in waybar, rofi, swaylock, yazi                                  | Medium | Low    | 4 files   |
-| 7   | **Fix starship disabled-but-enabled modules**                                                    | Low    | Low    | 1 file    |
-| 8   | **Adopt `lib/types.nix` helpers** (`servicePort`, `restartDelay`) in service modules             | Medium | Medium | 10+ files |
-| 9   | **Add `MemoryMax` bounds to all services** — Prevent any single service from consuming all 128GB | Medium | High   | 15 files  |
-| 10  | **Split `signoz.nix` into sub-modules**                                                          | High   | Medium | 1→4 files |
-| 11  | **Refactor `lib/default.nix` adoption** — Change all modules to import from central entry        | Medium | Low    | 16 files  |
-| 12  | **Add `serviceDefaults {}` to more services** — Standardize restart behavior                     | Low    | Medium | 15 files  |
-| 13  | **Audit all `ExecStart` for hardcoded paths** — Should use `${pkgs.*}/bin/` consistently         | Medium | Medium | 20+ files |
-| 14  | **Consolidate DNS service lists** — evo-x2 and rpi3 have duplicate `local-data` lists            | Low    | Medium | 2 files   |
+| #  | Task                                                                                             | Effort | Impact | Files     |
+| -- | ------------------------------------------------------------------------------------------------ | ------ | ------ | --------- |
+| 6  | **Adopt `colorScheme.palette`** in waybar, rofi, swaylock, yazi                                  | Medium | Low    | 4 files   |
+| 7  | **Fix starship disabled-but-enabled modules**                                                    | Low    | Low    | 1 file    |
+| 8  | **Adopt `lib/types.nix` helpers** (`servicePort`, `restartDelay`) in service modules             | Medium | Medium | 10+ files |
+| 9  | **Add `MemoryMax` bounds to all services** — Prevent any single service from consuming all 128GB | Medium | High   | 15 files  |
+| 10 | **Split `signoz.nix` into sub-modules**                                                          | High   | Medium | 1→4 files |
+| 11 | **Refactor `lib/default.nix` adoption** — Change all modules to import from central entry        | Medium | Low    | 16 files  |
+| 12 | **Add `serviceDefaults {}` to more services** — Standardize restart behavior                     | Low    | Medium | 15 files  |
+| 13 | **Audit all `ExecStart` for hardcoded paths** — Should use `${pkgs.*}/bin/` consistently         | Medium | Medium | 20+ files |
+| 14 | **Consolidate DNS service lists** — evo-x2 and rpi3 have duplicate `local-data` lists            | Low    | Medium | 2 files   |
 
 ### P3 — Lower Priority, Worth Doing Eventually
 
-| #   | Task                                                                                                   | Effort   | Impact |
-| --- | ------------------------------------------------------------------------------------------------------ | -------- | ------ |
-| 15  | **DNS failover Pi 3 provisioning** — Hardware-dependent                                                | External | High   |
-| 16  | **Test Darwin build** — `nix build .#darwinConfigurations.Lars-MacBook-Air.system`                     | Low      | High   |
-| 17  | **Extract common Caddy vhost pattern** into a helper function                                          | Low      | Low    |
-| 18  | **Add health check endpoints** to custom services (photomap, voice-agents, comfyui)                    | Medium   | Medium |
-| 19  | **Centralize firewall port management** — Ports scattered across modules                               | Medium   | Medium |
-| 20  | **Audit all `tmpfiles.rules` for consistency** — Some use `primaryUser`, some hardcode                 | Low      | Low    |
-| 21  | **Add `ReadWritePaths` to hardened services** — Some may need explicit write paths                     | Medium   | Medium |
-| 22  | **Create NixOS test harness** — `nixosTests` for critical services                                     | High     | High   |
-| 23  | **Migrate remaining `imports` to use `lib/default.nix`** central entry                                 | Medium   | Low    |
-| 24  | **Review all `wantedBy = ["multi-user.target"]`** — Some services should be `graphical-session.target` | Low      | Medium |
-| 25  | **Add structured logging** to custom services — Standardize on `slog` (Go) and `structlog` (Python)    | Medium   | Medium |
+| #  | Task                                                                                                   | Effort   | Impact |
+| -- | ------------------------------------------------------------------------------------------------------ | -------- | ------ |
+| 15 | **DNS failover Pi 3 provisioning** — Hardware-dependent                                                | External | High   |
+| 16 | **Test Darwin build** — `nix build .#darwinConfigurations.Lars-MacBook-Air.system`                     | Low      | High   |
+| 17 | **Extract common Caddy vhost pattern** into a helper function                                          | Low      | Low    |
+| 18 | **Add health check endpoints** to custom services (photomap, voice-agents, comfyui)                    | Medium   | Medium |
+| 19 | **Centralize firewall port management** — Ports scattered across modules                               | Medium   | Medium |
+| 20 | **Audit all `tmpfiles.rules` for consistency** — Some use `primaryUser`, some hardcode                 | Low      | Low    |
+| 21 | **Add `ReadWritePaths` to hardened services** — Some may need explicit write paths                     | Medium   | Medium |
+| 22 | **Create NixOS test harness** — `nixosTests` for critical services                                     | High     | High   |
+| 23 | **Migrate remaining `imports` to use `lib/default.nix`** central entry                                 | Medium   | Low    |
+| 24 | **Review all `wantedBy = ["multi-user.target"]`** — Some services should be `graphical-session.target` | Low      | Medium |
+| 25 | **Add structured logging** to custom services — Standardize on `slog` (Go) and `structlog` (Python)    | Medium   | Medium |
 
 ---
 

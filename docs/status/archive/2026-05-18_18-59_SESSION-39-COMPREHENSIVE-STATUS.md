@@ -196,33 +196,33 @@ All packages build cleanly. No cascade failures since Session 36.
 
 ## f) Top #25 Things We Should Get Done Next! 🎯
 
-| #   | Task                                       | Why                                        | Effort   | Impact    |
-| --- | ------------------------------------------ | ------------------------------------------ | -------- | --------- |
-| 1   | **Fix XDG_PROJECTS_DIR deprecation**       | Eliminates HM warning on every build       | 2 min    | Low       |
-| 2   | **Decide on `netwatch`**                   | Built but not installed — confusing        | 5 min    | Low       |
-| 3   | **Decide on `photomap`**                   | Dead commented code + stale module         | 10 min   | Medium    |
-| 4   | **Run `just clean` on evo-x2**             | Disk at 86% — prevent build failures       | 10 min   | High      |
-| 5   | **Verify Darwin build from MacBook**       | Latent issues possible since Session 36    | 30 min   | High      |
-| 6   | **Archive status reports >2 weeks old**    | 56+ reports, no cleanup policy             | 10 min   | Low       |
-| 7   | **Set up Cachix binary cache**             | Massive rebuild time savings               | 2 hours  | Very High |
-| 8   | **GitHub Actions `nix flake check` CI**    | Prevent breakage on push                   | 1 hour   | Very High |
-| 9   | **Create `mk-pnpm-package.nix` helper**    | Reuse jscpd pattern                        | 1 hour   | Medium    |
-| 10  | **Write upstream fix playbook**            | Prevent repeated cascade debugging         | 30 min   | Medium    |
-| 11  | **Go.sum transitive merge audit**          | Prevent future cascade failures            | 1 hour   | High      |
-| 12  | **Dependency graph visualization**         | "What breaks when go-output updates?"      | 2 hours  | High      |
-| 13  | **Automated vendor hash updater**          | Set `""`, build, grep, paste → one command | 3 hours  | Very High |
-| 14  | **rpi3-dns hardware provisioning**         | Eliminate DNS single point of failure      | Hardware | High      |
-| 15  | **SigNoz per-threshold routing**           | Critical→DM, warning→channel               | 1 hour   | Medium    |
-| 16  | **Distributed Darwin builds**              | MacBook disk at 90-95%                     | 2 hours  | High      |
-| 17  | **Migrate justfile → flake.nix**           | AGENTS.md policy: justfile deprecated      | 4 hours  | Low       |
-| 18  | **Standardize ADR numbering**              | Some `ADR-NNN`, some `NNN-`                | 15 min   | Low       |
-| 19  | **DNS-over-QUIC re-evaluation**            | Currently disabled for build time          | 1 hour   | Low       |
-| 20  | **AppArmor enablement**                    | Currently `mkDefault false`                | 2 hours  | Medium    |
-| 21  | **Auditd re-enablement**                   | Blocked by nixpkgs #483085; track upstream | Ongoing  | Medium    |
-| 22  | **Consolidate voice-agents Caddy vHost**   | Inconsistency with other services          | 30 min   | Low       |
-| 23  | **Move dns-failover authPassword to sops** | Plaintext password in module               | 30 min   | Medium    |
-| 24  | **Add per-service health check endpoints** | Beyond Gatus — self-reporting              | 3 hours  | Medium    |
-| 25  | **Contribute jscpd upstream fix**          | Give back to nixpkgs                       | 2 hours  | Low       |
+| #  | Task                                       | Why                                        | Effort   | Impact    |
+| -- | ------------------------------------------ | ------------------------------------------ | -------- | --------- |
+| 1  | **Fix XDG_PROJECTS_DIR deprecation**       | Eliminates HM warning on every build       | 2 min    | Low       |
+| 2  | **Decide on `netwatch`**                   | Built but not installed — confusing        | 5 min    | Low       |
+| 3  | **Decide on `photomap`**                   | Dead commented code + stale module         | 10 min   | Medium    |
+| 4  | **Run `just clean` on evo-x2**             | Disk at 86% — prevent build failures       | 10 min   | High      |
+| 5  | **Verify Darwin build from MacBook**       | Latent issues possible since Session 36    | 30 min   | High      |
+| 6  | **Archive status reports >2 weeks old**    | 56+ reports, no cleanup policy             | 10 min   | Low       |
+| 7  | **Set up Cachix binary cache**             | Massive rebuild time savings               | 2 hours  | Very High |
+| 8  | **GitHub Actions `nix flake check` CI**    | Prevent breakage on push                   | 1 hour   | Very High |
+| 9  | **Create `mk-pnpm-package.nix` helper**    | Reuse jscpd pattern                        | 1 hour   | Medium    |
+| 10 | **Write upstream fix playbook**            | Prevent repeated cascade debugging         | 30 min   | Medium    |
+| 11 | **Go.sum transitive merge audit**          | Prevent future cascade failures            | 1 hour   | High      |
+| 12 | **Dependency graph visualization**         | "What breaks when go-output updates?"      | 2 hours  | High      |
+| 13 | **Automated vendor hash updater**          | Set `""`, build, grep, paste → one command | 3 hours  | Very High |
+| 14 | **rpi3-dns hardware provisioning**         | Eliminate DNS single point of failure      | Hardware | High      |
+| 15 | **SigNoz per-threshold routing**           | Critical→DM, warning→channel               | 1 hour   | Medium    |
+| 16 | **Distributed Darwin builds**              | MacBook disk at 90-95%                     | 2 hours  | High      |
+| 17 | **Migrate justfile → flake.nix**           | AGENTS.md policy: justfile deprecated      | 4 hours  | Low       |
+| 18 | **Standardize ADR numbering**              | Some `ADR-NNN`, some `NNN-`                | 15 min   | Low       |
+| 19 | **DNS-over-QUIC re-evaluation**            | Currently disabled for build time          | 1 hour   | Low       |
+| 20 | **AppArmor enablement**                    | Currently `mkDefault false`                | 2 hours  | Medium    |
+| 21 | **Auditd re-enablement**                   | Blocked by nixpkgs #483085; track upstream | Ongoing  | Medium    |
+| 22 | **Consolidate voice-agents Caddy vHost**   | Inconsistency with other services          | 30 min   | Low       |
+| 23 | **Move dns-failover authPassword to sops** | Plaintext password in module               | 30 min   | Medium    |
+| 24 | **Add per-service health check endpoints** | Beyond Gatus — self-reporting              | 3 hours  | Medium    |
+| 25 | **Contribute jscpd upstream fix**          | Give back to nixpkgs                       | 2 hours  | Low       |
 
 ---
 

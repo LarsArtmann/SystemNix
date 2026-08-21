@@ -152,38 +152,38 @@ The fix for go-structure-linter was 10 commits. Should be squashed to 1-2 clean 
 
 ### High Impact
 
-| #   | Task                                          | Impact                          | Effort |
-| --- | --------------------------------------------- | ------------------------------- | ------ |
-| 1   | Refactor 4 repos to use `mkPreparedSource` v2 | DRY, reduce copy-paste errors   | Medium |
-| 2   | Create `mk-pnpm-package.nix` reusable helper  | Extract jscpd pattern for reuse | Medium |
-| 3   | Document `overrideModAttrs` pattern           | Knowledge preservation          | Low    |
-| 4   | Implement `just hash-check --fix` auto-repair | Developer velocity              | Medium |
-| 5   | Go.sum transitive merge audit                 | Prevent future cascade failures | Medium |
+| # | Task                                          | Impact                          | Effort |
+| - | --------------------------------------------- | ------------------------------- | ------ |
+| 1 | Refactor 4 repos to use `mkPreparedSource` v2 | DRY, reduce copy-paste errors   | Medium |
+| 2 | Create `mk-pnpm-package.nix` reusable helper  | Extract jscpd pattern for reuse | Medium |
+| 3 | Document `overrideModAttrs` pattern           | Knowledge preservation          | Low    |
+| 4 | Implement `just hash-check --fix` auto-repair | Developer velocity              | Medium |
+| 5 | Go.sum transitive merge audit                 | Prevent future cascade failures | Medium |
 
 ### Medium Impact
 
-| #   | Task                                             | Impact                     | Effort |
-| --- | ------------------------------------------------ | -------------------------- | ------ |
-| 6   | Write upstream fix playbook                      | Prevent repeated debugging | Low    |
-| 7   | Write session 35/36 case study                   | Institutional knowledge    | Low    |
-| 8   | Set up cachix for faster rebuilds                | Build speed                | High   |
-| 9   | CI spec for pre-merge validation                 | Prevent breakage           | High   |
-| 10  | Flake input audit (unused/stale inputs)          | Lock file cleanup          | Medium |
-| 11  | Explore `fetchGoModules` for private repos       | Simplify vendor management | High   |
-| 12  | `update-all-vendor-hashes` recipe with dep graph | Cascade prevention         | High   |
-| 13  | Refactor `todoListAiFixedHash` pattern           | Consistency                | Low    |
-| 14  | GitHub Actions for automated vendor hash updates | Automation                 | High   |
+| #  | Task                                             | Impact                     | Effort |
+| -- | ------------------------------------------------ | -------------------------- | ------ |
+| 6  | Write upstream fix playbook                      | Prevent repeated debugging | Low    |
+| 7  | Write session 35/36 case study                   | Institutional knowledge    | Low    |
+| 8  | Set up cachix for faster rebuilds                | Build speed                | High   |
+| 9  | CI spec for pre-merge validation                 | Prevent breakage           | High   |
+| 10 | Flake input audit (unused/stale inputs)          | Lock file cleanup          | Medium |
+| 11 | Explore `fetchGoModules` for private repos       | Simplify vendor management | High   |
+| 12 | `update-all-vendor-hashes` recipe with dep graph | Cascade prevention         | High   |
+| 13 | Refactor `todoListAiFixedHash` pattern           | Consistency                | Low    |
+| 14 | GitHub Actions for automated vendor hash updates | Automation                 | High   |
 
 ### General Backlog
 
-| #   | Task                                             | Notes                                                          |
-| --- | ------------------------------------------------ | -------------------------------------------------------------- |
-| 15  | Consolidate/archive status docs                  | 55 status reports in docs/status/, could archive old ones      |
-| 16  | Dependency graph visualization                   | Show which packages affect which when go-output changes        |
-| 17  | Go sub-module tag automation                     | go-output/testhelpers release process                          |
-| 18  | Darwin disk space strategy                       | MacBook Air at 90-95% full, need distributed builds or cleanup |
-| 19  | rpi3-dns hardware provisioning                   | Pi 3 not yet provisioned, cluster is "planned" status          |
-| 20  | Add `netwatch` to `base.nix` or document why not | Only remaining "built but not installed" package               |
+| #  | Task                                             | Notes                                                          |
+| -- | ------------------------------------------------ | -------------------------------------------------------------- |
+| 15 | Consolidate/archive status docs                  | 55 status reports in docs/status/, could archive old ones      |
+| 16 | Dependency graph visualization                   | Show which packages affect which when go-output changes        |
+| 17 | Go sub-module tag automation                     | go-output/testhelpers release process                          |
+| 18 | Darwin disk space strategy                       | MacBook Air at 90-95% full, need distributed builds or cleanup |
+| 19 | rpi3-dns hardware provisioning                   | Pi 3 not yet provisioned, cluster is "planned" status          |
+| 20 | Add `netwatch` to `base.nix` or document why not | Only remaining "built but not installed" package               |
 
 ---
 
@@ -199,8 +199,8 @@ The `just update-vendor-hashes` recipe uses `nix build .#pkg --no-link` which re
 
 ### 2. Dead/Stale Files
 
-| File                           | Issue                                                                                 |
-| ------------------------------ | ------------------------------------------------------------------------------------- |
+| File                           | Issue                                                                                  |
+| ------------------------------ | -------------------------------------------------------------------------------------- |
 | `pkgs/jscpd-package-lock.json` | Leftover from pnpm-based build, not referenced. jscpd now uses pnpm. **Still exists.** |
 
 ### 3. Unused Exports
@@ -265,48 +265,48 @@ Either enable it, fix the podman permission issue, or remove the module and the 
 
 ### Tier 1: Immediate (This Session or Next)
 
-| #   | Task                                                                           | Why                                              | Effort |
-| --- | ------------------------------------------------------------------------------ | ------------------------------------------------ | ------ |
-| 1   | **Delete `pkgs/jscpd-package-lock.json`**                                      | Dead file, leftover from pnpm→pnpm migration      | 1 min  |
-| 2   | **Decide on `netwatch`** — add to `base.nix` or document as overlay-only       | Only remaining "built but not installed" package | 5 min  |
-| 3   | **Decide on `photomap`** — fix podman issue, enable, or remove module          | Dead commented code in configuration.nix         | 10 min |
-| 4   | **Fix `update-vendor-hashes` false negatives**                                 | Missed buildflow stale hash in session 36        | Medium |
-| 5   | **Consolidate `hash-check` + `update-vendor-hashes`** into one reliable recipe | Two overlapping tools with different accuracy    | Medium |
+| # | Task                                                                           | Why                                              | Effort |
+| - | ------------------------------------------------------------------------------ | ------------------------------------------------ | ------ |
+| 1 | **Delete `pkgs/jscpd-package-lock.json`**                                      | Dead file, leftover from pnpm→pnpm migration     | 1 min  |
+| 2 | **Decide on `netwatch`** — add to `base.nix` or document as overlay-only       | Only remaining "built but not installed" package | 5 min  |
+| 3 | **Decide on `photomap`** — fix podman issue, enable, or remove module          | Dead commented code in configuration.nix         | 10 min |
+| 4 | **Fix `update-vendor-hashes` false negatives**                                 | Missed buildflow stale hash in session 36        | Medium |
+| 5 | **Consolidate `hash-check` + `update-vendor-hashes`** into one reliable recipe | Two overlapping tools with different accuracy    | Medium |
 
 ### Tier 2: Short Term (Next Few Sessions)
 
-| #   | Task                                              | Why                                        | Effort |
-| --- | ------------------------------------------------- | ------------------------------------------ | ------ |
-| 6   | **Verify mkPreparedSource v2 in upstream repos**  | Ensure 4 migrated repos build correctly    | 30 min |
-| 7   | **Squash go-structure-linter commits** (10 → 1-2) | Clean git history                          | 10 min |
-| 8   | **Write upstream fix playbook**                   | Session 35/36 learnings documented         | Low    |
-| 9   | **Verify Darwin build** from MacBook              | Ensure macOS still builds after session 36 | 30 min |
-| 10  | **Archive old status docs** (keep last 5 active)  | 55 reports is excessive                    | Low    |
+| #  | Task                                              | Why                                        | Effort |
+| -- | ------------------------------------------------- | ------------------------------------------ | ------ |
+| 6  | **Verify mkPreparedSource v2 in upstream repos**  | Ensure 4 migrated repos build correctly    | 30 min |
+| 7  | **Squash go-structure-linter commits** (10 → 1-2) | Clean git history                          | 10 min |
+| 8  | **Write upstream fix playbook**                   | Session 35/36 learnings documented         | Low    |
+| 9  | **Verify Darwin build** from MacBook              | Ensure macOS still builds after session 36 | 30 min |
+| 10 | **Archive old status docs** (keep last 5 active)  | 55 reports is excessive                    | Low    |
 
 ### Tier 3: Medium Term (Next Week)
 
-| #   | Task                                                      | Why                                   | Effort |
-| --- | --------------------------------------------------------- | ------------------------------------- | ------ |
-| 11  | **Flake input audit** — identify and remove unused inputs | 137 transitive inputs is excessive    | Medium |
-| 12  | **Create `mk-pnpm-package.nix`** reusable helper          | jscpd pattern extracted for reuse     | Medium |
-| 13  | **Set up cachix** for binary cache                        | Faster rebuilds, CI prerequisite      | High   |
-| 14  | **CI spec** — GitHub Actions `nix flake check`            | Prevent breakage on push              | High   |
-| 15  | **Dependency graph visualization**                        | "What breaks when go-output updates?" | Medium |
+| #  | Task                                                      | Why                                   | Effort |
+| -- | --------------------------------------------------------- | ------------------------------------- | ------ |
+| 11 | **Flake input audit** — identify and remove unused inputs | 137 transitive inputs is excessive    | Medium |
+| 12 | **Create `mk-pnpm-package.nix`** reusable helper          | jscpd pattern extracted for reuse     | Medium |
+| 13 | **Set up cachix** for binary cache                        | Faster rebuilds, CI prerequisite      | High   |
+| 14 | **CI spec** — GitHub Actions `nix flake check`            | Prevent breakage on push              | High   |
+| 15 | **Dependency graph visualization**                        | "What breaks when go-output updates?" | Medium |
 
 ### Tier 4: Strategic (Next Month)
 
-| #   | Task                                                                         | Why                          | Effort   |
-| --- | ---------------------------------------------------------------------------- | ---------------------------- | -------- |
-| 16  | **Explore `fetchGoModules`** for private repos                               | Simplify vendor management   | High     |
-| 17  | **GitHub Actions** for automated vendor hash updates                         | Full automation              | High     |
-| 18  | **`update-all-vendor-hashes`** with dep graph walker                         | Cascade prevention           | High     |
-| 19  | **Darwin disk space strategy** (distributed builds to evo-x2)                | MacBook at 90-95% full       | High     |
-| 20  | **Standardize ADR numbering** (all `NNN-` or all `ADR-NNN-`)                 | Consistency                  | Low      |
-| 21  | **rpi3-dns hardware provisioning**                                           | Pi 3 DNS cluster backup node | Hardware |
-| 22  | **Contribute jscpd upstream fix** (wrapped-src pattern)                      | Give back to open source     | Medium   |
-| 23  | **Add per-threshold SigNoz channel routing** (critical→Discord, warning→log) | Better alert granularity     | Medium   |
-| 24  | **Move `dns-failover.nix` plaintext `authPassword` to sops**                 | Security hardening           | Medium   |
-| 25  | **Consolidate voice-agents Caddy vHost** into caddy.nix pattern              | Consistency                  | Low      |
+| #  | Task                                                                         | Why                          | Effort   |
+| -- | ---------------------------------------------------------------------------- | ---------------------------- | -------- |
+| 16 | **Explore `fetchGoModules`** for private repos                               | Simplify vendor management   | High     |
+| 17 | **GitHub Actions** for automated vendor hash updates                         | Full automation              | High     |
+| 18 | **`update-all-vendor-hashes`** with dep graph walker                         | Cascade prevention           | High     |
+| 19 | **Darwin disk space strategy** (distributed builds to evo-x2)                | MacBook at 90-95% full       | High     |
+| 20 | **Standardize ADR numbering** (all `NNN-` or all `ADR-NNN-`)                 | Consistency                  | Low      |
+| 21 | **rpi3-dns hardware provisioning**                                           | Pi 3 DNS cluster backup node | Hardware |
+| 22 | **Contribute jscpd upstream fix** (wrapped-src pattern)                      | Give back to open source     | Medium   |
+| 23 | **Add per-threshold SigNoz channel routing** (critical→Discord, warning→log) | Better alert granularity     | Medium   |
+| 24 | **Move `dns-failover.nix` plaintext `authPassword` to sops**                 | Security hardening           | Medium   |
+| 25 | **Consolidate voice-agents Caddy vHost** into caddy.nix pattern              | Consistency                  | Low      |
 
 ---
 

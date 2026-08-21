@@ -32,6 +32,7 @@ This requires `CAP_SYS_NICE` on the systemd unit for `sched_setscheduler(SCHED_R
 ## IO Priority Is Irrelevant
 
 `watchdogd` does effectively zero block I/O:
+
 - Writes 1 byte to `/dev/watchdog0` (character device — bypasses block layer entirely)
 - Reads `/proc/meminfo` (virtual file — no block I/O)
 
@@ -41,14 +42,14 @@ The real risk is **CPU scheduler starvation**, not I/O.
 
 ## Tradeoffs
 
-| Aspect | Current (CFS / SCHED_OTHER) | With SCHED_RR prio 98 |
-|---|---|---|
-| **Survives scheduler starvation** (CFS never gives it a timeslice) | No — starved by IO-heavy processes | Yes — preempts all normal tasks |
-| **Survives true kernel lockup** (non-preemptible section, RCU stall) | No | No — if the scheduler isn't running, nothing runs |
-| **Risk if watchdogd itself bugs out** | Low — normal priority, trivially managed | High — RT process can monopolize a CPU core, harder to kill/debug |
-| **Extra capabilities needed** | None | `CAP_SYS_NICE` (or root) for `sched_setscheduler(SCHED_RR)` |
-| **Impact on system latency** | Zero | Minimal — daemon is tiny, runs ~1ms every 10s |
-| **False resets during recoverable stalls** | More likely — any brief stall → missed kick → reset | Less likely — rides out short scheduler stalls |
+| Aspect                                                               | Current (CFS / SCHED_OTHER)                         | With SCHED_RR prio 98                                             |
+| -------------------------------------------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------- |
+| **Survives scheduler starvation** (CFS never gives it a timeslice)   | No — starved by IO-heavy processes                  | Yes — preempts all normal tasks                                   |
+| **Survives true kernel lockup** (non-preemptible section, RCU stall) | No                                                  | No — if the scheduler isn't running, nothing runs                 |
+| **Risk if watchdogd itself bugs out**                                | Low — normal priority, trivially managed            | High — RT process can monopolize a CPU core, harder to kill/debug |
+| **Extra capabilities needed**                                        | None                                                | `CAP_SYS_NICE` (or root) for `sched_setscheduler(SCHED_RR)`       |
+| **Impact on system latency**                                         | Zero                                                | Minimal — daemon is tiny, runs ~1ms every 10s                     |
+| **False resets during recoverable stalls**                           | More likely — any brief stall → missed kick → reset | Less likely — rides out short scheduler stalls                    |
 
 ## Why Not Enable It
 

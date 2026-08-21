@@ -38,13 +38,13 @@
 
 ### 1% → 51% IMPACT (Critical Foundation Tasks)
 
-| #   | Task                                  | Duration | Impact | Effort | ROI  |
-| --- | ------------------------------------- | -------- | ------ | ------ | ---- |
-| 1   | Create platforms/common/base.nix      | 10min    | 9      | 3      | 3.00 |
-| 2   | Setup platforms/darwin/core.nix       | 10min    | 9      | 3      | 3.00 |
-| 3   | Setup platforms/nixos/core.nix        | 10min    | 9      | 3      | 3.00 |
-| 4   | Move flake.nix inputs to lib/         | 10min    | 8      | 3      | 2.67 |
-| 5   | Eliminate dotfiles/nixos/ duplication | 10min    | 9      | 3      | 3.00 |
+| # | Task                                  | Duration | Impact | Effort | ROI  |
+| - | ------------------------------------- | -------- | ------ | ------ | ---- |
+| 1 | Create platforms/common/base.nix      | 10min    | 9      | 3      | 3.00 |
+| 2 | Setup platforms/darwin/core.nix       | 10min    | 9      | 3      | 3.00 |
+| 3 | Setup platforms/nixos/core.nix        | 10min    | 9      | 3      | 3.00 |
+| 4 | Move flake.nix inputs to lib/         | 10min    | 8      | 3      | 2.67 |
+| 5 | Eliminate dotfiles/nixos/ duplication | 10min    | 9      | 3      | 3.00 |
 
 **Total Time**: 50min | **Total Impact**: 51%
 

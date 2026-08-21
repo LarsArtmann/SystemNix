@@ -29,14 +29,14 @@
 
 5. **Applied all 6 settings** to `modules/nixos/services/signoz.nix`:
 
-   | Setting | Default | New | File | Kills |
-   |---|---|---|---|---|
-   | `background_pool_size` | 16 | 2 | `config.xml` | 14 MergeMutate threads |
-   | `background_schedule_pool_size` | 128 | 8 | `config.xml` | ~29 BgSchPool threads |
-   | `background_buffer_flush_schedule_pool_size` | 16 | 4 | `config.xml` | 12 BgBufSchPool threads |
-   | `background_move_pool_size` | 8 | 2 | `config.xml` | 6 Move threads |
-   | `background_fetches_pool_size` | 8 | 1 | `config.xml` | 15 Fetch threads (no replicas!) |
-   | `max_threads` | (auto=cores) | 2 | `users.xml` | Caps per-query parallelism |
+   | Setting                                      | Default      | New | File         | Kills                           |
+   | -------------------------------------------- | ------------ | --- | ------------ | ------------------------------- |
+   | `background_pool_size`                       | 16           | 2   | `config.xml` | 14 MergeMutate threads          |
+   | `background_schedule_pool_size`              | 128          | 8   | `config.xml` | ~29 BgSchPool threads           |
+   | `background_buffer_flush_schedule_pool_size` | 16           | 4   | `config.xml` | 12 BgBufSchPool threads         |
+   | `background_move_pool_size`                  | 8            | 2   | `config.xml` | 6 Move threads                  |
+   | `background_fetches_pool_size`               | 8            | 1   | `config.xml` | 15 Fetch threads (no replicas!) |
+   | `max_threads`                                | (auto=cores) | 2   | `users.xml`  | Caps per-query parallelism      |
 
    **Expected result:** ~76 idle threads eliminated from background pools + 14 from merge pool = **~90 threads gone, 434 → ~344**.
 

@@ -28,13 +28,13 @@
 
 ### 4. Five of thirteen 08-14 reports annotated (every numbered item checked)
 
-| Report | Verdicts | Highest-value findings |
-|---|---|---|
-| `08-23` boot-failure/qmd | ~30 (15-row F-table, §b, §c, 3 Q) | 7afab3f8 closed most (mkOidcGate/mkDnsGate, qmd doc sweep); auth-ready.target superseded; qmd GGUF models already gone — TODO_LIST item is stale; reboot-test items genuinely OPEN (no reboot since 08-13 21:42) |
-| `08-24` smart-audio | ~20 (§b, §c, §f 3/4/5/18-24/35/41-45, §g.3) | hermes chain closed at `54781ffe`; AGENTS items at `61a2224b`; per-app routing/widget/override items open (ROADMAP) |
-| `08-24` twenty | ~25 (§b, §c, §d.4, §f×10, §g.1, §g.3) | **backup-coordination premise was FALSE** — Twenty registered since `976e9547` (08-01), the session's §d.4 self-criticism wrong; docker-restart monitoring closed at `9b6590bf`; scrub item superseded by `autoScrub` (`ab7c331a`) |
-| `08-46` monitoring-gaps | ~15 (§7/§8/§12 + §e + §f 2-4/6-9/27 + §g.1, §g.2) | **LIVE verification** via node_exporter `/metrics`: oomd `Killed` pattern matches real events (2408 kills), docker restart metrics emit for all 7 containers, disk metric live (86) — the report's "unverified" concerns resolved with runtime evidence |
-| `09-14` code-quality | ~30 (§b×2, §c 3-5, §d.1, §d.5, §f×16, §g.1) | `0fce1ed9` closed harden-audit + gomemlimit; `9a56c1a7` closed I/O wrappers; registry-fix reboot moot (boot post-dates `d2443c29`); **live: dozzle runtime container STILL unbounded** (Memory=0) despite config limit |
+| Report                   | Verdicts                                          | Highest-value findings                                                                                                                                                                                                                                  |
+| ------------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `08-23` boot-failure/qmd | ~30 (15-row F-table, §b, §c, 3 Q)                 | 7afab3f8 closed most (mkOidcGate/mkDnsGate, qmd doc sweep); auth-ready.target superseded; qmd GGUF models already gone — TODO_LIST item is stale; reboot-test items genuinely OPEN (no reboot since 08-13 21:42)                                        |
+| `08-24` smart-audio      | ~20 (§b, §c, §f 3/4/5/18-24/35/41-45, §g.3)       | hermes chain closed at `54781ffe`; AGENTS items at `61a2224b`; per-app routing/widget/override items open (ROADMAP)                                                                                                                                     |
+| `08-24` twenty           | ~25 (§b, §c, §d.4, §f×10, §g.1, §g.3)             | **backup-coordination premise was FALSE** — Twenty registered since `976e9547` (08-01), the session's §d.4 self-criticism wrong; docker-restart monitoring closed at `9b6590bf`; scrub item superseded by `autoScrub` (`ab7c331a`)                      |
+| `08-46` monitoring-gaps  | ~15 (§7/§8/§12 + §e + §f 2-4/6-9/27 + §g.1, §g.2) | **LIVE verification** via node_exporter `/metrics`: oomd `Killed` pattern matches real events (2408 kills), docker restart metrics emit for all 7 containers, disk metric live (86) — the report's "unverified" concerns resolved with runtime evidence |
+| `09-14` code-quality     | ~30 (§b×2, §c 3-5, §d.1, §d.5, §f×16, §g.1)       | `0fce1ed9` closed harden-audit + gomemlimit; `9a56c1a7` closed I/O wrappers; registry-fix reboot moot (boot post-dates `d2443c29`); **live: dozzle runtime container STILL unbounded** (Memory=0) despite config limit                                  |
 
 ### 5. A wrong prior-session annotation corrected (live evidence beat code archaeology)
 
@@ -57,7 +57,7 @@
 
 ### 1. 08-24 twenty annotation — 11 of 12 edits applied
 
-- The failed edit: §e items 3-6 ("Register Twenty backup…" block) — my old_string omitted the leading `- ` on list items. All other sections landed (24 markers). The content-level truth IS already recorded elsewhere (§c + §d.4 + §f.4 carry the same verdicts), so nothing is factually missing from the file — but the §e items 3/6 deserve their done-markers too
+- The failed edit: §e items 3-6 ("Register Twenty backup…" block) — my old_string omitted the leading `-` on list items. All other sections landed (24 markers). The content-level truth IS already recorded elsewhere (§c + §d.4 + §f.4 carry the same verdicts), so nothing is factually missing from the file — but the §e items 3/6 deserve their done-markers too
 
 ### 2. 08-14 annotation batch — 5 of 13 files done
 
@@ -85,7 +85,7 @@ Done: 08-23, 08-24×2, 08-46, 09-14. Remaining: 09-30, 10-00, 10-04, 10-41, 12-3
 
 ### 1. Ignored a "1 edit failed" result for two full tool rounds
 
-The twenty multiedit reported "Applied 11 of 12" and I moved on WITHOUT identifying the failure — only chased it down when the user demanded this report. The failure was trivial (missing `- ` prefix) but it sat uninvestigated. Read the failure count BEFORE proceeding, always.
+The twenty multiedit reported "Applied 11 of 12" and I moved on WITHOUT identifying the failure — only chased it down when the user demanded this report. The failure was trivial (missing `-` prefix) but it sat uninvestigated. Read the failure count BEFORE proceeding, always.
 
 ### 2. Repeated the uncommitted-work failure mode
 
@@ -119,6 +119,7 @@ The `systemctl is-active` batch died on sandbox policy. journalctl, docker inspe
 ## f) Up to 50 Things To Get Done Next
 
 ### Immediate (this batch)
+
 ~~1. Apply the §e 3-6 done-markers in `08-24` twenty~~ done — §e items 3 and 6 carry strikethroughs in the archived file. Annotation 2026-08-17.
 ~~2. Commit the current batch~~ done — chain continued (20-31 report committed).
 ~~3. Annotate `09-30` oidc-gate-helpers~~ done — archived.
@@ -131,6 +132,7 @@ The `systemctl is-active` batch died on sandbox policy. journalctl, docker inspe
 ~~10. Annotate `13-44` hermes-registration~~ done — archived (flake-bump-and-delete-patch item remains TODO_LIST P2).
 
 ### TODO_LIST routing (new this session)
+
 ~~11. immich backup stale 999h~~ done — fixed across the collector-capability fix (08-15) + pool migration; first full overnight pool cycle GREEN 2026-08-17 (immich-db-backup success, `backup_healthy=1`; `docs/status/2026-08-17_10-28` §a.1).
 12. Recreate dozzle container ← open — TODO_LIST P1.
 ~~13. BTRFS scrubs interrupted ×2~~ superseded by events — weekly scrubs complete since (the 2026-08-17 /data scrub ran 6h37m and finished, FINDING the 1.3MB corruption); root-fs scrub remains TODO_LIST P0.
@@ -140,6 +142,7 @@ The `systemctl is-active` batch died on sandbox policy. journalctl, docker inspe
 17-27. The 11 carried items from 16-20 §f.17-27 — SHIPPED: em-dash fix, OTel-scheme eval check (`otel-endpoint-audit.nix`), committed-templ CI, zram-fill Gatus alert. OPEN in TODO_LIST: renamer follows (P3), go-cqrs-lite ssh→github (P3), alsa-utils (P5), zram ADR (P3), vendor-hash CI (P6), session-37 note (P6). See the 16-20 annotation for per-item verdicts. Annotation 2026-08-17.
 
 ### Closure
+
 ~~28. ARCHIVE pass~~ done.
 ~~29. `nix flake check --no-build` formal gate~~ done — green 2026-08-17.
 30. Inline health report ← open at annotation time — owed by the 2026-08-17 docs-health pass (printed at its close).
@@ -147,11 +150,12 @@ The `systemctl is-active` batch died on sandbox policy. journalctl, docker inspe
 ~~32. AGENTS.md: statix staged-only pre-commit behavior note~~ done — AGENTS.md gotcha "Pre-commit statix lints STAGED `.nix` files only".
 
 ### Structural debt (observed, not this session's scope)
+
 33. AGENTS.md 72.6KB compression session ← open — TODO_LIST P6 (~80 KB now).
 34. 11 appendix-only archived reports ← open — TODO_LIST P6.
 35. `docs/planning/` 48+ files triage ← open — TODO_LIST P6.
-~~36. `nix flake check --all-systems` Darwin eval intent undocumented~~ done — documented in AGENTS.md ("Build & Deploy": Darwin skip EXPECTED).
-~~37. immich backup staleness may deserve a Gatus `backup_all_healthy` alert check~~ done — `[BODY] == pat(*backup_all_healthy 1*)` check live (gatus-config.nix:1178).
+    ~~36. `nix flake check --all-systems` Darwin eval intent undocumented~~ done — documented in AGENTS.md ("Build & Deploy": Darwin skip EXPECTED).
+    ~~37. immich backup staleness may deserve a Gatus `backup_all_healthy` alert check~~ done — `[BODY] == pat(*backup_all_healthy 1*)` check live (gatus-config.nix:1178).
 
 ---
 
@@ -171,5 +175,5 @@ Machine load hit 728 during this session (parallel buildcache/build work). My re
 
 ---
 
-*Report generated: 2026-08-14 18:31 CEST*
-*Session delta: 1 commit landed (`4a02342d`, 11 files), 6 more files annotated/modified awaiting commit, 2 inherited wrong claims corrected (statix gate scope, expires_at moot), 96-node ssh-fetch truth established, 4 new live findings (disk 87%, immich backup stale, dozzle unbounded, scrubs interrupted)*
+_Report generated: 2026-08-14 18:31 CEST_
+_Session delta: 1 commit landed (`4a02342d`, 11 files), 6 more files annotated/modified awaiting commit, 2 inherited wrong claims corrected (statix gate scope, expires_at moot), 96-node ssh-fetch truth established, 4 new live findings (disk 87%, immich backup stale, dozzle unbounded, scrubs interrupted)_

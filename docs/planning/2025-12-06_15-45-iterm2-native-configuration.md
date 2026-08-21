@@ -41,12 +41,12 @@ Complete migration of iTerm2 configuration from JSON profile to native Nix-darwi
 
 | Priority                          | Task                                               | Impact   | Effort | Value Score | Est. Time |
 | --------------------------------- | -------------------------------------------------- | -------- | ------ | ----------- | --------- |
-| **CRITICAL PATH (1%):**           |
+| **CRITICAL PATH (1%):**           |                                                    |          |        |             |           |
 | 1                                 | Verify iTerm2 installation and basic functionality | High     | 15min  | ⭐⭐⭐⭐    | 15min     |
 | 2                                 | Add basic ANSI colors 0-7 (dark mode)              | Critical | 45min  | ⭐⭐⭐⭐⭐  | 45min     |
 | 3                                 | Add bright ANSI colors 8-15 (dark mode)            | Critical | 45min  | ⭐⭐⭐⭐⭐  | 45min     |
 | 4                                 | Add light mode ANSI colors 0-15                    | Critical | 60min  | ⭐⭐⭐⭐    | 60min     |
-| **HIGH IMPACT (4%):**             |
+| **HIGH IMPACT (4%):**             |                                                    |          |        |             |           |
 | 5                                 | Add cursor colors (dark/light modes)               | High     | 30min  | ⭐⭐⭐⭐    | 30min     |
 | 6                                 | Add selection colors (dark/light modes)            | High     | 30min  | ⭐⭐⭐⭐    | 30min     |
 | 7                                 | Add status bar CPU component                       | High     | 45min  | ⭐⭐⭐⭐    | 45min     |
@@ -55,7 +55,7 @@ Complete migration of iTerm2 configuration from JSON profile to native Nix-darwi
 | 10                                | Add status bar Git component                       | High     | 45min  | ⭐⭐⭐⭐    | 45min     |
 | 11                                | Add status bar Working Directory component         | High     | 45min  | ⭐⭐⭐⭐    | 45min     |
 | 12                                | Add status bar Clock component                     | High     | 45min  | ⭐⭐⭐⭐    | 45min     |
-| **COMPREHENSIVE COVERAGE (20%):** |
+| **COMPREHENSIVE COVERAGE (20%):** |                                                    |          |        |             |           |
 | 13                                | Add link colors (dark/light modes)                 | Medium   | 30min  | ⭐⭐⭐      | 30min     |
 | 14                                | Add badge colors (dark/light modes)                | Medium   | 30min  | ⭐⭐⭐      | 30min     |
 | 15                                | Add bold colors (dark/light modes)                 | Medium   | 30min  | ⭐⭐⭐      | 30min     |
@@ -80,7 +80,7 @@ Complete migration of iTerm2 configuration from JSON profile to native Nix-darwi
 
 | Priority                   | Task                                               | Impact   | Effort | Value Score | Est. Time |
 | -------------------------- | -------------------------------------------------- | -------- | ------ | ----------- | --------- |
-| **CRITICAL PATH (1%):**    |
+| **CRITICAL PATH (1%):**    |                                                    |          |        |             |           |
 | 1                          | Verify iTerm2.app installation and basic launch    | High     | 15min  | ⭐⭐⭐⭐⭐  | 15min     |
 | 2                          | Add Ansi 0 Color (Dark) - Black base               | Critical | 15min  | ⭐⭐⭐⭐⭐  | 15min     |
 | 3                          | Add Ansi 1 Color (Dark) - Red base                 | Critical | 15min  | ⭐⭐⭐⭐⭐  | 15min     |
@@ -91,7 +91,7 @@ Complete migration of iTerm2 configuration from JSON profile to native Nix-darwi
 | 8                          | Add Ansi 6 Color (Dark) - Cyan base                | Critical | 15min  | ⭐⭐⭐⭐    | 15min     |
 | 9                          | Add Ansi 7 Color (Dark) - White base               | Critical | 15min  | ⭐⭐⭐⭐    | 15min     |
 | 10                         | Add Ansi 8 Color (Dark) - Bright Black             | Critical | 15min  | ⭐⭐⭐⭐    | 15min     |
-| **HIGH PRIORITY (4%):**    |
+| **HIGH PRIORITY (4%):**    |                                                    |          |        |             |           |
 | 11                         | Add Ansi 9 Color (Dark) - Bright Red               | Critical | 15min  | ⭐⭐⭐⭐    | 15min     |
 | 12                         | Add Ansi 10 Color (Dark) - Bright Green            | Critical | 15min  | ⭐⭐⭐⭐    | 15min     |
 | 13                         | Add Ansi 11 Color (Dark) - Bright Yellow           | Critical | 15min  | ⭐⭐⭐⭐    | 15min     |
@@ -107,7 +107,7 @@ Complete migration of iTerm2 configuration from JSON profile to native Nix-darwi
 | 23                         | Add Status Bar Memory component configuration      | High     | 15min  | ⭐⭐⭐⭐    | 15min     |
 | 24                         | Add Status Bar Network component configuration     | High     | 15min  | ⭐⭐⭐⭐    | 15min     |
 | 25                         | Add Status Bar Git component configuration         | High     | 15min  | ⭐⭐⭐⭐    | 15min     |
-| **MEDIUM PRIORITY (20%):** |
+| **MEDIUM PRIORITY (20%):** |                                                    |          |        |             |           |
 | 26                         | Add Status Bar Working Directory component config  | High     | 15min  | ⭐⭐⭐⭐    | 15min     |
 | 27                         | Add Status Bar Clock component configuration       | High     | 15min  | ⭐⭐⭐⭐    | 15min     |
 | 28                         | Add Background Color (Dark) - terminal background  | Medium   | 15min  | ⭐⭐⭐      | 15min     |

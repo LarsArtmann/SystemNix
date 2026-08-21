@@ -118,7 +118,7 @@ auto-commit daemon) so overview could work without re-introducing the
   based on the existing TEMP comment, but the user may prefer a different
   split.
 - Should have verified that `nix flake check` fails with the new assertion
-  *before* enabling PMA, as a controlled test. I did see it fail after the
+  _before_ enabling PMA, as a controlled test. I did see it fail after the
   change, but not as a deliberate negative test.
 - Could have added the same `StartLimitBurst`/`StartLimitIntervalSec` audit to
   other imported modules in the same session, since we know upstream has the

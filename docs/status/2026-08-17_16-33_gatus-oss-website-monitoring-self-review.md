@@ -7,15 +7,15 @@
 
 ## Session Summary
 
-| What | Result |
-|------|--------|
-| Better Stack equivalence answer | Gatus = uptime+alerts, SigNoz = logs/metrics/APM, nothing = status page / external vantage / on-call |
-| Websites enumerated | 20 hosts (from `lars.software.tf` + `gogenfilter.larsartmann.com` alias + apex/www + `status.lars.software`) |
-| Live probe (all 20) | **17 healthy**, **3 broken** (see §d) |
-| Gatus config change | `modules/nixos/services/gatus-config.nix` +48/−1: new group "Open Source Websites", 20 checks, Discord alerts |
-| Verification | `nix eval` (count=20 + endpoint shape), `nix flake check --no-build` → all checks passed |
-| Deployed | **NO** — blocked by other sessions' uncommitted work in the tree |
-| Net new files | This report |
+| What                            | Result                                                                                                        |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Better Stack equivalence answer | Gatus = uptime+alerts, SigNoz = logs/metrics/APM, nothing = status page / external vantage / on-call          |
+| Websites enumerated             | 20 hosts (from `lars.software.tf` + `gogenfilter.larsartmann.com` alias + apex/www + `status.lars.software`)  |
+| Live probe (all 20)             | **17 healthy**, **3 broken** (see §d)                                                                         |
+| Gatus config change             | `modules/nixos/services/gatus-config.nix` +48/−1: new group "Open Source Websites", 20 checks, Discord alerts |
+| Verification                    | `nix eval` (count=20 + endpoint shape), `nix flake check --no-build` → all checks passed                      |
+| Deployed                        | **NO** — blocked by other sessions' uncommitted work in the tree                                              |
+| Net new files                   | This report                                                                                                   |
 
 ---
 
@@ -78,36 +78,36 @@
 
 ## f) NEXT (impact-sorted; ≈28 real items, not 50 padded)
 
-| # | Task | Impact |
-|---|------|--------|
-| ~~1~~ | ~~Deploy the Gatus change (after tree is clean / other sessions land)~~ done at `e5edf0bd` | ~~High~~ |
-| 2 | Decide broken-3 handling BEFORE deploy: fix or accept ~15 min of 3 Discord alerts | High |
-| 3 | `terraform plan` (+ apply) in `/home/lars/projects/domains` — md-go-validator record is staged in .tf, unapplied | High |
-| 4 | Investigate `go-output` 404: is `go-output.web.app` claimed? Re-run website-launch `firebase deploy` in the go-output repo | High |
-| 5 | Investigate `cmdguard` 404: same class; also missing acme TXT in .tf | High |
-| 6 | Answer inclusion question (§g Q1) → extend `ossWebsites` if more domains qualify | High |
-| 7 | Read `modules/firebase-hosting` and enumerate ALL firebase-hosting instantiations (catch apex A-record sites the web.app grep missed) | Med |
-| 8 | Add `[CERTIFICATE_EXPIRATION] > 168h` to `mkWebsiteCheck` | Med |
-| 9 | Kill the split-brain: generate `ossWebsites` from terraform output JSON, or add a drift-check script comparing the two lists | Med |
-| 10 | AGENTS.md (SystemNix): document the "sites added in domains repo ⇒ add to ossWebsites" rule | Med |
-| 11 | AGENTS.md (domains repo): mirror rule pointing back at SystemNix gatus | Med |
-| 12 | TODO_LIST.md: harvest items 2–5 + 8 | Med |
-| 13 | External vantage: second prober off-site (MacBook cron, cheap VPS, or keep Better Stack free tier) — closes the "evo-x2 offline looks like internet down" blind spot | Med |
-| 14 | Alert-storm mitigation: raise failure-threshold for the OSS group or add an aggregate endpoint | Med |
-| 15 | Audit `status.lars.software` Better Stack page: which monitors feed it? Ghost or alive? | Med |
-| 16 | Decide Gatus status-page vs Better Stack (ties into Q3) | Med |
-| ~~17~~ | ~~Verify post-deploy: 20 endpoints visible, exactly 3 red (no surprises)~~ done (deployed 2026-08-17/18; endpoints live at gen 690) | ~~Med~~ |
-| ~~18~~ | ~~Actually execute `gatus-pattern-lint` (full `nix flake check` or pre-commit will)~~ done (pre-commit/CI executed full checks in subsequent sessions) | ~~Low~~ |
-| 19 | Add eval-time assertion / test pinning the OSS host list (drift tripwire) | Low |
-| 20 | Consider per-site response-time thresholds (slowest observed: art-dupl 0.57 s; 2 s headroom is fine) | Low |
-| 21 | Gatus UI button for `lars.software` / docs hub | Low |
-| 22 | Homepage bookmarks group for OSS sites (optional) | Low |
-| 23 | Check whether the domains repo's Aug 17 .tf edits are even committed (git status there) | Low |
-| 24 | Verify `pat()` case-sensitivity assumption (`<html` lowercase — holds for all 17 healthy sites' bodies; existing Homepage check uses same pattern) | Low |
-| 25 | If keeping Better Stack: mirror the 20 monitors there too (manual, or via API script) | Low |
-| 26 | Investigate `meet.lars.software` Calendly FRAME redirect (legacy; FRAME = iframe, bad for SEO/UX) | Low |
-| 27 | Note in domains repo: `cmdguard` + `md-go-validator` + `templcomponents` + `go-atomic-write` lack acme TXT records (cert-provisioning fragility) | Low |
-| 28 | After fixes land: re-probe all 20 and record baseline response times in this file's appendix | Low |
+| #      | Task                                                                                                                                                                 | Impact   |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| ~~1~~  | ~~Deploy the Gatus change (after tree is clean / other sessions land)~~ done at `e5edf0bd`                                                                           | ~~High~~ |
+| 2      | Decide broken-3 handling BEFORE deploy: fix or accept ~15 min of 3 Discord alerts                                                                                    | High     |
+| 3      | `terraform plan` (+ apply) in `/home/lars/projects/domains` — md-go-validator record is staged in .tf, unapplied                                                     | High     |
+| 4      | Investigate `go-output` 404: is `go-output.web.app` claimed? Re-run website-launch `firebase deploy` in the go-output repo                                           | High     |
+| 5      | Investigate `cmdguard` 404: same class; also missing acme TXT in .tf                                                                                                 | High     |
+| 6      | Answer inclusion question (§g Q1) → extend `ossWebsites` if more domains qualify                                                                                     | High     |
+| 7      | Read `modules/firebase-hosting` and enumerate ALL firebase-hosting instantiations (catch apex A-record sites the web.app grep missed)                                | Med      |
+| 8      | Add `[CERTIFICATE_EXPIRATION] > 168h` to `mkWebsiteCheck`                                                                                                            | Med      |
+| 9      | Kill the split-brain: generate `ossWebsites` from terraform output JSON, or add a drift-check script comparing the two lists                                         | Med      |
+| 10     | AGENTS.md (SystemNix): document the "sites added in domains repo ⇒ add to ossWebsites" rule                                                                          | Med      |
+| 11     | AGENTS.md (domains repo): mirror rule pointing back at SystemNix gatus                                                                                               | Med      |
+| 12     | TODO_LIST.md: harvest items 2–5 + 8                                                                                                                                  | Med      |
+| 13     | External vantage: second prober off-site (MacBook cron, cheap VPS, or keep Better Stack free tier) — closes the "evo-x2 offline looks like internet down" blind spot | Med      |
+| 14     | Alert-storm mitigation: raise failure-threshold for the OSS group or add an aggregate endpoint                                                                       | Med      |
+| 15     | Audit `status.lars.software` Better Stack page: which monitors feed it? Ghost or alive?                                                                              | Med      |
+| 16     | Decide Gatus status-page vs Better Stack (ties into Q3)                                                                                                              | Med      |
+| ~~17~~ | ~~Verify post-deploy: 20 endpoints visible, exactly 3 red (no surprises)~~ done (deployed 2026-08-17/18; endpoints live at gen 690)                                  | ~~Med~~  |
+| ~~18~~ | ~~Actually execute `gatus-pattern-lint` (full `nix flake check` or pre-commit will)~~ done (pre-commit/CI executed full checks in subsequent sessions)               | ~~Low~~  |
+| 19     | Add eval-time assertion / test pinning the OSS host list (drift tripwire)                                                                                            | Low      |
+| 20     | Consider per-site response-time thresholds (slowest observed: art-dupl 0.57 s; 2 s headroom is fine)                                                                 | Low      |
+| 21     | Gatus UI button for `lars.software` / docs hub                                                                                                                       | Low      |
+| 22     | Homepage bookmarks group for OSS sites (optional)                                                                                                                    | Low      |
+| 23     | Check whether the domains repo's Aug 17 .tf edits are even committed (git status there)                                                                              | Low      |
+| 24     | Verify `pat()` case-sensitivity assumption (`<html` lowercase — holds for all 17 healthy sites' bodies; existing Homepage check uses same pattern)                   | Low      |
+| 25     | If keeping Better Stack: mirror the 20 monitors there too (manual, or via API script)                                                                                | Low      |
+| 26     | Investigate `meet.lars.software` Calendly FRAME redirect (legacy; FRAME = iframe, bad for SEO/UX)                                                                    | Low      |
+| 27     | Note in domains repo: `cmdguard` + `md-go-validator` + `templcomponents` + `go-atomic-write` lack acme TXT records (cert-provisioning fragility)                     | Low      |
+| 28     | After fixes land: re-probe all 20 and record baseline response times in this file's appendix                                                                         | Low      |
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF (max 3)
 
@@ -117,7 +117,7 @@
 
 ---
 
-*Point-in-time snapshot. Report written as `.md` per explicit user instruction (overriding this repo's status-report HTML default). Next reader: re-verify §d claims before acting — they were true at 16:33, 2026-08-17.*
+_Point-in-time snapshot. Report written as `.md` per explicit user instruction (overriding this repo's status-report HTML default). Next reader: re-verify §d claims before acting — they were true at 16:33, 2026-08-17._
 
 ---
 
@@ -128,4 +128,3 @@ The auto-git commit daemon landed commit `e5edf0bd` ("docs: 2026-08-17 FastFlowL
 1. **§b/1 and §f/1 are stale**: the "blocked by dirty tree" deploy blocker NO LONGER EXISTS — the tree is clean. `nix run .#deploy` is unblocked (still awaiting user instruction per session protocol).
 2. My own commit attempt was aborted by the pre-commit deadnix check on **other sessions' staged files** ("Unused let binding: `mkStateDir`" — fastflowlm/system-health/ai-models area). The daemon committed them anyway; that deadnix debt is now IN the tree, unresolved.
 3. The gatus-config change (20 OSS website checks) is now committed but still NOT deployed — the §f/2 decision (fix broken-3 first vs accept 3 red alerts) remains the gating choice.
-

@@ -143,33 +143,33 @@
 
 Sorted by impact/effort ratio (highest first):
 
-| #   | Task                                                               | Impact   | Effort | Category        |
-| --- | ------------------------------------------------------------------ | -------- | ------ | --------------- |
-| 1   | **`just switch` to deploy hermes module**                          | Critical | 5min   | Deploy          |
-| 2   | Verify hermes starts with new HM service + Opus works              | Critical | 2min   | Verify          |
-| 3   | `nix profile remove hermes-agent` cleanup                          | High     | 1min   | Cleanup         |
-| 4   | Add `WatchdogSec=60` to hermes service                             | High     | 1min   | Reliability     |
-| 5   | Add systemd hardening (ProtectSystem, ReadWritePaths)              | High     | 10min  | Security        |
-| 6   | Google OAuth credentials.json → sops                               | Medium   | 15min  | Security        |
-| 7   | Configure auxiliary vision to use local Ollama model               | Medium   | 10min  | Performance     |
-| 8   | Enable smart_model_routing with local cheap model                  | Medium   | 10min  | Performance     |
-| 9   | Add hermes to SigNoz journald receiver                             | Medium   | 5min   | Observability   |
-| 10  | Set `session_reset.mode: idle`                                     | Medium   | 1min   | Hygiene         |
-| 11  | Restrict `GATEWAY_ALLOW_ALL_USERS` to specific Discord users/roles | Medium   | 5min   | Security        |
-| 12  | Add hermes SigNoz dashboard                                        | Medium   | 20min  | Observability   |
-| 13  | Investigate intermittent DNS failures for discord.com              | Medium   | 30min  | Reliability     |
-| 14  | Replace ExecStartPre shell merge with Python dotenv merge          | Low      | 20min  | Robustness      |
-| 15  | Add MemoryMax/MemoryHigh limits to service                         | Low      | 5min   | Safety          |
-| 16  | Add `just hermes-backup` for ~/.hermes/ state backup               | Low      | 10min  | Operations      |
-| 17  | Add gateway crash notification (OnFailure=notify)                  | Low      | 5min   | Observability   |
-| 18  | Add cron job delivery retry with backoff                           | Low      | 15min  | Reliability     |
-| 19  | Consider `browser.backend: local` (Camofox) to drop firecrawl dep  | Low      | 10min  | Dependencies    |
-| 20  | Render partial config.yaml from Nix (timezone, logging, display)   | Low      | 30min  | Declarativeness |
-| 21  | Add ADR for hermes deployment model                                | Low      | 15min  | Documentation   |
-| 22  | Fix pre-existing statix W20 warnings in signoz.nix, snapshots.nix  | Low      | 10min  | Code quality    |
-| 23  | Add `just hermes-update` to update hermes flake input              | Low      | 5min   | Operations      |
-| 24  | Configure compression auxiliary to use local model                 | Low      | 5min   | Performance     |
-| 25  | Add health check endpoint to hermes gateway                        | Low      | 15min  | Reliability     |
+| #  | Task                                                               | Impact   | Effort | Category        |
+| -- | ------------------------------------------------------------------ | -------- | ------ | --------------- |
+| 1  | **`just switch` to deploy hermes module**                          | Critical | 5min   | Deploy          |
+| 2  | Verify hermes starts with new HM service + Opus works              | Critical | 2min   | Verify          |
+| 3  | `nix profile remove hermes-agent` cleanup                          | High     | 1min   | Cleanup         |
+| 4  | Add `WatchdogSec=60` to hermes service                             | High     | 1min   | Reliability     |
+| 5  | Add systemd hardening (ProtectSystem, ReadWritePaths)              | High     | 10min  | Security        |
+| 6  | Google OAuth credentials.json → sops                               | Medium   | 15min  | Security        |
+| 7  | Configure auxiliary vision to use local Ollama model               | Medium   | 10min  | Performance     |
+| 8  | Enable smart_model_routing with local cheap model                  | Medium   | 10min  | Performance     |
+| 9  | Add hermes to SigNoz journald receiver                             | Medium   | 5min   | Observability   |
+| 10 | Set `session_reset.mode: idle`                                     | Medium   | 1min   | Hygiene         |
+| 11 | Restrict `GATEWAY_ALLOW_ALL_USERS` to specific Discord users/roles | Medium   | 5min   | Security        |
+| 12 | Add hermes SigNoz dashboard                                        | Medium   | 20min  | Observability   |
+| 13 | Investigate intermittent DNS failures for discord.com              | Medium   | 30min  | Reliability     |
+| 14 | Replace ExecStartPre shell merge with Python dotenv merge          | Low      | 20min  | Robustness      |
+| 15 | Add MemoryMax/MemoryHigh limits to service                         | Low      | 5min   | Safety          |
+| 16 | Add `just hermes-backup` for ~/.hermes/ state backup               | Low      | 10min  | Operations      |
+| 17 | Add gateway crash notification (OnFailure=notify)                  | Low      | 5min   | Observability   |
+| 18 | Add cron job delivery retry with backoff                           | Low      | 15min  | Reliability     |
+| 19 | Consider `browser.backend: local` (Camofox) to drop firecrawl dep  | Low      | 10min  | Dependencies    |
+| 20 | Render partial config.yaml from Nix (timezone, logging, display)   | Low      | 30min  | Declarativeness |
+| 21 | Add ADR for hermes deployment model                                | Low      | 15min  | Documentation   |
+| 22 | Fix pre-existing statix W20 warnings in signoz.nix, snapshots.nix  | Low      | 10min  | Code quality    |
+| 23 | Add `just hermes-update` to update hermes flake input              | Low      | 5min   | Operations      |
+| 24 | Configure compression auxiliary to use local model                 | Low      | 5min   | Performance     |
+| 25 | Add health check endpoint to hermes gateway                        | Low      | 15min  | Reliability     |
 
 ---
 

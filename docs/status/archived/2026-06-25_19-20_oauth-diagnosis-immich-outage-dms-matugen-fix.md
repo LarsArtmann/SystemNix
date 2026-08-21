@@ -9,7 +9,6 @@
 
 ---
 
-
 ## Executive Summary
 
 This session diagnosed a **split-brain OAuth failure** between Pocket ID and Immich, then applied a fix that **backfired into a full Immich outage**. The root cause is definitively identified (client-secret file desync in `pocket-id-provision`), but the recovery left Immich crash-looping. Additionally, a DMS matugen-suppression env var was wired, and routine flake lock updates were pulled. The system is in a **degraded state**: Immich is DOWN (start-limit-hit), all other 39 services remain operational.
@@ -157,53 +156,53 @@ sudo systemctl start immich-server.service
 
 ### Critical (Immich is DOWN)
 
-| #   | Task                                                                                     | Impact                          | Effort |
-| --- | ---------------------------------------------------------------------------------------- | ------------------------------- | ------ |
-| 1   | **Recover Immich** — run provision to regenerate secret, reset start-limit, verify OAuth | Unblocks all photo/video access | 15 min |
-| 2   | **Verify OAuth end-to-end** — login at immich.home.lan via Pocket ID                     | Confirms the fix actually works | 5 min  |
+| # | Task                                                                                     | Impact                          | Effort |
+| - | ---------------------------------------------------------------------------------------- | ------------------------------- | ------ |
+| 1 | **Recover Immich** — run provision to regenerate secret, reset start-limit, verify OAuth | Unblocks all photo/video access | 15 min |
+| 2 | **Verify OAuth end-to-end** — login at immich.home.lan via Pocket ID                     | Confirms the fix actually works | 5 min  |
 
 ### High Priority
 
-| #   | Task                                                                                | Impact                                         | Effort |
-| --- | ----------------------------------------------------------------------------------- | ---------------------------------------------- | ------ |
-| 3   | **Deploy current changes** — DMS_DISABLE_MATUGEN + flake lock updates + AGENTS.md   | Gets working tree clean, matugen warnings gone | 10 min |
-| 4   | **Harden provision script** — remove migration-seeding, add post-write verification | Prevents future desync permanently             | 30 min |
-| 5   | **Commit and push** — 3 unpushed commits + working tree changes                     | Backup to remote                               | 5 min  |
-| 6   | **Reboot evo-x2** — verify boot time (~35s target after NVMe APST fix)              | TODO P0, overdue                               | 10 min |
-| 7   | **Verify Pocket ID email sending** — test SMTP notification                         | TODO P0                                        | 5 min  |
+| # | Task                                                                                | Impact                                         | Effort |
+| - | ----------------------------------------------------------------------------------- | ---------------------------------------------- | ------ |
+| 3 | **Deploy current changes** — DMS_DISABLE_MATUGEN + flake lock updates + AGENTS.md   | Gets working tree clean, matugen warnings gone | 10 min |
+| 4 | **Harden provision script** — remove migration-seeding, add post-write verification | Prevents future desync permanently             | 30 min |
+| 5 | **Commit and push** — 3 unpushed commits + working tree changes                     | Backup to remote                               | 5 min  |
+| 6 | **Reboot evo-x2** — verify boot time (~35s target after NVMe APST fix)              | TODO P0, overdue                               | 10 min |
+| 7 | **Verify Pocket ID email sending** — test SMTP notification                         | TODO P0                                        | 5 min  |
 
 ### Medium Priority
 
-| #   | Task                                                                               | Impact                                        | Effort |
-| --- | ---------------------------------------------------------------------------------- | --------------------------------------------- | ------ |
-| 8   | **Add OAuth health check to Gatus** — detect token-endpoint failures proactively   | Catches OAuth breakage before users notice    | 30 min |
-| 9   | **Fix deprecated `system` warnings** — replace with `stdenv.hostPlatform.system`   | Clean evaluation, no warnings                 | 15 min |
-| 10  | **BTRFS `/data` subvolume migration** — create `@data`, update fstab, add to btrbk | Snapshot protection for Docker/Immich/AI data | 1-2h   |
-| 11  | **Hermes: add OpenAI API key to sops** — TODO P2, config already wired             | Enables secondary LLM provider                | 5 min  |
-| 12  | **Swap investigation** — 8 GiB swap on 128 GiB RAM, run `smem`                     | Understand memory pressure                    | 15 min |
-| 13  | **Monitor365 upstream fix** — Axum 0.7 route syntax (`:param` → `{param}`)         | Unblocks monitor365 server                    | 30 min |
+| #  | Task                                                                               | Impact                                        | Effort |
+| -- | ---------------------------------------------------------------------------------- | --------------------------------------------- | ------ |
+| 8  | **Add OAuth health check to Gatus** — detect token-endpoint failures proactively   | Catches OAuth breakage before users notice    | 30 min |
+| 9  | **Fix deprecated `system` warnings** — replace with `stdenv.hostPlatform.system`   | Clean evaluation, no warnings                 | 15 min |
+| 10 | **BTRFS `/data` subvolume migration** — create `@data`, update fstab, add to btrbk | Snapshot protection for Docker/Immich/AI data | 1-2h   |
+| 11 | **Hermes: add OpenAI API key to sops** — TODO P2, config already wired             | Enables secondary LLM provider                | 5 min  |
+| 12 | **Swap investigation** — 8 GiB swap on 128 GiB RAM, run `smem`                     | Understand memory pressure                    | 15 min |
+| 13 | **Monitor365 upstream fix** — Axum 0.7 route syntax (`:param` → `{param}`)         | Unblocks monitor365 server                    | 30 min |
 
 ### Architecture & Quality
 
-| #   | Task                                                                          | Impact                           | Effort |
-| --- | ----------------------------------------------------------------------------- | -------------------------------- | ------ |
-| 14  | **Provision script: add secret validation** — test token-exchange after write | Catches desync at provision time | 30 min |
-| 15  | **Split large modules** — monitor365 (716L), signoz (705L), forgejo (583L)    | Maintainability                  | 2-3h   |
-| 16  | **Typed NixOS module options** — ports, paths, timeouts with types            | Validation + testing             | 3-4h   |
-| 17  | **Extract dnsblockd** — ~930 lines of Go embedded in Nix config               | Standalone repo, testability     | 4-6h   |
-| 18  | **Firewall deny-by-default** — explicit allowlist instead of open             | Security hardening               | 2h     |
-| 19  | **Remove photomap** — decided to remove, niche + maintenance burden           | Cleanup                          | 15 min |
+| #  | Task                                                                          | Impact                           | Effort |
+| -- | ----------------------------------------------------------------------------- | -------------------------------- | ------ |
+| 14 | **Provision script: add secret validation** — test token-exchange after write | Catches desync at provision time | 30 min |
+| 15 | **Split large modules** — monitor365 (716L), signoz (705L), forgejo (583L)    | Maintainability                  | 2-3h   |
+| 16 | **Typed NixOS module options** — ports, paths, timeouts with types            | Validation + testing             | 3-4h   |
+| 17 | **Extract dnsblockd** — ~930 lines of Go embedded in Nix config               | Standalone repo, testability     | 4-6h   |
+| 18 | **Firewall deny-by-default** — explicit allowlist instead of open             | Security hardening               | 2h     |
+| 19 | **Remove photomap** — decided to remove, niche + maintenance burden           | Cleanup                          | 15 min |
 
 ### Upstream & Ecosystem
 
-| #   | Task                                                                               | Impact                    | Effort |
-| --- | ---------------------------------------------------------------------------------- | ------------------------- | ------ |
-| 20  | **nixpkgs: `aw-watcher-utilization` poetry-core migration**                        | Removes custom overlay    | 1h     |
-| 21  | **nixpkgs: KeePassXC Chromium manifests**                                          | Removes workaround code   | 30 min |
-| 22  | **HM: ActivityWatch Wayland watcher deps**                                         | Removes After= workaround | 30 min |
-| 23  | **library-policy: commit correct go.sum upstream**                                 | Removes mkTidyOverride    | 30 min |
-| 24  | **Cloud backup setup** — BorgBackup to Hetzner StorageBox                          | Disaster recovery         | 3-4h   |
-| 25  | **DiscordSync migration** — watermill.CatchUpSubscriber from deleted projection/v2 | Re-enable discordsync     | 2-3h   |
+| #  | Task                                                                               | Impact                    | Effort |
+| -- | ---------------------------------------------------------------------------------- | ------------------------- | ------ |
+| 20 | **nixpkgs: `aw-watcher-utilization` poetry-core migration**                        | Removes custom overlay    | 1h     |
+| 21 | **nixpkgs: KeePassXC Chromium manifests**                                          | Removes workaround code   | 30 min |
+| 22 | **HM: ActivityWatch Wayland watcher deps**                                         | Removes After= workaround | 30 min |
+| 23 | **library-policy: commit correct go.sum upstream**                                 | Removes mkTidyOverride    | 30 min |
+| 24 | **Cloud backup setup** — BorgBackup to Hetzner StorageBox                          | Disaster recovery         | 3-4h   |
+| 25 | **DiscordSync migration** — watermill.CatchUpSubscriber from deleted projection/v2 | Re-enable discordsync     | 2-3h   |
 
 ---
 
@@ -254,13 +253,13 @@ Unpushed commits (3):
 
 ## Service Health Summary
 
-| Category         | Services                                                                                               | Status                                  |
-| ---------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------- |
-| Infrastructure   | Docker, Caddy, SOPS, Pocket ID, oauth2-proxy                                                           | ✅ Operational                          |
-| Self-Hosted Apps | Forgejo, Homepage, SigNoz, TaskChampion, Twenty, Dozzle, Manifest, Overview, Crush Daily, OpenSEO, PMA | ✅ Operational                          |
-| **Immich**       | **immich-server, immich-machine-learning**                                                             | **❌ DOWN (start-limit-hit)**           |
-| Desktop          | DMS (13 plugins), niri, Quickshell                                                                     | ✅ Operational                          |
-| Disabled         | voice-agents, minecraft, photomap                                                                      | 🔧 Intentionally disabled               |
+| Category         | Services                                                                                               | Status                                 |
+| ---------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------- |
+| Infrastructure   | Docker, Caddy, SOPS, Pocket ID, oauth2-proxy                                                           | ✅ Operational                         |
+| Self-Hosted Apps | Forgejo, Homepage, SigNoz, TaskChampion, Twenty, Dozzle, Manifest, Overview, Crush Daily, OpenSEO, PMA | ✅ Operational                         |
+| **Immich**       | **immich-server, immich-machine-learning**                                                             | **❌ DOWN (start-limit-hit)**          |
+| Desktop          | DMS (13 plugins), niri, Quickshell                                                                     | ✅ Operational                         |
+| Disabled         | voice-agents, minecraft, photomap                                                                      | 🔧 Intentionally disabled              |
 | Monitoring       | Gatus (36/38 endpoints passing)                                                                        | ⚠️ 2 expected DOWN (Ollama, Monitor365) |
 
 ---

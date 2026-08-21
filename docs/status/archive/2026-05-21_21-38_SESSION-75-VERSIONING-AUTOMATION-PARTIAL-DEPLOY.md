@@ -152,33 +152,33 @@ Multiple repos have BuildFlow pre-commit hooks that fail on unrelated lint/test 
 
 ## F) TOP 25 NEXT ACTIONS (sorted by impact/effort)
 
-| #   | Action                                                       | Impact   | Effort | Depends |
-| --- | ------------------------------------------------------------ | -------- | ------ | ------- |
-| 1   | Commit+push buildflow vendorHash fix                         | High     | 2min   | —       |
-| 2   | Commit+push go-auto-upgrade vendorHash fix                   | High     | 2min   | —       |
-| 3   | Commit+push go-structure-linter vendorHash fix               | High     | 2min   | —       |
-| 4   | Rebuild file-and-image-renamer, get vendorHash, commit+push  | High     | 5min   | —       |
-| 5   | Commit+push hierarchical-errors type conversion fix          | High     | 2min   | —       |
-| 6   | Verify all 16 repos build clean                              | Critical | 10min  | 1-5     |
-| 7   | Push emeet-pixyd unpushed commit                             | Low      | 1min   | —       |
-| 8   | Fix todo-list-ai version mismatch (two versions in one file) | High     | 5min   | —       |
-| 9   | Bump dnsblockd 0.1.0→0.2.0                                   | Medium   | 2min   | 6       |
-| 10  | Bump emeet-pixyd 0.2.0→0.3.0                                 | Medium   | 2min   | 6       |
-| 11  | Bump monitor365 0.1.0→0.2.0                                  | Medium   | 2min   | 6       |
-| 12  | Bump file-and-image-renamer 0.1.0→0.2.0                      | Medium   | 2min   | 6       |
-| 13  | Bump hierarchical-errors 0.0.1→0.1.0                         | Medium   | 2min   | 6       |
-| 14  | Bump mr-sync 0.1.0→0.2.0                                     | Medium   | 2min   | 6       |
-| 15  | Bump golangci-lint-auto-configure 0.1.0→0.2.0                | Medium   | 2min   | 6       |
-| 16  | Bump go-auto-upgrade 0.1.0→0.2.0                             | Medium   | 2min   | 6       |
-| 17  | Bump go-structure-linter 0.1.0→0.2.0                         | Medium   | 2min   | 6       |
-| 18  | Bump branching-flow 0.1.0→0.2.0                              | Medium   | 2min   | 6       |
-| 19  | Bump buildflow 0.1.0→0.2.0                                   | Medium   | 2min   | 6       |
-| 20  | Bump art-dupl 0.1.0→0.2.0                                    | Medium   | 2min   | 6       |
-| 21  | Bump projects-management-automation 0.1.2→0.2.0              | Medium   | 2min   | 6       |
-| 22  | Bump crush-config 4.1→4.2.0                                  | Medium   | 2min   | 6       |
-| 23  | Update SystemNix flake.lock for all 16 inputs                | Critical | 5min   | 9-22    |
-| 24  | Run `just test-upstream-builds` in SystemNix                 | Critical | 15min  | 23      |
-| 25  | Final `just versions` verification                           | High     | 2min   | 24      |
+| #  | Action                                                       | Impact   | Effort | Depends |
+| -- | ------------------------------------------------------------ | -------- | ------ | ------- |
+| 1  | Commit+push buildflow vendorHash fix                         | High     | 2min   | —       |
+| 2  | Commit+push go-auto-upgrade vendorHash fix                   | High     | 2min   | —       |
+| 3  | Commit+push go-structure-linter vendorHash fix               | High     | 2min   | —       |
+| 4  | Rebuild file-and-image-renamer, get vendorHash, commit+push  | High     | 5min   | —       |
+| 5  | Commit+push hierarchical-errors type conversion fix          | High     | 2min   | —       |
+| 6  | Verify all 16 repos build clean                              | Critical | 10min  | 1-5     |
+| 7  | Push emeet-pixyd unpushed commit                             | Low      | 1min   | —       |
+| 8  | Fix todo-list-ai version mismatch (two versions in one file) | High     | 5min   | —       |
+| 9  | Bump dnsblockd 0.1.0→0.2.0                                   | Medium   | 2min   | 6       |
+| 10 | Bump emeet-pixyd 0.2.0→0.3.0                                 | Medium   | 2min   | 6       |
+| 11 | Bump monitor365 0.1.0→0.2.0                                  | Medium   | 2min   | 6       |
+| 12 | Bump file-and-image-renamer 0.1.0→0.2.0                      | Medium   | 2min   | 6       |
+| 13 | Bump hierarchical-errors 0.0.1→0.1.0                         | Medium   | 2min   | 6       |
+| 14 | Bump mr-sync 0.1.0→0.2.0                                     | Medium   | 2min   | 6       |
+| 15 | Bump golangci-lint-auto-configure 0.1.0→0.2.0                | Medium   | 2min   | 6       |
+| 16 | Bump go-auto-upgrade 0.1.0→0.2.0                             | Medium   | 2min   | 6       |
+| 17 | Bump go-structure-linter 0.1.0→0.2.0                         | Medium   | 2min   | 6       |
+| 18 | Bump branching-flow 0.1.0→0.2.0                              | Medium   | 2min   | 6       |
+| 19 | Bump buildflow 0.1.0→0.2.0                                   | Medium   | 2min   | 6       |
+| 20 | Bump art-dupl 0.1.0→0.2.0                                    | Medium   | 2min   | 6       |
+| 21 | Bump projects-management-automation 0.1.2→0.2.0              | Medium   | 2min   | 6       |
+| 22 | Bump crush-config 4.1→4.2.0                                  | Medium   | 2min   | 6       |
+| 23 | Update SystemNix flake.lock for all 16 inputs                | Critical | 5min   | 9-22    |
+| 24 | Run `just test-upstream-builds` in SystemNix                 | Critical | 15min  | 23      |
+| 25 | Final `just versions` verification                           | High     | 2min   | 24      |
 
 ---
 

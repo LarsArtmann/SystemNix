@@ -8,7 +8,6 @@
 
 ---
 
-
 ## Session Work Summary
 
 Three independent issues were diagnosed and fixed in this session:
@@ -98,6 +97,7 @@ Three independent issues were diagnosed and fixed in this session:
 ## f) Next Actions (up to 50)
 
 ### Critical (do now)
+
 1. **Fix `monitor365-agent-watchdog` to run as root** — remove `User`/`Group` from serviceConfig
 2. **Deploy all pending changes** — DNS + Monitor365 + watchdog fix in one `nix run .#deploy`
 3. **Verify DNS resolution** — `getent hosts dnsblock.home.lan` after deploy
@@ -105,6 +105,7 @@ Three independent issues were diagnosed and fixed in this session:
 5. **Verify helium-launch** — kill helium main process, confirm wrapper relaunches cleanly
 
 ### High priority
+
 6. **Investigate why Monitor365 server was down** — check WAL corruption history, DuckDB health
 7. **Fix `monitor365-graphical-restart.path/.service` deploy failure** — investigate the activation error
 8. **Check Monitor365 backup health** — Gatus reports failing; check textfile collector + backup freshness
@@ -113,6 +114,7 @@ Three independent issues were diagnosed and fixed in this session:
 11. **Investigate helium `PartOf` propagation** — why did Jul-23 process survive graphical-session restart?
 
 ### Medium priority
+
 12. **Vacuum/checkpoint the 2GB DuckDB** — may reduce memory pressure
 13. **Clear the stale Monitor365 agent buffer** — 95% full with events that may be corrupt from the CB deadlock period
 14. **Add Gatus alert for DNS subdomain resolution** — catch missing subdomains before users notice
@@ -124,6 +126,7 @@ Three independent issues were diagnosed and fixed in this session:
 20. **Review all `Restart=always` services for the handoff-exit-0 bug class** — any service that "opens in existing session"
 
 ### Lower priority
+
 21. **Consider `KillMode=mixed` + `TimeoutStopSec` on helium.service** — ensure clean shutdown on graphical-session stop
 22. **Add a systemd unit dependency diagram** — visualize the monitor365 service dependency chain
 23. **Consider a health endpoint on the agent** — not just Prometheus metrics, a simple `/health` 200
@@ -152,7 +155,7 @@ Three independent issues were diagnosed and fixed in this session:
 46. **Review whether the agent buffer encryption is worth the CPU cost** — `encryption = true` adds overhead
 47. **Add documentation for the graphical-restart debounce pattern** — reusable for other path-unit-triggered services
 48. **Consider a systemd `ConditionPathIsSymbolicLink` on the graphical-restart path** — avoid false triggers
-49. **Review the ` ProtectProc=default` override** — is it still needed after the debounce fix?
+49. **Review the `ProtectProc=default` override** — is it still needed after the debounce fix?
 50. **Write an end-to-end Monitor365 test script** — `scripts/test-monitor365-connectivity.sh`
 
 ---

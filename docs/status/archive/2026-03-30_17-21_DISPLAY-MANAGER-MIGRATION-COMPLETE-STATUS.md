@@ -135,33 +135,33 @@
 
 ## F. TOP 25 THINGS TO DO NEXT 🎯
 
-| #   | Task                                                    | Priority | Effort | Impact                                                |
-| --- | ------------------------------------------------------- | -------- | ------ | ----------------------------------------------------- |
-| 1   | Deploy ReGreet on evo-x2 and verify login flow          | P0       | 1h     | Critical — no display manager until deployed          |
-| 2   | Test HiDPI scaling on 4K TV output                      | P0       | 30m    | Visual — broken scaling = unusable                    |
-| 3   | Add regreet background wallpaper support                | P1       | 2h     | Aesthetic — custom wallpaper on login                 |
-| 4   | Wire tuigreet as fallback greeter                       | P1       | 30m    | Safety — if regreet breaks, still can login           |
-| 5   | Immich GPU acceleration (ROCm)                          | P1       | 4h     | Performance — ML on GPU vs CPU                        |
-| 6   | Immich Smart Search re-index                            | P1       | 2h     | Feature — AI search across photo library              |
-| 7   | Centralize Catppuccin color palette                     | P1       | 3h     | Maintenance — 8+ files with hardcoded colors          |
-| 8   | Activate Ghost Systems type safety or remove it         | P2       | 8h     | Architecture — dead code vs. active validation        |
-| 9   | Grafana alerting rules                                  | P2       | 3h     | Operations — proactive incident detection             |
-| 10  | CI/CD pipeline (GitHub Actions)                         | P2       | 4h     | Quality — automated nix flake check on push           |
-| 11  | NPU activation (check kernel 6.14 availability)         | P2       | 1h     | Hardware — unlock 50 TOPS AI accelerator              |
-| 12  | Fix Hyprland audio: pactl → wpctl                       | P2       | 30m    | Consistency — wpctl is the PipeWire native tool       |
-| 13  | Regreet autologin for dev iteration                     | P2       | 15m    | DX — skip login during active development             |
-| 14  | Update docs/STATUS.md                                   | P2       | 1h     | Documentation — main status page 3 months stale       |
-| 15  | Offsite backup strategy                                 | P2       | 4h     | Safety — local-only backups = single point of failure |
-| 16  | Pin PhotoMap container image by digest                  | P3       | 15m    | Reproducibility — eliminate `latest` tag drift        |
-| 17  | DNS blocklist hash automation                           | P3       | 2h     | Reliability — auto-update instead of manual pinning   |
-| 18  | NixOS module documentation                              | P3       | 4h     | Onboarding — structured docs for each module          |
-| 19  | Cross-platform parity audit (Darwin vs NixOS)           | P3       | 3h     | Consistency — detect config drift                     |
-| 20  | Security audit: re-enable auditd when NixOS fixes bug   | P3       | 1h     | Security — audit logging is disabled                  |
-| 21  | Waybar module consolidation (hyprland+niri)             | P3       | 2h     | Maintenance — shared bar config has duplication       |
-| 22  | Hyprland plugin migration (hy3, hyprsplit, hyprwinwrap) | P3       | 2h     | Features — waiting for 0.54 compatibility             |
-| 23  | Automated health check cron (system-level)              | P3       | 1h     | Operations — scheduled `just health` runs             |
-| 24  | SOPS secrets audit — what's encrypted vs. plaintext     | P3       | 2h     | Security — verify all secrets managed properly        |
-| 25  | Desktop environment screenshot/visual documentation     | P4       | 2h     | Documentation — catalog the visual setup              |
+| #  | Task                                                    | Priority | Effort | Impact                                                |
+| -- | ------------------------------------------------------- | -------- | ------ | ----------------------------------------------------- |
+| 1  | Deploy ReGreet on evo-x2 and verify login flow          | P0       | 1h     | Critical — no display manager until deployed          |
+| 2  | Test HiDPI scaling on 4K TV output                      | P0       | 30m    | Visual — broken scaling = unusable                    |
+| 3  | Add regreet background wallpaper support                | P1       | 2h     | Aesthetic — custom wallpaper on login                 |
+| 4  | Wire tuigreet as fallback greeter                       | P1       | 30m    | Safety — if regreet breaks, still can login           |
+| 5  | Immich GPU acceleration (ROCm)                          | P1       | 4h     | Performance — ML on GPU vs CPU                        |
+| 6  | Immich Smart Search re-index                            | P1       | 2h     | Feature — AI search across photo library              |
+| 7  | Centralize Catppuccin color palette                     | P1       | 3h     | Maintenance — 8+ files with hardcoded colors          |
+| 8  | Activate Ghost Systems type safety or remove it         | P2       | 8h     | Architecture — dead code vs. active validation        |
+| 9  | Grafana alerting rules                                  | P2       | 3h     | Operations — proactive incident detection             |
+| 10 | CI/CD pipeline (GitHub Actions)                         | P2       | 4h     | Quality — automated nix flake check on push           |
+| 11 | NPU activation (check kernel 6.14 availability)         | P2       | 1h     | Hardware — unlock 50 TOPS AI accelerator              |
+| 12 | Fix Hyprland audio: pactl → wpctl                       | P2       | 30m    | Consistency — wpctl is the PipeWire native tool       |
+| 13 | Regreet autologin for dev iteration                     | P2       | 15m    | DX — skip login during active development             |
+| 14 | Update docs/STATUS.md                                   | P2       | 1h     | Documentation — main status page 3 months stale       |
+| 15 | Offsite backup strategy                                 | P2       | 4h     | Safety — local-only backups = single point of failure |
+| 16 | Pin PhotoMap container image by digest                  | P3       | 15m    | Reproducibility — eliminate `latest` tag drift        |
+| 17 | DNS blocklist hash automation                           | P3       | 2h     | Reliability — auto-update instead of manual pinning   |
+| 18 | NixOS module documentation                              | P3       | 4h     | Onboarding — structured docs for each module          |
+| 19 | Cross-platform parity audit (Darwin vs NixOS)           | P3       | 3h     | Consistency — detect config drift                     |
+| 20 | Security audit: re-enable auditd when NixOS fixes bug   | P3       | 1h     | Security — audit logging is disabled                  |
+| 21 | Waybar module consolidation (hyprland+niri)             | P3       | 2h     | Maintenance — shared bar config has duplication       |
+| 22 | Hyprland plugin migration (hy3, hyprsplit, hyprwinwrap) | P3       | 2h     | Features — waiting for 0.54 compatibility             |
+| 23 | Automated health check cron (system-level)              | P3       | 1h     | Operations — scheduled `just health` runs             |
+| 24 | SOPS secrets audit — what's encrypted vs. plaintext     | P3       | 2h     | Security — verify all secrets managed properly        |
+| 25 | Desktop environment screenshot/visual documentation     | P4       | 2h     | Documentation — catalog the visual setup              |
 
 ---
 

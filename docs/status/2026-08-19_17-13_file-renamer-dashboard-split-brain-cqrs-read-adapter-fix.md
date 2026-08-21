@@ -53,7 +53,7 @@
 ### Why the fallback returned 0 even with a row in the DB (UNRESOLVED)
 
 16. The `b588a9e` build's `scanFromDB` silently returned `nil, nil` on every code path (open error, query error, decode error — all swallowed). The `33a1892` build adds logging at each branch, but it has NOT been activated on the running services yet. So we do NOT know which branch is failing. Hypotheses:
-    - **H1 (most likely)**: `modernc.org/sqlite` DSN `file:<path>?mode=ro&_pragma=busy_timeout(5000)` — the `_pragma` query param syntax may not be what modernc expects. The vendor code uses `pragma busy_timeout = ` (space-separated, not `_pragma=`). Need to check modernc's DSN docs or just use `db.Exec("PRAGMA busy_timeout=5000")` after open.
+    - **H1 (most likely)**: `modernc.org/sqlite` DSN `file:<path>?mode=ro&_pragma=busy_timeout(5000)` — the `_pragma` query param syntax may not be what modernc expects. The vendor code uses `pragma busy_timeout =` (space-separated, not `_pragma=`). Need to check modernc's DSN docs or just use `db.Exec("PRAGMA busy_timeout=5000")` after open.
     - **H2**: `mode=ro` may not be supported by modernc (only `?_query_only=true` or similar). The vendor code never uses `mode=ro`.
     - **H3**: The `*sql.DB` is opened with `SetMaxOpenConns(1)` but the watcher holds a write lock — `busy_timeout=5000` should handle this but maybe the pragma isn't applied.
     - **H4**: JSON decode fails on `quality_level: 0` (int into `filename.QualityLevel` int typedef) or `last_retry: "0001-01-01T00:00:00Z"` (Go zero time) — but Python `json.loads` handled both fine, so this is unlikely.

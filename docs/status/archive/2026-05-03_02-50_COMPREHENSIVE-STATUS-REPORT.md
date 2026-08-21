@@ -15,12 +15,12 @@ SystemNix is in **excellent structural shape** with ~140 enabled features, 29 Ni
 
 ### Resource Usage
 
-| Resource          | Used               | Total | Free          | Status                        |
-| ----------------- | ------------------ | ----- | ------------- | ----------------------------- |
+| Resource          | Used               | Total | Free          | Status                       |
+| ----------------- | ------------------ | ----- | ------------- | ---------------------------- |
 | Root disk `/`     | 448G               | 512G  | 59G (89%)     | ⚠️ WARNING                    |
 | Data disk `/data` | 685G               | 800G  | 116G (86%)    | ⚠️ WARNING                    |
-| RAM               | 45G                | 62G   | 16G available | ✅ OK                         |
-| Swap              | 11G                | 41G   | 29G           | ✅ OK                         |
+| RAM               | 45G                | 62G   | 16G available | ✅ OK                        |
+| Swap              | 11G                | 41G   | 29G           | ✅ OK                        |
 | Load              | 3.16 / 8.54 / 9.69 | —     | —             | ⚠️ High (decaying from spike) |
 
 ### Services (expected active)
@@ -149,48 +149,48 @@ Sorted by **impact × effort** (highest impact first):
 
 ### P0 — Critical (Do Now)
 
-| #   | Task                                                                                                                       | Impact | Effort |
-| --- | -------------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
-| 1   | **Fix broken justfile commands** — create missing scripts OR remove dead recipes (`benchmark`, `perf`, `context`, `clean`) | High   | Low    |
-| 2   | **Disk cleanup** — `just clean-aggressive`, Docker prune, review `/data/ai/models/` for unused models                      | High   | Low    |
-| 3   | **Investigate high load** — identify what's consuming CPU/RAM with `btop`                                                  | High   | Low    |
+| # | Task                                                                                                                       | Impact | Effort |
+| - | -------------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 1 | **Fix broken justfile commands** — create missing scripts OR remove dead recipes (`benchmark`, `perf`, `context`, `clean`) | High   | Low    |
+| 2 | **Disk cleanup** — `just clean-aggressive`, Docker prune, review `/data/ai/models/` for unused models                      | High   | Low    |
+| 3 | **Investigate high load** — identify what's consuming CPU/RAM with `btop`                                                  | High   | Low    |
 
 ### P1 — High Impact
 
-| #   | Task                                                                                            | Impact | Effort |
-| --- | ----------------------------------------------------------------------------------------------- | ------ | ------ |
-| 4   | **Create TODO_LIST.md** — build from existing docs, AGENTS.md, and FEATURES.md gaps             | High   | Medium |
-| 5   | **Verify Voice Agents stack** — test Whisper Docker + ROCm pipeline end-to-end                  | High   | Medium |
-| 6   | **Verify Twenty CRM** — check if Docker Compose stack is actually running and healthy           | Medium | Low    |
-| 7   | **Update PhotoMap AI** — bump SHA256, enable in config, test                                    | Medium | Low    |
-| 8   | **Provision Raspberry Pi 3** — enables DNS failover cluster (currently single point of failure) | High   | High   |
-| 9   | **Test `just switch` on Darwin** — verify macOS config still applies cleanly                    | High   | Medium |
-| 10  | **Add SigNoz disk alert verification** — confirm >90% alert rule actually fires                 | Medium | Low    |
+| #  | Task                                                                                            | Impact | Effort |
+| -- | ----------------------------------------------------------------------------------------------- | ------ | ------ |
+| 4  | **Create TODO_LIST.md** — build from existing docs, AGENTS.md, and FEATURES.md gaps             | High   | Medium |
+| 5  | **Verify Voice Agents stack** — test Whisper Docker + ROCm pipeline end-to-end                  | High   | Medium |
+| 6  | **Verify Twenty CRM** — check if Docker Compose stack is actually running and healthy           | Medium | Low    |
+| 7  | **Update PhotoMap AI** — bump SHA256, enable in config, test                                    | Medium | Low    |
+| 8  | **Provision Raspberry Pi 3** — enables DNS failover cluster (currently single point of failure) | High   | High   |
+| 9  | **Test `just switch` on Darwin** — verify macOS config still applies cleanly                    | High   | Medium |
+| 10 | **Add SigNoz disk alert verification** — confirm >90% alert rule actually fires                 | Medium | Low    |
 
 ### P2 — Quality Improvements
 
-| #   | Task                                                                                                | Impact | Effort |
-| --- | --------------------------------------------------------------------------------------------------- | ------ | ------ |
-| 11  | **dnsblockd: Category enum** — Go type safety for the 10-category system                            | Medium | Low    |
-| 12  | **dnsblockd: false positive persistence** — SQLite/file storage in `/var/lib`                       | Medium | Medium |
-| 13  | **Nix module typed options** — add ports, paths, timeouts to key modules (dnsblockd, caddy, immich) | Medium | Medium |
-| 14  | **`mkHardenedService` wrapper** — DRY the `harden {} // serviceDefaults {}` pattern                 | Medium | Low    |
-| 15  | **Extract overlays to `overlays/`** — move inline overlays out of `flake.nix` for discoverability   | Medium | Medium |
-| 16  | **Auditd re-enablement** — check if NixOS 26.05 bug #483085 is fixed upstream                       | Medium | Low    |
-| 17  | **AppArmor evaluation** — assess feasibility for key services                                       | Medium | High   |
+| #  | Task                                                                                                | Impact | Effort |
+| -- | --------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 11 | **dnsblockd: Category enum** — Go type safety for the 10-category system                            | Medium | Low    |
+| 12 | **dnsblockd: false positive persistence** — SQLite/file storage in `/var/lib`                       | Medium | Medium |
+| 13 | **Nix module typed options** — add ports, paths, timeouts to key modules (dnsblockd, caddy, immich) | Medium | Medium |
+| 14 | **`mkHardenedService` wrapper** — DRY the `harden {} // serviceDefaults {}` pattern                 | Medium | Low    |
+| 15 | **Extract overlays to `overlays/`** — move inline overlays out of `flake.nix` for discoverability   | Medium | Medium |
+| 16 | **Auditd re-enablement** — check if NixOS 26.05 bug #483085 is fixed upstream                       | Medium | Low    |
+| 17 | **AppArmor evaluation** — assess feasibility for key services                                       | Medium | High   |
 
 ### P3 — Nice to Have
 
-| #   | Task                                                                                       | Impact | Effort |
-| --- | ------------------------------------------------------------------------------------------ | ------ | ------ |
-| 18  | **`services.defaults` shared module** — common user/group/stateDir for all service modules | Low    | Medium |
-| 19  | **DNS-over-QUIC** — re-evaluate if binary cache impact can be mitigated                    | Low    | High   |
-| 20  | **Multi-WM (Sway) verification** — test if backup compositor still works                   | Low    | Low    |
-| 21  | **Chrome auto-policy apply** — eliminate the manual sudo step on Darwin                    | Low    | Medium |
-| 22  | **Nix sandbox on macOS** — investigate if sandbox can be re-enabled                        | Low    | High   |
-| 23  | **Hermes integration tests** — verify Discord bot + cron + messaging pipeline              | Low    | Medium |
-| 24  | **AI integration test automation** — run `ai-integration-test.sh` in CI                    | Low    | Low    |
-| 25  | **Flake dependency visualization** — generate updated architecture diagrams                | Low    | Low    |
+| #  | Task                                                                                       | Impact | Effort |
+| -- | ------------------------------------------------------------------------------------------ | ------ | ------ |
+| 18 | **`services.defaults` shared module** — common user/group/stateDir for all service modules | Low    | Medium |
+| 19 | **DNS-over-QUIC** — re-evaluate if binary cache impact can be mitigated                    | Low    | High   |
+| 20 | **Multi-WM (Sway) verification** — test if backup compositor still works                   | Low    | Low    |
+| 21 | **Chrome auto-policy apply** — eliminate the manual sudo step on Darwin                    | Low    | Medium |
+| 22 | **Nix sandbox on macOS** — investigate if sandbox can be re-enabled                        | Low    | High   |
+| 23 | **Hermes integration tests** — verify Discord bot + cron + messaging pipeline              | Low    | Medium |
+| 24 | **AI integration test automation** — run `ai-integration-test.sh` in CI                    | Low    | Low    |
+| 25 | **Flake dependency visualization** — generate updated architecture diagrams                | Low    | Low    |
 
 ---
 

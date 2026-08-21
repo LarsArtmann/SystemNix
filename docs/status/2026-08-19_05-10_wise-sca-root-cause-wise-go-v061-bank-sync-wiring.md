@@ -6,13 +6,13 @@
 
 ## Executive Summary
 
-| Category | Count |
-|---|---|
-| FULLY DONE | 6 |
-| PARTIALLY DONE | 3 |
-| NOT STARTED | 5 |
-| TOTALLY FUCKED UP | 4 |
-| Next-task candidates | 28 |
+| Category             | Count |
+| -------------------- | ----- |
+| FULLY DONE           | 6     |
+| PARTIALLY DONE       | 3     |
+| NOT STARTED          | 5     |
+| TOTALLY FUCKED UP    | 4     |
+| Next-task candidates | 28    |
 
 **Headline:** The Wise 403 mystery is SOLVED at the root cause: `statement.json` is **SCA-protected** (UK/EEA profiles) — Wise answers 403 with an EMPTY body and puts the verdict + one-time token in `x-2fa-approval*` response headers, which wise-go discarded. The SDK fix is **released as wise-go v0.6.1** (pushed, tests green). bank-sync consumes it (go.mod + flake lock + env wiring) but is **UNCOMMITTED and its nix build is UNVERIFIED** — the session was interrupted right after the vendorHash was set. The SystemNix deploy leg has not started. The final unlock requires a human step: approving the SCA challenge in the Wise app.
 
@@ -86,6 +86,7 @@
 ## f) NEXT — ranked
 
 **P0 — finish the pipeline (blocking the actual data sync):**
+
 1. `nix build .#default` in bank-sync with the new vendorHash — must be green.
 2. Add bank-sync CHANGELOG `[Unreleased]` entry: SCA approval-token config + wise-go v0.6.1 bump.
 3. Add a bank-sync test: `BANK_SYNC_WISE_SCA_APPROVAL_TOKEN` set → adapter constructed with the option (factory-level assertion).
@@ -129,4 +130,4 @@
 
 ---
 
-*Report written 2026-08-19 05:10 CEST. bank-sync tree intentionally left uncommitted mid-pipeline (P0 items 1-4 next). wise-go clean at v0.6.1 (`88f3e20`). SystemNix untouched this session beyond the previous session's staged docs. Auto-commit daemon will batch this report.*
+_Report written 2026-08-19 05:10 CEST. bank-sync tree intentionally left uncommitted mid-pipeline (P0 items 1-4 next). wise-go clean at v0.6.1 (`88f3e20`). SystemNix untouched this session beyond the previous session's staged docs. Auto-commit daemon will batch this report._

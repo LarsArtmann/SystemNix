@@ -61,6 +61,7 @@
 ## f) Up to 50 things to get done next
 
 **P0 — ship this session's work:**
+
 1. ~~`nix run .#deploy` — ships: black-screen fix (prior session), session-boot-audit, healthcheck condition, zombie tripwire, Qt fix, agent timer fix, crush-daily fix, BTRFS alert — PLUS the concurrent session's fastflowlm socat / smartd / data-to-pool changes riding the same tree (review before shipping if unwanted).~~ done (deploys through gen 690; the full batch shipped (a34ba608 + 34217be3))
 2. Reboot; pre-login `pgrep -x niri` → empty; SDDM login → desktop in seconds (08-15 §4 checklist governs).
 3. Post-deploy settle check (TODO §2.5): smart-audio, shutdown-overlay, niri-flake-polkit, DMS all recover in the real session; then `nix run .#post-deploy-check`.
@@ -99,4 +100,4 @@
 
 ---
 
-*All work committed; verification ended at the edge of my permissions. The deploy — and the choice of what rides with it — is yours.*
+_All work committed; verification ended at the edge of my permissions. The deploy — and the choice of what rides with it — is yours._

@@ -10,7 +10,7 @@
 
 | Metric             | Value           | Status                     |
 | ------------------ | --------------- | -------------------------- |
-| Root disk          | 446G/512G (90%) | ⚠️ Tight — 51G free        |
+| Root disk          | 446G/512G (90%) | ⚠️ Tight — 51G free         |
 | /data disk         | 819G/1.0T (80%) | OK                         |
 | /nix/store         | 86G             | Large but expected         |
 | Branching-flow rev | `20192b4cbf26`  | ✅ Latest, builds          |
@@ -115,33 +115,33 @@
 
 ## F. Top 25 Things To Do Next (Sorted by Impact/Effort)
 
-| #   | Task                                                                          | Impact   | Effort | Category     |
-| --- | ----------------------------------------------------------------------------- | -------- | ------ | ------------ |
-| 1   | **Run `just switch` — deploy all accumulated changes**                        | Critical | Low    | Deploy       |
-| 2   | Commit dead-code cleanup: minecraft.nix + voice-agents.nix unused `onFailure` | Low      | Low    | Cleanup      |
-| 3   | Verify full NixOS build passes end-to-end                                     | Critical | Low    | Verify       |
-| 4   | Adopt file-and-image-renamer postPatch in branching-flow                      | High     | Low    | Prevention   |
-| 5   | Check go-structure-linter vendorHash isn't stale                              | High     | Low    | Fix          |
-| 6   | Check buildflow vendorHash isn't stale                                        | High     | Low    | Fix          |
-| 7   | Audit all Go overlay repos for stale vendorHash                               | Medium   | Medium | Fix          |
-| 8   | Migrate twenty to mkDockerService                                             | Medium   | Low    | Refactor     |
-| 9   | Migrate photomap to mkDockerService                                           | Medium   | Low    | Refactor     |
-| 10  | Add `just update-vendor-hash` command                                         | Medium   | Medium | Tooling      |
-| 11  | Archive old docs/status/ files to archive/                                    | Low      | Low    | Cleanup      |
-| 12  | Run `just format` to ensure all .nix files formatted                          | Low      | Low    | Quality      |
-| 13  | Run `just validate-scripts` for shellcheck                                    | Low      | Low    | Quality      |
-| 14  | Run `just test-fast` for syntax validation                                    | Medium   | Low    | Quality      |
-| 15  | Add weekly `nix-collect-garbage` timer                                        | Medium   | Low    | Maintenance  |
-| 16  | Extract Caddy vhost definitions into structured data                          | High     | High   | Architecture |
-| 17  | Create mkGatusEndpoint helper                                                 | Medium   | Medium | Library      |
-| 18  | Create consecutive-failure lib helper for Gatus                               | Medium   | Low    | Library      |
-| 19  | Add CI pipeline for private Go repos                                          | High     | High   | Prevention   |
-| 20  | Create Go repo template with correct Nix patterns                             | Medium   | Medium | Tooling      |
-| 21  | Run `just health` for cross-platform health check                             | Low      | Low    | Verify       |
-| 22  | Check hermes npmDeps hash isn't stale                                         | Medium   | Low    | Fix          |
-| 23  | Add `nix flake check` to pre-commit hooks                                     | Medium   | Low    | Quality      |
-| 24  | Review all overlay repos for consistent patterns                              | Medium   | Medium | Quality      |
-| 25  | Consider `nix-auto-gc` for automatic store cleanup                            | Medium   | Low    | Maintenance  |
+| #  | Task                                                                          | Impact   | Effort | Category     |
+| -- | ----------------------------------------------------------------------------- | -------- | ------ | ------------ |
+| 1  | **Run `just switch` — deploy all accumulated changes**                        | Critical | Low    | Deploy       |
+| 2  | Commit dead-code cleanup: minecraft.nix + voice-agents.nix unused `onFailure` | Low      | Low    | Cleanup      |
+| 3  | Verify full NixOS build passes end-to-end                                     | Critical | Low    | Verify       |
+| 4  | Adopt file-and-image-renamer postPatch in branching-flow                      | High     | Low    | Prevention   |
+| 5  | Check go-structure-linter vendorHash isn't stale                              | High     | Low    | Fix          |
+| 6  | Check buildflow vendorHash isn't stale                                        | High     | Low    | Fix          |
+| 7  | Audit all Go overlay repos for stale vendorHash                               | Medium   | Medium | Fix          |
+| 8  | Migrate twenty to mkDockerService                                             | Medium   | Low    | Refactor     |
+| 9  | Migrate photomap to mkDockerService                                           | Medium   | Low    | Refactor     |
+| 10 | Add `just update-vendor-hash` command                                         | Medium   | Medium | Tooling      |
+| 11 | Archive old docs/status/ files to archive/                                    | Low      | Low    | Cleanup      |
+| 12 | Run `just format` to ensure all .nix files formatted                          | Low      | Low    | Quality      |
+| 13 | Run `just validate-scripts` for shellcheck                                    | Low      | Low    | Quality      |
+| 14 | Run `just test-fast` for syntax validation                                    | Medium   | Low    | Quality      |
+| 15 | Add weekly `nix-collect-garbage` timer                                        | Medium   | Low    | Maintenance  |
+| 16 | Extract Caddy vhost definitions into structured data                          | High     | High   | Architecture |
+| 17 | Create mkGatusEndpoint helper                                                 | Medium   | Medium | Library      |
+| 18 | Create consecutive-failure lib helper for Gatus                               | Medium   | Low    | Library      |
+| 19 | Add CI pipeline for private Go repos                                          | High     | High   | Prevention   |
+| 20 | Create Go repo template with correct Nix patterns                             | Medium   | Medium | Tooling      |
+| 21 | Run `just health` for cross-platform health check                             | Low      | Low    | Verify       |
+| 22 | Check hermes npmDeps hash isn't stale                                         | Medium   | Low    | Fix          |
+| 23 | Add `nix flake check` to pre-commit hooks                                     | Medium   | Low    | Quality      |
+| 24 | Review all overlay repos for consistent patterns                              | Medium   | Medium | Quality      |
+| 25 | Consider `nix-auto-gc` for automatic store cleanup                            | Medium   | Low    | Maintenance  |
 
 ---
 

@@ -20,23 +20,23 @@
 
 ## Tier 1: CRITICAL - COMPLETE ✅ (15/15 tasks)
 
-| #   | Task                                | Status                | Commit     |
-| --- | ----------------------------------- | --------------------- | ---------- |
-| 1   | Fix Hyprland type safety assertions | ✅ Already enabled    | -          |
-| 2   | Re-enable assertions                | ✅ Already enabled    | -          |
-| 3   | Verify assertions pass              | ✅ Test passed        | -          |
-| 4   | Document assertion fix              | ✅ Documented in code | -          |
-| 5   | Research audit kernel module        | ✅ Blocked upstream   | Documented |
-| 6   | Test audit with kernel              | ✅ Blocked upstream   | -          |
-| 7   | Document audit disable reason       | ✅ Comment added      | -          |
-| 8   | Fix Sandbox override                | ✅ Already correct    | -          |
-| 9   | Verify sandbox settings             | ✅ Test passed        | -          |
-| 10  | Run darwin-rebuild build            | ✅ Completed          | -          |
-| 11  | Analyze build output                | ✅ No errors          | -          |
-| 12  | Create git backup checkpoint        | ✅ Committed          | -          |
-| 13  | Test HM workaround removal          | ✅ Removed            | ecd5a51    |
-| 14  | Verify HM builds without workaround | ✅ Test passed        | ecd5a51    |
-| 15  | Document workaround removal         | ✅ Committed          | ecd5a51    |
+| #  | Task                                | Status                | Commit     |
+| -- | ----------------------------------- | --------------------- | ---------- |
+| 1  | Fix Hyprland type safety assertions | ✅ Already enabled    | -          |
+| 2  | Re-enable assertions                | ✅ Already enabled    | -          |
+| 3  | Verify assertions pass              | ✅ Test passed        | -          |
+| 4  | Document assertion fix              | ✅ Documented in code | -          |
+| 5  | Research audit kernel module        | ✅ Blocked upstream   | Documented |
+| 6  | Test audit with kernel              | ✅ Blocked upstream   | -          |
+| 7  | Document audit disable reason       | ✅ Comment added      | -          |
+| 8  | Fix Sandbox override                | ✅ Already correct    | -          |
+| 9  | Verify sandbox settings             | ✅ Test passed        | -          |
+| 10 | Run darwin-rebuild build            | ✅ Completed          | -          |
+| 11 | Analyze build output                | ✅ No errors          | -          |
+| 12 | Create git backup checkpoint        | ✅ Committed          | -          |
+| 13 | Test HM workaround removal          | ✅ Removed            | ecd5a51    |
+| 14 | Verify HM builds without workaround | ✅ Test passed        | ecd5a51    |
+| 15 | Document workaround removal         | ✅ Committed          | ecd5a51    |
 
 ---
 

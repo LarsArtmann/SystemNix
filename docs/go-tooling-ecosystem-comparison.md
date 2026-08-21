@@ -135,20 +135,20 @@ stripReplaceDirectives = ''
 
 ## Feature Matrix
 
-| Feature                       | library-policy  | BuildFlow |   PMA    | hier-errors | golangci-auto | go-struct | branch-flow |   go-auto-up   |    art-dupl    |
-| ----------------------------- | :-------------: | :-------: | :------: | :---------: | :-----------: | :-------: | :---------: | :------------: | :------------: |
-| **Builds with nix**           |       ✅        |    ❌     |    ⚠️    |      —      |      ✅       |    ✅     |     ✅      |       ✅       |       ✅       |
-| **Modular nix files**         |       ✅        |    ❌     |    ❌    |      —      |      ❌       |    ❌     |     ❌      |       ❌       |       ❌       |
-| **treefmt**                   |       ✅        |    ❌     |    ❌    |      —      |      ❌       |    ❌     |     ❌      |       ❌       |       ❌       |
-| **pre-commit hooks**          |       ✅        |    ❌     |    ❌    |      —      |      ❌       |    ❌     |     ❌      |       ❌       |       ❌       |
-| **Multiple packages**         | ✅ (debug+prod) |    ❌     |    ❌    |      —      |      ❌       |    ❌     |     ❌      |       ❌       |       ❌       |
-| **7+ checks**                 |       ✅        |    ❌     |    3     |      —      |       1       |     1     |      1      |       4        |       2        |
-| **Apps**                      |       10        |     0     |    25    |      —      |       1       |     0     |      2      |       1        |       2        |
-| **Overlay output**            |       ❌        |    ❌     |    ❌    |      —      |      ❌       |    ❌     |     ❌      |       ❌       |       ✅       |
-| **Portable (no local paths)** |       ✅        |    ❌     |    ⚠️    |      —      |      ✅       |    ✅     |     ✅      |       ❌       |       ✅       |
+| Feature                       | library-policy  | BuildFlow |   PMA   | hier-errors | golangci-auto | go-struct | branch-flow |  go-auto-up   |    art-dupl    |
+| ----------------------------- | :-------------: | :-------: | :-----: | :---------: | :-----------: | :-------: | :---------: | :-----------: | :------------: |
+| **Builds with nix**           |       ✅        |    ❌     |    ⚠️    |      —      |      ✅       |    ✅     |     ✅      |      ✅       |       ✅       |
+| **Modular nix files**         |       ✅        |    ❌     |   ❌    |      —      |      ❌       |    ❌     |     ❌      |      ❌       |       ❌       |
+| **treefmt**                   |       ✅        |    ❌     |   ❌    |      —      |      ❌       |    ❌     |     ❌      |      ❌       |       ❌       |
+| **pre-commit hooks**          |       ✅        |    ❌     |   ❌    |      —      |      ❌       |    ❌     |     ❌      |      ❌       |       ❌       |
+| **Multiple packages**         | ✅ (debug+prod) |    ❌     |   ❌    |      —      |      ❌       |    ❌     |     ❌      |      ❌       |       ❌       |
+| **7+ checks**                 |       ✅        |    ❌     |    3    |      —      |       1       |     1     |      1      |       4       |       2        |
+| **Apps**                      |       10        |     0     |   25    |      —      |       1       |     0     |      2      |       1       |       2        |
+| **Overlay output**            |       ❌        |    ❌     |   ❌    |      —      |      ❌       |    ❌     |     ❌      |      ❌       |       ✅       |
+| **Portable (no local paths)** |       ✅        |    ❌     |    ⚠️    |      —      |      ✅       |    ✅     |     ✅      |      ❌       |       ✅       |
 | **Sibling dep handling**      |       N/A       |    ❌     | ⚠️ strip |      —      | ✅ postPatch  |    N/A    |     N/A     | ⚠️ local paths | ✅ vendor swap |
-| **Dev shell richness**        |      Full       |   Full    |   Full   |      —      |     Full      |  Minimal  |   Medium    |      Full      |     Medium     |
-| **CGO_ENABLED=0**             |       ✅        |    ❌     |    ✅    |      —      |      ❌       |    ❌     |     ❌      |       ❌       |       ✅       |
+| **Dev shell richness**        |      Full       |   Full    |  Full   |      —      |     Full      |  Minimal  |   Medium    |     Full      |     Medium     |
+| **CGO_ENABLED=0**             |       ✅        |    ❌     |   ✅    |      —      |      ❌       |    ❌     |     ❌      |      ❌       |       ✅       |
 
 ---
 

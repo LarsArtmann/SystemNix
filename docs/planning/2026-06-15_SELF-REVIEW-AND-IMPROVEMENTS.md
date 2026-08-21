@@ -24,15 +24,15 @@
 
 ### Execution Plan (sorted by work vs impact)
 
-| #   | Task                                         | Work  | Impact      | Ratio |
-| --- | -------------------------------------------- | ----- | ----------- | ----- |
-| 1   | Fix stale TODO comment in sops.nix           | 1min  | Clarity     | 🔥    |
-| 2   | Fix security-hardening.nix literal onFailure | 2min  | Consistency | 🔥    |
-| 3   | Fix waybar.nix port import bypass            | 2min  | Safety      | 🔥    |
-| 4   | Fix darwinConfig stale path                  | 1min  | Correctness | 🔥    |
-| 5   | Fix hermes hardcoded username                | 5min  | Portability | 🔥    |
-| 6   | Fix monitor365 misleading fallback           | 2min  | Clarity     | 🔥    |
-| 7   | Fix template version anti-pattern            | 2min  | Consistency | 🔥    |
-| 8   | Remove duplicate password gen in forgejo     | 5min  | Clean code  | ⭐    |
-| 9   | Harden gitea-runner (forgotten P3-18)        | 5min  | Security    | ⭐    |
-| 10  | Update AGENTS.md with new patterns           | 10min | Onboarding  | ⭐    |
+| #  | Task                                         | Work  | Impact      | Ratio |
+| -- | -------------------------------------------- | ----- | ----------- | ----- |
+| 1  | Fix stale TODO comment in sops.nix           | 1min  | Clarity     | 🔥    |
+| 2  | Fix security-hardening.nix literal onFailure | 2min  | Consistency | 🔥    |
+| 3  | Fix waybar.nix port import bypass            | 2min  | Safety      | 🔥    |
+| 4  | Fix darwinConfig stale path                  | 1min  | Correctness | 🔥    |
+| 5  | Fix hermes hardcoded username                | 5min  | Portability | 🔥    |
+| 6  | Fix monitor365 misleading fallback           | 2min  | Clarity     | 🔥    |
+| 7  | Fix template version anti-pattern            | 2min  | Consistency | 🔥    |
+| 8  | Remove duplicate password gen in forgejo     | 5min  | Clean code  | ⭐    |
+| 9  | Harden gitea-runner (forgotten P3-18)        | 5min  | Security    | ⭐    |
+| 10 | Update AGENTS.md with new patterns           | 10min | Onboarding  | ⭐    |

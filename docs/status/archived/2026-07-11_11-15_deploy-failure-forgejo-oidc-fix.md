@@ -6,7 +6,6 @@ A `nh os switch . -v --show-activation-logs --keep-going` deploy at ~09:23 CEST 
 
 ---
 
-
 ## a) FULLY DONE
 
 ### 1. Root Cause Analysis of All 6 Failed Services

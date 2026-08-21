@@ -72,11 +72,11 @@ This session continued the "less code, more system" deduplication effort. **28 f
 
 | #                                       | Task                                   | Impact  | Effort |
 | --------------------------------------- | -------------------------------------- | ------- | ------ |
-| `mkDockerService` factory               | ~240 lines saved                       | ~30 min |
-| `mkGatusEndpoint` factory               | ~570 lines saved                       | ~20 min |
-| Consecutive-failure `lib.sh` extraction | ~75 lines saved                        | ~15 min |
-| Caddy vhosts as data                    | ~80 lines saved                        | ~20 min |
-| Service self-registration pattern       | ~200 lines + 3 manual steps eliminated | ~60 min |
+| `mkDockerService` factory               | ~240 lines saved                       | ~30 min |        |
+| `mkGatusEndpoint` factory               | ~570 lines saved                       | ~20 min |        |
+| Consecutive-failure `lib.sh` extraction | ~75 lines saved                        | ~15 min |        |
+| Caddy vhosts as data                    | ~80 lines saved                        | ~20 min |        |
+| Service self-registration pattern       | ~200 lines + 3 manual steps eliminated | ~60 min |        |
 
 ### Infrastructure / Platform
 
@@ -128,33 +128,33 @@ This session continued the "less code, more system" deduplication effort. **28 f
 
 ## f) Top #25 Things We Should Get Done Next
 
-| #   | Task                                                       | Impact                                                              | Effort   | Category     |
-| --- | ---------------------------------------------------------- | ------------------------------------------------------------------- | -------- | ------------ |
-| 1   | **Deploy current changes** (`just switch`)                 | Critical — SSH signing, security fixes live                         | 5 min    | Deploy       |
-| 2   | **Add SSH signing key to GitHub**                          | Verified commit badges                                              | 2 min    | Config       |
-| 3   | **Test Darwin build** after color-scheme + overlay changes | Prevents cross-platform break                                       | 10 min   | Quality      |
-| 4   | **Extract gitea mirror scripts** to `scripts/`             | -200 lines from gitea.nix                                           | 15 min   | Dedup        |
-| 5   | **Extract gitea admin scripts** to `scripts/`              | -100 lines from gitea.nix                                           | 15 min   | Dedup        |
-| 6   | **Create `mkDockerService` factory**                       | -240 lines across 4 services                                        | 30 min   | Dedup        |
-| 7   | **Create `mkGatusEndpoint` helper**                        | -570 lines in gatus-config.nix                                      | 20 min   | Dedup        |
-| 8   | **Caddy vhosts as data**                                   | -80 lines, 1-line per vhost                                         | 20 min   | Dedup        |
-| 9   | **Consecutive-failure lib.sh extraction**                  | DRY across 5 scripts                                                | 15 min   | Dedup        |
-| 10  | **Service self-registration pattern**                      | Eliminates manual wiring class                                      | 60 min   | Architecture |
-| 11  | **Move `d2DarwinOverlay` to darwin.nix**                   | Correct abstraction placement                                       | 5 min    | Quality      |
-| 12  | **Extract script hardcoded IPs to env vars**               | Respects network config changes                                     | 10 min   | Scripts      |
-| 13  | **Archive 60+ stale docs**                                 | Clean docs/ directory                                               | 15 min   | Cleanup      |
-| 14  | **Pi 3 DNS failover node provisioning**                    | HA DNS cluster                                                      | Hardware | Infra        |
-| 15  | **Apple Silicon distributed builds**                       | Saves MacBook disk                                                  | 30 min   | Infra        |
-| 16  | **Overlay composition helper in flake.nix**                | -20 lines, single composition point                                 | 10 min   | Dedup        |
-| 17  | **Add `path-validation` CI for scripts**                   | Prevents silent breakage                                            | 15 min   | Quality      |
-| 18  | **Btrfs snapshot automation review**                       | Verify timeshift config is healthy                                  | 10 min   | Reliability  |
-| 19  | **Audit remaining hardcoded paths** in all modules         | Find any remaining `/home/lars`                                     | 10 min   | Quality      |
-| 20  | **Verify `disableTests` overlay consistency**              | Confirm intentional or fix                                          | 5 min    | Correctness  |
-| 21  | **ComfyUI module options for pipeline dir**                | Already partially done (userHome), finish with `pipelineDir` option | 5 min    | Quality      |
-| 22  | **Flake.lock update** — 2 days stale                       | Security patches, bug fixes                                         | 5 min    | Deps         |
-| 23  | **Shellcheck all scripts** (`just validate-scripts`)       | Catch issues before they hit prod                                   | 5 min    | Quality      |
-| 24  | **Consider NixOS 26.05 beta channel**                      | New features, fixes                                                 | Research | Platform     |
-| 25  | **Pre-commit hook for nix eval**                           | Gate PRs on build success                                           | 15 min   | Quality      |
+| #  | Task                                                       | Impact                                                              | Effort   | Category     |
+| -- | ---------------------------------------------------------- | ------------------------------------------------------------------- | -------- | ------------ |
+| 1  | **Deploy current changes** (`just switch`)                 | Critical — SSH signing, security fixes live                         | 5 min    | Deploy       |
+| 2  | **Add SSH signing key to GitHub**                          | Verified commit badges                                              | 2 min    | Config       |
+| 3  | **Test Darwin build** after color-scheme + overlay changes | Prevents cross-platform break                                       | 10 min   | Quality      |
+| 4  | **Extract gitea mirror scripts** to `scripts/`             | -200 lines from gitea.nix                                           | 15 min   | Dedup        |
+| 5  | **Extract gitea admin scripts** to `scripts/`              | -100 lines from gitea.nix                                           | 15 min   | Dedup        |
+| 6  | **Create `mkDockerService` factory**                       | -240 lines across 4 services                                        | 30 min   | Dedup        |
+| 7  | **Create `mkGatusEndpoint` helper**                        | -570 lines in gatus-config.nix                                      | 20 min   | Dedup        |
+| 8  | **Caddy vhosts as data**                                   | -80 lines, 1-line per vhost                                         | 20 min   | Dedup        |
+| 9  | **Consecutive-failure lib.sh extraction**                  | DRY across 5 scripts                                                | 15 min   | Dedup        |
+| 10 | **Service self-registration pattern**                      | Eliminates manual wiring class                                      | 60 min   | Architecture |
+| 11 | **Move `d2DarwinOverlay` to darwin.nix**                   | Correct abstraction placement                                       | 5 min    | Quality      |
+| 12 | **Extract script hardcoded IPs to env vars**               | Respects network config changes                                     | 10 min   | Scripts      |
+| 13 | **Archive 60+ stale docs**                                 | Clean docs/ directory                                               | 15 min   | Cleanup      |
+| 14 | **Pi 3 DNS failover node provisioning**                    | HA DNS cluster                                                      | Hardware | Infra        |
+| 15 | **Apple Silicon distributed builds**                       | Saves MacBook disk                                                  | 30 min   | Infra        |
+| 16 | **Overlay composition helper in flake.nix**                | -20 lines, single composition point                                 | 10 min   | Dedup        |
+| 17 | **Add `path-validation` CI for scripts**                   | Prevents silent breakage                                            | 15 min   | Quality      |
+| 18 | **Btrfs snapshot automation review**                       | Verify timeshift config is healthy                                  | 10 min   | Reliability  |
+| 19 | **Audit remaining hardcoded paths** in all modules         | Find any remaining `/home/lars`                                     | 10 min   | Quality      |
+| 20 | **Verify `disableTests` overlay consistency**              | Confirm intentional or fix                                          | 5 min    | Correctness  |
+| 21 | **ComfyUI module options for pipeline dir**                | Already partially done (userHome), finish with `pipelineDir` option | 5 min    | Quality      |
+| 22 | **Flake.lock update** — 2 days stale                       | Security patches, bug fixes                                         | 5 min    | Deps         |
+| 23 | **Shellcheck all scripts** (`just validate-scripts`)       | Catch issues before they hit prod                                   | 5 min    | Quality      |
+| 24 | **Consider NixOS 26.05 beta channel**                      | New features, fixes                                                 | Research | Platform     |
+| 25 | **Pre-commit hook for nix eval**                           | Gate PRs on build success                                           | 15 min   | Quality      |
 
 ---
 

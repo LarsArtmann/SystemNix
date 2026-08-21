@@ -44,13 +44,13 @@ SystemNix is in **good operational shape** with two new commits since Session 41
 
 A deep audit of all 111 .nix files, 17 scripts, 33 service modules identified the following security issues:
 
-| #   | Issue                                          | Module           | Severity      | Details                                                                                                                              |
-| --- | ---------------------------------------------- | ---------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | **monitor365 plaintext secrets**               | `monitor365.nix` | 🔴 **HIGH**   | `authToken` and `jwtSecret` stored as plaintext Nix options → world-readable in `/nix/store`. Needs sops-nix migration.              |
-| 2   | **unsloth-studio zero hardening**              | `ai-stack.nix`   | 🟡 **MEDIUM** | Service has `PrivateTmp=false`, no `MemoryMax`, no `NoNewPrivileges`, no `ProtectSystem`. Runs PyTorch ROCm with full system access. |
-| 3   | **Authelia OIDC client_secret as bcrypt hash** | `authelia.nix`   | 🟡 **MEDIUM** | `client_secret` stored as bcrypt hash string in Nix config. Not sops-managed. If hash is cracked, all OIDC sessions compromised.     |
-| 4   | **Gitea admin password in plaintext**          | `gitea.nix`      | 🟡 **MEDIUM** | Admin password stored as plaintext string. Token generation silently fails on first run.                                             |
-| 5   | **Twenty CRM secrets outside sops.nix**        | `twenty.nix`     | 🟡 **MEDIUM** | Secrets (`ACCESS_TOKEN_SECRET`, `REFRESH_TOKEN_SECRET`) defined in module, not in central `sops.nix`.                                |
+| # | Issue                                          | Module           | Severity      | Details                                                                                                                              |
+| - | ---------------------------------------------- | ---------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| 1 | **monitor365 plaintext secrets**               | `monitor365.nix` | 🔴 **HIGH**   | `authToken` and `jwtSecret` stored as plaintext Nix options → world-readable in `/nix/store`. Needs sops-nix migration.              |
+| 2 | **unsloth-studio zero hardening**              | `ai-stack.nix`   | 🟡 **MEDIUM** | Service has `PrivateTmp=false`, no `MemoryMax`, no `NoNewPrivileges`, no `ProtectSystem`. Runs PyTorch ROCm with full system access. |
+| 3 | **Authelia OIDC client_secret as bcrypt hash** | `authelia.nix`   | 🟡 **MEDIUM** | `client_secret` stored as bcrypt hash string in Nix config. Not sops-managed. If hash is cracked, all OIDC sessions compromised.     |
+| 4 | **Gitea admin password in plaintext**          | `gitea.nix`      | 🟡 **MEDIUM** | Admin password stored as plaintext string. Token generation silently fails on first run.                                             |
+| 5 | **Twenty CRM secrets outside sops.nix**        | `twenty.nix`     | 🟡 **MEDIUM** | Secrets (`ACCESS_TOKEN_SECRET`, `REFRESH_TOKEN_SECRET`) defined in module, not in central `sops.nix`.                                |
 
 ### SSH Deprecation Fix (Still Holding)
 
@@ -142,33 +142,33 @@ The sustained load is from 10+ Crush AI sessions running concurrently, not runaw
 
 ## f) Top #25 Things We Should Get Done Next! 🎯
 
-| #   | Task                                         | Why                               | Effort   | Impact       |
-| --- | -------------------------------------------- | --------------------------------- | -------- | ------------ |
-| 1   | **Fix monitor365 plaintext secrets**         | authToken/jwtSecret in /nix/store | 1 hour   | 🔴 Critical  |
-| 2   | **Harden unsloth-studio service**            | Zero systemd hardening            | 30 min   | 🔴 High      |
-| 3   | **Migrate Authelia OIDC secret to sops**     | bcrypt hash in plaintext          | 30 min   | 🔴 High      |
-| 4   | **Fix Gitea admin password**                 | Plaintext + token gen fails       | 30 min   | 🔴 High      |
-| 5   | **Migrate Twenty secrets to sops**           | Secrets outside central module    | 30 min   | 🟡 Medium    |
-| 6   | **Run `just clean` + `nix-collect-garbage`** | Root disk at 88%                  | 15 min   | 🔴 High      |
-| 7   | **Archive status reports >2 weeks old**      | 59+ reports accumulating          | 10 min   | 🟢 Low       |
-| 8   | **Verify Darwin build from MacBook**         | Latent issues since Session 36    | 30 min   | 🟡 Medium    |
-| 9   | **Set up Cachix**                            | Massive rebuild time savings      | 2 hours  | 🔴 Very High |
-| 10  | **GitHub Actions CI**                        | Prevent breakage on push          | 1 hour   | 🔴 Very High |
-| 11  | **photomap decision**                        | Fix, enable, or remove            | 10 min   | 🟡 Medium    |
-| 12  | **Create `mk-pnpm-package.nix` helper**      | Reuse jscpd pattern               | 1 hour   | 🟡 Medium    |
-| 13  | **Write upstream fix playbook**              | Document vendor hash cascade      | 30 min   | 🟡 Medium    |
-| 14  | **Go.sum transitive merge audit**            | Prevent future cascade failures   | 1 hour   | 🔴 High      |
-| 15  | **Dependency graph visualization**           | Auto-detect stale hashes          | 2 hours  | 🔴 High      |
-| 16  | **Automated vendor hash updater**            | One command for all updates       | 3 hours  | 🔴 Very High |
-| 17  | **rpi3-dns hardware provisioning**           | Eliminate DNS SPOF                | Hardware | 🔴 High      |
-| 18  | **SigNoz per-threshold routing**             | Critical→DM, warning→channel      | 1 hour   | 🟡 Medium    |
-| 19  | **Distributed Darwin builds**                | MacBook disk at 90-95%            | 2 hours  | 🔴 High      |
-| 20  | **Migrate justfile → flake.nix**             | AGENTS.md policy                  | 4 hours  | 🟢 Low       |
-| 21  | **AppArmor enablement**                      | Currently disabled                | 2 hours  | 🟡 Medium    |
-| 22  | **Auditd re-enablement**                     | Track nixpkgs #483085             | Ongoing  | 🟡 Medium    |
-| 23  | **Move dns-failover authPassword to sops**   | Plaintext password                | 30 min   | 🟡 Medium    |
-| 24  | **Add per-service health check endpoints**   | Self-reporting beyond Gatus       | 3 hours  | 🟡 Medium    |
-| 25  | **Contribute jscpd upstream fix**            | Give back to nixpkgs              | 2 hours  | 🟢 Low       |
+| #  | Task                                         | Why                               | Effort   | Impact       |
+| -- | -------------------------------------------- | --------------------------------- | -------- | ------------ |
+| 1  | **Fix monitor365 plaintext secrets**         | authToken/jwtSecret in /nix/store | 1 hour   | 🔴 Critical  |
+| 2  | **Harden unsloth-studio service**            | Zero systemd hardening            | 30 min   | 🔴 High      |
+| 3  | **Migrate Authelia OIDC secret to sops**     | bcrypt hash in plaintext          | 30 min   | 🔴 High      |
+| 4  | **Fix Gitea admin password**                 | Plaintext + token gen fails       | 30 min   | 🔴 High      |
+| 5  | **Migrate Twenty secrets to sops**           | Secrets outside central module    | 30 min   | 🟡 Medium    |
+| 6  | **Run `just clean` + `nix-collect-garbage`** | Root disk at 88%                  | 15 min   | 🔴 High      |
+| 7  | **Archive status reports >2 weeks old**      | 59+ reports accumulating          | 10 min   | 🟢 Low       |
+| 8  | **Verify Darwin build from MacBook**         | Latent issues since Session 36    | 30 min   | 🟡 Medium    |
+| 9  | **Set up Cachix**                            | Massive rebuild time savings      | 2 hours  | 🔴 Very High |
+| 10 | **GitHub Actions CI**                        | Prevent breakage on push          | 1 hour   | 🔴 Very High |
+| 11 | **photomap decision**                        | Fix, enable, or remove            | 10 min   | 🟡 Medium    |
+| 12 | **Create `mk-pnpm-package.nix` helper**      | Reuse jscpd pattern               | 1 hour   | 🟡 Medium    |
+| 13 | **Write upstream fix playbook**              | Document vendor hash cascade      | 30 min   | 🟡 Medium    |
+| 14 | **Go.sum transitive merge audit**            | Prevent future cascade failures   | 1 hour   | 🔴 High      |
+| 15 | **Dependency graph visualization**           | Auto-detect stale hashes          | 2 hours  | 🔴 High      |
+| 16 | **Automated vendor hash updater**            | One command for all updates       | 3 hours  | 🔴 Very High |
+| 17 | **rpi3-dns hardware provisioning**           | Eliminate DNS SPOF                | Hardware | 🔴 High      |
+| 18 | **SigNoz per-threshold routing**             | Critical→DM, warning→channel      | 1 hour   | 🟡 Medium    |
+| 19 | **Distributed Darwin builds**                | MacBook disk at 90-95%            | 2 hours  | 🔴 High      |
+| 20 | **Migrate justfile → flake.nix**             | AGENTS.md policy                  | 4 hours  | 🟢 Low       |
+| 21 | **AppArmor enablement**                      | Currently disabled                | 2 hours  | 🟡 Medium    |
+| 22 | **Auditd re-enablement**                     | Track nixpkgs #483085             | Ongoing  | 🟡 Medium    |
+| 23 | **Move dns-failover authPassword to sops**   | Plaintext password                | 30 min   | 🟡 Medium    |
+| 24 | **Add per-service health check endpoints**   | Self-reporting beyond Gatus       | 3 hours  | 🟡 Medium    |
+| 25 | **Contribute jscpd upstream fix**            | Give back to nixpkgs              | 2 hours  | 🟢 Low       |
 
 ---
 

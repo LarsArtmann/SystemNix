@@ -298,43 +298,43 @@ The entire DNS failover cluster is code-only — never tested on hardware. The P
 
 ### P0 — Do This Week
 
-| #   | Task                                                                                                    | Impact   | Effort |
-| --- | ------------------------------------------------------------------------------------------------------- | -------- | ------ |
-| 1   | **Deploy & verify evo-x2** — `just switch` + validate all services                                      | CRITICAL | High   |
-| 2   | **Deduplicate fail2ban config** — remove one of the two definitions                                     | High     | Low    |
-| 3   | **Deduplicate docker prune** — remove autoPrune or timer, not both                                      | High     | Low    |
-| 4   | **Fix unguarded module refs** — add `mkIf` guards for photomap→immich, caddy→immich, ai-stack→ai-models | High     | Low    |
-| 5   | **Migrate authelia to `harden` function**                                                               | Medium   | Low    |
-| 6   | **Migrate caddy to `harden` function**                                                                  | Medium   | Low    |
-| 7   | **Add `serviceDefaults` to all hardened services**                                                      | Medium   | Low    |
+| # | Task                                                                                                    | Impact   | Effort |
+| - | ------------------------------------------------------------------------------------------------------- | -------- | ------ |
+| 1 | **Deploy & verify evo-x2** — `just switch` + validate all services                                      | CRITICAL | High   |
+| 2 | **Deduplicate fail2ban config** — remove one of the two definitions                                     | High     | Low    |
+| 3 | **Deduplicate docker prune** — remove autoPrune or timer, not both                                      | High     | Low    |
+| 4 | **Fix unguarded module refs** — add `mkIf` guards for photomap→immich, caddy→immich, ai-stack→ai-models | High     | Low    |
+| 5 | **Migrate authelia to `harden` function**                                                               | Medium   | Low    |
+| 6 | **Migrate caddy to `harden` function**                                                                  | Medium   | Low    |
+| 7 | **Add `serviceDefaults` to all hardened services**                                                      | Medium   | Low    |
 
 ### P1 — Do This Month
 
-| #   | Task                                                               | Impact | Effort |
-| --- | ------------------------------------------------------------------ | ------ | ------ |
-| 8   | **Pin Twenty CRM Docker image** to SHA256 digest                   | High   | Low    |
-| 9   | **Harden ollama service** — add `harden {}` + `serviceDefaults {}` | High   | Medium |
-| 10  | **Move authelia secrets to sops** — client_secret, user password   | High   | Medium |
-| 11  | **Move gitea admin password to sops**                              | High   | Medium |
-| 12  | **Harden gitea main service** — currently no hardening at all      | Medium | Low    |
-| 13  | **Harden unsloth services** — ollama, setup, studio                | Medium | Medium |
-| 14  | **Add `serviceDefaults` to signoz, hermes, twenty, immich**        | Medium | Low    |
-| 15  | **Archive stale status docs** — keep last 5, archive the rest      | Low    | Low    |
-| 16  | **Split signoz.nix** into sub-modules (query/collector/clickhouse) | Medium | Medium |
+| #  | Task                                                               | Impact | Effort |
+| -- | ------------------------------------------------------------------ | ------ | ------ |
+| 8  | **Pin Twenty CRM Docker image** to SHA256 digest                   | High   | Low    |
+| 9  | **Harden ollama service** — add `harden {}` + `serviceDefaults {}` | High   | Medium |
+| 10 | **Move authelia secrets to sops** — client_secret, user password   | High   | Medium |
+| 11 | **Move gitea admin password to sops**                              | High   | Medium |
+| 12 | **Harden gitea main service** — currently no hardening at all      | Medium | Low    |
+| 13 | **Harden unsloth services** — ollama, setup, studio                | Medium | Medium |
+| 14 | **Add `serviceDefaults` to signoz, hermes, twenty, immich**        | Medium | Low    |
+| 15 | **Archive stale status docs** — keep last 5, archive the rest      | Low    | Low    |
+| 16 | **Split signoz.nix** into sub-modules (query/collector/clickhouse) | Medium | Medium |
 
 ### P2 — Do This Quarter
 
-| #   | Task                                                                                       | Impact | Effort |
-| --- | ------------------------------------------------------------------------------------------ | ------ | ------ |
-| 17  | **Provision RPi3 hardware** + test DNS failover cluster                                    | High   | High   |
-| 18  | **Add NixOS VM tests** for critical services                                               | High   | High   |
-| 19  | **Enable DNS-over-QUIC for clients** — fix binary cache hit issue                          | Medium | High   |
-| 20  | **Darwin parity** — ensure macOS config is as complete as NixOS                            | Medium | Medium |
-| 21  | **Move Taskwarrior encryption secret to sops**                                             | Medium | Low    |
-| 22  | **Consolidate documentation** — single living status doc pattern                           | Low    | Medium |
-| 23  | **Re-evaluate monitor365** — currently disabled for RAM, worth re-enabling?                | Low    | Low    |
-| 24  | **Extract niri session save/restore** into separate module                                 | Low    | Medium |
-| 25  | **Add module options for hardcoded paths** (Docker data-root, blocklist working dir, etc.) | Low    | Medium |
+| #  | Task                                                                                       | Impact | Effort |
+| -- | ------------------------------------------------------------------------------------------ | ------ | ------ |
+| 17 | **Provision RPi3 hardware** + test DNS failover cluster                                    | High   | High   |
+| 18 | **Add NixOS VM tests** for critical services                                               | High   | High   |
+| 19 | **Enable DNS-over-QUIC for clients** — fix binary cache hit issue                          | Medium | High   |
+| 20 | **Darwin parity** — ensure macOS config is as complete as NixOS                            | Medium | Medium |
+| 21 | **Move Taskwarrior encryption secret to sops**                                             | Medium | Low    |
+| 22 | **Consolidate documentation** — single living status doc pattern                           | Low    | Medium |
+| 23 | **Re-evaluate monitor365** — currently disabled for RAM, worth re-enabling?                | Low    | Low    |
+| 24 | **Extract niri session save/restore** into separate module                                 | Low    | Medium |
+| 25 | **Add module options for hardcoded paths** (Docker data-root, blocklist working dir, etc.) | Low    | Medium |
 
 ---
 

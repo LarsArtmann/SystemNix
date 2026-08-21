@@ -6,7 +6,6 @@ Fixed two statix `[20] Warning: Avoid repeated keys in attribute sets` warnings 
 
 ---
 
-
 ## A) Fully Done
 
 1. **`btrfs-health.nix` repeated `timers` keys — FIXED**
@@ -64,6 +63,7 @@ Nothing. Both fixes were clean, verified, and non-breaking.
 ## F) Up to 50 Things We Should Get Done Next
 
 ### Immediate (statix/lint sweep)
+
 1. Run `statix check` on EVERY `.nix` file in the project — find all remaining warnings
 2. Grep for dotted-key patterns (`services\.`, `timers\.`, `packages\.`) inside `systemd = { ... }` blocks across all modules
 3. Run `deadnix check` on the two touched files
@@ -71,11 +71,13 @@ Nothing. Both fixes were clean, verified, and non-breaking.
 5. Check if any other statix warning types exist (not just `[20]`)
 
 ### The two touched files
+
 6. Verify `git diff` on both files is clean and minimal
 7. Consider whether `alejandra` / `nix fmt` would reformat the consolidated blocks differently
 8. Run the pre-commit hook manually to verify it passes on these files
 
 ### Broader codebase lint health
+
 9. Audit all files in `modules/nixos/services/` for statix warnings
 10. Audit all files in `modules/nixos/desktop/` for statix warnings
 11. Audit all files in `platforms/` for statix warnings
@@ -88,16 +90,19 @@ Nothing. Both fixes were clean, verified, and non-breaking.
 18. Check if `statix check` can be run project-wide via `--recursive` or similar (statix may not support dirs — the gotcha says it takes one target)
 
 ### Pattern consistency
+
 19. Establish a convention: always use grouped attrsets (`services = { ... }`) over dotted keys (`services.x = ...`) in new code
 20. Add this convention to `AGENTS.md` or `docs/CONTRIBUTING.md`
 21. Check if `alejandra` formatter already enforces or prefers one style
 
 ### Deployment verification
+
 22. Deploy to verify the refactored timers/services work at runtime (eval passing ≠ runtime correct, though the change is purely structural)
 23. After deploy, verify BTRFS timers fire correctly (`systemctl list-timers btrfs-*`)
 24. After deploy, verify pocket-id services start correctly (`systemctl status pocket-id*`)
 
 ### Other observations from this session
+
 25. The `timers.pocket-id-secret-rotation` in `pocket-id.nix` is still dotted-key notation — but it's a single timer so statix doesn't flag it. If a second timer is ever added there, it will trigger the same warning.
 26. The `btrfs-health.nix` `systemd = { ... }` block mixes `services.*` (via `mkMerge`) and now `timers = { ... }` — verify this mixed style is intentional and consistent
 27. Both files use `systemd.tmpfiles.rules` inside the same `systemd = { }` attrset — fine, just noting the structure

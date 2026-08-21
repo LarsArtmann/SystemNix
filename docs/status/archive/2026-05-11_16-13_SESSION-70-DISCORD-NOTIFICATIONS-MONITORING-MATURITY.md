@@ -70,10 +70,10 @@ Implemented Discord notification channels for both SigNoz and Gatus monitoring s
 
 ### lib/ Shared Infrastructure
 
-| Helper                                | Adopters                  | Status          |
-| ------------------------------------- | ------------------------- | --------------- |
-| `harden {}`                           | 20 modules, 27 call sites | ✅ Mature       |
-| `serviceDefaults {}`                  | 21 modules                | ✅ Mature       |
+| Helper                                | Adopters                  | Status         |
+| ------------------------------------- | ------------------------- | -------------- |
+| `harden {}`                           | 20 modules, 27 call sites | ✅ Mature      |
+| `serviceDefaults {}`                  | 21 modules                | ✅ Mature      |
 | `serviceTypes.systemdServiceIdentity` | 1 module (hermes)         | ⚠️ Low adoption |
 | `serviceTypes.servicePort`            | 2 modules (gatus, hermes) | ⚠️ Low adoption |
 | `serviceTypes.restartDelay`           | 1 module (hermes)         | ⚠️ Only 1       |
@@ -132,12 +132,12 @@ The ExecStartPre + sed pattern works but is fragile — it mutates a file in `/r
 | `audio.nix`                  | No systemd services | ❌ N/A                                         |
 | `default.nix`                | No systemd services | ❌ N/A                                         |
 | `multi-wm.nix`               | No systemd services | ❌ N/A                                         |
-| `ai-models.nix`              | tmpfiles only       | ⚠️ No services                                 |
+| `ai-models.nix`              | tmpfiles only       | ⚠️ No services                                  |
 | `monitor365.nix`             | User service        | ✅ YES — missing                               |
 | `monitoring.nix`             | Timer/oneshot       | ✅ Maybe                                       |
 | `niri-config.nix`            | User services       | ✅ YES — missing                               |
 | `dns-failover.nix`           | keepalived          | ✅ YES — missing                               |
-| `display-manager.nix`        | SDDM theme          | ⚠️ Minimal                                     |
+| `display-manager.nix`        | SDDM theme          | ⚠️ Minimal                                      |
 | `chromium-policies.nix`      | No systemd services | ❌ N/A                                         |
 | `file-and-image-renamer.nix` | User service        | ✅ Already has it (via sd.serviceDefaultsUser) |
 
@@ -230,48 +230,48 @@ Sessions 67-70 interleaved code changes with status reports and planning docs in
 
 ### Critical (Deploy or Die)
 
-| #   | Task                                                                                      | Impact      | Effort |
-| --- | ----------------------------------------------------------------------------------------- | ----------- | ------ |
-| 1   | **Deploy all 13 commits** (`just switch` + reboot)                                        | 🔴 Critical | 15 min |
-| 2   | **Verify Discord notifications actually fire** after deploy                               | 🔴 Critical | 10 min |
-| 3   | **Fix Gatus ExecStartPre GATUS_CONFIG_PATH bug** (preStart reads from overridden env var) | 🔴 Bug      | 5 min  |
+| # | Task                                                                                      | Impact      | Effort |
+| - | ----------------------------------------------------------------------------------------- | ----------- | ------ |
+| 1 | **Deploy all 13 commits** (`just switch` + reboot)                                        | 🔴 Critical | 15 min |
+| 2 | **Verify Discord notifications actually fire** after deploy                               | 🔴 Critical | 10 min |
+| 3 | **Fix Gatus ExecStartPre GATUS_CONFIG_PATH bug** (preStart reads from overridden env var) | 🔴 Bug      | 5 min  |
 
 ### High Priority (Monitoring Completeness)
 
-| #   | Task                                                                   | Impact  | Effort |
-| --- | ---------------------------------------------------------------------- | ------- | ------ |
-| 4   | Wire `onFailure` to remaining 9 critical services                      | 🟡 High | 30 min |
-| 5   | Add `harden {}` to monitor365, niri-config, dns-failover user services | 🟡 High | 20 min |
-| 6   | Replace Gatus sed hack with sops template approach                     | 🟡 High | 30 min |
-| 7   | Add SigNoz alert rule for Ollama down                                  | 🟡 High | 15 min |
-| 8   | Add SigNoz alert rule for Docker daemon down                           | 🟡 High | 15 min |
-| 9   | Test alert firing end-to-end (trigger GPU VRAM alert, check Discord)   | 🟡 High | 20 min |
+| # | Task                                                                   | Impact  | Effort |
+| - | ---------------------------------------------------------------------- | ------- | ------ |
+| 4 | Wire `onFailure` to remaining 9 critical services                      | 🟡 High | 30 min |
+| 5 | Add `harden {}` to monitor365, niri-config, dns-failover user services | 🟡 High | 20 min |
+| 6 | Replace Gatus sed hack with sops template approach                     | 🟡 High | 30 min |
+| 7 | Add SigNoz alert rule for Ollama down                                  | 🟡 High | 15 min |
+| 8 | Add SigNoz alert rule for Docker daemon down                           | 🟡 High | 15 min |
+| 9 | Test alert firing end-to-end (trigger GPU VRAM alert, check Discord)   | 🟡 High | 20 min |
 
 ### Medium Priority (Architecture & Quality)
 
-| #   | Task                                                                                     | Impact    | Effort |
-| --- | ---------------------------------------------------------------------------------------- | --------- | ------ |
-| 10  | Extract overlays from flake.nix → `overlays/` directory                                  | 🟢 Medium | 1 hr   |
-| 11  | Decide on `systemdServiceIdentity` future (keep/split/remove)                            | 🟢 Medium | 15 min |
-| 12  | Migrate SigNoz rules from v1 → v2 API schema                                             | 🟢 Medium | 1 hr   |
-| 13  | Add per-service SigNoz dashboards (Docker, GPU, DNS)                                     | 🟢 Medium | 2 hr   |
-| 14  | Create `TODO_LIST.md` from all planning docs                                             | 🟢 Medium | 30 min |
-| 15  | Add Gatus endpoint descriptions and per-endpoint alert config                            | 🟢 Medium | 30 min |
-| 16  | Add DNS blocking effectiveness check to Gatus (verify blocked domain returns block page) | 🟢 Medium | 20 min |
+| #  | Task                                                                                     | Impact    | Effort |
+| -- | ---------------------------------------------------------------------------------------- | --------- | ------ |
+| 10 | Extract overlays from flake.nix → `overlays/` directory                                  | 🟢 Medium | 1 hr   |
+| 11 | Decide on `systemdServiceIdentity` future (keep/split/remove)                            | 🟢 Medium | 15 min |
+| 12 | Migrate SigNoz rules from v1 → v2 API schema                                             | 🟢 Medium | 1 hr   |
+| 13 | Add per-service SigNoz dashboards (Docker, GPU, DNS)                                     | 🟢 Medium | 2 hr   |
+| 14 | Create `TODO_LIST.md` from all planning docs                                             | 🟢 Medium | 30 min |
+| 15 | Add Gatus endpoint descriptions and per-endpoint alert config                            | 🟢 Medium | 30 min |
+| 16 | Add DNS blocking effectiveness check to Gatus (verify blocked domain returns block page) | 🟢 Medium | 20 min |
 
 ### Lower Priority (Nice to Have)
 
-| #   | Task                                                                      | Impact | Effort            |
-| --- | ------------------------------------------------------------------------- | ------ | ----------------- |
-| 17  | Wire Pi 3 DNS failover (hardware not provisioned yet)                     | 🔵 Low | 4 hr              |
-| 18  | Add Gatus alerting for certificate expiry (TLS certs for *.home.lan)      | 🔵 Low | 30 min            |
-| 19  | Create ADR for Discord notification architecture                          | 🔵 Low | 30 min            |
-| 20  | Consolidate docs/status/ — archive sessions 45-62                         | 🔵 Low | 15 min            |
-| 21  | Add `just test` (full build) to CI pipeline or pre-push hook              | 🔵 Low | 1 hr              |
-| 22  | Explore SigNoz log-based alert rules (journald → alert on error patterns) | 🔵 Low | 1 hr              |
-| 23  | Add Caddy reverse proxy metrics dashboard in SigNoz                       | 🔵 Low | 1 hr              |
-| 24  | Harden ClickHouse service (currently no MemoryMax, no harden)             | 🔵 Low | 30 min            |
-| 25  | Update kernel from 7.0.1 → 7.0.6 (will happen with `just switch`)         | 🔵 Low | 0 min (automatic) |
+| #  | Task                                                                      | Impact | Effort            |
+| -- | ------------------------------------------------------------------------- | ------ | ----------------- |
+| 17 | Wire Pi 3 DNS failover (hardware not provisioned yet)                     | 🔵 Low | 4 hr              |
+| 18 | Add Gatus alerting for certificate expiry (TLS certs for *.home.lan)      | 🔵 Low | 30 min            |
+| 19 | Create ADR for Discord notification architecture                          | 🔵 Low | 30 min            |
+| 20 | Consolidate docs/status/ — archive sessions 45-62                         | 🔵 Low | 15 min            |
+| 21 | Add `just test` (full build) to CI pipeline or pre-push hook              | 🔵 Low | 1 hr              |
+| 22 | Explore SigNoz log-based alert rules (journald → alert on error patterns) | 🔵 Low | 1 hr              |
+| 23 | Add Caddy reverse proxy metrics dashboard in SigNoz                       | 🔵 Low | 1 hr              |
+| 24 | Harden ClickHouse service (currently no MemoryMax, no harden)             | 🔵 Low | 30 min            |
+| 25 | Update kernel from 7.0.1 → 7.0.6 (will happen with `just switch`)         | 🔵 Low | 0 min (automatic) |
 
 ---
 
@@ -302,21 +302,21 @@ This needs to be fixed before deploying.
 
 ## Undeployed Commits (generation 313 → HEAD)
 
-| #   | Commit     | Description                                                                        |
-| --- | ---------- | ---------------------------------------------------------------------------------- |
-| 1   | `93e18cf6` | fix(monitoring): improve Gatus health checks, boot stability, DNS resilience       |
-| 2   | `d8375175` | fix(monitoring): add upstream DNS check, clean stale imports, reduce DNS log noise |
-| 3   | `59985ac4` | feat(monitoring): add GPU VRAM and Niri compositor alert rules to SigNoz           |
-| 4   | `3e2c16c5` | fix(gatus): remove bogus TLS client config from ComfyUI HTTP check                 |
-| 5   | `821f46c5` | fix(monitoring): wire failure notifications to caddy, hermes, and signoz           |
-| 6   | `13b8c12f` | refactor(hermes): adopt systemdServiceIdentity from lib/types.nix                  |
-| 7   | `d1f2652b` | feat(nix): wire 5 Go tooling projects as flake inputs with overlays                |
-| 8   | `bce40ad0` | chore: update flake.lock for new Go tooling inputs                                 |
-| 9   | `821f46c5` | (duplicate in rebase?)                                                             |
-| 10  | `25d88350` | docs(planning): add Go flake standardization plan                                  |
-| 11  | `667307db` | docs(status): session 69                                                           |
-| 12  | `79b2f579` | docs(status): session 68                                                           |
-| 13  | `7a8a1912` | feat(monitoring): add Discord notification channels for SigNoz and Gatus           |
+| #  | Commit     | Description                                                                        |
+| -- | ---------- | ---------------------------------------------------------------------------------- |
+| 1  | `93e18cf6` | fix(monitoring): improve Gatus health checks, boot stability, DNS resilience       |
+| 2  | `d8375175` | fix(monitoring): add upstream DNS check, clean stale imports, reduce DNS log noise |
+| 3  | `59985ac4` | feat(monitoring): add GPU VRAM and Niri compositor alert rules to SigNoz           |
+| 4  | `3e2c16c5` | fix(gatus): remove bogus TLS client config from ComfyUI HTTP check                 |
+| 5  | `821f46c5` | fix(monitoring): wire failure notifications to caddy, hermes, and signoz           |
+| 6  | `13b8c12f` | refactor(hermes): adopt systemdServiceIdentity from lib/types.nix                  |
+| 7  | `d1f2652b` | feat(nix): wire 5 Go tooling projects as flake inputs with overlays                |
+| 8  | `bce40ad0` | chore: update flake.lock for new Go tooling inputs                                 |
+| 9  | `821f46c5` | (duplicate in rebase?)                                                             |
+| 10 | `25d88350` | docs(planning): add Go flake standardization plan                                  |
+| 11 | `667307db` | docs(status): session 69                                                           |
+| 12 | `79b2f579` | docs(status): session 68                                                           |
+| 13 | `7a8a1912` | feat(monitoring): add Discord notification channels for SigNoz and Gatus           |
 
 ---
 

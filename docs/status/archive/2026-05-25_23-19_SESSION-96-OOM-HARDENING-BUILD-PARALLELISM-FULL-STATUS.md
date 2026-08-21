@@ -220,7 +220,7 @@ The TTM `pages_limit = 29360128` (112 GiB) and `vis_vram_total = 64 GiB` suggest
 | **GPU VRAM used**    | 1.56 GiB                                              |
 | **Swap**             | 16.2 GiB (6.2 GiB ZRAM + 10 GiB partition), 5.1% used |
 | **Disk /**           | 304/512 GiB used (61%)                                |
-| **Disk /data**       | 906/1024 GiB used (89%) — ⚠️ no snapshots             |
+| **Disk /data**       | 906/1024 GiB used (89%) — ⚠️ no snapshots              |
 | **NixOS generation** | system-364                                            |
 | **Service modules**  | 32 registered                                         |
 | **Flake inputs**     | 47                                                    |

@@ -173,30 +173,30 @@ All 8 files cover the EMEET PIXY webcam daemon development. Heavy overlap betwee
 
 ## 4. Verified Security Issues (Still Present in Codebase)
 
-| #   | Issue                                                                  | Source Doc  | Verified                           | Severity |
-| --- | ---------------------------------------------------------------------- | ----------- | ---------------------------------- | -------- |
-| 1   | Taskwarrior "encryption" secret is `sha256` of public string in repo   | 04-23 08:52 | **CONFIRMED**                      | HIGH     |
-| 2   | ComfyUI hardcoded paths to `/home/lars/projects/anime-comic-pipeline/` | 04-23 08:52 | **CONFIRMED**                      | MEDIUM   |
-| 3   | `gitea-ensure-repos` has zero systemd hardening                        | 04-23 10:06 | **CONFIRMED**                      | MEDIUM   |
-| 4   | Voice agents / Photomap Docker images pinned to `latest`               | 04-23 08:52 | **CONFIRMED**                      | MEDIUM   |
-| 5   | Authelia user password hash hardcoded in sops template                 | 04-10 07:32 | **CONFIRMED** (partially migrated) | MEDIUM   |
-| 6   | VRRP auth_pass is plaintext `"DNSClusterVRRP"`                         | 04-24 21:10 | **CONFIRMED**                      | LOW      |
-| 7   | `ublock-filters.nix` disabled, timer just echoes message               | 04-23 08:52 | **CONFIRMED**                      | LOW      |
+| # | Issue                                                                  | Source Doc  | Verified                           | Severity |
+| - | ---------------------------------------------------------------------- | ----------- | ---------------------------------- | -------- |
+| 1 | Taskwarrior "encryption" secret is `sha256` of public string in repo   | 04-23 08:52 | **CONFIRMED**                      | HIGH     |
+| 2 | ComfyUI hardcoded paths to `/home/lars/projects/anime-comic-pipeline/` | 04-23 08:52 | **CONFIRMED**                      | MEDIUM   |
+| 3 | `gitea-ensure-repos` has zero systemd hardening                        | 04-23 10:06 | **CONFIRMED**                      | MEDIUM   |
+| 4 | Voice agents / Photomap Docker images pinned to `latest`               | 04-23 08:52 | **CONFIRMED**                      | MEDIUM   |
+| 5 | Authelia user password hash hardcoded in sops template                 | 04-10 07:32 | **CONFIRMED** (partially migrated) | MEDIUM   |
+| 6 | VRRP auth_pass is plaintext `"DNSClusterVRRP"`                         | 04-24 21:10 | **CONFIRMED**                      | LOW      |
+| 7 | `ublock-filters.nix` disabled, timer just echoes message               | 04-23 08:52 | **CONFIRMED**                      | LOW      |
 
 ---
 
 ## 5. Verified Fixed Issues
 
-| #   | Issue                                           | Source Doc  | Verified Fixed      |
-| --- | ----------------------------------------------- | ----------- | ------------------- |
-| 1   | SigNoz firewall ports wide open                 | 04-10 07:32 | Fixed (04-10 10:43) |
-| 2   | Gitea token world-readable (644)                | 04-10 07:32 | Fixed (04-10 10:43) |
-| 3   | Steam firewall open                             | 04-10 07:32 | Fixed (04-10 10:43) |
-| 4   | dnsblockd XSS vulnerability                     | 04-20 11:00 | Fixed               |
-| 5   | dnsblockd data race (`hit.Count++`)             | 04-20 11:00 | Fixed (atomic)      |
-| 6   | Hermes WatchdogSec=60 bug                       | 04-21 20:09 | Fixed (removed)     |
-| 7   | EMEET PIXY socket permissions 0666              | 04-15 23:51 | Fixed (0600)        |
-| 8   | Crush `eval` shell injection in session restore | 04-19 00:57 | Fixed               |
+| # | Issue                                           | Source Doc  | Verified Fixed      |
+| - | ----------------------------------------------- | ----------- | ------------------- |
+| 1 | SigNoz firewall ports wide open                 | 04-10 07:32 | Fixed (04-10 10:43) |
+| 2 | Gitea token world-readable (644)                | 04-10 07:32 | Fixed (04-10 10:43) |
+| 3 | Steam firewall open                             | 04-10 07:32 | Fixed (04-10 10:43) |
+| 4 | dnsblockd XSS vulnerability                     | 04-20 11:00 | Fixed               |
+| 5 | dnsblockd data race (`hit.Count++`)             | 04-20 11:00 | Fixed (atomic)      |
+| 6 | Hermes WatchdogSec=60 bug                       | 04-21 20:09 | Fixed (removed)     |
+| 7 | EMEET PIXY socket permissions 0666              | 04-15 23:51 | Fixed (0600)        |
+| 8 | Crush `eval` shell injection in session restore | 04-19 00:57 | Fixed               |
 
 ---
 
@@ -219,7 +219,7 @@ These items appear in status report after status report, never resolved:
 
 1. **"Archive status docs"** — appears in every single report from 04-10 to 04-24. Never done.
 2. **"Drop orphaned Hyprland stash"** — stash@{2} still exists (confirmed).
-3. _*"Clean 18 copilot/fix-* branches"_* — mentioned since 04-16, never done.
+3. __"Clean 18 copilot/fix-_ branches"_* — mentioned since 04-16, never done.
 4. **"Fix pre-commit statix hook"** — mentioned since 04-15, still broken.
 5. **"Add CI pipeline"** — mentioned since 04-10, no CI exists.
 6. **"preferences.nix is dead code"** — mentioned 04-23, no action taken.

@@ -435,14 +435,14 @@ sudo sed -i '' 's/nameserver.*/nameserver 1.1.1.1/' /etc/resolv.conf
 
 ## Health Check Status
 
-| Area                  | Status     | Notes                                                 |
-| --------------------- | ---------- | ----------------------------------------------------- |
-| Nix syntax validation | ✅ Pass    | All configurations valid                              |
-| Flake outputs         | ✅ Pass    | 7 outputs validated                                   |
-| Type safety           | ✅ Pass    | No evaluation errors                                  |
+| Area                  | Status    | Notes                                                 |
+| --------------------- | --------- | ----------------------------------------------------- |
+| Nix syntax validation | ✅ Pass   | All configurations valid                              |
+| Flake outputs         | ✅ Pass   | 7 outputs validated                                   |
+| Type safety           | ✅ Pass   | No evaluation errors                                  |
 | Pre-commit hooks      | ⚠️ Partial | nix-check fixed, alejandra stdin error (pre-existing) |
-| Code formatting       | ✅ Pass    | Alejandra compliant on modified files                 |
-| Git status            | ✅ Clean   | 4 files modified, ready to commit                     |
+| Code formatting       | ✅ Pass   | Alejandra compliant on modified files                 |
+| Git status            | ✅ Clean  | 4 files modified, ready to commit                     |
 
 ---
 

@@ -2,6 +2,7 @@
 """
 commit-tag-push.py — Commit, tag, and push version fixes for all LarsArtmann projects.
 """
+
 from __future__ import annotations
 
 import os
@@ -12,9 +13,14 @@ from pathlib import Path
 PROJECTS_DIR = Path.home() / "projects"
 
 SKIP_PROJECTS = {
-    "dnsblockd", "go-auto-upgrade", "golangci-lint-auto-configure",
-    "SystemNix", "crush-config", "nix-ssh-config",
+    "dnsblockd",
+    "go-auto-upgrade",
+    "golangci-lint-auto-configure",
+    "SystemNix",
+    "crush-config",
+    "nix-ssh-config",
 }
+
 
 # Map project name to the version it was fixed to
 def get_version_from_file(nix_file: Path) -> str | None:
@@ -26,11 +32,15 @@ def get_version_from_file(nix_file: Path) -> str | None:
             return m.group(1)
     return None
 
+
 def get_existing_tag_version(repo: Path) -> str | None:
     """Get the version from the latest semver tag."""
     result = subprocess.run(
         ["git", "tag", "-l", "--sort=-version:refname"],
-        cwd=repo, capture_output=True, text=True, timeout=5,
+        cwd=repo,
+        capture_output=True,
+        text=True,
+        timeout=5,
     )
     for tag in result.stdout.strip().split("\n"):
         tag = tag.strip()
@@ -38,6 +48,7 @@ def get_existing_tag_version(repo: Path) -> str | None:
         if m:
             return m.group(1)
     return None
+
 
 def main():
     success = []
@@ -53,7 +64,10 @@ def main():
         # Check if there are staged/unstaged changes to flake.nix or nix/*.nix
         status_result = subprocess.run(
             ["git", "status", "--porcelain"],
-            cwd=entry, capture_output=True, text=True, timeout=5,
+            cwd=entry,
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         changed_files = [line.strip() for line in status_result.stdout.strip().split("\n") if line.strip()]
         nix_changes = [f for f in changed_files if f.endswith(".nix")]
@@ -96,11 +110,19 @@ def main():
 
         # Commit
         commit_result = subprocess.run(
-            ["git", "commit", "--no-verify", "-m",
-             f"fix(nix): use semver version {version} instead of git rev\n\n"
-             f"Packages were showing git commit hashes instead of proper versions.\n\n"
-             f"Generated with Crush\n\nAssisted-by: Crush:glm-5.1"],
-            cwd=entry, capture_output=True, text=True, timeout=30,
+            [
+                "git",
+                "commit",
+                "--no-verify",
+                "-m",
+                f"fix(nix): use semver version {version} instead of git rev\n\n"
+                f"Packages were showing git commit hashes instead of proper versions.\n\n"
+                f"Generated with Crush\n\nAssisted-by: Crush:glm-5.1",
+            ],
+            cwd=entry,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
 
         if commit_result.returncode != 0:
@@ -112,7 +134,10 @@ def main():
         if needs_tag:
             tag_result = subprocess.run(
                 ["git", "tag", "-a", tag, "-m", tag],
-                cwd=entry, capture_output=True, text=True, timeout=5,
+                cwd=entry,
+                capture_output=True,
+                text=True,
+                timeout=5,
                 env={**os.environ, "GIT_EDITOR": "true"},
             )
             if tag_result.returncode != 0:
@@ -123,7 +148,10 @@ def main():
         # Push current branch (not hardcoded master)
         push_result = subprocess.run(
             ["git", "push", "origin", "HEAD"],
-            cwd=entry, capture_output=True, text=True, timeout=30,
+            cwd=entry,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if push_result.returncode != 0:
             print(f"    FAIL push: {push_result.stderr[:100]}")
@@ -133,7 +161,10 @@ def main():
         if needs_tag:
             tag_push = subprocess.run(
                 ["git", "push", "origin", tag],
-                cwd=entry, capture_output=True, text=True, timeout=15,
+                cwd=entry,
+                capture_output=True,
+                text=True,
+                timeout=15,
             )
             if tag_push.returncode != 0:
                 print(f"    FAIL tag push: {tag_push.stderr[:100]}")
@@ -143,7 +174,7 @@ def main():
         print("    OK ✓")
         success.append((name, version))
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  SUCCESS: {len(success)}")
     for name, ver in success:
         print(f"    {name} → {ver}")

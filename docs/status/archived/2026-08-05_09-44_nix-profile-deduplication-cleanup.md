@@ -6,7 +6,6 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 1. **Identified all four duplicated packages** in the active `nix profile`:

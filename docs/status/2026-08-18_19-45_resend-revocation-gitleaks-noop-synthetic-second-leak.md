@@ -34,14 +34,14 @@ action**.
 
 ## Changes
 
-| File | Change |
-| ---- | ------ |
-| `docs/status/archive/2026-06-11_…md` | Resend key redacted (2 occurrences) |
-| `docs/status/archived/2026-07-29_{07-18,19-55,22-05}, 2026-07-30_00-05, 2026-08-10_…md` | Synthetic key redacted (5 files) |
-| `.gitleaks.toml` | `[extend] useDefault = true` + `resend-api-key` + `synthetic-api-key` rules (+ per-rule AGENTS.md allowlists for the purge snippets) + false-positive allowlist (SigNoz commit SHA, "Immich/Forgejo" prose) |
-| `.githooks/pre-commit` | gitleaks now scans the STAGED TREE via `git checkout-index` + `detect --no-git` and **exit 1** on leaks (full history stays CI's job — history leaks are purge-pending) |
-| `scripts/scan-history-secrets.sh` | Added `re_` and `syn_` patterns |
-| `AGENTS.md` | Incident table rows (Resend, Synthetic), purge replacements extended, "never write secret values into docs/commit messages" rule |
+| File                                                                                    | Change                                                                                                                                                                                                      |
+| --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/status/archive/2026-06-11_…md`                                                    | Resend key redacted (2 occurrences)                                                                                                                                                                         |
+| `docs/status/archived/2026-07-29_{07-18,19-55,22-05}, 2026-07-30_00-05, 2026-08-10_…md` | Synthetic key redacted (5 files)                                                                                                                                                                            |
+| `.gitleaks.toml`                                                                        | `[extend] useDefault = true` + `resend-api-key` + `synthetic-api-key` rules (+ per-rule AGENTS.md allowlists for the purge snippets) + false-positive allowlist (SigNoz commit SHA, "Immich/Forgejo" prose) |
+| `.githooks/pre-commit`                                                                  | gitleaks now scans the STAGED TREE via `git checkout-index` + `detect --no-git` and **exit 1** on leaks (full history stays CI's job — history leaks are purge-pending)                                     |
+| `scripts/scan-history-secrets.sh`                                                       | Added `re_` and `syn_` patterns                                                                                                                                                                             |
+| `AGENTS.md`                                                                             | Incident table rows (Resend, Synthetic), purge replacements extended, "never write secret values into docs/commit messages" rule                                                                            |
 
 ## Verification
 

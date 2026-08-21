@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Root Cause Chain
 
 ### Problem 1: Orphaned Homepage Process (FIXED)
@@ -52,42 +51,42 @@ These appear to be from a concurrent or prior session, not from this session's w
 
 ### a) FULLY DONE
 
-| #   | Item                                                         | Verification                                                                                    |
-| --- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| 1   | Root cause identified (orphaned process + GC'd static files) | BuildId mismatch confirmed: HTML had `CIuIat0om0vpje-HVmCoS`, store had `6ZX6XOaLMPXld_hsu2_oG` |
-| 2   | `restartTriggers = [ homepagePkg ]` added to homepage.nix    | `nix eval` confirms 1 trigger; `nix flake check --no-build` passes                              |
-| 3   | Deployed and activated                                       | `nh os switch .` succeeded, homepage restarted (PID 1563689)                                    |
-| 4   | Homepage verified working                                    | Post-deploy smoke test: PASS (HTTP 200 localhost + HTTPS vHost)                                 |
-| 5   | Static chunks serve correctly                                | `_buildManifest.js` and `index-*.js` both return valid JS                                       |
-| 6   | AGENTS.md updated with gotcha                                | New row in Non-Obvious Gotchas table                                                            |
-| 7   | Docker disk space freed                                      | `docker builder prune -af` (5.4 GB) + `docker image prune` (2.4 GB)                             |
-| 8   | Stale deploy lock cleared                                    | Lock file released after zombie process terminated                                              |
+| # | Item                                                         | Verification                                                                                    |
+| - | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| 1 | Root cause identified (orphaned process + GC'd static files) | BuildId mismatch confirmed: HTML had `CIuIat0om0vpje-HVmCoS`, store had `6ZX6XOaLMPXld_hsu2_oG` |
+| 2 | `restartTriggers = [ homepagePkg ]` added to homepage.nix    | `nix eval` confirms 1 trigger; `nix flake check --no-build` passes                              |
+| 3 | Deployed and activated                                       | `nh os switch .` succeeded, homepage restarted (PID 1563689)                                    |
+| 4 | Homepage verified working                                    | Post-deploy smoke test: PASS (HTTP 200 localhost + HTTPS vHost)                                 |
+| 5 | Static chunks serve correctly                                | `_buildManifest.js` and `index-*.js` both return valid JS                                       |
+| 6 | AGENTS.md updated with gotcha                                | New row in Non-Obvious Gotchas table                                                            |
+| 7 | Docker disk space freed                                      | `docker builder prune -af` (5.4 GB) + `docker image prune` (2.4 GB)                             |
+| 8 | Stale deploy lock cleared                                    | Lock file released after zombie process terminated                                              |
 
 ### b) PARTIALLY DONE
 
-| #   | Item                   | What's Left                                                                                                                               |
-| --- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Disk space cleanup     | Docker pruned (~8 GB freed) but root FS still at 97%. 18 stale build sandboxes in `/nix/var/nix/builds/` (7.3 GB) NOT cleaned (need root) |
-| 2   | `nix fmt` reformatting | Reverted 5 files, but deploy re-introduced changes to forgejo.nix and monitor365.nix. These are now LIVE on the system                    |
-| 3   | Git commit             | Changes not committed. Working tree has 4 modified files (2 intentional, 2 unintended)                                                    |
+| # | Item                   | What's Left                                                                                                                               |
+| - | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | Disk space cleanup     | Docker pruned (~8 GB freed) but root FS still at 97%. 18 stale build sandboxes in `/nix/var/nix/builds/` (7.3 GB) NOT cleaned (need root) |
+| 2 | `nix fmt` reformatting | Reverted 5 files, but deploy re-introduced changes to forgejo.nix and monitor365.nix. These are now LIVE on the system                    |
+| 3 | Git commit             | Changes not committed. Working tree has 4 modified files (2 intentional, 2 unintended)                                                    |
 
 ### c) NOT STARTED
 
-| #   | Item                                                                                                                                              |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Systematic audit of ALL services serving static files from nix store for missing `restartTriggers` (Immich, Twenty, OpenSEO, SigNoz, Gatus, etc.) |
-| 2   | Permanent fix for stale lock issue (deploy.sh should detect and clear stale locks)                                                                |
-| 3   | Investigation of WHY the Jul 15 deploy left a stale lock (OOM? crash? WDT reset?)                                                                 |
-| 4   | Cleaning `/nix/var/nix/builds/` stale sandboxes (7.3 GB, needs root)                                                                              |
-| 5   | Monitor365 API key sync restoration (the service was deleted by deadnix and deployed)                                                             |
+| # | Item                                                                                                                                              |
+| - | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | Systematic audit of ALL services serving static files from nix store for missing `restartTriggers` (Immich, Twenty, OpenSEO, SigNoz, Gatus, etc.) |
+| 2 | Permanent fix for stale lock issue (deploy.sh should detect and clear stale locks)                                                                |
+| 3 | Investigation of WHY the Jul 15 deploy left a stale lock (OOM? crash? WDT reset?)                                                                 |
+| 4 | Cleaning `/nix/var/nix/builds/` stale sandboxes (7.3 GB, needs root)                                                                              |
+| 5 | Monitor365 API key sync restoration (the service was deleted by deadnix and deployed)                                                             |
 
 ### d) TOTALLY FUCKED UP
 
-| #   | Item                                                                      | Impact                                                                                                                                                                                                                                                                          |
-| --- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **`monitor365.nix` API key sync service DELETED by deadnix and DEPLOYED** | Monitor365 agent can't authenticate. Server has stale API key hash. Post-deploy confirms: "0 devices connected". The fix documented in AGENTS.md (`monitor365-api-key-sync.service`) was silently removed.                                                                      |
-| 2   | **`forgejo.nix` unauthorized changes deployed**                           | A `runuser()` mock, user change from root→forgejo, and restartTriggers were deployed without review. Unknown if Forgejo OIDC still works (smoke test passed, but the `runuser` mock is suspicious).                                                                             |
-| 3   | **`nix fmt` is destructive in this repo**                                 | Deadnix removes "unused" imports that are actually used by code it also removes. Running `nix fmt` + deploying without reviewing EVERY changed file is dangerous. The formatter cascade (alejandra reformats → deadnix removes "unused" → statix "fixes") can delete real code. |
+| # | Item                                                                      | Impact                                                                                                                                                                                                                                                                          |
+| - | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **`monitor365.nix` API key sync service DELETED by deadnix and DEPLOYED** | Monitor365 agent can't authenticate. Server has stale API key hash. Post-deploy confirms: "0 devices connected". The fix documented in AGENTS.md (`monitor365-api-key-sync.service`) was silently removed.                                                                      |
+| 2 | **`forgejo.nix` unauthorized changes deployed**                           | A `runuser()` mock, user change from root→forgejo, and restartTriggers were deployed without review. Unknown if Forgejo OIDC still works (smoke test passed, but the `runuser` mock is suspicious).                                                                             |
+| 3 | **`nix fmt` is destructive in this repo**                                 | Deadnix removes "unused" imports that are actually used by code it also removes. Running `nix fmt` + deploying without reviewing EVERY changed file is dangerous. The formatter cascade (alejandra reformats → deadnix removes "unused" → statix "fixes") can delete real code. |
 
 ---
 
@@ -145,11 +144,11 @@ These appear to be from a concurrent or prior session, not from this session's w
 
 ## Files Changed This Session
 
-| File                                    | Change                                           | Status                           |
-| --------------------------------------- | ------------------------------------------------ | -------------------------------- |
-| `modules/nixos/services/homepage.nix`   | Added `restartTriggers = [ homepagePkg ]`        | ✅ Intentional, verified         |
-| `AGENTS.md`                             | Added "Homepage orphaned process" gotcha row     | ✅ Intentional                   |
-| `modules/nixos/services/monitor365.nix` | API key sync service DELETED by deadnix          | ❌ UNINTENDED — needs revert     |
+| File                                    | Change                                           | Status                          |
+| --------------------------------------- | ------------------------------------------------ | ------------------------------- |
+| `modules/nixos/services/homepage.nix`   | Added `restartTriggers = [ homepagePkg ]`        | ✅ Intentional, verified        |
+| `AGENTS.md`                             | Added "Homepage orphaned process" gotcha row     | ✅ Intentional                  |
+| `modules/nixos/services/monitor365.nix` | API key sync service DELETED by deadnix          | ❌ UNINTENDED — needs revert    |
 | `modules/nixos/services/forgejo.nix`    | `runuser()` mock + user change + restartTriggers | ⚠️ UNKNOWN origin — needs review |
 
 ---

@@ -201,33 +201,33 @@ SystemNix is in **strong overall health**. All 111 `.nix` files evaluate cleanly
 
 ## f) Top #25 Things to Get Done Next
 
-| #   | Task                                                  | Effort | Impact      | Category       |
-| --- | ----------------------------------------------------- | ------ | ----------- | -------------- |
-| 1   | **Migrate monitor365 secrets to sops**                | 1 hr   | 🔴 Critical | Security       |
-| 2   | **Add hardening to unsloth-studio**                   | 30 min | 🔴 Critical | Security       |
-| 3   | **Provision Pi 3 for DNS failover**                   | 3 hrs  | 🔴 Critical | Infrastructure |
-| 4   | **Run `just clean` — disk at 86%**                    | 10 min | 🟡 High     | Operations     |
-| 5   | **Migrate SSH config to `programs.ssh.settings`**     | 15 min | 🟡 High     | Quality        |
-| 6   | **Set up GitHub Actions CI for `nix flake check`**    | 1 hr   | 🟡 High     | Operations     |
-| 7   | **Set up Cachix binary cache**                        | 2 hrs  | 🟡 High     | Operations     |
-| 8   | **Pin Twenty Docker image to specific version**       | 15 min | 🟡 High     | Security       |
-| 9   | **Move twenty secrets to central sops.nix**           | 30 min | 🟡 High     | Architecture   |
-| 10  | **Fix route-health-monitor state drift**              | 1 hr   | 🟡 High     | Reliability    |
-| 11  | **Add flock to gpu-recovery + route-health-monitor**  | 1 hr   | 🟡 Medium   | Reliability    |
-| 12  | **Fix gpu-recovery DRM_CARD auto-detection**          | 30 min | 🟡 Medium   | Reliability    |
-| 13  | **Fix gpu-recovery root/user context**                | 30 min | 🟡 Medium   | Reliability    |
-| 14  | **Archive old status reports (>30 days)**             | 10 min | 🟢 Low      | Housekeeping   |
-| 15  | **Add `/data > 90%` disk threshold to Gatus**         | 30 min | 🟡 Medium   | Monitoring     |
-| 16  | **Derive 7 remaining hardcoded ports to options**     | 1 hr   | 🟢 Low      | Architecture   |
-| 17  | **Fix voice-agents to use mkDockerServiceFactory**    | 30 min | 🟢 Low      | Architecture   |
-| 18  | **Export rocm.nix from lib/default.nix**              | 5 min  | 🟢 Low      | Consistency    |
-| 19  | **Add SIGTERM trap to route-health-monitor**          | 15 min | 🟢 Low      | Reliability    |
-| 20  | **Verify Whisper ROCm pipeline at runtime**           | 1 hr   | 🟡 Medium   | AI Stack       |
-| 21  | **Decide on photomap: fix, enable, or remove**        | 10 min | 🟢 Low      | Cleanup        |
-| 22  | **Verify Darwin build from MacBook**                  | 30 min | 🟢 Low      | Cross-platform |
-| 23  | **Create `just stale-images` recipe for Docker tags** | 30 min | 🟢 Low      | Operations     |
-| 24  | **Document all `mkForce false` security overrides**   | 1 hr   | 🟡 Medium   | Documentation  |
-| 25  | **Add `command -v` guards to wallpaper-set.sh**       | 15 min | 🟢 Low      | Reliability    |
+| #  | Task                                                  | Effort | Impact      | Category       |
+| -- | ----------------------------------------------------- | ------ | ----------- | -------------- |
+| 1  | **Migrate monitor365 secrets to sops**                | 1 hr   | 🔴 Critical | Security       |
+| 2  | **Add hardening to unsloth-studio**                   | 30 min | 🔴 Critical | Security       |
+| 3  | **Provision Pi 3 for DNS failover**                   | 3 hrs  | 🔴 Critical | Infrastructure |
+| 4  | **Run `just clean` — disk at 86%**                    | 10 min | 🟡 High     | Operations     |
+| 5  | **Migrate SSH config to `programs.ssh.settings`**     | 15 min | 🟡 High     | Quality        |
+| 6  | **Set up GitHub Actions CI for `nix flake check`**    | 1 hr   | 🟡 High     | Operations     |
+| 7  | **Set up Cachix binary cache**                        | 2 hrs  | 🟡 High     | Operations     |
+| 8  | **Pin Twenty Docker image to specific version**       | 15 min | 🟡 High     | Security       |
+| 9  | **Move twenty secrets to central sops.nix**           | 30 min | 🟡 High     | Architecture   |
+| 10 | **Fix route-health-monitor state drift**              | 1 hr   | 🟡 High     | Reliability    |
+| 11 | **Add flock to gpu-recovery + route-health-monitor**  | 1 hr   | 🟡 Medium   | Reliability    |
+| 12 | **Fix gpu-recovery DRM_CARD auto-detection**          | 30 min | 🟡 Medium   | Reliability    |
+| 13 | **Fix gpu-recovery root/user context**                | 30 min | 🟡 Medium   | Reliability    |
+| 14 | **Archive old status reports (>30 days)**             | 10 min | 🟢 Low      | Housekeeping   |
+| 15 | **Add `/data > 90%` disk threshold to Gatus**         | 30 min | 🟡 Medium   | Monitoring     |
+| 16 | **Derive 7 remaining hardcoded ports to options**     | 1 hr   | 🟢 Low      | Architecture   |
+| 17 | **Fix voice-agents to use mkDockerServiceFactory**    | 30 min | 🟢 Low      | Architecture   |
+| 18 | **Export rocm.nix from lib/default.nix**              | 5 min  | 🟢 Low      | Consistency    |
+| 19 | **Add SIGTERM trap to route-health-monitor**          | 15 min | 🟢 Low      | Reliability    |
+| 20 | **Verify Whisper ROCm pipeline at runtime**           | 1 hr   | 🟡 Medium   | AI Stack       |
+| 21 | **Decide on photomap: fix, enable, or remove**        | 10 min | 🟢 Low      | Cleanup        |
+| 22 | **Verify Darwin build from MacBook**                  | 30 min | 🟢 Low      | Cross-platform |
+| 23 | **Create `just stale-images` recipe for Docker tags** | 30 min | 🟢 Low      | Operations     |
+| 24 | **Document all `mkForce false` security overrides**   | 1 hr   | 🟡 Medium   | Documentation  |
+| 25 | **Add `command -v` guards to wallpaper-set.sh**       | 15 min | 🟢 Low      | Reliability    |
 
 ---
 

@@ -49,11 +49,13 @@ User reported that after registering via Pocket ID, browser-history login fails.
 ### browser-history `StartLimitIntervalSec` silently ignored (CRITICAL)
 
 The systemd unit warning at `/etc/systemd/system/browser-history.service:75`:
+
 ```
 Unknown key 'StartLimitIntervalSec' in section [Service], ignoring.
 ```
 
 This is the **exact bug** documented extensively in AGENTS.md. The browser-history module at `modules/nixos/services/browser-history.nix` uses:
+
 ```nix
 systemd.services.browser-history = {
   startLimitBurst = 3;
@@ -84,6 +86,7 @@ The browser-history module sets `otelEndpoint = "127.0.0.1:${toString ports.sign
 ### Monitor365 is DOWN
 
 Post-deploy smoke test showed:
+
 - `FAIL Monitor365 API (localhost:3001) — unreachable`
 - `FAIL Monitor365 UI (localhost:3001) — unreachable`
 - `FAIL Monitor365 agent metrics NOT responding (localhost:9191)`
@@ -135,10 +138,11 @@ Post-deploy check flagged: `FAIL Pocket ID — SQLITE_BUSY or panic in recent jo
 ---
 
 ## f) NEXT 50 THINGS TO GET DONE
+
 > **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
 
-
 ### Critical (do now)
+
 1. ~~Deploy the reverted config to clear `regenerateSecretsFor = ["browser-history"]` from the running system~~ done — verified deployed, `nix eval` returns `[ ]` (`2026-08-12_14-59` report §a.3)
 2. ~~Fix `startLimitBurst`/`startLimitIntervalSec` placement in `browser-history.nix` — move to `unitConfig`~~ done at `a941f88d` (top-level `[Unit]` placement, verified in deployed unit)
 3. ~~Fix the same pattern in `browser-history-oidc-setup` and `browser-history-agent` blocks~~ done — upstream `a1b78af` fixed server+agent modules; SystemNix already correct (`2026-08-12_14-59` §a.4)
@@ -146,6 +150,7 @@ Post-deploy check flagged: `FAIL Pocket ID — SQLITE_BUSY or panic in recent jo
 5. **Add an eval-time assertion (`start-limit-audit.nix`) that catches `startLimitBurst`/`startLimitIntervalSec` in `[Service]` section**
 
 ### High priority
+
 6. Investigate and fix the `no such column: expires_at` session reaper error (upstream browser-history schema migration)
 7. ~~Fix OTel endpoint format: add `http://` prefix to `otelEndpoint` for browser-history~~ done (inverted) — the CORRECT fix for `otlptracegrpc` is a scheme-free `host:port` (`d2138202`); traces export, one benign startup warning remains
 8. ~~Investigate the 3 phantom metrics (`cloud_sync_consecutive_failures`, `cloud_sync_upload_backlog_size`, `collector_events_collected`)~~ done at `84c44f1b` — pre-deploy-check downgrades Monitor365 metrics to warnings when the agent endpoint is down
@@ -155,6 +160,7 @@ Post-deploy check flagged: `FAIL Pocket ID — SQLITE_BUSY or panic in recent jo
 12. ~~Add the 3 phantom metrics to `KNOWN_NEW_METRICS` list if they're legitimately from a not-yet-deployed service, or fix the Gatus config if they're stale~~ done at `84c44f1b` (Monitor365 allowlist)
 
 ### Medium priority
+
 13. Consider auto-clearing `regenerateSecretsFor` after a successful provision run (script-level)
 14. Add a pre-deploy warning when `regenerateSecretsFor` is non-empty (assertion or check script)
 15. ~~Investigate the `parse url` OTel error in browser-history more broadly — are other services affected?~~ done at `d2138202` (browser-history was the only affected service; scheme-free endpoint deployed)
@@ -165,6 +171,7 @@ Post-deploy check flagged: `FAIL Pocket ID — SQLITE_BUSY or panic in recent jo
 20. Add a Gatus health check that validates the OAuth2 login flow for browser-history (not just `/health`)
 
 ### Low priority / cleanup
+
 21. Consider a `deploy --force` flag for the deploy script instead of requiring manual script edits
 22. The `RestartSec = lib.mkForce "5min"` on browser-history-agent — combined with ignored start limit, this means up to 5 minutes between retry attempts with no cap
 23. Document the `expires_at` schema issue in AGENTS.md once root cause is found
@@ -187,6 +194,7 @@ Post-deploy check flagged: `FAIL Pocket ID — SQLITE_BUSY or panic in recent jo
 40. Review whether the browser-history server needs a `restartTriggers` on the OIDC env file (so it auto-restarts when the secret changes)
 
 ### Documentation
+
 41. Update AGENTS.md with the `expires_at` session reaper issue once root cause is confirmed
 42. Document the OTel endpoint scheme requirement in the OTLP tracing section
 43. Add the `startLimitBurst` audit pattern to the prevention layers table
@@ -194,6 +202,7 @@ Post-deploy check flagged: `FAIL Pocket ID — SQLITE_BUSY or panic in recent jo
 45. Update the browser-history section with the secret desync as a known recurring issue
 
 ### Broader system health
+
 46. Monitor365 has been down — check if the watchdog timer circuit breaker is deadlocked
 47. Monitor365 agent metrics not responding — may indicate the agent is crash-looped
 48. The Pocket ID SQLITE_BUSY could indicate the francis SQLite driver needs WAL tuning

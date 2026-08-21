@@ -6,19 +6,18 @@
 
 ---
 
-
 ## a) FULLY DONE (shipped, verified, committed as `9a56c1a7`)
 
-| # | Item | Files |
-|---|------|-------|
+| # | Item                                                                                                                                                                                                                                                                                                               | Files                                                       |
+| - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
 | 1 | **system-health textfile collector** — systemd service state (active/failed), restart count, start-limit-hit detection for 5 critical services; user-1000.slice memory threshold (40G); GPUActive threshold (60G); monitor365 DuckDB buffer pressure (1.6G). Pre-computes boolean flags for Gatus `pat()` matching | `modules/nixos/services/system-health.nix` (new, 197 lines) |
-| 2 | **7 new Gatus alerts** — Monitor365 crash-loop/start-limit-hit, PMA service health, service restart metrics presence, GPUActive >60G, user-slice >40G, monitor365 buffer pressure | `modules/nixos/services/gatus-config.nix` |
-| 3 | **wrapWithMemoryLimit helper** — creates a `systemd-run --user` wrapper script with cgroup MemoryMax | `lib/default.nix` |
-| 4 | **Memory-limited test wrappers** — `go-test-memlimit` (4G), `cargo-test-memlimit` (8G), `pnpm-test-memlimit` (4G) installed to user PATH | `platforms/nixos/users/home.nix` |
-| 5 | **monitor365 restartTriggers** — agent and server now restart on package change, not just sops secret rotation | `modules/nixos/services/monitor365.nix` |
-| 6 | **Monitoring runbook updated** — added entries for all 7 new alerts, crash-loop recovery, GPUActive diagnosis, user-slice OOM cascade, PMA daemon, buffer pressure. Fixed outdated entries (unbound→dnsblockd, ollama wantedBy, monitor365 system vs user service) | `docs/runbooks/monitoring-runbook.md` |
-| 7 | **WDT reset runbook** — new comprehensive runbook covering OOM cascade chain diagnosis, post-recovery state corruption cleanup, prevention measures table | `docs/runbooks/wdt-reset.md` (new, 181 lines) |
-| 8 | **README updated** — Helium added to summary table desktop row + NixOS Desktop section | `README.md` |
+| 2 | **7 new Gatus alerts** — Monitor365 crash-loop/start-limit-hit, PMA service health, service restart metrics presence, GPUActive >60G, user-slice >40G, monitor365 buffer pressure                                                                                                                                  | `modules/nixos/services/gatus-config.nix`                   |
+| 3 | **wrapWithMemoryLimit helper** — creates a `systemd-run --user` wrapper script with cgroup MemoryMax                                                                                                                                                                                                               | `lib/default.nix`                                           |
+| 4 | **Memory-limited test wrappers** — `go-test-memlimit` (4G), `cargo-test-memlimit` (8G), `pnpm-test-memlimit` (4G) installed to user PATH                                                                                                                                                                           | `platforms/nixos/users/home.nix`                            |
+| 5 | **monitor365 restartTriggers** — agent and server now restart on package change, not just sops secret rotation                                                                                                                                                                                                     | `modules/nixos/services/monitor365.nix`                     |
+| 6 | **Monitoring runbook updated** — added entries for all 7 new alerts, crash-loop recovery, GPUActive diagnosis, user-slice OOM cascade, PMA daemon, buffer pressure. Fixed outdated entries (unbound→dnsblockd, ollama wantedBy, monitor365 system vs user service)                                                 | `docs/runbooks/monitoring-runbook.md`                       |
+| 7 | **WDT reset runbook** — new comprehensive runbook covering OOM cascade chain diagnosis, post-recovery state corruption cleanup, prevention measures table                                                                                                                                                          | `docs/runbooks/wdt-reset.md` (new, 181 lines)               |
+| 8 | **README updated** — Helium added to summary table desktop row + NixOS Desktop section                                                                                                                                                                                                                             | `README.md`                                                 |
 
 **Verification:** `nix flake check --no-build` passed. Pre-commit hooks passed (gitleaks, deadnix, statix, alejandra).
 
@@ -53,6 +52,7 @@ Gatus 5.36.0's `pat()` does substring matching, not word-boundary matching. The 
 ### 1. `wrapWithMemoryLimit` is fundamentally fragile
 
 **Problem:** The helper uses `systemd-run --user --collect --wait`. This requires:
+
 - A running user systemd session (`systemd --user`)
 - The `systemd-run` binary on PATH at call time
 - DBus user session bus
@@ -102,6 +102,7 @@ Instead of directly probing PMA's health, I check a Prometheus metric derived fr
 ## f) Up to 50 Things to Get Done Next
 
 ### Immediate (blocks deploy correctness)
+
 1. **Deploy SystemNix** — `nix run .#deploy` to activate PMA + DuckDB fixes + all new monitoring
 2. **Run `nix run .#post-deploy-check`** after deploy to verify functional outcomes
 3. **Verify PMA starts correctly** — check `journalctl -u projects-management-automation` for `DefaultChainFromEnv` loading `MINIMAX_API_KEY`
@@ -111,6 +112,7 @@ Instead of directly probing PMA's health, I check a Prometheus metric derived fr
 7. **Fix `system_service_nrestarts` type** — change from `counter` to `gauge` in the collector script
 
 ### Monitoring improvements
+
 8. **Add more services to `monitoredServices`** — gatus, pocket-id, signoz, forgejo, homepage-dashboard, dnsblockd
 9. **Add direct PMA health check** — probe PMA's HTTP endpoint instead of relying on derived metrics
 10. **Add monitor365 agent crash-loop Gatus check** — currently only the server has a start-limit-hit check
@@ -126,6 +128,7 @@ Instead of directly probing PMA's health, I check a Prometheus metric derived fr
 20. **Add Gatus check for SSH socket cleanup timer** — verify dead sockets are being cleaned
 
 ### `wrapWithMemoryLimit` fixes
+
 21. **Rename to `wrapCmdMemLimit`** — the name shouldn't imply test-only usage
 22. **Pass through environment variables** — use `systemd-run --setenv` or `--environment` to propagate GOFLAGS, GOPATH, CARGO_HOME, etc.
 23. **Add `--working-directory` to systemd-run** — or document that cwd is preserved
@@ -134,6 +137,7 @@ Instead of directly probing PMA's health, I check a Prometheus metric derived fr
 26. **Add `nix-build-memlimit` wrapper** — nix builds can also OOM on Strix Halo
 
 ### Code quality
+
 27. **Reference `config.services.monitor365-server.stateDir`** instead of hardcoded DuckDB path
 28. **Guard system-health for rpi3-dns** — use `lib.optionalAttrs` or platform checks
 29. **Add `# HELP`/`# TYPE` for each metric inside the `emit_service` function** — currently emitted once globally, Prometheus expects them per-scrape (acceptable but non-standard)
@@ -142,6 +146,7 @@ Instead of directly probing PMA's health, I check a Prometheus metric derived fr
 32. **Validate Prometheus metric names** — `system_` prefix might collide with node_exporter's own metrics
 
 ### Documentation
+
 33. **Update AGENTS.md** with system-health collector, wrapWithMemoryLimit, new Gatus alert patterns
 34. **Update TODO_LIST.md** — move completed items, add new ones from this report
 35. **Update FEATURES.md** — add system-health monitoring to the feature inventory
@@ -151,12 +156,14 @@ Instead of directly probing PMA's health, I check a Prometheus metric derived fr
 39. **Add monitoring runbook cross-reference** from AGENTS.md gotchas
 
 ### Testing
+
 40. **Add VM test for system-health collector** — NixOS test that starts the service and verifies metrics output
 41. **Add test for wrapWithMemoryLimit** — verify the wrapper actually limits memory
 42. **Add test for DuckDB WAL healing** — simulate unclean shutdown, verify ExecStartPre removes .wal
 43. **Add test for Gatus config parsing** — start Gatus with the generated config in a VM
 
 ### Operational
+
 44. **Check if PMA has an HTTP health endpoint** — if so, add a direct Gatus check
 45. **Monitor `nix-daemon` memory** — nix builds can consume significant RAM
 46. **Add journal persistence check** — if journald drops logs, WDT diagnosis becomes impossible
@@ -185,44 +192,44 @@ There's an untracked file from earlier today that I didn't create. It appears to
 
 ## Session Metrics
 
-| Metric | Value |
-|--------|-------|
-| Files created | 2 (`system-health.nix`, `wdt-reset.md`) |
-| Files modified | 7 |
-| Lines added | 1169 |
-| Lines removed | 610 |
-| Commit | `9a56c1a7` |
-| Flake check | PASSED |
-| Pre-commit hooks | PASSED (gitleaks, deadnix, statix, alejandra) |
-| Deploy executed | NO |
-| Post-deploy check | NOT RUN |
-| AGENTS.md updated | NO |
-| TODO_LIST.md updated | NO |
-| Time to first error | ~2 min (module not in git → flake check failure) |
+| Metric               | Value                                            |
+| -------------------- | ------------------------------------------------ |
+| Files created        | 2 (`system-health.nix`, `wdt-reset.md`)          |
+| Files modified       | 7                                                |
+| Lines added          | 1169                                             |
+| Lines removed        | 610                                              |
+| Commit               | `9a56c1a7`                                       |
+| Flake check          | PASSED                                           |
+| Pre-commit hooks     | PASSED (gitleaks, deadnix, statix, alejandra)    |
+| Deploy executed      | NO                                               |
+| Post-deploy check    | NOT RUN                                          |
+| AGENTS.md updated    | NO                                               |
+| TODO_LIST.md updated | NO                                               |
+| Time to first error  | ~2 min (module not in git → flake check failure) |
 
 ---
 
 ## Item Resolution (2026-07-30)
 
-| # | Status | Resolution |
-|---|--------|------------|
-| 1-6 | DONE | All deployed in `9a56c1a7`; system-health, Gatus, test wrappers verified |
-| 7 | DONE | `system_service_nrestarts` changed from counter to gauge |
-| 8 | DONE | More services added to `monitoredServices` |
-| 9-14 | DONE/REJECTED | PMA health check REJECTED (no endpoint); crash-loop checks DONE; snapshot freshness DONE |
-| 15 | DONE | nix-gc guard in btrfs-health.nix |
-| 16-17 | DONE | zram + GPUReclaim metrics in system-health |
-| 18 | REJECTED | SigNoz scraping textfile collectors — Gatus pat() is sufficient |
-| 19 | DONE | DMS crash-rate alerting via system-health |
-| 20 | REJECTED | SSH socket cleanup timer check — timer is self-verifying |
-| 21-23 | DONE/REJECTED | wrapWithMemoryLimit renamed + env passthrough DONE; working-directory REJECTED |
-| 24-26 | REJECTED | prlimit/ulimit fallback, nix-build-memlimit — over-engineering |
-| 27 | DONE | system-health references upstream config options, not hardcoded paths |
-| 28 | DONE | system-health guarded with lib.optionalAttrs for rpi3-dns |
-| 29-32 | DONE/REJECTED | HELP/TYPE metrics DONE; UID configurable REJECTED (single-user); Prometheus naming verified |
-| 33-36 | DONE | AGENTS.md, TODO_LIST, FEATURES.md, CHANGELOG.md all updated |
-| 37-39 | DONE/REJECTED | Monitoring runbook DONE; pat() gotcha DONE; architecture diagram REJECTED |
-| 40-43 | REJECTED | VM tests — aspirational, no NixOS test infrastructure |
+| #     | Status        | Resolution                                                                                    |
+| ----- | ------------- | --------------------------------------------------------------------------------------------- |
+| 1-6   | DONE          | All deployed in `9a56c1a7`; system-health, Gatus, test wrappers verified                      |
+| 7     | DONE          | `system_service_nrestarts` changed from counter to gauge                                      |
+| 8     | DONE          | More services added to `monitoredServices`                                                    |
+| 9-14  | DONE/REJECTED | PMA health check REJECTED (no endpoint); crash-loop checks DONE; snapshot freshness DONE      |
+| 15    | DONE          | nix-gc guard in btrfs-health.nix                                                              |
+| 16-17 | DONE          | zram + GPUReclaim metrics in system-health                                                    |
+| 18    | REJECTED      | SigNoz scraping textfile collectors — Gatus pat() is sufficient                               |
+| 19    | DONE          | DMS crash-rate alerting via system-health                                                     |
+| 20    | REJECTED      | SSH socket cleanup timer check — timer is self-verifying                                      |
+| 21-23 | DONE/REJECTED | wrapWithMemoryLimit renamed + env passthrough DONE; working-directory REJECTED                |
+| 24-26 | REJECTED      | prlimit/ulimit fallback, nix-build-memlimit — over-engineering                                |
+| 27    | DONE          | system-health references upstream config options, not hardcoded paths                         |
+| 28    | DONE          | system-health guarded with lib.optionalAttrs for rpi3-dns                                     |
+| 29-32 | DONE/REJECTED | HELP/TYPE metrics DONE; UID configurable REJECTED (single-user); Prometheus naming verified   |
+| 33-36 | DONE          | AGENTS.md, TODO_LIST, FEATURES.md, CHANGELOG.md all updated                                   |
+| 37-39 | DONE/REJECTED | Monitoring runbook DONE; pat() gotcha DONE; architecture diagram REJECTED                     |
+| 40-43 | REJECTED      | VM tests — aspirational, no NixOS test infrastructure                                         |
 | 44-50 | DONE/REJECTED | PMA health check REJECTED; nix-daemon memory REJECTED; others DONE or REJECTED as brainstorms |
 
 ---

@@ -6,33 +6,34 @@
 
 ---
 
-
 ## THE REAL ROOT CAUSE: Disk I/O Saturation
 
 ### The Smoking Gun
 
 After writing the initial report, I checked I/O pressure and found **catastrophic disk contention**:
 
-| Metric | Value | Severity |
-|--------|-------|----------|
-| `/proc/pressure/io` some avg10 | **98.98%** | CRITICAL — nearly all tasks stalled on I/O |
-| `/proc/pressure/io` full avg10 | **86.32%** | CRITICAL — ALL tasks stalled 86% of the time |
-| `%iowait` | **88-89%** | CPU spending almost all time waiting for disk |
-| NVMe utilization | **80%** | Saturated |
-| NVMe read throughput | **244 MB/s** | Massive |
-| NVMe write throughput | **102 MB/s** | Massive |
-| Write latency (w_await) | **10-30ms** | Elevated for QLC NAND (normal <5ms) |
-| Swap used | **13.6 GB / 16 GB** | High — zram under pressure |
+| Metric                         | Value               | Severity                                      |
+| ------------------------------ | ------------------- | --------------------------------------------- |
+| `/proc/pressure/io` some avg10 | **98.98%**          | CRITICAL — nearly all tasks stalled on I/O    |
+| `/proc/pressure/io` full avg10 | **86.32%**          | CRITICAL — ALL tasks stalled 86% of the time  |
+| `%iowait`                      | **88-89%**          | CPU spending almost all time waiting for disk |
+| NVMe utilization               | **80%**             | Saturated                                     |
+| NVMe read throughput           | **244 MB/s**        | Massive                                       |
+| NVMe write throughput          | **102 MB/s**        | Massive                                       |
+| Write latency (w_await)        | **10-30ms**         | Elevated for QLC NAND (normal <5ms)           |
+| Swap used                      | **13.6 GB / 16 GB** | High — zram under pressure                    |
 
 ### What's Causing It
 
 **`cargo-nextest run -p monitor365-server`** — a Rust test build is running RIGHT NOW, with:
+
 - Multiple `rustc` processes at 100-254% CPU each
 - Linker (`mold`) linking hundreds of dependency rlibs simultaneously
 - `sccache` caching compiled artifacts
 - All reading from and writing to the same BTRFS filesystem on QLC NAND
 
 Additional cumulative I/O offenders:
+
 - `projects-manage` (PMA daemon): 15.6 GB read
 - `aw-server` (ActivityWatch): 12.3 GB read
 - Multiple `crush` instances: 8867 MB, 3915 MB, 3197 MB, 2431 MB+ each
@@ -41,6 +42,7 @@ Additional cumulative I/O offenders:
 ### Why This Causes 3 FPS Video
 
 The NVMe is saturated. Even with hardware video decode working perfectly, the video player needs to:
+
 1. **Read video data from disk** (cached pages, browser cache, Widevine CDM files)
 2. **Write decoded frames to GPU memory** (via DMA-BUF)
 3. **Buffer ahead** for smooth playback
@@ -109,43 +111,43 @@ System-level VA-API working ≠ Chromium using it. I never checked `chrome://gpu
 
 ### a) FULLY DONE
 
-| Item | Details |
-|------|---------|
-| Anti-throttling flags added | 4 flags added to `base.nix`, committed as `9f72a422`, `nix flake check` passes |
-| System-level VA-API verified | Mesa 26.1.6, radeonsi, full codec support confirmed |
-| GPU pressure ruled out | GPU at 0% busy, 7% VRAM at time of check |
-| AGENTS.md gotcha added | "Helium video throttling (3 FPS)" entry at line 375 |
-| Research documented | Chromium source-level analysis of throttling mechanisms |
-| I/O pressure diagnosed | `/proc/pressure/io` at 99% — root cause identified |
-| I/O offenders identified | `cargo-nextest` / `rustc` / `mold` saturating NVMe; PMA, aw-server, crush as cumulative offenders |
+| Item                         | Details                                                                                           |
+| ---------------------------- | ------------------------------------------------------------------------------------------------- |
+| Anti-throttling flags added  | 4 flags added to `base.nix`, committed as `9f72a422`, `nix flake check` passes                    |
+| System-level VA-API verified | Mesa 26.1.6, radeonsi, full codec support confirmed                                               |
+| GPU pressure ruled out       | GPU at 0% busy, 7% VRAM at time of check                                                          |
+| AGENTS.md gotcha added       | "Helium video throttling (3 FPS)" entry at line 375                                               |
+| Research documented          | Chromium source-level analysis of throttling mechanisms                                           |
+| I/O pressure diagnosed       | `/proc/pressure/io` at 99% — root cause identified                                                |
+| I/O offenders identified     | `cargo-nextest` / `rustc` / `mold` saturating NVMe; PMA, aw-server, crush as cumulative offenders |
 
 ### b) PARTIALLY DONE
 
-| Item | What's done | What's missing |
-|------|-------------|----------------|
+| Item                 | What's done                                                                                                       | What's missing                                                                      |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | Root cause diagnosis | TWO causes found: (1) missing anti-throttling flags [fixed in config], (2) I/O saturation from builds [not fixed] | Haven't implemented I/O throttling for builds; haven't deployed anti-throttling fix |
-| Helium flag audit | Found and added anti-throttling flags | Did NOT verify VA-API is actually used by Chromium at runtime |
-| Documentation | Added gotcha entry | AGENTS.md version still says "Chromium 150" (actual: 151) |
+| Helium flag audit    | Found and added anti-throttling flags                                                                             | Did NOT verify VA-API is actually used by Chromium at runtime                       |
+| Documentation        | Added gotcha entry                                                                                                | AGENTS.md version still says "Chromium 150" (actual: 151)                           |
 
 ### c) NOT STARTED
 
-| Item |
-|------|
-| Deploy the anti-throttling fix (`nix run .#deploy`) |
-| Implement cgroup I/O throttling for dev builds (`cargo`, `rustc`, `go`, `nix`) |
-| Give Helium elevated I/O priority via systemd `IOWeight` |
+| Item                                                                                 |
+| ------------------------------------------------------------------------------------ |
+| Deploy the anti-throttling fix (`nix run .#deploy`)                                  |
+| Implement cgroup I/O throttling for dev builds (`cargo`, `rustc`, `go`, `nix`)       |
+| Give Helium elevated I/O priority via systemd `IOWeight`                             |
 | Verify VA-API is actually used by Chromium (need `chrome://gpu` or GPU log analysis) |
-| Check if video decode falls back to software under CPU contention |
-| Investigate TV-specific rendering path (DP-2, 4K, refresh rate, HDR) |
-| Consider whether `--enable-gpu-rasterization` should be re-evaluated |
-| Check if `--use-gl=egl` or `--use-angle=gl` is needed for VA-API on Wayland |
+| Check if video decode falls back to software under CPU contention                    |
+| Investigate TV-specific rendering path (DP-2, 4K, refresh rate, HDR)                 |
+| Consider whether `--enable-gpu-rasterization` should be re-evaluated                 |
+| Check if `--use-gl=egl` or `--use-angle=gl` is needed for VA-API on Wayland          |
 
 ### d) TOTALLY FUCKED UP
 
-| Item | Why |
-|------|-----|
-| **Initial root cause was wrong** | Diagnosed throttling flags when the real cause was disk I/O saturation. Should have checked `/proc/pressure/io` FIRST. |
-| **Never deployed or tested** | The fix is committed but NOT deployed. The user is still at 3 FPS. |
+| Item                                               | Why                                                                                                                                                                     |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Initial root cause was wrong**                   | Diagnosed throttling flags when the real cause was disk I/O saturation. Should have checked `/proc/pressure/io` FIRST.                                                  |
+| **Never deployed or tested**                       | The fix is committed but NOT deployed. The user is still at 3 FPS.                                                                                                      |
 | **Didn't check the obvious system-level resource** | I/O pressure is the #1 cause of media stuttering on this QLC NAND machine. I have 58 WDT resets documented from the same I/O pattern. Should have been the first check. |
 
 ### e) WHAT WE SHOULD IMPROVE
@@ -163,13 +165,13 @@ System-level VA-API working ≠ Chromium using it. I never checked `chrome://gpu
 1. **Implement systemd cgroup I/O throttling** for dev build processes — limit `cargo`/`rustc`/`go`/`nix` to e.g. 50% of NVMe I/O bandwidth
 2. **Give Helium `IOWeight=1000`** in its systemd user service — media playback gets highest I/O priority
 3. **Create `ionice` wrapper functions** in `lib/default.nix` for dev commands (`cargo`, `go test`, `nix build`, etc.) — set them to idle or best-effort low priority
-~~4. **Add I/O pressure monitoring** to `system-health` textfile collector — record `/proc/pressure/io` values as Prometheus metrics~~ done — PSI I/O stall monitoring in system-health.nix (CHANGELOG)
-~~5. **Add Gatus alert** when I/O pressure avg10 > 80% for >5 min — early warning before user notices stuttering~~ done — Gatus "I/O Stall Rate" alert (CHANGELOG)
-6. **Consider a "media mode" systemd target** that throttles background services when media is playing
-7. **Move `sccache` cache to `/rust-cache` (ext4)** — it currently hits BTRFS for every cache lookup
-8. **Check if `CARGO_TARGET_DIR` can be moved to a tmpfs or ext4** for the monitor365 build
-9. **Profile the exact I/O pattern** — is it reads (rlib linking) or writes (object files) that saturate?
-10. **Consider `nvme ionice` or `blkio` cgroup limits** at the kernel level
+   ~~4. **Add I/O pressure monitoring** to `system-health` textfile collector — record `/proc/pressure/io` values as Prometheus metrics~~ done — PSI I/O stall monitoring in system-health.nix (CHANGELOG)
+   ~~5. **Add Gatus alert** when I/O pressure avg10 > 80% for >5 min — early warning before user notices stuttering~~ done — Gatus "I/O Stall Rate" alert (CHANGELOG)
+4. **Consider a "media mode" systemd target** that throttles background services when media is playing
+5. **Move `sccache` cache to `/rust-cache` (ext4)** — it currently hits BTRFS for every cache lookup
+6. **Check if `CARGO_TARGET_DIR` can be moved to a tmpfs or ext4** for the monitor365 build
+7. **Profile the exact I/O pattern** — is it reads (rlib linking) or writes (object files) that saturate?
+8. **Consider `nvme ionice` or `blkio` cgroup limits** at the kernel level
 
 #### Deploy and Verify (P0)
 
@@ -247,16 +249,16 @@ System-level VA-API working ≠ Chromium using it. I never checked `chrome://gpu
 
 ## Files Changed This Session
 
-| File | Change | Committed |
-|------|--------|-----------|
+| File                                 | Change                                   | Committed        |
+| ------------------------------------ | ---------------------------------------- | ---------------- |
 | `platforms/common/packages/base.nix` | +4 anti-throttling flags + comment block | Yes (`9f72a422`) |
-| `AGENTS.md` | +1 gotcha entry for video throttling | Yes (`9f72a422`) |
+| `AGENTS.md`                          | +1 gotcha entry for video throttling     | Yes (`9f72a422`) |
 
 ## Files NOT Changed (But Should Be)
 
-| File | What's needed |
-|------|---------------|
-| `AGENTS.md:377` | "Chromium 150" → "Chromium 151" (stale version) |
+| File                                     | What's needed                                                              |
+| ---------------------------------------- | -------------------------------------------------------------------------- |
+| `AGENTS.md:377`                          | "Chromium 150" → "Chromium 151" (stale version)                            |
 | `platforms/common/programs/chromium.nix` | Add `--disable-background-media-suspend` to Brave/Darwin config for parity |
 
 ---

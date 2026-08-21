@@ -396,33 +396,33 @@
 
 Sorted by impact/urgency:
 
-| #   | Task                                             | Priority | Why                                     | Effort  |
-| --- | ------------------------------------------------ | -------- | --------------------------------------- | ------- |
-| 1   | **Complete BTRFS Phase 3**                       | 🔴 P0    | Disk full imminent                      | 30 min  |
-| 2   | **Add `pocket_id_static_api_key` to sops**       | 🔴 P0    | Blocked deploy of provisioning          | 10 min  |
-| 3   | **Deploy and test Pocket ID provision**          | 🔴 P0    | Verify declarative config works         | 20 min  |
-| 4   | **Verify OAuth end-to-end**                      | 🔴 P0    | Confirm auth flow works after provision | 15 min  |
-| 5   | **Fix `/data` subvolume migration**              | 🔴 P1    | Data loss risk                          | 45 min  |
-| 6   | **Fix PhotoMap Podman permissions**              | 🟡 P1    | Service disabled for no good reason     | 60 min  |
-| 7   | **Add OpenAI key to Hermes**                     | 🟡 P1    | One-line fix, enables OpenAI adapter    | 5 min   |
-| 8   | **Add `overview` homepage tile**                 | 🟡 P2    | Service invisible to users              | 15 min  |
-| 9   | **Pre-commit exclude HTML planning docs**        | 🟡 P2    | Saves time on every commit              | 10 min  |
-| 10  | **Create `just backup-all` orchestrator**        | 🟡 P2    | Unified backup strategy                 | 30 min  |
-| 11  | **Darwin config parity (min viable)**            | 🟡 P2    | Reduce platform switching friction      | 120 min |
-| 12  | **Disko migration planning**                     | 🟢 P3    | Long-term disk management               | 180 min |
-| 13  | **Fix dozzle module eval issue**                 | 🟢 P3    | Cleaner module structure                | 60 min  |
-| 14  | **Add `livekit`/`whisper` integration test**     | 🟢 P3    | Verify voice agents actually work       | 45 min  |
-| 15  | **Monitor365 alerting rules**                    | 🟢 P3    | Currently just health checks            | 60 min  |
-| 16  | **Document `mkPreparedSource` v2 sub-modules**   | 🟢 P3    | Save future debugging time              | 30 min  |
-| 17  | **Add `crush-daily` feature documentation**      | 🟢 P3    | No one knows what it does               | 30 min  |
-| 18  | **Service dependency graph generator**           | 🟢 P3    | Visualize interconnections              | 90 min  |
-| 19  | **Pocket ID provision: run as non-root**         | 🟢 P3    | Security hardening                      | 30 min  |
-| 20  | **Add client secret rotation mechanism**         | 🟢 P3    | Security best practice                  | 60 min  |
-| 21  | **Auth bootstrap: auto-open browser**            | 🔵 P4    | UX polish                               | 15 min  |
-| 22  | **Standardize DB provisioning pattern**          | 🔵 P4    | Reusable across services                | 120 min |
-| 23  | **Add `auth-bootstrap` passkey detection**       | 🔵 P4    | Prevent re-running unnecessarily        | 30 min  |
-| 24  | **Automate BTRFS Phase 3 via activation script** | 🔵 P4    | No more manual steps                    | 90 min  |
-| 25  | **Document all conditional service patterns**    | 🔵 P4    | README for module authors               | 60 min  |
+| #  | Task                                             | Priority | Why                                     | Effort  |
+| -- | ------------------------------------------------ | -------- | --------------------------------------- | ------- |
+| 1  | **Complete BTRFS Phase 3**                       | 🔴 P0    | Disk full imminent                      | 30 min  |
+| 2  | **Add `pocket_id_static_api_key` to sops**       | 🔴 P0    | Blocked deploy of provisioning          | 10 min  |
+| 3  | **Deploy and test Pocket ID provision**          | 🔴 P0    | Verify declarative config works         | 20 min  |
+| 4  | **Verify OAuth end-to-end**                      | 🔴 P0    | Confirm auth flow works after provision | 15 min  |
+| 5  | **Fix `/data` subvolume migration**              | 🔴 P1    | Data loss risk                          | 45 min  |
+| 6  | **Fix PhotoMap Podman permissions**              | 🟡 P1    | Service disabled for no good reason     | 60 min  |
+| 7  | **Add OpenAI key to Hermes**                     | 🟡 P1    | One-line fix, enables OpenAI adapter    | 5 min   |
+| 8  | **Add `overview` homepage tile**                 | 🟡 P2    | Service invisible to users              | 15 min  |
+| 9  | **Pre-commit exclude HTML planning docs**        | 🟡 P2    | Saves time on every commit              | 10 min  |
+| 10 | **Create `just backup-all` orchestrator**        | 🟡 P2    | Unified backup strategy                 | 30 min  |
+| 11 | **Darwin config parity (min viable)**            | 🟡 P2    | Reduce platform switching friction      | 120 min |
+| 12 | **Disko migration planning**                     | 🟢 P3    | Long-term disk management               | 180 min |
+| 13 | **Fix dozzle module eval issue**                 | 🟢 P3    | Cleaner module structure                | 60 min  |
+| 14 | **Add `livekit`/`whisper` integration test**     | 🟢 P3    | Verify voice agents actually work       | 45 min  |
+| 15 | **Monitor365 alerting rules**                    | 🟢 P3    | Currently just health checks            | 60 min  |
+| 16 | **Document `mkPreparedSource` v2 sub-modules**   | 🟢 P3    | Save future debugging time              | 30 min  |
+| 17 | **Add `crush-daily` feature documentation**      | 🟢 P3    | No one knows what it does               | 30 min  |
+| 18 | **Service dependency graph generator**           | 🟢 P3    | Visualize interconnections              | 90 min  |
+| 19 | **Pocket ID provision: run as non-root**         | 🟢 P3    | Security hardening                      | 30 min  |
+| 20 | **Add client secret rotation mechanism**         | 🟢 P3    | Security best practice                  | 60 min  |
+| 21 | **Auth bootstrap: auto-open browser**            | 🔵 P4    | UX polish                               | 15 min  |
+| 22 | **Standardize DB provisioning pattern**          | 🔵 P4    | Reusable across services                | 120 min |
+| 23 | **Add `auth-bootstrap` passkey detection**       | 🔵 P4    | Prevent re-running unnecessarily        | 30 min  |
+| 24 | **Automate BTRFS Phase 3 via activation script** | 🔵 P4    | No more manual steps                    | 90 min  |
+| 25 | **Document all conditional service patterns**    | 🔵 P4    | README for module authors               | 60 min  |
 
 ---
 

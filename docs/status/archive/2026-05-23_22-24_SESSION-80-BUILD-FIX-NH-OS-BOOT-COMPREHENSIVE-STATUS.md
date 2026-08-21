@@ -277,33 +277,33 @@ ALL OIDC clients share the SAME bcrypt client secret hash, hardcoded in the nix 
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| #   | Priority | Task                                                            | Est. | Impact                   |
-| --- | -------- | --------------------------------------------------------------- | ---- | ------------------------ |
-| 1   | **P0**   | `just switch` + reboot — deploy ALL 22+ undeployed commits      | 30m  | Prevents repeat crash    |
-| 2   | **P0**   | Verify watchdog rewrites work after deploy                      | 10m  | Confirms crash fix       |
-| 3   | **P0**   | Verify ZRAM increased to 10% after reboot                       | 2m   | Confirms swap headroom   |
-| 4   | **P0**   | Verify Jan no longer auto-starts after reboot                   | 2m   | Confirms skip_apps       |
-| 5   | **P0**   | Verify Immich VA-API hardware transcoding works                 | 10m  | Media performance        |
-| 6   | **P0**   | Fix 4 upstream Go repos (_local_deps / preparedSrc)             | 2h   | Restores dev tooling     |
-| 7   | **P0**   | Add `GOMEMLIMIT=1GiB` to gopls via Nix config                   | 15m  | Caps gopls memory        |
-| 8   | **P0**   | Fix `nix fmt` / shfmt script damage                             | 15m  | Prevents silent breakage |
-| 9   | **P0**   | Investigate service-health-check failures (every 15 min)        | 20m  | Stops alert spam         |
-| 10  | **P1**   | Run Forgejo SOPS migration script (needs sudo)                  | 5m   | Security                 |
-| 11  | **P1**   | Configure secondary LLM provider for Hermes                     | 30m  | Hermes resilience        |
-| 12  | **P1**   | Verify Hermes firecrawl/edge-tts/fal/exa at runtime             | 15m  | Confirms extras work     |
-| 13  | **P1**   | Hermes git remote access (SSH deploy key)                       | 30m  | Repo access              |
-| 14  | **P1**   | Resolve port 3001 conflict (monitor365 vs openseo)              | 10m  | Prevents bind failure    |
-| 15  | **P1**   | Docker MemoryMax for SigNoz/Twenty (not just Homepage)          | 20m  | Prevents memory runaway  |
-| 16  | **P1**   | Investigate OpenSEO auth — can `local_auth` work?               | 20m  | Security                 |
-| 17  | **P1**   | Consolidate watchdog state management into shared lib           | 45m  | DRY, fewer bugs          |
-| 18  | **P1**   | Add memory/swap alerting to Gatus (80% mem, 50% swap)           | 30m  | Early warning            |
-| 19  | **P2**   | Fix FEATURES.md — ZRAM, boot time, phantom scripts              | 15m  | Doc accuracy             |
-| 20  | **P2**   | Update TODO_LIST.md with current state                          | 15m  | Doc accuracy             |
-| 21  | **P2**   | Re-enable ActivityWatch — fix or overlay broken nixpkgs package | 30m  | Time tracking            |
-| 22  | **P2**   | Deploy Dozzle at `logs.home.lan`                                | 45m  | Real-time Docker logs    |
-| 23  | **P3**   | Flake inputs audit — 47 inputs, find stale                      | 2h   | Dependency hygiene       |
-| 24  | **P3**   | Provision Pi 3 for DNS failover cluster                         | 4h   | DNS resilience           |
-| 25  | **P3**   | Investigate boot time: 1m44s initrd (post-serial8250)           | 60m  | Faster reboots           |
+| #  | Priority | Task                                                            | Est. | Impact                   |
+| -- | -------- | --------------------------------------------------------------- | ---- | ------------------------ |
+| 1  | **P0**   | `just switch` + reboot — deploy ALL 22+ undeployed commits      | 30m  | Prevents repeat crash    |
+| 2  | **P0**   | Verify watchdog rewrites work after deploy                      | 10m  | Confirms crash fix       |
+| 3  | **P0**   | Verify ZRAM increased to 10% after reboot                       | 2m   | Confirms swap headroom   |
+| 4  | **P0**   | Verify Jan no longer auto-starts after reboot                   | 2m   | Confirms skip_apps       |
+| 5  | **P0**   | Verify Immich VA-API hardware transcoding works                 | 10m  | Media performance        |
+| 6  | **P0**   | Fix 4 upstream Go repos (_local_deps / preparedSrc)             | 2h   | Restores dev tooling     |
+| 7  | **P0**   | Add `GOMEMLIMIT=1GiB` to gopls via Nix config                   | 15m  | Caps gopls memory        |
+| 8  | **P0**   | Fix `nix fmt` / shfmt script damage                             | 15m  | Prevents silent breakage |
+| 9  | **P0**   | Investigate service-health-check failures (every 15 min)        | 20m  | Stops alert spam         |
+| 10 | **P1**   | Run Forgejo SOPS migration script (needs sudo)                  | 5m   | Security                 |
+| 11 | **P1**   | Configure secondary LLM provider for Hermes                     | 30m  | Hermes resilience        |
+| 12 | **P1**   | Verify Hermes firecrawl/edge-tts/fal/exa at runtime             | 15m  | Confirms extras work     |
+| 13 | **P1**   | Hermes git remote access (SSH deploy key)                       | 30m  | Repo access              |
+| 14 | **P1**   | Resolve port 3001 conflict (monitor365 vs openseo)              | 10m  | Prevents bind failure    |
+| 15 | **P1**   | Docker MemoryMax for SigNoz/Twenty (not just Homepage)          | 20m  | Prevents memory runaway  |
+| 16 | **P1**   | Investigate OpenSEO auth — can `local_auth` work?               | 20m  | Security                 |
+| 17 | **P1**   | Consolidate watchdog state management into shared lib           | 45m  | DRY, fewer bugs          |
+| 18 | **P1**   | Add memory/swap alerting to Gatus (80% mem, 50% swap)           | 30m  | Early warning            |
+| 19 | **P2**   | Fix FEATURES.md — ZRAM, boot time, phantom scripts              | 15m  | Doc accuracy             |
+| 20 | **P2**   | Update TODO_LIST.md with current state                          | 15m  | Doc accuracy             |
+| 21 | **P2**   | Re-enable ActivityWatch — fix or overlay broken nixpkgs package | 30m  | Time tracking            |
+| 22 | **P2**   | Deploy Dozzle at `logs.home.lan`                                | 45m  | Real-time Docker logs    |
+| 23 | **P3**   | Flake inputs audit — 47 inputs, find stale                      | 2h   | Dependency hygiene       |
+| 24 | **P3**   | Provision Pi 3 for DNS failover cluster                         | 4h   | DNS resilience           |
+| 25 | **P3**   | Investigate boot time: 1m44s initrd (post-serial8250)           | 60m  | Faster reboots           |
 
 ---
 
@@ -321,7 +321,7 @@ ALL OIDC clients share the SAME bcrypt client secret hash, hardcoded in the nix 
 | ---------------------- | ------------------------------ | --------------- |
 | **Branch**             | master, up to date with origin | ✅              |
 | **Build**              | `nh os boot .` passes clean    | ✅              |
-| **Undeployed commits** | 22+ (Sessions 76–80)           | ⚠️              |
+| **Undeployed commits** | 22+ (Sessions 76–80)           | ⚠️               |
 | **Uptime**             | 16h 43m                        | 🟢 Stable       |
 | **RAM**                | 22/62 GiB (35%)                | 🟢 Healthy      |
 | **Swap**               | 11.5/13.1 GiB (88%)            | 🔴 Very high    |

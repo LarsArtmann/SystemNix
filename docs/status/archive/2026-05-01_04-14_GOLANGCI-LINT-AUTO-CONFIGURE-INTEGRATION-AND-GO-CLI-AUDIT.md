@@ -46,7 +46,7 @@ Integrated `golangci-lint-auto-configure` as a cross-platform Nix package, then 
 | --------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------- |
 | ✅ Build passes | 7     | `art-dupl`, `branching-flow`, `go-structure-linter`, `hierarchical-errors`, `library-policy`, `md-go-validator`, `project-meta` |
 | ❌ Build fails  | 10    | See section d)                                                                                                                  |
-| ⚠️ Not exposed  | 1     | `mr-sync` (overlay exists but not in perSystem.packages)                                                                        |
+| ⚠️ Not exposed   | 1     | `mr-sync` (overlay exists but not in perSystem.packages)                                                                        |
 
 ---
 
@@ -110,33 +110,33 @@ Integrated `golangci-lint-auto-configure` as a cross-platform Nix package, then 
 
 ## f) Top 25 Things We Should Do Next (sorted by impact / effort)
 
-| #   | Task                                                            | Impact | Effort            | Type        |
-| --- | --------------------------------------------------------------- | ------ | ----------------- | ----------- |
-| 1   | Remove staged `go.mod` from repo root                           | High   | Tiny              | Fix         |
-| 2   | Add `mr-sync` to perSystem.packages                             | High   | Tiny              | Fix         |
-| 3   | Fix `projects-management-automation` GOPRIVATE/GIT_CONFIG       | Medium | Small             | Fix         |
-| 4   | Fix `terraform-diagrams-aggregator` vendor hash                 | Medium | Tiny              | Fix         |
-| 5   | Add `just go-tools-check` recipe to build all Go tools          | High   | Small             | Feature     |
-| 6   | Create `mkGoPackage` helper to reduce 18-file boilerplate       | High   | Medium            | Refactor    |
-| 7   | Extract `cleanGoSource` to `lib/go-source.nix`                  | Medium | Small             | Refactor    |
-| 8   | Extract shared Go dep inputs to `lib/go-deps.nix`               | Medium | Small             | Refactor    |
-| 9   | Fix `go mod tidy` in upstream `auto-deduplicate` repo           | Medium | Small (upstream)  | External    |
-| 10  | Fix `go mod tidy` in upstream `code-duplicate-analyzer` repo    | Medium | Small (upstream)  | External    |
-| 11  | Fix `go mod tidy` in upstream `terraform-to-d2` repo            | Medium | Small (upstream)  | External    |
-| 12  | Fix missing subpackage in upstream `buildflow` repo             | Medium | Medium (upstream) | External    |
-| 13  | Fix missing subpackage in upstream `go-functional-fixer` repo   | Medium | Medium (upstream) | External    |
-| 14  | Fix compilation error in upstream `template-readme` repo        | Medium | Medium (upstream) | External    |
-| 15  | Fix test failure in upstream `go-auto-upgrade` repo             | Medium | Medium (upstream) | External    |
-| 16  | Add `GOWORK=off` to all 4 packages using `go-finding-src`       | Low    | Tiny              | Defensive   |
-| 17  | Standardize `version` across all Go packages                    | Low    | Small             | Consistency |
-| 18  | Add Go CLI tools to CI checks (nix build matrix)                | High   | Medium            | CI          |
-| 19  | Install more Go CLI tools in base.nix based on utility          | Medium | Small             | Feature     |
-| 20  | Add `just go-tool-versions` recipe showing all Go tool versions | Low    | Small             | Feature     |
-| 21  | Consolidate overlay definitions in flake.nix (600+ lines)       | High   | Large             | Refactor    |
-| 22  | Consider Go workspace for local development                     | Low    | Medium            | DevEx       |
-| 23  | Add `.golangci.yml` to SystemNix repo for Go files              | Low    | Tiny              | Quality     |
-| 24  | Document which Go CLI tools are installed vs available          | Medium | Tiny              | Docs        |
-| 25  | Add `nixci` or `nix flake check` with actual builds             | High   | Large             | CI          |
+| #  | Task                                                            | Impact | Effort            | Type        |
+| -- | --------------------------------------------------------------- | ------ | ----------------- | ----------- |
+| 1  | Remove staged `go.mod` from repo root                           | High   | Tiny              | Fix         |
+| 2  | Add `mr-sync` to perSystem.packages                             | High   | Tiny              | Fix         |
+| 3  | Fix `projects-management-automation` GOPRIVATE/GIT_CONFIG       | Medium | Small             | Fix         |
+| 4  | Fix `terraform-diagrams-aggregator` vendor hash                 | Medium | Tiny              | Fix         |
+| 5  | Add `just go-tools-check` recipe to build all Go tools          | High   | Small             | Feature     |
+| 6  | Create `mkGoPackage` helper to reduce 18-file boilerplate       | High   | Medium            | Refactor    |
+| 7  | Extract `cleanGoSource` to `lib/go-source.nix`                  | Medium | Small             | Refactor    |
+| 8  | Extract shared Go dep inputs to `lib/go-deps.nix`               | Medium | Small             | Refactor    |
+| 9  | Fix `go mod tidy` in upstream `auto-deduplicate` repo           | Medium | Small (upstream)  | External    |
+| 10 | Fix `go mod tidy` in upstream `code-duplicate-analyzer` repo    | Medium | Small (upstream)  | External    |
+| 11 | Fix `go mod tidy` in upstream `terraform-to-d2` repo            | Medium | Small (upstream)  | External    |
+| 12 | Fix missing subpackage in upstream `buildflow` repo             | Medium | Medium (upstream) | External    |
+| 13 | Fix missing subpackage in upstream `go-functional-fixer` repo   | Medium | Medium (upstream) | External    |
+| 14 | Fix compilation error in upstream `template-readme` repo        | Medium | Medium (upstream) | External    |
+| 15 | Fix test failure in upstream `go-auto-upgrade` repo             | Medium | Medium (upstream) | External    |
+| 16 | Add `GOWORK=off` to all 4 packages using `go-finding-src`       | Low    | Tiny              | Defensive   |
+| 17 | Standardize `version` across all Go packages                    | Low    | Small             | Consistency |
+| 18 | Add Go CLI tools to CI checks (nix build matrix)                | High   | Medium            | CI          |
+| 19 | Install more Go CLI tools in base.nix based on utility          | Medium | Small             | Feature     |
+| 20 | Add `just go-tool-versions` recipe showing all Go tool versions | Low    | Small             | Feature     |
+| 21 | Consolidate overlay definitions in flake.nix (600+ lines)       | High   | Large             | Refactor    |
+| 22 | Consider Go workspace for local development                     | Low    | Medium            | DevEx       |
+| 23 | Add `.golangci.yml` to SystemNix repo for Go files              | Low    | Tiny              | Quality     |
+| 24 | Document which Go CLI tools are installed vs available          | Medium | Tiny              | Docs        |
+| 25 | Add `nixci` or `nix flake check` with actual builds             | High   | Large             | CI          |
 
 ---
 

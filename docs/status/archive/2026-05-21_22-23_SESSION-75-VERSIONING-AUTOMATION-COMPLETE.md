@@ -165,33 +165,33 @@ Every repo with BuildFlow pre-commit hooks requires `--no-verify` for versioning
 
 ## F) TOP 25 NEXT ACTIONS
 
-| #   | Action                                                            | Impact   | Effort |
-| --- | ----------------------------------------------------------------- | -------- | ------ |
-| 1   | Run `just switch` to deploy all updates to evo-x2                 | Critical | 2min   |
-| 2   | Fix go-auto-upgrade broken tests (go-finding.MustBuild panic)     | High     | 30min  |
-| 3   | Add auto-tag + release to Tier 3 repos (25 repos)                 | Medium   | 2hr    |
-| 4   | Fix KeyCountdown self.rev violation                               | Medium   | 5min   |
-| 5   | Improve `just release` to handle multi-version flakes             | High     | 30min  |
-| 6   | Document GOTOOLCHAIN=auto pattern in AGENTS.md                    | Medium   | 10min  |
-| 7   | Verify GitHub Actions auto-tag actually works (push to test repo) | High     | 10min  |
-| 8   | Add `just update-lars` recipe for batch flake.lock updates        | Medium   | 15min  |
-| 9   | Resolve art-dupl fork vs master (pick one)                        | Medium   | 5min   |
-| 10  | Add CI exemption for `release: v*` commits                        | Low      | 10min  |
-| 11  | Create go-finding v2 with proper semver                           | High     | 1hr    |
-| 12  | Audit Tier 3 repos for build status                               | Medium   | 1hr    |
-| 13  | Add overlay vendorHash sync script                                | Medium   | 30min  |
-| 14  | Standardize flake structure across all repos                      | Medium   | 2hr    |
-| 15  | Add `nix flake check` to each repo's CI                           | Medium   | 30min  |
-| 16  | Document `_local_deps` / preparedSrc pattern                      | Low      | 15min  |
-| 17  | Unify crush-config version format to semver                       | Low      | 2min   |
-| 18  | Add `just hash-check` to SystemNix CI                             | Medium   | 15min  |
-| 19  | Create template flake for new LarsArtmann Go repos                | Medium   | 30min  |
-| 20  | Test auto-tag with `just release 0.2.1` on dnsblockd              | High     | 5min   |
-| 21  | Add `flake.lock` age check to SystemNix CI                        | Low      | 10min  |
-| 22  | Consolidate overlay vendorHash into single attrset                | Low      | 15min  |
-| 23  | Add `just versions --json` for machine-readable output            | Low      | 10min  |
-| 24  | Audit go-finding usage across all repos for Confidence breaks     | Medium   | 15min  |
-| 25  | Add pre-commit hook to verify version was bumped in ALL locations | Medium   | 20min  |
+| #  | Action                                                            | Impact   | Effort |
+| -- | ----------------------------------------------------------------- | -------- | ------ |
+| 1  | Run `just switch` to deploy all updates to evo-x2                 | Critical | 2min   |
+| 2  | Fix go-auto-upgrade broken tests (go-finding.MustBuild panic)     | High     | 30min  |
+| 3  | Add auto-tag + release to Tier 3 repos (25 repos)                 | Medium   | 2hr    |
+| 4  | Fix KeyCountdown self.rev violation                               | Medium   | 5min   |
+| 5  | Improve `just release` to handle multi-version flakes             | High     | 30min  |
+| 6  | Document GOTOOLCHAIN=auto pattern in AGENTS.md                    | Medium   | 10min  |
+| 7  | Verify GitHub Actions auto-tag actually works (push to test repo) | High     | 10min  |
+| 8  | Add `just update-lars` recipe for batch flake.lock updates        | Medium   | 15min  |
+| 9  | Resolve art-dupl fork vs master (pick one)                        | Medium   | 5min   |
+| 10 | Add CI exemption for `release: v*` commits                        | Low      | 10min  |
+| 11 | Create go-finding v2 with proper semver                           | High     | 1hr    |
+| 12 | Audit Tier 3 repos for build status                               | Medium   | 1hr    |
+| 13 | Add overlay vendorHash sync script                                | Medium   | 30min  |
+| 14 | Standardize flake structure across all repos                      | Medium   | 2hr    |
+| 15 | Add `nix flake check` to each repo's CI                           | Medium   | 30min  |
+| 16 | Document `_local_deps` / preparedSrc pattern                      | Low      | 15min  |
+| 17 | Unify crush-config version format to semver                       | Low      | 2min   |
+| 18 | Add `just hash-check` to SystemNix CI                             | Medium   | 15min  |
+| 19 | Create template flake for new LarsArtmann Go repos                | Medium   | 30min  |
+| 20 | Test auto-tag with `just release 0.2.1` on dnsblockd              | High     | 5min   |
+| 21 | Add `flake.lock` age check to SystemNix CI                        | Low      | 10min  |
+| 22 | Consolidate overlay vendorHash into single attrset                | Low      | 15min  |
+| 23 | Add `just versions --json` for machine-readable output            | Low      | 10min  |
+| 24 | Audit go-finding usage across all repos for Confidence breaks     | Medium   | 15min  |
+| 25 | Add pre-commit hook to verify version was bumped in ALL locations | Medium   | 20min  |
 
 ---
 

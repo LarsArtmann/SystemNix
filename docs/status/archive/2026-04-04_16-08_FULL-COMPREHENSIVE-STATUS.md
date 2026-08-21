@@ -198,33 +198,33 @@ The SSH key migration from RSA to Ed25519 is **architecturally complete but not 
 
 ## F) Top 25 Things We Should Get Done Next
 
-| #   | Priority | Task                                                                                   | Effort | Status          |
-| --- | -------- | -------------------------------------------------------------------------------------- | ------ | --------------- |
-| 1   | P0       | **Free disk space**: Run `sudo nix-collect-garbage -d` to clear 127 system generations | 2 min  | Blocked on user |
-| 2   | P0       | **Deploy SSH config**: `just switch` once disk is free                                 | 30 min | Blocked on #1   |
-| 3   | P0       | **Verify SSH deployment**: `cat ~/.ssh/config` must show KexAlgorithms, Ciphers, MACs  | 1 min  | Blocked on #2   |
-| 4   | P0       | **Test git push**: Verify Ed25519 key works with GitHub                                | 1 min  | Blocked on #2   |
-| 5   | P0       | **Push all commits**: 4 commits ahead of origin                                        | 1 min  | Blocked on #4   |
-| 6   | P1       | **Deploy to evo-x2**: `sudo nixos-rebuild switch --flake .#evo-x2` on NixOS target     | 30 min | Ready           |
-| 7   | P1       | **Verify evo-x2 SSH**: Test SSH login to evo-x2 with Ed25519 key                       | 5 min  | Blocked on #6   |
-| 8   | P1       | **Add GC to justfile**: `just clean-nix` recipe with `nix-collect-garbage -d`          | 5 min  | Ready           |
-| 9   | P1       | **Add disk check to just switch**: Fail early if <5GB free                             | 5 min  | Ready           |
-| 10  | P1       | **Extract crypto constants**: Shared `constants.nix` in nix-ssh-config                 | 15 min | Ready           |
-| 11  | P1       | **Add SSH verification recipe**: `just verify-ssh` checks deployed config              | 10 min | Ready           |
-| 12  | P2       | **Fix statix warnings**: Address pre-commit hook warnings                              | 15 min | Ready           |
-| 13  | P2       | **Fix alejandra formatting**: Run `just format` and address warnings                   | 10 min | Ready           |
-| 14  | P2       | **Set up sops-nix**: Configure `.sops.yaml`, create encrypted secrets                  | 30 min | Ready           |
-| 15  | P2       | **Add GitHub Actions CI**: Basic `nix flake check` on push/PR                          | 20 min | Ready           |
-| 16  | P2       | **Document SSH key rotation**: Runbook for adding/rotating keys                        | 15 min | Ready           |
-| 17  | P2       | **Add home-manager SSH test**: Verify HM module renders correct config                 | 20 min | Ready           |
-| 18  | P2       | **Clean up status reports**: 140+ status reports in docs/status/, archive old ones     | 15 min | Ready           |
-| 19  | P2       | **Add disk monitoring to just health**: Show disk usage with warning                   | 5 min  | Ready           |
-| 20  | P3       | **Set up branch protection**: Require CI on master                                     | 10 min | Ready           |
-| 21  | P3       | **Add pre-push hook**: Run `nix flake check --no-build` before push                    | 5 min  | Ready           |
-| 22  | P3       | **Document buildflow vs pre-commit**: Prevent future override conflicts                | 10 min | Ready           |
-| 23  | P3       | **Add launchd for weekly GC**: Automated disk cleanup                                  | 15 min | Ready           |
-| 24  | P3       | **Remove stale SSH comment**: `home-base.nix` line 12 stale comment (unstaged)         | 1 min  | Ready           |
-| 25  | P3       | **Consolidate nix-ssh-config README**: Document architecture and usage                 | 15 min | Ready           |
+| #  | Priority | Task                                                                                   | Effort | Status          |
+| -- | -------- | -------------------------------------------------------------------------------------- | ------ | --------------- |
+| 1  | P0       | **Free disk space**: Run `sudo nix-collect-garbage -d` to clear 127 system generations | 2 min  | Blocked on user |
+| 2  | P0       | **Deploy SSH config**: `just switch` once disk is free                                 | 30 min | Blocked on #1   |
+| 3  | P0       | **Verify SSH deployment**: `cat ~/.ssh/config` must show KexAlgorithms, Ciphers, MACs  | 1 min  | Blocked on #2   |
+| 4  | P0       | **Test git push**: Verify Ed25519 key works with GitHub                                | 1 min  | Blocked on #2   |
+| 5  | P0       | **Push all commits**: 4 commits ahead of origin                                        | 1 min  | Blocked on #4   |
+| 6  | P1       | **Deploy to evo-x2**: `sudo nixos-rebuild switch --flake .#evo-x2` on NixOS target     | 30 min | Ready           |
+| 7  | P1       | **Verify evo-x2 SSH**: Test SSH login to evo-x2 with Ed25519 key                       | 5 min  | Blocked on #6   |
+| 8  | P1       | **Add GC to justfile**: `just clean-nix` recipe with `nix-collect-garbage -d`          | 5 min  | Ready           |
+| 9  | P1       | **Add disk check to just switch**: Fail early if <5GB free                             | 5 min  | Ready           |
+| 10 | P1       | **Extract crypto constants**: Shared `constants.nix` in nix-ssh-config                 | 15 min | Ready           |
+| 11 | P1       | **Add SSH verification recipe**: `just verify-ssh` checks deployed config              | 10 min | Ready           |
+| 12 | P2       | **Fix statix warnings**: Address pre-commit hook warnings                              | 15 min | Ready           |
+| 13 | P2       | **Fix alejandra formatting**: Run `just format` and address warnings                   | 10 min | Ready           |
+| 14 | P2       | **Set up sops-nix**: Configure `.sops.yaml`, create encrypted secrets                  | 30 min | Ready           |
+| 15 | P2       | **Add GitHub Actions CI**: Basic `nix flake check` on push/PR                          | 20 min | Ready           |
+| 16 | P2       | **Document SSH key rotation**: Runbook for adding/rotating keys                        | 15 min | Ready           |
+| 17 | P2       | **Add home-manager SSH test**: Verify HM module renders correct config                 | 20 min | Ready           |
+| 18 | P2       | **Clean up status reports**: 140+ status reports in docs/status/, archive old ones     | 15 min | Ready           |
+| 19 | P2       | **Add disk monitoring to just health**: Show disk usage with warning                   | 5 min  | Ready           |
+| 20 | P3       | **Set up branch protection**: Require CI on master                                     | 10 min | Ready           |
+| 21 | P3       | **Add pre-push hook**: Run `nix flake check --no-build` before push                    | 5 min  | Ready           |
+| 22 | P3       | **Document buildflow vs pre-commit**: Prevent future override conflicts                | 10 min | Ready           |
+| 23 | P3       | **Add launchd for weekly GC**: Automated disk cleanup                                  | 15 min | Ready           |
+| 24 | P3       | **Remove stale SSH comment**: `home-base.nix` line 12 stale comment (unstaged)         | 1 min  | Ready           |
+| 25 | P3       | **Consolidate nix-ssh-config README**: Document architecture and usage                 | 15 min | Ready           |
 
 ---
 

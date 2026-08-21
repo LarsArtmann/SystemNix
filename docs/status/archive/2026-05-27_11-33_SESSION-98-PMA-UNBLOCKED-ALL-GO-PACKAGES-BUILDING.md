@@ -154,53 +154,53 @@ The only ongoing pain point is the PMA build configuration complexity — 12 pri
 
 ### Tier 1: Quick Wins (5 min each, high impact)
 
-| #   | Task                                                                       | Impact                       |
-| --- | -------------------------------------------------------------------------- | ---------------------------- |
-| 1   | Fix PMA go.work: `go 1.26.2` → `go 1.26.3`                                 | Unblocks local golangci-lint |
-| 2   | Fix go-output submodule go.mod versions (9 files)                          | Consistency                  |
-| 3   | Verify `just switch` works on evo-x2 after all updates                     | Production readiness         |
-| 4   | Update PMA flake.lock for go-output latest (after submodule version fixes) | Stay current                 |
+| # | Task                                                                       | Impact                       |
+| - | -------------------------------------------------------------------------- | ---------------------------- |
+| 1 | Fix PMA go.work: `go 1.26.2` → `go 1.26.3`                                 | Unblocks local golangci-lint |
+| 2 | Fix go-output submodule go.mod versions (9 files)                          | Consistency                  |
+| 3 | Verify `just switch` works on evo-x2 after all updates                     | Production readiness         |
+| 4 | Update PMA flake.lock for go-output latest (after submodule version fixes) | Stay current                 |
 
 ### Tier 2: Medium Effort (30 min each, architectural improvement)
 
-| #   | Task                                                         | Impact                          |
-| --- | ------------------------------------------------------------ | ------------------------------- |
-| 5   | Publish git tags for go-output submodules                    | Eliminates PMA sed hack         |
-| 6   | Publish git tags for project-discovery-sdk submodules        | Same                            |
-| 7   | Remove PMA `overrideModAttrs` + `postPatchExtra` after tags  | Cleaner build                   |
-| 8   | Fix file-and-image-renamer `overrideModAttrs`                | Consistency                     |
-| 9   | Split PMA `stats_output.go` (480 → 2-3 files)                | Code quality                    |
-| 10  | Redesign `mkPreparedSource` to auto-generate `require` lines | Eliminates entire class of bugs |
+| #  | Task                                                         | Impact                          |
+| -- | ------------------------------------------------------------ | ------------------------------- |
+| 5  | Publish git tags for go-output submodules                    | Eliminates PMA sed hack         |
+| 6  | Publish git tags for project-discovery-sdk submodules        | Same                            |
+| 7  | Remove PMA `overrideModAttrs` + `postPatchExtra` after tags  | Cleaner build                   |
+| 8  | Fix file-and-image-renamer `overrideModAttrs`                | Consistency                     |
+| 9  | Split PMA `stats_output.go` (480 → 2-3 files)                | Code quality                    |
+| 10 | Redesign `mkPreparedSource` to auto-generate `require` lines | Eliminates entire class of bugs |
 
 ### Tier 3: Testing & Verification
 
-| #   | Task                                                   | Impact               |
-| --- | ------------------------------------------------------ | -------------------- |
-| 11  | Run PMA test suite locally (`go test ./...`)           | Verify nothing broke |
-| 12  | Run PMA BDD tests (`ginkgo -r`)                        | Verify nothing broke |
-| 13  | Build ALL SystemNix Go packages (`nix build .#<each>`) | Comprehensive check  |
-| 14  | Run `just test` on SystemNix (full build validation)   | Production readiness |
+| #  | Task                                                   | Impact               |
+| -- | ------------------------------------------------------ | -------------------- |
+| 11 | Run PMA test suite locally (`go test ./...`)           | Verify nothing broke |
+| 12 | Run PMA BDD tests (`ginkgo -r`)                        | Verify nothing broke |
+| 13 | Build ALL SystemNix Go packages (`nix build .#<each>`) | Comprehensive check  |
+| 14 | Run `just test` on SystemNix (full build validation)   | Production readiness |
 
 ### Tier 4: Documentation & Maintenance
 
-| #   | Task                                                       | Impact                 |
-| --- | ---------------------------------------------------------- | ---------------------- |
-| 15  | Update PMA AGENTS.md with current build state              | Knowledge preservation |
-| 16  | Update go-output AGENTS.md with submodule tagging strategy | Knowledge preservation |
-| 17  | Create `mkPreparedSource` design doc for redesign          | Architecture clarity   |
-| 18  | Document the full dependency graph of private Go repos     | System understanding   |
+| #  | Task                                                       | Impact                 |
+| -- | ---------------------------------------------------------- | ---------------------- |
+| 15 | Update PMA AGENTS.md with current build state              | Knowledge preservation |
+| 16 | Update go-output AGENTS.md with submodule tagging strategy | Knowledge preservation |
+| 17 | Create `mkPreparedSource` design doc for redesign          | Architecture clarity   |
+| 18 | Document the full dependency graph of private Go repos     | System understanding   |
 
 ### Tier 5: Long-Term Architecture
 
-| #   | Task                                                                    | Impact                       |
-| --- | ----------------------------------------------------------------------- | ---------------------------- |
-| 19  | Automate git submodule tagging in CI (go-output, project-discovery-sdk) | Prevents future drift        |
-| 20  | Evaluate PMA dependency consolidation (12 → fewer)                      | Simplification               |
-| 21  | Consider Go workspace mode for all private deps                         | Alternative to `_local_deps` |
-| 22  | Migrate `/data` BTRFS to `@data` subvolume (snapshots!)                 | Data safety                  |
-| 23  | Set up Jan AI memory leak monitoring                                    | Resource management          |
-| 24  | Resolve PMA 120 TODO comments                                           | Technical debt               |
-| 25  | Create automated vendorHash update script                               | Developer experience         |
+| #  | Task                                                                    | Impact                       |
+| -- | ----------------------------------------------------------------------- | ---------------------------- |
+| 19 | Automate git submodule tagging in CI (go-output, project-discovery-sdk) | Prevents future drift        |
+| 20 | Evaluate PMA dependency consolidation (12 → fewer)                      | Simplification               |
+| 21 | Consider Go workspace mode for all private deps                         | Alternative to `_local_deps` |
+| 22 | Migrate `/data` BTRFS to `@data` subvolume (snapshots!)                 | Data safety                  |
+| 23 | Set up Jan AI memory leak monitoring                                    | Resource management          |
+| 24 | Resolve PMA 120 TODO comments                                           | Technical debt               |
+| 25 | Create automated vendorHash update script                               | Developer experience         |
 
 ---
 

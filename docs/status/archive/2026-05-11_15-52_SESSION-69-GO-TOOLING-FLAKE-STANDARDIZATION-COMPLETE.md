@@ -18,17 +18,17 @@ Standardized Nix flake builds across the entire Go tooling ecosystem (9 projects
 
 ### Projects That Build Successfully
 
-| #   | Project                          | Flake Status                         | Key Fix                                                            |
-| --- | -------------------------------- | ------------------------------------ | ------------------------------------------------------------------ |
-| 1   | **library-policy**               | ✅ Best flake (flake-parts, modular) | DRY'd up shared bindings, added overlay                            |
-| 2   | **BuildFlow**                    | ✅ Complete rewrite                  | SSH inputs, preparedSrc with 4 private deps, go-output sub-modules |
-| 3   | **go-auto-upgrade**              | ✅ Fixed                             | Converted path: → SSH URLs, go.mod replace fix, overlay            |
-| 4   | **go-structure-linter**          | ✅ Complete rewrite                  | SSH inputs, preparedSrc, go-output sub-modules, overlay            |
-| 5   | **branching-flow**               | ✅ Complete rewrite                  | SSH inputs, preparedSrc, GOFLAGS=-mod=mod, overlay                 |
-| 6   | **golangci-lint-auto-configure** | ✅ Improved                          | Added overlay, standardized env vars                               |
-| 7   | **art-dupl**                     | ✅ Fixed                             | Updated gogenfilter pin (235fb88), env vars → env block            |
-| 8   | **PMA**                          | ✅ Fixed (was hardest)               | preparedSrc with 10 private deps, go.work version fixes            |
-| 9   | **hierarchical-errors**          | ✅ NEW FLAKE                         | Created from scratch, fixed go-finding API migration               |
+| # | Project                          | Flake Status                         | Key Fix                                                            |
+| - | -------------------------------- | ------------------------------------ | ------------------------------------------------------------------ |
+| 1 | **library-policy**               | ✅ Best flake (flake-parts, modular) | DRY'd up shared bindings, added overlay                            |
+| 2 | **BuildFlow**                    | ✅ Complete rewrite                  | SSH inputs, preparedSrc with 4 private deps, go-output sub-modules |
+| 3 | **go-auto-upgrade**              | ✅ Fixed                             | Converted path: → SSH URLs, go.mod replace fix, overlay            |
+| 4 | **go-structure-linter**          | ✅ Complete rewrite                  | SSH inputs, preparedSrc, go-output sub-modules, overlay            |
+| 5 | **branching-flow**               | ✅ Complete rewrite                  | SSH inputs, preparedSrc, GOFLAGS=-mod=mod, overlay                 |
+| 6 | **golangci-lint-auto-configure** | ✅ Improved                          | Added overlay, standardized env vars                               |
+| 7 | **art-dupl**                     | ✅ Fixed                             | Updated gogenfilter pin (235fb88), env vars → env block            |
+| 8 | **PMA**                          | ✅ Fixed (was hardest)               | preparedSrc with 10 private deps, go.work version fixes            |
+| 9 | **hierarchical-errors**          | ✅ NEW FLAKE                         | Created from scratch, fixed go-finding API migration               |
 
 ### SystemNix Wiring
 

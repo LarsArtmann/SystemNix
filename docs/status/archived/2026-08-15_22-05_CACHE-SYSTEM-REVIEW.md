@@ -9,14 +9,14 @@
 
 ## 1. Runtime verification (all P0 items CLOSED)
 
-| P0 item | Method | Result |
-|---|---|---|
-| gc never executed | ran the DEPLOYED store script as the unit's user with the unit's exact env/PATH | **exit 0, 12.2s**: npm verify GC'd 1.4G garbage; pnpm prune removed 382 pkgs / 209,908 files / **2.51G**; usage 44%→41%; watermark correctly not hit; rust prune correctly no-op (nothing >14d) |
-| sccache untested | tiny serde project, 2 builds (fresh + after `cargo clean`) | **fresh build 6.1s (12 misses, 0 errors, 9.1M written to the mount); clean rebuild 2.3s with 12/12 dependency HITS** — rustc never re-ran. Wrapper resolution, disk-store write, and hit path all proven |
-| 96% alert unverified | gatus journal (API is OIDC-gated; sqlite root-only; sudo/systemctl blocked) | **TRIGGERED 03:37 → failing every 30min all day → RESOLVED 21:58** (`filesystem_build-cache-usage`), both sent to Discord. **Alert delivery WORKS for this path** — the monitor365 silence is a separate incident, not a broken alerting stack |
-| init idempotency | journal + fix | confirmed live: init skipped 6× on the `!…/.initialized` condition → **fixed** (see §2) |
-| script syntax | `bash -n` + line-by-line review (shellcheck unavailable in env) | both OK; one real bug found in the btrfs script (§2) |
-| /tmp litter | trash | `/tmp/jv2test`, `/tmp/gocache*.go`, `/tmp/sccache-readme.md`, + this session's `/tmp/sccache-test` all trashed |
+| P0 item              | Method                                                                          | Result                                                                                                                                                                                                                                         |
+| -------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| gc never executed    | ran the DEPLOYED store script as the unit's user with the unit's exact env/PATH | **exit 0, 12.2s**: npm verify GC'd 1.4G garbage; pnpm prune removed 382 pkgs / 209,908 files / **2.51G**; usage 44%→41%; watermark correctly not hit; rust prune correctly no-op (nothing >14d)                                                |
+| sccache untested     | tiny serde project, 2 builds (fresh + after `cargo clean`)                      | **fresh build 6.1s (12 misses, 0 errors, 9.1M written to the mount); clean rebuild 2.3s with 12/12 dependency HITS** — rustc never re-ran. Wrapper resolution, disk-store write, and hit path all proven                                       |
+| 96% alert unverified | gatus journal (API is OIDC-gated; sqlite root-only; sudo/systemctl blocked)     | **TRIGGERED 03:37 → failing every 30min all day → RESOLVED 21:58** (`filesystem_build-cache-usage`), both sent to Discord. **Alert delivery WORKS for this path** — the monitor365 silence is a separate incident, not a broken alerting stack |
+| init idempotency     | journal + fix                                                                   | confirmed live: init skipped 6× on the `!…/.initialized` condition → **fixed** (see §2)                                                                                                                                                        |
+| script syntax        | `bash -n` + line-by-line review (shellcheck unavailable in env)                 | both OK; one real bug found in the btrfs script (§2)                                                                                                                                                                                           |
+| /tmp litter          | trash                                                                           | `/tmp/jv2test`, `/tmp/gocache*.go`, `/tmp/sccache-readme.md`, + this session's `/tmp/sccache-test` all trashed                                                                                                                                 |
 
 Also closed TODO_LIST item: `/mnt/buildcache/me/` test photos trashed (drive now holds only declared cache dirs).
 
@@ -41,9 +41,9 @@ Not fixed (deliberate): pip/playwright dirs have no GC step — mtime-based prun
 ## 4. Remaining open (unchanged backlog)
 
 - VM test for buildcache-gc (P0 #7 — the one P0 not closed; unit-level execution verified instead). ← open — untracked (module VM test queued, TODO_LIST Priority 3)
-~~- Sunday 05:00 first scheduled gc run — **check journal for the hardened (ProtectHome=read-only + hole) prune path**.~~ done — and it FAILED silently (2026-08-16 finding: pnpm resolves store from CWD; bare unit cwd=/` tried `/_tmp_*` under strict ProtectSystem). Fixed with `--store $mnt/pnpm-store` + `WorkingDirectory`; deploy.sh now starts gc post-switch so every deploy verifies the prune path (AGENTS.md)
+  ~~- Sunday 05:00 first scheduled gc run — **check journal for the hardened (ProtectHome=read-only + hole) prune path**.~~ done — and it FAILED silently (2026-08-16 finding: pnpm resolves store from CWD; bare unit cwd=/`tried`/_tmp_*`under strict ProtectSystem). Fixed with`--store $mnt/pnpm-store`+`WorkingDirectory`; deploy.sh now starts gc post-switch so every deploy verifies the prune path (AGENTS.md)
 - Satellite GOEXPERIMENT sweep (21 repos), btrfs conversion window, go-codec 1.26.6 floor, sccache hit-ratio metric, gopls consolidation — see TODO_LIST + prior report §f. ← open — sweep/btrfs/floor TODO_LIST Priority 2; hit-ratio metric + gopls consolidation untracked
-~~- monitor365/browser-history outages (5 post-deploy FAILs) — pre-existing, out of cache-system scope.~~ done — bh fixed (v4.7.0 era); monitor365 moot (G7); FAIL noise killed by gating
+  ~~- monitor365/browser-history outages (5 post-deploy FAILs) — pre-existing, out of cache-system scope.~~ done — bh fixed (v4.7.0 era); monitor365 moot (G7); FAIL noise killed by gating
 
 ## 5. Answers to prior open questions (report §g)
 

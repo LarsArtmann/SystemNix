@@ -75,14 +75,14 @@ Unknown — no journal survived from the boot that freed space. Likely candidate
 
 | Metric     | Value                  | Status                              |
 | ---------- | ---------------------- | ----------------------------------- |
-| Root (`/`) | 403G/512G (81%)        | ⚠️ Trending up                      |
+| Root (`/`) | 403G/512G (81%)        | ⚠️ Trending up                       |
 | `/data`    | 950G/1.0T (93%)        | 🔴 Critical — 74G free on 1TB       |
 | `/boot`    | 238M/2.0G (12%)        | ✅ Fine                             |
 | RAM        | 25G/93G used (27%)     | ✅ Healthy                          |
 | Swap       | 5M/19G used            | ✅ Healthy (was 13G/13G on May 30!) |
 | Load       | 2.17 / 1.76 / 1.57     | ✅ Normal                           |
-| Nix store  | 83G                    | ⚠️ Should GC                        |
-| Journal    | 3.9G/4G (becoming 16G) | ⚠️ Near limit, fix pending deploy   |
+| Nix store  | 83G                    | ⚠️ Should GC                         |
+| Journal    | 3.9G/4G (becoming 16G) | ⚠️ Near limit, fix pending deploy    |
 
 ### Services — This Boot (June 3, 03:00)
 
@@ -96,10 +96,10 @@ Unknown — no journal survived from the boot that freed space. Likely candidate
 | oauth2-proxy               | ✅     | Running (initial start failed, auto-recovered)               |
 | Pocket ID                  | ✅     | Running                                                      |
 | Homepage                   | ✅     | Running                                                      |
-| Ollama                     | ⚠️     | Gatus reports `success=false` — may be down or misconfigured |
+| Ollama                     | ⚠️      | Gatus reports `success=false` — may be down or misconfigured |
 | Monitor365                 | ❌     | Failing repeatedly (user service)                            |
 | disk-monitor               | 🔧     | Fix committed, NOT deployed yet                              |
-| DNS blocker CA import      | ⚠️     | NSS cert import failing (user service)                       |
+| DNS blocker CA import      | ⚠️      | NSS cert import failing (user service)                       |
 
 ### Build & Tests
 
@@ -165,8 +165,8 @@ Unknown — no journal survived from the boot that freed space. Likely candidate
 
 ## 4. B) Partially Done
 
-| Item                    | Status                | Gap                                                                                                 |
-| ----------------------- | --------------------- | --------------------------------------------------------------------------------------------------- |
+| Item                    | Status               | Gap                                                                                                 |
+| ----------------------- | -------------------- | --------------------------------------------------------------------------------------------------- |
 | Darwin home-manager     | ⚠️ 7 lines            | No terminal, editor, theme parity with NixOS — 4h work, deprioritized                               |
 | Ollama monitoring       | ⚠️ Gatus check exists | `success=false` — service may be down or endpoint misconfigured                                     |
 | Voice agents            | ⚠️ Module exists      | Docker ROCm Whisper — enabled but unverified since last deploy                                      |
@@ -247,33 +247,33 @@ User service `monitor365.service` is crash-looping this boot. Not investigated y
 
 ## 8. F) Top 25 Things to Do Next
 
-| #   | Task                                                                                                                                                      | Priority | Effort | Impact                                          |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ----------------------------------------------- |
-| 1   | **Deploy current fixes** (`just switch`) — disk-monitor + journald                                                                                        | P0       | 5min   | Critical — disk alerts dead, journal too small  |
-| 2   | **Delete `/data/testfile`** (4G orphan from Apr 22)                                                                                                       | P0       | 1min   | Trivial space recovery                          |
-| 3   | **Clean `/data/unsloth/venv`** (24G pip install leak)                                                                                                     | P0       | 5min   | 24G recovered                                   |
-| 4   | **Add external alerting for disk-monitor failure** (Discord webhook on N consecutive failures)                                                            | P0       | 30min  | Prevents repeat of silent failure               |
-| 5   | **Add SigNoz/journald rate limiting** (`RateLimitIntervalSec`, `RateLimitBurst`)                                                                          | P1       | 10min  | Prevents journal consumption by error floods    |
-| 6   | **Add disk-space SigNoz alert rule** (85% and 90% thresholds)                                                                                             | P1       | 20min  | Early warning before next disk-full             |
-| 7   | **Fix Ollama Gatus endpoint** (`success=false`)                                                                                                           | P1       | 15min  | Monitoring gap                                  |
-| 8   | **Investigate Monitor365 crash-loop**                                                                                                                     | P1       | 30min  | User service broken since boot                  |
-| 9   | **Investigate `/data` model deduplication** — 688G in models, possible duplicates across `/data/models` and `/data/llamacpp-models` and `/data/ai/models` | P1       | 1h     | Could recover 50-100G+                          |
-| 10  | **Run `/data` BTRFS subvolume migration** (`just snapshot-migrate-data`)                                                                                  | P2       | 30min  | Enables `/data` snapshots for disaster recovery |
-| 11  | **Add Gatus endpoint for disk-monitor health**                                                                                                            | P2       | 20min  | Monitoring the monitor                          |
-| 12  | **Deploy Dozzle** at `logs.home.lan`                                                                                                                      | P2       | 30min  | Better Docker log debugging                     |
-| 13  | **Hermes: configure secondary LLM provider** as GLM-5.1 fallback                                                                                          | P2       | 30min  | Resilience                                      |
-| 14  | **Hermes: SSH deploy key for sandbox** (`origin` unreachable)                                                                                             | P2       | 15min  | Unblock git operations                          |
-| 15  | **Flake inputs audit** — remove stale/unused inputs from 47 total                                                                                         | P2       | 2h     | Faster updates, smaller closure                 |
-| 16  | **Add per-threshold SigNoz channel routing** (critical→Discord, warning→log)                                                                              | P2       | 30min  | Noise reduction                                 |
-| 17  | **Verify voice-agents service** — Docker ROCm Whisper                                                                                                     | P2       | 30min  | Unknown state                                   |
-| 18  | **Investigate swap exhaustion history** — was 13Gi/13Gi on May 30                                                                                         | P2       | 1h     | Root cause analysis                             |
-| 19  | **Create `just status` command** for automated status generation                                                                                          | P3       | 1h     | DX improvement                                  |
-| 20  | **Clean `/data/ai/cache`** (51G HuggingFace downloads)                                                                                                    | P3       | 15min  | Space recovery                                  |
-| 21  | **Add `nix-collect-garbage` automation** — weekly timer                                                                                                   | P3       | 20min  | Prevents nix store growth (83G)                 |
-| 22  | **Provision Pi 3** for DNS failover cluster                                                                                                               | P3       | 2h     | DNS redundancy                                  |
-| 23  | **nix-colors integration** — migrate 17+ hardcoded colors                                                                                                 | P3       | 6h     | Theme consistency                               |
-| 24  | **Bring Darwin home.nix to parity** with NixOS                                                                                                            | P3       | 4h     | Cross-platform consistency                      |
-| 25  | **Investigate DNS blocker CA cert NSS import failure**                                                                                                    | P3       | 15min  | User service error on boot                      |
+| #  | Task                                                                                                                                                      | Priority | Effort | Impact                                          |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ----------------------------------------------- |
+| 1  | **Deploy current fixes** (`just switch`) — disk-monitor + journald                                                                                        | P0       | 5min   | Critical — disk alerts dead, journal too small  |
+| 2  | **Delete `/data/testfile`** (4G orphan from Apr 22)                                                                                                       | P0       | 1min   | Trivial space recovery                          |
+| 3  | **Clean `/data/unsloth/venv`** (24G pip install leak)                                                                                                     | P0       | 5min   | 24G recovered                                   |
+| 4  | **Add external alerting for disk-monitor failure** (Discord webhook on N consecutive failures)                                                            | P0       | 30min  | Prevents repeat of silent failure               |
+| 5  | **Add SigNoz/journald rate limiting** (`RateLimitIntervalSec`, `RateLimitBurst`)                                                                          | P1       | 10min  | Prevents journal consumption by error floods    |
+| 6  | **Add disk-space SigNoz alert rule** (85% and 90% thresholds)                                                                                             | P1       | 20min  | Early warning before next disk-full             |
+| 7  | **Fix Ollama Gatus endpoint** (`success=false`)                                                                                                           | P1       | 15min  | Monitoring gap                                  |
+| 8  | **Investigate Monitor365 crash-loop**                                                                                                                     | P1       | 30min  | User service broken since boot                  |
+| 9  | **Investigate `/data` model deduplication** — 688G in models, possible duplicates across `/data/models` and `/data/llamacpp-models` and `/data/ai/models` | P1       | 1h     | Could recover 50-100G+                          |
+| 10 | **Run `/data` BTRFS subvolume migration** (`just snapshot-migrate-data`)                                                                                  | P2       | 30min  | Enables `/data` snapshots for disaster recovery |
+| 11 | **Add Gatus endpoint for disk-monitor health**                                                                                                            | P2       | 20min  | Monitoring the monitor                          |
+| 12 | **Deploy Dozzle** at `logs.home.lan`                                                                                                                      | P2       | 30min  | Better Docker log debugging                     |
+| 13 | **Hermes: configure secondary LLM provider** as GLM-5.1 fallback                                                                                          | P2       | 30min  | Resilience                                      |
+| 14 | **Hermes: SSH deploy key for sandbox** (`origin` unreachable)                                                                                             | P2       | 15min  | Unblock git operations                          |
+| 15 | **Flake inputs audit** — remove stale/unused inputs from 47 total                                                                                         | P2       | 2h     | Faster updates, smaller closure                 |
+| 16 | **Add per-threshold SigNoz channel routing** (critical→Discord, warning→log)                                                                              | P2       | 30min  | Noise reduction                                 |
+| 17 | **Verify voice-agents service** — Docker ROCm Whisper                                                                                                     | P2       | 30min  | Unknown state                                   |
+| 18 | **Investigate swap exhaustion history** — was 13Gi/13Gi on May 30                                                                                         | P2       | 1h     | Root cause analysis                             |
+| 19 | **Create `just status` command** for automated status generation                                                                                          | P3       | 1h     | DX improvement                                  |
+| 20 | **Clean `/data/ai/cache`** (51G HuggingFace downloads)                                                                                                    | P3       | 15min  | Space recovery                                  |
+| 21 | **Add `nix-collect-garbage` automation** — weekly timer                                                                                                   | P3       | 20min  | Prevents nix store growth (83G)                 |
+| 22 | **Provision Pi 3** for DNS failover cluster                                                                                                               | P3       | 2h     | DNS redundancy                                  |
+| 23 | **nix-colors integration** — migrate 17+ hardcoded colors                                                                                                 | P3       | 6h     | Theme consistency                               |
+| 24 | **Bring Darwin home.nix to parity** with NixOS                                                                                                            | P3       | 4h     | Cross-platform consistency                      |
+| 25 | **Investigate DNS blocker CA cert NSS import failure**                                                                                                    | P3       | 15min  | User service error on boot                      |
 
 ---
 

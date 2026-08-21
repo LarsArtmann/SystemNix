@@ -196,53 +196,53 @@ All tracked in MASTER_TODO_PLAN.
 
 ### Tier 1: Unblock CI (1 item)
 
-| #   | Task                                                                        | Effort | Impact                  |
-| --- | --------------------------------------------------------------------------- | ------ | ----------------------- |
-| 1   | **Fix nix-ssh-config duplicate `environment.etc`** — fork, patch, or inline | Medium | 🔴 Unblocks ALL testing |
+| # | Task                                                                        | Effort | Impact                  |
+| - | --------------------------------------------------------------------------- | ------ | ----------------------- |
+| 1 | **Fix nix-ssh-config duplicate `environment.etc`** — fork, patch, or inline | Medium | 🔴 Unblocks ALL testing |
 
 ### Tier 2: Fix Broken Things (4 items)
 
-| #   | Task                                                           | Effort  | Impact                 |
-| --- | -------------------------------------------------------------- | ------- | ---------------------- |
-| 2   | Fix pre-commit trailing-whitespace sed path (NixOS → portable) | Trivial | Cross-platform CI      |
-| 3   | Remove or enable Unsloth Studio entry in Homepage Dashboard    | Trivial | No broken links        |
-| 4   | Verify all Dunst icon names resolve via Papirus-Dark on NixOS  | Low     | Icons actually show    |
-| 5   | Verify Homepage custom.css loads correctly (new tmpfiles rule) | Low     | Theme actually applies |
+| # | Task                                                           | Effort  | Impact                 |
+| - | -------------------------------------------------------------- | ------- | ---------------------- |
+| 2 | Fix pre-commit trailing-whitespace sed path (NixOS → portable) | Trivial | Cross-platform CI      |
+| 3 | Remove or enable Unsloth Studio entry in Homepage Dashboard    | Trivial | No broken links        |
+| 4 | Verify all Dunst icon names resolve via Papirus-Dark on NixOS  | Low     | Icons actually show    |
+| 5 | Verify Homepage custom.css loads correctly (new tmpfiles rule) | Low     | Theme actually applies |
 
 ### Tier 3: Theme Migration (7 items)
 
-| #   | Task                                                             | Effort | Impact                      |
-| --- | ---------------------------------------------------------------- | ------ | --------------------------- |
-| 6   | Create `lib/theme.nix` with CSS/rasi/SVG generation helpers      | Low    | Foundation for migration    |
-| 7   | Migrate waybar.nix CSS to use colorScheme.palette                | Medium | Largest file (32 values)    |
-| 8   | Migrate wlogout.nix SVG colors to colorScheme.palette            | Medium | ~20 values in Nix let-block |
-| 9   | Migrate yazi.nix theme to colorScheme.palette                    | Medium | ~30 values                  |
-| 10  | Migrate rofi.nix rasi theme to colorScheme.palette               | Medium | Complex rasi syntax         |
-| 11  | Migrate swaylock.nix colors to colorScheme.palette               | Low    | Simple color list           |
-| 12  | Migrate taskwarrior.nix 256-color palette to colorScheme.palette | Low    | Color table                 |
+| #  | Task                                                             | Effort | Impact                      |
+| -- | ---------------------------------------------------------------- | ------ | --------------------------- |
+| 6  | Create `lib/theme.nix` with CSS/rasi/SVG generation helpers      | Low    | Foundation for migration    |
+| 7  | Migrate waybar.nix CSS to use colorScheme.palette                | Medium | Largest file (32 values)    |
+| 8  | Migrate wlogout.nix SVG colors to colorScheme.palette            | Medium | ~20 values in Nix let-block |
+| 9  | Migrate yazi.nix theme to colorScheme.palette                    | Medium | ~30 values                  |
+| 10 | Migrate rofi.nix rasi theme to colorScheme.palette               | Medium | Complex rasi syntax         |
+| 11 | Migrate swaylock.nix colors to colorScheme.palette               | Low    | Simple color list           |
+| 12 | Migrate taskwarrior.nix 256-color palette to colorScheme.palette | Low    | Color table                 |
 
 ### Tier 4: Deploy & Verify (8 items — need evo-x2)
 
-| #   | Task                                      | Effort | Impact        |
-| --- | ----------------------------------------- | ------ | ------------- |
-| 13  | P1-7: Move Taskwarrior encryption to sops | Medium | Security      |
-| 14  | P1-9: Pin Docker digest for Voice Agents  | Medium | Supply chain  |
-| 15  | P1-10: Pin Docker digest for PhotoMap     | Medium | Supply chain  |
-| 16  | P5-38: Verify SigNoz dashboards           | Low    | Observability |
-| 17  | P5-42: Test Authelia SSO login            | Low    | Security      |
-| 18  | P5-44: Test Hermes Discord bot            | Low    | Functionality |
-| 19  | P5-45: Verify Homepage health checks      | Low    | Monitoring    |
-| 20  | P5-41: Verify Caddy TLS certificates      | Low    | Security      |
+| #  | Task                                      | Effort | Impact        |
+| -- | ----------------------------------------- | ------ | ------------- |
+| 13 | P1-7: Move Taskwarrior encryption to sops | Medium | Security      |
+| 14 | P1-9: Pin Docker digest for Voice Agents  | Medium | Supply chain  |
+| 15 | P1-10: Pin Docker digest for PhotoMap     | Medium | Supply chain  |
+| 16 | P5-38: Verify SigNoz dashboards           | Low    | Observability |
+| 17 | P5-42: Test Authelia SSO login            | Low    | Security      |
+| 18 | P5-44: Test Hermes Discord bot            | Low    | Functionality |
+| 19 | P5-45: Verify Homepage health checks      | Low    | Monitoring    |
+| 20 | P5-41: Verify Caddy TLS certificates      | Low    | Security      |
 
 ### Tier 5: Nice-to-Have Features (5 items)
 
-| #   | Task                                                             | Effort | Impact            |
-| --- | ---------------------------------------------------------------- | ------ | ----------------- |
-| 21  | Add Waybar idle-inhibit toggle module                            | Low    | Media viewing UX  |
-| 22  | Add Waybar BTRFS subvolume breakdown (separate /data monitoring) | Low    | Storage awareness |
-| 23  | Niri layout profiles (work/gaming/media) via Mod+Shift+P menu    | Medium | Workflow speed    |
-| 24  | Gitea backup/restore automation (justfile + systemd timer)       | Medium | Data safety       |
-| 25  | P9-83: NixOS test VM for smoke testing before deploy             | Medium | Confidence        |
+| #  | Task                                                             | Effort | Impact            |
+| -- | ---------------------------------------------------------------- | ------ | ----------------- |
+| 21 | Add Waybar idle-inhibit toggle module                            | Low    | Media viewing UX  |
+| 22 | Add Waybar BTRFS subvolume breakdown (separate /data monitoring) | Low    | Storage awareness |
+| 23 | Niri layout profiles (work/gaming/media) via Mod+Shift+P menu    | Medium | Workflow speed    |
+| 24 | Gitea backup/restore automation (justfile + systemd timer)       | Medium | Data safety       |
+| 25 | P9-83: NixOS test VM for smoke testing before deploy             | Medium | Confidence        |
 
 ---
 

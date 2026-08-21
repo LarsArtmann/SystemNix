@@ -6,7 +6,6 @@
 
 ---
 
-
 ## TL;DR
 
 Fixed 5 distinct issues across 2 repos (SystemNix + monitor365), deployed 4 times, freed 103 GB disk. Monitor365 SSO still unverified end-to-end due to Pocket ID crash mid-flow. Two SystemNix files and `flake.lock` remain uncommitted.

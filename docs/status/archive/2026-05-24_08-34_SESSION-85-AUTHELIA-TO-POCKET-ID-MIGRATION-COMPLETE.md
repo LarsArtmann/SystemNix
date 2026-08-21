@@ -86,23 +86,23 @@ From `docs/planning/2026-05-23_08-29_SESSION-78-COMPREHENSIVE-EXECUTION-PLAN.md`
 
 ## c) NOT STARTED ❌
 
-| #   | Task                                                                    | Impact           | From                 |
-| --- | ----------------------------------------------------------------------- | ---------------- | -------------------- |
-| 1   | **Deploy Pocket ID migration**                                          | 🔴 Critical      | This session         |
-| 2   | **Pin Docker `latest` tags** (twenty, manifest, openseo)                | 🟠 Security      | Session 78 plan      |
-| 3   | **Consolidate GPU config** — voice-agents + ai-stack use `lib/rocm.nix` | 🟡 Quality       | Session 78 plan      |
-| 4   | **Add swap-specific alert rule** to SigNoz                              | 🟡 Observability | Session 78 plan      |
-| 5   | **Configure secondary LLM provider** for Hermes (GLM fallback)          | 🟡 Resilience    | TODO_LIST.md         |
-| 6   | **Hermes git remote access** — SSH deploy key                           | 🟡 Automation    | TODO_LIST.md         |
-| 7   | **nix-colors integration** (~6h, 220+ themes)                           | 🟢 Visual        | TODO_LIST.md         |
-| 8   | **Deploy Dozzle** at `logs.home.lan`                                    | 🟢 Observability | Dozzle evaluation    |
-| 9   | **Provision Raspberry Pi 3** for DNS failover cluster                   | 🟢 Hardware      | TODO_LIST.md         |
-| 10  | **Investigate swap exhaustion** (13Gi/13Gi, 7 gopls instances)          | 🟡 Performance   | TODO_LIST.md         |
-| 11  | **Flake inputs audit** (47 inputs)                                      | 🟡 Maintenance   | TODO_LIST.md         |
-| 12  | **Auditd enablement** (blocked by NixOS 26.05 bug)                      | 🟢 Security      | FEATURES.md gap      |
-| 13  | **AppArmor enablement** (currently commented out)                       | 🟢 Security      | FEATURES.md gap      |
-| 14  | **`/data` BTRFS snapshot** conversion (currently toplevel)              | 🟡 Safety        | Gotchas in AGENTS.md |
-| 15  | **Voice agents verification** (LiveKit + Whisper)                       | 🟡 Verification  | FEATURES.md          |
+| #  | Task                                                                    | Impact           | From                 |
+| -- | ----------------------------------------------------------------------- | ---------------- | -------------------- |
+| 1  | **Deploy Pocket ID migration**                                          | 🔴 Critical      | This session         |
+| 2  | **Pin Docker `latest` tags** (twenty, manifest, openseo)                | 🟠 Security      | Session 78 plan      |
+| 3  | **Consolidate GPU config** — voice-agents + ai-stack use `lib/rocm.nix` | 🟡 Quality       | Session 78 plan      |
+| 4  | **Add swap-specific alert rule** to SigNoz                              | 🟡 Observability | Session 78 plan      |
+| 5  | **Configure secondary LLM provider** for Hermes (GLM fallback)          | 🟡 Resilience    | TODO_LIST.md         |
+| 6  | **Hermes git remote access** — SSH deploy key                           | 🟡 Automation    | TODO_LIST.md         |
+| 7  | **nix-colors integration** (~6h, 220+ themes)                           | 🟢 Visual        | TODO_LIST.md         |
+| 8  | **Deploy Dozzle** at `logs.home.lan`                                    | 🟢 Observability | Dozzle evaluation    |
+| 9  | **Provision Raspberry Pi 3** for DNS failover cluster                   | 🟢 Hardware      | TODO_LIST.md         |
+| 10 | **Investigate swap exhaustion** (13Gi/13Gi, 7 gopls instances)          | 🟡 Performance   | TODO_LIST.md         |
+| 11 | **Flake inputs audit** (47 inputs)                                      | 🟡 Maintenance   | TODO_LIST.md         |
+| 12 | **Auditd enablement** (blocked by NixOS 26.05 bug)                      | 🟢 Security      | FEATURES.md gap      |
+| 13 | **AppArmor enablement** (currently commented out)                       | 🟢 Security      | FEATURES.md gap      |
+| 14 | **`/data` BTRFS snapshot** conversion (currently toplevel)              | 🟡 Safety        | Gotchas in AGENTS.md |
+| 15 | **Voice agents verification** (LiveKit + Whisper)                       | 🟡 Verification  | FEATURES.md          |
 
 ---
 
@@ -157,48 +157,48 @@ From `docs/planning/2026-05-23_08-29_SESSION-78-COMPREHENSIVE-EXECUTION-PLAN.md`
 
 ### Tier 1: Must Do (Blocking/Security) — 🔴
 
-| #   | Task                                                     | Effort | Why                             |
-| --- | -------------------------------------------------------- | ------ | ------------------------------- |
-| 1   | **Create `pocket-id.yaml` sops file with all 4 secrets** | XS     | Without this, nothing deploys   |
-| 2   | **Deploy Pocket ID (standalone, oauth2-proxy disabled)** | XS     | Get OIDC provider running first |
-| 3   | **Register admin passkey + create OIDC clients**         | S      | Bootstrap the identity provider |
-| 4   | **Deploy oauth2-proxy + verify forward-auth**            | S      | Restore protected vhosts        |
-| 5   | **Reconfigure Immich OAuth to Pocket ID**                | XS     | Restore photo access            |
-| 6   | **Reconfigure Forgejo OAuth to Pocket ID**               | XS     | Restore git access              |
-| 7   | **Pin Docker `latest` tags** (twenty, manifest, openseo) | XS     | Supply chain security           |
+| # | Task                                                     | Effort | Why                             |
+| - | -------------------------------------------------------- | ------ | ------------------------------- |
+| 1 | **Create `pocket-id.yaml` sops file with all 4 secrets** | XS     | Without this, nothing deploys   |
+| 2 | **Deploy Pocket ID (standalone, oauth2-proxy disabled)** | XS     | Get OIDC provider running first |
+| 3 | **Register admin passkey + create OIDC clients**         | S      | Bootstrap the identity provider |
+| 4 | **Deploy oauth2-proxy + verify forward-auth**            | S      | Restore protected vhosts        |
+| 5 | **Reconfigure Immich OAuth to Pocket ID**                | XS     | Restore photo access            |
+| 6 | **Reconfigure Forgejo OAuth to Pocket ID**               | XS     | Restore git access              |
+| 7 | **Pin Docker `latest` tags** (twenty, manifest, openseo) | XS     | Supply chain security           |
 
 ### Tier 2: Should Do (Quality/Safety) — 🟠
 
-| #   | Task                                                         | Effort | Why                                          |
-| --- | ------------------------------------------------------------ | ------ | -------------------------------------------- |
-| 8   | **Write ADR-007: Authelia → Pocket ID migration**            | S      | Document the decision                        |
-| 9   | **Consolidate GPU config** via `lib/rocm.nix`                | S      | Eliminate hardcoded HSA_OVERRIDE_GFX_VERSION |
-| 10  | **Add `harden {}` to oauth2-proxy systemd override**         | XS     | Consistent security hardening                |
-| 11  | **Add swap alert rule to SigNoz**                            | XS     | Proactive monitoring                         |
-| 12  | **Convert `/data` from BTRFS toplevel to `@data` subvolume** | M      | Enable snapshots for data                    |
-| 13  | **Provisioning script for Pocket ID OIDC clients**           | M      | Restore declarative client management        |
-| 14  | **Trash `authelia-secrets.yaml`**                            | XS     | Cleanup                                      |
+| #  | Task                                                         | Effort | Why                                          |
+| -- | ------------------------------------------------------------ | ------ | -------------------------------------------- |
+| 8  | **Write ADR-007: Authelia → Pocket ID migration**            | S      | Document the decision                        |
+| 9  | **Consolidate GPU config** via `lib/rocm.nix`                | S      | Eliminate hardcoded HSA_OVERRIDE_GFX_VERSION |
+| 10 | **Add `harden {}` to oauth2-proxy systemd override**         | XS     | Consistent security hardening                |
+| 11 | **Add swap alert rule to SigNoz**                            | XS     | Proactive monitoring                         |
+| 12 | **Convert `/data` from BTRFS toplevel to `@data` subvolume** | M      | Enable snapshots for data                    |
+| 13 | **Provisioning script for Pocket ID OIDC clients**           | M      | Restore declarative client management        |
+| 14 | **Trash `authelia-secrets.yaml`**                            | XS     | Cleanup                                      |
 
 ### Tier 3: Nice to Have (Improvement) — 🟡
 
-| #   | Task                                     | Effort | Why                        |
-| --- | ---------------------------------------- | ------ | -------------------------- |
-| 15  | **FEATURES.md accuracy pass**            | S      | Trustworthy documentation  |
-| 16  | **TODO_LIST.md update**                  | S      | Reflect current state      |
-| 17  | **Configure Hermes secondary LLM**       | M      | Fallback for GLM-5.1       |
-| 18  | **Hermes SSH deploy key for git access** | S      | Enable git-based workflows |
-| 19  | **Flake inputs audit** (47 inputs)       | M      | Reduce attack surface      |
-| 20  | **Deploy Dozzle** at `logs.home.lan`     | S      | Live container log tailing |
+| #  | Task                                     | Effort | Why                        |
+| -- | ---------------------------------------- | ------ | -------------------------- |
+| 15 | **FEATURES.md accuracy pass**            | S      | Trustworthy documentation  |
+| 16 | **TODO_LIST.md update**                  | S      | Reflect current state      |
+| 17 | **Configure Hermes secondary LLM**       | M      | Fallback for GLM-5.1       |
+| 18 | **Hermes SSH deploy key for git access** | S      | Enable git-based workflows |
+| 19 | **Flake inputs audit** (47 inputs)       | M      | Reduce attack surface      |
+| 20 | **Deploy Dozzle** at `logs.home.lan`     | S      | Live container log tailing |
 
 ### Tier 4: Future/Someday — 🟢
 
-| #   | Task                                          | Effort | Why                              |
-| --- | --------------------------------------------- | ------ | -------------------------------- |
-| 21  | **nix-colors integration**                    | L (6h) | 220+ themes, centralized palette |
-| 22  | **Provision Pi 3 for DNS failover**           | L      | Hardware setup required          |
-| 23  | **Auditd enablement** (blocked by NixOS bug)  | S      | Blocked on upstream              |
-| 24  | **AppArmor enablement**                       | M      | Currently disabled               |
-| 25  | **Extract dnsblockd to external flake input** | M      | Decouple from monorepo           |
+| #  | Task                                          | Effort | Why                              |
+| -- | --------------------------------------------- | ------ | -------------------------------- |
+| 21 | **nix-colors integration**                    | L (6h) | 220+ themes, centralized palette |
+| 22 | **Provision Pi 3 for DNS failover**           | L      | Hardware setup required          |
+| 23 | **Auditd enablement** (blocked by NixOS bug)  | S      | Blocked on upstream              |
+| 24 | **AppArmor enablement**                       | M      | Currently disabled               |
+| 25 | **Extract dnsblockd to external flake input** | M      | Decouple from monorepo           |
 
 ---
 

@@ -4,7 +4,6 @@
 
 ---
 
-
 ## A) FULLY DONE
 
 1. **DNS/network debug tools installed system-wide** — Added to `platforms/common/packages/base.nix:269-275` (in `linuxUtilities`):
@@ -58,7 +57,7 @@
    - Rollback 1 (567→566): removed monitor365-backup-health timer, monitor365-server-backup timer, monitor365-schema-migrate, openseo, gatus, overview, discordsync, PMA
    - Rollback 2 (568→567): removed monitor365-agent-watchdog timer, file-and-image-renamer-health
    - Rollback 3: removed monitor365 users/groups entirely
-   Each rollback took the system further from the working state.
+     Each rollback took the system further from the working state.
 
 3. **alejandra reformatted 457 lines in flake.nix** — Running `alejandra flake.nix` caused massive unrelated churn (457 lines changed) when the actual change was ~10 lines. Should have been surgical. The global reformat makes the diff unreadable and obscures the actual functional changes.
 
@@ -87,6 +86,7 @@
 ## F) Up to 50 Things We Should Get Done Next
 
 ### Priority 0 — Critical (fix now)
+
 1. Fix Overview `StartLimitIntervalSec` in `[Service]` → should be in `[Unit]` section
 2. Restart monitor365 agent to clear circuit-breaker deadlock and buffer pressure
 3. Verify Overview recovers after the StartLimitIntervalSec fix + PMA is healthy
@@ -94,6 +94,7 @@
 5. Update AGENTS.md with the debug-tools-in-base lesson and new diagnostics script
 
 ### Priority 1 — High (this week)
+
 6. Add connectivity pre-check to `dns-update.sh` (fail fast with clear message if no network)
 7. Test dns-diagnostics.sh error paths by simulating an outage (stop dnsblockd, check script output)
 8. Add `lsof` to base packages (commonly needed for `lsof -i :53` network debugging)
@@ -106,6 +107,7 @@
 15. Review whether `nettools` conflicts with `iproute2` (both provide some commands)
 
 ### Priority 2 — Medium (this month)
+
 16. Fix the flake.nix reformatting churn — consider reverting the alejandra global format and applying only the functional diff
 17. Add a "network health" Gatus check that pings the gateway (L2 connectivity monitoring)
 18. Add a pre-deploy warning if `nixos-rebuild --rollback` is detected (discourage rollbacks)
@@ -123,6 +125,7 @@
 30. Add `ethtool` to base packages (link speed/duplex debugging — critical for cable issues!)
 
 ### Priority 3 — Lower (backlog)
+
 31. Create a runbook for "DNS is down" scenario (step-by-step, starting with physical check)
 32. Add `mtr` report generation to diagnostics (`mtr --report --report-cycles 10 1.1.1.1`)
 33. Consider adding `smokeping` for continuous network quality monitoring

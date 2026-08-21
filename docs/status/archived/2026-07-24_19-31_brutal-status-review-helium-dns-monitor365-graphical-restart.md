@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Context
 
 This session continued from a prior session where three incidents were diagnosed and code-fixed but NOT yet deployed:
@@ -220,6 +219,7 @@ The first deploy attempt (user-pasted output) revealed two NEW failures that req
 ### G1. Should we purge the Monitor365 597M backlog?
 
 The agent has 597M buffered events from the deadlock period. The server enforces a 10K/day tenant limit. At this rate, natural drain takes ~59,700 days. Options:
+
 - **(a)** `rm /var/lib/monitor365/events.db` — loses all buffered telemetry, clean start. Agent CPU drops from 95% to ~0%.
 - **(b)** Raise the daily limit on the server (requires DB or API access I don't have).
 - **(c)** Leave it — the agent drops events at 95% buffer pressure anyway, so it'll self-limit. But it burns 95% CPU on upload attempts that get 403'd.
@@ -238,13 +238,13 @@ The deploy diff showed openseo jumping from 0.0.2 to 0.1.1 (+478 MiB). This is a
 
 ## Summary Scorecard
 
-| Category | Count | Details |
-|---|---|---|
-| **Fully done & verified** | 5 | PathChanged fix, post-deploy-check timing, helium-launch, DNS subdomain, agent watchdog |
-| **Partially done** | 3 | Helium kill test skipped, DNS resolution not verified, AGENTS.md timing gotcha not added |
-| **Not started** | 3 | Wildcard DNS removal, buffer purge, Overview recovery |
-| **Missed/ignored** | 3 | file-and-image-renamer unit not found, Overview StartLimitIntervalSec wrong section, closure diff changes |
-| **Deploy result** | 26 PASS / 0 FAIL (for SystemNix-managed services) | Overview 503 is pre-existing PMA dependency issue |
+| Category                  | Count                                             | Details                                                                                                   |
+| ------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| **Fully done & verified** | 5                                                 | PathChanged fix, post-deploy-check timing, helium-launch, DNS subdomain, agent watchdog                   |
+| **Partially done**        | 3                                                 | Helium kill test skipped, DNS resolution not verified, AGENTS.md timing gotcha not added                  |
+| **Not started**           | 3                                                 | Wildcard DNS removal, buffer purge, Overview recovery                                                     |
+| **Missed/ignored**        | 3                                                 | file-and-image-renamer unit not found, Overview StartLimitIntervalSec wrong section, closure diff changes |
+| **Deploy result**         | 26 PASS / 0 FAIL (for SystemNix-managed services) | Overview 503 is pre-existing PMA dependency issue                                                         |
 
 **Overall assessment:** The three original incidents are resolved and deployed. The session exposed two systemic gaps: (1) I don't read deploy output comprehensively, and (2) I skip verification steps when things "pass." Both are process discipline issues, not technical ones.
 
@@ -253,6 +253,7 @@ The deploy diff showed openseo jumping from 0.0.2 to 0.1.1 (+478 MiB). This is a
 ## Resolution (2026-07-30)
 
 The "Not started" items from the scorecard were later resolved:
+
 - **Overview 503 recovery** — traced to PMA's `Type=notify` without `sd_notify(1)` bug; fixed by overriding to `Type=exec` + a discovery watchdog timer (2026-07-29).
 - **Overview StartLimitIntervalSec** — resolved in the PMA fix session.
 - **Monitor365 buffer purge** — resolved: `monitor365-schema-migrate` now sets `max_events_per_day = 1B` to drain the 597M backlog.

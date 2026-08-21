@@ -18,17 +18,17 @@ SystemNix manages 2 machines (macOS `Lars-MacBook-Air` + NixOS `evo-x2`) through
 
 ### Session Work (2026-04-30)
 
-| #   | Change                                | File                                        | Impact                                                                                |
-| --- | ------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------- |
-| 1   | Waybar tooltip CSS (Catppuccin Mocha) | `platforms/nixos/desktop/waybar.nix`        | Was default GTK white boxes → now themed                                              |
-| 2   | Waybar hover feedback (9 modules)     | `platforms/nixos/desktop/waybar.nix`        | clock, cpu, memory, temp, network, audio, tray, weather, media now highlight on hover |
-| 3   | Waybar weather error state            | `platforms/nixos/desktop/waybar.nix`        | "N/A" text → JSON with `.error` class + dimmed color                                  |
-| 4   | Waybar media tooltip + paused state   | `platforms/nixos/desktop/waybar.nix`        | Shows artist, title, album, player name + `.paused` class when paused                 |
-| 5   | FZF Catppuccin Mocha colors           | `platforms/common/programs/fzf.nix`         | Was the ONLY tool with default colors → now themed (cross-platform)                   |
-| 6   | Starship `$nix_shell` visibility      | `platforms/common/programs/starship.nix`    | Was `disabled = false` but missing from format string → now shows `❄ via shell-name`  |
-| 7   | Homepage Dashboard Catppuccin CSS     | `modules/nixos/services/homepage.nix`       | Was generic `dark/slate` → full Catppuccin Mocha with cards, hover, scrollbar         |
-| 8   | Kitty visual bell                     | `platforms/nixos/users/home.nix`            | Audio bell disabled, no replacement → blue flash on bell (0.2s)                       |
-| 9   | Dunst notification history formatting | `platforms/nixos/programs/niri-wrapped.nix` | Was raw JSON in rofi → formatted `Summary — Body [HH:MM]`                             |
+| # | Change                                | File                                        | Impact                                                                                |
+| - | ------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------- |
+| 1 | Waybar tooltip CSS (Catppuccin Mocha) | `platforms/nixos/desktop/waybar.nix`        | Was default GTK white boxes → now themed                                              |
+| 2 | Waybar hover feedback (9 modules)     | `platforms/nixos/desktop/waybar.nix`        | clock, cpu, memory, temp, network, audio, tray, weather, media now highlight on hover |
+| 3 | Waybar weather error state            | `platforms/nixos/desktop/waybar.nix`        | "N/A" text → JSON with `.error` class + dimmed color                                  |
+| 4 | Waybar media tooltip + paused state   | `platforms/nixos/desktop/waybar.nix`        | Shows artist, title, album, player name + `.paused` class when paused                 |
+| 5 | FZF Catppuccin Mocha colors           | `platforms/common/programs/fzf.nix`         | Was the ONLY tool with default colors → now themed (cross-platform)                   |
+| 6 | Starship `$nix_shell` visibility      | `platforms/common/programs/starship.nix`    | Was `disabled = false` but missing from format string → now shows `❄ via shell-name`  |
+| 7 | Homepage Dashboard Catppuccin CSS     | `modules/nixos/services/homepage.nix`       | Was generic `dark/slate` → full Catppuccin Mocha with cards, hover, scrollbar         |
+| 8 | Kitty visual bell                     | `platforms/nixos/users/home.nix`            | Audio bell disabled, no replacement → blue flash on bell (0.2s)                       |
+| 9 | Dunst notification history formatting | `platforms/nixos/programs/niri-wrapped.nix` | Was raw JSON in rofi → formatted `Summary — Body [HH:MM]`                             |
 
 ### Historical (from MASTER_TODO_PLAN)
 
@@ -112,16 +112,16 @@ SystemNix manages 2 machines (macOS `Lars-MacBook-Air` + NixOS `evo-x2`) through
 
 ## D) TOTALLY FUCKED UP 💥
 
-| #   | Issue                                                               | Severity  | Root Cause                                                                                                                                                                           |
-| --- | ------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | **`nix-ssh-config` external flake has duplicate `environment.etc`** | 🔴 HIGH   | Upstream bug in `LarsArtmann/nix-ssh-config@e0ac693` — `ssh.nix` defines `environment.etc` twice (lines 161 and 167). **This blocks `just test-fast` and `just validate` entirely.** |
-| 2   | **`docs/STATUS.md` is 4+ months stale**                             | 🟡 MEDIUM | Last updated 2025-12-27, describes Home Manager as "READY FOR DEPLOYMENT" — it's been deployed for months. Misleading for anyone reading it.                                         |
-| 3   | **Duplicate packages: `jq`, `zellij`, `swappy`**                    | 🟡 MEDIUM | These 3 packages appear in BOTH `common/packages/base.nix` AND `nixos/users/home.nix`. Not harmful (Nix deduplicates) but sloppy and confusing.                                      |
-| 4   | **Pre-commit hook hardcoded NixOS path**                            | 🟡 MEDIUM | Trailing-whitespace hook uses `/run/current-system/sw/bin/sed` — fails on macOS Darwin. Cross-platform regression.                                                                   |
-| 5   | **`.direnv/` not in `.gitignore`**                                  | 🟡 MEDIUM | `.direnv/flake-profile*` are Nix store symlinks tracked in git. Will be broken on other machines or after GC. Already committed in `1e7cb48`.                                        |
-| 6   | **Orphaned DNS blocker file**                                       | 🟢 LOW    | `platforms/nixos/modules/dns-blocker.nix` exists but is never imported — dead code. DNS blocker now uses `dns-blocker-config.nix`.                                                   |
-| 7   | **`nix-colors` missing `inputs.nixpkgs.follows`**                   | 🟢 LOW    | Causes nix-colors to use its own pinned nixpkgs, creating unnecessary downloads and potential version mismatches.                                                                    |
-| 8   | **4 TODO comments in service modules**                              | 🟢 LOW    | `voice-agents.nix` (Docker digest), `photomap.nix` (Docker digest), `security-hardening.nix` x2 (audit rules). All tracked in MASTER_TODO_PLAN.                                      |
+| # | Issue                                                               | Severity  | Root Cause                                                                                                                                                                           |
+| - | ------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1 | **`nix-ssh-config` external flake has duplicate `environment.etc`** | 🔴 HIGH   | Upstream bug in `LarsArtmann/nix-ssh-config@e0ac693` — `ssh.nix` defines `environment.etc` twice (lines 161 and 167). **This blocks `just test-fast` and `just validate` entirely.** |
+| 2 | **`docs/STATUS.md` is 4+ months stale**                             | 🟡 MEDIUM | Last updated 2025-12-27, describes Home Manager as "READY FOR DEPLOYMENT" — it's been deployed for months. Misleading for anyone reading it.                                         |
+| 3 | **Duplicate packages: `jq`, `zellij`, `swappy`**                    | 🟡 MEDIUM | These 3 packages appear in BOTH `common/packages/base.nix` AND `nixos/users/home.nix`. Not harmful (Nix deduplicates) but sloppy and confusing.                                      |
+| 4 | **Pre-commit hook hardcoded NixOS path**                            | 🟡 MEDIUM | Trailing-whitespace hook uses `/run/current-system/sw/bin/sed` — fails on macOS Darwin. Cross-platform regression.                                                                   |
+| 5 | **`.direnv/` not in `.gitignore`**                                  | 🟡 MEDIUM | `.direnv/flake-profile*` are Nix store symlinks tracked in git. Will be broken on other machines or after GC. Already committed in `1e7cb48`.                                        |
+| 6 | **Orphaned DNS blocker file**                                       | 🟢 LOW    | `platforms/nixos/modules/dns-blocker.nix` exists but is never imported — dead code. DNS blocker now uses `dns-blocker-config.nix`.                                                   |
+| 7 | **`nix-colors` missing `inputs.nixpkgs.follows`**                   | 🟢 LOW    | Causes nix-colors to use its own pinned nixpkgs, creating unnecessary downloads and potential version mismatches.                                                                    |
+| 8 | **4 TODO comments in service modules**                              | 🟢 LOW    | `voice-agents.nix` (Docker digest), `photomap.nix` (Docker digest), `security-hardening.nix` x2 (audit rules). All tracked in MASTER_TODO_PLAN.                                      |
 
 ---
 
@@ -157,48 +157,48 @@ SystemNix manages 2 machines (macOS `Lars-MacBook-Air` + NixOS `evo-x2`) through
 
 ### Priority 1: Fix What's Broken (5 items)
 
-| #   | Task                                                                    | Effort  | Impact               |
-| --- | ----------------------------------------------------------------------- | ------- | -------------------- |
-| 1   | Fix `nix-ssh-config` duplicate `environment.etc` (fork or upstream fix) | Medium  | Unblocks all testing |
-| 2   | Remove duplicate packages (`jq`, `zellij`, `swappy`) from `home.nix`    | Trivial | Clean build          |
-| 3   | Fix `.gitignore` (prefix bare text lines 128-135, add `.direnv/`)       | Trivial | Repo hygiene         |
-| 4   | Fix pre-commit `sed` path for cross-platform compatibility              | Trivial | macOS CI works       |
-| 5   | Remove `.direnv/flake-profile*` from git tracking                       | Trivial | No broken symlinks   |
+| # | Task                                                                    | Effort  | Impact               |
+| - | ----------------------------------------------------------------------- | ------- | -------------------- |
+| 1 | Fix `nix-ssh-config` duplicate `environment.etc` (fork or upstream fix) | Medium  | Unblocks all testing |
+| 2 | Remove duplicate packages (`jq`, `zellij`, `swappy`) from `home.nix`    | Trivial | Clean build          |
+| 3 | Fix `.gitignore` (prefix bare text lines 128-135, add `.direnv/`)       | Trivial | Repo hygiene         |
+| 4 | Fix pre-commit `sed` path for cross-platform compatibility              | Trivial | macOS CI works       |
+| 5 | Remove `.direnv/flake-profile*` from git tracking                       | Trivial | No broken symlinks   |
 
 ### Priority 2: Close Open Loops (5 items)
 
-| #   | Task                                                                  | Effort   | Impact            |
-| --- | --------------------------------------------------------------------- | -------- | ----------------- |
-| 6   | Archive `docs/STATUS.md` to `docs/archive/status/`                    | Trivial  | No confusion      |
-| 7   | Delete orphaned `platforms/nixos/modules/dns-blocker.nix`             | Trivial  | Dead code removal |
-| 8   | Decide on `ai-stack.nix`: enable it or remove from evo-x2 module list | Decision | Clarity           |
-| 9   | Add `nix-colors` follows nixpkgs in flake.nix                         | Trivial  | Faster eval       |
-| 10  | Run `nix flake update` — nixpkgs is 9 days stale                      | Trivial  | Security patches  |
+| #  | Task                                                                  | Effort   | Impact            |
+| -- | --------------------------------------------------------------------- | -------- | ----------------- |
+| 6  | Archive `docs/STATUS.md` to `docs/archive/status/`                    | Trivial  | No confusion      |
+| 7  | Delete orphaned `platforms/nixos/modules/dns-blocker.nix`             | Trivial  | Dead code removal |
+| 8  | Decide on `ai-stack.nix`: enable it or remove from evo-x2 module list | Decision | Clarity           |
+| 9  | Add `nix-colors` follows nixpkgs in flake.nix                         | Trivial  | Faster eval       |
+| 10 | Run `nix flake update` — nixpkgs is 9 days stale                      | Trivial  | Security patches  |
 
 ### Priority 3: Deploy & Verify (8 items — all need evo-x2 access)
 
-| #   | Task                                        | Effort | Impact                |
-| --- | ------------------------------------------- | ------ | --------------------- |
-| 11  | P1-7: Move Taskwarrior encryption to sops   | Medium | Security              |
-| 12  | P1-9: Pin Docker digest for Voice Agents    | Medium | Supply chain security |
-| 13  | P1-10: Pin Docker digest for PhotoMap       | Medium | Supply chain security |
-| 14  | P5-38: Verify SigNoz dashboards configured  | Low    | Observability         |
-| 15  | P5-42: Test Authelia SSO login flow         | Low    | Security              |
-| 16  | P5-44: Test Hermes Discord bot connectivity | Low    | Functionality         |
-| 17  | P5-45: Verify Homepage health checks green  | Low    | Monitoring            |
-| 18  | P5-39: Verify Immich ML pipeline works      | Low    | Functionality         |
+| #  | Task                                        | Effort | Impact                |
+| -- | ------------------------------------------- | ------ | --------------------- |
+| 11 | P1-7: Move Taskwarrior encryption to sops   | Medium | Security              |
+| 12 | P1-9: Pin Docker digest for Voice Agents    | Medium | Supply chain security |
+| 13 | P1-10: Pin Docker digest for PhotoMap       | Medium | Supply chain security |
+| 14 | P5-38: Verify SigNoz dashboards configured  | Low    | Observability         |
+| 15 | P5-42: Test Authelia SSO login flow         | Low    | Security              |
+| 16 | P5-44: Test Hermes Discord bot connectivity | Low    | Functionality         |
+| 17 | P5-45: Verify Homepage health checks green  | Low    | Monitoring            |
+| 18 | P5-39: Verify Immich ML pipeline works      | Low    | Functionality         |
 
 ### Priority 4: UX Polish & Features (7 items)
 
-| #   | Task                                                                        | Effort  | Impact                 |
-| --- | --------------------------------------------------------------------------- | ------- | ---------------------- |
-| 19  | Add niri keybind for Zellij dev layout (`Mod+Shift+D`)                      | Trivial | Workflow speed         |
-| 20  | Add disk usage module to Waybar (BTRFS pool monitoring)                     | Low     | Monitoring at a glance |
-| 21  | Add idle-inhibit to Waybar (toggle: keep screen on)                         | Low     | Media viewing UX       |
-| 22  | Configure Kitty tab/split keybinds consistent with niri                     | Low     | Muscle memory          |
-| 23  | Add custom Rofi power menu theme matching wlogout style                     | Medium  | Visual consistency     |
-| 24  | Research Waybar `group` modules for collapsible sections                    | Medium  | Clean bar when idle    |
-| 25  | Add systemd service for automatic wallpaper rotation (timed, not just boot) | Low     | Ambient UX             |
+| #  | Task                                                                        | Effort  | Impact                 |
+| -- | --------------------------------------------------------------------------- | ------- | ---------------------- |
+| 19 | Add niri keybind for Zellij dev layout (`Mod+Shift+D`)                      | Trivial | Workflow speed         |
+| 20 | Add disk usage module to Waybar (BTRFS pool monitoring)                     | Low     | Monitoring at a glance |
+| 21 | Add idle-inhibit to Waybar (toggle: keep screen on)                         | Low     | Media viewing UX       |
+| 22 | Configure Kitty tab/split keybinds consistent with niri                     | Low     | Muscle memory          |
+| 23 | Add custom Rofi power menu theme matching wlogout style                     | Medium  | Visual consistency     |
+| 24 | Research Waybar `group` modules for collapsible sections                    | Medium  | Clean bar when idle    |
+| 25 | Add systemd service for automatic wallpaper rotation (timed, not just boot) | Low     | Ambient UX             |
 
 ---
 

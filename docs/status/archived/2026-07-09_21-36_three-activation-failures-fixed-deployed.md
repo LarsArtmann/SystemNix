@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Context
 
 User pasted terminal output from a failed `nh os switch` activation. Three services failed:

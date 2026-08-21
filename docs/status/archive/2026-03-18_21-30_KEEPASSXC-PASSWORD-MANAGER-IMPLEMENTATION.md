@@ -220,8 +220,8 @@ Considered AliasVault as an alternative (see comparison below). While AliasVault
 | Self-hosted       | ❌ (local file) | ✅ (Docker)        |
 | Email Aliases     | ❌              | ✅ Built-in        |
 | Browser Extension | ✅              | ✅                 |
-| Mobile Apps       | ⚠️ Third-party  | ✅ Native          |
-| Sync              | ⚠️ File-based   | ✅ Cloud/Self-host |
+| Mobile Apps       | ⚠️ Third-party   | ✅ Native          |
+| Sync              | ⚠️ File-based    | ✅ Cloud/Self-host |
 | Server Required   | ❌              | ✅                 |
 | Identity Gen      | ❌              | ✅                 |
 

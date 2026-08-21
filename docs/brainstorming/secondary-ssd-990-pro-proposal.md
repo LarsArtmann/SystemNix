@@ -15,11 +15,11 @@ evo-x2 boots from a **Lexar NQ790** NVMe — a **QLC NAND** drive. QLC stores 4 
 
 ### Documented incidents caused by QLC on this machine
 
-| Incident | Root cause | Reference |
-|----------|-----------|-----------|
-| WDT hard resets (2026-06) | `discard=async` on QLC NAND caused 253ms discard latencies → 17.7s BTRFS commit freezes → watchdog reset | `AGENTS.md` gotcha table |
-| BTRFS metadata ENOSPC (2026-06-26) | Nightly `nix-gc` triggered metadata transactions on a full filesystem → I/O deadlock → WDT reset | `docs/troubleshooting/btrfs-metadata-enospc-recovery.md` |
-| Chronic GPUActive memory pressure | HMB (Host Memory Buffer) borrows system RAM for the SSD's FTL map because the NQ790 has no DRAM — competes with GPUActive's 51+ GiB | `AGENTS.md` Strix Halo section |
+| Incident                           | Root cause                                                                                                                          | Reference                                                |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| WDT hard resets (2026-06)          | `discard=async` on QLC NAND caused 253ms discard latencies → 17.7s BTRFS commit freezes → watchdog reset                            | `AGENTS.md` gotcha table                                 |
+| BTRFS metadata ENOSPC (2026-06-26) | Nightly `nix-gc` triggered metadata transactions on a full filesystem → I/O deadlock → WDT reset                                    | `docs/troubleshooting/btrfs-metadata-enospc-recovery.md` |
+| Chronic GPUActive memory pressure  | HMB (Host Memory Buffer) borrows system RAM for the SSD's FTL map because the NQ790 has no DRAM — competes with GPUActive's 51+ GiB | `AGENTS.md` Strix Halo section                           |
 
 ---
 
@@ -27,22 +27,22 @@ evo-x2 boots from a **Lexar NQ790** NVMe — a **QLC NAND** drive. QLC stores 4 
 
 Sources: Samsung official datasheet, Crucial official spec sheet, Tom's Hardware, TechPowerUp, Guru3D, SSD Wiki.
 
-| Spec | Lexar NQ790 (current) | Crucial P3 Plus 1TB | Samsung 990 PRO 1TB |
-|------|----------------------|---------------------|---------------------|
-| **NAND** | QLC | QLC (Micron 176-layer) | **TLC (Samsung V7, 176-layer)** |
-| **Controller** | Maxio MAP1602 | Phison PS5021-E21T | **Samsung Pascal (8nm)** |
-| **DRAM** | HMB (borrows system RAM) | None (HMB only, 64 MB) | **1 GB LPDDR4** |
-| **Seq Read** | ~7,000 MB/s | 5,000 MB/s | **7,450 MB/s** |
-| **Seq Write** | ~6,000 MB/s | 3,600 MB/s (1TB) | **6,900 MB/s** |
-| **Sustained Write (post-pSLC)** | Drops sharply (QLC) | ~100-200 MB/s (QLC cliff) | ~3,000+ MB/s (TLC, no cliff) |
-| **Random Read IOPS** | ~1,000K | ~650K (unofficial) | **1,200K** |
-| **Random Write IOPS** | ~800K | ~800K (unofficial) | **1,550K** |
-| **Endurance (TBW)** | ~600 TBW | **220 TBW** | 600 TBW |
-| **Warranty** | 5y | 5y | 5y |
-| **Form Factor** | M.2 2280 | M.2 2280 | M.2 2280 |
-| **Interface** | PCIe 4.0 x4 | PCIe 4.0 x4 | PCIe 4.0 x4 |
-| **Encryption** | AES-256 (no Opal) | None | **AES-256, Opal 2.0, IEEE 1667, eDrive** |
-| **Price (approx, new)** | ~$70-90 | ~$70-85 | ~$120-150 |
+| Spec                            | Lexar NQ790 (current)    | Crucial P3 Plus 1TB       | Samsung 990 PRO 1TB                      |
+| ------------------------------- | ------------------------ | ------------------------- | ---------------------------------------- |
+| **NAND**                        | QLC                      | QLC (Micron 176-layer)    | **TLC (Samsung V7, 176-layer)**          |
+| **Controller**                  | Maxio MAP1602            | Phison PS5021-E21T        | **Samsung Pascal (8nm)**                 |
+| **DRAM**                        | HMB (borrows system RAM) | None (HMB only, 64 MB)    | **1 GB LPDDR4**                          |
+| **Seq Read**                    | ~7,000 MB/s              | 5,000 MB/s                | **7,450 MB/s**                           |
+| **Seq Write**                   | ~6,000 MB/s              | 3,600 MB/s (1TB)          | **6,900 MB/s**                           |
+| **Sustained Write (post-pSLC)** | Drops sharply (QLC)      | ~100-200 MB/s (QLC cliff) | ~3,000+ MB/s (TLC, no cliff)             |
+| **Random Read IOPS**            | ~1,000K                  | ~650K (unofficial)        | **1,200K**                               |
+| **Random Write IOPS**           | ~800K                    | ~800K (unofficial)        | **1,550K**                               |
+| **Endurance (TBW)**             | ~600 TBW                 | **220 TBW**               | 600 TBW                                  |
+| **Warranty**                    | 5y                       | 5y                        | 5y                                       |
+| **Form Factor**                 | M.2 2280                 | M.2 2280                  | M.2 2280                                 |
+| **Interface**                   | PCIe 4.0 x4              | PCIe 4.0 x4               | PCIe 4.0 x4                              |
+| **Encryption**                  | AES-256 (no Opal)        | None                      | **AES-256, Opal 2.0, IEEE 1667, eDrive** |
+| **Price (approx, new)**         | ~$70-90                  | ~$70-85                   | ~$120-150                                |
 
 ### Key takeaways
 
@@ -77,10 +77,10 @@ The 990 PRO has the **full Opal stack**:
 
 The evo-x2 board (Strix Halo, AMD Ryzen AI Max+ 395) has **2 M.2 slots**, both PCIe 4.0 x4.
 
-| Slot | Drive | Role |
-|------|-------|------|
-| M.2_1 | Lexar NQ790 (QLC) | Boot (`/`), `/home`, `/data` (stays) |
-| M.2_2 | **Samsung 990 PRO (TLC)** | Write-heavy workloads |
+| Slot  | Drive                     | Role                                 |
+| ----- | ------------------------- | ------------------------------------ |
+| M.2_1 | Lexar NQ790 (QLC)         | Boot (`/`), `/home`, `/data` (stays) |
+| M.2_2 | **Samsung 990 PRO (TLC)** | Write-heavy workloads                |
 
 ### The Windows problem
 
@@ -96,15 +96,15 @@ The 990 PRO may have an old Windows install. Options:
 
 The highest-value move is moving the workloads that caused the QLC pain points:
 
-| Workload | Current (NQ790 QLC) | Proposed (990 PRO TLC) | Why |
-|----------|---------------------|------------------------|-----|
-| `/nix` store | Root `@` subvol | Separate `@nix` subvol | Millions of small writes during builds |
-| Go/Cargo/NPM caches | NQ790 subvols | 990 PRO | Sustained write pressure, no QLC cliff |
-| `/rust-cache` (`target/` dirs) | ext4 on NQ790 | ext4 on 990 PRO | 85K+ small files, heavy random IO |
-| monitor365 DuckDB | `/data` on NQ790 | Move to 990 PRO | WAL writes, DB checkpointing |
-| Docker volumes | `/data` on NQ790 | Consider for ClickHouse | Random write sensitivity |
-| Root `/` | NQ790 | Stays on NQ790 | Avoids reinstall; not write-hot |
-| `/home` media, photos | NQ790 | Stays on NQ790 | Mostly sequential reads |
+| Workload                       | Current (NQ790 QLC) | Proposed (990 PRO TLC)  | Why                                    |
+| ------------------------------ | ------------------- | ----------------------- | -------------------------------------- |
+| `/nix` store                   | Root `@` subvol     | Separate `@nix` subvol  | Millions of small writes during builds |
+| Go/Cargo/NPM caches            | NQ790 subvols       | 990 PRO                 | Sustained write pressure, no QLC cliff |
+| `/rust-cache` (`target/` dirs) | ext4 on NQ790       | ext4 on 990 PRO         | 85K+ small files, heavy random IO      |
+| monitor365 DuckDB              | `/data` on NQ790    | Move to 990 PRO         | WAL writes, DB checkpointing           |
+| Docker volumes                 | `/data` on NQ790    | Consider for ClickHouse | Random write sensitivity               |
+| Root `/`                       | NQ790               | Stays on NQ790          | Avoids reinstall; not write-hot        |
+| `/home` media, photos          | NQ790               | Stays on NQ790          | Mostly sequential reads                |
 
 ### Proposed config
 

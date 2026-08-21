@@ -186,7 +186,7 @@
 2. **Insights channel:** keep the shared alert webhook (current wiring: Discord
    gets raw+insight pairs in one channel), or do you want a dedicated
    channel/webhook for insights (requires you to create it; then one sops key
-   + `PAP_DISCORD_WEBHOOK` swap + redeploy)?
+   - `PAP_DISCORD_WEBHOOK` swap + redeploy)?
 3. **PapDashboard push before deploy:** the flake input must fetch a GitHub rev
    containing today's insight work. OK to rely on the auto-commit daemon's
    pushes to `origin/master` (verify rev, then lock), or do you want to review/

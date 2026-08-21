@@ -205,33 +205,33 @@ The `deadnix` check in `flake.nix` passes despite 33 warnings because deadnix re
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| #   | Priority | Task                                                                                | Effort | Impact                                     |
-| --- | -------- | ----------------------------------------------------------------------------------- | ------ | ------------------------------------------ |
-| 1   | 🔴 HIGH  | Fix 3 dead `let` bindings (twenty.nix, dns-blocker.nix, aw-watcher-utilization.nix) | 10min  | Eliminates dead code in production modules |
-| 2   | 🔴 HIGH  | Fix all 33 deadnix unused parameter warnings                                        | 30min  | Clean linting baseline                     |
-| 3   | 🔴 HIGH  | Make deadnix check strict (`--fail` flag) in flake.nix                              | 5min   | Prevents future dead code from merging     |
-| 4   | 🔴 HIGH  | Add systemd hardening to gitea-repos (currently zero)                               | 15min  | Security: unhardened service               |
-| 5   | 🔴 HIGH  | Add WatchdogSec + Restart to services missing them                                  | 30min  | Reliability: crash recovery                |
-| 6   | 🟡 MED   | Create `lib/systemd-harden.nix` shared helper                                       | 30min  | DRY: avoid 20 lines × 17 services          |
-| 7   | 🟡 MED   | Add `options` + `mkIf` to always-on service modules                                 | 1hr    | Enables per-host toggling                  |
-| 8   | 🟡 MED   | Add `.editorconfig`                                                                 | 5min   | Consistency across tools                   |
-| 9   | 🟡 MED   | Track/fix NixOS audit bug (security-hardening.nix TODOs)                            | 30min  | Security monitoring gap                    |
-| 10  | 🟡 MED   | Write top-level README.md                                                           | 30min  | Onboarding, discoverability                |
-| 11  | 🟡 MED   | Fix eval smoke tests (remove `\|\| true`)                                           | 15min  | Test reliability                           |
-| 12  | 🟡 MED   | Complete systemd hardening for partial services (twenty, comfyui, voice-agents)     | 30min  | Security consistency                       |
-| 13  | 🟡 MED   | Add `homepage` URL to emeet-pixyd meta                                              | 2min   | Package metadata completeness              |
-| 14  | 🟢 LOW   | Add GitHub Actions for `nix flake check` on push                                    | 30min  | Continuous quality gate                    |
-| 15  | 🟢 LOW   | Add Renovate for automated flake.lock updates                                       | 30min  | Dependency freshness                       |
-| 16  | 🟢 LOW   | Consolidate overlays to `overlays/` directory                                       | 1hr    | Code organization                          |
-| 17  | 🟢 LOW   | Add option `description` fields to all service modules                              | 30min  | Documentation                              |
-| 18  | 🟢 LOW   | Centralize sops config (shared `.sops.yaml`)                                        | 30min  | Config dedup                               |
-| 19  | 🟢 LOW   | Archive old status reports (39 in docs/status/)                                     | 5min   | Repo cleanliness                           |
-| 20  | 🟢 LOW   | Test Immich backup restore procedure                                                | 1hr    | Disaster recovery confidence               |
-| 21  | 🟢 LOW   | Test Twenty backup restore procedure                                                | 1hr    | Disaster recovery confidence               |
-| 22  | 🟢 LOW   | Add `docs/CONTRIBUTING.md` with module patterns                                     | 30min  | Contributor onboarding                     |
-| 23  | 🟢 LOW   | Replace `with pkgs;` with explicit `pkgs.` prefixes in service modules              | 1hr    | Static analysis friendliness               |
-| 24  | 🟢 LOW   | Add pre-commit hook for deadnix + statix                                            | 15min  | Catch issues before commit                 |
-| 25  | 🟢 LOW   | Add `nix flake check` timing benchmark to justfile                                  | 10min  | Build performance monitoring               |
+| #  | Priority | Task                                                                                | Effort | Impact                                     |
+| -- | -------- | ----------------------------------------------------------------------------------- | ------ | ------------------------------------------ |
+| 1  | 🔴 HIGH  | Fix 3 dead `let` bindings (twenty.nix, dns-blocker.nix, aw-watcher-utilization.nix) | 10min  | Eliminates dead code in production modules |
+| 2  | 🔴 HIGH  | Fix all 33 deadnix unused parameter warnings                                        | 30min  | Clean linting baseline                     |
+| 3  | 🔴 HIGH  | Make deadnix check strict (`--fail` flag) in flake.nix                              | 5min   | Prevents future dead code from merging     |
+| 4  | 🔴 HIGH  | Add systemd hardening to gitea-repos (currently zero)                               | 15min  | Security: unhardened service               |
+| 5  | 🔴 HIGH  | Add WatchdogSec + Restart to services missing them                                  | 30min  | Reliability: crash recovery                |
+| 6  | 🟡 MED   | Create `lib/systemd-harden.nix` shared helper                                       | 30min  | DRY: avoid 20 lines × 17 services          |
+| 7  | 🟡 MED   | Add `options` + `mkIf` to always-on service modules                                 | 1hr    | Enables per-host toggling                  |
+| 8  | 🟡 MED   | Add `.editorconfig`                                                                 | 5min   | Consistency across tools                   |
+| 9  | 🟡 MED   | Track/fix NixOS audit bug (security-hardening.nix TODOs)                            | 30min  | Security monitoring gap                    |
+| 10 | 🟡 MED   | Write top-level README.md                                                           | 30min  | Onboarding, discoverability                |
+| 11 | 🟡 MED   | Fix eval smoke tests (remove `\|\| true`)                                           | 15min  | Test reliability                           |
+| 12 | 🟡 MED   | Complete systemd hardening for partial services (twenty, comfyui, voice-agents)     | 30min  | Security consistency                       |
+| 13 | 🟡 MED   | Add `homepage` URL to emeet-pixyd meta                                              | 2min   | Package metadata completeness              |
+| 14 | 🟢 LOW   | Add GitHub Actions for `nix flake check` on push                                    | 30min  | Continuous quality gate                    |
+| 15 | 🟢 LOW   | Add Renovate for automated flake.lock updates                                       | 30min  | Dependency freshness                       |
+| 16 | 🟢 LOW   | Consolidate overlays to `overlays/` directory                                       | 1hr    | Code organization                          |
+| 17 | 🟢 LOW   | Add option `description` fields to all service modules                              | 30min  | Documentation                              |
+| 18 | 🟢 LOW   | Centralize sops config (shared `.sops.yaml`)                                        | 30min  | Config dedup                               |
+| 19 | 🟢 LOW   | Archive old status reports (39 in docs/status/)                                     | 5min   | Repo cleanliness                           |
+| 20 | 🟢 LOW   | Test Immich backup restore procedure                                                | 1hr    | Disaster recovery confidence               |
+| 21 | 🟢 LOW   | Test Twenty backup restore procedure                                                | 1hr    | Disaster recovery confidence               |
+| 22 | 🟢 LOW   | Add `docs/CONTRIBUTING.md` with module patterns                                     | 30min  | Contributor onboarding                     |
+| 23 | 🟢 LOW   | Replace `with pkgs;` with explicit `pkgs.` prefixes in service modules              | 1hr    | Static analysis friendliness               |
+| 24 | 🟢 LOW   | Add pre-commit hook for deadnix + statix                                            | 15min  | Catch issues before commit                 |
+| 25 | 🟢 LOW   | Add `nix flake check` timing benchmark to justfile                                  | 10min  | Build performance monitoring               |
 
 ---
 

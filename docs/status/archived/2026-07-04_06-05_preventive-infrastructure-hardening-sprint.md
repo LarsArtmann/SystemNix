@@ -8,7 +8,6 @@
 
 ---
 
-
 ## Executive Summary
 
 A focused sprint to **prevent the class of silent failures** discovered while debugging crush-daily ("No reports yet" for weeks) and monitor365 (`/ui/` 404). Both bugs shared a pattern: health checks confirmed the process was alive, but nobody verified the service was actually **functional**. This sprint closes that gap with three layers of defense:
@@ -154,33 +153,33 @@ Forgejo (Git history), Immich (photos), DiscordSync (Discord archive), Twenty (C
 
 ## f) Top 25 Things to Get Done Next
 
-| #   | Task                                                                    | Impact   | Effort       | Dependency          |
-| --- | ----------------------------------------------------------------------- | -------- | ------------ | ------------------- |
-| 1   | **Deploy ~36 undeployed commits** + reboot                              | Critical | 1 command    | Physical attendance |
-| 2   | **Run post-deploy smoke test** (automatic in deploy.sh)                 | Critical | Automatic    | Deploy              |
-| 3   | **Verify crush-daily collection** post-deploy                           | High     | Low          | Deploy              |
-| 4   | **Verify monitor365 `/ui/`** post-deploy                                | High     | Low          | Deploy              |
-| 5   | **Verify DiscordSync SSO** post-deploy                                  | High     | Low          | Deploy              |
-| 6   | **Verify Overview vHost** post-deploy                                   | High     | Low          | Deploy              |
-| 7   | **Off-site backup** (Hetzner StorageBox + BorgBackup)                   | Critical | Medium       | Provisioning        |
-| 8   | **Tune smoke test** — adjust patterns/skip thresholds based on live run | High     | Low          | Deploy              |
-| 9   | **Gatus maintenance windows** (suppress deploy alerts)                  | High     | Low          | —                   |
-| 10  | **Firewall deny-by-default** with explicit allowlist                    | High     | Medium       | —                   |
-| 11  | **BTRFS `/data` → `@data` subvolume** migration                         | High     | ~1h downtime | USB rescue boot     |
-| 12  | **DNS migration Phase 2a** (dnsblockd module rework)                    | High     | ~6h          | dnsblockd v0.2.0    |
-| 13  | **Caddy admin API hardening** (`admin off` + metrics)                   | High     | Medium       | Deploy test         |
-| 14  | **PostgreSQL textfile exporter**                                        | Medium   | Medium       | —                   |
-| 15  | **Caddy access logs → SigNoz** (filelog receiver)                       | Medium   | Medium       | —                   |
-| 16  | **Caddy upstream health checks** (`health_uri`)                         | High     | Medium       | —                   |
-| 17  | **Gatus → Homepage integration** (statusStyle dot)                      | Low      | Low          | —                   |
-| 18  | **DNS migration Phase 2b-3** (config + deploy + observe)                | High     | ~8h          | Phase 2a            |
-| 19  | **Hermes: SSH deploy key + fallback model** (manual)                    | Medium   | Low          | Blocked on human    |
-| 20  | **Split large modules** (signoz 705L, forgejo 583L)                     | Low      | Medium       | —                   |
-| 21  | **Typed NixOS module options** (ports, paths, timeouts)                 | Low      | High         | Incremental         |
-| 22  | **Upstream nixpkgs PRs**                                                | Low      | Medium       | Community benefit   |
-| 23  | **Test ProtectHome hook** — stage a violating file, verify it fires     | Medium   | Low          | —                   |
-| 24  | **Monitoring runbook review** — verify procedures work on live system   | Medium   | Low          | Deploy              |
-| 25  | **Cloud sync verification** — `gsutil ls gs://discordsync-backup`       | Low      | Low          | Deploy              |
+| #  | Task                                                                    | Impact   | Effort       | Dependency          |
+| -- | ----------------------------------------------------------------------- | -------- | ------------ | ------------------- |
+| 1  | **Deploy ~36 undeployed commits** + reboot                              | Critical | 1 command    | Physical attendance |
+| 2  | **Run post-deploy smoke test** (automatic in deploy.sh)                 | Critical | Automatic    | Deploy              |
+| 3  | **Verify crush-daily collection** post-deploy                           | High     | Low          | Deploy              |
+| 4  | **Verify monitor365 `/ui/`** post-deploy                                | High     | Low          | Deploy              |
+| 5  | **Verify DiscordSync SSO** post-deploy                                  | High     | Low          | Deploy              |
+| 6  | **Verify Overview vHost** post-deploy                                   | High     | Low          | Deploy              |
+| 7  | **Off-site backup** (Hetzner StorageBox + BorgBackup)                   | Critical | Medium       | Provisioning        |
+| 8  | **Tune smoke test** — adjust patterns/skip thresholds based on live run | High     | Low          | Deploy              |
+| 9  | **Gatus maintenance windows** (suppress deploy alerts)                  | High     | Low          | —                   |
+| 10 | **Firewall deny-by-default** with explicit allowlist                    | High     | Medium       | —                   |
+| 11 | **BTRFS `/data` → `@data` subvolume** migration                         | High     | ~1h downtime | USB rescue boot     |
+| 12 | **DNS migration Phase 2a** (dnsblockd module rework)                    | High     | ~6h          | dnsblockd v0.2.0    |
+| 13 | **Caddy admin API hardening** (`admin off` + metrics)                   | High     | Medium       | Deploy test         |
+| 14 | **PostgreSQL textfile exporter**                                        | Medium   | Medium       | —                   |
+| 15 | **Caddy access logs → SigNoz** (filelog receiver)                       | Medium   | Medium       | —                   |
+| 16 | **Caddy upstream health checks** (`health_uri`)                         | High     | Medium       | —                   |
+| 17 | **Gatus → Homepage integration** (statusStyle dot)                      | Low      | Low          | —                   |
+| 18 | **DNS migration Phase 2b-3** (config + deploy + observe)                | High     | ~8h          | Phase 2a            |
+| 19 | **Hermes: SSH deploy key + fallback model** (manual)                    | Medium   | Low          | Blocked on human    |
+| 20 | **Split large modules** (signoz 705L, forgejo 583L)                     | Low      | Medium       | —                   |
+| 21 | **Typed NixOS module options** (ports, paths, timeouts)                 | Low      | High         | Incremental         |
+| 22 | **Upstream nixpkgs PRs**                                                | Low      | Medium       | Community benefit   |
+| 23 | **Test ProtectHome hook** — stage a violating file, verify it fires     | Medium   | Low          | —                   |
+| 24 | **Monitoring runbook review** — verify procedures work on live system   | Medium   | Low          | Deploy              |
+| 25 | **Cloud sync verification** — `gsutil ls gs://discordsync-backup`       | Low      | Low          | Deploy              |
 
 ---
 

@@ -9,15 +9,15 @@
 
 Enabled dnsblockd's built-in `auth_token` feature by wiring a sops-encrypted token through an environment variable. The Quickshell DnsStatsWidget regression was identified and fixed in the same session.
 
-| File | Change | Status |
-|------|--------|--------|
-| `platforms/nixos/secrets/dnsblockd-auth.yaml` | New sops-encrypted secret (`dnsblockd_auth_token`, random 32-byte hex) | DONE |
-| `modules/nixos/services/sops.nix` | Secret decryption (owned `primaryUser:users`) + `dnsblockd-auth-env` template | DONE |
-| `modules/nixos/services/dns-blocker.nix:689` | Added `EnvironmentFile = [ "/run/secrets/rendered/dnsblockd-auth-env" ]` | DONE |
-| `pkgs/dms-plugins/systemnix-dns-stats/DnsStatsWidget.qml` | Added `tokenPath` property + `sh -c` curl with Bearer header | DONE |
-| `platforms/nixos/desktop/quickshell.nix:75` | Added `tokenPath = "/run/secrets/dnsblockd_auth_token"` to widget settings | DONE |
-| `.crush/skills/sops-secret-management/SKILL.md` | Added `dnsblockd-auth.yaml` to encrypted files table | DONE |
-| `AGENTS.md` | Added auth_token pattern to DNS (dnsblockd) gotchas section | DONE |
+| File                                                      | Change                                                                        | Status |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------- | ------ |
+| `platforms/nixos/secrets/dnsblockd-auth.yaml`             | New sops-encrypted secret (`dnsblockd_auth_token`, random 32-byte hex)        | DONE   |
+| `modules/nixos/services/sops.nix`                         | Secret decryption (owned `primaryUser:users`) + `dnsblockd-auth-env` template | DONE   |
+| `modules/nixos/services/dns-blocker.nix:689`              | Added `EnvironmentFile = [ "/run/secrets/rendered/dnsblockd-auth-env" ]`      | DONE   |
+| `pkgs/dms-plugins/systemnix-dns-stats/DnsStatsWidget.qml` | Added `tokenPath` property + `sh -c` curl with Bearer header                  | DONE   |
+| `platforms/nixos/desktop/quickshell.nix:75`               | Added `tokenPath = "/run/secrets/dnsblockd_auth_token"` to widget settings    | DONE   |
+| `.crush/skills/sops-secret-management/SKILL.md`           | Added `dnsblockd-auth.yaml` to encrypted files table                          | DONE   |
+| `AGENTS.md`                                               | Added auth_token pattern to DNS (dnsblockd) gotchas section                   | DONE   |
 
 **Flake check:** `nix flake check --no-build` passes.
 
@@ -49,6 +49,7 @@ Enabled dnsblockd's built-in `auth_token` feature by wiring a sops-encrypted tok
 **Original problem:** The widget polled `/stats` with bare `curl -sf` (no auth header). Enabling `auth_token` would cause 401 → widget shows "DNS off" permanently.
 
 **Fix applied:**
+
 1. Changed sops secret owner from root to `primaryUser:users` — `/run/secrets/dnsblockd_auth_token` is now readable by the desktop user
 2. Added `tokenPath` property to `DnsStatsWidget.qml` — widget reads the token file and sends it as `Authorization: Bearer $(cat <tokenPath>)` via `sh -c`
 3. Passed `tokenPath = "/run/secrets/dnsblockd_auth_token"` through `quickshell.nix` plugin settings
@@ -59,6 +60,7 @@ Enabled dnsblockd's built-in `auth_token` feature by wiring a sops-encrypted tok
 ### Broken Token Retrieval Command
 
 The command I gave the user at the end of the session was **invalid bash**:
+
 ```bash
 # What I wrote (BROKEN — pipe + $(cat) doesn't work this way):
 sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key | \
@@ -86,8 +88,8 @@ SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key)
 6. **SKILL.md secrets table not updated** — The `.crush/skills/sops-secret-management/SKILL.md` has a table of all encrypted secret files. `dnsblockd-auth.yaml` is missing from it.
 
 ## f) REMAINING STEPS (user action required)
-> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
 
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
 
 1. ~~**Restart dnsblockd** — `sudo systemctl restart dnsblockd.service` (config is deployed but process not restarted due to tool security policy)~~ done (moot) — subsequent deploys (08-13/08-14) restarted dnsblockd; service healthy with auth config
 2. **Verify dashboard login** — Visit `https://dnsblock.home.lan/dashboard`, enter token, confirm stats load with top domains

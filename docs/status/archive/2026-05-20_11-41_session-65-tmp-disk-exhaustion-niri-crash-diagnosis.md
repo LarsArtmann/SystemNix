@@ -187,48 +187,48 @@ The niri "crashes" were NOT GPU/DRM failures (no amdgpu errors, no OOM kills). T
 
 ### Immediate (This Session)
 
-| #   | Task                                                                                          | Impact                          | Effort |
-| --- | --------------------------------------------------------------------------------------------- | ------------------------------- | ------ |
-| 1   | **Clean `/tmp` now** — remove 62 GB stale build caches                                        | Frees 12% root disk instantly   | 1 min  |
-| 2   | **Fix whisper-asr crash loop** — add tmpfiles rule for `/var/lib/whisper-asr`                 | Stops journal spam, reduces I/O | 5 min  |
-| 3   | **Fix monitor365 env var** — correct the broken `XDG_RUNTIME_DIR` config path                 | Service stops crashing          | 10 min |
-| 4   | **Investigate Hermes startup failure** — check logs, fix root cause                           | Discord bot comes back online   | 15 min |
-| 5   | **Deploy pending changes** — `just switch` to activate boot.tmp.cleanOnBoot + ollama wantedBy | Both fixes take effect          | 5 min  |
+| # | Task                                                                                          | Impact                          | Effort |
+| - | --------------------------------------------------------------------------------------------- | ------------------------------- | ------ |
+| 1 | **Clean `/tmp` now** — remove 62 GB stale build caches                                        | Frees 12% root disk instantly   | 1 min  |
+| 2 | **Fix whisper-asr crash loop** — add tmpfiles rule for `/var/lib/whisper-asr`                 | Stops journal spam, reduces I/O | 5 min  |
+| 3 | **Fix monitor365 env var** — correct the broken `XDG_RUNTIME_DIR` config path                 | Service stops crashing          | 10 min |
+| 4 | **Investigate Hermes startup failure** — check logs, fix root cause                           | Discord bot comes back online   | 15 min |
+| 5 | **Deploy pending changes** — `just switch` to activate boot.tmp.cleanOnBoot + ollama wantedBy | Both fixes take effect          | 5 min  |
 
 ### Short Term (Next Session)
 
-| #   | Task                                                                             | Impact                                        | Effort |
-| --- | -------------------------------------------------------------------------------- | --------------------------------------------- | ------ |
-| 6   | **Clean `~/go` (11 GB)** — audit and remove stale GOPATH/module caches           | Recovers disk space                           | 10 min |
-| 7   | **Audit `~/.cache` (52 GB)** — clean HuggingFace, Go, browser caches             | Major space recovery                          | 15 min |
-| 8   | **Consolidate `/data/models` → `/data/ai/models`** — check if ai-migrate was run | Eliminates potential duplication (461+119 GB) | 30 min |
-| 9   | **Fix dnsblockd-cert-import user service** — NSS cert import failing since boot  | Browser trust for *.home.lan                  | 10 min |
-| 10  | **Add disk space monitoring** — gatus check for root disk > 85%                  | Early warning before exhaustion               | 15 min |
+| #  | Task                                                                             | Impact                                        | Effort |
+| -- | -------------------------------------------------------------------------------- | --------------------------------------------- | ------ |
+| 6  | **Clean `~/go` (11 GB)** — audit and remove stale GOPATH/module caches           | Recovers disk space                           | 10 min |
+| 7  | **Audit `~/.cache` (52 GB)** — clean HuggingFace, Go, browser caches             | Major space recovery                          | 15 min |
+| 8  | **Consolidate `/data/models` → `/data/ai/models`** — check if ai-migrate was run | Eliminates potential duplication (461+119 GB) | 30 min |
+| 9  | **Fix dnsblockd-cert-import user service** — NSS cert import failing since boot  | Browser trust for *.home.lan                  | 10 min |
+| 10 | **Add disk space monitoring** — gatus check for root disk > 85%                  | Early warning before exhaustion               | 15 min |
 
 ### Medium Term
 
-| #   | Task                                                                                        | Impact                               | Effort                |
-| --- | ------------------------------------------------------------------------------------------- | ------------------------------------ | --------------------- |
-| 11  | **Provision Pi 3 at remote site** — physical deployment + sops enrollment                   | DNS failover cluster goes live       | 1-2 hours on-site     |
-| 12  | **Lockfile dedup phase 3** — upstream changes for Go private repo shared inputs             | 23 fewer lock nodes, faster eval     | Requires upstream PRs |
-| 13  | **Archive old status reports** — move pre-session-60 to `archive/`                          | Cleaner docs directory               | 5 min                 |
-| 14  | **Evaluate `/tmp` as tmpfs** — benchmark nix build performance on tmpfs vs disk             | Faster builds, automatic cleanup     | 1 hour testing        |
-| 15  | **Docker storage audit** — verify all Docker data is on `/data/docker`, not root            | Prevent root disk surprises          | 15 min                |
-| 16  | **Automated vendor hash updates** — script that detects stale hashes and updates            | Reduces manual cascade fixing        | 2 hours               |
-| 17  | **whisper-asr module hardening** — add proper StateDirectory, Restart=on-failure with delay | Prevents future crash loops          | 20 min                |
-| 18  | **AGENTS.md update** — add whisper-asr/monitor365/hermes crash loop findings                | Future sessions avoid same debugging | 10 min                |
+| #  | Task                                                                                        | Impact                               | Effort                |
+| -- | ------------------------------------------------------------------------------------------- | ------------------------------------ | --------------------- |
+| 11 | **Provision Pi 3 at remote site** — physical deployment + sops enrollment                   | DNS failover cluster goes live       | 1-2 hours on-site     |
+| 12 | **Lockfile dedup phase 3** — upstream changes for Go private repo shared inputs             | 23 fewer lock nodes, faster eval     | Requires upstream PRs |
+| 13 | **Archive old status reports** — move pre-session-60 to `archive/`                          | Cleaner docs directory               | 5 min                 |
+| 14 | **Evaluate `/tmp` as tmpfs** — benchmark nix build performance on tmpfs vs disk             | Faster builds, automatic cleanup     | 1 hour testing        |
+| 15 | **Docker storage audit** — verify all Docker data is on `/data/docker`, not root            | Prevent root disk surprises          | 15 min                |
+| 16 | **Automated vendor hash updates** — script that detects stale hashes and updates            | Reduces manual cascade fixing        | 2 hours               |
+| 17 | **whisper-asr module hardening** — add proper StateDirectory, Restart=on-failure with delay | Prevents future crash loops          | 20 min                |
+| 18 | **AGENTS.md update** — add whisper-asr/monitor365/hermes crash loop findings                | Future sessions avoid same debugging | 10 min                |
 
 ### Longer Term / Strategic
 
-| #   | Task                                                                                      | Impact                             | Effort        |
-| --- | ----------------------------------------------------------------------------------------- | ---------------------------------- | ------------- |
-| 19  | **Cross-remote builds** — Darwin offloads to evo-x2                                       | Solves MacBook Air disk exhaustion | 3 hours setup |
-| 20  | **Unified backup strategy** — automated BTRFS snapshots for critical data                 | Disaster recovery                  | 4 hours       |
-| 21  | **IPv6 support** — evo-x2 has link-local only, Unbound `do-ip6=false` workaround in place | Future-proof networking            | 2 hours       |
-| 22  | **Secrets rotation** — rotate sops keys, age identities                                   | Security hygiene                   | 1 hour        |
-| 23  | **Test rpi3-dns build** — verify `nixosConfigurations.rpi3-dns` still builds              | Ensure Pi 3 image is current       | 10 min        |
-| 24  | **Service dependency graph** — document which services depend on which                    | Troubleshooting, startup ordering  | 2 hours       |
-| 25  | **Performance baseline** — record boot time, service start times, eval time               | Detect regressions                 | 1 hour        |
+| #  | Task                                                                                      | Impact                             | Effort        |
+| -- | ----------------------------------------------------------------------------------------- | ---------------------------------- | ------------- |
+| 19 | **Cross-remote builds** — Darwin offloads to evo-x2                                       | Solves MacBook Air disk exhaustion | 3 hours setup |
+| 20 | **Unified backup strategy** — automated BTRFS snapshots for critical data                 | Disaster recovery                  | 4 hours       |
+| 21 | **IPv6 support** — evo-x2 has link-local only, Unbound `do-ip6=false` workaround in place | Future-proof networking            | 2 hours       |
+| 22 | **Secrets rotation** — rotate sops keys, age identities                                   | Security hygiene                   | 1 hour        |
+| 23 | **Test rpi3-dns build** — verify `nixosConfigurations.rpi3-dns` still builds              | Ensure Pi 3 image is current       | 10 min        |
+| 24 | **Service dependency graph** — document which services depend on which                    | Troubleshooting, startup ordering  | 2 hours       |
+| 25 | **Performance baseline** — record boot time, service start times, eval time               | Detect regressions                 | 1 hour        |
 
 ---
 

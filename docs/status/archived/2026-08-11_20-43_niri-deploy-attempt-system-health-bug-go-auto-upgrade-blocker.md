@@ -8,32 +8,32 @@
 
 ## a) FULLY DONE
 
-| Item | Status | Notes |
-|------|--------|-------|
-| Prior session niri monitoring changes | Committed & present | `niri-config.nix` grace period (6 refs), gatus debug check (2 refs), pre-deploy-check metrics (3 refs) — all survived auto-git daemon |
-| go-auto-upgrade flake.lock investigation | Complete | Discovered the flake.lock `go-auto-upgrade` node (v0.3.0) belongs to `buildflow`, NOT SystemNix's root input. Root input maps to `go-auto-upgrade_2` which was already correctly locked to master@`2101a66` (github type). No lock fix needed. |
-| go-auto-upgrade temporarily disabled | Committed (`5f948e0d`) | `go-auto-upgrade = null` in `lib/lars-packages.nix`. Unblocks deploy. |
-| Root-caused `system_health.prom` parse failure | Complete | Two lines emit `[not set]` as metric value for inactive services (discordsync, projects-management-automation). `systemctl show -p MemoryCurrent --value` returns `[not set]` for stopped services. The empty-string guard `${mem_bytes:-0}` doesn't catch this sentinel. This causes `node_textfile_scrape_error 1`, rejecting ALL `system_*` metrics from Prometheus. |
-| Root-caused `niri.prom` malformation | Complete | Old script emits bare `0` on separate lines (from `wc -l` output not captured properly). Also contributes to textfile parse errors. |
+| Item                                           | Status                 | Notes                                                                                                                                                                                                                                                                                                                                                                   |
+| ---------------------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Prior session niri monitoring changes          | Committed & present    | `niri-config.nix` grace period (6 refs), gatus debug check (2 refs), pre-deploy-check metrics (3 refs) — all survived auto-git daemon                                                                                                                                                                                                                                   |
+| go-auto-upgrade flake.lock investigation       | Complete               | Discovered the flake.lock `go-auto-upgrade` node (v0.3.0) belongs to `buildflow`, NOT SystemNix's root input. Root input maps to `go-auto-upgrade_2` which was already correctly locked to master@`2101a66` (github type). No lock fix needed.                                                                                                                          |
+| go-auto-upgrade temporarily disabled           | Committed (`5f948e0d`) | `go-auto-upgrade = null` in `lib/lars-packages.nix`. Unblocks deploy.                                                                                                                                                                                                                                                                                                   |
+| Root-caused `system_health.prom` parse failure | Complete               | Two lines emit `[not set]` as metric value for inactive services (discordsync, projects-management-automation). `systemctl show -p MemoryCurrent --value` returns `[not set]` for stopped services. The empty-string guard `${mem_bytes:-0}` doesn't catch this sentinel. This causes `node_textfile_scrape_error 1`, rejecting ALL `system_*` metrics from Prometheus. |
+| Root-caused `niri.prom` malformation           | Complete               | Old script emits bare `0` on separate lines (from `wc -l` output not captured properly). Also contributes to textfile parse errors.                                                                                                                                                                                                                                     |
 
 ---
 
 ## b) PARTIALLY DONE
 
-| Item | Status | What's left |
-|------|--------|-------------|
-| system-health.nix `[not set]` fix | **EDIT LOST** | I applied the fix (adding `[ "$mem_bytes" = "[not set]" ] && mem_bytes=0`), but it was NOT committed by the auto-git daemon before the session was interrupted. The file currently has the OLD buggy code. The fix must be re-applied. |
-| `nix fmt` + `nix flake check --no-build` | **INTERRUPTED** | The `nix fmt` command was running when the user interrupted. Formatting status unknown. Flake check status unknown. |
-| Pre-deploy-check | Blocked | 15 phantom metrics because `system_health.prom` parse error blocks ALL system_ metrics. The temp workaround file (`niri_fix.prom`) was created but is now GONE (cleaned up by something). |
+| Item                                     | Status          | What's left                                                                                                                                                                                                                            |
+| ---------------------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| system-health.nix `[not set]` fix        | **EDIT LOST**   | I applied the fix (adding `[ "$mem_bytes" = "[not set]" ] && mem_bytes=0`), but it was NOT committed by the auto-git daemon before the session was interrupted. The file currently has the OLD buggy code. The fix must be re-applied. |
+| `nix fmt` + `nix flake check --no-build` | **INTERRUPTED** | The `nix fmt` command was running when the user interrupted. Formatting status unknown. Flake check status unknown.                                                                                                                    |
+| Pre-deploy-check                         | Blocked         | 15 phantom metrics because `system_health.prom` parse error blocks ALL system_ metrics. The temp workaround file (`niri_fix.prom`) was created but is now GONE (cleaned up by something).                                              |
 
 ---
 
 ## c) NOT STARTED
 
-| Item | Why |
-|------|-----|
-| Deploy (`nix run .#deploy`) | Never attempted — blocked by pre-deploy-check failures and missing system-health fix |
-| Runtime verification of niri metrics | Depends on deploy |
+| Item                                              | Why                                                                                        |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Deploy (`nix run .#deploy`)                       | Never attempted — blocked by pre-deploy-check failures and missing system-health fix       |
+| Runtime verification of niri metrics              | Depends on deploy                                                                          |
 | Verifying other Go packages for vendorHash issues | Never tested — the nixpkgs bump may have invalidated crush-daily, monitor365, hermes, etc. |
 
 ---

@@ -7,7 +7,6 @@
 
 ---
 
-
 ## A. Fully Done
 
 1. **Diagnosed root cause** — `nix flake update` pulled two upstream commits that broke the `outputs` function contract:
@@ -63,23 +62,27 @@ Nothing partial — the fix is complete and verified.
 ## F. Next 50 Things to Get Done
 
 ### Immediate (this session's gaps)
+
 1. Run `nh os boot . -v --show-activation-logs --keep-going` to complete the user's original command
 2. Run `nix run .#post-deploy-check` after boot to verify services are functional
 3. File upstream issue/PR on `mr-sync` to add `...` to `outputs` params
 4. Once upstream fixes mr-sync, unpin back to `ref=master`
 
 ### Upstream standardization
+
 5. Audit ALL LarsArtmann flake repos for missing `...` in `outputs` params
 6. Create a template/standard that all repos use `inputs@{ self, ... }:` pattern
 7. Add a `flake-check` CI step upstream that validates `outputs` accepts all declared inputs
 
 ### Build robustness
+
 8. Add a pre-deploy-check rule that evaluates all consumed flake packages before allowing deploy
 9. Consider pinning ALL LarsArtmann tool repos to tags instead of `ref=master` (reduces `nix flake update` surprise breaks)
 10. Add `nix flake check --no-build` as a gate before `nh os boot` in the deploy script
 11. Document the "outputs signature without `...`" failure class in the contributing guide
 
 ### SystemNix maintenance
+
 12. Run `nix run .#deploy` to activate the new generation
 13. Verify all Gatus health checks pass post-deploy
 14. Check if any other updated inputs (buildflow, discordsync, go-cqrs-lite, etc.) introduced behavioral changes
@@ -91,22 +94,26 @@ Nothing partial — the fix is complete and verified.
 20. Run `nix fmt` to ensure formatting is clean after the edits
 
 ### Monitoring
+
 21. Verify Gatus "Build Check" endpoint (if any) reports healthy
 22. Verify the deploy didn't break any service startup ordering
 23. Check Discord alerts for any new failures post-deploy
 
 ### Documentation
+
 24. Update TODO_LIST.md if the mr-sync pin needs tracking
 25. Consider adding a "flake update safety checklist" to docs/CONTRIBUTING.md
 26. Add the `outputs without ...` pattern to the nix-review skill's checklist
 
 ### Technical debt
+
 27. The `hierarchical-errors` input has a stale comment about `go-finding: NOT followed` — verify if this is still accurate after the update
 28. The `branching-flow` overrideVendorHash pattern should be documented better
 29. Audit whether any `flakePkg` entries return `null` silently (filtered by `filterAttrs`)
 30. Consider adding `nix flake update --dry-run` equivalent or pre-check
 
 ### Architecture
+
 31. Consider a `mkFlakeInput` helper that enforces `...` in outputs by wrapping consumption
 32. Evaluate whether SystemNix should vendor critical tool flakes instead of following master
 33. Consider a daily CI job that runs `nix flake update --no-write-lock-file` to detect upstream breaks early
@@ -114,6 +121,7 @@ Nothing partial — the fix is complete and verified.
 35. Document which inputs are safe to follow `master` vs which should be pinned to tags
 
 ### Quality
+
 36. Run statix check on flake.nix after edits
 37. Run deadnix check on flake.nix after edits
 38. Verify no new eval warnings were introduced
@@ -121,6 +129,7 @@ Nothing partial — the fix is complete and verified.
 40. Run `nix flake show` to verify all packages resolve
 
 ### Deploy verification
+
 41. After `nh os boot`, verify the bootloader entry was created
 42. Check `journalctl -b 0` for any boot-time issues after reboot
 43. Verify systemd service start-limit counters are clean
@@ -128,6 +137,7 @@ Nothing partial — the fix is complete and verified.
 45. Verify DNS resolution still works (dnsblockd dependency chain)
 
 ### Cleanup
+
 46. Remove any stale nix store entries from failed builds (`nix-build-cleanup`)
 47. Run `nix-collect-garbage` after successful deploy
 48. Verify `/nix/var/nix/builds` isn't accumulating

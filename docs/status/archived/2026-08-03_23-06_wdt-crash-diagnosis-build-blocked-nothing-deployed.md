@@ -5,7 +5,6 @@
 
 ---
 
-
 ## Executive Summary
 
 System hard-reset at 22:03 via hardware watchdog timer (sp5100-tco). Root cause found:
@@ -36,6 +35,7 @@ I found and fixed the root cause, wrote a DiscordSync DB recovery script, and tr
 User correctly called this out as "very stupid" — destructive data loss.
 
 **V2 (CURRENT):** Recovery cascade that preserves maximum data:
+
 1. `PRAGMA integrity_check` — if `ok`, proceed normally
 2. If corrupt → back up DB for forensics
 3. Run `sqlite3 .recover` — scans pages directly, bypasses damaged B-tree, rebuilds with salvageable rows
@@ -47,6 +47,7 @@ User correctly called this out as "very stupid" — destructive data loss.
 ### 3. AGENTS.md Documentation
 
 Added two gotcha entries:
+
 - `builtins.toString null` silent slice bug (root cause)
 - DiscordSync SQLite corruption self-healing
 
@@ -71,6 +72,7 @@ Updated `monitor365` → `588ef725` and `go-cqrs-lite` → `8d675907` to fix bui
 ### Deploy
 
 Attempted 3 times. All failed. Generation mismatch confirmed:
+
 ```
 Deployed: ...26.11.20260801.148bab9  (OLD — from previous session)
 Eval:     ...26.11.20260802.6438090  (NEW — won't build)
@@ -242,6 +244,7 @@ improvements on top. Instead I have 4 commits of fixes that can't deploy.
 ### 1. Should I pin monitor365 to the last known-working commit?
 
 The current master (`588ef72`) still has the libspa-sys `[lints]` issue. I can either:
+
 - (a) Pin to the last working commit (I don't know which one worked — the previous
   session updated it and I don't have the old hash)
 - (b) Fix it upstream in the monitor365 repo by stripping `[lints]` from vendored
@@ -265,6 +268,7 @@ the deploy to fix it automatically?
 
 The user-1000.slice cap is 56G/64G (High/Max). System services currently use ~15 GB
 on average but spike higher during monitor365 backlog processing. Options:
+
 - (a) 80G MemoryMax (leaves ~14G for kernel + user slice headroom)
 - (b) 70G MemoryMax (tighter, leaves more for user slice)
 - (c) No system.slice cap, rely only on per-service MemoryMax limits
@@ -276,24 +280,24 @@ session memory headroom?
 
 ## Timeline of This Session
 
-| Time | Event |
-|------|-------|
-| ~22:05 | Started investigating crash |
-| ~22:10 | Found WDT reset reason in kernel log |
-| ~22:15 | Found oomd kills, memory pressure cascade |
-| ~22:20 | **Found root cause:** `toString null` = `""` in boot.nix |
-| ~22:25 | Fixed boot.nix (hardcode `"user-1000"`) |
-| ~22:28 | Wrote V1 db-heal (destructive — just deleted corrupt DB) |
-| ~22:30 | Wrote first status report |
-| ~22:32 | Added AGENTS.md documentation |
-| ~22:34 | First deploy attempt → **FAILED** (monitor365 libspa-sys) |
-| ~22:38 | Updated monitor365 flake input |
-| ~22:40 | Second deploy attempt → **FAILED** (cqrs-lint go.mod drift) |
-| ~22:43 | Updated go-cqrs-lite flake input |
+| Time   | Event                                                                  |
+| ------ | ---------------------------------------------------------------------- |
+| ~22:05 | Started investigating crash                                            |
+| ~22:10 | Found WDT reset reason in kernel log                                   |
+| ~22:15 | Found oomd kills, memory pressure cascade                              |
+| ~22:20 | **Found root cause:** `toString null` = `""` in boot.nix               |
+| ~22:25 | Fixed boot.nix (hardcode `"user-1000"`)                                |
+| ~22:28 | Wrote V1 db-heal (destructive — just deleted corrupt DB)               |
+| ~22:30 | Wrote first status report                                              |
+| ~22:32 | Added AGENTS.md documentation                                          |
+| ~22:34 | First deploy attempt → **FAILED** (monitor365 libspa-sys)              |
+| ~22:38 | Updated monitor365 flake input                                         |
+| ~22:40 | Second deploy attempt → **FAILED** (cqrs-lint go.mod drift)            |
+| ~22:43 | Updated go-cqrs-lite flake input                                       |
 | ~22:45 | Third deploy attempt → **FAILED** (monitor365 libspa-sys still broken) |
-| ~22:50 | User called out destructive DB recovery as "very stupid" |
-| ~22:55 | Rewrote db-heal with `.recover` cascade |
-| 23:06 | This report |
+| ~22:50 | User called out destructive DB recovery as "very stupid"               |
+| ~22:55 | Rewrote db-heal with `.recover` cascade                                |
+| 23:06  | This report                                                            |
 
 ---
 

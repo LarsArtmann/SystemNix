@@ -52,21 +52,21 @@ Removed DONE items (oomd tuning, Docker memory limits, dev-build I/O throttling,
 
 ### 9. ANNOTATE — 10 of 35 reports fully inline-resolved (every numbered item checked)
 
-| Report | Items resolved |
-|---|---|
+| Report                                   | Items resolved                                                                                             |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | 08-12_10-20 comprehensive-session-review | ~17 struck with hashes (`d57c1210`, `3ef0f26a`, `73aef2b`, `d2138202`, `9b6590bf`, `7afab3f8`, `5b9f596a`) |
-| 08-12_10-48 server-alive | ~19 |
-| 08-12_13-05 overview-hermes-pma | items 4-10 |
-| 08-12_14-03 pma-cli-oomd | ~18 (`ef863c26`, `17731861`, `9b6590bf`) |
-| 08-12_14-17 oidc-secret-desync | 10 (`84c44f1b`, `a941f88d`, `c39b6d50`) |
-| 08-12_14-25 dnsblockd-regression | 6 |
-| 08-12_14-55 dnsblockd-comprehensive | 5 |
-| 08-12_14-59 css-startlimit | 11 (`116051ee`, `72115c62`) |
-| 08-12_20-08 nix-daemon-oomd | 14 (`505ac4de`, `8ad493c9`, `7afab3f8`, `17731861`) |
-| 08-12_23-50 jscpd + nar-hash | 12 (`1d3a53a0`, `82963f04`, `caf2cab8`, `72115c62`) |
-| 08-13_01-50 clickhouse | 11 (`43e11db3`, `008b4c8b`, `c39b6d50`) |
+| 08-12_10-48 server-alive                 | ~19                                                                                                        |
+| 08-12_13-05 overview-hermes-pma          | items 4-10                                                                                                 |
+| 08-12_14-03 pma-cli-oomd                 | ~18 (`ef863c26`, `17731861`, `9b6590bf`)                                                                   |
+| 08-12_14-17 oidc-secret-desync           | 10 (`84c44f1b`, `a941f88d`, `c39b6d50`)                                                                    |
+| 08-12_14-25 dnsblockd-regression         | 6                                                                                                          |
+| 08-12_14-55 dnsblockd-comprehensive      | 5                                                                                                          |
+| 08-12_14-59 css-startlimit               | 11 (`116051ee`, `72115c62`)                                                                                |
+| 08-12_20-08 nix-daemon-oomd              | 14 (`505ac4de`, `8ad493c9`, `7afab3f8`, `17731861`)                                                        |
+| 08-12_23-50 jscpd + nar-hash             | 12 (`1d3a53a0`, `82963f04`, `caf2cab8`, `72115c62`)                                                        |
+| 08-13_01-50 clickhouse                   | 11 (`43e11db3`, `008b4c8b`, `c39b6d50`)                                                                    |
 
-Every resolution follows the skill grammar: full-line strikethrough + `done at \`hash\`` (variants: `done (moot)`, `done (superseded)`, `done — premise corrected`). Open items left untouched. No renumbering. The misleading "> Note: Done items are struck through" harvest notes that LIED (files had zero strikethroughs) are now true for these 10 files.
+Every resolution follows the skill grammar: full-line strikethrough + `done at \`hash\``(variants:`done (moot)`,`done (superseded)`,`done — premise corrected`). Open items left untouched. No renumbering. The misleading "> Note: Done items are struck through" harvest notes that LIED (files had zero strikethroughs) are now true for these 10 files.
 
 ---
 
@@ -111,7 +111,7 @@ The interrupt happened because I emitted a `multiedit` invocation with NO argume
 - FEATURES Gatus row: I wrote `| Gatus...` but the file had `|| Gatus...` (double pipe on a table row) — failed twice before `cat -A` revealed the byte-level truth
 - 14-03 items 25-29, 14-59 items 16-18, nar-hash items 3/6-7: failed on invisible whitespace deltas; recovered by re-viewing exact lines
 - jscpd: my first multiedit targeted section-e prose items instead of the section-f numbered list — **wrong section entirely**, no-op. Recovered with correct targets
-Each recovery worked, but 6 failures on 60+ edits is careless whitespace discipline.
+  Each recovery worked, but 6 failures on 60+ edits is careless whitespace discipline.
 
 ### 3. Annotation coverage numbers not honestly verifiable
 
@@ -145,6 +145,7 @@ I wrote `_Nothing pending — cut into [2026-08] below._` — new work since (in
 ## f) Up to 50 things to get done next
 
 ### Immediate (finish this audit)
+
 ~~1. Annotate 08-13_04-47 buildflow-templ~~ done — archived (`docs/status/archived/2026-08-13_04-47*`).
 ~~2. Annotate 08-13_05-48 comprehensive-fix-sweep~~ done — archived; session-reaper item lives on in TODO_LIST P3 (`expires_at` fix).
 ~~3. Annotate 08-13_09-06 hdmi-audio~~ done — archived (superseded by smart-audio).
@@ -160,6 +161,7 @@ I wrote `_Nothing pending — cut into [2026-08] below._` — new work since (in
 ~~13. Run `nix flake check --no-build` quality gate~~ done — green 2026-08-17 ("all checks passed").
 
 ### High (from this session's findings)
+
 14. AGENTS.md 72.6KB ← open — now ~80 KB; TODO_LIST Priority 6 "AGENTS.md compression session".
 15. Add WDT-08-11 chain narrative to `docs/gotchas-archive.md` ← open — TODO_LIST P6 narratives item.
 16. Add nix-daemon oomd kill chain narrative to gotchas-archive ← open — TODO_LIST P6 narratives item.
@@ -169,6 +171,7 @@ I wrote `_Nothing pending — cut into [2026-08] below._` — new work since (in
 20. Triage `docs/planning/` ← open — TODO_LIST P6.
 
 ### Carried (already in TODO_LIST, not re-listed here)
+
 21-50. See TODO_LIST.md Priorities 0-7 — this audit re-verified and re-routed all of them; nothing new to add without new session work.
 
 ---
@@ -191,13 +194,13 @@ The rubric calls >50KB "severely bloated." Getting under 30KB means moving the s
 
 ## Session Metrics
 
-| Metric | Value |
-|--------|-------|
-| Reports read | 35 non-archived (7,141 lines) + 35 archived spot-check |
-| Living docs updated | 5 (TODO_LIST rebuilt, CHANGELOG +11 entries + [2026-08] cut, FEATURES 17 edits, ROADMAP 5 edits, AGENTS +4 sections −9 stale entries) |
-| Reports inline-annotated | 10 of 35 (every numbered item checked; ~120 verdicts) |
-| Items archived | 0 (queued post-annotation) |
-| Edit failures | 6 (all recovered; 1 wrong-section no-op) |
-| Malformed tool calls | 1 (parameterless multiedit — cancelled) |
-| Commits | 0 mine — daemon swept all as `61a2224b` (+606/−234, 18 files, incl. 1 foreign file) |
-| Quality gate | NOT run (pending) |
+| Metric                   | Value                                                                                                                                 |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Reports read             | 35 non-archived (7,141 lines) + 35 archived spot-check                                                                                |
+| Living docs updated      | 5 (TODO_LIST rebuilt, CHANGELOG +11 entries + [2026-08] cut, FEATURES 17 edits, ROADMAP 5 edits, AGENTS +4 sections −9 stale entries) |
+| Reports inline-annotated | 10 of 35 (every numbered item checked; ~120 verdicts)                                                                                 |
+| Items archived           | 0 (queued post-annotation)                                                                                                            |
+| Edit failures            | 6 (all recovered; 1 wrong-section no-op)                                                                                              |
+| Malformed tool calls     | 1 (parameterless multiedit — cancelled)                                                                                               |
+| Commits                  | 0 mine — daemon swept all as `61a2224b` (+606/−234, 18 files, incl. 1 foreign file)                                                   |
+| Quality gate             | NOT run (pending)                                                                                                                     |

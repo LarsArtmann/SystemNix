@@ -19,65 +19,65 @@ This session resolved a **blocking Go module dependency chain** across 3 upstrea
 
 ### Session 28 — This Session
 
-| #   | Task                                              | Detail                                                                                                                                                       | Commit                            |
-| --- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
-| 1   | **Fix gogenfilter module path**                   | v3.0.0 had `module github.com/LarsArtmann/gogenfilter` but was tagged v3 — Go requires `/v3` suffix. Fixed in v3.0.1.                                        | `gogenfilter: 4a37f7c`            |
-| 2   | **Fix go-filewatcher imports**                    | Updated all Go imports from `gogenfilter` → `gogenfilter/v3`, including examples. Pushed as v0.2.2 pseudo-version.                                           | `go-filewatcher: 5fa4bb2`         |
-| 3   | **Fix file-and-image-renamer go.mod**             | Updated go-filewatcher dependency to the v3-compatible version. Resolved `+incompatible` module path mismatch.                                               | `file-and-image-renamer: 506ac73` |
-| 4   | **Update SystemNix flake.lock**                   | Updated `file-and-image-renamer-src` to rev `506ac73` with the fixed go.mod.                                                                                 | `SystemNix: cc486cd`              |
-| 5   | **Simplify file-and-image-renamer.nix postPatch** | Removed gogenfilter go.mod/go.sum substitution hacks (no longer needed since upstream is fixed). Removed broken `preBuild` block.                            | `SystemNix: cc486cd`              |
-| 6   | **Fix vendorHash**                                | Updated to `sha256-JPL3Am/8w3EccJaU/KN/NYyDEuLy+Y9GlSkV00i/DGc=` (correct hash for the new dependency tree).                                                 | `SystemNix: cc486cd`              |
-| 7   | **Fix waybar Restart conflict**                   | `home-manager`'s waybar module sets `Restart = "on-failure"`, our override set `Restart = "always"` — NixOS rejected the conflict. Fixed with `lib.mkForce`. | `SystemNix: 3219a34`              |
-| 8   | **Successful NixOS build**                        | `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel` succeeds. Full system closure builds.                                                  | N/A                               |
-| 9   | **Deploy via `nh os switch`**                     | Configuration activated. Crash recovery sysctls verified active (`sysrq=1`, `panic=30`, `softlockup_panic=1`, `hung_task_panic=1`, `watchdog_thresh=20`).    | N/A                               |
+| # | Task                                              | Detail                                                                                                                                                       | Commit                            |
+| - | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
+| 1 | **Fix gogenfilter module path**                   | v3.0.0 had `module github.com/LarsArtmann/gogenfilter` but was tagged v3 — Go requires `/v3` suffix. Fixed in v3.0.1.                                        | `gogenfilter: 4a37f7c`            |
+| 2 | **Fix go-filewatcher imports**                    | Updated all Go imports from `gogenfilter` → `gogenfilter/v3`, including examples. Pushed as v0.2.2 pseudo-version.                                           | `go-filewatcher: 5fa4bb2`         |
+| 3 | **Fix file-and-image-renamer go.mod**             | Updated go-filewatcher dependency to the v3-compatible version. Resolved `+incompatible` module path mismatch.                                               | `file-and-image-renamer: 506ac73` |
+| 4 | **Update SystemNix flake.lock**                   | Updated `file-and-image-renamer-src` to rev `506ac73` with the fixed go.mod.                                                                                 | `SystemNix: cc486cd`              |
+| 5 | **Simplify file-and-image-renamer.nix postPatch** | Removed gogenfilter go.mod/go.sum substitution hacks (no longer needed since upstream is fixed). Removed broken `preBuild` block.                            | `SystemNix: cc486cd`              |
+| 6 | **Fix vendorHash**                                | Updated to `sha256-JPL3Am/8w3EccJaU/KN/NYyDEuLy+Y9GlSkV00i/DGc=` (correct hash for the new dependency tree).                                                 | `SystemNix: cc486cd`              |
+| 7 | **Fix waybar Restart conflict**                   | `home-manager`'s waybar module sets `Restart = "on-failure"`, our override set `Restart = "always"` — NixOS rejected the conflict. Fixed with `lib.mkForce`. | `SystemNix: 3219a34`              |
+| 8 | **Successful NixOS build**                        | `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel` succeeds. Full system closure builds.                                                  | N/A                               |
+| 9 | **Deploy via `nh os switch`**                     | Configuration activated. Crash recovery sysctls verified active (`sysrq=1`, `panic=30`, `softlockup_panic=1`, `hung_task_panic=1`, `watchdog_thresh=20`).    | N/A                               |
 
 ### Prior Session Work (Verified Active)
 
-| #   | Task                                | Evidence                                                                                                                         |
-| --- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| 10  | **Crash recovery defense-in-depth** | `/proc/sys/kernel/sysrq = 1`, `panic = 30`, `softlockup_panic = 1`, `hung_task_panic = 1`, `watchdog_thresh = 20` — all verified |
-| 11  | **GPU metrics fix**                 | SigNoz GPU metrics script uses `tr -d '%\n'` instead of `${pct%?}` — committed in `b6ec972`                                      |
-| 12  | **DNS blocklist hash updates**      | HaGeZi DOH + hoster blocklists updated — committed in prior sessions                                                             |
-| 13  | **Nix GC tuning**                   | `max-free` → 100GB, `min-free` → 5GB — committed in `aafa1bb`                                                                    |
+| #  | Task                                | Evidence                                                                                                                         |
+| -- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| 10 | **Crash recovery defense-in-depth** | `/proc/sys/kernel/sysrq = 1`, `panic = 30`, `softlockup_panic = 1`, `hung_task_panic = 1`, `watchdog_thresh = 20` — all verified |
+| 11 | **GPU metrics fix**                 | SigNoz GPU metrics script uses `tr -d '%\n'` instead of `${pct%?}` — committed in `b6ec972`                                      |
+| 12 | **DNS blocklist hash updates**      | HaGeZi DOH + hoster blocklists updated — committed in prior sessions                                                             |
+| 13 | **Nix GC tuning**                   | `max-free` → 100GB, `min-free` → 5GB — committed in `aafa1bb`                                                                    |
 
 ---
 
 ## B) PARTIALLY DONE 🔶
 
-| #   | Task                            | Status                                                                     | What Remains                                                     |
-| --- | ------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| 1   | **NixOS deployment**            | Config built and activated, but 3 services failed                          | Caddy, ComfyUI, PhotoMap services need investigation and restart |
-| 2   | **Crash recovery verification** | Sysctls verified, but `watchdogd` service status unknown                   | Need `systemctl is-active watchdogd` (requires root)             |
-| 3   | **go-filewatcher v0.3.0 tag**   | Commit pushed, but git tag creation blocked by GPG signing + editor config | Need to create tag with `git -c commit.gpgSign=false tag v0.3.0` |
+| # | Task                            | Status                                                                     | What Remains                                                     |
+| - | ------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| 1 | **NixOS deployment**            | Config built and activated, but 3 services failed                          | Caddy, ComfyUI, PhotoMap services need investigation and restart |
+| 2 | **Crash recovery verification** | Sysctls verified, but `watchdogd` service status unknown                   | Need `systemctl is-active watchdogd` (requires root)             |
+| 3 | **go-filewatcher v0.3.0 tag**   | Commit pushed, but git tag creation blocked by GPG signing + editor config | Need to create tag with `git -c commit.gpgSign=false tag v0.3.0` |
 
 ---
 
 ## C) NOT STARTED ⬜
 
-| #   | Task                                                                | Notes                                           |
-| --- | ------------------------------------------------------------------- | ----------------------------------------------- |
-| 1   | Service health verification (whisper-asr, ollama, authelia, signoz) | Needs `systemctl` access or `nh` output parsing |
-| 2   | nix-collect-garbage -d                                              | Independent, safe to run anytime                |
-| 3   | docker system prune -af                                             | Independent, safe to run anytime                |
-| 4   | Immich backup restore test                                          | Blocked on service health verification          |
-| 5   | Build Pi 3 SD image                                                 | Requires hardware provisioning                  |
-| 6   | Fix root partition sizing                                           | Disk at 84%, needs planning                     |
-| 7   | GPU compute/display isolation research                              | Research task                                   |
-| 8   | Real-time niri session save                                         | Feature development                             |
-| 9   | Binary cache (Cachix) investigation                                 | Research task                                   |
-| 10  | Taskwarrior encryption → sops migration                             | WONTFIX by design (deterministic hash)          |
+| #  | Task                                                                | Notes                                           |
+| -- | ------------------------------------------------------------------- | ----------------------------------------------- |
+| 1  | Service health verification (whisper-asr, ollama, authelia, signoz) | Needs `systemctl` access or `nh` output parsing |
+| 2  | nix-collect-garbage -d                                              | Independent, safe to run anytime                |
+| 3  | docker system prune -af                                             | Independent, safe to run anytime                |
+| 4  | Immich backup restore test                                          | Blocked on service health verification          |
+| 5  | Build Pi 3 SD image                                                 | Requires hardware provisioning                  |
+| 6  | Fix root partition sizing                                           | Disk at 84%, needs planning                     |
+| 7  | GPU compute/display isolation research                              | Research task                                   |
+| 8  | Real-time niri session save                                         | Feature development                             |
+| 9  | Binary cache (Cachix) investigation                                 | Research task                                   |
+| 10 | Taskwarrior encryption → sops migration                             | WONTFIX by design (deterministic hash)          |
 
 ---
 
 ## D) TOTALLY FUCKED UP 💥
 
-| #   | Issue                                                   | Impact                                                                             | Root Cause                                                         | Status                            |
-| --- | ------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------ | --------------------------------- |
-| 1   | **3 services failed on deploy**                         | Caddy (reverse proxy), ComfyUI (AI image gen), PhotoMap (photo viewer) not running | Unknown — `nh os switch` reported failures but didn't show details | Needs investigation               |
-| 2   | **file-and-image-renamer local repo had no git remote** | Wasted time rebasing 200+ commits from diverged local/remote history               | Local clone was never connected to GitHub. Fixed by fresh clone.   | Resolved                          |
-| 3   | **`nixos-rebuild switch` requires root**                | Cannot deploy from non-root session                                                | Security restriction in this agent environment                     | Blocking — need `nh` or user sudo |
-| 4   | **cache.nixos.org unreachable**                         | Binary cache down, causing rebuilds from source                                    | DNS or network issue                                               | Transient                         |
-| 5   | **Memory: 41/62 GB used**                               | System under memory pressure at idle                                               | Hermes `generate_happy_girl.py` consuming 4.1 GB RSS               | Known, accepted                   |
+| # | Issue                                                   | Impact                                                                             | Root Cause                                                         | Status                            |
+| - | ------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------ | --------------------------------- |
+| 1 | **3 services failed on deploy**                         | Caddy (reverse proxy), ComfyUI (AI image gen), PhotoMap (photo viewer) not running | Unknown — `nh os switch` reported failures but didn't show details | Needs investigation               |
+| 2 | **file-and-image-renamer local repo had no git remote** | Wasted time rebasing 200+ commits from diverged local/remote history               | Local clone was never connected to GitHub. Fixed by fresh clone.   | Resolved                          |
+| 3 | **`nixos-rebuild switch` requires root**                | Cannot deploy from non-root session                                                | Security restriction in this agent environment                     | Blocking — need `nh` or user sudo |
+| 4 | **cache.nixos.org unreachable**                         | Binary cache down, causing rebuilds from source                                    | DNS or network issue                                               | Transient                         |
+| 5 | **Memory: 41/62 GB used**                               | System under memory pressure at idle                                               | Hermes `generate_happy_girl.py` consuming 4.1 GB RSS               | Known, accepted                   |
 
 ---
 

@@ -6,26 +6,25 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 ### 1. Read and classified all 11 `2026-07-2*` files ✅
 
 Every file read in full before any annotation. Classification:
 
-| File | Decision | Rationale |
-|------|----------|-----------|
-| Pareto plan (`docs/planning/2026-07-21_14-41_*`) | ANNOTATE | 9 findings all shipped; success criteria checkboxes were all unchecked; stale |
-| Post-deploy-check false-positives (`docs/status/2026-07-21_13-40_*`) | ANNOTATE | "Final State" claimed `/data/.snapshots` missing and changes not deployed — both now fixed |
-| qmd refactor (`docs/status/2026-07-21_13-43_*`) | ANNOTATE | Ended with "Wait for instructions" and mixed git state — both resolved (committed `bb37ad2a`, deployed) |
-| Renamer 500 fix (`docs/status/2026-07-21_14-40_*`) | ANNOTATE | TL;DR said "awaiting user instructions" for split-brain — resolved in follow-up session |
-| Pareto execution status (`docs/status/2026-07-21_16-44_*`) | ANNOTATE | "2 graphical collectors remain non-functional" and scorecard — all fixed in `a000fe0c` |
-| Monitor365 graphical collectors (`docs/status/2026-07-22_03-49_monitor365-*`) | ANNOTATE | "All changes are unverified in production" — deployed in `a000fe0c` |
-| SSH timeout / bun memory (`docs/status/2026-07-22_03-49_ssh-*`) | ANNOTATE | "NOT DEPLOYED — sits uncommitted" — shipped in `a000fe0c` |
-| PMA watcher fix (`docs/status/2026-07-21_14-41_pma-*`) | SKIP | Already accurate — fix shipped, auto-commit blocker honestly reported as open |
-| Renamer split-brain resolution (`docs/status/2026-07-21_15-14_*`) | LEAVE ALONE | Resolution report — all tasks done, nothing stale |
-| DiscordSync deep-dive HTML (`docs/research/2026-07-21_discordsync-*`) | LEAVE ALONE | Point-in-time audit, referenced by the Pareto plan |
-| Monitor365 deep-dive HTML (`docs/research/2026-07-21_monitor365-*`) | LEAVE ALONE | Point-in-time audit, referenced by the Pareto plan |
+| File                                                                          | Decision    | Rationale                                                                                               |
+| ----------------------------------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------- |
+| Pareto plan (`docs/planning/2026-07-21_14-41_*`)                              | ANNOTATE    | 9 findings all shipped; success criteria checkboxes were all unchecked; stale                           |
+| Post-deploy-check false-positives (`docs/status/2026-07-21_13-40_*`)          | ANNOTATE    | "Final State" claimed `/data/.snapshots` missing and changes not deployed — both now fixed              |
+| qmd refactor (`docs/status/2026-07-21_13-43_*`)                               | ANNOTATE    | Ended with "Wait for instructions" and mixed git state — both resolved (committed `bb37ad2a`, deployed) |
+| Renamer 500 fix (`docs/status/2026-07-21_14-40_*`)                            | ANNOTATE    | TL;DR said "awaiting user instructions" for split-brain — resolved in follow-up session                 |
+| Pareto execution status (`docs/status/2026-07-21_16-44_*`)                    | ANNOTATE    | "2 graphical collectors remain non-functional" and scorecard — all fixed in `a000fe0c`                  |
+| Monitor365 graphical collectors (`docs/status/2026-07-22_03-49_monitor365-*`) | ANNOTATE    | "All changes are unverified in production" — deployed in `a000fe0c`                                     |
+| SSH timeout / bun memory (`docs/status/2026-07-22_03-49_ssh-*`)               | ANNOTATE    | "NOT DEPLOYED — sits uncommitted" — shipped in `a000fe0c`                                               |
+| PMA watcher fix (`docs/status/2026-07-21_14-41_pma-*`)                        | SKIP        | Already accurate — fix shipped, auto-commit blocker honestly reported as open                           |
+| Renamer split-brain resolution (`docs/status/2026-07-21_15-14_*`)             | LEAVE ALONE | Resolution report — all tasks done, nothing stale                                                       |
+| DiscordSync deep-dive HTML (`docs/research/2026-07-21_discordsync-*`)         | LEAVE ALONE | Point-in-time audit, referenced by the Pareto plan                                                      |
+| Monitor365 deep-dive HTML (`docs/research/2026-07-21_monitor365-*`)           | LEAVE ALONE | Point-in-time audit, referenced by the Pareto plan                                                      |
 
 **7 annotated, 2 skipped, 2 left alone.** Every annotation cites specific commit hashes and resolves specific stale claims. No generic banners.
 
@@ -39,12 +38,14 @@ Every file read in full before any annotation. Classification:
 ### 3. docs-health: TODO_LIST.md full rebuild ✅
 
 The TODO_LIST had severe structural decay:
+
 - **"Recently Completed (Session 2026-07-13)"** section — 6 done items duplicating CHANGELOG
 - **Entire "Priority 0: DNS Migration — ✅ CODE COMPLETE"** section — ~18 done items, migration shipped
 - **10+ done items** scattered across Priority 0-1 (crush-daily ProtectHome, monitor365 displayUser, DiscordSync SSO vHost, overview vHost, post-deploy-check in deploy.sh, signoz-provision — all verified as shipped)
 - Header was 9 days stale ("Updated: 2026-07-13")
 
 Rebuilt from scratch:
+
 - Removed all completed items (they belong in CHANGELOG, not TODO_LIST)
 - Added new open items discovered from reading the status reports (cloud sync circuit breaker, PMA auto-commit secrets gap, Turso 403, monitor365 buffer backlog purge, bun/other dev tool memory wrappers)
 - Reframed the user-slice MemoryMax item per user feedback (targeted per-tool limiters are the correct approach, not a blunt global cap)
@@ -52,20 +53,21 @@ Rebuilt from scratch:
 
 ### 4. docs-health: FEATURES.md updates ✅
 
-| Change | What was stale | What it now says |
-|--------|---------------|-----------------|
-| qmd service | Missing entirely | Added as ✅ with full description (port 8181, GGUF models, CPU-only, Crush MCP) |
-| qmd package | Missing from pkgs table | Added as Node.js ✅ |
-| File & Image Renamer | ⚠️ "pending deploy" | ✅ — split-brain fixed, post-deploy-check asserts `total_operations > 0` |
-| Ollama | "no autostart (`wantedBy = []`)" | ✅ — auto-starts with `multi-user.target` (`mkForce []` removed) |
-| Twenty CRM | ✅ | ⚠️ — `twenty-server` crash-loops with PG role mismatch (honest status) |
-| Module count | "39 service modules" | 41 (computed via `nix eval .#nixosModules`) |
-| Gatus endpoints | "52+" | 59 (computed via `rg -c 'name =' gatus-config.nix`) |
-| DiscordSync | Missing OTel/overlay info | Updated with upstream module consumption pattern + OTel tracing |
+| Change               | What was stale                   | What it now says                                                                |
+| -------------------- | -------------------------------- | ------------------------------------------------------------------------------- |
+| qmd service          | Missing entirely                 | Added as ✅ with full description (port 8181, GGUF models, CPU-only, Crush MCP) |
+| qmd package          | Missing from pkgs table          | Added as Node.js ✅                                                             |
+| File & Image Renamer | ⚠️ "pending deploy"               | ✅ — split-brain fixed, post-deploy-check asserts `total_operations > 0`        |
+| Ollama               | "no autostart (`wantedBy = []`)" | ✅ — auto-starts with `multi-user.target` (`mkForce []` removed)                |
+| Twenty CRM           | ✅                               | ⚠️ — `twenty-server` crash-loops with PG role mismatch (honest status)           |
+| Module count         | "39 service modules"             | 41 (computed via `nix eval .#nixosModules`)                                     |
+| Gatus endpoints      | "52+"                            | 59 (computed via `rg -c 'name =' gatus-config.nix`)                             |
+| DiscordSync          | Missing OTel/overlay info        | Updated with upstream module consumption pattern + OTel tracing                 |
 
 ### 5. docs-health: CHANGELOG.md [Unreleased] expanded ✅
 
 Added 10+ entries to `[Unreleased]` covering recent significant work:
+
 - qmd on-device markdown search
 - Bun memory limiter overlay
 - Monitor365 graphical collectors + backup health monitoring
@@ -148,6 +150,7 @@ The skill mandates: "Open the file as if you've never seen it. Where do your eye
 ### 3. Did not update AGENTS.md
 
 The AGENTS.md "Non-Obvious Gotchas" table is the project's most important living doc. Multiple `2026-07-2*` status reports noted "AGENTS.md NOT updated" as a process failure. While the subsequent sessions DID update AGENTS.md (the gotchas are present in the current file), I did not verify that EVERY gotcha from every report is now documented. Specifically:
+
 - The PMA watcher-attribution 3-symptom cascade — is it in AGENTS.md? I did not check.
 - The `config.users.users.${primaryUser}.uid` is null at eval time — is it documented as a general lesson? I did not check.
 
@@ -156,6 +159,7 @@ The AGENTS.md "Non-Obvious Gotchas" table is the project's most important living
 ### 4. FEATURES.md count claims are now computed from commands, but the commands themselves are fragile
 
 I replaced hardcoded counts with "run `rg -c 'name =' ...`" and "run `nix eval ...`" directives in the notes column. This is better than hardcoded numbers. But:
+
 - The module count (41) is in a table cell, not a footnote — if someone adds a module and the count is wrong, the "run this command" instruction is in the same cell and easy to miss.
 - The Gatus count (59) similarly. A separate CI check (doc-freshness script) would be more robust.
 

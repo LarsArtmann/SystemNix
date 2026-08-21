@@ -167,33 +167,33 @@ In this session we also completed a focused `nix-review` of the shared `lib/` he
 
 ## f) TOP 25 THINGS TO DO NEXT
 
-| #   | Priority | Task                                                                                             | Impact   | Effort |
-| --- | -------- | ------------------------------------------------------------------------------------------------ | -------- | ------ |
-| 1   | P0       | **Reboot evo-x2** and verify SDK daemon socket, Overview probe, Caddy boot order, Pocket ID SMTP | Critical | 10 min |
-| 2   | P0       | **Push 4 local commits** to origin master (after user approval)                                  | Critical | 1 min  |
-| 3   | P0       | **Commit zellij keybinding fix** and push                                                        | Low      | 2 min  |
-| 4   | P1       | **Run `nix-collect-garbage`** to reclaim `/` disk (93% full)                                     | High     | 30 min |
-| 5   | P1       | **Write `just update-hash <pkg>`** automation for vendorHash cascades                            | High     | 30 min |
-| 6   | P1       | **Update TODO_LIST.md** — mark completed items, archive long-term wishlist                       | High     | 30 min |
-| 7   | P1       | **Fix Twenty CRM 502s** — inspect Docker logs / memory limits                                    | High     | 1 h    |
-| 8   | P1       | **Audit Gatus health checks** — correct URLs / expectations                                      | High     | 1 h    |
-| 9   | P1       | **Reset failed Monitor365 state** and verify server/agent health                                 | Med      | 10 min |
-| 10  | P1       | **Test Immich OAuth login** via Pocket ID end-to-end                                             | High     | 20 min |
-| 11  | P2       | **Apply `lib/docker.nix` hardening fixes** from section e                                        | Med      | 1 h    |
-| 12  | P2       | **Pin remaining image digests** in `lib/images.nix`                                              | Med      | 30 min |
-| 13  | P2       | **Refactor `rec` → `let ... in`** in `lib/images.nix` and `lib/rocm.nix`                         | Low      | 20 min |
-| 14  | P2       | **Add NixOS test for daemon integration**                                                        | High     | 2 h    |
-| 15  | P2       | **Archive old status reports** pre-session-100                                                   | Low      | 30 min |
-| 16  | P2       | **Create `ROADMAP.md`**                                                                          | Med      | 1 h    |
-| 17  | P2       | **Create `CHANGELOG.md`**                                                                        | Med      | 2 h    |
-| 18  | P2       | **Split oversized modules** (`monitor365`, `signoz`, `forgejo`)                                  | Med      | 4 h    |
-| 19  | P3       | **Add daemon socket auth / permissions**                                                         | Med      | 1 h    |
-| 20  | P3       | **Make Overview re-probe daemon** periodically                                                   | Med      | 1 h    |
-| 21  | P3       | **BTRFS `/data` subvolume migration**                                                            | High     | 2 h    |
-| 22  | P3       | **Triage disabled services** (`voice-agents`, `minecraft`, `photomap`)                           | Low      | 30 min |
-| 23  | P3       | **PMA API catch-up** — migrate to `NewCommand` error handling                                    | Med      | 2 h    |
-| 24  | P3       | **CI for LarsArtmann Go repos**                                                                  | High     | 4 h    |
-| 25  | P3       | **Add daemon metrics / health endpoint**                                                         | Low      | 1 h    |
+| #  | Priority | Task                                                                                             | Impact   | Effort |
+| -- | -------- | ------------------------------------------------------------------------------------------------ | -------- | ------ |
+| 1  | P0       | **Reboot evo-x2** and verify SDK daemon socket, Overview probe, Caddy boot order, Pocket ID SMTP | Critical | 10 min |
+| 2  | P0       | **Push 4 local commits** to origin master (after user approval)                                  | Critical | 1 min  |
+| 3  | P0       | **Commit zellij keybinding fix** and push                                                        | Low      | 2 min  |
+| 4  | P1       | **Run `nix-collect-garbage`** to reclaim `/` disk (93% full)                                     | High     | 30 min |
+| 5  | P1       | **Write `just update-hash <pkg>`** automation for vendorHash cascades                            | High     | 30 min |
+| 6  | P1       | **Update TODO_LIST.md** — mark completed items, archive long-term wishlist                       | High     | 30 min |
+| 7  | P1       | **Fix Twenty CRM 502s** — inspect Docker logs / memory limits                                    | High     | 1 h    |
+| 8  | P1       | **Audit Gatus health checks** — correct URLs / expectations                                      | High     | 1 h    |
+| 9  | P1       | **Reset failed Monitor365 state** and verify server/agent health                                 | Med      | 10 min |
+| 10 | P1       | **Test Immich OAuth login** via Pocket ID end-to-end                                             | High     | 20 min |
+| 11 | P2       | **Apply `lib/docker.nix` hardening fixes** from section e                                        | Med      | 1 h    |
+| 12 | P2       | **Pin remaining image digests** in `lib/images.nix`                                              | Med      | 30 min |
+| 13 | P2       | **Refactor `rec` → `let ... in`** in `lib/images.nix` and `lib/rocm.nix`                         | Low      | 20 min |
+| 14 | P2       | **Add NixOS test for daemon integration**                                                        | High     | 2 h    |
+| 15 | P2       | **Archive old status reports** pre-session-100                                                   | Low      | 30 min |
+| 16 | P2       | **Create `ROADMAP.md`**                                                                          | Med      | 1 h    |
+| 17 | P2       | **Create `CHANGELOG.md`**                                                                        | Med      | 2 h    |
+| 18 | P2       | **Split oversized modules** (`monitor365`, `signoz`, `forgejo`)                                  | Med      | 4 h    |
+| 19 | P3       | **Add daemon socket auth / permissions**                                                         | Med      | 1 h    |
+| 20 | P3       | **Make Overview re-probe daemon** periodically                                                   | Med      | 1 h    |
+| 21 | P3       | **BTRFS `/data` subvolume migration**                                                            | High     | 2 h    |
+| 22 | P3       | **Triage disabled services** (`voice-agents`, `minecraft`, `photomap`)                           | Low      | 30 min |
+| 23 | P3       | **PMA API catch-up** — migrate to `NewCommand` error handling                                    | Med      | 2 h    |
+| 24 | P3       | **CI for LarsArtmann Go repos**                                                                  | High     | 4 h    |
+| 25 | P3       | **Add daemon metrics / health endpoint**                                                         | Low      | 1 h    |
 
 ---
 

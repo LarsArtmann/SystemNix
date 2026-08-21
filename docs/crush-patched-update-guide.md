@@ -195,7 +195,6 @@ Crush uses Go modules (vendor directory). The hash changes with each version bec
 If you prefer manual control, or if `just update` fails:
 
 ````bash
-
 ```bash
 # Step 1: Update version
 ./pkgs/update-crush-patched.sh

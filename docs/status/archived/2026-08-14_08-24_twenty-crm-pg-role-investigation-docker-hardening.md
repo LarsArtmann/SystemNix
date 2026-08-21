@@ -16,6 +16,7 @@ TODO_LIST.md Priority 2 item reported: `twenty-server` crash-loops with `FATAL: 
 ### 1. Root Cause Diagnosis: PG role issue was ALREADY RESOLVED at runtime
 
 **Investigation chain:**
+
 - `docker ps -a --filter name=twenty` — ALL 4 containers UP, 0 restarts on server/worker, healthchecks passing
 - `docker logs twenty-server-1` — NO `FATAL: role "twenty" does not exist` anywhere in 3,110 log lines
 - `docker inspect twenty-server-1 --format '{{.Config.Env}}'` — `PG_DATABASE_URL=postgres://postgres:...@db:5432/twenty` (user is `postgres`, NOT `twenty`)
@@ -30,6 +31,7 @@ TODO_LIST.md Priority 2 item reported: `twenty-server` crash-loops with `FATAL: 
 ### 2. Docker vs Native Nixification Decision: Docker stays
 
 Twenty CRM is a large third-party NestJS application:
+
 - 50+ NestJS InstanceLoader modules at startup
 - Complex native dependencies (node-gyp, better-sqlite3 patterns)
 - Officially maintained Docker images (`twentycrm/twenty:v2.7.3`)
@@ -44,12 +46,12 @@ Nixifying this would require: vendoring the entire Node.js build, mirroring the 
 
 Added `mem_limit` + `memswap_limit` to ALL containers that were previously unbounded:
 
-| Container | Memory Limit | Swap Limit | `NODE_OPTIONS` | Rationale |
-|-----------|-------------|------------|-----------------|-----------|
-| server | **1g** (new) | 1g | `--max-old-space-size=768` (new) | Was 529MB unbounded; cap V8 heap at 768M to prevent oomd targeting |
-| worker | 2g (existing) | 2g | `--max-old-space-size=1536` (existing) | Previously fixed in 08-12 session |
-| db | **2g** (new) | 2g | N/A | PostgreSQL for a 90-table CRM with 66 companies — 2G is generous headroom |
-| redis | **256m** (new) | 256m | N/A | Redis for BullMQ job queue only; `noeviction` policy prevents OOM crashes |
+| Container | Memory Limit   | Swap Limit | `NODE_OPTIONS`                         | Rationale                                                                 |
+| --------- | -------------- | ---------- | -------------------------------------- | ------------------------------------------------------------------------- |
+| server    | **1g** (new)   | 1g         | `--max-old-space-size=768` (new)       | Was 529MB unbounded; cap V8 heap at 768M to prevent oomd targeting        |
+| worker    | 2g (existing)  | 2g         | `--max-old-space-size=1536` (existing) | Previously fixed in 08-12 session                                         |
+| db        | **2g** (new)   | 2g         | N/A                                    | PostgreSQL for a 90-table CRM with 66 companies — 2G is generous headroom |
+| redis     | **256m** (new) | 256m       | N/A                                    | Redis for BullMQ job queue only; `noeviction` policy prevents OOM crashes |
 
 **Defense against systemd-oomd:** These limits prevent any Twenty container from becoming the top memory consumer under `/system.slice` during system pressure events. The `NODE_OPTIONS` heap caps ensure V8 GC runs aggressively BEFORE hitting the container hard limit, reducing RSS and making the containers less attractive oomd targets.
 
@@ -109,17 +111,20 @@ The running Docker containers ALREADY have the memory limits applied (verified v
 ## f) Up to 50 Things to Get Done Next
 
 ### Critical
+
 1. ~~**Deploy the Twenty changes** — `nix run .#deploy` to make the Nix config authoritative for container memory limits~~ done — deployed in the 09:30 session (`8ad493c9`)
 2. ~~**Verify Twenty health after deploy** — `docker ps`, `docker inspect twenty-server-1 --format '{{.RestartCount}}'`, check `/healthz` endpoint~~ done — verified live 08-14: all 7 containers in restart metrics with count 0; FEATURES ⚠️→✅ (`61a2224b`)
 3. ~~**Check Twenty backup status** — `ls -la /var/lib/twenty/backup/` to see if `pg_dump` has been succeeding. Verify the most recent backup file is < 24h old~~ done — dumps through 08-14 02:06; `backup_healthy{backup="twenty"}=1` live
 
 ### Twenty CRM Hardening
+
 4. ~~**Add Twenty to backup-coordination** — Register in `services.backup-coordination.backups.twenty` in `configuration.nix` with directory `/var/lib/twenty/backup`, filePattern `*.sql`, maxAgeHours 48~~ done (existing rule) — already registered since `976e9547` (maxAgeHours 31); the "NOT registered" premise was wrong
 5. **Verify server NODE_OPTIONS under load** — Test a bulk import or heavy GraphQL query to ensure 768M heap is sufficient. If it OOMs, raise to 1024M
 6. **Add PG startup role check** — Extend the `fixCollation` oneshot or add a new oneshot that verifies `SELECT 1 FROM pg_roles WHERE rolname = 'postgres'` passes before the server starts
 7. **Consider `MemoryHigh` (soft throttle) on containers** — Docker compose supports `mem_reservation` (soft limit). Setting it to 80% of `mem_limit` encourages reclaim before hard OOM
 
 ### Docker Memory Limits (Remaining)
+
 8. ~~**Add mem_limit to `mnfst-manifest-1`** — Manifest app container is unbounded~~ done at `7afab3f8` (1g)
 9. ~~**Add mem_limit to `mnfst-postgres-1`** — Manifest PostgreSQL is unbounded~~ done at `7afab3f8` (1g, verified live 08-14)
 10. ~~**Add mem_limit to `dozzle`** — Log viewer container is unbounded~~ done in config at `7afab3f8` (256m) — **but the runtime container was never recreated and is still unbounded (live: Memory=0)**
@@ -127,6 +132,7 @@ The running Docker containers ALREADY have the memory limits applied (verified v
 12. **Consider `mkDockerServiceFactory` enhancement** — Accept per-container memory limits as a structured option rather than raw compose attrs
 
 ### Monitoring Gaps
+
 13. ~~**Add Docker container restart count collector** — `docker inspect --format '{{.RestartCount}}'` for all containers → Prometheus textfile metric~~ done at `9b6590bf`
 14. ~~**Add Gatus alert on Docker restart count** — Alert when any container exceeds N restarts per hour~~ done at `9b6590bf` ("Docker Container Restarts", gatus-config.nix:911)
 15. ~~**Add `system_oomd_kills_total` metric** — Textfile collector grepping `journalctl -u systemd-oomd --grep "killed"` per unit~~ done at `9b6590bf` — verified live: 2408 kills counted
@@ -135,12 +141,14 @@ The running Docker containers ALREADY have the memory limits applied (verified v
 18. ~~**Add I/O PSI Gatus alert** — PSI I/O data is collected but has NO alert. Leading indicator of QLC SLC cache exhaustion → WDT crash~~ done — "I/O Stall Rate" check already existed (`004924be`-era; gatus-config.nix:710)
 
 ### Deploy & System Health
+
 19. ~~**Run foreground BTRFS scrub on `/`** — Root FS has NEVER been scrubbed. Same NVMe as `/data` which had 13 corrupted files~~ done (superseded) — weekly `autoScrub` (`snapshots.nix:104`, `ab7c331a`); current status=interrupted on both mounts (reboots)
 20. **Free disk space** — Root at 90-93% on QLC NAND. `nix-collect-garbage -d`, `docker system prune`, audit `/data` usage — **08-14: 87% (97G free)**, still above the 85% alert threshold
 21. ~~**Reboot evo-x2** — NixOS system registry override for nixpkgs tarball regression is in config but NOT active until reboot~~ done (moot) — last boot (08-13 21:42) post-dates the 08-06 fix (`d2443c29`)
 22. **Off-site backup** — No DR backup exists. Forgejo, Immich, Twenty, DiscordSync would all be lost on SSD failure (tracked in TODO_LIST)
 
 ### Code Quality
+
 23. **Add eval-time assertion for `StartLimitBurst` placement** — In systemd 261+, placing it in `serviceConfig` is silently ignored
 24. ~~**Add `node_textfile_scrape_error` Gatus check** — Invalid `.prom` files cause node_exporter to drop ALL textfile metrics silently~~ done at `9b6590bf` ("Textfile Collector Health", gatus-config.nix:962)
 25. ~~**Add crash-loop detector metric** — Rate-based alert on `system_service_nrestarts` per 10-min window~~ done at `9b6590bf` (`system_any_service_crash_loop`, gatus-config.nix:889)

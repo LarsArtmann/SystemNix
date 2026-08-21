@@ -43,7 +43,7 @@
 
 ## d) TOTALLY FUCKED UP
 
-1. ~~No auto-login on a single-user desktop~~ — *Correction:* auto-login is intentionally disabled. The real gap is that monitoring could not distinguish "no one logged in" from "desktop crashed while logged in". That is fixed in the follow-up report.
+1. ~~No auto-login on a single-user desktop~~ — _Correction:_ auto-login is intentionally disabled. The real gap is that monitoring could not distinguish "no one logged in" from "desktop crashed while logged in". That is fixed in the follow-up report.
 
 2. **No alerting for "desktop is down"** — Gatus monitors 79+ endpoints but NONE of them detect "niri compositor is down" or "graphical session never started." The `niri_running` metric is collected to a textfile but no Gatus endpoint checks it. The system can be in a headless state for 17+ hours (as demonstrated this session) with zero alerts. Monitor365 even logs "no DISPLAY or WAYLAND_DISPLAY found" every 2 seconds — a clear signal — but it's just a WARN log, not an alert.
 

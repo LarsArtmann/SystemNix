@@ -6,7 +6,6 @@
 
 ---
 
-
 ## What Triggered This Session
 
 1. **User frustration:** "Why does nh os switch NOT restart Caddy!?!" — Caddy was stale, `history.home.lan` redirected to `dash.home.lan`
@@ -18,27 +17,27 @@
 
 ### Browser-History Registration & Login UI
 
-| Item | Status | Details |
-|------|--------|---------|
-| `api/auth.templ` created | DONE | `RegisterPage` + `LoginPage` templ components with full WebAuthn JS flow (base64url encode/decode, `navigator.credentials.create/get`, fetch to `/auth/webauthn/*`) |
-| `auth_templ.go` generated | DONE | Via `templ generate -path ./api` |
-| `GET /register` route | DONE | Renders `RegisterPage`, redirects to `/` if already authenticated |
-| `GET /login` route | DONE | Renders `LoginPage`, redirects to `/` if already authenticated |
-| `GET /` auth behavior fixed | DONE | Changed from 400 `auth.required` rejection page to `302 → /register` redirect |
-| Registration JS flow | DONE | POST `/auth/register` → auto-prompts passkey setup → redirect to dashboard on success |
-| Login JS flow | DONE | POST `/auth/webauthn/login/begin` → `navigator.credentials.get` → POST `/auth/webauthn/login/finish` → redirect to dashboard |
-| Go build passes | DONE | `go build ./api/...` and `go vet ./api/...` clean |
-| Auth tests pass | DONE | `TestAuth_*` and `TestWebAuthn_*` all PASS |
-| Nix build passes | DONE | `nix build .#browser-history-server` produces working binary |
-| Committed | DONE | Auto-commit `e9016af` on browser-history master |
+| Item                        | Status | Details                                                                                                                                                             |
+| --------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `api/auth.templ` created    | DONE   | `RegisterPage` + `LoginPage` templ components with full WebAuthn JS flow (base64url encode/decode, `navigator.credentials.create/get`, fetch to `/auth/webauthn/*`) |
+| `auth_templ.go` generated   | DONE   | Via `templ generate -path ./api`                                                                                                                                    |
+| `GET /register` route       | DONE   | Renders `RegisterPage`, redirects to `/` if already authenticated                                                                                                   |
+| `GET /login` route          | DONE   | Renders `LoginPage`, redirects to `/` if already authenticated                                                                                                      |
+| `GET /` auth behavior fixed | DONE   | Changed from 400 `auth.required` rejection page to `302 → /register` redirect                                                                                       |
+| Registration JS flow        | DONE   | POST `/auth/register` → auto-prompts passkey setup → redirect to dashboard on success                                                                               |
+| Login JS flow               | DONE   | POST `/auth/webauthn/login/begin` → `navigator.credentials.get` → POST `/auth/webauthn/login/finish` → redirect to dashboard                                        |
+| Go build passes             | DONE   | `go build ./api/...` and `go vet ./api/...` clean                                                                                                                   |
+| Auth tests pass             | DONE   | `TestAuth_*` and `TestWebAuthn_*` all PASS                                                                                                                          |
+| Nix build passes            | DONE   | `nix build .#browser-history-server` produces working binary                                                                                                        |
+| Committed                   | DONE   | Auto-commit `e9016af` on browser-history master                                                                                                                     |
 
 ### Caddy Reload Diagnosis
 
-| Item | Status | Details |
-|------|--------|---------|
-| Root cause identified | DONE | `PrivateTmp=true` in `harden {}` blocks systemd's mount namespace setup during `systemctl reload caddy` — exit code 4 |
-| Confirmed `nh os switch` DOES try to reload | DONE | `switch-to-configuration` calls the upstream NixOS module's `ExecReload` (`caddy reload`), but the reload fails due to hardening |
-| Confirmed no `restartTriggers` on Caddy | DONE | The Caddy module has no `restartTriggers`, so nothing forces a full restart on config change |
+| Item                                        | Status | Details                                                                                                                          |
+| ------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| Root cause identified                       | DONE   | `PrivateTmp=true` in `harden {}` blocks systemd's mount namespace setup during `systemctl reload caddy` — exit code 4            |
+| Confirmed `nh os switch` DOES try to reload | DONE   | `switch-to-configuration` calls the upstream NixOS module's `ExecReload` (`caddy reload`), but the reload fails due to hardening |
+| Confirmed no `restartTriggers` on Caddy     | DONE   | The Caddy module has no `restartTriggers`, so nothing forces a full restart on config change                                     |
 
 ---
 
@@ -46,11 +45,11 @@
 
 ### SystemNix Deploy Pipeline Fixes
 
-| Item | Status | What Remains |
-|------|--------|-------------|
-| Caddy restart in deploy.sh | NOT STARTED | Designed the fix (add `sudo systemctl restart caddy` after `nh os switch`), but did NOT implement it — got interrupted by the status report request |
-| Pre-deploy phantom metric check | NOT STARTED | `system_gatus_endpoints_in_error_long` check blocks `nix run .#deploy`. Fix designed (change `fail()` to `warn()` in `pre-deploy-check.sh`) but not implemented |
-| Update SystemNix flake input for browser-history | NOT STARTED | Need to `nix flake lock --update-input browser-history` to pick up commit `e9016af` with the auth pages |
+| Item                                             | Status      | What Remains                                                                                                                                                    |
+| ------------------------------------------------ | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Caddy restart in deploy.sh                       | NOT STARTED | Designed the fix (add `sudo systemctl restart caddy` after `nh os switch`), but did NOT implement it — got interrupted by the status report request             |
+| Pre-deploy phantom metric check                  | NOT STARTED | `system_gatus_endpoints_in_error_long` check blocks `nix run .#deploy`. Fix designed (change `fail()` to `warn()` in `pre-deploy-check.sh`) but not implemented |
+| Update SystemNix flake input for browser-history | NOT STARTED | Need to `nix flake lock --update-input browser-history` to pick up commit `e9016af` with the auth pages                                                         |
 
 ---
 
@@ -161,10 +160,10 @@
 ### P4 — Monitoring & observability
 
 31. Verify OTel traces appear in SigNoz for `browser-history` service
-~~32. Verify Gatus health check passes for `history.home.lan`~~ done
-33. Add Gatus alert for auth endpoint failure rate
-~~34. Add Homepage tile verification (already added — verify it links correctly)~~ done — tile present
-35. Consider adding OTel traces to the agent
+    ~~32. Verify Gatus health check passes for `history.home.lan`~~ done
+32. Add Gatus alert for auth endpoint failure rate
+    ~~34. Add Homepage tile verification (already added — verify it links correctly)~~ done — tile present
+33. Consider adding OTel traces to the agent
 
 ### P5 — SystemNix improvements
 
@@ -177,15 +176,15 @@
 ### P6 — Browser-history features
 
 41. Add favicon for history.home.lan
-~~42. Add OIDC/Pocket ID as alternative auth method~~ done — OAuth2 via Pocket ID integrated (see 02-45 report)
-43. Add data export/backup UI
-44. Add domain tagging UI
-45. Add AI summary features (if AI keys configured)
-46. Add timeline view
-47. Add productivity heatmap
-48. Add search query tracking
-49. Add download tracking
-50. Add engagement metrics
+    ~~42. Add OIDC/Pocket ID as alternative auth method~~ done — OAuth2 via Pocket ID integrated (see 02-45 report)
+42. Add data export/backup UI
+43. Add domain tagging UI
+44. Add AI summary features (if AI keys configured)
+45. Add timeline view
+46. Add productivity heatmap
+47. Add search query tracking
+48. Add download tracking
+49. Add engagement metrics
 
 ---
 

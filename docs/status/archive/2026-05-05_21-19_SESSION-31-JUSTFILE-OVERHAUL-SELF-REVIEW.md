@@ -100,25 +100,25 @@ The self-review fixed 4 high-traffic files (README, CONTRIBUTING, AGENTS.md, hea
 
 ## C. NOT STARTED
 
-| #   | Task                                                                                               | Why not started                                                         |
-| --- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| 1   | Batch-fix all 21 stale doc files                                                                   | Low impact — these are reference/historical docs, not user entry points |
-| 2   | Consolidate service log recipes (hermes-logs, manifest-logs, immich-logs → generic `svc-logs SVC`) | Would require changing user muscle memory                               |
-| 3   | Add `just svc-status SVC` generic recipe                                                           | Same — specific recipes are more discoverable                           |
-| 4   | Add `just update && just switch` combined recipe                                                   | `just switch` already does the build; update is separate intentionally  |
-| 5   | Migrate remaining `dotfiles/` activitywatch scripts                                                | Low priority, works as-is                                               |
-| 6   | Add `[macos]` group for macOS-only recipes (setup, switch)                                         | Not useful — only 2 recipes, and they handle both platforms             |
+| # | Task                                                                                               | Why not started                                                         |
+| - | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| 1 | Batch-fix all 21 stale doc files                                                                   | Low impact — these are reference/historical docs, not user entry points |
+| 2 | Consolidate service log recipes (hermes-logs, manifest-logs, immich-logs → generic `svc-logs SVC`) | Would require changing user muscle memory                               |
+| 3 | Add `just svc-status SVC` generic recipe                                                           | Same — specific recipes are more discoverable                           |
+| 4 | Add `just update && just switch` combined recipe                                                   | `just switch` already does the build; update is separate intentionally  |
+| 5 | Migrate remaining `dotfiles/` activitywatch scripts                                                | Low priority, works as-is                                               |
+| 6 | Add `[macos]` group for macOS-only recipes (setup, switch)                                         | Not useful — only 2 recipes, and they handle both platforms             |
 
 ---
 
 ## D. TOTALLY FUCKED UP
 
-| #   | Issue                                                                                | Status          | Severity |
-| --- | ------------------------------------------------------------------------------------ | --------------- | -------- |
-| 1   | `validate` was an alias for `test-fast` — nobody noticed it was redundant for months | Fixed (removed) | Low      |
-| 2   | `dep-graph` was 120 lines for a tool nobody used                                     | Removed         | None     |
-| 3   | 84 recipes that added zero value (Go/Node tools in a Nix config repo)                | Removed         | None     |
-| 4   | `rm -rf` in `clean` and `disk-reset` — safety rule violation                         | Fixed → `trash` | Medium   |
+| # | Issue                                                                                | Status          | Severity |
+| - | ------------------------------------------------------------------------------------ | --------------- | -------- |
+| 1 | `validate` was an alias for `test-fast` — nobody noticed it was redundant for months | Fixed (removed) | Low      |
+| 2 | `dep-graph` was 120 lines for a tool nobody used                                     | Removed         | None     |
+| 3 | 84 recipes that added zero value (Go/Node tools in a Nix config repo)                | Removed         | None     |
+| 4 | `rm -rf` in `clean` and `disk-reset` — safety rule violation                         | Fixed → `trash` | Medium   |
 
 ---
 
@@ -136,33 +136,33 @@ The self-review fixed 4 high-traffic files (README, CONTRIBUTING, AGENTS.md, hea
 
 Sorted by impact/work ratio:
 
-| #   | Task                                                                                 | Impact | Work    | Category |
-| --- | ------------------------------------------------------------------------------------ | ------ | ------- | -------- |
-| 1   | Archive crush-_.md, GITHUB-ISSUES-_.md, configuration-validation.md to docs/archive/ | High   | Trivial | Cleanup  |
-| 2   | Fix 21 stale doc files (batch sed for validate→test-fast, backup→git, go-dev→N/A)    | Medium | Low     | Docs     |
-| 3   | Add `just switch` dry-run mode (nh os test or nix build without switch)              | Medium | Low     | Core     |
-| 4   | Add `just flake-lock-update INPUT` for targeted input updates                        | Medium | Low     | Core     |
-| 5   | Add `just service-status` — one recipe showing ALL service health at once            | High   | Low     | Services |
-| 6   | Remove `dotfiles/` directory (deprecated by Home Manager)                            | Medium | Low     | Cleanup  |
-| 7   | Add minimum just version to AGENTS.md / flake.nix devShell                           | Low    | Trivial | Docs     |
-| 8   | Add `just check-nixos` — run all NixOS-specific validations                          | Medium | Low     | Quality  |
-| 9   | Add `just logs SVC` — generic service log viewer                                     | Medium | Low     | Services |
-| 10  | Create `just` recipe reference checker script                                        | Medium | Medium  | Tooling  |
-| 11  | Add `just fmt` alias for format (shorter)                                            | Low    | Trivial | Core     |
-| 12  | Add `just rebuild` — clean + switch combo                                            | Medium | Low     | Core     |
-| 13  | Add `just diff` — show what changed between current and last generation              | Medium | Medium  | Core     |
-| 14  | Add `just search PKG` — nix search wrapper                                           | Low    | Low     | Tools    |
-| 15  | Add `just cache-repair` — nix store repair                                           | Medium | Low     | Recovery |
-| 16  | Add `just secrets` — sops-nix status/rotation helper                                 | Medium | Medium  | Services |
-| 17  | Add `just test-nixos` — build only evo-x2 config                                     | Medium | Low     | Quality  |
-| 18  | Add `just home-manager` — run home-manager for current user                          | Medium | Low     | Core     |
-| 19  | Document `just --group services` filter in AGENTS.md                                 | Low    | Trivial | Docs     |
-| 20  | Add `just top` — show top resource-consuming systemd services                        | Low    | Low     | Desktop  |
-| 21  | Add `just ports` — show all listening ports + which service owns them                | Medium | Low     | Services |
-| 22  | Add `just network-test` — connectivity check (ping, DNS, speed)                      | Low    | Low     | Services |
-| 23  | Consolidate `docs/verification/` into README/CONTRIBUTING                            | Medium | Medium  | Docs     |
-| 24  | Add `just generate-config` — scaffold a new service module                           | Low    | Medium  | Tooling  |
-| 25  | Add shell completions for just recipes (fish/zsh)                                    | Low    | Medium  | UX       |
+| #  | Task                                                                                 | Impact | Work    | Category |
+| -- | ------------------------------------------------------------------------------------ | ------ | ------- | -------- |
+| 1  | Archive crush-_.md, GITHUB-ISSUES-_.md, configuration-validation.md to docs/archive/ | High   | Trivial | Cleanup  |
+| 2  | Fix 21 stale doc files (batch sed for validate→test-fast, backup→git, go-dev→N/A)    | Medium | Low     | Docs     |
+| 3  | Add `just switch` dry-run mode (nh os test or nix build without switch)              | Medium | Low     | Core     |
+| 4  | Add `just flake-lock-update INPUT` for targeted input updates                        | Medium | Low     | Core     |
+| 5  | Add `just service-status` — one recipe showing ALL service health at once            | High   | Low     | Services |
+| 6  | Remove `dotfiles/` directory (deprecated by Home Manager)                            | Medium | Low     | Cleanup  |
+| 7  | Add minimum just version to AGENTS.md / flake.nix devShell                           | Low    | Trivial | Docs     |
+| 8  | Add `just check-nixos` — run all NixOS-specific validations                          | Medium | Low     | Quality  |
+| 9  | Add `just logs SVC` — generic service log viewer                                     | Medium | Low     | Services |
+| 10 | Create `just` recipe reference checker script                                        | Medium | Medium  | Tooling  |
+| 11 | Add `just fmt` alias for format (shorter)                                            | Low    | Trivial | Core     |
+| 12 | Add `just rebuild` — clean + switch combo                                            | Medium | Low     | Core     |
+| 13 | Add `just diff` — show what changed between current and last generation              | Medium | Medium  | Core     |
+| 14 | Add `just search PKG` — nix search wrapper                                           | Low    | Low     | Tools    |
+| 15 | Add `just cache-repair` — nix store repair                                           | Medium | Low     | Recovery |
+| 16 | Add `just secrets` — sops-nix status/rotation helper                                 | Medium | Medium  | Services |
+| 17 | Add `just test-nixos` — build only evo-x2 config                                     | Medium | Low     | Quality  |
+| 18 | Add `just home-manager` — run home-manager for current user                          | Medium | Low     | Core     |
+| 19 | Document `just --group services` filter in AGENTS.md                                 | Low    | Trivial | Docs     |
+| 20 | Add `just top` — show top resource-consuming systemd services                        | Low    | Low     | Desktop  |
+| 21 | Add `just ports` — show all listening ports + which service owns them                | Medium | Low     | Services |
+| 22 | Add `just network-test` — connectivity check (ping, DNS, speed)                      | Low    | Low     | Services |
+| 23 | Consolidate `docs/verification/` into README/CONTRIBUTING                            | Medium | Medium  | Docs     |
+| 24 | Add `just generate-config` — scaffold a new service module                           | Low    | Medium  | Tooling  |
+| 25 | Add shell completions for just recipes (fish/zsh)                                    | Low    | Medium  | UX       |
 
 ---
 

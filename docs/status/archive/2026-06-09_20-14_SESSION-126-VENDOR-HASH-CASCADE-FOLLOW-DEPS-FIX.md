@@ -19,20 +19,20 @@ A single `buildflow` vendorHash mismatch revealed a systemic issue: SystemNix us
 
 ### Go Package vendorHash Fixes (Primary Task)
 
-| #   | Package                            | Upstream Fix                   | SystemNix Overlay Fix                                         | Verified  |
-| --- | ---------------------------------- | ------------------------------ | ------------------------------------------------------------- | --------- |
-| 1   | **BuildFlow**                      | vendorHash updated (`fcf95dc`) | `{}` (no override)                                            | ✅ Builds |
-| 2   | **go-auto-upgrade**                | vendorHash updated (`04a06b6`) | `{vendorHash = "sha256-RwGN...";}`                            | ✅ Builds |
-| 3   | **projects-management-automation** | vendorHash updated (`9d4db17`) | `{}`                                                          | ✅ Builds |
-| 4   | **library-policy**                 | vendorHash updated (`56648f1`) | `mkTidyOverride` — inconsistent vendoring                     | ✅ Builds |
-| 5   | **golangci-lint-auto-configure**   | vendorHash updated (`07e80a4`) | Custom override: `proxyVendor + templ generate + go mod tidy` | ✅ Builds |
-| 6   | **mr-sync**                        | vendorHash updated (`e743803`) | `mkTidyOverride` — inconsistent vendoring                     | ✅ Builds |
-| 7   | **hierarchical-errors**            | No upstream change needed      | `{vendorHash = "sha256-TSXI...";}`                            | ✅ Builds |
-| 8   | **go-structure-linter**            | No upstream change needed      | `{vendorHash = "sha256-jLc2...";}`                            | ✅ Builds |
-| 9   | **art-dupl**                       | No upstream change needed      | `{vendorHash = "sha256-p8ml...";}`                            | ✅ Builds |
-| 10  | **branching-flow**                 | No override needed             | `{}`                                                          | ✅ Builds |
-| 11  | **project-meta**                   | No override needed             | `{}`                                                          | ✅ Builds |
-| 12  | **todo-list-ai**                   | No override needed             | `{}`                                                          | ✅ Builds |
+| #  | Package                            | Upstream Fix                   | SystemNix Overlay Fix                                         | Verified  |
+| -- | ---------------------------------- | ------------------------------ | ------------------------------------------------------------- | --------- |
+| 1  | **BuildFlow**                      | vendorHash updated (`fcf95dc`) | `{}` (no override)                                            | ✅ Builds |
+| 2  | **go-auto-upgrade**                | vendorHash updated (`04a06b6`) | `{vendorHash = "sha256-RwGN...";}`                            | ✅ Builds |
+| 3  | **projects-management-automation** | vendorHash updated (`9d4db17`) | `{}`                                                          | ✅ Builds |
+| 4  | **library-policy**                 | vendorHash updated (`56648f1`) | `mkTidyOverride` — inconsistent vendoring                     | ✅ Builds |
+| 5  | **golangci-lint-auto-configure**   | vendorHash updated (`07e80a4`) | Custom override: `proxyVendor + templ generate + go mod tidy` | ✅ Builds |
+| 6  | **mr-sync**                        | vendorHash updated (`e743803`) | `mkTidyOverride` — inconsistent vendoring                     | ✅ Builds |
+| 7  | **hierarchical-errors**            | No upstream change needed      | `{vendorHash = "sha256-TSXI...";}`                            | ✅ Builds |
+| 8  | **go-structure-linter**            | No upstream change needed      | `{vendorHash = "sha256-jLc2...";}`                            | ✅ Builds |
+| 9  | **art-dupl**                       | No upstream change needed      | `{vendorHash = "sha256-p8ml...";}`                            | ✅ Builds |
+| 10 | **branching-flow**                 | No override needed             | `{}`                                                          | ✅ Builds |
+| 11 | **project-meta**                   | No override needed             | `{}`                                                          | ✅ Builds |
+| 12 | **todo-list-ai**                   | No override needed             | `{}`                                                          | ✅ Builds |
 
 ### Infrastructure Created
 
@@ -43,12 +43,12 @@ A single `buildflow` vendorHash mismatch revealed a systemic issue: SystemNix us
 
 ### Validation
 
-| Check                                 | Result                                                     |
-| ------------------------------------- | ---------------------------------------------------------- |
-| `just test-fast`                      | ✅ All checks passed                                       |
-| Individual Go package builds (all 12) | ✅ All build successfully                                  |
+| Check                                 | Result                                                    |
+| ------------------------------------- | --------------------------------------------------------- |
+| `just test-fast`                      | ✅ All checks passed                                      |
+| Individual Go package builds (all 12) | ✅ All build successfully                                 |
 | Full NixOS toplevel build             | ⚠️ Pre-existing `monitor365` Rust/WASM failure (unrelated) |
-| All upstream repos pushed             | ✅ 6 repos committed + pushed                              |
+| All upstream repos pushed             | ✅ 6 repos committed + pushed                             |
 
 ---
 
@@ -134,33 +134,33 @@ The custom override for `golangci-lint-auto-configure` is fragile:
 
 ## F) Top 25 Things We Should Get Done Next
 
-| #   | Task                                                                                     | Impact | Effort | Priority |
-| --- | ---------------------------------------------------------------------------------------- | ------ | ------ | -------- |
-| 1   | **Deploy this fix** — `just switch` on evo-x2                                            | HIGH   | 5min   | P0       |
-| 2   | **Commit + push SystemNix overlay changes**                                              | HIGH   | 1min   | P0       |
-| 3   | **Fix monitor365 Rust/WASM build**                                                       | HIGH   | MED    | P0       |
-| 4   | **Update AGENTS.md** with `follows` vendorHash cascade docs + `mkTidyOverride` pattern   | MED    | 10min  | P1       |
-| 5   | **Create `just fix-vendor-hashes` automation recipe**                                    | MED    | 30min  | P1       |
-| 6   | **Commit dirty go.mod/go.sum in library-policy**                                         | LOW    | 2min   | P2       |
-| 7   | **Commit dirty go.mod/go.sum in golangci-lint-auto-configure**                           | LOW    | 2min   | P2       |
-| 8   | **Commit dirty go.mod/go.sum in mr-sync**                                                | LOW    | 2min   | P2       |
-| 9   | **Commit dirty go.mod/go.sum in art-dupl**                                               | LOW    | 2min   | P2       |
-| 10  | **Commit dirty go.mod/go.sum in projects-management-automation**                         | LOW    | 2min   | P2       |
-| 11  | **Verify Darwin eval still passes** after overlay changes                                | MED    | 5min   | P1       |
-| 12  | **Investigate `fetchGoModules` or `go.sum`-based vendor hashing**                        | HIGH   | 2hr    | P1       |
-| 13  | **SigNoz 0.127.1 deployment verification** — service health checks                       | MED    | 10min  | P1       |
-| 14  | **Hermes agent v2026.6.5 deployment verification** — service health checks               | MED    | 10min  | P1       |
-| 15  | **Stale status report cleanup** — 140+ files in `docs/status/`, archive old ones         | LOW    | 15min  | P3       |
-| 16  | **Run `golangci-lint-auto-configure` on all Go repos** — ensure lint configs are current | MED    | 20min  | P2       |
-| 17  | **Investigate `art-dupl` vendorHash — should it use `mkTidyOverride`?**                  | LOW    | 10min  | P3       |
-| 18  | **BTRFS snapshot verification** — `just snapshot-verify` on evo-x2                       | MED    | 5min   | P2       |
-| 19  | **Stale LSP cleanup timer verification** — check it's running                            | LOW    | 2min   | P3       |
-| 20  | **Disk usage check on evo-x2** — ensure /nix/store isn't growing unchecked               | LOW    | 2min   | P3       |
-| 21  | **Archive `docs/status/` pre-May-24 reports** — move old ones to `archive/`              | LOW    | 5min   | P3       |
-| 22  | **Centralize vendorHash overrides** into a single attrset for batch updates              | MED    | 20min  | P2       |
-| 23  | **Run `nix flake check` on Darwin** — verify cross-platform compatibility                | MED    | 10min  | P2       |
-| 24  | **Review SigNoz alert rules** — ensure critical paths are monitored                      | MED    | 30min  | P2       |
-| 25  | **Clean up `overlays/default.nix`** — both `isFunction` branches do the same thing       | LOW    | 5min   | P3       |
+| #  | Task                                                                                     | Impact | Effort | Priority |
+| -- | ---------------------------------------------------------------------------------------- | ------ | ------ | -------- |
+| 1  | **Deploy this fix** — `just switch` on evo-x2                                            | HIGH   | 5min   | P0       |
+| 2  | **Commit + push SystemNix overlay changes**                                              | HIGH   | 1min   | P0       |
+| 3  | **Fix monitor365 Rust/WASM build**                                                       | HIGH   | MED    | P0       |
+| 4  | **Update AGENTS.md** with `follows` vendorHash cascade docs + `mkTidyOverride` pattern   | MED    | 10min  | P1       |
+| 5  | **Create `just fix-vendor-hashes` automation recipe**                                    | MED    | 30min  | P1       |
+| 6  | **Commit dirty go.mod/go.sum in library-policy**                                         | LOW    | 2min   | P2       |
+| 7  | **Commit dirty go.mod/go.sum in golangci-lint-auto-configure**                           | LOW    | 2min   | P2       |
+| 8  | **Commit dirty go.mod/go.sum in mr-sync**                                                | LOW    | 2min   | P2       |
+| 9  | **Commit dirty go.mod/go.sum in art-dupl**                                               | LOW    | 2min   | P2       |
+| 10 | **Commit dirty go.mod/go.sum in projects-management-automation**                         | LOW    | 2min   | P2       |
+| 11 | **Verify Darwin eval still passes** after overlay changes                                | MED    | 5min   | P1       |
+| 12 | **Investigate `fetchGoModules` or `go.sum`-based vendor hashing**                        | HIGH   | 2hr    | P1       |
+| 13 | **SigNoz 0.127.1 deployment verification** — service health checks                       | MED    | 10min  | P1       |
+| 14 | **Hermes agent v2026.6.5 deployment verification** — service health checks               | MED    | 10min  | P1       |
+| 15 | **Stale status report cleanup** — 140+ files in `docs/status/`, archive old ones         | LOW    | 15min  | P3       |
+| 16 | **Run `golangci-lint-auto-configure` on all Go repos** — ensure lint configs are current | MED    | 20min  | P2       |
+| 17 | **Investigate `art-dupl` vendorHash — should it use `mkTidyOverride`?**                  | LOW    | 10min  | P3       |
+| 18 | **BTRFS snapshot verification** — `just snapshot-verify` on evo-x2                       | MED    | 5min   | P2       |
+| 19 | **Stale LSP cleanup timer verification** — check it's running                            | LOW    | 2min   | P3       |
+| 20 | **Disk usage check on evo-x2** — ensure /nix/store isn't growing unchecked               | LOW    | 2min   | P3       |
+| 21 | **Archive `docs/status/` pre-May-24 reports** — move old ones to `archive/`              | LOW    | 5min   | P3       |
+| 22 | **Centralize vendorHash overrides** into a single attrset for batch updates              | MED    | 20min  | P2       |
+| 23 | **Run `nix flake check` on Darwin** — verify cross-platform compatibility                | MED    | 10min  | P2       |
+| 24 | **Review SigNoz alert rules** — ensure critical paths are monitored                      | MED    | 30min  | P2       |
+| 25 | **Clean up `overlays/default.nix`** — both `isFunction` branches do the same thing       | LOW    | 5min   | P3       |
 
 ---
 

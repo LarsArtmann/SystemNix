@@ -2405,7 +2405,6 @@ test-fast:
    **LaunchAgent File:** `~/Library/LaunchAgents/net.activitywatch.ActivityWatch.plist`
 
    ```
-
    ```
 
 2. Add Nix-Visualize section to README:
@@ -2439,7 +2438,6 @@ test-fast:
    **Documentation:** `docs/architecture/nix-visualize-integration.md`
 
    ```
-
    ```
 
 3. Update Go development tools section:
@@ -2473,7 +2471,6 @@ test-fast:
    ````
 
    ```
-
    ```
 
 4. Update architecture overview with anti-patterns resolution

@@ -333,18 +333,18 @@ Add to `.pre-commit-config.yaml`:
 
 ## Commit Audit Summary (Last 10 Commits)
 
-| #   | Hash      | Message                                                    | Quality                                   |
-| --- | --------- | ---------------------------------------------------------- | ----------------------------------------- |
-| 1   | `c6ce990` | docs: SSH extraction follow-up status report               | ✅ Clean                                  |
-| 2   | `d43bbbd` | fix(nixos): correct SSH authorized keys path               | ❌ Wrong fix — used `builtins.pathExists` |
-| 3   | `7e3171b` | docs(status): SSH migration session 10 report              | ✅ Clean                                  |
-| 4   | `c23da71` | chore(flake): update flake.lock                            | ✅ Clean                                  |
-| 5   | `f2c9b18` | chore(flake): update inputs, remove duplicate crush-config | ✅ Clean                                  |
-| 6   | `50dd2ed` | chore(config): update flake inputs                         | ❌ Merge conflict markers committed       |
-| 7   | `4da33dd` | refactor: remove crush-config                              | ⚠️ Premature — re-added 2 commits later   |
-| 8   | `fcb7a82` | fix(nixos): correct fail2ban ignoreip syntax               | ✅ Correct fix                            |
-| 9   | `68e1ef5` | docs(status): remove trailing whitespace                   | ✅ Clean                                  |
-| 10  | `bb6925d` | fix(nixos): correct ClickHouse cluster + fail2ban ignoreip | ⚠️ Wrong fail2ban syntax (fixed in #8)    |
+| #  | Hash      | Message                                                    | Quality                                   |
+| -- | --------- | ---------------------------------------------------------- | ----------------------------------------- |
+| 1  | `c6ce990` | docs: SSH extraction follow-up status report               | ✅ Clean                                  |
+| 2  | `d43bbbd` | fix(nixos): correct SSH authorized keys path               | ❌ Wrong fix — used `builtins.pathExists` |
+| 3  | `7e3171b` | docs(status): SSH migration session 10 report              | ✅ Clean                                  |
+| 4  | `c23da71` | chore(flake): update flake.lock                            | ✅ Clean                                  |
+| 5  | `f2c9b18` | chore(flake): update inputs, remove duplicate crush-config | ✅ Clean                                  |
+| 6  | `50dd2ed` | chore(config): update flake inputs                         | ❌ Merge conflict markers committed       |
+| 7  | `4da33dd` | refactor: remove crush-config                              | ⚠️ Premature — re-added 2 commits later    |
+| 8  | `fcb7a82` | fix(nixos): correct fail2ban ignoreip syntax               | ✅ Correct fix                            |
+| 9  | `68e1ef5` | docs(status): remove trailing whitespace                   | ✅ Clean                                  |
+| 10 | `bb6925d` | fix(nixos): correct ClickHouse cluster + fail2ban ignoreip | ⚠️ Wrong fail2ban syntax (fixed in #8)     |
 
 **Score:** 5 clean, 2 wrong fixes, 1 premature removal, 1 merge conflict, 1 clean fix of a previous wrong fix
 

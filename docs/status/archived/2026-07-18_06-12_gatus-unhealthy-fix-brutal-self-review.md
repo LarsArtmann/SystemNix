@@ -6,25 +6,26 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 ### Fixes shipped & verified (6 files changed, +50/-17 lines)
 
-| # | Service | Root cause (verified) | Fix | Direct-verified post-deploy |
-|---|---------|----------------------|-----|----------------------------|
-| 1 | **DNS Blocker** | `dns-blocker.nix` passed `bl.file` (a **directory**) to dnsblockd instead of the hosts file inside it (`$out/${name}`). Silent: `dnsBlocklistEntries: 0`, `mapping.json: {}`, ZERO blocking. `ads.google.com` resolved to real Google IPs. | `processorArgs` + `blocklistPaths` now use `${bl.file}/${bl.name}`. | `dnsBlocklistEntries: 2535619`, `mapping.json` 6.4 MB / 130k+ per list |
-| 2 | **DNS Blocking Active** | Same root cause as #1. Once blocklists load, `dns_block_response: zero_ip` returns the block IP (192.168.1.200), which the check expects. | (Fixed by #1.) | `ads.google.com` → `192.168.1.200` (was `142.251.141.174`) |
-| 3 | **Redis** | nixpkgs immich module defaults `redis.port = 0` (TCP disabled) + `host = unixSocket`. Gatus `tcp://127.0.0.1:6379` can't reach a unix socket. | `services.immich.redis.port = ports.redis` + `bind = mkForce "127.0.0.1"`. Redis now listens on both socket AND TCP localhost. | `PING` → `+PONG`; host `127.0.0.1:6379` LISTEN |
-| 4 | **Monitor365 System Agent** | Gatus matched `pat(*monitor365*)`, but agent `/metrics` emits `collector_events_collected`, `middleware_dedup_*`, `cloud_sync_*` — none contain "monitor365". | Pattern → `collector_events_collected`. | Body contains the metric |
-| 5 | **Ollama** | `ai-stack.nix:75` had `wantedBy = lib.mkForce []` — an enabled service that **silently never started**. No crash, no log, pure split-brain against the unconditional Gatus check. | Removed the override (nixpkgs `WantedBy=multi-user.target` applies). Made Gatus check conditional on `ai-stack.enable` (matches voice-agents/monitor365 pattern). | HTTP 200 `{"models":[]}`, 34 MB RSS |
+| # | Service                     | Root cause (verified)                                                                                                                                                                                                                      | Fix                                                                                                                                                               | Direct-verified post-deploy                                            |
+| - | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| 1 | **DNS Blocker**             | `dns-blocker.nix` passed `bl.file` (a **directory**) to dnsblockd instead of the hosts file inside it (`$out/${name}`). Silent: `dnsBlocklistEntries: 0`, `mapping.json: {}`, ZERO blocking. `ads.google.com` resolved to real Google IPs. | `processorArgs` + `blocklistPaths` now use `${bl.file}/${bl.name}`.                                                                                               | `dnsBlocklistEntries: 2535619`, `mapping.json` 6.4 MB / 130k+ per list |
+| 2 | **DNS Blocking Active**     | Same root cause as #1. Once blocklists load, `dns_block_response: zero_ip` returns the block IP (192.168.1.200), which the check expects.                                                                                                  | (Fixed by #1.)                                                                                                                                                    | `ads.google.com` → `192.168.1.200` (was `142.251.141.174`)             |
+| 3 | **Redis**                   | nixpkgs immich module defaults `redis.port = 0` (TCP disabled) + `host = unixSocket`. Gatus `tcp://127.0.0.1:6379` can't reach a unix socket.                                                                                              | `services.immich.redis.port = ports.redis` + `bind = mkForce "127.0.0.1"`. Redis now listens on both socket AND TCP localhost.                                    | `PING` → `+PONG`; host `127.0.0.1:6379` LISTEN                         |
+| 4 | **Monitor365 System Agent** | Gatus matched `pat(*monitor365*)`, but agent `/metrics` emits `collector_events_collected`, `middleware_dedup_*`, `cloud_sync_*` — none contain "monitor365".                                                                              | Pattern → `collector_events_collected`.                                                                                                                           | Body contains the metric                                               |
+| 5 | **Ollama**                  | `ai-stack.nix:75` had `wantedBy = lib.mkForce []` — an enabled service that **silently never started**. No crash, no log, pure split-brain against the unconditional Gatus check.                                                          | Removed the override (nixpkgs `WantedBy=multi-user.target` applies). Made Gatus check conditional on `ai-stack.enable` (matches voice-agents/monitor365 pattern). | HTTP 200 `{"models":[]}`, 34 MB RSS                                    |
 
 ### Deploy
+
 - `nix flake check --no-build`: **all checks passed**.
 - `nix run .#deploy`: built 17 derivations, processed **2,535,619 blocklist domains** (+227 MiB), bootloader updated cleanly (no lock error), 0 failed units, **post-deploy smoke test 21 PASS / 0 FAIL**.
 - The earlier `Could not acquire lock` (exit 11) was **transient lock contention** with buildflow running under load avg 21. No stale locks; retry succeeded.
 
 ### Documentation
+
 - 4 new gotcha entries appended to `AGENTS.md` Non-Obvious Gotchas table (dnsblockd path bug, ollama wantedBy, immich redis socket-only, monitor365 metrics pattern).
 
 ---
@@ -33,7 +34,7 @@
 
 ### Verification depth — the honest gaps
 
-1. **Gatus's *recorded* status not confirmed.** I verified each *underlying service* is healthy by direct probing, but I did NOT confirm Gatus itself flipped each check to green. Two blockers: the Gatus REST API returns 401 (OIDC required), and the SQLite DB file (`/var/lib/gatus/gatus.db`) is owned by the `gatus` DynamicUser so unreadable as `lars`. Gatus needs `success-threshold = 2` consecutive passes (60s checks) + the 5m-interval checks (DNS Blocking Active) take up to 5 min to register even one success. **Probable** all green now, but "probable" is not "verified".
+1. **Gatus's _recorded_ status not confirmed.** I verified each _underlying service_ is healthy by direct probing, but I did NOT confirm Gatus itself flipped each check to green. Two blockers: the Gatus REST API returns 401 (OIDC required), and the SQLite DB file (`/var/lib/gatus/gatus.db`) is owned by the `gatus` DynamicUser so unreadable as `lars`. Gatus needs `success-threshold = 2` consecutive passes (60s checks) + the 5m-interval checks (DNS Blocking Active) take up to 5 min to register even one success. **Probable** all green now, but "probable" is not "verified".
 
 2. **rpi3 not re-deployed.** `dns-blocker.nix` is shared by rpi3 (`platforms/nixos/rpi3/default.nix` imports the same blocklists). The fix lands in the module, so rpi3's next deploy will process ~2.5M blocklist entries too — but rpi3 is a separate `nixosConfiguration` that I did NOT rebuild or deploy. Its DNS blocking is still silently broken until someone deploys it.
 
@@ -51,7 +52,7 @@
 - No commit made (working tree is dirty with the 6 changed files). User did not ask.
 - No `FEATURES.md` / `TODO_LIST.md` update (DNS-blocking feature status, ollama always-on change).
 - No verification that the generated `gatus.yaml` has correct YAML / no other latent check misconfigurations.
-- No audit of the *other* ~40 Gatus checks for similarly wrong patterns (I only fixed the one reported).
+- No audit of the _other_ ~40 Gatus checks for similarly wrong patterns (I only fixed the one reported).
 - No investigation of WHY the blocklist path bug was introduced (likely commit `d521dd2d` "Expand dns-blocker with dnsblockd feature parity" — I didn't pin it or scan that commit for sibling bugs).
 - Disk pressure (93%, 52 GiB free, 14 stale build sandboxes flagged by pre-deploy-check) — untouched.
 
@@ -78,7 +79,7 @@ Nothing in this session was destructive or left the system worse. But two judgme
 7. **The Monitor365 agent health check is too shallow.** "metrics endpoint serves 200" doesn't mean "agent is collecting and syncing". Add a check on `cloud_sync_consecutive_failures < threshold` or `cloud_sync_upload_backlog_size < N`.
 8. **`post-deploy-check` should fail (not SKIP/WARN) on functional regressions.** DiscordSync stats "unexpected response" and Crush Daily "unexpected response" were SKIPped/WARNed, not failed. These are real signals being demoted to noise.
 9. **Deploy during load avg 21 + swap 100%** is gambling. `pre-deploy-check` should gate on memory pressure / load, or at least warn loudly (it warned on disk but not on memory).
-10. **AGENTS.md is now ~280 rows of gotchas.** It's becoming a dump. Several entries describe *fixed* bugs ("FIXED" suffix) that no longer need to be re-learned every session. Consider an `AGENTS-history.md` for resolved incidents and keep AGENTS.md to *currently-relevant* gotchas.
+10. **AGENTS.md is now ~280 rows of gotchas.** It's becoming a dump. Several entries describe _fixed_ bugs ("FIXED" suffix) that no longer need to be re-learned every session. Consider an `AGENTS-history.md` for resolved incidents and keep AGENTS.md to _currently-relevant_ gotchas.
 
 ---
 
@@ -87,6 +88,7 @@ Nothing in this session was destructive or left the system worse. But two judgme
 Ordered roughly by impact.
 
 **Confirm what I just claimed (do these first)**
+
 1. Read the generated `/nix/store/*-gatus.yaml` and verify the Monitor365 + Ollama + Redis entries are well-formed.
 2. `sudo sqlite3 /var/lib/gatus/gatus.db` (or `sudo cat`) — confirm the 5 previously-unhealthy checks flipped to `success=1` after 2 × interval.
 3. Re-run `nix flake check --no-build` after the final ai-stack edit (the one edit not covered).
@@ -96,7 +98,7 @@ Ordered roughly by impact.
 5. Investigate `cloud_sync_consecutive_failures = 119` — why can't the agent reach the cloud? Network? Auth token? Endpoint down?
 6. Investigate `cloud_sync_upload_backlog_size = 597 MB` — is it growing or draining?
 7. Add a Gatus check on `cloud_sync_consecutive_failures < 5` and `cloud_sync_upload_backlog_size < 100 MB`.
-8. Check the Monitor365 server (`/health` showed `realtime: connected (1 devices)`) — is the *server* receiving but failing to forward to cloud?
+8. Check the Monitor365 server (`/health` showed `realtime: connected (1 devices)`) — is the _server_ receiving but failing to forward to cloud?
 
 **rpi3 (same bug, not deployed)**
 9. Build `nixosConfigurations.rpi3-dns` to confirm the shared module fix doesn't break rpi3 eval.
@@ -176,7 +178,7 @@ Ordered roughly by impact.
 
 ---
 
-*Arte in Aeternum — but verify, don't assume.*
+_Arte in Aeternum — but verify, don't assume._
 
 ---
 

@@ -19,7 +19,7 @@ Completed the `harden` helper migration across **all 10 service modules**, fixed
 | #     | Task                                                 | How Verified                                                                                                     |
 | ----- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | P0-2  | Clear stale git stashes                              | `git stash list` → empty                                                                                         |
-| P0-3  | Delete remote copilot branches                       | `git branch -r                                                                                                   | grep copilot` → none |
+| P0-3  | Delete remote copilot branches                       | `git branch -r                                                                                                   |
 | P0-4  | Archive old status docs                              | 242 files in `docs/status/archive/`                                                                              |
 | P0-5  | Rewrite status README                                | `docs/status/README.md` updated                                                                                  |
 | P0-6  | Fix "29 modules" → correct count                     | Done in prior session                                                                                            |

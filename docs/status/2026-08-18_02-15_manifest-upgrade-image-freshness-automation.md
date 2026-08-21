@@ -56,7 +56,8 @@ Nothing irreversible or data-threatening. Ranked honest mistakes:
 
 ## f) NEXT — up to 50, session-scoped + noticed-along-the-way
 
-*Image freshness (this session's thread):*
+_Image freshness (this session's thread):_
+
 1. ~~Commit + push `image-updates.yml`, `check-image-updates.sh`, images bump — activate the daily enforcement~~ done (workflow live — daily run opens drift issues (AGENTS.md Docker images rule))
 2. ~~Twenty v2.31.1: read release notes for breaking migrations; decide single-jump vs stepwise (2.7→~2.12→~2.18→2.31); verify a fresh pg_dump first; then bump~~ done (upgraded past it: v2.32 shipped by the 20-38 session (single-jump, verified))
 3. Pin twenty / twenty-postgres / twenty-redis with digests; register Dozzle in `lib/images.nix` (pinned) — it currently escapes all policy
@@ -65,7 +66,7 @@ Nothing irreversible or data-threatening. Ranked honest mistakes:
 6. Decide digest-refresh ergonomics: `postgres:16-alpine` digest will drift ~weekly — the workflow will nag often; consider auto-PR (renovate-style) instead of issue-only
 7. ~~`nixpkgs-compat`-style: first manual run of the workflow via `workflow_dispatch` after push to prove the issue-creation path works end-to-end~~ done (issue-creation path proven — the workflow keeps an open issue on Twenty being behind)
 
-*Manifest (the actual app):*
+_Manifest (the actual app):_
 8. Verify Autofix works self-hosted (trigger a deliberately malformed request; check `/errors/` catalog)
 9. Verify existing login sessions survived 6.6.1→6.18.0 (BetterAuth secret unchanged, but confirm in browser)
 10. Re-verify Ollama integration env is still honored by 6.18.0 (`OLLAMA_HOST` reaches the UI's local-model list)
@@ -74,13 +75,13 @@ Nothing irreversible or data-threatening. Ranked honest mistakes:
 13. Browser-eyeball the new Homepage tile description
 14. ~~Watch Gatus/Discord for alert noise from tonight's double-restart (should be none)~~ done (no alert noise from the double-restart)
 
-*Prevention-layer gaps found:*
+_Prevention-layer gaps found:_
 15. Post-deploy-check: container-health assertions (see e.2)
 16. AGENTS.md gotcha: compose `${}` substitution inside healthcheck/exec strings (see e.3)
 17. Consider an eval-time guard in `lib/docker.nix`: reject healthcheck/cmd strings containing unescaped `${` that isn't an intended compose var (hard — maybe just a comment + README note)
 18. ~~CHANGELOG: decide whether it's maintained or dead; if dead, delete or archive to stop pretending~~ done (CHANGELOG is actively maintained (rich Unreleased section through 2026-08-18))
 
-*Noticed but not touched (pre-existing, from TODO/journal during this session):*
+_Noticed but not touched (pre-existing, from TODO/journal during this session):_
 19. Root fs at 91% (69G free) — deploy gate is 95%; the P0 free-space item is still open and shrinking
 20. I/O pressure avg10=97% WARN during deploy (btrbk seed + corruption-recovery context) — check BFQ tiering impact while sends run
 21. pocket-id SQLITE_BUSY under IO storms (00:23 onset, pre-session) — if it recurs outside deploys, worth a WAL/busy_timeout look; possibly the known corruption-read contention
@@ -89,7 +90,7 @@ Nothing irreversible or data-threatening. Ranked honest mistakes:
 24. URGENT google-sync fix deployed — VERIFY the crash-loop alerts actually stopped (journal quiet since deploy)
 25. The other P0s in TODO_LIST are unchanged (data-corruption recovery plan T04-T08, offsite decision, Turso decision, dnsblockd oomd exemption, scrub coverage for /data, emergency reserve re-provision, foreground scrub of `/`)
 
-*(list intentionally ends at 25 — the remaining TODO_LIST backlog is already tracked there; duplicating it here adds nothing.)*
+_(list intentionally ends at 25 — the remaining TODO_LIST backlog is already tracked there; duplicating it here adds nothing.)_
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 

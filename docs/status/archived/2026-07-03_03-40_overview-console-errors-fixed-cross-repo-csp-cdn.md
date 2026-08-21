@@ -6,7 +6,6 @@
 
 ---
 
-
 ## The Problem (4 Console Errors)
 
 ```
@@ -23,13 +22,13 @@
 
 ### Overview Console Errors — ALL 4 FIXED & DEPLOYED
 
-| #   | Error                    | Root Cause                                                                                       | Fix                                                                                         | Repo                        | Status      |
-| --- | ------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- | --------------------------- | ----------- |
-| 1   | htmx blocked by CSP      | `templ-components` loaded htmx from `unpkg.com`, but overview CSP only allows `cdn.jsdelivr.net` | Switched all CDN URLs from `unpkg.com` → `cdn.jsdelivr.net` in `layout/sri.go`              | templ-components            | ✅ Deployed |
-| 2   | response-targets blocked | Same as #1                                                                                       | Same fix                                                                                    | templ-components            | ✅ Deployed |
-| 3   | Source map CSP violation | `connect-src 'self'` blocked jsDelivr `.map` fetch                                               | Added `https://cdn.jsdelivr.net` to `connect-src`                                           | overview                    | ✅ Deployed |
-| 4   | favicon.svg 404          | `DefaultPageProps.Favicon = "/favicon.svg"` but overview serves no such file                     | Made favicon conditional in base layout; static emoji data URI in overview's `layout.templ` | templ-components + overview | ✅ Deployed |
-| 5   | htmx is not defined      | Cascade from #1+#2                                                                               | Resolved by #1+#2                                                                           | —                           | ✅ Deployed |
+| # | Error                    | Root Cause                                                                                       | Fix                                                                                         | Repo                        | Status      |
+| - | ------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- | --------------------------- | ----------- |
+| 1 | htmx blocked by CSP      | `templ-components` loaded htmx from `unpkg.com`, but overview CSP only allows `cdn.jsdelivr.net` | Switched all CDN URLs from `unpkg.com` → `cdn.jsdelivr.net` in `layout/sri.go`              | templ-components            | ✅ Deployed |
+| 2 | response-targets blocked | Same as #1                                                                                       | Same fix                                                                                    | templ-components            | ✅ Deployed |
+| 3 | Source map CSP violation | `connect-src 'self'` blocked jsDelivr `.map` fetch                                               | Added `https://cdn.jsdelivr.net` to `connect-src`                                           | overview                    | ✅ Deployed |
+| 4 | favicon.svg 404          | `DefaultPageProps.Favicon = "/favicon.svg"` but overview serves no such file                     | Made favicon conditional in base layout; static emoji data URI in overview's `layout.templ` | templ-components + overview | ✅ Deployed |
+| 5 | htmx is not defined      | Cascade from #1+#2                                                                               | Resolved by #1+#2                                                                           | —                           | ✅ Deployed |
 
 **Live verification (03:40 CEST):** All 5 checks pass on http://localhost:8083/
 
@@ -130,33 +129,33 @@ The BuildFlow pre-commit hook reports "failed" on both repos but this is a **fal
 
 ## f) Top 25 Things To Get Done Next
 
-| #   | Priority | Task                                                                                                   | Effort | Impact                              |
-| --- | -------- | ------------------------------------------------------------------------------------------------------ | ------ | ----------------------------------- |
-| 1   | 🔴       | **Commit SystemNix flake.lock** — overview input points to `0b0ed2a`, must be committed                | 1 min  | Critical — uncommitted deploy state |
-| 2   | 🔴       | **Commit templ-components generated files** — 50 `*_templ.go` version banner changes                   | 1 min  | Clean working tree                  |
-| 3   | 🔴       | **Commit pre-existing SystemNix changes** — direnv.nix import, `mr` package, shellcheck fix            | 5 min  | Clean working tree                  |
-| 4   | 🟠       | **Add Overview Caddy vHost** — `overview.home.lan` → `localhost:8083`                                  | 15 min | Network accessibility               |
-| 5   | 🟠       | **Add Overview Homepage tile** — service card on dashboard                                             | 10 min | Discoverability                     |
-| 6   | 🟠       | **Add Overview Gatus endpoint** — health check at `/health`                                            | 10 min | Uptime monitoring                   |
-| 7   | 🟠       | **Fix `nix-build-cleanup.service`** — failed unit on evo-x2                                            | 15 min | System health                       |
-| 8   | 🟡       | **Pin templ generator version** — match `go.mod` `v0.3.1020` in devShell                               | 10 min | Eliminate noise diffs               |
-| 9   | 🟡       | **Fix templ-components `TestGoldenSidebarNav`** — whitespace diff in golden test                       | 10 min | Test suite green                    |
-| 10  | 🟡       | **CDN allow-list as exported constant** — templ-components exports CDN origin for CSP generation       | 30 min | Architectural correctness           |
-| 11  | 🟡       | **Fix pre-deploy disk space check** — use `statvfs` available bytes instead of `df` percentage         | 15 min | Unblock deploys at 97%              |
-| 12  | 🟡       | **Overview README config table** — document env vars (`OVERVIEW_PORT`, `OVERVIEW_SEARCH_PATHS`, etc.)  | 20 min | Documentation                       |
-| 13  | 🟡       | **Overview endpoint table** — document SSE, metrics, health endpoints in README                        | 20 min | Documentation                       |
-| 14  | 🟢       | **Overview OIDC (Layer 2)** — add `protectedVHost` when Caddy vHost is added                           | 30 min | Security                            |
-| 15  | 🟢       | **Overview systemd hardening audit** — verify `harden` + `serviceDefaults` are applied                 | 15 min | Security                            |
-| 16  | 🟢       | **BTRFS space monitoring** — check if `btrfs-health.nix` reports device-unallocated correctly after GC | 10 min | Operational                         |
-| 17  | 🟢       | **Stale build sandbox investigation** — why `/nix/var/nix/builds/` accumulates despite cleanup timer   | 20 min | Operational                         |
-| 18  | 🟢       | **cqrs-htmx `.vendor-local` upstream** — move eventtest to go-cqrs-lite proper                         | 30 min | Architectural debt                  |
-| 19  | 🟢       | **Overview integration test** — `nixosTests.overview` in SystemNix                                     | 45 min | Test coverage                       |
-| 20  | 🟢       | **Overview Home Manager module** — per-user overview config                                            | 30 min | Feature                             |
-| 21  | 🟢       | **Overview Cachix binary cache** — avoid rebuilds on every overview rev bump                           | 20 min | Build speed                         |
-| 22  | 🟢       | **Overview CHANGELOG.md** — track releases                                                             | 15 min | Documentation                       |
-| 23  | 🔵       | **Overview dynamic theming** — evaluate DMS `enableDynamicTheming` for Material You colors             | 30 min | Feature                             |
-| 24  | 🔵       | **Overview project detail pages** — deep-link to individual project stats                              | 2h     | Feature                             |
-| 25  | 🔵       | **Consolidate overview into homepage** — evaluate if overview is redundant with Homepage dashboard     | 1h     | Architectural                       |
+| #  | Priority | Task                                                                                                   | Effort | Impact                              |
+| -- | -------- | ------------------------------------------------------------------------------------------------------ | ------ | ----------------------------------- |
+| 1  | 🔴       | **Commit SystemNix flake.lock** — overview input points to `0b0ed2a`, must be committed                | 1 min  | Critical — uncommitted deploy state |
+| 2  | 🔴       | **Commit templ-components generated files** — 50 `*_templ.go` version banner changes                   | 1 min  | Clean working tree                  |
+| 3  | 🔴       | **Commit pre-existing SystemNix changes** — direnv.nix import, `mr` package, shellcheck fix            | 5 min  | Clean working tree                  |
+| 4  | 🟠       | **Add Overview Caddy vHost** — `overview.home.lan` → `localhost:8083`                                  | 15 min | Network accessibility               |
+| 5  | 🟠       | **Add Overview Homepage tile** — service card on dashboard                                             | 10 min | Discoverability                     |
+| 6  | 🟠       | **Add Overview Gatus endpoint** — health check at `/health`                                            | 10 min | Uptime monitoring                   |
+| 7  | 🟠       | **Fix `nix-build-cleanup.service`** — failed unit on evo-x2                                            | 15 min | System health                       |
+| 8  | 🟡       | **Pin templ generator version** — match `go.mod` `v0.3.1020` in devShell                               | 10 min | Eliminate noise diffs               |
+| 9  | 🟡       | **Fix templ-components `TestGoldenSidebarNav`** — whitespace diff in golden test                       | 10 min | Test suite green                    |
+| 10 | 🟡       | **CDN allow-list as exported constant** — templ-components exports CDN origin for CSP generation       | 30 min | Architectural correctness           |
+| 11 | 🟡       | **Fix pre-deploy disk space check** — use `statvfs` available bytes instead of `df` percentage         | 15 min | Unblock deploys at 97%              |
+| 12 | 🟡       | **Overview README config table** — document env vars (`OVERVIEW_PORT`, `OVERVIEW_SEARCH_PATHS`, etc.)  | 20 min | Documentation                       |
+| 13 | 🟡       | **Overview endpoint table** — document SSE, metrics, health endpoints in README                        | 20 min | Documentation                       |
+| 14 | 🟢       | **Overview OIDC (Layer 2)** — add `protectedVHost` when Caddy vHost is added                           | 30 min | Security                            |
+| 15 | 🟢       | **Overview systemd hardening audit** — verify `harden` + `serviceDefaults` are applied                 | 15 min | Security                            |
+| 16 | 🟢       | **BTRFS space monitoring** — check if `btrfs-health.nix` reports device-unallocated correctly after GC | 10 min | Operational                         |
+| 17 | 🟢       | **Stale build sandbox investigation** — why `/nix/var/nix/builds/` accumulates despite cleanup timer   | 20 min | Operational                         |
+| 18 | 🟢       | **cqrs-htmx `.vendor-local` upstream** — move eventtest to go-cqrs-lite proper                         | 30 min | Architectural debt                  |
+| 19 | 🟢       | **Overview integration test** — `nixosTests.overview` in SystemNix                                     | 45 min | Test coverage                       |
+| 20 | 🟢       | **Overview Home Manager module** — per-user overview config                                            | 30 min | Feature                             |
+| 21 | 🟢       | **Overview Cachix binary cache** — avoid rebuilds on every overview rev bump                           | 20 min | Build speed                         |
+| 22 | 🟢       | **Overview CHANGELOG.md** — track releases                                                             | 15 min | Documentation                       |
+| 23 | 🔵       | **Overview dynamic theming** — evaluate DMS `enableDynamicTheming` for Material You colors             | 30 min | Feature                             |
+| 24 | 🔵       | **Overview project detail pages** — deep-link to individual project stats                              | 2h     | Feature                             |
+| 25 | 🔵       | **Consolidate overview into homepage** — evaluate if overview is redundant with Homepage dashboard     | 1h     | Architectural                       |
 
 ---
 

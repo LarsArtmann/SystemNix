@@ -112,43 +112,43 @@ Nothing is broken. All checks pass:
 
 ### High Priority (Architecture & Performance)
 
-| #   | Task                                                                 | Impact | Effort |
-| --- | -------------------------------------------------------------------- | ------ | ------ |
-| 1   | **Add GitHub Actions CI** for `nix flake check` on push/PR           | High   | 2hr    |
-| 2   | **Split justfile** into category files or migrate to Nix apps        | Medium | 4hr    |
-| 3   | **Provision Pi 3** for DNS failover cluster                          | High   | 4hr    |
-| 4   | **Add `niri-session-restore` tests** — at least a dry-run validation | Medium | 2hr    |
-| 5   | **Archive old status reports** — move 60+ files to archive/          | Low    | 15min  |
+| # | Task                                                                 | Impact | Effort |
+| - | -------------------------------------------------------------------- | ------ | ------ |
+| 1 | **Add GitHub Actions CI** for `nix flake check` on push/PR           | High   | 2hr    |
+| 2 | **Split justfile** into category files or migrate to Nix apps        | Medium | 4hr    |
+| 3 | **Provision Pi 3** for DNS failover cluster                          | High   | 4hr    |
+| 4 | **Add `niri-session-restore` tests** — at least a dry-run validation | Medium | 2hr    |
+| 5 | **Archive old status reports** — move 60+ files to archive/          | Low    | 15min  |
 
 ### Medium Priority (Code Quality)
 
-| #   | Task                                                                                                                | Impact | Effort |
-| --- | ------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
-| 6   | **Consolidate overlay definitions** — perSystem and darwinSystem share the same overlays, reduce duplication        | Medium | 1hr    |
-| 7   | **Add shellcheck** to all scripts in `scripts/` directory via pre-commit                                            | Medium | 30min  |
-| 8   | **Migrate remaining justfile patterns to Nix apps** — `deploy`, `validate`, `dns-diagnostics` pattern shows the way | Medium | 2hr    |
-| 9   | **Add module-level assertions** for critical services (immich postgres, caddy certs, etc.)                          | Medium | 2hr    |
-| 10  | **Create a `lib/` helper for systemd service generation** — reduce boilerplate across 30 service modules            | Medium | 3hr    |
-| 11  | **Twenty CRM configuration** — module imported but not configured                                                   | Medium | 4hr    |
-| 12  | **Photomap service activation** — verify it works                                                                   | Low    | 1hr    |
-| 13  | **SigNoz cached build** — investigate if binary cache is available                                                  | High   | 2hr    |
-| 14  | **DNS blocklist automated hash updates** — currently manual `just update` + hash editing                            | Medium | 3hr    |
-| 15  | **Add `home-manager` shared test** — verify both platforms build same program set                                   | Medium | 1hr    |
+| #  | Task                                                                                                                | Impact | Effort |
+| -- | ------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 6  | **Consolidate overlay definitions** — perSystem and darwinSystem share the same overlays, reduce duplication        | Medium | 1hr    |
+| 7  | **Add shellcheck** to all scripts in `scripts/` directory via pre-commit                                            | Medium | 30min  |
+| 8  | **Migrate remaining justfile patterns to Nix apps** — `deploy`, `validate`, `dns-diagnostics` pattern shows the way | Medium | 2hr    |
+| 9  | **Add module-level assertions** for critical services (immich postgres, caddy certs, etc.)                          | Medium | 2hr    |
+| 10 | **Create a `lib/` helper for systemd service generation** — reduce boilerplate across 30 service modules            | Medium | 3hr    |
+| 11 | **Twenty CRM configuration** — module imported but not configured                                                   | Medium | 4hr    |
+| 12 | **Photomap service activation** — verify it works                                                                   | Low    | 1hr    |
+| 13 | **SigNoz cached build** — investigate if binary cache is available                                                  | High   | 2hr    |
+| 14 | **DNS blocklist automated hash updates** — currently manual `just update` + hash editing                            | Medium | 3hr    |
+| 15 | **Add `home-manager` shared test** — verify both platforms build same program set                                   | Medium | 1hr    |
 
 ### Lower Priority (Polish & DX)
 
-| #   | Task                                                                                   | Impact | Effort |
-| --- | -------------------------------------------------------------------------------------- | ------ | ------ |
-| 16  | **Niri session restore: add Darwin equivalent** using `launchctl` + `osascript`        | Low    | 4hr    |
-| 17  | **Unify theme application** — some apps still have hardcoded Catppuccin values         | Low    | 2hr    |
-| 18  | **Add `nixos-generators` for VM images** — test config changes in VMs before deploying | Medium | 3hr    |
-| 19  | **Create a service dependency graph** — visualize which services depend on which       | Low    | 1hr    |
-| 20  | **Migrate emeet-pixyd config to module options** — currently hardcoded in nix module   | Low    | 2hr    |
-| 21  | **Add `programs.niri-session` to AGENTS.md** — document the new config options         | Low    | 30min  |
-| 22  | **Investigate `nix-fast-build`** for parallel remote builds                            | Medium | 2hr    |
-| 23  | **Create a flake output for Raspberry Pi SD image builds**                             | Low    | 1hr    |
-| 24  | **Add sops secret rotation strategy** — document how to rotate age keys                | Low    | 1hr    |
-| 25  | **Clean up `flake.nix` input list** — 30+ inputs, consider grouping or reducing        | Low    | 2hr    |
+| #  | Task                                                                                   | Impact | Effort |
+| -- | -------------------------------------------------------------------------------------- | ------ | ------ |
+| 16 | **Niri session restore: add Darwin equivalent** using `launchctl` + `osascript`        | Low    | 4hr    |
+| 17 | **Unify theme application** — some apps still have hardcoded Catppuccin values         | Low    | 2hr    |
+| 18 | **Add `nixos-generators` for VM images** — test config changes in VMs before deploying | Medium | 3hr    |
+| 19 | **Create a service dependency graph** — visualize which services depend on which       | Low    | 1hr    |
+| 20 | **Migrate emeet-pixyd config to module options** — currently hardcoded in nix module   | Low    | 2hr    |
+| 21 | **Add `programs.niri-session` to AGENTS.md** — document the new config options         | Low    | 30min  |
+| 22 | **Investigate `nix-fast-build`** for parallel remote builds                            | Medium | 2hr    |
+| 23 | **Create a flake output for Raspberry Pi SD image builds**                             | Low    | 1hr    |
+| 24 | **Add sops secret rotation strategy** — document how to rotate age keys                | Low    | 1hr    |
+| 25 | **Clean up `flake.nix` input list** — 30+ inputs, consider grouping or reducing        | Low    | 2hr    |
 
 ---
 

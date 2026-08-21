@@ -239,7 +239,7 @@ graph TD
 97. Sales channel development - Revenue expansion
 98. Financial planning system - Business stability
 99. Investor relations setup - Funding preparation
-100.  Exit strategy planning - Business outcomes
+100. Exit strategy planning - Business outcomes
 
 ## 🎯 IMMEDIATE NEXT STEPS
 

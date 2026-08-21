@@ -135,18 +135,18 @@ just format             # ✅ treefmt formatting
 | ---------------------- | ----------- | --------------------------- |
 | NixOS                  | ✅ Complete | Fully Nix-managed           |
 | Darwin Core            | ✅ Working  | Homebrew-based              |
-| Darwin Custom Watchers | ⚠️ Partial  | Manual pip install required |
+| Darwin Custom Watchers | ⚠️ Partial   | Manual pip install required |
 | URL Tracking           | ✅ Fixed    | Accessibility permissions   |
 | Utilization Watcher    | ✅ Packaged | NixOS auto, macOS manual    |
 
 ### 2. Security Hardening
 
-| Feature       | Status      | Issue                        |
-| ------------- | ----------- | ---------------------------- |
+| Feature       | Status     | Issue                        |
+| ------------- | ---------- | ---------------------------- |
 | Audit Rules   | ⚠️ Disabled | NixOS bug #483085 (upstream) |
-| AppArmor      | ✅ Enabled  | Working                      |
-| PAM TouchID   | ✅ Working  | macOS sudo                   |
-| Gitleaks Scan | ✅ Clean    | 0 findings                   |
+| AppArmor      | ✅ Enabled | Working                      |
+| PAM TouchID   | ✅ Working | macOS sudo                   |
+| Gitleaks Scan | ✅ Clean   | 0 findings                   |
 
 ### 3. TODO Backlog Management
 
@@ -169,7 +169,7 @@ just format             # ✅ treefmt formatting
 | Quake Terminal      | ❌ Not started | 0%                   |
 | Screenshot OCR      | ❌ Not started | 0%                   |
 | Color Picker Script | ❌ Not started | 0%                   |
-| GPU/CPU Monitoring  | ⚠️ Partial     | Waybar modules exist |
+| GPU/CPU Monitoring  | ⚠️ Partial      | Waybar modules exist |
 
 ---
 
@@ -177,38 +177,38 @@ just format             # ✅ treefmt formatting
 
 ### High Priority (Next Session)
 
-| #   | Feature                      | Effort | Value  |
-| --- | ---------------------------- | ------ | ------ |
-| 1   | Quake Terminal Dropdown      | 2h     | High   |
-| 2   | Screenshot + OCR Script      | 2h     | High   |
-| 3   | Color Picker Script          | 2h     | Medium |
-| 4   | Clipboard History Viewer     | 2h     | Medium |
-| 5   | GPU Temp Waybar Module       | 1.5h   | Medium |
-| 6   | Keyboard Repeat Optimization | 20m    | Low    |
-| 7   | Caps Lock → Escape/Ctrl      | 20m    | Low    |
-| 8   | Bluetooth Auto-pairing       | 1h     | Medium |
+| # | Feature                      | Effort | Value  |
+| - | ---------------------------- | ------ | ------ |
+| 1 | Quake Terminal Dropdown      | 2h     | High   |
+| 2 | Screenshot + OCR Script      | 2h     | High   |
+| 3 | Color Picker Script          | 2h     | Medium |
+| 4 | Clipboard History Viewer     | 2h     | Medium |
+| 5 | GPU Temp Waybar Module       | 1.5h   | Medium |
+| 6 | Keyboard Repeat Optimization | 20m    | Low    |
+| 7 | Caps Lock → Escape/Ctrl      | 20m    | Low    |
+| 8 | Bluetooth Auto-pairing       | 1h     | Medium |
 
 ### Medium Priority (This Week)
 
-| #   | Feature                        | Effort | Value  |
-| --- | ------------------------------ | ------ | ------ |
-| 9   | sops-nix Secrets Management    | 2h     | High   |
-| 10  | NixOS Deployment Documentation | 2h     | High   |
-| 11  | Memory Usage Waybar Module     | 1.5h   | Medium |
-| 12  | Network Bandwidth Waybar       | 1.5h   | Medium |
-| 13  | Audio Visualizer               | 1h     | Low    |
-| 14  | Per-App Volume Control         | 1h     | Low    |
-| 15  | Dev Environment Launcher       | 1h     | Medium |
+| #  | Feature                        | Effort | Value  |
+| -- | ------------------------------ | ------ | ------ |
+| 9  | sops-nix Secrets Management    | 2h     | High   |
+| 10 | NixOS Deployment Documentation | 2h     | High   |
+| 11 | Memory Usage Waybar Module     | 1.5h   | Medium |
+| 12 | Network Bandwidth Waybar       | 1.5h   | Medium |
+| 13 | Audio Visualizer               | 1h     | Low    |
+| 14 | Per-App Volume Control         | 1h     | Low    |
+| 15 | Dev Environment Launcher       | 1h     | Medium |
 
 ### Low Priority (Backlog)
 
-| #   | Feature                  | Effort | Value |
-| --- | ------------------------ | ------ | ----- |
-| 16  | Gaming Mode Toggle       | 2h     | Low   |
-| 17  | AI Workspace Suggestions | 8h+    | Low   |
-| 18  | NPU Enablement           | 4h     | Low   |
-| 19  | Distributed Build Cache  | 2h     | Low   |
-| 20  | GTK/Qt Theme Integration | 2h     | Low   |
+| #  | Feature                  | Effort | Value |
+| -- | ------------------------ | ------ | ----- |
+| 16 | Gaming Mode Toggle       | 2h     | Low   |
+| 17 | AI Workspace Suggestions | 8h+    | Low   |
+| 18 | NPU Enablement           | 4h     | Low   |
+| 19 | Distributed Build Cache  | 2h     | Low   |
+| 20 | GTK/Qt Theme Integration | 2h     | Low   |
 
 ---
 

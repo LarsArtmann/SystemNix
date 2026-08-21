@@ -4,7 +4,6 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 ### Deploy blocker fixed — `displayUser` removed

@@ -225,33 +225,33 @@
 
 ## F) Top 25 Things We Should Get Done Next
 
-| #   | Priority | Item                                                                                | Impact                           | Effort |
-| --- | -------- | ----------------------------------------------------------------------------------- | -------------------------------- | ------ |
-| 1   | P0       | **Deploy all 39 undeployed commits** (`just switch`)                                | Critical — unblocks verification | 10 min |
-| 2   | P0       | **Run post-deploy verification** (`scripts/verify-deployment.sh`)                   | Confirms everything works        | 5 min  |
-| 3   | P0       | **Investigate swap saturation** — root cause analysis + fix                         | Prevents OOM cascade             | 30 min |
-| 4   | P0       | **Add `/data` disk usage alerting** to SigNoz/Gatus                                 | Prevents silent disk full        | 15 min |
-| 5   | P1       | **Activate Hermes fallback LLM** — populate OpenRouter sops secret                  | Prevents rate limit lockout      | 20 min |
-| 6   | P1       | **Commit staged doc cleanup** — .mmd deletions + migration move                     | Clean working tree               | 2 min  |
-| 7   | P1       | **Create TODO_LIST.md** — comprehensive action tracking from status reports         | Project management hygiene       | 30 min |
-| 8   | P1       | **Create FEATURES.md** — honest feature inventory by status                         | Project documentation            | 30 min |
-| 9   | P1       | **Fix `security-hardening.nix`** — use centralized `onFailure`                      | Deduplication completeness       | 5 min  |
-| 10  | P1       | **Fix `disableTests` overlay** — use `python3Packages` not `python313Packages`      | Prevents future breakage         | 15 min |
-| 11  | P1       | **`theme.nix` → module system migration** — proper HM/NixOS option                  | Architecture improvement         | 1-2 hr |
-| 12  | P1       | **Resolve stash@{0}** — address or discard PMA excludePaths WIP                     | Clean repo state                 | 10 min |
-| 13  | P2       | **`servicePort` defaults → `ports.*`** (16 modules)                                 | Centralization completeness      | 2-3 hr |
-| 14  | P2       | **SigNoz Discord webhook delivery test** — verify runtime delivery                  | Monitoring confidence            | 15 min |
-| 15  | P2       | **Gatus endpoint health verification** — post-migration check                       | Monitoring confidence            | 15 min |
-| 16  | P2       | **Convert `/data` to BTRFS subvolume** — enable snapshotting                        | Data protection                  | 30 min |
-| 17  | P2       | **RPi3 DNS failover provisioning** — acquire hardware + deploy                      | Infrastructure resilience        | 2-4 hr |
-| 18  | P2       | **Hermes SSH deploy key installation** — complete git access                        | Hermes git integration           | 10 min |
-| 19  | P2       | **Container-internal port documentation** — add to ports.nix or document separately | Discoverability                  | 1 hr   |
-| 20  | P2       | **Archive old status reports** — move 100+ old reports to archive/                  | Repo cleanliness                 | 5 min  |
-| 21  | P3       | **Darwin disk cleanup** — reclaim space on 90%+ full SSD                            | Darwin usability                 | 30 min |
-| 22  | P3       | **Darwin desktop config parity** — terminal, editor, theme                          | Cross-platform consistency       | 2-4 hr |
-| 23  | P3       | **Create ROADMAP.md** — long-term direction and raw ideas                           | Project planning                 | 30 min |
-| 24  | P3       | **`dns-blocker-config.nix` port dedup** — single source for statsPort               | Deduplication                    | 10 min |
-| 25  | P3       | **Swap-based alerting** — Gatus/SigNoz check for swap > 90%                         | Proactive monitoring             | 15 min |
+| #  | Priority | Item                                                                                | Impact                           | Effort |
+| -- | -------- | ----------------------------------------------------------------------------------- | -------------------------------- | ------ |
+| 1  | P0       | **Deploy all 39 undeployed commits** (`just switch`)                                | Critical — unblocks verification | 10 min |
+| 2  | P0       | **Run post-deploy verification** (`scripts/verify-deployment.sh`)                   | Confirms everything works        | 5 min  |
+| 3  | P0       | **Investigate swap saturation** — root cause analysis + fix                         | Prevents OOM cascade             | 30 min |
+| 4  | P0       | **Add `/data` disk usage alerting** to SigNoz/Gatus                                 | Prevents silent disk full        | 15 min |
+| 5  | P1       | **Activate Hermes fallback LLM** — populate OpenRouter sops secret                  | Prevents rate limit lockout      | 20 min |
+| 6  | P1       | **Commit staged doc cleanup** — .mmd deletions + migration move                     | Clean working tree               | 2 min  |
+| 7  | P1       | **Create TODO_LIST.md** — comprehensive action tracking from status reports         | Project management hygiene       | 30 min |
+| 8  | P1       | **Create FEATURES.md** — honest feature inventory by status                         | Project documentation            | 30 min |
+| 9  | P1       | **Fix `security-hardening.nix`** — use centralized `onFailure`                      | Deduplication completeness       | 5 min  |
+| 10 | P1       | **Fix `disableTests` overlay** — use `python3Packages` not `python313Packages`      | Prevents future breakage         | 15 min |
+| 11 | P1       | **`theme.nix` → module system migration** — proper HM/NixOS option                  | Architecture improvement         | 1-2 hr |
+| 12 | P1       | **Resolve stash@{0}** — address or discard PMA excludePaths WIP                     | Clean repo state                 | 10 min |
+| 13 | P2       | **`servicePort` defaults → `ports.*`** (16 modules)                                 | Centralization completeness      | 2-3 hr |
+| 14 | P2       | **SigNoz Discord webhook delivery test** — verify runtime delivery                  | Monitoring confidence            | 15 min |
+| 15 | P2       | **Gatus endpoint health verification** — post-migration check                       | Monitoring confidence            | 15 min |
+| 16 | P2       | **Convert `/data` to BTRFS subvolume** — enable snapshotting                        | Data protection                  | 30 min |
+| 17 | P2       | **RPi3 DNS failover provisioning** — acquire hardware + deploy                      | Infrastructure resilience        | 2-4 hr |
+| 18 | P2       | **Hermes SSH deploy key installation** — complete git access                        | Hermes git integration           | 10 min |
+| 19 | P2       | **Container-internal port documentation** — add to ports.nix or document separately | Discoverability                  | 1 hr   |
+| 20 | P2       | **Archive old status reports** — move 100+ old reports to archive/                  | Repo cleanliness                 | 5 min  |
+| 21 | P3       | **Darwin disk cleanup** — reclaim space on 90%+ full SSD                            | Darwin usability                 | 30 min |
+| 22 | P3       | **Darwin desktop config parity** — terminal, editor, theme                          | Cross-platform consistency       | 2-4 hr |
+| 23 | P3       | **Create ROADMAP.md** — long-term direction and raw ideas                           | Project planning                 | 30 min |
+| 24 | P3       | **`dns-blocker-config.nix` port dedup** — single source for statsPort               | Deduplication                    | 10 min |
+| 25 | P3       | **Swap-based alerting** — Gatus/SigNoz check for swap > 90%                         | Proactive monitoring             | 15 min |
 
 ---
 

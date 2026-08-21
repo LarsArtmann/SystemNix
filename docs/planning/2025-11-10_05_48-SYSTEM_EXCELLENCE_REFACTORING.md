@@ -277,7 +277,7 @@
 97. Integration testing (15min)
 98. Documentation review (15min)
 99. Final validation (15min)
-100.  Deployment preparation (15min)
+100. Deployment preparation (15min)
 
 ---
 

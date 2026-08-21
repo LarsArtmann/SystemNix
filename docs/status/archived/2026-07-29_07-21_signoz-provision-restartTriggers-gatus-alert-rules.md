@@ -7,7 +7,6 @@
 
 ---
 
-
 ## Executive Summary
 
 The SigNoz alert rules endpoint (`GET /api/v1/rules`) returned `{"data":{"rules":[]}}` — zero rules despite 19 being defined in `_signoz-alerts.nix`. The jq path fix (`.rules[]` → `.data.rules[]`) was already deployed but the `Type=oneshot` + `RemainAfterExit=true` provisioner service never re-ran. This session added `restartTriggers` to 10 provisioner oneshots, added a Prometheus textfile collector + Gatus health check for alert rules, fixed two pre-existing upstream build blockers (go-cqrs-lite, mr-sync), and added an explicit provisioner restart loop to `deploy.sh`. The provisioner now runs and creates rules (verified via journal), but the rules endpoint still returns empty — likely a silent POST failure requiring API format investigation.
@@ -20,18 +19,18 @@ The SigNoz alert rules endpoint (`GET /api/v1/rules`) returned `{"data":{"rules"
 
 Added `restartTriggers = [ (lib.getExe <scriptName>) ]` to 8 provisioner services that were missing it (2 already had it):
 
-| Service | File | Status |
-|---|---|---|
-| `signoz-provision` | `signoz.nix` (→ `_signoz-scripts.nix`) | ✅ Added — script extracted to `let` binding |
-| `pocket-id-provision` | `pocket-id.nix` | ✅ Added |
-| `forgejo-generate-token` | `forgejo.nix` | ✅ Added |
-| `forgejo-github-sync` | `forgejo.nix` | ✅ Added |
-| `forgejo-ensure-repos` | `forgejo-repos.nix` | ✅ Added |
-| `twenty-fix-collation` | `twenty.nix` | ✅ Added |
-| `dnsblockd-attach-ip` | `dns-blocker.nix` | ✅ Added |
-| `monitor365-schema-migrate` | `monitor365.nix` | ✅ Added — inline script extracted to `writeShellApplication` |
-| `forgejo-oidc-setup` | `forgejo.nix` | ✅ Already had it |
-| `forgejo-ssh-keys` | `forgejo.nix` | ✅ Already had it |
+| Service                     | File                                   | Status                                                        |
+| --------------------------- | -------------------------------------- | ------------------------------------------------------------- |
+| `signoz-provision`          | `signoz.nix` (→ `_signoz-scripts.nix`) | ✅ Added — script extracted to `let` binding                  |
+| `pocket-id-provision`       | `pocket-id.nix`                        | ✅ Added                                                      |
+| `forgejo-generate-token`    | `forgejo.nix`                          | ✅ Added                                                      |
+| `forgejo-github-sync`       | `forgejo.nix`                          | ✅ Added                                                      |
+| `forgejo-ensure-repos`      | `forgejo-repos.nix`                    | ✅ Added                                                      |
+| `twenty-fix-collation`      | `twenty.nix`                           | ✅ Added                                                      |
+| `dnsblockd-attach-ip`       | `dns-blocker.nix`                      | ✅ Added                                                      |
+| `monitor365-schema-migrate` | `monitor365.nix`                       | ✅ Added — inline script extracted to `writeShellApplication` |
+| `forgejo-oidc-setup`        | `forgejo.nix`                          | ✅ Already had it                                             |
+| `forgejo-ssh-keys`          | `forgejo.nix`                          | ✅ Already had it                                             |
 
 **Pattern:** `restartTriggers = [ (lib.getExe scriptVar) ]` references the Nix store path of the script. When the script content changes (any edit to the `writeShellApplication` text), the store path changes, which triggers systemd to restart the service on next activation.
 
@@ -40,12 +39,14 @@ Added `restartTriggers = [ (lib.getExe <scriptName>) ]` to 8 provisioner service
 ### 2. SigNoz Alert Rules Health Monitoring (Prometheus + Gatus)
 
 **system-health.nix** — Added `collectSignozRules` option + `signoz.port` option:
+
 - Collector queries `GET /api/v1/rules` every 2min via `curl | jq`
 - Emits `system_signoz_alert_rules_total` (raw count) and `system_signoz_alert_rules_healthy` (1 if >15 rules, 0 otherwise)
 - Auto-disables when `services.signoz.enable` is false
 - Uses the established textfile collector pattern (same as monitor365-backup-health)
 
 **gatus-config.nix** — Added "SigNoz Alert Rules Provisioned" check:
+
 - Queries node_exporter `/metrics` endpoint for `system_signoz_alert_rules_healthy 1`
 - Uses `pat()` pattern matching (Gatus 5.36.0 jsonpath limitation workaround)
 - Discord alert: "SigNoz alert rules not provisioned — observability gap, no alerts will fire"
@@ -54,6 +55,7 @@ Added `restartTriggers = [ (lib.getExe <scriptName>) ]` to 8 provisioner service
 ### 3. Post-Deploy Check for Alert Rules Count
 
 **scripts/post-deploy-check.sh** — Added hard FAIL assertion:
+
 - Queries `GET /api/v1/rules` and checks `.data.rules | length > 15`
 - FAIL if 0 rules ("signoz-provision.service did not run or failed")
 - FAIL if 1-15 rules ("under-provisioned")
@@ -63,6 +65,7 @@ Added `restartTriggers = [ (lib.getExe <scriptName>) ]` to 8 provisioner service
 ### 4. deploy.sh Provisioner Restart Loop
 
 **scripts/deploy.sh** — Added explicit `systemctl restart` for all provisioner oneshots after `nh os switch`:
+
 - **Root cause discovered:** `switch-to-configuration` does NOT restart `Type=oneshot` + `RemainAfterExit=true` services even when `restartTriggers` change. The service stays in "active (exited)" state and the new script in the Nix store never executes.
 - **Fix:** deploy.sh now loops through 8 provisioner services and runs `sudo systemctl restart` on each after activation.
 - This is a workaround for a fundamental systemd/NixOS limitation, not a bug in our config.
@@ -72,11 +75,13 @@ Added `restartTriggers = [ (lib.getExe <scriptName>) ]` to 8 provisioner service
 Two upstream LarsArtmann repos had missing private Go deps that blocked ALL SystemNix builds:
 
 **go-cqrs-lite** (`e0855503`):
+
 - Added `go-atomic-write`, `go-error-family`, `go-ndjson` to flake inputs + `mkCqrsLintSource` deps map
 - Updated `vendorHash` for the new vendored content
 - Pushed to GitHub
 
 **mr-sync** (`97719d4`):
+
 - Same three private deps were missing from the flake (already had them in go.mod)
 - Added `proxyVendor = true` (fixes "go: updates to go.mod needed" during vendor phase)
 - Updated `vendorHash`
@@ -97,6 +102,7 @@ The auto-git daemon extracted the inline scripts from `signoz.nix` into `_signoz
 ### 1. SigNoz Alert Rules Actually Provisioned — NEEDS VERIFICATION
 
 **What works:** The provisioner service runs successfully (exit 0). Journal confirms:
+
 - Channel "Discord Alerts" created (JSON response with ID visible)
 - All 19 rule files iterated ("Creating: cpu-sustained.json", "Creating: disk-full.json", etc.)
 - All 6 dashboards applied (JSON responses with IDs visible)
@@ -107,6 +113,7 @@ The auto-git daemon extracted the inline scripts from `signoz.nix` into `_signoz
 **Probable cause:** The `POST /api/v1/rules` calls are failing silently. Every curl in the provision script uses `2>/dev/null || true`, which swallows ALL errors. Unlike channel creation (which shows the JSON response body in the journal), the rule creation POSTs show NO response — suggesting they returned non-2xx or failed entirely. The SigNoz 0.127.1 API may expect a different payload format than what `_signoz-alerts.nix` generates.
 
 **Not yet verified:**
+
 - The actual HTTP response codes from `POST /api/v1/rules`
 - Whether the rule JSON format matches SigNoz 0.127.1's expected schema
 - Whether the Gatus health check fires correctly (system-health collector hasn't run yet — 2min interval)
@@ -114,6 +121,7 @@ The auto-git daemon extracted the inline scripts from `signoz.nix` into `_signoz
 ### 2. Gatus Health Check — Deployed but Not Verified at Runtime
 
 The "SigNoz Alert Rules Provisioned" Gatus check is deployed but:
+
 - The system-health collector runs every 2min — hasn't completed a cycle yet with the new SigNoz rules collector
 - The Gatus check queries the node_exporter textfile endpoint — needs the collector to write `system_signoz_alert_rules_healthy` first
 - Cannot verify the `pat()` pattern matches correctly until the metric exists
@@ -125,6 +133,7 @@ The "SigNoz Alert Rules Provisioned" Gatus check is deployed but:
 ### 1. AGENTS.md Documentation Updates
 
 The following AGENTS.md entries are needed but not written:
+
 - The `switch-to-configuration` + `Type=oneshot` + `RemainAfterExit=true` gotcha (restartTriggers don't work, need explicit systemctl restart)
 - The deploy.sh provisioner restart loop documentation
 - The system-health `collectSignozRules` pattern
@@ -133,6 +142,7 @@ The following AGENTS.md entries are needed but not written:
 ### 2. TODO_LIST.md Update
 
 The SigNoz alert rules TODO item should be updated to reflect:
+
 - restartTriggers added ✅
 - Gatus check added ✅
 - Post-deploy check added ✅
@@ -141,6 +151,7 @@ The SigNoz alert rules TODO item should be updated to reflect:
 ### 3. SigNoz API Format Investigation
 
 The provisioner POSTs rules but they don't appear in the GET endpoint. This requires:
+
 - Checking the actual HTTP response from `POST /api/v1/rules` (remove `|| true` temporarily)
 - Comparing the rule JSON format against SigNoz 0.127.1 API docs
 - Testing with `curl -v` manually
@@ -162,6 +173,7 @@ I disabled cqrs-lint (`cqrs-lint = null` in `lars-packages.nix`) as a workaround
 ### 3. The Provisioner `|| true` Anti-Pattern
 
 The entire `signoz-provision` script uses `|| true` on every curl call, which means:
+
 - If POST fails with 400/500 → silently continues
 - If the API format changed → silently continues
 - If the network is down → silently continues
@@ -272,9 +284,11 @@ The provisioner POSTs rules using the format from `_signoz-alerts.nix` (`{"data"
 **Question:** Has the SigNoz rule creation API changed format in 0.127.1? Does `POST /api/v1/rules` still accept `{"data":{"rule":{...}}}`, or does it now expect a different schema (e.g., flat `{"rule":{...}}` or `{"data":[{...}]}`)?
 
 I cannot test this myself because `curl` and `systemctl` are blocked by the security policy. I would need you to run:
+
 ```bash
 curl -v -X POST -H "Content-Type: application/json" -d @/etc/signoz/rules/disk-full.json http://localhost:8080/api/v1/rules
 ```
+
 and share the response.
 
 ### Q2: Should cqrs-lint Be Fixed Now or Left Disabled?
@@ -293,19 +307,19 @@ Both repos are on `ref=master`, which means any upstream change (like adding new
 
 ## Session Metrics
 
-| Metric | Value |
-|---|---|
-| Files modified | 11 (signoz.nix, _signoz-scripts.nix, gatus-config.nix, system-health.nix, deploy.sh, post-deploy-check.sh, lars-packages.nix, forgejo.nix, forgejo-repos.nix, pocket-id.nix, twenty.nix, dns-blocker.nix, monitor365.nix) |
-| Upstream repos fixed | 2 (go-cqrs-lite, mr-sync) |
-| Upstream commits pushed | 5 (go-cqrs-lite: 2, mr-sync: 3) |
-| Deploys attempted | 4 |
-| Deploys succeeded | 3 (1st failed on pre-existing cqrs-lint breakage) |
-| Post-deploy checks passed | 28/29 (1 FAIL: SigNoz rules still empty) |
-| restartTriggers added | 8 services |
-| Gatus checks added | 1 ("SigNoz Alert Rules Provisioned") |
-| Post-deploy checks added | 1 (alert rules count assertion) |
-| Time spent on upstream fixes | ~4 hours (60% of session) |
-| Time spent on actual task | ~2.5 hours (40% of session) |
+| Metric                       | Value                                                                                                                                                                                                                     |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Files modified               | 11 (signoz.nix, _signoz-scripts.nix, gatus-config.nix, system-health.nix, deploy.sh, post-deploy-check.sh, lars-packages.nix, forgejo.nix, forgejo-repos.nix, pocket-id.nix, twenty.nix, dns-blocker.nix, monitor365.nix) |
+| Upstream repos fixed         | 2 (go-cqrs-lite, mr-sync)                                                                                                                                                                                                 |
+| Upstream commits pushed      | 5 (go-cqrs-lite: 2, mr-sync: 3)                                                                                                                                                                                           |
+| Deploys attempted            | 4                                                                                                                                                                                                                         |
+| Deploys succeeded            | 3 (1st failed on pre-existing cqrs-lint breakage)                                                                                                                                                                         |
+| Post-deploy checks passed    | 28/29 (1 FAIL: SigNoz rules still empty)                                                                                                                                                                                  |
+| restartTriggers added        | 8 services                                                                                                                                                                                                                |
+| Gatus checks added           | 1 ("SigNoz Alert Rules Provisioned")                                                                                                                                                                                      |
+| Post-deploy checks added     | 1 (alert rules count assertion)                                                                                                                                                                                           |
+| Time spent on upstream fixes | ~4 hours (60% of session)                                                                                                                                                                                                 |
+| Time spent on actual task    | ~2.5 hours (40% of session)                                                                                                                                                                                               |
 
 ---
 

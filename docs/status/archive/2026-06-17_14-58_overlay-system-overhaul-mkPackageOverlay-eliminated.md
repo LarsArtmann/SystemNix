@@ -53,12 +53,12 @@ Systematic elimination of the `mkPackageOverlay` indirection layer that wrapped 
 
 | Item                                         | Status | What's Left                                                                                                                            |
 | -------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `just test-fast` passes, full build untested | ⚠️     | `nh os boot .` not re-run after overlay refactor — vendorHash fix should resolve the art-dupl FOD failure, but full build not verified |
-| Overlay documentation in AGENTS.md           | ⚠️     | Updated for `mkLarsPackages`, but FEATURES.md still references old overlay patterns ("19 via flake-input overlays")                    |
-| TODO_LIST.md upstream Go repo entries        | ⚠️     | Still references `overlays/shared.nix` for library-policy and mr-sync mkTidyOverride — now lives in `mkLarsPackages`                   |
-| Monitor365                                   | ⚠️     | Server was crash-looping (DB path fixed in prior session), needs `reset-failed` after deploy                                           |
-| Hermes AI gateway                            | ⚠️     | Config wired, missing OpenAI API key in sops + SSH deploy key                                                                          |
-| Twenty CRM                                   | ⚠️     | Intermittent 502s — possible container OOM or PG connection exhaustion                                                                 |
+| `just test-fast` passes, full build untested | ⚠️      | `nh os boot .` not re-run after overlay refactor — vendorHash fix should resolve the art-dupl FOD failure, but full build not verified |
+| Overlay documentation in AGENTS.md           | ⚠️      | Updated for `mkLarsPackages`, but FEATURES.md still references old overlay patterns ("19 via flake-input overlays")                    |
+| TODO_LIST.md upstream Go repo entries        | ⚠️      | Still references `overlays/shared.nix` for library-policy and mr-sync mkTidyOverride — now lives in `mkLarsPackages`                   |
+| Monitor365                                   | ⚠️      | Server was crash-looping (DB path fixed in prior session), needs `reset-failed` after deploy                                           |
+| Hermes AI gateway                            | ⚠️      | Config wired, missing OpenAI API key in sops + SSH deploy key                                                                          |
+| Twenty CRM                                   | ⚠️      | Intermittent 502s — possible container OOM or PG connection exhaustion                                                                 |
 
 ---
 

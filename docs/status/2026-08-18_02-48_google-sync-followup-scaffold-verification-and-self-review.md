@@ -54,6 +54,7 @@
 ## f) Up to 50 things to get done next
 
 **P0 — incident closure:**
+
 1. ~~User runs `nix run .#deploy` (ships fix + the concurrent session's landed work; tree carries my sops scaffold + TODO edits).~~ done (deploys ran through 2026-08-18 (gen 690); fix live since system-686)
 2. ~~Post-deploy verify: `journalctl -u google-sync-dirs` (ran, mkdir'd 6 dirs); `journalctl -u google-sync.service -n 5` (no new 226s); `readlink /run/current-system` ≠ `ycvhzq52`; OnFailure silent.~~ done (no new 226s since 01:20:35; google-sync-dirs oneshot deployed)
 3. ~~Annotate the 01:34 report (appendix): timer stopped 01:21:28, urgency was stale at write time.~~ done (01-34 carries the addendum; correction also in CHANGELOG (00:33 was manual activation))
@@ -98,4 +99,4 @@
 
 ---
 
-*Arte in Aeternum — receipts above claims, annotations over rewrites.*
+_Arte in Aeternum — receipts above claims, annotations over rewrites._

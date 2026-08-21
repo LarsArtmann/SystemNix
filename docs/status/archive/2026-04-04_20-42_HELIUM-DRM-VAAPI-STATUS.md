@@ -138,33 +138,33 @@ Widevine on Linux provides **Security Level L3** (software-only). This caps stre
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| #   | Priority | Effort | Item                                                                 |
-| --- | -------- | ------ | -------------------------------------------------------------------- |
-| 1   | P0       | S      | `just switch` and verify Helium DRM works at drm.info                |
-| 2   | P0       | S      | Remove Hyprland validation from `validate-deployment.sh`             |
-| 3   | P0       | S      | Remove stale "Ghost Systems" comment at `flake.nix:313`              |
-| 4   | P0       | S      | Verify Go overlay: does `go_1_26` exist in current nixpkgs-unstable? |
-| 5   | P1       | M      | Archive 170+ stale status reports to `docs/status/archive/`          |
-| 6   | P1       | S      | Create `docs/status/README.md` index with links                      |
-| 7   | P1       | M      | Add CI pipeline for NixOS build (GitHub Actions)                     |
-| 8   | P1       | S      | Wire 6 orphan scripts into justfile or archive                       |
-| 9   | P1       | M      | Fix pre-commit devShell: add `gitleaks`, `jq`                        |
-| 10  | P1       | S      | Clean up stale Setup-Mac references in scripts                       |
-| 11  | P2       | M      | Add `widevine-cdm` support for system Chrome too                     |
-| 12  | P2       | M      | Add NixOS VM smoke tests for service modules                         |
-| 13  | P2       | S      | Add Prometheus alerting rules for monitoring stack                   |
-| 14  | P2       | M      | Test BTRFS/Timeshift backup restore procedure                        |
-| 15  | P2       | S      | Add `libva-utils` to Darwin config for consistency                   |
-| 16  | P2       | M      | Consolidate browser config into single module                        |
-| 13  | P2       | L      | Automated flake input updates (Renovate/Dependabot)                  |
-| 18  | P2       | M      | Add systemd timer for `health-check.sh`                              |
-| 19  | P2       | M      | Add sops secrets rotation documentation                              |
-| 20  | P3       | S      | Add Home Manager test harness                                        |
-| 21  | P3       | M      | Create ADR for Widevine L3 limitation                                |
-| 22  | P3       | S      | Document Helium DRM setup in AGENTS.md                               |
-| 23  | P3       | M      | Unify Darwin/NixOS Chromium policy management                        |
-| 24  | P3       | L      | Investigate Helium declarative extension support                     |
-| 25  | P3       | M      | Add `chrome://gpu` / `vainfo` verification to justfile               |
+| #  | Priority | Effort | Item                                                                 |
+| -- | -------- | ------ | -------------------------------------------------------------------- |
+| 1  | P0       | S      | `just switch` and verify Helium DRM works at drm.info                |
+| 2  | P0       | S      | Remove Hyprland validation from `validate-deployment.sh`             |
+| 3  | P0       | S      | Remove stale "Ghost Systems" comment at `flake.nix:313`              |
+| 4  | P0       | S      | Verify Go overlay: does `go_1_26` exist in current nixpkgs-unstable? |
+| 5  | P1       | M      | Archive 170+ stale status reports to `docs/status/archive/`          |
+| 6  | P1       | S      | Create `docs/status/README.md` index with links                      |
+| 7  | P1       | M      | Add CI pipeline for NixOS build (GitHub Actions)                     |
+| 8  | P1       | S      | Wire 6 orphan scripts into justfile or archive                       |
+| 9  | P1       | M      | Fix pre-commit devShell: add `gitleaks`, `jq`                        |
+| 10 | P1       | S      | Clean up stale Setup-Mac references in scripts                       |
+| 11 | P2       | M      | Add `widevine-cdm` support for system Chrome too                     |
+| 12 | P2       | M      | Add NixOS VM smoke tests for service modules                         |
+| 13 | P2       | S      | Add Prometheus alerting rules for monitoring stack                   |
+| 14 | P2       | M      | Test BTRFS/Timeshift backup restore procedure                        |
+| 15 | P2       | S      | Add `libva-utils` to Darwin config for consistency                   |
+| 16 | P2       | M      | Consolidate browser config into single module                        |
+| 13 | P2       | L      | Automated flake input updates (Renovate/Dependabot)                  |
+| 18 | P2       | M      | Add systemd timer for `health-check.sh`                              |
+| 19 | P2       | M      | Add sops secrets rotation documentation                              |
+| 20 | P3       | S      | Add Home Manager test harness                                        |
+| 21 | P3       | M      | Create ADR for Widevine L3 limitation                                |
+| 22 | P3       | S      | Document Helium DRM setup in AGENTS.md                               |
+| 23 | P3       | M      | Unify Darwin/NixOS Chromium policy management                        |
+| 24 | P3       | L      | Investigate Helium declarative extension support                     |
+| 25 | P3       | M      | Add `chrome://gpu` / `vainfo` verification to justfile               |
 
 ## G) TOP #1 QUESTION I CANNOT FIGURE OUT MYSELF
 

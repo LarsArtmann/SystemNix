@@ -114,7 +114,7 @@ Commit `a023114c` introduced `|>` (pipe operators) across manifest.nix, niri-con
 | Justfile task runner   | 50+ commands grouped by category                                                                   |
 | Quality tooling        | treefmt + alejandra + deadnix + shellcheck + statix integrated                                     |
 | Caddy port references  | All ports derived from service module options, never hardcoded                                     |
-| Pipe operator cleanup  | All `                                                                                              | >` removed from .nix files, statix passes, pushed |
+| Pipe operator cleanup  | All `                                                                                              |
 | Sops gatus fix         | `owner = "root"` for gatus-env template, committed and pushed                                      |
 | Dual-WAN failover      | Active-passive redesign with consecutive-failure counters (`c1fb0176`)                             |
 | Pre-commit hooks       | All pass: gitleaks, deadnix, statix, alejandra, nix flake check                                    |
@@ -207,33 +207,33 @@ Textfile collector dir owned by `nobody:nogroup` but service runs as a different
 
 ## f) Top 25 Things We Should Get Done Next
 
-| #   | Priority | Task                                                      | Impact                            | Effort   |
-| --- | -------- | --------------------------------------------------------- | --------------------------------- | -------- |
-| 1   | **P0**   | `just switch` + reboot to apply sops fix                  | Recovers ALL 13 broken services   | 5 min    |
-| 2   | **P0**   | Fix ClickHouse `/var/log/clickhouse-server` missing       | Recovers SigNoz observability     | 10 min   |
-| 3   | **P0**   | Fix niri-health-metrics textfile permissions              | Recovers niri health metrics      | 5 min    |
-| 4   | **P0**   | Increase/remove Caddy WatchdogSec for non-ACME            | Stops Caddy crash loop            | 5 min    |
-| 5   | **P1**   | Audit ALL sops secrets for initrd-time user existence     | Prevents future sops failures     | 30 min   |
-| 6   | **P1**   | Add boot-time secret validation check                     | Early detection of sops failures  | 30 min   |
-| 7   | **P1**   | Remove `pipe-operators` from experimental-features        | Prevents accidental `             | >` usage | 5 min |
-| 8   | **P1**   | Clean Nix store: `nix-collect-garbage -d`                 | Reclaims ~30-40G                  | 5 min    |
-| 9   | **P1**   | Replace whisper-asr Docker image (37.5G)                  | Reclaims disk                     | 1 hour   |
-| 10  | **P2**   | Add ClickHouse tmpfiles rule                              | Proper fix for log dir            | 10 min   |
-| 11  | **P2**   | Write disaster recovery doc                               | Operational resilience            | 1 hour   |
-| 12  | **P2**   | Add minimal boot-time health check (independent of Gatus) | Alerting during sops failures     | 1 hour   |
-| 13  | **P2**   | Fix dnsblockd context-canceled errors                     | Reduces log noise                 | 30 min   |
-| 14  | **P2**   | Configure journal size limits + rate limiting             | Prevents disk fill from niri spam | 15 min   |
-| 15  | **P2**   | Test Darwin (macOS) config sync                           | Cross-platform integrity          | 30 min   |
-| 16  | **P3**   | Evaluate Caddy TLS — manual cert loading vs certmagic     | Architectural fix for watchdog    | 2 hours  |
-| 17  | **P3**   | Add service dependency gating (systemd ordering)          | Graceful degradation              | 2 hours  |
-| 18  | **P3**   | Provision rpi3-dns hardware                               | DNS failover foundation           | 2 hours  |
-| 19  | **P3**   | Enable DNS failover (Keepalived VRRP)                     | HA DNS                            | 1 hour   |
-| 20  | **P3**   | Add automated backup rotation for databases + photos      | Data safety                       | 2 hours  |
-| 21  | **P4**   | Set up CI/CD pipeline (GitHub Actions)                    | Prevent broken deploys            | 2 hours  |
-| 22  | **P4**   | Add offsite backup strategy (S3/B2/Restic)                | Disaster recovery                 | 2 hours  |
-| 23  | **P4**   | WireGuard/Tailscale VPN for remote access                 | Remote management                 | 1 hour   |
-| 24  | **P4**   | Security audit: port scan, vulnerability scan             | Security posture                  | 2 hours  |
-| 25  | **P4**   | Formalize log retention and cleanup policy                | Operational hygiene               | 30 min   |
+| #  | Priority | Task                                                      | Impact                            | Effort   |
+| -- | -------- | --------------------------------------------------------- | --------------------------------- | -------- |
+| 1  | **P0**   | `just switch` + reboot to apply sops fix                  | Recovers ALL 13 broken services   | 5 min    |
+| 2  | **P0**   | Fix ClickHouse `/var/log/clickhouse-server` missing       | Recovers SigNoz observability     | 10 min   |
+| 3  | **P0**   | Fix niri-health-metrics textfile permissions              | Recovers niri health metrics      | 5 min    |
+| 4  | **P0**   | Increase/remove Caddy WatchdogSec for non-ACME            | Stops Caddy crash loop            | 5 min    |
+| 5  | **P1**   | Audit ALL sops secrets for initrd-time user existence     | Prevents future sops failures     | 30 min   |
+| 6  | **P1**   | Add boot-time secret validation check                     | Early detection of sops failures  | 30 min   |
+| 7  | **P1**   | Remove `pipe-operators` from experimental-features        | Prevents accidental `             | >` usage |
+| 8  | **P1**   | Clean Nix store: `nix-collect-garbage -d`                 | Reclaims ~30-40G                  | 5 min    |
+| 9  | **P1**   | Replace whisper-asr Docker image (37.5G)                  | Reclaims disk                     | 1 hour   |
+| 10 | **P2**   | Add ClickHouse tmpfiles rule                              | Proper fix for log dir            | 10 min   |
+| 11 | **P2**   | Write disaster recovery doc                               | Operational resilience            | 1 hour   |
+| 12 | **P2**   | Add minimal boot-time health check (independent of Gatus) | Alerting during sops failures     | 1 hour   |
+| 13 | **P2**   | Fix dnsblockd context-canceled errors                     | Reduces log noise                 | 30 min   |
+| 14 | **P2**   | Configure journal size limits + rate limiting             | Prevents disk fill from niri spam | 15 min   |
+| 15 | **P2**   | Test Darwin (macOS) config sync                           | Cross-platform integrity          | 30 min   |
+| 16 | **P3**   | Evaluate Caddy TLS — manual cert loading vs certmagic     | Architectural fix for watchdog    | 2 hours  |
+| 17 | **P3**   | Add service dependency gating (systemd ordering)          | Graceful degradation              | 2 hours  |
+| 18 | **P3**   | Provision rpi3-dns hardware                               | DNS failover foundation           | 2 hours  |
+| 19 | **P3**   | Enable DNS failover (Keepalived VRRP)                     | HA DNS                            | 1 hour   |
+| 20 | **P3**   | Add automated backup rotation for databases + photos      | Data safety                       | 2 hours  |
+| 21 | **P4**   | Set up CI/CD pipeline (GitHub Actions)                    | Prevent broken deploys            | 2 hours  |
+| 22 | **P4**   | Add offsite backup strategy (S3/B2/Restic)                | Disaster recovery                 | 2 hours  |
+| 23 | **P4**   | WireGuard/Tailscale VPN for remote access                 | Remote management                 | 1 hour   |
+| 24 | **P4**   | Security audit: port scan, vulnerability scan             | Security posture                  | 2 hours  |
+| 25 | **P4**   | Formalize log retention and cleanup policy                | Operational hygiene               | 30 min   |
 
 ---
 

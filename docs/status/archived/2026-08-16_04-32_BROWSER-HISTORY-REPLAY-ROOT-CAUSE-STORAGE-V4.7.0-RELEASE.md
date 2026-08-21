@@ -38,6 +38,7 @@ go.work replaces.
 ## a) What is FULLY DONE
 
 ### Evidence gathering (journal + live metrics)
+
 - Journal (2 observed restarts): silent gap **"OAuth2 providers configured" →
   "server starting"** = 4m19s (03:26:41.6→03:31:00.4) and 4m08s
   (03:35:34.5→03:39:42.2). Both at ~101% CPU.
@@ -52,6 +53,7 @@ go.work replaces.
   journal scan is cheap; the usermgmt drain is ~370x more expensive per event.
 
 ### Root cause (proven, not hypothesized)
+
 - Code path: `api/server.go` → `usermgmt.NewService` (cqrs-htmx
   `service_core.go:282` → `es_setup.go:284` → `startProjectionHost` with
   `block=true`) → 6 projection workers each drain the journal from checkpoint
@@ -68,6 +70,7 @@ go.work replaces.
   timing × 6 workers — consistent with observed 4.5 min.
 
 ### Fix implementation (go-cqrs-lite, module `storage/v4`)
+
 - NEW `storage/sql/keyset.go`: `ResolveCursorTimestamp` (PK point lookup,
   driver-native value passed back verbatim — no format round-trip) +
   `KeysetPositionQuery` (`WHERE e.ts >= ? AND (e.ts > ? OR e.id > ?)` — the
@@ -101,6 +104,7 @@ go.work replaces.
   sibling session (see §d).
 
 ### Release (supply side)
+
 - **`storage/v4.7.0`** tagged (annotated) at `f30183e1b`, pushed to origin.
   Contents: keyset fix + sibling's wave-3 storage work that landed in the same
   commit range (batch INSERT chunking, view batch shuttle, pebble/bbolt
@@ -119,6 +123,7 @@ go.work replaces.
   existing pins.
 
 ### Consumer bump (browser-history)
+
 - `api/go.mod`: `storage/v4 v4.6.0 → v4.7.0` (via `go get`, not manual edit) +
   tidy. go.sum updated.
 - Full workspace test suite (`go test ./...`): **green, exit 0**.
@@ -128,6 +133,7 @@ go.work replaces.
 - Change set staged: `api/go.mod`, `api/go.sum`, `api/server.go`.
 
 ### Carried F3 gap (partial)
+
 - `go test ./...` in **browser-history**: DONE this session (green ×2).
 - file-and-image-renamer + go-cqrs-lite full-suite: still pending (see §f).
 
@@ -225,12 +231,12 @@ go.work replaces.
   every sibling's working tree. Worth proposing (upstream, both repos): scope
   pre-commit builds to staged modules, or add a GOWORK=off escape hatch.
 - **Q3 (old) is now evidence-answered:** cqrs-htmx already has `AsyncStartup`
-  + `ProjectionReadinessCheck` (bind-early + gate reads) — but with replay at
-  single-digit seconds, **keeping the blocking read-your-writes startup is the
-  right call**; no stale-read window, no semantics change. The remaining
-  long-term optimization is `CheckpointStore` + `HydrateFromSQL` in cqrs-htmx
-  (makes restarts O(delta) instead of O(journal)) — documented as future work,
-  not needed now.
+  - `ProjectionReadinessCheck` (bind-early + gate reads) — but with replay at
+    single-digit seconds, **keeping the blocking read-your-writes startup is the
+    right call**; no stale-read window, no semantics change. The remaining
+    long-term optimization is `CheckpointStore` + `HydrateFromSQL` in cqrs-htmx
+    (makes restarts O(delta) instead of O(journal)) — documented as future work,
+    not needed now.
 - **Regression-proofing:** the EXPLAIN QUERY PLAN pin test turns "the plan
   regressed to a temp-B-tree sort" into a loud CI failure instead of a
   4.5-minute production burn discovered months later.

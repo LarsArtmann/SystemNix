@@ -56,6 +56,7 @@
 ## f) NEXT THINGS (28, priority-sorted)
 
 **P0 — landmines on live system**
+
 1. Apply `find -xdev` fix to `hermes-fix-permissions` (d)1) + redeploy
 2. Add `GIT_CONFIG_GLOBAL` (store gitconfig, `[safe] directory = "/home/hermes/workspace/projects/*"`) to hermes service env (b)2)
 3. User: Discord E2E — ask Hermes to read `projects/SystemNix/flake.nix` and run `git -C ./projects/SystemNix log -1` (expect success after #2; before it, expect the dubious-ownership error — confirms diagnosis)

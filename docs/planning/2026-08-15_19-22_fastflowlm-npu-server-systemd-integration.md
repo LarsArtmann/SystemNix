@@ -25,30 +25,30 @@ XDNA2 NPU of evo-x2. It currently runs as a hand-started process:
 - No restart-on-crash, dies with the shell, invisible to monitoring
 - Model (13.6 GB) stays resident in RAM indefinitely once loaded
 
-The goal: always-*available* (not always-*loaded*) local LLM on the NPU —
+The goal: always-_available_ (not always-_loaded_) local LLM on the NPU —
 socket-activated cold load, idle unload after 1 h, monitored, declarative.
 
 ## 2. Verified constraints (live binary, v1.0.1 `--help`)
 
-| Constraint | Consequence |
-| --- | --- |
-| No native idle-unload / keep-alive flag | TTL must be implemented at the systemd layer |
-| No `sd_notify` (not Type=notify capable) | No watchdog; liveness via port/HTTP only |
-| No systemd socket-fd support | Socket activation needs a proxy hop |
-| Server logs every `TCP connection established` line to stdout | Idle detection is journal-greppable (monitor365-watchdog pattern) |
-| `flm` wrapper needs a system bash | Wrapper must use a nix bash, not `/run/current-system/sw/bin/bash` |
+| Constraint                                                    | Consequence                                                                                  |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| No native idle-unload / keep-alive flag                       | TTL must be implemented at the systemd layer                                                 |
+| No `sd_notify` (not Type=notify capable)                      | No watchdog; liveness via port/HTTP only                                                     |
+| No systemd socket-fd support                                  | Socket activation needs a proxy hop                                                          |
+| Server logs every `TCP connection established` line to stdout | Idle detection is journal-greppable (monitor365-watchdog pattern)                            |
+| `flm` wrapper needs a system bash                             | Wrapper must use a nix bash, not `/run/current-system/sw/bin/bash`                           |
 | One LLM at a time; server swaps models on request naming them | Bind the module to ONE model; requests naming another model trigger a cold swap (acceptable) |
-| `/dev/accel/accel0` is `root:video 0660` | Service user needs `video` supplementary group |
-| memlock unlimited required for NPU | `LimitMEMLOCK = infinity` in unit + existing pam limits already set by `ai-stack` |
+| `/dev/accel/accel0` is `root:video 0660`                      | Service user needs `video` supplementary group                                               |
+| memlock unlimited required for NPU                            | `LimitMEMLOCK = infinity` in unit + existing pam limits already set by `ai-stack`            |
 
 ## 3. Measured baseline (2026-08-15, from anime-comic-pipeline doc)
 
-| Resource | Idle | Generating (14 t/s) |
-| --- | --- | --- |
-| RSS | 24.9 GB (23.4 GB shared/mmap) | ~25.7 GB |
-| CPU | 0.0% | ~19% of one core (0.6% of 32) |
-| iGPU | untouched | untouched |
-| RAM after start | 48/93 GB | — |
+| Resource        | Idle                          | Generating (14 t/s)           |
+| --------------- | ----------------------------- | ----------------------------- |
+| RSS             | 24.9 GB (23.4 GB shared/mmap) | ~25.7 GB                      |
+| CPU             | 0.0%                          | ~19% of one core (0.6% of 32) |
+| iGPU            | untouched                     | untouched                     |
+| RAM after start | 48/93 GB                      | —                             |
 
 Shmem is swappable to zram under pressure → the cost model is **RAM capacity,
 with graceful degradation (slower t/s) instead of OOM**. The anime-pipeline RAM
@@ -103,17 +103,17 @@ client → 127.0.0.1:52625  fastflowlm.socket          ← stable public port (u
 
 Options (`services.fastflowlm.*`):
 
-| Option | Default | Notes |
-| --- | --- | --- |
-| `enable` | `false` | |
-| `model` | `"qwen3.6-moe:35b-a3b"` | single bound model |
-| `keepAlive` | `"1h"` | idle TTL window |
-| `loadAsr` | `false` | `--asr 1` (whisper-v3) |
-| `loadEmbed` | `false` | `--embed 1` (embeddinggemma) |
-| `pmode` | `"performance"` | powersaver/balanced/performance/turbo |
-| `host` | `"127.0.0.1"` | backend bind |
-| `port` | `ports.fastflowlm` (52625) | public socket port |
-| `backendPort` | `ports.fastflowlm-backend` (52626) | internal |
+| Option        | Default                            | Notes                                 |
+| ------------- | ---------------------------------- | ------------------------------------- |
+| `enable`      | `false`                            |                                       |
+| `model`       | `"qwen3.6-moe:35b-a3b"`            | single bound model                    |
+| `keepAlive`   | `"1h"`                             | idle TTL window                       |
+| `loadAsr`     | `false`                            | `--asr 1` (whisper-v3)                |
+| `loadEmbed`   | `false`                            | `--embed 1` (embeddinggemma)          |
+| `pmode`       | `"performance"`                    | powersaver/balanced/performance/turbo |
+| `host`        | `"127.0.0.1"`                      | backend bind                          |
+| `port`        | `ports.fastflowlm` (52625)         | public socket port                    |
+| `backendPort` | `ports.fastflowlm-backend` (52626) | internal                              |
 
 Service wiring:
 

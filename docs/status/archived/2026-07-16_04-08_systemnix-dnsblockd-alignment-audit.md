@@ -7,7 +7,6 @@
 
 ---
 
-
 ## TL;DR
 
 **Before:** No. SystemNix locked dnsblockd **one feature-branch behind** `origin/master`

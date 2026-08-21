@@ -122,40 +122,40 @@ Successfully implemented Home Manager integration for Darwin (macOS), enabling c
 
 | ID                                        | Task                                          | Effort | Impact     | Value       | Priority    | Category |
 | ----------------------------------------- | --------------------------------------------- | ------ | ---------- | ----------- | ----------- | -------- |
-| **🟢 P0: Critical Path (1% → 51%)**       |
-| 1                                         | Kill hung Nix processes if any                | 10m    | ⭐⭐⭐⭐⭐ | 🔴 CRITICAL | Build       |
-| 2                                         | Run `darwin-rebuild check --flake .`          | 15m    | ⭐⭐⭐⭐⭐ | 🔴 CRITICAL | Build       |
-| 3                                         | Verify build success & check errors           | 10m    | ⭐⭐⭐⭐⭐ | 🔴 CRITICAL | Build       |
-| **🟡 P1: Basic Functionality (4% → 64%)** |
-| 4                                         | Apply config: `just switch`                   | 10m    | ⭐⭐⭐⭐⭐ | 🔴 CRITICAL | Apply       |
-| 5                                         | Test Starship prompt in new terminal          | 10m    | ⭐⭐⭐⭐⭐ | 🔴 CRITICAL | Test        |
-| 6                                         | Test Tmux launches with config                | 10m    | ⭐⭐⭐⭐⭐ | 🔴 CRITICAL | Test        |
-| 7                                         | Test Fish shell with all aliases              | 10m    | ⭐⭐⭐⭐⭐ | 🔴 CRITICAL | Test        |
-| 8                                         | Verify environment variables (EDITOR, LANG)   | 10m    | ⭐⭐⭐⭐⭐ | 🔴 CRITICAL | Test        |
-| **🟠 P2: Cross-Platform (20% → 80%)**     |
-| 9                                         | Test NixOS build on evo-x2                    | 15m    | ⭐⭐⭐⭐⭐ | 🟡 HIGH     | Test        |
-| 10                                        | Verify shared modules work on both platforms  | 10m    | ⭐⭐⭐⭐   | 🟡 HIGH     | Test        |
-| 11                                        | Document verification results                 | 15m    | ⭐⭐⭐⭐   | 🟡 HIGH     | Docs        |
-| 12                                        | Create final status report                    | 15m    | ⭐⭐⭐⭐   | 🟡 HIGH     | Docs        |
-| 13                                        | Update documentation with verification status | 15m    | ⭐⭐⭐⭐   | 🟡 HIGH     | Docs        |
-| 14                                        | Archive completed status reports              | 10m    | ⭐⭐⭐     | 🟢 MEDIUM   | Docs        |
-| **🔵 P3: Architecture Documentation**     |
-| 15                                        | Create ADR-001: Home Manager for Darwin       | 30m    | ⭐⭐⭐     | 🟢 MEDIUM   | Docs        |
-| 16                                        | Update AGENTS.md with architecture rules      | 20m    | ⭐⭐⭐     | 🟢 MEDIUM   | Docs        |
-| 17                                        | Update README with Home Manager section       | 15m    | ⭐⭐       | 🟢 MEDIUM   | Docs        |
-| **🟣 P4: Developer Experience**           |
-| 18                                        | Create module templates (nix-darwin, HM)      | 20m    | ⭐⭐       | 🟢 MEDIUM   | Templates   |
-| 19                                        | Write migration guide for new platforms       | 20m    | ⭐⭐       | 🟢 MEDIUM   | Docs        |
-| 20                                        | Create testing procedure document             | 20m    | ⭐⭐       | 🟢 MEDIUM   | Docs        |
-| **⚪ P5: Infrastructure**                 |
-| 21                                        | Add incremental validation to justfile        | 15m    | ⭐⭐       | 🟢 MEDIUM   | Process     |
-| 22                                        | Add pre-commit validation hooks               | 20m    | ⭐⭐       | 🟢 MEDIUM   | Process     |
-| 23                                        | Create troubleshooting guide                  | 25m    | ⭐⭐       | 🟢 MEDIUM   | Docs        |
-| **🔴 P6: Excellence Items**               |
-| 24                                        | Create visual architecture diagram            | 30m    | ⭐         | 🟢 LOW      | Visuals     |
-| 25                                        | Improve build times with caching              | 30m    | ⭐         | 🟢 LOW      | Performance |
-| 26                                        | Add automated CI for Darwin                   | 45m    | ⭐         | 🟢 LOW      | CI/CD       |
-| 27                                        | Add automated CI for NixOS                    | 45m    | ⭐         | 🟢 LOW      | CI/CD       |
+| **🟢 P0: Critical Path (1% → 51%)**       |                                               |        |            |             |             |          |
+| 1                                         | Kill hung Nix processes if any                | 10m    | ⭐⭐⭐⭐⭐ | 🔴 CRITICAL | Build       |          |
+| 2                                         | Run `darwin-rebuild check --flake .`          | 15m    | ⭐⭐⭐⭐⭐ | 🔴 CRITICAL | Build       |          |
+| 3                                         | Verify build success & check errors           | 10m    | ⭐⭐⭐⭐⭐ | 🔴 CRITICAL | Build       |          |
+| **🟡 P1: Basic Functionality (4% → 64%)** |                                               |        |            |             |             |          |
+| 4                                         | Apply config: `just switch`                   | 10m    | ⭐⭐⭐⭐⭐ | 🔴 CRITICAL | Apply       |          |
+| 5                                         | Test Starship prompt in new terminal          | 10m    | ⭐⭐⭐⭐⭐ | 🔴 CRITICAL | Test        |          |
+| 6                                         | Test Tmux launches with config                | 10m    | ⭐⭐⭐⭐⭐ | 🔴 CRITICAL | Test        |          |
+| 7                                         | Test Fish shell with all aliases              | 10m    | ⭐⭐⭐⭐⭐ | 🔴 CRITICAL | Test        |          |
+| 8                                         | Verify environment variables (EDITOR, LANG)   | 10m    | ⭐⭐⭐⭐⭐ | 🔴 CRITICAL | Test        |          |
+| **🟠 P2: Cross-Platform (20% → 80%)**     |                                               |        |            |             |             |          |
+| 9                                         | Test NixOS build on evo-x2                    | 15m    | ⭐⭐⭐⭐⭐ | 🟡 HIGH     | Test        |          |
+| 10                                        | Verify shared modules work on both platforms  | 10m    | ⭐⭐⭐⭐   | 🟡 HIGH     | Test        |          |
+| 11                                        | Document verification results                 | 15m    | ⭐⭐⭐⭐   | 🟡 HIGH     | Docs        |          |
+| 12                                        | Create final status report                    | 15m    | ⭐⭐⭐⭐   | 🟡 HIGH     | Docs        |          |
+| 13                                        | Update documentation with verification status | 15m    | ⭐⭐⭐⭐   | 🟡 HIGH     | Docs        |          |
+| 14                                        | Archive completed status reports              | 10m    | ⭐⭐⭐     | 🟢 MEDIUM   | Docs        |          |
+| **🔵 P3: Architecture Documentation**     |                                               |        |            |             |             |          |
+| 15                                        | Create ADR-001: Home Manager for Darwin       | 30m    | ⭐⭐⭐     | 🟢 MEDIUM   | Docs        |          |
+| 16                                        | Update AGENTS.md with architecture rules      | 20m    | ⭐⭐⭐     | 🟢 MEDIUM   | Docs        |          |
+| 17                                        | Update README with Home Manager section       | 15m    | ⭐⭐       | 🟢 MEDIUM   | Docs        |          |
+| **🟣 P4: Developer Experience**           |                                               |        |            |             |             |          |
+| 18                                        | Create module templates (nix-darwin, HM)      | 20m    | ⭐⭐       | 🟢 MEDIUM   | Templates   |          |
+| 19                                        | Write migration guide for new platforms       | 20m    | ⭐⭐       | 🟢 MEDIUM   | Docs        |          |
+| 20                                        | Create testing procedure document             | 20m    | ⭐⭐       | 🟢 MEDIUM   | Docs        |          |
+| **⚪ P5: Infrastructure**                 |                                               |        |            |             |             |          |
+| 21                                        | Add incremental validation to justfile        | 15m    | ⭐⭐       | 🟢 MEDIUM   | Process     |          |
+| 22                                        | Add pre-commit validation hooks               | 20m    | ⭐⭐       | 🟢 MEDIUM   | Process     |          |
+| 23                                        | Create troubleshooting guide                  | 25m    | ⭐⭐       | 🟢 MEDIUM   | Docs        |          |
+| **🔴 P6: Excellence Items**               |                                               |        |            |             |             |          |
+| 24                                        | Create visual architecture diagram            | 30m    | ⭐         | 🟢 LOW      | Visuals     |          |
+| 25                                        | Improve build times with caching              | 30m    | ⭐         | 🟢 LOW      | Performance |          |
+| 26                                        | Add automated CI for Darwin                   | 45m    | ⭐         | 🟢 LOW      | CI/CD       |          |
+| 27                                        | Add automated CI for NixOS                    | 45m    | ⭐         | 🟢 LOW      | CI/CD       |          |
 
 **TOTAL ESTIMATED TIME:** ~7.5 hours
 **CRITICAL PATH (P0-P1):** ~1.5 hours → 64% value

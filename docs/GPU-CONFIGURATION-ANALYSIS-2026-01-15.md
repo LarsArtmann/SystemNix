@@ -467,10 +467,10 @@ On NixOS, all layers have GPU access because:
 
 | Level                      | GPU Configuration | Current Status | Correct? |
 | -------------------------- | ----------------- | -------------- | -------- |
-| System (hardware.graphics) | ✅ YES            | ✅ CORRECT     |
-| System (environment.vars)  | ✅ YES            | ✅ CORRECT     |
-| User (home.sessionVars)    | ❌ NO (GPU vars)  | ✅ CORRECT     |
-| User (home.packages)       | ✅ YES (GPU apps) | ✅ CORRECT     |
+| System (hardware.graphics) | ✅ YES            | ✅ CORRECT     |          |
+| System (environment.vars)  | ✅ YES            | ✅ CORRECT     |          |
+| User (home.sessionVars)    | ❌ NO (GPU vars)  | ✅ CORRECT     |          |
+| User (home.packages)       | ✅ YES (GPU apps) | ✅ CORRECT     |          |
 
 GPU variables are at system level, user variables are for Wayland integration only.
 

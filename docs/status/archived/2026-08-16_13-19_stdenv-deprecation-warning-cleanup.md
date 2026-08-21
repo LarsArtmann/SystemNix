@@ -43,7 +43,7 @@ and audit pipeline untouched; I did not run `nix fmt` or `nix flake build`.
      (`sha256-AAAAAAAA...` and `sha256-BBBBBBB...`) for `wireguard-collector.git v0.4.1`
      in both `crane`'s `outputHashes` AND `importCargoLock`'s `outputHashes` shapes,
      to silence the "No output hash provided" warning. Hashes are obviously fake —
-     they will trigger a vendorHash mismatch at build time, which is the *intended*
+     they will trigger a vendorHash mismatch at build time, which is the _intended_
      signal (see "What I totally fucked up" below).
    - `DiscordSync/flake.nix`: `final.system` → `final.stdenv.hostPlatform.system`
      (sibling repo, also consumed by SystemNix)

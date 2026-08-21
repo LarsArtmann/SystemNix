@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Executive Summary
 
 The `llama-cpp-rocwmma` derivation in `modules/nixos/services/ai-stack.nix` had an `overrideAttrs` adding `-DGGML_HIP_MMQ_MFMA=ON`. This flag was a **complete no-op on Strix Halo (gfx1150 / RDNA 3.5)** — it only affects CDNA datacenter GPUs (MI100/200/300/350), defaults to ON upstream already, and RDNA 3.5 uses WMMA (not MFMA) which is always enabled via compiler builtins. The override existed for months, causing 30+ minute local source builds on every nixpkgs bump because the changed derivation hash never matched `cache.nixos.org` — for zero functional benefit. Removed the override, added a 14-line warning comment, marked the TODO done, and wrote a skill proposal capturing the epistemic lesson.
@@ -138,7 +137,7 @@ The `llama-cpp-rocwmma` derivation in `modules/nixos/services/ai-stack.nix` had 
 
 ---
 
-*Created and Reviewed by Lars Artmann with the help of GLM-5.2 via Z.ai and Crush*
+_Created and Reviewed by Lars Artmann with the help of GLM-5.2 via Z.ai and Crush_
 
 ---
 

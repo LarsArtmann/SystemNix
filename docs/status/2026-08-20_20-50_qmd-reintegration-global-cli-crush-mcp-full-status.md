@@ -59,6 +59,7 @@ Nothing catastrophic. Honest detritus:
 ## f) NEXT — up to 50, realistically 25 (prioritized)
 
 **User-blocking / immediate:**
+
 1. Restart Crush (running sessions keep the old MCP set) — then confirm `qmd` appears with tools query/get/multi_get/status.
 2. First real `qmd query "…"` in Crush to warm the reranker (one-time ~640M download) — or run it CLI-side first.
 3. Decide + onboard collections (see questions below): candidates are notes trees, `~/projects/*/docs`, SystemNix itself.
@@ -92,7 +93,7 @@ Nothing catastrophic. Honest detritus:
 ## g) QUESTIONS I CANNOT ANSWER MYSELF ❓
 
 1. **Which collections should qmd index first, and is CODE actually in scope?** "RAG for code" was your original framing, but qmd's center of gravity is markdown (code support = tree-sitter chunking on .ts/.py/.go/.rs, best-effort). Candidates I see: your notes trees (where?), `~/projects/*/docs`, SystemNix docs/, or whole project sources. Scale matters: 279 projects → embed time + index size are unknown until we try; pick 1-2 pilot collections for me.
-2. **Where should the ~1.9G of GGUF models live?** Currently `~/.cache/qmd` on the QLC NVMe. Your buildcache SSD pattern covers *rebuildable* caches; these are *re-downloadable*. Redirect to `/mnt/buildcache/qmd`, or is NVMe fine because they're read-once-per-session mmap'd?
+2. **Where should the ~1.9G of GGUF models live?** Currently `~/.cache/qmd` on the QLC NVMe. Your buildcache SSD pattern covers _rebuildable_ caches; these are _re-downloadable_. Redirect to `/mnt/buildcache/qmd`, or is NVMe fine because they're read-once-per-session mmap'd?
 3. **Imperative or declarative collection config long-term?** I shipped imperative (CLI-managed `~/.config/qmd/index.yml`, zero Nix surface). Once collections stabilize: keep imperative (flexible, `qmd collection add` anytime) or converge to HM-managed `index.yml` (declarative, drift-proof, but every experiment = a rebuild)? I need your preference for the follow-up.
 
 ---

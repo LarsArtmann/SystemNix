@@ -154,33 +154,33 @@ Integrated the project-discovery SDK daemon so that Overview delegates project d
 
 ## f) TOP 25 THINGS TO DO NEXT
 
-| #   | Priority | Task                                                                                             | Impact | Effort |
-| --- | -------- | ------------------------------------------------------------------------------------------------ | ------ | ------ |
-| 1   | P0       | **Reboot and verify daemon socket** — confirm PMA creates socket, Overview probes it             | High   | 5min   |
-| 2   | P0       | **Test Immich OAuth login** via Pocket ID (original goal from session 132)                       | High   | 15min  |
-| 3   | P0       | **Test PKCE compatibility** with confidential client in Immich                                   | High   | 10min  |
-| 4   | P1       | **Push 2 local commits** to origin master                                                        | Low    | 1min   |
-| 5   | P1       | **Define `follows` policy** for SystemNix — document which inputs use follows and why            | Med    | 30min  |
-| 6   | P1       | **Write automated vendorHash update script** — `just update-hash <pkg>`                          | High   | 30min  |
-| 7   | P1       | **Migrate PMA from MustNewCommand to NewCommand** with proper error handling                     | Med    | 2h     |
-| 8   | P1       | **PMA full API catch-up** — fix go-structure-linter API breaks in projects-management-automation | Med    | 2h     |
-| 9   | P1       | **Add NixOS test for daemon integration** — verify socket creation + connectivity                | High   | 1h     |
-| 10  | P2       | **SDK daemon version** — derive from SDK version instead of hardcoded `"0.4.0"`                  | Low    | 15min  |
-| 11  | P2       | **Shared socket path constant** — avoid hardcoding in both PMA and Overview modules              | Low    | 15min  |
-| 12  | P2       | **Overview: skip DiscoveryCache when daemon is available** — reduce double-caching               | Med    | 1h     |
-| 13  | P2       | **CI for all LarsArtmann repos** — catch untracked files, build failures from clean checkout     | High   | 4h     |
-| 14  | P2       | **Daemon health monitoring** — add Gatus endpoint for daemon socket availability                 | Low    | 30min  |
-| 15  | P2       | **PMA: expose daemon status in `pma service status`** — show socket path, daemon PID             | Low    | 30min  |
-| 16  | P2       | **Overview: show daemon connection status in /health endpoint**                                  | Low    | 15min  |
-| 17  | P3       | **SDK daemon: add authentication** — unix socket is world-readable (0o666), consider restricting | Med    | 1h     |
-| 18  | P3       | **SDK daemon: add rate limiting** — prevent abuse from misbehaving consumers                     | Low    | 1h     |
-| 19  | P3       | **SDK daemon: add metrics** — request count, latency, cache hit rate                             | Low    | 1h     |
-| 20  | P3       | **go-auto-upgrade: migrate from MustNewCommand** to NewCommand                                   | Low    | 30min  |
-| 21  | P3       | **Overview: add daemon connection metrics** — show probe success/failure in dashboard            | Low    | 30min  |
-| 22  | P3       | **SDK daemon: graceful reload** — accept new config without dropping connections                 | Low    | 2h     |
-| 23  | P3       | **PMA: add `PROJECT_DISCOVERY_MODE` env var** — allow forcing daemon/standalone mode             | Low    | 15min  |
-| 24  | P3       | **Overview flake.nix: share socket path** as a let binding instead of hardcoding in module.nix   | Low    | 10min  |
-| 25  | P3       | **Session retrospective** — update TODO_LIST.md with new items from this session                 | Med    | 30min  |
+| #  | Priority | Task                                                                                             | Impact | Effort |
+| -- | -------- | ------------------------------------------------------------------------------------------------ | ------ | ------ |
+| 1  | P0       | **Reboot and verify daemon socket** — confirm PMA creates socket, Overview probes it             | High   | 5min   |
+| 2  | P0       | **Test Immich OAuth login** via Pocket ID (original goal from session 132)                       | High   | 15min  |
+| 3  | P0       | **Test PKCE compatibility** with confidential client in Immich                                   | High   | 10min  |
+| 4  | P1       | **Push 2 local commits** to origin master                                                        | Low    | 1min   |
+| 5  | P1       | **Define `follows` policy** for SystemNix — document which inputs use follows and why            | Med    | 30min  |
+| 6  | P1       | **Write automated vendorHash update script** — `just update-hash <pkg>`                          | High   | 30min  |
+| 7  | P1       | **Migrate PMA from MustNewCommand to NewCommand** with proper error handling                     | Med    | 2h     |
+| 8  | P1       | **PMA full API catch-up** — fix go-structure-linter API breaks in projects-management-automation | Med    | 2h     |
+| 9  | P1       | **Add NixOS test for daemon integration** — verify socket creation + connectivity                | High   | 1h     |
+| 10 | P2       | **SDK daemon version** — derive from SDK version instead of hardcoded `"0.4.0"`                  | Low    | 15min  |
+| 11 | P2       | **Shared socket path constant** — avoid hardcoding in both PMA and Overview modules              | Low    | 15min  |
+| 12 | P2       | **Overview: skip DiscoveryCache when daemon is available** — reduce double-caching               | Med    | 1h     |
+| 13 | P2       | **CI for all LarsArtmann repos** — catch untracked files, build failures from clean checkout     | High   | 4h     |
+| 14 | P2       | **Daemon health monitoring** — add Gatus endpoint for daemon socket availability                 | Low    | 30min  |
+| 15 | P2       | **PMA: expose daemon status in `pma service status`** — show socket path, daemon PID             | Low    | 30min  |
+| 16 | P2       | **Overview: show daemon connection status in /health endpoint**                                  | Low    | 15min  |
+| 17 | P3       | **SDK daemon: add authentication** — unix socket is world-readable (0o666), consider restricting | Med    | 1h     |
+| 18 | P3       | **SDK daemon: add rate limiting** — prevent abuse from misbehaving consumers                     | Low    | 1h     |
+| 19 | P3       | **SDK daemon: add metrics** — request count, latency, cache hit rate                             | Low    | 1h     |
+| 20 | P3       | **go-auto-upgrade: migrate from MustNewCommand** to NewCommand                                   | Low    | 30min  |
+| 21 | P3       | **Overview: add daemon connection metrics** — show probe success/failure in dashboard            | Low    | 30min  |
+| 22 | P3       | **SDK daemon: graceful reload** — accept new config without dropping connections                 | Low    | 2h     |
+| 23 | P3       | **PMA: add `PROJECT_DISCOVERY_MODE` env var** — allow forcing daemon/standalone mode             | Low    | 15min  |
+| 24 | P3       | **Overview flake.nix: share socket path** as a let binding instead of hardcoding in module.nix   | Low    | 10min  |
+| 25 | P3       | **Session retrospective** — update TODO_LIST.md with new items from this session                 | Med    | 30min  |
 
 ---
 

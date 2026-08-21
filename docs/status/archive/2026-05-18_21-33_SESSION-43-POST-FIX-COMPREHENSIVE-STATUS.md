@@ -194,33 +194,33 @@ Now: Both migrated to sops-nix secrets. Agent uses `ExecStartPre` runtime inject
 
 Updated from Session 41 — ✅ marks completed items, shifts priority.
 
-| #   | Task                                                 | Effort | Impact      | Status             |
-| --- | ---------------------------------------------------- | ------ | ----------- | ------------------ |
-| 1   | ~~Migrate monitor365 secrets to sops~~               | 1 hr   | 🔴 Critical | ✅ DONE            |
-| 2   | **Add hardening to unsloth-studio**                  | 30 min | 🔴 Critical | Next               |
-| 3   | **Provision Pi 3 for DNS failover**                  | 3 hrs  | 🔴 Critical | Blocked (hardware) |
-| 4   | **Run `just clean` — disk at 86%**                   | 10 min | 🟡 High     | Next               |
-| 5   | **Migrate SSH config to `programs.ssh.settings`**    | 15 min | 🟡 High     | Next               |
-| 6   | **Set up GitHub Actions CI**                         | 1 hr   | 🟡 High     | Planned            |
-| 7   | **Set up Cachix binary cache**                       | 2 hrs  | 🟡 High     | Planned            |
-| 8   | **Pin Twenty Docker image**                          | 15 min | 🟡 High     | Next               |
-| 9   | **Move twenty secrets to central sops.nix**          | 30 min | 🟡 High     | Next               |
-| 10  | **Fix route-health-monitor state drift**             | 1 hr   | 🟡 High     | Planned            |
-| 11  | **Add flock to gpu-recovery + route-health-monitor** | 1 hr   | 🟡 Medium   | Planned            |
-| 12  | **Fix gpu-recovery DRM_CARD auto-detection**         | 30 min | 🟡 Medium   | Planned            |
-| 13  | **Fix gpu-recovery root/user context**               | 30 min | 🟡 Medium   | Planned            |
-| 14  | **Archive old status reports**                       | 10 min | 🟢 Low      | Easy               |
-| 15  | **Add `/data > 90%` Gatus disk threshold**           | 30 min | 🟡 Medium   | Planned            |
-| 16  | **Derive 7 remaining hardcoded ports**               | 1 hr   | 🟢 Low      | Planned            |
-| 17  | **Fix voice-agents mkDockerServiceFactory**          | 30 min | 🟢 Low      | Easy               |
-| 18  | **Export rocm.nix from lib/default.nix**             | 5 min  | 🟢 Low      | Trivial            |
-| 19  | **Add SIGTERM trap to route-health-monitor**         | 15 min | 🟢 Low      | Easy               |
-| 20  | **Verify Whisper ROCm pipeline**                     | 1 hr   | 🟡 Medium   | Planned            |
-| 21  | **Decide on photomap: fix/enable/remove**            | 10 min | 🟢 Low      | Decision           |
-| 22  | **Verify Darwin build from MacBook**                 | 30 min | 🟢 Low      | Planned            |
-| 23  | **Create `just stale-images` recipe**                | 30 min | 🟢 Low      | Planned            |
-| 24  | **Document `mkForce false` security overrides**      | 1 hr   | 🟡 Medium   | Planned            |
-| 25  | **Add `command -v` guards to wallpaper-set.sh**      | 15 min | 🟢 Low      | Easy               |
+| #  | Task                                                 | Effort | Impact      | Status             |
+| -- | ---------------------------------------------------- | ------ | ----------- | ------------------ |
+| 1  | ~~Migrate monitor365 secrets to sops~~               | 1 hr   | 🔴 Critical | ✅ DONE            |
+| 2  | **Add hardening to unsloth-studio**                  | 30 min | 🔴 Critical | Next               |
+| 3  | **Provision Pi 3 for DNS failover**                  | 3 hrs  | 🔴 Critical | Blocked (hardware) |
+| 4  | **Run `just clean` — disk at 86%**                   | 10 min | 🟡 High     | Next               |
+| 5  | **Migrate SSH config to `programs.ssh.settings`**    | 15 min | 🟡 High     | Next               |
+| 6  | **Set up GitHub Actions CI**                         | 1 hr   | 🟡 High     | Planned            |
+| 7  | **Set up Cachix binary cache**                       | 2 hrs  | 🟡 High     | Planned            |
+| 8  | **Pin Twenty Docker image**                          | 15 min | 🟡 High     | Next               |
+| 9  | **Move twenty secrets to central sops.nix**          | 30 min | 🟡 High     | Next               |
+| 10 | **Fix route-health-monitor state drift**             | 1 hr   | 🟡 High     | Planned            |
+| 11 | **Add flock to gpu-recovery + route-health-monitor** | 1 hr   | 🟡 Medium   | Planned            |
+| 12 | **Fix gpu-recovery DRM_CARD auto-detection**         | 30 min | 🟡 Medium   | Planned            |
+| 13 | **Fix gpu-recovery root/user context**               | 30 min | 🟡 Medium   | Planned            |
+| 14 | **Archive old status reports**                       | 10 min | 🟢 Low      | Easy               |
+| 15 | **Add `/data > 90%` Gatus disk threshold**           | 30 min | 🟡 Medium   | Planned            |
+| 16 | **Derive 7 remaining hardcoded ports**               | 1 hr   | 🟢 Low      | Planned            |
+| 17 | **Fix voice-agents mkDockerServiceFactory**          | 30 min | 🟢 Low      | Easy               |
+| 18 | **Export rocm.nix from lib/default.nix**             | 5 min  | 🟢 Low      | Trivial            |
+| 19 | **Add SIGTERM trap to route-health-monitor**         | 15 min | 🟢 Low      | Easy               |
+| 20 | **Verify Whisper ROCm pipeline**                     | 1 hr   | 🟡 Medium   | Planned            |
+| 21 | **Decide on photomap: fix/enable/remove**            | 10 min | 🟢 Low      | Decision           |
+| 22 | **Verify Darwin build from MacBook**                 | 30 min | 🟢 Low      | Planned            |
+| 23 | **Create `just stale-images` recipe**                | 30 min | 🟢 Low      | Planned            |
+| 24 | **Document `mkForce false` security overrides**      | 1 hr   | 🟡 Medium   | Planned            |
+| 25 | **Add `command -v` guards to wallpaper-set.sh**      | 15 min | 🟢 Low      | Easy               |
 
 ---
 

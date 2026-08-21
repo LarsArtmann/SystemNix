@@ -5,7 +5,6 @@
 
 ---
 
-
 ## TL;DR
 
 The 2026-07-22 fix moved identity lookup from `go-git`'s local-only `repo.Config()` to `git config user.{name,email}` via CLI (which respects all config scopes). **But the daemon kept a silent fallback** to `"Unknown Author"`/`"unknown@example.com"` whenever that lookup returned empty. A transient failure during Home Manager activation (~08:40, `~/.config/git/config` symlink creation) produced ~6,400 unattributable commits across ~145 repos.
@@ -51,6 +50,7 @@ The user reported "the daemon is committing again with Unknown Author." This was
 ### What I changed
 
 **`/home/lars/projects/go-commit/pkg/commit/git/gogit.go`:**
+
 - Replaced the silent `getAuthorSignature` with a version that returns `(*object.Signature, error)`.
 - Added `resolveIdentity(ctx, role)` that reads env vars first (`GIT_AUTHOR_NAME`/`GIT_AUTHOR_EMAIL` or `GIT_COMMITTER_*`), then falls back to `git config`, then returns a wrapped error with `codeCommit`.
 - Updated `gogit_commit.go` to resolve committer separately, falling back to author when committer config is unset (matches `git commit` default).
@@ -62,100 +62,105 @@ The user reported "the daemon is committing again with Unknown Author." This was
 - Tagged `v0.6.1` and pushed to GitHub.
 
 **`/home/lars/projects/projects-management-automation/internal/application/services/git/service_gogit.go` + `service_gogit_write.go`:**
+
 - Same `getAuthorSignature` rewrite (PMA's CLI path had its own copy of the silent fallback).
 - Added `resolveCommitter` with author-fallback semantics.
 - Updated `go.mod`/`go.sum` to `go-commit v0.6.1`.
 - Updated `flake.lock` to point at `56f528b9`.
 
 **`/home/lars/projects/projects-management-automation/nix/module.nix`:**
+
 - Added `gitIdentity = nullOr (submodule { name, email })` option with thorough docs.
 - When set, exports `GIT_AUTHOR_NAME`/`GIT_AUTHOR_EMAIL`/`GIT_COMMITTER_NAME`/`GIT_COMMITTER_EMAIL` on the systemd unit via `lib.optionals` in `Environment`.
 
 **`/home/lars/projects/SystemNix/platforms/nixos/system/configuration.nix`:**
+
 - Set `gitIdentity = { name = "Lars Artmann"; email = "git@lars.software"; }` on the daemon.
 - Documented resolution precedence inline (env → config → error).
 - `flake.lock` updated to PMA `56f528b9` (also bumps transitive `project-discovery-sdk` and prunes the unused `branching-flow_3` input).
 
 **`/home/lars/projects/SystemNix/AGENTS.md`:**
+
 - New Critical Rule: "Never silently substitute placeholder identity in git commits."
 
 **`/home/lars/projects/SystemNix/docs/gotchas-archive.md`:**
+
 - Expanded the existing `go-git repo.Config() only reads local scope` entry to include the 2026-08-06 follow-up.
 
 ---
 
 ## a) FULLY DONE
 
-| Item | Where | State |
-| --- | --- | --- |
-| `go-commit` `getAuthorSignature` errors loud | `pkg/commit/git/gogit.go` | Pushed as `v0.6.1` |
-| `go-commit` `gogit_commit.go` resolves committer + sets `CommitOptions.Committer` | `pkg/commit/git/gogit_commit.go` | Pushed as `v0.6.1` |
-| `go-commit` 3 regression tests | `pkg/commit/git/gogit_identity_test.go` | Pushed, all pass |
-| `go-commit` v0.6.1 tag + push | GitHub | `v0.6.1` annotated tag pushed |
-| PMA `service_gogit.go` silent fallback removed | `internal/application/services/git/service_gogit.go` | Pushed in `56f528b9` |
-| PMA `service_gogit_write.go` committer resolution | `internal/application/services/git/service_gogit_write.go` | Pushed in `56f528b9` |
-| PMA `nix/module.nix` `gitIdentity` option | `nix/module.nix` | Pushed in `56f528b9` |
-| PMA `go.mod`/`go.sum` bumped to v0.6.1 | `go.mod`, `go.sum` | Pushed in `56f528b9` |
-| PMA `flake.lock` updated | `flake.lock` | Pushed in `56f528b9` |
-| SystemNix `gitIdentity` config | `platforms/nixos/system/configuration.nix:608-612` | Pushed in `b611b4cf` |
-| SystemNix `flake.lock` updated | `flake.lock` | Pushed in `b611b4cf` |
-| SystemNix AGENTS.md Critical Rule | `AGENTS.md:231` | Pushed in `8dac0b15` |
-| SystemNix gotchas-archive entry expanded | `docs/gotchas-archive.md` | Pushed in `8dac0b15` |
-| Live verification: daemon produces `Lars Artmann <git@lars.software>` | `/home/lars/projects/typespec-asyncapi` at 11:57:28 | Verified, test commit reverted |
-| `nix flake check --no-build` passes for SystemNix | `flake.nix` | All checks pass (only aarch64-darwin skipped, expected) |
-| All Go tests pass in go-commit | `go test ./...` in `~/projects/go-commit` | 10 packages, all pass |
-| All Go tests pass in PMA | `GOEXPERIMENT=jsonv2 go test ./...` | All pass |
-| NixOS module evaluates correctly | `nix eval .#nixosConfigurations.evo-x2.config.systemd.services.projects-management-automation.serviceConfig.Environment` | Shows all 4 `GIT_*` env vars |
-| NixOS module option evaluates correctly | `nix eval .#nixosConfigurations.evo-x2.config.services.projects-management-automation.gitIdentity` | Returns `{ email = "git@lars.software"; name = "Lars Artmann"; }` |
+| Item                                                                              | Where                                                                                                                    | State                                                             |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| `go-commit` `getAuthorSignature` errors loud                                      | `pkg/commit/git/gogit.go`                                                                                                | Pushed as `v0.6.1`                                                |
+| `go-commit` `gogit_commit.go` resolves committer + sets `CommitOptions.Committer` | `pkg/commit/git/gogit_commit.go`                                                                                         | Pushed as `v0.6.1`                                                |
+| `go-commit` 3 regression tests                                                    | `pkg/commit/git/gogit_identity_test.go`                                                                                  | Pushed, all pass                                                  |
+| `go-commit` v0.6.1 tag + push                                                     | GitHub                                                                                                                   | `v0.6.1` annotated tag pushed                                     |
+| PMA `service_gogit.go` silent fallback removed                                    | `internal/application/services/git/service_gogit.go`                                                                     | Pushed in `56f528b9`                                              |
+| PMA `service_gogit_write.go` committer resolution                                 | `internal/application/services/git/service_gogit_write.go`                                                               | Pushed in `56f528b9`                                              |
+| PMA `nix/module.nix` `gitIdentity` option                                         | `nix/module.nix`                                                                                                         | Pushed in `56f528b9`                                              |
+| PMA `go.mod`/`go.sum` bumped to v0.6.1                                            | `go.mod`, `go.sum`                                                                                                       | Pushed in `56f528b9`                                              |
+| PMA `flake.lock` updated                                                          | `flake.lock`                                                                                                             | Pushed in `56f528b9`                                              |
+| SystemNix `gitIdentity` config                                                    | `platforms/nixos/system/configuration.nix:608-612`                                                                       | Pushed in `b611b4cf`                                              |
+| SystemNix `flake.lock` updated                                                    | `flake.lock`                                                                                                             | Pushed in `b611b4cf`                                              |
+| SystemNix AGENTS.md Critical Rule                                                 | `AGENTS.md:231`                                                                                                          | Pushed in `8dac0b15`                                              |
+| SystemNix gotchas-archive entry expanded                                          | `docs/gotchas-archive.md`                                                                                                | Pushed in `8dac0b15`                                              |
+| Live verification: daemon produces `Lars Artmann <git@lars.software>`             | `/home/lars/projects/typespec-asyncapi` at 11:57:28                                                                      | Verified, test commit reverted                                    |
+| `nix flake check --no-build` passes for SystemNix                                 | `flake.nix`                                                                                                              | All checks pass (only aarch64-darwin skipped, expected)           |
+| All Go tests pass in go-commit                                                    | `go test ./...` in `~/projects/go-commit`                                                                                | 10 packages, all pass                                             |
+| All Go tests pass in PMA                                                          | `GOEXPERIMENT=jsonv2 go test ./...`                                                                                      | All pass                                                          |
+| NixOS module evaluates correctly                                                  | `nix eval .#nixosConfigurations.evo-x2.config.systemd.services.projects-management-automation.serviceConfig.Environment` | Shows all 4 `GIT_*` env vars                                      |
+| NixOS module option evaluates correctly                                           | `nix eval .#nixosConfigurations.evo-x2.config.services.projects-management-automation.gitIdentity`                       | Returns `{ email = "git@lars.software"; name = "Lars Artmann"; }` |
 
 ## b) PARTIALLY DONE
 
-| Item | State |
-| --- | --- |
-| Test the fix end-to-end on evo-x2 | The fix is deployed to `flake.lock` and the daemon binary still uses `34b62ce` (the pre-fix build). A `nix run .#deploy` would rebuild PMA + restart the daemon with the new binary + env vars. I did NOT deploy — this is a server with 128GB RAM and active workloads. |
-| Backfill ~6,400 existing Unknown Author commits with correct identity | Not done. The commits exist as-is. `git rebase -i --exec 'git commit --amend --reset-author --no-edit'` per repo would fix history, but rewriting ~6K commits across 145 repos is risky and not requested. |
-| Alert on Unknown Author regression | Not done. If `getAuthorSignature` now returns an error, the daemon logs it but there's no Gatus/Prometheus metric for it. The error gets swallowed somewhere in `committer.Commit` / `CommitAndPush`. |
-| Daemon binary rebuild + restart on evo-x2 | The active daemon (`2581453`) still runs `34b62ce`. Needs `nix run .#deploy` to roll the new binary. |
+| Item                                                                  | State                                                                                                                                                                                                                                                                    |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Test the fix end-to-end on evo-x2                                     | The fix is deployed to `flake.lock` and the daemon binary still uses `34b62ce` (the pre-fix build). A `nix run .#deploy` would rebuild PMA + restart the daemon with the new binary + env vars. I did NOT deploy — this is a server with 128GB RAM and active workloads. |
+| Backfill ~6,400 existing Unknown Author commits with correct identity | Not done. The commits exist as-is. `git rebase -i --exec 'git commit --amend --reset-author --no-edit'` per repo would fix history, but rewriting ~6K commits across 145 repos is risky and not requested.                                                               |
+| Alert on Unknown Author regression                                    | Not done. If `getAuthorSignature` now returns an error, the daemon logs it but there's no Gatus/Prometheus metric for it. The error gets swallowed somewhere in `committer.Commit` / `CommitAndPush`.                                                                    |
+| Daemon binary rebuild + restart on evo-x2                             | The active daemon (`2581453`) still runs `34b62ce`. Needs `nix run .#deploy` to roll the new binary.                                                                                                                                                                     |
 
 ## c) NOT STARTED
 
-| Item | Why not |
-| --- | --- |
-| Audit other LarsArtmann Go services for the same silent-authority pattern | `go-commit` was the canonical library; other services consume it. But `Monitor365`, `DiscordSync`, `overview`, `mr-sync` all do their own git work. A repo-wide grep for "Unknown Author" / `"unknown@example"` would be wise. |
-| Add `Gatus` alert for "commit failed with author identity" | Would need a Prometheus metric exported by the daemon. Out of scope for this session. |
-| Backfill-script for existing Unknown Author commits | Could be `git rebase -i` per repo, or a custom `git filter-repo` script. Risk vs reward unclear. |
-| Make the `gitIdentity` option default to reading from HM-managed git config | Would require the module to introspect `~/.config/git/config`. Brittle (path varies by HM version). Better to require explicit opt-in. |
-| Add OTel counter `pma.commit.errors{reason="author_identity"}` | Would let SREs alert on this in SigNoz. Requires touching the daemon's telemetry init. |
-| Migrate the `pma-daemon/committer` package to use the same go-commit resolver via interface | Right now PMA wraps go-commit's `commit.Commit` but maintains its own `service_gogit.go` for the CLI. Two implementations of the same logic — drift risk. |
-| Investigation into why the 09:15 Unknown commit happened | Daemon env was correct, `git config` returned right values. Probably a transient read failure. Without journald logs from 09:15 (lost on restart), can't prove what failed. |
+| Item                                                                                        | Why not                                                                                                                                                                                                                        |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Audit other LarsArtmann Go services for the same silent-authority pattern                   | `go-commit` was the canonical library; other services consume it. But `Monitor365`, `DiscordSync`, `overview`, `mr-sync` all do their own git work. A repo-wide grep for "Unknown Author" / `"unknown@example"` would be wise. |
+| Add `Gatus` alert for "commit failed with author identity"                                  | Would need a Prometheus metric exported by the daemon. Out of scope for this session.                                                                                                                                          |
+| Backfill-script for existing Unknown Author commits                                         | Could be `git rebase -i` per repo, or a custom `git filter-repo` script. Risk vs reward unclear.                                                                                                                               |
+| Make the `gitIdentity` option default to reading from HM-managed git config                 | Would require the module to introspect `~/.config/git/config`. Brittle (path varies by HM version). Better to require explicit opt-in.                                                                                         |
+| Add OTel counter `pma.commit.errors{reason="author_identity"}`                              | Would let SREs alert on this in SigNoz. Requires touching the daemon's telemetry init.                                                                                                                                         |
+| Migrate the `pma-daemon/committer` package to use the same go-commit resolver via interface | Right now PMA wraps go-commit's `commit.Commit` but maintains its own `service_gogit.go` for the CLI. Two implementations of the same logic — drift risk.                                                                      |
+| Investigation into why the 09:15 Unknown commit happened                                    | Daemon env was correct, `git config` returned right values. Probably a transient read failure. Without journald logs from 09:15 (lost on restart), can't prove what failed.                                                    |
 
 ## d) TOTALLY FUCKED UP
 
-| Item | Damage |
-| --- | --- |
-| `go-commit v0.6.1` tag was amended AFTER `git push` | I pushed `9f289e8` (without test file) then amended locally, then force-pushed tag. The auto-commit daemon then committed on top of the amended hash, creating `9f0f702`. The published v0.6.1 tag points to `9f289e8` which DOES NOT include the regression tests. The tests are on `master` but not in the tag. Should have re-tagged or rebased before pushing. |
-| Documentation grep returned 100 results | My initial grep for "projects-management-automation" in AGENTS.md failed (no match) but I didn't re-check. The actual file has the references in `gotchas-archive.md` and elsewhere — not in AGENTS.md itself. Minor, just slowed me down. |
-| I never deployed | The whole point of the fix is to get the new binary running with the new env vars. Until `nix run .#deploy` runs on evo-x2, the daemon still has the old code and no GIT_* env vars. The user may believe the fix is "live" but it isn't. |
-| I never proved the silent fallback was the cause of the 09:15 commit | I theorized (HM activation race) but have no journal evidence. Could be a totally different bug. The fix removes the silent fallback regardless, but I don't have hard evidence this fixes the 09:15 case specifically. |
-| I left `typespec-asyncapi` with a `README.md` test commit in the daemon log | Wait, no, I `git reset --hard HEAD~1` to clean up. But the cleanup commit `7b7048f` says "remove probe test file" which itself was a test artifact. Real HEAD is clean. |
+| Item                                                                        | Damage                                                                                                                                                                                                                                                                                                                                                             |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `go-commit v0.6.1` tag was amended AFTER `git push`                         | I pushed `9f289e8` (without test file) then amended locally, then force-pushed tag. The auto-commit daemon then committed on top of the amended hash, creating `9f0f702`. The published v0.6.1 tag points to `9f289e8` which DOES NOT include the regression tests. The tests are on `master` but not in the tag. Should have re-tagged or rebased before pushing. |
+| Documentation grep returned 100 results                                     | My initial grep for "projects-management-automation" in AGENTS.md failed (no match) but I didn't re-check. The actual file has the references in `gotchas-archive.md` and elsewhere — not in AGENTS.md itself. Minor, just slowed me down.                                                                                                                         |
+| I never deployed                                                            | The whole point of the fix is to get the new binary running with the new env vars. Until `nix run .#deploy` runs on evo-x2, the daemon still has the old code and no GIT_* env vars. The user may believe the fix is "live" but it isn't.                                                                                                                          |
+| I never proved the silent fallback was the cause of the 09:15 commit        | I theorized (HM activation race) but have no journal evidence. Could be a totally different bug. The fix removes the silent fallback regardless, but I don't have hard evidence this fixes the 09:15 case specifically.                                                                                                                                            |
+| I left `typespec-asyncapi` with a `README.md` test commit in the daemon log | Wait, no, I `git reset --hard HEAD~1` to clean up. But the cleanup commit `7b7048f` says "remove probe test file" which itself was a test artifact. Real HEAD is clean.                                                                                                                                                                                            |
 
 ## e) WHAT WE SHOULD IMPROVE
 
-| Improvement | Why |
-| --- | --- |
-| **NEVER have a "silent fallback to placeholder" in any commit/identity code path.** | The 2026-07-22 fix didn't go far enough. Silent fallbacks are how bugs become invisible. Rule: if you can't get the right value, FAIL. The user shouldn't have to discover the bug by seeing `Unknown Author` in `git log`. |
-| **Always wire identity via env vars on systemd units for any service that writes to git.** | Config lookup (even shell-out to `git config`) is fragile. Env vars are deterministic. The same pattern should apply to Monitor365, DiscordSync, overview — any service that touches git. |
-| **Audit every "default to X" string in commit paths.** | `grep -r 'Unknown Author\|unknown@example\|TODO_AUTHOR\|placeholder author' ~/projects/*/internal ~/projects/*/pkg ~/projects/*/cmd 2>/dev/null` should be a one-shot CI check. |
-| **Add a smoke test that runs `git commit --allow-empty -m test` from every service's runtime context.** | Would catch identity regressions at deploy time, not when the user notices 6K bad commits. |
-| **Make `getAuthorSignature` part of an exported, reusable interface.** | Both PMA's `service_gogit.go` and go-commit's `gogit.go` reimplement the same logic. Extract to a shared package or upstream to go-commit with `WithIdentity` option. |
-| **Tag releases BEFORE pushing tag-related commits.** | The amend-after-push race created a tag-without-tests situation. Always: commit → tag → push in that order. |
-| **Consider whether the auto-commit daemon should ever run with `--no-verify`.** | It does NOT run pre-commit hooks (go-git can't). For projects with husky/buildflow/etc., the daemon commits broken code without lint checks. `typespec-asyncapi` has `.husky/_/pre-commit` that builds the entire project — the daemon skipped that. |
-| **Investigate why `~/.gitconfig` (legacy file at 2026-08-03) lacks `[user]`** | It's there at `/home/lars/.gitconfig` (547 bytes, last modified Aug 3) but only contains aliases and `url.insteadOf`. The HM-managed `/home/lars/.config/git/config` has `[user]`. The legacy `~/.gitconfig` should either be removed or properly managed. |
-| **The 6,400 existing Unknown commits are still in history.** | They show up in `git shortlog -sn` as `Unknown Author`. Anyone running `git blame` on those repos sees anonymous commits. A `git filter-repo` run across affected repos (with backup) would clean history, but it's a big hammer. |
-| **The auto-git daemon's commit message generation is opaque.** | I never checked what model/prompt it uses. If it generates commit messages with `MiniMax`, those commits could have low-quality messages that obscure real changes. Worth an audit. |
-| **The SystemNix module's `gitIdentity` should be optional and overridable per-project.** | Some repos want a different identity (work vs personal). A future enhancement: per-path overrides via `services.projects-management-automation.gitIdentityOverrides.<path> = { name; email; }`. |
-| **Wire `pma.commit.errors{reason=...}` into OTel counter.** | Would alert on identity failures via SigNoz dashboards. |
-| **Test the fix on macOS too.** | I only tested NixOS. Darwin's path resolution differs (Homebrew git vs Nix git). |
+| Improvement                                                                                             | Why                                                                                                                                                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **NEVER have a "silent fallback to placeholder" in any commit/identity code path.**                     | The 2026-07-22 fix didn't go far enough. Silent fallbacks are how bugs become invisible. Rule: if you can't get the right value, FAIL. The user shouldn't have to discover the bug by seeing `Unknown Author` in `git log`.                                |
+| **Always wire identity via env vars on systemd units for any service that writes to git.**              | Config lookup (even shell-out to `git config`) is fragile. Env vars are deterministic. The same pattern should apply to Monitor365, DiscordSync, overview — any service that touches git.                                                                  |
+| **Audit every "default to X" string in commit paths.**                                                  | `grep -r 'Unknown Author\|unknown@example\|TODO_AUTHOR\|placeholder author' ~/projects/*/internal ~/projects/*/pkg ~/projects/*/cmd 2>/dev/null` should be a one-shot CI check.                                                                            |
+| **Add a smoke test that runs `git commit --allow-empty -m test` from every service's runtime context.** | Would catch identity regressions at deploy time, not when the user notices 6K bad commits.                                                                                                                                                                 |
+| **Make `getAuthorSignature` part of an exported, reusable interface.**                                  | Both PMA's `service_gogit.go` and go-commit's `gogit.go` reimplement the same logic. Extract to a shared package or upstream to go-commit with `WithIdentity` option.                                                                                      |
+| **Tag releases BEFORE pushing tag-related commits.**                                                    | The amend-after-push race created a tag-without-tests situation. Always: commit → tag → push in that order.                                                                                                                                                |
+| **Consider whether the auto-commit daemon should ever run with `--no-verify`.**                         | It does NOT run pre-commit hooks (go-git can't). For projects with husky/buildflow/etc., the daemon commits broken code without lint checks. `typespec-asyncapi` has `.husky/_/pre-commit` that builds the entire project — the daemon skipped that.       |
+| **Investigate why `~/.gitconfig` (legacy file at 2026-08-03) lacks `[user]`**                           | It's there at `/home/lars/.gitconfig` (547 bytes, last modified Aug 3) but only contains aliases and `url.insteadOf`. The HM-managed `/home/lars/.config/git/config` has `[user]`. The legacy `~/.gitconfig` should either be removed or properly managed. |
+| **The 6,400 existing Unknown commits are still in history.**                                            | They show up in `git shortlog -sn` as `Unknown Author`. Anyone running `git blame` on those repos sees anonymous commits. A `git filter-repo` run across affected repos (with backup) would clean history, but it's a big hammer.                          |
+| **The auto-git daemon's commit message generation is opaque.**                                          | I never checked what model/prompt it uses. If it generates commit messages with `MiniMax`, those commits could have low-quality messages that obscure real changes. Worth an audit.                                                                        |
+| **The SystemNix module's `gitIdentity` should be optional and overridable per-project.**                | Some repos want a different identity (work vs personal). A future enhancement: per-path overrides via `services.projects-management-automation.gitIdentityOverrides.<path> = { name; email; }`.                                                            |
+| **Wire `pma.commit.errors{reason=...}` into OTel counter.**                                             | Would alert on identity failures via SigNoz dashboards.                                                                                                                                                                                                    |
+| **Test the fix on macOS too.**                                                                          | I only tested NixOS. Darwin's path resolution differs (Homebrew git vs Nix git).                                                                                                                                                                           |
 
 ## f) Up to 50 things we should get done next
 

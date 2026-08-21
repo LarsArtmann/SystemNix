@@ -249,53 +249,53 @@ nixpkgs.lib.mkMerge [
 
 ### Immediate (This Week)
 
-| #   | Task                                            | Effort | Impact | Priority |
-| --- | ----------------------------------------------- | ------ | ------ | -------- |
-| 1   | Test niri-wrapped on actual x86_64-linux system | 1h     | HIGH   | P0       |
-| 2   | Fix Home Manager warnings (gtk, xdg)            | 30m    | MEDIUM | P1       |
-| 3   | Apply wrapper pattern to ghostty terminal       | 2h     | HIGH   | P1       |
-| 4   | Apply wrapper pattern to fuzzel launcher        | 1h     | MEDIUM | P2       |
-| 5   | Create niri-wrapped NixOS integration test      | 2h     | HIGH   | P1       |
+| # | Task                                            | Effort | Impact | Priority |
+| - | ----------------------------------------------- | ------ | ------ | -------- |
+| 1 | Test niri-wrapped on actual x86_64-linux system | 1h     | HIGH   | P0       |
+| 2 | Fix Home Manager warnings (gtk, xdg)            | 30m    | MEDIUM | P1       |
+| 3 | Apply wrapper pattern to ghostty terminal       | 2h     | HIGH   | P1       |
+| 4 | Apply wrapper pattern to fuzzel launcher        | 1h     | MEDIUM | P2       |
+| 5 | Create niri-wrapped NixOS integration test      | 2h     | HIGH   | P1       |
 
 ### Short-term (This Sprint)
 
-| #   | Task                                  | Effort | Impact | Priority |
-| --- | ------------------------------------- | ------ | ------ | -------- |
-| 6   | Implement program discovery system    | 4h     | HIGH   | P1       |
-| 7   | Fix audit kernel module on NixOS      | 2h     | MEDIUM | P2       |
-| 8   | Fix sandbox override on Darwin        | 1h     | MEDIUM | P2       |
-| 9   | Add GPU temperature module to Waybar  | 1.5h   | MEDIUM | P2       |
-| 10  | Create Quake Terminal dropdown script | 2h     | MEDIUM | P2       |
+| #  | Task                                  | Effort | Impact | Priority |
+| -- | ------------------------------------- | ------ | ------ | -------- |
+| 6  | Implement program discovery system    | 4h     | HIGH   | P1       |
+| 7  | Fix audit kernel module on NixOS      | 2h     | MEDIUM | P2       |
+| 8  | Fix sandbox override on Darwin        | 1h     | MEDIUM | P2       |
+| 9  | Add GPU temperature module to Waybar  | 1.5h   | MEDIUM | P2       |
+| 10 | Create Quake Terminal dropdown script | 2h     | MEDIUM | P2       |
 
 ### Medium-term (This Month)
 
-| #   | Task                                   | Effort | Impact | Priority |
-| --- | -------------------------------------- | ------ | ------ | -------- |
-| 11  | Consolidate Bluetooth documentation    | 1h     | LOW    | P3       |
-| 12  | Implement `just organize` command      | 2h     | LOW    | P3       |
-| 13  | Add pre-commit hook for root directory | 1h     | LOW    | P3       |
-| 14  | Create security tools status script    | 1h     | MEDIUM | P2       |
-| 15  | Implement automated config backups     | 3h     | MEDIUM | P2       |
+| #  | Task                                   | Effort | Impact | Priority |
+| -- | -------------------------------------- | ------ | ------ | -------- |
+| 11 | Consolidate Bluetooth documentation    | 1h     | LOW    | P3       |
+| 12 | Implement `just organize` command      | 2h     | LOW    | P3       |
+| 13 | Add pre-commit hook for root directory | 1h     | LOW    | P3       |
+| 14 | Create security tools status script    | 1h     | MEDIUM | P2       |
+| 15 | Implement automated config backups     | 3h     | MEDIUM | P2       |
 
 ### Long-term (This Quarter)
 
-| #   | Task                                       | Effort | Impact | Priority |
-| --- | ------------------------------------------ | ------ | ------ | -------- |
-| 16  | Design unified project structure           | 4h     | LOW    | P3       |
-| 17  | Implement cross-platform path handling     | 3h     | LOW    | P3       |
-| 18  | Create visualization of project structure  | 2h     | LOW    | P3       |
-| 19  | Integrate TypeSafetySystem with wrappers   | 4h     | MEDIUM | P2       |
-| 20  | Create comprehensive wrapper documentation | 2h     | MEDIUM | P2       |
+| #  | Task                                       | Effort | Impact | Priority |
+| -- | ------------------------------------------ | ------ | ------ | -------- |
+| 16 | Design unified project structure           | 4h     | LOW    | P3       |
+| 17 | Implement cross-platform path handling     | 3h     | LOW    | P3       |
+| 18 | Create visualization of project structure  | 2h     | LOW    | P3       |
+| 19 | Integrate TypeSafetySystem with wrappers   | 4h     | MEDIUM | P2       |
+| 20 | Create comprehensive wrapper documentation | 2h     | MEDIUM | P2       |
 
 ### Ongoing/Maintenance
 
-| #   | Task                                    | Effort  | Impact | Priority |
-| --- | --------------------------------------- | ------- | ------ | -------- |
-| 21  | Review and fix gitleaks findings        | 1h      | HIGH   | P1       |
-| 22  | Address statix warnings                 | 1h      | MEDIUM | P2       |
-| 23  | Update TODO_LIST.md (445 items tracked) | 2h      | LOW    | P3       |
-| 24  | Weekly system verification routine      | 30m/wk  | MEDIUM | P2       |
-| 25  | Monitor Go 1.26 for regressions         | Ongoing | HIGH   | P1       |
+| #  | Task                                    | Effort  | Impact | Priority |
+| -- | --------------------------------------- | ------- | ------ | -------- |
+| 21 | Review and fix gitleaks findings        | 1h      | HIGH   | P1       |
+| 22 | Address statix warnings                 | 1h      | MEDIUM | P2       |
+| 23 | Update TODO_LIST.md (445 items tracked) | 2h      | LOW    | P3       |
+| 24 | Weekly system verification routine      | 30m/wk  | MEDIUM | P2       |
+| 25 | Monitor Go 1.26 for regressions         | Ongoing | HIGH   | P1       |
 
 ---
 

@@ -130,13 +130,13 @@ systemd.services.signoz = {
 
 ## Summary
 
-| #   | Optimization                               | Estimated Savings   | Effort    | Risk                        |
-| --- | ------------------------------------------ | ------------------- | --------- | --------------------------- |
-| 1   | **ClamAV → socket-only**                   | **~17s**            | 3 lines   | Low — still works on-demand |
-| 2   | Remove unnecessary `network-online.target` | ~1-2s               | 4 lines   | None                        |
-| 3   | Reduce loader timeout                      | up to ~5s           | 1-2 lines | None                        |
-| 4   | Disable TPM (if unused)                    | ~4.3s I/O reduction | 1 line    | Low — breaks measured boot  |
-| 5   | Move heavy services post-login             | I/O reduction       | optional  | Low — services start later  |
+| # | Optimization                               | Estimated Savings   | Effort    | Risk                        |
+| - | ------------------------------------------ | ------------------- | --------- | --------------------------- |
+| 1 | **ClamAV → socket-only**                   | **~17s**            | 3 lines   | Low — still works on-demand |
+| 2 | Remove unnecessary `network-online.target` | ~1-2s               | 4 lines   | None                        |
+| 3 | Reduce loader timeout                      | up to ~5s           | 1-2 lines | None                        |
+| 4 | Disable TPM (if unused)                    | ~4.3s I/O reduction | 1 line    | Low — breaks measured boot  |
+| 5 | Move heavy services post-login             | I/O reduction       | optional  | Low — services start later  |
 
 **The single biggest win is #1 (ClamAV).** It alone accounts for ~89% of the userspace boot time. With that fix, userspace time drops from 19s to ~2s, and total boot from 36s to ~19s.
 

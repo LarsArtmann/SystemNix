@@ -218,33 +218,33 @@ Gatus supports alerting natively but it's not configured.
 
 ## F) Top #25 Things We Should Get Done Next
 
-| #   | Priority | Task                                                                                      | Impact   | Effort  |
-| --- | -------- | ----------------------------------------------------------------------------------------- | -------- | ------- |
-| 1   | P0       | **Run `just clean`** — disk at 90%, risk of build failures                                | Critical | 5 min   |
-| 2   | P0       | **Configure Gatus alerting** (Discord webhook via Hermes)                                 | High     | 30 min  |
-| 3   | P0       | **Add whisper-asr Gatus endpoint**                                                        | Medium   | 5 min   |
-| 4   | P1       | **Add automated Nix GC timer** (weekly, 7d threshold)                                     | High     | 15 min  |
-| 5   | P1       | **Archive old status docs** — keep only latest comprehensive                              | Low      | 10 min  |
-| 6   | P1       | **Create `serviceDefaultsUser` variant** (no mkForce) for user services                   | Low      | 15 min  |
-| 7   | P1       | **Add livekit Gatus endpoint**                                                            | Medium   | 5 min   |
-| 8   | P1       | **Add Docker health check** to service-health-check script                                | Medium   | 10 min  |
-| 9   | P2       | **Consolidate flake.nix overlay definitions** — extract overlays to separate file         | Medium   | 30 min  |
-| 10  | P2       | **Refactor signoz port options** to use serviceTypes                                      | Low      | 20 min  |
-| 11  | P2       | **Add EMEET PIXY Gatus endpoint** (`http://localhost:8090/metrics`)                       | Low      | 5 min   |
-| 12  | P2       | **Backup restorability test** — verify at least one backup                                | Medium   | 30 min  |
-| 13  | P2       | **Add `status.home.lan` link** to Homepage dashboard                                      | Low      | 10 min  |
-| 14  | P2       | **Clean up stale DNS cert files** in `platforms/nixos/secrets/`                           | Low      | 5 min   |
-| 15  | P2       | **Pi 3 DNS failover provisioning** — build and flash SD card                              | High     | 2 hours |
-| 16  | P3       | **Add fail2ban Gatus endpoint** — verify SSH brute-force protection                       | Low      | 5 min   |
-| 17  | P3       | **Add `just health` integration** — call service-health-check from justfile health recipe | Low      | 10 min  |
-| 18  | P3       | **Document Gatus endpoint conventions** — add to AGENTS.md                                | Low      | 10 min  |
-| 19  | P3       | **Create `nixosModules` index** — auto-generated list of all 32 modules with descriptions | Low      | 20 min  |
-| 20  | P3       | **Add docker-compose health to Gatus** — check container status via docker socket         | Medium   | 30 min  |
-| 21  | P3       | **BTRFS snapshot health** — verify Timeshift snapshots are running                        | Medium   | 15 min  |
-| 22  | P4       | **Explore `nixos-generators`** for Pi 3 SD card image generation                          | Medium   | 1 hour  |
-| 23  | P4       | **Add SigNoz alerts** for disk usage, service failures, OOM kills                         | Medium   | 1 hour  |
-| 24  | P4       | **Evaluate `deploy.rs`** or `nixinate` for remote Pi 3 deployment                         | Medium   | 1 hour  |
-| 25  | P4       | **Add `just doctor` command** — comprehensive system diagnostics                          | Low      | 30 min  |
+| #  | Priority | Task                                                                                      | Impact   | Effort  |
+| -- | -------- | ----------------------------------------------------------------------------------------- | -------- | ------- |
+| 1  | P0       | **Run `just clean`** — disk at 90%, risk of build failures                                | Critical | 5 min   |
+| 2  | P0       | **Configure Gatus alerting** (Discord webhook via Hermes)                                 | High     | 30 min  |
+| 3  | P0       | **Add whisper-asr Gatus endpoint**                                                        | Medium   | 5 min   |
+| 4  | P1       | **Add automated Nix GC timer** (weekly, 7d threshold)                                     | High     | 15 min  |
+| 5  | P1       | **Archive old status docs** — keep only latest comprehensive                              | Low      | 10 min  |
+| 6  | P1       | **Create `serviceDefaultsUser` variant** (no mkForce) for user services                   | Low      | 15 min  |
+| 7  | P1       | **Add livekit Gatus endpoint**                                                            | Medium   | 5 min   |
+| 8  | P1       | **Add Docker health check** to service-health-check script                                | Medium   | 10 min  |
+| 9  | P2       | **Consolidate flake.nix overlay definitions** — extract overlays to separate file         | Medium   | 30 min  |
+| 10 | P2       | **Refactor signoz port options** to use serviceTypes                                      | Low      | 20 min  |
+| 11 | P2       | **Add EMEET PIXY Gatus endpoint** (`http://localhost:8090/metrics`)                       | Low      | 5 min   |
+| 12 | P2       | **Backup restorability test** — verify at least one backup                                | Medium   | 30 min  |
+| 13 | P2       | **Add `status.home.lan` link** to Homepage dashboard                                      | Low      | 10 min  |
+| 14 | P2       | **Clean up stale DNS cert files** in `platforms/nixos/secrets/`                           | Low      | 5 min   |
+| 15 | P2       | **Pi 3 DNS failover provisioning** — build and flash SD card                              | High     | 2 hours |
+| 16 | P3       | **Add fail2ban Gatus endpoint** — verify SSH brute-force protection                       | Low      | 5 min   |
+| 17 | P3       | **Add `just health` integration** — call service-health-check from justfile health recipe | Low      | 10 min  |
+| 18 | P3       | **Document Gatus endpoint conventions** — add to AGENTS.md                                | Low      | 10 min  |
+| 19 | P3       | **Create `nixosModules` index** — auto-generated list of all 32 modules with descriptions | Low      | 20 min  |
+| 20 | P3       | **Add docker-compose health to Gatus** — check container status via docker socket         | Medium   | 30 min  |
+| 21 | P3       | **BTRFS snapshot health** — verify Timeshift snapshots are running                        | Medium   | 15 min  |
+| 22 | P4       | **Explore `nixos-generators`** for Pi 3 SD card image generation                          | Medium   | 1 hour  |
+| 23 | P4       | **Add SigNoz alerts** for disk usage, service failures, OOM kills                         | Medium   | 1 hour  |
+| 24 | P4       | **Evaluate `deploy.rs`** or `nixinate` for remote Pi 3 deployment                         | Medium   | 1 hour  |
+| 25 | P4       | **Add `just doctor` command** — comprehensive system diagnostics                          | Low      | 30 min  |
 
 ---
 

@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Context
 
 This session resumed from a prior session that completed test infrastructure
@@ -19,6 +18,7 @@ atticd, bootstrapping the Attic binary cache, and configuring the public key.
 ## A) FULLY DONE
 
 ### 1. SC2004 Blocker — Already Fixed by Parallel Session
+
 - The `$(( $VAR ))` → `$(( VAR ))` shellcheck error in `btrfs-health.nix`
   was already resolved by a parallel auto-commit session before this run.
 - Verified: `rg '$\(\(\s*\$' btrfs-health.nix` → no matches.
@@ -26,6 +26,7 @@ atticd, bootstrapping the Attic binary cache, and configuring the public key.
   passed clean.
 
 ### 2. Pre-existing scheduled-tasks.nix Nix String Escaping Bug (FIXED)
+
 - A parallel session commit (`3b26c8b9`) introduced `${before_kb:-0}` in Nix
   `''...''` strings across 5 locations in `platforms/nixos/system/scheduled-tasks.nix`.
 - Nix interprets `${...}` as string interpolation, causing:
@@ -38,6 +39,7 @@ atticd, bootstrapping the Attic binary cache, and configuring the public key.
   pipeline results" but didn't account for Nix string interpolation syntax.
 
 ### 3. Attic Storage Directory Mount Race (FIXED)
+
 - **Problem:** `/data` has `nofail` mount option (per AGENTS.md gotcha
   "Non-`nofail` mounts = boot hazard"). systemd-tmpfiles runs before `/data`
   mounts, creating `/data/atticd/storage` on the root filesystem (hidden
@@ -51,6 +53,7 @@ atticd, bootstrapping the Attic binary cache, and configuring the public key.
   that depend on `nofail` mounts need explicit mount ordering.
 
 ### 4. atticd Running and Verified
+
 - atticd process confirmed running (PID 1005093), listening on `127.0.0.1:8200`.
 - Migrations completed: `Migrating NARs to chunks...`, `Migrating NAR schema...`,
   `Starting API server...`, `Listening on 127.0.0.1:8200...`
@@ -61,6 +64,7 @@ atticd, bootstrapping the Attic binary cache, and configuring the public key.
 - Post-deploy smoke test: **30/30 PASS** (multiple deploys).
 
 ### 5. Attic Cache Bootstrapped — Fully Automated
+
 - **Cache created:** `monitor365` (public cache)
 - **Public key:** `monitor365:/vu56vS4pTdjoltqqqj80dJ6freEdzEEf4ugdZUPpY8=`
 - **Retention configured:** 604800 seconds (7 days)
@@ -75,6 +79,7 @@ atticd, bootstrapping the Attic binary cache, and configuring the public key.
   atticd's unit file via sed.
 
 ### 6. Public Key Configured in configuration.nix (UNCOMMITTED)
+
 - `configuration.nix` line 220: `cachePublicKey` set to the real value.
 - This enables `nix.settings.substituters` + `trusted-public-keys` so
   LAN machines can pull from the cache.
@@ -84,6 +89,7 @@ atticd, bootstrapping the Attic binary cache, and configuring the public key.
 ## B) PARTIALLY DONE
 
 ### 1. Bootstrap Service — Functional but Failing on tee (LAST RUN)
+
 - The bootstrap service **successfully creates the cache, configures
   retention, and prints cache info to the journal** — but exits with
   status 1 because the final `tee /var/lib/atticd/cache-info.txt` fails
@@ -97,6 +103,7 @@ atticd, bootstrapping the Attic binary cache, and configuring the public key.
   `onFailure` alerts.
 
 ### 2. Deploy with Public Key — BLOCKED by Disk Space
+
 - Root filesystem at **95% (42 GiB free, 660 GiB used of 723 GiB)**.
 - Pre-deploy check hard-fails on 95% usage.
 - The deploy with `cachePublicKey` + `tee` fix is staged but not deployed.
@@ -122,6 +129,7 @@ atticd, bootstrapping the Attic binary cache, and configuring the public key.
 ## D) TOTALLY FUCKED UP
 
 ### 1. Bootstrap Service Took 4 Iterations to Get Right
+
 - **Iteration 1:** Used `atticd-atticadm` (the nixpkgs wrapper) but forgot
   to add it to `path` → `command not found`. Should have checked the wrapper
   mechanism first.
@@ -141,6 +149,7 @@ atticd, bootstrapping the Attic binary cache, and configuring the public key.
   are ALL predictable from reading the code.
 
 ### 2. Killed nix-collect-garbage Too Early
+
 - Started `nix-collect-garbage --delete-old` to free disk space, then the
   user interrupted with the status request. I killed the GC job.
 - User-level GC may not free much — the bulk of `/nix/store` garbage comes
@@ -158,10 +167,10 @@ atticd, bootstrapping the Attic binary cache, and configuring the public key.
    would execute it, catch issues on paper.
 
 2. **The parallel session coordination is fragile** — the auto-commit daemon
-   + parallel sessions create commits that break evaluation (the
-   `${before_kb:-0}` Nix string escaping bug). I fixed it, but this is the
-   second time a parallel session has broken `nix flake check` with
-   shell-script-in-Nix-string escaping bugs.
+   - parallel sessions create commits that break evaluation (the
+     `${before_kb:-0}` Nix string escaping bug). I fixed it, but this is the
+     second time a parallel session has broken `nix flake check` with
+     shell-script-in-Nix-string escaping bugs.
 
 3. **Disk space management is reactive, not proactive** — the system has
    been at 90-95% for weeks. A proactive GC timer or a disk-pressure alert
@@ -302,17 +311,20 @@ atticd, bootstrapping the Attic binary cache, and configuring the public key.
 ## G) Questions for User
 
 ### Q1: How should I free root filesystem space?
+
 Root is at 95% (42 GiB free). I need `sudo nix-collect-garbage --delete-old`
 which I can't run (no sudo). Should you run it, or should I try an
 alternative approach (user-level GC, clearing profiles, etc.)?
 
 ### Q2: Should I push the 6 unpushed commits to origin now, or wait until
+
 the `cachePublicKey` + `tee` fix is deployed and verified?
 The public key is in the uncommitted `configuration.nix` change. If I commit
 it, the push would include the key. If the cache needs to be recreated (key
 rotation), the committed key would be stale.
 
 ### Q3: The `atticd-bootstrap` service currently re-creates the admin token
+
 and re-logs in on every boot (overwriting the attic client config). Should
 it instead check if the cache already exists and skip the token/login
 entirely? The cache creation is idempotent (`already exists` message), but
@@ -322,15 +334,15 @@ the token generation + login are wasteful on every deploy.
 
 ## Session Statistics
 
-| Metric | Value |
-|--------|-------|
-| Commits this session | ~8 (6 pushed-ready + 2 auto-committed by daemon) |
-| Deploys | 5 (4 successful, 1 blocked by disk space) |
-| Post-deploy smoke tests | 5 runs (30/30, 28/2, 29/1, 30/0, blocked) |
-| New services | 2 (`atticd-storage-dir`, `atticd-bootstrap`) |
-| Bug fixes | 3 (scheduled-tasks escaping, storage mount race, retention quoting) |
-| Files modified | 4 (`attic.nix`, `scheduled-tasks.nix`, `configuration.nix`, `gatus-config.nix` already had checks) |
-| Iterations to bootstrap | 4 (PATH, wantedBy, quoting, permissions) |
+| Metric                  | Value                                                                                              |
+| ----------------------- | -------------------------------------------------------------------------------------------------- |
+| Commits this session    | ~8 (6 pushed-ready + 2 auto-committed by daemon)                                                   |
+| Deploys                 | 5 (4 successful, 1 blocked by disk space)                                                          |
+| Post-deploy smoke tests | 5 runs (30/30, 28/2, 29/1, 30/0, blocked)                                                          |
+| New services            | 2 (`atticd-storage-dir`, `atticd-bootstrap`)                                                       |
+| Bug fixes               | 3 (scheduled-tasks escaping, storage mount race, retention quoting)                                |
+| Files modified          | 4 (`attic.nix`, `scheduled-tasks.nix`, `configuration.nix`, `gatus-config.nix` already had checks) |
+| Iterations to bootstrap | 4 (PATH, wantedBy, quoting, permissions)                                                           |
 
 ---
 

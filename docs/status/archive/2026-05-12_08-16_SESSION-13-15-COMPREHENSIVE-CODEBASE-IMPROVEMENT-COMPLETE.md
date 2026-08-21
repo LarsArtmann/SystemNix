@@ -10,22 +10,22 @@
 
 ### 14 commits, 42 files changed, +519/-428 lines
 
-| #   | Commit     | Category | Description                                                                                                                                   |
-| --- | ---------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | `287d2975` | docs     | AGENTS.md: otel-tui Linux-only pattern, Darwin disk exhaustion, _module.args pattern                                                          |
-| 2   | `94bbcdb0` | fix      | Remove broken config-validate.sh references from global pre-commit config                                                                     |
-| 3   | `b0780bd0` | fix      | Alejandra formatting in niri-config.nix, disable dead sublime-sync LaunchAgent                                                                |
-| 4   | `a4bb3b94` | refactor | justfile: [linux] tag on dns-update, extract evo_x2_ip, simplify gpu-python                                                                   |
-| 5   | `a4bb3b94` | refactor | dns-blocker: replace inline hardening with shared `harden{}` + `serviceDefaults{}`                                                            |
-| 6   | `29f9164b` | refactor | niri-wrapped: use `hardenUser{}` + `serviceDefaultsUser{}` for awww-daemon, swayidle, cliphist                                                |
-| 7   | `fa0efa75` | refactor | gitea + gitea-repos: extract 10x hardcoded `localhost:3000` to config-derived `giteaUrl`                                                      |
-| 8   | `fa0efa75` | fix      | pre-commit: statix hook loops files individually (only accepts one target)                                                                    |
-| 9   | `4785469d` | refactor | overlays: extract `mkPackageOverlay` helper — deduplicates 4 identical overlays                                                               |
-| 10  | `9e1f229a` | docs     | Header comments on all 35 service modules                                                                                                     |
-| 11  | `33327c7b` | fix      | **statix pre-commit hook root cause**: `grep -q .` returns 1 on no match → false failures on EVERY commit. Fixed with result variable pattern |
-| 12  | `df0473cb` | refactor | signoz: extract alert rules to `signoz-alerts.nix` with `mkRule` helper (939 → 599 lines, -36%)                                               |
-| 13  | `bfd0541d` | docs     | AGENTS.md: mkPackageOverlay, config-derived URLs, signoz split, statix gotchas                                                                |
-| 14  | `git push` | ops      | Rebased onto remote (1 new commit from emeet-pixyd update), pushed all 14 commits                                                             |
+| #  | Commit     | Category | Description                                                                                                                                   |
+| -- | ---------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | `287d2975` | docs     | AGENTS.md: otel-tui Linux-only pattern, Darwin disk exhaustion, _module.args pattern                                                          |
+| 2  | `94bbcdb0` | fix      | Remove broken config-validate.sh references from global pre-commit config                                                                     |
+| 3  | `b0780bd0` | fix      | Alejandra formatting in niri-config.nix, disable dead sublime-sync LaunchAgent                                                                |
+| 4  | `a4bb3b94` | refactor | justfile: [linux] tag on dns-update, extract evo_x2_ip, simplify gpu-python                                                                   |
+| 5  | `a4bb3b94` | refactor | dns-blocker: replace inline hardening with shared `harden{}` + `serviceDefaults{}`                                                            |
+| 6  | `29f9164b` | refactor | niri-wrapped: use `hardenUser{}` + `serviceDefaultsUser{}` for awww-daemon, swayidle, cliphist                                                |
+| 7  | `fa0efa75` | refactor | gitea + gitea-repos: extract 10x hardcoded `localhost:3000` to config-derived `giteaUrl`                                                      |
+| 8  | `fa0efa75` | fix      | pre-commit: statix hook loops files individually (only accepts one target)                                                                    |
+| 9  | `4785469d` | refactor | overlays: extract `mkPackageOverlay` helper — deduplicates 4 identical overlays                                                               |
+| 10 | `9e1f229a` | docs     | Header comments on all 35 service modules                                                                                                     |
+| 11 | `33327c7b` | fix      | **statix pre-commit hook root cause**: `grep -q .` returns 1 on no match → false failures on EVERY commit. Fixed with result variable pattern |
+| 12 | `df0473cb` | refactor | signoz: extract alert rules to `signoz-alerts.nix` with `mkRule` helper (939 → 599 lines, -36%)                                               |
+| 13 | `bfd0541d` | docs     | AGENTS.md: mkPackageOverlay, config-derived URLs, signoz split, statix gotchas                                                                |
+| 14 | `git push` | ops      | Rebased onto remote (1 new commit from emeet-pixyd update), pushed all 14 commits                                                             |
 
 ### Key Achievements
 

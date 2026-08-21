@@ -6,7 +6,6 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 1. **Root cause diagnosed:** Pocket ID v2.9.0 crash-looped with `"failed to run services: renew lock: lock ownership lost"` after a system-wide I/O stall at Jul 11 13:49 (SQLite lock renewal couldn't complete within TTL due to BTRFS commit stall under GPUActive memory pressure). After 3-4 crash-restart cycles, hit `start-limit-hit` and stayed permanently dead.

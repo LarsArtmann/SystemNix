@@ -302,48 +302,48 @@ No `nix flake check` in CI. Even a manual `just ci` recipe would help.
 
 ### Priority 1: Critical (Do This Week)
 
-| #   | Task                                                               | Impact                  | Effort  |
-| --- | ------------------------------------------------------------------ | ----------------------- | ------- |
-| 1   | **Fix `jscpd` `pnpmDeps.hash`** — build, capture hash, fill in     | Package actually builds | Low     |
-| 2   | **Archive old status reports** (>7 days) to `docs/status/archive/` | Reduces docs noise      | Trivial |
-| 3   | **Adopt `hardenUser` in `monitor365.nix`** — last service gap      | Consistency             | Low     |
-| 4   | **Add `just disk-clean` recipe** — prune Docker, Nix store, temp   | Disk management         | Low     |
-| 5   | **Commit the `flake.lock` update** — uncommitted drift from origin | Keeps origin in sync    | Trivial |
+| # | Task                                                               | Impact                  | Effort  |
+| - | ------------------------------------------------------------------ | ----------------------- | ------- |
+| 1 | **Fix `jscpd` `pnpmDeps.hash`** — build, capture hash, fill in     | Package actually builds | Low     |
+| 2 | **Archive old status reports** (>7 days) to `docs/status/archive/` | Reduces docs noise      | Trivial |
+| 3 | **Adopt `hardenUser` in `monitor365.nix`** — last service gap      | Consistency             | Low     |
+| 4 | **Add `just disk-clean` recipe** — prune Docker, Nix store, temp   | Disk management         | Low     |
+| 5 | **Commit the `flake.lock` update** — uncommitted drift from origin | Keeps origin in sync    | Trivial |
 
 ### Priority 2: High (Do This Month)
 
-| #   | Task                                                          | Impact                            | Effort |
-| --- | ------------------------------------------------------------- | --------------------------------- | ------ |
-| 6   | **Write first NixOS VM test** (e.g., DNS resolver test)       | Validates actual service behavior | High   |
-| 7   | **Split AGENTS.md** into domain-specific files                | Reduces context loading           | Medium |
-| 8   | **Set up remote deploy pipeline** from macOS → evo-x2         | Faster, safer deployments         | Medium |
-| 9   | **Add `just ci` recipe** — full `nix flake check` + test-fast | CI-like validation locally        | Low    |
-| 10  | **Add session lock mechanism** to prevent parallel collisions | Prevents build breakage           | Medium |
-| 11  | **Provision Pi 3** for DNS failover cluster                   | HA DNS                            | Medium |
+| #  | Task                                                          | Impact                            | Effort |
+| -- | ------------------------------------------------------------- | --------------------------------- | ------ |
+| 6  | **Write first NixOS VM test** (e.g., DNS resolver test)       | Validates actual service behavior | High   |
+| 7  | **Split AGENTS.md** into domain-specific files                | Reduces context loading           | Medium |
+| 8  | **Set up remote deploy pipeline** from macOS → evo-x2         | Faster, safer deployments         | Medium |
+| 9  | **Add `just ci` recipe** — full `nix flake check` + test-fast | CI-like validation locally        | Low    |
+| 10 | **Add session lock mechanism** to prevent parallel collisions | Prevents build breakage           | Medium |
+| 11 | **Provision Pi 3** for DNS failover cluster                   | HA DNS                            | Medium |
 
 ### Priority 3: Medium (Next Quarter)
 
-| #   | Task                                                              | Impact                         | Effort |
-| --- | ----------------------------------------------------------------- | ------------------------------ | ------ |
-| 12  | **Add automated secret rotation** via sops + cron                 | Security hygiene               | High   |
-| 13  | **Write `just runbook <service>` command**                        | Faster incident response       | Medium |
-| 14  | **Add health check endpoints** to services lacking them           | Observability                  | Medium |
-| 15  | **Extract Caddy virtual hosts to a helper**                       | DRY reverse proxy config       | Medium |
-| 16  | **Add Dozzle** for Docker log viewer                              | Better container observability | Low    |
-| 17  | **Consolidate `signoz-alerts.nix` mkRule helper** into shared lib | Reusable alert definitions     | Medium |
+| #  | Task                                                              | Impact                         | Effort |
+| -- | ----------------------------------------------------------------- | ------------------------------ | ------ |
+| 12 | **Add automated secret rotation** via sops + cron                 | Security hygiene               | High   |
+| 13 | **Write `just runbook <service>` command**                        | Faster incident response       | Medium |
+| 14 | **Add health check endpoints** to services lacking them           | Observability                  | Medium |
+| 15 | **Extract Caddy virtual hosts to a helper**                       | DRY reverse proxy config       | Medium |
+| 16 | **Add Dozzle** for Docker log viewer                              | Better container observability | Low    |
+| 17 | **Consolidate `signoz-alerts.nix` mkRule helper** into shared lib | Reusable alert definitions     | Medium |
 
 ### Priority 4: Nice-to-Have
 
-| #   | Task                                                                   | Impact                      | Effort |
-| --- | ---------------------------------------------------------------------- | --------------------------- | ------ |
-| 18  | **Write integration tests** for critical services (Caddy, DNS, SigNoz) | Correctness validation      | High   |
-| 19  | **Automate Darwin disk cleanup** via LaunchAgent                       | Prevents disk exhaustion    | Low    |
-| 20  | **Monitor365 alerting rules** in Gatus/SigNoz                          | Device monitoring coverage  | Low    |
-| 21  | **Twenty CRM backup** verification via test restore                    | Data protection validation  | Low    |
-| 22  | **Add `nix flake check` to CI** (even manual `just ci`)                | Full flake validation       | Low    |
-| 23  | **GPU metrics dashboard** in SigNoz                                    | Better GPU observability    | Medium |
-| 24  | **Automated dependency updates** via Renovate/Dependabot equivalent    | Keeps packages fresh        | High   |
-| 25  | **Document service module template** — `just new-service <name>`       | Faster new service creation | Medium |
+| #  | Task                                                                   | Impact                      | Effort |
+| -- | ---------------------------------------------------------------------- | --------------------------- | ------ |
+| 18 | **Write integration tests** for critical services (Caddy, DNS, SigNoz) | Correctness validation      | High   |
+| 19 | **Automate Darwin disk cleanup** via LaunchAgent                       | Prevents disk exhaustion    | Low    |
+| 20 | **Monitor365 alerting rules** in Gatus/SigNoz                          | Device monitoring coverage  | Low    |
+| 21 | **Twenty CRM backup** verification via test restore                    | Data protection validation  | Low    |
+| 22 | **Add `nix flake check` to CI** (even manual `just ci`)                | Full flake validation       | Low    |
+| 23 | **GPU metrics dashboard** in SigNoz                                    | Better GPU observability    | Medium |
+| 24 | **Automated dependency updates** via Renovate/Dependabot equivalent    | Keeps packages fresh        | High   |
+| 25 | **Document service module template** — `just new-service <name>`       | Faster new service creation | Medium |
 
 ---
 
@@ -361,27 +361,27 @@ This determines whether item 1 in the priority list is "fix it" or "remove it".
 
 ## Metrics Dashboard
 
-| Metric                        | Value                                                                    |
-| ----------------------------- | ------------------------------------------------------------------------ |
-| Total commits                 | 2,393                                                                    |
-| `.nix` files                  | 110                                                                      |
-| Shell scripts                 | 17                                                                       |
-| Service modules               | 35                                                                       |
-| Custom packages               | 6                                                                        |
-| Flake inputs                  | 30+                                                                      |
-| Overlays (shared)             | 12                                                                       |
-| Overlays (linux-only)         | 6                                                                        |
-| Status reports                | 48                                                                       |
-| Planning docs                 | 31                                                                       |
-| ADRs                          | 6                                                                        |
-| `harden {}` adoption          | 21/35 (60%) — all applicable services covered                            |
-| `serviceDefaults {}` adoption | 20/35 (57%)                                                              |
-| `onFailure` adoption          | 15/35 (43%)                                                              |
-| `mkDockerService` adoption    | **5/5 Docker services (100%)** ✅                                        |
-| `mkStateDir` adoption         | **11/11 services with tmpfiles (100%)** ✅                               |
-| `serviceTypes.servicePort`    | **13/13 services with ports (100%)** ✅                                  |
-| Build status                  | ✅ Clean (`just test-fast` passes)                                       |
-| Disk usage (evo-x2)           | 86% (424G / 512G)                                                        |
+| Metric                        | Value                                                                   |
+| ----------------------------- | ----------------------------------------------------------------------- |
+| Total commits                 | 2,393                                                                   |
+| `.nix` files                  | 110                                                                     |
+| Shell scripts                 | 17                                                                      |
+| Service modules               | 35                                                                      |
+| Custom packages               | 6                                                                       |
+| Flake inputs                  | 30+                                                                     |
+| Overlays (shared)             | 12                                                                      |
+| Overlays (linux-only)         | 6                                                                       |
+| Status reports                | 48                                                                      |
+| Planning docs                 | 31                                                                      |
+| ADRs                          | 6                                                                       |
+| `harden {}` adoption          | 21/35 (60%) — all applicable services covered                           |
+| `serviceDefaults {}` adoption | 20/35 (57%)                                                             |
+| `onFailure` adoption          | 15/35 (43%)                                                             |
+| `mkDockerService` adoption    | **5/5 Docker services (100%)** ✅                                       |
+| `mkStateDir` adoption         | **11/11 services with tmpfiles (100%)** ✅                              |
+| `serviceTypes.servicePort`    | **13/13 services with ports (100%)** ✅                                 |
+| Build status                  | ✅ Clean (`just test-fast` passes)                                      |
+| Disk usage (evo-x2)           | 86% (424G / 512G)                                                       |
 | Working tree                  | ⚠️ Uncommitted changes (flake.lock, justfile, jscpd, ai-stack, base.nix) |
 
 ---
@@ -391,7 +391,7 @@ This determines whether item 1 in the priority list is "fix it" or "remove it".
 | Commit     | Files                 | Summary                                                                                                              |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `1a409877` | 11 files (-102 lines) | `mkStateDir` adoption across 10 services + `imagePull` extension to `mkDockerService` + `voice-agents.nix` migration |
-| Unstaged   | 6 files               | `flake.lock` drift, `just hash-check` recipe, `jscpd.nix` fix, `ai-stack.nix` pnpm→pnpm, `base.nix` nodejs removal    |
+| Unstaged   | 6 files               | `flake.lock` drift, `just hash-check` recipe, `jscpd.nix` fix, `ai-stack.nix` pnpm→pnpm, `base.nix` nodejs removal   |
 
 ---
 

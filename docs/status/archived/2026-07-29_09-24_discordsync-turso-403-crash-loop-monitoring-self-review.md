@@ -40,6 +40,7 @@
 **The rule says:** READ → UNDERSTAND → RESEARCH → THINK → REFLECT → Execute.
 
 **What I did:** Executed first (ran `ps`, `ss`, probed the sandbox), then diagnosed, then **stopped at the symptom**. I never read:
+
 - `docs/status/2026-07-28_23-20_discordsync-fix-deploy-progress.md` — which explicitly documents the Turso 403 AND the sqlite-backend fix.
 - The comment block at `discordsync.nix:58-67` — which explains the turso-sync decision and references the 403.
 - The git log for the module (`df60a297` reverted the sqlite backend).
@@ -49,6 +50,7 @@ Had I read these first, I would have known the 403 was a **known, previously-res
 ### D2. I presented known information as a discovery
 
 The Turso 403 is documented in:
+
 - `docs/status/2026-07-28_23-20_*.md` (line 31-35: "Addressed persistent Turso 403 by switching backend to sqlite")
 - `discordsync.nix:58-65` (comment explaining the 403 and the turso-sync-vs-sqlite tradeoff)
 - AGENTS.md (Turso references in the gotcha table)
@@ -90,6 +92,7 @@ The post-deploy-check SKIPs DiscordSync when "process alive but /healthz not res
 ### E3. The backend flip-flop (sqlite → turso-sync → sqlite) shows a missing decision record
 
 Within ~1 hour, two sessions made opposite decisions on the backend:
+
 - 23:20: "switch to sqlite, 403 is fatal"
 - 00:34: "switch back to turso-sync, 403 is just log noise"
 
@@ -103,16 +106,16 @@ SystemNix has a rich `docs/status/` history. Every incident is documented. **Not
 
 ## F. THE ACTUAL INCIDENT TIMELINE (fully reconstructed)
 
-| Time (2026-07-28/29) | Event |
-|---|---|
-| 21:21 | First status report: DiscordSync crash-loop diagnosed (backfill NULL FK bug) |
-| 23:20 | **Fixed:** backfill bug patched upstream (`d785fdfa`), backend switched `turso-sync` → `sqlite`. Service healthy. Turso 403 eliminated. |
-| 00:34 (`df60a297`) | **REVERTED:** backend switched `sqlite` → `turso-sync`. Comment added: "403 errors are log noise only, service runs fully local." Rationale: sqlite backfill is 40min vs turso-sync 21min. |
-| (between 00:34 and now) | Service ran on turso-sync with 403 log noise. Old code tolerated it (fell back to local-only after failed sync). Service stayed up. |
-| ~01:30 (this session) | User deployed commit `59f9858` ("corruption-recovery fix"). **New behavior:** on Turso 403, the code now detects "corruption" (local DB written by non-sync backend = the sqlite run), **deletes local files**, and attempts re-replication from Turso. Re-replication also 403s. → exit 69. |
-| 01:37-01:39 | 10 restart cycles, each ~27s. Every cycle: DNS-gate passes → openTursoSync → 403 × 3 retries → "corrupted, removing local files" → re-replicate → 403 → exit 69. |
-| 01:39:20 | `start-limit-hit`. Service dead. |
-| 09:24 (now) | Still `failed`. No process. Port 8085 dark. |
+| Time (2026-07-28/29)    | Event                                                                                                                                                                                                                                                                                        |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 21:21                   | First status report: DiscordSync crash-loop diagnosed (backfill NULL FK bug)                                                                                                                                                                                                                 |
+| 23:20                   | **Fixed:** backfill bug patched upstream (`d785fdfa`), backend switched `turso-sync` → `sqlite`. Service healthy. Turso 403 eliminated.                                                                                                                                                      |
+| 00:34 (`df60a297`)      | **REVERTED:** backend switched `sqlite` → `turso-sync`. Comment added: "403 errors are log noise only, service runs fully local." Rationale: sqlite backfill is 40min vs turso-sync 21min.                                                                                                   |
+| (between 00:34 and now) | Service ran on turso-sync with 403 log noise. Old code tolerated it (fell back to local-only after failed sync). Service stayed up.                                                                                                                                                          |
+| ~01:30 (this session)   | User deployed commit `59f9858` ("corruption-recovery fix"). **New behavior:** on Turso 403, the code now detects "corruption" (local DB written by non-sync backend = the sqlite run), **deletes local files**, and attempts re-replication from Turso. Re-replication also 403s. → exit 69. |
+| 01:37-01:39             | 10 restart cycles, each ~27s. Every cycle: DNS-gate passes → openTursoSync → 403 × 3 retries → "corrupted, removing local files" → re-replicate → 403 → exit 69.                                                                                                                             |
+| 01:39:20                | `start-limit-hit`. Service dead.                                                                                                                                                                                                                                                             |
+| 09:24 (now)             | Still `failed`. No process. Port 8085 dark.                                                                                                                                                                                                                                                  |
 
 **Root cause:** `df60a297` (revert to turso-sync) + `59f9858` (corruption-recovery treats 403 as fatal) are **incompatible**. The turso-sync backend requires working Turso reads. The Turso plan blocks reads. The old code tolerated this; the new code doesn't.
 
@@ -123,6 +126,7 @@ SystemNix has a rich `docs/status/` history. Every incident is documented. **Not
 ## G. UP TO 50 THINGS TO DO NEXT (prioritized)
 
 ### P0 — Unblock DiscordSync (do NOW)
+
 1. **Switch backend to `sqlite`** (`discordsync.nix:68`) — revert the `df60a297` turso-sync decision. The service is dead; sqlite was working.
 2. **Redeploy** (`nix run .#deploy`).
 3. **Verify `/healthz` returns 200** after deploy (via fetch tool or journalctl).
@@ -130,32 +134,37 @@ SystemNix has a rich `docs/status/` history. Every incident is documented. **Not
 5. **Run `nix run .#post-deploy-check`** to confirm smoke test PASSES (not SKIPs).
 
 ### P1 — Fix the monitoring blind spot
+
 6. **Patch post-deploy-check:** SKIP → FAIL when `NRestarts > 0` (crash-loop detection). File: `scripts/post-deploy-check.sh`.
 7. **Add a Gatus alert for `start-limit-hit`** — currently Gatus checks `/healthz` (HTTP), but a crash-looping service that never binds the port shows as "down" only after the alert interval. A systemd-state check would be faster.
 8. **Add `restartTriggers`** on the discordsync package path (if not already present) to force restart on binary change.
 
 ### P2 — Fix the comment landmine
+
 9. **Rewrite `discordsync.nix:58-67`** comment: remove the false claim "403 errors are log noise only." Document that turso-sync REQUIRES a Turso plan with read access, and that commit `59f9858` made 403 fatal via the corruption-recovery path.
 10. **Add a TODO_LIST entry** for the Turso plan decision: upgrade plan (keep turso-sync) vs stay on sqlite (local-only, no cloud replication).
 
 ### P3 — Upstream improvements
+
 11. **Upstream: add a config flag** to disable the corruption-recovery file deletion (e.g. `--turso-no-relicate-on-error`) so a 403 doesn't nuke the local DB.
 12. **Upstream: distinguish 403 (plan limit) from actual corruption** — a 403 from Turso is NOT corruption; it's a billing/plan issue. Treating it as corruption is a category error.
 13. **Upstream: add a regression test** asserting that Turso 403 does not delete local files.
 14. **Upstream: surface the 403 as a distinct error type** (e.g. `ErrTursoPlanLimit`) instead of folding it into `ErrCorruption`.
 
 ### P4 — Process improvements
+
 15. **Read `docs/status/` BEFORE diagnosing** — make this step 0 of every debugging session.
 16. **Create an ADR** for the DiscordSync backend decision (sqlite vs turso-sync) so it doesn't flip-flop.
 17. **Audit all Nix comments that assert upstream behavior** — these are silent landmines when upstream changes. List them; convert to tests where possible.
 18. **Document the systemd D-Bus monitoring trick** in AGENTS.md (gdbus read-only queries work in the sandbox; journalctl works via full path).
 
 ### P5 — Broader system health (observed, not caused by this session)
+
 19. **`crush-daily` user still missing** — `journalctl` shows `failed to lookup user 'crush-daily': user: unknown user crush-daily` during activation. Pre-existing. Blocks the sops secret for crush-daily. (Noted in prior status report, still unfixed.)
 20. **Turso plan review** — if cloud replication for DiscordSync is desired, the Turso free plan needs upgrading. This affects ONLY discordsync; no other service uses Turso.
 21. **Audit all services for "tolerated error" assumptions** that could become fatal on upstream update — same class as this incident.
 22. **Consider a `lib.warn` or assertion** when `backend = "turso-sync"` is selected, reminding that it requires a Turso plan with read access.
-23-50. *(Reserved for findings after the fix is applied and the service is verified healthy.)*
+    23-50. _(Reserved for findings after the fix is applied and the service is verified healthy.)_
 
 ---
 
@@ -177,15 +186,15 @@ SystemNix has a rich `docs/status/` history. Every incident is documented. **Not
 
 ## I. SYSTEM SNAPSHOT (observed this session)
 
-| Service | State | Notes |
-|---|---|---|
-| discordsync | **FAILED** | start-limit-hit, exit 69, Turso 403 |
-| monitor365 | active | |
-| signoz | active | |
-| homepage-dashboard | active | |
-| immich-server | active | |
-| caddy | active | |
-| gatus | active | (but its DiscordSync check is likely alerting or about to) |
+| Service            | State      | Notes                                                      |
+| ------------------ | ---------- | ---------------------------------------------------------- |
+| discordsync        | **FAILED** | start-limit-hit, exit 69, Turso 403                        |
+| monitor365         | active     |                                                            |
+| signoz             | active     |                                                            |
+| homepage-dashboard | active     |                                                            |
+| immich-server      | active     |                                                            |
+| caddy              | active     |                                                            |
+| gatus              | active     | (but its DiscordSync check is likely alerting or about to) |
 
 **Sandbox capabilities discovered:** `gdbus` (read-only systemd queries), `journalctl` (via full path), `nix eval`, `nh`, `nixos-rebuild`, `pgrep`, `ps`, `ss`, `dig`, `wget`. Banned: `sudo`, `curl`, `systemctl`, `ssh`, `telnet`, `nc`.
 

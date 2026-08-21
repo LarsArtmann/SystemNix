@@ -6,7 +6,6 @@
 
 ---
 
-
 ## What Was Done
 
 ### Problem
@@ -22,16 +21,16 @@ Two-repo change:
 
 ### Key Technical Decisions
 
-| Decision | Why |
-|---|---|
-| Manual `buildGoModule` instead of `go-standard` module | Upstream already had a hand-rolled flake with apps/devShells. Migrating to `go-standard` would be a larger refactor with no incremental value for this task. |
-| `mkPreparedSource` for 3 private deps (`go-finding`, `go-linter-sdk`, `go-error-family`) | All three are private GitHub repos (404 on `github.com`). Can't be fetched by the Go proxy in the Nix sandbox. |
-| `doCheck = false` | CLI tests in `cmd/go-humanize-linter/main_test.go` shell out to `go build` via `exec.Command`, which requires a writable `$HOME`. Nix sandbox has no writability. Tests pass via `nix run .#test` in CI. |
-| `env.GOWORK = "off"` | Local `go.work` file (gitignored but present) causes `go mod vendor` to fail with "cannot be run in workspace mode". |
-| `cleanSourceWith` filter excluding `.direnv/`, `result`, `reports`, `custom-gcl` | `lib.cleanSource` includes gitignored dirs that contain broken symlinks → `noBrokenSymlinks` build failure. |
-| `proxyVendor = false` | Required when using `mkPreparedSource` — the prepared source has local `_local_deps/` replaces that can't be resolved via the Go proxy. |
-| Flake input `ref=main` (not `master`) | Upstream repo uses `main` as default branch. |
-| Go dep inputs NOT followed in SystemNix | `go-finding`, `go-linter-sdk`, `go-error-family` are `flake = false` in the upstream flake. Following them would require re-declaring them in SystemNix, adding complexity for no benefit. |
+| Decision                                                                                 | Why                                                                                                                                                                                                      |
+| ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Manual `buildGoModule` instead of `go-standard` module                                   | Upstream already had a hand-rolled flake with apps/devShells. Migrating to `go-standard` would be a larger refactor with no incremental value for this task.                                             |
+| `mkPreparedSource` for 3 private deps (`go-finding`, `go-linter-sdk`, `go-error-family`) | All three are private GitHub repos (404 on `github.com`). Can't be fetched by the Go proxy in the Nix sandbox.                                                                                           |
+| `doCheck = false`                                                                        | CLI tests in `cmd/go-humanize-linter/main_test.go` shell out to `go build` via `exec.Command`, which requires a writable `$HOME`. Nix sandbox has no writability. Tests pass via `nix run .#test` in CI. |
+| `env.GOWORK = "off"`                                                                     | Local `go.work` file (gitignored but present) causes `go mod vendor` to fail with "cannot be run in workspace mode".                                                                                     |
+| `cleanSourceWith` filter excluding `.direnv/`, `result`, `reports`, `custom-gcl`         | `lib.cleanSource` includes gitignored dirs that contain broken symlinks → `noBrokenSymlinks` build failure.                                                                                              |
+| `proxyVendor = false`                                                                    | Required when using `mkPreparedSource` — the prepared source has local `_local_deps/` replaces that can't be resolved via the Go proxy.                                                                  |
+| Flake input `ref=main` (not `master`)                                                    | Upstream repo uses `main` as default branch.                                                                                                                                                             |
+| Go dep inputs NOT followed in SystemNix                                                  | `go-finding`, `go-linter-sdk`, `go-error-family` are `flake = false` in the upstream flake. Following them would require re-declaring them in SystemNix, adding complexity for no benefit.               |
 
 ---
 
@@ -125,6 +124,7 @@ Nothing. All builds pass, all tests pass, binary works correctly. No regressions
 ## F) Up to 50 Things to Get Done Next
 
 ### Immediate (blocked on push)
+
 1. Push upstream: `cd ~/projects/go-humanize-linter && git push`
 2. Update SystemNix lock: `nix flake lock --update-input go-humanize-linter`
 3. Deploy: `nix run .#deploy`
@@ -133,12 +133,14 @@ Nothing. All builds pass, all tests pass, binary works correctly. No regressions
 6. Run post-deploy check: `nix run .#post-deploy-check`
 
 ### Documentation
+
 7. Update SystemNix `AGENTS.md` — add `go-humanize-linter` to the Go tools section
 8. Update upstream `AGENTS.md` — document the `packages.default` build, `mkPreparedSource` usage, `doCheck = false` rationale
 9. Update upstream `FEATURES.md` — add "Nix package output" to the features list
 10. Update upstream `CHANGELOG.md` — add entry for Nix package support
 
 ### Upstream improvements
+
 11. Migrate upstream `flake.nix` to `go-standard` module (eliminates ~150 lines of manual config)
 12. Fix upstream `GOPRIVATE` to include `github.com/LarsArtmann/*` (mixed case)
 13. Add `flake.overlays.default` to upstream (for overlay-based consumption)
@@ -148,12 +150,14 @@ Nothing. All builds pass, all tests pass, binary works correctly. No regressions
 17. Tag upstream release (so SystemNix can pin to a version instead of `ref=main`)
 
 ### SystemNix improvements
+
 18. Add `go-humanize-linter` to the `golangci-lint` custom binary build (if desired)
 19. Consider adding `go-humanize-linter` to the devShell of Go projects in SystemNix
 20. Add `go-humanize-linter` to the `post-deploy-check` script to verify it's on PATH
 21. Update SystemNix `lib/lars-packages.nix` comment block if needed
 
 ### Quality hardening
+
 22. Add a SystemNix VM test for `go-humanize-linter` package availability
 23. Add `go-humanize-linter` to the `dynamic-user-audit.nix` exclusion list (if needed)
 24. Verify `go-humanize-linter` works in the `qmd` MCP context (if relevant)
@@ -162,10 +166,12 @@ Nothing. All builds pass, all tests pass, binary works correctly. No regressions
 27. Consider adding `go-humanize-linter` to `golangci-lint-auto-configure` output
 
 ### Monitoring
+
 28. Add Gatus check for `go-humanize-linter` binary availability (not applicable — CLI tool)
 29. Add `go-humanize-linter` to `system-health` module's tool inventory (if applicable)
 
 ### Cleanup
+
 30. Remove `result` symlink from upstream repo after deploy testing
 31. Remove `result` symlink from SystemNix after deploy testing
 32. Clean up `flake.lock` entries in upstream if any are stale after migration
@@ -174,6 +180,7 @@ Nothing. All builds pass, all tests pass, binary works correctly. No regressions
 35. Verify the `hermes-python-source` pre-existing error is not worsened
 
 ### Future considerations
+
 36. Pin `go-humanize-linter` to a tagged release once available
 37. Consider adding `go-humanize-linter` to the `go-structure-linter` config (meta-linting)
 38. Add `go-humanize-linter` to the `buildflow` managed tools list (if applicable)

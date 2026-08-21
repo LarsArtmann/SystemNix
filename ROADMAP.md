@@ -96,18 +96,18 @@ See [TODO_LIST.md](./TODO_LIST.md) Priority 6 for detailed task breakdowns.
 
 ## Deferred / Rejected Ideas
 
-| Idea                  | Status   | Reason                                         |
-| --------------------- | -------- | ---------------------------------------------- |
+| Idea                  | Status   | Reason                                                                                                |
+| --------------------- | -------- | ----------------------------------------------------------------------------------------------------- |
 | ZFS `datapool`        | Removed  | Forensically extracted + destroyed 2026-08-16; disks rebuilt as BTRFS RAID1 backup pool (`/mnt/pool`) |
-| OpenZFS on macOS      | Rejected | Kernel panics (ADR-003)                        |
-| otel-tui on Darwin    | Rejected | 40+ min builds, disk exhaustion                |
-| ComfyUI               | Removed  | Prefer using AI models via code directly       |
-| Authelia              | Removed  | Replaced by Pocket ID (passkey-based, simpler) |
-| Prometheus            | Removed  | Replaced by SigNoz (full-stack observability)  |
-| Hyprland              | Removed  | Replaced by Niri (scrollable tiling). grimblast dependency purged (~122 MiB)   |
-| swww wallpaper daemon     | Removed  | Ghost service crash-looping 1220+ times/boot. DMS manages wallpapers natively via IPC |
-| DNS-over-QUIC overlay     | Disabled | Breaks binary cache (40+ min builds)                           |
-| llama-cpp MFMA flag   | Removed  | No-op on RDNA 3.5 (Strix Halo). Only affects CDNA GPUs |
-| SearXNG rate limiter  | Removed  | Private LAN, no abuse vector. Redis removed too |
-| `discard=none`        | Reverted | Would have bricked boot. `nodiscard` mount option confirmed working |
-| Git core.compression  | Removed  | Counterproductive for .nix files — poor compression, increases CPU. Level 9 removed |
+| OpenZFS on macOS      | Rejected | Kernel panics (ADR-003)                                                                               |
+| otel-tui on Darwin    | Rejected | 40+ min builds, disk exhaustion                                                                       |
+| ComfyUI               | Removed  | Prefer using AI models via code directly                                                              |
+| Authelia              | Removed  | Replaced by Pocket ID (passkey-based, simpler)                                                        |
+| Prometheus            | Removed  | Replaced by SigNoz (full-stack observability)                                                         |
+| Hyprland              | Removed  | Replaced by Niri (scrollable tiling). grimblast dependency purged (~122 MiB)                          |
+| swww wallpaper daemon | Removed  | Ghost service crash-looping 1220+ times/boot. DMS manages wallpapers natively via IPC                 |
+| DNS-over-QUIC overlay | Disabled | Breaks binary cache (40+ min builds)                                                                  |
+| llama-cpp MFMA flag   | Removed  | No-op on RDNA 3.5 (Strix Halo). Only affects CDNA GPUs                                                |
+| SearXNG rate limiter  | Removed  | Private LAN, no abuse vector. Redis removed too                                                       |
+| `discard=none`        | Reverted | Would have bricked boot. `nodiscard` mount option confirmed working                                   |
+| Git core.compression  | Removed  | Counterproductive for .nix files — poor compression, increases CPU. Level 9 removed                   |

@@ -14,16 +14,16 @@ System was experiencing severe performance degradation caused by **RAM exhaustio
 
 ## a) FULLY DONE ✅
 
-| #   | Task                                                                                                                                        | Impact                                 |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| 1   | **Root cause diagnosed** — NOT SSD failure. NVMe healthy (rotational=0, no SMART errors)                                                    | Ruled out hardware                     |
-| 2   | **OOM kill cascade identified** — services being SIGKILL'd in loop: homepage, immich, comfyui, authelia, signoz, taskchampion, llama-vision | Found root cause of slowness           |
-| 3   | **monitor365 Rust `target/` cleaned** — 125GB of Cargo build artifacts removed                                                              | Root partition 88% → 75%               |
-| 4   | **Trash emptied** — 132GB freed (was holding trashed target/)                                                                               | Actual disk space recovered            |
-| 5   | **Model duplicate audit with SHA-256 hashing** — all GGUF files across 3 locations hashed                                                   | Confirmed no byte-identical duplicates |
-| 6   | **4 dangling symlinks identified** in `/data/models/llm/` pointing to missing ollama blobs                                                  | Documented, awaiting cleanup           |
-| 7   | **Ollama blob graveyard found** — 107GB in `/data/models/ollama/`, 1216 blobs, many orphaned                                                | Documented, awaiting decision          |
-| 8   | **Hermes module fix staged** — removed old `oldStateDir` from `ReadWritePaths` (already committed in git history, leftover unstaged change) | Bug fix ready                          |
+| # | Task                                                                                                                                        | Impact                                 |
+| - | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 1 | **Root cause diagnosed** — NOT SSD failure. NVMe healthy (rotational=0, no SMART errors)                                                    | Ruled out hardware                     |
+| 2 | **OOM kill cascade identified** — services being SIGKILL'd in loop: homepage, immich, comfyui, authelia, signoz, taskchampion, llama-vision | Found root cause of slowness           |
+| 3 | **monitor365 Rust `target/` cleaned** — 125GB of Cargo build artifacts removed                                                              | Root partition 88% → 75%               |
+| 4 | **Trash emptied** — 132GB freed (was holding trashed target/)                                                                               | Actual disk space recovered            |
+| 5 | **Model duplicate audit with SHA-256 hashing** — all GGUF files across 3 locations hashed                                                   | Confirmed no byte-identical duplicates |
+| 6 | **4 dangling symlinks identified** in `/data/models/llm/` pointing to missing ollama blobs                                                  | Documented, awaiting cleanup           |
+| 7 | **Ollama blob graveyard found** — 107GB in `/data/models/ollama/`, 1216 blobs, many orphaned                                                | Documented, awaiting decision          |
+| 8 | **Hermes module fix staged** — removed old `oldStateDir` from `ReadWritePaths` (already committed in git history, leftover unstaged change) | Bug fix ready                          |
 
 ### Disk Space Recovery Summary
 
@@ -48,29 +48,29 @@ System was experiencing severe performance degradation caused by **RAM exhaustio
 
 ## b) PARTIALLY DONE 🔧
 
-| #   | Task                           | Status                                                                     | Remaining Work                                                         |
-| --- | ------------------------------ | -------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| 1   | **Reduce swap aggressiveness** | swappiness=30 identified in `boot.nix:57`, change designed but NOT applied | Need to lower swappiness (10 recommended for 62GB RAM system), rebuild |
-| 2   | **Coredump cleanup**           | 12K coredumps identified, consuming disk + I/O                             | Need `coredumpctl vacuum`                                              |
-| 3   | **Hermes module fix**          | Diff exists (remove `oldStateDir` from ReadWritePaths)                     | Needs staging and commit                                               |
+| # | Task                           | Status                                                                     | Remaining Work                                                         |
+| - | ------------------------------ | -------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| 1 | **Reduce swap aggressiveness** | swappiness=30 identified in `boot.nix:57`, change designed but NOT applied | Need to lower swappiness (10 recommended for 62GB RAM system), rebuild |
+| 2 | **Coredump cleanup**           | 12K coredumps identified, consuming disk + I/O                             | Need `coredumpctl vacuum`                                              |
+| 3 | **Hermes module fix**          | Diff exists (remove `oldStateDir` from ReadWritePaths)                     | Needs staging and commit                                               |
 
 ---
 
 ## c) NOT STARTED ⏳
 
-| #   | Task                                                                                 | Est. Space Savings           |
-| --- | ------------------------------------------------------------------------------------ | ---------------------------- |
-| 1   | **Clear huggingface cache** (`~/.cache/huggingface/`)                                | ~118GB                       |
-| 2   | **Clear pip cache** (`~/.cache/pip/`)                                                | ~21GB                        |
-| 3   | **Purge coredumps** (`coredumpctl vacuum`)                                           | Several GB                   |
-| 4   | **Vacuum journal** (`journalctl --vacuum-size=500M`)                                 | ~3.5GB (`/var/log` is 4.1GB) |
-| 5   | **Clean dangling symlinks** in `/data/models/llm/` (4 broken links)                  | Minimal space, but cleanup   |
-| 6   | **Audit and clean ollama blob storage** (107GB, likely mostly orphaned)              | Potentially 50-100GB         |
-| 7   | **Clean `/data/cache/`** (118GB huggingface hub cache duplicate)                     | ~118GB                       |
-| 8   | **Journal cleanup** — `/var/log` at 4.1GB                                            | ~3.5GB                       |
-| 9   | **nix-collect-garbage** — old Nix generations may have store paths                   | Variable                     |
-| 10  | **Symlink `/data/cache/huggingface` → `~/.cache/huggingface`** to deduplicate        | 118GB saved on /data         |
-| 11  | **Go tool caches** — `~/.cache/goimports` (3.6GB) + `~/.cache/golangci-lint` (3.0GB) | ~6.6GB                       |
+| #  | Task                                                                                 | Est. Space Savings           |
+| -- | ------------------------------------------------------------------------------------ | ---------------------------- |
+| 1  | **Clear huggingface cache** (`~/.cache/huggingface/`)                                | ~118GB                       |
+| 2  | **Clear pip cache** (`~/.cache/pip/`)                                                | ~21GB                        |
+| 3  | **Purge coredumps** (`coredumpctl vacuum`)                                           | Several GB                   |
+| 4  | **Vacuum journal** (`journalctl --vacuum-size=500M`)                                 | ~3.5GB (`/var/log` is 4.1GB) |
+| 5  | **Clean dangling symlinks** in `/data/models/llm/` (4 broken links)                  | Minimal space, but cleanup   |
+| 6  | **Audit and clean ollama blob storage** (107GB, likely mostly orphaned)              | Potentially 50-100GB         |
+| 7  | **Clean `/data/cache/`** (118GB huggingface hub cache duplicate)                     | ~118GB                       |
+| 8  | **Journal cleanup** — `/var/log` at 4.1GB                                            | ~3.5GB                       |
+| 9  | **nix-collect-garbage** — old Nix generations may have store paths                   | Variable                     |
+| 10 | **Symlink `/data/cache/huggingface` → `~/.cache/huggingface`** to deduplicate        | 118GB saved on /data         |
+| 11 | **Go tool caches** — `~/.cache/goimports` (3.6GB) + `~/.cache/golangci-lint` (3.0GB) | ~6.6GB                       |
 
 ### Major /data Consumers (not yet addressed)
 
@@ -87,16 +87,16 @@ System was experiencing severe performance degradation caused by **RAM exhaustio
 
 ## d) TOTALLY FUCKED UP 💥
 
-| #   | Issue                                              | Severity    | Details                                                                                                                                                                                        |
-| --- | -------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **OOM kill cascade was active for hours**          | 🔴 Critical | 11,722 coredumps generated TODAY. Services (immich, homepage, comfyui, authelia, signoz, taskchampion) were being killed in a loop. Each kill → coredump → disk I/O → more slowness → more OOM |
-| 2   | **Duplicate llama-server instances**               | 🔴 Critical | Two `llama-server` processes running with the same Gemma 4 26B model — port 8118 AND port 18089. One consuming 11GB+ RAM, the other 0.8GB. Port 18089 appears redundant                        |
-| 3   | **HuggingFace cache duplicated across partitions** | 🟡 High     | 118GB in `~/.cache/huggingface/` AND 118GB in `/data/cache/huggingface/` — likely the same data on two partitions (236GB total waste)                                                          |
-| 4   | **107GB ollama blob graveyard**                    | 🟡 High     | 1,216 blobs, most with broken symlinks pointing to them. Ollama may not even be actively used                                                                                                  |
-| 5   | **`/data` at 86% (117GB free)**                    | 🟡 High     | BTRFS performance degrades above 80%. Combined with the huggingface cache duplication, this is recoverable                                                                                     |
-| 6   | **Swappiness=30 on 62GB system with 41GB swap**    | 🟡 High     | With 62GB RAM, kernel swaps too aggressively. Should be 1-10 for this workload                                                                                                                 |
-| 7   | **ComfyUI + llama-server running simultaneously**  | 🟠 Medium   | Both GPU-heavy, thrash VRAM when run together                                                                                                                                                  |
-| 8   | **6 Crush instances + nix flake check**            | 🟠 Medium   | 6 AI agent sessions + nix build running concurrently adds significant CPU/memory pressure                                                                                                      |
+| # | Issue                                              | Severity    | Details                                                                                                                                                                                        |
+| - | -------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **OOM kill cascade was active for hours**          | 🔴 Critical | 11,722 coredumps generated TODAY. Services (immich, homepage, comfyui, authelia, signoz, taskchampion) were being killed in a loop. Each kill → coredump → disk I/O → more slowness → more OOM |
+| 2 | **Duplicate llama-server instances**               | 🔴 Critical | Two `llama-server` processes running with the same Gemma 4 26B model — port 8118 AND port 18089. One consuming 11GB+ RAM, the other 0.8GB. Port 18089 appears redundant                        |
+| 3 | **HuggingFace cache duplicated across partitions** | 🟡 High     | 118GB in `~/.cache/huggingface/` AND 118GB in `/data/cache/huggingface/` — likely the same data on two partitions (236GB total waste)                                                          |
+| 4 | **107GB ollama blob graveyard**                    | 🟡 High     | 1,216 blobs, most with broken symlinks pointing to them. Ollama may not even be actively used                                                                                                  |
+| 5 | **`/data` at 86% (117GB free)**                    | 🟡 High     | BTRFS performance degrades above 80%. Combined with the huggingface cache duplication, this is recoverable                                                                                     |
+| 6 | **Swappiness=30 on 62GB system with 41GB swap**    | 🟡 High     | With 62GB RAM, kernel swaps too aggressively. Should be 1-10 for this workload                                                                                                                 |
+| 7 | **ComfyUI + llama-server running simultaneously**  | 🟠 Medium   | Both GPU-heavy, thrash VRAM when run together                                                                                                                                                  |
+| 8 | **6 Crush instances + nix flake check**            | 🟠 Medium   | 6 AI agent sessions + nix build running concurrently adds significant CPU/memory pressure                                                                                                      |
 
 ---
 

@@ -58,28 +58,28 @@
 
 ## c) NOT STARTED
 
-| #   | Item                                                   | Priority | Notes                                        |
-| --- | ------------------------------------------------------ | -------- | -------------------------------------------- |
-| 1   | Deploy all 5 commits and reboot                        | P0       | `nh os switch . && sudo reboot`              |
-| 2   | Audit remaining services on multi-user.target          | P1       | 8 custom modules + upstream modules          |
-| 3   | Create custom `apps.target` for non-essential services | P1       | Alternative to mass graphical.target moves   |
-| 4   | CI check for `self.rev` anti-pattern                   | P2       | GitHub Actions                               |
-| 5   | Shared `flake-parts-go-template` repo                  | P2       | Prevent anti-pattern                         |
-| 6   | `version-bump` automation script                       | P3       | One-command releases                         |
-| 7   | `sync-flake-lock` script                               | P3       | One-command lock updates                     |
-| 8   | Dozzle deployment                                      | P3       | Docker log tailing                           |
-| 9   | nix-colors integration                                 | P3       | Wire to Home Manager                         |
-| 10  | ADR-007: Nix Versioning Convention                     | P3       | Permanent ADR                                |
-| 11  | `CONTEXT.md` at SystemNix root                         | P3       | Agent onboarding                             |
-| 12  | `docs/status/` archive sweep                           | P4       | Move old reports                             |
-| 13  | Darwin disk cleanup                                    | P4       | 229GB, 90-95% full                           |
-| 14  | SigNoz JWT secret fix                                  | P4       | `SIGNOZ_TOKENIZER_JWT_SECRET`                |
-| 15  | Whisper ASR down alert                                 | P4       | Add to SigNoz rules                          |
-| 16  | Boot time alert timer                                  | P4       | Alert if `systemd-analyze` > 60s             |
-| 17  | Weekly nix store GC timer                              | P4       | Prevents disk exhaustion                     |
-| 18  | Hermes migrateScript optimization                      | P4       | Move SQLite integrity check to weekly timer? |
-| 19  | Unbound `num-threads` reduction                        | P4       | 2→1 saves boot + runtime CPU                 |
-| 20  | GPU workload CPU affinity                              | P4       | Reserve cores for niri compositor            |
+| #  | Item                                                   | Priority | Notes                                        |
+| -- | ------------------------------------------------------ | -------- | -------------------------------------------- |
+| 1  | Deploy all 5 commits and reboot                        | P0       | `nh os switch . && sudo reboot`              |
+| 2  | Audit remaining services on multi-user.target          | P1       | 8 custom modules + upstream modules          |
+| 3  | Create custom `apps.target` for non-essential services | P1       | Alternative to mass graphical.target moves   |
+| 4  | CI check for `self.rev` anti-pattern                   | P2       | GitHub Actions                               |
+| 5  | Shared `flake-parts-go-template` repo                  | P2       | Prevent anti-pattern                         |
+| 6  | `version-bump` automation script                       | P3       | One-command releases                         |
+| 7  | `sync-flake-lock` script                               | P3       | One-command lock updates                     |
+| 8  | Dozzle deployment                                      | P3       | Docker log tailing                           |
+| 9  | nix-colors integration                                 | P3       | Wire to Home Manager                         |
+| 10 | ADR-007: Nix Versioning Convention                     | P3       | Permanent ADR                                |
+| 11 | `CONTEXT.md` at SystemNix root                         | P3       | Agent onboarding                             |
+| 12 | `docs/status/` archive sweep                           | P4       | Move old reports                             |
+| 13 | Darwin disk cleanup                                    | P4       | 229GB, 90-95% full                           |
+| 14 | SigNoz JWT secret fix                                  | P4       | `SIGNOZ_TOKENIZER_JWT_SECRET`                |
+| 15 | Whisper ASR down alert                                 | P4       | Add to SigNoz rules                          |
+| 16 | Boot time alert timer                                  | P4       | Alert if `systemd-analyze` > 60s             |
+| 17 | Weekly nix store GC timer                              | P4       | Prevents disk exhaustion                     |
+| 18 | Hermes migrateScript optimization                      | P4       | Move SQLite integrity check to weekly timer? |
+| 19 | Unbound `num-threads` reduction                        | P4       | 2→1 saves boot + runtime CPU                 |
+| 20 | GPU workload CPU affinity                              | P4       | Reserve cores for niri compositor            |
 
 ---
 
@@ -138,53 +138,53 @@
 
 ### P0 — Deploy Now
 
-| #   | Task                                      | Effort | Impact                           |
-| --- | ----------------------------------------- | ------ | -------------------------------- |
-| 1   | `nh os switch . && sudo reboot`           | 5m     | Activates all 5 commits          |
-| 2   | Verify boot time post-deploy              | 1m     | Confirm improvements             |
-| 3   | Check hermes journal for fast-path        | 10s    | Confirms conditional perms work  |
-| 4   | Check unbound journal for no anchor fetch | 10s    | Confirms preStart override works |
+| # | Task                                      | Effort | Impact                           |
+| - | ----------------------------------------- | ------ | -------------------------------- |
+| 1 | `nh os switch . && sudo reboot`           | 5m     | Activates all 5 commits          |
+| 2 | Verify boot time post-deploy              | 1m     | Confirm improvements             |
+| 3 | Check hermes journal for fast-path        | 10s    | Confirms conditional perms work  |
+| 4 | Check unbound journal for no anchor fetch | 10s    | Confirms preStart override works |
 
 ### P1 — Service Target Audit
 
-| #   | Task                                                           | Effort | Impact                |
-| --- | -------------------------------------------------------------- | ------ | --------------------- |
-| 5   | Audit all 8 custom modules on multi-user.target                | 15m    | Identify what to move |
-| 6   | Create `apps.target` systemd target                            | 10m    | Clean separation      |
-| 7   | Move dnsblockd, homepage, signoz, comfyui to apps.target       | 10m    | Faster multi-user     |
-| 8   | Move docker containers (mkDockerServiceFactory) to apps.target | 10m    | Faster multi-user     |
-| 9   | Keep dual-wan, unbound on multi-user.target                    | 0m     | Network infra         |
+| # | Task                                                           | Effort | Impact                |
+| - | -------------------------------------------------------------- | ------ | --------------------- |
+| 5 | Audit all 8 custom modules on multi-user.target                | 15m    | Identify what to move |
+| 6 | Create `apps.target` systemd target                            | 10m    | Clean separation      |
+| 7 | Move dnsblockd, homepage, signoz, comfyui to apps.target       | 10m    | Faster multi-user     |
+| 8 | Move docker containers (mkDockerServiceFactory) to apps.target | 10m    | Faster multi-user     |
+| 9 | Keep dual-wan, unbound on multi-user.target                    | 0m     | Network infra         |
 
 ### P2 — System Health
 
-| #   | Task                                         | Effort | Impact                   |
-| --- | -------------------------------------------- | ------ | ------------------------ |
-| 10  | `nix store gc --delete-older-than 7d`        | 10m    | Frees 200-400GB          |
-| 11  | Reduce unbound `num-threads` from 2 to 1     | 2m     | Saves boot + runtime CPU |
-| 12  | Make hermes migrateScript conditional/weekly | 20m    | Saves 2m on restart      |
-| 13  | Update `TODO_LIST.md`                        | 15m    | Accurate state           |
+| #  | Task                                         | Effort | Impact                   |
+| -- | -------------------------------------------- | ------ | ------------------------ |
+| 10 | `nix store gc --delete-older-than 7d`        | 10m    | Frees 200-400GB          |
+| 11 | Reduce unbound `num-threads` from 2 to 1     | 2m     | Saves boot + runtime CPU |
+| 12 | Make hermes migrateScript conditional/weekly | 20m    | Saves 2m on restart      |
+| 13 | Update `TODO_LIST.md`                        | 15m    | Accurate state           |
 
 ### P3 — Prevent Regression
 
-| #   | Task                                           | Effort | Impact                |
-| --- | ---------------------------------------------- | ------ | --------------------- |
-| 14  | Create `flake-parts-go-template`               | 1h     | Prevents anti-pattern |
-| 15  | Add CI check for `self.rev`/`self.shortRev`    | 15m    | Catches anti-pattern  |
-| 16  | Remove redundant `boot.tmp.cleanOnBoot = true` | 2m     | Cleanliness           |
+| #  | Task                                           | Effort | Impact                |
+| -- | ---------------------------------------------- | ------ | --------------------- |
+| 14 | Create `flake-parts-go-template`               | 1h     | Prevents anti-pattern |
+| 15 | Add CI check for `self.rev`/`self.shortRev`    | 15m    | Catches anti-pattern  |
+| 16 | Remove redundant `boot.tmp.cleanOnBoot = true` | 2m     | Cleanliness           |
 
 ### P4 — Cleanup & Features
 
-| #   | Task                                                 | Effort | Impact                   |
-| --- | ---------------------------------------------------- | ------ | ------------------------ |
-| 17  | Fix pre-commit hooks in BuildFlow                    | 2h     | Clean commits            |
-| 18  | Fix pre-commit hooks in dnsblockd                    | 30m    | Clean commits            |
-| 19  | Fix pre-commit hooks in golangci-lint-auto-configure | 30m    | Clean commits            |
-| 20  | Standardize repo branches                            | 1h     | Removes fragility        |
-| 21  | Archive old status reports                           | 15m    | Hygiene                  |
-| 22  | Create `version-bump` script                         | 30m    | One-command releases     |
-| 23  | Create `sync-flake-lock` script                      | 30m    | One-command lock updates |
-| 24  | Deploy Dozzle at `logs.home.lan`                     | 1h     | Container log tailing    |
-| 25  | Write ADR-007: Nix Versioning Convention             | 15m    | Permanent record         |
+| #  | Task                                                 | Effort | Impact                   |
+| -- | ---------------------------------------------------- | ------ | ------------------------ |
+| 17 | Fix pre-commit hooks in BuildFlow                    | 2h     | Clean commits            |
+| 18 | Fix pre-commit hooks in dnsblockd                    | 30m    | Clean commits            |
+| 19 | Fix pre-commit hooks in golangci-lint-auto-configure | 30m    | Clean commits            |
+| 20 | Standardize repo branches                            | 1h     | Removes fragility        |
+| 21 | Archive old status reports                           | 15m    | Hygiene                  |
+| 22 | Create `version-bump` script                         | 30m    | One-command releases     |
+| 23 | Create `sync-flake-lock` script                      | 30m    | One-command lock updates |
+| 24 | Deploy Dozzle at `logs.home.lan`                     | 1h     | Container log tailing    |
+| 25 | Write ADR-007: Nix Versioning Convention             | 15m    | Permanent record         |
 
 ---
 

@@ -103,7 +103,7 @@ Nothing — no implementation was started.
    - A real scrub finding errors (serious)
    - The scrub status script failing to run (sudo permissions?)
    - Stale metrics from the `btrfs-health-metrics` service
-   This needs investigation before assuming it's benign.~~ done (moot) — did not persist; `btrfs-health-metrics` (every 5 min, CAP_SYS_ADMIN) feeds the Gatus scrub alerts
+     This needs investigation before assuming it's benign.~~ done (moot) — did not persist; `btrfs-health-metrics` (every 5 min, CAP_SYS_ADMIN) feeds the Gatus scrub alerts
 
 10. **Swap is 98.4% full with no disk swap fallback** — When zram fills completely, the kernel has NO swap left and must either OOM-kill or aggressively reclaim page cache (disk I/O). Adding a small disk swap as emergency fallback (even 4-8 GiB on the NVMe) would prevent the "zram full → disk I/O storm" cascade. This was explicitly removed in `hardware-configuration.nix` to free 10G — but the tradeoff was disk space vs. stability, and stability lost.
 
@@ -199,22 +199,22 @@ Nothing — no implementation was started.
 
 ## System State Snapshot (15:04)
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| zram swap used | 15.0G / 16G (98.4%) | CRITICAL |
-| zram compression ratio | 3.23x | Good |
-| zram physical cost | ~2.5 GiB | Acceptable |
-| I/O PSI full avg10 | 79.3% | CRITICAL |
-| Memory PSI full avg10 | 10.2% | Elevated |
-| Free RAM | 3.8 GiB | Low |
-| Available RAM | 58 GiB | OK (buff/cache reclaimable) |
-| BTRFS scrub health | FAILING (2+ hours) | Needs investigation |
-| Top CPU | quickshell 7.5%, clickhouse 6.6% | No runaway process |
-| PMA RSS | 6.5 GB | High but within limits |
-| iotop stale process | 91 min CPU since Aug 11 | Should be killed |
+| Metric                 | Value                            | Status                      |
+| ---------------------- | -------------------------------- | --------------------------- |
+| zram swap used         | 15.0G / 16G (98.4%)              | CRITICAL                    |
+| zram compression ratio | 3.23x                            | Good                        |
+| zram physical cost     | ~2.5 GiB                         | Acceptable                  |
+| I/O PSI full avg10     | 79.3%                            | CRITICAL                    |
+| Memory PSI full avg10  | 10.2%                            | Elevated                    |
+| Free RAM               | 3.8 GiB                          | Low                         |
+| Available RAM          | 58 GiB                           | OK (buff/cache reclaimable) |
+| BTRFS scrub health     | FAILING (2+ hours)               | Needs investigation         |
+| Top CPU                | quickshell 7.5%, clickhouse 6.6% | No runaway process          |
+| PMA RSS                | 6.5 GB                           | High but within limits      |
+| iotop stale process    | 91 min CPU since Aug 11          | Should be killed            |
 
 ---
 
-*Report generated: 2026-08-13 15:04*
-*Session duration: ~4.5 hours*
-*Changes made: None (diagnostic session only)*
+_Report generated: 2026-08-13 15:04_
+_Session duration: ~4.5 hours_
+_Changes made: None (diagnostic session only)_

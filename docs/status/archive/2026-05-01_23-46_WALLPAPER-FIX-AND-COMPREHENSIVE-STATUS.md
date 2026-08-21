@@ -16,11 +16,11 @@ User reported wallpapers not showing. Investigated the full pipeline: flake inpu
 
 ### Wallpaper Pipeline Fix (3 root causes found, all fixed)
 
-| #   | Issue                                                      | Root Cause                                                                                                                                                                                                                                                                                        | Fix                                                                                                                                                             |
-| --- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Wallpapers never deployed to user space**                | `wallpaperDir = wallpapers;` pointed to raw flake input path (a Nix store path owned by root). The `awww` CLI runs as user `lars` and needed a user-accessible path.                                                                                                                              | Changed `wallpaperDir = "$HOME/.local/share/wallpapers"` + added `home.file.".local/share/wallpapers".source = wallpapers;` to symlink wallpapers into home dir |
-| 2   | **awww-daemon never started after boot**                   | Service had `After=` missing from `[Unit]` section. A comment said "avoids ordering cycle with awww-wallpaper" but this was wrong — `After=` on a target never creates cycles. The daemon just had no ordering guarantee.                                                                         | Added `After = ["graphical-session.target"]` to `awww-daemon` unit                                                                                              |
-| 3   | **StartLimitBurst/StartLimitIntervalSec in wrong section** | These directives were in `[Service]` instead of `[Unit]`. Systemd silently ignored them and logged `Unknown key 'StartLimitIntervalSec' in section [Service], ignoring` on every reload. The daemon crashed on April 30 (broken pipe → coredump) and with broken restart limits, never recovered. | Already fixed in session 13 for system-level services. This session fixed the remaining instance in the `awww-daemon` user service.                             |
+| # | Issue                                                      | Root Cause                                                                                                                                                                                                                                                                                        | Fix                                                                                                                                                             |
+| - | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Wallpapers never deployed to user space**                | `wallpaperDir = wallpapers;` pointed to raw flake input path (a Nix store path owned by root). The `awww` CLI runs as user `lars` and needed a user-accessible path.                                                                                                                              | Changed `wallpaperDir = "$HOME/.local/share/wallpapers"` + added `home.file.".local/share/wallpapers".source = wallpapers;` to symlink wallpapers into home dir |
+| 2 | **awww-daemon never started after boot**                   | Service had `After=` missing from `[Unit]` section. A comment said "avoids ordering cycle with awww-wallpaper" but this was wrong — `After=` on a target never creates cycles. The daemon just had no ordering guarantee.                                                                         | Added `After = ["graphical-session.target"]` to `awww-daemon` unit                                                                                              |
+| 3 | **StartLimitBurst/StartLimitIntervalSec in wrong section** | These directives were in `[Service]` instead of `[Unit]`. Systemd silently ignored them and logged `Unknown key 'StartLimitIntervalSec' in section [Service], ignoring` on every reload. The daemon crashed on April 30 (broken pipe → coredump) and with broken restart limits, never recovered. | Already fixed in session 13 for system-level services. This session fixed the remaining instance in the `awww-daemon` user service.                             |
 
 ### Files Changed
 
@@ -142,33 +142,33 @@ No change from last session — wallpaper fix is an operational bug, not a TODO 
 
 Sorted by (impact × urgency) / effort:
 
-| #   | Action                                                                      | Impact | Effort  | Status                 | Est.   |
-| --- | --------------------------------------------------------------------------- | ------ | ------- | ---------------------- | ------ |
-| 1   | **`just switch`** — deploy wallpaper fix to evo-x2                          | High   | Trivial | READY                  | 5min   |
-| 2   | **Verify awww-daemon + awww-wallpaper start** after switch                  | High   | Trivial | BLOCKED on #1          | 2min   |
-| 3   | **Pin Docker images by digest** (whisper, twenty, photomap)                 | High   | Low     | READY                  | 15min  |
-| 4   | **Add SIGNOZ_TOKENIZER_JWT_SECRET** via sops                                | High   | Low     | READY                  | 10min  |
-| 5   | **Update Gitea GitHub mirror token**                                        | High   | Trivial | BLOCKED on user        | 2min   |
-| 6   | **Create `lib/systemd/podman.nix`** hardening profile                       | Medium | Low     | READY                  | 10min  |
-| 7   | **Create `lib/systemd/health-check.nix`** shared curl helper                | Medium | Low     | READY                  | 10min  |
-| 8   | **Nix GC + Docker image prune timer**                                       | Medium | Low     | READY                  | 15min  |
-| 9   | **Audit disk usage** — find large dirs/files                                | Medium | Low     | READY                  | 10min  |
-| 10  | **Add WAYLAND_DISPLAY env to awww-daemon** service                          | Low    | Trivial | READY                  | 2min   |
-| 11  | **Verify Twenty CRM v2.x data integrity**                                   | Medium | Medium  | BLOCKED on user        | 20min  |
-| 12  | **Verify SigNoz dashboards/alerts** provisioned correctly                   | Medium | Low     | BLOCKED on #1          | 10min  |
-| 13  | **Add signoz alert for service crash loops**                                | Medium | Medium  | READY                  | 15min  |
-| 14  | **Update homepage dashboard** for new services                              | Low    | Low     | READY                  | 10min  |
-| 15  | **Test Caddy TLS cert renewal**                                             | Medium | Low     | BLOCKED on #1          | 5min   |
-| 16  | **Verify whisper-asr GPU passthrough** working                              | Medium | Low     | BLOCKED on #1          | 5min   |
-| 17  | **Review swap usage** — 11GB seems high                                     | Low    | Low     | READY                  | 10min  |
-| 18  | **Add systemd watchdog** for services that support sd_notify (caddy, gitea) | Medium | Medium  | BLOCKED — Caddy broken | 15min  |
-| 19  | **Consolidate StartLimitBurst/IntervalSec** into serviceDefaults helper     | Low    | Low     | READY                  | 10min  |
-| 20  | **BTRFS scrub timer** for data integrity                                    | Medium | Low     | READY                  | 10min  |
-| 21  | **Audit all sops secrets** — check for rotation needs                       | Medium | Medium  | READY                  | 20min  |
-| 22  | **Build Pi 3 SD image** for DNS failover cluster                            | High   | High    | BLOCKED on hardware    | 30min+ |
-| 23  | **Migrate Taskwarrior encryption to sops**                                  | Medium | Low     | BLOCKED on evo-x2      | 10min  |
-| 24  | **Secure VRRP auth_pass with sops**                                         | Medium | Low     | BLOCKED on evo-x2      | 8min   |
-| 25  | **Create integration tests** for hardening lib                              | High   | High    | READY                  | 30min  |
+| #  | Action                                                                      | Impact | Effort  | Status                 | Est.   |
+| -- | --------------------------------------------------------------------------- | ------ | ------- | ---------------------- | ------ |
+| 1  | **`just switch`** — deploy wallpaper fix to evo-x2                          | High   | Trivial | READY                  | 5min   |
+| 2  | **Verify awww-daemon + awww-wallpaper start** after switch                  | High   | Trivial | BLOCKED on #1          | 2min   |
+| 3  | **Pin Docker images by digest** (whisper, twenty, photomap)                 | High   | Low     | READY                  | 15min  |
+| 4  | **Add SIGNOZ_TOKENIZER_JWT_SECRET** via sops                                | High   | Low     | READY                  | 10min  |
+| 5  | **Update Gitea GitHub mirror token**                                        | High   | Trivial | BLOCKED on user        | 2min   |
+| 6  | **Create `lib/systemd/podman.nix`** hardening profile                       | Medium | Low     | READY                  | 10min  |
+| 7  | **Create `lib/systemd/health-check.nix`** shared curl helper                | Medium | Low     | READY                  | 10min  |
+| 8  | **Nix GC + Docker image prune timer**                                       | Medium | Low     | READY                  | 15min  |
+| 9  | **Audit disk usage** — find large dirs/files                                | Medium | Low     | READY                  | 10min  |
+| 10 | **Add WAYLAND_DISPLAY env to awww-daemon** service                          | Low    | Trivial | READY                  | 2min   |
+| 11 | **Verify Twenty CRM v2.x data integrity**                                   | Medium | Medium  | BLOCKED on user        | 20min  |
+| 12 | **Verify SigNoz dashboards/alerts** provisioned correctly                   | Medium | Low     | BLOCKED on #1          | 10min  |
+| 13 | **Add signoz alert for service crash loops**                                | Medium | Medium  | READY                  | 15min  |
+| 14 | **Update homepage dashboard** for new services                              | Low    | Low     | READY                  | 10min  |
+| 15 | **Test Caddy TLS cert renewal**                                             | Medium | Low     | BLOCKED on #1          | 5min   |
+| 16 | **Verify whisper-asr GPU passthrough** working                              | Medium | Low     | BLOCKED on #1          | 5min   |
+| 17 | **Review swap usage** — 11GB seems high                                     | Low    | Low     | READY                  | 10min  |
+| 18 | **Add systemd watchdog** for services that support sd_notify (caddy, gitea) | Medium | Medium  | BLOCKED — Caddy broken | 15min  |
+| 19 | **Consolidate StartLimitBurst/IntervalSec** into serviceDefaults helper     | Low    | Low     | READY                  | 10min  |
+| 20 | **BTRFS scrub timer** for data integrity                                    | Medium | Low     | READY                  | 10min  |
+| 21 | **Audit all sops secrets** — check for rotation needs                       | Medium | Medium  | READY                  | 20min  |
+| 22 | **Build Pi 3 SD image** for DNS failover cluster                            | High   | High    | BLOCKED on hardware    | 30min+ |
+| 23 | **Migrate Taskwarrior encryption to sops**                                  | Medium | Low     | BLOCKED on evo-x2      | 10min  |
+| 24 | **Secure VRRP auth_pass with sops**                                         | Medium | Low     | BLOCKED on evo-x2      | 8min   |
+| 25 | **Create integration tests** for hardening lib                              | High   | High    | READY                  | 30min  |
 
 ---
 
@@ -194,15 +194,15 @@ This is an awww upstream bug — an `unwrap()` on a write operation that hit a b
 
 ## Overall System Health
 
-| Area                 | Status                | Notes                                             |
-| -------------------- | --------------------- | ------------------------------------------------- |
-| NixOS build          | ✅ Clean              | `just test` passes, no eval warnings              |
-| System services (19) | ✅ All running        | Verified in session 13                            |
+| Area                 | Status               | Notes                                             |
+| -------------------- | -------------------- | ------------------------------------------------- |
+| NixOS build          | ✅ Clean             | `just test` passes, no eval warnings              |
+| System services (19) | ✅ All running       | Verified in session 13                            |
 | User services        | ⚠️ awww-daemon down   | Fix staged, needs `just switch`                   |
 | Disk (root)          | ⚠️ 88% full           | Needs audit + cleanup                             |
 | Disk (/data)         | ⚠️ 86% full           | Needs audit + cleanup                             |
 | Swap                 | ⚠️ 11GB/41GB          | Higher than expected                              |
-| Security hardening   | ✅ Applied            | All services hardened (except podman — by design) |
-| DNS blocker          | ✅ Running            | 2.5M+ domains blocked                             |
+| Security hardening   | ✅ Applied           | All services hardened (except podman — by design) |
+| DNS blocker          | ✅ Running           | 2.5M+ domains blocked                             |
 | Sops secrets         | ⚠️ SigNoz JWT missing | Needs sops secret creation                        |
-| Wallpaper            | 🔧 Fix staged         | Needs `just switch` to deploy                     |
+| Wallpaper            | 🔧 Fix staged        | Needs `just switch` to deploy                     |

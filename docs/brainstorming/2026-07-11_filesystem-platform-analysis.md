@@ -50,13 +50,13 @@
 Four wants, fundamentally in conflict:
 
 ```
-  Love ZFS ────────────────────────┐
-                                    │
-  Love NixOS ──────────────────────┤
-                                    ├──► ALL FOUR = IMPOSSIBLE
-  Dislike BTRFS ───────────────────┤    (as of July 2026)
-                                    │
-  CPU needs latest kernel ─────────┘
+Love ZFS ────────────────────────┐
+                                  │
+Love NixOS ──────────────────────┤
+                                  ├──► ALL FOUR = IMPOSSIBLE
+Dislike BTRFS ───────────────────┤    (as of July 2026)
+                                  │
+CPU needs latest kernel ─────────┘
 ```
 
 The Strix Halo (Ryzen AI Max+ 395) is the fulcrum. Its hardware — GFX1151 GPU, DCN 3.5.1 display pipeline, XDNA NPU, unified memory architecture — requires the **absolute latest kernel**. Patches are still actively landing in 7.1 and 7.2-rc. This directly conflicts with any out-of-tree module that can't compile against the latest kernel.
@@ -595,13 +595,13 @@ The mitigation (`MemoryHigh=56G; MemoryMax=64G` in `boot.nix`) is tuned against 
 **What are you unwilling to give up?** Every path flows from this answer.
 
 ```
-                    ┌─ Latest kernel for Strix Halo?
-                    │
-                    ├─ Declarative NixOS config?
-  What won't  ──────┤
-  you give up?      ├─ ZFS-class filesystem features?
-                    │
-                    └─ No DKMS / no kernel lag?
+                  ┌─ Latest kernel for Strix Halo?
+                  │
+                  ├─ Declarative NixOS config?
+What won't  ──────┤
+you give up?      ├─ ZFS-class filesystem features?
+                  │
+                  └─ No DKMS / no kernel lag?
 ```
 
 ### Decision tree

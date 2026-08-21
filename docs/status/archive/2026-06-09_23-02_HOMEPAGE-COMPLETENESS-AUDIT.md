@@ -115,33 +115,33 @@ Nothing broken this session. Everything builds clean.
 
 ## f) Top 25 Things We Should Get Done Next
 
-| #   | Task                                                             | Impact                              | Effort |
-| --- | ---------------------------------------------------------------- | ----------------------------------- | ------ |
-| 1   | Commit Pocket ID provisioning changes (6 files, +301 lines)      | HIGH — uncommitted feature work     | 5min   |
-| 2   | Add Photomap Caddy vHost (`photomap.home.lan`)                   | MED — completeness                  | 10min  |
-| 3   | Make Homepage empty categories fully conditional                 | MED — edge case polish              | 15min  |
-| 4   | Add `/healthz` endpoint to Hermes (Go binary)                    | MED — monitoring completeness       | 30min  |
-| 5   | Run `just switch` to deploy all changes to evo-x2                | HIGH — get it live                  | 15min  |
-| 6   | Verify Homepage renders correctly with all tiles                 | HIGH — visual confirmation          | 5min   |
-| 7   | Verify Gatus shows all new health checks green                   | HIGH — monitoring validation        | 5min   |
-| 8   | Add Gatus health checks for Forgejo Repos (systemd check)        | LOW — background service            | 10min  |
-| 9   | Archive old status reports (100+ in docs/status/)                | LOW — housekeeping                  | 10min  |
-| 10  | Update `docs/status/` naming convention doc                      | LOW — consistency                   | 5min   |
-| 11  | Add Homepage widget for GPU utilization                          | MED — at-a-glance system health     | 15min  |
-| 12  | Add Homepage widget for Docker container count                   | MED — operational awareness         | 10min  |
-| 13  | Review all Gatus endpoints match Homepage `siteMonitor` URLs     | MED — consistency audit             | 15min  |
-| 14  | Add Monitor365 to DNS (Unbound local zone)                       | MED — `monitor.home.lan` resolution | 5min   |
-| 15  | Verify TLS cert works for `monitor.home.lan`                     | MED — Caddy cert coverage           | 5min   |
-| 16  | Add `lib/ports.nix` entry for any hardcoded ports remaining      | LOW — centralization                | 15min  |
-| 17  | Consider Homepage integration with Gatus API (status badges)     | LOW — enhanced monitoring           | 30min  |
-| 18  | Review `justfile` for stale recipes referencing removed services | LOW — cleanup                       | 10min  |
-| 19  | Push all commits to origin                                       | MED — backup/sharing                | 2min   |
-| 20  | Add NixOS VM test for Homepage rendering (smoke test)            | LOW — CI coverage                   | 60min  |
-| 21  | Audit all Caddy vHosts have corresponding Homepage tiles         | MED — coverage audit                | 10min  |
-| 22  | Audit all Homepage tiles have corresponding Gatus checks         | MED — monitoring audit              | 10min  |
-| 23  | Add Discordsync monitoring (process check via Gatus)             | LOW — completeness                  | 10min  |
-| 24  | Review and update `docs/DOMAIN_LANGUAGE.md` if stale             | LOW — documentation                 | 15min  |
-| 25  | Verify `just test` (full build) still passes                     | MED — full validation               | 30min  |
+| #  | Task                                                             | Impact                              | Effort |
+| -- | ---------------------------------------------------------------- | ----------------------------------- | ------ |
+| 1  | Commit Pocket ID provisioning changes (6 files, +301 lines)      | HIGH — uncommitted feature work     | 5min   |
+| 2  | Add Photomap Caddy vHost (`photomap.home.lan`)                   | MED — completeness                  | 10min  |
+| 3  | Make Homepage empty categories fully conditional                 | MED — edge case polish              | 15min  |
+| 4  | Add `/healthz` endpoint to Hermes (Go binary)                    | MED — monitoring completeness       | 30min  |
+| 5  | Run `just switch` to deploy all changes to evo-x2                | HIGH — get it live                  | 15min  |
+| 6  | Verify Homepage renders correctly with all tiles                 | HIGH — visual confirmation          | 5min   |
+| 7  | Verify Gatus shows all new health checks green                   | HIGH — monitoring validation        | 5min   |
+| 8  | Add Gatus health checks for Forgejo Repos (systemd check)        | LOW — background service            | 10min  |
+| 9  | Archive old status reports (100+ in docs/status/)                | LOW — housekeeping                  | 10min  |
+| 10 | Update `docs/status/` naming convention doc                      | LOW — consistency                   | 5min   |
+| 11 | Add Homepage widget for GPU utilization                          | MED — at-a-glance system health     | 15min  |
+| 12 | Add Homepage widget for Docker container count                   | MED — operational awareness         | 10min  |
+| 13 | Review all Gatus endpoints match Homepage `siteMonitor` URLs     | MED — consistency audit             | 15min  |
+| 14 | Add Monitor365 to DNS (Unbound local zone)                       | MED — `monitor.home.lan` resolution | 5min   |
+| 15 | Verify TLS cert works for `monitor.home.lan`                     | MED — Caddy cert coverage           | 5min   |
+| 16 | Add `lib/ports.nix` entry for any hardcoded ports remaining      | LOW — centralization                | 15min  |
+| 17 | Consider Homepage integration with Gatus API (status badges)     | LOW — enhanced monitoring           | 30min  |
+| 18 | Review `justfile` for stale recipes referencing removed services | LOW — cleanup                       | 10min  |
+| 19 | Push all commits to origin                                       | MED — backup/sharing                | 2min   |
+| 20 | Add NixOS VM test for Homepage rendering (smoke test)            | LOW — CI coverage                   | 60min  |
+| 21 | Audit all Caddy vHosts have corresponding Homepage tiles         | MED — coverage audit                | 10min  |
+| 22 | Audit all Homepage tiles have corresponding Gatus checks         | MED — monitoring audit              | 10min  |
+| 23 | Add Discordsync monitoring (process check via Gatus)             | LOW — completeness                  | 10min  |
+| 24 | Review and update `docs/DOMAIN_LANGUAGE.md` if stale             | LOW — documentation                 | 15min  |
+| 25 | Verify `just test` (full build) still passes                     | MED — full validation               | 30min  |
 
 ---
 

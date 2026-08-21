@@ -88,8 +88,8 @@ SystemNix/
 | Tool         | Status    | Notes                                     |
 | ------------ | --------- | ----------------------------------------- |
 | `alejandra`  | ✅ Active | Nix formatter, configured in flake        |
-| `deadnix`    | ⚠️ Manual | Available via `nix shell .#deadnix`       |
-| `statix`     | ⚠️ Manual | Not in PATH, run via `nix run`            |
+| `deadnix`    | ⚠️ Manual  | Available via `nix shell .#deadnix`       |
+| `statix`     | ⚠️ Manual  | Not in PATH, run via `nix run`            |
 | `treefmt`    | ✅ Active | Unified code formatter                    |
 | `pre-commit` | ✅ Active | Gitleaks, trailing whitespace, Nix syntax |
 

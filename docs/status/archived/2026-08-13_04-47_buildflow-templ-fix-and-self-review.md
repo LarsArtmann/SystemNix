@@ -13,11 +13,11 @@
 
 **Fix applied across 3 repos:**
 
-| Repo | Change | Commit |
-|------|--------|--------|
-| `samber-do-auditlog` | Removed `*_templ.go` from repo `.gitignore`, force-added `live/fragments_templ.go` (1213 lines), tagged v0.9.1, pushed | `33bda48` |
-| `BuildFlow` | Bumped samber-do-auditlog pin v0.9.0 → v0.9.1 in `flake.nix`, re-locked, verified `nix build .#buildflow` passes, pushed | `c1f627b` |
-| `SystemNix` | Updated buildflow flake input (`nix flake lock --update-input buildflow`), verified `nix build .#buildflow` + full system eval, committed, deployed | `7c7bb369` |
+| Repo                 | Change                                                                                                                                              | Commit     |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| `samber-do-auditlog` | Removed `*_templ.go` from repo `.gitignore`, force-added `live/fragments_templ.go` (1213 lines), tagged v0.9.1, pushed                              | `33bda48`  |
+| `BuildFlow`          | Bumped samber-do-auditlog pin v0.9.0 → v0.9.1 in `flake.nix`, re-locked, verified `nix build .#buildflow` passes, pushed                            | `c1f627b`  |
+| `SystemNix`          | Updated buildflow flake input (`nix flake lock --update-input buildflow`), verified `nix build .#buildflow` + full system eval, committed, deployed | `7c7bb369` |
 
 **Deploy result:** 36 PASS, 7 FAIL (all pre-existing), 10 SKIP. The buildflow compilation error that was blocking ALL deploys is resolved.
 
@@ -73,16 +73,16 @@ Used `--no-verify` on both samber-do-auditlog (`33bda48`) and BuildFlow (`c1f627
 
 8 flake inputs consume samber-do-auditlog at different versions:
 
-| Consumer | samber-do-auditlog variant | Version |
-|----------|---------------------------|---------|
-| `buildflow` | `samber-do-auditlog` | v0.9.1 (FIXED) |
-| `discordsync` | `samber-do-auditlog_2` | rev `aae2e29` (v0.8.1-era) |
-| `go-auto-upgrade_2` | `samber-do-auditlog_3` | v0.8.1 |
-| `go-cqrs-lite_4` | `samber-do-auditlog_4` | master (`5950658`) |
-| `hierarchical-errors` | `samber-do-auditlog_5` | v0.8.1 |
-| `library-policy` | `samber-do-auditlog_6` | master (`e1053d1`) |
-| `mr-sync` | `samber-do-auditlog_7` | v0.8.1 |
-| `projects-management-automation` | `samber-do-auditlog_8` | master (`e1053d1`) |
+| Consumer                         | samber-do-auditlog variant | Version                    |
+| -------------------------------- | -------------------------- | -------------------------- |
+| `buildflow`                      | `samber-do-auditlog`       | v0.9.1 (FIXED)             |
+| `discordsync`                    | `samber-do-auditlog_2`     | rev `aae2e29` (v0.8.1-era) |
+| `go-auto-upgrade_2`              | `samber-do-auditlog_3`     | v0.8.1                     |
+| `go-cqrs-lite_4`                 | `samber-do-auditlog_4`     | master (`5950658`)         |
+| `hierarchical-errors`            | `samber-do-auditlog_5`     | v0.8.1                     |
+| `library-policy`                 | `samber-do-auditlog_6`     | master (`e1053d1`)         |
+| `mr-sync`                        | `samber-do-auditlog_7`     | v0.8.1                     |
+| `projects-management-automation` | `samber-do-auditlog_8`     | master (`e1053d1`)         |
 
 Only `buildflow` imports the `live` package. The `library-policy` and `projects-management-automation` inputs pin to master `e1053d1` which is POST-v0.9.0 — they could potentially hit the same issue IF they import `live`. I did NOT verify this. The risk is low (only buildflow uses `live`) but unverified.
 
@@ -90,12 +90,12 @@ Only `buildflow` imports the `live` package. The `library-policy` and `projects-
 
 **The global gitignore at `~/.config/git/ignore` line 69 has `*_templ.go`.** This affects EVERY Go repo on this machine that uses templ. Repos with this latent bug:
 
-| Repo | Templ files on disk | Tracked by git? | Risk |
-|------|--------------------|--------------|------|
-| `samber-do-auditlog` | `html_templ.go`, `live/fragments_templ.go` | `html_templ.go` YES, `live/fragments_templ.go` YES (just fixed) | Fixed |
-| `storbi` | `hello_templ.go`, `layout_templ.go` + 7 in `internal/ui/` | `internal/ui/*` YES, root-level NO | **Latent** |
-| `emeet-pixyd` | `templates_templ.go` | NO | **ACTIVE BUG** |
-| `go-health-dashboard` | `view_templ.go` | YES | OK |
+| Repo                  | Templ files on disk                                       | Tracked by git?                                                 | Risk           |
+| --------------------- | --------------------------------------------------------- | --------------------------------------------------------------- | -------------- |
+| `samber-do-auditlog`  | `html_templ.go`, `live/fragments_templ.go`                | `html_templ.go` YES, `live/fragments_templ.go` YES (just fixed) | Fixed          |
+| `storbi`              | `hello_templ.go`, `layout_templ.go` + 7 in `internal/ui/` | `internal/ui/*` YES, root-level NO                              | **Latent**     |
+| `emeet-pixyd`         | `templates_templ.go`                                      | NO                                                              | **ACTIVE BUG** |
+| `go-health-dashboard` | `view_templ.go`                                           | YES                                                             | OK             |
 
 `emeet-pixyd` has an active bug — `templates_templ.go` is not tracked. `storbi` has root-level templ files untracked. Both are time bombs if ever consumed by Nix builds that vendor from source.
 

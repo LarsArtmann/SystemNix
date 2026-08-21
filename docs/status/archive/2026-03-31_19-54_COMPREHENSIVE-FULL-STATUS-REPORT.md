@@ -231,48 +231,48 @@ SystemNix is a **mature, production-grade cross-platform Nix configuration** man
 
 ### Immediate (Do Today)
 
-| #   | Priority    | Task                                                                                                  | Impact          | Effort |
-| --- | ----------- | ----------------------------------------------------------------------------------------------------- | --------------- | ------ |
-| 1   | 🔴 CRITICAL | **Import `niri-wrapped.nix` in `configuration.nix`** — All keybinds/layout/window-rules are dead code | System-breaking | 1 line |
-| 2   | 🔴 HIGH     | **Deploy and verify on evo-x2** — Rebuild with niri-wrapped + statix + today's fixes                  | Verification    | 30 min |
-| 3   | 🟡 HIGH     | **Add swayidle for Niri** — No idle daemon since hypridle removal; screen never dims/locks            | Usability       | 15 min |
-| 4   | 🟡 HIGH     | **Configure swaylock Catppuccin theme** — Lock screen is unthemed                                     | Polish          | 10 min |
+| # | Priority    | Task                                                                                                  | Impact          | Effort |
+| - | ----------- | ----------------------------------------------------------------------------------------------------- | --------------- | ------ |
+| 1 | 🔴 CRITICAL | **Import `niri-wrapped.nix` in `configuration.nix`** — All keybinds/layout/window-rules are dead code | System-breaking | 1 line |
+| 2 | 🔴 HIGH     | **Deploy and verify on evo-x2** — Rebuild with niri-wrapped + statix + today's fixes                  | Verification    | 30 min |
+| 3 | 🟡 HIGH     | **Add swayidle for Niri** — No idle daemon since hypridle removal; screen never dims/locks            | Usability       | 15 min |
+| 4 | 🟡 HIGH     | **Configure swaylock Catppuccin theme** — Lock screen is unthemed                                     | Polish          | 10 min |
 
 ### This Week
 
-| #   | Priority | Task                                                                               | Impact        | Effort |
-| --- | -------- | ---------------------------------------------------------------------------------- | ------------- | ------ |
-| 5   | 🟡 HIGH  | **Import Immich config** into running instance + trigger re-index                  | Data quality  | 1 hr   |
-| 6   | 🟡 HIGH  | **Fix sops SSH→age key** — Blocks gitea-repos deployment                           | Security      | 2 hr   |
-| 7   | 🟡 HIGH  | **Remove dead code** — ghostty, regreet.css, wrapper-modules input, Technitium DNS | Hygiene       | 30 min |
-| 8   | 🟡 HIGH  | **Add `just reload` recipe** for Niri config hot-reload                            | Workflow      | 5 min  |
-| 9   | 🟡 MED   | **Extract wallpaper path** to shared Nix variable                                  | DRY           | 10 min |
-| 10  | 🟡 MED   | **Archive old status reports** (137 files, 7.9 MB)                                 | Housekeeping  | 5 min  |
-| 11  | 🟡 MED   | **Update stale docs** (STATUS.md, TODO-STATUS.md)                                  | Documentation | 30 min |
-| 12  | 🟡 MED   | **Add Nix garbage collection** (`nix.gc`)                                          | Disk space    | 5 min  |
+| #  | Priority | Task                                                                               | Impact        | Effort |
+| -- | -------- | ---------------------------------------------------------------------------------- | ------------- | ------ |
+| 5  | 🟡 HIGH  | **Import Immich config** into running instance + trigger re-index                  | Data quality  | 1 hr   |
+| 6  | 🟡 HIGH  | **Fix sops SSH→age key** — Blocks gitea-repos deployment                           | Security      | 2 hr   |
+| 7  | 🟡 HIGH  | **Remove dead code** — ghostty, regreet.css, wrapper-modules input, Technitium DNS | Hygiene       | 30 min |
+| 8  | 🟡 HIGH  | **Add `just reload` recipe** for Niri config hot-reload                            | Workflow      | 5 min  |
+| 9  | 🟡 MED   | **Extract wallpaper path** to shared Nix variable                                  | DRY           | 10 min |
+| 10 | 🟡 MED   | **Archive old status reports** (137 files, 7.9 MB)                                 | Housekeeping  | 5 min  |
+| 11 | 🟡 MED   | **Update stale docs** (STATUS.md, TODO-STATUS.md)                                  | Documentation | 30 min |
+| 12 | 🟡 MED   | **Add Nix garbage collection** (`nix.gc`)                                          | Disk space    | 5 min  |
 
 ### This Month
 
-| #   | Priority | Task                                                                            | Impact         | Effort |
-| --- | -------- | ------------------------------------------------------------------------------- | -------------- | ------ |
-| 13  | 🟡 MED   | **Enable NixOS firewall** (deny-by-default)                                     | Security       | 1 hr   |
-| 14  | 🟡 MED   | **Consolidate monitoring** — Keep Netdata + Grafana, evaluate Prometheus/ntopng | Simplification | 2 hr   |
-| 15  | 🟡 MED   | **DNS-over-HTTPS** for unbound                                                  | Privacy        | 1 hr   |
-| 16  | 🟡 MED   | **NPU activation** research (kernel 6.14+ check)                                | Performance    | 2 hr   |
-| 17  | 🟡 MED   | **Immich GPU/ROCm ML acceleration** research                                    | Performance    | 4 hr   |
-| 18  | 🟡 MED   | **Open WebUI for Ollama** — No web interface for AI                             | Usability      | 1 hr   |
-| 19  | 🟡 MED   | **Grafana alerting rules** — No alerts configured                               | Observability  | 2 hr   |
-| 20  | 🟡 MED   | **Fix justfile for NixOS** — Add platform detection                             | Cross-platform | 1 hr   |
-| 21  | 🟡 MED   | **Automated flake updates** — Weekly schedule                                   | Maintenance    | 30 min |
+| #  | Priority | Task                                                                            | Impact         | Effort |
+| -- | -------- | ------------------------------------------------------------------------------- | -------------- | ------ |
+| 13 | 🟡 MED   | **Enable NixOS firewall** (deny-by-default)                                     | Security       | 1 hr   |
+| 14 | 🟡 MED   | **Consolidate monitoring** — Keep Netdata + Grafana, evaluate Prometheus/ntopng | Simplification | 2 hr   |
+| 15 | 🟡 MED   | **DNS-over-HTTPS** for unbound                                                  | Privacy        | 1 hr   |
+| 16 | 🟡 MED   | **NPU activation** research (kernel 6.14+ check)                                | Performance    | 2 hr   |
+| 17 | 🟡 MED   | **Immich GPU/ROCm ML acceleration** research                                    | Performance    | 4 hr   |
+| 18 | 🟡 MED   | **Open WebUI for Ollama** — No web interface for AI                             | Usability      | 1 hr   |
+| 19 | 🟡 MED   | **Grafana alerting rules** — No alerts configured                               | Observability  | 2 hr   |
+| 20 | 🟡 MED   | **Fix justfile for NixOS** — Add platform detection                             | Cross-platform | 1 hr   |
+| 21 | 🟡 MED   | **Automated flake updates** — Weekly schedule                                   | Maintenance    | 30 min |
 
 ### This Quarter
 
-| #   | Priority | Task                                                          | Impact            | Effort |
-| --- | -------- | ------------------------------------------------------------- | ----------------- | ------ |
-| 22  | 🟢 LOW   | **Offsite backup strategy** (restic/borg to external storage) | Disaster recovery | 4 hr   |
-| 23  | 🟢 LOW   | **Ghost Systems type safety activation** (0/14 tasks)         | Architecture      | 8 hr   |
-| 24  | 🟢 LOW   | **Desktop Improvements Phase 1** (0/21 tasks)                 | Polish            | 16 hr  |
-| 25  | 🟢 LOW   | **CI/CD pipeline** for `nix flake check --all-systems`        | Quality           | 4 hr   |
+| #  | Priority | Task                                                          | Impact            | Effort |
+| -- | -------- | ------------------------------------------------------------- | ----------------- | ------ |
+| 22 | 🟢 LOW   | **Offsite backup strategy** (restic/borg to external storage) | Disaster recovery | 4 hr   |
+| 23 | 🟢 LOW   | **Ghost Systems type safety activation** (0/14 tasks)         | Architecture      | 8 hr   |
+| 24 | 🟢 LOW   | **Desktop Improvements Phase 1** (0/21 tasks)                 | Polish            | 16 hr  |
+| 25 | 🟢 LOW   | **CI/CD pipeline** for `nix flake check --all-systems`        | Quality           | 4 hr   |
 
 ---
 

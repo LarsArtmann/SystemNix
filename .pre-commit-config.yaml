@@ -87,7 +87,10 @@ repos:
       - id: shellcheck
         name: shellcheck (shell script linter)
         entry: bash
-        args: [-c, "shellcheck --severity=warning --exclude=SC2312 scripts/*.sh"]
+        args: [
+          -c,
+          "shellcheck --severity=warning --exclude=SC2312 scripts/*.sh",
+        ]
         language: system
         files: ^scripts/.*\.sh$
         pass_filenames: false

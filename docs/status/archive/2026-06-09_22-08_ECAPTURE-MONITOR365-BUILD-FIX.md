@@ -31,17 +31,17 @@ This expanded into fixing a **pre-existing monitor365-ui build failure** that bl
 
 **Root causes identified and fixed:**
 
-| #   | Issue                                | Location                      | Fix                                                                                                           |
-| --- | ------------------------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| 1   | Trunk.toml `target` misconfiguration | `crates/server-ui/Trunk.toml` | `target = "wasm32-unknown-unknown"` → `target = "index.html"` + `target_wasm_arch = "wasm32-unknown-unknown"` |
-| 2   | Workspace root missing from sandbox  | `flake.nix:monitor365-ui.src` | `src = ./crates/server-ui` → `src = builtins.path { path = ./.; }`                                            |
-| 3   | Cargo vendor deps not available      | `flake.nix:monitor365-ui`     | Added `cargoDeps = rustPlatform.importCargoLock { lockFile = ./Cargo.lock; }` + `cargoSetupHook`              |
-| 4   | Data URI favicon broke trunk 0.21.14 | `index.html`                  | `postPatch` sed removes `data-trunk` from inline SVG favicon `<link>`                                         |
-| 5   | wasm-opt binaryen incompatibility    | `index.html` + build          | `postPatch` sed sets `data-wasm-opt="0"` (disables wasm-opt)                                                  |
-| 6   | Cargo target dir mismatch            | `flake.nix:buildPhase`        | `ln -s ../../target target` in `crates/server-ui/` so trunk finds artifacts                                   |
-| 7   | Missing `cdylib` crate type          | `Cargo.toml`                  | Added `[lib] crate-type = ["cdylib"]`                                                                         |
-| 8   | Missing wasm-bindgen entry point     | `src/lib.rs`                  | Added `#[wasm_bindgen(start)]` to `pub fn main()`                                                             |
-| 9   | monitor365-server install path       | `flake.nix:monitor365-server` | Fixed `mkdir -p` to include `ui/` subdirectory                                                                |
+| # | Issue                                | Location                      | Fix                                                                                                           |
+| - | ------------------------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| 1 | Trunk.toml `target` misconfiguration | `crates/server-ui/Trunk.toml` | `target = "wasm32-unknown-unknown"` → `target = "index.html"` + `target_wasm_arch = "wasm32-unknown-unknown"` |
+| 2 | Workspace root missing from sandbox  | `flake.nix:monitor365-ui.src` | `src = ./crates/server-ui` → `src = builtins.path { path = ./.; }`                                            |
+| 3 | Cargo vendor deps not available      | `flake.nix:monitor365-ui`     | Added `cargoDeps = rustPlatform.importCargoLock { lockFile = ./Cargo.lock; }` + `cargoSetupHook`              |
+| 4 | Data URI favicon broke trunk 0.21.14 | `index.html`                  | `postPatch` sed removes `data-trunk` from inline SVG favicon `<link>`                                         |
+| 5 | wasm-opt binaryen incompatibility    | `index.html` + build          | `postPatch` sed sets `data-wasm-opt="0"` (disables wasm-opt)                                                  |
+| 6 | Cargo target dir mismatch            | `flake.nix:buildPhase`        | `ln -s ../../target target` in `crates/server-ui/` so trunk finds artifacts                                   |
+| 7 | Missing `cdylib` crate type          | `Cargo.toml`                  | Added `[lib] crate-type = ["cdylib"]`                                                                         |
+| 8 | Missing wasm-bindgen entry point     | `src/lib.rs`                  | Added `#[wasm_bindgen(start)]` to `pub fn main()`                                                             |
+| 9 | monitor365-server install path       | `flake.nix:monitor365-server` | Fixed `mkdir -p` to include `ui/` subdirectory                                                                |
 
 **Verification:**
 
@@ -166,13 +166,13 @@ But `lib/ports.nix` has no `twenty-internal` entry.
 
 ## 6. Execution Plan (Pareto-sorted)
 
-| #   | Task                                                            | Effort    | Impact                             | Status        |
-| --- | --------------------------------------------------------------- | --------- | ---------------------------------- | ------------- |
-| 1   | **Fix or revert SystemNix pre-existing service module changes** | 2-30 min  | 🔥 Critical — unblocks all deploys | **BLOCKING**  |
-| 2   | Run `nh os boot .` on evo-x2 to verify full closure             | 15-30 min | High — confirms everything works   | Waiting on #1 |
-| 3   | Verify ecapture runtime on evo-x2                               | 2 min     | Low — sanity check                 | Waiting on #2 |
-| 4   | Document ecapture usage in cybersecurity-tools doc              | 10 min    | Medium                             | Optional      |
-| 5   | Re-enable wasm-opt in monitor365 when binaryen catches up       | 5 min     | Low                                | Future        |
+| # | Task                                                            | Effort    | Impact                             | Status        |
+| - | --------------------------------------------------------------- | --------- | ---------------------------------- | ------------- |
+| 1 | **Fix or revert SystemNix pre-existing service module changes** | 2-30 min  | 🔥 Critical — unblocks all deploys | **BLOCKING**  |
+| 2 | Run `nh os boot .` on evo-x2 to verify full closure             | 15-30 min | High — confirms everything works   | Waiting on #1 |
+| 3 | Verify ecapture runtime on evo-x2                               | 2 min     | Low — sanity check                 | Waiting on #2 |
+| 4 | Document ecapture usage in cybersecurity-tools doc              | 10 min    | Medium                             | Optional      |
+| 5 | Re-enable wasm-opt in monitor365 when binaryen catches up       | 5 min     | Low                                | Future        |
 
 ---
 

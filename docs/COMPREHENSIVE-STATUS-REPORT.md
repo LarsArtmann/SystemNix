@@ -717,7 +717,7 @@ test_streaming.py           # Streaming generation test script
 | **CPU**     | ✅ Excellent | 16 cores @ 5.19 GHz      | AMD Ryzen AI Max+ 395  |
 | **RAM**     | ✅ Excellent | 62.44 GB                 | ZRAM enabled           |
 | **GPU**     | ✅ Good      | Integrated Radeon        | Optimized for Hyprland |
-| **NPU**     | ⚠️ Unused    | AMD XDNA                 | Limited Linux support  |
+| **NPU**     | ⚠️ Unused     | AMD XDNA                 | Limited Linux support  |
 | **Storage** | ✅ Good      | BTRFS + ZSTD compression | Needs snapshots        |
 
 ### AI Performance (CPU-only)
@@ -798,7 +798,7 @@ test_streaming.py           # Streaming generation test script
 
 | Category                   | Score      | Status                 |
 | -------------------------- | ---------- | ---------------------- |
-| **Hardware Utilization**   | 7/10       | ⚠️ NPU unused          |
+| **Hardware Utilization**   | 7/10       | ⚠️ NPU unused           |
 | **Software Configuration** | 9/10       | ✅ Well optimized      |
 | **Security**               | 9/10       | ✅ Strong hardening    |
 | **Performance**            | 8/10       | ✅ Good, NPU potential |

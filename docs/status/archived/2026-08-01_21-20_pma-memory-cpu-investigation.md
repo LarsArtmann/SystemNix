@@ -6,7 +6,6 @@
 
 ---
 
-
 ## TL;DR
 
 The 12G "memory" is almost entirely **Linux page cache**, not process heap. PMA's actual RSS is **367 MB**. The cgroup v2 memory accounting charges file-cache reads (from scanning 260 git repos) against `MemoryMax`, making the service appear memory-exhausted when it is not.
@@ -19,21 +18,21 @@ A secondary issue — a **commit retry death-loop on go-cqrs-lite** — drives t
 
 ### cgroup memory breakdown (`memory.stat`)
 
-| Metric | Value | Meaning |
-|--------|-------|---------|
-| `memory.current` (at investigation time) | 3.1 GB | Total cgroup memory (was 11.9 GB at peak) |
-| **`anon`** | **367 MB** | Process heap + stack — the *real* footprint |
-| `file` (page cache) | 2.6 GB (was ~10 GB at peak) | Cached git object/index/worktree reads |
-| `slab_reclaimable` | 297 MB | Inode/dentry cache from scanning 260 directories |
-| `read_bytes` | 16 GB | Total disk reads since service start |
+| Metric                                   | Value                       | Meaning                                          |
+| ---------------------------------------- | --------------------------- | ------------------------------------------------ |
+| `memory.current` (at investigation time) | 3.1 GB                      | Total cgroup memory (was 11.9 GB at peak)        |
+| **`anon`**                               | **367 MB**                  | Process heap + stack — the _real_ footprint      |
+| `file` (page cache)                      | 2.6 GB (was ~10 GB at peak) | Cached git object/index/worktree reads           |
+| `slab_reclaimable`                       | 297 MB                      | Inode/dentry cache from scanning 260 directories |
+| `read_bytes`                             | 16 GB                       | Total disk reads since service start             |
 
 ### Process-level (`/proc/1544/status`)
 
-| Metric | Value |
-|--------|-------|
-| `VmRSS` | 395 MB |
-| `VmHWM` | 10.7 GB (peak RSS — includes reclaimable page cache) |
-| `Threads` | 50 |
+| Metric    | Value                                                |
+| --------- | ---------------------------------------------------- |
+| `VmRSS`   | 395 MB                                               |
+| `VmHWM`   | 10.7 GB (peak RSS — includes reclaimable page cache) |
+| `Threads` | 50                                                   |
 
 ### File descriptors
 
@@ -84,21 +83,21 @@ if !commitResult.IsSuccess() {
 }
 ```
 
-`commitResult.Error` (the actual git/LLM failure reason) is **never logged**. `oops.New()` creates a fresh error with no wrapped cause. This makes every commit failure look identical in the logs, preventing diagnosis of the *real* failure (likely the EOF from memory pressure, or an LLM API error).
+`commitResult.Error` (the actual git/LLM failure reason) is **never logged**. `oops.New()` creates a fresh error with no wrapped cause. This makes every commit failure look identical in the logs, preventing diagnosis of the _real_ failure (likely the EOF from memory pressure, or an LLM API error).
 
 ### 5. Each commit spawns expensive subprocesses + LLM calls
 
 A single `processBatch` for one project does:
 
-| Step | Implementation | Cost |
-|------|---------------|------|
-| `HasChanges` | go-git `worktree.Status()` — walks full index | Memory + CPU |
-| `GetContext` → `getStagedDiff` | `exec.Command("git", "diff", "--staged")` | Subprocess |
-| `GetContext` → `getFullDiff` | `exec.Command("git", "diff")` | Subprocess |
-| `GenerateCommitMessage` | LLM API call (network roundtrip) | 2-20s latency |
-| `StageAll` | go-git `worktree.Add()` per file — reads each file | Memory + IO |
-| `Commit` | go-git `worktree.Commit()` | CPU |
-| `getAuthorSignature` | `exec.Command("git", "config", "user.name")` + `"user.email"` | 2 subprocesses per commit |
+| Step                           | Implementation                                                | Cost                      |
+| ------------------------------ | ------------------------------------------------------------- | ------------------------- |
+| `HasChanges`                   | go-git `worktree.Status()` — walks full index                 | Memory + CPU              |
+| `GetContext` → `getStagedDiff` | `exec.Command("git", "diff", "--staged")`                     | Subprocess                |
+| `GetContext` → `getFullDiff`   | `exec.Command("git", "diff")`                                 | Subprocess                |
+| `GenerateCommitMessage`        | LLM API call (network roundtrip)                              | 2-20s latency             |
+| `StageAll`                     | go-git `worktree.Add()` per file — reads each file            | Memory + IO               |
+| `Commit`                       | go-git `worktree.Commit()`                                    | CPU                       |
+| `getAuthorSignature`           | `exec.Command("git", "config", "user.name")` + `"user.email"` | 2 subprocesses per commit |
 
 For `monitor365` (large Rust repo), a single commit took **2 minutes 23 seconds**.
 
@@ -147,6 +146,7 @@ This ensures the actual git/LLM error is logged, enabling diagnosis.
 - Or add a `Close()` method and defer it in `processBatch`
 
 **Investigate the go-cqrs-lite commit loop.** Why does `commitResult.IsSuccess()` return false? Possible causes:
+
 - LLM API error (network, auth, rate limit)
 - The EOF errors from memory pressure (would be fixed by Priority 0)
 - go-git commit failing on a locked index file

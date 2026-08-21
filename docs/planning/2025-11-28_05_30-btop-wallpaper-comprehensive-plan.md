@@ -37,60 +37,60 @@
 
 ### PRIORITY 1: CRITICAL PATH (Tasks 1-3)
 
-| #   | Task                                       | Time  | Dependencies  | Risk   | Status  |
-| --- | ------------------------------------------ | ----- | ------------- | ------ | ------- |
-| 1   | **Investigate Home Manager root cause**    | 60min | Current state | HIGH   | BLOCKED |
-| 2   | **Create alternative deployment strategy** | 45min | Task 1        | HIGH   | TODO    |
-| 3   | **Apply working configuration**            | 30min | Task 2        | MEDIUM | TODO    |
+| # | Task                                       | Time  | Dependencies  | Risk   | Status  |
+| - | ------------------------------------------ | ----- | ------------- | ------ | ------- |
+| 1 | **Investigate Home Manager root cause**    | 60min | Current state | HIGH   | BLOCKED |
+| 2 | **Create alternative deployment strategy** | 45min | Task 1        | HIGH   | TODO    |
+| 3 | **Apply working configuration**            | 30min | Task 2        | MEDIUM | TODO    |
 
 ### PRIORITY 2: SYSTEM STABILITY (Tasks 4-8)
 
-| #   | Task                                     | Time  | Dependencies | Risk   | Status |
-| --- | ---------------------------------------- | ----- | ------------ | ------ | ------ |
-| 4   | **Test btop + kitty manual execution**   | 40min | Task 3       | LOW    | TODO   |
-| 5   | **Implement performance monitoring**     | 50min | Task 4       | LOW    | TODO   |
-| 6   | **Configure launchd auto-start**         | 45min | Task 3       | MEDIUM | TODO   |
-| 7   | **Add error handling and restart logic** | 40min | Task 6       | MEDIUM | TODO   |
-| 8   | **Create rollback procedures**           | 30min | Task 3       | LOW    | TODO   |
+| # | Task                                     | Time  | Dependencies | Risk   | Status |
+| - | ---------------------------------------- | ----- | ------------ | ------ | ------ |
+| 4 | **Test btop + kitty manual execution**   | 40min | Task 3       | LOW    | TODO   |
+| 5 | **Implement performance monitoring**     | 50min | Task 4       | LOW    | TODO   |
+| 6 | **Configure launchd auto-start**         | 45min | Task 3       | MEDIUM | TODO   |
+| 7 | **Add error handling and restart logic** | 40min | Task 6       | MEDIUM | TODO   |
+| 8 | **Create rollback procedures**           | 30min | Task 3       | LOW    | TODO   |
 
 ### PRIORITY 3: OPTIMIZATION (Tasks 9-15)
 
-| #   | Task                                    | Time  | Dependencies | Risk | Status |
-| --- | --------------------------------------- | ----- | ------------ | ---- | ------ |
-| 9   | **Optimize update rates and CPU usage** | 60min | Task 5       | LOW  | TODO   |
-| 10  | **Test battery impact on MacBook Air**  | 45min | Task 9       | LOW  | TODO   |
-| 11  | **Window positioning optimization**     | 35min | Task 4       | LOW  | TODO   |
-| 12  | **Font and visual refinement**          | 30min | Task 11      | LOW  | TODO   |
-| 13  | **Memory usage optimization**           | 40min | Task 9       | LOW  | TODO   |
-| 14  | **Thermal performance testing**         | 35min | Task 10      | LOW  | TODO   |
-| 15  | **Create performance benchmarks**       | 50min | Task 13      | LOW  | TODO   |
+| #  | Task                                    | Time  | Dependencies | Risk | Status |
+| -- | --------------------------------------- | ----- | ------------ | ---- | ------ |
+| 9  | **Optimize update rates and CPU usage** | 60min | Task 5       | LOW  | TODO   |
+| 10 | **Test battery impact on MacBook Air**  | 45min | Task 9       | LOW  | TODO   |
+| 11 | **Window positioning optimization**     | 35min | Task 4       | LOW  | TODO   |
+| 12 | **Font and visual refinement**          | 30min | Task 11      | LOW  | TODO   |
+| 13 | **Memory usage optimization**           | 40min | Task 9       | LOW  | TODO   |
+| 14 | **Thermal performance testing**         | 35min | Task 10      | LOW  | TODO   |
+| 15 | **Create performance benchmarks**       | 50min | Task 13      | LOW  | TODO   |
 
 ### PRIORITY 4: ENHANCEMENT (Tasks 16-20)
 
-| #   | Task                              | Time  | Dependencies | Risk   | Status |
-| --- | --------------------------------- | ----- | ------------ | ------ | ------ |
-| 16  | **Multi-monitor configuration**   | 80min | Task 11      | MEDIUM | TODO   |
-| 17  | **Dynamic workspace switching**   | 60min | Task 16      | MEDIUM | TODO   |
-| 18  | **Theme customization options**   | 45min | Task 12      | LOW    | TODO   |
-| 19  | **Advanced configuration module** | 70min | Task 18      | MEDIUM | TODO   |
-| 20  | **User preference management**    | 50min | Task 19      | LOW    | TODO   |
+| #  | Task                              | Time  | Dependencies | Risk   | Status |
+| -- | --------------------------------- | ----- | ------------ | ------ | ------ |
+| 16 | **Multi-monitor configuration**   | 80min | Task 11      | MEDIUM | TODO   |
+| 17 | **Dynamic workspace switching**   | 60min | Task 16      | MEDIUM | TODO   |
+| 18 | **Theme customization options**   | 45min | Task 12      | LOW    | TODO   |
+| 19 | **Advanced configuration module** | 70min | Task 18      | MEDIUM | TODO   |
+| 20 | **User preference management**    | 50min | Task 19      | LOW    | TODO   |
 
 ### PRIORITY 5: QUALITY ASSURANCE (Tasks 21-24)
 
-| #   | Task                                | Time  | Dependencies | Risk   | Status |
-| --- | ----------------------------------- | ----- | ------------ | ------ | ------ |
-| 21  | **Comprehensive testing suite**     | 90min | Task 20      | MEDIUM | TODO   |
-| 22  | **Edge case handling**              | 60min | Task 21      | MEDIUM | TODO   |
-| 23  | **Integration with existing tools** | 70min | Task 20      | MEDIUM | TODO   |
-| 24  | **Stress testing and validation**   | 80min | Task 22      | MEDIUM | TODO   |
+| #  | Task                                | Time  | Dependencies | Risk   | Status |
+| -- | ----------------------------------- | ----- | ------------ | ------ | ------ |
+| 21 | **Comprehensive testing suite**     | 90min | Task 20      | MEDIUM | TODO   |
+| 22 | **Edge case handling**              | 60min | Task 21      | MEDIUM | TODO   |
+| 23 | **Integration with existing tools** | 70min | Task 20      | MEDIUM | TODO   |
+| 24 | **Stress testing and validation**   | 80min | Task 22      | MEDIUM | TODO   |
 
 ### PRIORITY 6: DOCUMENTATION (Tasks 25-27)
 
-| #   | Task                         | Time  | Dependencies | Risk | Status |
-| --- | ---------------------------- | ----- | ------------ | ---- | ------ |
-| 25  | **Technical documentation**  | 60min | Task 24      | LOW  | TODO   |
-| 26  | **User guide and tutorials** | 70min | Task 25      | LOW  | TODO   |
-| 27  | **Troubleshooting guide**    | 50min | Task 26      | LOW  | TODO   |
+| #  | Task                         | Time  | Dependencies | Risk | Status |
+| -- | ---------------------------- | ----- | ------------ | ---- | ------ |
+| 25 | **Technical documentation**  | 60min | Task 24      | LOW  | TODO   |
+| 26 | **User guide and tutorials** | 70min | Task 25      | LOW  | TODO   |
+| 27 | **Troubleshooting guide**    | 50min | Task 26      | LOW  | TODO   |
 
 ---
 

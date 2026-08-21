@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Executive Summary
 
 Implemented 7 of 18 phases from the integration plan. All NixOS-level changes pass `nix flake check --no-build`. However, **zero upstream changes have been committed or deployed** — the OTLP tracing infrastructure is wired but inert until upstream repos are committed, flake inputs are bumped, vendor hashes are updated, and the system is deployed. This is the critical gap.
@@ -20,6 +19,7 @@ Implemented 7 of 18 phases from the integration plan. All NixOS-level changes pa
 **File:** `modules/nixos/services/signoz.nix:448-462`
 
 Added 5 high-value services to the journald receiver `units` list:
+
 - `monitor365-server.service`
 - `discordsync.service`
 - `hermes.service`
@@ -44,6 +44,7 @@ Added 5 high-value services to the journald receiver `units` list:
 **File:** `docs/service-integration-ideas.md` (appendix)
 
 Documented:
+
 - Go services: `OTEL_EXPORTER_OTLP_ENDPOINT = "localhost:4318"` (HTTP, no scheme)
 - Rust services: `http://localhost:4317` (gRPC/tonic, with scheme)
 - Docker services: `host.docker.internal:4318` + `extra_hosts` in compose
@@ -86,15 +87,16 @@ Documented:
 
 Each service has **both** NixOS env var (verified) AND upstream Go/Rust init code (written, builds, but uncommitted).
 
-| Service | Language | NixOS Env Var | Upstream Code | Builds? | Committed? | Flake Bumped? | Deployed? |
-|---|---|---|---|---|---|---|---|
-| Crush Daily | Go | `localhost:4318` | `internal/telemetry/telemetry.go` + `main.go` | YES | NO | NO | NO |
-| Monitor365 | Rust | `http://localhost:4317` | `cargoExtraArgs = "--features otel"` in flake.nix | NOT TESTED | NO | NO | NO |
-| PMA | Go | `localhost:4318` | `internal/telemetry/telemetry.go` + `main.go` | YES | NO | NO | NO |
-| Overview | Go | `localhost:4318` | `internal/telemetry/telemetry.go` + `main.go` | YES | NO | NO | NO |
-| File-Renamer | Go | `localhost:4318` | `pkg/telemetry/telemetry.go` + `main.go` | YES | NO | NO | NO |
+| Service      | Language | NixOS Env Var           | Upstream Code                                     | Builds?    | Committed? | Flake Bumped? | Deployed? |
+| ------------ | -------- | ----------------------- | ------------------------------------------------- | ---------- | ---------- | ------------- | --------- |
+| Crush Daily  | Go       | `localhost:4318`        | `internal/telemetry/telemetry.go` + `main.go`     | YES        | NO         | NO            | NO        |
+| Monitor365   | Rust     | `http://localhost:4317` | `cargoExtraArgs = "--features otel"` in flake.nix | NOT TESTED | NO         | NO            | NO        |
+| PMA          | Go       | `localhost:4318`        | `internal/telemetry/telemetry.go` + `main.go`     | YES        | NO         | NO            | NO        |
+| Overview     | Go       | `localhost:4318`        | `internal/telemetry/telemetry.go` + `main.go`     | YES        | NO         | NO            | NO        |
+| File-Renamer | Go       | `localhost:4318`        | `pkg/telemetry/telemetry.go` + `main.go`          | YES        | NO         | NO            | NO        |
 
 **Critical blockers before tracing works:**
+
 1. Commit + push each upstream repo
 2. `nix flake lock --update-input <name>` for each
 3. Update `vendorHash` for Go services (deps changed)
@@ -103,6 +105,7 @@ Each service has **both** NixOS env var (verified) AND upstream Go/Rust init cod
 6. Verify traces in SigNoz UI
 
 **NixOS env vars verified:**
+
 ```
 crush-daily:                   "localhost:4318"
 monitor365-server:             "http://localhost:4317"
@@ -117,16 +120,16 @@ file-and-image-renamer-health: "OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4318"
 
 ### From the original plan:
 
-| Phase | Description | Why Skipped |
-|---|---|---|
-| 2D | OTLP for Hermes | Repo not locally available (`/home/lars/projects/hermes` missing) |
-| 2F | OTLP for Manifest | Repo not locally available (`/home/lars/projects/manifest` missing) |
-| 2H | End-to-end tracing verification | Requires deploy (upstream not committed yet) |
-| 3A | AI routing through Manifest | P2 — deferred |
-| 3D | Homepage dynamic service discovery | P2 — deferred |
-| 3E | Forgejo ↔ PMA discovery integration | P2 — deferred |
-| 4A | QMD ↔ SearXNG adapter | P3 — optional |
-| 4B | QMD → Crush Daily context feed | P3 — optional |
+| Phase | Description                         | Why Skipped                                                         |
+| ----- | ----------------------------------- | ------------------------------------------------------------------- |
+| 2D    | OTLP for Hermes                     | Repo not locally available (`/home/lars/projects/hermes` missing)   |
+| 2F    | OTLP for Manifest                   | Repo not locally available (`/home/lars/projects/manifest` missing) |
+| 2H    | End-to-end tracing verification     | Requires deploy (upstream not committed yet)                        |
+| 3A    | AI routing through Manifest         | P2 — deferred                                                       |
+| 3D    | Homepage dynamic service discovery  | P2 — deferred                                                       |
+| 3E    | Forgejo ↔ PMA discovery integration | P2 — deferred                                                       |
+| 4A    | QMD ↔ SearXNG adapter               | P3 — optional                                                       |
+| 4B    | QMD → Crush Daily context feed      | P3 — optional                                                       |
 
 ---
 

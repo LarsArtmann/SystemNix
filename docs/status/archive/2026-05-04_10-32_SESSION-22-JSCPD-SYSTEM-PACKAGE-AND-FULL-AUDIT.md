@@ -110,8 +110,8 @@ The last 30 commits focused on: systemd watchdog fixes, overlay consolidation, s
 
 ## b) PARTIALLY DONE ⚠️
 
-| Component               | Status                    | What's Missing                                                                                     |
-| ----------------------- | ------------------------- | -------------------------------------------------------------------------------------------------- |
+| Component               | Status                   | What's Missing                                                                                     |
+| ----------------------- | ------------------------ | -------------------------------------------------------------------------------------------------- |
 | DNS Failover Cluster    | ⚠️ Module exists          | RPi3 hardware not provisioned; VRRP untested in production                                         |
 | PhotoMap                | ⚠️ Module exists          | Service disabled in configuration.nix (`services.photomap.enable` not set)                         |
 | Twenty CRM              | ⚠️ Module exists          | Service disabled in configuration.nix (`services.twenty.enable` present but likely not functional) |
@@ -205,33 +205,33 @@ The last 30 commits focused on: systemd watchdog fixes, overlay consolidation, s
 
 **Sorted by impact (Pareto principle: 20% effort → 80% value)**
 
-| #   | Task                                   | Category       | Impact   | Effort | Rationale                                         |
-| --- | -------------------------------------- | -------------- | -------- | ------ | ------------------------------------------------- |
-| 1   | **LUKS disk encryption**               | Security       | CRITICAL | 2h     | No encryption on production machine with secrets  |
-| 2   | **Move Authelia secret to sops**       | Security       | HIGH     | 15min  | Hardcoded secret in source code                   |
-| 3   | **Clean stale imports/comments**       | Cleanup        | MEDIUM   | 10min  | Dead references in configuration.nix              |
-| 4   | **Remove stale cert files**            | Cleanup        | LOW      | 2min   | `dnsblockd-ca.crt`, `dnsblockd-server.crt` unused |
-| 5   | **Add enable gate to default.nix**     | Architecture   | HIGH     | 15min  | Docker module should be disableable               |
-| 6   | **Parameterize hardcoded user paths**  | Architecture   | MEDIUM   | 30min  | comfyui, file-and-image-renamer defaults          |
-| 7   | **Add implicit dependency assertions** | Architecture   | MEDIUM   | 20min  | photomap → immich, voice-agents → ai-models       |
-| 8   | **fwupd firmware updates**             | Security       | MEDIUM   | 30min  | No firmware update mechanism                      |
-| 9   | **SSH config parameterization**        | Architecture   | MEDIUM   | 30min  | 6 hardcoded IPs → configurable options            |
-| 10  | **Create TODO_LIST.md**                | Documentation  | MEDIUM   | 1h     | Centralized task tracking                         |
-| 11  | **CI pipeline (GitHub Actions)**       | Reliability    | HIGH     | 2h     | Automated flake check + format on push            |
-| 12  | **SigNoz binary cache**                | Performance    | HIGH     | 2h     | Built from source every time — huge bottleneck    |
-| 13  | **Service module tests**               | Testing        | HIGH     | 3h     | No automated testing for 30 modules               |
-| 14  | **Monitor365 enable + verify**         | Feature        | LOW      | 30min  | Module exists but service disabled                |
-| 15  | **PhotoMap enable + verify**           | Feature        | LOW      | 1h     | Module exists but service disabled                |
-| 16  | **Gitea GitHub sync auth fix**         | Feature        | MEDIUM   | 1h     | Token auth may be broken                          |
-| 17  | **RPi3 provisioning**                  | Infrastructure | MEDIUM   | 4h     | Hardware needed + SD image deployment             |
-| 18  | **DNS failover testing**               | Infrastructure | MEDIUM   | 2h     | VRRP cluster untested in production               |
-| 19  | **Twenty CRM verification**            | Feature        | LOW      | 1h     | Module present, runtime unverified                |
-| 20  | **TPM2 + measured boot**               | Security       | HIGH     | 3h     | Requires LUKS first                               |
-| 21  | **Pre-commit hook for jscpd**          | Quality        | LOW      | 30min  | Automated copy/paste detection                    |
-| 22  | **Module option documentation**        | Documentation  | MEDIUM   | 2h     | Generated docs for service options                |
-| 23  | **CONTEXT.md**                         | Documentation  | LOW      | 30min  | Domain context for new contributors               |
-| 24  | **Minecraft runtime verification**     | Feature        | LOW      | 30min  | Module exists, untested at runtime                |
-| 25  | **Build time profiling**               | Performance    | MEDIUM   | 1h     | Identify and optimize slow derivations            |
+| #  | Task                                   | Category       | Impact   | Effort | Rationale                                         |
+| -- | -------------------------------------- | -------------- | -------- | ------ | ------------------------------------------------- |
+| 1  | **LUKS disk encryption**               | Security       | CRITICAL | 2h     | No encryption on production machine with secrets  |
+| 2  | **Move Authelia secret to sops**       | Security       | HIGH     | 15min  | Hardcoded secret in source code                   |
+| 3  | **Clean stale imports/comments**       | Cleanup        | MEDIUM   | 10min  | Dead references in configuration.nix              |
+| 4  | **Remove stale cert files**            | Cleanup        | LOW      | 2min   | `dnsblockd-ca.crt`, `dnsblockd-server.crt` unused |
+| 5  | **Add enable gate to default.nix**     | Architecture   | HIGH     | 15min  | Docker module should be disableable               |
+| 6  | **Parameterize hardcoded user paths**  | Architecture   | MEDIUM   | 30min  | comfyui, file-and-image-renamer defaults          |
+| 7  | **Add implicit dependency assertions** | Architecture   | MEDIUM   | 20min  | photomap → immich, voice-agents → ai-models       |
+| 8  | **fwupd firmware updates**             | Security       | MEDIUM   | 30min  | No firmware update mechanism                      |
+| 9  | **SSH config parameterization**        | Architecture   | MEDIUM   | 30min  | 6 hardcoded IPs → configurable options            |
+| 10 | **Create TODO_LIST.md**                | Documentation  | MEDIUM   | 1h     | Centralized task tracking                         |
+| 11 | **CI pipeline (GitHub Actions)**       | Reliability    | HIGH     | 2h     | Automated flake check + format on push            |
+| 12 | **SigNoz binary cache**                | Performance    | HIGH     | 2h     | Built from source every time — huge bottleneck    |
+| 13 | **Service module tests**               | Testing        | HIGH     | 3h     | No automated testing for 30 modules               |
+| 14 | **Monitor365 enable + verify**         | Feature        | LOW      | 30min  | Module exists but service disabled                |
+| 15 | **PhotoMap enable + verify**           | Feature        | LOW      | 1h     | Module exists but service disabled                |
+| 16 | **Gitea GitHub sync auth fix**         | Feature        | MEDIUM   | 1h     | Token auth may be broken                          |
+| 17 | **RPi3 provisioning**                  | Infrastructure | MEDIUM   | 4h     | Hardware needed + SD image deployment             |
+| 18 | **DNS failover testing**               | Infrastructure | MEDIUM   | 2h     | VRRP cluster untested in production               |
+| 19 | **Twenty CRM verification**            | Feature        | LOW      | 1h     | Module present, runtime unverified                |
+| 20 | **TPM2 + measured boot**               | Security       | HIGH     | 3h     | Requires LUKS first                               |
+| 21 | **Pre-commit hook for jscpd**          | Quality        | LOW      | 30min  | Automated copy/paste detection                    |
+| 22 | **Module option documentation**        | Documentation  | MEDIUM   | 2h     | Generated docs for service options                |
+| 23 | **CONTEXT.md**                         | Documentation  | LOW      | 30min  | Domain context for new contributors               |
+| 24 | **Minecraft runtime verification**     | Feature        | LOW      | 30min  | Module exists, untested at runtime                |
+| 25 | **Build time profiling**               | Performance    | MEDIUM   | 1h     | Identify and optimize slow derivations            |
 
 ---
 

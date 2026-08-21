@@ -8,21 +8,21 @@
 
 ## Timeline (all 2026-08-16/18, CEST)
 
-| Time | Event |
-|------|-------|
-| Aug 16 16:40 | First fatal + Gatus flips red. Last green: 20:40 same day (one working window after a restart) |
-| Aug 16 → Aug 18 | Crash loop: ~30-min cadence, each cycle = 30 min livelock → exit 69. 404,655 `database is locked` journal lines |
-| Aug 17 23:58 | Final cycle hangs MID-SHUTDOWN: process alive, API closed, gateway flapping `invalid session` every 3-5 min. Zombie — systemd never restarts a live MainPID |
-| Aug 18 01:10 | Session starts; user asks why it's down |
-| Aug 18 01:33 | Root cause identified in deployed rev `e71e8086`: `invokeHealthCheckServices` → `do.InvokeNamed[do.HealthcheckerWithContext]` on concrete registrations |
-| Aug 18 ~01:45 | Upstream fix written + guard test; `go test` green; `nix flake check` green; daemon auto-committed `085fa539` |
-| Aug 18 01:52 | Pushed upstream; SystemNix input bumped |
-| Aug 18 01:56 | Deploy attempt 1: build OK, activation fails `Could not acquire lock` (exit 11) — unexplained, retried blind |
-| Aug 18 01:56 | Deploy attempt 2: succeeds. New binary `discordsync-085fa53` running |
-| Aug 18 02:07:24 | Thumb-hash backfill completes (11 min, 3090 candidates, zero livelock) |
-| Aug 18 02:07:26 | API binds `127.0.0.1:8085` — old crash point passed cleanly |
-| Aug 18 02:07:50 | Gatus green. 17/17 successes since |
-| Aug 18 02:26 | STILL SAME PID. Guild message backfill running; **lock contention reappearing at low rate** (attempt-1 retries, no exhaustion, no DLQ loss) |
+| Time            | Event                                                                                                                                                       |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Aug 16 16:40    | First fatal + Gatus flips red. Last green: 20:40 same day (one working window after a restart)                                                              |
+| Aug 16 → Aug 18 | Crash loop: ~30-min cadence, each cycle = 30 min livelock → exit 69. 404,655 `database is locked` journal lines                                             |
+| Aug 17 23:58    | Final cycle hangs MID-SHUTDOWN: process alive, API closed, gateway flapping `invalid session` every 3-5 min. Zombie — systemd never restarts a live MainPID |
+| Aug 18 01:10    | Session starts; user asks why it's down                                                                                                                     |
+| Aug 18 01:33    | Root cause identified in deployed rev `e71e8086`: `invokeHealthCheckServices` → `do.InvokeNamed[do.HealthcheckerWithContext]` on concrete registrations     |
+| Aug 18 ~01:45   | Upstream fix written + guard test; `go test` green; `nix flake check` green; daemon auto-committed `085fa539`                                               |
+| Aug 18 01:52    | Pushed upstream; SystemNix input bumped                                                                                                                     |
+| Aug 18 01:56    | Deploy attempt 1: build OK, activation fails `Could not acquire lock` (exit 11) — unexplained, retried blind                                                |
+| Aug 18 01:56    | Deploy attempt 2: succeeds. New binary `discordsync-085fa53` running                                                                                        |
+| Aug 18 02:07:24 | Thumb-hash backfill completes (11 min, 3090 candidates, zero livelock)                                                                                      |
+| Aug 18 02:07:26 | API binds `127.0.0.1:8085` — old crash point passed cleanly                                                                                                 |
+| Aug 18 02:07:50 | Gatus green. 17/17 successes since                                                                                                                          |
+| Aug 18 02:26    | STILL SAME PID. Guild message backfill running; **lock contention reappearing at low rate** (attempt-1 retries, no exhaustion, no DLQ loss)                 |
 
 ---
 
@@ -81,6 +81,7 @@
 ## f) NEXT — up to 50 things, Pareto-sorted
 
 **P0 — verify the monitoring meta-failure (this class of outage)**
+
 1. Verify Discord alert delivery end-to-end for the 33 h DiscordSync outage (gatus → webhook → Discord; check gatus journal for alert-triggered events, then confirm receipt).
 2. If alerts never fired: root-cause gatus alerting (same family as the documented monitor365 silence).
 3. Add sustained-failure escalation (endpoint red > 1 h → distinct alert/channel).

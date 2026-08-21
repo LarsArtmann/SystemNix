@@ -9,34 +9,40 @@
 ## A) FULLY DONE (Working + Verified)
 
 ### 1. `node_textfile_scrape_error` Gatus meta-check
+
 - **File:** `gatus-config.nix` — "Textfile Collector Health" check
 - **What:** Alerts when `node_textfile_scrape_error != 0` — catches invalid `.prom` files that silently drop ALL textfile metrics
 - **Why it matters:** 14 Gatus checks went permanently RED because of this, and there was no meta-check to catch it
 - **Verified:** `nix flake check --no-build` passes. Pattern `pat(*node_textfile_scrape_error 0*)` passes gatus-pattern-lint
 
 ### 2. Disk usage textfile metric + Gatus alert
+
 - **Files:** `system-health.nix` (collector), `gatus-config.nix` (alert)
 - **What:** `system_disk_usage_percent` + `system_disk_usage_over_threshold` (85% threshold) + "Root Disk Usage" Gatus alert
 - **Why it matters:** Root filesystem at 90-93% was a chronic issue across 5+ reports with no proactive alerting
 - **New module option:** `collectDiskUsage` (default true)
 
 ### 3. Crash-loop detector textfile metric + Gatus alert
+
 - **Files:** `system-health.nix` (collector), `gatus-config.nix` (alert)
 - **What:** `system_service_crash_loop{service=...}` per-service + `system_any_service_crash_loop` aggregate, tracking NRestarts delta per 2min interval (threshold 3 restarts). Gatus "Service Crash Loop" alert
 - **Why it matters:** browser-history 520-restart loop and Twenty 235-restart loop went completely undetected
 - **Added browser-history + browser-history-agent to `monitoredServices`** — they were missing entirely
 
 ### 4. PMA daemon health Gatus check
+
 - **Files:** `gatus-config.nix` (check), `lib/ports.nix` (port)
 - **What:** "PMA Daemon Health" check hitting `http://127.0.0.1:9190/readyz` (K8s-style readiness probe — 503 if auto-commit or discovery daemon fails). Conditional on `projects-management-automation.enable`. Added `pma-health = 9190` to `lib/ports.nix` for collision detection
 - **Why it matters:** PMA daemon was failing silently — the 3 existing PMA Gatus checks only checked Prometheus textfile metrics (indirect), not the HTTP health endpoint
 
 ### 5. I/O PSI Gatus alert (ALREADY EXISTED)
+
 - **File:** `gatus-config.nix` line 716-726
 - **What:** "I/O Stall Rate" check was already present, alerting on `node_psi_io_alert 0` (PSI I/O stall >10%)
 - **Action:** Marked as done in TODO_LIST.md with "ALREADY EXISTED" note. No code changes needed.
 
 ### 6. TODO_LIST.md + CHANGELOG.md updated
+
 - All 7 Priority 1 items marked `[x]` with implementation details
 - CHANGELOG.md entry added under `[Unreleased] > Added`
 - TODO_LIST.md header updated to reflect this session
@@ -46,6 +52,7 @@
 ## B) PARTIALLY DONE (Implemented but with gaps)
 
 ### 7. `system_oomd_kills_total` textfile metric + Gatus alert
+
 - **Files:** `system-health.nix` (collector), `gatus-config.nix` (alert)
 - **What:** `system_oomd_kills_total`, `_recent`, `_alert` from `journalctl -u systemd-oomd --grep "Killed"` with delta tracking. Gatus "OOMD Kills" alert
 - **ISSUE 1 (potential):** The `journalctl --grep "Killed"` query scans the ENTIRE oomd journal since boot every 2 minutes. Over time (weeks of uptime), this could grow large. Unlike the niri-health-metrics gotcha (which was fixed by adding `-n` for early termination), this query needs to count ALL matches so `-n` can't help. However, systemd-oomd should have relatively few log entries compared to niri (which logs every 30s). **Risk: LOW** but should monitor.
@@ -54,6 +61,7 @@
 - **New module option:** `collectOomdKills` (default true)
 
 ### 8. Docker container restart count monitoring
+
 - **Files:** `system-health.nix` (collector), `gatus-config.nix` (alert)
 - **What:** `docker_container_restart_count{name=...}`, `_alert` per-container + `system_any_docker_container_restart_alert` aggregate, using `docker inspect --format '{{.RestartCount}}'` with delta tracking. Gatus "Docker Container Restarts" alert. Auto-disabled when Docker off.
 - **ISSUE 1 (unverified):** Never run on the actual system. The collector script is syntactically valid (nix eval passes) but the bash has not been executed to verify it produces valid Prometheus text format.
@@ -61,13 +69,14 @@
 - **ISSUE 3 (no timeout):** `docker inspect` has no timeout. If the Docker daemon hangs, the collector will hang. The systemd service has no per-command timeout.
 - **ISSUE 4 (MemoryMax):** Added `pkgs.docker` to runtimeInputs but MemoryMax is still 128M. Running docker commands + journalctl queries could exceed this under load.
 - **New module option:** `collectDockerRestarts` (default true, auto-disabled when Docker off)
-- **→ VERIFIED LIVE (08-14):** restart metrics emit correctly for all 7 containers (dozzle, mnfst-*, twenty-*), all 0. The word-splitting (§f.17), timeout (§f.18), and MemoryMax (§f.20) concerns remain OPEN.
+- **→ VERIFIED LIVE (08-14):** restart metrics emit correctly for all 7 containers (dozzle, mnfst-_, twenty-_), all 0. The word-splitting (§f.17), timeout (§f.18), and MemoryMax (§f.20) concerns remain OPEN.
 
 ---
 
 ## C) NOT STARTED
 
 ### 9. VM test for new Gatus patterns
+
 - The project has `tests/test-gatus-patterns.nix` that validates Gatus `pat()` patterns against a mock metrics server. I added 6 new patterns but added ZERO test cases.
 - **Patterns needing test coverage:**
   - `pat(*system_disk_usage_over_threshold 0*)`
@@ -77,6 +86,7 @@
   - `pat(*node_textfile_scrape_error 0*)`
 
 ### 10. pre-deploy-check.sh phantom metric whitelist
+
 - Section 10 of `pre-deploy-check.sh` validates that Gatus-referenced metrics exist in `/metrics`. New phantom metrics were added that are conditionally emitted:
   - `system_any_docker_container_restart_alert` — only emitted when Docker is enabled AND containers are running
   - `docker_container_restart_count` / `docker_container_restart_alert` — same
@@ -86,10 +96,12 @@
 - The Docker metrics are the phantom risk: on a fresh deploy before containers start, these metrics won't exist → pre-deploy-check will FAIL them as phantom metrics. They need to be added to the `KNOWN_NEW_METRICS` whitelist.
 
 ### 11. AGENTS.md update
+
 - AGENTS.md documents the system-health collector extensively (all metrics listed in the "Prevention Layers" table). I added 4 new collectors with ~15 new metrics but didn't update AGENTS.md.
 - Should document: new `collectDiskUsage`/`collectOomdKills`/`collectDockerRestarts` options, new metrics, new state files
 
 ### 12. Runtime verification of collector output
+
 - The collector script was never run to verify it produces valid Prometheus text format. `nix flake check` validates Nix syntax but NOT bash correctness. The entire `node_textfile_scrape_error` alert exists BECAUSE of invalid .prom files — irony if we ship a new one.
 - **→ RESOLVED (08-14):** verified live via node_exporter `/metrics` — `system_health.prom` serves disk/oomd/docker metrics in valid text format.
 
@@ -136,6 +148,7 @@ No catastrophic errors. All changes pass `nix flake check --no-build`, full eval
 ## F) Up to 50 Things to Get Done Next
 
 ### Immediate (blocks correct deploy)
+
 1. Add Docker phantom metrics to `KNOWN_NEW_METRICS` in `pre-deploy-check.sh`
 2. ~~Run `system-health-metrics` locally to verify valid `.prom` output~~ done — live `/metrics` verified 08-14
 3. ~~Verify `journalctl -u systemd-oomd --grep "Killed"` matches actual kill events~~ done — 2408 matches counted live
@@ -143,6 +156,7 @@ No catastrophic errors. All changes pass `nix flake check --no-build`, full eval
 5. Verify PMA `/readyz` endpoint responds on `127.0.0.1:9190`
 
 ### Deploy + Verify
+
 6. ~~Deploy to evo-x2: `nix run .#deploy`~~ done — deployed in the 09:30 session (`7afab3f8`)
 7. ~~Verify `system_health.prom` contains all new metrics: `grep -E 'system_disk|crash_loop|oomd|docker_container' /var/lib/prometheus-node-exporter/textfile_collectors/system_health.prom`~~ done — verified live 08-14
 8. Verify new Gatus checks appear in dashboard (all should be GREEN)
@@ -152,12 +166,14 @@ No catastrophic errors. All changes pass `nix flake check --no-build`, full eval
 12. Check Gatus "Textfile Collector Health" check is GREEN
 
 ### Testing
+
 13. Extend `tests/test-gatus-patterns.nix` with 5 new pattern assertions
 14. Add `tests/test-system-health.nix` VM test for the collector script
 15. Test crash-loop detection by deliberately restarting a service 3+ times
 16. Test Docker restart alert by restarting a container rapidly
 
 ### Code Quality
+
 17. Fix word splitting: `for cname in $(docker ps...)` → `while IFS= read -r cname`
 18. Add `timeout 5` to `docker inspect` and `docker ps` calls
 19. Optimize NRestarts triple-read to single read per service
@@ -166,6 +182,7 @@ No catastrophic errors. All changes pass `nix flake check --no-build`, full eval
 22. Add `pkgs.util-linux` to runtimeInputs for `timeout` command (if not already available)
 
 ### Documentation
+
 23. Update AGENTS.md with new system-health collectors and metrics
 24. Update AGENTS.md "Prevention Layers" table with new Gatus checks
 25. Update AGENTS.md monitored services list to include browser-history
@@ -173,6 +190,7 @@ No catastrophic errors. All changes pass `nix flake check --no-build`, full eval
 27. ~~Add oomd journalctl pattern to AGENTS.md gotchas if it differs from "Killed"~~ done (moot) — pattern confirmed live as `Killed` (2408 matches); nothing to document
 
 ### Monitoring (next gaps)
+
 28. Add `system_textfile_collector_parse_errors` per-file metric (which .prom file failed)
 29. Add network connectivity meta-check (can Gatus reach Discord webhook?)
 30. Add zram fill ratio metric (`/sys/block/zram0/mm_stat`) — currently only documented in AGENTS.md
@@ -188,6 +206,7 @@ No catastrophic errors. All changes pass `nix flake check --no-build`, full eval
 40. Add per-container CPU/memory metric (cAdvisor already provides this — wire to Gatus)
 
 ### Architecture
+
 41. Extract system-health collector into per-collector scripts (modular vs monolithic)
 42. Add a "collector health" meta-check (did system-health-metrics run in the last 5min?)
 43. Add systemd timer failure alert (timer not firing = stale metrics)
@@ -206,6 +225,7 @@ No catastrophic errors. All changes pass `nix flake check --no-build`, full eval
 ### 1. Should the oomd collector use `--grep "Killed"` or a broader pattern?
 
 ~~I based the grep pattern on the TODO description ("journalctl -u systemd-oomd --grep 'killed'"). But systemd-oomd log messages might say "Killing" (not "Killed"), or use "oomd killed" lowercase, or have a different format entirely. I cannot verify this without access to evo-x2's journal. Should I:~~ **answered (08-14):** option (b) was correct — `Killed` matches real events (2408 counted live); no broader pattern needed.
+
 - (a) Use `--grep "Killed|killed|Killing|killed process"` (broader)?
 - (b) Keep `"Killed"` and verify post-deploy?
 - (c) Use a case-insensitive grep equivalent?
@@ -213,6 +233,7 @@ No catastrophic errors. All changes pass `nix flake check --no-build`, full eval
 ### 2. Should I deploy now or fix the pre-deploy-check phantom metric issue first?
 
 ~~The Docker metrics (`docker_container_restart_count`, `docker_container_restart_alert`, `system_any_docker_container_restart_alert`) won't exist until containers are running post-deploy. This means `nix run .#pre-deploy-check` will FAIL them as phantom metrics. Should I:~~ **answered by history:** the deploy proceeded anyway (09:30 session, `7afab3f8`) and the metrics went live — but the whitelist gap (§f.1) is STILL OPEN and will bite the next fresh-deploy pre-deploy check.
+
 - (a) Fix pre-deploy-check.sh first, then deploy?
 - (b) Deploy directly (pre-deploy-check is a warning tool, not a hard gate)?
 - (c) Add the whitelist entry AND deploy in one step?
@@ -220,6 +241,7 @@ No catastrophic errors. All changes pass `nix flake check --no-build`, full eval
 ### 3. Should the system-health collector be split into per-concern scripts?
 
 The collector is now 700+ lines emitting ~40 metrics across 10+ concerns (service state, CPU, memory, memory.events, disk, oomd, docker, GPUActive, tmpfs, fstrim, gatus health, EMEET, SigNoz rules, Monitor365 buffer). It runs as a single oneshot every 2min. If any section fails, the entire `.prom` file is lost (the exact `node_textfile_scrape_error` problem we're now monitoring for). Should I:
+
 - (a) Split into per-concern scripts (modular, one failure doesn't kill all metrics)?
 - (b) Keep monolithic but add per-section error handling (try/catch per section)?
 - (c) Leave as-is (the `systemctl_value()` sanitizer already handles most failure modes)?

@@ -199,48 +199,48 @@
 
 ### Critical (Do Now)
 
-| #   | Task                                                                                                                               | Effort | Impact |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
-| 1   | **Resolve Hyprland vs Niri** — decide which compositor to use, remove dead one's config, packages, and scripts                     | 2h     | High   |
-| 2   | **Fill in Home Manager issue XXXX** or remove the dead reference at `darwin/default.nix:85`                                        | 15min  | Low    |
-| 3   | **Remove duplicate `scripts/ublock-origin-setup (1).sh`**                                                                          | 1min   | Low    |
-| 4   | **Move root clutter to proper locations** (`test_speed.py`, `download_glm_model.py`, `README.test.md`, `HARDCORE_REVIEW.md`, etc.) | 30min  | Medium |
+| # | Task                                                                                                                               | Effort | Impact |
+| - | ---------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 1 | **Resolve Hyprland vs Niri** — decide which compositor to use, remove dead one's config, packages, and scripts                     | 2h     | High   |
+| 2 | **Fill in Home Manager issue XXXX** or remove the dead reference at `darwin/default.nix:85`                                        | 15min  | Low    |
+| 3 | **Remove duplicate `scripts/ublock-origin-setup (1).sh`**                                                                          | 1min   | Low    |
+| 4 | **Move root clutter to proper locations** (`test_speed.py`, `download_glm_model.py`, `README.test.md`, `HARDCORE_REVIEW.md`, etc.) | 30min  | Medium |
 
 ### High Impact (This Week)
 
-| #   | Task                                                  | Effort | Impact |
-| --- | ----------------------------------------------------- | ------ | ------ |
-| 5   | **Add `set -euo pipefail` to 19 scripts** missing it  | 30min  | Medium |
-| 6   | **Import Ghost Systems core/Types.nix** in flake      | 15min  | High   |
-| 7   | **Import Ghost Systems core/State.nix** in flake      | 15min  | High   |
-| 8   | **Import Ghost Systems core/Validation.nix** in flake | 15min  | High   |
-| 9   | **Enable TypeSafetySystem** in flake                  | 30min  | High   |
-| 10  | **Add Waybar GPU temperature module** (AMD GPU)       | 1.5h   | Medium |
-| 11  | **Add Waybar CPU usage module** (per-core)            | 1.5h   | Medium |
+| #  | Task                                                  | Effort | Impact |
+| -- | ----------------------------------------------------- | ------ | ------ |
+| 5  | **Add `set -euo pipefail` to 19 scripts** missing it  | 30min  | Medium |
+| 6  | **Import Ghost Systems core/Types.nix** in flake      | 15min  | High   |
+| 7  | **Import Ghost Systems core/State.nix** in flake      | 15min  | High   |
+| 8  | **Import Ghost Systems core/Validation.nix** in flake | 15min  | High   |
+| 9  | **Enable TypeSafetySystem** in flake                  | 30min  | High   |
+| 10 | **Add Waybar GPU temperature module** (AMD GPU)       | 1.5h   | Medium |
+| 11 | **Add Waybar CPU usage module** (per-core)            | 1.5h   | Medium |
 
 ### Medium Impact (Next 2 Weeks)
 
-| #   | Task                                                     | Effort | Impact |
-| --- | -------------------------------------------------------- | ------ | ------ |
-| 12  | **Add Waybar memory/network/disk modules**               | 4.5h   | Medium |
-| 13  | **Create Quake Terminal dropdown script** (F12)          | 2h     | Medium |
-| 14  | **Create Clipboard History Viewer**                      | 2h     | Medium |
-| 15  | **Add hot-reload for Hyprland/Niri config** (Ctrl+Alt+R) | 10min  | High   |
-| 16  | **Consolidate user config** (eliminate split brain)      | 45min  | High   |
-| 17  | **Consolidate path config**                              | 30min  | High   |
-| 18  | **Enable SystemAssertions**                              | 30min  | High   |
-| 19  | **Optimize keyboard repeat rate**                        | 20min  | Low    |
-| 20  | **Map Caps Lock to Escape/Control**                      | 20min  | Low    |
+| #  | Task                                                     | Effort | Impact |
+| -- | -------------------------------------------------------- | ------ | ------ |
+| 12 | **Add Waybar memory/network/disk modules**               | 4.5h   | Medium |
+| 13 | **Create Quake Terminal dropdown script** (F12)          | 2h     | Medium |
+| 14 | **Create Clipboard History Viewer**                      | 2h     | Medium |
+| 15 | **Add hot-reload for Hyprland/Niri config** (Ctrl+Alt+R) | 10min  | High   |
+| 16 | **Consolidate user config** (eliminate split brain)      | 45min  | High   |
+| 17 | **Consolidate path config**                              | 30min  | High   |
+| 18 | **Enable SystemAssertions**                              | 30min  | High   |
+| 19 | **Optimize keyboard repeat rate**                        | 20min  | Low    |
+| 20 | **Map Caps Lock to Escape/Control**                      | 20min  | Low    |
 
 ### Lower Priority (Next Month)
 
-| #   | Task                                                    | Effort  | Impact |
-| --- | ------------------------------------------------------- | ------- | ------ |
-| 21  | **Split system.nix** (397 lines → 3 files)              | 90min   | Medium |
-| 22  | **Archive old status reports** (127 files)              | 1h      | Low    |
-| 23  | **Fix TODO_LIST.md phase counts** (says 21, is 22)      | 5min    | Low    |
-| 24  | **Monitor NixOS bug #483085** for audit daemon          | Ongoing | Medium |
-| 25  | **Research audit kernel module** AppArmor compatibility | 2-4h    | Medium |
+| #  | Task                                                    | Effort  | Impact |
+| -- | ------------------------------------------------------- | ------- | ------ |
+| 21 | **Split system.nix** (397 lines → 3 files)              | 90min   | Medium |
+| 22 | **Archive old status reports** (127 files)              | 1h      | Low    |
+| 23 | **Fix TODO_LIST.md phase counts** (says 21, is 22)      | 5min    | Low    |
+| 24 | **Monitor NixOS bug #483085** for audit daemon          | Ongoing | Medium |
+| 25 | **Research audit kernel module** AppArmor compatibility | 2-4h    | Medium |
 
 ---
 

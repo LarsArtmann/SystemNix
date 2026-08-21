@@ -145,48 +145,48 @@ This is a **surgical fix** to align the repo with the running system. It does NO
 
 ### Immediate (This Session — Next 30 Minutes)
 
-| #   | Task                                                                         | Impact                                              | Effort | Blockers |
-| --- | ---------------------------------------------------------------------------- | --------------------------------------------------- | ------ | -------- |
-| 1   | **Clean `/tmp` now** — remove 62 GB stale build caches                       | Frees 12% root disk instantly, reduces I/O pressure | 1 min  | None     |
-| 2   | **Fix whisper-asr state dir** — add tmpfiles rule for `/var/lib/whisper-asr` | Stops journal spam, reduces load average            | 5 min  | None     |
-| 3   | **Deploy pending changes** — `just switch` for cleanOnBoot + ollama wantedBy | Fixes take effect immediately                       | 5 min  | None     |
-| 4   | **Fix monitor365 env var** — correct broken `XDG_RUNTIME_DIR` config path    | Service stops crashing                              | 10 min | None     |
-| 5   | **Investigate Hermes startup** — check logs, identify root cause             | Discord bot comes back online                       | 15 min | None     |
+| # | Task                                                                         | Impact                                              | Effort | Blockers |
+| - | ---------------------------------------------------------------------------- | --------------------------------------------------- | ------ | -------- |
+| 1 | **Clean `/tmp` now** — remove 62 GB stale build caches                       | Frees 12% root disk instantly, reduces I/O pressure | 1 min  | None     |
+| 2 | **Fix whisper-asr state dir** — add tmpfiles rule for `/var/lib/whisper-asr` | Stops journal spam, reduces load average            | 5 min  | None     |
+| 3 | **Deploy pending changes** — `just switch` for cleanOnBoot + ollama wantedBy | Fixes take effect immediately                       | 5 min  | None     |
+| 4 | **Fix monitor365 env var** — correct broken `XDG_RUNTIME_DIR` config path    | Service stops crashing                              | 10 min | None     |
+| 5 | **Investigate Hermes startup** — check logs, identify root cause             | Discord bot comes back online                       | 15 min | None     |
 
 ### Short Term (Next Session)
 
-| #   | Task                                                                   | Impact                                    | Effort | Blockers                        |
-| --- | ---------------------------------------------------------------------- | ----------------------------------------- | ------ | ------------------------------- |
-| 6   | **Clean `~/go` (11 GB)** — audit and remove stale GOPATH/module caches | Recovers disk space                       | 10 min | None                            |
-| 7   | **Audit `~/.cache` (52 GB)** — clean HuggingFace, Go, browser caches   | Major space recovery                      | 15 min | None                            |
-| 8   | **Fix dnsblockd-cert-import** — NSS cert import user service           | Browser trust for `*.home.lan`            | 10 min | None                            |
-| 9   | **Consolidate `/data/models` → `/data/ai/models`**                     | Eliminates potential duplication (626 GB) | 30 min | **Requires human confirmation** |
-| 10  | **Add disk space monitoring** — gatus check for root disk > 85%        | Early warning before exhaustion           | 15 min | None                            |
+| #  | Task                                                                   | Impact                                    | Effort | Blockers                        |
+| -- | ---------------------------------------------------------------------- | ----------------------------------------- | ------ | ------------------------------- |
+| 6  | **Clean `~/go` (11 GB)** — audit and remove stale GOPATH/module caches | Recovers disk space                       | 10 min | None                            |
+| 7  | **Audit `~/.cache` (52 GB)** — clean HuggingFace, Go, browser caches   | Major space recovery                      | 15 min | None                            |
+| 8  | **Fix dnsblockd-cert-import** — NSS cert import user service           | Browser trust for `*.home.lan`            | 10 min | None                            |
+| 9  | **Consolidate `/data/models` → `/data/ai/models`**                     | Eliminates potential duplication (626 GB) | 30 min | **Requires human confirmation** |
+| 10 | **Add disk space monitoring** — gatus check for root disk > 85%        | Early warning before exhaustion           | 15 min | None                            |
 
 ### Medium Term (This Week)
 
-| #   | Task                                                                            | Impact                               | Effort                | Blockers             |
-| --- | ------------------------------------------------------------------------------- | ------------------------------------ | --------------------- | -------------------- |
-| 11  | **Provision Pi 3 at remote site** — physical deployment + sops enrollment       | DNS failover cluster goes live       | 1-2 hours on-site     | Hardware transport   |
-| 12  | **Lockfile dedup phase 3** — upstream changes for Go private repo shared inputs | 23 fewer lock nodes, faster eval     | Requires upstream PRs | Upstream cooperation |
-| 13  | **Archive old status reports** — move pre-session-60 to `archive/`              | Cleaner docs directory               | 5 min                 | None                 |
-| 14  | **Evaluate `/tmp` as tmpfs** — benchmark nix build performance                  | Faster builds, automatic cleanup     | 1 hour testing        | None                 |
-| 15  | **Docker storage audit** — verify all Docker data is on `/data/docker`          | Prevent root disk surprises          | 15 min                | None                 |
-| 16  | **Automated vendor hash updates** — script to detect and update stale hashes    | Reduces manual cascade fixing        | 2 hours               | None                 |
-| 17  | **AGENTS.md update** — add crash loop findings from sessions 65-66              | Future sessions avoid same debugging | 10 min                | None                 |
-| 18  | **Service dependency graph** — document service interdependencies               | Troubleshooting, startup ordering    | 2 hours               | None                 |
+| #  | Task                                                                            | Impact                               | Effort                | Blockers             |
+| -- | ------------------------------------------------------------------------------- | ------------------------------------ | --------------------- | -------------------- |
+| 11 | **Provision Pi 3 at remote site** — physical deployment + sops enrollment       | DNS failover cluster goes live       | 1-2 hours on-site     | Hardware transport   |
+| 12 | **Lockfile dedup phase 3** — upstream changes for Go private repo shared inputs | 23 fewer lock nodes, faster eval     | Requires upstream PRs | Upstream cooperation |
+| 13 | **Archive old status reports** — move pre-session-60 to `archive/`              | Cleaner docs directory               | 5 min                 | None                 |
+| 14 | **Evaluate `/tmp` as tmpfs** — benchmark nix build performance                  | Faster builds, automatic cleanup     | 1 hour testing        | None                 |
+| 15 | **Docker storage audit** — verify all Docker data is on `/data/docker`          | Prevent root disk surprises          | 15 min                | None                 |
+| 16 | **Automated vendor hash updates** — script to detect and update stale hashes    | Reduces manual cascade fixing        | 2 hours               | None                 |
+| 17 | **AGENTS.md update** — add crash loop findings from sessions 65-66              | Future sessions avoid same debugging | 10 min                | None                 |
+| 18 | **Service dependency graph** — document service interdependencies               | Troubleshooting, startup ordering    | 2 hours               | None                 |
 
 ### Longer Term / Strategic
 
-| #   | Task                                                                         | Impact                             | Effort        | Blockers    |
-| --- | ---------------------------------------------------------------------------- | ---------------------------------- | ------------- | ----------- |
-| 19  | **Cross-remote builds** — Darwin offloads to evo-x2                          | Solves MacBook Air disk exhaustion | 3 hours setup | None        |
-| 20  | **Unified backup strategy** — automated BTRFS snapshots for critical data    | Disaster recovery                  | 4 hours       | None        |
-| 21  | **IPv6 support** — evo-x2 has link-local only                                | Future-proof networking            | 2 hours       | ISP support |
-| 22  | **Secrets rotation** — rotate sops keys, age identities                      | Security hygiene                   | 1 hour        | None        |
-| 23  | **Test rpi3-dns build** — verify `nixosConfigurations.rpi3-dns` still builds | Ensure Pi 3 image is current       | 10 min        | None        |
-| 24  | **Performance baseline** — record boot time, service start times, eval time  | Detect regressions                 | 1 hour        | None        |
-| 25  | **Consider ComfyUI removal cleanup** — module disabled but data may remain   | Reclaim GPU VRAM / disk            | 30 min        | None        |
+| #  | Task                                                                         | Impact                             | Effort        | Blockers    |
+| -- | ---------------------------------------------------------------------------- | ---------------------------------- | ------------- | ----------- |
+| 19 | **Cross-remote builds** — Darwin offloads to evo-x2                          | Solves MacBook Air disk exhaustion | 3 hours setup | None        |
+| 20 | **Unified backup strategy** — automated BTRFS snapshots for critical data    | Disaster recovery                  | 4 hours       | None        |
+| 21 | **IPv6 support** — evo-x2 has link-local only                                | Future-proof networking            | 2 hours       | ISP support |
+| 22 | **Secrets rotation** — rotate sops keys, age identities                      | Security hygiene                   | 1 hour        | None        |
+| 23 | **Test rpi3-dns build** — verify `nixosConfigurations.rpi3-dns` still builds | Ensure Pi 3 image is current       | 10 min        | None        |
+| 24 | **Performance baseline** — record boot time, service start times, eval time  | Detect regressions                 | 1 hour        | None        |
+| 25 | **Consider ComfyUI removal cleanup** — module disabled but data may remain   | Reclaim GPU VRAM / disk            | 30 min        | None        |
 
 ---
 

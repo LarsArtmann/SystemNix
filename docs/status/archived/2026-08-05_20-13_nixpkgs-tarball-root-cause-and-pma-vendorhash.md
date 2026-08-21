@@ -6,7 +6,6 @@
 
 ---
 
-
 ## What the user reported
 
 ```
@@ -21,18 +20,18 @@ This was blocking `nh os switch` and every `nix flake` / `nix eval` / `nix build
 
 ## What I did (chronological)
 
-| Step | What | Verdict |
-|------|------|---------|
-| 1 | Read `flake.lock`; confirmed `nodes.nixpkgs` is `type: "tarball"` pointing to `channels.nixos.org` / stale Jan 2026 rev `3497aa5`. | OK |
-| 2 | Verified the global Nix registry is the root cause: `global flake:nixpkgs/nixos-unstable https://channels.nixos.org/nixos-unstable/nixexprs.tar.xz`. | OK |
-| 3 | Searched public code for similar issues; confirmed Renovate/Nix tooling recognizes this `channels.nixos.org` tarball pattern but no upstream fix exists. | OK |
-| 4 | Manually fixed `flake.lock` `nodes.nixpkgs` to latest GitHub `nixos-unstable` (`e72e4f299401`, `lastModified: 1785828668`, `narHash: sha256-8fsyqeO+mJqvIzeO4xIpgJe/f7MTbbVTEC6RT6WSXNs=`). | OK |
-| 5 | Discovered `nix flake update` (with or without `--no-use-registries`, `--override-flake`, or `--override-input`) immediately reverts `nixpkgs` to tarball because the registry rewrite happens during lock refresh. | Root cause confirmed |
-| 6 | Added a NixOS system registry override so `nixpkgs/nixos-unstable` resolves to GitHub directly in `platforms/nixos/system/configuration.nix`. | OK |
-| 7 | Ran `nix flake update` to update the remaining inputs, then programmatically restored only the `nodes.nixpkgs` node to GitHub. | OK |
-| 8 | Ran `nix flake check --no-build`; guard passes, but `packages.x86_64-linux.projects-management-automation` fails with a vendorHash mismatch. | New blocker |
-| 9 | Diagnosed the vendorHash mismatch: with current nixpkgs the expected `vendorHash` for PMA is `sha256-mWaqAUTxYHEqXiZdGS3bIFllLxC+3REpyjwJIrXvjf4=` vs. the upstream `sha256-3LYbR/K12onY6rNEntu8GV3JXSG0Bl9tTqkaYnfWCCk=`. | OK |
-| 10 | Edited `~/projects/projects-management-automation/flake.nix` to the new vendorHash. | Done locally, not yet committed/pushed |
+| Step | What                                                                                                                                                                                                                       | Verdict                                |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 1    | Read `flake.lock`; confirmed `nodes.nixpkgs` is `type: "tarball"` pointing to `channels.nixos.org` / stale Jan 2026 rev `3497aa5`.                                                                                         | OK                                     |
+| 2    | Verified the global Nix registry is the root cause: `global flake:nixpkgs/nixos-unstable https://channels.nixos.org/nixos-unstable/nixexprs.tar.xz`.                                                                       | OK                                     |
+| 3    | Searched public code for similar issues; confirmed Renovate/Nix tooling recognizes this `channels.nixos.org` tarball pattern but no upstream fix exists.                                                                   | OK                                     |
+| 4    | Manually fixed `flake.lock` `nodes.nixpkgs` to latest GitHub `nixos-unstable` (`e72e4f299401`, `lastModified: 1785828668`, `narHash: sha256-8fsyqeO+mJqvIzeO4xIpgJe/f7MTbbVTEC6RT6WSXNs=`).                                | OK                                     |
+| 5    | Discovered `nix flake update` (with or without `--no-use-registries`, `--override-flake`, or `--override-input`) immediately reverts `nixpkgs` to tarball because the registry rewrite happens during lock refresh.        | Root cause confirmed                   |
+| 6    | Added a NixOS system registry override so `nixpkgs/nixos-unstable` resolves to GitHub directly in `platforms/nixos/system/configuration.nix`.                                                                              | OK                                     |
+| 7    | Ran `nix flake update` to update the remaining inputs, then programmatically restored only the `nodes.nixpkgs` node to GitHub.                                                                                             | OK                                     |
+| 8    | Ran `nix flake check --no-build`; guard passes, but `packages.x86_64-linux.projects-management-automation` fails with a vendorHash mismatch.                                                                               | New blocker                            |
+| 9    | Diagnosed the vendorHash mismatch: with current nixpkgs the expected `vendorHash` for PMA is `sha256-mWaqAUTxYHEqXiZdGS3bIFllLxC+3REpyjwJIrXvjf4=` vs. the upstream `sha256-3LYbR/K12onY6rNEntu8GV3JXSG0Bl9tTqkaYnfWCCk=`. | OK                                     |
+| 10   | Edited `~/projects/projects-management-automation/flake.nix` to the new vendorHash.                                                                                                                                        | Done locally, not yet committed/pushed |
 
 The auto-commit daemon already committed the SystemNix-side changes:
 

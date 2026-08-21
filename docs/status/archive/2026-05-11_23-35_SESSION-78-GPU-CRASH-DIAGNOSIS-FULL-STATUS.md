@@ -43,17 +43,17 @@ Both fixes are **committed but NOT yet deployed** — `just switch` + reboot is 
 | **Docker**                  | ✅ Running   | All containers healthy                                   |
 | **SOPS secrets**            | ✅ Fixed     | Owner fix deployed in session 76                         |
 | **GPU defense in depth**    | ✅ Committed | OLLAMA_MAX_LOADED_MODELS=1, GPU overhead, OOMScoreAdjust |
-| **Pipe operators**          | ✅ Complete  | All modules migrated from `builtins` chains to `         | >`  |
+| **Pipe operators**          | ✅ Complete  | All modules migrated from `builtins` chains to `         |
 
 ### Monitoring & Observability
 
-| Component               | Status               | Notes                                         |
-| ----------------------- | -------------------- | --------------------------------------------- |
+| Component               | Status              | Notes                                         |
+| ----------------------- | ------------------- | --------------------------------------------- |
 | **SigNoz (partial)**    | ⚠️ Collector running | ClickHouse down (log dir missing)             |
 | **Gatus health checks** | ⚠️ Down              | Env file missing (needs reboot to regenerate) |
-| **node_exporter**       | ✅ Running           | System metrics on :9100                       |
-| **cAdvisor**            | ✅ Running           | Container metrics on :9110                    |
-| **GPU metrics**         | ✅ Running           | VRAM/busy/temp via textfile collector         |
+| **node_exporter**       | ✅ Running          | System metrics on :9100                       |
+| **cAdvisor**            | ✅ Running          | Container metrics on :9110                    |
+| **GPU metrics**         | ✅ Running          | VRAM/busy/temp via textfile collector         |
 | **Niri health metrics** | ⚠️ Permission issue  | Textfile dir ownership wrong                  |
 
 ### Cross-Platform Configuration
@@ -99,8 +99,8 @@ Both fixes are **committed but NOT yet deployed** — `just switch` + reboot is 
 
 ## B) PARTIALLY DONE ⚠️
 
-| Component                | Status                  | What's Missing                                                                                    |
-| ------------------------ | ----------------------- | ------------------------------------------------------------------------------------------------- |
+| Component                | Status                 | What's Missing                                                                                    |
+| ------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------- |
 | **ClickHouse**           | ⚠️ Down                 | `/var/log/clickhouse-server` missing — tmpfiles fix committed but not deployed                    |
 | **Gatus**                | ⚠️ Down                 | `gatus-env` env file missing — needs reboot to regenerate from sops template                      |
 | **SigNoz**               | ⚠️ Degraded             | Collector running but can't write to ClickHouse (down)                                            |
@@ -207,48 +207,48 @@ Both fixes are **committed but NOT yet deployed** — `just switch` + reboot is 
 
 ### Priority 1 — Immediate (System Health)
 
-| #   | Action                                                                                      | Effort | Impact                                               |
-| --- | ------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------- |
-| 1   | **`just switch` + reboot** to deploy clickhouse tmpfiles fix + GPU recovery retries         | 10 min | 🔴 CRITICAL — restores SigNoz, Gatus, all monitoring |
-| 2   | **Verify all services start clean** after reboot (`systemctl --failed`)                     | 5 min  | 🔴 Validates fix                                     |
-| 3   | **Investigate DeviceMissing spam** — determine if 410K errors/boot are benign or driver bug | 30 min | 🟡 Reduces false positive GPU recoveries             |
-| 4   | **Fix niri-health-metrics permissions** — textfile dir ownership                            | 10 min | 🟡 Restores compositor metrics                       |
+| # | Action                                                                                      | Effort | Impact                                               |
+| - | ------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------- |
+| 1 | **`just switch` + reboot** to deploy clickhouse tmpfiles fix + GPU recovery retries         | 10 min | 🔴 CRITICAL — restores SigNoz, Gatus, all monitoring |
+| 2 | **Verify all services start clean** after reboot (`systemctl --failed`)                     | 5 min  | 🔴 Validates fix                                     |
+| 3 | **Investigate DeviceMissing spam** — determine if 410K errors/boot are benign or driver bug | 30 min | 🟡 Reduces false positive GPU recoveries             |
+| 4 | **Fix niri-health-metrics permissions** — textfile dir ownership                            | 10 min | 🟡 Restores compositor metrics                       |
 
 ### Priority 2 — Short Term (This Week)
 
-| #   | Action                                                                          | Effort | Impact                          |
-| --- | ------------------------------------------------------------------------------- | ------ | ------------------------------- |
-| 5   | **Extract hardcoded user paths** in hermes, comfyui, authelia, homepage modules | 1 hr   | 🟡 Portability, maintainability |
-| 6   | **Remove dead `mkGraphicalUserService`** from lib/                              | 5 min  | 🟢 Code hygiene                 |
-| 7   | **Remove unused overlays** (hierarchicalErrors, art-dupl) or add to packages    | 15 min | 🟢 Build time reduction         |
-| 8   | **Fix or remove monitor365** — disabled module is dead code                     | 30 min | 🟢 Code hygiene                 |
-| 9   | **Fix or remove photomap** — disabled with podman bug                           | 1 hr   | 🟡 Shipped module should work   |
-| 10  | **Move VRRP authPassword to sops** in rpi3 config                               | 15 min | 🟡 Security                     |
-| 11  | **Disk cleanup** — `just clean` + manual review of large files                  | 30 min | 🟡 Both disks at 80%            |
-| 12  | **Create TODO_LIST.md** from this audit                                         | 30 min | 🟢 Process                      |
+| #  | Action                                                                          | Effort | Impact                          |
+| -- | ------------------------------------------------------------------------------- | ------ | ------------------------------- |
+| 5  | **Extract hardcoded user paths** in hermes, comfyui, authelia, homepage modules | 1 hr   | 🟡 Portability, maintainability |
+| 6  | **Remove dead `mkGraphicalUserService`** from lib/                              | 5 min  | 🟢 Code hygiene                 |
+| 7  | **Remove unused overlays** (hierarchicalErrors, art-dupl) or add to packages    | 15 min | 🟢 Build time reduction         |
+| 8  | **Fix or remove monitor365** — disabled module is dead code                     | 30 min | 🟢 Code hygiene                 |
+| 9  | **Fix or remove photomap** — disabled with podman bug                           | 1 hr   | 🟡 Shipped module should work   |
+| 10 | **Move VRRP authPassword to sops** in rpi3 config                               | 15 min | 🟡 Security                     |
+| 11 | **Disk cleanup** — `just clean` + manual review of large files                  | 30 min | 🟡 Both disks at 80%            |
+| 12 | **Create TODO_LIST.md** from this audit                                         | 30 min | 🟢 Process                      |
 
 ### Priority 3 — Medium Term (Next 2 Weeks)
 
-| #   | Action                                                             | Effort | Impact                    |
-| --- | ------------------------------------------------------------------ | ------ | ------------------------- |
-| 13  | **Provision Pi 3 hardware** for DNS failover cluster               | 2 hr   | 🟡 HA DNS                 |
-| 14  | **Deploy Dozzle** at `logs.home.lan` for container log viewing     | 1 hr   | 🟢 Observability          |
-| 15  | **Add SigNoz channel routing** — per-threshold Discord alerts      | 1 hr   | 🟢 Alert quality          |
-| 16  | **Migrate hardcoded colors to nix-colors** — 17+ instances         | 2 hr   | 🟢 Theme consistency      |
-| 17  | **Verify voice-agents** — LiveKit + Whisper integration test       | 1 hr   | 🟡 Shipped but untested   |
-| 18  | **Update FEATURES.md** — remove references to non-existent scripts | 30 min | 🟢 Documentation accuracy |
+| #  | Action                                                             | Effort | Impact                    |
+| -- | ------------------------------------------------------------------ | ------ | ------------------------- |
+| 13 | **Provision Pi 3 hardware** for DNS failover cluster               | 2 hr   | 🟡 HA DNS                 |
+| 14 | **Deploy Dozzle** at `logs.home.lan` for container log viewing     | 1 hr   | 🟢 Observability          |
+| 15 | **Add SigNoz channel routing** — per-threshold Discord alerts      | 1 hr   | 🟢 Alert quality          |
+| 16 | **Migrate hardcoded colors to nix-colors** — 17+ instances         | 2 hr   | 🟢 Theme consistency      |
+| 17 | **Verify voice-agents** — LiveKit + Whisper integration test       | 1 hr   | 🟡 Shipped but untested   |
+| 18 | **Update FEATURES.md** — remove references to non-existent scripts | 30 min | 🟢 Documentation accuracy |
 
 ### Priority 4 — Long Term (Nice to Have)
 
-| #   | Action                                                             | Effort | Impact                    |
-| --- | ------------------------------------------------------------------ | ------ | ------------------------- |
-| 19  | **Archive old status reports** — move 15+ old files to archive/    | 15 min | 🟢 Clean docs             |
-| 20  | **Write ADR-007** — GPU recovery retry strategy                    | 15 min | 🟢 Documentation          |
-| 21  | **rpi3 SSH key migration** — use nix-ssh-config input              | 15 min | 🟢 Consistency            |
-| 22  | **Add clickhouse readiness probe** for SigNoz collector            | 30 min | 🟢 Faster recovery        |
-| 23  | **Rate-limit GPU recovery** — increase consecutive check threshold | 15 min | 🟢 Fewer false positives  |
-| 24  | **Create benchmark/performance scripts** referenced in FEATURES.md | 2 hr   | 🟢 Feature completeness   |
-| 25  | **Investigate watchdogd nixpkgs bugs** — file upstream issues      | 1 hr   | 🟢 Community contribution |
+| #  | Action                                                             | Effort | Impact                    |
+| -- | ------------------------------------------------------------------ | ------ | ------------------------- |
+| 19 | **Archive old status reports** — move 15+ old files to archive/    | 15 min | 🟢 Clean docs             |
+| 20 | **Write ADR-007** — GPU recovery retry strategy                    | 15 min | 🟢 Documentation          |
+| 21 | **rpi3 SSH key migration** — use nix-ssh-config input              | 15 min | 🟢 Consistency            |
+| 22 | **Add clickhouse readiness probe** for SigNoz collector            | 30 min | 🟢 Faster recovery        |
+| 23 | **Rate-limit GPU recovery** — increase consecutive check threshold | 15 min | 🟢 Fewer false positives  |
+| 24 | **Create benchmark/performance scripts** referenced in FEATURES.md | 2 hr   | 🟢 Feature completeness   |
+| 25 | **Investigate watchdogd nixpkgs bugs** — file upstream issues      | 1 hr   | 🟢 Community contribution |
 
 ---
 

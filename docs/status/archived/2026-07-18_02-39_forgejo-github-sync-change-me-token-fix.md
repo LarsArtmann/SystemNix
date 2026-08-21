@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Summary
 
 Forgejo at `https://forgejo.home.lan/lars` showed **zero repos** despite a fully-wired GitHub mirror system. Root cause: the sops secret `forgejo_token` (`platforms/nixos/secrets/secrets.yaml`) held the literal placeholder string `"CHANGE_ME"` and was never filled in. The `forgejo-sync.env` sops template rendered `FORGEJO_TOKEN=CHANGE_ME`, which both sync services (`forgejo-github-sync.service` and `forgejo-ensure-repos.service`) sent as a Bearer token. Forgejo rejected every `/api/v1/repos/migrate` call with:
@@ -77,7 +76,7 @@ Three secondary bugs compounded this:
 
 1. **First deploy failed due to ShellCheck SC1090** — I used `. "$TOKEN_FILE"` to source the env file inside a `writeShellApplication`. `writeShellApplication` runs ShellCheck and treats warnings as errors. SC1090 ("can't follow non-constant source") killed the build at `forgejo-token-gen.drv`. I should have known — ShellCheck always complains about dynamic sources, and there's a documented pattern (grep+cut) used elsewhere in the codebase. Cost one extra deploy cycle (~90s build). Fixed by switching to `grep -E '^FORGEJO_TOKEN=[0-9a-f]{40}$' "$TOKEN_FILE" | cut -d= -f2`, which is also more secure (only extracts the expected key, ignores any injected garbage).
 2. **Did not catch the `pocket-id-provision.service` activation failure** — during deploy, `switch-to-configuration` reported `Failed to start pocket-id-provision.service`. The deploy script's retry logic cleared it (final smoke test was green, 0 failed units), so it was transient — but I did not investigate WHY it failed on first activation. It may be unrelated (pocket-id-provision has its own history of start-limit races per AGENTS.md), but I should have at least checked the journal instead of dismissing it as "transient, unrelated".
-3. **Wasted a `busctl` round-trip on a malformed object path** — first D-Bus call used a path with a stray `o ` prefix from naive `sed` parsing of the `GetUnit` return value. Fixed on retry. Trivial, but sloppy.
+3. **Wasted a `busctl` round-trip on a malformed object path** — first D-Bus call used a path with a stray `o` prefix from naive `sed` parsing of the `GetUnit` return value. Fixed on retry. Trivial, but sloppy.
 4. **The grep validation has a subtle edge case** — `grep -qE '^FORGEJO_TOKEN=[0-9a-f]{40}$'` requires the token to be exactly 40 hex chars on its own line. Forgejo tokens ARE 40-char hex today, but if Forgejo ever changes token format (e.g., adds a prefix like `fmt_…`), the validation will silently fail to extract the token and regenerate a new one on every run — a slow token leak. A looser pattern (`^FORGEJO_TOKEN=\S+$`) would be more future-proof, at the cost of accepting malformed tokens. Trade-off was not documented.
 
 ---

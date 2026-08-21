@@ -8,7 +8,6 @@
 
 ---
 
-
 ## A) FULLY DONE ✅
 
 ### 1. Root Cause Analysis (COMPLETE)
@@ -79,6 +78,7 @@ Without this, the deploy that regenerated the secret did NOT restart oauth2-prox
 ### 6. AGENTS.md Documentation (COMMITTED — 58436f30)
 
 Added two new gotcha entries:
+
 - `oauth2-proxy whitelist-domain REQUIRED` — documents the missing flag and its fix
 - `oauth2-proxy partOf pocket-id-provision` — documents the restart-on-provision dependency
 
@@ -244,20 +244,20 @@ Every `nix run .#deploy` fails because of three independent build failures (dnsb
 
 ## Item Resolution (2026-07-30)
 
-| # | Status | Resolution |
-|---|--------|------------|
-| 1-5 | DONE | All build failures fixed; deploys succeed; PKCE enabled |
-| 6-8 | REJECTED | Browser tests — require manual user verification, tracked in TODO_LIST deploy checklist |
-| 9 | DONE | PKCE S256 enabled on oauth2-proxy |
-| 10 | DONE | `partOf = pocket-id-provision.service` ensures credential reload |
-| 11 | DONE | Gatus checks oauth2-proxy `/ping` endpoint |
-| 12 | DONE | Native OIDC clients verified (Forgejo, Immich, Gatus) |
-| 13-14 | REJECTED | Pre-deploy dry-run / commit message CI — over-engineering |
-| 15 | DONE | regenerateSecretsFor documented in AGENTS.md |
-| 16 | DONE | PKCE enabled and tested |
-| 17 | DONE | `-k` curl flags audited |
-| 18-19 | DONE/REJECTED | OIDC monitoring DONE via Gatus; read-only API key REJECTED |
-| 20-50 | MIXED | Items 20-50 are oauth2-proxy hardening brainstorms. Most REJECTED as over-engineering for single-admin. Key survivors: item 24 (localhost:8080 firewall) noted in AGENTS.md. |
+| #     | Status        | Resolution                                                                                                                                                                   |
+| ----- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1-5   | DONE          | All build failures fixed; deploys succeed; PKCE enabled                                                                                                                      |
+| 6-8   | REJECTED      | Browser tests — require manual user verification, tracked in TODO_LIST deploy checklist                                                                                      |
+| 9     | DONE          | PKCE S256 enabled on oauth2-proxy                                                                                                                                            |
+| 10    | DONE          | `partOf = pocket-id-provision.service` ensures credential reload                                                                                                             |
+| 11    | DONE          | Gatus checks oauth2-proxy `/ping` endpoint                                                                                                                                   |
+| 12    | DONE          | Native OIDC clients verified (Forgejo, Immich, Gatus)                                                                                                                        |
+| 13-14 | REJECTED      | Pre-deploy dry-run / commit message CI — over-engineering                                                                                                                    |
+| 15    | DONE          | regenerateSecretsFor documented in AGENTS.md                                                                                                                                 |
+| 16    | DONE          | PKCE enabled and tested                                                                                                                                                      |
+| 17    | DONE          | `-k` curl flags audited                                                                                                                                                      |
+| 18-19 | DONE/REJECTED | OIDC monitoring DONE via Gatus; read-only API key REJECTED                                                                                                                   |
+| 20-50 | MIXED         | Items 20-50 are oauth2-proxy hardening brainstorms. Most REJECTED as over-engineering for single-admin. Key survivors: item 24 (localhost:8080 firewall) noted in AGENTS.md. |
 
 ---
 

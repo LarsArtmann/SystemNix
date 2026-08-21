@@ -84,7 +84,7 @@ Fixed 30+ inaccuracies across README.md, FEATURES.md, TODO_LIST.md, and pkgs/REA
 | --------------------------------------------------- | ------------------------------------- | ----------------- | ---------------------------------------------------------------------------------- |
 | Context bug: `r.Context()` → `context.Background()` | `internal/tracking/middleware.go:190` | ✅ Fixed + tested | Eliminates all "context canceled" errors                                           |
 | Goroutine cap: semaphore (32 concurrent)            | `internal/tracking/middleware.go`     | ✅ Fixed + tested | Non-blocking drop — prevents OOM                                                   |
-| Other dnsblockd changes                             | 6 other files                         | ⚠️ Unknown origin | `ratelimit.go`, `tls.go`, `stats.go`, `templates.go` — may be from a prior session |
+| Other dnsblockd changes                             | 6 other files                         | ⚠️ Unknown origin  | `ratelimit.go`, `tls.go`, `stats.go`, `templates.go` — may be from a prior session |
 
 ### Mullvad disable
 
@@ -143,58 +143,58 @@ Fixed 30+ inaccuracies across README.md, FEATURES.md, TODO_LIST.md, and pkgs/REA
 
 ### Priority 0: Stop the Bleeding (DO FIRST)
 
-| #   | Task                                                     | Effort | Impact                                     |
-| --- | -------------------------------------------------------- | ------ | ------------------------------------------ |
-| 1   | **Disable Mullvad** (`mullvad-vpn.enable = false`)       | 2min   | Critical — stops DNS hijacking permanently |
-| 2   | **Commit SystemNix DNS fixes** (MemoryMax 1G, timer fix) | 5min   | High — gets dnsblockd breathing room       |
-| 3   | **Commit dnsblockd Go fixes** (context + goroutine cap)  | 5min   | High — fixes root cause of OOM             |
-| 4   | **`just switch`** (after user confirmation)              | 10min  | Critical — applies all fixes               |
-| 5   | **Verify DNS works for 5+ minutes** without breaking     | 5min   | Critical — confirms fix                    |
+| # | Task                                                     | Effort | Impact                                     |
+| - | -------------------------------------------------------- | ------ | ------------------------------------------ |
+| 1 | **Disable Mullvad** (`mullvad-vpn.enable = false`)       | 2min   | Critical — stops DNS hijacking permanently |
+| 2 | **Commit SystemNix DNS fixes** (MemoryMax 1G, timer fix) | 5min   | High — gets dnsblockd breathing room       |
+| 3 | **Commit dnsblockd Go fixes** (context + goroutine cap)  | 5min   | High — fixes root cause of OOM             |
+| 4 | **`just switch`** (after user confirmation)              | 10min  | Critical — applies all fixes               |
+| 5 | **Verify DNS works for 5+ minutes** without breaking     | 5min   | Critical — confirms fix                    |
 
 ### Priority 1: Harden DNS Stack
 
-| #   | Task                                                        | Effort | Impact                              |
-| --- | ----------------------------------------------------------- | ------ | ----------------------------------- |
-| 6   | **Update dnsblockd flake.lock** in SystemNix                | 5min   | High — picks up Go fixes            |
-| 7   | **Set dnsblockd vendorHash** to new hash                    | 5min   | High — required for build           |
-| 8   | **Test `just test-fast`** after flake.lock update           | 2min   | High                                |
-| 9   | **Add `do-ip6 = false` to unbound config** (if not present) | 2min   | Medium — prevents IPv6 DNS failures |
+| # | Task                                                        | Effort | Impact                              |
+| - | ----------------------------------------------------------- | ------ | ----------------------------------- |
+| 6 | **Update dnsblockd flake.lock** in SystemNix                | 5min   | High — picks up Go fixes            |
+| 7 | **Set dnsblockd vendorHash** to new hash                    | 5min   | High — required for build           |
+| 8 | **Test `just test-fast`** after flake.lock update           | 2min   | High                                |
+| 9 | **Add `do-ip6 = false` to unbound config** (if not present) | 2min   | Medium — prevents IPv6 DNS failures |
 
 ### Priority 2: Mullvad Integration
 
-| #   | Task                                                                                       | Effort | Impact                             |
-| --- | ------------------------------------------------------------------------------------------ | ------ | ---------------------------------- |
-| 10  | **Fix `mullvad-config` service** — `unitConfig.Restart` → `serviceConfig.Restart`          | 2min   | Medium — fixes systemd warning     |
-| 11  | **Add Mullvad auto-connect script** — only sets DNS when tunnel is UP                      | 15min  | High — proper VPN DNS management   |
-| 12  | **Add `mullvad-daemon.service` override** — `Restart = "no"` so it stays dead when stopped | 5min   | Medium                             |
-| 13  | **Document Mullvad + unbound interaction** in AGENTS.md                                    | 10min  | Medium — prevents future confusion |
+| #  | Task                                                                                       | Effort | Impact                             |
+| -- | ------------------------------------------------------------------------------------------ | ------ | ---------------------------------- |
+| 10 | **Fix `mullvad-config` service** — `unitConfig.Restart` → `serviceConfig.Restart`          | 2min   | Medium — fixes systemd warning     |
+| 11 | **Add Mullvad auto-connect script** — only sets DNS when tunnel is UP                      | 15min  | High — proper VPN DNS management   |
+| 12 | **Add `mullvad-daemon.service` override** — `Restart = "no"` so it stays dead when stopped | 5min   | Medium                             |
+| 13 | **Document Mullvad + unbound interaction** in AGENTS.md                                    | 10min  | Medium — prevents future confusion |
 
 ### Priority 3: dnsblockd Improvements
 
-| #   | Task                                             | Effort | Impact                              |
-| --- | ------------------------------------------------ | ------ | ----------------------------------- |
-| 14  | **Replace goroutine spawn with worker pool**     | 30min  | High — proper fix for memory growth |
-| 15  | **Reduce payload capture size** (1MB → 4KB)      | 5min   | Medium — less memory per goroutine  |
-| 16  | **Add `GOMEMLIMIT`** to dnsblockd service config | 2min   | Medium — Go soft memory limit       |
-| 17  | **Add Prometheus metric** for goroutine count    | 10min  | Medium — observability              |
+| #  | Task                                             | Effort | Impact                              |
+| -- | ------------------------------------------------ | ------ | ----------------------------------- |
+| 14 | **Replace goroutine spawn with worker pool**     | 30min  | High — proper fix for memory growth |
+| 15 | **Reduce payload capture size** (1MB → 4KB)      | 5min   | Medium — less memory per goroutine  |
+| 16 | **Add `GOMEMLIMIT`** to dnsblockd service config | 2min   | Medium — Go soft memory limit       |
+| 17 | **Add Prometheus metric** for goroutine count    | 10min  | Medium — observability              |
 
 ### Priority 4: DNS Resilience
 
-| #   | Task                                                                                      | Effort | Impact                    |
-| --- | ----------------------------------------------------------------------------------------- | ------ | ------------------------- |
-| 18  | **Add DNS health check timer** — tests resolution every 1min, restarts unbound on failure | 15min  | High                      |
-| 19  | **Add fallback nameserver** in resolv.conf (127.0.0.1 + 1.1.1.1)                          | 2min   | Low — belt and suspenders |
-| 20  | **Audit all blocklist whitelist entries** — verify SBS entries are correct                | 10min  | Low                       |
+| #  | Task                                                                                      | Effort | Impact                    |
+| -- | ----------------------------------------------------------------------------------------- | ------ | ------------------------- |
+| 18 | **Add DNS health check timer** — tests resolution every 1min, restarts unbound on failure | 15min  | High                      |
+| 19 | **Add fallback nameserver** in resolv.conf (127.0.0.1 + 1.1.1.1)                          | 2min   | Low — belt and suspenders |
+| 20 | **Audit all blocklist whitelist entries** — verify SBS entries are correct                | 10min  | Low                       |
 
 ### Priority 5: Documentation & Cleanup
 
-| #   | Task                                                                     | Effort       | Impact                           |
-| --- | ------------------------------------------------------------------------ | ------------ | -------------------------------- |
-| 21  | **Commit remaining doc accuracy fixes** from self-review round           | Already done | ✅                               |
-| 22  | **Add Mullvad talpid_dns gotcha** to AGENTS.md non-obvious gotchas table | 5min         | High — prevents future confusion |
-| 23  | **Update TODO_LIST.md** with DNS crisis findings                         | 10min        | Medium                           |
-| 24  | **Archive old status reports** (178 → ~30 in docs/status/)               | 30min        | Low                              |
-| 25  | **Create ROADMAP.md**                                                    | 30min        | Low                              |
+| #  | Task                                                                     | Effort       | Impact                           |
+| -- | ------------------------------------------------------------------------ | ------------ | -------------------------------- |
+| 21 | **Commit remaining doc accuracy fixes** from self-review round           | Already done | ✅                               |
+| 22 | **Add Mullvad talpid_dns gotcha** to AGENTS.md non-obvious gotchas table | 5min         | High — prevents future confusion |
+| 23 | **Update TODO_LIST.md** with DNS crisis findings                         | 10min        | Medium                           |
+| 24 | **Archive old status reports** (178 → ~30 in docs/status/)               | 30min        | Low                              |
+| 25 | **Create ROADMAP.md**                                                    | 30min        | Low                              |
 
 ---
 
@@ -217,9 +217,9 @@ Context:
 | --------------------- | ------------------------- | ------------------------------------------------------ |
 | `/etc/resolv.conf`    | 🔴 Broken                 | `nanmeserver 9.9.9.9` (typo from manual nano edit)     |
 | Unbound               | ✅ Healthy                | Resolves all queries correctly via `dig @127.0.0.1`    |
-| dnsblockd             | ⚠️ Running but leaking    | PID 4080749, RSS 319MB (319076 KB), MemoryMax 512M     |
+| dnsblockd             | ⚠️ Running but leaking     | PID 4080749, RSS 319MB (319076 KB), MemoryMax 512M     |
 | Mullvad daemon        | 🔴 Running (shouldn't be) | PID 4080696, disconnected, but talpid_dns still active |
-| Mullvad DNS config    | ⚠️ Custom: 192.168.1.150  | Correct value but talpid_dns resets periodically       |
+| Mullvad DNS config    | ⚠️ Custom: 192.168.1.150   | Correct value but talpid_dns resets periodically       |
 | NixOS generation      | Gen 416 (rolled back)     | User rolled back from broken generation                |
 | SystemNix uncommitted | 3 files changed           | dns-blocker.nix, dns-blocklists.nix, configuration.nix |
 | dnsblockd uncommitted | 7 files changed           | middleware.go + 6 others                               |

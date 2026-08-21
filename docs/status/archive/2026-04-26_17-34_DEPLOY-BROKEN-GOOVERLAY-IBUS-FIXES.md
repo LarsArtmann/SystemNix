@@ -27,42 +27,42 @@ The project is in a **broken deploy state** — `nixos-rebuild switch` fails. Th
 
 ### Prior sessions — P0 CRITICAL (6/6 done)
 
-| #   | Task                             | Evidence                                         |
-| --- | -------------------------------- | ------------------------------------------------ |
-| 1   | `git push`                       | All commits pushed to origin                     |
-| 2   | `git stash clear`                | `git stash list` returns empty                   |
-| 3   | Delete copilot branches          | `git branch -r                                   | grep copilot` returns nothing |
-| 4   | Archive redundant status docs    | 242 files in `archive/`, 12 active remain        |
-| 5   | Rewrite docs/status/README.md    | 3 lines: current status, archive pointer, policy |
-| 6   | Fix "29 modules" → correct count | Done in prior session (`821d829`)                |
+| # | Task                             | Evidence                                         |
+| - | -------------------------------- | ------------------------------------------------ |
+| 1 | `git push`                       | All commits pushed to origin                     |
+| 2 | `git stash clear`                | `git stash list` returns empty                   |
+| 3 | Delete copilot branches          | `git branch -r                                   |
+| 4 | Archive redundant status docs    | 242 files in `archive/`, 12 active remain        |
+| 5 | Rewrite docs/status/README.md    | 3 lines: current status, archive pointer, policy |
+| 6 | Fix "29 modules" → correct count | Done in prior session (`821d829`)                |
 
 ### P1 — SECURITY (3/7 done)
 
-| #   | Task                                             | Status                                           |
-| --- | ------------------------------------------------ | ------------------------------------------------ |
-| 7   | Move Taskwarrior encryption to sops              | **BLOCKED** — requires evo-x2 runtime            |
-| 8   | Add systemd hardening to gitea-ensure-repos      | **DONE** — hardening directives present          |
-| 9   | Pin Voice Agents Docker digest                   | **BLOCKED** — requires evo-x2 to pull digest     |
-| 10  | Pin PhotoMap Docker digest                       | **BLOCKED** — requires evo-x2 to pull digest     |
-| 11  | Secure VRRP auth_pass with sops                  | **BLOCKED** — requires evo-x2 runtime            |
-| 12  | Remove dead ublock-filters.nix                   | **DONE** — file deleted, import removed          |
-| 13  | Fix gitea-ensure-repos Restart + StartLimitBurst | **DONE** — Restart=on-failure, StartLimitBurst=3 |
+| #  | Task                                             | Status                                           |
+| -- | ------------------------------------------------ | ------------------------------------------------ |
+| 7  | Move Taskwarrior encryption to sops              | **BLOCKED** — requires evo-x2 runtime            |
+| 8  | Add systemd hardening to gitea-ensure-repos      | **DONE** — hardening directives present          |
+| 9  | Pin Voice Agents Docker digest                   | **BLOCKED** — requires evo-x2 to pull digest     |
+| 10 | Pin PhotoMap Docker digest                       | **BLOCKED** — requires evo-x2 to pull digest     |
+| 11 | Secure VRRP auth_pass with sops                  | **BLOCKED** — requires evo-x2 runtime            |
+| 12 | Remove dead ublock-filters.nix                   | **DONE** — file deleted, import removed          |
+| 13 | Fix gitea-ensure-repos Restart + StartLimitBurst | **DONE** — Restart=on-failure, StartLimitBurst=3 |
 
 ### P2 — RELIABILITY (10/11 done)
 
-| #   | Task                                                 | Status                         |
-| --- | ---------------------------------------------------- | ------------------------------ |
-| 14  | WatchdogSec for caddy, gitea, authelia, taskchampion | **DONE**                       |
-| 15  | Restart=on-failure for 5 services                    | **DONE**                       |
-| 16  | Fix dead let bindings                                | **DONE** — none found          |
-| 17  | Fix core.pager vs pager.diff                         | **DONE** — no conflict exists  |
-| 18  | Fix fonts.packages darwin compat                     | **DONE** — guarded with `mkIf` |
-| 19  | Enable udisks2 on NixOS                              | **DONE**                       |
-| 20  | Add .editorconfig                                    | **NOT DONE**                   |
-| 21  | Make deadnix strict                                  | **DONE**                       |
-| 22  | Fix pre-commit statix hook                           | **DONE**                       |
-| 23  | Add date + commit to debug-map.md                    | **DONE**                       |
-| 24  | Add homepage URL to emeet-pixyd                      | **DONE**                       |
+| #  | Task                                                 | Status                         |
+| -- | ---------------------------------------------------- | ------------------------------ |
+| 14 | WatchdogSec for caddy, gitea, authelia, taskchampion | **DONE**                       |
+| 15 | Restart=on-failure for 5 services                    | **DONE**                       |
+| 16 | Fix dead let bindings                                | **DONE** — none found          |
+| 17 | Fix core.pager vs pager.diff                         | **DONE** — no conflict exists  |
+| 18 | Fix fonts.packages darwin compat                     | **DONE** — guarded with `mkIf` |
+| 19 | Enable udisks2 on NixOS                              | **DONE**                       |
+| 20 | Add .editorconfig                                    | **NOT DONE**                   |
+| 21 | Make deadnix strict                                  | **DONE**                       |
+| 22 | Fix pre-commit statix hook                           | **DONE**                       |
+| 23 | Add date + commit to debug-map.md                    | **DONE**                       |
+| 24 | Add homepage URL to emeet-pixyd                      | **DONE**                       |
 
 ### P3 — CODE QUALITY (7/9 done)
 
@@ -163,11 +163,11 @@ sops, authelia, caddy, gitea, gitea-repos, homepage, immich, photomap, signoz (+
 
 **Status**: 3 errors encountered, 2 fixed, 1 remains
 
-| #   | Error                                                                                        | Cause                                                                                             | Status                                                                    |
-| --- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| 1   | `hermes-tui-0.0.1 npmDepsHash mismatch`                                                      | Upstream hermes-agent had stale hash                                                              | **FIXED** — flake input updated to rev `59b56d4`                          |
-| 2   | `undefined variable 'goOverlay'` at flake.nix:437                                            | goOverlay let-binding removed but darwin overlay list still referenced it                         | **FIXED** (unstaged) — removed from all 4 overlay lists                   |
-| 3   | `ibus-1.5.33` build failure: `install: cannot create regular file '...IBus.py': File exists` | nixpkgs ibus packaging bug — parallel make installs IBus.py in both install-data and install-exec | **NOT FIXED** — needs `ibusOverlay` with `enableParallelBuilding = false` |
+| # | Error                                                                                        | Cause                                                                                             | Status                                                                    |
+| - | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| 1 | `hermes-tui-0.0.1 npmDepsHash mismatch`                                                      | Upstream hermes-agent had stale hash                                                              | **FIXED** — flake input updated to rev `59b56d4`                          |
+| 2 | `undefined variable 'goOverlay'` at flake.nix:437                                            | goOverlay let-binding removed but darwin overlay list still referenced it                         | **FIXED** (unstaged) — removed from all 4 overlay lists                   |
+| 3 | `ibus-1.5.33` build failure: `install: cannot create regular file '...IBus.py': File exists` | nixpkgs ibus packaging bug — parallel make installs IBus.py in both install-data and install-exec | **NOT FIXED** — needs `ibusOverlay` with `enableParallelBuilding = false` |
 
 **Impact**: Cannot deploy ANY pending changes. All module toggles, hardening improvements, and new features are code-only — not running on the actual machine.
 

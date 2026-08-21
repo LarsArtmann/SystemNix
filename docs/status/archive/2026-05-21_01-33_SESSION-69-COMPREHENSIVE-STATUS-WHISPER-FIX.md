@@ -58,18 +58,18 @@
 
 ## c) NOT STARTED
 
-| #   | Item                                                 | Priority | Notes                                                     |
-| --- | ---------------------------------------------------- | -------- | --------------------------------------------------------- |
-| 1   | SigNoz JWT secret (`SIGNOZ_TOKENIZER_JWT_SECRET`)    | P2       | Service runs without it but warns loudly on every start   |
-| 2   | nix-colors integration                               | P3       | ~6h estimate, theme consistency                           |
-| 3   | Deploy Dozzle (Docker log viewer)                    | P3       | Would replace manual `journalctl` for containers          |
-| 4   | Convert `go-auto-upgrade` `path:` inputs to SSH URLs | P3       | External repo work                                        |
-| 5   | Create shared flake-parts template                   | P4       | External repo work                                        |
-| 6   | Per-threshold SigNoz channel routing                 | P2       | E.g., P1 → #alerts, P2 → #warnings                        |
-| 7   | Consolidate voice-agents Caddy vHost                 | P2       | `voice.` and `whisper.` could be sub-paths                |
-| 8   | Hardcoded port cleanup                               | P3       | 5 instances of `localhost:PORT` should use config options |
-| 9   | `todoListAiFixedHash` auto-update                    | P3       | Custom derivation hash not covered by `hash-check`        |
-| 10  | Context.md creation                                  | P4       | No CONTEXT.md at repo root                                |
+| #  | Item                                                 | Priority | Notes                                                     |
+| -- | ---------------------------------------------------- | -------- | --------------------------------------------------------- |
+| 1  | SigNoz JWT secret (`SIGNOZ_TOKENIZER_JWT_SECRET`)    | P2       | Service runs without it but warns loudly on every start   |
+| 2  | nix-colors integration                               | P3       | ~6h estimate, theme consistency                           |
+| 3  | Deploy Dozzle (Docker log viewer)                    | P3       | Would replace manual `journalctl` for containers          |
+| 4  | Convert `go-auto-upgrade` `path:` inputs to SSH URLs | P3       | External repo work                                        |
+| 5  | Create shared flake-parts template                   | P4       | External repo work                                        |
+| 6  | Per-threshold SigNoz channel routing                 | P2       | E.g., P1 → #alerts, P2 → #warnings                        |
+| 7  | Consolidate voice-agents Caddy vHost                 | P2       | `voice.` and `whisper.` could be sub-paths                |
+| 8  | Hardcoded port cleanup                               | P3       | 5 instances of `localhost:PORT` should use config options |
+| 9  | `todoListAiFixedHash` auto-update                    | P3       | Custom derivation hash not covered by `hash-check`        |
+| 10 | Context.md creation                                  | P4       | No CONTEXT.md at repo root                                |
 
 ---
 
@@ -120,48 +120,48 @@
 
 ### P1 — Security & Correctness
 
-| #   | Task                                                                   | Effort | Impact                |
-| --- | ---------------------------------------------------------------------- | ------ | --------------------- |
-| 1   | Add `SIGNOZ_TOKENIZER_JWT_SECRET` to sops + inject into signoz service | 30m    | Critical security fix |
-| 2   | Verify all services start clean after `just switch`                    | 15m    | Confidence            |
-| 3   | Check SigNoz provision logs + test Discord alert channel               | 15m    | Monitoring validation |
-| 4   | Verify Gatus endpoints all return healthy                              | 10m    | Uptime confirmation   |
+| # | Task                                                                   | Effort | Impact                |
+| - | ---------------------------------------------------------------------- | ------ | --------------------- |
+| 1 | Add `SIGNOZ_TOKENIZER_JWT_SECRET` to sops + inject into signoz service | 30m    | Critical security fix |
+| 2 | Verify all services start clean after `just switch`                    | 15m    | Confidence            |
+| 3 | Check SigNoz provision logs + test Discord alert channel               | 15m    | Monitoring validation |
+| 4 | Verify Gatus endpoints all return healthy                              | 10m    | Uptime confirmation   |
 
 ### P2 — Robustness
 
-| #   | Task                                                                         | Effort | Impact                              |
-| --- | ---------------------------------------------------------------------------- | ------ | ----------------------------------- |
-| 5   | Add Whisper ASR down alert to SigNoz rules                                   | 15m    | Prevent silent failures             |
-| 6   | Make `mkDockerService` return single mergeable attrset (services + tmpfiles) | 1h     | Prevent future tmpfiles wiring bugs |
-| 7   | Consolidate voice-agents Caddy vHost (`voice.` + `whisper.` → sub-paths)     | 30m    | Simplify routing                    |
-| 8   | Extract hardcoded LiveKit port to config option in `voice-agents.nix`        | 15m    | Config consistency                  |
-| 9   | Extract hardcoded Monitor365 port in `configuration.nix` to module option    | 15m    | Config consistency                  |
-| 10  | Per-threshold SigNoz Discord channel routing                                 | 1h     | Alert noise reduction               |
+| #  | Task                                                                         | Effort | Impact                              |
+| -- | ---------------------------------------------------------------------------- | ------ | ----------------------------------- |
+| 5  | Add Whisper ASR down alert to SigNoz rules                                   | 15m    | Prevent silent failures             |
+| 6  | Make `mkDockerService` return single mergeable attrset (services + tmpfiles) | 1h     | Prevent future tmpfiles wiring bugs |
+| 7  | Consolidate voice-agents Caddy vHost (`voice.` + `whisper.` → sub-paths)     | 30m    | Simplify routing                    |
+| 8  | Extract hardcoded LiveKit port to config option in `voice-agents.nix`        | 15m    | Config consistency                  |
+| 9  | Extract hardcoded Monitor365 port in `configuration.nix` to module option    | 15m    | Config consistency                  |
+| 10 | Per-threshold SigNoz Discord channel routing                                 | 1h     | Alert noise reduction               |
 
 ### P3 — Quality & Maintenance
 
-| #   | Task                                                                   | Effort | Impact            |
-| --- | ---------------------------------------------------------------------- | ------ | ----------------- |
-| 11  | Update `TODO_LIST.md` — verify against actual code state               | 1h     | Accuracy          |
-| 12  | Create `CONTEXT.md` at repo root                                       | 30m    | Onboarding        |
-| 13  | Deploy Dozzle for Docker container log viewing                         | 30m    | Debugging UX      |
-| 14  | Clean up `docs/status/` — archive reports older than 2 weeks           | 15m    | Hygiene           |
-| 15  | Add `mkVersion` helper to `overlays/default.nix` + apply to 3 packages | 30m    | Version accuracy  |
-| 16  | Fix `todoListAiFixedHash` to be covered by `hash-check` automation     | 1h     | Automation        |
-| 17  | nix-colors integration                                                 | 6h     | Theme consistency |
-| 18  | Add `network-setup.service` → `unit-network.target` migration cleanup  | 30m    | Cleanup from diff |
+| #  | Task                                                                   | Effort | Impact            |
+| -- | ---------------------------------------------------------------------- | ------ | ----------------- |
+| 11 | Update `TODO_LIST.md` — verify against actual code state               | 1h     | Accuracy          |
+| 12 | Create `CONTEXT.md` at repo root                                       | 30m    | Onboarding        |
+| 13 | Deploy Dozzle for Docker container log viewing                         | 30m    | Debugging UX      |
+| 14 | Clean up `docs/status/` — archive reports older than 2 weeks           | 15m    | Hygiene           |
+| 15 | Add `mkVersion` helper to `overlays/default.nix` + apply to 3 packages | 30m    | Version accuracy  |
+| 16 | Fix `todoListAiFixedHash` to be covered by `hash-check` automation     | 1h     | Automation        |
+| 17 | nix-colors integration                                                 | 6h     | Theme consistency |
+| 18 | Add `network-setup.service` → `unit-network.target` migration cleanup  | 30m    | Cleanup from diff |
 
 ### P4 — Long-term
 
-| #   | Task                                                               | Effort   | Impact         |
-| --- | ------------------------------------------------------------------ | -------- | -------------- |
-| 19  | Provision Pi 3 + wire as secondary DNS                             | 2h       | DNS redundancy |
-| 20  | Add sops-nix to Pi 3 (VRRP auth password)                          | 30m      | Security       |
-| 21  | Monitor nixpkgs for Go 1.26.3 → re-enable `file-and-image-renamer` | 5m/check | Unblock        |
-| 22  | Convert `go-auto-upgrade` `path:` inputs to SSH URLs               | 1h       | Portability    |
-| 23  | Create shared flake-parts template for LarsArtmann repos           | 2h       | Consistency    |
-| 24  | Audit all `mkDockerService` consumers for `onFailure` coverage     | 30m      | Reliability    |
-| 25  | `hostPlatform` deprecation — track upstream nixpkgs fix            | 0        | Wait           |
+| #  | Task                                                               | Effort   | Impact         |
+| -- | ------------------------------------------------------------------ | -------- | -------------- |
+| 19 | Provision Pi 3 + wire as secondary DNS                             | 2h       | DNS redundancy |
+| 20 | Add sops-nix to Pi 3 (VRRP auth password)                          | 30m      | Security       |
+| 21 | Monitor nixpkgs for Go 1.26.3 → re-enable `file-and-image-renamer` | 5m/check | Unblock        |
+| 22 | Convert `go-auto-upgrade` `path:` inputs to SSH URLs               | 1h       | Portability    |
+| 23 | Create shared flake-parts template for LarsArtmann repos           | 2h       | Consistency    |
+| 24 | Audit all `mkDockerService` consumers for `onFailure` coverage     | 30m      | Reliability    |
+| 25 | `hostPlatform` deprecation — track upstream nixpkgs fix            | 0        | Wait           |
 
 ---
 

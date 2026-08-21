@@ -167,33 +167,33 @@ The activation script in `sops.nix` (removed this session) tried to provision a 
 
 ## f) TOP 25 THINGS TO DO NEXT
 
-| #   | Item                                                                                                       | Category      | Priority  | Effort |
-| --- | ---------------------------------------------------------------------------------------------------------- | ------------- | --------- | ------ |
-| 1   | **Deploy staged changes** — `just switch` to activate NVMe monitor + VRRP fix + Gatus update               | Deploy        | 🔴 NOW    | 5 min  |
-| 2   | **Verify Twenty sops keys** — confirm `twenty_app_secret` and `twenty_db_password` exist in `secrets.yaml` | Security      | 🔴 HIGH   | 10 min |
-| 3   | **Verify NVMe monitoring** — check metrics at `:9100/metrics`, confirm desktop notification works          | Monitoring    | 🔴 HIGH   | 10 min |
-| 4   | **Centralize Twenty secrets into `sops.nix`** — move from `twenty.nix` to the central module               | Security      | 🟡 Medium | 20 min |
-| 5   | **Centralize Manifest secrets into `sops.nix`** — move from `manifest.nix` to the central module           | Security      | 🟡 Medium | 20 min |
-| 6   | **Investigate whisper-asr failure** — check journalctl, determine root cause                               | Reliability   | 🟡 Medium | 30 min |
-| 7   | **Fix photomap podman permissions** — debug and fix the container permission issue                         | Reliability   | 🟡 Medium | 1 hr   |
-| 8   | **Migrate Gitea admin password to sops** — remove plaintext from nix config                                | Security      | 🟡 Medium | 20 min |
-| 9   | **Migrate Authelia OIDC client_secret to sops** — store raw secret, let Authelia hash it                   | Security      | 🟡 Medium | 30 min |
-| 10  | **Remove disabled modules from `serviceModules`** — comfyui, minecraft (or add explanatory comments)       | Cleanup       | 🟢 Low    | 10 min |
-| 11  | **Add `sopsFile` explicit on all secrets** — remove reliance on `defaultSopsFile` for auditability         | Code quality  | 🟢 Low    | 20 min |
-| 12  | **Archive old status reports** — move pre-May-15 reports to `docs/status/archive/`                         | Cleanup       | 🟢 Low    | 10 min |
-| 13  | **Create `just archive-status` recipe** — automate moving reports older than N days                        | Automation    | 🟢 Low    | 15 min |
-| 14  | **Fix `gogenfilter_2` lockfile duplicate** — get PMA upstream to accept shared library inputs              | Optimization  | 🟢 Low    | 1 hr   |
-| 15  | **Create `follows-check` script** — detect new inputs without proper `follows` declarations                | Automation    | 🟢 Low    | 30 min |
-| 16  | **Create `vendorHash-check` script** — detect stale hashes across `_local_deps` repos                      | Automation    | 🟢 Low    | 30 min |
-| 17  | **Add unsloth hardening** — if/when re-enabled, add systemd security hardening                             | Security      | 🟢 Low    | 20 min |
-| 18  | **Evaluate Darwin distributed builds** — offload builds to evo-x2 to save MacBook disk                     | Performance   | 🟢 Low    | 1 hr   |
-| 19  | **Root disk cleanup** — nix-collect-garbage, clear caches, target <80%                                     | Maintenance   | 🟢 Low    | 20 min |
-| 20  | **Add build-time sops key validation** — fail `nix flake check` if referenced key missing                  | Reliability   | 🟢 Low    | 1 hr   |
-| 21  | **Document sops secret management workflow** — how to add/verify/rotate secrets                            | Documentation | 🟢 Low    | 20 min |
-| 22  | **Review and clean `docs/` directory** — remove stale docs, update outdated references                     | Cleanup       | 🟢 Low    | 1 hr   |
-| 23  | **Add `just test-full` as pre-deploy gate** — full build test before `just switch`                         | Process       | 🟢 Low    | 15 min |
-| 24  | **Investigate NixOS 25.11 upgrade path** — nixpkgs-unstable → nixos-25.11 when stable                      | Planning      | 🟢 Low    | 2 hr   |
-| 25  | **Explore NixOS Generations UI** — `nh` or custom for visual generation management                         | UX            | 🟢 Low    | 1 hr   |
+| #  | Item                                                                                                       | Category      | Priority  | Effort |
+| -- | ---------------------------------------------------------------------------------------------------------- | ------------- | --------- | ------ |
+| 1  | **Deploy staged changes** — `just switch` to activate NVMe monitor + VRRP fix + Gatus update               | Deploy        | 🔴 NOW    | 5 min  |
+| 2  | **Verify Twenty sops keys** — confirm `twenty_app_secret` and `twenty_db_password` exist in `secrets.yaml` | Security      | 🔴 HIGH   | 10 min |
+| 3  | **Verify NVMe monitoring** — check metrics at `:9100/metrics`, confirm desktop notification works          | Monitoring    | 🔴 HIGH   | 10 min |
+| 4  | **Centralize Twenty secrets into `sops.nix`** — move from `twenty.nix` to the central module               | Security      | 🟡 Medium | 20 min |
+| 5  | **Centralize Manifest secrets into `sops.nix`** — move from `manifest.nix` to the central module           | Security      | 🟡 Medium | 20 min |
+| 6  | **Investigate whisper-asr failure** — check journalctl, determine root cause                               | Reliability   | 🟡 Medium | 30 min |
+| 7  | **Fix photomap podman permissions** — debug and fix the container permission issue                         | Reliability   | 🟡 Medium | 1 hr   |
+| 8  | **Migrate Gitea admin password to sops** — remove plaintext from nix config                                | Security      | 🟡 Medium | 20 min |
+| 9  | **Migrate Authelia OIDC client_secret to sops** — store raw secret, let Authelia hash it                   | Security      | 🟡 Medium | 30 min |
+| 10 | **Remove disabled modules from `serviceModules`** — comfyui, minecraft (or add explanatory comments)       | Cleanup       | 🟢 Low    | 10 min |
+| 11 | **Add `sopsFile` explicit on all secrets** — remove reliance on `defaultSopsFile` for auditability         | Code quality  | 🟢 Low    | 20 min |
+| 12 | **Archive old status reports** — move pre-May-15 reports to `docs/status/archive/`                         | Cleanup       | 🟢 Low    | 10 min |
+| 13 | **Create `just archive-status` recipe** — automate moving reports older than N days                        | Automation    | 🟢 Low    | 15 min |
+| 14 | **Fix `gogenfilter_2` lockfile duplicate** — get PMA upstream to accept shared library inputs              | Optimization  | 🟢 Low    | 1 hr   |
+| 15 | **Create `follows-check` script** — detect new inputs without proper `follows` declarations                | Automation    | 🟢 Low    | 30 min |
+| 16 | **Create `vendorHash-check` script** — detect stale hashes across `_local_deps` repos                      | Automation    | 🟢 Low    | 30 min |
+| 17 | **Add unsloth hardening** — if/when re-enabled, add systemd security hardening                             | Security      | 🟢 Low    | 20 min |
+| 18 | **Evaluate Darwin distributed builds** — offload builds to evo-x2 to save MacBook disk                     | Performance   | 🟢 Low    | 1 hr   |
+| 19 | **Root disk cleanup** — nix-collect-garbage, clear caches, target <80%                                     | Maintenance   | 🟢 Low    | 20 min |
+| 20 | **Add build-time sops key validation** — fail `nix flake check` if referenced key missing                  | Reliability   | 🟢 Low    | 1 hr   |
+| 21 | **Document sops secret management workflow** — how to add/verify/rotate secrets                            | Documentation | 🟢 Low    | 20 min |
+| 22 | **Review and clean `docs/` directory** — remove stale docs, update outdated references                     | Cleanup       | 🟢 Low    | 1 hr   |
+| 23 | **Add `just test-full` as pre-deploy gate** — full build test before `just switch`                         | Process       | 🟢 Low    | 15 min |
+| 24 | **Investigate NixOS 25.11 upgrade path** — nixpkgs-unstable → nixos-25.11 when stable                      | Planning      | 🟢 Low    | 2 hr   |
+| 25 | **Explore NixOS Generations UI** — `nh` or custom for visual generation management                         | UX            | 🟢 Low    | 1 hr   |
 
 ---
 

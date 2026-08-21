@@ -74,33 +74,33 @@
 
 ## F. Top 25 Things To Do Next (Sorted by Impact/Effort)
 
-| #   | Task                                                                        | Impact   | Effort | Category   |
-| --- | --------------------------------------------------------------------------- | -------- | ------ | ---------- |
-| 1   | Run `just switch` to verify full deployment                                 | Critical | Low    | Fix        |
-| 2   | Adopt file-and-image-renamer postPatch pattern in branching-flow            | High     | Low    | Prevention |
-| 3   | Check go-structure-linter vendorHash isn't stale                            | High     | Low    | Fix        |
-| 4   | Check buildflow vendorHash isn't stale                                      | High     | Low    | Fix        |
-| 5   | Add `just update-vendor-hash` command to SystemNix                          | Medium   | Medium | Tooling    |
-| 6   | Audit all Go overlay repos for stale vendorHash                             | Medium   | Low    | Fix        |
-| 7   | Adopt postPatch pattern in all Go repos                                     | High     | Medium | Prevention |
-| 8   | Archive old docs/status/ files                                              | Low      | Low    | Cleanup    |
-| 9   | Fix branching-flow pre-commit nix-fmt error                                 | Low      | Low    | Fix        |
-| 10  | Add `go-branded-id` injection to branching-flow's prepared-source postPatch | High     | Low    | Prevention |
-| 11  | Run `just validate-scripts` to verify all shell scripts                     | Low      | Low    | Quality    |
-| 12  | Run `just format` to ensure all .nix files formatted                        | Low      | Low    | Quality    |
-| 13  | Check hermes vendorHash isn't stale after pnpm dep changes                   | Medium   | Low    | Fix        |
-| 14  | Verify monitor365 build (Rust crates downloading)                           | Medium   | Low    | Fix        |
-| 15  | Run `just test-fast` to validate Nix syntax                                 | Medium   | Low    | Quality    |
-| 16  | Add CI pipeline for private Go repos (GitHub Actions)                       | High     | High   | Prevention |
-| 17  | Create a shared Go repo template with correct Nix patterns                  | Medium   | Medium | Prevention |
-| 18  | Document the vendorHash update procedure in justfile help text              | Medium   | Low    | Docs       |
-| 19  | Consider using `govendor` or similar tool for reproducible Go deps          | Medium   | High   | Prevention |
-| 20  | Add `nix flake check` to pre-commit hooks                                   | Medium   | Low    | Quality    |
-| 21  | Review all overlay repos for consistent Nix patterns                        | Medium   | Medium | Quality    |
-| 22  | Add health checks for all overlay packages in CI                            | Medium   | Medium | Quality    |
-| 23  | Consider consolidating `_local_deps` pattern into a Nix lib helper          | Low      | Medium | Refactor   |
-| 24  | Update AGENTS.md with lessons from this session                             | Low      | Low    | Docs       |
-| 25  | Review flake.lock diff for unexpected input changes                         | Low      | Low    | Quality    |
+| #  | Task                                                                        | Impact   | Effort | Category   |
+| -- | --------------------------------------------------------------------------- | -------- | ------ | ---------- |
+| 1  | Run `just switch` to verify full deployment                                 | Critical | Low    | Fix        |
+| 2  | Adopt file-and-image-renamer postPatch pattern in branching-flow            | High     | Low    | Prevention |
+| 3  | Check go-structure-linter vendorHash isn't stale                            | High     | Low    | Fix        |
+| 4  | Check buildflow vendorHash isn't stale                                      | High     | Low    | Fix        |
+| 5  | Add `just update-vendor-hash` command to SystemNix                          | Medium   | Medium | Tooling    |
+| 6  | Audit all Go overlay repos for stale vendorHash                             | Medium   | Low    | Fix        |
+| 7  | Adopt postPatch pattern in all Go repos                                     | High     | Medium | Prevention |
+| 8  | Archive old docs/status/ files                                              | Low      | Low    | Cleanup    |
+| 9  | Fix branching-flow pre-commit nix-fmt error                                 | Low      | Low    | Fix        |
+| 10 | Add `go-branded-id` injection to branching-flow's prepared-source postPatch | High     | Low    | Prevention |
+| 11 | Run `just validate-scripts` to verify all shell scripts                     | Low      | Low    | Quality    |
+| 12 | Run `just format` to ensure all .nix files formatted                        | Low      | Low    | Quality    |
+| 13 | Check hermes vendorHash isn't stale after pnpm dep changes                  | Medium   | Low    | Fix        |
+| 14 | Verify monitor365 build (Rust crates downloading)                           | Medium   | Low    | Fix        |
+| 15 | Run `just test-fast` to validate Nix syntax                                 | Medium   | Low    | Quality    |
+| 16 | Add CI pipeline for private Go repos (GitHub Actions)                       | High     | High   | Prevention |
+| 17 | Create a shared Go repo template with correct Nix patterns                  | Medium   | Medium | Prevention |
+| 18 | Document the vendorHash update procedure in justfile help text              | Medium   | Low    | Docs       |
+| 19 | Consider using `govendor` or similar tool for reproducible Go deps          | Medium   | High   | Prevention |
+| 20 | Add `nix flake check` to pre-commit hooks                                   | Medium   | Low    | Quality    |
+| 21 | Review all overlay repos for consistent Nix patterns                        | Medium   | Medium | Quality    |
+| 22 | Add health checks for all overlay packages in CI                            | Medium   | Medium | Quality    |
+| 23 | Consider consolidating `_local_deps` pattern into a Nix lib helper          | Low      | Medium | Refactor   |
+| 24 | Update AGENTS.md with lessons from this session                             | Low      | Low    | Docs       |
+| 25 | Review flake.lock diff for unexpected input changes                         | Low      | Low    | Quality    |
 
 ---
 

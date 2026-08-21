@@ -138,33 +138,33 @@ The status directory has 141 files (many in archive/). The reports are comprehen
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| #   | Task                                        | Impact   | Effort | Why                             |
-| --- | ------------------------------------------- | -------- | ------ | ------------------------------- |
-| 1   | **Nix GC immediately**                      | CRITICAL | 5min   | 96% disk, 23G free              |
-| 2   | **Kill gopls processes**                    | CRITICAL | 1min   | Swap at 89%, OOM imminent       |
-| 3   | **`just switch` — Deploy**                  | HIGH     | 10min  | 7+ commits undeployed           |
-| 4   | **Test niri animation feel**                | HIGH     | 5min   | 80000 stiffness may be too much |
-| 5   | **Add disk space Gatus alert**              | HIGH     | 15min  | Silent disk-full risk           |
-| 6   | **Add swap/RAM SigNoz alert**               | HIGH     | 15min  | OOM risk unmonitored            |
-| 7   | **Move 4 vendorHash upstream**              | HIGH     | 2h     | Breaks on every dep update      |
-| 8   | **Rebuild TODO_LIST.md**                    | MED      | 30min  | Stale since session 75          |
-| 9   | **Clean up docs/status/ (141 files)**       | MED      | 15min  | Hard to navigate                |
-| 10  | **Audit FEATURES.md**                       | MED      | 1h     | Verify against actual code      |
-| 11  | **BTRFS /data snapshot migration**          | MED      | 1h     | /data unprotected by snapshots  |
-| 12  | **Fix upstream pre-commit hooks**           | MED      | 2h     | `--no-verify` on every commit   |
-| 13  | **Flake inputs audit (47 → ?)**             | MED      | 2h     | Reduce lock file churn          |
-| 14  | **crates.io upstream fix**                  | MED      | 1h     | File nixpkgs issue              |
-| 15  | **nix-colors integration**                  | MED      | 6h     | 17+ hardcoded colors            |
-| 16  | **Deploy Dozzle**                           | LOW      | 30min  | Docker log tailing              |
-| 17  | **Wire Pi 3 DNS failover**                  | LOW      | 4h     | Hardware sitting idle           |
-| 18  | **Hermes secondary LLM**                    | LOW      | 2h     | Single-provider risk            |
-| 19  | **Hermes SSH deploy key**                   | LOW      | 30min  | Git ops fail in sandbox         |
-| 20  | **Create shared flake-parts template**      | LOW      | 3h     | Reduce boilerplate across repos |
-| 21  | **Fix `file-and-image-renamer` Go version** | LOW      | 30min  | Disabled, Go 1.26.2 vs 1.26.3   |
-| 22  | **Fix `photomap` Podman permissions**       | LOW      | 1h     | Disabled service                |
-| 23  | **SigNoz per-threshold channel routing**    | LOW      | 1h     | All alerts → same channel       |
-| 24  | **Consolidate voice-agents Caddy vHost**    | LOW      | 30min  | Not following caddy.nix pattern |
-| 25  | **Verify boot time (~35s target)**          | LOW      | 5min   | Measure after deploy            |
+| #  | Task                                        | Impact   | Effort | Why                             |
+| -- | ------------------------------------------- | -------- | ------ | ------------------------------- |
+| 1  | **Nix GC immediately**                      | CRITICAL | 5min   | 96% disk, 23G free              |
+| 2  | **Kill gopls processes**                    | CRITICAL | 1min   | Swap at 89%, OOM imminent       |
+| 3  | **`just switch` — Deploy**                  | HIGH     | 10min  | 7+ commits undeployed           |
+| 4  | **Test niri animation feel**                | HIGH     | 5min   | 80000 stiffness may be too much |
+| 5  | **Add disk space Gatus alert**              | HIGH     | 15min  | Silent disk-full risk           |
+| 6  | **Add swap/RAM SigNoz alert**               | HIGH     | 15min  | OOM risk unmonitored            |
+| 7  | **Move 4 vendorHash upstream**              | HIGH     | 2h     | Breaks on every dep update      |
+| 8  | **Rebuild TODO_LIST.md**                    | MED      | 30min  | Stale since session 75          |
+| 9  | **Clean up docs/status/ (141 files)**       | MED      | 15min  | Hard to navigate                |
+| 10 | **Audit FEATURES.md**                       | MED      | 1h     | Verify against actual code      |
+| 11 | **BTRFS /data snapshot migration**          | MED      | 1h     | /data unprotected by snapshots  |
+| 12 | **Fix upstream pre-commit hooks**           | MED      | 2h     | `--no-verify` on every commit   |
+| 13 | **Flake inputs audit (47 → ?)**             | MED      | 2h     | Reduce lock file churn          |
+| 14 | **crates.io upstream fix**                  | MED      | 1h     | File nixpkgs issue              |
+| 15 | **nix-colors integration**                  | MED      | 6h     | 17+ hardcoded colors            |
+| 16 | **Deploy Dozzle**                           | LOW      | 30min  | Docker log tailing              |
+| 17 | **Wire Pi 3 DNS failover**                  | LOW      | 4h     | Hardware sitting idle           |
+| 18 | **Hermes secondary LLM**                    | LOW      | 2h     | Single-provider risk            |
+| 19 | **Hermes SSH deploy key**                   | LOW      | 30min  | Git ops fail in sandbox         |
+| 20 | **Create shared flake-parts template**      | LOW      | 3h     | Reduce boilerplate across repos |
+| 21 | **Fix `file-and-image-renamer` Go version** | LOW      | 30min  | Disabled, Go 1.26.2 vs 1.26.3   |
+| 22 | **Fix `photomap` Podman permissions**       | LOW      | 1h     | Disabled service                |
+| 23 | **SigNoz per-threshold channel routing**    | LOW      | 1h     | All alerts → same channel       |
+| 24 | **Consolidate voice-agents Caddy vHost**    | LOW      | 30min  | Not following caddy.nix pattern |
+| 25 | **Verify boot time (~35s target)**          | LOW      | 5min   | Measure after deploy            |
 
 ---
 
@@ -184,8 +184,8 @@ Before deploying anything, we need `systemd-oomd` to confirm it's active and `ps
 ## Uncommitted Changes
 
 ```
- M platforms/common/dns-blocklists.nix       (+7 Apache domains)
- M platforms/nixos/desktop/niri-wrapped.nix  (animations 100x faster)
+M platforms/common/dns-blocklists.nix       (+7 Apache domains)
+M platforms/nixos/desktop/niri-wrapped.nix  (animations 100x faster)
 ```
 
 ---

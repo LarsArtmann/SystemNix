@@ -7,7 +7,6 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 ### 1. Gatus Health Check — VERIFIED GREEN
@@ -66,6 +65,7 @@
 ### DNS Fix — Code Complete, NOT Deployed
 
 The fix exists in the Nix configuration but has not been deployed via `nix run .#deploy`. Until deployed:
+
 - The current running `searx.service` still has the OLD unit file (no DNS gate)
 - Wikidata + radio browser engines remain disabled on this running instance
 - A reboot or `systemctl restart searx` would re-trigger the race (though DNS is likely ready now since the system has been up for hours)
@@ -81,6 +81,7 @@ I could not query the Gatus API directly (`http://localhost:9110/api/v1/endpoint
 ### Post-Deploy Verification
 
 After deploying the DNS fix, the following should be verified:
+
 1. `journalctl -u searx.service` should show NO "engine INIT failed" errors for wikidata/radio browser
 2. `/stats` endpoint should show wikidata and radio browser as active engines (currently absent)
 3. ClearURLs tracker patterns should load (currently failing with DNS error)
@@ -89,6 +90,7 @@ After deploying the DNS fix, the following should be verified:
 ### Post-Deploy-Check Enhancement
 
 The post-deploy-check (`scripts/post-deploy-check.sh` line 137) only checks SearXNG `/healthz` returns 200. It does NOT verify:
+
 - Search actually returns results
 - Autocomplete endpoint works
 - Engines are initialized (not DNS-failed)
@@ -124,7 +126,7 @@ Brave returns "Too many request (suspended_time=180)" — SearXNG suspends it fo
 
 3. **Consider removing Brave engine** — it persistently 429s from residential IPs. `search.brave.com` rate-limits aggressively. Either remove it or accept it's permanently non-functional. Currently it adds noise to every search (WARNING + ERROR logs) and shows "0 results" in stats.
 
-4. **The `waitDnsReady` script exits 0 on timeout** — this means if DNS truly never comes up, SearXNG starts anyway with degraded engines. This is intentional (degradation > hard failure) but means the fix doesn't *guarantee* wikidata works — it makes it much more likely. An alternative would be to fail hard, but that would prevent SearXNG from starting at all if DNS is briefly slow.
+4. **The `waitDnsReady` script exits 0 on timeout** — this means if DNS truly never comes up, SearXNG starts anyway with degraded engines. This is intentional (degradation > hard failure) but means the fix doesn't _guarantee_ wikidata works — it makes it much more likely. An alternative would be to fail hard, but that would prevent SearXNG from starting at all if DNS is briefly slow.
 
 5. **ClearURLs tracker patterns** — these also failed DNS init. The `waitDnsReady` gate should fix them too, but this wasn't explicitly tested. ClearURLs provides URL-stripping (removes tracking parameters from result URLs). Its absence is a privacy regression, not a functional one.
 
@@ -204,6 +206,7 @@ Brave returns "Too many request (suspended_time=180)" — SearXNG suspends it fo
 ### Q1: Should I deploy now?
 
 The DNS-gate fix is ready (`nix flake check` passes, full eval confirms correct wiring). There are also other pending changes in the working tree (homepage.nix, TODO_LIST.md, status docs). Deploying would apply ALL changes. Should I:
+
 - (a) Deploy immediately with just the SearXNG fix?
 - (b) Wait for you to review the changes first?
 - (c) You'll deploy yourself?
@@ -213,6 +216,7 @@ I cannot answer this because deploying is a system-level action with blast radiu
 ### Q2: Should Brave engine be removed entirely?
 
 Brave persistently returns 429 from this residential IP with `suspended_time=180` (3-minute ban per failure). It shows 0 results in `/stats`. The config has `ban_time_on_fail = 5` but Brave's own rate-limiting overrides this. Options:
+
 - (a) Remove Brave from engines (cleaner logs, no false "too many requests" noise)
 - (b) Keep it (occasionally works, provides results when not rate-limited)
 - (c) Increase `max_ban_time_on_fail` to reduce retry frequency
@@ -222,6 +226,7 @@ I cannot answer this because it's a UX preference: do you want occasionally-work
 ### Q3: Is the Gatus OIDC protection intentional for localhost?
 
 Gatus API at `localhost:9110` returns 401 for unauthenticated requests. This means no script or monitoring tool can query Gatus programmatically without going through the OIDC flow. The post-deploy-check reads Gatus results via journald instead. Options:
+
 - (a) Keep OIDC on (security: even localhost requires auth)
 - (b) Add localhost bypass (operational: scripts can query the API)
 - (c) Add a read-only API key for monitoring

@@ -66,7 +66,7 @@
 3. **signoz.nix formatting churn must be reverted** — The auto-git daemon committed 831 lines of formatting noise. This is the SAME issue documented on 2026-08-11 ("nix fmt reformatted the entire 800-line file"). The formatter is destroying git blame every time someone touches this file. Either:
    - Run `git checkout HEAD~2 -- modules/nixos/services/signoz.nix` and re-apply only the merge_tree changes, OR
    - Accept the formatting as the new baseline and move on
-   The formatting churn should NOT be in a commit titled "fix(signoz): stop whack-a-moling ClickHouse merge_tree sanity checks."
+     The formatting churn should NOT be in a commit titled "fix(signoz): stop whack-a-moling ClickHouse merge_tree sanity checks."
 
 4. **Pre-deploy-check Monitor365 workaround is fragile** — I hardcoded three Monitor365 metric names. If Monitor365 adds or renames metrics, this list goes stale silently. A better approach: tag Gatus checks with their source endpoint, and the pre-deploy check skips metrics from endpoints that are down.
 

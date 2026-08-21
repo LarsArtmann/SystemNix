@@ -7,7 +7,6 @@
 
 ---
 
-
 ## Critical Context: The User Fixed It Manually
 
 **The user manually remounted ALL filesystems to remove `discard=async` BEFORE this session.** This was done in the prior session — `sudo mount -o remount,nodiscard` on every BTRFS mount. The live system was ALREADY clean when this session started.
@@ -23,12 +22,14 @@ The prior session (02-53) claimed BTRFS auto-enables `discard=async`. This sessi
 - **Neither session accounted for the fact that the USER had manually remounted** between observations
 
 The actual sequence was:
+
 1. Prior session: user remounted `/data` with `nodiscard` → `/data` clean
 2. Prior session: `/` and subvolumes STILL had `discard=async` (user hadn't remounted those yet)
 3. Between sessions: **user manually remounted ALL remaining mounts** → entire system clean
 4. This session: saw clean `/proc/mounts` → wrongly concluded "kernel doesn't auto-enable"
 
 **Whether BTRFS auto-enables `discard=async` on SSDs remains UNVERIFIED.** What IS verified:
+
 - The live system has no `discard=async` (user removed it all manually)
 - The deployed fstab has explicit `nodiscard` on all filesystems (this session deployed it)
 - `fstrim.timer` is enabled for weekly periodic TRIM

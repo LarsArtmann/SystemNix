@@ -36,28 +36,28 @@ The Nix build (`nix run .#deploy`) failed with 22 errors. Every HaGeZi DNS block
 
 ## a) FULLY DONE
 
-| Item | Details |
-|------|---------|
-| HaGeZi blocklist URLs switched to GitLab mirror | All 22 entries updated in `platforms/common/dns-blocklists.nix` |
-| SRI hashes recomputed | All 22 hashes freshly computed from GitLab mirror content |
-| Nix eval passes | `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath` succeeds |
-| Hash verification | `nix-prefetch-url` for `hosts/ultimate.txt` matches the SRI hash in the file |
-| Shared by both NixOS hosts | `dns-blocklists.nix` is shared — both `evo-x2` and `rpi3-dns` consume it (via `dns-blocker-config.nix` and `rpi3/default.nix`) |
+| Item                                            | Details                                                                                                                        |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| HaGeZi blocklist URLs switched to GitLab mirror | All 22 entries updated in `platforms/common/dns-blocklists.nix`                                                                |
+| SRI hashes recomputed                           | All 22 hashes freshly computed from GitLab mirror content                                                                      |
+| Nix eval passes                                 | `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath` succeeds                                          |
+| Hash verification                               | `nix-prefetch-url` for `hosts/ultimate.txt` matches the SRI hash in the file                                                   |
+| Shared by both NixOS hosts                      | `dns-blocklists.nix` is shared — both `evo-x2` and `rpi3-dns` consume it (via `dns-blocker-config.nix` and `rpi3/default.nix`) |
 
 ## b) PARTIALLY DONE
 
-| Item | Status | Gap |
-|------|--------|-----|
-| Deploy verification | NOT done | Build evaluates but hasn't been built or deployed. The actual fetch derivations haven't been built — only eval was checked |
+| Item                | Status           | Gap                                                                                                                                                                                 |
+| ------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Deploy verification | NOT done         | Build evaluates but hasn't been built or deployed. The actual fetch derivations haven't been built — only eval was checked                                                          |
 | Blocklist freshness | Latest available | GitLab mirror serves `main` branch (today's data: version `2026.0813.0800.38`). Previously the pinned commit guaranteed reproducibility — now we fetch from `main` which is mutable |
 
 ## c) NOT STARTED
 
-| Item | Why |
-|------|-----|
-| ~~AGENTS.md update~~ done at `61a2224b` — DNS gotcha documents the GitLab mirror + lock risk |
-| Pinning strategy | No mechanism to pin a specific GitLab commit for reproducibility (see "Improvements") |
-| ~~Testing on rpi3-dns~~ done — verified 08-14: `rpi3-dns` evaluates clean with the shared GitLab-mirror blocklists |
+| Item                                                                                                               | Why                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| ~~AGENTS.md update~~ done at `61a2224b` — DNS gotcha documents the GitLab mirror + lock risk                       |                                                                                       |
+| Pinning strategy                                                                                                   | No mechanism to pin a specific GitLab commit for reproducibility (see "Improvements") |
+| ~~Testing on rpi3-dns~~ done — verified 08-14: `rpi3-dns` evaluates clean with the shared GitLab-mirror blocklists |                                                                                       |
 
 ## d) TOTALLY FUCKED UP
 
@@ -76,6 +76,7 @@ Nothing. The fix is clean and minimal.
 ### 2. No fallback mechanism
 
 If GitLab also goes down (or locks the account), the build breaks again. Consider:
+
 - Adding a jsDelivr CDN fallback (`cdn.jsdelivr.net/gh/hagezi/dns-blocklists@<rev>/`)
 - Committing the blocklist files directly into the repo (they're large — `ultimate.txt` alone is ~20 MB — so this is a tradeoff)
 - Using `fetchurl` with multiple mirror URLs
@@ -87,6 +88,7 @@ Add a gotcha note: "HaGeZi blocklists are fetched from GitLab mirror (`gitlab.co
 ## f) Up to 50 Things We Should Get Done Next
 
 ### Immediate (this fix)
+
 1. ~~**Deploy and verify** — Run `nix run .#deploy` and confirm `dnsblockd` starts with the new blocklists~~ done — deployed successfully the same evening (`2026-08-13_19-01`, `990fcd66`)
 2. ~~**Verify blocklist entry counts** — After deploy, check `dnsblockd` logs for expected domain counts~~ done (moot) — "DNS Blocking Active" Gatus check guards the blocking pipeline
 3. ~~**Verify DNS resolution still works** — Confirm `*.home.lan` resolves and ad-blocking is functional~~ done (moot) — "DNS Resolver" + "DNS Resolver TCP" Gatus checks monitor continuously
@@ -95,6 +97,7 @@ Add a gotcha note: "HaGeZi blocklists are fetched from GitLab mirror (`gitlab.co
 6. **Update archived status report** — `docs/status/archive/2026-05-06_07-10_SESSION-37-DNS-REPRODUCIBILITY-MANIFEST-HARDENING.md` line 22 references the old GitHub rev — add a note that GitHub is no longer used
 
 ### Short-term (reproducibility & resilience)
+
 7. **Pin to a GitLab commit** — Instead of `main`, fetch from a specific GitLab commit hash for reproducibility, with a scheduled job to bump it
 8. **Create a blocklist hash refresh script** — `scripts/update-dns-blocklists.sh` that downloads from GitLab, recomputes hashes, and updates `dns-blocklists.nix`
 9. **Add jsDelivr as fallback mirror** — `fetchurl` supports multiple URLs; add `cdn.jsdelivr.net/gh/hagezi/dns-blocklists@main/` as fallback
@@ -102,6 +105,7 @@ Add a gotcha note: "HaGeZi blocklists are fetched from GitLab mirror (`gitlab.co
 11. **Consider vendoring critical blocklists** — The small lists (`dga7.txt`, `doh.txt`, native.* lists) could be committed directly; only `ultimate.txt` (~20 MB) needs fetching
 
 ### DNS system health
+
 12. **Add Gatus check for GitLab mirror reachability** — Alert if GitLab mirror goes down, so we know before a deploy breaks
 13. **Add blocklist download monitoring** — Expose Prometheus metric for blocklist entry count, alert if it drops dramatically
 14. **Review the whitelist** — Some entries may be stale (e.g., movieffm.net, olevod.com — are these still needed?)
@@ -109,6 +113,7 @@ Add a gotcha note: "HaGeZi blocklists are fetched from GitLab mirror (`gitlab.co
 16. ~~**Review StevenBlack blocklist** — That one uses a pinned GitHub commit (`4a68876c`); verify it's still reachable (different repo, likely fine, but check)~~ done (moot) — every successful build since has fetched it
 
 ### From the build log (other things noticed)
+
 17. **OpenAudible AppImage download** — The build was also fetching `OpenAudible_4.7.4_x86_64.AppImage` (94 MB) from GitHub releases — consider mirroring or caching
 18. **Geekbench tarball download** — 217 MB `Geekbench-6.7.1-Linux.tar.gz` was downloading during the build — this is a large FOD that should be cached or pre-fetched
 19. **Review all GitHub-based `fetchurl` dependencies** — Audit the entire flake for other `raw.githubusercontent.com` or GitHub release downloads that could break if repos are locked

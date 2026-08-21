@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Executive Summary
 
 The user ran `nix flake update && nh os switch .` which hit a deploy blocker (`services.monitor365.displayUser` option missing). A previous Crush session (GLM-5.2) fixed that and committed `83608262`, but that commit included `buildflow --fix` (deadnix:repair) changes that **broke two files** by removing lambda parameters without adding `...` to accept extra arguments. This session found and fixed both breakages, verified the entire flake evaluates, and documented the gotcha.

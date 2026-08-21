@@ -7,7 +7,6 @@
 
 ---
 
-
 ## What This Session Did
 
 The user asked to expand SearXNG with more search engines (Yandex, Baidu, Quark, video engines, developer-reference engines) and improve privacy/performance. The session uncovered a critical SearXNG configuration bug affecting **53 of 71 engines**.
@@ -20,13 +19,13 @@ The user asked to expand SearXNG with more search engines (Yandex, Baidu, Quark,
 
 Added explicit `disabled = false; inactive = false;` declarations for:
 
-| Category | Count | Engines |
-|---|---|---|
-| General search | 7 | google, google images, bing, yandex, yandex images, baidu images, quark images |
-| Package registries | 15 | alpine, cachy, crates.io, docker hub, hex, hoogle, lib.rs, metacpan, pnpm, packagist, pkg.go.dev, pub.dev, pypi, rubygems, voidlinux |
-| Q&A forums | 6 | askubuntu, caddy.community, discuss.python, pi-hole.community, stackoverflow, superuser |
-| Code repos | 10 | bitbucket, codeberg, gitea.com, github, gitlab, huggingface (3), ollama, sourcehut |
-| Video search | 33 | google videos, bing videos, brave.videos, qwant videos, ddg videos, youtube, dailymotion, vimeo, rumble, peertube, sepiasearch, odysee, bilibili, media.ccc.de, wikicommons.videos, pixabay, bitchute, google play movies, mediathekviewweb, naver, acfun, iqiyi, sogou, 360search, adobe stock, dogpile, findfiles, fireball, niconico, privacywall, tusksearch, vuhuv, ina |
+| Category           | Count | Engines                                                                                                                                                                                                                                                                                                                                                                      |
+| ------------------ | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| General search     | 7     | google, google images, bing, yandex, yandex images, baidu images, quark images                                                                                                                                                                                                                                                                                               |
+| Package registries | 15    | alpine, cachy, crates.io, docker hub, hex, hoogle, lib.rs, metacpan, pnpm, packagist, pkg.go.dev, pub.dev, pypi, rubygems, voidlinux                                                                                                                                                                                                                                         |
+| Q&A forums         | 6     | askubuntu, caddy.community, discuss.python, pi-hole.community, stackoverflow, superuser                                                                                                                                                                                                                                                                                      |
+| Code repos         | 10    | bitbucket, codeberg, gitea.com, github, gitlab, huggingface (3), ollama, sourcehut                                                                                                                                                                                                                                                                                           |
+| Video search       | 33    | google videos, bing videos, brave.videos, qwant videos, ddg videos, youtube, dailymotion, vimeo, rumble, peertube, sepiasearch, odysee, bilibili, media.ccc.de, wikicommons.videos, pixabay, bitchute, google play movies, mediathekviewweb, naver, acfun, iqiyi, sogou, 360search, adobe stock, dogpile, findfiles, fireball, niconico, privacywall, tusksearch, vuhuv, ina |
 
 ### 2. Redis cache bounded
 
@@ -65,6 +64,7 @@ Already configured at `configuration.nix:146-154` via `programs.chromium.extraOp
 ### 1. SearXNG `disabled` vs `inactive` bug — FIXED, but not deployed
 
 **Root cause:** SearXNG has two independent engine off-switches:
+
 - `disabled: true` — engine module never loads at all
 - `inactive: true` — engine loads but is excluded from default category searches
 
@@ -105,6 +105,7 @@ All changes verified via `nix eval --json` (71 engines, both `disabled` and `ina
 I wrote `inactive = false` on every engine without understanding SearXNG's dual off-switch system. The result: we "added" 60+ engines over multiple turns, and almost NONE of them were actually enabled. Only Google and YouTube worked (because they default to `inactive: true`, not `disabled: true`).
 
 **Why this happened:**
+
 - I copied the pattern from the existing Google config (`inactive = false`), which worked for Google only because Google's default is `inactive: true`
 - I never checked SearXNG's default `settings.yml` to see what the actual default state of each engine was
 - When the user said "Why can't I add yandex?", I initially blamed Yandex's CAPTCHA blocking — a plausible but WRONG diagnosis. The real reason was that the engine was simply never loaded.
@@ -257,9 +258,9 @@ You expressed interest in a SOCKS5 proxy on a VPS to hide evo-x2's IP. I need: (
 
 ## File-level summary
 
-| File | Changes | Lines changed |
-|---|---|---|
-| `modules/nixos/services/searxng.nix` | Engine list (8→71), timeouts (3s→8s), Redis cache, autocomplete, `disabled` fix | ~100 lines |
+| File                                 | Changes                                                                         | Lines changed |
+| ------------------------------------ | ------------------------------------------------------------------------------- | ------------- |
+| `modules/nixos/services/searxng.nix` | Engine list (8→71), timeouts (3s→8s), Redis cache, autocomplete, `disabled` fix | ~100 lines    |
 
 No other files were modified. No AGENTS.md, no Gatus config, no post-deploy-check — all identified as next steps above.
 

@@ -67,6 +67,7 @@ PR reviewed and verdict posted on GitHub as a **COMMENT** review ("Request chang
 ## f) NEXT — up to 50 things (ordered: P0 blockers first)
 
 **PR 139 fixes (P0 — must land before merge):**
+
 1. Rewrite unit: `User = "forgejo"; Group = "forgejo";` + plain `harden { }`; drop root, drop all five caps.
 2. Script: remove `runuser -u forgejo --` prefixes; call the forgejo CLI directly (tokenGen idiom); drop `util-linux` runtimeInput.
 3. Add `+`-prefixed `ExecStartPost`: `install -o hermes -g hermes -m 0400 ${stateDir}/hermes-agent.token /run/hermes-forgejo-token` (root escape hatch; mirrors gitea-runner `+forgejo-gen-runner-token`).
@@ -116,4 +117,4 @@ PR reviewed and verdict posted on GitHub as a **COMMENT** review ("Request chang
 
 ---
 
-*Session artifacts: review posted at https://github.com/LarsArtmann/SystemNix/pull/139 (COMMENTED). Worktree/branch cleaned. Zero edits to tracked files this session.*
+_Session artifacts: review posted at https://github.com/LarsArtmann/SystemNix/pull/139 (COMMENTED). Worktree/branch cleaned. Zero edits to tracked files this session._

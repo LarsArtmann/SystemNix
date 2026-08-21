@@ -54,6 +54,7 @@
 ## f) NEXT UP TO 50 THINGS
 
 **Immediate (this session's thread)**
+
 1. ~~Watch monitor365 copy to completion: `journalctl -u data-to-pool-migration -f`~~ done (ADDENDUM 16:10 — all three trees migrated, verified)
 2. ~~On success: confirm all three sources gone (`ls /data`), unit skips on next boot, sources recoverable only via snapshots~~ done (ADDENDUM: complete; sources recoverable via snapshots)
 3. On COPY FAILED with EIO: extract the unreadable-file list from the journal — that's the corrupt-file map (T05 partial) for this tree
@@ -96,6 +97,7 @@
 **g.3 — keep snapshotting (no action):** `services/monitor365` was already in the committed btrbk-pool list before the question; CoW snapshots of static data are near-free once taken (first-night cost only). Coherent with the other subvols.
 
 **Operational notes from the completion run:**
+
 - 5 runs total (1 SIGTERM'd by a concurrent deploy's unit restart, 2 verify-failed pre-heal-fix, 1 post-heal dir-mtime iteration, 1 clean). Every restart was cheap after the bulk landed (64 MB delta + one verify walk each) — the idempotent design paid for itself under a hostile concurrent-deploy environment.
 - Memory: verify walks peaked at the old 512M cap (483M swap); raised to 1G — peak then 1G/457M swap. A 1.9M-inode `rsync -c` walk wants ~1.5G headroom.
 - Verify walks took 20-60 min depending on concurrent build IO (same-machine contention is the dominant variable, not the tree).

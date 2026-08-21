@@ -74,4 +74,4 @@
 
 ---
 
-*Point-in-time snapshot. Live probes and journal evidence gathered 2026-08-18 22:20–22:40 CEST. The auto-commit daemon will sweep this file.*
+_Point-in-time snapshot. Live probes and journal evidence gathered 2026-08-18 22:20–22:40 CEST. The auto-commit daemon will sweep this file._

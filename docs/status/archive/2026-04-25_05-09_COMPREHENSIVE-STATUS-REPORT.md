@@ -174,13 +174,13 @@
 
 ## D) TOTALLY FUCKED UP (Mistakes Made & Fixed)
 
-| #   | What happened                                     | Impact                                                                                                      | Resolution                                                         |
-| --- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| 1   | gitea-repos.nix structural bug (session 2)        | ExecStartPre/ExecStart placed outside `serviceConfig` during initial refactor — service would fail silently | Fixed immediately. `nix fmt` syntax check caught the misplacement. |
-| 2   | Taskwarrior `home.file` addition (session 2)      | Added `home.file` pointing to nonexistent path — no functional benefit, no security improvement             | Reverted in commit `1670737`.                                      |
-| 3   | Eval smoke test removal (session 3)               | Removed `                                                                                                   |                                                                    | true` → darwin eval failed in sandbox (`nix-instantiate` doesn't support flake refs) | Replaced with honest stubs. `nix flake check --no-build` validates everything. |
-| 4   | rpi3 extraSpecialArgs edit (session 3)            | Edit ate the closing `};` and `inputs.self.nixosModules.dns-failover` line, breaking rpi3 config            | Fixed immediately. `just test-fast` caught it before commit.       |
-| 5   | Statix warnings in theme.nix/home.nix (session 3) | Used `{}: rec` and `x = theme.x` patterns that statix flags                                                 | Fixed: `_` for unused arg, `inherit` for assignments.              |
+| # | What happened                                     | Impact                                                                                                      | Resolution                                                         |
+| - | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| 1 | gitea-repos.nix structural bug (session 2)        | ExecStartPre/ExecStart placed outside `serviceConfig` during initial refactor — service would fail silently | Fixed immediately. `nix fmt` syntax check caught the misplacement. |
+| 2 | Taskwarrior `home.file` addition (session 2)      | Added `home.file` pointing to nonexistent path — no functional benefit, no security improvement             | Reverted in commit `1670737`.                                      |
+| 3 | Eval smoke test removal (session 3)               | Removed `                                                                                                   |                                                                    |
+| 4 | rpi3 extraSpecialArgs edit (session 3)            | Edit ate the closing `};` and `inputs.self.nixosModules.dns-failover` line, breaking rpi3 config            | Fixed immediately. `just test-fast` caught it before commit.       |
+| 5 | Statix warnings in theme.nix/home.nix (session 3) | Used `{}: rec` and `x = theme.x` patterns that statix flags                                                 | Fixed: `_` for unused arg, `inherit` for assignments.              |
 
 **Zero lasting damage.** All 5 issues caught by pre-commit hooks or `just test-fast` before push.
 
@@ -228,48 +228,48 @@
 
 ### TIER 1: Deploy & Verify (REQUIRES HUMAN)
 
-| #   | Task                                          | Est. | Why                                        |
-| --- | --------------------------------------------- | ---- | ------------------------------------------ |
-| 1   | `just switch` — deploy 17 commits to evo-x2   | 45m  | Ollama/Steam/ComfyUI broken until deployed |
-| 2   | Verify Ollama + Steam + ComfyUI after rebuild | 15m  | hipblaslt fix must be validated            |
-| 3   | Verify Caddy HTTPS block page + all vhosts    | 5m   | TLS certs, forwardAuth, 12+ vhosts         |
-| 4   | Verify SigNoz metrics/logs/traces collection  | 5m   | Full observability stack                   |
-| 5   | Verify Authelia SSO login (immich, gitea)     | 3m   | OIDC flow end-to-end                       |
-| 6   | Verify Taskwarrior backup timer fires         | 2m   | Daily backup, 30-day rotation              |
+| # | Task                                          | Est. | Why                                        |
+| - | --------------------------------------------- | ---- | ------------------------------------------ |
+| 1 | `just switch` — deploy 17 commits to evo-x2   | 45m  | Ollama/Steam/ComfyUI broken until deployed |
+| 2 | Verify Ollama + Steam + ComfyUI after rebuild | 15m  | hipblaslt fix must be validated            |
+| 3 | Verify Caddy HTTPS block page + all vhosts    | 5m   | TLS certs, forwardAuth, 12+ vhosts         |
+| 4 | Verify SigNoz metrics/logs/traces collection  | 5m   | Full observability stack                   |
+| 5 | Verify Authelia SSO login (immich, gitea)     | 3m   | OIDC flow end-to-end                       |
+| 6 | Verify Taskwarrior backup timer fires         | 2m   | Daily backup, 30-day rotation              |
 
 ### TIER 2: High-Impact Code (AI CAN DO NOW)
 
-| #   | Task                                                              | Est. | Why                                         |
-| --- | ----------------------------------------------------------------- | ---- | ------------------------------------------- |
-| 7   | Delete duplicate `platforms/nixos/desktop/security-hardening.nix` | 5m   | Byte-for-byte duplicate of modules/ version |
-| 8   | Wire `theme.nix` to darwin `home.nix`                             | 15m  | Cross-platform theme consistency            |
-| 9   | Fix SigNoz dashboard provisioning (idempotent)                    | 10m  | Same fix pattern as alert rules             |
-| 10  | Move DNS failover VRRP password to sops                           | 10m  | Production security                         |
-| 11  | Add enable toggles to core 4 modules (sops, caddy, gitea, immich) | 45m  | Service composability                       |
-| 12  | Pin Docker sha256 digests (voice-agents + photomap)               | 10m  | Immutable deployments                       |
-| 13  | Setup Cachix binary cache                                         | 30m  | 30-60min build time savings                 |
+| #  | Task                                                              | Est. | Why                                         |
+| -- | ----------------------------------------------------------------- | ---- | ------------------------------------------- |
+| 7  | Delete duplicate `platforms/nixos/desktop/security-hardening.nix` | 5m   | Byte-for-byte duplicate of modules/ version |
+| 8  | Wire `theme.nix` to darwin `home.nix`                             | 15m  | Cross-platform theme consistency            |
+| 9  | Fix SigNoz dashboard provisioning (idempotent)                    | 10m  | Same fix pattern as alert rules             |
+| 10 | Move DNS failover VRRP password to sops                           | 10m  | Production security                         |
+| 11 | Add enable toggles to core 4 modules (sops, caddy, gitea, immich) | 45m  | Service composability                       |
+| 12 | Pin Docker sha256 digests (voice-agents + photomap)               | 10m  | Immutable deployments                       |
+| 13 | Setup Cachix binary cache                                         | 30m  | 30-60min build time savings                 |
 
 ### TIER 3: Service Improvements
 
-| #   | Task                                          | Est. | Why                 |
-| --- | --------------------------------------------- | ---- | ------------------- |
-| 14  | Hermes: add health check endpoint             | 10m  | Service reliability |
-| 15  | ComfyUI: fix hardcoded paths → module options | 12m  | Configurability     |
-| 16  | Twenty CRM: add backup rotation               | 8m   | Data safety         |
-| 17  | Voice agents: add Whisper ASR health check    | 8m   | Service reliability |
-| 18  | Authelia: add SMTP notifications              | 10m  | User experience     |
+| #  | Task                                          | Est. | Why                 |
+| -- | --------------------------------------------- | ---- | ------------------- |
+| 14 | Hermes: add health check endpoint             | 10m  | Service reliability |
+| 15 | ComfyUI: fix hardcoded paths → module options | 12m  | Configurability     |
+| 16 | Twenty CRM: add backup rotation               | 8m   | Data safety         |
+| 17 | Voice agents: add Whisper ASR health check    | 8m   | Service reliability |
+| 18 | Authelia: add SMTP notifications              | 10m  | User experience     |
 
 ### TIER 4: Quality & Documentation
 
-| #   | Task                                                      | Est. | Why                        |
-| --- | --------------------------------------------------------- | ---- | -------------------------- |
-| 19  | Resolve `preferences.nix` vs `theme.nix` (pick one)       | 15m  | Eliminate zombie module    |
-| 20  | Document DNS cluster in AGENTS.md                         | 10m  | Onboarding                 |
-| 21  | Write ADR for niri session restore design                 | 10m  | Architecture documentation |
-| 22  | Update top-level README.md                                | 12m  | Project presentation       |
-| 23  | Add missing metrics for 8 services in SigNoz              | 12m  | Observability coverage     |
-| 24  | Consolidate 4× `allowUnfree = true` in flake.nix          | 10m  | DRY principle              |
-| 25  | File nixpkgs issue for hipblaslt Tensile gfx908 rejection | 10m  | Upstream fix               |
+| #  | Task                                                      | Est. | Why                        |
+| -- | --------------------------------------------------------- | ---- | -------------------------- |
+| 19 | Resolve `preferences.nix` vs `theme.nix` (pick one)       | 15m  | Eliminate zombie module    |
+| 20 | Document DNS cluster in AGENTS.md                         | 10m  | Onboarding                 |
+| 21 | Write ADR for niri session restore design                 | 10m  | Architecture documentation |
+| 22 | Update top-level README.md                                | 12m  | Project presentation       |
+| 23 | Add missing metrics for 8 services in SigNoz              | 12m  | Observability coverage     |
+| 24 | Consolidate 4× `allowUnfree = true` in flake.nix          | 10m  | DRY principle              |
+| 25 | File nixpkgs issue for hipblaslt Tensile gfx908 rejection | 10m  | Upstream fix               |
 
 **Estimated total: ~5.5 hours (Tier 1: 1.25h, Tier 2: 1.8h, Tier 3: 0.8h, Tier 4: 1.1h)**
 

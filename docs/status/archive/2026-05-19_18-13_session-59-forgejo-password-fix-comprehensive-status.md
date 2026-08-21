@@ -211,33 +211,33 @@ The service is condition-checked and skipped. Needs investigation.
 
 ## f) Top 25 Things We Should Get Done Next
 
-| #   | Priority | Task                                                                                          | Effort | Impact                                   |
-| --- | -------- | --------------------------------------------------------------------------------------------- | ------ | ---------------------------------------- |
-| 1   | **P0**   | Deploy Forgejo fix (`just switch`)                                                            | 5 min  | Restores git forge                       |
-| 2   | **P0**   | Verify Forgejo + runner come up healthy                                                       | 5 min  | Confirms fix                             |
-| 3   | **P0**   | ClickHouse backup — even a daily `pg_dump` equivalent                                         | 2h     | Prevents catastrophic data loss          |
-| 4   | **P1**   | Service capability audit — check all 36 modules for missing `CapabilityBoundingSet` overrides | 4h     | Prevents silent service failures         |
-| 5   | **P1**   | WatchdogSec audit — verify no other service has Caddy-style misconfig                         | 1h     | Prevents mystery service kills           |
-| 6   | **P1**   | Fix ComfyUI startup (condition check fails)                                                   | 1h     | Restores AI image generation             |
-| 7   | **P1**   | Investigate Photomap service (no journal entries)                                             | 30min  | Determine if it's configured             |
-| 8   | **P1**   | Investigate Immich main service (no journal entries for systemd wrapper)                      | 30min  | Ensure photo management works            |
-| 9   | **P2**   | Migrate Forgejo admin password to sops-nix                                                    | 2h     | Eliminates fragile password file pattern |
-| 10  | **P2**   | Add `PartOf=forgejo.service` to runner to stop infinite retries                               | 15min  | Cleaner failure mode                     |
-| 11  | **P2**   | Provision Pi 3 hardware + sops-nix age identity                                               | 4h     | Enables DNS failover cluster             |
-| 12  | **P2**   | Migrate VRRP password from plaintext to sops (the only TODO in codebase)                      | 1h     | Security fix                             |
-| 13  | **P2**   | Set up Forgejo Actions CI for automated flake.lock updates                                    | 3h     | Automates dependency management          |
-| 14  | **P2**   | Forgejo push mirror — use dedicated GitHub PAT with minimal scope                             | 30min  | Security improvement                     |
-| 15  | **P2**   | Hermes HTTP 429 rate limit handling — add retry/backoff                                       | 2h     | Reduces cron job failures                |
-| 16  | **P2**   | Darwin distributed builds to evo-x2                                                           | 3h     | Fixes MacBook Air disk exhaustion        |
-| 17  | **P2**   | Darwin automated disk cleanup                                                                 | 2h     | Prevents build failures                  |
-| 18  | **P3**   | Add DNSSEC validation to Unbound config                                                       | 1h     | DNS security improvement                 |
-| 19  | **P3**   | Automate Forgejo repo push mirror setup (currently manual)                                    | 3h     | Reduces manual work                      |
-| 20  | **P3**   | Add Gatus endpoint for Forgejo Actions runner health                                          | 15min  | Observability gap                        |
-| 21  | **P3**   | Investigate dnsblockd TLS handshake errors from 192.168.1.62                                  | 30min  | Reduce log noise                         |
-| 22  | **P3**   | Review all `mkForce` usage for correctness (esp. in harden overrides)                         | 2h     | Prevents subtle config conflicts         |
-| 23  | **P3**   | Add `nix flake check` CI via Forgejo Actions                                                  | 2h     | Catches build issues before merge        |
-| 24  | **P3**   | Document the `_local_deps` overlay pattern in a guide for new repos                           | 1h     | Developer experience                     |
-| 25  | **P3**   | Audit all services for `BindsTo` misuse (wallpaper-style bugs)                                | 1h     | Prevents cascade failures                |
+| #  | Priority | Task                                                                                          | Effort | Impact                                   |
+| -- | -------- | --------------------------------------------------------------------------------------------- | ------ | ---------------------------------------- |
+| 1  | **P0**   | Deploy Forgejo fix (`just switch`)                                                            | 5 min  | Restores git forge                       |
+| 2  | **P0**   | Verify Forgejo + runner come up healthy                                                       | 5 min  | Confirms fix                             |
+| 3  | **P0**   | ClickHouse backup — even a daily `pg_dump` equivalent                                         | 2h     | Prevents catastrophic data loss          |
+| 4  | **P1**   | Service capability audit — check all 36 modules for missing `CapabilityBoundingSet` overrides | 4h     | Prevents silent service failures         |
+| 5  | **P1**   | WatchdogSec audit — verify no other service has Caddy-style misconfig                         | 1h     | Prevents mystery service kills           |
+| 6  | **P1**   | Fix ComfyUI startup (condition check fails)                                                   | 1h     | Restores AI image generation             |
+| 7  | **P1**   | Investigate Photomap service (no journal entries)                                             | 30min  | Determine if it's configured             |
+| 8  | **P1**   | Investigate Immich main service (no journal entries for systemd wrapper)                      | 30min  | Ensure photo management works            |
+| 9  | **P2**   | Migrate Forgejo admin password to sops-nix                                                    | 2h     | Eliminates fragile password file pattern |
+| 10 | **P2**   | Add `PartOf=forgejo.service` to runner to stop infinite retries                               | 15min  | Cleaner failure mode                     |
+| 11 | **P2**   | Provision Pi 3 hardware + sops-nix age identity                                               | 4h     | Enables DNS failover cluster             |
+| 12 | **P2**   | Migrate VRRP password from plaintext to sops (the only TODO in codebase)                      | 1h     | Security fix                             |
+| 13 | **P2**   | Set up Forgejo Actions CI for automated flake.lock updates                                    | 3h     | Automates dependency management          |
+| 14 | **P2**   | Forgejo push mirror — use dedicated GitHub PAT with minimal scope                             | 30min  | Security improvement                     |
+| 15 | **P2**   | Hermes HTTP 429 rate limit handling — add retry/backoff                                       | 2h     | Reduces cron job failures                |
+| 16 | **P2**   | Darwin distributed builds to evo-x2                                                           | 3h     | Fixes MacBook Air disk exhaustion        |
+| 17 | **P2**   | Darwin automated disk cleanup                                                                 | 2h     | Prevents build failures                  |
+| 18 | **P3**   | Add DNSSEC validation to Unbound config                                                       | 1h     | DNS security improvement                 |
+| 19 | **P3**   | Automate Forgejo repo push mirror setup (currently manual)                                    | 3h     | Reduces manual work                      |
+| 20 | **P3**   | Add Gatus endpoint for Forgejo Actions runner health                                          | 15min  | Observability gap                        |
+| 21 | **P3**   | Investigate dnsblockd TLS handshake errors from 192.168.1.62                                  | 30min  | Reduce log noise                         |
+| 22 | **P3**   | Review all `mkForce` usage for correctness (esp. in harden overrides)                         | 2h     | Prevents subtle config conflicts         |
+| 23 | **P3**   | Add `nix flake check` CI via Forgejo Actions                                                  | 2h     | Catches build issues before merge        |
+| 24 | **P3**   | Document the `_local_deps` overlay pattern in a guide for new repos                           | 1h     | Developer experience                     |
+| 25 | **P3**   | Audit all services for `BindsTo` misuse (wallpaper-style bugs)                                | 1h     | Prevents cascade failures                |
 
 ---
 

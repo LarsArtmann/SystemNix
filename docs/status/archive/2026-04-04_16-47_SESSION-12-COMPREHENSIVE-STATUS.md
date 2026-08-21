@@ -186,33 +186,33 @@
 
 ## f) Top #25 Things to Get Done Next
 
-| #   | Task                                                                          | Priority | Blocked By                  |
-| --- | ----------------------------------------------------------------------------- | -------- | --------------------------- |
-| 1   | **Run `just switch` to deploy hardened SSH config**                           | CRITICAL | User action (sudo/Touch ID) |
-| 2   | **Verify `~/.ssh/config` has crypto hardening**                               | CRITICAL | #1                          |
-| 3   | **Test `git push` to verify Ed25519 key with GitHub**                         | CRITICAL | #1                          |
-| 4   | **Push all 6 commits to origin**                                              | HIGH     | #3                          |
-| 5   | **Run `sudo nix-collect-garbage -d`** to clear 127 root profiles              | HIGH     | User action (sudo)          |
-| 6   | **Free more disk space** (currently 2.5GB, need 5-10GB)                       | HIGH     | #5                          |
-| 7   | **Deploy NixOS SSH hardening on evo-x2**                                      | HIGH     | Physical/SSH access         |
-| 8   | **Verify NixOS sshd hardening on evo-x2**                                     | HIGH     | #7                          |
-| 9   | **Confirm GitHub has Ed25519 key** (not RSA)                                  | MEDIUM   | #2                          |
-| 10  | **Add GitHub Actions CI for `nix flake check`**                               | MEDIUM   | #4                          |
-| 11  | **Fix pre-commit `nix check` timeout/hanging**                                | MEDIUM   | Time                        |
-| 12  | **Remove old RSA keys from GitHub account**                                   | MEDIUM   | #9                          |
-| 13  | **DRY crypto constants in nix-ssh-config**                                    | LOW      | #4                          |
-| 14  | **Fix statix warnings** (signoz.nix W03/W04, flake.nix W20, ai-stack.nix W20) | LOW      | Time                        |
-| 15  | **Clean up stale SSH config backup** (`~/.ssh/config.backup`)                 | LOW      | Time                        |
-| 16  | **Remove `~/.ssh/google_compute_engine*` keys** if unused                     | LOW      | Verification                |
-| 17  | **Add `ssh-config` to NixOS evo-x2 home.nix** for Hetzner hosts               | LOW      | Already done?               |
-| 18  | **Test SSH to onprem (192.168.1.100)** with Ed25519                           | LOW      | #1, network                 |
-| 19  | **Test SSH to evo-x2 (192.168.1.150)** with Ed25519                           | LOW      | #1, network                 |
-| 20  | **Test SSH to Hetzner servers** with Ed25519                                  | LOW      | #1, network                 |
-| 21  | **Update AGENTS.md with AI regression lesson**                                | LOW      | Time                        |
-| 22  | **Add nix-ssh-config README with usage examples**                             | LOW      | Time                        |
-| 23  | **Verify Secretive SSH agent integration** (macOS Touch ID for SSH)           | LOW      | #1                          |
-| 24  | **Set up SSH key rotation schedule** (annual?)                                | LOW      | Documentation               |
-| 25  | **Archive session 10-12 status reports** into project docs                    | LOW      | Time                        |
+| #  | Task                                                                          | Priority | Blocked By                  |
+| -- | ----------------------------------------------------------------------------- | -------- | --------------------------- |
+| 1  | **Run `just switch` to deploy hardened SSH config**                           | CRITICAL | User action (sudo/Touch ID) |
+| 2  | **Verify `~/.ssh/config` has crypto hardening**                               | CRITICAL | #1                          |
+| 3  | **Test `git push` to verify Ed25519 key with GitHub**                         | CRITICAL | #1                          |
+| 4  | **Push all 6 commits to origin**                                              | HIGH     | #3                          |
+| 5  | **Run `sudo nix-collect-garbage -d`** to clear 127 root profiles              | HIGH     | User action (sudo)          |
+| 6  | **Free more disk space** (currently 2.5GB, need 5-10GB)                       | HIGH     | #5                          |
+| 7  | **Deploy NixOS SSH hardening on evo-x2**                                      | HIGH     | Physical/SSH access         |
+| 8  | **Verify NixOS sshd hardening on evo-x2**                                     | HIGH     | #7                          |
+| 9  | **Confirm GitHub has Ed25519 key** (not RSA)                                  | MEDIUM   | #2                          |
+| 10 | **Add GitHub Actions CI for `nix flake check`**                               | MEDIUM   | #4                          |
+| 11 | **Fix pre-commit `nix check` timeout/hanging**                                | MEDIUM   | Time                        |
+| 12 | **Remove old RSA keys from GitHub account**                                   | MEDIUM   | #9                          |
+| 13 | **DRY crypto constants in nix-ssh-config**                                    | LOW      | #4                          |
+| 14 | **Fix statix warnings** (signoz.nix W03/W04, flake.nix W20, ai-stack.nix W20) | LOW      | Time                        |
+| 15 | **Clean up stale SSH config backup** (`~/.ssh/config.backup`)                 | LOW      | Time                        |
+| 16 | **Remove `~/.ssh/google_compute_engine*` keys** if unused                     | LOW      | Verification                |
+| 17 | **Add `ssh-config` to NixOS evo-x2 home.nix** for Hetzner hosts               | LOW      | Already done?               |
+| 18 | **Test SSH to onprem (192.168.1.100)** with Ed25519                           | LOW      | #1, network                 |
+| 19 | **Test SSH to evo-x2 (192.168.1.150)** with Ed25519                           | LOW      | #1, network                 |
+| 20 | **Test SSH to Hetzner servers** with Ed25519                                  | LOW      | #1, network                 |
+| 21 | **Update AGENTS.md with AI regression lesson**                                | LOW      | Time                        |
+| 22 | **Add nix-ssh-config README with usage examples**                             | LOW      | Time                        |
+| 23 | **Verify Secretive SSH agent integration** (macOS Touch ID for SSH)           | LOW      | #1                          |
+| 24 | **Set up SSH key rotation schedule** (annual?)                                | LOW      | Documentation               |
+| 25 | **Archive session 10-12 status reports** into project docs                    | LOW      | Time                        |
 
 ---
 

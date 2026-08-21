@@ -141,33 +141,33 @@
 
 ## F) Top 25 Things We Should Do Next
 
-| #   | Priority | Task                                                                                             | Impact                      |
-| --- | -------- | ------------------------------------------------------------------------------------------------ | --------------------------- |
-| 1   | P0       | **Fix ComfyUI service** — investigate crash, get image generation back online                    | Users blocked               |
-| 2   | P0       | **Fix service-health-check.service** — the monitor monitoring itself is broken                   | Blind to failures           |
-| 3   | P0       | **Nix GC + disk assessment** — `nix-collect-garbage -d`, audit large store paths                 | Disk crisis prevention      |
-| 4   | P1       | **Wire Gatus into flake.nix** — add to imports, nixosModules, configuration.nix enable           | External uptime monitoring  |
-| 5   | P1       | **Add Gatus Caddy vhost + DNS** — `gatus.home.lan` reverse proxy + Unbound entry                 | Accessible dashboard        |
-| 6   | P1       | **Implement backup strategy** — Immich DB, Gitea repos, Taskwarrior export to `/data` + off-site | Catastrophe prevention      |
-| 7   | P1       | **Configure SigNoz alert rules** — CPU >90%, disk >85%, service down, OOM kills                  | Proactive incident response |
-| 8   | P1       | **Set up ntfy.sh or Gotify for alerts** — wire Gatus + SigNoz alerts to push notifications       | Incident awareness          |
-| 9   | P2       | **Audit all services for `harden` library adoption** — find inline systemd configs               | Consistency                 |
-| 10  | P2       | **Split signoz.nix** (741 lines) into sub-modules — collector, clickhouse, query-service         | Maintainability             |
-| 11  | P2       | **Add `gatus` justfile recipes** — `just gatus-status`, `just gatus-logs`                        | Operational convenience     |
-| 12  | P2       | **Provision Pi 3 for DNS failover cluster** — hardware setup, flash SD card                      | High-availability DNS       |
-| 13  | P2       | **Configure Gatus → SigNoz metrics pipeline** — Prometheus exporter to OTel                      | Unified observability       |
-| 14  | P2       | **Root disk audit** — find what's consuming space beyond /nix/store (84G)                        | Understand disk pressure    |
-| 15  | P2       | **Write NixOS integration tests** — at minimum: DNS resolves, services respond, Caddy proxies    | Regression prevention       |
-| 16  | P2       | **Twenty CRM post-setup** — complete `twenty-POST-SETUP.md` checklist                            | Fully operational CRM       |
-| 17  | P3       | **Consolidate status docs** — archive old reports, create single `CURRENT-STATUS.md` living doc  | Navigation sanity           |
-| 18  | P3       | **Add fail2ban** — protect SSH + web-facing services                                             | Intrusion prevention        |
-| 19  | P3       | **Automate Immich DB backup** — daily pg_dump to `/data/backups/`                                | Data safety                 |
-| 20  | P3       | **Automate Gitea repo backup** — mirror to S3 or external storage                                | Code safety                 |
-| 21  | P3       | **Audit journald log rotation** — ensure logs don't consume root disk                            | Disk management             |
-| 22  | P3       | **Test `just switch` end-to-end on Darwin** — ensure macOS config still deploys                  | Cross-platform health       |
-| 23  | P4       | **Add uptime status page** — public-facing status page for artmann.tech domains                  | Professionalism             |
-| 24  | P4       | **Evaluate NixOS containerization** — move services to systemd-nspawn or incus                   | Isolation                   |
-| 25  | P4       | **Document disaster recovery procedure** — step-by-step restore from backups                     | Business continuity         |
+| #  | Priority | Task                                                                                             | Impact                      |
+| -- | -------- | ------------------------------------------------------------------------------------------------ | --------------------------- |
+| 1  | P0       | **Fix ComfyUI service** — investigate crash, get image generation back online                    | Users blocked               |
+| 2  | P0       | **Fix service-health-check.service** — the monitor monitoring itself is broken                   | Blind to failures           |
+| 3  | P0       | **Nix GC + disk assessment** — `nix-collect-garbage -d`, audit large store paths                 | Disk crisis prevention      |
+| 4  | P1       | **Wire Gatus into flake.nix** — add to imports, nixosModules, configuration.nix enable           | External uptime monitoring  |
+| 5  | P1       | **Add Gatus Caddy vhost + DNS** — `gatus.home.lan` reverse proxy + Unbound entry                 | Accessible dashboard        |
+| 6  | P1       | **Implement backup strategy** — Immich DB, Gitea repos, Taskwarrior export to `/data` + off-site | Catastrophe prevention      |
+| 7  | P1       | **Configure SigNoz alert rules** — CPU >90%, disk >85%, service down, OOM kills                  | Proactive incident response |
+| 8  | P1       | **Set up ntfy.sh or Gotify for alerts** — wire Gatus + SigNoz alerts to push notifications       | Incident awareness          |
+| 9  | P2       | **Audit all services for `harden` library adoption** — find inline systemd configs               | Consistency                 |
+| 10 | P2       | **Split signoz.nix** (741 lines) into sub-modules — collector, clickhouse, query-service         | Maintainability             |
+| 11 | P2       | **Add `gatus` justfile recipes** — `just gatus-status`, `just gatus-logs`                        | Operational convenience     |
+| 12 | P2       | **Provision Pi 3 for DNS failover cluster** — hardware setup, flash SD card                      | High-availability DNS       |
+| 13 | P2       | **Configure Gatus → SigNoz metrics pipeline** — Prometheus exporter to OTel                      | Unified observability       |
+| 14 | P2       | **Root disk audit** — find what's consuming space beyond /nix/store (84G)                        | Understand disk pressure    |
+| 15 | P2       | **Write NixOS integration tests** — at minimum: DNS resolves, services respond, Caddy proxies    | Regression prevention       |
+| 16 | P2       | **Twenty CRM post-setup** — complete `twenty-POST-SETUP.md` checklist                            | Fully operational CRM       |
+| 17 | P3       | **Consolidate status docs** — archive old reports, create single `CURRENT-STATUS.md` living doc  | Navigation sanity           |
+| 18 | P3       | **Add fail2ban** — protect SSH + web-facing services                                             | Intrusion prevention        |
+| 19 | P3       | **Automate Immich DB backup** — daily pg_dump to `/data/backups/`                                | Data safety                 |
+| 20 | P3       | **Automate Gitea repo backup** — mirror to S3 or external storage                                | Code safety                 |
+| 21 | P3       | **Audit journald log rotation** — ensure logs don't consume root disk                            | Disk management             |
+| 22 | P3       | **Test `just switch` end-to-end on Darwin** — ensure macOS config still deploys                  | Cross-platform health       |
+| 23 | P4       | **Add uptime status page** — public-facing status page for artmann.tech domains                  | Professionalism             |
+| 24 | P4       | **Evaluate NixOS containerization** — move services to systemd-nspawn or incus                   | Isolation                   |
+| 25 | P4       | **Document disaster recovery procedure** — step-by-step restore from backups                     | Business continuity         |
 
 ---
 

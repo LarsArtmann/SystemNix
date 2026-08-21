@@ -15,50 +15,50 @@
 
 ### This Session (Session 122 — 1 commit: `16ce8c92`)
 
-| #   | Item                                     | File(s)                           | Notes                                                                                      |
-| --- | ---------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------ |
-| 1   | Hermes OpenRouter/OpenAI fallback config | `modules/nixos/services/sops.nix` | Added `hermes_openai_api_key` sops placeholder + `OPENAI_API_KEY` to `hermes-env` template |
-| 2   | Hermes SSH deploy key generation         | `scripts/hermes-setup/`           | Ed25519 key pair generated, public key committed, private key gitignored                   |
-| 3   | Hermes git remote access docs            | `scripts/hermes-setup/README.md`  | Complete GitHub deploy key setup guide                                                     |
-| 4   | Post-deploy verification script          | `scripts/verify-deployment.sh`    | Comprehensive health check for all blocked verification items                              |
-| 5   | `just verify` recipe                     | `justfile`                        | Runs `verify-deployment.sh` remotely over SSH to evo-x2                                    |
-| 6   | Go flake-parts template                  | `templates/go-flake-parts/`       | Standardized `flake.nix` + `README.md` for all LarsArtmann Go repos                        |
-| 7   | Template copied to go-nix-helpers        | `go-nix-helpers/templates/`       | Needs commit + push in that repo                                                           |
-| 8   | go-auto-upgrade `path:` audit            | —                                 | Verified already converted (commit `97df102` in go-auto-upgrade repo)                      |
-| 9   | `.gitignore` SSH key exclusions          | `.gitignore`                      | Added `*.pem`, `id_ed25519`, `id_rsa` patterns                                             |
-| 10  | TODO_LIST.md updated                     | `TODO_LIST.md`                    | All items classified with DONE/PARTIAL/NOT_STARTED/Blocked status                          |
-| 11  | Nix eval passes                          | `flake.nix`                       | `nix flake check --system x86_64-linux` ✅ (statix + deadnix + eval)                       |
-| 12  | All changes pushed to origin             | Git                               | `master` pushed to `github.com:LarsArtmann/SystemNix`                                      |
+| #  | Item                                     | File(s)                           | Notes                                                                                      |
+| -- | ---------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------ |
+| 1  | Hermes OpenRouter/OpenAI fallback config | `modules/nixos/services/sops.nix` | Added `hermes_openai_api_key` sops placeholder + `OPENAI_API_KEY` to `hermes-env` template |
+| 2  | Hermes SSH deploy key generation         | `scripts/hermes-setup/`           | Ed25519 key pair generated, public key committed, private key gitignored                   |
+| 3  | Hermes git remote access docs            | `scripts/hermes-setup/README.md`  | Complete GitHub deploy key setup guide                                                     |
+| 4  | Post-deploy verification script          | `scripts/verify-deployment.sh`    | Comprehensive health check for all blocked verification items                              |
+| 5  | `just verify` recipe                     | `justfile`                        | Runs `verify-deployment.sh` remotely over SSH to evo-x2                                    |
+| 6  | Go flake-parts template                  | `templates/go-flake-parts/`       | Standardized `flake.nix` + `README.md` for all LarsArtmann Go repos                        |
+| 7  | Template copied to go-nix-helpers        | `go-nix-helpers/templates/`       | Needs commit + push in that repo                                                           |
+| 8  | go-auto-upgrade `path:` audit            | —                                 | Verified already converted (commit `97df102` in go-auto-upgrade repo)                      |
+| 9  | `.gitignore` SSH key exclusions          | `.gitignore`                      | Added `*.pem`, `id_ed25519`, `id_rsa` patterns                                             |
+| 10 | TODO_LIST.md updated                     | `TODO_LIST.md`                    | All items classified with DONE/PARTIAL/NOT_STARTED/Blocked status                          |
+| 11 | Nix eval passes                          | `flake.nix`                       | `nix flake check --system x86_64-linux` ✅ (statix + deadnix + eval)                       |
+| 12 | All changes pushed to origin             | Git                               | `master` pushed to `github.com:LarsArtmann/SystemNix`                                      |
 
 ### Previous Sessions (Accumulated since last status report)
 
-| #   | Item                                                  | Session   | Status                                                            |
-| --- | ----------------------------------------------------- | --------- | ----------------------------------------------------------------- |
-| 13  | Catppuccin palette expansion (26 colors)              | 121       | ✅ 164 colors migrated across 9 files                             |
-| 14  | `just status` command                                 | 121       | ✅ `scripts/status-report.sh` + `justfile` recipe                 |
-| 15  | SigNoz per-threshold routing                          | 121       | ✅ 12 critical→Discord, 6 warning→no external                     |
-| 16  | Darwin home.nix parity                                | 121       | ✅ zellij, yazi, zed-editor, session vars, xdg                    |
-| 17  | Cross-platform zellij                                 | 121       | ✅ `pbcopy` on Darwin, `wl-copy` on Linux                         |
-| 18  | `crush-daily` flake lock fix                          | 121       | ✅ Updated to rev with `overlays.default`                         |
-| 19  | Port centralization (all hardcoded → `lib/ports.nix`) | 120       | ✅ 29 registered ports, zero hardcoded                            |
-| 20  | Code deduplication sprint                             | 120       | ✅ 10 duplications eliminated, ~200 lines saved                   |
-| 21  | Dead code elimination                                 | 120       | ✅ `colorSchemeName` removed, `auto-optimise-store` moved         |
-| 22  | Delete orphan `ai-stack.nix`                          | 118       | ✅ 109 lines removed                                              |
-| 23  | Port 8050 conflict fix                                | 118       | ✅ Photomap reassigned 8050→8051                                  |
-| 24  | `go-structure-linter` restored                        | 118       | ✅ Upstream fixed, overlay re-enabled                             |
-| 25  | Stale LSP cleanup timer                               | 118       | ✅ Daily kills gopls/vtsls/rust-analyzer/lua-ls >24h              |
-| 26  | Dozzle deployed                                       | 118       | ✅ Docker log viewer at `logs.home.lan`                           |
-| 27  | Disk growth check timer                               | 118       | ✅ Daily alert if `/data` grows >5G/24h                           |
-| 28  | `xdg-desktop-portal-gtk` race fix                     | 117       | ✅ `After=niri.service`                                           |
-| 29  | `home-manager-lars.service` resilience                | 117       | ✅ `Restart=on-failure`, 3 retries                                |
-| 30  | `dnsblockd.service` start limits                      | 117       | ✅ `StartLimitBurst=10/120s`                                      |
-| 31  | Sed patches eliminated from overlays                  | 117       | ✅ All upstream repos tagged with semver                          |
-| 32  | Duplicate ghostty/swappy removed                      | 115       | ✅ Removed from `base.nix`                                        |
-| 33  | `justfile` fixes (3 bugs)                             | 115       | ✅ gatus port, vendor hashes, auth-bootstrap filename             |
-| 34  | Gatus memory/swap checks                              | 115       | ✅ With Discord alerts                                            |
-| 35  | `overrideModAttrs` anti-pattern documented            | AGENTS.md | ✅ Clear guidance added                                           |
-| 36  | BTRFS snapshot verification timer                     | Multiple  | ✅ Daily `btrfs-verify-snapshots`                                 |
-| 37  | Boot performance optimizations                        | 71-72     | ✅ `boot.tmp.useTmpfs` (56% reduction), unbound-anchor eliminated |
+| #  | Item                                                  | Session   | Status                                                            |
+| -- | ----------------------------------------------------- | --------- | ----------------------------------------------------------------- |
+| 13 | Catppuccin palette expansion (26 colors)              | 121       | ✅ 164 colors migrated across 9 files                             |
+| 14 | `just status` command                                 | 121       | ✅ `scripts/status-report.sh` + `justfile` recipe                 |
+| 15 | SigNoz per-threshold routing                          | 121       | ✅ 12 critical→Discord, 6 warning→no external                     |
+| 16 | Darwin home.nix parity                                | 121       | ✅ zellij, yazi, zed-editor, session vars, xdg                    |
+| 17 | Cross-platform zellij                                 | 121       | ✅ `pbcopy` on Darwin, `wl-copy` on Linux                         |
+| 18 | `crush-daily` flake lock fix                          | 121       | ✅ Updated to rev with `overlays.default`                         |
+| 19 | Port centralization (all hardcoded → `lib/ports.nix`) | 120       | ✅ 29 registered ports, zero hardcoded                            |
+| 20 | Code deduplication sprint                             | 120       | ✅ 10 duplications eliminated, ~200 lines saved                   |
+| 21 | Dead code elimination                                 | 120       | ✅ `colorSchemeName` removed, `auto-optimise-store` moved         |
+| 22 | Delete orphan `ai-stack.nix`                          | 118       | ✅ 109 lines removed                                              |
+| 23 | Port 8050 conflict fix                                | 118       | ✅ Photomap reassigned 8050→8051                                  |
+| 24 | `go-structure-linter` restored                        | 118       | ✅ Upstream fixed, overlay re-enabled                             |
+| 25 | Stale LSP cleanup timer                               | 118       | ✅ Daily kills gopls/vtsls/rust-analyzer/lua-ls >24h              |
+| 26 | Dozzle deployed                                       | 118       | ✅ Docker log viewer at `logs.home.lan`                           |
+| 27 | Disk growth check timer                               | 118       | ✅ Daily alert if `/data` grows >5G/24h                           |
+| 28 | `xdg-desktop-portal-gtk` race fix                     | 117       | ✅ `After=niri.service`                                           |
+| 29 | `home-manager-lars.service` resilience                | 117       | ✅ `Restart=on-failure`, 3 retries                                |
+| 30 | `dnsblockd.service` start limits                      | 117       | ✅ `StartLimitBurst=10/120s`                                      |
+| 31 | Sed patches eliminated from overlays                  | 117       | ✅ All upstream repos tagged with semver                          |
+| 32 | Duplicate ghostty/swappy removed                      | 115       | ✅ Removed from `base.nix`                                        |
+| 33 | `justfile` fixes (3 bugs)                             | 115       | ✅ gatus port, vendor hashes, auth-bootstrap filename             |
+| 34 | Gatus memory/swap checks                              | 115       | ✅ With Discord alerts                                            |
+| 35 | `overrideModAttrs` anti-pattern documented            | AGENTS.md | ✅ Clear guidance added                                           |
+| 36 | BTRFS snapshot verification timer                     | Multiple  | ✅ Daily `btrfs-verify-snapshots`                                 |
+| 37 | Boot performance optimizations                        | 71-72     | ✅ `boot.tmp.useTmpfs` (56% reduction), unbound-anchor eliminated |
 
 ### Infrastructure (Always-Running)
 
@@ -83,36 +83,36 @@
 
 ### Hermes AI Gateway
 
-| Component                           | Status                          | What's Done                                 | What's Missing                                                                                                  |
-| ----------------------------------- | ------------------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Primary LLM (GLM-5.1 via ZAI)       | ✅ Running                      | `GLM_API_KEY` in sops + env                 | —                                                                                                               |
+| Component                           | Status                         | What's Done                                 | What's Missing                                                                                                  |
+| ----------------------------------- | ------------------------------ | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Primary LLM (GLM-5.1 via ZAI)       | ✅ Running                     | `GLM_API_KEY` in sops + env                 | —                                                                                                               |
 | Secondary LLM (OpenRouter fallback) | ⚠️ Configured, not activated    | `OPENAI_API_KEY` env var wired in Nix       | `openai_api_key` must be added to `hermes.yaml` via sops; `fallback_model` must be set in hermes runtime config |
 | Git remote access                   | ⚠️ Key generated, not installed | Ed25519 key pair in `scripts/hermes-setup/` | Private key needs installation to `/home/hermes/.ssh/` + GitHub deploy key registration                         |
-| Rate limit monitoring               | ❌ Not started                  | —                                           | Requires `journalctl -u hermes` on evo-x2                                                                       |
-| Discord bot integration             | ✅ Working                      | `DISCORD_BOT_TOKEN` in sops                 | —                                                                                                               |
+| Rate limit monitoring               | ❌ Not started                 | —                                           | Requires `journalctl -u hermes` on evo-x2                                                                       |
+| Discord bot integration             | ✅ Working                     | `DISCORD_BOT_TOKEN` in sops                 | —                                                                                                               |
 
 **Root cause:** These items require either (a) sops secret editing on the actual machine, (b) GitHub UI interaction, or (c) runtime config changes in `/home/hermes/` — none of which are possible from this sandboxed environment.
 
 ### SigNoz Observability
 
-| Component             | Status                    | What's Done                             | What's Missing                                          |
-| --------------------- | ------------------------- | --------------------------------------- | ------------------------------------------------------- |
-| Core deployment       | ✅ Running                | ClickHouse + Query Service + Frontend   | —                                                       |
-| Alert rules           | ✅ 18 rules               | CPU, memory, swap, disk, NVMe, services | —                                                       |
-| Per-threshold routing | ✅ Configured             | 12 critical→Discord, 6 warning→log only | Actual webhook delivery untested                        |
-| Dashboards            | ✅ 4 dashboards           | GPU, DNS, Docker, Caddy                 | Verification via API pending                            |
+| Component             | Status                   | What's Done                             | What's Missing                                          |
+| --------------------- | ------------------------ | --------------------------------------- | ------------------------------------------------------- |
+| Core deployment       | ✅ Running               | ClickHouse + Query Service + Frontend   | —                                                       |
+| Alert rules           | ✅ 18 rules              | CPU, memory, swap, disk, NVMe, services | —                                                       |
+| Per-threshold routing | ✅ Configured            | 12 critical→Discord, 6 warning→log only | Actual webhook delivery untested                        |
+| Dashboards            | ✅ 4 dashboards          | GPU, DNS, Docker, Caddy                 | Verification via API pending                            |
 | Discord alert channel | ⚠️ Configured, not tested | Webhook URL in sops                     | `POST /api/v1/channels/test` needs manual execution     |
-| Provision logs        | ❌ Not checked            | —                                       | `curl localhost:8080/api/v1/health` needs evo-x2 access |
+| Provision logs        | ❌ Not checked           | —                                       | `curl localhost:8080/api/v1/health` needs evo-x2 access |
 
 ### Darwin (macOS) Home Manager
 
-| Component        | Status     | What's Done                                      | What's Missing                                                   |
-| ---------------- | ---------- | ------------------------------------------------ | ---------------------------------------------------------------- |
-| HM evaluation    | ✅ Passes  | `nix eval` succeeds                              | —                                                                |
-| Terminal configs | ✅ Added   | zellij, yazi                                     | Ghostty config missing (only Linux has Ghostty)                  |
-| Editor configs   | ✅ Added   | zed-editor (Catppuccin, vim mode)                | Helium browser config not in Darwin                              |
-| Session vars     | ✅ Added   | dark mode, cursor theme                          | —                                                                |
-| XDG userDirs     | ✅ Added   | `xdg.userDirs`                                   | —                                                                |
+| Component        | Status    | What's Done                                      | What's Missing                                                   |
+| ---------------- | --------- | ------------------------------------------------ | ---------------------------------------------------------------- |
+| HM evaluation    | ✅ Passes | `nix eval` succeeds                              | —                                                                |
+| Terminal configs | ✅ Added  | zellij, yazi                                     | Ghostty config missing (only Linux has Ghostty)                  |
+| Editor configs   | ✅ Added  | zed-editor (Catppuccin, vim mode)                | Helium browser config not in Darwin                              |
+| Session vars     | ✅ Added  | dark mode, cursor theme                          | —                                                                |
+| XDG userDirs     | ✅ Added  | `xdg.userDirs`                                   | —                                                                |
 | Package parity   | ⚠️ Partial | 90+ packages in `base.nix`                       | Some Linux-only packages (Ghostty, Foot) not available on Darwin |
 | Disk constraints | ⚠️ Ongoing | 90-95% full, `nix-collect-garbage` before builds | Cannot add heavy packages (otel-tui, etc.)                       |
 
@@ -224,53 +224,53 @@
 
 ### Priority 0: Blocked on Manual Steps (Do These on evo-x2)
 
-| #   | Task                                                                            | Est. Time | Impact    | Why                                      |
-| --- | ------------------------------------------------------------------------------- | --------- | --------- | ---------------------------------------- |
-| 1   | Add `openai_api_key` to sops `hermes.yaml` and run `just switch`                | 5 min     | 🔴 HIGH   | Unblocks hermes OpenRouter fallback      |
-| 2   | Set hermes fallback model: `hermes config set fallback_model openrouter/gpt-4o` | 2 min     | 🔴 HIGH   | Completes secondary LLM setup            |
-| 3   | Install hermes SSH key to `/home/hermes/.ssh/` + GitHub deploy key              | 10 min    | 🟡 MEDIUM | Unblocks hermes git remote access        |
-| 4   | Run `bash scripts/verify-deployment.sh` on evo-x2                               | 2 min     | 🟡 MEDIUM | Validates all blocked verification items |
-| 5   | Reboot evo-x2 and check `systemd-analyze` for boot time                         | 5 min     | 🟢 LOW    | Confirms ~35s boot target                |
-| 6   | Fix `crush-daily.service` failure (`systemctl status crush-daily`)              | 10 min    | 🟡 MEDIUM | Pre-existing uncommitted work            |
+| # | Task                                                                            | Est. Time | Impact    | Why                                      |
+| - | ------------------------------------------------------------------------------- | --------- | --------- | ---------------------------------------- |
+| 1 | Add `openai_api_key` to sops `hermes.yaml` and run `just switch`                | 5 min     | 🔴 HIGH   | Unblocks hermes OpenRouter fallback      |
+| 2 | Set hermes fallback model: `hermes config set fallback_model openrouter/gpt-4o` | 2 min     | 🔴 HIGH   | Completes secondary LLM setup            |
+| 3 | Install hermes SSH key to `/home/hermes/.ssh/` + GitHub deploy key              | 10 min    | 🟡 MEDIUM | Unblocks hermes git remote access        |
+| 4 | Run `bash scripts/verify-deployment.sh` on evo-x2                               | 2 min     | 🟡 MEDIUM | Validates all blocked verification items |
+| 5 | Reboot evo-x2 and check `systemd-analyze` for boot time                         | 5 min     | 🟢 LOW    | Confirms ~35s boot target                |
+| 6 | Fix `crush-daily.service` failure (`systemctl status crush-daily`)              | 10 min    | 🟡 MEDIUM | Pre-existing uncommitted work            |
 
 ### Priority 1: Code Improvements
 
-| #   | Task                                                                  | Est. Time | Impact    | Why                                        |
-| --- | --------------------------------------------------------------------- | --------- | --------- | ------------------------------------------ |
-| 7   | Add `just test-darwin` to CI/justfile                                 | 15 min    | 🟡 MEDIUM | Catches Darwin eval regressions early      |
-| 8   | Commit Go flake-parts template to `go-nix-helpers` repo               | 5 min     | 🟢 LOW    | Template already exists in working tree    |
-| 9   | Add `just doctor` command for troubleshooting                         | 30 min    | 🟢 LOW    | DX improvement                             |
-| 10  | Create `docs/ARCHITECTURE.md`                                         | 1h        | 🟢 LOW    | Onboarding aid                             |
-| 11  | Remove `render` group from `hermes` user if unused                    | 5 min     | 🟢 LOW    | Security hardening                         |
-| 12  | Convert go-auto-upgrade from `overrideModAttrs` to `mkPreparedSource` | 1h        | 🟡 MEDIUM | Align with AGENTS.md anti-pattern guidance |
-| 13  | Add `hermes` health check to Gatus                                    | 20 min    | 🟡 MEDIUM | Monitor hermes uptime                      |
-| 14  | Add `crush-daily` health check to Gatus                               | 15 min    | 🟡 MEDIUM | Monitor crush-daily uptime                 |
+| #  | Task                                                                  | Est. Time | Impact    | Why                                        |
+| -- | --------------------------------------------------------------------- | --------- | --------- | ------------------------------------------ |
+| 7  | Add `just test-darwin` to CI/justfile                                 | 15 min    | 🟡 MEDIUM | Catches Darwin eval regressions early      |
+| 8  | Commit Go flake-parts template to `go-nix-helpers` repo               | 5 min     | 🟢 LOW    | Template already exists in working tree    |
+| 9  | Add `just doctor` command for troubleshooting                         | 30 min    | 🟢 LOW    | DX improvement                             |
+| 10 | Create `docs/ARCHITECTURE.md`                                         | 1h        | 🟢 LOW    | Onboarding aid                             |
+| 11 | Remove `render` group from `hermes` user if unused                    | 5 min     | 🟢 LOW    | Security hardening                         |
+| 12 | Convert go-auto-upgrade from `overrideModAttrs` to `mkPreparedSource` | 1h        | 🟡 MEDIUM | Align with AGENTS.md anti-pattern guidance |
+| 13 | Add `hermes` health check to Gatus                                    | 20 min    | 🟡 MEDIUM | Monitor hermes uptime                      |
+| 14 | Add `crush-daily` health check to Gatus                               | 15 min    | 🟡 MEDIUM | Monitor crush-daily uptime                 |
 
 ### Priority 2: Observability & Monitoring
 
-| #   | Task                                                             | Est. Time | Impact    | Why                                           |
-| --- | ---------------------------------------------------------------- | --------- | --------- | --------------------------------------------- |
-| 15  | Automate BTRFS `/data` snapshot migration                        | 30 min    | 🟡 MEDIUM | Currently manual `just snapshot-migrate-data` |
-| 16  | Add SigNoz alert for "hermes activation chown error"             | 20 min    | 🟢 LOW    | Reduce deploy noise                           |
-| 17  | Add systemd watchdog for `crush-daily.service`                   | 15 min    | 🟡 MEDIUM | Auto-restart on failure                       |
-| 18  | Create Grafana dashboard for system overview (CPU/mem/swap/disk) | 1h        | 🟢 LOW    | Visual system health                          |
+| #  | Task                                                             | Est. Time | Impact    | Why                                           |
+| -- | ---------------------------------------------------------------- | --------- | --------- | --------------------------------------------- |
+| 15 | Automate BTRFS `/data` snapshot migration                        | 30 min    | 🟡 MEDIUM | Currently manual `just snapshot-migrate-data` |
+| 16 | Add SigNoz alert for "hermes activation chown error"             | 20 min    | 🟢 LOW    | Reduce deploy noise                           |
+| 17 | Add systemd watchdog for `crush-daily.service`                   | 15 min    | 🟡 MEDIUM | Auto-restart on failure                       |
+| 18 | Create Grafana dashboard for system overview (CPU/mem/swap/disk) | 1h        | 🟢 LOW    | Visual system health                          |
 
 ### Priority 3: External Ecosystem
 
-| #   | Task                                                             | Est. Time | Impact    | Why                          |
-| --- | ---------------------------------------------------------------- | --------- | --------- | ---------------------------- |
-| 19  | Standardize all 8+ Go repos on new flake-parts template          | 4h        | 🟡 MEDIUM | Consistency across ecosystem |
-| 20  | Update `go-nix-helpers` README with `mkPreparedSource` deep dive | 30 min    | 🟢 LOW    | Better docs                  |
-| 21  | Audit all Go repos for `vendorHash` drift (monthly)              | 1h        | 🟡 MEDIUM | Prevent build failures       |
-| 22  | Create shared GitHub Actions workflow for Go repos               | 2h        | 🟡 MEDIUM | CI consistency               |
+| #  | Task                                                             | Est. Time | Impact    | Why                          |
+| -- | ---------------------------------------------------------------- | --------- | --------- | ---------------------------- |
+| 19 | Standardize all 8+ Go repos on new flake-parts template          | 4h        | 🟡 MEDIUM | Consistency across ecosystem |
+| 20 | Update `go-nix-helpers` README with `mkPreparedSource` deep dive | 30 min    | 🟢 LOW    | Better docs                  |
+| 21 | Audit all Go repos for `vendorHash` drift (monthly)              | 1h        | 🟡 MEDIUM | Prevent build failures       |
+| 22 | Create shared GitHub Actions workflow for Go repos               | 2h        | 🟡 MEDIUM | CI consistency               |
 
 ### Priority 4: Hardware & Future
 
-| #   | Task                                             | Est. Time | Impact    | Why                                                |
-| --- | ------------------------------------------------ | --------- | --------- | -------------------------------------------------- |
-| 23  | Acquire and provision Raspberry Pi 3             | Days      | 🟡 MEDIUM | DNS failover cluster                               |
-| 24  | Wire Pi 3 as secondary DNS in `dns-failover.nix` | 30 min    | 🟡 MEDIUM | Depends on #23                                     |
-| 25  | Evaluate NixOS 25.05 upgrade path                | 2h        | 🟢 LOW    | nixpkgs is on unstable, but major release planning |
+| #  | Task                                             | Est. Time | Impact    | Why                                                |
+| -- | ------------------------------------------------ | --------- | --------- | -------------------------------------------------- |
+| 23 | Acquire and provision Raspberry Pi 3             | Days      | 🟡 MEDIUM | DNS failover cluster                               |
+| 24 | Wire Pi 3 as secondary DNS in `dns-failover.nix` | 30 min    | 🟡 MEDIUM | Depends on #23                                     |
+| 25 | Evaluate NixOS 25.05 upgrade path                | 2h        | 🟢 LOW    | nixpkgs is on unstable, but major release planning |
 
 ---
 

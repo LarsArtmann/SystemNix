@@ -210,33 +210,33 @@ aa2df5f feat(nixos/waybar): display seconds in clock module time format
 
 ## F) Top 25 Next Actions
 
-| #   | Priority | Action                                                                                 | Effort |
-| --- | -------- | -------------------------------------------------------------------------------------- | ------ |
-| 1   | **P0**   | **Fix signoz port 8080 conflict** — identify what's holding the port, resolve conflict | Low    |
-| 2   | **P0**   | **Debug hermes-gateway failure** — check logs, fix startup, verify Discord bot         | Medium |
-| 3   | **P0**   | **Set SIGNOZ_TOKENIZER_JWT_SECRET** — sops-managed secret for SigNoz JWT               | Low    |
-| 4   | **P0**   | **Fix or disable awww-daemon** — either fix Wayland connect or mask the service        | Low    |
-| 5   | **P0**   | **Fix or disable unsloth-studio** — stop the 154-restart insanity                      | Low    |
-| 6   | **P0**   | **Fix Twenty CRM container** — `/app/python` missing, image broken or config wrong     | Medium |
-| 7   | **P1**   | **Investigate 9.2G swap usage** — find what's consuming memory/swap on 62G system      | Medium |
-| 8   | **P1**   | **Investigate crash #2 (03:09)** — determine if hardware or software; run stress tests | Medium |
-| 9   | **P1**   | **Add restart limits to failing services** — `StartLimitBurst`/`StartLimitIntervalSec` | Low    |
-| 10  | **P1**   | **Fix Gitea GitHub sync auth** — token expired or misconfigured                        | Low    |
-| 11  | **P1**   | **Clean up root filesystem** — 402G/512G used, find and remove large files             | Medium |
-| 12  | **P1**   | **Add Hermes SigNoz monitoring** — journald ingestion, alert rules, dashboard          | Medium |
-| 13  | **P2**   | **Add disk space alerting** — SigNoz alert for root >85%                               | Low    |
-| 14  | **P2**   | **Add swap usage alerting** — SigNoz alert for swap >5G                                | Low    |
-| 15  | **P2**   | **Make Hermes config.yaml declarative** — managed by Home Manager                      | Medium |
-| 16  | **P2**   | **Fix amdxdna NPU driver** — SVA bind failure, ret -19                                 | Hard   |
-| 17  | **P2**   | **Clean up 3 stale git stashes**                                                       | Low    |
-| 18  | **P2**   | **Update AGENTS.md** — document all recent changes                                     | Medium |
-| 19  | **P2**   | **Add sops ordering dependencies** — `After=` for services needing sops secrets        | Low    |
-| 20  | **P3**   | **Validate darwin build** — ensure macOS config still builds                           | Low    |
-| 21  | **P3**   | **Prune old status reports** — archive or delete >28 reports                           | Low    |
-| 21  | **P3**   | **Add service-level rollback docs** — per-service recovery procedures                  | Medium |
-| 23  | **P3**   | **Flake.lock staleness alerting** — automated check for aged inputs                    | Medium |
-| 24  | **P3**   | **Harden EMEET PIXY CSP** — remove `unsafe-eval` for htmx                              | Medium |
-| 25  | **P3**   | **Add NixOS module tests** — at least smoke tests for critical services                | High   |
+| #  | Priority | Action                                                                                 | Effort |
+| -- | -------- | -------------------------------------------------------------------------------------- | ------ |
+| 1  | **P0**   | **Fix signoz port 8080 conflict** — identify what's holding the port, resolve conflict | Low    |
+| 2  | **P0**   | **Debug hermes-gateway failure** — check logs, fix startup, verify Discord bot         | Medium |
+| 3  | **P0**   | **Set SIGNOZ_TOKENIZER_JWT_SECRET** — sops-managed secret for SigNoz JWT               | Low    |
+| 4  | **P0**   | **Fix or disable awww-daemon** — either fix Wayland connect or mask the service        | Low    |
+| 5  | **P0**   | **Fix or disable unsloth-studio** — stop the 154-restart insanity                      | Low    |
+| 6  | **P0**   | **Fix Twenty CRM container** — `/app/python` missing, image broken or config wrong     | Medium |
+| 7  | **P1**   | **Investigate 9.2G swap usage** — find what's consuming memory/swap on 62G system      | Medium |
+| 8  | **P1**   | **Investigate crash #2 (03:09)** — determine if hardware or software; run stress tests | Medium |
+| 9  | **P1**   | **Add restart limits to failing services** — `StartLimitBurst`/`StartLimitIntervalSec` | Low    |
+| 10 | **P1**   | **Fix Gitea GitHub sync auth** — token expired or misconfigured                        | Low    |
+| 11 | **P1**   | **Clean up root filesystem** — 402G/512G used, find and remove large files             | Medium |
+| 12 | **P1**   | **Add Hermes SigNoz monitoring** — journald ingestion, alert rules, dashboard          | Medium |
+| 13 | **P2**   | **Add disk space alerting** — SigNoz alert for root >85%                               | Low    |
+| 14 | **P2**   | **Add swap usage alerting** — SigNoz alert for swap >5G                                | Low    |
+| 15 | **P2**   | **Make Hermes config.yaml declarative** — managed by Home Manager                      | Medium |
+| 16 | **P2**   | **Fix amdxdna NPU driver** — SVA bind failure, ret -19                                 | Hard   |
+| 17 | **P2**   | **Clean up 3 stale git stashes**                                                       | Low    |
+| 18 | **P2**   | **Update AGENTS.md** — document all recent changes                                     | Medium |
+| 19 | **P2**   | **Add sops ordering dependencies** — `After=` for services needing sops secrets        | Low    |
+| 20 | **P3**   | **Validate darwin build** — ensure macOS config still builds                           | Low    |
+| 21 | **P3**   | **Prune old status reports** — archive or delete >28 reports                           | Low    |
+| 21 | **P3**   | **Add service-level rollback docs** — per-service recovery procedures                  | Medium |
+| 23 | **P3**   | **Flake.lock staleness alerting** — automated check for aged inputs                    | Medium |
+| 24 | **P3**   | **Harden EMEET PIXY CSP** — remove `unsafe-eval` for htmx                              | Medium |
+| 25 | **P3**   | **Add NixOS module tests** — at least smoke tests for critical services                | High   |
 
 ---
 

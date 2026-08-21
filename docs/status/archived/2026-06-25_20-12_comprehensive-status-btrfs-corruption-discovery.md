@@ -7,7 +7,6 @@
 
 ---
 
-
 ## Executive Summary
 
 The DMS (DankMaterialShell) migration is **complete and runtime-verified** — zero matugen warnings, all 13 plugins loaded, DMS owns the desktop. A self-review pass delivered 5 commits hardening the systemd type-safety hole that caused the original wallpaper-init crash, plus disk-space pre-deploy protection. However, the session uncovered **CRITICAL BTRFS corruption on `/data`** (4.9M checksum errors) that was previously unknown and demands immediate attention.
@@ -184,33 +183,33 @@ DMS's Qt Scene Graph render thread crashed with a GP fault in libEGL. DMS auto-r
 
 Sorted by **impact / effort ratio** (highest first).
 
-| #   | Task                                                                                                                     | Impact      | Effort      | Category       |
-| --- | ------------------------------------------------------------------------------------------------------------------------ | ----------- | ----------- | -------------- |
-| 1   | **BTRFS scrub `/data`** — run `btrfs scrub start /data` to assess full corruption scope                                  | 🔴 CRITICAL | 30min       | Data safety    |
-| 2   | **Cloud backup** — BorgBackup to Hetzner StorageBox, encrypt all `/data` Docker volumes                                  | 🔴 CRITICAL | 2-4h        | Data safety    |
-| 3   | **Assess `/data` corruption** — determine which files/blocks are affected, whether Docker DBs are corrupted              | 🔴 CRITICAL | 1-2h        | Data safety    |
-| 4   | **BTRFS `/data` subvolume migration** — convert toplevel to named subvol + enable btrbk snapshots                        | 🔴 HIGH     | 1h downtime | Reliability    |
-| 5   | **BTRFS corruption monitor** — systemd timer that checks `btrfs device stats` and alerts if corruption_errs growing      | 🔴 HIGH     | 30min       | Monitoring     |
-| 6   | **Reboot evo-x2** — applies new generation (timer hardening, serviceOneshotDefaults), clears stale polkit-gnome          | 🟡 MED      | 5min        | Operations     |
-| 7   | **Deploy pending commits** — 5 commits pushed but not yet deployed to running system (disk guard will block at 96%)      | 🟡 MED      | 10min       | Operations     |
-| 8   | **Reclaim root disk space** — wait for BTRFS snapshots to expire OR manually delete old btrbk snapshots to free the 112G | 🟡 MED      | 30min       | Operations     |
-| 9   | **Fix SigNoz** — query logger dir creation failure, start-limit-hit. Restores observability                              | 🟡 MED      | 1h          | Monitoring     |
-| 10  | **BTRFS balance root `/`** — metadata is 34G for 420G data, may reclaim space from CoW fragmentation                     | 🟡 MED      | 1-2h        | Disk space     |
-| 11  | **Swap investigation** — 7.4G/9.4G on 128G RAM. Check if zram-config is normal or if there's a leak                      | 🟡 MED      | 30min       | Investigation  |
-| 12  | **Investigate 3 unexpected Gatus DOWN endpoints** — Crush Daily, Memory Pressure, SigNoz                                 | 🟡 MED      | 30min       | Monitoring     |
-| 13  | **Clean orphaned Docker volumes** — 37GB reclaimable (lemonade, deer-flow, code-quality-agent, flm-models)               | 🟡 MED      | 15min       | Disk space     |
-| 14  | **Firewall deny-by-default** — currently permissive, should lock down exposed ports                                      | 🟡 MED      | 2h          | Security       |
-| 15  | **EGL/libEGL crash investigation** — QSGRenderThread GP fault, likely Mesa/AMD driver issue                              | 🟡 MED      | 1-2h        | Stability      |
-| 16  | **Bind Immich to localhost** — currently exposed beyond reverse proxy                                                    | 🟡 MED      | 15min       | Security       |
-| 17  | **Remove legacy ssh-rsa** — weak crypto still permitted                                                                  | 🟢 LOW      | 15min       | Security       |
-| 18  | **Monitor365 upstream fix** — Axum 0.7 route syntax (`:param`→`{param}`), needs fix in `github:LarsArtmann/monitor365`   | 🟢 LOW      | 1h          | Upstream       |
-| 19  | **Large module splits** — monitor365 (716L), signoz (705L), forgejo (583L) into smaller focused modules                  | 🟢 LOW      | 3-4h        | Code quality   |
-| 20  | **Extract dnsblockd** — ~930 lines in dns-blocker.nix, should be its own package                                         | 🟢 LOW      | 2-3h        | Code quality   |
-| 21  | **Typed NixOS module options** — replace stringly-typed config with proper types                                         | 🟢 LOW      | 4h+         | Code quality   |
-| 22  | **Pi 3 DNS failover** — provision hardware, configure secondary DNS + keepalived                                         | 🟢 LOW      | 4h+         | Reliability    |
-| 23  | **nixpkgs upstream PRs** — 7 items (poetry-core migration, broken tests, new packages)                                   | 🟢 LOW      | 8h+         | Upstream       |
-| 24  | **Auditd/AppArmor** — blocked on NixOS 26.05 bug, revisit after upgrade                                                  | 🟢 LOW      | —           | Security       |
-| 25  | **Darwin HM parity** — blocked by 256GB SSD disk space, low priority                                                     | 🟢 LOW      | —           | Cross-platform |
+| #  | Task                                                                                                                     | Impact      | Effort      | Category       |
+| -- | ------------------------------------------------------------------------------------------------------------------------ | ----------- | ----------- | -------------- |
+| 1  | **BTRFS scrub `/data`** — run `btrfs scrub start /data` to assess full corruption scope                                  | 🔴 CRITICAL | 30min       | Data safety    |
+| 2  | **Cloud backup** — BorgBackup to Hetzner StorageBox, encrypt all `/data` Docker volumes                                  | 🔴 CRITICAL | 2-4h        | Data safety    |
+| 3  | **Assess `/data` corruption** — determine which files/blocks are affected, whether Docker DBs are corrupted              | 🔴 CRITICAL | 1-2h        | Data safety    |
+| 4  | **BTRFS `/data` subvolume migration** — convert toplevel to named subvol + enable btrbk snapshots                        | 🔴 HIGH     | 1h downtime | Reliability    |
+| 5  | **BTRFS corruption monitor** — systemd timer that checks `btrfs device stats` and alerts if corruption_errs growing      | 🔴 HIGH     | 30min       | Monitoring     |
+| 6  | **Reboot evo-x2** — applies new generation (timer hardening, serviceOneshotDefaults), clears stale polkit-gnome          | 🟡 MED      | 5min        | Operations     |
+| 7  | **Deploy pending commits** — 5 commits pushed but not yet deployed to running system (disk guard will block at 96%)      | 🟡 MED      | 10min       | Operations     |
+| 8  | **Reclaim root disk space** — wait for BTRFS snapshots to expire OR manually delete old btrbk snapshots to free the 112G | 🟡 MED      | 30min       | Operations     |
+| 9  | **Fix SigNoz** — query logger dir creation failure, start-limit-hit. Restores observability                              | 🟡 MED      | 1h          | Monitoring     |
+| 10 | **BTRFS balance root `/`** — metadata is 34G for 420G data, may reclaim space from CoW fragmentation                     | 🟡 MED      | 1-2h        | Disk space     |
+| 11 | **Swap investigation** — 7.4G/9.4G on 128G RAM. Check if zram-config is normal or if there's a leak                      | 🟡 MED      | 30min       | Investigation  |
+| 12 | **Investigate 3 unexpected Gatus DOWN endpoints** — Crush Daily, Memory Pressure, SigNoz                                 | 🟡 MED      | 30min       | Monitoring     |
+| 13 | **Clean orphaned Docker volumes** — 37GB reclaimable (lemonade, deer-flow, code-quality-agent, flm-models)               | 🟡 MED      | 15min       | Disk space     |
+| 14 | **Firewall deny-by-default** — currently permissive, should lock down exposed ports                                      | 🟡 MED      | 2h          | Security       |
+| 15 | **EGL/libEGL crash investigation** — QSGRenderThread GP fault, likely Mesa/AMD driver issue                              | 🟡 MED      | 1-2h        | Stability      |
+| 16 | **Bind Immich to localhost** — currently exposed beyond reverse proxy                                                    | 🟡 MED      | 15min       | Security       |
+| 17 | **Remove legacy ssh-rsa** — weak crypto still permitted                                                                  | 🟢 LOW      | 15min       | Security       |
+| 18 | **Monitor365 upstream fix** — Axum 0.7 route syntax (`:param`→`{param}`), needs fix in `github:LarsArtmann/monitor365`   | 🟢 LOW      | 1h          | Upstream       |
+| 19 | **Large module splits** — monitor365 (716L), signoz (705L), forgejo (583L) into smaller focused modules                  | 🟢 LOW      | 3-4h        | Code quality   |
+| 20 | **Extract dnsblockd** — ~930 lines in dns-blocker.nix, should be its own package                                         | 🟢 LOW      | 2-3h        | Code quality   |
+| 21 | **Typed NixOS module options** — replace stringly-typed config with proper types                                         | 🟢 LOW      | 4h+         | Code quality   |
+| 22 | **Pi 3 DNS failover** — provision hardware, configure secondary DNS + keepalived                                         | 🟢 LOW      | 4h+         | Reliability    |
+| 23 | **nixpkgs upstream PRs** — 7 items (poetry-core migration, broken tests, new packages)                                   | 🟢 LOW      | 8h+         | Upstream       |
+| 24 | **Auditd/AppArmor** — blocked on NixOS 26.05 bug, revisit after upgrade                                                  | 🟢 LOW      | —           | Security       |
+| 25 | **Darwin HM parity** — blocked by 256GB SSD disk space, low priority                                                     | 🟢 LOW      | —           | Cross-platform |
 
 ---
 

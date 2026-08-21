@@ -9,12 +9,12 @@
 
 ---
 
-
 ## Executive Summary
 
 The session began as a continuation of prior `discard=async` performance investigations and evolved into discovery of **active data corruption on `/data`** (`/dev/nvme0n1p8`).
 
 **Facts established this session:**
+
 1. `/dev/nvme0n1p8` returned corrupted data on at least two distinct inodes (ino 1331118, ino 2608092)
 2. The user deleted one corrupted file (`diffusion_pytorch_model.safetensors`, ino 2608092)
 3. `btrfs balance` operations on `/data` consistently fail with `Input/output error` (`status: -5`) when targeting data block groups
@@ -22,12 +22,14 @@ The session began as a continuation of prior `discard=async` performance investi
 5. The Lexar NQ790 is a consumer QLC drive that has experienced sustained stress: 26+ days of `discard=async` (since removed), WDT resets, heavy write workload
 
 **Facts NOT established this session:**
+
 - Total count of corrupted files
 - Whether corruption is localized to one block group or spread across the drive
 - Hardware-level drive health (SMART data never checked)
 - Whether more corruption is occurring in real time or is from a single past event
 
 **Anchored to AGENTS.md:**
+
 - Prior status reports: `docs/status/2026-07-08_*` (discard-related) and `docs/status/2026-06-25_*` (WDT reset investigation)
 - AGENTS.md line 209 (TRIM section, updated 2026-08-02 to reflect `nodiscard`)
 - AGENTS.md gotcha: "BTRFS metadata ENOSPC crash (2026-06-26)" — confirms this hardware has a history of filesystem-stress events
@@ -81,7 +83,7 @@ The following require `sudo` which is not available in this session's execution 
 1. **Recommended balance operations on a filesystem with known corruption** — When the user reported the first `Input/output error` from `-dusage=70`, we should have immediately recommended STOP and switch to foreground scrub. Instead we encouraged more balance attempts with higher `-dusage` thresholds (`80`, `90`, `95`, `75`). Each failed balance logged additional `csum failed` errors, growing the kernel `bdev errs` counter.
 2. **Missed the first corruption wave at 05:47:35** — The kernel log shows `csum failed root 5 ino 1331118` at 05:47:35 — a DIFFERENT inode than the 2608092 file we focused on. Inode 1331118's file path is unknown (not in the balance-triggered logs, only in the initial wave). We never investigated whether inode 1331118 has additional corruption.
 3. **Did not check `btrfs device stats /dev/nvme0n1p8` early** — When we saw kernel `bdev errs` increment in dmesg for `/p8`, the per-mount `btrfs device stats` counter would have confirmed the cumulative count immediately. Instead we relied on the user's later manual check.
-4. **Asserted AGENTS.md's "BTRFS compression is filesystem-wide" as fact** — Technically true for `compress=zstd` semantics, but the *performance* analysis (BTRFS compression overhead vs FTL handling) was speculative. We treated inference as established fact.
+4. **Asserted AGENTS.md's "BTRFS compression is filesystem-wide" as fact** — Technically true for `compress=zstd` semantics, but the _performance_ analysis (BTRFS compression overhead vs FTL handling) was speculative. We treated inference as established fact.
 5. **Did not clear dmesg between balance attempts** — When balances failed, we should have recommended `sudo dmesg --clear` to make new errors distinguishable from accumulated old ones.
 
 ### c.2) Process Mistakes
@@ -159,6 +161,7 @@ But the fstab has `nodiscard` on BOTH mounts:
 **Verification needed:** `cat /sys/fs/btrfs/*/discard/discardable_extents` showed static counters (238259 and 56) — but these may not prove the discard worker is inactive. The kernel MESSAGE is authoritative: "turning on async discard" = the worker IS running.
 
 **This single finding invalidates the entire `nodiscard` remediation strategy.** The fix requires either:
+
 - A kernel parameter to force-disable BTRFS discard (`btrfs.discard=-1` or similar, needs kernel source verification)
 - A BTRFS feature flag change (`btrfs filesystem disable discard` if such a command exists — it may not)
 - A kernel downgrade to a version where `nodiscard` is respected
@@ -167,11 +170,13 @@ But the fstab has `nodiscard` on BOTH mounts:
 ### e.1) Inode 1331118 — second corrupted file, PATH UNKNOWN, still on disk
 
 The first corruption wave at 05:47:35 hit inode 1331118:
+
 ```
 BTRFS warning (device nvme0n1p8): csum failed root 5 ino 1331118 off 327962624 csum 0x8941f998 expected csum 0x29d3e519 mirror 1
 ```
 
 This is a DIFFERENT file than the one we deleted (ino 2608092). We NEVER identified its path. It could be:
+
 - An AI model file (like the one we deleted)
 - A Docker volume
 - A database file
@@ -189,6 +194,7 @@ Aug 03 05:47:35  First csum failed (ino 1331118)
 fstrim sent TRIM commands for **330 GiB** of freed blocks on `/data`. 4.5 hours later, corruption appeared. On QLC NAND, a massive TRIM burst can overwhelm the FTL's garbage collection — the controller spends time erasing blocks and may corrupt adjacent data.
 
 **Combined with the async-discord-still-active finding (e.0), the drive was hit by TRIM from TWO sources simultaneously:**
+
 1. BTRFS's async discard worker (running despite `nodiscard`)
 2. The weekly `fstrim.service` (trimmed 330 GiB)
 
@@ -197,6 +203,7 @@ This is exactly the failure mode documented in AGENTS.md: "253ms discard latency
 ### e.3) Monthly scrub is effectively broken — only ran 15 minutes
 
 Both scrubs show:
+
 ```
 Status: interrupted
 Duration: 0:15:21
@@ -211,6 +218,7 @@ The monthly `autoScrub` is supposed to catch corruption. It hasn't completed sin
 ### e.4) Our fio benchmark WROTE 8 GiB to the corrupted drive
 
 We ran fio benchmarks on `/data` at ~05:39-05:41, writing 8 GiB of test data. The first corruption appeared at 05:47:35 — 6 minutes after our benchmark completed. The benchmark:
+
 - Wrote 8 GiB to an already-stressed filesystem (92% full)
 - Consumed SLC cache capacity needed for FTL operations
 - Added write amplification during a period when the drive was already failing
@@ -223,6 +231,7 @@ We ran fio benchmarks on `/data` at ~05:39-05:41, writing 8 GiB of test data. Th
 `/dev/nvme0n1p6` (`/`) and `/dev/nvme0n1p8` (`/data`) are partitions on the SAME physical Lexar NQ790 NVMe. If the NAND is degrading, `/` could have corruption too. We NEVER ran scrub on `/`. We focused entirely on `/data`.
 
 The `/` filesystem contains:
+
 - The entire NixOS system (`/nix/store`, 47+ GiB)
 - Home directory (`/home/lars`)
 - All system configuration
@@ -232,11 +241,13 @@ If `/` has corruption, the system may be running on corrupted binaries. This wou
 ### e.6) `/data` is 92% full — contributing factor
 
 From `btrfs filesystem usage /data`:
+
 ```
 Data,single: Size:758.01GiB, Used:700.46GiB (92.41%)
 ```
 
 A 92% full BTRFS filesystem on QLC NAND is problematic:
+
 - BTRFS needs free blocks for CoW (every write needs new blocks)
 - The FTL needs free blocks for garbage collection and wear leveling
 - At 92% full, write amplification increases dramatically
@@ -248,6 +259,7 @@ A 92% full BTRFS filesystem on QLC NAND is problematic:
 ### e.7) `systemd-journald.service: Failed with result 'watchdog'` on Aug 02 23:19
 
 We noted this but never investigated. journald failing its watchdog means:
+
 - System logging was compromised
 - The system was under extreme pressure (CPU, memory, or I/O)
 - This is the same OOM-cascade pattern documented in AGENTS.md: "journald starved → sp5100-tco WDT hard reset"
@@ -256,6 +268,7 @@ We noted this but never investigated. journald failing its watchdog means:
 ### e.8) `nvme_core.default_ps_max_latency_us=0` in kernel cmdline
 
 From the boot log:
+
 ```
 nvme_core.default_ps_max_latency_us=0
 ```
@@ -307,13 +320,13 @@ But the kernel auto-detected SSD on `/` anyway: `BTRFS info (device nvme0n1p6): 
 
 ### f.5) What Would Falsify Our Conclusions
 
-| Hypothesis | Falsification |
-|-----------|---------------|
-| Drive is at end-of-life | SMART shows 0-50% usage, 0 media errors, 100% available spare |
-| Corruption is widespread | Foreground scrub returns 0 corrupted blocks (only the deleted file had issues) |
-| Corruption is ongoing | Re-scrub after 24h shows the same error count (no new errors) |
-| Drive is healthy but bad blocks | SMART shows good health AND only 1-2 corrupted files total |
-| Other mounts are also corrupt | Foreground scrub on `/` returns 0 errors |
+| Hypothesis                       | Falsification                                                                                                                                            |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Drive is at end-of-life          | SMART shows 0-50% usage, 0 media errors, 100% available spare                                                                                            |
+| Corruption is widespread         | Foreground scrub returns 0 corrupted blocks (only the deleted file had issues)                                                                           |
+| Corruption is ongoing            | Re-scrub after 24h shows the same error count (no new errors)                                                                                            |
+| Drive is healthy but bad blocks  | SMART shows good health AND only 1-2 corrupted files total                                                                                               |
+| Other mounts are also corrupt    | Foreground scrub on `/` returns 0 errors                                                                                                                 |
 | **`nodiscard` is being ignored** | **Kernel source shows `nodiscard` correctly sets `NO_DISCARD` flag AND prevents async worker start; the "turning on async discard" message is cosmetic** |
 
 ---
@@ -396,6 +409,7 @@ But the kernel auto-detected SSD on `/` anyway: `BTRFS info (device nvme0n1p6): 
 **What I found:** The kernel boot log says `BTRFS info (device nvme0n1p8): turning on async discard` despite `nodiscard` in the fstab. But I can't run `sudo` to verify at runtime.
 
 **What you can run:**
+
 ```bash
 # Check if the discard worker is active (if numbers change over time, it's running)
 watch -n 10 'cat /sys/fs/btrfs/*/discard/discardable_extents'
@@ -415,11 +429,13 @@ findmnt -o TARGET,SOURCE,OPTIONS | grep btrfs
 **What I know:** There are at least two corrupted inodes. One was deleted (ino 2608092). The other (ino 1331118) is still on disk, path unknown, possibly being read by a service right now.
 
 **What the scrub output would tell us:**
+
 - Exact count of corrupted files
 - Whether corruption is localized or spread across the drive
 - Whether corruption is ongoing (re-scrub shows more errors)
 
 **What inode-resolve would tell us:**
+
 - Which specific file is the second corrupted one
 - Whether it's actively used by a service
 
@@ -453,19 +469,19 @@ findmnt -o TARGET,SOURCE,OPTIONS | grep btrfs
 
 ### Evidence References
 
-| Claim | Source |
-|-------|--------|
+| Claim                                         | Source                                                                                                                                                       |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Async discard running despite `nodiscard`** | **Kernel boot log: `BTRFS info (device nvme0n1p6): turning on async discard` and `(device nvme0n1p8): turning on async discard` (paste_2.txt, paste_4.txt)** |
-| Drive returned corrupted data | `journalctl -k --since '30 days ago'` (paste_4.txt) |
-| Two distinct inodes corrupted | `csum failed root 5 ino 1331118` (05:47:35), `csum failed ... ino 2608092` (06:09:56) |
-| Balance failures on data blocks only | 4× failed `-dusage=N`, all `-musage/-susage` succeeded |
-| fstrim ran 4.5h before corruption | `journalctl -u fstrim` (paste_3.txt): 01:17:55 fstrim → 05:47:35 first csum error |
-| Monthly scrub broken (15min/16h needed) | `btrfs scrub status /` and `/data` both show `Duration: 0:15:21` |
-| `/data` 92% full (write amplification risk) | `btrfs filesystem usage /data`: Data 92.41% used |
-| Previous WDT reset | `x86/amd: Previous system reset reason [0x02000800]` on Aug 01 boot |
-| journald watchdog failure | `systemd-journald.service: Failed with result 'watchdog'` Aug 02 23:19 |
-| `nvme_core.default_ps_max_latency_us=0` | Kernel cmdline in boot log (paste_2.txt) |
-| Drive wear / health | NOT CHECKED — `smartctl` not installed |
+| Drive returned corrupted data                 | `journalctl -k --since '30 days ago'` (paste_4.txt)                                                                                                          |
+| Two distinct inodes corrupted                 | `csum failed root 5 ino 1331118` (05:47:35), `csum failed ... ino 2608092` (06:09:56)                                                                        |
+| Balance failures on data blocks only          | 4× failed `-dusage=N`, all `-musage/-susage` succeeded                                                                                                       |
+| fstrim ran 4.5h before corruption             | `journalctl -u fstrim` (paste_3.txt): 01:17:55 fstrim → 05:47:35 first csum error                                                                            |
+| Monthly scrub broken (15min/16h needed)       | `btrfs scrub status /` and `/data` both show `Duration: 0:15:21`                                                                                             |
+| `/data` 92% full (write amplification risk)   | `btrfs filesystem usage /data`: Data 92.41% used                                                                                                             |
+| Previous WDT reset                            | `x86/amd: Previous system reset reason [0x02000800]` on Aug 01 boot                                                                                          |
+| journald watchdog failure                     | `systemd-journald.service: Failed with result 'watchdog'` Aug 02 23:19                                                                                       |
+| `nvme_core.default_ps_max_latency_us=0`       | Kernel cmdline in boot log (paste_2.txt)                                                                                                                     |
+| Drive wear / health                           | NOT CHECKED — `smartctl` not installed                                                                                                                       |
 
 ---
 
@@ -486,20 +502,21 @@ findmnt -o TARGET,SOURCE,OPTIONS | grep btrfs
 
 This report's central claim — **"`nodiscard` is NOT working, async discard is STILL ACTIVE"** (section e.0) — was **proven false** in the follow-up investigations (`2026-08-03_08-14`, `2026-08-03_09-24`).
 
-| Claim in this report | Resolution |
-|---|---|
-| §e.0: `nodiscard` is NOT working, kernel ignores it | **FALSE.** `mount \| grep btrfs` confirms `nodiscard` IS active. The kernel log messages were from a **previous boot** (journalctl shows all boots since rotation). |
-| §e.0: "The prior 3 sessions' fix was a complete no-op" | **FALSE.** `nodiscard` is working as intended. |
-| §e.0: "Async discard on QLC NAND is the root cause" | **FALSE.** Root cause is **58 unsafe shutdowns** (46% of 126 power cycles) causing incomplete BTRFS commits. |
-| §f.2: "The `nodiscard` deploy was a no-op" | **FALSE.** Same as above. |
-| §f.5: Hypothesis that `nodiscard` might be correctly working | **CONFIRMED** — this falsification criterion was the correct one. |
-| 2 corrupted inodes (ino 1331118, ino 2608092) | **EXPANDED:** foreground scrub found **13 corrupted files** total (all AI model files), all deleted. |
-| SMART data never checked | **DONE:** 0 media errors, 11% wear, drive is healthy. See `2026-08-03_08-14`. |
-| Monthly scrub broken (15min/16h) | **FIXED:** `autoScrub` changed from monthly to weekly (`9083c126`). Scrub monitoring false-positive fixed. |
-| `discard=none` and block-layer discard disable | **REVERTED** — both were dangerous changes made without research. `discard=none` would have bricked boot. Reverted in `c2615d09`. |
-| Database integrity unchecked | **DONE:** PostgreSQL (Immich) clean, MySQL (Twenty) dead, DuckDB (monitor365) not on `/data`. |
+| Claim in this report                                         | Resolution                                                                                                                                                          |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| §e.0: `nodiscard` is NOT working, kernel ignores it          | **FALSE.** `mount \| grep btrfs` confirms `nodiscard` IS active. The kernel log messages were from a **previous boot** (journalctl shows all boots since rotation). |
+| §e.0: "The prior 3 sessions' fix was a complete no-op"       | **FALSE.** `nodiscard` is working as intended.                                                                                                                      |
+| §e.0: "Async discard on QLC NAND is the root cause"          | **FALSE.** Root cause is **58 unsafe shutdowns** (46% of 126 power cycles) causing incomplete BTRFS commits.                                                        |
+| §f.2: "The `nodiscard` deploy was a no-op"                   | **FALSE.** Same as above.                                                                                                                                           |
+| §f.5: Hypothesis that `nodiscard` might be correctly working | **CONFIRMED** — this falsification criterion was the correct one.                                                                                                   |
+| 2 corrupted inodes (ino 1331118, ino 2608092)                | **EXPANDED:** foreground scrub found **13 corrupted files** total (all AI model files), all deleted.                                                                |
+| SMART data never checked                                     | **DONE:** 0 media errors, 11% wear, drive is healthy. See `2026-08-03_08-14`.                                                                                       |
+| Monthly scrub broken (15min/16h)                             | **FIXED:** `autoScrub` changed from monthly to weekly (`9083c126`). Scrub monitoring false-positive fixed.                                                          |
+| `discard=none` and block-layer discard disable               | **REVERTED** — both were dangerous changes made without research. `discard=none` would have bricked boot. Reverted in `c2615d09`.                                   |
+| Database integrity unchecked                                 | **DONE:** PostgreSQL (Immich) clean, MySQL (Twenty) dead, DuckDB (monitor365) not on `/data`.                                                                       |
 
 **What IS still open from this report:**
+
 - Off-site backup (still #1 data loss risk — flagged since 2026-06-25)
 - `/data` at 92% fill (systemic risk, needs cleanup)
 - Investigate the 58 unsafe shutdowns (WDT resets, OOM cascades, power events)

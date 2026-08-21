@@ -27,7 +27,7 @@ Comprehensive audit of all kernel extensions and system extensions completed. **
 | Apple Kernel Extensions    | 464   | ✅ None       | Active & Required    |
 | Third-Party Kexts (disk)   | 3     | ✅ Inactive   | Legacy Remnants      |
 | Active System Extensions   | 2     | ✅ Legitimate | Verified Tools       |
-| Disabled System Extensions | 2     | ⚠️ Review     | Not Currently Active |
+| Disabled System Extensions | 2     | ⚠️ Review      | Not Currently Active |
 | Loaded Non-Apple Kexts     | 0     | ✅ None       | Clean                |
 
 ---
@@ -160,9 +160,9 @@ macOS replaced kernel extensions with **System Extensions** — these run in use
 
 #### Inactive/Waiting Extensions
 
-| Status      | Extension                          | Vendor        | Purpose           | Assessment             |
-| ----------- | ---------------------------------- | ------------- | ----------------- | ---------------------- |
-| ⏳ Waiting  | `com.objective-see.lulu.extension` | Objective-See | **LuLu Firewall** | Awaiting user approval |
+| Status     | Extension                          | Vendor        | Purpose           | Assessment             |
+| ---------- | ---------------------------------- | ------------- | ----------------- | ---------------------- |
+| ⏳ Waiting | `com.objective-see.lulu.extension` | Objective-See | **LuLu Firewall** | Awaiting user approval |
 | ⚠️ Disabled | `org.mitmproxy.macos-redirector`   | mitmproxy     | HTTPS proxy       | Disabled by user       |
 
 #### LuLu Firewall (Waiting for Approval)

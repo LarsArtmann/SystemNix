@@ -4,7 +4,7 @@
 
 **Created:** 2026-08-18 20:58 CEST
 **Mandate:** View ALL `docs/status/2026-08-1*` (62 files), execute the **docs-health AUDIT** (BUILD + HARVEST + VERIFY + ANNOTATE + ARCHIVE), make TODO_LIST / CHANGELOG / AGENTS / ROADMAP / FEATURES superb, and **archive fully-done + inline-annotated files**.
-**Skill:** `~/.config/crush/skills/docs-health/SKILL.md` — annotation grammar: inline `~~item~~ done at \`hash\`` is MANDATORY (appendix-only = #1 failure mode); open items left untouched (absence of marker = open); annotate-THEN-`git mv`; never renumber; cite hashes.
+**Skill:** `~/.config/crush/skills/docs-health/SKILL.md` — annotation grammar: inline `~~item~~ done at \`hash\``is MANDATORY (appendix-only = #1 failure mode); open items left untouched (absence of marker = open); annotate-THEN-`git mv`; never renumber; cite hashes.
 
 ---
 
@@ -68,20 +68,20 @@ flowchart TD
 
 **TODO_LIST additions (~12 items, each with `file:line`-style evidence + report source):**
 
-| Item | Source report |
-|---|---|
-| papdashboard: fix journalUnits default → `dnsblockd.service` + remove pointless TimeoutStartSec | 15-03 §d |
-| papdashboard: pre/post-deploy-check coverage (port 8088, `/api/health` 200, ingest 401-unauthenticated) | 15-03 §f.4 |
-| Add `crm.home.lan` (enable-gated) to post-deploy external checks | 20-38 §c.3/f.3 |
-| sops manifest check-mode (`sops-install-secrets -check-mode`) in pre-deploy-check | 20-38 §e.1/f.4 |
-| Twenty ENCRYPTION_KEY rotation decision + digest-pin twenty-postgres/redis (user-decision flavor) | 20-38 §c.1/c.2/f.6-7 |
-| Upstream OTel instrumentation for overview + PMA (env wired ≠ instrumented; 0 spans ever) + phantom-telemetry Gatus detection | 02-38 |
-| PMA commit-failure + journald-staleness Gatus checks (171 failures invisible; frozen journald blinded diagnosis) | 13-53 §e.2-3 |
-| Rogue git-identity audit all repos (`noreply@anthropic.com`, `unknown@example.com`, `Claude`) + make global identity declarative + CV rewrite decision (162 Crush commits) | 13-53 §b/f |
-| Gatus HTTP-method-uppercase lint (eval-time or pre-commit; the `post`→405 class) + synthetic ingest health probe + smoke enable-gate audit (`test -e` pattern) | 20-52 §e.3/7, §f.9/18 |
-| FastFlowLM smoke: assert model NAME in `/v1/models` body + idle-check unit test (age math + instance guard) | 19-56 §e.3/f.21-22 |
-| Sweep ALL LarsArtmann Go repos for `InvokeNamed[interface]` on concrete do registrations (samber/do trap class) | 02-27 §f.28 |
-| deploy-window journal anchoring (`--since` = generation mtime) + retry/backoff on external HTTP checks | 20-38 §e.6-7 |
+| Item                                                                                                                                                                       | Source report         |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| papdashboard: fix journalUnits default → `dnsblockd.service` + remove pointless TimeoutStartSec                                                                            | 15-03 §d              |
+| papdashboard: pre/post-deploy-check coverage (port 8088, `/api/health` 200, ingest 401-unauthenticated)                                                                    | 15-03 §f.4            |
+| Add `crm.home.lan` (enable-gated) to post-deploy external checks                                                                                                           | 20-38 §c.3/f.3        |
+| sops manifest check-mode (`sops-install-secrets -check-mode`) in pre-deploy-check                                                                                          | 20-38 §e.1/f.4        |
+| Twenty ENCRYPTION_KEY rotation decision + digest-pin twenty-postgres/redis (user-decision flavor)                                                                          | 20-38 §c.1/c.2/f.6-7  |
+| Upstream OTel instrumentation for overview + PMA (env wired ≠ instrumented; 0 spans ever) + phantom-telemetry Gatus detection                                              | 02-38                 |
+| PMA commit-failure + journald-staleness Gatus checks (171 failures invisible; frozen journald blinded diagnosis)                                                           | 13-53 §e.2-3          |
+| Rogue git-identity audit all repos (`noreply@anthropic.com`, `unknown@example.com`, `Claude`) + make global identity declarative + CV rewrite decision (162 Crush commits) | 13-53 §b/f            |
+| Gatus HTTP-method-uppercase lint (eval-time or pre-commit; the `post`→405 class) + synthetic ingest health probe + smoke enable-gate audit (`test -e` pattern)             | 20-52 §e.3/7, §f.9/18 |
+| FastFlowLM smoke: assert model NAME in `/v1/models` body + idle-check unit test (age math + instance guard)                                                                | 19-56 §e.3/f.21-22    |
+| Sweep ALL LarsArtmann Go repos for `InvokeNamed[interface]` on concrete do registrations (samber/do trap class)                                                            | 02-27 §f.28           |
+| deploy-window journal anchoring (`--since` = generation mtime) + retry/backoff on external HTTP checks                                                                     | 20-38 §e.6-7          |
 
 **TODO_LIST deletions:** the 8 `[x]` items above. **Header update:** new `Updated:` line citing this pass.
 
@@ -96,11 +96,12 @@ flowchart TD
 Use the **python annotator pattern** (proven 08-17): regex-strike numbered items, assert edit counts, fail loudly on mismatch. Files:
 
 - 08-17: `16-33`, `16-37`, `21-05`, `21-32`, `22-46`, `22-47`, `22-55`, `22-56`
-- 08-18: `00-00`, `00-40`, `01-34`*, `02-15_homepage`, `02-15_manifest`, `02-27`, `02-36`, `02-38`, `02-48`, `12-37`, `13-14`*, `13-33`, `13-38`, `13-51`, `13-53`, `14-51`, `14-52`, `15-03`, `17-42`, `17-44`, `19-45`, `19-56`, `20-38`, `20-52`, `signoz-vs-victoriametrics-research`
+- 08-18: `00-00`, `00-40`, `01-34` _, `02-15_homepage`, `02-15_manifest`, `02-27`, `02-36`, `02-38`, `02-48`, `12-37`, `13-14`_, `13-33`, `13-38`, `13-51`, `13-53`, `14-51`, `14-52`, `15-03`, `17-42`, `17-44`, `19-45`, `19-56`, `20-38`, `20-52`, `signoz-vs-victoriametrics-research`
 
 (*01-34 and 13-14 already carry addenda resolving their questions — light annotation + archivable)
 
 **Known resolution facts from cross-reading (use as `done at` evidence):**
+
 - 17-55 "deployed and active" = dead endpoint (corrected 08-18, socat rework `c6f91f33`/`99301327`)
 - 13-22 all three bugs fixed + deployed; wedged-stc shipped; smoke live
 - 19-56 pending batch (idle-check, gotenberg http://, paperless smoke) → deployed by 20-52 deploy #2; ingest 405 fixed by 20-52 (two stacked bugs)
@@ -138,4 +139,4 @@ Print inline two-score report (Accuracy / Fitness) with visible math, per-doc fi
 
 ---
 
-*Pick up at Step E (HARVEST). Everything above is verified state, not intent.*
+_Pick up at Step E (HARVEST). Everything above is verified state, not intent._

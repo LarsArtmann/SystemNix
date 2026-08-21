@@ -143,33 +143,33 @@ After fixes: **621 paths fetched from cache (6.3 GiB), 353 built** — a ~5-10 m
 
 ## F) Top 25 Next Actions
 
-| #   | Priority    | Action                                                             | Effort |
-| --- | ----------- | ------------------------------------------------------------------ | ------ |
-| 1   | 🔴 Critical | Fix `nix-ssh-config` duplicate `environment.etc` build error       | Small  |
-| 2   | 🔴 Critical | Run `just switch` to verify full build succeeds end-to-end         | Medium |
-| 3   | 🟡 High     | Create `just cache-check` command (dry-run + fetch ratio report)   | Small  |
-| 4   | 🟡 High     | Document nixpkgs pinning policy in AGENTS.md                       | Small  |
-| 5   | 🟡 High     | Isolate unbound DoQ into separate derivation (not global overlay)  | Medium |
-| 6   | 🟡 High     | Push all committed changes to origin                               | Small  |
-| 7   | 🟡 High     | Fix Hermes health check endpoint (#62 in MASTER_TODO_PLAN)         | Medium |
-| 8   | 🟢 Medium   | Add `just update-nixpkgs` that verifies cache hits before updating | Medium |
-| 9   | 🟢 Medium   | SigNoz missing metrics investigation (#65)                         | Medium |
-| 10  | 🟢 Medium   | Authelia SMTP notifications (#66)                                  | Small  |
-| 11  | 🟢 Medium   | Immich backup restore test (#67)                                   | Small  |
-| 12  | 🟢 Medium   | Twenty backup restore test (#68)                                   | Medium |
-| 13  | 🟢 Medium   | DNS failover: provision Pi 3 hardware                              | Large  |
-| 14  | 🟢 Medium   | Remove `disableTestsOverlay` when valkey test is fixed upstream    | Small  |
-| 15  | 🟢 Medium   | Add overlay safety linter (warn if overriding core packages)       | Medium |
-| 16  | 🟢 Medium   | Update MASTER_TODO_PLAN with cache fix status                      | Small  |
-| 17  | 🟢 Medium   | Clean up docs/status/ — archive old reports                        | Small  |
-| 18  | 🟢 Medium   | Verify Darwin build still works after goOverlay removal            | Medium |
-| 19  | 🟢 Medium   | Add `meta.mainProgram` to all custom packages                      | Small  |
-| 20  | 🟢 Medium   | Investigate remaining 353 from-source builds (which packages?)     | Medium |
-| 21  | 🟢 Medium   | ComfyUI service status check                                       | Small  |
-| 22  | 🟢 Medium   | Minecraft server whitelist verification                            | Small  |
-| 23  | 🟢 Medium   | Review Hermes `key_env` migration (#63)                            | Small  |
-| 24  | 🟢 Medium   | Smart disk monitoring — root at 93% on evo-x2                      | Small  |
-| 25  | 🟢 Medium   | Add `just build-dry` alias for cache-hit checking                  | Small  |
+| #  | Priority    | Action                                                             | Effort |
+| -- | ----------- | ------------------------------------------------------------------ | ------ |
+| 1  | 🔴 Critical | Fix `nix-ssh-config` duplicate `environment.etc` build error       | Small  |
+| 2  | 🔴 Critical | Run `just switch` to verify full build succeeds end-to-end         | Medium |
+| 3  | 🟡 High     | Create `just cache-check` command (dry-run + fetch ratio report)   | Small  |
+| 4  | 🟡 High     | Document nixpkgs pinning policy in AGENTS.md                       | Small  |
+| 5  | 🟡 High     | Isolate unbound DoQ into separate derivation (not global overlay)  | Medium |
+| 6  | 🟡 High     | Push all committed changes to origin                               | Small  |
+| 7  | 🟡 High     | Fix Hermes health check endpoint (#62 in MASTER_TODO_PLAN)         | Medium |
+| 8  | 🟢 Medium   | Add `just update-nixpkgs` that verifies cache hits before updating | Medium |
+| 9  | 🟢 Medium   | SigNoz missing metrics investigation (#65)                         | Medium |
+| 10 | 🟢 Medium   | Authelia SMTP notifications (#66)                                  | Small  |
+| 11 | 🟢 Medium   | Immich backup restore test (#67)                                   | Small  |
+| 12 | 🟢 Medium   | Twenty backup restore test (#68)                                   | Medium |
+| 13 | 🟢 Medium   | DNS failover: provision Pi 3 hardware                              | Large  |
+| 14 | 🟢 Medium   | Remove `disableTestsOverlay` when valkey test is fixed upstream    | Small  |
+| 15 | 🟢 Medium   | Add overlay safety linter (warn if overriding core packages)       | Medium |
+| 16 | 🟢 Medium   | Update MASTER_TODO_PLAN with cache fix status                      | Small  |
+| 17 | 🟢 Medium   | Clean up docs/status/ — archive old reports                        | Small  |
+| 18 | 🟢 Medium   | Verify Darwin build still works after goOverlay removal            | Medium |
+| 19 | 🟢 Medium   | Add `meta.mainProgram` to all custom packages                      | Small  |
+| 20 | 🟢 Medium   | Investigate remaining 353 from-source builds (which packages?)     | Medium |
+| 21 | 🟢 Medium   | ComfyUI service status check                                       | Small  |
+| 22 | 🟢 Medium   | Minecraft server whitelist verification                            | Small  |
+| 23 | 🟢 Medium   | Review Hermes `key_env` migration (#63)                            | Small  |
+| 24 | 🟢 Medium   | Smart disk monitoring — root at 93% on evo-x2                      | Small  |
+| 25 | 🟢 Medium   | Add `just build-dry` alias for cache-hit checking                  | Small  |
 
 ---
 

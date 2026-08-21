@@ -20,6 +20,7 @@ Cross-referenced every ACTIONABLE and CONSIDER item against the existing TODO_LI
 ### 14 New Items Added to TODO_LIST.md
 
 **Priority 2 (Manual / blocked on user):**
+
 1. **Browser-history registration lock** — `POST /auth/register` open to anyone on LAN. Surfaces from 3 separate status reports (02-12, 07-47, 10-36). Not in any living doc.
 2. **WebAuthn `.lan` RP ID browser validation** — Browsers may reject passkey registration on `.lan` domains. If rejected, OAuth2 fallback already works. Requires manual browser test.
 
@@ -55,6 +56,7 @@ Cross-referenced every ACTIONABLE and CONSIDER item against the existing TODO_LI
 The agents identified ~11 open user questions across the 12 reports. Some are already answered by later reports (4 resolved), but **7 remain genuinely open**. I did NOT route these:
 
 **Unanswered questions that need routing:**
+
 1. "Is `home.lan` a valid WebAuthn RP ID?" — needs user browser test
 2. "Should browser-history agent run on MacBook?" — needs user decision
 3. "Should registration be locked after first user?" — needs user decision (but I added it as a TODO item anyway, which is a reasonable default)

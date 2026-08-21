@@ -1,7 +1,7 @@
 # Three-Drive Repurposing — Safety-Net Storage for evo-x2
 
 **Created:** 2026-08-16 20:22 CEST
-**Trigger:** User abandoned the private-cloud media hunt (2026-08-16 ~20:14, "I give up") and asked: *"how can we actually use these 3 drives effectively?"*
+**Trigger:** User abandoned the private-cloud media hunt (2026-08-16 ~20:14, "I give up") and asked: _"how can we actually use these 3 drives effectively?"_
 **Supersedes:** `docs/planning/2026-08-16_20-06_PRIVATE-CLOUD-MEDIA-HUNT-ENDGAME.md` (abandoned, annotated)
 **Prior art read before this doc:** `docs/hardware/wooacme-w3a894-assessment.md` (full Aug-10 assessment of sdf), `docs/status/2026-08-14_13-15_ssd-repurposing-options.md` (the two SanDisk 240 GB SSDs), `docs/status/2026-08-14_12-30_ssd-recovery-benchmarking-session.md`.
 
@@ -9,11 +9,11 @@
 
 ## 1. What the three drives ARE (measured tonight, read-only)
 
-| Drive | Model | Capacity | Health (SMART, 2026-08-16) | Attachment | Worth |
-|---|---|---|---|---|---|
-| **sdb** | Toshiba **MG08ACA16TE** (enterprise, 7200 rpm, CMR, 512e/4Kn) | **16.0 TB** | **PASSED — 912 power-on hours (~5 weeks!), 0 reallocated, 0 pending, 0 uncorrectable, 38 °C** | USB DAS, port 8-1 (shared link, see §3) | ~$350 new; effectively a new drive |
-| **sde** | Toshiba **MG08ACA16TE** | **16.0 TB** | **PASSED — identical: 912 POH, zero defects, 38 °C** | same DAS, same USB link | same |
-| **sdf** | WOOACME W3A894-512GB (budget SATA SSD behind RTL9210B USB-SATA) | 476.9 GiB | PASSED, 5,623 POH, **4 % endurance used → ~14 TB TBW implied**, 577 GB lifetime writes, 0 bad blocks (full assessment: Aug-10 doc) | own USB controller (c7:00.3) | Weak: low endurance, USB latency tail 99 ms |
+| Drive   | Model                                                           | Capacity    | Health (SMART, 2026-08-16)                                                                                                         | Attachment                              | Worth                                       |
+| ------- | --------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- | ------------------------------------------- |
+| **sdb** | Toshiba **MG08ACA16TE** (enterprise, 7200 rpm, CMR, 512e/4Kn)   | **16.0 TB** | **PASSED — 912 power-on hours (~5 weeks!), 0 reallocated, 0 pending, 0 uncorrectable, 38 °C**                                      | USB DAS, port 8-1 (shared link, see §3) | ~$350 new; effectively a new drive          |
+| **sde** | Toshiba **MG08ACA16TE**                                         | **16.0 TB** | **PASSED — identical: 912 POH, zero defects, 38 °C**                                                                               | same DAS, same USB link                 | same                                        |
+| **sdf** | WOOACME W3A894-512GB (budget SATA SSD behind RTL9210B USB-SATA) | 476.9 GiB   | PASSED, 5,623 POH, **4 % endurance used → ~14 TB TBW implied**, 577 GB lifetime writes, 0 bad blocks (full assessment: Aug-10 doc) | own USB controller (c7:00.3)            | Weak: low endurance, USB latency tail 99 ms |
 
 Also in the same DAS (not part of this decision, must not be disrupted): **sdc** = buildcache (ext4, 88 G used), **sdd** = btrfs SanDisk earmarked for Docker storage.
 
@@ -38,10 +38,10 @@ Also in the same DAS (not part of this decision, must not be disrupted): **sdc**
 
 ### Option A — Safety Net (RECOMMENDED)
 
-| Drive | Role | Detail |
-|---|---|---|
+| Drive     | Role                                                                    | Detail                                                                                                                                                                                                                                                                                                                                                  |
+| --------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | sdb + sde | **BTRFS RAID1 mirror**, label `backup-pool`, mounted `/mnt/backup-pool` | `mkfs.btrfs -m raid1 -d raid1` on whole disks (by-id), `noatime,compress=zstd`. Nightly **borg** repo: immich library + DB dumps, `/home/lars` projects/keys, sops secrets, docker volumes, monitor365. Est. 0.3-1 TB seed → years of headroom in 14.6 TiB usable. Weekly btrfs scrub. Becomes the new home for the 13 G forensic clones (frees /data). |
-| sdf | **Offsite rotation vault** | Monthly manual borg of the small irreplaceable core (projects, secrets, keys, immich 17 GB, docs ≈ 30-50 G deduped) → drive physically leaves the house. Returns next month, refreshes (charge-loss safe). |
+| sdf       | **Offsite rotation vault**                                              | Monthly manual borg of the small irreplaceable core (projects, secrets, keys, immich 17 GB, docs ≈ 30-50 G deduped) → drive physically leaves the house. Returns next month, refreshes (charge-loss safe).                                                                                                                                              |
 
 **Result: full 3-2-1 with hardware already owned** — NVMe + local snapshots (copy 1), HDD mirror on separate disks (copy 2), offsite SSD (copy 3). Closes the #1 standing risk of the whole infrastructure.
 
@@ -55,16 +55,16 @@ sdb = backup target, sde = bulk scratch/media, sdf = offsite. **Rejected**: sing
 
 ## 5. Migration plan (executes only after explicit green light)
 
-| # | Task | Detail / estimate |
-|---|---|---|
-| M1 | Pre-wipe safety | Verify `-ssh` clone manifest (`sha256sum -c` spot-check), confirm `-hdds` copy complete (done tonight), snapshot the final state of sdf mounts, unmount `/tmp/sdf-mount` + `/tmp/sdf1-mount`, retire the ZFS-VM scripts/workflow |
-| M2 | Wipe + create mirror | `sgdisk --zap-all` sdb+sde → `mkfs.btrfs -L backup-pool -m raid1 -d raid1` → `fileSystems."/mnt/backup-pool"` via `mkFilesystem` helper (by-id, `nofail`, `auto`); ~15 min |
-| M3 | Borg seed + nightly timer | borg repo on the mirror, passphrase in sops; seed run 0.3-1 T (~1-2 h over USB); systemd timer 02:30, `ioTier.maintenance`, `harden` |
-| M4 | Monitoring | Gatus: pool-mounted + borg-last-success-age checks; smartd already watches DAS disks via `-d sat` (confirm both MG08 serials); buildcache-style `.prom` collector for pool usage |
-| M5 | sdf offsite vault | Wipe → ext4 `offsite-vault` → monthly borg script + calendar reminder; SMART short self-test first (never run, per Aug-10 doc) |
-| M6 | Relocate forensic clones | Move `/data/backup-2026-08-11-private-cloud-*` (13 G) to `/mnt/backup-pool/archive/private-cloud-forensics/`; keep 6-12 months, then delete |
-| M7 | Docs + memory | AGENTS.md storage section (DAS topology, pool, borg layout), TODO_LIST/FEATURES updates, deploy via `nix run .#deploy`, `post-deploy-check` |
-| M8 | Optional polish | hd-idle spin-down (MG08s ~7 W idle each), btrbk-to-mirror as borg alternative if send/receive preferred |
+| #  | Task                      | Detail / estimate                                                                                                                                                                                                                |
+| -- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| M1 | Pre-wipe safety           | Verify `-ssh` clone manifest (`sha256sum -c` spot-check), confirm `-hdds` copy complete (done tonight), snapshot the final state of sdf mounts, unmount `/tmp/sdf-mount` + `/tmp/sdf1-mount`, retire the ZFS-VM scripts/workflow |
+| M2 | Wipe + create mirror      | `sgdisk --zap-all` sdb+sde → `mkfs.btrfs -L backup-pool -m raid1 -d raid1` → `fileSystems."/mnt/backup-pool"` via `mkFilesystem` helper (by-id, `nofail`, `auto`); ~15 min                                                       |
+| M3 | Borg seed + nightly timer | borg repo on the mirror, passphrase in sops; seed run 0.3-1 T (~1-2 h over USB); systemd timer 02:30, `ioTier.maintenance`, `harden`                                                                                             |
+| M4 | Monitoring                | Gatus: pool-mounted + borg-last-success-age checks; smartd already watches DAS disks via `-d sat` (confirm both MG08 serials); buildcache-style `.prom` collector for pool usage                                                 |
+| M5 | sdf offsite vault         | Wipe → ext4 `offsite-vault` → monthly borg script + calendar reminder; SMART short self-test first (never run, per Aug-10 doc)                                                                                                   |
+| M6 | Relocate forensic clones  | Move `/data/backup-2026-08-11-private-cloud-*` (13 G) to `/mnt/backup-pool/archive/private-cloud-forensics/`; keep 6-12 months, then delete                                                                                      |
+| M7 | Docs + memory             | AGENTS.md storage section (DAS topology, pool, borg layout), TODO_LIST/FEATURES updates, deploy via `nix run .#deploy`, `post-deploy-check`                                                                                      |
+| M8 | Optional polish           | hd-idle spin-down (MG08s ~7 W idle each), btrbk-to-mirror as borg alternative if send/receive preferred                                                                                                                          |
 
 ```mermaid
 graph LR

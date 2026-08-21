@@ -331,7 +331,7 @@ services.hypridle = {
 | -------------- | ------------------------------------- | ------------------------ | ----------------------------------- |
 | **Hyprland**   | Modern, Wayland, fast, rich ecosystem | Newer, smaller community | ✅ **YES** - You have this, keep it |
 | **i3**         | Mature, stable, huge community        | X11 only, no Wayland     | ❌ No - Hyprland better             |
-| **Sway**       | i3-compatible, Wayland                | Less active development  | ⚠️ Maybe - If you want i3-style     |
+| **Sway**       | i3-compatible, Wayland                | Less active development  | ⚠️ Maybe - If you want i3-style      |
 | **bspwm**      | Lightweight, fast                     | Tiling only, no floating | ❌ No - Hyprland more features      |
 | **awesome**    | Lua-configurable, very flexible       | Steeper learning curve   | ❌ No - Too complex                 |
 

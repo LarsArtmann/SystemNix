@@ -65,18 +65,18 @@ Nothing in this session. All 6 commits passed every pre-commit check (gitleaks, 
 
 ## F) Top #10 Things We Should Get Done Next
 
-| #   | Task                                                | Effort | Impact                           |
-| --- | --------------------------------------------------- | ------ | -------------------------------- |
-| 1   | Add `.pre-commit-config.yaml` to repo root          | 30 min | Prevents Nix quality regressions |
-| 2   | Simplify serviceModules list (convention-based)     | 30 min | Reduces flake.nix verbosity      |
-| 3   | Migrate homepage + photomap to mkDockerService      | 30 min | Reduces Docker boilerplate       |
-| 4   | Migrate signoz tmpfiles to mkStateDir (5 instances) | 10 min | Consistency                      |
-| 5   | Extract SSH config IPs to shared options module     | 1 hr   | Eliminates 6 hardcoded IPs       |
-| 6   | Write basic nixosTests for caddy + unbound          | 2 hrs  | Catches runtime breakage         |
-| 7   | Refactor gitea.nix embedded scripts                 | 2 hrs  | 555→250 lines                    |
-| 8   | Add `just bootstrap` for new machine setup          | 2 hrs  | Reproducible provisioning        |
-| 9   | Split configuration.nix into focused sub-modules    | 2 hrs  | Separation of concerns           |
-| 10  | Test rpi3-dns build                                 | 20 min | Ensures alternate target works   |
+| #  | Task                                                | Effort | Impact                           |
+| -- | --------------------------------------------------- | ------ | -------------------------------- |
+| 1  | Add `.pre-commit-config.yaml` to repo root          | 30 min | Prevents Nix quality regressions |
+| 2  | Simplify serviceModules list (convention-based)     | 30 min | Reduces flake.nix verbosity      |
+| 3  | Migrate homepage + photomap to mkDockerService      | 30 min | Reduces Docker boilerplate       |
+| 4  | Migrate signoz tmpfiles to mkStateDir (5 instances) | 10 min | Consistency                      |
+| 5  | Extract SSH config IPs to shared options module     | 1 hr   | Eliminates 6 hardcoded IPs       |
+| 6  | Write basic nixosTests for caddy + unbound          | 2 hrs  | Catches runtime breakage         |
+| 7  | Refactor gitea.nix embedded scripts                 | 2 hrs  | 555→250 lines                    |
+| 8  | Add `just bootstrap` for new machine setup          | 2 hrs  | Reproducible provisioning        |
+| 9  | Split configuration.nix into focused sub-modules    | 2 hrs  | Separation of concerns           |
+| 10 | Test rpi3-dns build                                 | 20 min | Ensures alternate target works   |
 
 ---
 

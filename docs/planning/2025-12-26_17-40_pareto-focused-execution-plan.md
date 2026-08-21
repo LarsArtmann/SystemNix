@@ -150,33 +150,33 @@ These tasks from the original plan are **NOT WORTH IT**:
 
 ### **CRITICAL (Must Do - 51% value)**
 
-| ID  | Task                          | Time   | Dependencies | Status     |
-| --- | ----------------------------- | ------ | ------------ | ---------- |
-| C1  | Fix Ollama GPU variable scope | 10 min | None         | ⏳ Pending |
+| ID | Task                          | Time   | Dependencies | Status     |
+| -- | ----------------------------- | ------ | ------------ | ---------- |
+| C1 | Fix Ollama GPU variable scope | 10 min | None         | ⏳ Pending |
 
 ### **HIGH PRIORITY (Should Do - 64% total value)**
 
-| ID  | Task                          | Time   | Dependencies | Status     |
-| --- | ----------------------------- | ------ | ------------ | ---------- |
-| H1  | Run `just pre-commit-run`     | 5 min  | None         | ⏳ Pending |
-| H2  | Clean empty placeholder files | 5 min  | None         | ⏳ Pending |
-| H3  | Update Phase 1 documentation  | 10 min | C1           | ⏳ Pending |
-| H4  | Run NixOS build test          | 30 min | None         | ⏳ Pending |
-| H5  | Run Darwin build test         | 30 min | None         | ⏳ Pending |
-| H6  | Verify all imports valid      | 10 min | H4, H5       | ⏳ Pending |
-| H7  | Create testing checklist      | 15 min | H4, H5       | ⏳ Pending |
-| H8  | Document testing results      | 20 min | H4, H5, H7   | ⏳ Pending |
+| ID | Task                          | Time   | Dependencies | Status     |
+| -- | ----------------------------- | ------ | ------------ | ---------- |
+| H1 | Run `just pre-commit-run`     | 5 min  | None         | ⏳ Pending |
+| H2 | Clean empty placeholder files | 5 min  | None         | ⏳ Pending |
+| H3 | Update Phase 1 documentation  | 10 min | C1           | ⏳ Pending |
+| H4 | Run NixOS build test          | 30 min | None         | ⏳ Pending |
+| H5 | Run Darwin build test         | 30 min | None         | ⏳ Pending |
+| H6 | Verify all imports valid      | 10 min | H4, H5       | ⏳ Pending |
+| H7 | Create testing checklist      | 15 min | H4, H5       | ⏳ Pending |
+| H8 | Document testing results      | 20 min | H4, H5, H7   | ⏳ Pending |
 
 ### **MEDIUM PRIORITY (Nice to Have - 80% total value)**
 
-| ID  | Task                               | Time   | Dependencies | Status     |
-| --- | ---------------------------------- | ------ | ------------ | ---------- |
-| M1  | Comprehensive package audit        | 30 min | H6           | ⏳ Pending |
-| M2  | Fix remaining package duplications | 60 min | M1           | ⏳ Pending |
-| M3  | Cross-platform consistency check   | 60 min | H6           | ⏳ Pending |
-| M4  | Update AGENTS.md documentation     | 30 min | M2, M3       | ⏳ Pending |
-| M5  | Fix configuration duplications     | 45 min | M3           | ⏳ Pending |
-| M6  | Run `just health`                  | 15 min | M5           | ⏳ Pending |
+| ID | Task                               | Time   | Dependencies | Status     |
+| -- | ---------------------------------- | ------ | ------------ | ---------- |
+| M1 | Comprehensive package audit        | 30 min | H6           | ⏳ Pending |
+| M2 | Fix remaining package duplications | 60 min | M1           | ⏳ Pending |
+| M3 | Cross-platform consistency check   | 60 min | H6           | ⏳ Pending |
+| M4 | Update AGENTS.md documentation     | 30 min | M2, M3       | ⏳ Pending |
+| M5 | Fix configuration duplications     | 45 min | M3           | ⏳ Pending |
+| M6 | Run `just health`                  | 15 min | M5           | ⏳ Pending |
 
 ### **LOW PRIORITY (Optional - SKIPPED)**
 

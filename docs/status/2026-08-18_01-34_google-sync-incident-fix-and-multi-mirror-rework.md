@@ -28,6 +28,7 @@ The prior session's summary claimed "deployed disabled" — **wrong**. The 00:33
 ### 2. Placeholder/config validation (runtime layer)
 
 `google-sync-config-check` ExecStartPre:
+
 - greps `REPLACE_WITH` → actionable message pointing at the TODO_LIST P0 go-live checklist (the module's whole "ships disabled" premise now fails CLOSED with instructions instead of an inscrutable auth crash-loop);
 - `rclone listremotes` (offline parse) → verifies every configured mirror remote exists in the INI;
 - eval-time assertion was impossible (sops content is encrypted until activation) — runtime check is the correct layer.
@@ -37,11 +38,12 @@ The prior session's summary claimed "deployed disabled" — **wrong**. The 00:33
 Answers: scope = **shared-with-me AND team drives both matter**; Drive = **two accounts** (private ~1.9 TB; Workspace work account, low-digit GBs); Photos = **wait for mirror stability**.
 
 Module redesigned around a `mirrors` option (one service, N remotes):
-| remote | destination | config keys needed in sops rclone.conf |
-|---|---|---|
-| `gdrive` | `/mnt/pool/backups/google-drive` | token (private My Drive, ~1.9 TB) |
-| `gdrive-shared` | `.../google-drive-shared` | `shared_with_me = true` + token |
-| `gwork` | `.../google-drive-work` | `team_drive = <id>` (if shared drive) + token |
+
+| remote          | destination                      | config keys needed in sops rclone.conf        |
+| --------------- | -------------------------------- | --------------------------------------------- |
+| `gdrive`        | `/mnt/pool/backups/google-drive` | token (private My Drive, ~1.9 TB)             |
+| `gdrive-shared` | `.../google-drive-shared`        | `shared_with_me = true` + token               |
+| `gwork`         | `.../google-drive-work`          | `team_drive = <id>` (if shared drive) + token |
 
 - Per-mirror grace dirs `google-drive-deleted/<remote>/` (deletion collisions across mirrors stay separated); grace expiry uses `-mindepth 2`.
 - Seed sizing for 1.9 TB: `TimeoutStartSec` 4h → **48h**; `MemoryMax` 1G → **2G** (`--fast-list` holds ~1 KB/object in memory).
@@ -115,6 +117,7 @@ A concurrent session is actively editing `homepage.nix` (FastFlowLM/Google Sync 
 ## f) NEXT UP TO 50 (this session's threads only)
 
 **Blocking / incident:**
+
 1. ~~**USER: `nix run .#deploy`** (or `sudo systemctl stop google-sync.timer google-sync.service` for instant silence) — stops the live loop~~ done (system-686 switched 01:21 with the service disabled; timer stop was switch-to-configuration)
 2. ~~After deploy: confirm `google-sync.timer` gone, `google-sync-dirs.service` ran, no new 226s, OnFailure silence~~ done (last failure 01:20:35, none since; no new 226s)
 3. ~~Update sops placeholder to the 3-remote layout (2 sections + keys) so the scaffold matches the docs~~ done (3-remote placeholder committed 2026-08-18 (TODO_LIST go-live item))
@@ -155,7 +158,7 @@ A concurrent session is actively editing `homepage.nix` (FastFlowLM/Google Sync 
 
 ---
 
-*Artifacts this session: `modules/nixos/services/google-sync.nix` (226 fix + multi-mirror rework), `scripts/deploy.sh` (+google-sync-dirs restart), AGENTS.md (section rework + ReadWritePaths gotcha), CHANGELOG.md (Added+Fixed), TODO_LIST.md (urgent item + 3-remote go-live), prior status report (2 addenda). All eval/build/lint green; fix NOT yet deployed — loop live until item f.1.*
+_Artifacts this session: `modules/nixos/services/google-sync.nix` (226 fix + multi-mirror rework), `scripts/deploy.sh` (+google-sync-dirs restart), AGENTS.md (section rework + ReadWritePaths gotcha), CHANGELOG.md (Added+Fixed), TODO_LIST.md (urgent item + 3-remote go-live), prior status report (2 addenda). All eval/build/lint green; fix NOT yet deployed — loop live until item f.1._
 
 ---
 

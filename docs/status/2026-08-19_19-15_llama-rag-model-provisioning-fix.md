@@ -77,6 +77,7 @@ The two new llama.cpp RAG services (embeddings + reranker, deployed earlier on 2
 ## f) Up to 50 Things We Should Get Done Next
 
 **Immediate (this stack):**
+
 1. Verify GPU offload: check `HSA_OVERRIDE_GFX_VERSION` presence in `llama-embeddings.service` environment; if absent, add to `rocm` env helper or the units; confirm via journal offload lines / `rocm-smi`
 2. Add a GPU-evidence smoke check (or fold into the two llama functional checks) so CPU-fallback becomes a visible FAIL
 3. Verify Paperless AI actually consumes the embedding endpoint (journal for embedding calls/errors)

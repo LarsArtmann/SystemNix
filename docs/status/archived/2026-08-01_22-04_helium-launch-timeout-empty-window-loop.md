@@ -5,7 +5,6 @@
 
 ---
 
-
 ## Executive Summary
 
 The Helium browser was opening a new empty window every 5 minutes. The 2026-07-24 `helium-launch` fix was supposed to prevent this, but I initially dismissed the user's report as "already fixed" — **I was wrong**. The fix contained a 300-second timeout that defeated its own guard, causing the exact bug it was designed to prevent, just slower (every 5 min instead of every 5 sec).
@@ -50,7 +49,7 @@ The Helium browser was opening a new empty window every 5 minutes. The 2026-07-2
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Don't trust AGENTS.md as ground truth for "is it fixed."** AGENTS.md records *intended* state. The *actual* state is in the running system. When a user reports a bug that AGENTS.md says is fixed, **investigate the running system first**, then check if the documentation drifted.
+1. **Don't trust AGENTS.md as ground truth for "is it fixed."** AGENTS.md records _intended_ state. The _actual_ state is in the running system. When a user reports a bug that AGENTS.md says is fixed, **investigate the running system first**, then check if the documentation drifted.
 
 2. **Timeouts on guards are a code smell.** A "wait then give up" pattern on a mutex-like guard is almost always wrong. Either the condition will eventually be met (wait forever / poll), or it won't (fail immediately / take a different action). "Wait a bit then proceed anyway" creates a third, worse state. The 300s timeout turned a tight crash loop (11 windows/36s, visible) into a slow drip (1 window/5min, insidious and harder to notice).
 
@@ -58,23 +57,23 @@ The Helium browser was opening a new empty window every 5 minutes. The 2026-07-2
 
 4. **Post-deploy verification gap.** The `post-deploy-check` script does NOT verify that `helium.service` isn't cycling. It checks HTTP endpoints, not systemd restart loops. A check for `systemctl --user show helium.service -p NRestarts` exceeding a threshold would have caught this on the first deploy after the 2026-07-24 "fix."
 
-5. **AGENTS.md gotcha needs to mention the *verification* of the fix, not just the fix itself.** "FIXED 2026-07-24" implies verified. It should say "FIXED 2026-07-24, VERIFIED 2026-07-24" or "FIXED 2026-07-24, NOT YET VERIFIED" — making the verification status explicit.
+5. **AGENTS.md gotcha needs to mention the _verification_ of the fix, not just the fix itself.** "FIXED 2026-07-24" implies verified. It should say "FIXED 2026-07-24, VERIFIED 2026-07-24" or "FIXED 2026-07-24, NOT YET VERIFIED" — making the verification status explicit.
 
 ---
 
 ## f) Up to 50 Things We Should Get Done Next
 
-| # | Task | Priority |
-|---|------|----------|
-| 1 | **Deploy** the helium-launch fix (`nix run .#deploy`) | P0 |
-| 2 | **Verify** after deploy: `journalctl --user -u helium.service --since "5 min ago"` shows no "Opening in existing browser session" | P0 |
-| 3 | **Stop the cycling now**: `systemctl --user stop helium.service` (user must do this — I can't run systemctl) | P0 |
-| 4 | Add `helium.service` restart-count check to `post-deploy-check.sh` (alert if NRestarts > 3 in the first 10 min after deploy) | P1 |
-| 5 | Consider replacing `pgrep` in `helium-launch` with a direct `SingletonLock` file check (`test -f ~/.config/net.imput.helium/SingletonLock`) — more reliable than process name matching | P2 |
-| 6 | Audit all other `Restart=always` user services for the same "clean exit → restart loop" pattern (ghostty, dunst-retired, etc.) | P2 |
-| 7 | Consider whether `helium-launch` should `exec` into the wait loop as PID 1 of the cgroup, so systemd can track it properly (currently it's a bash script that sleeps) | P3 |
-| 8 | Document in the `helium-launch` comment that `systemctl --user stop helium.service` is the manual recovery for a stuck instance | P3 |
-| 9 | Consider a `Type=notify` approach for helium — but only if upstream Helium adds `sd_notify` support (it won't, it's Chromium) | P4 |
+| # | Task                                                                                                                                                                                   | Priority |
+| - | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| 1 | **Deploy** the helium-launch fix (`nix run .#deploy`)                                                                                                                                  | P0       |
+| 2 | **Verify** after deploy: `journalctl --user -u helium.service --since "5 min ago"` shows no "Opening in existing browser session"                                                      | P0       |
+| 3 | **Stop the cycling now**: `systemctl --user stop helium.service` (user must do this — I can't run systemctl)                                                                           | P0       |
+| 4 | Add `helium.service` restart-count check to `post-deploy-check.sh` (alert if NRestarts > 3 in the first 10 min after deploy)                                                           | P1       |
+| 5 | Consider replacing `pgrep` in `helium-launch` with a direct `SingletonLock` file check (`test -f ~/.config/net.imput.helium/SingletonLock`) — more reliable than process name matching | P2       |
+| 6 | Audit all other `Restart=always` user services for the same "clean exit → restart loop" pattern (ghostty, dunst-retired, etc.)                                                         | P2       |
+| 7 | Consider whether `helium-launch` should `exec` into the wait loop as PID 1 of the cgroup, so systemd can track it properly (currently it's a bash script that sleeps)                  | P3       |
+| 8 | Document in the `helium-launch` comment that `systemctl --user stop helium.service` is the manual recovery for a stuck instance                                                        | P3       |
+| 9 | Consider a `Type=notify` approach for helium — but only if upstream Helium adds `sd_notify` support (it won't, it's Chromium)                                                          | P4       |
 
 ---
 

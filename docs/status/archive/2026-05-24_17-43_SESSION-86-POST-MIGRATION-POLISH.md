@@ -62,33 +62,33 @@ Verified that `harden {}` uses `mkDefault` (priority 1000) and never sets `User`
 
 ### Must Do Before Deploy 🔴
 
-| #   | Task                                                 | Effort |
-| --- | ---------------------------------------------------- | ------ |
-| 1   | Create `pocket-id.yaml` sops file with 4 secrets     | XS     |
-| 2   | Deploy Pocket ID (oauth2-proxy disabled)             | XS     |
-| 3   | Register admin passkey + create OIDC clients         | S      |
-| 4   | Deploy oauth2-proxy + verify forward-auth + redirect | S      |
-| 5   | Reconfigure Immich + Forgejo OAuth                   | XS     |
+| # | Task                                                 | Effort |
+| - | ---------------------------------------------------- | ------ |
+| 1 | Create `pocket-id.yaml` sops file with 4 secrets     | XS     |
+| 2 | Deploy Pocket ID (oauth2-proxy disabled)             | XS     |
+| 3 | Register admin passkey + create OIDC clients         | S      |
+| 4 | Deploy oauth2-proxy + verify forward-auth + redirect | S      |
+| 5 | Reconfigure Immich + Forgejo OAuth                   | XS     |
 
 ### Should Do 🟠
 
-| #   | Task                                                 | Effort |
-| --- | ---------------------------------------------------- | ------ |
-| 6   | Pin Docker `latest` tags (twenty, manifest, openseo) | XS     |
-| 7   | Consolidate GPU config via `lib/rocm.nix`            | S      |
-| 8   | Add swap alert rule to SigNoz                        | XS     |
-| 9   | Write Pocket ID OIDC client provisioning script      | M      |
-| 10  | Convert `/data` to `@data` subvolume                 | M      |
+| #  | Task                                                 | Effort |
+| -- | ---------------------------------------------------- | ------ |
+| 6  | Pin Docker `latest` tags (twenty, manifest, openseo) | XS     |
+| 7  | Consolidate GPU config via `lib/rocm.nix`            | S      |
+| 8  | Add swap alert rule to SigNoz                        | XS     |
+| 9  | Write Pocket ID OIDC client provisioning script      | M      |
+| 10 | Convert `/data` to `@data` subvolume                 | M      |
 
 ### Nice to Have 🟡
 
-| #   | Task                             | Effort |
-| --- | -------------------------------- | ------ |
-| 11  | Configure Hermes secondary LLM   | M      |
-| 12  | Deploy Dozzle at `logs.home.lan` | S      |
-| 13  | Flake inputs audit (47 inputs)   | M      |
-| 14  | nix-colors integration           | L (6h) |
-| 15  | Provision Pi 3 for DNS failover  | L      |
+| #  | Task                             | Effort |
+| -- | -------------------------------- | ------ |
+| 11 | Configure Hermes secondary LLM   | M      |
+| 12 | Deploy Dozzle at `logs.home.lan` | S      |
+| 13 | Flake inputs audit (47 inputs)   | M      |
+| 14 | nix-colors integration           | L (6h) |
+| 15 | Provision Pi 3 for DNS failover  | L      |
 
 ---
 

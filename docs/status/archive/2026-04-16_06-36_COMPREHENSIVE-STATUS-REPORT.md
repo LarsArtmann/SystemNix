@@ -183,33 +183,33 @@ The package was created with types and shared utilities, but:
 
 Sorted by impact x effort (highest first):
 
-| #   | Task                                                                      | Impact          | Effort | Category |
-| --- | ------------------------------------------------------------------------- | --------------- | ------ | -------- |
-| 1   | **Fix PTZ degree-to-v4l2 conversion** — Call `ptzRange()` in `handlePTZ`  | Critical bug    | 5 min  | Bug      |
-| 2   | **Update Nix `vendorHash`** for `internal/pixy` extraction                | Blocks deploy   | 10 min | Build    |
-| 3   | **Eliminate `web/client.go` duplication** — Import from `internal/pixy`   | Architecture    | 30 min | Refactor |
-| 4   | **Remove unused `errDeadline`**                                           | Dead code       | 2 min  | Cleanup  |
-| 5   | **Add Web UI NixOS service** — systemd unit + Caddy vhost                 | Feature         | 1 hr   | NixOS    |
-| 6   | **Complete `internal/pixy` extraction** — HID constants, protocol logic   | Architecture    | 2 hr   | Refactor |
-| 7   | **Archive old status reports** (>7 days to `archive/`)                    | Hygiene         | 5 min  | Process  |
-| 8   | **Make web UI a daemon subcommand** (`emeet-pixyd web`)                   | Architecture    | 1 hr   | Refactor |
-| 9   | **Add basic web UI tests** — handler responses, status parsing            | Quality         | 2 hr   | Testing  |
-| 10  | **Web UI auth** — Token-based or TLS client cert via Caddy                | Security        | 1 hr   | Security |
-| 11  | **Caddy reverse proxy** — `pixy.home.lan` with TLS                        | Access          | 30 min | NixOS    |
-| 12  | **WebSocket real-time updates** — Replace polling                         | UX              | 3 hr   | Feature  |
-| 13  | **Daemon graceful shutdown** — Context cancellation, socket cleanup       | Reliability     | 30 min | Quality  |
-| 14  | **Move `parseHIDResponse` to `internal/pixy`**                            | Architecture    | 1 hr   | Refactor |
-| 15  | **Move `queryHIDState[T]` to `internal/pixy`**                            | Architecture    | 1 hr   | Refactor |
-| 16  | **Consistent error wrapping audit** — Ensure all returns use `fmt.Errorf` | Quality         | 1 hr   | Quality  |
-| 17  | **HID protocol documentation** — Byte-level spec in `docs/`               | Maintainability | 2 hr   | Docs     |
-| 18  | **Config file support** — YAML/TOML instead of hardcoded constants        | Flexibility     | 2 hr   | Feature  |
-| 19  | **Fix Go stdlib on macOS** — Nix overlay or system Go                     | Dev experience  | 1 hr   | Tooling  |
-| 20  | **Mobile-responsive PTZ panel** — Collapsible on small screens            | UX              | 30 min | UI       |
-| 21  | **Prometheus metrics endpoint** — Camera state, call duration, errors     | Observability   | 2 hr   | Feature  |
-| 22  | **Pre-commit hook fix** — Handle staged+unstaged same-file conflict       | Dev experience  | 30 min | Tooling  |
-| 23  | **Add `go generate` for templ** — Automated template regeneration         | Build           | 30 min | Build    |
-| 24  | **Integration test** — Start daemon, send commands, verify responses      | Quality         | 3 hr   | Testing  |
-| 25  | **Multi-camera support** — Multiple HID devices, named cameras            | Feature         | 4 hr   | Feature  |
+| #  | Task                                                                      | Impact          | Effort | Category |
+| -- | ------------------------------------------------------------------------- | --------------- | ------ | -------- |
+| 1  | **Fix PTZ degree-to-v4l2 conversion** — Call `ptzRange()` in `handlePTZ`  | Critical bug    | 5 min  | Bug      |
+| 2  | **Update Nix `vendorHash`** for `internal/pixy` extraction                | Blocks deploy   | 10 min | Build    |
+| 3  | **Eliminate `web/client.go` duplication** — Import from `internal/pixy`   | Architecture    | 30 min | Refactor |
+| 4  | **Remove unused `errDeadline`**                                           | Dead code       | 2 min  | Cleanup  |
+| 5  | **Add Web UI NixOS service** — systemd unit + Caddy vhost                 | Feature         | 1 hr   | NixOS    |
+| 6  | **Complete `internal/pixy` extraction** — HID constants, protocol logic   | Architecture    | 2 hr   | Refactor |
+| 7  | **Archive old status reports** (>7 days to `archive/`)                    | Hygiene         | 5 min  | Process  |
+| 8  | **Make web UI a daemon subcommand** (`emeet-pixyd web`)                   | Architecture    | 1 hr   | Refactor |
+| 9  | **Add basic web UI tests** — handler responses, status parsing            | Quality         | 2 hr   | Testing  |
+| 10 | **Web UI auth** — Token-based or TLS client cert via Caddy                | Security        | 1 hr   | Security |
+| 11 | **Caddy reverse proxy** — `pixy.home.lan` with TLS                        | Access          | 30 min | NixOS    |
+| 12 | **WebSocket real-time updates** — Replace polling                         | UX              | 3 hr   | Feature  |
+| 13 | **Daemon graceful shutdown** — Context cancellation, socket cleanup       | Reliability     | 30 min | Quality  |
+| 14 | **Move `parseHIDResponse` to `internal/pixy`**                            | Architecture    | 1 hr   | Refactor |
+| 15 | **Move `queryHIDState[T]` to `internal/pixy`**                            | Architecture    | 1 hr   | Refactor |
+| 16 | **Consistent error wrapping audit** — Ensure all returns use `fmt.Errorf` | Quality         | 1 hr   | Quality  |
+| 17 | **HID protocol documentation** — Byte-level spec in `docs/`               | Maintainability | 2 hr   | Docs     |
+| 18 | **Config file support** — YAML/TOML instead of hardcoded constants        | Flexibility     | 2 hr   | Feature  |
+| 19 | **Fix Go stdlib on macOS** — Nix overlay or system Go                     | Dev experience  | 1 hr   | Tooling  |
+| 20 | **Mobile-responsive PTZ panel** — Collapsible on small screens            | UX              | 30 min | UI       |
+| 21 | **Prometheus metrics endpoint** — Camera state, call duration, errors     | Observability   | 2 hr   | Feature  |
+| 22 | **Pre-commit hook fix** — Handle staged+unstaged same-file conflict       | Dev experience  | 30 min | Tooling  |
+| 23 | **Add `go generate` for templ** — Automated template regeneration         | Build           | 30 min | Build    |
+| 24 | **Integration test** — Start daemon, send commands, verify responses      | Quality         | 3 hr   | Testing  |
+| 25 | **Multi-camera support** — Multiple HID devices, named cameras            | Feature         | 4 hr   | Feature  |
 
 ---
 

@@ -9,6 +9,7 @@
 ## What Triggered This Session
 
 User ran `nh os switch` and observed:
+
 1. `projects-management-automation` (PMA) deployed and started, but the CLI binary was NOT on PATH
 2. Both `overview.service` and `projects-management-automation.service` had obvious problems in the journal
 
@@ -16,45 +17,45 @@ User ran `nh os switch` and observed:
 
 ## A. FULLY DONE
 
-| # | Task | Details |
-|---|------|---------|
-| 1 | **Diagnosed PMA CLI missing from PATH** | Root cause: `lib/lars-packages.nix:35` had `projects-management-automation` commented out ("TEMPORARILY DISABLED: go-cqrs-lite/codec/v4 private repo FOD rebuild needed"). The service module pulled the package directly from the flake input for the systemd unit, but the CLI was never exposed to `environment.systemPackages`. |
-| 2 | **Uncommented PMA in lars-packages.nix** | `nix build .#projects-management-automation` succeeds. `nix flake check --no-build` passes with the package included. |
-| 3 | **Diagnosed 3 runtime problems from journals** | (a) PMA OOM-killed by systemd-oomd every ~2min during discovery. (b) Invalid environment assignment "Artmann" — unquoted GIT_AUTHOR_NAME. (c) overview StartLimitIntervalSec warning in [Service]. |
-| 4 | **Identified the OOM-kill mechanism** | It is `systemd-oomd` killing for **memory pressure** (`DefaultMemoryPressureLimit=50%`, `DefaultMemoryPressureDurationSec=20s`), NOT the cgroup `MemoryMax=8G` limit. PMA peaked at only 6.3G. The 50% pressure threshold trips during the 260-repo discovery burst. |
-| 5 | **Fixed GIT_AUTHOR_NAME env quoting** | Added quoted overrides: `''GIT_AUTHOR_NAME="Lars Artmann"''` in PMA serviceConfig. Upstream emits unquoted `"GIT_AUTHOR_NAME=Lars Artmann"` which systemd parses the space as a delimiter. |
-| 6 | **Nulled upstream StartLimit in serviceConfig** | overview.nix: Added `serviceConfig.StartLimitBurst = lib.mkForce null` and `serviceConfig.StartLimitIntervalSec = lib.mkForce null` to remove the broken `[Service]` entries from the upstream module. Only `[Unit]` entries (from top-level NixOS options) remain. |
-| 7 | **Removed duplicate GOMEMLIMIT** | The deployed unit had TWO `GOMEMLIMIT` entries: `6144MiB` (SystemNix override) and `6GiB` (upstream default). Removed SystemNix's duplicate; now uses upstream's `goMemLimit` option set to `"6GiB"` in configuration.nix. |
-| 8 | **First memory-increase attempt rejected by user** | I initially set MemoryMax=20G / MemoryHigh=14G. User correctly rejected: "WE ARE NOT giving PMA GB memory FUCK NO!" Reverted to 8G/6G. The problem was never about memory limits — it was about oomd's pressure-based killing. |
+| # | Task                                               | Details                                                                                                                                                                                                                                                                                                                             |
+| - | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Diagnosed PMA CLI missing from PATH**            | Root cause: `lib/lars-packages.nix:35` had `projects-management-automation` commented out ("TEMPORARILY DISABLED: go-cqrs-lite/codec/v4 private repo FOD rebuild needed"). The service module pulled the package directly from the flake input for the systemd unit, but the CLI was never exposed to `environment.systemPackages`. |
+| 2 | **Uncommented PMA in lars-packages.nix**           | `nix build .#projects-management-automation` succeeds. `nix flake check --no-build` passes with the package included.                                                                                                                                                                                                               |
+| 3 | **Diagnosed 3 runtime problems from journals**     | (a) PMA OOM-killed by systemd-oomd every ~2min during discovery. (b) Invalid environment assignment "Artmann" — unquoted GIT_AUTHOR_NAME. (c) overview StartLimitIntervalSec warning in [Service].                                                                                                                                  |
+| 4 | **Identified the OOM-kill mechanism**              | It is `systemd-oomd` killing for **memory pressure** (`DefaultMemoryPressureLimit=50%`, `DefaultMemoryPressureDurationSec=20s`), NOT the cgroup `MemoryMax=8G` limit. PMA peaked at only 6.3G. The 50% pressure threshold trips during the 260-repo discovery burst.                                                                |
+| 5 | **Fixed GIT_AUTHOR_NAME env quoting**              | Added quoted overrides: `''GIT_AUTHOR_NAME="Lars Artmann"''` in PMA serviceConfig. Upstream emits unquoted `"GIT_AUTHOR_NAME=Lars Artmann"` which systemd parses the space as a delimiter.                                                                                                                                          |
+| 6 | **Nulled upstream StartLimit in serviceConfig**    | overview.nix: Added `serviceConfig.StartLimitBurst = lib.mkForce null` and `serviceConfig.StartLimitIntervalSec = lib.mkForce null` to remove the broken `[Service]` entries from the upstream module. Only `[Unit]` entries (from top-level NixOS options) remain.                                                                 |
+| 7 | **Removed duplicate GOMEMLIMIT**                   | The deployed unit had TWO `GOMEMLIMIT` entries: `6144MiB` (SystemNix override) and `6GiB` (upstream default). Removed SystemNix's duplicate; now uses upstream's `goMemLimit` option set to `"6GiB"` in configuration.nix.                                                                                                          |
+| 8 | **First memory-increase attempt rejected by user** | I initially set MemoryMax=20G / MemoryHigh=14G. User correctly rejected: "WE ARE NOT giving PMA GB memory FUCK NO!" Reverted to 8G/6G. The problem was never about memory limits — it was about oomd's pressure-based killing.                                                                                                      |
 
 ---
 
 ## B. PARTIALLY DONE
 
-| # | Task | Status | What Remains |
-|---|------|--------|--------------|
+| # | Task                                                   | Status    | What Remains                                                                                                                                                                                       |
+| - | ------------------------------------------------------ | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | **Prevent PMA from being OOM-killed during discovery** | **FIXED** | Changed `ManagedOOMMemoryPressure = "auto"` (no-op default) to `ManagedOOMPreference = "omit"` (actual oomd exemption). Verified via `nix eval`, `nix fmt`, `nix flake check --no-build` all pass. |
-| 2 | **`nix flake check --no-build`** | PASS | But changes not deployed to runtime. |
-| 3 | **`nix build .#projects-management-automation`** | PASS | But not verified at runtime whether the CLI is actually on PATH after deploy. |
+| 2 | **`nix flake check --no-build`**                       | PASS      | But changes not deployed to runtime.                                                                                                                                                               |
+| 3 | **`nix build .#projects-management-automation`**       | PASS      | But not verified at runtime whether the CLI is actually on PATH after deploy.                                                                                                                      |
 
 ---
 
 ## C. NOT STARTED
 
-| # | Task |
-|---|------|
-| 1 | Deploy the current changes (`nh os switch`) |
-| 2 | Verify PMA CLI is on PATH after deploy |
-| 3 | Verify PMA survives a full discovery cycle without being OOM-killed |
-| 4 | Verify overview.service gets valid discovery results from PMA |
-| 5 | Verify hermes.service (re-enabled in prior session, never verified) |
-| 6 | Add Gatus health checks for overview and PMA |
-| 7 | Fix upstream PMA module (GIT_AUTHOR_NAME quoting, StartLimit placement) |
-| 8 | Fix upstream overview module (StartLimit in serviceConfig) |
-| 9 | Run `nix fmt` after changes |
-| 10 | Update AGENTS.md with new findings (oomd pressure kill, ManagedOOMPreference) |
+| #  | Task                                                                                     |
+| -- | ---------------------------------------------------------------------------------------- |
+| 1  | Deploy the current changes (`nh os switch`)                                              |
+| 2  | Verify PMA CLI is on PATH after deploy                                                   |
+| 3  | Verify PMA survives a full discovery cycle without being OOM-killed                      |
+| 4  | Verify overview.service gets valid discovery results from PMA                            |
+| 5  | Verify hermes.service (re-enabled in prior session, never verified)                      |
+| 6  | Add Gatus health checks for overview and PMA                                             |
+| 7  | Fix upstream PMA module (GIT_AUTHOR_NAME quoting, StartLimit placement)                  |
+| 8  | Fix upstream overview module (StartLimit in serviceConfig)                               |
+| 9  | Run `nix fmt` after changes                                                              |
+| 10 | Update AGENTS.md with new findings (oomd pressure kill, ManagedOOMPreference)            |
 | 11 | Investigate overview warning: `WARN Search path does not exist path=/home/lars/projects` |
-| 12 | Commit current uncommitted changes |
+| 12 | Commit current uncommitted changes                                                       |
 
 ---
 
@@ -65,6 +66,7 @@ User ran `nh os switch` and observed:
 **This was the critical mistake.** I initially set `ManagedOOMMemoryPressure = "auto"` thinking it would exempt PMA from oomd's memory-pressure killer. It does NOT.
 
 From systemd.resource-control(5):
+
 - `ManagedOOMMemoryPressure = auto` — oomd **will** kill processes when pressure thresholds are met (this is the DEFAULT when oomd is enabled)
 - `ManagedOOMMemoryPressure = kill` — oomd will kill regardless of pressure
 - There is NO "off" or "disable" value for this directive
@@ -88,6 +90,7 @@ AGENTS.md explicitly says: "Fix application bugs upstream, not in SystemNix." Tw
 ### D4. Missed the overview "Search path does not exist" warning
 
 The overview journal shows:
+
 ```
 WARN Search path does not exist path=/home/lars/projects
 ```
@@ -97,6 +100,7 @@ WARN Search path does not exist path=/home/lars/projects
 ### D5. Changes not deployed, not committed, not formatted
 
 Three files are modified but:
+
 - Not deployed (`nh os switch` not run since changes)
 - Not committed (auto-git daemon hasn't picked them up yet or was disabled)
 - Not formatted (`nix fmt` not run)
@@ -108,10 +112,12 @@ Three files are modified but:
 ### E1. Understand systemd-oomd vs cgroup OOM before touching memory limits
 
 Two completely different OOM mechanisms:
+
 - **cgroup OOM killer** (`MemoryMax`): kills when cgroup exceeds hard limit. PMA peaked at 6.3G, never hit the 8G limit.
 - **systemd-oomd** (`ManagedOOMMemoryPressure`, `ManagedOOMSwap`): kills based on system-wide or per-cgroup memory pressure metrics. This is what was killing PMA — discovery of 260 repos creates >50% pressure for >20s.
 
 Before changing any memory limit, check the journal line:
+
 - `killed, status=9/KILL` + `Failed with result 'oom-kill'` + `systemd-oomd killed N process(es)` = **oomd pressure kill**
 - `Main process exited, code=killed` + `memory max usage` = **cgroup OOM**
 
@@ -122,6 +128,7 @@ Before changing any memory limit, check the journal line:
 ### E3. Upstream PMA module needs sd_notify or SystemNix needs to stop fighting it
 
 The SystemNix override `Type = lib.mkForce "exec"` on line 75 patches upstream's `Type = "notify"` because the Go binary never calls `sd_notify(READY=1)`. This has been documented for months. Either:
+
 - Upstream should add `sd_notify` support (best — enables `WatchdogSec` health checking)
 - OR upstream should change to `Type = "exec"` and drop `WatchdogSec`
 - OR SystemNix should stop consuming the upstream module and write its own (worst)
@@ -129,6 +136,7 @@ The SystemNix override `Type = lib.mkForce "exec"` on line 75 patches upstream's
 ### E4. systemd-oomd configuration may be too aggressive for this workload
 
 The oomd config (`DefaultMemoryPressureLimit=50%`, `DefaultMemoryPressureDurationSec=20s`) is reasonable for interactive workloads but kills legitimate burst workloads like PMA's 260-repo discovery. Options:
+
 - Set `ManagedOOMPreference = "omit"` on PMA specifically (surgical)
 - Increase `DefaultMemoryPressureDurationSec` globally (broader)
 - Disable oomd entirely and rely on cgroup limits (nuclear)
@@ -247,12 +255,12 @@ The downstream patches work but create a maintenance burden — they override up
 
 ## Files Changed This Session
 
-| File | Change |
-|------|--------|
-| `lib/lars-packages.nix:34-35` | Uncommented `projects-management-automation` (was "TEMPORARILY DISABLED") |
+| File                                                              | Change                                                                                                                                          |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lib/lars-packages.nix:34-35`                                     | Uncommented `projects-management-automation` (was "TEMPORARILY DISABLED")                                                                       |
 | `modules/nixos/services/projects-management-automation.nix:62-92` | Added `ManagedOOMPreference = "omit"` (oomd exemption for burst workloads), added quoted GIT_*_NAME env overrides, removed duplicate GOMEMLIMIT |
-| `modules/nixos/services/overview.nix:104-108` | Added `serviceConfig.StartLimitBurst = lib.mkForce null` and `serviceConfig.StartLimitIntervalSec = lib.mkForce null` |
-| `platforms/nixos/system/configuration.nix:631-632` | Added `goMemLimit = "6GiB"` |
+| `modules/nixos/services/overview.nix:104-108`                     | Added `serviceConfig.StartLimitBurst = lib.mkForce null` and `serviceConfig.StartLimitIntervalSec = lib.mkForce null`                           |
+| `platforms/nixos/system/configuration.nix:631-632`                | Added `goMemLimit = "6GiB"`                                                                                                                     |
 
 ## Files Changed But NOT Deployed
 

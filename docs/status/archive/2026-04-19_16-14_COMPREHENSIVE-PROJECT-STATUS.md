@@ -214,33 +214,33 @@
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| #   | Task                                                                        | Impact | Effort |
-| --- | --------------------------------------------------------------------------- | ------ | ------ |
-| 1   | Archive/cull 100+ status reports to last 5 + README index                   | High   | Low    |
-| 2   | Consolidate docs/ into clear taxonomy (guides/, architecture/, operations/) | High   | Medium |
-| 3   | Add `nixosTests` for dnsblockd + emeet-pixyd modules                        | High   | Medium |
-| 4   | Set up Gitea Actions CI pipeline (runner exists, no pipelines)              | High   | Medium |
-| 5   | Automated `nix flake update` + `just test-fast` weekly schedule             | High   | Low    |
-| 6   | Post-switch health check script (verify all services running)               | High   | Low    |
-| 7   | Secrets rotation runbook + automation                                       | High   | Medium |
-| 8   | Disaster recovery test (rollback + restore on evo-x2)                       | High   | Medium |
-| 9   | SigNoz log ingestion for all systemd services                               | Medium | Medium |
-| 10  | Unified monitoring dashboard (SigNoz OR Prometheus, pick one)               | Medium | High   |
-| 11  | Network uptime monitoring (external health checks for services)             | Medium | Low    |
-| 12  | macOS config parity audit (launchagents, ActivityWatch, packages)           | Medium | Medium |
-| 13  | Immich OAuth stability fix (sporadic 500 errors)                            | Medium | Medium |
-| 14  | Gitea automated scheduled sync with GitHub                                  | Medium | Low    |
-| 15  | Authelia SSO coverage for remaining services                                | Medium | Medium |
-| 16  | Clean up stale flake inputs (review all 20+)                                | Medium | Low    |
-| 17  | Ollama model auto-management (cleanup old models, GPU monitoring)           | Medium | Medium |
-| 18  | Justfile reorganization (group 156 recipes into logical categories)         | Low    | Low    |
-| 19  | AGENTS.md auto-sync with actual codebase state                              | Low    | Medium |
-| 20  | Homepage dynamic health checks for all services                             | Low    | Low    |
-| 21  | BTRFS snapshot verification + automated cleanup                             | Low    | Low    |
-| 22  | ROCm/NPU driver version tracking + update automation                        | Low    | Medium |
-| 23  | Photomap service status — is it actively used? Evaluate keep/retire         | Low    | Low    |
-| 24  | Voice agents module — document architecture, add to Homepage                | Low    | Low    |
-| 25  | Create ADR template + start recording architectural decisions               | Low    | Low    |
+| #  | Task                                                                        | Impact | Effort |
+| -- | --------------------------------------------------------------------------- | ------ | ------ |
+| 1  | Archive/cull 100+ status reports to last 5 + README index                   | High   | Low    |
+| 2  | Consolidate docs/ into clear taxonomy (guides/, architecture/, operations/) | High   | Medium |
+| 3  | Add `nixosTests` for dnsblockd + emeet-pixyd modules                        | High   | Medium |
+| 4  | Set up Gitea Actions CI pipeline (runner exists, no pipelines)              | High   | Medium |
+| 5  | Automated `nix flake update` + `just test-fast` weekly schedule             | High   | Low    |
+| 6  | Post-switch health check script (verify all services running)               | High   | Low    |
+| 7  | Secrets rotation runbook + automation                                       | High   | Medium |
+| 8  | Disaster recovery test (rollback + restore on evo-x2)                       | High   | Medium |
+| 9  | SigNoz log ingestion for all systemd services                               | Medium | Medium |
+| 10 | Unified monitoring dashboard (SigNoz OR Prometheus, pick one)               | Medium | High   |
+| 11 | Network uptime monitoring (external health checks for services)             | Medium | Low    |
+| 12 | macOS config parity audit (launchagents, ActivityWatch, packages)           | Medium | Medium |
+| 13 | Immich OAuth stability fix (sporadic 500 errors)                            | Medium | Medium |
+| 14 | Gitea automated scheduled sync with GitHub                                  | Medium | Low    |
+| 15 | Authelia SSO coverage for remaining services                                | Medium | Medium |
+| 16 | Clean up stale flake inputs (review all 20+)                                | Medium | Low    |
+| 17 | Ollama model auto-management (cleanup old models, GPU monitoring)           | Medium | Medium |
+| 18 | Justfile reorganization (group 156 recipes into logical categories)         | Low    | Low    |
+| 19 | AGENTS.md auto-sync with actual codebase state                              | Low    | Medium |
+| 20 | Homepage dynamic health checks for all services                             | Low    | Low    |
+| 21 | BTRFS snapshot verification + automated cleanup                             | Low    | Low    |
+| 22 | ROCm/NPU driver version tracking + update automation                        | Low    | Medium |
+| 23 | Photomap service status — is it actively used? Evaluate keep/retire         | Low    | Low    |
+| 24 | Voice agents module — document architecture, add to Homepage                | Low    | Low    |
+| 25 | Create ADR template + start recording architectural decisions               | Low    | Low    |
 
 ---
 

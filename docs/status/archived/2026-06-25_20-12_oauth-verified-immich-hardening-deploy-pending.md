@@ -9,7 +9,6 @@
 
 ---
 
-
 ## Executive Summary
 
 The OAuth secret-desync crisis is **resolved and verified working**. The root cause was fully diagnosed (pocket-id-provision migration block seeding stale secrets), the fix is committed (migration block removed, `serviceOneshotDefaults` added), and OAuth login via Pocket ID → Immich succeeded at 19:37:07 (token endpoint returned 200). Immich is back online.
@@ -155,53 +154,53 @@ Immich 2.7.5 is running but referencing a `plugin.wasm` from the **2.6.1** Nix s
 
 ### Critical
 
-| #   | Task                                                         | Impact                                                                                          | Effort |
-| --- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- | ------ |
-| 1   | **Deploy latest generation** — `nix run .#deploy`            | Activates: password-disable, autoLaunch, matugen fix, serviceOneshotDefaults, pre-deploy checks | 5 min  |
-| 2   | **Root disk cleanup** — `nix-collect-garbage -d` (96% full!) | Prevents emergency shell                                                                        | 10 min |
-| 3   | **Reboot evo-x2** — verify boot time, clear stale state      | TODO P0, 2+ days uptime                                                                         | 12 min |
+| # | Task                                                         | Impact                                                                                          | Effort |
+| - | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- | ------ |
+| 1 | **Deploy latest generation** — `nix run .#deploy`            | Activates: password-disable, autoLaunch, matugen fix, serviceOneshotDefaults, pre-deploy checks | 5 min  |
+| 2 | **Root disk cleanup** — `nix-collect-garbage -d` (96% full!) | Prevents emergency shell                                                                        | 10 min |
+| 3 | **Reboot evo-x2** — verify boot time, clear stale state      | TODO P0, 2+ days uptime                                                                         | 12 min |
 
 ### High Priority
 
-| #   | Task                                                                                  | Impact                 | Effort |
-| --- | ------------------------------------------------------------------------------------- | ---------------------- | ------ |
-| 4   | **Verify Immich password-login disabled** — try password login, confirm it's rejected | Security verification  | 2 min  |
-| 5   | **Verify OAuth auto-launch** — visit immich.home.lan, confirm redirect to Pocket ID   | UX verification        | 2 min  |
-| 6   | **Fix SigNoz** — query logger dir creation failure                                    | Restores observability | 30 min |
-| 7   | **Verify Pocket ID email sending** — test SMTP notification                           | TODO P0                | 5 min  |
-| 8   | **Investigate immich plugin.wasm** — stale 2.6.1 path on 2.7.5 install                | Plugin system health   | 20 min |
-| 9   | **Swap investigation** — 7.4 GiB swap on 93 GiB RAM (79%)                             | Memory pressure        | 15 min |
+| # | Task                                                                                  | Impact                 | Effort |
+| - | ------------------------------------------------------------------------------------- | ---------------------- | ------ |
+| 4 | **Verify Immich password-login disabled** — try password login, confirm it's rejected | Security verification  | 2 min  |
+| 5 | **Verify OAuth auto-launch** — visit immich.home.lan, confirm redirect to Pocket ID   | UX verification        | 2 min  |
+| 6 | **Fix SigNoz** — query logger dir creation failure                                    | Restores observability | 30 min |
+| 7 | **Verify Pocket ID email sending** — test SMTP notification                           | TODO P0                | 5 min  |
+| 8 | **Investigate immich plugin.wasm** — stale 2.6.1 path on 2.7.5 install                | Plugin system health   | 20 min |
+| 9 | **Swap investigation** — 7.4 GiB swap on 93 GiB RAM (79%)                             | Memory pressure        | 15 min |
 
 ### Medium Priority
 
-| #   | Task                                                                               | Impact                                   | Effort |
-| --- | ---------------------------------------------------------------------------------- | ---------------------------------------- | ------ |
-| 10  | **Add OAuth health check to Gatus** — probe OIDC token endpoint                    | Detect OAuth breakage proactively        | 30 min |
-| 11  | **Add secret verification to provision script** — test token-exchange after write  | Catch desync at provision time           | 30 min |
-| 12  | **BTRFS `/data` subvolume migration** — create `@data`, update fstab, add to btrbk | Snapshot protection for Docker/Immich/AI | 1-2h   |
-| 13  | **Hermes: add OpenAI API key to sops**                                             | Enables secondary LLM                    | 5 min  |
-| 14  | **Monitor365 upstream fix** — Axum 0.7 route syntax                                | Unblocks monitoring                      | 30 min |
-| 15  | **Fix deprecated `system` warnings** — replace with `stdenv.hostPlatform.system`   | Clean evaluation                         | 15 min |
-| 16  | **Document IMMICH_CONFIG_FILE behavior** — add comment in immich.nix               | Prevent confusion about admin UI changes | 5 min  |
+| #  | Task                                                                               | Impact                                   | Effort |
+| -- | ---------------------------------------------------------------------------------- | ---------------------------------------- | ------ |
+| 10 | **Add OAuth health check to Gatus** — probe OIDC token endpoint                    | Detect OAuth breakage proactively        | 30 min |
+| 11 | **Add secret verification to provision script** — test token-exchange after write  | Catch desync at provision time           | 30 min |
+| 12 | **BTRFS `/data` subvolume migration** — create `@data`, update fstab, add to btrbk | Snapshot protection for Docker/Immich/AI | 1-2h   |
+| 13 | **Hermes: add OpenAI API key to sops**                                             | Enables secondary LLM                    | 5 min  |
+| 14 | **Monitor365 upstream fix** — Axum 0.7 route syntax                                | Unblocks monitoring                      | 30 min |
+| 15 | **Fix deprecated `system` warnings** — replace with `stdenv.hostPlatform.system`   | Clean evaluation                         | 15 min |
+| 16 | **Document IMMICH_CONFIG_FILE behavior** — add comment in immich.nix               | Prevent confusion about admin UI changes | 5 min  |
 
 ### Architecture & Quality
 
-| #   | Task                                                                       | Impact               | Effort |
-| --- | -------------------------------------------------------------------------- | -------------------- | ------ |
-| 17  | **Split large modules** — monitor365 (716L), signoz (705L), forgejo (583L) | Maintainability      | 2-3h   |
-| 18  | **Typed NixOS module options** — ports, paths, timeouts                    | Validation + testing | 3-4h   |
-| 19  | **Extract dnsblockd** — ~930 lines of Go in Nix config                     | Standalone repo      | 4-6h   |
-| 20  | **Firewall deny-by-default** — explicit allowlist                          | Security hardening   | 2h     |
-| 21  | **Remove photomap** — decided to remove, niche + maintenance               | Cleanup              | 15 min |
+| #  | Task                                                                       | Impact               | Effort |
+| -- | -------------------------------------------------------------------------- | -------------------- | ------ |
+| 17 | **Split large modules** — monitor365 (716L), signoz (705L), forgejo (583L) | Maintainability      | 2-3h   |
+| 18 | **Typed NixOS module options** — ports, paths, timeouts                    | Validation + testing | 3-4h   |
+| 19 | **Extract dnsblockd** — ~930 lines of Go in Nix config                     | Standalone repo      | 4-6h   |
+| 20 | **Firewall deny-by-default** — explicit allowlist                          | Security hardening   | 2h     |
+| 21 | **Remove photomap** — decided to remove, niche + maintenance               | Cleanup              | 15 min |
 
 ### Upstream & Ecosystem
 
-| #   | Task                                                      | Impact                 | Effort |
-| --- | --------------------------------------------------------- | ---------------------- | ------ |
-| 22  | **nixpkgs: aw-watcher-utilization poetry-core migration** | Removes custom overlay | 1h     |
-| 23  | **nixpkgs: KeePassXC Chromium manifests**                 | Removes workaround     | 30 min |
-| 24  | **Cloud backup setup** — BorgBackup to Hetzner StorageBox | Disaster recovery      | 3-4h   |
-| 25  | **library-policy: commit correct go.sum upstream**        | Removes mkTidyOverride | 30 min |
+| #  | Task                                                      | Impact                 | Effort |
+| -- | --------------------------------------------------------- | ---------------------- | ------ |
+| 22 | **nixpkgs: aw-watcher-utilization poetry-core migration** | Removes custom overlay | 1h     |
+| 23 | **nixpkgs: KeePassXC Chromium manifests**                 | Removes workaround     | 30 min |
+| 24 | **Cloud backup setup** — BorgBackup to Hetzner StorageBox | Disaster recovery      | 3-4h   |
+| 25 | **library-policy: commit correct go.sum upstream**        | Removes mkTidyOverride | 30 min |
 
 ---
 

@@ -46,17 +46,17 @@ graph TD
 
 ## Task Breakdown (each ~5-15 min)
 
-| #   | Task                                                                       | Time  | Impact   |
-| --- | -------------------------------------------------------------------------- | ----- | -------- |
-| 1   | Add dnsblockd flake input to SystemNix flake.nix                           | 5min  | Critical |
-| 2   | Replace dnsblockdOverlay to use flake input package                        | 5min  | Critical |
-| 3   | Replace `dnsblockd-processor` with `dnsblockd process` in dns-blocker.nix  | 10min | Critical |
-| 4   | Update dns-blocker.nix wrapper: flags → YAML config                        | 10min | Critical |
-| 5   | Replace `dnsblockd-processor` with `dnsblockd process` in rpi3/default.nix | 5min  | Critical |
-| 6   | Delete pkgs/dnsblockd.nix                                                  | 2min  | Medium   |
-| 7   | Delete pkgs/dnsblockd-processor/ directory                                 | 2min  | Medium   |
-| 8   | Delete platforms/nixos/programs/dnsblockd/ directory                       | 2min  | Medium   |
-| 9   | Remove dnsblockd-processor from packages output in flake.nix               | 2min  | Medium   |
-| 10  | Verify evo-x2 nix eval                                                     | 5min  | Critical |
-| 11  | Verify rpi3-dns nix eval                                                   | 5min  | Critical |
-| 12  | Commit and push SystemNix                                                  | 5min  | Critical |
+| #  | Task                                                                       | Time  | Impact   |
+| -- | -------------------------------------------------------------------------- | ----- | -------- |
+| 1  | Add dnsblockd flake input to SystemNix flake.nix                           | 5min  | Critical |
+| 2  | Replace dnsblockdOverlay to use flake input package                        | 5min  | Critical |
+| 3  | Replace `dnsblockd-processor` with `dnsblockd process` in dns-blocker.nix  | 10min | Critical |
+| 4  | Update dns-blocker.nix wrapper: flags → YAML config                        | 10min | Critical |
+| 5  | Replace `dnsblockd-processor` with `dnsblockd process` in rpi3/default.nix | 5min  | Critical |
+| 6  | Delete pkgs/dnsblockd.nix                                                  | 2min  | Medium   |
+| 7  | Delete pkgs/dnsblockd-processor/ directory                                 | 2min  | Medium   |
+| 8  | Delete platforms/nixos/programs/dnsblockd/ directory                       | 2min  | Medium   |
+| 9  | Remove dnsblockd-processor from packages output in flake.nix               | 2min  | Medium   |
+| 10 | Verify evo-x2 nix eval                                                     | 5min  | Critical |
+| 11 | Verify rpi3-dns nix eval                                                   | 5min  | Critical |
+| 12 | Commit and push SystemNix                                                  | 5min  | Critical |

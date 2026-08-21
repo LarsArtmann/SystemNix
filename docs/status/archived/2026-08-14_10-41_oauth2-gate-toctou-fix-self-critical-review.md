@@ -74,7 +74,7 @@ However, several things were forgotten or done suboptimally. The most significan
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Audit ALL dispatch sites before declaring a gate complete.** The pattern: search for the command constructor (``rg "NewRegisterUserCmd"``), then audit every non-test dispatch site. I did the search but didn't audit. This is the #1 process failure.
+1. **Audit ALL dispatch sites before declaring a gate complete.** The pattern: search for the command constructor (`rg "NewRegisterUserCmd"`), then audit every non-test dispatch site. I did the search but didn't audit. This is the #1 process failure.
 2. **Run `gofmt` after every `multiedit`.** Struct field additions shift alignment. Don't wait for a separate fmt-check step.
 3. **Check `git status` before editing in a multi-agent environment.** The auto-git daemon + parallel sessions mean the working tree changes under you. `git status` before `edit` would have caught the foreign `sql_readmodel_dialect_test.go` before it broke my build.
 4. **Don't trust the prior session's gap analysis.** The prior session said "OAuth2 bypass is the biggest gap" and listed the known gaps. I fixed those and stopped. I should have re-run the dispatch-site search myself instead of trusting the prior analysis was complete.
@@ -90,12 +90,14 @@ However, several things were forgotten or done suboptimally. The most significan
 ## f) UP TO 50 THINGS TO DO NEXT
 
 ### Security (Priority 1)
+
 1. **Gate `import_export.go:156`** — Add `MaxUsers` check + `registrationMu` lock to `importUsers()`. This is the remaining security hole. 15-min fix. — still open: verified 08-14, `v4.8.0` shipped WITHOUT the import gate (`import_export.go` has no maxUsers/registrationMu references)
 2. ~~**Audit for any other `RegisterUserCmd` dispatch sites** — Run `rg "NewRegisterUserCmd" usermgmt/*.go | grep -v test` and verify every site is gated. Currently: `service_register.go:92` (gated), `service_oauth2_extracted.go:262` (gated), `import_export.go:156` (NOT gated). Are there others?~~ done — re-audited 08-14: exactly 3 dispatch sites exist (`service_register.go:98`, `service_oauth2_extracted.go:263`, `import_export.go:156`); no others
 3. **Document the per-process mutex limitation** in `ServiceConfig.MaxUsers` field comment — "only effective for single-process deployments; multi-process requires a DB-level lock or fold invariant."
 4. **Add `slog.Warn` when `NewOAuth2Service` gets `registrationMu == nil && maxUsers > 0`** — silent degradation to advisory-only gate.
 
 ### Release & Deploy (Priority 2)
+
 5. ~~**Tag cqrs-htmx** — `git tag identity-model/v4.X.0 usermgmt/v4.X.0 b1ad3350` (determine version bump: minor for new feature, or patch — the breaking `NewOAuth2Service` change argues for minor).~~ done — minor chosen: full `v4.8.0` train
 6. **Bump browser-history `go.mod`** — Require the new cqrs-htmx tags. Run `cd /home/lars/projects/browser-history && go get github.com/larsartmann/cqrs-htmx/usermgmt/v4@<new-tag> && go mod tidy`. — still open
 7. **Tag browser-history** — After go.mod bump. — still open
@@ -105,6 +107,7 @@ However, several things were forgotten or done suboptimally. The most significan
 11. **Verify live** — `POST /auth/register` → 403 while logged-out; second Pocket ID first-login → 403; `oomctl` shows 60%/30s; watch `system_oomd_kills_total`. — oomctl half done (see c.6); the 403 checks blocked on 6–9
 
 ### Test Coverage (Priority 3)
+
 12. **Test OAuth2 error-redirect path with `OAuth2ErrorURL` configured** — Verify the 403 status is preserved (or intentionally lost) when `OAuth2ErrorURL` is set. `TestHandler_OAuth2Callback_RegistrationClosed_ErrorRedirect`.
 13. **Add concurrency test with MaxUsers=1** — Narrower window, more targeted race detection. Pre-seed count=0, fire 16 concurrent first-registrations, assert exactly 1 created.
 14. **Add test for `importUsers` gate** (once gated) — `TestService_ImportUsers_MaxUsersReached`.
@@ -112,38 +115,45 @@ However, several things were forgotten or done suboptimally. The most significan
 16. **Unify or document test stub incompatibility** — `perProviderOAuth2Stub` vs `testOAuth2Provider` — different email schemes. Either merge or add a comment.
 
 ### Documentation (Priority 4)
+
 17. ~~**Document `MAX_USERS` in browser-history `docs/deployment-nixos.md`** — The NixOS deployment guide should show the env var in the environment file example.~~ NOT-DO/DUPLICATE — that file does not exist; `MAX_USERS` is already documented in README.md + docs/configuration.md (`f6c5c0b`)
 18. ~~**Add `NewOAuth2Service` migration note** — The breaking signature change needs a migration note for any consumer that calls it directly (none found, but the public API is broken).~~ done — usermgmt/CHANGELOG.md:21 documents the signature change and who's unaffected
 19. **Update browser-history `docs/architecture-diagram.md`** if it shows the auth flow — the registration gate should be visible.
 20. **Add a "security boundaries" section to browser-history docs** — Document what `MAX_USERS` covers (Register, OAuth2 auto-provision, import) and what it doesn't (multi-process, fold-level).
 
 ### Monitoring (Priority 5)
+
 21. **Add a browser-history user-count metric** — Expose `browser_history_user_count` in `/metrics`. Then Gatus can alert if it exceeds `MAX_USERS`.
 22. **Add Gatus check for `browser_history_user_count > 1`** — Detects any bypass.
 23. **Add Gatus check for `browser_history_registration_rejected_total`** — Counter metric on 403 responses. Detects bypass attempts.
 
 ### oomd (Priority 6)
+
 24. ~~**Verify oomd 60%/30s after reboot** — `oomctl` output, `systemd-oomd` journal.~~ done — live 2026-08-14: `oomctl` reports `60.00% / 30s`
 25. **Monitor `system_oomd_kills_total` for 24h** — dnsblockd kill rate should drop from 730x/day.
 26. ~~**Monitor Twenty worker `RestartCount`** — Should stabilize after oomd threshold raise.~~ done — live 2026-08-14: `RestartCount 0`; all 7 containers at 0 in `docker_container_restart_count`
 27. **Consider `ManagedOOMSwap = "auto"` on user slice** — If swap pressure is also a factor.
 
 ### Code Quality (Priority 7)
+
 28. **Run `nix run .#lint` on cqrs-htmx after the parallel session's work settles** — The lint failures I saw were pre-existing cross-module drift; verify they don't include my files.
 29. **Run `golangci-lint` on browser-history** — Never run in the prior session.
 30. **Verify `go vet` on cqrs-htmx `usermgmt/` after all parallel work settles** — The `sql_readmodel_dialect_test.go` collision showed the tree can be temporarily broken.
 31. **Run `nix flake check --no-build` on SystemNix after the flake input bump** — Verify the new browser-history tag doesn't break the build.
 
 ### Frontend (Priority 8)
+
 32. **Add "registration closed" state to browser-history register form** — When the API returns 403, show a friendly message instead of a raw error.
 33. **Hide the register form entirely when `MAX_USERS=1` and a user exists** — Requires a "can I register?" endpoint or a frontend check.
 
 ### Architecture (Priority 9)
+
 34. **Consider a fold-level registration invariant** — `decideRegisterUser` in `es_decide.go` could reject when a global count is exceeded. This would be the strongest guarantee (impossible state). Requires a cross-aggregate query in the decide function, which is architecturally unusual in CQRS (deciders should be pure functions of aggregate state + command). May need a saga or a pre-dispatch check in the command handler.
 35. **Consider a DB-level unique constraint on user count** — Not straightforward in an event-sourced system, but a projection-level check (reject in the materializer) would be a backstop.
 36. **Document the registration gate's threat model** — What it protects against (LAN-open registration, OAuth2 bypass) and what it doesn't (admin import, multi-process race, fold-level bypass).
 
 ### Operational (Priority 10)
+
 37. ~~**Add browser-history DB backup to `backup-coordination`** — `/var/lib/browser-history/data.db` is not backed up.~~ done (existing rule) — registered since `f84e7b62` (`configuration.nix:343`)
 38. **Fix browser-history `expires_at` session reaper error** — Every 5 min: `no such column: expires_at`. Migration gap. — still broken live: error firing every 5 min as of 2026-08-14 16:38
 39. **Fix browser-history `CheckpointStore` upstream** — Server replays ALL events on startup (4-min projection drain).
@@ -151,6 +161,7 @@ However, several things were forgotten or done suboptimally. The most significan
 41. ~~**Annotate superseded status reports** — `2026-08-12_20-08_nix-daemon-oomd-kill-and-twenty-worker-restart-loop.md` (resolved by oomd 60%/30s once rebooted).~~ done — 11 inline `done at` markers present in that report
 
 ### Cleanup (Priority 11)
+
 42. **Remove the `perProviderOAuth2Stub` if `testOAuth2Provider` can be parameterized** — Reduce test stub duplication.
 43. **Move `stateFromRedirectURL` to a shared test helper** — It duplicates `extractStateFromURL` from `service_oauth2_errorcontext_test.go`.
 44. ~~**Verify `context_actor_test.go` is gofmt-clean** — Verified this session (already formatted). Close the TODO item.~~ done — re-verified 08-14: clean
@@ -175,14 +186,14 @@ However, several things were forgotten or done suboptimally. The most significan
 
 ## Session Metrics
 
-| Metric | Value |
-|--------|-------|
-| Files changed (cqrs-htmx) | 6 (service_core.go, service_oauth2_extracted.go, service_register.go, handler_register_test.go, oauth2_http_test.go, service_oauth2_register_test.go) + CHANGELOG.md |
-| Files changed (browser-history) | 2 (README.md, docs/configuration.md) |
-| Files changed (SystemNix) | 4 (CHANGELOG.md, TODO_LIST.md, AGENTS.md, status report annotation) |
-| Tests added | 8 (5 service, 2 handler, 1 concurrency) |
-| Test suites run | usermgmt (20.7s), identity-model (0.006s), browser-history (pass), `-race` (2.4s), `nix flake check --no-build` (pass) |
-| Commits (auto-git) | cqrs-htmx `b1ad3350`, browser-history `f6c5c0b` |
-| Security gaps closed | 2 (OAuth2 bypass, TOCTOU) |
-| Security gaps remaining | 1 (`import_export.go` bypass) |
-| Questions to user | 3 |
+| Metric                          | Value                                                                                                                                                                |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Files changed (cqrs-htmx)       | 6 (service_core.go, service_oauth2_extracted.go, service_register.go, handler_register_test.go, oauth2_http_test.go, service_oauth2_register_test.go) + CHANGELOG.md |
+| Files changed (browser-history) | 2 (README.md, docs/configuration.md)                                                                                                                                 |
+| Files changed (SystemNix)       | 4 (CHANGELOG.md, TODO_LIST.md, AGENTS.md, status report annotation)                                                                                                  |
+| Tests added                     | 8 (5 service, 2 handler, 1 concurrency)                                                                                                                              |
+| Test suites run                 | usermgmt (20.7s), identity-model (0.006s), browser-history (pass), `-race` (2.4s), `nix flake check --no-build` (pass)                                               |
+| Commits (auto-git)              | cqrs-htmx `b1ad3350`, browser-history `f6c5c0b`                                                                                                                      |
+| Security gaps closed            | 2 (OAuth2 bypass, TOCTOU)                                                                                                                                            |
+| Security gaps remaining         | 1 (`import_export.go` bypass)                                                                                                                                        |
+| Questions to user               | 3                                                                                                                                                                    |

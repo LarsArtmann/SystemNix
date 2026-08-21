@@ -8,7 +8,6 @@
 
 ---
 
-
 ## Context
 
 User asked: "Can we get the auth stuff fixed?" — referring to the GSC OAuth callback gap identified in the previous session's status report (`2026-07-23_15-21_openseo-nix-configuration-improvements.md`).
@@ -23,13 +22,13 @@ The previous report claimed the GSC OAuth callback would be "TOTALLY FUCKED UP" 
 
 ### a) FULLY DONE
 
-| # | Change | File(s) | Verified |
-|---|--------|---------|----------|
-| 1 | Hand-rolled `seo.${domain}` Caddy vHost with GSC callback path exemption (`/api/gsc/oauth/callback` bypasses forward-auth) | `modules/nixos/services/caddy.nix` | `nix flake check --no-build` passed |
+| # | Change                                                                                                                                                                                              | File(s)                              | Verified                                                   |
+| - | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | ---------------------------------------------------------- |
+| 1 | Hand-rolled `seo.${domain}` Caddy vHost with GSC callback path exemption (`/api/gsc/oauth/callback` bypasses forward-auth)                                                                          | `modules/nixos/services/caddy.nix`   | `nix flake check --no-build` passed                        |
 | 2 | `openseo-validate` ExecStartPre script — checks GSC env vars (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, BETTER_AUTH_SECRET) and OPENROUTER_API_KEY are non-empty when respective features are enabled | `modules/nixos/services/openseo.nix` | `nix flake check --no-build` passed (NOT runtime-verified) |
-| 3 | Corrected module header comment with accurate auth model analysis | `modules/nixos/services/openseo.nix` | `nix flake check --no-build` passed |
-| 4 | Updated option docs for `googleSearchConsole.enable` | `modules/nixos/services/openseo.nix` | `nix flake check --no-build` passed |
-| 5 | Added AGENTS.md gotcha entry documenting why seo vHost is hand-rolled | `AGENTS.md` | N/A (documentation) |
+| 3 | Corrected module header comment with accurate auth model analysis                                                                                                                                   | `modules/nixos/services/openseo.nix` | `nix flake check --no-build` passed                        |
+| 4 | Updated option docs for `googleSearchConsole.enable`                                                                                                                                                | `modules/nixos/services/openseo.nix` | `nix flake check --no-build` passed                        |
+| 5 | Added AGENTS.md gotcha entry documenting why seo vHost is hand-rolled                                                                                                                               | `AGENTS.md`                          | N/A (documentation)                                        |
 
 ### b) PARTIALLY DONE
 
@@ -85,6 +84,7 @@ The project uses alejandra via `nix fmt` / treefmt. I did a manual `in` placemen
 ### f) Up to 50 Things to Do Next
 
 #### Critical (correctness of this session's work)
+
 1. **Verify `/api/gsc/oauth/callback` is the actual callback path in OpenSEO v0.1.1** — grep the source or read the route definitions
 2. **Run `nix fmt`** on modified files
 3. **Deploy and verify** the Caddy vHost renders correctly and the GSC callback path is reachable without auth
@@ -92,6 +92,7 @@ The project uses alejandra via `nix fmt` / treefmt. I did a manual `in` placemen
 5. **Update the previous status report** to annotate the corrected analysis
 
 #### High Priority
+
 6. **Verify Caddy config rendering** via `nix eval .#nixosConfigurations.evo-x2.config.services.caddy.virtualHosts`
 7. **Audit other Layer 2 services** for OAuth callback paths behind `protectedVHost` (Twenty CRM has Google integration?)
 8. **Update AGENTS.md Layer 2 table** — note OpenSEO has a hand-rolled vHost, not `protectedVHost`
@@ -100,12 +101,14 @@ The project uses alejandra via `nix fmt` / treefmt. I did a manual `in` placemen
 11. **Update Homepage tile description** for v0.1.x features (AI Visibility, MCP)
 
 #### MCP Integration
+
 12. **Research OpenSEO MCP endpoint** — is it HTTP or stdio? What port/path?
 13. **Wire OpenSEO MCP into Crush** `mcpServers` config if HTTP-based
 14. **Add Gatus check for OpenSEO MCP endpoint** if it exists
 15. **Document MCP setup** in AGENTS.md or docs/services/
 
 #### Validation & Hardening
+
 16. **Consider making ExecStartPre conditional** — only include validate script when GSC or AI is enabled
 17. **Add eval-time assertion** as documentation (always passes, but documents the invariant)
 18. **Consider checking for placeholder values** in validate script (e.g., reject "CHANGE_ME", "placeholder")
@@ -113,6 +116,7 @@ The project uses alejandra via `nix fmt` / treefmt. I did a manual `in` placemen
 20. **Consider `ProtectSystem = "strict"`** + `ReadWritePaths` for tighter openseo sandboxing
 
 #### Monitoring
+
 21. **Add Gatus check for GSC callback reachability** (at minimum, verify 404 not redirect when unauthenticated)
 22. **Add Gatus body-content check** (beyond just `[STATUS] == 200`)
 23. **Tune response time threshold** (2s may be too generous for vite preview)
@@ -120,11 +124,13 @@ The project uses alejandra via `nix fmt` / treefmt. I did a manual `in` placemen
 25. **Add OpenSEO to system-health module** if it needs health metrics
 
 #### Backup & Data
+
 26. **Add D1 database backup** (systemd oneshot + timer, like monitor365 backup pattern)
 27. **Document that `/var/lib/openseo` is inside `@` subvolume** (already snapshotted by btrbk)
 28. **Consider per-project DataForSEO budget limits** (prevent runaway API costs)
 
 #### Code Quality
+
 29. **Consider extracting `protectedVHostWithExclusion`** helper (generic, reusable for other OAuth callbacks)
 30. **Consider a pre-commit check** for `protectedVHost` + OAuth callback path conflicts
 31. **Review whether `NODE_OPTION=--max-old-space-size=1536`** is optimal for v0.1.x
@@ -134,6 +140,7 @@ The project uses alejandra via `nix fmt` / treefmt. I did a manual `in` placemen
 35. **Consider `DO_NOT_TRACK=1`** as a second telemetry opt-out (belt + suspenders)
 
 #### Documentation
+
 36. **Document the GSC setup steps** in `docs/services/openseo-gsc-setup.md`
 37. **Document the AI/SAM (OpenRouter) setup steps**
 38. **Update FEATURES.md** with OpenSEO v0.1.1 feature inventory
@@ -141,6 +148,7 @@ The project uses alejandra via `nix fmt` / treefmt. I did a manual `in` placemen
 40. **Add OpenSEO to docs/DOMAIN_LANGUAGE.md** if SEO terms are used elsewhere
 
 #### Future Features
+
 41. **Consider wiring OpenSEO rank tracking** into Homepage dashboard widget
 42. **Consider OpenSEO + Hermes integration** (AI agent consuming SEO data)
 43. **Consider declarative OpenSEO project configuration** (like qmd's `bootstrapCollections`)

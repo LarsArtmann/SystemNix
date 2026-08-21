@@ -22,27 +22,27 @@ page-cache, handled by `MemoryHigh=12G`.
 
 Kernel tuning already in place post-incident (see `boot.nix`, `docs/gotchas-archive.md`):
 
-| Setting | Value | Why |
-|---|---|---|
-| `vm.swappiness` | 150 | zram-only: prefer in-RAM swap over QLC-NAND page-cache reclaim |
-| `vm.watermark_scale_factor` | 100 | gradual reclaim, no panic-reclaim bursts |
-| `vm.vfs_cache_pressure` | 150 | prefer cheap dentry/inode reclaim |
-| `vm.dirty_ratio` / `dirty_background_ratio` | 5 / 1 | spread writeback on QLC NAND |
-| zramSwap | 30% (~28 GiB), `zstd(level=1)` | L1 vs L3: 1.7% worse ratio, 11.5% faster compress |
-| MGLRU | enabled (`0x0007`) | multi-gen LRU, better under pressure |
-| THP | `madvise` | see §3 |
+| Setting                                     | Value                          | Why                                                            |
+| ------------------------------------------- | ------------------------------ | -------------------------------------------------------------- |
+| `vm.swappiness`                             | 150                            | zram-only: prefer in-RAM swap over QLC-NAND page-cache reclaim |
+| `vm.watermark_scale_factor`                 | 100                            | gradual reclaim, no panic-reclaim bursts                       |
+| `vm.vfs_cache_pressure`                     | 150                            | prefer cheap dentry/inode reclaim                              |
+| `vm.dirty_ratio` / `dirty_background_ratio` | 5 / 1                          | spread writeback on QLC NAND                                   |
+| zramSwap                                    | 30% (~28 GiB), `zstd(level=1)` | L1 vs L3: 1.7% worse ratio, 11.5% faster compress              |
+| MGLRU                                       | enabled (`0x0007`)             | multi-gen LRU, better under pressure                           |
+| THP                                         | `madvise`                      | see §3                                                         |
 
 ---
 
 ## 2. Optimization Candidates (ranked)
 
-| # | Optimization | Impact | Tradeoff | Verdict |
-|---|---|---|---|---|
-| 1 | **BIOS GPU carveout** — MemTotal 93.9 GiB of ~119 GiB nominal → ~25 GiB sits in iGPU UMA carveout. Lower `UMA Frame Buffer Size` to 8-16G if ollama rarely runs 20G+ models | **Up to +16-24 GiB — biggest single win** | Large local LLMs need it; BIOS reboot | Worth doing |
-| 2 | **zram 30% → 50%** (~28 → 47 GiB) | Cheap insurance — the zram-full cliff is page-cache eviction = BTRFS I/O storms. Empty zram costs nothing (in-kernel metadata only) | None real | Worth doing |
-| 3 | **MemoryMax audit module** (eval-time, like `timeout-audit.nix`) — flag enabled services missing `MemoryMax` | Prevents future balloons | Occasional oneshot false positives | Good hygiene |
-| 4 | **KSM** (`hardware.ksm.enable`) | Only QEMU VM tests have mergeable memory (see §4) | ksmd CPU + side-channel class | Skip |
-| 5 | **zram disk writeback** | Offload idle pages to disk | Writes to QLC NAND — the exact thing we avoid | **No** |
+| # | Optimization                                                                                                                                                                | Impact                                                                                                                              | Tradeoff                                      | Verdict      |
+| - | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | ------------ |
+| 1 | **BIOS GPU carveout** — MemTotal 93.9 GiB of ~119 GiB nominal → ~25 GiB sits in iGPU UMA carveout. Lower `UMA Frame Buffer Size` to 8-16G if ollama rarely runs 20G+ models | **Up to +16-24 GiB — biggest single win**                                                                                           | Large local LLMs need it; BIOS reboot         | Worth doing  |
+| 2 | **zram 30% → 50%** (~28 → 47 GiB)                                                                                                                                           | Cheap insurance — the zram-full cliff is page-cache eviction = BTRFS I/O storms. Empty zram costs nothing (in-kernel metadata only) | None real                                     | Worth doing  |
+| 3 | **MemoryMax audit module** (eval-time, like `timeout-audit.nix`) — flag enabled services missing `MemoryMax`                                                                | Prevents future balloons                                                                                                            | Occasional oneshot false positives            | Good hygiene |
+| 4 | **KSM** (`hardware.ksm.enable`)                                                                                                                                             | Only QEMU VM tests have mergeable memory (see §4)                                                                                   | ksmd CPU + side-channel class                 | Skip         |
+| 5 | **zram disk writeback**                                                                                                                                                     | Offload idle pages to disk                                                                                                          | Writes to QLC NAND — the exact thing we avoid | **No**       |
 
 ---
 
@@ -63,11 +63,11 @@ collapses adjacent 4 KiB pages in the background. Apps need zero changes.
 
 ### Modes (evo-x2: `[madvise]` — verified in `/sys/kernel/mm/transparent_hugepage/enabled`)
 
-| Mode | Behavior |
-|---|---|
-| `always` | Kernel tries to hugepage *all* anonymous memory |
+| Mode      | Behavior                                                        |
+| --------- | --------------------------------------------------------------- |
+| `always`  | Kernel tries to hugepage _all_ anonymous memory                 |
 | `madvise` | Only regions where the app opts in via `madvise(MADV_HUGEPAGE)` |
-| `never` | Disabled |
+| `never`   | Disabled                                                        |
 
 ### Why `always` is not the win it looks like
 
@@ -75,7 +75,7 @@ collapses adjacent 4 KiB pages in the background. Apps need zero changes.
   2 MiB physical RAM. Sparse allocations balloon RSS.
 - **Latency spikes** — khugepaged collapses trigger memory compaction, which
   can stall allocations for milliseconds. Redis, MongoDB, and Oracle all
-  document THP-`always` as a performance *hazard* and recommend `never`/`madvise`.
+  document THP-`always` as a performance _hazard_ and recommend `never`/`madvise`.
 - Go runtimes (most services here) use their own arena allocator and rarely benefit.
 
 `madvise` is the sweet spot: opted-in workloads (JVM, HPC) get the TLB win;
@@ -93,7 +93,7 @@ Memory deduplication via the `ksmd` kernel daemon:
 1. Apps explicitly mark anonymous memory `madvise(MADV_MERGEABLE)` — unlike
    THP, nothing is merged by default
 2. `ksmd` wakes every `sleep_millisecs`, scans up to `pages_to_scan` pages of
-   *only mergeable regions*
+   _only mergeable regions_
 3. Pages with identical checksums are compared; exact matches are replaced by
    **one shared read-only physical page** + copy-on-write
 4. Any write triggers a COW fault — kernel copies the page back and unmerges
@@ -130,7 +130,7 @@ What this proves:
    reverse-map walk cost on COW faults, so 131072 identical pages spread over
    ~512 duplicate tree nodes. First test draft asserted `== 1` and failed on
    exactly this; the corrected range assertion (100-1000 nodes) passes.
-3. **Negative control** — different content forms a *separate* dedup set
+3. **Negative control** — different content forms a _separate_ dedup set
    (768 = 512 + 256); KSM merges only exact page matches
 4. **Teardown** — exiting probes unmerge; `run=2` force-unmerges everything
 
@@ -173,12 +173,12 @@ Verified against the sqlite/sqlite mirror: zero `MADV_*` references.
 
 ## 6. Who actually uses `MADV_MERGEABLE`
 
-| Consumer | How | Verified |
-|---|---|---|
-| **QEMU** — the reason KSM exists | Marks guest RAM mergeable (`memory-merge=on`, default on; ≥8.0 via `prctl(PR_SET_MEMORY_MERGE)`) | strings in local qemu-11.0.3 |
-| **systemd ≥254** | `MemoryKSM=` unit directive wraps `prctl(PR_SET_MEMORY_MERGE)` — any service can opt in without code changes | directive in systemd 261 |
-| **NixOS** | `hardware.ksm.enable` (+ `hardware.ksm.sleep`) — oneshot writes `/sys/kernel/mm/ksm/run` | `nixos/modules/hardware/ksm.nix` in our nixpkgs pin |
-| **Basically nobody else** | Apps avoid it: marginal wins for diverse heaps, ksmd scan CPU, COW-fault cost, demonstrated co-residency side-channels (browsers explicitly stay away) | — |
+| Consumer                         | How                                                                                                                                                    | Verified                                            |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------- |
+| **QEMU** — the reason KSM exists | Marks guest RAM mergeable (`memory-merge=on`, default on; ≥8.0 via `prctl(PR_SET_MEMORY_MERGE)`)                                                       | strings in local qemu-11.0.3                        |
+| **systemd ≥254**                 | `MemoryKSM=` unit directive wraps `prctl(PR_SET_MEMORY_MERGE)` — any service can opt in without code changes                                           | directive in systemd 261                            |
+| **NixOS**                        | `hardware.ksm.enable` (+ `hardware.ksm.sleep`) — oneshot writes `/sys/kernel/mm/ksm/run`                                                               | `nixos/modules/hardware/ksm.nix` in our nixpkgs pin |
+| **Basically nobody else**        | Apps avoid it: marginal wins for diverse heaps, ksmd scan CPU, COW-fault cost, demonstrated co-residency side-channels (browsers explicitly stay away) | —                                                   |
 
 ---
 

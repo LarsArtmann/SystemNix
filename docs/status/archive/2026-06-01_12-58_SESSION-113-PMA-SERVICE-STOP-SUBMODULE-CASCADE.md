@@ -109,33 +109,33 @@ The core blocker: PMA's source code imports APIs that no longer exist in the dep
 
 ## F) Top 25 Things To Do Next
 
-| #   | Task                                                          | Impact       | Effort | Status                             |
-| --- | ------------------------------------------------------------- | ------------ | ------ | ---------------------------------- |
-| 1   | Fix PMA `go-output` API mismatch (HasFooter/Footer)           | **Critical** | Medium | Blocked on understanding new API   |
-| 2   | Fix PMA `cmdguard` API mismatch (MarshalJSON etc.)            | **Critical** | Medium | Blocked on go-output fix first     |
-| 3   | Fix PMA `project-meta` API mismatch (Tag, Importance)         | **Critical** | Low    | Blocked on understanding new types |
-| 4   | Fix PMA `committer` providers.NewFallback                     | **Critical** | Low    | Likely cascades from go-output fix |
-| 5   | Rebuild PMA vendorHash after source fixes                     | **Critical** | Low    | After #1-4                         |
-| 6   | Create PMA NixOS module                                       | High         | Medium | After build works                  |
-| 7   | Wire PMA NixOS module into SystemNix                          | High         | Low    | After #6                           |
-| 8   | Add systemd timer for PMA auto-commit (5m debounce)           | High         | Low    | After #6                           |
-| 9   | Commit SystemNix uncommitted overlay changes                  | Medium       | Low    | Independent                        |
-| 10  | Fix SystemNix `go-structure-linter` overlay error             | Medium       | Low    | Independent                        |
-| 11  | Auto-discover sub-modules in `mkPreparedSource`               | High         | High   | Long-term                          |
-| 12  | Pin PMA flake inputs to specific commits                      | Medium       | Low    | Risk mitigation                    |
-| 13  | Fix PMA gosec config (`rules` not allowed)                    | Low          | Low    | PMA                                |
-| 14  | Fix PMA concurrent access flaky test                          | Medium       | Medium | PMA                                |
-| 15  | Extract `NotificationSender` interface                        | Medium       | Medium | PMA                                |
-| 16  | Replace `notify-send` with `godbus/dbus`                      | Low          | Medium | PMA                                |
-| 17  | Fix `GoProjectWithDepsTemplate` hardcoded test-project        | Low          | Low    | PMA                                |
-| 18  | Set up Hetzner Storage Box + BorgBackup                       | High         | High   | SystemNix                          |
-| 19  | Add BTRFS /data snapshot migration                            | High         | High   | SystemNix                          |
-| 20  | Archive old status docs (100+ files)                          | Low          | Low    | SystemNix                          |
-| 21  | Fix gitleaks false positives in PMA status docs               | Low          | Low    | PMA                                |
-| 22  | Add `nilaway` or `errcheck` to PMA CI                         | Medium       | Low    | PMA                                |
-| 23  | Consolidate PMA `pkg/domain/types/` with `pkg/domain/domain/` | Medium       | High   | PMA                                |
-| 24  | Migrate PMA from `gopkg.in/yaml.v3` to `go-faster/yaml`       | Low          | Medium | PMA                                |
-| 25  | Remove dead `go_homedir` dep from PMA                         | Low          | Low    | PMA                                |
+| #  | Task                                                          | Impact       | Effort | Status                             |
+| -- | ------------------------------------------------------------- | ------------ | ------ | ---------------------------------- |
+| 1  | Fix PMA `go-output` API mismatch (HasFooter/Footer)           | **Critical** | Medium | Blocked on understanding new API   |
+| 2  | Fix PMA `cmdguard` API mismatch (MarshalJSON etc.)            | **Critical** | Medium | Blocked on go-output fix first     |
+| 3  | Fix PMA `project-meta` API mismatch (Tag, Importance)         | **Critical** | Low    | Blocked on understanding new types |
+| 4  | Fix PMA `committer` providers.NewFallback                     | **Critical** | Low    | Likely cascades from go-output fix |
+| 5  | Rebuild PMA vendorHash after source fixes                     | **Critical** | Low    | After #1-4                         |
+| 6  | Create PMA NixOS module                                       | High         | Medium | After build works                  |
+| 7  | Wire PMA NixOS module into SystemNix                          | High         | Low    | After #6                           |
+| 8  | Add systemd timer for PMA auto-commit (5m debounce)           | High         | Low    | After #6                           |
+| 9  | Commit SystemNix uncommitted overlay changes                  | Medium       | Low    | Independent                        |
+| 10 | Fix SystemNix `go-structure-linter` overlay error             | Medium       | Low    | Independent                        |
+| 11 | Auto-discover sub-modules in `mkPreparedSource`               | High         | High   | Long-term                          |
+| 12 | Pin PMA flake inputs to specific commits                      | Medium       | Low    | Risk mitigation                    |
+| 13 | Fix PMA gosec config (`rules` not allowed)                    | Low          | Low    | PMA                                |
+| 14 | Fix PMA concurrent access flaky test                          | Medium       | Medium | PMA                                |
+| 15 | Extract `NotificationSender` interface                        | Medium       | Medium | PMA                                |
+| 16 | Replace `notify-send` with `godbus/dbus`                      | Low          | Medium | PMA                                |
+| 17 | Fix `GoProjectWithDepsTemplate` hardcoded test-project        | Low          | Low    | PMA                                |
+| 18 | Set up Hetzner Storage Box + BorgBackup                       | High         | High   | SystemNix                          |
+| 19 | Add BTRFS /data snapshot migration                            | High         | High   | SystemNix                          |
+| 20 | Archive old status docs (100+ files)                          | Low          | Low    | SystemNix                          |
+| 21 | Fix gitleaks false positives in PMA status docs               | Low          | Low    | PMA                                |
+| 22 | Add `nilaway` or `errcheck` to PMA CI                         | Medium       | Low    | PMA                                |
+| 23 | Consolidate PMA `pkg/domain/types/` with `pkg/domain/domain/` | Medium       | High   | PMA                                |
+| 24 | Migrate PMA from `gopkg.in/yaml.v3` to `go-faster/yaml`       | Low          | Medium | PMA                                |
+| 25 | Remove dead `go_homedir` dep from PMA                         | Low          | Low    | PMA                                |
 
 ---
 

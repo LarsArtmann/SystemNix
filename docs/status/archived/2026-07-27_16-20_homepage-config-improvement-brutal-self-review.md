@@ -7,7 +7,6 @@
 
 ---
 
-
 ## TL;DR
 
 I made 7 concrete improvements to the Homepage dashboard module. The changes
@@ -48,7 +47,7 @@ the gotcha in `AGENTS.md`.
    - **Development:** Forgejo, GitHub (LarsArtmann), NixOS Options search,
      Nix Package search
    - **Search:** DuckDuckGo, Kagi
-   All internal URLs derive from `svcUrl` (no hardcoded hostnames).
+     All internal URLs derive from `svcUrl` (no hardcoded hostnames).
 
 6. **Improved the `resources` widget — split into two labeled groups:**
    - **System:** CPU, memory, cputemp, network, uptime
@@ -195,6 +194,7 @@ Nothing critically broken. Two near-misses worth flagging:
 ## f) Up to 50 things we should get done next
 
 ### Immediate (blocking deploy verification)
+
 1. **Decide on deploy** — run `nix run .#deploy` or hold
 2. **Run `nix run .#post-deploy-check`** after deploy
 3. **Browser-verify** the new layout at `https://dash.home.lan`
@@ -202,6 +202,7 @@ Nothing critically broken. Two near-misses worth flagging:
 5. **Fix or remove the dishonest `Caddy` tile** in Infrastructure
 
 ### Correctness / hardening
+
 6. **Audit the whole repo for `mdi-` icon references** (likely 0 remain, but verify)
 7. **Add `mdi-*` gotcha to `AGENTS.md`** Non-Obvious Gotchas table
 8. **Derive `title` from `config.networking.hostName`** (not hardcoded "evo-x2")
@@ -213,6 +214,7 @@ Nothing critically broken. Two near-misses worth flagging:
 14. **Check if `tempmin=30`/`tempmax=95` renders the gauge correctly** in browser
 
 ### New tiles / widgets worth adding
+
 15. **Weather widget (Open-Meteo)** — no API key, free, uses lat/long
 16. **Glances info widget** — better host metrics, supports BTRFS (unlike `resources`)
 17. **Gatus service widget** on the Gatus tile — show failing-check count
@@ -225,6 +227,7 @@ Nothing critically broken. Two near-misses worth flagging:
 24. **Calendar widget** — if a CalDAV source exists
 
 ### Bookmarks expansion
+
 25. **Add `lars.software`** and other LarsArtmann web properties
 26. **Add NixOS wiki / nix.dev** to Development bookmarks
 27. **Add Crush docs** if public
@@ -234,6 +237,7 @@ Nothing critically broken. Two near-misses worth flagging:
 31. **Confirm user has a Kagi account** — remove if not
 
 ### Layout / UX polish
+
 32. **Make `columns` per-group match actual tile count** (Productivity = 3, etc.)
 33. **Standardize service description style** (sentence case, no trailing period, ≤60 chars)
 34. **Standardize `statusStyle = "dot"` everywhere or document exceptions**
@@ -245,6 +249,7 @@ Nothing critically broken. Two near-misses worth flagging:
 40. **Add `hideSSHAuth: true`** if it appears in the header
 
 ### Theme / styling
+
 41. **Investigate native Catppuccin Mocha theme** support in Homepage (instead of custom CSS overrides)
 42. **Add hover transitions** for tiles in `custom.css`
 43. **Add a dark/light toggle** if user wants light mode support
@@ -252,6 +257,7 @@ Nothing critically broken. Two near-misses worth flagging:
 45. **Add a `--catppuccin-mauve` / `--catppuccin-peach` etc.** full palette to `custom.css` for completeness
 
 ### Testing / CI
+
 46. **Add a statix/lint rule** that flags `icon = "mdi-*"` patterns (the root cause)
 47. **Add a test that verifies every icon referenced exists in the pack** (integration test)
 48. **Add a test that `bookmarks.yaml` is non-empty**

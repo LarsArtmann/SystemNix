@@ -6,15 +6,15 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 ### Task 1 — Homepage Widgets audit (`homepage.nix`)
 
 **What was done:**
+
 - **Widgets schema audit:** Verified all 4 widget types (greeting, datetime, search, resources x2) use `pkgs.formats.yaml{}.generate` — structurally safe. No bare-string YAML (the class of bug that caused the bookmark schema crash).
 - **Productivity columns:** The TODO claimed "3 tiles with columns=4". Actual count on evo-x2: **5 tiles** (Taskwarrior, OpenSEO, Twenty CRM, File Renamer, SearXNG — the latter three are conditional, all enabled on evo-x2). `columns=4` is correct for 5 tiles. The TODO itself was stale/wrong.
-- **Caddy tile dishonesty fixed:** `siteMonitor` changed from `svcUrl "dash"` (self-referential — showed Next.js SSR latency *through* Caddy as "Caddy health") → `http://127.0.0.1:2019/metrics` (Caddy's own admin API endpoint). `href` removed (no user-facing Caddy UI; linking to the dashboard you're already viewing is a no-op, same rationale as the already-removed Homepage self-tile).
+- **Caddy tile dishonesty fixed:** `siteMonitor` changed from `svcUrl "dash"` (self-referential — showed Next.js SSR latency _through_ Caddy as "Caddy health") → `http://127.0.0.1:2019/metrics` (Caddy's own admin API endpoint). `href` removed (no user-facing Caddy UI; linking to the dashboard you're already viewing is a no-op, same rationale as the already-removed Homepage self-tile).
 - **Favicon local bundling:** Changed from GitHub CDN (`raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/nixos.png`) → `/icons/nixos.png` (served from the local icon pack bundled via `enableLocalIcons = true`). Eliminates external dependency and potential CDN outage.
 
 **Files changed:** `modules/nixos/services/homepage.nix` (3 edits)
@@ -22,6 +22,7 @@
 ### Task 2 — /tmp tmpfs monitoring
 
 **What was done:**
+
 - **system-health collector** (`system-health.nix`): Added `/tmp` usage collection via `df --output=pcent /tmp`. Emits two new Prometheus metrics:
   - `system_tmpfs_tmp_usage_percent` — raw percentage (0-100)
   - `system_tmpfs_tmp_over_threshold` — pre-computed boolean (1 if >80%, 0 otherwise)
@@ -35,6 +36,7 @@
 ### Task 3 — SigNoz mkRule target validation
 
 **What was done:**
+
 - Added `validateTarget` function in `_signoz-alerts.nix` that `throw`s at Nix eval time on:
   - `target=0` + `above_or_equal` → always true for non-negative metrics (the bug that caused 3 permanently-firing rules)
   - `target=0` + `below` → never true for non-negative metrics (mathematically vacuous)
@@ -63,7 +65,7 @@
 
 ### Widgets schema audit — SHALLOW
 
-The TODO asked to "audit widgets.yaml for schema issues (same class as the bookmark schema crash)". I verified the YAML *generation method* (`pkgs.formats.yaml`) is structurally safe, but I did NOT cross-reference each widget's fields against Homepage's expected schema. The bookmark crash was caused by wrong YAML *structure* (bare object vs list-of-one), not by the generation method. Using `pkgs.formats.yaml` guarantees valid YAML but does NOT guarantee schema correctness. A widget with wrong field names or wrong nesting would still produce valid YAML that crashes Homepage at runtime.
+The TODO asked to "audit widgets.yaml for schema issues (same class as the bookmark schema crash)". I verified the YAML _generation method_ (`pkgs.formats.yaml`) is structurally safe, but I did NOT cross-reference each widget's fields against Homepage's expected schema. The bookmark crash was caused by wrong YAML _structure_ (bare object vs list-of-one), not by the generation method. Using `pkgs.formats.yaml` guarantees valid YAML but does NOT guarantee schema correctness. A widget with wrong field names or wrong nesting would still produce valid YAML that crashes Homepage at runtime.
 
 **What I should have done:** Read Homepage's widget schema docs or source for each widget type (resources, datetime, search, greeting) and verified each field name, type, and structure matches.
 
@@ -74,6 +76,7 @@ All code is complete and passes `nix flake check`, but nothing is deployed. The 
 ### No post-deploy verification plan
 
 I didn't think about HOW to verify these changes work after deploy:
+
 - How to confirm `/tmp` metrics appear in Prometheus/SigNoz
 - How to confirm the Caddy admin siteMonitor works (Homepage sends HTTP GET, expects 200)
 - How to confirm the favicon loads from local path
@@ -104,7 +107,7 @@ I changed `favicon` to `/icons/nixos.png` assuming Homepage serves the favicon f
 
 ### 3. Widgets audit depth — checked the wrong thing
 
-The TODO explicitly said "same class as the bookmark schema crash." The bookmark crash was a YAML *structure* bug (bare object vs list-of-one). I checked the *generation method* (pkgs.formats.yaml) instead of the *structure* of each widget definition. These are different concerns. Valid YAML can still have wrong schema.
+The TODO explicitly said "same class as the bookmark schema crash." The bookmark crash was a YAML _structure_ bug (bare object vs list-of-one). I checked the _generation method_ (pkgs.formats.yaml) instead of the _structure_ of each widget definition. These are different concerns. Valid YAML can still have wrong schema.
 
 ### 4. No verification that Caddy admin API returns 200
 
@@ -231,16 +234,16 @@ This session's 3 changes are code-complete but undeployed. There are also multip
 
 ## Session Metrics
 
-| Metric | Value |
-|--------|-------|
-| Tasks requested | 3 |
-| Tasks code-complete | 3 |
-| Tasks deployed | 0 |
-| Files changed | 7 (homepage.nix, system-health.nix, _signoz-alerts.nix, gatus-config.nix, README.md, FEATURES.md, CHANGELOG.md, AGENTS.md) |
-| Nix flake check | ✅ all passed |
-| Doc freshness | ✅ all current |
-| Quality gate confidence | Medium-high (code correct, assumptions unverified post-deploy) |
-| Brutal self-assessment | Widgets audit was shallow. Assumptions unverified. UX decision unilateral. Status report should have been written proactively. |
+| Metric                  | Value                                                                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Tasks requested         | 3                                                                                                                              |
+| Tasks code-complete     | 3                                                                                                                              |
+| Tasks deployed          | 0                                                                                                                              |
+| Files changed           | 7 (homepage.nix, system-health.nix, _signoz-alerts.nix, gatus-config.nix, README.md, FEATURES.md, CHANGELOG.md, AGENTS.md)     |
+| Nix flake check         | ✅ all passed                                                                                                                  |
+| Doc freshness           | ✅ all current                                                                                                                 |
+| Quality gate confidence | Medium-high (code correct, assumptions unverified post-deploy)                                                                 |
+| Brutal self-assessment  | Widgets audit was shallow. Assumptions unverified. UX decision unilateral. Status report should have been written proactively. |
 
 ---
 

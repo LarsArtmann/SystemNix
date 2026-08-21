@@ -102,14 +102,14 @@ The project is in a **stable, documentation-heavy phase** with clear next steps 
 
 ## d) TOTALLY FUCKED UP 💥
 
-| #   | Item                           | Severity    | Root Cause                                                                                                                                      | Status                             |
-| --- | ------------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| 1   | **Authelia secrets in git**    | 🔴 CRITICAL | Password hash + OIDC secret in `pkgs.writeText` in authelia.nix, tracked in git history forever. If repo is public → immediately exploitable.   | Known, not fixed                   |
-| 2   | **SigNoz firewall wide open**  | 🔴 HIGH     | ClickHouse (9000), HTTP (8123), OTLP (4317/4318) all open on firewall. All services are behind Caddy — these ports serve no purpose being open. | Known, trivial fix, not done       |
-| 3   | **Gitea token world-readable** | 🟡 HIGH     | Token file at `/var/lib/gitea/.admin-token.env` has mode 644. Any user/process on the machine can read the Gitea admin API token.               | Known, 1-line fix, not done        |
-| 4   | **DNS rebuild race condition** | 🟡 HIGH     | During `nixos-rebuild switch`, Unbound may restart before dependent services are ready, causing transient DNS failures.                         | Documented, not fixed structurally |
-| 5   | **uBlock filters broken**      | 🟠 MEDIUM   | `programs.ublock-filters.enable = false` — time parsing issue. Feature written but non-functional.                                              | Disabled since implementation      |
-| 6   | **Git credential plaintext**   | 🟠 MEDIUM   | `credential.helper = "store"` — passwords stored in plaintext in `~/.git-credentials`. Should use libsecret or KeePassXC.                       | Known, needs D-Bus secret service  |
+| # | Item                           | Severity    | Root Cause                                                                                                                                      | Status                             |
+| - | ------------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| 1 | **Authelia secrets in git**    | 🔴 CRITICAL | Password hash + OIDC secret in `pkgs.writeText` in authelia.nix, tracked in git history forever. If repo is public → immediately exploitable.   | Known, not fixed                   |
+| 2 | **SigNoz firewall wide open**  | 🔴 HIGH     | ClickHouse (9000), HTTP (8123), OTLP (4317/4318) all open on firewall. All services are behind Caddy — these ports serve no purpose being open. | Known, trivial fix, not done       |
+| 3 | **Gitea token world-readable** | 🟡 HIGH     | Token file at `/var/lib/gitea/.admin-token.env` has mode 644. Any user/process on the machine can read the Gitea admin API token.               | Known, 1-line fix, not done        |
+| 4 | **DNS rebuild race condition** | 🟡 HIGH     | During `nixos-rebuild switch`, Unbound may restart before dependent services are ready, causing transient DNS failures.                         | Documented, not fixed structurally |
+| 5 | **uBlock filters broken**      | 🟠 MEDIUM   | `programs.ublock-filters.enable = false` — time parsing issue. Feature written but non-functional.                                              | Disabled since implementation      |
+| 6 | **Git credential plaintext**   | 🟠 MEDIUM   | `credential.helper = "store"` — passwords stored in plaintext in `~/.git-credentials`. Should use libsecret or KeePassXC.                       | Known, needs D-Bus secret service  |
 
 ---
 
@@ -141,53 +141,53 @@ The project is in a **stable, documentation-heavy phase** with clear next steps 
 
 ### Priority 1 — Trivial Security Fixes (< 5 minutes each)
 
-| #   | Task                            | Effort | Impact | File                                                                                         |
-| --- | ------------------------------- | ------ | ------ | -------------------------------------------------------------------------------------------- |
-| 1   | **Close SigNoz firewall ports** | 30s    | HIGH   | `modules/nixos/services/signoz.nix` — delete the `networking.firewall.allowedTCPPorts` block |
-| 2   | **Fix Gitea token permissions** | 30s    | HIGH   | `modules/nixos/services/gitea.nix` — change `chmod 644` to `chmod 600`                       |
-| 3   | **Close Steam firewall**        | 30s    | LOW    | `platforms/nixos/programs/steam.nix` — set `localNetworkGameTransfers.openFirewall = false`  |
+| # | Task                            | Effort | Impact | File                                                                                         |
+| - | ------------------------------- | ------ | ------ | -------------------------------------------------------------------------------------------- |
+| 1 | **Close SigNoz firewall ports** | 30s    | HIGH   | `modules/nixos/services/signoz.nix` — delete the `networking.firewall.allowedTCPPorts` block |
+| 2 | **Fix Gitea token permissions** | 30s    | HIGH   | `modules/nixos/services/gitea.nix` — change `chmod 644` to `chmod 600`                       |
+| 3 | **Close Steam firewall**        | 30s    | LOW    | `platforms/nixos/programs/steam.nix` — set `localNetworkGameTransfers.openFirewall = false`  |
 
 ### Priority 2 — Taskwarrior Full Integration (2-4 hours total)
 
-| #   | Task                                                              | Effort | Impact                |
-| --- | ----------------------------------------------------------------- | ------ | --------------------- |
-| 4   | Create `modules/nixos/services/taskchampion.nix` service module   | 30min  | New capability        |
-| 5   | Add to `flake.nix` imports + nixosModules                         | 10min  | Wiring                |
-| 6   | Add DNS record `tasks` to Unbound local zone                      | 2min   | Resolution            |
-| 7   | Add Caddy vhost `tasks.home.lan` → `localhost:10222`              | 10min  | Access                |
-| 8   | Add Homepage entry under "Productivity" group                     | 5min   | Visibility            |
-| 9   | Create `platforms/common/programs/taskwarrior.nix` (Home Manager) | 45min  | Cross-platform config |
-| 10  | Import taskwarrior.nix in `home-base.nix`                         | 2min   | Wiring                |
-| 11  | Define AI Agent task protocol (tags, UDAs, docs)                  | 30min  | Agent integration     |
-| 12  | Install TaskStrider on Android, connect to sync server            | 15min  | Mobile access         |
-| 13  | Test sync across NixOS → macOS → Android                          | 15min  | Verification          |
+| #  | Task                                                              | Effort | Impact                |
+| -- | ----------------------------------------------------------------- | ------ | --------------------- |
+| 4  | Create `modules/nixos/services/taskchampion.nix` service module   | 30min  | New capability        |
+| 5  | Add to `flake.nix` imports + nixosModules                         | 10min  | Wiring                |
+| 6  | Add DNS record `tasks` to Unbound local zone                      | 2min   | Resolution            |
+| 7  | Add Caddy vhost `tasks.home.lan` → `localhost:10222`              | 10min  | Access                |
+| 8  | Add Homepage entry under "Productivity" group                     | 5min   | Visibility            |
+| 9  | Create `platforms/common/programs/taskwarrior.nix` (Home Manager) | 45min  | Cross-platform config |
+| 10 | Import taskwarrior.nix in `home-base.nix`                         | 2min   | Wiring                |
+| 11 | Define AI Agent task protocol (tags, UDAs, docs)                  | 30min  | Agent integration     |
+| 12 | Install TaskStrider on Android, connect to sync server            | 15min  | Mobile access         |
+| 13 | Test sync across NixOS → macOS → Android                          | 15min  | Verification          |
 
 ### Priority 3 — Security Hardening (1-2 hours)
 
-| #   | Task                                              | Effort | Impact       |
-| --- | ------------------------------------------------- | ------ | ------------ |
-| 14  | Move Authelia users_database.yml to sops template | 45min  | CRITICAL fix |
-| 15  | Move Authelia OIDC client secret to sops          | 30min  | CRITICAL fix |
-| 16  | Switch git credential helper to libsecret         | 30min  | MEDIUM fix   |
-| 17  | Evaluate rootless Docker / podman migration       | 2h     | HIGH fix     |
+| #  | Task                                              | Effort | Impact       |
+| -- | ------------------------------------------------- | ------ | ------------ |
+| 14 | Move Authelia users_database.yml to sops template | 45min  | CRITICAL fix |
+| 15 | Move Authelia OIDC client secret to sops          | 30min  | CRITICAL fix |
+| 16 | Switch git credential helper to libsecret         | 30min  | MEDIUM fix   |
+| 17 | Evaluate rootless Docker / podman migration       | 2h     | HIGH fix     |
 
 ### Priority 4 — Monitoring & Reliability (2-4 hours)
 
-| #   | Task                                            | Effort | Impact                       |
-| --- | ----------------------------------------------- | ------ | ---------------------------- |
-| 18  | Configure SigNoz alerting (disk, services, OOM) | 2h     | Operational safety           |
-| 19  | Fix DNS rebuild race condition                  | 1h     | Reliability                  |
-| 20  | Create SigNoz dashboards for services           | 2h     | Observability                |
-| 21  | Automate blocklist hash updates                 | 2h     | Maintenance reduction        |
-| 22  | Test BTRFS snapshot restore                     | 1h     | Disaster recovery confidence |
+| #  | Task                                            | Effort | Impact                       |
+| -- | ----------------------------------------------- | ------ | ---------------------------- |
+| 18 | Configure SigNoz alerting (disk, services, OOM) | 2h     | Operational safety           |
+| 19 | Fix DNS rebuild race condition                  | 1h     | Reliability                  |
+| 20 | Create SigNoz dashboards for services           | 2h     | Observability                |
+| 21 | Automate blocklist hash updates                 | 2h     | Maintenance reduction        |
+| 22 | Test BTRFS snapshot restore                     | 1h     | Disaster recovery confidence |
 
 ### Priority 5 — Cleanup & Quality (Ongoing)
 
-| #   | Task                                                  | Effort | Impact             |
-| --- | ----------------------------------------------------- | ------ | ------------------ |
-| 23  | Archive 90+ old status docs to `docs/status/archive/` | 15min  | Repo cleanliness   |
-| 24  | Fix uBlock filter time parsing bug                    | 1h     | Feature completion |
-| 25  | Update AGENTS.md to reflect all changes               | 30min  | Agent accuracy     |
+| #  | Task                                                  | Effort | Impact             |
+| -- | ----------------------------------------------------- | ------ | ------------------ |
+| 23 | Archive 90+ old status docs to `docs/status/archive/` | 15min  | Repo cleanliness   |
+| 24 | Fix uBlock filter time parsing bug                    | 1h     | Feature completion |
+| 25 | Update AGENTS.md to reflect all changes               | 30min  | Agent accuracy     |
 
 ---
 

@@ -190,33 +190,33 @@ Three separate model directories exist with likely heavy duplication. No audit h
 
 Sorted by impact × effort (highest first):
 
-| #   | Task                                                                          | Impact      | Effort | Category     |
-| --- | ----------------------------------------------------------------------------- | ----------- | ------ | ------------ |
-| 1   | **Deploy all pending changes** (`just switch`) — activates BFQ + systemd-oomd | 🔴 Critical | 5min   | Deploy       |
-| 2   | **Verify systemd-oomd is working** — check PSI files, test with stress        | 🔴 Critical | 15min  | Verify       |
-| 3   | **Consolidate AI model directories** — deduplicate 828 GB across 3 dirs       | 🔴 Critical | 2h     | Ops          |
-| 4   | **Add Docker global log limits** — prevent unbounded container log growth     | 🔴 Critical | 15min  | Config       |
-| 5   | **Add SigNoz/ClickHouse retention policy** — TTL on all tables                | 🟡 High     | 1h     | Config       |
-| 6   | **Clean caches** — `~/.cache/pip` (6.3G), goimports (4G), etc.                | 🟡 High     | 5min   | Ops          |
-| 7   | **Fix monitor365-server** user service failures                               | 🟡 High     | 1h     | Bug          |
-| 8   | **Fix activitywatch-watcher** service failure                                 | 🟡 High     | 30min  | Bug          |
-| 9   | **Fix oauth2-proxy** intermittent startup failure                             | 🟡 High     | 1h     | Bug          |
-| 10  | **Set `vm.overcommit_memory = 1`** for Redis                                  | 🟡 High     | 5min   | Config       |
-| 11  | **Run /data BTRFS migration** (`just snapshot-migrate-data`)                  | 🟡 Medium   | 1h     | Ops          |
-| 12  | **Add disk space alerting** to Gatus                                          | 🟡 Medium   | 30min  | Monitoring   |
-| 13  | **Add PSI/IO pressure metrics** via node-exporter textfile                    | 🟡 Medium   | 30min  | Monitoring   |
-| 14  | **Add boot time tracking** (systemd-analyze in timer)                         | 🟡 Medium   | 30min  | Monitoring   |
-| 15  | **Fix dnsblockd-cert-import** user service failure                            | 🟡 Medium   | 30min  | Bug          |
-| 16  | **Archive old status reports** (125+ files → keep last 10)                    | 🟢 Low      | 15min  | Housekeeping |
-| 17  | **Enforce service target convention** via NixOS assertion                     | 🟢 Low      | 30min  | Code quality |
-| 18  | **Auto-gate Caddy vHosts** behind service enable flags                        | 🟢 Low      | 2h     | Refactor     |
-| 19  | **Auto-gate Gatus endpoints** behind service enable flags                     | 🟢 Low      | 1h     | Refactor     |
-| 20  | **Fix IPv6 tempaddr errors** on Docker veths                                  | 🟢 Low      | 30min  | Config       |
-| 21  | **Investigate firmware 33s** — check BIOS fast boot options                   | 🟢 Low      | 15min  | Perf         |
-| 22  | **Redis authentication** — set a password                                     | 🟢 Low      | 15min  | Security     |
-| 23  | **fstrim redundancy** — remove fstrim for /data (already has `discard=async`) | 🟢 Low      | 5min   | Config       |
-| 24  | **Pi 3 DNS hardware provisioning**                                            | 🟢 Low      | 4h+    | Infra        |
-| 25  | **Bluetooth hci0 wmt error** — investigate RTL driver issue                   | 🟢 Low      | 2h     | Bug          |
+| #  | Task                                                                          | Impact      | Effort | Category     |
+| -- | ----------------------------------------------------------------------------- | ----------- | ------ | ------------ |
+| 1  | **Deploy all pending changes** (`just switch`) — activates BFQ + systemd-oomd | 🔴 Critical | 5min   | Deploy       |
+| 2  | **Verify systemd-oomd is working** — check PSI files, test with stress        | 🔴 Critical | 15min  | Verify       |
+| 3  | **Consolidate AI model directories** — deduplicate 828 GB across 3 dirs       | 🔴 Critical | 2h     | Ops          |
+| 4  | **Add Docker global log limits** — prevent unbounded container log growth     | 🔴 Critical | 15min  | Config       |
+| 5  | **Add SigNoz/ClickHouse retention policy** — TTL on all tables                | 🟡 High     | 1h     | Config       |
+| 6  | **Clean caches** — `~/.cache/pip` (6.3G), goimports (4G), etc.                | 🟡 High     | 5min   | Ops          |
+| 7  | **Fix monitor365-server** user service failures                               | 🟡 High     | 1h     | Bug          |
+| 8  | **Fix activitywatch-watcher** service failure                                 | 🟡 High     | 30min  | Bug          |
+| 9  | **Fix oauth2-proxy** intermittent startup failure                             | 🟡 High     | 1h     | Bug          |
+| 10 | **Set `vm.overcommit_memory = 1`** for Redis                                  | 🟡 High     | 5min   | Config       |
+| 11 | **Run /data BTRFS migration** (`just snapshot-migrate-data`)                  | 🟡 Medium   | 1h     | Ops          |
+| 12 | **Add disk space alerting** to Gatus                                          | 🟡 Medium   | 30min  | Monitoring   |
+| 13 | **Add PSI/IO pressure metrics** via node-exporter textfile                    | 🟡 Medium   | 30min  | Monitoring   |
+| 14 | **Add boot time tracking** (systemd-analyze in timer)                         | 🟡 Medium   | 30min  | Monitoring   |
+| 15 | **Fix dnsblockd-cert-import** user service failure                            | 🟡 Medium   | 30min  | Bug          |
+| 16 | **Archive old status reports** (125+ files → keep last 10)                    | 🟢 Low      | 15min  | Housekeeping |
+| 17 | **Enforce service target convention** via NixOS assertion                     | 🟢 Low      | 30min  | Code quality |
+| 18 | **Auto-gate Caddy vHosts** behind service enable flags                        | 🟢 Low      | 2h     | Refactor     |
+| 19 | **Auto-gate Gatus endpoints** behind service enable flags                     | 🟢 Low      | 1h     | Refactor     |
+| 20 | **Fix IPv6 tempaddr errors** on Docker veths                                  | 🟢 Low      | 30min  | Config       |
+| 21 | **Investigate firmware 33s** — check BIOS fast boot options                   | 🟢 Low      | 15min  | Perf         |
+| 22 | **Redis authentication** — set a password                                     | 🟢 Low      | 15min  | Security     |
+| 23 | **fstrim redundancy** — remove fstrim for /data (already has `discard=async`) | 🟢 Low      | 5min   | Config       |
+| 24 | **Pi 3 DNS hardware provisioning**                                            | 🟢 Low      | 4h+    | Infra        |
+| 25 | **Bluetooth hci0 wmt error** — investigate RTL driver issue                   | 🟢 Low      | 2h     | Bug          |
 
 ---
 

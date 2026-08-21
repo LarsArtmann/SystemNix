@@ -5,7 +5,6 @@
 
 ---
 
-
 ## A) FULLY DONE
 
 ### 1. Root Cause Analysis: 31 Dates Had ZERO Per-Project Insights (Not Just Missing Cross-Project)
@@ -53,7 +52,7 @@ Even though the generator returned partial results alongside the error, the stor
 
 Added a reuse path: if `result.ProjectInsights` already has entries (from the read model projection), Round 1 skips all LLM calls and reuses them. This is critical for backfill scenarios where Round 1 succeeded but Round 2 failed. A helper `alignInsightsToProjects` maps stored insights back into project-index space (stored events are a subset — inactive projects with SessionCount==0 are skipped, so the slice is shorter than the projects slice).
 
-*Note: Bug #3 was implemented but turned out to be unnecessary for THIS backfill (the 31 dates had zero stored insights due to Bugs #1+#2). It will help future partial-failure backfills.*
+_Note: Bug #3 was implemented but turned out to be unnecessary for THIS backfill (the 31 dates had zero stored insights due to Bugs #1+#2). It will help future partial-failure backfills._
 
 ### 3. All 20 crush-daily Test Packages Pass
 
@@ -67,6 +66,7 @@ ok  github.com/larsartmann/crush-daily/internal/insights         0.006s
 ### 4. Batch Backfill Script Created and Running
 
 Wrote `/tmp/run-insights-batch.sh` — a throttled batch runner that:
+
 - Processes dates from **fewest-to-most active projects** (maximizes dates completed before any rate limit)
 - Detects rate limit errors and stops early with a summary
 - 5-second delay between dates
@@ -84,16 +84,17 @@ The auto-commit daemon in crush-daily committed the 2 changed files (67 insertio
 
 The batch job is running in the background. Current state:
 
-| Metric | Value |
-|--------|-------|
-| Dates completed (with cross-project insights) | 4 of 31 |
-| Dates remaining | 27 |
-| Current date processing | 2026-07-12 (5th, 29 active projects) |
-| New ProjectInsightsGenerated events | 68 (14+13+13+28 across 4 dates) |
-| Total CrossProjectInsightsGenerated events | 19 (15 old + 4 new) |
-| Rate limit hit | No |
+| Metric                                        | Value                                |
+| --------------------------------------------- | ------------------------------------ |
+| Dates completed (with cross-project insights) | 4 of 31                              |
+| Dates remaining                               | 27                                   |
+| Current date processing                       | 2026-07-12 (5th, 29 active projects) |
+| New ProjectInsightsGenerated events           | 68 (14+13+13+28 across 4 dates)      |
+| Total CrossProjectInsightsGenerated events    | 19 (15 old + 4 new)                  |
+| Rate limit hit                                | No                                   |
 
 **Completed dates so far:**
+
 1. `2026-06-25` (14 projects) — OK
 2. `2026-06-26` (13 projects) — OK
 3. `2026-07-27` (14 projects) — OK
@@ -178,6 +179,7 @@ Bug #3 (reuse existing insights) was implemented and tested but is effectively d
 ## F) Up to 50 Things to Get Done Next
 
 ### Immediate (block completing this task)
+
 1. **Wait for batch to complete or hit rate limit** — monitor background shell `0BA`
 2. **Write final batch results** — update this report or write a follow-up with the final count
 3. **Mark TODO_LIST.md checkbox `[x]`** for the crush-daily insights backfill item
@@ -186,6 +188,7 @@ Bug #3 (reuse existing insights) was implemented and tested but is effectively d
 6. **Verify via HTTP API** — `curl localhost:8081/api/reports` should show the new dates with cross-project insights
 
 ### SystemNix Integration
+
 7. **Update SystemNix flake.lock** — bump crush-daily input to commit `868fe33` (includes resilience fixes)
 8. **Deploy to evo-x2** — `nix run .#deploy` to activate the updated crush-daily with errgroup fix
 9. **Verify post-deploy** — `nix run .#post-deploy-check` should still pass (asserts `session_count > 0`)
@@ -193,6 +196,7 @@ Bug #3 (reuse existing insights) was implemented and tested but is effectively d
 11. **Document partial-results-storage pattern in AGENTS.md** — the "store before error return" pattern
 
 ### crush-daily Upstream Improvements
+
 12. **Add `--insights-only` flag to backfill script** — for dates with data but missing insights
 13. **Add `min_session_threshold` config option** — skip projects with <N sessions in insights pipeline
 14. **Add dedicated test for partial-failure resilience** — simulate 3/5 projects failing, verify 2/5 stored
@@ -207,12 +211,14 @@ Bug #3 (reuse existing insights) was implemented and tested but is effectively d
 23. **Add `crush-daily insights --from X --to Y` batch mode** — built into the CLI, not external scripts
 
 ### Monitoring & Alerting
+
 24. **Add Gatus check for cross-project insight freshness** — alert if latest report has no cross-project insight
 25. **Add alert for insight failure rate** — if >50% of projects fail in a single run, alert
 26. **Add Synthetic API quota monitoring** — track remaining quota if API exposes it
 27. **Add crush-daily dashboard to Homepage** — show insight coverage %, last success, failure count
 
 ### Data Quality
+
 28. **Investigate 2026-06-24 gap** — no DailyDataCollected event exists for this date (service was down or collection failed)
 29. **Audit all 46 dates for data completeness** — verify session_count > 0 for all, not just the 45 backfilled
 30. **Check for duplicate events** — re-running collect/insights may have created duplicates
@@ -220,12 +226,14 @@ Bug #3 (reuse existing insights) was implemented and tested but is effectively d
 32. **Add data validation to post-deploy-check** — assert cross-project insight exists for the latest report
 
 ### Documentation
+
 33. **Update AGENTS.md crush-daily section** — document the errgroup fix, partial storage pattern, reuse logic
 34. **Write runbook for insight backfill** — step-by-step for future operators
 35. **Document Synthetic API rate limit behavior** — how it manifests, how to detect, how to throttle
 36. **Update CHANGELOG.md** — entry for the resilience fixes
 
 ### Technical Debt
+
 37. **The `HOME_DIR = "/home/lars"` hardcoded in backfill script** — should derive from config or primaryUser
 38. **Backfill script wrapping Python as shell text** — should use `buildPythonApplication` or `writeScriptBin`
 39. **`find_binary()` uses `sorted(glob)[-1]`** — non-deterministic if multiple store paths exist
@@ -234,6 +242,7 @@ Bug #3 (reuse existing insights) was implemented and tested but is effectively d
 42. **Consolidate 4 go-cqrs-lite lock nodes** — carried over from cqrs-lint task, still pending
 
 ### Future Enhancements
+
 43. **Weekly/monthly insight rollups** — synthesize across multiple days for trend analysis
 44. **Project grouping/clustering** — group sub-projects (e.g., all SystemNix/* as one)
 45. **Cost tracking and budgeting** — alert when daily LLM cost exceeds threshold

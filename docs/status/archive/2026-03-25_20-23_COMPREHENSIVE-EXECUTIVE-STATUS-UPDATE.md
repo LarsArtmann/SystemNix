@@ -248,48 +248,48 @@ grep -rn "TODO:\|FIXME:\|HACK:\|XXX:" --include="*.nix" --include="*.sh" .
 
 ### Priority 0 (Critical - Do Now)
 
-| #   | Task                              | Location        | Estimated Time |
-| --- | --------------------------------- | --------------- | -------------- |
-| 1   | Complete flake check verification | nix flake check | 5 min          |
-| 2   | Re-count actual TODOs in codebase | grep TODOs      | 15 min         |
-| 3   | Verify gitleaks findings          | gitleaks detect | 30 min         |
-| 4   | Fix any statix warnings           | Nix files       | 1 hour         |
+| # | Task                              | Location        | Estimated Time |
+| - | --------------------------------- | --------------- | -------------- |
+| 1 | Complete flake check verification | nix flake check | 5 min          |
+| 2 | Re-count actual TODOs in codebase | grep TODOs      | 15 min         |
+| 3 | Verify gitleaks findings          | gitleaks detect | 30 min         |
+| 4 | Fix any statix warnings           | Nix files       | 1 hour         |
 
 ### Priority 1 (High - This Week)
 
-| #   | Task                                | Location             | Estimated Time |
-| --- | ----------------------------------- | -------------------- | -------------- |
-| 5   | Verify scheduled task execution     | launchd/systemd      | 30 min         |
-| 6   | Review Sublime Text backup strategy | sublime-text-sync.sh | 1 hour         |
-| 7   | Archive old status reports          | docs/status/         | 30 min         |
-| 8   | Test NixOS evo-x2 features          | Physical testing     | 2 hours        |
-| 9   | Review 10 oldest TODOs              | Grep results         | 1 hour         |
-| 10  | Update project health metrics       | docs/                | 30 min         |
+| #  | Task                                | Location             | Estimated Time |
+| -- | ----------------------------------- | -------------------- | -------------- |
+| 5  | Verify scheduled task execution     | launchd/systemd      | 30 min         |
+| 6  | Review Sublime Text backup strategy | sublime-text-sync.sh | 1 hour         |
+| 7  | Archive old status reports          | docs/status/         | 30 min         |
+| 8  | Test NixOS evo-x2 features          | Physical testing     | 2 hours        |
+| 9  | Review 10 oldest TODOs              | Grep results         | 1 hour         |
+| 10 | Update project health metrics       | docs/                | 30 min         |
 
 ### Priority 2 (Medium - This Month)
 
-| #   | Task                            | Location         | Estimated Time |
-| --- | ------------------------------- | ---------------- | -------------- |
-| 11  | Review Hyprland 0.54 config     | platforms/nixos/ | 1 hour         |
-| 12  | Verify Waybar UTF-8 fixes       | waybar.nix       | 30 min         |
-| 13  | Test NPU driver on evo-x2       | AMD XDNA         | 2 hours        |
-| 14  | Test Ollama Vulkan acceleration | ollama config    | 1 hour         |
-| 15  | Review 50 markdown files        | docs/            | 4 hours        |
+| #  | Task                            | Location         | Estimated Time |
+| -- | ------------------------------- | ---------------- | -------------- |
+| 11 | Review Hyprland 0.54 config     | platforms/nixos/ | 1 hour         |
+| 12 | Verify Waybar UTF-8 fixes       | waybar.nix       | 30 min         |
+| 13 | Test NPU driver on evo-x2       | AMD XDNA         | 2 hours        |
+| 14 | Test Ollama Vulkan acceleration | ollama config    | 1 hour         |
+| 15 | Review 50 markdown files        | docs/            | 4 hours        |
 
 ### Priority 3 (Low - This Quarter)
 
-| #   | Task                               | Location                   | Estimated Time |
-| --- | ---------------------------------- | -------------------------- | -------------- |
-| 16  | Review programs.nix TODOs          | platforms/common/programs/ | 2 hours        |
-| 17  | Review core.nix TODOs              | platforms/common/core/     | 2 hours        |
-| 18  | Review system.nix TODOs            | platforms/nixos/system/    | 2 hours        |
-| 19  | Consolidate status reports         | docs/status/               | 3 hours        |
-| 20  | Update AGENTS.md with new patterns | AGENTS.md                  | 1 hour         |
-| 21  | Create documentation index         | docs/README.md             | 1 hour         |
-| 22  | Implement automated TODO tracking  | scripts/                   | 3 hours        |
-| 23  | Verify lockscreen configuration    | hyprland.nix               | 30 min         |
-| 24  | Review activitywatch integration   | platforms/common/          | 1 hour         |
-| 25  | Test cross-platform consistency    | Both platforms             | 2 hours        |
+| #  | Task                               | Location                   | Estimated Time |
+| -- | ---------------------------------- | -------------------------- | -------------- |
+| 16 | Review programs.nix TODOs          | platforms/common/programs/ | 2 hours        |
+| 17 | Review core.nix TODOs              | platforms/common/core/     | 2 hours        |
+| 18 | Review system.nix TODOs            | platforms/nixos/system/    | 2 hours        |
+| 19 | Consolidate status reports         | docs/status/               | 3 hours        |
+| 20 | Update AGENTS.md with new patterns | AGENTS.md                  | 1 hour         |
+| 21 | Create documentation index         | docs/README.md             | 1 hour         |
+| 22 | Implement automated TODO tracking  | scripts/                   | 3 hours        |
+| 23 | Verify lockscreen configuration    | hyprland.nix               | 30 min         |
+| 24 | Review activitywatch integration   | platforms/common/          | 1 hour         |
+| 25 | Test cross-platform consistency    | Both platforms             | 2 hours        |
 
 ---
 
@@ -387,10 +387,10 @@ To github.com:LarsArtmann/SystemNix.git
 | Cross-Platform  | ✅     | macOS + NixOS supported                  |
 | Clone Detection | ✅     | 0 clone groups (art-dupl)                |
 | Backup Cleanup  | ✅     | 28 duplicate folders removed             |
-| Documentation   | ⚠️     | Status reports need consolidation        |
+| Documentation   | ⚠️      | Status reports need consolidation        |
 | TODO Management | ❓     | Needs re-count                           |
-| Security        | ⚠️     | gitleaks needs verification              |
-| Code Quality    | ⚠️     | statix warnings may exist                |
+| Security        | ⚠️      | gitleaks needs verification              |
+| Code Quality    | ⚠️      | statix warnings may exist                |
 
 ---
 

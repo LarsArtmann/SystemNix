@@ -51,18 +51,18 @@ trusting the report (AGENTS.md lesson). Then drove golangci-lint on
 
 ### 4. SystemNix wiring (all local, nothing deployed)
 
-| Piece | File | Notes |
-|---|---|---|
-| Port 8088 | `lib/ports.nix` | free slot between browser-history and searxng |
-| Flake input | `flake.nix` | `github:LarsArtmann/PapDashboard?ref=master`, nixpkgs follows; locked (rev e93d2b15) |
-| Service module | `modules/nixos/services/papdashboard.nix` | DynamicUser + `systemd-journal` supplementary group (journal evidence), StateDirectory, harden+serviceDefaults+ioTier.background, MemoryMax 512M, mkSecretCheck ExecStartPre, onFailure, startLimit 5/300 |
-| DNS | `platforms/common/dns-local.nix` | `alerts` subdomain |
-| Caddy | `caddy.nix` | `alerts.home.lan` protectedVHost (Layer 2 — UI has no built-in auth; Gatus posts to localhost directly) |
-| Homepage | `homepage.nix` | Monitoring tile, alertmanager.png icon (verified in icon pack), enable-gated |
-| Gatus ingest | `gatus-config.nix` | custom provider + health check + `withPapIngest` map (below) |
-| Sops | `sops.nix` + `secrets/papdashboard.yaml` | real random `papdashboard_api_key` (public-key encrypt, no sudo); `papdashboard-env` template (PAP_API_KEY + PAP_DISCORD_WEBHOOK reusing shared `discord_alert_webhook_url`); gatus-env gains PAPDASHBOARD_INGEST_KEY |
-| OTel | `otel-endpoint-audit.nix` | `papdashboard = "http-host-port"` |
-| Enable | `configuration.nix` | `papdashboard.enable = true` |
+| Piece          | File                                      | Notes                                                                                                                                                                                                                 |
+| -------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Port 8088      | `lib/ports.nix`                           | free slot between browser-history and searxng                                                                                                                                                                         |
+| Flake input    | `flake.nix`                               | `github:LarsArtmann/PapDashboard?ref=master`, nixpkgs follows; locked (rev e93d2b15)                                                                                                                                  |
+| Service module | `modules/nixos/services/papdashboard.nix` | DynamicUser + `systemd-journal` supplementary group (journal evidence), StateDirectory, harden+serviceDefaults+ioTier.background, MemoryMax 512M, mkSecretCheck ExecStartPre, onFailure, startLimit 5/300             |
+| DNS            | `platforms/common/dns-local.nix`          | `alerts` subdomain                                                                                                                                                                                                    |
+| Caddy          | `caddy.nix`                               | `alerts.home.lan` protectedVHost (Layer 2 — UI has no built-in auth; Gatus posts to localhost directly)                                                                                                               |
+| Homepage       | `homepage.nix`                            | Monitoring tile, alertmanager.png icon (verified in icon pack), enable-gated                                                                                                                                          |
+| Gatus ingest   | `gatus-config.nix`                        | custom provider + health check + `withPapIngest` map (below)                                                                                                                                                          |
+| Sops           | `sops.nix` + `secrets/papdashboard.yaml`  | real random `papdashboard_api_key` (public-key encrypt, no sudo); `papdashboard-env` template (PAP_API_KEY + PAP_DISCORD_WEBHOOK reusing shared `discord_alert_webhook_url`); gatus-env gains PAPDASHBOARD_INGEST_KEY |
+| OTel           | `otel-endpoint-audit.nix`                 | `papdashboard = "http-host-port"`                                                                                                                                                                                     |
+| Enable         | `configuration.nix`                       | `papdashboard.enable = true`                                                                                                                                                                                          |
 
 Insight config defaults: LLM `http://127.0.0.1:52625/v1` (FastFlowLM socket
 activation wakes the NPU on first insight), model `qwen3.6-moe:35b-a3b`,

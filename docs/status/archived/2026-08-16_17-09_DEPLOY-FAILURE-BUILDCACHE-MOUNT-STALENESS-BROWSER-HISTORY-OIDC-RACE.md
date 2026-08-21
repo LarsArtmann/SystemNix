@@ -46,13 +46,13 @@ at startup failing because dnsblockd hasn't bound 127.0.0.1:53 yet**.
 
 Timeline reconstruction from journals:
 
-| Time | Event |
-|------|-------|
-| 16:40:21 | dnsblockd `loaded config file` (process started, CA loading…) |
-| 16:40:21 | buildcache-init started, mkdir ok, chown → **EIO** |
-| 16:40:22 | pocket-id-provision re-registered browser-history OIDC client |
+| Time     | Event                                                                  |
+| -------- | ---------------------------------------------------------------------- |
+| 16:40:21 | dnsblockd `loaded config file` (process started, CA loading…)          |
+| 16:40:21 | buildcache-init started, mkdir ok, chown → **EIO**                     |
+| 16:40:22 | pocket-id-provision re-registered browser-history OIDC client          |
 | 16:40:24 | browser-history-server started → OIDC discovery → 9.9.9.9 lookup fails |
-| 16:40:24 | browser-history exits status=69 (UNAVAILABLE) |
+| 16:40:24 | browser-history exits status=69 (UNAVAILABLE)                          |
 | 16:40:29 | dnsblockd `loaded CA certificate` (8s after browser-history tried DNS) |
 
 **Mechanism:** browser-history v4.7.0+ (input `4e7604d`) does OIDC discovery at
@@ -75,16 +75,16 @@ startup timeline.
 
 Direct device-state inspection (cannot sudo, so used sysfs + proc):
 
-| Source | Finding |
-|--------|---------|
-| `lsblk` | No `sda` — device table starts at `sdb` (8:16) |
-| `/proc/partitions` | Confirms `sdb/sdc/sdd/sde/sdf` only; no `sda` |
-| `findmnt /mnt/buildcache` | Source = `/dev/sda1` (major:minor 8:1 — does NOT exist) |
-| `/proc/self/mountinfo` | `8:1 / /mnt/buildcache ... ext4 /dev/sda1 rw,...,emergency_ro,shutdown` |
-| `/sys/fs/ext4/` | Only `sda1` sysfs entry exists; no `sdc1` (kernel still has stale ext4 state) |
-| `/dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311-part1` | Symlinks to `../../sdc1` |
-| Last buildcache-metrics write | `usage=99%, free=4GB/235GB, smart=PASSED` |
-| Kernel logs | `EXT4-fs warning (device sda1): htree_dirblock_to_tree:1051: inode #2: lblock 0: comm ls: error -5` |
+| Source                                                      | Finding                                                                                             |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `lsblk`                                                     | No `sda` — device table starts at `sdb` (8:16)                                                      |
+| `/proc/partitions`                                          | Confirms `sdb/sdc/sdd/sde/sdf` only; no `sda`                                                       |
+| `findmnt /mnt/buildcache`                                   | Source = `/dev/sda1` (major:minor 8:1 — does NOT exist)                                             |
+| `/proc/self/mountinfo`                                      | `8:1 / /mnt/buildcache ... ext4 /dev/sda1 rw,...,emergency_ro,shutdown`                             |
+| `/sys/fs/ext4/`                                             | Only `sda1` sysfs entry exists; no `sdc1` (kernel still has stale ext4 state)                       |
+| `/dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311-part1` | Symlinks to `../../sdc1`                                                                            |
+| Last buildcache-metrics write                               | `usage=99%, free=4GB/235GB, smart=PASSED`                                                           |
+| Kernel logs                                                 | `EXT4-fs warning (device sda1): htree_dirblock_to_tree:1051: inode #2: lblock 0: comm ls: error -5` |
 
 **Mechanism:** the buildcache SSD was hot-unplugged/replugged (or the enclosure
 power-cycled). The kernel reassigned the device letter from `sda` to `sdc` (USB
@@ -199,6 +199,7 @@ Then deploy as usual — `nix run .#deploy`.
   requires host action.
 - Auto-git daemon will commit the change once verified clean (AGENTS.md + .nix
   edits). No manual commit needed.
+
 ---
 
 ## Resolution (2026-08-17, docs-health pass)

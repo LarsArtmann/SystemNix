@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Crash Summary
 
 System rebooted at **22:03** via **hardware watchdog timer (sp5100-tco)** after becoming
@@ -66,6 +65,7 @@ WDT crash attributed to "Helium renderers grew unbounded" was **enabled** by thi
 64G hard ceiling that was supposed to kill runaway user processes **never existed**.
 
 This is the **same class of bug** documented in AGENTS.md for monitor365:
+
 > `config.users.users.${primaryUser}.uid` being `null` at eval time
 
 ### Fix
@@ -85,20 +85,20 @@ Hardcoded `"user-1000"` with explanatory comment in `boot.nix`:
 
 ## Crash Timeline
 
-| Time | Event |
-|------|-------|
-| **Aug 1 21:05** | System booted after previous crash |
-| **Aug 1 21:10** | Memory Pressure Gatus check FAILING (5 min after boot) — system already under pressure |
-| **Aug 3 03:26** | systemd-oomd kills monitor365-server (Avg10: 61.56% pressure on /system.slice) |
-| **Aug 3 03:40** | oomd kills monitor365-server again (Avg10: 69.02%) |
-| **Aug 3 05:11** | oomd kills monitor365-server (Avg10: 60.06%) |
-| **Aug 3 05:38** | oomd kills monitor365-server (Avg10: 60.61%) |
-| **Aug 3 19:57** | oomd kills monitor365-server (Avg10: 57.23%, total pressure: 1h 28min) |
-| **Aug 3 20:08** | Kernel OOM-kills dnsblockd (RSS: 1 GB — abnormal for DNS resolver) |
+| Time                  | Event                                                                                  |
+| --------------------- | -------------------------------------------------------------------------------------- |
+| **Aug 1 21:05**       | System booted after previous crash                                                     |
+| **Aug 1 21:10**       | Memory Pressure Gatus check FAILING (5 min after boot) — system already under pressure |
+| **Aug 3 03:26**       | systemd-oomd kills monitor365-server (Avg10: 61.56% pressure on /system.slice)         |
+| **Aug 3 03:40**       | oomd kills monitor365-server again (Avg10: 69.02%)                                     |
+| **Aug 3 05:11**       | oomd kills monitor365-server (Avg10: 60.06%)                                           |
+| **Aug 3 05:38**       | oomd kills monitor365-server (Avg10: 60.61%)                                           |
+| **Aug 3 19:57**       | oomd kills monitor365-server (Avg10: 57.23%, total pressure: 1h 28min)                 |
+| **Aug 3 20:08**       | Kernel OOM-kills dnsblockd (RSS: 1 GB — abnormal for DNS resolver)                     |
 | **Aug 3 20:00-21:45** | monitor365-server DuckDB hitting MemoryMax (953.6 MiB) repeatedly, failing every alloc |
-| **Aug 3 21:57** | monitor365 agent buffer at 95% capacity, mass-dropping events |
-| **Aug 3 21:58** | Hermes heartbeat blocked >10s, Pocket ID SQLITE_BUSY — system freezing |
-| **Aug 3 ~22:03** | System fully hangs. WDT fires (60s timeout). Hard reset. |
+| **Aug 3 21:57**       | monitor365 agent buffer at 95% capacity, mass-dropping events                          |
+| **Aug 3 21:58**       | Hermes heartbeat blocked >10s, Pocket ID SQLITE_BUSY — system freezing                 |
+| **Aug 3 ~22:03**      | System fully hangs. WDT fires (60s timeout). Hard reset.                               |
 
 ### Cascade Explanation
 
@@ -126,6 +126,7 @@ Hardcoded `"user-1000"` with explanatory comment in `boot.nix`:
 ### DiscordSync Database Corruption (SQLite)
 
 The unclean WDT shutdown corrupted the DiscordSync SQLite DB. Crash-looping with:
+
 ```
 internal error: entered unreachable code: cell_index_read_payload_ptr called on non-index page
 ```
@@ -139,16 +140,16 @@ dir are preserved.
 
 ### 8 Services Failed to Start on Boot
 
-| Service | Status | Cause |
-|---------|--------|-------|
-| DiscordSync | start-limit-hit | SQLite corruption (fixed by db-heal) |
-| qmd MCP | failed | First-boot model loading timeout (expected, self-recovers) |
-| Forgejo OIDC setup | failed | DNS gate race (dnsblockd not ready at boot) |
-| Hermes | failed initially | Transient, self-recovered on restart |
-| OAuth2 Proxy | failed initially | Pocket ID provision ordering |
-| ActivityWatch Wayland | failed | Missing Wayland session at boot time |
-| BTRFS compsize | failed | MemoryMax too low for 47 GiB Nix store (known issue) |
-| Nix build cleanup | failed | BTRFS CoW + snapshot references |
+| Service               | Status           | Cause                                                      |
+| --------------------- | ---------------- | ---------------------------------------------------------- |
+| DiscordSync           | start-limit-hit  | SQLite corruption (fixed by db-heal)                       |
+| qmd MCP               | failed           | First-boot model loading timeout (expected, self-recovers) |
+| Forgejo OIDC setup    | failed           | DNS gate race (dnsblockd not ready at boot)                |
+| Hermes                | failed initially | Transient, self-recovered on restart                       |
+| OAuth2 Proxy          | failed initially | Pocket ID provision ordering                               |
+| ActivityWatch Wayland | failed           | Missing Wayland session at boot time                       |
+| BTRFS compsize        | failed           | MemoryMax too low for 47 GiB Nix store (known issue)       |
+| Nix build cleanup     | failed           | BTRFS CoW + snapshot references                            |
 
 ---
 

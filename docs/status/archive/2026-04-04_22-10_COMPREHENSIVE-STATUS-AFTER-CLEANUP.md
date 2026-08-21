@@ -97,33 +97,33 @@
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| #   | Task                                                             | Priority | Effort | Category       |
-| --- | ---------------------------------------------------------------- | -------- | ------ | -------------- |
-| 1   | Verify `go_1_26` and `go_1_25` exist in current nixpkgs-unstable | P0       | 5min   | Build health   |
-| 2   | Align SigNoz to Go 1.26 (eliminate dual toolchain)               | P0       | 30min  | Technical debt |
-| 3   | Create first Gitea Actions workflow (`nix flake check` on push)  | P1       | 1hr    | CI/CD          |
-| 4   | Add Prometheus alerting rules for critical services              | P1       | 2hr    | Monitoring     |
-| 5   | Investigate security-hardening.nix TODOs (auditd, AppArmor)      | P1       | 1hr    | Security       |
-| 6   | Audit and prune `docs/architecture/` (21 files)                  | P2       | 1hr    | Docs cleanup   |
-| 7   | Audit and prune `docs/planning/` (19 files)                      | P2       | 1hr    | Docs cleanup   |
-| 8   | Consolidate remaining Setup-Mac/Hyprland refs in docs/           | P2       | 2hr    | Docs cleanup   |
-| 9   | Write NixOS VM test for dnsblockd service                        | P2       | 2hr    | Testing        |
-| 10  | Write NixOS VM test for Caddy reverse proxy                      | P2       | 2hr    | Testing        |
-| 11  | Add Immich ML with GPU acceleration on evo-x2                    | P2       | 1hr    | Services       |
-| 12  | Create `.gitea/workflows/` directory with CI templates           | P2       | 30min  | CI/CD          |
-| 13  | Set up Cachix or Gitea Actions cache for Nix builds              | P2       | 1hr    | CI/CD          |
-| 14  | Document DNS blocker architecture in a proper ADR                | P3       | 1hr    | Documentation  |
-| 15  | Create ADR for flake-parts service module pattern                | P3       | 30min  | Documentation  |
-| 16  | Set up automated flake input updates (Renovate)                  | P3       | 2hr    | Automation     |
-| 17  | Implement backup restore testing                                 | P3       | 2hr    | Reliability    |
-| 18  | Automated secret rotation with sops-nix                          | P3       | 2hr    | Security       |
-| 19  | Add Darwin build to CI (macOS runner)                            | P3       | 1hr    | CI/CD          |
-| 20  | NixOS system auto-upgrade with automatic rollback                | P3       | 1hr    | Automation     |
-| 21  | Clean up `dotfiles/` directory — all managed by HM now           | P3       | 1hr    | Tech debt      |
-| 22  | Add Waybar custom modules for service health                     | P3       | 2hr    | Desktop        |
-| 23  | Create docs index by topic (services, hardware, desktop)         | P3       | 1hr    | Documentation  |
-| 24  | Investigate NixOS minimal ISO for recovery boot                  | P4       | 2hr    | Reliability    |
-| 25  | Add system health dashboard (Grafana panel for NixOS host)       | P4       | 2hr    | Monitoring     |
+| #  | Task                                                             | Priority | Effort | Category       |
+| -- | ---------------------------------------------------------------- | -------- | ------ | -------------- |
+| 1  | Verify `go_1_26` and `go_1_25` exist in current nixpkgs-unstable | P0       | 5min   | Build health   |
+| 2  | Align SigNoz to Go 1.26 (eliminate dual toolchain)               | P0       | 30min  | Technical debt |
+| 3  | Create first Gitea Actions workflow (`nix flake check` on push)  | P1       | 1hr    | CI/CD          |
+| 4  | Add Prometheus alerting rules for critical services              | P1       | 2hr    | Monitoring     |
+| 5  | Investigate security-hardening.nix TODOs (auditd, AppArmor)      | P1       | 1hr    | Security       |
+| 6  | Audit and prune `docs/architecture/` (21 files)                  | P2       | 1hr    | Docs cleanup   |
+| 7  | Audit and prune `docs/planning/` (19 files)                      | P2       | 1hr    | Docs cleanup   |
+| 8  | Consolidate remaining Setup-Mac/Hyprland refs in docs/           | P2       | 2hr    | Docs cleanup   |
+| 9  | Write NixOS VM test for dnsblockd service                        | P2       | 2hr    | Testing        |
+| 10 | Write NixOS VM test for Caddy reverse proxy                      | P2       | 2hr    | Testing        |
+| 11 | Add Immich ML with GPU acceleration on evo-x2                    | P2       | 1hr    | Services       |
+| 12 | Create `.gitea/workflows/` directory with CI templates           | P2       | 30min  | CI/CD          |
+| 13 | Set up Cachix or Gitea Actions cache for Nix builds              | P2       | 1hr    | CI/CD          |
+| 14 | Document DNS blocker architecture in a proper ADR                | P3       | 1hr    | Documentation  |
+| 15 | Create ADR for flake-parts service module pattern                | P3       | 30min  | Documentation  |
+| 16 | Set up automated flake input updates (Renovate)                  | P3       | 2hr    | Automation     |
+| 17 | Implement backup restore testing                                 | P3       | 2hr    | Reliability    |
+| 18 | Automated secret rotation with sops-nix                          | P3       | 2hr    | Security       |
+| 19 | Add Darwin build to CI (macOS runner)                            | P3       | 1hr    | CI/CD          |
+| 20 | NixOS system auto-upgrade with automatic rollback                | P3       | 1hr    | Automation     |
+| 21 | Clean up `dotfiles/` directory — all managed by HM now           | P3       | 1hr    | Tech debt      |
+| 22 | Add Waybar custom modules for service health                     | P3       | 2hr    | Desktop        |
+| 23 | Create docs index by topic (services, hardware, desktop)         | P3       | 1hr    | Documentation  |
+| 24 | Investigate NixOS minimal ISO for recovery boot                  | P4       | 2hr    | Reliability    |
+| 25 | Add system health dashboard (Grafana panel for NixOS host)       | P4       | 2hr    | Monitoring     |
 
 ---
 

@@ -1261,7 +1261,6 @@ import ../darwin/packages/helium.nix
 - Not testing on all affected platforms
 
 ````
-
 **Priority:** LOW
 **Estimated Effort:** 2-3 hours
 
@@ -1274,7 +1273,6 @@ import ../darwin/packages/helium.nix
 ## Architecture
 
 Setup-Mac uses a clean three-tier architecture:
-
 ````
 
 platforms/
@@ -1295,7 +1293,6 @@ platforms/
 └── ...
 
 ```
-
 ### Principles
 1. `common/` contains ONLY cross-platform code
 2. `darwin/` contains ONLY macOS-specific code
@@ -1355,7 +1352,6 @@ hostPlatform.system = "aarch64-darwin"
 package.meta.platforms = ["aarch64-linux", "x86_64-linux"]
 
 ````
-
 **Solution:**
 Move package from cross-platform to Linux-only packages:
 ```nix
@@ -1387,7 +1383,6 @@ Verify import path is correct relative to current file:
 ```
 
 ````
-
 **Common Issues to Document:**
 - Platform-specific packages in common/ causing build failures
 - Incorrect import paths after file moves
@@ -1461,7 +1456,6 @@ import ../common/environment/variables.nix
 (Never import darwin/ from nixos/ or vice versa)
 
 ````
-
 **Priority:** LOW
 **Estimated Effort:** 2-3 hours
 
@@ -1887,9 +1881,9 @@ Solving this would:
 | Build System             | ✅ COMPLETE    | 100%     | All builds passing, no errors       |
 | Git Workflow             | ✅ COMPLETE    | 100%     | 7 commits, clean tree               |
 | Justfile Improvements    | ✅ COMPLETE    | 100%     | Enhanced debugging and tooling      |
-| Nix Settings             | ⚠️ PARTIAL     | 50%      | Duplication issue remains           |
-| Platform Packages        | ⚠️ PARTIAL     | 75%      | Darwin done, NixOS pending          |
-| TODO Cleanup             | ⚠️ PARTIAL     | 20%      | 7 items identified                  |
+| Nix Settings             | ⚠️ PARTIAL      | 50%      | Duplication issue remains           |
+| Platform Packages        | ⚠️ PARTIAL      | 75%      | Darwin done, NixOS pending          |
+| TODO Cleanup             | ⚠️ PARTIAL      | 20%      | 7 items identified                  |
 | Documentation            | ❌ NOT STARTED | 0%       | No architecture docs created        |
 | Testing Infrastructure   | ❌ NOT STARTED | 0%       | No automated tests                  |
 

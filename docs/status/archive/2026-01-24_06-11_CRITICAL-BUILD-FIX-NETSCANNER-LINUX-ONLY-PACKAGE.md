@@ -397,7 +397,6 @@ Before adding a package to `platforms/common/packages/`, you MUST:
 - GUI applications with platform-specific bindings
 
 ```
-
 **Benefit:** Clear process prevents future errors
 
 ---

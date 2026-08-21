@@ -23,36 +23,36 @@ SystemNix manages **2 machines** (NixOS `evo-x2` desktop + macOS `Lars-MacBook-A
 
 ### This Session (131)
 
-| #   | Item                                       | Files Changed                                | Details                                                                                                                                                                              |
-| --- | ------------------------------------------ | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | **Caddy boot ordering fix**                | `caddy.nix`                                  | Added `bindsTo = ["sops-nix.service"]` + `after = [..., "sops-nix.service"]`. Prevents Caddy from starting before sops decrypts TLS certs — the cause of a 14-hour outage on June 10 |
-| 2   | **DNS A records for 5 missing subdomains** | `dns-blocker-config.nix`, `rpi3/default.nix` | Added `status`, `seo`, `daily`, `logs`, `monitor` to Unbound local-data on both primary and RPi3 DNS servers. All had Caddy vhosts but no DNS resolution                             |
+| # | Item                                       | Files Changed                                | Details                                                                                                                                                                              |
+| - | ------------------------------------------ | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1 | **Caddy boot ordering fix**                | `caddy.nix`                                  | Added `bindsTo = ["sops-nix.service"]` + `after = [..., "sops-nix.service"]`. Prevents Caddy from starting before sops decrypts TLS certs — the cause of a 14-hour outage on June 10 |
+| 2 | **DNS A records for 5 missing subdomains** | `dns-blocker-config.nix`, `rpi3/default.nix` | Added `status`, `seo`, `daily`, `logs`, `monitor` to Unbound local-data on both primary and RPi3 DNS servers. All had Caddy vhosts but no DNS resolution                             |
 
 ### Sessions 128–130 (June 10) — All Committed
 
-| #   | Item                                           | Commit                    | Details                                                                                                                              |
-| --- | ---------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| 3   | **sops atomic failure fix**                    | `eaeba69c`                | Discordsync secret referenced non-existent user → ALL secrets blocked → 15+ services crash-looping. Wrapped with `lib.optionalAttrs` |
-| 4   | **SigNoz decoupled from boot**                 | `eaeba69c`                | Created `signoz.target` — ClickHouse/SigNoz no longer block `graphical.target` (~2m saved)                                           |
-| 5   | **SigNoz JWT secret auto-generation**          | `eaeba69c`                | Wrapper script auto-generates random secret on first start                                                                           |
-| 6   | **Crash-loop protection (startLimitBurst)**    | `eaeba69c`                | Added to homepage, immich, minecraft, ollama, signoz, signoz-collector, clickhouse, cadvisor                                         |
-| 7   | **notify-failure %i specifier fix**            | `eaeba69c`                | `%i` passed as script argument instead of inside Nix store script                                                                    |
-| 8   | **plugdev group for UDEV rules**               | `eaeba69c`                | Eliminated 36 udev warnings                                                                                                          |
-| 9   | **Deprecated amdgpu.gttsize removed**          | `eaeba69c`                | Kernel 7.0+ uses `ttm.pages_limit` only                                                                                              |
-| 10  | **ClickHouse ports centralized**               | `eaeba69c`                | Keeper (9181) and RAFT (9234) added to `lib/ports.nix`                                                                               |
-| 11  | **Overview package build**                     | `4ed93f7` (overview repo) | Complete `mkPreparedSource` integration with 9 private Go repos, 12 sub-modules                                                      |
-| 12  | **Pocket ID static API key**                   | `eaeba69c`                | Generated and added to sops                                                                                                          |
-| 13  | **Discordsync enabled**                        | `eaeba69c`                | Service + token regenerated                                                                                                          |
-| 14  | **Pocket ID provision: header casing**         | `21ce65fb`                | `X-API-KEY` → `X-API-Key`                                                                                                            |
-| 15  | **Pocket ID provision: URL encoding**          | `21ce65fb`                | `pagination[limit]` → `pagination%5Blimit%5D` — curl was interpreting brackets as glob                                               |
-| 16  | **Pocket ID provision: user creation payload** | `21ce65fb`                | Removed `emailVerified`, `displayName`, `disabled` — API rejects unknown fields                                                      |
-| 17  | **Pocket ID provision: race conditions**       | `21ce65fb`                | Idempotent "already exists" handling for both users and OIDC clients                                                                 |
-| 18  | **Manifest behind auth**                       | `f679b8fb`                | Was the only unprotected Caddy vhost — now uses `protectedVHost`                                                                     |
-| 19  | **Homepage YAML rewrite**                      | `78b52da0`                | Replaced broken string concatenation with `mkGroup`/`mkService` helpers                                                              |
-| 20  | **Homepage ALLOWED_HOSTS + cache dir**         | `78b52da0`                | Added `HOMEPAGE_ALLOWED_HOSTS=dash.${domain}` + tmpfiles cache rule                                                                  |
-| 21  | **Admin email updated**                        | `109b6d3e`                | `larsartmann.com` → `larsartmann.cloud`                                                                                              |
-| 22  | **QDirStat added**                             | `d0bf0347`                | Qt disk usage analyzer                                                                                                               |
-| 23  | **NVMe APST fix**                              | `eef194c2`                | `nvme_core.default_ps_max_latency_us=0` — eliminates 2m50s device detection delay                                                    |
+| #  | Item                                           | Commit                    | Details                                                                                                                              |
+| -- | ---------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| 3  | **sops atomic failure fix**                    | `eaeba69c`                | Discordsync secret referenced non-existent user → ALL secrets blocked → 15+ services crash-looping. Wrapped with `lib.optionalAttrs` |
+| 4  | **SigNoz decoupled from boot**                 | `eaeba69c`                | Created `signoz.target` — ClickHouse/SigNoz no longer block `graphical.target` (~2m saved)                                           |
+| 5  | **SigNoz JWT secret auto-generation**          | `eaeba69c`                | Wrapper script auto-generates random secret on first start                                                                           |
+| 6  | **Crash-loop protection (startLimitBurst)**    | `eaeba69c`                | Added to homepage, immich, minecraft, ollama, signoz, signoz-collector, clickhouse, cadvisor                                         |
+| 7  | **notify-failure %i specifier fix**            | `eaeba69c`                | `%i` passed as script argument instead of inside Nix store script                                                                    |
+| 8  | **plugdev group for UDEV rules**               | `eaeba69c`                | Eliminated 36 udev warnings                                                                                                          |
+| 9  | **Deprecated amdgpu.gttsize removed**          | `eaeba69c`                | Kernel 7.0+ uses `ttm.pages_limit` only                                                                                              |
+| 10 | **ClickHouse ports centralized**               | `eaeba69c`                | Keeper (9181) and RAFT (9234) added to `lib/ports.nix`                                                                               |
+| 11 | **Overview package build**                     | `4ed93f7` (overview repo) | Complete `mkPreparedSource` integration with 9 private Go repos, 12 sub-modules                                                      |
+| 12 | **Pocket ID static API key**                   | `eaeba69c`                | Generated and added to sops                                                                                                          |
+| 13 | **Discordsync enabled**                        | `eaeba69c`                | Service + token regenerated                                                                                                          |
+| 14 | **Pocket ID provision: header casing**         | `21ce65fb`                | `X-API-KEY` → `X-API-Key`                                                                                                            |
+| 15 | **Pocket ID provision: URL encoding**          | `21ce65fb`                | `pagination[limit]` → `pagination%5Blimit%5D` — curl was interpreting brackets as glob                                               |
+| 16 | **Pocket ID provision: user creation payload** | `21ce65fb`                | Removed `emailVerified`, `displayName`, `disabled` — API rejects unknown fields                                                      |
+| 17 | **Pocket ID provision: race conditions**       | `21ce65fb`                | Idempotent "already exists" handling for both users and OIDC clients                                                                 |
+| 18 | **Manifest behind auth**                       | `f679b8fb`                | Was the only unprotected Caddy vhost — now uses `protectedVHost`                                                                     |
+| 19 | **Homepage YAML rewrite**                      | `78b52da0`                | Replaced broken string concatenation with `mkGroup`/`mkService` helpers                                                              |
+| 20 | **Homepage ALLOWED_HOSTS + cache dir**         | `78b52da0`                | Added `HOMEPAGE_ALLOWED_HOSTS=dash.${domain}` + tmpfiles cache rule                                                                  |
+| 21 | **Admin email updated**                        | `109b6d3e`                | `larsartmann.com` → `larsartmann.cloud`                                                                                              |
+| 22 | **QDirStat added**                             | `d0bf0347`                | Qt disk usage analyzer                                                                                                               |
+| 23 | **NVMe APST fix**                              | `eef194c2`                | `nvme_core.default_ps_max_latency_us=0` — eliminates 2m50s device detection delay                                                    |
 
 ### Build & Quality
 
@@ -187,27 +187,27 @@ All 15 externally-accessible Caddy vhosts are protected:
 
 ## c) NOT STARTED 📋
 
-| #   | Item                                         | Priority | Blocker                                                   |
-| --- | -------------------------------------------- | -------- | --------------------------------------------------------- |
-| 1   | **Raspberry Pi 3 DNS failover provisioning** | Medium   | Hardware not available                                    |
-| 2   | **BTRFS `/data` subvolume migration**        | High     | `just snapshot-migrate-data` exists, requires downtime    |
-| 3   | **Pocket ID SMTP via SES/Resend**            | High     | Need SMTP credentials, SES infra exists in `domains` repo |
-| 4   | **Hermes OpenAI API key to sops**            | Medium   | Manual: `sops platforms/nixos/secrets/hermes.yaml`        |
-| 5   | **Hermes SSH deploy key installation**       | Medium   | Manual: install key + add to GitHub                       |
-| 6   | **Boot time verification (target ~35s)**     | Low      | Requires reboot                                           |
-| 7   | **SigNoz provision log verification**        | Low      | Requires `just switch` + curl                             |
-| 8   | **Gatus endpoint health re-audit**           | Medium   | Manual verification of 30+ endpoints                      |
-| 9   | **Discord alert channel test**               | Low      | Needs webhook test on evo-x2                              |
-| 10  | **Auditd enablement**                        | Low      | Blocked: NixOS 26.05 bug #483085                          |
-| 11  | **AppArmor enablement**                      | Low      | Commented out in security-hardening.nix                   |
-| 12  | **Darwin Home Manager parity**               | Low      | Disk constraint (90%+ full, 256GB SSD)                    |
-| 13  | **Monitor365 agent→server auth**             | Low      | No auth — anyone on LAN can POST data                     |
-| 14  | **Dozzle proper NixOS module**               | Low      | Creating module with options causes eval failure          |
-| 15  | **Shared flake-parts template push**         | Low      | Created, needs push to `go-nix-helpers`                   |
-| 16  | **Deer Flow NixOS module**                   | Low      | Running as ad-hoc Docker Compose, no proper module        |
-| 17  | **Voice agents evaluation**                  | Low      | Module exists, disabled — decide enable/remove            |
-| 18  | **Minecraft server evaluation**              | Low      | Module exists, disabled — decide enable/remove            |
-| 19  | **PhotoMap evaluation**                      | Low      | Module exists, disabled — decide enable/remove            |
+| #  | Item                                         | Priority | Blocker                                                   |
+| -- | -------------------------------------------- | -------- | --------------------------------------------------------- |
+| 1  | **Raspberry Pi 3 DNS failover provisioning** | Medium   | Hardware not available                                    |
+| 2  | **BTRFS `/data` subvolume migration**        | High     | `just snapshot-migrate-data` exists, requires downtime    |
+| 3  | **Pocket ID SMTP via SES/Resend**            | High     | Need SMTP credentials, SES infra exists in `domains` repo |
+| 4  | **Hermes OpenAI API key to sops**            | Medium   | Manual: `sops platforms/nixos/secrets/hermes.yaml`        |
+| 5  | **Hermes SSH deploy key installation**       | Medium   | Manual: install key + add to GitHub                       |
+| 6  | **Boot time verification (target ~35s)**     | Low      | Requires reboot                                           |
+| 7  | **SigNoz provision log verification**        | Low      | Requires `just switch` + curl                             |
+| 8  | **Gatus endpoint health re-audit**           | Medium   | Manual verification of 30+ endpoints                      |
+| 9  | **Discord alert channel test**               | Low      | Needs webhook test on evo-x2                              |
+| 10 | **Auditd enablement**                        | Low      | Blocked: NixOS 26.05 bug #483085                          |
+| 11 | **AppArmor enablement**                      | Low      | Commented out in security-hardening.nix                   |
+| 12 | **Darwin Home Manager parity**               | Low      | Disk constraint (90%+ full, 256GB SSD)                    |
+| 13 | **Monitor365 agent→server auth**             | Low      | No auth — anyone on LAN can POST data                     |
+| 14 | **Dozzle proper NixOS module**               | Low      | Creating module with options causes eval failure          |
+| 15 | **Shared flake-parts template push**         | Low      | Created, needs push to `go-nix-helpers`                   |
+| 16 | **Deer Flow NixOS module**                   | Low      | Running as ad-hoc Docker Compose, no proper module        |
+| 17 | **Voice agents evaluation**                  | Low      | Module exists, disabled — decide enable/remove            |
+| 18 | **Minecraft server evaluation**              | Low      | Module exists, disabled — decide enable/remove            |
+| 19 | **PhotoMap evaluation**                      | Low      | Module exists, disabled — decide enable/remove            |
 
 ---
 
@@ -325,58 +325,58 @@ All 15 externally-accessible Caddy vhosts are protected:
 
 ### Priority 0: Deploy & Verify
 
-| #   | Task                                                                               | Impact                                                         | Effort |
-| --- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------- | ------ |
-| 1   | **`just switch`** — deploy Caddy boot fix + DNS fixes + verify Pocket ID provision | Prevents 14h outage recurrence, fixes 5 unreachable subdomains | 10 min |
-| 2   | **Reboot evo-x2** — verify boot time with NVMe APST fix + Caddy sops ordering      | Confirms ~35s boot target vs 6m17s pre-fix                     | 5 min  |
+| # | Task                                                                               | Impact                                                         | Effort |
+| - | ---------------------------------------------------------------------------------- | -------------------------------------------------------------- | ------ |
+| 1 | **`just switch`** — deploy Caddy boot fix + DNS fixes + verify Pocket ID provision | Prevents 14h outage recurrence, fixes 5 unreachable subdomains | 10 min |
+| 2 | **Reboot evo-x2** — verify boot time with NVMe APST fix + Caddy sops ordering      | Confirms ~35s boot target vs 6m17s pre-fix                     | 5 min  |
 
 ### Priority 1: Fix Broken Services
 
-| #   | Task                                                                                    | Impact                          | Effort |
-| --- | --------------------------------------------------------------------------------------- | ------------------------------- | ------ |
-| 3   | **Fix Monitor365 DB path** — investigate stateDir, add tmpfiles rule                    | Monitoring dashboard restored   | 20 min |
-| 4   | **Fix dnsblockd-cert-import PATH** — add `nssTools` to service                          | CA cert import works            | 5 min  |
-| 5   | **Fix Pocket ID OTel endpoint** — `https://` → `http://` localhost:4318                 | Eliminates 1,440 log lines/day  | 5 min  |
-| 6   | **Fix PostgreSQL collation spam** — `ALTER DATABASE postgres REFRESH COLLATION VERSION` | Eliminates 15,000 log lines/day | 5 min  |
-| 7   | **Fix aw-watcher-wayland startup** — verify `After=graphical-session.target`            | Wayland window tracking works   | 10 min |
+| # | Task                                                                                    | Impact                          | Effort |
+| - | --------------------------------------------------------------------------------------- | ------------------------------- | ------ |
+| 3 | **Fix Monitor365 DB path** — investigate stateDir, add tmpfiles rule                    | Monitoring dashboard restored   | 20 min |
+| 4 | **Fix dnsblockd-cert-import PATH** — add `nssTools` to service                          | CA cert import works            | 5 min  |
+| 5 | **Fix Pocket ID OTel endpoint** — `https://` → `http://` localhost:4318                 | Eliminates 1,440 log lines/day  | 5 min  |
+| 6 | **Fix PostgreSQL collation spam** — `ALTER DATABASE postgres REFRESH COLLATION VERSION` | Eliminates 15,000 log lines/day | 5 min  |
+| 7 | **Fix aw-watcher-wayland startup** — verify `After=graphical-session.target`            | Wayland window tracking works   | 10 min |
 
 ### Priority 2: High-Value Quick Wins
 
-| #   | Task                                                                                                     | Impact                          | Effort |
-| --- | -------------------------------------------------------------------------------------------------------- | ------------------------------- | ------ |
-| 8   | **Audit Gatus health checks** — fix 6 DOWN endpoints with wrong URLs                                     | Reliable monitoring             | 30 min |
-| 9   | **Guard ALL sops secrets** — `lib.optionalAttrs config.services.X.enable` on every service-specific user | Prevents future atomic failures | 30 min |
-| 10  | **Investigate swap usage** — `smem -t -k \| tail -20` + `swapoff -a && swapon -a`                        | Memory efficiency               | 15 min |
-| 11  | **Wire Hermes OpenAI fallback** — add API key to sops                                                    | LLM gateway has resilience      | 5 min  |
-| 12  | **Install Hermes SSH deploy key**                                                                        | Hermes can reach git repos      | 5 min  |
-| 13  | **Add weekly Nix GC timer** — prevent root disk creep                                                    | Long-term disk health           | 15 min |
+| #  | Task                                                                                                     | Impact                          | Effort |
+| -- | -------------------------------------------------------------------------------------------------------- | ------------------------------- | ------ |
+| 8  | **Audit Gatus health checks** — fix 6 DOWN endpoints with wrong URLs                                     | Reliable monitoring             | 30 min |
+| 9  | **Guard ALL sops secrets** — `lib.optionalAttrs config.services.X.enable` on every service-specific user | Prevents future atomic failures | 30 min |
+| 10 | **Investigate swap usage** — `smem -t -k \| tail -20` + `swapoff -a && swapon -a`                        | Memory efficiency               | 15 min |
+| 11 | **Wire Hermes OpenAI fallback** — add API key to sops                                                    | LLM gateway has resilience      | 5 min  |
+| 12 | **Install Hermes SSH deploy key**                                                                        | Hermes can reach git repos      | 5 min  |
+| 13 | **Add weekly Nix GC timer** — prevent root disk creep                                                    | Long-term disk health           | 15 min |
 
 ### Priority 3: Service Maturity
 
-| #   | Task                                                                           | Impact                                        | Effort          |
-| --- | ------------------------------------------------------------------------------ | --------------------------------------------- | --------------- |
-| 14  | **Investigate Twenty CRM 502s** — check container logs, OOM, PG connections    | CRM stability                                 | 30 min          |
-| 15  | **`/data` BTRFS subvolume migration** — `just snapshot-migrate-data`           | Snapshot protection for Docker/Immich/AI data | 1 hr + downtime |
-| 16  | **Pocket ID SMTP wiring** — SES/Resend credentials + env vars                  | Email verification + login notifications      | 30 min          |
-| 17  | **Create Deer Flow NixOS module** — proper service with options                | Consistency with other services               | 45 min          |
-| 18  | **DiscordSync: file upstream issue** — INSERT OR IGNORE for UNIQUE constraints | Reduces backfill log noise                    | 10 min          |
+| #  | Task                                                                           | Impact                                        | Effort          |
+| -- | ------------------------------------------------------------------------------ | --------------------------------------------- | --------------- |
+| 14 | **Investigate Twenty CRM 502s** — check container logs, OOM, PG connections    | CRM stability                                 | 30 min          |
+| 15 | **`/data` BTRFS subvolume migration** — `just snapshot-migrate-data`           | Snapshot protection for Docker/Immich/AI data | 1 hr + downtime |
+| 16 | **Pocket ID SMTP wiring** — SES/Resend credentials + env vars                  | Email verification + login notifications      | 30 min          |
+| 17 | **Create Deer Flow NixOS module** — proper service with options                | Consistency with other services               | 45 min          |
+| 18 | **DiscordSync: file upstream issue** — INSERT OR IGNORE for UNIQUE constraints | Reduces backfill log noise                    | 10 min          |
 
 ### Priority 4: Documentation & Hygiene
 
-| #   | Task                                                                            | Impact                               | Effort |
-| --- | ------------------------------------------------------------------------------- | ------------------------------------ | ------ |
-| 19  | **Update TODO_LIST.md** — sessions 125–131 missing                              | Accurate task tracking               | 30 min |
-| 20  | **Update FEATURES.md** — add 8+ features since Jun 3                            | Accurate feature inventory           | 30 min |
-| 21  | **Archive old status reports** — move pre-session-100 to `docs/status/archive/` | Reduces 177 → ~30 files              | 10 min |
-| 22  | **Create ROADMAP.md** — consolidate from `docs/planning/`                       | Single source of truth for direction | 1 hr   |
+| #  | Task                                                                            | Impact                               | Effort |
+| -- | ------------------------------------------------------------------------------- | ------------------------------------ | ------ |
+| 19 | **Update TODO_LIST.md** — sessions 125–131 missing                              | Accurate task tracking               | 30 min |
+| 20 | **Update FEATURES.md** — add 8+ features since Jun 3                            | Accurate feature inventory           | 30 min |
+| 21 | **Archive old status reports** — move pre-session-100 to `docs/status/archive/` | Reduces 177 → ~30 files              | 10 min |
+| 22 | **Create ROADMAP.md** — consolidate from `docs/planning/`                       | Single source of truth for direction | 1 hr   |
 
 ### Priority 5: Long-Term
 
-| #   | Task                                                                           | Impact                               | Effort |
-| --- | ------------------------------------------------------------------------------ | ------------------------------------ | ------ |
-| 23  | **Provision Pi 3 for DNS failover** — hardware setup, SD flash, network wiring | Network resilience                   | 4 hr   |
-| 24  | **Darwin Home Manager parity** — terminal, editor, theme matching NixOS        | Consistent cross-platform experience | 2 hr   |
-| 25  | **Split large modules** — monitor365 (716L), signoz (705L), forgejo (583L)     | Maintainability                      | 3 hr   |
+| #  | Task                                                                           | Impact                               | Effort |
+| -- | ------------------------------------------------------------------------------ | ------------------------------------ | ------ |
+| 23 | **Provision Pi 3 for DNS failover** — hardware setup, SD flash, network wiring | Network resilience                   | 4 hr   |
+| 24 | **Darwin Home Manager parity** — terminal, editor, theme matching NixOS        | Consistent cross-platform experience | 2 hr   |
+| 25 | **Split large modules** — monitor365 (716L), signoz (705L), forgejo (583L)     | Maintainability                      | 3 hr   |
 
 ---
 

@@ -10,6 +10,7 @@ After migration, each .envrc is reduced to minimal lines:
 All comments from old .envrc are stripped — the smart library is self-documenting.
 Multi-line constructs (if/fi, function defs) are handled as atomic units.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -19,6 +20,7 @@ from pathlib import Path
 PROJECTS_DIR = Path("/home/lars/projects")
 
 # ── Line classifiers ────────────────────────────────────────────────────────
+
 
 def is_auto_handled(line: str) -> bool:
     """Lines whose functionality is provided by the smart library or nix-direnv."""
@@ -69,6 +71,7 @@ def has_flake(project_dir: Path) -> bool:
 
 # ── Multi-line construct detection ──────────────────────────────────────────
 
+
 def find_block_end(lines: list[str], start: int, opener: str, closer_re: str) -> int:
     """Find the line index matching a closing token for a block opened at `start`."""
     depth = 0
@@ -103,6 +106,7 @@ def find_func_end(lines: list[str], start: int) -> int:
 
 
 # ── Core migration ──────────────────────────────────────────────────────────
+
 
 def migrate_content(old_content: str, project_dir: Path) -> str:
     lines = old_content.splitlines()
@@ -234,7 +238,7 @@ def main() -> int:
         elif desc:
             unchanged += 1
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Migrated: {changed}  Already optimal: {unchanged}")
     if dry_run:
         print("(dry-run — no files modified)")

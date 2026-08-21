@@ -8,7 +8,6 @@
 
 ---
 
-
 ## Context
 
 A previous session (`2026-07-23_15-21`) hand-rolled the OpenSEO Caddy vHost to exempt `/api/gsc/oauth/callback` from oauth2-proxy forward-auth, added a runtime `openseo-validate` ExecStartPre, and rewrote module comments. That session's own self-review (`2026-07-23_15-53`) identified critical gaps — most importantly that the callback path was **never verified against OpenSEO source**, and no config rendering was validated.
@@ -19,25 +18,25 @@ This session's job was to close those gaps.
 
 ## a) FULLY DONE
 
-| # | Task | How Verified |
-|---|------|-------------|
-| 1 | **GSC callback path verified** against OpenSEO v0.1.1 source | `src/routes/api/gsc/oauth/callback.ts` defines `createFileRoute("/api/gsc/oauth/callback")` with GET handler; `src/server/features/gsc/selfHostedOAuth.ts:138` constructs redirect URI as `${publicOrigin}/api/gsc/oauth/callback`. Path is exact, no trailing slash, GET method. **No path discrepancy.** |
-| 2 | **Caddy vHost config rendering verified** via `nix eval` | Three handler blocks render correctly: `@gsc_callback` → plain proxy (no auth), `@external` → forward-auth + proxy, default → plain proxy. Port 3002, forward-auth port 4180, LAN subnet `192.168.1.0/24`, auth redirect to `auth.home.lan`. All `${}` interpolations resolve. |
-| 3 | **ExecStartPre ordering verified** | `[openseo-validate, openseo-stage, openseo-migrate]` — validate runs FIRST (before staging/migration), catching missing secrets early. |
-| 4 | **Validate script content verified** | Inspected the actual built script at `/nix/store/.../openseo-validate/bin/openseo-validate`. When both features disabled (current state): valid no-op (`#!/bin/bash\nset -euo pipefail\n\n`). When GSC enabled: checks `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `BETTER_AUTH_SECRET` non-empty. When AI enabled: checks `OPENROUTER_API_KEY` non-empty. Uses `''${!var:-}` indirect expansion with correct Nix string escaping. |
-| 5 | **Sops template wiring verified** | `openseo-env` template in `sops.nix` uses `lib.generators.toKeyValue {}` over conditional attrset: always has `DATAFORSEO_API_KEY`, adds GSC trio when `googleSearchConsole.enable`, adds `OPENROUTER_API_KEY` when `aiFeatures.enable`. Template renders to `DATAFORSEO_API_KEY=<SOPS:PLACEHOLDER>` when features disabled (correct). |
-| 6 | **Feature flags verified disabled** | `googleSearchConsole.enable = false`, `aiFeatures.enable = false` in current config. Validate script is currently a no-op. Fix is purely preventative — no runtime behavior change until features are explicitly enabled. |
-| 7 | **`nix flake check --no-build` passes** | All NixOS modules, packages, devShells, and checks evaluated successfully. No warnings beyond the known `system` → `stdenv.hostPlatform.system` rename. |
-| 8 | **AGENTS.md Layer 2 SSO table updated** | Added `†` footnote to OpenSEO in the services column, with a note explaining the hand-rolled vHost and pointing to the gotcha table. |
-| 9 | **AGENTS.md OpenSEO native build gotcha updated** | Appended v0.1.1 additions: telemetry opt-out, `googleSearchConsole`/`aiFeatures` options, `openseo-validate` ExecStartPre, `restartTriggers` pattern. |
-| 10 | **Stale status report corrected** | `docs/status/2026-07-23_15-21_openseo-nix-configuration-improvements.md` annotated with correction block at top, section d) header changed from "TOTALLY FUCKED UP" to "CORRECTED", individual items struck through with fix annotations, and summary corrected. Original text preserved for audit trail. Non-destructive (additive annotations only). |
-| 11 | **Pre-existing infrastructure confirmed** | Gatus health check (HTTP 200 + RESPONSE_TIME < 2000ms + Discord alert), Homepage tile (group: Productivity), and post-deploy smoke test (`check_local "OpenSEO" "3002" "/" "200" "<html"`) all already exist and are wired. Nothing missing on the monitoring/dashboard front. |
+| #  | Task                                                         | How Verified                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| -- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | **GSC callback path verified** against OpenSEO v0.1.1 source | `src/routes/api/gsc/oauth/callback.ts` defines `createFileRoute("/api/gsc/oauth/callback")` with GET handler; `src/server/features/gsc/selfHostedOAuth.ts:138` constructs redirect URI as `${publicOrigin}/api/gsc/oauth/callback`. Path is exact, no trailing slash, GET method. **No path discrepancy.**                                                                                                                         |
+| 2  | **Caddy vHost config rendering verified** via `nix eval`     | Three handler blocks render correctly: `@gsc_callback` → plain proxy (no auth), `@external` → forward-auth + proxy, default → plain proxy. Port 3002, forward-auth port 4180, LAN subnet `192.168.1.0/24`, auth redirect to `auth.home.lan`. All `${}` interpolations resolve.                                                                                                                                                     |
+| 3  | **ExecStartPre ordering verified**                           | `[openseo-validate, openseo-stage, openseo-migrate]` — validate runs FIRST (before staging/migration), catching missing secrets early.                                                                                                                                                                                                                                                                                             |
+| 4  | **Validate script content verified**                         | Inspected the actual built script at `/nix/store/.../openseo-validate/bin/openseo-validate`. When both features disabled (current state): valid no-op (`#!/bin/bash\nset -euo pipefail\n\n`). When GSC enabled: checks `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `BETTER_AUTH_SECRET` non-empty. When AI enabled: checks `OPENROUTER_API_KEY` non-empty. Uses `''${!var:-}` indirect expansion with correct Nix string escaping. |
+| 5  | **Sops template wiring verified**                            | `openseo-env` template in `sops.nix` uses `lib.generators.toKeyValue {}` over conditional attrset: always has `DATAFORSEO_API_KEY`, adds GSC trio when `googleSearchConsole.enable`, adds `OPENROUTER_API_KEY` when `aiFeatures.enable`. Template renders to `DATAFORSEO_API_KEY=<SOPS:PLACEHOLDER>` when features disabled (correct).                                                                                             |
+| 6  | **Feature flags verified disabled**                          | `googleSearchConsole.enable = false`, `aiFeatures.enable = false` in current config. Validate script is currently a no-op. Fix is purely preventative — no runtime behavior change until features are explicitly enabled.                                                                                                                                                                                                          |
+| 7  | **`nix flake check --no-build` passes**                      | All NixOS modules, packages, devShells, and checks evaluated successfully. No warnings beyond the known `system` → `stdenv.hostPlatform.system` rename.                                                                                                                                                                                                                                                                            |
+| 8  | **AGENTS.md Layer 2 SSO table updated**                      | Added `†` footnote to OpenSEO in the services column, with a note explaining the hand-rolled vHost and pointing to the gotcha table.                                                                                                                                                                                                                                                                                               |
+| 9  | **AGENTS.md OpenSEO native build gotcha updated**            | Appended v0.1.1 additions: telemetry opt-out, `googleSearchConsole`/`aiFeatures` options, `openseo-validate` ExecStartPre, `restartTriggers` pattern.                                                                                                                                                                                                                                                                              |
+| 10 | **Stale status report corrected**                            | `docs/status/2026-07-23_15-21_openseo-nix-configuration-improvements.md` annotated with correction block at top, section d) header changed from "TOTALLY FUCKED UP" to "CORRECTED", individual items struck through with fix annotations, and summary corrected. Original text preserved for audit trail. Non-destructive (additive annotations only).                                                                             |
+| 11 | **Pre-existing infrastructure confirmed**                    | Gatus health check (HTTP 200 + RESPONSE_TIME < 2000ms + Discord alert), Homepage tile (group: Productivity), and post-deploy smoke test (`check_local "OpenSEO" "3002" "/" "200" "<html"`) all already exist and are wired. Nothing missing on the monitoring/dashboard front.                                                                                                                                                     |
 
 ---
 
 ## b) PARTIALLY DONE
 
-- **Runtime verification**: All checks are eval-time only. The Caddy vHost, validate script, and sops template are confirmed to *render correctly* but have never been deployed and tested against live traffic. The validate script specifically has not been tested with `googleSearchConsole.enable = true` — only verified that its Nix string interpolation produces correct bash code.
+- **Runtime verification**: All checks are eval-time only. The Caddy vHost, validate script, and sops template are confirmed to _render correctly_ but have never been deployed and tested against live traffic. The validate script specifically has not been tested with `googleSearchConsole.enable = true` — only verified that its Nix string interpolation produces correct bash code.
 - **`nix fmt`**: Attempted alejandra formatting on `caddy.nix` and `openseo.nix`, which reformatted 678 lines. Reverted because the existing codebase is NOT in alejandra style (uses `let in` not `let: in:`, uses 2-space `let` bindings not collapsed). The pre-commit hook runs alejandra with `|| true` on staged files only, so this is handled at commit time. **Did not re-format after revert.**
 
 ---
@@ -74,7 +73,8 @@ This session's job was to close those gaps.
 
 **What happened:** Every verification was `nix eval` or `nix flake check --no-build`. Zero runtime tests. Zero deploys.
 
-**Why it matters:** Eval-time checks confirm the config *renders*. They do NOT confirm:
+**Why it matters:** Eval-time checks confirm the config _renders_. They do NOT confirm:
+
 - Caddy accepts the hand-rolled vHost syntax (Caddyfile parsing happens at runtime)
 - The `@gsc_callback` matcher actually matches the path (Caddy's path matcher is regex-based)
 - The validate script actually exits non-zero when secrets are missing
@@ -98,6 +98,7 @@ This session's job was to close those gaps.
 ## f) Up to 50 Things to Do Next
 
 #### Critical (blocks confidence in the fix)
+
 1. Deploy to evo-x2 (`nix run .#deploy`)
 2. Runtime-test the callback: `curl -k https://seo.home.lan/api/gsc/oauth/callback` — should reach OpenSEO (not redirect to auth)
 3. Runtime-test from external IP — verify forward-auth still applies to non-callback paths
@@ -106,6 +107,7 @@ This session's job was to close those gaps.
 6. Verify `systemctl status openseo` shows validate → stage → migrate → serve in order
 
 #### High Priority
+
 7. Extract `protectedVHost` path-exclusion support (generic, reusable)
 8. Make validate script conditional in ExecStartPre (only when GSC or AI enabled)
 9. Add Gatus check for `/api/gsc/oauth/callback` path
@@ -118,6 +120,7 @@ This session's job was to close those gaps.
 16. Research whether `DO_NOT_TRACK=1` is also needed (second telemetry opt-out)
 
 #### Medium Priority
+
 17. Consider exposing `ALLOWED_HOST` as a module option instead of hardcoding `seo.${domain}`
 18. Consider exposing telemetry opt-out as a module option
 19. Consider exposing `MemoryMax` as a module option
@@ -129,6 +132,7 @@ This session's job was to close those gaps.
 25. Consider tighter sandboxing (`ProtectSystem = "strict"` + `ReadWritePaths`)
 
 #### Documentation
+
 26. Update FEATURES.md with OpenSEO v0.1.1 feature inventory
 27. Document the `AUTH_MODE=local_noauth` security model in docs/services/
 28. Add OpenSEO to docs/DOMAIN_LANGUAGE.md if SEO terms are used elsewhere
@@ -136,6 +140,7 @@ This session's job was to close those gaps.
 30. Document OpenSEO MCP setup (HTTP vs stdio, auth model)
 
 #### Monitoring & Alerting
+
 31. Add Gatus check for OpenSEO MCP endpoint (if it exists)
 32. Tune response time threshold (2s may be too generous for vite preview)
 33. Consider Gatus check for DataForSEO API connectivity (indirect)
@@ -143,6 +148,7 @@ This session's job was to close those gaps.
 35. Add log-based alerting for vite preview crashes
 
 #### Code Quality
+
 36. Consider extracting the `@external` + `forwardAuth` + `handle` pattern into a reusable Caddy snippet
 37. Add eval-time assertion for `googleSearchConsole.enable` requiring `pocket-id` OIDC client registration (if ever needed)
 38. Consider whether OpenSEO should be registered as a Layer 1 OIDC client (native auth instead of Layer 2)
@@ -150,6 +156,7 @@ This session's job was to close those gaps.
 40. Consider whether `.wrangler/deploy/config.json` seeding logic is still needed in v0.1.1
 
 #### Future Features
+
 41. Consider wiring OpenSEO rank tracking results into Homepage dashboard widget
 42. Consider OpenSEO + Hermes integration (AI agent consuming SEO data)
 43. Consider declarative OpenSEO project configuration (like qmd's `bootstrapCollections`)

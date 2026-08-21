@@ -17,14 +17,14 @@ Two sessions in one day. Session 22 (earlier today) built the crash-recovery def
 
 ### Resilience — Crash Recovery Stack (6 layers, all wired)
 
-| #   | Layer                   | Mechanism                                                                                  | File       | Status       |
-| --- | ----------------------- | ------------------------------------------------------------------------------------------ | ---------- | ------------ |
-| 1   | Userspace OOM           | earlyoom (10% free threshold) + OOMScoreAdjust on sshd/niri/waybar/pipewire/journald       | `boot.nix` | ✅ Committed |
-| 2   | Kernel panic recovery   | `kernel.panic=30`, `softlockup_panic=1`, `hung_task_panic=1`                               | `boot.nix` | ✅ Committed |
-| 3   | Hardware watchdog       | watchdogd (SP5100 TCO, 30s timeout, meminfo critical at 98%)                               | `boot.nix` | ✅ Committed |
-| 4   | SysRq emergency         | `kernel.sysrq=1` — REISUB from keyboard                                                    | `boot.nix` | ✅ Committed |
-| 5   | Post-reboot diagnostics | pstore (`pstore.backend=efi`, `max_reason=3`) — panic/oops/warn logs survive in UEFI NVRAM | `boot.nix` | ✅ Committed |
-| 6   | GPU driver recovery     | `amdgpu.gpu_recovery=1`, `lockup_timeout=30000`                                            | `boot.nix` | ✅ Committed |
+| # | Layer                   | Mechanism                                                                                  | File       | Status       |
+| - | ----------------------- | ------------------------------------------------------------------------------------------ | ---------- | ------------ |
+| 1 | Userspace OOM           | earlyoom (10% free threshold) + OOMScoreAdjust on sshd/niri/waybar/pipewire/journald       | `boot.nix` | ✅ Committed |
+| 2 | Kernel panic recovery   | `kernel.panic=30`, `softlockup_panic=1`, `hung_task_panic=1`                               | `boot.nix` | ✅ Committed |
+| 3 | Hardware watchdog       | watchdogd (SP5100 TCO, 30s timeout, meminfo critical at 98%)                               | `boot.nix` | ✅ Committed |
+| 4 | SysRq emergency         | `kernel.sysrq=1` — REISUB from keyboard                                                    | `boot.nix` | ✅ Committed |
+| 5 | Post-reboot diagnostics | pstore (`pstore.backend=efi`, `max_reason=3`) — panic/oops/warn logs survive in UEFI NVRAM | `boot.nix` | ✅ Committed |
+| 6 | GPU driver recovery     | `amdgpu.gpu_recovery=1`, `lockup_timeout=30000`                                            | `boot.nix` | ✅ Committed |
 
 ### Resilience — Resource Protection (3 new, committed this session)
 
@@ -151,33 +151,33 @@ Two sessions in one day. Session 22 (earlier today) built the crash-recovery def
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| #   | Priority | Item                                                                           | Effort | Impact   |
-| --- | -------- | ------------------------------------------------------------------------------ | ------ | -------- |
-| 1   | **P0**   | `just switch` on evo-x2 — deploy all changes and verify system boots correctly | 5min   | Critical |
-| 2   | **P0**   | Verify pstore works: check `ls /sys/fs/pstore/` after reboot                   | 1min   | High     |
-| 3   | **P0**   | Test Ollama with 32GB GPU cap — run a model and verify it works                | 5min   | High     |
-| 4   | **P0**   | Update AGENTS.md to reflect GPU rebalance + resilience changes                 | 15min  | High     |
-| 5   | **P1**   | Update FEATURES.md — Ollama keep-alive, pstore, journald/coredump limits       | 15min  | Medium   |
-| 6   | **P1**   | Enable Gatus uptime monitor in `configuration.nix`                             | 5min   | High     |
-| 7   | **P1**   | Personalize Gatus ntfy topic (not `gatus-systemnix`)                           | 5min   | Medium   |
-| 8   | **P1**   | Add MemoryMax to ClickHouse (4G cap) in signoz.nix                             | 5min   | Medium   |
-| 9   | **P1**   | Verify `notify-failure@` template fires correctly on evo-x2                    | 5min   | Medium   |
-| 10  | **P1**   | Verify `service-health-check` script works with new SigNoz checks              | 5min   | Medium   |
-| 11  | **P2**   | Create TODO_LIST.md with current open items                                    | 20min  | Medium   |
-| 12  | **P2**   | Test BTRFS snapshot restore (quarterly verification)                           | 15min  | Medium   |
-| 13  | **P2**   | Add MemoryMax to services still using default harden (512M): homepage, gatus   | 5min   | Low      |
-| 14  | **P2**   | Add `coredumpctl vacuum` weekly timer for proactive cleanup                    | 10min  | Low      |
-| 15  | **P2**   | Add `journalctl --vacuum-time=2week` to scheduled-tasks                        | 5min   | Low      |
-| 16  | **P2**   | Provision Pi 3 for DNS failover cluster                                        | 60min  | High     |
-| 17  | **P2**   | Verify Twenty CRM is actually deployed and functional                          | 10min  | Medium   |
-| 18  | **P3**   | Investigate kdump for kernel crash dump capture                                | 30min  | Medium   |
-| 19  | **P3**   | Add UPS monitoring (NetworkUPSTools)                                           | 30min  | Medium   |
-| 20  | **P3**   | Re-enable auditd once NixOS 26.05 bug is fixed                                 | 15min  | Medium   |
-| 21  | **P3**   | Add LUKS disk encryption with TPM auto-unlock                                  | 60min  | High     |
-| 22  | **P3**   | Network NIC bonding for failover                                               | 30min  | Medium   |
-| 23  | **P4**   | CI/CD pipeline for `just test` before merge                                    | 60min  | Medium   |
-| 24  | **P4**   | Immutable system paths (read-only /etc, /usr)                                  | 30min  | Low      |
-| 25  | **P4**   | SSH certificate-based auth (CA-signed)                                         | 30min  | Low      |
+| #  | Priority | Item                                                                           | Effort | Impact   |
+| -- | -------- | ------------------------------------------------------------------------------ | ------ | -------- |
+| 1  | **P0**   | `just switch` on evo-x2 — deploy all changes and verify system boots correctly | 5min   | Critical |
+| 2  | **P0**   | Verify pstore works: check `ls /sys/fs/pstore/` after reboot                   | 1min   | High     |
+| 3  | **P0**   | Test Ollama with 32GB GPU cap — run a model and verify it works                | 5min   | High     |
+| 4  | **P0**   | Update AGENTS.md to reflect GPU rebalance + resilience changes                 | 15min  | High     |
+| 5  | **P1**   | Update FEATURES.md — Ollama keep-alive, pstore, journald/coredump limits       | 15min  | Medium   |
+| 6  | **P1**   | Enable Gatus uptime monitor in `configuration.nix`                             | 5min   | High     |
+| 7  | **P1**   | Personalize Gatus ntfy topic (not `gatus-systemnix`)                           | 5min   | Medium   |
+| 8  | **P1**   | Add MemoryMax to ClickHouse (4G cap) in signoz.nix                             | 5min   | Medium   |
+| 9  | **P1**   | Verify `notify-failure@` template fires correctly on evo-x2                    | 5min   | Medium   |
+| 10 | **P1**   | Verify `service-health-check` script works with new SigNoz checks              | 5min   | Medium   |
+| 11 | **P2**   | Create TODO_LIST.md with current open items                                    | 20min  | Medium   |
+| 12 | **P2**   | Test BTRFS snapshot restore (quarterly verification)                           | 15min  | Medium   |
+| 13 | **P2**   | Add MemoryMax to services still using default harden (512M): homepage, gatus   | 5min   | Low      |
+| 14 | **P2**   | Add `coredumpctl vacuum` weekly timer for proactive cleanup                    | 10min  | Low      |
+| 15 | **P2**   | Add `journalctl --vacuum-time=2week` to scheduled-tasks                        | 5min   | Low      |
+| 16 | **P2**   | Provision Pi 3 for DNS failover cluster                                        | 60min  | High     |
+| 17 | **P2**   | Verify Twenty CRM is actually deployed and functional                          | 10min  | Medium   |
+| 18 | **P3**   | Investigate kdump for kernel crash dump capture                                | 30min  | Medium   |
+| 19 | **P3**   | Add UPS monitoring (NetworkUPSTools)                                           | 30min  | Medium   |
+| 20 | **P3**   | Re-enable auditd once NixOS 26.05 bug is fixed                                 | 15min  | Medium   |
+| 21 | **P3**   | Add LUKS disk encryption with TPM auto-unlock                                  | 60min  | High     |
+| 22 | **P3**   | Network NIC bonding for failover                                               | 30min  | Medium   |
+| 23 | **P4**   | CI/CD pipeline for `just test` before merge                                    | 60min  | Medium   |
+| 24 | **P4**   | Immutable system paths (read-only /etc, /usr)                                  | 30min  | Low      |
+| 25 | **P4**   | SSH certificate-based auth (CA-signed)                                         | 30min  | Low      |
 
 ---
 

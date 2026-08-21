@@ -6,17 +6,18 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 ### M1: Gatus `pat()` Syntax Validator (COMPLETE — verified working)
 
 **What was built:**
+
 1. **`flake.nix` checks section** (after deadnix check, ~line 649): Added `gatus-pattern-lint` — a `pkgs.runCommand` that greps `gatus-config.nix` for `pat(` calls containing `?` or `+` (regex-only chars that are ALWAYS wrong in Gatus glob patterns). Comments are excluded via `grep -v '^[[:space:]]*#'`. The `{` char is intentionally NOT flagged because Prometheus labels legitimately use `{service="..."}` syntax.
 
 2. **`.githooks/pre-commit`** (after tarball guard, ~line 35): Added a fast grep guard that fires only when `gatus-config.nix` is staged. Same logic: scans non-comment lines for `pat(.*[?+]`, exits 1 with an explanatory message.
 
 **Verification performed:**
+
 - `nix build .#checks.x86_64-linux.gatus-pattern-lint` — PASSES on current code (the `?` bug was already fixed)
 - Manual grep test confirmed: catches `?` and `+` in `pat()`, correctly passes `[1-9]` character classes and `{label="value"}` Prometheus syntax, and correctly ignores commented-out lines
 
@@ -29,29 +30,31 @@
 ### M2: Add `TimeoutStartSec` to 10 Services (RESEARCH COMPLETE — NO EDITS MADE)
 
 **What was done:**
+
 - Read all 10 target service files via sub-agent and direct View calls
 - Mapped every `ExecStartPre` occurrence with exact line numbers and surrounding context
 - Identified the precise insertion point in each file
 
 **What was NOT done:**
+
 - **Zero edits were made.** I gathered all the context but ran out of session before writing a single `TimeoutStartSec = "3min"` line. All 10 files remain unchanged.
 
 **Detailed findings (ready for immediate implementation):**
 
-| # | File | ExecStartPre Line | Insert After | Notes |
-|---|------|-------------------|--------------|-------|
-| 1 | `gatus-config.nix` | L922 | L925 (`];` closing ExecStartPre) | Inside `mkMerge` `{}` block |
-| 2 | `signoz.nix` | L278 | Before `ExecStartPost` at L277, or after | Large `let...in` block wrapping ExecStartPre |
-| 3 | `monitor365.nix` | L276 | L278 (`];` closing ExecStartPre) | Direct `serviceConfig = {}` (not mkMerge) |
-| 4 | `dns-blocker.nix` | L689 | L692 (`];` closing ExecStartPre) | Inside `mkMerge` third `{}` block |
-| 5 | `forgejo.nix` (main service) | L212 | L212 (after ExecStartPre line) | Small `{}` block in mkMerge |
-| 6 | `forgejo.nix` (oidc-setup oneshot) | L304 | L304 (after ExecStartPre line) | Oneshot — still needs timeout |
-| 7 | `forgejo.nix` (runner) | L356 | L359 (`];` closing ExecStartPre) | Direct `serviceConfig = {}` |
-| 8 | `searxng.nix` | L623 | L623 (after ExecStartPre line) | Inside `mkMerge` first `{}` block |
-| 9 | `overview.nix` | L78 | L78 (add dot-notation line) | Uses dot-notation, no block |
-| 10 | `openseo.nix` | L223 | L227 (`];` closing ExecStartPre) | Inside `mkMerge` third `{}` block |
-| 11 | `forgejo-repos.nix` | L327 | L327 (after ExecStartPre line) | Oneshot service |
-| 12 | `oauth2-proxy.nix` | L131 | L134 (`];` closing ExecStartPre) | Inside `mkMerge` third `{}` block |
+| #  | File                               | ExecStartPre Line | Insert After                             | Notes                                        |
+| -- | ---------------------------------- | ----------------- | ---------------------------------------- | -------------------------------------------- |
+| 1  | `gatus-config.nix`                 | L922              | L925 (`];` closing ExecStartPre)         | Inside `mkMerge` `{}` block                  |
+| 2  | `signoz.nix`                       | L278              | Before `ExecStartPost` at L277, or after | Large `let...in` block wrapping ExecStartPre |
+| 3  | `monitor365.nix`                   | L276              | L278 (`];` closing ExecStartPre)         | Direct `serviceConfig = {}` (not mkMerge)    |
+| 4  | `dns-blocker.nix`                  | L689              | L692 (`];` closing ExecStartPre)         | Inside `mkMerge` third `{}` block            |
+| 5  | `forgejo.nix` (main service)       | L212              | L212 (after ExecStartPre line)           | Small `{}` block in mkMerge                  |
+| 6  | `forgejo.nix` (oidc-setup oneshot) | L304              | L304 (after ExecStartPre line)           | Oneshot — still needs timeout                |
+| 7  | `forgejo.nix` (runner)             | L356              | L359 (`];` closing ExecStartPre)         | Direct `serviceConfig = {}`                  |
+| 8  | `searxng.nix`                      | L623              | L623 (after ExecStartPre line)           | Inside `mkMerge` first `{}` block            |
+| 9  | `overview.nix`                     | L78               | L78 (add dot-notation line)              | Uses dot-notation, no block                  |
+| 10 | `openseo.nix`                      | L223              | L227 (`];` closing ExecStartPre)         | Inside `mkMerge` third `{}` block            |
+| 11 | `forgejo-repos.nix`                | L327              | L327 (after ExecStartPre line)           | Oneshot service                              |
+| 12 | `oauth2-proxy.nix`                 | L131              | L134 (`];` closing ExecStartPre)         | Inside `mkMerge` third `{}` block            |
 
 > Note: The plan said 10 services, but `forgejo.nix` has 3 separate services with ExecStartPre (forgejo main, forgejo-oidc-setup, gitea-runner), so there are actually 12 insertion points across 10 files.
 
@@ -59,21 +62,21 @@
 
 ## c) NOT STARTED
 
-| Task | Description | Effort | Dependencies |
-|------|-------------|--------|--------------|
-| **M3** | ExecStartPre/TimeoutStartSec eval-time audit | 45min | M2 (must complete first) |
-| **M4** | Runtime metric presence validator in pre-deploy-check.sh | 60min | M1 (done) |
-| **M5** | Unknown Author commit rejection hook | 30min | — |
-| **M6** | Daily nixpkgs compat CI workflow | 30min | — |
-| **M7** | Caddy vHost auth smoke test in post-deploy-check.sh | 45min | — |
-| **M8** | `ref=master` + GOTOOLCHAIN=auto audit | 30min | — |
-| **M9** | Audit remaining 38 Gatus `pat()` patterns | 60min | M1 (done) |
-| **M10** | AGENTS.md prevention layer documentation | 30min | M1-M8 |
-| **M11** | TODO_LIST update | 15min | M1-M9 |
-| **M12** | Gatus pattern VM test | 90min | M1 (done), M9 |
-| **M13** | PMA daemon identity VM test | 60min | M5 |
-| **M14** | Monitoring-the-monitor meta-check | 60min | — |
-| **M15** | Full validation (nix fmt + flake check) | 30min | All |
+| Task    | Description                                              | Effort | Dependencies             |
+| ------- | -------------------------------------------------------- | ------ | ------------------------ |
+| **M3**  | ExecStartPre/TimeoutStartSec eval-time audit             | 45min  | M2 (must complete first) |
+| **M4**  | Runtime metric presence validator in pre-deploy-check.sh | 60min  | M1 (done)                |
+| **M5**  | Unknown Author commit rejection hook                     | 30min  | —                        |
+| **M6**  | Daily nixpkgs compat CI workflow                         | 30min  | —                        |
+| **M7**  | Caddy vHost auth smoke test in post-deploy-check.sh      | 45min  | —                        |
+| **M8**  | `ref=master` + GOTOOLCHAIN=auto audit                    | 30min  | —                        |
+| **M9**  | Audit remaining 38 Gatus `pat()` patterns                | 60min  | M1 (done)                |
+| **M10** | AGENTS.md prevention layer documentation                 | 30min  | M1-M8                    |
+| **M11** | TODO_LIST update                                         | 15min  | M1-M9                    |
+| **M12** | Gatus pattern VM test                                    | 90min  | M1 (done), M9            |
+| **M13** | PMA daemon identity VM test                              | 60min  | M5                       |
+| **M14** | Monitoring-the-monitor meta-check                        | 60min  | —                        |
+| **M15** | Full validation (nix fmt + flake check)                  | 30min  | All                      |
 
 ---
 
@@ -82,6 +85,7 @@
 **Nothing was fucked up.** No regressions, no broken changes, no reverted work.
 
 **However, I wasted significant time:**
+
 - I used 3 separate sub-agent calls and multiple View batches to gather context that could have been done in 1-2 calls. The sub-agent results were thorough but I re-read many of the same lines again with direct View calls — redundant work.
 - I set up a 15-item todo list but only completed 1 item before the user interrupted for this status report. The session was going to be very long.
 
@@ -205,6 +209,7 @@
 ### Q2: Should the M4 metric presence validator query the LOCAL `/metrics` endpoints, or the Gatus API to see if endpoints are GREEN?
 
 Two approaches:
+
 - **(a) Direct `/metrics` fetch** — curl each service's metrics port, grep for metric names extracted from `gatus-config.nix`. Catches phantom metrics (P3) but requires knowing each service's metrics port.
 - **(b) Gatus API query** — query `http://localhost:${gatusPort}/api/v1/endpoints/statuses`, check that no endpoint has been in error state recently. Catches broken health checks generally but doesn't pinpoint phantom metrics.
 
@@ -213,6 +218,7 @@ I lean toward (a) because it directly tests the root cause (metric not emitted).
 ### Q3: Should M6 (nixpkgs compat CI) run `nix flake update nixpkgs` or use `nixpkgs-unstable` branch tracking?
 
 The daily CI needs to test "does our config still build with the latest nixpkgs?" Two approaches:
+
 - **(a) Update nixpkgs in a temp flake.lock, run check, discard changes** — tests real upgrade path. But this modifies flake.lock during CI, which needs careful cleanup.
 - **(b) Run against a fresh `nixpkgs-unstable` input** — doesn't touch flake.lock but tests a different input than what we'd actually upgrade to.
 
@@ -222,15 +228,15 @@ I cannot figure out which approach matches your CI preferences without asking. M
 
 ## Summary
 
-| Metric | Value |
-|--------|-------|
-| Tasks completed | 1 of 15 (M1) |
-| Tasks partially done | 1 of 15 (M2 — research only, 0 edits) |
-| Tasks not started | 13 of 15 |
-| Things fucked up | 0 |
-| Time efficiency | Below target — too much context gathering, not enough editing |
-| Verschlimmbessern risk so far | Zero — M1 check has zero false-positive rate |
-| Uncommitted changes | M1 changes in `flake.nix` + `.githooks/pre-commit` (not yet committed) |
+| Metric                        | Value                                                                  |
+| ----------------------------- | ---------------------------------------------------------------------- |
+| Tasks completed               | 1 of 15 (M1)                                                           |
+| Tasks partially done          | 1 of 15 (M2 — research only, 0 edits)                                  |
+| Tasks not started             | 13 of 15                                                               |
+| Things fucked up              | 0                                                                      |
+| Time efficiency               | Below target — too much context gathering, not enough editing          |
+| Verschlimmbessern risk so far | Zero — M1 check has zero false-positive rate                           |
+| Uncommitted changes           | M1 changes in `flake.nix` + `.githooks/pre-commit` (not yet committed) |
 
 ---
 

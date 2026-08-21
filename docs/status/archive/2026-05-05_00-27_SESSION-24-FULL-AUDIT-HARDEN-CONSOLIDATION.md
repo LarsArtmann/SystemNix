@@ -173,33 +173,33 @@ This will break on every rebuild because the Nix store is immutable. It currentl
 
 Sorted by **impact × urgency / effort**:
 
-| #   | Task                                                                              | Impact   | Effort | Category        |
-| --- | --------------------------------------------------------------------------------- | -------- | ------ | --------------- |
-| 1   | **Fix `ai-stack.nix` Nix store writes** — use mutable data directory              | Critical | Medium | Bug             |
-| 2   | **Create shared `primaryUser` option** — replace 12+ hardcoded `"lars"`           | High     | Medium | Architecture    |
-| 3   | **Archive old docs/status/** — keep last 5, archive rest                          | Medium   | Low    | Hygiene         |
-| 4   | **Adopt `colorScheme.palette`** in waybar, rofi, swaylock, yazi                   | Medium   | Low    | DRY             |
-| 5   | **Fix starship config** — remove modules not in format string                     | Low      | Tiny   | Performance     |
-| 6   | **Extract gitea.nix inline bash** to `writeShellApplication`                      | Medium   | Medium | Maintainability |
-| 7   | **Extract gitea-repos.nix inline bash** to `writeShellApplication`                | Medium   | Medium | Maintainability |
-| 8   | **Split signoz.nix** into sub-modules (packages, alerts, gpu)                     | Medium   | Medium | Architecture    |
-| 9   | **Guard `taskwarrior.nix` systemd for Darwin** with `mkIf isLinux`                | Medium   | Low    | Cross-platform  |
-| 10  | **Move VRRP auth to sops** in `dns-failover.nix`                                  | Medium   | Low    | Security        |
-| 11  | **Use `config.networking.local.lanIP`** in dns-blocker-config.nix                 | Low      | Tiny   | DRY             |
-| 12  | **Split `networking.nix`** — networking, locale/time, nix-gc, systemd             | Low      | Medium | Organization    |
-| 13  | **Remove redundant `colorScheme` options** in configuration.nix                   | Low      | Tiny   | Cleanup         |
-| 14  | **Fix `fonts.nix` for Darwin** — install Nerd fonts on macOS                      | Medium   | Low    | Cross-platform  |
-| 15  | **Add `harden()` to `ai-stack.nix` services** (ollama, unsloth-setup)             | High     | Low    | Security        |
-| 16  | **Create port registry** — centralize all service ports                           | Medium   | Medium | Architecture    |
-| 17  | **Adopt `lib/types.nix`** broadly — ports, delays, timeouts                       | Low      | Medium | DRY             |
-| 18  | **Extract `minecraft.nix` options.txt** from inline string to Nix attrset         | Low      | Medium | Maintainability |
-| 19  | **Fix `darwin/home.nix` empty packages** (already done this session)              | —        | —      | Done            |
-| 20  | **Add `ReadWritePaths` to services that disable `ProtectHome/ProtectSystem`**     | Medium   | Medium | Security        |
-| 21  | **Deduplicate fail2ban `ignoreip`** in configuration.nix                          | Low      | Tiny   | DRY             |
-| 22  | **Remove `services.pulseaudio.enable = false`** from audio.nix (default)          | Low      | Tiny   | Cleanup         |
-| 23  | **Add audit logging to sudo.nix**                                                 | Medium   | Low    | Security        |
-| 24  | **Fix `configuration.nix` `colorScheme` type** — `types.attrs` → proper submodule | Low      | Low    | Type safety     |
-| 25  | **Consolidate overlay definitions** in flake.nix — reduce boilerplate             | Medium   | Medium | Architecture    |
+| #  | Task                                                                              | Impact   | Effort | Category        |
+| -- | --------------------------------------------------------------------------------- | -------- | ------ | --------------- |
+| 1  | **Fix `ai-stack.nix` Nix store writes** — use mutable data directory              | Critical | Medium | Bug             |
+| 2  | **Create shared `primaryUser` option** — replace 12+ hardcoded `"lars"`           | High     | Medium | Architecture    |
+| 3  | **Archive old docs/status/** — keep last 5, archive rest                          | Medium   | Low    | Hygiene         |
+| 4  | **Adopt `colorScheme.palette`** in waybar, rofi, swaylock, yazi                   | Medium   | Low    | DRY             |
+| 5  | **Fix starship config** — remove modules not in format string                     | Low      | Tiny   | Performance     |
+| 6  | **Extract gitea.nix inline bash** to `writeShellApplication`                      | Medium   | Medium | Maintainability |
+| 7  | **Extract gitea-repos.nix inline bash** to `writeShellApplication`                | Medium   | Medium | Maintainability |
+| 8  | **Split signoz.nix** into sub-modules (packages, alerts, gpu)                     | Medium   | Medium | Architecture    |
+| 9  | **Guard `taskwarrior.nix` systemd for Darwin** with `mkIf isLinux`                | Medium   | Low    | Cross-platform  |
+| 10 | **Move VRRP auth to sops** in `dns-failover.nix`                                  | Medium   | Low    | Security        |
+| 11 | **Use `config.networking.local.lanIP`** in dns-blocker-config.nix                 | Low      | Tiny   | DRY             |
+| 12 | **Split `networking.nix`** — networking, locale/time, nix-gc, systemd             | Low      | Medium | Organization    |
+| 13 | **Remove redundant `colorScheme` options** in configuration.nix                   | Low      | Tiny   | Cleanup         |
+| 14 | **Fix `fonts.nix` for Darwin** — install Nerd fonts on macOS                      | Medium   | Low    | Cross-platform  |
+| 15 | **Add `harden()` to `ai-stack.nix` services** (ollama, unsloth-setup)             | High     | Low    | Security        |
+| 16 | **Create port registry** — centralize all service ports                           | Medium   | Medium | Architecture    |
+| 17 | **Adopt `lib/types.nix`** broadly — ports, delays, timeouts                       | Low      | Medium | DRY             |
+| 18 | **Extract `minecraft.nix` options.txt** from inline string to Nix attrset         | Low      | Medium | Maintainability |
+| 19 | **Fix `darwin/home.nix` empty packages** (already done this session)              | —        | —      | Done            |
+| 20 | **Add `ReadWritePaths` to services that disable `ProtectHome/ProtectSystem`**     | Medium   | Medium | Security        |
+| 21 | **Deduplicate fail2ban `ignoreip`** in configuration.nix                          | Low      | Tiny   | DRY             |
+| 22 | **Remove `services.pulseaudio.enable = false`** from audio.nix (default)          | Low      | Tiny   | Cleanup         |
+| 23 | **Add audit logging to sudo.nix**                                                 | Medium   | Low    | Security        |
+| 24 | **Fix `configuration.nix` `colorScheme` type** — `types.attrs` → proper submodule | Low      | Low    | Type safety     |
+| 25 | **Consolidate overlay definitions** in flake.nix — reduce boilerplate             | Medium   | Medium | Architecture    |
 
 ---
 

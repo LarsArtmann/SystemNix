@@ -6,13 +6,14 @@
 
 ---
 
-
 ## What Was Done This Session
 
 ### Task
+
 Review the SystemNix ↔ BuildFlow flake integration quality. Assess whether we are doing a "superb job."
 
 ### Process
+
 1. Read BuildFlow's `flake.nix` (1223 lines) — identified all exports: `packages` (buildflow, ginkgo, tools), `devShells` (default, ci, tools), `apps` (9 apps), `checks` (7 checks), `overlays.default`, `treefmt`. **No `nixosModules` or `homeModules`** — BuildFlow is a CLI tool, not a service.
 2. Traced the full integration chain in SystemNix:
    - `flake.nix` input → `lib/lars-packages.nix` → `systems/{evo-x2,darwin}.nix` → `platforms/common/packages/base.nix` → `environment.systemPackages`
@@ -27,38 +28,38 @@ Review the SystemNix ↔ BuildFlow flake integration quality. Assess whether we 
 
 ## a) FULLY DONE
 
-| # | Item | Details |
-|---|------|---------|
-| 1 | Flake input wiring | `buildflow` input with `nixpkgs.follows` + `go-nix-helpers.follows` — proper dedup, consistent with all LarsArtmann flake inputs |
-| 2 | Single source of truth | `lib/lars-packages.nix` line 19: `buildflow = flakePkg inputs.buildflow` — one place to change |
-| 3 | System-wide install | Both NixOS (`evo-x2`) and Darwin (`Lars-MacBook-Air`) install buildflow via `builtins.attrValues larsPackages` in `base.nix` |
-| 4 | Flake packages exposure | `nix build .#buildflow` works via `perSystem.packages` (line 568-569) |
-| 5 | Forgejo mirror | `configuration.nix` line 586 mirrors `git@github.com:LarsArtmann/BuildFlow.git` to local Forgejo |
-| 6 | No service module needed | Correct — BuildFlow is a CLI tool, not a daemon. No port, no systemd service, no Caddy vHost |
-| 7 | DevShell env var | `BUILDFLOW_EXCLUDE_PATTERNS = "assets/avatar.png"` already set in default devShell |
-| 8 | DevShell explicit dependency | **Fixed this session**: added `buildflow` to devShell `packages` — no longer relies on implicit system-wide install |
-| 9 | Syntax verification | `nix flake check --no-build` passes — all NixOS modules evaluate |
-| 10 | Runtime verification | `nix develop .#default --command bash -c 'which buildflow'` → `/nix/store/.../bin/buildflow` confirmed on PATH |
+| #  | Item                         | Details                                                                                                                          |
+| -- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | Flake input wiring           | `buildflow` input with `nixpkgs.follows` + `go-nix-helpers.follows` — proper dedup, consistent with all LarsArtmann flake inputs |
+| 2  | Single source of truth       | `lib/lars-packages.nix` line 19: `buildflow = flakePkg inputs.buildflow` — one place to change                                   |
+| 3  | System-wide install          | Both NixOS (`evo-x2`) and Darwin (`Lars-MacBook-Air`) install buildflow via `builtins.attrValues larsPackages` in `base.nix`     |
+| 4  | Flake packages exposure      | `nix build .#buildflow` works via `perSystem.packages` (line 568-569)                                                            |
+| 5  | Forgejo mirror               | `configuration.nix` line 586 mirrors `git@github.com:LarsArtmann/BuildFlow.git` to local Forgejo                                 |
+| 6  | No service module needed     | Correct — BuildFlow is a CLI tool, not a daemon. No port, no systemd service, no Caddy vHost                                     |
+| 7  | DevShell env var             | `BUILDFLOW_EXCLUDE_PATTERNS = "assets/avatar.png"` already set in default devShell                                               |
+| 8  | DevShell explicit dependency | **Fixed this session**: added `buildflow` to devShell `packages` — no longer relies on implicit system-wide install              |
+| 9  | Syntax verification          | `nix flake check --no-build` passes — all NixOS modules evaluate                                                                 |
+| 10 | Runtime verification         | `nix develop .#default --command bash -c 'which buildflow'` → `/nix/store/.../bin/buildflow` confirmed on PATH                   |
 
 ---
 
 ## b) PARTIALLY DONE
 
-| # | Item | What's done | What's missing |
-|---|------|-------------|----------------|
-| 1 | `buildflow-tools` package consumption | BuildFlow exports a `tools` buildEnv (Go, Rust, Node, formatters, linters, Python tools) | SystemNix does NOT consume it — **correct for this repo** (SystemNix is a Nix config repo, not a Go project), but worth documenting as a deliberate decision |
-| 2 | BuildFlow overlay consumption | BuildFlow exports `flake.overlays.default` (adds `buildflow` + `buildflow-tools` to pkgs) | SystemNix does NOT consume it — uses `lib/lars-packages.nix` instead. This is fine (lars-packages is the canonical pattern), but the overlay is unused. No action needed. |
+| # | Item                                  | What's done                                                                               | What's missing                                                                                                                                                            |
+| - | ------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | `buildflow-tools` package consumption | BuildFlow exports a `tools` buildEnv (Go, Rust, Node, formatters, linters, Python tools)  | SystemNix does NOT consume it — **correct for this repo** (SystemNix is a Nix config repo, not a Go project), but worth documenting as a deliberate decision              |
+| 2 | BuildFlow overlay consumption         | BuildFlow exports `flake.overlays.default` (adds `buildflow` + `buildflow-tools` to pkgs) | SystemNix does NOT consume it — uses `lib/lars-packages.nix` instead. This is fine (lars-packages is the canonical pattern), but the overlay is unused. No action needed. |
 
 ---
 
 ## c) NOT STARTED
 
-| # | Item | Why | Priority |
-|---|------|-----|----------|
-| 1 | BuildFlow CI integration in SystemNix | SystemNix has no CI pipeline (it's a personal config repo). BuildFlow CI lives in BuildFlow's own repo. | N/A |
-| 2 | BuildFlow `checks` consumption | BuildFlow exports 7 checks (format, build, test, fuzz-seed, coverage, benchmark, arch-lint). SystemNix could theoretically re-export them, but that's BuildFlow's own CI concern. | N/A |
-| 3 | BuildFlow `apps` consumption | BuildFlow exports 9 apps (test, lint, fuzz, deps, arch-lint, etc.). These are BuildFlow-internal dev commands — not useful in SystemNix. | N/A |
-| 4 | Documentation of BuildFlow integration in AGENTS.md | The `lib/lars-packages.nix` section is mentioned, but there's no specific BuildFlow entry in AGENTS.md documenting the integration approach. | Low |
+| # | Item                                                | Why                                                                                                                                                                               | Priority |
+| - | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| 1 | BuildFlow CI integration in SystemNix               | SystemNix has no CI pipeline (it's a personal config repo). BuildFlow CI lives in BuildFlow's own repo.                                                                           | N/A      |
+| 2 | BuildFlow `checks` consumption                      | BuildFlow exports 7 checks (format, build, test, fuzz-seed, coverage, benchmark, arch-lint). SystemNix could theoretically re-export them, but that's BuildFlow's own CI concern. | N/A      |
+| 3 | BuildFlow `apps` consumption                        | BuildFlow exports 9 apps (test, lint, fuzz, deps, arch-lint, etc.). These are BuildFlow-internal dev commands — not useful in SystemNix.                                          | N/A      |
+| 4 | Documentation of BuildFlow integration in AGENTS.md | The `lib/lars-packages.nix` section is mentioned, but there's no specific BuildFlow entry in AGENTS.md documenting the integration approach.                                      | Low      |
 
 ---
 
@@ -71,9 +72,11 @@ Review the SystemNix ↔ BuildFlow flake integration quality. Assess whether we 
 ## e) WHAT WE SHOULD IMPROVE
 
 ### Already Fixed This Session
+
 1. **DevShell implicit dependency** — `buildflow` was available in devShell only because it was system-wide installed. On a clean machine or CI, `nix develop .#default` would have the `BUILDFLOW_EXCLUDE_PATTERNS` env var set but no `buildflow` binary. **Fixed**: now explicitly declared in `packages`.
 
 ### Could Still Improve
+
 2. **No AGENTS.md entry for BuildFlow** — `lib/lars-packages.nix` is documented, but BuildFlow specifically isn't. A short note would help future sessions understand: "BuildFlow is a CLI tool, not a service. Consumed via lars-packages only. No module/port/Caddy needed."
 
 3. **`?ref=master` on the flake input** — This is the established SystemNix convention (lock file pins exact rev), but per the AGENTS.md gotcha about CLI tool flake inputs, tagged releases are preferred for Go CLI tools. BuildFlow uses `ref=master` because it's LarsArtmann's own repo and the lock file pins the exact revision. This is fine, but inconsistent with the "CLI tool flake inputs must use tags" guideline. The guideline exists for third-party repos that drift; for first-party repos where the lock file is the source of truth, `ref=master` is acceptable.
@@ -87,12 +90,14 @@ Review the SystemNix ↔ BuildFlow flake integration quality. Assess whether we 
 ## f) Up to 50 Things We Should Get Done Next
 
 ### High Priority
+
 1. **Update AGENTS.md** with a BuildFlow integration note under Key Procedures (2-3 lines: "CLI tool, consumed via lars-packages, no service module needed, devShell explicitly declares it")
 2. **Review ALL larsPackages entries** for the same devShell implicit-dependency pattern — do any other tools (art-dupl, branching-flow, go-structure-linter, etc.) have the same issue?
 3. **Audit `?ref=master` inputs** across all LarsArtmann flake inputs — should any be pinned to tags instead? (AGENTS.md says CLI tool inputs should use tags)
 4. **Check if `buildflow-tools` should be consumed in SystemNix's devShell** — even though SystemNix is a Nix config repo, having all BuildFlow-orchestrated tools available in `nix develop` could be useful for contributing to BuildFlow itself from within SystemNix's shell
 
 ### Medium Priority
+
 5. **Document `buildflow_2` in flake.lock** — add a comment or AGENTS.md note explaining it's a transitive non-flake input from `branching-flow`, not redundant duplication
 6. **Add `buildflow` to the `quickshell` devShell** — currently only in the default devShell. If BuildFlow is used for QML development too, it should be available there
 7. **Verify BuildFlow works on Darwin** — `nix develop` on macOS would need `buildflow` in the devShell too (the fix we applied is for `x86_64-linux`; `aarch64-darwin` should work since `mkLarsPackages` filters by system, but it's untested)
@@ -101,6 +106,7 @@ Review the SystemNix ↔ BuildFlow flake integration quality. Assess whether we 
 10. **Add a `nix run .#post-deploy-check` test for buildflow** — verify `buildflow --version` works after deploy
 
 ### Lower Priority
+
 11. **Consider exposing `buildflow-tools` as a SystemNix package** — `nix build .#buildflow-tools` would give a buildEnv of all BuildFlow-orchestrated tools
 12. **Review BuildFlow's `checks` integration** — could SystemNix re-export BuildFlow's `checks` for its own CI?
 13. **Audit all larsPackages for `meta.platforms`** — do any tools not support `aarch64-darwin`? `mkLarsPackages` filters nulls, but silent dropping could hide build failures

@@ -178,33 +178,33 @@ The multi-session migration sprint (sessions 119–125) has completed the larges
 
 Ranked by impact × feasibility:
 
-| #   | Task                                                                                       | Impact | Effort | Category              |
-| --- | ------------------------------------------------------------------------------------------ | ------ | ------ | --------------------- |
-| 1   | **Add `openai_api_key` to hermes.yaml sops** on evo-x2                                     | High   | 5min   | Blocked: needs evo-x2 |
-| 2   | **Test `lib/` helpers** — `nix eval` assertions for harden, serviceDefaults, ports, images | High   | 8h     | Quality               |
-| 3   | **Verify full deployment on evo-x2** — `just verify` after all migrations                  | High   | 30min  | Blocked: needs evo-x2 |
-| 4   | **Push go-flake-parts template** in go-nix-helpers                                         | Medium | 5min   | External repo         |
-| 5   | **Fix DiscordSync lint issues** from `--no-verify` commit                                  | Medium | 30min  | External repo         |
-| 6   | **Auditd re-enable** — check NixOS 26.11 fix status                                        | Medium | 1h     | Security              |
-| 7   | **Create `mkNativeService`** wrapper for harden + defaults + onFailure                     | Medium | 4h     | Architecture          |
-| 8   | **dnsblockd temp-allow persistence** — SQLite backing                                      | Medium | 4h     | Reliability           |
-| 9   | **Port option audit** — ensure all port defaults reference `ports.*`                       | Medium | 2h     | Consistency           |
-| 10  | **monitor365-ui trunk fix** — downgrade or config update                                   | Low    | 2h     | Broken build          |
-| 11  | **Wire `test-upstream-builds` to CI** — GitHub Actions                                     | Medium | 2h     | CI/CD                 |
-| 12  | **AppArmor profile for Docker** — start with container confinement                         | Medium | 4h     | Security              |
-| 13  | **dnsblockd Category enum** in Go — replace stringly-typed categories                      | Low    | 2h     | Code quality          |
-| 14  | **Move `dnsblockd-ca.crt`** out of secrets directory                                       | Low    | 15min  | Cleanup               |
-| 15  | **PhotoMap AI enablement** — test module, enable in config                                 | Low    | 2h     | Feature               |
-| 16  | **`dep-graph` reliability** — fix nix-visualize dependency                                 | Low    | 1h     | Tooling               |
-| 17  | **Multi-WM (Sway) bitrot check** — test backup compositor                                  | Low    | 1h     | Reliability           |
-| 18  | **Shared `services.defaults`** NixOS module options                                        | Medium | 8h     | Architecture          |
-| 19  | **Hermes SSH deploy key installation** on evo-x2                                           | Medium | 15min  | Blocked: needs evo-x2 |
-| 20  | **DNS-over-QUIC** overlay re-evaluation                                                    | Low    | 2h     | Feature               |
-| 21  | **Voice agents enablement** — Whisper Docker + ROCm                                        | Low    | 4h     | Feature               |
-| 22  | **Pi 3 hardware provisioning** — physical setup                                            | High   | 4h     | Blocked: hardware     |
-| 23  | **Per-module flake checks** — faster feedback loop                                         | Medium | 4h     | Developer experience  |
-| 24  | **Automate `vendorHash` update instructions** — better error messages                      | Low    | 2h     | Developer experience  |
-| 25  | **`justfile` → `flake.nix` migration** — move task automation to Nix                       | Medium | 16h    | Long-term             |
+| #  | Task                                                                                       | Impact | Effort | Category              |
+| -- | ------------------------------------------------------------------------------------------ | ------ | ------ | --------------------- |
+| 1  | **Add `openai_api_key` to hermes.yaml sops** on evo-x2                                     | High   | 5min   | Blocked: needs evo-x2 |
+| 2  | **Test `lib/` helpers** — `nix eval` assertions for harden, serviceDefaults, ports, images | High   | 8h     | Quality               |
+| 3  | **Verify full deployment on evo-x2** — `just verify` after all migrations                  | High   | 30min  | Blocked: needs evo-x2 |
+| 4  | **Push go-flake-parts template** in go-nix-helpers                                         | Medium | 5min   | External repo         |
+| 5  | **Fix DiscordSync lint issues** from `--no-verify` commit                                  | Medium | 30min  | External repo         |
+| 6  | **Auditd re-enable** — check NixOS 26.11 fix status                                        | Medium | 1h     | Security              |
+| 7  | **Create `mkNativeService`** wrapper for harden + defaults + onFailure                     | Medium | 4h     | Architecture          |
+| 8  | **dnsblockd temp-allow persistence** — SQLite backing                                      | Medium | 4h     | Reliability           |
+| 9  | **Port option audit** — ensure all port defaults reference `ports.*`                       | Medium | 2h     | Consistency           |
+| 10 | **monitor365-ui trunk fix** — downgrade or config update                                   | Low    | 2h     | Broken build          |
+| 11 | **Wire `test-upstream-builds` to CI** — GitHub Actions                                     | Medium | 2h     | CI/CD                 |
+| 12 | **AppArmor profile for Docker** — start with container confinement                         | Medium | 4h     | Security              |
+| 13 | **dnsblockd Category enum** in Go — replace stringly-typed categories                      | Low    | 2h     | Code quality          |
+| 14 | **Move `dnsblockd-ca.crt`** out of secrets directory                                       | Low    | 15min  | Cleanup               |
+| 15 | **PhotoMap AI enablement** — test module, enable in config                                 | Low    | 2h     | Feature               |
+| 16 | **`dep-graph` reliability** — fix nix-visualize dependency                                 | Low    | 1h     | Tooling               |
+| 17 | **Multi-WM (Sway) bitrot check** — test backup compositor                                  | Low    | 1h     | Reliability           |
+| 18 | **Shared `services.defaults`** NixOS module options                                        | Medium | 8h     | Architecture          |
+| 19 | **Hermes SSH deploy key installation** on evo-x2                                           | Medium | 15min  | Blocked: needs evo-x2 |
+| 20 | **DNS-over-QUIC** overlay re-evaluation                                                    | Low    | 2h     | Feature               |
+| 21 | **Voice agents enablement** — Whisper Docker + ROCm                                        | Low    | 4h     | Feature               |
+| 22 | **Pi 3 hardware provisioning** — physical setup                                            | High   | 4h     | Blocked: hardware     |
+| 23 | **Per-module flake checks** — faster feedback loop                                         | Medium | 4h     | Developer experience  |
+| 24 | **Automate `vendorHash` update instructions** — better error messages                      | Low    | 2h     | Developer experience  |
+| 25 | **`justfile` → `flake.nix` migration** — move task automation to Nix                       | Medium | 16h    | Long-term             |
 
 ---
 

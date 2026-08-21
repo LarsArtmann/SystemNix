@@ -583,48 +583,48 @@ Capture insights when discovering:
 
 ### Critical Priority (🔴)
 
-| #   | Task                                                      | Effort | Impact |
-| --- | --------------------------------------------------------- | ------ | ------ |
-| 1   | Fix zsh→Fish inconsistencies in health check section      | 15 min | High   |
-| 2   | Verify ActivityWatch status on Darwin is actually working | 30 min | High   |
+| # | Task                                                      | Effort | Impact |
+| - | --------------------------------------------------------- | ------ | ------ |
+| 1 | Fix zsh→Fish inconsistencies in health check section      | 15 min | High   |
+| 2 | Verify ActivityWatch status on Darwin is actually working | 30 min | High   |
 
 ### High Priority (🟠)
 
-| #   | Task                                  | Effort | Impact |
-| --- | ------------------------------------- | ------ | ------ |
-| 3   | Add Troubleshooting Playbook section  | 2 hrs  | High   |
-| 4   | Create Cross-Platform Migration Guide | 2 hrs  | High   |
-| 5   | Add Package Addition Guide            | 1 hr   | High   |
-| 6   | Add Module Development Guide          | 2 hrs  | High   |
+| # | Task                                  | Effort | Impact |
+| - | ------------------------------------- | ------ | ------ |
+| 3 | Add Troubleshooting Playbook section  | 2 hrs  | High   |
+| 4 | Create Cross-Platform Migration Guide | 2 hrs  | High   |
+| 5 | Add Package Addition Guide            | 1 hr   | High   |
+| 6 | Add Module Development Guide          | 2 hrs  | High   |
 
 ### Medium Priority (🟡)
 
-| #   | Task                                       | Effort  | Impact |
-| --- | ------------------------------------------ | ------- | ------ |
-| 7   | Create Quick Reference Card section        | 1 hr    | Medium |
-| 8   | Add FAQ Section (Top 10 questions)         | 1.5 hrs | Medium |
-| 9   | Add Table of Contents with links           | 30 min  | Medium |
-| 10  | Add Mermaid architecture diagrams          | 2 hrs   | Medium |
-| 11  | Link existing ADRs from docs/architecture/ | 30 min  | Medium |
-| 12  | Add Secrets Management (agenix/sops) guide | 2 hrs   | Medium |
-| 13  | Create "Common Tasks" step-by-step section | 1.5 hrs | Medium |
+| #  | Task                                       | Effort  | Impact |
+| -- | ------------------------------------------ | ------- | ------ |
+| 7  | Create Quick Reference Card section        | 1 hr    | Medium |
+| 8  | Add FAQ Section (Top 10 questions)         | 1.5 hrs | Medium |
+| 9  | Add Table of Contents with links           | 30 min  | Medium |
+| 10 | Add Mermaid architecture diagrams          | 2 hrs   | Medium |
+| 11 | Link existing ADRs from docs/architecture/ | 30 min  | Medium |
+| 12 | Add Secrets Management (agenix/sops) guide | 2 hrs   | Medium |
+| 13 | Create "Common Tasks" step-by-step section | 1.5 hrs | Medium |
 
 ### Low Priority (🟢)
 
-| #   | Task                                          | Effort  | Impact |
-| --- | --------------------------------------------- | ------- | ------ |
-| 14  | Add Flake Input Management guide              | 1 hr    | Low    |
-| 15  | Document NixOS Hardware-Specific Configs      | 1 hr    | Low    |
-| 16  | Add Custom Package Development guide          | 2 hrs   | Low    |
-| 17  | Document Nix Store Management deep dive       | 1 hr    | Low    |
-| 18  | Add Override System documentation             | 1 hr    | Low    |
-| 19  | Document Testing Framework for Nix            | 2 hrs   | Low    |
-| 20  | Add CI/CD Integration guide                   | 1.5 hrs | Low    |
-| 21  | Create Version History section                | 30 min  | Low    |
-| 22  | Cross-reference all `just` commands           | 1 hr    | Low    |
-| 23  | Add automated link checker note               | 15 min  | Low    |
-| 24  | Standardize emoji usage                       | 30 min  | Low    |
-| 25  | Add "Reading List" for Nix learning resources | 30 min  | Low    |
+| #  | Task                                          | Effort  | Impact |
+| -- | --------------------------------------------- | ------- | ------ |
+| 14 | Add Flake Input Management guide              | 1 hr    | Low    |
+| 15 | Document NixOS Hardware-Specific Configs      | 1 hr    | Low    |
+| 16 | Add Custom Package Development guide          | 2 hrs   | Low    |
+| 17 | Document Nix Store Management deep dive       | 1 hr    | Low    |
+| 18 | Add Override System documentation             | 1 hr    | Low    |
+| 19 | Document Testing Framework for Nix            | 2 hrs   | Low    |
+| 20 | Add CI/CD Integration guide                   | 1.5 hrs | Low    |
+| 21 | Create Version History section                | 30 min  | Low    |
+| 22 | Cross-reference all `just` commands           | 1 hr    | Low    |
+| 23 | Add automated link checker note               | 15 min  | Low    |
+| 24 | Standardize emoji usage                       | 30 min  | Low    |
+| 25 | Add "Reading List" for Nix learning resources | 30 min  | Low    |
 
 ---
 

@@ -13,13 +13,13 @@
 
 ### Session 76–77: Critical Fix + Pipe Operator Modernization
 
-| #   | What                                        | File                                        | Detail                                                                                                                                                                                                                           |
-| --- | ------------------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Gatus sops secret fix**                   | `modules/nixos/services/sops.nix`           | Fixed `gatus-env` template owner from `gatus`→`root`. nixpkgs `services.gatus` uses `DynamicUser=true` (no static user), so sops-install-secrets failed validation at activation — blocking ALL secret installation. Now passes. |
-| 2   | **Pipe operator refactor: sops.nix**        | `modules/nixos/services/sops.nix`           | Rewrote `mkSecrets` and `mkKeyedSecrets` using `                                                                                                                                                                                 | >` pipe operators.                                         |
-| 3   | **Pipe operator refactor: manifest.nix**    | `modules/nixos/services/manifest.nix`       | Rewrote sops secrets generation with `                                                                                                                                                                                           | >` pipe chain.                                             |
-| 4   | **Pipe operator refactor: niri-config.nix** | `modules/nixos/services/niri-config.nix`    | Rewrote unit file processing pipeline with `                                                                                                                                                                                     | >` pipe chains (BindsTo→Wants patch, unit file filtering). |
-| 5   | **Pipe operator refactor: taskwarrior.nix** | `platforms/common/programs/taskwarrior.nix` | Rewrote UUID derivation with `                                                                                                                                                                                                   | >` pipes.                                                  |
+| # | What                                        | File                                        | Detail                                                                                                                                                                                                                           |
+| - | ------------------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Gatus sops secret fix**                   | `modules/nixos/services/sops.nix`           | Fixed `gatus-env` template owner from `gatus`→`root`. nixpkgs `services.gatus` uses `DynamicUser=true` (no static user), so sops-install-secrets failed validation at activation — blocking ALL secret installation. Now passes. |
+| 2 | **Pipe operator refactor: sops.nix**        | `modules/nixos/services/sops.nix`           | Rewrote `mkSecrets` and `mkKeyedSecrets` using `                                                                                                                                                                                 |
+| 3 | **Pipe operator refactor: manifest.nix**    | `modules/nixos/services/manifest.nix`       | Rewrote sops secrets generation with `                                                                                                                                                                                           |
+| 4 | **Pipe operator refactor: niri-config.nix** | `modules/nixos/services/niri-config.nix`    | Rewrote unit file processing pipeline with `                                                                                                                                                                                     |
+| 5 | **Pipe operator refactor: taskwarrior.nix** | `platforms/common/programs/taskwarrior.nix` | Rewrote UUID derivation with `                                                                                                                                                                                                   |
 
 ### Sessions 67–76: Major Sprint (64 commits today)
 
@@ -32,16 +32,16 @@
 | **Dual-WAN fix**            | ✅        | WiFi interface name fixed from `wlp195s0` to `wlan0`.                                                                                                     |
 | **rpi3-dns build**          | ✅        | Removed explicit `system` — nixpkgs infers `aarch64-linux`. mr-sync overlay supports aarch64.                                                             |
 | **ADRs**                    | ✅        | 6 architecture decision records (go-workspace, GPU headroom, BindsTo vs Wants, PartOf vs BindsTo, Discord notifications, Gatus secret injection).         |
-| **Pipe operators**          | ✅        | `nixConfig` declares `pipe-operators` experimental feature. 4 files refactored to use `                                                                   | >`. |
+| **Pipe operators**          | ✅        | `nixConfig` declares `pipe-operators` experimental feature. 4 files refactored to use `                                                                   |
 
 ### Build Verification
 
-| Check                     | Result                                   |
-| ------------------------- | ---------------------------------------- |
-| `just test-fast` (syntax) | ✅ all checks passed                     |
-| `just test` (full build)  | ✅ 18/18 derivations                     |
+| Check                     | Result                                  |
+| ------------------------- | --------------------------------------- |
+| `just test-fast` (syntax) | ✅ all checks passed                    |
+| `just test` (full build)  | ✅ 18/18 derivations                    |
 | `just health`             | ⚠️ 1 failed (3 systemd units), 24 passed |
-| `just format`             | ✅ clean                                 |
+| `just format`             | ✅ clean                                |
 
 ---
 
@@ -126,48 +126,48 @@ From Master TODO (`docs/planning/2026-05-11_17-30_MASTER-TODO-EXECUTION-PLAN.md`
 
 ### 🔴 P0 — Deploy or Die (blocks everything)
 
-| #   | Task                                                    | Est   |
-| --- | ------------------------------------------------------- | ----- |
-| 1   | Run `just switch` to deploy current config              | 10min |
-| 2   | Investigate and fix caddy.service failure               | 10min |
-| 3   | Investigate and fix signoz-provision.service failure    | 10min |
-| 4   | Investigate and fix niri-health-metrics.service failure | 5min  |
-| 5   | Verify all services start clean after fixes             | 3min  |
-| 6   | `git push` to origin (1 commit ahead)                   | 2min  |
+| # | Task                                                    | Est   |
+| - | ------------------------------------------------------- | ----- |
+| 1 | Run `just switch` to deploy current config              | 10min |
+| 2 | Investigate and fix caddy.service failure               | 10min |
+| 3 | Investigate and fix signoz-provision.service failure    | 10min |
+| 4 | Investigate and fix niri-health-metrics.service failure | 5min  |
+| 5 | Verify all services start clean after fixes             | 3min  |
+| 6 | `git push` to origin (1 commit ahead)                   | 2min  |
 
 ### 🟡 P1 — High Impact
 
-| #   | Task                                                                                        | Est   |
-| --- | ------------------------------------------------------------------------------------------- | ----- |
-| 7   | Audit all sops templates for DynamicUser compatibility (prevent future gatus-like failures) | 15min |
-| 8   | Run `just clean` to reclaim disk space on both mounts                                       | 10min |
-| 9   | Investigate caddy boot reliability — add `After=sops-nix.service` if needed                 | 10min |
-| 10  | Continue pipe operator migration to remaining Nix files                                     | 30min |
-| 11  | Adopt `mkGraphicalUserService` in all user services that match the pattern                  | 15min |
+| #  | Task                                                                                        | Est   |
+| -- | ------------------------------------------------------------------------------------------- | ----- |
+| 7  | Audit all sops templates for DynamicUser compatibility (prevent future gatus-like failures) | 15min |
+| 8  | Run `just clean` to reclaim disk space on both mounts                                       | 10min |
+| 9  | Investigate caddy boot reliability — add `After=sops-nix.service` if needed                 | 10min |
+| 10 | Continue pipe operator migration to remaining Nix files                                     | 30min |
+| 11 | Adopt `mkGraphicalUserService` in all user services that match the pattern                  | 15min |
 
 ### 🟢 P2 — Code Quality
 
-| #   | Task                                                                                              | Est   |
-| --- | ------------------------------------------------------------------------------------------------- | ----- |
-| 12  | Consolidate voice-agents Caddy vHost into caddy.nix                                               | 10min |
-| 13  | Deploy Dozzle for Docker log viewing (if decision is yes)                                         | 15min |
-| 14  | Start Nix Flake Standardization Phase 1: fix 3 broken Go builds (BuildFlow, PMA, go-auto-upgrade) | 30min |
-| 15  | Add `just test` integration: test-home-manager + test-shell-aliases                               | 15min |
-| 16  | Create/update TODO_LIST.md from all planning docs                                                 | 10min |
-| 17  | Archive old status docs (sessions 45–62)                                                          | 5min  |
-| 18  | Move dns-failover authPassword to sops (unblock: needs age identity)                              | 10min |
-| 19  | Add SigNoz per-threshold channel routing (critical vs warning)                                    | 10min |
-| 20  | Add Gatus endpoint: Dozzle (if deployed)                                                          | 5min  |
+| #  | Task                                                                                              | Est   |
+| -- | ------------------------------------------------------------------------------------------------- | ----- |
+| 12 | Consolidate voice-agents Caddy vHost into caddy.nix                                               | 10min |
+| 13 | Deploy Dozzle for Docker log viewing (if decision is yes)                                         | 15min |
+| 14 | Start Nix Flake Standardization Phase 1: fix 3 broken Go builds (BuildFlow, PMA, go-auto-upgrade) | 30min |
+| 15 | Add `just test` integration: test-home-manager + test-shell-aliases                               | 15min |
+| 16 | Create/update TODO_LIST.md from all planning docs                                                 | 10min |
+| 17 | Archive old status docs (sessions 45–62)                                                          | 5min  |
+| 18 | Move dns-failover authPassword to sops (unblock: needs age identity)                              | 10min |
+| 19 | Add SigNoz per-threshold channel routing (critical vs warning)                                    | 10min |
+| 20 | Add Gatus endpoint: Dozzle (if deployed)                                                          | 5min  |
 
 ### 🔵 P3 — Infrastructure
 
-| #   | Task                                                                            | Est      |
-| --- | ------------------------------------------------------------------------------- | -------- |
-| 21  | Create shared flake-parts template for Go projects (Phase 2 of standardization) | 30min    |
-| 22  | Apply template to all 9 LarsArtmann Go projects (Phase 3)                       | 2hr      |
-| 23  | Provision Pi 3 hardware for DNS failover cluster                                | Hardware |
-| 24  | Wire Pi 3 as secondary DNS in dns-failover.nix                                  | 10min    |
-| 25  | Add automated disk cleanup timer (monthly `just clean`)                         | 10min    |
+| #  | Task                                                                            | Est      |
+| -- | ------------------------------------------------------------------------------- | -------- |
+| 21 | Create shared flake-parts template for Go projects (Phase 2 of standardization) | 30min    |
+| 22 | Apply template to all 9 LarsArtmann Go projects (Phase 3)                       | 2hr      |
+| 23 | Provision Pi 3 hardware for DNS failover cluster                                | Hardware |
+| 24 | Wire Pi 3 as secondary DNS in dns-failover.nix                                  | 10min    |
+| 25 | Add automated disk cleanup timer (monthly `just clean`)                         | 10min    |
 
 ---
 

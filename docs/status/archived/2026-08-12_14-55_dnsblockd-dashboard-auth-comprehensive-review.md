@@ -85,6 +85,7 @@ The task was to enable dnsblockd's built-in `auth_token` feature so the dashboar
 **This is the #1 failure.** The entire point of this session was to make the dashboard show detailed stats. We deployed the config but the dnsblockd PROCESS WAS NEVER RESTARTED. The old process is running without `auth_token`. The dashboard still shows basic stats. The user's original problem is NOT SOLVED at runtime.
 
 **Root cause chain:**
+
 1. `nix run .#deploy` was blocked by 3 pre-existing phantom metric failures (Monitor365 agent down — unrelated to our work)
 2. Fell back to `nh os switch .` directly
 3. `nh os switch` returned exit code 4 (clickhouse.service failed during activation)
@@ -111,6 +112,7 @@ The user's original question was "how do I get an auth key?" We created the secr
 ### 4. No runtime verification of ANY kind
 
 Due to `curl`/`sudo`/`systemctl` being blocked by tool security policy, zero runtime verification was performed:
+
 - Did not verify the koanf env override works (does `DNSBLOCKD_AUTH_TOKEN` actually map to `auth_token`?)
 - Did not verify the widget sends the correct header format
 - Did not verify the dashboard shows the login page
@@ -161,8 +163,8 @@ All verification was deferred to "the user should check." This is unacceptable f
 ---
 
 ## f) NEXT STEPS (prioritized, up to 50)
-> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
 
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
 
 ### CRITICAL — User must do these
 

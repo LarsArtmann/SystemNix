@@ -27,28 +27,28 @@
 
 Priority formula: `(Impact × CustomerValue) / Effort` — higher is better.
 
-| #   | Task                                                                                   | Impact | Effort | Value | Priority | Phase      | Deps         |
-| --- | -------------------------------------------------------------------------------------- | ------ | ------ | ----- | -------- | ---------- | ------------ |
-| 1   | Add `STATIC_API_KEY` to sops secrets                                                   | 10     | 2      | 10    | **50.0** | Foundation | —            |
-| 2   | Wire `STATIC_API_KEY` into pocket-id module                                            | 10     | 2      | 10    | **50.0** | Foundation | #1           |
-| 3   | Add missing env vars (LOG_LEVEL, VERSION_CHECK_DISABLED, AUDIT_LOG_RETENTION_DAYS)     | 5      | 3      | 6     | **10.0** | Config     | —            |
-| 4   | Pin `DB_CONNECTION_STRING` and `UPLOAD_PATH` explicitly                                | 6      | 2      | 7     | **21.0** | Config     | —            |
-| 5   | Research Pocket ID API: user create, OIDC client create, avatar upload endpoints       | 9      | 6      | 9     | **13.5** | Research   | #2           |
-| 6   | Create `pocket-id-provision` systemd service skeleton                                  | 8      | 4      | 8     | **16.0** | Provision  | #2, #5       |
-| 7   | Implement admin user creation via API in provision service                             | 9      | 6      | 9     | **13.5** | Provision  | #5, #6       |
-| 8   | Implement OIDC client creation (oauth2-proxy, immich) via API in provision service     | 9      | 6      | 9     | **13.5** | Provision  | #5, #6       |
-| 9   | Implement avatar seeding (copy `assets/avatar.png` → upload path) in provision service | 6      | 4      | 7     | **10.5** | Provision  | #4, #6       |
-| 10  | Make provision service idempotent (check-before-create)                                | 7      | 5      | 8     | **11.2** | Provision  | #6–9         |
-| 11  | Add `just pocket-id-export` recipe                                                     | 5      | 2      | 6     | **15.0** | Backup     | —            |
-| 12  | Add `just pocket-id-restore` recipe                                                    | 5      | 2      | 6     | **15.0** | Backup     | —            |
-| 13  | Add assertion: `STATIC_API_KEY` required when `provision.enable`                       | 4      | 2      | 5     | **10.0** | Safety     | #6           |
-| 14  | Add `dataDir` + tmpfiles rule explicitly in module                                     | 4      | 2      | 5     | **10.0** | Config     | —            |
-| 15  | Update `just auth-bootstrap` to use provision service                                  | 6      | 3      | 7     | **14.0** | UX         | #6–10        |
-| 16  | Update AGENTS.md with full declarative workflow                                        | 5      | 4      | 7     | **8.8**  | Docs       | #11–15       |
-| 17  | Test compilation: `just test-fast`                                                     | 3      | 3      | 5     | **5.0**  | Test       | #1–4, #13–14 |
-| 18  | Test provision service on live system                                                  | 8      | 8      | 9     | **9.0**  | Test       | #6–10        |
-| 19  | Verify OIDC auth works end-to-end after provision                                      | 7      | 5      | 8     | **11.2** | Test       | #18          |
-| 20  | Verify avatar renders correctly                                                        | 4      | 3      | 5     | **6.7**  | Test       | #9, #18      |
+| #  | Task                                                                                   | Impact | Effort | Value | Priority | Phase      | Deps         |
+| -- | -------------------------------------------------------------------------------------- | ------ | ------ | ----- | -------- | ---------- | ------------ |
+| 1  | Add `STATIC_API_KEY` to sops secrets                                                   | 10     | 2      | 10    | **50.0** | Foundation | —            |
+| 2  | Wire `STATIC_API_KEY` into pocket-id module                                            | 10     | 2      | 10    | **50.0** | Foundation | #1           |
+| 3  | Add missing env vars (LOG_LEVEL, VERSION_CHECK_DISABLED, AUDIT_LOG_RETENTION_DAYS)     | 5      | 3      | 6     | **10.0** | Config     | —            |
+| 4  | Pin `DB_CONNECTION_STRING` and `UPLOAD_PATH` explicitly                                | 6      | 2      | 7     | **21.0** | Config     | —            |
+| 5  | Research Pocket ID API: user create, OIDC client create, avatar upload endpoints       | 9      | 6      | 9     | **13.5** | Research   | #2           |
+| 6  | Create `pocket-id-provision` systemd service skeleton                                  | 8      | 4      | 8     | **16.0** | Provision  | #2, #5       |
+| 7  | Implement admin user creation via API in provision service                             | 9      | 6      | 9     | **13.5** | Provision  | #5, #6       |
+| 8  | Implement OIDC client creation (oauth2-proxy, immich) via API in provision service     | 9      | 6      | 9     | **13.5** | Provision  | #5, #6       |
+| 9  | Implement avatar seeding (copy `assets/avatar.png` → upload path) in provision service | 6      | 4      | 7     | **10.5** | Provision  | #4, #6       |
+| 10 | Make provision service idempotent (check-before-create)                                | 7      | 5      | 8     | **11.2** | Provision  | #6–9         |
+| 11 | Add `just pocket-id-export` recipe                                                     | 5      | 2      | 6     | **15.0** | Backup     | —            |
+| 12 | Add `just pocket-id-restore` recipe                                                    | 5      | 2      | 6     | **15.0** | Backup     | —            |
+| 13 | Add assertion: `STATIC_API_KEY` required when `provision.enable`                       | 4      | 2      | 5     | **10.0** | Safety     | #6           |
+| 14 | Add `dataDir` + tmpfiles rule explicitly in module                                     | 4      | 2      | 5     | **10.0** | Config     | —            |
+| 15 | Update `just auth-bootstrap` to use provision service                                  | 6      | 3      | 7     | **14.0** | UX         | #6–10        |
+| 16 | Update AGENTS.md with full declarative workflow                                        | 5      | 4      | 7     | **8.8**  | Docs       | #11–15       |
+| 17 | Test compilation: `just test-fast`                                                     | 3      | 3      | 5     | **5.0**  | Test       | #1–4, #13–14 |
+| 18 | Test provision service on live system                                                  | 8      | 8      | 9     | **9.0**  | Test       | #6–10        |
+| 19 | Verify OIDC auth works end-to-end after provision                                      | 7      | 5      | 8     | **11.2** | Test       | #18          |
+| 20 | Verify avatar renders correctly                                                        | 4      | 3      | 5     | **6.7**  | Test       | #9, #18      |
 
 ---
 

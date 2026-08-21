@@ -171,33 +171,33 @@ The amdgpu driver freeze on ~Jun 5 produced zero diagnostic output. pstore is em
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| #   | Priority | Task                                                                                                                               | Impact                             |
-| --- | -------- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| 1   | CRITICAL | **Reboot to verify boot time improvement** — signoz.target decoupling + sops fix should drop graphical.target from ~3min to ~30s   | 2.5min faster boot                 |
-| 2   | CRITICAL | **Fix pocket-id-provision API auth** — debug STATIC_API_KEY against Pocket ID v2.7.0 API, run curl commands as pocket-id user      | All OIDC client provisioning works |
-| 3   | HIGH     | **Guard ALL sops secrets with optionalAttrs** — audit every secret in sops.nix that references a service-specific user/owner       | Prevents future atomic failures    |
-| 4   | HIGH     | **Add startLimitBurst to serviceDefaults** — bake crash-loop protection into the shared default instead of per-service             | All future services auto-protected |
-| 5   | HIGH     | **Investigate NVMe 2m50s device detection** — try `nvme_core.default_ps_max_latency_us=0` kernel param, check module loading order | Faster initrd                      |
-| 6   | HIGH     | **Fix discordsync Discord connection** — check bot token validity, test with manual curl                                           | Backup service operational         |
-| 7   | HIGH     | **Monitor swap usage** — investigate why 17Gi swap used with 70Gi RAM free, consider swap clear                                    | Memory efficiency                  |
-| 8   | MEDIUM   | **Add service ordering: oauth2-proxy After pocket-id** — prevent first-start failures                                              | Cleaner boot                       |
-| 9   | MEDIUM   | **Add amdgpu reset_method=0 module param** — force GPU reset method for faster watchdog response                                   | Faster crash recovery              |
-| 10  | MEDIUM   | **Run full `nix flake update`** — update all flake inputs, fix vendorHash cascades                                                 | Security + features                |
-| 11  | MEDIUM   | **Archive old status reports** — move 160+ old reports to docs/status/archive/                                                     | Clean repo                         |
-| 12  | MEDIUM   | **Test pocket-id provision on clean state** — create a test script that can run independently                                      | Debugging DX                       |
-| 13  | MEDIUM   | **Add systemd-oomd swap pressure config** — automatic swap management                                                              | Memory resilience                  |
-| 14  | LOW      | **Check BIOS update for GMKtec EVO-X2** — newer BIOS may fix NVMe detection or POST time                                           | Hardware fix                       |
-| 15  | LOW      | **Add GPU crash kernel params** — `amdgpu.gpu_recovery=1`, `amdgpu.lockup_timeout=10000`                                           | Better crash handling              |
-| 16  | LOW      | **Review watchdogd config** — SP5100 TCO took 2+ min instead of 60s, needs investigation                                           | Reliable watchdog                  |
-| 17  | LOW      | **Add pstore Ramoops** — configure ramoops to capture crash logs before WDT reset                                                  | Crash forensics                    |
-| 18  | LOW      | **Homepage health check tiles** — add statusStyle: dot + siteMonitor to remaining tiles                                            | Dashboard completeness             |
-| 19  | LOW      | **Darwin disk cleanup** — macOS at 90%+ full, needs nix-collect-garbage                                                            | macOS usability                    |
-| 20  | LOW      | **Consolidate SigNoz module** — JWT secret wrapper + target + startLimitBurst all added piecemeal                                  | Code cleanliness                   |
-| 21  | LOW      | **Test overview service** — verify overview dashboard actually works at its URL                                                    | Service verification               |
-| 22  | LOW      | **Add Gatus endpoints for new services** — discordsync, overview, pocket-id-provision                                              | Monitoring coverage                |
-| 23  | LOW      | **Review AGENTS.md accuracy** — several new gotchas added, verify no contradictions                                                | Documentation accuracy             |
-| 24  | LOW      | **Investigate TPM/serial device 2m50s delay** — tpmrm0, ttyS0-S3 all take 2m50s in blame                                           | Boot optimization                  |
-| 25  | LOW      | **Consider systemd-boot `editor=false`** — prevent bootloader security bypass                                                      | Hardening                          |
+| #  | Priority | Task                                                                                                                               | Impact                             |
+| -- | -------- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| 1  | CRITICAL | **Reboot to verify boot time improvement** — signoz.target decoupling + sops fix should drop graphical.target from ~3min to ~30s   | 2.5min faster boot                 |
+| 2  | CRITICAL | **Fix pocket-id-provision API auth** — debug STATIC_API_KEY against Pocket ID v2.7.0 API, run curl commands as pocket-id user      | All OIDC client provisioning works |
+| 3  | HIGH     | **Guard ALL sops secrets with optionalAttrs** — audit every secret in sops.nix that references a service-specific user/owner       | Prevents future atomic failures    |
+| 4  | HIGH     | **Add startLimitBurst to serviceDefaults** — bake crash-loop protection into the shared default instead of per-service             | All future services auto-protected |
+| 5  | HIGH     | **Investigate NVMe 2m50s device detection** — try `nvme_core.default_ps_max_latency_us=0` kernel param, check module loading order | Faster initrd                      |
+| 6  | HIGH     | **Fix discordsync Discord connection** — check bot token validity, test with manual curl                                           | Backup service operational         |
+| 7  | HIGH     | **Monitor swap usage** — investigate why 17Gi swap used with 70Gi RAM free, consider swap clear                                    | Memory efficiency                  |
+| 8  | MEDIUM   | **Add service ordering: oauth2-proxy After pocket-id** — prevent first-start failures                                              | Cleaner boot                       |
+| 9  | MEDIUM   | **Add amdgpu reset_method=0 module param** — force GPU reset method for faster watchdog response                                   | Faster crash recovery              |
+| 10 | MEDIUM   | **Run full `nix flake update`** — update all flake inputs, fix vendorHash cascades                                                 | Security + features                |
+| 11 | MEDIUM   | **Archive old status reports** — move 160+ old reports to docs/status/archive/                                                     | Clean repo                         |
+| 12 | MEDIUM   | **Test pocket-id provision on clean state** — create a test script that can run independently                                      | Debugging DX                       |
+| 13 | MEDIUM   | **Add systemd-oomd swap pressure config** — automatic swap management                                                              | Memory resilience                  |
+| 14 | LOW      | **Check BIOS update for GMKtec EVO-X2** — newer BIOS may fix NVMe detection or POST time                                           | Hardware fix                       |
+| 15 | LOW      | **Add GPU crash kernel params** — `amdgpu.gpu_recovery=1`, `amdgpu.lockup_timeout=10000`                                           | Better crash handling              |
+| 16 | LOW      | **Review watchdogd config** — SP5100 TCO took 2+ min instead of 60s, needs investigation                                           | Reliable watchdog                  |
+| 17 | LOW      | **Add pstore Ramoops** — configure ramoops to capture crash logs before WDT reset                                                  | Crash forensics                    |
+| 18 | LOW      | **Homepage health check tiles** — add statusStyle: dot + siteMonitor to remaining tiles                                            | Dashboard completeness             |
+| 19 | LOW      | **Darwin disk cleanup** — macOS at 90%+ full, needs nix-collect-garbage                                                            | macOS usability                    |
+| 20 | LOW      | **Consolidate SigNoz module** — JWT secret wrapper + target + startLimitBurst all added piecemeal                                  | Code cleanliness                   |
+| 21 | LOW      | **Test overview service** — verify overview dashboard actually works at its URL                                                    | Service verification               |
+| 22 | LOW      | **Add Gatus endpoints for new services** — discordsync, overview, pocket-id-provision                                              | Monitoring coverage                |
+| 23 | LOW      | **Review AGENTS.md accuracy** — several new gotchas added, verify no contradictions                                                | Documentation accuracy             |
+| 24 | LOW      | **Investigate TPM/serial device 2m50s delay** — tpmrm0, ttyS0-S3 all take 2m50s in blame                                           | Boot optimization                  |
+| 25 | LOW      | **Consider systemd-boot `editor=false`** — prevent bootloader security bypass                                                      | Hardening                          |
 
 ---
 

@@ -144,33 +144,33 @@ BuildFlow pre-commit hook fails on 7 pre-existing issues:
 
 ## F) Top 25 Things To Do Next (sorted by impact/effort)
 
-| #   | Task                                                              | Impact | Effort | Repo           |
-| --- | ----------------------------------------------------------------- | ------ | ------ | -------------- |
-| 1   | Commit SystemNix uncommitted overlay changes                      | High   | Low    | SystemNix      |
-| 2   | Fix PMA gosec config (`rules` not allowed)                        | Medium | Low    | PMA            |
-| 3   | Fix `GoProjectWithDepsTemplate` hardcoded `test-project`          | Low    | Low    | PMA            |
-| 4   | Create PMA NixOS module in flake outputs                          | High   | Medium | PMA            |
-| 5   | Wire PMA NixOS module into SystemNix                              | High   | Low    | SystemNix      |
-| 6   | Add `goModTidy` option to `mkPreparedSource`                      | High   | Medium | go-nix-helpers |
-| 7   | Enable `doCheck = true` in PMA flake                              | Medium | Low    | PMA            |
-| 8   | Fix PMA concurrent access flaky test                              | Medium | Medium | PMA            |
-| 9   | Extract `NotificationSender` interface in PMA                     | Medium | Medium | PMA            |
-| 10  | Replace `exec.Command("notify-send")` with `godbus/dbus`          | Low    | Medium | PMA            |
-| 11  | Implement `service stop` in PMA (PID file)                        | Medium | Medium | PMA            |
-| 12  | Add PMA systemd timer for scheduled commits                       | High   | Medium | SystemNix      |
-| 13  | Fix PMA library-policy violations (testify→ginkgo)                | Low    | High   | PMA            |
-| 14  | Migrate PMA from `gopkg.in/yaml.v3` to `go-faster/yaml`           | Low    | Medium | PMA            |
-| 15  | Clean up PMA `deploy/systemd/` → proper NixOS module              | High   | Medium | PMA            |
-| 16  | Add `GONOSUMCHECK`/`GONOSUMDB` to PMA flake for private deps      | Low    | Low    | PMA            |
-| 17  | Remove dead `go_homedir` dep from PMA (use `os.UserHomeDir()`)    | Low    | Low    | PMA            |
-| 18  | Add BTRFS /data snapshot migration (`just snapshot-migrate-data`) | High   | High   | SystemNix      |
-| 19  | Set up Hetzner Storage Box + BorgBackup offsite backup            | High   | High   | SystemNix      |
-| 20  | Archive old status docs (100+ files in `docs/status/`)            | Low    | Low    | SystemNix      |
-| 21  | Add `GOWORK=off` check to PMA pre-commit hook                     | Low    | Low    | PMA            |
-| 22  | Fix gitleaks false positives in PMA status docs                   | Low    | Low    | PMA            |
-| 23  | Consolidate PMA `pkg/domain/types/` with `pkg/domain/domain/`     | Medium | High   | PMA            |
-| 24  | Add `nilaway` or `errcheck` to PMA CI pipeline                    | Medium | Low    | PMA            |
-| 25  | Create `docs/planning/` with Pareto execution graph               | Low    | Medium | PMA            |
+| #  | Task                                                              | Impact | Effort | Repo           |
+| -- | ----------------------------------------------------------------- | ------ | ------ | -------------- |
+| 1  | Commit SystemNix uncommitted overlay changes                      | High   | Low    | SystemNix      |
+| 2  | Fix PMA gosec config (`rules` not allowed)                        | Medium | Low    | PMA            |
+| 3  | Fix `GoProjectWithDepsTemplate` hardcoded `test-project`          | Low    | Low    | PMA            |
+| 4  | Create PMA NixOS module in flake outputs                          | High   | Medium | PMA            |
+| 5  | Wire PMA NixOS module into SystemNix                              | High   | Low    | SystemNix      |
+| 6  | Add `goModTidy` option to `mkPreparedSource`                      | High   | Medium | go-nix-helpers |
+| 7  | Enable `doCheck = true` in PMA flake                              | Medium | Low    | PMA            |
+| 8  | Fix PMA concurrent access flaky test                              | Medium | Medium | PMA            |
+| 9  | Extract `NotificationSender` interface in PMA                     | Medium | Medium | PMA            |
+| 10 | Replace `exec.Command("notify-send")` with `godbus/dbus`          | Low    | Medium | PMA            |
+| 11 | Implement `service stop` in PMA (PID file)                        | Medium | Medium | PMA            |
+| 12 | Add PMA systemd timer for scheduled commits                       | High   | Medium | SystemNix      |
+| 13 | Fix PMA library-policy violations (testify→ginkgo)                | Low    | High   | PMA            |
+| 14 | Migrate PMA from `gopkg.in/yaml.v3` to `go-faster/yaml`           | Low    | Medium | PMA            |
+| 15 | Clean up PMA `deploy/systemd/` → proper NixOS module              | High   | Medium | PMA            |
+| 16 | Add `GONOSUMCHECK`/`GONOSUMDB` to PMA flake for private deps      | Low    | Low    | PMA            |
+| 17 | Remove dead `go_homedir` dep from PMA (use `os.UserHomeDir()`)    | Low    | Low    | PMA            |
+| 18 | Add BTRFS /data snapshot migration (`just snapshot-migrate-data`) | High   | High   | SystemNix      |
+| 19 | Set up Hetzner Storage Box + BorgBackup offsite backup            | High   | High   | SystemNix      |
+| 20 | Archive old status docs (100+ files in `docs/status/`)            | Low    | Low    | SystemNix      |
+| 21 | Add `GOWORK=off` check to PMA pre-commit hook                     | Low    | Low    | PMA            |
+| 22 | Fix gitleaks false positives in PMA status docs                   | Low    | Low    | PMA            |
+| 23 | Consolidate PMA `pkg/domain/types/` with `pkg/domain/domain/`     | Medium | High   | PMA            |
+| 24 | Add `nilaway` or `errcheck` to PMA CI pipeline                    | Medium | Low    | PMA            |
+| 25 | Create `docs/planning/` with Pareto execution graph               | Low    | Medium | PMA            |
 
 ---
 

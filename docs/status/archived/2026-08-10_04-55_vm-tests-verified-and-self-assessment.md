@@ -12,11 +12,11 @@
 
 The #1 gap from the handoff was "VM tests evaluate but were never run." All 3 now pass:
 
-| Test | Runtime | Result | What It Proves |
-|------|---------|--------|----------------|
-| `lib-helpers` | 20.3s | ✅ PASS | `safe_head` survives pipefail SIGPIPE; `summary()` returns correct exit codes (0 on all-pass, 1 on any failure); `state_init`/`state_hit`/`state_reset` threshold logic works (counter increments, threshold comparison, file deletion on reset) |
-| `pipefail-sigpipe` | 17.0s | ✅ PASS | Unguarded `seq 1 1000000 \| head -1` aborts with exit 141 (SIGPIPE) under `set -o pipefail`; `\|\| true` guard survives. Proves the entire bug class is real and the fix works. |
-| `sed-delimiter` | 17.1s | ✅ PASS | `sed s\|old\|new\|g` correctly substitutes base64 SRI hashes containing `/`; `sed s/old/new/g` breaks on the same input. Proves the dns-update.sh fix was necessary. |
+| Test               | Runtime | Result  | What It Proves                                                                                                                                                                                                                                   |
+| ------------------ | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `lib-helpers`      | 20.3s   | ✅ PASS | `safe_head` survives pipefail SIGPIPE; `summary()` returns correct exit codes (0 on all-pass, 1 on any failure); `state_init`/`state_hit`/`state_reset` threshold logic works (counter increments, threshold comparison, file deletion on reset) |
+| `pipefail-sigpipe` | 17.0s   | ✅ PASS | Unguarded `seq 1 1000000 \| head -1` aborts with exit 141 (SIGPIPE) under `set -o pipefail`; `\|\| true` guard survives. Proves the entire bug class is real and the fix works.                                                                  |
+| `sed-delimiter`    | 17.1s   | ✅ PASS | `sed s\|old\|new\|g` correctly substitutes base64 SRI hashes containing `/`; `sed s/old/new/g` breaks on the same input. Proves the dns-update.sh fix was necessary.                                                                             |
 
 ### What Was Already Done (Prior Sessions, R1+R2)
 
@@ -67,6 +67,7 @@ The #1 gap from the handoff was "VM tests evaluate but were never run." All 3 no
 Nothing in this session. All 3 VM tests passed cleanly — no failures, no retries, no fixes needed.
 
 **From prior sessions (honest retrospectives):**
+
 - The `crush-daily-backfill.py` re-insert SQL was written blind — never read the actual schema. This could fail silently if the column names or types don't match.
 - The `safe_head`/`safe_tail` helpers were added to lib.sh with zero callers — adding code nobody uses is debt, not value, until adoption.
 - The test for sed `/` delimiter breaking on base64 is actually a soft assertion — the test accepts ALL three outcomes (sed succeeds with correct output, sed succeeds with wrong output, sed errors). It never actually FAILS. This makes the test tautological for the negative case — it proves nothing about the `/` delimiter being dangerous.
@@ -163,6 +164,7 @@ Nothing in this session. All 3 VM tests passed cleanly — no failures, no retri
 ### Q1: Should `niri-health.sh` be deleted or wired to a systemd service?
 
 The script exists in `scripts/` but is not referenced by any Nix module in `modules/nixos/`. I cannot determine if it was:
+
 - (a) Intentionally decommissioned in favor of `niri-drm-healthcheck.sh` (which IS wired)
 - (b) Meant to be wired but forgotten
 - (c) Used manually as an ad-hoc diagnostic tool
@@ -172,6 +174,7 @@ Deleting active code is destructive. Wiring dead code creates maintenance burden
 ### Q2: Should the private SSH key at `scripts/hermes-setup/id_ed25519` be removed from the working tree?
 
 I can see the file exists. I cannot determine:
+
 - (a) Whether it's a dummy/example key with no access to anything
 - (b) Whether it's a real key also stored in sops (making the on-disk copy redundant and a security risk)
 - (c) Whether hermes-setup needs it present on disk for a first-run bootstrap that sops can't cover yet

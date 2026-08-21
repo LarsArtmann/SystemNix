@@ -45,7 +45,7 @@ Nothing — no file has been written yet. The session ended between "understand"
 ## What is TOTALLY FUCKED UP — discovered during research (pre-existing, unfixed)
 
 1. **251 duplicated dashboards in production.** `signoz-provision` POSTs (create) on every run with no delete/update guard — 5 new dashboards per deploy for ~50 runs. The dashboard UI is unusable garbage. This is a worse bug than the schema warnings.
-2. **The "auto-migrated" dashboards are empty.** The v6 (`legacy:false`) entries created from v1 POSTs have `panels: {}` and `layouts: []` — SigNoz's create-time migration only kept `spec.display`. So the current dashboards show *nothing* even where POST succeeded with 2xx.
+2. **The "auto-migrated" dashboards are empty.** The v6 (`legacy:false`) entries created from v1 POSTs have `panels: {}` and `layouts: []` — SigNoz's create-time migration only kept `spec.display`. So the current dashboards show _nothing_ even where POST succeeded with 2xx.
 3. **Legacy v5 entries are zombies** — listed but 501 on GET; they cannot be fixed, only deleted.
 4. **`dns.json` queries dead metrics.** It targets `unbound_*` metrics, but dnsblockd replaced unbound entirely (AGENTS.md). The whole dashboard renders no data. Should be rewritten against real `dnsblockd_*` metrics (only `dnsblockd_dns_crashes_total` verified so far; the full set on the live `/metrics` endpoint has not been enumerated).
 5. **`signoz-overview.json` CPU Temperature panel** uses `node_hwmon_temp_celsius{chip="amdgpu"}` — the real metric per alert rules is `node_amdgpu_gpu_temp_celsius`. Likely dead panel.

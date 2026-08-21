@@ -29,14 +29,14 @@
 
 Authelia upgraded to **4.39.12** which introduced strict config validation. Five errors + one deprecation warning:
 
-| #   | Error                                                 | Fix                                      |
-| --- | ----------------------------------------------------- | ---------------------------------------- |
-| 1   | `notifier.filesystem.path` unexpected                 | → `filesystem.filename`                  |
-| 2   | `server.endpoints.enable.enable_expvars` unexpected   | → `endpoints.enable_expvars`             |
-| 3   | `server.endpoints.enable.enable_pprof` unexpected     | → `endpoints.enable_pprof`               |
-| 4   | `domain 'lan'` not valid cookie domain                | Domain migration (see below)             |
-| 5   | `notifier: filesystem: option 'filename' is required` | Same as #1                               |
-| ⚠   | `webauthn.user_verification` deprecated               | → `selection_criteria.user_verification` |
+| # | Error                                                 | Fix                                      |
+| - | ----------------------------------------------------- | ---------------------------------------- |
+| 1 | `notifier.filesystem.path` unexpected                 | → `filesystem.filename`                  |
+| 2 | `server.endpoints.enable.enable_expvars` unexpected   | → `endpoints.enable_expvars`             |
+| 3 | `server.endpoints.enable.enable_pprof` unexpected     | → `endpoints.enable_pprof`               |
+| 4 | `domain 'lan'` not valid cookie domain                | Domain migration (see below)             |
+| 5 | `notifier: filesystem: option 'filename' is required` | Same as #1                               |
+| ⚠ | `webauthn.user_verification` deprecated               | → `selection_criteria.user_verification` |
 
 ### 2. ClickHouse XML Parse Error
 

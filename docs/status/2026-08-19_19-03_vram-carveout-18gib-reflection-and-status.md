@@ -20,20 +20,21 @@ The user requested moving 16 GiB from VRAM (BIOS carveout) to GTT (system-visibl
 
 All references to "34 GiB" and "~94 GiB" were updated across **10 files**:
 
-| File | What Changed |
-|------|-------------|
-| `platforms/nixos/system/boot.nix` | TTM comments, zram sizing comments, sysctl comments |
-| `modules/nixos/services/ai-stack.nix` | VRAM carveout comments (2 lines) |
-| `modules/nixos/services/gpu-active.nix` | Collector header comment |
-| `modules/nixos/services/gatus-config.nix` | GPUActive alert message |
-| `modules/nixos/services/projects-management-automation.nix` | MemoryMax sizing rationale comment |
-| `AGENTS.md` | ZRAM sizing, dirty_ratio, GPU (NixOS) sections |
-| `README.md` | Memory row in hardware table |
-| `docs/gotchas-archive.md` | Strix Halo unified memory gotcha |
-| `docs/runbooks/monitoring-runbook.md` | GPUActive impact description |
-| `docs/runbooks/wdt-reset.md` | Visible RAM reference |
+| File                                                        | What Changed                                        |
+| ----------------------------------------------------------- | --------------------------------------------------- |
+| `platforms/nixos/system/boot.nix`                           | TTM comments, zram sizing comments, sysctl comments |
+| `modules/nixos/services/ai-stack.nix`                       | VRAM carveout comments (2 lines)                    |
+| `modules/nixos/services/gpu-active.nix`                     | Collector header comment                            |
+| `modules/nixos/services/gatus-config.nix`                   | GPUActive alert message                             |
+| `modules/nixos/services/projects-management-automation.nix` | MemoryMax sizing rationale comment                  |
+| `AGENTS.md`                                                 | ZRAM sizing, dirty_ratio, GPU (NixOS) sections      |
+| `README.md`                                                 | Memory row in hardware table                        |
+| `docs/gotchas-archive.md`                                   | Strix Halo unified memory gotcha                    |
+| `docs/runbooks/monitoring-runbook.md`                       | GPUActive impact description                        |
+| `docs/runbooks/wdt-reset.md`                                | Visible RAM reference                               |
 
 Auto-commit daemon committed these as:
+
 - `7db09df5` — refactor + VRAM carveout values in .nix files
 - `fe8093d4` — docs/memory update for 18 GiB allocation
 
@@ -55,7 +56,7 @@ Auto-commit daemon committed these as:
 
 ## b) PARTIALLY DONE
 
-1. ⚠️ **FastFlowLM AGENTS.md section** — Line 156 still says "~25 GB of the 94 GB CPU-visible pool". The 94→110 figure is stale here. The FastFlowLM model is 13.6 GB mmap'd and uses the NPU (XDNA), NOT the iGPU VRAM, so the *functional* impact of the VRAM reduction on FastFlowLM is indirect (more GTT pressure from other workloads competing with the 22.5 GB cold load). The comment is misleading but not dangerous.
+1. ⚠️ **FastFlowLM AGENTS.md section** — Line 156 still says "~25 GB of the 94 GB CPU-visible pool". The 94→110 figure is stale here. The FastFlowLM model is 13.6 GB mmap'd and uses the NPU (XDNA), NOT the iGPU VRAM, so the _functional_ impact of the VRAM reduction on FastFlowLM is indirect (more GTT pressure from other workloads competing with the 22.5 GB cold load). The comment is misleading but not dangerous.
 2. ⚠️ **Research/brainstorming docs** — `docs/brainstorming/2026-07-11_filesystem-platform-analysis.md` and `docs/research/observability-signoz-to-victoriametrics.md` still reference "94 GiB" and "34 GiB". These are point-in-time research docs (dated 2026-07-11 and 2026-08-18), so updating them is optional — they reflect the state at the time of writing. Not updated.
 
 ---
@@ -148,78 +149,78 @@ Nothing is broken. No functional regressions introduced — all changes were com
 
 ### Critical (Functional — Do Before Deploy)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 1 | **Reduce `OLLAMA_GPU_OVERHEAD` from 8 GiB to 4 GiB** — compositor needs ~2-4 GiB, not 8, when VRAM is only 18 GiB | 🔴 Models can't fit | 5 min |
-| 2 | **Raise `PYTORCH_CUDA_ALLOC_CONF` from 0.45 to 0.75-0.80** for Ollama — 45% of 18 GiB = 8.1 GiB is too restrictive | 🔴 Ollama models limited | 5 min |
-| 3 | **Verify BIOS change was actually made** — `free -h` or `grep MemTotal /proc/meminfo` should show ~110 GiB | 🔴 Invalid assumptions | 1 min |
-| 4 | **Update FastFlowLM AGENTS.md line 156** — "94 GB" → "110 GB" | 🟡 Stale info | 1 min |
-| 5 | **Update `ROADMAP.md`** — "2.5 GiB of 94 GiB" → "2.5 GiB of 110 GiB" | 🟡 Stale info | 1 min |
-| 6 | **Annotate `docs/hardware/ram-optimization-research-2026-08-16.md`** — Add decision outcome: "Done: lowered to 18 GiB (2026-08-19)" | 🟡 Closure | 2 min |
-| 7 | **Annotate ADR-002** — Mark as "Superseded by ADR-00X" or add a note about the 18 GiB reality | 🟡 Architecture | 5 min |
-| 8 | **Write a new ADR-003** — "VRAM Budget Allocation at 18 GiB Carveout" — defines compositor reservation, Ollama overhead, model budget | 🟡 Architecture | 15 min |
+| # | Task                                                                                                                                  | Impact                   | Effort |
+| - | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ------ |
+| 1 | **Reduce `OLLAMA_GPU_OVERHEAD` from 8 GiB to 4 GiB** — compositor needs ~2-4 GiB, not 8, when VRAM is only 18 GiB                     | 🔴 Models can't fit      | 5 min  |
+| 2 | **Raise `PYTORCH_CUDA_ALLOC_CONF` from 0.45 to 0.75-0.80** for Ollama — 45% of 18 GiB = 8.1 GiB is too restrictive                    | 🔴 Ollama models limited | 5 min  |
+| 3 | **Verify BIOS change was actually made** — `free -h` or `grep MemTotal /proc/meminfo` should show ~110 GiB                            | 🔴 Invalid assumptions   | 1 min  |
+| 4 | **Update FastFlowLM AGENTS.md line 156** — "94 GB" → "110 GB"                                                                         | 🟡 Stale info            | 1 min  |
+| 5 | **Update `ROADMAP.md`** — "2.5 GiB of 94 GiB" → "2.5 GiB of 110 GiB"                                                                  | 🟡 Stale info            | 1 min  |
+| 6 | **Annotate `docs/hardware/ram-optimization-research-2026-08-16.md`** — Add decision outcome: "Done: lowered to 18 GiB (2026-08-19)"   | 🟡 Closure               | 2 min  |
+| 7 | **Annotate ADR-002** — Mark as "Superseded by ADR-00X" or add a note about the 18 GiB reality                                         | 🟡 Architecture          | 5 min  |
+| 8 | **Write a new ADR-003** — "VRAM Budget Allocation at 18 GiB Carveout" — defines compositor reservation, Ollama overhead, model budget | 🟡 Architecture          | 15 min |
 
 ### Important (Architecture & Monitoring)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 9 | **Create `lib/hardware.nix`** — single source of truth for `vramCarveoutGiB`, `totalRamGiB`, `visibleRamGiB`, `gpuModel`, `npuModel` | 🔴 Prevents future staleness | 30 min |
-| 10 | **Add eval-time assertion** — `OLLAMA_GPU_OVERHEAD + compositorMinGiB <= vramCarveoutGiB` | 🟡 Catches misconfiguration | 15 min |
-| 11 | **Derive `OLLAMA_GPU_OVERHEAD` from `lib/hardware.nix` constant** instead of hardcoding bytes | 🟡 Single source of truth | 10 min |
-| 12 | **Reconsider SigNoz "GPU VRAM Critical (>85%)" alert** — may need to become 90% or an absolute GiB threshold | 🟡 False alerts | 10 min |
-| 13 | **Add "VRAM Budget Remaining" Prometheus metric** — `vram_total - vram_used - gpu_overhead` | 🟡 Better monitoring | 20 min |
-| 14 | **Consider raising GPUActive threshold** from 60G to 70G (now 55% of visible vs original 64%) | 🟡 False positives | 5 min |
-| 15 | **Review `PYTORCH_CUDA_ALLOC_CONF=0.95` on gpu-python wrapper** — 95% of 18 GiB = 17.1 GiB, leaves 0.9 GiB for compositor. Lower to 0.85? | 🟡 Compositor starvation | 5 min |
-| 16 | **Review Hermes `MemoryMax=24G`** — claims "PyTorch + ROCm + HIP" but has no `rocmEnv` (TODO_LIST line 135). With 18 GiB VRAM, if Hermes ever uses GPU, 24G MemoryMax is way over VRAM | 🟡 Latent bug | 10 min |
-| 17 | **Update `TODO_LIST.md`** — mark "check BIOS UMA Frame Buffer Size" as done, add any new follow-ups | 🟡 Hygiene | 5 min |
-| 18 | **Update `FEATURES.md`** if it references VRAM (checked: it only says "Model + VRAM + temp" in Homepage tile, no specific figures) | 🟢 Hygiene | 2 min |
+| #  | Task                                                                                                                                                                                   | Impact                       | Effort |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | ------ |
+| 9  | **Create `lib/hardware.nix`** — single source of truth for `vramCarveoutGiB`, `totalRamGiB`, `visibleRamGiB`, `gpuModel`, `npuModel`                                                   | 🔴 Prevents future staleness | 30 min |
+| 10 | **Add eval-time assertion** — `OLLAMA_GPU_OVERHEAD + compositorMinGiB <= vramCarveoutGiB`                                                                                              | 🟡 Catches misconfiguration  | 15 min |
+| 11 | **Derive `OLLAMA_GPU_OVERHEAD` from `lib/hardware.nix` constant** instead of hardcoding bytes                                                                                          | 🟡 Single source of truth    | 10 min |
+| 12 | **Reconsider SigNoz "GPU VRAM Critical (>85%)" alert** — may need to become 90% or an absolute GiB threshold                                                                           | 🟡 False alerts              | 10 min |
+| 13 | **Add "VRAM Budget Remaining" Prometheus metric** — `vram_total - vram_used - gpu_overhead`                                                                                            | 🟡 Better monitoring         | 20 min |
+| 14 | **Consider raising GPUActive threshold** from 60G to 70G (now 55% of visible vs original 64%)                                                                                          | 🟡 False positives           | 5 min  |
+| 15 | **Review `PYTORCH_CUDA_ALLOC_CONF=0.95` on gpu-python wrapper** — 95% of 18 GiB = 17.1 GiB, leaves 0.9 GiB for compositor. Lower to 0.85?                                              | 🟡 Compositor starvation     | 5 min  |
+| 16 | **Review Hermes `MemoryMax=24G`** — claims "PyTorch + ROCm + HIP" but has no `rocmEnv` (TODO_LIST line 135). With 18 GiB VRAM, if Hermes ever uses GPU, 24G MemoryMax is way over VRAM | 🟡 Latent bug                | 10 min |
+| 17 | **Update `TODO_LIST.md`** — mark "check BIOS UMA Frame Buffer Size" as done, add any new follow-ups                                                                                    | 🟡 Hygiene                   | 5 min  |
+| 18 | **Update `FEATURES.md`** if it references VRAM (checked: it only says "Model + VRAM + temp" in Homepage tile, no specific figures)                                                     | 🟢 Hygiene                   | 2 min  |
 
 ### Defer (Historical Docs — Low Priority)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 19 | Update `docs/brainstorming/2026-07-11_filesystem-platform-analysis.md` — 94→110, 34→18 | 🟢 Historical accuracy | 2 min |
-| 20 | Update `docs/research/observability-signoz-to-victoriametrics.md` — "2.5 GiB of 94 GiB" → "110 GiB" | 🟢 Historical accuracy | 1 min |
-| 21 | Update `docs/crash-analysis-2026-08-09.md` — "94G usable RAM" → "110G" | 🟢 Historical accuracy | 1 min |
-| 22 | Leave `CHANGELOG.md` as-is — historical records should reflect state at time of writing | 🟢 Correct as-is | 0 |
+| #  | Task                                                                                                | Impact                 | Effort |
+| -- | --------------------------------------------------------------------------------------------------- | ---------------------- | ------ |
+| 19 | Update `docs/brainstorming/2026-07-11_filesystem-platform-analysis.md` — 94→110, 34→18              | 🟢 Historical accuracy | 2 min  |
+| 20 | Update `docs/research/observability-signoz-to-victoriametrics.md` — "2.5 GiB of 94 GiB" → "110 GiB" | 🟢 Historical accuracy | 1 min  |
+| 21 | Update `docs/crash-analysis-2026-08-09.md` — "94G usable RAM" → "110G"                              | 🟢 Historical accuracy | 1 min  |
+| 22 | Leave `CHANGELOG.md` as-is — historical records should reflect state at time of writing             | 🟢 Correct as-is       | 0      |
 
 ### Concurrent Session Work (NOT Mine — Flagged)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 23 | `modules/nixos/services/llama-rag.nix` has uncommitted changes from another session (model fetch script rewrite) | ⚠️ Concurrent edit | — |
-| 24 | `scripts/post-deploy-check.sh` has uncommitted changes from another session | ⚠️ Concurrent edit | — |
-| 25 | 12+ commits since my work: llama-rag RAG stack, Paperless embeddings, systemd-graph, systemd-timer-monitor, bank-sync bump — all from other sessions | ⚠️ Awareness | — |
+| #  | Task                                                                                                                                                 | Impact            | Effort |
+| -- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | ------ |
+| 23 | `modules/nixos/services/llama-rag.nix` has uncommitted changes from another session (model fetch script rewrite)                                     | ⚠️ Concurrent edit | —      |
+| 24 | `scripts/post-deploy-check.sh` has uncommitted changes from another session                                                                          | ⚠️ Concurrent edit | —      |
+| 25 | 12+ commits since my work: llama-rag RAG stack, Paperless embeddings, systemd-graph, systemd-timer-monitor, bank-sync bump — all from other sessions | ⚠️ Awareness       | —      |
 
 ### Broader Improvements (Not Directly Related But Noticed)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 26 | **`lib/hardware.nix` should also encode NPU type** (XDNA), GPU arch (gfx1150), and ROCm version — currently scattered | 🟡 Architecture | 20 min |
-| 27 | **`ollama` `MemoryMax=32G` audit** — with 110G visible, is 32G still right? The model budget (10G VRAM with current settings) means most of the model is in GTT, and 32G cgroup limits total RSS+GTT. May need to raise. | 🟡 Functional | 10 min |
-| 28 | **`llama-rag` models are ~1-2 GiB VRAM each** (bge-m3 ~1.2 GiB FP16, reranker ~0.6 GiB) — with 18 GiB VRAM, both fit alongside a small Ollama model. But with OLLAMA_GPU_OVERHEAD=8G, only 10G is budget — 2G for RAG + 8G for Ollama = tight. | 🟡 Functional | 5 min |
-| 29 | **Consider whether Ollama should use `--n-gpu-layers` explicitly** to cap VRAM usage per model, rather than relying on the fraction | 🟡 Architecture | 15 min |
-| 30 | **Document the VRAM budget in AGENTS.md** — a table showing: VRAM total 18G, compositor 2-4G, Ollama overhead 4-8G, model budget 6-12G, RAG models 2G | 🟡 Clarity | 10 min |
-| 31 | **`OLLAMA_NUM_PARALLEL=2`** — with 10G model budget, 2 parallel contexts each need their own KV cache. May need to reduce to 1 for large models. | 🟡 Functional | 5 min |
-| 32 | **`OLLAMA_MAX_LOADED_MODELS=1`** — with the RAG embeddings model (~1.2 GiB) co-residing, this is correct. But verify the RAG llama-server doesn't conflict with Ollama for VRAM. | 🟡 Functional | 10 min |
-| 33 | **Create a `lib/gpu-budget.nix`** — derives all per-service VRAM allocations from the carveout constant. `compositorBudget = 4; ollamaOverhead = 4; modelBudget = vramCarveout - compositorBudget - ollamaOverhead;` | 🟡 Architecture | 30 min |
-| 34 | **Add a Gatus check for VRAM exhaustion** — `node_amdgpu_mem_info_vram_used_bytes > (vramCarveout - 2GiB) * 0.9` — alert when VRAM is >90% full | 🟡 Monitoring | 10 min |
-| 35 | **Review all `MemoryMax` values** against new 110G visible RAM — some services may benefit from higher limits | 🟡 Audit | 30 min |
-| 36 | **`vm.min_free_kbytes=2097152` (2 GiB)** — with 16 GiB more visible RAM, this could be raised for better kernel allocation headroom. Or leave as-is — 2G is already adequate. | 🟢 Tuning | 5 min |
-| 37 | **`vm.dirty_ratio=5`** — 5% of 110G = 5.5 GiB (was 4.7 GiB at 94G). Still fine for QLC NAND. | 🟢 No change needed | 0 |
-| 38 | **zram `memoryPercent=30`** — 30% of 110G = 33 GiB (was 28 GiB). At 3.2x compression, 33 GiB costs ~10.3 GiB physical. Good trade. Auto-adjusts, no change needed. | 🟢 No change needed | 0 |
-| 39 | **TTM `pages_limit=112 GiB`** — ceiling, not reservation. 110G visible < 112G ceiling. Fine. | 🟢 No change needed | 0 |
-| 40 | **TTM `page_pool_size=24 GiB`** — could raise to 32 GiB with more visible RAM, giving better GPU page reuse. But 24G was chosen to fix the GPUActive black hole — raising it risks reintroducing that. Leave as-is. | 🟢 No change needed | 0 |
-| 41 | **Paperless AI `PAPERLESS_AI_LLM_REQUEST_TIMEOUT=300`** — FastFlowLM cold load is 1-3 min. With more system RAM, cold load may be slightly faster. No change needed. | 🟢 No change needed | 0 |
-| 42 | **`platforms/common/packages/base.nix` comment about GPU rasterization** — references "51+ GiB GPUActive (55% of visible RAM)". With 110G visible, 51G = 46%. Comment is stale but the decision (disable GPU rasterization) is still correct. | 🟢 Stale comment | 2 min |
-| 43 | **`docs/runbooks/monitoring-runbook.md`** — "At 60G+, only ~50G remains for all system processes" — I updated this, but the original "34G" was wrong math (94-60=34). Now 110-60=50. Correct. | ✅ Done | 0 |
-| 44 | **Check if `amdgpu.ttm.pages_limit` kernel param needs updating** — it's set to `ttmPagesLimit` (112 GiB). With 110G visible, this is fine as a ceiling. | 🟢 No change needed | 0 |
-| 45 | **Consider a `lib/hardware.nix` assertion: `vramCarveoutGiB >= 8`** — prevent accidentally reducing VRAM below compositor minimum | 🟡 Safety | 10 min |
-| 46 | **Consider documenting the tradeoff matrix in the ADR** — at 34G: large models (up to ~26G), at 18G: small models (up to ~10G), at 8G: tiny models only | 🟡 Architecture | 10 min |
-| 47 | **Add a "VRAM Carveout" section to AGENTS.md** — explain the budget breakdown, which services consume VRAM, and how to change it | 🟡 Documentation | 15 min |
-| 48 | **Review whether FastFlowLM `OOMScoreAdjust=300` should change** — with 16G more headroom, the model is less likely to be OOM-killed, but the priority is still "sacrifice model, protect desktop". No change needed. | 🟢 No change needed | 0 |
-| 49 | **Check if `LimitMEMLOCK=infinity` for FastFlowLM NPU access is affected** — NPU DMA uses system RAM, not VRAM. No change needed. | 🟢 No change needed | 0 |
-| 50 | **Git commit all remaining doc updates** — the auto-commit daemon handled the .nix files but some .md files may still be uncommitted | 🟡 Hygiene | check |
+| #  | Task                                                                                                                                                                                                                                           | Impact              | Effort |
+| -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ------ |
+| 26 | **`lib/hardware.nix` should also encode NPU type** (XDNA), GPU arch (gfx1150), and ROCm version — currently scattered                                                                                                                          | 🟡 Architecture     | 20 min |
+| 27 | **`ollama` `MemoryMax=32G` audit** — with 110G visible, is 32G still right? The model budget (10G VRAM with current settings) means most of the model is in GTT, and 32G cgroup limits total RSS+GTT. May need to raise.                       | 🟡 Functional       | 10 min |
+| 28 | **`llama-rag` models are ~1-2 GiB VRAM each** (bge-m3 ~1.2 GiB FP16, reranker ~0.6 GiB) — with 18 GiB VRAM, both fit alongside a small Ollama model. But with OLLAMA_GPU_OVERHEAD=8G, only 10G is budget — 2G for RAG + 8G for Ollama = tight. | 🟡 Functional       | 5 min  |
+| 29 | **Consider whether Ollama should use `--n-gpu-layers` explicitly** to cap VRAM usage per model, rather than relying on the fraction                                                                                                            | 🟡 Architecture     | 15 min |
+| 30 | **Document the VRAM budget in AGENTS.md** — a table showing: VRAM total 18G, compositor 2-4G, Ollama overhead 4-8G, model budget 6-12G, RAG models 2G                                                                                          | 🟡 Clarity          | 10 min |
+| 31 | **`OLLAMA_NUM_PARALLEL=2`** — with 10G model budget, 2 parallel contexts each need their own KV cache. May need to reduce to 1 for large models.                                                                                               | 🟡 Functional       | 5 min  |
+| 32 | **`OLLAMA_MAX_LOADED_MODELS=1`** — with the RAG embeddings model (~1.2 GiB) co-residing, this is correct. But verify the RAG llama-server doesn't conflict with Ollama for VRAM.                                                               | 🟡 Functional       | 10 min |
+| 33 | **Create a `lib/gpu-budget.nix`** — derives all per-service VRAM allocations from the carveout constant. `compositorBudget = 4; ollamaOverhead = 4; modelBudget = vramCarveout - compositorBudget - ollamaOverhead;`                           | 🟡 Architecture     | 30 min |
+| 34 | **Add a Gatus check for VRAM exhaustion** — `node_amdgpu_mem_info_vram_used_bytes > (vramCarveout - 2GiB) * 0.9` — alert when VRAM is >90% full                                                                                                | 🟡 Monitoring       | 10 min |
+| 35 | **Review all `MemoryMax` values** against new 110G visible RAM — some services may benefit from higher limits                                                                                                                                  | 🟡 Audit            | 30 min |
+| 36 | **`vm.min_free_kbytes=2097152` (2 GiB)** — with 16 GiB more visible RAM, this could be raised for better kernel allocation headroom. Or leave as-is — 2G is already adequate.                                                                  | 🟢 Tuning           | 5 min  |
+| 37 | **`vm.dirty_ratio=5`** — 5% of 110G = 5.5 GiB (was 4.7 GiB at 94G). Still fine for QLC NAND.                                                                                                                                                   | 🟢 No change needed | 0      |
+| 38 | **zram `memoryPercent=30`** — 30% of 110G = 33 GiB (was 28 GiB). At 3.2x compression, 33 GiB costs ~10.3 GiB physical. Good trade. Auto-adjusts, no change needed.                                                                             | 🟢 No change needed | 0      |
+| 39 | **TTM `pages_limit=112 GiB`** — ceiling, not reservation. 110G visible < 112G ceiling. Fine.                                                                                                                                                   | 🟢 No change needed | 0      |
+| 40 | **TTM `page_pool_size=24 GiB`** — could raise to 32 GiB with more visible RAM, giving better GPU page reuse. But 24G was chosen to fix the GPUActive black hole — raising it risks reintroducing that. Leave as-is.                            | 🟢 No change needed | 0      |
+| 41 | **Paperless AI `PAPERLESS_AI_LLM_REQUEST_TIMEOUT=300`** — FastFlowLM cold load is 1-3 min. With more system RAM, cold load may be slightly faster. No change needed.                                                                           | 🟢 No change needed | 0      |
+| 42 | **`platforms/common/packages/base.nix` comment about GPU rasterization** — references "51+ GiB GPUActive (55% of visible RAM)". With 110G visible, 51G = 46%. Comment is stale but the decision (disable GPU rasterization) is still correct.  | 🟢 Stale comment    | 2 min  |
+| 43 | **`docs/runbooks/monitoring-runbook.md`** — "At 60G+, only ~50G remains for all system processes" — I updated this, but the original "34G" was wrong math (94-60=34). Now 110-60=50. Correct.                                                  | ✅ Done             | 0      |
+| 44 | **Check if `amdgpu.ttm.pages_limit` kernel param needs updating** — it's set to `ttmPagesLimit` (112 GiB). With 110G visible, this is fine as a ceiling.                                                                                       | 🟢 No change needed | 0      |
+| 45 | **Consider a `lib/hardware.nix` assertion: `vramCarveoutGiB >= 8`** — prevent accidentally reducing VRAM below compositor minimum                                                                                                              | 🟡 Safety           | 10 min |
+| 46 | **Consider documenting the tradeoff matrix in the ADR** — at 34G: large models (up to ~26G), at 18G: small models (up to ~10G), at 8G: tiny models only                                                                                        | 🟡 Architecture     | 10 min |
+| 47 | **Add a "VRAM Carveout" section to AGENTS.md** — explain the budget breakdown, which services consume VRAM, and how to change it                                                                                                               | 🟡 Documentation    | 15 min |
+| 48 | **Review whether FastFlowLM `OOMScoreAdjust=300` should change** — with 16G more headroom, the model is less likely to be OOM-killed, but the priority is still "sacrifice model, protect desktop". No change needed.                          | 🟢 No change needed | 0      |
+| 49 | **Check if `LimitMEMLOCK=infinity` for FastFlowLM NPU access is affected** — NPU DMA uses system RAM, not VRAM. No change needed.                                                                                                              | 🟢 No change needed | 0      |
+| 50 | **Git commit all remaining doc updates** — the auto-commit daemon handled the .nix files but some .md files may still be uncommitted                                                                                                           | 🟡 Hygiene          | check  |
 
 ---
 

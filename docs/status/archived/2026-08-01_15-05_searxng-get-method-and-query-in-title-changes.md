@@ -6,7 +6,6 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 1. **Switched `method` from `"POST"` to `"GET"`** — shareable/bookmarkable URLs, browser back-button works cleanly

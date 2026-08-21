@@ -211,48 +211,48 @@ SystemNix is a cross-platform Nix configuration managing **2 machines** (NixOS `
 
 ### P0 — High Impact, Immediate
 
-| #   | Task                                                    | Impact                                   | Effort        |
-| --- | ------------------------------------------------------- | ---------------------------------------- | ------------- |
-| 1   | **Deploy session 128-129 changes to evo-x2**            | All committed work is untested in prod   | `just switch` |
-| 2   | **Wire Pocket ID SMTP via SES**                         | Email verification + login notifications | Small         |
-| 3   | **Add SES SMTP credentials to sops** (`pocket-id.yaml`) | Unblocks email features                  | Manual        |
-| 4   | **Archive status reports (pre-session 100)**            | Reduces noise from 177 → ~30 files       | Trivial       |
-| 5   | **Verify all 30+ Gatus endpoints are healthy**          | Confidence in prod state                 | `just verify` |
+| # | Task                                                    | Impact                                   | Effort        |
+| - | ------------------------------------------------------- | ---------------------------------------- | ------------- |
+| 1 | **Deploy session 128-129 changes to evo-x2**            | All committed work is untested in prod   | `just switch` |
+| 2 | **Wire Pocket ID SMTP via SES**                         | Email verification + login notifications | Small         |
+| 3 | **Add SES SMTP credentials to sops** (`pocket-id.yaml`) | Unblocks email features                  | Manual        |
+| 4 | **Archive status reports (pre-session 100)**            | Reduces noise from 177 → ~30 files       | Trivial       |
+| 5 | **Verify all 30+ Gatus endpoints are healthy**          | Confidence in prod state                 | `just verify` |
 
 ### P1 — High Impact, This Week
 
-| #   | Task                                                                      | Impact                                | Effort  |
-| --- | ------------------------------------------------------------------------- | ------------------------------------- | ------- |
-| 6   | **Wire Hermes OpenAI fallback** (sops secret + model config)              | AI gateway resilience                 | Small   |
-| 7   | **Push shared flake-parts template to `go-nix-helpers`**                  | Go ecosystem standardization          | Small   |
-| 8   | **Investigate Dozzle module eval bug**                                    | Clean architecture, remove workaround | Medium  |
-| 9   | **Split `monitor365.nix` into sub-modules**                               | Maintainability                       | Medium  |
-| 10  | **Verify BTRFS snapshot health** (daily timer running, retention working) | Disaster recovery confidence          | Trivial |
+| #  | Task                                                                      | Impact                                | Effort  |
+| -- | ------------------------------------------------------------------------- | ------------------------------------- | ------- |
+| 6  | **Wire Hermes OpenAI fallback** (sops secret + model config)              | AI gateway resilience                 | Small   |
+| 7  | **Push shared flake-parts template to `go-nix-helpers`**                  | Go ecosystem standardization          | Small   |
+| 8  | **Investigate Dozzle module eval bug**                                    | Clean architecture, remove workaround | Medium  |
+| 9  | **Split `monitor365.nix` into sub-modules**                               | Maintainability                       | Medium  |
+| 10 | **Verify BTRFS snapshot health** (daily timer running, retention working) | Disaster recovery confidence          | Trivial |
 
 ### P2 — Medium Impact, This Month
 
-| #   | Task                                                          | Impact                             | Effort |
-| --- | ------------------------------------------------------------- | ---------------------------------- | ------ |
-| 11  | **Provision Pi 3 for DNS failover cluster**                   | Network resilience                 | Medium |
-| 12  | **Split `signoz.nix` — extract alert rules + dashboards**     | Maintainability                    | Medium |
-| 13  | **Split `forgejo.nix` — extract runner + federation config**  | Maintainability                    | Medium |
-| 14  | **Enable AppArmor** (when NixOS bug fixed)                    | Security hardening                 | Small  |
-| 15  | **Consider Nix flake migration for `domains` repo**           | Infrastructure-as-code consistency | Large  |
-| 16  | **Extract `scheduled-tasks.nix` sub-timers**                  | Code organization                  | Medium |
-| 17  | **Add `emailVerificationEnabled` option to Pocket ID module** | Declarative email config           | Small  |
+| #  | Task                                                          | Impact                             | Effort |
+| -- | ------------------------------------------------------------- | ---------------------------------- | ------ |
+| 11 | **Provision Pi 3 for DNS failover cluster**                   | Network resilience                 | Medium |
+| 12 | **Split `signoz.nix` — extract alert rules + dashboards**     | Maintainability                    | Medium |
+| 13 | **Split `forgejo.nix` — extract runner + federation config**  | Maintainability                    | Medium |
+| 14 | **Enable AppArmor** (when NixOS bug fixed)                    | Security hardening                 | Small  |
+| 15 | **Consider Nix flake migration for `domains` repo**           | Infrastructure-as-code consistency | Large  |
+| 16 | **Extract `scheduled-tasks.nix` sub-timers**                  | Code organization                  | Medium |
+| 17 | **Add `emailVerificationEnabled` option to Pocket ID module** | Declarative email config           | Small  |
 
 ### P3 — Nice to Have
 
-| #   | Task                                                                   | Impact                | Effort       |
-| --- | ---------------------------------------------------------------------- | --------------------- | ------------ |
-| 18  | **Enable PhotoMap** (port conflict resolved)                           | Photo AI features     | Medium       |
-| 19  | **Re-enable file-and-image-renamer** (when Go 1.26.3 lands in nixpkgs) | Desktop automation    | Waiting      |
-| 20  | **Voice agents — evaluate if still needed**                            | Clean disabled code   | Small        |
-| 21  | **Multi-WM (Sway) — test or remove**                                   | Reduce bitrot risk    | Medium       |
-| 22  | **DNS-over-QUIC — re-evaluate**                                        | Privacy               | Low priority |
-| 23  | **Add container image digests to all images in `lib/images.nix`**      | Supply chain security | Small        |
-| 24  | **Minecraft server — evaluate if still wanted**                        | Clean disabled code   | Trivial      |
-| 25  | **Consider consolidating `overview` into `homepage`**                  | Reduce service count  | Large        |
+| #  | Task                                                                   | Impact                | Effort       |
+| -- | ---------------------------------------------------------------------- | --------------------- | ------------ |
+| 18 | **Enable PhotoMap** (port conflict resolved)                           | Photo AI features     | Medium       |
+| 19 | **Re-enable file-and-image-renamer** (when Go 1.26.3 lands in nixpkgs) | Desktop automation    | Waiting      |
+| 20 | **Voice agents — evaluate if still needed**                            | Clean disabled code   | Small        |
+| 21 | **Multi-WM (Sway) — test or remove**                                   | Reduce bitrot risk    | Medium       |
+| 22 | **DNS-over-QUIC — re-evaluate**                                        | Privacy               | Low priority |
+| 23 | **Add container image digests to all images in `lib/images.nix`**      | Supply chain security | Small        |
+| 24 | **Minecraft server — evaluate if still wanted**                        | Clean disabled code   | Trivial      |
+| 25 | **Consider consolidating `overview` into `homepage`**                  | Reduce service count  | Large        |
 
 ---
 

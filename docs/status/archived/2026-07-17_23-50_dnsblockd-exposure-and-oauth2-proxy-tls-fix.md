@@ -9,7 +9,6 @@ services, diagnose and fix oauth2-proxy 500 error on OIDC callback.
 
 ---
 
-
 ## A) FULLY DONE ✅
 
 ### 1. dnsblockd Stats Router Root Redirect (UNCOMMITTED in dnsblockd repo)

@@ -34,13 +34,13 @@ gc-guard fix, restart-churn monitoring wiring, etc.) was quiescent (~2 h) and
    early-exit, which is the exact live-host scenario. VM-tested (test 6b:
    full-walk path AND fast-path drift).
 3. **TERMINAL_CWD drift question CLOSED** — read upstream commits `31561e37`
-   + `a93f1b2` in full: the deprecation warning now reads the `.env` FILE
-   (not the process env), and its docstring explicitly blesses process-env
-   TERMINAL_CWD ("runtime config bridges and session restoration
-   legitimately set TERMINAL_CWD"). The vanished startup warning is CORRECT
-   new behavior, our systemd env-bridge is upstream-sanctioned, and
-   `resolve_placeholder_terminal_cwd` + `HERMES_WRITE_SAFE_ROOT` are intact
-   at `63c6d9a4`. `flake.nix` RE-VERIFY comment re-dated with the verdict.
+   - `a93f1b2` in full: the deprecation warning now reads the `.env` FILE
+     (not the process env), and its docstring explicitly blesses process-env
+     TERMINAL_CWD ("runtime config bridges and session restoration
+     legitimately set TERMINAL_CWD"). The vanished startup warning is CORRECT
+     new behavior, our systemd env-bridge is upstream-sanctioned, and
+     `resolve_placeholder_terminal_cwd` + `HERMES_WRITE_SAFE_ROOT` are intact
+     at `63c6d9a4`. `flake.nix` RE-VERIFY comment re-dated with the verdict.
 4. **Bank-Sync smoke made deterministic** — the transient body-mismatch FAIL
    was neither of the two documented flake classes (both already fixed:
    `--compressed` + herestring): it was the restart race (single-shot curl
@@ -155,23 +155,23 @@ gc-guard fix, restart-churn monitoring wiring, etc.) was quiescent (~2 h) and
 
 ## f) Top things next
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 1 | USER: PAT go-live — create fine-grained read-only PAT + `sops --set` into `hermes-github-token.yaml`, then confirm `hermes-github-verify` prints `private-repo read auth OK` | High | S |
-| 2 | USER: pin policy for hermes-agent (track main vs `?ref=` release tags) — unblocks the bump-workflow TODO | High | S |
-| 3 | USER: history-purge push decision (held since 08-18; rotation already made residues inert) | Med | S |
-| 4 | Discord "connected" post-deploy smoke for hermes (journal assert; mind 429 noise) — TODO added | Med | S |
-| 5 | Verify tonight's `nix-gc` actually runs post gc-guard fix (root at 96%, 44 generations — the concurrent session's fix rode this deploy) | High | S |
-| 6 | BTRFS `/data` EIO inode repair (carried P0 — nightly `btrbk-data` still aborting on it) | High | M |
-| 7 | Forgejo mirror `AddAuthCredentialHelperForRemote` 2.4k errors/day (concurrent session's P1) | Med | M |
-| 8 | Create attic cache + push hermes 0.20.4 tree (CI rebuild cost until then) | Med | S |
-| 9 | Shared `wait_for_200` helper in post-deploy-check; audit remaining one-shot checks for warmup races | Med | S |
-| 10 | VM-test helpers: DNS-gate `/etc/hosts` + restart-burst audit (TODOs added) | Med | S |
-| 11 | VM test: real-binary exec instead of `sleep infinity` (venv import proof in CI) | Med | M |
-| 12 | Classify live `tools.registry` warnings (`check_bfl_requirements`, kanban-mode False) | Low | S |
-| 13 | Re-read curated notes when upstream v0.21.0 ships (TERMINAL_CWD/write-path watch) | Med | S |
-| 14 | Confirm the 05:23:19 deploy-stop OnFailure didn't spam Discord (known benign stop path) | Low | S |
-| 15 | Consider deleting `scripts/hermes-state-audit.sh` (58G claim was stale; script purpose gone) | Low | S |
+| #  | Task                                                                                                                                                                         | Impact | Effort |
+| -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 1  | USER: PAT go-live — create fine-grained read-only PAT + `sops --set` into `hermes-github-token.yaml`, then confirm `hermes-github-verify` prints `private-repo read auth OK` | High   | S      |
+| 2  | USER: pin policy for hermes-agent (track main vs `?ref=` release tags) — unblocks the bump-workflow TODO                                                                     | High   | S      |
+| 3  | USER: history-purge push decision (held since 08-18; rotation already made residues inert)                                                                                   | Med    | S      |
+| 4  | Discord "connected" post-deploy smoke for hermes (journal assert; mind 429 noise) — TODO added                                                                               | Med    | S      |
+| 5  | Verify tonight's `nix-gc` actually runs post gc-guard fix (root at 96%, 44 generations — the concurrent session's fix rode this deploy)                                      | High   | S      |
+| 6  | BTRFS `/data` EIO inode repair (carried P0 — nightly `btrbk-data` still aborting on it)                                                                                      | High   | M      |
+| 7  | Forgejo mirror `AddAuthCredentialHelperForRemote` 2.4k errors/day (concurrent session's P1)                                                                                  | Med    | M      |
+| 8  | Create attic cache + push hermes 0.20.4 tree (CI rebuild cost until then)                                                                                                    | Med    | S      |
+| 9  | Shared `wait_for_200` helper in post-deploy-check; audit remaining one-shot checks for warmup races                                                                          | Med    | S      |
+| 10 | VM-test helpers: DNS-gate `/etc/hosts` + restart-burst audit (TODOs added)                                                                                                   | Med    | S      |
+| 11 | VM test: real-binary exec instead of `sleep infinity` (venv import proof in CI)                                                                                              | Med    | M      |
+| 12 | Classify live `tools.registry` warnings (`check_bfl_requirements`, kanban-mode False)                                                                                        | Low    | S      |
+| 13 | Re-read curated notes when upstream v0.21.0 ships (TERMINAL_CWD/write-path watch)                                                                                            | Med    | S      |
+| 14 | Confirm the 05:23:19 deploy-stop OnFailure didn't spam Discord (known benign stop path)                                                                                      | Low    | S      |
+| 15 | Consider deleting `scripts/hermes-state-audit.sh` (58G claim was stale; script purpose gone)                                                                                 | Low    | S      |
 
 ## g) Questions I cannot answer myself
 

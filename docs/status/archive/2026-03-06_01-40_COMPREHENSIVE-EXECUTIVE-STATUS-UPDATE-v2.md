@@ -57,10 +57,10 @@ SystemNix remains operationally stable with comprehensive tooling. This update f
 
 ### ActivityWatch Ecosystem (70% COMPLETE)
 
-| Component                        | Status       | Blocker                      |
-| -------------------------------- | ------------ | ---------------------------- |
-| Core watchers (afk, window, web) | ✅ Working   | -                            |
-| Utilization watcher              | ✅ Deployed  | LaunchAgent (CLI args fixed) |
+| Component                        | Status      | Blocker                      |
+| -------------------------------- | ----------- | ---------------------------- |
+| Core watchers (afk, window, web) | ✅ Working  | -                            |
+| Utilization watcher              | ✅ Deployed | LaunchAgent (CLI args fixed) |
 | Input watcher                    | ⚠️ Available | Not auto-started             |
 | Enhanced watcher (AI/OCR)        | ⚠️ Analyzed  | Requires Ollama setup        |
 | Screenshot watcher               | ⚠️ Analyzed  | Storage planning needed      |
@@ -69,8 +69,8 @@ SystemNix remains operationally stable with comprehensive tooling. This update f
 
 ### Homebrew Configuration (ANALYSIS COMPLETE, MIGRATION PENDING)
 
-| Aspect              | Current              | Target                          | Status                          |
-| ------------------- | -------------------- | ------------------------------- | ------------------------------- |
+| Aspect              | Current              | Target                          | Status                         |
+| ------------------- | -------------------- | ------------------------------- | ------------------------------ |
 | **Prefix**          | `/usr/local` (Intel) | `/opt/homebrew` (Apple Silicon) | ⚠️ Migration planned            |
 | **Git Origin**      | Missing              | `github.com/Homebrew/brew`      | ⚠️ Will auto-fix with migration |
 | **Tier Status**     | Tier 3 (limited)     | Tier 1 (full support)           | ⚠️ Migration required           |
@@ -81,20 +81,20 @@ SystemNix remains operationally stable with comprehensive tooling. This update f
 
 ### NixOS evo-x2 (80% COMPLETE)
 
-| Component          | Status        | Issue                                  |
-| ------------------ | ------------- | -------------------------------------- |
-| Base System        | ✅ Working    | -                                      |
-| Hyprland Desktop   | ✅ Working    | -                                      |
-| Home Manager       | ✅ Working    | -                                      |
+| Component          | Status       | Issue                                  |
+| ------------------ | ------------ | -------------------------------------- |
+| Base System        | ✅ Working   | -                                      |
+| Hyprland Desktop   | ✅ Working   | -                                      |
+| Home Manager       | ✅ Working   | -                                      |
 | Bluetooth Audio    | ⚠️ Configured | Pending testing with Nest Audio        |
 | Security Hardening | ⚠️ Partial    | Audit rules disabled (kernel conflict) |
 
 ### Code Quality (75% COMPLETE)
 
-| Check            | Status      | Issues                          |
-| ---------------- | ----------- | ------------------------------- |
-| Nix syntax       | ✅ Passing  | No eval errors                  |
-| Flake check      | ✅ Passing  | Clean                           |
+| Check            | Status     | Issues                          |
+| ---------------- | ---------- | ------------------------------- |
+| Nix syntax       | ✅ Passing | No eval errors                  |
+| Flake check      | ✅ Passing | Clean                           |
 | Statix linting   | ⚠️ Warnings | W20, W04, W23                   |
 | Gitleaks secrets | ⚠️ Flagged  | 6 potential secrets need review |
 
@@ -247,48 +247,48 @@ Git Origin:   github.com/Homebrew/brew ✅
 
 ### P0 - Critical (This Week) ⭐
 
-| #   | Task                                     | Effort | Impact   | Status                   |
-| --- | ---------------------------------------- | ------ | -------- | ------------------------ |
-| 1   | **Homebrew Migration Decision**          | 15m    | CRITICAL | ⏳ User decision pending |
-| 2   | Execute Homebrew migration (if approved) | 30m    | CRITICAL | ⏳ Blocked on #1         |
-| 3   | Review gitleaks findings                 | 45m    | HIGH     | ⏳ Pending               |
-| 4   | Fix statix linting warnings              | 30m    | MEDIUM   | ⏳ Pending               |
-| 5   | Test NixOS Bluetooth with Nest Audio     | 60m    | MEDIUM   | ⏳ Pending               |
+| # | Task                                     | Effort | Impact   | Status                   |
+| - | ---------------------------------------- | ------ | -------- | ------------------------ |
+| 1 | **Homebrew Migration Decision**          | 15m    | CRITICAL | ⏳ User decision pending |
+| 2 | Execute Homebrew migration (if approved) | 30m    | CRITICAL | ⏳ Blocked on #1         |
+| 3 | Review gitleaks findings                 | 45m    | HIGH     | ⏳ Pending               |
+| 4 | Fix statix linting warnings              | 30m    | MEDIUM   | ⏳ Pending               |
+| 5 | Test NixOS Bluetooth with Nest Audio     | 60m    | MEDIUM   | ⏳ Pending               |
 
 ### P1 - High Priority (This Month)
 
-| #   | Task                                        | Effort | Impact | Dependencies |
-| --- | ------------------------------------------- | ------ | ------ | ------------ |
-| 6   | Implement programs/discovery.nix            | 2h     | HIGH   | None         |
-| 7   | Install Ollama and test aw-watcher-enhanced | 1h     | HIGH   | None         |
-| 8   | Create scripts/lib/paths.sh constants       | 1h     | MEDIUM | None         |
-| 9   | Merge Bluetooth documentation               | 30m    | LOW    | None         |
-| 10  | Create `just organize` command              | 2h     | MEDIUM | None         |
-| 11  | Deploy aw-watcher-input                     | 30m    | MEDIUM | None         |
-| 12  | Add automated flake update check            | 1h     | MEDIUM | None         |
+| #  | Task                                        | Effort | Impact | Dependencies |
+| -- | ------------------------------------------- | ------ | ------ | ------------ |
+| 6  | Implement programs/discovery.nix            | 2h     | HIGH   | None         |
+| 7  | Install Ollama and test aw-watcher-enhanced | 1h     | HIGH   | None         |
+| 8  | Create scripts/lib/paths.sh constants       | 1h     | MEDIUM | None         |
+| 9  | Merge Bluetooth documentation               | 30m    | LOW    | None         |
+| 10 | Create `just organize` command              | 2h     | MEDIUM | None         |
+| 11 | Deploy aw-watcher-input                     | 30m    | MEDIUM | None         |
+| 12 | Add automated flake update check            | 1h     | MEDIUM | None         |
 
 ### P2 - Medium Priority (This Quarter)
 
-| #   | Task                                     | Effort | Impact | Dependencies      |
-| --- | ---------------------------------------- | ------ | ------ | ----------------- |
-| 13  | Build cross-platform CLI tool            | 4h     | HIGH   | Program discovery |
-| 14  | Create tests/ framework                  | 3h     | HIGH   | None              |
-| 15  | Set up aw-sync multi-device              | 2h     | MEDIUM | None              |
-| 16  | Deploy aw-watcher-spotify                | 30m    | LOW    | None              |
-| 17  | Add InfluxDB export option               | 2h     | LOW    | None              |
-| 18  | Research iOS integration                 | 2h     | MEDIUM | None              |
-| 19  | Create file organization pre-commit hook | 1h     | MEDIUM | None              |
-| 20  | Update TODO_LIST.md                      | 30m    | LOW    | None              |
+| #  | Task                                     | Effort | Impact | Dependencies      |
+| -- | ---------------------------------------- | ------ | ------ | ----------------- |
+| 13 | Build cross-platform CLI tool            | 4h     | HIGH   | Program discovery |
+| 14 | Create tests/ framework                  | 3h     | HIGH   | None              |
+| 15 | Set up aw-sync multi-device              | 2h     | MEDIUM | None              |
+| 16 | Deploy aw-watcher-spotify                | 30m    | LOW    | None              |
+| 17 | Add InfluxDB export option               | 2h     | LOW    | None              |
+| 18 | Research iOS integration                 | 2h     | MEDIUM | None              |
+| 19 | Create file organization pre-commit hook | 1h     | MEDIUM | None              |
+| 20 | Update TODO_LIST.md                      | 30m    | LOW    | None              |
 
 ### P3 - Low Priority (Backlog)
 
-| #   | Task                            | Effort | Impact | Dependencies     |
-| --- | ------------------------------- | ------ | ------ | ---------------- |
-| 21  | Deploy aw-watcher-screenshot    | 1h     | MEDIUM | Storage planning |
-| 22  | Set up aw-watcher-ask           | 30m    | LOW    | None             |
-| 23  | Move AGENTS.md to docs/         | 15m    | LOW    | None             |
-| 24  | Create onboarding checklist     | 1h     | LOW    | None             |
-| 25  | Research standing desk hardware | 2h     | LOW    | None             |
+| #  | Task                            | Effort | Impact | Dependencies     |
+| -- | ------------------------------- | ------ | ------ | ---------------- |
+| 21 | Deploy aw-watcher-screenshot    | 1h     | MEDIUM | Storage planning |
+| 22 | Set up aw-watcher-ask           | 30m    | LOW    | None             |
+| 23 | Move AGENTS.md to docs/         | 15m    | LOW    | None             |
+| 24 | Create onboarding checklist     | 1h     | LOW    | None             |
+| 25 | Research standing desk hardware | 2h     | LOW    | None             |
 
 ---
 
@@ -365,13 +365,13 @@ nix-homebrew = {
 
 ### Build Health
 
-| Metric                       | Status                 |
-| ---------------------------- | ---------------------- |
-| `just test-fast`             | ✅ Passing             |
-| `nix flake check --no-build` | ✅ Passing             |
+| Metric                       | Status                |
+| ---------------------------- | --------------------- |
+| `just test-fast`             | ✅ Passing            |
+| `nix flake check --no-build` | ✅ Passing            |
 | `just pre-commit-run`        | ⚠️ 6 gitleaks findings |
-| `darwin-rebuild switch`      | ✅ Working             |
-| `nixos-rebuild switch`       | ✅ Working (evo-x2)    |
+| `darwin-rebuild switch`      | ✅ Working            |
+| `nixos-rebuild switch`       | ✅ Working (evo-x2)   |
 
 ### ActivityWatch Status
 
@@ -381,8 +381,8 @@ nix-homebrew = {
 | aw-watcher-window      | Darwin/NixOS | ✅ Fixed (permissions)  |
 | aw-watcher-web-chrome  | Darwin/NixOS | ✅ Active               |
 | aw-watcher-utilization | Darwin       | ✅ Active (LaunchAgent) |
-| aw-watcher-input       | Available    | ⚠️ Not deployed         |
-| aw-watcher-enhanced    | Research     | ⚠️ Ready for testing    |
+| aw-watcher-input       | Available    | ⚠️ Not deployed          |
+| aw-watcher-enhanced    | Research     | ⚠️ Ready for testing     |
 | aw-watcher-screenshot  | Research     | ❌ Not started          |
 
 ### Homebrew Status

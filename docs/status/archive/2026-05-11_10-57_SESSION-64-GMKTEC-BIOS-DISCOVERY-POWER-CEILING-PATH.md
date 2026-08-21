@@ -108,33 +108,33 @@ However, the overall situation with GMKtec is frustrating:
 
 ## f) Top #25 Things We Should Get Done Next
 
-| #   | Priority | Task                                                                      | Effort |
-| --- | -------- | ------------------------------------------------------------------------- | ------ |
-| 1   | P0       | **Reboot into BIOS → check AMD CBS/AMD PBS menus for PPT/TDP controls**   | 10min  |
-| 2   | P0       | **Try Ctrl+F1 / Ctrl+F2 in BIOS Advanced tab to reveal hidden AMD menus** | 2min   |
-| 3   | P0       | **Root disk cleanup** — `just clean`, coredumps, nix-collect-garbage      | 15min  |
-| 4   | P0       | **Download `251028b` image on another machine** (85 GB)                   | 2hr+   |
-| 5   | P1       | **Extract BIOS `.cap` file from `251028b` image**                         | 30min  |
-| 6   | P1       | **Flash newer BIOS** via BIOS setup if `.cap` extracted successfully      | 15min  |
-| 7   | P1       | **Contact GMKtec support** for standalone BIOS + PPT access               | 20min  |
-| 8   | P1       | **`just switch`** to deploy session 63 changes                            | 30min  |
-| 9   | P1       | **Verify Ollama stability** under load with MAX_LOADED_MODELS=1           | 30min  |
-| 10  | P1       | **Test GPU recovery** — simulate DRM zombie, verify auto-reboot flow      | 20min  |
-| 11  | P2       | Move niri-drm-healthcheck state file from `/tmp` to `/var/lib`            | 5min   |
-| 12  | P2       | **Check EVO-X2 Ubuntu image** for BIOS `.cap` (smaller download)          | 1hr    |
-| 3   | P2       | Add power estimation to waybar (RAPL energy_uj delta)                     | 30min  |
-| 14  | P2       | Provision Pi 3 for DNS failover cluster                                   | 2hr    |
-| 15  | P2       | Audit all 17 gatus health check endpoints                                 | 15min  |
-| 16  | P2       | Verify SigNoz metrics ingestion from all exporters                        | 15min  |
-| 17  | P2       | Add disk monitoring alerts (90% root, 67% data)                           | 20min  |
-| 18  | P3       | Search GMKtec forum/community for EVO-X2 BIOS modding info                | 30min  |
-| 19  | P3       | Write AMI IFR parser script for EFI variable analysis                     | 1hr    |
-| 20  | P3       | Test dual-WAN failover (mptcp-endpoint-manager)                           | 1hr    |
-| 21  | P3       | Check if `251028b` BIOS unlocks platform profiles for Linux               | 10min  |
-| 22  | P3       | Review awww-daemon sandboxing completeness                                | 15min  |
-| 23  | P3       | Investigate AMD Curve Optimizer support on Strix Halo                     | 30min  |
-| 24  | P4       | Add waybar CPU package power estimate module                              | 30min  |
-| 25  | P4       | Test full system recovery: GPU hang → auto-reboot → session restore       | 30min  |
+| #  | Priority | Task                                                                      | Effort |
+| -- | -------- | ------------------------------------------------------------------------- | ------ |
+| 1  | P0       | **Reboot into BIOS → check AMD CBS/AMD PBS menus for PPT/TDP controls**   | 10min  |
+| 2  | P0       | **Try Ctrl+F1 / Ctrl+F2 in BIOS Advanced tab to reveal hidden AMD menus** | 2min   |
+| 3  | P0       | **Root disk cleanup** — `just clean`, coredumps, nix-collect-garbage      | 15min  |
+| 4  | P0       | **Download `251028b` image on another machine** (85 GB)                   | 2hr+   |
+| 5  | P1       | **Extract BIOS `.cap` file from `251028b` image**                         | 30min  |
+| 6  | P1       | **Flash newer BIOS** via BIOS setup if `.cap` extracted successfully      | 15min  |
+| 7  | P1       | **Contact GMKtec support** for standalone BIOS + PPT access               | 20min  |
+| 8  | P1       | **`just switch`** to deploy session 63 changes                            | 30min  |
+| 9  | P1       | **Verify Ollama stability** under load with MAX_LOADED_MODELS=1           | 30min  |
+| 10 | P1       | **Test GPU recovery** — simulate DRM zombie, verify auto-reboot flow      | 20min  |
+| 11 | P2       | Move niri-drm-healthcheck state file from `/tmp` to `/var/lib`            | 5min   |
+| 12 | P2       | **Check EVO-X2 Ubuntu image** for BIOS `.cap` (smaller download)          | 1hr    |
+| 3  | P2       | Add power estimation to waybar (RAPL energy_uj delta)                     | 30min  |
+| 14 | P2       | Provision Pi 3 for DNS failover cluster                                   | 2hr    |
+| 15 | P2       | Audit all 17 gatus health check endpoints                                 | 15min  |
+| 16 | P2       | Verify SigNoz metrics ingestion from all exporters                        | 15min  |
+| 17 | P2       | Add disk monitoring alerts (90% root, 67% data)                           | 20min  |
+| 18 | P3       | Search GMKtec forum/community for EVO-X2 BIOS modding info                | 30min  |
+| 19 | P3       | Write AMI IFR parser script for EFI variable analysis                     | 1hr    |
+| 20 | P3       | Test dual-WAN failover (mptcp-endpoint-manager)                           | 1hr    |
+| 21 | P3       | Check if `251028b` BIOS unlocks platform profiles for Linux               | 10min  |
+| 22 | P3       | Review awww-daemon sandboxing completeness                                | 15min  |
+| 23 | P3       | Investigate AMD Curve Optimizer support on Strix Halo                     | 30min  |
+| 24 | P4       | Add waybar CPU package power estimate module                              | 30min  |
+| 25 | P4       | Test full system recovery: GPU hang → auto-reboot → session restore       | 30min  |
 
 ---
 

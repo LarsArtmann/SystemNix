@@ -193,8 +193,8 @@ Audit log of all manual allow/deny actions with timestamp and user.
 | 8        | Export Stats           | Medium | Medium - Observability   |
 | 9        | DNS Caching Stats      | Low    | Low - Performance tuning |
 | 10       | Per-Client Stats       | High   | Low - Debugging          |
-| 11       | Preload Common Domains | Low    | Low                      | Performance |
-| 12       | Allow/Deny Log         | Low    | Low                      | Audit       |
+| 11       | Preload Common Domains | Low    | Low                      |
+| 12       | Allow/Deny Log         | Low    | Low                      |
 
 ---
 

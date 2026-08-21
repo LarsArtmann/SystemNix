@@ -8,7 +8,6 @@
 
 ---
 
-
 ## A) FULLY DONE ✅
 
 ### 1. PKCE (S256) Enabled on oauth2-proxy (COMMITTED + DEPLOYED)
@@ -32,6 +31,7 @@ Extracted the correct hash from the cached derivation (`/nix/store/kh04nfw92285q
 The working tree had flake.lock churn from multiple auto-commits by other sessions/agents (commits `5f66742f` through `e5de655f`). Several inputs pointed to revisions with no binary cache (monitor365 `0615301`, buildflow `5279e685`, dnsblockd `bbbc136`), causing build failures.
 
 Reverted flake.lock to the state matching the last successfully deployed generation (commit `88419e21`), where all three critical inputs have cached store paths:
+
 - `monitor365: 90b20839` ✅ cached
 - `dnsblockd: d74adf44` ✅ cached
 - `buildflow: 258abe0c` ✅ cached
@@ -41,6 +41,7 @@ Reverted flake.lock to the state matching the last successfully deployed generat
 After fixing the cqrs-lint hash and reverting flake.lock, `nix run .#deploy` completed successfully. The deployed generation (`/run/current-system`) matches git HEAD (`40e1e334`), confirmed via `nixos-rebuild list-generations`. This is the FIRST clean deploy since the auth fixes were applied.
 
 All oauth2-proxy changes are now active via a proper `nh os switch`, not a manual `systemctl restart`:
+
 - `--code-challenge-method=S256` (PKCE)
 - `--whitelist-domain=.home.lan` (redirect whitelist)
 - Regenerated client secret (from previous session's `regenerateSecretsFor`)
@@ -208,16 +209,16 @@ The working tree has a full `nix flake update` from another session. None of the
 
 ## Item Resolution (2026-07-30)
 
-| # | Status | Resolution |
-|---|--------|------------|
-| 1 | REJECTED | Browser test — requires manual verification, in TODO_LIST deploy checklist |
-| 2 | DONE | Pocket ID provision HTTP 500 resolved (regenerateSecretsFor + partOf) |
-| 3 | DONE | Monitor365 binder bug fixed (`b900d3454`) |
-| 4 | DONE | dnsblockd health endpoint working after subdomain fix |
-| 5 | DONE | flake.lock committed by auto-git daemon |
-| 6-10 | DONE | partOf/restartTriggers, Gatus, native OIDC, PKCE all done |
-| 11 | DONE | cqrs-lint vendorHash fixed (2026-07-29) |
-| 12-50 | MIXED | Items 12-50 overlap heavily with file 12 (signoz-oauth2-proxy). Most are oauth2-proxy hardening brainstorms — REJECTED as over-engineering. Key survivors tracked in TODO_LIST/ROADMAP. |
+| #     | Status   | Resolution                                                                                                                                                                              |
+| ----- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | REJECTED | Browser test — requires manual verification, in TODO_LIST deploy checklist                                                                                                              |
+| 2     | DONE     | Pocket ID provision HTTP 500 resolved (regenerateSecretsFor + partOf)                                                                                                                   |
+| 3     | DONE     | Monitor365 binder bug fixed (`b900d3454`)                                                                                                                                               |
+| 4     | DONE     | dnsblockd health endpoint working after subdomain fix                                                                                                                                   |
+| 5     | DONE     | flake.lock committed by auto-git daemon                                                                                                                                                 |
+| 6-10  | DONE     | partOf/restartTriggers, Gatus, native OIDC, PKCE all done                                                                                                                               |
+| 11    | DONE     | cqrs-lint vendorHash fixed (2026-07-29)                                                                                                                                                 |
+| 12-50 | MIXED    | Items 12-50 overlap heavily with file 12 (signoz-oauth2-proxy). Most are oauth2-proxy hardening brainstorms — REJECTED as over-engineering. Key survivors tracked in TODO_LIST/ROADMAP. |
 
 ---
 

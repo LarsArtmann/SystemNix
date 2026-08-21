@@ -79,12 +79,13 @@
 ## f) NEXT UP (prioritized)
 
 **Paperless (user-gated):**
+
 1. Consume a real German PDF via web UI → verify OCR deu + AI suggestions + file layout template
 2. `.docx` consume (Gotenberg path) · 3. `.eml` consume (Tika path)
-4. Trash: delete → restore → retention-empty proof
-5. Decide old data: `document_importer` for pool-side `export/` + the synthetic test doc, or discard
-6. After PG ≥1 day stable + decision: remove `db.sqlite3*` (neutralizes the migration oneshot)
-7. Decide barcode consume (PATCHT/Code-39) and e-mail consumption (needs IMAP + sops)
+3. Trash: delete → restore → retention-empty proof
+4. Decide old data: `document_importer` for pool-side `export/` + the synthetic test doc, or discard
+5. After PG ≥1 day stable + decision: remove `db.sqlite3*` (neutralizes the migration oneshot)
+6. Decide barcode consume (PATCHT/Code-39) and e-mail consumption (needs IMAP + sops)
 
 **Alert hub (now unblocked by the ingest fix):**
 8. Watch first organic alert → verify `insight` enrichment (LLM via FastFlowLM) + Discord pairing

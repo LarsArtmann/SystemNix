@@ -187,13 +187,13 @@ The working tree is clean, no merge conflicts exist, no syntax errors detected. 
 
 ### Active Risks
 
-| #   | Risk                                  | Severity | Details                                                                                                                                                                         |
-| --- | ------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Go overlay duplicated**             | Medium   | Same Go 1.26.1 overlay in `flake.nix:91-98` AND `darwin/default.nix:66-78`. If one updates without the other, platforms diverge.                                                |
-| 2   | **nixpkgs allowUnfree contradiction** | Medium   | `flake.nix:139` sets blanket `allowUnfree = true`; `common/core/nix-settings.nix:48-60` sets curated `allowUnfreePredicate`. Blanket overrides predicate = dead code.           |
-| 3   | **Disabled services rotting**         | Low      | Authelia, Immich, Grafana modules exist but are disabled. Code could drift from API changes without anyone noticing.                                                            |
-| 4   | **SOPS secrets incomplete**           | Medium   | `gitea_token`, `github_token`, `github_user` secrets exist. `grafana_*`, `authelia_*`, `immich_*` secrets are commented out. Services can't be enabled until secrets are added. |
-| 5   | **Authelia user database hardcoded**  | Low      | `modules/nixos/services/authelia.nix` has a hardcoded user "lars" with a hashed password. This should use sops-nix.                                                             |
+| # | Risk                                  | Severity | Details                                                                                                                                                                         |
+| - | ------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Go overlay duplicated**             | Medium   | Same Go 1.26.1 overlay in `flake.nix:91-98` AND `darwin/default.nix:66-78`. If one updates without the other, platforms diverge.                                                |
+| 2 | **nixpkgs allowUnfree contradiction** | Medium   | `flake.nix:139` sets blanket `allowUnfree = true`; `common/core/nix-settings.nix:48-60` sets curated `allowUnfreePredicate`. Blanket overrides predicate = dead code.           |
+| 3 | **Disabled services rotting**         | Low      | Authelia, Immich, Grafana modules exist but are disabled. Code could drift from API changes without anyone noticing.                                                            |
+| 4 | **SOPS secrets incomplete**           | Medium   | `gitea_token`, `github_token`, `github_user` secrets exist. `grafana_*`, `authelia_*`, `immich_*` secrets are commented out. Services can't be enabled until secrets are added. |
+| 5 | **Authelia user database hardcoded**  | Low      | `modules/nixos/services/authelia.nix` has a hardcoded user "lars" with a hashed password. This should use sops-nix.                                                             |
 
 ---
 
@@ -235,53 +235,53 @@ The working tree is clean, no merge conflicts exist, no syntax errors detected. 
 
 ### Priority 1: Quick Wins (Under 15 min each)
 
-| #   | Task                                                           | Effort | Impact | Risk if skipped                   |
-| --- | -------------------------------------------------------------- | ------ | ------ | --------------------------------- |
-| 1   | Remove Darwin Go overlay from `darwin/default.nix`             | 2min   | Medium | Go version divergence             |
-| 2   | Fix Darwin `shells.nix` double-imports                         | 3min   | Medium | Nix module warnings               |
-| 3   | Remove `jq` from NixOS `home.packages` (duplicate of base.nix) | 1min   | Low    | Confusion                         |
-| 4   | Reconcile `allowUnfree` (remove dead predicate OR enforce it)  | 5min   | Medium | False security confidence         |
-| 5   | Add Hetzner SSH hosts to macOS `home.nix`                      | 5min   | High   | Can't access servers from MacBook |
+| # | Task                                                           | Effort | Impact | Risk if skipped                   |
+| - | -------------------------------------------------------------- | ------ | ------ | --------------------------------- |
+| 1 | Remove Darwin Go overlay from `darwin/default.nix`             | 2min   | Medium | Go version divergence             |
+| 2 | Fix Darwin `shells.nix` double-imports                         | 3min   | Medium | Nix module warnings               |
+| 3 | Remove `jq` from NixOS `home.packages` (duplicate of base.nix) | 1min   | Low    | Confusion                         |
+| 4 | Reconcile `allowUnfree` (remove dead predicate OR enforce it)  | 5min   | Medium | False security confidence         |
+| 5 | Add Hetzner SSH hosts to macOS `home.nix`                      | 5min   | High   | Can't access servers from MacBook |
 
 ### Priority 2: Service Enablement (Requires secrets)
 
-| #   | Task                                                     | Effort | Impact | Risk if skipped          |
-| --- | -------------------------------------------------------- | ------ | ------ | ------------------------ |
-| 6   | Add Authelia secrets to `secrets.yaml` and enable module | 30min  | High   | No SSO                   |
-| 7   | Add Immich OAuth secret and enable module                | 15min  | High   | No photo management      |
-| 8   | Add Grafana secrets and enable module                    | 15min  | Medium | No monitoring dashboards |
-| 9   | Fix Authelia hardcoded password → use sops-nix           | 10min  | Medium | Security risk            |
-| 10  | Verify Caddy TLS certs work with enabled services        | 10min  | High   | HTTPS broken             |
+| #  | Task                                                     | Effort | Impact | Risk if skipped          |
+| -- | -------------------------------------------------------- | ------ | ------ | ------------------------ |
+| 6  | Add Authelia secrets to `secrets.yaml` and enable module | 30min  | High   | No SSO                   |
+| 7  | Add Immich OAuth secret and enable module                | 15min  | High   | No photo management      |
+| 8  | Add Grafana secrets and enable module                    | 15min  | Medium | No monitoring dashboards |
+| 9  | Fix Authelia hardcoded password → use sops-nix           | 10min  | Medium | Security risk            |
+| 10 | Verify Caddy TLS certs work with enabled services        | 10min  | High   | HTTPS broken             |
 
 ### Priority 3: Architecture Consolidation
 
-| #   | Task                                                   | Effort | Impact | Risk if skipped       |
-| --- | ------------------------------------------------------ | ------ | ------ | --------------------- |
-| 11  | Extract SSH hosts to common module (or nix-ssh-config) | 30min  | High   | Ongoing drift         |
-| 12  | Extract color scheme options to common module          | 20min  | Medium | Divergence            |
-| 13  | Move `gitui` to `common/packages/base.nix`             | 5min   | Low    | Missing tool on macOS |
-| 14  | Consolidate Chrome policy definitions                  | 30min  | Medium | Policy drift          |
-| 15  | Create `just sync-audit` command                       | 1hr    | High   | Manual audits only    |
+| #  | Task                                                   | Effort | Impact | Risk if skipped       |
+| -- | ------------------------------------------------------ | ------ | ------ | --------------------- |
+| 11 | Extract SSH hosts to common module (or nix-ssh-config) | 30min  | High   | Ongoing drift         |
+| 12 | Extract color scheme options to common module          | 20min  | Medium | Divergence            |
+| 13 | Move `gitui` to `common/packages/base.nix`             | 5min   | Low    | Missing tool on macOS |
+| 14 | Consolidate Chrome policy definitions                  | 30min  | Medium | Policy drift          |
+| 15 | Create `just sync-audit` command                       | 1hr    | High   | Manual audits only    |
 
 ### Priority 4: Quality & Testing
 
-| #   | Task                                               | Effort | Impact | Risk if skipped       |
-| --- | -------------------------------------------------- | ------ | ------ | --------------------- |
-| 16  | Add CI cross-platform drift detection workflow     | 2hr    | High   | Silent drift          |
-| 17  | Verify Darwin Chrome policies are actually applied | 15min  | Medium | Unenforced policies   |
-| 18  | Add statix + deadnix to GitHub Actions             | 1hr    | Medium | Catch issues late     |
-| 19  | Test NixOS build from macOS (remote deploy)        | 2hr    | Medium | Can't verify remotely |
-| 20  | Create Home Manager test harness                   | 4hr    | High   | Manual testing only   |
+| #  | Task                                               | Effort | Impact | Risk if skipped       |
+| -- | -------------------------------------------------- | ------ | ------ | --------------------- |
+| 16 | Add CI cross-platform drift detection workflow     | 2hr    | High   | Silent drift          |
+| 17 | Verify Darwin Chrome policies are actually applied | 15min  | Medium | Unenforced policies   |
+| 18 | Add statix + deadnix to GitHub Actions             | 1hr    | Medium | Catch issues late     |
+| 19 | Test NixOS build from macOS (remote deploy)        | 2hr    | Medium | Can't verify remotely |
+| 20 | Create Home Manager test harness                   | 4hr    | High   | Manual testing only   |
 
 ### Priority 5: Documentation & Polish
 
-| #   | Task                                                       | Effort | Impact | Risk if skipped        |
-| --- | ---------------------------------------------------------- | ------ | ------ | ---------------------- |
-| 21  | Update AGENTS.md for removed files and new modules         | 30min  | Medium | Stale documentation    |
-| 22  | Document disabled services runbook                         | 20min  | Medium | Can't enable services  |
-| 23  | Add ADR for preferences module                             | 15min  | Low    | Undocumented decisions |
-| 24  | Document intentional vs unintentional platform differences | 30min  | Medium | Confusion              |
-| 25  | Clean up `common/core/` references in docs                 | 10min  | Low    | Broken references      |
+| #  | Task                                                       | Effort | Impact | Risk if skipped        |
+| -- | ---------------------------------------------------------- | ------ | ------ | ---------------------- |
+| 21 | Update AGENTS.md for removed files and new modules         | 30min  | Medium | Stale documentation    |
+| 22 | Document disabled services runbook                         | 20min  | Medium | Can't enable services  |
+| 23 | Add ADR for preferences module                             | 15min  | Low    | Undocumented decisions |
+| 24 | Document intentional vs unintentional platform differences | 30min  | Medium | Confusion              |
+| 25 | Clean up `common/core/` references in docs                 | 10min  | Low    | Broken references      |
 
 ---
 
@@ -301,20 +301,20 @@ This determines: add them to Darwin, extract to shared module, or leave as-is.
 
 ## Changes Since Last Audit (2026-04-04 17:28)
 
-| Change                                                     | Location                              | Status              |
-| ---------------------------------------------------------- | ------------------------------------- | ------------------- |
-| Cross-platform `preferences.nix` module                    | `common/preferences.nix`              | ✅ New              |
-| Dark mode driven by preferences                            | `darwin/system/settings.nix`          | ✅ New              |
-| Steam added to NixOS                                       | `nixos/programs/steam.nix`            | ✅ New              |
-| Authelia module (disabled)                                 | `modules/nixos/services/authelia.nix` | ✅ New              |
-| Helium Widevine CDM wrapping                               | `common/packages/base.nix`            | ✅ New              |
-| Dagger CI/CD tool added                                    | `common/packages/base.nix`            | ✅ New              |
-| Crush config as flake input                                | `flake.nix`                           | ✅ New              |
-| treefmt-full-flake as formatter                            | `flake.nix`                           | ✅ New              |
-| `UserConfig.nix`, `PathConfig.nix`, `security.nix` removed | `common/core/`                        | ✅ Cleaned          |
+| Change                                                     | Location                              | Status             |
+| ---------------------------------------------------------- | ------------------------------------- | ------------------ |
+| Cross-platform `preferences.nix` module                    | `common/preferences.nix`              | ✅ New             |
+| Dark mode driven by preferences                            | `darwin/system/settings.nix`          | ✅ New             |
+| Steam added to NixOS                                       | `nixos/programs/steam.nix`            | ✅ New             |
+| Authelia module (disabled)                                 | `modules/nixos/services/authelia.nix` | ✅ New             |
+| Helium Widevine CDM wrapping                               | `common/packages/base.nix`            | ✅ New             |
+| Dagger CI/CD tool added                                    | `common/packages/base.nix`            | ✅ New             |
+| Crush config as flake input                                | `flake.nix`                           | ✅ New             |
+| treefmt-full-flake as formatter                            | `flake.nix`                           | ✅ New             |
+| `UserConfig.nix`, `PathConfig.nix`, `security.nix` removed | `common/core/`                        | ✅ Cleaned         |
 | Authelia, Immich, Grafana disabled                         | `flake.nix`                           | ⚠️ Awaiting secrets |
-| `TODO_LIST.md` removed                                     | Root                                  | ✅ Cleaned          |
-| PrimaryUser inlined in activation                          | `darwin/system/activation.nix`        | ✅ Simplified       |
+| `TODO_LIST.md` removed                                     | Root                                  | ✅ Cleaned         |
+| PrimaryUser inlined in activation                          | `darwin/system/activation.nix`        | ✅ Simplified      |
 
 ---
 

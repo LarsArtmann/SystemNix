@@ -161,48 +161,48 @@ The fact that it's 21 bytes suggests it was a manually typed string rather than 
 
 ### P0 — Blocking (Do Immediately)
 
-| #   | Task                                           | Why                                 | Blocking? |
-| --- | ---------------------------------------------- | ----------------------------------- | --------- |
-| 1   | **Fix oauth2-proxy cookie secret**             | All protected services inaccessible | YES       |
-| 2   | **Verify all services start** after secret fix | Confirm no cascading failures       | YES       |
-| 3   | **Investigate 42 GiB RAM usage**               | OOM risk with systemd-oomd          | HIGH      |
+| # | Task                                           | Why                                 | Blocking? |
+| - | ---------------------------------------------- | ----------------------------------- | --------- |
+| 1 | **Fix oauth2-proxy cookie secret**             | All protected services inaccessible | YES       |
+| 2 | **Verify all services start** after secret fix | Confirm no cascading failures       | YES       |
+| 3 | **Investigate 42 GiB RAM usage**               | OOM risk with systemd-oomd          | HIGH      |
 
 ### P1 — High Impact (Do Today)
 
-| #   | Task                                                                 | Why                                  |
-| --- | -------------------------------------------------------------------- | ------------------------------------ |
-| 4   | **Add `just sops-edit` recipe** with `SOPS_AGE_SSH_PRIVATE_KEY_FILE` | Prevent future sops editing blockers |
-| 5   | **Update AGENTS.md** with session 94 learnings                       | Future sessions need context         |
-| 6   | **Check `protectedVHost` services** are accessible after fix         | Verify auth chain works end-to-end   |
-| 7   | **Monitor swap** — should decrease after build workload ends         | 3.3 GiB is elevated                  |
-| 8   | **Verify `systemd-oomd` is active** and not killing services         | Post-reboot validation               |
+| # | Task                                                                 | Why                                  |
+| - | -------------------------------------------------------------------- | ------------------------------------ |
+| 4 | **Add `just sops-edit` recipe** with `SOPS_AGE_SSH_PRIVATE_KEY_FILE` | Prevent future sops editing blockers |
+| 5 | **Update AGENTS.md** with session 94 learnings                       | Future sessions need context         |
+| 6 | **Check `protectedVHost` services** are accessible after fix         | Verify auth chain works end-to-end   |
+| 7 | **Monitor swap** — should decrease after build workload ends         | 3.3 GiB is elevated                  |
+| 8 | **Verify `systemd-oomd` is active** and not killing services         | Post-reboot validation               |
 
 ### P2 — Important (Do This Week)
 
-| #   | Task                                                       | Why                                               |
-| --- | ---------------------------------------------------------- | ------------------------------------------------- |
-| 9   | **Tag `go-output/graph` and `go-output/d2`** with v0.1.0   | Pseudo-versions are fragile                       |
-| 10  | **Add CI to `go-output`** for sub-module external builds   | Prevents replace-directive regression             |
-| 11  | **`/data` BTRFS migration** (`just snapshot-migrate-data`) | 89% full, no snapshots                            |
-| 12  | **Darwin build verification**                              | Cross-platform regressions invisible until deploy |
-| 13  | **`just test` full build check**                           | Only syntax check was run in session 94           |
-| 14  | **rpi3-dns build verification**                            | Different overlay set                             |
-| 15  | **Create Go repo dependency graph**                        | Predict cascade impacts                           |
-| 16  | **Review `nix-amd-npu`** — last updated April 8            | Stale input                                       |
+| #  | Task                                                       | Why                                               |
+| -- | ---------------------------------------------------------- | ------------------------------------------------- |
+| 9  | **Tag `go-output/graph` and `go-output/d2`** with v0.1.0   | Pseudo-versions are fragile                       |
+| 10 | **Add CI to `go-output`** for sub-module external builds   | Prevents replace-directive regression             |
+| 11 | **`/data` BTRFS migration** (`just snapshot-migrate-data`) | 89% full, no snapshots                            |
+| 12 | **Darwin build verification**                              | Cross-platform regressions invisible until deploy |
+| 13 | **`just test` full build check**                           | Only syntax check was run in session 94           |
+| 14 | **rpi3-dns build verification**                            | Different overlay set                             |
+| 15 | **Create Go repo dependency graph**                        | Predict cascade impacts                           |
+| 16 | **Review `nix-amd-npu`** — last updated April 8            | Stale input                                       |
 
 ### P3 — Nice to Have (Do Eventually)
 
-| #   | Task                                                                                            | Why                                             |
-| --- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| 17  | **`just check-secrets` recipe**                                                                 | Validate all sops secrets are present and valid |
-| 18  | **Add user SSH key as secondary sops recipient**                                                | Allow sops editing without root                 |
-| 19  | **`just update-and-build` recipe**                                                              | One-command flake update + build                |
-| 20  | **Auto-detect `subModules` in `mkPreparedSource`**                                              | Eliminate manual sub-module lists               |
-| 21  | **Monitor365 effectiveness audit**                                                              | Verify uptime monitoring is reporting           |
-| 22  | **DNS blocker blocklist freshness check**                                                       | Ensure blocklists are current                   |
-| 23  | **Consider `GOWORK` instead of `_local_deps`**                                                  | Native Go solution for multi-module dev         |
-| 24  | **Review stale flake inputs** — `homebrew-bundle` (Apr 2025), `niri-session-manager` (Jul 2025) | Security/functionality updates                  |
-| 25  | **NixOS 26.05 → 26.11 tracking**                                                                | Watch for breaking changes in unstable          |
+| #  | Task                                                                                            | Why                                             |
+| -- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| 17 | **`just check-secrets` recipe**                                                                 | Validate all sops secrets are present and valid |
+| 18 | **Add user SSH key as secondary sops recipient**                                                | Allow sops editing without root                 |
+| 19 | **`just update-and-build` recipe**                                                              | One-command flake update + build                |
+| 20 | **Auto-detect `subModules` in `mkPreparedSource`**                                              | Eliminate manual sub-module lists               |
+| 21 | **Monitor365 effectiveness audit**                                                              | Verify uptime monitoring is reporting           |
+| 22 | **DNS blocker blocklist freshness check**                                                       | Ensure blocklists are current                   |
+| 23 | **Consider `GOWORK` instead of `_local_deps`**                                                  | Native Go solution for multi-module dev         |
+| 24 | **Review stale flake inputs** — `homebrew-bundle` (Apr 2025), `niri-session-manager` (Jul 2025) | Security/functionality updates                  |
+| 25 | **NixOS 26.05 → 26.11 tracking**                                                                | Watch for breaking changes in unstable          |
 
 ---
 

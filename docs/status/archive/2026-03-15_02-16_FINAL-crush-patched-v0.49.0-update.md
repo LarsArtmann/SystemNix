@@ -74,12 +74,12 @@ Successfully updated `crush-patched` from v0.47.2 to v0.49.0. All changes commit
 
 ## C) NOT STARTED ❌
 
-| #   | Task                     | Notes                  |
-| --- | ------------------------ | ---------------------- |
-| 1   | Apply patch decision     | Depends on user choice |
-| 2   | Run `just switch`        | After patch decision   |
-| 3   | Test crush in real usage | After `just switch`    |
-| 4   | Push to remote           | User decision          |
+| # | Task                     | Notes                  |
+| - | ------------------------ | ---------------------- |
+| 1 | Apply patch decision     | Depends on user choice |
+| 2 | Run `just switch`        | After patch decision   |
+| 3 | Test crush in real usage | After `just switch`    |
+| 4 | Push to remote           | User decision          |
 
 ---
 

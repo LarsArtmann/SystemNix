@@ -136,8 +136,8 @@ The simplest fix (native ZFS on host) was NOT attempted.
 ---
 
 ## f) NEXT STEPS (up to 50)
-> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
 
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
 
 ### Immediate — Access Strategy (highest impact first)
 
@@ -240,17 +240,18 @@ always-on VM, monitoring, automated backups, drive health checks. **What's the l
 
 ## Files Changed This Session
 
-| File | Status | Purpose |
-|------|--------|---------|
-| `systems/zfs-vm.nix` | Created, git-staged | NixOS VM config (kernel 6.18 + ZFS + USB passthrough) |
-| `pkgs/freebsd-zfs-vm.nix` | Created, git-staged | FreeBSD 14.2 QEMU launcher script with USB passthrough |
-| `flake.nix` | Modified | Wired `nixosConfigurations.zfs-vm` + `packages.freebsd-zfs-vm` |
+| File                      | Status              | Purpose                                                        |
+| ------------------------- | ------------------- | -------------------------------------------------------------- |
+| `systems/zfs-vm.nix`      | Created, git-staged | NixOS VM config (kernel 6.18 + ZFS + USB passthrough)          |
+| `pkgs/freebsd-zfs-vm.nix` | Created, git-staged | FreeBSD 14.2 QEMU launcher script with USB passthrough         |
+| `flake.nix`               | Modified            | Wired `nixosConfigurations.zfs-vm` + `packages.freebsd-zfs-vm` |
 
 ---
 
 ## Resolution Status (2026-08-10)
 
 **PARTIALLY DONE — DO NOT ARCHIVE.** Analysis work is complete. VM configs are written but UNTESTED. Key open items:
+
 - ~~Drive detection & identification~~ done (2x16TB, JMicron JMS567 USB bridge)
 - ~~Host kernel/ZFS compatibility analysis~~ done (ZFS 2.4.3 supports 7.0, host is 7.1 — ONE minor behind)
 - ~~Architecture research~~ done (containers share kernel, FreeBSD has first-class ZFS, OpenBSD has none)

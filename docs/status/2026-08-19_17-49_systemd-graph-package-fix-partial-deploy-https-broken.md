@@ -14,43 +14,43 @@ Fixed all three systemd-graph package build blockers (pnpm hook, vendorHash, bin
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-|------|----------|
-| **systemd-graph webui builds** | `nix build .#systemd-graph-webui` → `/nix/store/h5ppq2zzvkclww5n1lnvk3jlw86iappa-…` with `dist/{index.html,assets/,favicon.svg,icons.svg}` |
-| **systemd-graph Go binary builds** | `nix build .#systemd-graph` → `/nix/store/z45y0jsdbf59…/bin/systemd-graph`, `--help` prints `-addr string listen address (default ":8080")` |
-| **vendorHash computed** | `sha256-Ac63bZlBvCrhS7b8mk7aJdApI8UGtJxnZG35L37roGY=` (was empty `""`) |
-| **Binary renamed** | `postInstall` renames `bin/server` → `bin/systemd-graph` to match `meta.mainProgram` so `lib.getExe` resolves |
-| **restartTriggers added** | `modules/nixos/services/systemd-graph.nix:58` — `restartTriggers = [ cfg.package ]` |
-| **DNS subdomains registered** | `platforms/common/dns-local.nix` — added `"graph"` and `"timers"` to `localSubdomains` |
-| **nix flake check --no-build passes** | "all checks passed!" (run twice, before and after DNS addition) |
-| **systemd-timer-monitor package** | Was already done from prior session — pure Python, zero deps, builds to `/nix/store/1szzv1113shqw2qs693yx77r43rkf2v8-…` |
-| **Both NixOS modules eval cleanly** | `nix eval` confirms ExecStart paths for both services + Caddy vHosts `['graph.home.lan', 'timers.home.lan']` |
-| **systemd-graph IS RUNNING live** | PID 2620577, serving `http://127.0.0.1:8847/` → 200/455B (React SPA), `/api/snapshot` → 200/698KB (D-Bus data) |
-| **Caddy has both vHosts** | Config on disk includes `graph.home.lan` + `timers.home.lan` blocks with `tlsConfig`, `commonConfig`, `proxyTo` / `file_server` |
-| **HTTP graph.home.lan works** | `http://192.168.1.150/` with `Host: graph.home.lan` → 200/455B (the SPA) |
+| Item                                  | Evidence                                                                                                                                    |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **systemd-graph webui builds**        | `nix build .#systemd-graph-webui` → `/nix/store/h5ppq2zzvkclww5n1lnvk3jlw86iappa-…` with `dist/{index.html,assets/,favicon.svg,icons.svg}`  |
+| **systemd-graph Go binary builds**    | `nix build .#systemd-graph` → `/nix/store/z45y0jsdbf59…/bin/systemd-graph`, `--help` prints `-addr string listen address (default ":8080")` |
+| **vendorHash computed**               | `sha256-Ac63bZlBvCrhS7b8mk7aJdApI8UGtJxnZG35L37roGY=` (was empty `""`)                                                                      |
+| **Binary renamed**                    | `postInstall` renames `bin/server` → `bin/systemd-graph` to match `meta.mainProgram` so `lib.getExe` resolves                               |
+| **restartTriggers added**             | `modules/nixos/services/systemd-graph.nix:58` — `restartTriggers = [ cfg.package ]`                                                         |
+| **DNS subdomains registered**         | `platforms/common/dns-local.nix` — added `"graph"` and `"timers"` to `localSubdomains`                                                      |
+| **nix flake check --no-build passes** | "all checks passed!" (run twice, before and after DNS addition)                                                                             |
+| **systemd-timer-monitor package**     | Was already done from prior session — pure Python, zero deps, builds to `/nix/store/1szzv1113shqw2qs693yx77r43rkf2v8-…`                     |
+| **Both NixOS modules eval cleanly**   | `nix eval` confirms ExecStart paths for both services + Caddy vHosts `['graph.home.lan', 'timers.home.lan']`                                |
+| **systemd-graph IS RUNNING live**     | PID 2620577, serving `http://127.0.0.1:8847/` → 200/455B (React SPA), `/api/snapshot` → 200/698KB (D-Bus data)                              |
+| **Caddy has both vHosts**             | Config on disk includes `graph.home.lan` + `timers.home.lan` blocks with `tlsConfig`, `commonConfig`, `proxyTo` / `file_server`             |
+| **HTTP graph.home.lan works**         | `http://192.168.1.150/` with `Host: graph.home.lan` → 200/455B (the SPA)                                                                    |
 
 ---
 
 ## b) PARTIALLY DONE
 
-| Item | State | What's missing |
-|------|-------|----------------|
-| **Deploy** | First deploy partially activated (unit files copied, some services started), but `/run/current-system` still → gen 695 (old). Second deploy never ran (interrupted). | A clean `nix run .#deploy` after clearing the stale lock file. The lock at `/run/nixos/switch-to-configuration.lock` is free (no process holds it) but the file still exists. |
-| **HTTPS / TLS** | Caddy is running (PID 2684150) with admin API on :2019, configured to listen on `192.168.1.150:80` and `:443`. HTTP works. **HTTPS is broken system-wide** — `tlsv1 alert internal error` on ALL vHosts (auth.home.lan, dash.home.lan, graph.home.lan — all fail identically). | The partial activation may have restarted Caddy before sops rendered the cert, or the cert config path changed. A clean deploy (which includes `sudo systemctl restart caddy.service` per deploy.sh:137) should fix this. |
-| **timer-monitor state dir** | `/var/lib/systemd-timer-monitor/` exists (created by partial activation's tmpfiles) but is **empty** — no `report.html`, no `status.json`, no `.last-run`. The timer hasn't fired yet (OnBootSec=2min, and systemd may not have loaded the timer unit properly during partial activation). | A clean deploy would start the timer, which fires after 2 min and writes the audit. |
-| **timers.home.lan** | Returns 404 on HTTP (Caddy file_server has no files to serve). | Will resolve once the timer fires and writes `report.html`. |
+| Item                        | State                                                                                                                                                                                                                                                                                      | What's missing                                                                                                                                                                                                            |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Deploy**                  | First deploy partially activated (unit files copied, some services started), but `/run/current-system` still → gen 695 (old). Second deploy never ran (interrupted).                                                                                                                       | A clean `nix run .#deploy` after clearing the stale lock file. The lock at `/run/nixos/switch-to-configuration.lock` is free (no process holds it) but the file still exists.                                             |
+| **HTTPS / TLS**             | Caddy is running (PID 2684150) with admin API on :2019, configured to listen on `192.168.1.150:80` and `:443`. HTTP works. **HTTPS is broken system-wide** — `tlsv1 alert internal error` on ALL vHosts (auth.home.lan, dash.home.lan, graph.home.lan — all fail identically).             | The partial activation may have restarted Caddy before sops rendered the cert, or the cert config path changed. A clean deploy (which includes `sudo systemctl restart caddy.service` per deploy.sh:137) should fix this. |
+| **timer-monitor state dir** | `/var/lib/systemd-timer-monitor/` exists (created by partial activation's tmpfiles) but is **empty** — no `report.html`, no `status.json`, no `.last-run`. The timer hasn't fired yet (OnBootSec=2min, and systemd may not have loaded the timer unit properly during partial activation). | A clean deploy would start the timer, which fires after 2 min and writes the audit.                                                                                                                                       |
+| **timers.home.lan**         | Returns 404 on HTTP (Caddy file_server has no files to serve).                                                                                                                                                                                                                             | Will resolve once the timer fires and writes `report.html`.                                                                                                                                                               |
 
 ---
 
 ## c) NOT STARTED
 
-| Item | Why |
-|------|-----|
-| **Gatus health checks** | Not added to `gatus-config.nix` yet |
-| **Post-deploy smoke tests** | Not added to `scripts/post-deploy-check.sh` |
-| **Homepage tiles** | Not added to `homepage.nix` (under "Review Tools" group) |
-| **Service docs** | `docs/services/systemd-graph.md` and `docs/services/systemd-timer-monitor.md` not written |
-| **AGENTS.md update** | "Other Services" section and SSO table not updated |
+| Item                        | Why                                                                                       |
+| --------------------------- | ----------------------------------------------------------------------------------------- |
+| **Gatus health checks**     | Not added to `gatus-config.nix` yet                                                       |
+| **Post-deploy smoke tests** | Not added to `scripts/post-deploy-check.sh`                                               |
+| **Homepage tiles**          | Not added to `homepage.nix` (under "Review Tools" group)                                  |
+| **Service docs**            | `docs/services/systemd-graph.md` and `docs/services/systemd-timer-monitor.md` not written |
+| **AGENTS.md update**        | "Other Services" section and SSO table not updated                                        |
 
 ---
 
@@ -58,7 +58,7 @@ Fixed all three systemd-graph package build blockers (pnpm hook, vendorHash, bin
 
 ### 1. The Root Cause of the Webui Build Failure (Previous Session)
 
-**The bug was `dontConfigure = true`.** The previous session added `pnpmConfigHook` to `nativeBuildInputs` (correct) but then set `dontConfigure = true` (wrong) and hand-rolled `pnpm install` in `buildPhase` (fighting the hook). 
+**The bug was `dontConfigure = true`.** The previous session added `pnpmConfigHook` to `nativeBuildInputs` (correct) but then set `dontConfigure = true` (wrong) and hand-rolled `pnpm install` in `buildPhase` (fighting the hook).
 
 `pnpmConfigHook` is registered in `postConfigureHooks` — it fires during the **configure** phase, not the build phase. Setting `dontConfigure = true` skips the entire configure phase, so `pnpmConfigHook` **never ran**. The hand-rolled `pnpm install` in buildPhase then tried to install deps manually, but:
 
@@ -90,12 +90,14 @@ deploy.sh's detection is correct for live wedged processes, but it doesn't handl
 ### 4. The Partial Activation State
 
 The first deploy's `switch-to-configuration test` partially ran before getting wedged. It:
+
 - Copied unit files to `/etc/systemd/system/` (systemd-graph.service, systemd-timer-monitor-audit.service, systemd-timer-monitor-audit.timer)
 - Started systemd-graph.service (PID 2620577, running from the new store path)
 - Restarted Caddy with the new config (vHosts include graph.home.lan, timers.home.lan)
 - Created `/var/lib/systemd-timer-monitor/` via tmpfiles
 
 But it **never completed**:
+
 - `/run/current-system` still → gen 695 (old generation `2jxmi57l`)
 - The system profile was never updated to gen 697
 - HTTPS is broken system-wide (Caddy restarted but TLS is broken — likely cert issue from incomplete sops rendering)
@@ -291,13 +293,13 @@ buildPhase = ''
 
 ## Commit History (This Session)
 
-| Commit | Description | Files |
-|--------|-------------|-------|
-| `995f4f8d` | fix(systemd-graph): fix package build, binary name, and pnpm hook integration | `modules/nixos/services/systemd-graph.nix`, `pkgs/systemd-graph/default.nix`, `pkgs/systemd-graph/webui.nix` |
-| `b4eeaffa` | feat(dns): register graph and timers services in local DNS configuration | `platforms/common/dns-local.nix` |
-| `276475a2` | docs(architecture): add RAG embedding and reranker architecture decision record | `docs/adr/…` (unrelated to this task) |
-| `64d6957f` | chore(deps): update flake.lock for file-and-image-renamer | `flake.lock` (unrelated) |
-| `91181cd8` | chore(deps): update bank-sync and document CQRS read adapter fix | `flake.lock`, `docs/status/…` (unrelated) |
+| Commit     | Description                                                                     | Files                                                                                                        |
+| ---------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `995f4f8d` | fix(systemd-graph): fix package build, binary name, and pnpm hook integration   | `modules/nixos/services/systemd-graph.nix`, `pkgs/systemd-graph/default.nix`, `pkgs/systemd-graph/webui.nix` |
+| `b4eeaffa` | feat(dns): register graph and timers services in local DNS configuration        | `platforms/common/dns-local.nix`                                                                             |
+| `276475a2` | docs(architecture): add RAG embedding and reranker architecture decision record | `docs/adr/…` (unrelated to this task)                                                                        |
+| `64d6957f` | chore(deps): update flake.lock for file-and-image-renamer                       | `flake.lock` (unrelated)                                                                                     |
+| `91181cd8` | chore(deps): update bank-sync and document CQRS read adapter fix                | `flake.lock`, `docs/status/…` (unrelated)                                                                    |
 
 **Note:** Commits `276475a2`, `64d6957f`, `91181cd8` were auto-committed by the daemon or another session — they rode alongside my work. Only `995f4f8d` and `b4eeaffa` are from this session.
 

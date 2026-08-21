@@ -6,7 +6,6 @@ The gen 516 deploy (unbound→dnsblockd migration with master-tracked dnsblockd)
 
 ---
 
-
 ## a) FULLY DONE
 
 1. **Root cause identified from deploy log.** The `nh os switch` activation output showed `dnsblockd.service` absent from ALL activation lists (stop/restart/start), while `unbound.service` was in the stop list. The old dnsblockd process (running the v0.2.0 binary, HTTP block-page only) was never terminated. Nothing served `:53`. Evidence: discordsync logs show `dial tcp: lookup discord.com on 127.0.0.1:53: read: connection refused`.
@@ -85,93 +84,93 @@ The gen 516 deploy (unbound→dnsblockd migration with master-tracked dnsblockd)
 
 ### Tier 0: BLOCKING — Before next deploy
 
-| #   | Task                                                                                                 | Effort   | Why                                                |
-| --- | ---------------------------------------------------------------------------------------------------- | -------- | -------------------------------------------------- |
-| 1   | Commit the `restartTriggers` fix + AGENTS.md update                                                  | 1min     | Preserve work                                      |
-| 2   | Run `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath` to verify full eval | 30s      | Catch eval errors `flake check` misses             |
-| 3   | Deploy with `nix run .#deploy` (NOT `nh os switch`)                                                  | 10-20min | Uses deploy.sh with reset-failed + pre/post checks |
-| 4   | Verify dnsblockd logs show "DNS server initialized" after deploy                                     | 30s      | Confirm resolver started                           |
-| 5   | `dig @127.0.0.1 google.com` → resolves                                                               | 30s      | Verify recursion                                   |
-| 6   | `dig @127.0.0.1 forgejo.home.lan` → server IP                                                        | 30s      | Verify local records                               |
-| 7   | `dig @127.0.0.1 unknown.home.lan` → NXDOMAIN                                                         | 30s      | Verify zone boundary                               |
-| 8   | `dig @127.0.0.1 doubleclick.net` → block IP                                                          | 30s      | Verify blocklist                                   |
-| 9   | Verify oauth2-proxy starts (exit code 0)                                                             | 30s      | Cascade resolved                                   |
-| 10  | Verify discordsync starts (exit code 0)                                                              | 30s      | Cascade resolved                                   |
-| 11  | Run `nix run .#post-deploy-check`                                                                    | 1min     | Functional verification                            |
-| 12  | Check Gatus DNS health check passes                                                                  | 30s      | Monitoring                                         |
+| #  | Task                                                                                                 | Effort   | Why                                                |
+| -- | ---------------------------------------------------------------------------------------------------- | -------- | -------------------------------------------------- |
+| 1  | Commit the `restartTriggers` fix + AGENTS.md update                                                  | 1min     | Preserve work                                      |
+| 2  | Run `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath` to verify full eval | 30s      | Catch eval errors `flake check` misses             |
+| 3  | Deploy with `nix run .#deploy` (NOT `nh os switch`)                                                  | 10-20min | Uses deploy.sh with reset-failed + pre/post checks |
+| 4  | Verify dnsblockd logs show "DNS server initialized" after deploy                                     | 30s      | Confirm resolver started                           |
+| 5  | `dig @127.0.0.1 google.com` → resolves                                                               | 30s      | Verify recursion                                   |
+| 6  | `dig @127.0.0.1 forgejo.home.lan` → server IP                                                        | 30s      | Verify local records                               |
+| 7  | `dig @127.0.0.1 unknown.home.lan` → NXDOMAIN                                                         | 30s      | Verify zone boundary                               |
+| 8  | `dig @127.0.0.1 doubleclick.net` → block IP                                                          | 30s      | Verify blocklist                                   |
+| 9  | Verify oauth2-proxy starts (exit code 0)                                                             | 30s      | Cascade resolved                                   |
+| 10 | Verify discordsync starts (exit code 0)                                                              | 30s      | Cascade resolved                                   |
+| 11 | Run `nix run .#post-deploy-check`                                                                    | 1min     | Functional verification                            |
+| 12 | Check Gatus DNS health check passes                                                                  | 30s      | Monitoring                                         |
 
 ### Tier 1: Root cause investigation
 
-| #   | Task                                                                                                                   | Effort | Why                                                          |
-| --- | ---------------------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------ |
-| 13  | Read NixOS `switch-to-configuration.pl` — understand `test` vs `switch` restart behavior                               | 30min  | Determine if `nh os switch` is the real culprit              |
-| 14  | Check if dnsblockd was in start-limit-hit state during the failed deploy                                               | 10min  | If so, `reset-failed` is the real fix, not `restartTriggers` |
-| 15  | Test: deploy with `nix run .#deploy` (which runs `reset-failed`) and see if dnsblockd restarts WITHOUT restartTriggers | 10min  | Isolate whether `restartTriggers` is actually needed         |
-| 16  | Document in AGENTS.md: `nh os switch` bypasses deploy.sh safety nets                                                   | 5min   | Prevention                                                   |
+| #  | Task                                                                                                                   | Effort | Why                                                          |
+| -- | ---------------------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------ |
+| 13 | Read NixOS `switch-to-configuration.pl` — understand `test` vs `switch` restart behavior                               | 30min  | Determine if `nh os switch` is the real culprit              |
+| 14 | Check if dnsblockd was in start-limit-hit state during the failed deploy                                               | 10min  | If so, `reset-failed` is the real fix, not `restartTriggers` |
+| 15 | Test: deploy with `nix run .#deploy` (which runs `reset-failed`) and see if dnsblockd restarts WITHOUT restartTriggers | 10min  | Isolate whether `restartTriggers` is actually needed         |
+| 16 | Document in AGENTS.md: `nh os switch` bypasses deploy.sh safety nets                                                   | 5min   | Prevention                                                   |
 
 ### Tier 2: Systemic hardening
 
-| #   | Task                                                                                                           | Effort | Why                 |
-| --- | -------------------------------------------------------------------------------------------------------------- | ------ | ------------------- |
-| 17  | Audit all services with `ExecStart = "... -c ${configFile}"` pattern for missing `restartTriggers`             | 1h     | Systemic risk       |
-| 18  | Add `restartTriggers` to `hermes.nix` if missing                                                               | 5min   | Same latent risk    |
-| 19  | Add `restartTriggers` to `manifest.nix` if missing                                                             | 5min   | Same                |
-| 20  | Add `restartTriggers` to `gatus-config.nix` if missing                                                         | 5min   | Same                |
-| 21  | Add `restartTriggers` to `homepage.nix` if missing                                                             | 5min   | Same                |
-| 22  | Add `restartTriggers` to `crush-daily.nix` if missing                                                          | 5min   | Same                |
-| 23  | Consider a pre-commit hook that warns when a service has `${configFile}` in ExecStart but no `restartTriggers` | 1h     | Automated detection |
-| 24  | Verify `openseo.nix` and `monitor365.nix` have proper restart behavior                                         | 15min  | Same class of risk  |
+| #  | Task                                                                                                           | Effort | Why                 |
+| -- | -------------------------------------------------------------------------------------------------------------- | ------ | ------------------- |
+| 17 | Audit all services with `ExecStart = "... -c ${configFile}"` pattern for missing `restartTriggers`             | 1h     | Systemic risk       |
+| 18 | Add `restartTriggers` to `hermes.nix` if missing                                                               | 5min   | Same latent risk    |
+| 19 | Add `restartTriggers` to `manifest.nix` if missing                                                             | 5min   | Same                |
+| 20 | Add `restartTriggers` to `gatus-config.nix` if missing                                                         | 5min   | Same                |
+| 21 | Add `restartTriggers` to `homepage.nix` if missing                                                             | 5min   | Same                |
+| 22 | Add `restartTriggers` to `crush-daily.nix` if missing                                                          | 5min   | Same                |
+| 23 | Consider a pre-commit hook that warns when a service has `${configFile}` in ExecStart but no `restartTriggers` | 1h     | Automated detection |
+| 24 | Verify `openseo.nix` and `monitor365.nix` have proper restart behavior                                         | 15min  | Same class of risk  |
 
 ### Tier 3: DNS monitoring & verification
 
-| #   | Task                                                                                                     | Effort | Why                                   |
-| --- | -------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------- |
-| 25  | Add DNS resolution check to `pre-deploy-check.sh`: `getent hosts google.com`                             | 10min  | Pre-deploy DNS validation             |
-| 26  | Add DNS resolution check to `post-deploy-check`: `getent hosts google.com && getent hosts auth.home.lan` | 10min  | Post-deploy DNS validation            |
-| 27  | Verify Gatus has a DNS health check (TCP :53 or actual query)                                            | 15min  | Proactive DNS monitoring              |
-| 28  | Add Gatus DNS check with Discord alert for DNS resolution failure                                        | 15min  | "Every new service MUST be monitored" |
-| 29  | Update Grafana `dns.json` dashboard — stale unbound PromQL queries                                       | 30min  | Empty panels                          |
-| 30  | Verify dnsblockd exposes Prometheus metrics with DNS-specific counters                                   | 15min  | Observability                         |
+| #  | Task                                                                                                     | Effort | Why                                   |
+| -- | -------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------- |
+| 25 | Add DNS resolution check to `pre-deploy-check.sh`: `getent hosts google.com`                             | 10min  | Pre-deploy DNS validation             |
+| 26 | Add DNS resolution check to `post-deploy-check`: `getent hosts google.com && getent hosts auth.home.lan` | 10min  | Post-deploy DNS validation            |
+| 27 | Verify Gatus has a DNS health check (TCP :53 or actual query)                                            | 15min  | Proactive DNS monitoring              |
+| 28 | Add Gatus DNS check with Discord alert for DNS resolution failure                                        | 15min  | "Every new service MUST be monitored" |
+| 29 | Update Grafana `dns.json` dashboard — stale unbound PromQL queries                                       | 30min  | Empty panels                          |
+| 30 | Verify dnsblockd exposes Prometheus metrics with DNS-specific counters                                   | 15min  | Observability                         |
 
 ### Tier 4: Migration follow-up
 
-| #   | Task                                                                                       | Effort | Why                                   |
-| --- | ------------------------------------------------------------------------------------------ | ------ | ------------------------------------- |
-| 31  | Verify wildcard `*.home.lan` record works with dnsblockd's sdns resolver                   | 5min   | Migration doc flagged this as #1 risk |
-| 32  | Verify rpi3-dns dnsblockd input tracks master (not tags)                                   | 5min   | Same tag-pin bug could exist          |
-| 33  | Clean up stale `unbound.conf` output arg from `dnsblockd process` build step               | 15min  | Dead code                             |
-| 34  | Write dnsblockd DNS VM test (replaces removed unbound test)                                | 2-3h   | Test coverage                         |
-| 35  | Verify DNSSEC works end-to-end (`dig +dnssec` for a signed domain)                         | 5min   | Security feature verification         |
-| 36  | Monitor dnsblockd memory usage — sdns resolver + 2.5M blocklist entries under 1G MemoryMax | 1h     | OOM prevention                        |
+| #  | Task                                                                                       | Effort | Why                                   |
+| -- | ------------------------------------------------------------------------------------------ | ------ | ------------------------------------- |
+| 31 | Verify wildcard `*.home.lan` record works with dnsblockd's sdns resolver                   | 5min   | Migration doc flagged this as #1 risk |
+| 32 | Verify rpi3-dns dnsblockd input tracks master (not tags)                                   | 5min   | Same tag-pin bug could exist          |
+| 33 | Clean up stale `unbound.conf` output arg from `dnsblockd process` build step               | 15min  | Dead code                             |
+| 34 | Write dnsblockd DNS VM test (replaces removed unbound test)                                | 2-3h   | Test coverage                         |
+| 35 | Verify DNSSEC works end-to-end (`dig +dnssec` for a signed domain)                         | 5min   | Security feature verification         |
+| 36 | Monitor dnsblockd memory usage — sdns resolver + 2.5M blocklist entries under 1G MemoryMax | 1h     | OOM prevention                        |
 
 ### Tier 5: Process improvements
 
-| #   | Task                                                                                    | Effort | Why                               |
-| --- | --------------------------------------------------------------------------------------- | ------ | --------------------------------- |
-| 37  | Add `nh os switch` to the "never use" list in AGENTS.md alongside raw `nixos-rebuild`   | 5min   | It bypasses deploy.sh safety nets |
-| 38  | Consider making `deploy.sh` the ONLY entrypoint — alias or wrapper that blocks raw `nh` | 30min  | Enforcement                       |
-| 39  | Add DNS smoke test to deploy.sh activation phase (before declaring success)             | 30min  | Catch DNS outage during deploy    |
-| 40  | Document recovery procedure: `nixos-rebuild switch --flake .#evo-x2 --sudo --rollback`  | 5min   | Already used, just document it    |
+| #  | Task                                                                                    | Effort | Why                               |
+| -- | --------------------------------------------------------------------------------------- | ------ | --------------------------------- |
+| 37 | Add `nh os switch` to the "never use" list in AGENTS.md alongside raw `nixos-rebuild`   | 5min   | It bypasses deploy.sh safety nets |
+| 38 | Consider making `deploy.sh` the ONLY entrypoint — alias or wrapper that blocks raw `nh` | 30min  | Enforcement                       |
+| 39 | Add DNS smoke test to deploy.sh activation phase (before declaring success)             | 30min  | Catch DNS outage during deploy    |
+| 40 | Document recovery procedure: `nixos-rebuild switch --flake .#evo-x2 --sudo --rollback`  | 5min   | Already used, just document it    |
 
 ### Tier 6: Code quality
 
-| #   | Task                                                                                                | Effort | Why                                                               |
-| --- | --------------------------------------------------------------------------------------------------- | ------ | ----------------------------------------------------------------- |
-| 41  | Shorten the verbose comment block in `dns-blocker.nix` to 1-2 lines                                 | 2min   | Convention compliance                                             |
-| 42  | Consider `reloadIfChanged` + `ExecReload` instead of `restartTriggers` if dnsblockd supports SIGHUP | 30min  | Zero-downtime config reload                                       |
-| 43  | Verify the `restartTriggers` don't cause unnecessary restarts on EVERY deploy (false positives)     | 15min  | Config file store path should be stable if content doesn't change |
-| 44  | Move the `caCert`/`caKey` sops path references back to inner scope if possible (less coupling)      | 10min  | Minimal scope                                                     |
+| #  | Task                                                                                                | Effort | Why                                                               |
+| -- | --------------------------------------------------------------------------------------------------- | ------ | ----------------------------------------------------------------- |
+| 41 | Shorten the verbose comment block in `dns-blocker.nix` to 1-2 lines                                 | 2min   | Convention compliance                                             |
+| 42 | Consider `reloadIfChanged` + `ExecReload` instead of `restartTriggers` if dnsblockd supports SIGHUP | 30min  | Zero-downtime config reload                                       |
+| 43 | Verify the `restartTriggers` don't cause unnecessary restarts on EVERY deploy (false positives)     | 15min  | Config file store path should be stable if content doesn't change |
+| 44 | Move the `caCert`/`caKey` sops path references back to inner scope if possible (less coupling)      | 10min  | Minimal scope                                                     |
 
 ### Tier 7: Future
 
-| #   | Task                                                                                        | Effort | Why                                  |
-| --- | ------------------------------------------------------------------------------------------- | ------ | ------------------------------------ |
-| 45  | Add upstream dnsblockd validation: fail loudly if `dns_enabled: true` but binary lacks sdns | 1h     | Silent ignore caused original outage |
-| 46  | Add `nix flake check` assertion: no LarsArtmann private repos pinned to tags                | 30min  | Prevent tag-pin staleness            |
-| 47  | Consider DoT/DoH listener in dnsblockd config                                               | 5min   | Encrypted DNS transport              |
-| 48  | Add DNS failover test (stop dnsblockd on evo-x2, verify rpi3 takes over via VRRP)           | 10min  | HA verification                      |
-| 49  | Add per-client DNS statistics dashboard                                                     | 2h     | Network visibility                   |
-| 50  | Consider secondary `nameserver` in `/etc/resolv.conf` for resilience                        | 5min   | Single point of failure              |
+| #  | Task                                                                                        | Effort | Why                                  |
+| -- | ------------------------------------------------------------------------------------------- | ------ | ------------------------------------ |
+| 45 | Add upstream dnsblockd validation: fail loudly if `dns_enabled: true` but binary lacks sdns | 1h     | Silent ignore caused original outage |
+| 46 | Add `nix flake check` assertion: no LarsArtmann private repos pinned to tags                | 30min  | Prevent tag-pin staleness            |
+| 47 | Consider DoT/DoH listener in dnsblockd config                                               | 5min   | Encrypted DNS transport              |
+| 48 | Add DNS failover test (stop dnsblockd on evo-x2, verify rpi3 takes over via VRRP)           | 10min  | HA verification                      |
+| 49 | Add per-client DNS statistics dashboard                                                     | 2h     | Network visibility                   |
+| 50 | Consider secondary `nameserver` in `/etc/resolv.conf` for resilience                        | 5min   | Single point of failure              |
 
 ---
 

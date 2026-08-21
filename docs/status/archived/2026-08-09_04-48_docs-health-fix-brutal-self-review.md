@@ -22,11 +22,11 @@ Updated AGENTS.md with 4 new patterns that every future session needs:
 
 Applied per-item `~~strikethrough~~ done at <location>` annotations per the docs-health skill's mandatory format:
 
-| Report | Items Checked | Items Struck (DONE) | Items Left Open |
-|--------|--------------|--------------------|-----------------|
-| 02-45 deployment fix | 50 | 7 (AGENTS.md updates, SSO table, module comment, token format, gotcha) | 43 |
-| 01-34 module review | 50 | 18 (Gatus check, Homepage tile, deploy, agent validation, CSS, token auth, profile discovery, idempotency, response time, SSL_CERT_FILE, pre-deploy port, AGENTS.md docs) | 32 |
-| 00-21 oauth2 login fix | 50 | 8 (commit, AGENTS.md, timeout, vendorHash, auth docs, deploy.sh, SSO table, writeJSON) | 42 |
+| Report                 | Items Checked | Items Struck (DONE)                                                                                                                                                       | Items Left Open |
+| ---------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| 02-45 deployment fix   | 50            | 7 (AGENTS.md updates, SSO table, module comment, token format, gotcha)                                                                                                    | 43              |
+| 01-34 module review    | 50            | 18 (Gatus check, Homepage tile, deploy, agent validation, CSS, token auth, profile discovery, idempotency, response time, SSL_CERT_FILE, pre-deploy port, AGENTS.md docs) | 32              |
+| 00-21 oauth2 login fix | 50            | 8 (commit, AGENTS.md, timeout, vendorHash, auth docs, deploy.sh, SSO table, writeJSON)                                                                                    | 42              |
 
 Total: 33 items struck as DONE with specific evidence, 117 items left untouched (open — absence of marker IS the open signal per skill rules).
 
@@ -85,6 +85,7 @@ The prior session (04:21) had the catastrophic failure (#1 failure mode: banner-
 ### However: The Commit Race Condition
 
 My manual commit failed with `fatal: cannot lock ref 'HEAD'` because the auto-daemon committed similar work concurrently (commit `6cc30f66` — "relocate RESOLVED annotations to footer across 150 archived status reports"). The daemon's commit message is actually better than mine would have been. But this means:
+
 - I lost control of the commit narrative
 - The daemon may have committed partial state (it caught me mid-edit on some files)
 - My detailed commit message was never used
@@ -215,6 +216,7 @@ The daemon's commit ("relocate RESOLVED annotations to footer across 150 archive
 ## Resolution (2026-08-10)
 
 This was docs-health fix session #2. All work items resolved:
+
 - **AGENTS.md browser-history patterns:** 4 patterns documented (LoadCredential, StateDirectory, ProviderConfig crash-loop, SSO Layer 1 table).
 - **Inline strikethroughs (3 browser-history cascade reports):** Applied with per-item evidence.
 - **Banner-to-appendix conversion (243 files):** Completed.

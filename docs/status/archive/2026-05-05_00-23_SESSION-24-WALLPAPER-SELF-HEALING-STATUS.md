@@ -200,33 +200,33 @@ Session 24 diagnosed and fixed the **recurring wallpaper failure** — a 4-sessi
 
 ## f) Top #25 Next Actions
 
-| #   | Action                                                                                              | Impact   | Effort  | Est.   |
-| --- | --------------------------------------------------------------------------------------------------- | -------- | ------- | ------ |
-| 1   | **`just switch` on evo-x2** — deploy all session 22-24 changes                                      | Critical | Trivial | 10min  |
-| 2   | **Verify wallpaper self-healing** — `just wallpaper-status`, then kill daemon, verify auto-recovery | High     | Trivial | 2min   |
-| 3   | **Commit swappiness + ZRAM tuning** (30→10, 15→25%) from session 23                                 | Medium   | Trivial | 2min   |
-| 4   | **Extract wallpaper to own module** (`platforms/nixos/programs/wallpaper.nix`)                      | Medium   | Low     | 15min  |
-| 5   | **Add `ExecStartPost` socket check** to awww-daemon                                                 | Medium   | Trivial | 5min   |
-| 6   | **Use `serviceDefaults` for awww-daemon**                                                           | Low      | Trivial | 2min   |
-| 7   | **Pin Docker image digests** (whisper, photomap)                                                    | High     | Low     | 15min  |
-| 8   | **Add `SIGNOZ_TOKENIZER_JWT_SECRET`** via sops                                                      | High     | Low     | 10min  |
-| 9   | **Update Gitea GitHub mirror token**                                                                | High     | Trivial | 2min   |
-| 10  | **Disk usage audit** — find large dirs on root and /data                                            | Medium   | Low     | 10min  |
-| 11  | **Nix GC + Docker prune timer**                                                                     | Medium   | Low     | 15min  |
-| 12  | **Archive 75 status docs** — move to `docs/status/archive/2026-05/`                                 | Low      | Trivial | 5min   |
-| 13  | **Verify SigNoz dashboards/alerts**                                                                 | Medium   | Low     | 10min  |
-| 14  | **Verify crash recovery stack** — test SysRq REISUB, watchdog, pstore                               | High     | Medium  | 15min  |
-| 15  | **Create `lib/systemd/health-check.nix`** shared curl helper                                        | Medium   | Low     | 10min  |
-| 16  | **Swap audit** — 12GB seems high, investigate                                                       | Medium   | Low     | 10min  |
-| 17  | **BTRFS scrub timer** for data integrity                                                            | Medium   | Low     | 10min  |
-| 18  | **Hermes health check endpoint**                                                                    | Medium   | Low     | 10min  |
-| 19  | **Update homepage dashboard** for new/changed services                                              | Low      | Low     | 10min  |
-| 20  | **Test Caddy TLS cert renewal**                                                                     | Medium   | Low     | 5min   |
-| 21  | **Build Pi 3 SD image** for DNS failover                                                            | High     | High    | 30min+ |
-| 22  | **Migrate Taskwarrior encryption to sops**                                                          | Medium   | Low     | 10min  |
-| 23  | **Secure VRRP auth_pass with sops**                                                                 | Medium   | Low     | 8min   |
-| 24  | **Create TODO_LIST.md** from existing docs                                                          | Medium   | Medium  | 20min  |
-| 25  | **Verify AMD NPU workload** (XDNA driver)                                                           | Medium   | Low     | 5min   |
+| #  | Action                                                                                              | Impact   | Effort  | Est.   |
+| -- | --------------------------------------------------------------------------------------------------- | -------- | ------- | ------ |
+| 1  | **`just switch` on evo-x2** — deploy all session 22-24 changes                                      | Critical | Trivial | 10min  |
+| 2  | **Verify wallpaper self-healing** — `just wallpaper-status`, then kill daemon, verify auto-recovery | High     | Trivial | 2min   |
+| 3  | **Commit swappiness + ZRAM tuning** (30→10, 15→25%) from session 23                                 | Medium   | Trivial | 2min   |
+| 4  | **Extract wallpaper to own module** (`platforms/nixos/programs/wallpaper.nix`)                      | Medium   | Low     | 15min  |
+| 5  | **Add `ExecStartPost` socket check** to awww-daemon                                                 | Medium   | Trivial | 5min   |
+| 6  | **Use `serviceDefaults` for awww-daemon**                                                           | Low      | Trivial | 2min   |
+| 7  | **Pin Docker image digests** (whisper, photomap)                                                    | High     | Low     | 15min  |
+| 8  | **Add `SIGNOZ_TOKENIZER_JWT_SECRET`** via sops                                                      | High     | Low     | 10min  |
+| 9  | **Update Gitea GitHub mirror token**                                                                | High     | Trivial | 2min   |
+| 10 | **Disk usage audit** — find large dirs on root and /data                                            | Medium   | Low     | 10min  |
+| 11 | **Nix GC + Docker prune timer**                                                                     | Medium   | Low     | 15min  |
+| 12 | **Archive 75 status docs** — move to `docs/status/archive/2026-05/`                                 | Low      | Trivial | 5min   |
+| 13 | **Verify SigNoz dashboards/alerts**                                                                 | Medium   | Low     | 10min  |
+| 14 | **Verify crash recovery stack** — test SysRq REISUB, watchdog, pstore                               | High     | Medium  | 15min  |
+| 15 | **Create `lib/systemd/health-check.nix`** shared curl helper                                        | Medium   | Low     | 10min  |
+| 16 | **Swap audit** — 12GB seems high, investigate                                                       | Medium   | Low     | 10min  |
+| 17 | **BTRFS scrub timer** for data integrity                                                            | Medium   | Low     | 10min  |
+| 18 | **Hermes health check endpoint**                                                                    | Medium   | Low     | 10min  |
+| 19 | **Update homepage dashboard** for new/changed services                                              | Low      | Low     | 10min  |
+| 20 | **Test Caddy TLS cert renewal**                                                                     | Medium   | Low     | 5min   |
+| 21 | **Build Pi 3 SD image** for DNS failover                                                            | High     | High    | 30min+ |
+| 22 | **Migrate Taskwarrior encryption to sops**                                                          | Medium   | Low     | 10min  |
+| 23 | **Secure VRRP auth_pass with sops**                                                                 | Medium   | Low     | 8min   |
+| 24 | **Create TODO_LIST.md** from existing docs                                                          | Medium   | Medium  | 20min  |
+| 25 | **Verify AMD NPU workload** (XDNA driver)                                                           | Medium   | Low     | 5min   |
 
 ---
 
@@ -251,18 +251,18 @@ Home Manager has `systemd.user.startServices` (default: `sd-switch` or `true` in
 
 ## Current System State
 
-|                         | Area               | Status                                     | Detail |
-| ----------------------- | ------------------ | ------------------------------------------ | ------ |
-| NixOS build             | ✅ Clean           | `just test-fast` passes                    |
-| Git                     | 2 ahead of origin  | About to push                              |
-| Root disk               | ⚠️ 88% (434G/512G) | 62G free — needs audit                     |
-| /data disk              | ⚠️ 74% (590G/800G) | 210G free — improved from 86%              |
-| RAM                     | 54G/62G used       | 8G available                               |
-| Swap                    | 12G/41G            | Elevated — investigate                     |
-| System services (19+)   | ✅ Running         | Per session 23                             |
-| Wallpaper (awww-daemon) | ❓ Unknown         | SSH session — can't verify graphical state |
-| Crash recovery stack    | ✅ In config       | Not tested in production                   |
-| 31 service modules      | ✅ All evaluate    | `just test-fast` clean                     |
+|                         | Area              | Status                                     | Detail |
+| ----------------------- | ----------------- | ------------------------------------------ | ------ |
+| NixOS build             | ✅ Clean          | `just test-fast` passes                    |        |
+| Git                     | 2 ahead of origin | About to push                              |        |
+| Root disk               | ⚠️ 88% (434G/512G) | 62G free — needs audit                     |        |
+| /data disk              | ⚠️ 74% (590G/800G) | 210G free — improved from 86%              |        |
+| RAM                     | 54G/62G used      | 8G available                               |        |
+| Swap                    | 12G/41G           | Elevated — investigate                     |        |
+| System services (19+)   | ✅ Running        | Per session 23                             |        |
+| Wallpaper (awww-daemon) | ❓ Unknown        | SSH session — can't verify graphical state |        |
+| Crash recovery stack    | ✅ In config      | Not tested in production                   |        |
+| 31 service modules      | ✅ All evaluate   | `just test-fast` clean                     |        |
 
 ---
 

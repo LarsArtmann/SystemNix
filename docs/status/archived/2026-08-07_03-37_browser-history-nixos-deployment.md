@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Executive Summary
 
 The task was to deploy the browser-history server (a Go CQRS/ES multi-module monorepo) as a systemd service on the evo-x2 NixOS machine via SystemNix. The upstream `flake.nix` had NO real binary package — only a no-op `packages.default` that creates an empty directory. The entire session was spent adding `buildGoModule` infrastructure to the upstream flake so it can produce a deployable server binary. The SystemNix integration (service module, Caddy vHost, Gatus, configuration.nix) has NOT been started.
@@ -87,6 +86,7 @@ The upstream build is one `GOFLAGS=-mod=mod` edit away from potentially working,
 ## f) NEXT 50 THINGS TO DO
 
 ### Upstream (browser-history repo)
+
 ~~1. Verify `GOFLAGS=-mod=mod` build works — run `nix build .#browser-history-server`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~2. If it fails, add `go mod tidy` to the main `preBuild` (matching DiscordSync pattern exactly)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~3. Update vendorHash if the FOD output changed~~ done — work captured in CHANGELOG.md / TODO_LIST.md
@@ -99,14 +99,17 @@ The upstream build is one `GOFLAGS=-mod=mod` edit away from potentially working,
 ~~10. Document the multi-module workspace build pattern in browser-history/AGENTS.md~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### SystemNix flake.nix
+
 ~~11. Add `inputs.browser-history` to SystemNix flake.nix (`url = "github:LarsArtmann/browser-history?ref=master"` with nixpkgs.follows)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~12. Run `nix flake lock --update-input browser-history` to populate flake.lock~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~13. Verify the input resolves: `nix flake show .#browser-history`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### SystemNix lib/ports.nix
+
 ~~14. Add `browser-history = <PORT>;` (suggest 8087 — 8086 is taken by file-and-image-renamer-health)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### SystemNix service module (modules/nixos/services/browser-history.nix)
+
 ~~15. Create the module file following the `{ inputs, ... }: { flake.nixosModules.browser-history = ...; }` pattern~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~16. Define `options.services.browser-history` with `enable`, `package`, `dataDir`, `port`, `domain` options~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~17. Set up systemd service with `harden {} // serviceDefaults {}`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
@@ -120,36 +123,44 @@ The upstream build is one `GOFLAGS=-mod=mod` edit away from potentially working,
 ~~25. Set `MemoryMax` appropriately (Go service with SQLite — 1G should suffice)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### SystemNix Caddy
+
 ~~26. Add `history.${domain}` vHost in caddy.nix — decide: `protectedVHost` (Layer 2 forward-auth) or plain `reverse_proxy` (if browser-history gets native OIDC)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~27. Browser-history has its OWN WebAuthn/Passkey auth — this is neither Layer 1 (Pocket ID native OIDC) nor Layer 2 (oauth2-proxy). It's a THIRD auth model. Need to decide whether to also gate behind `protectedVHost` or expose directly with TLS.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~28. If using `protectedVHost`: WebAuthn origins need to include the external URL with HTTPS~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~29. If direct TLS proxy: use plain `reverse_proxy` with `${proxyTo}` and `${commonConfig}`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### SystemNix Gatus
+
 ~~30. Add health check: `mkHttpCheck` for `http://localhost:${PORT}/health`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~31. Add `discordAlert "Browser History server down"`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~32. Add `[RESPONSE_TIME] < 1000` condition~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### SystemNix configuration.nix
+
 ~~33. Enable: `services.browser-history = { enable = true; };`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~34. Wire WebAuthn RP ID to the real domain (not localhost)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~35. Wire WebAuthn origins to `https://history.${domain}`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 36. Consider backup-coordination for `/var/lib/browser-history/` ← still open (TODO_LIST Priority 7)
 
 ### SystemNix DNS
+
 ~~37. Add `history` to `dnsLocal.localSubdomains` in dnsblockd config~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### SystemNix Homepage
+
 ~~38. Add Homepage tile for browser-history (if desired)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### SystemNix Sops
+
 ~~39. Create sops secret for `BROWSER_HISTORY_AGENT_TOKEN` (for multi-machine sync)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~40. Create sops template or environment file for the service~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### SystemNix OTel
+
 ~~41. Verify `OTEL_EXPORTER_OTLP_ENDPOINT = "localhost:${toString ports.signoz-otlp-http}"` works with browser-history's OTel instrumentation~~ partially — known OTel URL scheme bug (`127.0.0.1:4317` needs `http://` prefix); traces may not ship. Fix belongs upstream
 
 ### Testing & Verification
+
 ~~42. Run `nix flake check --no-build` on SystemNix~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~43. Run `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel` (full eval)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~44. Deploy: `nix run .#deploy`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
@@ -175,6 +186,7 @@ The upstream build is one `GOFLAGS=-mod=mod` edit away from potentially working,
 ## File-Level Summary of Changes Made
 
 ### `/home/lars/projects/browser-history/flake.nix` (auto-committed as cc98eca)
+
 - **Added 10 flake inputs:** go-nix-helpers, go-cqrs-lite (SSH URL, private), cqrs-htmx, go-error-family, go-branded-id, go-httputil, templ-components, go-sse, go-idempotency, go-retry
 - **Added to outputs function signature:** all 10 new inputs destructured
 - **Added `mkPreparedSource` setup:** with deps map for all 9 LarsArtmann repos

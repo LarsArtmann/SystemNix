@@ -41,20 +41,20 @@ a7e3b00 docs(reports): add eCapture TLS capture integration assessment with NOT 
 
 ### Critical Issues Found During Audit
 
-| #   | Issue                                                                                                                             | Priority    | File                                                        |
-| --- | --------------------------------------------------------------------------------------------------------------------------------- | ----------- | ----------------------------------------------------------- |
-| 1   | **Duplicate fail2ban config** — conflicting settings in `configuration.nix` and `security-hardening.nix`                          | 🔴 CRITICAL | `configuration.nix:154-178`, `security-hardening.nix:58-88` |
-| 2   | **Orphaned Grafana fail2ban jail** — Grafana never deployed, jail watches non-existent log file                                   | 🔴 CRITICAL | `security-hardening.nix:78-86`                              |
-| 3   | **Dead package** — `pkgs/superfile.nix` has `vendorHash = null` and is unreferenced                                               | 🔴 CRITICAL | `pkgs/superfile.nix`                                        |
-| 4   | **Duplicate packages** — `gnupg`, `foot`, `zellij`, `swappy`, `jq`, `wl-clipboard`, `rofi`, `cliphist` defined in multiple places | 🟡 HIGH     | Multiple files                                              |
-| 5   | **Duplicate Go overlay** — defined in `flake.nix` AND `platforms/darwin/default.nix`                                              | 🟡 HIGH     | `flake.nix:139-147`, `darwin/default.nix:66-82`             |
-| 6   | **Unused `nix-visualize` specialArg** — passed to both platforms but never used in modules                                        | 🟡 HIGH     | `flake.nix`                                                 |
-| 7   | **Stale commented imports** in `configuration.nix` referencing removed services                                                   | 🟢 LOW      | `configuration.nix:21-29`                                   |
-| 8   | **Orphaned `ssh-banner` file** — exists but never referenced                                                                      | 🟢 LOW      | `platforms/nixos/users/ssh-banner`                          |
-| 9   | **Outdated justfile text** — "Go 1.26rc2" should be "Go 1.26.1"                                                                   | 🟢 LOW      | `justfile:1078`                                             |
-| 10  | **Stale monitoring recipes** — netdata/ntopng recipes for macOS LaunchAgents                                                      | 🟢 LOW      | `justfile:866-916`                                          |
-| 11  | **Orphaned `better-claude` recipes** — reference non-existent package                                                             | 🟢 LOW      | `justfile:1296-1323`                                        |
-| 12  | **Overlapping system monitors** — `bottom`, `btop`, `htop` all installed                                                          | 🟢 LOW      | `base.nix:104-107`                                          |
+| #  | Issue                                                                                                                             | Priority    | File                                                        |
+| -- | --------------------------------------------------------------------------------------------------------------------------------- | ----------- | ----------------------------------------------------------- |
+| 1  | **Duplicate fail2ban config** — conflicting settings in `configuration.nix` and `security-hardening.nix`                          | 🔴 CRITICAL | `configuration.nix:154-178`, `security-hardening.nix:58-88` |
+| 2  | **Orphaned Grafana fail2ban jail** — Grafana never deployed, jail watches non-existent log file                                   | 🔴 CRITICAL | `security-hardening.nix:78-86`                              |
+| 3  | **Dead package** — `pkgs/superfile.nix` has `vendorHash = null` and is unreferenced                                               | 🔴 CRITICAL | `pkgs/superfile.nix`                                        |
+| 4  | **Duplicate packages** — `gnupg`, `foot`, `zellij`, `swappy`, `jq`, `wl-clipboard`, `rofi`, `cliphist` defined in multiple places | 🟡 HIGH     | Multiple files                                              |
+| 5  | **Duplicate Go overlay** — defined in `flake.nix` AND `platforms/darwin/default.nix`                                              | 🟡 HIGH     | `flake.nix:139-147`, `darwin/default.nix:66-82`             |
+| 6  | **Unused `nix-visualize` specialArg** — passed to both platforms but never used in modules                                        | 🟡 HIGH     | `flake.nix`                                                 |
+| 7  | **Stale commented imports** in `configuration.nix` referencing removed services                                                   | 🟢 LOW      | `configuration.nix:21-29`                                   |
+| 8  | **Orphaned `ssh-banner` file** — exists but never referenced                                                                      | 🟢 LOW      | `platforms/nixos/users/ssh-banner`                          |
+| 9  | **Outdated justfile text** — "Go 1.26rc2" should be "Go 1.26.1"                                                                   | 🟢 LOW      | `justfile:1078`                                             |
+| 10 | **Stale monitoring recipes** — netdata/ntopng recipes for macOS LaunchAgents                                                      | 🟢 LOW      | `justfile:866-916`                                          |
+| 11 | **Orphaned `better-claude` recipes** — reference non-existent package                                                             | 🟢 LOW      | `justfile:1296-1323`                                        |
+| 12 | **Overlapping system monitors** — `bottom`, `btop`, `htop` all installed                                                          | 🟢 LOW      | `base.nix:104-107`                                          |
 
 ---
 

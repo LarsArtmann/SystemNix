@@ -159,33 +159,33 @@
 
 ## F) Top 25 Next Actions
 
-| #   | Task                                                                     | Effort  | Impact   |
-| --- | ------------------------------------------------------------------------ | ------- | -------- |
-| 1   | **Resolve Hyprland vs Niri** — pick one, remove dead code                | 2h      | Critical |
-| 2   | **Add `set -euo pipefail` to 7 remaining scripts**                       | 15min   | Medium   |
-| 3   | **Fix TODO_LIST.md summary counts**                                      | 5min    | Low      |
-| 4   | **Import core/Types.nix in flake** (Ghost Systems)                       | 15min   | High     |
-| 5   | **Import core/State.nix in flake** (Ghost Systems)                       | 15min   | High     |
-| 6   | **Import core/Validation.nix in flake** (Ghost Systems)                  | 15min   | High     |
-| 7   | **Enable TypeSafetySystem in flake**                                     | 30min   | High     |
-| 8   | **Add Waybar GPU temperature module** (AMD GPU)                          | 1.5h    | Medium   |
-| 9   | **Add Waybar CPU usage module**                                          | 1.5h    | Medium   |
-| 10  | **Add hot-reload for Niri config** (Ctrl+Alt+R)                          | 10min   | High     |
-| 11  | **Add Waybar memory/network/disk modules**                               | 4.5h    | Medium   |
-| 12  | **Create Quake Terminal dropdown** (F12)                                 | 2h      | Medium   |
-| 13  | **Create Clipboard History Viewer**                                      | 2h      | Medium   |
-| 14  | **Consolidate user config** (eliminate split brain)                      | 45min   | High     |
-| 15  | **Consolidate path config**                                              | 30min   | High     |
-| 16  | **Enable SystemAssertions**                                              | 30min   | High     |
-| 17  | **Archive old status reports** (133 files)                               | 1h      | Low      |
-| 18  | **Monitor NixOS bug #483085** for audit daemon                           | Ongoing | Medium   |
-| 19  | **Research audit kernel module** AppArmor compatibility                  | 2-4h    | Medium   |
-| 20  | **Optimize keyboard repeat rate**                                        | 20min   | Low      |
-| 21  | **Map Caps Lock to Escape/Control**                                      | 20min   | Low      |
-| 22  | **Split system.nix** (397 lines → 3 files)                               | 90min   | Medium   |
-| 23  | **Remove Hyprland scripts** (validate-deployment.sh, optimize-system.sh) | 30min   | Medium   |
-| 24  | **Add workspace naming persistence**                                     | 30min   | Low      |
-| 25  | **Bluetooth setup** (pair Nest Audio)                                    | 30min   | Low      |
+| #  | Task                                                                     | Effort  | Impact   |
+| -- | ------------------------------------------------------------------------ | ------- | -------- |
+| 1  | **Resolve Hyprland vs Niri** — pick one, remove dead code                | 2h      | Critical |
+| 2  | **Add `set -euo pipefail` to 7 remaining scripts**                       | 15min   | Medium   |
+| 3  | **Fix TODO_LIST.md summary counts**                                      | 5min    | Low      |
+| 4  | **Import core/Types.nix in flake** (Ghost Systems)                       | 15min   | High     |
+| 5  | **Import core/State.nix in flake** (Ghost Systems)                       | 15min   | High     |
+| 6  | **Import core/Validation.nix in flake** (Ghost Systems)                  | 15min   | High     |
+| 7  | **Enable TypeSafetySystem in flake**                                     | 30min   | High     |
+| 8  | **Add Waybar GPU temperature module** (AMD GPU)                          | 1.5h    | Medium   |
+| 9  | **Add Waybar CPU usage module**                                          | 1.5h    | Medium   |
+| 10 | **Add hot-reload for Niri config** (Ctrl+Alt+R)                          | 10min   | High     |
+| 11 | **Add Waybar memory/network/disk modules**                               | 4.5h    | Medium   |
+| 12 | **Create Quake Terminal dropdown** (F12)                                 | 2h      | Medium   |
+| 13 | **Create Clipboard History Viewer**                                      | 2h      | Medium   |
+| 14 | **Consolidate user config** (eliminate split brain)                      | 45min   | High     |
+| 15 | **Consolidate path config**                                              | 30min   | High     |
+| 16 | **Enable SystemAssertions**                                              | 30min   | High     |
+| 17 | **Archive old status reports** (133 files)                               | 1h      | Low      |
+| 18 | **Monitor NixOS bug #483085** for audit daemon                           | Ongoing | Medium   |
+| 19 | **Research audit kernel module** AppArmor compatibility                  | 2-4h    | Medium   |
+| 20 | **Optimize keyboard repeat rate**                                        | 20min   | Low      |
+| 21 | **Map Caps Lock to Escape/Control**                                      | 20min   | Low      |
+| 22 | **Split system.nix** (397 lines → 3 files)                               | 90min   | Medium   |
+| 23 | **Remove Hyprland scripts** (validate-deployment.sh, optimize-system.sh) | 30min   | Medium   |
+| 24 | **Add workspace naming persistence**                                     | 30min   | Low      |
+| 25 | **Bluetooth setup** (pair Nest Audio)                                    | 30min   | Low      |
 
 ---
 

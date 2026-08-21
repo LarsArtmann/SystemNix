@@ -5,40 +5,42 @@
 
 ---
 
-
 ## a) FULLY DONE
 
-| # | Item | Verification |
-|---|------|-------------|
-| 1 | **`perform_init` event-sourcing fix** — `monitor365-server init` CLI path emitted no `TenantCreated` domain event, same class of bug as the original bootstrap api_key data loss | `47920ba37` committed, pushed. Regression test `test_perform_init_emits_tenant_created_event` added. All 622 unit tests pass |
-| 2 | **WS 101 Switching Protocols bug** — Agent treated HTTP 101 as an error because `is_success()` only matches 200-299. Every successful WS upgrade was logged as "WS upgrade rejected", causing an infinite 1s connect/disconnect loop with 6000+ consecutive failures | `c8bcc6b6c` committed, pushed. Server logs show stable WS connection after deploy |
-| 3 | **`/realtime/` rate limit exemption** — Global rate limiter (100 req/60s) covered WS upgrade endpoints. Agent reconnect attempts exhausted the budget within seconds, getting 429'd on every subsequent request — blocking both WS AND HTTP API calls | `68f03c069` committed, pushed. 8 rate limit tests pass. No 429 errors in production logs |
-| 4 | **JSON gzip request body bug (THE real root cause)** — Cloud client gzipped JSON bodies >= 1024 bytes with `content-encoding: gzip`, but the server's `DecompressionLayer` only decompresses RESPONSE bodies, not request bodies. `DeviceRegistration` with `hardware_sources` exceeded the threshold, so the server received gzipped bytes it couldn't parse as JSON → "expected value at line 1 column 1" → 400 on every registration | `d32f6622b` committed, pushed. Clippy clean. Agent logs show successful registration after deploy |
-| 5 | **Pre-commit hook treefmt damage eliminated** — Hook called `nix fmt` (treefmt) which formatted the entire project including Markdown docs, silently damaging 25+ files. Now calls `alejandra` directly on staged `.nix` files only | `2a26e618` committed. Fragile `git restore` band-aid removed |
-| 6 | **BDD tests verified after DuckDB SQL fixes** — 112 scenarios pass (18 features, 892 steps). The prior session's DuckDB `CAST`/`GREATEST`/`GROUP BY` fixes are confirmed correct | `cargo test -p monitor365-bdd-tests` |
-| 7 | **Stale status report annotated** — `docs/status/2026-07-17_22-51_monitor365-data-loss-fix-and-templ-reapplied.md` now has a comprehensive resolution appendix documenting all fixes | Committed |
-| 8 | **93GB stale build cache freed** — `/rust-cache/monitor365` was 100% full (0 bytes available), blocking all cargo builds. Cleaned old debug/flycheck/wasm artifacts | `df -h /rust-cache` shows 93G available (was 0) |
-| 9 | **11GB freed via nix-collect-garbage** — 7538 store paths older than 7d deleted | `df -h /` shows 52G available (was 46G) |
-| 10 | **AGENTS.md updated** — Pre-commit hook entry corrected to document the alejandra-direct fix | Committed |
+| #  | Item                                                                                                                                                                                                                                                                                                                                                                                                                                    | Verification                                                                                                                 |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1  | **`perform_init` event-sourcing fix** — `monitor365-server init` CLI path emitted no `TenantCreated` domain event, same class of bug as the original bootstrap api_key data loss                                                                                                                                                                                                                                                        | `47920ba37` committed, pushed. Regression test `test_perform_init_emits_tenant_created_event` added. All 622 unit tests pass |
+| 2  | **WS 101 Switching Protocols bug** — Agent treated HTTP 101 as an error because `is_success()` only matches 200-299. Every successful WS upgrade was logged as "WS upgrade rejected", causing an infinite 1s connect/disconnect loop with 6000+ consecutive failures                                                                                                                                                                    | `c8bcc6b6c` committed, pushed. Server logs show stable WS connection after deploy                                            |
+| 3  | **`/realtime/` rate limit exemption** — Global rate limiter (100 req/60s) covered WS upgrade endpoints. Agent reconnect attempts exhausted the budget within seconds, getting 429'd on every subsequent request — blocking both WS AND HTTP API calls                                                                                                                                                                                   | `68f03c069` committed, pushed. 8 rate limit tests pass. No 429 errors in production logs                                     |
+| 4  | **JSON gzip request body bug (THE real root cause)** — Cloud client gzipped JSON bodies >= 1024 bytes with `content-encoding: gzip`, but the server's `DecompressionLayer` only decompresses RESPONSE bodies, not request bodies. `DeviceRegistration` with `hardware_sources` exceeded the threshold, so the server received gzipped bytes it couldn't parse as JSON → "expected value at line 1 column 1" → 400 on every registration | `d32f6622b` committed, pushed. Clippy clean. Agent logs show successful registration after deploy                            |
+| 5  | **Pre-commit hook treefmt damage eliminated** — Hook called `nix fmt` (treefmt) which formatted the entire project including Markdown docs, silently damaging 25+ files. Now calls `alejandra` directly on staged `.nix` files only                                                                                                                                                                                                     | `2a26e618` committed. Fragile `git restore` band-aid removed                                                                 |
+| 6  | **BDD tests verified after DuckDB SQL fixes** — 112 scenarios pass (18 features, 892 steps). The prior session's DuckDB `CAST`/`GREATEST`/`GROUP BY` fixes are confirmed correct                                                                                                                                                                                                                                                        | `cargo test -p monitor365-bdd-tests`                                                                                         |
+| 7  | **Stale status report annotated** — `docs/status/2026-07-17_22-51_monitor365-data-loss-fix-and-templ-reapplied.md` now has a comprehensive resolution appendix documenting all fixes                                                                                                                                                                                                                                                    | Committed                                                                                                                    |
+| 8  | **93GB stale build cache freed** — `/rust-cache/monitor365` was 100% full (0 bytes available), blocking all cargo builds. Cleaned old debug/flycheck/wasm artifacts                                                                                                                                                                                                                                                                     | `df -h /rust-cache` shows 93G available (was 0)                                                                              |
+| 9  | **11GB freed via nix-collect-garbage** — 7538 store paths older than 7d deleted                                                                                                                                                                                                                                                                                                                                                         | `df -h /` shows 52G available (was 46G)                                                                                      |
+| 10 | **AGENTS.md updated** — Pre-commit hook entry corrected to document the alejandra-direct fix                                                                                                                                                                                                                                                                                                                                            | Committed                                                                                                                    |
 
 ### Commits this session
 
 **monitor365 (4 commits):**
-| Commit | Description |
-|--------|-------------|
+
+| Commit      | Description                                                              |
+| ----------- | ------------------------------------------------------------------------ |
 | `47920ba37` | `perform_init` emits `TenantCreated` event for projection rebuild safety |
-| `68f03c069` | Exempt `/realtime/` from global rate limiter |
-| `c8bcc6b6c` | Accept 101 Switching Protocols as valid WS upgrade response |
-| `d32f6622b` | Stop gzipping JSON request bodies the server can't decompress |
+| `68f03c069` | Exempt `/realtime/` from global rate limiter                             |
+| `c8bcc6b6c` | Accept 101 Switching Protocols as valid WS upgrade response              |
+| `d32f6622b` | Stop gzipping JSON request bodies the server can't decompress            |
 
 **SystemNix (3 commits):**
-| Commit | Description |
-|--------|-------------|
+
+| Commit     | Description                                                 |
+| ---------- | ----------------------------------------------------------- |
 | `2a26e618` | Pre-commit hook scopes formatting to staged .nix files only |
-| `61803d92` | Flake lock → WS 101 + rate limit fix |
-| `54789b16` | Flake lock → JSON gzip fix |
+| `61803d92` | Flake lock → WS 101 + rate limit fix                        |
+| `54789b16` | Flake lock → JSON gzip fix                                  |
 
 **Concurrent session commits (not mine, observed in git log):**
+
 - `3ca1ad69` — Forgejo CHANGE_ME placeholder fix
 - `2d12a613` — Forgejo orphan git dirs fix
 - `add3f045` — Markdown/YAML formatting across docs
@@ -47,11 +49,11 @@
 
 ## b) PARTIALLY DONE
 
-| # | Item | What Remains |
-|---|------|-------------|
-| 1 | **Agent event buffer (50GB) needs clearing** — The agent's local buffer (`/var/lib/monitor365/events.db` = 27G + `events.db-wal` = 23G) contains events from Jul 11 that fail integrity hash verification (old storage key). They block the upload pipeline — the agent retries the same bad events forever. Commands provided to user but NOT yet run (requires sudo + service stop) | `sudo systemctl stop monitor365.service && sudo rm /var/lib/monitor365/events.db* && sudo systemctl start monitor365.service` |
-| 2 | **Production DuckDB api_key verification** — Indirectly verified (agent authenticates successfully = key works). But never ran raw SQL to see the actual hash value. The DuckDB file at `/var/lib/monitor365-server/monitor365.duckdb` requires sudo to read, and the initial attempt hit a confusion: the first `sudo duckdb` command created a 12K empty file in the WRONG directory (`/var/lib/monitor365/` instead of `/var/lib/monitor365-server/`) | Direct SQL verification is unnecessary — agent auth success is stronger proof |
-| 3 | **Deploy templ to macOS** — templ is in `base.nix` and verified on evo-x2. Darwin switch requires running on the Mac | `darwin-rebuild switch --flake .#Lars-MacBook-Air` on the Mac |
+| # | Item                                                                                                                                                                                                                                                                                                                                                                                                                                                     | What Remains                                                                                                                  |
+| - | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Agent event buffer (50GB) needs clearing** — The agent's local buffer (`/var/lib/monitor365/events.db` = 27G + `events.db-wal` = 23G) contains events from Jul 11 that fail integrity hash verification (old storage key). They block the upload pipeline — the agent retries the same bad events forever. Commands provided to user but NOT yet run (requires sudo + service stop)                                                                    | `sudo systemctl stop monitor365.service && sudo rm /var/lib/monitor365/events.db* && sudo systemctl start monitor365.service` |
+| 2 | **Production DuckDB api_key verification** — Indirectly verified (agent authenticates successfully = key works). But never ran raw SQL to see the actual hash value. The DuckDB file at `/var/lib/monitor365-server/monitor365.duckdb` requires sudo to read, and the initial attempt hit a confusion: the first `sudo duckdb` command created a 12K empty file in the WRONG directory (`/var/lib/monitor365/` instead of `/var/lib/monitor365-server/`) | Direct SQL verification is unnecessary — agent auth success is stronger proof                                                 |
+| 3 | **Deploy templ to macOS** — templ is in `base.nix` and verified on evo-x2. Darwin switch requires running on the Mac                                                                                                                                                                                                                                                                                                                                     | `darwin-rebuild switch --flake .#Lars-MacBook-Air` on the Mac                                                                 |
 
 ---
 
@@ -73,6 +75,7 @@
 The prior session's self-review flagged a "WS idle timeout cycle" and I dismissed it in this session, reasoning: "heartbeat (30s) < server timeout (90s), serde formats match, no issue." I checked the server-side timeout code and the agent-side heartbeat interval and concluded there was no problem.
 
 **Reality:** There WAS a 1-second connect/disconnect death spiral — 6000+ consecutive failures. But the root cause wasn't a timeout at all. It was three layered bugs:
+
 1. Rate limiter blocked `/realtime/` after 100 req/60s
 2. Agent treated 101 as an error
 3. (After fixing 1+2) Device registration failed due to gzip
@@ -90,6 +93,7 @@ I told the user to run `sudo duckdb /var/lib/monitor365/monitor365.duckdb -c "SE
 ### 3. I declared 5 items "VERIFIED: no actual bug" based on code reading, not production evidence
 
 At the start of this session, I marked these as "completed" based on reading source code:
+
 - Device registration gap → "already event-sourced"
 - Agent re-registration 400 → "code correct, agent connected"
 - WS idle timeout → "heartbeat 30s < timeout 90s"
@@ -101,6 +105,7 @@ All three were **wrong**. The agent was in a 6000+ failure death spiral the enti
 ### 4. The post-deploy check "Monitor365 agent connected" is fundamentally broken
 
 It passes even when the agent is in a 1-second connect/disconnect death spiral. The check sees the agent in the `devices` table (which persists from a brief connection) and declares success. It does NOT verify:
+
 - The WS connection is sustained
 - Events are being uploaded
 - The upload success rate is non-zero

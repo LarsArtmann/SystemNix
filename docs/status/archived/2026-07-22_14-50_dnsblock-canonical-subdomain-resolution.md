@@ -9,7 +9,6 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 1. **Swap proxy/redirect roles in Caddy** — `dnsblock.home.lan` is now the `protectedVHost` reverse-proxying to `localhost:9090`, and `dnsblockd.home.lan` is now the 301 redirect to `dnsblock.home.lan` (`modules/nixos/services/caddy.nix:170`).
@@ -147,18 +146,18 @@ Run `nix run .#deploy` on evo-x2 to apply the canonical-subdomain change, then v
 
 ## Item Resolution (2026-07-30)
 
-| # | Status | Resolution |
-|---|--------|------------|
-| 1-4 | DONE | Deployed; dnsblock.home.lan serving correctly |
-| 5 | DONE | Homepage tile updated |
-| 6-8 | DONE/REJECTED | auth_token_file via sops DONE; localSubdomains updated DONE |
-| 9-10 | DONE | FEATURES.md updated; runbook updated |
-| 11 | DONE | Caddy config verified at runtime |
-| 12-13 | REJECTED | Flake-level svcUrl/vhost parity check — over-engineering |
-| 14-15 | DONE | Gatus checks for dnsblock.home.lan health + redirect |
-| 16-17 | REJECTED | Prometheus gauge / Grafana panel for dnsblockd — over-monitoring |
-| 18 | DONE | Architecture documented in AGENTS.md |
-| 19-50 | MIXED | Items 20-50 are brainstorms. Key survivors: item 30 (Darwin CA trust) is OPEN in TODO_LIST. Rest REJECTED as aspirational (homepage linter, quarterly audit, flatPath helper, etc.) |
+| #     | Status        | Resolution                                                                                                                                                                          |
+| ----- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1-4   | DONE          | Deployed; dnsblock.home.lan serving correctly                                                                                                                                       |
+| 5     | DONE          | Homepage tile updated                                                                                                                                                               |
+| 6-8   | DONE/REJECTED | auth_token_file via sops DONE; localSubdomains updated DONE                                                                                                                         |
+| 9-10  | DONE          | FEATURES.md updated; runbook updated                                                                                                                                                |
+| 11    | DONE          | Caddy config verified at runtime                                                                                                                                                    |
+| 12-13 | REJECTED      | Flake-level svcUrl/vhost parity check — over-engineering                                                                                                                            |
+| 14-15 | DONE          | Gatus checks for dnsblock.home.lan health + redirect                                                                                                                                |
+| 16-17 | REJECTED      | Prometheus gauge / Grafana panel for dnsblockd — over-monitoring                                                                                                                    |
+| 18    | DONE          | Architecture documented in AGENTS.md                                                                                                                                                |
+| 19-50 | MIXED         | Items 20-50 are brainstorms. Key survivors: item 30 (Darwin CA trust) is OPEN in TODO_LIST. Rest REJECTED as aspirational (homepage linter, quarterly audit, flatPath helper, etc.) |
 
 ---
 

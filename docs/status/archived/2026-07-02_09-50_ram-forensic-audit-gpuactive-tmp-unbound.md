@@ -8,7 +8,6 @@
 
 ---
 
-
 ## Executive Summary
 
 The user asked "Do we reserve RAM for things that don't use it?" The answer was **no** — all
@@ -184,53 +183,53 @@ zstd compression/decompression AND occupies RAM at ~2.7:1 compression ratio.
 
 ### Critical (Deploy Blockers)
 
-| #   | Task                                                                                              | Impact                 | Effort |
-| --- | ------------------------------------------------------------------------------------------------- | ---------------------- | ------ |
-| 1   | **Free disk space**: `docker volume prune` (37 GiB), `nix-collect-garbage --delete-older-than 7d` | Unblocks deploy        | 10 min |
-| 2   | **Fix nix-build-cleanup.service** — investigate failure, clear `/nix/var/nix/builds/`             | Restores cleanup timer | 5 min  |
-| 3   | **Deploy the 3 config fixes** (/tmp cap, unbound bounds, nofail mount)                            | Fixes 2 memory leaks   | 15 min |
+| # | Task                                                                                              | Impact                 | Effort |
+| - | ------------------------------------------------------------------------------------------------- | ---------------------- | ------ |
+| 1 | **Free disk space**: `docker volume prune` (37 GiB), `nix-collect-garbage --delete-older-than 7d` | Unblocks deploy        | 10 min |
+| 2 | **Fix nix-build-cleanup.service** — investigate failure, clear `/nix/var/nix/builds/`             | Restores cleanup timer | 5 min  |
+| 3 | **Deploy the 3 config fixes** (/tmp cap, unbound bounds, nofail mount)                            | Fixes 2 memory leaks   | 15 min |
 
 ### High Impact
 
-| #   | Task                                                                                   | Impact                        | Effort  |
-| --- | -------------------------------------------------------------------------------------- | ----------------------------- | ------- |
-| 4   | **Add GPUActive/GPUReclaim monitoring** to Gatus or btrfs-health widget                | Makes #1 RAM consumer visible | 1 hour  |
-| 5   | **Test TTM `page_pool_size` reduction** to 32 GiB — reboot, load Ollama model, observe | Could free 20+ GiB RAM        | 2 hours |
-| 6   | **Add Docker volume prune timer** — weekly `docker volume prune --filter "until=168h"` | Prevents 37 GiB accumulation  | 15 min  |
-| 7   | **Increase zramSwap to 15%** (~14 GiB) or add disk swap overflow                       | Prevents 100% swap full       | 10 min  |
-| 8   | **Cap Helium browser memory** via systemd slice or `--memory-pressure-off` flag        | Prevents 4.5 GiB tab bloat    | 30 min  |
-| 9   | **BTRFS metadata relief** — balance metadata or grow partition                         | Prevents ENOSPC crash         | 1 hour  |
+| # | Task                                                                                   | Impact                        | Effort  |
+| - | -------------------------------------------------------------------------------------- | ----------------------------- | ------- |
+| 4 | **Add GPUActive/GPUReclaim monitoring** to Gatus or btrfs-health widget                | Makes #1 RAM consumer visible | 1 hour  |
+| 5 | **Test TTM `page_pool_size` reduction** to 32 GiB — reboot, load Ollama model, observe | Could free 20+ GiB RAM        | 2 hours |
+| 6 | **Add Docker volume prune timer** — weekly `docker volume prune --filter "until=168h"` | Prevents 37 GiB accumulation  | 15 min  |
+| 7 | **Increase zramSwap to 15%** (~14 GiB) or add disk swap overflow                       | Prevents 100% swap full       | 10 min  |
+| 8 | **Cap Helium browser memory** via systemd slice or `--memory-pressure-off` flag        | Prevents 4.5 GiB tab bloat    | 30 min  |
+| 9 | **BTRFS metadata relief** — balance metadata or grow partition                         | Prevents ENOSPC crash         | 1 hour  |
 
 ### Infrastructure
 
-| #   | Task                                                                                        | Impact                                        | Effort  |
-| --- | ------------------------------------------------------------------------------------------- | --------------------------------------------- | ------- |
-| 10  | **BTRFS /data subvolume migration**                                                         | Enables snapshot protection for Docker/Immich | 4 hours |
-| 11  | **DNS migration: unbound → dnsblockd** (blocked on 3 gaps, see ROADMAP)                     | Eliminates 1.5 GiB unbound                    | Days    |
-| 12  | **Add `/dev/shm` size cap** — currently 47 GiB (50% of RAM), unbounded by default           | Prevents IPC shmem bloat                      | 5 min   |
-| 13  | **nix-build-cleanup timer frequency** — increase from 4h to 2h or add disk-pressure trigger | Faster sandbox cleanup                        | 10 min  |
-| 14  | **Reboot evo-x2** — 23 days uptime in prior sessions caused TTM pool accumulation           | Clears GPU buffer pool                        | 5 min   |
+| #  | Task                                                                                        | Impact                                        | Effort  |
+| -- | ------------------------------------------------------------------------------------------- | --------------------------------------------- | ------- |
+| 10 | **BTRFS /data subvolume migration**                                                         | Enables snapshot protection for Docker/Immich | 4 hours |
+| 11 | **DNS migration: unbound → dnsblockd** (blocked on 3 gaps, see ROADMAP)                     | Eliminates 1.5 GiB unbound                    | Days    |
+| 12 | **Add `/dev/shm` size cap** — currently 47 GiB (50% of RAM), unbounded by default           | Prevents IPC shmem bloat                      | 5 min   |
+| 13 | **nix-build-cleanup timer frequency** — increase from 4h to 2h or add disk-pressure trigger | Faster sandbox cleanup                        | 10 min  |
+| 14 | **Reboot evo-x2** — 23 days uptime in prior sessions caused TTM pool accumulation           | Clears GPU buffer pool                        | 5 min   |
 
 ### Quality of Life
 
-| #   | Task                                                                                         | Impact                              | Effort |
-| --- | -------------------------------------------------------------------------------------------- | ----------------------------------- | ------ |
-| 15  | **Kill stale ad-hoc processes** (Python scripts, old Crush sessions)                         | Frees 3-5 GiB immediately           | 2 min  |
-| 16  | **Add `MemoryMax` to Helium** — no cgroup cap on the largest desktop consumer                | Prevents runaway tab memory         | 20 min |
-| 17  | **Add `nr_gpu_active` to btrfs-health metrics collection**                                   | Makes GPU RAM visible in DMS widget | 30 min |
-| 18  | **Document `GPUActive` in README or boot.nix header** for future debugging                   | Onboarding                          | 10 min |
-| 19  | **Monitor PSI (Pressure Stall Information)** — `/proc/pressure/mem` missing, investigate why | Better OOM early warning            | 30 min |
+| #  | Task                                                                                         | Impact                              | Effort |
+| -- | -------------------------------------------------------------------------------------------- | ----------------------------------- | ------ |
+| 15 | **Kill stale ad-hoc processes** (Python scripts, old Crush sessions)                         | Frees 3-5 GiB immediately           | 2 min  |
+| 16 | **Add `MemoryMax` to Helium** — no cgroup cap on the largest desktop consumer                | Prevents runaway tab memory         | 20 min |
+| 17 | **Add `nr_gpu_active` to btrfs-health metrics collection**                                   | Makes GPU RAM visible in DMS widget | 30 min |
+| 18 | **Document `GPUActive` in README or boot.nix header** for future debugging                   | Onboarding                          | 10 min |
+| 19 | **Monitor PSI (Pressure Stall Information)** — `/proc/pressure/mem` missing, investigate why | Better OOM early warning            | 30 min |
 
 ### Technical Debt
 
-| #   | Task                                                                                        | Impact                         | Effort |
-| --- | ------------------------------------------------------------------------------------------- | ------------------------------ | ------ |
-| 20  | **Update TODO_LIST.md** — last updated session 152, many items stale/done                   | Project tracking accuracy      | 20 min |
-| 21  | **Run `nix flake update` after deploy** — flake.lock already shows input changes            | Security patches               | 5 min  |
-| 22  | **Review all `MemoryMax` values** — some may be too generous (DMS 4G, Hermes 24G)           | Tighter memory budgeting       | 1 hour |
-| 23  | **Add `systemd-oomd` log forwarding** — oomd decisions invisible in SigNoz                  | OOM root cause visibility      | 30 min |
-| 24  | **Docker `mem_limit` audit** — most containers have no memory cap                           | Prevents container OOM cascade | 1 hour |
-| 25  | **Test `vm.min_free_kbytes` reduction** — 2 GiB may be excessive, 512 MiB likely sufficient | Frees 1.5 GiB for processes    | 1 hour |
+| #  | Task                                                                                        | Impact                         | Effort |
+| -- | ------------------------------------------------------------------------------------------- | ------------------------------ | ------ |
+| 20 | **Update TODO_LIST.md** — last updated session 152, many items stale/done                   | Project tracking accuracy      | 20 min |
+| 21 | **Run `nix flake update` after deploy** — flake.lock already shows input changes            | Security patches               | 5 min  |
+| 22 | **Review all `MemoryMax` values** — some may be too generous (DMS 4G, Hermes 24G)           | Tighter memory budgeting       | 1 hour |
+| 23 | **Add `systemd-oomd` log forwarding** — oomd decisions invisible in SigNoz                  | OOM root cause visibility      | 30 min |
+| 24 | **Docker `mem_limit` audit** — most containers have no memory cap                           | Prevents container OOM cascade | 1 hour |
+| 25 | **Test `vm.min_free_kbytes` reduction** — 2 GiB may be excessive, 512 MiB likely sufficient | Frees 1.5 GiB for processes    | 1 hour |
 
 ---
 
@@ -278,7 +277,7 @@ and testing with Ollama to verify no regression in model loading.
 | `platforms/nixos/system/boot.nix`        | `/tmp` tmpfs size cap (8G), TTM comment overhaul, sysctl comment fix | ✅ Validated |
 | `modules/nixos/services/dns-blocker.nix` | Unbound `key-cache-size`, `neg-cache-size`, `infra-cache-numhost`    | ✅ Validated |
 | `AGENTS.md`                              | 3 new gotcha entries (GPUActive, /tmp cap, unbound RSS)              | ✅ Added     |
-| `flake.lock`                             | Pre-existing input updates (not from this session)                   | ⚠️ Present   |
+| `flake.lock`                             | Pre-existing input updates (not from this session)                   | ⚠️ Present    |
 
 ## System Health Snapshot
 

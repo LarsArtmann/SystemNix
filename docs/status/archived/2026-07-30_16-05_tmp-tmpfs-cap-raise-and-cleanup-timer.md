@@ -6,10 +6,10 @@
 
 ---
 
-
 ## What Was Requested
 
 User wanted to raise the /tmp tmpfs cap beyond 24 GiB but was concerned about:
+
 1. Reserving too much RAM permanently
 2. Whether zram-backed /tmp made sense
 3. Stale accumulation filling RAM during long uptimes
@@ -53,6 +53,7 @@ Researched and rejected. The system already has zram swap (17% of 128 GiB, ~16 G
 Timer fires every 4h (matching `nix-build-cleanup` cadence). Service removes stale top-level /tmp entries untouched for >4 hours.
 
 **Safety features:**
+
 - Only top-level non-dotfile entries (`.X11-unix`, `.font-unix`, lock files protected)
 - Skips symlinks, sockets, named pipes
 - **Per-entry descendant check**: if ANY file in the subtree was touched in the last 4h, the entry is skipped — protects active builds writing into a dir created hours ago
@@ -68,20 +69,20 @@ Timer fires every 4h (matching `nix-build-cleanup` cadence). Service removes sta
 
 After the initial implementation, a critical self-review against AGENTS.md rules found three issues. All fixed:
 
-| Fix | Issue | AGENTS.md Rule |
-|-----|-------|----------------|
-| `//` → `lib.mkMerge` | `//` on `serviceConfig` silently discards `mkDefault`/`mkForce` priority annotations | "All serviceConfig `//` chains have been converted to `lib.mkMerge`" |
-| Added `-xdev` to `find` | `find` could descend into bind-mounted filesystems under /tmp | Defense-in-depth |
-| Added `--one-file-system` to `rm` + `-x` to `du` | Same class — `rm -rf` could delete contents of a mounted dir | Same |
+| Fix                                              | Issue                                                                                | AGENTS.md Rule                                                       |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| `//` → `lib.mkMerge`                             | `//` on `serviceConfig` silently discards `mkDefault`/`mkForce` priority annotations | "All serviceConfig `//` chains have been converted to `lib.mkMerge`" |
+| Added `-xdev` to `find`                          | `find` could descend into bind-mounted filesystems under /tmp                        | Defense-in-depth                                                     |
+| Added `--one-file-system` to `rm` + `-x` to `du` | Same class — `rm -rf` could delete contents of a mounted dir                         | Same                                                                 |
 
 ### 5. Updated stale documentation
 
 Updated all references to the old 16 GiB / 24 GiB cap:
 
-| File | Change |
-|------|--------|
-| `AGENTS.md` gotcha table (line 311) | Updated from "16 GiB" to "48 GiB + stale-entry cleanup timer", added zram rejection rationale |
-| `docs/runbooks/wdt-reset.md` (line 155) | Updated from "16G" to "48G + cleanup timer" |
+| File                                    | Change                                                                                        |
+| --------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `AGENTS.md` gotcha table (line 311)     | Updated from "16 GiB" to "48 GiB + stale-entry cleanup timer", added zram rejection rationale |
+| `docs/runbooks/wdt-reset.md` (line 155) | Updated from "16G" to "48G + cleanup timer"                                                   |
 
 Historical status reports in `docs/status/` were intentionally left unchanged — they are point-in-time snapshots.
 

@@ -7,7 +7,6 @@
 
 ---
 
-
 ## Executive Summary
 
 Successfully migrated the desktop shell stack from **Waybar + Dunst + Swaylock + Wlogout + polkit-gnome** to **DankMaterialShell (DMS) v1.4.6** running on **Quickshell v0.2.1**. All 13 SystemNix-native plugins are loaded and verified at runtime with zero QML errors. The old shell stack is fully removed (717 lines of dead code deleted). DMS owns the DBus notification daemon, screen saver, system tray, and polkit agent.
@@ -176,48 +175,48 @@ Successfully migrated the desktop shell stack from **Waybar + Dunst + Swaylock +
 
 ### High Impact / Low Effort
 
-| #   | Task                                                                           | Impact                               | Effort |
-| --- | ------------------------------------------------------------------------------ | ------------------------------------ | ------ |
-| 1   | **Reboot evo-x2** to clear stale polkit-gnome process                          | Fixes polkit duplicate agent warning | 5 min  |
-| 2   | **Update FEATURES.md** with Quickshell/DMS section                             | Docs accuracy                        | 30 min |
-| 3   | **Create `dms-matugen.service`** that applies Catppuccin Mocha accent on login | Theme survives reboot                | 1 hour |
-| 4   | **Run `dms doctor`** and fix any issues it finds                               | Proactive health check               | 30 min |
-| 5   | **Verify DMS lock screen** works on real suspend (Mod+Shift+S)                 | Critical untested path               | 5 min  |
-| 6   | **Test notification delivery** — `notify-send "test"` should show DMS popup    | Verify notification daemon           | 2 min  |
-| 7   | **Test `dms ipc lock lock`** manually                                          | Verify lock screen works             | 2 min  |
+| # | Task                                                                           | Impact                               | Effort |
+| - | ------------------------------------------------------------------------------ | ------------------------------------ | ------ |
+| 1 | **Reboot evo-x2** to clear stale polkit-gnome process                          | Fixes polkit duplicate agent warning | 5 min  |
+| 2 | **Update FEATURES.md** with Quickshell/DMS section                             | Docs accuracy                        | 30 min |
+| 3 | **Create `dms-matugen.service`** that applies Catppuccin Mocha accent on login | Theme survives reboot                | 1 hour |
+| 4 | **Run `dms doctor`** and fix any issues it finds                               | Proactive health check               | 30 min |
+| 5 | **Verify DMS lock screen** works on real suspend (Mod+Shift+S)                 | Critical untested path               | 5 min  |
+| 6 | **Test notification delivery** — `notify-send "test"` should show DMS popup    | Verify notification daemon           | 2 min  |
+| 7 | **Test `dms ipc lock lock`** manually                                          | Verify lock screen works             | 2 min  |
 
 ### Medium Impact / Medium Effort
 
-| #   | Task                                                                                     | Impact                         | Effort  |
-| --- | ---------------------------------------------------------------------------------------- | ------------------------------ | ------- |
-| 8   | **Auto-detect WAN interfaces** in Dual-WAN plugin instead of hardcoded `enp2s0`/`wlp1s0` | Works on different hardware    | 2 hours |
-| 9   | **Add GPU temperature** to GPU Monitor plugin (currently only utilization + VRAM)        | More useful at-a-glance        | 1 hour  |
-| 10  | **Add Ollama model download progress** to Ollama plugin                                  | See active downloads           | 2 hours |
-| 11  | **Add DNS block rate per-hour graph** to DNS Stats plugin                                | Visual trend                   | 3 hours |
-| 12  | **Port ImmichMemory widget** as DMS plugin (photo of the day in bar popup)               | Nice daily touch               | 2 hours |
-| 13  | **Add BTRFS disk usage** to Btrfs plugin (not just snapshot age)                         | Know when to clean up          | 1 hour  |
-| 14  | **DMS bar widget ordering** — configure which systemnix plugins appear left/right        | Customization                  | 1 hour  |
-| 15  | **Create DMS plugin template** (skeleton for adding new plugins quickly)                 | Developer experience           | 1 hour  |
-| 16  | **Add `dms doctor` to pre-deploy-check**                                                 | Catch DMS issues before deploy | 30 min  |
+| #  | Task                                                                                     | Impact                         | Effort  |
+| -- | ---------------------------------------------------------------------------------------- | ------------------------------ | ------- |
+| 8  | **Auto-detect WAN interfaces** in Dual-WAN plugin instead of hardcoded `enp2s0`/`wlp1s0` | Works on different hardware    | 2 hours |
+| 9  | **Add GPU temperature** to GPU Monitor plugin (currently only utilization + VRAM)        | More useful at-a-glance        | 1 hour  |
+| 10 | **Add Ollama model download progress** to Ollama plugin                                  | See active downloads           | 2 hours |
+| 11 | **Add DNS block rate per-hour graph** to DNS Stats plugin                                | Visual trend                   | 3 hours |
+| 12 | **Port ImmichMemory widget** as DMS plugin (photo of the day in bar popup)               | Nice daily touch               | 2 hours |
+| 13 | **Add BTRFS disk usage** to Btrfs plugin (not just snapshot age)                         | Know when to clean up          | 1 hour  |
+| 14 | **DMS bar widget ordering** — configure which systemnix plugins appear left/right        | Customization                  | 1 hour  |
+| 15 | **Create DMS plugin template** (skeleton for adding new plugins quickly)                 | Developer experience           | 1 hour  |
+| 16 | **Add `dms doctor` to pre-deploy-check**                                                 | Catch DMS issues before deploy | 30 min  |
 
 ### High Impact / High Effort
 
-| #   | Task                                                                                              | Impact                                     | Effort  |
-| --- | ------------------------------------------------------------------------------------------------- | ------------------------------------------ | ------- |
-| 17  | **NixOS test for DMS plugin loading** — Automated test that builds and checks plugin QML validity | Prevent broken plugins reaching production | 4 hours |
-| 18  | **DMS CLI wrapper for NixOps** — `nix run .#dms-restart`, `nix run .#dms-locks`                   | Better DX                                  | 2 hours |
-| 19  | **Migrate rofi launcher to DMS launcher** (if DMS launcher is mature enough)                      | One less process                           | 4 hours |
-| 20  | **DMS custom CSS/theme overlay** — inject Catppuccin Mocha colors via DMS theme system            | Visual consistency                         | 4 hours |
-| 21  | **Add NPU process attribution** — which process is using the NPU                                  | Debugging AI workloads                     | 4 hours |
-| 22  | **DMS bar profile switching** — different bar layouts for work/gaming/media                       | Context-aware desktop                      | 6 hours |
+| #  | Task                                                                                              | Impact                                     | Effort  |
+| -- | ------------------------------------------------------------------------------------------------- | ------------------------------------------ | ------- |
+| 17 | **NixOS test for DMS plugin loading** — Automated test that builds and checks plugin QML validity | Prevent broken plugins reaching production | 4 hours |
+| 18 | **DMS CLI wrapper for NixOps** — `nix run .#dms-restart`, `nix run .#dms-locks`                   | Better DX                                  | 2 hours |
+| 19 | **Migrate rofi launcher to DMS launcher** (if DMS launcher is mature enough)                      | One less process                           | 4 hours |
+| 20 | **DMS custom CSS/theme overlay** — inject Catppuccin Mocha colors via DMS theme system            | Visual consistency                         | 4 hours |
+| 21 | **Add NPU process attribution** — which process is using the NPU                                  | Debugging AI workloads                     | 4 hours |
+| 22 | **DMS bar profile switching** — different bar layouts for work/gaming/media                       | Context-aware desktop                      | 6 hours |
 
 ### Lower Priority
 
-| #   | Task                                                                                    | Impact                      | Effort  |
-| --- | --------------------------------------------------------------------------------------- | --------------------------- | ------- |
-| 23  | **Add Sops secret rotation alerts** to sops plugin                                      | Security awareness          | 2 hours |
-| 24  | **Add systemd journal tail** widget (last 5 errors)                                     | Quick debugging             | 3 hours |
-| 25  | **DMS + niri scrollable workspace integration** — show workspace content preview in bar | Better workspace navigation | 8 hours |
+| #  | Task                                                                                    | Impact                      | Effort  |
+| -- | --------------------------------------------------------------------------------------- | --------------------------- | ------- |
+| 23 | **Add Sops secret rotation alerts** to sops plugin                                      | Security awareness          | 2 hours |
+| 24 | **Add systemd journal tail** widget (last 5 errors)                                     | Quick debugging             | 3 hours |
+| 25 | **DMS + niri scrollable workspace integration** — show workspace content preview in bar | Better workspace navigation | 8 hours |
 
 ---
 

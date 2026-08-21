@@ -6,7 +6,6 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 1. ✅ **mr-sync `package.nix`**: Changed `doCheck = false` + dead custom `checkPhase` to `checkFlags = [ "-skip" "<6 tests>" ]`. Verified nix build passes with tests running (6 skipped, rest pass).
@@ -84,6 +83,7 @@
 ## f) Next Tasks (Up to 50)
 
 ### Immediate — Push & Tag (BLOCKING everything else)
+
 1. **Push go-atomic-write to GitHub** — the `commitVerified` fix (commit `2232124`)
 2. **Tag go-atomic-write v0.4.1** — `git tag v0.4.1 && git push origin v0.4.1`
 3. **Push mr-sync to GitHub** — the `package.nix` checkFlags change
@@ -95,6 +95,7 @@
 9. **Verify SystemNix `nix build .#cqrs-lint`** still works after lock update
 
 ### Root Cause — git insteadOf Rule
+
 10. **Check `git config --global --list | grep insteadOf`** — confirm the rule exists
 11. **Assess blast radius of removing `url.git@github.com:.insteadof=https://github.com/`** — which workflows depend on it?
 12. **Check if GOPRIVATE repos (4 repos) need SSH** — they use access-tokens per AGENTS.md, so SSH insteadOf may be unnecessary
@@ -103,6 +104,7 @@
 15. **Audit ALL LarsArtmann repo flake.locks for SSH URLs** — same pattern may exist in other repos
 
 ### mr-sync Cleanup
+
 16. **Run full mr-sync test suite after v0.4.1 bump** — verify all 6 previously-failing tests pass
 17. **Add a CI check for mr-sync vendorHash drift** — catch upstream dep changes
 18. **Consider adding `doCheck = true` explicitly** in package.nix once checkFlags is removed — makes intent clear
@@ -110,6 +112,7 @@
 20. **Update mr-sync AGENTS.md** with the go-atomic-write flock-creates-file gotcha
 
 ### go-cqrs-lite Cleanup
+
 21. **Run `nix run .#test` on go-cqrs-lite** — full test suite after flake.lock change
 22. **Run `nix run .#lint` on go-cqrs-lite** — verify no lint regressions
 23. **Check if cqrs-lint vendorHash is affected** by the flake.lock refresh (it built, but verify hash stability)
@@ -118,6 +121,7 @@
 26. **Update go-cqrs-lite AGENTS.md** with the SSH→GitHub conversion pattern
 
 ### go-atomic-write Cleanup
+
 27. **Update go-atomic-write CHANGELOG.md** for v0.4.1 — document the `commitVerified` fix
 28. **Update go-atomic-write FEATURES.md** if the first-write semantics changed
 29. **Add a test for `WriteFuncVerified` with zero fingerprint** — same code path, untested
@@ -126,6 +130,7 @@
 32. **Review the flock dependency** — is there a flag to avoid O_CREATE? `flock.New` doesn't expose one, but worth checking upstream
 
 ### SystemNix Integration
+
 33. **Verify cqrs-lint is still in `environment.systemPackages`** after any lock changes
 34. **Run `nix flake check --no-build` on SystemNix** after go-cqrs-lite lock update
 35. **Consider adding a flake.lock linter** that detects SSH URLs — prevents regression
@@ -136,6 +141,7 @@
 40. **Verify `cqrs-lint --version` in a new shell** on evo-x2
 
 ### Documentation
+
 41. **Update the prior session status doc** (`2026-07-29_14-56`) — annotate the SSH→GitHub conversion as done (locally)
 42. **Document the go-atomic-write flock-creates-file gotcha** in SystemNix AGENTS.md
 43. **Document the `git insteadOf` → flake.lock SSH pollution** pattern in AGENTS.md
@@ -143,6 +149,7 @@
 45. **Update go-cqrs-lite TODO_LIST.md** if it references the SSH URL issue
 
 ### Broader Audit
+
 46. **Audit ALL LarsArtmann Go tool flakes** for `git+ssh://` inputs that should be `github:`
 47. **Check if `mkPreparedSource` works with `github:` URLs** (it should — they're just source paths, but verify)
 48. **Consider a pre-commit hook** that rejects `git+ssh://` in flake.nix for public repos

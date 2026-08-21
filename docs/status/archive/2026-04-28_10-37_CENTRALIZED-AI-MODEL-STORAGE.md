@@ -213,33 +213,33 @@ However, one minor concern:
 
 ## f) Top #25 Things To Get Done Next
 
-| #   | Task                                                    | Impact   | Effort | Status |
-| --- | ------------------------------------------------------- | -------- | ------ | ------ |
-| 1   | Update AGENTS.md with new AI model architecture         | High     | Low    | ⏳     |
-| 2   | Add `services.ai-models.models` declarative option      | High     | Medium | ⏳     |
-| 3   | Test `just ai-migrate` on actual `/data`                | Critical | Low    | ⏳     |
-| 4   | Add `just ai-health` diagnostic command                 | Medium   | Low    | ⏳     |
-| 5   | Verify Jan AI launches with symlinked data dir          | High     | Low    | ⏳     |
-| 6   | Add macOS `ai-models` home-manager equivalent           | Medium   | Medium | ⏳     |
-| 7   | Create BTRFS `@ai` subvolume                            | Medium   | Low    | ⏳     |
-| 8   | Add model backup strategy (restic/borg)                 | Medium   | Medium | ⏳     |
-| 9   | Integrate `ollama.loadModels` with centralized paths    | Medium   | Low    | ⏳     |
-| 10  | Add `services.ai-models.cleanup` periodic GC            | Low      | Medium | ⏳     |
-| 11  | Document migration path in README                       | Medium   | Low    | ⏳     |
-| 12  | Add `ai-models` to homepage dashboard                   | Low      | Low    | ⏳     |
-| 13  | Monitor `/data/ai` disk usage via SigNoz                | Low      | Low    | ⏳     |
-| 14  | Add per-tool size quota options                         | Low      | Medium | ⏳     |
-| 15  | Hardlink deduplication across model dirs                | Low      | High   | ⏳     |
-| 16  | Add `ai-models.cache.maxAge` for HF cache cleanup       | Low      | Low    | ⏳     |
-| 17  | Support `services.ai-models.paths.custom` for user dirs | Low      | Low    | ⏳     |
-| 18  | Add NixOS test for `ai-models` module                   | Low      | Medium | ⏳     |
-| 19  | Create `lib/ai-models.nix` shared helper                | Low      | Low    | ⏳     |
-| 20  | Add `Type = lib.types.path` for all path options        | Low      | Low    | ⏳     |
-| 21  | Document Jan data folder UI configuration               | Low      | Low    | ⏳     |
-| 22  | Add `ollama-rocm` model warmup script                   | Low      | Medium | ⏳     |
-| 23  | Create model download progress wrapper                  | Low      | Medium | ⏳     |
-| 24  | Add `ai-models` to Darwin packages if useful            | Low      | Low    | ⏳     |
-| 25  | Evaluate `llama.cpp` NixOS service module               | Low      | High   | ⏳     |
+| #  | Task                                                    | Impact   | Effort | Status |
+| -- | ------------------------------------------------------- | -------- | ------ | ------ |
+| 1  | Update AGENTS.md with new AI model architecture         | High     | Low    | ⏳     |
+| 2  | Add `services.ai-models.models` declarative option      | High     | Medium | ⏳     |
+| 3  | Test `just ai-migrate` on actual `/data`                | Critical | Low    | ⏳     |
+| 4  | Add `just ai-health` diagnostic command                 | Medium   | Low    | ⏳     |
+| 5  | Verify Jan AI launches with symlinked data dir          | High     | Low    | ⏳     |
+| 6  | Add macOS `ai-models` home-manager equivalent           | Medium   | Medium | ⏳     |
+| 7  | Create BTRFS `@ai` subvolume                            | Medium   | Low    | ⏳     |
+| 8  | Add model backup strategy (restic/borg)                 | Medium   | Medium | ⏳     |
+| 9  | Integrate `ollama.loadModels` with centralized paths    | Medium   | Low    | ⏳     |
+| 10 | Add `services.ai-models.cleanup` periodic GC            | Low      | Medium | ⏳     |
+| 11 | Document migration path in README                       | Medium   | Low    | ⏳     |
+| 12 | Add `ai-models` to homepage dashboard                   | Low      | Low    | ⏳     |
+| 13 | Monitor `/data/ai` disk usage via SigNoz                | Low      | Low    | ⏳     |
+| 14 | Add per-tool size quota options                         | Low      | Medium | ⏳     |
+| 15 | Hardlink deduplication across model dirs                | Low      | High   | ⏳     |
+| 16 | Add `ai-models.cache.maxAge` for HF cache cleanup       | Low      | Low    | ⏳     |
+| 17 | Support `services.ai-models.paths.custom` for user dirs | Low      | Low    | ⏳     |
+| 18 | Add NixOS test for `ai-models` module                   | Low      | Medium | ⏳     |
+| 19 | Create `lib/ai-models.nix` shared helper                | Low      | Low    | ⏳     |
+| 20 | Add `Type = lib.types.path` for all path options        | Low      | Low    | ⏳     |
+| 21 | Document Jan data folder UI configuration               | Low      | Low    | ⏳     |
+| 22 | Add `ollama-rocm` model warmup script                   | Low      | Medium | ⏳     |
+| 23 | Create model download progress wrapper                  | Low      | Medium | ⏳     |
+| 24 | Add `ai-models` to Darwin packages if useful            | Low      | Low    | ⏳     |
+| 25 | Evaluate `llama.cpp` NixOS service module               | Low      | High   | ⏳     |
 
 ---
 

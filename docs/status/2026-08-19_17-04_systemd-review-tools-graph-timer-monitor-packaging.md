@@ -23,6 +23,7 @@ End-to-end packaged and verified building:
 ### Research / selection
 
 Reviewed 6 candidate tools (GitHub stars 0-11) for "lightweight + read-only + web UI for systemd timers":
+
 - `cappy-dev/systemd-timer-monitor` (Python stdlib, 490 LoC) — selected for the timer audit
 - `icholy/systemd-graph` (Go + React SPA, 11 stars) — selected for the dependency graph
 - 4 others rejected for being either not web (lazycron TUI), not timer-focused (sysd-logs, app-dashboard, systemd_dashboard), or having write-side capabilities (systemctl-dashboard)
@@ -62,6 +63,7 @@ Wiring is complete and committed; **the webui derivation build is blocked**:
 ### Manual smoke test of upstream binary (NOT the Nix build)
 
 To verify the upstream code works on this host, I cloned `icholy/systemd-graph` to `/tmp/sd-graph`, ran `pnpm install && pnpm build && go build -o bin/server ./cmd/server`, and smoke-tested:
+
 - `/` → 200, 455 bytes (HTML shell)
 - `/api/snapshot` → 200, 825 KB (full systemd graph JSON)
 - Both system and user D-Bus scopes connect successfully on evo-x2
@@ -98,6 +100,7 @@ The upstream code works. The Nix packaging is the blocker — not the upstream p
 **The fundamental issue:** pnpm 11's lockfile supply-chain policy check (280 entries) requires fetching metadata for EVERY package from `registry.npmjs.org`. The Nix sandbox blocks DNS. The `--config.*` overrides I tried disable `verify-deps-before-run` (the pre-run check) but do NOT disable the install-time supply-chain policy verification, which is a separate code path. There is no documented pnpm flag to disable the supply-chain check entirely.
 
 **What I did NOT try** (would likely work but I didn't get to them):
+
 - Patching `webui/pnpm-lock.yaml` to set `autoInstallPeers: false` AND `ignoredBuiltDependencies: []` AND `onlyBuiltDependencies: []` (might suppress the metadata fetch)
 - Using `pnpm config set` to set `verify-deps-before-run=false` globally before install (the `--config.` flag may not propagate to the install subcommand)
 - Using `npm` instead of `pnpm` (would require generating a `package-lock.json` — the repo only ships `pnpm-lock.yaml`)

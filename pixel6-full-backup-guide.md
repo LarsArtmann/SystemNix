@@ -133,14 +133,14 @@ You should see your phone listed with a `device` status. On the phone, tap **All
 adb backup -apk -shared -all -system -keyvalue -f pixel6_full_backup.ab
 ```
 
-| Flag | Meaning |
-| --- | --- |
-| `-apk` | Include APK files so apps can be reinstalled |
-| `-shared` | Include shared storage (photos, downloads, documents) |
-| `-all` | Include all apps that allow backup |
-| `-system` | Include system apps |
-| `-keyvalue` | Include key/value backups (settings, etc.) |
-| `-f path` | Output file path |
+| Flag        | Meaning                                               |
+| ----------- | ----------------------------------------------------- |
+| `-apk`      | Include APK files so apps can be reinstalled          |
+| `-shared`   | Include shared storage (photos, downloads, documents) |
+| `-all`      | Include all apps that allow backup                    |
+| `-system`   | Include system apps                                   |
+| `-keyvalue` | Include key/value backups (settings, etc.)            |
+| `-f path`   | Output file path                                      |
 
 Alternative without system apps (smaller, fewer restore conflicts):
 
@@ -224,15 +224,15 @@ You will be prompted on the phone. The restore may take a long time.
 
 These apps usually exclude themselves from Google and ADB backups. Export from each one.
 
-| App | How to Export |
-| --- | --- |
-| **WhatsApp** | Settings → Chats → Chat backup → Back up to Google Drive |
-| **Signal** | Settings → Chats → Backups → enable and save passphrase |
-| **Telegram** | Settings → Advanced → Export Telegram data (or rely on cloud chats) |
+| App                      | How to Export                                                             |
+| ------------------------ | ------------------------------------------------------------------------- |
+| **WhatsApp**             | Settings → Chats → Chat backup → Back up to Google Drive                  |
+| **Signal**               | Settings → Chats → Backups → enable and save passphrase                   |
+| **Telegram**             | Settings → Advanced → Export Telegram data (or rely on cloud chats)       |
 | **Google Authenticator** | Use transfer/export codes; consider migrating to Aegis for better backups |
-| **Password managers** | Bitwarden, 1Password, etc.: export encrypted vault |
-| **Banking apps** | Usually no export; note balances and transactions separately |
-| **Games** | Check Play Games cloud save or in-game account |
+| **Password managers**    | Bitwarden, 1Password, etc.: export encrypted vault                        |
+| **Banking apps**         | Usually no export; note balances and transactions separately              |
+| **Games**                | Check Play Games cloud save or in-game account                            |
 
 ---
 
@@ -335,15 +335,15 @@ adb pull /sdcard/data_backup.tar.gz
 
 ## Recommended Workflow Summary
 
-| Priority | Method | What It Covers |
-| --- | --- | --- |
-| 1 | Google One backup | System, most app data, settings, call logs, SMS |
-| 2 | Google Photos sync | Photos and videos |
-| 3 | ADB local backup | Local copy of apps, allowed app data, shared storage |
-| 4 | App-specific exports | WhatsApp, Signal, auth apps, password managers, games |
-| 5 | SMS Backup & Restore | Local SMS and call log archive |
-| 6 | Google Takeout | All Google service data |
-| 7 | Custom recovery NANDroid | True full image backup (requires root/unlocked bootloader) |
+| Priority | Method                   | What It Covers                                             |
+| -------- | ------------------------ | ---------------------------------------------------------- |
+| 1        | Google One backup        | System, most app data, settings, call logs, SMS            |
+| 2        | Google Photos sync       | Photos and videos                                          |
+| 3        | ADB local backup         | Local copy of apps, allowed app data, shared storage       |
+| 4        | App-specific exports     | WhatsApp, Signal, auth apps, password managers, games      |
+| 5        | SMS Backup & Restore     | Local SMS and call log archive                             |
+| 6        | Google Takeout           | All Google service data                                    |
+| 7        | Custom recovery NANDroid | True full image backup (requires root/unlocked bootloader) |
 
 ---
 
@@ -364,13 +364,13 @@ adb pull /sdcard/data_backup.tar.gz
 
 ## Common ADB Backup Issues
 
-| Problem | Fix |
-| --- | --- |
-| `adb: unable to connect` | Check USB cable, re-authorize debugging, try `adb kill-server && adb start-server` |
-| Backup file is 0 bytes | Some apps or the system refused. Try `-nosystem` or exclude problem apps |
-| Backup fails partway through | Reboot phone, reconnect, retry |
-| Restore fails | Ensure target phone runs the same Android version |
-| Encrypted backup won't extract | Use the exact password with `abe.jar` |
+| Problem                        | Fix                                                                                |
+| ------------------------------ | ---------------------------------------------------------------------------------- |
+| `adb: unable to connect`       | Check USB cable, re-authorize debugging, try `adb kill-server && adb start-server` |
+| Backup file is 0 bytes         | Some apps or the system refused. Try `-nosystem` or exclude problem apps           |
+| Backup fails partway through   | Reboot phone, reconnect, retry                                                     |
+| Restore fails                  | Ensure target phone runs the same Android version                                  |
+| Encrypted backup won't extract | Use the exact password with `abe.jar`                                              |
 
 ---
 

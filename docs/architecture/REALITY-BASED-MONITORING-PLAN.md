@@ -54,61 +54,61 @@
 
 ### Group A: Core Deployment (35min)
 
-| ID  | Task                                    | Time  | Priority | Verification                        |
-| --- | --------------------------------------- | ----- | -------- | ----------------------------------- |
-| A1  | Check current netdata deployment status | 3min  | P0       | ps aux \| grep netdata              |
-| A2  | Complete interrupted nh darwin switch   | 10min | P0       | Command completes successfully      |
-| A3  | Test netdata web interface access       | 2min  | P0       | curl localhost:19999 returns data   |
-| A4  | Verify netdata is in PATH               | 2min  | P0       | which netdata returns path          |
-| A5  | Test netdata service persistence        | 5min  | P0       | killall netdata; check auto-restart |
-| A6  | Git commit netdata working state        | 3min  | P1       | git status clean after commit       |
-| A7  | Basic netdata configuration review      | 5min  | P1       | Check default config sanity         |
-| A8  | Document actual netdata setup           | 5min  | P1       | Only working steps, no fiction      |
+| ID | Task                                    | Time  | Priority | Verification                        |
+| -- | --------------------------------------- | ----- | -------- | ----------------------------------- |
+| A1 | Check current netdata deployment status | 3min  | P0       | ps aux \| grep netdata              |
+| A2 | Complete interrupted nh darwin switch   | 10min | P0       | Command completes successfully      |
+| A3 | Test netdata web interface access       | 2min  | P0       | curl localhost:19999 returns data   |
+| A4 | Verify netdata is in PATH               | 2min  | P0       | which netdata returns path          |
+| A5 | Test netdata service persistence        | 5min  | P0       | killall netdata; check auto-restart |
+| A6 | Git commit netdata working state        | 3min  | P1       | git status clean after commit       |
+| A7 | Basic netdata configuration review      | 5min  | P1       | Check default config sanity         |
+| A8 | Document actual netdata setup           | 5min  | P1       | Only working steps, no fiction      |
 
 ### Group B: ntopng Research & Deploy (40min)
 
-| ID  | Task                               | Time  | Priority | Verification                |
-| --- | ---------------------------------- | ----- | -------- | --------------------------- |
-| B1  | Search ntopng in nixpkgs           | 3min  | P0       | nix search results          |
-| B2  | Check ntopng dependencies          | 5min  | P0       | Dependency conflicts check  |
-| B3  | Add ntopng to environment.nix      | 2min  | P0       | File diff shows addition    |
-| B4  | Deploy ntopng via Nix              | 12min | P0       | nh darwin switch completes  |
-| B5  | Verify ntopng installation         | 3min  | P0       | which ntopng returns path   |
-| B6  | Test ntopng basic startup          | 5min  | P0       | ntopng --help works         |
-| B7  | Configure ntopng network interface | 8min  | P1       | Interface detection working |
-| B8  | Git commit ntopng addition         | 2min  | P1       | Clean commit of changes     |
+| ID | Task                               | Time  | Priority | Verification                |
+| -- | ---------------------------------- | ----- | -------- | --------------------------- |
+| B1 | Search ntopng in nixpkgs           | 3min  | P0       | nix search results          |
+| B2 | Check ntopng dependencies          | 5min  | P0       | Dependency conflicts check  |
+| B3 | Add ntopng to environment.nix      | 2min  | P0       | File diff shows addition    |
+| B4 | Deploy ntopng via Nix              | 12min | P0       | nh darwin switch completes  |
+| B5 | Verify ntopng installation         | 3min  | P0       | which ntopng returns path   |
+| B6 | Test ntopng basic startup          | 5min  | P0       | ntopng --help works         |
+| B7 | Configure ntopng network interface | 8min  | P1       | Interface detection working |
+| B8 | Git commit ntopng addition         | 2min  | P1       | Clean commit of changes     |
 
 ### Group C: Service Configuration (35min)
 
-| ID  | Task                              | Time | Priority | Verification            |
-| --- | --------------------------------- | ---- | -------- | ----------------------- |
-| C1  | Research macOS service management | 5min | P1       | launchd vs manual start |
-| C2  | Configure netdata auto-start      | 8min | P1       | Starts after reboot     |
-| C3  | Configure ntopng auto-start       | 8min | P1       | Starts after reboot     |
-| C4  | Test both services startup order  | 5min | P1       | No startup conflicts    |
-| C5  | Configure service resource limits | 6min | P2       | CPU/memory limits set   |
-| C6  | Service restart/recovery setup    | 3min | P2       | Auto-restart on failure |
+| ID | Task                              | Time | Priority | Verification            |
+| -- | --------------------------------- | ---- | -------- | ----------------------- |
+| C1 | Research macOS service management | 5min | P1       | launchd vs manual start |
+| C2 | Configure netdata auto-start      | 8min | P1       | Starts after reboot     |
+| C3 | Configure ntopng auto-start       | 8min | P1       | Starts after reboot     |
+| C4 | Test both services startup order  | 5min | P1       | No startup conflicts    |
+| C5 | Configure service resource limits | 6min | P2       | CPU/memory limits set   |
+| C6 | Service restart/recovery setup    | 3min | P2       | Auto-restart on failure |
 
 ### Group D: Testing & Validation (30min)
 
-| ID  | Task                              | Time | Priority | Verification            |
-| --- | --------------------------------- | ---- | -------- | ----------------------- |
-| D1  | Test netdata web UI functionality | 5min | P0       | All graphs loading      |
-| D2  | Test ntopng web UI functionality  | 5min | P0       | Interface accessible    |
-| D3  | Generate test network traffic     | 3min | P1       | wget/curl for test data |
-| D4  | Verify traffic monitoring works   | 5min | P1       | Both tools show traffic |
-| D5  | Resource usage measurement        | 5min | P1       | htop during operation   |
-| D6  | Service restart testing           | 4min | P1       | Survive kill/restart    |
-| D7  | System reboot testing             | 3min | P2       | Survive full reboot     |
+| ID | Task                              | Time | Priority | Verification            |
+| -- | --------------------------------- | ---- | -------- | ----------------------- |
+| D1 | Test netdata web UI functionality | 5min | P0       | All graphs loading      |
+| D2 | Test ntopng web UI functionality  | 5min | P0       | Interface accessible    |
+| D3 | Generate test network traffic     | 3min | P1       | wget/curl for test data |
+| D4 | Verify traffic monitoring works   | 5min | P1       | Both tools show traffic |
+| D5 | Resource usage measurement        | 5min | P1       | htop during operation   |
+| D6 | Service restart testing           | 4min | P1       | Survive kill/restart    |
+| D7 | System reboot testing             | 3min | P2       | Survive full reboot     |
 
 ### Group E: Security & Documentation (25min)
 
-| ID  | Task                          | Time  | Priority | Verification                |
-| --- | ----------------------------- | ----- | -------- | --------------------------- |
-| E1  | Security port exposure review | 5min  | P1       | netstat -an check           |
-| E2  | Access control configuration  | 8min  | P1       | Localhost-only access       |
-| E3  | Document actual working setup | 10min | P2       | Real instructions only      |
-| E4  | Final system validation       | 2min  | P2       | Everything working together |
+| ID | Task                          | Time  | Priority | Verification                |
+| -- | ----------------------------- | ----- | -------- | --------------------------- |
+| E1 | Security port exposure review | 5min  | P1       | netstat -an check           |
+| E2 | Access control configuration  | 8min  | P1       | Localhost-only access       |
+| E3 | Document actual working setup | 10min | P2       | Real instructions only      |
+| E4 | Final system validation       | 2min  | P2       | Everything working together |
 
 ## Implementation Strategy
 

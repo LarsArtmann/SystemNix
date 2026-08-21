@@ -6,7 +6,6 @@
 
 ---
 
-
 ## What Happened
 
 A `nix run .#deploy` failed with a cascading build error originating from a single derivation: `searxng-wait-dns`. The `writeShellApplication` wrapper runs shellcheck, which flagged SC2034 (variable `i` appears unused) on the loop `for i in $(seq 1 60); do`. Shellcheck warnings are treated as errors by `writeShellApplication`, failing the derivation. This cascaded: `searxng-wait-dns` → `unit-searx.service` → `system-units` → `etc` → `activate` → `nixos-system-evo-x2` — the ENTIRE system build died from one unused loop variable.
@@ -66,12 +65,14 @@ Nothing. The fix is correct and minimal. But there are process failures worth ca
 ## f) NEXT 50 THINGS TO GET DONE
 
 ### Immediate (this fix)
+
 1. **Commit the searxng.nix fix** (`i` → `_`)
 2. **Deploy** (`nix run .#deploy`)
 3. **Run post-deploy smoke test** (`nix run .#post-deploy-check`)
 4. **Verify SearXNG engines init correctly** — check `searx.service` logs for "DNS resolution ready", confirm wikidata/radio-browser engines are NOT disabled
 
 ### Short-term (shellcheck / build safety)
+
 5. **Add `nix flake check --no-build` pre-commit hook** — catches eval-time + shellcheck failures before commit
 6. **Scan ALL `writeShellApplication` blocks in the repo** for shellcheck issues (`grep -rn 'writeShellApplication' modules/ platforms/ pkgs/ lib/`)
 7. **Extract `mkDnsGate` helper** into `lib/default.nix` — DRY the 5+ duplicated DNS-wait patterns
@@ -80,6 +81,7 @@ Nothing. The fix is correct and minimal. But there are process failures worth ca
 10. **Add `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel`** to CI or pre-deploy-check — `flake check --no-build` catches eval errors but NOT all build-time failures
 
 ### SearXNG module health
+
 11. **Verify SearXNG is actually running** post-deploy (the DNS gate was just added; the service may have other issues)
 12. **Check SearXNG Gatus health check** — is `searxng` showing green?
 13. **Verify SearXNG search actually works** — not just `/healthz`, but an actual search query returns results
@@ -87,22 +89,26 @@ Nothing. The fix is correct and minimal. But there are process failures worth ca
 15. **Test SearXNG from a browser** via `searxng.home.lan` — DNS resolution, Caddy vHost, forward-auth, actual search
 
 ### Build system robustness
+
 16. **Run a full system build** (`nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel`) to confirm zero other build failures
 17. **Check flake.lock** — it's modified (`M flake.lock`); verify the lock update is intentional and doesn't introduce other issues
 18. **Review the auto-git daemon's commit `717edcdb`** — "chore(flake): update flake.lock" — did this lock update introduce the searxng changes or are they independent?
 
 ### Documentation
+
 19. **Update the "SearXNG engine init DNS race" gotcha** to mention the shellcheck SC2034 build failure
 20. **Document the `writeShellApplication` shellcheck enforcement** as a general gotcha (not SearXNG-specific)
 21. **Consider a "Common Nix Build Failures" doc** — SC2034, vendorHash, FOD purity, etc. are all recurring patterns
 
 ### Technical debt (from AGENTS.md observations)
+
 22. **Extract `mkHttpCheck` and `discordAlert` patterns** into a Gatus helper module (partially done?)
 23. **Add `CPUQuota` to ALL `writeShellApplication`-based services** — these run shell scripts that could loop
 24. **Audit all `writeShellApplication` blocks for `RuntimeInputs` completeness** — missing runtime deps cause `status=127`
 25. **Consider `writeShellScriptBin` for simple gate scripts** where shellcheck strictness isn't worth the overhead
 
 ### Broader SystemNix improvements (noticed during this session)
+
 26. **The AGENTS.md gotcha table is ENORMOUS** (~100+ entries) — consider splitting into `docs/gotchas/` by category (Caddy, systemd, Nix, SearXNG, etc.)
 27. **No automated test for "does the system build?"** — `nix flake check --no-build` catches eval, but `nix run .#deploy` is the only full build test, and it's manual
 28. **The deploy script (`deploy.sh`) runs `reset-failed` + `nh os switch` but doesn't pre-validate the build** — `pre-deploy-check` catches boot issues but not shellcheck failures
@@ -110,6 +116,7 @@ Nothing. The fix is correct and minimal. But there are process failures worth ca
 30. **The `restartTriggers` pattern** (package path changes → service restarts) should be audited across ALL services — some may be missing it (silent stale-process bugs)
 
 ### Process improvements
+
 31. **Add a "build gate" to the auto-git daemon** — never commit without `nix flake check --no-build` passing
 32. **Add a "deploy gate" to `deploy.sh`** — `nix build` the toplevel BEFORE `nh os switch`, fail fast on build errors
 33. **Consider `nix flake check --build`** (full build) in CI — expensive but catches everything
@@ -117,6 +124,7 @@ Nothing. The fix is correct and minimal. But there are process failures worth ca
 35. **Template for DNS-gate scripts** — standardize the pattern across all services
 
 ### Monitoring gaps noticed
+
 36. **No Gatus check for "is the system buildable?"** — a daily CI job that builds the toplevel would catch regressions early
 37. **No alert when auto-git commits a broken build** — the daemon commits silently; a broken build can sit on master for hours
 38. **Post-deploy-check doesn't validate SearXNG search** — only checks `/healthz` (HTTP 200), not actual search functionality
@@ -124,6 +132,7 @@ Nothing. The fix is correct and minimal. But there are process failures worth ca
 40. **Monitor auto-git daemon health** — is it logging? committing at expected intervals?
 
 ### Future considerations
+
 41. **Migrate DNS-gate scripts to a NixOS `ExecStartPre` with `pkgs.writeShellScriptBin`** — less strict than `writeShellApplication` but avoids shellcheck false positives on intentional patterns
 42. **Consider `systemd` `ExecStartPre=` with inline scripts** — no shellcheck at all, but loses type safety
 43. **Add `bash` LSP to devShell** — `bash-language-server` provides inline shellcheck feedback in editors
@@ -149,16 +158,16 @@ Nothing. The fix is correct and minimal. But there are process failures worth ca
 
 ## Summary
 
-| Category | Status |
-|----------|--------|
-| Build error | FIXED (`i` → `_`) |
-| Verified | `nix flake check --no-build` passes, individual derivation builds |
-| Full system build | NOT verified (only eval check) |
-| Committed | NO |
-| Deployed | NO |
-| AGENTS.md updated | NO |
-| Root cause (auto-git commits broken code) | NOT addressed |
-| Root cause (no build gate) | NOT addressed |
+| Category                                  | Status                                                            |
+| ----------------------------------------- | ----------------------------------------------------------------- |
+| Build error                               | FIXED (`i` → `_`)                                                 |
+| Verified                                  | `nix flake check --no-build` passes, individual derivation builds |
+| Full system build                         | NOT verified (only eval check)                                    |
+| Committed                                 | NO                                                                |
+| Deployed                                  | NO                                                                |
+| AGENTS.md updated                         | NO                                                                |
+| Root cause (auto-git commits broken code) | NOT addressed                                                     |
+| Root cause (no build gate)                | NOT addressed                                                     |
 
 **One-character fix, correct and minimal. But I skipped the full-build verification, didn't update docs, and didn't address the systemic issue (auto-git daemon commits without build checks). The fix is done; the process that created the bug is not.**
 

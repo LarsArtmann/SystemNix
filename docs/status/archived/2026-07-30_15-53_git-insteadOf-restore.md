@@ -2,10 +2,9 @@
 
 **Date:** 2026-07-30 15:53
 **Session Duration:** ~3 minutes
-**Trigger:** User request: *"Bring my fucking GitHub/LarsArtmann insteadOf for https to ssh for back!"*
+**Trigger:** User request: _"Bring my fucking GitHub/LarsArtmann insteadOf for https to ssh for back!"_
 
 ---
-
 
 ## TL;DR
 
@@ -17,27 +16,27 @@ Restored the `url."git@github.com:".insteadOf = "https://github.com/"` rule in `
 
 ### a) FULLY DONE
 
-| # | Item | Status |
-|---|------|--------|
-| 1 | Added `url."git@github.com:".insteadOf = "https://github.com/"` to `platforms/common/programs/git.nix` (after `credential.helper` block) | ✅ |
-| 2 | Documented `"FIXED 2026-07-29"` status in AGENTS.md gotcha → rewrote to `"restored on user demand 2026-07-30"` with `GIT_CONFIG_GLOBAL=/dev/null` workaround | ✅ |
-| 3 | Verified `nix flake check --no-build` passes (all NixOS modules) | ✅ |
-| 4 | Verified `nix eval .#nixosConfigurations.evo-x2.config.home-manager.users.lars.programs.git.settings` renders the rule at the right nesting (`url."git@github.com:".insteadOf = "https://github.com/"`) | ✅ |
-| 5 | Confirmed no Darwin-specific git config exists that would need a parallel update (`platforms/darwin/programs/` only has `chrome.nix` + `shells.nix`) | ✅ |
+| # | Item                                                                                                                                                                                                    | Status |
+| - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 1 | Added `url."git@github.com:".insteadOf = "https://github.com/"` to `platforms/common/programs/git.nix` (after `credential.helper` block)                                                                | ✅     |
+| 2 | Documented `"FIXED 2026-07-29"` status in AGENTS.md gotcha → rewrote to `"restored on user demand 2026-07-30"` with `GIT_CONFIG_GLOBAL=/dev/null` workaround                                            | ✅     |
+| 3 | Verified `nix flake check --no-build` passes (all NixOS modules)                                                                                                                                        | ✅     |
+| 4 | Verified `nix eval .#nixosConfigurations.evo-x2.config.home-manager.users.lars.programs.git.settings` renders the rule at the right nesting (`url."git@github.com:".insteadOf = "https://github.com/"`) | ✅     |
+| 5 | Confirmed no Darwin-specific git config exists that would need a parallel update (`platforms/darwin/programs/` only has `chrome.nix` + `shells.nix`)                                                    | ✅     |
 
 ### b) PARTIALLY DONE
 
-| # | Item | Status |
-|---|------|--------|
-| 1 | The `git.nix` change is **committed** (commit `502020e7` from auto-commit daemon) but the AGENTS.md rewrite is **NOT yet committed** — `git status` shows `M AGENTS.md` unstaged | ⚠️ |
+| # | Item                                                                                                                                                                             | Status |
+| - | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 1 | The `git.nix` change is **committed** (commit `502020e7` from auto-commit daemon) but the AGENTS.md rewrite is **NOT yet committed** — `git status` shows `M AGENTS.md` unstaged | ⚠️      |
 
 ### c) NOT STARTED
 
-| # | Item | Reason |
-|---|------|--------|
-| 1 | Deploy to either evo-x2 or Lars-MacBook-Air | User did not request a deploy; only the config change |
-| 2 | Test whether any in-flight `nix flake lock` operations are affected | No flake update was run |
-| 3 | Audit all LarsArtmann repo `flake.lock` files for SSH URL pollution | Out of scope for this minimal request |
+| # | Item                                                                | Reason                                                |
+| - | ------------------------------------------------------------------- | ----------------------------------------------------- |
+| 1 | Deploy to either evo-x2 or Lars-MacBook-Air                         | User did not request a deploy; only the config change |
+| 2 | Test whether any in-flight `nix flake lock` operations are affected | No flake update was run                               |
+| 3 | Audit all LarsArtmann repo `flake.lock` files for SSH URL pollution | Out of scope for this minimal request                 |
 
 ### d) TOTALLY FUCKED UP
 
@@ -45,18 +44,18 @@ Restored the `url."git@github.com:".insteadOf = "https://github.com/"` rule in `
 
 ### e) WHAT WE SHOULD IMPROVE
 
-| # | Improvement |
-|---|-------------|
-| 1 | **Consider a global `gitConfigScope`** that scopes the `insteadOf` rule to user-remotes only (e.g., `url.git@github.com:.insteadof=https://github.com/LarsArtmann/`). This would rewrite only your own orgs, leaving external `github.com/X` URLs untouched — eliminates the flake.lock pollution entirely. The current rule is too broad. |
-| 2 | Add a pre-commit hook (or pre-`flake update` script) that warns when `flake.lock` ends up with `ssh://git@github.com/` URLs and offers to convert to `github:` clean entries. |
-| 3 | The AGENTS.md gotcha entry is now ~3 sentences of reasoning crammed into one table cell. Consider extracting the full workaround to a dedicated `docs/troubleshooting/flake-lock-ssh-urls.md` runbook with examples. |
-| 4 | The git.nix file has implicit assumptions about user remotes. Document this in the file header (e.g., "Assumes all GitHub remotes are SSH; HTTPS-to-SSH rewrite is a convenience for ad-hoc clones"). |
-| 5 | The `nix flake check --no-build` does NOT validate the rendered HM config — only the NixOS module graph. We relied on `nix eval` for the actual config rendering. Add a tiny `nix run .#verify-git-config` check script that builds the actual file and grep-checks for `[url]` + `insteadOf`. |
-| 6 | The commit `502020e7` was created by the auto-commit daemon (NOT by me) — it's titled "chore(programs/git): update git configuration and aliases" which is vague. A better commit would be `"feat(programs/git): restore insteadOf rule for GitHub HTTPS→SSH rewrites"`. |
-| 7 | AGENTS.md was updated but not committed. Either commit now, or accept the auto-commit daemon will do it with a generic title. |
-| 8 | The AGENTS.md gotcha entry goes from "FIXED" → "restored" — but the table is alphabetically organized (chronological-ish). Consider a "Status" column or split into "Active Gotchas" vs "Resolved" sections. |
-| 9 | The `git.nix` file structure is a flat `programs.git` attrset with no sub-modules. Consider splitting: `programs.git.{core,signing,aliases,urlRewrites,credentials}` for readability. |
-| 10 | No test for this rule. The NixOS test infrastructure could include a minimal test that builds the HM config and grep-checks for `insteadOf`. |
+| #  | Improvement                                                                                                                                                                                                                                                                                                                                |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1  | **Consider a global `gitConfigScope`** that scopes the `insteadOf` rule to user-remotes only (e.g., `url.git@github.com:.insteadof=https://github.com/LarsArtmann/`). This would rewrite only your own orgs, leaving external `github.com/X` URLs untouched — eliminates the flake.lock pollution entirely. The current rule is too broad. |
+| 2  | Add a pre-commit hook (or pre-`flake update` script) that warns when `flake.lock` ends up with `ssh://git@github.com/` URLs and offers to convert to `github:` clean entries.                                                                                                                                                              |
+| 3  | The AGENTS.md gotcha entry is now ~3 sentences of reasoning crammed into one table cell. Consider extracting the full workaround to a dedicated `docs/troubleshooting/flake-lock-ssh-urls.md` runbook with examples.                                                                                                                       |
+| 4  | The git.nix file has implicit assumptions about user remotes. Document this in the file header (e.g., "Assumes all GitHub remotes are SSH; HTTPS-to-SSH rewrite is a convenience for ad-hoc clones").                                                                                                                                      |
+| 5  | The `nix flake check --no-build` does NOT validate the rendered HM config — only the NixOS module graph. We relied on `nix eval` for the actual config rendering. Add a tiny `nix run .#verify-git-config` check script that builds the actual file and grep-checks for `[url]` + `insteadOf`.                                             |
+| 6  | The commit `502020e7` was created by the auto-commit daemon (NOT by me) — it's titled "chore(programs/git): update git configuration and aliases" which is vague. A better commit would be `"feat(programs/git): restore insteadOf rule for GitHub HTTPS→SSH rewrites"`.                                                                   |
+| 7  | AGENTS.md was updated but not committed. Either commit now, or accept the auto-commit daemon will do it with a generic title.                                                                                                                                                                                                              |
+| 8  | The AGENTS.md gotcha entry goes from "FIXED" → "restored" — but the table is alphabetically organized (chronological-ish). Consider a "Status" column or split into "Active Gotchas" vs "Resolved" sections.                                                                                                                               |
+| 9  | The `git.nix` file structure is a flat `programs.git` attrset with no sub-modules. Consider splitting: `programs.git.{core,signing,aliases,urlRewrites,credentials}` for readability.                                                                                                                                                      |
+| 10 | No test for this rule. The NixOS test infrastructure could include a minimal test that builds the HM config and grep-checks for `insteadOf`.                                                                                                                                                                                               |
 
 ---
 
@@ -84,9 +83,9 @@ Restored the `url."git@github.com:".insteadOf = "https://github.com/"` rule in `
 
 ### `AGENTS.md` (1 line changed)
 
-| Line | Before | After |
-|------|--------|-------|
-| 408 | status: `FIXED 2026-07-29` (rule removed) | status: `restored on user demand 2026-07-30` (rule present, with workaround) |
+| Line | Before                                    | After                                                                        |
+| ---- | ----------------------------------------- | ---------------------------------------------------------------------------- |
+| 408  | status: `FIXED 2026-07-29` (rule removed) | status: `restored on user demand 2026-07-30` (rule present, with workaround) |
 
 ---
 
@@ -177,12 +176,14 @@ Sorted by impact (Pareto: 80/20). The first ~10 are the real winners.
 ## Final Self-Assessment
 
 **What I did well:**
+
 - Identified the exact line in the exact file that needed changing (the rule was in `platforms/common/programs/git.nix:79-82` literally the day before).
 - Updated the parallel AGENTS.md gotcha entry to reflect the new state (not just the code).
 - Verified the eval works and the rule renders correctly.
 - Asked nothing — the user request was unambiguous.
 
 **What I could have done better:**
+
 - **Did NOT commit the AGENTS.md change** — left `git status` showing `M AGENTS.md`. The auto-commit daemon will likely commit it with a generic title. Should have committed it explicitly with a meaningful message.
 - **Did NOT deploy** — user did not ask, but the change is useless without a deploy. Could have asked "Deploy now?"
 - **Did NOT explain the `flake.lock` SSH pollution risk** at the time of the change — just put it in a comment. Should have summarized the trade-off in the response.
@@ -192,6 +193,7 @@ Sorted by impact (Pareto: 80/20). The first ~10 are the real winners.
 - **Did NOT run `nix run .#pre-deploy-check`** — could've validated the change is deploy-safe before declaring victory.
 
 **What I should improve going forward:**
+
 - Always commit changes in the same turn as the edit (don't leave `git status` dirty).
 - Always run `nix run .#pre-deploy-check` after any `platforms/common` change.
 - Always surface unpushed commits (current branch is 7 ahead).

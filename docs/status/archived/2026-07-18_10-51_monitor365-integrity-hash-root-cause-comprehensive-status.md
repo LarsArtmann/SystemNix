@@ -6,79 +6,79 @@
 
 ---
 
-
 ## a) FULLY DONE ✅
 
-| # | Task | Evidence |
-|---|------|----------|
-| 1 | **Root cause identified and PROVEN** with a round-trip test | `{"zebra":1,"apple":"hello"}` (agent) ≠ `{"apple":"hello","zebra":1}` (server) → different SHA-256 |
-| 2 | **Fix A: `Event::new` canonicalization** — payload bytes go through `serde_json::Value` round-trip before hashing | `crates/domain/src/lib.rs:166`, commit `9ea1f1000` |
-| 3 | **Fix B: `event_to_cloud_event` hash recompute** — recovers 597M legacy buffered events | `crates/cloud-client/src/types.rs:50`, commit `9ea1f1000` |
-| 4 | **Regression test** — proves Event::new canonicalizes so server verify SUCCEEDS | `crates/domain/tests/canonicalization_regression.rs` |
-| 5 | **Legacy recovery test** — proves old buffered events are recovered | `test_event_to_cloud_event_recomputes_hash_for_legacy_events` |
-| 6 | **Full upstream test suite** — 1117+ tests pass, 0 regressions (7 E2E failures are pre-existing, require running DB) | `cargo test --workspace` |
-| 7 | **Server log rate-limiting** — per-event WARN → single aggregated WARN per batch (was 5000 lines/cycle) | `event_upload.rs`, commit `ebb26a0bd` |
-| 8 | **Circuit breaker 4xx classification** — `ServerError` non-5xx reclassified `Infrastructure` → `Rejection` | `crates/errors/src/lib.rs:258`, commit `ebb26a0bd` |
-| 9 | **Metric naming fix** — `ingest.rejected_events_total` → `ingest_rejected_events_total` (Prometheus convention) | `event_upload.rs`, commit `ebb26a0bd` |
-| 10 | **`accepted>0` health signal** — `cloud_sync_zero_accept_cycles` gauge + ERROR after 3 consecutive zero-accept cycles | `cloud_sync.rs`, commit `ebb26a0bd` |
-| 11 | **Upstream commits pushed** — `9ea1f1000` + `ebb26a0bd` on origin/master | `git push` confirmed |
-| 12 | **PMA `goMemLimit` config error fixed** — removed invalid option that blocked nix eval | `configuration.nix:479`, commit `0575f6ea` |
-| 13 | **SystemNix flake.lock updated** — monitor365 input → `ebb26a0bd` | commit `0575f6ea` |
-| 14 | **Deployed to evo-x2** — new binary `ebb26a0bd` confirmed running (PID 422941) | `pgrep -af monitor365` |
-| 15 | **Post-deploy verification** — ZERO integrity failures server-side, 5016 events uploaded before daily limit | server logs + agent metrics |
-| 16 | **AGENTS.md corrected** — replaced false "new events will pass" claim with accurate root cause + fix description | commit `e0323f9f` |
-| 17 | **Comprehensive plan written** — Pareto analysis, 20 tasks ≤12min each, mermaid graph | `docs/planning/2026-07-18_09-30_monitor365-integrity-hash-root-cause-fix.md` |
-| 18 | **Status report written and committed** | commit `e0323f9f` |
-| 19 | **SystemNix commits pushed** — `0575f6ea` + `e0323f9f` on origin/master | `git push` confirmed |
-| 20 | **Honest self-review committed** (from prior session, carried forward) | `docs/status/2026-07-18_08-38_monitor365-resilience-honest-self-review.md` |
+| #  | Task                                                                                                                  | Evidence                                                                                           |
+| -- | --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| 1  | **Root cause identified and PROVEN** with a round-trip test                                                           | `{"zebra":1,"apple":"hello"}` (agent) ≠ `{"apple":"hello","zebra":1}` (server) → different SHA-256 |
+| 2  | **Fix A: `Event::new` canonicalization** — payload bytes go through `serde_json::Value` round-trip before hashing     | `crates/domain/src/lib.rs:166`, commit `9ea1f1000`                                                 |
+| 3  | **Fix B: `event_to_cloud_event` hash recompute** — recovers 597M legacy buffered events                               | `crates/cloud-client/src/types.rs:50`, commit `9ea1f1000`                                          |
+| 4  | **Regression test** — proves Event::new canonicalizes so server verify SUCCEEDS                                       | `crates/domain/tests/canonicalization_regression.rs`                                               |
+| 5  | **Legacy recovery test** — proves old buffered events are recovered                                                   | `test_event_to_cloud_event_recomputes_hash_for_legacy_events`                                      |
+| 6  | **Full upstream test suite** — 1117+ tests pass, 0 regressions (7 E2E failures are pre-existing, require running DB)  | `cargo test --workspace`                                                                           |
+| 7  | **Server log rate-limiting** — per-event WARN → single aggregated WARN per batch (was 5000 lines/cycle)               | `event_upload.rs`, commit `ebb26a0bd`                                                              |
+| 8  | **Circuit breaker 4xx classification** — `ServerError` non-5xx reclassified `Infrastructure` → `Rejection`            | `crates/errors/src/lib.rs:258`, commit `ebb26a0bd`                                                 |
+| 9  | **Metric naming fix** — `ingest.rejected_events_total` → `ingest_rejected_events_total` (Prometheus convention)       | `event_upload.rs`, commit `ebb26a0bd`                                                              |
+| 10 | **`accepted>0` health signal** — `cloud_sync_zero_accept_cycles` gauge + ERROR after 3 consecutive zero-accept cycles | `cloud_sync.rs`, commit `ebb26a0bd`                                                                |
+| 11 | **Upstream commits pushed** — `9ea1f1000` + `ebb26a0bd` on origin/master                                              | `git push` confirmed                                                                               |
+| 12 | **PMA `goMemLimit` config error fixed** — removed invalid option that blocked nix eval                                | `configuration.nix:479`, commit `0575f6ea`                                                         |
+| 13 | **SystemNix flake.lock updated** — monitor365 input → `ebb26a0bd`                                                     | commit `0575f6ea`                                                                                  |
+| 14 | **Deployed to evo-x2** — new binary `ebb26a0bd` confirmed running (PID 422941)                                        | `pgrep -af monitor365`                                                                             |
+| 15 | **Post-deploy verification** — ZERO integrity failures server-side, 5016 events uploaded before daily limit           | server logs + agent metrics                                                                        |
+| 16 | **AGENTS.md corrected** — replaced false "new events will pass" claim with accurate root cause + fix description      | commit `e0323f9f`                                                                                  |
+| 17 | **Comprehensive plan written** — Pareto analysis, 20 tasks ≤12min each, mermaid graph                                 | `docs/planning/2026-07-18_09-30_monitor365-integrity-hash-root-cause-fix.md`                       |
+| 18 | **Status report written and committed**                                                                               | commit `e0323f9f`                                                                                  |
+| 19 | **SystemNix commits pushed** — `0575f6ea` + `e0323f9f` on origin/master                                               | `git push` confirmed                                                                               |
+| 20 | **Honest self-review committed** (from prior session, carried forward)                                                | `docs/status/2026-07-18_08-38_monitor365-resilience-honest-self-review.md`                         |
 
 ---
 
 ## b) PARTIALLY DONE ⚠️
 
-| # | Task | What's done | What's missing |
-|---|------|-------------|----------------|
-| 1 | **Backlog draining** | Fix B makes events acceptable; 5016 uploaded before daily limit | 597M backlog still NOT draining — blocked by 10K/day tenant limit. Backlog actually WENT UP (597918444 → 597922541) because new events are collected but can't upload |
-| 2 | **Daily event limit** | Identified as the blocker (10K/day default, designed for multi-tenant SaaS) | NOT raised or purged — needs sudo + admin API access. Recommendations documented but not executed |
-| 3 | **Monitoring/alerting** | `cloud_sync_zero_accept_cycles` gauge added; Gatus presence check exists | No value-based alerting (Gatus can't do numeric comparison on Prometheus text). No Prometheus/SigNoz integration for this metric |
-| 4 | **Disk cleanup** | Freed 11.3 GiB via `nix-collect-garbage --delete-older-than 3d` | Disk back to 95% (monitor365 rebuild consumed the freed space). 14 stale build sandboxes NOT cleaned |
+| # | Task                    | What's done                                                                 | What's missing                                                                                                                                                        |
+| - | ----------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Backlog draining**    | Fix B makes events acceptable; 5016 uploaded before daily limit             | 597M backlog still NOT draining — blocked by 10K/day tenant limit. Backlog actually WENT UP (597918444 → 597922541) because new events are collected but can't upload |
+| 2 | **Daily event limit**   | Identified as the blocker (10K/day default, designed for multi-tenant SaaS) | NOT raised or purged — needs sudo + admin API access. Recommendations documented but not executed                                                                     |
+| 3 | **Monitoring/alerting** | `cloud_sync_zero_accept_cycles` gauge added; Gatus presence check exists    | No value-based alerting (Gatus can't do numeric comparison on Prometheus text). No Prometheus/SigNoz integration for this metric                                      |
+| 4 | **Disk cleanup**        | Freed 11.3 GiB via `nix-collect-garbage --delete-older-than 3d`             | Disk back to 95% (monitor365 rebuild consumed the freed space). 14 stale build sandboxes NOT cleaned                                                                  |
 
 ---
 
 ## c) NOT STARTED ❌
 
-| # | Task | Why |
-|---|------|-----|
-| 1 | **Deploy rpi3-dns** with DNS blocker fix | flake eval passes for rpi3, but deploy not attempted |
-| 2 | **Reboot evo-x2** | Kernel 7+ days stale (booted Jul 11, now Jul 18) |
-| 3 | **Fix EMEET PIXY Gatus check** | Also uses broken `[BODY].jsonpath.realtime` — identified but not fixed |
-| 4 | **Dead-letter queue (DLQ)** for rejected events | Documented as deferred in plan. Bad events are silently dropped with no recovery path |
-| 5 | **Canary health check** (agent sends test event, verifies storage) | Deferred — `accepted>0` signal covers the same ground more simply |
-| 6 | **Prometheus/Grafana value-based alerting** | Deferred — needs Prometheus setup (Gatus can't do numeric comparison) |
-| 7 | **Backlog purge** | Requires sudo, irreversible — documented as recommendation but not executed |
-| 8 | **Daily limit raise** | Requires admin API access — documented as recommendation but not executed |
-| 9 | **Stale build sandbox cleanup** | 14 sandboxes in `/nix/var/nix/builds/` — identified but not cleaned |
-| 10 | **Read prior-session status report** | `docs/status/2026-07-18_07-41_pma-type-notify-fix-and-self-review.md` was committed without review — still unreviewed |
+| #  | Task                                                               | Why                                                                                                                   |
+| -- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| 1  | **Deploy rpi3-dns** with DNS blocker fix                           | flake eval passes for rpi3, but deploy not attempted                                                                  |
+| 2  | **Reboot evo-x2**                                                  | Kernel 7+ days stale (booted Jul 11, now Jul 18)                                                                      |
+| 3  | **Fix EMEET PIXY Gatus check**                                     | Also uses broken `[BODY].jsonpath.realtime` — identified but not fixed                                                |
+| 4  | **Dead-letter queue (DLQ)** for rejected events                    | Documented as deferred in plan. Bad events are silently dropped with no recovery path                                 |
+| 5  | **Canary health check** (agent sends test event, verifies storage) | Deferred — `accepted>0` signal covers the same ground more simply                                                     |
+| 6  | **Prometheus/Grafana value-based alerting**                        | Deferred — needs Prometheus setup (Gatus can't do numeric comparison)                                                 |
+| 7  | **Backlog purge**                                                  | Requires sudo, irreversible — documented as recommendation but not executed                                           |
+| 8  | **Daily limit raise**                                              | Requires admin API access — documented as recommendation but not executed                                             |
+| 9  | **Stale build sandbox cleanup**                                    | 14 sandboxes in `/nix/var/nix/builds/` — identified but not cleaned                                                   |
+| 10 | **Read prior-session status report**                               | `docs/status/2026-07-18_07-41_pma-type-notify-fix-and-self-review.md` was committed without review — still unreviewed |
 
 ---
 
 ## d) TOTALLY FUCKED UP 💥
 
-| # | What | Impact | Status |
-|---|------|--------|--------|
-| 1 | **Declared "self-healing confirmed" while 100% of events were dropped** (prior session) | Optimized for MECHANISM (cursor advances) not OUTCOME (data stored). Graceful degradation hid total data loss. | Fixed this session — root cause found and fixed |
-| 2 | **Stated in AGENTS.md "New events going forward will pass" without evidence** (prior session) | False claim persisted in docs. New events ALSO failed (proven by `AnalyticsCorrelation` in server logs). | Fixed this session — AGENTS.md corrected with accurate root cause |
-| 3 | **Didn't investigate the serialization difference despite having all the code** (prior session) | The root cause was 3 grep commands away (`serde_json`, `preserve_order`, `to_vec`). Instead built 3 layers of graceful degradation around a problem that could have been fixed with 1 canonicalization round-trip. | Fixed this session — 8 min to find, 8 min to fix |
-| 4 | **Non-atomic commits bundling unrelated changes** | `6a151f93` bundled DNS blocker + Gatus + flake.lock + AGENTS.md. Made review harder. | Not fixed — already pushed. Future commits should be atomic |
-| 5 | **Committed prior-session untracked file without reading it** | `docs/status/2026-07-18_07-41_pma-type-notify-fix-and-self-review.md` committed blind in `0575f6ea` | Not fixed — content still unverified |
-| 6 | **Created plan doc AFTER coding** (workflow violation) | The plan was written after the code changes were already done, defeating the purpose of planning first. | Acknowledged in self-review. This session's root-cause fix was also coded before the plan, but the plan WAS written before Phase 2 hardening |
-| 7 | **Disk at 95% after rebuild** | GC freed 11.3 GiB, but the monitor365 rebuild consumed it all. System is back at 95% — deploy-blocking territory. | Not resolved — needs more aggressive cleanup or the backlog purge |
+| # | What                                                                                            | Impact                                                                                                                                                                                                             | Status                                                                                                                                       |
+| - | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Declared "self-healing confirmed" while 100% of events were dropped** (prior session)         | Optimized for MECHANISM (cursor advances) not OUTCOME (data stored). Graceful degradation hid total data loss.                                                                                                     | Fixed this session — root cause found and fixed                                                                                              |
+| 2 | **Stated in AGENTS.md "New events going forward will pass" without evidence** (prior session)   | False claim persisted in docs. New events ALSO failed (proven by `AnalyticsCorrelation` in server logs).                                                                                                           | Fixed this session — AGENTS.md corrected with accurate root cause                                                                            |
+| 3 | **Didn't investigate the serialization difference despite having all the code** (prior session) | The root cause was 3 grep commands away (`serde_json`, `preserve_order`, `to_vec`). Instead built 3 layers of graceful degradation around a problem that could have been fixed with 1 canonicalization round-trip. | Fixed this session — 8 min to find, 8 min to fix                                                                                             |
+| 4 | **Non-atomic commits bundling unrelated changes**                                               | `6a151f93` bundled DNS blocker + Gatus + flake.lock + AGENTS.md. Made review harder.                                                                                                                               | Not fixed — already pushed. Future commits should be atomic                                                                                  |
+| 5 | **Committed prior-session untracked file without reading it**                                   | `docs/status/2026-07-18_07-41_pma-type-notify-fix-and-self-review.md` committed blind in `0575f6ea`                                                                                                                | Not fixed — content still unverified                                                                                                         |
+| 6 | **Created plan doc AFTER coding** (workflow violation)                                          | The plan was written after the code changes were already done, defeating the purpose of planning first.                                                                                                            | Acknowledged in self-review. This session's root-cause fix was also coded before the plan, but the plan WAS written before Phase 2 hardening |
+| 7 | **Disk at 95% after rebuild**                                                                   | GC freed 11.3 GiB, but the monitor365 rebuild consumed it all. System is back at 95% — deploy-blocking territory.                                                                                                  | Not resolved — needs more aggressive cleanup or the backlog purge                                                                            |
 
 ---
 
 ## e) WHAT WE SHOULD IMPROVE 🎯
 
 ### Process improvements
+
 1. **Verify OUTCOMES, not MECHANISMS.** A pipeline that "succeeds" while dropping 100% of data is worse than one that fails loudly. Always check `accepted > 0`, not just "no crash."
 2. **Investigate root causes BEFORE building workarounds.** The root cause was 3 grep commands away. Instead, 3 layers of graceful degradation were built around it. Always ask: "WHY does the hash mismatch? What are the exact bytes?"
 3. **Write the plan FIRST, then code.** Not the reverse. The plan forces you to think through the problem before committing to a solution.
@@ -86,6 +86,7 @@
 5. **Never commit files you haven't read.** The prior-session status report was committed blind.
 
 ### Technical improvements
+
 6. **The `accepted>0` health signal should have existed from day one.** It would have caught the 100% rejection immediately. Any pipeline needs a "is data actually flowing?" metric.
 7. **The daily event limit (10K) is absurdly low for a monitoring agent.** It's designed for multi-tenant SaaS, not a single-tenant homelab. Should be configurable and default much higher for single-tenant deployments.
 8. **Integrity hash over re-serialized JSON is fragile by design.** Hashing over canonical bytes (CBOR, or raw stored bytes) would have avoided this entire class of bug. The current fix (Value round-trip) works but is a band-aid — the hash should be over a canonical binary format.
@@ -93,6 +94,7 @@
 10. **The server per-event WARN logging was 5000 lines/cycle.** This should have been caught in code review. Aggregated logging is the obvious pattern.
 
 ### Documentation improvements
+
 11. **AGENTS.md should have a "known-fixed bugs" section**, not just "gotchas." The poison-pill row was wrong for hours because it claimed the root cause was fixed when it wasn't.
 12. **Status reports should include verification evidence**, not just claims. "Self-healing confirmed" without showing `accepted > 0` is meaningless.
 
@@ -101,12 +103,14 @@
 ## f) Up to 50 Things We Should Get Done Next 📋
 
 ### Priority 0 — Critical (do today)
+
 1. **Purge or raise the daily event limit** — 597M backlog is blocked by 10K/day. Without this, the fix is cosmetic (events pass integrity but can't be stored).
 2. **Verify backlog is actually draining after limit fix** — `cloud_sync_upload_backlog_size` must decrease over time.
 3. **Run `nix-build-cleanup`** — 14 stale build sandboxes + 95% disk is deploy-blocking.
 4. **Reboot evo-x2** — kernel 7+ days stale, boot Jul 11.
 
 ### Priority 1 — High (this week)
+
 5. **Deploy rpi3-dns** with DNS blocker fix (flake eval already passes).
 6. **Fix EMEET PIXY Gatus check** — also uses broken `[BODY].jsonpath.realtime`.
 7. **Read the prior-session status report** (`2026-07-18_07-41_pma-type-notify-fix-and-self-review.md`) — committed blind.
@@ -118,6 +122,7 @@
 13. **Document the serde_json key-ordering footgun** in `crates/domain/src/domain/hash.rs` — add a doc comment explaining WHY the Value round-trip is necessary.
 
 ### Priority 2 — Medium (this sprint)
+
 14. **Add a dead-letter queue (DLQ)** for genuinely corrupt events — currently silently dropped. Write to a separate segment buffer for manual inspection/replay.
 15. **Set up Prometheus or use SigNoz for value-based alerting** — Gatus can't do numeric comparison on Prometheus text. The `cloud_sync_zero_accept_cycles` gauge needs a threshold alert.
 16. **Add a canary health check** — agent sends 1 known-good test event per cycle, verifies server stored it. Complements the `accepted>0` signal.
@@ -132,6 +137,7 @@
 25. **Document the 4-layer fix in `docs/DOMAIN_LANGUAGE.md`** — integrity hash, canonicalization, graceful degradation, and self-heal are domain concepts worth defining.
 
 ### Priority 3 — Low (backlog)
+
 26. **Consolidate the 3 status reports from today** — `07-41`, `08-38`, `10-15` all cover the same incident. Consider a single canonical post-mortem.
 27. **Add a "lessons learned" section to AGENTS.md** — the "verify outcomes not mechanisms" lesson is universally applicable.
 28. **Audit all metric names for Prometheus convention compliance** — `ingest.rejected_events_total` was wrong (dots). There may be others.
@@ -163,6 +169,7 @@
 ## g) Questions I CANNOT Answer Myself ❓
 
 ### Q1: Should I purge the 597M backlog, or raise the daily limit and let it drain?
+
 The backlog is historical monitoring data from a broken pipeline. At 10K/day it would
 take ~164 years to drain. At 1M/day it would take ~8 months. Purging is instant but
 irreversible (requires sudo: `sudo systemctl stop monitor365 && sudo rm -rf
@@ -173,6 +180,7 @@ admin API to raise the limit (needs the admin JWT or bootstrap API key, which
 requires sudo to read from `/run/secrets/`).**
 
 ### Q2: Is the 10K/day daily event limit intentional for your use case, or is it the wrong default?
+
 The default is 10K (`crates/server/src/handlers/tenants.rs:100`). For a single-tenant
 homelab monitoring agent collecting events every few seconds (battery, app usage,
 AFK status, etc.), 10K/day is ~7 events/minute — likely too low. But I don't know
@@ -181,6 +189,7 @@ growth. **I cannot change this without knowing your intended event volume and st
 budget.**
 
 ### Q3: Should the integrity hash be over CBOR bytes (robust) or canonical JSON (current fix)?
+
 The current fix (Value round-trip) works but is a band-aid — it relies on serde_json's
 default BTreeMap ordering being stable across versions. Hashing over raw CBOR bytes
 (the binary endpoint already uses CBOR) would eliminate this entire class of bug.
@@ -195,6 +204,7 @@ accept another hash format change.**
 ## Session Summary
 
 **What went right:**
+
 - Found the root cause in ~10 minutes with a proof test (3 grep commands + 1 test)
 - Fixed it in ~16 minutes (2 edits, 8 min each)
 - Verified the fix with 1117+ tests + post-deploy evidence (zero integrity failures, 5016 events uploaded)
@@ -202,6 +212,7 @@ accept another hash format change.**
 - Documented everything honestly
 
 **What went wrong:**
+
 - The prior session built 3 layers of workarounds without investigating WHY the hash mismatched
 - 100% of events were silently dropped for hours while "self-healing" was declared confirmed
 - The daily limit (10K) now blocks the backlog from draining — the fix is verified but not fully operational

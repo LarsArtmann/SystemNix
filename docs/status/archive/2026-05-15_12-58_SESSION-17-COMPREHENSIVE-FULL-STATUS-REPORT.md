@@ -232,33 +232,33 @@ These features are fully implemented, tested, and running in production.
 
 Ranked by impact × effort (highest first):
 
-| #   | Task                                                                                      | Impact   | Effort | Priority |
-| --- | ----------------------------------------------------------------------------------------- | -------- | ------ | -------- |
-| 1   | **Deploy current flake to evo-x2** — kernel 7.0.1→7.0.6, verify all services              | Critical | Low    | P0       |
-| 2   | **Provision Pi 3 for DNS failover cluster** — HA DNS is the last major infrastructure gap | High     | Medium | P0       |
-| 3   | **Add NixOS VM tests for critical services** — Caddy, DNS, SigNoz scraping                | High     | Medium | P1       |
-| 4   | **Modularize `flake.nix`** — Split 612 lines into flake-parts sub-modules                 | High     | Medium | P1       |
-| 5   | **Create `mkDockerService` helper** — DRY up 4 docker-compose services                    | Medium   | Low    | P1       |
-| 6   | **Deploy Dozzle** — Container log tailing at `logs.home.lan`                              | Medium   | Low    | P1       |
-| 7   | **Triage documentation sprawl** — Archive/delete 200+ stale status reports                | Medium   | Low    | P2       |
-| 8   | **Adopt `mkPackageOverlay` in 8 remaining overlays**                                      | Low      | Low    | P2       |
-| 9   | **Adopt `systemdServiceIdentity` in 4 remaining services**                                | Low      | Low    | P2       |
-| 10  | **SigNoz alert severity routing** — critical→Discord, warning→log                         | Medium   | Low    | P2       |
-| 11  | **Add GPU memory monitoring alert** — Catch OOM before crash                              | Medium   | Low    | P2       |
-| 12  | **Move `dns-failover.nix` authPassword to sops** — Security                               | Medium   | Low    | P2       |
-| 13  | **Test voice agents after recent changes** — Verify LiveKit + Whisper                     | Medium   | Low    | P2       |
-| 14  | **GitHub Actions: add Darwin cross-build check**                                          | Medium   | Medium | P2       |
-| 15  | **Create shared Go flake-parts template** — For all LarsArtmann Go repos                  | Medium   | Medium | P2       |
-| 16  | **Add flake.lock merge conflict resolution** — `nix config` or CI strategy                | Medium   | Medium | P2       |
-| 17  | **Verify Twenty CRM is actually deployed and functional**                                 | Medium   | Low    | P2       |
-| 18  | **Consolidate voice-agents Caddy vHost** into caddy.nix pattern                           | Low      | Low    | P3       |
-| 19  | **nix-colors full migration** — Replace 17+ hardcoded colors                              | Low      | Medium | P3       |
-| 20  | **Enable AppArmor profiles** — Currently commented out                                    | Medium   | Medium | P3       |
-| 21  | **Clean up `legacy/` directory** — Remove dead configs                                    | Low      | Low    | P3       |
-| 22  | **BTRFS qgroup limits** — Prevent silent `/data` fill-up                                  | Low      | Low    | P3       |
-| 23  | **Secrets rotation plan** — Document and automate sops key rotation                       | Medium   | High   | P3       |
-| 24  | **Remove unused shell configs** — Zsh/Bash if Fish is primary                             | Low      | Low    | P3       |
-| 25  | **Benchmark scripts** — Fix or remove broken `benchmark-system.sh`                        | Low      | Low    | P4       |
+| #  | Task                                                                                      | Impact   | Effort | Priority |
+| -- | ----------------------------------------------------------------------------------------- | -------- | ------ | -------- |
+| 1  | **Deploy current flake to evo-x2** — kernel 7.0.1→7.0.6, verify all services              | Critical | Low    | P0       |
+| 2  | **Provision Pi 3 for DNS failover cluster** — HA DNS is the last major infrastructure gap | High     | Medium | P0       |
+| 3  | **Add NixOS VM tests for critical services** — Caddy, DNS, SigNoz scraping                | High     | Medium | P1       |
+| 4  | **Modularize `flake.nix`** — Split 612 lines into flake-parts sub-modules                 | High     | Medium | P1       |
+| 5  | **Create `mkDockerService` helper** — DRY up 4 docker-compose services                    | Medium   | Low    | P1       |
+| 6  | **Deploy Dozzle** — Container log tailing at `logs.home.lan`                              | Medium   | Low    | P1       |
+| 7  | **Triage documentation sprawl** — Archive/delete 200+ stale status reports                | Medium   | Low    | P2       |
+| 8  | **Adopt `mkPackageOverlay` in 8 remaining overlays**                                      | Low      | Low    | P2       |
+| 9  | **Adopt `systemdServiceIdentity` in 4 remaining services**                                | Low      | Low    | P2       |
+| 10 | **SigNoz alert severity routing** — critical→Discord, warning→log                         | Medium   | Low    | P2       |
+| 11 | **Add GPU memory monitoring alert** — Catch OOM before crash                              | Medium   | Low    | P2       |
+| 12 | **Move `dns-failover.nix` authPassword to sops** — Security                               | Medium   | Low    | P2       |
+| 13 | **Test voice agents after recent changes** — Verify LiveKit + Whisper                     | Medium   | Low    | P2       |
+| 14 | **GitHub Actions: add Darwin cross-build check**                                          | Medium   | Medium | P2       |
+| 15 | **Create shared Go flake-parts template** — For all LarsArtmann Go repos                  | Medium   | Medium | P2       |
+| 16 | **Add flake.lock merge conflict resolution** — `nix config` or CI strategy                | Medium   | Medium | P2       |
+| 17 | **Verify Twenty CRM is actually deployed and functional**                                 | Medium   | Low    | P2       |
+| 18 | **Consolidate voice-agents Caddy vHost** into caddy.nix pattern                           | Low      | Low    | P3       |
+| 19 | **nix-colors full migration** — Replace 17+ hardcoded colors                              | Low      | Medium | P3       |
+| 20 | **Enable AppArmor profiles** — Currently commented out                                    | Medium   | Medium | P3       |
+| 21 | **Clean up `legacy/` directory** — Remove dead configs                                    | Low      | Low    | P3       |
+| 22 | **BTRFS qgroup limits** — Prevent silent `/data` fill-up                                  | Low      | Low    | P3       |
+| 23 | **Secrets rotation plan** — Document and automate sops key rotation                       | Medium   | High   | P3       |
+| 24 | **Remove unused shell configs** — Zsh/Bash if Fish is primary                             | Low      | Low    | P3       |
+| 25 | **Benchmark scripts** — Fix or remove broken `benchmark-system.sh`                        | Low      | Low    | P4       |
 
 ---
 

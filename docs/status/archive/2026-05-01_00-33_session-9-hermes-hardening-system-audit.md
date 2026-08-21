@@ -178,53 +178,53 @@ The mystery: where did the watchdog come from? Possibilities:
 
 ### Tier 1: Stop the Bleeding (Critical — Do First)
 
-| #   | Task                                                                           | Effort | Impact                                 |
-| --- | ------------------------------------------------------------------------------ | ------ | -------------------------------------- |
-| 1   | **Fix Caddy service** — diagnose why failed, restart, verify TLS               | 15min  | CRITICAL — all services depend on this |
-| 2   | **Deploy Hermes fixes** — `just switch` to apply libopus + deprecation cleanup | 10min  | HIGH — fixes Discord voice             |
-| 3   | **Fix Authelia** — diagnose failure, likely needs Caddy first                  | 10min  | HIGH — SSO gateway                     |
-| 4   | **Fix Ollama** — diagnose why local LLM inference is down                      | 15min  | HIGH — AI stack dependency             |
-| 5   | **Run `nix-collect-garbage -d`** — reclaim space from 186G nix store           | 30min  | MEDIUM — disk pressure relief          |
+| # | Task                                                                           | Effort | Impact                                 |
+| - | ------------------------------------------------------------------------------ | ------ | -------------------------------------- |
+| 1 | **Fix Caddy service** — diagnose why failed, restart, verify TLS               | 15min  | CRITICAL — all services depend on this |
+| 2 | **Deploy Hermes fixes** — `just switch` to apply libopus + deprecation cleanup | 10min  | HIGH — fixes Discord voice             |
+| 3 | **Fix Authelia** — diagnose failure, likely needs Caddy first                  | 10min  | HIGH — SSO gateway                     |
+| 4 | **Fix Ollama** — diagnose why local LLM inference is down                      | 15min  | HIGH — AI stack dependency             |
+| 5 | **Run `nix-collect-garbage -d`** — reclaim space from 186G nix store           | 30min  | MEDIUM — disk pressure relief          |
 
 ### Tier 2: Service Recovery
 
-| #   | Task                                                                             | Effort | Impact                        |
-| --- | -------------------------------------------------------------------------------- | ------ | ----------------------------- |
-| 6   | **Fix PhotoMap container** — podman crash-looping, investigate image/perm issues | 30min  | MEDIUM — photo AI tool        |
-| 7   | **Fix Whisper ASR** — Docker image pull failing, check registry access           | 20min  | MEDIUM — voice agents         |
-| 8   | **Fix SigNoz** — observability platform down, likely needs Caddy first           | 20min  | MEDIUM — monitoring           |
-| 9   | **Fix `home-manager-lars.service`** — check HM activation errors                 | 15min  | MEDIUM — user environment     |
-| 10  | **Fix `gitea-ensure-repos`** — change Restart=on-failure for oneshot type        | 5min   | LOW — eliminates eval warning |
+| #  | Task                                                                             | Effort | Impact                        |
+| -- | -------------------------------------------------------------------------------- | ------ | ----------------------------- |
+| 6  | **Fix PhotoMap container** — podman crash-looping, investigate image/perm issues | 30min  | MEDIUM — photo AI tool        |
+| 7  | **Fix Whisper ASR** — Docker image pull failing, check registry access           | 20min  | MEDIUM — voice agents         |
+| 8  | **Fix SigNoz** — observability platform down, likely needs Caddy first           | 20min  | MEDIUM — monitoring           |
+| 9  | **Fix `home-manager-lars.service`** — check HM activation errors                 | 15min  | MEDIUM — user environment     |
+| 10 | **Fix `gitea-ensure-repos`** — change Restart=on-failure for oneshot type        | 5min   | LOW — eliminates eval warning |
 
 ### Tier 3: Security Hardening (from MASTER_TODO_PLAN P1)
 
-| #   | Task                                                                     | Effort | Impact                         |
-| --- | ------------------------------------------------------------------------ | ------ | ------------------------------ |
-| 11  | **Move Taskwarrior encryption to sops** — replace hardcoded hash         | 30min  | HIGH — secrets management      |
-| 12  | **Pin Docker digests for Voice Agents** — pin `sha256` for whisper image | 15min  | MEDIUM — supply chain security |
-| 13  | **Pin Docker digests for PhotoMap** — pin `sha256` for photomap image    | 15min  | MEDIUM — supply chain security |
-| 14  | **Secure VRRP auth_pass with sops** — encrypt plaintext password         | 20min  | MEDIUM — network security      |
+| #  | Task                                                                     | Effort | Impact                         |
+| -- | ------------------------------------------------------------------------ | ------ | ------------------------------ |
+| 11 | **Move Taskwarrior encryption to sops** — replace hardcoded hash         | 30min  | HIGH — secrets management      |
+| 12 | **Pin Docker digests for Voice Agents** — pin `sha256` for whisper image | 15min  | MEDIUM — supply chain security |
+| 13 | **Pin Docker digests for PhotoMap** — pin `sha256` for photomap image    | 15min  | MEDIUM — supply chain security |
+| 14 | **Secure VRRP auth_pass with sops** — encrypt plaintext password         | 20min  | MEDIUM — network security      |
 
 ### Tier 4: Quality of Life
 
-| #   | Task                                                                                | Effort | Impact                           |
-| --- | ----------------------------------------------------------------------------------- | ------ | -------------------------------- |
-| 15  | **Add post-switch health check** — verify critical services are active after deploy | 30min  | HIGH — prevents silent failures  |
-| 16  | **Add Caddy health timer** — periodic check + auto-restart if down                  | 20min  | HIGH — prevents cascade failures |
-| 17  | **Manage Hermes config.yaml via sops** — declarative config, not runtime            | 45min  | MEDIUM — reproducibility         |
-| 18  | **Standardize justfile log recipe naming** — all `*-logs` + `*-logs-follow`         | 15min  | LOW — consistency                |
-| 19  | **Add `just nix-gc` recipe** — one-command garbage collection + optimise            | 10min  | LOW — maintenance UX             |
+| #  | Task                                                                                | Effort | Impact                           |
+| -- | ----------------------------------------------------------------------------------- | ------ | -------------------------------- |
+| 15 | **Add post-switch health check** — verify critical services are active after deploy | 30min  | HIGH — prevents silent failures  |
+| 16 | **Add Caddy health timer** — periodic check + auto-restart if down                  | 20min  | HIGH — prevents cascade failures |
+| 17 | **Manage Hermes config.yaml via sops** — declarative config, not runtime            | 45min  | MEDIUM — reproducibility         |
+| 18 | **Standardize justfile log recipe naming** — all `*-logs` + `*-logs-follow`         | 15min  | LOW — consistency                |
+| 19 | **Add `just nix-gc` recipe** — one-command garbage collection + optimise            | 10min  | LOW — maintenance UX             |
 
 ### Tier 5: Future Improvements
 
-| #   | Task                                                                         | Effort | Impact                     |
-| --- | ---------------------------------------------------------------------------- | ------ | -------------------------- |
-| 20  | **Provision Pi 3 DNS failover node** — hardware setup + NixOS image          | 2hr    | HIGH — DNS HA              |
-| 21  | **CI/CD pipeline** — automated flake check on push                           | 2hr    | MEDIUM — quality gate      |
-| 22  | **E2E service smoke tests** — automated `*.home.lan` reachability checks     | 3hr    | MEDIUM — reliability       |
-| 23  | **BTRFS snapshot automation review** — verify Timeshift is working correctly | 30min  | MEDIUM — disaster recovery |
-| 24  | **DNS blocklist update automation** — auto-refresh blocklists on schedule    | 1hr    | LOW — security hygiene     |
-| 25  | **Archive old status docs** — 180+ in archive/, consider pruning to last 30  | 15min  | LOW — repo cleanliness     |
+| #  | Task                                                                         | Effort | Impact                     |
+| -- | ---------------------------------------------------------------------------- | ------ | -------------------------- |
+| 20 | **Provision Pi 3 DNS failover node** — hardware setup + NixOS image          | 2hr    | HIGH — DNS HA              |
+| 21 | **CI/CD pipeline** — automated flake check on push                           | 2hr    | MEDIUM — quality gate      |
+| 22 | **E2E service smoke tests** — automated `*.home.lan` reachability checks     | 3hr    | MEDIUM — reliability       |
+| 23 | **BTRFS snapshot automation review** — verify Timeshift is working correctly | 30min  | MEDIUM — disaster recovery |
+| 24 | **DNS blocklist update automation** — auto-refresh blocklists on schedule    | 1hr    | LOW — security hygiene     |
+| 25 | **Archive old status docs** — 180+ in archive/, consider pruning to last 30  | 15min  | LOW — repo cleanliness     |
 
 ---
 

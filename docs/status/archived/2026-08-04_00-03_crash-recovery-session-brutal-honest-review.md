@@ -7,7 +7,6 @@
 
 ---
 
-
 ## Executive Summary
 
 **NOTHING IS DEPLOYED. The system is still vulnerable to the same crash.** The entire session was spent chasing an endless cascade of upstream Go build failures. The critical fix (`boot.nix` user-1000 slice hardcoding) has been committed for over 90 minutes but cannot deploy because the full system build keeps breaking on different Go packages.
@@ -64,7 +63,7 @@ This is a failure of prioritization. The most critical fix (memory cap) should h
    - Manually set the memory cap via `systemctl set-property`
    - Manually recovered the DiscordSync DB
    - Manually checked the BTRFS snapshot DB integrity
-   I never asked.
+     I never asked.
 
 5. **Previous session's v1 DB recovery script was destructive.** While it was never deployed, the fact that it was written and committed (`7191c79e`) — deleting the corrupt DB as first resort instead of attempting recovery — is a data safety failure. The user correctly called this out.
 
@@ -87,6 +86,7 @@ This is a failure of prioritization. The most critical fix (memory cap) should h
 ## f) Up to 50 Things to Get Done Next
 
 ### Critical (BLOCKING — system is unsafe)
+
 1. ~~Fix buildflow vendorHash mismatch (last build blocker)~~ done at `4372f51d` (resolved Aug 4)
 2. ~~Build the full system: `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel`~~ done at `4372f51d`
 3. ~~Deploy: `nix run .#deploy`~~ done at `4372f51d` (deployed Aug 4)
@@ -95,12 +95,14 @@ This is a failure of prioritization. The most critical fix (memory cap) should h
 6. ~~Run post-deploy smoke test~~ done at `4372f51d`
 
 ### Immediate Hotfix (can do NOW, no build needed)
+
 7. Ask user to run: `sudo systemctl set-property user-1000.slice MemoryMax=64G MemoryHigh=56G` — immediate protection
 8. Ask user to manually recover DiscordSync DB from BTRFS snapshot: `sudo cp --reflink=always /mnt/btrfs-root/.snapshots/@.20260802T2300/var/lib/discordsync/discordsync.db /var/lib/discordsync/discordsync.db`
 9. Ask user to verify snapshot DB integrity: `sudo sqlite3 /mnt/btrfs-root/.snapshots/@.20260802T2300/var/lib/discordsync/discordsync.db "PRAGMA integrity_check;"`
 10. Ask user to reset DiscordSync start-limit: `sudo systemctl reset-failed discordsync && sudo systemctl start discordsync`
 
 ### Build Resilience
+
 11. Batch-test ALL Go packages: `nix build .#cqrs-lint .#buildflow .#crush-daily .#library-policy .#monitor365-server`
 12. Add a CI check that catches vendorHash drift before full system build
 13. Add pre-commit guard in go-cqrs-lite: reject zero pseudo-versions in go.mod
@@ -108,6 +110,7 @@ This is a failure of prioritization. The most critical fix (memory cap) should h
 15. Document the mkPreparedSource + zero pseudo-version trap in go-cqrs-lite AGENTS.md
 
 ### Data Safety
+
 16. Verify Docker containerd bbolt DB health (known crash corruption risk, needs root)
 17. Verify monitor365 DuckDB health (needs root — `.wal` file presence indicates unclean shutdown)
 18. Check if any user data in `/home/lars` was lost or corrupted by the crash
@@ -118,15 +121,17 @@ This is a failure of prioritization. The most critical fix (memory cap) should h
 23. Run `btrfs scrub status /` to check for filesystem-level corruption from the crash
 
 ### Monitoring & Prevention
+
 24. Add Gatus alert for `user-1000.slice` memory.max == max (detect silent cap removal)
 25. Add eval-time assertion in boot.nix: `assert config.users.users.lars.uid != null` (fail-fast instead of silent `""`)
 26. Add system.slice MemoryMax (e.g., 80G) as defense-in-depth
-27. Consider adding ` systemd.oomd.SystemSwapUsedLimit` for system-wide OOM protection
+27. Consider adding `systemd.oomd.SystemSwapUsedLimit` for system-wide OOM protection
 28. Add Gatus alert when any service is in `start-limit-hit` state for >5 min
 29. Monitor BTRFS snapshot freshness after crash (ensure btrbk resumes)
 30. Add a pre-deploy check that verifies the deployed generation matches `nix eval` output
 
 ### Documentation
+
 31. Document BTRFS snapshot recovery cascade pattern in AGENTS.md
 32. Document cqrs-lint mkPreparedSource + go.sum interplay
 33. Document the `builtins.toString null` → `""` Nix anti-pattern as a general gotcha
@@ -134,12 +139,14 @@ This is a failure of prioritization. The most critical fix (memory cap) should h
 35. Document that auto-commit daemon races with BuildFlow pre-commit hooks
 
 ### DiscordSync Hardening
+
 36. Consider adding `RestartSec=30` to DiscordSync to reduce crash-loop CPU burn
 37. Add a Gatus alert specifically for DiscordSync DB corruption (check log for "pager.rs" panic)
 38. Consider periodic SQLite integrity_check cron for all service databases
 39. Document the Turso sync pager corruption pattern and recovery procedure
 
 ### System Resilience
+
 40. Review ALL systemd slices for missing memory caps (not just user-1000)
 41. Check if `systemd-oomd` config needs tuning after the crash (PSI thresholds)
 42. Verify the hardware watchdog (sp5100-tco) timeout is appropriate (currently 60s)
@@ -148,6 +155,7 @@ This is a failure of prioritization. The most critical fix (memory cap) should h
 45. Check if zram swap configuration needs adjustment (was 100% full during crash)
 
 ### Process Improvements
+
 46. Create a "crash recovery runbook" with prioritized steps for future WDT resets
 47. Add a `nix run .#emergency-memory-cap` script that applies the hotfix without rebuild
 48. Consider a read-only "golden generation" that's known-good for emergency rollback
@@ -168,41 +176,41 @@ This is a failure of prioritization. The most critical fix (memory cap) should h
 
 ## Timeline
 
-| Time | Event |
-|------|-------|
-| 22:03 | System crashed (WDT reset from memory exhaustion) |
-| ~22:20 | Previous session: root cause found, boot.nix fix committed |
-| ~22:30 | Previous session: v1 destructive DB recovery committed |
-| ~22:33 | Previous session: AGENTS.md docs committed |
-| ~22:40-22:52 | Previous session: flake inputs updated, 3 deploy attempts failed |
-| **This session starts** | |
-| ~23:15 | BTRFS snapshot inventory completed |
-| ~23:20 | All readable databases verified healthy |
-| ~23:25 | Key discovery: v1 script never deployed, DB is corrupt NOT deleted |
-| ~23:30 | Enhanced dbHeal with BTRFS snapshot recovery committed |
-| ~23:30 | Shellcheck SC2012 fix (ls → find) |
-| ~23:33 | monitor365 libspa-sys [lints] fix pushed upstream |
-| ~23:35 | cqrs-lint vendorHash mismatch #1 |
-| ~23:40 | cqrs-lint go.sum seeded with go-finding v1.4.1 |
-| ~23:45 | cqrs-lint zero pseudo-version fix |
-| ~23:50 | cqrs-lint go-output/escape version sync |
-| ~23:55 | cqrs-lint vendorHash mismatch #2 |
-| ~00:00 | cqrs-lint finally builds; buildflow vendorHash mismatch revealed |
-| **00:03** | **Status report written. NOTHING DEPLOYED.** |
+| Time                    | Event                                                              |
+| ----------------------- | ------------------------------------------------------------------ |
+| 22:03                   | System crashed (WDT reset from memory exhaustion)                  |
+| ~22:20                  | Previous session: root cause found, boot.nix fix committed         |
+| ~22:30                  | Previous session: v1 destructive DB recovery committed             |
+| ~22:33                  | Previous session: AGENTS.md docs committed                         |
+| ~22:40-22:52            | Previous session: flake inputs updated, 3 deploy attempts failed   |
+| **This session starts** |                                                                    |
+| ~23:15                  | BTRFS snapshot inventory completed                                 |
+| ~23:20                  | All readable databases verified healthy                            |
+| ~23:25                  | Key discovery: v1 script never deployed, DB is corrupt NOT deleted |
+| ~23:30                  | Enhanced dbHeal with BTRFS snapshot recovery committed             |
+| ~23:30                  | Shellcheck SC2012 fix (ls → find)                                  |
+| ~23:33                  | monitor365 libspa-sys [lints] fix pushed upstream                  |
+| ~23:35                  | cqrs-lint vendorHash mismatch #1                                   |
+| ~23:40                  | cqrs-lint go.sum seeded with go-finding v1.4.1                     |
+| ~23:45                  | cqrs-lint zero pseudo-version fix                                  |
+| ~23:50                  | cqrs-lint go-output/escape version sync                            |
+| ~23:55                  | cqrs-lint vendorHash mismatch #2                                   |
+| ~00:00                  | cqrs-lint finally builds; buildflow vendorHash mismatch revealed   |
+| **00:03**               | **Status report written. NOTHING DEPLOYED.**                       |
 
 ---
 
 ## Live System State (as of 00:03)
 
-| Check | Value | Status |
-|-------|-------|--------|
-| `user-1000.slice memory.max` | `max` | **BROKEN — same as crash condition** |
-| Deployed generation | `...20260801.148bab9` | **STALE — from Aug 1** |
-| Evaluated generation | `...20260802.6438090` | **MISMATCH — never deployed** |
-| DiscordSync | `start-limit-hit` | **DOWN — corrupt DB** |
-| monitor365 libspa-sys | Fixed upstream | **NOT DEPLOYED** |
-| cqrs-lint go.sum | Fixed upstream | **NOT DEPLOYED** |
-| buildflow vendorHash | **MISMATCH** | **BLOCKING** |
+| Check                        | Value                 | Status                               |
+| ---------------------------- | --------------------- | ------------------------------------ |
+| `user-1000.slice memory.max` | `max`                 | **BROKEN — same as crash condition** |
+| Deployed generation          | `...20260801.148bab9` | **STALE — from Aug 1**               |
+| Evaluated generation         | `...20260802.6438090` | **MISMATCH — never deployed**        |
+| DiscordSync                  | `start-limit-hit`     | **DOWN — corrupt DB**                |
+| monitor365 libspa-sys        | Fixed upstream        | **NOT DEPLOYED**                     |
+| cqrs-lint go.sum             | Fixed upstream        | **NOT DEPLOYED**                     |
+| buildflow vendorHash         | **MISMATCH**          | **BLOCKING**                         |
 
 **The system that crashed is functionally identical to the system running now.** The fix exists in source but has not reached the running system.
 

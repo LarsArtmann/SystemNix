@@ -6,7 +6,6 @@
 
 ---
 
-
 ## TL;DR
 
 A full boot/shutdown log audit found the system **boots cleanly at the kernel level** (no OOM, no WDT reset, no NVMe/FS errors) and **shuts down cleanly** (boot −1 was a normal `systemd-reboot`). The reliability problems are all **service-startup failures**: 6 root-caused, **5 fixed in this session** (1 blocked on an upstream bug). All fixes pass `nix flake check --no-build` + full evo-x2 system eval. **Deploy pending.**
@@ -120,33 +119,33 @@ The TODO_LIST (`Updated 2026-06-25`) records the monitor365-server root cause as
 
 Ranked by impact × effort (Pareto):
 
-| #   | Task                                                                      | Impact      | Effort |
-| --- | ------------------------------------------------------------------------- | ----------- | ------ |
-| 1   | **Deploy the 6 boot fixes** (`nix run .#deploy`)                          | 🔴 Critical | XS     |
-| 2   | **Fix DiscordSync migration SQL** (upstream `CREATE INDEX` bug)           | 🔴 Critical | S      |
-| 3   | **Verify signoz + signoz-provision self-heal post-deploy**                | 🔴 High     | XS     |
-| 4   | **Verify monitor365 agent + server start post-deploy**                    | 🔴 High     | XS     |
-| 5   | **Verify xdg-document-portal + activitywatch post-deploy**                | 🟠 Medium   | XS     |
-| 6   | **Set up BorgBackup to Hetzner StorageBox** (off-site DR)                 | 🔴 Critical | M      |
-| 7   | **BTRFS `/data` subvolume migration** (snapshot protection)               | 🔴 High     | L      |
-| 8   | **Fix network-dependent service ordering** (`.device` units)              | 🟠 High     | M      |
-| 9   | **Reduce signoz-provision boot tail** (2min → target <30s)                | 🟠 Medium   | M      |
-| 10  | **Hermes manual steps** (OpenAI key, SSH deploy key, fallback model)      | 🟠 Medium   | S      |
-| 11  | **Firewall deny-by-default** + explicit allowlist                         | 🟠 High     | M      |
-| 12  | **Bind Immich to localhost** (remove `0.0.0.0` + openFirewall)            | 🟡 Security | XS     |
-| 13  | **Monitor365 agent→server auth**                                          | 🟡 Security | M      |
-| 14  | **Remove photomap** (decided — podman perm issue, niche)                  | 🟢 Low      | XS     |
-| 15  | **Audit disk: `/nix` at 118G** — run `nix-collect-garbage -d`             | 🟠 Medium   | S      |
-| 16  | **Split large modules** (monitor365 716L, signoz 705L, forgejo 583L)      | 🟢 Low      | L      |
-| 17  | **Upstream: nixpkgs `aw-watcher-utilization` poetry-core PR**             | 🟢 Low      | S      |
-| 18  | **Upstream: HM ActivityWatch watcher deps PR**                            | 🟢 Low      | S      |
-| 19  | **Add post-boot `no-failed-services` assertion** to deploy checks         | 🟠 Medium   | S      |
-| 20  | **Auditd enablement** (re-check NixOS bug #483085 status)                 | 🟡 Security | S      |
-| 21  | **AppArmor enablement**                                                   | 🟡 Security | M      |
-| 22  | **Provision Pi 3** for DNS failover cluster (hardware needed)             | 🟢 Low      | L      |
-| 23  | **Jan llama-server respawn investigation** (spawns new proc every 1-3min) | 🟠 Medium   | M      |
-| 24  | **Extract dnsblockd to standalone repo** (~930 lines embedded Go)         | 🟢 Low      | L      |
-| 25  | **Darwin HM parity** (blocked by 256GB disk constraint)                   | 🟢 Low      | L      |
+| #  | Task                                                                      | Impact      | Effort |
+| -- | ------------------------------------------------------------------------- | ----------- | ------ |
+| 1  | **Deploy the 6 boot fixes** (`nix run .#deploy`)                          | 🔴 Critical | XS     |
+| 2  | **Fix DiscordSync migration SQL** (upstream `CREATE INDEX` bug)           | 🔴 Critical | S      |
+| 3  | **Verify signoz + signoz-provision self-heal post-deploy**                | 🔴 High     | XS     |
+| 4  | **Verify monitor365 agent + server start post-deploy**                    | 🔴 High     | XS     |
+| 5  | **Verify xdg-document-portal + activitywatch post-deploy**                | 🟠 Medium   | XS     |
+| 6  | **Set up BorgBackup to Hetzner StorageBox** (off-site DR)                 | 🔴 Critical | M      |
+| 7  | **BTRFS `/data` subvolume migration** (snapshot protection)               | 🔴 High     | L      |
+| 8  | **Fix network-dependent service ordering** (`.device` units)              | 🟠 High     | M      |
+| 9  | **Reduce signoz-provision boot tail** (2min → target <30s)                | 🟠 Medium   | M      |
+| 10 | **Hermes manual steps** (OpenAI key, SSH deploy key, fallback model)      | 🟠 Medium   | S      |
+| 11 | **Firewall deny-by-default** + explicit allowlist                         | 🟠 High     | M      |
+| 12 | **Bind Immich to localhost** (remove `0.0.0.0` + openFirewall)            | 🟡 Security | XS     |
+| 13 | **Monitor365 agent→server auth**                                          | 🟡 Security | M      |
+| 14 | **Remove photomap** (decided — podman perm issue, niche)                  | 🟢 Low      | XS     |
+| 15 | **Audit disk: `/nix` at 118G** — run `nix-collect-garbage -d`             | 🟠 Medium   | S      |
+| 16 | **Split large modules** (monitor365 716L, signoz 705L, forgejo 583L)      | 🟢 Low      | L      |
+| 17 | **Upstream: nixpkgs `aw-watcher-utilization` poetry-core PR**             | 🟢 Low      | S      |
+| 18 | **Upstream: HM ActivityWatch watcher deps PR**                            | 🟢 Low      | S      |
+| 19 | **Add post-boot `no-failed-services` assertion** to deploy checks         | 🟠 Medium   | S      |
+| 20 | **Auditd enablement** (re-check NixOS bug #483085 status)                 | 🟡 Security | S      |
+| 21 | **AppArmor enablement**                                                   | 🟡 Security | M      |
+| 22 | **Provision Pi 3** for DNS failover cluster (hardware needed)             | 🟢 Low      | L      |
+| 23 | **Jan llama-server respawn investigation** (spawns new proc every 1-3min) | 🟠 Medium   | M      |
+| 24 | **Extract dnsblockd to standalone repo** (~930 lines embedded Go)         | 🟢 Low      | L      |
+| 25 | **Darwin HM parity** (blocked by 256GB disk constraint)                   | 🟢 Low      | L      |
 
 ---
 

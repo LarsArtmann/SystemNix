@@ -128,48 +128,48 @@ System is **functional but degraded**. Hermes Agent is the primary pain point �
 
 ### 🔴 Critical (Do Now)
 
-| #   | Task                                                     | Impact                                                            | Effort |
-| --- | -------------------------------------------------------- | ----------------------------------------------------------------- | ------ |
-| 1   | **Deploy all pending changes** (`just switch`)           | Fixes service-health-check, Hermes permissions, SQLite corruption | 10 min |
-| 2   | **Regenerate MiniMax API key** from console, update sops | Restores all Hermes cron jobs                                     | 5 min  |
-| 3   | **Run `just clean`** — disk at 90% root                  | Prevents disk-full failures                                       | 5 min  |
-| 4   | **Docker system prune** — /data at 83%                   | Reclaims Docker image space                                       | 5 min  |
+| # | Task                                                     | Impact                                                            | Effort |
+| - | -------------------------------------------------------- | ----------------------------------------------------------------- | ------ |
+| 1 | **Deploy all pending changes** (`just switch`)           | Fixes service-health-check, Hermes permissions, SQLite corruption | 10 min |
+| 2 | **Regenerate MiniMax API key** from console, update sops | Restores all Hermes cron jobs                                     | 5 min  |
+| 3 | **Run `just clean`** — disk at 90% root                  | Prevents disk-full failures                                       | 5 min  |
+| 4 | **Docker system prune** — /data at 83%                   | Reclaims Docker image space                                       | 5 min  |
 
 ### 🟠 High Priority (This Week)
 
-| #   | Task                                                                                             | Impact                 | Effort |
-| --- | ------------------------------------------------------------------------------------------------ | ---------------------- | ------ |
-| 5   | **Harden all oneshot services** — apply `harden{}` + `serviceDefaults{}` to backup/setup scripts | Defense in depth       | 30 min |
-| 6   | **Adopt `serviceDefaultsUser`** in file-and-image-renamer + monitor365                           | Consistency            | 15 min |
-| 7   | **Replace hardcoded usernames** with `config.users.primaryUser`                                  | Multi-user correctness | 30 min |
-| 8   | **Fix Darwin colorScheme override**                                                              | Removes dead code path | 5 min  |
-| 9   | **Remove duplicate nix.gc** from networking.nix or nix-settings.nix                              | Eliminates redundancy  | 5 min  |
-| 10  | **Push 3 local commits** to origin/master                                                        | Backup + sync          | 1 min  |
+| #  | Task                                                                                             | Impact                 | Effort |
+| -- | ------------------------------------------------------------------------------------------------ | ---------------------- | ------ |
+| 5  | **Harden all oneshot services** — apply `harden{}` + `serviceDefaults{}` to backup/setup scripts | Defense in depth       | 30 min |
+| 6  | **Adopt `serviceDefaultsUser`** in file-and-image-renamer + monitor365                           | Consistency            | 15 min |
+| 7  | **Replace hardcoded usernames** with `config.users.primaryUser`                                  | Multi-user correctness | 30 min |
+| 8  | **Fix Darwin colorScheme override**                                                              | Removes dead code path | 5 min  |
+| 9  | **Remove duplicate nix.gc** from networking.nix or nix-settings.nix                              | Eliminates redundancy  | 5 min  |
+| 10 | **Push 3 local commits** to origin/master                                                        | Backup + sync          | 1 min  |
 
 ### 🟡 Medium Priority (This Sprint)
 
-| #   | Task                                                       | Impact                                     | Effort  |
-| --- | ---------------------------------------------------------- | ------------------------------------------ | ------- |
-| 11  | **PhotoMap re-enablement** — debug podman permission issue | Restores photo exploration service         | 1-2 hrs |
-| 12  | **Add Gatus check for Hermes API key validity**            | Early warning on key expiry                | 20 min  |
-| 13  | **Hermes upstream bug: unawaited coroutine** — file issue  | Gets upstream fix for silent message drops | 15 min  |
-| 14  | **Remove UDP 853 firewall rule** (DoQ disabled)            | Eliminates inconsistency                   | 5 min   |
-| 15  | **Clean up darwin services/default.nix** placeholder       | Code hygiene                               | 5 min   |
-| 16  | **Audit docs/planning/** — triage 25 docs for relevance    | Reduces cognitive load                     | 30 min  |
-| 17  | **Prune old docs/status/archive/** — 270+ files            | Reduces repo size                          | 15 min  |
+| #  | Task                                                       | Impact                                     | Effort  |
+| -- | ---------------------------------------------------------- | ------------------------------------------ | ------- |
+| 11 | **PhotoMap re-enablement** — debug podman permission issue | Restores photo exploration service         | 1-2 hrs |
+| 12 | **Add Gatus check for Hermes API key validity**            | Early warning on key expiry                | 20 min  |
+| 13 | **Hermes upstream bug: unawaited coroutine** — file issue  | Gets upstream fix for silent message drops | 15 min  |
+| 14 | **Remove UDP 853 firewall rule** (DoQ disabled)            | Eliminates inconsistency                   | 5 min   |
+| 15 | **Clean up darwin services/default.nix** placeholder       | Code hygiene                               | 5 min   |
+| 16 | **Audit docs/planning/** — triage 25 docs for relevance    | Reduces cognitive load                     | 30 min  |
+| 17 | **Prune old docs/status/archive/** — 270+ files            | Reduces repo size                          | 15 min  |
 
 ### 🟢 Nice to Have (Backlog)
 
-| #   | Task                                                                   | Impact                  | Effort  |
-| --- | ---------------------------------------------------------------------- | ----------------------- | ------- |
-| 18  | **Monitor365 re-enablement** with memory limit tuning                  | Device monitoring       | 1 hr    |
-| 19  | **Extract dnsblockd** into standalone repo                             | Cleaner separation      | 2-3 hrs |
-| 20  | **Consolidate private flake inputs** where possible                    | Simpler dependency tree | 2 hrs   |
-| 21  | **Pi 3 DNS backup node provisioning**                                  | HA DNS failover         | 2-4 hrs |
-| 22  | **Update cross-platform consistency audit** (stale from Dec 2025)      | Ensures platform parity | 1 hr    |
-| 23  | **Add BTRFS snapshot automation** for /home/hermes before ExecStartPre | Additional safety net   | 30 min  |
-| 24  | **Hermes structured logging** — contribute slog adoption upstream      | Better observability    | 4+ hrs  |
-| 25  | **Nix anti-patterns phase 3-4** execution plan                         | Codebase quality        | 4+ hrs  |
+| #  | Task                                                                   | Impact                  | Effort  |
+| -- | ---------------------------------------------------------------------- | ----------------------- | ------- |
+| 18 | **Monitor365 re-enablement** with memory limit tuning                  | Device monitoring       | 1 hr    |
+| 19 | **Extract dnsblockd** into standalone repo                             | Cleaner separation      | 2-3 hrs |
+| 20 | **Consolidate private flake inputs** where possible                    | Simpler dependency tree | 2 hrs   |
+| 21 | **Pi 3 DNS backup node provisioning**                                  | HA DNS failover         | 2-4 hrs |
+| 22 | **Update cross-platform consistency audit** (stale from Dec 2025)      | Ensures platform parity | 1 hr    |
+| 23 | **Add BTRFS snapshot automation** for /home/hermes before ExecStartPre | Additional safety net   | 30 min  |
+| 24 | **Hermes structured logging** — contribute slog adoption upstream      | Better observability    | 4+ hrs  |
+| 25 | **Nix anti-patterns phase 3-4** execution plan                         | Codebase quality        | 4+ hrs  |
 
 ---
 
@@ -196,18 +196,18 @@ just switch
 
 ## System Metrics Snapshot
 
-| Metric               | Value                    | Status                               |
-| -------------------- | ------------------------ | ------------------------------------ |
+| Metric               | Value                    | Status                              |
+| -------------------- | ------------------------ | ----------------------------------- |
 | Root disk            | 90% (55G free / 512G)    | ⚠️ Warning                           |
 | /data disk           | 83% (140G free / 800G)   | ⚠️ Warning                           |
-| RAM                  | 48G/62G (77%)            | ✅ OK                                |
+| RAM                  | 48G/62G (77%)            | ✅ OK                               |
 | Nix store            | 65G                      | ℹ️ Info                              |
-| Nix version          | 2.34.6                   | ✅ Current                           |
-| Flake checks         | All passing              | ✅ Clean                             |
-| Failed systemd units | 1 (service-health-check) | ❌ Fix ready, needs deploy           |
+| Nix version          | 2.34.6                   | ✅ Current                          |
+| Flake checks         | All passing              | ✅ Clean                            |
+| Failed systemd units | 1 (service-health-check) | ❌ Fix ready, needs deploy          |
 | Health check         | 21/22 passed             | ⚠️ service-health-check + 3 warnings |
-| Unpushed commits     | 2 (now 3 after this)     | 🔧 Needs push                        |
-| Hermes errors (7d)   | 146                      | 🔴 Degraded                          |
+| Unpushed commits     | 2 (now 3 after this)     | 🔧 Needs push                       |
+| Hermes errors (7d)   | 146                      | 🔴 Degraded                         |
 
 ---
 

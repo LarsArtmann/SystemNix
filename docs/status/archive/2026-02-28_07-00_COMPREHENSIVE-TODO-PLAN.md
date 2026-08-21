@@ -22,23 +22,23 @@
 
 ## Tier 1: CRITICAL (Score 9.0+) - Do Today
 
-| #   | Task                                                  | Source                    | Est. Time | Score | Action                                |
-| --- | ----------------------------------------------------- | ------------------------- | --------- | ----- | ------------------------------------- |
-| 1   | Fix Hyprland type safety assertions path resolution   | hyprland.nix:6            | 10m       | 9.8   | Investigate flake-parts context issue |
-| 2   | Re-enable assertions after path fix                   | hyprland.nix              | 5m        | 9.8   | Uncomment assertion code              |
-| 3   | Verify assertions pass on rebuild                     | hyprland.nix              | 5m        | 9.8   | Run `just test`                       |
-| 4   | Document assertion fix in code comments               | hyprland.nix              | 5m        | 9.5   | Add explanation                       |
-| 5   | Research audit kernel module compatibility            | security-hardening.nix:11 | 12m       | 9.6   | Check NixOS issues                    |
-| 6   | Test audit with current kernel                        | NixOS                     | 10m       | 9.6   | Rebuild with audit enabled            |
-| 7   | Document audit disable reason if keeping disabled     | security-hardening.nix    | 8m        | 9.5   | Add comment with reason               |
-| 8   | Fix Sandbox override using lib.mkForce                | darwin/nix/settings.nix:3 | 10m       | 9.6   | Replace anti-pattern                  |
-| 9   | Verify sandbox settings apply                         | Darwin                    | 5m        | 9.6   | Test darwin-rebuild                   |
-| 10  | Run `darwin-rebuild build --flake .#Lars-MacBook-Air` | MICRO-TASKS               | 10m       | 9.7   | Verify build                          |
-| 11  | Analyze build output for errors                       | MICRO-TASKS               | 5m        | 9.7   | Check logs                            |
-| 12  | Create git backup checkpoint                          | MICRO-TASKS               | 3m        | 9.7   | Tag current state                     |
-| 13  | Test HM workaround removal                            | darwin/default.nix        | 8m        | 9.4   | Remove users.users.lars block         |
-| 14  | Verify HM still builds without workaround             | Darwin                    | 5m        | 9.4   | Run `just test`                       |
-| 15  | Document workaround removal if successful             | docs/                     | 8m        | 9.3   | Update bug report                     |
+| #  | Task                                                  | Source                    | Est. Time | Score | Action                                |
+| -- | ----------------------------------------------------- | ------------------------- | --------- | ----- | ------------------------------------- |
+| 1  | Fix Hyprland type safety assertions path resolution   | hyprland.nix:6            | 10m       | 9.8   | Investigate flake-parts context issue |
+| 2  | Re-enable assertions after path fix                   | hyprland.nix              | 5m        | 9.8   | Uncomment assertion code              |
+| 3  | Verify assertions pass on rebuild                     | hyprland.nix              | 5m        | 9.8   | Run `just test`                       |
+| 4  | Document assertion fix in code comments               | hyprland.nix              | 5m        | 9.5   | Add explanation                       |
+| 5  | Research audit kernel module compatibility            | security-hardening.nix:11 | 12m       | 9.6   | Check NixOS issues                    |
+| 6  | Test audit with current kernel                        | NixOS                     | 10m       | 9.6   | Rebuild with audit enabled            |
+| 7  | Document audit disable reason if keeping disabled     | security-hardening.nix    | 8m        | 9.5   | Add comment with reason               |
+| 8  | Fix Sandbox override using lib.mkForce                | darwin/nix/settings.nix:3 | 10m       | 9.6   | Replace anti-pattern                  |
+| 9  | Verify sandbox settings apply                         | Darwin                    | 5m        | 9.6   | Test darwin-rebuild                   |
+| 10 | Run `darwin-rebuild build --flake .#Lars-MacBook-Air` | MICRO-TASKS               | 10m       | 9.7   | Verify build                          |
+| 11 | Analyze build output for errors                       | MICRO-TASKS               | 5m        | 9.7   | Check logs                            |
+| 12 | Create git backup checkpoint                          | MICRO-TASKS               | 3m        | 9.7   | Tag current state                     |
+| 13 | Test HM workaround removal                            | darwin/default.nix        | 8m        | 9.4   | Remove users.users.lars block         |
+| 14 | Verify HM still builds without workaround             | Darwin                    | 5m        | 9.4   | Run `just test`                       |
+| 15 | Document workaround removal if successful             | docs/                     | 8m        | 9.3   | Update bug report                     |
 
 **Tier 1 Total: 15 tasks | ~117 minutes | 2.0 hours**
 
@@ -46,48 +46,48 @@
 
 ## Tier 2: HIGH (Score 8.0-8.9) - This Week
 
-| #   | Task                                   | Source             | Est. Time | Score | Action                  |
-| --- | -------------------------------------- | ------------------ | --------- | ----- | ----------------------- |
-| 16  | Fish shell startup profiling           | just benchmark     | 12m       | 8.9   | Identify bottlenecks    |
-| 17  | Optimize Fish initialization scripts   | fish.nix           | 12m       | 8.9   | Remove slow plugins     |
-| 18  | Test Fish startup after optimization   | fish.nix           | 5m        | 8.9   | Target <200ms           |
-| 19  | Document Fish optimization changes     | docs/              | 10m       | 8.8   | Add performance notes   |
-| 20  | Add nh Nix management tool             | base.nix           | 8m        | 8.7   | Add to packages         |
-| 21  | Configure nh integration               | home.nix           | 8m        | 8.7   | Add nh alias            |
-| 22  | Test nh functionality                  | CLI                | 5m        | 8.7   | Run nh commands         |
-| 23  | Research TouchID auth extensions       | pam.nix:7          | 10m       | 8.6   | Check nix-darwin docs   |
-| 24  | Identify TouchID services to add       | pam.nix            | 8m        | 8.6   | List auth points        |
-| 25  | Test additional TouchID configurations | Darwin             | 8m        | 8.6   | Test sudo, etc.         |
-| 26  | Document TouchID security implications | docs/              | 10m       | 8.5   | Add security notes      |
-| 27  | Configure git user.name                | git.nix            | 3m        | 8.5   | Add to Home Manager     |
-| 28  | Configure git user.email               | git.nix            | 3m        | 8.5   | Add to Home Manager     |
-| 29  | Configure git default editor           | git.nix            | 5m        | 8.5   | Set to nvim             |
-| 30  | Test LaunchAgent without workaround    | launchagents.nix:5 | 10m       | 8.5   | Remove fallback         |
-| 31  | Verify ActivityWatch auto-starts       | Darwin             | 5m        | 8.5   | Test LaunchAgent        |
-| 32  | Create SSH config directory            | ssh.nix            | 5m        | 8.4   | Add to home.nix         |
-| 33  | Configure SSH options                  | ssh.nix            | 8m        | 8.4   | Add sane defaults       |
-| 34  | Test SSH configuration                 | CLI                | 5m        | 8.4   | ssh -G github.com       |
-| 35  | Add jq JSON processor                  | base.nix           | 3m        | 8.4   | Already present? Verify |
-| 36  | Add ripgrep search tool                | base.nix           | 3m        | 8.4   | Verify presence         |
-| 37  | Add fd find tool                       | base.nix           | 3m        | 8.4   | Verify presence         |
-| 38  | Add bat cat replacement                | base.nix           | 3m        | 8.4   | Add if missing          |
-| 39  | Test all CLI utilities                 | CLI                | 8m        | 8.3   | Verify each works       |
-| 40  | Rebuild NixOS for Bluetooth            | evo-x2             | 10m       | 8.3   | sudo nixos-rebuild      |
-| 41  | Reboot for kernel modules              | evo-x2             | 5m        | 8.3   | Required reboot         |
-| 42  | Pair with Nest Audio                   | Bluetooth          | 10m       | 8.3   | Use bluetoothctl        |
-| 43  | Set Nest Audio as default              | audio              | 8m        | 8.3   | pactl set-default       |
-| 44  | Test audio output                      | Bluetooth          | 5m        | 8.3   | Play test sound         |
-| 45  | Enable auto-connect for Nest           | Bluetooth          | 8m        | 8.2   | Configure trust         |
-| 46  | Test Bluetooth range                   | Bluetooth          | 5m        | 8.2   | Walk around             |
-| 47  | Check A2DP profile active              | audio              | 5m        | 8.2   | pactl list cards        |
-| 48  | Test with different apps               | audio              | 10m       | 8.2   | Music, videos           |
-| 49  | Configure Nix cache                    | nix-settings.nix   | 8m        | 8.1   | Add substituters        |
-| 50  | Configure binary cache                 | nix-settings.nix   | 8m        | 8.1   | Add trusted keys        |
-| 51  | Test cache performance                 | CLI                | 5m        | 8.1   | Time rebuild            |
-| 52  | Add security scanning tools            | base.nix           | 8m        | 8.1   | Add nmap, etc.          |
-| 53  | Configure firewall basics              | networking.nix     | 10m       | 8.1   | Check current           |
-| 54  | Add password manager                   | base.nix           | 8m        | 8.1   | Add pass or similar     |
-| 55  | Test security setup                    | CLI                | 8m        | 8.1   | Run tools               |
+| #  | Task                                   | Source             | Est. Time | Score | Action                  |
+| -- | -------------------------------------- | ------------------ | --------- | ----- | ----------------------- |
+| 16 | Fish shell startup profiling           | just benchmark     | 12m       | 8.9   | Identify bottlenecks    |
+| 17 | Optimize Fish initialization scripts   | fish.nix           | 12m       | 8.9   | Remove slow plugins     |
+| 18 | Test Fish startup after optimization   | fish.nix           | 5m        | 8.9   | Target <200ms           |
+| 19 | Document Fish optimization changes     | docs/              | 10m       | 8.8   | Add performance notes   |
+| 20 | Add nh Nix management tool             | base.nix           | 8m        | 8.7   | Add to packages         |
+| 21 | Configure nh integration               | home.nix           | 8m        | 8.7   | Add nh alias            |
+| 22 | Test nh functionality                  | CLI                | 5m        | 8.7   | Run nh commands         |
+| 23 | Research TouchID auth extensions       | pam.nix:7          | 10m       | 8.6   | Check nix-darwin docs   |
+| 24 | Identify TouchID services to add       | pam.nix            | 8m        | 8.6   | List auth points        |
+| 25 | Test additional TouchID configurations | Darwin             | 8m        | 8.6   | Test sudo, etc.         |
+| 26 | Document TouchID security implications | docs/              | 10m       | 8.5   | Add security notes      |
+| 27 | Configure git user.name                | git.nix            | 3m        | 8.5   | Add to Home Manager     |
+| 28 | Configure git user.email               | git.nix            | 3m        | 8.5   | Add to Home Manager     |
+| 29 | Configure git default editor           | git.nix            | 5m        | 8.5   | Set to nvim             |
+| 30 | Test LaunchAgent without workaround    | launchagents.nix:5 | 10m       | 8.5   | Remove fallback         |
+| 31 | Verify ActivityWatch auto-starts       | Darwin             | 5m        | 8.5   | Test LaunchAgent        |
+| 32 | Create SSH config directory            | ssh.nix            | 5m        | 8.4   | Add to home.nix         |
+| 33 | Configure SSH options                  | ssh.nix            | 8m        | 8.4   | Add sane defaults       |
+| 34 | Test SSH configuration                 | CLI                | 5m        | 8.4   | ssh -G github.com       |
+| 35 | Add jq JSON processor                  | base.nix           | 3m        | 8.4   | Already present? Verify |
+| 36 | Add ripgrep search tool                | base.nix           | 3m        | 8.4   | Verify presence         |
+| 37 | Add fd find tool                       | base.nix           | 3m        | 8.4   | Verify presence         |
+| 38 | Add bat cat replacement                | base.nix           | 3m        | 8.4   | Add if missing          |
+| 39 | Test all CLI utilities                 | CLI                | 8m        | 8.3   | Verify each works       |
+| 40 | Rebuild NixOS for Bluetooth            | evo-x2             | 10m       | 8.3   | sudo nixos-rebuild      |
+| 41 | Reboot for kernel modules              | evo-x2             | 5m        | 8.3   | Required reboot         |
+| 42 | Pair with Nest Audio                   | Bluetooth          | 10m       | 8.3   | Use bluetoothctl        |
+| 43 | Set Nest Audio as default              | audio              | 8m        | 8.3   | pactl set-default       |
+| 44 | Test audio output                      | Bluetooth          | 5m        | 8.3   | Play test sound         |
+| 45 | Enable auto-connect for Nest           | Bluetooth          | 8m        | 8.2   | Configure trust         |
+| 46 | Test Bluetooth range                   | Bluetooth          | 5m        | 8.2   | Walk around             |
+| 47 | Check A2DP profile active              | audio              | 5m        | 8.2   | pactl list cards        |
+| 48 | Test with different apps               | audio              | 10m       | 8.2   | Music, videos           |
+| 49 | Configure Nix cache                    | nix-settings.nix   | 8m        | 8.1   | Add substituters        |
+| 50 | Configure binary cache                 | nix-settings.nix   | 8m        | 8.1   | Add trusted keys        |
+| 51 | Test cache performance                 | CLI                | 5m        | 8.1   | Time rebuild            |
+| 52 | Add security scanning tools            | base.nix           | 8m        | 8.1   | Add nmap, etc.          |
+| 53 | Configure firewall basics              | networking.nix     | 10m       | 8.1   | Check current           |
+| 54 | Add password manager                   | base.nix           | 8m        | 8.1   | Add pass or similar     |
+| 55 | Test security setup                    | CLI                | 8m        | 8.1   | Run tools               |
 
 **Tier 2 Total: 40 tasks | ~340 minutes | 5.7 hours**
 

@@ -17,14 +17,14 @@ Session 23 was a resilience audit and GPU memory rebalance for evo-x2 (AMD Ryzen
 
 ### 1. Crash Recovery Stack — 6 Layers of Defense
 
-| #   | Layer                   | Mechanism                                                                                        | What it catches                        |
-| --- | ----------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------- |
-| 1   | Userspace OOM           | earlyoom (10% free threshold) + OOMScoreAdjust (sshd -1000, journald -500, waybar/pipewire -500) | OOM before kernel panic                |
-| 2   | Kernel panic recovery   | `kernel.panic=30`, `softlockup_panic=1`, `hung_task_panic=1`, `watchdog_thresh=20`               | Auto-reboot after 30s                  |
-| 3   | Hardware watchdog       | watchdogd (SP5100 TCO, 30s timeout, meminfo critical at 98% → hard reboot)                       | Complete system unresponsiveness       |
-| 4   | SysRq emergency         | `kernel.sysrq=1` — REISUB from keyboard                                                          | Manual emergency reboot                |
-| 5   | Post-reboot diagnostics | pstore (`pstore.backend=efi`, `max_reason=3`) — panic/oops/warn in UEFI NVRAM                    | Crash forensics after reboot           |
-| 6   | GPU driver recovery     | `amdgpu.gpu_recovery=1`, `lockup_timeout=30000`                                                  | GPU hang → reset instead of dead state |
+| # | Layer                   | Mechanism                                                                                        | What it catches                        |
+| - | ----------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------- |
+| 1 | Userspace OOM           | earlyoom (10% free threshold) + OOMScoreAdjust (sshd -1000, journald -500, waybar/pipewire -500) | OOM before kernel panic                |
+| 2 | Kernel panic recovery   | `kernel.panic=30`, `softlockup_panic=1`, `hung_task_panic=1`, `watchdog_thresh=20`               | Auto-reboot after 30s                  |
+| 3 | Hardware watchdog       | watchdogd (SP5100 TCO, 30s timeout, meminfo critical at 98% → hard reboot)                       | Complete system unresponsiveness       |
+| 4 | SysRq emergency         | `kernel.sysrq=1` — REISUB from keyboard                                                          | Manual emergency reboot                |
+| 5 | Post-reboot diagnostics | pstore (`pstore.backend=efi`, `max_reason=3`) — panic/oops/warn in UEFI NVRAM                    | Crash forensics after reboot           |
+| 6 | GPU driver recovery     | `amdgpu.gpu_recovery=1`, `lockup_timeout=30000`                                                  | GPU hang → reset instead of dead state |
 
 **Files:** `platforms/nixos/system/boot.nix`
 
@@ -156,33 +156,33 @@ Merged scattered `systemd.services`, `systemd.user.services`, `systemd.coredump`
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| #   | Priority | Item                                        | Effort |
-| --- | -------- | ------------------------------------------- | ------ |
-| 1   | **P0**   | Commit pending boot.nix (swappiness, ZRAM)  | 1min   |
-| 2   | **P0**   | `just switch` on evo-x2                     | 5min   |
-| 3   | **P0**   | Verify btop/nvtop shows ~32GB GPU           | 1min   |
-| 4   | **P0**   | Test Ollama inference works                 | 5min   |
-| 5   | **P0**   | Verify pstore: `ls /sys/fs/pstore/`         | 1min   |
-| 6   | **P1**   | Update AGENTS.md for all session 23 changes | 15min  |
-| 7   | **P1**   | Update FEATURES.md                          | 15min  |
-| 8   | **P1**   | Enable Gatus in configuration.nix           | 5min   |
-| 9   | **P1**   | Personalize Gatus ntfy topic                | 5min   |
-| 10  | **P1**   | Add MemoryMax=4G to ClickHouse (signoz.nix) | 5min   |
-| 11  | **P1**   | Verify service-health-check runs correctly  | 5min   |
-| 12  | **P1**   | Verify notify-failure@ fires correctly      | 5min   |
-| 13  | **P2**   | Create TODO_LIST.md                         | 20min  |
-| 14  | **P2**   | Test BTRFS snapshot restore                 | 15min  |
-| 15  | **P2**   | Add coredumpctl vacuum weekly timer         | 10min  |
-| 16  | **P2**   | Provision Pi 3 for DNS failover             | 60min  |
-| 17  | **P2**   | Verify Twenty CRM deployment status         | 10min  |
-| 18  | **P2**   | Verify Photomap deployment status           | 10min  |
-| 19  | **P3**   | Investigate kdump for crash dumps           | 30min  |
-| 20  | **P3**   | Add UPS monitoring (NetworkUPSTools)        | 30min  |
-| 21  | **P3**   | Re-enable auditd after NixOS fix            | 15min  |
-| 22  | **P3**   | Add LUKS disk encryption + TPM              | 60min  |
-| 23  | **P3**   | Network NIC bonding                         | 30min  |
-| 24  | **P4**   | CI/CD pipeline for `just test`              | 60min  |
-| 25  | **P4**   | SSH certificate-based auth                  | 30min  |
+| #  | Priority | Item                                        | Effort |
+| -- | -------- | ------------------------------------------- | ------ |
+| 1  | **P0**   | Commit pending boot.nix (swappiness, ZRAM)  | 1min   |
+| 2  | **P0**   | `just switch` on evo-x2                     | 5min   |
+| 3  | **P0**   | Verify btop/nvtop shows ~32GB GPU           | 1min   |
+| 4  | **P0**   | Test Ollama inference works                 | 5min   |
+| 5  | **P0**   | Verify pstore: `ls /sys/fs/pstore/`         | 1min   |
+| 6  | **P1**   | Update AGENTS.md for all session 23 changes | 15min  |
+| 7  | **P1**   | Update FEATURES.md                          | 15min  |
+| 8  | **P1**   | Enable Gatus in configuration.nix           | 5min   |
+| 9  | **P1**   | Personalize Gatus ntfy topic                | 5min   |
+| 10 | **P1**   | Add MemoryMax=4G to ClickHouse (signoz.nix) | 5min   |
+| 11 | **P1**   | Verify service-health-check runs correctly  | 5min   |
+| 12 | **P1**   | Verify notify-failure@ fires correctly      | 5min   |
+| 13 | **P2**   | Create TODO_LIST.md                         | 20min  |
+| 14 | **P2**   | Test BTRFS snapshot restore                 | 15min  |
+| 15 | **P2**   | Add coredumpctl vacuum weekly timer         | 10min  |
+| 16 | **P2**   | Provision Pi 3 for DNS failover             | 60min  |
+| 17 | **P2**   | Verify Twenty CRM deployment status         | 10min  |
+| 18 | **P2**   | Verify Photomap deployment status           | 10min  |
+| 19 | **P3**   | Investigate kdump for crash dumps           | 30min  |
+| 20 | **P3**   | Add UPS monitoring (NetworkUPSTools)        | 30min  |
+| 21 | **P3**   | Re-enable auditd after NixOS fix            | 15min  |
+| 22 | **P3**   | Add LUKS disk encryption + TPM              | 60min  |
+| 23 | **P3**   | Network NIC bonding                         | 30min  |
+| 24 | **P4**   | CI/CD pipeline for `just test`              | 60min  |
+| 25 | **P4**   | SSH certificate-based auth                  | 30min  |
 
 ---
 

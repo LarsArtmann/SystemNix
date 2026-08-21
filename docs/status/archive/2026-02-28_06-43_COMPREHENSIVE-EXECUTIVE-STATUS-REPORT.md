@@ -118,13 +118,13 @@ just pre-commit-run     # ✅ Run all hooks
 
 ### 6. Type Safety & Assertions Framework
 
-| Component            | Assertions    | Status                           |
-| -------------------- | ------------- | -------------------------------- |
-| PathConfig.nix       | 4 assertions  | ✅ Active                        |
-| SystemAssertions.nix | 5 assertions  | ✅ Active                        |
-| security.nix         | 2 assertions  | ✅ Active                        |
-| darwin/default.nix   | 1 assertion   | ✅ Active                        |
-| TypeAssertions.nix   | 6 type checks | ✅ Active                        |
+| Component            | Assertions    | Status                          |
+| -------------------- | ------------- | ------------------------------- |
+| PathConfig.nix       | 4 assertions  | ✅ Active                       |
+| SystemAssertions.nix | 5 assertions  | ✅ Active                       |
+| security.nix         | 2 assertions  | ✅ Active                       |
+| darwin/default.nix   | 1 assertion   | ✅ Active                       |
+| TypeAssertions.nix   | 6 type checks | ✅ Active                       |
 | HyprlandTypes.nix    | 1 validation  | ⚠️ Disabled (see Partially Done) |
 
 **Total Active Assertions: 21** providing compile-time safety
@@ -149,7 +149,7 @@ just pre-commit-run     # ✅ Run all hooks
 | ---------------------- | ----------- | ----------------------------------- | ---------- |
 | NixOS                  | ✅ Complete | Fully Nix-managed with systemd      | 100%       |
 | Darwin Core            | ✅ Working  | Homebrew-based, LaunchAgent managed | 90%        |
-| Darwin Custom Watchers | ⚠️ Partial  | Manual pip install required         | 60%        |
+| Darwin Custom Watchers | ⚠️ Partial   | Manual pip install required         | 60%        |
 | URL Tracking           | ✅ Fixed    | Requires Accessibility permissions  | 100%       |
 | Utilization Watcher    | ✅ Packaged | NixOS auto, macOS manual install    | 80%        |
 
@@ -157,33 +157,33 @@ just pre-commit-run     # ✅ Run all hooks
 
 ### 2. Security Hardening
 
-| Feature          | Status      | Issue                                    | Priority |
-| ---------------- | ----------- | ---------------------------------------- | -------- |
+| Feature          | Status     | Issue                                    | Priority |
+| ---------------- | ---------- | ---------------------------------------- | -------- |
 | Audit Rules      | ⚠️ Disabled | NixOS audit-rules service bug (upstream) | Medium   |
 | AppArmor         | ⚠️ Disabled | Conflicts with audit kernel module       | Low      |
-| PAM TouchID      | ✅ Working  | Could add more auth options              | Low      |
-| Gitleaks Scan    | ✅ Clean    | 0 findings currently                     | -        |
+| PAM TouchID      | ✅ Working | Could add more auth options              | Low      |
+| Gitleaks Scan    | ✅ Clean   | 0 findings currently                     | -        |
 | Pre-commit Hooks | ⚠️ Working  | Some warnings (non-blocking)             | Low      |
 
 ### 3. NixOS Desktop Experience
 
-| Component               | Status              | Issue                                  | Completion |
-| ----------------------- | ------------------- | -------------------------------------- | ---------- |
-| Hyprland Window Manager | ✅ Working          | Type safety assertions disabled        | 85%        |
+| Component               | Status             | Issue                                  | Completion |
+| ----------------------- | ------------------ | -------------------------------------- | ---------- |
+| Hyprland Window Manager | ✅ Working         | Type safety assertions disabled        | 85%        |
 | SDDM Display Manager    | ⚠️ Working          | Wayland disabled for AMD GPU stability | 80%        |
 | Bluetooth               | ⚠️ Configured       | Hardware present but not auto-paired   | 70%        |
-| Audio (PipeWire)        | ✅ Working          | Default configuration                  | 90%        |
+| Audio (PipeWire)        | ✅ Working         | Default configuration                  | 90%        |
 | NPU (Ryzen AI)          | ⚠️ Hardware present | Linux support in Early Access (unused) | 20%        |
 
 **Note:** Hyprland type safety assertions are disabled due to path resolution issues in flake-parts context. Functionality works, but compile-time validation is bypassed.
 
 ### 4. Shell Performance
 
-| Shell | Current | Target | Status                |
-| ----- | ------- | ------ | --------------------- |
+| Shell | Current | Target | Status               |
+| ----- | ------- | ------ | -------------------- |
 | Fish  | 334ms   | <200ms | ⚠️ Needs optimization |
-| Zsh   | 72ms    | <100ms | ✅ Good               |
-| Bash  | Unknown | <100ms | ❓ Not measured       |
+| Zsh   | 72ms    | <100ms | ✅ Good              |
+| Bash  | Unknown | <100ms | ❓ Not measured      |
 
 **Action Required:** Fish shell startup optimization via `just benchmark` profiling.
 
@@ -192,16 +192,16 @@ just pre-commit-run     # ✅ Run all hooks
 | Hook                | Status     | Issues                                |
 | ------------------- | ---------- | ------------------------------------- |
 | Gitleaks            | ✅ Working | Clean - 0 findings                    |
-| Statix              | ⚠️ Working | W20, W04, W23 warnings (not blocking) |
+| Statix              | ⚠️ Working  | W20, W04, W23 warnings (not blocking) |
 | Trailing Whitespace | ✅ Working | Auto-fix enabled                      |
 | Shellcheck          | ✅ Working | Passing                               |
 | Deadnix             | ✅ Working | Passing                               |
 
 ### 6. Flake Architecture Migration
 
-| Component                      | Current State          | Target State       | Progress |
-| ------------------------------ | ---------------------- | ------------------ | -------- |
-| perSystem (packages/devShells) | ✅ flake-parts         | -                  | 100%     |
+| Component                      | Current State         | Target State       | Progress |
+| ------------------------------ | --------------------- | ------------------ | -------- |
+| perSystem (packages/devShells) | ✅ flake-parts        | -                  | 100%     |
 | darwinConfigurations           | ⚠️ Inline in flake.nix | flake-parts module | 30%      |
 | nixosConfigurations            | ⚠️ Inline in flake.nix | flake-parts module | 30%      |
 | homeConfigurations             | ⚠️ Inline in flake.nix | flake-parts module | 30%      |

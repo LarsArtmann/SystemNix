@@ -4,7 +4,6 @@
 
 ---
 
-
 ## Executive Summary
 
 Monitor365 has been reconfigured for **full telemetry mode** — all 19 collector
@@ -268,33 +267,33 @@ start-limit. Requires an upstream fix; cannot be fixed in this repo.
 
 Sorted by impact × urgency.
 
-| #   | Task                                                          | Impact      | Effort | Why now                                                                        |
-| --- | ------------------------------------------------------------- | ----------- | ------ | ------------------------------------------------------------------------------ |
-| 1   | **`nix run .#deploy`**                                        | 🔴 Critical | S      | 73 commits inert. Everything below is moot until this happens.                 |
-| 2   | **`nix-collect-garbage`** before deploy                       | 🔴 Critical | S      | Root at 93%. Deploy builds a new generation (~5-10 GiB). Free space first.     |
-| 3   | **Verify Monitor365 post-deploy**                             | 🔴 Critical | S      | Confirm all 19 collectors running, 30 GiB cap active, server healthy.          |
-| 4   | **Verify BTRFS GC guard is live**                             | 🔴 Critical | S      | The ENOSPC crash WILL recur without it. Check `systemctl status btrfs-health`. |
-| 5   | **Commit + push demo.sh fix** (monitor365 repo)               | 🟡 Medium   | S      | Port collision fix is uncommitted in `github:LarsArtmann/monitor365`.          |
-| 6   | **Monitor365 Caddy vHost + Pocket ID**                        | 🟠 High     | M      | Dashboard has no auth, no TLS. Screenshots + keystrokes on open LAN.           |
-| 7   | **Gatus health audit post-deploy**                            | 🟡 Medium   | S      | Verify which DOWN endpoints are real vs stale URLs.                            |
-| 8   | **Hermes: add OpenAI API key to sops**                        | 🟡 Medium   | S      | 3 manual steps blocking Hermes insights. This is the first.                    |
-| 9   | **BTRFS `/data` subvolume migration**                         | 🟠 High     | L      | Docker/Immich/AI data has no snapshot protection. ~1h downtime.                |
-| 10  | **Cloud backup (BorgBackup → Hetzner)**                       | 🟠 High     | M      | No off-site backup = total data loss risk.                                     |
-| 11  | **Split `monitor365.nix`** (716L → agent + server)            | 🟢 Low      | M      | Module too large, hard to maintain.                                            |
-| 12  | **Split `signoz.nix`** (705L)                                 | 🟢 Low      | M      | Same.                                                                          |
-| 13  | **Boot time optimization** (signoz-provision)                 | 🟡 Medium   | M      | 5 min boot is unacceptable for crash recovery.                                 |
-| 14  | **Firewall deny-by-default**                                  | 🟠 High     | M      | NixOS allows all inbound. Docker punches holes.                                |
-| 15  | **Fix DiscordSync turso migration** (upstream)                | 🟡 Medium   | M      | Service crash-loops. Upstream SQL bug.                                         |
-| 16  | **Monitor365 agent→server auth**                              | 🟠 High     | M      | No API key auth. Resolved by #6 (Caddy + Pocket ID).                           |
-| 17  | **Re-enable dual-WAN** (after ethernet verified stable)       | 🟡 Medium   | S      | WAN failover disabled since June 27.                                           |
-| 18  | **Raspberry Pi 3 DNS failover**                               | 🟢 Low      | L      | Hardware needed. Module ready.                                                 |
-| 19  | **Hermes: SSH deploy key + fallback model**                   | 🟡 Medium   | S      | Steps 2+3 of Hermes unblock.                                                   |
-| 20  | **`nix-collect-garbage` automation** (root >90%)              | 🟡 Medium   | S      | Prevent the 93% situation from recurring.                                      |
-| 21  | **Twenty CRM 502 monitoring**                                 | 🟢 Low      | S      | Appears resolved. Monitor post-deploy.                                         |
-| 22  | **Upstream Go repo `go.sum` fixes** (library-policy, mr-sync) | 🟢 Low      | M      | Removes Nix-side workaround overlays.                                          |
-| 23  | **nixpkgs upstream PRs** (6 candidates)                       | 🟢 Low      | L      | aw-watcher-utilization, valkey, taskwarrior3, etc.                             |
-| 24  | **AppArmor enablement**                                       | 🟢 Low      | M      | Currently `mkDefault false`.                                                   |
-| 25  | **Auditd enablement**                                         | 🟢 Low      | S      | Blocked on NixOS 26.05 bug. Re-evaluate.                                       |
+| #  | Task                                                          | Impact      | Effort | Why now                                                                        |
+| -- | ------------------------------------------------------------- | ----------- | ------ | ------------------------------------------------------------------------------ |
+| 1  | **`nix run .#deploy`**                                        | 🔴 Critical | S      | 73 commits inert. Everything below is moot until this happens.                 |
+| 2  | **`nix-collect-garbage`** before deploy                       | 🔴 Critical | S      | Root at 93%. Deploy builds a new generation (~5-10 GiB). Free space first.     |
+| 3  | **Verify Monitor365 post-deploy**                             | 🔴 Critical | S      | Confirm all 19 collectors running, 30 GiB cap active, server healthy.          |
+| 4  | **Verify BTRFS GC guard is live**                             | 🔴 Critical | S      | The ENOSPC crash WILL recur without it. Check `systemctl status btrfs-health`. |
+| 5  | **Commit + push demo.sh fix** (monitor365 repo)               | 🟡 Medium   | S      | Port collision fix is uncommitted in `github:LarsArtmann/monitor365`.          |
+| 6  | **Monitor365 Caddy vHost + Pocket ID**                        | 🟠 High     | M      | Dashboard has no auth, no TLS. Screenshots + keystrokes on open LAN.           |
+| 7  | **Gatus health audit post-deploy**                            | 🟡 Medium   | S      | Verify which DOWN endpoints are real vs stale URLs.                            |
+| 8  | **Hermes: add OpenAI API key to sops**                        | 🟡 Medium   | S      | 3 manual steps blocking Hermes insights. This is the first.                    |
+| 9  | **BTRFS `/data` subvolume migration**                         | 🟠 High     | L      | Docker/Immich/AI data has no snapshot protection. ~1h downtime.                |
+| 10 | **Cloud backup (BorgBackup → Hetzner)**                       | 🟠 High     | M      | No off-site backup = total data loss risk.                                     |
+| 11 | **Split `monitor365.nix`** (716L → agent + server)            | 🟢 Low      | M      | Module too large, hard to maintain.                                            |
+| 12 | **Split `signoz.nix`** (705L)                                 | 🟢 Low      | M      | Same.                                                                          |
+| 13 | **Boot time optimization** (signoz-provision)                 | 🟡 Medium   | M      | 5 min boot is unacceptable for crash recovery.                                 |
+| 14 | **Firewall deny-by-default**                                  | 🟠 High     | M      | NixOS allows all inbound. Docker punches holes.                                |
+| 15 | **Fix DiscordSync turso migration** (upstream)                | 🟡 Medium   | M      | Service crash-loops. Upstream SQL bug.                                         |
+| 16 | **Monitor365 agent→server auth**                              | 🟠 High     | M      | No API key auth. Resolved by #6 (Caddy + Pocket ID).                           |
+| 17 | **Re-enable dual-WAN** (after ethernet verified stable)       | 🟡 Medium   | S      | WAN failover disabled since June 27.                                           |
+| 18 | **Raspberry Pi 3 DNS failover**                               | 🟢 Low      | L      | Hardware needed. Module ready.                                                 |
+| 19 | **Hermes: SSH deploy key + fallback model**                   | 🟡 Medium   | S      | Steps 2+3 of Hermes unblock.                                                   |
+| 20 | **`nix-collect-garbage` automation** (root >90%)              | 🟡 Medium   | S      | Prevent the 93% situation from recurring.                                      |
+| 21 | **Twenty CRM 502 monitoring**                                 | 🟢 Low      | S      | Appears resolved. Monitor post-deploy.                                         |
+| 22 | **Upstream Go repo `go.sum` fixes** (library-policy, mr-sync) | 🟢 Low      | M      | Removes Nix-side workaround overlays.                                          |
+| 23 | **nixpkgs upstream PRs** (6 candidates)                       | 🟢 Low      | L      | aw-watcher-utilization, valkey, taskwarrior3, etc.                             |
+| 24 | **AppArmor enablement**                                       | 🟢 Low      | M      | Currently `mkDefault false`.                                                   |
+| 25 | **Auditd enablement**                                         | 🟢 Low      | S      | Blocked on NixOS 26.05 bug. Re-evaluate.                                       |
 
 ---
 

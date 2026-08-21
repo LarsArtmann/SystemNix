@@ -6,16 +6,18 @@
 
 ---
 
-
 ## The Root Cause (Finally)
 
 The global flake registry at `channels.nixos.org/flake-registry.json` contains `exact: true` entries that map ALL nixpkgs refs to channel tarballs:
 
 ```json
 {
-  "from": {"id": "nixpkgs", "type": "indirect", "ref": "nixos-unstable"},
+  "from": { "id": "nixpkgs", "type": "indirect", "ref": "nixos-unstable" },
   "exact": true,
-  "to": {"type": "tarball", "url": "https://channels.nixos.org/nixos-unstable/nixexprs.tar.xz"}
+  "to": {
+    "type": "tarball",
+    "url": "https://channels.nixos.org/nixos-unstable/nixexprs.tar.xz"
+  }
 }
 ```
 
@@ -24,6 +26,7 @@ When `nix flake update` runs with `use-registries = true`, it consults these ent
 ### Why the Previous Override Failed
 
 The NixOS config had:
+
 ```nix
 nix.registry."nixpkgs/nixos-unstable" = { to = { type = "github"; ... }; };
 ```
@@ -31,6 +34,7 @@ nix.registry."nixpkgs/nixos-unstable" = { to = { type = "github"; ... }; };
 This creates a registry entry with `from.id = "nixpkgs/nixos-unstable"` — a **combined string**. But the global registry uses `from.id = "nixpkgs"` + `from.ref = "nixos-unstable"` — **separate fields**. These are DIFFERENT registry keys. The override never matched the global entry it was supposed to override.
 
 Confirmed via `nix registry list` (before fix):
+
 ```
 system flake:nixpkgs path:/nix/store/...                    ← override for bare nixpkgs (worked)
 global flake:nixpkgs/nixos-unstable channels.nixos.org/...   ← tarball entry (NOT overridden!)
@@ -72,13 +76,13 @@ Both fixes applied to `platforms/nixos/system/configuration.nix` and `platforms/
 
 ## Verification
 
-| Test | Before Fix | After Fix |
-|------|-----------|-----------|
-| `nix registry list \| grep nixpkgs` | 8 `global` entries (7 tarball) | 0 `global` entries |
-| `nix flake update nixpkgs` | rewrites to `type: tarball` | stays `type: github` ✓ |
-| `nix flake lock --update-input nixpkgs` | rewrites to `type: tarball` | stays `type: github` ✓ |
-| `nix flake check --no-build` | passes (guard catches tarball) | passes (no tarball to catch) ✓ |
-| Deploy + post-deploy smoke test | N/A | 29 PASS, 0 FAIL, 2 SKIP ✓ |
+| Test                                    | Before Fix                     | After Fix                      |
+| --------------------------------------- | ------------------------------ | ------------------------------ |
+| `nix registry list \| grep nixpkgs`     | 8 `global` entries (7 tarball) | 0 `global` entries             |
+| `nix flake update nixpkgs`              | rewrites to `type: tarball`    | stays `type: github` ✓         |
+| `nix flake lock --update-input nixpkgs` | rewrites to `type: tarball`    | stays `type: github` ✓         |
+| `nix flake check --no-build`            | passes (guard catches tarball) | passes (no tarball to catch) ✓ |
+| Deploy + post-deploy smoke test         | N/A                            | 29 PASS, 0 FAIL, 2 SKIP ✓      |
 
 ---
 
@@ -93,6 +97,7 @@ Both fixes applied to `platforms/nixos/system/configuration.nix` and `platforms/
 ### Health-Check Cleanup
 
 Added 3 missing active services to `platforms/nixos/scripts/service-health-check`:
+
 - `discordsync` (system service)
 - `searx` (system service — SearXNG)
 - `qmd-mcp` (user service — qmd MCP)
@@ -105,15 +110,15 @@ Replaced the 4-line "RECURRING" tarball regression entry with a comprehensive ro
 
 ## Defense-in-Depth Inventory (Updated)
 
-| Layer | Location | Status | Notes |
-|-------|----------|--------|-------|
-| **Empty flake-registry** | `configuration.nix` | ✅ ACTIVE | Eliminates ALL global tarball entries at source |
-| **Correct-format overrides** | `configuration.nix` | ✅ ACTIVE | `from = { id; ref; }` matches global registry key format |
-| **Darwin mirror** | `platforms/darwin/nix/settings.nix` | ✅ COMMITTED | Needs `nix run .#deploy` on macOS to activate |
-| Eval-time guard | `flake.nix:519-534` | ✅ ACTIVE | Last line of defense — catches if regression somehow recurs |
-| Pre-commit hook | `.githooks/pre-commit` | ✅ ACTIVE | Catches manual commits (daemon bypasses hooks) |
-| CI normalization | `.github/workflows/flake-update.yml` | ✅ COMMITTED | Runs fix script after update, creates PR |
-| Recovery script | `scripts/fix-nixpkgs-lock.sh` | ✅ TESTED | Both pin-current and `--latest` modes verified |
+| Layer                        | Location                             | Status       | Notes                                                       |
+| ---------------------------- | ------------------------------------ | ------------ | ----------------------------------------------------------- |
+| **Empty flake-registry**     | `configuration.nix`                  | ✅ ACTIVE    | Eliminates ALL global tarball entries at source             |
+| **Correct-format overrides** | `configuration.nix`                  | ✅ ACTIVE    | `from = { id; ref; }` matches global registry key format    |
+| **Darwin mirror**            | `platforms/darwin/nix/settings.nix`  | ✅ COMMITTED | Needs `nix run .#deploy` on macOS to activate               |
+| Eval-time guard              | `flake.nix:519-534`                  | ✅ ACTIVE    | Last line of defense — catches if regression somehow recurs |
+| Pre-commit hook              | `.githooks/pre-commit`               | ✅ ACTIVE    | Catches manual commits (daemon bypasses hooks)              |
+| CI normalization             | `.github/workflows/flake-update.yml` | ✅ COMMITTED | Runs fix script after update, creates PR                    |
+| Recovery script              | `scripts/fix-nixpkgs-lock.sh`        | ✅ TESTED    | Both pin-current and `--latest` modes verified              |
 
 ---
 

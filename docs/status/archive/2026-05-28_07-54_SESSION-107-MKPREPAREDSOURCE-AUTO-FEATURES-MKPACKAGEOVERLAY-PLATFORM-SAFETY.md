@@ -165,53 +165,53 @@ The `subModules` parameter has dual purpose: (1) generate `replace` directives s
 
 ### P0 — Unblock & Protect (Do Immediately)
 
-| #   | Task                                                                                         | Impact             | Effort |
-| --- | -------------------------------------------------------------------------------------------- | ------------------ | ------ |
-| 1   | **Commit & push 5 consumer repos** (BuildFlow, Standup-Killer, library-policy, PMA, mr-sync) | Prevents data loss | 15 min |
-| 2   | **SystemNix: commit AGENTS.md documentation fix**                                            | Accuracy           | 2 min  |
-| 3   | **Run `just test` (full build)** — not just `test-fast`                                      | Confidence         | 30 min |
-| 4   | **Fix Standup-Killer Go type errors** — `event.Version` cast                                 | Unblocks build     | 30 min |
+| # | Task                                                                                         | Impact             | Effort |
+| - | -------------------------------------------------------------------------------------------- | ------------------ | ------ |
+| 1 | **Commit & push 5 consumer repos** (BuildFlow, Standup-Killer, library-policy, PMA, mr-sync) | Prevents data loss | 15 min |
+| 2 | **SystemNix: commit AGENTS.md documentation fix**                                            | Accuracy           | 2 min  |
+| 3 | **Run `just test` (full build)** — not just `test-fast`                                      | Confidence         | 30 min |
+| 4 | **Fix Standup-Killer Go type errors** — `event.Version` cast                                 | Unblocks build     | 30 min |
 
 ### P1 — High Impact Infrastructure
 
-| #   | Task                                                                           | Impact                    | Effort |
-| --- | ------------------------------------------------------------------------------ | ------------------------- | ------ |
-| 5   | **Consolidate overlays: move Linux-only mkPackageOverlay calls to shared.nix** | Simpler overlay structure | 1 hr   |
-| 6   | **Add ADR-008: mkPreparedSource auto-features design**                         | Documents lessons learned | 30 min |
-| 7   | **Create FEATURES.md** — feature inventory with status indicators              | Project visibility        | 1 hr   |
-| 8   | **Create TODO_LIST.md** — verified against actual code                         | Project planning          | 1 hr   |
-| 9   | **Archive old status docs** — 350+ files in `docs/status/` and `archive/`      | Disk space, searchability | 30 min |
+| # | Task                                                                           | Impact                    | Effort |
+| - | ------------------------------------------------------------------------------ | ------------------------- | ------ |
+| 5 | **Consolidate overlays: move Linux-only mkPackageOverlay calls to shared.nix** | Simpler overlay structure | 1 hr   |
+| 6 | **Add ADR-008: mkPreparedSource auto-features design**                         | Documents lessons learned | 30 min |
+| 7 | **Create FEATURES.md** — feature inventory with status indicators              | Project visibility        | 1 hr   |
+| 8 | **Create TODO_LIST.md** — verified against actual code                         | Project planning          | 1 hr   |
+| 9 | **Archive old status docs** — 350+ files in `docs/status/` and `archive/`      | Disk space, searchability | 30 min |
 
 ### P2 — Consumer Repo Quality
 
-| #   | Task                                                                                                               | Impact         | Effort |
-| --- | ------------------------------------------------------------------------------------------------------------------ | -------------- | ------ |
-| 10  | **Fix branching-flow private repo HTTPS auth**                                                                     | Unblocks build | 1 hr   |
-| 11  | **PMA: add missing sub-module requires to go.mod** (eliminate `requireDeps`)                                       | Cleaner source | 30 min |
-| 12  | **go-structure-linter: add `stripLocalReplaces` benefit** — remove `postPatchExtra` replace-block stripping if any | Simplicity     | 15 min |
-| 13  | **Verify all Go packages build from SystemNix** (`nix build .#<pkg>` for each)                                     | CI confidence  | 30 min |
+| #  | Task                                                                                                               | Impact         | Effort |
+| -- | ------------------------------------------------------------------------------------------------------------------ | -------------- | ------ |
+| 10 | **Fix branching-flow private repo HTTPS auth**                                                                     | Unblocks build | 1 hr   |
+| 11 | **PMA: add missing sub-module requires to go.mod** (eliminate `requireDeps`)                                       | Cleaner source | 30 min |
+| 12 | **go-structure-linter: add `stripLocalReplaces` benefit** — remove `postPatchExtra` replace-block stripping if any | Simplicity     | 15 min |
+| 13 | **Verify all Go packages build from SystemNix** (`nix build .#<pkg>` for each)                                     | CI confidence  | 30 min |
 
 ### P3 — Ecosystem Improvements
 
-| #   | Task                                                                          | Impact          | Effort |
-| --- | ----------------------------------------------------------------------------- | --------------- | ------ |
-| 14  | **Add CI flake check to all consumer repos** — `nix flake check` on push      | Early detection | 2 hr   |
-| 15  | **Centralize go-output subModules list** — 7 repos duplicate the same list    | DRY             | 1 hr   |
-| 16  | **Template new Go repos with `go-nix-helpers`** — cookiecutter/flake template | DX              | 2 hr   |
-| 17  | **Add `nix flake check` to SystemNix justfile** — validate all outputs        | Reliability     | 30 min |
-| 18  | **SystemNix Darwin eval check** — verify overlays work on aarch64-darwin      | Cross-platform  | 15 min |
+| #  | Task                                                                          | Impact          | Effort |
+| -- | ----------------------------------------------------------------------------- | --------------- | ------ |
+| 14 | **Add CI flake check to all consumer repos** — `nix flake check` on push      | Early detection | 2 hr   |
+| 15 | **Centralize go-output subModules list** — 7 repos duplicate the same list    | DRY             | 1 hr   |
+| 16 | **Template new Go repos with `go-nix-helpers`** — cookiecutter/flake template | DX              | 2 hr   |
+| 17 | **Add `nix flake check` to SystemNix justfile** — validate all outputs        | Reliability     | 30 min |
+| 18 | **SystemNix Darwin eval check** — verify overlays work on aarch64-darwin      | Cross-platform  | 15 min |
 
 ### P4 — Long-term Architecture
 
-| #   | Task                                                                                                  | Impact          | Effort |
-| --- | ----------------------------------------------------------------------------------------------------- | --------------- | ------ |
-| 19  | **Extract service health checks into a module** — `lib/health.nix`                                    | Reusability     | 2 hr   |
-| 20  | **Port collision detection at eval time** — extend `ports.nix`                                        | Safety          | 1 hr   |
-| 21  | **Centralized Docker image registry** — `lib/images.nix` with version pinning                         | Security        | 1 hr   |
-| 22  | **Gatus endpoint auto-generation from service config**                                                | Observability   | 2 hr   |
-| 23  | **Migrate remaining `writeShellScriptBin` to `writeShellApplication`**                                | Security        | 2 hr   |
-| 24  | **Add `nixosTests` for each service module**                                                          | Reliability     | 4 hr   |
-| 25  | **Consolidate flake-parts modules into fewer files** — reduce file count in `modules/nixos/services/` | Maintainability | 2 hr   |
+| #  | Task                                                                                                  | Impact          | Effort |
+| -- | ----------------------------------------------------------------------------------------------------- | --------------- | ------ |
+| 19 | **Extract service health checks into a module** — `lib/health.nix`                                    | Reusability     | 2 hr   |
+| 20 | **Port collision detection at eval time** — extend `ports.nix`                                        | Safety          | 1 hr   |
+| 21 | **Centralized Docker image registry** — `lib/images.nix` with version pinning                         | Security        | 1 hr   |
+| 22 | **Gatus endpoint auto-generation from service config**                                                | Observability   | 2 hr   |
+| 23 | **Migrate remaining `writeShellScriptBin` to `writeShellApplication`**                                | Security        | 2 hr   |
+| 24 | **Add `nixosTests` for each service module**                                                          | Reliability     | 4 hr   |
+| 25 | **Consolidate flake-parts modules into fewer files** — reduce file count in `modules/nixos/services/` | Maintainability | 2 hr   |
 
 ---
 

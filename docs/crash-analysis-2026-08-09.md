@@ -136,25 +136,25 @@ As of boot 0 (06:00 CEST), PMA is **actively in the death-loop** at 91% CPU and 
 
 ## Contributing Factors
 
-| Factor | Impact | Detail |
-|--------|--------|--------|
-| **MemoryMax too high (16G)** | Prevents OOM kill | 16G allows page cache to fill without triggering a kill. The process RSS is only ~7.5 GB; the rest is page cache. |
-| **No MemoryHigh set** | No throttling | Without `MemoryHigh` < `MemoryMax`, the kernel doesn't throttle allocations before hitting the hard limit. |
-| **PMA has no commit backoff** | Immediate retry on failure | Commit failures (`empty commit`, `EOF`, `clean working tree`) are retried immediately — no exponential backoff. |
-| **systemd-oomd not killing page-cache thrashers** | Design limitation | cgroup v2 OOM kill prefers reclaim over kill for file-backed memory. |
-| **Total system memory budget** | Compounding pressure | ClickHouse (2.1G), Monitor365 (1.6G), Docker/Twenty (2G+), nix-daemon (5.8G) + PMA (16G) = 28G+ system slice alone. With page cache (46G), the 94G usable RAM is insufficient under PMA thrashing. |
-| **`PMA_COMMITTER_WORKERS=4`** | Still too many | Reduced from default 8, but 4 concurrent git+LLM workers still generate enough I/O to compound the thrashing. |
+| Factor                                            | Impact                     | Detail                                                                                                                                                                                             |
+| ------------------------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **MemoryMax too high (16G)**                      | Prevents OOM kill          | 16G allows page cache to fill without triggering a kill. The process RSS is only ~7.5 GB; the rest is page cache.                                                                                  |
+| **No MemoryHigh set**                             | No throttling              | Without `MemoryHigh` < `MemoryMax`, the kernel doesn't throttle allocations before hitting the hard limit.                                                                                         |
+| **PMA has no commit backoff**                     | Immediate retry on failure | Commit failures (`empty commit`, `EOF`, `clean working tree`) are retried immediately — no exponential backoff.                                                                                    |
+| **systemd-oomd not killing page-cache thrashers** | Design limitation          | cgroup v2 OOM kill prefers reclaim over kill for file-backed memory.                                                                                                                               |
+| **Total system memory budget**                    | Compounding pressure       | ClickHouse (2.1G), Monitor365 (1.6G), Docker/Twenty (2G+), nix-daemon (5.8G) + PMA (16G) = 28G+ system slice alone. With page cache (46G), the 94G usable RAM is insufficient under PMA thrashing. |
+| **`PMA_COMMITTER_WORKERS=4`**                     | Still too many             | Reduced from default 8, but 4 concurrent git+LLM workers still generate enough I/O to compound the thrashing.                                                                                      |
 
 ---
 
 ## Comparison to Previous Crashes
 
-| Crash | Date | Root Cause | Trigger | Mechanism |
-|-------|------|------------|---------|-----------|
-| #1 | 2026-06-15 | BTRFS metadata exhaustion | Manual `btrfs balance` + `nix-collect-garbage` | Metadata ENOSPC → I/O park → WDT |
-| #2 | 2026-06-26 | BTRFS metadata exhaustion | Automated `nix-gc` timer | Same: metadata ENOSPC → WDT |
-| **#3a** | **2026-08-09 03:05** | **PMA page-cache death-loop** | **PMA commit failure + no backoff** | **Memory thrash → PSI 95% → freeze → WDT** |
-| **#3b** | **2026-08-09 05:47** | **PMA page-cache death-loop** | **Auto-restart after crash 1** | **Same: PMA re-entered loop → WDT** |
+| Crash   | Date                 | Root Cause                    | Trigger                                        | Mechanism                                  |
+| ------- | -------------------- | ----------------------------- | ---------------------------------------------- | ------------------------------------------ |
+| #1      | 2026-06-15           | BTRFS metadata exhaustion     | Manual `btrfs balance` + `nix-collect-garbage` | Metadata ENOSPC → I/O park → WDT           |
+| #2      | 2026-06-26           | BTRFS metadata exhaustion     | Automated `nix-gc` timer                       | Same: metadata ENOSPC → WDT                |
+| **#3a** | **2026-08-09 03:05** | **PMA page-cache death-loop** | **PMA commit failure + no backoff**            | **Memory thrash → PSI 95% → freeze → WDT** |
+| **#3b** | **2026-08-09 05:47** | **PMA page-cache death-loop** | **Auto-restart after crash 1**                 | **Same: PMA re-entered loop → WDT**        |
 
 All three share the same final pathway: kernel freeze → sp5100-tco WDT reset. But the root causes are completely different — this crash is **not** a BTRFS problem.
 
@@ -190,6 +190,7 @@ With MemoryMax=8G, the cgroup will hit max much sooner, and with less page cache
 ### Option C: Fix the upstream bug (long-term)
 
 The real fix is in the PMA daemon (`/home/lars/projects/projects-management-automation`):
+
 1. **Add exponential backoff** on commit failures — don't retry immediately
 2. **Don't retry on "empty commit" / "clean working tree"** — these are not recoverable errors
 3. **Limit page cache growth** — close git repos after discovery, don't keep them mapped
@@ -215,13 +216,13 @@ The commit handler now detects TOCTOU race conditions where the working tree was
 
 **File:** `modules/nixos/services/projects-management-automation.nix`
 
-| Setting | Before | After | Rationale |
-|---------|--------|-------|-----------|
-| `MemoryMax` | 16G (no OOM kill possible) | **8G** | Lower ceiling → faster OOM kill + clean restart |
-| `MemoryHigh` | not set (unlimited) | **6G** | Throttles via direct reclaim before hitting the wall |
-| `MemorySwapMax` | not set (unlimited) | **0** | PMA has only 370 MB anon — swap is counterproductive |
-| `CPUQuota` | not set (unlimited) | **200%** | Caps at 2 cores — prevents 91% CPU death-loop |
-| `PMA_COMMITTER_WORKERS` | 4 | **2** | Halves concurrent git+LLM pressure |
+| Setting                 | Before                     | After    | Rationale                                            |
+| ----------------------- | -------------------------- | -------- | ---------------------------------------------------- |
+| `MemoryMax`             | 16G (no OOM kill possible) | **8G**   | Lower ceiling → faster OOM kill + clean restart      |
+| `MemoryHigh`            | not set (unlimited)        | **6G**   | Throttles via direct reclaim before hitting the wall |
+| `MemorySwapMax`         | not set (unlimited)        | **0**    | PMA has only 370 MB anon — swap is counterproductive |
+| `CPUQuota`              | not set (unlimited)        | **200%** | Caps at 2 cores — prevents 91% CPU death-loop        |
+| `PMA_COMMITTER_WORKERS` | 4                          | **2**    | Halves concurrent git+LLM pressure                   |
 
 ### Layer 3: Monitoring (Early Warning)
 
@@ -234,4 +235,3 @@ Added two new Gatus health checks with Discord alerts:
 2. **PMA Memory Pressure** — alerts when `system_service_memory_over_threshold{service="projects-management-automation"}` is `1` (cgroup memory > 5 GiB). Added a new per-service `system_service_memory_bytes` and `system_service_memory_over_threshold` metric to system-health.nix (following the existing CPU pattern), with a configurable `serviceMemoryThreshold` (default 5 GiB).
 
 Both checks run at 2-minute intervals. The test patterns file was updated with mock metric values for the new checks.
-

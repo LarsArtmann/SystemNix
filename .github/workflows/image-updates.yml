@@ -3,7 +3,7 @@ name: image updates
 on:
   schedule:
     # Daily at 07:00 UTC (staggered after nixpkgs-compat at 06:00)
-    - cron: '0 7 * * *'
+    - cron: "0 7 * * *"
   workflow_dispatch:
 
 jobs:

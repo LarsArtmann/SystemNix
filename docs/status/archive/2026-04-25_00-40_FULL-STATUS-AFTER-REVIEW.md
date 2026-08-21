@@ -38,36 +38,36 @@
 
 #### 4. Security Fixes (7 items)
 
-| #   | Fix                                                                                                     | File                           |
-| --- | ------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| 1   | Removed dead `ublock-filters.nix` module (disabled, broken timer, no browser integration)               | `home-base.nix` + deleted file |
-| 2   | Added full systemd hardening to `gitea-ensure-repos` (was zero directives)                              | `gitea-repos.nix`              |
-| 3   | Pinned Voice Agents image `latest` → `1.0.0` (compose + pull service)                                   | `voice-agents.nix`             |
-| 4   | Pinned PhotoMap image `latest` → `1.0.0`                                                                | `photomap.nix`                 |
-| 5   | Added VRRP authentication to Keepalived + `authPassword` option                                         | `dns-failover.nix`             |
-| 6   | Removed dead `appSecretFile`/`pgPasswordFile` let bindings from Twenty CRM                              | `twenty.nix`                   |
-| 7   | Removed unused `castlabs-electron`/`cursor` from unfree allowlist; set `allowUnsupportedSystem = false` | `nix-settings.nix`             |
+| # | Fix                                                                                                     | File                           |
+| - | ------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| 1 | Removed dead `ublock-filters.nix` module (disabled, broken timer, no browser integration)               | `home-base.nix` + deleted file |
+| 2 | Added full systemd hardening to `gitea-ensure-repos` (was zero directives)                              | `gitea-repos.nix`              |
+| 3 | Pinned Voice Agents image `latest` → `1.0.0` (compose + pull service)                                   | `voice-agents.nix`             |
+| 4 | Pinned PhotoMap image `latest` → `1.0.0`                                                                | `photomap.nix`                 |
+| 5 | Added VRRP authentication to Keepalived + `authPassword` option                                         | `dns-failover.nix`             |
+| 6 | Removed dead `appSecretFile`/`pgPasswordFile` let bindings from Twenty CRM                              | `twenty.nix`                   |
+| 7 | Removed unused `castlabs-electron`/`cursor` from unfree allowlist; set `allowUnsupportedSystem = false` | `nix-settings.nix`             |
 
 #### 5. Reliability Fixes (6 items)
 
-| #   | Fix                                                                                | File                |
-| --- | ---------------------------------------------------------------------------------- | ------------------- |
-| 1   | Added `WatchdogSec=30` + `Restart=on-failure` to Gitea main service                | `gitea.nix`         |
-| 2   | Added `Restart=on-failure` + `RestartSec=5` to Authelia                            | `authelia.nix`      |
-| 3   | Added `Restart=on-failure` + `RestartSec=5` to TaskChampion                        | `taskchampion.nix`  |
-| 4   | Removed `core.pager = "cat"` from git config (was overriding `pager.diff = "bat"`) | `git.nix`           |
-| 5   | Enabled `services.udisks2` for auto-mounting USB/SD                                | `configuration.nix` |
-| 6   | Made deadnix check strict (`--fail` flag) in flake.nix                             | `flake.nix`         |
+| # | Fix                                                                                | File                |
+| - | ---------------------------------------------------------------------------------- | ------------------- |
+| 1 | Added `WatchdogSec=30` + `Restart=on-failure` to Gitea main service                | `gitea.nix`         |
+| 2 | Added `Restart=on-failure` + `RestartSec=5` to Authelia                            | `authelia.nix`      |
+| 3 | Added `Restart=on-failure` + `RestartSec=5` to TaskChampion                        | `taskchampion.nix`  |
+| 4 | Removed `core.pager = "cat"` from git config (was overriding `pager.diff = "bat"`) | `git.nix`           |
+| 5 | Enabled `services.udisks2` for auto-mounting USB/SD                                | `configuration.nix` |
+| 6 | Made deadnix check strict (`--fail` flag) in flake.nix                             | `flake.nix`         |
 
 #### 6. Code Quality Fixes (5 items)
 
-| #   | Fix                                                                                                                              | File               |
-| --- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| 1   | Created `.editorconfig` (2-space, LF, UTF-8, Go=tab)                                                                             | `.editorconfig`    |
-| 2   | Removed 7 duplicate git ignore entries (`*.so` 3→1, `target/` 2→1, `*~` 2→1, `*.log` 2→1, `*.out` 2→1, `*.rar` 2→1, `*.zip` 2→1) | `git.nix`          |
-| 3   | Made GPG program path cross-platform (`gpg` on darwin, full path on linux)                                                       | `git.nix`          |
-| 4   | Removed unused `utils` param from voice-agents                                                                                   | `voice-agents.nix` |
-| 5   | Removed dead PIDFile from voice-agents + fixed infinite `TimeoutStartSec=0` → 600                                                | `voice-agents.nix` |
+| # | Fix                                                                                                                              | File               |
+| - | -------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| 1 | Created `.editorconfig` (2-space, LF, UTF-8, Go=tab)                                                                             | `.editorconfig`    |
+| 2 | Removed 7 duplicate git ignore entries (`*.so` 3→1, `target/` 2→1, `*~` 2→1, `*.log` 2→1, `*.out` 2→1, `*.rar` 2→1, `*.zip` 2→1) | `git.nix`          |
+| 3 | Made GPG program path cross-platform (`gpg` on darwin, full path on linux)                                                       | `git.nix`          |
+| 4 | Removed unused `utils` param from voice-agents                                                                                   | `voice-agents.nix` |
+| 5 | Removed dead PIDFile from voice-agents + fixed infinite `TimeoutStartSec=0` → 600                                                | `voice-agents.nix` |
 
 ### Pre-existing (Sessions 2026-04-10 to 2026-04-24)
 
@@ -242,33 +242,33 @@ Zero automated checks on push. Broken formatting, dead code, and eval errors can
 
 ## F) TOP 25 NEXT ACTIONS
 
-| #   | Action                                                                      | Impact      | Effort |
-| --- | --------------------------------------------------------------------------- | ----------- | ------ |
-| 1   | **`git commit` + `git push`** — commit this session's 13 fixes and push NOW | 🔴 Critical | 2m     |
-| 2   | **`just switch`** — deploy hipblaslt fix + all changes to evo-x2            | 🔴 Critical | 45m+   |
-| 3   | **Verify Ollama works** after rebuild                                       | High        | Low    |
-| 4   | **Verify Steam works** after rebuild                                        | High        | Low    |
-| 5   | **Verify ComfyUI works** after rebuild                                      | High        | Low    |
-| 6   | **Verify Caddy HTTPS block page**                                           | Medium      | Low    |
-| 7   | **Check Authelia SSO** status                                               | High        | Low    |
-| 8   | **Check SigNoz** collection status                                          | Medium      | Low    |
-| 9   | **Build Pi 3 SD image**                                                     | High        | Low    |
-| 10  | **Pin Docker digests** (pull images, get sha256)                            | Medium      | Low    |
-| 11  | **Move Taskwarrior encryption to sops**                                     | 🔴 Security | Medium |
-| 12  | **Move VRRP auth to sops**                                                  | Medium      | Low    |
-| 13  | **Fix deadnix warnings batch 1** (6 service modules)                        | Medium      | Low    |
-| 14  | **Fix deadnix warnings batch 2** (6 more modules)                           | Medium      | Low    |
-| 15  | **Fix deadnix warnings batch 3** (5 platform files)                         | Medium      | Low    |
-| 16  | **Fix deadnix warnings batch 4** (remaining files)                          | Medium      | Low    |
-| 17  | **Add GitHub Actions** (`just test-fast` on push)                           | High        | Low    |
-| 18  | **Extract `lib/systemd-harden.nix`** shared helper                          | Medium      | Low    |
-| 19  | **Fix pre-commit statix hook**                                              | Medium      | Low    |
-| 20  | **Wire `preferences.nix`** to actual GTK/Qt theming                         | High        | Medium |
-| 21  | **Convert niri session restore** to NixOS options                           | High        | Medium |
-| 22  | **Add `options`+`mkIf` to 16 always-on modules** (4 batches)                | Medium      | Medium |
-| 23  | **Create `homeModules` pattern** for HM configs                             | High        | Medium |
-| 24  | **File nixpkgs issue** for hipblaslt Tensile gfx908 bug                     | Medium      | Low    |
-| 25  | **Setup Taskwarrior backup** timer                                          | Medium      | Low    |
+| #  | Action                                                                      | Impact      | Effort |
+| -- | --------------------------------------------------------------------------- | ----------- | ------ |
+| 1  | **`git commit` + `git push`** — commit this session's 13 fixes and push NOW | 🔴 Critical | 2m     |
+| 2  | **`just switch`** — deploy hipblaslt fix + all changes to evo-x2            | 🔴 Critical | 45m+   |
+| 3  | **Verify Ollama works** after rebuild                                       | High        | Low    |
+| 4  | **Verify Steam works** after rebuild                                        | High        | Low    |
+| 5  | **Verify ComfyUI works** after rebuild                                      | High        | Low    |
+| 6  | **Verify Caddy HTTPS block page**                                           | Medium      | Low    |
+| 7  | **Check Authelia SSO** status                                               | High        | Low    |
+| 8  | **Check SigNoz** collection status                                          | Medium      | Low    |
+| 9  | **Build Pi 3 SD image**                                                     | High        | Low    |
+| 10 | **Pin Docker digests** (pull images, get sha256)                            | Medium      | Low    |
+| 11 | **Move Taskwarrior encryption to sops**                                     | 🔴 Security | Medium |
+| 12 | **Move VRRP auth to sops**                                                  | Medium      | Low    |
+| 13 | **Fix deadnix warnings batch 1** (6 service modules)                        | Medium      | Low    |
+| 14 | **Fix deadnix warnings batch 2** (6 more modules)                           | Medium      | Low    |
+| 15 | **Fix deadnix warnings batch 3** (5 platform files)                         | Medium      | Low    |
+| 16 | **Fix deadnix warnings batch 4** (remaining files)                          | Medium      | Low    |
+| 17 | **Add GitHub Actions** (`just test-fast` on push)                           | High        | Low    |
+| 18 | **Extract `lib/systemd-harden.nix`** shared helper                          | Medium      | Low    |
+| 19 | **Fix pre-commit statix hook**                                              | Medium      | Low    |
+| 20 | **Wire `preferences.nix`** to actual GTK/Qt theming                         | High        | Medium |
+| 21 | **Convert niri session restore** to NixOS options                           | High        | Medium |
+| 22 | **Add `options`+`mkIf` to 16 always-on modules** (4 batches)                | Medium      | Medium |
+| 23 | **Create `homeModules` pattern** for HM configs                             | High        | Medium |
+| 24 | **File nixpkgs issue** for hipblaslt Tensile gfx908 bug                     | Medium      | Low    |
+| 25 | **Setup Taskwarrior backup** timer                                          | Medium      | Low    |
 
 ---
 

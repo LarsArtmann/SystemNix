@@ -5,7 +5,6 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 1. **Gotcha table extracted to archive** — `docs/gotchas-archive.md` (239 lines, 420 KB) preserves all 228 original table rows verbatim with full root-cause narratives, commit hashes, dates, and recovery procedures
@@ -42,42 +41,42 @@
 
 1. **Dropped ~30+ critical enduring lessons** — This is the biggest failure. The compression was too aggressive. These are NOT just "FIXED incident reports" — they contain transferable engineering lessons that a fresh AI session needs. Examples of knowledge now ONLY in the archive:
 
-   | Dropped Lesson | Why It Matters |
-   |---|---|
-   | `go-git repo.Config()` only reads local scope | NEVER use go-git config reader for user identity — shell out to `git config` |
-   | `errgroup.WithContext` cancels best-effort parallel work | Use plain `errgroup.Group` + error slice when partial results have value |
-   | `time.Truncate(24h)` snaps to UTC midnight | Use `time.Date()` with local location for local-midnight truncation |
-   | serde_json field ordering differs between struct and Value | Canonicalize before hashing — struct order ≠ BTreeMap alphabetical |
-   | `ProtectHome = read-only` + binary defaults to `$HOME` | Redirect state via env vars into writable ReadWritePaths |
-   | Two services sharing state = split-brain | Update ALL consumers when reconfiguring shared state paths |
-   | `initServiceOrWarn` nil-swallow anti-pattern | Swallow + nil-safe callers is dangerous for required state |
-   | OOM crash chain (user-1000.slice) | Per-service MemoryMax alone insufficient — user processes run outside it |
-   | MGLRU `min_ttl_ms=1000` | Protects youngest page generation from eviction under pressure |
-   | Strix Halo GPUActive = AI VRAM | NOT a leak — expected unified-memory behavior, 50+ GiB when AI running |
-   | Network interface boot race | Dedicated `dnsblockd-attach-ip.service` needed, not `localCommands` |
-   | Immich redis defaults to unix-socket-only (port 0) | Override `redis.port` + bind to `127.0.0.1` for monitoring |
-   | Ollama `wantedBy = mkForce []` silent non-start | NEVER suppress nixpkgs default WantedBy without replacement |
-   | Forgejo GitHub-sync token trap | NEVER put `FORGEJO_TOKEN` in sops template — stale placeholder |
-   | SigNoz v0.127 v5 alerting API | Full v5 schema shape — legacy shape returns HTTP 400 |
-   | `settings.signing` invalid + `gpg.ssh` dotted-key | Use nested form + HM structured `signing` submodule |
-   | `post-deploy-check SIGPIPE false-FAIL` | `echo | grep -q` under pipefail fails on large bodies — grep from file |
-   | `monitor365 circuit breaker` is in-memory | Only process restart clears it — degraded-but-alive needs health watchdog |
-   | `monitor365 COALESCE` non-nullable lesson | "Confirmed non-nullable" is never confirmed until every INSERT path audited |
-   | `PMA DefaultChain() vs DefaultChainFromEnv()` | Two factory functions — verify which reads configuration |
-   | `cqrs-lint samber-do-auditlog` version drift | `mkPreparedSource` flake input ALWAYS overrides go.mod version |
-   | `mr-sync` outputs signature missing `...` | Pin to last working commit when upstream breaks |
-   | `file-and-image-renamer` auth fallback | `ErrorTypeAuth` — non-retryable, triggers provider fallback |
-   | Docker backup service ordering | `requires` without `after` doesn't guarantee ordering |
-   | `btrbk-data` missing snapshot_dir | tmpfiles rule required before btrbk can create snapshots |
-   | `btrfs-verify-snapshots` stat reads wrong timestamp | Parse snapshot NAME not stat mtime — inherited from source |
-   | `monitor365 agent auth model` | LoadCredential + figment env override — no secrets in Nix store |
-   | `monitor365 runtimeDeps PATH` | Graphical collectors need `input`/`video` groups + `ProtectProc=default` |
-   | `dnsblockd OOM` memory leak | GOMEMLIMIT forces GC below MemoryMax; high-cardinality labels are root cause |
-   | `DiscordSync chattr ExecStartPre` | ExecStartPre is NOT shell — `2>/dev/null` passed as literal arg |
-   | `DiscordSync Turso quota` | Degrades to local SQLite on quota exhaustion |
-   | `Pocket ID francis crash-loop` | v2.12.0 fixes it; WAL-clearing ExecStartPre kept as defense |
-   | `display-watchdog` false-positive at login screen | Login-screen guard checks for user Wayland/x11 session |
-   | `monitor365 DuckDB pool deadlock` | `Restart=always` only covers EXIT — degraded states need active probes |
+   | Dropped Lesson                                             | Why It Matters                                                               |
+   | ---------------------------------------------------------- | ---------------------------------------------------------------------------- |
+   | `go-git repo.Config()` only reads local scope              | NEVER use go-git config reader for user identity — shell out to `git config` |
+   | `errgroup.WithContext` cancels best-effort parallel work   | Use plain `errgroup.Group` + error slice when partial results have value     |
+   | `time.Truncate(24h)` snaps to UTC midnight                 | Use `time.Date()` with local location for local-midnight truncation          |
+   | serde_json field ordering differs between struct and Value | Canonicalize before hashing — struct order ≠ BTreeMap alphabetical           |
+   | `ProtectHome = read-only` + binary defaults to `$HOME`     | Redirect state via env vars into writable ReadWritePaths                     |
+   | Two services sharing state = split-brain                   | Update ALL consumers when reconfiguring shared state paths                   |
+   | `initServiceOrWarn` nil-swallow anti-pattern               | Swallow + nil-safe callers is dangerous for required state                   |
+   | OOM crash chain (user-1000.slice)                          | Per-service MemoryMax alone insufficient — user processes run outside it     |
+   | MGLRU `min_ttl_ms=1000`                                    | Protects youngest page generation from eviction under pressure               |
+   | Strix Halo GPUActive = AI VRAM                             | NOT a leak — expected unified-memory behavior, 50+ GiB when AI running       |
+   | Network interface boot race                                | Dedicated `dnsblockd-attach-ip.service` needed, not `localCommands`          |
+   | Immich redis defaults to unix-socket-only (port 0)         | Override `redis.port` + bind to `127.0.0.1` for monitoring                   |
+   | Ollama `wantedBy = mkForce []` silent non-start            | NEVER suppress nixpkgs default WantedBy without replacement                  |
+   | Forgejo GitHub-sync token trap                             | NEVER put `FORGEJO_TOKEN` in sops template — stale placeholder               |
+   | SigNoz v0.127 v5 alerting API                              | Full v5 schema shape — legacy shape returns HTTP 400                         |
+   | `settings.signing` invalid + `gpg.ssh` dotted-key          | Use nested form + HM structured `signing` submodule                          |
+   | `post-deploy-check SIGPIPE false-FAIL`                     | `echo                                                                        |
+   | `monitor365 circuit breaker` is in-memory                  | Only process restart clears it — degraded-but-alive needs health watchdog    |
+   | `monitor365 COALESCE` non-nullable lesson                  | "Confirmed non-nullable" is never confirmed until every INSERT path audited  |
+   | `PMA DefaultChain() vs DefaultChainFromEnv()`              | Two factory functions — verify which reads configuration                     |
+   | `cqrs-lint samber-do-auditlog` version drift               | `mkPreparedSource` flake input ALWAYS overrides go.mod version               |
+   | `mr-sync` outputs signature missing `...`                  | Pin to last working commit when upstream breaks                              |
+   | `file-and-image-renamer` auth fallback                     | `ErrorTypeAuth` — non-retryable, triggers provider fallback                  |
+   | Docker backup service ordering                             | `requires` without `after` doesn't guarantee ordering                        |
+   | `btrbk-data` missing snapshot_dir                          | tmpfiles rule required before btrbk can create snapshots                     |
+   | `btrfs-verify-snapshots` stat reads wrong timestamp        | Parse snapshot NAME not stat mtime — inherited from source                   |
+   | `monitor365 agent auth model`                              | LoadCredential + figment env override — no secrets in Nix store              |
+   | `monitor365 runtimeDeps PATH`                              | Graphical collectors need `input`/`video` groups + `ProtectProc=default`     |
+   | `dnsblockd OOM` memory leak                                | GOMEMLIMIT forces GC below MemoryMax; high-cardinality labels are root cause |
+   | `DiscordSync chattr ExecStartPre`                          | ExecStartPre is NOT shell — `2>/dev/null` passed as literal arg              |
+   | `DiscordSync Turso quota`                                  | Degrades to local SQLite on quota exhaustion                                 |
+   | `Pocket ID francis crash-loop`                             | v2.12.0 fixes it; WAL-clearing ExecStartPre kept as defense                  |
+   | `display-watchdog` false-positive at login screen          | Login-screen guard checks for user Wayland/x11 session                       |
+   | `monitor365 DuckDB pool deadlock`                          | `Restart=always` only covers EXIT — degraded states need active probes       |
 
 2. **No quality gate on the compression** — I never went back and asked "does a fresh AI session have enough context from the compressed version alone?" I should have diffed every archive entry against the compressed version and verified each enduring lesson survived.
 
@@ -101,6 +100,7 @@
 ## f) Up to 50 Things to Get Done Next
 
 ### Critical (knowledge recovery)
+
 1. Add back `go-git repo.Config()` lesson as terse bullet
 2. Add back `errgroup.WithContext` vs plain `errgroup.Group` lesson
 3. Add back `time.Truncate` UTC midnight timezone trap
@@ -137,17 +137,19 @@
 34. Add back Pocket ID francis crash-loop (v2.12.0)
 
 ### Cleanup (polish)
+
 35. Strip 4 remaining date references from compressed bullets
 36. Clean BTRFS Key Procedures section (compress 23 lines)
 37. De-duplicate SearXNG between Procedures and Gotchas sections
 38. Clean Qmd Key Procedures section
 39. Add cross-reference links from compressed entries to archive anchors
-39. Reformat `docs/gotchas-archive.md` with section headers + TOC
-40. Review Architecture section for bloat
-41. Review Platform Constraints for bloat
-42. Set size budget target and measure against it
+40. Reformat `docs/gotchas-archive.md` with section headers + TOC
+41. Review Architecture section for bloat
+42. Review Platform Constraints for bloat
+43. Set size budget target and measure against it
 
 ### Process (prevent recurrence)
+
 43. Add CONTRIBUTING note about gotcha entry format (enduring rule, not incident)
 44. Add pre-commit check: warn if AGENTS.md exceeds size budget
 45. Add pre-commit check: warn if AGENTS.md contains commit hashes (7+ hex chars)
@@ -171,16 +173,16 @@
 
 ## Session Metrics
 
-| Metric | Value |
-|--------|-------|
-| AGENTS.md before | 484 lines, 447 KB |
-| AGENTS.md after | 421 lines, 45 KB |
-| Archive created | `docs/gotchas-archive.md` — 239 lines, 420 KB |
-| Gotcha entries compressed | 228 table rows → 171-line categorized list |
-| Enduring lessons dropped | ~30-40 (critical failure) |
-| Date references remaining | 4 (cleanup needed) |
-| Sections NOT cleaned | Key Procedures (BTRFS, SearXNG, Qmd, Quickshell) |
-| Validation | `nix flake check --no-build` passes (but doesn't validate AGENTS.md content) |
+| Metric                    | Value                                                                        |
+| ------------------------- | ---------------------------------------------------------------------------- |
+| AGENTS.md before          | 484 lines, 447 KB                                                            |
+| AGENTS.md after           | 421 lines, 45 KB                                                             |
+| Archive created           | `docs/gotchas-archive.md` — 239 lines, 420 KB                                |
+| Gotcha entries compressed | 228 table rows → 171-line categorized list                                   |
+| Enduring lessons dropped  | ~30-40 (critical failure)                                                    |
+| Date references remaining | 4 (cleanup needed)                                                           |
+| Sections NOT cleaned      | Key Procedures (BTRFS, SearXNG, Qmd, Quickshell)                             |
+| Validation                | `nix flake check --no-build` passes (but doesn't validate AGENTS.md content) |
 
 ---
 

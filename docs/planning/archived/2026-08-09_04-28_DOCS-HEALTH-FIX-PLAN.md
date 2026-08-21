@@ -12,15 +12,15 @@ The prior docs-health pass (04:21) updated 4 living docs and archived 261 report
 
 ### What's Actually Wrong (ranked by reader impact)
 
-| # | Problem | Impact | Affected Files |
-|---|---------|--------|----------------|
-| 1 | AGENTS.md missing browser-history patterns | Every future session reads AGENTS.md and won't know about LoadCredential + DynamicUser StateDirectory isolation or ProviderConfig crash-loop | 1 file (AGENTS.md) |
-| 2 | 3 browser-history cascade reports have 50+ unstruck numbered items | Future sessions opening these reports see 50 "open" items that are actually done | 3 files (Aug 9 reports) |
-| 3 | FEATURES.md Known Gaps missing browser-history issues | Feature inventory dishonest about browser-history's known problems | 1 file (FEATURES.md) |
-| 4 | Generic banners on recent reports (Aug 7-9) | "Resolved. Work captured in CHANGELOG.md." fails "So what?" test | ~15 files |
-| 5 | Generic banners on old reports (June-July) | Same failure, but lower impact — nobody opens June reports | ~90 files |
-| 6 | Prevention plan not archived | `docs/planning/2026-08-06_23-24_EARLY-DETECTION-PREVENTION-PLAN.md` is complete but unarchived | 1 file |
-| 7 | Planning/research dirs not triaged | 42 planning + 12 research docs, some stale | 54 files |
+| # | Problem                                                            | Impact                                                                                                                                       | Affected Files          |
+| - | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| 1 | AGENTS.md missing browser-history patterns                         | Every future session reads AGENTS.md and won't know about LoadCredential + DynamicUser StateDirectory isolation or ProviderConfig crash-loop | 1 file (AGENTS.md)      |
+| 2 | 3 browser-history cascade reports have 50+ unstruck numbered items | Future sessions opening these reports see 50 "open" items that are actually done                                                             | 3 files (Aug 9 reports) |
+| 3 | FEATURES.md Known Gaps missing browser-history issues              | Feature inventory dishonest about browser-history's known problems                                                                           | 1 file (FEATURES.md)    |
+| 4 | Generic banners on recent reports (Aug 7-9)                        | "Resolved. Work captured in CHANGELOG.md." fails "So what?" test                                                                             | ~15 files               |
+| 5 | Generic banners on old reports (June-July)                         | Same failure, but lower impact — nobody opens June reports                                                                                   | ~90 files               |
+| 6 | Prevention plan not archived                                       | `docs/planning/2026-08-06_23-24_EARLY-DETECTION-PREVENTION-PLAN.md` is complete but unarchived                                               | 1 file                  |
+| 7 | Planning/research dirs not triaged                                 | 42 planning + 12 research docs, some stale                                                                                                   | 54 files                |
 
 ---
 
@@ -31,6 +31,7 @@ The prior docs-health pass (04:21) updated 4 living docs and archived 261 report
 **AGENTS.md browser-history section update.** This is the #1 harvested TODO. Every future AI session loads AGENTS.md automatically. Without these patterns documented, the next deployment of a Go service with OIDC will repeat the exact same ProviderConfig crash-loop and ProtectSystem=strict secret-access failure.
 
 Patterns to document:
+
 - LoadCredential for reading other services' secrets inside `ProtectSystem=strict`
 - DynamicUser + StateDirectory isolation (server's dir is private to dynamic UID)
 - Upstream `optionalEnv` always emits env vars (even when empty) → ProviderConfig.Validate() crash
@@ -93,39 +94,39 @@ graph TD
 
 ## Task Breakdown — 100min to 30min each
 
-| ID | Task | Impact | Effort | Priority |
-|----|------|--------|--------|----------|
-| T1 | AGENTS.md: Document LoadCredential + isolated StateDirectory + ProviderConfig crash-loop + optionalEnv gotcha + SSO table | CRITICAL — every future session | 30min | P0 |
-| T2 | Inline-resolve numbered items in 3 browser-history cascade reports (Aug 9) | HIGH — most-referenced reports | 45min | P1 |
-| T3 | FEATURES.md: Update Known Gaps with browser-history issues | MEDIUM — feature inventory honesty | 10min | P1 |
-| T4 | Convert Aug 7-9 report banners from top to bottom appendices | MEDIUM — skill compliance | 20min | P2 |
-| T5 | Archive completed prevention plan from docs/planning/ | LOW — cleanup | 5min | P2 |
-| T6 | Clean generic banners on June-July reports → end-of-file 1-line appendix | LOW — noise reduction | 30min | P3 |
-| T7 | Commit + push | — | 10min | — |
+| ID | Task                                                                                                                      | Impact                             | Effort | Priority |
+| -- | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | ------ | -------- |
+| T1 | AGENTS.md: Document LoadCredential + isolated StateDirectory + ProviderConfig crash-loop + optionalEnv gotcha + SSO table | CRITICAL — every future session    | 30min  | P0       |
+| T2 | Inline-resolve numbered items in 3 browser-history cascade reports (Aug 9)                                                | HIGH — most-referenced reports     | 45min  | P1       |
+| T3 | FEATURES.md: Update Known Gaps with browser-history issues                                                                | MEDIUM — feature inventory honesty | 10min  | P1       |
+| T4 | Convert Aug 7-9 report banners from top to bottom appendices                                                              | MEDIUM — skill compliance          | 20min  | P2       |
+| T5 | Archive completed prevention plan from docs/planning/                                                                     | LOW — cleanup                      | 5min   | P2       |
+| T6 | Clean generic banners on June-July reports → end-of-file 1-line appendix                                                  | LOW — noise reduction              | 30min  | P3       |
+| T7 | Commit + push                                                                                                             | —                                  | 10min  | —        |
 
 ---
 
 ## Sub-Task Breakdown — max 12min each
 
-| ID | Sub-Task | Parent | Est. |
-|----|----------|--------|------|
-| S1 | Read AGENTS.md Browser History section + SSO table + gotchas section | T1 | 5min |
-| S2 | Add LoadCredential + isolated StateDirectory gotcha to AGENTS.md | T1 | 8min |
-| S3 | Add ProviderConfig.Validate() crash-loop root cause to AGENTS.md | T1 | 8min |
-| S4 | Add browser-history to SSO Layer 1 table in AGENTS.md | T1 | 5min |
-| S5 | Add upstream optionalEnv env-var split gotcha to AGENTS.md | T1 | 5min |
-| S6 | Read 02-45 deployment fix report numbered items | T2 | 10min |
-| S7 | Resolve 02-45 numbered items (strike done, leave open) | T2 | 12min |
-| S8 | Read 01-34 module review report numbered items | T2 | 10min |
-| S9 | Resolve 01-34 numbered items | T2 | 12min |
-| S10 | Read 00-21 oauth2 login fix report numbered items | T2 | 10min |
-| S11 | Resolve 00-21 numbered items | T2 | 12min |
-| S12 | Update FEATURES.md Known Gaps section with browser-history issues | T3 | 8min |
-| S13 | Convert Aug 7-9 banners to end-of-file appendices (script-assisted) | T4 | 12min |
-| S14 | Archive prevention plan to docs/planning/archived/ | T5 | 3min |
-| S15 | Clean June-July banners: replace top-banner with end-of-file appendix | T6 | 12min |
-| S16 | Commit all changes | T7 | 5min |
-| S17 | Push to origin | T7 | 5min |
+| ID  | Sub-Task                                                              | Parent | Est.  |
+| --- | --------------------------------------------------------------------- | ------ | ----- |
+| S1  | Read AGENTS.md Browser History section + SSO table + gotchas section  | T1     | 5min  |
+| S2  | Add LoadCredential + isolated StateDirectory gotcha to AGENTS.md      | T1     | 8min  |
+| S3  | Add ProviderConfig.Validate() crash-loop root cause to AGENTS.md      | T1     | 8min  |
+| S4  | Add browser-history to SSO Layer 1 table in AGENTS.md                 | T1     | 5min  |
+| S5  | Add upstream optionalEnv env-var split gotcha to AGENTS.md            | T1     | 5min  |
+| S6  | Read 02-45 deployment fix report numbered items                       | T2     | 10min |
+| S7  | Resolve 02-45 numbered items (strike done, leave open)                | T2     | 12min |
+| S8  | Read 01-34 module review report numbered items                        | T2     | 10min |
+| S9  | Resolve 01-34 numbered items                                          | T2     | 12min |
+| S10 | Read 00-21 oauth2 login fix report numbered items                     | T2     | 10min |
+| S11 | Resolve 00-21 numbered items                                          | T2     | 12min |
+| S12 | Update FEATURES.md Known Gaps section with browser-history issues     | T3     | 8min  |
+| S13 | Convert Aug 7-9 banners to end-of-file appendices (script-assisted)   | T4     | 12min |
+| S14 | Archive prevention plan to docs/planning/archived/                    | T5     | 3min  |
+| S15 | Clean June-July banners: replace top-banner with end-of-file appendix | T6     | 12min |
+| S16 | Commit all changes                                                    | T7     | 5min  |
+| S17 | Push to origin                                                        | T7     | 5min  |
 
 ---
 

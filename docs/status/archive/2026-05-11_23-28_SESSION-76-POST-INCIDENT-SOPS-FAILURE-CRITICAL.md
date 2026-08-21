@@ -234,33 +234,33 @@ Failed to set up mount namespacing: /var/log/clickhouse-server: No such file or 
 
 ## f) Top 25 Things We Should Get Done Next
 
-| #   | Priority | Task                                                                    | Impact                        |
-| --- | -------- | ----------------------------------------------------------------------- | ----------------------------- |
-| 1   | **P0**   | **Apply `just switch` to activate sops fix + reboot**                   | Recovers ALL services         |
-| 2   | **P0**   | **Fix ClickHouse `/var/log/clickhouse-server` missing**                 | Recovers SigNoz observability |
-| 3   | **P0**   | **Fix niri-health-metrics textfile permissions**                        | Recovers niri health metrics  |
-| 4   | **P0**   | **Investigate Caddy watchdog timeout — increase or remove WatchdogSec** | Stops Caddy crash loop        |
-| 5   | **P1**   | Audit ALL sops secrets for initrd-time user existence                   | Prevents future sops failures |
-| 6   | **P1**   | Add boot-time secret validation check (is `/run/secrets/` populated?)   | Early detection               |
-| 7   | **P1**   | Fix niri DeviceMissing spam — investigate if fixable upstream           | Reduces log noise 99%         |
-| 8   | **P1**   | Clean Nix store: `nix-collect-garbage -d` + lower retention             | Reclaims ~30-40G              |
-| 9   | **P1**   | Replace whisper-asr Docker image (37.5G!) with lighter alternative      | Reclaims disk                 |
-| 10  | **P2**   | Add systemd hardening for ClickHouse (LogsDirectory tmpfiles rule)      | Proper fix for ClickHouse     |
-| 11  | **P2**   | Write disaster recovery doc (total failure → recovery steps)            | Operational resilience        |
-| 12  | **P2**   | Add minimal boot-time health check (independent of Gatus/secrets)       | Alerting during sops failures |
-| 13  | **P2**   | Configure journal size limits and rate limiting for niri                | Prevents disk fill            |
-| 14  | **P2**   | Test Darwin (macOS) config sync                                         | Cross-platform integrity      |
-| 15  | **P3**   | Evaluate Caddy TLS architecture — manual cert loading vs certmagic      | Architectural improvement     |
-| 16  | **P3**   | Add service dependency gating (don't start X until Y is healthy)        | Graceful degradation          |
-| 17  | **P3**   | Provision rpi3-dns hardware + flash NixOS image                         | DNS failover foundation       |
-| 18  | **P3**   | Enable DNS failover (Keepalived VRRP) with rpi3-dns                     | High-availability DNS         |
-| 19  | **P3**   | Add automated backup rotation for databases + photos                    | Data safety                   |
-| 20  | **P4**   | Set up CI/CD pipeline (GitHub Actions) for flake checks                 | Prevent broken deploys        |
-| 21  | **P4**   | Add offsite backup strategy (S3/B2/Restic)                              | Disaster recovery             |
-| 22  | **P4**   | WireGuard/Tailscale VPN for remote access                               | Remote management             |
-| 23  | **P4**   | Build multi-arch binary cache (aarch64-linux)                           | Faster Pi builds              |
-| 24  | **P4**   | Security audit: port scan, vulnerability scan, firewall review          | Security posture              |
-| 25  | **P4**   | Formalize log retention and cleanup policy                              | Operational hygiene           |
+| #  | Priority | Task                                                                    | Impact                        |
+| -- | -------- | ----------------------------------------------------------------------- | ----------------------------- |
+| 1  | **P0**   | **Apply `just switch` to activate sops fix + reboot**                   | Recovers ALL services         |
+| 2  | **P0**   | **Fix ClickHouse `/var/log/clickhouse-server` missing**                 | Recovers SigNoz observability |
+| 3  | **P0**   | **Fix niri-health-metrics textfile permissions**                        | Recovers niri health metrics  |
+| 4  | **P0**   | **Investigate Caddy watchdog timeout — increase or remove WatchdogSec** | Stops Caddy crash loop        |
+| 5  | **P1**   | Audit ALL sops secrets for initrd-time user existence                   | Prevents future sops failures |
+| 6  | **P1**   | Add boot-time secret validation check (is `/run/secrets/` populated?)   | Early detection               |
+| 7  | **P1**   | Fix niri DeviceMissing spam — investigate if fixable upstream           | Reduces log noise 99%         |
+| 8  | **P1**   | Clean Nix store: `nix-collect-garbage -d` + lower retention             | Reclaims ~30-40G              |
+| 9  | **P1**   | Replace whisper-asr Docker image (37.5G!) with lighter alternative      | Reclaims disk                 |
+| 10 | **P2**   | Add systemd hardening for ClickHouse (LogsDirectory tmpfiles rule)      | Proper fix for ClickHouse     |
+| 11 | **P2**   | Write disaster recovery doc (total failure → recovery steps)            | Operational resilience        |
+| 12 | **P2**   | Add minimal boot-time health check (independent of Gatus/secrets)       | Alerting during sops failures |
+| 13 | **P2**   | Configure journal size limits and rate limiting for niri                | Prevents disk fill            |
+| 14 | **P2**   | Test Darwin (macOS) config sync                                         | Cross-platform integrity      |
+| 15 | **P3**   | Evaluate Caddy TLS architecture — manual cert loading vs certmagic      | Architectural improvement     |
+| 16 | **P3**   | Add service dependency gating (don't start X until Y is healthy)        | Graceful degradation          |
+| 17 | **P3**   | Provision rpi3-dns hardware + flash NixOS image                         | DNS failover foundation       |
+| 18 | **P3**   | Enable DNS failover (Keepalived VRRP) with rpi3-dns                     | High-availability DNS         |
+| 19 | **P3**   | Add automated backup rotation for databases + photos                    | Data safety                   |
+| 20 | **P4**   | Set up CI/CD pipeline (GitHub Actions) for flake checks                 | Prevent broken deploys        |
+| 21 | **P4**   | Add offsite backup strategy (S3/B2/Restic)                              | Disaster recovery             |
+| 22 | **P4**   | WireGuard/Tailscale VPN for remote access                               | Remote management             |
+| 23 | **P4**   | Build multi-arch binary cache (aarch64-linux)                           | Faster Pi builds              |
+| 24 | **P4**   | Security audit: port scan, vulnerability scan, firewall review          | Security posture              |
+| 25 | **P4**   | Formalize log retention and cleanup policy                              | Operational hygiene           |
 
 ---
 

@@ -6,7 +6,6 @@
 
 ---
 
-
 ## TL;DR
 
 All six boot-time service failures are **root-caused and fixed in Nix** (commit `f09dae03`). The deploy-blocking exit-code-4 bug is **also fixed** (commit `71081507`). The DiscordSync upstream migration bug — the only remaining failure — is **fixed in the DiscordSync repo** (commit `e6c7606`). **Everything is ready to deploy.** Nothing has been deployed yet.

@@ -6,52 +6,51 @@
 
 ---
 
-
 ## a) FULLY DONE
 
-| # | Task | Status | Evidence |
-|---|------|--------|----------|
-| 1 | Identify port 8888 occupant | **DONE** | SigNoz OTel Collector metrics endpoint (ClickHouse exporter metrics on `/metrics`). NOT a Go test binary as the previous session hypothesized |
-| 2 | Change SearXNG port 8888 → 8889 | **DONE** | `lib/ports.nix:66`, `scripts/post-deploy-check.sh:137` |
-| 3 | Deploy SearXNG successfully | **DONE** | `searx.service` started, `/healthz` → 200 |
-| 4 | Functional search test | **DONE** | 26-27 results for "nixos package manager" and "rust programming language" — real URLs from Google, DuckDuckGo, etc. |
-| 5 | Favicon config added | **DONE** | `faviconsSettings` with `cfg_schema = 1`, cache config (HOLD_TIME, LIMIT_TOTAL_BYTES, BLOB_MAX_BYTES, MAINTENANCE_MODE) |
-| 6 | Tor engines disabled | **DONE** | `use_default_settings.engines.remove = [ "ahmia" "torch" ]` — no more `can't register engine` errors for Tor services |
-| 7 | Limiter `pass_ip` fix | **DONE** | Added `127.0.0.0/8` alongside LAN subnet. Without this, ALL direct localhost access got 429 Too Many Requests |
-| 8 | Pre-deploy port availability check | **DONE** | `scripts/pre-deploy-check.sh` check #9 — validates SearXNG port is free before deploy |
-| 9 | Homepage loads (local) | **DONE** | `GET /` → 200, HTML content |
-| 10 | External access via Caddy | **DONE** | `https://search.home.lan/healthz` → 200 |
-| 11 | JSON API blocked (privacy) | **DONE** | `format=json` → 403 Forbidden (by design — `formats = [ "html" ]`) |
-| 12 | Autocomplete works | **DONE** | `GET /autocompleter?q=nixos` → `["nixos", ["nixos packages", "nixos vs arch", ...]]` |
-| 13 | Post-deploy smoke test | **DONE** | 28 PASS, 0 FAIL, 2 SKIP (DiscordSync startup backfill — expected) |
-| 14 | AGENTS.md updated | **DONE** | Port corrected to 8889, 3 new gotchas added (port conflict, pass_ip localhost, JSON API blocking) |
+| #  | Task                               | Status   | Evidence                                                                                                                                      |
+| -- | ---------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | Identify port 8888 occupant        | **DONE** | SigNoz OTel Collector metrics endpoint (ClickHouse exporter metrics on `/metrics`). NOT a Go test binary as the previous session hypothesized |
+| 2  | Change SearXNG port 8888 → 8889    | **DONE** | `lib/ports.nix:66`, `scripts/post-deploy-check.sh:137`                                                                                        |
+| 3  | Deploy SearXNG successfully        | **DONE** | `searx.service` started, `/healthz` → 200                                                                                                     |
+| 4  | Functional search test             | **DONE** | 26-27 results for "nixos package manager" and "rust programming language" — real URLs from Google, DuckDuckGo, etc.                           |
+| 5  | Favicon config added               | **DONE** | `faviconsSettings` with `cfg_schema = 1`, cache config (HOLD_TIME, LIMIT_TOTAL_BYTES, BLOB_MAX_BYTES, MAINTENANCE_MODE)                       |
+| 6  | Tor engines disabled               | **DONE** | `use_default_settings.engines.remove = [ "ahmia" "torch" ]` — no more `can't register engine` errors for Tor services                         |
+| 7  | Limiter `pass_ip` fix              | **DONE** | Added `127.0.0.0/8` alongside LAN subnet. Without this, ALL direct localhost access got 429 Too Many Requests                                 |
+| 8  | Pre-deploy port availability check | **DONE** | `scripts/pre-deploy-check.sh` check #9 — validates SearXNG port is free before deploy                                                         |
+| 9  | Homepage loads (local)             | **DONE** | `GET /` → 200, HTML content                                                                                                                   |
+| 10 | External access via Caddy          | **DONE** | `https://search.home.lan/healthz` → 200                                                                                                       |
+| 11 | JSON API blocked (privacy)         | **DONE** | `format=json` → 403 Forbidden (by design — `formats = [ "html" ]`)                                                                            |
+| 12 | Autocomplete works                 | **DONE** | `GET /autocompleter?q=nixos` → `["nixos", ["nixos packages", "nixos vs arch", ...]]`                                                          |
+| 13 | Post-deploy smoke test             | **DONE** | 28 PASS, 0 FAIL, 2 SKIP (DiscordSync startup backfill — expected)                                                                             |
+| 14 | AGENTS.md updated                  | **DONE** | Port corrected to 8889, 3 new gotchas added (port conflict, pass_ip localhost, JSON API blocking)                                             |
 
 ---
 
 ## b) PARTIALLY DONE
 
-| # | Task | What's done | What's missing |
-|---|------|-------------|----------------|
+| # | Task                              | What's done                                                                                    | What's missing                                                                                                                            |
+| - | --------------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | Browser search engine integration | Policy configured in `configuration.nix` (DefaultSearchProviderEnabled, SearchURL, SuggestURL) | NOT verified that Chromium/Helium actually picks up the policy. Need to open browser and confirm SearXNG appears as default search engine |
-| 2 | Homepage tile + search bar | Configured in `homepage.nix` (tile, search provider, bookmark) | NOT verified the tile shows green or the search bar queries SearXNG. Homepage was running pre-SearXNG; need a restart or page refresh |
-| 3 | Gatus health check | Configured in `gatus-config.nix` (`/healthz` endpoint, Discord alert) | NOT verified it turns green. Gatus API is OIDC-protected, couldn't query endpoint status. Check will run on next 60s cycle |
-| 4 | `nix fmt` before deploy | Ran and applied | Did NOT re-run statix check after final edit (adding `127.0.0.0/8` to pass_ip) |
+| 2 | Homepage tile + search bar        | Configured in `homepage.nix` (tile, search provider, bookmark)                                 | NOT verified the tile shows green or the search bar queries SearXNG. Homepage was running pre-SearXNG; need a restart or page refresh     |
+| 3 | Gatus health check                | Configured in `gatus-config.nix` (`/healthz` endpoint, Discord alert)                          | NOT verified it turns green. Gatus API is OIDC-protected, couldn't query endpoint status. Check will run on next 60s cycle                |
+| 4 | `nix fmt` before deploy           | Ran and applied                                                                                | Did NOT re-run statix check after final edit (adding `127.0.0.0/8` to pass_ip)                                                            |
 
 ---
 
 ## c) NOT STARTED
 
-| # | Task | Why it matters |
-|---|------|----------------|
-| 1 | Annotate stale status report | `docs/status/2026-07-28_23-03_searxng-comprehensive-status-and-port-conflict.md` still says SearXNG is **BLOCKED** on port 8888. Future sessions will read this and think SearXNG is broken |
-| 2 | Investigate wikidata engine error | `wikidata: engine init was not successful` / `HTTP error 403 (suspended_time=180)` — Wikidata API rejecting requests from residential IP. Wikidata provides knowledge graph enrichments |
-| 3 | Investigate Brave engine rate-limiting | `Too many request (suspended_time=180)` during search testing. Transient but may indicate the default engine set over-indexes on rate-limited engines |
-| 4 | SQLite ResourceWarning | `ResourceWarning: unclosed database in <sqlite3.Connection object>` — markupsafe library leaking a SQLite connection. May be related to favicon cache DB |
-| 5 | Fix `X-Forwarded-For nor X-Real-IP header is set!` ERROR | SearXNG logs this as ERROR when direct localhost requests (health checks) arrive without XFF. Caddy DOES set XFF for proxied requests, so this only affects direct access. Could add `X-Real-IP` header in the Caddy vHost or accept it as expected noise |
-| 6 | Verify favicon cache directory | `/var/cache/searx/` was not visible via `ls` (may be permissions under DynamicUser). `CacheDirectory=searx` is set in the systemd unit but `faviconcache.db` was not found. Favicon resolution (`duckduckgo`) may silently fail to cache |
-| 7 | Redis socket verification | Redis IS running (`redis-searx.service` started, BGSAVE working with 1 key), but socket path `/run/redis-searx/` could not be listed (permission denied under DynamicUser). Need to confirm SearXNG actually connects to Redis for the limiter |
-| 8 | Engine performance audit | Search returned 26-27 results but unknown how many engines are actually responding vs suspended. A `/stats` page exists but wasn't analyzed |
-| 9 | `use_default_settings.engines.remove` format verification | The object form `{ engines.remove = [ "ahmia" "torch" ] }` was validated by `nix eval` but not verified against SearXNG's actual settings.yml schema at runtime. If the format is wrong, engines silently remain enabled |
+| # | Task                                                      | Why it matters                                                                                                                                                                                                                                            |
+| - | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | Annotate stale status report                              | `docs/status/2026-07-28_23-03_searxng-comprehensive-status-and-port-conflict.md` still says SearXNG is **BLOCKED** on port 8888. Future sessions will read this and think SearXNG is broken                                                               |
+| 2 | Investigate wikidata engine error                         | `wikidata: engine init was not successful` / `HTTP error 403 (suspended_time=180)` — Wikidata API rejecting requests from residential IP. Wikidata provides knowledge graph enrichments                                                                   |
+| 3 | Investigate Brave engine rate-limiting                    | `Too many request (suspended_time=180)` during search testing. Transient but may indicate the default engine set over-indexes on rate-limited engines                                                                                                     |
+| 4 | SQLite ResourceWarning                                    | `ResourceWarning: unclosed database in <sqlite3.Connection object>` — markupsafe library leaking a SQLite connection. May be related to favicon cache DB                                                                                                  |
+| 5 | Fix `X-Forwarded-For nor X-Real-IP header is set!` ERROR  | SearXNG logs this as ERROR when direct localhost requests (health checks) arrive without XFF. Caddy DOES set XFF for proxied requests, so this only affects direct access. Could add `X-Real-IP` header in the Caddy vHost or accept it as expected noise |
+| 6 | Verify favicon cache directory                            | `/var/cache/searx/` was not visible via `ls` (may be permissions under DynamicUser). `CacheDirectory=searx` is set in the systemd unit but `faviconcache.db` was not found. Favicon resolution (`duckduckgo`) may silently fail to cache                  |
+| 7 | Redis socket verification                                 | Redis IS running (`redis-searx.service` started, BGSAVE working with 1 key), but socket path `/run/redis-searx/` could not be listed (permission denied under DynamicUser). Need to confirm SearXNG actually connects to Redis for the limiter            |
+| 8 | Engine performance audit                                  | Search returned 26-27 results but unknown how many engines are actually responding vs suspended. A `/stats` page exists but wasn't analyzed                                                                                                               |
+| 9 | `use_default_settings.engines.remove` format verification | The object form `{ engines.remove = [ "ahmia" "torch" ] }` was validated by `nix eval` but not verified against SearXNG's actual settings.yml schema at runtime. If the format is wrong, engines silently remain enabled                                  |
 
 ---
 
@@ -80,6 +79,7 @@ Failed to run activate script
 ### 2. Didn't verify favicon cache works at runtime
 
 I configured `faviconsSettings` with cache paths pointing to `/var/cache/searx/faviconcache.db`, but:
+
 - `/var/cache/searx/` was not visible (permissions under DynamicUser)
 - `faviconcache.db` does not exist
 - The SQLite `ResourceWarning: unclosed database` in the logs is likely the favicon cache DB failing to open
@@ -205,6 +205,7 @@ The previous session wrote `docs/status/2026-07-28_23-03_searxng-comprehensive-s
 The `crush-daily` system user doesn't exist (`getent passwd crush-daily` → not found). The previous session changed crush-daily to run as `runAsUser = config.users.primaryUser` (user `lars`). But the sops secret for crush-daily still references the `crush-daily` user as the owner. This causes `failed to lookup user 'crush-daily'` during EVERY deploy, which blocks ALL sops secrets atomically.
 
 **Options I see but can't decide between:**
+
 - (A) Recreate the `crush-daily` system user in the NixOS config
 - (B) Change the sops secret ownership to `lars` or `root`
 - (C) Remove the crush-daily secret from sops entirely (if it's no longer needed under the `runAsUser` model)
@@ -214,6 +215,7 @@ I don't know which is correct because I don't know if the crush-daily service st
 ### 2. Should the stale status reports be deleted or annotated?
 
 There are now TWO stale status reports about SearXNG from today:
+
 - `2026-07-28_19-51_searxng-integration-status.md` (references port 8888)
 - `2026-07-28_23-03_searxng-comprehensive-status-and-port-conflict.md` (says BLOCKED)
 
@@ -224,6 +226,7 @@ The `update-old-docs` skill says to annotate, not delete. But I want to confirm:
 SearXNG logs this as ERROR level every time a direct localhost request arrives without XFF headers (i.e., health checks, post-deploy tests). Caddy DOES set XFF for proxied requests, so real user traffic is fine. The error only fires for direct access.
 
 **Options:**
+
 - (A) Accept it as noise (health checks are the only direct access)
 - (B) Add `X-Real-IP: 127.0.0.1` to the health check script
 - (C) Move health checks to go through Caddy instead of localhost

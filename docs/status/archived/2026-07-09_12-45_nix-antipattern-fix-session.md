@@ -7,7 +7,6 @@
 
 ---
 
-
 ## A) FULLY DONE
 
 ### Bug Fixes (2)
@@ -199,12 +198,12 @@ Cuts the 50-item list to what has real value vs what is churn or YAGNI.
 
 ### Worth fixing (high value, real risk)
 
-| #   | Item                                                   | Source     | Why                                                                                                                                                           |
-| --- | ------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Runtime verification: deploy + `post-deploy-check`** | C9, F33-34 | Biggest blind spot. 30+ files converted with only `nix eval` — zero runtime proof. One deploy validates all conversions at once. Single highest-value action. |
-| 2   | **`immich.nix:105-129` db-backup unhardened**          | B6, F2     | Genuine security gap — backup service runs with zero hardening. Quick fix, real risk.                                                                         |
-| 3   | **`signoz.nix:509-595` grep -oP → jq**                 | B3, F1     | Brittle JSON-via-regex that silently produces wrong metrics. Same fix already applied to `nvme-health-monitor.nix`.                                           |
-| 4   | **`minecraft.nix:456-460` raw iptables**               | B5, F3     | Raw `iptables -A` in `extraCommands` accumulates duplicate rules on every reload. Declarative `allowedTCPPorts` is the fix.                                   |
+| # | Item                                                   | Source     | Why                                                                                                                                                           |
+| - | ------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Runtime verification: deploy + `post-deploy-check`** | C9, F33-34 | Biggest blind spot. 30+ files converted with only `nix eval` — zero runtime proof. One deploy validates all conversions at once. Single highest-value action. |
+| 2 | **`immich.nix:105-129` db-backup unhardened**          | B6, F2     | Genuine security gap — backup service runs with zero hardening. Quick fix, real risk.                                                                         |
+| 3 | **`signoz.nix:509-595` grep -oP → jq**                 | B3, F1     | Brittle JSON-via-regex that silently produces wrong metrics. Same fix already applied to `nvme-health-monitor.nix`.                                           |
+| 4 | **`minecraft.nix:456-460` raw iptables**               | B5, F3     | Raw `iptables -A` in `extraCommands` accumulates duplicate rules on every reload. Declarative `allowedTCPPorts` is the fix.                                   |
 
 ### Not worth fixing (low value, or risk exceeds reward)
 

@@ -242,33 +242,33 @@ Build warns: `linux-rpi series will be removed in a future release. Please chang
 
 ## F) TOP 25 NEXT ACTIONS (Impact × Effort)
 
-| #   | Action                                                           | Impact      | Effort | Status              |
-| --- | ---------------------------------------------------------------- | ----------- | ------ | ------------------- |
-| 1   | **`just switch`** — deploy hipblaslt fix + new modules to evo-x2 | 🔴 Critical | Low    | Ready               |
-| 2   | **`git push`** — push 4 commits to origin                        | 🔴 Critical | 0      | Ready               |
-| 3   | **Build Pi 3 SD image**                                          | High        | Low    | Blocked on hardware |
-| 4   | **Flash SD + boot Pi 3**                                         | High        | Low    | After #3            |
-| 5   | **Test DNS failover**                                            | High        | Low    | After #4            |
-| 6   | **Verify Ollama works** after rebuild with fixed hipblaslt       | High        | Low    | After #1            |
-| 7   | **Verify Steam works** after rebuild                             | High        | Low    | After #1            |
-| 8   | **Verify ComfyUI works** after rebuild                           | High        | Low    | After #1            |
-| 9   | **Archive 30+ stale status docs** to `docs/status/archive/`      | Medium      | Low    | Ready               |
-| 10  | **Drop orphaned Hyprland stash**                                 | Low         | 0      | Ready               |
-| 11  | **Clean up 18 remote branches**                                  | Low         | Low    | Ready               |
-| 12  | **Enable `services.udisks2`** for auto-mounting                  | High        | Low    | Ready               |
-| 13  | **Fix pre-commit statix hook**                                   | Medium      | Low    | Ready               |
-| 14  | **File nixpkgs issue** for hipblaslt Tensile gfx908 rejection    | Medium      | Low    | Ready               |
-| 15  | **Secure VRRP auth** — sops-nix for Keepalived password          | Medium      | Low    | Ready               |
-| 16  | **Verify SigNoz** is collecting traces/metrics/logs              | Medium      | Low    | Ready               |
-| 17  | **Check Authelia** SSO deployment status                         | High        | Low    | Ready               |
-| 18  | **Check Photomap** service status                                | Medium      | Low    | Ready               |
-| 19  | **Investigate `just test` race**                                 | Medium      | Medium | Research            |
-| 20  | **Convert niri session restore** to proper NixOS module options  | High        | Medium | Design              |
-| 21  | **Create `homeModules` pattern** for HM configs via flake-parts  | High        | Medium | Design              |
-| 22  | **Verify AMD NPU** with test workload                            | Medium      | Medium | Hardware            |
-| 23  | **Add CI pipeline** — at minimum `just test-fast` on push        | High        | Medium | DevOps              |
-| 24  | **Setup Taskwarrior backup** via systemd timer                   | Medium      | Low    | Ready               |
-| 25  | **Document DNS cluster** in AGENTS.md                            | Medium      | Low    | Ready               |
+| #  | Action                                                           | Impact      | Effort | Status              |
+| -- | ---------------------------------------------------------------- | ----------- | ------ | ------------------- |
+| 1  | **`just switch`** — deploy hipblaslt fix + new modules to evo-x2 | 🔴 Critical | Low    | Ready               |
+| 2  | **`git push`** — push 4 commits to origin                        | 🔴 Critical | 0      | Ready               |
+| 3  | **Build Pi 3 SD image**                                          | High        | Low    | Blocked on hardware |
+| 4  | **Flash SD + boot Pi 3**                                         | High        | Low    | After #3            |
+| 5  | **Test DNS failover**                                            | High        | Low    | After #4            |
+| 6  | **Verify Ollama works** after rebuild with fixed hipblaslt       | High        | Low    | After #1            |
+| 7  | **Verify Steam works** after rebuild                             | High        | Low    | After #1            |
+| 8  | **Verify ComfyUI works** after rebuild                           | High        | Low    | After #1            |
+| 9  | **Archive 30+ stale status docs** to `docs/status/archive/`      | Medium      | Low    | Ready               |
+| 10 | **Drop orphaned Hyprland stash**                                 | Low         | 0      | Ready               |
+| 11 | **Clean up 18 remote branches**                                  | Low         | Low    | Ready               |
+| 12 | **Enable `services.udisks2`** for auto-mounting                  | High        | Low    | Ready               |
+| 13 | **Fix pre-commit statix hook**                                   | Medium      | Low    | Ready               |
+| 14 | **File nixpkgs issue** for hipblaslt Tensile gfx908 rejection    | Medium      | Low    | Ready               |
+| 15 | **Secure VRRP auth** — sops-nix for Keepalived password          | Medium      | Low    | Ready               |
+| 16 | **Verify SigNoz** is collecting traces/metrics/logs              | Medium      | Low    | Ready               |
+| 17 | **Check Authelia** SSO deployment status                         | High        | Low    | Ready               |
+| 18 | **Check Photomap** service status                                | Medium      | Low    | Ready               |
+| 19 | **Investigate `just test` race**                                 | Medium      | Medium | Research            |
+| 20 | **Convert niri session restore** to proper NixOS module options  | High        | Medium | Design              |
+| 21 | **Create `homeModules` pattern** for HM configs via flake-parts  | High        | Medium | Design              |
+| 22 | **Verify AMD NPU** with test workload                            | Medium      | Medium | Hardware            |
+| 23 | **Add CI pipeline** — at minimum `just test-fast` on push        | High        | Medium | DevOps              |
+| 24 | **Setup Taskwarrior backup** via systemd timer                   | Medium      | Low    | Ready               |
+| 25 | **Document DNS cluster** in AGENTS.md                            | Medium      | Low    | Ready               |
 
 ---
 

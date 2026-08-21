@@ -25,6 +25,7 @@ drives visible as `/dev/sda` and `/dev/sdb` on host. Everything committed.
 ## A) FULLY DONE
 
 ### 1. Private-Cloud System Analysis
+
 - Read `/home/lars/projects/private-cloud/docs/status/archive/2025-11-20_External-16TB-Drives-ZFS-Readiness-Report.md`
 - Found **274 MB/s** raw disk benchmark (fio, 1M, QD1, O_DIRECT) on kernel 6.6
 - Found **108 MB/s** ZFS scrub throughput (40 seconds for 20 GB)
@@ -34,6 +35,7 @@ drives visible as `/dev/sda` and `/dev/sdb` on host. Everything committed.
 - Identified old ARC config: 16 GB max (vs 2.8 GB in VM)
 
 ### 2. Kernel Quirk Root-Cause Analysis
+
 - Decoded `0x05000000` = `US_FL_BROKEN_FUA` (0x01000000) | `US_FL_NO_REPORT_OPCODES` (0x04000000)
 - Confirmed `US_FL_IGNORE_UAS` (0x00800000) is **NOT SET**
 - Found the quirk in kernel `unusual_uas.h` (UAS quirk table) — it applies quirks ON TOP of UAS, it does NOT disable UAS
@@ -42,6 +44,7 @@ drives visible as `/dev/sda` and `/dev/sdb` on host. Everything committed.
 - Verified: 1 configuration, 1 interface, 0 alternate settings — no UAS descriptor exists
 
 ### 3. UAS History from Private-Cloud
+
 - Read 5+ status reports about UAS troubleshooting on the old system
 - The old system explicitly loaded `uas` in `boot.initrd.kernelModules`
 - Disabling UAS (`quirks=152d:0567:u`) caused drives to **VANISH ENTIRELY** on the old system
@@ -50,6 +53,7 @@ drives visible as `/dev/sda` and `/dev/sdb` on host. Everything committed.
 - Current firmware 5203 does NOT advertise UAS descriptors — firmware may have been updated
 
 ### 4. Old System Configuration Extraction
+
 - `boot.initrd.kernelModules = [ ... "usb_storage" "uas" ]` — both modules in initrd
 - `boot.kernelParams = [ "zfs.zfs_vdev_open_timeout_ms=30000" "usbcore.autosuspend=-1" ]`
 - ZFS tuning: ARC max 16 GB, prefetch enabled, txg timeout 5s, dirty_ratio 15%
@@ -58,11 +62,13 @@ drives visible as `/dev/sda` and `/dev/sdb` on host. Everything committed.
 - UAS quirk was **COMMENTED OUT** — system ran with UAS enabled
 
 ### 5. Scrub Verified Complete
+
 - Scrub completed: 2026-08-10 07:09:09 UTC (01:29:25 duration)
 - **0 errors, 0 bytes repaired**
 - Previous scrub: Dec 1, 2025 (01:49:23, 0 errors)
 
 ### 6. Host USB Controller Mapping
+
 - 4 xHCI controllers on evo-x2: `c5:00.4`, `c7:00.0`, `c7:00.3`, `c7:00.4`
 - All advertise 10 Gbps USB 3.1 Gen 2 (10000 Mbps root hubs)
 - JMS567 negotiates at 5 Gbps (USB 3.0 device limitation, not port limitation)
@@ -71,6 +77,7 @@ drives visible as `/dev/sda` and `/dev/sdb` on host. Everything committed.
 - No SATA ports on this motherboard (Strix Halo)
 
 ### 7. Report Corrected and Committed
+
 - Updated executive summary to correct the bottleneck identification
 - Added Section H with corrected speed analysis
 - Corrected UAS investigation section
@@ -79,22 +86,24 @@ drives visible as `/dev/sda` and `/dev/sdb` on host. Everything committed.
 - Committed as `575733e7`
 
 ### 8. VM Clean Shutdown
+
 - Exported pool from VM (`zpool export datapool`)
 - Shut down VM via SSH `poweroff`
 - Unbound USB controller from VFIO, returned to host xhci_hcd
 - Drives visible on host as `/dev/sda` and `/dev/sdb`
 
 ### 9. Host Raw Disk Benchmarks (User-Run)
+
 User ran `/tmp/host-benchmark.sh /dev/sda` on the host (no VM, no VFIO):
 
-| Test | Result | Comparison |
-|------|--------|------------|
-| Seq Read 1M QD1 O_DIRECT | **40 MB/s** (42 MB/s) | Old system: 275 MB/s at QD1 |
-| Seq Read 1M QD32 O_DIRECT | **276 MB/s** | Old system: 274 MB/s — **MATCH** |
-| Seq Read 4M QD32 O_DIRECT | **276 MB/s** | Same as 1M at QD32 |
-| Random Read 4K QD1 | **211 IOPS** (863 KB/s) | Better than VM's 71 IOPS |
-| Random Read 4K QD32 | **211 IOPS** (864 KB/s) | QD doesn't help — BOT serializes |
-| Both drives simultaneous 1M QD32 | **390 MB/s** | Aggregate of mirror |
+| Test                             | Result                  | Comparison                       |
+| -------------------------------- | ----------------------- | -------------------------------- |
+| Seq Read 1M QD1 O_DIRECT         | **40 MB/s** (42 MB/s)   | Old system: 275 MB/s at QD1      |
+| Seq Read 1M QD32 O_DIRECT        | **276 MB/s**            | Old system: 274 MB/s — **MATCH** |
+| Seq Read 4M QD32 O_DIRECT        | **276 MB/s**            | Same as 1M at QD32               |
+| Random Read 4K QD1               | **211 IOPS** (863 KB/s) | Better than VM's 71 IOPS         |
+| Random Read 4K QD32              | **211 IOPS** (864 KB/s) | QD doesn't help — BOT serializes |
+| Both drives simultaneous 1M QD32 | **390 MB/s**            | Aggregate of mirror              |
 
 **Key insight:** At QD32, native BOT delivers **276 MB/s** — exactly matching the old system.
 The QD1 result (40 MB/s) is the real anomaly — the old system got 275 MB/s at QD1 too, which
@@ -105,12 +114,14 @@ suggests the old system WAS running UAS (which parallelizes at QD1).
 ## B) PARTIALLY DONE
 
 ### 1. Speed Improvement Recommendation
+
 - Options presented to user (BTRFS native, ZFS kernel 6.x, keep VFIO VM, NVMe cache)
 - User answered questions but hasn't made a final pool format decision
 - User wants: "media storage/streaming (Immich) + backup target (MAIN GOAL)"
 - User loves ZFS but needs kernel 7.1 for CPU
 
 ### 2. Host Benchmark Analysis
+
 - Got QD32 results (276 MB/s — excellent)
 - QD1 anomaly (40 MB/s) noted but not investigated
 - Random IOPS on host (211) vs VM (71) — ~3x improvement, confirming VFIO tax
@@ -118,6 +129,7 @@ suggests the old system WAS running UAS (which parallelizes at QD1).
 - No ZFS-level benchmarks on host (can't run ZFS on kernel 7.1)
 
 ### 3. Temp Files Lost
+
 - `/tmp/host-benchmark.sh`, `/tmp/uas-diagnostic.sh`, `/tmp/zfs-vm.pid`, `/tmp/zfs-vm-vfio.qcow2`
 - All gone — likely cleaned by tmpfiles or reboot
 - Scripts need to be recreated if benchmarks are re-run
@@ -126,6 +138,7 @@ suggests the old system WAS running UAS (which parallelizes at QD1).
 - Need recreation if benchmarks are re-run
 
 ### 4. NVMe Partition for ZIL/L2ARC
+
 - User said yes to NVMe cache
 - Never created the partition (focused on root-cause analysis first)
 - NVMe has 145 GB free on root (`/dev/nvme0n1p6`) and 1 TB on `/data` partition
@@ -151,6 +164,7 @@ suggests the old system WAS running UAS (which parallelizes at QD1).
 ## D) TOTALLY FUCKED UP
 
 ### 1. Previous Session's Entire UAS Analysis Was Wrong
+
 The previous report claimed the kernel quirk `0x05000000` disables UAS. This was a **fabricated
 diagnosis** based on incomplete reading. The quirk is `US_FL_BROKEN_FUA | US_FL_NO_REPORT_OPCODES`
 which limits SCSI commands but does NOT disable UAS. `US_FL_IGNORE_UAS` (0x00800000) is a
@@ -159,6 +173,7 @@ conclusion was wrong. I should have decoded the quirk flags from the kernel sour
 drawing conclusions.
 
 ### 2. Never Checked the Private-Cloud System First
+
 The private-cloud repo at `/home/lars/projects/private-cloud/` contains the EXACT same hardware
 with full benchmarks (274 MB/s), kernel config, and UAS troubleshooting history. This should
 have been the FIRST thing checked — it's the reference baseline. Instead, two full sessions
@@ -166,30 +181,35 @@ went by without ever looking at it. The user explicitly asked "compare what I di
 revealed the discrepancy.
 
 ### 3. Wasted Two Sessions Building VM Infrastructure
+
 The VFIO VM, FreeBSD launcher, USB passthrough experiments — all solving the wrong problem.
 The real issue was never "ZFS can't run on kernel 7.1" (that's true but the user doesn't want
 to risk native ZFS). The real issue was "we built a VM that adds 4x latency to every USB
 command, then blamed the USB bridge for being slow."
 
 ### 4. Read Anomaly Misdiagnosed for Two Sessions
+
 "Sequential read slower than write" was noted in the first report, carried into the second,
 and never properly investigated. The real cause is VFIO asymmetric latency (reads require
 data transfer back through IOMMU, writes are fire-and-forget). This should have been diagnosed
 in session 1.
 
 ### 5. Didn't Write Host Benchmarks Before Presenting Options
+
 I presented speed improvement options to the user based on old data and projections. I should
 have run host-level benchmarks FIRST (no VM, no VFIO) to establish a native baseline, THEN
 presented options with real numbers. The user correctly pushed back and ran the benchmarks
 themselves, revealing the 276 MB/s native speed.
 
 ### 6. QD1 Anomaly Not Investigated
+
 The host benchmark showed 40 MB/s at QD1 vs 276 MB/s at QD32. The old system got 275 MB/s
 at QD1. This means the old system was running UAS (which handles QD1 parallelism), while
 the current BOT driver serializes at QD1. This difference matters for random I/O and
 single-threaded workloads. I noted it but didn't investigate.
 
 ### 7. Temp Files Lost
+
 Benchmark scripts and VM disk image stored in `/tmp` are gone. Should have been in a
 permanent location from the start.
 

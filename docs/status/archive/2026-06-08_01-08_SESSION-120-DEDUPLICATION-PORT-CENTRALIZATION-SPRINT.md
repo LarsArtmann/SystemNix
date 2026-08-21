@@ -189,33 +189,33 @@ The only risk: **28 commits not yet deployed**. The next `just switch` will appl
 
 **Sorted by impact / effort (highest ROI first):**
 
-| #   | Task                                                                                | Impact | Effort | Category       |
-| --- | ----------------------------------------------------------------------------------- | ------ | ------ | -------------- |
-| 1   | **Deploy all 28 commits** (`just switch`)                                           | High   | 15 min | Deploy         |
-| 2   | **Verify deployed services** — health check, port connectivity                      | High   | 10 min | Verify         |
-| 3   | **Update TODO_LIST.md** — sync with sessions 119-120                                | Medium | 15 min | Docs           |
-| 4   | **Configure secondary LLM for Hermes** (OpenRouter fallback)                        | High   | 30 min | Services       |
-| 5   | **Test Discord alert channel** via SigNoz API                                       | Medium | 5 min  | Verify         |
-| 6   | **Create `just status` command**                                                    | High   | 1h     | DX             |
-| 7   | **Fix `disableTests` overlay** — use `python3.pkgs` not `python313Packages`         | Medium | 5 min  | Tech Debt      |
-| 8   | **SigNoz channel routing** (critical→Discord, warning→log)                          | Medium | 30 min | Services       |
-| 9   | **Flake inputs audit** — prune any stale follows                                    | Low    | 30 min | Maintenance    |
-| 10  | **Provision Pi 3** for DNS failover                                                 | High   | 2h     | Infrastructure |
-| 11  | **Wire Pi 3 as secondary DNS**                                                      | High   | 1h     | Infrastructure |
-| 12  | **nix-colors integration** — eliminate 17+ hardcoded colors                         | High   | 6h     | Architecture   |
-| 13  | **Darwin home.nix parity** — terminal, editor, theme                                | Medium | 4h     | Cross-platform |
-| 14  | **Migrate `theme.nix` to module system**                                            | High   | 3h     | Architecture   |
-| 15  | **Parameterize `nix-settings.nix`** build-max-jobs/cores                            | Low    | 1h     | Architecture   |
-| 16  | **Waybar CSS from colorScheme.palette**                                             | Medium | 2h     | Theme          |
-| 17  | **Foot terminal from colorScheme.palette**                                          | Low    | 1h     | Theme          |
-| 18  | **`servicePort` defaults → `ports.*` lookup**                                       | Medium | 2h     | Tech Debt      |
-| 19  | **SigNoz ldflags `8080` → `ports.signoz`**                                          | Low    | 1h     | Tech Debt      |
-| 20  | **Hermes git remote SSH deploy key**                                                | Medium | 30 min | Services       |
-| 21  | **Monitor GLM-5.1 rate limit recovery**                                             | Medium | 15 min | Verify         |
-| 22  | **Convert go-auto-upgrade `path:` inputs to SSH**                                   | Low    | 30 min | Maintenance    |
-| 23  | **Create shared flake-parts template**                                              | Medium | 2h     | DX             |
-| 24  | **Verify boot time** (~35s target)                                                  | Low    | 5 min  | Verify         |
-| 25  | **`art-duplOverlay` cleanup** — remove templ vendor surgery when nixpkgs catches up | Low    | 30 min | Maintenance    |
+| #  | Task                                                                                | Impact | Effort | Category       |
+| -- | ----------------------------------------------------------------------------------- | ------ | ------ | -------------- |
+| 1  | **Deploy all 28 commits** (`just switch`)                                           | High   | 15 min | Deploy         |
+| 2  | **Verify deployed services** — health check, port connectivity                      | High   | 10 min | Verify         |
+| 3  | **Update TODO_LIST.md** — sync with sessions 119-120                                | Medium | 15 min | Docs           |
+| 4  | **Configure secondary LLM for Hermes** (OpenRouter fallback)                        | High   | 30 min | Services       |
+| 5  | **Test Discord alert channel** via SigNoz API                                       | Medium | 5 min  | Verify         |
+| 6  | **Create `just status` command**                                                    | High   | 1h     | DX             |
+| 7  | **Fix `disableTests` overlay** — use `python3.pkgs` not `python313Packages`         | Medium | 5 min  | Tech Debt      |
+| 8  | **SigNoz channel routing** (critical→Discord, warning→log)                          | Medium | 30 min | Services       |
+| 9  | **Flake inputs audit** — prune any stale follows                                    | Low    | 30 min | Maintenance    |
+| 10 | **Provision Pi 3** for DNS failover                                                 | High   | 2h     | Infrastructure |
+| 11 | **Wire Pi 3 as secondary DNS**                                                      | High   | 1h     | Infrastructure |
+| 12 | **nix-colors integration** — eliminate 17+ hardcoded colors                         | High   | 6h     | Architecture   |
+| 13 | **Darwin home.nix parity** — terminal, editor, theme                                | Medium | 4h     | Cross-platform |
+| 14 | **Migrate `theme.nix` to module system**                                            | High   | 3h     | Architecture   |
+| 15 | **Parameterize `nix-settings.nix`** build-max-jobs/cores                            | Low    | 1h     | Architecture   |
+| 16 | **Waybar CSS from colorScheme.palette**                                             | Medium | 2h     | Theme          |
+| 17 | **Foot terminal from colorScheme.palette**                                          | Low    | 1h     | Theme          |
+| 18 | **`servicePort` defaults → `ports.*` lookup**                                       | Medium | 2h     | Tech Debt      |
+| 19 | **SigNoz ldflags `8080` → `ports.signoz`**                                          | Low    | 1h     | Tech Debt      |
+| 20 | **Hermes git remote SSH deploy key**                                                | Medium | 30 min | Services       |
+| 21 | **Monitor GLM-5.1 rate limit recovery**                                             | Medium | 15 min | Verify         |
+| 22 | **Convert go-auto-upgrade `path:` inputs to SSH**                                   | Low    | 30 min | Maintenance    |
+| 23 | **Create shared flake-parts template**                                              | Medium | 2h     | DX             |
+| 24 | **Verify boot time** (~35s target)                                                  | Low    | 5 min  | Verify         |
+| 25 | **`art-duplOverlay` cleanup** — remove templ vendor surgery when nixpkgs catches up | Low    | 30 min | Maintenance    |
 
 ---
 

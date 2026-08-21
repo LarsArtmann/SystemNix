@@ -157,12 +157,14 @@
 ## f) Up to 50 Things to Get Done Next
 
 ### Critical (blocks correctness)
+
 1. Run `go mod tidy` in mr-sync to clean go.sum stale v0.4.0 entries
 2. Run `go mod vendor` in mr-sync to regenerate vendor/ with v0.4.1 (removes manual patch)
 3. Verify deployed SystemNix generation matches latest commits (deploy generation mismatch gotcha)
 4. Investigate the 3 deploy smoke test FAILs (SigNoz provision, etc.)
 
 ### High Priority
+
 5. Identify and document the auto-commit daemon (BuildFlow?) in AGENTS.md
 6. Audit ALL LarsArtmann repo flake.locks for SSH URLs (now that insteadOf is removed)
 7. Annotate prior session report `2026-07-29_15-49_*` with resolution status
@@ -171,6 +173,7 @@
 10. Run `nix flake check --no-build` on ALL LarsArtmann repos after insteadOf removal
 
 ### Medium Priority
+
 11. Convert remaining SSH flake inputs in mr-sync's transitive deps (if any remain after lock recreation)
 12. Add a CI check / pre-commit hook that rejects SSH URLs in flake.lock
 13. Run `go mod tidy` + `go mod vendor` in ALL LarsArtmann repos to clean up stale entries
@@ -183,6 +186,7 @@
 20. Update SystemNix's mr-sync input if a new tag is cut
 
 ### Low Priority / Cleanup
+
 21. Clean up the stale status report files in `docs/status/` that reference resolved issues
 22. Add `flake.lock` to a `.gitignore` for repos where it shouldn't be committed (or keep committing but document the daemon behavior)
 23. Consider adding `--no-update-lock-file` to SystemNix's deploy script for nix build calls

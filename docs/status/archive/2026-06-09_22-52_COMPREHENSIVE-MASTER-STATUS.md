@@ -175,48 +175,48 @@ SystemNix is a **mature, production Nix configuration** managing 2 daily-driver 
 
 ### Priority 0: IMMEDIATE (Safety & Deployment)
 
-| #   | Task                                                                      | Why                                                                                   | Effort |
-| --- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------ |
-| 1   | **Push 4 unpushed commits to origin**                                     | Risk of data loss if local disk fails                                                 | 1 min  |
-| 2   | **Deploy & verify on evo-x2** (`just switch`)                             | Caddy manifest fix, Monitor365 vhost, Homepage tiles — all committed but not deployed | 10 min |
-| 3   | **Verify Manifest auth** — confirm login works without Pocket ID redirect | Just changed from protectedVHost to plain proxy                                       | 2 min  |
-| 4   | **Verify Monitor365 at `monitor.home.lan`**                               | New vhost, needs TLS cert and Pocket ID forward auth test                             | 2 min  |
-| 5   | **Verify Homepage dynamic tiles** — no stale tiles for disabled services  | New conditional rendering                                                             | 2 min  |
+| # | Task                                                                      | Why                                                                                   | Effort |
+| - | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------ |
+| 1 | **Push 4 unpushed commits to origin**                                     | Risk of data loss if local disk fails                                                 | 1 min  |
+| 2 | **Deploy & verify on evo-x2** (`just switch`)                             | Caddy manifest fix, Monitor365 vhost, Homepage tiles — all committed but not deployed | 10 min |
+| 3 | **Verify Manifest auth** — confirm login works without Pocket ID redirect | Just changed from protectedVHost to plain proxy                                       | 2 min  |
+| 4 | **Verify Monitor365 at `monitor.home.lan`**                               | New vhost, needs TLS cert and Pocket ID forward auth test                             | 2 min  |
+| 5 | **Verify Homepage dynamic tiles** — no stale tiles for disabled services  | New conditional rendering                                                             | 2 min  |
 
 ### Priority 1: QUICK WINS (< 30 min each)
 
-| #   | Task                                                                             | Why                                                          | Effort |
-| --- | -------------------------------------------------------------------------------- | ------------------------------------------------------------ | ------ |
-| 6   | **Add Gatus endpoint for Overview**                                              | Health check coverage gap                                    | 5 min  |
-| 7   | **Add Gatus endpoint for crush-daily**                                           | Health check coverage gap                                    | 5 min  |
-| 8   | **Drop stale git stash** (`git stash drop`)                                      | `stash@{0}` is old PMA WIP, confusing                        | 1 min  |
-| 9   | **Update FEATURES.md** — add Overview, Manifest auth fix, Monitor365 server mode | Docs out of date                                             | 15 min |
-| 10  | **Archive old status reports** — move pre-June to `archive/`                     | 130+ files cluttering `docs/status/`                         | 5 min  |
-| 11  | **Bind Monitor365 server to `127.0.0.1`**                                        | Currently `0.0.0.0`, Caddy proxies anyway — defense in depth | 5 min  |
+| #  | Task                                                                             | Why                                                          | Effort |
+| -- | -------------------------------------------------------------------------------- | ------------------------------------------------------------ | ------ |
+| 6  | **Add Gatus endpoint for Overview**                                              | Health check coverage gap                                    | 5 min  |
+| 7  | **Add Gatus endpoint for crush-daily**                                           | Health check coverage gap                                    | 5 min  |
+| 8  | **Drop stale git stash** (`git stash drop`)                                      | `stash@{0}` is old PMA WIP, confusing                        | 1 min  |
+| 9  | **Update FEATURES.md** — add Overview, Manifest auth fix, Monitor365 server mode | Docs out of date                                             | 15 min |
+| 10 | **Archive old status reports** — move pre-June to `archive/`                     | 130+ files cluttering `docs/status/`                         | 5 min  |
+| 11 | **Bind Monitor365 server to `127.0.0.1`**                                        | Currently `0.0.0.0`, Caddy proxies anyway — defense in depth | 5 min  |
 
 ### Priority 2: IMPORTANT (1-2 hours each)
 
-| #   | Task                                                       | Why                                                                 | Effort               |
-| --- | ---------------------------------------------------------- | ------------------------------------------------------------------- | -------------------- |
-| 12  | **Hermes deploy key installation**                         | Hermes can't reach git remotes, manual step documented but not done | 15 min               |
-| 13  | **Hermes OpenAI fallback key**                             | Add API key to sops, set fallback model                             | 15 min               |
-| 14  | **BTRFS `/data` migration** (`just snapshot-migrate-data`) | Cannot snapshot `/data` — single biggest data loss risk             | 30 min + downtime    |
-| 15  | **Pocket ID declarative OIDC clients**                     | Plan exists, eliminates manual client setup                         | 2 hours              |
-| 16  | **PhotoMap podman fix**                                    | Disabled due to podman config permission issue                      | 1 hour investigation |
+| #  | Task                                                       | Why                                                                 | Effort               |
+| -- | ---------------------------------------------------------- | ------------------------------------------------------------------- | -------------------- |
+| 12 | **Hermes deploy key installation**                         | Hermes can't reach git remotes, manual step documented but not done | 15 min               |
+| 13 | **Hermes OpenAI fallback key**                             | Add API key to sops, set fallback model                             | 15 min               |
+| 14 | **BTRFS `/data` migration** (`just snapshot-migrate-data`) | Cannot snapshot `/data` — single biggest data loss risk             | 30 min + downtime    |
+| 15 | **Pocket ID declarative OIDC clients**                     | Plan exists, eliminates manual client setup                         | 2 hours              |
+| 16 | **PhotoMap podman fix**                                    | Disabled due to podman config permission issue                      | 1 hour investigation |
 
 ### Priority 3: STRATEGIC (Half-day+)
 
-| #   | Task                                                                       | Why                                                              | Effort                |
-| --- | -------------------------------------------------------------------------- | ---------------------------------------------------------------- | --------------------- |
-| 17  | **Darwin Home Manager parity** — terminal, editor, theme                   | 7-line config vs full NixOS HM. UX inconsistency across machines | Half day              |
-| 18  | **Darwin disk automation** — scheduled nix-collect-garbage timer           | 90-95% full causes build failures                                | 1 hour                |
-| 19  | **Pi 3 DNS failover provisioning**                                         | Hardware needed, but module is ready                             | Hardware + 2 hours    |
-| 20  | **Dozzle module eval fix** — investigate nix flake check failure           | Inline config is a code smell                                    | 2 hours investigation |
-| 21  | **Backup automation for non-DB state** — Caddy certs, sops files, /var/lib | BTRFS snapshots only, no offsite                                 | Half day              |
-| 22  | **Automated flake update CI** — GitHub Action for `nix flake update` PRs   | Manual process, easy to forget                                   | 2 hours               |
-| 23  | **Voice agents re-enablement**                                             | LiveKit + Whisper disabled, no immediate need but module exists  | 1 hour                |
-| 24  | **file-and-image-renamer re-enablement**                                   | Blocked on Go 1.26.3 in nixpkgs — watch for nixpkgs update       | 5 min once Go bumps   |
-| 25  | **Immich ML model optimization**                                           | Default models, could be faster with tuned models                | Half day research     |
+| #  | Task                                                                       | Why                                                              | Effort                |
+| -- | -------------------------------------------------------------------------- | ---------------------------------------------------------------- | --------------------- |
+| 17 | **Darwin Home Manager parity** — terminal, editor, theme                   | 7-line config vs full NixOS HM. UX inconsistency across machines | Half day              |
+| 18 | **Darwin disk automation** — scheduled nix-collect-garbage timer           | 90-95% full causes build failures                                | 1 hour                |
+| 19 | **Pi 3 DNS failover provisioning**                                         | Hardware needed, but module is ready                             | Hardware + 2 hours    |
+| 20 | **Dozzle module eval fix** — investigate nix flake check failure           | Inline config is a code smell                                    | 2 hours investigation |
+| 21 | **Backup automation for non-DB state** — Caddy certs, sops files, /var/lib | BTRFS snapshots only, no offsite                                 | Half day              |
+| 22 | **Automated flake update CI** — GitHub Action for `nix flake update` PRs   | Manual process, easy to forget                                   | 2 hours               |
+| 23 | **Voice agents re-enablement**                                             | LiveKit + Whisper disabled, no immediate need but module exists  | 1 hour                |
+| 24 | **file-and-image-renamer re-enablement**                                   | Blocked on Go 1.26.3 in nixpkgs — watch for nixpkgs update       | 5 min once Go bumps   |
+| 25 | **Immich ML model optimization**                                           | Default models, could be faster with tuned models                | Half day research     |
 
 ---
 

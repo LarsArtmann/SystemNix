@@ -6,7 +6,6 @@
 
 ---
 
-
 ## A) FULLY DONE
 
 1. **Skill loaded:** `nix-review` SKILL.md + `references/common-problems.md` + `references/best-practices.md` — full checklist applied

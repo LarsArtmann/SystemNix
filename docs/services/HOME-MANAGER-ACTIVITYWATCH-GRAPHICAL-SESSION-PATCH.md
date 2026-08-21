@@ -10,17 +10,17 @@ The Home Manager `services.activitywatch` module generates a systemd **user** se
 
 Add a per-watcher `requiresGraphicalSession` boolean (default `false`, backward compatible). When enabled, the generated service is ordered `After` and bound to the lifetime of (`PartOf`) `graphical-session.target`, so it starts only once the compositor is ready and is stopped together with the session.
 
-| Changed file                          | Change                                                                                          |
-| ------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `modules/services/activitywatch.nix`   | New `requiresGraphicalSession` option on the watcher submodule + conditional `After`/`PartOf`    |
+| Changed file                         | Change                                                                                        |
+| ------------------------------------ | --------------------------------------------------------------------------------------------- |
+| `modules/services/activitywatch.nix` | New `requiresGraphicalSession` option on the watcher submodule + conditional `After`/`PartOf` |
 
 Non-graphical watchers (`aw-watcher-afk`, `aw-watcher-utilization`, …) are unaffected — `requiresGraphicalSession` defaults to `false`.
 
 ## Files
 
-| File                                                  | Purpose                                                |
-| ----------------------------------------------------- | ------------------------------------------------------ |
-| `home-manager-activitywatch-graphical-session.patch`  | Git patch against `home-manager` `modules/services/activitywatch.nix` |
+| File                                                 | Purpose                                                               |
+| ---------------------------------------------------- | --------------------------------------------------------------------- |
+| `home-manager-activitywatch-graphical-session.patch` | Git patch against `home-manager` `modules/services/activitywatch.nix` |
 
 ## Base commit
 

@@ -152,48 +152,48 @@
 
 ### Tier 1: Immediate (today, <30 min each)
 
-| #   | Task                                                                                                                            | Effort | Impact                                        |
-| --- | ------------------------------------------------------------------------------------------------------------------------------- | ------ | --------------------------------------------- |
-| 1   | Finish `writeShellScript` → `writeShellApplication` migration (forgejo.nix: 8 scripts)                                          | 30 min | Consistency, shellcheck on all scripts        |
-| 2   | Finish migration (waybar.nix: 7 scripts)                                                                                        | 20 min | Consistency, shellcheck                       |
-| 3   | Finish migration (dual-wan, dns-blocker, monitor365, niri-wrapped, taskwarrior, ai-stack)                                       | 30 min | Consistency, shellcheck                       |
-| 4   | Investigate `monitor365-server` failure — check logs and fix                                                                    | 10 min | Real service failure hidden by previous noise |
-| 5   | Convert external `.sh` scripts to `writeShellApplication` (service-health-check, dns-update, deploy, validate, dns-diagnostics) | 30 min | Complete migration                            |
+| # | Task                                                                                                                            | Effort | Impact                                        |
+| - | ------------------------------------------------------------------------------------------------------------------------------- | ------ | --------------------------------------------- |
+| 1 | Finish `writeShellScript` → `writeShellApplication` migration (forgejo.nix: 8 scripts)                                          | 30 min | Consistency, shellcheck on all scripts        |
+| 2 | Finish migration (waybar.nix: 7 scripts)                                                                                        | 20 min | Consistency, shellcheck                       |
+| 3 | Finish migration (dual-wan, dns-blocker, monitor365, niri-wrapped, taskwarrior, ai-stack)                                       | 30 min | Consistency, shellcheck                       |
+| 4 | Investigate `monitor365-server` failure — check logs and fix                                                                    | 10 min | Real service failure hidden by previous noise |
+| 5 | Convert external `.sh` scripts to `writeShellApplication` (service-health-check, dns-update, deploy, validate, dns-diagnostics) | 30 min | Complete migration                            |
 
 ### Tier 2: This Week (<2 hr each)
 
-| #   | Task                                                                    | Effort | Impact                                       |
-| --- | ----------------------------------------------------------------------- | ------ | -------------------------------------------- |
-| 6   | Move `todo-list-ai` bun FOD hash management to upstream repo            | 30 min | Eliminates most fragile hash in SystemNix    |
-| 7   | Move `dnsblockd` vendorHash to upstream repo                            | 15 min | Eliminates linux.nix hardcode                |
-| 8   | Move `file-and-image-renamer` vendorHash to upstream repo               | 15 min | Eliminates linux.nix hardcode + anti-pattern |
-| 9   | Fix PMA go.work: `go 1.26.2` → `go 1.26.3`                              | 2 min  | Unblocks local golangci-lint                 |
-| 10  | Publish git tags for go-output submodules (9 tags)                      | 10 min | Enables PMA overrideModAttrs removal         |
-| 11  | Remove PMA `overrideModAttrs` after tags exist                          | 15 min | Eliminates anti-pattern                      |
-| 12  | Add GitHub Actions CI: `nix flake check --no-build` on push             | 30 min | Catch eval errors pre-deploy                 |
-| 13  | Auto-generate `service-health-check` service list from enabled services | 1 hr   | Never rots again                             |
+| #  | Task                                                                    | Effort | Impact                                       |
+| -- | ----------------------------------------------------------------------- | ------ | -------------------------------------------- |
+| 6  | Move `todo-list-ai` bun FOD hash management to upstream repo            | 30 min | Eliminates most fragile hash in SystemNix    |
+| 7  | Move `dnsblockd` vendorHash to upstream repo                            | 15 min | Eliminates linux.nix hardcode                |
+| 8  | Move `file-and-image-renamer` vendorHash to upstream repo               | 15 min | Eliminates linux.nix hardcode + anti-pattern |
+| 9  | Fix PMA go.work: `go 1.26.2` → `go 1.26.3`                              | 2 min  | Unblocks local golangci-lint                 |
+| 10 | Publish git tags for go-output submodules (9 tags)                      | 10 min | Enables PMA overrideModAttrs removal         |
+| 11 | Remove PMA `overrideModAttrs` after tags exist                          | 15 min | Eliminates anti-pattern                      |
+| 12 | Add GitHub Actions CI: `nix flake check --no-build` on push             | 30 min | Catch eval errors pre-deploy                 |
+| 13 | Auto-generate `service-health-check` service list from enabled services | 1 hr   | Never rots again                             |
 
 ### Tier 3: Architecture (this sprint)
 
-| #   | Task                                                                  | Effort | Impact                                     |
-| --- | --------------------------------------------------------------------- | ------ | ------------------------------------------ |
-| 14  | Redesign `mkPreparedSource` to auto-generate `require` lines          | 2 hr   | Eliminates manual postPatchExtra sed hacks |
-| 15  | Add `mkPackageOverlay` platform filtering (skip Linux-only on Darwin) | 1 hr   | Cleaner overlay separation                 |
-| 16  | Convert `/data` BTRFS from toplevel to `@data` subvolume              | 30 min | Enables /data snapshots                    |
-| 17  | Add Gatus health checks for all services                              | 1 hr   | Full observability                         |
-| 18  | Audit all services for `WatchdogSec` misuse                           | 30 min | Correctness                                |
-| 19  | Centralize Docker image tags in `lib/`                                | 2 hr   | Single source of truth                     |
+| #  | Task                                                                  | Effort | Impact                                     |
+| -- | --------------------------------------------------------------------- | ------ | ------------------------------------------ |
+| 14 | Redesign `mkPreparedSource` to auto-generate `require` lines          | 2 hr   | Eliminates manual postPatchExtra sed hacks |
+| 15 | Add `mkPackageOverlay` platform filtering (skip Linux-only on Darwin) | 1 hr   | Cleaner overlay separation                 |
+| 16 | Convert `/data` BTRFS from toplevel to `@data` subvolume              | 30 min | Enables /data snapshots                    |
+| 17 | Add Gatus health checks for all services                              | 1 hr   | Full observability                         |
+| 18 | Audit all services for `WatchdogSec` misuse                           | 30 min | Correctness                                |
+| 19 | Centralize Docker image tags in `lib/`                                | 2 hr   | Single source of truth                     |
 
 ### Tier 4: Nice to Have
 
-| #   | Task                                                                                  | Effort | Impact                          |
-| --- | ------------------------------------------------------------------------------------- | ------ | ------------------------------- |
-| 20  | Add `just test` to GitHub Actions (full build)                                        | 1 hr   | Complete CI coverage            |
-| 21  | Create `modules/nixos/services/` README with conventions                              | 15 min | Onboarding                      |
-| 22  | Benchmark flake eval time before/after auto-discovery                                 | 10 min | Performance baseline            |
-| 23  | Add `# @module <name>` convention to replace file parsing in auto-discovery           | 1 hr   | Faster eval, more explicit      |
-| 24  | Add runtime secret validation for other critical secrets (pattern from cookie_secret) | 1 hr   | Prevents bad secret deployments |
-| 25  | Textfile collectors: dedicated `node-exporter` user instead of world-writable 1777    | 30 min | Better security posture         |
+| #  | Task                                                                                  | Effort | Impact                          |
+| -- | ------------------------------------------------------------------------------------- | ------ | ------------------------------- |
+| 20 | Add `just test` to GitHub Actions (full build)                                        | 1 hr   | Complete CI coverage            |
+| 21 | Create `modules/nixos/services/` README with conventions                              | 15 min | Onboarding                      |
+| 22 | Benchmark flake eval time before/after auto-discovery                                 | 10 min | Performance baseline            |
+| 23 | Add `# @module <name>` convention to replace file parsing in auto-discovery           | 1 hr   | Faster eval, more explicit      |
+| 24 | Add runtime secret validation for other critical secrets (pattern from cookie_secret) | 1 hr   | Prevents bad secret deployments |
+| 25 | Textfile collectors: dedicated `node-exporter` user instead of world-writable 1777    | 30 min | Better security posture         |
 
 ---
 

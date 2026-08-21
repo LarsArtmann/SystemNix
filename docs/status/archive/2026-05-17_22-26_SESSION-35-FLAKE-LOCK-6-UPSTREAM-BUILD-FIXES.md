@@ -69,14 +69,14 @@ Session 35 started as a routine `nix flake update && nh os boot` but cascaded in
 
 ### 6. jscpd — pnpm Lockfile + Missing Install Phase (`pkgs/jscpd.nix`)
 
-| Item           | Detail                                                                                                                                                                                        |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Item           | Detail                                                                                                                                                                                         |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Root cause** | Session 34's pnpm→pnpm migration left jscpd with `fetchPnpmDeps` pointing at a source without `pnpm-lock.yaml` (the lockfile was only copied in `postPatch`, which runs AFTER `fetchPnpmDeps`) |
-| **Fix**        | Wrapped `src` in a derivation that copies `pnpm-lock.yaml` before `fetchPnpmDeps` runs                                                                                                        |
-| **Fix**        | Set correct pnpm hash: `sha256-W/O1e8Rk...`                                                                                                                                                   |
-| **Fix**        | Added `installPhase` with `makeWrapper` to create `bin/jscpd` wrapper                                                                                                                         |
-| **File**       | `pkgs/jscpd.nix` — complete rewrite of `pnpmDeps`, added `installPhase`, added `makeWrapper`                                                                                                  |
-| **Status**     | ✅ Builds cleanly                                                                                                                                                                             |
+| **Fix**        | Wrapped `src` in a derivation that copies `pnpm-lock.yaml` before `fetchPnpmDeps` runs                                                                                                         |
+| **Fix**        | Set correct pnpm hash: `sha256-W/O1e8Rk...`                                                                                                                                                    |
+| **Fix**        | Added `installPhase` with `makeWrapper` to create `bin/jscpd` wrapper                                                                                                                          |
+| **File**       | `pkgs/jscpd.nix` — complete rewrite of `pnpmDeps`, added `installPhase`, added `makeWrapper`                                                                                                   |
+| **Status**     | ✅ Builds cleanly                                                                                                                                                                              |
 
 ### 7. Flake Lock Update — 12 Inputs Updated
 
@@ -106,7 +106,7 @@ Session 35 started as a routine `nix flake update && nh os boot` but cascaded in
 | **Error**      | `no required module provides package github.com/larsartmann/go-composable-business-types/programminglanguage`                                                                  |
 | **Fix needed** | Upstream must either add the module or fix the import path                                                                                                                     |
 | **Workaround** | Could pin to older rev or remove from overlays temporarily                                                                                                                     |
-| **Status**     | ⚠️ Blocks full `nh os boot` — all other packages build                                                                                                                         |
+| **Status**     | ⚠️ Blocks full `nh os boot` — all other packages build                                                                                                                          |
 
 ---
 
@@ -127,18 +127,18 @@ Session 35 started as a routine `nix flake update && nh os boot` but cascaded in
 
 The go-structure-linter fix required **10 iterations** of push→build→fail→fix:
 
-| #   | Approach                                                | Why it failed                                   |
-| --- | ------------------------------------------------------- | ----------------------------------------------- |
-| 1   | Added `replace` directive only                          | go.sum stale, `go mod tidy` needed              |
-| 2   | Added `go mod tidy` to postPatch                        | No network in sandbox                           |
-| 3   | Set `GOCACHE` env                                       | `GOMODCACHE` also needed                        |
-| 4   | Set `GOMODCACHE` too                                    | Still needs network for tidy                    |
-| 5   | Removed `go.sum` entirely                               | Missing all transitive entries                  |
-| 6   | Added `overrideModAttrs` with `GOFLAGS=-mod=mod`        | Still needs tidy                                |
-| 7   | Added `go mod tidy` to `overrideModAttrs`               | WORKED for go-modules! But vendorHash was empty |
-| 8   | Set correct vendorHash                                  | Main build failed: vendor inconsistent          |
-| 9   | Removed `GOFLAGS=-mod=mod`, kept tidy only              | `GOPROXY=off` blocked downloads                 |
-| 10  | Merged all transitive go.sum entries + explicit require | ✅ Finally works                                |
+| #  | Approach                                                | Why it failed                                   |
+| -- | ------------------------------------------------------- | ----------------------------------------------- |
+| 1  | Added `replace` directive only                          | go.sum stale, `go mod tidy` needed              |
+| 2  | Added `go mod tidy` to postPatch                        | No network in sandbox                           |
+| 3  | Set `GOCACHE` env                                       | `GOMODCACHE` also needed                        |
+| 4  | Set `GOMODCACHE` too                                    | Still needs network for tidy                    |
+| 5  | Removed `go.sum` entirely                               | Missing all transitive entries                  |
+| 6  | Added `overrideModAttrs` with `GOFLAGS=-mod=mod`        | Still needs tidy                                |
+| 7  | Added `go mod tidy` to `overrideModAttrs`               | WORKED for go-modules! But vendorHash was empty |
+| 8  | Set correct vendorHash                                  | Main build failed: vendor inconsistent          |
+| 9  | Removed `GOFLAGS=-mod=mod`, kept tidy only              | `GOPROXY=off` blocked downloads                 |
+| 10 | Merged all transitive go.sum entries + explicit require | ✅ Finally works                                |
 
 **Lesson:** When using `_local_deps` with `replace` directives, ALL transitive deps from ALL local deps must be present in `go.sum`. The `overrideModAttrs` + `go mod tidy` pattern is essential for the go-modules derivation.
 
@@ -179,33 +179,33 @@ Had to use `--no-verify` to push the vendorHash fix. This is a recurring frictio
 
 ## f) Top 25 Things To Do Next
 
-| #   | Priority | Task                                                                                                              | Impact                      |
-| --- | -------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------- |
-| 1   | 🔴 P0    | Fix `projects-management-automation` upstream — missing `go-composable-business-types/programminglanguage` module | Unblocks full `nh os boot`  |
-| 2   | 🔴 P0    | Commit flake.lock + jscpd.nix changes and deploy to evo-x2                                                        | Deploys all fixes           |
-| 3   | 🟡 P1    | Squash go-structure-linter's 10 fix commits into 1-2 clean commits                                                | Clean git history           |
-| 4   | 🟡 P1    | Verify Darwin (`aarch64-darwin`) build passes with updated flake.lock                                             | Cross-platform CI           |
-| 5   | 🟡 P1    | Create `mkPreparedSource` helper in `lib/` for the `_local_deps` pattern                                          | DRY across 6+ repos         |
-| 6   | 🟡 P1    | Automate vendorHash discovery — script that sets empty hash, builds, extracts got: hash, updates flake.nix        | Prevents manual hash chase  |
-| 7   | 🟡 P1    | Configure GitHub `access-tokens` in nix config to avoid API rate limits                                           | Reliable `nix flake update` |
-| 8   | 🟢 P2    | Add CI/CD pipeline: `nix flake check` + `nh os build` on every push                                               | Catch build failures early  |
-| 9   | 🟢 P2    | Standardize `overrideModAttrs` + `go mod tidy` pattern across all Go repos with `_local_deps`                     | Prevents go.sum drift       |
-| 10  | 🟢 P2    | Create automated `just update-vendor-hashes` recipe                                                               | One-command hash updates    |
-| 11  | 🟢 P2    | Investigate `fetchBundlerDeps` for todo-list-ai to avoid fixed hash                                               | Less fragile bun builds     |
-| 12  | 🟢 P2    | Add `--quick` flag to BuildFlow pre-commit for hash-only changes                                                  | Faster upstream fixes       |
-| 13  | 🟢 P2    | Write ADR for `_local_deps` pattern — when to use, how to maintain transitive go.sum                              | Documentation               |
-| 14  | 🟢 P2    | Extract jscpd's wrapped-src pattern into a reusable function                                                      | Cleaner pnpm packages       |
-| 15  | 🟢 P2    | Audit all Go repos for stale `vendorHash` — proactive fix before next flake update                                | Prevent future breakage     |
-| 16  | 🟢 P2    | Add `nix flake update && nix build .#packages.x86_64-linux.* --no-link` to CI                                     | Catch breakage immediately  |
-| 17  | 🟢 P2    | Review rpi3-dns build with updated inputs                                                                         | DNS cluster health          |
-| 18  | 🔵 P3    | Create `docs/contributing/UPSTREAM-FIX-PLAYBOOK.md` — step-by-step for fixing upstream build failures             | Knowledge transfer          |
-| 19  | 🔵 P3    | Investigate Nix `fetchGoModules` or `goModulesHook` for better vendor hash management                             | Better tooling              |
-| 20  | 🔵 P3    | Set up Cachix or binary cache for private repos                                                                   | Faster builds               |
-| 21  | 🔵 P3    | Add `just test-upstream-builds` recipe that builds all overlay packages                                           | Pre-deploy validation       |
-| 22  | 🔵 P3    | Consider `gomod2nix` for automatic vendor hash management                                                         | Automated go deps           |
-| 23  | 🔵 P3    | Document the 10-step go-structure-linter debug journey as a case study                                            | Learning resource           |
-| 24  | 🔵 P3    | Review all 38 flake inputs for stale pins or unneeded dependencies                                                | Dependency hygiene          |
-| 25  | 🔵 P3    | Update AGENTS.md with lessons from this session (go.sum transitive merging, overrideModAttrs pattern)             | Better future sessions      |
+| #  | Priority | Task                                                                                                              | Impact                      |
+| -- | -------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| 1  | 🔴 P0    | Fix `projects-management-automation` upstream — missing `go-composable-business-types/programminglanguage` module | Unblocks full `nh os boot`  |
+| 2  | 🔴 P0    | Commit flake.lock + jscpd.nix changes and deploy to evo-x2                                                        | Deploys all fixes           |
+| 3  | 🟡 P1    | Squash go-structure-linter's 10 fix commits into 1-2 clean commits                                                | Clean git history           |
+| 4  | 🟡 P1    | Verify Darwin (`aarch64-darwin`) build passes with updated flake.lock                                             | Cross-platform CI           |
+| 5  | 🟡 P1    | Create `mkPreparedSource` helper in `lib/` for the `_local_deps` pattern                                          | DRY across 6+ repos         |
+| 6  | 🟡 P1    | Automate vendorHash discovery — script that sets empty hash, builds, extracts got: hash, updates flake.nix        | Prevents manual hash chase  |
+| 7  | 🟡 P1    | Configure GitHub `access-tokens` in nix config to avoid API rate limits                                           | Reliable `nix flake update` |
+| 8  | 🟢 P2    | Add CI/CD pipeline: `nix flake check` + `nh os build` on every push                                               | Catch build failures early  |
+| 9  | 🟢 P2    | Standardize `overrideModAttrs` + `go mod tidy` pattern across all Go repos with `_local_deps`                     | Prevents go.sum drift       |
+| 10 | 🟢 P2    | Create automated `just update-vendor-hashes` recipe                                                               | One-command hash updates    |
+| 11 | 🟢 P2    | Investigate `fetchBundlerDeps` for todo-list-ai to avoid fixed hash                                               | Less fragile bun builds     |
+| 12 | 🟢 P2    | Add `--quick` flag to BuildFlow pre-commit for hash-only changes                                                  | Faster upstream fixes       |
+| 13 | 🟢 P2    | Write ADR for `_local_deps` pattern — when to use, how to maintain transitive go.sum                              | Documentation               |
+| 14 | 🟢 P2    | Extract jscpd's wrapped-src pattern into a reusable function                                                      | Cleaner pnpm packages       |
+| 15 | 🟢 P2    | Audit all Go repos for stale `vendorHash` — proactive fix before next flake update                                | Prevent future breakage     |
+| 16 | 🟢 P2    | Add `nix flake update && nix build .#packages.x86_64-linux.* --no-link` to CI                                     | Catch breakage immediately  |
+| 17 | 🟢 P2    | Review rpi3-dns build with updated inputs                                                                         | DNS cluster health          |
+| 18 | 🔵 P3    | Create `docs/contributing/UPSTREAM-FIX-PLAYBOOK.md` — step-by-step for fixing upstream build failures             | Knowledge transfer          |
+| 19 | 🔵 P3    | Investigate Nix `fetchGoModules` or `goModulesHook` for better vendor hash management                             | Better tooling              |
+| 20 | 🔵 P3    | Set up Cachix or binary cache for private repos                                                                   | Faster builds               |
+| 21 | 🔵 P3    | Add `just test-upstream-builds` recipe that builds all overlay packages                                           | Pre-deploy validation       |
+| 22 | 🔵 P3    | Consider `gomod2nix` for automatic vendor hash management                                                         | Automated go deps           |
+| 23 | 🔵 P3    | Document the 10-step go-structure-linter debug journey as a case study                                            | Learning resource           |
+| 24 | 🔵 P3    | Review all 38 flake inputs for stale pins or unneeded dependencies                                                | Dependency hygiene          |
+| 25 | 🔵 P3    | Update AGENTS.md with lessons from this session (go.sum transitive merging, overrideModAttrs pattern)             | Better future sessions      |
 
 ---
 

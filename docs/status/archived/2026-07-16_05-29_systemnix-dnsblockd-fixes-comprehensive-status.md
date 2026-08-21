@@ -7,7 +7,6 @@
 
 ---
 
-
 ## TL;DR
 
 Round 1 bumped the lock and exposed 8 config keys but made two dangerous mistakes
