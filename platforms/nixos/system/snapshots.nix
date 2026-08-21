@@ -81,8 +81,12 @@ in
       onCalendar = "23:00";
       snapshotOnly = false;
       settings = {
-        snapshot_preserve_min = "7d";
-        snapshot_preserve = "14d 4w";
+        # LOCAL retention ~1/4 of the old policy (was 14d 4w, user decision
+        # 2026-08-21): snapshots pin deleted extents on the space-tight QLC
+        # NVMe; local tier only needs rollback + incremental-send-parent duty.
+        # The pool (below) is the real history tier.
+        snapshot_preserve_min = "2d";
+        snapshot_preserve = "3d 1w";
         # Received copies on the pool keep longer retention than the local
         # snapshots — the pool is the safety net, not scratch space.
         target_preserve_min = "7d";

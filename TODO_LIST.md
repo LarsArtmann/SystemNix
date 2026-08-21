@@ -248,6 +248,7 @@ _Extraction DONE: ~62.7 GB / 17.5k files verified on `/mnt/pool/backups/pixel6/2
 - [ ] **Re-evaluate oomd thresholds after reboot** — if 60%/30s proves insufficient, consider per-slice refinement. Watch `system_oomd_kills_total` + Twenty worker restarts
 - [ ] **HaGeZi blocklist refresh workflow** — lists track the GitLab mirror `main` with SRI-hash pinning; hashes must be refreshed periodically. Consider `scripts/update-dns-blocklists.sh` or scheduled bump
 - [ ] **ZFS-VM/QEMU legacy** — `pkgs/freebsd-zfs-vm.nix` + survey scripts kept for history; fold into the ZFS-scripts retirement item or delete with it
+- [ ] **Proper `@home` subvolume layout** — the empty install-residue `@home` (Dec 2025, never mounted) will be deleted; ONE day set up home as a real separate subvolume (own btrbk instance, own retention, snapshot/restore without root). Not now — requires a migration window + updating `hardware-configuration.nix` + btrbk config together
 
 ---
 
