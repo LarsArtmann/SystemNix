@@ -89,11 +89,11 @@
         "wise-go": "wise-go"
       },
       "locked": {
-        "lastModified": 1787296031,
-        "narHash": "sha256-2LXauqVvwHPrRReVwFOaqDMx/FlATNHxbmdkrb8SPqg=",
+        "lastModified": 1787350325,
+        "narHash": "sha256-d7wtLaCVEjxF70DC6TGFi6yGrxKshceGFVrpNi8WW7k=",
         "owner": "LarsArtmann",
         "repo": "bank-sync",
-        "rev": "5d7866fcaa690646ad18a15cb59d615de2f6233d",
+        "rev": "54849ebdb6b5d7868b7bfd9ee85c8ab89cf28377",
         "type": "github"
       },
       "original": {
@@ -1921,16 +1921,16 @@
     "go-cqrs-lite": {
       "flake": false,
       "locked": {
-        "lastModified": 1787078398,
-        "narHash": "sha256-nb9nhOSs4aJb+FpO1EL+vwYILKy9MWm5UJmIBS7DFWU=",
+        "lastModified": 1787343393,
+        "narHash": "sha256-wirkVGLe3G9B4oqC2RsV2M8LjxKG5qa2OdAgzUm/nCY=",
         "ref": "refs/heads/master",
-        "rev": "6bd510ea3816397a1a38799465c941ef01d919df",
-        "revCount": 5787,
+        "rev": "b017c739e9c7138a4e640db2c5fb91b9457ae5bb",
+        "revCount": 5788,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
       },
       "original": {
-        "rev": "6bd510ea3816397a1a38799465c941ef01d919df",
+        "rev": "b017c739e9c7138a4e640db2c5fb91b9457ae5bb",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
       }

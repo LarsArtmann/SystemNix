@@ -391,10 +391,10 @@ _: {
                   interval = "5m";
                   # HELP line is "# HELP system_signoz_alert_rules_healthy 1 if ..." — a bare
                   # pat(*metric 1*) would match the comment and stay green when the value is 0.
-                  # Negative glob: only passes when the value line is neither 0 nor absent.
+                  # Assert absence of the 0-value line plus presence of the metric instead.
                   conditions = [
-                    "[BODY] == pat(*!system_signoz_alert_rules_healthy 0*)"
-                    "[BODY] == pat(*system_signoz_alert_rules_healthy*)"
+                    "[BODY] != pat(*system_signoz_alert_rules_healthy 0\\n*)"
+                    "[BODY] == pat(*\\nsystem_signoz_alert_rules_healthy *)"
                   ];
                   alerts = discordAlert "SigNoz alert rules not provisioned — observability gap, no alerts will fire";
                 })
@@ -1042,13 +1042,13 @@ _: {
                   interval = "2m";
                   conditions = [
                     "[STATUS] == 200"
-                    # pat() is a GLOB over the whole /metrics body: the metric's HELP
-                    # comment ("# HELP system_lan_nic_present 1 if ...") itself contains
-                    # "system_lan_nic_present 1", so pat(*metric 1*) matches even when the
-                    # value is 0. Negative glob only passes when neither the 0-value line
-                    # nor an absent metric can satisfy it.
-                    "[BODY] == pat(*!system_lan_nic_present 0*)"
-                    "[BODY] == pat(*system_lan_nic_present*)"
+                    # pat() is a GLOB over the whole /metrics body and '!' is a LITERAL in
+                    # filepath.Match (no negation syntax): the metric's HELP comment
+                    # ("# HELP system_lan_nic_present 1 if ...") itself contains
+                    # "system_lan_nic_present 1", so pat(*metric 1*) stays green when the
+                    # value is 0. Assert the 0-value line is absent + the metric is present.
+                    "[BODY] != pat(*system_lan_nic_present 0\\n*)"
+                    "[BODY] == pat(*\\nsystem_lan_nic_present *)"
                   ];
                   alerts = discordAlert "LAN NIC (eno1 / RTL8125) is ABSENT from the bus — wired networking is DOWN (static IP + SSH unreachable). A warm reboot does NOT retrain it: POWER-CYCLE the machine (shut down, wait 10s, power on). Check: ls /sys/class/net/eno1, journalctl -k -b -1 | grep 10ec:8125, lspci | grep -i network";
                 })
@@ -1332,12 +1332,13 @@ _: {
                   interval = "5m";
                   conditions = [
                     "[STATUS] == 200"
-                    # pat() is a GLOB: HELP comments contain "metric 1", so assert with a
-                    # negative glob against the 0-value line + a presence check instead.
-                    "[BODY] == pat(*!buildcache_mounted 0*)"
-                    "[BODY] == pat(*buildcache_mounted*)"
-                    "[BODY] == pat(*!buildcache_smart_healthy 0*)"
-                    "[BODY] == pat(*buildcache_smart_healthy*)"
+                    # pat() is a GLOB: HELP comments contain "metric 1", so assert absence
+                    # of the 0-value line plus presence of the metric instead ('!' is a
+                    # literal in filepath.Match — no glob negation exists).
+                    "[BODY] != pat(*buildcache_mounted 0\\n*)"
+                    "[BODY] == pat(*\\nbuildcache_mounted *)"
+                    "[BODY] != pat(*buildcache_smart_healthy 0\\n*)"
+                    "[BODY] == pat(*\\nbuildcache_smart_healthy *)"
                   ];
                   alerts = discordAlert "Build cache SSD (/mnt/buildcache) unmounted or SMART-failing — go/cargo/pnpm builds will fail with missing-directory errors. Check: findmnt /mnt/buildcache, sudo smartctl -d sat -H /dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311. If the drive died: revert GOCACHE/GOMODCACHE in platforms/nixos/users/home.nix and rebuild caches on NVMe.";
                 })
@@ -1359,9 +1360,9 @@ _: {
                   interval = "5m";
                   conditions = [
                     "[STATUS] == 200"
-                    # HELP comment contains "pool_mounted 1" — negative glob + presence.
-                    "[BODY] == pat(*!pool_mounted 0*)"
-                    "[BODY] == pat(*pool_mounted*)"
+                    # HELP comment contains "pool_mounted 1" — absence-of-0 + presence.
+                    "[BODY] != pat(*pool_mounted 0\\n*)"
+                    "[BODY] == pat(*\\npool_mounted *)"
                   ];
                   alerts = discordAlert "Mirrored HDD pool (/mnt/pool) unmounted — immich + paperless data, ALL application backups, and the btrbk safety net are offline. Check: findmnt /mnt/pool, systemctl status mnt-pool.mount. If a DAS member died: the raid1 still serves from the other member; replace the drive and btrfs replace.";
                 })
