@@ -363,6 +363,31 @@ if $banksync_enabled; then
   else
     report_warn "Bank-Sync — bank_sync_profiles is 0: first sync may still be running, or the Wise token failed (journalctl -u bank-sync -n 50)"
   fi
+  # Invisible-outage guard: the dashboard above can be green while every
+  # sync cycle fails (2026-08: 129 consecutive sync errors, 0 transactions,
+  # dashboard fine). The unit was just restarted by the deploy, so the
+  # errors counter is process-fresh — nonzero means cycles are failing
+  # RIGHT NOW. Retry like the dashboard check: the first cycle may still
+  # be in flight when this runs.
+  banksync_errors_ok=false
+  for _attempt in 1 2 3 4 5 6; do
+    if grep -q '^bank_sync_sync_errors_total 0' <<<"$banksync_metrics"; then
+      banksync_errors_ok=true
+      break
+    fi
+    sleep 5
+    banksync_metrics=$(curl -s --compressed --max-time 10 "http://127.0.0.1:8097/metrics" 2>/dev/null || true)
+  done
+  if $banksync_errors_ok; then
+    report_pass "Bank-Sync — sync cycles clean (sync_errors_total 0)"
+  else
+    report_fail "Bank-Sync — sync cycles failing since restart (bank_sync_sync_errors_total > 0): journalctl -u bank-sync -n 100"
+  fi
+  if grep -q '^bank_sync_last_sync_timestamp_seconds' <<<"${banksync_metrics:-}"; then
+    report_pass "Bank-Sync — at least one sync succeeded (last-sync timestamp present)"
+  else
+    report_warn "Bank-Sync — no successful sync yet (last-sync timestamp absent): first cycle may still be running"
+  fi
 else
   report_skip "Bank-Sync — service disabled (units absent from systemd)"
 fi

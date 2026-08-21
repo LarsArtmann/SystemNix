@@ -7,8 +7,7 @@
 #   - Value-assertion failures (pat(*metric 0*) when value is non-zero)
 #
 # Uses a mock HTTP server serving canned Prometheus-format /metrics output.
-{ pkgs }:
-let
+{pkgs}: let
   # Canned /metrics output matching SystemNix textfile + node_exporter metrics.
   mockMetrics = pkgs.writeText "mock-metrics.prom" ''
     # HELP system_signoz_alert_rules_healthy SigNoz alert rules provisioned
@@ -49,11 +48,21 @@ let
     niri_running 1
     attic_storage_over_threshold 0
     system_gatus_endpoints_in_error_long 0
+    # bank-sync sync-health surface (mirrors the "Bank-Sync Sync Health"
+    # endpoint in gatus-config.nix): errors counter zero + last-sync
+    # timestamp present (that metric only renders after a successful sync —
+    # its absence is exactly the never-synced outage class).
+    # HELP bank_sync_sync_errors_total Total number of failed sync cycles.
+    # TYPE bank_sync_sync_errors_total counter
+    bank_sync_sync_errors_total 0
+    # HELP bank_sync_last_sync_timestamp_seconds Unix timestamp of last successful sync.
+    # TYPE bank_sync_last_sync_timestamp_seconds gauge
+    bank_sync_last_sync_timestamp_seconds 1760000000
   '';
 
   mockMetricsServer = pkgs.writeShellApplication {
     name = "mock-metrics-server";
-    runtimeInputs = [ pkgs.python3 ];
+    runtimeInputs = [pkgs.python3];
     text = ''
       python3 -c '
       import http.server
@@ -76,13 +85,12 @@ let
       '
     '';
   };
-in
-{
+in {
   name = "gatus-patterns";
 
-  nodes.machine = { lib, ... }: {
+  nodes.machine = {lib, ...}: {
     systemd.services.mock-metrics = {
-      wantedBy = [ "multi-user.target" ];
+      wantedBy = ["multi-user.target"];
       serviceConfig = {
         ExecStart = lib.getExe mockMetricsServer;
         Restart = "always";
@@ -143,6 +151,16 @@ in
               "[STATUS] == 200"
               "[BODY] == pat(*btrfs_scrub_status*)"
               "[BODY] == pat(*btrfs_scrub_error_free 1*)"
+            ];
+          }
+          {
+            name = "[TEST] Bank-Sync sync health (errors zero + ever synced)";
+            url = "http://127.0.0.1:9100/metrics";
+            interval = "5s";
+            conditions = [
+              "[STATUS] == 200"
+              "[BODY] == pat(*bank_sync_sync_errors_total 0*)"
+              "[BODY] == pat(*bank_sync_last_sync_timestamp_seconds*)"
             ];
           }
         ];
