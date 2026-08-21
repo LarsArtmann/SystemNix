@@ -87,6 +87,7 @@ in
       oidcIssuerURL = "https://auth.${domain}";
       oidcClientID = "dnsblockd";
       oidcRedirectURL = "https://dnsblock.${domain}/auth/oidc/callback";
+      oidcButtonText = "Sign in with Pocket ID";
 
       # Reverse-proxy temp-allowed domains so "Continue to site" works
       # without waiting for the browser's cached block IP to expire.
