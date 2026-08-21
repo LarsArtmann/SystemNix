@@ -213,9 +213,9 @@ check_local "Attic cache" "8200" "/" "200" 2>/dev/null || true
 # proxy ExecStart'd a binary nixpkgs doesn't build → exit 127 → start-limit-hit
 # → systemd deactivated the socket; endpoint refused connections for hours
 # while all liveness checks stayed green). Gatus must NOT probe this port
-# (every connection pins the 13.6 GB model for another keepAlive window), so
+# (every connection pins the 21.6 GB model for another keepAlive window), so
 # this deploy-time smoke is the sole functional gate. First connection after
-# idle-stop cold-loads the model (1-3 min) — max-time covers it.
+# idle-stop cold-loads the model (2-5 min) — max-time covers it.
 flm_enabled=false
 systemctl list-unit-files 'fastflowlm*' --no-legend 2>/dev/null | grep -q fastflowlm && flm_enabled=true
 

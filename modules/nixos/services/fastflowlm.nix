@@ -40,8 +40,8 @@
 #
 # WHY socket activation: the model is 21.6 GB mmap'd from /data (v1.0.2
 # re-quantized weights). Pinned in RAM
-# 24/7, it would reserve ~25 GB of the 94 GB CPU-visible pool at idle. That's
-# only affordable when the model is actually in use. Cold load is 1-3 min
+# 24/7, it would reserve ~30 GB of the 94 GB CPU-visible pool at idle. That's
+# only affordable when the model is actually in use. Cold load is 2-5 min
 # (acceptable for a background LLM); if it isn't, the warmCalendar option
 # pre-loads before work hours.
 #
