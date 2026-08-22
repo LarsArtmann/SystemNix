@@ -535,6 +535,30 @@ else
   SKIP=$((SKIP + 1))
 fi
 
+# ClickHouse XFS data mount: functional gate for the dedicated-partition
+# migration. Gated on the mount unit's existence (the AGENTS.md enable-gate
+# pattern: unit files present = deployed-enabled, is-enabled lies for units
+# pulled in via Requires). If the mount is deployed but NOT xfs (or absent),
+# clickhouse.service refused to start by design — catch it here, not in an
+# alert storm.
+if [ -e /etc/systemd/system/var-lib-clickhouse.mount ]; then
+  CH_FSTYPE="$(findmnt -no FSTYPE /var/lib/clickhouse 2>/dev/null || true)"
+  if [ "$CH_FSTYPE" = "xfs" ]; then
+    echo -e "${GREEN}PASS${NC} ClickHouse data mount is XFS (/var/lib/clickhouse)"
+    PASS=$((PASS + 1))
+  else
+    echo -e "${RED}FAIL${NC} /var/lib/clickhouse mounted as '${CH_FSTYPE:-nothing}' (expected xfs) — clickhouse.service is refusing to start by design (ConditionPathIsMountPoint). Check: systemctl status var-lib-clickhouse.mount, dmesg | grep -i xfs"
+    FAIL=$((FAIL + 1))
+  fi
+  if curl -sf --compressed --max-time 5 "http://127.0.0.1:8123/ping" 2>/dev/null | grep -q "Ok"; then
+    echo -e "${GREEN}PASS${NC} ClickHouse answering /ping on :8123 (running on the XFS mount)"
+    PASS=$((PASS + 1))
+  else
+    echo -e "${RED}FAIL${NC} ClickHouse not answering :8123/ping — stack down since the XFS migration deploy. Check: systemctl status clickhouse.service"
+    FAIL=$((FAIL + 1))
+  fi
+fi
+
 # SigNoz: impersonation mode must be active (auth delegated to Caddy + Pocket ID)
 if signoz_config=$(curl -s --compressed --max-time 5 "http://localhost:8080/api/v1/global/config" 2>/dev/null); then
   if echo "$signoz_config" | grep -q '"impersonation"'; then

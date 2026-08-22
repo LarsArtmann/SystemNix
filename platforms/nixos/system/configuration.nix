@@ -321,10 +321,6 @@ in
             firstName = "Lars";
             lastName = "Artmann";
           };
-          # TEMPORARY: dnsblockd OIDC client secret desynced after crash-recovery
-          # boots recreated the Pocket ID client but the secret file survived from
-          # before. Remove after the next successful deploy.
-          regenerateSecretsFor = [ "dnsblockd" ];
         };
       };
       oauth2-proxy-config.enable = true;

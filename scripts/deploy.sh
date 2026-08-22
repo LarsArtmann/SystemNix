@@ -197,6 +197,19 @@ if nix run .#pre-deploy-check; then
     sudo systemctl restart browser-history.service 2>/dev/null || true
   fi
 
+  # Restart dnsblockd AFTER dnsblockd-oidc-secret so a rotated Pocket ID client
+  # secret takes effect. The bridge oneshot is RemainAfterExit=true and only
+  # wantedBy=dnsblockd.service (is-enabled returns rc=1 for indirect units —
+  # the provisioner loop above skips it), and dnsblockd reads the env file via
+  # EnvironmentFile at process start only. Without this, a provisioner-rotated
+  # secret never reaches the running daemon (2026-08-22: dnsblockd SSO broken
+  # after a crash-recovery secret regeneration because neither unit restarted).
+  if systemctl is-active --quiet dnsblockd-oidc-secret.service 2>/dev/null; then
+    echo "Restarting dnsblockd-oidc-secret.service + dnsblockd.service (reload OIDC client secret)"
+    sudo systemctl restart dnsblockd-oidc-secret.service 2>/dev/null || true
+    sudo systemctl restart dnsblockd.service 2>/dev/null || true
+  fi
+
   # Heal garbled btrbk receive targets at deploy time (before the next nightly
   # window) — see snapshots.nix btrbk-pool-clean for why this must not race a
   # live send. --no-block: the unit's After= ordering makes it WAIT behind any

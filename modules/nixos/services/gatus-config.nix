@@ -1378,6 +1378,35 @@ _: {
                   alerts = discordAlert "Mirrored HDD pool exceeds 85% — review /mnt/pool usage: backups retention (30d 12w targets, forgejo zips 7d), archive/forensic-snapshots growth.";
                 })
               ]
+              ++ lib.optionals config.services.signoz.enable [
+                (mkHttpCheck {
+                  name = "ClickHouse Data Mount";
+                  group = "Filesystem";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    # pat() is a GLOB (HELP comments contain "clickhouse_xfs_mounted 1"):
+                    # assert absence of the 0-value line plus presence (buildcache pattern)
+                    "[BODY] != pat(*clickhouse_xfs_mounted 0\\n*)"
+                    "[BODY] == pat(*\\nclickhouse_xfs_mounted *)"
+                    "[BODY] != pat(*clickhouse_xfs_is_xfs 0\\n*)"
+                    "[BODY] == pat(*\\nclickhouse_xfs_is_xfs *)"
+                  ];
+                  alerts = discordAlert "ClickHouse XFS data mount (/var/lib/clickhouse) is unmounted, EIO-dead, or not XFS — clickhouse.service refuses to start by design (ConditionPathIsMountPoint, no telemetry written to the root fs). Observability ingestion is DOWN. Check: findmnt /var/lib/clickhouse, systemctl status var-lib-clickhouse.mount, dmesg | grep -i xfs. If the partition/fs is missing: scripts/migrate-clickhouse-xfs.sh (prepare phase), then redeploy.";
+                })
+                (mkHttpCheck {
+                  name = "ClickHouse Data Usage";
+                  group = "Filesystem";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "30m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*clickhouse_xfs_usage_over_threshold 0*)"
+                  ];
+                  alerts = discordAlert "ClickHouse XFS data filesystem exceeds 85% — XFS cannot shrink and telemetry retention grows unboundedly. Check per-table sizes (clickhouse-client 'SELECT database, formatReadableSize(sum(bytes_on_disk)) FROM system.parts GROUP BY database') and tighten TTLs in signoz.nix (clickhouseInternalLogs / signoz_logs / signoz_traces retention).";
+                })
+              ]
               ++ lib.optionals config.services.discordsync.enable [
                 (mkHttpCheck {
                   name = "DiscordSync";

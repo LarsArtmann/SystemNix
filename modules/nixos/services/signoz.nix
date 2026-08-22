@@ -43,6 +43,7 @@ in
       inherit (import ../../../lib/default.nix lib)
         harden
         serviceDefaults
+        serviceOneshotDefaults
         serviceTypes
         onFailure
         mkStateDir
@@ -63,6 +64,16 @@ in
           ;
       };
       inherit (signozScripts) waitReadyScript provisionScript;
+
+      # Self-wiring XFS data-mount dependency: hosts that declare a
+      # fileSystems."/var/lib/clickhouse" entry (evo-x2: dedicated XFS
+      # partition, see hardware-configuration.nix) get clickhouse hard-gated
+      # on the mount; hosts without it (VM tests, future hosts) keep the
+      # plain directory behavior. This is the anti-contamination rail: with
+      # the mount absent (partition missing / fs corrupt), ClickHouse refuses
+      # to start instead of silently writing telemetry into the root fs
+      # underneath the mountpoint.
+      hasClickhouseDataMount = builtins.hasAttr "/var/lib/clickhouse" config.fileSystems;
 
       # ClickHouse internal self-logs (system db) shipped WITHOUT TTLs on this
       # install — 52 GiB / 9.13B rows (90% of the data dir) measured 2026-08-17.
@@ -480,6 +491,18 @@ in
               restartTriggers = [
                 config.environment.etc."clickhouse-server/config.d/200-nixos-module-extra-config.xml".source
               ];
+              # Only when the host declares the dedicated data mount (see
+              # hasClickhouseDataMount above). RequiresMountsFor adds
+              # Requires=+After= on var-lib-clickhouse.mount; the Condition
+              # is evaluated after those dependencies are up, so the path is
+              # a mountpoint exactly when the mount succeeded. Belt AND
+              # suspenders: either one alone has a hole (Requires without
+              # the Condition tolerates a leftover plain dir if the mount
+              # unit were masked; the Condition alone doesn't order).
+              unitConfig = lib.optionalAttrs hasClickhouseDataMount {
+                RequiresMountsFor = "/var/lib/clickhouse";
+                ConditionPathIsMountPoint = "/var/lib/clickhouse";
+              };
               serviceConfig = lib.mkMerge [
                 (harden {
                   MemoryMax = "4G";
@@ -526,6 +549,116 @@ in
                 OnCalendar = "04:20";
                 Persistent = true;
                 Unit = "signoz-clickhouse-log-ttl.service";
+              };
+            };
+
+            # ── Dedicated XFS data mount monitoring (buildcache pattern) ──────
+            # The XFS filesystem at /var/lib/clickhouse is invisible to
+            # btrfs-health metrics by design; these gauges close that hole.
+            # Fail-closed: the .prom file is written on EVERY run (a dead/
+            # absent mount flips clickhouse_xfs_mounted to 0 → Gatus alerts),
+            # and "mounted" gates on REAL I/O, not mount-table presence —
+            # a zombie VFS entry (stale major:minor after device churn)
+            # satisfies findmnt while every read EIOs.
+            systemd.services.clickhouse-xfs-metrics = lib.mkIf hasClickhouseDataMount (
+              let
+                textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
+                mnt = "/var/lib/clickhouse";
+                usageThresholdPercent = 85;
+              in
+              {
+                description = "ClickHouse XFS data mount Prometheus metrics (mount, usage)";
+                startLimitBurst = 3;
+                startLimitIntervalSec = 300;
+                inherit onFailure;
+                path = [
+                  pkgs.util-linux
+                  pkgs.coreutils
+                  pkgs.gnugrep
+                ];
+                serviceConfig = lib.mkMerge [
+                  {
+                    Type = "oneshot";
+                    User = "root";
+                  }
+                  (harden {
+                    ReadWritePaths = [ textfileDir ];
+                    MemoryMax = "128M";
+                  })
+                  (serviceOneshotDefaults { })
+                ];
+                script = ''
+                  set -eu
+                  OUT="${textfileDir}/clickhouse-xfs.prom"
+                  TMP="''${OUT}.tmp"
+                  mnt="${mnt}"
+                  threshold=${toString usageThresholdPercent}
+
+                  mounted=0
+                  fstype=""
+                  if
+                    findmnt -n -o TARGET "$mnt" 2>/dev/null | grep -qx "$mnt" \
+                      && timeout 15 ls -A "$mnt" >/dev/null 2>&1
+                  then
+                    mounted=1
+                    fstype="$(findmnt -no FSTYPE "$mnt" 2>/dev/null || echo unknown)"
+                  fi
+
+                  usage=0
+                  over=0
+                  free_bytes=0
+                  total_bytes=0
+                  if [ "$mounted" = 1 ]; then
+                    usage="$(df --output=pcent "$mnt" | tail -n1 | tr -dc '0-9')"
+                    free_bytes="$(df -B1 --output=avail "$mnt" | tail -n1 | tr -dc '0-9')"
+                    total_bytes="$(df -B1 --output=size "$mnt" | tail -n1 | tr -dc '0-9')"
+                    if [ "''${usage:-0}" -ge "$threshold" ] 2>/dev/null; then
+                      over=1
+                    fi
+                  fi
+
+                  # xfs_mounted doubles as the "is actually XFS" signal: the
+                  # check is written as a separate gauge so a misconfigured
+                  # mount (wrong fs on the partition) is distinguishable from
+                  # a dead one.
+                  is_xfs=0
+                  if [ "$fstype" = "xfs" ]; then
+                    is_xfs=1
+                  fi
+
+                  mkdir -p "${textfileDir}"
+                  cat > "$TMP" <<METRICS
+                  # HELP clickhouse_xfs_mounted 1 if the ClickHouse data mount is mounted and answering I/O, 0 otherwise
+                  # TYPE clickhouse_xfs_mounted gauge
+                  clickhouse_xfs_mounted ''${mounted}
+                  # HELP clickhouse_xfs_is_xfs 1 if the mounted filesystem type is xfs (0 = wrong fs or unmounted)
+                  # TYPE clickhouse_xfs_is_xfs gauge
+                  clickhouse_xfs_is_xfs ''${is_xfs}
+                  # HELP clickhouse_xfs_usage_percent ClickHouse data filesystem usage percentage (0-100)
+                  # TYPE clickhouse_xfs_usage_percent gauge
+                  clickhouse_xfs_usage_percent ''${usage}
+                  # HELP clickhouse_xfs_usage_over_threshold 1 if usage >= ${toString usageThresholdPercent}%
+                  # TYPE clickhouse_xfs_usage_over_threshold gauge
+                  clickhouse_xfs_usage_over_threshold ''${over}
+                  # HELP clickhouse_xfs_free_bytes Free bytes on the ClickHouse data filesystem
+                  # TYPE clickhouse_xfs_free_bytes gauge
+                  clickhouse_xfs_free_bytes ''${free_bytes}
+                  # HELP clickhouse_xfs_total_bytes Total bytes on the ClickHouse data filesystem
+                  # TYPE clickhouse_xfs_total_bytes gauge
+                  clickhouse_xfs_total_bytes ''${total_bytes}
+                  METRICS
+                  mv "$TMP" "$OUT"
+                '';
+              }
+            );
+
+            systemd.timers.clickhouse-xfs-metrics = lib.mkIf hasClickhouseDataMount {
+              description = "Collect ClickHouse XFS data mount metrics every 5 minutes";
+              wantedBy = [ "timers.target" ];
+              timerConfig = {
+                OnBootSec = "2min";
+                OnUnitActiveSec = "5min";
+                Persistent = true;
               };
             };
           })

@@ -120,10 +120,43 @@ in
         "commit=300"
       ];
     };
+    # ClickHouse telemetry store on a dedicated XFS filesystem (nvme0n1p9,
+    # ~100 GiB tail freed when the old p9 /rust-cache ext4 was deleted
+    # 2026-08-17). Created + populated by scripts/migrate-clickhouse-xfs.sh
+    # (prepare phase) BEFORE the first deploy of this entry — deploy-before-
+    # script is safe: the by-label device is then absent, the mount fails,
+    # nofail keeps boot going, and clickhouse.service's ConditionPathIsMountPoint
+    # (signoz.nix) refuses to start rather than writing telemetry into the
+    # root fs underneath the mountpoint.
+    #
+    # Why XFS: ClickHouse is the reference merge-heavy workload (parallel
+    # allocation groups, no CoW). FS-level compression is pointless — CH
+    # LZ4/ZSTD-compresses every column itself. Removing CH churn from the
+    # root @ subvolume stops QLC write-amplified CoW extent churn AND stops
+    # btrbk root snapshots (kept FOREVER pool-side) from pinning telemetry
+    # extents. XFS cannot shrink — 100 GiB is sized against the 52 GiB
+    # pre-TTL-cleanup high-water mark with ample headroom.
+    #
+    # by-label (not by-uuid): the label is re-applied by the documented
+    # mkfs command in the migration script runbook, so a reformat keeps the
+    # Nix config valid; a fresh UUID would require a config edit. XFS labels
+    # are capped at 12 chars — hence the short "clickhouse".
+    #
+    # nodiscard: same QLC doctrine as every other mount (253ms discard
+    # latency → commit stalls); the daily fstrim.timer (idle priority)
+    # covers TRIM for XFS too.
+    "/var/lib/clickhouse" = mkFilesystem {
+      device = "/dev/disk/by-label/clickhouse";
+      fsType = "xfs";
+      options = [
+        "noatime"
+        "nodiscard"
+        "nofail"
+      ];
+    };
     # Old /rust-cache mount (nvme0n1p9, ext4, by-partlabel/rust-cache) removed
     # 2026-08-16: Rust targets moved to /mnt/buildcache/rust + sccache. The
-    # partition itself still exists (98G raw) — delete/grow requires manual
-    # partition-table surgery, deliberately not automated.
+    # partition slot now carries the XFS ClickHouse store above.
   };
 
   # Disk swap dropped — zramSwap (10% of 64G = ~6.4G compressed) is sufficient.

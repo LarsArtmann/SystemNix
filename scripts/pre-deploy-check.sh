@@ -80,6 +80,27 @@ else
   done <<<"$MOUNTS"
 fi
 
+# 4b. ClickHouse XFS data mount prerequisite: if the to-be-deployed config
+# declares fileSystems."/var/lib/clickhouse", the labeled fs must already
+# exist (created by scripts/migrate-clickhouse-xfs.sh prepare BEFORE the
+# deploy). A missing device means the deploy would leave the stack down by
+# design (nofail mount fails + ConditionPathIsMountPoint blocks clickhouse).
+echo ""
+echo "4b. ClickHouse XFS data mount prerequisite"
+HAS_CH_MOUNT=$(nix eval .#nixosConfigurations.evo-x2.config.fileSystems --json 2>/dev/null | jq -r 'has("/var/lib/clickhouse")' 2>/dev/null || echo "false")
+if [ "$HAS_CH_MOUNT" = "true" ]; then
+  if [ -e /dev/disk/by-label/clickhouse ]; then
+    pass "labeled XFS device /dev/disk/by-label/clickhouse present"
+    if findmnt -no FSTYPE /var/lib/clickhouse 2>/dev/null | grep -qx xfs; then
+      pass "/var/lib/clickhouse already mounted as xfs (migration complete)"
+    fi
+  elif findmnt -no FSTYPE /var/lib/clickhouse 2>/dev/null | grep -qx xfs; then
+    pass "/var/lib/clickhouse already mounted as xfs (migration complete)"
+  else
+    fail "/dev/disk/by-label/clickhouse absent — run 'sudo bash scripts/migrate-clickhouse-xfs.sh prepare' BEFORE deploying, or the SigNoz stack stays down post-switch (by design: no root-fs contamination)"
+  fi
+fi
+
 # 5. Check no ExecStart inside harden()
 echo ""
 echo "5. Service hardening validation"
@@ -268,7 +289,13 @@ if [ -s "$METRICS_FILE" ]; then
   # pre-deploy runs minutes apart on 2026-08-22 (present twice, then absent) —
   # consistent with a concurrent deploy/rollback of system-health, but if it
   # flaps again post-deploy, suspect the NIC check itself.
-  KNOWN_NEW_METRICS="system_zram_swap_fill_percent system_zram_fill_over_threshold system_zram_swap_orig_data_bytes system_zram_swap_disksize_bytes system_zram_mem_used_bytes discordsync_projection_dlq_legacy_depth bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds system_lan_nic_present"
+  # clickhouse_xfs_* (2026-08-22): emitted by the new clickhouse-xfs-metrics
+  # textfile collector (signoz.nix) once the first deploy lands it. The
+  # collector is gated on the fileSystems."/var/lib/clickhouse" entry — it
+  # appears only after BOTH the XFS migration script prepare phase ran AND
+  # the deploy activated the mount. post-deploy-check.sh asserts the mount;
+  # verify :9100/metrics after that deploy, then remove from this list.
+  KNOWN_NEW_METRICS="system_zram_swap_fill_percent system_zram_fill_over_threshold system_zram_swap_orig_data_bytes system_zram_swap_disksize_bytes system_zram_mem_used_bytes discordsync_projection_dlq_legacy_depth bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds system_lan_nic_present clickhouse_xfs_mounted clickhouse_xfs_is_xfs clickhouse_xfs_usage_percent clickhouse_xfs_usage_over_threshold clickhouse_xfs_free_bytes clickhouse_xfs_total_bytes"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"
