@@ -81,3 +81,29 @@
 1. **Deploy now or batch?** The live gatus is running never-matching patterns (7 checks permanently red since the 01:46 deploy). I can deploy immediately, or batch the remaining small quick wins (f.6-f.14, ~30-60 min) into one deploy. Which?
 2. **DAS physically reseed yet?** `buildcache_mounted 0` / `pool_mounted 0` are still live. If the link is still absent at deploy time, the new DAS-link + pool + buildcache checks will (correctly) fire Discord alerts on deploy — expected noise or hold the deploy until the hardware is reseated?
 3. **Alert-noise posture:** with truthful cause+consequence alerts now live (one DAS drop = 3-4 Discord messages), do you want gatus-side dedup/grouping now (f.16) or is per-check alerts fine?
+
+---
+
+## h) CONTINUATION ADDENDUM (deploy session, later same day)
+
+**§g answers arrived as "keep going until everything works" — batched ALL of f.6-f.14 + deployed 3×.**
+
+### Completed in the continuation
+- **f.6** FastFlowLM smoke now asserts the BOUND model id (derived from the unit's `flm serve <model>` ExecStart — tracks config changes): `qwen3.6-moe:35b-a3b` verified in live `/v1/models`
+- **f.7** `crm.home.lan` enable-gated external check (`test -e .../twenty.service`) — passed 200 live
+- **f.10** pre-deploy §10 mirrors BOTH flake-lint traps (phantom-green + literal `\n`), mutation-tested
+- **f.9-adjacent** third flake-lint trap: literal backslash-n inside `pat()` rejected (grep unit-tested)
+- AGENTS.md: real-newline requirement + all three traps documented; dnsblockd-oidc reports linked; escape-layers bullet in Design Patterns
+- `start-limit-audit.nix`: eval-time assertion against StartLimit* in serviceConfig — mutation-tested (fires on offender, zero false positives on live config)
+- 7 TODO items marked done/stale (forgejo-oidc race, papdashboard coverage, pool-usage alert, DAS-link metric, AGENTS gatus docs, §10, crm check) + Dozzle-recreate item
+- `file-and-image-renamer.inputs.go-nix-helpers.follows` DECLARED; subtree rev bump attempted and REVERTED — upstream master needs go ≥1.26.6, nixpkgs has 1.26.5 (FOD fails loudly = the go-codec deliberate-signal class). TODO item added
+
+### Deploy blockers found + fixed mid-session
+1. `system_das_link_present` missing from `KNOWN_NEW_METRICS` — the prior session's DAS check would have aborted EVERY deploy at pre-deploy §10 (phantom-metric FAIL). Added (the system_lan_nic_present precedent).
+2. **ClickHouse XFS migration was broken pre-existing** (other session): zero healthy starts since 00:32, `posix_stat: Permission denied` on `data/system/...` at metadata load ⇒ mis-owned PARENT dir in the rsync'd tree (migration script has NO chown step; interrupted first run left strays). Fixed with a guarded `+`-root-escape `ExecStartPre` ownership heal in `signoz.nix` (chown -R only when a mis-owned inode exists — healthy starts pay one find pass). SigNoz answered 200 within the deploy; telemetry restored after ~5h down.
+3. **Dozzle split brain (root cause of the f.8 "recreate" item)**: the hardened config lived in the DORMANT module (`services.dozzle.enable` never set) while an inline `configuration.nix` definition actually ran the container — `--memory=256m` NEVER reached `docker run`. Consolidated onto the module; container recreated with `mem=256m no-new-privileges cap-drop=ALL`, `:8084` → 200.
+
+### Final state
+- 3 deploys green; `nix flake check --no-build` all-passed; pre-deploy 83/0/20
+- Remaining smoke FAILs are ALL one physical root cause: **DAS USB link still down** (Immich, Attic, Paperless, Bank-Sync dataDirs on `/mnt/pool`) — truthful reds, fix = reseat DAS cable + reboot (user, physical)
+- gatus "DAS USB Link" endpoint live: success=false @69ms — anchored pattern evaluating, will alert on the cause. Discord should receive cause+consequence alerts (dedup posture = §g.3 still open)
