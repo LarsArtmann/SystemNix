@@ -82,6 +82,18 @@ _: {
       # restarts per 2min. 3 restarts in 2 minutes is definitely a crash loop.
       crashLoopRestartThreshold = 3;
 
+      # Forgejo mirror staleness: freshest pull-mirror sync older than this
+      # flags the sync pipeline as stalled. Mirrors run on an 8h interval
+      # with a 30m update_mirrors cron — healthy freshest age is minutes;
+      # 10h = one full interval + slack (2026-08-22 dead-queue outage was
+      # discovered only via frozen mirror.updated_unix).
+      forgejoMirrorStalenessSeconds = 10 * 3600;
+
+      # Forgejo mirror journal-error threshold per 30 min window. The ENOENT
+      # era logged ~100 errors/30min; a single transient git failure should
+      # not page. >=3 = a systematic failure retrying every cron round.
+      forgejoMirrorErrorThreshold = 3;
+
       # Slow-churn detection: CUMULATIVE NRestarts since the last explicit
       # (deploy/manual) start. Catches restart chains that never trip the
       # per-interval threshold above — e.g. hermes' exit-75 drain-timeout
@@ -310,6 +322,51 @@ _: {
               GATUS_RESULTS_STALE=0
               if [ $((NOW_EPOCH - GATUS_FRESH_EPOCH)) -ge 900 ]; then
                 GATUS_RESULTS_STALE=1
+              fi
+            fi
+          fi
+
+          # === Forgejo pull-mirror sync health ===
+          # Reads forgejo's sqlite DB directly (readonly, gatus pattern):
+          # the API is auth-gated and the journal alone is blind to the
+          # silent failure class. Mirror outages come in two shapes
+          # (2026-08-18..22 incident), each needing its own signal:
+          # 1. ACTIVE failures (forgejo 15.0.6 AddAuthCredentialHelper
+          #    aborting every credentialed sync with ENOENT for 2.5 days;
+          #    DNS-dead allowlist rechecks logging "not allowed") produce
+          #    Error journal lines every cron round — caught by the error
+          #    count. TouchMirror advances mirror.updated_unix on FAILURE
+          #    too, so the DB age alone cannot see this class.
+          # 2. The SILENT dead-queue class: after the 2026-08-22 hard
+          #    freeze every restarted forgejo process had a wedged mirror
+          #    queue — the update_mirrors cron (30m) pushes dedup-skip at
+          #    Trace level and NOTHING is logged; only updated_unix stops
+          #    advancing. Caught by the freshest-sync age. Fail-closed: on
+          #    any read error only system_forgejo_mirror_scrape_errors=1 is
+          #    emitted and the Gatus pat() presence checks go red.
+          collect_forgejo_mirrors=${lib.boolToString cfg.collectForgejoMirrors}
+          FORGEJO_MIRROR_SCRAPE_ERRORS=1
+          FORGEJO_MIRROR_LAST_SYNC_AGE=""
+          FORGEJO_MIRROR_STALLED=""
+          FORGEJO_MIRROR_ERRORS_30M=""
+          FORGEJO_MIRROR_ERRORING=""
+          if [ "$collect_forgejo_mirrors" = "true" ] && [ -r "${cfg.forgejo.dbPath}" ]; then
+            FORGEJO_LAST_SYNC=$(sqlite3 -readonly "${cfg.forgejo.dbPath}" "SELECT MAX(updated_unix) FROM mirror" 2>/dev/null) || FORGEJO_LAST_SYNC=""
+            if [ -n "$FORGEJO_LAST_SYNC" ]; then
+              FORGEJO_MIRROR_SCRAPE_ERRORS=0
+              FORGEJO_MIRROR_LAST_SYNC_AGE=$((NOW_EPOCH - FORGEJO_LAST_SYNC))
+              if [ "$FORGEJO_MIRROR_LAST_SYNC_AGE" -lt 0 ] 2>/dev/null; then
+                FORGEJO_MIRROR_LAST_SYNC_AGE=0
+              fi
+              FORGEJO_MIRROR_STALLED=0
+              if [ "$FORGEJO_MIRROR_LAST_SYNC_AGE" -ge ${toString forgejoMirrorStalenessSeconds} ] 2>/dev/null; then
+                FORGEJO_MIRROR_STALLED=1
+              fi
+              FORGEJO_MIRROR_ERRORS_30M=$(journalctl -u forgejo.service --since "-30 min" --grep "AddAuthCredentialHelperForRemote Error|failed to update mirror repository|pull mirror failed to meet migration URL requirements|failed to get remote address" --output cat --no-pager 2>/dev/null | wc -l) || FORGEJO_MIRROR_ERRORS_30M=0
+              FORGEJO_MIRROR_ERRORS_30M="''${FORGEJO_MIRROR_ERRORS_30M:-0}"
+              FORGEJO_MIRROR_ERRORING=0
+              if [ "$FORGEJO_MIRROR_ERRORS_30M" -ge ${toString forgejoMirrorErrorThreshold} ] 2>/dev/null; then
+                FORGEJO_MIRROR_ERRORING=1
               fi
             fi
           fi
@@ -599,6 +656,29 @@ _: {
               echo "# HELP system_gatus_results_stale 1 if the gatus result DB has had no writes for >15 minutes, 0 otherwise"
               echo "# TYPE system_gatus_results_stale gauge"
               echo "system_gatus_results_stale ''${GATUS_RESULTS_STALE}"
+            fi
+
+            if [ "$collect_forgejo_mirrors" = "true" ]; then
+              echo "# HELP system_forgejo_mirror_scrape_errors Scrape status of the forgejo mirror sqlite read: 0 = OK, 1 = DB unreadable or mirror table empty (fail-closed)"
+              echo "# TYPE system_forgejo_mirror_scrape_errors gauge"
+              echo "system_forgejo_mirror_scrape_errors ''${FORGEJO_MIRROR_SCRAPE_ERRORS}"
+            fi
+            if [ -n "$FORGEJO_MIRROR_LAST_SYNC_AGE" ]; then
+              echo "# HELP system_forgejo_mirror_last_sync_age_seconds Age of the freshest pull-mirror sync (now - MAX(mirror.updated_unix)). TouchMirror advances updated_unix on failure too, so this goes stale ONLY when nothing runs at all (dead queue / dead scheduler)"
+              echo "# TYPE system_forgejo_mirror_last_sync_age_seconds gauge"
+              echo "system_forgejo_mirror_last_sync_age_seconds ''${FORGEJO_MIRROR_LAST_SYNC_AGE}"
+
+              echo "# HELP system_forgejo_mirror_sync_stalled Stall flag for the freshest pull-mirror sync: 1 when older than ${toString forgejoMirrorStalenessSeconds}s (one 8h interval + slack), 0 otherwise"
+              echo "# TYPE system_forgejo_mirror_sync_stalled gauge"
+              echo "system_forgejo_mirror_sync_stalled ''${FORGEJO_MIRROR_STALLED}"
+
+              echo "# HELP system_forgejo_mirror_errors_30m Forgejo mirror-sync Error journal lines in the last 30 minutes (credential-helper aborts, allowlist rejections, fetch failures)"
+              echo "# TYPE system_forgejo_mirror_errors_30m gauge"
+              echo "system_forgejo_mirror_errors_30m ''${FORGEJO_MIRROR_ERRORS_30M}"
+
+              echo "# HELP system_forgejo_mirror_erroring Error flag: 1 when >=${toString forgejoMirrorErrorThreshold} mirror-sync Error lines hit the forgejo journal within 30 minutes, 0 otherwise"
+              echo "# TYPE system_forgejo_mirror_erroring gauge"
+              echo "system_forgejo_mirror_erroring ''${FORGEJO_MIRROR_ERRORING}"
             fi
 
             echo "# HELP system_disk_usage_percent Root filesystem usage percentage (0-100)"

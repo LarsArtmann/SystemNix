@@ -85,6 +85,23 @@ _: {
         domain = config.networking.domain;
         serviceName = "forgejo-oidc-setup";
       };
+
+      # The MAIN forgejo daemon resolves auth.<domain> exactly once at
+      # startup to register the PocketID OIDC auth source, and with
+      # ENABLE_INTERNAL_SIGNIN=false there is no fallback login. On the
+      # 2026-08-22 boot forgejo started seconds before dnsblockd answered
+      # its first query — "Unable to register source: PocketID ... lookup
+      # auth.home.lan: no such host" — and logins stayed dead until the
+      # next restart. DNS gate (getent probe) + ordering behind
+      # dnsblockd/caddy/pocket-id fixes the class without hard-coupling
+      # forgejo's availability to Caddy TLS (ordering only, no probe of
+      # :443 — a hard down Caddy degrades logins, not the whole forge).
+      forgejoMainDnsGate = mkDnsGate {
+        inherit pkgs;
+        serviceName = "forgejo";
+        hostname = "auth.${config.networking.domain}";
+        maxAttempts = 30;
+      };
     in
     {
       options = {
@@ -201,6 +218,8 @@ _: {
 
         systemd = {
           services.forgejo = {
+            after = [ "caddy.service" "pocket-id.service" ] ++ forgejoMainDnsGate.after;
+            wants = [ "caddy.service" "pocket-id.service" ] ++ forgejoMainDnsGate.wants;
             unitConfig = {
               StartLimitBurst = lib.mkForce 3;
               StartLimitIntervalSec = lib.mkForce 300;
@@ -215,6 +234,7 @@ _: {
                 ExecStartPre = lib.mkBefore [ ("+" + lib.getExe ensurePasswordFile) ];
                 TimeoutStartSec = "3min";
               }
+              { ExecStartPre = forgejoMainDnsGate.serviceConfig.ExecStartPre; }
             ];
             preStart = lib.getExe adminSetup;
           };
