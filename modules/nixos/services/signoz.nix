@@ -135,6 +135,28 @@ in
           '') clickhouseInternalLogs
       );
 
+      # Ownership heal for the XFS data partition (2026-08-22 incident): the
+      # migrate-clickhouse-xfs.sh runbook copies with rsync -aHAX but has NO
+      # chown step — an interrupted first run left parts of the tree (e.g.
+      # data/system) non-clickhouse-owned, and the server dies at metadata
+      # load with `posix_stat: Permission denied` (statx needs search on every
+      # parent; the owner process being denied = mis-owned PARENT dir). The
+      # heal only walks; chown -R runs exclusively when a mis-owned inode
+      # exists, so healthy starts pay one find pass and no mutations.
+      clickhouseOwnershipHeal = pkgs.writeShellApplication {
+        name = "clickhouse-xfs-ownership-heal";
+        runtimeInputs = [
+          pkgs.findutils
+          pkgs.coreutils
+        ];
+        text = ''
+          if offender=$(find /var/lib/clickhouse ! -user clickhouse -print -quit) && [ -n "$offender" ]; then
+            echo "heal: mis-owned inode found ($offender) — chown -R clickhouse:clickhouse /var/lib/clickhouse"
+            chown -R clickhouse:clickhouse /var/lib/clickhouse
+          fi
+        '';
+      };
+
       # Converge EXISTING tables to the TTL above. The config XML only sets
       # the TTL at table creation (or on lucky restart semantics); tables that
       # predate it — plus zombie `<name>_N` copies left behind by unclean
@@ -513,6 +535,13 @@ in
                 })
                 (serviceDefaults { })
                 ioTier.heavyDB
+                # Root-escape (`+`) ExecStartPre: the ownership heal runs as
+                # PID-1 privileges (harden{}'s empty CapabilityBoundingSet
+                # would EPERM chown inside the sandbox). Gated on the XFS
+                # mount host — the plain-state-dir hosts need no heal.
+                (lib.optionalAttrs hasClickhouseDataMount {
+                  ExecStartPre = [ "+${lib.getExe clickhouseOwnershipHeal}" ];
+                })
               ];
             };
 
