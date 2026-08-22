@@ -5,7 +5,7 @@
 # (FastFlowLM, ~25 GB unevictable shmem once its mmap'd model is fully
 # resident) when the system enters the pre-freeze zone.
 #
-# 2026-08-22 incident (the class this guards): the machine froze solid at
+# 2026-08-22 incident #1 (the class this guards): the machine froze solid at
 # 00:27 after a chain that started at 22:25 with zram swap at 100%
 # (Free swap = 0 kB of 29.5 GB), flm's model locked in as ~25 GB UNEVICTABLE
 # shmem (shmem eviction requires swap space — with zram full there is none),
@@ -17,6 +17,33 @@
 # would have fired at 10 min; the user power-cycled at 00:31. Gatus had
 # ALREADY alerted "Memory pressure CRITICAL" to Discord at 23:44 — the
 # warning existed, the automated action did not.
+#
+# 2026-08-22 incident #2 (05:49, the SAME NIGHT, post-guard): the guard
+# tripped 7x (03:32-04:53, MemAvail 5.4-9.7%, zram stuck at 98.6%) but the
+# machine STILL froze at 05:49:56 — journal cut mid-write, no OOM dump, no
+# shutdown. Three compounding design gaps, all fixed here:
+#
+#   1. THE FEEDBACK LOOP: stopping only fastflowlm.service leaves the
+#      ACTIVATION SOCKET up by design ("self-heals on next connection").
+#      Under the resulting alert storm every trip CAUSED gatus alerts →
+#      PapDashboard ingest → the LLM insight enricher → a flm connection →
+#      a fresh 21.6 GB cold load into a zram-full machine → re-trip ~10 min
+#      later (flm's restart backoff cadence). The guard's own alerts woke
+#      its sacrifice victim. Fix: trip ALSO stops fastflowlm.socket —
+#      connections then fail FAST (ECONNREFUSED, enricher degrades
+#      gracefully) instead of cold-loading the model; the guard restores
+#      the socket once memory has recovered past a margin.
+#
+#   2. THE PSI BLIND SPOT: the final freeze was a refault-thrash death —
+#      PSI some avg10 >50% (gatus "Memory pressure CRITICAL" fired at
+#      05:49:39) while MemAvailable stayed ≥10% (51 GiB of page cache gave
+#      the reclaim code headroom), so NEITHER trip zone fired at the 05:48:58
+#      guard run. The kernel died of zram decompression CPU burn 17 s later.
+#      Fix: Zone 3 trips on PSI some avg10 ≥40% AND zram ≥80% regardless of
+#      MemAvailable.
+#
+#   3. CADENCE: the 60 s timer tick landed 2 s AFTER the kernel died.
+#      Default interval is now 30 s (a 64M oneshot — cheap).
 #
 # The guard closes that gap: stop the flm backend BEFORE the cliff. flm is
 # the designated sacrifice (stateless, socket-activated, self-heals on the
@@ -60,6 +87,7 @@ _: {
           TMP="''${OUT}.tmp"
           COUNT_FILE="${stateDir}/tripped.count"
           LAST_TRIP_FILE="${stateDir}/last-trip"
+          SOCKET_UNITS="${lib.concatStringsSep " " cfg.socketUnits}"
 
           mem_available_kb=$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)
           mem_total_kb=$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)
@@ -82,6 +110,16 @@ _: {
             fi
           fi
 
+          # PSI memory stall (some avg10): the refault-thrash signal. During
+          # the 05:49 freeze this was >50% while MemAvailable stayed >=10% —
+          # the kernel was CPU-starved decompressing zram pages, not out of
+          # pages. -1 when /proc/pressure/memory is unreadable.
+          psi_some_avg10=-1
+          if [ -r /proc/pressure/memory ]; then
+            psi_some_avg10=$(awk '/^some avg10=/ { sub("avg10=","",$2); print $2; exit }' /proc/pressure/memory 2>/dev/null) || psi_some_avg10=-1
+            psi_some_avg10="''${psi_some_avg10:--1}"
+          fi
+
           tripped_total=0
           if [ -f "$COUNT_FILE" ]; then
             tripped_total=$(cat "$COUNT_FILE" 2>/dev/null) || tripped_total=0
@@ -94,6 +132,9 @@ _: {
           # Zone 2 (combined): low MemAvailable AND zram nearly full — the
           #   shmem-unevictable trap forming (flm model pages cannot evict
           #   once swap is exhausted).
+          # Zone 3 (thrash): PSI some avg10 high AND zram mostly full — the
+          #   05:49 refault-freeze mode: MemAvailable can look healthy while
+          #   the kernel dies of zram decompression CPU burn.
           trip=0
           reason=""
           if awk -v p="$avail_pct" 'BEGIN { exit !(p < ${toString cfg.absoluteMemAvailableThresholdPercent}) }'; then
@@ -105,44 +146,87 @@ _: {
           then
             trip=1
             reason="MemAvailable=''${avail_pct}% AND zram=''${zram_pct}% (shmem-unevictable trap: model pages cannot evict with full zram)"
+          elif
+            awk -v p="$psi_some_avg10" 'BEGIN { exit !(p >= ${toString cfg.psiSomeThresholdPercent}) }' &&
+              awk -v z="$zram_pct" 'BEGIN { exit !(z >= ${toString cfg.zramPsiFillThresholdPercent}) }'
+          then
+            trip=1
+            reason="PSI some avg10=''${psi_some_avg10}% AND zram=''${zram_pct}% (refault-thrash freeze mode — MemAvailable stays high while the kernel starves on zram decompression)"
+          fi
+
+          # Last-trip age, computed for BOTH branches (trip gating + socket
+          # restore gating below).
+          now=$(date +%s)
+          last_trip=0
+          if [ -f "$LAST_TRIP_FILE" ]; then
+            last_trip=$(cat "$LAST_TRIP_FILE" 2>/dev/null) || last_trip=0
+          fi
+          last_trip="''${last_trip:-0}"
+          if [ "$last_trip" -gt 0 ]; then
+            last_trip_age=$((now - last_trip))
+          else
+            last_trip_age=-1
+          fi
+
+          # Are any sacrifice sockets currently active? (restore candidate)
+          sacrifice_socket_active=0
+          if [ -n "$SOCKET_UNITS" ]; then
+            for unit in $SOCKET_UNITS; do
+              if systemctl is-active --quiet "$unit" 2>/dev/null; then
+                sacrifice_socket_active=1
+              fi
+            done
           fi
 
           if [ "$trip" = "1" ]; then
-            now=$(date +%s)
-            last_trip=0
-            if [ -f "$LAST_TRIP_FILE" ]; then
-              last_trip=$(cat "$LAST_TRIP_FILE" 2>/dev/null) || last_trip=0
+            # Kill the ACTIVATION PATH FIRST, outside the cooldown: stopping
+            # only the backend left the socket accepting, and every trip's
+            # own gatus alerts re-woke flm via the PapDashboard insight
+            # enricher — a 21.6 GB cold load into a zram-full machine
+            # (2026-08-22 05:49 feedback loop). Socket stop is idempotent.
+            if [ -n "$SOCKET_UNITS" ]; then
+              systemctl stop $SOCKET_UNITS 2>/dev/null || true
             fi
-            last_trip="''${last_trip:-0}"
-            age=$((now - last_trip))
 
-            if [ "$last_trip" -gt 0 ] && [ "$age" -lt ${toString cfg.actionCooldownSeconds} ]; then
-              echo "MEMORY EMERGENCY still active (''${reason}) but action cooldown active (''${age}s < ${toString cfg.actionCooldownSeconds}s) — skipping repeat stop"
+            if [ "$last_trip" -gt 0 ] && [ "$last_trip_age" -lt ${toString cfg.actionCooldownSeconds} ]; then
+              echo "MEMORY EMERGENCY still active (''${reason}) but action cooldown active (''${last_trip_age}s < ${toString cfg.actionCooldownSeconds}s) — socket stays down, skipping repeat service stop"
             else
-              echo "MEMORY EMERGENCY: ''${reason} — stopping ${
+              echo "MEMORY EMERGENCY: ''${reason} — stopping sockets + ${
                 lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
-              } to prevent kernel freeze (2026-08-22 incident class). flm self-heals on next connection (1-3 min cold load)." >&2
+              } to prevent kernel freeze (2026-08-22 incident class). The socket stays down until memory recovers; flm cold-loads once on restore." >&2
               systemctl stop ${
                 lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
               } 2>/dev/null || true
               echo "$now" > "$LAST_TRIP_FILE"
               tripped_total=$((tripped_total + 1))
               echo "$tripped_total" > "$COUNT_FILE"
-              echo "MEMORY EMERGENCY action taken: sacrifice units stopped (trip #''${tripped_total})" >&2
+              echo "MEMORY EMERGENCY action taken: sockets + sacrifice units stopped (trip #''${tripped_total})" >&2
             fi
+          elif
+            [ "$sacrifice_socket_active" = "0" ] &&
+              [ -n "$SOCKET_UNITS" ] &&
+              [ "$last_trip_age" -ge ${toString cfg.actionCooldownSeconds} ] &&
+              awk -v p="$avail_pct" 'BEGIN { exit !(p >= ${toString cfg.restoreMemAvailableThresholdPercent}) }' &&
+              awk -v z="$zram_pct" 'BEGIN { exit !(z >= 0 && z < ${toString cfg.zramFillThresholdPercent}) }' &&
+              awk -v p="$psi_some_avg10" 'BEGIN { exit !(p >= 0 && p < ${toString cfg.restorePsiSomeThresholdPercent}) }'
+          then
+            # Self-heal: the emergency has drained (healthy margins on all
+            # three axes + cooldown elapsed). Bring the socket back so flm
+            # cold-loads on the next real client connection, and clear any
+            # start-limit the repeated stops may have left behind.
+            systemctl reset-failed ${
+              lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
+            } 2>/dev/null || true
+            systemctl start $SOCKET_UNITS 2>/dev/null || true
+            echo "MEMORY EMERGENCY cleared (MemAvailable=''${avail_pct}%, zram=''${zram_pct}%, PSI some avg10=''${psi_some_avg10}%, ''${last_trip_age}s since last trip) — sacrifice sockets restored" >&2
           fi
 
           # last_trip_recent: 1 if a trip happened within the last 30 min —
           # the Gatus-visible "guard fired" signal (a raw counter would alert
           # forever after a single trip).
           last_trip_recent=0
-          if [ -f "$LAST_TRIP_FILE" ]; then
-            lt=$(cat "$LAST_TRIP_FILE" 2>/dev/null) || lt=0
-            lt="''${lt:-0}"
-            now=$(date +%s)
-            if [ "$lt" -gt 0 ] && [ $((now - lt)) -lt 1800 ]; then
-              last_trip_recent=1
-            fi
+          if [ "$last_trip" -gt 0 ] && [ "$last_trip_age" -lt 1800 ]; then
+            last_trip_recent=1
           fi
 
           {
@@ -153,6 +237,14 @@ _: {
             echo "# HELP memory_emergency_guard_zram_fill_percent zram swap fill percent (-1 when zram is absent)"
             echo "# TYPE memory_emergency_guard_zram_fill_percent gauge"
             echo "memory_emergency_guard_zram_fill_percent ''${zram_pct}"
+
+            echo "# HELP memory_emergency_guard_psi_some_avg10_percent PSI memory some avg10 stall percent (-1 when PSI is unreadable)"
+            echo "# TYPE memory_emergency_guard_psi_some_avg10_percent gauge"
+            echo "memory_emergency_guard_psi_some_avg10_percent ''${psi_some_avg10}"
+
+            echo "# HELP memory_emergency_guard_sacrifice_socket_active 1 when any sacrifice socket is accepting, 0 when sacrificed"
+            echo "# TYPE memory_emergency_guard_sacrifice_socket_active gauge"
+            echo "memory_emergency_guard_sacrifice_socket_active ''${sacrifice_socket_active}"
 
             echo "# HELP memory_emergency_guard_tripped_total Total emergency stops performed since first deploy"
             echo "# TYPE memory_emergency_guard_tripped_total counter"
@@ -172,8 +264,8 @@ _: {
 
         checkInterval = lib.mkOption {
           type = lib.types.str;
-          default = "1min";
-          description = "Timer interval for the guard check (the 2026-08-22 freeze went from PSI-CRITICAL alert to kernel death in ~40 min; 1 min leaves room to act)";
+          default = "30s";
+          description = "Timer interval for the guard check. The 2026-08-22 05:49 freeze went from PSI-critical to kernel death in 17 s — the 60 s tick landed 2 s after the freeze; 30 s halves the blind window (a 64M oneshot is cheap to run twice as often)";
         };
 
         memAvailableThresholdPercent = lib.mkOption {
@@ -194,6 +286,18 @@ _: {
           description = "MemAvailable percentage below which the guard trips unconditionally (freeze imminent regardless of zram)";
         };
 
+        psiSomeThresholdPercent = lib.mkOption {
+          type = lib.types.int;
+          default = 40;
+          description = "PSI memory some avg10 stall percentage at or above which the Zone 3 thrash trip fires (requires zram fill above zramPsiFillThresholdPercent). 2026-08-22 05:49: gatus PSI-critical (some avg10 >50%) fired 17 s before the kernel froze while MemAvailable stayed >=10%";
+        };
+
+        zramPsiFillThresholdPercent = lib.mkOption {
+          type = lib.types.int;
+          default = 80;
+          description = "zram fill percentage at or above which the Zone 3 thrash trip fires together with the PSI threshold (lower than the Zone 2 threshold: high PSI already proves the refault storm)";
+        };
+
         actionCooldownSeconds = lib.mkOption {
           type = lib.types.int;
           default = 600;
@@ -206,7 +310,25 @@ _: {
             "fastflowlm@*.service"
             "fastflowlm.service"
           ];
-          description = "Units stopped when the guard trips. Must be self-healing (socket-activated or auto-restarting) — stopping them must degrade, not break. The fastflowlm socket stays up so the next connection cold-loads the model again";
+          description = "Units stopped when the guard trips. Must be self-healing (socket-activated or auto-restarting) — stopping them must degrade, not break";
+        };
+
+        socketUnits = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ "fastflowlm.socket" ];
+          description = "Activation sockets stopped when the guard trips and restored once memory recovers. Without this the socket keeps accepting: every trip's own gatus alerts woke the PapDashboard LLM enricher, which re-connected to flm and cold-loaded 21.6 GB into a zram-full machine (the 2026-08-22 05:49 feedback loop)";
+        };
+
+        restoreMemAvailableThresholdPercent = lib.mkOption {
+          type = lib.types.int;
+          default = 15;
+          description = "MemAvailable percentage at or above which (plus the other restore margins and the elapsed cooldown) the sacrifice sockets are started again";
+        };
+
+        restorePsiSomeThresholdPercent = lib.mkOption {
+          type = lib.types.int;
+          default = 5;
+          description = "PSI some avg10 percentage below which the sacrifice sockets may be restored";
         };
       };
 
