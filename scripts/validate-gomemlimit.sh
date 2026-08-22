@@ -12,15 +12,21 @@
 # Usage: sudo bash scripts/validate-gomemlimit.sh   (sudo for cgroup reads)
 set -euo pipefail
 
-# service:metrics-port pairs (0 = no known /metrics endpoint)
+# service:metrics-port pairs (0 = no known /metrics endpoint).
+# MARKER: when you add GOMEMLIMIT to a service module, add it here too —
+# the list is hardcoded because there is no cheap systemd query for
+# "units carrying GOMEMLIMIT in Environment".
 SERVICES=(
   "dnsblockd:9090"
   "discordsync:8085"
   "pocket-id:0"
-  "signoz-collector:0"
+  "papdashboard:0"
+  "signoz:0"
+  "signoz-collector:8888"
   "browser-history:8087"
-  "file-and-image-renamer-server:0"
+  "file-and-image-renamer:0"
   "crush-daily:0"
+  "projects-management-automation:0"
 )
 
 PASS=0
