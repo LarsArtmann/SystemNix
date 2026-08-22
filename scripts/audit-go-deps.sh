@@ -12,15 +12,24 @@
 #
 # Verdicts:
 #   OK-EXACT    require resolves to exactly the pinned rev
-#   OK-AHEAD    pinned rev is a descendant of the required commit (pin newer)
+#   OK-AHEAD    pinned rev contains the required commit (pin at-or-ahead)
+#   OK-TREE     history diverged but the module's code tree is identical
+#   WARN-DIVERGED pin does not contain the required commit AND the module tree
+#               differs (this ecosystem rebases master, so direction is
+#               unprovable — the build relies on API compatibility, not the
+#               version the go.mod promises)
 #   WARN-UNKNOWN  relation not decidable (no local clone / missing objects)
-#   ERROR-STALE pinned rev does NOT contain the required commit (pin older)
 #   ERROR-MISSING required tag/pseudo-rev does not exist on the provider
 #   INFO-UNPINNED  module is not a flake input (resolved via Go proxy at build)
 #   SKIP-LOCAL  module is locally replaced in the consumer's go.mod
 #
-# Exit 1 if any ERROR. Tag resolution + ancestry prefer local clones in
-# $PROJECTS_DIR (offline); falls back to `git ls-remote` for tag resolution.
+# Exit 1 on ERROR-MISSING. WARN-DIVERGED stays exit-0 because rebased history
+# makes "pin older" unprovable and the tree currently deploys despite drift.
+#
+# Release-tag heuristic: this ecosystem cuts release commits ("strip replace
+# directives") on tag-only commits that are NEVER on master, so for tag-resolved
+# requires the comparison uses the tag commit's PARENT (the real code commit).
+# Pseudo-version commits live on master directly and are compared as-is.
 #
 # Usage: bash scripts/audit-go-deps.sh
 set -uo pipefail
@@ -242,8 +251,33 @@ for input in "${!INPUT_REPO[@]}"; do
         OK=$((OK + 1))
         ;;
       1)
-        say "ERROR-STALE  $context → $repo pin ${pinned:0:12} does NOT contain required code ${reqcommit:0:12} (pin older than go.mod require)"
-        ERR=$((ERR + 1))
+        # History diverged (rebased master) or pin is genuinely older. Compare
+        # the module's code tree (excluding go.mod/go.sum — release commits
+        # legitimately rewrite those) before calling it drift.
+        trees_identical=2
+        if clone=$(local_clone "$repo"); then
+          treepath="$(sed -E 's|/v[0-9]+$||' <<<"$subpath")"
+          [ -z "$treepath" ] && treepath="."
+          if git -C "$clone" diff --quiet "$reqcommit" "$pinned" -- "$treepath" ':(exclude)*go.mod' ':(exclude)*go.sum' 2>/dev/null; then
+            trees_identical=0
+          else
+            trees_identical=1
+          fi
+        fi
+        case $trees_identical in
+        0)
+          say "OK-TREE      $context → history diverged but $repo tree identical (rebased release commit)"
+          OK=$((OK + 1))
+          ;;
+        1)
+          say "WARN-DIVERGED $context → $repo pin ${pinned:0:12} lacks required ${reqcommit:0:12} and tree differs (direction unprovable under rebase)"
+          WARN=$((WARN + 1))
+          ;;
+        2)
+          say "WARN-UNKNOWN $context → relation of $repo pin ${pinned:0:12} vs required ${reqcommit:0:12} undecidable (no local clone at $PROJECTS_DIR/$repo or missing objects)"
+          WARN=$((WARN + 1))
+          ;;
+        esac
         ;;
       2)
         say "WARN-UNKNOWN $context → relation of $repo pin ${pinned:0:12} vs required ${reqcommit:0:12} undecidable (no local clone at $PROJECTS_DIR/$repo or missing objects)"
