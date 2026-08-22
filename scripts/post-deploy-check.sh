@@ -76,6 +76,51 @@ check_local() {
   check "$name (localhost:$port)" "http://localhost:$port$path" "$expect_status" "$expect_body"
 }
 
+# --- Shared wait helpers ------------------------------------------------------
+# Deploy-time warmup tolerance: this script runs seconds after
+# switch-to-configuration restarts services, so one-shot probes race slow
+# binders (model loads, DB backfills, engine restarts). Both helpers poll
+# until a readiness signal holds; the caller's one-shot functional check
+# still produces the verdict. Neither sleeps after the final attempt.
+
+# wait_for_200 <url> <attempts> <interval-seconds>
+# Poll until the URL answers HTTP 200. Returns 0 on success, 1 on timeout.
+wait_for_200() {
+  local url="$1" attempts="$2" interval="$3"
+  local i
+  for i in $(seq 1 "$attempts"); do
+    if [ "$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "$url" 2>/dev/null || true)" = "200" ]; then
+      return 0
+    fi
+    if [ "$i" -lt "$attempts" ]; then sleep "$interval"; fi
+  done
+  return 1
+}
+
+# wait_body_pattern <url> <pattern> <attempts> <interval-seconds>
+# Poll until the URL's body matches the fixed-string pattern (BRE). Prints
+# the LAST fetched body so callers can capture it for diagnostics; returns
+# 0 on match, 1 on timeout. For endpoints whose success signal is content,
+# not status (bank-sync dashboard). Bodies are grepped via herestring,
+# NEVER `echo "$body" | grep -q`: under set -o pipefail a body larger than
+# the 64KiB pipe buffer makes the echo writer die on SIGPIPE (141) the
+# moment grep -q exits at its first match — a false "body lacks" FAIL
+# (caught live 2026-08-19 when the templ dashboard grew to ~106KiB).
+wait_body_pattern() {
+  local url="$1" pattern="$2" attempts="$3" interval="$4"
+  local body="" i
+  for i in $(seq 1 "$attempts"); do
+    body=$(curl -s --compressed --max-time 10 "$url" 2>/dev/null || true)
+    if grep -q "$pattern" <<<"$body"; then
+      printf '%s' "$body"
+      return 0
+    fi
+    if [ "$i" -lt "$attempts" ]; then sleep "$interval"; fi
+  done
+  printf '%s' "$body"
+  return 1
+}
+
 # Report helpers for non-HTTP checks (system state, timers, journals, etc.)
 report_pass() {
   echo -e "${GREEN}PASS${NC} $1"
@@ -148,15 +193,7 @@ check_local "Immich" "2283" "/api/server/ping" "200" "" 2>/dev/null || true
 # (~5-11 min after restart, depending on attachment count). Retry to distinguish
 # "in startup backfill" (SKIP) from "crashed" (FAIL). Uses /healthz (fast) not
 # /api/stats (can take 10+ seconds on a fully loaded instance).
-discordsync_ready=false
-for _ in 1 2 3; do
-  if [ "$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "http://localhost:8085/healthz" 2>/dev/null || true)" = "200" ]; then
-    discordsync_ready=true
-    break
-  fi
-  sleep 5
-done
-if [ "$discordsync_ready" = true ]; then
+if wait_for_200 "http://localhost:8085/healthz" 3 5; then
   echo -e "${GREEN}PASS${NC} DiscordSync (localhost:8085) (200)"
   PASS=$((PASS + 1))
 elif pgrep -f discordsync >/dev/null 2>&1; then
@@ -257,11 +294,7 @@ if $llama_rag_enabled; then
   # one-shot checks below declare failure (Gatus covers continuous
   # health; this only needs to catch config regressions post-warmup).
   for port in 8848 8849; do
-    for _attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
-      code=$(curl -s --compressed -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:$port/health" 2>/dev/null || true)
-      [ "$code" = "200" ] && break
-      sleep 10
-    done
+    wait_for_200 "http://127.0.0.1:$port/health" 12 10 || true
   done
   check_local "llama.cpp Embeddings" "8848" "/health" "200" "ok" 2>/dev/null || true
   check_local "llama.cpp Reranker" "8849" "/health" "200" "ok" 2>/dev/null || true
@@ -336,22 +369,8 @@ if $banksync_enabled; then
   # always enough under post-build I/O contention, and a mid-restart
   # answer (connection refused / empty body / error page) must not
   # produce a FAIL. Retry up to 6x5s before declaring failure.
-  banksync_body=""
-  banksync_dashboard_ok=false
-  for _attempt in 1 2 3 4 5 6; do
-    banksync_body=$(curl -s --compressed --max-time 10 "http://127.0.0.1:8097/" 2>/dev/null || true)
-    # grep a herestring, NEVER `echo "$body" | grep -q`: under set -o
-    # pipefail a body larger than the 64KiB pipe buffer makes the echo
-    # writer die on SIGPIPE (141) the moment grep -q exits at its first
-    # match — a false "body lacks" FAIL (caught live 2026-08-19 when the
-    # templ-components dashboard grew the page to ~106KiB).
-    if grep -q "Bank-Sync Dashboard" <<<"$banksync_body"; then
-      banksync_dashboard_ok=true
-      break
-    fi
-    sleep 5
-  done
-  if $banksync_dashboard_ok; then
+  banksync_body="$(wait_body_pattern "http://127.0.0.1:8097/" "Bank-Sync Dashboard" 6 5)" || true
+  if grep -q "Bank-Sync Dashboard" <<<"$banksync_body"; then
     report_pass "Bank-Sync — dashboard answers (templ stack + read models)"
   elif [ -z "$banksync_body" ]; then
     report_fail "Bank-Sync — :8097 unreachable after 6 attempts (journalctl -u bank-sync -n 30)"
@@ -378,16 +397,10 @@ if $banksync_enabled; then
   # errors counter is process-fresh — nonzero means cycles are failing
   # RIGHT NOW. Retry like the dashboard check: the first cycle may still
   # be in flight when this runs.
-  banksync_errors_ok=false
-  for _attempt in 1 2 3 4 5 6; do
-    if grep -q '^bank_sync_sync_errors_total 0' <<<"$banksync_metrics"; then
-      banksync_errors_ok=true
-      break
-    fi
-    sleep 5
-    banksync_metrics=$(curl -s --compressed --max-time 10 "http://127.0.0.1:8097/metrics" 2>/dev/null || true)
-  done
-  if $banksync_errors_ok; then
+  # is nonzero. wait_body_pattern refetches the metrics page per attempt:
+  # the first cycle may still be in flight when this runs.
+  banksync_metrics="$(wait_body_pattern "http://127.0.0.1:8097/metrics" '^bank_sync_sync_errors_total 0' 6 5)" || true
+  if grep -q '^bank_sync_sync_errors_total 0' <<<"$banksync_metrics"; then
     report_pass "Bank-Sync — sync cycles clean (sync_errors_total 0)"
   else
     report_fail "Bank-Sync — sync cycles failing since restart (bank_sync_sync_errors_total > 0): journalctl -u bank-sync -n 100"
