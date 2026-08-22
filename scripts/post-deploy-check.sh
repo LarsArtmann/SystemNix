@@ -543,12 +543,15 @@ else
 fi
 
 # ClickHouse XFS data mount: functional gate for the dedicated-partition
-# migration. Gated on the mount unit's existence (the AGENTS.md enable-gate
-# pattern: unit files present = deployed-enabled, is-enabled lies for units
-# pulled in via Requires). If the mount is deployed but NOT xfs (or absent),
-# clickhouse.service refused to start by design — catch it here, not in an
-# alert storm.
-if [ -e /etc/systemd/system/var-lib-clickhouse.mount ]; then
+# migration. Gated on the DEPLOYED fstab declaring the mount. Do NOT gate on
+# /etc/systemd/system/var-lib-clickhouse.mount — fileSystems entries render
+# to /etc/fstab and their units are generated AT RUNTIME by
+# systemd-fstab-generator into /run/systemd/generator/; the static path is
+# never populated and the gate silently skips = phantom green (caught live
+# 2026-08-22: the generator unit existed, the static one did not). If fstab
+# declares the mount but it is NOT xfs (or not mounted), clickhouse.service
+# refused to start by design — catch it here, not in an alert storm.
+if awk '$1 !~ /^#/ && $2 == "/var/lib/clickhouse" { found = 1 } END { exit !found }' /etc/fstab 2>/dev/null; then
   CH_FSTYPE="$(findmnt -no FSTYPE /var/lib/clickhouse 2>/dev/null || true)"
   if [ "$CH_FSTYPE" = "xfs" ]; then
     echo -e "${GREEN}PASS${NC} ClickHouse data mount is XFS (/var/lib/clickhouse)"

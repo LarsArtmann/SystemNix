@@ -25,6 +25,9 @@
 # Usage (sudo, on evo-x2):
 #   sudo bash scripts/migrate-clickhouse-xfs.sh prepare   # partition+mkfs+copy
 #   nix run .#deploy                                       # activates the mount
+#   sudo bash scripts/migrate-clickhouse-xfs.sh restamp   # re-create the tripwire stamp
+#                                                          # (when prepare died pre-stamp and
+#                                                          #  the migration went live anyway)
 #   sudo bash scripts/migrate-clickhouse-xfs.sh finalize  # delete shadowed originals
 set -euo pipefail
 
@@ -272,6 +275,36 @@ additionally pinned by btrbk root snapshots (3d+1w local, forever pool-side).
 EOF
 }
 
+# Re-create the migration state stamp on the LIVE XFS mount. For the case
+# where prepare died before stamping (e.g. run 5: count-gate failure after a
+# verified copy) and the migration was activated anyway — finalize then only
+# WARNs about the missing tripwire instead of enforcing it. Stamping the
+# CURRENT live tree is sound: the finalize tripwire compares live-vs-stamped
+# with a >= 50% floor, and ClickHouse merges only ever consolidate parts
+# downward; ingest adding parts cannot make the check fail.
+restamp() {
+  require_root
+
+  [ "$(findmnt -no FSTYPE "$SRC" 2>/dev/null || true)" = "xfs" ] ||
+    die "$SRC is not the XFS mount — deploy first (restamp works on the live fs)"
+  findmnt -n -o TARGET "$SRC" | grep -qx "$SRC" || die "$SRC not a mountpoint"
+  timeout 15 ls -A "$SRC" >/dev/null 2>&1 || die "$SRC mount is EIO-dead — do NOT restamp"
+
+  SRC_SIZE=$(du -sb "$SRC" | cut -f1)
+  SRC_FILES=$(find "$SRC" | wc -l)
+  SRC_PARTS=$(find "$SRC/store" -name '*.bin' -type f 2>/dev/null | wc -l)
+  [ "${SRC_PARTS:-0}" -gt 0 ] || die "zero part bin-files on the live fs — refusing to stamp a tripwire that can never pass"
+
+  cat >"$SRC/$STATE_FILE" <<STAMP
+timestamp=$(date -Is)
+source_bytes=$SRC_SIZE
+source_entries=$SRC_FILES
+source_part_bin_files=$SRC_PARTS
+STAMP
+  chown clickhouse:clickhouse "$SRC/$STATE_FILE" 2>/dev/null || true
+  info "re-stamped migration state: $SRC_PARTS part bin-files (finalize tripwire now ENFORCES at >= $((SRC_PARTS / 2)))"
+}
+
 finalize() {
   require_root
 
@@ -301,7 +334,7 @@ finalize() {
     [ "${LIVE_PARTS:-0}" -ge $((STAMPED_PARTS / 2)) ] ||
       die "live fs holds ${LIVE_PARTS} part files (< 50% of the ${STAMPED_PARTS} stamped at prepare) — wrong or empty filesystem mounted; do NOT finalize"
   else
-    warn "no migration state stamp found on the live fs (pre-hardening prepare?) — relying on snapshot + health gates only"
+    warn "no migration state stamp found on the live fs (prepare died before stamping?) — run '$0 restamp' to arm the tripwire, or rely on snapshot + health gates only"
   fi
 
   # ── Pre-deletion snapshot of @ (the zero-risk recovery point) ──────────
@@ -366,9 +399,10 @@ EOF
 
 case "${1:-}" in
 prepare) prepare ;;
+restamp) restamp ;;
 finalize) finalize ;;
 *)
-  echo "usage: $0 {prepare|finalize}" >&2
+  echo "usage: $0 {prepare|restamp|finalize}" >&2
   exit 64
   ;;
 esac
