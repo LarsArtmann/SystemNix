@@ -23,35 +23,50 @@
 let
   # zram disksize: 30 GiB in bytes; orig_data_size scaled per scenario.
   disksize = "32212254720";
-  zramOrig =
-    pct: toString (builtins.floor (32212254720 * pct));
+  zramOrig = pct: toString (builtins.floor (32212254720 * pct));
 
-  fakeSources =
+  # Single 5-line kernel-file blob: meminfo (2) + mm_stat (1) + psi (2).
+  # Built as ONE line with literal \n escapes so the Nix interpolation into
+  # the Python testScript stays a valid single-line string literal.
+  sourcesBlob =
     {
       availPct,
       zramPct,
       psiAvg10,
-    }: ''
-      MemTotal:       10000000 kB
-      MemAvailable:    ${toString (builtins.floor (10000000 * availPct))} kB
-    ''
-    + ''
-      ${zramOrig zramPct} 1000000000 1000000000 0 0 0 0 0
-    ''
-    + ''
-      some avg10=${psiAvg10} avg60=10.00 avg300=5.00 total=1000000
-      full avg10=0.00 avg60=0.00 avg300=0.00 total=100000
-    '';
+    }:
+    "MemTotal:       10000000 kB\\nMemAvailable:    "
+    + (toString (builtins.floor (10000000 * availPct)))
+    + " kB\\n"
+    + (zramOrig zramPct)
+    + " 1000000000 1000000000 0 0 0 0 0\\nsome avg10="
+    + psiAvg10
+    + " avg60=10.00 avg300=5.00 total=1000000\\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=100000";
 
-  # (meminfo, mm_stat, psi) file sets per scenario
+  # Writes /tmp/gt/<name>-meminfo, -mmstat, -psi from the blob (line 3 is
+  # mm_stat, line 4 the PSI "some" line the guard's awk reads).
   writeFakes =
     name: attrs:
     "mkdir -p /tmp/gt && "
-    + "printf '%s\n' '${fakeSources attrs}' > /tmp/gt/${name}-meminfo && "
-    + "sed -n '3p' /tmp/gt/${name}-meminfo > /tmp/gt/${name}-mmstat && "
-    + "sed -n '4p' /tmp/gt/${name}-meminfo > /tmp/gt/${name}-psi && "
-    + "head -2 /tmp/gt/${name}-meminfo > /tmp/gt/${name}-meminfo.tmp && "
-    + "mv /tmp/gt/${name}-meminfo.tmp /tmp/gt/${name}-meminfo";
+    + "printf '"
+    + (sourcesBlob attrs)
+    + "\\n' > /tmp/gt/"
+    + name
+    + "-all && "
+    + "sed -n '1,2p' /tmp/gt/"
+    + name
+    + "-all > /tmp/gt/"
+    + name
+    + "-meminfo && "
+    + "sed -n '3p' /tmp/gt/"
+    + name
+    + "-all > /tmp/gt/"
+    + name
+    + "-mmstat && "
+    + "sed -n '4p' /tmp/gt/"
+    + name
+    + "-all > /tmp/gt/"
+    + name
+    + "-psi";
 in
 {
   name = "memory-emergency-guard";
@@ -120,8 +135,6 @@ in
       };
     in
     ''
-      import re
-
       machine.start()
       machine.wait_for_unit("multi-user.target")
       machine.wait_for_unit("fastflowlm.service")
