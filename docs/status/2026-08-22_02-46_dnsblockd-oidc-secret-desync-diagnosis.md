@@ -193,3 +193,41 @@ dnsblockd.service (EnvironmentFile)
   → reads DNSBLOCKD_OIDC_CLIENT_SECRET from env
   → OIDC authorization-code + PKCE S256 flow with Pocket ID
 ```
+
+---
+
+## RESOLUTION (2026-08-22 03:45) — fixed, verified, time bomb removed
+
+The situation ESCALATED before the fix deploy ran: Pocket ID hit a fatal
+SQLITE_BUSY chain (02:37–02:40, collateral of crash-recovery IO pressure),
+exited, and after its 02:42 restart the `dnsblockd` client row was GONE from
+the DB entirely — user-facing error changed to "The requested OAuth 2.0 Client
+does not exist" (`invalid_client` on `/authorize`, not token exchange).
+
+**Root causes fixed (three, stacked):**
+
+1. **Client vanished from Pocket ID DB** (new failure class — SQLite crash
+   fallout, distinct from secret desync). Healed by the provisioner's
+   client-missing → POST create path at 03:05:49 (HTTP 201).
+2. **Secret desync** (original diagnosis) — `regenerateSecretsFor =
+   ["dnsblockd"]` rotated the secret at 03:05:49. Flag REMOVED and redeployed
+   at 03:40 (provisioner now logs "Secret file already exists" — stable).
+3. **Systemic deploy gap (the reason the first deploy didn't fix login)** —
+   a rotated secret never reached the daemon: `dnsblockd-oidc-secret`
+   (RemainAfterExit=true, `wantedBy=dnsblockd.service` → `is-enabled` rc=1
+   "indirect" → silently skipped by deploy.sh's provisioner loop) and
+   `dnsblockd.service` (reads EnvironmentFile at start only) were never
+   restarted. deploy.sh now has a dedicated is-active-gated block restarting
+   bridge + daemon in order (browser-history pattern).
+
+**Verified end-to-end:** authorize probe → `302 /interaction` (client
+recognized, was error-redirect before); bridge journal "client secret written"
+03:42:04; dnsblockd restarted 03:42:04 after bridge; 0 OIDC errors in
+dnsblockd journal since; DNS + dashboard :9090 healthy.
+
+**Unrelated collateral this crash-recovery night (NOT fixed here):**
+`/mnt/pool` unmounted (DAS USB dropped, needs physical reseat) → Immich,
+Paperless, bank-sync, Attic down; `signoz-provision` failing is a concurrent
+session's in-flight ClickHouse XFS migration (docs/planning/
+2026-08-22_02-38_clickhouse-xfs-migration.md); Pocket ID SQLITE_BUSY was
+transient IO-pressure collateral (clean at 03:44 smoke).
