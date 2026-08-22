@@ -395,9 +395,7 @@ if $banksync_enabled; then
   # sync cycle fails (2026-08: 129 consecutive sync errors, 0 transactions,
   # dashboard fine). The unit was just restarted by the deploy, so the
   # errors counter is process-fresh — nonzero means cycles are failing
-  # RIGHT NOW. Retry like the dashboard check: the first cycle may still
-  # be in flight when this runs.
-  # is nonzero. wait_body_pattern refetches the metrics page per attempt:
+  # RIGHT NOW. wait_body_pattern refetches the metrics page per attempt:
   # the first cycle may still be in flight when this runs.
   banksync_metrics="$(wait_body_pattern "http://127.0.0.1:8097/metrics" '^bank_sync_sync_errors_total 0' 6 5)" || true
   if grep -q '^bank_sync_sync_errors_total 0' <<<"$banksync_metrics"; then
