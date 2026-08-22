@@ -46,10 +46,13 @@ echo "== DAS USB link recovery check ($(date '+%F %T')) =="
 # ── 1. USB storage tree ─────────────────────────────────────────────────────
 echo "[1] USB storage interfaces (sysfs)"
 usb_storage_ifaces=$(
+  count=0
   for f in /sys/bus/usb/devices/*:*/bInterfaceClass; do
-    [ -f "$f" ] || continue
-    [ "$(cat "$f" 2>/dev/null)" = "08" ] && dirname "$f"
-  done | wc -l
+    if [ -f "$f" ] && [ "$(cat "$f" 2>/dev/null)" = "08" ]; then
+      count=$((count + 1))
+    fi
+  done
+  echo "$count"
 )
 if [ "$usb_storage_ifaces" -gt 0 ]; then
   ok "$usb_storage_ifaces storage-class USB interface(s) present"
@@ -83,7 +86,9 @@ fi
 echo "[3] sd* block devices"
 sd_devices=()
 for d in /sys/class/block/sd*; do
-  [ -e "$d" ] && sd_devices+=("${d##*/}")
+  if [ -e "$d" ]; then
+    sd_devices+=("${d##*/}")
+  fi
 done
 if [ "${#sd_devices[@]}" -gt 0 ]; then
   ok "${#sd_devices[@]} sd* device(s): ${sd_devices[*]}"
@@ -133,7 +138,9 @@ check_mount /mnt/pool btrfs
 if findmnt -n /mnt/pool >/dev/null 2>&1; then
   present_members=0
   for dev in "${POOL_MEMBERS[@]}"; do
-    [ -b "$dev" ] && present_members=$((present_members + 1))
+    if [ -b "$dev" ]; then
+      present_members=$((present_members + 1))
+    fi
   done
   if [ "$present_members" -lt 2 ]; then
     note "pool mounted with $present_members/2 members — degraded RAID1; never"
@@ -162,8 +169,11 @@ else
   note "journal unreadable without root — re-run with sudo for the ext4 scan"
 fi
 if findmnt -n -t ext4 /mnt/buildcache >/dev/null 2>&1; then
-  sysfs_errors=$(cat /sys/fs/ext4/*/errors_count 2>/dev/null | grep -vc '^0$' || true)
-  [ "${sysfs_errors:-0}" -gt 0 ] && fsck_needed=1
+  for f in /sys/fs/ext4/*/errors_count; do
+    if [ -r "$f" ] && [ "$(cat "$f" 2>/dev/null)" != "0" ]; then
+      fsck_needed=1
+    fi
+  done
 fi
 if [ "$fsck_needed" = 1 ]; then
   echo "  e2fsck decision (cache data is DISPOSABLE by design):"
@@ -187,7 +197,10 @@ if findmnt -n -t ext4 /mnt/buildcache >/dev/null 2>&1; then
     [ -z "$entry" ] && continue
     known=0
     for k in "${KNOWN_CACHE_ENTRIES[@]}"; do
-      [ "$entry" = "$k" ] && known=1 && break
+      if [ "$entry" = "$k" ]; then
+        known=1
+        break
+      fi
     done
     if [ "$known" = 0 ]; then
       note "unexpected entry on cache SSD: /mnt/buildcache/$entry (debris or"
