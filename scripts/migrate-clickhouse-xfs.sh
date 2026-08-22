@@ -115,27 +115,34 @@ prepare() {
 
   # ── Preflight ─────────────────────────────────────────────────────────
   [ -b "$DISK" ] || die "$DISK is not a block device"
-  if lsblk -no NAME "$DISK" | grep -qx "nvme0n1p9"; then
-    die "nvme0n1p9 already exists — refusing to touch the partition table.
-If this is a RERUN after a failed copy: the fs may already hold data; inspect
-(blkid / lsblk -f) and continue manually instead of re-partitioning."
-  fi
+  # NOTE: p9 already existing is NOT fatal — the partition+filesystem step
+  # below is resumable (stale-signature aware). A rerun after a failed run
+  # continues where it left off instead of demanding manual surgery.
   if findmnt -n "$SRC" >/dev/null 2>&1; then
     die "$SRC is already a mountpoint — the XFS migration appears already active"
   fi
   [ -d "$SRC" ] || die "$SRC does not exist (no data to migrate?)"
 
-  # Free tail: last partition end vs disk size (512b sectors)
-  DISK_SECTORS=$(cat "/sys/block/nvme0n1/size")
-  LAST_END=0
-  for p in /sys/block/nvme0n1/nvme0n1p*; do
-    end=$(($(cat "$p/start") + $(cat "$p/size")))
-    [ "$end" -gt "$LAST_END" ] && LAST_END=$end
-  done
-  FREE_SECTORS=$((DISK_SECTORS - LAST_END))
-  FREE_GIB=$((FREE_SECTORS / 2 / 1024 / 1024))
-  info "Unallocated tail after last partition: ${FREE_GIB} GiB"
-  [ "$FREE_GIB" -ge "$MIN_FREE_GIB" ] || die "free tail is only ${FREE_GIB} GiB (< ${MIN_FREE_GIB} GiB) — partition table is not what this script expects"
+  # Free tail: last partition end vs disk size (512b sectors). Only gates
+  # partition CREATION — when p9 exists this script created it earlier over
+  # verified-free space, and the tail is naturally ~0 now.
+  P9_EXISTS=false
+  [ -b "$PART" ] && P9_EXISTS=true
+  if [ "$P9_EXISTS" = false ]; then
+    DISK_SECTORS=$(cat "/sys/block/nvme0n1/size")
+    LAST_END=0
+    for p in /sys/block/nvme0n1/nvme0n1p*; do
+      end=$(($(cat "$p/start") + $(cat "$p/size")))
+      [ "$end" -gt "$LAST_END" ] && LAST_END=$end
+    done
+    FREE_SECTORS=$((DISK_SECTORS - LAST_END))
+    FREE_GIB=$((FREE_SECTORS / 2 / 1024 / 1024))
+    info "Unallocated tail after last partition: ${FREE_GIB} GiB"
+    [ "$FREE_GIB" -ge "$MIN_FREE_GIB" ] || die "free tail is only ${FREE_GIB} GiB (< ${MIN_FREE_GIB} GiB) — partition table is not what this script expects"
+  else
+    P9_GIB=$(($(cat "/sys/block/nvme0n1/nvme0n1p9/size") / 2 / 1024 / 1024))
+    info "p9 already exists (${P9_GIB} GiB) — resuming interrupted prepare"
+  fi
 
   SRC_SIZE=$(du -sb "$SRC" | cut -f1)
   SRC_FILES=$(find "$SRC" | wc -l)
@@ -145,18 +152,41 @@ If this is a RERUN after a failed copy: the fs may already hold data; inspect
 
   stop_stack
 
-  # ── Partition + filesystem ────────────────────────────────────────────
-  info "Creating partition 9 spanning the free tail (sgdisk -n 9:0:0)"
-  "$SGDISK" -n 9:0:0 -t 9:8300 "$DISK"
-  "$PARTX" -u "$DISK"
-  udevadm settle
-  [ -b "$PART" ] || die "$PART did not appear after partx -u"
-  if lsblk -no FSTYPE "$PART" | grep -q .; then
-    die "$PART already contains a filesystem — aborting to avoid destroying data"
+  # ── Partition + filesystem (resumable, stale-signature aware) ────────
+  if [ "$P9_EXISTS" = false ]; then
+    info "Creating partition 9 spanning the free tail (sgdisk -n 9:0:0)"
+    "$SGDISK" -n 9:0:0 -t 9:8300 "$DISK"
+    "$PARTX" -u "$DISK"
+    udevadm settle
+    [ -b "$PART" ] || die "$PART did not appear after partx -u"
   fi
 
-  info "Creating XFS filesystem with label '${LABEL}'"
-  "$MKFS_XFS" -L "$LABEL" "$PART"
+  P9_FSTYPE=$(lsblk -no FSTYPE "$PART" 2>/dev/null | head -n1)
+  P9_LABEL=$(lsblk -no LABEL "$PART" 2>/dev/null | head -n1)
+  if [ "$P9_FSTYPE" = "xfs" ] && [ "$P9_LABEL" = "$LABEL" ]; then
+    # Partial or complete prior run: NEVER re-mkfs a labeled fs — rsync
+    # below is incremental and resumes/refreshes the copy idempotently.
+    info "p9 already holds the XFS fs '${LABEL}' — resuming (rsync continues where it stopped)"
+  else
+    if [ -n "$P9_FSTYPE" ]; then
+      # Expected residue: the retired /rust-cache ext4 lived at this exact
+      # offset; deleting its partition entry (2026-08-17) erased NOTHING —
+      # the old superblock still sits on the platters and blkid reports it.
+      # Its contents moved to /mnt/buildcache long ago; this is dead bytes,
+      # not live data. Only THIS known signature is auto-wiped; anything
+      # else is unexpected and aborts (live-data protection).
+      if [ "$P9_FSTYPE" = "ext4" ] && [ "$P9_LABEL" = "rust-cache" ]; then
+        WIPEFS=$(resolve_bin wipefs util-linux) || die "wipefs unavailable"
+        info "wiping stale '${P9_LABEL}' ${P9_FSTYPE} signature (retired rust-cache; partition-entry deletion does not erase bytes)"
+        "$WIPEFS" -a "$PART" || die "wipefs failed on $PART"
+        udevadm settle
+      else
+        die "$PART carries an unexpected ${P9_FSTYPE} fs '${P9_LABEL:-unlabeled}' — refusing to destroy; inspect manually: blkid $PART"
+      fi
+    fi
+    info "Creating XFS filesystem with label '${LABEL}'"
+    "$MKFS_XFS" -L "$LABEL" "$PART"
+  fi
 
   # ── Copy + verify ─────────────────────────────────────────────────────
   mkdir -p "$MNT"
