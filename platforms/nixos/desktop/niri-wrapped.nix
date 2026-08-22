@@ -693,8 +693,15 @@ in
                   systemctl suspend
                 '';
               };
+              swayidleDpmsOff = pkgs.writeShellApplication {
+                name = "swayidle-dpms-off";
+                runtimeInputs = [ pkgs.niri-unstable ];
+                text = ''
+                  niri msg action power-off-monitors
+                '';
+              };
             in
-            "${lib.getExe' pkgs.swayidle "swayidle"} -w timeout 43200 ${lib.getExe swayidleSuspend} before-sleep ${lib.getExe dms-lock}";
+            "${lib.getExe' pkgs.swayidle "swayidle"} -w timeout 1200 ${lib.getExe swayidleDpmsOff} timeout 43200 ${lib.getExe swayidleSuspend} before-sleep ${lib.getExe dms-lock}";
           TimeoutStartSec = "10s";
         };
         Install.WantedBy = [ "graphical-session.target" ];
