@@ -145,13 +145,20 @@ prepare() {
     info "p9 already exists (${P9_GIB} GiB) — resuming interrupted prepare"
   fi
 
+  stop_stack
+
+  # ── Source metrics — MUST be counted on the quiesced source ──────────
+  # Counting before stop_stack races ClickHouse's background merges: run 5
+  # (2026-08-22) failed the final entry-count gate 299214 vs 299215 — one
+  # part file was merged away between the preflight count and the stop,
+  # while the checksum gate (authoritative) proved content parity. Counts
+  # taken post-stop compare apples-to-apples with DST below, and the
+  # stamped tripwire reflects the quiesced state finalize re-checks.
   SRC_SIZE=$(du -sb "$SRC" | cut -f1)
   SRC_FILES=$(find "$SRC" | wc -l)
   SRC_PARTS=$(find "$SRC/store" -name '*.bin' -type f 2>/dev/null | wc -l)
   info "Source: $SRC — $((SRC_SIZE / 1024 / 1024 / 1024)) GiB, ${SRC_FILES} entries, ${SRC_PARTS} part bin-files"
   [ "$SRC_SIZE" -gt 0 ] || die "source is empty — nothing to migrate (fresh ClickHouse? start the stack first)"
-
-  stop_stack
 
   # ── Partition + filesystem (resumable, stale-signature aware) ────────
   if [ "$P9_EXISTS" = false ]; then
