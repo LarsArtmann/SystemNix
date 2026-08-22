@@ -339,6 +339,13 @@ in
           "Mod+Ctrl+Shift+K".action.move-window-to-monitor-up = { };
           "Mod+Ctrl+Shift+J".action.move-window-to-monitor-down = { };
 
+          # Multiscreen "Now" batch (TV-not-adjacent plan, agreed 2026-08-16):
+          # Tab cycles monitors without needing edge-crossing rebinds (Mod+H/L).
+          # When a 2nd identical LG arrives: clone DP-1 output entry + rebind Mod+H/L.
+          "Mod+Tab".action.focus-monitor-next = { };
+          "Mod+Shift+Tab".action.move-column-to-monitor-next = { };
+          "Mod+Ctrl+Tab".action.move-workspace-to-monitor-next = { };
+
           "Mod+BracketLeft".action.consume-window-into-column = { };
           "Mod+BracketRight".action.expel-window-from-column = { };
           "Mod+R".action.switch-preset-column-width = { };
@@ -370,6 +377,14 @@ in
           "Mod+Page_Down".action.focus-workspace-down = { };
           "Mod+Shift+Page_Up".action.move-column-to-workspace-up = { };
           "Mod+Shift+Page_Down".action.move-column-to-workspace-down = { };
+
+          # Named-workspace jumps — direct access to the 5 routed workspaces
+          # (main/browser/dev on DP-1, chat/media on DP-2)
+          "Mod+M".action.focus-workspace = "main";
+          "Mod+B".action.focus-workspace = "browser";
+          "Mod+E".action.focus-workspace = "dev";
+          "Mod+C".action.focus-workspace = "chat";
+          "Mod+V".action.focus-workspace = "media";
 
           # App launcher — DMS spotlight (replaces rofi drun, which OOM-killed niri)
           "Mod+D".action.spawn = [
