@@ -351,7 +351,16 @@ _: {
           FORGEJO_MIRROR_ERRORS_30M=""
           FORGEJO_MIRROR_ERRORING=""
           if [ "$collect_forgejo_mirrors" = "true" ] && [ -r "${cfg.forgejo.dbPath}" ]; then
-            FORGEJO_LAST_SYNC=$(sqlite3 -readonly "${cfg.forgejo.dbPath}" "SELECT MAX(updated_unix) FROM mirror" 2>/dev/null) || FORGEJO_LAST_SYNC=""
+            # .timeout: forgejo's DB is hot (action_runner heartbeats every
+            # ~2s) — without a busy-timeout the readonly query dies on the
+            # first SQLITE_BUSY and the check fail-closes permanently.
+            # stderr is captured so failures are diagnosable via
+            # journalctl -u system-health-metrics.
+            FORGEJO_LAST_SYNC=$(sqlite3 -readonly "${cfg.forgejo.dbPath}" ".timeout 5000" "SELECT MAX(updated_unix) FROM mirror" 2>&1) || FORGEJO_LAST_SYNC=""
+            if ! echo "$FORGEJO_LAST_SYNC" | grep -qE '^[0-9]+$'; then
+              echo "system-health: forgejo mirror query failed: $FORGEJO_LAST_SYNC" >&2
+              FORGEJO_LAST_SYNC=""
+            fi
             if [ -n "$FORGEJO_LAST_SYNC" ]; then
               FORGEJO_MIRROR_SCRAPE_ERRORS=0
               FORGEJO_MIRROR_LAST_SYNC_AGE=$((NOW_EPOCH - FORGEJO_LAST_SYNC))
