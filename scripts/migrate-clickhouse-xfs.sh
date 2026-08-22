@@ -212,7 +212,13 @@ prepare() {
   # re-runnable without manual cleanup.
   trap 'umount "$MNT" 2>/dev/null || true' EXIT
   info "rsyncing $SRC -> $MNT (this is the data copy; NVMe->NVMe)"
-  "$RSYNC" -aHAX --numeric-ids --info=progress2 "$SRC"/ "$MNT"/
+  # --delete keeps the copy an EXACT mirror of the quiesced source across
+  # reruns: ClickHouse merges may have removed part files between attempts,
+  # and without --delete those linger in the copy and fail the entry-count
+  # gate below as EXTRANEOUS files (checksum parity does not flag extras).
+  # Scoped to $MNT (a dedicated mount of the copy) — the source is never
+  # touched, and the state stamp is simply re-written after the count.
+  "$RSYNC" -aHAX --delete --numeric-ids --info=progress2 "$SRC"/ "$MNT"/
 
   # Verification: a CHECKSUM dry-run delta MUST report zero files
   # transferred. Without --checksum rsync only compares size+mtime — a

@@ -728,6 +728,7 @@
           "go-nix-helpers"
         ],
         "go-retry": "go-retry_5",
+        "go-src": "go-src",
         "go-sse": "go-sse_5",
         "nixpkgs": [
           "nixpkgs"
@@ -735,11 +736,11 @@
         "templ-components": "templ-components_5"
       },
       "locked": {
-        "lastModified": 1787350975,
-        "narHash": "sha256-WnmxSkbhmaOMrgGTdd8Z1kAxUNa4/NzvOfhc4Fhqg1M=",
+        "lastModified": 1787367238,
+        "narHash": "sha256-INbaVFMrxHAqvZ+iCIp0TrhJameCOHr4Etuzg71JfMc=",
         "owner": "LarsArtmann",
         "repo": "dnsblockd",
-        "rev": "52878112d07e554bc0a8c9cb54a270153116b484",
+        "rev": "6f92eb7a2c3242698b36be2fb749faf5ba253855",
         "type": "github"
       },
       "original": {
@@ -3729,6 +3730,19 @@
         "url": "ssh://git@github.com/larsartmann/go-retry"
       }
     },
+    "go-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1786408852,
+        "narHash": "sha256-KBd2vX1uNGBkFMkSfz1jvNSecqhLnexdVbhPYlIT8Js=",
+        "type": "tarball",
+        "url": "https://go.dev/dl/go1.26.6.src.tar.gz"
+      },
+      "original": {
+        "type": "tarball",
+        "url": "https://go.dev/dl/go1.26.6.src.tar.gz"
+      }
+    },
     "go-sse": {
       "flake": false,
       "locked": {
@@ -3817,16 +3831,16 @@
     "go-sse_5": {
       "flake": false,
       "locked": {
-        "lastModified": 1786581294,
-        "narHash": "sha256-3srYhFHfXB64jclhG3XWAimYpbfjw9zM8kp/E61xUzA=",
-        "ref": "refs/tags/v0.5.0",
-        "rev": "ccceeaa93af5292914085d893a0b78b4258fa19a",
-        "revCount": 196,
+        "lastModified": 1787355654,
+        "narHash": "sha256-j4WYw3AlK81w2T67kLj3rCRCSKsyK8D2B+iNGUccEuI=",
+        "ref": "refs/tags/v0.5.1",
+        "rev": "804da8835d5159e6a23a7f3ab10009b0fe232a35",
+        "revCount": 213,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-sse"
       },
       "original": {
-        "ref": "refs/tags/v0.5.0",
+        "ref": "refs/tags/v0.5.1",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-sse"
       }
@@ -5910,16 +5924,16 @@
     "templ-components_5": {
       "flake": false,
       "locked": {
-        "lastModified": 1787339812,
-        "narHash": "sha256-NGUoHnN++vkHeAgKobbIMHeKducxxdBPz/Ob0UKlie0=",
-        "ref": "refs/tags/v1.9.0",
-        "rev": "4951c079ac795e5e5a2507e536d5b13e039282b9",
-        "revCount": 1082,
+        "lastModified": 1787363541,
+        "narHash": "sha256-XV2n6EnfPZ4DEbr4ANgORtVKCy7DaCImpqVZcN01zrs=",
+        "ref": "refs/tags/v1.10.0",
+        "rev": "e8233eefac7615595653a3530f24b0d061e93f1f",
+        "revCount": 1098,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/templ-components"
       },
       "original": {
-        "ref": "refs/tags/v1.9.0",
+        "ref": "refs/tags/v1.10.0",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/templ-components"
       }
