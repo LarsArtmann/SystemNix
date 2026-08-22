@@ -230,6 +230,10 @@
       url = "github:LarsArtmann/file-and-image-renamer?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-parts.follows = "flake-parts";
+      # Without this, the input locks its own go-nix-helpers via git+ssh:
+      # (git insteadOf pollution) — divergent narHash vs the top-level
+      # github: fetch, the "NAR hash mismatch" daemon-cache trap (AGENTS.md).
+      inputs.go-nix-helpers.follows = "go-nix-helpers";
     };
 
     # crush-daily — Daily AI-powered insights from Crush development databases
@@ -745,6 +749,22 @@
                 echo "backslash-n is filepath.Match's ESCAPE for a literal 'n' and can never match"
                 echo "(2026-08-22 bug: 7 deployed checks permanently red from exactly this)."
                 echo "Incident: 2026-08-22 DAS USB drop (buildcache/pool stayed green through a live outage) — docs/status/2026-08-22_01-46_das-usb-drop-gatus-phantom-green-fix.md"
+                exit 1
+              fi
+              # Escape-sequence trap: in a double-quoted nix string the source
+              # bytes backslash-backslash-n evaluate to a LITERAL backslash + 'n'.
+              # gatus 5.36.0 pattern.Match delegates to filepath.Match, which
+              # treats '\' as an escape for the next character — so the glob
+              # "\\n" matches only the letter 'n' and the condition can NEVER
+              # match a real /metrics body (permanently red, zero diagnostics;
+              # 7 checks were live-broken by this on 2026-08-22). The anchored
+              # form needs the REAL newline: single-backslash \n in the nix
+              # source (gatus-config.nix anchored conditions are the reference).
+              if grep -v '^[[:space:]]*#' ${./modules/nixos/services/gatus-config.nix} | grep -nE 'pat\(.*\\\\n'; then
+                echo "FAIL: pat() contains a literal backslash-n (nix source \"\\\\n\")."
+                echo "filepath.Match treats '\\' as an ESCAPE, so this glob matches only the letter 'n'"
+                echo "and the condition can never match a real body. Write the newline as single-"
+                echo "backslash \"\\n\" in the double-quoted nix string — see gatus-config.nix anchored forms."
                 exit 1
               fi
               touch $out

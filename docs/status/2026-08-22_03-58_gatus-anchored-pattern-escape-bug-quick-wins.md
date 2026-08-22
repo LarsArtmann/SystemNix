@@ -1,0 +1,83 @@
+# Status Report: Gatus Anchored-Pattern Escape Bug + Quick-Wins Batch
+
+**Date:** 2026-08-22 03:58 CEST
+**Session scope:** Execute the TODO_LIST "quick wins" batch. Mid-batch, discovered and root-caused that the DEPLOYED 2026-08-22 gatus "anchored form" fix is itself broken (never-matching patterns); fixed it, migrated the 4 allowlisted metrics, added the DAS-link root-cause check, hardening + `--compressed` sweep.
+**Machine state at report time:** evo-x2 up, DAS USB link still absent (`buildcache_mounted 0`, `pool_mounted 0` live), concurrent session active (dnsblockd OIDC outage fixes, clickhouse XFS follow-ups).
+
+---
+
+## a) FULLY DONE
+
+1. **Verified gatus `pattern.Match` semantics against the actual 5.36.0 source** (realized `pkgs.gatus.src` from the nix store): `pattern/pattern.go` is `filepath.Match` after stripping `/` from both sides; `config/endpoint/condition.go` does NO newline preprocessing. Go's `filepath.Match` treats `\` as an ESCAPE character — a literal `\n` (backslash + n) in a pattern matches a literal **`n`**, never a newline.
+
+2. **Discovered + fixed a live monitoring bug: the deployed anchored form never matches.** The 01:46 session's fix wrote `"...\\n..."` in Nix double-quoted strings → single-quoted YAML scalars carry a literal backslash-n → the positive conditions (`pat(*\nmetric *)`) can NEVER match and the negative ones (`!= pat(*metric 0\n*)`) are vacuously true. All 7 deployed anchored checks (LAN NIC, Build Cache SSD ×2, Pool Mounted, SigNoz Alert Rules, ClickHouse XFS ×2) have been **permanently red since that deploy**. Fixed: 14 sites changed `\\n` → `\n` (real newline; `formats.yaml` round-trips it as a double-quoted YAML `\n` escape — verified with a generated test YAML + Python parse). The 01:46 session's Python "faithful reimplementation" missed this because Python-side strings already had real newlines — the bug lived entirely in the Nix→YAML escaping layer.
+
+3. **Migrated the 4 allowlisted metrics to the anchored form and deleted the lint allowlist** (`btrfs_scrub_error_free`, `btrfs_emergency_reserve_present`, `backup_all_healthy`, `secret_rotation_all_fresh` in `gatus-config.nix`; allowlist loop removed from `flake.nix` `gatus-pattern-lint`; failure message now also documents the real-newline requirement).
+
+4. **Verification harness, not vibes:** built the actual `services.gatus.settings` YAML through the full NixOS eval (`nix build` + `formats.yaml`), extracted all 114 `pat()` conditions, and evaluated them with a Go replica of `pattern.Match` against the LIVE `:9100/metrics` body: 88 metrics-endpoint conditions → 68 green / 20 red, **every red verified truthful** (DAS down, post-freeze memory pressure, `btrfs_health_critical 1`, discordsync/bank-sync metrics absent = fail-closed). Mutation tests: zeroed value → negated conditions flip red; metric removed → presence conditions flip red. ALL PASS. No condition is vacuously green or permanently red.
+
+5. **Added `system_das_link_present` + Gatus "DAS USB Link" check** (`system-health.nix`: `dasUsbPath` option, default `"8-1"`; `gatus-config.nix`: anchored conditions + Discord alert that names the CAUSE and the physical recovery path). The single-USB-link topology previously only produced N consequence alerts (buildcache + pool + SSDs).
+
+6. **Extended `tests/test-gatus-patterns.nix`** with an anchored-form regression endpoint (real-newline conditions against the mock body). A backslash-n regression turns this test red; also replaced the legacy `pat(*btrfs_scrub_error_free 1*)` case (vacuous-green form) with a neutral one.
+
+7. **`--compressed` sweep over every module-level body-parsing curl** (implicit-gzip trap, TODO P1): `pocket-id.nix` (api_get/api_put/api_post + client-secret POST), `forgejo-repos.nix` (GitHub repo info + migrate result), `_forgejo-scripts.nix` (repos fetch, starred fetch, SSH-key POST), and — found by this session, NOT in the TODO — `system-health.nix` SigNoz rules-count scrape (`curl | jq` against the SigNoz API, the exact silent-garbling shape).
+
+8. **Dozzle container hardening:** `--security-opt=no-new-privileges:true` + `--cap-drop=ALL` (Docker-socket container). Bonus: the config change forces oci-containers to RECREATE the stale runtime container on next deploy — also resolving the "Memory=0 (unbounded) running container" TODO item.
+
+## b) PARTIALLY DONE
+
+1. **Nothing deployed.** All changes are committed (auto-commit daemon: `e34a1a52`, `c121f8cf`, `2893fd3f`) but `nix run .#deploy` has NOT run. Until it does, the LIVE gatus keeps the never-matching patterns (7 checks permanently red + alert noise risk) and the DAS-link check doesn't exist.
+
+2. **`nix flake check --no-build` / `nix fmt`: GREEN** — ran after committing: "all checks passed" (the aarch64-darwin omission is the expected Linux-only-input warning), treefmt reports 0 changed. The eval gates confirm the whole batch; deployment remains the open half.
+
+3. **AGENTS.md Gatus documentation:** the anchored-form + real-newline requirement is documented in the lint failure message, but the AGENTS.md "Gatus Health Check Design Patterns" section still teaches the anchored form without the newline-escaping trap.
+
+## c) NOT STARTED (planned quick wins, blocked by session end)
+
+1. FastFlowLM smoke: assert the model NAME in `/v1/models` body (site read, edit not applied — `post-deploy-check.sh:227`).
+2. Enable-gated `crm.$DOMAIN` external vHost check in `post-deploy-check.sh`.
+3. Pre-deploy-check §10: flag `pat(*<metric> 1*)` on HELP-emitting metrics (the lint covers eval time; the pre-deploy layer stays uncovered).
+4. `file-and-image-renamer.inputs.go-nix-helpers.follows` (verified missing — flake.nix:229 has only nixpkgs/flake-parts follows).
+5. `start-limit-audit.nix` eval-time guard (StartLimitBurst-in-[Service] silently-ignored class).
+6. TODO_LIST truth-upkeep: `forgejo-oidc-setup` race item is STALE (mkOidcGate wired, forgejo.nix:83), `PapDashboard coverage` item is STALE (post-deploy checks exist, post-deploy-check.sh:456-473), `Pool-usage Gatus alert` item is STALE (`pool_usage_over_threshold` check live, gatus-config.nix:1370). None marked yet.
+7. Lint hardening: a third `gatus-pattern-lint` trap rejecting literal `\\n` inside `pat()` in the nix source (currently only the message documents it).
+
+## d) TOTALLY FUCKED UP
+
+1. **The pre-existing broken fix (not this session's bug, but this session's find):** the 01:46 "phantom-green fix" deployed never-matching patterns — trading phantom greens for permanent reds. Two independent safety nets failed: the Python reimplementation (newline handling differed from the Nix→YAML path) and my first harness draft (I initially mislabeled the correct absent→red behavior as a FAIL — caught by re-deriving expected semantics before drawing conclusions; also one first-draft Go file had a nonexistent-API call, self-caught). No tree state was ever wrong from my drafts.
+2. **Repo-gate order violation:** the auto-commit daemon committed my edits BEFORE I ran `nix fmt`/`nix flake check` on the batch. Eval-safety of the monitoring path is proven; the format/lint gates are pending. Lesson: in a shared tree, stage-then-verify cycles must be atomic or the daemon ships unverified states.
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **The regression class is "escaping layers", not "glob semantics".** Two consecutive sessions got the anchored form wrong in different ways. The durable guard is the VM test (added) + a lint trap for literal `\\n` (not yet added) + the pre-deploy §10 extension (not yet added) — three layers, one currently live.
+2. **Pre-deploy §10 and the gatus-pattern-lint overlap but don't cover the same moment**: eval-time lint catches source patterns; a pre-deploy flag would catch hand-edited/allowlisted escapes. Cheap, still missing.
+3. **20 truthful live-reds are sitting in the exporter right now** (memory-pressure family, `btrfs_health_critical 1`, DAS down, discordsync/bank-sync absent metrics). Post-fix these alert honestly — the alert-noise question (dedup, one-cause-one-alert) is now live, not theoretical.
+
+## f) NEXT UP TO 50 THINGS (prioritized, session-scoped)
+
+1. ~~`nix fmt` + `nix flake check --no-build` (running) — confirm green.~~ DONE — both green (see b.2).
+2. `nix run .#deploy` — ships the never-matching-pattern fix; the 7 checks start evaluating truthfully.
+3. Post-deploy: verify gatus journal shows the anchored conditions evaluating (green where healthy, red only for real outages).
+4. Check Discord/gatus alert history for noise from the broken-red window since the 01:46 deploy (ack/resolve after fix).
+5. Run `tests/test-gatus-patterns.nix` VM test (new anchored regression case).
+6. FastFlowLM smoke: assert model name in `/v1/models` (c.1).
+7. `crm.$DOMAIN` enable-gated external check (c.2).
+8. Pre-deploy §10 `pat(*<metric> 1*)` flag (c.3).
+9. `gatus-pattern-lint`: third trap rejecting literal `\\n` in `pat()` (c.7).
+10. AGENTS.md Gatus section: real-newline requirement + `!`-literal + HELP-collision + `system_das_link_present` note (b.3).
+11. Link `docs/dnsblockd-oidc-recovery.md` from AGENTS.md DNS section.
+12. `file-and-image-renamer` go-nix-helpers follows + lock re-encode (c.4).
+13. `start-limit-audit.nix` (c.5).
+14. TODO_LIST: mark the three stale items + today's completed ones (c.6).
+15. Dozzle post-deploy: `docker inspect dozzle` → confirm 256m + no-new-privileges + cap-drop landed (container recreated).
+16. Consider gatus alert dedup / cause-vs-consequence grouping now that cause alerts exist (e.3).
+17. Re-check `system_signoz_alert_rules_healthy 0` (live-red — real rules regression or collector port drift after the concurrent session's signoz work).
+18. Sweep remaining Priority-3 quick wins from the session's original list (niri blur schema check, das-link-recovery script).
+
+(19-50 intentionally unpopulated — the 18 above are real, ordered, and session-grounded.)
+
+## g) QUESTIONS I CANNOT ANSWER MYSELF (max 3)
+
+1. **Deploy now or batch?** The live gatus is running never-matching patterns (7 checks permanently red since the 01:46 deploy). I can deploy immediately, or batch the remaining small quick wins (f.6-f.14, ~30-60 min) into one deploy. Which?
+2. **DAS physically reseed yet?** `buildcache_mounted 0` / `pool_mounted 0` are still live. If the link is still absent at deploy time, the new DAS-link + pool + buildcache checks will (correctly) fire Discord alerts on deploy — expected noise or hold the deploy until the hardware is reseated?
+3. **Alert-noise posture:** with truthful cause+consequence alerts now live (one DAS drop = 3-4 Discord messages), do you want gatus-side dedup/grouping now (f.16) or is per-check alerts fine?

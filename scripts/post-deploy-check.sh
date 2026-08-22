@@ -224,8 +224,15 @@ if $flm_enabled; then
   # max-time 480: v1.0.2 weights are 21.6 GB (was 13.6) — worst-case cold load
   # through the kernel backlog is now ~5 min.
   if curl -s --compressed --max-time 480 -o /tmp/.smoke-flm "http://127.0.0.1:52625/v1/models" 2>/dev/null; then
-    if grep -q '"data"' /tmp/.smoke-flm 2>/dev/null; then
-      report_pass "FastFlowLM — /v1/models through socket-activated :52625 (model now pinned ≤ keepAlive)"
+    # Assert the BOUND model id, not just a JSON envelope: a stale/wrong model
+    # file (the v1.0.2 re-pull incident: old weights hash-mismatch the new
+    # manifest) still answers with a "data" array. Expected id is derived from
+    # the deployed unit's ExecStart so the check tracks config changes.
+    flm_model=$(systemctl cat fastflowlm.service 2>/dev/null | sed -n 's/.*flm serve \([^ ]*\).*/\1/p' | head -1)
+    if [ -n "$flm_model" ] && grep -q "\"$flm_model\"" /tmp/.smoke-flm 2>/dev/null; then
+      report_pass "FastFlowLM — /v1/models serves bound model '$flm_model' through socket-activated :52625 (pinned ≤ keepAlive)"
+    elif grep -q '"data"' /tmp/.smoke-flm 2>/dev/null; then
+      report_fail "FastFlowLM — :52625 answered but /v1/models lacks bound model '${flm_model:-<derive-failed>}' — stale/wrong model serving (v1.0.2 re-pull class)"
     else
       report_fail 'FastFlowLM — :52625 answered but /v1/models body lacks "data" — proxy chain up, backend wrong'
     fi
@@ -778,6 +785,9 @@ check "Immich (HTTPS)" "https://immich.$DOMAIN/api/server/ping" "200" "" 2>/dev/
 # above): a disabled bank-sync leaves the Caddy vHost proxying to a dead
 # port, which would false-FAIL every deploy until the service goes live.
 $banksync_enabled && check "Bank-Sync (HTTPS)" "https://banksync.$DOMAIN/" "200" "Bank-Sync Dashboard" 2>/dev/null || true
+# Enable-gated via the twenty unit (banksync pattern): a disabled Twenty
+# leaves crm vHost proxying to a dead container port.
+test -e /etc/systemd/system/twenty.service && check "Twenty CRM (HTTPS)" "https://crm.$DOMAIN/" "200" "<html" 2>/dev/null || true
 check "Overview (HTTPS)" "https://overview.$DOMAIN/" "200" "<html" 2>/dev/null || true
 
 # Enable-gated review tools (LAN-only, no auth)

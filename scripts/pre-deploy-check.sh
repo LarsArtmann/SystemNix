@@ -193,6 +193,22 @@ GATUS_CONFIG="modules/nixos/services/gatus-config.nix"
 NODE_EXPORTER_PORT=9100
 MONITOR365_PORT=9191
 
+# Static config traps (mirrors the flake.nix gatus-pattern-lint — defense in
+# depth at deploy time: the working tree can carry a regression CI hasn't
+# rejected yet, e.g. mid-race with the auto-commit daemon).
+PHANTOM_PATTERNS=$(grep -v '^[[:space:]]*#' "$GATUS_CONFIG" | grep -nE 'pat\(\*[a-z_0-9]+ 1\*\)' || true)
+if [ -n "$PHANTOM_PATTERNS" ]; then
+  fail "bare pat(*<metric> 1*) matches the metric's own HELP comment (phantom green): ${PHANTOM_PATTERNS} — use the anchored form [BODY] != pat(*m 0\\n*) + [BODY] == pat(*\\nm *)"
+else
+  pass "no bare pat(*<metric> 1*) phantom-green conditions in gatus config"
+fi
+ESCAPED_PATTERNS=$(grep -v '^[[:space:]]*#' "$GATUS_CONFIG" | grep -nE 'pat\(.*\\\\n' || true)
+if [ -n "$ESCAPED_PATTERNS" ]; then
+  fail "pat() with literal backslash-n (nix source '\\\\n') can NEVER match — filepath.Match escapes it to the letter 'n'; write the real newline as single-backslash \\n"
+else
+  pass "no literal backslash-n escapes inside pat() in gatus config"
+fi
+
 # Extract metric-like names from gatus pat() patterns.
 # Skips HTML checks (*<html*), text body checks, and comments. Body-text
 # patterns like pat(*Paperless-ngx sign in*) extract a leading word that is
