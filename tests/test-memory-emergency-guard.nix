@@ -163,8 +163,14 @@ in
                           " /var/lib/memory-emergency-guard/tripped.count")
           # Bring every sacrifice unit back up (the restore path only
           # restarts the socket; activation would re-spawn the backend).
+          # Order matters: the socket FIRST — systemd refuses a socket whose
+          # service is already active ("Socket service ... refusing").
+          # A stale /run/flm-test.sock (left when the guard stopped the
+          # socket mid-listen) makes ListenStream fail with EADDRINUSE.
+          machine.succeed("rm -f /run/flm-test.sock")
+          machine.succeed("systemctl start fastflowlm.socket")
           machine.succeed("systemctl start fastflowlm.service"
-                          " 'fastflowlm@1.service' fastflowlm.socket")
+                          " 'fastflowlm@1.service'")
 
       def assert_all_down():
           machine.fail("systemctl is-active --quiet fastflowlm.socket")

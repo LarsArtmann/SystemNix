@@ -94,22 +94,25 @@ let
     text = ''
       wallpaper_dir="''${1:-$HOME/.local/share/wallpapers}"
 
-      probe() { dms ipc call wallpaper get 2>&1; }
-
       # Wait for DankMaterialShell IPC to become reachable. DMS can lag well
       # past its "Started" journal line during startup/restart churn
       # (2026-08-22 boot: quickshell not serving IPC until +35s).
-      out=$(probe)
-      for _ in $(seq 1 60); do
-        [ "$out" != "No running instances"* ] && break
-        sleep 1
-        out=$(probe)
-      done
+      wait_for_dms() {
+        for _ in $(seq 1 60); do
+          out=$(dms ipc call wallpaper get 2>&1)
+          case "$out" in
+            "No running instances"*) ;;
+            *) return 0 ;;
+          esac
+          sleep 1
+        done
+        return 1
+      }
 
       # DMS never came up: skip CLEANLY. Attempting the set anyway FATALs
       # ("Error running IPC command: exit status 255") and fails the unit.
       # The wallpaper stays at DMS default; next login retries the seed.
-      if [ "$out" = "No running instances"* ]; then
+      if ! wait_for_dms; then
         echo "dms-wallpaper-init: DMS IPC not available after 60s — skipping wallpaper seed" >&2
         exit 0
       fi
