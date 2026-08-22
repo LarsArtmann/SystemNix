@@ -41,14 +41,18 @@ KNOWN_CACHE_ENTRIES=(
   playwright rust sccache
 )
 
+# Home of the invoking user (SUDO_USER-aware so [7] still checks the real
+# user's cache symlinks when the whole script is run under sudo).
+USER_HOME=$(getent passwd "${SUDO_USER:-$(id -un)}" | cut -d: -f6)
+
 # HM-managed symlinks that MUST stay symlinks — a real dir here is fallback
 # regrowth onto the space-critical NVMe (blocks the next HM activation and
 # re-contaminates root; see AGENTS.md buildcache section).
 CACHE_SYMLINKS=(
-  "$HOME/.cache/goimports"
-  "$HOME/.cache/go"
-  "$HOME/.cache/go-build"
-  "$HOME/.local/share/pnpm/store"
+  "$USER_HOME/.cache/goimports"
+  "$USER_HOME/.cache/go"
+  "$USER_HOME/.cache/go-build"
+  "$USER_HOME/.local/share/pnpm/store"
 )
 # Sibling-session fallback caches (BuildFlow names) — NOT in the recovery
 # reap list; surfaced with sizes because the disposition decision is open.
@@ -261,6 +265,7 @@ for pair in "/mnt/buildcache:@/mnt/buildcache" "/mnt/pool:@/mnt/pool"; do
     # Distinguish real stranded data from empty scaffolding (dirs mkdir'd by
     # services while the mount was dead — benign, hidden once remounted).
     first_file=$(find "$shadow" -xdev -type f -print -quit 2>&1 || true)
+    first_file=${first_file%%$'\n'*}   # keep the first line only (display)
     case "$first_file" in
       /*)
         bad "REAL data under $shadow (e.g. $first_file) — written to the"
@@ -316,7 +321,7 @@ for p in "${CACHE_SYMLINKS[@]}"; do
   fi
 done
 for name in "${FALLBACK_CACHE_DIRS[@]}"; do
-  p="$HOME/.cache/$name"
+  p="$USER_HOME/.cache/$name"
   if [ -e "$p" ] && [ ! -L "$p" ]; then
     note "$p (sibling-session fallback, disposition open):"
     hint "$(du -sh "$p" 2>/dev/null | cut -f1) on the space-critical NVMe;"
