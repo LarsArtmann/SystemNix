@@ -676,8 +676,12 @@ in
       # flags were back to 0 within hours). smartmontools 7.5 rejects
       # '-d sat,removable' as an unsupported type, so the fix is retry-based:
       # restart on failure with a 2-min delay until enumeration settles.
-      # Note: Restart= is only useful for the transient-removable class;
-      # absent devices make smartd exit 16 as well (nofail DAS unplugged).
+      # All four USB-DAS disks carry "-d sat -d removable": smartd exits 16
+      # (fatal registration error, NO disk monitored at all — including the
+      # NVMe) when a configured device is absent without the removable
+      # directive (2026-08-22: DAS offline → smartd dead for the whole boot).
+      # Verified against smartmontools 7.5: "-d sat,removable" is INVALID;
+      # only the separate second "-d removable" token tolerates absence.
       smartd = {
         enable = true;
         autodetect = false;
@@ -688,11 +692,11 @@ in
           # Same USB DAS bridge class as the SanDisks: -d sat is required.
           {
             device = "/dev/disk/by-id/ata-TOSHIBA_MG08ACA16TE_72U0A005FWTG";
-            options = "-d sat";
+            options = "-d sat -d removable";
           }
           {
             device = "/dev/disk/by-id/ata-TOSHIBA_MG08ACA16TE_72U0A0ZUFWTG";
-            options = "-d sat";
+            options = "-d sat -d removable";
           }
           # USB-attached SanDisk SDSSDA240G SSDs. by-id (ata- serial form) is
           # stable across sdb/sdc letter swaps between the two enclosures;
@@ -701,11 +705,11 @@ in
           # SSD 2 = future Docker storage.
           {
             device = "/dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311";
-            options = "-d sat";
+            options = "-d sat -d removable";
           }
           {
             device = "/dev/disk/by-id/ata-SanDisk_SDSSDA240G_174244451713";
-            options = "-d sat";
+            options = "-d sat -d removable";
           }
         ];
         defaults.monitored = "-a -o on -s (S/../.././02|L/../../6/03)";

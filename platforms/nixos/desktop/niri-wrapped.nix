@@ -94,11 +94,25 @@ let
     text = ''
       wallpaper_dir="''${1:-$HOME/.local/share/wallpapers}"
 
-      # Wait for DankMaterialShell to be ready
-      for _ in $(seq 1 30); do
-        dms ipc call wallpaper get &>/dev/null && break
+      probe() { dms ipc call wallpaper get 2>&1; }
+
+      # Wait for DankMaterialShell IPC to become reachable. DMS can lag well
+      # past its "Started" journal line during startup/restart churn
+      # (2026-08-22 boot: quickshell not serving IPC until +35s).
+      out=$(probe)
+      for _ in $(seq 1 60); do
+        [ "$out" != "No running instances"* ] && break
         sleep 1
+        out=$(probe)
       done
+
+      # DMS never came up: skip CLEANLY. Attempting the set anyway FATALs
+      # ("Error running IPC command: exit status 255") and fails the unit.
+      # The wallpaper stays at DMS default; next login retries the seed.
+      if [ "$out" = "No running instances"* ]; then
+        echo "dms-wallpaper-init: DMS IPC not available after 60s — skipping wallpaper seed" >&2
+        exit 0
+      fi
 
       # Respect user choice — only seed if nothing is set
       if dms ipc call wallpaper get &>/dev/null; then
@@ -107,11 +121,14 @@ let
 
       img=$(find -L "$wallpaper_dir" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | shuf -n1)
       if [ -z "$img" ]; then
-        echo "No wallpaper images found in $wallpaper_dir" >&2
-        exit 1
+        echo "WARNING: no wallpaper images found in $wallpaper_dir" >&2
+        exit 0
       fi
 
-      dms ipc call wallpaper set "$img"
+      dms ipc call wallpaper set "$img" || {
+        echo "WARNING: DMS IPC rejected wallpaper set — skipping" >&2
+        exit 0
+      }
     '';
   };
 

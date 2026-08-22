@@ -107,8 +107,17 @@ in
                 restartUnits = [ "paperless-scheduler.service" ];
               };
             }
-            // mkSecrets "dnsblockd-certs.yaml" { } [ "dnsblockd_ca_cert" ]
             // {
+              # The CA cert is PUBLIC material (every browser trust store gets
+              # a copy by design). It MUST be world-readable: the
+              # dnsblockd-cert-import USER unit runs certutil as the session
+              # user, and Firefox policies read the same path at startup.
+              # root:root 0400 made both fail with EACCES (certutil exit 255,
+              # 2026-08-22 boot).
+              dnsblockd_ca_cert = {
+                sopsFile = lib.path.append secretsDir "dnsblockd-certs.yaml";
+                mode = "0444";
+              };
               dnsblockd_ca_key = {
                 sopsFile = lib.path.append secretsDir "dnsblockd-certs.yaml";
                 mode = "0400";

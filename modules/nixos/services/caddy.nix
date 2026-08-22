@@ -341,16 +341,23 @@ _: {
           443
         ];
 
+        # oauth2-proxy is deliberately NOT ordered here: its ExecStartPre OIDC
+        # gate probes https://auth.<domain>/... which is served BY Caddy.
+        # Ordering Caddy after oauth2-proxy deadlocks that gate for its full
+        # 120s timeout on EVERY boot, guarantees a first-start failure of
+        # oauth2-proxy/gatus/browser-history (OnFailure alerts included), and
+        # delays the whole web stack by 2 minutes (observed 2026-08-22 boot:
+        # Caddy "Started" 2min05s in, one second after the gates gave up).
+        # Cost of the removed ordering: a few seconds of 502s on external
+        # forward-auth paths at boot; LAN bypass is unaffected.
         systemd.services.caddy = {
           after = [
             "pocket-id.service"
-            "oauth2-proxy.service"
             "sops-nix.service"
           ]
           ++ lib.optional (config.services.attic-config.enable or false) "atticd.service";
           wants = [
             "pocket-id.service"
-            "oauth2-proxy.service"
             "sops-nix.service"
           ]
           ++ lib.optional (config.services.attic-config.enable or false) "atticd.service";
