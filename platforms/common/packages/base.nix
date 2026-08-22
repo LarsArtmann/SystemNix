@@ -73,7 +73,6 @@ let
             --add-flags "--ozone-platform-hint=auto" \
             --add-flags "--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo,WebAuthenticationHybridTransport" \
             --add-flags "--ignore-gpu-blocklist" \
-            --add-flags "--enable-zero-copy" \
             --add-flags "--disable-gpu-watchdog" \
             --add-flags "--disable-background-timer-throttling" \
             --add-flags "--disable-backgrounding-occluded-windows" \
