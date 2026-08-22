@@ -60,6 +60,41 @@ stop_stack() {
 prepare() {
   require_root
 
+  # ── Tool preflight (BEFORE stopping anything) ─────────────────────────
+  # gptfdisk (sgdisk) and parted (partprobe) are NOT in the system
+  # environment (verified live 2026-08-22: the first prepare run stopped
+  # the stack and THEN died at sgdisk — command not found under sudo's
+  # secure PATH). Resolve every tool up front: PATH → system env → a
+  # nix build against THIS flake's pinned nixpkgs (registry-free, instant
+  # when already in the store). A missing tool must fail BEFORE the stack
+  # goes down, never after. partx (util-linux) replaces partprobe.
+  resolve_bin() {
+    local bin=$1 nixattr=$2
+    if command -v "$bin" >/dev/null 2>&1; then
+      command -v "$bin"
+      return 0
+    fi
+    if [ -x "/run/current-system/sw/bin/$bin" ]; then
+      echo "/run/current-system/sw/bin/$bin"
+      return 0
+    fi
+    local out
+    if
+      out=$(nix build --no-link --print-out-paths \
+        "/home/lars/projects/SystemNix#nixosConfigurations.evo-x2.pkgs.${nixattr}" 2>/dev/null) \
+        && [ -n "$out" ] && [ -x "$out/bin/$bin" ]
+    then
+      echo "$out/bin/$bin"
+      return 0
+    fi
+    return 1
+  }
+  SGDISK=$(resolve_bin sgdisk gptfdisk) || die "sgdisk unavailable (PATH / system env / nix build of gptfdisk all failed) — fix tooling BEFORE the stack stops"
+  PARTX=$(resolve_bin partx util-linux) || die "partx unavailable"
+  MKFS_XFS=$(resolve_bin mkfs.xfs xfsprogs) || die "mkfs.xfs unavailable"
+  RSYNC=$(resolve_bin rsync rsync) || die "rsync unavailable"
+  info "tools resolved: sgdisk=$SGDISK partx=$PARTX mkfs.xfs=$MKFS_XFS rsync=$RSYNC"
+
   # ── Preflight ─────────────────────────────────────────────────────────
   [ -b "$DISK" ] || die "$DISK is not a block device"
   if lsblk -no NAME "$DISK" | grep -qx "nvme0n1p9"; then
@@ -93,26 +128,26 @@ If this is a RERUN after a failed copy: the fs may already hold data; inspect \
 
   # ── Partition + filesystem ────────────────────────────────────────────
   info "Creating partition 9 spanning the free tail (sgdisk -n 9:0:0)"
-  sgdisk -n 9:0:0 -t 9:8300 "$DISK"
-  partprobe "$DISK"
+  "$SGDISK" -n 9:0:0 -t 9:8300 "$DISK"
+  "$PARTX" -u "$DISK"
   udevadm settle
-  [ -b "$PART" ] || die "$PART did not appear after partprobe"
+  [ -b "$PART" ] || die "$PART did not appear after partx -u"
   if lsblk -no FSTYPE "$PART" | grep -q .; then
     die "$PART already contains a filesystem — aborting to avoid destroying data"
   fi
 
   info "Creating XFS filesystem with label '${LABEL}'"
-  mkfs.xfs -L "$LABEL" "$PART"
+  "$MKFS_XFS" -L "$LABEL" "$PART"
 
   # ── Copy + verify ─────────────────────────────────────────────────────
   mkdir -p "$MNT"
   mount "$PART" "$MNT"
   info "rsyncing $SRC -> $MNT (this is the data copy; NVMe->NVMe)"
-  rsync -aHAX --numeric-ids --info=progress2 "$SRC"/ "$MNT"/
+  "$RSYNC" -aHAX --numeric-ids --info=progress2 "$SRC"/ "$MNT"/
 
   # Verification: a dry-run delta MUST report zero files transferred.
   info "Verifying: rsync dry-run delta (must be 0 transferred)"
-  STATS=$(rsync -aHAX --numeric-ids --dry-run --stats "$SRC"/ "$MNT"/)
+  STATS=$("$RSYNC" -aHAX --numeric-ids --dry-run --stats "$SRC"/ "$MNT"/)
   XFERRED=$(echo "$STATS" | awk '/^Number of regular files transferred:/ {print $NF}')
   [ "${XFERRED:-1}" -eq 0 ] || die "verification failed: ${XFERRED} files still differ — DO NOT DEPLOY yet; inspect $MNT"
 
