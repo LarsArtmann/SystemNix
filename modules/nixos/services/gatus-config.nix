@@ -1097,12 +1097,16 @@ _: {
                 (mkHttpCheck {
                   name = "Memory Emergency Guard";
                   group = "Monitoring";
-                  # The 2026-08-22 freeze: zram 100% full made flm's 25 GB
-                  # model unevictable, nightly GC/backup I/O + zram refault
-                  # CPU burn froze the kernel at 00:27. The guard stops the
-                  # flm backend when MemAvailable <10% AND zram >=92% (or
-                  # <5% absolute) — this check alerts when the guard FIRED
-                  # (within the last 30 min) or died (absent metrics).
+                  # The 2026-08-22 freezes: #1 (00:27) zram 100% full made
+                  # flm's 25 GB model unevictable; #2 (05:49) the guard tripped
+                  # 7x but flm's activation socket re-woke it via the
+                  # alert→enricher feedback loop, and the final refault-thrash
+                  # freeze (PSI some avg10 >50%, MemAvailable still >=10%) fell
+                  # between the guard's thresholds AND between its 60 s ticks.
+                  # The guard now ALSO stops fastflowlm.socket on trip (restores
+                  # it once memory recovers), trips on PSI>=40% AND zram>=80%,
+                  # and ticks every 30 s. This check alerts when the guard
+                  # FIRED (within the last 30 min) or died (absent metrics).
                   url = "http://localhost:${toString nodePort}/metrics";
                   interval = "2m";
                   conditions = [
@@ -1110,7 +1114,7 @@ _: {
                     "[BODY] == pat(*memory_emergency_guard_avail_percent*)"
                     "[BODY] == pat(*memory_emergency_guard_last_trip_recent 0*)"
                   ];
-                  alerts = discordAlert "Memory emergency guard TRIPPED (or the guard died): MemAvailable entered the pre-freeze zone and FastFlowLM was force-stopped to prevent a kernel freeze (2026-08-22 incident class). flm self-heals on next connection (1-3 min cold load). Check: journalctl -u memory-emergency-guard -n 20, memory_emergency_guard_avail_percent / _zram_fill_percent in the textfile collector, what is holding RAM (ps aux --sort=-%mem | head)";
+                  alerts = discordAlert "Memory emergency guard TRIPPED (or the guard died): the machine entered a pre-freeze zone (low MemAvailable, near-full zram, or PSI refault thrash) and FastFlowLM + its activation socket were force-stopped. The socket auto-restores once memory recovers; until then LLM clients get connection-refused by design. Check: journalctl -u memory-emergency-guard -n 30, memory_emergency_guard_{avail,zram_fill,psi_some_avg10}_percent in the textfile collector, what is holding RAM (ps aux --sort=-%mem | head)";
                 })
                 (mkHttpCheck {
                   name = "Hermes Agent Gateway";
