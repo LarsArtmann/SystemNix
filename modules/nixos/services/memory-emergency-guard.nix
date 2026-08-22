@@ -89,8 +89,17 @@ _: {
           LAST_TRIP_FILE="${stateDir}/last-trip"
           SOCKET_UNITS="${lib.concatStringsSep " " cfg.socketUnits}"
 
-          mem_available_kb=$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)
-          mem_total_kb=$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)
+          # Kernel data sources, env-overridable for the VM regression test
+          # (tests/test-memory-emergency-guard.nix fakes them to exercise the
+          # trip zones + restore state machine). Production always reads the
+          # real files — the systemd unit never sets these.
+          MEMINFO_SRC="''${MEMINFO_SRC:-/proc/meminfo}"
+          ZRAM_MM_STAT_SRC="''${ZRAM_MM_STAT_SRC:-/sys/block/zram0/mm_stat}"
+          ZRAM_DISKSIZE_SRC="''${ZRAM_DISKSIZE_SRC:-/sys/block/zram0/disksize}"
+          PSI_SRC="''${PSI_SRC:-/proc/pressure/memory}"
+
+          mem_available_kb=$(awk '/^MemAvailable:/ {print $2}' "$MEMINFO_SRC")
+          mem_total_kb=$(awk '/^MemTotal:/ {print $2}' "$MEMINFO_SRC")
           mem_available_kb="''${mem_available_kb:-0}"
           mem_total_kb="''${mem_total_kb:-1}"
 
@@ -100,9 +109,9 @@ _: {
           # unreadable (treated as "not full" — the absolute threshold below
           # still catches zram-less emergencies).
           zram_pct=-1
-          if [ -r /sys/block/zram0/mm_stat ] && [ -r /sys/block/zram0/disksize ]; then
-            zram_orig=$(awk '{print $1}' /sys/block/zram0/mm_stat 2>/dev/null) || zram_orig=0
-            zram_disksize=$(cat /sys/block/zram0/disksize 2>/dev/null) || zram_disksize=0
+          if [ -r "$ZRAM_MM_STAT_SRC" ] && [ -r "$ZRAM_DISKSIZE_SRC" ]; then
+            zram_orig=$(awk '{print $1}' "$ZRAM_MM_STAT_SRC" 2>/dev/null) || zram_orig=0
+            zram_disksize=$(cat "$ZRAM_DISKSIZE_SRC" 2>/dev/null) || zram_disksize=0
             zram_orig="''${zram_orig:-0}"
             zram_disksize="''${zram_disksize:-0}"
             if [ "$zram_disksize" -gt 0 ] 2>/dev/null; then
@@ -115,8 +124,8 @@ _: {
           # the kernel was CPU-starved decompressing zram pages, not out of
           # pages. -1 when /proc/pressure/memory is unreadable.
           psi_some_avg10=-1
-          if [ -r /proc/pressure/memory ]; then
-            psi_some_avg10=$(awk '/^some avg10=/ { sub("avg10=","",$2); print $2; exit }' /proc/pressure/memory 2>/dev/null) || psi_some_avg10=-1
+          if [ -r "$PSI_SRC" ]; then
+            psi_some_avg10=$(awk '/^some avg10=/ { sub("avg10=","",$2); print $2; exit }' "$PSI_SRC" 2>/dev/null) || psi_some_avg10=-1
             psi_some_avg10="''${psi_some_avg10:--1}"
           fi
 

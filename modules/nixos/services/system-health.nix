@@ -896,6 +896,18 @@ _: {
           description = "Collect Gatus endpoint failure meta-check (monitoring the monitor)";
         };
 
+        collectForgejoMirrors = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = ''
+            Collect forgejo pull-mirror sync health: freshest-sync age from
+            the forgejo sqlite DB (catches the silent dead-queue class where
+            the update_mirrors cron logs nothing) plus mirror-sync Error
+            journal rate (catches active aborts — credential-helper ENOENT,
+            allowlist rejections). Auto-disabled on hosts without forgejo.
+          '';
+        };
+
         collectDiskUsage = lib.mkOption {
           type = lib.types.bool;
           default = true;
@@ -966,6 +978,12 @@ _: {
           description = "Host path to the gatus sqlite DB (DynamicUser hides /var/lib/gatus behind /var/lib/private on the host)";
         };
 
+        forgejo.dbPath = lib.mkOption {
+          type = lib.types.str;
+          default = "/var/lib/forgejo/data/forgejo.db";
+          description = "Host path to the forgejo sqlite DB (read readonly for mirror sync staleness)";
+        };
+
         monitor365.stateDir = lib.mkOption {
           type = lib.types.str;
           default = "/var/lib/monitor365-server";
@@ -989,6 +1007,12 @@ _: {
           })
           // (lib.optionalAttrs (options ? services.gatus) {
             collectGatusHealth = lib.mkDefault (config.services.gatus.enable or false);
+          })
+          // (lib.optionalAttrs (options ? services.forgejo) {
+            collectForgejoMirrors = lib.mkDefault (config.services.forgejo.enable or false);
+            forgejo.dbPath = lib.mkDefault (
+              config.services.forgejo.stateDir + "/data/forgejo.db"
+            );
           })
           // (lib.optionalAttrs (options ? virtualisation.docker) {
             collectDockerRestarts = lib.mkDefault (config.virtualisation.docker.enable or false);
