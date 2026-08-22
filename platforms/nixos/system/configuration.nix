@@ -229,18 +229,16 @@ in
     };
 
     # Dozzle — Docker container log tailing at logs.home.lan
-    # Inline config (not module) to avoid nix flake check eval issue
     # Backend set to docker to avoid running Podman alongside Docker
+    # Definition lives in modules/nixos/services/dozzle.nix (hardened: memory
+    # cap, no-new-privileges, cap-drop=ALL). The former INLINE definition here
+    # was a split brain: the dormant module's hardening never reached the
+    # container (extraOptions absent from the generated docker run — the
+    # "config sets 256m but running container has Memory=0" TODO mystery).
     virtualisation.oci-containers.backend = "docker";
-    virtualisation.oci-containers.containers.dozzle = {
-      autoStart = true;
-      image = "amir20/dozzle:latest";
-      ports = [ "127.0.0.1:${toString ports.dozzle}:8080" ];
-      volumes = [ "/var/run/docker.sock:/var/run/docker.sock:ro" ];
-      environment = {
-        DOZZLE_TAILSIZE = "300";
-        DOZZLE_FILTER = "status=running";
-      };
+    services.dozzle = {
+      enable = true;
+      port = ports.dozzle;
     };
 
     # EMEET PIXY webcam auto-activation

@@ -47,12 +47,10 @@ say() { printf '%s\n' "$*"; }
 # ── 1. Root input name → lock node (repo, rev) for LarsArtmann-owned inputs ──
 declare -A PROVIDER_REV=() # repo (lowercase) -> pinned rev
 declare -A INPUT_REPO=()   # root input name  -> repo (lowercase)
-declare -A INPUT_REV=()    # root input name  -> pinned rev
 
 while IFS=$'\t' read -r input repo rev; do
   [ -n "$input" ] || continue
   INPUT_REPO["$input"]="$repo"
-  INPUT_REV["$input"]="$rev"
   # Multiple root inputs pointing at the same repo: last one wins, flagged below.
   if [ -n "${PROVIDER_REV[$repo]:-}" ] && [ "${PROVIDER_REV[$repo]}" != "$rev" ]; then
     say "WARN-AMBIG   repo $repo pinned by multiple inputs with DIFFERENT revs"
