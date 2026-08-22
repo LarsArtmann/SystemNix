@@ -34,6 +34,7 @@ in
   browser-history = makeTest (import ./test-browser-history.nix { inherit pkgs inputs; });
   paperless = makeTest (import ./test-paperless.nix { inherit pkgs; });
   hermes = makeTest (import ./test-hermes.nix { inherit pkgs inputs; });
+  memory-emergency-guard = makeTest (import ./test-memory-emergency-guard.nix { inherit pkgs; });
   session-boot-audit = import ./test-session-boot-audit.nix { inherit pkgs inputs system; };
 }
 // (import ./test-scripts.nix { inherit pkgs; })

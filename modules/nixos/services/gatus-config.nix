@@ -296,6 +296,19 @@ _: {
                   alerts = discordAlert "Forgejo down — git forge unavailable";
                 })
                 (mkHttpCheck {
+                  name = "Forgejo Mirror Sync";
+                  group = "Development";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_forgejo_mirror_scrape_errors 0*)"
+                    "[BODY] == pat(*system_forgejo_mirror_sync_stalled 0*)"
+                    "[BODY] == pat(*system_forgejo_mirror_erroring 0*)"
+                  ];
+                  alerts = discordAlert "Forgejo pull-mirror syncing broken. stalled=1: freshest mirror sync >10h old — dead queue (restart forgejo.service; the unique queue wedges after a hard freeze, cron pushes then dedup-skip silently). erroring=1: syncs actively failing — journalctl -u forgejo --grep SyncMirrors (credential-helper ENOENT / DNS allowlist rejects). scrape_errors=1: forgejo sqlite unreadable.";
+                })
+                (mkHttpCheck {
                   name = "Homepage";
                   group = "Infrastructure";
                   url = "http://localhost:${toString config.services.homepage.port}";

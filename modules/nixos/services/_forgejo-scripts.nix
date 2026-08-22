@@ -524,7 +524,7 @@
       for user in $(jq -r 'keys[]' "$KEYS_FILE"); do
         echo "Syncing SSH keys for Forgejo user: $user"
 
-        curl -sf -H "Authorization: token $FORGEJO_TOKEN" \
+        curl -sf --compressed -H "Authorization: token $FORGEJO_TOKEN" \
           "${forgejoUrl}/api/v1/users/$user/keys" > "$existing_keys"
 
         mapfile -t keys < <(jq -r --arg user "$user" '.[$user][]' "$KEYS_FILE")
