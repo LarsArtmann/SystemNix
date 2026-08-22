@@ -91,6 +91,13 @@ let
           # chrome://extensions. Helium's ungoogled-chromium base already strips Google
           # telemetry, and Helium anonymizes Chrome Web Store requests via its own proxy,
           # so the privacy tradeoff of allowing background networking is acceptable.
+          #
+          # --enable-zero-copy was REMOVED (2026-08-22) to test whether it causes
+          # display hotplug crashes. If removing it prevents the crashes,
+          # --disable-gpu-watchdog may also become unnecessary. Zero-copy can
+          # cause GPU process crashes on display reconfiguration because the
+          # GPU buffer manager doesn't always handle output removal gracefully.
+          # Re-evaluate after observing hotplug behavior across deploys.
         '';
       }
     else
@@ -306,6 +313,8 @@ let
       wf-recorder # Screen recorder
       brillo # Brightness control utility
       pamixer # PulseAudio command line mixer
+      alsa-utils # speaker-test, aplay, amixer — audio debugging & test tones
+      pipewire # pw-cat, pw-play, pw-cli — PipeWire CLI for audio routing debug
 
       # Disk space visualization
       qdirstat # Qt-based disk usage analyzer with treemap visualization
