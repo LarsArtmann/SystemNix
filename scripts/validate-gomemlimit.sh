@@ -27,15 +27,17 @@ PASS=0
 WARN=0
 
 to_bytes() {
-  # Convert systemd memory units to bytes (KiB/MiB/GiB/TiB or plain)
+  # Convert systemd/Go memory units to bytes (KiB/MiB/GiB/TiB or plain).
+  # Handles decimals (Go accepts e.g. 1.5GiB) via awk — bash arithmetic
+  # is integer-only and cannot parse them.
   local value="$1"
   local number="${value%*[KMGTP]iB}"
   local unit="${value#"$number"}"
   case "$unit" in
-  KiB) echo $((number * 1024)) ;;
-  MiB) echo $((number * 1024 * 1024)) ;;
-  GiB) echo $((number * 1024 * 1024 * 1024)) ;;
-  TiB) echo $((number * 1024 * 1024 * 1024 * 1024)) ;;
+  KiB) awk "BEGIN {printf \"%d\", $number * 1024}" ;;
+  MiB) awk "BEGIN {printf \"%d\", $number * 1024 * 1024}" ;;
+  GiB) awk "BEGIN {printf \"%d\", $number * 1024 * 1024 * 1024}" ;;
+  TiB) awk "BEGIN {printf \"%d\", $number * 1024 * 1024 * 1024 * 1024}" ;;
   "") echo "$number" ;;
   *) echo "0" ;;
   esac
@@ -75,7 +77,9 @@ for entry in "${SERVICES[@]}"; do
   # Go heap-level check (requires /metrics with go runtime stats)
   if [ "$metrics_port" != "0" ]; then
     heap=$(curl -sf --max-time 3 "http://127.0.0.1:${metrics_port}/metrics" 2>/dev/null |
-      awk '/^go_memstats_heap_inuse_bytes/ {print $2; exit}' || true)
+      awk '/^go_memstats_heap_inuse_bytes/ {printf "%.0f", $2; exit}' || true)
+    # Prometheus renders large counters in scientific notation (6.97e+08);
+    # %.0f in the awk above normalizes them — bash arithmetic is integer-only.
     if [ -n "$heap" ] && [ "$memlimit" -gt 0 ]; then
       heap_pct=$((heap * 100 / memlimit))
       if [ "$heap_pct" -ge 90 ]; then
