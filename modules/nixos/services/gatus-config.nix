@@ -1074,6 +1074,27 @@ _: {
                   alerts = discordAlert "DAS USB link (8-1) is DOWN — ALL external disks (pool members, buildcache, spare SSDs) vanished simultaneously. Software recovery is impossible without the link: physically reseat the DAS USB cable + enclosure power, then REBOOT (warm reboot may not re-enumerate). After boot: scripts/das-link-recovery-check.sh, verify findmnt /mnt/pool and /mnt/buildcache, e2fsck decision for buildcache. Runbook: AGENTS.md 'DAS USB link' section.";
                 })
                 (mkHttpCheck {
+                  name = "System Profile Anchor";
+                  group = "Monitoring";
+                  # Manual activations (switch-to-configuration outside
+                  # `nix run .#deploy` — banned; 2026-08-18 google-sync
+                  # crash-loop, 2026-08-22 hand-activated XFS migration) leave
+                  # /run/current-system anchored to NO numbered profile: a
+                  # reboot silently reverts to the last real generation and
+                  # nothing warns. 0 = revert-on-reboot risk. Emitted
+                  # unconditionally by system-health (fail-closed) and the
+                  # anchored form is mandatory: the HELP embeds
+                  # "system_current_system_profiled 1".
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*system_current_system_profiled 0\n*)"
+                    "[BODY] == pat(*\nsystem_current_system_profiled *)"
+                  ];
+                  alerts = discordAlert "The RUNNING system is not anchored to any numbered nix profile generation — it was activated manually (banned pattern; deploy.sh post-switch steps and the profile/boot-entry trail are missing). A REBOOT WILL REVERT the machine to the last real generation. Fix: run `nix run .#deploy` NOW to persist the current config. Check: readlink /run/current-system vs ls /nix/var/nix/profiles/";
+                })
+                (mkHttpCheck {
                   name = "Memory Emergency Guard";
                   group = "Monitoring";
                   # The 2026-08-22 freeze: zram 100% full made flm's 25 GB

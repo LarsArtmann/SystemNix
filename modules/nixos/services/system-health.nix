@@ -374,6 +374,21 @@ _: {
             DAS_LINK_PRESENT=0
           fi
 
+          # === running-system profile anchor (manual-activation detector) ===
+          # Activations outside `nix run .#deploy` (switch-to-configuration
+          # by hand — the banned pattern from the 2026-08-18 google-sync
+          # incident; recurred 2026-08-22 when the ClickHouse XFS migration
+          # was activated with no numbered profile) leave /run/current-system
+          # pointing at a store path no system-N-link references: the next
+          # reboot silently reverts to the last REAL generation and nothing
+          # warns. 1 = anchored to a profile, 0 = revert-on-reboot risk.
+          # Emitted unconditionally (fail-closed).
+          SYSTEM_PROFILED=0
+          RUN_SYS=$(readlink -f /run/current-system 2>/dev/null) || RUN_SYS=""
+          if [ -n "$RUN_SYS" ] && readlink -f /nix/var/nix/profiles/system-*-link 2>/dev/null | grep -qxF "$RUN_SYS"; then
+            SYSTEM_PROFILED=1
+          fi
+
           # === systemd-oomd kills tracking ===
           # systemd-oomd kills (nix-daemon, Twenty worker) went completely
           # undetected. This counts kill events from the journal since boot
@@ -623,6 +638,10 @@ _: {
             echo "# HELP system_das_link_present 1 if the DAS USB link (${cfg.dasUsbPath}) exists in /sys/bus/usb/devices, 0 if it dropped"
             echo "# TYPE system_das_link_present gauge"
             echo "system_das_link_present ''${DAS_LINK_PRESENT}"
+
+            echo "# HELP system_current_system_profiled 1 if /run/current-system matches a numbered nix profile generation (deployed via nix run .#deploy), 0 if manually activated (reboot would revert to the last real generation)"
+            echo "# TYPE system_current_system_profiled gauge"
+            echo "system_current_system_profiled ''${SYSTEM_PROFILED}"
 
             echo "# HELP system_service_crash_loop 1 if service restarted >=${toString crashLoopRestartThreshold} times since last collection, 0 otherwise"
             echo "# TYPE system_service_crash_loop gauge"
