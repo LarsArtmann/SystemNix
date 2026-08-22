@@ -317,7 +317,7 @@ if [ -s "$METRICS_FILE" ]; then
   # endpoint pats it anchored — verify :9100/metrics after the deploy lands
   # (expected 0 while the DAS link is physically down — truthful), then
   # remove from this list.
-  KNOWN_NEW_METRICS="system_zram_swap_fill_percent system_zram_fill_over_threshold system_zram_swap_orig_data_bytes system_zram_swap_disksize_bytes system_zram_mem_used_bytes discordsync_projection_dlq_legacy_depth bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds system_lan_nic_present system_das_link_present clickhouse_xfs_mounted clickhouse_xfs_is_xfs clickhouse_xfs_usage_percent clickhouse_xfs_usage_over_threshold clickhouse_xfs_free_bytes clickhouse_xfs_total_bytes"
+  KNOWN_NEW_METRICS="system_zram_swap_fill_percent system_zram_fill_over_threshold system_zram_swap_orig_data_bytes system_zram_swap_disksize_bytes system_zram_mem_used_bytes discordsync_projection_dlq_legacy_depth bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds system_lan_nic_present system_das_link_present"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"
