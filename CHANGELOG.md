@@ -10,9 +10,15 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 
 ### Added
 
+- **Niri multiscreen "Now" batch (2026-08-22): monitor cycling keybindings, named-workspace jumps, idle DPMS** — three `Mod+Tab` variants cycle monitors without edge-crossing rebinds: `Mod+Tab` = `focus-monitor-next`, `Mod+Shift+Tab` = `move-column-to-monitor-next`, `Mod+Ctrl+Tab` = `move-workspace-to-monitor-next`. Five named-workspace jump binds provide direct access to the routed workspaces: `Mod+M/B/E/C/V` → main/browser/dev/chat/media (main/browser/dev on DP-1, chat/media on DP-2). Swayidle gains a 1200s (20min) idle timeout calling `niri msg action power-off-monitors` (DPMS off) before the existing 12h suspend; `sway-audio-idle-inhibit` handles the TV-as-audio-sink case (DPMS won't fire during audio playback). When a 2nd identical LG arrives: clone the DP-1 output entry + rebind `Mod+H/L`
+
+- **Audio debugging tooling (2026-08-22)** — `alsa-utils` (speaker-test, aplay, amixer) and `pipewire` CLI (pw-cat, pw-play, pw-cli) added to `linuxUtilities` in `base.nix`. Unblocks the Priority 2 smart-audio audibility verification
+
 - **`btrbk-pool-clean` (2026-08-21): automated garbled-receive GC for the pool backup targets** — `btrbk clean` runs nightly at 23:50 (after the 23:00/23:30/23:45 btrbk windows; `After=` ordering holds it behind still-running seeds so it never races a live receive) and is enqueued `--no-block` at every deploy. A garbled (interrupted-receive) target subvolume with a snapshot's name BLOCKS btrbk from ever re-sending that snapshot ("exists, but is not a receive target" → skipped backup) — under keep-forever root retention that would be a permanent history gap. First run deleted the three seed-era strays (root `@.20260814/15T2300`, data `data.20260721T2330`) and unblocked the automatic nightly re-send of Aug 14/15 from still-present local snapshots, healing the root chain to a continuous Aug 12→21 daily history
 
 ### Changed
+
+- **Helium `--enable-zero-copy` removed (2026-08-22)** — the Chromium zero-copy rasterization flag was removed from the Helium browser wrapper to test whether it causes display hotplug crashes (the GPU buffer manager doesn't always handle output removal gracefully). `--disable-gpu-watchdog` retained pending observation; if crashes stop, it may also become unnecessary
 
 - **Backup retention asymmetry (2026-08-21)**: local root snapshots quartered (`snapshot_preserve 14d 4w` → `3d 1w`, min `7d`→`2d`; extent pinning relief for the space-tight QLC NVMe — local tier only needs rollback + incremental-send-parent duty) while pool-side root receives are kept FOREVER (`target_preserve_min = "all"`; CoW extent sharing makes snapshot count ~free on the 16T RAID1 pool, revisit at ~50% usage). `/data` retention unchanged (local 14d 4w / pool 30d 12w)
 
