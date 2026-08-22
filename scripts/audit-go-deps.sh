@@ -130,6 +130,9 @@ parse_gomod() {
     {
       line = $0
       sub(/\/\/.*$/, "", line)
+      # split() with an explicit regex keeps leading whitespace as an empty
+      # first field — trim it or require blocks (tab-indented) parse shifted.
+      gsub(/^[[:space:]]+/, "", line)
     }
     line ~ /^[[:space:]]*require[[:space:]]*\(/ { inreq = 1; next }
     inreq && line ~ /^[[:space:]]*\)/ { inreq = 0; next }
@@ -174,7 +177,7 @@ for input in "${!INPUT_REPO[@]}"; do
       *) continue ;;
       esac
       rest="${mod#github.com/}"
-      rest="${rest#[lL][aA][rR][sS][aA][rR][tT][mM][aA][nN]/}"
+      rest="${rest#[lL][aA][rR][sS][aA][rR][tT][mM][aA][nN][nN]/}"
       repo="$(cut -d/ -f1 <<<"$rest" | tr '[:upper:]' '[:lower:]')"
       subpath="$(cut -d/ -f2- -s <<<"$rest")"
       # Strip trailing /vN major suffix from the subpath for tag construction
