@@ -1019,9 +1019,7 @@ _: {
           })
           // (lib.optionalAttrs (options ? services.forgejo) {
             collectForgejoMirrors = lib.mkDefault (config.services.forgejo.enable or false);
-            forgejo.dbPath = lib.mkDefault (
-              config.services.forgejo.stateDir + "/data/forgejo.db"
-            );
+            forgejo.dbPath = lib.mkDefault (config.services.forgejo.stateDir + "/data/forgejo.db");
           })
           // (lib.optionalAttrs (options ? virtualisation.docker) {
             collectDockerRestarts = lib.mkDefault (config.virtualisation.docker.enable or false);
@@ -1041,6 +1039,12 @@ _: {
             serviceConfig = lib.mkMerge [
               (harden {
                 MemoryMax = "128M";
+                # CAP_DAC_READ_SEARCH: the collector runs as root but harden{}
+                # strips all caps — without this it cannot traverse forgejo's
+                # 0700 stateDir to read the mirror-sync sqlite (the -r gate
+                # silently fail-closes system_forgejo_mirror_scrape_errors=1,
+                # 2026-08-22). Same pattern as atticd-storage-dir.
+                CapabilityBoundingSet = "CAP_DAC_READ_SEARCH";
               })
               (serviceOneshotDefaults { })
               {

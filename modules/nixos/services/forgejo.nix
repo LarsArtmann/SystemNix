@@ -218,8 +218,16 @@ _: {
 
         systemd = {
           services.forgejo = {
-            after = [ "caddy.service" "pocket-id.service" ] ++ forgejoMainDnsGate.after;
-            wants = [ "caddy.service" "pocket-id.service" ] ++ forgejoMainDnsGate.wants;
+            after = [
+              "caddy.service"
+              "pocket-id.service"
+            ]
+            ++ forgejoMainDnsGate.after;
+            wants = [
+              "caddy.service"
+              "pocket-id.service"
+            ]
+            ++ forgejoMainDnsGate.wants;
             unitConfig = {
               StartLimitBurst = lib.mkForce 3;
               StartLimitIntervalSec = lib.mkForce 300;

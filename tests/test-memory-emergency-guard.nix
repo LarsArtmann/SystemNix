@@ -78,7 +78,8 @@ in
         # The module file is a flake-parts wrapper (top-level lambda
         # `_:`) — apply it, then pull the NixOS module out of the
         # flake.nixosModules option it declares.
-        ((import ../modules/nixos/services/memory-emergency-guard.nix) { }).flake.nixosModules.memory-emergency-guard
+        ((import ../modules/nixos/services/memory-emergency-guard.nix) { })
+        .flake.nixosModules.memory-emergency-guard
       ];
 
       services.memory-emergency-guard.enable = true;
