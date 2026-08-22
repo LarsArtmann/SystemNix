@@ -66,7 +66,7 @@ _: {
             fi
 
             echo "  → Fetching info from GitHub..."
-            repo_info=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            repo_info=$(curl -s --compressed -H "Authorization: token $GITHUB_TOKEN" \
               "https://api.github.com/repos/$GITHUB_USER/$repo_name")
 
             if echo "$repo_info" | jq -e '.message == "Not Found"' &>/dev/null; then
@@ -87,7 +87,7 @@ _: {
               -H "Authorization: token $FORGEJO_TOKEN" \
               "$FORGEJO_URL/api/v1/admin/unadopted/$FORGEJO_OWNER/$repo_name"
 
-            result=$(curl -s -X POST \
+            result=$(curl -s --compressed -X POST \
               -H "Authorization: token $FORGEJO_TOKEN" \
               -H "Content-Type: application/json" \
               "$FORGEJO_URL/api/v1/repos/migrate" \

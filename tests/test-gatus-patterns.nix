@@ -152,7 +152,25 @@ in
             conditions = [
               "[STATUS] == 200"
               "[BODY] == pat(*btrfs_scrub_status*)"
-              "[BODY] == pat(*btrfs_scrub_error_free 1*)"
+              "[BODY] == pat(*node_nvme_percentage_used*)"
+            ];
+          }
+          {
+            # Anchored form regression (2026-08-22): the "\n" in these
+            # patterns must reach gatus as a REAL newline. A literal
+            # backslash-n is filepath.Match's ESCAPE for a literal 'n' and
+            # can NEVER match — the positive condition goes permanently red
+            # (7 deployed checks sat red on exactly this). A phantom-green
+            # regression (bare pat(*metric 1*)) would pass here vacuously
+            # via the HELP-less body, so the lint + pre-deploy check cover
+            # that half; this endpoint covers the newline-escaping half.
+            name = "[TEST] Anchored value assertion";
+            url = "http://127.0.0.1:9100/metrics";
+            interval = "5s";
+            conditions = [
+              "[STATUS] == 200"
+              "[BODY] != pat(*btrfs_scrub_error_free 0\n*)"
+              "[BODY] == pat(*\nbtrfs_scrub_error_free *)"
             ];
           }
           {

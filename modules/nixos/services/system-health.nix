@@ -233,7 +233,7 @@ _: {
           RULE_COUNT=0
           RULES_HEALTHY=0
           if [ "$collect_signoz_rules" = "true" ]; then
-            RULE_COUNT=$(curl -sf --max-time 5 http://127.0.0.1:${toString cfg.signoz.port}/api/v1/rules 2>/dev/null | jq '.data.rules | length' 2>/dev/null) || RULE_COUNT=0
+            RULE_COUNT=$(curl -sf --compressed --max-time 5 http://127.0.0.1:${toString cfg.signoz.port}/api/v1/rules 2>/dev/null | jq '.data.rules | length' 2>/dev/null) || RULE_COUNT=0
             RULE_COUNT="''${RULE_COUNT:-0}"
             if [ "$RULE_COUNT" -gt 15 ] 2>/dev/null; then
               RULES_HEALTHY=1

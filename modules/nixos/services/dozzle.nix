@@ -41,6 +41,8 @@ _: {
             "--log-driver=json-file"
             "--log-opt=max-size=5m"
             "--log-opt=max-file=3"
+            "--security-opt=no-new-privileges:true"
+            "--cap-drop=ALL"
           ];
         };
       };

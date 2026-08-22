@@ -78,21 +78,21 @@ _: {
           api_get() {
             local path="$1"
             local resp
-            resp=$(curl -s --max-time 10 --retry 3 --retry-delay 2 --retry-all-errors -H "X-API-Key: $API_KEY" "$API_URL$path" 2>&1) || true
+            resp=$(curl -s --compressed --max-time 10 --retry 3 --retry-delay 2 --retry-all-errors -H "X-API-Key: $API_KEY" "$API_URL$path" 2>&1) || true
             echo "$resp"
           }
 
           api_put() {
             local path="$1"
             local body="$2"
-            curl -s --max-time 30 --retry 3 --retry-delay 2 -w '\n%{http_code}' -X PUT -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" \
+            curl -s --compressed --max-time 30 --retry 3 --retry-delay 2 -w '\n%{http_code}' -X PUT -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" \
               -d "$body" "$API_URL$path" 2>&1 || true
           }
 
           api_post() {
             local path="$1"
             local body="$2"
-            curl -s --max-time 30 --retry 3 --retry-delay 2 -w '\n%{http_code}' -X POST -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" \
+            curl -s --compressed --max-time 30 --retry 3 --retry-delay 2 -w '\n%{http_code}' -X POST -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" \
               -d "$body" "$API_URL$path" 2>&1 || true
           }
 
@@ -283,7 +283,7 @@ _: {
                 echo "  Secret file already exists."
               else
                 echo "  Generating client secret..."
-                SECRET_RESPONSE=$(curl -s --max-time 30 -X POST \
+                SECRET_RESPONSE=$(curl -s --compressed --max-time 30 -X POST \
                   -H "X-API-Key: $API_KEY" \
                   "$API_URL/api/oidc/clients/$CLIENT_ID/secret" 2>&1 || true)
                 CLIENT_SECRET=$(echo "$SECRET_RESPONSE" | jq -r '.secret // empty' 2>/dev/null || true)
