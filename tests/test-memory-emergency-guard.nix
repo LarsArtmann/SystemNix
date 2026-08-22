@@ -141,6 +141,10 @@ in
       machine.wait_for_unit("fastflowlm.socket")
       # Stop the timer so background runs cannot race the assertions.
       machine.succeed("systemctl stop memory-emergency-guard.timer")
+      # The guard's StateDirectory is created by systemd when the unit first
+      # runs; we stopped the timer before its OnBootSec=2min first fire, so
+      # create it like the unit contract would.
+      machine.succeed("mkdir -p /var/lib/memory-emergency-guard")
 
       script = machine.succeed(
           "grep -oP '^ExecStart=\\K.*' /etc/systemd/system/memory-emergency-guard.service"
@@ -168,7 +172,7 @@ in
           machine.fail("systemctl is-active --quiet 'fastflowlm@1.service'")
 
       # Shared zram disksize file.
-      machine.succeed("echo '${disksize}' > /tmp/gt/disksize")
+      machine.succeed("mkdir -p /tmp/gt && echo '${disksize}' > /tmp/gt/disksize")
 
       # --- 1. Healthy: no trip ------------------------------------------
       machine.succeed("${writeFakes "healthy" healthy}")
