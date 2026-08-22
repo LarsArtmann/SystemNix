@@ -180,8 +180,12 @@ for input in "${!INPUT_REPO[@]}"; do
       rest="${rest#[lL][aA][rR][sS][aA][rR][tT][mM][aA][nN][nN]/}"
       repo="$(cut -d/ -f1 <<<"$rest" | tr '[:upper:]' '[:lower:]')"
       subpath="$(cut -d/ -f2- -s <<<"$rest")"
-      # Strip trailing /vN major suffix from the subpath for tag construction
-      tagprefix="$(sed -E 's|/v[0-9]+$||' <<<"$subpath")"
+      # Strip trailing /vN major suffix from the subpath for tag construction.
+      # Root module with only a major suffix (gogenfilter/v3) → plain vX.Y.Z tag.
+      case "$subpath" in
+      v[0-9]*) tagprefix="" ;;
+      *) tagprefix="$(sed -E 's|/v[0-9]+$||' <<<"$subpath")" ;;
+      esac
 
       context="$input ($rel) requires $mod $ver"
 
@@ -197,18 +201,30 @@ for input in "${!INPUT_REPO[@]}"; do
         continue
       fi
 
-      # Resolve the required version to a commit
+      # Resolve the required version to a commit. Pseudo-versions come in two
+      # shapes: v0.0.0-<ts>-<rev> and vX.Y.Z-0.<ts>-<rev> (base-tag infix).
       reqcommit=""
-      if [[ "$ver" =~ -[0-9]{14}-([0-9a-f]{12})$ ]]; then
-        reqcommit="${BASH_REMATCH[1]}"
+      from_tag=0
+      if [[ "$ver" =~ (0\.|-)[0-9]{14}-([0-9a-f]{12})$ ]]; then
+        reqcommit="${BASH_REMATCH[2]}"
       else
         tag="$ver"
         [ -n "$tagprefix" ] && tag="$tagprefix/$ver"
         reqcommit=$(resolve_tag "$repo" "$tag")
+        from_tag=1
         if [ -z "$reqcommit" ]; then
           say "ERROR-MISSING $context — tag $tag not found in $repo"
           ERR=$((ERR + 1))
           continue
+        fi
+        # This ecosystem cuts release commits ("strip replace directives") on a
+        # detached/tag-only commit that is NEVER on master, so the tag commit
+        # itself is never an ancestor of a master pin — its PARENT (the real
+        # code commit) is the right comparison point. Pseudo-version commits
+        # live on master directly and must NOT be parented.
+        clone=$(local_clone "$repo") || clone=""
+        if [ "$from_tag" = "1" ] && [ -n "$clone" ] && git -C "$clone" cat-file -e "$reqcommit^{commit}" 2>/dev/null; then
+          reqcommit=$(git -C "$clone" rev-parse "$reqcommit^" 2>/dev/null || echo "$reqcommit")
         fi
       fi
 
@@ -222,11 +238,11 @@ for input in "${!INPUT_REPO[@]}"; do
       is_ancestor "$repo" "$reqcommit" "$pinned"
       case $? in
       0)
-        say "OK-AHEAD     $context → $repo pin ${pinned:0:12} is newer than required ${reqcommit:0:12}"
+        say "OK-AHEAD     $context → $repo pin ${pinned:0:12} contains required code (${reqcommit:0:12})"
         OK=$((OK + 1))
         ;;
       1)
-        say "ERROR-STALE  $context → $repo pin ${pinned:0:12} does NOT contain required ${reqcommit:0:12} (pin older than go.mod require)"
+        say "ERROR-STALE  $context → $repo pin ${pinned:0:12} does NOT contain required code ${reqcommit:0:12} (pin older than go.mod require)"
         ERR=$((ERR + 1))
         ;;
       2)
