@@ -132,6 +132,56 @@ if nix run .#pre-deploy-check; then
   fi
 
   echo ""
+  echo "=== Memory pressure gate (2026-08-22 stability plan) ==="
+  # A deploy is itself a multi-GB build + an activation storm; both freezes
+  # had heavy builds as contributing load. Deploying INTO pressure adds fuel
+  # — but deploying the FIX from pressure is sometimes exactly what is
+  # needed, hence DEPLOY_FORCE_PRESSURE=1 as the escape hatch. Reads the
+  # kernel directly (no curl, no metrics dependency).
+  psi_avg10=$(awk '/^some/ {split($2, a, "="); print a[2]}' /proc/pressure/memory 2>/dev/null || echo 0)
+  zram_fill=""
+  if [ -r /sys/block/zram0/mm_stat ] && [ -r /sys/block/zram0/disksize ]; then
+    zram_orig=$(awk '{print $1}' /sys/block/zram0/mm_stat 2>/dev/null || echo 0)
+    zram_size=$(cat /sys/block/zram0/disksize 2>/dev/null || echo 0)
+    if [ "${zram_size:-0}" -gt 0 ] 2>/dev/null; then
+      zram_fill=$(awk -v o="$zram_orig" -v d="$zram_size" 'BEGIN { printf "%.1f", o * 100.0 / d }')
+    fi
+  fi
+  avail_pct=$(awk '/^MemAvailable:/ {a=$2} /^MemTotal:/ {t=$2} END { if (t > 0) printf "%.1f", a * 100.0 / t }' /proc/meminfo 2>/dev/null || echo 100)
+  pressure_blocked=0
+  if awk "BEGIN{exit !(${psi_avg10:-0} >= 20)}"; then
+    pressure_blocked=1
+    echo "✗ PSI memory some avg10 = ${psi_avg10}% (>= 20% — storm forming)"
+  fi
+  if awk "BEGIN{exit !(${avail_pct:-100} < 10)}"; then
+    pressure_blocked=1
+    echo "✗ MemAvailable = ${avail_pct}% (< 10% floor)"
+  fi
+  # zram near-full ALONE is NOT an emergency on this box: swappiness=150
+  # keeps cold anon compressed in zram by design (steady state sits at
+  # 90-99% with PSI 0.00 — measured 2026-08-22 evening, avail 25%). The
+  # freeze precursor is zram full AND degraded margins (nothing left to
+  # swap new pages while already stalling) — mirror the emergency guard's
+  # combined-zone semantics.
+  if [ -n "$zram_fill" ] && awk "BEGIN{exit !(${zram_fill:-0} >= 95)}" && awk "BEGIN{exit !(${psi_avg10:-0} >= 5)}"; then
+    pressure_blocked=1
+    echo "✗ zram swap fill = ${zram_fill}% (>= 95%) WITH PSI some avg10 = ${psi_avg10}% (>= 5%) — combined pre-freeze zone"
+  fi
+  if [ "$pressure_blocked" = "1" ]; then
+    echo ""
+    echo "  Deploying under this pressure risks contributing to a kernel freeze"
+    echo "  (both 2026-08-22 freezes had builds as contributing load)."
+    echo "  Options: wait for pressure to drain, shed heavy jobs — or override:"
+    echo "    DEPLOY_FORCE_PRESSURE=1 nix run .#deploy"
+    if [ "${DEPLOY_FORCE_PRESSURE:-0}" != "1" ]; then
+      exit 12
+    fi
+    echo "  DEPLOY_FORCE_PRESSURE=1 set — proceeding anyway"
+  else
+    echo "  OK (PSI some avg10 = ${psi_avg10}%, zram = ${zram_fill:-n/a}%, MemAvailable = ${avail_pct}%)"
+  fi
+
+  echo ""
   echo "=== Deploying NixOS config to evo-x2 ==="
   set +e
   nh_output="$(nh os switch . 2>&1 | tee /dev/stderr)"

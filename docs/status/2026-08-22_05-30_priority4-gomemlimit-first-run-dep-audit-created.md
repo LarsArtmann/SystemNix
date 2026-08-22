@@ -101,3 +101,49 @@ Daemon commits: `96fe6f37` (pseudo-version + release-commit handling), `6e2530fe
 ---
 
 **Files changed this session:** `scripts/validate-gomemlimit.sh` (fixed+extended), `scripts/audit-go-deps.sh` (new, ~260 lines). No `.nix` files touched — `nix flake check` not warranted for this diff.
+
+---
+
+## RESUME (2026-08-22, later session): items 3+4+5 executed — BATCH 5/5 COMPLETE
+
+The three pending items were executed after the report above. Open questions g)1–3 (dep-audit wiring) remain UNANSWERED by the owner — the script stays manual-only/advisory/fetch-free until they are (safe defaults require no code change).
+
+### 5. `wait_for_200`/`wait_body_pattern` helpers in post-deploy-check.sh — DONE
+
+- **Two helpers**, not one: `wait_for_200 <url> <attempts> <interval>` (status readiness) and `wait_body_pattern <url> <pattern> <attempts> <interval>` (content-signal endpoints — SIGPIPE-safe herestring grep, prints the LAST body so callers keep unreachable-vs-wrong-body verdicts). Both skip the trailing sleep after the final failed attempt.
+- **4 actual polling loops converted** (the TODO said 3; a fresh grep found the browser-history "gate" was already a one-shot `check_local` — the real copies were DiscordSync 3×5s, llama-rag 2×12×10s, bank-sync dashboard 6×5s + sync-errors 6×5s).
+- **Audit of remaining one-shot checks:** paperless uses curl-native `--retry 5` (fine — same tolerance, no shell loop); Monitor365's 20s/30s grace sleeps carry domain-specific verdicts (agent-restart decision trees), left alone deliberately; papdashboard POST probe checks steady-state 401 (no retry needed).
+- **Verification:** `bash -n` + shellcheck clean; 6/6 isolated functional tests of both helpers (live python http.server: immediate-200, timeout rc=1 + timing window, body match + capture, miss rc=1 + last-body diagnostics); **full end-to-end run of the script on evo-x2** — all converted sections behave identically (DiscordSync PASS via helper, llama warmups PASS, bank-sync correctly reported "unreachable after 6 attempts" from the converted branch's exact message).
+- **Live-system note (NOT this diff):** the e2e run shows 10 pre-existing FAILs — Immich (local + HTTPS 502), Paperless web, Bank-Sync, Attic, oauth2-proxy, Caddy HTTP redirect. Plausibly crash-recovery-night fallout (see the 06-05 forensics reports). No probe targets or verdicts changed by this refactor; flagged for the owning sessions.
+
+### 4. VM-test restart×burst audit — DONE, zero unfixed collisions
+
+Full `tests/` grep (`restart` case-insensitive, minus Restart=/restartTriggers lines): only **3 files** restart or stop/start services.
+
+| Test | Restarts | Module burst | Verdict |
+| --- | --- | --- | --- |
+| test-hermes | 7× intentional (ExecStartPre idempotency) | 5/600s → test raises `startLimitBurst = lib.mkForce 20` | already fixed + documented in-test |
+| test-searxng | 2× (searx-init + searx) | searxng 5/300s | safe (2 < 5, plus boot start = 3) |
+| test-memory-emergency-guard | stop/start pairs (~3 fastflowlm starts) | module guard does `systemctl reset-failed` before `start` (memory-emergency-guard.nix:226) | safe by design — the canonical pattern |
+
+No crash-loop-simulation tests exist (grep for kill/SIGKILL patterns: none).
+
+### 3. `test-helpers.dnsGateHosts` — DONE, adopted in test-hermes
+
+- New option in `tests/test-helpers.nix`: list of hostnames → `networking.hosts."192.0.2.1"` (TEST-NET-1, RFC 5737 — resolution succeeds, connections fail fast).
+- Option docs encode the boundary learned from the two existing strategies: use it when the gate needs RESOLUTION only (hermes-github-verify hits its unset-token skip branch before any git use); do NOT use it when the unit would actually connect — mkForce the gate away instead (test-oauth2-proxy pattern).
+- test-hermes converted from the inline line. No other test has an inline hosts entry (grep: only test-hermes) — so "adopt in a second test" had no candidate; generality is proven by the option being generic + type-checked in every importing test (oauth2-proxy, browser-history, paperless, attic, searxng, memory-guard, hermes all import test-helpers).
+- **Verification:** `nix fmt` clean, `nix flake check --no-build` all-green, and the **hermes VM test built+ran green** (`nix build .#checks.x86_64-linux.hermes`, exit 0) — the hosts entry provably still lands via the option.
+
+### Harvest
+
+TODO_LIST Priority-4: all 5 items `[x]` with done-notes. CHANGELOG: 2 Added (dep-audit tooling, dnsGateHosts option), 1 Changed (wait helpers), 1 Fixed (validate-gomemlimit first-run bugs). NOTE: CHANGELOG's Unreleased section has pre-existing DUPLICATE `### Fixed`/`### Added` headers (a past session inserted a full block mid-section) — left as-is, not this session's mess.
+
+### Self-review (resume session)
+
+- The TODO's "3 copies" was stale — actual code had 4 polling loops and browser-history was NOT one of them. Grep-first beat summary-trust.
+- Edit-tool comment seam bug caught by re-reading after multiedit (edit 4's replacement comment didn't join the surviving prefix cleanly; garbled before fix).
+- CHANGELOG multiedit hit the duplicate-header ambiguity — non-unique anchors fail loudly; re-anchored on unique content.
+- Did NOT run post-deploy-check.sh before converting (would have been a better pre-change baseline); relied on verdict-message diffing + isolated helper tests instead. Acceptable, but a pre-change run is the stricter pattern.
+
+**Files changed (resume):** `scripts/post-deploy-check.sh` (helpers + 4 conversions), `tests/test-helpers.nix` (dnsGateHosts), `tests/test-hermes.nix` (adopt), `TODO_LIST.md` (P4 harvest), `CHANGELOG.md` (4 entries), this report.

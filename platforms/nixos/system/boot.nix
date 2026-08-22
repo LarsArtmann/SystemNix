@@ -2,8 +2,7 @@
   pkgs,
   lib,
   ...
-}:
-let
+}: let
   inherit (import ../../../lib/default.nix lib) ioTier;
 
   # Ceiling for active GPU buffer object allocations — ML model loading needs this high.
@@ -15,8 +14,7 @@ let
   # were NEVER returned to the kernel, causing GPUActive=51+ GiB with only desktop workloads).
   # 24 GiB is enough for smooth desktop compositing; excess freed pages return to kernel's free pool.
   ttmPagePoolSize = 6291456;
-in
-{
+in {
   # Bootloader and Kernel Configuration
   boot = {
     # Systemd boot configuration
@@ -33,6 +31,19 @@ in
     # Verbose boot — surface activation/initrd errors on console instead of silent hang
     initrd.verbose = true;
     consoleLogLevel = 7;
+
+    # ── kdump crash capture (2026-08-22 freeze forensics) ────────────────
+    # Both kernel freezes died SILENT (journal cut mid-write, no panic, no
+    # dump). softlockup_panic/hung_task_panic never fired: a scheduler
+    # LIVELOCK (all CPUs burning in zram refault with IRQs enabled, RCU
+    # progressing) pets the hardware watchdog "eventually", never trips the
+    # soft-lockup detector, and starves khungtaskd of CPU. Hang detection
+    # cannot catch that class — admission control + the emergency guard act
+    # BEFORE the cliff; kdump guarantees that when a panic DOES fire (driver
+    # bug, hung_task, future policy change) the vmcore lands in /var/crash
+    # and the postmortem is a 10-minute read instead of archaeology.
+    # Retention is bounded by kdump-retention.service below (root fs is tight).
+    crashDump.enable = true;
 
     # Load I2C module for DDC/CI monitor brightness control
     # Load pstore for kernel panic/oops log capture in UEFI NVRAM
@@ -108,7 +119,7 @@ in
       "delayacct"
     ];
 
-    binfmt.emulatedSystems = [ "aarch64-linux" ];
+    binfmt.emulatedSystems = ["aarch64-linux"];
 
     # Wipe /tmp on every boot — prevents stale nix build caches from accumulating
     # (2011 go-build dirs / 59 GB observed in a single boot cycle)
@@ -195,7 +206,7 @@ in
 
     # Crash recovery — prevent needing hard power cuts when GPU/driver hangs
     "kernel.sysrq" = 1; # Full SysRq — enables REISUB emergency reboot from keyboard
-    "kernel.panic" = 30; # Auto-reboot 30s after kernel panic (time to read/photograph stack trace, then recover)
+    "kernel.panic" = 10; # Auto-reboot 10s after kernel panic — kdump captures the vmcore FIRST (crashkernel path reboots after dump completes); 10s is pure post-dump recovery latency. Was 30 (time to photograph a stack trace) — kdump makes the photo redundant.
     "kernel.softlockup_panic" = 1; # Panic on soft lockup (CPU stuck in kernel with interrupts disabled)
     "kernel.watchdog_thresh" = 20; # Soft lockup detection threshold in seconds (default: 10, raised to avoid GPU compute false positives)
     "kernel.hung_task_panic" = 1; # Panic when a task is stuck in D state for too long
@@ -229,7 +240,7 @@ in
   systemd = {
     services = {
       "sshd".serviceConfig = lib.mkMerge [
-        { OOMScoreAdjust = -1000; }
+        {OOMScoreAdjust = -1000;}
         ioTier.interactive
       ];
       "systemd-journald".serviceConfig.OOMScoreAdjust = -500;
@@ -249,8 +260,8 @@ in
       # not a /proc/sys/ sysctl, so it can't go in boot.kernel.sysctl.
       mglru-thrash-protection = {
         description = "Enable MGLRU thrashing prevention (min_ttl_ms=1000)";
-        wantedBy = [ "multi-user.target" ];
-        after = [ "systemd-modules-load.service" ];
+        wantedBy = ["multi-user.target"];
+        after = ["systemd-modules-load.service"];
         serviceConfig = {
           Type = "oneshot";
           RemainAfterExit = true;
@@ -259,15 +270,52 @@ in
           echo 1000 > /sys/kernel/mm/lru_gen/min_ttl_ms
         '';
       };
+
+      # ── kdump vmcore retention ────────────────────────────────────────
+      # vmcores of a 94 GB machine are multi-GB even filtered+compressed;
+      # an unbounded /var/crash on the space-tight root fs would trade one
+      # emergency for another. Keep the 2 newest dumps, hard-cap total at
+      # 20G (oldest deleted first). Timer at boot + weekly — dumps are rare.
+      kdump-retention = {
+        description = "Bound /var/crash vmcore retention (2 newest, max 20G total)";
+        serviceConfig = {
+          Type = "oneshot";
+        };
+        script = ''
+          set -euo pipefail
+          CRASH_DIR="/var/crash"
+          [ -d "$CRASH_DIR" ] || exit 0
+
+          list_entries() {
+            # kdump default layout: timestamp dirs; also tolerate flat vmcore files.
+            ${pkgs.findutils}/bin/find "$CRASH_DIR" -mindepth 1 -maxdepth 1 \( -name 'vmcore*' -o -type d \) -printf '%T@ %p\n' | sort -rn
+          }
+
+          # Keep the 2 newest entries, delete the rest.
+          list_entries | ${pkgs.gawk}/bin/awk 'NR > 2 { $1=""; sub(/^ /, ""); print }' | while read -r old; do
+            [ -n "$old" ] && ${pkgs.coreutils}/bin/rm -rf -- "$old" && echo "kdump-retention: removed old dump $old"
+          done
+
+          # Hard cap: while total exceeds 20G, delete the oldest remaining entry.
+          while :; do
+            total_bytes=$(${pkgs.coreutils}/bin/du -sb "$CRASH_DIR" 2>/dev/null | ${pkgs.gawk}/bin/awk '{print $1}')
+            [ "''${total_bytes:-0}" -lt 21474836480 ] && break
+            oldest=$(list_entries | tail -1 | ${pkgs.gawk}/bin/awk '{ $1=""; sub(/^ /, ""); print }')
+            [ -z "$oldest" ] && break
+            ${pkgs.coreutils}/bin/rm -rf -- "$oldest"
+            echo "kdump-retention: 20G cap exceeded — removed $oldest"
+          done
+        '';
+      };
     };
 
     user.services = {
       "dms".serviceConfig = lib.mkMerge [
-        { OOMScoreAdjust = -500; }
+        {OOMScoreAdjust = -500;}
         ioTier.desktop
       ];
       "pipewire".serviceConfig = lib.mkMerge [
-        { OOMScoreAdjust = -500; }
+        {OOMScoreAdjust = -500;}
         ioTier.desktop
       ];
     };
@@ -403,6 +451,17 @@ in
   # stale blocks — subsequent daily runs only trim ~24h of churn (~50-100
   # GiB), taking ~10-15 min instead of 1h14m.
   systemd.timers.fstrim.timerConfig.OnCalendar = lib.mkForce "daily";
+
+  # kdump vmcore retention — bound /var/crash growth (boot + weekly)
+  systemd.timers.kdump-retention = {
+    description = "Run kdump vmcore retention cleanup";
+    wantedBy = ["timers.target"];
+    timerConfig = {
+      OnBootSec = "10min";
+      OnCalendar = "weekly";
+      Persistent = true;
+    };
+  };
 
   # Run fstrim at idle I/O priority so it doesn't compete with host I/O.
   # fstrim is a background maintenance task; a 10-15 min trim run at idle

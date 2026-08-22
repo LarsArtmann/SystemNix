@@ -1,0 +1,78 @@
+direction: right
+title: Defense in Depth — Freeze Containment Ladder {
+	near: top-center
+}
+
+storm: "Workload storm forms: 12 crush sessions, 10 nix builds, 12 QEMU VMs" {
+	shape: hexagon
+	style.fill: "#f4d35e"
+	style.font-color: "#111111"
+}
+
+tier1: TIER 1 — PREVENT + BOUND {
+	admission: |`Admission Control
+	nix-daemon MemoryHigh
+	VM queue MAX=3
+	crush = metric only (USER)`| {
+		style.fill: "#118ab2"
+		style.font-color: "#ffffff"
+	}
+	panic: |`Hang -> panic -> kdump
+	softlockup_panic=1, panic=10
+	vmcore retention (USER: approved)`| {
+		style.fill: "#118ab2"
+		style.font-color: "#ffffff"
+	}
+	style.fill: "#e8e8e2"
+	style.font-color: "#111111"
+}
+
+tier2: TIER 2 — SEE IT + SAY IT {
+	psiwarn: |`PSI >=20% warning zone
+	ALERT-ONLY (USER: no auto-kill)`| {
+		style.fill: "#06d6a0"
+		style.font-color: "#111111"
+	}
+	sev1: |`SEV1 escalation
+	Discord phone, DMS notify
+	overlay: guard-trip, infra-crit, guard-dead`| {
+		style.fill: "#06d6a0"
+		style.font-color: "#111111"
+	}
+	census: |`Top-N memory census
+	who holds the 30 GiB?`| {
+		style.fill: "#06d6a0"
+		style.font-color: "#111111"
+	}
+	style.fill: "#e8e8e2"
+	style.font-color: "#111111"
+}
+
+guard: |`Memory Emergency Guard
+	existing, redesigned 06:23
+	ONLY automated sacrifice`| {
+	style.fill: "#ef476f"
+	style.font-color: "#ffffff"
+}
+
+freeze: "Hard freeze" {
+	shape: diamond
+	style.fill: "#ef476f"
+	style.font-color: "#ffffff"
+}
+
+reboot: |`Auto-reboot <=10s + vmcore
+	freeze becomes 10-min diagnosis`| {
+	style.fill: "#073b4c"
+	style.font-color: "#ffffff"
+}
+
+storm -> admission: storm never forms
+storm -> psiwarn: earliest signal
+admission -> guard: peak load bounded
+psiwarn -> sev1: human in the loop
+psiwarn -> guard: escalates to zones
+guard -> sev1: trip = SEV1
+census -> psiwarn: evidence for tuning
+storm -> freeze: if all layers miss
+freeze -> reboot: bounded blast radius

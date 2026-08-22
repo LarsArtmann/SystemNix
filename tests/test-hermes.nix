@@ -34,14 +34,13 @@
 {
   pkgs,
   inputs,
-}:
-let
+}: let
   hermesFlakeOutput = (import ../modules/nixos/services/hermes.nix) {
     inherit inputs;
   };
   hermesNixosModule = hermesFlakeOutput.flake.nixosModules.hermes;
 
-  common = { lib, ... }: {
+  common = {lib, ...}: {
     imports = [
       hermesNixosModule
       ./mock-sops.nix
@@ -80,13 +79,12 @@ let
     # on. The limiter itself is not under test here.
     systemd.services.hermes.startLimitBurst = lib.mkForce 20;
   };
-in
-{
+in {
   name = "hermes";
 
   nodes = {
-    bound = { ... }: {
-      imports = [ common ];
+    bound = {...}: {
+      imports = [common];
 
       services.hermes = {
         enable = true;
@@ -104,11 +102,11 @@ in
       # deterministically: inside the sandboxed nix build, slirp host-side
       # DNS is not guaranteed. /etc/hosts resolves it without network; the
       # verify script hits the unset-token skip branch before any git use.
-      networking.hosts."192.0.2.1" = [ "github.com" ];
+      test-helpers.dnsGateHosts = ["github.com"];
     };
 
-    bare = { ... }: {
-      imports = [ common ];
+    bare = {...}: {
+      imports = [common];
 
       services.hermes.enable = true;
     };

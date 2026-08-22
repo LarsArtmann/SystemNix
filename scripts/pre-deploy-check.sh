@@ -324,7 +324,13 @@ if [ -s "$METRICS_FILE" ]; then
   # collectForgejoMirrors is on (mkDefault = services.forgejo.enable, evo-x2
   # true — system-health.nix:662-681), so they appear post-switch. Verify in
   # :9100/metrics after this deploy, then remove from this list.
-  KNOWN_NEW_METRICS="system_zram_swap_fill_percent system_zram_fill_over_threshold system_zram_swap_orig_data_bytes system_zram_swap_disksize_bytes system_zram_mem_used_bytes discordsync_projection_dlq_legacy_depth bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds system_lan_nic_present system_das_link_present system_current_system_profiled system_forgejo_mirror_scrape_errors system_forgejo_mirror_sync_stalled system_forgejo_mirror_erroring"
+  # node_psi_memory_warning + node_psi_memory_some_avg60 (2026-08-22 stability
+  # plan): warning tier added to the psi-metrics collector (_signoz-metrics.nix)
+  # — not emitted by the running collector yet. Also below: the crush census +
+  # cgroup census (system-health) and the SEV1 bridge metrics (sev1-bridge.prom)
+  # from the same plan batch. All appear post-switch; verify :9100/metrics,
+  # then remove from this list.
+  KNOWN_NEW_METRICS="system_zram_swap_fill_percent system_zram_fill_over_threshold system_zram_swap_orig_data_bytes system_zram_swap_disksize_bytes system_zram_mem_used_bytes discordsync_projection_dlq_legacy_depth bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds system_lan_nic_present system_das_link_present system_current_system_profiled system_forgejo_mirror_scrape_errors system_forgejo_mirror_sync_stalled system_forgejo_mirror_erroring node_psi_memory_warning node_psi_memory_some_avg60 system_crush_sessions system_crush_sessions_over_threshold system_cgroup_mem_bytes system_cgroup_mem_anon_bytes system_cgroup_mem_shmem_bytes system_cgroup_mem_unevictable_bytes sev1_bridge_alerts_active sev1_bridge_runs_total"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"

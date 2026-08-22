@@ -3,9 +3,8 @@
   lib,
   pkgs,
   ...
-}:
-{
-  imports = [ ../../common/dns-resolver.nix ];
+}: {
+  imports = [../../common/dns-resolver.nix];
   # Networking configuration
   networking = {
     hostName = "evo-x2"; # Machine name
@@ -26,7 +25,7 @@
     # Firewall - deny by default, trust LAN, allow public-facing ports
     firewall = {
       enable = true;
-      trustedInterfaces = [ "eno1" ];
+      trustedInterfaces = ["eno1"];
       allowedTCPPorts = [
         22
         53
@@ -104,6 +103,18 @@
           # imminent anyway.
           ManagedOOMPreference = "omit";
           OOMScoreAdjust = -1000;
+
+          # ── Workload admission control (2026-08-22 freeze class) ──────────
+          # Every nix build — user- or root-initiated, interactive or CI —
+          # executes inside this unit's cgroup (the daemon multiplexes all
+          # builders). The 2026-08-22 05:49 freeze census counted 10 concurrent
+          # builds × 4-8 GB against a zram-full machine, with NOTHING bounding
+          # their aggregate footprint (oomd-exempt + no MemoryHigh).
+          # MemoryHigh (NOT MemoryMax) throttles instead of killing: past
+          # 32 GB the kernel reclaims/swaps the builders' pages, so builds
+          # slow down while SSH/desktop/services keep headroom. The daemon
+          # itself is tiny — anything above this line is build working set.
+          MemoryHigh = "32G";
         };
       };
     };
@@ -122,11 +133,11 @@
 
   # Enable CUPS to print documents.
   services.printing.enable = true;
-  services.printing.drivers = [ pkgs.gutenprint ];
+  services.printing.drivers = [pkgs.gutenprint];
 
   # Enable SANE for scanning (Canon PIXMA MG2500 scanner)
   hardware.sane.enable = true;
-  hardware.sane.extraBackends = [ pkgs.sane-backends ];
+  hardware.sane.extraBackends = [pkgs.sane-backends];
 
   # nix.gc is defined in platforms/common/nix-settings.nix (shared)
 }
