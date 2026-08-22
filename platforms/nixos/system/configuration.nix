@@ -268,6 +268,12 @@ in
       # for the `qmd` MCP server (crushrc). Upstream flake pin — see flake.nix
       # input for why nixpkgs is not followed.
       inputs.qmd.packages.${pkgs.system}.default
+      # Partitioning for user-run sudo migration scripts (sgdisk). NOT in the
+      # system env before 2026-08-22 — the first migrate-clickhouse-xfs.sh
+      # prepare run died at "sgdisk: command not found" after stopping the
+      # SigNoz stack (sudo's secure PATH hides user-profile tools). Keeping it
+      # installed removes the nix-build fallback dependency entirely.
+      pkgs.gptfdisk
     ];
 
     fonts.fontconfig.defaultFonts = {

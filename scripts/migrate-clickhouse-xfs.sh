@@ -60,6 +60,10 @@ stop_stack() {
 prepare() {
   require_root
 
+  # Root under sudo gets a minimal secure PATH — make sure the system
+  # environment (and its nix) is always reachable for the resolution below.
+  export PATH="/run/current-system/sw/bin:$PATH"
+
   # ── Tool preflight (BEFORE stopping anything) ─────────────────────────
   # gptfdisk (sgdisk) and parted (partprobe) are NOT in the system
   # environment (verified live 2026-08-22: the first prepare run stopped
@@ -78,15 +82,19 @@ prepare() {
       echo "/run/current-system/sw/bin/$bin"
       return 0
     fi
-    local out
-    if
-      out=$(nix build --no-link --print-out-paths \
-        "/home/lars/projects/SystemNix#nixosConfigurations.evo-x2.pkgs.${nixattr}" 2>/dev/null) \
-        && [ -n "$out" ] && [ -x "$out/bin/$bin" ]
-    then
-      echo "$out/bin/$bin"
-      return 0
-    fi
+    # nix build --print-out-paths emits ONE LINE PER OUTPUT (out, man, …) —
+    # verified live 2026-08-22: gptfdisk prints two lines and a single-line
+    # "$out/bin/$bin" test silently fails on the embedded newline. Iterate
+    # every printed store path instead.
+    local out line
+    out=$(nix build --no-link --print-out-paths \
+      "/home/lars/projects/SystemNix#nixosConfigurations.evo-x2.pkgs.${nixattr}" 2>/dev/null) || out=""
+    while IFS= read -r line; do
+      if [ -n "$line" ] && [ -x "$line/bin/$bin" ]; then
+        echo "$line/bin/$bin"
+        return 0
+      fi
+    done <<<"$out"
     return 1
   }
   SGDISK=$(resolve_bin sgdisk gptfdisk) || die "sgdisk unavailable (PATH / system env / nix build of gptfdisk all failed) — fix tooling BEFORE the stack stops"

@@ -393,8 +393,8 @@ _: {
                   # pat(*metric 1*) would match the comment and stay green when the value is 0.
                   # Assert absence of the 0-value line plus presence of the metric instead.
                   conditions = [
-                    "[BODY] != pat(*system_signoz_alert_rules_healthy 0\\n*)"
-                    "[BODY] == pat(*\\nsystem_signoz_alert_rules_healthy *)"
+                    "[BODY] != pat(*system_signoz_alert_rules_healthy 0\n*)"
+                    "[BODY] == pat(*\nsystem_signoz_alert_rules_healthy *)"
                   ];
                   alerts = discordAlert "SigNoz alert rules not provisioned — observability gap, no alerts will fire";
                 })
@@ -782,7 +782,8 @@ _: {
                   conditions = [
                     "[STATUS] == 200"
                     "[BODY] == pat(*btrfs_scrub_status*)"
-                    "[BODY] == pat(*btrfs_scrub_error_free 1*)"
+                    "[BODY] != pat(*btrfs_scrub_error_free 0\n*)"
+                    "[BODY] == pat(*\nbtrfs_scrub_error_free *)"
                   ];
                   alerts = discordAlert "BTRFS scrub found errors — potential data corruption. Run 'btrfs scrub status /' and 'btrfs scrub status /data' to investigate. Check Prometheus btrfs_scrub_errors_total for details.";
                 })
@@ -793,7 +794,8 @@ _: {
                   interval = "10m";
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*btrfs_emergency_reserve_present 1*)"
+                    "[BODY] != pat(*btrfs_emergency_reserve_present 0\n*)"
+                    "[BODY] == pat(*\nbtrfs_emergency_reserve_present *)"
                   ];
                   alerts = discordAlert "BTRFS emergency reserve missing — the 10 GiB safety net at /btrfs-emergency-reserve was deleted or never created. Re-provision: 'sudo systemctl start btrfs-emergency-reserve'.";
                 })
@@ -1047,8 +1049,8 @@ _: {
                     # ("# HELP system_lan_nic_present 1 if ...") itself contains
                     # "system_lan_nic_present 1", so pat(*metric 1*) stays green when the
                     # value is 0. Assert the 0-value line is absent + the metric is present.
-                    "[BODY] != pat(*system_lan_nic_present 0\\n*)"
-                    "[BODY] == pat(*\\nsystem_lan_nic_present *)"
+                    "[BODY] != pat(*system_lan_nic_present 0\n*)"
+                    "[BODY] == pat(*\nsystem_lan_nic_present *)"
                   ];
                   alerts = discordAlert "LAN NIC (eno1 / RTL8125) is ABSENT from the bus — wired networking is DOWN (static IP + SSH unreachable). A warm reboot does NOT retrain it: POWER-CYCLE the machine (shut down, wait 10s, power on). Check: ls /sys/class/net/eno1, journalctl -k -b -1 | grep 10ec:8125, lspci | grep -i network";
                 })
@@ -1335,10 +1337,10 @@ _: {
                     # pat() is a GLOB: HELP comments contain "metric 1", so assert absence
                     # of the 0-value line plus presence of the metric instead ('!' is a
                     # literal in filepath.Match — no glob negation exists).
-                    "[BODY] != pat(*buildcache_mounted 0\\n*)"
-                    "[BODY] == pat(*\\nbuildcache_mounted *)"
-                    "[BODY] != pat(*buildcache_smart_healthy 0\\n*)"
-                    "[BODY] == pat(*\\nbuildcache_smart_healthy *)"
+                    "[BODY] != pat(*buildcache_mounted 0\n*)"
+                    "[BODY] == pat(*\nbuildcache_mounted *)"
+                    "[BODY] != pat(*buildcache_smart_healthy 0\n*)"
+                    "[BODY] == pat(*\nbuildcache_smart_healthy *)"
                   ];
                   alerts = discordAlert "Build cache SSD (/mnt/buildcache) unmounted or SMART-failing — go/cargo/pnpm builds will fail with missing-directory errors. Check: findmnt /mnt/buildcache, sudo smartctl -d sat -H /dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311. If the drive died: revert GOCACHE/GOMODCACHE in platforms/nixos/users/home.nix and rebuild caches on NVMe.";
                 })
@@ -1361,8 +1363,8 @@ _: {
                   conditions = [
                     "[STATUS] == 200"
                     # HELP comment contains "pool_mounted 1" — absence-of-0 + presence.
-                    "[BODY] != pat(*pool_mounted 0\\n*)"
-                    "[BODY] == pat(*\\npool_mounted *)"
+                    "[BODY] != pat(*pool_mounted 0\n*)"
+                    "[BODY] == pat(*\npool_mounted *)"
                   ];
                   alerts = discordAlert "Mirrored HDD pool (/mnt/pool) unmounted — immich + paperless data, ALL application backups, and the btrbk safety net are offline. Check: findmnt /mnt/pool, systemctl status mnt-pool.mount. If a DAS member died: the raid1 still serves from the other member; replace the drive and btrfs replace.";
                 })
@@ -1388,10 +1390,10 @@ _: {
                     "[STATUS] == 200"
                     # pat() is a GLOB (HELP comments contain "clickhouse_xfs_mounted 1"):
                     # assert absence of the 0-value line plus presence (buildcache pattern)
-                    "[BODY] != pat(*clickhouse_xfs_mounted 0\\n*)"
-                    "[BODY] == pat(*\\nclickhouse_xfs_mounted *)"
-                    "[BODY] != pat(*clickhouse_xfs_is_xfs 0\\n*)"
-                    "[BODY] == pat(*\\nclickhouse_xfs_is_xfs *)"
+                    "[BODY] != pat(*clickhouse_xfs_mounted 0\n*)"
+                    "[BODY] == pat(*\nclickhouse_xfs_mounted *)"
+                    "[BODY] != pat(*clickhouse_xfs_is_xfs 0\n*)"
+                    "[BODY] == pat(*\nclickhouse_xfs_is_xfs *)"
                   ];
                   alerts = discordAlert "ClickHouse XFS data mount (/var/lib/clickhouse) is unmounted, EIO-dead, or not XFS — clickhouse.service refuses to start by design (ConditionPathIsMountPoint, no telemetry written to the root fs). Observability ingestion is DOWN. Check: findmnt /var/lib/clickhouse, systemctl status var-lib-clickhouse.mount, dmesg | grep -i xfs. If the partition/fs is missing: scripts/migrate-clickhouse-xfs.sh (prepare phase), then redeploy.";
                 })
@@ -1557,7 +1559,8 @@ _: {
                   client.timeout = "10s";
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*backup_all_healthy 1*)"
+                    "[BODY] != pat(*backup_all_healthy 0\n*)"
+                    "[BODY] == pat(*\nbackup_all_healthy *)"
                   ];
                   alerts = discordAlert "One or more service backups are stale (>25h)";
                 })
@@ -1571,7 +1574,8 @@ _: {
                   client.timeout = "10s";
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*secret_rotation_all_fresh 1*)"
+                    "[BODY] != pat(*secret_rotation_all_fresh 0\n*)"
+                    "[BODY] == pat(*\nsecret_rotation_all_fresh *)"
                   ];
                   alerts = discordAlert "One or more OIDC client secrets are stale (>90d) — consider rotating";
                 })
