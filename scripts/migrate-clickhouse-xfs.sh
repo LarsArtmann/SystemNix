@@ -34,7 +34,7 @@ LABEL="clickhouse" # XFS labels are capped at 12 chars
 SRC="/var/lib/clickhouse"
 MNT="/mnt/clickhouse-xfs-migration"
 STATE_FILE=".systemnix-migration-state"
-MIN_FREE_GIB=90 # the tail must be at least this big to proceed
+MIN_FREE_GIB=90              # the tail must be at least this big to proceed
 BTRFS_ROOT="/mnt/btrfs-root" # subvolid=5 automount (snapshots.nix)
 
 RED=$'\033[0;31m'
@@ -111,7 +111,8 @@ prepare() {
   PARTX=$(resolve_bin partx util-linux) || die "partx unavailable"
   MKFS_XFS=$(resolve_bin mkfs.xfs xfsprogs) || die "mkfs.xfs unavailable"
   RSYNC=$(resolve_bin rsync rsync) || die "rsync unavailable"
-  info "tools resolved: sgdisk=$SGDISK partx=$PARTX mkfs.xfs=$MKFS_XFS rsync=$RSYNC"
+  MODPROBE=$(resolve_bin modprobe kmod) || die "modprobe unavailable"
+  info "tools resolved: sgdisk=$SGDISK partx=$PARTX mkfs.xfs=$MKFS_XFS rsync=$RSYNC modprobe=$MODPROBE"
 
   # ── Preflight ─────────────────────────────────────────────────────────
   [ -b "$DISK" ] || die "$DISK is not a block device"
@@ -189,8 +190,17 @@ prepare() {
   fi
 
   # ── Copy + verify ─────────────────────────────────────────────────────
+  # Load the xfs kernel module EXPLICITLY. No XFS fs existed on this box
+  # before, so the module was never loaded; util-linux mount (without -t)
+  # probes /proc/filesystems, misses xfs, tries to exec /sbin/modprobe
+  # ITSELF (does not exist on NixOS) and aborts with "wrong fs type /
+  # missing helper program" BEFORE the mount(2) syscall that would have
+  # triggered the kernel's (correctly configured) request_module autoload
+  # — verified live 2026-08-22. Explicit modprobe + -t xfs sidesteps both
+  # the probe and the userspace helper path.
+  "$MODPROBE" xfs || die "modprobe xfs failed — check dmesg"
   mkdir -p "$MNT"
-  mount "$PART" "$MNT"
+  mount -t xfs "$PART" "$MNT"
   # Never leak the temp mount if a later step dies — the migration must be
   # re-runnable without manual cleanup.
   trap 'umount "$MNT" 2>/dev/null || true' EXIT

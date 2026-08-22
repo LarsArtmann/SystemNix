@@ -16,37 +16,37 @@
 # `nix eval ...config.system.build.toplevel` alone do NOT check assertions;
 # only `nix flake check` (pre-commit + CI) forces them.
 _: {
-  flake.nixosModules.start-limit-audit = {
-    config,
-    lib,
-    ...
-  }: let
-    # serviceConfig is a mix of typed (nullOr) options and freeform attrs:
-    # `?` guards freeform absence, `!= null` guards typed-but-unset options.
-    offenders =
-      lib.filterAttrs
-      (
+  flake.nixosModules.start-limit-audit =
+    {
+      config,
+      lib,
+      ...
+    }:
+    let
+      # serviceConfig is a mix of typed (nullOr) options and freeform attrs:
+      # `?` guards freeform absence, `!= null` guards typed-but-unset options.
+      offenders = lib.filterAttrs (
         _name: svc:
-          (svc.serviceConfig ? StartLimitBurst && svc.serviceConfig.StartLimitBurst != null)
-          || (svc.serviceConfig ? StartLimitIntervalSec && svc.serviceConfig.StartLimitIntervalSec != null)
-      )
-      config.systemd.services;
-    offenderNames = lib.attrNames offenders;
-  in {
-    config.assertions = [
-      {
-        assertion = offenderNames == [];
-        message = ''
-          start-limit-audit: StartLimitBurst/StartLimitIntervalSec set in serviceConfig for:
-          ${lib.concatStringsSep ", " offenderNames}
-          systemd 261+ only honors these in [Unit] — in [Service] they are silently
-          ignored and Restart=on-failure services restart infinitely with no limit.
-          Fix (NixOS top-level options, outside serviceConfig):
-            systemd.services.<name>.startLimitBurst = 5;
-            systemd.services.<name>.startLimitIntervalSec = 300;
-          or unitConfig.StartLimitBurst / unitConfig.StartLimitIntervalSec.
-        '';
-      }
-    ];
-  };
+        (svc.serviceConfig ? StartLimitBurst && svc.serviceConfig.StartLimitBurst != null)
+        || (svc.serviceConfig ? StartLimitIntervalSec && svc.serviceConfig.StartLimitIntervalSec != null)
+      ) config.systemd.services;
+      offenderNames = lib.attrNames offenders;
+    in
+    {
+      config.assertions = [
+        {
+          assertion = offenderNames == [ ];
+          message = ''
+            start-limit-audit: StartLimitBurst/StartLimitIntervalSec set in serviceConfig for:
+            ${lib.concatStringsSep ", " offenderNames}
+            systemd 261+ only honors these in [Unit] — in [Service] they are silently
+            ignored and Restart=on-failure services restart infinitely with no limit.
+            Fix (NixOS top-level options, outside serviceConfig):
+              systemd.services.<name>.startLimitBurst = 5;
+              systemd.services.<name>.startLimitIntervalSec = 300;
+            or unitConfig.StartLimitBurst / unitConfig.StartLimitIntervalSec.
+          '';
+        }
+      ];
+    };
 }

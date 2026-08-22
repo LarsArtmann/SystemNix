@@ -311,7 +311,13 @@ if [ -s "$METRICS_FILE" ]; then
   # appears only after BOTH the XFS migration script prepare phase ran AND
   # the deploy activated the mount. post-deploy-check.sh asserts the mount;
   # verify :9100/metrics after that deploy, then remove from this list.
-  KNOWN_NEW_METRICS="system_zram_swap_fill_percent system_zram_fill_over_threshold system_zram_swap_orig_data_bytes system_zram_swap_disksize_bytes system_zram_mem_used_bytes discordsync_projection_dlq_legacy_depth bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds system_lan_nic_present clickhouse_xfs_mounted clickhouse_xfs_is_xfs clickhouse_xfs_usage_percent clickhouse_xfs_usage_over_threshold clickhouse_xfs_free_bytes clickhouse_xfs_total_bytes"
+  # system_das_link_present (2026-08-22): emitted by the tree's system-health
+  # collector (DAS-USB-link-present gauge, commit c121f8cf) but not by the
+  # deployed collector binary. Appears post-switch; the gatus "DAS USB Link"
+  # endpoint pats it anchored — verify :9100/metrics after the deploy lands
+  # (expected 0 while the DAS link is physically down — truthful), then
+  # remove from this list.
+  KNOWN_NEW_METRICS="system_zram_swap_fill_percent system_zram_fill_over_threshold system_zram_swap_orig_data_bytes system_zram_swap_disksize_bytes system_zram_mem_used_bytes discordsync_projection_dlq_legacy_depth bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds system_lan_nic_present system_das_link_present clickhouse_xfs_mounted clickhouse_xfs_is_xfs clickhouse_xfs_usage_percent clickhouse_xfs_usage_over_threshold clickhouse_xfs_free_bytes clickhouse_xfs_total_bytes"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"

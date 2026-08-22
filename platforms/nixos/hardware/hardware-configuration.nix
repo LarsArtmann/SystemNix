@@ -159,6 +159,16 @@ in
     # partition slot now carries the XFS ClickHouse store above.
   };
 
+  # xfs kernel module support for the ClickHouse data mount. Without this,
+  # the module is not in the initrd/module-load set (no other XFS fs exists
+  # on this box) and the first mount of the new filesystem fails: util-linux
+  # mount probes /proc/filesystems, misses xfs, tries to exec /sbin/modprobe
+  # itself (nonexistent on NixOS) and aborts with "wrong fs type / missing
+  # helper program" before the mount(2) syscall that would have triggered
+  # the kernel's request_module autoload — verified live 2026-08-22 when the
+  # migration script's temp mount failed on a freshly-mkfs'd XFS.
+  boot.supportedFilesystems = [ "xfs" ];
+
   # Disk swap dropped — zramSwap (10% of 64G = ~6.4G compressed) is sufficient.
   # Freed 10G from p2. See boot.nix for zramSwap config.
 
