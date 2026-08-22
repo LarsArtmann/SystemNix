@@ -214,7 +214,7 @@ for input in "${!INPUT_REPO[@]}"; do
       # shapes: v0.0.0-<ts>-<rev> and vX.Y.Z-0.<ts>-<rev> (base-tag infix).
       reqcommit=""
       from_tag=0
-      if [[ "$ver" =~ (0\.|-)[0-9]{14}-([0-9a-f]{12})$ ]]; then
+      if [[ $ver =~ (0\.|-)[0-9]{14}-([0-9a-f]{12})$ ]]; then
         reqcommit="${BASH_REMATCH[2]}"
       else
         tag="$ver"
@@ -238,7 +238,7 @@ for input in "${!INPUT_REPO[@]}"; do
       fi
 
       # Compare against the pinned rev
-      if [[ "$pinned" == "$reqcommit"* ]]; then
+      if [[ $pinned == "$reqcommit"* ]]; then
         say "OK-EXACT     $context → $repo@${pinned:0:12}"
         OK=$((OK + 1))
         continue

@@ -199,9 +199,9 @@ _Extraction DONE: ~62.7 GB / 17.5k files verified on `/mnt/pool/backups/pixel6/2
 
 ## Priority 5: Desktop
 
-- [ ] **Niri multiscreen "Now" batch (TV-not-adjacent plan, agreed 2026-08-16)** — skip edge-crossing rebinds until a 2nd identical LG arrives. Implement now: `Mod+Tab` = `focus-monitor-next`, `Mod+Shift+Tab` = `move-column-to-monitor-next`, named-workspace jump bind, optional `move-workspace-to-monitor`, idle DPMS via swayidle (~20min; TV may be an audio sink). When 2nd LG arrives: clone DP-1 output entry + rebind `Mod+H/L`. **Source:** 2026-08-16 niri session, 03-47 status report #17
-- [ ] **Test removing `--enable-zero-copy`** — if it prevents display hotplug crashes, `--disable-gpu-watchdog` may become unnecessary
-- [ ] **Add test-tone tooling for audio debugging** — `alsa-utils` (speaker-test) or `pw-cat` in PATH. Blocks the smart-audio audibility verification (Priority 2)
+- [x] **Niri multiscreen "Now" batch (TV-not-adjacent plan, agreed 2026-08-16)** — skip edge-crossing rebinds until a 2nd identical LG arrives. Implement now: `Mod+Tab` = `focus-monitor-next`, `Mod+Shift+Tab` = `move-column-to-monitor-next`, named-workspace jump bind, optional `move-workspace-to-monitor`, idle DPMS via swayidle (~20min; TV may be an audio sink). When 2nd LG arrives: clone DP-1 output entry + rebind `Mod+H/L`. **Source:** 2026-08-16 niri session, 03-47 status report #17 — **Done (2026-08-22):** `Mod+Tab`/`Mod+Shift+Tab`/`Mod+Ctrl+Tab` monitor cycling + `Mod+M/B/E/C/V` named-workspace jumps + 20min swayidle DPMS via `niri msg action power-off-monitors` (`sway-audio-idle-inhibit` handles the TV-as-audio-sink case). Deploy and verify hotplug behavior; when 2nd LG arrives, clone DP-1 output entry + rebind `Mod+H/L`
+- [x] **Test removing `--enable-zero-copy`** — if it prevents display hotplug crashes, `--disable-gpu-watchdog` may become unnecessary — **Done (2026-08-22):** Flag removed from Helium wrapper in `base.nix`. `--disable-gpu-watchdog` retained pending observation. Deploy and observe display hotplug crash behavior; if crashes stop, try removing `--disable-gpu-watchdog` too
+- [x] **Add test-tone tooling for audio debugging** — `alsa-utils` (speaker-test) or `pw-cat` in PATH. Blocks the smart-audio audibility verification (Priority 2) — **Done (2026-08-22):** `alsa-utils` (speaker-test, aplay, amixer) and `pipewire` (pw-cat, pw-play, pw-cli) added to `linuxUtilities` in `base.nix`
 
 ## Priority 6: Upstream Contributions
 
