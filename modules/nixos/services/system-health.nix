@@ -362,6 +362,18 @@ _: {
             LAN_NIC_PRESENT=0
           fi
 
+          # === DAS USB link presence (single-link topology root cause) ===
+          # ALL four external disks (2x pool Toshiba, 2x SanDisk incl.
+          # buildcache) share ONE USB link. When it drops without a
+          # reconnect (2026-08-22 00:59), buildcache + pool + SSDs vanish
+          # simultaneously and only consequence alerts fire. This metric
+          # alerts on the CAUSE. Emitted unconditionally (fail-closed).
+          DAS_USB_PATH="${cfg.dasUsbPath}"
+          DAS_LINK_PRESENT=1
+          if [ -n "$DAS_USB_PATH" ] && [ ! -e "/sys/bus/usb/devices/$DAS_USB_PATH" ]; then
+            DAS_LINK_PRESENT=0
+          fi
+
           # === systemd-oomd kills tracking ===
           # systemd-oomd kills (nix-daemon, Twenty worker) went completely
           # undetected. This counts kill events from the journal since boot
@@ -608,6 +620,10 @@ _: {
             echo "# TYPE system_lan_nic_present gauge"
             echo "system_lan_nic_present ''${LAN_NIC_PRESENT}"
 
+            echo "# HELP system_das_link_present 1 if the DAS USB link (${cfg.dasUsbPath}) exists in /sys/bus/usb/devices, 0 if it dropped"
+            echo "# TYPE system_das_link_present gauge"
+            echo "system_das_link_present ''${DAS_LINK_PRESENT}"
+
             echo "# HELP system_service_crash_loop 1 if service restarted >=${toString crashLoopRestartThreshold} times since last collection, 0 otherwise"
             echo "# TYPE system_service_crash_loop gauge"
 
@@ -816,6 +832,20 @@ _: {
             enumeration showed no 10ec:8125, the SDHCI reader shifted into
             its slot, and a WARM reboot did not retrain it; only the second
             reboot brought it back). Set to "" to disable.
+          '';
+        };
+
+        dasUsbPath = lib.mkOption {
+          type = lib.types.str;
+          default = "8-1";
+          description = ''
+            USB bus path of the DAS link that carries all external disks
+            (pool members + buildcache + spare SSDs). When absent from
+            /sys/bus/usb/devices, system_das_link_present emits 0 and the
+            Gatus "DAS USB Link" check alerts on the root cause instead of
+            N consequence alerts (2026-08-22: link dropped without a single
+            reconnect attempt for 22+ min while buildcache/pool checks were
+            the only signals). Set to "" to disable.
           '';
         };
 

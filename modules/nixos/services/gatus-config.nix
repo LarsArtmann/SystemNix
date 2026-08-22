@@ -1055,6 +1055,25 @@ _: {
                   alerts = discordAlert "LAN NIC (eno1 / RTL8125) is ABSENT from the bus — wired networking is DOWN (static IP + SSH unreachable). A warm reboot does NOT retrain it: POWER-CYCLE the machine (shut down, wait 10s, power on). Check: ls /sys/class/net/eno1, journalctl -k -b -1 | grep 10ec:8125, lspci | grep -i network";
                 })
                 (mkHttpCheck {
+                  name = "DAS USB Link";
+                  group = "Monitoring";
+                  # Root-cause alert for the single-USB-link DAS topology:
+                  # all 4 external disks (2x pool Toshiba, buildcache SSD,
+                  # spare btrfs SSD) sit behind /sys/bus/usb/devices/8-1.
+                  # When the link drops, buildcache + pool + SSD checks all
+                  # fire at once — this check names the CAUSE (2026-08-22:
+                  # zero reconnect attempts for 22+ min). Anchored form is
+                  # mandatory: the metric's HELP embeds "system_das_link_present 1".
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*system_das_link_present 0\n*)"
+                    "[BODY] == pat(*\nsystem_das_link_present *)"
+                  ];
+                  alerts = discordAlert "DAS USB link (8-1) is DOWN — ALL external disks (pool members, buildcache, spare SSDs) vanished simultaneously. Software recovery is impossible without the link: physically reseat the DAS USB cable + enclosure power, then REBOOT (warm reboot may not re-enumerate). After boot: scripts/das-link-recovery-check.sh, verify findmnt /mnt/pool and /mnt/buildcache, e2fsck decision for buildcache. Runbook: AGENTS.md 'DAS USB link' section.";
+                })
+                (mkHttpCheck {
                   name = "Memory Emergency Guard";
                   group = "Monitoring";
                   # The 2026-08-22 freeze: zram 100% full made flm's 25 GB
