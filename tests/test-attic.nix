@@ -99,8 +99,15 @@ in
     #    failure that blocked every nh os switch during DAS outages.
     machine.succeed("rm -rf /var/lib/atticd/storage")
     machine.systemctl("restart atticd-bootstrap.service")
-    result = machine.succeed("systemctl show -p Result --value atticd-bootstrap.service").strip()
-    assert result == "condition", f"expected bootstrap to skip with result=condition, got {result!r}"
+    # Condition skip => inactive + ConditionResult=no, and the journal shows
+    # the skip. Result= is NOT a reliable signal across a restart (it retains
+    # "success" from the pre-restart run), so assert on the properties that
+    # actually change.
+    state = machine.succeed("systemctl show -p ActiveState --value atticd-bootstrap.service").strip()
+    cond = machine.succeed("systemctl show -p ConditionResult --value atticd-bootstrap.service").strip()
+    assert state == "inactive", f"expected bootstrap inactive after condition skip, got {state!r}"
+    assert cond == "no", f"expected ConditionResult=no, got {cond!r}"
+    machine.succeed("journalctl -u atticd-bootstrap.service -b | grep -q 'unmet condition'")
     machine.fail("systemctl is-failed --quiet atticd-bootstrap.service")
   '';
 }
