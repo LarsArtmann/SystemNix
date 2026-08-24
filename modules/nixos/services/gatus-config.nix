@@ -1046,6 +1046,8 @@ _: {
                   ];
                   alerts = discordAlert "FastFlowLM cgroup memory exceeds 90% of its MemoryMax (40G) — the 21.6 GB model mmap'd from /data plus KV cache is reaching the OOM-kill ceiling. Check: flm-loaded models, /data/ai/models/fastflowlm size, pma discovery worker count";
                 })
+              ]
+              ++ lib.optionals ((config.services.system-health.enable or false) && (config.services.system-health.lanInterface or "") != "") [
                 (mkHttpCheck {
                   name = "LAN NIC Present";
                   group = "Monitoring";
@@ -1053,8 +1055,10 @@ _: {
                   # PCIe bus — PCI enumeration showed no 10ec:8125 at all,
                   # r8125 had nothing to probe, eno1 never got its static IP
                   # and SSH was dead until a second reboot. The metric is
-                  # emitted unconditionally by system-health (fail-closed:
-                  # absent metric fails the pat()). If this fires, a warm
+                  # emitted by system-health whenever lanInterface is set, and
+                  # this check is gated on the SAME condition — a host that
+                  # watches no LAN NIC gets neither metric nor check (no
+                  # phantom 1). If this fires, a warm
                   # reboot is NOT reliable — power-cycle the machine.
                   url = "http://localhost:${toString nodePort}/metrics";
                   interval = "2m";
@@ -1070,6 +1074,8 @@ _: {
                   ];
                   alerts = discordAlert "LAN NIC (eno1 / RTL8125) is ABSENT from the bus — wired networking is DOWN (static IP + SSH unreachable). A warm reboot does NOT retrain it: POWER-CYCLE the machine (shut down, wait 10s, power on). Check: ls /sys/class/net/eno1, journalctl -k -b -1 | grep 10ec:8125, lspci | grep -i network";
                 })
+              ]
+              ++ lib.optionals ((config.services.system-health.enable or false) && (config.services.system-health.dasUsbPath or "") != "") [
                 (mkHttpCheck {
                   name = "DAS USB Link";
                   group = "Monitoring";
@@ -1089,6 +1095,8 @@ _: {
                   ];
                   alerts = discordAlert "DAS USB link (8-1) is DOWN — ALL external disks (pool members, buildcache, spare SSDs) vanished simultaneously. Software recovery is impossible without the link: physically reseat the DAS USB cable + enclosure power, then REBOOT (warm reboot may not re-enumerate). After boot: scripts/das-link-recovery-check.sh, verify findmnt /mnt/pool and /mnt/buildcache, e2fsck decision for buildcache. Runbook: AGENTS.md 'DAS USB link' section.";
                 })
+              ]
+              ++ lib.optionals (config.services.system-health.enable or false) [
                 (mkHttpCheck {
                   name = "System Profile Anchor";
                   group = "Monitoring";
@@ -1467,7 +1475,15 @@ _: {
                   interval = "30m";
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*buildcache_usage_over_threshold 0*)"
+                    # Fail-closed on the dead-drive state (2026-08-22 DAS
+                    # outage): with the drive absent the usage metrics vanish
+                    # but over_threshold last wrote "0" via the always-write
+                    # .prom — this check stayed GREEN on a dead drive for
+                    # days while "Build Cache SSD" alone carried the signal.
+                    # Mounted must be 1; anchored form (HELP embeds "metric 1").
+                    "[BODY] != pat(*buildcache_mounted 0\n*)"
+                    "[BODY] == pat(*\nbuildcache_mounted *)"
+                    "[BODY] == pat(*\nbuildcache_usage_over_threshold 0*)"
                   ];
                   alerts = discordAlert "Build cache SSD exceeds 85% — the 240 GB drive is filling. Prune: GOCACHE=/mnt/buildcache/go-build go clean -cache; cargo clean in monitor365; pnpm store prune; rm old Playwright browsers.";
                 })

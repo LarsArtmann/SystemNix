@@ -540,9 +540,13 @@ in
       };
 
       # ── GC guard: ExecStartPre on nix-gc ────────────────────────────────────
-      # If device-unallocated < 10%, the guard exits 1 → systemd marks nix-gc
-      # as failed → OnFailure triggers notify-failure (desktop notification).
-      # This PREVENTS the 2026-06-26 crash: GC on a metadata-starved filesystem.
+      # Gates (fixed 2026-08-21, was the 5-night deadlock): absolute
+      # device-unallocated floor (< 5 GiB) + metadata >90% hard block. The
+      # old "<10% of device" gate demanded 72 GiB of chunk-level unalloc that
+      # GC itself can never restore (only balance returns chunks). On abort
+      # the guard exits 1 → systemd marks nix-gc as failed → OnFailure
+      # triggers notify-failure (desktop notification). This PREVENTS the
+      # 2026-06-26 crash: GC on a metadata-starved filesystem.
       nix-gc = {
         inherit onFailure;
         serviceConfig = {

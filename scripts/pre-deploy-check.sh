@@ -271,15 +271,14 @@ if [ -s "$METRICS_FILE" ]; then
   # exist in the to-be-deployed config but not in the currently running system.
   # Remove entries after deploy verification confirms them in /metrics.
   #
-  # Most system_* textfile metrics are now live (verified 2026-08-10).
-  # system_zram_*: new system-health zram-fill metrics (2026-08-16 session).
-  # system_service_state_failed: verified live 2026-08-17 22:54 and removed
-  # from this bypass list in the 2026-08-18 session.
-  # niri_zombie: verified live 2026-08-18 14:15 (niri.prom) and removed.
-  # btrfs_health_critical: verified live 2026-08-18 14:15 (btrfs.prom) and
-  # removed — note it correctly reports 1 (unallocated 4% < 5% threshold).
-  # system_any_service_restart_churn: verified live 2026-08-20 (deployed with
-  # the hermes churn work) and removed from this bypass list.
+  # 2026-08-24 sweep (docs/status 2026-08-2* harvest): verified live against
+  # the textfile collectors in /var/lib/prometheus-node-exporter/textfile_collectors
+  # and REMOVED — 21 entries retired: system_zram_* (5), system_lan_nic_present,
+  # system_das_link_present, system_current_system_profiled,
+  # system_forgejo_mirror_* (3), node_psi_memory_warning/_some_avg60,
+  # system_crush_sessions(_over_threshold), system_cgroup_mem_{,anon_,shmem_,
+  # unevictable_}bytes (4), sev1_bridge_{alerts_active,runs_total}.
+  # clickhouse_xfs_* were retired earlier (2026-08-22 XFS session).
   # discordsync_projection_dlq_legacy_depth (2026-08-21): the gatus M07 mirror
   # (c9f3c2bf) references this metric from DiscordSync upstream HEAD
   # (metrics_db.go:111), but the tree still pins discordsync 085fa53 which only
@@ -290,47 +289,13 @@ if [ -s "$METRICS_FILE" ]; then
   # its Discord alert — bump discordsync or disable the endpoint.
   # bank_sync_* (2026-08-22): the gatus "Bank-Sync Sync Health" probe
   # (2026-08-21 session) references the sync_errors/last_sync metrics from
-  # bank-sync's own :8097/metrics exporter, but the RUNNING bank-sync predates
-  # the exporter. The locked flake input (5d7866f) verifiably emits both
+  # bank-sync's own :8097/metrics exporter. UNVERIFIABLE while the DAS is
+  # detached (bank-sync dataDir lives on /mnt/pool → service dependency-down):
+  # the locked flake input (5d7866f) verifiably emits both
   # (internal/server/metrics.go:257,299 — verified against the locked rev
-  # 2026-08-22), so they appear post-switch. post-deploy-check.sh already
-  # asserts them (Bank-Sync section, :8097/metrics) — after the first deploy
-  # confirms, remove from this list.
-  # system_lan_nic_present (2026-08-22): emitted by the tree's system-health
-  # collector (modules/nixos/services/system-health.nix:606-608, primary-LAN-
-  # NIC-fell-off-the-bus gauge) but NOT by the deployed collector binary
-  # (verified: string absent from the active store path and from the live
-  # system_health.prom). Appears post-switch; gatus pats 1 — remove from this
-  # list after deploy verification. NOTE: presence flapped across consecutive
-  # pre-deploy runs minutes apart on 2026-08-22 (present twice, then absent) —
-  # consistent with a concurrent deploy/rollback of system-health, but if it
-  # flaps again post-deploy, suspect the NIC check itself.
-  # clickhouse_xfs_* (2026-08-22): emitted by the new clickhouse-xfs-metrics
-  # textfile collector (signoz.nix) once the first deploy lands it. The
-  # collector is gated on the fileSystems."/var/lib/clickhouse" entry — it
-  # appears only after BOTH the XFS migration script prepare phase ran AND
-  # the deploy activated the mount. post-deploy-check.sh asserts the mount;
-  # verify :9100/metrics after that deploy, then remove from this list.
-  # system_das_link_present (2026-08-22): emitted by the tree's system-health
-  # collector (DAS-USB-link-present gauge, commit c121f8cf) but not by the
-  # deployed collector binary. Appears post-switch; the gatus "DAS USB Link"
-  # endpoint pats it anchored — verify :9100/metrics after the deploy lands
-  # (expected 0 while the DAS link is physically down — truthful), then
-  # remove from this list.
-  # system_forgejo_mirror_* (2026-08-22): the forgejo mirror health checks
-  # (47f1b442) reference scrape_errors/sync_stalled/erroring from the
-  # system-health textfile collector, but the RUNNING collector predates
-  # them. All three are emitted by the tree's collector when
-  # collectForgejoMirrors is on (mkDefault = services.forgejo.enable, evo-x2
-  # true — system-health.nix:662-681), so they appear post-switch. Verify in
-  # :9100/metrics after this deploy, then remove from this list.
-  # node_psi_memory_warning + node_psi_memory_some_avg60 (2026-08-22 stability
-  # plan): warning tier added to the psi-metrics collector (_signoz-metrics.nix)
-  # — not emitted by the running collector yet. Also below: the crush census +
-  # cgroup census (system-health) and the SEV1 bridge metrics (sev1-bridge.prom)
-  # from the same plan batch. All appear post-switch; verify :9100/metrics,
-  # then remove from this list.
-  KNOWN_NEW_METRICS="system_zram_swap_fill_percent system_zram_fill_over_threshold system_zram_swap_orig_data_bytes system_zram_swap_disksize_bytes system_zram_mem_used_bytes discordsync_projection_dlq_legacy_depth bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds system_lan_nic_present system_das_link_present system_current_system_profiled system_forgejo_mirror_scrape_errors system_forgejo_mirror_sync_stalled system_forgejo_mirror_erroring node_psi_memory_warning node_psi_memory_some_avg60 system_crush_sessions system_crush_sessions_over_threshold system_cgroup_mem_bytes system_cgroup_mem_anon_bytes system_cgroup_mem_shmem_bytes system_cgroup_mem_unevictable_bytes sev1_bridge_alerts_active sev1_bridge_runs_total"
+  # 2026-08-22). Remove after the first post-DAS-recovery deploy confirms
+  # them (post-deploy-check.sh Bank-Sync section asserts :8097/metrics).
+  KNOWN_NEW_METRICS="discordsync_projection_dlq_legacy_depth bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"

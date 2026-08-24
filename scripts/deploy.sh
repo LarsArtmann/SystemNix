@@ -183,6 +183,17 @@ if nix run .#pre-deploy-check; then
 
   echo ""
   echo "=== Deploying NixOS config to evo-x2 ==="
+  latest_system_generation() {
+    local link num
+    for link in /nix/var/nix/profiles/system-*-link; do
+      [ -L "$link" ] || continue
+      num=${link##*/system-}
+      num=${num%-link}
+      case $num in '' | *[!0-9]*) continue ;; esac
+      printf '%s\n' "$num"
+    done | sort -n | tail -1
+  }
+  prev_gen=$(latest_system_generation)
   set +e
   nh_output="$(nh os switch . 2>&1 | tee /dev/stderr)"
   switch_exit=$?
@@ -207,6 +218,21 @@ if nix run .#pre-deploy-check; then
       echo "❌ nh os switch FAILED (exit $switch_exit) — config NOT activated. Aborting."
       exit "$switch_exit"
     fi
+  fi
+
+  # Generation trail (2026-08-24 crash3 lesson: a stale rollback boot ran
+  # for days unnoticed): print the generation this deploy produced and
+  # verify the RUNNING system is anchored to it — an unanchored
+  # /run/current-system means a manual activation (banned) and a reboot
+  # would silently revert to the last real generation.
+  new_gen=$(latest_system_generation)
+  if [ -n "$new_gen" ] && [ "$new_gen" != "$prev_gen" ]; then
+    echo "✓ New profile generation: system-${new_gen} (was system-${prev_gen:-none})"
+  elif [ -n "$new_gen" ]; then
+    echo "ℹ No new profile generation (system-${new_gen} unchanged — config already active)"
+  fi
+  if [ -n "$new_gen" ] && [ "$(readlink /run/current-system 2>/dev/null)" != "$(readlink "/nix/var/nix/profiles/system-${new_gen}-link" 2>/dev/null)" ]; then
+    echo "⚠ /run/current-system is NOT anchored to the newest generation (system-${new_gen}) — manual activation detected; a REBOOT WILL REVERT. Re-run: nix run .#deploy"
   fi
 
   # Start critical services that deploy may have left in inactive/dead state.

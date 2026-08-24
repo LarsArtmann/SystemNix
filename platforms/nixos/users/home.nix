@@ -251,6 +251,15 @@ in
     __go_cache_redirect GOCACHE $HOME/tmp/go-cache
     __go_cache_redirect GOMODCACHE $HOME/tmp/go-mod
     __go_cache_redirect GOLANGCI_LINT_CACHE $HOME/tmp/go-lint
+    # 2026-08-24 follow-up: the login chain inherits EVERY dead-mount cache
+    # var from hm-session-vars.sh, not just the Go ones — an unprobed var
+    # still blocks the full device-timeout per lookup during login
+    # (docs/status/2026-08-24_08-00_sddm §b.1).
+    __go_cache_redirect CARGO_HOME $HOME/tmp/cargo
+    __go_cache_redirect PIP_CACHE_DIR $HOME/tmp/pip
+    __go_cache_redirect SCCACHE_DIR $HOME/tmp/sccache
+    __go_cache_redirect npm_config_cache $HOME/tmp/npm
+    __go_cache_redirect PLAYWRIGHT_BROWSERS_PATH $HOME/tmp/playwright
 
     if test "$GOTOOLCHAIN" = local
         echo "⚠ GOTOOLCHAIN=local blocks go.work ≥1.26.6 projects — switching to auto"

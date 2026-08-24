@@ -456,8 +456,10 @@ _: {
         # 2026-08-22: after a hard crash the RTL8125 NIC was absent from
         # PCI enumeration entirely; r8125 had nothing to probe and the
         # static-IP stack (networking.interfaces.eno1) never ran — no IP,
-        # SSH dead. Emitted unconditionally so absence fails Gatus pat()
-        # fail-closed (never a phantom green).
+        # SSH dead. Emitted only when lanInterface is set (empty string =
+        # disabled); the matching Gatus check is gated on the SAME
+        # condition — otherwise a NIC-less host would emit a permanent 1
+        # (phantom green).
         LAN_IF="${cfg.lanInterface}"
         LAN_NIC_PRESENT=1
         if [ -n "$LAN_IF" ] && [ ! -e "/sys/class/net/$LAN_IF" ]; then
@@ -469,7 +471,8 @@ _: {
         # buildcache) share ONE USB link. When it drops without a
         # reconnect (2026-08-22 00:59), buildcache + pool + SSDs vanish
         # simultaneously and only consequence alerts fire. This metric
-        # alerts on the CAUSE. Emitted unconditionally (fail-closed).
+        # alerts on the CAUSE. Emitted only when dasUsbPath is set (empty
+        # string = disabled); the matching Gatus check is gated identically.
         DAS_USB_PATH="${cfg.dasUsbPath}"
         DAS_LINK_PRESENT=1
         if [ -n "$DAS_USB_PATH" ] && [ ! -e "/sys/bus/usb/devices/$DAS_USB_PATH" ]; then
@@ -760,13 +763,17 @@ _: {
             echo "system_zram_fill_over_threshold ''${ZRAM_OVER}"
           fi
 
-          echo "# HELP system_lan_nic_present 1 if the primary LAN NIC (${cfg.lanInterface}) exists in /sys/class/net, 0 if it fell off the bus"
-          echo "# TYPE system_lan_nic_present gauge"
-          echo "system_lan_nic_present ''${LAN_NIC_PRESENT}"
+          if [ -n "${cfg.lanInterface}" ]; then
+            echo "# HELP system_lan_nic_present 1 if the primary LAN NIC (${cfg.lanInterface}) exists in /sys/class/net, 0 if it fell off the bus"
+            echo "# TYPE system_lan_nic_present gauge"
+            echo "system_lan_nic_present ''${LAN_NIC_PRESENT}"
+          fi
 
-          echo "# HELP system_das_link_present 1 if the DAS USB link (${cfg.dasUsbPath}) exists in /sys/bus/usb/devices, 0 if it dropped"
-          echo "# TYPE system_das_link_present gauge"
-          echo "system_das_link_present ''${DAS_LINK_PRESENT}"
+          if [ -n "${cfg.dasUsbPath}" ]; then
+            echo "# HELP system_das_link_present 1 if the DAS USB link (${cfg.dasUsbPath}) exists in /sys/bus/usb/devices, 0 if it dropped"
+            echo "# TYPE system_das_link_present gauge"
+            echo "system_das_link_present ''${DAS_LINK_PRESENT}"
+          fi
 
           echo "# HELP system_crush_sessions Concurrent crush agent sessions (main TUI processes, MCP children excluded)"
           echo "# TYPE system_crush_sessions gauge"
