@@ -90,5 +90,17 @@ in
     # 8. Full cache lifecycle: login + create cache (end-to-end smoke test)
     machine.succeed(f"attic login local http://localhost:8200 {token}")
     machine.succeed("attic cache create test-cache")
+
+    # 9. Regression (2026-08-24): a detached DAS must SKIP the bootstrap, not
+    #    fail it. The storage dir exists only while the pool is mounted (created
+    #    by the mount-gated atticd-storage-dir). Removing it simulates the
+    #    detached-DAS boot: re-running the bootstrap must land in
+    #    result=condition (clean skip), NOT the old connection-refused exit-4
+    #    failure that blocked every nh os switch during DAS outages.
+    machine.succeed("rm -rf /var/lib/atticd/storage")
+    machine.systemctl("restart atticd-bootstrap.service")
+    result = machine.succeed("systemctl show -p Result --value atticd-bootstrap.service").strip()
+    assert result == "condition", f"expected bootstrap to skip with result=condition, got {result!r}"
+    machine.fail("systemctl is-failed --quiet atticd-bootstrap.service")
   '';
 }

@@ -232,7 +232,10 @@ if nix run .#pre-deploy-check; then
   # after their first run. switch-to-configuration does NOT restart them even
   # when restartTriggers change. This means provisioning fixes deployed to the
   # Nix store never re-run without an explicit restart.
-  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir bank-sync-storage-dir google-sync-dirs llama-rag-model-fetch hermes-github-verify; do
+  # atticd-bootstrap: re-runs after DAS recovery even when it condition-skipped
+  # at boot (2026-08-24 — was missing here, so a skipped bootstrap stayed
+  # skipped until the next reboot).
+  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir atticd-bootstrap bank-sync-storage-dir google-sync-dirs llama-rag-model-fetch hermes-github-verify; do
     if systemctl is-enabled --quiet "$provisioner.service" 2>/dev/null; then
       echo "Restarting provisioner: $provisioner.service"
       sudo systemctl restart "$provisioner.service" 2>/dev/null || true
