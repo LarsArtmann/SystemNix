@@ -220,6 +220,44 @@ in
     };
   };
 
+  # Go/Rust/lint cache self-healing for a dead or absent /mnt/buildcache.
+  # Fish conf.d (runs BEFORE config.fish, in login AND interactive shells).
+  # 2026-08-24: the original hand-written version probed writability with a
+  # BARE `mkdir -p $val` — on the dead buildcache automount every probe
+  # blocked for the full 10s x-systemd.device-timeout, and SDDM's login
+  # chain (wayland-session -> fish --login, which inherits GOCACHE et al.
+  # from /etc/profile.d/hm-session-vars.sh) spent ~40s in uninterruptible
+  # sleep before niri ever started. display-watchdog restarted the display
+  # manager at ~20s, bouncing every login back to SDDM (black-screen loop).
+  # Probes must be SIGKILL-bounded: SIGTERM/coreutils default stays pending
+  # until the kernel device-timeout releases the syscall; only SIGKILL
+  # interrupts the autofs wait (TASK_KILLABLE) at the 1s bound.
+  xdg.configFile."fish/conf.d/00-go-cache-guard.fish".text = ''
+    function __go_cache_redirect -a var fallback
+        if not set -q $var
+            return
+        end
+        set -l val $$var
+        if timeout --signal=KILL 1 mkdir -p $val 2>/dev/null; and timeout --signal=KILL 1 touch $val/.cache-write-probe 2>/dev/null
+            rm -f $val/.cache-write-probe
+            return
+        end
+        echo "⚠ $var=$val is unwritable or unreachable (dead mount?) — redirecting to $fallback"
+        set -gx $var $fallback
+        timeout --signal=KILL 1 mkdir -p $fallback
+    end
+
+    __go_cache_redirect TMPDIR $HOME/tmp
+    __go_cache_redirect GOCACHE $HOME/tmp/go-cache
+    __go_cache_redirect GOMODCACHE $HOME/tmp/go-mod
+    __go_cache_redirect GOLANGCI_LINT_CACHE $HOME/tmp/go-lint
+
+    if test "$GOTOOLCHAIN" = local
+        echo "⚠ GOTOOLCHAIN=local blocks go.work ≥1.26.6 projects — switching to auto"
+        set -gx GOTOOLCHAIN auto
+    end
+  '';
+
   home = {
     enableNixpkgsReleaseCheck = false;
 
