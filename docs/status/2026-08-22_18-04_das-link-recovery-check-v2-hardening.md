@@ -1,0 +1,49 @@
+# DAS Link Recovery Check — v2 Hardening (Brutal Review)
+
+**Date:** 2026-08-22 18:04 · **Session:** "Is `scripts/das-link-recovery-check.sh` SUPERB!?!" · **Host:** evo-x2 (DAS still DOWN at time of review — verified live, zero storage-class USB interfaces, no `sd*`)
+
+## Verdict
+
+**No — v1 was good, not superb.** The review found **two in-script phantom greens of the exact class the sibling Gatus check was condemned for earlier the same day**, plus a damage scan that looked in the wrong boot, inverted severities, an inflated issue counter, and a missing check for 11.3 GB of live NVMe contamination. All fixed in v2 and re-verified against the real outage.
+
+## Findings (all live-confirmed unless noted)
+
+| # | Defect | Evidence | Fix in v2 |
+|---|--------|----------|-----------|
+| 1 | **Phantom green**: autofs armed + backing device ABSENT printed `✓ automount armed (will mount on access)` | Live run v1 during outage — the drive is GONE; access ENODEVs. Same lying-green class as `buildcache_usage_over_threshold 0` | Now `✗ … backing device ABSENT — access will fail ENODEV until the disk returns` |
+| 2 | **Healthy state flagged as issue**: autofs armed + device present (normal fresh-boot idle) counted a `note` → exit 1 on a healthy box | Branch logic (unit-tested post-fix: T1 ok/0 issues) | Now `✓ … mounts on first access (normal)` |
+| 3 | **Damage scan looked in the wrong boot**: `-b` only, but the ext4 damage (Aborting journal sda1-8, lost async page write, dx_probe EIO at 00:59–01:00) lives in boot `-1` — the decision tree itself mandates a reboot before re-running, guaranteeing the scan misses | `journalctl -k -b -1` shows 11+ damage lines; v1 printed `✓ no ext4 error lines this boot` | Scans BOTH `-b` and `-b -1`; live run now flags damage + prints the e2fsck decision |
+| 4 | **Issue-count inflation**: every remediation/evidence line incremented `issues` (12 "issues" for 1 root cause) | v1 live output | New `hint()` (uncounted) for remediation/evidence; `issues` now equals ✗+⚠ lines exactly (verified: 14 = 14) |
+| 5 | **`8-1` hardcoded as unconditional issue** — USB topology can move (port change) → false positive on a healthy system | Design review | 8-1 absence counted only when zero storage ifaces; otherwise silent |
+| 6 | **Pool shadow triage binary**: "non-empty ⇒ data was written" overstated — live content is 0-byte empty scaffolding (`backups/{root,data,twenty,pocket-id,manifest,forgejo}`, `services/paperless/*`, `.snapshots`, dated Aug 17 20:27 = mkdir'd while unmounted); also root-only dirs (EACCES as lars) were silently swallowed | `du` = 0 everywhere; `find` hits Permission denied on pocket-id/forgejo | Split: real files ⇒ `✗` triage; empty dirs ⇒ `⚠ scaffolding only (benign, hidden once remounted)`; EACCES ⇒ `⚠ re-run with sudo` |
+| 7 | **`errors_count` swept ALL ext4 filesystems** (`/sys/fs/ext4/*/errors_count`) → false fsck triggers from unrelated ext4 | Code review | Scoped to buildcache's own device (resolved via findmnt SOURCE) |
+| 8 | **Journal-unreadable guard was exit-code-only** — journalctl exits 0 with EMPTY output when access is denied on some setups → phantom "✓ clean" | Code review (works as lars on this box; guard is for other contexts) | Probes output content (`-n 1`), skips scan + prints sudo hint when empty |
+| 9 | **`sd[a-f]` grep too narrow** — this box already has an `sdf` documented; letters can exceed f | Code review | `sd[a-z]`; added `Aborting journal` pattern |
+| 10 | **Missing the live contamination check**: 11.3 GB of BuildFlow fallback caches (`~/.cache/gobuild` 468M, `gocache` 8.5G, `gomod` 2.3G) as REAL dirs on the space-critical NVMe, invisible to the auto-reap — the AGENTS-documented regrowth class for exactly this mount | `du` live | New section [7]: HM symlink integrity (real dir ⇒ `✗` with size + HM-activation-block warning) + fallback-cache surfacing with sizes |
+| 11 | **Device constants = silent mirror of fstab** (member 2 is btrfs-remembered, NOT derivable) | fstab read | Runtime fstab-drift check in [2]: mismatch ⇒ `✗ update this script` (fails loud) |
+
+## Verification
+
+- `bash -n` clean; `shellcheck --severity=warning` clean.
+- Live run against the real outage: 14 genuine distinct findings (1 link-down + 1 8-1 + 3 absent disks + 1 no-sd + 2 mount states + 1 ext4 damage from boot -1 + 1 shadow-needs-root + 1 debris-skip + 3 fallback caches), exit 1, decision tree prints.
+- `check_mount` branch unit tests (real function extracted via `sed`+`eval`, no duplication): autofs+present→ok/0, autofs+absent→bad/1, real mount+I/O probe (on `/data`)→ok/0, unmounted→bad/1 — **4/4 pass**.
+- `journalctl -k "-b -1"` (single quoted arg) verified byte-identical to two-arg form: previous boot = 00:48:05, current = 05:55:36 — damage lines correctly attributed.
+- Bonus fact learned: `/mnt/btrfs-root` is itself automount-idle between accesses — T3 initially tested the wrong branch and caught it.
+
+## Honest limits (NOT tested)
+
+- Zombie-mount branch (`[ ! -b "$source" ]`) untestable live — no zombie exists right now; logic reviewed only.
+- Happy-path (all green, exit 0) unreachable until the DAS physically returns; post-recovery re-run expected: [1][2][3][4][5][6][7] green, exit 0, "All checks green" verdict.
+- Letter-reassignment zombie (mount holds `/dev/sda1` that now belongs to ANOTHER disk) is NOT caught directly — partial indirect coverage via the [6] debris check.
+
+## Files changed
+
+- `scripts/das-link-recovery-check.sh` — v2 (all fixes above; full rewrite, ~330 lines)
+- `AGENTS.md` — DAS bullet now points at the script as the diagnostics runbook
+- `TODO_LIST.md` — [x] entry amended with v2 provenance
+
+## Still open (user decisions from the earlier report, unchanged)
+
+1. Physical DAS reseat + power-cycle reboot (blocks everything).
+2. Disposition of the 11.3 GB BuildFlow fallback caches (keep vs quarantine/remove + extend recovery reap list).
+3. Phantom-green fix shape for the Gatus "Build Cache Usage" endpoint (`gatus-config.nix:1467-1470` — still unfixed, still green on a dead drive).
