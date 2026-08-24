@@ -233,13 +233,30 @@ in
   # until the kernel device-timeout releases the syscall; only SIGKILL
   # interrupts the autofs wait (TASK_KILLABLE) at the 1s bound.
   xdg.configFile."fish/conf.d/00-go-cache-guard.fish".text = ''
+    # Probe each DISTINCT parent directory once, not each variable: on this
+    # host eight cache vars point into /mnt/buildcache/* — per-var SIGKILL
+    # probes cost ~1s each against a dead automount (9 vars ≈ 8s login, the
+    # exact SDDM black-screen cost class). A dead dir is remembered and the
+    # remaining vars under it redirect without re-probing.
+    set -g __dead_cache_dirs
+    function __cache_dir_alive -a dir
+        if contains -- $dir $__dead_cache_dirs
+            return 1
+        end
+        if timeout --signal=KILL 1 mkdir -p $dir 2>/dev/null; and timeout --signal=KILL 1 touch $dir/.cache-write-probe 2>/dev/null
+            rm -f $dir/.cache-write-probe
+            return 0
+        end
+        set -a __dead_cache_dirs $dir
+        return 1
+    end
+
     function __go_cache_redirect -a var fallback
         if not set -q $var
             return
         end
         set -l val $$var
-        if timeout --signal=KILL 1 mkdir -p $val 2>/dev/null; and timeout --signal=KILL 1 touch $val/.cache-write-probe 2>/dev/null
-            rm -f $val/.cache-write-probe
+        if __cache_dir_alive (dirname $val)
             return
         end
         echo "⚠ $var=$val is unwritable or unreachable (dead mount?) — redirecting to $fallback"
