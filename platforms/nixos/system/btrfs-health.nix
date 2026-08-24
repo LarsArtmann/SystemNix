@@ -129,7 +129,12 @@ let
 
       if [ "$UNALLOC_BYTES" -lt ${toString gcMinUnallocBytes} ]; then
         echo "BTRFS GUARD: ABORT — device-unallocated at ''${UNALLOC_BYTES} bytes (''${UNALLOC_PCT}%), below the ${toString gcMinUnallocBytes}-byte floor. GC metadata churn risks ENOSPC." >&2
-        echo "Free chunk headroom first (in order): expire old btrbk snapshots (''${UNALLOC_PCT}% unalloc means freed extents sit in full chunks until balance), then 'sudo systemctl start btrfs-balance-metadata.service', or consume the 10 GiB reserve: rm /btrfs-emergency-reserve" >&2
+        echo "Chunk-headroom recovery runbook (in order):" >&2
+        echo "  1. Free extents: rm /btrfs-emergency-reserve (instant 10 GiB), let old btrbk snapshots expire" >&2
+        echo "  2. Wait for QUIET: zram <80% AND low IO pressure. Balance during pressure FROZE the machine (2026-08-24)" >&2
+        echo "  3. One bounded balance at idle IO: sudo ionice -c 3 btrfs balance start -dusage=5 -dlimit=2 /" >&2
+        echo "  4. Re-provision the reserve: sudo systemctl start btrfs-emergency-reserve" >&2
+        echo "NEVER 'btrfs balance start' without step 1: with no freed extents there is no relocation write room and the IO livelock freezes the box (2026-08-24 crash #3: manual balance at 0% unalloc + zram 85%, dead in 2.5 min)." >&2
         exit 1
       fi
 
@@ -345,12 +350,27 @@ let
         exit 0
       fi
 
+      # Guard 0: never balance under IO or zram pressure
+      # (2026-08-24: a manual balance at 99% IO PSI + zram 85% froze the machine solid)
+      PSI_IO_SOME=$(awk '/^some/ {for (i = 2; i <= NF; i++) if ($i ~ /^avg10=/) {sub(/^avg10=/, "", $i); printf "%d", $i; exit}}' /proc/pressure/io)
+      : "''${PSI_IO_SOME:=0}"
+      ZRAM_ORIG=$(awk '{print $1}' /sys/block/zram0/mm_stat 2>/dev/null)
+      : "''${ZRAM_ORIG:=0}"
+      ZRAM_SIZE=$(cat /sys/block/zram0/disksize 2>/dev/null)
+      : "''${ZRAM_SIZE:=1}"
+      ZRAM_PCT=$(( ZRAM_ORIG * 100 / ZRAM_SIZE ))
+      if [ "$PSI_IO_SOME" -ge 20 ] || [ "$ZRAM_PCT" -ge 80 ]; then
+        echo "btrfs-balance-metadata: skipping — IO PSI some avg10=''${PSI_IO_SOME}% (>=20) or zram ''${ZRAM_PCT}% full (>=80); balance during pressure froze the machine (2026-08-24)"
+        exit 0
+      fi
+
       # Guard 2: need >= 5 GiB unallocated as bounce room
       eval "$(btrfs-chunk-check "$MOUNT" 2>/dev/null)"
       : "''${UNALLOC_BYTES:=0}"
       : "''${META_PCT:=0}"
       if [ "$UNALLOC_BYTES" -lt 5368709120 ]; then
         echo "btrfs-balance-metadata: insufficient unallocated ($((UNALLOC_BYTES / 1073741824)) GiB < 5 GiB), skipping"
+        echo "If chunk headroom is needed: rm /btrfs-emergency-reserve first (frees extents), then on a QUIET system run 'sudo ionice -c 3 btrfs balance start -dusage=5 -dlimit=2 /'. NEVER balance while IO pressure is high or zram >=80% (2026-08-24 freeze)"
         exit 0
       fi
 
@@ -383,11 +403,26 @@ let
         exit 0
       fi
 
+      # Guard 0: never balance under IO or zram pressure
+      # (2026-08-24: a manual balance at 99% IO PSI + zram 85% froze the machine solid)
+      PSI_IO_SOME=$(awk '/^some/ {for (i = 2; i <= NF; i++) if ($i ~ /^avg10=/) {sub(/^avg10=/, "", $i); printf "%d", $i; exit}}' /proc/pressure/io)
+      : "''${PSI_IO_SOME:=0}"
+      ZRAM_ORIG=$(awk '{print $1}' /sys/block/zram0/mm_stat 2>/dev/null)
+      : "''${ZRAM_ORIG:=0}"
+      ZRAM_SIZE=$(cat /sys/block/zram0/disksize 2>/dev/null)
+      : "''${ZRAM_SIZE:=1}"
+      ZRAM_PCT=$(( ZRAM_ORIG * 100 / ZRAM_SIZE ))
+      if [ "$PSI_IO_SOME" -ge 20 ] || [ "$ZRAM_PCT" -ge 80 ]; then
+        echo "btrfs-balance-data: skipping — IO PSI some avg10=''${PSI_IO_SOME}% (>=20) or zram ''${ZRAM_PCT}% full (>=80); balance during pressure froze the machine (2026-08-24)"
+        exit 0
+      fi
+
       # Guard 2: need >= 10 GiB unallocated as bounce room
       eval "$(btrfs-chunk-check "$MOUNT" 2>/dev/null)"
       : "''${UNALLOC_BYTES:=0}"
       if [ "$UNALLOC_BYTES" -lt 10737418240 ]; then
         echo "btrfs-balance-data: insufficient unallocated ($((UNALLOC_BYTES / 1073741824)) GiB < 10 GiB), skipping"
+        echo "If chunk headroom is needed: rm /btrfs-emergency-reserve first (frees extents), then on a QUIET system run 'sudo ionice -c 3 btrfs balance start -dusage=5 -dlimit=2 /'. NEVER balance while IO pressure is high or zram >=80% (2026-08-24 freeze)"
         exit 0
       fi
 
