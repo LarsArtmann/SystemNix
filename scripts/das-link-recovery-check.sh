@@ -59,8 +59,14 @@ CACHE_SYMLINKS=(
 FALLBACK_CACHE_DIRS=(gobuild gocache gomod)
 
 issues=0
-bad() { printf '  ✗ %s\n' "$*"; issues=$((issues + 1)); }
-note() { printf '  ⚠ %s\n' "$*"; issues=$((issues + 1)); }
+bad() {
+  printf '  ✗ %s\n' "$*"
+  issues=$((issues + 1))
+}
+note() {
+  printf '  ⚠ %s\n' "$*"
+  issues=$((issues + 1))
+}
 ok() { printf '  ✓ %s\n' "$*"; }
 hint() { printf '    %s\n' "$*"; }
 
@@ -208,10 +214,10 @@ scan_boot() {
     return
   fi
   hits=$(
-    journalctl -k "$label" --no-pager 2>/dev/null \
-      | grep -E 'lost async page write|Aborting journal|journal abort|EXT4-fs (error|warning)|remounting read-only|I/O error' \
-      | grep -Ei 'sd[a-z]|buildcache|ext4' \
-      | tail -5 || true
+    journalctl -k "$label" --no-pager 2>/dev/null |
+      grep -E 'lost async page write|Aborting journal|journal abort|EXT4-fs (error|warning)|remounting read-only|I/O error' |
+      grep -Ei 'sd[a-z]|buildcache|ext4' |
+      tail -5 || true
   )
   if [ -n "$hits" ]; then
     fsck_needed=1
@@ -260,27 +266,27 @@ echo "[6] Shadow/debris checks"
 for pair in "/mnt/buildcache:@/mnt/buildcache" "/mnt/pool:@/mnt/pool"; do
   live=${pair%%:*}
   shadow="/mnt/btrfs-root/${pair#*:}"
-  if [ -d "$shadow" ] && [ -n "$(ls -A "$shadow" 2>/dev/null)" ] \
-    && ! findmnt -n "$live" >/dev/null 2>&1; then
+  if [ -d "$shadow" ] && [ -n "$(ls -A "$shadow" 2>/dev/null)" ] &&
+    ! findmnt -n "$live" >/dev/null 2>&1; then
     # Distinguish real stranded data from empty scaffolding (dirs mkdir'd by
     # services while the mount was dead — benign, hidden once remounted).
     first_file=$(find "$shadow" -xdev -type f -print -quit 2>&1 || true)
-    first_file=${first_file%%$'\n'*}   # keep the first line only (display)
+    first_file=${first_file%%$'\n'*} # keep the first line only (display)
     case "$first_file" in
-      /*)
-        bad "REAL data under $shadow (e.g. $first_file) — written to the"
-        hint "NVMe under a dead mount; triage before mounting over it"
-        ;;
-      "")
-        note "$shadow: empty scaffolding only (dirs created while unmounted;"
-        hint "harmless — hidden once the real mount returns — but watch that"
-        hint "nothing writes here while the pool is down)"
-        ;;
-      *)
-        note "$shadow: non-empty; full triage needs root:"
-        hint "$first_file"
-        hint "re-run with sudo: sudo bash scripts/das-link-recovery-check.sh"
-        ;;
+    /*)
+      bad "REAL data under $shadow (e.g. $first_file) — written to the"
+      hint "NVMe under a dead mount; triage before mounting over it"
+      ;;
+    "")
+      note "$shadow: empty scaffolding only (dirs created while unmounted;"
+      hint "harmless — hidden once the real mount returns — but watch that"
+      hint "nothing writes here while the pool is down)"
+      ;;
+    *)
+      note "$shadow: non-empty; full triage needs root:"
+      hint "$first_file"
+      hint "re-run with sudo: sudo bash scripts/das-link-recovery-check.sh"
+      ;;
     esac
   fi
 done
