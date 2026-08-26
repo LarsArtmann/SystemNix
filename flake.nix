@@ -455,11 +455,24 @@
     };
 
     # DiscordSync — Continuous Discord backup with Turso cloud sync
+    # Rev-pinned (2026-08-25) at 7919aef4 (= upstream aa56b582 + vendorHash fix, branch nix/aa56b582-vendorhash): the LAST commits before upstream's
+    # Go toolchain floor bump to 1.26.6 (ca9c470c, 2026-08-22) — nixpkgs has
+    # 1.26.5 + GOTOOLCHAIN=local, so master's go-modules FOD fails loudly
+    # (same class as file-and-image-renamer). The tree carries the legacy-DLQ
+    # metric (418c3223, 2026-08-18) that the gatus "Legacy DLQ Empty" check
+    # asserts — the endpoint stayed RED + fired Discord alerts every interval
+    # while the input sat at 085fa53. When nixpkgs go >= 1.26.6: switch back
+    # to ?ref=master and update-input.
     discordsync = {
-      url = "github:LarsArtmann/DiscordSync?ref=master";
+      url = "github:LarsArtmann/DiscordSync/7919aef4";
       inputs = {
-        nixpkgs.follows = "nixpkgs";
-        go-nix-helpers.follows = "go-nix-helpers";
+        # go-nix-helpers AND nixpkgs deliberately NOT followed (bank-sync +
+        # qmd precedents): upstream's vendorHash was validated against ITS
+        # own lock — a different mkPreparedSource (helper version) or a
+        # different go (nixpkgs) changes the vendored module set and breaks
+        # the go-modules FOD hash (2026-08-25: both mismatch classes hit
+        # live before this pin; got-hash drifted with each follows change).
+        # discordsync must consume its own locked build environment.
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
@@ -765,6 +778,20 @@
                 echo "filepath.Match treats '\\' as an ESCAPE, so this glob matches only the letter 'n'"
                 echo "and the condition can never match a real body. Write the newline as single-"
                 echo "backslash \"\\n\" in the double-quoted nix string — see gatus-config.nix anchored forms."
+                exit 1
+              fi
+              # HTTP method tokens are case-SENSITIVE end to end (RFC 9110):
+              # gatus passes the configured method through verbatim and Go's
+              # ServeMux matches method tokens case-sensitively — a lowercase
+              # "post" 405s against a POST-registered route while an
+              # unauthenticated 401 probe CANNOT catch it (auth middleware
+              # runs before routing). Live incident: papdashboard /api/ingest
+              # 405'd 1076× before a journal 200 proved the fix (2026-08-18).
+              if grep -v '^[[:space:]]*#' ${./modules/nixos/services/gatus-config.nix} | grep -nE 'method = "[a-z]+"'; then
+                echo "FAIL: lowercase HTTP method value in gatus-config.nix."
+                echo "Method tokens are matched case-sensitively (RFC 9110 + Go ServeMux);"
+                echo "'post' 405s against POST-registered routes and 401 probes cannot detect it."
+                echo "Use uppercase: method = \"POST\"."
                 exit 1
               fi
               touch $out

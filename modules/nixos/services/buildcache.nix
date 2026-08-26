@@ -175,7 +175,13 @@
             "commit=120"
             "nofail"
             "x-systemd.automount"
-            "x-systemd.device-timeout=10s"
+            # 2s (was 10s): a dead/flapping enclosure must not cost the full
+            # timeout per mount lookup — every D-state probe stalls its caller
+            # (login chain, units, scripts) and fakes IO PSI saturation
+            # (2026-08-24 crash3: phantom PSI from automount waits). A healthy
+            # enumerated device answers instantly; USB enumeration happens
+            # before the automount trigger, not inside this window.
+            "x-systemd.device-timeout=2s"
             "x-systemd.device-bound"
           ];
         };

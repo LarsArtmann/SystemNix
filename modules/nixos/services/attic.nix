@@ -389,15 +389,19 @@ _: {
           script = ''
                       set -euo pipefail
 
-                      # Wait for atticd to be ready (migrations run on first start)
-                      for i in $(seq 1 30); do
-                        if python3 -c "
+                      atticd_ready() {
+                        python3 -c "
             import urllib.request, sys
             try:
                 urllib.request.urlopen('http://127.0.0.1:${toString atticPort}/', timeout=2)
             except Exception:
                 sys.exit(1)
-            " 2>/dev/null; then
+            " 2>/dev/null
+                      }
+
+                      # Wait for atticd to be ready (migrations run on first start)
+                      for i in $(seq 1 30); do
+                        if atticd_ready; then
                           echo "atticd is ready"
                           break
                         fi
@@ -409,13 +413,7 @@ _: {
                       # detached mid-run or atticd crashed). Without this the
                       # failure surfaces later as an opaque "error sending
                       # request" from an attic client HTTP call.
-                      if ! python3 -c "
-            import urllib.request, sys
-            try:
-                urllib.request.urlopen('http://127.0.0.1:${toString atticPort}/', timeout=2)
-            except Exception:
-                sys.exit(1)
-            " 2>/dev/null; then
+                      if ! atticd_ready; then
                         echo "ERROR: atticd did not become ready on 127.0.0.1:${toString atticPort} within 30s — check 'journalctl -u atticd.service' (pool detached?)"
                         exit 1
                       fi

@@ -22,7 +22,9 @@ SERVICES=(
   "pocket-id:0"
   "papdashboard:0"
   "signoz:0"
-  "signoz-collector:8888"
+  # signoz-collector REMOVED 2026-08-25: the collector is OTel-native, not a
+  # Go runtime /metrics exporter — :8888 has no go_memstats (live-verified),
+  # so its heap check could never do anything.
   "browser-history:8087"
   "file-and-image-renamer:0"
   "crush-daily:0"
