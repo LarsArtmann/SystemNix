@@ -399,6 +399,12 @@ in {
         enable = true; # Browser history intelligence server
       };
 
+      # CV — resume generator + career pipeline server (cv.home.lan).
+      # Sops: platforms/nixos/secrets/cv.yaml (cv_api_key → CV_API_KEY).
+      cv-server = {
+        enable = true;
+      };
+
       # PapDashboard — alert hub: Gatus ingests trigger/resolve events, the
       # insight enricher correlates storms, pulls journal + metrics evidence,
       # and asks FastFlowLM (NPU) for root-cause analysis. Outbound Discord
@@ -773,6 +779,15 @@ in {
             monitor365 = {
               directory = "/var/lib/monitor365-server";
               filePattern = "*.backup_*.db";
+              maxAgeHours = 25;
+            };
+          }
+          // lib.optionalAttrs config.services.cv-server.enable {
+            cv = {
+              # Nightly online .backup of the pipeline event store
+              # (cv-backup.timer, 03:17) onto the mirrored pool.
+              directory = "/mnt/pool/backups/cv";
+              filePattern = "pipeline-*.sqlite";
               maxAgeHours = 25;
             };
           };

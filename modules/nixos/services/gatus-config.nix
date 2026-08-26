@@ -1,60 +1,59 @@
 # Gatus health check monitoring with Discord alerts and endpoints
 _: {
-  flake.nixosModules.gatus-config =
-    {
-      config,
-      pkgs,
-      lib,
-      ...
-    }:
-    let
-      cfg = config.services.gatus-config;
-      inherit (import ../../../lib/default.nix lib)
-        harden
-        serviceDefaults
-        onFailure
-        serviceTypes
-        mkHttpCheck
-        mkSecretCheck
-        mkOidcGate
-        ports
-        ;
+  flake.nixosModules.gatus-config = {
+    config,
+    pkgs,
+    lib,
+    ...
+  }: let
+    cfg = config.services.gatus-config;
+    inherit
+      (import ../../../lib/default.nix lib)
+      harden
+      serviceDefaults
+      onFailure
+      serviceTypes
+      mkHttpCheck
+      mkSecretCheck
+      mkOidcGate
+      ports
+      ;
 
-      nodePort = config.services.prometheus.exporters.node.port;
+    nodePort = config.services.prometheus.exporters.node.port;
 
-      checkGatusEnv = mkSecretCheck pkgs {
-        name = "gatus-env";
-        secretPath = config.sops.templates."gatus-env".path;
-        message = "gatus: environment file is missing or empty (${
-          config.sops.templates."gatus-env".path
-        }) — Discord alerting will fail";
-      };
+    checkGatusEnv = mkSecretCheck pkgs {
+      name = "gatus-env";
+      secretPath = config.sops.templates."gatus-env".path;
+      message = "gatus: environment file is missing or empty (${
+        config.sops.templates."gatus-env".path
+      }) — Discord alerting will fail";
+    };
 
-      # NOTE: the YAML field is `description` (gatus alert.Alert yaml tag).
-      # The old `inherit desc` emitted `desc:`, which yaml.v3 silently ignores —
-      # descriptions never reached Discord messages.
-      discordAlert = desc: [
-        {
-          type = "discord";
-          description = desc;
-        }
-      ];
+    # NOTE: the YAML field is `description` (gatus alert.Alert yaml tag).
+    # The old `inherit desc` emitted `desc:`, which yaml.v3 silently ignores —
+    # descriptions never reached Discord messages.
+    discordAlert = desc: [
+      {
+        type = "discord";
+        description = desc;
+      }
+    ];
 
-      # Smart alerting: append a PapDashboard ingest alert (type "custom") to
-      # every endpoint when the hub is enabled. Gatus' provider default-alert
-      # only fills thresholds for endpoints that DECLARE an alert of that
-      # type — without this pass, nothing would reach /api/ingest.
-      papIngestEnabled = config.services.papdashboard.enable or false;
+    # Smart alerting: append a PapDashboard ingest alert (type "custom") to
+    # every endpoint when the hub is enabled. Gatus' provider default-alert
+    # only fills thresholds for endpoints that DECLARE an alert of that
+    # type — without this pass, nothing would reach /api/ingest.
+    papIngestEnabled = config.services.papdashboard.enable or false;
 
-      withPapIngest =
-        ep:
-        let
-          existing = ep.alerts or [ ];
-          withDescription = lib.findFirst (a: a ? description) null existing;
-        in
-        ep
-        // {
-          alerts = existing ++ [
+    withPapIngest = ep: let
+      existing = ep.alerts or [];
+      withDescription = lib.findFirst (a: a ? description) null existing;
+    in
+      ep
+      // {
+        alerts =
+          existing
+          ++ [
             (
               {
                 type = "custom";
@@ -64,150 +63,149 @@ _: {
               }
             )
           ];
-        };
-
-      # Public open-source project websites (Firebase Hosting), mirrored from
-      # /home/lars/projects/domains/lars.software.tf — keep in sync when a site
-      # is added there. Probed from evo-x2, so each check verifies the full
-      # external chain: public DNS → Firebase CDN → site content. This catches
-      # outages the LAN-only checks cannot see (unclaimed web.app targets,
-      # missing DNS records, broken deploys).
-      ossWebsites = [
-        "lars.software"
-        "www.lars.software"
-        "status.lars.software" # Better Stack status page (CNAME → statuspage.betteruptime.com)
-        "gogenfilter.lars.software"
-        "gogenfilter.larsartmann.com" # alias CNAME from larsartmann.com.tf
-        "atomicwrite.lars.software"
-        "go-atomic-write.lars.software" # alias of atomicwrite.lars.software
-        "go-output.lars.software"
-        "go-workflow-auditlog.lars.software"
-        "filewatcher.lars.software"
-        "errorfamily.lars.software"
-        "art-dupl.lars.software"
-        "do-auditlog.lars.software"
-        "dynamicmarkdown.lars.software"
-        "templcomponents.lars.software"
-        "branded-id.lars.software"
-        "emeet-pixyd.lars.software"
-        "cleanwizard.lars.software"
-        "cmdguard.lars.software"
-        "md-go-validator.lars.software"
-      ];
-
-      mkWebsiteCheck =
-        host:
-        mkHttpCheck {
-          name = host;
-          group = "Open Source Websites";
-          url = "https://${host}/";
-          interval = "5m";
-          conditions = [
-            "[STATUS] == 200"
-            "[RESPONSE_TIME] < 2000"
-            # Firebase serves an HTML error page even for 404s, so STATUS is the
-            # hard gate; this confirms real site content (docs/SPA shell) came back.
-            "[BODY] == pat(*<html*)"
-          ];
-          alerts = discordAlert "${host} down — public website unreachable (DNS, Firebase Hosting, or certificate issue)";
-        };
-
-      inherit (config.networking) domain;
-
-      # Native OIDC via Pocket ID (Layer 1 SSO). Provision-only: evo-x2 always
-      # runs pocket-id-config.provision, which writes the client secret to the
-      # file below. systemd LoadCredential reads it as root (DynamicUser means the
-      # gatus user does not exist to own files directly) and exposes the value to
-      # the service via $CREDENTIALS_DIRECTORY, where the oidc env writer copies it
-      # into an env file that gatus consumes via config.yaml $VAR interpolation.
-      enableOidc =
-        (config.services.pocket-id-config.enable or false)
-        && (config.services.pocket-id-config.provision.enable or false);
-      clientSecretPath = "${config.services.pocket-id.dataDir}/client-secrets/gatus";
-
-      gatusOidcEnv = pkgs.writeShellApplication {
-        name = "gatus-oidc-env";
-        runtimeInputs = [ pkgs.coreutils ];
-        text = ''
-          set -eu
-          out="''${RUNTIME_DIRECTORY:-/run/gatus}/oidc.env"
-          if [ -n "''${CREDENTIALS_DIRECTORY:-}" ] && [ -f "''${CREDENTIALS_DIRECTORY}/gatus-oidc-secret" ]; then
-            printf 'GATUS_OIDC_CLIENT_SECRET=%s\n' "$(cat "''${CREDENTIALS_DIRECTORY}/gatus-oidc-secret")" > "$out"
-            chmod 600 "$out"
-          else
-            : > "$out"
-          fi
-        '';
-      };
-    in
-    {
-      options.services.gatus-config = {
-        enable = lib.mkEnableOption "Gatus health check monitoring with pre-configured endpoints";
-        port = serviceTypes.servicePort ports.gatus "HTTP port for Gatus web interface";
       };
 
-      config = lib.mkIf cfg.enable {
-        services.gatus = {
-          enable = true;
-          environmentFile = config.sops.templates."gatus-env".path;
-          settings = {
-            web.port = cfg.port;
-            storage = {
-              type = "sqlite";
-              path = "/var/lib/gatus/gatus.db";
-              caching = true;
-            };
-            # Native OIDC (Layer 1 SSO) via Pocket ID. Empty when OIDC is off.
-            # allowed-subjects omitted: single-admin IdP, so any authenticated user
-            # (= the admin) may view the dashboard.
-            security = lib.optionalAttrs enableOidc {
-              oidc = {
-                issuer-url = "https://auth.${domain}";
-                client-id = "gatus";
-                client-secret = "$GATUS_OIDC_CLIENT_SECRET";
-                redirect-url = "https://status.${domain}/authorization-code/callback";
-                scopes = [
-                  "openid"
-                  "profile"
-                  "email"
-                ];
-              };
-            };
-            ui = {
-              title = "evo-x2 Status";
-              header = "System Status";
-              logo = "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/gatus.png";
-              link = "https://dash.${domain}";
-              dark-mode = true;
-              default-sort-by = "group";
-              buttons = [
-                {
-                  name = "Dashboard";
-                  link = "https://dash.${domain}";
-                }
-                {
-                  name = "Forgejo";
-                  link = "https://forgejo.${domain}";
-                }
-                {
-                  name = "SigNoz";
-                  link = "https://signoz.${domain}";
-                }
-                {
-                  name = "Dozzle";
-                  link = "https://logs.${domain}";
-                }
+    # Public open-source project websites (Firebase Hosting), mirrored from
+    # /home/lars/projects/domains/lars.software.tf — keep in sync when a site
+    # is added there. Probed from evo-x2, so each check verifies the full
+    # external chain: public DNS → Firebase CDN → site content. This catches
+    # outages the LAN-only checks cannot see (unclaimed web.app targets,
+    # missing DNS records, broken deploys).
+    ossWebsites = [
+      "lars.software"
+      "www.lars.software"
+      "status.lars.software" # Better Stack status page (CNAME → statuspage.betteruptime.com)
+      "gogenfilter.lars.software"
+      "gogenfilter.larsartmann.com" # alias CNAME from larsartmann.com.tf
+      "atomicwrite.lars.software"
+      "go-atomic-write.lars.software" # alias of atomicwrite.lars.software
+      "go-output.lars.software"
+      "go-workflow-auditlog.lars.software"
+      "filewatcher.lars.software"
+      "errorfamily.lars.software"
+      "art-dupl.lars.software"
+      "do-auditlog.lars.software"
+      "dynamicmarkdown.lars.software"
+      "templcomponents.lars.software"
+      "branded-id.lars.software"
+      "emeet-pixyd.lars.software"
+      "cleanwizard.lars.software"
+      "cmdguard.lars.software"
+      "md-go-validator.lars.software"
+    ];
+
+    mkWebsiteCheck = host:
+      mkHttpCheck {
+        name = host;
+        group = "Open Source Websites";
+        url = "https://${host}/";
+        interval = "5m";
+        conditions = [
+          "[STATUS] == 200"
+          "[RESPONSE_TIME] < 2000"
+          # Firebase serves an HTML error page even for 404s, so STATUS is the
+          # hard gate; this confirms real site content (docs/SPA shell) came back.
+          "[BODY] == pat(*<html*)"
+        ];
+        alerts = discordAlert "${host} down — public website unreachable (DNS, Firebase Hosting, or certificate issue)";
+      };
+
+    inherit (config.networking) domain;
+
+    # Native OIDC via Pocket ID (Layer 1 SSO). Provision-only: evo-x2 always
+    # runs pocket-id-config.provision, which writes the client secret to the
+    # file below. systemd LoadCredential reads it as root (DynamicUser means the
+    # gatus user does not exist to own files directly) and exposes the value to
+    # the service via $CREDENTIALS_DIRECTORY, where the oidc env writer copies it
+    # into an env file that gatus consumes via config.yaml $VAR interpolation.
+    enableOidc =
+      (config.services.pocket-id-config.enable or false)
+      && (config.services.pocket-id-config.provision.enable or false);
+    clientSecretPath = "${config.services.pocket-id.dataDir}/client-secrets/gatus";
+
+    gatusOidcEnv = pkgs.writeShellApplication {
+      name = "gatus-oidc-env";
+      runtimeInputs = [pkgs.coreutils];
+      text = ''
+        set -eu
+        out="''${RUNTIME_DIRECTORY:-/run/gatus}/oidc.env"
+        if [ -n "''${CREDENTIALS_DIRECTORY:-}" ] && [ -f "''${CREDENTIALS_DIRECTORY}/gatus-oidc-secret" ]; then
+          printf 'GATUS_OIDC_CLIENT_SECRET=%s\n' "$(cat "''${CREDENTIALS_DIRECTORY}/gatus-oidc-secret")" > "$out"
+          chmod 600 "$out"
+        else
+          : > "$out"
+        fi
+      '';
+    };
+  in {
+    options.services.gatus-config = {
+      enable = lib.mkEnableOption "Gatus health check monitoring with pre-configured endpoints";
+      port = serviceTypes.servicePort ports.gatus "HTTP port for Gatus web interface";
+    };
+
+    config = lib.mkIf cfg.enable {
+      services.gatus = {
+        enable = true;
+        environmentFile = config.sops.templates."gatus-env".path;
+        settings = {
+          web.port = cfg.port;
+          storage = {
+            type = "sqlite";
+            path = "/var/lib/gatus/gatus.db";
+            caching = true;
+          };
+          # Native OIDC (Layer 1 SSO) via Pocket ID. Empty when OIDC is off.
+          # allowed-subjects omitted: single-admin IdP, so any authenticated user
+          # (= the admin) may view the dashboard.
+          security = lib.optionalAttrs enableOidc {
+            oidc = {
+              issuer-url = "https://auth.${domain}";
+              client-id = "gatus";
+              client-secret = "$GATUS_OIDC_CLIENT_SECRET";
+              redirect-url = "https://status.${domain}/authorization-code/callback";
+              scopes = [
+                "openid"
+                "profile"
+                "email"
               ];
             };
-            # Smart-alerting fast path #2: every endpoint ALSO POSTs its
-            # trigger/resolve transitions into PapDashboard (localhost ingest,
-            # Bearer-key auth via $PAPDASHBOARD_INGEST_KEY from gatus-env).
-            # The raw Discord path above stays untouched — PapDashboard death
-            # never silences raw alerts. Placeholders remap the state marker to
-            # PapDashboard's event types (alert.triggered / alert.resolved).
-            # Key is OMITTED (not emptied) when papdashboard is off — gatus
-            # validates a present-but-empty custom provider as ErrURLNotSet.
-            alerting = {
+          };
+          ui = {
+            title = "evo-x2 Status";
+            header = "System Status";
+            logo = "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/gatus.png";
+            link = "https://dash.${domain}";
+            dark-mode = true;
+            default-sort-by = "group";
+            buttons = [
+              {
+                name = "Dashboard";
+                link = "https://dash.${domain}";
+              }
+              {
+                name = "Forgejo";
+                link = "https://forgejo.${domain}";
+              }
+              {
+                name = "SigNoz";
+                link = "https://signoz.${domain}";
+              }
+              {
+                name = "Dozzle";
+                link = "https://logs.${domain}";
+              }
+            ];
+          };
+          # Smart-alerting fast path #2: every endpoint ALSO POSTs its
+          # trigger/resolve transitions into PapDashboard (localhost ingest,
+          # Bearer-key auth via $PAPDASHBOARD_INGEST_KEY from gatus-env).
+          # The raw Discord path above stays untouched — PapDashboard death
+          # never silences raw alerts. Placeholders remap the state marker to
+          # PapDashboard's event types (alert.triggered / alert.resolved).
+          # Key is OMITTED (not emptied) when papdashboard is off — gatus
+          # validates a present-but-empty custom provider as ErrURLNotSet.
+          alerting =
+            {
               discord = {
                 webhook-url = "$DISCORD_WEBHOOK_URL";
                 default-alert = {
@@ -246,7 +244,12 @@ _: {
                 };
               };
             };
-            endpoints = (if papIngestEnabled then map withPapIngest else lib.id) (
+          endpoints =
+            (
+              if papIngestEnabled
+              then map withPapIngest
+              else lib.id
+            ) (
               [
                 (mkHttpCheck {
                   name = "Caddy";
@@ -368,7 +371,7 @@ _: {
                   group = "Infrastructure";
                   url = "tcp://127.0.0.1:${toString ports.redis}";
                   interval = "60s";
-                  conditions = [ "[CONNECTED] == true" ];
+                  conditions = ["[CONNECTED] == true"];
                   alerts = discordAlert "Redis down — Immich ML pipeline and caching broken";
                 }
                 (mkHttpCheck {
@@ -436,7 +439,7 @@ _: {
                   group = "Productivity";
                   url = "tcp://127.0.0.1:${toString config.services.taskchampion-sync-server.port}";
                   interval = "60s";
-                  conditions = [ "[CONNECTED] == true" ];
+                  conditions = ["[CONNECTED] == true"];
                   alerts = discordAlert "TaskChampion sync server down — task syncing broken";
                 }
                 (mkHttpCheck {
@@ -472,7 +475,7 @@ _: {
                     query-type = "A";
                   };
                   interval = "60s";
-                  conditions = [ "[DNS_RCODE] == NOERROR" ];
+                  conditions = ["[DNS_RCODE] == NOERROR"];
                   alerts = discordAlert "Local DNS resolver down — name resolution failing";
                 }
                 {
@@ -480,7 +483,7 @@ _: {
                   group = "Infrastructure";
                   url = "tcp://127.0.0.1:53";
                   interval = "60s";
-                  conditions = [ "[CONNECTED] == true" ];
+                  conditions = ["[CONNECTED] == true"];
                 }
                 (mkHttpCheck {
                   name = "DNS Blocker";
@@ -501,14 +504,14 @@ _: {
                     query-type = "A";
                   };
                   interval = "5m";
-                  conditions = [ "[DNS_RCODE] == NOERROR" ];
+                  conditions = ["[DNS_RCODE] == NOERROR"];
                 }
                 {
                   name = "Upstream DNS DoT (Mullvad)";
                   group = "Infrastructure";
                   url = "tcp://dot.mullvad.net:853";
                   interval = "5m";
-                  conditions = [ "[CONNECTED] == true" ];
+                  conditions = ["[CONNECTED] == true"];
                   alerts = discordAlert "Mullvad DoT upstream unreachable — DNS-over-TLS path broken";
                 }
                 {
@@ -520,7 +523,7 @@ _: {
                     query-type = "A";
                   };
                   interval = "5m";
-                  conditions = [ "[BODY] == ${config.services.dns-blocker.blockIP}" ];
+                  conditions = ["[BODY] == ${config.services.dns-blocker.blockIP}"];
                   alerts = discordAlert "DNS blocking not active — ads.google.com resolved without block";
                 }
                 (mkHttpCheck {
@@ -589,7 +592,7 @@ _: {
                   group = "AI";
                   url = "tcp://127.0.0.1:${toString config.services.livekit.settings.port}";
                   interval = "60s";
-                  conditions = [ "[CONNECTED] == true" ];
+                  conditions = ["[CONNECTED] == true"];
                 }
               ]
               ++ [
@@ -1044,67 +1047,65 @@ _: {
                   alerts = discordAlert "FastFlowLM cgroup memory exceeds 90% of its MemoryMax (40G) — the 21.6 GB model mmap'd from /data plus KV cache is reaching the OOM-kill ceiling. Check: flm-loaded models, /data/ai/models/fastflowlm size, pma discovery worker count";
                 })
               ]
-              ++
-                lib.optionals
-                  (
-                    (config.services.system-health.enable or false)
-                    && (config.services.system-health.lanInterface or "") != ""
-                  )
-                  [
-                    (mkHttpCheck {
-                      name = "LAN NIC Present";
-                      group = "Monitoring";
-                      # 2026-08-22: after a hard crash the RTL8125 fell off the
-                      # PCIe bus — PCI enumeration showed no 10ec:8125 at all,
-                      # r8125 had nothing to probe, eno1 never got its static IP
-                      # and SSH was dead until a second reboot. The metric is
-                      # emitted by system-health whenever lanInterface is set, and
-                      # this check is gated on the SAME condition — a host that
-                      # watches no LAN NIC gets neither metric nor check (no
-                      # phantom 1). If this fires, a warm
-                      # reboot is NOT reliable — power-cycle the machine.
-                      url = "http://localhost:${toString nodePort}/metrics";
-                      interval = "2m";
-                      conditions = [
-                        "[STATUS] == 200"
-                        # pat() is a GLOB over the whole /metrics body and '!' is a LITERAL in
-                        # filepath.Match (no negation syntax): the metric's HELP comment
-                        # ("# HELP system_lan_nic_present 1 if ...") itself contains
-                        # "system_lan_nic_present 1", so pat(*metric 1*) stays green when the
-                        # value is 0. Assert the 0-value line is absent + the metric is present.
-                        "[BODY] != pat(*system_lan_nic_present 0\n*)"
-                        "[BODY] == pat(*\nsystem_lan_nic_present *)"
-                      ];
-                      alerts = discordAlert "LAN NIC (eno1 / RTL8125) is ABSENT from the bus — wired networking is DOWN (static IP + SSH unreachable). A warm reboot does NOT retrain it: POWER-CYCLE the machine (shut down, wait 10s, power on). Check: ls /sys/class/net/eno1, journalctl -k -b -1 | grep 10ec:8125, lspci | grep -i network";
-                    })
-                  ]
-              ++
-                lib.optionals
-                  (
-                    (config.services.system-health.enable or false)
-                    && (config.services.system-health.dasUsbPath or "") != ""
-                  )
-                  [
-                    (mkHttpCheck {
-                      name = "DAS USB Link";
-                      group = "Monitoring";
-                      # Root-cause alert for the single-USB-link DAS topology:
-                      # all 4 external disks (2x pool Toshiba, buildcache SSD,
-                      # spare btrfs SSD) sit behind /sys/bus/usb/devices/8-1.
-                      # When the link drops, buildcache + pool + SSD checks all
-                      # fire at once — this check names the CAUSE (2026-08-22:
-                      # zero reconnect attempts for 22+ min). Anchored form is
-                      # mandatory: the metric's HELP embeds "system_das_link_present 1".
-                      url = "http://localhost:${toString nodePort}/metrics";
-                      interval = "2m";
-                      conditions = [
-                        "[STATUS] == 200"
-                        "[BODY] != pat(*system_das_link_present 0\n*)"
-                        "[BODY] == pat(*\nsystem_das_link_present *)"
-                      ];
-                      alerts = discordAlert "DAS USB link (8-1) is DOWN — ALL external disks (pool members, buildcache, spare SSDs) vanished simultaneously. Software recovery is impossible without the link: physically reseat the DAS USB cable + enclosure power, then REBOOT (warm reboot may not re-enumerate). After boot: scripts/das-link-recovery-check.sh, verify findmnt /mnt/pool and /mnt/buildcache, e2fsck decision for buildcache. Runbook: AGENTS.md 'DAS USB link' section.";
-                    })
-                  ]
+              ++ lib.optionals
+              (
+                (config.services.system-health.enable or false)
+                && (config.services.system-health.lanInterface or "") != ""
+              )
+              [
+                (mkHttpCheck {
+                  name = "LAN NIC Present";
+                  group = "Monitoring";
+                  # 2026-08-22: after a hard crash the RTL8125 fell off the
+                  # PCIe bus — PCI enumeration showed no 10ec:8125 at all,
+                  # r8125 had nothing to probe, eno1 never got its static IP
+                  # and SSH was dead until a second reboot. The metric is
+                  # emitted by system-health whenever lanInterface is set, and
+                  # this check is gated on the SAME condition — a host that
+                  # watches no LAN NIC gets neither metric nor check (no
+                  # phantom 1). If this fires, a warm
+                  # reboot is NOT reliable — power-cycle the machine.
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    # pat() is a GLOB over the whole /metrics body and '!' is a LITERAL in
+                    # filepath.Match (no negation syntax): the metric's HELP comment
+                    # ("# HELP system_lan_nic_present 1 if ...") itself contains
+                    # "system_lan_nic_present 1", so pat(*metric 1*) stays green when the
+                    # value is 0. Assert the 0-value line is absent + the metric is present.
+                    "[BODY] != pat(*system_lan_nic_present 0\n*)"
+                    "[BODY] == pat(*\nsystem_lan_nic_present *)"
+                  ];
+                  alerts = discordAlert "LAN NIC (eno1 / RTL8125) is ABSENT from the bus — wired networking is DOWN (static IP + SSH unreachable). A warm reboot does NOT retrain it: POWER-CYCLE the machine (shut down, wait 10s, power on). Check: ls /sys/class/net/eno1, journalctl -k -b -1 | grep 10ec:8125, lspci | grep -i network";
+                })
+              ]
+              ++ lib.optionals
+              (
+                (config.services.system-health.enable or false)
+                && (config.services.system-health.dasUsbPath or "") != ""
+              )
+              [
+                (mkHttpCheck {
+                  name = "DAS USB Link";
+                  group = "Monitoring";
+                  # Root-cause alert for the single-USB-link DAS topology:
+                  # all 4 external disks (2x pool Toshiba, buildcache SSD,
+                  # spare btrfs SSD) sit behind /sys/bus/usb/devices/8-1.
+                  # When the link drops, buildcache + pool + SSD checks all
+                  # fire at once — this check names the CAUSE (2026-08-22:
+                  # zero reconnect attempts for 22+ min). Anchored form is
+                  # mandatory: the metric's HELP embeds "system_das_link_present 1".
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*system_das_link_present 0\n*)"
+                    "[BODY] == pat(*\nsystem_das_link_present *)"
+                  ];
+                  alerts = discordAlert "DAS USB link (8-1) is DOWN — ALL external disks (pool members, buildcache, spare SSDs) vanished simultaneously. Software recovery is impossible without the link: physically reseat the DAS USB cable + enclosure power, then REBOOT (warm reboot may not re-enumerate). After boot: scripts/das-link-recovery-check.sh, verify findmnt /mnt/pool and /mnt/buildcache, e2fsck decision for buildcache. Runbook: AGENTS.md 'DAS USB link' section.";
+                })
+              ]
               ++ lib.optionals (config.services.system-health.enable or false) [
                 (mkHttpCheck {
                   name = "System Profile Anchor";
@@ -1429,7 +1430,10 @@ _: {
                   # With native OIDC enabled, an unauthenticated probe is redirected
                   # to the IdP login (302/303) instead of 200. Accept any non-error
                   # status so the self-health check doesn't false-alarm.
-                  conditions = if enableOidc then [ "[STATUS] < 400" ] else [ "[STATUS] == 200" ];
+                  conditions =
+                    if enableOidc
+                    then ["[STATUS] < 400"]
+                    else ["[STATUS] == 200"];
                 })
                 (mkHttpCheck {
                   name = "Textfile Collector Health";
@@ -1645,6 +1649,35 @@ _: {
                   alerts = discordAlert "Browser History server down — browsing analytics unavailable";
                 })
               ]
+              ++ lib.optionals (config.services.cv-server.enable or false) [
+                # Liveness: go-health probe served from the raw mux (always
+                # 200 once the process is up; connection-refused when down).
+                (mkHttpCheck {
+                  name = "CV";
+                  group = "Productivity";
+                  url = "http://localhost:${toString ports.cv}/health/live";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 1000"
+                  ];
+                  alerts = discordAlert "CV server down — resume site and PDF export at cv.home.lan unreachable. Check: systemctl status cv-server, journalctl -u cv-server.";
+                })
+                # Functional: the CV page renders real HTML (liveness alone
+                # would stay green through a broken render/config path).
+                (mkHttpCheck {
+                  name = "CV Page Renders";
+                  group = "Productivity";
+                  url = "http://localhost:${toString ports.cv}/cv";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 2000"
+                    "[BODY] == pat(*<html*)"
+                  ];
+                  alerts = discordAlert "CV /cv page no longer renders HTML — content sync, config, or the render layer is broken (cv.home.lan)";
+                })
+              ]
               ++ lib.optionals (config.services.bank-sync.enable or false) [
                 (mkHttpCheck {
                   name = "Bank-Sync";
@@ -1754,54 +1787,55 @@ _: {
               ]
               ++ map mkWebsiteCheck ossWebsites
             );
-          };
         };
+      };
 
-        systemd.services.gatus =
-          let
-            oidcGate = mkOidcGate {
-              inherit pkgs domain;
-              serviceName = "gatus";
-              includeProvision = true;
-            };
-          in
+      systemd.services.gatus = let
+        oidcGate = mkOidcGate {
+          inherit pkgs domain;
+          serviceName = "gatus";
+          includeProvision = true;
+        };
+      in {
+        inherit onFailure;
+        after =
+          [
+            "network-online.target"
+            "dnsblockd.service"
+          ]
+          ++ lib.optionals enableOidc oidcGate.after;
+        wants =
+          [
+            "network-online.target"
+            "dnsblockd.service"
+          ]
+          ++ lib.optionals enableOidc oidcGate.wants;
+        serviceConfig = lib.mkMerge [
+          (harden {
+            MemoryMax = "512M";
+            ReadWritePaths = ["/var/lib/gatus"];
+          })
+          (serviceDefaults {Restart = "on-failure";})
           {
-            inherit onFailure;
-            after = [
-              "network-online.target"
-              "dnsblockd.service"
-            ]
-            ++ lib.optionals enableOidc oidcGate.after;
-            wants = [
-              "network-online.target"
-              "dnsblockd.service"
-            ]
-            ++ lib.optionals enableOidc oidcGate.wants;
-            serviceConfig = lib.mkMerge [
-              (harden {
-                MemoryMax = "512M";
-                ReadWritePaths = [ "/var/lib/gatus" ];
-              })
-              (serviceDefaults { Restart = "on-failure"; })
-              {
-                ExecStartPre = [
-                  "+${lib.getExe checkGatusEnv}"
-                  "${lib.getExe gatusOidcEnv}"
-                ]
-                ++ lib.optionals enableOidc oidcGate.serviceConfig.ExecStartPre;
-                TimeoutStartSec = "3min";
-                RuntimeDirectory = "gatus";
-                LoadCredential = lib.optional enableOidc "gatus-oidc-secret:${clientSecretPath}";
-                # Compose the full EnvironmentFile list: the sops template
-                # (DISCORD_WEBHOOK_URL) plus the runtime-generated OIDC secret file
-                # (the '-' prefix makes a missing file non-fatal when OIDC is off).
-                EnvironmentFile = lib.mkForce [
-                  config.sops.templates."gatus-env".path
-                  "-/run/gatus/oidc.env"
-                ];
-              }
+            ExecStartPre =
+              [
+                "+${lib.getExe checkGatusEnv}"
+                "${lib.getExe gatusOidcEnv}"
+              ]
+              ++ lib.optionals enableOidc oidcGate.serviceConfig.ExecStartPre;
+            TimeoutStartSec = "3min";
+            RuntimeDirectory = "gatus";
+            LoadCredential = lib.optional enableOidc "gatus-oidc-secret:${clientSecretPath}";
+            # Compose the full EnvironmentFile list: the sops template
+            # (DISCORD_WEBHOOK_URL) plus the runtime-generated OIDC secret file
+            # (the '-' prefix makes a missing file non-fatal when OIDC is off).
+            EnvironmentFile = lib.mkForce [
+              config.sops.templates."gatus-env".path
+              "-/run/gatus/oidc.env"
             ];
-          };
+          }
+        ];
       };
     };
+  };
 }

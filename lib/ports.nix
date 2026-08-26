@@ -99,5 +99,8 @@
     # exclusive per server instance.
     llama-embeddings = 8848;
     llama-reranker = 8849;
+
+    # CV — resume generator + career pipeline server (services.cv-server)
+    cv = 8098;
   };
 }

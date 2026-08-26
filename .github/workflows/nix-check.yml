@@ -18,6 +18,22 @@ jobs:
             experimental-features = nix-command flakes pipe-operators
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
 
+      # Private flake inputs (CV, go-cqrs-lite — both git+ssh) need deploy
+      # keys; the public go-nix-helpers input rides a git+ssh URL too (also
+      # transitively through go-cqrs-lite), so rewrite that repo to
+      # anonymous HTTPS instead of a third deploy key.
+      - name: Configure private flake-input auth
+        env:
+          NIX_DEPLOY_KEY_CV: ${{ secrets.NIX_DEPLOY_KEY_CV }}
+          NIX_DEPLOY_KEY_GO_CQRS_LITE: ${{ secrets.NIX_DEPLOY_KEY_GO_CQRS_LITE }}
+        run: |
+          eval "$(ssh-agent -s)" >/dev/null
+          printf '%s\n' "$NIX_DEPLOY_KEY_CV" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_GO_CQRS_LITE" | ssh-add -
+          git config --global url."https://github.com/LarsArtmann/go-nix-helpers".insteadOf "git@github.com:LarsArtmann/go-nix-helpers"
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          echo "GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=accept-new" >> "$GITHUB_ENV"
+
       - name: Validate flake structure
         run: nix flake show --allow-import-from-derivation 2>&1 | head -20
 
