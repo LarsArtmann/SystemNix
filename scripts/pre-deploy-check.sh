@@ -279,14 +279,14 @@ if [ -s "$METRICS_FILE" ]; then
   # system_crush_sessions(_over_threshold), system_cgroup_mem_{,anon_,shmem_,
   # unevictable_}bytes (4), sev1_bridge_{alerts_active,runs_total}.
   # clickhouse_xfs_* were retired earlier (2026-08-22 XFS session).
-  # discordsync_projection_dlq_legacy_depth (2026-08-21): the gatus M07 mirror
-  # (c9f3c2bf) references this metric from DiscordSync upstream HEAD
-  # (metrics_db.go:111), but the tree still pins discordsync 085fa53 which only
-  # emits projection_dlq_depth. Real once the discordsync flake input is
-  # bumped to >= the rev adding _legacy_depth — verify in :8085/metrics after
-  # that deploy, then remove from this list. NOTE: until the bump, the gatus
-  # "DiscordSync Legacy DLQ Empty" endpoint stays RED (pat misses) and fires
-  # its Discord alert — bump discordsync or disable the endpoint.
+  # discordsync_projection_dlq_legacy_depth (2026-08-21): RETIRED from this
+  # list 2026-08-25 — the input bump to 2862b613 landed the metric live
+  # (11,404 frozen rows, truthful). The gatus check now asserts the companion
+  # discordsync_projection_dlq_legacy_unchanged flag (growth detector) — that
+  # one is NEW in the same deploy, listed below; remove after this deploy
+  # confirms it in :8085/metrics (expected 1 = stable backlog).
+  # discordsync_projection_dlq_legacy_unchanged (2026-08-25): emitted by the
+  # discordsync rev 2862b613 gauge added for the "Legacy DLQ Stable" check.
   # bank_sync_* (2026-08-22): the gatus "Bank-Sync Sync Health" probe
   # (2026-08-21 session) references the sync_errors/last_sync metrics from
   # bank-sync's own :8097/metrics exporter. UNVERIFIABLE while the DAS is
@@ -295,7 +295,7 @@ if [ -s "$METRICS_FILE" ]; then
   # (internal/server/metrics.go:257,299 — verified against the locked rev
   # 2026-08-22). Remove after the first post-DAS-recovery deploy confirms
   # them (post-deploy-check.sh Bank-Sync section asserts :8097/metrics).
-  KNOWN_NEW_METRICS="discordsync_projection_dlq_legacy_depth bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds"
+  KNOWN_NEW_METRICS="discordsync_projection_dlq_legacy_unchanged bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"

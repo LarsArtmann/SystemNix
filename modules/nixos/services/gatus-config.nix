@@ -1574,17 +1574,25 @@ _: {
                 # or a zero-failure check would false-fire on transients.
                 # Those stay Prometheus-only.
                 (mkHttpCheck {
-                  name = "DiscordSync Legacy DLQ Empty";
+                  name = "DiscordSync Legacy DLQ Stable";
                   group = "Infrastructure";
+                  # Renamed from "Legacy DLQ Empty" (2026-08-25): production
+                  # permanently carries 11,404 frozen legacy dead letters
+                  # until the M09 event-store replay recovers them — a
+                  # depth==0 condition fired Discord every 5 min forever.
+                  # The depth gauge's companion flag (upstream 2862b613)
+                  # pre-computes "unchanged since previous scrape": only NEW
+                  # legacy dead letters (the Jul 3-6 silent-loss class
+                  # regressing) flip it to 0. Anchored form is mandatory —
+                  # the HELP embeds "<metric> 1 if ..." (phantom-green trap).
                   url = "http://localhost:${toString ports.discordsync-api}/metrics";
                   interval = "5m";
                   conditions = [
                     "[STATUS] == 200"
-                    # HELP/TYPE lines continue with prose ("Entries...", "gauge"),
-                    # so only the value line can match "<metric name> 0".
-                    "[BODY] == pat(*discordsync_projection_dlq_legacy_depth 0*)"
+                    "[BODY] != pat(*discordsync_projection_dlq_legacy_unchanged 0\n*)"
+                    "[BODY] == pat(*\ndiscordsync_projection_dlq_legacy_unchanged *)"
                   ];
-                  alerts = discordAlert "DiscordSync legacy DLQ non-empty: unrecovered pre-v4.3 dead letters (Jul 3-6 silent-loss incident class). Recover via event-store replay (plan M09)";
+                  alerts = discordAlert "DiscordSync legacy DLQ GREW: new entries joined the frozen pre-v4.3 backlog (Jul 3-6 silent-loss incident class regressing). Check journalctl -u discordsync for decode failures; recovery of the frozen 11,404 remains plan M09";
                 })
                 (mkHttpCheck {
                   name = "DiscordSync Turso Sync Active";

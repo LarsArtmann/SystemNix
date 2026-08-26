@@ -455,16 +455,17 @@
     };
 
     # DiscordSync — Continuous Discord backup with Turso cloud sync
-    # Rev-pinned (2026-08-25) at 7919aef4 (= upstream aa56b582 + vendorHash fix, branch nix/aa56b582-vendorhash): the LAST commits before upstream's
-    # Go toolchain floor bump to 1.26.6 (ca9c470c, 2026-08-22) — nixpkgs has
-    # 1.26.5 + GOTOOLCHAIN=local, so master's go-modules FOD fails loudly
-    # (same class as file-and-image-renamer). The tree carries the legacy-DLQ
-    # metric (418c3223, 2026-08-18) that the gatus "Legacy DLQ Empty" check
-    # asserts — the endpoint stayed RED + fired Discord alerts every interval
-    # while the input sat at 085fa53. When nixpkgs go >= 1.26.6: switch back
-    # to ?ref=master and update-input.
+    # Rev-pinned (2026-08-25) at 2862b613 = upstream aa56b582 + two commits
+    # on branch nix/aa56b582-vendorhash (vendorHash correction + the
+    # projection_dlq_legacy_unchanged growth flag the gatus check asserts).
+    # aa56b582 is the LAST tree before upstream's Go toolchain floor bump to
+    # 1.26.6 (ca9c470c, 2026-08-22) — nixpkgs has 1.26.5 + GOTOOLCHAIN=local,
+    # so master's go-modules FOD fails loudly (same class as
+    # file-and-image-renamer). When nixpkgs go >= 1.26.6: rebase the branch
+    # onto master (or cherry-pick the two commits), then switch back to
+    # ?ref=master and update-input.
     discordsync = {
-      url = "github:LarsArtmann/DiscordSync/7919aef4";
+      url = "github:LarsArtmann/DiscordSync/2862b613";
       inputs = {
         # go-nix-helpers AND nixpkgs deliberately NOT followed (bank-sync +
         # qmd precedents): upstream's vendorHash was validated against ITS

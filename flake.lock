@@ -698,16 +698,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1787622694,
-        "narHash": "sha256-OeY7UhauQx6BI2jbWuPvfuQCIVLLkX7jKJAzkvKsoNo=",
+        "lastModified": 1787716009,
+        "narHash": "sha256-7yV5yL9KpwWwxRnJ7WiyLTJD0nmHAHbulcyfsH8u4Zo=",
         "owner": "LarsArtmann",
         "repo": "DiscordSync",
-        "rev": "7919aef440b47406fb79be2cfc74a02f9bb8c42d",
+        "rev": "2862b6130ddd68efb27708aee43f2c10435d6ad5",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "7919aef4",
+        "ref": "2862b613",
         "repo": "DiscordSync",
         "type": "github"
       }
