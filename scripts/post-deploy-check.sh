@@ -280,6 +280,32 @@ else
   report_skip "FastFlowLM — service disabled (units absent from systemd)"
 fi
 
+# CV server (cv module): the PDF export is the money path and the exact one
+# that broke in production while every HTML/liveness check stayed green
+# (2026-08-27: typst template vanished from the state dir → /export/pdf 404
+# for hours). Gate deploys on liveness + a real PDF's magic bytes. Port is
+# ports.cv (lib/ports.nix) — keep in sync.
+cv_enabled=false
+systemctl list-unit-files 'cv-server*' --no-legend 2>/dev/null | grep -q cv-server && cv_enabled=true
+
+if $cv_enabled; then
+  cv_health=$(curl -s --compressed -o /tmp/.smoke-cv-health -w "%{http_code}" --max-time 10 "http://127.0.0.1:8098/health/live" 2>/dev/null || true)
+  if [ "$cv_health" = "200" ] && grep -q '"status":"pass"' /tmp/.smoke-cv-health 2>/dev/null; then
+    cv_ver=$(sed -n 's/.*"version":"\([^"]*\)".*/\1/p' /tmp/.smoke-cv-health | head -1)
+    report_pass "CV — /health/live pass (version ${cv_ver:-unknown})"
+  else
+    report_fail "CV — /health/live not passing (status '${cv_health:-none}') — cv-server down or unhealthy (journalctl -u cv-server -n 50)"
+  fi
+  # max-time 30: typst compile + first-render font cache on a fresh restart.
+  if curl -s --compressed --max-time 30 -o /tmp/.smoke-cv-pdf "http://127.0.0.1:8098/export/pdf" 2>/dev/null && head -c 8 /tmp/.smoke-cv-pdf 2>/dev/null | grep -q '%PDF'; then
+    report_pass "CV — /export/pdf compiles a real PDF (typst path, assets synced)"
+  else
+    report_fail "CV — /export/pdf broken: typst template missing from /var/lib/cv/assets or renderer failed (restart re-syncs assets; journalctl -u cv-server -n 50)"
+  fi
+else
+  report_skip "CV — service disabled (units absent from systemd)"
+fi
+
 # llama.cpp RAG stack (llama-rag module): the /health endpoint proves the
 # model loaded and the server is serving (llama-server exits nonzero when the
 # GGUF is missing). The RAG endpoints themselves are exercised functionally

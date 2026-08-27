@@ -422,13 +422,17 @@
     };
 
     # projects-management-automation — CLI for managing multiple projects with workflow automation
+    # nixpkgs / go-commit / go-nix-helpers deliberately NOT followed
+    # (DiscordSync + bank-sync + qmd precedents): PMA's vendorHash was
+    # validated against ITS own lock — a different mkPreparedSource (helper
+    # version), go-commit rev, or nixpkgs go changes the vendored module set
+    # and breaks the go-modules FOD hash (hit live 2026-08-27: go-commit
+    # master moved past PMA's own pin under the old follows wiring).
+    # PMA must consume its own locked build environment.
     projects-management-automation = {
       url = "github:LarsArtmann/projects-management-automation?ref=master";
       inputs = {
-        nixpkgs.follows = "nixpkgs";
         flake-parts.follows = "flake-parts";
-        go-commit.follows = "go-commit";
-        go-nix-helpers.follows = "go-nix-helpers";
       };
     };
 
