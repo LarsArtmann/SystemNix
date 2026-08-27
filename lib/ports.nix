@@ -102,5 +102,8 @@
 
     # CV — resume generator + career pipeline server (services.cv-server)
     cv = 8098;
+
+    # InboxClean — Gmail AI assistant web dashboard (services.inboxclean)
+    inboxclean = 8099;
   };
 }

@@ -5,12 +5,10 @@
   inputs,
   lib,
   ...
-}:
-let
+}: let
   inherit (import ../../../lib/default.nix lib) ports;
   theme = import ../../common/theme.nix;
-in
-{
+in {
   imports = [
     # Import common packages shared with macOS
     ../../common/packages/base.nix
@@ -287,7 +285,7 @@ in
         "DejaVu Serif"
         "Noto Serif"
       ];
-      emoji = [ "Noto Color Emoji" ];
+      emoji = ["Noto Color Emoji"];
     };
 
     # Experimental features
@@ -357,40 +355,38 @@ in
       systemd-timer-monitor.enable = true;
       browser-policies = {
         enable = true;
-        chromiumExtensions =
-          let
-            ext = id: name: { inherit id name; };
-          in
-          [
-            # Privacy / Content Blocking
-            (ext "cjpalhdlnbpafiamejdnhcphjbkeiagm" "uBlock Origin")
-            # Productivity
-            (ext "chphlpgkkbolifaimnlloiipkdnihall" "OneTab")
-            # Time Tracking
-            (ext "nglaklhklhcoonedhgnpgddginnjdadi" "ActivityWatch Web Watcher")
-            # Email
-            (ext "oeopbcgkkoapgobdbedcemjljbihmemj" "Checker Plus for Gmail")
-            # YouTube
-            (ext "ckagfhpboagdopichicnebandlofghbc" "YouTube Shorts Blocker")
-            (ext "bbeaicapbccfllodepmimpkgecanonai" "BlockTube")
-            (ext "mnjggcdmjocbbbhaepdhchncahnbgone" "SponsorBlock for YouTube")
-            (ext "enamippconapkdmgfgjchkhakpfinmaj" "DeArrow - Better Titles and Thumbnails")
-            (ext "hdannnflhlmdablckfkjpleikpphncik" "YouTube Playback Speed Control")
-            (ext "pgpdaocammeipkkgaeelifgakbhjoiel" "YouTube Full Title For Videos")
-            # GitHub
-            (ext "hlepfoohegkhhmjieoechaddaejaokhf" "Refined GitHub")
-            (ext "nbiddhncecgemgccalnoanpnenalmkic" "GitHub Issue Link Status")
-            (ext "ocfdgncpifmegplaglcnglhioflaimkd" "GitHub Better Line Counts")
-            (ext "pemednoikdemhakcchcmjlckmepoighb" "GitHub Milestones Timeline")
-            (ext "ialbpcipalajnakfondkflpkagbkdoib" "Lovely forks")
-            # Development Tools
-            (ext "fmkadmapgofadopljbjfkapdkoienihi" "React Developer Tools")
-            (ext "jabopobgcpjmedljpbcaablpmlmfcogm" "WhatFont")
-            # Translation
-            (ext "cofdbpoegempjloogbagkncekinflcnj" "DeepL: translate and write with AI")
-            # Social / Content
-            (ext "iffnacikcgjlndahdgnckeekdefoafbn" "Reddit Image Opener")
-          ];
+        chromiumExtensions = let
+          ext = id: name: {inherit id name;};
+        in [
+          # Privacy / Content Blocking
+          (ext "cjpalhdlnbpafiamejdnhcphjbkeiagm" "uBlock Origin")
+          # Productivity
+          (ext "chphlpgkkbolifaimnlloiipkdnihall" "OneTab")
+          # Time Tracking
+          (ext "nglaklhklhcoonedhgnpgddginnjdadi" "ActivityWatch Web Watcher")
+          # Email
+          (ext "oeopbcgkkoapgobdbedcemjljbihmemj" "Checker Plus for Gmail")
+          # YouTube
+          (ext "ckagfhpboagdopichicnebandlofghbc" "YouTube Shorts Blocker")
+          (ext "bbeaicapbccfllodepmimpkgecanonai" "BlockTube")
+          (ext "mnjggcdmjocbbbhaepdhchncahnbgone" "SponsorBlock for YouTube")
+          (ext "enamippconapkdmgfgjchkhakpfinmaj" "DeArrow - Better Titles and Thumbnails")
+          (ext "hdannnflhlmdablckfkjpleikpphncik" "YouTube Playback Speed Control")
+          (ext "pgpdaocammeipkkgaeelifgakbhjoiel" "YouTube Full Title For Videos")
+          # GitHub
+          (ext "hlepfoohegkhhmjieoechaddaejaokhf" "Refined GitHub")
+          (ext "nbiddhncecgemgccalnoanpnenalmkic" "GitHub Issue Link Status")
+          (ext "ocfdgncpifmegplaglcnglhioflaimkd" "GitHub Better Line Counts")
+          (ext "pemednoikdemhakcchcmjlckmepoighb" "GitHub Milestones Timeline")
+          (ext "ialbpcipalajnakfondkflpkagbkdoib" "Lovely forks")
+          # Development Tools
+          (ext "fmkadmapgofadopljbjfkapdkoienihi" "React Developer Tools")
+          (ext "jabopobgcpjmedljpbcaablpmlmfcogm" "WhatFont")
+          # Translation
+          (ext "cofdbpoegempjloogbagkncekinflcnj" "DeepL: translate and write with AI")
+          # Social / Content
+          (ext "iffnacikcgjlndahdgnckeekdefoafbn" "Reddit Image Opener")
+        ];
       };
       steam-config.enable = true;
       discordsync = {
@@ -407,6 +403,14 @@ in
       # CV — resume generator + career pipeline server (cv.home.lan).
       # Sops: platforms/nixos/secrets/cv.yaml (cv_api_key → CV_API_KEY).
       cv-server = {
+        enable = true;
+      };
+
+      # InboxClean — Gmail AI assistant dashboard (inbox.home.lan).
+      # Sops: platforms/nixos/secrets/inboxclean.yaml (gmail credentials.json).
+      # Runbook: complete the one-time OAuth flow (see modules/nixos/services/
+      # inboxclean.nix header), then flip sync.enable = true.
+      inboxclean = {
         enable = true;
       };
 
@@ -592,7 +596,7 @@ in
       overview = {
         enable = true;
         port = ports.overview;
-        searchPaths = [ "/home/${config.users.primaryUser}/projects" ];
+        searchPaths = ["/home/${config.users.primaryUser}/projects"];
         logLevel = "info";
         # Daemon architecture: overview delegates all discovery to the
         # project-discovery daemon over the unix socket. It never touches the
@@ -707,7 +711,7 @@ in
         enable = true;
         autodetect = false;
         devices = [
-          { device = "/dev/nvme0n1"; }
+          {device = "/dev/nvme0n1";}
           # Toshiba MG08ACA16TE 16TB pool members (mirrored BTRFS at
           # /mnt/pool, created 2026-08-16 from the dead private-cloud box).
           # Same USB DAS bridge class as the SanDisks: -d sat is required.
@@ -743,67 +747,68 @@ in
       # Monitor365 03:00.
       backup-coordination = {
         enable = true;
-        backups = {
-          immich = {
-            # mediaLocation moved to the mirrored pool 2026-08-16; the DB
-            # backup timer writes next to the media it protects.
-            directory = "/mnt/pool/services/immich/database-backup";
-            maxAgeHours = 25;
+        backups =
+          {
+            immich = {
+              # mediaLocation moved to the mirrored pool 2026-08-16; the DB
+              # backup timer writes next to the media it protects.
+              directory = "/mnt/pool/services/immich/database-backup";
+              maxAgeHours = 25;
+            };
+            paperless = {
+              # Daily documentexporter output (01:30 + randomized delay).
+              directory = "/mnt/pool/services/paperless/export";
+              maxAgeHours = 25;
+            };
+            twenty = {
+              # pg_dump redirected to the pool 2026-08-16.
+              directory = "/mnt/pool/backups/twenty";
+              maxAgeHours = 31;
+            };
+            manifest = {
+              # pg_dump redirected to the pool 2026-08-16.
+              directory = "/mnt/pool/backups/manifest";
+              maxAgeHours = 31;
+            };
+            forgejo = {
+              # Daily forgejo dump (repos+DB+config, 03:30 + randomized delay).
+              directory = "/mnt/pool/backups/forgejo";
+              filePattern = "*.zip";
+              maxAgeHours = 25;
+            };
+            pocket-id = {
+              # Daily sqlite3 .backup of the SSO backbone (04:00 + randomized delay).
+              directory = "/mnt/pool/backups/pocket-id";
+              maxAgeHours = 25;
+            };
+          }
+          // lib.optionalAttrs config.services.monitor365-server.enable {
+            # Only monitored while the service exists — a disabled service must
+            # not fire permanent stale-backup alerts.
+            monitor365 = {
+              directory = "/var/lib/monitor365-server";
+              filePattern = "*.backup_*.db";
+              maxAgeHours = 25;
+            };
+          }
+          // lib.optionalAttrs config.services.cv-server.enable {
+            cv = {
+              # Nightly online .backup of the pipeline event store
+              # (cv-backup.timer, 03:17) onto the mirrored pool.
+              directory = "/mnt/pool/backups/cv";
+              filePattern = "pipeline-*.sqlite";
+              maxAgeHours = 25;
+            };
           };
-          paperless = {
-            # Daily documentexporter output (01:30 + randomized delay).
-            directory = "/mnt/pool/services/paperless/export";
-            maxAgeHours = 25;
-          };
-          twenty = {
-            # pg_dump redirected to the pool 2026-08-16.
-            directory = "/mnt/pool/backups/twenty";
-            maxAgeHours = 31;
-          };
-          manifest = {
-            # pg_dump redirected to the pool 2026-08-16.
-            directory = "/mnt/pool/backups/manifest";
-            maxAgeHours = 31;
-          };
-          forgejo = {
-            # Daily forgejo dump (repos+DB+config, 03:30 + randomized delay).
-            directory = "/mnt/pool/backups/forgejo";
-            filePattern = "*.zip";
-            maxAgeHours = 25;
-          };
-          pocket-id = {
-            # Daily sqlite3 .backup of the SSO backbone (04:00 + randomized delay).
-            directory = "/mnt/pool/backups/pocket-id";
-            maxAgeHours = 25;
-          };
-        }
-        // lib.optionalAttrs config.services.monitor365-server.enable {
-          # Only monitored while the service exists — a disabled service must
-          # not fire permanent stale-backup alerts.
-          monitor365 = {
-            directory = "/var/lib/monitor365-server";
-            filePattern = "*.backup_*.db";
-            maxAgeHours = 25;
-          };
-        }
-        // lib.optionalAttrs config.services.cv-server.enable {
-          cv = {
-            # Nightly online .backup of the pipeline event store
-            # (cv-backup.timer, 03:17) onto the mirrored pool.
-            directory = "/mnt/pool/backups/cv";
-            filePattern = "pipeline-*.sqlite";
-            maxAgeHours = 25;
-          };
-        };
       };
 
       # SSH server with hardening (from nix-ssh-config)
       ssh-server = {
         enable = true;
-        allowUsers = [ config.users.primaryUser ];
+        allowUsers = [config.users.primaryUser];
         passwordAuthentication = false;
         allowRootLogin = false;
-        authorizedKeys = [ nix-ssh-config.sshKeys.lars ];
+        authorizedKeys = [nix-ssh-config.sshKeys.lars];
       };
 
       # Declarative Forgejo repository mirroring
@@ -844,7 +849,7 @@ in
       projects-management-automation = {
         enable = true;
         mode = "active"; # git auto-commit ENABLED — discovery daemon co-located
-        paths = [ "/home/${config.users.primaryUser}/projects" ];
+        paths = ["/home/${config.users.primaryUser}/projects"];
         excludePaths = [
           "/home/${config.users.primaryUser}/projects/forks"
           "/home/${config.users.primaryUser}/projects/archived"

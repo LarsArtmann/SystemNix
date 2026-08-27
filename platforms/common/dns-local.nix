@@ -27,5 +27,6 @@
     "graph"
     "timers"
     "cv"
+    "inbox"
   ];
 }
