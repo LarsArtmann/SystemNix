@@ -2,7 +2,8 @@
   pkgs,
   lib,
   ...
-}: let
+}:
+let
   inherit (import ../../../lib/default.nix lib) ioTier;
 
   # Ceiling for active GPU buffer object allocations — ML model loading needs this high.
@@ -14,7 +15,8 @@
   # were NEVER returned to the kernel, causing GPUActive=51+ GiB with only desktop workloads).
   # 24 GiB is enough for smooth desktop compositing; excess freed pages return to kernel's free pool.
   ttmPagePoolSize = 6291456;
-in {
+in
+{
   # Bootloader and Kernel Configuration
   boot = {
     # Systemd boot configuration
@@ -119,7 +121,7 @@ in {
       "delayacct"
     ];
 
-    binfmt.emulatedSystems = ["aarch64-linux"];
+    binfmt.emulatedSystems = [ "aarch64-linux" ];
 
     # Wipe /tmp on every boot — prevents stale nix build caches from accumulating
     # (2011 go-build dirs / 59 GB observed in a single boot cycle)
@@ -240,7 +242,7 @@ in {
   systemd = {
     services = {
       "sshd".serviceConfig = lib.mkMerge [
-        {OOMScoreAdjust = -1000;}
+        { OOMScoreAdjust = -1000; }
         ioTier.interactive
       ];
       "systemd-journald".serviceConfig.OOMScoreAdjust = -500;
@@ -260,8 +262,8 @@ in {
       # not a /proc/sys/ sysctl, so it can't go in boot.kernel.sysctl.
       mglru-thrash-protection = {
         description = "Enable MGLRU thrashing prevention (min_ttl_ms=1000)";
-        wantedBy = ["multi-user.target"];
-        after = ["systemd-modules-load.service"];
+        wantedBy = [ "multi-user.target" ];
+        after = [ "systemd-modules-load.service" ];
         serviceConfig = {
           Type = "oneshot";
           RemainAfterExit = true;
@@ -311,11 +313,11 @@ in {
 
     user.services = {
       "dms".serviceConfig = lib.mkMerge [
-        {OOMScoreAdjust = -500;}
+        { OOMScoreAdjust = -500; }
         ioTier.desktop
       ];
       "pipewire".serviceConfig = lib.mkMerge [
-        {OOMScoreAdjust = -500;}
+        { OOMScoreAdjust = -500; }
         ioTier.desktop
       ];
     };
@@ -455,7 +457,7 @@ in {
   # kdump vmcore retention — bound /var/crash growth (boot + weekly)
   systemd.timers.kdump-retention = {
     description = "Run kdump vmcore retention cleanup";
-    wantedBy = ["timers.target"];
+    wantedBy = [ "timers.target" ];
     timerConfig = {
       OnBootSec = "10min";
       OnCalendar = "weekly";

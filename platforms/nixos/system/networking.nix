@@ -3,8 +3,9 @@
   lib,
   pkgs,
   ...
-}: {
-  imports = [../../common/dns-resolver.nix];
+}:
+{
+  imports = [ ../../common/dns-resolver.nix ];
   # Networking configuration
   networking = {
     hostName = "evo-x2"; # Machine name
@@ -25,7 +26,7 @@
     # Firewall - deny by default, trust LAN, allow public-facing ports
     firewall = {
       enable = true;
-      trustedInterfaces = ["eno1"];
+      trustedInterfaces = [ "eno1" ];
       allowedTCPPorts = [
         22
         53
@@ -133,11 +134,11 @@
 
   # Enable CUPS to print documents.
   services.printing.enable = true;
-  services.printing.drivers = [pkgs.gutenprint];
+  services.printing.drivers = [ pkgs.gutenprint ];
 
   # Enable SANE for scanning (Canon PIXMA MG2500 scanner)
   hardware.sane.enable = true;
-  hardware.sane.extraBackends = [pkgs.sane-backends];
+  hardware.sane.extraBackends = [ pkgs.sane-backends ];
 
   # nix.gc is defined in platforms/common/nix-settings.nix (shared)
 }

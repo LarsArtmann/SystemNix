@@ -15,11 +15,12 @@
   lib,
   config,
   ...
-}: {
+}:
+{
   options = {
     test-helpers.dnsGateHosts = lib.mkOption {
       type = lib.types.listOf lib.types.nonEmptyStr;
-      default = [];
+      default = [ ];
       description = ''
         Hostnames that must resolve inside the VM without real network.
         Set this on nodes whose services carry a DNS gate (mkDnsGate getent
