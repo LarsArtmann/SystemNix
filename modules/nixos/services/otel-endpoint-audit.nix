@@ -252,6 +252,7 @@ _: {
             file-and-image-renamer = "http-host-port";
             file-and-image-renamer-health = "http-host-port";
             papdashboard = "http-host-port";
+            cv-server = "http-host-port";
           };
           description = ''
             Per-service OTLP endpoint shape contract. Register EVERY service

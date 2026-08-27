@@ -1677,6 +1677,23 @@ _: {
                   ];
                   alerts = discordAlert "CV /cv page no longer renders HTML — content sync, config, or the render layer is broken (cv.home.lan)";
                 })
+                # Functional: the PDF export actually compiles — this stayed
+                # green through a real incident where the typst template
+                # vanished from the state dir and /export/pdf 404'd while
+                # /cv kept rendering (2026-08-27). 5m interval stays far
+                # inside the export rate limit (5/min burst 8 per client).
+                (mkHttpCheck {
+                  name = "CV PDF Export";
+                  group = "Productivity";
+                  url = "http://localhost:${toString ports.cv}/export/pdf";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 10000"
+                    "[BODY] == pat(*%PDF*)"
+                  ];
+                  alerts = discordAlert "CV /export/pdf broken — typst template missing from /var/lib/cv/assets or the typst renderer failed (cv.home.lan). Check: journalctl -u cv-server, restart re-syncs assets.";
+                })
               ]
               ++ lib.optionals (config.services.bank-sync.enable or false) [
                 (mkHttpCheck {

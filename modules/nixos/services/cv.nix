@@ -48,6 +48,15 @@
           # CV_ENVIRONMENT drives CSP strictness (production blocks inline
           # scripts without nonces) and skips dev rate-limit bypasses.
           environment = "production";
+          # Tracked applications/evaluations must survive restarts: the
+          # memory store (default) evaporates on every service restart,
+          # and cv-backup below protects exactly this file. data/ ROOT
+          # files are never touched by the upstream content sync (it only
+          # replaces the 8 content SUBDIRS).
+          pipeline = {
+            event_store_driver = "sqlite";
+            event_store_dsn = "/var/lib/cv/data/pipeline.sqlite";
+          };
         };
       };
 
@@ -63,7 +72,13 @@
           })
           {
             # Keep GC headroom below the 1G cgroup cap (validate-gomemlimit).
-            Environment = ["GOMEMLIMIT=768MiB"];
+            # OTEL_*: Go otlptracehttp — bare host:port, NO scheme (the SDK
+            # builds the URL itself); registered in otel-endpoint-audit.
+            Environment = [
+              "GOMEMLIMIT=768MiB"
+              "OTEL_EXPORTER_OTLP_ENDPOINT=localhost:${toString ports.signoz-otlp-http}"
+              "OTEL_ENVIRONMENT=production"
+            ];
           }
         ];
       };
