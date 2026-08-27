@@ -128,18 +128,51 @@ in
     };
     "signoz/rules/gpu-thermal.json".source = mkRule {
       name = "GPU Thermal Throttling (>90°C)";
-      description = "AMD GPU temperature above 90°C on {{.Labels.card}}";
-      query = "node_amdgpu_gpu_temp_celsius";
+      description = "AMD GPU temperature above 90°C";
+      # node_amdgpu_gpu_temp_celsius does not exist (0 series — node_exporter
+      # exposes GPU temp only via hwmon). Two-source OR for bus-renumber
+      # resilience: the hwmon chip label is PCI-address-keyed (breaks silently
+      # when this box renumbers buses after hard crashes), while ClickHouse's
+      # async metric name (amdgpu_edge) is stable but only exists while CH
+      # runs. Together they cover each other's blind spot.
+      query = ''max(node_hwmon_temp_celsius{chip=~".*c5:00_0"} or ClickHouseAsyncMetrics_Temperature_amdgpu_edge)'';
       target = 90;
     };
     "signoz/rules/dnsblockd-down.json".source = mkRule {
       name = "DNS Blocker Down";
-      description = "dnsblockd metrics endpoint is unreachable";
-      query = ''up{job="dnsblockd"}'';
+      description = "dnsblockd service unit is not active";
+      # up{job="dnsblockd"} NEVER matched: the OTel prometheus receiver stores
+      # the scrape job as the resource attribute service.name (dotted labels
+      # are unmatchable in PromQL), so no series ever carried a `job` label —
+      # the rule was permanently phantom-green while the stats API wedged
+      # 2026-08-27. The systemd collector's unit-state gauge is the real
+      # signal for process death (same fix as the ollama rule).
+      query = ''node_systemd_unit_state{name="dnsblockd.service",state="active"}'';
       step = 60;
       op = "below";
       target = 1;
       interval = "1m";
+    };
+    "signoz/rules/dnsblockd-stats-wedged.json".source = mkRule {
+      name = "DNS Blocker Stats API Wedged";
+      description = "dnsblockd /metrics scrape failing — stats API wedged or unreachable (DNS may still resolve)";
+      # Process can be active while its :9090 stats API is wedged (live
+      # 2026-08-27: handlers stuck mid-request, CLOSE_WAIT pileup). When the
+      # scrape SUCCEEDS, dnsblockd's OTel bridge self-reports the
+      # service_name label on the up series; when it fails the receiver
+      # emits a bare-label up=0 series, the labeled one goes stale, and
+      # count(...) drops to 0 — `or vector(0)` turns that into a fireable
+      # value. WARNING severity: DNS resolution itself is covered by the
+      # Gatus DNS checks and usually survives the wedge.
+      # Fragility note: depends on dnsblockd's self-reported service_name
+      # label; if upstream drops its OTel bridge labels, this alert would
+      # fire permanently false — keep an eye on it after dnsblockd bumps.
+      query = ''count(up{service_name="dnsblockd"}) or vector(0)'';
+      step = 60;
+      op = "below";
+      target = 1;
+      interval = "1m";
+      severity = "warning";
     };
     "signoz/rules/dnsblockd-crashes.json".source = mkRule {
       name = "DNS Blocker Listener Crashes";
@@ -152,10 +185,15 @@ in
     };
     "signoz/rules/emeet-pixyd-down.json".source = mkRule {
       name = "EMEET PIXY Daemon Down";
-      description = "emeet-pixyd metrics endpoint is unreachable";
-      query = ''up{job="emeet-pixyd"}'';
+      description = "emeet-pixyd is not running while a graphical session is active — webcam auto-management broken";
+      # Session-aware gate (mirrors the Gatus design): emeet-pixyd is a
+      # graphical-session user service, legitimately absent when nobody is
+      # logged in — a raw up{job=}/running check false-fires on every
+      # SSH-only period. The textfile collector already computes the gated
+      # boolean (niri running AND daemon missing = 1). Also fixes the
+      # phantom-green: up{job="emeet-pixyd"} never matched any series.
+      query = "system_emeet_pixyd_expected_down";
       step = 60;
-      op = "below";
       target = 1;
       interval = "1m";
       severity = "warning";
@@ -168,10 +206,14 @@ in
     };
     "signoz/rules/niri-down.json".source = mkRule {
       name = "Niri Compositor Down";
-      description = "Niri Wayland compositor is not running — desktop may be unresponsive";
-      query = "niri_running";
+      description = "Graphical session is active but niri is not running — desktop died mid-session";
+      # Session-aware gate (same design as the Gatus niri checks): raw
+      # `niri_running < 1` false-fires critical on every headless/SSH-only
+      # period (it sat firing 2026-08-27 while the machine was healthy).
+      # niri_desktop_died = 1 ONLY when a graphical session exists AND niri
+      # is gone (60s grace built into the emitter).
+      query = "niri_desktop_died";
       step = 60;
-      op = "below";
       target = 1;
       interval = "1m";
     };
@@ -210,10 +252,12 @@ in
     };
     "signoz/rules/docker-down.json".source = mkRule {
       name = "Docker Daemon Down";
-      description = "Docker engine metrics endpoint is unreachable — daemon down or wedged";
-      # Direct engine signal (metrics-addr on 127.0.0.1) — the old
-      # up{job="cadvisor"} proxy kept serving while dockerd idled.
-      query = ''up{job="docker-engine"}'';
+      description = "Docker engine daemon unit is not active";
+      # up{job="docker-engine"} was phantom-green (no series carries a `job`
+      # label — see dnsblockd-down). Unit-state gauge is the real signal;
+      # engine metrics presence is separately visible via the collector's
+      # scrape coverage.
+      query = ''node_systemd_unit_state{name="docker.service",state="active"}'';
       step = 60;
       op = "below";
       target = 1;
@@ -268,8 +312,10 @@ in
     };
     "signoz/rules/collector-down.json".source = mkRule {
       name = "Telemetry Collector Down";
-      description = "SigNoz OTel collector self-metrics endpoint is unreachable — ALL telemetry ingestion (logs/traces/metrics) is at risk";
-      query = ''up{job="signoz-collector"}'';
+      description = "SigNoz OTel collector unit is not active — ALL telemetry ingestion (logs/traces/metrics) is at risk";
+      # up{job="signoz-collector"} was phantom-green (no `job` label exists
+      # in the OTel metrics store — see dnsblockd-down).
+      query = ''node_systemd_unit_state{name="signoz-collector.service",state="active"}'';
       step = 60;
       op = "below";
       target = 1;
@@ -288,8 +334,10 @@ in
     };
     "signoz/rules/clickhouse-down.json".source = mkRule {
       name = "ClickHouse Down";
-      description = "ClickHouse Prometheus endpoint is unreachable — the telemetry store itself is down";
-      query = ''up{job="clickhouse"}'';
+      description = "ClickHouse service unit is not active — the telemetry store itself is down";
+      # up{job="clickhouse"} was phantom-green (no `job` label exists — see
+      # dnsblockd-down).
+      query = ''node_systemd_unit_state{name="clickhouse.service",state="active"}'';
       step = 60;
       op = "below";
       target = 1;

@@ -264,6 +264,30 @@ in
         timeout --signal=KILL 1 mkdir -p $fallback
     end
 
+    # 2026-08-27: stale sessions carry UNEXPANDED '$HOME/...' env literals
+    # (exported verbatim from nix print-dev-env attrs — Nix does not expand
+    # $HOME in plain strings; the CV devshell GOPATH attr was the offender,
+    # fixed at source). A literal's dirname is a RELATIVE '$HOME' path, so
+    # the liveness probe above would mkdir it INTO the CWD and call it
+    # alive — Go then writes './$HOME/.go/pkg/sumdb' junk next to every
+    # module. Expand before probing.
+    function __expand_literal_home -a var
+        if set -q $var; and string match -q '*$HOME*' -- $$var
+            echo "⚠ $var=$$var is an unexpanded literal — expanding"
+            set -gx $var (string replace -a '$HOME' -- $HOME $$var)
+        end
+    end
+    __expand_literal_home TMPDIR
+    __expand_literal_home GOCACHE
+    __expand_literal_home GOMODCACHE
+    __expand_literal_home GOLANGCI_LINT_CACHE
+    __expand_literal_home CARGO_HOME
+    __expand_literal_home PIP_CACHE_DIR
+    __expand_literal_home SCCACHE_DIR
+    __expand_literal_home npm_config_cache
+    __expand_literal_home PLAYWRIGHT_BROWSERS_PATH
+    __expand_literal_home GOPATH
+
     __go_cache_redirect TMPDIR $HOME/tmp
     __go_cache_redirect GOCACHE $HOME/tmp/go-cache
     __go_cache_redirect GOMODCACHE $HOME/tmp/go-mod

@@ -43,7 +43,7 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "max(node_amdgpu_gpu_temp_celsius)",
+                    "query": "max(node_hwmon_temp_celsius{chip=~\".*c5:00_0\"} or ClickHouseAsyncMetrics_Temperature_amdgpu_edge)",
                     "disabled": false,
                     "step": 0,
                     "stats": false,
@@ -232,11 +232,11 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "node_amdgpu_gpu_temp_celsius",
+                    "query": "max(node_hwmon_temp_celsius{chip=~\".*c5:00_0\"} or ClickHouseAsyncMetrics_Temperature_amdgpu_edge)",
                     "disabled": false,
                     "step": 0,
                     "stats": false,
-                    "legend": "{{card}} °C"
+                    "legend": "GPU °C"
                   }
                 }
               }
