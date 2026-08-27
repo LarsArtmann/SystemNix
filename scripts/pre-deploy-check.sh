@@ -42,6 +42,25 @@ else
   warn "nix flake check --no-build — only 'path is not valid' errors (known --no-build limitation, toplevel eval is authoritative)"
 fi
 
+# 1b. Tracked-files trap — flakes only see TRACKED files: a NEW module under
+# modules/ that is not `git add`ed yet makes EVERY evo-x2 eval fail with
+# "attribute missing" while the file sits visibly on disk (aborted a deploy
+# 2026-08-27). Concurrent-session trees are especially prone: another agent
+# writes the module and imports it before staging it.
+echo ""
+echo "1b. Untracked files under modules/ (tracked-files trap)"
+if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  UNTRACKED_MODULES=$(git status --porcelain modules/ platforms/ 2>/dev/null | grep -E '^\?\?' || true)
+  if [ -n "$UNTRACKED_MODULES" ]; then
+    warn "untracked files invisible to flake evals — git add them or they break the NEXT eval that imports them:"
+    while IFS= read -r line; do echo "      $line"; done <<<"$UNTRACKED_MODULES"
+  else
+    pass "no untracked files under modules/ or platforms/"
+  fi
+else
+  pass "not a git worktree (deploying from a copy) — check skipped"
+fi
+
 # 2. Eval the system configuration
 echo ""
 echo "2. Configuration evaluation"

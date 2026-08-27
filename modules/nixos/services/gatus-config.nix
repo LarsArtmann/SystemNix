@@ -1297,6 +1297,23 @@ _: {
                   alerts = discordAlert "/tmp tmpfs exceeds 80% (~38 GiB of 48 GiB cap) — runaway build or temp file accumulation. Check: du -sh /tmp/* | sort -rh | head";
                 })
                 (mkHttpCheck {
+                  name = "DNS Blocker Stats API Fresh";
+                  group = "Infrastructure";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  # Anchored forms: the \n MUST reach gatus as a real newline
+                  # (single-backslash in this double-quoted nix string) —
+                  # presence-of-1 at line start + not-0 keep the check
+                  # fail-closed through probe absence (collector down =
+                  # metric absent = both conditions fail = alert fires).
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*system_dnsblockd_metrics_fresh 0\n*)"
+                    "[BODY] == pat(*\nsystem_dnsblockd_metrics_fresh 1*)"
+                  ];
+                  alerts = discordAlert "dnsblockd :9090 stats API is wedged or unreachable while the DNS resolver may still be healthy (2026-08-27 class). Recovery runbook: sudo systemctl restart dnsblockd — for a goroutine dump FIRST, see scripts/dnsblockd-goroutine-dump.sh (root).";
+                })
+                (mkHttpCheck {
                   name = "fstrim Duration";
                   group = "Filesystem";
                   url = "http://localhost:${toString nodePort}/metrics";

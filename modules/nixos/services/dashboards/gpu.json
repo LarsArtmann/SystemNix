@@ -144,8 +144,8 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "name": "Temperature by Card",
-            "description": ""
+            "name": "Temperature Sources (hwmon vs ClickHouse)",
+            "description": "Both temp sources overlaid: hwmon chip label is PCI-address-keyed (fragile to bus renumbering), ClickHouseAsyncMetrics is CH-dependent — one series flatlining/absent means that source broke while the alert keeps working via the other"
           },
           "plugin": {
             "kind": "signoz/TimeSeriesPanel",
@@ -190,11 +190,11 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "max(node_hwmon_temp_celsius{chip=~\".*c5:00_0\"} or ClickHouseAsyncMetrics_Temperature_amdgpu_edge)",
+                    "query": "node_hwmon_temp_celsius{chip=~\".*c5:00_0\"} or ClickHouseAsyncMetrics_Temperature_amdgpu_edge",
                     "disabled": false,
                     "step": 0,
                     "stats": false,
-                    "legend": "GPU °C"
+                    "legend": ""
                   }
                 }
               }
