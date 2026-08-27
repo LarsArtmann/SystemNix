@@ -438,6 +438,37 @@ else
   report_skip "Bank-Sync — service disabled (units absent from systemd)"
 fi
 
+# InboxClean (port from lib/ports.nix: 8099). /health proves the CQRS stack
+# (SQLite + event store migrations ran); the dashboard body proves templ
+# rendering. gmail:"not_connected" is EXPECTED until the one-time OAuth
+# runbook completes (see modules/nixos/services/inboxclean.nix header) —
+# only warn, never fail, on that state.
+inboxclean_enabled=false
+test -e /etc/systemd/system/inboxclean-web.service && inboxclean_enabled=true
+if $inboxclean_enabled; then
+  inboxclean_health="$(wait_body_pattern "http://127.0.0.1:8099/health" '"status": *"ok"' 6 5)" || true
+  if grep -q '"status": *"ok"' <<<"$inboxclean_health"; then
+    report_pass "InboxClean — /health ok (CQRS stack + migrations up)"
+  elif [ -z "$inboxclean_health" ]; then
+    report_fail "InboxClean — :8099/health unreachable after 6 attempts (journalctl -u inboxclean-web -n 30)"
+  else
+    report_fail "InboxClean — /health answered but status is not ok"
+  fi
+  inboxclean_body="$(wait_body_pattern "http://127.0.0.1:8099/" 'Dashboard' 6 5)" || true
+  if grep -q 'Dashboard' <<<"$inboxclean_body"; then
+    report_pass "InboxClean — dashboard renders (templ stack)"
+  else
+    report_fail "InboxClean — :8099 answered but the dashboard body lacks content"
+  fi
+  if grep -q '"gmail": *"ok"' <<<"${inboxclean_health:-}"; then
+    report_pass "InboxClean — Gmail connected (OAuth token active)"
+  else
+    report_warn "InboxClean — Gmail not_connected: complete the OAuth runbook and enable services.inboxclean.sync"
+  fi
+else
+  report_skip "InboxClean — service disabled (units absent from systemd)"
+fi
+
 # Hermes: the read-only projects bind and the dubious-ownership gitconfig
 # live ONLY inside the gateway's mount namespace — unit state and the unit
 # file alone cannot prove they reached the running process. The gateway PID's
@@ -642,6 +673,49 @@ if signoz_rules=$(curl -s --compressed --max-time 5 "http://localhost:8080/api/v
 else
   echo -e "${YELLOW}SKIP${NC} SigNoz rules endpoint not reachable"
   SKIP=$((SKIP + 1))
+fi
+
+# SigNoz: the provisioner must have CONVERGED on this deploy. A failed
+# signoz-provision leaves STALE rules/dashboards in place, so the rule-count
+# check above stays green off old state (2026-08-27: provisioner hard-failed
+# on a dashboard layout $ref bug for ~18 min while the count check passed —
+# a phantom green in this checker itself).
+if systemctl list-unit-files 'signoz*' --no-legend 2>/dev/null | grep -q signoz-provision; then
+  signoz_prov_result=$(systemctl show signoz-provision.service -p Result --value 2>/dev/null)
+  case "$signoz_prov_result" in
+  success)
+    echo -e "${GREEN}PASS${NC} signoz-provision.service converged (Result=success — rules AND dashboards match nix)"
+    PASS=$((PASS + 1))
+    ;;
+  "")
+    echo -e "${YELLOW}WARN${NC} signoz-provision.service has no Result yet (never started since load?)"
+    SKIP=$((SKIP + 1))
+    ;;
+  *)
+    echo -e "${RED}FAIL${NC} signoz-provision.service Result=${signoz_prov_result} — rules/dashboards are STALE. Check: journalctl -u signoz-provision -n 50"
+    FAIL=$((FAIL + 1))
+    ;;
+  esac
+fi
+
+# SigNoz: surface alerts firing longer than 24h. WARN, not FAIL — an ongoing
+# incident (e.g. DAS-dependent units through the pool outage) is a legitimate
+# long-firing state; the point is VISIBILITY at every deploy: a rule that can
+# never resolve is usually a broken query or an unacknowledged outage.
+if signoz_alerts_json=$(curl -s --compressed --max-time 5 "http://localhost:8080/api/v1/alerts" 2>/dev/null) &&
+  [ -n "$signoz_alerts_json" ]; then
+  LONG_FIRING=$(echo "$signoz_alerts_json" | jq -r '
+    .data[]?
+    | select(.status.state == "active")
+    | select(((now - (.startsAt | sub("\\.[0-9]+"; "") | fromdateiso8601)) / 86400) > 1)
+    | .labels.alertname' 2>/dev/null | sort -u)
+  if [ -n "$LONG_FIRING" ]; then
+    echo -e "${YELLOW}WARN${NC} SigNoz alerts firing >24h (ongoing incidents or unresolvable rules): $(echo "$LONG_FIRING" | tr '\n' ' ')"
+    SKIP=$((SKIP + 1))
+  else
+    echo -e "${GREEN}PASS${NC} no SigNoz alert firing longer than 24h"
+    PASS=$((PASS + 1))
+  fi
 fi
 
 # llama.cpp RAG stack functional probes (enable-gated like the liveness checks
