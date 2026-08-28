@@ -8,9 +8,11 @@
   lib,
   modulesPath,
   ...
-}: let
+}:
+let
   mkFilesystem = import ../../../lib/filesystems.nix lib;
-in {
+in
+{
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
   ];
@@ -24,7 +26,7 @@ in {
         "usbhid"
         "sdhci_pci"
       ];
-      kernelModules = ["amdgpu"];
+      kernelModules = [ "amdgpu" ];
     };
     # Restore critical network drivers (Realtek 2.5G Ethernet + MediaTek WiFi)
     kernelModules = [
@@ -32,7 +34,7 @@ in {
       "mt7925e"
       "r8125"
     ];
-    extraModulePackages = with config.boot.kernelPackages; [r8125];
+    extraModulePackages = with config.boot.kernelPackages; [ r8125 ];
   };
 
   # Required for WiFi/Bluetooth hardware
@@ -175,7 +177,7 @@ in {
   # helper program" before the mount(2) syscall that would have triggered
   # the kernel's request_module autoload — verified live 2026-08-22 when the
   # migration script's temp mount failed on a freshly-mkfs'd XFS.
-  boot.supportedFilesystems = ["xfs"];
+  boot.supportedFilesystems = [ "xfs" ];
 
   # Disk swap dropped — zramSwap (10% of 64G = ~6.4G compressed) is sufficient.
   # Freed 10G from p2. See boot.nix for zramSwap config.

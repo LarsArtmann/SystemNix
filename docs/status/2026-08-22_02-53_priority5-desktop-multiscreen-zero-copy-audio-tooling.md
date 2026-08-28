@@ -15,6 +15,7 @@
 All three sub-items from the TODO implemented in `platforms/nixos/desktop/niri-wrapped.nix`:
 
 #### Monitor Cycling Keybindings (lines 342–347)
+
 - `Mod+Tab` → `focus-monitor-next` — cycle focus between monitors without edge-crossing
 - `Mod+Shift+Tab` → `move-column-to-monitor-next` — carry focused column to next monitor
 - `Mod+Ctrl+Tab` → `move-workspace-to-monitor-next` — move entire workspace to next monitor
@@ -22,6 +23,7 @@ All three sub-items from the TODO implemented in `platforms/nixos/desktop/niri-w
 - Verified: niri action names (`focus-monitor-next`, `move-column-to-monitor-next`, `move-workspace-to-monitor-next`) confirmed against niri-flake `memo-binds.nix` source
 
 #### Named-Workspace Jump Binds (lines 381–387)
+
 - `Mod+M` → `focus-workspace "main"` (DP-1)
 - `Mod+B` → `focus-workspace "browser"` (DP-1)
 - `Mod+E` → `focus-workspace "dev"` (DP-1)
@@ -31,6 +33,7 @@ All three sub-items from the TODO implemented in `platforms/nixos/desktop/niri-w
 - The 5 workspaces match the existing `workspaces` block (lines 631–636) and `window-rules` open-on-workspace routing
 
 #### Idle DPMS via Swayidle (lines 696–704)
+
 - Added `swayidleDpmsOff` script: `niri msg action power-off-monitors` (runtimeInputs: `pkgs.niri-unstable`)
 - Swayidle ExecStart chain: `timeout 1200 <dpms-off> timeout 43200 <suspend> before-sleep <dms-lock>`
   - 1200s (20min) idle → DPMS off via niri action
@@ -131,6 +134,7 @@ No errors, no broken builds, no bad edits. One minor scare:
 ## f) Up to 50 Things We Should Get Done Next
 
 ### Immediate (this session's follow-ups)
+
 1. **Deploy the changes** — `nix run .#deploy` to activate all 3 changes on evo-x2
 2. **Verify swayidle DPMS** — After deploy, let the machine idle 20min and confirm monitors power off
 3. **Verify `Mod+Tab` monitor cycling** — After deploy, test that Tab cycles between DP-1 and DP-2
@@ -140,12 +144,14 @@ No errors, no broken builds, no bad edits. One minor scare:
 7. **Check DMS plugin keybind conflicts with `Mod+Tab`** — Verify no DMS plugin handles `Mod+Tab`
 
 ### Smart-Audio (Priority 2, now unblocked)
+
 8. **Verify smart-audio audibility** — Use `speaker-test -c2 -twav` to confirm audio routes to the correct HDMI output per workspace
 9. **Test smart-audio reverse direction** — Verify audio switches back when focus returns to DP-1
 10. **Test smart-audio with TV as audio sink** — Verify DPMS doesn't fire while TV is playing audio (sway-audio-idle-inhibit)
 11. **Verify `pw-cat` / `pw-play` are on PATH** — Check if they were already available before the package addition
 
 ### Desktop (Priority 5 remaining)
+
 12. **When 2nd LG arrives: clone DP-1 output entry** — Add a second DP-1 output block with the new monitor's EDID
 13. **When 2nd LG arrives: rebind `Mod+H/L`** — Restore edge-crossing column focus for adjacent identical monitors
 14. **Consider `Mod+Shift+M/B/E/C/V` for move-to-named-workspace** — Symmetric with the numbered workspace pattern
@@ -154,18 +160,21 @@ No errors, no broken builds, no bad edits. One minor scare:
 17. **Review whether 20min is the right DPMS timeout** — May need tuning based on usage patterns
 
 ### Helium / Browser
+
 18. **If zero-copy removal prevents crashes: remove `--disable-gpu-watchdog`** — Conditional on observation
 19. **If zero-copy removal causes video perf regression: re-add with a different approach** — e.g. `--enable-features=...ZeroCopyGL` only
 20. **Audit remaining Chromium flags for deprecation** — Some VaapiVideoDecoder flags may be no-ops in Chromium 151+
 21. **Check if `--disable-gpu-watchdog` is still needed at all** — Even with zero-copy removed, the watchdog may be unnecessary on AMD GPU
 
 ### Audio
+
 22. **Add `pw-cli` to the audio debugging toolkit** — Already added via `pipewire` package, but document usage in a runbook
 23. **Create an audio debugging runbook** — `docs/services/audio-debugging.md` with speaker-test, pw-cat, wpctl examples
 24. **Verify `alsa-utils` `speaker-test` works with PipeWire** — PipeWire's ALSA compatibility layer should make this work, but verify
 25. **Consider adding `easyeffects` or `qpwgraph`** — GUI tools for PipeWire routing visualization (may be overkill for a headless-first setup)
 
 ### Niri / Wayland
+
 26. **Review niri `focus-monitor-next` behavior with 2 monitors** — Does it cycle DP-1 → DP-2 → DP-1, or does it depend on physical layout?
 27. **Review niri `move-workspace-to-monitor-next` behavior** — Does it move the workspace or just focus? Test with a populated workspace
 28. **Consider `focus-monitor-previous` bind** — `Mod+Shift+Tab` is taken, but a reverse cycle could use `Mod+Ctrl+Shift+Tab` or similar
@@ -175,6 +184,7 @@ No errors, no broken builds, no bad edits. One minor scare:
 32. **Review whether `sway-audio-idle-inhibit` covers all audio cases** — Does it inhibit during system audio (notifications, alarms) or only media playback?
 
 ### General Desktop
+
 33. **Audit all niri keybinds for DMS conflicts** — Systematic check of every `Mod+X` bind against DMS plugin keybinds
 34. **Document the full keybind map** — A cheat sheet in `docs/services/niri-keybinds.md` (the DMS keybinds modal already exists at `Mod+?`, but a static reference is useful)
 35. **Consider `Mod+grave` (backtick) as a workspace overview** — Some WMs use this for expose/overview
@@ -182,18 +192,21 @@ No errors, no broken builds, no bad edits. One minor scare:
 37. **Check if `power-off-monitors` affects USB-C DP alt mode displays** — Some displays don't handle DPMS well over USB-C
 
 ### Build / Deploy
+
 38. **Run `nix run .#deploy` and verify post-deploy checks pass** — The post-deploy smoke test should still pass
 39. **Check if `alsa-utils` adds significant closure size** — `speaker-test` pulls in ALSA libs; verify the system closure isn't bloated
 40. **Verify `pipewire` package doesn't conflict with `services.pipewire` module** — The package and the module should coexist, but verify
 41. **Run `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel` to verify the full build** — Eval is not build; a build would catch FOD hash issues
 
 ### Monitoring
+
 42. **Add a Gatus check for swayidle service health** — Currently no monitoring for the idle daemon
 43. **Add a Gatus check for smart-audio service health** — Currently no monitoring for the audio router
 44. **Consider a metric for display power state** — Track whether monitors are on/off via a textfile collector
 45. **Log DPMS events** — Journal the `power-off-monitors` calls for debugging
 
 ### Documentation
+
 46. **Update `docs/services/` with niri keybind reference** — If one doesn't exist, create it
 47. **Update the DMS section in AGENTS.md with the new keybinds** — Already done, but could be more detailed
 48. **Document the `--enable-zero-copy` removal test in a status report** — This report covers it, but a dedicated decision record might be useful
@@ -220,25 +233,27 @@ I checked niri binds for conflicts (none found) but I did not check DMS plugin k
 
 ## Session Summary
 
-| Task | Status | Verification |
-|---|---|---|
-| Niri multiscreen keybindings | DONE | Eval-verified (bind names + action values) |
-| Idle DPMS via swayidle | DONE | Eval-verified (ExecStart string) |
-| `--enable-zero-copy` removal | DONE | Eval-verified (flag absent from wrapper) |
-| Test-tone tooling | DONE | Eval-verified (packages in systemPackages) |
-| AGENTS.md update | DONE | Diff-verified |
-| TODO_LIST.md update | DONE | Diff-verified |
-| `nix flake check --no-build` | PASS | All checks passed |
-| Deploy | NOT DONE | User decision |
-| Runtime verification | NOT DONE | Pending deploy |
+| Task                         | Status   | Verification                               |
+| ---------------------------- | -------- | ------------------------------------------ |
+| Niri multiscreen keybindings | DONE     | Eval-verified (bind names + action values) |
+| Idle DPMS via swayidle       | DONE     | Eval-verified (ExecStart string)           |
+| `--enable-zero-copy` removal | DONE     | Eval-verified (flag absent from wrapper)   |
+| Test-tone tooling            | DONE     | Eval-verified (packages in systemPackages) |
+| AGENTS.md update             | DONE     | Diff-verified                              |
+| TODO_LIST.md update          | DONE     | Diff-verified                              |
+| `nix flake check --no-build` | PASS     | All checks passed                          |
+| Deploy                       | NOT DONE | User decision                              |
+| Runtime verification         | NOT DONE | Pending deploy                             |
 
 **Files changed:**
+
 - `platforms/nixos/desktop/niri-wrapped.nix` — +24 lines (keybinds + swayidle DPMS)
 - `platforms/common/packages/base.nix` — +10 lines (zero-copy removal + audio tools)
 - `AGENTS.md` — +6 lines (3 doc updates)
 - `TODO_LIST.md` — +6 lines (3 items marked done)
 
 **Commits (auto-commit daemon):**
+
 - `0241b357` feat(niri): add monitor cycling and named-workspace jump keybindings
 - `4c8feb25` feat(niri): add automatic display power-off after 20 minutes idle
 - `6ed0ea57` fix(packages): remove deprecated --enable-zero-copy Chromium flag

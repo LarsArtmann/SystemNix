@@ -55,15 +55,15 @@ User asked "why the fuck did we crash this time". Boot `-1` (00:48:05 → 05:49:
 
 ## Timeline
 
-| Time  | Event |
-| ----- | ----- |
-| ~06:00 | Boot census, journal forensics boot `-1` (timeline, OOM dump, trips) |
-| ~06:08 | Guard module gap analysis → 3 design gaps identified |
+| Time   | Event                                                                                                      |
+| ------ | ---------------------------------------------------------------------------------------------------------- |
+| ~06:00 | Boot census, journal forensics boot `-1` (timeline, OOM dump, trips)                                       |
+| ~06:08 | Guard module gap analysis → 3 design gaps identified                                                       |
 | ~06:10 | Module rewritten (socket sacrifice, Zone 3, 30 s, restore state machine); caught+fixed `$SOCKET_UNITS` bug |
-| ~06:12 | flake check (passed; note: gatus edit mid-flight — gap), gatus + AGENTS.md + status report |
-| ~06:14 | Deploy attempt 1 (botched backgrounding) → killed |
-| ~06:22 | Deploy attempt 2 → died "Could not acquire lock" (concurrent session switching; my commits ride along) |
-| ~06:24 | This report |
+| ~06:12 | flake check (passed; note: gatus edit mid-flight — gap), gatus + AGENTS.md + status report                 |
+| ~06:14 | Deploy attempt 1 (botched backgrounding) → killed                                                          |
+| ~06:22 | Deploy attempt 2 → died "Could not acquire lock" (concurrent session switching; my commits ride along)     |
+| ~06:24 | This report                                                                                                |
 
 ## Final Verdict
 

@@ -72,7 +72,7 @@ in
   name = "memory-emergency-guard";
 
   nodes.machine =
-    { config, ... }:
+    { ... }:
     {
       imports = [
         # The module file is a flake-parts wrapper (top-level lambda

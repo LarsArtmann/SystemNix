@@ -23,75 +23,77 @@
 #   3. Flip services.inboxclean.sync.enable to true and redeploy.
 #      Until then the sync timer stays off: without a token every run fails
 #      (Infrastructure family, exit 69) and would spam onFailure alerts.
-{inputs, ...}: {
-  flake.nixosModules.inboxclean = {
-    config,
-    pkgs,
-    lib,
-    ...
-  }: let
-    inherit
-      (import ../../../lib/default.nix lib)
-      harden
-      ports
-      onFailure
-      serviceDefaults
-      serviceOneshotDefaults
-      ioTier
-      ;
-    cfg = config.services.inboxclean;
-    inboxcleanPkg = inputs.inboxclean.packages.${pkgs.stdenv.hostPlatform.system}.default;
-  in {
-    imports = [inputs.inboxclean.nixosModules.default];
+{ inputs, ... }: {
+  flake.nixosModules.inboxclean =
+    {
+      config,
+      pkgs,
+      lib,
+      ...
+    }:
+    let
+      inherit (import ../../../lib/default.nix lib)
+        harden
+        ports
+        onFailure
+        serviceDefaults
+        serviceOneshotDefaults
+        ioTier
+        ;
+      cfg = config.services.inboxclean;
+      inboxcleanPkg = inputs.inboxclean.packages.${pkgs.stdenv.hostPlatform.system}.default;
+    in
+    {
+      imports = [ inputs.inboxclean.nixosModules.default ];
 
-    config = lib.mkIf cfg.enable {
-      # CLI on PATH for the one-time `auth` runbook and operator use
-      # (events/undo/export/doctor against the service database).
-      environment.systemPackages = [cfg.package];
+      config = lib.mkIf cfg.enable {
+        # CLI on PATH for the one-time `auth` runbook and operator use
+        # (events/undo/export/doctor against the service database).
+        environment.systemPackages = [ cfg.package ];
 
-      services.inboxclean = {
-        package = lib.mkDefault inboxcleanPkg;
-        addr = lib.mkDefault "127.0.0.1:${toString ports.inboxclean}";
-        gmailCredentialsFile = lib.mkDefault config.sops.secrets.inboxclean_gmail_credentials.path;
-        # See runbook above: enable after the one-time OAuth flow.
-        sync.enable = lib.mkDefault false;
-      };
+        services.inboxclean = {
+          package = lib.mkDefault inboxcleanPkg;
+          addr = lib.mkDefault "127.0.0.1:${toString ports.inboxclean}";
+          gmailCredentialsFile = lib.mkDefault config.sops.secrets.inboxclean_gmail_credentials.path;
+          # See runbook above: enable after the one-time OAuth flow.
+          sync.enable = lib.mkDefault false;
+        };
 
-      systemd.services.inboxclean-web = {
-        after = ["sops-nix.service"];
-        wants = ["sops-nix.service"];
-        inherit onFailure;
-        startLimitBurst = 5;
-        startLimitIntervalSec = 300;
+        systemd.services.inboxclean-web = {
+          after = [ "sops-nix.service" ];
+          wants = [ "sops-nix.service" ];
+          inherit onFailure;
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
 
-        serviceConfig = lib.mkMerge [
-          (harden {
-            MemoryMax = "512M";
-            ReadWritePaths = [cfg.dataDir];
-          })
-          (serviceDefaults {})
-          ioTier.background
-          {Environment = ["GOMEMLIMIT=384MiB"];}
-        ];
-      };
+          serviceConfig = lib.mkMerge [
+            (harden {
+              MemoryMax = "512M";
+              ReadWritePaths = [ cfg.dataDir ];
+            })
+            (serviceDefaults { })
+            ioTier.background
+            { Environment = [ "GOMEMLIMIT=384MiB" ]; }
+          ];
+        };
 
-      systemd.services.inboxclean-sync = {
-        after = ["sops-nix.service"];
-        wants = ["sops-nix.service"];
-        inherit onFailure;
-        startLimitBurst = 5;
-        startLimitIntervalSec = 300;
+        systemd.services.inboxclean-sync = {
+          after = [ "sops-nix.service" ];
+          wants = [ "sops-nix.service" ];
+          inherit onFailure;
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
 
-        serviceConfig = lib.mkMerge [
-          (harden {
-            MemoryMax = "1G";
-            ReadWritePaths = [cfg.dataDir];
-          })
-          (serviceOneshotDefaults {})
-          ioTier.background
-          {Environment = ["GOMEMLIMIT=768MiB"];}
-        ];
+          serviceConfig = lib.mkMerge [
+            (harden {
+              MemoryMax = "1G";
+              ReadWritePaths = [ cfg.dataDir ];
+            })
+            (serviceOneshotDefaults { })
+            ioTier.background
+            { Environment = [ "GOMEMLIMIT=768MiB" ]; }
+          ];
+        };
       };
     };
-  };
 }

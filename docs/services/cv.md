@@ -6,19 +6,19 @@ Resume/CV generator (`cv serve`, Go + Typst) from the private
 
 ## Layout
 
-| Concern          | Where                                                                |
-| ---------------- | -------------------------------------------------------------------- |
-| Service          | `cv-server.service` (upstream module: CV repo `nix/nixos-module.nix`) |
-| SystemNix wrapper| `modules/nixos/services/cv.nix`                                      |
-| Port             | `8098` (`lib/ports.nix`), loopback only; Caddy `protectedVHost` front |
-| State dir        | `/var/lib/cv` (owned `cv:cv`, 0700)                                  |
-| Config           | generated `config.yaml` symlinked into the state dir from `services.cv-server.settings` |
-| Secrets          | sops `platforms/nixos/secrets/cv.yaml` → template `cv-env` (`CV_API_KEY`), owned `cv:cv` 0400 |
-| Persistence      | `/var/lib/cv/data/pipeline.sqlite` (event store; `pipeline.event_store_driver=sqlite`) |
-| Backups          | `/mnt/pool/backups/cv/pipeline-<ts>.sqlite`, nightly 03:17 (`cv-backup.timer`) |
-| Monitoring       | Gatus: `CV` (liveness 60s), `CV Page Renders` (/cv HTML 5m), `CV PDF Export` (%PDF body 5m) |
-| Tracing          | OTLP-HTTP → localhost:4318, service `cv-application` (SigNoz)        |
-| Upstream pin     | flake input `cv` (rev-locked, git+ssh; no `follows` — vendorHash stability) |
+| Concern           | Where                                                                                         |
+| ----------------- | --------------------------------------------------------------------------------------------- |
+| Service           | `cv-server.service` (upstream module: CV repo `nix/nixos-module.nix`)                         |
+| SystemNix wrapper | `modules/nixos/services/cv.nix`                                                               |
+| Port              | `8098` (`lib/ports.nix`), loopback only; Caddy `protectedVHost` front                         |
+| State dir         | `/var/lib/cv` (owned `cv:cv`, 0700)                                                           |
+| Config            | generated `config.yaml` symlinked into the state dir from `services.cv-server.settings`       |
+| Secrets           | sops `platforms/nixos/secrets/cv.yaml` → template `cv-env` (`CV_API_KEY`), owned `cv:cv` 0400 |
+| Persistence       | `/var/lib/cv/data/pipeline.sqlite` (event store; `pipeline.event_store_driver=sqlite`)        |
+| Backups           | `/mnt/pool/backups/cv/pipeline-<ts>.sqlite`, nightly 03:17 (`cv-backup.timer`)                |
+| Monitoring        | Gatus: `CV` (liveness 60s), `CV Page Renders` (/cv HTML 5m), `CV PDF Export` (%PDF body 5m)   |
+| Tracing           | OTLP-HTTP → localhost:4318, service `cv-application` (SigNoz)                                 |
+| Upstream pin      | flake input `cv` (rev-locked, git+ssh; no `follows` — vendorHash stability)                   |
 
 ## State dir contract
 

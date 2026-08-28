@@ -32,12 +32,12 @@ Boot `f6448713` (20:55–00:27). Evidence chain:
 
 PCI enumeration diff across boots:
 
-| Device | Boot -3 (healthy) | Boot -2 (no network) | Boot -1 / 0 |
-|---|---|---|---|
-| Root port `00:02.1` | present | **ABSENT** | present |
-| RTL8125 `10ec:8125` @ `c1:00.0` | present | **ABSENT** | present |
-| SDHCI `17a0:9755` | `c2:00.0` | **shifted to `c1:00.0`** | `c2:00.0` |
-| Buses c2..c7 | — | renumbered −1 | normal |
+| Device                          | Boot -3 (healthy) | Boot -2 (no network)     | Boot -1 / 0 |
+| ------------------------------- | ----------------- | ------------------------ | ----------- |
+| Root port `00:02.1`             | present           | **ABSENT**               | present     |
+| RTL8125 `10ec:8125` @ `c1:00.0` | present           | **ABSENT**               | present     |
+| SDHCI `17a0:9755`               | `c2:00.0`         | **shifted to `c1:00.0`** | `c2:00.0`   |
+| Buses c2..c7                    | —                 | renumbered −1            | normal      |
 
 r8125 loaded but had **no device to probe**; `eno1` never existed; static IPs (192.168.1.150/.200/.53) never configured → **not even .150 answered on LAN**. The user's second reboot retrained the link. Warm reboot does NOT reliably fix this; power-cycle does.
 
@@ -142,6 +142,7 @@ flm (24.7 GB shmem — killed, by design the sacrifice), chromium (large), **4×
 ### f) Next Tasks (prioritized, ~50)
 
 **P0 — now:**
+
 1. **Guard retune:** zram ≥95% trips ALONE (drop the AND), keep <5% absolute; consider avail <30% + zram ≥92% as middle band. Eval + deploy.
 2. **PHYSICAL: power off, reseat DAS USB cable + enclosure power, power on.** Verify `ls /sys/block` shows sdb/sdc/sdd/sda again. Try a different USB port/cable if not.
 3. After disks return: pool mount, `btrfs device stats` both members, restart atticd-bootstrap / btrfs-verify-pool-backups / immich / smartd.
@@ -207,14 +208,14 @@ flm (24.7 GB shmem — killed, by design the sacrifice), chromium (large), **4×
 
 ## Appendix: Deployed Artifacts This Session
 
-| Artifact | File | State |
-|---|---|---|
+| Artifact                      | File                                                | State                                                                     |
+| ----------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------- |
 | Memory emergency guard module | `modules/nixos/services/memory-emergency-guard.nix` | deployed; 7 overnight trips; **thresholds need P0 retune after crash #2** |
-| LAN NIC metric + watchdog | `modules/nixos/services/system-health.nix` | deployed; `system_lan_nic_present 1` live |
-| forgejo OIDC full gate | `modules/nixos/services/forgejo.nix` | deployed (unproven until next restart) |
-| Gatus checks ×2 | `modules/nixos/services/gatus-config.nix` | deployed (runtime green-state unconfirmed) |
-| Guard enablement | `platforms/nixos/system/configuration.nix` | deployed |
-| Phantom-metric allowlist | `scripts/pre-deploy-check.sh` | deployed (entry now stale — remove) |
-| Incident documentation | `AGENTS.md` (Hardware Instability section) | written |
+| LAN NIC metric + watchdog     | `modules/nixos/services/system-health.nix`          | deployed; `system_lan_nic_present 1` live                                 |
+| forgejo OIDC full gate        | `modules/nixos/services/forgejo.nix`                | deployed (unproven until next restart)                                    |
+| Gatus checks ×2               | `modules/nixos/services/gatus-config.nix`           | deployed (runtime green-state unconfirmed)                                |
+| Guard enablement              | `platforms/nixos/system/configuration.nix`          | deployed                                                                  |
+| Phantom-metric allowlist      | `scripts/pre-deploy-check.sh`                       | deployed (entry now stale — remove)                                       |
+| Incident documentation        | `AGENTS.md` (Hardware Instability section)          | written                                                                   |
 
 All eval gates green (`nix flake check --no-build`), formatted, committed by the auto-commit daemon.

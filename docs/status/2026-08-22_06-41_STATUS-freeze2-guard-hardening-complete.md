@@ -118,12 +118,12 @@ after cooldown, restore blocked by residual PSI. Passing:
 
 ## System Snapshot (06:41)
 
-| Metric | Value |
-| ------ | ----- |
-| Uptime | 46 min (boot 05:55:36) |
-| MemAvailable / zram / PSI | 31.6% / 20.7% / 0.09% — healthy |
-| Guard | new version live, 30 s cadence, socket up, 0 trips this boot |
-| flm | running (model resident) — expected; healthy headroom |
-| ClickHouse | on XFS (nvme0n1p9), 30% used |
-| DAS | ABSENT (physical reseat needed) |
-| Pool backups | offline until DAS returns |
+| Metric                    | Value                                                        |
+| ------------------------- | ------------------------------------------------------------ |
+| Uptime                    | 46 min (boot 05:55:36)                                       |
+| MemAvailable / zram / PSI | 31.6% / 20.7% / 0.09% — healthy                              |
+| Guard                     | new version live, 30 s cadence, socket up, 0 trips this boot |
+| flm                       | running (model resident) — expected; healthy headroom        |
+| ClickHouse                | on XFS (nvme0n1p9), 30% used                                 |
+| DAS                       | ABSENT (physical reseat needed)                              |
+| Pool backups              | offline until DAS returns                                    |

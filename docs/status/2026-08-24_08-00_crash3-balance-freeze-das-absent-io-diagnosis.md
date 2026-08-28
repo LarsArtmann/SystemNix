@@ -7,19 +7,19 @@
 
 ## Incident Timeline (reconstructed from journals)
 
-| Time | Event |
-|---|---|
-| Aug 22 05:55 | Boot after freeze #2. **DAS never enumerated this boot** — smartd: pool Toshiba #2 `open() failed: No such device`; buildcache device timed out. All 4 external disks absent for the entire 2-day boot. |
-| Aug 23–24 | Root fs sits at **0% chunk-unallocated**. `btrfs-gc-guard` blocks GC nightly and prints recovery advice (00:00, 02:27). Scheduled Mon 04:00/05:00 balance jobs **correctly self-skip** (insufficient headroom). |
-| Aug 24 ~06:00–06:18 | zram climbs to **85%**, ClickHouse warns 100% CPU, `I/O Stall Rate` gatus check fails, load 10–15. IO PSI building. |
-| Aug 24 06:18:28 | **Manual `sudo btrfs balance start -dusage=10 -musage=10 /`** from an interactive TTY (pts/173, while pts/174 ran `balance status`). |
-| Aug 24 06:20:52 | **Journal stops mid-entry — kernel freeze #3.** No panic, no WDT reset (scheduler-livelock class, 4th freeze in 3 days). |
-| Aug 24 06:24 | Boot (7 min) — clean shutdown at 06:31 (user-driven reboot). |
-| Aug 24 06:31 | Boot **loads the Aug 16 rollback generation** (`d17zk1aw`): no XFS clickhouse mount, no stability stack. ClickHouse starts 06:32 and **writes ~13 min of telemetry to the ROOT btrfs**. |
-| Aug 24 06:42 | User's `nix switch` deploys the 2026-08-22 stability stack (sev1-bridge, kdump-retention, clickhouse-xfs-*, heavy-job). XFS re-mounts OVER the shadow data ("Directory to mount over is not empty"). |
-| Aug 24 06:51 | flm cold-loads 21.6 GB (PMA wake) into the post-crash box; quickshell crash-loop dumps 8+ cores (07:00–07:01, known ScriptModel UAF). |
-| Aug 24 06:52–07:05 | This session deploys the balance-guard hotfix; smoke: 58 PASS / 10 FAIL (DAS cascade) / 5 SKIP. |
-| Aug 24 07:06+ | NVMe **0% util while IO PSI reads 84–99%** — D-state processes parked on the dead pool automount: phantom saturation. |
+| Time                | Event                                                                                                                                                                                                           |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Aug 22 05:55        | Boot after freeze #2. **DAS never enumerated this boot** — smartd: pool Toshiba #2 `open() failed: No such device`; buildcache device timed out. All 4 external disks absent for the entire 2-day boot.         |
+| Aug 23–24           | Root fs sits at **0% chunk-unallocated**. `btrfs-gc-guard` blocks GC nightly and prints recovery advice (00:00, 02:27). Scheduled Mon 04:00/05:00 balance jobs **correctly self-skip** (insufficient headroom). |
+| Aug 24 ~06:00–06:18 | zram climbs to **85%**, ClickHouse warns 100% CPU, `I/O Stall Rate` gatus check fails, load 10–15. IO PSI building.                                                                                             |
+| Aug 24 06:18:28     | **Manual `sudo btrfs balance start -dusage=10 -musage=10 /`** from an interactive TTY (pts/173, while pts/174 ran `balance status`).                                                                            |
+| Aug 24 06:20:52     | **Journal stops mid-entry — kernel freeze #3.** No panic, no WDT reset (scheduler-livelock class, 4th freeze in 3 days).                                                                                        |
+| Aug 24 06:24        | Boot (7 min) — clean shutdown at 06:31 (user-driven reboot).                                                                                                                                                    |
+| Aug 24 06:31        | Boot **loads the Aug 16 rollback generation** (`d17zk1aw`): no XFS clickhouse mount, no stability stack. ClickHouse starts 06:32 and **writes ~13 min of telemetry to the ROOT btrfs**.                         |
+| Aug 24 06:42        | User's `nix switch` deploys the 2026-08-22 stability stack (sev1-bridge, kdump-retention, clickhouse-xfs-*, heavy-job). XFS re-mounts OVER the shadow data ("Directory to mount over is not empty").            |
+| Aug 24 06:51        | flm cold-loads 21.6 GB (PMA wake) into the post-crash box; quickshell crash-loop dumps 8+ cores (07:00–07:01, known ScriptModel UAF).                                                                           |
+| Aug 24 06:52–07:05  | This session deploys the balance-guard hotfix; smoke: 58 PASS / 10 FAIL (DAS cascade) / 5 SKIP.                                                                                                                 |
+| Aug 24 07:06+       | NVMe **0% util while IO PSI reads 84–99%** — D-state processes parked on the dead pool automount: phantom saturation.                                                                                           |
 
 ---
 
@@ -72,6 +72,7 @@
 ## f) NEXT — prioritized (~28, impact-ordered)
 
 **P0 — recovery (user hands/sudo required):**
+
 1. Power-cycle DAS enclosure, reseat USB + power, verify enumeration; run `sudo bash scripts/das-link-recovery-check.sh`.
 2. Reboot evo-x2 into the current generation (arms kdump, XFS at boot, guards active).
 3. Verify pool mounts cleanly (both Toshibas) — else decide degraded-mount vs. wait.

@@ -9,10 +9,12 @@
 ## Session Summary
 
 The user's deploy failed with:
+
 1. 4 nix build errors: `unable to download https://cache.home.lan/monitor365/<hash>.narinfo: HTTP error 502`
 2. Activation exit 4 with two failed units: `atticd-bootstrap.service` (Connection refused to :8200) and `memory-emergency-guard.service` (`mv ... Operation not permitted`)
 
 Root causes found and addressed:
+
 - **memory-emergency-guard EPERM** — real latent bug (fixed + committed + live-healed).
 - **atticd-bootstrap + cache 502** — physical DAS USB link drop (documented 2026-08-22 incident), NOT a code bug. Pool unmounted → atticd down by design → cache 502s → nix fell back to local builds and still produced the toplevel.
 
@@ -56,6 +58,7 @@ Root causes found and addressed:
 ## f) NEXT 50 THINGS (prioritized)
 
 **P0 — immediate (this outage):**
+
 1. Reseat DAS USB cable + enclosure power, reboot (user) — restores pool, atticd, cache.home.lan, btrbk, all pool-dependent services.
 2. After reboot: `nix run .#deploy` to land the guard fix (and everything else pending).
 3. Verify pool mounts: `findmnt /mnt/pool`, `btrfs device stats`, `btrbk` nightly send resumes.

@@ -97,6 +97,7 @@ The dnsblockd dashboard OIDC login (Pocket ID SSO) is broken with `invalid_clien
 ## f) Up to 50 Things to Get Done Next
 
 ### Immediate (blocking — must do before session ends)
+
 1. **Deploy the fix** — `nix run .#deploy`
 2. **Verify provisioner force-regenerated the dnsblockd secret** — check journal for `Force-regenerating secret`
 3. **Verify dnsblockd OIDC login works** — test the dashboard login flow
@@ -104,12 +105,14 @@ The dnsblockd dashboard OIDC login (Pocket ID SSO) is broken with `invalid_clien
 5. **Re-deploy without the flag** — clear the time bomb
 
 ### High priority (same session or next)
+
 6. **Test ALL other OIDC client logins** — oauth2-proxy (any Layer 2 service), immich, forgejo, gatus, browser-history. The crash-recovery may have desynced ALL of them.
 7. **If other clients are also desynced, add them to `regenerateSecretsFor`** and deploy
 8. **Check if `dnsblockd-oidc-secret.service` was RESTARTED (not just started) by deploy.sh** — `RemainAfterExit=true` makes `start` a no-op
 9. **Verify the `dnsblockd.service` actually restarted** and picked up the new `EnvironmentFile`
 
 ### Medium priority (improvements)
+
 10. **Add an auto-clear mechanism for `regenerateSecretsFor`** — script-level: after successful regeneration, clear the flag (or at least warn loudly on every provision run while it's non-empty)
 11. **Add a pre-deploy assertion/warning when `regenerateSecretsFor` is non-empty** — `nix flake check` or a deploy.sh check
 12. **Consider a "DB recreation detection" heuristic in the provisioner** — if ALL clients were created (not "already exists") in a single run, force-regenerate all secrets
@@ -121,6 +124,7 @@ The dnsblockd dashboard OIDC login (Pocket ID SSO) is broken with `invalid_clien
 18. **Audit ALL `*-oidc-secret` / `*-oidc-setup` oneshots for the `RemainAfterExit=true` + deploy.sh restart pattern** — ensure deploy.sh RESTARTS (not starts) all of them
 
 ### Lower priority (nice to have)
+
 19. **Add a "pocket-id DB recreation" detector** — compare client count or a checksum to detect a fresh DB
 20. **Consider a `regenerateAllSecrets` option** — for post-crash-recovery scenarios
 21. **Review the Pocket ID backup/restore flow** — does restoring from backup also invalidate secrets?
@@ -151,11 +155,13 @@ The dnsblockd dashboard OIDC login (Pocket ID SSO) is broken with `invalid_clien
 ### Error Evidence
 
 **dnsblockd** (02:23:22):
+
 ```
 level=ERROR msg="oidc login exchange failed" error="finishing oidc login: [transient:oauth2.finish_login] finish login: [transient:oauth2.token_exchange] exchange code: oauth2: \"invalid_client\" \"Client authentication failed (e.g., unknown client, no client authentication included, or unsupported authentication method).\""
 ```
 
 **Pocket ID** (02:23:22):
+
 ```
 ERR Failed to create access request error=invalid_client
 WRN status=401 method=POST path=/api/oidc/token
@@ -163,13 +169,13 @@ WRN status=401 method=POST path=/api/oidc/token
 
 ### Root Cause Timeline
 
-| Time | Event | Impact |
-|------|-------|--------|
-| 00:27 | Kernel freeze (zram full + flm model unevictable) | System hard-reset |
-| 00:32 | Boot 1 — Pocket ID DB recreated from scratch | `dnsblockd` client re-created with NEW secret in DB |
+| Time  | Event                                                                          | Impact                                                        |
+| ----- | ------------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| 00:27 | Kernel freeze (zram full + flm model unevictable)                              | System hard-reset                                             |
+| 00:32 | Boot 1 — Pocket ID DB recreated from scratch                                   | `dnsblockd` client re-created with NEW secret in DB           |
 | 00:32 | Provisioner: `Creating OIDC client: dnsblockd` + `Secret file already exists.` | Stale secret file survives, new DB secret not written to file |
-| 00:48 | Boot 2 — same pattern repeats | Client re-created again, secret file still stale |
-| 02:23 | User attempts OIDC login to dnsblockd dashboard | Token exchange fails: `invalid_client` |
+| 00:48 | Boot 2 — same pattern repeats                                                  | Client re-created again, secret file still stale              |
+| 02:23 | User attempts OIDC login to dnsblockd dashboard                                | Token exchange fails: `invalid_client`                        |
 
 ### Fix Applied
 

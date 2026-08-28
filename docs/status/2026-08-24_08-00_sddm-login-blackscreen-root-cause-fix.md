@@ -16,7 +16,8 @@ armed; the fish `00-go-cache-guard.fish` (added 2026-08-22) probed
 that dead automount — 4 probes × 10 s kernel device-timeout = ~40 s of
 uninterruptible sleep inside `fish --login`, so `niri-session` never ran.
 The `display-watchdog` then correctly restarted SDDM at ~20 s ("dead display
-+ wayland session + no niri") — infinite login loop since 2026-08-22.
+
+- wayland session + no niri") — infinite login loop since 2026-08-22.
 
 Fix deployed live (SIGKILL-bounded probes, login chain now 3.1 s) and made
 declarative in SystemNix. **Real graphical login by the user is not yet
@@ -27,25 +28,25 @@ exposes more unpatched paths than the ones I fixed (see b/e/f).
 
 ## a) FULLY DONE
 
-| # | Item | Evidence |
-|---|------|----------|
-| 1 | **Root cause identified with full causal chain** | automount ambush → fish conf.d guard → 4×10 s D-state → niri never starts → watchdog kills SDDM. Matches journal at both failed logins (06:34:44, 06:38:45) |
-| 2 | **Live fix on host**: `~/.config/fish/conf.d/00-go-cache-guard.fish` probes now `timeout --signal=KILL 1` | SIGTERM cannot interrupt autofs waits (TASK_KILLABLE); SIGKILL lands at the 1 s bound — verified by strace |
-| 3 | **End-to-end verification of the exact SDDM chain** (`wayland-session` → `fish --login` → `niri-session`) with dead-mount env vars: **3.1 s** (was 40+) | repro ran the real store-path scripts under a synthetic SDDM env |
-| 4 | **Declarative ownership in SystemNix**: guard added as `xdg.configFile."fish/conf.d/00-go-cache-guard.fish"` in `platforms/nixos/users/home.nix` | `nix flake check --no-build` passes (all checks) |
-| 5 | **Incident documentation**: `docs/troubleshooting/2026-08-24-sddm-login-blackscreen-dead-buildcache.md` | symptom, chain, fix, lessons, open items |
-| 6 | **Test-state cleanup**: zombie headless niri stopped, user-manager env scrubbed (`XDG_SESSION_ID`, WAYLAND_DISPLAY, NIRI_SOCKET, GOCACHE…), /tmp repro + login-trap artifacts removed, `niri.service` inactive, manager env clean | verified via `systemctl --user` + `pgrep` |
-| 7 | Ruled out the custom `niri.service` override, `ConditionEnvironment=XDG_SESSION_ID`, D-Bus user bus, PAM env, hm-session-vars chain, systemd user units, sddm wrapper — all proven healthy | synthetic repro started real niri when env was right |
+| # | Item                                                                                                                                                                                                                              | Evidence                                                                                                                                                    |
+| - | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Root cause identified with full causal chain**                                                                                                                                                                                  | automount ambush → fish conf.d guard → 4×10 s D-state → niri never starts → watchdog kills SDDM. Matches journal at both failed logins (06:34:44, 06:38:45) |
+| 2 | **Live fix on host**: `~/.config/fish/conf.d/00-go-cache-guard.fish` probes now `timeout --signal=KILL 1`                                                                                                                         | SIGTERM cannot interrupt autofs waits (TASK_KILLABLE); SIGKILL lands at the 1 s bound — verified by strace                                                  |
+| 3 | **End-to-end verification of the exact SDDM chain** (`wayland-session` → `fish --login` → `niri-session`) with dead-mount env vars: **3.1 s** (was 40+)                                                                           | repro ran the real store-path scripts under a synthetic SDDM env                                                                                            |
+| 4 | **Declarative ownership in SystemNix**: guard added as `xdg.configFile."fish/conf.d/00-go-cache-guard.fish"` in `platforms/nixos/users/home.nix`                                                                                  | `nix flake check --no-build` passes (all checks)                                                                                                            |
+| 5 | **Incident documentation**: `docs/troubleshooting/2026-08-24-sddm-login-blackscreen-dead-buildcache.md`                                                                                                                           | symptom, chain, fix, lessons, open items                                                                                                                    |
+| 6 | **Test-state cleanup**: zombie headless niri stopped, user-manager env scrubbed (`XDG_SESSION_ID`, WAYLAND_DISPLAY, NIRI_SOCKET, GOCACHE…), /tmp repro + login-trap artifacts removed, `niri.service` inactive, manager env clean | verified via `systemctl --user` + `pgrep`                                                                                                                   |
+| 7 | Ruled out the custom `niri.service` override, `ConditionEnvironment=XDG_SESSION_ID`, D-Bus user bus, PAM env, hm-session-vars chain, systemd user units, sddm wrapper — all proven healthy                                        | synthetic repro started real niri when env was right                                                                                                        |
 
 ## b) PARTIALLY DONE
 
-| # | Item | What's missing |
-|---|------|----------------|
-| 1 | **Guard covers only 4 of 9 dead-mount vars.** hm-session-vars exports `CARGO_HOME`, `PIP_CACHE_DIR`, `SCCACHE_DIR`, `npm_config_cache`, `PLAYWRIGHT_BROWSERS_PATH` to `/mnt/buildcache/*` too — none probed/redirected. Rust/pip/npm/playwright usage will hit the same 10 s ambush or fail | extend `__go_cache_redirect` list |
-| 2 | **Real login not confirmed.** Fix verified synthetically only; the definitive test is the user logging in at SDDM | user action |
-| 3 | **HM takeover not exercised.** The hand-edited file and the new `xdg.configFile` carry identical content, but `nixos-rebuild switch` hasn't run — symlink-vs-file transition unverified | run switch, check for conflict/backups |
-| 4 | **Symlink ambush remains**: `~/.cache/go-build`, `~/.cache/go`, `~/.cache/goimports`, `~/.local/share/pnpm/store` → `/mnt/buildcache/*`. Any tool resolving defaults (not env) still blocks 10 s per access | guard should detect dead mount and note/relink |
-| 5 | **Monitoring gap partially mapped**: noticed Gatus "Niri Compositor" + "Niri Graphical Session" endpoints returned `success=true` **during** the broken logins (false negatives), while nothing alerts on buildcache SSD absence | fix queries / add endpoints |
+| # | Item                                                                                                                                                                                                                                                                                        | What's missing                                 |
+| - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| 1 | **Guard covers only 4 of 9 dead-mount vars.** hm-session-vars exports `CARGO_HOME`, `PIP_CACHE_DIR`, `SCCACHE_DIR`, `npm_config_cache`, `PLAYWRIGHT_BROWSERS_PATH` to `/mnt/buildcache/*` too — none probed/redirected. Rust/pip/npm/playwright usage will hit the same 10 s ambush or fail | extend `__go_cache_redirect` list              |
+| 2 | **Real login not confirmed.** Fix verified synthetically only; the definitive test is the user logging in at SDDM                                                                                                                                                                           | user action                                    |
+| 3 | **HM takeover not exercised.** The hand-edited file and the new `xdg.configFile` carry identical content, but `nixos-rebuild switch` hasn't run — symlink-vs-file transition unverified                                                                                                     | run switch, check for conflict/backups         |
+| 4 | **Symlink ambush remains**: `~/.cache/go-build`, `~/.cache/go`, `~/.cache/goimports`, `~/.local/share/pnpm/store` → `/mnt/buildcache/*`. Any tool resolving defaults (not env) still blocks 10 s per access                                                                                 | guard should detect dead mount and note/relink |
+| 5 | **Monitoring gap partially mapped**: noticed Gatus "Niri Compositor" + "Niri Graphical Session" endpoints returned `success=true` **during** the broken logins (false negatives), while nothing alerts on buildcache SSD absence                                                            | fix queries / add endpoints                    |
 
 ## c) NOT STARTED
 
@@ -60,14 +61,14 @@ exposes more unpatched paths than the ones I fixed (see b/e/f).
 
 ## d) TOTALLY FUCKED UP!
 
-| # | Failure | Impact | Status |
-|---|---------|--------|--------|
-| 1 | **My synthetic repro started a REAL headless niri** (first run didn't intercept `systemctl --user --wait start niri.service`); it spammed `Error::DeviceMissing` and would have blocked the next login with "A niri session is already running" — the exact zombie class this system guards against | could have reproduced the 2026-08-18 black-screen on top of the current one | cleaned up same minute; later repros intercepted the call |
-| 2 | **Wrong-shell repro**: assumed zsh; user's login shell is **fish**. The zsh repro "passed", briefly misleading the diagnosis. `getent passwd lars` would have cost 1 s | wasted a diagnostic round | caught when the full chain errored on `/run/current-system/sw/bin/zsh: No such file` |
-| 3 | **First "fix" didn't actually fix**: `timeout 1` (SIGTERM) fired at 1 s but `mkdir` stayed in D-state until the kernel's 10 s timeout — my interim verification under-measured (outer `timeout 30` masked it). Second strace exposed it; `--signal=KILL` is the real fix | interim false "done" claim | corrected; final fix re-verified |
-| 4 | **Login-trap theater**: armed a background watcher, told the user "waiting for your next login attempt", never used it | wasted effort, false expectation | killed during cleanup |
-| 5 | **Observations under strace lied** (automount failure cached → fast-fail), delaying the repro of the hang | minor time loss | worked around with untraced timing runs |
-| 6 | **User-manager state pollution** during testing (env vars imported into PID 1345) | transient risk to production session | fully scrubbed |
+| # | Failure                                                                                                                                                                                                                                                                                             | Impact                                                                      | Status                                                                               |
+| - | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| 1 | **My synthetic repro started a REAL headless niri** (first run didn't intercept `systemctl --user --wait start niri.service`); it spammed `Error::DeviceMissing` and would have blocked the next login with "A niri session is already running" — the exact zombie class this system guards against | could have reproduced the 2026-08-18 black-screen on top of the current one | cleaned up same minute; later repros intercepted the call                            |
+| 2 | **Wrong-shell repro**: assumed zsh; user's login shell is **fish**. The zsh repro "passed", briefly misleading the diagnosis. `getent passwd lars` would have cost 1 s                                                                                                                              | wasted a diagnostic round                                                   | caught when the full chain errored on `/run/current-system/sw/bin/zsh: No such file` |
+| 3 | **First "fix" didn't actually fix**: `timeout 1` (SIGTERM) fired at 1 s but `mkdir` stayed in D-state until the kernel's 10 s timeout — my interim verification under-measured (outer `timeout 30` masked it). Second strace exposed it; `--signal=KILL` is the real fix                            | interim false "done" claim                                                  | corrected; final fix re-verified                                                     |
+| 4 | **Login-trap theater**: armed a background watcher, told the user "waiting for your next login attempt", never used it                                                                                                                                                                              | wasted effort, false expectation                                            | killed during cleanup                                                                |
+| 5 | **Observations under strace lied** (automount failure cached → fast-fail), delaying the repro of the hang                                                                                                                                                                                           | minor time loss                                                             | worked around with untraced timing runs                                              |
+| 6 | **User-manager state pollution** during testing (env vars imported into PID 1345)                                                                                                                                                                                                                   | transient risk to production session                                        | fully scrubbed                                                                       |
 
 ## e) WHAT WE SHOULD IMPROVE!
 
@@ -83,6 +84,7 @@ exposes more unpatched paths than the ones I fixed (see b/e/f).
 ## f) Up to 50 things to do next
 
 **P0 — immediate:**
+
 1. User performs a real SDDM login → confirm niri comes up (the only missing verification)
 2. Replug/power-cycle the JMicron JMS567 enclosure (known flapper, 9 disconnects 2026-08-16) or replace the SanDisk SSD; verify automount re-resolves via by-id (module is device-bound — should self-heal)
 3. Run `nixos-rebuild switch` with the new home.nix; verify HM takes over the guard file without conflict (identical content → clean swap expected; check for `.backup` artifacts)

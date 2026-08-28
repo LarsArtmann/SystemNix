@@ -115,6 +115,7 @@ what was forgotten, what was done badly, what remains.
 ## f) NEXT: up to 50 things (grouped, ranked)
 
 **Prevention (highest leverage):**
+
 1. `signoz-query-lint` flake check (dead selectors/metrics in rules+dashboards)
 2. post-deploy-check: assert signoz-provision result=success + dashboard convergence
 3. post-deploy-check: diff `:8080/api/v1/rules` states — flag any rule firing >24h

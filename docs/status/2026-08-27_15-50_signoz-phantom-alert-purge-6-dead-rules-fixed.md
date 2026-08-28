@@ -18,14 +18,14 @@ clickhouse, signoz-collector, emeet don't).
 Six critical/warning rules queried `up{job="..."}` and returned EMPTY on every
 evaluation — permanently phantom-green since provisioning (2026-08-16):
 
-| Rule | Severity | Consequence of the phantom |
-| --- | --- | --- |
-| DNS Blocker Down | critical | SILENT through the live 2026-08-27 :9090 stats-API wedge (`up=0` for hours) |
-| Docker Daemon Down | critical | daemon death unalerted |
-| ClickHouse Down | critical | telemetry-store death unalerted |
-| Telemetry Collector Down | critical | ALL ingestion loss unalerted |
-| EMEET PIXY Daemon Down | warning | dead daemon unalerted |
-| GPU Thermal Throttling | critical | queried `node_amdgpu_gpu_temp_celsius` — a metric with ZERO series (different trap, same effect) |
+| Rule                     | Severity | Consequence of the phantom                                                                       |
+| ------------------------ | -------- | ------------------------------------------------------------------------------------------------ |
+| DNS Blocker Down         | critical | SILENT through the live 2026-08-27 :9090 stats-API wedge (`up=0` for hours)                      |
+| Docker Daemon Down       | critical | daemon death unalerted                                                                           |
+| ClickHouse Down          | critical | telemetry-store death unalerted                                                                  |
+| Telemetry Collector Down | critical | ALL ingestion loss unalerted                                                                     |
+| EMEET PIXY Daemon Down   | warning  | dead daemon unalerted                                                                            |
+| GPU Thermal Throttling   | critical | queried `node_amdgpu_gpu_temp_celsius` — a metric with ZERO series (different trap, same effect) |
 
 Meanwhile the **inverse bug** lived next door: "Niri Compositor Down"
 (`niri_running < 1`, critical) was **actively FIRING as a false positive** the

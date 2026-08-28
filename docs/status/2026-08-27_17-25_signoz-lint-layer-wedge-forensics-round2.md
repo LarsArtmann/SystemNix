@@ -8,11 +8,11 @@
 
 ## Decisions on the 3 open questions
 
-| Q | Decision | Rationale |
-|---|----------|-----------|
-| 1. SIGQUIT runbook vs restart-first | **Capture-then-restart — shipped** | `scripts/dnsblockd-goroutine-dump.sh` (root): SIGQUIT IS the restart (Go runtime dumps every goroutine to the journal, then exits; systemd restarts). `GOTRACEBACK=all` baked into `dnsblockd.service` Environment — default `single` mode shows only the signal-handling goroutine and would say nothing about a mutex deadlock. Zero added MTTR: the dump costs one signal. |
-| 2. Deploy-window alert noise | **Accept transients; no grace mechanism** | Deploy restart-churn is bounded (~minutes) and self-resolves; an activation-gated grace adds cross-unit state (deploy marker ↔ rule evaluator) for marginal value. Instead the NEW long-firing WARN surfaces every >24h firing alert at each deploy — ongoing incidents become per-deploy visible rather than silenced. |
-| 3. Alert layering | **Keep complementary (de-facto codified)** | SigNoz = unit-state/resource/frequency rules; Gatus = HTTP/functional outcomes. The `signoz-query-lint` scope (alerts file + dashboards) encodes this boundary. Mirroring both layers doubles maintenance for the exact duplicated-signal class the PapDashboard design already avoids. |
+| Q                                   | Decision                                   | Rationale                                                                                                                                                                                                                                                                                                                                                                     |
+| ----------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. SIGQUIT runbook vs restart-first | **Capture-then-restart — shipped**         | `scripts/dnsblockd-goroutine-dump.sh` (root): SIGQUIT IS the restart (Go runtime dumps every goroutine to the journal, then exits; systemd restarts). `GOTRACEBACK=all` baked into `dnsblockd.service` Environment — default `single` mode shows only the signal-handling goroutine and would say nothing about a mutex deadlock. Zero added MTTR: the dump costs one signal. |
+| 2. Deploy-window alert noise        | **Accept transients; no grace mechanism**  | Deploy restart-churn is bounded (~minutes) and self-resolves; an activation-gated grace adds cross-unit state (deploy marker ↔ rule evaluator) for marginal value. Instead the NEW long-firing WARN surfaces every >24h firing alert at each deploy — ongoing incidents become per-deploy visible rather than silenced.                                                       |
+| 3. Alert layering                   | **Keep complementary (de-facto codified)** | SigNoz = unit-state/resource/frequency rules; Gatus = HTTP/functional outcomes. The `signoz-query-lint` scope (alerts file + dashboards) encodes this boundary. Mirroring both layers doubles maintenance for the exact duplicated-signal class the PapDashboard design already avoids.                                                                                       |
 
 ## Shipped
 
@@ -24,7 +24,7 @@
    - Surfaces: `_signoz-alerts.nix` (comment lines stripped) + `dashboards/*.json`. Failure messages explain mechanism + fix + incident pointer, per repo lint convention.
 2. **post-deploy-check hardening** (`scripts/post-deploy-check.sh`):
    - `signoz-provision.service` Result assertion — closes the phantom-green where the rule-COUNT stays green off stale rules while the provisioner hard-failed (my own 18-min regression last session)
-   - >24h-firing alert surfacing via `/api/v1/alerts` `startsAt` (WARN — ongoing incidents are legitimate; the point is visibility)
+   - 24h-firing alert surfacing via `/api/v1/alerts` `startsAt` (WARN — ongoing incidents are legitimate; the point is visibility)
 3. **pre-deploy-check §1b** — untracked-files warning under `modules/`+`platforms/` (the tracked-files trap that aborted a deploy last session; comments explain the concurrent-agent variant)
 4. **dnsblockd wedge detection stack**:
    - `system_dnsblockd_metrics_fresh` textfile gauge (system-health collector; 5s curl probe of `:9090/metrics`, 200→1; emitted only when probed → Gatus presence check fails closed)

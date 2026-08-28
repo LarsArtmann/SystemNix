@@ -61,6 +61,7 @@
 ## f) NEXT UP TO 50 THINGS (prioritized, session-scoped)
 
 **Immediate (this outage):**
+
 1. User: physically reseat DAS USB cable + enclosure power, then `sudo reboot`.
 2. Post-boot: verify `findmnt /mnt/pool` and `findmnt /mnt/buildcache` return real btrfs/ext4 mounts.
 3. If sda1 stays EIO after reconnect: `sudo e2fsck -y /dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311-part1` before remount.

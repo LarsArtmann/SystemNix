@@ -14,21 +14,21 @@ The Mac's original cert error led through three layers: (1) a real but secondary
 
 ## Timeline (CEST)
 
-| Time | Event |
-|---|---|
-| ~03:30 | User hits `ERR_CERT_DATE_INVALID` on pornhub.com block page (Chrome, HSTS, Mac). Pasted cert: leaf notBefore `03:30:28 UTC`, issuer `dnsblockd-CA` |
-| 03:39 | Clocks verified in sync (Mac == evo-x2; sntp offset 84 ms after sync; sntp exchange itself timed out — NTP/UDP 123 blocked somewhere, unexplained) |
-| ~03:40 | User imports dnsblockd-CA into macOS system keychain. `curl -vk https://pornhub.com` → `No route to host` to 192.168.1.200 |
-| 03:41–05:49 | Server-side checks all green (listeners on `.200:80/:443`, eno1 up, no kernel NIC events, no VRRP flap, ARP healthy) — no server-side trace of the Mac's failure |
-| 05:49:56 | **Boot `-1` journal stops dead** (buildcache USB device-job timeout, no shutdown sequence) — freeze #2 tonight; power-cycled 05:55 (boot `0`) |
-| 05:55+ | Post-reboot: DAS (all 4 external disks incl. buildcache SSD + pool Toshibas) **never enumerates** — `/proc/partitions` shows only NVMe+zram; `/mnt/buildcache` accesses hang/ENODEV (idle autofs + dead device job) |
-| ~06:30 | dnsblockd restarted several times by concurrent deploys; healthy |
-| 06:40 | Journal: `rendering block page: context canceled` at the exact second of the Mac's request; Chrome `unknown certificate` probes around it |
-| ~06:44 | Mac `curl -vk https://www.pornhub.com`: **TLS handshake OK, cert presented, then `close_notify` + `(16) HTTP2 framing layer`** — network resolved itself post-reboot; h2-specific failure isolated |
-| 06:45–06:53 | Root cause found in `server.go` + go1.26.6 `net/http` source; regression test written (failed `unexpected EOF` pre-fix), one-line fix applied, full dnsblockd suite green (`GOCACHE=/tmp/...` — buildcache dead) |
-| 06:53 | Concurrent session deploys; running dnsblockd = v0.7.0 `07173f8` (**pre-fix**) |
-| 06:59:27 | Auto-commit daemon commits my h2 fix as `31cdcae` (backdate rode earlier as `fa2c5e3`; other session's batch_writer fix as `67769ef`) |
-| 07:01 | SystemNix `flake.lock` (uncommitted) pins dnsblockd → `31cdcae` (the fix). Deploy pending |
+| Time        | Event                                                                                                                                                                                                               |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~03:30      | User hits `ERR_CERT_DATE_INVALID` on pornhub.com block page (Chrome, HSTS, Mac). Pasted cert: leaf notBefore `03:30:28 UTC`, issuer `dnsblockd-CA`                                                                  |
+| 03:39       | Clocks verified in sync (Mac == evo-x2; sntp offset 84 ms after sync; sntp exchange itself timed out — NTP/UDP 123 blocked somewhere, unexplained)                                                                  |
+| ~03:40      | User imports dnsblockd-CA into macOS system keychain. `curl -vk https://pornhub.com` → `No route to host` to 192.168.1.200                                                                                          |
+| 03:41–05:49 | Server-side checks all green (listeners on `.200:80/:443`, eno1 up, no kernel NIC events, no VRRP flap, ARP healthy) — no server-side trace of the Mac's failure                                                    |
+| 05:49:56    | **Boot `-1` journal stops dead** (buildcache USB device-job timeout, no shutdown sequence) — freeze #2 tonight; power-cycled 05:55 (boot `0`)                                                                       |
+| 05:55+      | Post-reboot: DAS (all 4 external disks incl. buildcache SSD + pool Toshibas) **never enumerates** — `/proc/partitions` shows only NVMe+zram; `/mnt/buildcache` accesses hang/ENODEV (idle autofs + dead device job) |
+| ~06:30      | dnsblockd restarted several times by concurrent deploys; healthy                                                                                                                                                    |
+| 06:40       | Journal: `rendering block page: context canceled` at the exact second of the Mac's request; Chrome `unknown certificate` probes around it                                                                           |
+| ~06:44      | Mac `curl -vk https://www.pornhub.com`: **TLS handshake OK, cert presented, then `close_notify` + `(16) HTTP2 framing layer`** — network resolved itself post-reboot; h2-specific failure isolated                  |
+| 06:45–06:53 | Root cause found in `server.go` + go1.26.6 `net/http` source; regression test written (failed `unexpected EOF` pre-fix), one-line fix applied, full dnsblockd suite green (`GOCACHE=/tmp/...` — buildcache dead)    |
+| 06:53       | Concurrent session deploys; running dnsblockd = v0.7.0 `07173f8` (**pre-fix**)                                                                                                                                      |
+| 06:59:27    | Auto-commit daemon commits my h2 fix as `31cdcae` (backdate rode earlier as `fa2c5e3`; other session's batch_writer fix as `67769ef`)                                                                               |
+| 07:01       | SystemNix `flake.lock` (uncommitted) pins dnsblockd → `31cdcae` (the fix). Deploy pending                                                                                                                           |
 
 ---
 
@@ -80,6 +80,7 @@ The Mac's original cert error led through three layers: (1) a real but secondary
 ## f) Next up to 50 (session-scoped, impact-sorted)
 
 **P0 — close the loop**
+
 1. Deploy: `nix run .#deploy` (flake.lock already pins `31cdcae`) — or wait for the concurrent session's next deploy to carry it.
 2. Mac: Cmd+Q Chrome → `https://pornhub.com` → expect dnsblockd block page; confirm h2 in DevTools Protocol column.
 3. Verify journal: no more `rendering block page: context canceled` / `unknown certificate` from the Mac.

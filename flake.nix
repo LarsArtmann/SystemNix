@@ -558,87 +558,88 @@
     };
   };
 
-  outputs = inputs @ {
-    flake-parts,
-    nixpkgs,
-    nix-ssh-config,
-    treefmt-full-flake,
-    ...
-  }: let
-    inherit (nixpkgs) lib;
-    overlays = import ./overlays inputs;
-    inherit
-      (overlays)
-      sharedOverlays
-      linuxOnlyOverlays
-      disableTests
-      pythonTest
-      ;
+  outputs =
+    inputs@{
+      flake-parts,
+      nixpkgs,
+      nix-ssh-config,
+      treefmt-full-flake,
+      ...
+    }:
+    let
+      inherit (nixpkgs) lib;
+      overlays = import ./overlays inputs;
+      inherit (overlays)
+        sharedOverlays
+        linuxOnlyOverlays
+        disableTests
+        pythonTest
+        ;
 
-    # Auto-discover NixOS modules from modules/nixos/{services,desktop}/.
-    # Convention: filename (minus .nix) IS the module name and MUST be unique
-    # across all scanned directories (it becomes flake.nixosModules.<name>).
-    # Non-module files must start with _ (e.g., _signoz-alerts.nix).
-    # Non-.nix files and directories are ignored automatically.
-    moduleDirs = [
-      ./modules/nixos/services
-      ./modules/nixos/desktop
-    ];
-    discoveredModules =
-      lib.concatMap (
-        dir: let
+      # Auto-discover NixOS modules from modules/nixos/{services,desktop}/.
+      # Convention: filename (minus .nix) IS the module name and MUST be unique
+      # across all scanned directories (it becomes flake.nixosModules.<name>).
+      # Non-module files must start with _ (e.g., _signoz-alerts.nix).
+      # Non-.nix files and directories are ignored automatically.
+      moduleDirs = [
+        ./modules/nixos/services
+        ./modules/nixos/desktop
+      ];
+      discoveredModules = lib.concatMap (
+        dir:
+        let
           files = lib.filterAttrs (n: v: v == "regular" && lib.hasSuffix ".nix" n && !(lib.hasPrefix "_" n)) (
             builtins.readDir dir
           );
         in
-          lib.mapAttrsToList (file: _: {
-            path = dir + "/${file}";
-            module = lib.removeSuffix ".nix" file;
-          })
-          files
-      )
-      moduleDirs;
+        lib.mapAttrsToList (file: _: {
+          path = dir + "/${file}";
+          module = lib.removeSuffix ".nix" file;
+        }) files
+      ) moduleDirs;
 
-    discoveredModulePaths = map (m: m.path) discoveredModules;
+      discoveredModulePaths = map (m: m.path) discoveredModules;
 
-    # Shared Home Manager configuration — only user/home file path differs per system
-    sharedHomeManagerConfig = {
-      useGlobalPkgs = true;
-      useUserPackages = true;
-      backupFileExtension = "backup";
-      overwriteBackup = true;
-    };
+      # Shared Home Manager configuration — only user/home file path differs per system
+      sharedHomeManagerConfig = {
+        useGlobalPkgs = true;
+        useUserPackages = true;
+        backupFileExtension = "backup";
+        overwriteBackup = true;
+      };
 
-    # Shared theme (Catppuccin Mocha palette)
-    theme = import ./platforms/common/theme.nix;
+      # Shared theme (Catppuccin Mocha palette)
+      theme = import ./platforms/common/theme.nix;
 
-    # Shared extraSpecialArgs for Home Manager — available in all platform home.nix files
-    sharedHomeManagerSpecialArgs = {
-      inherit nix-ssh-config;
-      inherit (theme) colorScheme;
-    };
+      # Shared extraSpecialArgs for Home Manager — available in all platform home.nix files
+      sharedHomeManagerSpecialArgs = {
+        inherit nix-ssh-config;
+        inherit (theme) colorScheme;
+      };
 
-    # LarsArtmann Go tool packages — single source of truth in lib/lars-packages.nix.
-    # Referenced by perSystem.packages (for nix build .#X) and passed to base.nix
-    # via specialArgs (for environment.systemPackages).
-    mkLarsPackages = import ./lib/lars-packages.nix {inherit lib inputs;};
+      # LarsArtmann Go tool packages — single source of truth in lib/lars-packages.nix.
+      # Referenced by perSystem.packages (for nix build .#X) and passed to base.nix
+      # via specialArgs (for environment.systemPackages).
+      mkLarsPackages = import ./lib/lars-packages.nix { inherit lib inputs; };
 
-    # Eval-time guard: the nix global registry rewrites github:NixOS/nixpkgs/nixos-unstable
-    # to a tarball URL. The tarball pointer can be stale, silently downgrading nixpkgs
-    # by months. This assertion fails nix flake check / nix eval if the regression recurs.
-    # Uses builtins.seq to force eager evaluation (Nix is lazy — an unreferenced let
-    # binding would never fire).
-    lockFile = builtins.fromJSON (builtins.readFile ./flake.lock);
-    nixpkgsLockType = lockFile.nodes.nixpkgs.original.type or "unknown";
-    nixpkgsTarballGuard = assert nixpkgsLockType
-    == "github"
-    || throw ''
-      nixpkgs flake.lock regression: original type is "${nixpkgsLockType}", expected "github".
-      The nix global registry rewrote nixpkgs to a tarball which may be stale.
-      Fix: manually edit flake.lock nodes.nixpkgs.original to type "github".
-    ''; true;
-  in
-    builtins.seq nixpkgsTarballGuard flake-parts.lib.mkFlake {inherit inputs;} {
+      # Eval-time guard: the nix global registry rewrites github:NixOS/nixpkgs/nixos-unstable
+      # to a tarball URL. The tarball pointer can be stale, silently downgrading nixpkgs
+      # by months. This assertion fails nix flake check / nix eval if the regression recurs.
+      # Uses builtins.seq to force eager evaluation (Nix is lazy — an unreferenced let
+      # binding would never fire).
+      lockFile = builtins.fromJSON (builtins.readFile ./flake.lock);
+      nixpkgsLockType = lockFile.nodes.nixpkgs.original.type or "unknown";
+      nixpkgsTarballGuard =
+        assert
+          nixpkgsLockType == "github"
+          || throw ''
+            nixpkgs flake.lock regression: original type is "${nixpkgsLockType}", expected "github".
+            The nix global registry rewrote nixpkgs to a tarball which may be stale.
+            Fix: manually edit flake.lock nodes.nixpkgs.original to type "github".
+          '';
+        true;
+    in
+    builtins.seq nixpkgsTarballGuard flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [
         "aarch64-darwin"
         "x86_64-linux"
@@ -648,119 +649,119 @@
       imports = discoveredModulePaths;
 
       # Per-system configuration (packages, devShells, etc.)
-      perSystem = {
-        pkgs,
-        system,
-        lib,
-        ...
-      }: {
-        # Allow unfree and broken packages for all systems
-        _module.args.pkgs = import nixpkgs {
-          inherit system;
-          config.allowUnfree = true;
-          config.allowBroken = false; # # <-- THIS MUST ALWAYS BE FALSE!
-          overlays =
-            sharedOverlays
-            ++ [disableTests]
-            ++ lib.optionals (lib.hasSuffix "-linux" system) linuxOnlyOverlays;
-        };
-
-        # Use treefmt-full-flake's formatter which includes alejandra in PATH
-        formatter = treefmt-full-flake.formatter.${system};
-
-        packages =
-          (mkLarsPackages system)
-          // {
-            inherit
-              (pkgs)
-              aw-watcher-utilization
-              govalid
-              jscpd
-              sqlc
-              systemd-timer-monitor
-              ;
-          }
-          // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-            inherit
-              (pkgs)
-              openaudible
-              openseo
-              dnsblockd
-              monitor365
-              netwatch
-              systemd-graph
-              systemd-graph-webui
-              emeet-pixyd
-              file-and-image-renamer
-              crush-daily
-              fastflowlm
-              ;
-            freebsd-zfs-vm = import ./pkgs/freebsd-zfs-vm.nix {inherit pkgs;};
+      perSystem =
+        {
+          pkgs,
+          system,
+          lib,
+          ...
+        }:
+        {
+          # Allow unfree and broken packages for all systems
+          _module.args.pkgs = import nixpkgs {
+            inherit system;
+            config.allowUnfree = true;
+            config.allowBroken = false; # # <-- THIS MUST ALWAYS BE FALSE!
+            overlays =
+              sharedOverlays
+              ++ [ disableTests ]
+              ++ lib.optionals (lib.hasSuffix "-linux" system) linuxOnlyOverlays;
           };
 
-        # Development shells for different program categories
-        devShells = {
-          default = pkgs.mkShellNoCC {
-            BUILDFLOW_EXCLUDE_PATTERNS = "assets/avatar.png";
-            packages = with pkgs;
-              [
-                git
-                nixfmt
-                alejandra
-                treefmt
-                deadnix
-                shellcheck
-                statix
-                gitleaks
-                jq
+          # Use treefmt-full-flake's formatter which includes alejandra in PATH
+          formatter = treefmt-full-flake.formatter.${system};
+
+          packages =
+            (mkLarsPackages system)
+            // {
+              inherit (pkgs)
+                aw-watcher-utilization
+                govalid
+                jscpd
                 sqlc
-              ]
-              ++ [
-                (mkLarsPackages system).buildflow
-              ];
-          };
-          # Quickshell development — hot-reload QML shell development
-          quickshell = pkgs.mkShellNoCC {
-            packages = [
-              inputs.dankMaterialShell.packages.${system}.default
-              pkgs.qt6.qtdeclarative
-              pkgs.qt6.qttools # provides qmlls (QML LSP)
-            ];
-          };
-        };
+                systemd-timer-monitor
+                ;
+            }
+            // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+              inherit (pkgs)
+                openaudible
+                openseo
+                dnsblockd
+                monitor365
+                netwatch
+                systemd-graph
+                systemd-graph-webui
+                emeet-pixyd
+                file-and-image-renamer
+                crush-daily
+                fastflowlm
+                ;
+              freebsd-zfs-vm = import ./pkgs/freebsd-zfs-vm.nix { inherit pkgs; };
+            };
 
-        checks =
-          {
+          # Development shells for different program categories
+          devShells = {
+            default = pkgs.mkShellNoCC {
+              BUILDFLOW_EXCLUDE_PATTERNS = "assets/avatar.png";
+              packages =
+                with pkgs;
+                [
+                  git
+                  nixfmt
+                  alejandra
+                  treefmt
+                  deadnix
+                  shellcheck
+                  statix
+                  gitleaks
+                  jq
+                  sqlc
+                ]
+                ++ [
+                  (mkLarsPackages system).buildflow
+                ];
+            };
+            # Quickshell development — hot-reload QML shell development
+            quickshell = pkgs.mkShellNoCC {
+              packages = [
+                inputs.dankMaterialShell.packages.${system}.default
+                pkgs.qt6.qtdeclarative
+                pkgs.qt6.qttools # provides qmlls (QML LSP)
+              ];
+            };
+          };
+
+          checks = {
             statix =
               pkgs.runCommand "statix-check"
-              {
-                nativeBuildInputs = [pkgs.statix];
-              }
-              ''
-                cd ${./.}
-                statix check -o errfmt . 2>&1 | grep -v ':E:0:' | tee $out || true
-                if statix check -o errfmt . 2>&1 | grep -v ':E:0:' | grep -q '.'; then
-                  exit 1
-                fi
-                exit 0
-              '';
+                {
+                  nativeBuildInputs = [ pkgs.statix ];
+                }
+                ''
+                  cd ${./.}
+                  statix check -o errfmt . 2>&1 | grep -v ':E:0:' | tee $out || true
+                  if statix check -o errfmt . 2>&1 | grep -v ':E:0:' | grep -q '.'; then
+                    exit 1
+                  fi
+                  exit 0
+                '';
 
             deadnix =
               pkgs.runCommand "deadnix-check"
-              {
-                nativeBuildInputs = [pkgs.deadnix];
-              }
-              ''
-                cd ${./.}
-                deadnix --fail --no-lambda-pattern-names . 2>&1 | tee $out
-              '';
+                {
+                  nativeBuildInputs = [ pkgs.deadnix ];
+                }
+                ''
+                  cd ${./.}
+                  deadnix --fail --no-lambda-pattern-names . 2>&1 | tee $out
+                '';
 
             # Gatus pat() uses GLOB, not regex. Chars ? and + have
             # different meanings in glob (? = single-char wildcard) vs
             # regex (? = optional quantifier), causing silent false
             # negatives in health checks. { is allowed — Prometheus
             # labels use {label="value"} syntax.
-            gatus-pattern-lint = pkgs.runCommand "gatus-pattern-lint" {} ''
+            gatus-pattern-lint = pkgs.runCommand "gatus-pattern-lint" { } ''
               if grep -v '^[[:space:]]*#' ${./modules/nixos/services/gatus-config.nix} | grep -nE 'pat\(.*[?+]'; then
                 echo "FAIL: Gatus pat() patterns contain regex-only chars (? or +)."
                 echo "Gatus pat() uses GLOB, not regex."
@@ -832,88 +833,89 @@
             #      series disappears when the scrape target fails), so a bare
             #      selector never fires — wrap in count(...) or vector(0).
             #   4. Known-dead metric names (verified 0 series in the store).
-            signoz-query-lint = let
-              alerts = ./modules/nixos/services/_signoz-alerts.nix;
-              dashboards = ./modules/nixos/services/dashboards;
-              deadMetrics = ["node_amdgpu_gpu_temp_celsius"];
-            in
+            signoz-query-lint =
+              let
+                alerts = ./modules/nixos/services/_signoz-alerts.nix;
+                dashboards = ./modules/nixos/services/dashboards;
+                deadMetrics = [ "node_amdgpu_gpu_temp_celsius" ];
+              in
               pkgs.runCommand "signoz-query-lint"
-              {
-                # extensible blocklist of metrics verified to have 0 series;
-                # verify additions via
-                #   clickhouse-client --query "SELECT count() FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='X'"
-                metrics = toString deadMetrics;
-              }
-              ''
-                fail=0
-                # NOTE: stdenv setup.sh enables `shopt -s nullglob` — an
-                # unquoted `$strip` command-string variable would have its
-                # glob-bearing words (the quoted grep pattern) silently
-                # DELETED, turning every trap below phantom-green. Command
-                # indirection MUST use function definitions (quotes parse
-                # at definition time), never variable expansion.
-                scan() { # scan <label> <files...>
-                  label="$1"; shift
-                  for f in "$@"; do
-                    case "$f" in
-                      *.nix)
-                        stream() { grep -v '^[[:space:]]*#' "$1"; }
-                        ;;
-                      *)
-                        stream() { cat "$1"; }
-                        ;;
-                    esac
+                {
+                  # extensible blocklist of metrics verified to have 0 series;
+                  # verify additions via
+                  #   clickhouse-client --query "SELECT count() FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='X'"
+                  metrics = toString deadMetrics;
+                }
+                ''
+                  fail=0
+                  # NOTE: stdenv setup.sh enables `shopt -s nullglob` — an
+                  # unquoted `$strip` command-string variable would have its
+                  # glob-bearing words (the quoted grep pattern) silently
+                  # DELETED, turning every trap below phantom-green. Command
+                  # indirection MUST use function definitions (quotes parse
+                  # at definition time), never variable expansion.
+                  scan() { # scan <label> <files...>
+                    label="$1"; shift
+                    for f in "$@"; do
+                      case "$f" in
+                        *.nix)
+                          stream() { grep -v '^[[:space:]]*#' "$1"; }
+                          ;;
+                        *)
+                          stream() { cat "$1"; }
+                          ;;
+                      esac
 
-                    # 1. job= label matchers never match anything
-                    if stream "$f" | grep -nE '\bjob[[:space:]]*=[[:space:]]*["~]' >lint_hits; then
-                      echo "FAIL [$label] $f: job= label matcher — no series carries a job label."
-                      echo "  The OTel prometheus receiver stores the scrape job as resource attr"
-                      echo "  service.name. Use node_systemd_unit_state{name=\"X.service\",state=\"active\"}"
-                      echo "  for liveness, or count(up{service_name=\"X\"}) or vector(0) for scrape health."
-                      sed 's/^/    /' lint_hits
-                      fail=1
-                    fi
-
-                    # 2. underscore histogram/summary suffixes are stored DOTTED
-                    if stream "$f" | grep -nE '[a-z_0-9]+_(sum|count|bucket)\b' >lint_hits; then
-                      echo "FAIL [$label] $f: underscore histogram suffix (metric_sum/_count/_bucket)."
-                      echo "  SigNoz stores suffixes DOTTED: metric.sum, metric.count, metric.bucket."
-                      echo "  The underscore form matches zero series (caddy/dns dashboards 2026-08-27)."
-                      echo "  Query as {__name__=\"metric.suffix\"} instead."
-                      sed 's/^/    /' lint_hits
-                      fail=1
-                    fi
-
-                    # 3. up{service_name=...} goes STALE mid-outage without a vector(0) fallback
-                    if stream "$f" | grep -nE 'up\{[^}]*service_name' | grep -vE '(or vector\(0\)|absent\()' >lint_hits; then
-                      echo "FAIL [$label] $f: bare up{service_name=...} selector."
-                      echo "  On scrape FAILURE the receiver emits a bare-label up=0 series and the"
-                      echo "  labeled series goes stale — the selector returns nothing exactly when"
-                      echo "  it should fire (dnsblockd :9090 wedge, 2026-08-27)."
-                      echo "  Use: count(up{service_name=\"X\"}) or vector(0)"
-                      sed 's/^/    /' lint_hits
-                      fail=1
-                    fi
-
-                    # 4. known-dead metric names
-                    for m in $metrics; do
-                      if stream "$f" | grep -nE "\b$m\b" >lint_hits; then
-                        echo "FAIL [$label] $f: dead metric '$m' (verified 0 series in the store)."
+                      # 1. job= label matchers never match anything
+                      if stream "$f" | grep -nE '\bjob[[:space:]]*=[[:space:]]*["~]' >lint_hits; then
+                        echo "FAIL [$label] $f: job= label matcher — no series carries a job label."
+                        echo "  The OTel prometheus receiver stores the scrape job as resource attr"
+                        echo "  service.name. Use node_systemd_unit_state{name=\"X.service\",state=\"active\"}"
+                        echo "  for liveness, or count(up{service_name=\"X\"}) or vector(0) for scrape health."
                         sed 's/^/    /' lint_hits
                         fail=1
                       fi
+
+                      # 2. underscore histogram/summary suffixes are stored DOTTED
+                      if stream "$f" | grep -nE '[a-z_0-9]+_(sum|count|bucket)\b' >lint_hits; then
+                        echo "FAIL [$label] $f: underscore histogram suffix (metric_sum/_count/_bucket)."
+                        echo "  SigNoz stores suffixes DOTTED: metric.sum, metric.count, metric.bucket."
+                        echo "  The underscore form matches zero series (caddy/dns dashboards 2026-08-27)."
+                        echo "  Query as {__name__=\"metric.suffix\"} instead."
+                        sed 's/^/    /' lint_hits
+                        fail=1
+                      fi
+
+                      # 3. up{service_name=...} goes STALE mid-outage without a vector(0) fallback
+                      if stream "$f" | grep -nE 'up\{[^}]*service_name' | grep -vE '(or vector\(0\)|absent\()' >lint_hits; then
+                        echo "FAIL [$label] $f: bare up{service_name=...} selector."
+                        echo "  On scrape FAILURE the receiver emits a bare-label up=0 series and the"
+                        echo "  labeled series goes stale — the selector returns nothing exactly when"
+                        echo "  it should fire (dnsblockd :9090 wedge, 2026-08-27)."
+                        echo "  Use: count(up{service_name=\"X\"}) or vector(0)"
+                        sed 's/^/    /' lint_hits
+                        fail=1
+                      fi
+
+                      # 4. known-dead metric names
+                      for m in $metrics; do
+                        if stream "$f" | grep -nE "\b$m\b" >lint_hits; then
+                          echo "FAIL [$label] $f: dead metric '$m' (verified 0 series in the store)."
+                          sed 's/^/    /' lint_hits
+                          fail=1
+                        fi
+                      done
                     done
-                  done
-                  rm -f lint_hits
-                  return 0
-                }
+                    rm -f lint_hits
+                    return 0
+                  }
 
-                scan alerts ${alerts}
-                scan dashboards ${dashboards}/*.json
+                  scan alerts ${alerts}
+                  scan dashboards ${dashboards}/*.json
 
-                [ "$fail" -eq 0 ] || exit 1
-                touch $out
-              '';
+                  [ "$fail" -eq 0 ] || exit 1
+                  touch $out
+                '';
 
             # Recursive chown/chmod walks in modules that also configure
             # Bind*Paths: systemd builds the mount namespace BEFORE any
@@ -923,7 +925,7 @@
             # (shared st_dev on one BTRFS subvol) — prune the exact path.
             # WARNING-only for now (live incident class: hermes 2026-08-20,
             # down 09:18-09:35); promote to exit 1 after one clean cycle.
-            chown-vs-bind-audit = pkgs.runCommand "chown-vs-bind-audit" {} ''
+            chown-vs-bind-audit = pkgs.runCommand "chown-vs-bind-audit" { } ''
               warn=0
               for f in $(grep -rlE 'Bind(ReadOnly|ReadWrite)?Paths' ${./modules}); do
                 if grep -nE '(chown|chmod) -R' "$f" | grep -vE '^[0-9]+:[[:space:]]*#'; then
@@ -952,141 +954,136 @@
             }
           );
 
-        apps = let
-          mkApp = name: description: runtimeInputs: scriptPath: {
-            type = "app";
-            program = "${
-              pkgs.writeShellApplication {
-                inherit name runtimeInputs;
-                text = builtins.readFile scriptPath;
-              }
-            }/bin/${name}";
-            meta.description = description;
-          };
-        in
-          {
-            deploy =
-              mkApp "deploy" "Deploy NixOS config to evo-x2 via nh with post-deploy checks" [
+          apps =
+            let
+              mkApp = name: description: runtimeInputs: scriptPath: {
+                type = "app";
+                program = "${
+                  pkgs.writeShellApplication {
+                    inherit name runtimeInputs;
+                    text = builtins.readFile scriptPath;
+                  }
+                }/bin/${name}";
+                meta.description = description;
+              };
+            in
+            {
+              deploy = mkApp "deploy" "Deploy NixOS config to evo-x2 via nh with post-deploy checks" [
                 pkgs.nh
                 pkgs.systemd
-              ]
-              ./scripts/deploy.sh;
-            validate = mkApp "validate" "Validate flake without building" [pkgs.nix] ./scripts/validate.sh;
-            fix-nixpkgs-lock =
-              mkApp "fix-nixpkgs-lock"
-              "Restore the flake.lock nixpkgs node to github type (one-command recovery from the tarball regression)"
-              [pkgs.nix pkgs.jq]
-              ./scripts/fix-nixpkgs-lock.sh;
-            pre-deploy-check =
-              mkApp "pre-deploy-check" "Pre-deploy validation: catches boot-breaking issues before switch"
-              [pkgs.nix pkgs.jq pkgs.systemd]
-              ./scripts/pre-deploy-check.sh;
-            post-deploy-check =
-              mkApp "post-deploy-check" "Post-deploy smoke test: verifies services are functional, not just alive"
-              [
-                pkgs.coreutils # date, wc, head, tr, sleep, id
-                pkgs.curl
-                pkgs.fish
-                pkgs.glibc # getent
-                pkgs.gnugrep
-                pkgs.jq
-                pkgs.nix
-                pkgs.procps # pgrep
-                pkgs.systemd # systemctl, journalctl
-              ]
-              ./scripts/post-deploy-check.sh;
-            btrfs-inventory =
-              mkApp "btrfs-inventory" "List all BTRFS subvolumes, snapshots, and mount points" [
+              ] ./scripts/deploy.sh;
+              validate = mkApp "validate" "Validate flake without building" [ pkgs.nix ] ./scripts/validate.sh;
+              fix-nixpkgs-lock =
+                mkApp "fix-nixpkgs-lock"
+                  "Restore the flake.lock nixpkgs node to github type (one-command recovery from the tarball regression)"
+                  [ pkgs.nix pkgs.jq ]
+                  ./scripts/fix-nixpkgs-lock.sh;
+              pre-deploy-check =
+                mkApp "pre-deploy-check" "Pre-deploy validation: catches boot-breaking issues before switch"
+                  [ pkgs.nix pkgs.jq pkgs.systemd ]
+                  ./scripts/pre-deploy-check.sh;
+              post-deploy-check =
+                mkApp "post-deploy-check" "Post-deploy smoke test: verifies services are functional, not just alive"
+                  [
+                    pkgs.coreutils # date, wc, head, tr, sleep, id
+                    pkgs.curl
+                    pkgs.fish
+                    pkgs.glibc # getent
+                    pkgs.gnugrep
+                    pkgs.jq
+                    pkgs.nix
+                    pkgs.procps # pgrep
+                    pkgs.systemd # systemctl, journalctl
+                  ]
+                  ./scripts/post-deploy-check.sh;
+              btrfs-inventory = mkApp "btrfs-inventory" "List all BTRFS subvolumes, snapshots, and mount points" [
                 pkgs.btrfs-progs
                 pkgs.util-linux
                 pkgs.coreutils
                 pkgs.findutils
-              ]
-              ./scripts/btrfs-subvolume-inventory.sh;
-            migrate-buildcache =
-              mkApp "migrate-buildcache"
-              "One-time migration of build caches (Go/Rust/npm/pip/pnpm/playwright) to the USB SSD at /mnt/buildcache. Run BEFORE the first deploy of services.buildcache"
-              [
-                pkgs.coreutils # cut, du, find, tr, wc
-                pkgs.e2fsprogs # e2label
-                pkgs.findutils
-                pkgs.gnugrep
-                pkgs.rsync
-                pkgs.trash-cli
-                pkgs.util-linux # findmnt, mountpoint
-              ]
-              ./scripts/migrate-buildcache.sh;
-            verify-io-tiers =
-              mkApp "verify-io-tiers" "Verify BFQ I/O priority tiers are correctly applied" [
+              ] ./scripts/btrfs-subvolume-inventory.sh;
+              migrate-buildcache =
+                mkApp "migrate-buildcache"
+                  "One-time migration of build caches (Go/Rust/npm/pip/pnpm/playwright) to the USB SSD at /mnt/buildcache. Run BEFORE the first deploy of services.buildcache"
+                  [
+                    pkgs.coreutils # cut, du, find, tr, wc
+                    pkgs.e2fsprogs # e2label
+                    pkgs.findutils
+                    pkgs.gnugrep
+                    pkgs.rsync
+                    pkgs.trash-cli
+                    pkgs.util-linux # findmnt, mountpoint
+                  ]
+                  ./scripts/migrate-buildcache.sh;
+              verify-io-tiers = mkApp "verify-io-tiers" "Verify BFQ I/O priority tiers are correctly applied" [
                 pkgs.systemd
                 pkgs.procps
-              ]
-              ./scripts/verify-io-tiers.sh;
-            pocket-id-login-code =
-              mkApp "pocket-id-login-code" "Generate a one-time Pocket ID login code for a new device"
-              [pkgs.curl pkgs.jq]
-              ./scripts/pocket-id-login-code.sh;
-          }
-          // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-            dns-diagnostics =
-              mkApp "dns-diagnostics" "Run DNS stack diagnostics (resolution, blocking, stats, connectivity)"
-              [
-                pkgs.systemd
-                pkgs.bind.dnsutils
-                pkgs.curl
-                pkgs.iproute2
-                pkgs.iputils
-                pkgs.jq
-              ]
-              ./scripts/dns-diagnostics.sh;
-            dms-restart = {
-              type = "app";
-              program = "${
-                pkgs.writeShellApplication {
-                  name = "dms-restart";
-                  runtimeInputs = [pkgs.systemd];
-                  text = "systemctl --user restart dms.service && echo 'DMS restarted'";
-                }
-              }/bin/dms-restart";
-              meta.description = "Restart DankMaterialShell desktop shell";
-            };
-            dms-locks = {
-              type = "app";
-              program = "${pkgs.callPackage ./pkgs/dms-lock.nix {inherit (theme) colors;}}/bin/dms-lock";
-              meta.description = "Lock screen via DMS IPC (fallback: swaylock-effects with wallpaper + Catppuccin Mocha)";
-            };
-            dms-wallpaper-next = {
-              type = "app";
-              program = "${
-                pkgs.writeShellApplication {
-                  name = "dms-wallpaper-next";
-                  runtimeInputs = [inputs.dankMaterialShell.packages.${system}.default];
-                  text = "dms ipc call wallpaper next";
-                }
-              }/bin/dms-wallpaper-next";
-              meta.description = "Cycle to next wallpaper via DMS IPC";
-            };
-            crush-daily-backfill = {
-              type = "app";
-              program = "${
-                pkgs.writeShellApplication {
-                  name = "crush-daily-backfill";
-                  runtimeInputs = [
-                    pkgs.python3
-                    inputs.crush-daily.packages.${system}.default or pkgs.crush-daily
+              ] ./scripts/verify-io-tiers.sh;
+              pocket-id-login-code =
+                mkApp "pocket-id-login-code" "Generate a one-time Pocket ID login code for a new device"
+                  [ pkgs.curl pkgs.jq ]
+                  ./scripts/pocket-id-login-code.sh;
+            }
+            // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+              dns-diagnostics =
+                mkApp "dns-diagnostics" "Run DNS stack diagnostics (resolution, blocking, stats, connectivity)"
+                  [
+                    pkgs.systemd
+                    pkgs.bind.dnsutils
+                    pkgs.curl
+                    pkgs.iproute2
+                    pkgs.iputils
+                    pkgs.jq
+                  ]
+                  ./scripts/dns-diagnostics.sh;
+              dms-restart = {
+                type = "app";
+                program = "${
+                  pkgs.writeShellApplication {
+                    name = "dms-restart";
+                    runtimeInputs = [ pkgs.systemd ];
+                    text = "systemctl --user restart dms.service && echo 'DMS restarted'";
+                  }
+                }/bin/dms-restart";
+                meta.description = "Restart DankMaterialShell desktop shell";
+              };
+              dms-locks = {
+                type = "app";
+                program = "${pkgs.callPackage ./pkgs/dms-lock.nix { inherit (theme) colors; }}/bin/dms-lock";
+                meta.description = "Lock screen via DMS IPC (fallback: swaylock-effects with wallpaper + Catppuccin Mocha)";
+              };
+              dms-wallpaper-next = {
+                type = "app";
+                program = "${
+                  pkgs.writeShellApplication {
+                    name = "dms-wallpaper-next";
+                    runtimeInputs = [ inputs.dankMaterialShell.packages.${system}.default ];
+                    text = "dms ipc call wallpaper next";
+                  }
+                }/bin/dms-wallpaper-next";
+                meta.description = "Cycle to next wallpaper via DMS IPC";
+              };
+              crush-daily-backfill = {
+                type = "app";
+                program = "${
+                  pkgs.writeShellApplication {
+                    name = "crush-daily-backfill";
+                    runtimeInputs = [
+                      pkgs.python3
+                      inputs.crush-daily.packages.${system}.default or pkgs.crush-daily
                         or (throw "crush-daily package not found")
-                  ];
-                  text = builtins.readFile ./scripts/crush-daily-backfill.py;
-                }
-              }/bin/crush-daily-backfill";
-              meta.description = "Backfill crush-daily reports for zero-data or missing dates";
+                    ];
+                    text = builtins.readFile ./scripts/crush-daily-backfill.py;
+                  }
+                }/bin/crush-daily-backfill";
+                meta.description = "Backfill crush-daily reports for zero-data or missing dates";
+              };
             };
-          };
-      };
+        };
 
       # System configurations — assembled in systems/*.nix (thin host files)
       flake = {
-        lib = import ./lib {inherit (nixpkgs) lib;};
+        lib = import ./lib { inherit (nixpkgs) lib; };
 
         darwinConfigurations."Lars-MacBook-Air" = import ./systems/darwin.nix {
           inherit

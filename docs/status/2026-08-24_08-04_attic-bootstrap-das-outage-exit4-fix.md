@@ -127,6 +127,7 @@ exit 4 on `atticd-bootstrap.service` (connection refused to 127.0.0.1:8200).
 ## f) NEXT THINGS (session-derived, priority order)
 
 **Physical recovery (blocks everything pool-side):**
+
 1. Reseat DAS USB cable AND enclosure power connector
 2. Power-cycle reboot (~10s off — warm reboot may not re-enumerate; NIC-vanish
    precedent)
@@ -138,10 +139,10 @@ exit 4 on `atticd-bootstrap.service` (connection refused to 127.0.0.1:8200).
 
 **Post-recovery verification (self-healing expected — confirm it):**
 7. `/mnt/pool` mounted, BOTH Toshiba members present; `btrfs device stats`
-   clean
+clean
 8. smartd re-enumerates both MG08 members (`-d sat`)
 9. `atticd-bootstrap` runs green (deploy.sh restart converges it after the
-   reboot automatically)
+reboot automatically)
 10. `curl http://127.0.0.1:8200/` answers; `https://cache.home.lan/` 200
 11. immich / paperless / bank-sync services active; their vHosts 200
 12. bank-sync first successful sync lands (WARN today: no successful sync yet)
@@ -150,36 +151,36 @@ exit 4 on `atticd-bootstrap.service` (connection refused to 127.0.0.1:8200).
 
 **Decisions pending (user):**
 15. 11.3 GB NVMe fallback caches: keep while DAS is down vs quarantine/remove
-    (gocache 8.5G, gomod 2.3G, gobuild 468M — NOT in the recovery reap list)
+(gocache 8.5G, gomod 2.3G, gobuild 468M — NOT in the recovery reap list)
 16. Crush Daily 0-sessions on 2026-08-23: investigate vs accept crash-era gap
 17. One-member pool mount (`-o degraded`) if a Toshiba is actually dead —
-    never automated, always a user call
+never automated, always a user call
 
 **Code hardening (small, bounded):**
 18. Deduplicate the python3 readiness probe in atticd-bootstrap (single
-    helper, used by loop + post-loop assertion)
+helper, used by loop + post-loop assertion)
 19. VM test case: pool mounted but atticd wedged → bootstrap exits 1 with the
-    clear message (covers the loud-fail path I added)
+clear message (covers the loud-fail path I added)
 20. Sweep for OTHER activation-blocking oneshots behind mount-gated deps
-    (grep `wantedBy.*multi-user` + `RequiresMountsFor` in same unit); apply
-    the condition-skip pattern where semantics allow
+(grep `wantedBy.*multi-user` + `RequiresMountsFor` in same unit); apply
+the condition-skip pattern where semantics allow
 21. post-deploy-check: collapse dependency-failure cascades into one
-    root-cause SKIP/FAIL with a count
+root-cause SKIP/FAIL with a count
 22. deploy.sh: echo a checkable marker after the provisioner loop (or grep
-    its own log) so restarts are verifiable post-hoc
+its own log) so restarts are verifiable post-hoc
 
 **Smoke-noise follow-ups noticed this session (pre-existing, low priority):**
 23. fish startup 3049ms (threshold 200ms) — WARN every deploy
 24. quickshell: 1 error line in the last hour (WARN every deploy)
 25. Confirm sev1-bridge actually surfaced the DAS-link condition during this
-    outage (it evaluates DAS-link; the user should have seen the overlay —
-    worth one journal check)
+outage (it evaluates DAS-link; the user should have seen the overlay —
+worth one journal check)
 26. Confirm Discord got the "Attic Binary Cache" Gatus alert (journal showed
-    success=false at 04:42)
+success=false at 04:42)
 27. New timers that started with system-719 (sev1-bridge, kdump-retention,
-    clickhouse-xfs-metrics): spot-check one firing each
+clickhouse-xfs-metrics): spot-check one firing each
 28. Crush-daily session-count metric: if 0-sessions recurs on a calm day,
-    escalate to a real investigation
+escalate to a real investigation
 
 ## g) QUESTIONS FOR THE USER (cannot be answered from the repo/system)
 

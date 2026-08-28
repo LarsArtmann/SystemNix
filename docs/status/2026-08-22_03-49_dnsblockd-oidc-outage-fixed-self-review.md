@@ -8,22 +8,22 @@
 
 ## Timeline (what actually happened)
 
-| Time | Event |
-|---|---|
-| 00:27 | Kernel freeze (zram 100%, flm unevictable — prior incident) |
-| 00:32 / 00:48 | Crash-recovery boots; provisioner re-created dnsblockd client; stale-secret desync (prior session's diagnosis) |
-| 02:23 | User login fails `invalid_client` at token exchange (secret desync — original diagnosis correct AT THIS TIME) |
-| 02:37–02:40 | Pocket ID fatal `SQLITE_BUSY` chain → exit 1 |
-| 02:42 | Pocket ID restarts — **dnsblockd client row has VANISHED from the DB** (new, second failure class) |
-| 02:51 / 02:55 | User sees "The requested OAuth 2.0 Client does not exist" |
-| ~02:5x | User "deploys" the prior session's fix — **no generation is ever created; nothing activates** |
-| 02:58 | This session starts; finds gen 694 (Aug 20) is still latest → user's deploy never ran |
-| 03:02 | My deploy #1: provisioner re-creates client (201) + force-regenerates secret. **Login still broken** — bridge + daemon never restarted |
-| 03:05–03:15 | Root-cause the delivery gap (`is-enabled` rc=1 for indirect units + `EnvironmentFile` read at start only); fix `deploy.sh`; remove `regenerateSecretsFor` flag |
-| 03:13–03:27 | Deploys blocked: concurrent session's mid-edit `signoz.nix` syntax error (polled until it parsed; did not touch their file) |
-| 03:40 | Deploy #2: flag cleared (provisioner: "Secret file already exists" — stable), restart chain executes |
-| 03:42:04 | `dnsblockd-oidc-secret` writes fresh secret → `dnsblockd` restarts after it |
-| 03:44–03:49 | Verified: `/authorize` → `302 /interaction` (client recognized); 0 OIDC errors in dnsblockd journal; DNS + :9090 healthy |
+| Time          | Event                                                                                                                                                          |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 00:27         | Kernel freeze (zram 100%, flm unevictable — prior incident)                                                                                                    |
+| 00:32 / 00:48 | Crash-recovery boots; provisioner re-created dnsblockd client; stale-secret desync (prior session's diagnosis)                                                 |
+| 02:23         | User login fails `invalid_client` at token exchange (secret desync — original diagnosis correct AT THIS TIME)                                                  |
+| 02:37–02:40   | Pocket ID fatal `SQLITE_BUSY` chain → exit 1                                                                                                                   |
+| 02:42         | Pocket ID restarts — **dnsblockd client row has VANISHED from the DB** (new, second failure class)                                                             |
+| 02:51 / 02:55 | User sees "The requested OAuth 2.0 Client does not exist"                                                                                                      |
+| ~02:5x        | User "deploys" the prior session's fix — **no generation is ever created; nothing activates**                                                                  |
+| 02:58         | This session starts; finds gen 694 (Aug 20) is still latest → user's deploy never ran                                                                          |
+| 03:02         | My deploy #1: provisioner re-creates client (201) + force-regenerates secret. **Login still broken** — bridge + daemon never restarted                         |
+| 03:05–03:15   | Root-cause the delivery gap (`is-enabled` rc=1 for indirect units + `EnvironmentFile` read at start only); fix `deploy.sh`; remove `regenerateSecretsFor` flag |
+| 03:13–03:27   | Deploys blocked: concurrent session's mid-edit `signoz.nix` syntax error (polled until it parsed; did not touch their file)                                    |
+| 03:40         | Deploy #2: flag cleared (provisioner: "Secret file already exists" — stable), restart chain executes                                                           |
+| 03:42:04      | `dnsblockd-oidc-secret` writes fresh secret → `dnsblockd` restarts after it                                                                                    |
+| 03:44–03:49   | Verified: `/authorize` → `302 /interaction` (client recognized); 0 OIDC errors in dnsblockd journal; DNS + :9090 healthy                                       |
 
 ---
 
@@ -53,7 +53,7 @@
 4. **Pocket ID durability work** — SQLITE_BUSY-under-IO-pressure is a recurring crash class (discordsync collateral documented earlier); tonight it turned fatal and destroyed data. No mitigation, no forensics.
 5. **Secret-file PathChanged auto-re-bridge** — would remove deploy.sh from the critical path entirely.
 6. **TODO_LIST.md harvest** of this report's section (f).
-7. **Verification that `data-to-pool-migration` / `activitywatch-data-to-pool` skipped cleanly** on a pool-absent deploy (deploy.sh starts them every time; self-neutralizing conditions *should* hold — unconfirmed tonight).
+7. **Verification that `data-to-pool-migration` / `activitywatch-data-to-pool` skipped cleanly** on a pool-absent deploy (deploy.sh starts them every time; self-neutralizing conditions _should_ hold — unconfirmed tonight).
 
 ## d) TOTALLY FUCKED UP
 
@@ -76,6 +76,7 @@
 ## f) NEXT — up to 50, ordered by priority
 
 **P0 — verify & stabilize (today)**
+
 1. [user] Log into `https://dnsblock.home.lan` with passkey — confirm token exchange end-to-end
 2. [user] Reseat DAS USB cable/power + clean reboot → `/mnt/pool` back (clears Immich, Paperless, bank-sync, Attic, attic-cache 502s)
 3. After pool return: verify `atticd-bootstrap`, `btrfs-verify-pool-backups` recover; `reset-failed` the bootstrap unit
@@ -125,7 +126,7 @@
 39. Capture deploy generation numbers in the journal/report (I did not record 695/696 tonight)
 40. Re-verify dnsblockd SSO after the next reboot (proves the chain survives boot, not just deploy)
 
-*(40 items — the honest list; nothing padded to reach 50.)*
+_(40 items — the honest list; nothing padded to reach 50.)_
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 
@@ -135,4 +136,4 @@
 
 ---
 
-*Auto-commit daemon has already committed this session's code/docs work (deploy.sh, configuration.nix, AGENTS.md, diagnosis addendum); this report is the only new file. Format note: written as `.md` per explicit request — the status-report skill's HTML default was overridden.*
+_Auto-commit daemon has already committed this session's code/docs work (deploy.sh, configuration.nix, AGENTS.md, diagnosis addendum); this report is the only new file. Format note: written as `.md` per explicit request — the status-report skill's HTML default was overridden._

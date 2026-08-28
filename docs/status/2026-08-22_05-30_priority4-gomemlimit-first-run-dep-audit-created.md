@@ -12,14 +12,15 @@
 
 The TODO predicted "first run will likely reveal grep-pattern bugs" — it did, plus a second class:
 
-| Bug | Symptom | Fix |
-| --- | --- | --- |
-| **Scientific-notation heap values** (the predicted class, different mechanism) | `line 80: 6.97024512e+08: arithmetic syntax error` — Prometheus renders `go_memstats_heap_inuse_bytes` in exponent form; bash arithmetic is integer-only | `awk … printf "%.0f"` in the extraction; `to_bytes()` now uses awk so decimal values (`1.5GiB`) also work |
-| **Stale hardcoded service list** (unpredicted) | `file-and-image-renamer-server` — unit name that never existed (real: `file-and-image-renamer`, so the service was silently SKIPping its only GOMEMLIMIT check); missing `papdashboard`, `signoz`, `projects-management-automation`; `signoz-collector` port `0` although :8888 serves metrics | List rebuilt to 10 entries from module grep (`GOMEMLIMIT` across `modules/nixos/services/`); `MARKER` comment added: add new GOMEMLIMIT services to the script when adding them to modules |
+| Bug                                                                            | Symptom                                                                                                                                                                                                                                                                                        | Fix                                                                                                                                                                                        |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Scientific-notation heap values** (the predicted class, different mechanism) | `line 80: 6.97024512e+08: arithmetic syntax error` — Prometheus renders `go_memstats_heap_inuse_bytes` in exponent form; bash arithmetic is integer-only                                                                                                                                       | `awk … printf "%.0f"` in the extraction; `to_bytes()` now uses awk so decimal values (`1.5GiB`) also work                                                                                  |
+| **Stale hardcoded service list** (unpredicted)                                 | `file-and-image-renamer-server` — unit name that never existed (real: `file-and-image-renamer`, so the service was silently SKIPping its only GOMEMLIMIT check); missing `papdashboard`, `signoz`, `projects-management-automation`; `signoz-collector` port `0` although :8888 serves metrics | List rebuilt to 10 entries from module grep (`GOMEMLIMIT` across `modules/nixos/services/`); `MARKER` comment added: add new GOMEMLIMIT services to the script when adding them to modules |
 
 Final live run on evo-x2: **12 OK, 0 warnings, exit 0**; shellcheck clean. All 10 services at 2–30% of MemoryMax — no OOM proximity anywhere.
 
 **Findings harvested from the live run** (→ next-things list):
+
 - `browser-history`: heap 5 MiB against GOMEMLIMIT=384MiB (**1%** — limit likely oversized; note-level)
 - `discordsync` :8085 — no `go_memstats` on `/metrics` (API server doesn't export Go runtime stats)
 - `signoz-collector` :8888 — same (OTel collector exposes its own metric set, no Go runtime stats)
@@ -120,11 +121,11 @@ The three pending items were executed after the report above. Open questions g)1
 
 Full `tests/` grep (`restart` case-insensitive, minus Restart=/restartTriggers lines): only **3 files** restart or stop/start services.
 
-| Test | Restarts | Module burst | Verdict |
-| --- | --- | --- | --- |
-| test-hermes | 7× intentional (ExecStartPre idempotency) | 5/600s → test raises `startLimitBurst = lib.mkForce 20` | already fixed + documented in-test |
-| test-searxng | 2× (searx-init + searx) | searxng 5/300s | safe (2 < 5, plus boot start = 3) |
-| test-memory-emergency-guard | stop/start pairs (~3 fastflowlm starts) | module guard does `systemctl reset-failed` before `start` (memory-emergency-guard.nix:226) | safe by design — the canonical pattern |
+| Test                        | Restarts                                  | Module burst                                                                               | Verdict                                |
+| --------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------- |
+| test-hermes                 | 7× intentional (ExecStartPre idempotency) | 5/600s → test raises `startLimitBurst = lib.mkForce 20`                                    | already fixed + documented in-test     |
+| test-searxng                | 2× (searx-init + searx)                   | searxng 5/300s                                                                             | safe (2 < 5, plus boot start = 3)      |
+| test-memory-emergency-guard | stop/start pairs (~3 fastflowlm starts)   | module guard does `systemctl reset-failed` before `start` (memory-emergency-guard.nix:226) | safe by design — the canonical pattern |
 
 No crash-loop-simulation tests exist (grep for kill/SIGKILL patterns: none).
 

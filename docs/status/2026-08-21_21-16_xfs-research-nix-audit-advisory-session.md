@@ -6,45 +6,46 @@
 
 ## a) FULLY DONE
 
-| # | Item | Evidence / Location |
-|---|------|---------------------|
+| # | Item                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Evidence / Location     |
+| - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
 | 1 | **XFS opportunity analysis, ranked and grounded in the actual tree** — 7 ranked opportunities, 5 hard "must NOT go XFS" surfaces, implementation sketch, Pareto sequence. Read: `lib/filesystems.nix`, `modules/nixos/services/default-services.nix` (docker `overlay2` + `data-root=/data/docker`), `signoz.nix` (clickhouse dataDir), `hardware-configuration.nix`, prior XFS research in `docs/status/archived/2026-08-14_12-30_ssd-recovery-benchmarking-session.md` §9.2 and `docs/brainstorming/2026-07-11_filesystem-platform-analysis.md` | Answer 1 (this session) |
-| 2 | **`/nix` mount + lifecycle audit** — verified the `@nix` subvolume mount options, btrbk exclusion mechanics, GC/optimise ordering, gc-guard, oomd exemption. Read: `hardware-configuration.nix:71-82`, `snapshots.nix`, `platforms/common/nix-settings.nix`, `btrfs-health.nix:507-524`, `scripts/migrate-nix-subvol.sh` | Answer 2 (this session) |
-| 3 | **Verdict delivered with honest counters** — `auto-optimise-store=false` + daily optimise confirmed as deliberate and correct; migration script incident documentation acknowledged; identified 3 concrete gaps (see e) | Answer 2 |
-| 4 | **Cross-checked prior art instead of duplicating** — the 2026-08-14 SSD session already contained a generic XFS-vs-ext4-vs-btrfs table; this session built on it machine-specifically (QLC SLC-cache physics, Docker-on-`/data` CoW pinning, p9 space) rather than re-deriving | Session reasoning |
+| 2 | **`/nix` mount + lifecycle audit** — verified the `@nix` subvolume mount options, btrbk exclusion mechanics, GC/optimise ordering, gc-guard, oomd exemption. Read: `hardware-configuration.nix:71-82`, `snapshots.nix`, `platforms/common/nix-settings.nix`, `btrfs-health.nix:507-524`, `scripts/migrate-nix-subvol.sh`                                                                                                                                                                                                                          | Answer 2 (this session) |
+| 3 | **Verdict delivered with honest counters** — `auto-optimise-store=false` + daily optimise confirmed as deliberate and correct; migration script incident documentation acknowledged; identified 3 concrete gaps (see e)                                                                                                                                                                                                                                                                                                                           | Answer 2                |
+| 4 | **Cross-checked prior art instead of duplicating** — the 2026-08-14 SSD session already contained a generic XFS-vs-ext4-vs-btrfs table; this session built on it machine-specifically (QLC SLC-cache physics, Docker-on-`/data` CoW pinning, p9 space) rather than re-deriving                                                                                                                                                                                                                                                                    | Session reasoning       |
 
 ## b) PARTIALLY DONE
 
-| # | Item | What's missing |
-|---|------|----------------|
-| 1 | **XFS recommendation pack** — analysis complete, but nothing measured. Zero fio/benchmark runs performed (none requested, none possible read-only). The BTRFS-6.12-vs-XFS metadata question (`docs/brainstorming/2026-07-11_filesystem-platform-analysis.md:261` claims BTRFS 3-4x faster on metadata) remains UNSETTLED empirically — flagged as Pareto step 1 (benchmark on frozen sdf) but not executed |
-| 2 | **`/nix` "superb?" audit** — assessment complete on config-mechanics level, but live-state verification NOT done: actual `@nix` compression ratio never measured (only assumed 1.5-2x), current store size not checked, `compsite` output not consulted (a `btrfs-compsize` collector EXISTS and runs every 6h — I could have pulled the real number from the metrics) |
-| 3 | **Docker-on-XFS plan sketch** — direction + migration sequence outlined, but no sizing (how big should the sdd XFS volume be?), no rollback plan detail, no impact analysis on the `/data` EIO repair sequencing |
+| # | Item                                                                                                                                                                                                                                                                                                                                                                                                       | What's missing |
+| - | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| 1 | **XFS recommendation pack** — analysis complete, but nothing measured. Zero fio/benchmark runs performed (none requested, none possible read-only). The BTRFS-6.12-vs-XFS metadata question (`docs/brainstorming/2026-07-11_filesystem-platform-analysis.md:261` claims BTRFS 3-4x faster on metadata) remains UNSETTLED empirically — flagged as Pareto step 1 (benchmark on frozen sdf) but not executed |                |
+| 2 | **`/nix` "superb?" audit** — assessment complete on config-mechanics level, but live-state verification NOT done: actual `@nix` compression ratio never measured (only assumed 1.5-2x), current store size not checked, `compsite` output not consulted (a `btrfs-compsize` collector EXISTS and runs every 6h — I could have pulled the real number from the metrics)                                     |                |
+| 3 | **Docker-on-XFS plan sketch** — direction + migration sequence outlined, but no sizing (how big should the sdd XFS volume be?), no rollback plan detail, no impact analysis on the `/data` EIO repair sequencing                                                                                                                                                                                           |                |
 
 ## c) NOT STARTED
 
-| # | Item |
-|---|------|
-| 1 | Any implementation of any XFS recommendation (deliberate — advisory session, user decides) |
+| # | Item                                                                                                                                                                |
+| - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | Any implementation of any XFS recommendation (deliberate — advisory session, user decides)                                                                          |
 | 2 | Wiring attic as a substituter / creating the attic cache + CI token (long-standing TODO_LIST:137 item, re-confirmed as the single biggest `/nix` gap, not acted on) |
-| 3 | `max-free = 100G` fix in `nix-settings.nix` (identified, not fixed — would be a 1-line change + deploy) |
-| 4 | XFS monitoring design beyond a sketch (no `xfs_quota` collector, no `xfs_scrub` Gatus checks, no textfile-collector draft) |
-| 5 | p9 partition deletion follow-through (user-run by decision; the XFS-on-p9 idea adds a NEW decision on top: XFS `/nix` vs leave unallocated — now needs a call) |
+| 3 | `max-free = 100G` fix in `nix-settings.nix` (identified, not fixed — would be a 1-line change + deploy)                                                             |
+| 4 | XFS monitoring design beyond a sketch (no `xfs_quota` collector, no `xfs_scrub` Gatus checks, no textfile-collector draft)                                          |
+| 5 | p9 partition deletion follow-through (user-run by decision; the XFS-on-p9 idea adds a NEW decision on top: XFS `/nix` vs leave unallocated — now needs a call)      |
 
 ## d) TOTALLY FUCKED UP
 
 Nothing destroyed — read-only session. Honest failures of judgment/process:
 
-| # | Failure | Why it matters |
-|---|---------|----------------|
-| 1 | **Quoted stale numbers without live verification.** Repeated "~47 GiB store" (from comments/docs written 2026-08-17) — 4 days of deploys + a 3d GC cycle make that number almost certainly wrong today. Same for "~16 GB @cache-home". I had shell access and did not check | A status report carrying 4-day-old sizes as present tense is exactly the "point-in-time report treated as living truth" trap my own global instructions warn about |
-| 2 | **Did not check whether the btrfs-compsize metrics could already answer the compression question I flagged as "measure first"** — I recommended measuring the `/nix` zstd ratio before any XFS move, while the answer (per-subvol or at least per-fs ratio) is likely sitting in the existing collector output on the host | Missed free data; recommendation said "measure" when it could have said "read" |
-| 3 | **First answer's Docker claim was under-verified**: I asserted overlay2 upperdirs on `/data` are CoW-pinned by btrbk nightly sends — true per config (btrbk-data sends `/data` toplevel nightly), but I did not verify whether `/data/docker` is a nested subvolume (which btrbk would EXCLUDE) or a plain dir (which it would capture). The distinction changes the strength of recommendation #1 | Config read; host state not checked |
-| 4 | **Answer 2's "9/10" grade was generous packaging.** I found a store-wipe-class risk (min-free spontaneous GC sweeping the entire store toward an unreachable 100G max-free on a chronically 80-95% full filesystem) and still led with "excellent design". Severity ordering was inverted for palatability | A store-wide GC I/O storm on QLC NAND is the same incident class as the documented WDT resets; it should have been the headline, not gap #2 of 3 |
+| # | Failure                                                                                                                                                                                                                                                                                                                                                                                            | Why it matters                                                                                                                                                     |
+| - | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1 | **Quoted stale numbers without live verification.** Repeated "~47 GiB store" (from comments/docs written 2026-08-17) — 4 days of deploys + a 3d GC cycle make that number almost certainly wrong today. Same for "~16 GB @cache-home". I had shell access and did not check                                                                                                                        | A status report carrying 4-day-old sizes as present tense is exactly the "point-in-time report treated as living truth" trap my own global instructions warn about |
+| 2 | **Did not check whether the btrfs-compsize metrics could already answer the compression question I flagged as "measure first"** — I recommended measuring the `/nix` zstd ratio before any XFS move, while the answer (per-subvol or at least per-fs ratio) is likely sitting in the existing collector output on the host                                                                         | Missed free data; recommendation said "measure" when it could have said "read"                                                                                     |
+| 3 | **First answer's Docker claim was under-verified**: I asserted overlay2 upperdirs on `/data` are CoW-pinned by btrbk nightly sends — true per config (btrbk-data sends `/data` toplevel nightly), but I did not verify whether `/data/docker` is a nested subvolume (which btrbk would EXCLUDE) or a plain dir (which it would capture). The distinction changes the strength of recommendation #1 | Config read; host state not checked                                                                                                                                |
+| 4 | **Answer 2's "9/10" grade was generous packaging.** I found a store-wipe-class risk (min-free spontaneous GC sweeping the entire store toward an unreachable 100G max-free on a chronically 80-95% full filesystem) and still led with "excellent design". Severity ordering was inverted for palatability                                                                                         | A store-wide GC I/O storm on QLC NAND is the same incident class as the documented WDT resets; it should have been the headline, not gap #2 of 3                   |
 
 ## e) WHAT WE SHOULD IMPROVE (from this session's findings)
 
 ### `/nix` & store lifecycle (highest value)
+
 1. **Set `max-free` to a reachable value (~20-30G).** Current 100G is unreachable on this disk → any spontaneous GC (min-free trigger) sweeps the ENTIRE store in one I/O storm. 1-line fix in `platforms/common/nix-settings.nix:20`
 2. **Wire attic as a substituter + create the cache.** Server running since 2026-08-02, zero clients. Every deploy rebuilds `mkLarsPackages` Go binaries + the hermes uv2nix tree from scratch. `docs/setup/nix-binary-cache-setup.md` has the full runbook
 3. **Consider `keep-outputs`/`keep-derivations`** — not evaluated this session; on a 3d GC cycle they may reduce deploy-time rebuild churn (trade-off: larger store)
@@ -53,6 +54,7 @@ Nothing destroyed — read-only session. Honest failures of judgment/process:
 6. **Verify `/data/docker` is a plain dir, not a nested subvolume** — determines whether btrbk-data nightly sends really carry Docker churn (strengthens/weakens XFS-Docker case)
 
 ### Filesystem strategy (from XFS research)
+
 7. **fio metadata benchmark on frozen sdf** — settles BTRFS-6.12-vs-XFS empirically before any partition decision; free, zero risk
 8. **sdd → XFS Docker volume** (`mkfs.xfs -n ftype=1`, overlay2's canonical backing): removes worst CoW citizen from `/data`, narrows EIO repair blast radius, PG containers benefit. Requires clean PG shutdown (backup timers provide the quiesce point)
 9. **ClickHouse `/var/lib/clickhouse` → XFS** — ClickHouse's own docs recommend XFS and list BTRFS as unsuitable; the 52 GiB log-table incident was textbook CoW anti-pattern. Bonus: measure delta in SigNoz itself
@@ -61,6 +63,7 @@ Nothing destroyed — read-only session. Honest failures of judgment/process:
 12. **If VMs ever return: XFS home for qcow2 images** (CoW-on-CoW double fragmentation)
 
 ### Hygiene noticed in passing
+
 13. **`flake.lock.feat` + `flake.lock.orig` sit in repo root** — leftover lockfile copies from some merge/experiment; untracked debris that invites confusion (grep hits show they contain real lock data). Confirm origin, then trash
 14. **btrbk-data sends still aborting nightly on the known /data EIO inode** (TODO_LIST P0) — every XFS-Docker step interacts with this; repair remains the gate
 15. **`btrfs-health.nix:508` comment still says "device-unallocated < 10%"** while the guard was fixed to absolute bytes (<5 GiB) on 2026-08-21 per AGENTS.md — stale comment next to live code (I read this file and only caught it while writing this report)
@@ -68,6 +71,7 @@ Nothing destroyed — read-only session. Honest failures of judgment/process:
 ## f) UP TO 50 THINGS TO DO NEXT
 
 **Tier 0 — do first (high impact, tiny effort)**
+
 1. Fix `max-free` in `nix-settings.nix` (1 line) + deploy
 2. Pull real `/nix` + `/data` compression ratios from btrfs-compsize output (read-only)
 3. Verify `/data/docker` nested-subvolume vs plain dir (read-only, 1 command)

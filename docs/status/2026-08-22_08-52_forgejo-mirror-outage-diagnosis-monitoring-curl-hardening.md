@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-The review's verdict on the `AddAuthCredentialHelperForRemote` error spam — *"Verified NOT fatal: mirrors still complete"* — was **wrong**. I verified against the forgejo v15.0.6 source that `TouchMirror` advances `mirror.updated_unix` on FAILURE, which is exactly what the review used as its "mirrors still complete" evidence. In reality, **pull-mirror syncing has been broken in three escalating phases since 2026-08-18 15:28, and was 100% dead from 2026-08-21 21:55 until this session's restart at 07:16 today** (~9.5h total silence, ~1.5 days of aborted syncs before that). Nothing alerted, because nothing monitored mirror health — the exact gap the review flagged.
+The review's verdict on the `AddAuthCredentialHelperForRemote` error spam — _"Verified NOT fatal: mirrors still complete"_ — was **wrong**. I verified against the forgejo v15.0.6 source that `TouchMirror` advances `mirror.updated_unix` on FAILURE, which is exactly what the review used as its "mirrors still complete" evidence. In reality, **pull-mirror syncing has been broken in three escalating phases since 2026-08-18 15:28, and was 100% dead from 2026-08-21 21:55 until this session's restart at 07:16 today** (~9.5h total silence, ~1.5 days of aborted syncs before that). Nothing alerted, because nothing monitored mirror health — the exact gap the review flagged.
 
 **Current live state (verified 08:52):** mirrors ARE syncing again (`mirror_updated: 2026-08-22T07:16:37` — the 30m cron fired exactly 30 min after the deploy restart). The new Gatus check "Forgejo Mirror Sync" is deployed but **red on a false alarm**: the collector's sqlite `dbPath` is wrong (`scrape_errors=1`), needs one sudo command to fix.
 
@@ -61,23 +61,24 @@ The review's verdict on the `AddAuthCredentialHelperForRemote` error spam — *"
 ## f) NEXT UP TO 50
 
 **P0 — close out this incident:**
+
 1. Run `sudo grep -A6 '^\[database\]' /var/lib/forgejo/custom/conf/app.ini`, get real `PATH`, set `services.system-health.forgejo.dbPath` accordingly (or make the collector try `forgejo.db`+`gitea.db`), deploy, verify Mirror Sync gatus green.
 2. Enumerate the 8 post-deploy smoke failures (`nix run .#post-deploy-check`), triage which are mine vs pre-existing.
 3. Watch the 30m cron for 2–3 cycles: confirm `mirror_updated` keeps advancing (next due ~07:46, 08:16 …) and no ENOENT/allowlist errors return.
 4. Verify the `erroring` metric would have caught the ENOENT era: replay `journalctl --since 2026-08-19 --grep` against the metric's grep pattern (dry-run the exact command).
 5. Check whether push mirrors (sync-on-commit to GitHub) also resumed — separate code path (`SyncPushMirror`), same queue.
-**P1 — upstream:**
+   **P1 — upstream:**
 6. File forgejo issue: unique mirror queue wedges after hard process kills; cron dedup-skip is Trace-silent → total silent sync stop (evidence: this incident).
 7. File forgejo issue: `TouchMirror` on failure advances `updated_unix`, masking outages from API consumers.
 8. File forgejo issue: `AddAuthCredentialHelperForRemote` ENOENT aborts credentialed mirror syncs (15.0.6, PrivateTmp unit) — include binary/source refs, onset-without-restart observation.
 9. Evaluate forgejo `[queue]` config for mirror queue persistence/flush settings that survive crashes.
-**P1 — prevention layers:**
+   **P1 — prevention layers:**
 10. Add forgejo DNS-gate boot ordering to a VM test (dnsblockd-not-ready boot must not produce a PocketID-dead forgejo).
 11. Make `forgejo-github-sync` verify `mirror_updated` freshness per repo and fail loudly on stalled mirrors (its "0 failed" was blind for 4 days).
 12. post-deploy-check: add a forgejo mirror functional probe (API `mirror_updated` age < interval+slack).
 13. Consider a generic "sqlite path existence" eval-time or pre-deploy assertion for collector dbPaths (gatus one worked because the path was copy-pasted from a verified incident; forgejo one was assumed from nixpkgs defaults).
 14. Sweep other assumed-path consumers (`monitor365.stateDir` etc.) for the same stale-default risk.
-**P2 — from session observations:**
+    **P2 — from session observations:**
 15. `forgejo-runner` logged `connection refused` errors during the 2-min forgejo gap — consider `RestartSec`/backoff review or a gatus check on runner heartbeats.
 16. `mnt-buildcache.mount` start job timed out during activation (device job dependency) — buildcache recovery path re-verified post-deploy? (AGENTS says deploy.sh starts it; confirm it did.)
 17. DMS/quickshell journal has error lines post-deploy (WARN in smoke) — triage.
@@ -101,15 +102,15 @@ The review's verdict on the `AddAuthCredentialHelperForRemote` error spam — *"
 
 ### Verification evidence trail (this session)
 
-| Claim | Evidence |
-|---|---|
+| Claim                    | Evidence                                                                                                                                                                         |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Mirrors dead 21:55→07:16 | API `mirror_updated` frozen at `2026-08-21T21:55:58` (two repos), zero `SyncMirrors`/`Mirror.runSync` processes in 60s watch, `mirror_updated: 2026-08-22T07:16:37` post-restart |
-| Error timeline | journal counts/day: 855 (08-18), 2400, 2400, 900 (08-21 until 00:28); `not allowed` 100 lines 08-21 19:35–20:35 |
-| Same binary throughout | process cmdline `…-forgejo-lts-15.0.6/bin/forgejo web` all boots; version banner 15.0.6 |
-| TouchMirror-on-failure | v15.0.6 `services/mirror/mirror_pull.go` `SyncPullMirror`: `if !ok { TouchMirror…; return false }` (fetched from tag v15.0.6) |
-| Queue dedup silence | v15.0.6 `services/mirror/mirror.go` `ErrAlreadyInQueue` → `log.Trace`; queue is `CreateUniqueQueue` |
-| OIDC boot failure | journal 05:55:52 `Unable to register source: PocketID … lookup auth.home.lan: no such host`; post-fix 06:46:29 clean start behind `forgejo-wait-dns` |
-| Gate wiring | `nix eval …forgejo.serviceConfig.ExecStartPre` includes `forgejo-wait-dns`; `after` includes caddy/pocket-id/dnsblockd/network-online |
-| Metrics deployed | `system_health.prom` (08:52) carries `system_forgejo_mirror_scrape_errors 1` (the known-bad path) |
-| Gatus check live | journal 08:51:30 `endpoint=Forgejo Mirror Sync … success=false` (67ms — it evaluates, red on scrape_errors) |
-| Checks/lints | `nix flake check --no-build` pass; toplevel build ×3 pass; `gatus-pattern-lint` build pass; pre-deploy-check 84 pass/0 fail (final run) |
+| Error timeline           | journal counts/day: 855 (08-18), 2400, 2400, 900 (08-21 until 00:28); `not allowed` 100 lines 08-21 19:35–20:35                                                                  |
+| Same binary throughout   | process cmdline `…-forgejo-lts-15.0.6/bin/forgejo web` all boots; version banner 15.0.6                                                                                          |
+| TouchMirror-on-failure   | v15.0.6 `services/mirror/mirror_pull.go` `SyncPullMirror`: `if !ok { TouchMirror…; return false }` (fetched from tag v15.0.6)                                                    |
+| Queue dedup silence      | v15.0.6 `services/mirror/mirror.go` `ErrAlreadyInQueue` → `log.Trace`; queue is `CreateUniqueQueue`                                                                              |
+| OIDC boot failure        | journal 05:55:52 `Unable to register source: PocketID … lookup auth.home.lan: no such host`; post-fix 06:46:29 clean start behind `forgejo-wait-dns`                             |
+| Gate wiring              | `nix eval …forgejo.serviceConfig.ExecStartPre` includes `forgejo-wait-dns`; `after` includes caddy/pocket-id/dnsblockd/network-online                                            |
+| Metrics deployed         | `system_health.prom` (08:52) carries `system_forgejo_mirror_scrape_errors 1` (the known-bad path)                                                                                |
+| Gatus check live         | journal 08:51:30 `endpoint=Forgejo Mirror Sync … success=false` (67ms — it evaluates, red on scrape_errors)                                                                      |
+| Checks/lints             | `nix flake check --no-build` pass; toplevel build ×3 pass; `gatus-pattern-lint` build pass; pre-deploy-check 84 pass/0 fail (final run)                                          |

@@ -35,7 +35,7 @@
 
 ## d) What I totally fucked up
 
-1. **Lint v1 shipped as a phantom green and I initially TRUSTED it.** `nix build` exit 0 → "TREE EXIT=0" — measured through `| tail`, i.e. **tail's exit code, not nix's** (the exact anti-pattern this repo documents). Only the standalone-bash cross-check exposed it. Had I not been paranoid, a dead detector would be deployed and *documented as the cure for the class it can't catch* — the deepest irony of the session.
+1. **Lint v1 shipped as a phantom green and I initially TRUSTED it.** `nix build` exit 0 → "TREE EXIT=0" — measured through `| tail`, i.e. **tail's exit code, not nix's** (the exact anti-pattern this repo documents). Only the standalone-bash cross-check exposed it. Had I not been paranoid, a dead detector would be deployed and _documented as the cure for the class it can't catch_ — the deepest irony of the session.
 2. **Sandbox /tmp trap hit TWICE** (sed-substituted /tmp fixture paths, then a `cp`-from-/tmp fixture derivation) before landing the store-fixture pattern. Same lesson, two rounds.
 3. **SC2001 deploy abort** — shipped a `| sed` into a writeShellApplication without local shellcheck (none on PATH; noted it and deployed anyway). Pre-commit caught it; cost one deploy cycle.
 4. Minor: claimed "deployed green" for the provisioner check without seeing its output line (see b.5).

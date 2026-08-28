@@ -17,22 +17,22 @@ This report is a brutally honest account of what was done, what was verified, **
 
 ## a) FULLY DONE (verified live before the crash)
 
-| Item | Verification evidence |
-|---|---|
-| FastFlowLM smoke asserts the BOUND model id (derived from unit `ExecStart`, tracks config drift) | live `/v1/models` → 200 + `qwen3.6-moe:35b-a3b` present in body |
-| `crm.home.lan` enable-gated external check (banksync gate pattern, `twenty.service` existence) | post-deploy: "Twenty CRM (HTTPS) (200)" PASS |
-| pre-deploy-check §10 mirrors BOTH flake-lint traps (bare `pat(*m 1*)` phantom-green, literal `\\n` escape) | mutation-tested (broken forms caught, correct form clean); live run shows both ✓ traps |
-| Third flake-lint trap: literal backslash-n inside `pat()` rejected | grep unit-tested broken/correct; `nix build .#checks.x86_64-linux.gatus-pattern-lint` passed |
-| AGENTS.md: real-newline requirement + all three lint traps + escape-layers bullet + dnsblockd-oidc report links | text landed, committed by daemon |
-| `start-limit-audit.nix` eval-time guard (StartLimit* in serviceConfig = silent no-op class) | mutation-tested via `extendModules`: fires on offender, zero false positives on live config; flake check green |
-| `file-and-image-renamer.inputs.go-nix-helpers.follows` declared | lock attempt showed follows encoding works; rev bump correctly REVERTED (see b) |
-| 8 TODO_LIST items closed (forgejo-oidc race, papdashboard coverage, pool-usage alert, DAS-link metric, AGENTS gatus docs, §10 mirror, crm check, dozzle-recreate) with evidence | all claims verified against tree before marking |
-| **ClickHouse XFS ownership crash-loop fixed** (pre-existing from the 00:32 migration, SigNoz dark ~5h) | `+`-root-escape heal ExecStartPre in signoz.nix; clickhouse serving, signoz `/api/v1/health` → 200 in deploy #2 smoke |
-| **Dozzle split brain fixed** — dormant hardened module vs active inline config | module enabled + inline deleted; container verified `mem=268435456`, `no-new-privileges:true`, `capdrop=ALL`, `:8084` → 200 |
-| Deploy blocker caught pre-deploy: `system_das_link_present` missing from `KNOWN_NEW_METRICS` | without it, deploy #1 aborts at pre-deploy §10; added with comment |
-| Gatus anchored patterns evaluating truthfully | journal: "DAS USB Link … success=false; duration=69ms"; `system_das_link_present 0` in `:9100/metrics` (truthful — DAS is down) |
-| 3× `nix fmt` (0 changed) + 3× `nix flake check --no-build` (all checks passed) + final pre-deploy 83 pass / 0 fail | command outputs in session |
-| Status report addendum (§h) appended to `2026-08-22_03-58_…md` | written |
+| Item                                                                                                                                                                            | Verification evidence                                                                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| FastFlowLM smoke asserts the BOUND model id (derived from unit `ExecStart`, tracks config drift)                                                                                | live `/v1/models` → 200 + `qwen3.6-moe:35b-a3b` present in body                                                                 |
+| `crm.home.lan` enable-gated external check (banksync gate pattern, `twenty.service` existence)                                                                                  | post-deploy: "Twenty CRM (HTTPS) (200)" PASS                                                                                    |
+| pre-deploy-check §10 mirrors BOTH flake-lint traps (bare `pat(*m 1*)` phantom-green, literal `\\n` escape)                                                                      | mutation-tested (broken forms caught, correct form clean); live run shows both ✓ traps                                          |
+| Third flake-lint trap: literal backslash-n inside `pat()` rejected                                                                                                              | grep unit-tested broken/correct; `nix build .#checks.x86_64-linux.gatus-pattern-lint` passed                                    |
+| AGENTS.md: real-newline requirement + all three lint traps + escape-layers bullet + dnsblockd-oidc report links                                                                 | text landed, committed by daemon                                                                                                |
+| `start-limit-audit.nix` eval-time guard (StartLimit* in serviceConfig = silent no-op class)                                                                                     | mutation-tested via `extendModules`: fires on offender, zero false positives on live config; flake check green                  |
+| `file-and-image-renamer.inputs.go-nix-helpers.follows` declared                                                                                                                 | lock attempt showed follows encoding works; rev bump correctly REVERTED (see b)                                                 |
+| 8 TODO_LIST items closed (forgejo-oidc race, papdashboard coverage, pool-usage alert, DAS-link metric, AGENTS gatus docs, §10 mirror, crm check, dozzle-recreate) with evidence | all claims verified against tree before marking                                                                                 |
+| **ClickHouse XFS ownership crash-loop fixed** (pre-existing from the 00:32 migration, SigNoz dark ~5h)                                                                          | `+`-root-escape heal ExecStartPre in signoz.nix; clickhouse serving, signoz `/api/v1/health` → 200 in deploy #2 smoke           |
+| **Dozzle split brain fixed** — dormant hardened module vs active inline config                                                                                                  | module enabled + inline deleted; container verified `mem=268435456`, `no-new-privileges:true`, `capdrop=ALL`, `:8084` → 200     |
+| Deploy blocker caught pre-deploy: `system_das_link_present` missing from `KNOWN_NEW_METRICS`                                                                                    | without it, deploy #1 aborts at pre-deploy §10; added with comment                                                              |
+| Gatus anchored patterns evaluating truthfully                                                                                                                                   | journal: "DAS USB Link … success=false; duration=69ms"; `system_das_link_present 0` in `:9100/metrics` (truthful — DAS is down) |
+| 3× `nix fmt` (0 changed) + 3× `nix flake check --no-build` (all checks passed) + final pre-deploy 83 pass / 0 fail                                                              | command outputs in session                                                                                                      |
+| Status report addendum (§h) appended to `2026-08-22_03-58_…md`                                                                                                                  | written                                                                                                                         |
 
 ---
 
@@ -120,6 +120,7 @@ The clickhouse heal and dozzle consolidation were out-of-batch — but both were
 ## f) NEXT — up to 50, session-scoped, ordered
 
 **P0 — crash + hardware**
+
 1. Crash forensics on the 05:50 freeze (`journalctl -b -1`, OOM/unevictable evidence, guard trip, zram fill at death) — before any further deploy
 2. Verify current boot health: memory, zram, IO pressure, clickhouse/signoz/flm states after unclean shutdown
 3. User: physically reseat DAS USB + power-cycle (fixes Immich/Attic/Paperless/Bank-Sync reds)
@@ -160,4 +161,4 @@ The clickhouse heal and dozzle consolidation were out-of-batch — but both were
 
 ---
 
-*Point-in-time snapshot. Machine rebooted 05:56 after the 05:50 freeze; all "verified live" claims in section (a) refer to the pre-freeze boot.*
+_Point-in-time snapshot. Machine rebooted 05:56 after the 05:50 freeze; all "verified live" claims in section (a) refer to the pre-freeze boot._

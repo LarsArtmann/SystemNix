@@ -7,22 +7,22 @@ healthy, and actively tripping.
 
 ## Timeline (all 2026-08-22, boot -1)
 
-| Time    | Event |
-| ------- | ----- |
-| 00:48   | Boot (crash-recovery) |
-| 01:27   | First guard deploy runs — **dead on arrival**: `mv …prom.tmp → .prom: Operation not permitted` every minute (sticky-bit textfile dir + empty CapabilityBoundingSet; rename-over-foreign-file needs CAP_FOWNER even for root). Fail #26×/exit-1 until… |
-| 01:39   | flm SIGABRT core-dump (v1.0.2 heap bug recurring) → restart → 21.6 GB cold load |
-| 01:52   | Cap fix deployed (commit `9a14a8e1`, concurrent session) — guard starts working |
-| 02:37   | flm dies by signal again → another cold load |
-| 03:31   | Deploy (generation `e5bdc4a`) |
-| 03:32   | **Guard trip #1**: MemAvail 9.0%, zram 98.6% → stops flm (32G peak). zram value never moves again |
-| 03:42–04:53 | **Guard trips #2–#7** (MemAvail 5.4–9.7%, zram stuck 98.6%, Free swap = 64 kB of 29.5 GB). flm re-activates between trips ~10 min apart (restart-backoff cadence; enricher insights logged at 03:35 prove flm serving mid-storm) |
-| 04:58   | Kernel global OOM (kswapd): kills flm-real (22.2 GiB shmem) + ollama. OOM dump: **50.3 GiB shmem**, 51 GiB page cache, zram 100% full |
-| 05:26   | Guard alert RESOLVED |
-| 05:34   | flm insight logged again — model re-faulted, pressure rebuilding |
-| 05:49:39 | Gatus "Memory pressure CRITICAL" (PSI some avg10 >50%) + ZRAM Fill over-threshold |
-| 05:48:58 | **Guard ran and did NOT trip** — MemAvailable was still ≥10% |
-| 05:49:56 | **Kernel froze** — 17 s after PSI-critical, 2 s before the next guard tick |
+| Time        | Event                                                                                                                                                                                                                                                 |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 00:48       | Boot (crash-recovery)                                                                                                                                                                                                                                 |
+| 01:27       | First guard deploy runs — **dead on arrival**: `mv …prom.tmp → .prom: Operation not permitted` every minute (sticky-bit textfile dir + empty CapabilityBoundingSet; rename-over-foreign-file needs CAP_FOWNER even for root). Fail #26×/exit-1 until… |
+| 01:39       | flm SIGABRT core-dump (v1.0.2 heap bug recurring) → restart → 21.6 GB cold load                                                                                                                                                                       |
+| 01:52       | Cap fix deployed (commit `9a14a8e1`, concurrent session) — guard starts working                                                                                                                                                                       |
+| 02:37       | flm dies by signal again → another cold load                                                                                                                                                                                                          |
+| 03:31       | Deploy (generation `e5bdc4a`)                                                                                                                                                                                                                         |
+| 03:32       | **Guard trip #1**: MemAvail 9.0%, zram 98.6% → stops flm (32G peak). zram value never moves again                                                                                                                                                     |
+| 03:42–04:53 | **Guard trips #2–#7** (MemAvail 5.4–9.7%, zram stuck 98.6%, Free swap = 64 kB of 29.5 GB). flm re-activates between trips ~10 min apart (restart-backoff cadence; enricher insights logged at 03:35 prove flm serving mid-storm)                      |
+| 04:58       | Kernel global OOM (kswapd): kills flm-real (22.2 GiB shmem) + ollama. OOM dump: **50.3 GiB shmem**, 51 GiB page cache, zram 100% full                                                                                                                 |
+| 05:26       | Guard alert RESOLVED                                                                                                                                                                                                                                  |
+| 05:34       | flm insight logged again — model re-faulted, pressure rebuilding                                                                                                                                                                                      |
+| 05:49:39    | Gatus "Memory pressure CRITICAL" (PSI some avg10 >50%) + ZRAM Fill over-threshold                                                                                                                                                                     |
+| 05:48:58    | **Guard ran and did NOT trip** — MemAvailable was still ≥10%                                                                                                                                                                                          |
+| 05:49:56    | **Kernel froze** — 17 s after PSI-critical, 2 s before the next guard tick                                                                                                                                                                            |
 
 ## Root causes (three compounding guard design gaps)
 
@@ -86,5 +86,5 @@ guard ran clean from 01:53 onward.
   `fastflowlm.socket` is inactive (upstream change)
 - **Operational**: avoid full `nix flake check` (builds/runs VM tests = qemu
   storm) and mega-parallel agent sessions while flm is resident and zram is
-  >80% — the box has exactly one 21.6 GB unevictable liability and it must
-  always have ~25 GB of headroom
+  > 80% — the box has exactly one 21.6 GB unevictable liability and it must
+  > always have ~25 GB of headroom

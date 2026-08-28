@@ -20,11 +20,11 @@
 
 Full `tests/` grep (case-insensitive `restart`, minus Restart=/restartTriggers noise): only **3 files** restart/stop-start services.
 
-| Test | Restarts | Guard | Verdict |
-| --- | --- | --- | --- |
-| test-hermes | 7× (ExecStartPre idempotency) | test sets `startLimitBurst = lib.mkForce 20` (module: 5/600s) | already fixed + documented |
-| test-searxng | 2× | module burst 5/300s | safe (2 < 5) |
-| test-memory-emergency-guard | stop/start pairs | guard does `systemctl reset-failed` before `start` (memory-emergency-guard.nix:226) | safe by design — the canonical pattern |
+| Test                        | Restarts                      | Guard                                                                               | Verdict                                |
+| --------------------------- | ----------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------- |
+| test-hermes                 | 7× (ExecStartPre idempotency) | test sets `startLimitBurst = lib.mkForce 20` (module: 5/600s)                       | already fixed + documented             |
+| test-searxng                | 2×                            | module burst 5/300s                                                                 | safe (2 < 5)                           |
+| test-memory-emergency-guard | stop/start pairs              | guard does `systemctl reset-failed` before `start` (memory-emergency-guard.nix:226) | safe by design — the canonical pattern |
 
 No kill/SIGKILL crash-simulation tests exist. Class closed.
 

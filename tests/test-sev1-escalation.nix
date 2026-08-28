@@ -22,7 +22,7 @@
 { pkgs }: {
   name = "sev1-escalation";
 
-  nodes.machine = { config, ... }: {
+  nodes.machine = { ... }: {
     imports = [
       ((import ../modules/nixos/services/sev1-escalation.nix) { }).flake.nixosModules.sev1-escalation
     ];

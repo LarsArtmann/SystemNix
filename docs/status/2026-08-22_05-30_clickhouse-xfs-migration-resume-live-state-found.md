@@ -30,24 +30,24 @@ this session's work and observations.
 
 ## a) FULLY DONE (this session)
 
-| # | Item | Evidence |
-|---|------|----------|
-| 1 | Count-race fix: `SRC_SIZE`/`SRC_FILES`/`SRC_PARTS` moved AFTER `stop_stack` (quiesced source; apples-to-apples vs `DST_FILES`; tripwire stamps quiesced count) | commit `07908e26` (daemon swept my edit verbatim — verified via `git show`) |
-| 2 | rsync `--delete` on the copy — reruns converge to exact mirror; extraneous merge-churn files can no longer strand the count gate (checksum gate cannot flag extras) | commit `054ce8f6` |
-| 3 | `bash -n` on both edited scripts; pre-commit `nix flake check` passed on every commit (hook output captured) | commit transcripts |
-| 4 | Pushed everything; `master == origin/master` verified after each push | `git status -sb` clean sync |
-| 5 | Live-state verification (see appendix): `/var/lib/clickhouse` = XFS on nvme0n1p9, 30 GiB used / 100 GiB, `store/` 186 subdirs with preserved mtimes, CH 26.7.3.19 `uptime()=125`, **140 non-system tables**, signoz-otel-collector exporting traces | `findmnt`, `clickhouse-client`, journalctl |
-| 6 | All 6 `clickhouse_xfs_*` metrics verified live in the textfile collector (`mounted=1 is_xfs=1 usage=30% over_threshold=0 free/total present`) → retired from `KNOWN_NEW_METRICS` allowlist | `cat clickhouse-xfs.prom`, commit `c0a1ab8d` |
-| 7 | AGENTS.md XFS bullet extended with the two durable lessons: never count a live DB's file tree; `clickhouse-xfs-ownership-heal` ExecStartPre purpose | commit `312ae0f2` |
-| 8 | Honest attribution maintained across 3 daemon-swept commits (content verified verbatim each time; nothing mislabeled) | `git log --stat` checks after every commit |
+| # | Item                                                                                                                                                                                                                                                | Evidence                                                                    |
+| - | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 1 | Count-race fix: `SRC_SIZE`/`SRC_FILES`/`SRC_PARTS` moved AFTER `stop_stack` (quiesced source; apples-to-apples vs `DST_FILES`; tripwire stamps quiesced count)                                                                                      | commit `07908e26` (daemon swept my edit verbatim — verified via `git show`) |
+| 2 | rsync `--delete` on the copy — reruns converge to exact mirror; extraneous merge-churn files can no longer strand the count gate (checksum gate cannot flag extras)                                                                                 | commit `054ce8f6`                                                           |
+| 3 | `bash -n` on both edited scripts; pre-commit `nix flake check` passed on every commit (hook output captured)                                                                                                                                        | commit transcripts                                                          |
+| 4 | Pushed everything; `master == origin/master` verified after each push                                                                                                                                                                               | `git status -sb` clean sync                                                 |
+| 5 | Live-state verification (see appendix): `/var/lib/clickhouse` = XFS on nvme0n1p9, 30 GiB used / 100 GiB, `store/` 186 subdirs with preserved mtimes, CH 26.7.3.19 `uptime()=125`, **140 non-system tables**, signoz-otel-collector exporting traces | `findmnt`, `clickhouse-client`, journalctl                                  |
+| 6 | All 6 `clickhouse_xfs_*` metrics verified live in the textfile collector (`mounted=1 is_xfs=1 usage=30% over_threshold=0 free/total present`) → retired from `KNOWN_NEW_METRICS` allowlist                                                          | `cat clickhouse-xfs.prom`, commit `c0a1ab8d`                                |
+| 7 | AGENTS.md XFS bullet extended with the two durable lessons: never count a live DB's file tree; `clickhouse-xfs-ownership-heal` ExecStartPre purpose                                                                                                 | commit `312ae0f2`                                                           |
+| 8 | Honest attribution maintained across 3 daemon-swept commits (content verified verbatim each time; nothing mislabeled)                                                                                                                               | `git log --stat` checks after every commit                                  |
 
 ## b) PARTIALLY DONE
 
-| Item | State | Remaining |
-|------|-------|-----------|
-| Migration end-to-end | Data on XFS, stack serving | **Deploy is missing** (running system un-profiled); finalize not run; shadowed originals still on `@` (~26 GiB pinned); root still ~96% |
-| Migration state stamp | Absent (run 5 died before stamping; concurrent activation also never stamped) | finalize's part-file tripwire will only WARN, not enforce — optional restamp before finalize |
-| Post-deploy verification | Individual component checks done manually | `nix run .#post-deploy-check` never executed; **its XFS section is dead code anyway** (see d/1) |
+| Item                     | State                                                                         | Remaining                                                                                                                               |
+| ------------------------ | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Migration end-to-end     | Data on XFS, stack serving                                                    | **Deploy is missing** (running system un-profiled); finalize not run; shadowed originals still on `@` (~26 GiB pinned); root still ~96% |
+| Migration state stamp    | Absent (run 5 died before stamping; concurrent activation also never stamped) | finalize's part-file tripwire will only WARN, not enforce — optional restamp before finalize                                            |
+| Post-deploy verification | Individual component checks done manually                                     | `nix run .#post-deploy-check` never executed; **its XFS section is dead code anyway** (see d/1)                                         |
 
 ## c) NOT STARTED
 
@@ -77,6 +77,7 @@ this session's work and observations.
 ## f) NEXT UP TO 50 (categorized, session-scoped)
 
 **P0 — do before ANY reboot:**
+
 1. `nix run .#deploy` — persist XFS config into a real profile + boot entry.
 2. Fix post-deploy-check.sh XFS gate (d/1) BEFORE that deploy so the checks actually arm.
 3. Post-deploy verify: `findmnt -no FSTYPE /var/lib/clickhouse` → xfs; `curl :8123/ping` → Ok; `nix run .#post-deploy-check` (with fixed gate) green.
@@ -132,6 +133,7 @@ this session's work and observations.
 - `uptime` → `05:17:19 up 4:29, load average: 12.05, 27.68, 35.88`
 
 **Commits this session (all pushed, master == origin):**
+
 - `07908e26` fix(migrate-clickhouse-xfs): stop stack before capturing source metrics (daemon-swept, content verified)
 - `054ce8f6` rsync --delete convergence (daemon-swept with concurrent flake.lock bump, content verified)
 - `c0a1ab8d` chore(scripts): retire clickhouse_xfs_* from known-new-metrics allowlist

@@ -77,7 +77,7 @@ _: {
         ];
         inherit (cfg) user;
         inherit uid;
-        interval = cfg.interval;
+        inherit (cfg) interval;
         bootDelay = "5min";
         hardenFn = hardenUser;
       };
