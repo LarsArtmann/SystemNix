@@ -24,7 +24,11 @@ set -euo pipefail
 
 # Known devices (mirror of the fstab entries; drift vs /etc/fstab is CHECKED
 # at runtime in [2] so a stale constant fails loud instead of silently).
-# Pool member 2 (…0ZU…) is btrfs-remembered and NOT in fstab.
+# Pool mounts BY-LABEL (2026-08-27): any RAID1 member can mount the fs, so
+# the fstab names the label, not one member. BOTH member by-ids below stay
+# for the presence check (each member must enumerate) — and member 2 (…0ZU…)
+# is btrfs-remembered only, never in fstab.
+POOL_FSTAB_DEVICE="/dev/disk/by-label/pool"
 POOL_MEMBERS=(
   "/dev/disk/by-id/ata-TOSHIBA_MG08ACA16TE_72U0A005FWTG"
   "/dev/disk/by-id/ata-TOSHIBA_MG08ACA16TE_72U0A0ZUFWTG"
@@ -109,9 +113,11 @@ if [ -n "$fstab_bc" ] && [ "$fstab_bc" != "$BUILDCACHE_PART" ]; then
   hint "$BUILDCACHE_PART — update the constants at the top of this script."
 fi
 fstab_pool=$(fstab_device /mnt/pool)
-if [ -n "$fstab_pool" ] && [ "$fstab_pool" != "${POOL_MEMBERS[0]}" ]; then
+if [ -n "$fstab_pool" ] && [ "$fstab_pool" != "$POOL_FSTAB_DEVICE" ]; then
   bad "fstab drift: /mnt/pool uses $fstab_pool but this script knows"
-  hint "${POOL_MEMBERS[0]} — update the constants at the top of this script."
+  hint "$POOL_FSTAB_DEVICE — update the constants at the top of this script."
+  hint "(If $fstab_pool is the pre-2026-08-27 by-id member path, deploy first:"
+  hint " the by-label fstab entry ships with this same change.)"
 fi
 for dev in "${POOL_MEMBERS[@]}" "$BUILDCACHE_DISK"; do
   if [ -b "$dev" ]; then

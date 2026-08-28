@@ -3,8 +3,7 @@
   pkgs,
   lib,
   ...
-}:
-let
+}: let
   inherit (import ../../../lib/default.nix lib) harden onFailure serviceOneshotDefaults;
   rootDevice = config.fileSystems."/".device;
   primaryUser = config.users.primaryUser;
@@ -22,21 +21,25 @@ let
     "@cache-home" = "/home/${primaryUser}/.cache";
   };
 
-  cacheFileSystems = lib.mapAttrs' (subvol: mountPoint: {
-    name = mountPoint;
-    value = {
-      device = rootDevice;
-      fsType = "btrfs";
-      options = [
-        "subvol=${subvol}"
-        "compress=zstd"
-        "noatime"
-        "noauto"
-        "x-systemd.automount"
-        "x-systemd.idle-timeout=10min"
-      ];
-    };
-  }) cacheSubvolumes;
+  cacheFileSystems =
+    lib.mapAttrs' (subvol: mountPoint: {
+      name = mountPoint;
+      value = {
+        device = rootDevice;
+        fsType = "btrfs";
+        options = [
+          "subvol=${subvol}"
+          "compress=zstd"
+          "noatime"
+          "nodiscard"
+          "commit=300"
+          "noauto"
+          "x-systemd.automount"
+          "x-systemd.idle-timeout=10min"
+        ];
+      };
+    })
+    cacheSubvolumes;
 
   # Rust projects whose target/ dirs should live on ext4 — avoids COW
   # fragmentation from 85K+ small files and keeps them out of btrbk snapshots.
@@ -44,27 +47,31 @@ let
   # SSD build cache (services.buildcache) on 2026-08-14: removes build churn
   # from the QLC NVMe entirely. Dirs are created by buildcache-init (post-
   # mount); only the ~/projects/<p>/target symlinks are managed here.
-  rustCacheProjects = [ "monitor365" ];
+  rustCacheProjects = ["monitor365"];
 
-  rustCacheLinks = builtins.map (
-    p: "L+ /home/${primaryUser}/projects/${p}/target - - - - /mnt/buildcache/rust/${p}"
-  ) rustCacheProjects;
-in
-{
-  fileSystems = {
-    "/mnt/btrfs-root" = {
-      device = rootDevice;
-      fsType = "btrfs";
-      options = [
-        "noatime"
-        "compress=zstd"
-        "noauto"
-        "x-systemd.automount"
-        "x-systemd.idle-timeout=10min"
-      ];
-    };
-  }
-  // cacheFileSystems;
+  rustCacheLinks =
+    builtins.map (
+      p: "L+ /home/${primaryUser}/projects/${p}/target - - - - /mnt/buildcache/rust/${p}"
+    )
+    rustCacheProjects;
+in {
+  fileSystems =
+    {
+      "/mnt/btrfs-root" = {
+        device = rootDevice;
+        fsType = "btrfs";
+        options = [
+          "noatime"
+          "compress=zstd"
+          "nodiscard"
+          "commit=300"
+          "noauto"
+          "x-systemd.automount"
+          "x-systemd.idle-timeout=10min"
+        ];
+      };
+    }
+    // cacheFileSystems;
 
   services = {
     btrbk.instances."root" = {
@@ -141,14 +148,14 @@ in
         snapshot_preserve = "7d 4w";
         volume."/mnt/pool" = {
           snapshot_dir = "/mnt/pool/.snapshots";
-          subvolume."services/immich" = { };
-          subvolume."services/paperless" = { };
-          subvolume."services/atticd" = { };
-          subvolume."services/monitor365" = { };
-          subvolume."services/discordsync" = { };
-          subvolume."services/browser-history" = { };
-          subvolume."services/bank-sync" = { };
-          subvolume."services/activitywatch" = { };
+          subvolume."services/immich" = {};
+          subvolume."services/paperless" = {};
+          subvolume."services/atticd" = {};
+          subvolume."services/monitor365" = {};
+          subvolume."services/discordsync" = {};
+          subvolume."services/browser-history" = {};
+          subvolume."services/bank-sync" = {};
+          subvolume."services/activitywatch" = {};
         };
       };
     };
@@ -177,18 +184,20 @@ in
   };
 
   systemd = {
-    tmpfiles.rules = rustCacheLinks ++ [
-      # btrbk-data needs /data/.snapshots to exist before it can create
-      # snapshot subvolumes. Without this, btrbk-data fails with
-      # "Failed to fetch subvolume detail for snapshot_dir".
-      "d /data/.snapshots 0755 root root -"
-      # Pool-side receive targets + snapshot dir. The trailing "-" keeps
-      # boot clean when the DAS is detached (nofail); btrbk then fails loudly
-      # at 23:00 via RequiresMountsFor + onFailure instead.
-      "d /mnt/pool/.snapshots 0755 root root -"
-      "d /mnt/pool/backups/root 0755 root root -"
-      "d /mnt/pool/backups/data 0755 root root -"
-    ];
+    tmpfiles.rules =
+      rustCacheLinks
+      ++ [
+        # btrbk-data needs /data/.snapshots to exist before it can create
+        # snapshot subvolumes. Without this, btrbk-data fails with
+        # "Failed to fetch subvolume detail for snapshot_dir".
+        "d /data/.snapshots 0755 root root -"
+        # Pool-side receive targets + snapshot dir. The trailing "-" keeps
+        # boot clean when the DAS is detached (nofail); btrbk then fails loudly
+        # at 23:00 via RequiresMountsFor + onFailure instead.
+        "d /mnt/pool/.snapshots 0755 root root -"
+        "d /mnt/pool/backups/root 0755 root root -"
+        "d /mnt/pool/backups/data 0755 root root -"
+      ];
 
     services = {
       # btrbk units are Type=oneshot with the global 3min
@@ -217,7 +226,7 @@ in
         inherit onFailure;
       };
       btrbk-pool = {
-        unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
+        unitConfig.RequiresMountsFor = ["/mnt/pool"];
         serviceConfig.TimeoutStartSec = "1h";
         inherit onFailure;
       };
@@ -242,7 +251,7 @@ in
       btrbk-pool-clean = {
         description = "btrbk clean: delete incomplete (garbled) receive targets on the pool";
         unitConfig = {
-          RequiresMountsFor = [ "/mnt/pool" ];
+          RequiresMountsFor = ["/mnt/pool"];
           After = [
             "btrbk-root.service"
             "btrbk-data.service"
@@ -272,7 +281,7 @@ in
             IOSchedulingClass = "best-effort";
             TimeoutStartSec = "30min";
           }
-          (serviceOneshotDefaults { })
+          (serviceOneshotDefaults {})
         ];
         script = ''
           # Aggregate failures: one bad config must never mask the others.
@@ -311,10 +320,10 @@ in
             User = "root";
           }
           (harden {
-            ReadWritePaths = [ "/var/lib/prometheus-node-exporter/textfile_collectors" ];
+            ReadWritePaths = ["/var/lib/prometheus-node-exporter/textfile_collectors"];
             MemoryMax = "128M";
           })
-          (serviceOneshotDefaults { })
+          (serviceOneshotDefaults {})
         ];
         script = ''
           set -eu
@@ -391,7 +400,7 @@ in
             PrivateDevices = false; # btrfs ioctls go through the mount path
             ProtectSystem = "true";
           })
-          { Type = "oneshot"; }
+          {Type = "oneshot";}
         ];
         script = ''
           set -euo pipefail
@@ -436,13 +445,13 @@ in
       "btrfs-verify-snapshots" = {
         description = "Verify BTRFS snapshot freshness";
         inherit onFailure;
-        path = [ pkgs.coreutils ];
+        path = [pkgs.coreutils];
         serviceConfig = lib.mkMerge [
-          (harden { })
+          (harden {})
           {
             Type = "oneshot";
             ProtectSystem = "true";
-            ReadWritePaths = [ ];
+            ReadWritePaths = [];
           }
         ];
         script = ''
@@ -495,12 +504,12 @@ in
         Persistent = true;
         RandomizedDelaySec = "1h";
       };
-      wantedBy = [ "timers.target" ];
+      wantedBy = ["timers.target"];
     };
 
     timers.pool-metrics = {
       description = "Collect mirrored pool metrics every 5 minutes";
-      wantedBy = [ "timers.target" ];
+      wantedBy = ["timers.target"];
       timerConfig = {
         OnBootSec = "2min";
         OnUnitActiveSec = "5min";
@@ -515,7 +524,7 @@ in
         Persistent = true;
         RandomizedDelaySec = "1h";
       };
-      wantedBy = [ "timers.target" ];
+      wantedBy = ["timers.target"];
     };
 
     # 23:50 = after all three btrbk windows (23:00/23:30/23:45). The service's
@@ -523,7 +532,7 @@ in
     # active (e.g. a 24h seed), so clean never races a live receive.
     timers.btrbk-pool-clean = {
       description = "Nightly btrbk clean (garbled-receive GC) after all btrbk runs";
-      wantedBy = [ "timers.target" ];
+      wantedBy = ["timers.target"];
       timerConfig = {
         OnCalendar = "23:50";
         Persistent = true;
