@@ -4904,11 +4904,11 @@
         "treefmt-nix": "treefmt-nix_8"
       },
       "locked": {
-        "lastModified": 1787886155,
-        "narHash": "sha256-Lpurd1Qc1B5Hx0KfVcaNrO3Ypgw451h0kHnZMhGlI20=",
+        "lastModified": 1787898962,
+        "narHash": "sha256-Pyyj+VLIvh+VOELhYrFvPlaa6l7ZONT4sVBIobPpcjo=",
         "owner": "LarsArtmann",
         "repo": "InboxClean",
-        "rev": "21552dec07b8137c035b015bce725495f2d06bf0",
+        "rev": "ec719844a0a1e7d15d70b48b5da44189de6efddd",
         "type": "github"
       },
       "original": {

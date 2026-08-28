@@ -55,6 +55,16 @@
           package = lib.mkDefault inboxcleanPkg;
           addr = lib.mkDefault "127.0.0.1:${toString ports.inboxclean}";
           gmailCredentialsFile = lib.mkDefault config.sops.secrets.inboxclean_gmail_credentials.path;
+          # Google Workspace mailbox. Shares the personal account's OAuth
+          # client (same credentials.json) — the browser login during
+          # `inboxclean auth --account work` picks the Workspace identity.
+          # Its token lands in /var/lib/inboxclean/token-work.json.
+          extraAccounts = [
+            {
+              name = "work";
+              credentialsFile = lib.mkDefault config.sops.secrets.inboxclean_gmail_credentials.path;
+            }
+          ];
           # See runbook above: enable after the one-time OAuth flow.
           sync.enable = lib.mkDefault false;
         };
