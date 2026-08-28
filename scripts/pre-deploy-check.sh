@@ -314,7 +314,11 @@ if [ -s "$METRICS_FILE" ]; then
   # (internal/server/metrics.go:257,299 — verified against the locked rev
   # 2026-08-22). Remove after the first post-DAS-recovery deploy confirms
   # them (post-deploy-check.sh Bank-Sync section asserts :8097/metrics).
-  KNOWN_NEW_METRICS="discordsync_projection_dlq_legacy_unchanged bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds"
+  # system_dnsblockd_metrics_fresh (2026-08-28): new wedge tripwire from the
+  # monitoring-hardening round — the running generation's collector doesn't
+  # emit it yet, so pre-deploy sees absence. Remove after the first deploy
+  # confirms it in the textfile collector output.
+  KNOWN_NEW_METRICS="discordsync_projection_dlq_legacy_unchanged bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds system_dnsblockd_metrics_fresh"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"
