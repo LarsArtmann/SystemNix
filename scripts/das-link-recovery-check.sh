@@ -347,18 +347,30 @@ echo "== Decision tree =="
 if [ "$usb_storage_ifaces" -eq 0 ]; then
   cat <<'EOF'
 LINK DOWN (no USB storage on the bus):
-  1. Reseat the DAS USB cable AND the enclosure power connector.
-  2. REBOOT the machine (power cycle — a warm reboot may not re-enumerate).
-  3. After boot, re-run this script; expect [1][2][3] green.
-  4. buildcache heals itself: udev SYSTEMD_WANTS triggers
+  1. CRITICAL — the JMS567 bridge runs off USB VBUS from the host: pulling
+     ONLY the enclosure power does NOT power-cycle it. Pull the USB cable
+     AND the enclosure power, wait 60+ s, reconnect. Every "power cycle"
+     with the cable attached is a fake one (2026-08-29 lesson).
+  2. Use a REAR Type-A port ONLY. The front USB4-C ports have NO Type-C
+     port class registration under this kernel (/sys/class/typec is empty)
+     and have never enumerated a device — they are dead for data; silence
+     there says nothing about the DAS.
+  3. Replug after controllers are pinned awake (power/control=on — now
+     automatic via the buildcache udev rule; a D3cold controller silently
+     swallows hotplug events).
+  4. If still silent on a rear port: the bridge is wedged beyond VBUS
+     recovery → enclosure side (PSU/bridge) or disk relocation. The disks
+     are plain SATA: pool reassembles by-label (both Toshibas) in any other
+     enclosure; the buildcache SSD is disposable by design.
+  5. buildcache heals itself: udev SYSTEMD_WANTS triggers
      buildcache-usb-recovery.service on partition add (remount + I/O verify
      + re-provision + metrics refresh). Verify with:
        systemctl status buildcache-usb-recovery.service
-  5. /mnt/pool mounts via fstab once BOTH Toshiba members enumerate.
+  6. /mnt/pool mounts via fstab once BOTH Toshiba members enumerate.
      One-member mount requires -o degraded — USER decision, never automate.
-  6. If [5] flagged ext4 damage (check BOTH boots): run the printed e2fsck
+  7. If [5] flagged ext4 damage (check BOTH boots): run the printed e2fsck
      command, then systemctl start buildcache-init.service.
-  7. Re-run with sudo once for full shadow triage ([6] root-only dirs).
+  8. Re-run with sudo once for full shadow triage ([6] root-only dirs).
 EOF
 elif [ "$issues" -eq 0 ]; then
   echo "All checks green. Confirm Gatus flips: 'Build Cache SSD' + 'DAS USB Link'."

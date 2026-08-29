@@ -54,6 +54,14 @@ in
       "i2c-dev"
       "bfq"
       "usblp"
+      # JMS567 DAS bridge (152d:0567) requires UAS at attach time — when uas
+      # is not available it vanishes entirely instead of falling back to BOT
+      # (private-cloud 2025-11-24: boot-time disappearances until uas was
+      # guaranteed loaded; the standard quirks=152d:0567:u fallback caused
+      # TOTAL enumeration failure on this exact controller). Pre-loading
+      # removes on-demand autoload from the bridge's USB handshake path.
+      "uas"
+      "usb-storage"
     ];
 
     # AMD GPU + NPU optimization kernel parameters for Strix Halo (128GB unified memory)
