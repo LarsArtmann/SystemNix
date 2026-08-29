@@ -483,6 +483,25 @@ if $inboxclean_enabled; then
   if [ -n "$inboxclean_extra_ok" ]; then
     report_pass "InboxClean — extra account(s) connected: $inboxclean_extra_ok"
   fi
+  # Projection readiness (binaries with /health/projections): FAIL on a
+  # failed worker (exhausted restart budget — data is NOT converging),
+  # WARN on draining (transient; Init drains before the port opens, so this
+  # means the live subscription is racing), WARN-missing on old binaries.
+  inboxclean_projections="$(jq -r '.services.projections // "missing"' <<<"${inboxclean_health:-}" 2>/dev/null)" || true
+  case "$inboxclean_projections" in
+  ready)
+    report_pass "InboxClean — projections ready (journal drained, checkpoint current)"
+    ;;
+  failed)
+    report_fail "InboxClean — projection FAILED (exhausted restarts; inspect /health/projections and dead-letters)"
+    ;;
+  draining)
+    report_warn "InboxClean — projections still draining (unexpected post-Init; re-check /health/projections)"
+    ;;
+  missing)
+    report_warn "InboxClean — no services.projections field (binary predates projection readiness)"
+    ;;
+  esac
 else
   report_skip "InboxClean — service disabled (units absent from systemd)"
 fi
