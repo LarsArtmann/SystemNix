@@ -502,6 +502,22 @@ if $inboxclean_enabled; then
     report_warn "InboxClean — no services.projections field (binary predates projection readiness)"
     ;;
   esac
+  # Convergence guard (2026-08-29 drift incident): the deployed InboxClean
+  # binary must match the flake.lock input rev. The unit ExecStart embeds
+  # the store path 'inboxclean-<rev-prefix>' for the github input; a
+  # mismatch means the switch did not take (stale prod, silently).
+  inboxclean_lock_rev="$(jq -r '.nodes.inboxclean.locked.rev // empty' flake.lock 2>/dev/null)" || true
+  inboxclean_deployed_rev="$(grep -oP 'inboxclean-\K[0-9a-f]{7,40}' /etc/systemd/system/inboxclean-web.service 2>/dev/null | head -1)" || true
+  if [ -n "$inboxclean_lock_rev" ] && [ -n "$inboxclean_deployed_rev" ]; then
+    case "$inboxclean_deployed_rev" in
+      "$inboxclean_lock_rev"*)
+        report_pass "InboxClean — deployed binary matches flake.lock (${inboxclean_deployed_rev:0:10})"
+        ;;
+      *)
+        report_fail "InboxClean — DRIFT: deployed ${inboxclean_deployed_rev:0:10} != flake.lock ${inboxclean_lock_rev:0:10} (switch did not take or lock moved post-eval)"
+        ;;
+    esac
+  fi
 else
   report_skip "InboxClean — service disabled (units absent from systemd)"
 fi

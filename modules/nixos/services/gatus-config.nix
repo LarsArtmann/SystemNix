@@ -1690,6 +1690,22 @@ _: {
                   ];
                   alerts = discordAlert "InboxClean dashboard not rendering HTML — check inboxclean-web logs";
                 })
+                # Projection readiness: the endpoint 503s while a worker
+                # drains/fails and 404s on pre-c766c44 binaries (where the
+                # 404 JSON would false-alarm), so this probe only makes the
+                # route's absence visible once — acceptable noise for the
+                # one generation it takes to converge.
+                (mkHttpCheck {
+                  name = "InboxClean Projections Ready";
+                  group = "Productivity";
+                  url = "http://localhost:${toString ports.inboxclean}/health/projections";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*email_states*)"
+                  ];
+                  alerts = discordAlert "InboxClean projections endpoint degraded — check /health services.projections and journalctl -u inboxclean-web";
+                })
               ]
               # Per-extra-account render probes: the ?account=<name> inbox tab
               # must render HTML for every configured mailbox (graceful
