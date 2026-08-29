@@ -22,8 +22,14 @@
 #      and persists — the module never overwrites an existing token.json).
 #   3. Authenticate extra accounts the same way, one per identity —
 #      `--account <name>` limits the flow to one account, and the CLI
-#      itself only loops accounts whose token file is missing:
-#        sudo -u inboxclean \
+#      itself only loops accounts whose token file is missing. Extra
+#      accounts are defined in the generated accounts TOML, so the auth
+#      env MUST include INBOXCLEAN_CONFIG from the web unit (learned the
+#      hard way 2026-08-29: without it the CLI only sees the env-default
+#      main account and fails `no account matched --account "work"`,
+#      exit 75):
+#        sudo -u inboxclean env \
+#          INBOXCLEAN_CONFIG="$(grep -oP 'INBOXCLEAN_CONFIG=\K\S+' /etc/systemd/system/inboxclean-web.service | head -1)" \
 #          GMAIL_CREDENTIALS_FILE=/var/lib/inboxclean/credentials.json \
 #          GMAIL_TOKEN_FILE=/var/lib/inboxclean/token.json \
 #          DB_PATH=/var/lib/inboxclean/inboxclean.db \
