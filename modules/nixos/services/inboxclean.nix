@@ -20,7 +20,21 @@
 #          /run/current-system/sw/bin/inboxclean auth
 #      (browser opens for the Google login; the token lands in the state dir
 #      and persists — the module never overwrites an existing token.json).
-#   3. Flip services.inboxclean.sync.enable to true and redeploy.
+#   3. Authenticate extra accounts the same way, one per identity —
+#      `--account <name>` limits the flow to one account, and the CLI
+#      itself only loops accounts whose token file is missing:
+#        sudo -u inboxclean \
+#          GMAIL_CREDENTIALS_FILE=/var/lib/inboxclean/credentials.json \
+#          GMAIL_TOKEN_FILE=/var/lib/inboxclean/token.json \
+#          DB_PATH=/var/lib/inboxclean/inboxclean.db \
+#          /run/current-system/sw/bin/inboxclean auth --account work
+#      Log in AS the Workspace identity when the browser asks. The work
+#      token lands at /var/lib/inboxclean/token-work.json. If Google
+#      answers access_denied, add that Google user under "Test users" on
+#      the OAuth consent screen (Cloud Console) and retry.
+#   4. Verify: curl -s http://127.0.0.1:8099/health | jq .services.gmail
+#      must show every account "connected".
+#   5. Flip services.inboxclean.sync.enable to true and redeploy.
 #      Until then the sync timer stays off: without a token every run fails
 #      (Infrastructure family, exit 69) and would spam onFailure alerts.
 { inputs, ... }: {

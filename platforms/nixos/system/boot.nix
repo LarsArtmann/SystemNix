@@ -62,6 +62,12 @@ in
       # removes on-demand autoload from the bridge's USB handshake path.
       "uas"
       "usb-storage"
+      # Complete the SCSI disk chain resident as well: sd_mod/sg normally
+      # autoload on disk appearance, but this bridge family is documented
+      # to misbehave when any driver of its attach path is not already
+      # resident (see uas note above) — close the whole class.
+      "sd_mod"
+      "sg"
     ];
 
     # AMD GPU + NPU optimization kernel parameters for Strix Halo (128GB unified memory)

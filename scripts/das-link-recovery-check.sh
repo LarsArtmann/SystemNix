@@ -351,14 +351,15 @@ LINK DOWN (no USB storage on the bus):
      ONLY the enclosure power does NOT power-cycle it. Pull the USB cable
      AND the enclosure power, wait 60+ s, reconnect. Every "power cycle"
      with the cable attached is a fake one (2026-08-29 lesson).
-  2. Use a REAR Type-A port ONLY. The front USB4-C ports have NO Type-C
-     port class registration under this kernel (/sys/class/typec is empty)
-     and have never enumerated a device — they are dead for data; silence
-     there says nothing about the DAS.
+  2. Replug into the FRONT USB4-C port (user preference). An empty
+     /sys/class/typec is NORMAL on hardware-managed Type-C — it is NOT
+     evidence of a dead port, and no port was ever probed there with a
+     known-good device (circular-test trap). Rear Type-A = fallback
+     diagnostic if the front port stays silent.
   3. Replug after controllers are pinned awake (power/control=on — now
      automatic via the buildcache udev rule; a D3cold controller silently
      swallows hotplug events).
-  4. If still silent on a rear port: the bridge is wedged beyond VBUS
+  4. If still silent on BOTH ports: the bridge is wedged beyond VBUS
      recovery → enclosure side (PSU/bridge) or disk relocation. The disks
      are plain SATA: pool reassembles by-label (both Toshibas) in any other
      enclosure; the buildcache SSD is disposable by design.

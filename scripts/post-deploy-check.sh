@@ -440,9 +440,9 @@ fi
 
 # InboxClean (port from lib/ports.nix: 8099). /health proves the CQRS stack
 # (SQLite + event store migrations ran); the dashboard body proves templ
-# rendering. gmail:"not_connected" is EXPECTED until the one-time OAuth
-# runbook completes (see modules/nixos/services/inboxclean.nix header) —
-# only warn, never fail, on that state.
+# rendering. Per-account Gmail states: "main" must be connected; extra
+# accounts (work) warn until their one-time OAuth runbook completes
+# (see modules/nixos/services/inboxclean.nix header) — never fail on those.
 inboxclean_enabled=false
 test -e /etc/systemd/system/inboxclean-web.service && inboxclean_enabled=true
 if $inboxclean_enabled; then
@@ -460,10 +460,28 @@ if $inboxclean_enabled; then
   else
     report_fail "InboxClean — :8099 answered but the dashboard body lacks content"
   fi
-  if grep -q '"gmail": *"ok"' <<<"${inboxclean_health:-}"; then
-    report_pass "InboxClean — Gmail connected (OAuth token active)"
-  else
-    report_warn "InboxClean — Gmail not_connected: complete the OAuth runbook and enable services.inboxclean.sync"
+  # Per-account Gmail map: {"main":"connected","work":"connected",...}.
+  inboxclean_main_state="$(jq -r '.services.gmail.main // "missing"' <<<"${inboxclean_health:-}" 2>/dev/null)" || true
+  case "$inboxclean_main_state" in
+    connected)
+      report_pass "InboxClean — Gmail main connected (OAuth token active)"
+      ;;
+    missing)
+      report_warn "InboxClean — /health carries no services.gmail.main entry (binary predates multi-account?)"
+      ;;
+    *)
+      report_warn "InboxClean — Gmail main '$inboxclean_main_state': complete the OAuth runbook (inboxclean.nix header) and enable services.inboxclean.sync"
+      ;;
+  esac
+  # Extra accounts: WARN on any not-connected, FAIL only on transport errors
+  # (already handled above).
+  inboxclean_pending="$(jq -r '.services.gmail | to_entries | map(select(.key != "main" and .value != "connected") | .key) | join(", ")' <<<"${inboxclean_health:-}" 2>/dev/null)" || true
+  if [ -n "$inboxclean_pending" ]; then
+    report_warn "InboxClean — extra account(s) not connected: $inboxclean_pending (run 'inboxclean auth --account <name>')"
+  fi
+  inboxclean_extra_ok="$(jq -r '.services.gmail | to_entries | map(select(.key != "main" and .value == "connected") | .key) | join(", ")' <<<"${inboxclean_health:-}" 2>/dev/null)" || true
+  if [ -n "$inboxclean_extra_ok" ]; then
+    report_pass "InboxClean — extra account(s) connected: $inboxclean_extra_ok"
   fi
 else
   report_skip "InboxClean — service disabled (units absent from systemd)"
