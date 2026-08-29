@@ -1691,6 +1691,25 @@ _: {
                   alerts = discordAlert "InboxClean dashboard not rendering HTML — check inboxclean-web logs";
                 })
               ]
+              # Per-extra-account render probes: the ?account=<name> inbox tab
+              # must render HTML for every configured mailbox (graceful
+              # degradation keeps it 200 even when that account awaits its
+              # one-time OAuth runbook).
+              ++ lib.optionals ((config.services.inboxclean.extraAccounts or [ ]) != [ ]) (
+                map (account:
+                  mkHttpCheck {
+                    name = "InboxClean ${account.name} Inbox Renders";
+                    group = "Productivity";
+                    url = "http://localhost:${toString ports.inboxclean}/inbox?account=${account.name}";
+                    interval = "5m";
+                    conditions = [
+                      "[STATUS] == 200"
+                      "[BODY] == pat(*<html*)"
+                    ];
+                    alerts = discordAlert "InboxClean ${account.name} inbox tab not rendering — check inboxclean-web logs and the account OAuth runbook";
+                  })
+                  (config.services.inboxclean.extraAccounts or [ ])
+              )
               ++ lib.optionals (config.services.cv-server.enable or false) [
                 # Liveness: go-health probe served from the raw mux (always
                 # 200 once the process is up; connection-refused when down).
