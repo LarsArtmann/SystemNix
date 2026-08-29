@@ -39,7 +39,9 @@
 #      answers access_denied, add that Google user under "Test users" on
 #      the OAuth consent screen (Cloud Console) and retry.
 #   4. Verify: curl -s http://127.0.0.1:8099/health | jq .services.gmail
-#      must show every account "connected".
+#      must show every account "connected". NOTE: /health reports the
+#      clients captured at web-service START — a token minted afterwards
+#      keeps showing not_connected until the next deploy/restart.
 #   5. Flip services.inboxclean.sync.enable to true and redeploy.
 #      Until then the sync timer stays off: without a token every run fails
 #      (Infrastructure family, exit 69) and would spam onFailure alerts.
@@ -85,8 +87,10 @@
               credentialsFile = lib.mkDefault config.sops.secrets.inboxclean_gmail_credentials.path;
             }
           ];
-          # See runbook above: enable after the one-time OAuth flow.
-          sync.enable = lib.mkDefault false;
+          # Runbook steps 1-4 complete (both tokens on disk since
+          # 2026-08-29): the timer is on. OAuth tokens persist in the
+          # state dir and survive redeploys.
+          sync.enable = true;
         };
 
         systemd.services.inboxclean-web = {
