@@ -39,9 +39,11 @@
 #      answers access_denied, add that Google user under "Test users" on
 #      the OAuth consent screen (Cloud Console) and retry.
 #   4. Verify: curl -s http://127.0.0.1:8099/health | jq .services.gmail
-#      must show every account "connected". NOTE: /health reports the
+#      must show every account "connected". NOTE: on InboxClean releases
+#      before the lazy-reconnect fix (web a6ec3df), /health showed the
 #      clients captured at web-service START — a token minted afterwards
-#      keeps showing not_connected until the next deploy/restart.
+#      kept showing not_connected until the next deploy/restart. Newer
+#      builds self-heal within ~30s of the token landing.
 #   5. Flip services.inboxclean.sync.enable to true and redeploy.
 #      Until then the sync timer stays off: without a token every run fails
 #      (Infrastructure family, exit 69) and would spam onFailure alerts.
