@@ -59,6 +59,15 @@
               event_store_driver = "sqlite";
               event_store_dsn = "/var/lib/cv/data/pipeline.sqlite";
             };
+            # journald/SigNoz ingestion friendliness: structured JSON lines
+            # instead of the text default (internal/config LogFormatJSON).
+            logging.format = "json";
+            # Absolute state-dir path: the default (data/graphrag.sqlite) is
+            # CWD-relative, which happens to resolve correctly today but only
+            # because WorkingDirectory = /var/lib/cv. Pin it so graphrag can
+            # be enabled later without a relative-path surprise (module is
+            # disabled by default; the key is inert until then).
+            graphrag.store_dsn = "/var/lib/cv/data/graphrag.sqlite";
           };
         };
 

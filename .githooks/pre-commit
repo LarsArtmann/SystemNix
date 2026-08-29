@@ -159,14 +159,30 @@ if [ -n "$STAGED_NIX" ]; then
         log_success "Statix passed! No antipatterns found."
     fi
 
-    log_info "Formatting staged .nix files with alejandra..."
-    echo "$STAGED_NIX" | while read -r f; do
-        if [ -f "$f" ]; then
-            nix shell nixpkgs#alejandra --command alejandra "$f" 2>/dev/null || true
-            git add "$f" 2>/dev/null || true
-        fi
-    done
-    log_success "Staged .nix files formatted."
+    # MUST be the SAME formatter CI arbitrates with (`nix fmt -- --ci` =
+    # treefmt-full-flake from the locked inputs). The old `nix shell
+    # nixpkgs#alejandra` call was a SECOND formatter with a DIFFERENT style
+    # (floating nixpkgs on top): every commit re-broke CI's fmt check with
+    # alejandra-shaped output. `--no-update-lock-file` keeps eval from
+    # silently re-locking moving-ref inputs (browser-history, CV, ... ride
+    # ref=master) on every commit; if the locked formatter cannot be built
+    # (stale lock, offline), WARN and skip — CI still gates formatting.
+    log_info "Formatting staged .nix files with the repo formatter (treefmt)..."
+    case "$(uname -m)" in
+        arm64 | aarch64) sys=aarch64-darwin ;;
+        *) sys=x86_64-linux ;;
+    esac
+    if formatter_path="$(nix build ".#formatter.$sys" --no-link --print-out-paths --no-update-lock-file 2>/dev/null)"; then
+        echo "$STAGED_NIX" | while read -r f; do
+            if [ -f "$f" ]; then
+                "$formatter_path/bin/treefmt" "$f" >/dev/null 2>&1 || true
+                git add "$f" 2>/dev/null || true
+            fi
+        done
+        log_success "Staged .nix files formatted."
+    else
+        log_error "Could not build .#formatter.$sys (stale flake.lock or offline?) — skipping Nix formatting; CI gates it."
+    fi
 else
     log_info "No staged .nix files — skipping Nix linters."
 fi

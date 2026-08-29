@@ -1696,7 +1696,8 @@ _: {
               # degradation keeps it 200 even when that account awaits its
               # one-time OAuth runbook).
               ++ lib.optionals ((config.services.inboxclean.extraAccounts or [ ]) != [ ]) (
-                map (account:
+                map (
+                  account:
                   mkHttpCheck {
                     name = "InboxClean ${account.name} Inbox Renders";
                     group = "Productivity";
@@ -1707,8 +1708,8 @@ _: {
                       "[BODY] == pat(*<html*)"
                     ];
                     alerts = discordAlert "InboxClean ${account.name} inbox tab not rendering — check inboxclean-web logs and the account OAuth runbook";
-                  })
-                  (config.services.inboxclean.extraAccounts or [ ])
+                  }
+                ) (config.services.inboxclean.extraAccounts or [ ])
               )
               ++ lib.optionals (config.services.cv-server.enable or false) [
                 # Liveness: go-health probe served from the raw mux (always

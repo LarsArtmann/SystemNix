@@ -250,6 +250,20 @@ in
       interval = "1m";
       severity = "warning";
     };
+    "signoz/rules/cv-server-down.json".source = mkRule {
+      name = "CV Server Down";
+      description = "cv-server unit is not active — resume site and PDF export at cv.home.lan unreachable";
+      # Unit-state gauge (same pattern as ollama/dnsblockd): no series carries
+      # a `job` label in the OTel metrics store, so up{job="cv-server"} could
+      # never fire. Gatus owns HTTP liveness for cv.home.lan — this adds the
+      # unit-level death signal (crash-loops, boot-time failures) to the
+      # SigNoz alert surface.
+      query = ''node_systemd_unit_state{name="cv-server.service",state="active"}'';
+      step = 60;
+      op = "below";
+      target = 1;
+      interval = "1m";
+    };
     "signoz/rules/docker-down.json".source = mkRule {
       name = "Docker Daemon Down";
       description = "Docker engine daemon unit is not active";

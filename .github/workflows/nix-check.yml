@@ -26,10 +26,12 @@ jobs:
         env:
           NIX_DEPLOY_KEY_CV: ${{ secrets.NIX_DEPLOY_KEY_CV }}
           NIX_DEPLOY_KEY_GO_CQRS_LITE: ${{ secrets.NIX_DEPLOY_KEY_GO_CQRS_LITE }}
+          NIX_DEPLOY_KEY_BRANCHING_FLOW: ${{ secrets.NIX_DEPLOY_KEY_BRANCHING_FLOW }}
         run: |
           eval "$(ssh-agent -s)" >/dev/null
           printf '%s\n' "$NIX_DEPLOY_KEY_CV" | ssh-add -
           printf '%s\n' "$NIX_DEPLOY_KEY_GO_CQRS_LITE" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_BRANCHING_FLOW" | ssh-add -
           git config --global url."https://github.com/LarsArtmann/go-nix-helpers".insteadOf "git@github.com:LarsArtmann/go-nix-helpers"
           echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
           echo "GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=accept-new" >> "$GITHUB_ENV"
@@ -93,6 +95,24 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
+      # Same auth as the nix-check job: VM-test BUILDS force the source of
+      # every private input (branching-flow went private 2026-08 and its
+      # anonymous tarball fetch 404s when lars-packages forces its flake
+      # outputs — see lib/lars-packages.nix).
+      - name: Configure private flake-input auth
+        env:
+          NIX_DEPLOY_KEY_CV: ${{ secrets.NIX_DEPLOY_KEY_CV }}
+          NIX_DEPLOY_KEY_GO_CQRS_LITE: ${{ secrets.NIX_DEPLOY_KEY_GO_CQRS_LITE }}
+          NIX_DEPLOY_KEY_BRANCHING_FLOW: ${{ secrets.NIX_DEPLOY_KEY_BRANCHING_FLOW }}
+        run: |
+          eval "$(ssh-agent -s)" >/dev/null
+          printf '%s\n' "$NIX_DEPLOY_KEY_CV" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_GO_CQRS_LITE" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_BRANCHING_FLOW" | ssh-add -
+          git config --global url."https://github.com/LarsArtmann/go-nix-helpers".insteadOf "git@github.com:LarsArtmann/go-nix-helpers"
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          echo "GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=accept-new" >> "$GITHUB_ENV"
+
       - name: Enable KVM for VM tests
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -111,6 +131,7 @@ jobs:
           nix build .#checks.x86_64-linux.attic --no-link --print-out-paths
           nix build .#checks.x86_64-linux.searxng --no-link --print-out-paths
           nix build .#checks.x86_64-linux.browser-history --no-link --print-out-paths
+          nix build .#checks.x86_64-linux.cv --no-link --print-out-paths
 
   shellcheck:
     runs-on: ubuntu-latest

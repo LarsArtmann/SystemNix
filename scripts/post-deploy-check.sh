@@ -463,15 +463,15 @@ if $inboxclean_enabled; then
   # Per-account Gmail map: {"main":"connected","work":"connected",...}.
   inboxclean_main_state="$(jq -r '.services.gmail.main // "missing"' <<<"${inboxclean_health:-}" 2>/dev/null)" || true
   case "$inboxclean_main_state" in
-    connected)
-      report_pass "InboxClean — Gmail main connected (OAuth token active)"
-      ;;
-    missing)
-      report_warn "InboxClean — /health carries no services.gmail.main entry (binary predates multi-account?)"
-      ;;
-    *)
-      report_warn "InboxClean — Gmail main '$inboxclean_main_state': complete the OAuth runbook (inboxclean.nix header) and enable services.inboxclean.sync"
-      ;;
+  connected)
+    report_pass "InboxClean — Gmail main connected (OAuth token active)"
+    ;;
+  missing)
+    report_warn "InboxClean — /health carries no services.gmail.main entry (binary predates multi-account?)"
+    ;;
+  *)
+    report_warn "InboxClean — Gmail main '$inboxclean_main_state': complete the OAuth runbook (inboxclean.nix header) and enable services.inboxclean.sync"
+    ;;
   esac
   # Extra accounts: WARN on any not-connected, FAIL only on transport errors
   # (already handled above).

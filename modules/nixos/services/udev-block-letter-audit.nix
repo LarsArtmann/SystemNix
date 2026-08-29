@@ -31,8 +31,7 @@ _: {
       # KERNEL=="sd[ab]" + RUN+= on the same line: executing a command at
       # letter-matched disks. (\[ escaped; anything before/after allowed.)
       letterRuleLines = builtins.filter (
-        line:
-        builtins.match ".*KERNEL==\"sd\\[.*" line != null && builtins.match ".*RUN\\+=.*" line != null
+        line: builtins.match ".*KERNEL==\"sd\\[.*" line != null && builtins.match ".*RUN\\+=.*" line != null
       ) ruleLines;
     in
     {
