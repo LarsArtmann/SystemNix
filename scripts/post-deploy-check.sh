@@ -510,12 +510,12 @@ if $inboxclean_enabled; then
   inboxclean_deployed_rev="$(grep -oP 'inboxclean-\K[0-9a-f]{7,40}' /etc/systemd/system/inboxclean-web.service 2>/dev/null | head -1)" || true
   if [ -n "$inboxclean_lock_rev" ] && [ -n "$inboxclean_deployed_rev" ]; then
     case "$inboxclean_deployed_rev" in
-      "$inboxclean_lock_rev"*)
-        report_pass "InboxClean — deployed binary matches flake.lock (${inboxclean_deployed_rev:0:10})"
-        ;;
-      *)
-        report_fail "InboxClean — DRIFT: deployed ${inboxclean_deployed_rev:0:10} != flake.lock ${inboxclean_lock_rev:0:10} (switch did not take or lock moved post-eval)"
-        ;;
+    "$inboxclean_lock_rev"*)
+      report_pass "InboxClean — deployed binary matches flake.lock (${inboxclean_deployed_rev:0:10})"
+      ;;
+    *)
+      report_fail "InboxClean — DRIFT: deployed ${inboxclean_deployed_rev:0:10} != flake.lock ${inboxclean_lock_rev:0:10} (switch did not take or lock moved post-eval)"
+      ;;
     esac
   fi
 else

@@ -1772,6 +1772,26 @@ _: {
                   ];
                   alerts = discordAlert "CV /export/pdf broken — typst template missing from /var/lib/cv/assets or the typst renderer failed (cv.home.lan). Check: journalctl -u cv-server, restart re-syncs assets.";
                 })
+                # Funnel freshness: the newest job.discovered event must be
+                # younger than 26h (four missed 6h scan ticks). The server
+                # encodes the verdict as the funnelStale boolean so this needs
+                # no JSONPath support; the API key rides the same sops secret
+                # the cv-scan timer uses, rendered into gatus-env.
+                (mkHttpCheck {
+                  name = "CV Funnel Freshness";
+                  group = "Productivity";
+                  url = "http://localhost:${toString ports.cv}/api/pipeline/sse-stats";
+                  interval = "30m";
+                  headers = {
+                    X-API-Key = "$CV_API_KEY";
+                  };
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 2000"
+                    "[BODY] == pat(*\"funnelStale\":false*)"
+                  ];
+                  alerts = discordAlert "CV funnel stale — no new job discovered in 26h+ (cv-scan timer dead or every portal failing). Check: systemctl list-timers | grep cv-scan; journalctl -u cv-scan -u cv-server --since -24h";
+                })
               ]
               ++ lib.optionals (config.services.bank-sync.enable or false) [
                 (mkHttpCheck {

@@ -64,6 +64,50 @@ server skips CSRF for `X-API-Key`-bearing requests (CV repo 2026-08-29+).
 Older packages answer 403 `csrf_invalid`. Bump the `cv` flake input in the
 same deploy that activates this timer.
 
+## Ignition runbook (root on evo-x2, ~10 min, in order)
+
+One-time sequence that takes the funnel from dormant to live. Steps 1–3 are
+the deploy chain; step 4 is the production-store decision (default: SEED —
+the 755 evaluated dev rows ARE the shortlist; fresh history only if the dev
+store is considered noise).
+
+```bash
+# 1. Deploy the bumped input. NOTE (2026-08-30): rev a2372cb4 changed go.sum
+#    and the tree kept moving during the session, so the vendorHash was
+#    re-pinned repeatedly; the LAST verified value is
+#    sha256-IsEVNQQvlkJYpXlI/KRkOzY6ADpTY+YaUbgxVtipgZM=. The pushed CV
+#    master HEAD must CARRY that exact line, and the input rev must point
+#    at it — if the FOD fails with a hash mismatch, it names the correct
+#    value: paste that `got:` hash into nix/packages.nix vendorHash, let
+#    the daemon commit, re-bump the input, and build again.
+nix flake lock --update-input cv   # verify the lock rev includes the vendorHash fix
+nix run .#deploy                   # watch for cv-server + cv-scan units in the switch
+nix run .#post-deploy-check        # CV section: /health/live + /export/pdf
+curl -s http://localhost:8098/health/live   # version stamp = the new rev
+
+# 2. First-tick proof (the exact timer path, run once by hand)
+systemctl start cv-scan.service
+journalctl -u cv-scan -n 10                  # two "-> 200 (ok)" lines
+systemctl list-timers | grep cv-scan         # next tick at 00/06/12/18:23
+journalctl -u cv-server --since "-10 min" | grep 'dashboard scan completed'
+
+# 3. Decide the production store (peek, then SEED unless populated)
+ls -la /var/lib/cv/data/                     # pipeline.sqlite present? size?
+
+# 4. SEED path (default): server STOPPED, dev store copied in, lease NOT copied
+systemctl stop cv-server
+cp /home/lars/projects/CV/data/pipeline.sqlite /var/lib/cv/data/pipeline.sqlite
+rm -f /var/lib/cv/data/pipeline.sqlite.lease   # stale dev lease would block boot
+chown cv:cv /var/lib/cv/data/pipeline.sqlite && chmod 600 /var/lib/cv/data/pipeline.sqlite
+systemctl start cv-server
+journalctl -u cv-server --since "-2 min" | grep -iE 'rehydrat|events'   # replay proof
+#    then check the dashboard (cv.home.lan/pipeline) shows ~755 applications
+```
+
+After step 4, paste the first-tick journal excerpt into the root-proof block
+in "Pending root-gated proofs" below (evidence canon) — then the funnel is
+live and this section is historical.
+
 ## Common operations
 
 ```bash

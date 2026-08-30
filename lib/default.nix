@@ -128,6 +128,7 @@ in
       conditions ? [ "[STATUS] == 200" ],
       alerts ? [ ],
       client ? { },
+      headers ? { },
     }:
     {
       inherit
@@ -139,7 +140,8 @@ in
         alerts
         ;
     }
-    // lib.optionalAttrs (client != { }) { inherit client; };
+    // lib.optionalAttrs (client != { }) { inherit client; }
+    // lib.optionalAttrs (headers != { }) { inherit headers; };
 
   ports =
     let

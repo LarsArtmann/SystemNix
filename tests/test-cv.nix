@@ -33,7 +33,7 @@ in
   name = "cv";
 
   nodes.machine =
-    { lib, ... }:
+    { lib, pkgs, ... }:
     {
       imports = [
         cvNixosModule
@@ -44,6 +44,13 @@ in
       sops.templates."cv-env" = { };
 
       services.cv-server.enable = true;
+
+      # Probe timer (plan T23): assert the wiring with a stub chromium so
+      # the VM closure stays light — the real deployment uses pkgs.chromium.
+      services.cv-server.profileProbe = {
+        enable = true;
+        chromiumPackage = pkgs.hello;
+      };
 
       systemd.services.cv-server.serviceConfig.EnvironmentFile = lib.mkForce [
         "${mockCvEnv}"
@@ -73,9 +80,7 @@ in
     # 6. Continuous scan automation wired: timer active, portals present in
     #    the GENERATED config (settings are the whole config.yaml — without
     #    this list the server answers 400 "no portals configured" and the
-    #    cv-scan timer is a no-op). The scan POST itself is only runnable
-    #    once the cv flake input carries the X-API-Key CSRF bypass
-    #    (2026-08-29); until then this asserts the wiring, not the request.
+    #    cv-scan timer is a no-op).
     machine.wait_for_unit("cv-scan.timer")
     machine.succeed("grep -q 'freelancermap.com/projects/remote' /var/lib/cv/config.yaml")
     machine.succeed("test \"$(grep -c 'freelancermap.com/projects' /var/lib/cv/config.yaml)\" -ge 9")
@@ -91,6 +96,35 @@ in
     machine.succeed("grep -q 'api/pipeline/scan' " + scan_script)
     machine.succeed("grep -q 'api/pipeline/evaluate-tracked' " + scan_script)
 
-    print("CV server verified — starts, health responds, config generated, content synced, PDF export works, scan timer wired")
+    # 7. Live scan-POST through the full stdlib chain: the cv flake input
+    #    now carries the X-API-Key CSRF bypass (2026-08-29), so the exact
+    #    timer request shape is provable in-VM — no key -> 403 (nosurf
+    #    armed), wrong key -> 401 (fail-closed APIKeyAuth), mock env key
+    #    -> 200 (bypass + auth). The body pins one connection-refused
+    #    portal so the accepted async scan cannot egress the VM.
+    def scan_status(extra_headers):
+        return machine.succeed(
+            "curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' "
+            + extra_headers
+            + " --data '{\"portals\":[{\"url\":\"http://127.0.0.1:1/refused\",\"company\":\"vm-test\"}]}'"
+            + " http://localhost:${toString cvPort}/api/pipeline/scan"
+        ).strip()
+
+    no_key = scan_status("")
+    assert no_key == "403", "POST without X-API-Key must hit nosurf (got " + no_key + ")"
+    wrong_key = scan_status("-H 'X-API-Key: wrong-key'")
+    assert wrong_key == "401", "wrong X-API-Key must be fail-closed (got " + wrong_key + ")"
+    ok_key = scan_status("-H 'X-API-Key: test-api-key-for-vm-only'")
+    assert ok_key == "200", "timer-shaped POST must bypass CSRF and pass auth (got " + ok_key + ")"
+
+    # 8. Session-probe timer wiring (T23): the unit exists with the probe
+    #    command and the chromium env, and the weekly timer is scheduled.
+    #    Wiring-only: the probe itself needs operator sessions + a real
+    #    browser, neither of which exists in the VM.
+    machine.succeed("systemctl cat cv-profile-probe.service | grep -q 'profile accounts --probe --all'")
+    machine.succeed("systemctl cat cv-profile-probe.service | grep -q 'CHROMIUM_EXECUTABLE_PATH'")
+    machine.succeed("systemctl list-timers | grep -q cv-profile-probe")
+
+    print("CV server verified — starts, health responds, config generated, content synced, PDF export works, scan timer wired, timer-shaped scan-POST live-proven, session-probe timer wired")
   '';
 }

@@ -32,6 +32,30 @@
     {
       imports = [ inputs.cv.nixosModules.default ];
 
+      options.services.cv-server.profileProbe = {
+        enable = lib.mkEnableOption ''
+          Weekly platform-session validity probe: runs
+          `cv profile accounts --probe --all` against the operator checkout.
+          Exit 0 = all sessions valid; exit 3 = at least one INVALID session,
+          which FAILS the unit so onFailure alerts — logins rot visibly
+          instead of at apply-time. Disabled by default: the probe is
+          operator-local state (never a server surface) and pulls chromium
+          into the closure.
+        '';
+
+        chromiumPackage = lib.mkOption {
+          type = lib.types.package;
+          default = pkgs.chromium;
+          description = "Chromium derivation exported as CHROMIUM_EXECUTABLE_PATH for the Playwright-based probe (tests substitute a stub to keep the VM closure light).";
+        };
+
+        workingDirectory = lib.mkOption {
+          type = lib.types.str;
+          default = "/home/lars/projects/CV";
+          description = "CV checkout the probe runs from; session state (data/accounts) and the generated bun probe scripts live under it.";
+        };
+      };
+
       config = lib.mkIf cfg.enable {
         services.cv-server = {
           package = lib.mkDefault inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default;
@@ -263,6 +287,58 @@
             OnCalendar = "*-*-* 00/6:23:00";
             Persistent = true;
             Unit = "cv-scan.service";
+          };
+        };
+
+        # Platform-session validity probe (plan T23, 2026-08-30): weekly
+        # `cv profile accounts --probe --all` against the operator checkout.
+        # The probe reads/WRITES operator-local state (the accounts ledger +
+        # session files under the checkout), so it runs as the operator user
+        # with home access — deliberately NOT part of the hardened server
+        # surface. Exit 3 (>=1 invalid session) fails the unit on purpose:
+        # onFailure alerting is the entire value of the timer.
+        systemd.services.cv-profile-probe = lib.mkIf cfg.profileProbe.enable {
+          description = "CV platform session validity probe (exit 3 = invalid session -> alert)";
+          inherit onFailure;
+          startLimitBurst = 2;
+          startLimitIntervalSec = 600;
+
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = "lars";
+              Group = "users";
+              WorkingDirectory = cfg.profileProbe.workingDirectory;
+              Environment = [
+                "HOME=/home/lars"
+                "CHROMIUM_EXECUTABLE_PATH=${cfg.profileProbe.chromiumPackage}/bin/chromium"
+                "PLAYWRIGHT_BROWSERS_PATH=/home/lars/tmp/playwright"
+                "PATH=${
+                  lib.makeBinPath [
+                    pkgs.bun
+                    pkgs.coreutils
+                    pkgs.gnugrep
+                  ]
+                }:/run/current-system/sw/bin"
+              ];
+              ExecStart = "${lib.getExe cfg.package} profile accounts --probe --all";
+            }
+            (harden {
+              # The probe mutates operator state under /home and runs a
+              # browser; the server-grade home protection must not apply.
+              ProtectHome = false;
+            })
+            (serviceOneshotDefaults { })
+          ];
+        };
+
+        systemd.timers.cv-profile-probe = lib.mkIf cfg.profileProbe.enable {
+          description = "Weekly CV platform session validity probe (Mon 09:41, off the backup window)";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = "Mon *-*-* 09:41:00";
+            Persistent = true;
+            Unit = "cv-profile-probe.service";
           };
         };
 

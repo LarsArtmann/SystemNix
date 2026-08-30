@@ -474,6 +474,12 @@ in
                   # Bearer key for the PapDashboard ingest custom alerting provider.
                   PAPDASHBOARD_INGEST_KEY = config.sops.placeholder.papdashboard_api_key;
                 }
+                // lib.optionalAttrs (svcEnabled "cv-server") {
+                  # X-API-Key for the "CV Funnel Freshness" check: the same
+                  # secret the cv-scan timer authenticates with, so gatus
+                  # reads the guarded sse-stats endpoint.
+                  CV_API_KEY = config.sops.placeholder.cv_api_key;
+                }
               );
             };
           }
