@@ -530,8 +530,6 @@
     # go.mod floor is 1.26.6), so it must consume its own build environment.
     cv = {
       url = "git+ssh://git@github.com/LarsArtmann/CV?ref=master";
-      rev = "7371c650df29c98dd417c44efe3cdf00d33b1ed2";
-      narHash = "sha256-C6zAjTU++0OHIF9ipDhBgsCBaQ+1Bu+FTucD5WI4kKI=";
     };
 
     # DankMaterialShell — Quickshell-based desktop shell (Niri + Hyprland)

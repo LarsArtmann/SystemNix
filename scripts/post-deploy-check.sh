@@ -509,14 +509,17 @@ if $inboxclean_enabled; then
   inboxclean_lock_rev="$(jq -r '.nodes.inboxclean.locked.rev // empty' flake.lock 2>/dev/null)" || true
   inboxclean_deployed_rev="$(grep -oP 'inboxclean-\K[0-9a-f]{7,40}' /etc/systemd/system/inboxclean-web.service 2>/dev/null | head -1)" || true
   if [ -n "$inboxclean_lock_rev" ] && [ -n "$inboxclean_deployed_rev" ]; then
-    case "$inboxclean_deployed_rev" in
-    "$inboxclean_lock_rev"*)
+    # The package version is self.shortRev (7 chars) while the lock carries
+    # the full 40-char rev — compare at the DEPLOYED string's length. The
+    # original `case "$deployed" in "$lock"*` glob can never match a 7-char
+    # string against a 40-char pattern (pattern longer than the string), so
+    # every legit shortRev deploy read as drift on first live run (2026-08-30).
+    inboxclean_lock_prefix="${inboxclean_lock_rev:0:${#inboxclean_deployed_rev}}"
+    if [ "$inboxclean_deployed_rev" = "$inboxclean_lock_prefix" ]; then
       report_pass "InboxClean — deployed binary matches flake.lock (${inboxclean_deployed_rev:0:10})"
-      ;;
-    *)
+    else
       report_fail "InboxClean — DRIFT: deployed ${inboxclean_deployed_rev:0:10} != flake.lock ${inboxclean_lock_rev:0:10} (switch did not take or lock moved post-eval)"
-      ;;
-    esac
+    fi
   fi
 else
   report_skip "InboxClean — service disabled (units absent from systemd)"

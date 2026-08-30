@@ -1702,7 +1702,7 @@ _: {
                   interval = "5m";
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*email_states*)"
+                    "[BODY] == pat(*email_state*)"
                   ];
                   alerts = discordAlert "InboxClean projections endpoint degraded — check /health services.projections and journalctl -u inboxclean-web";
                 })

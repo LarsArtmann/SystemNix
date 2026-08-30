@@ -233,12 +233,18 @@ fi
 # patterns like pat(*Paperless-ngx sign in*) extract a leading word that is
 # NOT a metric — Prometheus metric names are lowercase by convention, so
 # dropping any candidate containing uppercase keeps human-text checks out.
+# `connected` (InboxClean /health JSON) and `email_state(s)` (InboxClean
+# /health/projections JSON, 2026-08-30 — the LIVE projection is named
+# "email_state", singular; the upstream test fixture says "email_states" and
+# is NOT prod truth) are lowercase JSON FIELD assertions on non-/metrics
+# endpoints — the extractor cannot tell them apart from metrics, and they
+# never appear in any /metrics scrape.
 extract_gatus_metrics() {
   grep -v '^[[:space:]]*#' "$GATUS_CONFIG" |
     grep -oE 'pat\(\*[a-zA-Z_][a-zA-Z0-9_]*' |
     sed 's/pat(\*//' |
     sort -u |
-    grep -vE '^<|connected|[A-Z]'
+    grep -vE '^<|connected|email_states?|[A-Z]'
 }
 
 # Fetch metrics from each endpoint separately to avoid false-positive phantom
