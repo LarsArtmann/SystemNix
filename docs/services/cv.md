@@ -72,14 +72,14 @@ the 755 evaluated dev rows ARE the shortlist; fresh history only if the dev
 store is considered noise).
 
 ```bash
-# 1. Deploy the bumped input. NOTE (2026-08-30): rev a2372cb4 changed go.sum
-#    and the tree kept moving during the session, so the vendorHash was
-#    re-pinned repeatedly; the LAST verified value is
-#    sha256-IsEVNQQvlkJYpXlI/KRkOzY6ADpTY+YaUbgxVtipgZM=. The pushed CV
-#    master HEAD must CARRY that exact line, and the input rev must point
-#    at it — if the FOD fails with a hash mismatch, it names the correct
-#    value: paste that `got:` hash into nix/packages.nix vendorHash, let
-#    the daemon commit, re-bump the input, and build again.
+# 1. Deploy the bumped input. VENDORHASH IS A MOVING TARGET (2026-08-30
+#    lesson: re-pinned 4× in one day — MSaj28 → IsEVNQQ → 5fFa31AH → … —
+#    because the CV tree moves under concurrent sessions and the go-modules
+#    FOD hash tracks tree state). Protocol, never a frozen value: read the
+#    CURRENT vendorHash at CV's nix/packages.nix on the rev you are about
+#    to push, confirm that rev carries it, and if the FOD still fails it
+#    names the truth — paste the `got:` hash into nix/packages.nix
+#    vendorHash, let the daemon commit, re-bump the input, build again.
 nix flake lock --update-input cv   # verify the lock rev includes the vendorHash fix
 nix run .#deploy                   # watch for cv-server + cv-scan units in the switch
 nix run .#post-deploy-check        # CV section: /health/live + /export/pdf

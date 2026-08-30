@@ -408,6 +408,11 @@ in
       # Sops: platforms/nixos/secrets/cv.yaml (cv_api_key → CV_API_KEY).
       cv-server = {
         enable = true;
+        # Weekly session-validity probe (Mon 09:41): `cv profile accounts
+        # --probe --all` against the operator checkout; exit 3 = a session
+        # went invalid → onPage failures, alerting instead of apply-time
+        # surprises. Adds chromium to the closure (accepted 2026-08-30).
+        profileProbe.enable = true;
       };
 
       # InboxClean — Gmail AI assistant dashboard (inbox.home.lan).
