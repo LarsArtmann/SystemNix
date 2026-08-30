@@ -70,6 +70,27 @@ in
     pdf = machine.succeed("curl -sf 'http://localhost:${toString cvPort}/export/pdf'")
     assert pdf.startswith("%PDF"), "PDF export did not return PDF magic bytes"
 
-    print("CV server verified — starts, health responds, config generated, content synced, PDF export works")
+    # 6. Continuous scan automation wired: timer active, portals present in
+    #    the GENERATED config (settings are the whole config.yaml — without
+    #    this list the server answers 400 "no portals configured" and the
+    #    cv-scan timer is a no-op). The scan POST itself is only runnable
+    #    once the cv flake input carries the X-API-Key CSRF bypass
+    #    (2026-08-29); until then this asserts the wiring, not the request.
+    machine.wait_for_unit("cv-scan.timer")
+    machine.succeed("grep -q 'freelancermap.com/projects/remote' /var/lib/cv/config.yaml")
+    machine.succeed("test \"$(grep -c 'freelancermap.com/projects' /var/lib/cv/config.yaml)\" -ge 9")
+    # systemctl show -P ExecStart prints the load-image format
+    # "{ path=/nix/store/... ; argv[]=... ; ... }" — extract the bare
+    # script path before grepping its contents (caught by the first real
+    # VM run 2026-08-30: the braces made grep treat the whole line as a
+    # filename).
+    scan_script = machine.succeed(
+      "systemctl show -P ExecStart cv-scan.service | tr ';' '\\n' | sed -n 's/.*path=//p' | tr -d ' '"
+    ).strip()
+    machine.succeed("test -f " + scan_script)
+    machine.succeed("grep -q 'api/pipeline/scan' " + scan_script)
+    machine.succeed("grep -q 'api/pipeline/evaluate-tracked' " + scan_script)
+
+    print("CV server verified — starts, health responds, config generated, content synced, PDF export works, scan timer wired")
   '';
 }

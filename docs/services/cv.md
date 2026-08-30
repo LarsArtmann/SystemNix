@@ -16,6 +16,7 @@ Resume/CV generator (`cv serve`, Go + Typst) from the private
 | Secrets           | sops `platforms/nixos/secrets/cv.yaml` → template `cv-env` (`CV_API_KEY`), owned `cv:cv` 0400 |
 | Persistence       | `/var/lib/cv/data/pipeline.sqlite` (event store; `pipeline.event_store_driver=sqlite`)        |
 | Backups           | `/mnt/pool/backups/cv/pipeline-<ts>.sqlite`, nightly 03:17 (`cv-backup.timer`)                |
+| Scan automation    | `cv-scan.timer` every 6h (:23): POST `/api/pipeline/scan` + `/evaluate-tracked` (X-API-Key)    |
 | Monitoring        | Gatus: `CV` (liveness 60s), `CV Page Renders` (/cv HTML 5m), `CV PDF Export` (%PDF body 5m)   |
 | Tracing           | OTLP-HTTP → localhost:4318, service `cv-application` (SigNoz)                                 |
 | Upstream pin      | flake input `cv` (rev-locked, git+ssh; no `follows` — vendorHash stability)                   |
@@ -27,6 +28,41 @@ Resume/CV generator (`cv serve`, Go + Typst) from the private
   Never store anything mutable there.
 - `data/` ROOT files (`pipeline.sqlite`, `dead-portals.json`,
   `graphrag.sqlite`) are runtime-mutable and never touched by the sync.
+
+## Continuous funnel automation
+
+`cv-scan.timer` fires every 6 hours and drives the server over HTTP with
+the same `CV_API_KEY` the server reads (sops `cv-env` template):
+
+1. `POST /api/pipeline/scan` — empty body scans ALL portals from
+   `pipeline.portals` in `cv.nix` settings (the generated config.yaml IS
+   the whole config — keep that list in sync with the CV repo's
+   config.yaml). Every newly discovered job is evaluated inline (score +
+   recommendation + ANÜ/eligibility blockers land in the same pass).
+2. `POST /api/pipeline/evaluate-tracked` — no-force pass that only picks
+   up rows whose scan-time evaluation failed (idempotent otherwise).
+
+Both endpoints are async + 409-guarded, so an overlap with a
+dashboard-triggered run is harmless. Failures (non-200/409, e.g. a wrong
+key after rotation) fail the unit → onFailure alert.
+
+**Forced re-scoring is manual** — when criteria change (keywords, CV data,
+blockers like the 2026-08-29 eligibility axis), run once:
+
+```bash
+key=$(sudo cat /run/secrets/cv-env 2>/dev/null | cut -d= -f2)   # or read from sops
+curl -s -X POST -H "X-API-Key: $key" -H 'Content-Type: application/json' \
+  -d '{"force":true,"workers":8}' http://localhost:8098/api/pipeline/evaluate-tracked
+```
+
+A periodic force pass is deliberately NOT timer-driven: it appends one
+`job.evaluated` event per tracked application per run even when verdicts
+are identical — pure event-store bloat.
+
+**Deploy-order dependency**: the timer's POSTs need a CV package whose
+server skips CSRF for `X-API-Key`-bearing requests (CV repo 2026-08-29+).
+Older packages answer 403 `csrf_invalid`. Bump the `cv` flake input in the
+same deploy that activates this timer.
 
 ## Common operations
 
@@ -41,6 +77,10 @@ nix run .#deploy                   # switch restarts changed units
 # Verify (no root needed):
 curl -s http://localhost:8098/health/live   # {"status":"pass","version":"<rev>",...}
 curl -s http://localhost:8098/export/pdf | head -c8   # %PDF-1.7
+
+# Trigger a funnel scan out-of-band (same path the 6h timer uses):
+systemctl start cv-scan.service && journalctl -u cv-scan -n 5
+journalctl -u cv-server --since "-10 min" | grep -E 'scan completed|bulk evaluation'
 ```
 
 ## Incident playbook
