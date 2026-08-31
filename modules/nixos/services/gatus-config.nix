@@ -1388,8 +1388,9 @@ _: {
                   conditions = [
                     "[STATUS] == 200"
                     "[BODY] == pat(*system_oomd_kills_alert 0*)"
+                    "[BODY] == pat(*system_oomd_kills_scrape_errors 0*)"
                   ];
-                  alerts = discordAlert "systemd-oomd killed a process since last check — memory pressure triggered OOM. Check: journalctl -u systemd-oomd --grep 'Killed' -n 20. The killed service may be in start-limit-hit state.";
+                  alerts = discordAlert "systemd-oomd killed a process since last check (memory pressure OOM; check: journalctl -u systemd-oomd --grep 'Killed' -n 20 — the killed service may be in start-limit-hit state), OR the bounded oomd journal scan timed out (system_oomd_kills_scrape_errors=1; check: systemctl status system-health-metrics)";
                 })
                 (mkHttpCheck {
                   name = "Docker Container Restarts";

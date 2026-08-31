@@ -9,6 +9,14 @@
 #   4. Content sync materialized the typst template (assets/typst/cv.typ)
 #      — the asset-vanishing incident class this must never regress
 #   5. /export/pdf returns real PDF magic bytes (typst renderer end-to-end)
+#   6-8. scan automation + session-probe wiring (see below)
+#   9. Pool backup dir SELF-CREATES on a mounted /mnt/pool (2026-08-31
+#      regression: the pool fs never had /mnt/pool/backups/cv and every
+#      cv-backup died 226/NAMESPACE — ReadWritePaths cannot be fixed
+#      in-unit because systemd builds the namespace BEFORE ExecStart)
+#  10. Full replay of the incident: dir removed (fresh pool), deploy-style
+#      restart of cv-backup-dir, real sqlite seed, cv-backup lands a
+#      pipeline-*.sqlite file pool-side, unit not failed
 #
 # Uses mock-sops.nix + test-helpers.nix for shared mock infrastructure.
 # The rendered sops template is never produced inside the VM, so the
@@ -28,6 +36,9 @@ let
   # lib/ports.nix: cv = 8098. Hardcoded here because the testScript is a
   # plain string (no Nix interpolation of the lib import).
   cvPort = 8098;
+
+  # For seeding a REAL sqlite store the backup unit can .backup from.
+  sqliteBin = "${pkgs.sqlite}/bin/sqlite3";
 in
 {
   name = "cv";
@@ -55,6 +66,16 @@ in
       systemd.services.cv-server.serviceConfig.EnvironmentFile = lib.mkForce [
         "${mockCvEnv}"
       ];
+
+      # Simulate the mirrored HDD pool: a second disk auto-formatted and
+      # mounted at /mnt/pool, exactly what cv-backup-dir's RequiresMountsFor
+      # gates on in production.
+      virtualisation.emptyDiskImages = [ 512 ];
+      fileSystems."/mnt/pool" = {
+        device = "/dev/vdb";
+        fsType = "ext4";
+        autoFormat = true;
+      };
     };
 
   testScript = ''
@@ -125,6 +146,32 @@ in
     machine.succeed("systemctl cat cv-profile-probe.service | grep -q 'CHROMIUM_EXECUTABLE_PATH'")
     machine.succeed("systemctl list-timers | grep -q cv-profile-probe")
 
-    print("CV server verified — starts, health responds, config generated, content synced, PDF export works, scan timer wired, timer-shaped scan-POST live-proven, session-probe timer wired")
+    # 9. Regression (2026-08-31): the pool-side backup dir must SELF-CREATE.
+    #    Production incident: /mnt/pool/backups/cv never existed on the pool
+    #    fs — a root-fs shadow dir under the mountpoint masked it during the
+    #    9-day DAS outage, and the pool remount turned every cv-backup run
+    #    into 226/NAMESPACE. The mount-gated cv-backup-dir oneshot
+    #    (atticd-storage-dir pattern) is the declarative creator: boot-wired
+    #    via multi-user.target, restarted by deploy.sh, wants-pulled by the
+    #    cv-backup timer transaction.
+    machine.wait_for_unit("cv-backup-dir.service")
+    machine.succeed("test -d /mnt/pool/backups/cv")
+    machine.succeed("systemctl cat cv-backup.service | grep -q 'RequiresMountsFor=/mnt/pool/backups/cv'")
+
+    # 10. Replay the exact production state (pool WITHOUT the dir) + the
+    #     deploy convergence path: restart the creator (what deploy.sh does
+    #     post-switch), seed a real sqlite store, then run a real backup.
+    #     Asserts the artifact lands pool-side and the unit is not failed —
+    #     the 226 class can never recur silently.
+    machine.succeed("rm -rf /mnt/pool/backups/cv")
+    machine.systemctl("restart cv-backup-dir.service")
+    machine.succeed("test -d /mnt/pool/backups/cv")
+    machine.succeed("mkdir -p /var/lib/cv/data")
+    machine.succeed("${sqliteBin} /var/lib/cv/data/pipeline.sqlite 'CREATE TABLE IF NOT EXISTS _vm_seed(x)'")
+    machine.systemctl("start cv-backup.service")
+    machine.succeed("test -f /mnt/pool/backups/cv/pipeline-*.sqlite")
+    machine.fail("systemctl is-failed --quiet cv-backup.service")
+
+    print("CV server verified — starts, health responds, config generated, content synced, PDF export works, scan timer wired, timer-shaped scan-POST live-proven, session-probe timer wired, pool backup dir self-creates + backup lands")
   '';
 }

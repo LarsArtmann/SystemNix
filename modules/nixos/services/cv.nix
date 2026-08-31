@@ -173,13 +173,57 @@
           ];
         };
 
+        # Mount-gated creator for the pool-side backup dir (atticd-storage-dir
+        # pattern). cv-backup's ReadWritePaths requires the path to EXIST
+        # before namespace setup: during the 9-day DAS outage a root-fs shadow
+        # dir under /mnt/pool let cv-backup pass setup while early-exiting
+        # ("no pipeline.sqlite yet"); the 2026-08-31 pool remount then failed
+        # the boot catch-up run with 226/NAMESPACE because the POOL filesystem
+        # never had the dir. tmpfiles must NOT create it either — pre-mount it
+        # would land on the root fs and shadow the pool copy.
+        systemd.services.cv-backup-dir = {
+          description = "Create CV backup directory on the HDD pool";
+          wantedBy = [ "multi-user.target" ];
+          unitConfig.RequiresMountsFor = [ backupDir ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = "root";
+              RemainAfterExit = true;
+            }
+            # ReadWritePaths targets the PARENT (/mnt/pool/backups), which
+            # always exists — pointing it at backupDir itself would 226 the
+            # creator before it can mkdir the leaf.
+            (harden {
+              MemoryMax = "128M";
+              ReadWritePaths = [ "/mnt/pool/backups" ];
+            })
+            (serviceOneshotDefaults { })
+          ];
+          script = ''
+            mkdir -p ${backupDir}
+            chmod 0755 ${backupDir}
+          '';
+        };
+
         # Pipeline event-store backup: the tracked-applications state
         # (data/pipeline.sqlite) is irreplaceable. Online SQLite backup
         # (safe against the live WAL writer) onto the mirrored pool.
         systemd.services.cv-backup = {
           description = "CV pipeline SQLite backup (online .backup)";
-          after = [ "cv-server.service" ];
-          wants = [ "cv-server.service" ];
+          after = [
+            "cv-server.service"
+            "cv-backup-dir.service"
+          ];
+          wants = [
+            "cv-server.service"
+            "cv-backup-dir.service"
+          ];
+          # Orders the unit AFTER the pool mount (a detached DAS fails the
+          # run as a clean dependency error instead of 226/NAMESPACE — the
+          # btrbk doctrine), and fixes the boot-race where Persistent timer
+          # catch-up fires seconds before mnt-pool.mount completes.
+          unitConfig.RequiresMountsFor = [ backupDir ];
           inherit onFailure;
           startLimitBurst = 5;
           startLimitIntervalSec = 300;

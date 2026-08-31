@@ -517,26 +517,45 @@ _: {
 
           # === systemd-oomd kills tracking ===
           # systemd-oomd kills (nix-daemon, Twenty worker) went completely
-          # undetected. This counts kill events from the journal since boot
-          # and tracks the delta since last collection to catch new kills.
+          # undetected. This counts kill events from the journal in the
+          # trailing 24h and tracks the delta since last collection to catch
+          # new kills.
+          #
+          # BOTH bounds are load-bearing (2026-08-31 live incident): the
+          # original unbounded scan (no --since) walked the ENTIRE 7.2G
+          # journal under this unit's 128M MemoryMax — page cache charged to
+          # the cgroup thrashed in reclaim and a single run took 11-28 MIN
+          # against a 2min timer interval. The textfile was stale most of
+          # the time and sev1 paged "system_health metrics missing/stale"
+          # on the desktop all afternoon. A 24h window measures ~10s;
+          # `timeout 60` is the hard ceiling so a degraded journal walk can
+          # never wedge the collector again. On timeout/failure we fail
+          # CLOSED via system_oomd_kills_scrape_errors=1 (Gatus asserts it
+          # 0) and keep the previous total: no phantom delta, no phantom
+          # reset.
           collect_oomd=${lib.boolToString cfg.collectOomdKills}
           OOMD_KILLS_TOTAL=0
           OOMD_KILLS_RECENT=0
           OOMD_ALERT=0
+          OOMD_SCRAPE_ERRORS=0
           if [ "$collect_oomd" = "true" ]; then
-            OOMD_KILLS_TOTAL=$(journalctl -u systemd-oomd --grep "Marked.*for killing" --output cat --no-pager 2>/dev/null | wc -l) || OOMD_KILLS_TOTAL=0
-            OOMD_KILLS_TOTAL="''${OOMD_KILLS_TOTAL:-0}"
             prev_oomd=0
             if [ -f "$OOMD_STATE" ]; then
               prev_oomd=$(cat "$OOMD_STATE" 2>/dev/null) || prev_oomd=0
             fi
             prev_oomd="''${prev_oomd:-0}"
+            OOMD_KILLS_TOTAL=$prev_oomd
+            if oomd_out=$(timeout 60 journalctl -u systemd-oomd --since "-24h" --grep "Marked.*for killing" --output cat --no-pager 2>/dev/null | wc -l); then
+              OOMD_KILLS_TOTAL="''${oomd_out:-0}"
+              echo "$OOMD_KILLS_TOTAL" > "''${OOMD_STATE}.tmp"
+              mv "''${OOMD_STATE}.tmp" "$OOMD_STATE"
+            else
+              OOMD_SCRAPE_ERRORS=1
+            fi
             if [ "$OOMD_KILLS_TOTAL" -gt "$prev_oomd" ] 2>/dev/null; then
               OOMD_KILLS_RECENT=$((OOMD_KILLS_TOTAL - prev_oomd))
               OOMD_ALERT=1
             fi
-            echo "$OOMD_KILLS_TOTAL" > "''${OOMD_STATE}.tmp"
-            mv "''${OOMD_STATE}.tmp" "$OOMD_STATE"
           fi
 
           # === Docker container restart count monitoring ===
@@ -869,7 +888,7 @@ _: {
             echo "# TYPE system_any_service_restart_churn gauge"
             echo "system_any_service_restart_churn ''${ANY_CHURN}"
 
-            echo "# HELP system_oomd_kills_total Total systemd-oomd kill events since boot"
+            echo "# HELP system_oomd_kills_total systemd-oomd kill events in the trailing 24h (bounded scan, see collector)"
             echo "# TYPE system_oomd_kills_total gauge"
             echo "system_oomd_kills_total ''${OOMD_KILLS_TOTAL}"
 
@@ -880,6 +899,10 @@ _: {
             echo "# HELP system_oomd_kills_alert 1 if oomd killed a process since last collection, 0 otherwise"
             echo "# TYPE system_oomd_kills_alert gauge"
             echo "system_oomd_kills_alert ''${OOMD_ALERT}"
+
+            echo "# HELP system_oomd_kills_scrape_errors 1 if the bounded oomd journal scan failed or timed out (totals held at last-known values), 0 otherwise"
+            echo "# TYPE system_oomd_kills_scrape_errors gauge"
+            echo "system_oomd_kills_scrape_errors ''${OOMD_SCRAPE_ERRORS}"
 
             echo "# HELP docker_container_restart_count Total restart count per Docker container"
             echo "# TYPE docker_container_restart_count gauge"
@@ -1175,6 +1198,14 @@ _: {
                 Type = "oneshot";
                 ExecStart = lib.getExe systemHealthMetrics;
                 ReadWritePaths = [ textfileDir ];
+                # Explicit ceiling (2026-08-31): the deployed system's
+                # /etc/systemd/system.conf.d/ is EMPTY — the global
+                # DefaultTimeoutStartSec=3min from timeout-audit.nix was
+                # NOT live, so a wedged collection (unbounded oomd journal
+                # scan) sat in "activating" for 11-28 min with nothing
+                # killing it. A collection that cannot finish in 3min is
+                # wedged: fail it into onFailure alerting instead.
+                TimeoutStartSec = "3min";
               }
             ];
           };

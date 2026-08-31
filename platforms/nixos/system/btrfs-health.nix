@@ -122,7 +122,10 @@ let
     runtimeInputs = [ btrfsChunkCheck ];
     text = ''
       set -uo pipefail
-      eval "$(btrfs-chunk-check / 2>/dev/null)"
+      # timeout: same ioctl-wedge class as the metrics collector (2026-08-31);
+      # on timeout the UNALLOC_BYTES default of 0 makes the guard ABORT GC —
+      # fail-closed (no GC on unknown chunk headroom), never a hang on nix-gc.
+      eval "$(timeout 30 btrfs-chunk-check / 2>/dev/null)"
       : "''${UNALLOC_BYTES:=0}"
       : "''${UNALLOC_PCT:=100}"
       : "''${META_PCT:=0}"
@@ -168,7 +171,10 @@ let
 
       mkdir -p "${textfileDir}" "${stateDir}"
 
-      eval "$(btrfs-chunk-check / 2>/dev/null)"
+      # timeout: `btrfs filesystem usage` is the same wedge-prone ioctl
+      # family as scrub status (2026-08-31). Bounded here too — on timeout
+      # the defaults below apply and the cycle degrades instead of hanging.
+      eval "$(timeout 30 btrfs-chunk-check / 2>/dev/null)"
       : "''${DEVICE_SIZE_BYTES:=0}"
       : "''${UNALLOC_BYTES:=0}"
       : "''${ALLOC_BYTES:=0}"
@@ -250,7 +256,7 @@ let
         scrub_total_errors=0
         scrub_all_finished=1
         for scrub_mnt in / /data; do
-          scrub_out=$(btrfs scrub status "$scrub_mnt" 2>/dev/null) || continue
+          scrub_out=$(timeout 30 btrfs scrub status "$scrub_mnt" 2>/dev/null) || continue
           scrub_err=$(echo "$scrub_out" | awk '
             /no errors found/ {e=0}
             /with [0-9]+ error/ {match($0, /with ([0-9]+)/, a); e=a[1]}
@@ -541,6 +547,12 @@ in
           {
             Type = "oneshot";
             ExecStart = lib.getExe btrfsHealthMetrics;
+            # 2026-08-31: `btrfs scrub status /` hung 1h+ with no unit-level
+            # timeout (the global DefaultTimeoutStartSec was NOT live on the
+            # deployed system — /etc/systemd/system.conf.d/ empty). Fail a
+            # wedged collection into onFailure alerting instead of pinning
+            # "activating" forever and staling btrfs.prom.
+            TimeoutStartSec = "3min";
           }
         ];
       };

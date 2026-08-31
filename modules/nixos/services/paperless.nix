@@ -148,6 +148,14 @@ _: {
           };
         };
 
+        # nixpkgs ships the exporter timer WITHOUT Persistent=true — the only
+        # backup timer in the fleet that misses boot catch-up. Proven live
+        # 2026-08-31: with the machine off at the 01:30 window during the DAS
+        # outage, the export stayed 254h stale after recovery while every
+        # Persistent backup timer re-fired at the 14:30 boot. Missed windows
+        # now fire as soon as the timer unit comes back.
+        systemd.timers.paperless-exporter.timerConfig.Persistent = true;
+
         systemd.services =
           let
             mountGate = {
