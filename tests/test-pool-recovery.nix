@@ -21,17 +21,23 @@
 #     not pollute systemctl --failed). Metrics still write fail-closed.
 { pkgs }:
 let
-  poolRecoveryModule = (import ../modules/nixos/services/pool-recovery.nix).flake.nixosModules.pool-recovery;
+  poolRecoveryModule =
+    (import ../modules/nixos/services/pool-recovery.nix).flake.nixosModules.pool-recovery;
 
   baseNode =
-    { lib, ... }:
+    { ... }:
     {
       imports = [ poolRecoveryModule ];
       system.stateVersion = "25.11";
-      environment.systemPackages = [ pkgs.e2fsprogs pkgs.btrfs-progs ];
+      environment.systemPackages = [
+        pkgs.e2fsprogs
+        pkgs.btrfs-progs
+      ];
     };
 in
 {
+  name = "pool-recovery";
+
   nodes.healthy = {
     imports = [ baseNode ];
     virtualisation.emptyDiskImages = [
@@ -61,7 +67,10 @@ in
         Type = "oneshot";
         User = "root";
       };
-      path = [ pkgs.btrfs-progs pkgs.util-linux ];
+      path = [
+        pkgs.btrfs-progs
+        pkgs.util-linux
+      ];
       script = ''
         if ! blkid /dev/vdb | grep -q 'LABEL="pool"'; then
           mkfs.btrfs -f -d raid1 -m raid1 -L pool /dev/vdb /dev/vdc

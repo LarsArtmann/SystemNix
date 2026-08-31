@@ -19,6 +19,11 @@ let
     btrfs_scrub_status 1
     btrfs_scrub_error_free 1
     btrfs_emergency_reserve_present 1
+    pool_usb_recovery_mounted 1
+    pool_usb_recovery_members_present 2
+    pool_usb_recovery_device_errors 0
+    pool_usb_recovery_recoveries_total 1
+    pool_usb_recovery_last_recovery_seconds 1760000000
     btrfs_device_unallocated_pct 42
     btrfs_metadata_utilization_pct 55
     system_emeet_pixyd_expected_down 0
@@ -181,6 +186,20 @@ in
               "[STATUS] == 200"
               "[BODY] == pat(*bank_sync_sync_errors_total 0*)"
               "[BODY] == pat(*bank_sync_last_sync_timestamp_seconds*)"
+            ];
+          }
+          {
+            # Pool RAID1 Membership (pool-recovery module): the production
+            # conditions verbatim against the HEALTHY mock (members_present 2
+            # must NOT match the " 1\n" line; device_errors must be present).
+            name = "[TEST] Pool RAID1 membership (healthy = 2 members)";
+            url = "http://127.0.0.1:9100/metrics";
+            interval = "5s";
+            conditions = [
+              "[STATUS] == 200"
+              "[BODY] != pat(*pool_usb_recovery_members_present 1\n*)"
+              "[BODY] == pat(*\npool_usb_recovery_members_present *)"
+              "[BODY] == pat(*\npool_usb_recovery_device_errors *)"
             ];
           }
         ];

@@ -54,15 +54,15 @@
       textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
       stateDir = "/var/lib/pool-recovery";
 
-      # ID_SERIAL of each member, parsed from the by-id device path
-      # ("ata-<model>_<serial>"). Whole disks — no -partN suffix.
-      memberSerials = map (
-        m:
-        let
-          m' = builtins.match "(ata|scsi|usb)-(.+)" (baseNameOf m);
-        in
-        if m' == null then throw "pool-recovery: member '${m}' is not an ata/scsi/usb by-id path" else builtins.elemAt m' 1
-      ) cfg.members;
+      # ID_SERIAL of each by-id member, parsed from the device path
+      # ("ata-<model>_<serial>"). Whole disks — no -partN suffix. Members NOT
+      # given as by-id paths (e.g. bare /dev/vdX in VM tests) simply don't
+      # get a udev rule — those are only ever resolvable at runtime anyway.
+      memberSerials = map (m: builtins.elemAt m 1) (
+        builtins.filter (m: m != null) (
+          map (m: builtins.match "(ata|scsi|usb)-(.+)" (baseNameOf m)) cfg.members
+        )
+      );
     in
     {
       options.services.pool-recovery = {
