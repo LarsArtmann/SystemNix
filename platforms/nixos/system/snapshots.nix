@@ -92,10 +92,15 @@ let
       # Guard 1: never stack a full-fs read on a live btrbk send or balance —
       # the 2026-08-31 16:34 freeze stacked scrub on / AND /data (Persistent
       # boot catch-up after the 9-day DAS outage) on top of the btrbk-data
-      # full re-send and four flm cold loads.
+      # full re-send and four flm cold loads. NOTE: btrbk/balance units are
+      # Type=oneshot — mid-send they sit in "activating", and
+      # `systemctl is-active --quiet` returns NON-ZERO for that state, so the
+      # naive check would miss exactly the streaming case it exists for
+      # (self-review catch, 2026-08-31 17:25). Compare ActiveState explicitly.
       for heavy in btrbk-root.service btrbk-data.service btrbk-pool.service btrfs-balance-metadata.service btrfs-balance-data.service; do
-        if systemctl is-active --quiet "$heavy" 2>/dev/null; then
-          echo "btrfs-scrub: deferring scrub of $mnt — $heavy is streaming; stacking full-device readers saturated the QLC NVMe and froze the box (2026-08-31 16:34). Next weekly window retries."
+        heavy_state=$(systemctl show -p ActiveState --value "$heavy" 2>/dev/null || echo inactive)
+        if [ "$heavy_state" = "active" ] || [ "$heavy_state" = "activating" ]; then
+          echo "btrfs-scrub: deferring scrub of $mnt — $heavy is streaming (state=$heavy_state); stacking full-device readers saturated the QLC NVMe and froze the box (2026-08-31 16:34). Next weekly window retries."
           exit 0
         fi
       done

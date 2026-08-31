@@ -68,6 +68,19 @@
         # TYPE memory_emergency_guard_psi_some_avg60_percent gauge
         memory_emergency_guard_psi_some_avg60_percent 52.00
       '';
+      # The CALIBRATED 16:34 signature (SigNoz): avg60 NEVER exceeded ~4% —
+      # the observable pre-freeze signal is the episode bucket alone.
+      guardPromEpisodic = ''
+        # HELP memory_emergency_guard_last_trip_recent 1 if an emergency stop happened within the last 30 min, 0 otherwise
+        # TYPE memory_emergency_guard_last_trip_recent gauge
+        memory_emergency_guard_last_trip_recent 0
+        # HELP memory_emergency_guard_psi_some_avg60_percent PSI memory some avg60 stall percent
+        # TYPE memory_emergency_guard_psi_some_avg60_percent gauge
+        memory_emergency_guard_psi_some_avg60_percent 3.00
+        # HELP memory_emergency_guard_psi_episodes Leaky-bucket count of avg10 stall episodes
+        # TYPE memory_emergency_guard_psi_episodes gauge
+        memory_emergency_guard_psi_episodes 5
+      '';
       healthPromHealthy = ''
         # HELP system_das_link_present 1 if the DAS USB link exists
         # TYPE system_das_link_present gauge
@@ -170,6 +183,19 @@
       alert = machine.succeed("cat /tmp/sev1/alert")
       assert "MEMORY STALL SUSTAINED" in alert
       assert "Stop heavy builds" in alert
+
+      # --- 3c. EPISODIC stall (episode bucket >= 4, avg60 LOW) — the
+      #         CALIBRATED 16:34 signature: the real boot's avg60 never
+      #         exceeded ~4%; the episode pattern is the only pre-freeze
+      #         observable. Must page.
+      machine.succeed("${writeProms "episodic" guardPromEpisodic healthPromHealthy}")
+      out = run_bridge("episodic")
+      assert "MEMORY STALL SUSTAINED" in out, (
+          "episode bucket >= 4 with LOW avg60 must escalate — the calibrated "
+          "2026-08-31 signature (avg60 averaged the episodic spikes away)"
+      )
+      alert = machine.succeed("cat /tmp/sev1/alert")
+      assert "episode bucket=5" in alert
 
       # --- 4. Guard dead: prom deleted while timer ENABLED ---------------
       machine.succeed("rm -f /tmp/sev1/dead-guard.prom; printf 'irrelevant\\n' > /tmp/sev1/dead-health.prom")

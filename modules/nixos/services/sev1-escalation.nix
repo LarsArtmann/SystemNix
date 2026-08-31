@@ -140,9 +140,15 @@ _: {
           if [ "$guard_enabled" = "true" ] && [ -f "$GUARD_PROM" ]; then
             g_avg60=$(prom_value "$GUARD_PROM" "memory_emergency_guard_psi_some_avg60_percent")
             g_avg60="''${g_avg60:--1}"
-            if awk "BEGIN{exit !($g_avg60 >= 45)}"; then
+            # Episodic signal (CALIBRATED): the real 16:34 boot NEVER lifted
+            # avg60 above ~4% — the observable pre-freeze pattern was the
+            # leaky-bucket episode count. Page at 4 (half the guard's trip
+            # count of 8) so the desktop page PRECEDES the sacrifice.
+            g_episodes=$(prom_value "$GUARD_PROM" "memory_emergency_guard_psi_episodes")
+            g_episodes="''${g_episodes:--1}"
+            if awk "BEGIN{exit !($g_avg60 >= 45)}" || awk "BEGIN{exit !($g_episodes >= 4)}"; then
               titles+=("MEMORY STALL SUSTAINED")
-              details+=("PSI memory some avg60=''${g_avg60}% — over half the tasks on the machine have been stalled on memory for a full minute (freeze precursor, 2026-08-31 class). Stop heavy builds / VM tests NOW; the guard is sacrificing FastFlowLM.")
+              details+=("Memory-stall freeze precursor, 2026-08-31 class (avg60=''${g_avg60}%, avg10-episode bucket=''${g_episodes}). Stop heavy builds / VM tests NOW; the guard is (about to be) sacrificing FastFlowLM. journalctl -u memory-emergency-guard -n 30")
             fi
           fi
 

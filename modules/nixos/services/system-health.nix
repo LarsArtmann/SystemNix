@@ -470,7 +470,7 @@ _: {
               [ -n "$name" ] || name=root
               cur=$(cat "$f" 2>/dev/null) || continue
               echo "$cur $name"
-            done | sort -rn | head -8
+            done | sort -rn | head -8 || true
           )
 
           # === LAN NIC presence (bus-level disappearance) ===
@@ -529,9 +529,13 @@ _: {
           # the time and sev1 paged "system_health metrics missing/stale"
           # on the desktop all afternoon. A 24h window measures ~10s;
           # `timeout 60` is the hard ceiling so a degraded journal walk can
-          # never wedge the collector again. On timeout/failure we fail
-          # CLOSED via system_oomd_kills_scrape_errors=1 (Gatus asserts it
-          # 0) and keep the previous total: no phantom delta, no phantom
+          # never wedge the collector again.
+          #
+          # Exit-code semantics matter: journalctl exits 1 when NO entries
+          # match the filter (verified live) — that is a VALID empty count,
+          # NOT a scrape failure; only >=2 (or timeout 124) fail CLOSED via
+          # system_oomd_kills_scrape_errors=1 (Gatus asserts it 0) while
+          # totals are held at last-known: no phantom delta, no phantom
           # reset.
           collect_oomd=${lib.boolToString cfg.collectOomdKills}
           OOMD_KILLS_TOTAL=0
@@ -545,7 +549,9 @@ _: {
             fi
             prev_oomd="''${prev_oomd:-0}"
             OOMD_KILLS_TOTAL=$prev_oomd
-            if oomd_out=$(timeout 60 journalctl -u systemd-oomd --since "-24h" --grep "Marked.*for killing" --output cat --no-pager 2>/dev/null | wc -l); then
+            oomd_status=0
+            oomd_out=$(timeout 60 journalctl -u systemd-oomd --since "-24h" --grep "Marked.*for killing" --output cat --no-pager 2>/dev/null | wc -l) || oomd_status=$?
+            if [ "$oomd_status" -le 1 ]; then
               OOMD_KILLS_TOTAL="''${oomd_out:-0}"
               echo "$OOMD_KILLS_TOTAL" > "''${OOMD_STATE}.tmp"
               mv "''${OOMD_STATE}.tmp" "$OOMD_STATE"

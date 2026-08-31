@@ -63,3 +63,17 @@ Tonight 23:00/23:30 the btrbk root+data sends run again (the actual catch-up). T
 1. flm client identity at 14:33 (3 min after boot): PMA go-commit is the documented heaviest flm consumer (starts at boot, 9 days of pending commits to make). PapDashboard enricher also qualifies via the alert storm. Not conclusively attributed.
 2. Whether v1.0.3 actually fixes the prefill core-dump — observe after upgrade.
 3. `btrfs scrub status /data` post-crash: the interrupted boot scrub may have logged csum errors against the KNOWN /data EIO inode (P0 since Aug 18) — check `btrfs-health` metrics before panicking at a red "BTRFS Scrub Health" (it was already red at 16:40 in boot 0).
+
+---
+
+## ADDENDUM (17:30 self-review): Zone 4 was miscalibrated — Zone 5 added, scrub-guard bug fixed
+
+Checking my own thresholds against the ACTUAL boot -1 telemetry (SigNoz `node_psi_memory_some_avg60`, 5-min samples 14:30–16:34) produced the most important correction of the session:
+
+**avg60 NEVER exceeded 3.93% in the entire crashed boot. Last readable sample: 0.49% at 16:30 — four minutes before the freeze.**
+
+1. **Zone 4 as first shipped (avg60 ≥50 → trip) was phantom protection for exactly the incident that motivated it.** The pressure was EPISODIC avg10 spiking (>50% episodes, gatus CRITICAL flapping ~2 h) with recovery gaps; every time-average damped it to nothing. The terminal collapse was minutes-fast and partly unobserved (collectors dead from 16:33). My VM test passed because I fed it a synthetic 55% avg60 — a value the real incident never produced. Lesson: **calibrate trip thresholds against incident telemetry BEFORE trusting (or documenting) a zone.**
+2. **Fix: Zone 5 — episodic leaky bucket** (`memory-emergency-guard.nix`): +1 per 30s guard run with avg10 ≥40, −1 per clean run (floor 0), trip at 8 (`psiEpisodeTripCount`). This is the signal that WAS present from 14:56. VM-tested: accumulation (7 runs no-trip, 8th trips) AND decay (4 episodes + clean runs → no trip). New metric `memory_emergency_guard_psi_episodes`; restore gate requires bucket < 4. Zone 4 retained for the slow-burn variant with a CALIBRATION WARNING.
+3. **sev1 page extended**: "MEMORY STALL SUSTAINED" fires at avg60 ≥45 OR episode bucket ≥4. VM-tested with an episodic fixture.
+4. **Scrub guard shipped with a broken detector**: `systemctl is-active --quiet` returns NON-ZERO while a Type=oneshot unit is mid-send (state `activating`) — Guard 1 would have missed exactly the streaming btrbk it exists to defer to. Fixed via `systemctl show -p ActiveState --value` against `active|activating` (self-review catch, 17:25).
+5. **The 16:29 session's own listed FUCKUP ("shipped without a runtime test") repeated by me for the scrub guard** — it remains eval-verified only; the is-active bug is precisely what that test would have caught.

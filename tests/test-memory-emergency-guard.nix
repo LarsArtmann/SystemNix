@@ -17,8 +17,11 @@
 #   4b. Burst resistance (PSI avg10 55% but avg60 12%, zram LOW): must NOT
 #      trip — a big nix build's transient avg10 spike is not a freeze.
 #   4c. Zone 4 (PSI avg60 55% SUSTAINED, zram ~empty, MemAvailable healthy):
-#      MUST trip — the 2026-08-31 16:34 freeze mode (no zram involvement, no
-#      OOM kills; pure refault/writeback stall against a saturated NVMe).
+#      MUST trip — slow-burn stall variant (NOTE: SigNoz calibration showed
+#      the REAL 16:34 freeze never lifted avg60 above ~4%).
+#   6b. Zone 5 (episodic avg10 ≥40%, avg60 LOW): 7 episode runs → no trip,
+#      8th → trip — the leaky bucket calibrated against the real incident.
+#   6c. Episode decay: 4 episodes + clean runs → bucket drains, no trip.
 #   5. Cooldown: repeat trip within 600 s → service stop skipped (counter
 #      unchanged) but the socket stays enforced down.
 #   6. Restore: healthy margins + last trip 700 s ago → socket restarted,
@@ -153,6 +156,16 @@ in
         psiAvg10 = "20.00";
         psiAvg60 = "55.00";
       };
+      # The 2026-08-31 16:34 REAL signature (SigNoz-calibrated): episodic
+      # avg10 spikes (>=40%), avg60 NEVER above ~4%, zram ~empty, avail
+      # healthy. Zone 5's leaky bucket accumulates one count per episode
+      # run (decay on clean runs) and trips at 8.
+      episodic = {
+        availPct = 0.30;
+        zramPct = 0.05;
+        psiAvg10 = "55.00";
+        psiAvg60 = "3.00";
+      };
       restoreBlockedPsi = {
         availPct = 0.30;
         zramPct = 0.20;
@@ -185,7 +198,8 @@ in
 
       def reset_state():
           machine.succeed("rm -f /var/lib/memory-emergency-guard/last-trip"
-                          " /var/lib/memory-emergency-guard/tripped.count")
+                          " /var/lib/memory-emergency-guard/tripped.count"
+                          " /var/lib/memory-emergency-guard/psi-episodes")
           # Bring every sacrifice unit back up (the restore path only
           # restarts the socket; activation would re-spawn the backend).
           # Order matters: the socket FIRST — systemd refuses a socket whose
@@ -279,6 +293,37 @@ in
       )
       out = run_guard("healthy")
       assert "sacrifice sockets restored" in out
+      machine.succeed("systemctl is-active --quiet fastflowlm.socket")
+
+      # --- 6b. Zone 5 (episodic avg10, avg60 LOW) — the CALIBRATED 16:34
+      #      signature: the real boot's avg60 peaked at 3.93% (SigNoz); only
+      #      the episode PATTERN was the observable pre-freeze signal.
+      reset_state()
+      machine.succeed("${writeFakes "episodic" episodic}")
+      for i in range(1, 8):
+          out = run_guard("episodic")
+          assert "MEMORY EMERGENCY" not in out, (
+              f"episode run {i}/8 must not trip yet (leaky bucket not full)"
+          )
+      out = run_guard("episodic")
+      assert "episodic stall" in out, (
+          "Zone 5 must trip at the 8th accumulated avg10 episode with avg60 "
+          "LOW — the calibrated 2026-08-31 16:34 signature the averages never saw"
+      )
+      assert_all_down()
+      prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
+      assert "memory_emergency_guard_psi_episodes 8" in prom
+
+      # --- 6c. Episode decay: bursts then clean runs drain the bucket ------
+      reset_state()
+      for i in range(4):
+          run_guard("episodic")
+      run_guard("healthy")
+      out = run_guard("healthy")
+      assert "MEMORY EMERGENCY" not in out, (
+          "4 episodes + clean runs must decay below the trip count — a burst "
+          "pattern must not latch the trip"
+      )
       machine.succeed("systemctl is-active --quiet fastflowlm.socket")
 
       # --- 7. Restore blocked by residual PSI ---------------------------

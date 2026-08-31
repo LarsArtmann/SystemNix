@@ -162,6 +162,29 @@ _: {
           fi
           tripped_total="''${tripped_total:-0}"
 
+          # Episodic-stall leaky bucket (Zone 5): CALIBRATED AGAINST THE REAL
+          # 2026-08-31 boot -1 telemetry — node_psi_memory_some_avg60 never
+          # exceeded 3.93% in the whole crashed boot (SigNoz, 5-min samples;
+          # last readable sample 0.49% at 16:30, four minutes before the
+          # freeze). The pressure was EPISODIC avg10 spiking (>50% episodes
+          # with recovery gaps — gatus CRITICAL flapped for ~2 h), and the
+          # terminal collapse was minutes-fast with collectors already dead.
+          # A 60s-average trip can NEVER see this class. Instead: count
+          # episode runs (avg10 >= psiSomeThresholdPercent) with decay on
+          # clean runs — the leading indicator that WAS present from 14:56.
+          EPISODES_FILE="${stateDir}/psi-episodes"
+          psi_episodes=0
+          if [ -f "$EPISODES_FILE" ]; then
+            psi_episodes=$(cat "$EPISODES_FILE" 2>/dev/null) || psi_episodes=0
+          fi
+          psi_episodes="''${psi_episodes:-0}"
+          if awk -v p="$psi_some_avg10" 'BEGIN { exit !(p >= ${toString cfg.psiSomeThresholdPercent}) }'; then
+            psi_episodes=$((psi_episodes + 1))
+          elif [ "$psi_episodes" -gt 0 ]; then
+            psi_episodes=$((psi_episodes - 1))
+          fi
+          echo "$psi_episodes" > "$EPISODES_FILE"
+
           # --- Trip decision ---
           # Zone 1 (absolute): MemAvailable below the hard floor — freeze is
           #   imminent regardless of zram state (2026-08-22 22:25: ~4-5%).
@@ -172,10 +195,14 @@ _: {
           #   05:49 refault-freeze mode: MemAvailable can look healthy while
           #   the kernel dies of zram decompression CPU burn.
           # Zone 4 (sustained stall): PSI some avg60 high ALONE — the
-          #   2026-08-31 16:34 mode: zram empty, MemAvailable healthy, no
-          #   OOM kills, but every task stalled on refault/writeback against
-          #   a saturated NVMe. Sustained (avg60) so legitimate avg10 bursts
-          #   from big builds do not trip it.
+          #   slow-burn variant. CALIBRATION WARNING (2026-08-31 data): the
+          #   actual 16:34 freeze NEVER lifted avg60 above ~4% — Zone 4
+          #   covers a hypothetical slow burn, NOT the observed fast-collapse
+          #   class; Zone 5 below is the one calibrated against the incident.
+          # Zone 5 (episodic stall): the leaky bucket of avg10 episodes
+          #   overflowed — the REAL 2026-08-31 16:34 signature (episodes
+          #   every few minutes for 2 h, avg60 damped to single digits,
+          #   terminal collapse in minutes).
           trip=0
           reason=""
           if awk -v p="$avail_pct" 'BEGIN { exit !(p < ${toString cfg.absoluteMemAvailableThresholdPercent}) }'; then
@@ -197,7 +224,10 @@ _: {
             awk -v p="$psi_some_avg60" 'BEGIN { exit !(p >= ${toString cfg.psiSomeAvg60ThresholdPercent}) }'
           then
             trip=1
-            reason="PSI some avg60=''${psi_some_avg60}% sustained stall with zram=''${zram_pct}% and MemAvailable=''${avail_pct}% (2026-08-31 mode: refault/writeback stalls against a saturated NVMe — the zram-gated zones never fire)"
+            reason="PSI some avg60=''${psi_some_avg60}% sustained stall with zram=''${zram_pct}% and MemAvailable=''${avail_pct}% (slow-burn refault/writeback stall — the zram-gated zones never fire)"
+          elif [ "$psi_episodes" -ge ${toString cfg.psiEpisodeTripCount} ]; then
+            trip=1
+            reason="PSI episodic stall: ''${psi_episodes} leaky-bucket episodes of avg10 >= ${toString cfg.psiSomeThresholdPercent}% (avg10=''${psi_some_avg10}%, avg60=''${psi_some_avg60}% stayed LOW — the calibrated 2026-08-31 16:34 signature: episodic spikes for ~2 h, then minutes-fast collapse the averages never saw)"
           fi
 
           # Last-trip age, computed for BOTH branches (trip gating + socket
@@ -255,7 +285,8 @@ _: {
               awk -v p="$avail_pct" 'BEGIN { exit !(p >= ${toString cfg.restoreMemAvailableThresholdPercent}) }' &&
               awk -v z="$zram_pct" 'BEGIN { exit !(z >= 0 && z < ${toString cfg.zramFillThresholdPercent}) }' &&
               awk -v p="$psi_some_avg10" 'BEGIN { exit !(p >= 0 && p < ${toString cfg.restorePsiSomeThresholdPercent}) }' &&
-              awk -v p="$psi_some_avg60" 'BEGIN { exit !(p >= 0 && p < ${toString cfg.restorePsiSomeAvg60ThresholdPercent}) }'
+              awk -v p="$psi_some_avg60" 'BEGIN { exit !(p >= 0 && p < ${toString cfg.restorePsiSomeAvg60ThresholdPercent}) }' &&
+              [ "$psi_episodes" -lt ${toString (cfg.psiEpisodeTripCount / 2)} ]
           then
             # Self-heal: the emergency has drained (healthy margins on all
             # three axes + cooldown elapsed). Bring the socket back so flm
@@ -292,6 +323,10 @@ _: {
             echo "# HELP memory_emergency_guard_psi_some_avg60_percent PSI memory some avg60 stall percent — the sustained-stall (Zone 4) signal (-1 when PSI is unreadable)"
             echo "# TYPE memory_emergency_guard_psi_some_avg60_percent gauge"
             echo "memory_emergency_guard_psi_some_avg60_percent ''${psi_some_avg60}"
+
+            echo "# HELP memory_emergency_guard_psi_episodes Leaky-bucket count of avg10 stall episodes (increment per episode run, decay per clean run) — the episodic-stall (Zone 5) signal calibrated against the 2026-08-31 freeze"
+            echo "# TYPE memory_emergency_guard_psi_episodes gauge"
+            echo "memory_emergency_guard_psi_episodes ''${psi_episodes}"
 
             echo "# HELP memory_emergency_guard_sacrifice_socket_active 1 when any sacrifice socket is accepting, 0 when sacrificed"
             echo "# TYPE memory_emergency_guard_sacrifice_socket_active gauge"
@@ -352,7 +387,13 @@ _: {
         psiSomeAvg60ThresholdPercent = lib.mkOption {
           type = lib.types.int;
           default = 50;
-          description = "SUSTAINED PSI memory some avg60 stall percentage at or above which the Zone 4 trip fires ALONE (no zram/MemAvailable gate). 2026-08-31 16:34 freeze: memory-PSI flapped CRITICAL for ~2 h while zram sat at ~0% and MemAvailable stayed healthy — the zram-gated zones never fired and the box froze with zero OOM kills. avg60 (a full minute of >=50% of tasks stalled on memory) ignores the legitimate avg10 bursts of a big nix build";
+          description = "SUSTAINED PSI memory some avg60 stall percentage at or above which the Zone 4 trip fires ALONE (no zram/MemAvailable gate). CALIBRATION WARNING: the real 2026-08-31 16:34 freeze never lifted avg60 above ~4% (episodic avg10 collapse) — this zone covers slow-burn stalls only; the episodic class is Zone 5's psiEpisodeTripCount";
+        };
+
+        psiEpisodeTripCount = lib.mkOption {
+          type = lib.types.int;
+          default = 8;
+          description = "Leaky-bucket episode count at which the Zone 5 episodic-stall trip fires: +1 per guard run with PSI some avg10 >= psiSomeThresholdPercent, -1 per clean run (floor 0), trip at this count. Default 8 = net 4 min of episode-runs within the decay horizon (~8 min at 30s cadence). CALIBRATED against 2026-08-31 boot -1: avg10 episodes recurred every few minutes for ~2 h while avg60 stayed <=4% — this, not any average, was the observable pre-freeze signal (first episode 14:56, freeze 16:34)";
         };
 
         actionCooldownSeconds = lib.mkOption {

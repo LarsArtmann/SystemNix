@@ -324,11 +324,10 @@ if [ -s "$METRICS_FILE" ]; then
   # monitoring-hardening round — the running generation's collector doesn't
   # emit it yet, so pre-deploy sees absence. Remove after the first deploy
   # confirms it in the textfile collector output.
-  # system_oomd_kills_scrape_errors (2026-08-31): fail-closed gauge for the
-  # bounded oomd journal scan (system-health collector fix) — same
-  # bootstrap class: absent on the running generation, emitted from the
-  # first post-switch collection. Remove after this deploy confirms it.
-  KNOWN_NEW_METRICS="discordsync_projection_dlq_legacy_unchanged bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds system_dnsblockd_metrics_fresh system_oomd_kills_scrape_errors"
+  # system_oomd_kills_scrape_errors (2026-08-31): REMOVED same day — the
+  # deploy that introduced it confirmed the metric live in the textfile
+  # (scrape_errors 0, collector runs 1.3s flat after the bounding fix).
+  KNOWN_NEW_METRICS="discordsync_projection_dlq_legacy_unchanged bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds system_dnsblockd_metrics_fresh"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"
