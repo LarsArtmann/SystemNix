@@ -184,6 +184,30 @@ in
                 restartUnits = [ "crush-daily.service" ];
               } [ "synthetic_api_key" ]
             )
+            # Interactive crush provider keys (user sessions), relocated
+            # 2026-08-31 out of the machine auth store
+            # (~/.local/share/crush/crush.json) — plaintext keys readable by
+            # every agent running as the user. Consumed by the HM crushrc
+            # (`provider add --api-key "$(cat /run/secrets/<name>)"`), which
+            # never persists the keys back. No restartUnits: read
+            # interactively at crush session start. hyper stays store-owned
+            # (OAuth refresh state, self-rotating — not a static key).
+            # mimo_api_key ships as a PLACEHOLDER until the real value is
+            # set; crushrc skips PLACEHOLDER values.
+            //
+              mkSecrets "crush.yaml"
+                {
+                  owner = primaryUser;
+                  group = "users";
+                  mode = "0400";
+                }
+                [
+                  "zai_api_key"
+                  "gemini_api_key"
+                  "minimax_api_key"
+                  "kimi_api_key"
+                  "mimo_api_key"
+                ]
             // lib.optionalAttrs (svcEnabled "bank-sync") (
               # The AES key lives in its own file: bank-sync.yaml holds the
               # real Wise token and is decryptable only with the host key

@@ -332,6 +332,39 @@ in
       # store is redirected via symlink at its default location instead —
       # mechanism-independent, survives pnpm config-scheme changes.
       ".local/share/pnpm/store".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/pnpm-store";
+
+      # golangci-lint-lsp wrapper — pins the lint cache to /mnt/buildcache but
+      # falls back to ~/tmp/go-lint when the mount is dead (the fish
+      # 00-go-cache-guard logic, SIGKILL-bounded so a wedged automount can
+      # never hang the LSP launch). Replaces the stray hand-copied wrapper
+      # that pinned $HOME/tmp/golangci-lint-cache UNCONDITIONALLY and grew
+      # ~900M of lint cache on the QLC NVMe even while the buildcache was
+      # healthy. Referenced by the HM crushrc (golangci_lint_ls LSP).
+      ".local/bin/golangci-lint-lsp-wrapper".text = ''
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        pick_cache() {
+          local candidate="''${GOLANGCI_LINT_CACHE:-/mnt/buildcache/golangci-lint}"
+          if timeout --signal=KILL 1 mkdir -p "$candidate" 2>/dev/null \
+            && timeout --signal=KILL 1 touch "$candidate/.cache-write-probe" 2>/dev/null; then
+            rm -f "$candidate/.cache-write-probe"
+            printf '%s' "$candidate"
+            return 0
+          fi
+          candidate="$HOME/tmp/go-lint"
+          mkdir -p "$candidate"
+          printf '%s' "$candidate"
+        }
+
+        CACHE_ROOT="$(pick_cache)"
+        export GOLANGCI_LINT_CACHE="$CACHE_ROOT"
+        export GOLANGCI_LINT_ANALYSIS_CACHE="''${CACHE_ROOT}-analysis"
+        mkdir -p "$GOLANGCI_LINT_ANALYSIS_CACHE"
+
+        exec golangci-lint-langserver "$@"
+      '';
+      ".local/bin/golangci-lint-lsp-wrapper".executable = true;
     };
     # Jan AI: symlink data folder to centralized /data/ai/models/jan
     activation.jan-data-link = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -550,15 +583,45 @@ in
       # Crush provider auth from sops — NEVER store keys in crush's auth store
       # (~/.local/share/crush/crush.json, machine-owned plaintext state that
       # agents can read; the 2026-08-18 leak class). crushrc api_key supports
-      # $(command) expansion at load, so the key flows sops → /run/secrets →
-      # process memory without ever touching a writable file. Guarded by
-      # test -r: absent secret (crush-daily disabled) = provider not defined.
-      # NOTE: do not track a real "crush/crushrc" in the ~/.config/crush
-      # dotfiles repo — it would collide with this HM symlink.
+      # $(command) expansion at load, so each key flows sops → /run/secrets →
+      # process memory without ever touching a writable file. crushrc-declared
+      # keys are never persisted back — synthetic has provably stayed out of
+      # the auth store and session DB snapshots since 2026-08-18. Guarded:
+      # absent secret or PLACEHOLDER value (mimo until provisioned) = provider
+      # skipped. hyper stays store-owned on purpose (OAuth refresh state,
+      # self-rotating). NOTE: do not track a real "crush/crushrc" in the
+      # ~/.config/crush dotfiles repo — it collides with this HM symlink.
       "crush/crushrc".text = ''
-        if test -r /run/secrets/synthetic_api_key; then
-          provider add synthetic --api-key "$(cat /run/secrets/synthetic_api_key)"
-        fi
+        crush_key() {
+          local f="/run/secrets/$2" k
+          test -r "$f" || return 0
+          k=$(cat "$f")
+          case "$k" in "" | PLACEHOLDER*) return 0 ;; esac
+          provider add "$1" --api-key "$k"
+        }
+        crush_key synthetic synthetic_api_key
+        crush_key zai zai_api_key
+        crush_key gemini gemini_api_key
+        crush_key minimax minimax_api_key
+        crush_key kimi-coding kimi_api_key
+        crush_key mimo mimo_api_key
+
+        # Context files (moved from the user crush.json options.context_paths).
+        option context-path $HOME/.config/crush/AGENTS.md
+        option context-path AGENTS.md
+
+        # LSP servers (moved from the user crush.json lsp section). Deliberately
+        # NO env pins: gopls/oxlint inherit the session env, where
+        # GOCACHE/GOMODCACHE/GOLANGCI_LINT_CACHE point at /mnt/buildcache (the
+        # fish 00-go-cache-guard redirects to ~/tmp only while the mount is
+        # dead). The old crush.json hardcoded $HOME/tmp/* pins that bypassed
+        # the buildcache doctrine and stranded ~48G of Go caches on the QLC
+        # NVMe (removed 2026-08-31). golangci_lint_ls goes through the
+        # HM-managed wrapper, which re-pins the lint cache with the same
+        # alive-check fallback for env-less launch paths.
+        lsp add gopls --command gopls --timeout 60 --options '{"analyses":{"stdversion":false}}'
+        lsp add oxlint --command oxlint --args --lsp --filetypes typescript --filetypes typescriptreact --filetypes javascript --filetypes javascriptreact --root-markers .oxlintrc.json --root-markers .oxlintrc.jsonc --root-markers oxlint.config.ts
+        lsp add golangci_lint_ls --command "$HOME/.local/bin/golangci-lint-lsp-wrapper"
 
         # qmd — local RAG/hybrid search over markdown + code collections
         # (BM25 + vector embeddings + LLM rerank, fully on-device). Global CLI
