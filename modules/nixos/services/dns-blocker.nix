@@ -229,6 +229,15 @@ _: {
             tls_port = cfg.blockTLSPort;
             stats_addr = "127.0.0.1";
             stats_port = cfg.statsPort;
+            # OTLP trace export to the local SigNoz collector (Go
+            # otlptracehttp: bare host:port, no scheme — dnsblockd strips an
+            # optional http:// itself, internal/otel/otel.go:97). Full
+            # instrumentation exists upstream (tracking.Dispatch /
+            # tracking.batchFlush + stats-API handler spans) but was dark
+            # until this key was set (2026-08-31 coverage audit). Metrics
+            # cardinality concerns do NOT apply to spans — span attributes
+            # never create unbounded metric series.
+            otlp_endpoint = "localhost:${toString ports.signoz-otlp-http}";
             ca_cert_file = "${caCert}";
             ca_key_file = "${caKey}";
             blocklist_mapping_file = "${processedBlocklist}/mapping.json";

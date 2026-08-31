@@ -910,6 +910,40 @@ _: {
             echo "# TYPE system_oomd_kills_scrape_errors gauge"
             echo "system_oomd_kills_scrape_errors ''${OOMD_SCRAPE_ERRORS}"
 
+            # === User-manager unit failure monitoring (2026-08-31) ===
+            # smart-audio (a USER unit) sat dead in start-limit-hit the whole
+            # 16:38 boot while every system-level check stayed green: nothing
+            # watched the user manager. Counts failed units per monitored user
+            # via the machined bus proxy (--machine=<user>@.host --user, the
+            # documented root->user-bus pattern). Every call is bounded by
+            # timeout(1) — a wedged user manager must never stall the
+            # collector. Distinguishes logout from wedge: /run/user/<uid>
+            # absent = logged out (legitimate, no alert); present but query
+            # failed = scrape_errors 1 (the dnsblockd-:9090 wedge class).
+            echo "# HELP system_user_units_failed Failed units in the user's systemd --user manager (via machined; 0 = healthy or manager not running)"
+            echo "# TYPE system_user_units_failed gauge"
+            echo "# HELP system_user_manager_reachable 1 if the user manager answered via machined, 0 if not running (logged out) — informational, no alert"
+            echo "# TYPE system_user_manager_reachable gauge"
+            echo "# HELP system_user_units_scrape_errors 1 if the user manager should be reachable (/run/user/<uid> exists) but the query failed or timed out (wedge class), 0 otherwise"
+            echo "# TYPE system_user_units_scrape_errors gauge"
+            for u in ${lib.concatMapStringsSep " " (u: "'${u}'") cfg.monitoredUserManagers}; do
+              user_failed=0
+              user_reachable=0
+              user_scrape_err=0
+              user_uid=$(id -u "$u" 2>/dev/null) || user_uid=""
+              if user_units="$(timeout 10 systemctl --machine="$u"@.host --user --no-legend --plain list-units --state=failed 2>/dev/null)"; then
+                user_reachable=1
+                if [ -n "$user_units" ]; then
+                  user_failed=$(printf '%s\n' "$user_units" | grep -c .) || user_failed=0
+                fi
+              elif [ -n "$user_uid" ] && [ -e "/run/user/$user_uid" ]; then
+                user_scrape_err=1
+              fi
+              echo "system_user_units_failed{user=\"$u\"} ''${user_failed}"
+              echo "system_user_manager_reachable{user=\"$u\"} ''${user_reachable}"
+              echo "system_user_units_scrape_errors{user=\"$u\"} ''${user_scrape_err}"
+            done
+
             echo "# HELP docker_container_restart_count Total restart count per Docker container"
             echo "# TYPE docker_container_restart_count gauge"
 
@@ -1078,6 +1112,19 @@ _: {
           description = "Collect systemd-oomd kill events from journal";
         };
 
+        monitoredUserManagers = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = lib.optional (config.users ? primaryUser) config.users.primaryUser;
+          description = ''
+            Users whose systemd --user manager is checked for failed units
+            (system_user_units_failed via the machined bus proxy). Catches
+            user-unit deaths invisible to system-level monitoring
+            (2026-08-31: smart-audio sat in start-limit-hit the whole boot
+            with nothing alerting). Empty list disables the section and its
+            Gatus check.
+          '';
+        };
+
         collectDockerRestarts = lib.mkOption {
           type = lib.types.bool;
           default = true;
@@ -1204,13 +1251,13 @@ _: {
                 Type = "oneshot";
                 ExecStart = lib.getExe systemHealthMetrics;
                 ReadWritePaths = [ textfileDir ];
-                # Explicit ceiling (2026-08-31): the deployed system's
-                # /etc/systemd/system.conf.d/ is EMPTY — the global
-                # DefaultTimeoutStartSec=3min from timeout-audit.nix was
-                # NOT live, so a wedged collection (unbounded oomd journal
-                # scan) sat in "activating" for 11-28 min with nothing
-                # killing it. A collection that cannot finish in 3min is
-                # wedged: fail it into onFailure alerting instead.
+                # Explicit ceiling (2026-08-31): the unbounded oomd journal
+                # scan once wedged this collector for 11-28 min. The global
+                # DefaultTimeoutStartSec=3min DOES apply (rendered into
+                # /etc/systemd/system.conf by timeout-audit.nix — verified
+                # live via `systemctl show -p DefaultTimeoutStartUSec`), but
+                # a collection that cannot finish in 3min is wedged: fail it
+                # into onFailure alerting instead of sitting in activating.
                 TimeoutStartSec = "3min";
               }
             ];

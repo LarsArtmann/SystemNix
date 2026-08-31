@@ -421,6 +421,37 @@ _: {
                   ];
                   alerts = discordAlert "SigNoz OTLP receiver not responding — distributed tracing will silently fail for all services";
                 })
+                # Telemetry coverage audit (signoz-coverage.nix): the registry
+                # demands spans from every enforced service; missing counts
+                # services whose traces went dark. Anchored value-check form
+                # (real newline in the nix string — the 2026-08-22 escape
+                # trap); [1-9] catches any nonzero value including multi-digit.
+                (mkHttpCheck {
+                  name = "SigNoz Traces Coverage";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nsignoz_traces_missing *)"
+                    "[BODY] != pat(*\nsignoz_traces_missing [1-9]*)"
+                    "[BODY] == pat(*\nsignoz_coverage_scrape_errors *)"
+                    "[BODY] != pat(*\nsignoz_coverage_scrape_errors [1-9]*)"
+                  ];
+                  alerts = discordAlert "SigNoz trace coverage gap — a registered service stopped sending spans (or the coverage collector failed): silent observability hole. Check signoz_traces_reporting in :9100/metrics for which service went dark";
+                })
+                (mkHttpCheck {
+                  name = "SigNoz Logs Pipeline Fresh";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nsignoz_logs_pipeline_stale *)"
+                    "[BODY] != pat(*\nsignoz_logs_pipeline_stale [1-9]*)"
+                  ];
+                  alerts = discordAlert "SigNoz journald logs pipeline stale — no log records ingested for >30 min (all service logs dark)";
+                })
                 (mkHttpCheck {
                   name = "Manifest";
                   group = "Monitoring";
@@ -1404,6 +1435,27 @@ _: {
                   alerts = discordAlert "A Docker container is rapidly restarting (3+ restarts in 2 min). Check: docker ps -a, docker inspect --format '{{.RestartCount}}' <container>. Likely OOM-killed by systemd-oomd (exit code 137).";
                 })
               ]
+              ++
+                lib.optionals
+                  (
+                    (config.services.system-health.enable or false)
+                    && config.services.system-health.monitoredUserManagers != [ ]
+                  )
+                  [
+                    (mkHttpCheck {
+                      name = "User Unit Failures";
+                      group = "Monitoring";
+                      url = "http://localhost:${toString nodePort}/metrics";
+                      interval = "2m";
+                      conditions = [
+                        "[STATUS] == 200"
+                        "[BODY] == pat(*\nsystem_user_units_failed{*)"
+                        "[BODY] != pat(*\nsystem_user_units_failed{*} [1-9]*)"
+                        "[BODY] != pat(*\nsystem_user_units_scrape_errors{*} 1*)"
+                      ];
+                      alerts = discordAlert "A systemd USER unit is in failed state (2026-08-31: smart-audio sat dead in start-limit-hit the whole boot with nothing alerting), OR the user-manager query is wedged (scrape_errors=1). Check: systemctl --machine=lars@.host --user --failed --no-legend, then journalctl --user -u <unit> -n 50";
+                    })
+                  ]
               ++ [
                 (mkHttpCheck {
                   name = "Crush Daily";

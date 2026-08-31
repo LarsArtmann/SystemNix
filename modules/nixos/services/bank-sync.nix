@@ -125,6 +125,13 @@ _: {
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
           inherit onFailure;
+          # OTel traces → local SigNoz collector (Go otlptracehttp: bare
+          # host:port, no scheme). Upstream gained OTLP exporter support
+          # 2026-08-31 (cmd/bank-sync/tracing.go, DiscordSync pattern); with
+          # older pinned revs this is a harmless noop until the flake bump.
+          # Enforced by services.signoz-coverage (wiring "upstream" → "env"
+          # after the input bump lands spans).
+          environment.OTEL_EXPORTER_OTLP_ENDPOINT = "localhost:${toString ports.signoz-otlp-http}";
           serviceConfig = lib.mkMerge [
             {
               ExecStartPre = [ (lib.getExe checkEncryptionKey) ];

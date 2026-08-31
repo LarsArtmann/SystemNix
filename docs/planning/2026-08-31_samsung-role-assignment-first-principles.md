@@ -7,6 +7,44 @@ _2026-08-31 · decision doc · status: PROPOSED (awaiting user ratification of l
 What MUST be fast all the time (→ Samsung 1 TB TLC, currently blank, internal)? What can
 stay on the 2 TB Lexar QLC? Answer from workload physics, not from "the QLC felt slow today".
 
+## Filesystem decision for `/nix` — RESOLVED 2026-08-31: BTRFS + compress=zstd
+
+Measured head-to-head on the actual Samsung (`scripts/bench-nix-fs.sh`, final valid run;
+629 real store paths / 1.7 GiB sample; box under live load PSI 26–70%, load 3–6):
+
+| Metric (file-based, on target) | ext4 | XFS (reflink=1) | BTRFS (zstd) |
+|---|---|---|---|
+| 4K randread QD1 | 18.1k IOPS / 55 µs | 17.0k / 58 µs | 17.9k / 55 µs |
+| 4K randwrite QD1 | 65–71k / 14 µs | 35–38k / 27 µs | 38–42k / 25 µs |
+| fsync-per-4K-write | ~338 IOPS (≈3 ms) | ~344 (≈2.9 ms) | ~315 (≈3.2 ms) |
+| create 20k small files + sync | 7.7–13.7 s | 8.0–9.3 s | 7.6–11.2 s |
+| delete 20k files | 0.36–0.66 s | 0.4–1.35 s | 0.6–1.4 s |
+| copy real 1.7 G store sample | 4.7 s | 2.2 s | 1.9 s |
+| **physical space (compsize)** | 1730 MiB | 1711 MiB | **913 MiB (1.89×)** |
+
+Key findings:
+- **Performance is a wash.** Run-to-run variance under load (±40%) exceeded every
+  inter-filesystem difference. No fs separates for nix workloads on this hardware.
+  (QD32 was CPU-contention-limited to ~19k IOPS in file mode; raw-device QD32 measured
+  305k — submission-bound, not device-bound.)
+- **Compression is the separator: measured 1.89×** (compsize: 64% of store data
+  compresses to 29% of original; 36% correctly skipped by the heuristic). 129 G store
+  → ~68 G physical. Halves the Samsung budget.
+- Community data agrees: NixOS wiki recommends `compress=zstd,noatime` for /nix; nix
+  release manager (vcunat) uses btrfs; nix disabled `preallocate-contents` by default
+  specifically so btrfs compression works (PR #4094); danieldk reported 1.88× — matches
+  our 1.89× almost exactly. ZFS txg-sync stalls sqlite (5 s) — excluded. f2fs eats open
+  files on power loss — excluded. ext4 static inodes: non-issue at 0.7 M files.
+- CoW cost is irrelevant for the store body (write-once immutable files); the nix db
+  (670 M sqlite, `fsync-metadata = true`) measured equal-fsync across all three.
+
+**Chosen: BTRFS, `noatime,compress=zstd`** (level default 3; NOT `compress-force` — the
+heuristic skip of incompressible files is correct). Consistent with root-fs tooling
+(btrbk, compsize, scrub doctrine). XFS remains the choice for the hot-DB partition.
+
+Benchmark tooling: `scripts/bench-disk.sh` (raw device) and `scripts/bench-nix-fs.sh`
+(fs comparison) — both guard against mounted devices and self-heal the fio store path.
+
 ## First principles
 
 A machine with **128 GB RAM** has three storage tiers. Disk choice only matters where the

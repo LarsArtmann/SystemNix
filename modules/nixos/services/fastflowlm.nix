@@ -388,10 +388,11 @@ _: {
           };
         };
 
-        # OTel traces → local SigNoz OTLP/HTTP collector (Go OTel SDK format).
-        # Noop tracer when collector is absent.
-        systemd.services.fastflowlm.environment.OTEL_EXPORTER_OTLP_ENDPOINT =
-          lib.mkDefault "localhost:${toString ports.signoz-otlp-http}";
+        # NOTE: flm is a PREBUILT upstream binary with no OpenTelemetry
+        # support — it carried a noop OTEL_EXPORTER_OTLP_ENDPOINT here until
+        # 2026-08-31 (removed by the signoz-coverage audit: env vars that
+        # cannot produce spans are silent lies). Liveness is covered by the
+        # system-health fastflowlm_failed / crash-loop metrics instead.
 
         # Gatus MUST NOT probe :52625 (every probe is a TCP connection =
         # permanent keepalive). The system-health textfile collector emits

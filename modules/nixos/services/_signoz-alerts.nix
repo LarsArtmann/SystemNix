@@ -357,6 +357,33 @@ in
       target = 1;
       interval = "1m";
     };
+    # Telemetry coverage audit (signoz-coverage.nix): SigNoz watching itself.
+    # Gatus carries the fast path (5m); this rule survives a gatus outage.
+    "signoz/rules/traces-coverage-missing.json".source = mkRule {
+      name = "SigNoz Trace Coverage Missing";
+      description = "A service registered in signoz-coverage stopped sending spans within its freshness budget — silent observability hole. Check signoz_traces_reporting by service in node-exporter /metrics";
+      query = ''signoz_traces_missing'';
+      step = 300;
+      target = 1;
+      interval = "5m";
+    };
+    "signoz/rules/coverage-collector-errors.json".source = mkRule {
+      name = "SigNoz Coverage Collector Errors";
+      description = "The signoz-coverage textfile collector failed its ClickHouse queries — coverage data is untrustworthy until it recovers";
+      query = ''signoz_coverage_scrape_errors'';
+      step = 300;
+      target = 1;
+      interval = "5m";
+      severity = "warning";
+    };
+    "signoz/rules/logs-pipeline-stale.json".source = mkRule {
+      name = "SigNoz Logs Pipeline Stale";
+      description = "No log records ingested for >30 min — the journald logs pipeline is dark for ALL services";
+      query = ''signoz_logs_pipeline_stale'';
+      step = 300;
+      target = 1;
+      interval = "5m";
+    };
   };
 
   dashboards = {

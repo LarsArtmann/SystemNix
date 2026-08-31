@@ -80,7 +80,8 @@
       execStartPreStrings =
         svc:
         lib.filter lib.isString (
-          lib.toList (svc.serviceConfig.ExecStartPre or null) ++ lib.toList (svc.serviceConfig.ExecStart or null)
+          lib.toList (svc.serviceConfig.ExecStartPre or null)
+          ++ lib.toList (svc.serviceConfig.ExecStart or null)
         );
 
       hasWaitSuffix = svc: suffix: lib.any (e: lib.hasInfix suffix e) (execStartPreStrings svc);
@@ -88,8 +89,7 @@
       gateAudits =
         let
           gateUnits = lib.filterAttrs (
-            name: svc:
-            hasWaitSuffix svc "-wait-oidc" || hasWaitSuffix svc "-wait-dns"
+            name: svc: hasWaitSuffix svc "-wait-oidc" || hasWaitSuffix svc "-wait-dns"
           ) config.systemd.services;
         in
         lib.mapAttrsToList (
@@ -98,16 +98,22 @@
             isOidc = hasWaitSuffix svc "-wait-oidc";
             isDns = hasWaitSuffix svc "-wait-dns";
             floorSec =
-              if isOidc then floorOidcSec else if isDns then floorDnsSec else 0;
-            floorLabel =
-              if isOidc then "6min (OIDC gate budget 300s)" else "4min (DNS gate budget 180s)";
+              if isOidc then
+                floorOidcSec
+              else if isDns then
+                floorDnsSec
+              else
+                0;
+            floorLabel = if isOidc then "6min (OIDC gate budget 300s)" else "4min (DNS gate budget 180s)";
             timeout = effectiveTimeout svc;
             seconds = parseSystemdSeconds timeout;
           in
           {
             assertion = seconds != null && seconds >= floorSec;
             message =
-              "systemd.services.${name} has a startup gate (${if isOidc then "-wait-oidc" else "-wait-dns"}) but its TimeoutStartSec is "
+              "systemd.services.${name} has a startup gate (${
+                if isOidc then "-wait-oidc" else "-wait-dns"
+              }) but its TimeoutStartSec is "
               + "${if timeout == null then "not set" else "'${timeout}'"}"
               + " — must be ≥ ${floorLabel}, or systemd kills the unit mid-gate on slow boots (2026-08-31 class: dnsblockd needs ~2min at boot). See modules/nixos/services/gate-timeout-audit.nix";
           }

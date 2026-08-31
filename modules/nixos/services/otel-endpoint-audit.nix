@@ -253,6 +253,8 @@ _: {
             file-and-image-renamer-health = "http-host-port";
             papdashboard = "http-host-port";
             cv-server = "http-host-port";
+            bank-sync = "http-host-port";
+            gotenberg = "http-url"; # upstream autoexport parses a full URL
           };
           description = ''
             Per-service OTLP endpoint shape contract. Register EVERY service
