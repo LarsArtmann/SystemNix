@@ -313,6 +313,14 @@ if nix run .#pre-deploy-check; then
     sudo systemctl start buildcache-usb-recovery.service 2>/dev/null || true
   fi
 
+  # Same convergence for the pool: verifies the mount devt matches a live
+  # member, remounts if stale, and restarts failed pool consumers. Exits
+  # cleanly when the whole DAS is absent (DAS-link Gatus check owns that).
+  if systemctl cat pool-usb-recovery.service >/dev/null 2>&1; then
+    echo "Running pool-usb-recovery.service (pool zombie reaper + remount)"
+    sudo systemctl start pool-usb-recovery.service 2>/dev/null || true
+  fi
+
   # Run the buildcache GC after recovery so every deploy verifies the prune
   # path end-to-end (a silent pnpm failure hid here for a week) and reclaims
   # incident debris without waiting for the weekly Sun 05:00 timer.

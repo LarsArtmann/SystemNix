@@ -766,6 +766,11 @@ in
         defaults.monitored = "-a -o on -s (S/../.././02|L/../../6/03)";
       };
 
+      # DAS pool replug self-heal: zombie reaper + remount + failed-service
+      # restart + real-IO metrics (the /mnt/pool analogue of
+      # buildcache-usb-recovery; udev-keyed to the two Toshiba serials).
+      pool-recovery.enable = true;
+
       # Cross-service backup health monitoring. Checks all backup dirs for
       # freshness and writes Prometheus metrics. Gatus alerts on Discord
       # when any backup is stale (>25h). Schedules are staggered to avoid
