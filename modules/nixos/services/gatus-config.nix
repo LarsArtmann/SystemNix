@@ -452,6 +452,22 @@ _: {
                   ];
                   alerts = discordAlert "SigNoz journald logs pipeline stale — no log records ingested for >30 min (all service logs dark)";
                 })
+                # Gap budget ratchet (signoz-coverage.maxUpstreamGaps): fires
+                # when the registry's upstream-gap count GROWS past the budget
+                # — new silent noops may not slip in unnoticed. Lower the
+                # budget as gaps close; raising it is a conscious commit.
+                (mkHttpCheck {
+                  name = "SigNoz Trace Gap Budget";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nsignoz_traces_upstream_gaps_over_threshold *)"
+                    "[BODY] != pat(*\nsignoz_traces_upstream_gaps_over_threshold [1-9]*)"
+                  ];
+                  alerts = discordAlert "SigNoz upstream trace-gap budget exceeded — a new silent-noop service entered the registry. Instrument it upstream and flip its wiring, or consciously raise services.signoz-coverage.maxUpstreamGaps (the ratchet goes DOWN as gaps close)";
+                })
                 (mkHttpCheck {
                   name = "Manifest";
                   group = "Monitoring";

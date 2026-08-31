@@ -28,6 +28,7 @@ let
     { ... }:
     {
       imports = [ poolRecoveryModule ];
+      boot.supportedFilesystems = [ "btrfs" ];
       system.stateVersion = "25.11";
       environment.systemPackages = [
         pkgs.e2fsprogs
@@ -53,16 +54,25 @@ in
       ];
       settleTimeoutSeconds = 10;
     };
-    # Simulate the production pool: btrfs raid1, by-label fstab entry.
-    fileSystems."/mnt/pool" = {
+    # VM tests must use virtualisation.fileSystems: qemu-vm.nix replaces the
+    # whole `fileSystems` option with virtualisation.fileSystems at priority
+    # 900 (a plain fileSystems entry silently vanishes from the guest fstab —
+    # this cost several debug rounds; test-cv has the same latent bug).
+    virtualisation.fileSystems."/mnt/pool" = {
       device = "/dev/disk/by-label/pool";
       fsType = "btrfs";
       options = [ "nofail" ];
     };
     systemd.services.pool-fmt = {
       description = "Format the two virtio disks as btrfs raid1 label pool (test-only)";
-      wantedBy = [ "mnt-pool.mount" ];
-      before = [ "mnt-pool.mount" ];
+      # Must complete BEFORE mnt-pool.mount starts (its by-label device unit
+      # only exists once mkfs has run) — being a sibling under local-fs.target
+      # with no ordering raced the mount (inactive, no pending jobs).
+      wantedBy = [ "local-fs.target" ];
+      before = [
+        "mnt-pool.mount"
+        "local-fs.target"
+      ];
       serviceConfig = {
         Type = "oneshot";
         User = "root";
@@ -70,11 +80,13 @@ in
       path = [
         pkgs.btrfs-progs
         pkgs.util-linux
+        pkgs.systemd
       ];
       script = ''
         if ! blkid /dev/vdb | grep -q 'LABEL="pool"'; then
           mkfs.btrfs -f -d raid1 -m raid1 -L pool /dev/vdb /dev/vdc
         fi
+        udevadm settle
       '';
     };
   };
@@ -90,7 +102,7 @@ in
       ];
       settleTimeoutSeconds = 8;
     };
-    fileSystems."/mnt/pool" = {
+    virtualisation.fileSystems."/mnt/pool" = {
       device = "/dev/disk/by-label/pool";
       fsType = "btrfs";
       options = [ "nofail" ];
@@ -113,13 +125,15 @@ in
     start_all()
 
     # ---------- healthy ----------
+    healthy.wait_for_unit("multi-user.target")
     healthy.wait_for_unit("mnt-pool.mount")
     healthy.wait_for_unit("multi-user.target")
 
-    # udev rule generated: SYSTEMD_WANTS on both member serials
-    healthy.succeed("grep -rq 'SYSTEMD_WANTS.*pool-usb-recovery' /etc/udev/rules.d/")
-    healthy.succeed("grep -rq 'ID_SERIAL==\"TOSHIBA_MG08ACA16TE_72U0A005FWTG\"' /etc/udev/rules.d/")
-    healthy.succeed("grep -rq 'ID_SERIAL==\"TOSHIBA_MG08ACA16TE_72U0A0ZUFWTG\"' /etc/udev/rules.d/")
+    # NOTE: udev rule generation is intentionally NOT asserted here — VM
+    # members are bare /dev/vdX (no ID_SERIAL), and memberSerials correctly
+    # filters non-by-id members out. The production by-id serial rules are
+    # verified at eval level (evo-x2 udev.extraRules contains both Toshiba
+    # SYSTEMD_WANTS lines; checked via nix eval).
 
     # 1. healthy mount: recovery is a clean no-op
     healthy.succeed("systemctl start pool-usb-recovery.service")
@@ -130,7 +144,7 @@ in
     healthy.succeed("mkfs.ext4 -F /dev/vdd")
     healthy.succeed("mount /dev/vdd /mnt/pool")
     healthy.succeed("systemctl start pool-usb-recovery.service")
-    healthy.succeed("journalctl -u pool-usb-recovery.service | grep -q 'reaping stale pool mount'")
+    healthy.succeed("journalctl -u pool-usb-recovery.service | grep -q 'stale or foreign mount'")
     # back on the pool fs (btrfs = /dev/vdb), not the foreign ext4 disk
     fstype = healthy.succeed("findmnt -n -o FSTYPE /mnt/pool").strip()
     assert fstype == "btrfs", f"pool remounted wrong fs: {fstype}"

@@ -54,6 +54,11 @@
       textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
       stateDir = "/var/lib/pool-recovery";
 
+      # systemd unit name for the mountpoint's .mount unit ("/mnt/pool" →
+      # "mnt-pool"). Valid for paths without dots (same caveat as
+      # buildcache.nix's mountUnitName — systemd-escape of '.' differs).
+      mountUnitName = lib.concatStringsSep "-" (lib.tail (lib.splitString "/" cfg.mountPoint));
+
       # ID_SERIAL of each by-id member, parsed from the device path
       # ("ata-<model>_<serial>"). Whole disks — no -partN suffix. Members NOT
       # given as by-id paths (e.g. bare /dev/vdX in VM tests) simply don't
@@ -194,32 +199,33 @@
               #    own btrfs rules usually did this already).
               btrfs device scan --all-devices >/dev/null 2>&1 || true
 
-              # 4. Zombie reaper: a persisted mount holds the OLD major:minor
-              #    while replugged members enumerate with NEW numbers. Compare
-              #    the mount's devt against every CURRENT member; no match =
-              #    stale. ([ -b $src ] alone cannot see this: /dev/sda exists
-              #    again after replug, just renumbered.)
-              mounted_devt="$(findmnt -n -o MAJ:MIN -- "$mnt" 2>/dev/null || true)"
-              if [ -n "$mounted_devt" ]; then
-                match=0
+              # 4. Health gate — two signals, both cheap, both truthful:
+              #    (a) REAL I/O probe: a stale mount (device gone) fails it.
+              #    (b) fs UUID identity: findmnt's UUID is probed from the
+              #        mounted fs; compare against the members' fs UUID. This
+              #        catches a WRONG filesystem occupying the mountpoint,
+              #        which the I/O probe alone cannot see. (findmnt's
+              #        MAJ:MIN is the btrfs anonymous superblock devt —
+              #        NEVER comparable to members; caught by the VM test.)
+              if findmnt -n -- "$mnt" >/dev/null 2>&1; then
+                mounted_uuid="$(findmnt -no UUID -- "$mnt" 2>/dev/null || true)"
+                expected_uuid=""
                 for dev in $members; do
-                  if [ -b "$dev" ]; then
-                    devt="$(lsblk -nrno MAJ:MIN "$dev")"
-                    if [ "$devt" = "$mounted_devt" ]; then match=1; fi
+                  if [ -z "$expected_uuid" ] && [ -b "$dev" ]; then
+                    expected_uuid="$(lsblk -nrno UUID "$dev" 2>/dev/null || true)"
                   fi
                 done
-                if [ "$match" -eq 1 ]; then
-                  # Live member, but is it serving REAL I/O?
-                  if timeout 20 ls -A "$mnt" >/dev/null 2>&1; then
-                    echo "pool-usb-recovery: mount healthy ($mnt) — no action"
-                    systemctl start pool-recovery-metrics.service 2>/dev/null || true
-                    exit 0
-                  fi
-                  echo "pool-usb-recovery: mount devt matches a member but I/O fails — remounting" >&2
-                else
-                  echo "pool-usb-recovery: reaping stale pool mount (devt $mounted_devt matches no current member)"
+                io_ok=0
+                if timeout 20 ls -A "$mnt" >/dev/null 2>&1; then io_ok=1; fi
+                uuid_ok=1
+                if [ -n "$expected_uuid" ] && [ "$mounted_uuid" != "$expected_uuid" ]; then uuid_ok=0; fi
+                if [ "$io_ok" -eq 1 ] && [ "$uuid_ok" -eq 1 ]; then
+                  echo "pool-usb-recovery: mount healthy ($mnt) — no action"
+                  systemctl start pool-recovery-metrics.service 2>/dev/null || true
+                  exit 0
                 fi
-                systemctl stop mnt-pool.mount 2>/dev/null || true
+                echo "pool-usb-recovery: stale or foreign mount at $mnt (io_ok=$io_ok uuid_ok=$uuid_ok) — remounting" >&2
+                systemctl stop ${mountUnitName}.mount 2>/dev/null || true
                 umount -l "$mnt" 2>/dev/null || true
               fi
 
@@ -283,7 +289,10 @@
               User = "root";
             }
             (harden {
-              ReadWritePaths = [ textfileDir ];
+              # "-" prefix: ignore-missing — the textfile dir does not exist
+              # on hosts without node_exporter (VM tests); a plain entry
+              # aborts the unit with 226/NAMESPACE before mkdir can run.
+              ReadWritePaths = [ "-${textfileDir}" ];
               CapabilityBoundingSet = "CAP_SYS_ADMIN";
               MemoryMax = "128M";
             })

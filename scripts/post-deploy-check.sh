@@ -610,6 +610,52 @@ else
   report_skip "PapDashboard — service disabled (units absent from systemd)"
 fi
 
+# SigNoz coverage audit (signoz-coverage.nix): deploy.sh restarts the
+# collector post-switch, so the textfile gauges are FRESH here — assert the
+# fail-closed summaries directly from node-exporter :9100. This gates trace-
+# coverage regressions at DEPLOY time instead of up to 5 min later (gatus
+# interval). grep -o (not -q): reads the whole stream, no SIGPIPE class on
+# the large /metrics body.
+signoz_coverage_enabled=false
+test -e /etc/systemd/system/signoz-coverage-metrics.service && signoz_coverage_enabled=true
+if $signoz_coverage_enabled; then
+  # missing needs a retry window: OTel batching (~5s) + a just-restarted
+  # service's first command mean the collector run immediately post-switch
+  # can legitimately see missing=1 (e.g. a freshly-enforced registry entry's
+  # first spans). The textfile only refreshes when the collector RUNS, so
+  # each retry re-runs it (restart is synchronous for the oneshot). 3
+  # attempts ≈ 45s; scrape_errors is instant-fail (no legit transient).
+  cov_missing=absent
+  cov_errors=absent
+  coverage_metrics=""
+  for _attempt in 1 2 3; do
+    coverage_metrics=$(curl -s --compressed --max-time 15 http://localhost:9100/metrics 2>/dev/null || true)
+    if [ -n "$coverage_metrics" ]; then
+      cov_missing=$(printf '%s\n' "$coverage_metrics" | grep -oP '^signoz_traces_missing \K[0-9]+' || echo absent)
+      cov_errors=$(printf '%s\n' "$coverage_metrics" | grep -oP '^signoz_coverage_scrape_errors \K[0-9]+' || echo absent)
+      [ "$cov_missing" = "0" ] && break
+    fi
+    sudo systemctl restart signoz-coverage-metrics.service 2>/dev/null || true
+    sleep 10
+  done
+  if [ -n "$coverage_metrics" ]; then
+    case "$cov_missing" in
+    0) report_pass "SigNoz Coverage — traces_missing 0 (every enforced service sent spans in budget)" ;;
+    absent) report_fail "SigNoz Coverage — signoz_traces_missing ABSENT from :9100 (collector never ran: journalctl -u signoz-coverage-metrics -n 20)" ;;
+    *) report_fail "SigNoz Coverage — traces_missing $cov_missing after 90s retry window (service(s) dark; grep signoz_traces_reporting :9100/metrics)" ;;
+    esac
+    case "$cov_errors" in
+    0) report_pass "SigNoz Coverage — collector scrape_errors 0" ;;
+    absent) report_fail "SigNoz Coverage — signoz_coverage_scrape_errors ABSENT from :9100 (textfile stale/missing)" ;;
+    *) report_fail "SigNoz Coverage — scrape_errors $cov_errors (ClickHouse queries failing: journalctl -u signoz-coverage-metrics)" ;;
+    esac
+  else
+    report_fail "SigNoz Coverage — node-exporter :9100 unreachable"
+  fi
+else
+  report_skip "SigNoz Coverage — module disabled (unit absent)"
+fi
+
 # --- Functional checks (not just liveness) ---
 echo ""
 echo "=== Functional Checks ==="

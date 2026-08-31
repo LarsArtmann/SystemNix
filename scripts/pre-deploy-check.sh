@@ -330,12 +330,24 @@ if [ -s "$METRICS_FILE" ]; then
   # system_oomd_kills_scrape_errors (2026-08-31): REMOVED same day — the
   # deploy that introduced it confirmed the metric live in the textfile
   # (scrape_errors 0, collector runs 1.3s flat after the bounding fix).
-  # signoz_traces_* / signoz_coverage_scrape_errors / signoz_logs_pipeline_*
-  # (2026-08-31): new textfile metrics from the signoz-coverage collector —
-  # the running generation doesn't emit them yet. Remove after the first
-  # deploy confirms them in the textfile collector output
-  # (signoz-coverage.prom).
-  KNOWN_NEW_METRICS="discordsync_projection_dlq_legacy_unchanged bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds system_dnsblockd_metrics_fresh signoz_traces_missing signoz_coverage_scrape_errors signoz_logs_pipeline_stale signoz_traces_reporting system_user_units_failed system_user_units_scrape_errors discordsync_turso_local_only_mode"
+  # 2026-08-31 sweep (follow-up session): retired 10 entries after probing
+  # the live endpoints — signoz_traces_{missing,reporting},
+  # signoz_coverage_scrape_errors, signoz_logs_pipeline_stale,
+  # system_user_units_{failed,scrape_errors}, system_dnsblockd_metrics_fresh
+  # (all :9100 textfile) + discordsync_projection_dlq_legacy_unchanged,
+  # discordsync_turso_local_only_mode (:8085) + bank_sync_sync_errors_total,
+  # bank_sync_last_sync_timestamp_seconds (:8097, DAS back). Every entry in
+  # this list must die the moment its metric is confirmed live — the list is
+  # a one-deploy loan, not a museum.
+  # signoz_traces_upstream_gaps_over_threshold (2026-08-31): gap-budget
+  # ratchet metric from the same session — appears with the deploy that adds
+  # the "SigNoz Trace Gap Budget" gatus check. Remove after confirmation.
+  # pool_usb_recovery_members_present / _device_errors (2026-08-31): added by
+  # the pool-recovery session (545a102b, healthy-members gatus check); the
+  # pool-recovery-metrics collector carrying them is a NEW unit in this same
+  # deploy — the running system cannot serve them pre-switch. Remove after
+  # this deploy confirms them in the textfile.
+  KNOWN_NEW_METRICS="signoz_traces_upstream_gaps_over_threshold pool_usb_recovery_members_present pool_usb_recovery_device_errors"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"

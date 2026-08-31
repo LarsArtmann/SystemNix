@@ -69,15 +69,15 @@ _: {
           wiseApiKeyFile = config.sops.templates."bank-sync-env".path;
           encryptionKeyFile = config.sops.templates."bank-sync-env".path;
 
-          # TEMPORARY (2026-08-31): upstream rev 09785e60 bumped Wise SDK to
-          # v0.9.0 without refreshing the flake vendorHash — the go-modules
-          # FOD fails (specified 8W10ZjIU…, got the hash below). Overridden
-          # with the measured hash to unblock deploys; DROP this override as
-          # soon as upstream refreshes its vendorHash (the bank-sync session
-          # is mid-flight on exactly that work).
+          # TEMPORARY (2026-08-31): upstream still ships a stale flake
+          # vendorHash (8W10ZjIU…, predates both the Wise SDK v0.9.0 bump at
+          # 09785e60 AND the OTLP exporter at 901978e) — the go-modules FOD
+          # fails. Overridden with the measured hash (rev 901978e, includes
+          # otlptracehttp v1.46.0) to unblock deploys; DROP this override as
+          # soon as upstream refreshes its vendorHash.
           package = lib.mkForce (
             pkgs.bank-sync.overrideAttrs (_old: {
-              vendorHash = "sha256-ZwzPSE/2LmOs72p6uMDK1EymRoqGozSiLTh12j9HdwQ=";
+              vendorHash = "sha256-KX7fRSCwB2puanId8Nc+JIP1C1zlAFjYDRzZGUuVMwM=";
             })
           );
         };

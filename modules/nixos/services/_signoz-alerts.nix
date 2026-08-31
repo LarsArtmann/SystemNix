@@ -395,5 +395,7 @@ in
       "${inputs.self}/modules/nixos/services/dashboards/docker.json";
     "signoz/dashboards/caddy.json".source =
       "${inputs.self}/modules/nixos/services/dashboards/caddy.json";
+    "signoz/dashboards/telemetry-coverage.json".source =
+      "${inputs.self}/modules/nixos/services/dashboards/telemetry-coverage.json";
   };
 }

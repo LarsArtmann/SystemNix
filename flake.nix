@@ -817,6 +817,34 @@
               touch $out
             '';
 
+            # Auto-discovered modules under modules/nixos/{services,desktop}/
+            # are flake-parts wrappers: filename -> flake.nixosModules.<filename>.
+            # A bare NixOS module evaluates its let-bindings in the WRONG
+            # context and contributes NOTHING to hosts — no options, no
+            # assertions, silently (2026-08-31 live: signoz-coverage shipped
+            # bare; every nix command failed until a concurrent session
+            # wrapped it, commit d7237d6c).
+            module-shape-lint = pkgs.runCommand "module-shape-lint" { } ''
+              fail=0
+              for dir in ${./modules/nixos/services} ${./modules/nixos/desktop}; do
+                for f in "$dir"/*.nix; do
+                  [ -e "$f" ] || continue
+                  base=$(basename "$f")
+                  case "$base" in _*) continue ;; esac
+                  name="''${base%.nix}"
+                  if ! grep -q "flake\.nixosModules\.''${name}\b" "$f"; then
+                    echo "FAIL: $base does not declare flake.nixosModules.''${name}"
+                    echo "  Auto-discovered modules MUST be flake-parts wrappers; a bare NixOS"
+                    echo "  module here evaluates silently and contributes NOTHING to hosts."
+                    echo "  Shape: { flake.nixosModules.<filename> = { config, lib, pkgs, ... }: { ... }; }"
+                    fail=1
+                  fi
+                done
+              done
+              [ "$fail" -eq 0 ] || exit 1
+              touch $out
+            '';
+
             # SigNoz alert rules (_signoz-alerts.nix) + dashboards query the
             # OTel-collector-backed metrics store, which has DIFFERENT label
             # and naming semantics than a plain Prometheus:

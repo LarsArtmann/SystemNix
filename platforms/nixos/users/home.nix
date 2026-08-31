@@ -605,6 +605,17 @@ in
         crush_key minimax minimax_api_key
         crush_key kimi-coding kimi_api_key
 
+        # glm-5.3-flash exists ONLY here: charm's auto-updated zai catalog
+        # does not list it, so deleting the old user crush.json dropped it
+        # from the model list (live regression 2026-08-31, restored same
+        # day). Pricing from the user's known-good def; effort tiers
+        # normalized to z.ai's current xhigh scheme (catalog glm-5.3/5.2
+        # already serve xhigh — the old hand-written "max" was stale
+        # naming). model add has NO reasoning_levels flag (source:
+        # shellconfig/model.go) — the picker tier list for flash falls back
+        # to crush's default handling of default_reasoning_effort.
+        model add zai/glm-5.3-flash --name "GLM-5.3-Flash" --context-window 1000000 --default-max-tokens 131072 --can-reason true --supports-images true --price-input 0.15 --price-output 0.5 --price-cache-hit 0.03 --reasoning-effort xhigh
+
         # Local llama.cpp (user starts llama-server ad hoc; nothing on
         # lib/ports.nix serves :8899). discover_models DEFAULTS TO TRUE —
         # crush queries /v1/models at session start, so whatever GGUF is

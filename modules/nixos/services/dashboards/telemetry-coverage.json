@@ -1,0 +1,440 @@
+{
+  "schemaVersion": "v6",
+  "name": "systemnix-telemetry-coverage",
+  "tags": [
+    {
+      "key": "owner",
+      "value": "systemnix"
+    }
+  ],
+  "spec": {
+    "display": {
+      "name": "Telemetry Coverage",
+      "description": "SigNoz service registration rail - traces coverage per registry entry, gap budget ratchet, logs pipeline freshness"
+    },
+    "variables": [],
+    "panels": {
+      "829a55ae-18cf-505f-8ed7-85babe871ec3": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Traces Missing",
+            "description": "Enforced services dark (no span within budget). Healthy: 0"
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "0"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "signoz_traces_missing",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "6efabae4-4fcb-5eb4-a501-28aaf2a0cccd": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Upstream Gaps",
+            "description": "Services whose binaries cannot emit traces yet (instrumentation debt)"
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "0"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "signoz_traces_upstream_gaps",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "7f9455c0-919b-51be-8d7b-35ae392df511": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Gap Budget Breach",
+            "description": "1 = registry gap count exceeded maxUpstreamGaps. Healthy: 0"
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "0"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "signoz_traces_upstream_gaps_over_threshold",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "6d3b5ddf-a379-5072-88ca-643503575058": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Collector Scrape Errors",
+            "description": "Coverage collector ClickHouse query failures. Healthy: 0"
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "0"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "signoz_coverage_scrape_errors",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "0e9951a9-0969-5328-9ab0-fa5930f6c7dd": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Logs Pipeline Stale",
+            "description": "1 = journald ingestion stopped (>30 min). Healthy: 0"
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "0"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "signoz_logs_pipeline_stale",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "e5d5f536-4716-5746-bc3c-8b5db11b42ce": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Logs Pipeline Age (s)",
+            "description": "Seconds since the newest ingested log record"
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "0"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "signoz_logs_pipeline_age_seconds",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "e78dce88-dea2-5df6-842b-52cdb2edc755": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Services Reporting",
+            "description": "1 = span within freshness budget, per registered service"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none"
+              },
+              "thresholds": null,
+              "legend": {
+                "position": "bottom"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "signoz_traces_reporting",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": "{{service}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "e234d285-5b2f-5e9e-9ec1-9a8edd03b163": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Last Span Age (s)",
+            "description": "-1 = never seen a span. Event-driven services (720h budget) legitimately drift high"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none"
+              },
+              "thresholds": null,
+              "legend": {
+                "position": "bottom"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "signoz_traces_last_span_age_seconds",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": "{{service}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      }
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 2,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/829a55ae-18cf-505f-8ed7-85babe871ec3"
+              }
+            },
+            {
+              "x": 2,
+              "y": 0,
+              "width": 2,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/6efabae4-4fcb-5eb4-a501-28aaf2a0cccd"
+              }
+            },
+            {
+              "x": 4,
+              "y": 0,
+              "width": 2,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/7f9455c0-919b-51be-8d7b-35ae392df511"
+              }
+            },
+            {
+              "x": 6,
+              "y": 0,
+              "width": 2,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/6d3b5ddf-a379-5072-88ca-643503575058"
+              }
+            },
+            {
+              "x": 8,
+              "y": 0,
+              "width": 2,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/0e9951a9-0969-5328-9ab0-fa5930f6c7dd"
+              }
+            },
+            {
+              "x": 10,
+              "y": 0,
+              "width": 2,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/e5d5f536-4716-5746-bc3c-8b5db11b42ce"
+              }
+            },
+            {
+              "x": 0,
+              "y": 4,
+              "width": 6,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/e78dce88-dea2-5df6-842b-52cdb2edc755"
+              }
+            },
+            {
+              "x": 2,
+              "y": 4,
+              "width": 6,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/e234d285-5b2f-5e9e-9ec1-9a8edd03b163"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Persist the FULL deploy + smoke output (2026-08-31: an unexplained transient
+# smoke FAIL could not be root-caused afterwards because the middle of every
+# run was lost to scrollback). tee keeps stdout on the terminal AND in the log;
+# 30d retention. Command substitutions (nh_output capture below) are unaffected
+# by the redirect — they read their own pipes.
+DEPLOY_LOG_DIR=/var/log/systemnix-deploys
+sudo mkdir -p "$DEPLOY_LOG_DIR"
+exec > >(sudo tee -a "$DEPLOY_LOG_DIR/$(date +%Y-%m-%d_%H-%M-%S).log") 2>&1
+sudo find "$DEPLOY_LOG_DIR" -type f -mtime +30 -delete 2>/dev/null || true
+
 echo "=== Pre-Deploy Validation ==="
 if nix run .#pre-deploy-check; then
   echo ""
@@ -303,6 +313,16 @@ if nix run .#pre-deploy-check; then
   if systemctl is-enabled --quiet systemd-timer-monitor-audit.service 2>/dev/null; then
     echo "Starting systemd-timer-monitor-audit.service (fresh report after deploy)"
     sudo systemctl start systemd-timer-monitor-audit.service 2>/dev/null || true
+  fi
+
+  # Refresh SigNoz coverage metrics right after switch: the collector is
+  # timer-only (up to 5-min lag otherwise), and the post-deploy smoke asserts
+  # signoz_traces_missing 0 — without this the smoke races the timer (the
+  # unexplained transient-FAIL-then-green class, 2026-08-31). `restart` (not
+  # `start`) so it re-runs even if the unit sits active(exited).
+  if systemctl cat signoz-coverage-metrics.service >/dev/null 2>&1; then
+    echo "Restarting signoz-coverage-metrics.service (fresh coverage data for smoke)"
+    sudo systemctl restart signoz-coverage-metrics.service 2>/dev/null || true
   fi
 
   # Reap zombie buildcache mounts + re-verify real I/O after switch. The unit is

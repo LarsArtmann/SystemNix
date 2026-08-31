@@ -83,6 +83,9 @@
 
       coverageCollector = pkgs.writeShellApplication {
         name = "signoz-coverage-metrics";
+        runtimeEnv = {
+          MAX_UPSTREAM_GAPS = toString cfg.maxUpstreamGaps;
+        };
         runtimeInputs = [
           pkgs.clickhouse
           pkgs.jq
@@ -93,6 +96,12 @@
         text = ''
           OUT="${textfileDir}/signoz-coverage.prom"
           TMP="''${OUT}.tmp.$$"
+
+          # Reap strays from killed earlier runs (fresh PID suffix each run —
+          # a crashed/killed run would otherwise litter .tmp.<pid> forever,
+          # 2026-08-31). All root-owned (this unit's own files), sticky-bit
+          # dir permits deleting files one owns.
+          rm -f "''${OUT}".tmp.*
 
           # Every unit script must list every binary it execs (gawk lesson,
           # 2026-08-31): timeout is coreutils, clickhouse-client is pkgs.clickhouse.
@@ -139,6 +148,13 @@
 
           ENFORCED_TOTAL=$(jq '[.[] | select(.enforced)] | length' ${expectedJson})
           UPSTREAM_GAPS=$(jq '[.[] | select(.enforced | not)] | length' ${expectedJson})
+          # Budget ratchet: a registry that GROWS its upstream-gap count past
+          # maxUpstreamGaps must consciously raise the budget — a Gatus check
+          # pages on the breach (new silent noops may not slip in unnoticed).
+          GAPS_OVER=0
+          if [ "$UPSTREAM_GAPS" -gt "''${MAX_UPSTREAM_GAPS:-9999}" ]; then
+            GAPS_OVER=1
+          fi
 
           MISSING=0
           {
@@ -153,6 +169,7 @@
               echo "signoz_coverage_scrape_errors 1"
               echo "signoz_traces_missing $ENFORCED_TOTAL"
               echo "signoz_traces_upstream_gaps $UPSTREAM_GAPS"
+              echo "signoz_traces_upstream_gaps_over_threshold $GAPS_OVER"
             else
             echo "signoz_coverage_scrape_errors 0"
 
@@ -194,6 +211,9 @@
             echo "# HELP signoz_traces_upstream_gaps services whose binaries cannot emit traces yet (upstream instrumentation debt)"
             echo "# TYPE signoz_traces_upstream_gaps gauge"
             echo "signoz_traces_upstream_gaps $UPSTREAM_GAPS"
+            echo "# HELP signoz_traces_upstream_gaps_over_threshold 1 if upstream gaps exceed the budget (ratchet: lower the budget as gaps close, never let it grow silently), healthy value is zero"
+            echo "# TYPE signoz_traces_upstream_gaps_over_threshold gauge"
+            echo "signoz_traces_upstream_gaps_over_threshold $GAPS_OVER"
 
             logs_age_s=-1
             if [ -n "$LOGS_LAST_MS" ] && [ "$LOGS_LAST_MS" -gt 0 ] 2>/dev/null; then
@@ -313,7 +333,28 @@
         untrackedOtelUnits = lib.mkOption {
           type = with lib.types; listOf str;
           default = [ ];
-          description = "Units allowed to set OTEL_EXPORTER_OTLP_ENDPOINT without a registry entry (with a reason in the commit).";
+          description = ''
+            Units allowed to set OTEL_EXPORTER_OTLP_ENDPOINT without a registry
+            entry. Intended for units whose binary is verified to emit spans but
+            that are tracked elsewhere, e.g.:
+              untrackedOtelUnits = [ "some-unit" ]; # emits via <where>, reason
+            Adding a unit here to silence the reverse assertion for a binary
+            that does NOT emit is reintroducing the fastflowlm noop class —
+            register it with wiring "upstream" instead so it stays counted.
+          '';
+        };
+
+        maxUpstreamGaps = lib.mkOption {
+          type = with lib.types; int;
+          default = 5;
+          description = ''
+            Budget for signoz_traces_upstream_gaps. When the registry's
+            upstream-wired entry count exceeds this, the collector emits
+            signoz_traces_upstream_gaps_over_threshold 1 and a Gatus check
+            pages — a NEW silent noop may not enter the registry unnoticed.
+            Ratchet DOWN as gaps close (flip wiring to env/config); raising it
+            is a conscious decision that belongs in a commit message.
+          '';
         };
       };
 
@@ -351,12 +392,10 @@
               serviceName = "dnsblockd";
               wiring = "upstream";
             };
-            bank-sync = {
-              serviceName = "bank-sync";
-              # OTLP support added upstream 2026-08-31 (cmd/bank-sync/tracing.go,
-              # DiscordSync pattern). Flip to "env" after tag + flake bump.
-              wiring = "upstream";
-            };
+            # FLIPPED to enforced 2026-08-31: upstream 901978e (pushed) added
+            # OTLP/HTTP trace export (DiscordSync pattern); flake input bumped
+            # same day. Spans must now flow within the 26h budget.
+            bank-sync = env "bank-sync" 26;
             overview = {
               serviceName = "overview";
               # SetupFromEnv runs ("OTel tracing enabled" in journal) but the
