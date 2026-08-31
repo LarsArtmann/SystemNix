@@ -95,7 +95,14 @@ User asked to weigh Docker as the SSD 2 tenant. **Verified live first — two me
 
 **If Docker-on-SSD2 is chosen anyway (runbook):** reformat **XFS `-n ftype=1`** — overlay2 REQUIRES d_type (`ftype=1` is mkfs.xfs default with crc, but pass it explicitly); do NOT keep btrfs (CoW on container writable layers + btrfs storage driver is the deprecated path). Mirror the buildcache mount stack (`nofail`, automount, device-timeout=2s, device-bound, `noatime lazytime`). Wire `virtualisation.docker.daemon.settings.data-root = "/mnt/docker"` + explicit `storage-driver = "overlay2"`. Migration: maintenance window → `systemctl stop docker.socket docker containerd` → `rsync -aH /data/docker/ /mnt/docker/` → repoint → restart → smoke (`docker ps`, both pgs answer, twenty/manifest vHosts 200) → keep `/data/docker` as rename-aside for one week → delete. Add `ioTier.background` on docker.service (already true via defaults?) and keep SigNoz/ClickHouse off the disk (unchanged). Photos salvage step still applies first.
 
-## Revised open decisions
+## Follow-up: should `/mnt/buildcache` (SSD 1) also convert ext4 → XFS "one day"?
+
+Answered 2026-08-31: **yes at the next natural reformat, but never as a scheduled migration.**
+
+- **No measured problem to fix.** The ext4 `data=writeback` recipe was chosen from benchmarks on THIS drive (234 µs randread, seq-write tax fixed) and has run clean since 2026-08-14. The XFS-vs-ext4 delta for this workload is single-digit percent on a disk whose real ceiling is the USB link + SandForce controller, not the fs.
+- **Migration logistics are the real cost.** Converting in place is impossible: ~110-150 GB of caches must transit somewhere — the only staging ground is the QLC NVMe the disk exists to protect (root has its own 90%+ history), or the caches are lost and rebuilt (go-build 64 G ≈ hours of recompilation across every project).
+- **The free conversion window already exists.** TRIM does not pass the bridge, so the documented fix for stale-block write degradation is a reformat anyway. A reformat wipes the caches regardless of fs — at that moment `mkfs.xfs -L buildcache` costs nothing extra, drops the `data=writeback` tradeoff (metadata-only journaling, unconditional crash consistency), recovers ~4-5 GB of fixed ext4 overhead (3.5 G pre-allocated inode table + 1 G journal vs XFS dynamic inodes), and keeps every other mount option (`noatime lazytime nofail automount device-bound` are fs-agnostic).
+- **Doctrine:** any FUTURE reformat/repurpose of a cache disk (SSD 1 reformat, SSD 2 partitioning, new disks) defaults to **XFS** without re-litigating; existing healthy ext4 caches are left alone until their next reformat.
 
 1. **Recommended overall: SSD 2 = Go cache (XFS); Docker stays on `/data` after a one-time prune** (and optionally a guarded docker-gc). Docker-on-SSD2 trades pg-data durability for ~2% QLC relief — poor exchange.
 2. Acceptable split if both wants persist: SSD 2 partitioned — gocache (XFS, ~160 G) + docker (XFS ftype=1, ~64 G). Both tenants fit; one bridge, shared fate.
