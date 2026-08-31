@@ -255,14 +255,16 @@
         unit: !(cfg.expected ? ${unit}) && !(builtins.elem unit cfg.untrackedOtelUnits)
       ) unitsWithOtelEnv;
 
-      # Forward scan: env/upstream entries whose unit exists must carry the env var.
+      # Forward scan: wiring="env" entries whose unit exists must carry the
+      # env var ("config"/"upstream" entries carry their wiring elsewhere or
+      # are pending — the runtime collector is their guard).
       envViolations = lib.concatMap (
         unit:
         let
           entry = cfg.expected.${unit};
           unitExists = config.systemd.services ? ${unit};
         in
-        lib.optional (unitExists && entry.wiring != "config" && !unitHasOtelEnv unit)
+        lib.optional (unitExists && entry.wiring == "env" && !unitHasOtelEnv unit)
           "signoz-coverage: registry demands traces from unit \"${unit}\" (wiring=${entry.wiring}, serviceName=${entry.serviceName}) but the unit sets no OTEL_EXPORTER_OTLP_ENDPOINT — spans can never reach SigNoz. Set the env var (Go otlptracehttp: localhost:4318, no scheme) or reclassify wiring."
       ) (builtins.attrNames cfg.expected);
 
@@ -336,13 +338,19 @@
             # units are attributed to "file-and-image-renamer".
             file-and-image-renamer-health = env "file-and-image-renamer" 720;
             gotenberg = env "gotenberg" 720; # spans only when paperless converts office docs
-            dnsblockd = {
-              serviceName = "dnsblockd";
-              wiring = "config"; # otlp_endpoint YAML key in dns-blocker.nix, not env
-              maxAgeHours = 26;
-            };
 
             # ── Known upstream gaps (env set, binary cannot emit yet) ──
+            # dnsblockd: otlp_endpoint config key IS set (dns-blocker.nix) but
+            # upstream's exporter omitted WithInsecure() — every export died
+            # "https://localhost:4318 … server gave HTTP response to HTTPS
+            # client" (caught by this coverage audit within minutes of the
+            # first-ever enablement, 2026-08-31). Fix applied in the dnsblockd
+            # checkout (scheme-aware transport). Flip wiring to "config" after
+            # push + flake bump; the config key is already live.
+            dnsblockd = {
+              serviceName = "dnsblockd";
+              wiring = "upstream";
+            };
             bank-sync = {
               serviceName = "bank-sync";
               # OTLP support added upstream 2026-08-31 (cmd/bank-sync/tracing.go,

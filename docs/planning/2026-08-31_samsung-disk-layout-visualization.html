@@ -3,9 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>
-      Disk Layout Blueprint · Samsung Role Assignment · SystemNix evo-x2
-    </title>
+    <title>Disk Layout Blueprint · Samsung Role Assignment · SystemNix evo-x2</title>
     <style>
       /* =========================================================================
          BAUHAUS LIGHT — Editorial template
@@ -215,6 +213,14 @@
       }
       p {
         margin: 0 0 1rem;
+      }
+
+      .prose-ul {
+        margin: 0.5rem 0 1rem 1.2rem;
+      }
+      .prose-ul li {
+        margin: 0.25rem 0;
+        font-size: 0.94rem;
       }
 
       .hero {
@@ -1076,7 +1082,7 @@
   <body>
     <div class="top-bar">
       <span>Disk Layout Blueprint · SystemNix / evo-x2</span>
-      <span>2026-08-31</span>
+      <span>2026-08-31 · Rev 2</span>
       <span>Companion: Samsung Role Assignment</span>
     </div>
 
@@ -1086,7 +1092,7 @@
           <div class="label">Contents</div>
           <a href="#tiers">Tier model</a>
           <a href="#perf">Measured physics</a>
-          <a href="#target">Target layout</a>
+          <a href="#target">Layout: today &rarr; target</a>
           <a href="#boot">Boot chain</a>
           <a href="#beforeafter">Before / After</a>
           <a href="#stays">Stays on QLC</a>
@@ -1094,7 +1100,7 @@
           <a href="#capacity">Capacity math</a>
           <a href="#phases">Migration phases</a>
           <a href="#risks">Risks &amp; rescue</a>
-          <a href="#decisions">Open decisions</a>
+          <a href="#decisions">Decisions</a>
         </nav>
       </aside>
 
@@ -1106,7 +1112,7 @@
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="eyebrow">Storage Blueprint &middot; 2026-08-31</div>
+          <div class="eyebrow">Storage Blueprint &middot; 2026-08-31 &middot; Rev 2</div>
           <h1>
             Samsung 970 EVO Plus: the synchronous disk.<br />Lexar QLC: the
             streaming disk.
@@ -1114,13 +1120,17 @@
           <p class="subtitle">
             Visual companion to the role-assignment decision doc. What lands on
             the new 1 TB TLC drive, what stays on the 2 TB QLC, where boot
-            lives, and how the migration gets there without a closed closure
-            gap.
+            lives, and how the migration gets there without a closure gap.
+            Rev 2: partition geometry ratified (4 G reserved ESP + one BTRFS
+            pool), hot DBs on a nodatacow <code>hot</code> subvol instead of
+            XFS, and occupancy figures measured live via
+            <code>lsblk</code>/<code>df</code> on this host.
           </p>
           <div class="meta">
             <span class="tag amber">Status: PROPOSED</span>
             <span class="tag">Host: evo-x2</span>
             <span class="tag teal">Boot disk: Lexar QLC (unchanged)</span>
+            <span class="tag">ESP reserved: 4 G</span>
             <span class="tag">Endurance: 600 TBW</span>
           </div>
         </header>
@@ -1131,16 +1141,16 @@
             <div class="label">exec-path refill (was 1.6 ms)</div>
           </div>
           <div class="score-card score-good">
-            <div class="score">0.78 ms</div>
-            <div class="label">DB fsync (was ~200 ms)</div>
+            <div class="score">1&ndash;2 ms</div>
+            <div class="label">DB fsync after P2 (QLC today: ~200 ms)</div>
           </div>
           <div class="score-card score-warn">
             <div class="score">+179 G</div>
-            <div class="label">freed on QLC root</div>
+            <div class="label">vacated on QLC root</div>
           </div>
           <div class="score-card">
-            <div class="score">6.6&ndash;16 yr</div>
-            <div class="label">Samsung endurance at 100&ndash;250 G/day</div>
+            <div class="score">1.89&times;</div>
+            <div class="label">/nix zstd compression (measured)</div>
           </div>
         </section>
 
@@ -1156,7 +1166,8 @@
           <div class="tier tier-neutral">
             <div class="t-name">
               RAM / page cache<small
-                >128 G &middot; zram ~33 G &middot; /tmp 48 G cap</small
+                >128 G &middot; zram 28.1 G (measured) &middot; /tmp 48 G
+                cap</small
               >
             </div>
             <div class="t-desc">
@@ -1204,7 +1215,8 @@
                 <td>Shell exec, <code>git status</code>, editor open</td>
                 <td>Human, synchronous</td>
                 <td>
-                  <code>/nix</code> &rarr; Samsung p2
+                  <code>/nix</code> &rarr; Samsung p2 subvol
+                  <code>nix</code>
                   <span class="badge badge-fixed">P1</span>
                 </td>
               </tr>
@@ -1212,7 +1224,8 @@
                 <td>Auth token check, photo browse, git push</td>
                 <td>HTTP request path</td>
                 <td>
-                  Hot DBs &rarr; Samsung p1 (XFS)
+                  Hot DBs &rarr; Samsung p2 subvol <code>hot</code>
+                  (nodatacow)
                   <span class="badge badge-fixed">P2</span>
                 </td>
               </tr>
@@ -1235,7 +1248,7 @@
                 <td>Compile iteration</td>
                 <td>Semi-interactive</td>
                 <td>
-                  RAM &rarr; GOCACHE &rarr; Samsung p2
+                  RAM &rarr; GOCACHE &rarr; Samsung p2 subvol
                   <span class="badge badge-low">P4 optional</span>
                 </td>
               </tr>
@@ -1311,6 +1324,20 @@
               </tbody>
             </table>
           </div>
+          <div class="callout">
+            <strong>
+              Filesystem choice for <code>/nix</code>: benchmarked, resolved
+            </strong>
+            <code>scripts/bench-nix-fs.sh</code> compared ext4 vs XFS
+            (reflink=1) vs BTRFS zstd on the actual Samsung with a 629-path /
+            1.7 GiB store sample: performance was a wash (run variance
+            &plusmn;40% under load exceeded every inter-fs delta), and
+            compression is the separator: measured <strong>1.89&times;</strong>
+            (compsize), turning the 129 G store into
+            <strong>~68 G physical</strong>. Chosen:
+            <code>noatime,compress=zstd</code> (heuristic skip of incompressible
+            files is correct; NOT <code>compress-force</code>).
+          </div>
           <div class="callout callout-warning">
             <strong>Live pathology, same day</strong>
             Device throughput 0.3 MB/s with PSI some 47&ndash;64%,
@@ -1323,7 +1350,17 @@
         </section>
 
         <section id="target">
-          <h2><span class="num">02</span>Target layout</h2>
+          <h2>
+            <span class="num">02</span>Layout: today &rarr; target
+          </h2>
+          <p>
+            Both partition bars are drawn from live <code>lsblk</code> on this
+            host (2026-08-31): the Samsung is blank today, the Lexar geometry
+            is measured exactly. Occupancy bars mix df-measured totals with
+            plan-doc category estimates; every segment also lives in the table
+            under its card, because small segments cannot carry readable
+            labels.
+          </p>
 
           <div class="legend">
             <span
@@ -1331,18 +1368,21 @@
               role)</span
             >
             <span
-              ><span class="key key-blue-tint"></span>Samsung BTRFS area</span
+              ><span class="key key-blue-tint"></span>Samsung BTRFS pool
+              area</span
             >
             <span
-              ><span class="key key-optional"></span>Optional phase
-              (P3/P4)</span
+              ><span class="key key-optional"></span>Optional phase (hatch,
+              any tint)</span
             >
             <span><span class="key key-red"></span>Moves OFF the QLC</span>
             <span
               ><span class="key key-yellow"></span>Streams, stays on QLC</span
             >
-            <span><span class="key key-green"></span>Freed on QLC</span>
-            <span><span class="key key-neutral"></span>Unchanged / free</span>
+            <span>
+              <span class="key key-green"></span>Unallocated / free</span
+            >
+            <span><span class="key key-neutral"></span>Stays / reserved</span>
           </div>
 
           <div class="disk" id="samsung">
@@ -1351,32 +1391,28 @@
                 >Samsung 970 EVO Plus &middot; 1 TB TLC</span
               >
               <span class="disk-sub"
-                >931.5 G usable &middot; PCIe 3.0 x4 &middot; currently
-                blank</span
+                >931.5 G usable &middot; blank today &middot; lsblk-verified</span
               >
             </div>
             <div class="disk-body">
-              <div class="bar-caption">Partitions</div>
+              <div class="bar-caption">
+                Partitions &middot; two, forever. Nothing ever moves a partition
+                start.
+              </div>
               <div class="disk-bar">
                 <div
-                  class="seg seg-blue"
-                  style="flex-grow: 7"
-                  title="p1: XFS 64 G for sync DBs"
+                  class="seg seg-neutral"
+                  style="flex-grow: 4"
+                  title="p1: EFI System (ef00), 4 GiB FAT32 label SAMSUNG-EFI, created and formatted now, UNMOUNTED, reserved for a future boot migration. Mirrors the Lexar's own 4 G ESP (p7)."
                 >
-                  <span>p1 &middot; XFS</span><span class="sz">64 G</span
-                  ><span>/var/lib-hot</span>
+                  <span>p1 &middot; ESP</span><span class="sz">4 G</span><span class="ph">reserved, unmounted</span>
                 </div>
                 <div
                   class="seg seg-blue-tint"
-                  style="flex-grow: 93"
-                  title="p2: BTRFS to end of disk, subvol nix mounted at /nix"
+                  style="flex-grow: 927.5"
+                  title="p2: BTRFS label tlc, rest of disk (~927.5 G). The ONLY data partition. Every role is a subvolume; space flows freely between them."
                 >
-                  <span>p2 &middot; BTRFS &rarr; end of disk</span
-                  ><span class="sz">~860 G</span
-                  ><span
-                    >subvol <code>nix</code> &rarr; /nix &middot; compress=zstd
-                    &middot; noatime &middot; commit 30 s (default)</span
-                  >
+                  <span>p2 &middot; BTRFS pool <code>tlc</code> &rarr; end of disk</span><span class="sz">~927.5 G</span><span>noatime &middot; compress=zstd &middot; commit 30 s (TLC: no SLC-preservation doctrine needed)</span>
                 </div>
               </div>
 
@@ -1386,70 +1422,204 @@
               <div class="disk-bar">
                 <div
                   class="seg seg-blue"
-                  style="flex-grow: 10"
-                  title="/nix compressed ~80-90 G, lands in Phase 1"
+                  style="flex-grow: 68"
+                  title="subvol nix: 129 G raw compressed to ~68 G (measured 1.89x). Lands in Phase 1. neededForBoot=true. Never snapshotted (rebuildable from flake.lock + attic)."
                 >
-                  <span>/nix (zstd)</span><span class="sz">~85 G</span
-                  ><span class="ph">P1</span>
+                  <span>/nix (zstd)</span><span class="sz">~68 G</span><span class="ph">P1 &middot; was 129 G raw</span>
+                </div>
+                <div
+                  class="seg seg-blue-tint"
+                  style="flex-grow: 50"
+                  title="subvol hot, mounted -o nodatacow: pocket-id + postgres (immich+paperless) + forgejo, 50 G or less today, as nested per-service subvol boundaries. Phase 2."
+                >
+                  <span>hot (nodatacow)</span><span class="sz">&le;50 G</span><span class="ph">P2 &middot; per-service subvols</span>
                 </div>
                 <div
                   class="seg seg-blue-tint seg-optional"
-                  style="flex-grow: 31"
-                  title="/home 268 G, optional Phase 3, trigger-based"
+                  style="flex-grow: 268"
+                  title="/home 268 G as subvol home, optional Phase 3, trigger-based"
                 >
-                  <span>/home</span><span class="sz">~268 G</span
-                  ><span class="ph">P3 optional</span>
+                  <span>/home</span><span class="sz">268 G</span><span class="ph">P3 optional</span>
                 </div>
                 <div
                   class="seg seg-blue-tint seg-optional"
-                  style="flex-grow: 9"
-                  title="GOCACHE 65 G + GOMODCACHE 13 G, optional Phase 4"
+                  style="flex-grow: 78"
+                  title="GOCACHE 65 G + GOMODCACHE 13 G as subvol caches, optional Phase 4"
                 >
-                  <span>Go caches</span><span class="sz">~78 G</span
-                  ><span class="ph">P4 optional</span>
+                  <span>Go caches</span><span class="sz">78 G</span><span class="ph">P4 optional</span>
                 </div>
                 <div
                   class="seg seg-neutral"
-                  style="flex-grow: 50"
-                  title="~429 G free after all optional phases"
+                  style="flex-grow: 463.5"
+                  title="~463 G free after all optional phases"
                 >
-                  <span>free</span><span class="sz">~429 G</span>
+                  <span>free</span><span class="sz">~463 G</span>
                 </div>
               </div>
 
-              <div class="bar-caption">
-                p1 (XFS, no CoW, fsync 0.78 ms) occupancy
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Type</th>
+                      <th>Size</th>
+                      <th>Phase</th>
+                      <th>Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>p1</td>
+                      <td>EFI System (ef00)</td>
+                      <td>4 G</td>
+                      <td>day one</td>
+                      <td>
+                        FAT32 <code>SAMSUNG-EFI</code>, created + formatted now,
+                        UNMOUNTED, not in fstab. Boot-migration day becomes
+                        zero-repartition.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>p2</td>
+                      <td>BTRFS <code>tlc</code></td>
+                      <td>~927.5 G</td>
+                      <td>day one</td>
+                      <td>The only data partition; all roles are subvols.</td>
+                    </tr>
+                    <tr>
+                      <td><code>nix</code></td>
+                      <td>subvol, CoW + zstd</td>
+                      <td>~68 G (129 raw)</td>
+                      <td><span class="badge badge-fixed">P1</span></td>
+                      <td><code>neededForBoot</code>; never snapshotted.</td>
+                    </tr>
+                    <tr>
+                      <td><code>hot</code></td>
+                      <td>subvol, nodatacow</td>
+                      <td>&le;50 G today</td>
+                      <td><span class="badge badge-fixed">P2</span></td>
+                      <td>Nested per-service boundaries; see table below.</td>
+                    </tr>
+                    <tr>
+                      <td><code>home</code></td>
+                      <td>subvol</td>
+                      <td>268 G</td>
+                      <td><span class="badge badge-low">P3 opt</span></td>
+                      <td>Trigger-based, no partition work.</td>
+                    </tr>
+                    <tr>
+                      <td><code>caches</code></td>
+                      <td>subvol</td>
+                      <td>78 G</td>
+                      <td><span class="badge badge-low">P4 opt</span></td>
+                      <td>GOCACHE + GOMODCACHE only.</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-              <div class="disk-bar">
-                <div
-                  class="seg seg-blue-tint"
-                  style="flex-grow: 78"
-                  title="pocket-id + postgres (immich, paperless) + forgejo, estimated 50 G or less"
-                >
-                  <span
-                    >pocket-id &middot; postgres (immich + paperless) &middot;
-                    forgejo</span
-                  ><span class="sz">&le;50 G est.</span
-                  ><span class="ph">P2, one service at a time</span>
-                </div>
-                <div
-                  class="seg seg-neutral"
-                  style="flex-grow: 22"
-                  title="XFS cannot shrink; 64 G is years of headroom"
-                >
-                  <span>headroom</span><span class="sz">&ge;14 G</span>
-                </div>
+
+              <h3>
+                The <code>hot</code> subvol: one mount, per-service boundaries
+              </h3>
+              <p>
+                Mounted once at <code>/var/lib/hot</code> with
+                <code>-o nodatacow</code>; the per-service subvol boundaries
+                exist in the fs tree regardless of mount points, so snapshots
+                and deletes stay surgical with zero extra mount units.
+                <code>chattr +C</code> is set explicitly per subvol root by the
+                storage-dir oneshot. Attribute granularity is per-directory, so
+                a service that values integrity over latency (gatus's tiny
+                sqlite) simply lives without <code>+C</code> and keeps
+                checksums.
+              </p>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Boundary</th>
+                      <th>FS attr</th>
+                      <th>Size</th>
+                      <th>Phase</th>
+                      <th>Why</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><code>hot/pocket-id</code></td>
+                      <td><code>+C</code></td>
+                      <td>tiny</td>
+                      <td><span class="badge badge-fixed">P2</span></td>
+                      <td>Auth tokens; fsync on every login.</td>
+                    </tr>
+                    <tr>
+                      <td><code>hot/postgres</code></td>
+                      <td><code>+C</code></td>
+                      <td>bulk of &le;50 G</td>
+                      <td><span class="badge badge-fixed">P2</span></td>
+                      <td>immich + paperless metadata; WAL appends.</td>
+                    </tr>
+                    <tr>
+                      <td><code>hot/forgejo</code></td>
+                      <td><code>+C</code></td>
+                      <td>est. ~10 G</td>
+                      <td><span class="badge badge-fixed">P2</span></td>
+                      <td>git push fsync path.</td>
+                    </tr>
+                    <tr>
+                      <td><code>hot/gatus</code> (candidate)</td>
+                      <td>no <code>+C</code></td>
+                      <td>tiny</td>
+                      <td><span class="badge badge-low">candidate</span></td>
+                      <td>
+                        Monitoring store: write volume trivial, so integrity
+                        detection (csums) beats fsync latency.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
 
               <div class="callout callout-teal">
-                <strong>Mount doctrine</strong>
-                Samsung BTRFS: <code>noatime,compress=zstd</code> with the
-                DEFAULT 30 s commit interval; <code>commit=300</code> is a QLC
-                SLC-preservation measure, not needed on TLC (and 30 s is a
-                better crash window). XFS p1: <code>noatime</code>.
-                <code>nodiscard</code> + daily fstrim stays for both disks.
-                <code>neededForBoot = true</code> on <code>/nix</code> is
-                REQUIRED: the stage-2 init lives in <code>/nix/store</code>.
+                <strong>Layout doctrine</strong>
+                <ul class="prose-ul">
+                  <li>
+                    Partition starts NEVER move; BTRFS shrinks only from its
+                    end; XFS never shrinks. Therefore: fixed things front, ONE
+                    elastic BTRFS pool behind, future XFS carved fresh from
+                    p2's tail at the moment of need (online
+                    <code>btrfs resize -X</code> &rarr;
+                    <code>parted resizepart</code> end &rarr;
+                    <code>mkfs.xfs</code>). The rejected 64 G mid-disk XFS
+                    would have been permanently un-growable.
+                  </li>
+                  <li>
+                    nodatacow = XFS-like data path (in-place writes, no csums,
+                    no compression) riding on BTRFS CoW metadata: still no
+                    journal, crash consistency unchanged. fsync lands ~1&ndash;2 ms
+                    vs raw 0.78 ms vs ~200 ms today.
+                  </li>
+                  <li>
+                    Snapshot landmine: nodatacow holds only for extents not
+                    shared with a snapshot; one scheduled snapshot silently
+                    reverts touched extents to CoW. Policy: no scheduled
+                    snapshots of <code>hot</code>, one-shot checkpoints deleted
+                    after the migration, eval-time assertion keyed on the
+                    <code>hot</code> prefix.
+                  </li>
+                  <li>
+                    qgroups stay OFF (per-write metadata tax) but this is TLC:
+                    the doctrine's own clause permits enabling here later for
+                    per-service accounting (the removed
+                    <code>btrfs_qgroup_referenced_bytes</code> collector is in
+                    git history for re-adding).
+                  </li>
+                  <li>
+                    VDO is dead upstream (removed in RHEL 9) and redundant:
+                    compression is BTRFS-native; dedupe (bees) stays declined
+                    on this hardware.
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
@@ -1462,180 +1632,232 @@
                 ></span
               >
               <span class="disk-sub"
-                >root p6 ~723 GiB &middot; /data p8 ~1.1 TB &middot; p9 XFS ~100
-                G &middot; ESP + boot untouched</span
+                >lsblk-measured: p6 722.5 G &middot; p7 ESP 4 G &middot; p8 1 T &middot; p9 100 G</span
               >
             </div>
             <div class="disk-body">
+              <div class="bar-caption">Partitions (measured)</div>
+              <div class="disk-bar">
+                <div
+                  class="seg seg-neutral"
+                  style="flex-grow: 722.5"
+                  title="p6: BTRFS root fs 722.5 G: @ with /nix, /home, @cache-home; also /mnt/btrfs-root"
+                >
+                  <span>p6 &middot; root BTRFS</span><span class="sz">722.5 G</span><span>/ &middot; /nix &middot; /home &middot; @cache-home</span>
+                </div>
+                <div
+                  class="seg seg-neutral"
+                  style="flex-grow: 4"
+                  title="p7: 4 G vfat ESP mounted at /boot - the existing boot device. Samsung's reserved p1 mirrors this exact size."
+                >
+                  <span>p7 &middot; ESP</span><span class="sz">4 G</span><span>/boot, stays</span>
+                </div>
+                <div
+                  class="seg seg-yellow"
+                  style="flex-grow: 1024"
+                  title="p8: BTRFS label data, 1 T: /data streaming tier"
+                >
+                  <span>p8 &middot; /data</span><span class="sz">1 T</span><span>streaming, stays</span>
+                </div>
+                <div
+                  class="seg seg-yellow"
+                  style="flex-grow: 100"
+                  title="p9: XFS label clickhouse, 100 G"
+                >
+                  <span>p9 &middot; XFS</span><span class="sz">100 G</span>
+                </div>
+              </div>
+
               <div class="bar-caption">
-                Root fs p6 (~723 GiB) &middot; TODAY: the co-tenancy problem
+                Root fs p6 (722.5 G) &middot; TODAY: the co-tenancy problem
               </div>
               <div class="disk-bar">
                 <div
                   class="seg seg-red"
-                  style="flex-grow: 18"
-                  title="/nix 129 G, moves to Samsung in Phase 1"
+                  style="flex-grow: 129"
+                  title="/nix 129 G raw, moves to Samsung in Phase 1"
                 >
-                  <span>/nix (@nix subvol)</span><span class="sz">129 G</span
-                  ><span class="ph">moves, P1</span>
+                  <span>/nix</span><span class="sz">129 G</span><span class="ph">moves, P1</span>
                 </div>
                 <div
                   class="seg seg-red"
-                  style="flex-grow: 7"
+                  style="flex-grow: 50"
                   title="pocket-id + postgres + forgejo, 50 G or less, move in Phase 2"
                 >
-                  <span>hot DBs</span><span class="sz">&le;50 G</span
-                  ><span class="ph">moves, P2</span>
+                  <span>hot DBs</span><span class="sz">&le;50 G</span><span class="ph">moves, P2</span>
                 </div>
                 <div
                   class="seg seg-neutral"
-                  style="flex-grow: 37"
+                  style="flex-grow: 268"
                   title="/home 268 G, stays by default, Phase 3 trigger"
                 >
-                  <span>/home</span><span class="sz">268 G</span
-                  ><span class="ph">stays (P3 trigger)</span>
+                  <span>/home</span><span class="sz">268 G</span><span class="ph">stays (P3 trigger)</span>
                 </div>
                 <div
                   class="seg seg-neutral"
-                  style="flex-grow: 2"
+                  style="flex-grow: 16"
                   title="@cache-home ~16 G live caches, stays"
                 >
                   <span>@cache-home</span><span class="sz">~16 G</span>
                 </div>
                 <div
                   class="seg seg-neutral"
-                  style="flex-grow: 36"
-                  title="service state, logs, boot, snapshot overhead"
+                  style="flex-grow: 88"
+                  title="other used: service state, logs, boot (residual of df used minus the categorized items)"
                 >
-                  <span>service state &middot; logs &middot; boot</span
-                  ><span class="sz">~260 G</span>
+                  <span>other used</span><span class="sz">~88 G</span>
+                </div>
+                <div
+                  class="seg seg-green"
+                  style="flex-grow: 128"
+                  title="df avail today: 128 G"
+                >
+                  <span>unallocated</span><span class="sz">128 G</span><span class="ph">df, today</span>
                 </div>
               </div>
 
               <div class="bar-caption">
-                Root fs p6 &middot; AFTER Phase 1+2: congestion cleared
+                Root fs p6 &middot; AFTER Phase 1+2: state, with the vacated
+                delta as annotation
               </div>
               <div class="disk-bar">
                 <div
-                  class="seg seg-green"
-                  style="flex-grow: 25"
-                  title="/nix + hot DBs vacated: chunk-unalloc CRITICAL clears structurally, immediately after the @nix subvol delete"
+                  class="seg seg-neutral"
+                  style="flex-grow: 268"
+                  title="/home stays"
                 >
-                  <span>freed</span><span class="sz">~179 G</span
-                  ><span class="ph"
-                    >@nix delete frees instantly (not snapshot-pinned)</span
-                  >
-                </div>
-                <div class="seg seg-neutral" style="flex-grow: 37">
                   <span>/home</span><span class="sz">268 G</span>
                 </div>
-                <div class="seg seg-neutral" style="flex-grow: 2">
+                <div
+                  class="seg seg-neutral"
+                  style="flex-grow: 16"
+                  title="@cache-home stays"
+                >
                   <span>@cache-home</span><span class="sz">~16 G</span>
                 </div>
-                <div class="seg seg-neutral" style="flex-grow: 36">
-                  <span>service state &middot; logs &middot; boot</span
-                  ><span class="sz">~260 G</span>
+                <div
+                  class="seg seg-neutral"
+                  style="flex-grow: 88"
+                  title="other used stays"
+                >
+                  <span>other used</span><span class="sz">~88 G</span>
+                </div>
+                <div
+                  class="seg seg-green"
+                  style="flex-grow: 307"
+                  title="unallocated grows from 128 G to ~307 G: /nix 129 G + hot DBs ~50 G vacated. The @nix subvol delete frees instantly (sibling subvol, not snapshot-pinned)."
+                >
+                  <span>unallocated</span><span class="sz">~307 G</span><span class="ph">+179 G vacated: /nix 129 + hot DBs ~50</span>
                 </div>
               </div>
 
               <div class="bar-caption">
-                /data p8 (~1.1 TB) &middot; the streaming role, unchanged
+                /data p8 (1 T, df: 888 G used / 142 G avail) &middot; the
+                streaming role, unchanged
               </div>
               <div class="disk-bar">
                 <div
                   class="seg seg-yellow"
-                  style="flex-grow: 28"
-                  title="/data/ai 287 G"
+                  style="flex-grow: 287"
+                  title="/data/ai 287 G (plan doc)"
                 >
                   <span>ai</span><span class="sz">287 G</span>
                 </div>
                 <div
                   class="seg seg-yellow"
-                  style="flex-grow: 20"
-                  title="/data/models 210 G"
+                  style="flex-grow: 210"
+                  title="/data/models 210 G (plan doc)"
                 >
                   <span>models</span><span class="sz">210 G</span>
                 </div>
                 <div
                   class="seg seg-yellow"
-                  style="flex-grow: 10"
-                  title="Steam 106 G"
+                  style="flex-grow: 106"
+                  title="SteamLibrary 106 G (plan doc)"
                 >
                   <span>Steam</span><span class="sz">106 G</span>
                 </div>
                 <div
                   class="seg seg-yellow"
-                  style="flex-grow: 9"
-                  title="/data/llamacpp-models 92 G"
+                  style="flex-grow: 92"
+                  title="/data/llamacpp-models 92 G (plan doc)"
                 >
                   <span>llamacpp</span><span class="sz">92 G</span>
                 </div>
                 <div
                   class="seg seg-neutral"
-                  style="flex-grow: 33"
-                  title="free ~330 G"
+                  style="flex-grow: 193"
+                  title="unclassified: df used 888 G minus the 695 G of categorized plan-doc figures; containers/cache measured ~0, tmp-crush-test 380 M; the balance is other dirs + snapshot-pinned extents"
                 >
-                  <span>free</span><span class="sz">~330 G</span>
+                  <span>unclassified + pinned</span><span class="sz">~193 G</span>
+                </div>
+                <div
+                  class="seg seg-green"
+                  style="flex-grow: 142"
+                  title="df avail: 142 G"
+                >
+                  <span>free</span><span class="sz">142 G</span>
                 </div>
               </div>
 
               <div class="bar-caption">
-                p9 XFS (~100 G) &middot; ClickHouse, the endurance sacrificial
-                disk
+                p9 XFS (100 G, df: 32 G used) &middot; ClickHouse, the endurance
+                sacrificial disk
               </div>
               <div class="disk-bar">
                 <div
                   class="seg seg-yellow"
-                  style="flex-grow: 75"
-                  title="~70 G telemetry, ~180 G/day async writes"
+                  style="flex-grow: 32"
+                  title="~32 G measured (df); the plan doc's ~70 G estimate was stale. ~180 G/day async writes stay here on purpose."
                 >
-                  <span>ClickHouse telemetry</span><span class="sz">~70 G</span
-                  ><span class="ph"
-                    >~180 G/day writes stay here on purpose</span
-                  >
+                  <span>ClickHouse telemetry</span><span class="sz">32 G</span><span class="ph">~180 G/day writes stay here on purpose</span>
                 </div>
-                <div class="seg seg-neutral" style="flex-grow: 25">
-                  <span>free</span><span class="sz">~25 G</span>
+                <div
+                  class="seg seg-green"
+                  style="flex-grow: 69"
+                  title="df avail: 69 G"
+                >
+                  <span>free</span><span class="sz">69 G</span>
                 </div>
               </div>
 
               <div class="callout">
-                <strong>Partition numbers where known</strong>
-                p6 = root <code>@</code> (with <code>@nix</code> and
-                <code>@cache-home</code> subvols, <code>/home</code> inside
-                <code>@</code>), p8 = <code>/data</code>, p9 = ClickHouse XFS.
-                ESP and any remaining partitions are unchanged and not drawn to
-                scale. Root fs size ~723 GiB from the gc-guard era device
-                figure.
+                <strong>Sourcing</strong>
+                Partition geometry: live <code>lsblk</code> (2026-08-31). Root
+                fs used/avail: <code>df</code> (551 G used / 128 G avail).
+                Category figures (/nix 129, /home 268, @cache-home ~16, hot DBs
+                &le;50, /data breakdown) are the decision doc's estimates;
+                ClickHouse corrected from the doc's stale ~70 G to the measured
+                32 G, and the pool's true usage is 1.1 T (not the doc's 29 T).
+                Correcting the decision doc's occupancy block is a pending
+                edit.
               </div>
             </div>
           </div>
         </section>
 
         <section id="boot">
-          <h2>
-            <span class="num">03</span>Boot chain: QLC stays the boot disk
-          </h2>
+          <h2><span class="num">03</span>Boot chain: QLC stays the boot disk</h2>
           <p>
-            The ESP and systemd-boot stay on the Lexar, untouched. Boot I/O
-            fails the TLC test: read once per boot, sequential, nobody waiting
-            interactively. Root
+            The ESP and systemd-boot stay on the Lexar (p7, 4 G vfat,
+            lsblk-confirmed), untouched. Boot I/O fails the TLC test: read once
+            per boot, sequential, nobody waiting interactively. Root
             <code>@</code> stays on QLC regardless, so moving the ESP buys zero
             failure-domain improvement, and keeping the boot path byte-identical
-            is what keeps Phase 1 rollback simple.
+            is what keeps Phase 1 rollback simple. Samsung p1 reserves exactly
+            4 G for a future ESP, mirroring the Lexar's own ESP size, so a
+            boot-migration one day is zero-repartition.
           </p>
 
           <div class="bootline">
-            <b>UEFI</b> &rarr; <b>ESP</b> (Lexar, ~1 G)
-            <span class="stays">&middot; stays</span> &rarr;
-            <b>systemd-boot</b> &rarr; <b>kernel + initrd</b> (on ESP)
-            <span class="stays">&middot; stays</span> &rarr; initrd mounts
-            <b>root @</b> (Lexar) + <b>/nix</b> (Samsung, <b>neededForBoot</b>)
+            <b>UEFI</b> &rarr; <b>ESP</b> (Lexar p7, 4 G vfat /boot) <span class="stays">&middot; stays</span> &rarr;
+            <b>systemd-boot</b> &rarr; <b>kernel + initrd</b> (on ESP) <span class="stays">&middot; stays</span> &rarr;
+            initrd mounts <b>root @</b> (Lexar) + <b>/nix</b> (Samsung p2 subvol nix, <b>neededForBoot</b>)
           </div>
           <div class="bootline">
-            switch-root &rarr; <b>stage 2</b> &rarr; systemd activates every
-            unit from <b>/nix on the Samsung</b> &middot; root fs, /home, /data
-            remain on the Lexar
+            switch-root &rarr; <b>stage 2</b> &rarr; systemd activates every unit
+            from <b>/nix on the Samsung</b> &middot; root fs, /home, /data remain
+            on the Lexar
           </div>
 
           <div class="grid-2">
@@ -1645,7 +1867,8 @@
                 Samsung dead: initrd drops to emergency shell, cannot mount
                 <code>/nix</code>. QLC dead: no bootloader, no root. The failure
                 modes are symmetric; rescue runbooks for both are in the risks
-                section.
+                section. The reserved Samsung p1 is empty until boot-migration
+                day, so until then it changes nothing about the boot path.
               </p>
             </div>
             <div class="card card-solution">
@@ -1680,7 +1903,9 @@
                 <tr>
                   <td>DB fsync (auth, photo browse, git push)</td>
                   <td class="no">~200 ms on CoW BTRFS root</td>
-                  <td class="yes">0.78 ms on dedicated XFS</td>
+                  <td class="yes">
+                    ~1&ndash;2 ms in the nodatacow <code>hot</code> subvol
+                  </td>
                 </tr>
                 <tr>
                   <td>Model cold-load co-tenancy</td>
@@ -1691,7 +1916,7 @@
                   <td>Root chunk-unalloc</td>
                   <td class="no">~6.4 GiB, CRITICAL</td>
                   <td class="yes">
-                    +179 G structurally freed, balance pressure resolves
+                    +179 G structurally vacated, balance pressure resolves
                   </td>
                 </tr>
                 <tr>
@@ -1700,6 +1925,11 @@
                   <td class="yes">
                     Full-disk readers serialized by role separation
                   </td>
+                </tr>
+                <tr>
+                  <td>/nix store footprint</td>
+                  <td>129 G raw on root fs</td>
+                  <td class="yes">~68 G physical (measured 1.89&times; zstd)</td>
                 </tr>
                 <tr>
                   <td>Boot path</td>
@@ -1728,7 +1958,8 @@
               <tbody>
                 <tr>
                   <td>
-                    AI models (<code>/data/ai</code>, <code>/data/models</code>,
+                    AI models (<code>/data/ai</code>,
+                    <code>/data/models</code>,
                     <code>/data/llamacpp-models</code>)
                   </td>
                   <td><strong>589 G</strong></td>
@@ -1744,22 +1975,20 @@
                 <tr>
                   <td>Steam</td>
                   <td>106 G</td>
-                  <td>
-                    Game-launch only; big immutable files read as streams.
-                  </td>
+                  <td>Game-launch only; big immutable files read as streams.</td>
                 </tr>
                 <tr>
                   <td>ClickHouse (p9 XFS)</td>
-                  <td>~70 G used / ~100 G</td>
+                  <td>32 G used / 100 G (measured)</td>
                   <td>
                     ~180 G/day of async telemetry writes makes it the endurance
-                    sacrificial disk; dashboard queries tolerate latency. Moving
-                    it would roughly double Samsung write volume.
+                    sacrificial disk; dashboard queries tolerate latency.
+                    Moving it would roughly double Samsung write volume.
                   </td>
                 </tr>
                 <tr>
                   <td>Backups, media, archive</td>
-                  <td>~29 T logical</td>
+                  <td>1.1 T used (df, measured)</td>
                   <td>
                     HDD pool by role; also the home of attic, the /nix
                     disaster-rebuild source.
@@ -1767,7 +1996,7 @@
                 </tr>
                 <tr>
                   <td>Swap</td>
-                  <td>zram ~33 G</td>
+                  <td>zram 28.1 G (measured)</td>
                   <td>
                     No disk swap on this box; zram-only doctrine with swappiness
                     150.
@@ -1775,7 +2004,7 @@
                 </tr>
                 <tr>
                   <td>ESP + bootloader</td>
-                  <td>~1 G</td>
+                  <td>p7, 4 G vfat</td>
                   <td>
                     Read once per boot; QLC stays the boot disk (section 03).
                   </td>
@@ -1791,29 +2020,26 @@
             <div class="card">
               <h4>RAM: 128 G</h4>
               <p>
-                zram swap ~33 G (<code>memoryPercent 30</code>),
-                <code>/tmp</code> capped at 48 G tmpfs, page cache absorbs every
-                warm working set. Nothing in this plan touches the memory
-                doctrine.
+                zram swap 28.1 G (measured), <code>/tmp</code> capped at 48 G
+                tmpfs, page cache absorbs every warm working set. Nothing in
+                this plan touches the memory doctrine.
               </p>
             </div>
             <div class="card card-warning">
               <h4>USB buildcache: 240 G ext4</h4>
               <p>
                 Go caches ~96 G (go-build 65 + go-mod 13 + aux 18). Phase 4
-                moves the 78 G of
-                <code>GOCACHE</code>+<code>GOMODCACHE</code> to Samsung; rust,
-                pnpm and playwright stay (cold, big). No TRIM through the JMS567
-                bridge.
+                moves the 78 G of <code>GOCACHE</code>+<code>GOMODCACHE</code>
+                to Samsung; rust, pnpm and playwright stay (cold, big). No TRIM
+                through the JMS567 bridge.
               </p>
             </div>
             <div class="card">
               <h4>HDD pool: 2&times;16 T RAID1</h4>
               <p>
-                Backups, media, archive. Unchanged by the plan. Nightly DB dumps
-                keep landing here after Phase 2 (dump-style backups are
-                location-agnostic, which is what makes the XFS move free of
-                backup-topology constraints).
+                Backups, media, archive (1.1 T used, df-measured). Unchanged by
+                the plan. Nightly DB dumps keep landing here after Phase 2.
+                Also hosts attic, the /nix disaster-rebuild source.
               </p>
             </div>
           </div>
@@ -1826,43 +2052,43 @@
               <thead>
                 <tr>
                   <th>Phase</th>
-                  <th>Lands on Samsung</th>
+                  <th>Lands on Samsung p2</th>
                   <th>Size</th>
                   <th>Cumulative used</th>
-                  <th>Free</th>
+                  <th>Free (of 927.5 G)</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td>P1</td>
                   <td>
-                    <code>/nix</code>, zstd-compressed (129 G raw &rarr;
-                    80&ndash;90 G)
+                    <code>nix</code>, zstd (129 G raw &rarr; ~68 G, measured
+                    1.89&times;)
                   </td>
-                  <td>~85 G &rarr; p2</td>
-                  <td>~85 G of 860 G</td>
-                  <td>~775 G</td>
+                  <td>~68 G</td>
+                  <td>~68 G</td>
+                  <td>~859 G</td>
                 </tr>
                 <tr>
                   <td>P2</td>
-                  <td>Hot DBs &rarr; p1 XFS (own partition)</td>
-                  <td>&le;50 G of 64 G</td>
-                  <td>p1: &le;50 G</td>
-                  <td>p1: &ge;14 G (XFS cannot shrink; sized for years)</td>
+                  <td><code>hot</code> subvol (nodatacow, no compression)</td>
+                  <td>&le;50 G</td>
+                  <td>~118 G</td>
+                  <td>~809 G</td>
                 </tr>
                 <tr>
                   <td>P4 optional</td>
-                  <td>GOCACHE + GOMODCACHE</td>
-                  <td>~78 G &rarr; p2</td>
-                  <td>~163 G</td>
-                  <td>~697 G</td>
+                  <td><code>caches</code>: GOCACHE + GOMODCACHE</td>
+                  <td>78 G</td>
+                  <td>~196 G</td>
+                  <td>~731 G</td>
                 </tr>
                 <tr>
                   <td>P3 optional</td>
-                  <td><code>/home</code></td>
-                  <td>~268 G &rarr; p2</td>
-                  <td>~431 G</td>
-                  <td>~429 G</td>
+                  <td><code>home</code></td>
+                  <td>~268 G</td>
+                  <td>~464 G</td>
+                  <td>~463 G</td>
                 </tr>
               </tbody>
             </table>
@@ -1878,7 +2104,7 @@
             Deleting <code>@nix</code> after the 3-day soak frees 129 G
             IMMEDIATELY: it is a sibling subvol, deliberately outside btrbk
             <code>@</code> snapshots since the 2026-08-17 migration, so nothing
-            pins those extents.
+            pins those extents. The hot DBs vacate with Phase 2.
           </div>
         </section>
 
@@ -1893,10 +2119,10 @@
             <div class="migration-content">
               <h4>Prerequisites (no hardware)</h4>
               <p>
-                Deploy the staged balance fix (gawk/class runtimeInputs,
-                chunk-unalloc ~6.4 G CRITICAL) and fix the /data EIO inode (P0)
-                so nightly btrbk stops walking 86 G into an abort. Both reduce
-                QLC pressure before any migration writes.
+                Deploy the staged balance fix (chunk-unalloc ~6.4 G CRITICAL)
+                and fix the /data EIO inode (P0) so nightly btrbk stops walking
+                86 G into an abort. Both reduce QLC pressure before any
+                migration writes.
               </p>
             </div>
           </div>
@@ -1904,18 +2130,26 @@
           <div class="migration-step">
             <div class="migration-num">1</div>
             <div class="migration-content">
-              <h4>/nix &rarr; Samsung p2 (the big one)</h4>
+              <h4>
+                Partitions + /nix &rarr; Samsung p2 subvol <code>nix</code> (the
+                big one)
+              </h4>
               <p>
-                Partition + <code>mkfs.btrfs -L nix</code> + subvol
-                <code>nix</code> + live <code>rsync -aH --delete</code>. Quiesce
-                builds AND <code>auto-optimise-store</code> AND nix-gc timers
-                (the optimiser rewrites hardlinks on every store add), final
-                delta sync. Add <code>fileSystems."/nix"</code> (by-label,
-                <code>neededForBoot = true</code>, nofail OFF) and deploy.
-                CRITICAL ordering: the deploy itself realizes new store paths
-                onto the QLC AFTER your sync, so run a delta rsync AGAIN after
-                deploy and BEFORE reboot, or the new generation's closure is
-                incomplete on the Samsung. Reboot. Verify:
+                <code>sgdisk</code>: p1 ef00 +4 G, p2 8300 rest.
+                <code>mkfs.fat -F32 -n SAMSUNG-EFI</code> p1 (formatted,
+                UNMOUNTED, reserved). <code>mkfs.btrfs -L tlc</code> p2 +
+                <code>subvol create nix</code>. Live
+                <code>rsync -aH --delete</code> of the store. Quiesce builds
+                AND <code>auto-optimise-store</code> AND nix-gc timers (the
+                optimiser rewrites hardlinks on every store add), final delta
+                sync. Add <code>fileSystems."/nix"</code> (by-label tlc,
+                <code>subvol = "nix"</code>,
+                <code>neededForBoot = true</code> REQUIRED: stage-2 init lives
+                in /nix/store; nofail OFF) and deploy. CRITICAL ordering: the
+                deploy itself realizes new store paths onto the QLC AFTER your
+                sync, so run a delta rsync AGAIN after deploy and BEFORE
+                reboot, or the new generation's closure is incomplete on the
+                Samsung. Reboot. Verify:
                 <code>readlink /run/current-system</code>,
                 <code>nixos-rebuild</code>, fio sanity, shell-exec latency
                 during a build storm (the acceptance test). Soak 3 days, then
@@ -1927,16 +2161,26 @@
           <div class="migration-step">
             <div class="migration-num">2</div>
             <div class="migration-content">
-              <h4>Hot DBs &rarr; Samsung p1 XFS, one service at a time</h4>
+              <h4>
+                Hot DBs &rarr; <code>hot</code> subvol (nodatacow), one service
+                at a time
+              </h4>
               <p>
-                pocket-id &rarr; postgres &rarr; forgejo: stop, rsync dataDir
-                (or bind-mount the XFS dir at the existing path), restart, gatus
-                green. Consider extending the candidate list by the same
-                classifier: dnsblockd (hottest write DB on root), gatus,
-                papdashboard sqlite. Honest RPO note: these DBs leave btrbk
-                snapshot coverage, so nightly dumps become the sole recovery
-                path (equivalent cadence, weaker mechanism); postgres WAL
-                archiving is a sensible Phase 2.5.
+                Mount-gated oneshot creates <code>hot</code> plus nested
+                per-service subvol boundaries (pocket-id, postgres, forgejo),
+                sets <code>chattr +C</code> per subvol root; mount
+                <code>/var/lib/hot</code> with <code>-o nodatacow</code>. Per
+                service: stop &rarr; rsync &rarr; dataDir re-point &rarr; restart
+                &rarr; gatus green. Checkpoints are ONE-SHOT btrfs snapshots,
+                deleted after the migration (scheduled snapshots would silently
+                revert touched extents to CoW); an eval-time assertion keyed on
+                the <code>hot</code> prefix enforces the policy. Candidates by
+                the same classifier: dnsblockd (hottest write DB on root),
+                papdashboard; gatus joins WITHOUT <code>+C</code> (integrity
+                over latency for a monitoring store). Honest RPO note: these
+                DBs leave btrbk snapshot coverage, so nightly dumps become the
+                sole recovery path; postgres WAL archiving is a sensible
+                Phase 2.5.
               </p>
             </div>
           </div>
@@ -1944,13 +2188,13 @@
           <div class="migration-step">
             <div class="migration-num">3</div>
             <div class="migration-content">
-              <h4>/home decision (trigger-based)</h4>
+              <h4>/home &rarr; subvol <code>home</code> (trigger-based)</h4>
               <p>
                 Stays on QLC by default. Trigger: if post-P1/P2 the QLC still
-                feels slow for
-                <code>git status</code> / editor opens during IO storms. Fits on
-                Samsung (~431 G cumulative). Cost: btrbk root-snapshot scope
-                change + HM symlink re-point + one offline window.
+                feels slow for <code>git status</code> / editor opens during IO
+                storms. <code>subvol create home</code>, no partition work.
+                Cost: btrbk root-snapshot scope change + HM symlink re-point +
+                one offline window.
               </p>
             </div>
           </div>
@@ -1958,11 +2202,12 @@
           <div class="migration-step">
             <div class="migration-num">4</div>
             <div class="migration-content">
-              <h4>Go caches &rarr; Samsung p2 (optional)</h4>
+              <h4>Go caches &rarr; subvol <code>caches</code> (optional)</h4>
               <p>
-                Move GOCACHE + GOMODCACHE only (~78 G); rust/pnpm/playwright
+                Move GOCACHE + GOMODCACHE only (78 G); rust/pnpm/playwright
                 stay on USB. Compile-iteration cache-hit reads go 2.2 ms &rarr;
-                27 &micro;s.
+                27 &micro;s. <code>subvol create caches</code>, no partition
+                work.
               </p>
             </div>
           </div>
@@ -1983,8 +2228,8 @@
                   <td>Boot now requires the Samsung</td>
                   <td>
                     <code>nofail</code> OFF (must mount),
-                    <code>neededForBoot = true</code>
-                    explicit; runbook A below; QLC boot partitions untouched.
+                    <code>neededForBoot = true</code> explicit; runbook A below;
+                    QLC boot partitions untouched.
                   </td>
                 </tr>
                 <tr>
@@ -2003,10 +2248,28 @@
                   </td>
                 </tr>
                 <tr>
+                  <td>Partition geometry mistakes are unfixable in place</td>
+                  <td>
+                    Starts never move: ESP carved day one (4 G), one BTRFS pool
+                    takes the rest, future XFS only ever carved fresh from p2's
+                    tail via online shrink. No mid-disk carve, ever.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Snapshot landmine re-enables CoW on <code>hot</code></td>
+                  <td>
+                    No scheduled snapshots; one-shot checkpoints deleted after
+                    use; eval-time assertion keyed on the <code>hot</code>
+                    prefix (never in btrbk).
+                  </td>
+                </tr>
+                <tr>
                   <td>Samsung dies: /nix + hot DBs lost</td>
                   <td>
                     /nix rebuildable (flake.lock + attic on the pool); DBs have
                     nightly dump backups on the pool (14d/7d); runbook B below.
+                    Until boot-migration day the reserved p1 is empty: QLC boot
+                    path unaffected.
                   </td>
                 </tr>
                 <tr>
@@ -2036,7 +2299,7 @@
 
           <pre><code><span class="tok-comment">Runbook A: Samsung dead (initrd emergency shell: cannot mount /nix)</span>
   1. Boot live media (or a generation with the old layout)
-  2. Remove the fileSystems.&quot;/nix&quot; entry (by-label nix)
+  2. Remove the fileSystems.&quot;/nix&quot; entry (by-label tlc, subvol nix)
   3. Re-mount the old @nix subvol at /nix, or rebuild the store:
      flake.lock + attic (on the HDD pool)</code></pre>
 
@@ -2048,40 +2311,75 @@
         </section>
 
         <section id="decisions">
-          <h2><span class="num">10</span>Open decisions</h2>
-          <div class="issue issue-important">
-            <span class="severity severity-important">User ratification</span>
-            <h3>1. Layout: 64 G XFS + ~860 G BTRFS</h3>
+          <h2><span class="num">10</span>Decisions</h2>
+          <div class="issue issue-nice">
+            <span class="severity severity-nice">Ratified in review</span>
+            <h3>
+              1. Partition layout: ESP 4 G + ONE BTRFS pool, hot DBs on a
+              nodatacow subvol
+            </h3>
+            <div class="where">
+              supersedes the decision doc's "XFS remains the choice for the
+              hot-DB partition" and the Rev 1 64 G XFS p1
+            </div>
             <p>
-              Recommended over single-BTRFS-with-noCoW-dirs:
-              <code>nodatacow</code> drops data checksums, and you want
-              checksumming under <code>/nix</code> (nix does not verify on
-              read); the XFS hot-DB partition follows the clickhouse precedent
-              cleanly.
+              Partition starts never move; BTRFS shrinks only from its end; XFS
+              never shrinks. A mid-disk XFS (Rev 1's 64 G, 14 G headroom on
+              &le;50 G of DBs) could NEVER grow. Hence: p1 = 4 G ESP (ef00,
+              FAT32 <code>SAMSUNG-EFI</code>, formatted now, unmounted,
+              mirroring the Lexar's own 4 G ESP), p2 = ~927.5 G BTRFS
+              <code>tlc</code> holding every role as subvols; future XFS is
+              carved fresh from the tail at the moment of need. Hot DBs ride a
+              <code>hot</code> subvol with <code>-o nodatacow</code>: fsync
+              ~1&ndash;2 ms vs XFS ~1 ms (noise for these workloads) in exchange
+              for full pool elasticity.
             </p>
           </div>
-          <div class="issue issue-important">
-            <span class="severity severity-important">User ratification</span>
-            <h3>
-              2. Phase ordering: 0 &rarr; 1 &rarr; 2, then decide 3/4 from data
-            </h3>
+          <div class="issue issue-nice">
+            <span class="severity severity-nice">Resolved (benchmarked)</span>
+            <h3>2. Filesystem for <code>/nix</code>: BTRFS + compress=zstd</h3>
+            <div class="where">
+              scripts/bench-nix-fs.sh &middot; recorded in the decision doc
+              2026-08-31
+            </div>
             <p>
-              Phase 0 (balance fix + EIO inode) is the gate; Phase 1 delivers
-              most of the value; Phases 3/4 are trigger- and data-driven.
+              Performance a wash across ext4/XFS/BTRFS under live load;
+              compression is the separator at a measured 1.89&times; (129 G &rarr;
+              ~68 G). <code>noatime,compress=zstd</code>, NOT
+              <code>compress-force</code>.
             </p>
           </div>
           <div class="issue issue-nice">
             <span class="severity severity-nice">Resolved in review</span>
             <h3>3. Boot disk: QLC (ESP + systemd-boot untouched)</h3>
             <p>
-              Settled 2026-08-31: boot I/O fails the TLC classifier, root stays
-              on QLC either way, and an untouched boot path keeps Phase 1
-              rollback trivial.
+              Boot I/O fails the TLC classifier, root stays on QLC either way,
+              and an untouched boot path keeps Phase 1 rollback trivial. The
+              reserved Samsung p1 makes any future migration zero-repartition.
+            </p>
+          </div>
+          <div class="issue issue-important">
+            <span class="severity severity-important">User ratification</span>
+            <h3>
+              4. Phase ordering: 0 &rarr; 1 &rarr; 2, then decide 3/4 from data
+            </h3>
+            <p>
+              Phase 0 (balance fix + EIO inode) is the gate; Phase 1 delivers
+              most of the value; Phases 3/4 are trigger- and data-driven.
+            </p>
+          </div>
+          <div class="issue issue-important">
+            <span class="severity severity-important">Optional, decide at P2</span>
+            <h3>5. Enable qgroups on the Samsung pool?</h3>
+            <p>
+              TLC exempts it from the QLC doctrine; per-service subvols +
+              qgroups give true per-service capacity accounting (collector
+              available in git history). Default OFF until a concrete need.
             </p>
           </div>
           <div class="issue issue-important">
             <span class="severity severity-important">Scheduling</span>
-            <h3>4. Reboot window for Phase 1</h3>
+            <h3>6. Reboot window for Phase 1</h3>
             <p>
               Single reboot, after the post-deploy delta rsync. Expect a full
               store re-warm of the page cache afterwards (first execs pull from
@@ -2092,10 +2390,11 @@
 
         <footer class="footer">
           <p>
-            Generated 2026-08-31 &middot; Companion to
+            Generated 2026-08-31 &middot; Rev 2 &middot; Companion to
             docs/planning/2026-08-31_samsung-role-assignment-first-principles.md
-            &middot; Sizes marked ~ are approximate or estimated; measured
-            figures cite the 2026-08-31 benchmark run under live load
+            &middot; Partition geometry and used/avail figures measured live on
+            evo-x2 via lsblk/df; category splits marked as plan-doc estimates
+            where noted
           </p>
         </footer>
       </main>
