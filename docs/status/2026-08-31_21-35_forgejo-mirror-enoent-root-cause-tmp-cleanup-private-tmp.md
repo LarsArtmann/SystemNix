@@ -70,3 +70,53 @@
 - `system_forgejo_mirror_{scrape_errors,last_sync_age_seconds,sync_stalled,errors_30m,erroring}` via system-health textfile collector (fail-closed on DB read errors).
 - Gatus "Forgejo Mirror Sync" (5m interval, 3 fail-closed body conditions, Discord alert with runbook text).
 - Known blind spot (documented, accepted): `updated_unix` advances on failed syncs → DB-age metric alone cannot see fetch-failure storms; only `errors_30m` can.
+
+---
+
+# ROUND 2 (2026-08-31 ~23:40) — blast radius, mechanism proof, prevention shipped
+
+Follow-up session executing §7 items 1-4. All verification gates green: `nix fmt --no-update-lock-file -- --ci` clean, `nix flake check --no-build` PASS, VM test PASS.
+
+## 9. Blast radius (§7.3 DONE) — forgejo was NOT alone: 4 victims, ~16.9k lines
+
+Full-window journal sweep (Aug 18 15:28 → Aug 30 23:03, `journalctl --grep` for messages pairing a `/tmp/...` path with "no such file", aggregated per unit via json+python):
+
+| Unit | Lines | Symptom | Lasting damage |
+| --- | --- | --- | --- |
+| forgejo.service | 16,318 | `AddAuthCredentialHelperForRemote` mirror-sync aborts | 12 days of missed upstream commits (~100 mirrors); caught up Aug 31 ~15:02 |
+| discordsync.service | 550 | `failed to create temp file: open /tmp/discordsync-download-*` (attachment downloads) | **NONE — self-healed**: the reconcile loop re-downloaded after the heal; Aug 31 has 0 download failures and reconciliation completed |
+| paperless-task-queue.service | 5 | celery `FileNotFoundError: /tmp/pymp-*` (01:30 daily scheduler hits) | transient task failures; no data loss |
+| immich-machine-learning.service | 2 | wgunicorn `tempfile.mkstemp` `FileNotFoundError` | transient worker failures |
+
+All four run `PrivateTmp=true` (verified in deployed unit files) — same mechanism. Unrelated noise excluded from the count: twenty/fail2ban/caddy/manifest each logged 3-6 systemd-internal `mount-rootfs/tmp` namespace warnings (different signature, not the tmp-cleanup class).
+
+**Correction to Round 1's "audit ~70 other services" framing:** the sweep bounds the actual damage — 4 services errored visibly; no other PrivateTmp consumer showed tmp-ENOENT in the window. Any silent victims (services that failed without logging, or restart-masked) remain theoretically possible but unevidenced.
+
+## 10. Mechanism PROVEN in a VM (§7.4 DONE, no root needed)
+
+`tests/test-tmp-cleanup.nix` scenario 2 boots a sacrificial `PrivateTmp=true` probe, writes through `/proc/<pid>/root/tmp` (lands inside the private tmp — verified via the backing dir), then host-side `rm -rf`s the backing dir (what the pre-fix tmp-cleanup did):
+
+- The unit's private `/tmp` stays **LISTABLE** — the bind mount resolves to the unlinked inode (forensic print: `private /tmp after backing-dir deletion: listable`).
+- Every file **CREATION** fails (`machine.fail("echo after > /proc/<pid>/root/tmp/after")` — ENOENT).
+- The pre-deletion file is gone with the backing dir.
+
+This upgrades Round 1's caveat ("strong correlation, NOT live repro") to a VM-reproduced fact: **unlink the bind source → dentry disconnected → reads/traversal work, openat(O_CREAT) returns ENOENT.** That read/create asymmetry explains the incident's shape: services kept running and serving while every temp-file write died. `TemporaryFileSystem=/tmp` for forgejo is REJECTED as unnecessary — the cleaner-layer fix + guards protect all ~70 PrivateTmp services at once; a per-unit workaround would protect one.
+
+## 11. Prevention stack shipped (§7.1 + §7.2 DONE) — 4 layers
+
+1. **`modules/nixos/services/tmp-cleaner-audit.nix`** (auto-discovered → imported into evo-x2 via `systems/evo-x2.nix:69`): eval-time assertion rejecting any unit whose Exec*/script option string contains a `/tmp/*` glob + `rm` without a `systemd-private` exclusion (the inline "quick cleanup script" mistake class). Zero false positives on the deployed host config (flake check green).
+2. **Self-assertion in `scheduled-tasks.nix`**: the tmp-cleanup script text is hoisted to module level (`tmpCleanupText`) and asserted (`lib.hasInfix "systemd-private-*) continue"`) — stripping the exclusion fails `nix flake check` with the incident story in the message. Covers the store-path script the cross-module audit cannot see.
+3. **`tests/test-tmp-cleanup.nix`** (VM): imports the REAL module (not a copy), runs the deployed unit against fixtures aged 5h — aged junk removed (exactly 2 entries), fresh entries + dotfiles + an artificially-aged `systemd-private-*` fixture survive — plus the mechanism proof (§10).
+4. **`tests/test-tmp-cleaner-audit.nix`** (pure eval, session-boot-audit pattern): 4 cases — evil inline cleaner caught; exempted cleaner passes; real config produces zero failing tmp-cleaner assertions (no false positives); the `tmp-cleanup guard:` tripwire is present and passing (wired). The source-mutation variant of case 4 is impossible under `flake check --no-build` (importing a synthesized module needs a realized store path) — its behavioral coverage lives in the VM test instead.
+
+## 12. Open questions from Round 1 — evidence gathered
+
+- **Q1 (was the 21:16 switch deliberate?):** generation 744 (21:16:25) is still the running system; no switches since. It shipped dd3479e9 (docker-prune rework + tmp-cleanup guard + crush sops) — content is consistent with an intentional deploy of the evening's batch. User confirmation still pending, but nothing anomalous.
+- **Q3 (keep the 4h timer given cleanOnBoot?):** RECOMMEND KEEPING, now guarded. The timer's marginal value is intra-boot junk on the 48G tmpfs (this box reboots often, but 100+ day uptimes would accumulate); the entire incident class is now fenced by 4 layers (fix + 2 eval guards + VM test). Removing the timer would drop real protection against tmpfs exhaustion (Gatus alerts at 80% but nothing would reclaim).
+- **Q2 (blast radius):** answered by §9 — no lasting damage beyond the known forgejo gap (self-recovered) and transient celery/wgunicorn failures.
+
+## 13. Remaining open
+
+- §7.5 stale `commit-graph.lock` cleanup (user, sudo).
+- Forgejo upstream filing (TODO_LIST line 35): dead-queue silence, TouchMirror masking, credential-helper ENOENT aborts — verify against current upstream main first.
+- Live confirmation that the next timer tick (~00:46, first run with the fixed script) leaves the 45 `systemd-private-*` dirs intact — expected clean; the VM test already proves the behavior deterministically.

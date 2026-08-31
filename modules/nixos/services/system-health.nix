@@ -397,11 +397,27 @@ _: {
               if [ "$FORGEJO_MIRROR_LAST_SYNC_AGE" -ge ${toString forgejoMirrorStalenessSeconds} ] 2>/dev/null; then
                 FORGEJO_MIRROR_STALLED=1
               fi
-              FORGEJO_MIRROR_ERRORS_30M=$(journalctl -u forgejo.service --since "-30 min" --grep "AddAuthCredentialHelperForRemote Error|failed to update mirror repository|pull mirror failed to meet migration URL requirements|failed to get remote address" --output cat --no-pager 2>/dev/null | wc -l) || FORGEJO_MIRROR_ERRORS_30M=0
-              FORGEJO_MIRROR_ERRORS_30M="''${FORGEJO_MIRROR_ERRORS_30M:-0}"
-              FORGEJO_MIRROR_ERRORING=0
-              if [ "$FORGEJO_MIRROR_ERRORS_30M" -ge ${toString forgejoMirrorErrorThreshold} ] 2>/dev/null; then
-                FORGEJO_MIRROR_ERRORING=1
+              # BOTH bounds (the 2026-08-31 oomd lesson applies here too —
+              # live the same evening 23:23-23:40: under I/O pressure this
+              # UNBOUNDED journal walk was slow enough that FOUR consecutive
+              # collector runs hit the 3min unit timeout, wrote NO textfile,
+              # and paged SEV1 SYSTEM MONITORING STALE mid-movie on every
+              # flap cycle). `timeout 30` bounds it; journalctl exit 1 (no
+              # matches) is a VALID empty count; exit >= 2 / timeout 124
+              # fails VISIBLE via scrape_errors — never a phantom 0-error
+              # green.
+              forgejo_scan_status=0
+              FORGEJO_MIRROR_ERRORS_30M=$(timeout 30 journalctl -u forgejo.service --since "-30 min" --grep "AddAuthCredentialHelperForRemote Error|failed to update mirror repository|pull mirror failed to meet migration URL requirements|failed to get remote address" --output cat --no-pager 2>/dev/null | wc -l) || forgejo_scan_status=$?
+              if [ "$forgejo_scan_status" -le 1 ]; then
+                FORGEJO_MIRROR_ERRORS_30M="''${FORGEJO_MIRROR_ERRORS_30M:-0}"
+                FORGEJO_MIRROR_ERRORING=0
+                if [ "$FORGEJO_MIRROR_ERRORS_30M" -ge ${toString forgejoMirrorErrorThreshold} ] 2>/dev/null; then
+                  FORGEJO_MIRROR_ERRORING=1
+                fi
+              else
+                echo "system-health: forgejo mirror journal scan failed (status $forgejo_scan_status)" >&2
+                FORGEJO_MIRROR_ERRORS_30M=""
+                FORGEJO_MIRROR_SCRAPE_ERRORS=1
               fi
             fi
           fi
@@ -954,10 +970,13 @@ _: {
             echo "# HELP docker_container_restart_alert 1 if container restarted >=${toString dockerRestartAlertThreshold} times since last collection, 0 otherwise"
             echo "# TYPE docker_container_restart_alert gauge"
 
-            if [ "$collect_docker" = "true" ] && docker info >/dev/null 2>&1; then
+            # timeout-bounded: a wedged/slow dockerd must never stall the
+            # collector into its unit timeout (same class as the 2026-08-31
+            # evening forgejo journal walk).
+            if [ "$collect_docker" = "true" ] && timeout 15 docker info >/dev/null 2>&1; then
               : > "''${DOCKER_STATE}.tmp"
-              for cname in $(docker ps --format '{{.Names}}' 2>/dev/null); do
-                cur_rc=$(docker inspect --format '{{.RestartCount}}' "$cname" 2>/dev/null) || cur_rc=0
+              for cname in $(timeout 15 docker ps --format '{{.Names}}' 2>/dev/null); do
+                cur_rc=$(timeout 10 docker inspect --format '{{.RestartCount}}' "$cname" 2>/dev/null) || cur_rc=0
                 cur_rc="''${cur_rc:-0}"
                 echo "$cname $cur_rc" >> "''${DOCKER_STATE}.tmp"
                 prev_rc="''${prev_docker_restarts[$cname]:-0}"

@@ -86,17 +86,19 @@ let
   cases = [
     {
       name = "inline-glob-cleaner-not-caught";
-      pass = (failing (evalAssertions [
-        audit
-        evilInlineCleaner
-      ])) != [ ];
+      pass =
+        (failing (evalAssertions [
+          audit
+          evilInlineCleaner
+        ])) != [ ];
     }
     {
       name = "exempted-inline-cleaner-rejected";
-      pass = (failing (evalAssertions [
-        audit
-        exemptedInlineCleaner
-      ])) == [ ];
+      pass =
+        (failing (evalAssertions [
+          audit
+          exemptedInlineCleaner
+        ])) == [ ];
     }
     {
       name = "real-scheduled-tasks-failing-its-own-guard";

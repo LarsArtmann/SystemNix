@@ -17,8 +17,13 @@
 #   5. Module-absent gate: guard timer DISABLED + prom still missing —
 #      must NOT fire GUARD DEAD (host simply does not run the guard).
 #   6. Infra critical (system_das_link_present 0): DAS USB LINK DOWN.
+#   6b. Monitoring stale: NOTIFY tier — alert file written with severity
+#       "notify" (line 4), page_alerts_active 0, and re-notification
+#       after a clear/refire cycle suppressed by the cooldown (the
+#       2026-08-31 movie-night flap class: 4 consecutive collector
+#       timeouts re-paged the fullscreen overlay every cycle).
 #   7. Clear: healthy inputs again — alert file REMOVED, state cleared,
-#      alerts_active 0.
+#       alerts_active 0.
 #   8. Boot grace: pre-shutdown-stale guard prom on a FRESH boot (< 600s
 #      uptime) must NOT page GUARD DEAD / STALE (2026-08-31 false-page class).
 { pkgs }: {
@@ -129,6 +134,15 @@
           "grep -oP '^ExecStart=\\K.*' /etc/systemd/system/sev1-bridge.service"
       ).strip()
 
+      def run_bridge_raw(guard_prom, health_prom):
+          return machine.succeed(
+              f"SEV1_BOOT_GRACE_SEC=0"
+              f" GUARD_PROM={guard_prom}"
+              f" HEALTH_PROM={health_prom}"
+              f" SEV1_ALERT_FILE=/tmp/sev1/alert"
+              f" SEV1_PROM_OUT=/tmp/sev1/bridge.prom {script} 2>&1"
+          )
+
       def run_bridge(case):
           # SEV1_BOOT_GRACE_SEC=0: the VM is freshly booted (< 600s uptime),
           # so the boot-grace window would otherwise suppress the very
@@ -157,9 +171,11 @@
       alert = machine.succeed("cat /tmp/sev1/alert")
       assert "MEMORY EMERGENCY GUARD TRIPPED" in alert
       assert "journalctl -u memory-emergency-guard" in alert
-      # Third line = generated-at epoch (the overlay's self-expiry anchor).
+      # Third line = generated-at epoch (the overlay's self-expiry anchor),
+      # fourth line = severity ("page" = fullscreen overlay eligible).
       lines = alert.strip().split("\n")
-      assert len(lines) == 3 and lines[2].isdigit(), "alert file must be title/detail/epoch"
+      assert len(lines) == 4 and lines[2].isdigit(), "alert file must be title/detail/epoch/severity"
+      assert lines[3] == "page", "guard trip must be PAGE tier (fullscreen overlay)"
       machine.succeed("test -f /var/lib/sev1-escalation/last-alert-key")
       prom = machine.succeed("cat /tmp/sev1/bridge.prom")
       assert "sev1_bridge_alerts_active 1" in prom
@@ -240,6 +256,33 @@
       assert "DAS USB LINK DOWN" in out
       alert = machine.succeed("cat /tmp/sev1/alert")
       assert "DAS USB LINK DOWN" in alert
+      assert alert.strip().split("\n")[3] == "page", "infra criticals must be PAGE tier"
+
+      # --- 6b. Monitoring stale: NOTIFY tier, no overlay, cooldown-gated --
+      # The 2026-08-31 movie-night class: the collector flapped stale for
+      # ~10 min and the bridge fullscreen-paged on EVERY cycle. Stale must
+      # write the alert file with severity "notify" (overlay ignores it),
+      # report page_alerts_active 0, and suppress re-notification within
+      # the cooldown window across a clear/refire cycle.
+      out = run_bridge_raw("/tmp/sev1/healthy-guard.prom", "/tmp/sev1/does-not-exist.prom")
+      assert "MONITORING STALE" in out, "missing health prom with the module ENABLED must still escalate"
+      assert "severity=notify" in out, "monitoring stale must be NOTIFY tier (no fullscreen overlay)"
+      alert = machine.succeed("cat /tmp/sev1/alert")
+      stale_lines = alert.strip().split("\n")
+      assert stale_lines[3] == "notify", "alert file line 4 must carry the notify severity for the overlay"
+      prom = machine.succeed("cat /tmp/sev1/bridge.prom")
+      assert "sev1_bridge_alerts_active 1" in prom
+      assert "sev1_bridge_page_alerts_active 0" in prom, "stale-only must not count as page-tier"
+      machine.succeed("test -f /var/lib/sev1-escalation/last-notify-epoch")
+
+      # Flap: clear, then immediately re-fire stale — within the 1800s
+      # cooldown the notify-tier notification must be suppressed (the
+      # alert file itself is still written; only the desktop notification
+      # is gated).
+      run_bridge("healthy")
+      out = run_bridge_raw("/tmp/sev1/healthy-guard.prom", "/tmp/sev1/does-not-exist.prom")
+      assert "suppressed (cooldown" in out, "a stale clear/refire flap must not re-notify within the cooldown"
+      machine.succeed("test -f /tmp/sev1/alert")
 
       # --- 7. Clear: healthy again — alert removed ------------------------
       out = run_bridge("healthy")

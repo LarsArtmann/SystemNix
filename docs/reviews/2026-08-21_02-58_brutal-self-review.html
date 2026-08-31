@@ -375,6 +375,9 @@
       .severity-important {
         background: var(--warning);
       }
+      .severity-resolved {
+        background: var(--solution);
+      }
       .severity-nice {
         background: var(--solution);
       }
@@ -1144,7 +1147,7 @@
         </div>
 
         <div class="issue issue-important">
-          <span class="severity severity-important">Open · P1</span>
+          <span class="severity severity-resolved">Resolved · 2026-08-31</span>
           <h3>Forgejo mirror syncs: 2,450 errors/day, unmonitored</h3>
           <div class="where">
             forgejo.service journal · since 2026-08-18 15:28 (forgejo 15.0.6)
@@ -1164,6 +1167,30 @@
             — onset correlates with the Aug 18 15:28 deploy; the PrivateTmp
             hypothesis was checked and <em>disproved</em> (that comment is on
             the backup oneshot). TODO filed with the investigation path.
+          </p>
+          <p
+            style="
+              border-left: 3px solid #4ade80;
+              padding-left: 0.75rem;
+              margin-top: 0.75rem;
+            "
+          >
+            <strong>RESOLVED 2026-08-31</strong> — and three claims in this card
+            were later DISPROVEN: mirrors did NOT complete (runSync aborts
+            before the fetch — ~100 credentialed mirrors missed 12 days of
+            upstream commits), the affected repos were NOT all public, and the
+            PrivateTmp hypothesis was RIGHT (it was the deployed forgejo.service
+            that carried PrivateTmp=true, not the backup oneshot). Root cause:
+            the tmp-cleanup timer deleted systemd-private-* backing dirs (aged
+            &gt;4h); deleting one unlinks the PrivateTmp bind source — /tmp
+            stays listable inside the namespace but every file creation fails
+            ENOENT (proven in a VM regression test). Blast radius: forgejo
+            16,318 errors, discordsync 550 attachment downloads (self-healed via
+            reconcile), paperless celery 5, immich-ml 2. Fix + eval-time audit +
+            VM test:
+            <code
+              >docs/status/2026-08-31_21-35_forgejo-mirror-enoent-root-cause-tmp-cleanup-private-tmp.md</code
+            >.
           </p>
         </div>
 

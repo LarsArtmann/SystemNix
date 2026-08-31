@@ -1240,6 +1240,10 @@ _: {
                   # the desktop overlay/notification path is dead. The
                   # overlay self-expires after 2 min without bridge
                   # refreshes, so a dead bridge cannot stick an overlay.
+                  # Tiered since 2026-08-31: notify-tier conditions (SYSTEM
+                  # MONITORING STALE) fire this Discord alert but do NOT
+                  # fullscreen-overlay by design — sev1_bridge_page_alerts_active
+                  # distinguishes them at the metrics level.
                   url = "http://localhost:${toString nodePort}/metrics";
                   interval = "2m";
                   conditions = [
@@ -1247,7 +1251,7 @@ _: {
                     "[BODY] == pat(*\nsev1_bridge_runs_total *)"
                     "[BODY] != pat(*sev1_bridge_alerts_active [1-9]\n*)"
                   ];
-                  alerts = discordAlert "SEV1 escalation bridge problem: either the bridge died (overlay + desktop notifications for criticals are DOWN — Discord still works) or SEV1 conditions are ACTIVE (guard trip/dead, DAS link, LAN NIC, btrfs critical, zram critical) — a fullscreen overlay should be on the desktop right now. Check: journalctl -u sev1-bridge -n 30, cat /run/systemnix/sev1/alert";
+                  alerts = discordAlert "SEV1 escalation bridge problem: either the bridge died (overlay + desktop notifications for criticals are DOWN — Discord still works) or SEV1 conditions are ACTIVE. Page-tier (guard trip/stall/dead, DAS link, LAN NIC, btrfs/zram critical) = a fullscreen overlay should be on the desktop right now. Notify-tier (e.g. SYSTEM MONITORING STALE) = notification + this Discord alert only, NO overlay BY DESIGN (2026-08-31 movie-night decision). Check: journalctl -u sev1-bridge -n 30, cat /run/systemnix/sev1/alert (line 4 = severity).";
                 })
                 (mkHttpCheck {
                   name = "Hermes Agent Gateway";

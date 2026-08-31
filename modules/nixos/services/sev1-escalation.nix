@@ -24,11 +24,26 @@
 #     - Clear: removes the alert file.
 #     - Emits sev1-bridge.prom (fail-closed presence metric).
 #   sev1-overlay.service (user, graphical-session.target):
-#     - Quickshell fullscreen banner while the alert file is fresh.
+#     - Quickshell fullscreen banner while the alert file is fresh AND its
+#       severity line (line 4) says "page" — notify-tier alerts never
+#       fullscreen.
 #
-# Overlay triggers (user decision): guard-trip, infra-criticals,
-# guard-dead. The PSI warning tier (psi-metrics) deliberately does NOT
-# overlay — Discord + notification only.
+# Overlay triggers are TIERED (user decision 2026-08-31 evening, the
+# movie-night flap session: "stale system_health monitoring is still not
+# something you need to spam my entire screen with"):
+#   page   = fullscreen overlay + persistent critical notification:
+#           guard-trip, sustained memory stall, guard-dead, infra
+#           criticals (DAS link, LAN NIC, btrfs, zram). Drop-everything
+#           conditions a human can act on immediately.
+#   notify = ONE self-expiring normal-urgency desktop notification +
+#           Gatus/Discord, NO overlay: SYSTEM MONITORING STALE. A degraded
+#           metrics collector is not an emergency the user can fix
+#           mid-movie, and the condition is flap-prone (collector
+#           timeouts oscillate stale/healthy — live 23:29-23:40 the same
+#           evening: 4 consecutive 3-min collector timeouts re-paged the
+#           fullscreen overlay on every cycle), so it is additionally
+#           cooldown-gated against re-notification. The PSI warning tier
+#           (psi-metrics) likewise does NOT overlay — Discord only.
 _: {
   flake.nixosModules.sev1-escalation =
     {
@@ -75,6 +90,7 @@ _: {
           now=$(date +%s)
           titles=()
           details=()
+          severities=()
 
           # Boot grace: on a fresh boot the textfile metrics are legitimately
           # absent/stale (their last write happened pre-shutdown; collectors
@@ -125,6 +141,7 @@ _: {
           if [ "$guard_trip" = "1" ]; then
             titles+=("MEMORY EMERGENCY GUARD TRIPPED")
             details+=("The machine entered a pre-freeze zone; FastFlowLM + socket were force-stopped. journalctl -u memory-emergency-guard -n 30")
+            severities+=("page")
           fi
 
           # --- Sustained memory stall (2026-08-31 16:34 freeze class: the
@@ -149,6 +166,7 @@ _: {
             if awk "BEGIN{exit !($g_avg60 >= 45)}" || awk "BEGIN{exit !($g_episodes >= 4)}"; then
               titles+=("MEMORY STALL SUSTAINED")
               details+=("Memory-stall freeze precursor, 2026-08-31 class (avg60=''${g_avg60}%, avg10-episode bucket=''${g_episodes}). Stop heavy builds / VM tests NOW; the guard is (about to be) sacrificing FastFlowLM. journalctl -u memory-emergency-guard -n 30")
+              severities+=("page")
             fi
           fi
 
@@ -158,13 +176,20 @@ _: {
           if [ "$BOOT_GRACE" = "0" ] && [ "$guard_enabled" = "true" ] && { [ "$guard_age" -lt 0 ] || [ "$guard_age" -gt $(( ${toString cfg.staleGuardSeconds} )) ]; }; then
             titles+=("MEMORY GUARD DEAD")
             details+=("memory-emergency-guard metrics are missing/stale (''${guard_age}s old). The automated freeze protection is DOWN. systemctl status memory-emergency-guard")
+            severities+=("page")
           fi
 
           # --- Monitoring stale (system-health textfile collector dead)
           health_age=$(file_age "$HEALTH_PROM")
           if [ "$BOOT_GRACE" = "0" ] && [ "$health_enabled" = "true" ] && { [ "$health_age" -lt 0 ] || [ "$health_age" -gt $(( ${toString cfg.staleHealthSeconds} )) ]; }; then
+            # NOTIFY tier (2026-08-31 user decision): stale monitoring is
+            # Discord/notification-worthy but must NEVER fullscreen-page —
+            # nothing the user can act on mid-movie, and the condition
+            # flaps with collector timeouts. Severity is line 4 of the
+            # alert file; the overlay ignores non-page alerts.
             titles+=("SYSTEM MONITORING STALE")
             details+=("system_health metrics missing/stale (''${health_age}s old). Most Gatus conditions are phantom right now. systemctl status system-health-metrics")
+            severities+=("notify")
           fi
 
           # --- Infra criticals from system_health.prom
@@ -173,16 +198,19 @@ _: {
             if [ "$v" = "0" ]; then
               titles+=("DAS USB LINK DOWN")
               details+=("All external disks (pool + buildcache) share one USB link that just dropped. Physical reseat + reboot may be needed.")
+              severities+=("page")
             fi
             v=$(prom_value "$HEALTH_PROM" "system_lan_nic_present")
             if [ "$v" = "0" ]; then
               titles+=("LAN NIC ABSENT")
               details+=("The RTL8125 fell off the PCIe bus. Power-cycle (full shutdown ~10s, not warm reboot).")
+              severities+=("page")
             fi
             v=$(prom_value "$HEALTH_PROM" "btrfs_health_critical")
             if [ "$v" = "1" ]; then
               titles+=("BTRFS CRITICAL")
               details+=("Filesystem in CRITICAL state (unalloc/meta envelope). btrfs-health metrics; do not add load.")
+              severities+=("page")
             fi
             v=$(prom_value "$HEALTH_PROM" "system_zram_fill_over_threshold")
             if [ "$v" = "1" ]; then
@@ -199,11 +227,27 @@ _: {
               if awk "BEGIN{exit !($g_psi >= 5)}" || awk "BEGIN{exit !($g_avail >= 0 && $g_avail < 15)}"; then
                 titles+=("ZRAM SWAP CRITICAL")
                 details+=("zram (the ONLY swap) is nearly full AND margins are degraded (PSI some avg10=''${g_psi}%, MemAvailable=''${g_avail}%) — shmem becomes unevictable past 100%. The guard should trip; shed load now.")
+                severities+=("page")
               fi
             fi
           fi
 
           alerts_active=''${#titles[@]}
+
+          # Overall severity: "page" if ANY page-tier condition is active,
+          # else "notify". Written as line 4 of the alert file — the
+          # overlay fullscreen-pages ONLY on "page" (notify-tier = one
+          # self-expiring desktop notification + Gatus/Discord).
+          page_active=0
+          for s in "''${severities[@]}"; do
+            if [ "$s" = "page" ]; then
+              page_active=1
+            fi
+          done
+          severity=notify
+          if [ "$page_active" = "1" ]; then
+            severity=page
+          fi
 
           if [ "$alerts_active" -gt 0 ]; then
             title=$(printf '%s; ' "''${titles[@]}" | sed 's/; $//')
@@ -211,9 +255,9 @@ _: {
 
             # Rewrite every run: freshness IS the liveness signal for the
             # overlay (it self-expires when the file goes stale).
-            printf '%s\n%s\n%s\n' "$title" "$detail" "$now" > "$ALERT_FILE"
+            printf '%s\n%s\n%s\n%s\n' "$title" "$detail" "$now" "$severity" > "$ALERT_FILE"
             chmod 0644 "$ALERT_FILE"
-            echo "SEV1 active (''${alerts_active} condition(s)): $title" >&2
+            echo "SEV1 active (''${alerts_active} condition(s), severity=$severity): $title" >&2
 
             # Notify ONLY on transition into a new alert set (dedup via
             # state file) — a persistent condition notifies once.
@@ -223,11 +267,33 @@ _: {
             if [ "$key" != "$prev_key" ]; then
               echo "$key" > "''${STATE_FILE}.tmp"
               mv "''${STATE_FILE}.tmp" "$STATE_FILE"
-              # Best-effort DMS desktop notification via the machined user
-              # bus proxy (AGENTS: root -> user-manager needs --machine).
-              systemd-run --machine="$DESKTOP_USER@.host" --user --collect \
-                ${lib.getExe' pkgs.libnotify "notify-send"} \
-                -u critical -t 0 "SEV1: $title" "$detail" 2>/dev/null || true
+              # Page tier: persistent critical notification (never
+              # cooldown-gated — drop-everything conditions). Notify tier:
+              # self-expiring normal-urgency notification, cooldown-gated
+              # so a flapping collector (stale -> clear -> stale cycles,
+              # live 2026-08-31 evening) cannot re-notify either.
+              send_notification=1
+              notify_urgency=critical
+              notify_expiry=0
+              if [ "$severity" = "notify" ]; then
+                notify_urgency=normal
+                notify_expiry=30000
+                last_notify=0
+                [ -f "${stateDir}/last-notify-epoch" ] && last_notify=$(cat "${stateDir}/last-notify-epoch" 2>/dev/null || echo 0)
+                last_notify="''${last_notify:-0}"
+                if [ $(( now - last_notify )) -lt ${toString cfg.notifyCooldownSeconds} ]; then
+                  send_notification=0
+                  echo "SEV1 notify-tier notification suppressed (cooldown ''$(( now - last_notify ))s < ${toString cfg.notifyCooldownSeconds}s)" >&2
+                fi
+              fi
+              if [ "$send_notification" = "1" ]; then
+                [ "$severity" = "notify" ] && echo "$now" > "${stateDir}/last-notify-epoch"
+                # Best-effort DMS desktop notification via the machined user
+                # bus proxy (AGENTS: root -> user-manager needs --machine).
+                systemd-run --machine="$DESKTOP_USER@.host" --user --collect \
+                  ${lib.getExe' pkgs.libnotify "notify-send"} \
+                  -u "$notify_urgency" -t "$notify_expiry" "SEV1: $title" "$detail" 2>/dev/null || true
+              fi
             fi
           else
             rm -f "$ALERT_FILE"
@@ -249,9 +315,12 @@ _: {
             runs=$(( runs + 1 ))
             echo "$runs" > "${stateDir}/runs.count.tmp" 2>/dev/null && mv "${stateDir}/runs.count.tmp" "${stateDir}/runs.count" || true
 
-            echo "# HELP sev1_bridge_alerts_active Number of active SEV1 conditions (guard trip/dead, monitoring stale, infra criticals)"
+            echo "# HELP sev1_bridge_alerts_active Number of active SEV1 conditions, ANY tier (page = overlay + persistent critical notification, notify = single self-expiring notification, no overlay)"
             echo "# TYPE sev1_bridge_alerts_active gauge"
             echo "sev1_bridge_alerts_active ''${alerts_active}"
+            echo "# HELP sev1_bridge_page_alerts_active Number of active PAGE-tier SEV1 conditions (fullscreen overlay eligible)"
+            echo "# TYPE sev1_bridge_page_alerts_active gauge"
+            echo "sev1_bridge_page_alerts_active ''${page_active}"
             echo "# HELP sev1_bridge_runs_total Total bridge runs since first deploy"
             echo "# TYPE sev1_bridge_runs_total counter"
             echo "sev1_bridge_runs_total ''${runs}"
@@ -286,7 +355,13 @@ _: {
             property string alertTitle: ""
             property string alertDetail: ""
             property real generatedAt: 0
-            readonly property bool active: root.generatedAt > 0 && (Date.now() / 1000 - root.generatedAt) < root.alertTtl
+            // Line 4 of the alert file: "page" (fullscreen overlay) or
+            // "notify" (single notification, NO overlay — e.g. SYSTEM
+            // MONITORING STALE, the 2026-08-31 movie-night decision).
+            // Missing/unknown line 4 fails LOUD (treated as page): a real
+            // emergency must never be silenced by a parse gap.
+            property bool severityIsPage: true
+            readonly property bool active: root.generatedAt > 0 && root.severityIsPage && (Date.now() / 1000 - root.generatedAt) < root.alertTtl
 
             function parseAlert(text) {
                 const lines = (text ?? "").split("\n");
@@ -299,6 +374,7 @@ _: {
                 }
                 root.alertTitle = lines[0] ?? "SEV1";
                 root.alertDetail = lines[1] ?? "";
+                root.severityIsPage = (lines[3] ?? "page").trim() !== "notify";
                 root.generatedAt = gen;
             }
 
@@ -435,7 +511,21 @@ _: {
         staleHealthSeconds = lib.mkOption {
           type = lib.types.int;
           default = 600;
-          description = "system-health metrics age (seconds) beyond which monitoring counts as STALE (SEV1)";
+          description = "system-health metrics age (seconds) beyond which monitoring counts as STALE (notify-tier: single notification + Gatus, NO fullscreen overlay — 2026-08-31 movie-night decision)";
+        };
+
+        notifyCooldownSeconds = lib.mkOption {
+          type = lib.types.int;
+          default = 1800;
+          description = ''
+            Minimum seconds between notify-tier (non-overlay) desktop
+            notifications. Notify-tier conditions (SYSTEM MONITORING STALE)
+            are flap-prone — the collector itself oscillates stale/healthy
+            under I/O pressure — so re-notification after a clear/refire
+            cycle is suppressed within this window (2026-08-31 movie-night
+            lesson: 4 consecutive collector timeouts re-paged on every
+            cycle). Page-tier notifications are never cooldown-gated.
+          '';
         };
 
         bootGraceSeconds = lib.mkOption {
