@@ -524,6 +524,13 @@ in
         enable = true;
       };
 
+      # 2026-08-31 coverage audit: registry asserting every service is FULLY
+      # registered with SigNoz (traces/logs), eval-time wiring checks + a
+      # runtime freshness collector + Gatus/SigNoz alerting.
+      signoz-coverage = {
+        enable = true;
+      };
+
       gpu-active = {
         enable = true;
       };

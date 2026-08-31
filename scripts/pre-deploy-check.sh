@@ -240,9 +240,12 @@ fi
 # endpoints — the extractor cannot tell them apart from metrics, and they
 # never appear in any /metrics scrape.
 extract_gatus_metrics() {
+  # Also catch the anchored form pat(*\n<metric> — the leading real-newline
+  # escape precedes the name there (2026-08-31: signoz-coverage checks were
+  # invisible to phantom validation without this).
   grep -v '^[[:space:]]*#' "$GATUS_CONFIG" |
-    grep -oE 'pat\(\*[a-zA-Z_][a-zA-Z0-9_]*' |
-    sed 's/pat(\*//' |
+    grep -oE 'pat\(\*(\\n)?[a-zA-Z_][a-zA-Z0-9_]*' |
+    sed 's/pat(\*//;s/^\\n//' |
     sort -u |
     grep -vE '^<|connected|email_states?|[A-Z]'
 }
@@ -327,7 +330,12 @@ if [ -s "$METRICS_FILE" ]; then
   # system_oomd_kills_scrape_errors (2026-08-31): REMOVED same day — the
   # deploy that introduced it confirmed the metric live in the textfile
   # (scrape_errors 0, collector runs 1.3s flat after the bounding fix).
-  KNOWN_NEW_METRICS="discordsync_projection_dlq_legacy_unchanged bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds system_dnsblockd_metrics_fresh"
+  # signoz_traces_* / signoz_coverage_scrape_errors / signoz_logs_pipeline_*
+  # (2026-08-31): new textfile metrics from the signoz-coverage collector —
+  # the running generation doesn't emit them yet. Remove after the first
+  # deploy confirms them in the textfile collector output
+  # (signoz-coverage.prom).
+  KNOWN_NEW_METRICS="discordsync_projection_dlq_legacy_unchanged bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds system_dnsblockd_metrics_fresh signoz_traces_missing signoz_coverage_scrape_errors signoz_logs_pipeline_stale signoz_traces_reporting"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"

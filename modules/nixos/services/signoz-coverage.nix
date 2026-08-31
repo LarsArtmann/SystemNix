@@ -45,13 +45,20 @@
 #                emit yet. Counted in signoz_traces_upstream_gaps so the
 #                debt stays visible on dashboards without paging. Flip to
 #                "env" when upstream instrumentation lands.
+# flake-parts wrapper note: files under modules/nixos/{services,desktop}/
+# are imported into the flake-parts module set — a bare NixOS module here
+# evaluates its let-bindings in the WRONG context (config.systemd.services
+# missing → every nix command fails, deploy 2026-08-31 19:35). The wrapper
+# below is the documented pattern (session-boot-audit.nix / gate-timeout-audit.nix).
 {
-  config,
-  lib,
-  pkgs,
-  ...
-}:
-let
+  flake.nixosModules.signoz-coverage =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
+    let
   inherit (import ../../../lib/default.nix lib)
     harden
     serviceOneshotDefaults
@@ -317,6 +324,9 @@ in
         discordsync = env "discordsync" 26;
         crush-daily = env "crush-daily" 26;
         file-and-image-renamer = env "file-and-image-renamer" 720; # spans only when files are renamed
+        # Same binary (health subcommand), same serviceName — spans of both
+        # units are attributed to "file-and-image-renamer".
+        file-and-image-renamer-health = env "file-and-image-renamer" 720;
         gotenberg = env "gotenberg" 720; # spans only when paperless converts office docs
         dnsblockd = {
           serviceName = "dnsblockd";
@@ -391,5 +401,6 @@ in
         };
       };
     };
+  };
   };
 }
