@@ -68,6 +68,18 @@ _: {
           # BANK_SYNC_SECURITY_ENCRYPTION_KEY=... (KEY=VALUE env file).
           wiseApiKeyFile = config.sops.templates."bank-sync-env".path;
           encryptionKeyFile = config.sops.templates."bank-sync-env".path;
+
+          # TEMPORARY (2026-08-31): upstream rev 09785e60 bumped Wise SDK to
+          # v0.9.0 without refreshing the flake vendorHash — the go-modules
+          # FOD fails (specified 8W10ZjIU…, got the hash below). Overridden
+          # with the measured hash to unblock deploys; DROP this override as
+          # soon as upstream refreshes its vendorHash (the bank-sync session
+          # is mid-flight on exactly that work).
+          package = lib.mkForce (
+            pkgs.bank-sync.overrideAttrs (_old: {
+              vendorHash = "sha256-ZwzPSE/2LmOs72p6uMDK1EymRoqGozSiLTh12j9HdwQ=";
+            })
+          );
         };
 
         # The pool mounts nofail — systemd-tmpfiles could create the dir on the

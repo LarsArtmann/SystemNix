@@ -335,7 +335,7 @@ if [ -s "$METRICS_FILE" ]; then
   # the running generation doesn't emit them yet. Remove after the first
   # deploy confirms them in the textfile collector output
   # (signoz-coverage.prom).
-  KNOWN_NEW_METRICS="discordsync_projection_dlq_legacy_unchanged bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds system_dnsblockd_metrics_fresh signoz_traces_missing signoz_coverage_scrape_errors signoz_logs_pipeline_stale signoz_traces_reporting system_user_units_failed system_user_units_scrape_errors"
+  KNOWN_NEW_METRICS="discordsync_projection_dlq_legacy_unchanged bank_sync_sync_errors_total bank_sync_last_sync_timestamp_seconds system_dnsblockd_metrics_fresh signoz_traces_missing signoz_coverage_scrape_errors signoz_logs_pipeline_stale signoz_traces_reporting system_user_units_failed system_user_units_scrape_errors discordsync_turso_local_only_mode"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"
