@@ -279,10 +279,14 @@ fi
 # so resolve each name against lib/ports.nix. Non-fatal per endpoint: a down
 # service already fails its own health checks elsewhere.
 GATUS_SERVICE_METRIC_PORTS=$(grep -oE 'localhost:\$\{toString ports\.[a-zA-Z0-9_-]+\}/metrics' "$GATUS_CONFIG" 2>/dev/null | sed -E 's/.*ports\.([a-zA-Z0-9_-]+)\}.*/\1/' | sort -u)
+DISCORDSYNC_API_UP=false
 for port_name in $GATUS_SERVICE_METRIC_PORTS; do
   port_num=$(sed -nE "s/^[[:space:]]*${port_name} = ([0-9]+);.*/\1/p" lib/ports.nix | head -1)
   if [ -n "$port_num" ] && curl -sf --compressed --max-time 5 "http://127.0.0.1:${port_num}/metrics" >>"$METRICS_FILE" 2>/dev/null; then
     pass "Service metrics '${port_name}' (port ${port_num}) responding"
+    if [ "${port_name}" = "discordsync-api" ]; then
+      DISCORDSYNC_API_UP=true
+    fi
   else
     warn "Service metrics '${port_name}' (port ${port_num:-unresolved}) not responding — its gatus pats will flag absent"
   fi
@@ -292,6 +296,15 @@ done
 # When Monitor365 is down, these are absent for infrastructure reasons, not
 # because they're phantom metrics in the config.
 MONITOR365_METRICS="collector_events_collected cloud_sync_consecutive_failures cloud_sync_upload_backlog_size"
+
+# Same doctrine for discordsync's OWN :8085 endpoint metrics (2026-08-31
+# 00:10 live block: the user deliberately STOPPED discordsync to relieve IO
+# pressure — its endpoint vanished and the phantom-metric gate hard-failed
+# EVERY subsequent deploy, including deploys unrelated to discordsync. A
+# stopped/failed service's endpoint metrics are an infrastructure signal,
+# not a config bug: WARN, never block. The gatus checks for discordsync go
+# red on their own while it is down — that is the correct visibility.)
+DISCORDSYNC_METRICS="discordsync_projection_dlq_legacy_depth discordsync_projection_dlq_legacy_unchanged discordsync_turso_local_only_mode"
 
 if [ -s "$METRICS_FILE" ]; then
   MISSING_METRICS=0
@@ -355,6 +368,8 @@ if [ -s "$METRICS_FILE" ]; then
       warn "Metric '$metric' absent (known new metric in this deploy — will appear post-switch)"
     elif echo "$MONITOR365_METRICS" | grep -qw "$metric" && [ "$MONITOR365_UP" = false ]; then
       warn "Metric '$metric' absent (Monitor365 endpoint down — not a phantom metric)"
+    elif echo "$DISCORDSYNC_METRICS" | grep -qw "$metric" && [ "$DISCORDSYNC_API_UP" = false ]; then
+      warn "Metric '$metric' absent (discordsync endpoint down/stopped — not a phantom metric)"
     else
       fail "Metric '$metric' ABSENT — Gatus health check will be permanently RED (phantom metric)"
       MISSING_METRICS=$((MISSING_METRICS + 1))
