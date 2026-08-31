@@ -406,6 +406,8 @@ _: {
 
 - All Docker/container services target `multi-user.target` (NOT `graphical.target`).
 - `mkDockerService` handles `preStart`, `ExecStart`, `ExecStop`, and `harden` automatically.
+- EVERY compose service — including DB sidecars — MUST set `restart = "always"`: docker auto-starts such containers whenever the daemon comes up (boot, post-crash). A missing policy leaves the stack dead after any docker restart (manifest postgres outage, 2026-08-31).
+- `mkDockerService` orders after docker.service via `wants` (NOT `requires`) on purpose: a Requires= dependency failure at boot fails the compose unit's start job with result=dependency, and job failures never re-trigger Restart=always — the stack stays down until the next deploy (manifest + twenty, 2026-08-31). With wants, ExecStart failing against a not-yet-ready daemon feeds the normal Restart loop.
 - Use `extraServiceConfig` for overrides like `{ RestartSec = "10s"; }`.
 - Use `backup = { execStart = "..."; schedule = "daily"; }` for DB backups.
 - Use `imagePull = "ghcr.io/owner/image:tag"` to add a pre-start image pull service.

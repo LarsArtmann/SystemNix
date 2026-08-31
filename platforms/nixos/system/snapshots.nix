@@ -51,6 +51,58 @@ let
   rustCacheLinks = builtins.map (
     p: "L+ /home/${primaryUser}/projects/${p}/target - - - - /mnt/buildcache/rust/${p}"
   ) rustCacheProjects;
+
+  # Scrub deferral guard (2026-08-31 freeze lesson). The nixpkgs autoScrub
+  # units run `btrfs scrub start -B <mnt>` at IOSchedulingClass=idle, but BFQ
+  # priority does not stop the BYTES: a scrub is a full-filesystem read, and
+  # stacked on the same QLC NVMe as a btrbk send (or a flm cold load) it
+  # saturates the NAND, drives sustained memory-PSI refault stalls, and —
+  # live 2026-08-31 16:34 — froze the box with zram empty and zero OOM kills.
+  # Weekly scrub is deferrable housekeeping: skip the run when anything
+  # heavier is already streaming (next week retries). The skip is NOT silent:
+  # btrfs-health metrics keep reporting scrub status, so a perpetually
+  # skipped scrub shows up as never-finished (Gatus-visible), not phantom-green.
+  scrubGuard = pkgs.writeShellApplication {
+    name = "btrfs-scrub-guard";
+    runtimeInputs = [
+      pkgs.btrfs-progs
+      pkgs.coreutils
+      pkgs.gawk
+      pkgs.systemd
+    ];
+    text = ''
+      set -euo pipefail
+      mnt="''${1:?usage: btrfs-scrub-guard <mountpoint>}"
+
+      # Guard 0 (same doctrine as btrfs-balance-*): never scrub under IO or
+      # zram pressure — a manual balance at 99% IO PSI froze the machine
+      # (2026-08-24); scrub is the same full-device reader class.
+      PSI_IO_SOME=$(awk '/^some/ {for (i = 2; i <= NF; i++) if ($i ~ /^avg10=/) {sub(/^avg10=/, "", $i); printf "%d", $i; exit}}' /proc/pressure/io)
+      ZRAM_ORIG=$(awk '{print $1}' /sys/block/zram0/mm_stat 2>/dev/null) || ZRAM_ORIG=0
+      ZRAM_DISKSIZE=$(cat /sys/block/zram0/disksize 2>/dev/null) || ZRAM_DISKSIZE=0
+      ZRAM_PCT=0
+      if [ "''${ZRAM_DISKSIZE:-0}" -gt 0 ] 2>/dev/null; then
+        ZRAM_PCT=$(( ''${ZRAM_ORIG:-0} * 100 / ZRAM_DISKSIZE ))
+      fi
+      if [ "''${PSI_IO_SOME:-0}" -ge 20 ] || [ "$ZRAM_PCT" -ge 80 ]; then
+        echo "btrfs-scrub: deferring scrub of $mnt — IO PSI some avg10=''${PSI_IO_SOME}% (>=20) or zram ''${ZRAM_PCT}% full (>=80); scrubbing under pressure froze the machine (2026-08-24/31 classes). Next weekly window retries."
+        exit 0
+      fi
+
+      # Guard 1: never stack a full-fs read on a live btrbk send or balance —
+      # the 2026-08-31 16:34 freeze stacked scrub on / AND /data (Persistent
+      # boot catch-up after the 9-day DAS outage) on top of the btrbk-data
+      # full re-send and four flm cold loads.
+      for heavy in btrbk-root.service btrbk-data.service btrbk-pool.service btrfs-balance-metadata.service btrfs-balance-data.service; do
+        if systemctl is-active --quiet "$heavy" 2>/dev/null; then
+          echo "btrfs-scrub: deferring scrub of $mnt — $heavy is streaming; stacking full-device readers saturated the QLC NVMe and froze the box (2026-08-31 16:34). Next weekly window retries."
+          exit 0
+        fi
+      done
+
+      exec btrfs scrub start -B "$mnt"
+    '';
+  };
 in
 {
   fileSystems = {
@@ -225,6 +277,15 @@ in
         serviceConfig.TimeoutStartSec = "1h";
         inherit onFailure;
       };
+
+      # ── scrub deferral (2026-08-31 freeze lesson) ─────────────────────────
+      # Replace the nixpkgs autoScrub ExecStart with the guarded wrapper.
+      # ExecStop (btrfs-scrub-maybe-cancel) from the nixpkgs module is kept —
+      # it only matters for the shutdown-cancel path, which the wrapper's
+      # `exec btrfs scrub start -B` preserves.
+      "btrfs-scrub--".serviceConfig.ExecStart = lib.mkForce "${scrubGuard} /";
+      btrfs-scrub-data.serviceConfig.ExecStart = lib.mkForce "${scrubGuard} /data";
+      btrfs-scrub-mnt-pool.serviceConfig.ExecStart = lib.mkForce "${scrubGuard} /mnt/pool";
 
       # ── btrbk clean: GC for garbled receive targets ────────────────────────
       # `btrbk clean` is btrbk's sanctioned garbage collector for incomplete

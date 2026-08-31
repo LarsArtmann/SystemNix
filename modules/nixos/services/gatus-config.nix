@@ -1938,7 +1938,8 @@ _: {
                   "${lib.getExe gatusOidcEnv}"
                 ]
                 ++ lib.optionals enableOidc oidcGate.serviceConfig.ExecStartPre;
-                TimeoutStartSec = "3min";
+                # Must exceed the 300s OIDC gate budget (slow-boot dnsblockd)
+                TimeoutStartSec = "6min";
                 RuntimeDirectory = "gatus";
                 LoadCredential = lib.optional enableOidc "gatus-oidc-secret:${clientSecretPath}";
                 # Compose the full EnvironmentFile list: the sops template

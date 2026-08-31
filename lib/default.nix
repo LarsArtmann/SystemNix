@@ -276,6 +276,14 @@ in
   # Returns: { after, wants, serviceConfig.ExecStartPre }
   # Merge with: systemd.services.foo = lib.mkMerge [ (mkOidcGate {...}) {...} ];
   #
+  # Gate budget is 300s (150 retries × 2s): dnsblockd needs ~2min at boot to
+  # load its 3.9M-entry blocklist mapping before it answers *.home.lan DNS
+  # (measured 2026-08-31: DNS ready at 16:39:58 while the old 120s budget
+  # expired at 16:40:01 — oauth2-proxy + gatus + browser-history failed into
+  # OnFailure Discord alerts on every slow boot, then self-healed 5s later).
+  # Consumers MUST set their unit's TimeoutStartSec ≥ 6min or systemd kills
+  # the unit mid-gate.
+  #
   # Example:
   #   mkOidcGate { inherit pkgs domain; serviceName = "gatus"; }
   #   → { after = ["network-online.target" "pocket-id.service" ...];
@@ -299,10 +307,10 @@ in
         runtimeInputs = [ pkgs.curl ];
         text = ''
           echo "${serviceName}: waiting for OIDC endpoint at auth.${domain}..."
-          curl -sf --max-time 5 --retry 60 --retry-delay 2 --retry-all-errors \
+          curl -sf --max-time 5 --retry 150 --retry-delay 2 --retry-all-errors \
             -o /dev/null "https://auth.${domain}/.well-known/openid-configuration" \
             || {
-              echo "${serviceName}: OIDC endpoint unreachable after 120s" >&2
+              echo "${serviceName}: OIDC endpoint unreachable after 300s" >&2
               exit 1
             }
           echo "${serviceName}: OIDC endpoint ready (TLS verified)"

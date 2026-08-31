@@ -14,6 +14,11 @@
 #   3. Zone 2 (MemAvailable 8% + zram 95%): trip.
 #   4. Zone 3 (PSI 55% + zram 85%, MemAvailable HEALTHY at 30%): MUST trip —
 #      the 05:49 refault-thrash freeze mode the old guard was blind to.
+#   4b. Burst resistance (PSI avg10 55% but avg60 12%, zram LOW): must NOT
+#      trip — a big nix build's transient avg10 spike is not a freeze.
+#   4c. Zone 4 (PSI avg60 55% SUSTAINED, zram ~empty, MemAvailable healthy):
+#      MUST trip — the 2026-08-31 16:34 freeze mode (no zram involvement, no
+#      OOM kills; pure refault/writeback stall against a saturated NVMe).
 #   5. Cooldown: repeat trip within 600 s → service stop skipped (counter
 #      unchanged) but the socket stays enforced down.
 #   6. Restore: healthy margins + last trip 700 s ago → socket restarted,
@@ -33,6 +38,7 @@ let
       availPct,
       zramPct,
       psiAvg10,
+      psiAvg60 ? "4.00",
     }:
     "MemTotal:       10000000 kB\\nMemAvailable:    "
     + (toString (builtins.floor (10000000 * availPct)))
@@ -40,7 +46,9 @@ let
     + (zramOrig zramPct)
     + " 1000000000 1000000000 0 0 0 0 0\\nsome avg10="
     + psiAvg10
-    + " avg60=10.00 avg300=5.00 total=1000000\\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=100000";
+    + " avg60="
+    + psiAvg60
+    + " avg300=5.00 total=1000000\\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=100000";
 
   # Writes /tmp/gt/<name>-meminfo, -mmstat, -psi from the blob (line 3 is
   # mm_stat, line 4 the PSI "some" line the guard's awk reads).
@@ -129,6 +137,22 @@ in
         zramPct = 0.85;
         psiAvg10 = "55.00";
       };
+      # Transient burst: avg10 spiking like a big nix build, but the full
+      # minute average stays low and zram is uninvolved. Must NOT trip.
+      burst = {
+        availPct = 0.30;
+        zramPct = 0.20;
+        psiAvg10 = "55.00";
+        psiAvg60 = "12.00";
+      };
+      # The 2026-08-31 16:34 freeze signature: SUSTAINED stall (avg60 over
+      # half the boot), zram ~empty, MemAvailable healthy, no OOM kills.
+      zone4 = {
+        availPct = 0.30;
+        zramPct = 0.05;
+        psiAvg10 = "20.00";
+        psiAvg60 = "55.00";
+      };
       restoreBlockedPsi = {
         availPct = 0.30;
         zramPct = 0.20;
@@ -216,6 +240,30 @@ in
       assert_all_down()
       counter = machine.succeed("cat /var/lib/memory-emergency-guard/tripped.count").strip()
       assert counter == "1"
+
+      # --- 4b. Burst resistance: avg10 spike, avg60 low → no trip --------
+      reset_state()
+      machine.succeed("${writeFakes "burst" burst}")
+      out = run_guard("burst")
+      assert "MEMORY EMERGENCY" not in out, (
+          "A transient avg10 burst with low avg60 must not trip (big nix "
+          "builds spike avg10 legitimately — Zone 4 keys on the SUSTAINED avg60)"
+      )
+      machine.succeed("systemctl is-active --quiet fastflowlm.socket")
+
+      # --- 4c. Zone 4 (sustained stall, zram empty) — the 16:34 blind spot
+      machine.succeed("${writeFakes "zone4" zone4}")
+      out = run_guard("zone4")
+      assert "sustained stall" in out, (
+          "Zone 4 must trip on PSI avg60>=50 ALONE with healthy zram and "
+          "MemAvailable (the 2026-08-31 16:34 freeze happened exactly here: "
+          "zram-gated zones never fired, box froze with zero OOM kills)"
+      )
+      assert_all_down()
+      counter = machine.succeed("cat /var/lib/memory-emergency-guard/tripped.count").strip()
+      assert counter == "1"
+      prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
+      assert "memory_emergency_guard_psi_some_avg60_percent 55.00" in prom
 
       # --- 5. Cooldown: repeat trip within 600 s ------------------------
       out = run_guard("zone3")

@@ -45,6 +45,22 @@
 #   3. CADENCE: the 60 s timer tick landed 2 s AFTER the kernel died.
 #      Default interval is now 30 s (a 64M oneshot — cheap).
 #
+# 2026-08-31 16:34 freeze (incident #3, the Zone 4 motivation): the box
+# froze with zram EMPTY (~0%), MemAvailable healthy and NO oomd kills —
+# every existing zone was blinded. The driver was pure sustained memory-PSI
+# stall (gatus "Memory pressure CRITICAL" flapped for ~2 h straight) caused
+# by FOUR stacked full-disk readers on the single QLC NVMe: the btrbk-data
+# 9-day-outage full re-send, weekly autoScrub on / AND /data (Persistent
+# catch-up fired at boot), and flm cold-loading 21.6 GB four times (the
+# v1.0.2 heap bug core-dumped every attempt; each restart re-paid the read,
+# stretched from 2-5 min to 27-43 min under contention). By 16:33 even the
+# guard itself and the PSI collector stopped completing their 30 s cycles;
+# journal cut at 16:34:42 mid-entry; hard reset at 16:36. Zone 3's
+# zram>=80% gate is what blinded it — this freeze class never touches zram.
+# Fix: Zone 4 trips on SUSTAINED memory-PSI alone (some avg60 >= threshold).
+# avg60 (a full-minute average of ALL tasks stalled on memory) resists the
+# legitimate avg10 bursts a big nix build produces.
+#
 # The guard closes that gap: stop the flm backend BEFORE the cliff. flm is
 # the designated sacrifice (stateless, socket-activated, self-heals on the
 # next connection with a 1-3 min cold load — OOMScoreAdjust=300 already
@@ -129,6 +145,17 @@ _: {
             psi_some_avg10="''${psi_some_avg10:--1}"
           fi
 
+          # SUSTAINED memory stall (some avg60): the Zone 4 signal. avg10
+          # flaps on legitimate bursts; a full minute with >=50% of tasks
+          # stalled on memory is never healthy, whatever zram/MemAvailable
+          # claim (2026-08-31: both looked healthy while the kernel died of
+          # refault/writeback stalls against a saturated QLC NVMe).
+          psi_some_avg60=-1
+          if [ -r "$PSI_SRC" ]; then
+            psi_some_avg60=$(awk '/^some/ { for (i = 1; i <= NF; i++) if ($i ~ /^avg60=/) { sub(/^avg60=/, "", $i); print $i; exit } }' "$PSI_SRC" 2>/dev/null) || psi_some_avg60=-1
+            psi_some_avg60="''${psi_some_avg60:--1}"
+          fi
+
           tripped_total=0
           if [ -f "$COUNT_FILE" ]; then
             tripped_total=$(cat "$COUNT_FILE" 2>/dev/null) || tripped_total=0
@@ -144,6 +171,11 @@ _: {
           # Zone 3 (thrash): PSI some avg10 high AND zram mostly full — the
           #   05:49 refault-freeze mode: MemAvailable can look healthy while
           #   the kernel dies of zram decompression CPU burn.
+          # Zone 4 (sustained stall): PSI some avg60 high ALONE — the
+          #   2026-08-31 16:34 mode: zram empty, MemAvailable healthy, no
+          #   OOM kills, but every task stalled on refault/writeback against
+          #   a saturated NVMe. Sustained (avg60) so legitimate avg10 bursts
+          #   from big builds do not trip it.
           trip=0
           reason=""
           if awk -v p="$avail_pct" 'BEGIN { exit !(p < ${toString cfg.absoluteMemAvailableThresholdPercent}) }'; then
@@ -161,6 +193,11 @@ _: {
           then
             trip=1
             reason="PSI some avg10=''${psi_some_avg10}% AND zram=''${zram_pct}% (refault-thrash freeze mode — MemAvailable stays high while the kernel starves on zram decompression)"
+          elif
+            awk -v p="$psi_some_avg60" 'BEGIN { exit !(p >= ${toString cfg.psiSomeAvg60ThresholdPercent}) }'
+          then
+            trip=1
+            reason="PSI some avg60=''${psi_some_avg60}% sustained stall with zram=''${zram_pct}% and MemAvailable=''${avail_pct}% (2026-08-31 mode: refault/writeback stalls against a saturated NVMe — the zram-gated zones never fire)"
           fi
 
           # Last-trip age, computed for BOTH branches (trip gating + socket
@@ -217,7 +254,8 @@ _: {
               [ "$last_trip_age" -ge ${toString cfg.actionCooldownSeconds} ] &&
               awk -v p="$avail_pct" 'BEGIN { exit !(p >= ${toString cfg.restoreMemAvailableThresholdPercent}) }' &&
               awk -v z="$zram_pct" 'BEGIN { exit !(z >= 0 && z < ${toString cfg.zramFillThresholdPercent}) }' &&
-              awk -v p="$psi_some_avg10" 'BEGIN { exit !(p >= 0 && p < ${toString cfg.restorePsiSomeThresholdPercent}) }'
+              awk -v p="$psi_some_avg10" 'BEGIN { exit !(p >= 0 && p < ${toString cfg.restorePsiSomeThresholdPercent}) }' &&
+              awk -v p="$psi_some_avg60" 'BEGIN { exit !(p >= 0 && p < ${toString cfg.restorePsiSomeAvg60ThresholdPercent}) }'
           then
             # Self-heal: the emergency has drained (healthy margins on all
             # three axes + cooldown elapsed). Bring the socket back so flm
@@ -227,7 +265,7 @@ _: {
               lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
             } 2>/dev/null || true
             systemctl start $SOCKET_UNITS 2>/dev/null || true
-            echo "MEMORY EMERGENCY cleared (MemAvailable=''${avail_pct}%, zram=''${zram_pct}%, PSI some avg10=''${psi_some_avg10}%, ''${last_trip_age}s since last trip) — sacrifice sockets restored" >&2
+            echo "MEMORY EMERGENCY cleared (MemAvailable=''${avail_pct}%, zram=''${zram_pct}%, PSI some avg10=''${psi_some_avg10}%, PSI some avg60=''${psi_some_avg60}%, ''${last_trip_age}s since last trip) — sacrifice sockets restored" >&2
           fi
 
           # last_trip_recent: 1 if a trip happened within the last 30 min —
@@ -250,6 +288,10 @@ _: {
             echo "# HELP memory_emergency_guard_psi_some_avg10_percent PSI memory some avg10 stall percent (-1 when PSI is unreadable)"
             echo "# TYPE memory_emergency_guard_psi_some_avg10_percent gauge"
             echo "memory_emergency_guard_psi_some_avg10_percent ''${psi_some_avg10}"
+
+            echo "# HELP memory_emergency_guard_psi_some_avg60_percent PSI memory some avg60 stall percent — the sustained-stall (Zone 4) signal (-1 when PSI is unreadable)"
+            echo "# TYPE memory_emergency_guard_psi_some_avg60_percent gauge"
+            echo "memory_emergency_guard_psi_some_avg60_percent ''${psi_some_avg60}"
 
             echo "# HELP memory_emergency_guard_sacrifice_socket_active 1 when any sacrifice socket is accepting, 0 when sacrificed"
             echo "# TYPE memory_emergency_guard_sacrifice_socket_active gauge"
@@ -307,6 +349,12 @@ _: {
           description = "zram fill percentage at or above which the Zone 3 thrash trip fires together with the PSI threshold (lower than the Zone 2 threshold: high PSI already proves the refault storm)";
         };
 
+        psiSomeAvg60ThresholdPercent = lib.mkOption {
+          type = lib.types.int;
+          default = 50;
+          description = "SUSTAINED PSI memory some avg60 stall percentage at or above which the Zone 4 trip fires ALONE (no zram/MemAvailable gate). 2026-08-31 16:34 freeze: memory-PSI flapped CRITICAL for ~2 h while zram sat at ~0% and MemAvailable stayed healthy — the zram-gated zones never fired and the box froze with zero OOM kills. avg60 (a full minute of >=50% of tasks stalled on memory) ignores the legitimate avg10 bursts of a big nix build";
+        };
+
         actionCooldownSeconds = lib.mkOption {
           type = lib.types.int;
           default = 600;
@@ -338,6 +386,12 @@ _: {
           type = lib.types.int;
           default = 5;
           description = "PSI some avg10 percentage below which the sacrifice sockets may be restored";
+        };
+
+        restorePsiSomeAvg60ThresholdPercent = lib.mkOption {
+          type = lib.types.int;
+          default = 10;
+          description = "PSI some avg60 percentage below which the sacrifice sockets may be restored (the sustained-stall axis must have fully drained — restoring into a lingering avg60 stall would immediately re-trip)";
         };
       };
 

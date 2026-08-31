@@ -32,7 +32,8 @@ _: {
             "/var/run/docker.sock:/var/run/docker.sock:ro"
           ];
           environment = {
-            DOZZLE_TAILSIZE = "300";
+            # DOZZLE_TAILSIZE removed 2026-08-31: Dozzle v10.6.6 rejects it
+            # ("Unexpected environment variable") and 300 is the default anyway.
             DOZZLE_FILTER = "status=running";
           };
           extraOptions = [

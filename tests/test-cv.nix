@@ -169,6 +169,11 @@ in
     machine.succeed("mkdir -p /var/lib/cv/data")
     machine.succeed("${sqliteBin} /var/lib/cv/data/pipeline.sqlite 'CREATE TABLE IF NOT EXISTS _vm_seed(x)'")
     machine.systemctl("start cv-backup.service")
+    # The silent-noop guard: with an empty CapabilityBoundingSet the root unit
+    # obeyed DAC on the 0750 cv:cv data/ dir and exited 0 "no pipeline.sqlite
+    # yet" WHILE the DB existed — a green backup that never ran (second
+    # 2026-08-31 bug, caught by this very test's first failing run).
+    machine.fail("journalctl -u cv-backup.service -b --no-pager | grep -q 'no pipeline.sqlite'")
     machine.succeed("test -f /mnt/pool/backups/cv/pipeline-*.sqlite")
     machine.fail("systemctl is-failed --quiet cv-backup.service")
 

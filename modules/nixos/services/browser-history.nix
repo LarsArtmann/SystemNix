@@ -111,6 +111,8 @@
                   "LOG_LEVEL=debug"
                   "MAX_USERS=1"
                 ];
+                # Must exceed the 300s OIDC gate budget (slow-boot dnsblockd)
+                TimeoutStartSec = "6min";
                 RestartSec = lib.mkForce "2min";
               }
               ioTier.background

@@ -26,17 +26,29 @@ DEVICE="${1:-/dev/nvme0n1}"
 RUNTIME="${RUNTIME:-15}"
 FIO="${FIO:-/nix/store/gpvq80c0ai5df2b8gaqbb4bfmbq8n4nk-fio-3.42/bin/fio}"
 [ -x "$FIO" ] || FIO="$(command -v fio || true)"
-[ -n "$FIO" ] || { echo "FAIL: fio not found (set FIO=/path/to/fio)"; exit 1; }
-command -v jq >/dev/null || { echo "FAIL: jq required for result parsing"; exit 1; }
+[ -n "$FIO" ] || {
+  echo "FAIL: fio not found (set FIO=/path/to/fio)"
+  exit 1
+}
+command -v jq >/dev/null || {
+  echo "FAIL: jq required for result parsing"
+  exit 1
+}
 
 if [ "$(id -u)" -ne 0 ]; then
   echo "(not root — re-execing via sudo -n)"
   exec sudo -n bash "$0" "$DEVICE"
 fi
 
-[ -b "$DEVICE" ] || { echo "FAIL: $DEVICE is not a block device"; exit 1; }
+[ -b "$DEVICE" ] || {
+  echo "FAIL: $DEVICE is not a block device"
+  exit 1
+}
 case "$DEVICE" in
-  /dev/zram*|/dev/loop*) echo "REFUSING: $DEVICE is zram/loop"; exit 1 ;;
+/dev/zram* | /dev/loop*)
+  echo "REFUSING: $DEVICE is zram/loop"
+  exit 1
+  ;;
 esac
 if lsblk -nr -o MOUNTPOINTS "$DEVICE" 2>/dev/null | grep -q '[^[:space:]]'; then
   echo "REFUSING: $DEVICE (or a partition of it) is mounted — destructive test"
@@ -58,20 +70,20 @@ run_test() { # <name> <rw> <extra fio args...>
     >/dev/null 2>&1
 }
 
-run_test rr1  randread  --bs=4k --iodepth=1
-run_test rw1  randwrite --bs=4k --iodepth=1
-run_test rr32 randread  --bs=4k --iodepth=32
-run_test fs1  randwrite --bs=4k --iodepth=1 --fsync=1
-run_test sr   read      --bs=1m --iodepth=1
-run_test sw   write     --bs=1m --iodepth=1
+run_test rr1 randread --bs=4k --iodepth=1
+run_test rw1 randwrite --bs=4k --iodepth=1
+run_test rr32 randread --bs=4k --iodepth=32
+run_test fs1 randwrite --bs=4k --iodepth=1 --fsync=1
+run_test sr read --bs=1m --iodepth=1
+run_test sw write --bs=1m --iodepth=1
 
 # jq: pick read or write side by which has iops>0; lat_ns.mean is in ns
 metric() { # <file> <iops|lat_us|bw_mibs>
   local f="$TMPDIR_BENCH/$1.json" m="$2"
   case "$m" in
-    iops)    jq -r '[.jobs[0].read.iops, .jobs[0].write.iops] | map(select(. != null and . > 0)) | .[0] // 0' "$f" ;;
-    lat_us)  jq -r '[.jobs[0].read.lat_ns.mean, .jobs[0].write.lat_ns.mean] | map(select(. != null and . > 0)) | .[0] // 0 | . / 1000' "$f" ;;
-    bw_mibs) jq -r '[.jobs[0].read.bw_bytes, .jobs[0].write.bw_bytes] | map(select(. != null and . > 0)) | .[0] // 0 | . / 1048576' "$f" ;;
+  iops) jq -r '[.jobs[0].read.iops, .jobs[0].write.iops] | map(select(. != null and . > 0)) | .[0] // 0' "$f" ;;
+  lat_us) jq -r '[.jobs[0].read.lat_ns.mean, .jobs[0].write.lat_ns.mean] | map(select(. != null and . > 0)) | .[0] // 0 | . / 1000' "$f" ;;
+  bw_mibs) jq -r '[.jobs[0].read.bw_bytes, .jobs[0].write.bw_bytes] | map(select(. != null and . > 0)) | .[0] // 0 | . / 1048576' "$f" ;;
   esac
 }
 
@@ -81,13 +93,13 @@ fsync_lat_us() {
 
 printf '%-28s %12s %12s %12s\n' "TEST" "IOPS" "avg lat" "BW"
 printf '%-28s %12s %12s %12s\n' "----" "----" "-------" "--"
-printf '%-28s %12.0f %10.1fµs %9.0fMiB/s\n' "4K randread QD1"  "$(metric rr1 iops)"  "$(metric rr1 lat_us)"  "$(metric rr1 bw_mibs)"
+printf '%-28s %12.0f %10.1fµs %9.0fMiB/s\n' "4K randread QD1" "$(metric rr1 iops)" "$(metric rr1 lat_us)" "$(metric rr1 bw_mibs)"
 printf '%-28s %12.0f %10.1fµs %9.0fMiB/s\n' "4K randwrite QD1" "$(metric rw1 iops)" "$(metric rw1 lat_us)" "$(metric rw1 bw_mibs)"
 printf '%-28s %12.0f %10.1fµs %9.0fMiB/s\n' "4K randread QD32" "$(metric rr32 iops)" "$(metric rr32 lat_us)" "$(metric rr32 bw_mibs)"
 printf '%-28s %12.0f %10.1fµs %9.0fMiB/s\n' "4K randwrite+fsync QD1" "$(metric fs1 iops)" "$(metric fs1 lat_us)" "$(metric fs1 bw_mibs)"
-printf '%-28s %12s %10.1fµs %9s\n'        "  fsync (sync) latency" "" "$(fsync_lat_us)" ""
-printf '%-28s %12s %12s %10.0fMiB/s\n'    "1M seq read"  "" "" "$(metric sr bw_mibs)"
-printf '%-28s %12s %12s %10.0fMiB/s\n'    "1M seq write" "" "" "$(metric sw bw_mibs)"
+printf '%-28s %12s %10.1fµs %9s\n' "  fsync (sync) latency" "" "$(fsync_lat_us)" ""
+printf '%-28s %12s %12s %10.0fMiB/s\n' "1M seq read" "" "" "$(metric sr bw_mibs)"
+printf '%-28s %12s %12s %10.0fMiB/s\n' "1M seq write" "" "" "$(metric sw bw_mibs)"
 echo
 echo "Raw JSON kept in $TMPDIR_BENCH until script exit; rerun a single test with:"
 echo "  $FIO --name=t --filename=$DEVICE --direct=1 --ioengine=io_uring --bs=4k --rw=randread --iodepth=1 --time_based --runtime=$RUNTIME"

@@ -248,7 +248,18 @@
                 "/var/lib/cv"
               ];
             }
-            (harden { })
+            (harden {
+              # cv-server's data/ is 0750 cv:cv. Root with an EMPTY
+              # CapabilityBoundingSet obeys DAC bits and cannot even stat
+              # through that dir: `[ ! -f $db ]` was TRUE with the DB sitting
+              # right there, and every run exited 0 "no pipeline.sqlite yet" —
+              # a silently green no-op backup since deployment (caught by the
+              # 2026-08-31 VM regression test, masked until then by the 226).
+              # CAP_DAC_READ_SEARCH = read-only traversal, the exact
+              # backup-health-metrics precedent for root collectors reading
+              # foreign-owned trees. Writing still targets root-owned paths.
+              CapabilityBoundingSet = "CAP_DAC_READ_SEARCH";
+            })
             (serviceOneshotDefaults { })
             ioTier.background
           ];

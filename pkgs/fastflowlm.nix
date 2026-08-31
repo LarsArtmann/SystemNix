@@ -29,14 +29,22 @@
 # at runtime and pulled imperatively via `flm pull`. 13.6 GB binaries do not
 # belong in the nix store.
 #
+# v1.0.3 (2026-08-27): re-quantized Qwen3.5 + Qwen3.6-MoE weights (Q4_1 →
+# Q4_K). REQUIRES a one-time `flm pull qwen3.6-moe:35b-a3b` after deploy —
+# old v1.0.2 weight files hash-mismatch the new manifest and `flm pull`
+# overwrites them in place (same dance as v1.0.1→v1.0.2). The release notes
+# do NOT claim a fix for the v1.0.2 prefill core-dump (4× in one boot,
+# 2026-08-31) — the crash-loop containment is the guard's Zone 4, not this
+# bump; treat the bump as accuracy + best-effort.
+#
 # Output: a single derivation exposing `flm` (the wrapper) on $PATH.
 stdenv.mkDerivation (finalAttrs: {
   pname = "fastflowlm";
-  version = "1.0.2";
+  version = "1.0.3";
 
   src = fetchurl {
     url = "https://github.com/ROCm/FastFlowLM/releases/download/v${finalAttrs.version}/fastflowlm_${finalAttrs.version}_linux.tar.gz";
-    hash = "sha256-em+KMNs86DLMVGyJzmvG5oYon5OnX0V/rldc+jOkYEo=";
+    hash = "sha256-9yElTmoeBsvXKYg+ikvVg/o5aq3nYdWbtDM86o9Z69E=";
   };
 
   nativeBuildInputs = [

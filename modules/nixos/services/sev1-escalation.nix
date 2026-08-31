@@ -76,6 +76,21 @@ _: {
           titles=()
           details=()
 
+          # Boot grace: on a fresh boot the textfile metrics are legitimately
+          # absent/stale (their last write happened pre-shutdown; collectors
+          # haven't ticked yet) and system_health.prom may hold pre-shutdown
+          # values. Skipping DEAD/STALE and infra-critical evaluation for the
+          # first bootGraceSeconds avoids a false SEV1 page on EVERY reboot
+          # (observed 2026-08-31: "MEMORY GUARD DEAD (303s old)" paged 60s
+          # after boot). Env-overridable for the VM regression test.
+          BOOT_GRACE_SEC=''${SEV1_BOOT_GRACE_SEC:-${toString cfg.bootGraceSeconds}}
+          BOOT_GRACE=0
+          if [ -r /proc/uptime ]; then
+            if [ "$(cut -d' ' -f1 /proc/uptime | cut -d. -f1)" -lt "$BOOT_GRACE_SEC" ]; then
+              BOOT_GRACE=1
+            fi
+          fi
+
           # Module presence gates: on a host where the guard/health modules
           # are DISABLED their prom files legitimately never exist — treat
           # that as "not applicable", not as DEAD/STALE. SYSTEMCTL_BIN is
@@ -103,7 +118,7 @@ _: {
 
           # --- Guard trip (the guard ACTED: machine entered a pre-freeze zone)
           guard_trip=0
-          if [ "$guard_enabled" = "true" ] && [ -f "$GUARD_PROM" ]; then
+          if [ "$BOOT_GRACE" = "0" ] && [ "$guard_enabled" = "true" ] && [ -f "$GUARD_PROM" ]; then
             v=$(prom_value "$GUARD_PROM" "memory_emergency_guard_last_trip_recent")
             [ "$v" = "1" ] && guard_trip=1
           fi
@@ -112,23 +127,42 @@ _: {
             details+=("The machine entered a pre-freeze zone; FastFlowLM + socket were force-stopped. journalctl -u memory-emergency-guard -n 30")
           fi
 
+          # --- Sustained memory stall (2026-08-31 16:34 freeze class: the
+          #     box froze with zram EMPTY, MemAvailable healthy, zero OOM
+          #     kills — Discord flapped "Memory pressure CRITICAL" for 2 h
+          #     while the user sat at the machine. The desktop must page on
+          #     the same SUSTAINED signal Zone 4 trips on: avg60 >= 45,
+          #     slightly below the trip threshold so the page can precede
+          #     the guard action. Guard-gated, NOT health-gated: during the
+          #     final stall the system-health collector dies FIRST (live
+          #     16:33) — only its own stale-page would fire, without the
+          #     actionable shed-load detail.)
+          if [ "$guard_enabled" = "true" ] && [ -f "$GUARD_PROM" ]; then
+            g_avg60=$(prom_value "$GUARD_PROM" "memory_emergency_guard_psi_some_avg60_percent")
+            g_avg60="''${g_avg60:--1}"
+            if awk "BEGIN{exit !($g_avg60 >= 45)}"; then
+              titles+=("MEMORY STALL SUSTAINED")
+              details+=("PSI memory some avg60=''${g_avg60}% — over half the tasks on the machine have been stalled on memory for a full minute (freeze precursor, 2026-08-31 class). Stop heavy builds / VM tests NOW; the guard is sacrificing FastFlowLM.")
+            fi
+          fi
+
           # --- Guard dead (trip capability lost — the guard that should fire
           #     during an emergency is itself down or its metrics vanished)
           guard_age=$(file_age "$GUARD_PROM")
-          if [ "$guard_enabled" = "true" ] && { [ "$guard_age" -lt 0 ] || [ "$guard_age" -gt $(( ${toString cfg.staleGuardSeconds} )) ]; }; then
+          if [ "$BOOT_GRACE" = "0" ] && [ "$guard_enabled" = "true" ] && { [ "$guard_age" -lt 0 ] || [ "$guard_age" -gt $(( ${toString cfg.staleGuardSeconds} )) ]; }; then
             titles+=("MEMORY GUARD DEAD")
             details+=("memory-emergency-guard metrics are missing/stale (''${guard_age}s old). The automated freeze protection is DOWN. systemctl status memory-emergency-guard")
           fi
 
           # --- Monitoring stale (system-health textfile collector dead)
           health_age=$(file_age "$HEALTH_PROM")
-          if [ "$health_enabled" = "true" ] && { [ "$health_age" -lt 0 ] || [ "$health_age" -gt $(( ${toString cfg.staleHealthSeconds} )) ]; }; then
+          if [ "$BOOT_GRACE" = "0" ] && [ "$health_enabled" = "true" ] && { [ "$health_age" -lt 0 ] || [ "$health_age" -gt $(( ${toString cfg.staleHealthSeconds} )) ]; }; then
             titles+=("SYSTEM MONITORING STALE")
             details+=("system_health metrics missing/stale (''${health_age}s old). Most Gatus conditions are phantom right now. systemctl status system-health-metrics")
           fi
 
           # --- Infra criticals from system_health.prom
-          if [ "$health_enabled" = "true" ] && [ -f "$HEALTH_PROM" ]; then
+          if [ "$BOOT_GRACE" = "0" ] && [ "$health_enabled" = "true" ] && [ -f "$HEALTH_PROM" ]; then
             v=$(prom_value "$HEALTH_PROM" "system_das_link_present")
             if [ "$v" = "0" ]; then
               titles+=("DAS USB LINK DOWN")
@@ -396,6 +430,20 @@ _: {
           type = lib.types.int;
           default = 600;
           description = "system-health metrics age (seconds) beyond which monitoring counts as STALE (SEV1)";
+        };
+
+        bootGraceSeconds = lib.mkOption {
+          type = lib.types.int;
+          default = 600;
+          description = ''
+            Seconds after boot during which DEAD/STALE and infra-critical
+            evaluations are suppressed: collectors haven't produced fresh
+            metrics yet, so every check would page falsely on each reboot
+            (live 2026-08-31: a stale pre-shutdown guard prom paged
+            "MEMORY GUARD DEAD" one minute into boot). The grace can be
+            disabled per-invocation with SEV1_BOOT_GRACE_SEC=0 (used by the
+            VM regression test).
+          '';
         };
       };
 

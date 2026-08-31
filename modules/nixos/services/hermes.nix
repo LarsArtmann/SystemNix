@@ -607,10 +607,12 @@
               KillMode = "mixed";
               KillSignal = "SIGTERM";
               TimeoutStopSec = cfg.timeoutStopSec;
-              # State migration (535 MB) + ACL revoke + permission fix can exceed
-              # systemd's default 90s during system switches. 3 min covers
-              # worst observed case (~96s on cold I/O).
-              TimeoutStartSec = "3min";
+              # State check/migration (state has grown to ~1.1 GB) + ACL revoke
+              # + permission fix can exceed shorter budgets during boot I/O
+              # storms: 2026-08-31 boot (load avg 24) hit the full 3min in
+              # ExecStartPre, failed into OnFailure alerting, then completed
+              # in 50s on the retry. 6min absorbs the storm without paging.
+              TimeoutStartSec = "6min";
               ExecReload = "/bin/kill -USR1 $MAINPID";
               StandardOutput = "journal";
               StandardError = "journal";

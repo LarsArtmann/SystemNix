@@ -103,3 +103,22 @@ Nothing new destroyed this session — but two honest admissions:
 ---
 
 **Bottom line:** the pool's return needs zero manual re-seeding — btrbk resumes incrementally tonight at 23:00 and every dump timer already re-fired at boot. The session's real yield: cv-backup (broken since birth) and the paperless timer gap, both fixed in-repo, verified at eval level, awaiting deploy.
+
+---
+
+## Addendum (17:10) — user challenge "why does the folder not create itself?! We have nix!" → THIRD bug + regression proof
+
+The user rightly rejected the `sudo mkdir` shortcut as the headline answer. Response: made the declarative path airtight and PROVED it in a VM instead of trusting eval.
+
+**What was done:**
+
+1. `tests/test-cv.nix` extended (steps 9-10): the VM now boots a REAL `/mnt/pool` disk (`virtualisation.emptyDiskImages` + autoFormat ext4 mount) and asserts: `cv-backup-dir` self-creates `/mnt/pool/backups/cv` at boot; a deploy-style `restart` recreates it after `rm -rf` (the exact production state); a real seeded sqlite store gets backed up pool-side; the unit is not failed.
+2. **First test run went RED and exposed a THIRD production bug the 226 had been masking:** `cv-backup` cannot SEE `/var/lib/cv/data/pipeline.sqlite` even when it exists. Root cause: `cv-server`'s `data/` is `0750 cv:cv`; `cv-backup` runs as root with `harden {}`'s EMPTY `CapabilityBoundingSet` — a root process without `CAP_DAC_OVERRIDE` **obeys DAC bits** and cannot stat through the cv-owned dir → `[ ! -f "$db" ]` = true → **exit 0 "no pipeline.sqlite yet" — a silently green no-op backup since deployment** (the prod server IS writing `data/` right now, live mtime at check time). Fix: `CapabilityBoundingSet = "CAP_DAC_READ_SEARCH"` on cv-backup — the exact `backup-health-metrics` precedent for root collectors reading foreign-owned trees (cv.nix).
+3. Test re-run: **GREEN end-to-end** — dir self-creates, backup artifact lands pool-side, and an explicit silent-noop guard (`journalctl` must NOT contain "no pipeline.sqlite") pins the class.
+4. `nix flake check --no-build` passes; my three touched files are formatter-clean (the `--ci` failure was a mid-run race on the parallel session's `scripts/bench-disk.sh`, not mine).
+
+**Answer to the actual question (why didn't it create itself):** because the module never DECLARED a creator — tmpfiles can't do it (runs before the pool mounts → creates a root-fs shadow dir, the documented contamination trap; that shadow is precisely what hid the bug during the outage), and ReadWritePaths cannot be self-healed in-unit (systemd builds the mount namespace BEFORE ExecStart — a missing path is 226). The house-blessed declarative answer is the mount-gated `cv-backup-dir` oneshot (atticd-storage-dir pattern), now wired three ways: at boot (`multi-user.target` + `RequiresMountsFor`), at deploy (deploy.sh provisioner restart → dir exists the moment the switch completes), and at timer fire (cv-backup `wants` it → systemd retries the oneshot in the same transaction). **No manual mkdir is ever needed; the only remaining step is the deploy that activates the module.**
+
+**Correction to section d.2:** "fix shipped without a negative test" is now resolved — the regression test exists AND it already paid for itself on its first run.
+
+**Still open:** deploy activation (user decision, parallel-session tree entanglement); tonight's convergence observation.

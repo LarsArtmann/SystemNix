@@ -19,6 +19,8 @@
 #   6. Infra critical (system_das_link_present 0): DAS USB LINK DOWN.
 #   7. Clear: healthy inputs again — alert file REMOVED, state cleared,
 #      alerts_active 0.
+#   8. Boot grace: pre-shutdown-stale guard prom on a FRESH boot (< 600s
+#      uptime) must NOT page GUARD DEAD / STALE (2026-08-31 false-page class).
 { pkgs }: {
   name = "sev1-escalation";
 
@@ -55,6 +57,16 @@
         # HELP memory_emergency_guard_last_trip_recent 1 if an emergency stop happened within the last 30 min, 0 otherwise
         # TYPE memory_emergency_guard_last_trip_recent gauge
         memory_emergency_guard_last_trip_recent 1
+      '';
+      # 2026-08-31 16:34 freeze signature: sustained stall, guard NOT (yet)
+      # tripped, zram/avail invisible to this condition.
+      guardPromStall = ''
+        # HELP memory_emergency_guard_last_trip_recent 1 if an emergency stop happened within the last 30 min, 0 otherwise
+        # TYPE memory_emergency_guard_last_trip_recent gauge
+        memory_emergency_guard_last_trip_recent 0
+        # HELP memory_emergency_guard_psi_some_avg60_percent PSI memory some avg60 stall percent
+        # TYPE memory_emergency_guard_psi_some_avg60_percent gauge
+        memory_emergency_guard_psi_some_avg60_percent 52.00
       '';
       healthPromHealthy = ''
         # HELP system_das_link_present 1 if the DAS USB link exists
@@ -105,8 +117,12 @@
       ).strip()
 
       def run_bridge(case):
+          # SEV1_BOOT_GRACE_SEC=0: the VM is freshly booted (< 600s uptime),
+          # so the boot-grace window would otherwise suppress the very
+          # DEAD/STALE scenarios these assertions verify.
           return machine.succeed(
-              f"GUARD_PROM=/tmp/sev1/{case}-guard.prom"
+              f"SEV1_BOOT_GRACE_SEC=0"
+              f" GUARD_PROM=/tmp/sev1/{case}-guard.prom"
               f" HEALTH_PROM=/tmp/sev1/{case}-health.prom"
               f" SEV1_ALERT_FILE=/tmp/sev1/alert"
               f" SEV1_PROM_OUT=/tmp/sev1/bridge.prom {script} 2>&1"
@@ -141,10 +157,25 @@
       key2 = machine.succeed("cat /var/lib/sev1-escalation/last-alert-key").strip()
       assert key1 == key2, "unchanged alert set must not re-notify"
 
+      # --- 3b. Sustained memory stall (avg60 >= 45) pages WITHOUT a guard
+      #         trip — the 2026-08-31 16:34 class: Discord flapped for 2 h
+      #         while the user sat at the machine; the desktop must page on
+      #         the sustained-stall signal itself.
+      machine.succeed("${writeProms "stall" guardPromStall healthPromHealthy}")
+      out = run_bridge("stall")
+      assert "MEMORY STALL SUSTAINED" in out, (
+          "guard avg60 >= 45% must escalate to the desktop overlay even "
+          "without a guard trip (the 16:34 freeze class)"
+      )
+      alert = machine.succeed("cat /tmp/sev1/alert")
+      assert "MEMORY STALL SUSTAINED" in alert
+      assert "Stop heavy builds" in alert
+
       # --- 4. Guard dead: prom deleted while timer ENABLED ---------------
       machine.succeed("rm -f /tmp/sev1/dead-guard.prom; printf 'irrelevant\\n' > /tmp/sev1/dead-health.prom")
       out = machine.succeed(
-          "GUARD_PROM=/tmp/sev1/does-not-exist.prom"
+          "SEV1_BOOT_GRACE_SEC=0"
+          " GUARD_PROM=/tmp/sev1/does-not-exist.prom"
           " HEALTH_PROM=/tmp/sev1/dead-health.prom"
           " SEV1_ALERT_FILE=/tmp/sev1/alert"
           " SEV1_PROM_OUT=/tmp/sev1/bridge.prom {script} 2>&1".format(script=script)
@@ -164,6 +195,7 @@
       )
       out = machine.succeed(
           "SYSTEMCTL_BIN=/tmp/fakebin/systemctl"
+          " SEV1_BOOT_GRACE_SEC=0"
           " GUARD_PROM=/tmp/sev1/does-not-exist.prom"
           " HEALTH_PROM=/tmp/sev1/dead-health.prom"
           " SEV1_ALERT_FILE=/tmp/sev1/alert"
@@ -190,5 +222,22 @@
       machine.fail("test -f /var/lib/sev1-escalation/last-alert-key")
       prom = machine.succeed("cat /tmp/sev1/bridge.prom")
       assert "sev1_bridge_alerts_active 0" in prom
+
+      # --- 8. Boot grace: stale guard prom on a FRESH boot must NOT page ---
+      # No SEV1_BOOT_GRACE_SEC override: the VM's uptime is < 600s, so the
+      # grace window applies — the pre-boot-stale prom from scenario 4's
+      # inputs is exactly the false-page class fixed on 2026-08-31.
+      out = machine.succeed(
+          "GUARD_PROM=/tmp/sev1/does-not-exist.prom"
+          " HEALTH_PROM=/tmp/sev1/dead-health.prom"
+          " SEV1_ALERT_FILE=/tmp/sev1/alert"
+          " SEV1_PROM_OUT=/tmp/sev1/bridge.prom {script} 2>&1".format(script=script)
+      )
+      assert "GUARD DEAD" not in out, (
+          "a fresh boot (< bootGraceSeconds) must not page GUARD DEAD from "
+          "pre-shutdown-stale metrics"
+      )
+      assert "MONITORING STALE" not in out, "boot grace must suppress STALE too"
+      machine.fail("test -f /tmp/sev1/alert")
     '';
 }

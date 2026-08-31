@@ -389,7 +389,8 @@ _: {
               ];
               ExecStartPre =
                 forgejoDnsGate.serviceConfig.ExecStartPre ++ forgejoOidcGate.serviceConfig.ExecStartPre;
-              TimeoutStartSec = "3min";
+              # Must exceed the 300s OIDC gate budget (slow-boot dnsblockd)
+              TimeoutStartSec = "6min";
             }
             (harden { })
             (serviceOneshotDefaults { })
