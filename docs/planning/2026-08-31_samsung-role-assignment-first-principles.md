@@ -1,6 +1,6 @@
 # Samsung 970 EVO Plus — Role Assignment from First Principles
 
-_2026-08-31 · decision doc · status: PROPOSED (awaiting user ratification of layout + reboot window)_
+_2026-08-31 · decision doc · Rev 2 · status: partition layout + hot-DB subvol RATIFIED in review; remaining open items listed at the bottom (reboot window, phase-ordering confirmation)_
 
 ## The question
 
@@ -40,7 +40,8 @@ Key findings:
 
 **Chosen: BTRFS, `noatime,compress=zstd`** (level default 3; NOT `compress-force` — the
 heuristic skip of incompressible files is correct). Consistent with root-fs tooling
-(btrbk, compsize, scrub doctrine). XFS remains the choice for the hot-DB partition.
+(btrbk, compsize, scrub doctrine). Hot-DB filesystem superseded later the same day:
+they now ride a nodatacow subvol on the single BTRFS pool (see Revision 2 below).
 
 Benchmark tooling: `scripts/bench-disk.sh` (raw device) and `scripts/bench-nix-fs.sh`
 (fs comparison) — both guard against mounted devices and self-heal the fio store path.
@@ -94,27 +95,46 @@ every exec queues behind it.
 | Go caches (go-build 65 G + go-mod 13 G + ~18 G aux) | ~96 G | USB SSD | Compile iteration waits (semi-interactive) |
 | AI models (`/data/ai` 287 G, `/data/models` 210 G, `/data/llamacpp-models` 92 G) | **589 G** | QLC `/data` | Nobody synchronously — cold-load bandwidth |
 | Steam | 106 G | QLC `/data` | Game launch only |
-| ClickHouse telemetry | ~70 G used / 100 G part | QLC p9 (XFS) | Nobody (analytics) |
-| Backups, media, service data | 29 T | HDD pool | Nobody |
+| ClickHouse telemetry | 32 G used / 100 G part (df, measured) | QLC p9 (XFS) | Nobody (analytics) |
+| Backups, media, service data | 1.1 T used (df, measured) | HDD pool | Nobody |
+
+Note (measured 2026-08-31): the `/data` category figures above sum to 695 G while df
+reports 888 G used on p8; the ~193 G balance is unclassified dirs + snapshot-pinned
+extents (`containers`/`cache` measured ~0, `tmp-crush-test` 380 M). The original "29 T"
+pool figure and "~70 G" ClickHouse estimate in Rev 1 were wrong.
 
 ## The design
 
 **Samsung = the synchronous disk. QLC = the streaming disk. RAM = the hot tier.**
 
-### Samsung layout (931.5 G)
+### Samsung layout (931.5 G) — Rev 2, ratified in review
 
 ```
-p1  XFS   64 G   /var/lib-hot    # sync DBs (pocket-id, postgres, forgejo) — no CoW, fsync 0.78 ms
-p2  BTRFS ~860 G /               # subvol `nix` → mounted at /nix
-                              # compress=zstd, noatime
+p1  EFI    4 G       # ef00, FAT32 label SAMSUNG-EFI, formatted now, UNMOUNTED.
+                      # Reserved for a future boot migration (zero-repartition then).
+                      # Mirrors the Lexar's own 4 G ESP (p7).
+p2  BTRFS  ~927.5 G  # label `tlc`, to end of disk. The ONLY data partition.
+                      # noatime, compress=zstd, commit 30 s (default; TLC).
+                      # subvols:
+                      #   nix    -> /nix            CoW+zstd, ~68 G (129 G raw)
+                      #   hot    -> /var/lib/hot    mount -o nodatacow
+                      #     /pocket-id /postgres /forgejo
+                      #     (nested per-service subvol boundaries, chattr +C per root)
+                      #   home   -> /home           (optional, Phase 3)
+                      #   caches -> GOCACHE/GOMODCACHE (optional, Phase 4)
 ```
 
-- **`/nix` (129 G → ~80–90 G zstd-compressed)**: the exec path. Every cache miss refills
+- **`/nix` (129 G → ~68 G, measured 1.89× zstd)**: the exec path. Every cache miss refills
   at 2.4 GB/s / 27 µs instead of queueing on the QLC. Also removes 129 G from QLC root
   → chunk-unalloc CRITICAL clears → balance/ENOSPC pressure resolves structurally.
-- **Hot DBs on XFS**: the fsync-bound crowd with humans on the request path. Follows the
-  clickhouse-XFS precedent. Sized generously (they're tens of GB today) — 64 G leaves
-  years of headroom.
+- **Hot DBs on a nodatacow subvol (Rev 2, replaces the 64 G XFS p1)**: partition starts
+  never move, BTRFS shrinks only from its end, XFS never shrinks. A mid-disk XFS sized
+  64 G against ≤50 G of DBs would have been permanently un-growable. The subvol keeps
+  full pool elasticity; fsync lands ~1–2 ms vs raw 0.78 ms (XFS would be ~1 ms; noise
+  for auth checks and git pushes). Per-service subvol BOUNDARIES live inside ONE `hot`
+  mount: surgical snapshots/deletes, zero extra mount units.
+- **Future XFS, if ever needed**: carved fresh from p2's tail at the moment of need
+  (online `btrfs resize -X` → `parted resizepart` end → `mkfs.xfs`). Never pre-carved.
 - **NOT on Samsung**: models (589 G — doesn't fit, doesn't need latency), games, media,
   telemetry, backups, swap (zram covers it).
 
@@ -138,9 +158,20 @@ moment exec-path misses refill from TLC at 2.4 GB/s.
 
 ### Mount options doctrine
 
-- Samsung BTRFS: `noatime,compress=zstd` — **default commit interval** (30 s); the
+- Samsung BTRFS pool: `noatime,compress=zstd` — **default commit interval** (30 s); the
   `commit=300` doctrine is a QLC/SLC-preservation measure, not needed on TLC.
-- Samsung XFS: `noatime`.
+- `hot` subvol: mount `-o nodatacow` + explicit `chattr +C` per nested subvol root (set
+  by the storage-dir oneshot; do not rely on inheritance into fresh subvol roots).
+  nodatacow = in-place data writes, no csums, no compression: the XFS-like data path on
+  BTRFS CoW metadata (still no journal, crash consistency unchanged). fsync ~1–2 ms.
+- Snapshot landmine: nodatacow holds only for extents not shared with a snapshot; one
+  scheduled snapshot silently reverts touched extents to CoW. Policy: never schedule
+  snapshots of `hot`; one-shot checkpoints around migrations, deleted after; eval-time
+  assertion keyed on the `hot` prefix keeps it out of btrbk.
+- gatus (if it joins) lives WITHOUT `+C`: tiny write volume, integrity detection beats
+  fsync latency.
+- qgroups: OFF (per-write metadata tax). TLC exempts this pool from the QLC doctrine,
+  so they MAY be enabled later for per-service accounting.
 - `nodiscard` + daily fstrim stays (repo doctrine; works for both disks).
 
 ## Migration phases (each independently valuable, each gated)
@@ -149,43 +180,68 @@ moment exec-path misses refill from TLC at 2.4 GB/s.
 `/data` EIO inode (P0) so nightly btrbk stops walking 86 G into an abort; both reduce
 QLC pressure immediately.
 
-**Phase 1 — `/nix` → Samsung p2** (the big one):
-1. Partition + mkfs + initial `rsync -aH --delete` (live; store is mostly idle between builds)
-2. Quiesce builds, final sync, add `fileSystems."/nix"` (by-label `nix`,
-   `neededForBoot = true` — verify NixOS default at implementation), deploy, reboot
-3. Verify: `readlink /run/current-system` resolves, nixos-rebuild works, `fio` sanity on
-   the new mount, shell-exec latency during a build storm (the acceptance test)
-4. Rollback: boot into previous generation + remove fs entry. Old `@nix` subvol deleted
-   only after 3-day soak (space frees as root snapshots expire; balances then run clean)
+**Phase 1 — partitions + `/nix` → Samsung p2 subvol `nix`** (the big one):
+1. `sgdisk`: p1 ef00 +4 G, p2 8300 rest. `mkfs.fat -F32 -n SAMSUNG-EFI` p1 (formatted,
+   UNMOUNTED, reserved). `mkfs.btrfs -L tlc` p2 + `btrfs subvolume create` `nix`.
+2. Initial `rsync -aH --delete` (live; store is mostly idle between builds)
+3. Quiesce builds AND `auto-optimise-store` AND nix-gc timers (the optimiser rewrites
+   hardlinks on every store add), final delta sync, add `fileSystems."/nix"` (by-label
+   `tlc`, `subvol = "nix"`, `neededForBoot = true` — REQUIRED: stage-2 init lives in
+   /nix/store; nofail OFF), deploy
+4. Delta rsync AGAIN after deploy and BEFORE reboot: the deploy realizes new store
+   paths onto the QLC after the sync; skipping this reboots into an incomplete closure
+5. Reboot. Verify: `readlink /run/current-system` resolves, nixos-rebuild works, `fio`
+   sanity on the new mount, shell-exec latency during a build storm (the acceptance test)
+6. Rollback: boot into previous generation + remove fs entry. Old `@nix` subvol deleted
+   only after 3-day soak — the delete frees 129 G IMMEDIATELY (sibling subvol, not
+   snapshot-pinned since the 2026-08-17 migration; Rev 1's "frees as snapshots expire"
+   was stale)
 
-**Phase 2 — hot DBs → Samsung p1** (per service, one at a time):
-pocket-id → postgres → forgejo. Each: stop, rsync dataDir, set dataDir/bind-mount,
-restart, gatus green, dump-style backups (already location-agnostic — pocket-id-backup,
-forgejo dump, pg dumps) land on pool as before. **No btrbk/backup topology change** —
-that was the constraint that made pool-mounted DBs attractive in 2026-08; dump backups
-make the XFS move free of it.
+**Phase 2 — hot DBs → `hot` subvol, nodatacow (Rev 2: replaces the XFS p1 plan)** (per
+service, one at a time): a mount-gated oneshot creates `hot` plus nested per-service
+subvol boundaries (pocket-id, postgres, forgejo) and sets `chattr +C` per subvol root;
+mount `/var/lib/hot` with `-o nodatacow`. Then per service: stop, rsync dataDir,
+re-point, restart, gatus green; dump-style backups (already location-agnostic —
+pocket-id-backup, forgejo dump, pg dumps) land on pool as before. **No btrbk/backup
+topology change.** Checkpoints are ONE-SHOT btrfs snapshots, deleted after the
+migration (scheduled snapshots would silently revert touched extents to CoW); an
+eval-time assertion keyed on the `hot` prefix enforces the policy. Candidates by the
+same classifier: dnsblockd (hottest write DB on root), papdashboard; gatus joins
+WITHOUT `+C` (integrity over latency for a monitoring store). RPO note: these DBs
+leave btrbk snapshot coverage, so nightly dumps become the sole recovery path;
+postgres WAL archiving is a sensible Phase 2.5.
 
 **Phase 3 — `/home` decision (268 G):** stays on QLC by default. Trigger to move: if
 post-Phase-1/2 the QLC still feels slow for `git status`/editor opens during IO storms.
-Fits on Samsung (525 G total with everything else). Cost: btrbk root-snapshot scope
-change + HM symlink re-point + one offline window.
+Fits on Samsung (~464 G cumulative of 927.5 G with everything else). `btrfs subvolume
+create home`, no partition work. Cost: btrbk root-snapshot scope change + HM symlink
+re-point + one offline window.
 
-**Phase 4 — Go caches → Samsung p2** (optional): move `GOCACHE`+`GOMODCACHE` only
-(~78 G); leave rust/pnpm/playwright on USB (cold, big). Iteration latency for compiles
-goes 2.2 ms → 27 µs per cache-hit read.
+**Phase 4 — Go caches → Samsung p2 subvol `caches`** (optional): move
+`GOCACHE`+`GOMODCACHE` only (~78 G); leave rust/pnpm/playwright on USB (cold, big).
+Iteration latency for compiles goes 2.2 ms → 27 µs per cache-hit read. `btrfs subvolume
+create caches`, no partition work.
 
 ## Risks & mitigations
 
 | Risk | Mitigation |
 |---|---|
-| Boot now requires Samsung | `nofail` OFF (must mount), rescue documented; store rebuildable from flake.lock + attic + upstreams; QLC boot partition untouched |
-| Samsung failure loses `/nix` + hot DBs | `/nix` rebuildable; DBs have nightly dump backups on pool (14d/7d) |
+| Boot now requires Samsung | `nofail` OFF (must mount), `neededForBoot = true` explicit, rescue documented; store rebuildable from flake.lock + attic + upstreams; QLC boot partition untouched |
+| Samsung failure loses `/nix` + hot DBs | `/nix` rebuildable; DBs have nightly dump backups on pool (14d/7d); reserved p1 is empty until boot-migration day, so the QLC boot path is unaffected by it |
+| Partition geometry mistakes are unfixable in place | Starts never move: ESP carved day one (4 G), ONE BTRFS pool takes the rest, future XFS only ever carved fresh from p2's tail via online shrink |
+| Snapshot landmine re-enables CoW on `hot` | No scheduled snapshots; one-shot checkpoints deleted after use; eval-time assertion keyed on the `hot` prefix (never in btrbk) |
 | Endurance (600 TBW) | Projected ~100–250 G/day worst case → 6–16 years; monitored via the (fixed) by-id smartd/nvme-monitor |
 | Migration writes stress the wedged QLC | Phase 0 first; deploy pressure gate; `--keep-going`; ionice the rsync |
 | Parallel-session tree races | Run migrations from a quiesced tree; auto-commit daemon aware |
 
 ## Open decisions for the user
 
-1. Ratify layout: 64 G XFS + 860 G BTRFS (vs. single-BTRFS-with-noCoW-dirs)
+1. ~~Ratify layout~~ RESOLVED in review (Rev 2): 4 G ESP + single BTRFS pool `tlc` +
+   nodatacow `hot` subvol. Supersedes BOTH Rev 1 options (the 64 G XFS p1, and
+   "single-BTRFS-with-noCoW-dirs" as then framed: the pool is indeed single-BTRFS, but
+   noCoW is a subvol mount with per-service boundaries, not plain directories)
 2. Phase ordering (proposed: 0→1→2, then decide 3/4 from data)
 3. Reboot window for Phase 1
+4. Optional, decide at Phase 2: enable qgroups on the Samsung pool for per-service
+   accounting (TLC exempts it from the QLC doctrine; the removed
+   `btrfs_qgroup_referenced_bytes` collector is in git history for re-adding)
