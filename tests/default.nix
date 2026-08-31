@@ -37,6 +37,7 @@ in
   cv = makeTest (import ./test-cv.nix { inherit pkgs inputs; });
   memory-emergency-guard = makeTest (import ./test-memory-emergency-guard.nix { inherit pkgs; });
   sev1-escalation = makeTest (import ./test-sev1-escalation.nix { inherit pkgs; });
+  pool-recovery = makeTest (import ./test-pool-recovery.nix { inherit pkgs; });
   session-boot-audit = import ./test-session-boot-audit.nix { inherit pkgs inputs system; };
 }
 // (import ./test-scripts.nix { inherit pkgs; })

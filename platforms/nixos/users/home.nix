@@ -605,6 +605,15 @@ in
         crush_key minimax minimax_api_key
         crush_key kimi-coding kimi_api_key
 
+        # Local llama.cpp (user starts llama-server ad hoc; nothing on
+        # lib/ports.nix serves :8899). discover_models DEFAULTS TO TRUE —
+        # crush queries /v1/models at session start, so whatever GGUF is
+        # loaded shows up with zero hand-maintained entries (the old
+        # crush.json carried a stale hardcoded model with invented pricing).
+        # Server down = provider lists no models; connection refused is
+        # instant, no startup cost.
+        provider add llamacpp --type llamacpp --base-url "http://127.0.0.1:8899/v1"
+
         # Context files (moved from the user crush.json options.context_paths).
         option context-path $HOME/.config/crush/AGENTS.md
         option context-path AGENTS.md
