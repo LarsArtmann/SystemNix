@@ -587,10 +587,10 @@ in
       # process memory without ever touching a writable file. crushrc-declared
       # keys are never persisted back — synthetic has provably stayed out of
       # the auth store and session DB snapshots since 2026-08-18. Guarded:
-      # absent secret or PLACEHOLDER value (mimo until provisioned) = provider
-      # skipped. hyper stays store-owned on purpose (OAuth refresh state,
-      # self-rotating). NOTE: do not track a real "crush/crushrc" in the
-      # ~/.config/crush dotfiles repo — it collides with this HM symlink.
+      # absent secret or PLACEHOLDER value = provider skipped. hyper stays
+      # store-owned on purpose (OAuth refresh state, self-rotating). NOTE: do
+      # not track a real "crush/crushrc" in the ~/.config/crush dotfiles repo
+      # — it collides with this HM symlink.
       "crush/crushrc".text = ''
         crush_key() {
           local f="/run/secrets/$2" k
@@ -604,7 +604,6 @@ in
         crush_key gemini gemini_api_key
         crush_key minimax minimax_api_key
         crush_key kimi-coding kimi_api_key
-        crush_key mimo mimo_api_key
 
         # Context files (moved from the user crush.json options.context_paths).
         option context-path $HOME/.config/crush/AGENTS.md

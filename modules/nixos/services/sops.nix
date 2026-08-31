@@ -192,8 +192,6 @@ in
             # never persists the keys back. No restartUnits: read
             # interactively at crush session start. hyper stays store-owned
             # (OAuth refresh state, self-rotating — not a static key).
-            # mimo_api_key ships as a PLACEHOLDER until the real value is
-            # set; crushrc skips PLACEHOLDER values.
             //
               mkSecrets "crush.yaml"
                 {
@@ -206,7 +204,6 @@ in
                   "gemini_api_key"
                   "minimax_api_key"
                   "kimi_api_key"
-                  "mimo_api_key"
                 ]
             // lib.optionalAttrs (svcEnabled "bank-sync") (
               # The AES key lives in its own file: bank-sync.yaml holds the
