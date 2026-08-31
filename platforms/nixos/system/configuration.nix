@@ -450,6 +450,7 @@ in
       # NVMe SSD health monitoring with desktop notifications for critical events
       nvme-health-monitor = {
         enable = true;
+        device = "/dev/disk/by-id/nvme-Lexar_SSD_NQ790_2TB_QBC838R010854P220C";
       };
 
       # OpenSEO — self-hosted SEO suite (rank tracking, keyword research, backlinks)
@@ -720,7 +721,16 @@ in
         enable = true;
         autodetect = false;
         devices = [
-          { device = "/dev/nvme0n1"; }
+          # Internal NVMe by-id: kernel nvmeXn1 enumeration SHIFTS when drives
+          # are added/removed (2026-08-31: the new Samsung took nvme0, moving
+          # the Lexar system disk to nvme1 — the hardcoded /dev/nvme0n1 then
+          # silently monitored the WRONG disk). by-id is slot-independent.
+          {
+            device = "/dev/disk/by-id/nvme-Lexar_SSD_NQ790_2TB_QBC838R010854P220C";
+          }
+          {
+            device = "/dev/disk/by-id/nvme-Samsung_SSD_970_EVO_Plus_1TB_S4EWNX0RA01856V";
+          }
           # Toshiba MG08ACA16TE 16TB pool members (mirrored BTRFS at
           # /mnt/pool, created 2026-08-16 from the dead private-cloud box).
           # Same USB DAS bridge class as the SanDisks: -d sat is required.

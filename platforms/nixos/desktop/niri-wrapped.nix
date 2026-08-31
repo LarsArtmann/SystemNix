@@ -173,10 +173,11 @@ in
 
       spawn-at-startup = [
         {
+          # Plain btop, NOT `sudo btop`: sudo prompts for a password inside the
+          # window and sits there unanswered at every login
           command = [
             "ghostty"
             "-e"
-            "sudo"
             "btop"
           ];
         }

@@ -337,6 +337,9 @@ let
     runtimeInputs = [
       btrfsChunkCheck
       pkgs.btrfs-progs
+      pkgs.gawk
+      pkgs.coreutils
+      pkgs.gnugrep
     ];
     text = ''
       set -uo pipefail
@@ -390,6 +393,9 @@ let
     runtimeInputs = [
       btrfsChunkCheck
       pkgs.btrfs-progs
+      pkgs.gawk
+      pkgs.coreutils
+      pkgs.gnugrep
     ];
     text = ''
       set -uo pipefail

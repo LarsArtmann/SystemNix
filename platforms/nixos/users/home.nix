@@ -583,6 +583,11 @@ in
             "Spotify",
             "spotify",
             "org.keepassxc.KeePassXC",
+            # ghostty is gtk-single-instance: every surface shares one process.
+            # Without this entry the session restore spawns ONE ghostty per SAVED
+            # WINDOW — restored empty shells get re-saved → the window count only
+            # grows across logins (2026-08-31: 152 empty terminals per login)
+            "com.mitchellh.ghostty",
         ]
 
         [skip_apps]
