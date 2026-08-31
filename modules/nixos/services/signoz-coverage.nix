@@ -394,7 +394,10 @@
             inherit onFailure;
             after = [ "clickhouse.service" ];
             serviceConfig = lib.mkMerge [
-              (harden { MemoryMax = "128M"; })
+              # 256M: measured peak 100M (page cache from the clickhouse/jq
+              # store reads is charged to the cgroup and counts toward the
+              # limit) — headroom for registry growth instead of a 3am OOM.
+              (harden { MemoryMax = "256M"; })
               (serviceOneshotDefaults { })
               {
                 Type = "oneshot";
