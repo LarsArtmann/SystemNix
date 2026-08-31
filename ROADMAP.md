@@ -2,7 +2,7 @@
 
 _Long-term direction and raw ideas not yet refined into actionable tasks._
 
-**Updated:** 2026-08-18
+**Updated:** 2026-08-31 (docs-health audit)
 
 For short-term actionable work, see [TODO_LIST.md](./TODO_LIST.md). For current feature status, see [FEATURES.md](./FEATURES.md).
 
@@ -13,10 +13,11 @@ For short-term actionable work, see [TODO_LIST.md](./TODO_LIST.md). For current 
 The system has been hardened through multiple crash cycles. The root cause chain is now well-understood: QLC NAND SLC cache exhaustion → I/O queue → kernel freeze → WDT reset, compounded by systemd-oomd killing critical services (nix-daemon, PMA) during memory pressure bursts. Mitigations deployed: daily fstrim, `commit=300`, BFQ I/O priority tiers, `ManagedOOMPreference=omit` on critical services, memory.events monitoring. Remaining work:
 
 - **Off-site backup** — **pool safety net is LIVE (2026-08-17):** btrbk root+data sends + every application backup (forgejo, pocket-id, immich, twenty, manifest, paperless) land on the 2×16 TB BTRFS mirror — the single-NVMe risk is closed. The remaining gap is the 3rd, OFF-SITE copy: user states important photos/docs already live in Google Photos/Drive — decide whether that satisfies 3-2-1 or whether an offsite leg (periodic sdf vault rotation, or the evaluated-but-never-executed Hetzner StorageBox + Borg, `docs/research/hetzner-storagebox-borgbackup.md`) returns
-- **Reduce unsafe shutdowns** — 58+ unsafe shutdowns from WDT resets. This is the ROOT CAUSE of data corruption. Options: UPS, WDT timeout tuning, oomd threshold adjustment, dedicated TLC boot disk
-- **Disk space management** — Root filesystem at 95% (2026-08-17; was 87% on 08-15 — the immich migration + seed overlap + CoW snapshot references pushed it back up). BTRFS snapshots hold references preventing GC reclamation (`rm` frees nothing until 14d retention expires). Levers: `/nix` GC, `/home/hermes` (58 G), CoW-aware timing of space-heavy ops around btrbk retention
+- **Reduce unsafe shutdowns** — 58+ unsafe shutdowns from WDT resets. This is the ROOT CAUSE of data corruption. Options: UPS, WDT timeout tuning, oomd threshold adjustment, dedicated TLC boot disk. The three kernel freezes of 2026-08-22/24/31 were scheduler LIVELOCKS (WDT, softlockup detectors and kdump were ALL armed and NONE fired — the class pets the watchdog "eventually"); prevention lives in the layered guard/sev1/stability stack, never in-kernel detection
+- **Samsung 1TB migration (ratified 2026-08-31)** — `/nix` moves to the internally-installed Samsung 970 EVO Plus (BTRFS ~860G zstd + XFS 64G for hot DBs, nodatacow subvols per the Rev-2 decision doc); QLC exec-latency-under-buildstorm is the driver. Phase 1/2 clusters live in TODO_LIST; end-state moves docker data-root off the QLC `/data` too. Root disk pressure is meanwhile RESOLVED (82% after the GC-guard fix + user levers; the old 95%/96% crisis entries are closed)
 - **BTRFS `/data` subvolume migration** — `/data` is BTRFS toplevel (subvolid=5). Migration to `@data` would enable separate CoW semantics
-- **Crash-loop circuit breaker** — No system-wide mechanism to detect and bound crash loops before they cause I/O pressure → WDT crash. The browser-history 592-restart and Twenty 235-restart loops both went undetected (crash-loop DETECTION metrics now live — auto-remediation/reset-failed is the remaining gap)
+- **Crash-loop circuit breaker** — crash-loop DETECTION metrics are live (`system_service_start_limit_hit`, restart-churn) — auto-remediation/reset-failed is the remaining gap. New idea (freeze #3, 2026-08-31): boot-time catch-up stampede control — after multi-day outages every Persistent timer + scrub + dump fires in the same minute; stagger catch-ups or add a boot IO-admission gate
+- **disko at the already-deferred reinstall** — declarative partitioning researched 2026-08-28; a provisioning-time tool (nixos-anywhere), NOT safely retrofittable — draft the config when the reinstall is actually scheduled
 - **Provision Raspberry Pi 3** — hardware needed for DNS failover cluster (VRRP)
 - **Auditd enablement** — blocked on NixOS 26.05 bug #483085
 - **GPUActive memory pressure** — `system-health.nix` collects GPUActive metrics and alerts at 60G threshold. TTM `page_pool_size` reduced from 112 GiB to 24 GiB. Remaining: investigate lowering `ttmPagesLimit` and `GPUReclaim` tuning

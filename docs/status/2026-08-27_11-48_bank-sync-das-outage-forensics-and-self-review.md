@@ -121,20 +121,20 @@ None — stayed on the outage end-to-end. Deliberately did NOT research unrelate
 
 **P0 — recovery (physical + verification)**
 
-1. User: swap the USB cable (last untested component), observe enclosure LED + disk spin-up.
-2. User: plug a known-good USB stick into the exact port used Aug 26 — formally closes the controller-wake domain.
-3. Decision: new 4-bay enclosure vs transplant vs internal SATA (if the chassis has ports).
-4. On enumeration: verify all 4 targets attach; `btrfs device stats` on pool = zero errors.
-5. On pool mount: `bank-sync-storage-dir` + `bank-sync` start; check Wise SCA gate (403 + `x-2fa-approval` header → `docs/services/bank-sync-sca.md` runbook).
-6. buildcache: confirm `buildcache-usb-recovery` self-heals (udev-triggered), real-I/O probe green, `errors_count` from the Aug 22 ext4 abort checked; e2fsck if nonzero.
-7. btrbk catch-up: root+data sends resume; verify last-received freshness; `btrbk-pool-clean` heals any garbled targets.
-8. Gatus sweep: Pool Mounted, Build Cache SSD, `backup_all_healthy` green; no `start-limit-hit` residue (`systemctl reset-failed` via deploy.sh if needed).
-9. atticd-bootstrap: verify clean start once pool is back.
+~~1. User: swap the USB cable (last untested component), observe enclosure LED + disk spin-up.~~ superseded — root cause found 2026-08-29 (hdparm letter-rule + VBUS fake power-cycles + missing uas); bridge RECOVERED on the 08-31 replug
+~~2. User: plug a known-good USB stick into the exact port used Aug 26 — formally closes the controller-wake domain.~~ superseded — controllers pinned awake + xHCI audit closed the domain (08-29 session); recovery proves the path
+~~3. Decision: new 4-bay enclosure vs transplant vs internal SATA (if the chassis has ports).~~ moot — the existing enclosure recovered; USB-path redundancy remains a TODO_LIST question
+~~4. On enumeration: verify all 4 targets attach; `btrfs device stats` on pool = zero errors.~~ done 2026-08-31 — all four targets, zero device errors (16-29 report)
+~~5. On pool mount: `bank-sync-storage-dir` + `bank-sync` start; check Wise SCA gate (403 + `x-2fa-approval` header → `docs/services/bank-sync-sca.md` runbook).~~ done — bank-sync checks PASS in the 08-31 83/0 run
+~~6. buildcache: confirm `buildcache-usb-recovery` self-heals (udev-triggered), real-I/O probe green, `errors_count` from the Aug 22 ext4 abort checked; e2fsck if nonzero.~~ done — buildcache attached + serving on recovery (e2fsck decision tree remains in the runbook)
+~~7. btrbk catch-up: root+data sends resume; verify last-received freshness; `btrbk-pool-clean` heals any garbled targets.~~ done 2026-08-31 — auto-resume verified; pool-clean removed both incomplete data receives (17-22 report)
+~~8. Gatus sweep: Pool Mounted, Build Cache SSD, `backup_all_healthy` green; no `start-limit-hit` residue (`systemctl reset-failed` via deploy.sh if needed).~~ done — 83 PASS / 0 FAIL; backup-age convergence watch remains (TODO_LIST)
+~~9. atticd-bootstrap: verify clean start once pool is back.~~ done — green in the 08-31 run
 
 **P1 — hardening/monitoring**
-10. Add `system_das_usb_link_present` (by-id bridge presence) to system-health; Gatus check + `discordAlert`; name it so link-death ≠ mount-failure.
-11. Verify whether "Pool Mounted"-class sustained failures reach the sev1-escalation overlay; wire if not.
-12. Decide interim redundancy while DAS is down (accept local-snapshot-only vs attach emergency USB btrbk target).
+~~10. Add `system_das_usb_link_present` (by-id bridge presence) to system-health; Gatus check + `discordAlert`; name it so link-death ≠ mount-failure.~~ done at `c121f8cf` (2026-08-22)
+~~11. Verify whether "Pool Mounted"-class sustained failures reach the sev1-escalation overlay; wire if not.~~ done — sev1-escalation carries the DAS-link condition (module-presence gated)
+~~12. Decide interim redundancy while DAS is down (accept local-snapshot-only vs attach emergency USB btrbk target).~~ moot — pool returned; the offsite-leg decision remains TODO_LIST P0
 13. Record fallback-cache disposition in TODO_LIST; if kept while DAS down, add reap-on-recovery to `buildcache-usb-recovery`.
 14. Write `docs/services/das-recovery.md`: transplant steps, `mount -o degraded` caution, catch-up, ext4 check, Gatus sweep.
 15. `das-link-recovery-check.sh`: per-section exit codes, built-in cross-boot "last seen bridge" lookup (avoiding the `-k` trap), emit presence metric file.
@@ -143,7 +143,7 @@ None — stayed on the outage end-to-end. Deliberately did NOT research unrelate
 18. Alert-path verification: confirm "Pool Mounted" actually delivered to Discord on Aug 22 (if silent, that is a second bug).
 
 **P2 — housekeeping**
-19. Harvest this report's P0/P1 into TODO_LIST (docs-health HARVEST).
+~~19. Harvest this report's P0/P1 into TODO_LIST (docs-health HARVEST).~~ done — 2026-08-24 harvest + the 2026-08-31 docs-health audit
 20. Run `sudo bash scripts/das-link-recovery-check.sh` once for the root-only shadow triage pending since Aug 26.
 21. bank-sync post-recovery: verify 5-day gap backfilled from Wise (journal `sync failure` count → 0).
 22. bank-sync SQLite integrity check after long cold downtime (module's ExecStartPre covers; verify journal).

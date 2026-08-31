@@ -45,7 +45,7 @@ Read ALL 47 status reports from 2026-08-20 → 2026-08-24 (620 KB) via 4 paralle
 
 ### f) Next
 
-See TODO_LIST (13 new rows). Highest value: IO-PSI phantom-saturation correlation (crash3 class), IO-PSI guard tier, niri gatus false negatives.
+~~See TODO_LIST (13 new rows). Highest value: IO-PSI phantom-saturation correlation (crash3 class), IO-PSI guard tier, niri gatus false negatives.~~ routed — all three rows live in TODO_LIST (P1; verified by the 2026-08-31 docs-health audit)
 
 ## Verification chain
 

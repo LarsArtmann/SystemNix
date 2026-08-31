@@ -71,7 +71,7 @@
 
 **Immediate (tonight, blocking):**
 
-1. Delete corrupt pool subvol: `sudo btrfs subvolume delete /mnt/pool/backups/root/@.20260814T2300`
+~~1. Delete corrupt pool subvol: `sudo btrfs subvolume delete /mnt/pool/backups/root/@.20260814T2300`~~ done — `btrbk-pool-clean` (2026-08-21) GC'd the garbled receives; chain healed Aug 12→21 continuous
 2. ~~Start pool catch-up: `sudo systemctl start btrbk-root.service` (sends 0814/0815/0816; monitor journal)~~ done (seeds completed; first overnight cycle green 2026-08-18)
 3. ~~Run the 5-command pivot block (daemon stop → rsync store delta → rsync var → switch → daemon start)~~ done at `d4a59d4d`
 4. ~~Verify pivot: `findmnt /nix` → `/@nix`; `ls /nix/store | wc -l` ≈ 78,903; `nix store verify --all --no-contents` spot check; `systemctl status nix-daemon`~~ done at `d4a59d4d`
@@ -79,7 +79,7 @@
 6. ~~Re-provision emergency reserve: `sudo systemctl start btrfs-emergency-reserve`~~ done (reserve file present, 10 GiB @ Aug 17 21:41)
 
 **Short-term (tomorrow):**
-7. After tonight's 23:00 snapshot lands: delete local 0814, 0813, 0815, 0816 (pool-verified)
+~~7. After tonight's 23:00 snapshot lands: delete local 0814, 0813, 0815, 0816 (pool-verified)~~ done — superseded by btrbk's own pruning (retention 3d+1w since 2026-08-21); pool-verified receives confirmed
 8. ~~Confirm tonight's btrbk 0817 snapshot EXCLUDES @nix extents (first slim snapshot — the whole point)~~ done at `d4a59d4d`
 9. `nix store gc` manual pass post-verify (zombie path sweep if any)
 10. ~~Fix `btrbk-root` TimeoutStartSec for catch-up-class runs~~ done at `e5edf0bd`
@@ -98,7 +98,7 @@
 21. ~~Reconcile AGENTS.md `/nix` bullet with ACTUAL state once pivot done (remove premature "migrated" claim if pivot slips)~~ done at `d4a59d4d`
 22. ~~Verify pool-side 0812/0813 still intact post-catch-up (`btrfs subvolume show`, du spot-check)~~ done at `e5edf0bd`
 23. ~~Cache-subvol reclaim batch (deferred): `@cargo/registry/src` (1.6 G), `@npm`, `@cache-home` — only if disk pressure persists~~ done at `71256d6f`
-24. Old `/rust-cache` partition (98 GiB raw) deletion + root-partition grow (pre-existing TODO_LIST item)
+~~24. Old `/rust-cache` partition (98 GiB raw) deletion + root-partition grow (pre-existing TODO_LIST item)~~ done (verified 2026-08-31) — p9 deleted, tail now hosts the ClickHouse XFS partition; grow-root was never physically possible (non-adjacent)
 25. Revisit `@home` subvol split (flat-layout recommendation from wikis, deferred at install)
 26. ~~Balance check after deletions settle (`btrfs balance status`; the Monday 04:00 `-musage=50` will consolidate)~~ done at `d4a59d4d`
 27. Consider `nix.settings.min-free` raise during migration windows (we run min-free 5 G; 97% full breached comfort)

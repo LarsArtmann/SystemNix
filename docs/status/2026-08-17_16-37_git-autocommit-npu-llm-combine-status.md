@@ -77,8 +77,8 @@
 | ~~16~~ | ~~Update FEATURES.md: FastFlowLM (DONE), PMA active mode (DONE), auto-commit→NPU combine (PARTIAL)~~ done (docs-health pass 2026-08-18)                             | ~~Medium~~   |
 | ~~17~~ | ~~Update ROADMAP.md: close "FastFlowLM NPU LLM server" TODO (design complete → shipped)~~ done (docs-health pass 2026-08-18)                                        | ~~Medium~~   |
 | ~~18~~ | ~~Verify the 3 concurrent fixes didn't break the idle-TTL unit's `After/Wants` graph (proxy → backend)~~ done at `99301327`, `c6f91f33`                             | ~~Medium~~   |
-| 19     | Decide whether to keep `OPENAI_API_KEY=local` dormant env vars or strip them until v0.8.0 lands                                                                     | Low          |
-| 20     | Check that Gatus FastFlowLM checks don't fire during normal idle (absence of `system_service_state_failed` = green)                                                 | Medium       |
+~~| 19     | Decide whether to keep `OPENAI_API_KEY=local` dormant env vars or strip them until v0.8.0 lands~~ moot — go-commit v0.8.0+ landed long ago; env wiring active (PMA = heaviest flm consumer per usage forensics 2026-08-22)                                                                     | Low          |
+~~| 20     | Check that Gatus FastFlowLM checks don't fire during normal idle (absence of `system_service_state_failed` = green)~~ done — live since 2026-08-18 (system-health state metrics; zero idle false-fires since)                                                 | Medium       |
 | 21     | Quick `systemd-analyze verify` on the 4 fastflowlm units post-deploy                                                                                                | Medium       |
 | ~~22~~ | ~~Verify `flm serve` command-line flags actually match module ExecStart (`--host`, `--port`, `--pmode` exist in v1.0.1)~~ done at `99301327`                        | ~~High~~     |
 | ~~23~~ | ~~Test the proxy cold-load wait (300s deadline vs 6min TimeoutStartSec) against the real cold-load time (1-3 min measured)~~ done at `99301327`                     | ~~Medium~~   |

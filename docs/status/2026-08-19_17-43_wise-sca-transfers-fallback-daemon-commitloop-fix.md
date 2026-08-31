@@ -85,18 +85,18 @@
 
 **Critical path (this evening):**
 
-1. Land the deploy (in flight) — verify gen > 696 activates.
-2. Verify fallback live: journal clean of `no aggregate`/`dashboard query`, `total_new > 0`, dashboard shows transfers.
+~~1. Land the deploy (in flight) — verify gen > 696 activates.~~ done — deployed (gen 696+)
+~~2. Verify fallback live: journal clean of `no aggregate`/`dashboard query`, `total_new > 0`, dashboard shows transfers.~~ done — transfers synced (completed by the wise-go v0.8.1 UTC-timestamp fix, 2026-08-21)
 3. User does the Wise-app statement view (or approval) → restart bank-sync → verify full-fidelity statements resume + no more SCA lines.
-4. Push SystemNix master at a quiescent moment.
+~~4. Push SystemNix master at a quiescent moment.~~ done — pushed
 
 **bank-sync follow-ups:**
 5. Fallback visibility log line + `sca_fallback_active` metric.
-6. Gatus check: bank-sync `total_new=0` for >24h → Discord alert (silent-zero-sync class).
+~~6. Gatus check: bank-sync `total_new=0` for >24h → Discord alert (silent-zero-sync class).~~ done — bank-sync gatus conditions live on the sync-error/last-sync metrics
 7. Wire `wise.transfer` metrics (fallback hit count).
 8. dprint.json exit-14 fix (markdown plugin / includes) — end the `--no-verify` pattern.
 9. Wise CSV importer (`internal/importer/wise/`, qonto pattern) — plan C if SCA never clears; also useful for >469-day backfill.
-10. README/AGENTS: document fallback semantics (outgoing only, zero fees, `transfer-` ID namespace).
+~~10. README/AGENTS: document fallback semantics (outgoing only, zero fees, `transfer-` ID namespace).~~ done — AGENTS.md Wise section documents the SCA/fallback semantics + runbook
 11. Consider `GetTransfer`/recipient enrichment (names for `recipient <id>` descriptions).
 12. Backfill pagination guard: transfers endpoint across 5 profiles × pages — confirm rate-limit behavior (failsafe already retries 429).
 

@@ -12,12 +12,12 @@ SystemNix manages both macOS (nix-darwin) and NixOS systems through a single, re
 | **Cloud & Infra**        | AWS CLI, GCP SDK, kubectl, Helm, Terraform, Docker                                                                                                                                               |
 | **Development**          | Git, GitHub CLI, Git Town, JetBrains Toolbox, Zed, Sublime Text 4, Fish shell, tmux, Zellij                                                                                                      |
 | **Desktop (NixOS)**      | Niri (Wayland tiling), DankMaterialShell (Quickshell) status bar / notifications / launcher / lock, SDDM, Ghostty, Kitty, Helium (Chromium browser), Sway (backup WM), Rofi (Sway fallback only) |
-| **Self-Hosted Services** | Immich (photos), Forgejo (Git), SigNoz (observability), SearXNG (privacy search), Homepage Dashboard, Hermes AI, Monitor365, Crush Daily                                                         |
-| **AI/ML**                | Ollama (ROCm), llama.cpp, AMD NPU (XDNA) driver                                                                                                                                                  |
+| **Self-Hosted Services** | Immich (photos), Forgejo (Git), Paperless-ngx (documents + AI), SigNoz (observability), SearXNG (privacy search), Pocket ID (SSO), Hermes AI, Gatus, Homepage, PapDashboard (alert hub), Browser History, InboxClean (Gmail assistant), CV server, Crush Daily, Dozzle, Attic (binary cache) |
+| **AI/ML**                | FastFlowLM (Qwen MoE on AMD NPU), llama-rag (embeddings + reranking on GPU), Ollama (ROCm), llama.cpp, AMD XDNA NPU driver |
 | **Security**             | Gitleaks, sops-nix, AppArmor, Fail2ban, ClamAV, Touch ID for sudo (macOS)                                                                                                                        |
-| **Monitoring**           | SigNoz (20 alert rules, 6 dashboards), Gatus (69 health checks), ActivityWatch                                                                                                                   |
+| **Monitoring**           | SigNoz (26 alert rules, 5 dashboards), Gatus (130+ health checks, Discord alerting), system-health textfile collectors, sev1 desktop escalation                                                                 |
 | **Networking**           | Caddy reverse proxy (TLS), dnsblockd embedded resolver (sdns: DNSSEC, DoT, DoH), SearXNG metasearch, 2.5M+ blocked domains                                                                       |
-| **Storage**              | BTRFS with btrbk snapshots (daily), ZRAM swap (~16 GiB), monthly scrub                                                                                                                           |
+| **Storage**              | BTRFS with btrbk snapshots (daily, sent to a 2×16TB RAID1 HDD pool), ZRAM swap (~28 GiB), weekly scrub, daily fstrim                                                |
 
 ## Quick Start
 
@@ -51,8 +51,9 @@ nix flake check --no-build  # Validate configuration syntax
 ```
 SystemNix/
 ├── flake.nix                    # Main entry point with flake-parts
-├── modules/nixos/services/     # 38 NixOS service modules + 6 desktop modules (auto-discovered, ~35 enabled)
-├── pkgs/                        # 7 custom package derivations + dms-plugins/ (13 widgets)
+├── modules/nixos/services/     # 66 NixOS service modules (auto-discovered by filename)
+├── modules/nixos/desktop/      # 10 desktop modules (auto-discovered)
+├── pkgs/                        # Custom packages (fastflowlm, systemd-graph, dms-plugins/ with 13 widgets + 2 community)
 ├── overlays/                    # Shared + Linux-only overlays (callPackage + flake-input overlays)
 ├── lib/                         # 10 files exporting 13+ helpers (harden, ports, mkDockerServiceFactory, ...)
 ├── platforms/
@@ -72,13 +73,13 @@ SystemNix/
 │       ├── hardware/            # AMD GPU/NPU, Bluetooth, hardware config
 │       ├── programs/            # Rofi (Sway backup), Yazi, Zellij, Chromium
 │       └── users/               # Home Manager user config
-├── scripts/                     # 39 operational scripts (shell + Python)
+├── scripts/                     # 60 operational scripts (shell + Python)
 └── docs/                        # Architecture decisions (ADRs), status reports, troubleshooting
 ```
 
 ## NixOS Services (evo-x2)
 
-All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (69 health checks) + SigNoz (20 alert rules, 6 dashboards):
+All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (130+ health checks) + SigNoz (26 alert rules, 5 dashboards):
 
 | Service          | Port             | URL                 | Description                                                                                         |
 | ---------------- | ---------------- | ------------------- | --------------------------------------------------------------------------------------------------- |
@@ -90,12 +91,18 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 | **Pocket ID**    | 1411             | `auth.home.lan`     | Passkey-based SSO/IDP + oauth2-proxy forward auth                                                   |
 | **Hermes**       | —                | —                   | AI agent gateway (Discord bot, cron scheduler, multi-provider LLM)                                  |
 | **Twenty CRM**   | 3200             | `crm.home.lan`      | Self-hosted CRM (Docker Compose: PostgreSQL + Redis)                                                |
-| **Voice Agents** | 7880             | —                   | AI voice agents (Docker: LiveKit + Whisper ASR with ROCm)                                           |
+| **Paperless-ngx**| 2892             | `paperless.home.lan`| Document management + OCR + AI tagging (PG backend, Tika/Gotenberg, NPU LLM)                       |
+| **PapDashboard** | 8088             | `alerts.home.lan`   | Alert lifecycle hub + NPU insight enricher (ingests Gatus)                                          |
+| **Browser History** | 8087          | `history.home.lan`  | Cross-device browser history (WebAuthn + Pocket ID OIDC)                                           |
+| **InboxClean**   | 8099             | `inbox.home.lan`    | Gmail AI assistant (event-sourced, multi-account, HTMX dashboard)                                  |
+| **CV server**    | 8098             | `cv.home.lan`       | Resume/CV generator (typst PDF, pipeline scanner + LLM evaluation)                                 |
+| **Attic**        | 8200             | `cache.home.lan`    | Nix binary cache (pool-backed)                                                                     |
+| **Voice Agents** | 7880             | —                   | AI voice agents (Docker: LiveKit + Whisper ASR) — currently disabled                               |
 | **TaskChampion** | 10222            | `tasks.home.lan`    | Taskwarrior sync server (cross-platform + Android)                                                  |
 | **Manifest**     | 2099             | `manifest.home.lan` | Smart LLM router for AI agents (cost optimization)                                                  |
 | **Overview**     | 8083             | —                   | Local project dashboard (git repo discovery, stats, activity)                                       |
 | **Dozzle**       | 8084             | `logs.home.lan`     | Real-time Docker container log viewer                                                               |
-| **Monitor365**   | 3001             | `monitor.home.lan`  | Device monitoring agent + server dashboard                                                          |
+| **Monitor365**   | 3001             | `monitor.home.lan`  | Device monitoring agent + server dashboard — disabled (private wireguard-collector dep)             |
 | **OpenSEO**      | 3002             | `seo.home.lan`      | Self-hosted SEO suite (rank tracking, keyword research)                                             |
 | **Crush Daily**  | 8081             | `daily.home.lan`    | AI-powered development insights from Crush databases                                                |
 | **PMA**          | —                | —                   | Projects Management Automation (AI commit messages, repo discovery)                                 |
@@ -105,13 +112,17 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 | **Mullvad VPN**  | —                | —                   | WireGuard VPN — currently disabled (talpid_dns corrupted resolv.conf)                               |
 | **DiscordSync**  | —                | —                   | Continuous Discord channel backup bot                                                               |
 | **SearXNG**      | 8889             | `search.home.lan`   | Privacy metasearch engine (70+ engines, no tracking, POST-only, DuckDuckGo icons)                   |
+| **FastFlowLM**   | 52625            | —                   | NPU LLM server (Qwen3.6 MoE, socket-activated, OpenAI-compatible)                                  |
+| **llama-rag**    | 8848, 8849       | —                   | GPU embeddings (bge-m3) + reranking (bge-reranker-v2-m3) for RAG                                    |
+| **systemd-graph**| 8847             | `graph.home.lan`    | Live systemd dependency graph (LAN-only)                                                            |
+| **timer-monitor**| —                | `timers.home.lan`   | Read-only systemd services+timers audit (LAN-only)                                                 |
 
 ### DNS Blocking
 
 - dnsblockd with embedded sdns recursive resolver (DNSSEC, DoT, DoH, caching, local zones, LAN ACLs)
 - 2.5M+ blocked domains across 23 blocklists (ads, trackers, malware, telemetry, gambling, native device trackers)
 - Blocklist hot-reload with automatic cache flush
-- Local `.home.lan` DNS zone with wildcard resolution for all services
+- Local `.home.lan` DNS zone — explicit per-service records (dnsblockd has NO wildcard local resolution; new subdomains must be listed)
 - IPv6 disabled at DNS level (no global IPv6 on evo-x2)
 - **DNS failover**: Raspberry Pi 3 secondary resolver with VRRP VIP (planned)
 
@@ -122,7 +133,7 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 - **Kitty**: Backup terminal (GPU-accelerated, image display)
 - **SDDM**: Login manager with Catppuccin Mocha theme
 - **Theme**: Catppuccin Mocha across all applications (GTK, Qt, terminal, browser)
-- **Helium**: Ungoogled Chromium fork (Chromium 150) with Widevine DRM, VA-API hardware video decode, Catppuccin Mocha theme
+- **Helium**: Ungoogled Chromium fork (Chromium 151) with Widevine DRM, VA-API hardware video decode, Catppuccin Mocha theme
 - **Backup WM**: Sway configured as fallback (uses Rofi, not DMS)
 
 ## NixOS Hardware (evo-x2)
@@ -132,8 +143,8 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 | **CPU**     | AMD Ryzen AI Max+ 395 (Strix Halo), amd_pstate=guided                                                     |
 | **GPU**     | AMD integrated (amdgpu), Mesa latest, ROCm compute stack                                                  |
 | **NPU**     | AMD XDNA via nix-amd-npu, XRT runtime                                                                     |
-| **Memory**  | 128GB physical (~110 GiB visible after GPU VRAM carveout), ZRAM swap (~33 GiB), tuned for AI/ML workloads |
-| **Storage** | BTRFS root (zstd) + `/data` (zstd:3), btrbk snapshots (daily)                                             |
+| **Memory**  | 128GB physical (~94 GiB visible after the 18 GiB GPU VRAM carveout), ZRAM swap (~28 GiB, zram-only), tuned for AI/ML workloads |
+| **Storage** | BTRFS root (zstd, QLC-tuned: commit=300, daily fstrim) + `/data` (zstd:3) + ClickHouse XFS partition + 2×16TB BTRFS RAID1 HDD pool; btrbk snapshots (daily) sent to the pool nightly |
 | **Boot**    | systemd-boot (50 generations), latest Linux kernel                                                        |
 | **Network** | Realtek 2.5G Ethernet, MediaTek WiFi                                                                      |
 

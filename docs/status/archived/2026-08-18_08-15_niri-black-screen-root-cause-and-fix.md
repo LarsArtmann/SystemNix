@@ -65,14 +65,14 @@ Also: `AGENTS.md` gotcha entry added under "Desktop".
 
 ## 4. NOT done / handover
 
-1. **Deploy** — user command (`nix run .#deploy`). Post-deploy checklist:
+~~1. **Deploy** — user command (`nix run .#deploy`). Post-deploy checklist:~~ done — deployed 2026-08-18 15:00 session; desktop recovered, no zombie recurrence since
    - reboot, then BEFORE logging in: `pgrep -x niri` → empty (no zombie at login screen);
    - login at SDDM → desktop appears within seconds; `journalctl --user -u niri -b --since -2min` shows outputs enabled, no `DeviceMissing` spam;
    - `loginctl show-session <id> -p Type` → wayland; `niri msg outputs` lists DP-1;
    - no `niri-drm-healthcheck` restart lines every 2 min;
    - aw-watcher attaches after login (gate execs once a wayland socket exists).
-2. **Live cleanup of the current zombie** — needs systemctl (blocked in this session); the deploy + reboot supersedes it.
-3. Follow-ups (not blocking): `niri-drm-healthcheck.timer` also arms for the SDDM greeter's user manager (global NixOS user unit) — harmless post-guard, but scoping it to graphical users would remove noise; consider a VM test simulating linger+SDDM login to lock this class in CI; `niri-flake-polkit` QML dialog crash ("module gtk2 is not installed") is cosmetic but crash-loops (restart counter 40) and deserves its own fix.
+~~2. **Live cleanup of the current zombie** — needs systemctl (blocked in this session); the deploy + reboot supersedes it.~~ done — superseded by the reboot; zombie gone
+~~3. Follow-ups (not blocking): `niri-drm-healthcheck.timer` also arms for the SDDM greeter's user manager (global NixOS user unit) — harmless post-guard, but scoping it to graphical users would remove noise; consider a VM test simulating linger+SDDM login to lock this class in CI; `niri-flake-polkit` QML dialog crash ("module gtk2 is not installed") is cosmetic but crash-loops (restart counter 40) and deserves its own fix.~~ mostly done — polkit gtk2→adwaita/fusion fixed same day (15:00 session); eval guard shipped as `session-boot-audit.nix`; the linger+SDDM VM test remains open in TODO_LIST
 4. Linger for `lars` is user-set (not in the repo) and intentionally left alone — the fix makes lingering safe.
 
 ## 5. Reflection

@@ -36,13 +36,13 @@
 
 1. **FastFlowLM v1.0.3 recovery path** — wrapper fix landed + documented, but the required one-time `flm pull qwen3.6-moe:35b-a3b` (Q4_1→Q4_K re-quant, ~21.6 GB) was NOT run; retry is intentionally held until a reboot into kernel 7.2.2 + live `flm serve` validation (parallel session's documented condition in `pkgs/fastflowlm.nix`).
 2. **`KNOWN_NEW_METRICS` retirement** — `system_oomd_kills_scrape_errors` (parallel session's new fail-closed gauge) should now be live in /metrics after deploy #2; NOT verified, and the pre-deploy-check.sh entry NOT removed (its own comment mandates removal after first post-deploy confirmation).
-3. **Parallel session's guard Zone 5 / sev1 / snapshots WIP went live on deploy #2 with eval-only validation** — I ran `nix flake check --no-build` (eval) but never executed their VM tests (`tests/test-memory-emergency-guard.nix` +51 lines, `tests/test-sev1-escalation.nix` +13). Doctrine says don't silently co-verify foreign work; I flagged it, fixed its build-blocker, and shipped it because the deployed system had flm dead — judgment call, not a fully closed loop.
+~~3. **Parallel session's guard Zone 5 / sev1 / snapshots WIP went live on deploy #2 with eval-only validation** — I ran `nix flake check --no-build` (eval) but never executed their VM tests (`tests/test-memory-emergency-guard.nix` +51 lines, `tests/test-sev1-escalation.nix` +13). Doctrine says don't silently co-verify foreign work; I flagged it, fixed its build-blocker, and shipped it because the deployed system had flm dead — judgment call, not a fully closed loop.~~ closed — the owning session's VM tests were executed GREEN in its own verification (17-48 report §a.7)
 4. **Post-deploy WARNs not investigated:** "1 error line(s) in quickshell journal (last 1h)"; I/O pressure avg10 78–87% (hypothesis: btrbk catch-up sending the 9-day DAS gap — unverified).
 
 ## c) NOT STARTED
 
 - `flm pull` for the v1.0.3 Q4_K weights (blocked on the 7.2.2 reboot decision).
-- `TODO_LIST.md` harvest of this session's follow-ups — deferred: TODO_LIST.md was mid-edit by the parallel session at report time.
+~~- `TODO_LIST.md` harvest of this session's follow-ups — deferred: TODO_LIST.md was mid-edit by the parallel session at report time.~~ done — 2026-08-31 docs-health audit
 - Post-deploy verification that `cv-backup` / `cv-backup-dir` (parallel session's new mount-gated oneshot) actually ran green after deploy #2.
 - Gatus/Discord alert-noise review for the ~40 min flm-down window (17:06→17:46).
 - `nix fmt` verification of my CV `nix/packages.nix` edits against CV's treefmt/nixfmt (CV pre-commit only formats staged **Go** files; CV CI may flag nix formatting).

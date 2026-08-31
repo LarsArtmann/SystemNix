@@ -93,18 +93,18 @@ No. Everything claimed as verified was verified live (build green, tests green, 
 1. Approve the pending access request in the Wise app (Settings → Security and privacy → Approvals).
 2. Run the renewal: latest OTT from journal → `/var/lib/bank-sync-sca/token.env` → `systemctl restart bank-sync` → verify `total_new > 0` → remove file (full commands in `docs/services/bank-sync-sca.md`).
 3. Decide: leave or drop duplicate commit `8ca25e18` on the PR #139 branch.
-4. Confirm master push of `3af48067` (daemon or manual).
+~~4. Confirm master push of `3af48067` (daemon or manual).~~ done — pushed (relock chain completed)
 
 **Alerting (closes the incident class):**
-5. Inspect bank-sync `/metrics` for error/last-sync counters.
-6. Add a Gatus check (or system-health textfile) alerting on sync errors / sustained zero-new — the thing that would have caught this incident on day 1.
-7. If no suitable metric exists upstream, add `bank_sync_last_sync_errors` / `bank_sync_last_sync_new` in bank-sync.
+~~5. Inspect bank-sync `/metrics` for error/last-sync counters.~~ done — counters live (`bank_sync_sync_errors_total`, `bank_sync_last_sync_timestamp_seconds`)
+~~6. Add a Gatus check (or system-health textfile) alerting on sync errors / sustained zero-new — the thing that would have caught this incident on day 1.~~ done — wired into gatus conditions
+~~7. If no suitable metric exists upstream, add `bank_sync_last_sync_errors` / `bank_sync_last_sync_new` in bank-sync.~~ done — the metrics exist upstream and are scraped
 8. Make post-deploy check WARN (not fail) if fresh journal shows `sca challenge` — a deploy-time nudge for the 90-day ritual.
 
 **bank-sync repo health:**
 9. Fix `dprint.json` exit-14 (markdown plugin / includes / BuildFlow allowNoFiles).
-10. TODO_LIST: 5 stdlib CVEs pending nixpkgs go1.26.6; revisit floor patch then.
-11. AGENTS.md: SCA operational pointer to the SystemNix runbook.
+~~10. TODO_LIST: 5 stdlib CVEs pending nixpkgs go1.26.6; revisit floor patch then.~~ moot — nixpkgs ships go 1.26.7 (≥ floor) since 2026-08-29
+~~11. AGENTS.md: SCA operational pointer to the SystemNix runbook.~~ done — AGENTS.md Wise SCA bullet links `docs/services/bank-sync-sca.md`
 12. Adapter spec: `SCAChallengeError` message survives `wrapSDKCall` classification (Rejection family preserved).
 13. `go.mod` line 56 direct/indirect mixing (gomod-check debt).
 14. Triage the 2 import-level + 2 module-level govulncheck findings (not called by our code).

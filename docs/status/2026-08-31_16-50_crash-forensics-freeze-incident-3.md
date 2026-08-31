@@ -62,7 +62,7 @@ Tonight 23:00/23:30 the btrbk root+data sends run again (the actual catch-up). T
 
 1. flm client identity at 14:33 (3 min after boot): PMA go-commit is the documented heaviest flm consumer (starts at boot, 9 days of pending commits to make). PapDashboard enricher also qualifies via the alert storm. Not conclusively attributed.
 2. Whether v1.0.3 actually fixes the prefill core-dump — observe after upgrade.
-3. `btrfs scrub status /data` post-crash: the interrupted boot scrub may have logged csum errors against the KNOWN /data EIO inode (P0 since Aug 18) — check `btrfs-health` metrics before panicking at a red "BTRFS Scrub Health" (it was already red at 16:40 in boot 0).
+~~3. `btrfs scrub status /data` post-crash: the interrupted boot scrub may have logged csum errors against the KNOWN /data EIO inode (P0 since Aug 18) — check `btrfs-health` metrics before panicking at a red "BTRFS Scrub Health" (it was already red at 16:40 in boot 0).~~ done — observed: scrub status 3 (interrupted) both mounts, `btrfs_scrub_error_free 0` red (20-02 report); ties into the P0
 
 ---
 

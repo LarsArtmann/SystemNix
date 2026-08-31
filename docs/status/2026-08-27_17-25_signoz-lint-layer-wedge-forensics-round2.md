@@ -54,7 +54,7 @@ Negative-testing lesson (hit twice): fixtures at `/tmp` paths DON'T EXIST in the
 
 - **Wedge-rule Discord delivery proof** — needs a controlled dnsblockd stats stop on the live resolver (root); declined autonomously: risk-to-value poor. The rule's QUERY was verified returning 0 during the live wedge (last session); delivery plumbing is shared with 25 proven rules.
 - **emeet/niri gate live verification** — needs a graphical session (SSH-only right now).
-- **DAS recovery / nixpkgs go_1_26 bump** — external/context, tracked in TODO_LIST.
+~~- **DAS recovery / nixpkgs go_1_26 bump** — external/context, tracked in TODO_LIST.~~ both landed — nixpkgs go 1.26.7 since 2026-08-29; DAS recovered 2026-08-31
 
 ## Flags for other sessions
 

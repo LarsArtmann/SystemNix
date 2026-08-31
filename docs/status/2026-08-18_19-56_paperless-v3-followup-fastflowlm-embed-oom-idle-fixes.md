@@ -61,10 +61,10 @@ Resume the paused paperless v3 "superb" upgrade at its two unresolved post-deplo
 4. ~~E2E fastflowlm probe again — fresh, timed right after an idle-tick, with memory headroom visible~~ done (E2E green in the 20-52 deploys)
 5. Verify `/v1/models` response actually contains `qwen3.6-moe:35b-a3b` (gate strength — see e.3)
 6. ~~If OOM recurs on cold load: quantify headroom needed; consider llama-server ceiling (user decision — it's theirs)~~ done (mitigations deployed (OOMScoreAdjust=300, RestartSec=60); no recurrence since)
-7. Verify PMA auto-commit resumes LLM usage (journal: heuristic-fallback gone)
-8. Verify PapDashboard enricher end-to-end (trigger a test Gatus alert)
+~~7. Verify PMA auto-commit resumes LLM usage (journal: heuristic-fallback gone)~~ done — PMA is the heaviest flm consumer per the 2026-08-22 usage forensics
+~~8. Verify PapDashboard enricher end-to-end (trigger a test Gatus alert)~~ done — enricher insights observed live during the 2026-08-22 incident storms
 9. `nix build .#checks.x86_64-linux.scripts`
-10. Re-run paperless VM test post-unblock
+~~10. Re-run paperless VM test post-unblock~~ done — test-paperless.nix green in CI since
 11. Paperless: consume a real German PDF → OCR deu → check filename layout
 12. Paperless: AI suggestion smoke (classify/tag/title on the consumed doc)
 13. Paperless: `.docx` consume via Gotenberg

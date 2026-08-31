@@ -70,7 +70,7 @@ All review fixes implemented, verified, and pushed to PR 139 (`e4a0634a`); merge
 
 1. Decide hook-fix placement: leave `8302b94b` (hook fix inside PR 139) as-is, or cherry-pick the hook change to master directly so it lands regardless of PR timing.
 2. Verify `8302b94b`'s three fixes to my code (atomic write, stderr visibility, `or {}` guard) — I have NOT reviewed that commit's diff in detail; trust-but-verify the regeneration path now writes via mktemp+install.
-3. Merge PR 139 (MERGEABLE; CI red is pre-existing master-red) or hold for deploy smoke.
+~~3. Merge PR 139 (MERGEABLE; CI red is pre-existing master-red) or hold for deploy smoke.~~ done — merged + deployed (token unit live; deploy.sh restart list carries it)
 4. `nix run .#deploy` after merge; then the smoke: unit state, token file owner/mode, `repos/search` 200 with token, `/user` 403 with token (proves scope).
 
 **Hermes consumer (P1):**
@@ -79,9 +79,9 @@ All review fixes implemented, verified, and pushed to PR 139 (`e4a0634a`); merge
 7. Stale-token cleanup on regen (delete old `hermes-agent-*` tokens via admin API).
 
 **Repo health surfaced by this session (P1-P2):**
-8. Fix `scripts/zfs-vm-{backup,deepdive,survey}.sh` SC2148 (add shebangs) — unblocks the shellcheck CI job.
-9. Fix repo-wide statix findings (paperless.nix×2, default-services.nix, session-boot-audit.nix×many) or scope CI statix to changed files — unblocks nix-check job.
-10. Resolve the dead `branching-flow` flake input (404 in vm-tests) — delete input or restore repo.
+~~8. Fix `scripts/zfs-vm-{backup,deepdive,survey}.sh` SC2148 (add shebangs) — unblocks the shellcheck CI job.~~ done 2026-08-29 (CHANGELOG CI-truth entry)
+~~9. Fix repo-wide statix findings (paperless.nix×2, default-services.nix, session-boot-audit.nix×many) or scope CI statix to changed files — unblocks nix-check job.~~ done — CI green since (nix-check passing through 2026-08-31)
+~~10. Resolve the dead `branching-flow` flake input (404 in vm-tests) — delete input or restore repo.~~ done 2026-08-29 — read-only deploy key + `NIX_DEPLOY_KEY_BRANCHING_FLOW` (CHANGELOG CI-truth entry)
 11. Add CI grep-guard banning `nixpkgs#alejandra`/`nixpkgs#nixfmt` invocations (pinned `nix fmt` only).
 12. Audit `.githooks/pre-commit` for other unpinned `nix shell nixpkgs#*` steps (statix at line 151 is also unpinned — same float risk, currently benign).
 

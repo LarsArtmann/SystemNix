@@ -137,21 +137,21 @@ This is a dangerous state: the system is running a mix of old generation (profil
 
 ### Immediate (blocking — do before anything else)
 
-1. **Clear the stale lock file** — `sudo rm /run/nixos/switch-to-configuration.lock` (verify no process holds it first with `fuser`)
-2. **Retry `nix run .#deploy`** — should complete now that the lock is cleared
-3. **Verify `/run/current-system` points to the new generation** after deploy
-4. **Verify HTTPS works on ALL vHosts** (not just graph/timers) — `python3 -c "import urllib.request, ssl; ctx=ssl.create_default_context(); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE; r=urllib.request.urlopen('https://192.168.1.150/', headers={'Host':'auth.home.lan'}, context=ctx, timeout=5); print(r.status)"`
-5. **Verify `https://graph.home.lan/`** returns 200 with the React SPA
-6. **Verify `https://timers.home.lan/`** returns 200 with the audit HTML (may need to wait 2 min for the timer to fire, or manually trigger: `sudo systemctl start systemd-timer-monitor-audit.service`)
-7. **Check `systemctl --failed`** for any units that failed during activation
-8. **If HTTPS is still broken after clean deploy**, check Caddy logs: `sudo journalctl -u caddy.service -n 50 --no-pager` and verify sops rendered the cert: `ls -la /run/secrets/dnsblockd_server_cert`
+~~1. **Clear the stale lock file** — `sudo rm /run/nixos/switch-to-configuration.lock` (verify no process holds it first with `fuser`)~~ done — resolved (deploy completed; the wedge-class detector + auto-kill now ships in deploy.sh per AGENTS.md)
+~~2. **Retry `nix run .#deploy`** — should complete now that the lock is cleared~~ done — deployed green
+~~3. **Verify `/run/current-system` points to the new generation** after deploy~~ done — generation trail printed by deploy.sh since 2026-08-24
+~~4. **Verify HTTPS works on ALL vHosts** (not just graph/timers)~~ done — external vHost checks PASS in every post-deploy run since — `python3 -c "import urllib.request, ssl; ctx=ssl.create_default_context(); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE; r=urllib.request.urlopen('https://192.168.1.150/', headers={'Host':'auth.home.lan'}, context=ctx, timeout=5); print(r.status)"`
+~~5. **Verify `https://graph.home.lan/`** returns 200 with the React SPA~~ done — live
+~~6. **Verify `https://timers.home.lan/`** returns 200 with the audit HTML~~ done — live (may need to wait 2 min for the timer to fire, or manually trigger: `sudo systemctl start systemd-timer-monitor-audit.service`)
+~~7. **Check `systemctl --failed`** for any units that failed during activation~~ done — 83 PASS / 0 FAIL by 2026-08-31
+~~8. **If HTTPS is still broken after clean deploy**, check Caddy logs~~ moot — HTTPS healthy: `sudo journalctl -u caddy.service -n 50 --no-pager` and verify sops rendered the cert: `ls -la /run/secrets/dnsblockd_server_cert`
 
 ### Post-deploy verification
 
-9. **Verify the timer fires and writes report.html** — check `/var/lib/systemd-timer-monitor/report.html` exists after 2 min
-10. **Verify `timers.home.lan/report.html`** returns the HTML audit via HTTPS
-11. **Verify `timers.home.lan/status.json`** returns the JSON audit
-12. **Verify `graph.home.lan/api/snapshot`** returns 200 with JSON D-Bus data (~700KB)
+~~9. **Verify the timer fires and writes report.html**~~ done — verified (18-49) — check `/var/lib/systemd-timer-monitor/report.html` exists after 2 min
+~~10. **Verify `timers.home.lan/report.html`** returns the HTML audit via HTTPS~~ done
+~~11. **Verify `timers.home.lan/status.json`** returns the JSON audit~~ done
+~~12. **Verify `graph.home.lan/api/snapshot`** returns 200 with JSON D-Bus data (~700KB)~~ done
 13. **Verify `graph.home.lan/api/events`** SSE stream is live (if the upstream supports it)
 
 ### Monitoring

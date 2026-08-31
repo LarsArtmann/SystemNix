@@ -56,22 +56,22 @@
 ## f) NEXT UP TO 50 THINGS (prioritized, session-scoped)
 
 1. ~~`nix fmt` + `nix flake check --no-build` (running) — confirm green.~~ DONE — both green (see b.2).
-2. `nix run .#deploy` — ships the never-matching-pattern fix; the 7 checks start evaluating truthfully.
-3. Post-deploy: verify gatus journal shows the anchored conditions evaluating (green where healthy, red only for real outages).
+~~2. `nix run .#deploy` — ships the never-matching-pattern fix; the 7 checks start evaluating truthfully.~~ done — deployed 2026-08-22 (anchored real-newline forms live)
+~~3. Post-deploy: verify gatus journal shows the anchored conditions evaluating (green where healthy, red only for real outages).~~ done — honestly red through the DAS outage, green after recovery
 4. Check Discord/gatus alert history for noise from the broken-red window since the 01:46 deploy (ack/resolve after fix).
-5. Run `tests/test-gatus-patterns.nix` VM test (new anchored regression case).
+~~5. Run `tests/test-gatus-patterns.nix` VM test (new anchored regression case).~~ done — test wired into flake checks (runs in CI)
 6. FastFlowLM smoke: assert model name in `/v1/models` (c.1).
-7. `crm.$DOMAIN` enable-gated external check (c.2).
-8. Pre-deploy §10 `pat(*<metric> 1*)` flag (c.3).
-9. `gatus-pattern-lint`: third trap rejecting literal `\\n` in `pat()` (c.7).
-10. AGENTS.md Gatus section: real-newline requirement + `!`-literal + HELP-collision + `system_das_link_present` note (b.3).
+~~7. `crm.$DOMAIN` enable-gated external check (c.2).~~ done 2026-08-22 — External vHost section
+~~8. Pre-deploy §10 `pat(*<metric> 1*)` flag (c.3).~~ done 2026-08-22 — §10 mirrors both lint traps
+~~9. `gatus-pattern-lint`: third trap rejecting literal `\\n` in `pat()` (c.7).~~ done — all three escape traps rejected by the lint
+~~10. AGENTS.md Gatus section: real-newline requirement + `!`-literal + HELP-collision + `system_das_link_present` note (b.3).~~ done 2026-08-22
 11. Link `docs/dnsblockd-oidc-recovery.md` from AGENTS.md DNS section.
-12. `file-and-image-renamer` go-nix-helpers follows + lock re-encode (c.4).
-13. `start-limit-audit.nix` (c.5).
-14. TODO_LIST: mark the three stale items + today's completed ones (c.6).
-15. Dozzle post-deploy: `docker inspect dozzle` → confirm 256m + no-new-privileges + cap-drop landed (container recreated).
+~~12. `file-and-image-renamer` go-nix-helpers follows + lock re-encode (c.4).~~ done 2026-08-22 (follows declared) + subtree relocked (verified `ace31ba8`, 2026-08-31)
+~~13. `start-limit-audit.nix` (c.5).~~ done — module fails eval on StartLimitBurst-in-[Service]
+~~14. TODO_LIST: mark the three stale items + today's completed ones (c.6).~~ done — swept by the 2026-08-24 harvest + 2026-08-31 verification/audit passes
+~~15. Dozzle post-deploy: `docker inspect dozzle` → confirm 256m + no-new-privileges + cap-drop landed (container recreated).~~ done 2026-08-22 — live container verified (mem=268435456, capdrop=ALL, no-new-privileges)
 16. Consider gatus alert dedup / cause-vs-consequence grouping now that cause alerts exist (e.3).
-17. Re-check `system_signoz_alert_rules_healthy 0` (live-red — real rules regression or collector port drift after the concurrent session's signoz work).
+~~17. Re-check `system_signoz_alert_rules_healthy 0` (live-red — real rules regression or collector port drift after the concurrent session's signoz work).~~ done — resolved by the 2026-08-27 phantom-purge round (26 rules converged; the meta-metric's structural limits documented in AGENTS.md)
 18. Sweep remaining Priority-3 quick wins from the session's original list (niri blur schema check, das-link-recovery script).
 
 (19-50 intentionally unpopulated — the 18 above are real, ordered, and session-grounded.)

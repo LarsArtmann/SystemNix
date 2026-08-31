@@ -121,7 +121,7 @@ global `DefaultTimeoutStartSec` being phantom on the deployed system.
 
 **Directly from this incident:**
 1. Verify Gatus "OOMD Kills" check green via gatus sqlite (read-only, per repo doctrine).
-2. Root-cause phantom `DefaultTimeoutStartSec`: check how nixpkgs renders `systemd.settings.Manager` in the
+~~2. Root-cause phantom `DefaultTimeoutStartSec`: check how nixpkgs renders `systemd.settings.Manager` in the~~ done — gotcha CORRECTED 2026-08-31 (20-30 report §5): nixpkgs renders the whole system.conf; the setting IS live; per-unit ceilings kept as good practice
    pinned rev; check whether the booted generation ever contained it; fix or replace the mechanism.
 3. Eval-time audit module: every `systemd.services.<name>` with a timer AND Type=oneshot MUST carry explicit
    `TimeoutStartSec` (the phantom-default defense).
@@ -135,14 +135,14 @@ global `DefaultTimeoutStartSec` being phantom on the deployed system.
 10. Consider `-n` early-termination cap on the oomd query (semantics allow "≥N kills" if alerting only needs ≥1).
 
 **Flagged side-conditions (other owners / user decisions):**
-11. Land the flm v1.0.2 holdback deploy (parallel session's `pkgs/fastflowlm.nix` dirty change) — flm has been
+~~11. Land the flm v1.0.2 holdback deploy (parallel session's `pkgs/fastflowlm.nix` dirty change) — flm has been~~ done — holdback deployed + serving (18-44 report §a.8)
     down since 14:30 boot (15× `No such device with index '0'` under XRT 2.25).
 12. After flm is back: confirm the PapDashboard enricher cold-load feedback loop guard still holds (alert →
     insight → flm socket → 21.6G load — AGENTS-documented risk).
 13. BTRFS chunk headroom (CRITICAL, 5.6 GiB unalloc): user decision — emergency-reserve runbook now vs waiting
     for Monday 04:00 balance (gawk fix deployed today; last night's balance died awk-missing).
 14. Scrub status `3` (interrupted) on both mounts with `btrfs_scrub_error_free 0` — ties into 13 / scrub deferral.
-15. Post-deploy smoke currently ends FAIL:1 (flm) on EVERY deploy — alert-fatigue risk; clears when 11 lands.
+~~15. Post-deploy smoke currently ends FAIL:1 (flm) on EVERY deploy — alert-fatigue risk; clears when 11 lands.~~ done — flm E2E smoke passes again (18-45 report §a.6)
 16. discordsync 5-11 min API gap per deploy — consider deploy.sh wait-or-skip logic.
 
 **Minor observations logged during the session (uninvestigated):**

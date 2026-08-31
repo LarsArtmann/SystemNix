@@ -153,7 +153,7 @@ After the first successful deploy, the timer-monitor service crash-looped 4 time
 
 ## f) Up to 50 things we should get done next
 
-1. **Fix `llama-rag-model-fetch.service`** — `/run/llama-rag-model-fetch` permission denied. The oneshot needs `RuntimeDirectory=llama-rag-model-fetch` or `+`-prefixed mkdir. This is from a concurrent session's commit, not mine.
+~~1. **Fix `llama-rag-model-fetch.service`** — `/run/llama-rag-model-fetch` permission denied. The oneshot needs `RuntimeDirectory=llama-rag-model-fetch` or `+`-prefixed mkdir. This is from a concurrent session's commit, not mine.~~ done — fixed by the 19-15 provisioning session (models on disk, servers serving)
 2. **NixOS VM test for systemd-graph** — `tests/test-systemd-graph.nix` verifying the module starts and serves the SPA.
 3. **NixOS VM test for systemd-timer-monitor** — `tests/test-systemd-timer-monitor.nix` verifying the timer fires and writes the report.
 4. **systemd-timer-monitor JSON alerting** — Scrape `status.json` via a Prometheus textfile collector for proactive alerting on failed service counts.

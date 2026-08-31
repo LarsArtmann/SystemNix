@@ -82,7 +82,7 @@ _Prevention-layer gaps found:_
 18. ~~CHANGELOG: decide whether it's maintained or dead; if dead, delete or archive to stop pretending~~ done (CHANGELOG is actively maintained (rich Unreleased section through 2026-08-18))
 
 _Noticed but not touched (pre-existing, from TODO/journal during this session):_
-19. Root fs at 91% (69G free) — deploy gate is 95%; the P0 free-space item is still open and shrinking
+~~19. Root fs at 91% (69G free) — deploy gate is 95%; the P0 free-space item is still open and shrinking~~ resolved-by-outcome — root at 82% (2026-08-31; GC-guard fix + user levers)
 20. I/O pressure avg10=97% WARN during deploy (btrbk seed + corruption-recovery context) — check BFQ tiering impact while sends run
 21. pocket-id SQLITE_BUSY under IO storms (00:23 onset, pre-session) — if it recurs outside deploys, worth a WAL/busy_timeout look; possibly the known corruption-read contention
 22. ~~DiscordSync API still in startup backfill (SKIP in smoke) — expected, but confirm it converges~~ done (DI crash-loop fixed 2026-08-18 (0d8a58ca); API converged)

@@ -107,10 +107,10 @@ after cooldown, restore blocked by residual PSI. Passing:
 
 ## Next Actions (priority order)
 
-1. **User**: reseat DAS + reboot; verify pool + buildcache + smartd recover
+~~1. **User**: reseat DAS + reboot; verify pool + buildcache + smartd recover~~ done 2026-08-31 — 9-day outage closed; all four targets + pool + buildcache recovered (root cause: hdparm letter-rule + VBUS + missing uas)
    (`lsblk`, `findmnt /mnt/pool`, btrbk verify).
-2. **User**: XFS finalize decision (immediately vs soak N days).
-3. Redeploy (`nix run .#deploy`) once the concurrent session's edits settle —
+~~2. **User**: XFS finalize decision (immediately vs soak N days).~~ done — XFS finalized (clickhouse live on the partition; backup-coverage decision remains TODO_LIST)
+~~3. Redeploy (`nix run .#deploy`) once the concurrent session's edits settle —~~ done — deployed through the 08-22 batch (gen 720+)
    converges tree and system.
 4. Check FastFlowLM upstream for a release fixing the recurring SIGABRT.
 5. Consider upstream enricher backoff; watch Zone 3 thresholds for

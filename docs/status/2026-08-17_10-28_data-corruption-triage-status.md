@@ -57,7 +57,7 @@
 4. ~~Deploy the 3-file fix batch (24h timeouts, byte gate, disk-growth preStart)~~ done — `2fbb69f9`.
 5. Re-provision `/btrfs-emergency-reserve` and fix its freshness semantics (e.4).
 6. Re-run scrub on /data post-repair to confirm 0 csum errors; then re-enable nightly data sends.
-7. Watch `btrfs-verify-pool-backups` turn green once both targets have fresh received snapshots.
+~~7. Watch `btrfs-verify-pool-backups` turn green once both targets have fresh received snapshots.~~ done — guard green from 2026-08-18 (red again only during the 08-22→31 DAS outage, by design)
 8. ~~Check/extend scrub-error Gatus coverage (e.5).~~ verified in config — the collector iterates `/` AND `/data` (`platforms/nixos/system/btrfs-health.nix:197`); composite `btrfs_scrub_error_free 1` + Gatus alert cover both.
 9. ~~Yesterday's doc debt (plan decision record, AGENTS.md storage section, TODO_LIST, CHANGELOG).~~ done — `46b5ffdb` (AGENTS.md pool section + TODO_LIST/CHANGELOG rewrites) + three-drive Decision Record archived.
 10. Remove stray `/var/lib/paperless` from the misconfigured first deploy. ← open — TODO_LIST Priority 3

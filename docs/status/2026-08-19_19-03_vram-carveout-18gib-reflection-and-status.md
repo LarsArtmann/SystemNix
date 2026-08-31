@@ -151,11 +151,11 @@ Nothing is broken. No functional regressions introduced — all changes were com
 
 | # | Task                                                                                                                                  | Impact                   | Effort |
 | - | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ------ |
-| 1 | **Reduce `OLLAMA_GPU_OVERHEAD` from 8 GiB to 4 GiB** — compositor needs ~2-4 GiB, not 8, when VRAM is only 18 GiB                     | 🔴 Models can't fit      | 5 min  |
+~~| 1 | **Reduce `OLLAMA_GPU_OVERHEAD` from 8 GiB to 4 GiB** — compositor needs ~2-4 GiB, not 8, when VRAM is only 18 GiB~~ done — reduced to 1 GiB 2026-08-22 (AGENTS.md Platform Constraints) |                     | 🔴 Models can't fit      | 5 min  |
 | 2 | **Raise `PYTORCH_CUDA_ALLOC_CONF` from 0.45 to 0.75-0.80** for Ollama — 45% of 18 GiB = 8.1 GiB is too restrictive                    | 🔴 Ollama models limited | 5 min  |
-| 3 | **Verify BIOS change was actually made** — `free -h` or `grep MemTotal /proc/meminfo` should show ~110 GiB                            | 🔴 Invalid assumptions   | 1 min  |
-| 4 | **Update FastFlowLM AGENTS.md line 156** — "94 GB" → "110 GB"                                                                         | 🟡 Stale info            | 1 min  |
-| 5 | **Update `ROADMAP.md`** — "2.5 GiB of 94 GiB" → "2.5 GiB of 110 GiB"                                                                  | 🟡 Stale info            | 1 min  |
+~~| 3 | **Verify BIOS change was actually made** — `free -h` or `grep MemTotal /proc/meminfo` should show ~110 GiB~~ done — ~94 GiB visible (18 GiB carveout confirmed) |                            | 🔴 Invalid assumptions   | 1 min  |
+~~| 4 | **Update FastFlowLM AGENTS.md line 156** — "94 GB" → "110 GB"~~ moot — final state kept ~94 GiB visible (AGENTS.md corrected to 94 by the 2026-08-31 audit) |                                                                         | 🟡 Stale info            | 1 min  |
+~~| 5 | **Update `ROADMAP.md`** — "2.5 GiB of 94 GiB" → "2.5 GiB of 110 GiB"~~ moot — 94 GiB is the correct post-carveout figure (item's premise inverted) |                                                                  | 🟡 Stale info            | 1 min  |
 | 6 | **Annotate `docs/hardware/ram-optimization-research-2026-08-16.md`** — Add decision outcome: "Done: lowered to 18 GiB (2026-08-19)"   | 🟡 Closure               | 2 min  |
 | 7 | **Annotate ADR-002** — Mark as "Superseded by ADR-00X" or add a note about the 18 GiB reality                                         | 🟡 Architecture          | 5 min  |
 | 8 | **Write a new ADR-003** — "VRAM Budget Allocation at 18 GiB Carveout" — defines compositor reservation, Ollama overhead, model budget | 🟡 Architecture          | 15 min |

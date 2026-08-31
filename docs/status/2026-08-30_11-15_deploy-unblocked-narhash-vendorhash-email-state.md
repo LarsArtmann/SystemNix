@@ -51,8 +51,8 @@ Four stacked blockers were found and fixed in sequence. Two of my own mistakes w
 
 ## f) Next tasks (impact-ordered; DAS = user physical action)
 
-1. **[USER] DAS physical recovery** — front USB4-C replug, cable AND enclosure power pulled ≥60 s (JMS567 runs off USB VBUS; enclosure-off alone is a fake power cycle). Unblocks 8 post-deploy fails, 4 pool-tied failed units, nightly pool backups.
-2. **Verify `/dev/disk/by-label/pool` on first DAS return** — the 2026-08-27 by-label mount change has NEVER been exercised (DAS detached since).
+~~1. **[USER] DAS physical recovery** — front USB4-C replug, cable AND enclosure power pulled ≥60 s (JMS567 runs off USB VBUS; enclosure-off alone is a fake power cycle). Unblocks 8 post-deploy fails, 4 pool-tied failed units, nightly pool backups.~~ done 2026-08-31 — 9-day outage closed (root cause chain in AGENTS.md)
+~~2. **Verify `/dev/disk/by-label/pool` on first DAS return** — the 2026-08-27 by-label mount change has NEVER been exercised (DAS detached since).~~ done 2026-08-31 — live-proven on the recovery boot
 3. First post-DAS deploy: confirm `bank_sync_*` in `:8097/metrics`, then RETIRE both entries from KNOWN_NEW_METRICS.
 4. RETIRE `system_dnsblockd_metrics_fresh` from KNOWN_NEW_METRICS (confirmed present this session).
 5. Check `discordsync_projection_dlq_legacy_unchanged` presence in `:8085/metrics`; retire if live.

@@ -77,11 +77,11 @@
 5. Owner decision: upgrade Turso plan or disable cloud sync cleanly (circuit breaker will log a failure cycle every hour forever)
 6. Persist thumb-hash backfill progress (or incremental backfill) — every restart re-scans 3370 attachments at ~100% CPU
 7. Add Gatus/textfile alert on `consecutive_failures` / circuit-breaker state so sync death is not silent
-8. Audit discordsync ioTier placement — backfill ran at 99.7% CPU/IO during a PSI-79% window
+~~8. Audit discordsync ioTier placement — backfill ran at 99.7% CPU/IO during a PSI-79% window~~ done — discordsync at `ioTier.background` (BE/6) in the ioTier table
 
 **ActivityWatch**
 9. VACUUM + retention policy for the 13.7 GB sqlite.db (9 months of window-tracking events; likely <2 GB after prune)
-10. Add ActivityWatch data dir to `backup-coordination` or explicitly document exclusion
+~~10. Add ActivityWatch data dir to `backup-coordination` or explicitly document exclusion~~ done — activitywatch data lives on `/mnt/pool/services/activitywatch` (btrbk-pool snapshotted) since 2026-08-18
 11. Consider MemoryMax/CPUQuota on the aw user services (currently unbounded)
 
 **Monitoring / smoke checks**
@@ -93,7 +93,7 @@
 **Migration follow-through**
 16. deploy.sh pre-flight: assert mount-target subvolumes exist & are non-empty before `nh os switch` (incident-class guard)
 17. ~~Fix btrbk pool-seed timeout (chunked receive or larger TimeoutStartSec; 6h killed a seed mid-stream)~~ done at `e5edf0bd`
-18. Delete corrupt pool partial `@.20260814T2300`; verify remaining pool backups parse
+~~18. Delete corrupt pool partial `@.20260814T2300`; verify remaining pool backups parse~~ done — `btrbk-pool-clean` (2026-08-21); first live proof of the garbled-receive GC
 19. ~~Run btrbk catch-up for missed snapshot window~~ done (seeds completed; first overnight cycle green 2026-08-18)
 20. ~~Delete old `@/nix` after 2–3 stable days (frees ~47 GiB as snapshots expire)~~ done (AGENTS.md: old @/nix deleted post-verification)
 21. ~~Finalize or retire `scripts/migrate-nix-subvol.sh` (unstaged edits from the incident; it served its purpose — the fixed version's history is worth keeping, the script itself arguably not)~~ done at `d4a59d4d`

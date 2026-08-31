@@ -56,7 +56,7 @@
 
 1. CI: execute trap-lint derivations (e.1) — highest leverage, 15 min.
 2. Diagnose `website-deploy-monitor.service` FAILED unit (critical firing since 14:43, other session's — see Q3).
-3. DAS cable swap per `scripts/das-link-recovery-check.sh` — unblocks the 8 post-deploy FAILs (Immich/Bank-Sync/Attic/Paperless).
+~~3. DAS cable swap per `scripts/das-link-recovery-check.sh` — unblocks the 8 post-deploy FAILs (Immich/Bank-Sync/Attic/Paperless).~~ done 2026-08-31 — outage closed; 83 PASS / 0 FAIL
 4. Wedge-rule Discord delivery proof (controlled stop, root) — see Q2.
 5. emeet/niri gate verification on next graphical login.
 6. GOTRACEBACK=all sweep over Go daemons (e.9).
@@ -96,7 +96,7 @@
 40. Signoz `Telemetry Export Failures` regex-form suffixes: lint the `=~` dotted regex variant for typos too.
 41. Lint: reject `job` in `by (job)` groupings too (same phantom class, unmatchable).
 42. Commit-attribution check once the daemon batches this session with inboxclean (AGENTS concurrent rule).
-43. docs-health sweep: annotate/retire stale items in the 08-22→08-27 status chain.
+~~43. docs-health sweep: annotate/retire stale items in the 08-22→08-27 status chain.~~ done — the 2026-08-31 docs-health audit (this pass)
 44. emeet gate HELP text vs SigNoz rule description drift check (cosmetic consistency).
 45. Q2 noise ledger: count deploy-window TRIGGERED alerts per deploy in post-deploy-check output (one grep on the gatus journal).
 46. Consider `RestartMinDelaySec`-style anti-churn for dnsblockd (restart-storm insurance) — evaluate against its SLA.

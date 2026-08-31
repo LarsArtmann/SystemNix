@@ -102,11 +102,11 @@
 *Impact / Effort (S<30min, M 30min–2h, L>2h) / Category*
 
 **Critical**
-1. DAS physical replug on front USB4-C (cable + VBUS + enclosure power, 60+s); record outcome — User / S / Ops
-2. Post-DAS: verify `/dev/disk/by-label/pool`, mount health, `btrfs device stats` — S / Ops
-3. Post-DAS: recover pool services (atticd+bootstrap, immich, bank-sync, paperless); re-run post-deploy-check for full green — M / Ops
-4. Post-DAS: confirm `uas` loads at attach (pre-load shipped 2026-08-29); update AGENTS DAS bullet with the replug outcome — S / Documentation
-5. Verify Gatus + SigNoz are actively FIRING for the 8 down services (no phantom greens) — S / Bug
+~~1. DAS physical replug on front USB4-C (cable + VBUS + enclosure power, 60+s); record outcome — User / S / Ops~~ done 2026-08-31 — OUTCOME RECORDED in AGENTS.md: bridge recovered; all four targets enumerated
+~~2. Post-DAS: verify `/dev/disk/by-label/pool`, mount health, `btrfs device stats` — S / Ops~~ done 2026-08-31 — zero device errors (16-29 report)
+~~3. Post-DAS: recover pool services (atticd+bootstrap, immich, bank-sync, paperless); re-run post-deploy-check for full green — M / Ops~~ done 2026-08-31 — 83 PASS / 0 FAIL
+~~4. Post-DAS: confirm `uas` loads at attach (pre-load shipped 2026-08-29); update AGENTS DAS bullet with the replug outcome — S / Documentation~~ done — AGENTS.md carries the outcome record (2026-08-31)
+~~5. Verify Gatus + SigNoz are actively FIRING for the 8 down services (no phantom greens) — S / Bug~~ done — honestly red through the outage (anchored patterns), green after recovery
 6. Rotate the still-LIVE Context7 key; update MCP config — S / Security
 7. Generate new Resend key → `sops --set` into pocket-id.yaml → redeploy (Pocket ID email is broken) — S / Security
 8. Re-confirm the held decision on the secret-history purge push — User decision / S / Security
@@ -127,7 +127,7 @@
 21. HARVEST this report into TODO_LIST.md / ROADMAP.md — S / Documentation
 22. Verify the daemon's commit of flake.lock + AGENTS.md carries a sane message/attribution — S / Quality
 23. Verify `/run/booted-system == /run/current-system` + review generation delta (nvd) — S / Ops
-24. Check root-fs headroom post-deploy; GC if tight — S / Ops
+~~24. Check root-fs headroom post-deploy; GC if tight — S / Ops~~ done — root at 82% (2026-08-31)
 
 **Medium**
 25. Investigate the quickshell journal error lines (smoke WARN) — S / Bug
@@ -148,9 +148,9 @@
 40. AGENTS.md: the 1.26.6 floor narrative keeps growing — compress history into a rule + link — S / Documentation
 41. Verify backup-coordination freshness signals (cv-backup etc.) resume after pool return — S / Ops
 42. Immich/paperless DB integrity checks after pool return (history of unclean USB removals) — M / Bug
-43. Run `scripts/das-link-recovery-check.sh` immediately after the replug — S / Ops
+~~43. Run `scripts/das-link-recovery-check.sh` immediately after the replug — S / Ops~~ done — recovery state verified by the 16-29 session (script + live table)
 44. SigNoz: confirm the 8 down services alert with post-2026-08-27 rule patterns (unit_state / service_name), not legacy — S / Bug
-45. Plan btrbk pool catch-up after DAS return (multi-day backlog; stagger vs IO pressure) — M / Ops
+~~45. Plan btrbk pool catch-up after DAS return (multi-day backlog; stagger vs IO pressure) — M / Ops~~ done 2026-08-31 — auto-resume verified (no manual re-seeding needed; the 16-29 report documents the semantics)
 
 **Low / hygiene**
 46. Add a fast flake output (e.g. `.#quick-go`) building the mkLarsPackages batch for one-command verification — S / Feature

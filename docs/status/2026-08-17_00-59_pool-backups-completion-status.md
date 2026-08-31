@@ -59,8 +59,8 @@
 
 ## f) NEXT THINGS (ordered)
 
-1. Free root below 95% and deploy the stranded monitor365-gating change (see g.2 for the /home/hermes question; `/nix/store` GC is the other lever).
-2. Monitor `btrbk-root`/`btrbk-data` to completion; confirm nightly incrementals are minutes-scale.
+~~1. Free root below 95% and deploy the stranded monitor365-gating change (see g.2 for the /home/hermes question; `/nix/store` GC is the other lever).~~ done — monitor365-gating deployed (`configuration.nix:744`, 2026-08-21 review); root at 82% (127G free) by 2026-08-31 (GC-guard fix + user levers)
+~~2. Monitor `btrbk-root`/`btrbk-data` to completion; confirm nightly incrementals are minutes-scale.~~ done — nightly cycles green 2026-08-18→21 (root receives healthy; data chain blocked by the /data EIO P0, tracked separately)
 3. Confirm `btrfs-verify-pool-backups` turns green after the seed finishes (next run ~00:45 tomorrow).
 4. Remove the stray `/var/lib/paperless` initial-DB remnants from the misconfigured first deploy (verify pool instance healthy first).
 5. Verify smartd is actually polling both TOSHIBA drives at runtime (`smartctl -a` data timestamps / correct rendered config path).
@@ -70,8 +70,8 @@
 9. ~~TODO_LIST: own-tools (monitor365/discordsync/browser-history) NVMe→pool migrations into the pre-created subvols; stray `/var/lib/paperless` cleanup; /rust-cache partition deletion batch.~~ done 2026-08-17 — all three live in TODO_LIST (Priority 3 / Priority 2)
 10. ~~CHANGELOG entry for the repurposing + backup tier.~~ done 2026-08-17 (docs-health)
 11. Boot-resilience test: detach DAS → `nixos-rebuild build-vm` or real boot → expect clean boot with failed-but-contained btrbk units, no `/mnt/pool` contamination on root.
-12. Pool-usage Gatus alert (>80% warn) — cheap while near-empty.
-13. Watch tomorrow-morning journal for the first full nightly cycle (btrbk ×3 + verify ×2 + dumps ×5 + exporter).
+~~12. Pool-usage Gatus alert (>80% warn) — cheap while near-empty.~~ done — `pool_usage_over_threshold` live in gatus-config.nix
+~~13. Watch tomorrow-morning journal for the first full nightly cycle (btrbk ×3 + verify ×2 + dumps ×5 + exporter).~~ done — first overnight cycle green 2026-08-18
 14. Optional: hd-idle spin-down for the HDDs; DAS fan/thermal check after sustained seed writes (38 °C idle earlier).
 15. Optional: coarse snapshots of `/mnt/pool/backups` (see e.7).
 16. Optional: revisit sdf (WOOACME) after the pool proves stable — original vault idea may be moot now.

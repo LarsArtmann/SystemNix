@@ -179,20 +179,20 @@ The `AGENTS.md` file has TWO llama-rag sections — one I wrote (line 167, "### 
 
 ### Critical (before deploy)
 
-1. **Add SigNoz alerts** for `llama-embeddings-down` and `llama-reranker-down` in `_signoz-alerts.nix` (follows Ollama pattern at line 178)
-2. **Consolidate duplicate AGENTS.md llama-rag sections** (lines 167 + 280 → one section)
-3. **Remove `loadEmbed` option from `fastflowlm.nix`** (lines 167-171 option + line 318 ExecStart)
-4. **Run `nix flake check --no-build`** after all changes
-5. **`nix run .#deploy`** — build and deploy to evo-x2
-6. **Verify `llama-rag-model-fetch` completes** — check journal for download progress (~2.4 GB from HuggingFace)
-7. **Verify `llama-embeddings` responds** — `curl http://127.0.0.1:8848/v1/embeddings -d '{"input":"test"}'`
-8. **Verify `llama-reranker` responds** — `curl http://127.0.0.1:8849/v1/rerank -d '{"query":"test","documents":["a","b"]}'`
+~~1. **Add SigNoz alerts** for `llama-embeddings-down` and `llama-reranker-down` in `_signoz-alerts.nix` (follows Ollama pattern at line 178)~~ done — SigNoz alerts on `node_systemd_unit_state` active < 1 (AGENTS.md llama-rag section)
+~~2. **Consolidate duplicate AGENTS.md llama-rag sections** (lines 167 + 280 → one section)~~ done — single llama-rag section
+~~3. **Remove `loadEmbed` option from `fastflowlm.nix`** (lines 167-171 option + line 318 ExecStart)~~ done — option removed (AGENTS.md)
+~~4. **Run `nix flake check --no-build`** after all changes~~ done — green
+~~5. **`nix run .#deploy`** — build and deploy to evo-x2~~ done — deployed
+~~6. **Verify `llama-rag-model-fetch` completes** — check journal for download progress (~2.4 GB from HuggingFace)~~ done — models on disk, hash-verified
+~~7. **Verify `llama-embeddings` responds**~~ done — post-deploy smoke asserts 1024-dim vectors — `curl http://127.0.0.1:8848/v1/embeddings -d '{"input":"test"}'`
+~~8. **Verify `llama-reranker` responds**~~ done — post-deploy smoke asserts correct ranking — `curl http://127.0.0.1:8849/v1/rerank -d '{"query":"test","documents":["a","b"]}'`
 9. **Verify Paperless AI picks up embeddings** — check paperless-task-queue logs for embedding activity
-10. **`git push`** — push all commits to remote
+~~10. **`git push`** — push all commits to remote~~ done
 
 ### Important (post-deploy)
 
-11. **Add Homepage tile** for llama-rag in `homepage.nix` (AI group, decorative like Ollama)
+~~11. **Add Homepage tile** for llama-rag in `homepage.nix` (AI group, decorative like Ollama)~~ done — tile in AI group (AGENTS.md)
 12. **Verify SigNoz alerts fire** — stop `llama-embeddings`, confirm Discord alert arrives
 13. **Verify Gatus health checks** — confirm both endpoints show green in Gatus UI
 14. **Verify `system-health` metrics** — check `node_systemd_unit_state{name="llama-embeddings.service"}` appears in Prometheus

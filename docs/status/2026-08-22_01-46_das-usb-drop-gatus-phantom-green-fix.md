@@ -56,23 +56,23 @@ Nothing in this session's own work reached a bad end state. The one genuine mist
 
 **Immediate (this outage):**
 
-1. User: physically reseat DAS USB cable + enclosure power, then `sudo reboot`.
-2. Post-boot: verify `findmnt /mnt/buildcache` and `findmnt /mnt/pool` both return real ext4/btrfs mounts.
-3. If sda1 stays EIO after reconnect: `sudo e2fsck -y /dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311-part1` before remount.
-4. `nix run .#deploy` to ship the phantom-green fix; confirm Discord receives TRIGGERED alerts for buildcache + pool (proving the fix fires), then RESOLVED after recovery.
-5. Verify gatus journal shows `success=false` for both endpoints after deploy (the canary that the anchored patterns actually evaluate).
+~~1. User: physically reseat DAS USB cable + enclosure power, then `sudo reboot`.~~ done 2026-08-31 — the replug (after the 08-29 uas/controller fixes) enumerated all four targets at the 14:30 boot
+~~2. Post-boot: verify `findmnt /mnt/buildcache` and `findmnt /mnt/pool` both return real ext4/btrfs mounts.~~ done 2026-08-31 — pool mounted by-label, both RAID1 members, zero device errors (16-29 report)
+~~3. If sda1 stays EIO after reconnect: `sudo e2fsck -y /dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311-part1` before remount.~~ moot — buildcache attached + serving on recovery (e2fsck decision tree remains in the runbook)
+~~4. `nix run .#deploy` to ship the phantom-green fix; confirm Discord receives TRIGGERED alerts for buildcache + pool (proving the fix fires), then RESOLVED after recovery.~~ done — fix deployed 2026-08-22; alert lifecycle proven through the outage + recovery
+~~5. Verify gatus journal shows `success=false` for both endpoints after deploy (the canary that the anchored patterns actually evaluate).~~ done — the outage kept them honestly red through Aug 22→31
 
 **Monitoring hardening (the bug class):**
-6. Migrate the 4 allowlisted metrics (`btrfs_scrub_error_free`, `btrfs_emergency_reserve_present`, `backup_all_healthy`, `secret_rotation_all_fresh`) to the anchored pat form; delete the lint allowlist.
-7. Add a DAS-link-presence metric (`system_das_link_present` from `/sys/bus/usb/devices/8-1`) to system-health + a Gatus check, so the cause alerts once instead of N consequences.
+~~6. Migrate the 4 allowlisted metrics (`btrfs_scrub_error_free`, `btrfs_emergency_reserve_present`, `backup_all_healthy`, `secret_rotation_all_fresh`) to the anchored pat form; delete the lint allowlist.~~ done (verified 2026-08-31) — all four on the anchored real-newline form; no allowlist remains
+~~7. Add a DAS-link-presence metric (`system_das_link_present` from `/sys/bus/usb/devices/8-1`) to system-health + a Gatus check, so the cause alerts once instead of N consequences.~~ done at `c121f8cf` (2026-08-22) — metric + anchored check + Discord alert naming the CAUSE
 8. Add the HELP-comment collision trap explanation to the `gatus-pattern-lint` failure message (partially done — message tells the fix, could link the incident).
-9. Write the pattern.Match semantics (no `!` negation, whole-string anchor, HELP collision) into AGENTS.md's Gatus section so no session re-derives it.
-10. Extend `scripts/pre-deploy-check.sh` section 10 (phantom metrics) to also flag gatus conditions matching `pat(*<metric> 1*)` on metrics whose collector emits HELP text.
+~~9. Write the pattern.Match semantics (no `!` negation, whole-string anchor, HELP collision) into AGENTS.md's Gatus section so no session re-derives it.~~ done 2026-08-22 — AGENTS.md item 9 + the "escape layers" bullet
+~~10. Extend `scripts/pre-deploy-check.sh` section 10 (phantom metrics) to also flag gatus conditions matching `pat(*<metric> 1*)` on metrics whose collector emits HELP text.~~ done 2026-08-22 — §10 mirrors both flake-lint traps, mutation-tested
 
 **Resilience:**
 11. Evaluate a second USB path for the two pool Toshiba members (separate from the buildcache/SSD link) so backups survive a single bridge drop.
-12. Review memory-emergency-guard thresholds/cadence against the 00:27 freeze timeline (did it trip? if not, why not?).
-13. Write `scripts/das-link-recovery-check.sh` (read-only: usb tree, by-id presence, zombie mounts, e2fsck-needed heuristic, printed decision tree).
+~~12. Review memory-emergency-guard thresholds/cadence against the 00:27 freeze timeline (did it trip? if not, why not?).~~ done 2026-08-22 — review found 3 design gaps, all fixed same day (socket-stop, Zone 3 PSI, CAP_FOWNER); extended with Zones 4/5 on 08-31
+~~13. Write `scripts/das-link-recovery-check.sh` (read-only: usb tree, by-id presence, zombie mounts, e2fsck-needed heuristic, printed decision tree).~~ done 2026-08-22 (v2 same day) — live-verified against the real DAS-down state
 14. Consider a gatus `alerting` dedup so N endpoints down from one root cause produce one Discord message, not N.
 
 **BTRFS space (observed, pre-existing):**

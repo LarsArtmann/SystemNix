@@ -43,7 +43,7 @@
 
 ### f) Next things (prioritized)
 
-1. USER: DAS physical reseat + power-cycle (blocks: 9 baseline smoke FAILs, bank-sync metrics verification, btrbk-data catch-up, attic bootstrap happy path)
+~~1. USER: DAS physical reseat + power-cycle (blocks: 9 baseline smoke FAILs, bank-sync metrics verification, btrbk-data catch-up, attic bootstrap happy path)~~ done 2026-08-31 — replug (post-08-29 fixes) enumerated all four targets; smoke 83 PASS / 0 FAIL
 2. After next deploy's green pre-deploy run: remove `discordsync_projection_dlq_legacy_unchanged` from KNOWN_NEW_METRICS
 3. CHANGELOG Unreleased entries for this batch + TODO rows (vendorHash-fix pattern, IO-baseline upstream flake, master-rebase-when-go-1.26.6)
 4. Upstream: file/fix `TestIOBaseline_DiskWriteBytes` environmental flake (DiscordSync repo)

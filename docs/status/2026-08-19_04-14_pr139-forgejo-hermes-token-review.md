@@ -81,7 +81,7 @@ PR reviewed and verdict posted on GitHub as a **COMMENT** review ("Request chang
 11. Anchor the user-exists grep (e.g. `grep -qE "^.*\s${FORGEJO_USER_NAME}\s"` or match `tokenGen`'s strictness).
 
 **Wiring + deploy (P1):**
-12. Add `forgejo-hermes-token` to the provisioner restart list in `scripts/deploy.sh:145`.
+~~12. Add `forgejo-hermes-token` to the provisioner restart list in `scripts/deploy.sh:145`.~~ done — `forgejo-generate-token.service` is in the deploy.sh restart list (verified 2026-08-31)
 13. Re-run `nix flake check --no-build` + eval on the fixed branch; re-review.
 14. Merge → `nix run .#deploy` → post-deploy check: unit `inactive (dead)` + `RemainAfterExit`, token file `hermes:hermes 0400` at `/run/hermes-forgejo-token`.
 15. Live-verify: `curl -H "Authorization: token $(cat /run/hermes-forge-token)" https://forgejo.home.lan/api/v1/user/repos` → 200; `/api/v1/user` → 403 (proves the scope is actually narrow).

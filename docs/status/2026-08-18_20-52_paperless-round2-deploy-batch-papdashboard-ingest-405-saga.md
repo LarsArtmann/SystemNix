@@ -88,16 +88,16 @@
 6. Decide barcode consume (PATCHT/Code-39) and e-mail consumption (needs IMAP + sops)
 
 **Alert hub (now unblocked by the ingest fix):**
-8. Watch first organic alert → verify `insight` enrichment (LLM via FastFlowLM) + Discord pairing
+~~8. Watch first organic alert → verify `insight` enrichment (LLM via FastFlowLM) + Discord pairing~~ done — organic insights observed (2026-08-22 storms; dedicated channel)
 9. Add synthetic ingest health probe (gatus or post-deploy-check): POST a test alert, expect 200, clean it up
 10. Add papdashboard ingest 200-count (or last-success age) to the `system-health` collector / a journal-watcher metric
 
 **FastFlowLM:**
 11. Strengthen smoke: assert model NAME in `/v1/models` body (server-up-model-dead detector)
 12. Idle-check unit/VM test (age math + instance guard)
-13. Decide memory priority (question g.1) → either keep OOMScoreAdjust=300 best-effort or reserve a slot
-14. Watch cold-load success over a week (xrt ENOMEM recurrence after memory storms)
-15. If RAG wanted later: dedicated embed-only flm instance on its own port (never `--embed 1` on the main one)
+~~13. Decide memory priority (question g.1) → either keep OOMScoreAdjust=300 best-effort or reserve a slot~~ decided — OOMScoreAdjust=300 retained BY DESIGN (flm = designated global-OOM sacrifice, AGENTS.md)
+~~14. Watch cold-load success over a week (xrt ENOMEM recurrence after memory storms)~~ done — weeks of stable cold loads; the driver-level ENOMEM after the 08-18 storm proved transient (AGENTS.md)
+~~15. If RAG wanted later: dedicated embed-only flm instance on its own port (never `--embed 1` on the main one)~~ superseded — embeddings served by llama-rag on the GPU since 2026-08-19 (bge-m3; the `--embed 1` option deleted)
 
 **PMA / consumers:**
 16. Verify go-commit ≥v0.8.0 propagated → real LLM commit messages in PMA journal (no heuristic fallback)

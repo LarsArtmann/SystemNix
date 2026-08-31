@@ -74,7 +74,7 @@ Two avoidable user round-trips were burned on prescribe-first-check-later mistak
 8. ~~**Unallocated-space decision** (g/2): the 100 GiB sits free; nothing needs it today, but it should be a DECISION, not drift.~~ done (DECIDED delete-only, left unallocated (TODO_LIST P2 records the user-run commands))
 9. **Add `gptfdisk` (sgdisk) to system packages** or drop a note in AGENTS.md that disk surgery uses `fdisk` — future sessions shouldn't repeat d/1.
 10. ~~**btrbk/scrub sanity pass after partition surgery** (paranoia): confirm tonight's 23:00/23:30 btrbk runs + pool sends succeed on the reshaped disk — the table rewrite happened while both BTRFS filesystems were mounted and in use.~~ done (first overnight pool cycle green 2026-08-18)
-11. **Root-disk trajectory**: 88% and the session was net-negative on free space. The two big levers stay `/home/hermes` (58 GiB, TODO P2 question) and Docker→SSD2 (TODO P2).
+~~11. **Root-disk trajectory**: 88% and the session was net-negative on free space. The two big levers stay `/home/hermes` (58 GiB, TODO P2 question) and Docker→SSD2 (TODO P2).~~ resolved-by-outcome — root at 82% (2026-08-31); /home/hermes re-measured 3.2M (stale claim); Docker→SSD2 superseded by the Samsung migration
 12. **`docs/gotchas-archive.md`**: add the two runbook lessons (d/1, d/2) as one compact entry — they're cheap, recurring, and exactly the file's purpose.
 
 ## g) QUESTIONS ONLY YOU CAN ANSWER

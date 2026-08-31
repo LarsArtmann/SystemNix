@@ -57,22 +57,22 @@
 
 1. ~~Watch monitor365 copy to completion: `journalctl -u data-to-pool-migration -f`~~ done (ADDENDUM 16:10 — all three trees migrated, verified)
 2. ~~On success: confirm all three sources gone (`ls /data`), unit skips on next boot, sources recoverable only via snapshots~~ done (ADDENDUM: complete; sources recoverable via snapshots)
-3. On COPY FAILED with EIO: extract the unreadable-file list from the journal — that's the corrupt-file map (T05 partial) for this tree
+~~3. On COPY FAILED with EIO: extract the unreadable-file list from the journal — that's the corrupt-file map (T05 partial) for this tree~~ moot — the copy completed verified (addendum); the corrupt-file map exists via the 10:28 session (13 files)
 4. ~~Verify tonight's 23:45 btrbk-pool run snapshots the populated atticd + monitor365 subvols~~ done (overnight btrbk-pool cycle green 2026-08-18)
 5. ~~Verify btrbk-data 23:30 behaves as expected (fails loudly on known /data corruption — standing state, not caused by us)~~ done (standing state — btrbk-data fails loudly by design (stance decided 14:45 session))
 6. ~~Commit the session's changes (mind the concurrent session's files — separate carefully)~~ done at `23b19c25`
 
 **Derived from what I noticed (in passing)**
 7. ~~smartd runtime-verification TODO (TODO_LIST P2) can now be closed — verified live this session ("Monitoring 4 ATA/SATA + 1 NVMe")~~ done (verified live this session (Monitoring 4 ATA/SATA + 1 NVMe); TODO_LIST item closed)
-8. Consider an eval-time or pre-commit lint: assert every Gatus pat() metric in NEW modules ships an emitter in the same deploy (the concurrent session hit the same phantom-metric wall — systemic)
+~~8. Consider an eval-time or pre-commit lint: assert every Gatus pat() metric in NEW modules ships an emitter in the same deploy (the concurrent session hit the same phantom-metric wall — systemic)~~ done — `gatus-pattern-lint` flake check + pre-deploy-check §10 cover the class
 9. Consider `ConditionPathIsMountPoint` instead of `RequiresMountsFor` where the semantics differ (we want fail-loudly, which RequiresMountsFor gives — document the choice pattern once)
 10. The 1.9M-entry monitor365 buffer is fs-salt: when monitor365 is re-enabled, evaluate whether its buffer format (millions of tiny chunks) belongs on HDD at all vs. fewer larger segment files (upstream concern)
 11. After monitor365 lands: consider excluding `services/monitor365` from btrbk-pool until re-enabled (1.9M-inode snapshot churn nightly for a disabled service is pure IO) — cheap toggle in snapshots.nix
 12. Pocket-id SQLITE_BUSY bursts at every deploy restart (pre-existing: 16 on 08-16, 55 on 08-17, 24 on 08-18 — provisioner-loop contention). Post-deploy-check FAILs on it intermittently. Worth a look at busy_timeout/serialization in the provisioner path
-13. smartd: nvme0n1 uses bare device node (no by-id) — fine, but note /dev/nvme0n1 vs the boot-disk identity convention used elsewhere
+~~13. smartd: nvme0n1 uses bare device node (no by-id) — fine, but note /dev/nvme0n1 vs the boot-disk identity convention used elsewhere~~ done 2026-08-31 — smartd + nvme-health-monitor now use `/dev/disk/by-id/nvme-<model>_<serial>` (enumeration-shift trap closed)
 14. The `tmp-crush-test` dir spotted in `/data` listing — session debris? verify + clean
 15. AGENTS.md: add the NixOS `set -e` prepend gotcha (e.3) — it cost a half-run
-16. Post-crash boot-failure cluster (07:00-07:25: browser-history-agent start-limit loop, hermes timeouts, btrfs-compsite timeout, forgejo-oidc-setup) — all self-recovered; if the pattern recurs on every crash-boot, harden the boot-order/gates once, holistically
+~~16. Post-crash boot-failure cluster (07:00-07:25: browser-history-agent start-limit loop, hermes timeouts, btrfs-compsite timeout, forgejo-oidc-setup) — all self-recovered; if the pattern recurs on every crash-boot, harden the boot-order/gates once, holistically~~ done — the 2026-08-31 boot-failure batch (gate budgets/floors + eval audit, hermes 6min, docker wants) hardened exactly this class
 
 ## g) QUESTIONS ONLY YOU CAN ANSWER
 

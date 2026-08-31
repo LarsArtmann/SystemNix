@@ -152,21 +152,21 @@ The upstream code works. The Nix packaging is the blocker — not the upstream p
 
 ### Blockers (must-do before deploy)
 
-1. **Fix the systemd-graph webui build** — try patching `pnpm-lock.yaml` to set `autoInstallPeers: false`, or try `pnpm install --ignore-scripts`, or build with `--option sandbox false` (acceptable for a review tool).
-2. **Compute `vendorHash` for `pkgs/systemd-graph/default.nix`** — once webui builds, `nix build #systemd-graph` will report the correct hash.
-3. **Set `systemd-graph.enable = false` in configuration.nix** until the package builds, to unblock deploys.
-4. **Run `nix flake check --no-build`** to validate syntax of all changes.
-5. **Run `nix run .#deploy`** to bring systemd-timer-monitor live (it builds and evals cleanly).
+~~1. **Fix the systemd-graph webui build** — try patching `pnpm-lock.yaml` to set `autoInstallPeers: false`, or try `pnpm install --ignore-scripts`, or build with `--option sandbox false` (acceptable for a review tool).~~ done — webui builds (18-49 session: both tools deployed + wired)
+~~2. **Compute `vendorHash` for `pkgs/systemd-graph/default.nix`** — once webui builds, `nix build #systemd-graph` will report the correct hash.~~ done — package green; systemd-graph live at graph.home.lan
+~~3. **Set `systemd-graph.enable = false` in configuration.nix** until the package builds, to unblock deploys.~~ done — enabled + serving (superseded by the completed build)
+~~4. **Run `nix flake check --no-build`** to validate syntax of all changes.~~ done — checks green through the chain
+~~5. **Run `nix run .#deploy`** to bring systemd-timer-monitor live (it builds and evals cleanly).~~ done — deployed 2026-08-19
 
 ### Verification (after deploy)
 
-6. **Verify `https://timers.home.lan/`** returns 200 with the audit HTML.
-7. **Verify `systemctl status systemd-timer-monitor-audit.timer`** shows active and next fire time.
-8. **Verify the audit HTML content** — failed services list, timer table, overdue badges.
-9. **Verify `https://timers.home.lan/status.json`** returns valid JSON.
-10. **Verify `systemctl start systemd-timer-monitor-audit.service`** runs the audit immediately.
-11. **Once systemd-graph builds: verify `https://graph.home.lan/`** returns 200 with the React SPA.
-12. **Verify `https://graph.home.lan/api/snapshot`** returns the graph JSON.
+~~6. **Verify `https://timers.home.lan/`** returns 200 with the audit HTML.~~ done — verified (18-49)
+~~7. **Verify `systemctl status systemd-timer-monitor-audit.timer`** shows active and next fire time.~~ done — verified (18-49)
+~~8. **Verify the audit HTML content** — failed services list, timer table, overdue badges.~~ done — verified (18-49)
+~~9. **Verify `https://timers.home.lan/status.json`** returns valid JSON.~~ done — verified (18-49)
+~~10. **Verify `systemctl start systemd-timer-monitor-audit.service`** runs the audit immediately.~~ done — deploy.sh starts it post-switch (AGENTS.md)
+~~11. **Once systemd-graph builds: verify `https://graph.home.lan/`** returns 200 with the React SPA.~~ done — live (18-49 + post-deploy checks since)
+~~12. **Verify `https://graph.home.lan/api/snapshot`** returns the graph JSON.~~ done — verified (18-49)
 13. **Verify `systemctl status systemd-graph.service`** shows active and connected to D-Bus.
 
 ### Hardening & completeness

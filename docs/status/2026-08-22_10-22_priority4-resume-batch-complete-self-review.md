@@ -70,18 +70,18 @@ No kill/SIGKILL crash-simulation tests exist. Class closed.
 
 ## f) NEXT (session-derived, up to 50 — realistic: 12)
 
-1. **Triage the 10 live FAILs** (Immich/Paperless/Bank-Sync/Attic/oauth2-proxy/Caddy-redirect): journalctl per unit, determine crash-recovery fallout vs config regression; coordinate with the stability-session (its 10-00 report may already own them)
+~~1. **Triage the 10 live FAILs** (Immich/Paperless/Bank-Sync/Attic/oauth2-proxy/Caddy-redirect): journalctl per unit, determine crash-recovery fallout vs config regression; coordinate with the stability-session (its 10-00 report may already own them)~~ done — classified as the DAS-outage cascade baseline (documented across the 08-24 harvest + recovery reports; 83 PASS / 0 FAIL by 2026-08-31)
 2. Answer standing Q1 (WARN-DIVERGED policy) → then wire `audit-go-deps.sh` into pre-deploy-check and/or CI (Q2)
 3. Q3: allow dep-audit `git fetch` in clones to dissolve the 2 buildflow WARN-UNKNOWNs — or document clones-must-be-fresh
 4. Promote the 6-case wait-helper test suite from /tmp into a flake check (`checks.wait-helpers`, pipefail-sigpipe precedent)
 5. Fix the `wait_body_pattern` "fixed-string (BRE)" comment wording
-6. Merge CHANGELOG's duplicate `### Fixed`/`### Added` Unreleased headers
+~~6. Merge CHANGELOG's duplicate `### Fixed`/`### Added` Unreleased headers~~ done 2026-08-24 (harvest session; bullet-content diff verified)
 7. Generate validate-gomemlimit SERVICES from `nix eval` (config-driven, MARKER becomes a throwaway)
 8. Dedupe/group the 46 WARN-DIVERGED audit rows (14 unique module+version combos)
 9. Right-size browser-history GOMEMLIMIT (384MiB limit vs ~5MiB live heap); drop/correct discordsync+signoz-collector entries that only produce NOTE noise
 10. Add audit-go-deps + validate-gomemlimit to a scripts/README index if one materializes
 11. Consider nightly CI run of audit-go-deps (catches upstream-tag-vs-pin drift without deploy latency)
-12. Re-run post-deploy-check after the stability session's deploy lands to re-baseline the FAIL set
+~~12. Re-run post-deploy-check after the stability session's deploy lands to re-baseline the FAIL set~~ done — 83 PASS / 0 FAIL on 2026-08-31 (post-DAS recovery)
 
 ## g) QUESTIONS (cannot figure out myself)
 

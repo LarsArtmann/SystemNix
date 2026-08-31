@@ -54,10 +54,10 @@
 **Verify / close this session's work**
 
 1. Eyeball the first real Discord insight embed after deploy (user).
-2. Update SystemNix `AGENTS.md` PapDashboard section: human-readable outbound rendering + event-type gate + webhook-contract note.
+~~2. Update SystemNix `AGENTS.md` PapDashboard section: human-readable outbound rendering + event-type gate + webhook-contract note.~~ done — AGENTS.md PapDashboard section documents the rendering contract + dedicated insights channel
 3. Update PapDashboard `AGENTS.md` with the notify rendering contract.
-4. Check SystemNix CHANGELOG convention for input bumps; add entry if warranted.
-5. Decide webhook-channel gating semantics (ungate webhook / per-channel gate / keep).
+~~4. Check SystemNix CHANGELOG convention for input bumps; add entry if warranted.~~ done — CHANGELOG carries the PapDashboard entries
+~~5. Decide webhook-channel gating semantics (ungate webhook / per-channel gate / keep).~~ superseded 2026-08-18 23-51 — dedicated insights webhook channel decided + deployed
 6. Add optional test-insight trigger (CLI flag or env) for deploy-time Discord verification.
 7. Consider adding a `post-deploy-check.sh` assertion: papdashboard webhook config present when enabled.
 

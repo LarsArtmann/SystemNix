@@ -90,12 +90,12 @@ _2026-08-31, started ~14:30, reported 20:02. All times same-day. Live session on
 ## 7. NEXT: up to 50 things (f), priority order
 
 **P0 — this week**
-1. Deploy the staged fixes (balance awk + by-id smartd/nvme) when PSI < 20%
+~~1. Deploy the staged fixes (balance awk + by-id smartd/nvme) when PSI < 20%~~ done — deployed (gawk+coreutils runtimeInputs; smartd/nvme-health by-id; AGENTS.md 2026-08-31 entries)
 2. Post-deploy: verify smartd monitors BOTH NVMe (journal), nvme.prom shows nvme1n1 (Lexar)
 3. Run `btrfs-balance-metadata` when quiet; data-balance per its printed runbook (reserve rm → quiet → ionice -dusage=5 -dlimit=2 → re-provision reserve)
 4. Fix the /data EIO inode (inode-resolve 1331118; delete/restore file; confirm btrbk-data green next night)
-5. Ratify Samsung layout (XFS 64G + BTRFS ~860G zstd) + pick Phase-1 reboot window
-6. Investigate cv-backup never-success (999h sentinel)
+~~5. Ratify Samsung layout (XFS 64G + BTRFS ~860G zstd) + pick Phase-1 reboot window~~ done — Rev 2 RATIFIED (layout + hot-DBs-to-nodatacow decision; `aa88a30a`); migration window pending (TODO_LIST)
+~~6. Investigate cv-backup never-success (999h sentinel)~~ done — three stacked bugs root-caused + fixed + VM-proven (16-29/17-22 reports)
 7. Root-fs chunk-unalloc re-check after balance (was 6.4G CRITICAL; GC freed extents, verify >10G before declaring safe)
 
 **P1 — migration (once ratified)**

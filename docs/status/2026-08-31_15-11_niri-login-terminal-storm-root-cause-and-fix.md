@@ -131,8 +131,8 @@ source `src/main.rs` restore loop (lines 646–652: dedup only for listed apps).
 
 ## 10. Next Up To ~30 (derived from this session only)
 
-1. `nix run .#deploy` — ship the dedup + btop fixes
-2. Verify at next login: ≤1 restored ghostty, journal shows clean restore
+~~1. `nix run .#deploy` — ship the dedup + btop fixes~~ done — shipped (session-storm patch, `a58c0734`) + deployed by the same-day sessions
+~~2. Verify at next login: ≤1 restored ghostty, journal shows clean restore~~ done — no storm recurrence through the same-day reboots (18-44 session saw clean logins)
 3. Upstream: gate restore to once per graphical session (XDG_RUNTIME_DIR marker)
 4. Upstream: dedupe saved windows by (app_id, pid)
 5. Upstream: skip restoring `terminal_state: null` terminals (or restore cwd-only)
@@ -148,10 +148,10 @@ source `src/main.rs` restore loop (lines 646–652: dedup only for listed apps).
 15. Post-deploy journal check: manager loaded the new config.toml
 16. Audit emacs (and any other single-process multi-window app) for the same class
 17. Interim mitigation until upstream gate lands: consider `Restart=on-failure` + tight burst on the manager unit (crash-loop × restore = multiplication today)
-18. Investigate smart-audio FATAL missing `alsa_card.pci-0000_c5_00.1` + start-limit-hit
+~~18. Investigate smart-audio FATAL missing `alsa_card.pci-0000_c5_00.1` + start-limit-hit~~ done 2026-08-31 — dynamic card discovery (`deviceName = "auto"`, pw-dump + 120s retry) fixed it (18-44 report)
 19. Identify which daemon was the "reading events too slowly" IPC client
 20. Look at hermes scheduled-task failure at 14:33:44
-21. Write TODO_LIST.md entries for items 3–12
+~~21. Write TODO_LIST.md entries for items 3–12~~ done — 2026-08-31 docs-health audit (upstream cluster + config-hardening rows)
 22. Trash or promote `/tmp/nsm-src` to a proper checkout for upstream work
 23. Recover the trashed `session-*.bak` files and measure the actual growth curve (confirms/refutes the +2/login model)
 24. Close the still-open stuck `sudo btop` prompt window + nvtop window (or let them die at next login naturally — they are no longer saved)

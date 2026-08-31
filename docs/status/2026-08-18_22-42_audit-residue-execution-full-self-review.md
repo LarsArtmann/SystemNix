@@ -55,13 +55,13 @@
 
 ## f) NEXT — impact-sorted
 
-1. **Deploy** (`nix run .#deploy`) — carries the papdashboard + gawk fixes + the concurrent session's now-working activitywatch module. Then `nix run .#post-deploy-check` (new PapDashboard block runs for real).
+~~1. **Deploy** (`nix run .#deploy`) — carries the papdashboard + gawk fixes + the concurrent session's now-working activitywatch module. Then `nix run .#post-deploy-check` (new PapDashboard block runs for real).~~ done — deployed 2026-08-18 evening (gen 690+); PapDashboard block live
 2. **User: key rotations** — Resend (REVOKED — Pocket ID email dead), Synthetic + Context7 (live-assumed). Exact `sops --set` runbook available.
 3. **User: history-purge push** — runbook staling as the daemon advances master on old history.
 4. **User: 162-commit attribution decision** (rewrite vs accept).
 5. **Eval-time bare-module guard** (e.2) — TODO_LIST candidate, ~30 min.
 6. **Generalize the unit-PATH phantom-green gotcha** into the AGENTS.md systemd section (currently only in the BTRFS bullet): "unit scripts must list every binary in `path`; a missing binary inside an `if` condition is non-fatal → silent skip".
-7. **Annotate 22-16 §f items closed here** (1–5, 10, 11, 14, 22–25) — routing note pointing at this report.
+~~7. **Annotate 22-16 §f items closed here** (1–5, 10, 11, 14, 22–25) — routing note pointing at this report.~~ done — closed items struck inline by the 2026-08-31 docs-health audit
 8. **FastFlowLM hand-install remnant deletion** (16-37 §f.6) — 48h window elapsed; user files (`~/.local/share/fastflowlm`, `~/.local/bin/flm`, `~/.bashrc` exports) — confirm with user, then trash.
 9. Remaining harvested TODOs (§f.12–13, 15–21) — already queued in TODO_LIST.
 10. Pre-existing backlog: appendix-only archives, AGENTS.md compression, README/CONTRIBUTING/DOMAIN_LANGUAGE freshness.

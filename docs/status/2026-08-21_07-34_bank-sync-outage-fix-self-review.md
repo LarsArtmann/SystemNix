@@ -192,8 +192,8 @@ A third failure (self-inflicted, recovered) and a **systemic monitoring gap**
 **P0 — outage closure & monitoring**
 
 1. SCA renewal (human): approve in Wise app → OTT → `/var/lib/bank-sync-sca/token.env` → `systemctl restart bank-sync` → remove file.
-2. Verify which metric bank-sync `/metrics` exposes for sync failures; if none, add one upstream (counter: failed syncs per provider).
-3. Add Gatus check on that failure metric (pat() presence + value 0), Discord alerting, fail-closed per phantom-metric rule.
+~~2. Verify which metric bank-sync `/metrics` exposes for sync failures; if none, add one upstream (counter: failed syncs per provider).~~ done — `bank_sync_sync_errors_total` + `bank_sync_last_sync_timestamp_seconds` live
+~~3. Add Gatus check on that failure metric (pat() presence + value 0), Discord alerting, fail-closed per phantom-metric rule.~~ done — wired into gatus conditions (allowlist retirement pending TODO_LIST)
 4. Strengthen post-deploy smoke: Bank-Sync section asserts "no `manual sync failed` in journal since restart".
 5. After SCA renewal: verify the 2.5-day outage window backfilled via statements (sync-window advancement semantics under `fail_sync`).
 6. Investigate why NO alert reached Discord for 2.5 days — enumerate every bank-sync Gatus check and its conditions; fix coverage holes.
@@ -201,25 +201,25 @@ A third failure (self-inflicted, recovered) and a **systemic monitoring gap**
 **P1 — correctness & debt from this session**
 7. bank-sync upstream: stop retrying `rejection`-family errors (422 wrong.date.format was retried ~2,220×).
 8. bank-sync: audit v2/v3 migrations for the same never-record-version bug class (v4-era DBs are healed; v1-era DBs would still hit v2/v3 re-runs); make them idempotent + self-recording like v5.
-9. Decide the UTC-normalization ownership: wise-go v0.8.1 owns it; the concurrent session's adapter-level `.UTC()` fix is now redundant belt-and-suspenders — keep consciously or remove, but document the single source of truth.
+~~9. Decide the UTC-normalization ownership: wise-go v0.8.1 owns it; the concurrent session's adapter-level `.UTC()` fix is now redundant belt-and-suspenders — keep consciously or remove, but document the single source of truth.~~ done — wise-go v0.8.1 documented as the single source (AGENTS.md Wise section)
 10. Line-review the 3,863-line deletion batch that rode `47b5301` (dashboard_templ.go et al.) — confirm nothing valuable was dropped.
 11. Create GitHub Release for wise-go v0.8.1 (go-release Phase 7) — or decide tags+CHANGELOG suffice for this repo.
-12. Roll SystemNix bank-sync input forward to `da2a202` (currently 2 commits behind master; includes the other session's health E2E + CHANGELOG work).
+~~12. Roll SystemNix bank-sync input forward to `da2a202` (currently 2 commits behind master; includes the other session's health E2E + CHANGELOG work).~~ superseded — input advanced well past it (09785e60 / Wise SDK v0.9.0 by 2026-08-31)
 13. wise-go: resolve GO-2026-6218 (net/url quadratic) — check Go patch availability; bump toolchain.
 14. Fix BuildFlow dprint-format plugin resolution in agent shells (nix-develop fallback fails today).
 
 **P2 — hardening & DX**
 15. bank-sync: pre-migration DB snapshot (`cp data.db data.db.pre-migration`) as a cheap rollback net for future migrations.
 16. Add a restart-after-migration regression test at module/VM level (the exact incident class; my repeat-open test covers storage, not systemd restart).
-17. `docs/services/bank-sync-sca.md`: document that the SCA fallback covers only outgoing transfers (deposits/card/interest wait for renewal).
-18. Investigate the transient Browser-History-unreachable FAIL from deploy #1 (self-recovered, unexplained).
+~~17. `docs/services/bank-sync-sca.md`: document that the SCA fallback covers only outgoing transfers (deposits/card/interest wait for renewal).~~ done — runbook + AGENTS.md document the fallback semantics
+~~18. Investigate the transient Browser-History-unreachable FAIL from deploy #1 (self-recovered, unexplained).~~ done — root-caused 2026-08-30 (deploy restart race; re-probe healthy)
 19. llama-rag: graceful-exit wedges aren't respawned (`Restart=on-failure` + clean exits); consider a /health watchdog unit or `Restart=always` + `RestartSec`.
 20. wise-go: address or consciously waive go-structure-linter's 14 root-package findings (flat SDK layout vs linter policy).
 21. Add `sqlite3-interactive` to lars' packages (prod DB is unreadable to lars today; debugging relied on journal + inference).
 22. Expose bank-sync schema version via `/metrics` (would have made the v5 half-applied state directly observable).
 23. SystemNix deploy.sh: trap/ignore SIGPIPE so a piped consumer can never truncate a deploy again.
 24. fish startup 3,772 ms WARN (pre-existing, every deploy flags it).
-25. quickshell 1 error line/hour WARN (pre-existing; peek at the journal once).
+~~25. quickshell 1 error line/hour WARN (pre-existing; peek at the journal once).~~ done — triaged transient 2026-08-26
 26. FastFlowLM smoke check cold-pins the 13.6 GB model on every deploy (documented tradeoff — reconsider cadence or skip-when-warm).
 27. wise-go: retire the govulncheck backlog beyond GO-2026-6218 as toolchain bumps land (36 findings, mostly stdlib-version-bound).
 28. wise-go `assertTimestampCases` helper: table type is clunky (inline struct in signature) — minor refactor.

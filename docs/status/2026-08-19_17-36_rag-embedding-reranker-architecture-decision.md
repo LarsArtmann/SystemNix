@@ -117,17 +117,17 @@ When the user asked "Why is llama-server not enough?", I finally researched llam
 
 ### Immediate — RAG stack implementation (this session's decision)
 
-1. Verify Ollama has `bge-m3` or equivalent strong embedding model in its pullable library
-2. Verify `paperless-ai` exposes a reranker env var/config (search the upstream repo)
-3. Acquire or convert `bge-reranker-v2-m3` GGUF model
-4. Add `reranker` port to `lib/ports.nix`
-5. Create `modules/nixos/services/llama-reranker.nix` module
+~~1. Verify Ollama has `bge-m3` or equivalent strong embedding model in its pullable library~~ **NOT-DO — superseded same-day:** the architecture decision landed on llama-server (`llama-rag.nix`, :8848/:8849) instead of Ollama (reranking unsupported upstream — the deciding factor)
+~~2. Verify `paperless-ai` exposes a reranker env var/config (search the upstream repo)~~ **NOT-DO — superseded same-day:** the architecture decision landed on llama-server (`llama-rag.nix`, :8848/:8849) instead of Ollama (reranking unsupported upstream — the deciding factor)
+~~3. Acquire or convert `bge-reranker-v2-m3` GGUF model~~ **NOT-DO — superseded same-day:** the architecture decision landed on llama-server (`llama-rag.nix`, :8848/:8849) instead of Ollama (reranking unsupported upstream — the deciding factor) (fetched declaratively by `llama-rag-model-fetch`)
+~~4. Add `reranker` port to `lib/ports.nix`~~ done — :8849 in the port registry (llama-rag)
+~~5. Create `modules/nixos/services/llama-reranker.nix` module~~ done in the shipped form — `llama-rag.nix` serves both engines
 6. Enable the module in `configuration.nix`
-7. Wire `PAPERLESS_AI_LLM_EMBEDDING_*` env vars in `paperless.nix` → Ollama `:11434/v1`
-8. Bump `OLLAMA_MAX_LOADED_MODELS` from 1 to 2 in `ai-stack.nix`
-9. Pull `bge-m3` (or chosen embedding model) via Ollama
+~~7. Wire `PAPERLESS_AI_LLM_EMBEDDING_*` env vars in `paperless.nix` → Ollama `:11434/v1`~~ done in the shipped form — wired to llama-server `:8848/v1` (bge-m3)
+~~8. Bump `OLLAMA_MAX_LOADED_MODELS` from 1 to 2 in `ai-stack.nix`~~ **NOT-DO — superseded same-day:** the architecture decision landed on llama-server (`llama-rag.nix`, :8848/:8849) instead of Ollama (reranking unsupported upstream — the deciding factor)
+~~9. Pull `bge-m3` (or chosen embedding model) via Ollama~~ **NOT-DO — superseded same-day:** the architecture decision landed on llama-server (`llama-rag.nix`, :8848/:8849) instead of Ollama (reranking unsupported upstream — the deciding factor)
 10. Add Gatus health check for the reranker `/health` endpoint
-11. Add Gatus health check for the Ollama embeddings endpoint
+~~11. Add Gatus health check for the Ollama embeddings endpoint~~ done in the shipped form — Gatus `:8848/health` + `:8849/health` (llama-rag)
 12. Add Homepage tile for the reranker (optional, if user wants visibility)
 13. Write a VM test for the reranker service (`tests/test-llama-reranker.nix`)
 14. Update `AGENTS.md` with the RAG architecture decision and the llama.cpp reranking finding

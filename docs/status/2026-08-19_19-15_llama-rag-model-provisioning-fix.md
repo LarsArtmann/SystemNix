@@ -78,14 +78,14 @@ The two new llama.cpp RAG services (embeddings + reranker, deployed earlier on 2
 
 **Immediate (this stack):**
 
-1. Verify GPU offload: check `HSA_OVERRIDE_GFX_VERSION` presence in `llama-embeddings.service` environment; if absent, add to `rocm` env helper or the units; confirm via journal offload lines / `rocm-smi`
+~~1. Verify GPU offload: check `HSA_OVERRIDE_GFX_VERSION` presence in `llama-embeddings.service` environment; if absent, add to `rocm` env helper or the units; confirm via journal offload lines / `rocm-smi`~~ done — GPU serving confirmed (AGENTS.md llama-rag section: both instances on GPU via ROCm)
 2. Add a GPU-evidence smoke check (or fold into the two llama functional checks) so CPU-fallback becomes a visible FAIL
 3. Verify Paperless AI actually consumes the embedding endpoint (journal for embedding calls/errors)
 4. Check Paperless DB for UI-saved embedding config that would override env vars (the `app_config.x or settings.X` trap)
 5. Pin sha256 for both GGUF downloads (house SRI-style); stamp file gains hash line; drift → loud re-fetch failure
 6. Decide reranker fate: keep always-on with zero consumers vs park it (see question 1)
 7. Trigger embedding backfill for the existing Paperless archive once (b-2)/(f-3) verified; monitor GPU/VRAM during
-8. Verify VRAM headroom: Ollama chat model + both RAG models co-resident under the 34 GiB carveout
+~~8. Verify VRAM headroom: Ollama chat model + both RAG models co-resident under the 34 GiB carveout~~ done — co-resident since 2026-08-19 without incident (18 GiB carveout era)
 9. Write `tests/test-llama-rag.nix` VM test: fetch-gate (mock/skip download) → service starts → `/health` ok (CPU llama-cpp in VM is fine)
 10. Add llama-server `/metrics` (:8848/:8849) to the SigNoz collector scrape list
 11. Add a SigNoz/Gatus alert on llama request latency if metrics expose it (plan item #37)

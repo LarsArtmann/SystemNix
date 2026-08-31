@@ -56,7 +56,7 @@
 3. VM test runtime half (TODO §2.5).
 4. aw-watcher gate monitoring preference (§g Q2 — still yours).
 5. dynamic-user-audit: consider the same CI negative-test pattern now proven on session-boot-audit.
-6. helium SIGTRAP + emeet-pixyd WARN — post-reboot verify / upstream.
+~~6. helium SIGTRAP + emeet-pixyd WARN — post-reboot verify / upstream.~~ half-done — helium verified stable 2026-08-31 (zero coredumps across crash-recovery reboots); emeet rate-limit remains TODO_LIST
 
 ## g) Questions I cannot answer myself
 

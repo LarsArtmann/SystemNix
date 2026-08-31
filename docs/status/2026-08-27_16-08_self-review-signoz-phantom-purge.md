@@ -41,7 +41,7 @@ what was forgotten, what was done badly, what remains.
 
 ## b) PARTIALLY DONE
 
-1. **Phantom-rule PREVENTION layer** — I fixed the instances and documented
+~~1. **Phantom-rule PREVENTION layer** — I fixed the instances and documented~~ done 2026-08-27 evening — `signoz-query-lint` flake check shipped (4 trap classes, mutation-tested; see 17-25/18-58)
    the meta-limitation (`system_signoz_alert_rules_healthy` only counts rules,
    structurally cannot catch dead queries), but built NO mechanical guard
    (no `signoz-query-lint` flake check, no post-deploy rule-state diff). The
@@ -49,22 +49,22 @@ what was forgotten, what was done badly, what remains.
 2. **Wedge-rule fragility** — the `service_name`-selector dependency is
    documented in a rule comment only; no code guard, no TODO_LIST entry, no
    note in the dnsblockd module where an upstream bump could silently break it.
-3. **dnsblockd root cause** — the wedge healed before a SIGQUIT goroutine
+~~3. **dnsblockd root cause** — the wedge healed before a SIGQUIT goroutine~~ done 2026-08-27 — `scripts/dnsblockd-goroutine-dump.sh` runbook + `GOTRACEBACK=all` deployed-unit-verified
    dump could be taken; AGENTS.md carries the forensic note but there is no
    prepared dump runbook, so the next wedge may again be restarted "blind".
 
 ## c) NOT STARTED (noticed this session, deliberately deferred)
 
-1. `signoz-query-lint` eval-time check (blocklist `up{job=`, zero-series
+~~1. `signoz-query-lint` eval-time check (blocklist `up{job=`, zero-series~~ done 2026-08-27 evening — `signoz-query-lint` flake check shipped (4 trap classes, mutation-tested; see 17-25/18-58)
    metric names, `metric_sum`-style suffix queries).
-2. post-deploy-check assertion that `signoz-provision.service` SUCCEEDED
+~~2. post-deploy-check assertion that `signoz-provision.service` SUCCEEDED~~ done 2026-08-27 (18-58 round) — Result assertion live
    (see d-1 — the current check passed while the unit was failed).
 3. Deploy-window tolerance for `service-health-check` / transient
    "Systemd Service Failed" criticals (fires when the checker catches a
    service mid-restart during deploys).
 4. dnsblockd `service_version` label-churn decision (20+ historical
    fingerprints in ClickHouse; drop via relabeling or accept).
-5. SigNoz mirror of `niri_crash_loop` (Gatus-only today).
+~~5. SigNoz mirror of `niri_crash_loop` (Gatus-only today).~~ left deliberately — Gatus owns all health alerting (repo rule)
 6. Discord-delivery proof for the NEW wedge rule (never fired for real —
    by design nothing should have; route policy created but unproven).
 7. Cosmetic: "Temperature by Card" panel name is now wrong (single max series).

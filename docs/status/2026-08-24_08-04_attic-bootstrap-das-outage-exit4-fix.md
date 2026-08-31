@@ -128,36 +128,36 @@ exit 4 on `atticd-bootstrap.service` (connection refused to 127.0.0.1:8200).
 
 **Physical recovery (blocks everything pool-side):**
 
-1. Reseat DAS USB cable AND enclosure power connector
-2. Power-cycle reboot (~10s off — warm reboot may not re-enumerate; NIC-vanish
+~~1. Reseat DAS USB cable AND enclosure power connector~~ done 2026-08-31 — after the 08-29 fixes (uas preloaded, controllers pinned, letter-rule blocked), the replug enumerated all four targets
+~~2. Power-cycle reboot (~10s off — warm reboot may not re-enumerate; NIC-vanish~~ done — 14:30 boot recovered everything
    precedent)
-3. Re-run `bash scripts/das-link-recovery-check.sh` — expect [1][2][3] green
+~~3. Re-run `bash scripts/das-link-recovery-check.sh` — expect [1][2][3] green~~ done — recovery verified by the 16-29 session (pool by-label, both members, zero device errors)
 4. Re-run it with `sudo` for the full shadow triage ([6])
-5. Verify buildcache self-healed (`buildcache-usb-recovery.service` status)
+~~5. Verify buildcache self-healed (`buildcache-usb-recovery.service` status)~~ done — buildcache attached + serving post-recovery
 6. If the runbook flags ext4 damage on sda1 in either boot: run its printed
    e2fsfsck command, then `systemctl start buildcache-init.service`
 
 **Post-recovery verification (self-healing expected — confirm it):**
-7. `/mnt/pool` mounted, BOTH Toshiba members present; `btrfs device stats`
+~~7. `/mnt/pool` mounted, BOTH Toshiba members present; `btrfs device stats`~~ done 2026-08-31 — all zeros (16-29 verified-live table)
 clean
-8. smartd re-enumerates both MG08 members (`-d sat`)
-9. `atticd-bootstrap` runs green (deploy.sh restart converges it after the
+~~8. smartd re-enumerates both MG08 members (`-d sat`)~~ done — smartd healthy post-recovery (and now by-id on the NVMe side since 08-31)
+~~9. `atticd-bootstrap` runs green (deploy.sh restart converges it after the~~ done — post-deploy 83 PASS / 0 FAIL includes the attic checks
 reboot automatically)
-10. `curl http://127.0.0.1:8200/` answers; `https://cache.home.lan/` 200
-11. immich / paperless / bank-sync services active; their vHosts 200
-12. bank-sync first successful sync lands (WARN today: no successful sync yet)
+~~10. `curl http://127.0.0.1:8200/` answers; `https://cache.home.lan/` 200~~ done — attic checks green in the 08-31 run
+~~11. immich / paperless / bank-sync services active; their vHosts 200~~ done — 83 PASS / 0 FAIL (2026-08-31)
+~~12. bank-sync first successful sync lands (WARN today: no successful sync yet)~~ done — bank-sync checks PASS in the 08-31 run (gap backfill watch remains in TODO_LIST)
 13. `btrfs-verify-pool-backups` green on next daily run
 14. btrbk pool snapshot cycle resumes (23:45) without garbled targets
 
 **Decisions pending (user):**
 15. 11.3 GB NVMe fallback caches: keep while DAS is down vs quarantine/remove
 (gocache 8.5G, gomod 2.3G, gobuild 468M — NOT in the recovery reap list)
-16. Crush Daily 0-sessions on 2026-08-23: investigate vs accept crash-era gap
-17. One-member pool mount (`-o degraded`) if a Toshiba is actually dead —
+~~16. Crush Daily 0-sessions on 2026-08-23: investigate vs accept crash-era gap~~ done — closed benign 2026-08-26 (genuinely zero sessions machine-wide; per-day API query)
+~~17. One-member pool mount (`-o degraded`) if a Toshiba is actually dead —~~ moot — both members healthy on recovery
 never automated, always a user call
 
 **Code hardening (small, bounded):**
-18. Deduplicate the python3 readiness probe in atticd-bootstrap (single
+~~18. Deduplicate the python3 readiness probe in atticd-bootstrap (single~~ done 2026-08-26 — one `atticd_ready()` function; test-attic 9/9 green
 helper, used by loop + post-loop assertion)
 19. VM test case: pool mounted but atticd wedged → bootstrap exits 1 with the
 clear message (covers the loud-fail path I added)

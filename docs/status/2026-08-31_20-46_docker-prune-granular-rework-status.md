@@ -108,7 +108,7 @@ Impact: Critical/High/Medium/Low · Effort: S <30min, M 30min–2h, L >2h
 
 | # | Task | Impact | Effort | Category |
 |---|---|---|---|---|
-| 1 | Commit this session's changes (`scheduled-tasks.nix` + AGENTS.md bullet) as a SEPARATE commit before the parallel sops/crush session's work gets batched | Critical | S | Chore |
+~~| 1 | Commit this session's changes (`scheduled-tasks.nix` + AGENTS.md bullet) as a SEPARATE commit before the parallel sops/crush session's work gets batched | Critical | S | Chore |~~ done — committed (`dd3479e9`, docker prune rework + tmp-cleanup guard + crush sops) |
 | 2 | Deploy (`nix run .#deploy`) so the live unit stops running the broken command | Critical | S | Ops |
 | 3 | Add `/data/docker` usage metric + Gatus check (filesystem df or textfile collector; alert >80%) — the pileup was invisible ~5 months | Critical | M | Feature |
 | 4 | User decision + purge policy for 126 orphan volumes (3.57 GB, 95% reclaimable) — enumerate by name, map to dead compose projects | High | S+user | Cleanup |

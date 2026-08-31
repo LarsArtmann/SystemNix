@@ -77,15 +77,15 @@
 
 **P0 — broken right now:**
 
-1. Wise 403 deep-dive in `/home/lars/projects/bank-sync`: why does the running binary emit `statement.json` requests WITHOUT `type=`? Is the `4c008d90` param actually consumed by the deployed rev? Then fix upstream + flake bump (per house rule: fix bugs upstream, not in SystemNix).
-2. Confirm whether the running bank-sync binary is pre- or post-`c888f497`; restart the service once the fix is confirmed deployed (it has not been restarted in days).
+~~1. Wise 403 deep-dive in `/home/lars/projects/bank-sync`: why does the running binary emit `statement.json` requests WITHOUT `type=`? Is the `4c008d90` param actually consumed by the deployed rev? Then fix upstream + flake bump (per house rule: fix bugs upstream, not in SystemNix).~~ done — root-caused by the 05-10 session (Wise SCA challenge; wise-go v0.6.1 OTT headers); runbook `docs/services/bank-sync-sca.md`
+~~2. Confirm whether the running bank-sync binary is pre- or post-`c888f497`; restart the service once the fix is confirmed deployed (it has not been restarted in days).~~ done — wise-go v0.6.1+ deployed and serving since
 3. Add `startLimitBurst`/`startLimitIntervalSec`/`onFailure` to `bank-sync-storage-dir` (house rule 5; missed this session).
 
 **P1 — verification gaps from this session:**
 4. Make post-deploy Bank-Sync body check log the received body head on failure (converts d-2 class failures into evidence).
-5. Verify Gatus endpoint exists for bank-sync (rule 9); add if missing.
+~~5. Verify Gatus endpoint exists for bank-sync (rule 9); add if missing.~~ done — bank-sync Gatus checks live (metrics incl. `bank_sync_sync_errors_total` referenced by gatus conditions)
 6. ActivityWatch functional smoke: `aw-server` API answers on localhost; watchers re-registered buckets from the pool path.
-7. If the dashboard body FAIL ever recurs: capture body + `systemctl status bank-sync` in the same second (no known cause; service was NOT restarting during the observed failure).
+~~7. If the dashboard body FAIL ever recurs: capture body + `systemctl status bank-sync` in the same second (no known cause; service was NOT restarting during the observed failure).~~ done — no recurrence; bank-sync checks PASS in the 2026-08-31 83/0 run
 
 **P2 — structural:**
 8. Automate the deploy.sh provisioner restart list (nix-generated from a marker attr or naming convention) — pending owner approval.

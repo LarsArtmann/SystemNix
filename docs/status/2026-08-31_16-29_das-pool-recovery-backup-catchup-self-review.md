@@ -68,13 +68,13 @@ Nothing new destroyed this session — but two honest admissions:
 
 ## f) NEXT THINGS (ranked, session-derived)
 
-1. Deploy the fixes: `nix run .#deploy` (or first `sudo mkdir -p /mnt/pool/backups/cv && sudo chmod 755 /mnt/pool/backups/cv` for immediate convergence; optionally `sudo systemctl start cv-backup.service` to prove the path before 03:17).
+~~1. Deploy the fixes: `nix run .#deploy` (or first `sudo mkdir -p /mnt/pool/backups/cv && sudo chmod 755 /mnt/pool/backups/cv` for immediate convergence; optionally `sudo systemctl start cv-backup.service` to prove the path before 03:17).~~ done — deployed 20:04+ (the mkdir shortcut retracted by the addendum: the declarative cv-backup-dir path shipped instead)
 2. Tomorrow morning: confirm `@.20260831T2300` received pool-side, `btrfs-verify-pool-backups` green, `backup_all_healthy 1`, cv healthy.
-3. Observe `btrbk-data` end state (EIO abort / oom-kill / completion) — journal + `btrbk-pool-clean` result (stray `data.20260721T2330` removal).
-4. VM test: cv-backup-dir creates dir after mount; cv-backup does not 226 (extend or mirror `tests/test-attic.nix`).
+~~3. Observe `btrbk-data` end state (EIO abort / oom-kill / completion) — journal + `btrbk-pool-clean` result (stray `data.20260721T2330` removal).~~ done — FAILED ~17:02 (known EIO class); pool-clean removed BOTH incomplete receives (17-22 report)
+~~4. VM test: cv-backup-dir creates dir after mount; cv-backup does not 226 (extend or mirror `tests/test-attic.nix`).~~ done — `tests/test-cv.nix` steps 9-10 GREEN (17-22 report; caught the third DAC bug on first run)
 5. Eval-time audit: ReadWritePaths under `/mnt/pool` ⇒ RequiresMountsFor.
 6. Eval-time/flake lint: backup-related timers must set `Persistent=true`.
-7. TODO_LIST.md entries for items 4–6 + the rest of this list that survives triage.
+~~7. TODO_LIST.md entries for items 4–6 + the rest of this list that survives triage.~~ done — 2026-08-31 docs-health audit
 8. Run pre-commit lints over cv.nix / paperless.nix / deploy.sh edits before/with the next commit.
 9. /data EIO P0 (since Aug 18): schedule the corruption repair decision — every `btrbk-data` run since July has failed pool-side; this is the ONLY backup that never converges.
 10. btrbk-data oom-kill containment (page-cache class, 20.6G peak) — separate from the EIO fix.

@@ -82,10 +82,10 @@
 
 **Deploy-critical (blocks the happy live):**
 
-1. Run `nix run .#deploy` (user) — activates declarative poll_time + starts the pool migration.
-2. Watch `journalctl -u activitywatch-data-to-pool` through copy → verify → symlink cutover (first run of brand-new script; expect the possibility of a fix round).
-3. Verify post-migration: `ls -la ~/.local/share/activitywatch` is a symlink; aw-server journal shows DB path resolving through it; first btrbk snapshot at 23:45 includes `services/activitywatch`.
-4. Verify the runtime toml → store symlink converges on deploy (HM backup file `.backup` appears, poll_time still 300).
+~~1. Run `nix run .#deploy` (user) — activates declarative poll_time + starts the pool migration.~~ done — deployed 2026-08-18/19 (gen 690+)
+~~2. Watch `journalctl -u activitywatch-data-to-pool` through copy → verify → symlink cutover (first run of brand-new script; expect the possibility of a fix round).~~ done — migration completed verified (AGENTS.md: data on pool, self-neutralizing unit)
+~~3. Verify post-migration: `ls -la ~/.local/share/activitywatch` is a symlink; aw-server journal shows DB path resolving through it; first btrbk snapshot at 23:45 includes `services/activitywatch`.~~ done — btrbk-pool snapshotted since (AGENTS.md)
+~~4. Verify the runtime toml → store symlink converges on deploy (HM backup file `.backup` appears, poll_time still 300).~~ done — poll_time 300 live (~1.6MB/day, AGENTS.md)
 
 **Data hygiene:**
 5. VACUUM the 246MB/0-row persistqueue `data.db` before the migration copies it (or accept the 246MB).

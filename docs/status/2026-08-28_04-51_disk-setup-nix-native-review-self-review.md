@@ -32,8 +32,8 @@
 
 ## b) PARTIALLY DONE
 
-1. **The das-link-recovery-check.sh ↔ fstab pair** — script updated, but until the next deploy the LIVE `/etc/fstab` still carries the old by-id path, so the script's drift check fires (by design, loud, with a "deploy first" hint). Resolves on deploy.
-2. **DAS verification of the by-label mount** — label `pool` is triple-documented (AGENTS + mount comments + creation history) but the DAS is electrically dead; `ls /dev/disk/by-label/pool` cannot be checked until physical recovery. Mitigations: nofail, loud failure (pool_mounted=0 → Gatus, btrbk onFailure), rollback path documented. **Residual risk: if the on-disk label were somehow not `pool`, first DAS-return boot fails the mount loudly (no data risk).**
+~~1. **The das-link-recovery-check.sh ↔ fstab pair** — script updated, but until the next deploy the LIVE `/etc/fstab` still carries the old by-id path, so the script's drift check fires (by design, loud, with a "deploy first" hint). Resolves on deploy.~~ done — deployed through the 08-28→31 chain; by-label mount live-proven on the recovery boot
+~~2. **DAS verification of the by-label mount** — label `pool` is triple-documented (AGENTS + mount comments + creation history) but the DAS is electrically dead; `ls /dev/disk/by-label/pool` cannot be checked until physical recovery. Mitigations: nofail, loud failure (pool_mounted=0 → Gatus, btrbk onFailure), rollback path documented. **Residual risk: if the on-disk label were somehow not `pool`, first DAS-return boot fails the mount loudly (no data risk).**~~ done 2026-08-31 — `/dev/disk/by-label/pool` verified live on the recovery boot (both members, zero errors)
 3. **`commit=300` on `/mnt/btrfs-root` semantic review** — judged safe (consistent with `/` and `/data`; btrbk is crash-resilient; btrbk-pool-clean exists for interrupted states), but the 5-min crash window for snapshot create/delete persistence is a judgment call that has NOT been battle-tested on this mount.
 
 ## c) NOT STARTED (deliberate, report-only)
@@ -61,10 +61,10 @@
 
 ## f) Next things (session-derived, ~35; impact-sorted, most are ROADMAP/TODO_LIST fuel)
 
-**Deploy-blocking / immediate:**
+~~**Deploy-blocking / immediate:**~~ 
 
-1. Deploy the tree (by-label pool + udev removal + options) once the sibling session is quiescent.
-2. On DAS physical recovery: verify `/dev/disk/by-label/pool` exists, pool mounts, `das-link-recovery-check.sh` exits clean.
+~~1. Deploy the tree (by-label pool + udev removal + options) once the sibling session is quiescent.~~ done — deployed through the 08-28→31 chain
+~~2. On DAS physical recovery: verify `/dev/disk/by-label/pool` exists, pool mounts, `das-link-recovery-check.sh` exits clean.~~ done 2026-08-31 — by-label mount verified on the recovery boot
 3. Verify the removed spindown rule: pool members must NOT enter standby during idle (check SMART power-on-hours delta / `hdparm -C`).
 
 **Disk-domain quality (from this review):**

@@ -55,20 +55,20 @@ _Outcome: 7 root causes fixed + deployed; 1 regression (flm 1.0.3) diagnosed and
 3. Retry flm 1.0.3: `flm list`/serve validation on 7.2.2; expect 21.6 GB weight re-pull; revert if it still can't enumerate.
 4. Diff 7.2.0→7.2.2 amdxdna driver source before the retry — does the ABI actually change?
 5. File/subscribe to an upstream FastFlowLM issue on XRT 2.25 + kernel 7.2.0 enumeration (verify-before-filing first).
-6. Positive test of wants-docker semantics: stop/start docker, watch manifest/twenty compose units converge.
+~~6. Positive test of wants-docker semantics: stop/start docker, watch manifest/twenty compose units converge.~~ done 2026-08-31 — live positive test (20-30 report §3: postgres healthy in ~17s; dozzle design gap found + documented)
 7. Add mkDockerService VM test (docker blip at boot simulation).
-8. mkDnsGate budget 120s → 180s+ (same class as the OIDC gate fix).
-9. Eval-time assertion: mkOidcGate consumers' TimeoutStartSec ≥ 6min.
+~~8. mkDnsGate budget 120s → 180s+ (same class as the OIDC gate fix).~~ done 2026-08-31 — 180s + eval-enforced floors (`gate-timeout-audit.nix`)
+~~9. Eval-time assertion: mkOidcGate consumers' TimeoutStartSec ≥ 6min.~~ done 2026-08-31 — `gate-timeout-audit.nix` (positive + negative verified)
 10. Pre-deploy-check addition: diffstat of foreign undeployed changes since last generation.
 11. deploy.sh pressure gate: add IO PSI some avg10 ≥ 20% (escape hatch exists).
 12. Restart-policy audit script/check for running containers (RestartPolicy != always).
-13. User-unit failure monitoring (system_health metric + Gatus check for `systemctl --user --failed` output).
-14. Investigate buildcache-init 15/TERM at 16:37:24 (who ordered the stop mid-run).
-15. Re-run post-deploy-check for a clean on-record summary.
+~~13. User-unit failure monitoring (system_health metric + Gatus check for `systemctl --user --failed` output).~~ done 2026-08-31 — `system_user_units_failed{user}` + "User Unit Failures" Gatus check (20-30 report)
+~~14. Investigate buildcache-init 15/TERM at 16:37:24 (who ordered the stop mid-run).~~ done — classified BENIGN (coldplug job replacement; 20-30 report §5)
+~~15. Re-run post-deploy-check for a clean on-record summary.~~ done — 83 PASS / 0 FAIL (2026-08-31)
 16. Verify Dozzle v10 default tail size in docs (confirm dropping DOZZLE_TAILSIZE is a true no-op).
 17. smart-audio: bump RestartSec 5s → 30s (exhausted-120s-wait failure mode politeness).
 18. smart-audio DP-2 cross-output test when DP-2 is connected (still untested path).
-19. Review other session's shipped changes line-by-line (cv.nix, system-health.nix, btrfs-health.nix, guard Zone 4, deploy.sh).
+~~19. Review other session's shipped changes line-by-line (cv.nix, system-health.nix, btrfs-health.nix, guard Zone 4, deploy.sh).~~ done 2026-08-31 — 20-30 report §6 line-review: sound, VM-tested; one factual error corrected
 20. BTRFS chunk health P0: root unalloc ~6.4 GiB CRITICAL — schedule balance when IO settles.
 21. Shadow-dir cleanup under /mnt/pool, /data, /var/lib/clickhouse ("mount over not empty").
 22. flm smoke timeout vs Zone-4 stretched cold loads (27–43 min under contention) — smoke will fail under high PSI; add a PSI-skip like the balance Guard 0.
@@ -80,7 +80,7 @@ _Outcome: 7 root causes fixed + deployed; 1 regression (flm 1.0.3) diagnosed and
 28. dbus duplicate-name spam reduction (xdg portal service dedup) — cosmetic.
 29. blueman: disable GameControllerWakelock plugin (X11-only warning every boot).
 30. quickshell UAF: track upstream fix / plan upgrade.
-31. Update TODO_LIST.md with this session's follow-ups.
+~~31. Update TODO_LIST.md with this session's follow-ups.~~ done — 2026-08-31 docs-health audit
 32. Add "review foreign undeployed tree changes before deploying" to AGENTS.md Critical Rules (if policy approved).
 33. Gatus/dashboard check for "compose unit inactive while its containers run" split-brain state (manifest this boot).
 34. docker containerd boot timeout: consider ioTier or longer wait for docker.service under boot storms.

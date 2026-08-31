@@ -72,9 +72,9 @@ Nothing destructive went wrong — the target verification held up under challen
 
 **Repo/tooling from this session:**
 19. Write `scripts/wipe-external-disk.sh` runbook (see e.2).
-20. Add the "by-id for destructive ops" rule to AGENTS.md Critical Rules or the wipe script docstring (currently only implied by the udev lesson).
-21. Commit/settle the AGENTS.md front-port edit (daemon batches it; verify wording survived).
-22. The USB NVMe enclosure (RTL9210B) is now a proven 10 Gbps external NVMe dock — worth keeping noted in AGENTS.md hardware inventory for future disk surgery (it already earned its mention via the TRIM caveat).
+~~20. Add the "by-id for destructive ops" rule to AGENTS.md Critical Rules or the wipe script docstring (currently only implied by the udev lesson).~~ done — AGENTS.md carries the never-match/by-id doctrine (udev-block-letter-audit enforces the class)
+~~21. Commit/settle the AGENTS.md front-port edit (daemon batches it; verify wording survived).~~ done — settled in the daemon batches
+~~22. The USB NVMe enclosure (RTL9210B) is now a proven 10 Gbps external NVMe dock — worth keeping noted in AGENTS.md hardware inventory for future disk surgery (it already earned its mention via the TRIM caveat).~~ done — AGENTS.md 2026-08-30 front-USB4-C bullet records the RTL9210B proof + TRIM caveat
 
 **Out-of-scope-but-noticed (one line each, NOT researched further per instructions):**
 23. DAS still fully offline (no pool, no buildcache disks attached) — recovery procedure per AGENTS.md root-cause section (USB cable VBUS + enclosure power, 60s+, replug front USB-C preferred) still pending a user run; pool backups/monitor365-class exposure continues.

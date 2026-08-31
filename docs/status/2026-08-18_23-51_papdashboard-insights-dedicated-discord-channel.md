@@ -53,7 +53,7 @@ Nothing is broken or lost — but one process failure deserves the harsh slot:
 3. When sudo is available: `sops --set` the webhook into `papdashboard.yaml`, delete `papdashboard-discord.yaml`, drop the extra mkSecrets block (fewer files, one papdashboard secret surface).
 4. Ask the concurrent session (or diff yourself) what the gatus-config/paperless/PMA changes were — confirm nothing half-finished shipped in `75537035`.
 5. Investigate the two deploy WARNs noticed in passing: "File Renamer dashboard 0 operations" and "1 error line in quickshell journal".
-6. Decide ZRAM posture: keep 30% + 90% alert (monitor only), raise `memoryPercent`, or add a zram writeback backing device as the storm valve.
+~~6. Decide ZRAM posture: keep 30% + 90% alert (monitor only), raise `memoryPercent`, or add a zram writeback backing device as the storm valve.~~ decided — keep + monitor (ZRAM fill Gatus check live; the guard stack owns the storm valve; zram recompression study stays in TODO_LIST)
 7. Optional: quiet-hours or severity filter for the insights channel so the new channel doesn't just become a second firehose.
 8. Optional: give Discordsync's self-alert webhook (`DISCORDSYNC_WEBHOOK_URL`) its own channel too — it currently shares the RAW alerts channel; raw-channel semantics are now mixed (Gatus + Discordsync self-errors).
 9. Consider a docs note in DEPLOYMENT.md (PapDashboard upstream) that `PAP_DISCORD_WEBHOOK` must be a full URL — the channel-ID confusion cost this session a discovery round.
