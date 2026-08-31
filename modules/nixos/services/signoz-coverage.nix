@@ -233,7 +233,11 @@
           lib.filter builtins.isString scEnv;
       fromServiceConfig = lib.filter (e: lib.hasPrefix "OTEL_EXPORTER_OTLP_ENDPOINT=" e) scList;
     in
-    fromAttrs ++ fromServiceConfig;
+    # An entry with an EMPTY value ("OTEL_EXPORTER_OTLP_ENDPOINT=") is not
+    # wiring — a mkForce "" override must still count as missing.
+    lib.filter (e: builtins.match "OTEL_EXPORTER_OTLP_ENDPOINT=..*" e != null) (
+      fromAttrs ++ fromServiceConfig
+    );
 
   unitHasOtelEnv = unit: (unitOtelEntries unit) != [ ];
 

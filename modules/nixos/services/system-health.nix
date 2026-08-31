@@ -926,7 +926,11 @@ _: {
             echo "# TYPE system_user_manager_reachable gauge"
             echo "# HELP system_user_units_scrape_errors 1 if the user manager should be reachable (/run/user/<uid> exists) but the query failed or timed out (wedge class), 0 otherwise"
             echo "# TYPE system_user_units_scrape_errors gauge"
-            for u in ${lib.concatMapStringsSep " " (u: "'${u}'") cfg.monitoredUserManagers}; do
+            # Unquoted interpolation on purpose: usernames are config-set
+            # [a-z0-9_-] identifiers (no glob/space chars possible), and a
+            # quoted single-user list trips shellcheck SC2041.
+            # shellcheck disable=SC2043  # single-user hosts legitimately iterate once; the list is config-generated
+            for u in ${lib.concatMapStringsSep " " (u: "${u}") cfg.monitoredUserManagers}; do
               user_failed=0
               user_reachable=0
               user_scrape_err=0
