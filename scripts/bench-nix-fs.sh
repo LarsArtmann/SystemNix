@@ -18,7 +18,7 @@ DEVICE="${1:-/dev/nvme0n1}"
 MNT=/mnt/nixfs-bench
 FIO=/nix/store/gpvq80c0ai5df2b8gaqbb4bfmbq8n4nk-fio-3.42/bin/fio
 RESULT=/tmp/nixfs-bench-results.txt
-STORE_SAMPLE=/tmp/nixfs-store-sample.dirs
+STORE_SAMPLE=/tmp/nixfs-store-sample.v2.$(id -u).dirs
 
 [ -x "$FIO" ] || FIO="$(nix build --no-link --print-out-paths --impure --expr 'let f = builtins.getFlake "git+file:///home/lars/projects/SystemNix"; in f.inputs.nixpkgs.legacyPackages.x86_64-linux.fio' 2>/dev/null)/bin/fio"
 [ -x "$FIO" ] || { echo "FAIL: fio missing at $FIO"; exit 1; }
@@ -40,22 +40,23 @@ for b in mkfs.ext4 mkfs.xfs mkfs.btrfs wipefs mount umount rsync find xargs jq; 
   command -v "$b" >/dev/null || { echo "FAIL: $b not on PATH"; exit 1; }
 done
 
-psi() { awk '{printf "PSI io some avg10=%s%", $2}' /proc/pressure/io | sed 's/someavg10=//;s/%//'; }
+psi() { awk 'NR==1{gsub(/.*avg10=/, "", $2); printf "PSI io some avg10=%s%%, load %s", $2,substr($0,0,0)}' /proc/pressure/io; printf "load %s" "$(cut -d' ' -f1-3 /proc/loadavg)"; }
 
-# Fixed real store-path sample (~1.5G), same for every fs
+# Fixed real store-path sample (~1.5G of REAL package directories), same for every fs
 if [ ! -s "$STORE_SAMPLE" ]; then
-  ls /nix/store | shuf -n 60 --random-source=/dev/zero > "$STORE_SAMPLE.tmp"
+  find /nix/store -maxdepth 1 -mindepth 1 -type d | sort > "$STORE_SAMPLE.tmp"
   : > "$STORE_SAMPLE"
   total=0
-  while read -r p; do
-    sz=$(du -sk "/nix/store/$p" 2>/dev/null | cut -f1) || continue
+  while read -r d; do
+    sz=$(du -sk "$d" 2>/dev/null | cut -f1) || continue
     if [ $((total + sz)) -le $((1536 * 1024)) ]; then
-      echo "$p" >> "$STORE_SAMPLE"; total=$((total + sz))
+      basename "$d" >> "$STORE_SAMPLE"; total=$((total + sz))
     fi
   done < "$STORE_SAMPLE.tmp"
   rm -f "$STORE_SAMPLE.tmp"
 fi
-SAMPLE_KB=$(du -sk --files0-from=<(sed 's|^|/nix/store/|' "$STORE_SAMPLE") 2>/dev/null | awk '{s+=$1} END{print s}')
+SAMPLE_KB=$(sed 's|^|/nix/store/|' "$STORE_SAMPLE" | tr '\n' '\0' | du -sk --files0-from=- 2>/dev/null | awk '{s+=$1} END{print s}')
+[ -n "$SAMPLE_KB" ] && [ "$SAMPLE_KB" -gt 0 ] || { echo "FAIL: store sample empty — delete $STORE_SAMPLE and retry"; exit 1; }
 echo "### nix-fs benchmark on $DEVICE — store sample: $(wc -l < "$STORE_SAMPLE") paths, $((SAMPLE_KB / 1024)) MiB apparent" | tee "$RESULT"
 
 setup_fs() {
@@ -85,22 +86,30 @@ fio_test() { # name rw extra...
 
 metadata_test() {
   local t
-  t=$( { cd "$MNT" && time (seq 1 20000 | xargs -P8 -I{} sh -c 'd=$(( $1 / 500 )); mkdir -p m$d; head -c $(( 4096 + ($1 % 32) * 4096 )) /dev/zero > m$d/f$1' _ {} && sync) ; } 2>&1 | awk '/real/ {print $2}')
+  t=$( { time (seq 1 20000 | xargs -P8 -I{} sh -c 'd=$(( $1 / 500 )); mkdir -p "$0/m/$d"; head -c $(( 4096 + ($1 % 32) * 4096 )) /dev/zero > "$0/m/$d/f$1"' "$MNT" {} && sync) ; } 2>&1 | awk '/real/ {print $2}')
   printf '    %-24s %s (create 20k files + sync)\n' "metadata create" "$t"
-  t=$( { cd "$MNT" && time (find m0* -type f -print0 | xargs -P8 -0 cat > /dev/null) ; } 2>&1 | awk '/real/ {print $2}')
-  printf '    %-24s %s (read all)\n' "metadata read" "$t"
-  t=$( { time (rm -rf "$MNT"/m0*) ; } 2>&1 | awk '/real/ {print $2}')
-  printf '    %-24s %s (delete all)\n' "metadata delete" "$t"
+  t=$( { time (find "$MNT/m" -type f -print0 | xargs -P8 -0 cat > /dev/null) ; } 2>&1 | awk '/real/ {print $2}')
+  printf '    %-24s %s (read 20k files)\n' "metadata read" "$t"
+  t=$( { time (rm -rf "$MNT/m" && sync) ; } 2>&1 | awk '/real/ {print $2}')
+  printf '    %-24s %s (delete 20k files)\n' "metadata delete" "$t"
+  [ ! -e "$MNT/m" ] || { echo "FAIL: metadata cleanup incomplete"; exit 1; }
 }
 
 store_copy_test() {
+  local t apparent_kb ondisk_kb label
   mkdir -p "$MNT/store"
-  local t disk_kb
-  t=$( { time (rsync -a --files-from="$STORE_SAMPLE" /nix/store/ "$MNT/store/") ; } 2>&1 | awk '/real/ {print $2}')
-  disk_kb=$(df -k --output=used "$MNT" | tail -1 | tr -d ' ')
-  printf '    %-24s %s (rsync %d MiB) → on-disk: %d MiB (ratio %.2fx)\n' \
-    "real store copy" "$t" $((SAMPLE_KB / 1024)) $((disk_kb / 1024)) \
-    "$(awk -v a="$SAMPLE_KB" -v d="$disk_kb" 'BEGIN{printf "%.2f", a / d}')"
+  t=$( { time (rsync -a --files-from="$STORE_SAMPLE" /nix/store/ "$MNT/store/" && sync) ; } 2>&1 | awk '/real/ {print $2}')
+  apparent_kb=$(du -sk "$MNT/store" | cut -f1)
+  if [ "$1" = btrfs ]; then
+    ondisk_kb=$(btrfs filesystem du -s --raw "$MNT/store" 2>/dev/null | awk 'END{print int($1/1024)}')
+    label="btrfs-fdu"
+  else
+    ondisk_kb=$(du -sk "$MNT/store" | cut -f1)
+    label="du"
+  fi
+  printf '    %-24s %s (rsync, apparent %s MiB) → on-disk %s: %s MiB (compression %.2fx)\n' \
+    "real store copy" "$t" "$((apparent_kb / 1024))" "$label" "$((ondisk_kb / 1024))" \
+    "$(awk -v a="$apparent_kb" -v d="$ondisk_kb" 'BEGIN{printf "%.2f", (a > 0 && d > 0) ? a / d : 0}')"
   rm -rf "$MNT/store"
 }
 
@@ -114,7 +123,7 @@ for fs in ext4 xfs btrfs; do
     fio_test rw-qd1  randwrite --iodepth=1
     fio_test fsync   randwrite --iodepth=1 --fsync=1
     metadata_test
-    store_copy_test
+    store_copy_test "$fs"
   } | tee -a "$RESULT"
   teardown_fs
 done

@@ -34,9 +34,13 @@
         runtimeInputs = [ pkgs.curl ];
         text = ''
           echo "discordsync: waiting for DNS resolution..."
-          curl -sf --max-time 5 --retry 60 --retry-delay 2 --retry-all-errors \
+          # 150 retries × 2s = 300s budget: dnsblockd needs ~2min at boot to
+          # load its blocklist mapping (2026-08-31 boot class). The unit's
+          # TimeoutStartSec (6min) MUST stay above this budget —
+          # gate-timeout-audit.nix enforces it at eval time.
+          curl -sf --max-time 5 --retry 150 --retry-delay 2 --retry-all-errors \
             -o /dev/null "https://discord.com" \
-            || { echo "discordsync: DNS/network not ready after 120s — dnsblockd may not be initialized" >&2; exit 1; }
+            || { echo "discordsync: DNS/network not ready after 300s — dnsblockd may not be initialized" >&2; exit 1; }
           echo "discordsync: DNS resolution ready"
         '';
       };
@@ -261,7 +265,7 @@
               ExecStartPre = lib.mkForce [
                 "+${lib.getExe waitDnsReady}"
               ];
-              TimeoutStartSec = "2min";
+              TimeoutStartSec = "6min";
             }
             (harden {
               # Backfill bursts + turso-sync need more than upstream's 512M.

@@ -240,7 +240,9 @@ _: {
               (serviceDefaults { })
               {
                 ExecStartPre = lib.mkBefore [ ("+" + lib.getExe ensurePasswordFile) ];
-                TimeoutStartSec = "3min";
+                # DNS gate budget is 180s; ceiling must exceed it
+                # (gate-timeout-audit floor: 4min).
+                TimeoutStartSec = "4min";
               }
               { ExecStartPre = forgejoMainDnsGate.serviceConfig.ExecStartPre; }
             ];
