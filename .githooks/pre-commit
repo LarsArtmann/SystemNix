@@ -57,7 +57,7 @@ fi
 # research docs — the link check belongs IN the move commit, not in a later
 # self-review. Frozen snapshots (archived status reports, planning docs) may
 # keep old paths.
-MOVED_MD=$(git diff --cached --name-status --diff-filter=DR -- '*.md' | awk '/^R/ { print $3 } /^D/ { print $2 }')
+MOVED_MD=$(git diff --cached --name-status --diff-filter=DR -- '*.md' | awk '/^R/ { print $2 } /^D/ { print $2 }')
 if [ -n "$MOVED_MD" ]; then
     dangling=""
     while IFS= read -r old; do

@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-18 22:16 (Tuesday)
 **Author:** Crush AI Agent
-**Session scope:** Continuation of the docs-health AUDIT pass over all `docs/status/2026-08-1*` files, resumed from `docs/planning/2026-08-18_20-58_docs-health-audit-continuation-plan.md` at Step E (HARVEST). Everything below is THIS session's work only. No code touched (markdown-only pass).
+**Session scope:** Continuation of the docs-health AUDIT pass over all `docs/status/2026-08-1*` files, resumed from `docs/planning/archived/2026-08-18_20-58_docs-health-audit-continuation-plan.md` at Step E (HARVEST). Everything below is THIS session's work only. No code touched (markdown-only pass).
 
 ---
 
@@ -72,7 +72,7 @@
 
 1. Verify `@.20260814T2300` Received UUID: `sudo btrfs subvolume show /mnt/pool/backups/root/@.20260814T2300` (user-run; confirms or refutes my "re-received cleanly" claim)
 2. Read last night's `btrfs-verify-pool-backups` journal (same validation, second source)
-3. Harvest 17-42 §F 6/9/49 → TODO items (visionreviewd/hermes `rocmEnv` audit; runtime llama-server verify)
+~~3. Harvest 17-42 §F 6/9/49 → TODO items (visionreviewd/hermes `rocmEnv` audit; runtime llama-server verify)~~ done — both live in TODO_LIST P3 (visionreviewd rocmEnv; hermes ROCm verify)
 4. Scope-correct 15-03 item 30 marker (append "; 13-33/13-38/14-51 annotated + kept live for open items")
 5. Verify 22-55 item 12 marker (TODO reconciliation covered it? adjust wording if not)
 
@@ -83,11 +83,11 @@
 9. Decide the 162 Crush-authored commits: rewrite or accept attribution
 
 **Harvested TODO execution (this pass queued them; next sessions execute):**
-10. papdashboard `journalUnits` → `dnsblockd.service` + drop pointless `TimeoutStartSec` (2-min fix, production bug)
-11. PapDashboard pre/post-deploy smoke (port 8088, `/api/health`, 401-probe)
-12. `crm.home.lan` enable-gated external check
+~~10. papdashboard `journalUnits` → `dnsblockd.service` + drop pointless `TimeoutStartSec` (2-min fix, production bug)~~ done 2026-08-18 (AGENTS.md dnsblockd evidence fix)
+~~11. PapDashboard pre/post-deploy smoke (port 8088, `/api/health`, 401-probe)~~ done — full post-deploy section live (verified 2026-08-31)
+~~12. `crm.home.lan` enable-gated external check~~ done 2026-08-22 (External vHost section)
 13. sops manifest check-mode in pre-deploy-check
-14. Gatus HTTP-method-uppercase lint + synthetic ingest probe (+ the ingest-success-count metric — 20-52 §f.10, only half-harvested)
+~~14. Gatus HTTP-method-uppercase lint + synthetic ingest probe (+ the ingest-success-count metric — 20-52 §f.10, only half-harvested)~~ half-done — method-uppercase lint shipped 2026-08-26 (gatus-pattern-lint 4th trap); probe + metric remain TODO_LIST
 15. FastFlowLM smoke model-name assertion + idle-check unit test
 16. PMA commit-failure + journald-staleness Gatus checks
 17. OTel instrumentation for overview/PMA + phantom-telemetry tripwire

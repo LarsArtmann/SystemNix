@@ -1,6 +1,6 @@
 # Hermes Projects Hardening — Plan Execution Status
 
-**Date:** 2026-08-20 10:44 CEST · **Session:** executed `docs/planning/2026-08-20_09-18_hermes-projects-hardening-pareto-plan.md` · **Machine:** evo-x2 · **Worktree:** clean @ `04dac7b6`
+**Date:** 2026-08-20 10:44 CEST · **Session:** executed `docs/planning/archived/2026-08-20_09-18_hermes-projects-hardening-pareto-plan.md` · **Machine:** evo-x2 · **Worktree:** clean @ `04dac7b6`
 
 ---
 

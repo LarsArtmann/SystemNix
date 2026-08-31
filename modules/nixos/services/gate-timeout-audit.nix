@@ -89,7 +89,7 @@
       gateAudits =
         let
           gateUnits = lib.filterAttrs (
-            name: svc: hasWaitSuffix svc "-wait-oidc" || hasWaitSuffix svc "-wait-dns"
+            _name: svc: hasWaitSuffix svc "-wait-oidc" || hasWaitSuffix svc "-wait-dns"
           ) config.systemd.services;
         in
         lib.mapAttrsToList (
