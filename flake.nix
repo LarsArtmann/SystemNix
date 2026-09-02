@@ -1215,19 +1215,41 @@
                   meta.description = "Pre-deploy validation: catches boot-breaking issues before switch";
                 };
               post-deploy-check =
-                mkApp "post-deploy-check" "Post-deploy smoke test: verifies services are functional, not just alive"
-                  [
-                    pkgs.coreutils # date, wc, head, tr, sleep, id
-                    pkgs.curl
-                    pkgs.fish
-                    pkgs.glibc # getent
-                    pkgs.gnugrep
-                    pkgs.jq
-                    pkgs.nix
-                    pkgs.procps # pgrep
-                    pkgs.systemd # systemctl, journalctl
-                  ]
-                  ./scripts/post-deploy-check.sh;
+                let
+                  # Same sibling-lib staging as pre-deploy-check: the script
+                  # sources scripts/lib/pressure-report.sh relative to its own
+                  # path, so package the lib next to the binary (2026-09-02
+                  # 21:57 deploy: the bare mkApp app failed its own build on
+                  # shellcheck SC1091/SC2016 and the smoke never ran).
+                  inner = pkgs.writeShellApplication {
+                    name = "post-deploy-check";
+                    runtimeInputs = [
+                      pkgs.coreutils # date, wc, head, tr, sleep, id
+                      pkgs.curl
+                      pkgs.fish
+                      pkgs.gawk # lib/pressure-report.sh PSI/zram arithmetic
+                      pkgs.glibc # getent
+                      pkgs.gnugrep
+                      pkgs.jq
+                      pkgs.nix
+                      pkgs.procps # pgrep
+                      pkgs.systemd # systemctl, journalctl
+                    ];
+                    text = builtins.readFile ./scripts/post-deploy-check.sh;
+                  };
+                in
+                {
+                  type = "app";
+                  program = "${
+                    pkgs.runCommand "post-deploy-check" { } ''
+                      mkdir -p $out/bin/lib
+                      cp ${inner}/bin/post-deploy-check $out/bin/post-deploy-check
+                      cp ${./scripts/lib/pressure-report.sh} $out/bin/lib/pressure-report.sh
+                      chmod +x $out/bin/post-deploy-check
+                    ''
+                  }/bin/post-deploy-check";
+                  meta.description = "Post-deploy smoke test: verifies services are functional, not just alive";
+                };
               btrfs-inventory = mkApp "btrfs-inventory" "List all BTRFS subvolumes, snapshots, and mount points" [
                 pkgs.btrfs-progs
                 pkgs.util-linux

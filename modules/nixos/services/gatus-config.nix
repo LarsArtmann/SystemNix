@@ -1296,12 +1296,13 @@ _: {
                   # the desktop overlay/notification path is dead. The
                   # overlay self-expires after 2 min without bridge
                   # refreshes, so a dead bridge cannot stick an overlay.
-                  # Tiered since 2026-08-31 (tiering hardened 2026-09-02:
-                  # NO memory condition may fullscreen-page — page = infra
-                  # hardware criticals ONLY): notify-tier conditions fire
-                  # this Discord alert but do NOT fullscreen-overlay by
-                  # design — sev1_bridge_page_alerts_active distinguishes
-                  # them at the metrics level.
+                  # Tiered since 2026-08-31 (hardened 2026-09-02: NO memory
+                  # condition may overlay; page is RESERVED with no current
+                  # emitter): warn-tier conditions (infra hardware
+                  # criticals) show a static yellow banner ONCE and fire
+                  # this Discord alert; notify-tier (memory/meta) fire the
+                  # alert only. sev1_bridge_page_alerts_active distinguishes
+                  # tiers at the metrics level.
                   url = "http://localhost:${toString nodePort}/metrics";
                   interval = "2m";
                   conditions = [
@@ -1309,7 +1310,7 @@ _: {
                     "[BODY] == pat(*\nsev1_bridge_runs_total *)"
                     "[BODY] != pat(*sev1_bridge_alerts_active [1-9]\n*)"
                   ];
-                  alerts = discordAlert "SEV1 escalation bridge problem: either the bridge died (overlay + desktop notifications for criticals are DOWN — Discord still works) or SEV1 conditions are ACTIVE. Page-tier (infra hardware criticals: DAS link, LAN NIC, btrfs critical ONLY) = a fullscreen overlay should be on the desktop right now. Notify-tier (ALL memory conditions, SYSTEM MONITORING STALE, zram critical) = notification + this Discord alert only, NO overlay BY DESIGN (2026-09-02: high memory must never flash the screen). Check: journalctl -u sev1-bridge -n 30, cat /run/systemnix/sev1/alert (line 4 = severity).";
+                  alerts = discordAlert "SEV1 escalation bridge problem: either the bridge died (desktop escalation for criticals is DOWN — Discord still works) or SEV1 conditions are ACTIVE. Warn-tier (infra hardware criticals: DAS link, LAN NIC, btrfs critical) = a static yellow banner shows ONCE on the desktop + this Discord alert. Notify-tier (ALL memory conditions, SYSTEM MONITORING STALE, zram critical) = notification + this Discord alert only, NO overlay BY DESIGN (2026-09-02: high memory must never flash the screen). Check: journalctl -u sev1-bridge -n 30, cat /run/systemnix/sev1/alert (line 4 = severity).";
                 })
                 (mkHttpCheck {
                   name = "Hermes Agent Gateway";
