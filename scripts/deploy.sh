@@ -8,8 +8,26 @@ set -euo pipefail
 # by the redirect — they read their own pipes.
 DEPLOY_LOG_DIR=/var/log/systemnix-deploys
 sudo mkdir -p "$DEPLOY_LOG_DIR"
-exec > >(sudo tee -a "$DEPLOY_LOG_DIR/$(date +%Y-%m-%d_%H-%M-%S).log") 2>&1
+DEPLOY_LOG_FILE="$DEPLOY_LOG_DIR/$(date +%Y-%m-%d_%H-%M-%S).log"
+exec > >(sudo tee -a "$DEPLOY_LOG_FILE") 2>&1
 sudo find "$DEPLOY_LOG_DIR" -type f -mtime +30 -delete 2>/dev/null || true
+
+# Exit-path recording (2026-09-02, deploy round 7 died silently and was never
+# root-caused): the tee above persists OUTPUT but not the OUTCOME — a log
+# ending mid-line is indistinguishable from a successful one. On EVERY exit
+# path append a structured final line to the log AND the systemd journal
+# (query: journalctl -t systemnix-deploy), plus a 30-line context tail so a
+# post-mortem never depends on the terminal that died. Best-effort: the trap
+# itself must never mask the original exit code.
+deploy_exit_record() {
+  local code=$?
+  local summary="deploy exited code=$code at $(date '+%F %T') after ${SECONDS}s (log: $DEPLOY_LOG_FILE)"
+  echo "$summary" | sudo tee -a "$DEPLOY_LOG_FILE" >/dev/null 2>&1 || true
+  printf '%s\n' "$summary" | timeout 10 sudo systemd-cat -t systemnix-deploy 2>/dev/null || true
+  tail -n 30 "$DEPLOY_LOG_FILE" 2>/dev/null | timeout 10 sudo systemd-cat -t systemnix-deploy-tail 2>/dev/null || true
+  return "$code"
+}
+trap deploy_exit_record EXIT
 
 echo "=== Pre-Deploy Validation ==="
 if nix run .#pre-deploy-check; then

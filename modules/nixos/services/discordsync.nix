@@ -253,12 +253,13 @@
           serviceConfig = lib.mkMerge [
             {
               # mkForce replaces the upstream ExecStartPre entirely.
-              # The upstream module ships a broken chattr: "chattr -R +C ... 2>/dev/null || true"
-              # — systemd ExecStartPre is NOT shell, so "2>/dev/null" and "|| true" are
-              # passed as literal file arguments to chattr. Also lacks "+" prefix so runs
-              # as the service user → "Operation not permitted". BTRFS +C (nodatacow) is
-              # nice-to-have for SQLite but not required — DiscordSync uses WAL mode.
-              # Fix upstream: wrap in pkgs.writeShellApplication or use ExecStartPre=+/bin/sh -c '...'.
+              # Upstream's chattr ExecStartPre was repaired 2026-08-05
+              # (0e72e7b1: writeShellApplication wrapper + "+" privileged prefix),
+              # so the drop below is NO LONGER about the chattr bug — the
+              # remaining reason is replacing upstream's ExecStartPre chain with
+              # the DNS-gate only (db-heal lives in discordsync-db-heal.service;
+              # NOCOW is nice-to-have for SQLite, WAL mode already bounds the
+              # write-amplification damage).
               #
               # DB heal extracted to discordsync-db-heal.service oneshot (see above).
               # Only DNS wait remains in ExecStartPre — fast (~2-10s).

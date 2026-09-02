@@ -139,6 +139,12 @@ report_warn() {
   WARN=$((WARN + 1))
 }
 
+# Shared pressure-reporting logic (fixture-tested by
+# scripts/test-post-deploy-pressure.sh + the post-deploy-pressure-selftest
+# flake check — the WARN/PASS semantics must never call a storm healthy).
+# shellcheck source=scripts/lib/pressure-report.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/pressure-report.sh"
+
 echo "=== Post-Deploy Smoke Test ==="
 echo "Domain: $DOMAIN"
 echo ""
@@ -1195,20 +1201,13 @@ else
   report_fail "Desktop — polkit render:${_polkit_problems} auth dialogs may fail to open (check qt.platformTheme/style in home.nix vs deployed Qt plugins)"
 fi
 
-# System: I/O pressure (PSI) — catches the exact condition that caused
-# Helium 3 FPS + WDT crashes during nix build storms on QLC NAND.
-# avg10 > 80% means I/O is saturated for the last 10 seconds.
-if [ -f /proc/pressure/io ]; then
-  _io_avg10=$(awk '/^some/{print $2}' /proc/pressure/io | cut -d= -f2)
-  _io_warn=$(awk "BEGIN { exit !(${_io_avg10:-0} > 80) }" && echo 1 || echo 0)
-  if [ "$_io_warn" = "1" ]; then
-    report_warn "System — I/O pressure avg10=${_io_avg10}% (>80% threshold — BFQ tiers may need attention)"
-  else
-    report_pass "System — I/O pressure avg10=${_io_avg10}% (healthy)"
-  fi
-else
-  report_skip "System — /proc/pressure/io not available"
-fi
+# System pressure (PSI I/O + memory + zram combined zone) — shared,
+# fixture-tested logic (scripts/lib/pressure-report.sh +
+# scripts/test-post-deploy-pressure.sh). 2026-09-02 T07: the old inline
+# check printed PASS "healthy" while memory PSI avg10 ran 48-77% (a live
+# storm) — semantics now mirror the deploy.sh blocking gate and can never
+# call a storm healthy.
+systemnix_report_pressure
 
 # --- §12 Mail Relay ---
 echo ""

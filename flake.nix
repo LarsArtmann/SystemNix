@@ -891,6 +891,25 @@
                 touch $out
               '';
 
+              # The pre-deploy §10 metric-absence classifier decides whether a
+              # deploy is BLOCKED — twice on 2026-09-02 the downgrade branches
+              # (node_textfile_scrape_error, forgejo scan-failed) had no tests
+              # and blocked the deploy carrying their own fix. This check runs
+              # the fixture selftest THROUGH nix so the tested artifact is the
+              # same file pre-deploy-check.sh sources (never trust a script
+              # test that greps its own copy).
+              pre-deploy-metrics-selftest = pkgs.runCommand "pre-deploy-metrics-selftest" { } ''
+                # Stage the repo layout the test script sources from
+                # (it resolves scripts/lib/ relative to its own path — a bare
+                # store file has no sibling lib).
+                scratch=$(mktemp -d)
+                mkdir -p "$scratch/scripts/lib"
+                cp ${./scripts/test-pre-deploy-metrics.sh} "$scratch/scripts/test-pre-deploy-metrics.sh"
+                cp ${./scripts/lib/metrics-gate.sh} "$scratch/scripts/lib/metrics-gate.sh"
+                ${pkgs.bash}/bin/bash "$scratch/scripts/test-pre-deploy-metrics.sh"
+                touch $out
+              '';
+
               # Auto-discovered modules under modules/nixos/{services,desktop}/
               # are flake-parts wrappers: filename -> flake.nixosModules.<filename>.
               # A bare NixOS module evaluates its let-bindings in the WRONG

@@ -20,6 +20,12 @@ warn() {
   WARN=$((WARN + 1))
 }
 
+# Shared §10 classifier (fixture-tested by scripts/test-pre-deploy-metrics.sh
+# and the pre-deploy-metrics-selftest flake check — the WARN-vs-FAIL cascade
+# decides deploy blocks, so it must not drift untested).
+# shellcheck source=scripts/lib/metrics-gate.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/metrics-gate.sh"
+
 echo "=== Pre-Deploy Validation ==="
 echo ""
 
@@ -356,6 +362,14 @@ if [ -s "$METRICS_FILE" ] && grep -qE '^system_forgejo_mirror_scrape_errors 1' "
   FORGEJO_SCAN_FAILED=true
 fi
 
+# Same doctrine for the pocket-id SQLITE_BUSY scan (2026-09-02): the busy
+# events/over-threshold pair is emitted ONLY on scan success; on failure
+# system_pocket_id_busy_scrape_errors=1 and the pair is absent BY DESIGN.
+POCKET_ID_SCAN_FAILED=false
+if [ -s "$METRICS_FILE" ] && grep -qE '^system_pocket_id_busy_scrape_errors 1' "$METRICS_FILE"; then
+  POCKET_ID_SCAN_FAILED=true
+fi
+
 if [ -s "$METRICS_FILE" ]; then
   MISSING_METRICS=0
   # Metrics not yet emitted by the RUNNING system (pre-deploy). These metrics
@@ -431,22 +445,7 @@ if [ -s "$METRICS_FILE" ]; then
   # until the switch lands.
   KNOWN_NEW_METRICS="system_pma_commit_scrape_errors system_pma_commit_failures_over_threshold system_pma_commit_fallbacks_over_threshold niri_aw_watcher_attached niri_aw_watcher_late system_pocket_id_busy_over_threshold system_pocket_id_busy_scrape_errors"
   for metric in $(extract_gatus_metrics); do
-    if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
-      pass "Metric '$metric' present"
-    elif echo "$KNOWN_NEW_METRICS" | grep -qw "$metric"; then
-      warn "Metric '$metric' absent (known new metric in this deploy — will appear post-switch)"
-    elif echo "$MONITOR365_METRICS" | grep -qw "$metric" && [ "$MONITOR365_UP" = false ]; then
-      warn "Metric '$metric' absent (Monitor365 endpoint down — not a phantom metric)"
-    elif echo "$DISCORDSYNC_METRICS" | grep -qw "$metric" && [ "$DISCORDSYNC_API_UP" = false ]; then
-      warn "Metric '$metric' absent (discordsync endpoint down/stopped — not a phantom metric)"
-    elif [ "$FORGEJO_SCAN_FAILED" = true ]; then
-      warn "Metric '$metric' absent — running system reports forgejo mirror journal scan FAILED (system_forgejo_mirror_scrape_errors=1): fail-closed absence, infrastructure signal"
-    elif [ "$TEXTFILE_SCRAPE_ERROR" = true ]; then
-      warn "Metric '$metric' absent — node exporter textfile collector broken on the RUNNING system (see node_textfile_scrape_error above): infrastructure signal, deploy the collector fix"
-    else
-      fail "Metric '$metric' ABSENT — Gatus health check will be permanently RED (phantom metric)"
-      MISSING_METRICS=$((MISSING_METRICS + 1))
-    fi
+    metrics_gate_classify_absence "$metric" || MISSING_METRICS=$((MISSING_METRICS + 1))
   done
   if [ "$MISSING_METRICS" -gt 0 ]; then
     warn "$MISSING_METRICS phantom metric/metrics — check if the emitting service is running or if the metric name changed"
