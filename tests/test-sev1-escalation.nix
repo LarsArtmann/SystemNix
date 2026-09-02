@@ -62,6 +62,36 @@
         # HELP memory_emergency_guard_last_trip_recent 1 if an emergency stop happened within the last 30 min, 0 otherwise
         # TYPE memory_emergency_guard_last_trip_recent gauge
         memory_emergency_guard_last_trip_recent 1
+        # HELP memory_emergency_guard_sacrifice_socket_active 1 when any sacrifice socket is accepting, 0 when sacrificed
+        # TYPE memory_emergency_guard_sacrifice_socket_active gauge
+        memory_emergency_guard_sacrifice_socket_active 0
+      '';
+      # 2026-09-02: the trip RESOLVED — the guard restored the sockets (the
+      # machine recovered to 53% avail / 0.26% PSI while zram stayed at 97%).
+      # last_trip_recent is still 1 inside its 30-min window, but the
+      # EMERGENCY is over: the bridge must NOT keep fullscreen-paging.
+      guardPromTripResolved = ''
+        # HELP memory_emergency_guard_last_trip_recent 1 if an emergency stop happened within the last 30 min, 0 otherwise
+        # TYPE memory_emergency_guard_last_trip_recent gauge
+        memory_emergency_guard_last_trip_recent 1
+        # HELP memory_emergency_guard_sacrifice_socket_active 1 when any sacrifice socket is accepting, 0 when sacrificed
+        # TYPE memory_emergency_guard_sacrifice_socket_active gauge
+        memory_emergency_guard_sacrifice_socket_active 1
+      '';
+      # ZRAM SWAP CRITICAL fixtures (combined-gate): fill over threshold +
+      # degraded margins must notify; the LIVE 2026-09-02 steady state
+      # (97% fill, 53% avail, 0.26% PSI) must stay silent.
+      guardPromZramMarginal = ''
+        memory_emergency_guard_last_trip_recent 0
+        memory_emergency_guard_sacrifice_socket_active 1
+        memory_emergency_guard_psi_some_avg10_percent 2.00
+        memory_emergency_guard_avail_percent 12.00
+      '';
+      guardPromZramSteady = ''
+        memory_emergency_guard_last_trip_recent 0
+        memory_emergency_guard_sacrifice_socket_active 1
+        memory_emergency_guard_psi_some_avg10_percent 0.26
+        memory_emergency_guard_avail_percent 53.00
       '';
       # 2026-08-31 16:34 freeze signature: sustained stall, guard NOT (yet)
       # tripped, zram/avail invisible to this condition.
@@ -113,6 +143,20 @@
         # HELP system_zram_fill_over_threshold 1 if zram fill exceeds threshold
         # TYPE system_zram_fill_over_threshold gauge
         system_zram_fill_over_threshold 0
+      '';
+      healthPromZram = ''
+        # HELP system_das_link_present 1 if the DAS USB link exists
+        # TYPE system_das_link_present gauge
+        system_das_link_present 1
+        # HELP system_lan_nic_present 1 if the primary LAN NIC exists
+        # TYPE system_lan_nic_present gauge
+        system_lan_nic_present 1
+        # HELP btrfs_health_critical 1 if btrfs is critical
+        # TYPE btrfs_health_critical gauge
+        btrfs_health_critical 0
+        # HELP system_zram_fill_over_threshold 1 if zram fill exceeds threshold
+        # TYPE system_zram_fill_over_threshold gauge
+        system_zram_fill_over_threshold 1
       '';
 
       # Single-line blobs with literal \n escapes for the Python heredocs.
@@ -307,6 +351,51 @@
           "pre-shutdown-stale metrics"
       )
       assert "MONITORING STALE" not in out, "boot grace must suppress STALE too"
+      machine.fail("test -f /tmp/sev1/alert")
+
+      # --- 9. Trip page lifecycle (2026-09-02): the page tracks the
+      #         EMERGENCY, not the 30-min last_trip_recent window.
+      # 9a. Trip resolved (sockets restored, machine healthy): NO page.
+      machine.succeed("${writeProms \"resolved\" guardPromTripResolved healthPromHealthy}")
+      out = run_bridge("resolved")
+      assert "GUARD TRIPPED" not in out, (
+          "a resolved trip (sacrifice restored at 53% avail) must not keep "
+          "fullscreen-paging — the 2026-09-02 30-min-overlay spam class"
+      )
+      machine.fail("test -f /tmp/sev1/alert")
+
+      # 9b. Trip ACTIVE (sacrifice still down) pages even 30+ min later if
+      #     the sockets never came back — the page IS "flm is unreachable".
+      machine.succeed("${writeProms \"tripactive\" guardPromTripped healthPromHealthy}")
+      out = run_bridge("tripactive")
+      assert "MEMORY EMERGENCY GUARD TRIPPED" in out
+      alert = machine.succeed("cat /tmp/sev1/alert")
+      assert alert.strip().split("\n")[3] == "page"
+
+      # --- 10. ZRAM SWAP CRITICAL is NOTIFY tier (2026-09-02 user
+      #         decision): combined-gated, but the fullscreen overlay is
+      #         the guard trip's job — a second overlay for the same cliff
+      #         was pure alert spam.
+      machine.succeed("${writeProms \"zram\" guardPromZramMarginal healthPromZram}")
+      out = run_bridge("zram")
+      assert "ZRAM SWAP CRITICAL" in out
+      assert "severity=notify" in out, "zram critical must be NOTIFY tier (no overlay)"
+      alert = machine.succeed("cat /tmp/sev1/alert")
+      assert alert.strip().split("\n")[3] == "notify"
+      prom = machine.succeed("cat /tmp/sev1/bridge.prom")
+      assert "sev1_bridge_alerts_active 1" in prom
+      assert "sev1_bridge_page_alerts_active 0" in prom, (
+          "zram-only must not count as page-tier"
+      )
+
+      # 10b. The LIVE 2026-09-02 steady state (97% fill, 53% avail,
+      #      0.26% PSI) must stay completely silent.
+      machine.succeed("${writeProms \"zramsteady\" guardPromZramSteady healthPromZram}")
+      out = run_bridge("zramsteady")
+      assert "SEV1" not in out, (
+          "zram near-full with healthy margins is steady-state normal on "
+          "this box (the live 2026-09-02 alert-spam source)"
+      )
       machine.fail("test -f /tmp/sev1/alert")
     '';
 }
