@@ -389,13 +389,17 @@
       )
 
       # 10b. The LIVE 2026-09-02 steady state (97% fill, 53% avail,
-      #      0.26% PSI) must stay completely silent.
+      #      0.26% PSI) must stay completely silent. The bridge's
+      #      clear-transition message ("SEV1 cleared") is expected here —
+      #      scenario 10 had just armed the notify-tier alert — so assert
+      #      on the ACTIVE marker, not the bare "SEV1" prefix.
       machine.succeed("${writeProms "zramsteady" guardPromZramSteady healthPromZram}")
       out = run_bridge("zramsteady")
-      assert "SEV1" not in out, (
+      assert "SEV1 active" not in out, (
           "zram near-full with healthy margins is steady-state normal on "
           "this box (the live 2026-09-02 alert-spam source)"
       )
+      assert "SEV1 cleared" in out, "the scenario-10 notify alert must clear on healthy margins"
       machine.fail("test -f /tmp/sev1/alert")
     '';
 }
