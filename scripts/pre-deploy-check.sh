@@ -338,6 +338,18 @@ fi
 # red on their own while it is down — that is the correct visibility.)
 DISCORDSYNC_METRICS="discordsync_projection_dlq_legacy_depth discordsync_projection_dlq_legacy_unchanged discordsync_turso_local_only_mode"
 
+# Forgejo mirror journal-scan metrics: the collector emits the errors_30m/
+# erroring pair ONLY when its bounded journalctl scan succeeds — on scan
+# failure (timeout under IO pressure) it reports
+# system_forgejo_mirror_scrape_errors=1 and the pair is ABSENT BY DESIGN
+# (fail-closed, 2026-09-02 fix). Keyed on the POSITIVE signal, not a name
+# list: when the running system itself reports the scan failed, absence is
+# an infrastructure signal, not a config phantom.
+FORGEJO_SCAN_FAILED=false
+if [ -s "$METRICS_FILE" ] && grep -qE '^system_forgejo_mirror_scrape_errors 1' "$METRICS_FILE"; then
+  FORGEJO_SCAN_FAILED=true
+fi
+
 if [ -s "$METRICS_FILE" ]; then
   MISSING_METRICS=0
   # Metrics not yet emitted by the RUNNING system (pre-deploy). These metrics
@@ -416,6 +428,8 @@ if [ -s "$METRICS_FILE" ]; then
       warn "Metric '$metric' absent (Monitor365 endpoint down — not a phantom metric)"
     elif echo "$DISCORDSYNC_METRICS" | grep -qw "$metric" && [ "$DISCORDSYNC_API_UP" = false ]; then
       warn "Metric '$metric' absent (discordsync endpoint down/stopped — not a phantom metric)"
+    elif [ "$FORGEJO_SCAN_FAILED" = true ]; then
+      warn "Metric '$metric' absent — running system reports forgejo mirror journal scan FAILED (system_forgejo_mirror_scrape_errors=1): fail-closed absence, infrastructure signal"
     elif [ "$TEXTFILE_SCRAPE_ERROR" = true ]; then
       warn "Metric '$metric' absent — node exporter textfile collector broken on the RUNNING system (see node_textfile_scrape_error above): infrastructure signal, deploy the collector fix"
     else
