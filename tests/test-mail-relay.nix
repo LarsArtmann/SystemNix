@@ -79,48 +79,56 @@ in
       environment.etc."fake-relay/fake-relay.py".text = ''
         import socket
         import ssl
-        s = socket.socket()
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind(("127.0.0.2", ${toString relayPort}))
-        s.listen(1)
-        c, _ = s.accept()
-        f = c.makefile("rwb", 0)
-        log = []
-        def send(x):
-            f.write((x + "\r\n").encode())
-        send("220 fake.relay ESMTP")
-        while True:
-            line = f.readline().decode().strip()
-            if not line:
-                break
-            log.append(line)
-            u = line.upper()
-            if u == "STARTTLS":
-                send("220 Go ahead")
-                ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-                ctx.load_cert_chain("/tmp/fake-relay-cert.pem", "/tmp/fake-relay-key.pem")
-                c = ctx.wrap_socket(c, server_side=True)
-                f = c.makefile("rwb", 0)
-            elif u.startswith("EHLO") or u.startswith("HELO"):
-                send("250-fake.relay")
-                send("250-STARTTLS")
-                send("250 AUTH PLAIN LOGIN")
-            elif u.startswith("AUTH"):
-                send("235 ok")
-            elif u.startswith(("MAIL", "RCPT")):
-                send("250 ok")
-            elif u == "DATA":
-                send("354 go")
-            elif u == ".":
-                send("250 accepted")
-                break
-            elif u.startswith("QUIT"):
-                break
-            else:
-                send("250 ok")
-        c.close()
-        with open("/tmp/fake-relay-capture.txt", "w") as out:
-            out.write("\n".join(log))
+        import traceback
+        try:
+            s = socket.socket()
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            s.bind(("127.0.0.2", ${toString relayPort}))
+            s.listen(1)
+            c, _ = s.accept()
+            f = c.makefile("rwb", 0)
+            log = []
+            def send(x):
+                f.write((x + "\r\n").encode())
+            def dump():
+                with open("/tmp/fake-relay-capture.txt", "w") as out:
+                    out.write("\n".join(log))
+            send("220 fake.relay ESMTP")
+            while True:
+                line = f.readline().decode(errors="replace").strip()
+                dump()
+                if not line:
+                    break
+                log.append(line)
+                u = line.upper()
+                if u == "STARTTLS":
+                    send("220 Go ahead")
+                    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+                    ctx.load_cert_chain("/tmp/fake-relay-cert.pem", "/tmp/fake-relay-key.pem")
+                    c = ctx.wrap_socket(c, server_side=True)
+                    f = c.makefile("rwb", 0)
+                elif u.startswith("EHLO") or u.startswith("HELO"):
+                    send("250-fake.relay")
+                    send("250-STARTTLS")
+                    send("250 AUTH PLAIN LOGIN")
+                elif u.startswith("AUTH"):
+                    send("235 ok")
+                elif u.startswith(("MAIL", "RCPT")):
+                    send("250 ok")
+                elif u == "DATA":
+                    send("354 go")
+                elif u == ".":
+                    send("250 accepted")
+                    break
+                elif u.startswith("QUIT"):
+                    break
+                else:
+                    send("250 ok")
+            c.close()
+            dump()
+        except Exception:
+            with open("/tmp/fake-relay-error.txt", "w") as out:
+                out.write(traceback.format_exc())
       '';
     };
 
@@ -182,7 +190,13 @@ in
     machine.wait_until_succeeds("postqueue -j | grep -q noreply@larsartmann.cloud", timeout=60)
     # postqueue -j is JSON Lines — wrap into an array with jq -s.
     entries = json.loads(machine.succeed("postqueue -j | jq -s '.'"))
-    assert len(entries) == 1, f"expected exactly 1 queued message, got {len(entries)}"
+    assert len(entries) == 1, (
+        f"expected exactly 1 queued message, got {len(entries)}:\n"
+        + "\n".join(
+            f"{e.get('queue_name')}/{e.get('queue_id')} from={e.get('sender')} rcpts={[r.get('address') for r in e.get('recipients', [])]}"
+            for e in entries
+        )
+    )
     rcpt = entries[0]["recipients"][0]["address"]
     assert rcpt == "noreply@larsartmann.cloud", f"recipient not rewritten: {rcpt}"
 
@@ -215,6 +229,8 @@ in
         "printf 'Subject: vm relay delivery\\n\\nbody\\n' | sendmail root@testhost.home.lan"
     )
     machine.wait_until_succeeds("test -s /tmp/fake-relay-capture.txt", timeout=90)
+    err = machine.succeed("cat /tmp/fake-relay-error.txt 2>/dev/null || true").strip()
+    assert not err, f"fake relay crashed:\n{err}"
     capture = machine.succeed("cat /tmp/fake-relay-capture.txt")
     assert "MAIL FROM:<noreply@larsartmann.cloud>" in capture, (
         f"envelope sender not rewritten at delivery:\n{capture}"
