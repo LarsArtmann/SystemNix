@@ -174,15 +174,19 @@ in
 
     # 4. Collector: real queue depth, placeholder flagged fail-closed,
     #    scrape clean (asserted BEFORE the fake-relay delivery adds a second
-    #    message to the queue).
+    #    message to the queue). Exact-LINE matches via splitlines — a plain
+    #    substring `in prom` matches the # HELP comment (the metric name
+    #    followed by "1 while..." — the phantom-green class in test form).
     machine.succeed("systemctl restart mail-relay-metrics.service")
     prom = machine.succeed(
         "cat /var/lib/prometheus-node-exporter/textfile_collectors/mail-relay.prom"
-    )
-    assert "mail_relay_queue_messages 1" in prom, f"queue depth wrong:\n{prom}"
-    assert "mail_relay_queue_over_threshold 0" in prom, f"threshold flapped:\n{prom}"
-    assert "mail_relay_credential_placeholder 1" in prom, f"placeholder not flagged:\n{prom}"
-    assert "mail_relay_scrape_errors 0" in prom, f"scrape errors:\n{prom}"
+    ).splitlines()
+    assert "mail_relay_queue_messages 1" in prom, f"queue depth wrong:\n{chr(10).join(prom)}"
+    assert "mail_relay_queue_over_threshold 0" in prom, f"threshold flapped:\n{chr(10).join(prom)}"
+    assert (
+        "mail_relay_credential_placeholder 1" in prom
+    ), f"placeholder not flagged:\n{chr(10).join(prom)}"
+    assert "mail_relay_scrape_errors 0" in prom, f"scrape errors:\n{chr(10).join(prom)}"
 
     # 5. Delivery-time E2E against a fake upstream: proves the smtp client
     #    rewrote the envelope sender (generic map), authenticated with the
