@@ -254,9 +254,15 @@ extract_gatus_metrics() {
   # Also catch the anchored form pat(*\n<metric> — the leading real-newline
   # escape precedes the name there (2026-08-31: signoz-coverage checks were
   # invisible to phantom validation without this).
+  # The name must be terminated by a NON-name character and that character
+  # must not be '=' (2026-09-02: pat(*type="password"* — an HTML-attribute
+  # body-content pattern from the paperless SSO check) extracted 'type' as a
+  # metric and phantom-failed §10; name=value attribute tokens are never
+  # metrics).
   grep -v '^[[:space:]]*#' "$GATUS_CONFIG" |
-    grep -oE 'pat\(\*(\\n)?[a-zA-Z_][a-zA-Z0-9_]*' |
-    sed 's/pat(\*//;s/^\\n//' |
+    grep -oE 'pat\(\*(\\n)?[a-zA-Z_][a-zA-Z0-9_]*[^a-zA-Z0-9_]' |
+    grep -v '=$' |
+    sed 's/pat(\*//;s/^\\n//;s/.$//' |
     sort -u |
     grep -vE '^<|connected|email_states?|oidc$|[A-Z]'
 }
@@ -418,7 +424,10 @@ if [ -s "$METRICS_FILE" ]; then
   # backlog drains; failures may legitimately read 1 during the
   # transition hour — 785 backlog failures sat in the 1h window at
   # deploy time).
-  KNOWN_NEW_METRICS="system_pma_commit_scrape_errors system_pma_commit_failures_over_threshold system_pma_commit_fallbacks_over_threshold"
+  # niri_aw_* (2026-09-02, aw-watcher attach monitoring): the metrics ride
+  # THIS deploy's niri-health collector (emitted unconditionally) — absent
+  # from the running scrape only until the switch lands.
+  KNOWN_NEW_METRICS="system_pma_commit_scrape_errors system_pma_commit_failures_over_threshold system_pma_commit_fallbacks_over_threshold niri_aw_watcher_attached niri_aw_watcher_late"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"

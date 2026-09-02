@@ -524,6 +524,7 @@ _: {
           POCKET_ID_BUSY_OVER=""
           POCKET_ID_BUSY_SCRAPE_ERRORS=1
           if [ "$collect_pocket_id_busy" = "true" ]; then
+            POCKET_ID_BUSY_SCRAPE_ERRORS=0
             pocket_id_scan_status=0
             POCKET_ID_BUSY_EVENTS_24H=$(timeout 30 journalctl -u pocket-id.service --since "-24h" --grep "database is locked" --output cat --no-pager 2>/dev/null | wc -l) || pocket_id_scan_status=$?
             if [ "$pocket_id_scan_status" -le 1 ]; then
@@ -533,6 +534,7 @@ _: {
             else
               echo "system-health: pocket-id busy journal scan failed (status $pocket_id_scan_status)" >&2
               POCKET_ID_BUSY_EVENTS_24H=""
+              POCKET_ID_BUSY_SCRAPE_ERRORS=1
             fi
           fi
 
@@ -945,6 +947,23 @@ _: {
               echo "# HELP system_pma_commit_fallbacks_over_threshold 1 when the 24h heuristic-fallback count means the LLM path is dead (${toString pmaHeuristicFallbackThreshold}+), 0 otherwise"
               echo "# TYPE system_pma_commit_fallbacks_over_threshold gauge"
               echo "system_pma_commit_fallbacks_over_threshold ''${PMA_HEURISTIC_FALLBACKS_OVER}"
+            fi
+
+            if [ "$collect_pocket_id_busy" = "true" ]; then
+              echo "# HELP system_pocket_id_busy_scrape_errors Scrape status of the pocket-id SQLITE_BUSY journal scan: 0 = OK, 1 = journalctl failed/timeout (fail-closed)"
+              echo "# TYPE system_pocket_id_busy_scrape_errors gauge"
+              echo "system_pocket_id_busy_scrape_errors ''${POCKET_ID_BUSY_SCRAPE_ERRORS}"
+            fi
+            # Absent pair + scrape_errors=1 is the documented fail-closed
+            # design (a value-less line would dark the whole textfile).
+            if [ -n "$POCKET_ID_BUSY_EVENTS_24H" ]; then
+              echo "# HELP system_pocket_id_busy_events_24h SQLITE_BUSY (\"database is locked\") journal lines from pocket-id in the last 24h — the auth-SPOF degradation signal"
+              echo "# TYPE system_pocket_id_busy_events_24h gauge"
+              echo "system_pocket_id_busy_events_24h ''${POCKET_ID_BUSY_EVENTS_24H}"
+
+              echo "# HELP system_pocket_id_busy_over_threshold 1 when SQLITE_BUSY events reach the sustained-contention threshold (${toString pocketIdBusyEventThreshold}/24h), 0 otherwise"
+              echo "# TYPE system_pocket_id_busy_over_threshold gauge"
+              echo "system_pocket_id_busy_over_threshold ''${POCKET_ID_BUSY_OVER}"
             fi
 
             echo "# HELP system_disk_usage_percent Root filesystem usage percentage (0-100)"
