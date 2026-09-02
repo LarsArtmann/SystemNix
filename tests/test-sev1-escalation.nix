@@ -6,9 +6,13 @@
 # REAL bridge script (the deployed ExecStart binary) with env-overridden
 # prom sources — only the metrics inputs are faked.
 #
-# TIER CONTRACT (2026-09-02 user decision, the movie-interruption finale):
-# NO memory-related condition may EVER fullscreen-page. page = infra
-# hardware criticals (DAS/NIC/btrfs) ONLY; everything else is notify.
+# TIER CONTRACT (2026-09-02 user decisions, the movie-interruption finale
+# + "yellow, non-flashing, once" refinement):
+#   NO memory-related condition may EVER overlay. page = RESERVED (red
+#   pulsing, no current emitter). warn = infra hardware criticals
+#   (DAS/NIC/btrfs): static amber banner, shown ONCE per alert set (the
+#   bridge downgrades same-set refreshes to "warn-seen"). notify = one
+#   self-expiring notification, no overlay.
 #
 # Scenarios:
 #   1. Healthy: no alert file, alerts_active 0, prom written.
@@ -327,13 +331,38 @@
           "a host without system-health must not page STALE forever either"
       )
 
-      # --- 6. Infra critical: DAS link down -------------------------------
+      # --- 6. Infra critical: DAS link down — WARN tier (2026-09-02
+      #        user decision: yellow, NON-FLASHING, shown ONCE per alert
+      #        set). First exposure writes "warn" (the overlay renders
+      #        the static amber banner); refreshing the SAME alert set
+      #        downgrades to "warn-seen" (overlay ignores it). The
+      #        "once" lives in the BRIDGE so it survives quickshell
+      #        restarts and is testable here.
       machine.succeed("${writeProms "das" guardPromHealthy healthPromDasDown}")
       out = run_bridge("das")
       assert "DAS USB LINK DOWN" in out
+      assert "severity=warn" in out, "infra critical must be WARN tier (static yellow banner, no pulsing)"
       alert = machine.succeed("cat /tmp/sev1/alert")
       assert "DAS USB LINK DOWN" in alert
-      assert alert.strip().split("\n")[3] == "page", "infra criticals must be PAGE tier"
+      assert alert.strip().split("\n")[3] == "warn", "first warn exposure must render the banner"
+      prom = machine.succeed("cat /tmp/sev1/bridge.prom")
+      assert "sev1_bridge_page_alerts_active 0" in prom, "warn is not page-tier"
+      # Repeat run: SAME alert set → warn-seen (shown ONCE).
+      out = run_bridge("das")
+      alert = machine.succeed("cat /tmp/sev1/alert")
+      assert alert.strip().split("\n")[3] == "warn-seen", (
+          "the yellow banner must show only ONCE per alert set (same-set "
+          "refreshes must downgrade to warn-seen)"
+      )
+      # A CHANGED alert set re-arms the banner: DAS + BTRFS is a new key.
+      machine.succeed(
+          "printf 'system_das_link_present 0\\nsystem_lan_nic_present 1\\nbtrfs_health_critical 1\\nsystem_zram_fill_over_threshold 0\\n'"
+          " > /tmp/sev1/das-health.prom"
+      )
+      out = run_bridge("das")
+      assert "BTRFS CRITICAL" in out
+      alert = machine.succeed("cat /tmp/sev1/alert")
+      assert alert.strip().split("\n")[3] == "warn", "a changed alert set must re-arm the warn banner"
 
       # --- 6b. Monitoring stale: NOTIFY tier, no overlay, cooldown-gated --
       # The 2026-08-31 movie-night class: the collector flapped stale for

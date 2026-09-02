@@ -142,7 +142,7 @@ report_warn() {
 # Shared pressure-reporting logic (fixture-tested by
 # scripts/test-post-deploy-pressure.sh + the post-deploy-pressure-selftest
 # flake check — the WARN/PASS semantics must never call a storm healthy).
-# shellcheck source=scripts/lib/pressure-report.sh
+# shellcheck source=scripts/lib/pressure-report.sh disable=SC1091
 source "$(dirname "${BASH_SOURCE[0]}")/lib/pressure-report.sh"
 
 echo "=== Post-Deploy Smoke Test ==="
@@ -1235,6 +1235,7 @@ if [ -e /etc/systemd/system/postfix.service ]; then
   fi
 
   # SMTP banner through the public socket (loopback-only null client).
+  # shellcheck disable=SC2016 # $_relay_line must expand INSIDE the inner bash
   _relay_banner=$(timeout 5 bash -c 'exec 3<>/dev/tcp/127.0.0.1/25 && read -t 3 -r _relay_line <&3 && printf %s "$_relay_line"' 2>/dev/null || true)
   case "$_relay_banner" in
   220*) report_pass "Mail relay — SMTP banner answering (220 greeting)" ;;
