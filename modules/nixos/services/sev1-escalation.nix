@@ -32,11 +32,19 @@
 # 2026-09-02 movie-night sessions; HARDENED 2026-09-02 late evening after
 # high-memory alerts kept fullscreen-flashing over a movie: "High memory
 # should NOT flash my entire screen — only shutdowns and
-# ACTUALLY-about-to-be-impacted events may page"):
-#   page   = fullscreen overlay + persistent critical notification:
-#           infra hardware criticals ONLY (DAS link, LAN NIC, btrfs
-#           critical). Rare, non-flapping, real-impact events a human can
-#           act on immediately.
+# ACTUALLY-about-to-be-impacted events may page"; refined same evening —
+# "if it's NOT gonna kill it, do a yellow non-flashing one once"):
+#   page   = red pulsing fullscreen overlay + persistent critical
+#           notification. RESERVED — no current emitter (true
+#           drop-everything emergencies only).
+#   warn   = STATIC amber fullscreen banner, shown ONCE per alert set,
+#           no animation, + one cooldown-gated notification:
+#           infra hardware criticals (DAS link, LAN NIC, btrfs critical).
+#           Once = the bridge writes "warn" on the first run of a NEW
+#           alert set and downgrades every refresh of the SAME set to
+#           "warn-seen" (which the overlay ignores) — the downgrade lives
+#           in the bridge so "once" survives quickshell restarts and is
+#           VM-testable. A CHANGED alert set re-arms the banner.
 #   notify = ONE self-expiring normal-urgency desktop notification +
 #           Gatus/Discord, NO overlay: EVERY memory-related condition
 #           (guard trip, sustained memory stall, guard dead) plus SYSTEM
@@ -255,19 +263,19 @@ _: {
             if [ "$v" = "0" ]; then
               titles+=("DAS USB LINK DOWN")
               details+=("All external disks (pool + buildcache) share one USB link that just dropped. Physical reseat + reboot may be needed.")
-              severities+=("page")
+              severities+=("warn")
             fi
             v=$(prom_value "$HEALTH_PROM" "system_lan_nic_present")
             if [ "$v" = "0" ]; then
               titles+=("LAN NIC ABSENT")
               details+=("The RTL8125 fell off the PCIe bus. Power-cycle (full shutdown ~10s, not warm reboot).")
-              severities+=("page")
+              severities+=("warn")
             fi
             v=$(prom_value "$HEALTH_PROM" "btrfs_health_critical")
             if [ "$v" = "1" ]; then
               titles+=("BTRFS CRITICAL")
               details+=("Filesystem in CRITICAL state (unalloc/meta envelope). btrfs-health metrics; do not add load.")
-              severities+=("page")
+              severities+=("warn")
             fi
             v=$(prom_value "$HEALTH_PROM" "system_zram_fill_over_threshold")
             if [ "$v" = "1" ]; then
@@ -275,13 +283,13 @@ _: {
               # (swappiness=150 keeps cold anon compressed in zram; live
               # 2026-09-02: 97% fill with 53% MemAvailable and 0.26% PSI —
               # perfectly healthy). Combined-gate exactly like before, but
-              # the tier is NOTIFY, not page (2026-09-02 user decision):
-              # this state is the guard's own trip zone about to fire, and
-              # the guard trip pages within one 30 s tick anyway — a second
-              # fullscreen overlay for the same cliff was pure alert spam.
-              # A self-expiring notification + the existing Gatus/Discord
-              # ZRAM Fill alert carry the early warning. Guard metrics are
-              # the PSI/avail source (-1 = guard absent → no escalation).
+              # the tier is NOTIFY, not warn/page (2026-09-02 user
+              # decision): the guard's own trip alert covers the real
+              # cliff within one tick — a second overlay for the same
+              # cliff was pure alert spam. A self-expiring notification +
+              # the existing Gatus/Discord ZRAM Fill alert carry the
+              # early warning. Guard metrics are the PSI/avail source
+              # (-1 = guard absent → no escalation).
               g_psi=$(prom_value "$GUARD_PROM" "memory_emergency_guard_psi_some_avg10_percent")
               g_avail=$(prom_value "$GUARD_PROM" "memory_emergency_guard_avail_percent")
               g_psi="''${g_psi:--1}"
@@ -296,17 +304,25 @@ _: {
 
           alerts_active=''${#titles[@]}
 
-          # Overall severity: "page" if ANY page-tier condition is active,
-          # else "notify". Written as line 4 of the alert file — the
-          # overlay fullscreen-pages ONLY on "page" (notify-tier = one
-          # self-expiring desktop notification + Gatus/Discord).
+          # Overall severity (highest tier wins): "page" > "warn" >
+          # "notify". Written as line 4 of the alert file (warn may be
+          # downgraded to warn-seen below) — the overlay fullscreens ONLY
+          # on "page" and shows the static yellow banner ONCE per alert
+          # set on "warn".
           page_active=0
+          warn_active=0
           for s in "''${severities[@]}"; do
             if [ "$s" = "page" ]; then
               page_active=1
             fi
+            if [ "$s" = "warn" ]; then
+              warn_active=1
+            fi
           done
           severity=notify
+          if [ "$warn_active" = "1" ]; then
+            severity=warn
+          fi
           if [ "$page_active" = "1" ]; then
             severity=page
           fi
@@ -347,29 +363,42 @@ _: {
             title=$(printf '%s; ' "''${titles[@]}" | sed 's/; $//')
             detail=$(printf '%s | ' "''${details[@]}" | sed 's/ | $//')
 
-            # Rewrite every run: freshness IS the liveness signal for the
-            # overlay (it self-expires when the file goes stale).
-            printf '%s\n%s\n%s\n%s\n' "$title" "$detail" "$now" "$severity" > "$ALERT_FILE"
-            chmod 0644 "$ALERT_FILE"
-            echo "SEV1 active (''${alerts_active} condition(s), severity=$severity): $title" >&2
-
-            # Notify ONLY on transition into a new alert set (dedup via
-            # state file) — a persistent condition notifies once.
+            # Alert-set key + whether it changed since the last run —
+            # drives BOTH the notification dedup and the warn show-once.
             key=$(printf '%s\n' "''${titles[@]}" | sort | tr '\n' ',')
             prev_key=""
             [ -f "$STATE_FILE" ] && prev_key=$(cat "$STATE_FILE" 2>/dev/null || true)
+
+            # Warn tier shows ONCE per alert set: the first run of a NEW
+            # set writes "warn" (overlay renders the static yellow
+            # banner), every refresh of the SAME set writes "warn-seen"
+            # (overlay ignores it). A changed set re-arms the banner.
+            line4="$severity"
+            if [ "$severity" = "warn" ] && [ "$key" = "$prev_key" ]; then
+              line4="warn-seen"
+            fi
+
+            # Rewrite every run: freshness IS the liveness signal for the
+            # overlay (it self-expires when the file goes stale).
+            printf '%s\n%s\n%s\n%s\n' "$title" "$detail" "$now" "$line4" > "$ALERT_FILE"
+            chmod 0644 "$ALERT_FILE"
+            echo "SEV1 active (''${alerts_active} condition(s), severity=$line4): $title" >&2
+
+            # Notify ONLY on transition into a new alert set (dedup via
+            # state file) — a persistent condition notifies once.
             if [ "$key" != "$prev_key" ]; then
               echo "$key" > "''${STATE_FILE}.tmp"
               mv "''${STATE_FILE}.tmp" "$STATE_FILE"
               # Page tier: persistent critical notification (never
-              # cooldown-gated — drop-everything conditions). Notify tier:
-              # self-expiring normal-urgency notification, cooldown-gated
-              # so a flapping collector (stale -> clear -> stale cycles,
-              # live 2026-08-31 evening) cannot re-notify either.
+              # cooldown-gated — drop-everything conditions). Warn and
+              # notify tiers: self-expiring normal-urgency notification,
+              # cooldown-gated so a flapping collector (stale -> clear ->
+              # stale cycles, live 2026-08-31 evening) cannot re-notify
+              # either.
               send_notification=1
               notify_urgency=critical
               notify_expiry=0
-              if [ "$severity" = "notify" ]; then
+              if [ "$severity" != "page" ]; then
                 notify_urgency=normal
                 notify_expiry=30000
                 # PER-KEY cooldown (2026-09-02): the old single
@@ -401,7 +430,7 @@ _: {
                 fi
               fi
               if [ "$send_notification" = "1" ]; then
-                if [ "$severity" = "notify" ]; then
+                if [ "$severity" != "page" ]; then
                   echo "$now" > "$notify_epoch_file"
                 fi
                 # Best-effort DMS desktop notification via the machined user
@@ -477,14 +506,16 @@ _: {
             property string alertTitle: ""
             property string alertDetail: ""
             property real generatedAt: 0
-            // Line 4 of the alert file: "page" (fullscreen overlay) or
-            // "notify" (single notification, NO overlay — all memory
-            // conditions and SYSTEM MONITORING STALE; the 2026-08-31 +
-            // 2026-09-02 movie-night decisions).
+            // Line 4 of the alert file: "page" (red fullscreen + pulsing,
+            // RESERVED — no current emitter), "warn" (static amber banner,
+            // shown once — the bridge downgrades refreshes of the same
+            // alert set to "warn-seen"), "notify" (no overlay).
             // Missing/unknown line 4 fails LOUD (treated as page): a real
             // emergency must never be silenced by a parse gap.
-            property bool severityIsPage: true
-            readonly property bool active: root.generatedAt > 0 && root.severityIsPage && (Date.now() / 1000 - root.generatedAt) < root.alertTtl
+            property string severity: "page"
+            readonly property bool isPage: root.severity == "page"
+            readonly property bool isWarn: root.severity == "warn"
+            readonly property bool active: root.generatedAt > 0 && (root.isPage || root.isWarn) && (Date.now() / 1000 - root.generatedAt) < root.alertTtl
 
             function parseAlert(text) {
                 const lines = (text ?? "").split("\n");
@@ -497,7 +528,7 @@ _: {
                 }
                 root.alertTitle = lines[0] ?? "SEV1";
                 root.alertDetail = lines[1] ?? "";
-                root.severityIsPage = (lines[3] ?? "page").trim() !== "notify";
+                root.severity = (lines[3] ?? "page").trim();
                 root.generatedAt = gen;
             }
 
@@ -550,10 +581,10 @@ _: {
 
                     Rectangle {
                         anchors.fill: parent
-                        color: "#e61a0505"
+                        color: root.isPage ? "#e61a0505" : "#e6b8860b"
 
                         SequentialAnimation on opacity {
-                            running: overlay.visible
+                            running: overlay.visible && root.isPage
                             loops: Animation.Infinite
 
                             NumberAnimation {
@@ -572,8 +603,8 @@ _: {
 
                             Text {
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                text: "SEVERE — SYSTEM EMERGENCY"
-                                color: "#ffe0e0"
+                                text: root.isPage ? "SEVERE — SYSTEM EMERGENCY" : "WARNING — HARDWARE CRITICAL"
+                                color: root.isPage ? "#ffe0e0" : "#fff3c4"
                                 font.pixelSize: Math.min(overlay.width, overlay.height) * 0.035
                                 font.weight: Font.Black
                                 font.letterSpacing: 10
@@ -582,7 +613,7 @@ _: {
                             Text {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: root.alertTitle
-                                color: "#ff2b2b"
+                                color: root.isPage ? "#ff2b2b" : "#ffd24d"
                                 font.pixelSize: Math.min(overlay.width, overlay.height) * 0.05
                                 font.weight: Font.Black
                                 font.family: "monospace"
@@ -594,7 +625,7 @@ _: {
                             Text {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: root.alertDetail
-                                color: "#ffd7d7"
+                                color: root.isPage ? "#ffd7d7" : "#ffedb8"
                                 font.pixelSize: Math.min(overlay.width, overlay.height) * 0.025
                                 font.weight: Font.Bold
                                 maximumLineCount: 4
@@ -611,7 +642,7 @@ _: {
     in
     {
       options.services.sev1-escalation = {
-        enable = lib.mkEnableOption "SEV1 escalation bridge: local unmissable escalation (DMS notification + fullscreen overlay for infra hardware criticals only) for guard/memory/infra conditions when a graphical session is online (2026-08-22 freeze lesson: Discord fired 43min early, nobody saw it)";
+        enable = lib.mkEnableOption "SEV1 escalation bridge: local unmissable escalation (red fullscreen RESERVED, static yellow once-banner for infra hardware criticals, notification-only for memory/meta) for guard/memory/infra conditions when a graphical session is online (2026-08-22 freeze lesson: Discord fired 43min early, nobody saw it)";
 
         desktopUser = lib.mkOption {
           type = lib.types.str;
@@ -641,13 +672,13 @@ _: {
           type = lib.types.int;
           default = 1800;
           description = ''
-            Minimum seconds between notify-tier (non-overlay) desktop
-            notifications. Notify-tier conditions (SYSTEM MONITORING STALE)
-            are flap-prone — the collector itself oscillates stale/healthy
-            under I/O pressure — so re-notification after a clear/refire
-            cycle is suppressed within this window (2026-08-31 movie-night
-            lesson: 4 consecutive collector timeouts re-paged on every
-            cycle). Page-tier notifications are never cooldown-gated.
+            Minimum seconds between notify/warn-tier (non-page) desktop
+            notifications. These conditions are flap-prone — the collector
+            itself oscillates stale/healthy under I/O pressure — so
+            re-notification after a clear/refire cycle is suppressed within
+            this window (2026-08-31 movie-night lesson: 4 consecutive
+            collector timeouts re-paged on every cycle). Page-tier
+            notifications are never cooldown-gated.
           '';
         };
 
