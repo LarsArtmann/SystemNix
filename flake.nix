@@ -1185,9 +1185,31 @@
                   [ pkgs.nix pkgs.jq ]
                   ./scripts/fix-nixpkgs-lock.sh;
               pre-deploy-check =
-                mkApp "pre-deploy-check" "Pre-deploy validation: catches boot-breaking issues before switch"
-                  [ pkgs.nix pkgs.jq pkgs.systemd ]
-                  ./scripts/pre-deploy-check.sh;
+                let
+                  # mkApp single-files scripts, but pre-deploy-check.sh
+                  # sources scripts/lib/metrics-gate.sh relative to its own
+                  # path — package the lib as a sibling so the wrapper's
+                  # runtime `source` resolves (2026-09-02: the refactor that
+                  # extracted the gate shipped without this and every deploy
+                  # aborted at the wrapper's runtime).
+                  inner = pkgs.writeShellApplication {
+                    name = "pre-deploy-check";
+                    runtimeInputs = [ pkgs.nix pkgs.jq pkgs.systemd ];
+                    text = builtins.readFile ./scripts/pre-deploy-check.sh;
+                  };
+                in
+                {
+                  type = "app";
+                  program = "${
+                    pkgs.runCommand "pre-deploy-check" { } ''
+                      mkdir -p $out/bin/lib
+                      cp ${inner}/bin/pre-deploy-check $out/bin/pre-deploy-check
+                      cp ${./scripts/lib/metrics-gate.sh} $out/bin/lib/metrics-gate.sh
+                      chmod +x $out/bin/pre-deploy-check
+                    ''
+                  }/bin/pre-deploy-check";
+                  meta.description = "Pre-deploy validation: catches boot-breaking issues before switch";
+                };
               post-deploy-check =
                 mkApp "post-deploy-check" "Post-deploy smoke test: verifies services are functional, not just alive"
                   [
