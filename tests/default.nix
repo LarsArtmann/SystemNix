@@ -44,5 +44,6 @@ in
   tmp-cleanup = makeTest (import ./test-tmp-cleanup.nix { inherit pkgs; });
   tmp-cleaner-audit = import ./test-tmp-cleaner-audit.nix { inherit pkgs inputs system; };
   inboxclean-paperless = import ./test-inboxclean-paperless.nix { inherit pkgs inputs system; };
+  mail-relay = makeTest (import ./test-mail-relay.nix { inherit pkgs; });
 }
 // (import ./test-scripts.nix { inherit pkgs; })
