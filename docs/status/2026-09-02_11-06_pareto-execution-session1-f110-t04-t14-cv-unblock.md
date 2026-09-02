@@ -44,3 +44,9 @@ An active session owns: `AGENTS.md`, `TODO_LIST.md`, `docs/status/2026-08-31_23-
 3. **CV upstream**: someone with ownership of the CV session's unpushed commits should land a correct vendorHash pin past d2f2752b so the `cv.nix` DROP-ME override can go.
 
 **Report status:** committed. Next automatable work: T08 (eval audits) or T05 (alert trust) at tree quiescence; everything else on the critical path is reboot-window-gated.
+
+## f) ADDENDUM (11:2x — user decisions on the three gates)
+
+1. **T02 reboot: DEFERRED** ("not now — continue 4% tier"). T05/T08/T12 are next; T12's remainder (F46/F47) collides with the concurrent session's active edits to `pre-deploy-check.sh` — skipped this session, flagged.
+2. **§g.1 archives: user rejected blanket accept, delegated the call.** Rule applied: archive only files whose NUMBERED action items all closed; records with enduring provenance stay live. RESTORED: `2026-08-18_23-01_sre-ai-agent-landscape-decision.md` (decision record) + `2026-08-18_08-15_niri-black-screen-root-cause-and-fix.md` (incident forensics; the 12-37 reference updated back). KEPT ARCHIVED: 7 executed planning docs (bannered), 4 HTML render snapshots (render artifacts), and the 9 closed-item session reports. Both restored files carry a KEPT-LIVE note so the next docs-health sweep honors the rule.
+3. **§g.2 brainstorm: user chose the SECOND PASS.** The ~1,300-item evidence sweep over the 08-20→08-24 self-review lists is SCHEDULED as a future session task — lands in TODO_LIST as soon as the file quiesces (foreign-dirty now); this addendum is the interim record.

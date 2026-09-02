@@ -1,5 +1,7 @@
 # Niri Black Screen on Login + Mystery Power-Off: Root Cause and Fix
 
+> **KEPT LIVE (2026-09-02, user §g.1 decision):** incident forensic record with enduring provenance — archive rule is "numbered action items all closed"; records with zero forward items stay in docs/status/.
+
 **Date:** 2026-08-18 ~08:15
 **Trigger:** User questions — (1) why did we shut down/crash? (2) why does logging into niri give a black screen and the monitor powers off?
 

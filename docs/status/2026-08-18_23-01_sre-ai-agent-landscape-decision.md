@@ -1,5 +1,7 @@
 # SRE AI Agents — Landscape & Adoption Decision
 
+> **KEPT LIVE (2026-09-02, user §g.1 decision):** decision/forensic record with enduring provenance — archive rule is "numbered action items all closed"; records with zero forward items stay in docs/status/.
+
 _Session note (2026-08-18): research + recommendation from a Q&A discussion. No code changed._
 
 ---

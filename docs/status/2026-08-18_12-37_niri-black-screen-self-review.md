@@ -17,7 +17,7 @@
 6. **Fix 4 — churn amplifier** (`scripts/niri-drm-healthcheck.sh`): login-screen guard (same loginctl Class/Type check as display-watchdog, awk-free) so the healthcheck never restarts a niri that has no graphical session to recover into; plus the `wc -l || echo 0` pipefail multi-line bug fixed (`|| true` + digit-normalize).
 7. **Fix 5 — silently dead watchdog** (`niri-config.nix`): `gawk` added to display-watchdog's `runtimeInputs` — its login-screen guard had been parsing `loginctl` output with an awk that DID NOT EXIST (`awk: command not found` every 30 s in the journal), permanently reading "no session".
 8. **Verification suite (everything short of deploy):** `nix flake check --no-build` exit 0; generated unit texts eval'd from `nixosConfigurations.evo-x2` (Wants absent, Condition + on-failure present); both scripts built through `writeShellApplication` (shellcheck in checkPhase) successfully; **5 deterministic behavioral tests** of the healthcheck against the live zombie niri with stubbed loginctl/journalctl/restart — including catching a real bug in my own first guard draft (`IFS= read -r sid _rest` disables word splitting; whole line landed in `sid`) which the tests caught before it shipped.
-9. **Documentation:** incident report at `docs/status/archived/2026-08-18_08-15_niri-black-screen-root-cause-and-fix.md`; AGENTS.md gotcha entry under "Desktop" covering the pull-in rule, the condition, the restart semantics, and the runtimeInputs lesson.
+9. **Documentation:** incident report at `docs/status/2026-08-18_08-15_niri-black-screen-root-cause-and-fix.md`; AGENTS.md gotcha entry under "Desktop" covering the pull-in rule, the condition, the restart semantics, and the runtimeInputs lesson.
 
 ## b) PARTIALLY DONE
 
