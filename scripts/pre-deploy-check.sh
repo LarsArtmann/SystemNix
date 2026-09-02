@@ -294,6 +294,7 @@ fi
 
 if curl -sf --compressed --max-time 5 "http://127.0.0.1:${MONITOR365_PORT}/metrics" >>"$METRICS_FILE" 2>/dev/null; then
   pass "Monitor365 metrics (port ${MONITOR365_PORT}) responding"
+  # shellcheck disable=SC2034
   MONITOR365_UP=true
 else
   warn "Monitor365 metrics (port ${MONITOR365_PORT}) not responding — monitor365 metrics will be skipped"
@@ -316,6 +317,7 @@ for port_name in $GATUS_SERVICE_METRIC_PORTS; do
   if [ -n "$port_num" ] && curl -sf --compressed --max-time 5 "http://127.0.0.1:${port_num}/metrics" >>"$METRICS_FILE" 2>/dev/null; then
     pass "Service metrics '${port_name}' (port ${port_num}) responding"
     if [ "${port_name}" = "discordsync-api" ]; then
+      # shellcheck disable=SC2034
       DISCORDSYNC_API_UP=true
     fi
   else
@@ -342,6 +344,7 @@ MONITOR365_METRICS="collector_events_collected cloud_sync_consecutive_failures c
 # shellcheck disable=SC2034
 TEXTFILE_SCRAPE_ERROR=false
 if [ -s "$METRICS_FILE" ] && grep -qE '^node_textfile_scrape_error 1' "$METRICS_FILE"; then
+  # shellcheck disable=SC2034
   TEXTFILE_SCRAPE_ERROR=true
   warn "node_textfile_scrape_error=1 — the RUNNING system's textfile collector is broken (a .prom file is being rejected whole). Absent textfile metrics below are downgraded to warnings; deploying the collector fix is the remedy. Inspect: ls /var/lib/prometheus-node-exporter/textfile_collectors/ + journalctl -u '*-metrics' -n 30"
   # Surface the offending lines directly — a metric line with a name but no
@@ -375,6 +378,7 @@ DISCORDSYNC_METRICS="discordsync_projection_dlq_legacy_depth discordsync_project
 # shellcheck disable=SC2034
 FORGEJO_SCAN_FAILED=false
 if [ -s "$METRICS_FILE" ] && grep -qE '^system_forgejo_mirror_scrape_errors 1' "$METRICS_FILE"; then
+  # shellcheck disable=SC2034
   FORGEJO_SCAN_FAILED=true
 fi
 
@@ -385,6 +389,7 @@ fi
 # shellcheck disable=SC2034
 POCKET_ID_SCAN_FAILED=false
 if [ -s "$METRICS_FILE" ] && grep -qE '^system_pocket_id_busy_scrape_errors 1' "$METRICS_FILE"; then
+  # shellcheck disable=SC2034
   POCKET_ID_SCAN_FAILED=true
 fi
 
