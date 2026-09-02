@@ -535,11 +535,24 @@ _: {
             # run PKCE S256 (OAUTH_PKCE_ENABLED in the provider JSON written
             # by paperless-oidc-setup). Silent drift here is a full-auth
             # outage, so it must be an eval-time failure, not a runtime one.
-            # Negative test (extendModules + mutate the callback — the
-            # assertion message MUST appear in config.assertions):
-            #   nix eval --impure --expr 'let f = builtins.getFlake (toString /home/lars/projects/SystemNix); lib = f.inputs.nixpkgs.lib; in f.nixosConfigurations.evo-x2.extendModules { modules = [{ services.pocket-id-config.provision.oidcClients = lib.mkForce [ { name = "Paperless"; clientId = "paperless"; launchURL = "https://paperless.home.lan"; callbackURLs = [ "https://paperless.home.lan/WRONG/callback/" ]; pkceEnabled = true; } ]; }]; }' \
-            #     --apply 'c: builtins.length (builtins.filter (a: builtins.match ".*paperless OIDC client registration.*" a.message != null) c.config.assertions)'
-            #   → must print 1 (0 = the guard stopped guarding).
+            # Negative test (PROVEN 2026-09-03 — the extendModules eval recipe
+            # below is DEPRECATED: it forces all assertion messages and hits
+            # the sops-template owner=null coercion crash; use the
+            # mutated-tree recipe instead):
+            #   1. git archive HEAD | tar -x -C /tmp/t10; cd /tmp/t10
+            #   2. Copy + `git add -f` the force-tracked gap (plain add -A
+            #      skips ignore rules and eval dies on missing flake-source
+            #      paths): diff the `git ls-files` sets vs the real repo —
+            #      platforms/nixos/secrets/*, assets/avatar.png, .envrc,
+            #      docs/reports/* — then commit.
+            #   3. Mutate ONLY the client registration callback (line with
+            #      `https://paperless.\${domain}/accounts/oidc/pocket-id/login/callback/`
+            #      inside oidcClients' paperless default) — NOT the
+            #      assertion's expected constant (same literal; a blanket sed
+            #      mutates both and the test self-neutralizes, proven the
+            #      hard way).
+            #   4. nix flake check --no-build → "Failed assertions:" naming
+            #      this message. Verified firing 2026-09-03.
             assertion =
               !cfg.provision.enable
               || !(options ? services.paperless)

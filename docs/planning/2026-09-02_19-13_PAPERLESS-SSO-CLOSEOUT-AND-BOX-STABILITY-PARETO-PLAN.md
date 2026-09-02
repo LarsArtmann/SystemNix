@@ -312,6 +312,26 @@ grep -E 'zram_swap_fill|crush_sessions ' /var/lib/prometheus-node-exporter/textf
 
 Read-only config survey 2026-09-02: **forgejo** `ENABLE_INTERNAL_SIGNIN=false` + `ENABLE_BASIC_AUTHENTICATION=false` (SSO-only; git HTTPS via tokens) · **immich** `passwordLogin.enabled=false` (OAuth-only) · **gatus** native OIDC, no local accounts · **browser-history** passkey WebAuthn + OAuth2, `MAX_USERS=1` (no passwords) · **paperless** SSO-only in UI since this plan's parent session. The ONLY remaining password surface in the SSO stack = **paperless REST API** (= T13's subject). No separate preference question needed — it folds into T13's recommendation.
 
+### T10 — client-shape assertion negative test (method proven 2026-09-03)
+
+The documented in-module `nix eval --impure … config.assertions` recipe is UNRELIABLE (sops `owner=null` coercion crash class + full-eval cost). Proven method: throwaway mutated tree — `git archive HEAD | tar -x -C /tmp/t10` + `git add -f` the force-tracked gap (all `platforms/nixos/secrets/*`, `assets/avatar.png`, `.envrc`, `docs/reports/*` — plain `git add -A` skips ignore rules and the eval dies on missing flake-source paths), sed-mutate the paperless callback in the DEFAULT oidcClients, then `nix flake check --no-build` in the copy → the assertion message must appear. (Result recorded in the 2026-09-03 status report; the in-module comment was updated to this recipe.)
+
+### T05 + T07 + T11 live proofs (2026-09-03)
+
+- **T05:** all six evening deploys wrote structured exit records (`deploy exited code=… after Ns`) to `/var/log/systemnix-deploys/*.log` + `journalctl -t systemnix-deploy`.
+- **T07:** the re-run smoke printed the NEW pressure verdicts against the live storm — `WARN I/O pressure avg10=61.71% (elevated, 20-80%)`, `PASS memory PSI 1.88%`, `PASS zram 97.7% (outside the combined pre-freeze zone)`. The old code called this state healthy.
+- **T11:** the classifier ran inside a real pre-deploy path during the 21:57/22:07 deploy window without false blocks.
+
+### Fallout fixed this session (2026-09-03 00:4x–01:xx)
+
+1. **post-deploy-check app build failure (blocker for every future deploy):** the 21:57 deploy's smoke app failed its own writeShellApplication shellcheck gate (SC1091 unstaged `lib/pressure-report.sh` + SC2016 mail-relay `_relay_banner`) — smoke never ran for gen 753. Fixed: sibling-lib staging in flake.nix (mirror of pre-deploy-check) + `disable=SC1091`/`disable=SC2016` directives + `gawk` runtimeInput; the re-run completed gen 753's missing smoke (84 PASS).
+2. **Smoke triage (8 FAILs → all attributed):** flm + llama-embeddings/reranker = **NPU-driver wedge since ~21:28** (flm-real zombie holds :52626 → start-limit-hit; llama pair D-state in `amdxdna_drm_open`, SIGKILL-immune) — reboot-class, folded into the P0 reboot TODO as URGENT; pocket-id SQLITE_BUSY = truthful (30/24h, the new alert firing correctly); CV pipeline-store = concurrent CV session's item (input bumped today); paperless EMAIL_HOST = mail-relay session's relay-gated block (their TODO exists).
+3. **bank-sync vendorHash override DROPPED:** upstream at lock rev c6342780 ships the identical hash (verified by eval) — the override was an identity no-op.
+4. **KNOWN_NEW_METRICS:** pocket-id pair retired (confirmed live); PMA trio + niri pair kept (still absent).
+5. **T15 shipped as `textfile-emission-lint` (checks.*):** fail-level with `# emission-ok` exemption — deviation from the plan's warn-level, justified by the zero-findings baseline (stronger guard, zero false positives at introduction, one-line escape hatch).
+6. **T16 closed with a live escalation:** system-health-metrics timed out its 3min ceiling on EVERY run 00:31–00:4x under the IO storm (forgejo scan status 124; textfile stale; sev1 paging correctly). Structural cause measured: worst-case serial section sum ≈500s (7×60s journal sections) vs 180s ceiling vs 120s cadence — TODO filed for the designed rework (parallelize/slash budgets); no band-aid applied mid-storm on a shared surface.
+7. **T12 verdict:** unrecoverable to direct attribution — but the window (15:50–17:26) was a VERIFIED kernel global-OOM sweep storm (PSI CRITICAL, kswapd kills of discordsync×N, chrome_crashpad, llama-server, ollama). Silent mid-step death + zero output is the exact signature of the deploy tree being SIGKILLed. T05's trap/journal-tag/logfile is the recurrence guard — now proven live.
+
 ### Deploy-train convergence (annotated 2026-09-02 23:5x)
 
 Concurrent sessions ran the train: gen **753** switched 21:59 (deploy exit 0, 22:07) carrying all Tier-1/2 code. Live-verified post-switch: `system_pocket_id_busy_*` LIVE (events_24h=30, over_threshold=1 — the SQLITE_BUSY alert fires TRUTHFULLY; user may tune the 10/24h threshold later), `node_textfile_scrape_error 0`, paperless login 5-conditions green, `/admin` + `/admin/documents` → 403. T05 exit-record proven live (all six 2026-09-02 evening deploys logged structured exit lines). **Fallout fixed:** the 21:57 deploy's `post-deploy-check` app failed its own build (shellcheck SC1091 unstaged lib + mail-relay SC2016) → smoke never ran for gen 753 → fixed with sibling-lib staging + directives; re-run completed the missing smoke.

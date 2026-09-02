@@ -955,6 +955,30 @@
                 touch $out
               '';
 
+              # Textfile-emission guard: a metric echo line without a VALUE
+              # makes the node exporter reject the WHOLE .prom file — one
+              # value-less line darked all 38 system_* metrics and blocked
+              # every deploy (2026-09-02). Fail-level (baseline zero
+              # findings at introduction): a snake_case token as the ONLY
+              # quoted argument to echo/printf is the value-less shape;
+              # append `# emission-ok` to exempt a deliberate one.
+              textfile-emission-lint = pkgs.runCommand "textfile-emission-lint" { } ''
+                fail=0
+                for dir in ${./modules/nixos/services} ${./modules/nixos/desktop}; do
+                  for f in "$dir"/*.nix; do
+                    [ -e "$f" ] || continue
+                    while IFS= read -r line; do
+                      echo "$line" | grep -q 'emission-ok' && continue
+                      echo "FAIL: $(basename "$f"): value-less metric echo (node exporter rejects the whole .prom):"
+                      echo "  $line"
+                      fail=1
+                    done < <(grep -nE 'echo[[:space:]]+"[a-z][a-z0-9]*(_[a-z0-9]+)+"[[:space:]]*(>>|>[^>]|[[:space:]]*$)' "$f" || true)
+                  done
+                done
+                [ "$fail" -eq 0 ] || exit 1
+                touch $out
+              '';
+
               # SigNoz alert rules (_signoz-alerts.nix) + dashboards query the
               # OTel-collector-backed metrics store, which has DIFFERENT label
               # and naming semantics than a plain Prometheus:

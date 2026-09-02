@@ -462,13 +462,12 @@ if [ -s "$METRICS_FILE" ]; then
   # transition hour — 785 backlog failures sat in the 1h window at
   # deploy time).
   # niri_aw_* (2026-09-02, aw-watcher attach monitoring) and
-  # system_pocket_id_busy_* (2026-09-02, pocket-id SQLITE_BUSY watch —
-  # collector + checks landed together undeployed in e5ad4901): the metrics
-  # ride THIS deploy's collectors — absent from the running scrape only
-  # until the switch lands.
+  # pocket-id pair retired 2026-09-03: confirmed LIVE in :9100/metrics after
+  # the gen-753 deploy (events_24h=30, scrape_errors=0). Still riding:
+  # PMA trio + niri pair (not yet live as of 2026-09-03 00:5x).
   # Read by the sourced metrics-gate.sh.
   # shellcheck disable=SC2034
-  KNOWN_NEW_METRICS="system_pma_commit_scrape_errors system_pma_commit_failures_over_threshold system_pma_commit_fallbacks_over_threshold niri_aw_watcher_attached niri_aw_watcher_late system_pocket_id_busy_over_threshold system_pocket_id_busy_scrape_errors"
+  KNOWN_NEW_METRICS="system_pma_commit_scrape_errors system_pma_commit_failures_over_threshold system_pma_commit_fallbacks_over_threshold niri_aw_watcher_attached niri_aw_watcher_late"
   for metric in $(extract_gatus_metrics); do
     metrics_gate_classify_absence "$metric" || MISSING_METRICS=$((MISSING_METRICS + 1))
   done

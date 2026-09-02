@@ -57,9 +57,16 @@ The sops value only **seeds bootstrap** (the nixpkgs scheduler's `superuser-stat
 
 Definitive gatus state (root): `sudo sqlite3 -readonly /var/lib/private/gatus/gatus.db 'select name,status from endpoints;'` — the gatus HTTP API sits behind OIDC and 401s plain curl.
 
-## API caveat (T13 pending user decision)
+## API auth surface (T13 research COMPLETE 2026-09-03, source+live-verified against 3.0.5 — implementation gated on user go)
 
-`PAPERLESS_DISABLE_REGULAR_LOGIN` also blocks username/password API-token acquisition (mobile app password login); **existing API tokens keep working**. The REST API itself still accepts username/password for session auth in some paths — closing that is a separate change gated on the "do you use API clients?" question (2026-09-02: answer pending, research-only). Paperless-ai uses a token; the web UI uses the session.
+**`PAPERLESS_DISABLE_REGULAR_LOGIN` does NOT close the REST API password surface.** Verified in source + live probe (supersedes an earlier claim in this file that it blocked token acquisition — it does not):
+
+- The flag lives ONLY in allauth's login-view path (`paperless/adapter.py pre_authenticate` → the web login form).
+- **HTTP Basic on `/api/*` stays open**: DRF's `PaperlessBasicAuthentication` subclasses `BasicAuthentication` → `user.check_password()` directly, no backend chain, no gate. Reachable EXTERNALLY (paperless is Layer-1 plain reverse_proxy — the app IS the auth boundary).
+- **`/api/token/` obtain stays open**: `AuthTokenSerializer` calls `django.contrib.auth.authenticate()`; `ModelBackend` (plain password check) runs BEFORE allauth's gated backend, so correct credentials succeed. Live probe with bogus creds returns "Unable to log in", NOT "Regular login is disabled" — the gate is never reached.
+- **API tokens keep working regardless** (`TokenAuthentication`): paperless-ai + InboxClean (token provisioned 2026-09-02) are the known consumers; no password-auth consumers exist on this box.
+
+**Recommended closure (not yet implemented — needs user go, Q2 answer was "unsure"):** Caddy-level, zero app change — under `/api/*`, respond 403 when `Authorization` starts with `Basic` (header-prefix matcher), plus an exact block of `/api/token/`. Token consumers (`Authorization: Token …`) pass untouched. Side effect: the official mobile app's password login breaks (it uses `/api/token/`); if the mobile app matters, keep `/api/token/` open and accept Basic being closed only. Ask: "Do you use, or plan to use, the paperless mobile app or any password-based API client?"
 
 ## Known traps (pointers)
 

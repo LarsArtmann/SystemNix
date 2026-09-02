@@ -325,7 +325,14 @@ _: {
                           # lands (TODO_LIST: niri-session-manager upstream).
                           mgr_config_stale=0
                           nsm_config="/home/${config.users.primaryUser}/.config/niri-session-manager/config.toml"
-                          nsm_pid=$(pgrep -x niri-session-manager 2>/dev/null | head -1)
+                          # `|| true` is LOAD-BEARING: pgrep exits 1 when the
+                          # manager is not running, and pipefail + set -e then
+                          # kill the whole collector BEFORE the .prom is
+                          # written — the oneshot fails and blocks EVERY
+                          # deploy at test-activation (Exited(4), live
+                          # 2026-09-03 00:2x, 4+ failed deploys across two
+                          # sessions before this was traced).
+                          nsm_pid=$(pgrep -x niri-session-manager 2>/dev/null | head -1 || true)
                           if [ -n "$nsm_pid" ] && [ -f "$nsm_config" ]; then
                             cfg_mtime=$(stat -c %Y "$nsm_config" 2>/dev/null || echo 0)
                             mgr_start_line=$(ps -o lstart= -p "$nsm_pid" 2>/dev/null)
