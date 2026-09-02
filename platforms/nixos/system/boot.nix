@@ -6,9 +6,13 @@
 let
   inherit (import ../../../lib/default.nix lib) ioTier;
 
-  # Ceiling for active GPU buffer object allocations — ML model loading needs this high.
-  # 29360128 pages × 4096 = 112 GiB (exceeds ~110 GiB visible, but it's a ceiling not a reservation)
-  ttmPagesLimit = 29360128;
+  # Ceiling for active GPU buffer object allocations (TTM pages, 4 KiB each).
+  # 31457280 pages × 4096 = 120 GiB. GTT-first architecture (2026-09-02): the BIOS
+  # UMA carveout is 512 MiB, so ALL real GPU memory is GTT (= shared system RAM);
+  # the driver reports GTT total ≈ MemTotal (~125 GiB after the small carveout).
+  # This ceiling is ~5 GiB below that so TTM refuses allocations before the box is
+  # fully pinned. Still a CEILING, not a reservation.
+  ttmPagesLimit = 31457280;
 
   # Pool cache for freed BO pages — pages retained for GPU reuse instead of returned to kernel.
   # 6291456 pages × 4096 = 24 GiB (was 112 GiB — same as pages_limit, which meant freed pages
@@ -90,8 +94,8 @@ in
       # The ~130W power ceiling is GMKtec firmware PPT — not OS-controllable (no ryzen_smu for
       # Strix Halo yet, no RAPL constraints exposed, no platform profile in BIOS).
       "amd_pstate=performance"
-      # TTM: match GTT limit so GPU page allocations can use the full 112GB
-      # Note: amdgpu.gttsize is deprecated in kernel 7.0+ — use ttm.pages_limit instead
+      # TTM: GTT allocation ceiling. amdgpu.gttsize is GONE in kernel 7.0+ —
+      # ttm.pages_limit (here + extraModprobeConfig below) is the only knob.
       "amdgpu.ttm.pages_limit=${toString ttmPagesLimit}"
       # IOMMU enabled — required for full 128GB memory mapping on Strix Halo.
       # Previously set to "off" for ~6% memory read improvement, but this prevented
@@ -182,21 +186,25 @@ in
     }
   ];
 
-  # TTM memory pool configuration for GPU workloads
-  # System has 128 GiB physical RAM but only ~110 GiB visible to Linux (18 GiB BIOS VRAM carveout).
-  # pages_limit = max pages TTM allocator can grab (ceiling, not reservation)
-  # page_pool_size = max pages TTM pool caches for reuse after BO free
-  # Split (2026-07-12): page_pool_size reduced from 112 GiB → 24 GiB to fix the GPUActive black hole.
-  # With pool = 112 GiB, freed GPU BO pages were never returned to kernel → GPUActive=51+ GiB even
-  # with only desktop workloads → chronic memory pressure → BTRFS commit stalls → SQLite lock
-  # renewal failures → Pocket ID crash-loop → auth.home.lan down. See docs/status/ for analysis.
+  # TTM memory pool configuration for GPU workloads (GTT-first, 2026-09-02).
+  # 128 GiB physical RAM; BIOS UMA carveout reduced to 512 MiB — visible RAM
+  # (~125 GiB) is GTT-shared instead of statically reserved by the iGPU.
+  # pages_limit = max pages TTM allocator can grab (ceiling, not reservation):
+  # 120 GiB, ~5 GiB below expected MemTotal so GPU pinning fails before the box.
+  # page_pool_size = max pages the TTM pool caches for reuse after BO free.
+  # MUST STAY SMALL (24 GiB): when pool = pages_limit (112 GiB era), freed GPU
+  # pages were never returned to the kernel → GPUActive=51+ GiB with only desktop
+  # workloads → chronic memory pressure → BTRFS commit stalls → SQLite lock
+  # renewal failures → Pocket ID crash-loop → auth.home.lan down. Do NOT raise it
+  # to "match" pages_limit. See docs/status/ for the analysis.
   boot.extraModprobeConfig = ''
     options ttm pages_limit=${toString ttmPagesLimit}
     options ttm page_pool_size=${toString ttmPagePoolSize}
   '';
 
-  # VM sysctl tuning for AI/ML workloads (AMD Ryzen AI MAX+ 395 — 128 GiB physical, ~110 GiB visible
-  # to Linux after 18 GiB BIOS VRAM carveout. GPU/CPU share same RAM via GTT on this unified-memory APU)
+  # VM sysctl tuning for AI/ML workloads (AMD Ryzen AI MAX+ 395 — 128 GiB physical,
+  # ~125 GiB visible to Linux with the 512 MiB BIOS VRAM carveout (GTT-first,
+  # 2026-09-02). GPU/CPU share the same RAM via GTT on this unified-memory APU)
   #
   # ZRAM-FIRST RECLAIM STRATEGY (2026-08-13):
   # This machine has zram as its ONLY swap (no disk swap). zram compresses in RAM

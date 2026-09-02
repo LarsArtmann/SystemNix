@@ -95,26 +95,52 @@ local_clone() {
 }
 
 declare -A TAG_CACHE=() # repo -> "tag commit" newline blob
+# repo -> "clone" | "remote" | "remote-failed". A FAILED upstream lookup
+# (network blip, private repo over anonymous https) is NOT evidence a tag is
+# missing — ERROR-MISSING must not fire on it (CI has no local clones, so
+# every private repo goes through the ls-remote fallback).
+declare -A TAG_SRC=()
 
-resolve_tag() { # <repo> <tag> -> commit on stdout, empty if unresolvable
+# Shared tag-peeling filter: "tag<TAB>commit", peeled refs preferred.
+filter_tags() {
+  awk '/\^\{\}$/{tag=$2; sub("refs/tags/", "", tag); sub(/\^\{\}$/, "", tag); peeled[tag]=$1}
+       !/\^\{\}$/{tag=$2; sub("refs/tags/", "", tag); direct[tag]=$1}
+       END{for (t in direct) print t "\t" (peeled[t] != "" ? peeled[t] : direct[t])}'
+}
+
+# resolve_tag result contract: sets RESOLVE_TAG_COMMIT (empty = not found)
+# and RESOLVE_TAG_SRC in the CALLING shell. MUST be called without command
+# substitution — $(resolve_tag ...) would run it in a subshell and silently
+# drop the TAG_SRC bookkeeping the ERROR-MISSING downgrade depends on
+# (exactly the class of bug the unit tests caught).
+RESOLVE_TAG_COMMIT=""
+RESOLVE_TAG_SRC=""
+
+resolve_tag() { # <repo> <tag>
   local repo="$1" tag="$2"
+  RESOLVE_TAG_COMMIT=""
+  RESOLVE_TAG_SRC="${TAG_SRC[$repo]:-}"
   if [ -z "${TAG_CACHE[$repo]+x}" ]; then
     local blob=""
     local clone
     if clone=$(local_clone "$repo"); then
-      blob=$(git -C "$clone" show-ref --tags -d 2>/dev/null |
-        awk '/\^\{\}$/{tag=$2; sub("refs/tags/", "", tag); sub(/\^\{\}$/, "", tag); peeled[tag]=$1}
-             !/\^\{\}$/{tag=$2; sub("refs/tags/", "", tag); direct[tag]=$1}
-             END{for (t in direct) print t "\t" (peeled[t] != "" ? peeled[t] : direct[t])}')
-    else
-      blob=$(git ls-remote --tags "https://github.com/LarsArtmann/$repo" 2>/dev/null |
-        awk '/\^\{\}$/{tag=$2; sub("refs/tags/", "", tag); sub(/\^\{\}$/, "", tag); peeled[tag]=$1}
-             !/\^\{\}$/{tag=$2; sub("refs/tags/", "", tag); direct[tag]=$1}
-             END{for (t in direct) print t "\t" (peeled[t] != "" ? peeled[t] : direct[t])}')
+      blob=$(git -C "$clone" show-ref --tags -d 2>/dev/null | filter_tags)
+      TAG_SRC[$repo]="clone"
+    fi
+    # Fallback when there is no clone (CI) or the clone has no tag refs at
+    # all (fresh checkout). pipefail (set at top) makes a failed ls-remote
+    # fail the assignment -> "remote-failed".
+    if [ -z "$blob" ]; then
+      if blob=$(git ls-remote --tags "https://github.com/LarsArtmann/$repo" 2>/dev/null | filter_tags); then
+        TAG_SRC[$repo]="remote"
+      else
+        TAG_SRC[$repo]="remote-failed"
+      fi
     fi
     TAG_CACHE[$repo]="$blob"
+    RESOLVE_TAG_SRC="${TAG_SRC[$repo]}"
   fi
-  awk -F'\t' -v tag="$2" '$1 == tag {print $2}' <<<"${TAG_CACHE[$repo]}"
+  RESOLVE_TAG_COMMIT=$(awk -F'\t' -v tag="$tag" '$1 == tag {print $2}' <<<"${TAG_CACHE[$repo]}")
 }
 
 is_ancestor() { # <repo> <commitA> <commitB> -> 0 if A is ancestor of B, 1 if not, 2 if undecidable
@@ -217,11 +243,17 @@ for input in "${!INPUT_REPO[@]}"; do
       else
         tag="$ver"
         [ -n "$tagprefix" ] && tag="$tagprefix/$ver"
-        reqcommit=$(resolve_tag "$repo" "$tag")
+        resolve_tag "$repo" "$tag"
+        reqcommit="$RESOLVE_TAG_COMMIT"
         from_tag=1
         if [ -z "$reqcommit" ]; then
-          say "ERROR-MISSING $context — tag $tag not found in $repo"
-          ERR=$((ERR + 1))
+          if [ "$RESOLVE_TAG_SRC" = "remote-failed" ]; then
+            say "WARN-UNKNOWN $context — upstream tag lookup FAILED for $repo (network/private repo over https); cannot verify tag $tag"
+            WARN=$((WARN + 1))
+          else
+            say "ERROR-MISSING $context — tag $tag not found in $repo"
+            ERR=$((ERR + 1))
+          fi
           continue
         fi
         # This ecosystem cuts release commits ("strip replace directives") on a
