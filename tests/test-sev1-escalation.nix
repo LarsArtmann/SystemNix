@@ -393,7 +393,7 @@
       out = run_bridge("resolved")
       assert "GUARD TRIPPED" not in out, (
           "a resolved trip (sacrifice restored at 53% avail) must not keep "
-          "fullscreen-paging — the 2026-09-02 30-min-overlay spam class"
+          "alerting — the 2026-09-02 30-min-overlay spam class"
       )
       machine.fail("test -f /tmp/sev1/alert")
 
@@ -405,10 +405,12 @@
       out = run_bridge("tripactive")
       assert "MEMORY EMERGENCY GUARD TRIPPED" in out
       alert = machine.succeed("cat /tmp/sev1/alert")
-      assert alert.strip().split("\n")[3] == "page"
+      assert alert.strip().split("\n")[3] == "notify", (
+          "an active trip must be NOTIFY tier — no memory fullscreen, ever"
+      )
 
       # 9c. Churn context: >=2 trips in the last hour appends the re-wake
-      #     warning to the trip page detail (same title set -> the dedup
+      #     warning to the trip alert detail (same title set -> the dedup
       #     keeps the notification quiet, but the alert file carries it).
       machine.succeed("${writeProms "churn" guardPromChurn healthPromHealthy}")
       out = run_bridge("churn")

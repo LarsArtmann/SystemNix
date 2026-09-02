@@ -67,14 +67,49 @@ in
         "${mockCvEnv}"
       ];
 
-      # Simulate the mirrored HDD pool: a second disk auto-formatted and
-      # mounted at /mnt/pool, exactly what cv-backup-dir's RequiresMountsFor
-      # gates on in production.
+      # Simulate the mirrored HDD pool: a second disk formatted as btrfs
+      # (production fs) and mounted at /mnt/pool, exactly what
+      # cv-backup-dir's RequiresMountsFor gates on in production.
+      #
+      # MUST be virtualisation.fileSystems, NOT fileSystems: qemu-vm.nix
+      # replaces the whole `fileSystems` option at priority 900
+      # (mkVMOverride), so a plain entry silently VANISHES from the guest
+      # fstab — until 2026-09-02 this test's pool never mounted and every
+      # cv-backup assertion ran against a root-fs shadow directory, weaker
+      # than believed (same trap as tests/test-pool-recovery.nix, whose
+      # pool-fmt unit is the reference implementation).
+      boot.supportedFilesystems = [ "btrfs" ];
       virtualisation.emptyDiskImages = [ 512 ];
-      fileSystems."/mnt/pool" = {
-        device = "/dev/vdb";
-        fsType = "ext4";
-        autoFormat = true;
+      virtualisation.fileSystems."/mnt/pool" = {
+        device = "/dev/disk/by-label/pool";
+        fsType = "btrfs";
+        options = [ "nofail" ];
+      };
+      systemd.services.pool-fmt = {
+        description = "Format the virtio disk as btrfs label pool (test-only)";
+        # Must complete BEFORE mnt-pool.mount starts (its by-label device
+        # unit only exists once mkfs has run) — a sibling under
+        # local-fs.target with no ordering races the mount.
+        wantedBy = [ "local-fs.target" ];
+        before = [
+          "mnt-pool.mount"
+          "local-fs.target"
+        ];
+        serviceConfig = {
+          Type = "oneshot";
+          User = "root";
+        };
+        path = [
+          pkgs.btrfs-progs
+          pkgs.util-linux
+          pkgs.systemd
+        ];
+        script = ''
+          if ! blkid /dev/vdb | grep -q 'LABEL="pool"'; then
+            mkfs.btrfs -f -L pool /dev/vdb
+          fi
+          udevadm settle
+        '';
       };
     };
 
@@ -153,7 +188,11 @@ in
     #    into 226/NAMESPACE. The mount-gated cv-backup-dir oneshot
     #    (atticd-storage-dir pattern) is the declarative creator: boot-wired
     #    via multi-user.target, restarted by deploy.sh, wants-pulled by the
-    #    cv-backup timer transaction.
+    #    cv-backup timer transaction. The findmnt assertion pins the REAL
+    #    mount (btrfs): before 2026-09-02 the plain fileSystems entry
+    #    vanished from the guest fstab and these steps ran against a
+    #    root-fs directory — green but meaningless.
+    machine.succeed("findmnt -n -o FSTYPE /mnt/pool | grep -q btrfs")
     machine.wait_for_unit("cv-backup-dir.service")
     machine.succeed("test -d /mnt/pool/backups/cv")
     machine.succeed("systemctl cat cv-backup.service | grep -q 'RequiresMountsFor=/mnt/pool/backups/cv'")
