@@ -31,8 +31,11 @@ _: {
     }:
     let
       inherit (import ../../../lib/default.nix lib)
+        harden
         ioTier
+        mkStateDir
         onFailure
+        serviceOneshotDefaults
         ;
 
       cfg = config.services.mail-relay;
