@@ -424,10 +424,12 @@ if [ -s "$METRICS_FILE" ]; then
   # backlog drains; failures may legitimately read 1 during the
   # transition hour — 785 backlog failures sat in the 1h window at
   # deploy time).
-  # niri_aw_* (2026-09-02, aw-watcher attach monitoring): the metrics ride
-  # THIS deploy's niri-health collector (emitted unconditionally) — absent
-  # from the running scrape only until the switch lands.
-  KNOWN_NEW_METRICS="system_pma_commit_scrape_errors system_pma_commit_failures_over_threshold system_pma_commit_fallbacks_over_threshold niri_aw_watcher_attached niri_aw_watcher_late"
+  # niri_aw_* (2026-09-02, aw-watcher attach monitoring) and
+  # system_pocket_id_busy_* (2026-09-02, pocket-id SQLITE_BUSY watch —
+  # collector + checks landed together undeployed in e5ad4901): the metrics
+  # ride THIS deploy's collectors — absent from the running scrape only
+  # until the switch lands.
+  KNOWN_NEW_METRICS="system_pma_commit_scrape_errors system_pma_commit_failures_over_threshold system_pma_commit_fallbacks_over_threshold niri_aw_watcher_attached niri_aw_watcher_late system_pocket_id_busy_over_threshold system_pocket_id_busy_scrape_errors"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"
