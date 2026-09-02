@@ -1,5 +1,7 @@
 # SystemNix Pareto Execution Plan — Outage Recovery & Trust Restoration
 
+> **ARCHIVED (executed or superseded — 2026-08-31 docs-health audit):** frozen snapshot; the live state lives in `TODO_LIST.md` / `FEATURES.md` / `AGENTS.md`.
+
 **Created:** 2026-08-14 20:58 CEST
 **Source of truth:** `TODO_LIST.md` @ `d7ba5084` (111 open items across P0–P7)
 **Trigger:** docs-health audit closed 20:52 (6 sessions, 35 reports annotated, 32 archived). This plan ranks the resulting backlog.

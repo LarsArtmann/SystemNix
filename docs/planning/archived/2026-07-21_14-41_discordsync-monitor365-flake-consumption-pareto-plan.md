@@ -1,5 +1,7 @@
 # DiscordSync + Monitor365 Flake Consumption — Pareto Execution Plan
 
+> **ARCHIVED (executed or superseded — 2026-08-31 docs-health audit):** frozen snapshot; the live state lives in `TODO_LIST.md` / `FEATURES.md` / `AGENTS.md`.
+
 **Created:** 2026-07-21 14:41
 **Source:** Two library deep-dive audits (`docs/research/2026-07-21_discordsync-flake-deep-dive.html` score 62/100; `docs/research/2026-07-21_monitor365-flake-deep-dive.html` score 88/100)
 **Scope:** Close every adoption gap surfaced by both audits. No scope creep — only the 9 findings.

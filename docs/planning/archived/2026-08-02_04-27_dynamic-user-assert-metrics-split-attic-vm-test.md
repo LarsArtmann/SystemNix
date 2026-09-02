@@ -1,5 +1,7 @@
 # DynamicUser Assert + Metrics Split + Attic VM Test
 
+> **ARCHIVED (executed or superseded — 2026-08-31 docs-health audit):** frozen snapshot; the live state lives in `TODO_LIST.md` / `FEATURES.md` / `AGENTS.md`.
+
 **Date:** 2026-08-02
 **Status:** Planning → Execution
 

@@ -1,5 +1,7 @@
 # PMA Memory & CPU Death-Loop — Comprehensive Fix Plan
 
+> **ARCHIVED (executed or superseded — 2026-08-31 docs-health audit):** frozen snapshot; the live state lives in `TODO_LIST.md` / `FEATURES.md` / `AGENTS.md`.
+
 **Date:** 2026-08-01 21:32
 **Status:** Planning
 **Severity:** High — service at 12G MemoryMax ceiling, commit death-loops burning CPU

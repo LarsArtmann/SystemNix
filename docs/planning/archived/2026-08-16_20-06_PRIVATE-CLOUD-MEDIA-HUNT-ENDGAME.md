@@ -1,5 +1,7 @@
 # Private-Cloud Media Hunt — ENDGAME (Pareto Execution Plan)
 
+> **ARCHIVED (executed or superseded — 2026-08-31 docs-health audit):** frozen snapshot; the live state lives in `TODO_LIST.md` / `FEATURES.md` / `AGENTS.md`.
+
 **Created:** 2026-08-16 20:06 CEST
 **Mission:** Definitively answer _"where are the photos I remember viewing on my Mac?"_ and close out the dead private-cloud box (died 2025-12-21/22) with **every byte classified**, zero risk of losing anything, and a clean decommission.
 **Inputs:** `docs/status/2026-08-16_20-01_media-hunt-forensic-deep-dive.md` (session verdict + 40 next items), `2026-08-16_19-12_…final-verification.md` (addendum H + §F/§G), `2026-08-16_17-24_…sdf2-clone.md`.

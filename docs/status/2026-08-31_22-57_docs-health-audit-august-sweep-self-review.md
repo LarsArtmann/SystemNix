@@ -87,6 +87,8 @@ Loaded the docs-health skill + 3 references, inventoried all **154 unarchived `2
 2. **Brainstorm depth:** the ~1,300 unmarked items in the 08-20→08-24 self-review lists — do you want a second evidence pass over them (hours, mostly "consider/minor" items), or is routed-to-TODO_LIST + unmarked-is-open the accepted end state for that era?
 3. **DOMAIN_LANGUAGE.md:** should an infra-config repo like SystemNix carry one (minimal: subvolume/pool/guard/sev1/phantom-green vocabulary), or record the "not needed" decision in the docs-debt row?
 
+**Resolution 2026-09-02 (execution session):** DECIDED — no DOMAIN_LANGUAGE.md. Rationale: SystemNix is an infrastructure-config repo, not a DDD domain project; its operational vocabulary (subvolume, pool, guard zones, sev1 tiers, phantom-green, harden, ioTier) is already defined in-context in AGENTS.md where each term carries its incident history — a separate glossary would become a second source of truth drifting from the narratives. Revisit only if the repo grows a true domain model. (§g.1 and §g.2 remain open for the user.)
+
 ---
 
 **Report status:** written 22:57, NOT committed (daemon owns commits). **WAITING for instructions** — no further work will be started until answers/direction arrive.

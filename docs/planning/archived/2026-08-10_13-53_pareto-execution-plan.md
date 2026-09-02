@@ -1,5 +1,7 @@
 # SystemNix Pareto Execution Plan — 2026-08-10
 
+> **ARCHIVED (executed or superseded — 2026-08-31 docs-health audit):** frozen snapshot; the live state lives in `TODO_LIST.md` / `FEATURES.md` / `AGENTS.md`.
+
 **Date:** 2026-08-10 13:53
 **Trigger:** User requested Pareto breakdown (1%/4%/20%) with comprehensive task plan
 **Input:** `TODO_LIST.md` (92 open items across 8 priorities) + self-review findings

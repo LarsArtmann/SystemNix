@@ -87,14 +87,14 @@ hypothesis is recorded as correct for the recovery-attempt blocker.
 
 ## c) NOT STARTED (blocked on DAS returning)
 
-~~1. Post-recovery verification chain: disks (`by-id` Toshiba/SanDisk) → `/mnt/pool` mount (both members;~~ done 2026-08-31 — full chain verified (16-29 report: by-label mount, both members, zero errors, checks green)
+~~1. Post-recovery verification chain: disks (`by-id` Toshiba/SanDisk) → `/mnt/pool` mount (both members;
    one-member `-o degraded` is a USER decision) → `buildcache-usb-recovery.service` fires → Gatus
-   "Build Cache SSD" + "DAS USB Link" flip green → sev1 DAS alert clears.
-~~2. Pool-dependent service catch-up: atticd (+storage-dir/bootstrap), immich, paperless, bank-sync —~~ done — 83 PASS / 0 FAIL on 2026-08-31
-   may need `systemctl reset-failed` + start (root) after days failed.
+   "Build Cache SSD" + "DAS USB Link" flip green → sev1 DAS alert clears.~~ done 2026-08-31 — full chain verified (16-29 report: by-label mount, both members, zero errors, checks green)
+~~2. Pool-dependent service catch-up: atticd (+storage-dir/bootstrap), immich, paperless, bank-sync —
+   may need `systemctl reset-failed` + start (root) after days failed.~~ done — 83 PASS / 0 FAIL on 2026-08-31
 ~~3. `btrbk-pool` snapshot catch-up (missed since Aug 22) + pool scrub + `btrfs device stats` check.~~ done — catch-up verified; scrub cadence resumed (deferred-scrub guard now IO-aware)
-~~4. smartd long tests on both Toshibas (one member already failed to enumerate at the Aug 22 boot —~~ done — both members healthy on recovery (zero device errors); long-test scheduling remains optional hygiene
-   pre-incident disk problem possible).
+~~4. smartd long tests on both Toshibas (one member already failed to enumerate at the Aug 22 boot —
+   pre-incident disk problem possible).~~ done — both members healthy on recovery (zero device errors); long-test scheduling remains optional hygiene
 5. NVMe fallback-cache decision (~6.7 GB `~/.cache/{gobuild,gocache,gomod}`) — user decision pending
    since before this session.
 6. e2fsck on buildcache SSD if the earlier ext4 damage flags recur.

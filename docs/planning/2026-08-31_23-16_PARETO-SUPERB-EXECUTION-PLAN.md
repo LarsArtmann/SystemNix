@@ -111,10 +111,10 @@ Sorted by tier then impact. `P` = parent task.
 | F13 | `rm /btrfs-emergency-reserve`; PSI/zram quiet check | 5 | T03 | 1% |
 | F14 | `sudo ionice -c 3 btrfs balance start -musage=50 /` (watch) | 12 | T03 | 1% |
 | F15 | Re-check unalloc >10G; re-provision reserve; AGENTS pinning caveat | 10 | T03 | 1% |
-| F16 | CI: add `nix build .#checks...gatus-pattern-lint signoz-query-lint` step | 10 | T04 | 1% |
-| F17 | Pre-commit: shellcheck hook for staged `scripts/*.sh` | 10 | T04 | 1% |
-| F18 | Binary-coverage lint v0: grep exec'd binaries vs `path`/`runtimeInputs` (runCommand check) | 12 | T04 | 1% |
-| F19 | Negative-test the lint through nix (mutation fixture) | 12 | T04 | 1% |
+| F16 | ~~CI: add `nix build .#checks...gatus-pattern-lint signoz-query-lint` step~~ done 2026-09-02 — step builds 6 pure lints (gatus-pattern, signoz-query, module-shape, chown-vs-bind, binary-coverage ×2) | 10 | T04 | 1% |
+| F17 | ~~Pre-commit: shellcheck hook for staged `scripts/*.sh`~~ already existed (5a798cb6 — plan row was stale); fixed 2 latent wedges instead (SC2034 zfs-vm-deepdive, SC2188 pre-commit itself) | 10 | T04 | 1% |
+| F18 | ~~Binary-coverage lint v0: grep exec'd binaries vs `path`/`runtimeInputs` (runCommand check)~~ done 2026-09-02 — `binary-coverage-lint` (awk→gawk, python3→pkgs.python3; incident-backed rows only) | 12 | T04 | 1% |
+| F19 | ~~Negative-test the lint through nix (mutation fixture)~~ done 2026-09-02 — `binary-coverage-selftest` (good/evil trees, asserts both fire and silence) | 12 | T04 | 1% |
 | F20 | Retire bank_sync ×2 + dnsblockd_fresh + legacy_unchanged from KNOWN_NEW (post-verify) | 8 | T05 | 1% |
 | F21 | Self-cleaning allowlist: flag entries already present in /metrics | 12 | T05 | 1% |
 | F22 | post-deploy-check: known-outage WARN classification (unit+dependency-aware) | 12 | T05 | 1% |
@@ -147,12 +147,12 @@ Sorted by tier then impact. `P` = parent task.
 | F49 | /data/docker usage metric + Gatus >80% + AGENTS numbers | 12 | T13 | 4% |
 | F50 | False-green detector: 0B-reclaimed ≥2 runs → Discord | 12 | T13 | 4% |
 | F51 | Timer out of Mon 03:00 window; runCommand no-bare-prune check; identify 4 deleted containers | 12 | T13 | 4% |
-| F52 | Fix 9 partial strikethroughs (extend ~~ over continuations) | 10 | T14 | 4% |
-| F53 | Fix empty-marker strike (28-04-51) + imprecise marker (03-58 #5) | 5 | T14 | 4% |
-| F54 | Link-checker rewrite + run over living docs | 8 | T14 | 4% |
-| F55 | EXECUTED banners on 7 archived planning docs | 10 | T14 | 4% |
-| F56 | FEATURES §4-6/10/11 read+fix; TODO row wording ("targeted update") | 12 | T14 | 4% |
-| F57 | DOMAIN_LANGUAGE decision recorded | 5 | T14 | 4% |
+| F52 | ~~Fix 9 partial strikethroughs (extend strikes over continuation lines)~~ done 2026-09-02 (27-16-08 ×4, 29-18-41 ×3, 18-45-syshealth ×2) | 10 | T14 | 4% |
+| F53 | ~~Fix empty-marker strike (28-04-51) + imprecise marker (03-58 #5)~~ done 2026-09-02 (heading strike reverted; marker corrected to pre-commit-executes claim) | 5 | T14 | 4% |
+| F54 | ~~Link-checker rewrite + run over living docs~~ done 2026-09-02 — `scripts/check-doc-links.sh` (shellcheck-clean, negative-tested; living docs all green) | 8 | T14 | 4% |
+| F55 | ~~EXECUTED banners on 7 archived planning docs~~ done 2026-09-02 — 13 bannerless archived plans bannered (7 was an undercount) | 10 | T14 | 4% |
+| F56 | ~~FEATURES §4-6/10/11 read+fix; TODO row wording ("targeted update")~~ done 2026-09-02 for FEATURES (5 factual drifts fixed: CI --all-systems claim, swayidle DPMS, monitor365 disabled note, bench scripts exist, trap-lint row updated); TODO row wording deferred (file foreign-dirty) | 12 | T14 | 4% |
+| F57 | ~~DOMAIN_LANGUAGE decision recorded~~ done 2026-09-02 — NO glossary (infra repo, AGENTS.md owns vocabulary in-context); recorded in the 22-57 self-review §g.3 | 5 | T14 | 4% |
 | F58 | dnsblockd push+tag+relock; flip wiring "config"; verify spans | 12 | T15 | 20% |
 | F59 | bank-sync push+tag+relock; flip wiring "env"; verify spans | 12 | T15 | 20% |
 | F60 | `backup_ever_succeeded` metric in backup-coordination | 10 | T16 | 20% |
@@ -205,7 +205,7 @@ Sorted by tier then impact. `P` = parent task.
 | F107 | Docs debt: appendix-only archives ×11 + gotchas narratives ×6 | 12 | T14 | 100% |
 | F108 | AGENTS compression session (263KB → rules + archive narratives) | 12×N | T14 | 100% |
 | F109 | Watch items: backup-age convergence, first granular prune Monday, flm post-reboot | 5 | T02/13 | 100% |
-| F110 | memory-emergency-guard VM test flake fix (socket start-limit → mkForce burst) | 10 | T04 | 1% |
+| F110 | ~~memory-emergency-guard VM test flake fix (socket start-limit → mkForce burst)~~ done 2026-09-02 — mkForce 100 on dummy socket/service/template (test-hermes precedent); 2 consecutive green VM runs | 10 | T04 | 1% |
 
 **110 micro-tasks · ≈19.5 h · every TODO_LIST row + session follow-up covered.**
 

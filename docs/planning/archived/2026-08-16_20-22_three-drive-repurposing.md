@@ -1,5 +1,7 @@
 # Three-Drive Repurposing — Safety-Net Storage for evo-x2
 
+> **ARCHIVED (executed or superseded — 2026-08-31 docs-health audit):** frozen snapshot; the live state lives in `TODO_LIST.md` / `FEATURES.md` / `AGENTS.md`.
+
 **Created:** 2026-08-16 20:22 CEST
 **Trigger:** User abandoned the private-cloud media hunt (2026-08-16 ~20:14, "I give up") and asked: _"how can we actually use these 3 drives effectively?"_
 **Supersedes:** `docs/planning/2026-08-16_20-06_PRIVATE-CLOUD-MEDIA-HUNT-ENDGAME.md` (abandoned, annotated)

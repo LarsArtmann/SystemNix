@@ -61,7 +61,7 @@
 
 ## f) Next things (session-derived, ~35; impact-sorted, most are ROADMAP/TODO_LIST fuel)
 
-~~**Deploy-blocking / immediate:**~~ 
+**Deploy-blocking / immediate:**
 
 ~~1. Deploy the tree (by-label pool + udev removal + options) once the sibling session is quiescent.~~ done — deployed through the 08-28→31 chain
 ~~2. On DAS physical recovery: verify `/dev/disk/by-label/pool` exists, pool mounts, `das-link-recovery-check.sh` exits clean.~~ done 2026-08-31 — by-label mount verified on the recovery boot

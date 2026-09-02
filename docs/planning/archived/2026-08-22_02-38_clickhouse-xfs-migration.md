@@ -1,5 +1,7 @@
 # ClickHouse → dedicated XFS partition (NVMe tail) — Execution Plan
 
+> **ARCHIVED (executed or superseded — 2026-08-31 docs-health audit):** frozen snapshot; the live state lives in `TODO_LIST.md` / `FEATURES.md` / `AGENTS.md`.
+
 **Date:** 2026-08-22 02:38
 **Status:** Approved for execution (this session)
 **Decision recap:** Convert the ~100 GiB unallocated NVMe tail (left when p9 `/rust-cache` was deleted) into a dedicated XFS partition mounted at `/var/lib/clickhouse`, and move ClickHouse (SigNoz telemetry store) onto it.

@@ -1,5 +1,7 @@
 # Monitor365 CPU Burn — Root Cause Fix, Deployment & Prevention Plan
 
+> **ARCHIVED (executed or superseded — 2026-08-31 docs-health audit):** frozen snapshot; the live state lives in `TODO_LIST.md` / `FEATURES.md` / `AGENTS.md`.
+
 **Created:** 2026-07-29 15:05
 **Status:** Planning
 **Scope:** Fix monitor365 295% CPU burn, deploy the fix, address root sync failure, prevent recurrence

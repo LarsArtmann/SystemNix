@@ -1,5 +1,7 @@
 # Final Docs-Health Inline Resolution Plan
 
+> **ARCHIVED (executed or superseded — 2026-08-31 docs-health audit):** frozen snapshot; the live state lives in `TODO_LIST.md` / `FEATURES.md` / `AGENTS.md`.
+
 **Date:** 2026-08-09 04:55
 **Goal:** Inline-resolve numbered items in 13 remaining recent archived reports
 **Constraint:** BE SMART — these are archived reports. Items are either DONE (in CHANGELOG) or OPEN (in TODO_LIST). Don't verschlimmbesser.

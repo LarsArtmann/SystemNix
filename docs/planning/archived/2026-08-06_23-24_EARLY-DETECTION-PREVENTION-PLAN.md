@@ -1,5 +1,7 @@
 # Early-Detection Prevention Plan: Catching SystemNix Problems Before They Bite
 
+> **ARCHIVED (executed or superseded — 2026-08-31 docs-health audit):** frozen snapshot; the live state lives in `TODO_LIST.md` / `FEATURES.md` / `AGENTS.md`.
+
 **Date:** 2026-08-06 23:24
 **Trigger:** 10 status reports from Aug 6 documented 13 incidents (10-11 distinct root causes). Question: "Where could we build checks, Nix VM tests, or automation that would catch these EARLY?"
 **Source material:** All `docs/status/2026-08-06*` reports + live infrastructure analysis

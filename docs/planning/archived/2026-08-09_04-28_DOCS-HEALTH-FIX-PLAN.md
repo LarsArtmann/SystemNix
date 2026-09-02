@@ -1,5 +1,7 @@
 # Docs Health Fix Plan — Pareto-Driven Recovery
 
+> **ARCHIVED (executed or superseded — 2026-08-31 docs-health audit):** frozen snapshot; the live state lives in `TODO_LIST.md` / `FEATURES.md` / `AGENTS.md`.
+
 **Date:** 2026-08-09 04:28
 **Goal:** Fix the failures from the docs-health audit session (04:21 report) using Pareto prioritization
 **Constraint:** DO NOT VERSCHLIMMBESSER — be surgical, be smart, use your brain

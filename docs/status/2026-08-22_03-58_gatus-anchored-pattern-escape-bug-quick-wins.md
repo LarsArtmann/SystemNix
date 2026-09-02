@@ -59,7 +59,7 @@
 ~~2. `nix run .#deploy` — ships the never-matching-pattern fix; the 7 checks start evaluating truthfully.~~ done — deployed 2026-08-22 (anchored real-newline forms live)
 ~~3. Post-deploy: verify gatus journal shows the anchored conditions evaluating (green where healthy, red only for real outages).~~ done — honestly red through the DAS outage, green after recovery
 4. Check Discord/gatus alert history for noise from the broken-red window since the 01:46 deploy (ack/resolve after fix).
-~~5. Run `tests/test-gatus-patterns.nix` VM test (new anchored regression case).~~ done — test wired into flake checks (runs in CI)
+~~5. Run `tests/test-gatus-patterns.nix` VM test (new anchored regression case).~~ done — test wired into flake checks; executed by pre-commit's full `nix flake check` (CI did NOT execute it: `--no-build` until the 2026-09-02 trap-lint step, which builds only the pure runCommand lints)
 6. FastFlowLM smoke: assert model name in `/v1/models` (c.1).
 ~~7. `crm.$DOMAIN` enable-gated external check (c.2).~~ done 2026-08-22 — External vHost section
 ~~8. Pre-deploy §10 `pat(*<metric> 1*)` flag (c.3).~~ done 2026-08-22 — §10 mirrors both lint traps

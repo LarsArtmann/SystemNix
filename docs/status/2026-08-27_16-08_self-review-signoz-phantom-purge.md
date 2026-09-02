@@ -41,24 +41,24 @@ what was forgotten, what was done badly, what remains.
 
 ## b) PARTIALLY DONE
 
-~~1. **Phantom-rule PREVENTION layer** — I fixed the instances and documented~~ done 2026-08-27 evening — `signoz-query-lint` flake check shipped (4 trap classes, mutation-tested; see 17-25/18-58)
+~~1. **Phantom-rule PREVENTION layer** — I fixed the instances and documented
    the meta-limitation (`system_signoz_alert_rules_healthy` only counts rules,
    structurally cannot catch dead queries), but built NO mechanical guard
    (no `signoz-query-lint` flake check, no post-deploy rule-state diff). The
-   repo's core philosophy is prevention layers; I shipped instances-only.
+   repo's core philosophy is prevention layers; I shipped instances-only.~~ done 2026-08-27 evening — `signoz-query-lint` flake check shipped (4 trap classes, mutation-tested; see 17-25/18-58)
 2. **Wedge-rule fragility** — the `service_name`-selector dependency is
    documented in a rule comment only; no code guard, no TODO_LIST entry, no
    note in the dnsblockd module where an upstream bump could silently break it.
-~~3. **dnsblockd root cause** — the wedge healed before a SIGQUIT goroutine~~ done 2026-08-27 — `scripts/dnsblockd-goroutine-dump.sh` runbook + `GOTRACEBACK=all` deployed-unit-verified
+~~3. **dnsblockd root cause** — the wedge healed before a SIGQUIT goroutine
    dump could be taken; AGENTS.md carries the forensic note but there is no
-   prepared dump runbook, so the next wedge may again be restarted "blind".
+   prepared dump runbook, so the next wedge may again be restarted "blind".~~ done 2026-08-27 — `scripts/dnsblockd-goroutine-dump.sh` runbook + `GOTRACEBACK=all` deployed-unit-verified
 
 ## c) NOT STARTED (noticed this session, deliberately deferred)
 
-~~1. `signoz-query-lint` eval-time check (blocklist `up{job=`, zero-series~~ done 2026-08-27 evening — `signoz-query-lint` flake check shipped (4 trap classes, mutation-tested; see 17-25/18-58)
-   metric names, `metric_sum`-style suffix queries).
-~~2. post-deploy-check assertion that `signoz-provision.service` SUCCEEDED~~ done 2026-08-27 (18-58 round) — Result assertion live
-   (see d-1 — the current check passed while the unit was failed).
+~~1. `signoz-query-lint` eval-time check (blocklist `up{job=`, zero-series
+   metric names, `metric_sum`-style suffix queries).~~ done 2026-08-27 evening — `signoz-query-lint` flake check shipped (4 trap classes, mutation-tested; see 17-25/18-58)
+~~2. post-deploy-check assertion that `signoz-provision.service` SUCCEEDED
+   (see d-1 — the current check passed while the unit was failed).~~ done 2026-08-27 (18-58 round) — Result assertion live
 3. Deploy-window tolerance for `service-health-check` / transient
    "Systemd Service Failed" criticals (fires when the checker catches a
    service mid-restart during deploys).
