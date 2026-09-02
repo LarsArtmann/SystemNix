@@ -244,6 +244,13 @@
             # expects host:port WITHOUT scheme — the SDK constructs the full URL
             # internally (http://<endpoint>/v1/traces). WithInsecure() = plain HTTP.
             OTEL_EXPORTER_OTLP_ENDPOINT = "localhost:${toString ports.signoz-otlp-http}";
+            # 2026-09-02 incident: the startup integrity sweep re-read and
+            # re-hashed the whole ~40 GB archive on every boot, saturating the
+            # SSD at 100% IO and starving SQLite (zombie gateway, 40s healthz,
+            # SIGKILL on shutdown). It cannot finish (30-min timeout < sweep
+            # duration, no resume), so sweep off-startup and off-peak instead.
+            INTEGRITY_CHECK_ON_STARTUP = "false";
+            INTEGRITY_CHECK_INTERVAL = "12h";
           }
           // lib.optionalAttrs (cfg.gcsBucket != null) {
             GCS_BUCKET = cfg.gcsBucket;
