@@ -145,13 +145,22 @@ _: {
             "immich.${domain}" = protectedVHost "immich" config.services.immich.port;
             # Paperless: native OIDC via Pocket ID (django-allauth) — Layer 1,
             # plain reverse_proxy like Forgejo/Gatus. protectedVHost would
-            # double-auth (forward-auth + the app's own login). Regular
-            # password login stays enabled as the break-glass path.
+            # double-auth (forward-auth + the app's own login). SSO-ONLY:
+            # password login is disabled via the paperless-oidc-setup env
+            # file (auto-break-glass restores it if the bridge degrades).
+            # /admin/* stays hard-blocked: PAPERLESS_DISABLE_REGULAR_LOGIN
+            # does NOT cover the Django admin login (documented), and nobody
+            # uses it here — paperless-manage covers admin operations.
             "paperless.${domain}" = {
               extraConfig = ''
                 ${tlsConfig}
                 ${commonConfig}
-                ${proxyTo config.services.paperless.port}
+                handle /admin/* {
+                  respond 403
+                }
+                handle {
+                  ${proxyTo config.services.paperless.port}
+                }
               '';
             };
             "forgejo.${domain}" = {

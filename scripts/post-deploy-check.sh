@@ -349,25 +349,30 @@ fi
 paperless_enabled=false
 test -e /etc/systemd/system/paperless-web.service && paperless_enabled=true
 if $paperless_enabled; then
-  # SSO-only mode (2026-09-02): the login page no longer renders a form —
-  # PAPERLESS_REDIRECT_LOGIN_TO_SSO (riding in the paperless-oidc-setup env
-  # file) 302s straight into the Pocket ID provider flow, and the password
-  # form exists ONLY as auto-break-glass (it returns automatically when the
-  # bridge's env file is absent). So the redirect IS the functional probe —
-  # and every branch reports explicitly (no silent skips: a silently-skipped
-  # check is a phantom green). --retry tolerates the post-switch gunicorn
-  # restart window; python urllib auto-follows redirects and would mask the
-  # 302 — verify smoke checks with curl semantics.
-  paperless_code=$(curl -s -o /dev/null -w '%{http_code}' --compressed --max-time 10 --retry 5 --retry-delay 3 --retry-all-errors "http://127.0.0.1:2892/accounts/login/?next=/" 2>/dev/null)
-  paperless_redirect=$(curl -s -o /dev/null -w '%{redirect_url}' --compressed --max-time 10 --retry 3 --retry-delay 3 "http://127.0.0.1:2892/accounts/login/?next=/" 2>/dev/null)
-  if [ "$paperless_code" = "302" ] && [[ $paperless_redirect == *pocket-id* ]]; then
-    report_pass "Paperless — login redirects to Pocket ID SSO (password login disabled)"
-  elif [ "$paperless_code" = "200" ]; then
-    report_fail "Paperless — login page serves the PASSWORD FORM: the SSO env file did not reach the unit (bridge degraded or REDIRECT flag missing) — journalctl -u paperless-oidc-setup"
-  elif [ -z "$paperless_code" ] || [ "$paperless_code" = "000" ]; then
-    report_fail "Paperless — :2892 unreachable (journalctl -u 'paperless-*' -n 30)"
+  # SSO-only mode (2026-09-02): the login page must carry the Pocket ID
+  # provider form + the JS auto-submit (PAPERLESS_REDIRECT_LOGIN_TO_SSO is a
+  # CLIENT-SIDE redirect — paperless's template auto-submits the first
+  # provider form; there is no 302) and NO password input
+  # (PAPERLESS_DISABLE_REGULAR_LOGIN). Both flags ride in the
+  # paperless-oidc-setup env file, so a password form appearing = bridge
+  # degraded = auto-break-glass serving. Every branch reports explicitly —
+  # a silently-skipped check is a phantom green. --retry tolerates the
+  # post-switch gunicorn restart window; keep curl semantics (python urllib
+  # auto-follows redirects).
+  if paperless_body=$(curl -s --compressed --max-time 10 --retry 5 --retry-delay 3 --retry-all-errors "http://127.0.0.1:2892/accounts/login/?next=/" 2>/dev/null); then
+    paperless_sso_ok=true
+    grep -q "oidc/pocket-id" <<<"$paperless_body" || paperless_sso_ok=false
+    grep -q "getElementById" <<<"$paperless_body" || paperless_sso_ok=false
+    grep -q 'type="password"' <<<"$paperless_body" && paperless_sso_ok=false
+    if $paperless_sso_ok; then
+      report_pass "Paperless — SSO-only login (Pocket ID auto-submit, no password form)"
+    elif grep -q 'type="password"' <<<"$paperless_body"; then
+      report_fail "Paperless — PASSWORD FORM is serving: the SSO env file did not reach the unit (bridge degraded or flags missing) — journalctl -u paperless-oidc-setup"
+    else
+      report_fail "Paperless — login page lacks the Pocket ID auto-submit flow (provider form or redirect script missing) — journalctl -u paperless-oidc-setup and paperless-scheduler"
+    fi
   else
-    report_fail "Paperless — unexpected login response: HTTP $paperless_code redirect='${paperless_redirect:0:120}' (Django settings or stack broken — paperless-scheduler journal)"
+    report_fail "Paperless — :2892 unreachable (journalctl -u 'paperless-*' -n 30)"
   fi
   if systemctl is-active tika.service >/dev/null 2>&1; then
     report_pass "Paperless — Tika OCR sidecar active"

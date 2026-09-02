@@ -164,13 +164,14 @@ _: {
 
         fromAddress = lib.mkOption {
           type = lib.types.str;
-          default = "onboarding@resend.dev";
+          default = "noreply@larsartmann.cloud";
           description = ''
             From address for all relayed mail. MUST be on a domain the upstream
-            provider has verified (Resend rejects other senders). The default
-            onboarding@resend.dev is Resend's test sender: it works without a
-            verified domain but only delivers to your own account's email.
-            Set a real address (e.g. noreply@your-verified-domain) for actual use.
+            provider has verified (Resend rejects other senders). Until
+            larsartmann.cloud is added + DNS-verified in the Resend dashboard
+            (SPF/DKIM records), sends from this address are rejected and defer
+            in the local queue — the Mail Relay Queue check surfaces that as
+            the pending go-live step.
           '';
         };
 

@@ -348,21 +348,22 @@ in
       )
       machine.succeed("systemctl is-active --quiet fastflowlm.socket")
       prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
-      assert "memory_emergency_guard_restored_total 2" in prom, (
-          "scenarios 6 + 6a each restored once (the daily budget in this VM is 2)"
+      assert "memory_emergency_guard_restored_total 1" in prom, (
+          "restore #1 after the 6a counter reset — the restored counter must track"
       )
-      assert "memory_emergency_guard_zone2_trips_total 2" in prom, (
-          "scenario 3 and 6a each tripped Zone 2 once — per-zone counters "
-          "must attribute trips without journal digging"
+      assert "memory_emergency_guard_zone2_trips_total 1" in prom, (
+          "6a tripped Zone 2 once since the counter reset — per-zone "
+          "counters must attribute trips without journal digging"
       )
       assert "memory_emergency_guard_trips_last_hour " in prom
 
       # --- 6b-cap. Daily restore budget exhausted (maxRestoresPerDay = 2 in
-      #      this VM): the third restore of the day is REFUSED — the socket
-      #      stays down and restore_capped hands the restart to a human.
-      #      The 2026-09-02 re-wake loop (trip -> restore -> consumer
-      #      reconnect -> 21.6 GB cold load -> re-trip within ~40 min) made
-      #      unlimited self-healing an I/O churn engine.
+      #      this VM): burn the budget with one more trip->restore cycle,
+      #      then the NEXT restore is REFUSED — the socket stays down and
+      #      restore_capped hands the restart to a human. The 2026-09-02
+      #      re-wake loop (trip -> restore -> consumer reconnect -> 21.6 GB
+      #      cold load -> re-trip within ~40 min) made unlimited self-healing
+      #      an I/O churn engine.
       machine.succeed(
           "echo $(( $(date +%s) - 700 )) > /var/lib/memory-emergency-guard/last-trip"
       )
@@ -371,7 +372,19 @@ in
       machine.succeed(
           "echo $(( $(date +%s) - 700 )) > /var/lib/memory-emergency-guard/last-trip"
       )
-      machine.succeed("${writeFakes "zramfull" restoreZramFull}")
+      out = run_guard("zramfull")
+      assert "sacrifice sockets restored" in out, "restore #2 of the day must still succeed (budget 2)"
+      prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
+      assert "memory_emergency_guard_restored_total 2" in prom
+
+      machine.succeed(
+          "echo $(( $(date +%s) - 700 )) > /var/lib/memory-emergency-guard/last-trip"
+      )
+      out = run_guard("zone2")
+      assert_all_down()
+      machine.succeed(
+          "echo $(( $(date +%s) - 700 )) > /var/lib/memory-emergency-guard/last-trip"
+      )
       out = run_guard("zramfull")
       assert "restore capped" in out, (
           "the third restore of the day must be refused (anti-churn cap) — "

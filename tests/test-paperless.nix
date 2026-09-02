@@ -143,16 +143,19 @@ in
     envfiles = machine.succeed("systemctl show paperless-web --property=EnvironmentFiles")
     assert "/var/lib/paperless-oidc/pocket-id.env" in envfiles, "OIDC env file not attached to paperless-web"
 
-    # 7. SSO-only mode live: the login page no longer renders — it 302s into
-    #    the Pocket ID provider flow (PAPERLESS_REDIRECT_LOGIN_TO_SSO). This
-    #    also proves Django parsed the delivered provider JSON end-to-end: a
-    #    broken SOCIALACCOUNT_PROVIDERS would fail settings init (500), and a
-    #    200 here would mean the SSO env file didn't reach the unit.
-    redirect = machine.succeed(
-      "curl -s -o /dev/null -w '%{http_code} %{redirect_url}' --retry 15 --retry-delay 2 --retry-all-errors http://localhost:2892/accounts/login/?next=/"
-    ).strip()
-    assert redirect.startswith("302"), f"login page must redirect in SSO-only mode, got: {redirect}"
-    assert "pocket-id" in redirect, f"login redirect must target the Pocket ID provider flow, got: {redirect}"
+    # 7. SSO-only mode live: the login page still renders (200) but with the
+    #    password form GONE (PAPERLESS_DISABLE_REGULAR_LOGIN), the Pocket ID
+    #    provider form present (Django parsed the delivered provider JSON
+    #    end-to-end), and the auto-submit script mounted
+    #    (PAPERLESS_REDIRECT_LOGIN_TO_SSO is a CLIENT-SIDE redirect —
+    #    paperless's login template auto-submits the first provider form via
+    #    JS; there is no 302, verified against the upstream template).
+    login_page = machine.succeed(
+      "curl -sf --retry 15 --retry-delay 2 --retry-all-errors 'http://localhost:2892/accounts/login/?next=/'"
+    )
+    assert "oidc/pocket-id" in login_page, "Pocket ID provider form missing from login page"
+    assert "getElementById" in login_page, "SSO auto-submit script missing (PAPERLESS_REDIRECT_LOGIN_TO_SSO not parsed)"
+    assert 'type="password"' not in login_page, "password form still present (PAPERLESS_DISABLE_REGULAR_LOGIN not parsed)"
 
     # 8. Degradation semantics: with the secret gone the bridge must SKIP
     #    cleanly (ConditionPathExists → inactive, NOT failed — LoadCredential
@@ -169,6 +172,9 @@ in
     machine.wait_for_unit("paperless-web.service")
     machine.succeed(
       "curl -sf --retry 15 --retry-delay 2 --retry-all-errors http://localhost:2892/accounts/login/ | grep -F 'Paperless-ngx sign in'"
+    )
+    machine.succeed(
+      "curl -sf http://localhost:2892/accounts/login/ | grep -F 'type=\"password\"'"
     )
 
     print("Paperless v3 wiring verified — units up, PG backend, AI env, trash, exporter, Pocket ID OIDC bridge, SSO-only + auto-break-glass")

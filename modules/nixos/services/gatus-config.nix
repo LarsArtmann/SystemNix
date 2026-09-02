@@ -340,18 +340,23 @@ _: {
                   name = "Paperless";
                   group = "Documents";
                   url = "http://localhost:${toString config.services.paperless.port}/accounts/login/";
-                  # SSO-only mode (2026-09-02): the login page no longer
-                  # renders — it 302s into the Pocket ID provider flow
-                  # (PAPERLESS_REDIRECT_LOGIN_TO_SSO rides in the
-                  # paperless-oidc-setup env file). STATUS is the functional
-                  # signal: 302 = SSO armed; 200 = env file gone → bridge
-                  # degraded → the auto-break-glass password form is serving;
-                  # 5xx = Django settings/stack broken.
+                  # SSO-only mode (2026-09-02): the login page must show the
+                  # Pocket ID provider form with the JS auto-submit mounted
+                  # (PAPERLESS_REDIRECT_LOGIN_TO_SSO is a CLIENT-SIDE
+                  # redirect — paperless's template auto-submits the first
+                  # provider form; there is no 302) and NO password input
+                  # (PAPERLESS_DISABLE_REGULAR_LOGIN — the flags ride in the
+                  # paperless-oidc-setup env file, so a 200 with a password
+                  # field means the bridge degraded and break-glass is
+                  # serving: visible, non-silent).
                   conditions =
                     if config.services.pocket-id-config.enable then
                       [
-                        "[STATUS] == 302"
+                        "[STATUS] == 200"
                         "[RESPONSE_TIME] < 1000"
+                        "[BODY] == pat(*oidc/pocket-id*)"
+                        "[BODY] == pat(*getElementById*)"
+                        "[BODY] != pat(*type=\"password\"*)"
                       ]
                     else
                       [
@@ -359,7 +364,7 @@ _: {
                         "[RESPONSE_TIME] < 1000"
                         "[BODY] == pat(*Paperless-ngx sign in*)"
                       ];
-                  alerts = discordAlert "Paperless SSO degraded — login no longer redirects to Pocket ID (302 expected; 200 = break-glass password form = paperless-oidc-setup problem)";
+                  alerts = discordAlert "Paperless SSO degraded — login page lost the Pocket ID auto-submit flow or the password form is back (bridge problem: journalctl -u paperless-oidc-setup)";
                 })
                 (mkHttpCheck {
                   name = "Paperless Tika";
@@ -2111,6 +2116,30 @@ _: {
                     "[BODY] == pat(*system_service_start_limit_hit{service=\"postfix\"} 0*)"
                   ];
                   alerts = discordAlert "postfix failed or in start-limit crash-loop — outbound mail halted. Check: journalctl -u postfix -n 50, journalctl -u postfix-setup -n 30, sasl credential in /run/secrets/rendered/mail-relay-sasl (placeholder value = every send defers)";
+                })
+                (mkHttpCheck {
+                  name = "Mail Relay Queue";
+                  group = "Infrastructure";
+                  # Third layer: the mail-relay-metrics collector's queue
+                  # state. A deferred queue is the silent failure mode of a
+                  # null client — postfix stays "active", the SMTP socket
+                  # answers, and every send quietly parks in mailq. While the
+                  # sops credential is still the PLACEHOLDER, the first few
+                  # user-triggered sends cross queueAlertThreshold and this
+                  # check fires as the pending go-live signal; after the real
+                  # Resend key + verified larsartmann.cloud land, a firing
+                  # check means genuine upstream rejections (provider outage,
+                  # expired key, unverified sender).
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*mail_relay_scrape_errors 0*)"
+                    "[BODY] == pat(*mail_relay_queue_over_threshold 0*)"
+                    "[BODY] == pat(*mail_relay_queue_messages*)"
+                    "[BODY] == pat(*mail_relay_credential_placeholder*)"
+                  ];
+                  alerts = discordAlert "Mail relay queue backed up — sends are deferring (go-live: sops mail_relay_password is still the PLACEHOLDER and/or larsartmann.cloud is not yet verified in Resend; live: provider rejecting — check mailq + journalctl -u postfix -n 50 for the remote server reply)";
                 })
               ]
               ++ map mkWebsiteCheck ossWebsites
