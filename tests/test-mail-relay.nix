@@ -89,7 +89,7 @@ in
     assert postconf("mydestination") == "", (
         f"mydestination must be empty on a null client, got: {postconf('mydestination')}"
     )
-    assert postconf("relayhost") == f"[{relayHost}]:{relayPort}", (
+    assert postconf("relayhost") == "[${relayHost}]:${toString relayPort}", (
         f"unexpected relayhost: {postconf('relayhost')}"
     )
     assert postconf("smtp_tls_security_level") == "encrypt", (
