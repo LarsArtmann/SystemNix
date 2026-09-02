@@ -32,7 +32,7 @@ residential egress has no rDNS — every provider rejects it.
 | ----------------- | ------------------------------------------------------------------- | ---------------------------------------------------- |
 | Paperless-ngx     | `PAPERLESS_EMAIL_*` → 127.0.0.1:25 (paperless.nix, relay-gated)      | Share links, password-protected archives, account mail |
 | Forgejo           | `[mailer]` plain SMTP → 127.0.0.1:25 (forgejo.nix, relay-gated)      | Issue/PR notifications                                |
-| System/cron mail  | root + postmaster aliases → `fromAddress`; `smtp_generic_maps` rewrites locally-generated senders | cron failure output reaches the inbox |
+| System/cron mail  | `recipient_canonical_maps` rewrites root@/postmaster@ recipients → `systemMailRecipient` (default `fromAddress`); `smtp_generic_maps` rewrites senders. aliases(5) is INERT on a null client (local(8) never runs) — the canonical map is the real mechanism | cron failure output reaches the inbox   |
 
 **Pocket ID is deliberately NOT on the relay** — its go-kit emailer fails CLOSED
 (`tls=auto` = mandatory STARTTLS) and the TLS mode lives in its DB, not env. It
@@ -49,9 +49,10 @@ admin-UI-only: *Administration → Settings → Notification settings*, point th
 1. **Resend account** (or any provider with an SMTP submission endpoint):
    create an API key (`re_...`). Resend's SMTP username is the literal string
    `resend`; the API key is the password.
-2. **Verify a sending domain** in the provider (add DNS records). Until then the
-   default from address `onboarding@resend.dev` works but ONLY delivers to your
-   own account's email — fine for testing.
+2. **Verify `larsartmann.cloud` in Resend** (*Domains → Add domain* → add the
+   shown SPF + DKIM DNS records → wait for "Verified"). Until then sends from
+   `noreply@larsartmann.cloud` are REJECTED and defer — the Gatus "Mail Relay
+   Queue" check fires as the pending go-live signal (expected).
 3. **Set the credential** (interactive editor, never on a command line — the
    fish_history leak class):
    ```
@@ -60,10 +61,11 @@ admin-UI-only: *Administration → Settings → Notification settings*, point th
    ```
    The sops template restartUnits also restarts postfix on the NEXT deploy; the
    manual restart makes it immediate.
-4. **Set the real from address** (once the domain is verified): set
-   `services.mail-relay.fromAddress` in `configuration.nix` (e.g.
-   `noreply@your-domain`) and `nix run .#deploy`. Paperless/Forgejo FROM values
-   derive from it automatically.
+4. **From address already set**: the module default IS
+   `noreply@larsartmann.cloud`; nothing to change in `configuration.nix`.
+   Override `services.mail-relay.fromAddress` / `systemMailRecipient` only if
+   system mail (root@, cron output) should land somewhere other than the
+   from address's mailbox.
 5. **End-to-end test** (no `mail`/`sendmail` on the system PATH — use the
    postfix package's sendmail binary):
    ```
@@ -94,6 +96,15 @@ vars, stored in its PostgreSQL. The polling task runs every 10 min by default
   stamps settings into a `postfix-config-stamp` restartTrigger (the nixpkgs
   module has none of its own). Secret changes ride the sops template
   `restartUnits`.
-- **Monitoring**: Gatus "Mail Relay (SMTP)" (TCP :25) + "Mail Relay Service"
-  (`system_service_state_failed`/`start_limit_hit` for postfix). A red TCP check
-  with postfix active = listen socket wedged (restart postfix).
+- **Monitoring**: Gatus "Mail Relay (SMTP)" (TCP :25), "Mail Relay Service"
+  (postfix failed/start-limit states from system-health), and "Mail Relay
+  Queue" (the `mail-relay-metrics` collector: queue depth vs
+  `queueAlertThreshold`, credential PLACEHOLDER flag — fail-closed). A red TCP
+  check with postfix active = listen socket wedged (restart postfix). A firing
+  queue check AFTER go-live = genuine upstream rejections (provider outage,
+  expired key, unverified sender) — read `mailq` + `journalctl -u postfix`.
+
+**Verification**: `tests/test-mail-relay.nix` (VM: loopback-only listener, null-client
+config, sender+recipient rewrite E2E, collector fail-closed) and
+`scripts/post-deploy-check.sh` §12 (live: postfix active, SMTP banner, placeholder
+WARN, paperless.conf wiring, collector textfile).

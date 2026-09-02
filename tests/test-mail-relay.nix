@@ -17,7 +17,7 @@
 #      the PLACEHOLDER credential fail-closed, and reports zero scrape errors
 { pkgs }:
 let
-  mailRelayModule = (import ../modules/nixos/services/mail-relay.nix) { }.flake.nixosModules.mail-relay;
+  mailRelayModule = ((import ../modules/nixos/services/mail-relay.nix) { }).flake.nixosModules.mail-relay;
 
   # Deterministic offline upstream: connection refused = 4xx defer, so the
   # test message stays queued (a real provider would 5xx-bounce the

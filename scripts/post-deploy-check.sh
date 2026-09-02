@@ -1210,6 +1210,64 @@ else
   report_skip "System — /proc/pressure/io not available"
 fi
 
+# --- §12 Mail Relay ---
+echo ""
+echo "=== Mail Relay ==="
+if [ -e /etc/systemd/system/postfix.service ]; then
+  if systemctl is-active --quiet postfix; then
+    report_pass "Mail relay — postfix active"
+  else
+    report_fail "Mail relay — postfix not active (outbound mail broken; journalctl -u postfix -n 50)"
+  fi
+
+  # SMTP banner through the public socket (loopback-only null client).
+  _relay_banner=$(timeout 5 bash -c 'exec 3<>/dev/tcp/127.0.0.1/25 && read -t 3 -r _relay_line <&3 && printf %s "$_relay_line"' 2>/dev/null || true)
+  case "$_relay_banner" in
+    220*) report_pass "Mail relay — SMTP banner answering (220 greeting)" ;;
+    "") report_fail "Mail relay — no SMTP banner on 127.0.0.1:25 (relay down or not loopback-bound)" ;;
+    *) report_fail "Mail relay — unexpected SMTP banner: $_relay_banner" ;;
+  esac
+
+  # Go-live gate: the placeholder credential defers every send. Expected
+  # WARN (not FAIL) until the user pastes the real Resend key and verifies
+  # larsartmann.cloud — same pattern as the google-sync config check.
+  if [ -r /run/secrets/rendered/mail-relay-sasl ]; then
+    if grep -q "PLACEHOLDER" /run/secrets/rendered/mail-relay-sasl; then
+      report_warn "Mail relay — sops credential still the PLACEHOLDER (go-live: sudo sops platforms/nixos/secrets/mail-relay.yaml, then sudo systemctl restart postfix; larsartmann.cloud must be verified in Resend first)"
+    else
+      report_pass "Mail relay — real upstream credential rendered"
+    fi
+  else
+    report_warn "Mail relay — rendered SASL map missing (sops template not rendered; sends defer)"
+  fi
+
+  # Paperless consumes the relay via PAPERLESS_* settings rendered into
+  # paperless.conf (NOT unit Environment — the nixpkgs module writes a conf
+  # file). Gate on the deployed unit file, not systemctl is-enabled (the
+  # requiredBy rc=1 trap).
+  if [ -e /etc/systemd/system/paperless-web.service ]; then
+    if grep -q "^PAPERLESS_EMAIL_HOST=" /var/lib/paperless/paperless.conf 2>/dev/null; then
+      report_pass "Paperless — mail wiring rendered into paperless.conf (PAPERLESS_EMAIL_HOST set)"
+    else
+      report_fail "Paperless — PAPERLESS_EMAIL_HOST missing from paperless.conf despite relay enabled (relay-gated settings block broke)"
+    fi
+  else
+    report_skip "Paperless — not deployed (mail wiring check skipped)"
+  fi
+
+  if [ -e /etc/systemd/system/mail-relay-metrics.timer ]; then
+    if [ -f /var/lib/prometheus-node-exporter/textfile_collectors/mail-relay.prom ]; then
+      report_pass "Mail relay — queue/credential collector writing textfile"
+    else
+      report_fail "Mail relay — collector textfile missing (mail-relay-metrics unit failing; queue depth unmonitored)"
+    fi
+  else
+    report_skip "Mail relay — metrics collector not deployed"
+  fi
+else
+  report_skip "Mail relay — postfix not deployed (enable services.mail-relay)"
+fi
+
 # --- Summary ---
 echo ""
 echo "=== Summary ==="
