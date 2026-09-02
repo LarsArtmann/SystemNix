@@ -6,6 +6,10 @@
 # REAL bridge script (the deployed ExecStart binary) with env-overridden
 # prom sources — only the metrics inputs are faked.
 #
+# TIER CONTRACT (2026-09-02 user decision, the movie-interruption finale):
+# NO memory-related condition may EVER fullscreen-page. page = infra
+# hardware criticals (DAS/NIC/btrfs) ONLY; everything else is notify.
+#
 # Scenarios:
 #   1. Healthy: no alert file, alerts_active 0, prom written.
 #   2. Guard trip (last_trip_recent 1): alert file with title, dedup state
@@ -93,7 +97,7 @@
         memory_emergency_guard_psi_some_avg10_percent 0.26
         memory_emergency_guard_avail_percent 53.00
       '';
-      # Churn: a trip page with >=2 trips in the last hour - the detail
+      # Churn: a trip alert with >=2 trips in the last hour - the detail
       # must carry the re-wake-loop warning (2026-09-02).
       guardPromChurn = ''
         memory_emergency_guard_last_trip_recent 1
@@ -101,7 +105,7 @@
         memory_emergency_guard_trips_last_hour 3
       '';
       # Anti-churn cap spent + socket still down: notify tier with the
-      # manual restart path (the trip page has long cleared by then).
+      # manual restart path (the trip alert has long cleared by then).
       guardPromCapped = ''
         memory_emergency_guard_last_trip_recent 0
         memory_emergency_guard_sacrifice_socket_active 0
@@ -233,10 +237,17 @@
       # fourth line = severity ("page" = fullscreen overlay eligible).
       lines = alert.strip().split("\n")
       assert len(lines) == 4 and lines[2].isdigit(), "alert file must be title/detail/epoch/severity"
-      assert lines[3] == "page", "guard trip must be PAGE tier (fullscreen overlay)"
+      assert "severity=notify" in out, (
+          "guard trip must be NOTIFY tier (2026-09-02 movie-interruption "
+          "decision: high memory must never fullscreen-page)"
+      )
+      assert lines[3] == "notify", "guard trip must be NOTIFY tier (no fullscreen overlay)"
       machine.succeed("test -f /var/lib/sev1-escalation/last-alert-key")
       prom = machine.succeed("cat /tmp/sev1/bridge.prom")
       assert "sev1_bridge_alerts_active 1" in prom
+      assert "sev1_bridge_page_alerts_active 0" in prom, (
+          "a memory trip alone must never count as page-tier"
+      )
 
       # --- 3. Dedup: same condition again — key unchanged ----------------
       key1 = machine.succeed("cat /var/lib/sev1-escalation/last-alert-key").strip()
@@ -244,24 +255,28 @@
       key2 = machine.succeed("cat /var/lib/sev1-escalation/last-alert-key").strip()
       assert key1 == key2, "unchanged alert set must not re-notify"
 
-      # --- 3b. Sustained memory stall (avg60 >= 45) pages WITHOUT a guard
-      #         trip — the 2026-08-31 16:34 class: Discord flapped for 2 h
-      #         while the user sat at the machine; the desktop must page on
-      #         the sustained-stall signal itself.
+      # --- 3b. Sustained memory stall (avg60 >= 45) escalates WITHOUT a
+      #         guard trip — the 2026-08-31 16:34 class: Discord flapped
+      #         for 2 h while the user sat at the machine. Desktop
+      #         visibility via the notify tier (one self-expiring
+      #         notification) — NEVER a fullscreen overlay (2026-09-02
+      #         movie-interruption decision).
       machine.succeed("${writeProms "stall" guardPromStall healthPromHealthy}")
       out = run_bridge("stall")
       assert "MEMORY STALL SUSTAINED" in out, (
-          "guard avg60 >= 45% must escalate to the desktop overlay even "
-          "without a guard trip (the 16:34 freeze class)"
+          "guard avg60 >= 45% must escalate to the desktop even without a "
+          "guard trip (the 16:34 freeze class)"
       )
+      assert "severity=notify" in out, "memory stall must be NOTIFY tier (no fullscreen overlay)"
       alert = machine.succeed("cat /tmp/sev1/alert")
       assert "MEMORY STALL SUSTAINED" in alert
       assert "Stop heavy builds" in alert
+      assert alert.strip().split("\n")[3] == "notify"
 
       # --- 3c. EPISODIC stall (episode bucket >= 4, avg60 LOW) — the
       #         CALIBRATED 16:34 signature: the real boot's avg60 never
       #         exceeded ~4%; the episode pattern is the only pre-freeze
-      #         observable. Must page.
+      #         observable. Must escalate — notify tier, no overlay.
       machine.succeed("${writeProms "episodic" guardPromEpisodic healthPromHealthy}")
       out = run_bridge("episodic")
       assert "MEMORY STALL SUSTAINED" in out, (
@@ -270,6 +285,7 @@
       )
       alert = machine.succeed("cat /tmp/sev1/alert")
       assert "episode bucket=5" in alert
+      assert alert.strip().split("\n")[3] == "notify", "episodic stall must be NOTIFY tier"
 
       # --- 4. Guard dead: prom deleted while timer ENABLED ---------------
       machine.succeed("rm -f /tmp/sev1/dead-guard.prom; printf 'irrelevant\\n' > /tmp/sev1/dead-health.prom")
@@ -284,6 +300,9 @@
           "missing guard metrics with the guard ENABLED must escalate "
           "(trip capability lost)"
       )
+      assert "severity=notify" in out, "guard dead must be NOTIFY tier (meta condition, no overlay)"
+      alert = machine.succeed("cat /tmp/sev1/alert")
+      assert alert.strip().split("\n")[3] == "notify"
 
       # --- 5. Module-absent gate: timer "not enabled", prom still missing ---
       # /etc is a read-only store link in NixOS VMs, so systemctl disable
@@ -367,9 +386,9 @@
       assert "MONITORING STALE" not in out, "boot grace must suppress STALE too"
       machine.fail("test -f /tmp/sev1/alert")
 
-      # --- 9. Trip page lifecycle (2026-09-02): the page tracks the
+      # --- 9. Trip alert lifecycle (2026-09-02): the alert tracks the
       #         EMERGENCY, not the 30-min last_trip_recent window.
-      # 9a. Trip resolved (sockets restored, machine healthy): NO page.
+      # 9a. Trip resolved (sockets restored, machine healthy): NO alert.
       machine.succeed("${writeProms "resolved" guardPromTripResolved healthPromHealthy}")
       out = run_bridge("resolved")
       assert "GUARD TRIPPED" not in out, (
@@ -378,8 +397,10 @@
       )
       machine.fail("test -f /tmp/sev1/alert")
 
-      # 9b. Trip ACTIVE (sacrifice still down) pages even 30+ min later if
-      #     the sockets never came back — the page IS "flm is unreachable".
+      # 9b. Trip ACTIVE (sacrifice still down) alerts even 30+ min later if
+      #     the sockets never came back — the alert IS "flm is unreachable"
+      #     (notify tier — the guard contains the emergency automatically;
+      #     fullscreen for memory states is banned, 2026-09-02).
       machine.succeed("${writeProms "tripactive" guardPromTripped healthPromHealthy}")
       out = run_bridge("tripactive")
       assert "MEMORY EMERGENCY GUARD TRIPPED" in out
@@ -394,14 +415,14 @@
       assert "MEMORY EMERGENCY GUARD TRIPPED" in out
       alert = machine.succeed("cat /tmp/sev1/alert")
       assert "TRIP CHURN" in alert, (
-          "trip churn (>=2 trips/hour) must be surfaced in the page detail"
+          "trip churn (>=2 trips/hour) must be surfaced in the alert detail"
       )
-      assert alert.strip().split("\n")[3] == "page"
+      assert alert.strip().split("\n")[3] == "notify"
 
       # --- 10. ZRAM SWAP CRITICAL is NOTIFY tier (2026-09-02 user
-      #         decision): combined-gated, but the fullscreen overlay is
-      #         the guard trip's job — a second overlay for the same cliff
-      #         was pure alert spam.
+      #         decision): combined-gated; the guard handles the cliff
+      #         automatically and NO memory state may fullscreen (the
+      #         2026-09-02 movie-interruption decision).
       machine.succeed("${writeProms "zram" guardPromZramMarginal healthPromZram}")
       out = run_bridge("zram")
       assert "ZRAM SWAP CRITICAL" in out
@@ -439,7 +460,8 @@
 
       # --- 11. Restore capped (anti-churn budget spent, socket down):
       #         notify tier with the manual restart path - without this,
-      #         flm would silently stay unusable after the trip page clears.
+      #         flm would silently stay unusable after the trip alert
+      #         clears.
       machine.succeed("${writeProms "capped" guardPromCapped healthPromHealthy}")
       out = run_bridge("capped")
       assert "FLM RESTORE CAPPED" in out

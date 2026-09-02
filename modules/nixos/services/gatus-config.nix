@@ -2001,6 +2001,30 @@ _: {
                   ];
                   alerts = discordAlert "CV funnel stale — no new job discovered in 26h+ (cv-scan timer dead or every portal failing). Check: systemctl list-timers | grep cv-scan; journalctl -u cv-scan -u cv-server --since -24h";
                 })
+                # Funnel DB health: /health's pipeline-store check pings the
+                # SQLite event store (the irreplaceable tracked-applications
+                # state cv-backup protects). Body pattern is deterministic:
+                # Go marshals the checks map with struct field order
+                # (name, status, …), json.MarshalWrite emits compact JSON.
+                # "disabled" (in-memory backend) also fails the pat — in
+                # production event_store_driver=sqlite by config, so a
+                # disabled/absent verdict means the persistence config
+                # regressed (the config-validation gap the CV repo flagged).
+                # DEPLOY-ORDER: ships together with the cv flake-input bump —
+                # binaries before 2026-09-02 have no pipeline-store key and
+                # would sit permanently red on this check.
+                (mkHttpCheck {
+                  name = "CV Pipeline Store Health";
+                  group = "Productivity";
+                  url = "http://localhost:${toString ports.cv}/health";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 2000"
+                    "[BODY] == pat(*\"pipeline-store\":{\"name\":\"pipeline-store\",\"status\":\"healthy\"*)"
+                  ];
+                  alerts = discordAlert "CV pipeline event store unreachable — tracked-applications persistence is degraded (cv.home.lan). Check: journalctl -u cv-server --since -15min; sqlite store at /var/lib/cv/data/pipeline.sqlite.";
+                })
               ]
               ++ lib.optionals (config.services.bank-sync.enable or false) [
                 (mkHttpCheck {

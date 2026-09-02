@@ -458,9 +458,12 @@
           };
         };
 
-        systemd.tmpfiles.rules = [
-          "d ${backupDir} 0755 root root -"
-        ];
+        # NO tmpfiles rule for ${backupDir} — deliberately (atticd-storage-dir
+        # doctrine): /mnt/pool is nofail, so local-fs.target does NOT wait for
+        # it and systemd-tmpfiles-setup (After=local-fs.target) can run BEFORE
+        # the pool mounts — a rule would create a ROOT-fs shadow dir during
+        # every DAS outage (the exact 226/NAMESPACE masking class fixed
+        # 2026-08-31). cv-backup-dir above is the only sanctioned creator.
       };
     };
 }

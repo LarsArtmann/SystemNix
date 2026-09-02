@@ -28,25 +28,26 @@
 #       severity line (line 4) says "page" — notify-tier alerts never
 #       fullscreen.
 #
-# Overlay triggers are TIERED (user decision 2026-08-31 evening, the
-# movie-night flap session: "stale system_health monitoring is still not
-# something you need to spam my entire screen with"; extended 2026-09-02,
-# the MEMORY EMERGENCY spam session):
+# Overlay triggers are TIERED (user decisions 2026-08-31 evening +
+# 2026-09-02 movie-night sessions; HARDENED 2026-09-02 late evening after
+# high-memory alerts kept fullscreen-flashing over a movie: "High memory
+# should NOT flash my entire screen — only shutdowns and
+# ACTUALLY-about-to-be-impacted events may page"):
 #   page   = fullscreen overlay + persistent critical notification:
-#           guard-trip (only while the sacrifice is actually DOWN — clears
-#           the moment the guard restores the sockets, not on a fixed
-#           30-min metric window), sustained memory stall, guard-dead,
-#           infra criticals (DAS link, LAN NIC, btrfs). Drop-everything
-#           conditions a human can act on immediately.
+#           infra hardware criticals ONLY (DAS link, LAN NIC, btrfs
+#           critical). Rare, non-flapping, real-impact events a human can
+#           act on immediately.
 #   notify = ONE self-expiring normal-urgency desktop notification +
-#           Gatus/Discord, NO overlay: SYSTEM MONITORING STALE and ZRAM
-#           SWAP CRITICAL (combined-gated — zram ≥90% with degraded
-#           PSI/avail; steady-state high fill never notifies, and the
-#           guard's own trip page covers the real cliff within 30 s).
-#           Both are flap-prone or guard-owned conditions the user cannot
-#           fix mid-movie, so they are additionally cooldown-gated against
-#           re-notification. The PSI warning tier (psi-metrics) likewise
-#           does NOT overlay — Discord only.
+#           Gatus/Discord, NO overlay: EVERY memory-related condition
+#           (guard trip, sustained memory stall, guard dead) plus SYSTEM
+#           MONITORING STALE, ZRAM SWAP CRITICAL (combined-gated — steady-
+#           state high fill never notifies) and FLM RESTORE CAPPED. The
+#           guard's entire job is to CONTAIN memory emergencies
+#           automatically — the user cannot act mid-movie, and the
+#           2026-09-02 re-wake loop proved a memory fullscreen overlay is
+#           pure spam. All notify-tier conditions are additionally
+#           cooldown-gated against re-notification. The PSI warning tier
+#           (psi-metrics) likewise does NOT overlay — Discord only.
 _: {
   flake.nixosModules.sev1-escalation =
     {
@@ -135,16 +136,24 @@ _: {
             fi
           }
 
-          # --- Guard trip (the guard ACTED: machine entered a pre-freeze zone).
-          # The page tracks the EMERGENCY, not the event: it stays while the
-          # sacrifice is actually DOWN (sacrifice_socket_active=0 — flm is
-          # unreachable, which IS actionable) and clears the moment the guard
-          # restores the sockets. 2026-09-02 lesson: keying on last_trip_recent
-          # alone fullscreen-paged for the metric's whole 30-min window while
-          # the machine had already recovered to 53% MemAvailable (the restore
-          # was blocked by the old zram gate). A missing socket metric fails
-          # LOUD (=0, page) — same philosophy as the overlay's missing
-          # severity line: an emergency is never silenced by a parse gap.
+          # --- Guard trip (the guard ACTED: machine entered a pre-freeze
+          #     zone). The alert tracks the EMERGENCY, not the event: it
+          #     stays while the sacrifice is actually DOWN
+          #     (sacrifice_socket_active=0 — flm is unreachable) and clears
+          #     the moment the guard restores the sockets. 2026-09-02
+          #     lesson: keying on last_trip_recent alone kept the alert
+          #     alive for the metric's whole 30-min window while the
+          #     machine had already recovered to 53% MemAvailable (the
+          #     restore was blocked by the old zram gate). A missing socket
+          #     metric fails LOUD (=0, alert) — same philosophy as the
+          #     overlay's missing severity line: an emergency is never
+          #     silenced by a parse gap.
+          #     TIER: notify (2026-09-02 user decision — "high memory must
+          #     NOT flash my entire screen while I watch a movie"). The
+          #     guard exists to CONTAIN this automatically; the re-wake
+          #     loop proved a fullscreen overlay for a contained emergency
+          #     is pure spam. Gatus/Discord + one cooldown-gated desktop
+          #     notification carry the visibility.
           guard_trip=0
           if [ "$BOOT_GRACE" = "0" ] && [ "$guard_enabled" = "true" ] && [ -f "$GUARD_PROM" ]; then
             v=$(prom_value "$GUARD_PROM" "memory_emergency_guard_last_trip_recent")
@@ -157,7 +166,7 @@ _: {
           if [ "$guard_trip" = "1" ]; then
             # Churn context (2026-09-02 re-wake loop): >=2 trips in the last
             # hour means an alert-driven consumer re-wakes flm after every
-            # restore — the page must SAY that, not just "guard tripped".
+            # restore — the alert must SAY that, not just "guard tripped".
             g_churn=$(prom_value "$GUARD_PROM" "memory_emergency_guard_trips_last_hour")
             g_churn="''${g_churn:-0}"
             churn_note=""
@@ -165,8 +174,8 @@ _: {
               churn_note=" TRIP CHURN: ''${g_churn} trips in the last hour — a consumer is re-waking FastFlowLM after every restore; the daily restore budget will stop this."
             fi
             titles+=("MEMORY EMERGENCY GUARD TRIPPED")
-            details+=("The machine entered a pre-freeze zone; FastFlowLM + socket were force-stopped (this page clears automatically when the guard restores the sockets).''${churn_note} journalctl -u memory-emergency-guard -n 30")
-            severities+=("page")
+            details+=("The machine entered a pre-freeze zone; FastFlowLM + socket were force-stopped (this alert clears automatically when the guard restores the sockets).''${churn_note} journalctl -u memory-emergency-guard -n 30")
+            severities+=("notify")
           fi
 
           # --- Restore capped (2026-09-02 anti-churn cap): the daily restore
@@ -190,13 +199,14 @@ _: {
           # --- Sustained memory stall (2026-08-31 16:34 freeze class: the
           #     box froze with zram EMPTY, MemAvailable healthy, zero OOM
           #     kills — Discord flapped "Memory pressure CRITICAL" for 2 h
-          #     while the user sat at the machine. The desktop must page on
-          #     the same SUSTAINED signal Zone 4 trips on: avg60 >= 45,
-          #     slightly below the trip threshold so the page can precede
-          #     the guard action. Guard-gated, NOT health-gated: during the
-          #     final stall the system-health collector dies FIRST (live
-          #     16:33) — only its own stale-page would fire, without the
-          #     actionable shed-load detail.)
+          #     while the user sat at the machine. The desktop must SEE the
+          #     same SUSTAINED signal Zone 4 trips on: avg60 >= 45, slightly
+          #     below the trip threshold. Guard-gated, NOT health-gated:
+          #     during the final stall the system-health collector dies
+          #     FIRST (live 16:33) — only its own stale alert would fire,
+          #     without the actionable shed-load detail.)
+          #     TIER: notify (2026-09-02 user decision — high-memory
+          #     warnings must NEVER fullscreen-page; see header).
           if [ "$guard_enabled" = "true" ] && [ -f "$GUARD_PROM" ]; then
             g_avg60=$(prom_value "$GUARD_PROM" "memory_emergency_guard_psi_some_avg60_percent")
             g_avg60="''${g_avg60:--1}"
@@ -209,17 +219,21 @@ _: {
             if awk "BEGIN{exit !($g_avg60 >= 45)}" || awk "BEGIN{exit !($g_episodes >= 4)}"; then
               titles+=("MEMORY STALL SUSTAINED")
               details+=("Memory-stall freeze precursor, 2026-08-31 class (avg60=''${g_avg60}%, avg10-episode bucket=''${g_episodes}). Stop heavy builds / VM tests NOW; the guard is (about to be) sacrificing FastFlowLM. journalctl -u memory-emergency-guard -n 30")
-              severities+=("page")
+              severities+=("notify")
             fi
           fi
 
           # --- Guard dead (trip capability lost — the guard that should fire
-          #     during an emergency is itself down or its metrics vanished)
+          #     during an emergency is itself down or its metrics vanished).
+          #     TIER: notify (2026-09-02 user decision — protection-layer
+          #     health is a meta condition, not a user-facing emergency;
+          #     the machine freezing IS the user-facing signal, and
+          #     Gatus/Discord carry this).
           guard_age=$(file_age "$GUARD_PROM")
           if [ "$BOOT_GRACE" = "0" ] && [ "$guard_enabled" = "true" ] && { [ "$guard_age" -lt 0 ] || [ "$guard_age" -gt $(( ${toString cfg.staleGuardSeconds} )) ]; }; then
             titles+=("MEMORY GUARD DEAD")
             details+=("memory-emergency-guard metrics are missing/stale (''${guard_age}s old). The automated freeze protection is DOWN. systemctl status memory-emergency-guard")
-            severities+=("page")
+            severities+=("notify")
           fi
 
           # --- Monitoring stale (system-health textfile collector dead)
@@ -464,8 +478,9 @@ _: {
             property string alertDetail: ""
             property real generatedAt: 0
             // Line 4 of the alert file: "page" (fullscreen overlay) or
-            // "notify" (single notification, NO overlay — e.g. SYSTEM
-            // MONITORING STALE, the 2026-08-31 movie-night decision).
+            // "notify" (single notification, NO overlay — all memory
+            // conditions and SYSTEM MONITORING STALE; the 2026-08-31 +
+            // 2026-09-02 movie-night decisions).
             // Missing/unknown line 4 fails LOUD (treated as page): a real
             // emergency must never be silenced by a parse gap.
             property bool severityIsPage: true
@@ -596,7 +611,7 @@ _: {
     in
     {
       options.services.sev1-escalation = {
-        enable = lib.mkEnableOption "SEV1 escalation bridge: local unmissable escalation (DMS notification + fullscreen overlay) for guard-trip, guard-dead and infra-critical conditions when a graphical session is online (2026-08-22 freeze lesson: Discord fired 43min early, nobody saw it)";
+        enable = lib.mkEnableOption "SEV1 escalation bridge: local unmissable escalation (DMS notification + fullscreen overlay for infra hardware criticals only) for guard/memory/infra conditions when a graphical session is online (2026-08-22 freeze lesson: Discord fired 43min early, nobody saw it)";
 
         desktopUser = lib.mkOption {
           type = lib.types.str;
