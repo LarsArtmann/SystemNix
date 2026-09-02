@@ -906,7 +906,11 @@
                     base=$(basename "$f")
                     case "$base" in _*) continue ;; esac
                     name="''${base%.nix}"
-                    if ! grep -q "flake\.nixosModules\.''${name}\b" "$f"; then
+                    # Anchor on the ` =` of the declaration: a bare \b word
+                    # boundary accepts RENAMED keys too (negative-test-lints
+                    # caught it: `flake.nixosModules.caddy-mutant =` satisfied
+                    # the `caddy\b` grep — hyphen is a boundary).
+                    if ! grep -q "flake\.nixosModules\.''${name}[[:space:]]*=" "$f"; then
                       echo "FAIL: $base does not declare flake.nixosModules.''${name}"
                       echo "  Auto-discovered modules MUST be flake-parts wrappers; a bare NixOS"
                       echo "  module here evaluates silently and contributes NOTHING to hosts."

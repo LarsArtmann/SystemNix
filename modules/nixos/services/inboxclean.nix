@@ -47,6 +47,22 @@
 #   5. Flip services.inboxclean.sync.enable to true and redeploy.
 #      Until then the sync timer stays off: without a token every run fails
 #      (Infrastructure family, exit 69) and would spam onFailure alerts.
+#
+# Paperless archiving go-live (one-time; services.inboxclean.paperless):
+#   A. Create the API token on the box:
+#        sudo -u paperless paperless-manage drf_create_token admin
+#      (prints the token once; `admin` is fine on this single-user
+#      instance. Alternative: Paperless admin UI -> the user -> Tokens.)
+#   B. sudo sops platforms/nixos/secrets/inboxclean-paperless.yaml —
+#      replace the PLACEHOLDER value with the token.
+#   C. Flip services.inboxclean.paperless.enable = true (configuration.nix)
+#      and deploy. B and C MUST land together: PAPERLESS_URL without a
+#      real token is a config Rejection at EVERY inboxclean process start
+#      (web + sync crash, gatus red), and a PLACEHOLDER token 401-warns
+#      on every sync tick — hence the explicit enable gate.
+#   Verify: journalctl -u inboxclean-sync | grep -i paperless shows the
+#   pipeline run (or a clean skip); the /sync dashboard card shows the
+#   Paperless stats; Gatus "InboxClean Paperless Archive Auth" is green.
 { inputs, ... }: {
   flake.nixosModules.inboxclean =
     {
@@ -70,10 +86,47 @@
     {
       imports = [ inputs.inboxclean.nixosModules.default ];
 
+      options.services.inboxclean.paperless = {
+        enable = lib.mkEnableOption ''
+          Gmail-attachment archiving into Paperless-ngx (upstream papersync
+          integration: after every sync, InboxClean uploads new attachments
+          and opt-in .eml bodies via the Paperless REST API; a local ledger
+          plus Paperless checksum dedup make runs idempotent; failures are
+          warnings, never fatal). Requires the real API token in
+          platforms/nixos/secrets/inboxclean-paperless.yaml — see the header
+          go-live runbook BEFORE flipping this on.
+        '';
+        url = lib.mkOption {
+          type = lib.types.str;
+          default = "http://127.0.0.1:${toString ports.paperless}";
+          description = "Paperless-ngx base URL the sync hook uploads to.";
+        };
+        tags = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ "gmail" ];
+          description = ''
+            PAPERLESS_TAGS (comma-joined) applied to every upload — the
+            provenance marker that makes archived attachments filterable
+            in Paperless.
+          '';
+        };
+      };
+
       config = lib.mkIf cfg.enable {
         # CLI on PATH for the one-time `auth` runbook and operator use
         # (events/undo/export/doctor against the service database).
         environment.systemPackages = [ cfg.package ];
+
+        assertions = [
+          {
+            assertion = cfg.paperless.enable -> (config.services.paperless.enable or false);
+            message = ''
+              services.inboxclean.paperless.enable requires services.paperless
+              (Paperless-ngx) on this host — without the API the sync hook
+              fail-fasts and warns on every tick.
+            '';
+          }
+        ];
 
         services.inboxclean = {
           package = lib.mkDefault inboxcleanPkg;
@@ -93,6 +146,22 @@
           # 2026-08-29): the timer is on. OAuth tokens persist in the
           # state dir and survive redeploys.
           sync.enable = true;
+
+          # Attachment archiving (upstream papersync pipeline). The token
+          # rides the sops template — root-owned on purpose, systemd reads
+          # EnvironmentFile as PID 1; URL + tags are non-secret and go
+          # through extraEnvironment. Upstream applies both to web + sync
+          # units (commonServiceConfig), so the /sync dashboard card lights
+          # up with upload stats too. No systemd ordering against
+          # paperless-web: the hook pings GET /api/ fail-fast and the next
+          # 30-min tick retries; the ledger keeps it idempotent.
+          environmentFile = lib.mkIf cfg.paperless.enable (
+            lib.mkDefault config.sops.templates."inboxclean-paperless-env".path
+          );
+          extraEnvironment = lib.mkIf cfg.paperless.enable {
+            PAPERLESS_URL = cfg.paperless.url;
+            PAPERLESS_TAGS = lib.concatStringsSep "," cfg.paperless.tags;
+          };
         };
 
         systemd.services.inboxclean-web = {

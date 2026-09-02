@@ -200,9 +200,7 @@ _Extraction DONE: ~62.7 GB / 17.5k files verified on `/mnt/pool/backups/pixel6/2
 
 ## Priority 4: Code Quality
 
-- [ ] **Wire `scripts/audit-go-deps.sh` into pre-deploy/CI** — script shipped + first run clean (1569 OK / 46 WARN-DIVERGED); wiring pending the WARN-DIVERGED policy decision (owner Q1-Q3 from the 05-30 report, never answered)
-- [ ] **nullglob audit of ALL `runCommand` checks** — unquoted command-variable expansion + `shopt nullglob` = silent phantom-green (caught once in signoz-query-lint v1); `grep -rn '\$[a-z]* "\?'`-style sweep. **Source:** 08-27 18-58 §f.10
-- [ ] **Persist the nix-native negative-test harness as a repo script** (store fixtures + `builtins.replaceStrings` mutation — currently only described in reports). **Source:** 08-27 18-58 §e.8
+_(all three 2026-09-02 batch items shipped: `audit-go-deps.sh` wired into CI via `.github/workflows/go-deps-audit.yml` — nightly + flake.lock-push triggers, WARN-DIVERGED stays advisory, lookup failures downgrade to WARN-UNKNOWN instead of false ERROR-MISSING, Q1-Q3 safe defaults documented in the workflow; nullglob audit clean (12 runCommand bodies, 0 command-position-var hits) + persisted as `scripts/audit-shell-nullglob.sh` (negative-tested against the signoz-v1 incident shape, wired into pre-commit + CI) + empty-blocklist guard on signoz-query-lint; nix-native negative-test harness persisted as `scripts/negative-test-lints.sh` — 15 cases, first run CAUGHT a real lint weakness (module-shape-lint's `\b` accepted renamed wrappers `caddy-mutant`, fixed with a `=`-anchored grep))_
 
 ## Priority 5: Desktop
 

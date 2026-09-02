@@ -114,7 +114,6 @@ run_case() {
 }
 
 SIGNALERTS="modules/nixos/services/_signoz-alerts.nix"
-GATUSCFG="modules/nixos/services/gatus-config.nix"
 
 # ── green controls: pristine copy, every touched check must build ──
 if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]]; then
@@ -147,14 +146,18 @@ run_case signoz comment-ignored signoz-query-lint pass '' \
   "append:$SIGNALERTS:# EVIL_MUTATION job=\"gatus\" (commented — must be ignored)"
 
 # ── gatus-pattern-lint: the 4 trap classes ──
+# gatus-config.nix is an auto-discovered flake-parts wrapper and IS parsed
+# during checks eval (VM-test module merging) — mutations must stay valid
+# nix. Each replaces a `let`-body comment line with an equivalent let
+# binding carrying the trap (unique anchor: the YAML-field NOTE).
 run_case gatus regex-chars gatus-pattern-lint fail 'regex-only chars' \
-  "append:$GATUSCFG:evilPattern = \"pat(*metric_z?)\";"
+  'sed:modules/nixos/services/gatus-config.nix:s|# NOTE: the YAML field is .*|evilPattern = "pat(*metric_z?)";|'
 run_case gatus phantom-one gatus-pattern-lint fail 'bare pat\(\*<metric> 1\*\)' \
-  "append:$GATUSCFG:evilPattern = \"pat(*metric_z 1*)\";"
+  'sed:modules/nixos/services/gatus-config.nix:s|# NOTE: the YAML field is .*|evilPattern = "pat(*metric_z 1*)";|'
 run_case gatus literal-backslash-n gatus-pattern-lint fail 'literal backslash-n' \
-  "append:$GATUSCFG:evilPattern = \"pat(*m \\n*)\";"
+  'sed:modules/nixos/services/gatus-config.nix:s|# NOTE: the YAML field is .*|evilPattern = "pat(*m \\n*)";|'
 run_case gatus lowercase-method gatus-pattern-lint fail 'lowercase HTTP method' \
-  "append:$GATUSCFG:evilMethod = { method = \"post\"; }"
+  'sed:modules/nixos/services/gatus-config.nix:s|# NOTE: the YAML field is .*|evilMethod.method = "post";|'
 
 # ── module-shape-lint: wrapper renamed away from the filename ──
 # (A bare module ALSO breaks flake eval with a worse message — renaming the

@@ -359,6 +359,20 @@ in
                 ];
               } [ "inboxclean_gmail_credentials" ]
             )
+            // lib.optionalAttrs (svcEnabled "inboxclean") (
+              # Paperless REST API token for InboxClean's Gmail-attachment
+              # archiving (uploads ride the sync hook). Nothing reads the
+              # raw secret — the inboxclean-paperless-env and gatus-env
+              # templates interpolate it for the inboxclean units and the
+              # Gatus auth check. Ships as PLACEHOLDER; go-live = paste the
+              # real token (paperless-manage drf_create_token) + flip
+              # services.inboxclean.paperless.enable.
+              mkSecrets "inboxclean-paperless.yaml" {
+                owner = "root";
+                group = "root";
+                mode = "0400";
+              } [ "paperless_api_token" ]
+            )
             // lib.optionalAttrs (svcEnabled "attic-config") (
               # atticd runs with DynamicUser=true (nixpkgs module default), so the
               # "atticd" user does NOT exist at sops-decrypt time and cannot own
@@ -520,6 +534,16 @@ in
                   # reads the guarded sse-stats endpoint.
                   CV_API_KEY = config.sops.placeholder.cv_api_key;
                 }
+                // lib.optionalAttrs
+                  (svcEnabled "inboxclean" && (config.services.inboxclean.paperless.enable or false))
+                  {
+                    # Paperless REST token for the "InboxClean Paperless
+                    # Archive Auth" check — the SAME secret inboxclean-sync
+                    # uploads attachments with, so the check fails exactly
+                    # when the archiving credential is dead (401) or the
+                    # API is unreachable.
+                    PAPERLESS_TOKEN = config.sops.placeholder.paperless_api_token;
+                  }
               );
             };
           }
@@ -628,6 +652,24 @@ in
               content = "[${config.services.mail-relay.relayHost}]:${toString config.services.mail-relay.relayPort} ${config.services.mail-relay.smtpUsername}:${config.sops.placeholder.mail_relay_password}";
             };
           }
+          // lib.optionalAttrs
+            (svcEnabled "inboxclean" && (config.services.inboxclean.paperless.enable or false))
+            {
+              # PAPERLESS_TOKEN for InboxClean's attachment archiving.
+              # Root-owned ON PURPOSE: systemd reads EnvironmentFile as PID 1
+              # (mail-relay-sasl rationale), the service user never needs it.
+              # Rotation restarts BOTH units so the next sync tick re-reads.
+              "inboxclean-paperless-env" = {
+                owner = "root";
+                group = "root";
+                mode = "0400";
+                restartUnits = [
+                  "inboxclean-web.service"
+                  "inboxclean-sync.service"
+                ];
+                content = "PAPERLESS_TOKEN=${config.sops.placeholder.paperless_api_token}";
+              };
+            }
           // lib.optionalAttrs (svcEnabled "dns-blocker") {
             # Retired 2026-08-21: the Bearer token (DNSBLOCKD_AUTH_TOKEN) was
             # dropped in favor of OIDC SSO as the only dashboard credential.
