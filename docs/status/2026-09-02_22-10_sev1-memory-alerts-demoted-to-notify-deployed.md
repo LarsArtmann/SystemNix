@@ -82,3 +82,30 @@ Actual system shutdowns already have their own dedicated countdown overlay (`shu
 
 - The live trip→notify path is proven by the VM test against the deployed script, not by a live trip (none can be forced safely). First real trip post-deploy: `cat /run/systemnix/sev1/alert` line 4 must read `notify` (or journal: `SEV1 active (1 condition(s), severity=notify)`).
 - DMS notification rendering was not visually verified (no graphical-session access from this context); the notify-send code path is unchanged and proven by prior notify-tier alerts.
+
+---
+
+# ADDENDUM (2026-09-03 01:14) — warn tier shipped + the deploy blocker fixed
+
+## User refinement → `warn` tier ("yellow, non-flashing, once")
+
+The user refined the tiering: infra hardware criticals should not hard-page either — they get a **yellow, non-flashing banner shown ONCE**. Final contract:
+
+| Severity (alert-file line 4) | Behavior | Conditions |
+| ---- | -------- | ---------- |
+| `page` | red pulsing fullscreen + persistent critical notification | **RESERVED — no current emitter** |
+| `warn` | static amber fullscreen banner, NO animation + one cooldown-gated notification | DAS link down, LAN NIC absent, btrfs critical |
+| `warn-seen` | overlay ignores it | same-set refreshes after the first `warn` exposure (bridge-side downgrade so "once" survives quickshell restarts; a CHANGED alert set re-arms) |
+| `notify` | one self-expiring normal notification + Gatus/Discord, no overlay | ALL memory conditions + stale + zram + FLM capped |
+
+Mechanics: the bridge computes severity `page > warn > notify`; on writing the alert file, a `warn` whose alert-set key is unchanged from the previous run is downgraded to `warn-seen`. The QML renders red/pulsing for `page`, static amber for `warn`, nothing otherwise.
+
+## The real deploy blocker: niri-health-metrics DOA (fixed)
+
+4+ deploys across two sessions died silently at test-activation (`Exited(4)`). Root cause traced by running the deployed collector standalone: **`nsm_pid=$(pgrep -x niri-session-manager 2>/dev/null | head -1)` — `pgrep` exits 1 when the manager is absent, and `pipefail` + `set -e` killed the collector BEFORE the `.prom` was written**, so the oneshot failed on every start (manager-not-running = the NORMAL headless state). This is the documented writeShellApplication pipefail/`|| true` trap class, introduced by the black-screen batch's config-staleness tripwire. Fix: `|| true` on the pipeline (`modules/nixos/desktop/niri-config.nix`) with a LOAD-BEARING comment. Verified standalone: rc=1 → rc=0 with a complete prom.
+
+## Final deploy (exit 0)
+
+- Switched: `/run/current-system = h4w1yz17…` — warn tier + niri fix live; cv rolled back to buildable `7dee729` (the CV session's own status report confirms the locked `6615eec` FOD fails vendorHash upstream; they own the re-bump).
+- Live verification: deployed sev1 script carries 3 `warn` severities + the `warn-seen` downgrade; `niri.prom` freshly written by the root timer; sev1 prom healthy (`alerts_active 0`).
+- Post-deploy smoke: 84 PASS / 8 FAIL / 5 WARN — **none sev1- or niri-related**: Pocket ID SQLITE_BUSY (transient under IO), FastFlowLM socket unreachable (IO storm avg10 67% blocks the smoke's cold-pin), CV pipeline-store (EXPECTED: rolled-back binary predates that check), llama.cpp embed/rerank unreachable (other domain), paperless PAPERLESS_EMAIL_HOST (mail-relay wiring, other session). The CV smoke goes green at the next upstream re-bump.
