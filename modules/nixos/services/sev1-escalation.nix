@@ -132,15 +132,28 @@ _: {
             fi
           }
 
-          # --- Guard trip (the guard ACTED: machine entered a pre-freeze zone)
+          # --- Guard trip (the guard ACTED: machine entered a pre-freeze zone).
+          # The page tracks the EMERGENCY, not the event: it stays while the
+          # sacrifice is actually DOWN (sacrifice_socket_active=0 — flm is
+          # unreachable, which IS actionable) and clears the moment the guard
+          # restores the sockets. 2026-09-02 lesson: keying on last_trip_recent
+          # alone fullscreen-paged for the metric's whole 30-min window while
+          # the machine had already recovered to 53% MemAvailable (the restore
+          # was blocked by the old zram gate). A missing socket metric fails
+          # LOUD (=0, page) — same philosophy as the overlay's missing
+          # severity line: an emergency is never silenced by a parse gap.
           guard_trip=0
           if [ "$BOOT_GRACE" = "0" ] && [ "$guard_enabled" = "true" ] && [ -f "$GUARD_PROM" ]; then
             v=$(prom_value "$GUARD_PROM" "memory_emergency_guard_last_trip_recent")
-            [ "$v" = "1" ] && guard_trip=1
+            g_sock=$(prom_value "$GUARD_PROM" "memory_emergency_guard_sacrifice_socket_active")
+            g_sock="''${g_sock:-0}"
+            if [ "$v" = "1" ] && [ "$g_sock" = "0" ]; then
+              guard_trip=1
+            fi
           fi
           if [ "$guard_trip" = "1" ]; then
             titles+=("MEMORY EMERGENCY GUARD TRIPPED")
-            details+=("The machine entered a pre-freeze zone; FastFlowLM + socket were force-stopped. journalctl -u memory-emergency-guard -n 30")
+            details+=("The machine entered a pre-freeze zone; FastFlowLM + socket were force-stopped (this page clears automatically when the guard restores the sockets). journalctl -u memory-emergency-guard -n 30")
             severities+=("page")
           fi
 

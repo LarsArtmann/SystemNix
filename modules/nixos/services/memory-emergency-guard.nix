@@ -244,9 +244,13 @@ _: {
             last_trip_age=-1
           fi
 
-          # Are any sacrifice sockets currently active? (restore candidate)
+          # Are any sacrifice sockets currently active? (restore candidate).
+          # An empty socketUnits list means NOTHING is managed, hence nothing
+          # is sacrificed — report restored (=1), never "emergency active".
           sacrifice_socket_active=0
-          if [ -n "$SOCKET_UNITS" ]; then
+          if [ -z "$SOCKET_UNITS" ]; then
+            sacrifice_socket_active=1
+          else
             for unit in $SOCKET_UNITS; do
               if systemctl is-active --quiet "$unit" 2>/dev/null; then
                 sacrifice_socket_active=1
@@ -283,13 +287,21 @@ _: {
               [ -n "$SOCKET_UNITS" ] &&
               [ "$last_trip_age" -ge ${toString cfg.actionCooldownSeconds} ] &&
               awk -v p="$avail_pct" 'BEGIN { exit !(p >= ${toString cfg.restoreMemAvailableThresholdPercent}) }' &&
-              awk -v z="$zram_pct" 'BEGIN { exit !(z >= 0 && z < ${toString cfg.zramFillThresholdPercent}) }' &&
               awk -v p="$psi_some_avg10" 'BEGIN { exit !(p >= 0 && p < ${toString cfg.restorePsiSomeThresholdPercent}) }' &&
               awk -v p="$psi_some_avg60" 'BEGIN { exit !(p >= 0 && p < ${toString cfg.restorePsiSomeAvg60ThresholdPercent}) }' &&
               [ "$psi_episodes" -lt ${toString (cfg.psiEpisodeTripCount / 2)} ]
           then
-            # Self-heal: the emergency has drained (healthy margins on all
-            # three axes + cooldown elapsed). Bring the socket back so flm
+            # Self-heal: the emergency has drained (pressure margins + episode
+            # bucket + cooldown elapsed). NO zram gate, deliberately
+            # (2026-09-02 live lockout): stopping the sacrifice CANNOT drain
+            # zram — its 28 GiB of swapped pages belong to OTHER processes
+            # and only fault back lazily, so a zram-gated restore kept the
+            # socket down for hours on a machine with 53% MemAvailable and
+            # 0.26% PSI while the sev1 overlay re-armed on the stale trip.
+            # Relapse protection is the trip zones themselves: every zram
+            # zone COMBINES zram with pressure, so a cold load that
+            # re-deteriorates memory re-trips within one 30 s tick.
+            # Bring the socket back so flm
             # cold-loads on the next real client connection, and clear any
             # start-limit the repeated stops may have left behind.
             systemctl reset-failed ${
@@ -420,7 +432,7 @@ _: {
         restoreMemAvailableThresholdPercent = lib.mkOption {
           type = lib.types.int;
           default = 15;
-          description = "MemAvailable percentage at or above which (plus the other restore margins and the elapsed cooldown) the sacrifice sockets are started again";
+          description = "MemAvailable percentage at or above which (plus the PSI/episode restore margins and the elapsed cooldown) the sacrifice sockets are started again. zram fill is deliberately NOT a restore gate — stopping the sacrifice cannot drain zram (its pages belong to other processes), so a zram-gated restore locks the socket down long after the emergency has passed (2026-09-02 lockout)";
         };
 
         restorePsiSomeThresholdPercent = lib.mkOption {
