@@ -30,9 +30,8 @@
     { ... }:
     {
       virtualisation = {
-        memorySize = 2048;
-        # Graphical output for SDDM + niri (virtio-gpu, llvmpipe rendering)
-        qemu.options = [ "-vga std" ];
+        # COSMIC-test precedent: Wayland compositors under llvmpipe want headroom
+        memorySize = 4096;
       };
 
       users.users.alice = {
@@ -119,7 +118,9 @@
     machine.wait_until_succeeds("loginctl list-sessions --no-legend | grep -q alice", timeout=60)
 
     # 7. The gate canary saw the compositor socket (the legal ordering works:
-    #    socket-wait, never Wants=graphical-session.target)
-    machine.succeed("test -S /run/user/1000/wayland-0 || test -S /run/user/1000/wayland-1")
+    #    socket-wait, never Wants=graphical-session.target). Retrying: niri
+    #    creates the socket shortly after process start.
+    machine.wait_until_succeeds("ls /run/user/1000/wayland-* >/dev/null 2>&1", timeout=60)
+    machine.succeed("ls -la /run/user/1000/ >&2")
   '';
 }

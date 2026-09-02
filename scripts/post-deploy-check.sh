@@ -349,36 +349,25 @@ fi
 paperless_enabled=false
 test -e /etc/systemd/system/paperless-web.service && paperless_enabled=true
 if $paperless_enabled; then
-  # --retry: post-deploy-check runs seconds after switch-to-configuration
-  # restarts paperless-webserver (gunicorn); during that window the socket
-  # can answer with an empty/error body before Django is ready. Retrying
-  # keeps the check strict (body MUST eventually contain the sign-in marker)
-  # while tolerating the restart window.
-  # URL: / 302-redirects to /accounts/login/?next=/ — curl without -L only
-  # sees the redirect (its body is empty); probe the login page directly,
-  # same URL Gatus probes. python urllib auto-follows redirects, which masked
-  # this during development — verify smoke checks with curl semantics.
-  if paperless_body=$(curl -s --compressed --max-time 10 --retry 5 --retry-delay 3 --retry-all-errors "http://127.0.0.1:2892/accounts/login/?next=/" 2>/dev/null); then
-    if echo "$paperless_body" | grep -q "Paperless-ngx sign in"; then
-      report_pass "Paperless — web login page (Django + PostgreSQL stack answers)"
-    else
-      report_fail 'Paperless — :2892 answered but the body lacks "Paperless-ngx sign in" — partial stack, check paperless-scheduler journal'
-    fi
-    # Layer 1 SSO: the login page must render the Pocket ID provider button
-    # (allauth → /accounts/oidc/pocket-id/login/). A missing button means
-    # PAPERLESS_APPS or the paperless-oidc-setup env file (with the client
-    # secret) didn't reach the unit — SSO silently dead while local login
-    # still works. Probe with herestring, never echo|grep on a large body
-    # (SIGPIPE/pipefail false-fail class).
-    if systemctl is-active --quiet paperless-oidc-setup.service 2>/dev/null; then
-      if grep -q "oidc/pocket-id" <<<"$paperless_body"; then
-        report_pass "Paperless — Pocket ID SSO button on login page"
-      else
-        report_fail "Paperless — login page lacks the Pocket ID OIDC button — check journalctl -u paperless-oidc-setup and the PAPERLESS_SOCIALACCOUNT_PROVIDERS env file"
-      fi
-    fi
-  else
+  # SSO-only mode (2026-09-02): the login page no longer renders a form —
+  # PAPERLESS_REDIRECT_LOGIN_TO_SSO (riding in the paperless-oidc-setup env
+  # file) 302s straight into the Pocket ID provider flow, and the password
+  # form exists ONLY as auto-break-glass (it returns automatically when the
+  # bridge's env file is absent). So the redirect IS the functional probe —
+  # and every branch reports explicitly (no silent skips: a silently-skipped
+  # check is a phantom green). --retry tolerates the post-switch gunicorn
+  # restart window; python urllib auto-follows redirects and would mask the
+  # 302 — verify smoke checks with curl semantics.
+  paperless_code=$(curl -s -o /dev/null -w '%{http_code}' --compressed --max-time 10 --retry 5 --retry-delay 3 --retry-all-errors "http://127.0.0.1:2892/accounts/login/?next=/" 2>/dev/null)
+  paperless_redirect=$(curl -s -o /dev/null -w '%{redirect_url}' --compressed --max-time 10 --retry 3 --retry-delay 3 "http://127.0.0.1:2892/accounts/login/?next=/" 2>/dev/null)
+  if [ "$paperless_code" = "302" ] && [[ $paperless_redirect == *pocket-id* ]]; then
+    report_pass "Paperless — login redirects to Pocket ID SSO (password login disabled)"
+  elif [ "$paperless_code" = "200" ]; then
+    report_fail "Paperless — login page serves the PASSWORD FORM: the SSO env file did not reach the unit (bridge degraded or REDIRECT flag missing) — journalctl -u paperless-oidc-setup"
+  elif [ -z "$paperless_code" ] || [ "$paperless_code" = "000" ]; then
     report_fail "Paperless — :2892 unreachable (journalctl -u 'paperless-*' -n 30)"
+  else
+    report_fail "Paperless — unexpected login response: HTTP $paperless_code redirect='${paperless_redirect:0:120}' (Django settings or stack broken — paperless-scheduler journal)"
   fi
   if systemctl is-active tika.service >/dev/null 2>&1; then
     report_pass "Paperless — Tika OCR sidecar active"
@@ -1146,9 +1135,9 @@ if [ -f "$_hm_vars" ]; then
   # 1. QT_STYLE_OVERRIDE must be empty or name a real QStyle: fusion/windows
   #    are qtbase built-ins; anything else needs a styles/ plugin deployed.
   _style=$(sed -n 's/^export QT_STYLE_OVERRIDE="\([^"]*\)".*/\1/p' "$_hm_vars")
-  if [ -n "$_style" ] \
-    && [ "$_style" != "fusion" ] && [ "$_style" != "windows" ] && [ "$_style" != "base" ] \
-    && ! ls "${_qt_plugins}"/styles/lib*"${_style}"*.so >/dev/null 2>&1; then
+  if [ -n "$_style" ] &&
+    [ "$_style" != "fusion" ] && [ "$_style" != "windows" ] && [ "$_style" != "base" ] &&
+    ! ls "${_qt_plugins}"/styles/lib*"${_style}"*.so >/dev/null 2>&1; then
     _polkit_problems="${_polkit_problems} QT_STYLE_OVERRIDE='${_style}' does not resolve (no styles plugin deployed);"
   fi
   # 2. QT_QUICK_CONTROLS_STYLE, if set, must have its QQC2 style module
@@ -1156,12 +1145,12 @@ if [ -f "$_hm_vars" ]; then
   _controls=$(sed -n 's/^export QT_QUICK_CONTROLS_STYLE="\([^"]*\)".*/\1/p' "$_hm_vars")
   if [ -n "$_controls" ]; then
     case "$_controls" in
-      Basic | Fusion | Imagine | Material | Universal) ;;
-      *)
-        if [ ! -d "${_qt_qml}/QtQuick/Controls.2/${_controls}" ]; then
-          _polkit_problems="${_polkit_problems} QT_QUICK_CONTROLS_STYLE='${_controls}' has no QML module;"
-        fi
-        ;;
+    Basic | Fusion | Imagine | Material | Universal) ;;
+    *)
+      if [ ! -d "${_qt_qml}/QtQuick/Controls.2/${_controls}" ]; then
+        _polkit_problems="${_polkit_problems} QT_QUICK_CONTROLS_STYLE='${_controls}' has no QML module;"
+      fi
+      ;;
     esac
   fi
 else

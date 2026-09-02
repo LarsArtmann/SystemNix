@@ -94,11 +94,12 @@
       id:
       "niri-session-manager: terminal app-id \"${id}\" is missing from single_instance_apps — restore dedupes single-instance apps to ONE spawn, and a terminal missing from that list re-arms the 2026-08-31 restore-storm growth loop."
     ) missingTerminals)
-    ++ (if builtins.elem "gcr-prompter" skipApps then
-      [ ]
-    else
-      [
-        "niri-session-manager: gcr-prompter (transient GCR auth dialog) must stay in skip_apps — restoring transient dialogs is nonsense by definition."
-      ]
+    ++ (
+      if builtins.elem "gcr-prompter" skipApps then
+        [ ]
+      else
+        [
+          "niri-session-manager: gcr-prompter (transient GCR auth dialog) must stay in skip_apps — restoring transient dialogs is nonsense by definition."
+        ]
     );
 }

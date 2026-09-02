@@ -26,8 +26,7 @@ let
   niriSessionManagerConfigToml =
     let
       tomlQuote = s: "\"" + lib.escape [ "\"" ] s + "\"";
-      tomlArray = indent: xs:
-        "[\n" + lib.concatMapStrings (x: indent + tomlQuote x + ",\n") xs + "  ]";
+      tomlArray = indent: xs: "[\n" + lib.concatMapStrings (x: indent + tomlQuote x + ",\n") xs + "  ]";
       tomlInlineArray = xs: "[" + lib.concatStringsSep ", " (map tomlQuote xs) + "]";
     in
     ''
@@ -38,7 +37,9 @@ let
       apps = ${tomlArray "    " niriSessionManagerSkipApps}
 
       [app_mappings]
-      ${lib.concatStringsSep "\n" (lib.mapAttrsToList (k: v: "${tomlQuote k} = ${tomlInlineArray v}") niriSessionManagerAppMappings)}
+      ${lib.concatStringsSep "\n" (
+        lib.mapAttrsToList (k: v: "${tomlQuote k} = ${tomlInlineArray v}") niriSessionManagerAppMappings
+      )}
 
       [terminal_state]
       enabled = true
@@ -47,7 +48,6 @@ let
       helper_names = ${tomlInlineArray [ "kitten" ]}
       max_walk_depth = 20
     '';
-
 
   # `open` — macOS-style file/URL opener that works from ANY context,
   # including SSH sessions that lack the graphical environment.
@@ -815,13 +815,10 @@ in
   # Niri session manager invariants (2026-08-31 terminal-storm class).
   # Same checker as tests/test-niri-session-config.nix — fires at
   # eval/build time so the config lists can never silently rot.
-  assertions =
-    map
-      (message: {
-        assertion = false;
-        inherit message;
-      })
-      (nsmApps.mkInvariantViolations nsmApps);
+  assertions = map (message: {
+    assertion = false;
+    inherit message;
+  }) (nsmApps.mkInvariantViolations nsmApps);
 
   # Qt settings for consistency with GTK.
   # NEVER use gtk2 here: the gtk2 Qt platform/theme plugins are Qt5-only —

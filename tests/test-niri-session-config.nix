@@ -39,13 +39,17 @@ let
       name = "terminal-dropped-from-single_instance-not-caught";
       pass =
         terminalDroppedViolations != [ ]
-        && pkgs.lib.any (v: pkgs.lib.hasPrefix "niri-session-manager: terminal app-id \"com.mitchellh.ghostty\"" v) terminalDroppedViolations;
+        && pkgs.lib.any (
+          v: pkgs.lib.hasPrefix "niri-session-manager: terminal app-id \"com.mitchellh.ghostty\"" v
+        ) terminalDroppedViolations;
     }
     {
       name = "gcr-prompter-dropped-from-skip_apps-not-caught";
       pass =
         transientDroppedViolations != [ ]
-        && pkgs.lib.any (v: pkgs.lib.hasPrefix "niri-session-manager: gcr-prompter" v) transientDroppedViolations;
+        && pkgs.lib.any (
+          v: pkgs.lib.hasPrefix "niri-session-manager: gcr-prompter" v
+        ) transientDroppedViolations;
     }
   ];
 

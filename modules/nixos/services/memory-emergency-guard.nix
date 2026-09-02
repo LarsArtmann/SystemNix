@@ -105,6 +105,7 @@ _: {
           LAST_TRIP_FILE="${stateDir}/last-trip"
           RESTORED_COUNT_FILE="${stateDir}/restored.count"
           SOCKET_UNITS="${lib.concatStringsSep " " cfg.socketUnits}"
+          MAX_RESTORES_PER_DAY=${toString cfg.maxRestoresPerDay}
 
           # Kernel data sources, env-overridable for the VM regression test
           # (tests/test-memory-emergency-guard.nix fakes them to exercise the
@@ -309,8 +310,8 @@ _: {
           if
             [ "$sacrifice_socket_active" = "0" ] &&
               [ -n "$SOCKET_UNITS" ] &&
-              [ ${toString cfg.maxRestoresPerDay} -gt 0 ] &&
-              [ "$restores_today" -ge ${toString cfg.maxRestoresPerDay} ]
+              [ "$MAX_RESTORES_PER_DAY" -gt 0 ] &&
+              [ "$restores_today" -ge "$MAX_RESTORES_PER_DAY" ]
           then
             restore_capped=1
           fi
@@ -375,7 +376,7 @@ _: {
             # human (a capped state with healthy memory must never look
             # like a silently working self-heal loop).
             if [ "$restore_capped" = "1" ]; then
-              echo "MEMORY EMERGENCY restore capped (''${restores_today} restores today >= ${toString cfg.maxRestoresPerDay}) — FastFlowLM socket stays DOWN. Manual restart once memory is healthy: systemctl start $SOCKET_UNITS" >&2
+              echo "MEMORY EMERGENCY restore capped (''${restores_today} restores today >= $MAX_RESTORES_PER_DAY) — FastFlowLM socket stays DOWN. Manual restart once memory is healthy: systemctl start $SOCKET_UNITS" >&2
             else
               systemctl reset-failed ${
                 lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
