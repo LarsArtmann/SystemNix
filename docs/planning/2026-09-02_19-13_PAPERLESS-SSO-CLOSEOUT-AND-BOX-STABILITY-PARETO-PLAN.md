@@ -293,3 +293,25 @@ grep -E 'zram_swap_fill|crush_sessions ' /var/lib/prometheus-node-exporter/textf
 - Then: "NOW GET SHIT DONE" mode on Tier 1 → Tier 2 → the deploy train → Tier 3, with the gating rules of §5.
 
 *Plan written by the Paperless SSO closeout session, 2026-09-02 19:13.*
+
+---
+
+## 9. Execution annotations (2026-09-02/03 — appended, plan body never rewritten)
+
+### T01 answers (recorded 19:40 via question tool)
+
+- **Q1 logout-bounce:** acceptable → **T14 CLOSED, no change**.
+- **Q2 API clients:** "unsure" → **T13 research-first**; no login-surface change without explicit go.
+- **Q3 memory:** user will "up the RAM - UMA Frame in the BIOS when we start again" → **T02 disposition = hardware path documented; no session caps, no flm-TTL changes**. Semantics ambiguity (physical RAM vs carveout vs both) flagged in the TODO_LIST item.
+
+### T02 — memory-pressure disposition (WRITTEN, closes the task)
+
+**Holders (measured 19:06–23:58):** flm 28 GB shmem (socket-activated; guard-sacrificable), 26–27 concurrent crush sessions (user.slice 25.6–31.9 GB; largest session scopes 8.5/2.8/2.6 GB), clickhouse 3.8 GB, ~50 GB page cache. **zram 97.5–97.7% ALL EVENING** (SwapFree 480 kB / 29.5 GB) — the documented real-cliff state; yet MemAvailable held 26–29 GB and memory PSI some avg10 = 0.00%. **Guard-zone mapping:** Zones 1–3 cycled clean all evening (correct: full-but-not-thrashing is not a trip condition); the episodic freeze-#3 class is Zone 5's job. **Verdict:** high-water-but-stable; risk accepted until the BIOS change, then re-baseline (TODO_LIST P2 item added with the full re-measurement checklist + UMA-semantics warning: raising the carveout REDUCES CPU-visible RAM and tightens zram margins — resolve the ambiguity at the BIOS screen). **Remediation options if post-BIOS zram still >90% steady** (links, no dupes): workload-admission cap on concurrent sessions (existing crush-cap TODO), flm idle-TTL shortening (existing fastflowlm TODO), zram re-size. Session-cap decision deliberately DEFERRED to post-BIOS data.
+
+### T19 — Layer-1 SSO-only survey (CLOSED: rollout already effectively complete)
+
+Read-only config survey 2026-09-02: **forgejo** `ENABLE_INTERNAL_SIGNIN=false` + `ENABLE_BASIC_AUTHENTICATION=false` (SSO-only; git HTTPS via tokens) · **immich** `passwordLogin.enabled=false` (OAuth-only) · **gatus** native OIDC, no local accounts · **browser-history** passkey WebAuthn + OAuth2, `MAX_USERS=1` (no passwords) · **paperless** SSO-only in UI since this plan's parent session. The ONLY remaining password surface in the SSO stack = **paperless REST API** (= T13's subject). No separate preference question needed — it folds into T13's recommendation.
+
+### Deploy-train convergence (annotated 2026-09-02 23:5x)
+
+Concurrent sessions ran the train: gen **753** switched 21:59 (deploy exit 0, 22:07) carrying all Tier-1/2 code. Live-verified post-switch: `system_pocket_id_busy_*` LIVE (events_24h=30, over_threshold=1 — the SQLITE_BUSY alert fires TRUTHFULLY; user may tune the 10/24h threshold later), `node_textfile_scrape_error 0`, paperless login 5-conditions green, `/admin` + `/admin/documents` → 403. T05 exit-record proven live (all six 2026-09-02 evening deploys logged structured exit lines). **Fallout fixed:** the 21:57 deploy's `post-deploy-check` app failed its own build (shellcheck SC1091 unstaged lib + mail-relay SC2016) → smoke never ran for gen 753 → fixed with sibling-lib staging + directives; re-run completed the missing smoke.
