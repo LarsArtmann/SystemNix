@@ -39,6 +39,7 @@ in
   sev1-escalation = makeTest (import ./test-sev1-escalation.nix { inherit pkgs; });
   pool-recovery = makeTest (import ./test-pool-recovery.nix { inherit pkgs; });
   session-boot-audit = import ./test-session-boot-audit.nix { inherit pkgs inputs system; };
+  niri-session-config = import ./test-niri-session-config.nix { inherit pkgs; };
   tmp-cleanup = makeTest (import ./test-tmp-cleanup.nix { inherit pkgs; });
   tmp-cleaner-audit = import ./test-tmp-cleaner-audit.nix { inherit pkgs inputs system; };
 }
