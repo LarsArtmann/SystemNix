@@ -910,6 +910,19 @@
                 touch $out
               '';
 
+              # The post-deploy pressure verdicts must never call a storm
+              # healthy (2026-09-02: PASS at memory PSI avg10 48-77% during
+              # the evening storm). Fixture-driven through the SAME
+              # scripts/lib/pressure-report.sh post-deploy-check.sh sources.
+              post-deploy-pressure-selftest = pkgs.runCommand "post-deploy-pressure-selftest" { } ''
+                scratch=$(mktemp -d)
+                mkdir -p "$scratch/scripts/lib"
+                cp ${./scripts/test-post-deploy-pressure.sh} "$scratch/scripts/test-post-deploy-pressure.sh"
+                cp ${./scripts/lib/pressure-report.sh} "$scratch/scripts/lib/pressure-report.sh"
+                ${pkgs.bash}/bin/bash "$scratch/scripts/test-post-deploy-pressure.sh"
+                touch $out
+              '';
+
               # Auto-discovered modules under modules/nixos/{services,desktop}/
               # are flake-parts wrappers: filename -> flake.nixosModules.<filename>.
               # A bare NixOS module evaluates its let-bindings in the WRONG

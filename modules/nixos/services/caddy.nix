@@ -151,11 +151,16 @@ _: {
             # /admin/* stays hard-blocked: PAPERLESS_DISABLE_REGULAR_LOGIN
             # does NOT cover the Django admin login (documented), and nobody
             # uses it here — paperless-manage covers admin operations.
+            # The exact-match handle /admin (2026-09-02) kills the bare
+            # /admin → /admin/ 301 hop that used to leak through to the app.
             "paperless.${domain}" = {
               extraConfig = ''
                 ${tlsConfig}
                 ${commonConfig}
                 handle /admin/* {
+                  respond 403
+                }
+                handle /admin {
                   respond 403
                 }
                 handle {
