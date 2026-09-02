@@ -198,10 +198,14 @@ in
       interval = "1m";
       severity = "warning";
     };
-    "signoz/rules/gpu-vram-high.json".source = mkRule {
-      name = "GPU VRAM Critical (>85%)";
-      description = "GPU VRAM usage above 85% on {{.Labels.card}} — risk of OOM cascade (niri SIGABRT, desktop freeze)";
-      query = "(node_amdgpu_mem_info_vram_used_bytes / node_amdgpu_mem_info_vram_total_bytes) * 100";
+    # GTT-first (2026-09-02): with a 512 MiB BIOS carveout, the vram_used/vram_total
+    # ratio pins near 100% from desktop compositing alone — a VRAM-% rule would
+    # false-fire CRITICAL permanently. GTT is the real GPU memory (≈ system RAM on
+    # this unified-memory APU); >85% of it = GPU pinning >100 GiB of the box.
+    "signoz/rules/gpu-gtt-high.json".source = mkRule {
+      name = "GPU GTT Critical (>85%)";
+      description = "GPU GTT usage above 85% on {{.Labels.card}} — GTT is shared system RAM on this APU (512 MiB carveout); risk of OOM cascade (niri SIGABRT, desktop freeze)";
+      query = "(node_amdgpu_mem_info_gtt_used_bytes / node_amdgpu_mem_info_gtt_total_bytes) * 100";
       target = 85;
     };
     "signoz/rules/niri-down.json".source = mkRule {

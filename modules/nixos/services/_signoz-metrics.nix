@@ -84,7 +84,7 @@ lib.mkIf cfg.components.nodeExporter {
                       fi
                     done
 
-                    for vram in /sys/class/drm/card*/device/mem_info_vram_total /sys/class/drm/card*/device/mem_info_vram_used; do
+                    for vram in /sys/class/drm/card*/device/mem_info_vram_total /sys/class/drm/card*/device/mem_info_vram_used /sys/class/drm/card*/device/mem_info_gtt_total /sys/class/drm/card*/device/mem_info_gtt_used; do
                       if [ -f "$vram" ]; then
                         bytes=$(cat "$vram" | tr -d '\n')
                         card_name="''${vram#/sys/class/drm/}"; card_name="''${card_name%%/*}"
