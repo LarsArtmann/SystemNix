@@ -305,6 +305,13 @@ _: {
               ReadWritePaths = [ textfileDir ];
               # postqueue is timeout-bounded inside; this is the hard ceiling
               TimeoutStartSec = "1min";
+              # Run AS the postfix user. Root under harden{}'s empty
+              # CapabilityBoundingSet has NO DAC bypass: it cannot read the
+              # postfix-owned 0400 SASL map nor connect to the postfix-owned
+              # showq socket (both fail with EACCES — VM-test-proven). The
+              # postfix user reads both natively, and the textfile dir is
+              # 1777 so the write still lands. Least privilege, no caps.
+              User = config.services.postfix.user;
             }
           ];
         };
