@@ -308,6 +308,18 @@ if $cv_enabled; then
   else
     report_fail "CV — /export/pdf broken: typst template missing from /var/lib/cv/assets or renderer failed (restart re-syncs assets; journalctl -u cv-server -n 50)"
   fi
+  # Funnel DB health (upstream 2026-09-02): /health's pipeline-store check
+  # pings the SQLite event store the nightly cv-backup protects. Requires a
+  # cv flake input >= a03ff09e — an older deployed binary lacks the key
+  # entirely. NOTE: the sibling "database" check is the optional Turso
+  # analytics DB (disabled by design in prod) — its "not configured"
+  # verdict is benign and deliberately NOT asserted here.
+  cv_store=$(curl -s --compressed --max-time 10 "http://127.0.0.1:8098/health" 2>/dev/null | grep -o '"pipeline-store":{"name":"pipeline-store","status":"[a-z]*"' || true)
+  if [ -n "$cv_store" ] && [ "$cv_store" != "${cv_store/\"status\":\"healthy\"/}" ]; then
+    report_pass "CV — pipeline-store healthy (SQLite funnel store reachable)"
+  else
+    report_fail "CV — pipeline-store not healthy (${cv_store:-check absent from /health}) — deployed cv binary predates 2026-09-02 or the sqlite store is unreachable (journalctl -u cv-server -n 50)"
+  fi
 else
   report_skip "CV — service disabled (units absent from systemd)"
 fi
