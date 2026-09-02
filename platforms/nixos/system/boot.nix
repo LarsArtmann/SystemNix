@@ -497,9 +497,10 @@ in
   systemd.services.fstrim.serviceConfig = ioTier.maintenance;
 
   # ZRAM: compressed swap on unified memory APU. This is the ONLY swap — no disk swap.
-  # ~30% of ~110 GiB visible RAM = ~33 GiB virtual device. At ~3.2x zstd compression,
-  # 33 GiB of swap costs ~10.3 GiB of physical RAM while holding ~106 GiB of original data.
-  # GPU and CPU share this RAM, so AI workloads compete directly with system processes.
+  # 50% of ~94 GiB visible RAM = ~47 GiB virtual device. At ~2.6-3.2x zstd compression,
+  # a FULL 47 GiB device costs ~15-18 GiB of physical RAM while holding ~120+ GiB of
+  # original data. GPU and CPU share this RAM, so AI workloads compete directly with
+  # system processes.
   #
   # swappiness=150 (set above) makes the kernel prefer zram swap over page cache reclaim.
   # This is CRITICAL: zram compresses in RAM at ~370 MiB/s, while page cache reclaim hits
@@ -516,6 +517,15 @@ in
   # more headroom before hitting that cliff. At 3.2x ratio, the extra 12 GiB costs only
   # ~3.7 GiB physical RAM — a good trade on a 110 GiB system.
   #
+  # Why 50% not 30% (2026-09-02): the 28.2 GiB device sat at 97% fill (27.4 GiB of
+  # swapped pages compressing to 10.7 GiB physical at 2.6x) as STEADY STATE — with
+  # 53% MemAvailable and 0.26% PSI, i.e. a perfectly healthy machine whose swap-fill
+  # gauge read "critical". Fill-% is only a meaningful cliff signal with headroom:
+  # at 50% the same load reads ~58%, the unevictable-shmem cliff (swap exhaustion)
+  # moves ~19 GiB further out, and the physical cost is bounded by compression.
+  # Idle cost is ZERO: zram allocates physical pages only for actually-stored data.
+  # NOTE: takes effect on REBOOT (zram device is sized at boot, not hot-resizable).
+  #
   # level=1 (not the kernel default of 3): zram compresses individual 4 KiB
   # pages synchronously in the reclaim path. At 4 KiB block sizes, higher zstd
   # levels can't find enough patterns to justify their CPU cost. Benchmark on
@@ -528,7 +538,7 @@ in
   # memory pressure (swap-in/swap-out is synchronous and blocks the reclaim path).
   zramSwap = {
     enable = true;
-    memoryPercent = 30;
+    memoryPercent = 50;
     algorithm = "zstd(level=1)";
   };
 }

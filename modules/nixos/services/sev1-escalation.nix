@@ -30,20 +30,23 @@
 #
 # Overlay triggers are TIERED (user decision 2026-08-31 evening, the
 # movie-night flap session: "stale system_health monitoring is still not
-# something you need to spam my entire screen with"):
+# something you need to spam my entire screen with"; extended 2026-09-02,
+# the MEMORY EMERGENCY spam session):
 #   page   = fullscreen overlay + persistent critical notification:
-#           guard-trip, sustained memory stall, guard-dead, infra
-#           criticals (DAS link, LAN NIC, btrfs, zram). Drop-everything
+#           guard-trip (only while the sacrifice is actually DOWN — clears
+#           the moment the guard restores the sockets, not on a fixed
+#           30-min metric window), sustained memory stall, guard-dead,
+#           infra criticals (DAS link, LAN NIC, btrfs). Drop-everything
 #           conditions a human can act on immediately.
 #   notify = ONE self-expiring normal-urgency desktop notification +
-#           Gatus/Discord, NO overlay: SYSTEM MONITORING STALE. A degraded
-#           metrics collector is not an emergency the user can fix
-#           mid-movie, and the condition is flap-prone (collector
-#           timeouts oscillate stale/healthy — live 23:29-23:40 the same
-#           evening: 4 consecutive 3-min collector timeouts re-paged the
-#           fullscreen overlay on every cycle), so it is additionally
-#           cooldown-gated against re-notification. The PSI warning tier
-#           (psi-metrics) likewise does NOT overlay — Discord only.
+#           Gatus/Discord, NO overlay: SYSTEM MONITORING STALE and ZRAM
+#           SWAP CRITICAL (combined-gated — zram ≥90% with degraded
+#           PSI/avail; steady-state high fill never notifies, and the
+#           guard's own trip page covers the real cliff within 30 s).
+#           Both are flap-prone or guard-owned conditions the user cannot
+#           fix mid-movie, so they are additionally cooldown-gated against
+#           re-notification. The PSI warning tier (psi-metrics) likewise
+#           does NOT overlay — Discord only.
 _: {
   flake.nixosModules.sev1-escalation =
     {
@@ -228,10 +231,15 @@ _: {
             v=$(prom_value "$HEALTH_PROM" "system_zram_fill_over_threshold")
             if [ "$v" = "1" ]; then
               # zram near-full ALONE is steady-state normal on this box
-              # (swappiness=150 keeps cold anon compressed in zram; measured
-              # 98.5% with PSI 0.00 and 25% avail on 2026-08-22 evening).
-              # Escalate only when margins are ALSO degraded — mirror the
-              # emergency guard's combined-zone semantics. Guard metrics are
+              # (swappiness=150 keeps cold anon compressed in zram; live
+              # 2026-09-02: 97% fill with 53% MemAvailable and 0.26% PSI —
+              # perfectly healthy). Combined-gate exactly like before, but
+              # the tier is NOTIFY, not page (2026-09-02 user decision):
+              # this state is the guard's own trip zone about to fire, and
+              # the guard trip pages within one 30 s tick anyway — a second
+              # fullscreen overlay for the same cliff was pure alert spam.
+              # A self-expiring notification + the existing Gatus/Discord
+              # ZRAM Fill alert carry the early warning. Guard metrics are
               # the PSI/avail source (-1 = guard absent → no escalation).
               g_psi=$(prom_value "$GUARD_PROM" "memory_emergency_guard_psi_some_avg10_percent")
               g_avail=$(prom_value "$GUARD_PROM" "memory_emergency_guard_avail_percent")
@@ -239,8 +247,8 @@ _: {
               g_avail="''${g_avail:--1}"
               if awk "BEGIN{exit !($g_psi >= 5)}" || awk "BEGIN{exit !($g_avail >= 0 && $g_avail < 15)}"; then
                 titles+=("ZRAM SWAP CRITICAL")
-                details+=("zram (the ONLY swap) is nearly full AND margins are degraded (PSI some avg10=''${g_psi}%, MemAvailable=''${g_avail}%) — shmem becomes unevictable past 100%. The guard should trip; shed load now.")
-                severities+=("page")
+                details+=("zram (the ONLY swap) is nearly full AND margins are degraded (PSI some avg10=''${g_psi}%, MemAvailable=''${g_avail}%) — the memory guard is about to sacrifice FastFlowLM; shed load now.")
+                severities+=("notify")
               fi
             fi
           fi

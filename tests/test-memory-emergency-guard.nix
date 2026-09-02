@@ -26,6 +26,10 @@
 #      unchanged) but the socket stays enforced down.
 #   6. Restore: healthy margins + last trip 700 s ago → socket restarted,
 #      reset-failed issued.
+#   6a. Restore with zram STILL ≥92% (53% avail, 0.26% PSI): MUST restore —
+#      the 2026-09-02 lockout regression: stopping the sacrifice cannot
+#      drain zram (its pages belong to other processes), so a zram-gated
+#      restore kept the socket down for hours on a healthy machine.
 #   7. Restore blocked by residual PSI (10% ≥ 5% threshold): socket stays down.
 { pkgs }:
 let
@@ -182,6 +186,14 @@ in
         zramPct = 0.20;
         psiAvg10 = "10.00";
       };
+      # The 2026-09-02 LIVE state that exposed the lockout: zram 97% (28 GiB
+      # of OTHER processes' swapped pages that the sacrifice cannot drain),
+      # but memory fully recovered (53% avail, PSI 0.26). Restore must fire.
+      restoreZramFull = {
+        availPct = 0.53;
+        zramPct = 0.97;
+        psiAvg10 = "0.26";
+      };
     in
     ''
       machine.start()
@@ -304,6 +316,28 @@ in
       )
       out = run_guard("healthy")
       assert "sacrifice sockets restored" in out
+      machine.succeed("systemctl is-active --quiet fastflowlm.socket")
+
+      # --- 6a. Restore with zram STILL nearly full — the 2026-09-02
+      #      lockout regression: the sacrifice cannot drain zram, so a
+      #      zram-gated restore locked the socket down for hours on a
+      #      machine with 53% avail / 0.26% PSI. Pressure margins + the
+      #      trip zones (which all COMBINE zram with pressure) are the
+      #      real protection, not the restore gate.
+      reset_state()
+      machine.succeed("${writeFakes \"zone2\" zone2}")
+      out = run_guard("zone2")
+      assert_all_down()
+      machine.succeed(
+          "echo $(( $(date +%s) - 700 )) > /var/lib/memory-emergency-guard/last-trip"
+      )
+      machine.succeed("${writeFakes \"zramfull\" restoreZramFull}")
+      out = run_guard("zramfull")
+      assert "sacrifice sockets restored" in out, (
+          "restore must NOT require zram headroom: stopping the sacrifice "
+          "cannot drain zram (2026-09-02 live lockout — socket stayed down "
+          "for hours at 53% avail / 0.26% PSI / 97% zram)"
+      )
       machine.succeed("systemctl is-active --quiet fastflowlm.socket")
 
       # --- 6b. Zone 5 (episodic avg10, avg60 LOW) — the CALIBRATED 16:34
