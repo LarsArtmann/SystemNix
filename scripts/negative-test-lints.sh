@@ -155,7 +155,11 @@ run_case gatus regex-chars gatus-pattern-lint fail 'regex-only chars' \
 run_case gatus phantom-one gatus-pattern-lint fail 'bare pat\(\*<metric> 1\*\)' \
   'sed:modules/nixos/services/gatus-config.nix:s|# NOTE: the YAML field is .*|evilPattern = "pat(*metric_z 1*)";|'
 run_case gatus literal-backslash-n gatus-pattern-lint fail 'literal backslash-n' \
-  'sed:modules/nixos/services/gatus-config.nix:s|# NOTE: the YAML field is .*|evilPattern = "pat(*m \\n*)";|'
+  'sed:modules/nixos/services/gatus-config.nix:s|# NOTE: the YAML field is .*|evilPattern = "pat(*m \\\\n*)";|'
+# NB (backslash accounting, the trap IS the test): the sed replacement above
+# carries FOUR backslashes -> sed emits TWO into the file -> double-quoted
+# nix evals them to ONE literal backslash + n = the broken runtime shape the
+# trap must catch. A single file backslash would be the CORRECT form.
 run_case gatus lowercase-method gatus-pattern-lint fail 'lowercase HTTP method' \
   'sed:modules/nixos/services/gatus-config.nix:s|# NOTE: the YAML field is .*|evilMethod.method = "post";|'
 
