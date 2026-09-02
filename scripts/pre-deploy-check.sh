@@ -308,6 +308,27 @@ done
 # because they're phantom metrics in the config.
 MONITOR365_METRICS="collector_events_collected cloud_sync_consecutive_failures cloud_sync_upload_backlog_size"
 
+# Textfile-collector breakage on the RUNNING system (2026-09-02, live twice):
+# a collector emitting a value-less line ("metric " + empty var) makes
+# node_exporter reject the ENTIRE textfile — every system_* metric goes dark
+# at once and this gate hard-blocked the very deploy carrying the collector
+# fix (chicken-and-egg). node_textfile_scrape_error=1 is the POSITIVE
+# infra-down signal: absent textfile metrics are then an infrastructure
+# signal, not config phantoms — WARN, never block (same doctrine as the
+# monitor365/discordsync down-endpoint exceptions).
+TEXTFILE_SCRAPE_ERROR=false
+if [ -s "$METRICS_FILE" ] && grep -qE '^node_textfile_scrape_error 1' "$METRICS_FILE"; then
+  TEXTFILE_SCRAPE_ERROR=true
+  warn "node_textfile_scrape_error=1 — the RUNNING system's textfile collector is broken (a .prom file is being rejected whole). Absent textfile metrics below are downgraded to warnings; deploying the collector fix is the remedy. Inspect: ls /var/lib/prometheus-node-exporter/textfile_collectors/ + journalctl -u '*-metrics' -n 30"
+  # Surface the offending lines directly — a metric line with a name but no
+  # value is the exact syntax node_exporter rejects.
+  for pf in /var/lib/prometheus-node-exporter/textfile_collectors/*.prom; do
+    if [ -r "$pf" ] && bad_lines=$(grep -nE '^[a-zA-Z_:][a-zA-Z0-9_:]*(\{[^}]*\})?[[:space:]]*$' "$pf" 2>/dev/null); then
+      warn "value-less metric lines in $pf (rejects the whole file): $(echo "$bad_lines" | head -3 | tr '\n' ';')"
+    fi
+  done
+fi
+
 # Same doctrine for discordsync's OWN :8085 endpoint metrics (2026-08-31
 # 00:10 live block: the user deliberately STOPPED discordsync to relieve IO
 # pressure — its endpoint vanished and the phantom-metric gate hard-failed
@@ -395,6 +416,8 @@ if [ -s "$METRICS_FILE" ]; then
       warn "Metric '$metric' absent (Monitor365 endpoint down — not a phantom metric)"
     elif echo "$DISCORDSYNC_METRICS" | grep -qw "$metric" && [ "$DISCORDSYNC_API_UP" = false ]; then
       warn "Metric '$metric' absent (discordsync endpoint down/stopped — not a phantom metric)"
+    elif [ "$TEXTFILE_SCRAPE_ERROR" = true ]; then
+      warn "Metric '$metric' absent — node exporter textfile collector broken on the RUNNING system (see node_textfile_scrape_error above): infrastructure signal, deploy the collector fix"
     else
       fail "Metric '$metric' ABSENT — Gatus health check will be permanently RED (phantom metric)"
       MISSING_METRICS=$((MISSING_METRICS + 1))
