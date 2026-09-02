@@ -151,6 +151,44 @@
                   provider = "freelancermap";
                 }
               ];
+              # One-click funnel tail. EXPLICITLY DISABLED until gate Q1
+              # (owner-gate-package-going-live.md): the upstream default is
+              # enabled=true (dev demo shape), but under the default dry-run
+              # sender an approve-click marks the application SENT without a
+              # real email — burning it. Flip enabled=true ONLY together
+              # with autosend_driver=agentmail + the agentmail env creds
+              # (see agentmail comment below); then the cv-scan timer's
+              # auto-apply POST activates on its next tick.
+              autoapply = {
+                enabled = false;
+                recommendations = [ "apply" ];
+                max_per_pass = 5;
+                strategy = "nudge";
+                send_on_approve = true;
+                never_reapply_rejected_companies = true;
+              };
+              # Reply loop + calendar feed (interview replies → /pipeline
+              # Interviews stage → /calendar/interviews.ics). enabled=true
+              # is INERT until the agentmail env vars below exist — the
+              # poller provider self-disables without creds. Subscribe the
+              # owner calendar once: /calendar/interviews.ics?key=<CV_API_KEY>
+              # (the calendar guard reuses the pipeline API key).
+              replyloop.enabled = true;
+              # Gate Q1 flip (do ALL of it in one change):
+              #   1. sops cv-env template += CV_PIPELINE_AUTOSEND_DRIVER=agentmail
+              #      CV_PIPELINE_AGENTMAIL_API_KEY=<am_...>
+              #      CV_PIPELINE_AGENTMAIL_INBOX_ID=<inbox id>
+              #      (identity: lars.artmann@agentmail.to — PERMANENT, gate Q3:
+              #      switching it later orphans SentTo reply matching)
+              #   2. settings: pipeline.autoapply.enabled = true
+              #   3. rebuild; verify boot log "Application sender: AgentMail"
+              #   4. first real send probe per gate-package A2, then done.
+              # Keys stay empty here so env overrides win and no secret
+              # ever lands in the nix store.
+              agentmail = {
+                api_key = "";
+                inbox_id = "";
+              };
             };
             # journald/SigNoz ingestion friendliness: structured JSON lines
             # instead of the text default (internal/config LogFormatJSON).
@@ -340,8 +378,31 @@
                   esac
                 }
 
+                # Funnel-tail variant: 503 (auto-apply disabled in config)
+                # is a WARN, not a unit failure — the funnel tail is opt-in
+                # (gate Q1: flip pipeline.autoapply.enabled together with
+                # autosend_driver=agentmail + creds) and its absence must
+                # not fail the scan/evaluate core alerting. 404 still fails:
+                # that means the deployed server predates the endpoint and
+                # this script needs a flake-input bump.
+                post_funnel_tail() {
+                  code=$("$curl_bin" -sS -o /dev/null -w '%{http_code}' -X POST \
+                    -H "X-API-Key: $key" -H 'Content-Type: application/json' -d '{}' "$1")
+                  case "$code" in
+                    200|409) echo "cv-scan: $1 -> $code (ok)" ;;
+                    503) echo "cv-scan: $1 -> 503 (auto-apply disabled — flip with gate Q1, not an error)" ;;
+                    *) echo "cv-scan: $1 -> $code (unexpected)" >&2; exit 1 ;;
+                  esac
+                }
+
                 post "$base/api/pipeline/scan"
                 post "$base/api/pipeline/evaluate-tracked"
+                # Funnel tail (2026-09-02, gate Q2): tailor the top
+                # recommended applications into the approval queue every
+                # tick + sweep approved-but-unsent sends. It never sends
+                # anything un-approved (send_on_approve: the dashboard
+                # Approve click IS the send confirmation).
+                post_funnel_tail "$base/api/pipeline/auto-apply"
               '';
             }
             (harden { })
