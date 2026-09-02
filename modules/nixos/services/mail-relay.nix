@@ -62,6 +62,80 @@ _: {
       # delivery, so unaliased root mail would be rejected by the provider as
       # an invalid recipient instead of reaching anyone.
       systemAlias = if cfg.systemMailRecipient == null then cfg.fromAddress else cfg.systemMailRecipient;
+
+      textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
+
+      mailRelayMetrics = pkgs.writeShellApplication {
+        name = "mail-relay-metrics";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.jq
+          pkgs.gnugrep
+          pkgs.postfix
+        ];
+        text = ''
+          OUT="${textfileDir}/mail-relay.prom"
+          TMP="''${OUT}.tmp"
+
+          errors=0
+          queue=-1
+          placeholder=1
+
+          # Credential state (fail-closed): the rendered SASL map must exist,
+          # be readable, and NOT carry the PLACEHOLDER go-live marker. A
+          # missing file means sops never rendered it — same operational
+          # state as a placeholder (every send will fail).
+          sasl="/run/secrets-rendered/mail-relay-sasl"
+          if [ -r "$sasl" ]; then
+            if timeout 5 grep -q "PLACEHOLDER" "$sasl"; then
+              placeholder=1
+            else
+              placeholder=0
+            fi
+          else
+            echo "mail-relay-metrics: rendered SASL map $sasl missing or unreadable" >&2
+            placeholder=1
+          fi
+
+          # Queue depth via the JSON queue report (one object per message;
+          # empty queue prints nothing and jq -s 'length' yields 0).
+          queue_json=""
+          if ! queue_json=$(timeout 15 postqueue -j 2>/dev/null); then
+            echo "mail-relay-metrics: postqueue -j failed (postfix down or queue unreadable)" >&2
+            errors=1
+          fi
+          parsed=$(printf '%s' "$queue_json" | timeout 10 jq -s 'length' 2>/dev/null) || parsed=""
+          if [ -n "$parsed" ]; then
+            queue=$parsed
+          else
+            errors=1
+          fi
+
+          over=0
+          if [ "$queue" -ge ${toString cfg.queueAlertThreshold} ] 2>/dev/null; then
+            over=1
+          fi
+
+          mkdir -p "${textfileDir}"
+          {
+            echo "# HELP mail_relay_queue_messages Deferred and active messages in the postfix queue"
+            echo "# TYPE mail_relay_queue_messages gauge"
+            echo "mail_relay_queue_messages $queue"
+            echo "# HELP mail_relay_queue_over_threshold 1 when the queue depth crossed the alert threshold"
+            echo "# TYPE mail_relay_queue_over_threshold gauge"
+            echo "mail_relay_queue_over_threshold $over"
+            echo "# HELP mail_relay_credential_placeholder 1 while the upstream credential is missing or still the go-live placeholder"
+            echo "# TYPE mail_relay_credential_placeholder gauge"
+            echo "mail_relay_credential_placeholder $placeholder"
+            echo "# HELP mail_relay_scrape_errors 1 when any probe in this scrape failed"
+            echo "# TYPE mail_relay_scrape_errors gauge"
+            echo "mail_relay_scrape_errors $errors"
+          } > "$TMP"
+          mv "$TMP" "$OUT"
+
+          echo "mail-relay-metrics: queue=$queue over=$over placeholder=$placeholder errors=$errors"
+        '';
+      };
     in
     {
       options.services.mail-relay = {
@@ -105,6 +179,18 @@ _: {
             Defaults to fromAddress — root/postmaster aliases point there, so
             cron failures land in the provider inbox instead of vanishing into
             a local mailbox that nobody reads on a null client.
+          '';
+        };
+
+        queueAlertThreshold = lib.mkOption {
+          type = lib.types.ints.positive;
+          default = 5;
+          description = ''
+            Deferred-queue depth at which mail_relay_queue_over_threshold flips
+            to 1 (the Gatus "Mail Relay Queue" check alerts). With the
+            PLACEHOLDER credential still set, the first few user-triggered
+            sends (paperless share link, forgejo notification) cross this and
+            surface the pending go-live instead of failing silently forever.
           '';
         };
       };
@@ -172,6 +258,45 @@ _: {
             ioTier.service
           ];
         };
+
+        # Queue + credential textfile collector for node_exporter. A null
+        # client's failure mode is INVISIBLE by design: sends fail at the app
+        # (or defer silently) while postfix liveness stays green — the exact
+        # phantom-green class this repo's monitoring doctrine exists for.
+        # Emits (fail-closed, the file is written on EVERY run):
+        #   mail_relay_queue_messages            deferred+active queue depth
+        #   mail_relay_queue_over_threshold      1 when depth >= queueAlertThreshold
+        #   mail_relay_credential_placeholder    1 while the rendered SASL map
+        #                                        is missing or still carries
+        #                                        the PLACEHOLDER go-live marker
+        #   mail_relay_scrape_errors             1 when any probe failed (values
+        #                                        then reflect best-effort reads)
+        systemd.services.mail-relay-metrics = {
+          description = "Mail relay queue/credential textfile collector";
+          inherit onFailure;
+          after = [ "postfix.service" ];
+          serviceConfig = lib.mkMerge [
+            (harden { MemoryMax = "64M"; })
+            (serviceOneshotDefaults { })
+            {
+              Type = "oneshot";
+              ExecStart = lib.getExe mailRelayMetrics;
+              ReadWritePaths = [ textfileDir ];
+              # postqueue is timeout-bounded inside; this is the hard ceiling
+              TimeoutStartSec = "1min";
+            }
+          ];
+        };
+
+        systemd.timers.mail-relay-metrics = {
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "30s";
+            OnUnitActiveSec = "5min";
+          };
+        };
+
+        systemd.tmpfiles.rules = [ (mkStateDir textfileDir "1777" "nobody" "nogroup") ];
       };
     };
 }

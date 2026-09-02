@@ -300,11 +300,14 @@ if nix run .#pre-deploy-check; then
   fi
 
   # Restart paperless-web AFTER paperless-oidc-setup so it reloads the Pocket
-  # ID SSO env file (same secret-bridge class as dnsblockd above: the bridge
-  # oneshot is RemainAfterExit=true and only wantedBy=paperless-*.service —
-  # an indirect unit, so the provisioner loop's is-enabled gate skips it —
-  # and paperless reads EnvironmentFile at process start only).
-  if systemctl is-active --quiet paperless-oidc-setup.service 2>/dev/null; then
+  # ID SSO env file (same secret-bridge class as dnsblockd above: paperless
+  # reads EnvironmentFile at process start only). Gated on paperless-WEB, not
+  # the bridge: the bridge is ConditionPathExists-gated on the Pocket ID
+  # secret and sits INACTIVE (condition-skipped) until pocket-id-provision
+  # has created the client — gating on it would skip the very first converge
+  # (chicken-and-egg, live 2026-09-02). A bridge restart without the secret
+  # is a clean condition-skip no-op.
+  if systemctl is-active --quiet paperless-web.service 2>/dev/null; then
     echo "Restarting paperless-oidc-setup.service + paperless-web.service (reload OIDC env file)"
     sudo systemctl restart paperless-oidc-setup.service 2>/dev/null || true
     sudo systemctl restart paperless-web.service 2>/dev/null || true

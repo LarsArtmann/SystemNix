@@ -269,7 +269,12 @@ _: {
               # Upload logo if configured
               upload_logo "$CLIENT_ID" "${logoPath}"
 
-              # Generate client secret (POST /secret rotates — only when file missing)
+              # Generate client secret — only when the file is missing.
+              # Pocket ID's multi-secret API (current): POST /secrets (PLURAL)
+              # with an OPTIONAL body, 201 returns {secret: ...} exactly once.
+              # The old singular /secret route 404s — every NEW client created
+              # after the pocket-id bump silently got no secret (live 2026-09-02:
+              # Paperless provisioned, secret generation failed every run).
               SECRET_FILE="$CLIENT_SECRETS_DIR/${client.clientId}"
               ${lib.optionalString (builtins.elem client.clientId cfg.provision.regenerateSecretsFor) ''
                 # Force regeneration: delete stale file so the skip-if-exists
@@ -285,7 +290,7 @@ _: {
                 echo "  Generating client secret..."
                 SECRET_RESPONSE=$(curl -s --compressed --max-time 30 -X POST \
                   -H "X-API-Key: $API_KEY" \
-                  "$API_URL/api/oidc/clients/$CLIENT_ID/secret" 2>&1 || true)
+                  "$API_URL/api/oidc/clients/$CLIENT_ID/secrets" 2>&1 || true)
                 CLIENT_SECRET=$(echo "$SECRET_RESPONSE" | jq -r '.secret // empty' 2>/dev/null || true)
 
                 if [ -n "$CLIENT_SECRET" ]; then
