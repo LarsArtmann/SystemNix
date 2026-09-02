@@ -356,7 +356,7 @@
       # --- 9. Trip page lifecycle (2026-09-02): the page tracks the
       #         EMERGENCY, not the 30-min last_trip_recent window.
       # 9a. Trip resolved (sockets restored, machine healthy): NO page.
-      machine.succeed("${writeProms \"resolved\" guardPromTripResolved healthPromHealthy}")
+      machine.succeed("${writeProms "resolved" guardPromTripResolved healthPromHealthy}")
       out = run_bridge("resolved")
       assert "GUARD TRIPPED" not in out, (
           "a resolved trip (sacrifice restored at 53% avail) must not keep "
@@ -366,7 +366,7 @@
 
       # 9b. Trip ACTIVE (sacrifice still down) pages even 30+ min later if
       #     the sockets never came back — the page IS "flm is unreachable".
-      machine.succeed("${writeProms \"tripactive\" guardPromTripped healthPromHealthy}")
+      machine.succeed("${writeProms "tripactive" guardPromTripped healthPromHealthy}")
       out = run_bridge("tripactive")
       assert "MEMORY EMERGENCY GUARD TRIPPED" in out
       alert = machine.succeed("cat /tmp/sev1/alert")
@@ -376,7 +376,7 @@
       #         decision): combined-gated, but the fullscreen overlay is
       #         the guard trip's job — a second overlay for the same cliff
       #         was pure alert spam.
-      machine.succeed("${writeProms \"zram\" guardPromZramMarginal healthPromZram}")
+      machine.succeed("${writeProms "zram" guardPromZramMarginal healthPromZram}")
       out = run_bridge("zram")
       assert "ZRAM SWAP CRITICAL" in out
       assert "severity=notify" in out, "zram critical must be NOTIFY tier (no overlay)"
@@ -390,7 +390,7 @@
 
       # 10b. The LIVE 2026-09-02 steady state (97% fill, 53% avail,
       #      0.26% PSI) must stay completely silent.
-      machine.succeed("${writeProms \"zramsteady\" guardPromZramSteady healthPromZram}")
+      machine.succeed("${writeProms "zramsteady" guardPromZramSteady healthPromZram}")
       out = run_bridge("zramsteady")
       assert "SEV1" not in out, (
           "zram near-full with healthy margins is steady-state normal on "

@@ -325,13 +325,13 @@ in
       #      trip zones (which all COMBINE zram with pressure) are the
       #      real protection, not the restore gate.
       reset_state()
-      machine.succeed("${writeFakes \"zone2\" zone2}")
+      machine.succeed("${writeFakes "zone2" zone2}")
       out = run_guard("zone2")
       assert_all_down()
       machine.succeed(
           "echo $(( $(date +%s) - 700 )) > /var/lib/memory-emergency-guard/last-trip"
       )
-      machine.succeed("${writeFakes \"zramfull\" restoreZramFull}")
+      machine.succeed("${writeFakes "zramfull" restoreZramFull}")
       out = run_guard("zramfull")
       assert "sacrifice sockets restored" in out, (
           "restore must NOT require zram headroom: stopping the sacrifice "
