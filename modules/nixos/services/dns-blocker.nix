@@ -796,12 +796,14 @@ _: {
                   {
                     Type = "simple";
                     # GOMEMLIMIT forces Go GC to run aggressively before MemoryMax.
-                    # dnsblockd has unbounded OTEL cardinality growth (dns_domain,
-                    # http_path, proxy_domain labels) + synchronous SQLite tracking
-                    # writes that accumulate in-memory pages. Without GOMEMLIMIT, Go's
-                    # default GOGC=100 doesn't trigger GC until heap doubles (~1.2G
-                    # from 600M base), but MemoryMax kills first. Fix upstream by
-                    # dropping high-cardinality labels from telemetry.go.
+                    # dnsblockd's METRICS cardinality was fixed upstream (2026-08):
+                    # the unbounded dns_domain/http_path/proxy_domain labels were
+                    # dropped and domains bucketed into domain_category; a
+                    # regression test (internal/server/cardinality_regression_test.go)
+                    # guards it. Span attributes are exempt (never create metric
+                    # series). The SQLite tracking-write pressure remains: without
+                    # GOMEMLIMIT, Go's default GOGC=100 doesn't trigger GC until
+                    # heap doubles (~1.2G from 600M base), but MemoryMax kills first.
                     Environment = [
                       "GOMEMLIMIT=3GiB"
                       # Full goroutine dump on SIGQUIT (kill -QUIT) — the

@@ -114,6 +114,14 @@ _: {
       # every commit message is degraded.
       pmaHeuristicFallbackThreshold = 20;
 
+      # Pocket ID SQLITE_BUSY event threshold per 24h window. Pocket ID is
+      # the ONLY login path for paperless (SSO-only since 2026-09-02), forgejo,
+      # gatus, immich and every oauth2-proxy vHost — a degraded (locked) DB is
+      # a homelab-wide SPOF event. 2026-09-02 measured 30 events/24h under
+      # memory pressure while the service still served; >=10/24h = sustained
+      # lock contention worth an alert (single transient retries don't page).
+      pocketIdBusyEventThreshold = 10;
+
       # Slow-churn detection: CUMULATIVE NRestarts since the last explicit
       # (deploy/manual) start. Catches restart chains that never trip the
       # per-interval threshold above — e.g. hermes' exit-75 drain-timeout
@@ -498,6 +506,33 @@ _: {
               PMA_COMMIT_FAILURES_1H=""
               PMA_HEURISTIC_FALLBACKS_24H=""
               PMA_COMMIT_SCRAPE_ERRORS=1
+            fi
+          fi
+
+          # === Pocket ID SQLITE_BUSY (auth SPOF) ===
+          # Pocket ID is the sole identity provider for the SSO-only surface
+          # (paperless has NO second login since 2026-09-02). Under memory/
+          # IO pressure its SQLite journals "database is locked" (2026-08-22:
+          # a fatal locked chain crashed the health check and lost the
+          # dnsblockd client row; 2026-09-02: 30 events/24h during the
+          # zram-full evening while logins still worked — degraded, not dead).
+          # Continuous cover where deploy-time smoke has none. Same journal
+          # doctrine as oomd/forgejo/pma: --since window + timeout ceiling +
+          # journalctl exit<=1 both valid + fail-closed scrape_errors.
+          collect_pocket_id_busy=${lib.boolToString cfg.collectPocketIdBusy}
+          POCKET_ID_BUSY_EVENTS_24H=""
+          POCKET_ID_BUSY_OVER=""
+          POCKET_ID_BUSY_SCRAPE_ERRORS=1
+          if [ "$collect_pocket_id_busy" = "true" ]; then
+            pocket_id_scan_status=0
+            POCKET_ID_BUSY_EVENTS_24H=$(timeout 30 journalctl -u pocket-id.service --since "-24h" --grep "database is locked" --output cat --no-pager 2>/dev/null | wc -l) || pocket_id_scan_status=$?
+            if [ "$pocket_id_scan_status" -le 1 ]; then
+              POCKET_ID_BUSY_EVENTS_24H="''${POCKET_ID_BUSY_EVENTS_24H:-0}"
+              POCKET_ID_BUSY_OVER=0
+              [ "$POCKET_ID_BUSY_EVENTS_24H" -ge ${toString pocketIdBusyEventThreshold} ] 2>/dev/null && POCKET_ID_BUSY_OVER=1
+            else
+              echo "system-health: pocket-id busy journal scan failed (status $pocket_id_scan_status)" >&2
+              POCKET_ID_BUSY_EVENTS_24H=""
             fi
           fi
 
@@ -1247,6 +1282,19 @@ _: {
           '';
         };
 
+        collectPocketIdBusy = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = ''
+            Collect Pocket ID SQLITE_BUSY health: "database is locked"
+            journal events over 24h. Pocket ID is the ONLY login path for
+            the SSO-only surface (paperless since 2026-09-02, plus forgejo/
+            gatus/immich/oauth2-proxy) — sustained lock contention is a
+            homelab-wide auth degradation that deploy-time smoke cannot see.
+            Auto-disabled on hosts without pocket-id.
+          '';
+        };
+
         dnsblockdStatsPort = lib.mkOption {
           type = lib.types.port;
           default = 9090;
@@ -1374,6 +1422,9 @@ _: {
           // (lib.optionalAttrs (options ? services.dns-blocker) {
             collectDnsblockdStats = lib.mkDefault (config.services.dns-blocker.enable or false);
             dnsblockdStatsPort = lib.mkDefault (config.services.dns-blocker.statsPort or 9090);
+          })
+          // (lib.optionalAttrs (options ? services.pocket-id) {
+            collectPocketIdBusy = lib.mkDefault (config.services.pocket-id.enable or false);
           })
           // (lib.optionalAttrs (options ? virtualisation.docker) {
             collectDockerRestarts = lib.mkDefault (config.virtualisation.docker.enable or false);
