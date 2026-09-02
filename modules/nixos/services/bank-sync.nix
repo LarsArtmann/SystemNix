@@ -72,12 +72,14 @@ _: {
           # TEMPORARY (2026-08-31): upstream still ships a stale flake
           # vendorHash (8W10ZjIU…, predates both the Wise SDK v0.9.0 bump at
           # 09785e60 AND the OTLP exporter at 901978e) — the go-modules FOD
-          # fails. Overridden with the measured hash (rev 901978e, includes
-          # otlptracehttp v1.46.0) to unblock deploys; DROP this override as
-          # soon as upstream refreshes its vendorHash.
+          # fails. Overridden with the measured hash to unblock deploys;
+          # DROP this override as soon as upstream refreshes its vendorHash.
+          # Hash re-measured 2026-09-02 for lock rev c6342780 (the input is
+          # on ref=master, so every upstream push moves the FOD inputs —
+          # the 901978e hash misfired with "hash mismatch" in installPhase).
           package = lib.mkForce (
             pkgs.bank-sync.overrideAttrs (_old: {
-              vendorHash = "sha256-KX7fRSCwB2puanId8Nc+JIP1C1zlAFjYDRzZGUuVMwM=";
+              vendorHash = "sha256-xkA6DNlqMPYDbGFGAxTb3AEVLOMl/ieI9SwgEPv9DOI=";
             })
           );
         };

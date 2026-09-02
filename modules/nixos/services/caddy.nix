@@ -143,10 +143,17 @@ _: {
             };
 
             "immich.${domain}" = protectedVHost "immich" config.services.immich.port;
-            # Paperless keeps its own Django login behind the forward-auth gate
-            # (no remote-user passthrough: the LAN-bypass path would let LAN
-            # clients spoof auth headers). Layer 2 SSO = the house default.
-            "paperless.${domain}" = protectedVHost "paperless" config.services.paperless.port;
+            # Paperless: native OIDC via Pocket ID (django-allauth) — Layer 1,
+            # plain reverse_proxy like Forgejo/Gatus. protectedVHost would
+            # double-auth (forward-auth + the app's own login). Regular
+            # password login stays enabled as the break-glass path.
+            "paperless.${domain}" = {
+              extraConfig = ''
+                ${tlsConfig}
+                ${commonConfig}
+                ${proxyTo config.services.paperless.port}
+              '';
+            };
             "forgejo.${domain}" = {
               extraConfig = ''
                 ${tlsConfig}

@@ -417,15 +417,20 @@ in
             };
           }
           // lib.optionalAttrs (svcEnabled "projects-management-automation") {
+            # No AI provider keys by default: the daemon's provider chain runs
+            # against the local FastFlowLM (OPENAI_BASE_URL in
+            # projects-management-automation.nix). MINIMAX_API_KEY lived here
+            # until 2026-09-02: minimax's Token Plan exhausted (429 billing
+            # state) on 2026-08-22 and the dead-first-provider burned ~3,800
+            # failed commits over 11 days while the local provider sat unused
+            # behind a stale go-commit pin. Do not re-add external provider
+            # keys here without a fallback plan (heuristic fallback + the
+            # "PMA Commit Health" gatus check catch this class now).
             "pma-env" = {
               owner = primaryUser;
               group = "users";
               restartUnits = [ "projects-management-automation.service" ];
-              content = lib.generators.toKeyValue { } (
-                lib.optionalAttrs (svcEnabled "hermes") {
-                  MINIMAX_API_KEY = config.sops.placeholder.hermes_minimax_api_key;
-                }
-              );
+              content = "";
             };
           }
           // lib.optionalAttrs (svcEnabled "monitor365-server") {

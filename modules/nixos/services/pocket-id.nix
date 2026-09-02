@@ -476,6 +476,20 @@ _: {
                 callbackURLs = [ "https://dnsblock.${domain}/auth/oidc/callback" ];
                 pkceEnabled = true;
               }
+              {
+                # Native OIDC in paperless-ngx via django-allauth
+                # (allauth.socialaccount.providers.openid_connect). Callback
+                # path is fixed by allauth's URL routing:
+                # /accounts/oidc/<provider_id>/login/callback/
+                # allauth sends PKCE (OAUTH_PKCE_ENABLED in the provider JSON).
+                name = "Paperless";
+                clientId = "paperless";
+                launchURL = "https://paperless.${domain}";
+                callbackURLs = [
+                  "https://paperless.${domain}/accounts/oidc/pocket-id/login/callback/"
+                ];
+                pkceEnabled = true;
+              }
             ];
             description = "OIDC clients to create declaratively";
           };

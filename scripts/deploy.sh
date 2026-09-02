@@ -299,6 +299,17 @@ if nix run .#pre-deploy-check; then
     sudo systemctl restart dnsblockd.service 2>/dev/null || true
   fi
 
+  # Restart paperless-web AFTER paperless-oidc-setup so it reloads the Pocket
+  # ID SSO env file (same secret-bridge class as dnsblockd above: the bridge
+  # oneshot is RemainAfterExit=true and only wantedBy=paperless-*.service —
+  # an indirect unit, so the provisioner loop's is-enabled gate skips it —
+  # and paperless reads EnvironmentFile at process start only).
+  if systemctl is-active --quiet paperless-oidc-setup.service 2>/dev/null; then
+    echo "Restarting paperless-oidc-setup.service + paperless-web.service (reload OIDC env file)"
+    sudo systemctl restart paperless-oidc-setup.service 2>/dev/null || true
+    sudo systemctl restart paperless-web.service 2>/dev/null || true
+  fi
+
   # Heal garbled btrbk receive targets at deploy time (before the next nightly
   # window) — see snapshots.nix btrbk-pool-clean for why this must not race a
   # live send. --no-block: the unit's After= ordering makes it WAIT behind any

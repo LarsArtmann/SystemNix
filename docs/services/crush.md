@@ -23,7 +23,7 @@ models, LSPs, and the verification workflow for changing any of it.
 | `synthetic`  | sops `crush-daily.yaml` | injected since 2026-08-18                              |
 | `zai`        | sops `crush.yaml`     | `glm-5.3-flash` declared via `model add` (not in catalog) |
 | `gemini`     | sops `crush.yaml`     |                                                          |
-| `minimax`    | sops `crush.yaml`     | account quota-limited as of 2026-08-31 (key valid)       |
+| `minimax`    | sops `crush.yaml`     | **DISABLED** 2026-08-31: Token Plan exhausted (2056). `provider add minimax --disable true` in crushrc; key stays rendered. Re-enable = delete that line |
 | `kimi-coding`| sops `crush.yaml`     |                                                          |
 | `llamacpp`   | none (local)          | `:8899`, ad-hoc llama-server; models auto-discovered     |
 | `hyper`      | auth store (OAuth)    | stays store-owned: tokens self-rotate hourly             |

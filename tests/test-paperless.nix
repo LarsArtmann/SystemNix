@@ -9,6 +9,10 @@
 #      unit environment
 #   4. The trash dir is provisioned, and the exporter unit + timer exist
 #   5. The paperless database + role exist in PostgreSQL
+#   6. Layer 1 OIDC: the paperless-oidc-setup bridge degrades gracefully
+#      without the Pocket ID secret, injects it when present, and the
+#      reloaded web unit renders the Pocket ID provider button on the
+#      login page (Django parsed the delivered JSON end-to-end)
 #
 # Tika/Gotenberg are NOT enabled in this test (configureTika = false) —
 # their closure (chromium + libreoffice) is multi-GB; the nixpkgs modules
@@ -25,29 +29,64 @@ let
     (import ../modules/nixos/services/fastflowlm.nix { }).flake.nixosModules.fastflowlm;
   llamaRagNixosModule =
     (import ../modules/nixos/services/llama-rag.nix { }).flake.nixosModules.llama-rag;
+
+  # Option-only mock for the OIDC gate: paperless.nix reads
+  # `services.pocket-id-config.enable or false` and falls back to
+  # /var/lib/pocket-id for the dataDir (`or` idiom, dns-blocker pattern).
+  # The full Pocket ID module is not needed — the secret file is placed
+  # by hand and the bridge is exercised directly.
+  pocketIdEnableMock =
+    { lib, ... }:
+    {
+      options.services.pocket-id-config.enable = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+      };
+    };
 in
 {
   name = "paperless";
 
-  nodes.machine = { lib, ... }: {
-    imports = [
-      paperlessNixosModule
-      fastflowlmNixosModule
-      llamaRagNixosModule
-      ./mock-sops.nix
-      ./test-helpers.nix
-    ];
+  nodes.machine =
+    { lib, ... }:
+    {
+      imports = [
+        paperlessNixosModule
+        fastflowlmNixosModule
+        llamaRagNixosModule
+        pocketIdEnableMock
+        ./mock-sops.nix
+        ./test-helpers.nix
+      ];
 
-    virtualisation.memorySize = 4096;
+      virtualisation.memorySize = 4096;
 
-    sops.secrets.paperless_admin_password = { };
+      sops.secrets.paperless_admin_password = { };
 
-    services.paperless = {
-      enable = true;
-      dataDir = lib.mkForce "/var/lib/paperless";
-      configureTika = lib.mkForce false;
+      services.pocket-id-config.enable = true;
+
+      # Boot-time fake: paperless-oidc-setup is ConditionPathExists-gated on
+      # the Pocket ID client secret (LoadCredential cannot tolerate a missing
+      # path). Seed one before the bridge so it runs for real at boot; the
+      # skip/degradation semantics are asserted in step 8 of the script.
+      systemd.services.vm-pocket-id-secret = {
+        description = "VM test: fake Pocket ID client secret";
+        wantedBy = [ "paperless-oidc-setup.service" ];
+        before = [ "paperless-oidc-setup.service" ];
+        serviceConfig.Type = "oneshot";
+        script = ''
+          mkdir -p /var/lib/pocket-id/client-secrets
+          printf 'vm-test-secret' > /var/lib/pocket-id/client-secrets/paperless
+          chmod 600 /var/lib/pocket-id/client-secrets/paperless
+        '';
+      };
+
+      services.paperless = {
+        enable = true;
+        dataDir = lib.mkForce "/var/lib/paperless";
+        configureTika = lib.mkForce false;
+      };
     };
-  };
 
   testScript = ''
     machine.start()
@@ -84,6 +123,43 @@ in
     machine.succeed("runuser -u postgres -- psql -tAc \"SELECT 1 FROM pg_database WHERE datname='paperless'\" | grep -q 1")
     machine.succeed("runuser -u postgres -- psql -tAc \"SELECT 1 FROM pg_roles WHERE rolname='paperless'\" | grep -q 1")
 
-    print("Paperless v3 wiring verified — units up, PG backend, AI env, trash, exporter")
+    # 6. Layer 1 OIDC — bridge ran at boot with the fake secret: the env file
+    #    is a single line (systemd EnvironmentFile cannot span lines) carrying
+    #    the injected secret + provider structure.
+    machine.wait_for_unit("paperless-oidc-setup.service")
+    machine.succeed("test $(wc -l < /var/lib/paperless-oidc/pocket-id.env) -eq 1")
+    machine.succeed("grep -q 'vm-test-secret' /var/lib/paperless-oidc/pocket-id.env")
+    machine.succeed("grep -q 'client_id' /var/lib/paperless-oidc/pocket-id.env")
+    machine.succeed("grep -q 'token_auth_method' /var/lib/paperless-oidc/pocket-id.env")
+    assert "PAPERLESS_APPS=allauth.socialaccount.providers.openid_connect" in env, "allauth provider app missing from unit env"
+    assert "PAPERLESS_SOCIAL_AUTO_SIGNUP=true" in env, "social auto-signup missing from unit env"
+    envfiles = machine.succeed("systemctl show paperless-web --property=EnvironmentFiles")
+    assert "/var/lib/paperless-oidc/pocket-id.env" in envfiles, "OIDC env file not attached to paperless-web"
+
+    # 7. The login page renders the Pocket ID provider button — Django
+    #    parsed the delivered provider JSON end-to-end (PAPERLESS_APPS +
+    #    SOCIALACCOUNT_PROVIDERS + allauth URL routing all live).
+    machine.succeed(
+      "curl -sf --retry 15 --retry-delay 2 --retry-all-errors http://localhost:2892/accounts/login/ | grep -F 'oidc/pocket-id'"
+    )
+
+    # 8. Degradation semantics: with the secret gone the bridge must SKIP
+    #    cleanly (ConditionPathExists → inactive, NOT failed — LoadCredential
+    #    would exit 243/CREDENTIALS), and paperless-web must still boot
+    #    local-login-only without the optional env file. The fake-secret
+    #    helper is disabled first — it is wantedBy the bridge and a plain
+    #    restart would re-pull (and re-seed) it.
+    machine.succeed("systemctl disable --now vm-pocket-id-secret.service")
+    machine.succeed("rm /var/lib/pocket-id/client-secrets/paperless")
+    machine.succeed("systemctl restart paperless-oidc-setup.service")
+    machine.succeed("test \"$(systemctl is-active paperless-oidc-setup.service)\" = inactive")
+    machine.succeed("rm -f /var/lib/paperless-oidc/pocket-id.env")
+    machine.succeed("systemctl restart paperless-web.service")
+    machine.wait_for_unit("paperless-web.service")
+    machine.succeed(
+      "curl -sf --retry 15 --retry-delay 2 --retry-all-errors http://localhost:2892/accounts/login/ | grep -F 'Paperless-ngx sign in'"
+    )
+
+    print("Paperless v3 wiring verified — units up, PG backend, AI env, trash, exporter, Pocket ID OIDC bridge")
   '';
 }

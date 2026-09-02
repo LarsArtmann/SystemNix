@@ -364,6 +364,19 @@ if $paperless_enabled; then
     else
       report_fail 'Paperless — :2892 answered but the body lacks "Paperless-ngx sign in" — partial stack, check paperless-scheduler journal'
     fi
+    # Layer 1 SSO: the login page must render the Pocket ID provider button
+    # (allauth → /accounts/oidc/pocket-id/login/). A missing button means
+    # PAPERLESS_APPS or the paperless-oidc-setup env file (with the client
+    # secret) didn't reach the unit — SSO silently dead while local login
+    # still works. Probe with herestring, never echo|grep on a large body
+    # (SIGPIPE/pipefail false-fail class).
+    if systemctl is-active --quiet paperless-oidc-setup.service 2>/dev/null; then
+      if grep -q "oidc/pocket-id" <<<"$paperless_body"; then
+        report_pass "Paperless — Pocket ID SSO button on login page"
+      else
+        report_fail "Paperless — login page lacks the Pocket ID OIDC button — check journalctl -u paperless-oidc-setup and the PAPERLESS_SOCIALACCOUNT_PROVIDERS env file"
+      fi
+    fi
   else
     report_fail "Paperless — :2892 unreachable (journalctl -u 'paperless-*' -n 30)"
   fi

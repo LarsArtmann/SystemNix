@@ -338,6 +338,15 @@ _: {
                     # Functional, not just liveness: the real sign-in page
                     # (not an error/redirect shell) says "Paperless-ngx sign in".
                     "[BODY] == pat(*Paperless-ngx sign in*)"
+                  ]
+                  # Layer 1 SSO: the login page must render the Pocket ID
+                  # provider button (allauth links to
+                  # /accounts/oidc/pocket-id/login/). A degraded/stale
+                  # paperless-oidc-setup env file silently drops the button
+                  # (empty SOCIALACCOUNT_PROVIDERS) — this condition catches
+                  # the bridge going stale, not just paperless dying.
+                  ++ lib.optionals config.services.pocket-id-config.enable [
+                    "[BODY] == pat(*oidc/pocket-id*)"
                   ];
                   alerts = discordAlert "Paperless down — document management unavailable";
                 })
@@ -1062,6 +1071,26 @@ _: {
                     "[BODY] == pat(*system_service_memory_over_threshold{service=\"projects-management-automation\"} 0*)"
                   ];
                   alerts = discordAlert "PMA cgroup memory exceeds 90% of its MemoryMax (16G) — a legitimate repo-discovery scan rides MemoryHigh=12G, so this alert means the hard OOM-kill ceiling is in reach. Check: systemctl status projects-management-automation and system_service_memory_bytes in the textfile collector. Full narrative: docs/crash-analysis-2026-08-09.md";
+                })
+                (mkHttpCheck {
+                  name = "PMA Commit Health";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  # Anchored forms (real \n): value must sit at line start —
+                  # collector down or section disabled = metric absent = the
+                  # check fails fail-closed. Catches BOTH directions of the
+                  # 2026-08-22..09-02 blackout class: sustained commit
+                  # failures (dead provider, nothing landing) and sustained
+                  # heuristic fallbacks (work landing with degraded messages
+                  # because the whole AI provider chain is down).
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nsystem_pma_commit_scrape_errors 0\n*)"
+                    "[BODY] == pat(*\nsystem_pma_commit_failures_over_threshold 0\n*)"
+                    "[BODY] == pat(*\nsystem_pma_commit_fallbacks_over_threshold 0\n*)"
+                  ];
+                  alerts = discordAlert "PMA commits are failing or riding heuristic fallbacks — the auto-commit pipeline is degraded (2026-08-22..09-02: 11 days, ~3,800 failed commits on a dead AI provider, invisible to liveness). Failures: journalctl -u projects-management-automation --since -1h --grep 'commit failed'. Fallbacks: same with 'heuristic fallback'. Check the provider chain (FastFlowLM :52625 socket, minimax/zai keys) before it becomes a backlog.";
                 })
                 (mkHttpCheck {
                   name = "FastFlowLM NPU LLM";

@@ -100,6 +100,20 @@ _: {
       # not page. >=3 = a systematic failure retrying every cron round.
       forgejoMirrorErrorThreshold = 3;
 
+      # PMA commit-failure threshold per 1h window. The 2026-08-22..09-02
+      # blackout logged hundreds of "commit failed" lines per hour (dead AI
+      # provider, ~3,800 total) while liveness stayed green; a single
+      # transient failure (dirty index race) must not page. >=3/h = the
+      # sustained-failure class.
+      pmaCommitFailureThreshold = 3;
+
+      # PMA heuristic-fallback threshold per 24h window. Fallbacks keep work
+      # landing while the AI provider chain is down (deliberate degraded
+      # mode), so they are visible but non-fatal: a handful per day is normal
+      # FastFlowLM cold-load timing, >=20/day means the LLM path is dead and
+      # every commit message is degraded.
+      pmaHeuristicFallbackThreshold = 20;
+
       # Slow-churn detection: CUMULATIVE NRestarts since the last explicit
       # (deploy/manual) start. Catches restart chains that never trip the
       # per-interval threshold above — e.g. hermes' exit-75 drain-timeout
@@ -435,6 +449,47 @@ _: {
                 FORGEJO_MIRROR_ERRORS_30M=""
                 FORGEJO_MIRROR_SCRAPE_ERRORS=1
               fi
+            fi
+          fi
+
+          # === PMA auto-commit health ===
+          # The 2026-08-22..09-02 blackout: every PMA commit failed against a
+          # dead AI provider (minimax 429, exhausted Token Plan) for 11 days —
+          # ~3,800 failed commits, invisible because nothing watched commit
+          # OUTCOMES (service liveness was green the whole time). Two signals:
+          #   1. "commit failed" lines in the last hour — sustained active
+          #      failure = the blackout class, pages.
+          #   2. "committed via heuristic fallback" lines in 24h — the daemon's
+          #      degraded mode that still lands work; sustained fallbacks mean
+          #      the LLM path is dead (visible, non-fatal threshold).
+          # Same IO discipline as the forgejo scan: --since bounds the journal
+          # walk, timeout bounds the wall clock, journalctl exit<=1 is a valid
+          # count (1 = no matches), >=2/timeout fails VISIBLE via
+          # scrape_errors — never a phantom green.
+          collect_pma_commits=${lib.boolToString cfg.collectPmaCommits}
+          PMA_COMMIT_FAILURES_1H=""
+          PMA_COMMIT_FAILURES_OVER=""
+          PMA_HEURISTIC_FALLBACKS_24H=""
+          PMA_HEURISTIC_FALLBACKS_OVER=""
+          PMA_COMMIT_SCRAPE_ERRORS=1
+          if [ "$collect_pma_commits" = "true" ]; then
+            PMA_COMMIT_SCRAPE_ERRORS=0
+            pma_fail_status=0
+            PMA_COMMIT_FAILURES_1H=$(timeout 30 journalctl -u projects-management-automation.service --since "-1h" --grep "commit failed" --output cat --no-pager 2>/dev/null | wc -l) || pma_fail_status=$?
+            pma_fb_status=0
+            PMA_HEURISTIC_FALLBACKS_24H=$(timeout 30 journalctl -u projects-management-automation.service --since "-24h" --grep "committed via heuristic fallback" --output cat --no-pager 2>/dev/null | wc -l) || pma_fb_status=$?
+            if [ "$pma_fail_status" -le 1 ] && [ "$pma_fb_status" -le 1 ]; then
+              PMA_COMMIT_FAILURES_1H="''${PMA_COMMIT_FAILURES_1H:-0}"
+              PMA_HEURISTIC_FALLBACKS_24H="''${PMA_HEURISTIC_FALLBACKS_24H:-0}"
+              PMA_COMMIT_FAILURES_OVER=0
+              [ "$PMA_COMMIT_FAILURES_1H" -ge ${toString pmaCommitFailureThreshold} ] 2>/dev/null && PMA_COMMIT_FAILURES_OVER=1
+              PMA_HEURISTIC_FALLBACKS_OVER=0
+              [ "$PMA_HEURISTIC_FALLBACKS_24H" -ge ${toString pmaHeuristicFallbackThreshold} ] 2>/dev/null && PMA_HEURISTIC_FALLBACKS_OVER=1
+            else
+              echo "system-health: pma commit journal scan failed (fail=$pma_fail_status fallback=$pma_fb_status)" >&2
+              PMA_COMMIT_FAILURES_1H=""
+              PMA_HEURISTIC_FALLBACKS_24H=""
+              PMA_COMMIT_SCRAPE_ERRORS=1
             fi
           fi
 
@@ -817,6 +872,29 @@ _: {
               echo "system_forgejo_mirror_erroring ''${FORGEJO_MIRROR_ERRORING}"
             fi
 
+            if [ "$collect_pma_commits" = "true" ]; then
+              echo "# HELP system_pma_commit_scrape_errors Scrape status of the PMA commit journal scan: 0 = OK, 1 = journalctl failed (fail-closed)"
+              echo "# TYPE system_pma_commit_scrape_errors gauge"
+              echo "system_pma_commit_scrape_errors ''${PMA_COMMIT_SCRAPE_ERRORS}"
+            fi
+            if [ -n "$PMA_COMMIT_FAILURES_1H" ]; then
+              echo "# HELP system_pma_commit_failures_1h PMA commit failures (journal \"commit failed\" lines) in the last hour"
+              echo "# TYPE system_pma_commit_failures_1h gauge"
+              echo "system_pma_commit_failures_1h ''${PMA_COMMIT_FAILURES_1H}"
+
+              echo "# HELP system_pma_commit_failures_over_threshold 1 when the 1h failure count reaches the sustained-failure threshold (${toString pmaCommitFailureThreshold}), 0 otherwise"
+              echo "# TYPE system_pma_commit_failures_over_threshold gauge"
+              echo "system_pma_commit_failures_over_threshold ''${PMA_COMMIT_FAILURES_OVER}"
+
+              echo "# HELP system_pma_commit_heuristic_fallbacks_24h PMA commits landed with a heuristic (non-AI) message in the last 24h — degraded mode that keeps work landing while the AI provider chain is down"
+              echo "# TYPE system_pma_commit_heuristic_fallbacks_24h gauge"
+              echo "system_pma_commit_heuristic_fallbacks_24h ''${PMA_HEURISTIC_FALLBACKS_24H}"
+
+              echo "# HELP system_pma_commit_fallbacks_over_threshold 1 when the 24h heuristic-fallback count means the LLM path is dead (${toString pmaHeuristicFallbackThreshold}+), 0 otherwise"
+              echo "# TYPE system_pma_commit_fallbacks_over_threshold gauge"
+              echo "system_pma_commit_fallbacks_over_threshold ''${PMA_HEURISTIC_FALLBACKS_OVER}"
+            fi
+
             echo "# HELP system_disk_usage_percent Root filesystem usage percentage (0-100)"
             echo "# TYPE system_disk_usage_percent gauge"
             echo "system_disk_usage_percent ''${DISK_USAGE}"
@@ -1124,6 +1202,20 @@ _: {
           '';
         };
 
+        collectPmaCommits = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = ''
+            Collect PMA auto-commit outcome health: "commit failed" journal
+            rate over 1h (the sustained-failure blackout class — 2026-08-22
+            ..09-02 every commit failed on a dead AI provider for 11 days
+            while liveness stayed green) and heuristic-fallback commits over
+            24h (the degraded mode that keeps work landing without the LLM;
+            sustained fallbacks mean the provider chain is down).
+            Auto-disabled on hosts without PMA.
+          '';
+        };
+
         collectDnsblockdStats = lib.mkOption {
           type = lib.types.bool;
           default = true;
@@ -1258,6 +1350,7 @@ _: {
           })
           // (lib.optionalAttrs (options ? services.forgejo) {
             collectForgejoMirrors = lib.mkDefault (config.services.forgejo.enable or false);
+            collectPmaCommits = lib.mkDefault (config.services.projects-management-automation.enable or false);
             forgejo.dbPath = lib.mkDefault (config.services.forgejo.stateDir + "/data/forgejo.db");
           })
           // (lib.optionalAttrs (options ? services.dns-blocker) {

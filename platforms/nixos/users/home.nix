@@ -603,6 +603,13 @@ in
         crush_key zai zai_api_key
         crush_key gemini gemini_api_key
         crush_key minimax minimax_api_key
+        # minimax DISABLED 2026-08-31 (user): Token Plan exhausted
+        # (rate_limit_error 2056 — billing state, the sops key itself is
+        # valid and stays rendered). Session selection is rejected
+        # ("model not found"); NOTE `crush models` still lists the
+        # catalog's minimax entries — the CLI ignores disabled providers.
+        # Re-enable = delete the next line.
+        provider add minimax --disable true
         crush_key kimi-coding kimi_api_key
 
         # glm-5.3-flash exists ONLY here: charm's auto-updated zai catalog
