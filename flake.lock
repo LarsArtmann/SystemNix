@@ -1000,11 +1000,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785627969,
-        "narHash": "sha256-4dtXQk/NMePegK/nWp5NSeuZKLATItOq61lpEvmXqGw=",
+        "lastModified": 1788306937,
+        "narHash": "sha256-lbrI1UYVpFgKSsyrU9oeF7FHfnu8nLD9ja0ou9f2rxk=",
         "owner": "hercules-ci",
         "repo": "flake-parts",
-        "rev": "427bf4bd9435fdf21321c8cc628c24efc14c0f7a",
+        "rev": "f16b25b8c3d2809b87925d0b76652d7821a75c68",
         "type": "github"
       },
       "original": {
@@ -2913,11 +2913,11 @@
     "go-finding_10": {
       "flake": false,
       "locked": {
-        "lastModified": 1786268343,
-        "narHash": "sha256-pMD5mj4JB4wsObCBOhqv1zq1GnYPa2WwISGgAWvxXVE=",
+        "lastModified": 1786721537,
+        "narHash": "sha256-Ojcup0ftw4hAnxIQWOkXAQXaMAXHJ9msh2Tm2rhtIGg=",
         "ref": "master",
-        "rev": "22cec8abe3671ce2840782a01624c6cd68ff3f03",
-        "revCount": 1139,
+        "rev": "c18e4c9cf0aeaf8c7dd2070496f4d44c34cc2f06",
+        "revCount": 1140,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-finding"
       },
@@ -4383,11 +4383,11 @@
     "gogenfilter_11": {
       "flake": false,
       "locked": {
-        "lastModified": 1786421025,
-        "narHash": "sha256-ocW+7A3ZrUXk40jhrY3kVe7EqLndoZRmn8vgyH1grRY=",
+        "lastModified": 1786562564,
+        "narHash": "sha256-IhNmeGFNxDinumZeahVAe0f47QHOJNXjM+KIb0PQec0=",
         "ref": "master",
-        "rev": "386909a2dc3bcda28067b6b51b54175de157129b",
-        "revCount": 855,
+        "rev": "e3a20e848d2c766b398dbb22a7c359b7a185b023",
+        "revCount": 857,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/gogenfilter"
       },
@@ -4631,11 +4631,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786720170,
-        "narHash": "sha256-WRi5od2xrhCOv555KQhBvCHP00XG4O4YR5DsObarhiI=",
+        "lastModified": 1788387075,
+        "narHash": "sha256-e1ac+IMKCLHmFAIV8Lzk1kZp5IgYvfLzqBMxEezHwBU=",
         "owner": "LarsArtmann",
         "repo": "golangci-lint-auto-configure",
-        "rev": "12b1c00fc87b993a2d7c97e15bf9bbc91f5e774e",
+        "rev": "6f8c1d7c274a49fc698fd22c1eec5ee30b3c72e7",
         "type": "github"
       },
       "original": {
