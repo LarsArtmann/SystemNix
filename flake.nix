@@ -1194,7 +1194,11 @@
                   # aborted at the wrapper's runtime).
                   inner = pkgs.writeShellApplication {
                     name = "pre-deploy-check";
-                    runtimeInputs = [ pkgs.nix pkgs.jq pkgs.systemd ];
+                    runtimeInputs = [
+                      pkgs.nix
+                      pkgs.jq
+                      pkgs.systemd
+                    ];
                     text = builtins.readFile ./scripts/pre-deploy-check.sh;
                   };
                 in

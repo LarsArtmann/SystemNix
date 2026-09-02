@@ -161,42 +161,31 @@ journalctl -u cv-server --since "-10 min" | grep -E 'scan completed|bulk evaluat
 
 ## Pending root-gated proofs (paste into ONE root shell)
 
-Open claims from the 2026-08-27 deployment that a non-root session cannot
-verify — `/var/lib/cv` is 0700 `cv:cv` and unit control is root-gated. Run
-as root on evo-x2; each block is independent, failures are informative, not
-destructive.
+Most 2026-08-27 deployment claims have since been verified live: nightly
+backups LAND pool-side (`pipeline-20260901T031700.sqlite` 970K,
+`pipeline-20260902T031700.sqlite` 1.67M — the event store grows with the
+funnel; 14-day retention since 2026-09-02), and the 03:17 timer is green in
+backup-coordination. Still open for a root shell when convenient:
 
 ```bash
-# 1. Persistence: the event store actually exists on disk (not inferential)
-ls -la /var/lib/cv/data/
-
-# 2. First REAL backup artifact (the machinery has never produced a .sqlite)
-systemctl start cv-backup
-ls -la /mnt/pool/backups/cv/
-journalctl -u cv-backup --since "-5 min" --no-pager
-
-# 3. Asset-vanishing incident forensics (2026-08-27, ~10:15–10:45 window):
+# 1. Asset-vanishing incident forensics (2026-08-27, ~10:15–10:45 window):
 #    the journal names exactly what vanished; journalctl is NOT volatile
 journalctl -u cv-server --since "2026-08-27 10:15" --until "2026-08-27 11:00" --no-pager
 
-# 4. Restart-drill persistence proof (the actual product claim):
+# 2. Restart-drill persistence proof (the actual product claim):
 #    a tracked application written via HTTP survives a full restart.
 curl -s http://localhost:8098/health/live        # baseline healthy
 systemctl restart cv-server && sleep 8
 curl -s http://localhost:8098/health/live        # back up, same version
 #    then compare tracked applications before/after via the dashboard
-#    (or POST a scan event first if the store is still empty).
 
-# 5. First PDF-export RSS under MemoryMax=1G / GOMEMLIMIT=768MiB
+# 3. First PDF-export RSS under MemoryMax=1G / GOMEMLIMIT=768MiB
 curl -s -o /dev/null http://localhost:8098/export/pdf
 systemctl status cv-server --no-pager | grep -E 'Memory|Tasks'
 journalctl -u cv-server --since "-10 min" | grep -iE 'oom|killed|memory'
 ```
 
-After the 03:17 timer (no root needed to ASK, root to answer): confirm
-`pipeline-*.sqlite` exists in `/mnt/pool/backups/cv` and that no
-backup-coordination staleness alert fired for the empty-dir era. Also
-observe one full Gatus `CV PDF Export` cycle (5m) and the
+Also observe one full Gatus `CV PDF Export` cycle (5m) and the
 `cv-application` service in SigNoz traces (traces.home.lan, last 1h) —
 both were config-level-verified only.
 

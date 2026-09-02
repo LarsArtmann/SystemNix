@@ -316,12 +316,12 @@ if $cv_enabled; then
   # verdict is benign and deliberately NOT asserted here.
   cv_store=$(curl -s --compressed --max-time 10 "http://127.0.0.1:8098/health" 2>/dev/null | grep -o '"pipeline-store":{"name":"pipeline-store","status":"[a-z]*"' || true)
   case "$cv_store" in
-    *'"status":"healthy"'*)
-      report_pass "CV — pipeline-store healthy (SQLite funnel store reachable)"
-      ;;
-    *)
-      report_fail "CV — pipeline-store not healthy (${cv_store:-check absent from /health}) — deployed cv binary predates 2026-09-02 or the sqlite store is unreachable (journalctl -u cv-server -n 50)"
-      ;;
+  *'"status":"healthy"'*)
+    report_pass "CV — pipeline-store healthy (SQLite funnel store reachable)"
+    ;;
+  *)
+    report_fail "CV — pipeline-store not healthy (${cv_store:-check absent from /health}) — deployed cv binary predates 2026-09-02 or the sqlite store is unreachable (journalctl -u cv-server -n 50)"
+    ;;
   esac
 else
   report_skip "CV — service disabled (units absent from systemd)"

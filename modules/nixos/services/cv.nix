@@ -279,6 +279,10 @@
                 ts=$(date +%Y%m%dT%H%M%S)
                 dst="${backupDir}/pipeline-$ts.sqlite"
                 ${lib.getExe pkgs.sqlite} "$db" ".backup '$dst'"
+                # 14-day retention (pocket-id-backup pattern): the online
+                # .backup rewrites every page, so nothing is shared between
+                # nights — without pruning the pool dir grows forever.
+                find "${backupDir}" -name "pipeline-*.sqlite" -mtime +14 -delete
                 echo "cv-backup: wrote $dst"
               '';
               ReadWritePaths = [
