@@ -83,7 +83,7 @@ in
   name = "memory-emergency-guard";
 
   nodes.machine =
-    { ... }:
+    { lib, ... }:
     {
       imports = [
         # The module file is a flake-parts wrapper (top-level lambda
@@ -112,6 +112,17 @@ in
         socketConfig.ListenStream = "/run/flm-test.sock";
         wantedBy = [ "sockets.target" ];
       };
+
+      # The guard's trip path STOPS these units and reset_state() restarts
+      # them — 9 socket starts across the scenarios, several within one
+      # 10 s window when adjacent scenarios run back-to-back. systemd's
+      # default StartLimitBurst=5/10s then rate-limits the restart as
+      # start-limit-hit (the flake that blocked every pre-commit
+      # `nix flake check`). The rate limiter is not under test here —
+      # the guard's own burst settings live on the GUARD unit.
+      systemd.sockets.fastflowlm.startLimitBurst = lib.mkForce 100;
+      systemd.services.fastflowlm.startLimitBurst = lib.mkForce 100;
+      systemd.services."fastflowlm@".startLimitBurst = lib.mkForce 100;
 
       system.stateVersion = "25.11";
     };

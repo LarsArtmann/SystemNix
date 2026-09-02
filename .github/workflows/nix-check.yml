@@ -51,6 +51,21 @@ jobs:
       - name: Evaluate flake (no build)
         run: nix flake check --no-build
 
+      # Trap-lints are pure runCommand checks (no VM, seconds to build).
+      # `flake check --no-build` only EVALUATES them — a check whose script
+      # logic is broken (phantom-green) or whose fixtures drift still passes
+      # eval. Building them executes the actual grep/lint logic. This is the
+      # class that let 7 gatus checks sit red-for-hours (2026-08-22) and the
+      # signoz query-lint v1 nullglob phantom-green (2026-08-27) through.
+      - name: Build trap-lint checks (pattern/query/module-shape audits)
+        run: |
+          nix build .#checks.x86_64-linux.gatus-pattern-lint --no-link --print-out-paths
+          nix build .#checks.x86_64-linux.signoz-query-lint --no-link --print-out-paths
+          nix build .#checks.x86_64-linux.module-shape-lint --no-link --print-out-paths
+          nix build .#checks.x86_64-linux.chown-vs-bind-audit --no-link --print-out-paths
+          nix build .#checks.x86_64-linux.binary-coverage-lint --no-link --print-out-paths
+          nix build .#checks.x86_64-linux.binary-coverage-selftest --no-link --print-out-paths
+
       - name: Check for unregistered port numbers
         run: |
           # Catches port assignments in modules that bypass lib/ports.nix.

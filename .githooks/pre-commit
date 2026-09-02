@@ -146,7 +146,7 @@ if [ -n "$STAGED_NIX" ]; then
     fi
 
     log_info "Running statix (Nix linter) on staged files..."
-    > /tmp/statix.log
+    : > /tmp/statix.log
     while IFS= read -r f; do
         nix shell nixpkgs#statix --command statix check -o errfmt "$f" 2>&1 \
             | grep -v ':E:0:' >> /tmp/statix.log || true
