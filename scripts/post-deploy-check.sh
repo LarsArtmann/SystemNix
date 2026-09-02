@@ -1223,9 +1223,9 @@ if [ -e /etc/systemd/system/postfix.service ]; then
   # SMTP banner through the public socket (loopback-only null client).
   _relay_banner=$(timeout 5 bash -c 'exec 3<>/dev/tcp/127.0.0.1/25 && read -t 3 -r _relay_line <&3 && printf %s "$_relay_line"' 2>/dev/null || true)
   case "$_relay_banner" in
-    220*) report_pass "Mail relay — SMTP banner answering (220 greeting)" ;;
-    "") report_fail "Mail relay — no SMTP banner on 127.0.0.1:25 (relay down or not loopback-bound)" ;;
-    *) report_fail "Mail relay — unexpected SMTP banner: $_relay_banner" ;;
+  220*) report_pass "Mail relay — SMTP banner answering (220 greeting)" ;;
+  "") report_fail "Mail relay — no SMTP banner on 127.0.0.1:25 (relay down or not loopback-bound)" ;;
+  *) report_fail "Mail relay — unexpected SMTP banner: $_relay_banner" ;;
   esac
 
   # Go-live gate: the placeholder credential defers every send. Expected

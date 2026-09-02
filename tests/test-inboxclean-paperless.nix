@@ -64,21 +64,22 @@ let
 
   # Keep the test lean: force a stub package so the inboxclean Go
   # derivation is never evaluated (mkDefault loses to mkForce lazily).
-  base =
-    [
-      inboxcleanModule
-      sopsStub
-      (
-        { lib, ... }:
-        {
-          services.inboxclean.enable = true;
-          services.inboxclean.package = lib.mkForce (pkgs.runCommand "inboxclean-stub" { } ''
+  base = [
+    inboxcleanModule
+    sopsStub
+    (
+      { lib, ... }:
+      {
+        services.inboxclean.enable = true;
+        services.inboxclean.package = lib.mkForce (
+          pkgs.runCommand "inboxclean-stub" { } ''
             mkdir -p $out/bin
             touch $out/bin/inboxclean
-          '');
-        }
-      )
-    ];
+          ''
+        );
+      }
+    )
+  ];
 
   eval =
     extra:
@@ -101,10 +102,7 @@ let
   syncConfig = c: c.systemd.services.inboxclean-sync.serviceConfig;
   webConfig = c: c.systemd.services.inboxclean-web.serviceConfig;
   envFile = "/run/secrets/rendered/inboxclean-paperless-env";
-  paperlessEnv =
-    c:
-    builtins.filter (lib.hasInfix "PAPERLESS_") (
-      syncConfig c).Environment;
+  paperlessEnv = c: builtins.filter (lib.hasInfix "PAPERLESS_") (syncConfig c).Environment;
 
   failingPaperlessAssertions =
     c:
