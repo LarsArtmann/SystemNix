@@ -94,11 +94,21 @@ in
                 with open("/tmp/fake-relay-capture.txt", "w") as out:
                     out.write("\n".join(log))
             send("220 fake.relay ESMTP")
+            in_data = False
             while True:
                 line = f.readline().decode(errors="replace").strip()
                 dump()
                 if not line:
                     break
+                if in_data:
+                    # Swallow message content silently — replying per-line
+                    # mid-DATA corrupts the dialog (postfix reads exactly
+                    # ONE reply after the dot, then closes).
+                    if line == ".":
+                        in_data = False
+                        log.append("[data . accepted]")
+                        send("250 accepted")
+                    continue
                 log.append(line)
                 u = line.upper()
                 if u == "STARTTLS":
@@ -116,10 +126,8 @@ in
                 elif u.startswith(("MAIL", "RCPT")):
                     send("250 ok")
                 elif u == "DATA":
+                    in_data = True
                     send("354 go")
-                elif u == ".":
-                    send("250 accepted")
-                    break
                 elif u.startswith("QUIT"):
                     break
                 else:
