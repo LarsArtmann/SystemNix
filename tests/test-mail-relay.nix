@@ -187,6 +187,10 @@ in
     # 5. Delivery-time E2E against a fake upstream: proves the smtp client
     #    rewrote the envelope sender (generic map), authenticated with the
     #    rendered SASL map, and relayed the canonicalized recipient.
+    machine.succeed(
+        "openssl req -x509 -newkey rsa:2048 -keyout /tmp/fake-relay-key.pem "
+        "-out /tmp/fake-relay-cert.pem -days 1 -nodes -subj '/CN=fake.relay'"
+    )
     machine.execute("nohup python3 /etc/fake-relay/fake-relay.py >/dev/null 2>&1 &")
     machine.wait_until_succeeds("ss -tln | grep -q '127.0.0.2:1'", timeout=30)
     machine.succeed(
