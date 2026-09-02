@@ -16,10 +16,12 @@ Resume/CV generator (`cv serve`, Go + Typst) from the private
 | Secrets           | sops `platforms/nixos/secrets/cv.yaml` → template `cv-env` (`CV_API_KEY`), owned `cv:cv` 0400 |
 | Persistence       | `/var/lib/cv/data/pipeline.sqlite` (event store; `pipeline.event_store_driver=sqlite`)        |
 | Backups           | `/mnt/pool/backups/cv/pipeline-<ts>.sqlite`, nightly 03:17 (`cv-backup.timer`)                |
-| Scan automation    | `cv-scan.timer` every 6h (:23): POST `/api/pipeline/scan` + `/evaluate-tracked` (X-API-Key)    |
-| Monitoring        | Gatus: `CV` (liveness 60s), `CV Page Renders` (/cv HTML 5m), `CV PDF Export` (%PDF body 5m)   |
+| Scan automation    | `cv-scan.timer` every 6h (:23): POST `/api/pipeline/scan` + `/evaluate-tracked` + `/auto-apply` (X-API-Key) |
+| Session probe     | `cv-profile-probe.timer` weekly Mon 09:41: `cv profile accounts --probe --all` — exit 3 = invalid session → onFailure alert (chromium in the closure) |
+| Monitoring        | Gatus: `CV` (liveness 60s), `CV Page Renders` (/cv HTML 5m), `CV PDF Export` (%PDF 5m), `CV Funnel Freshness` (sse-stats 30m), `CV Pipeline Store Health` (/health 5m) |
 | Tracing           | OTLP-HTTP → localhost:4318, service `cv-application` (SigNoz)                                 |
 | Upstream pin      | flake input `cv` (rev-locked, git+ssh; no `follows` — vendorHash stability)                   |
+| Health surfaces   | `/health` (hand-rolled: checks incl. `pipeline-store` ping of the SQLite store; `database` = optional Turso analytics, DISABLED by design — the "Database not configured" message is benign) + go-health probes `/health/live|ready|startup` + `/admin/health` dashboard |
 
 ## State dir contract
 
@@ -41,10 +43,27 @@ the same `CV_API_KEY` the server reads (sops `cv-env` template):
    recommendation + ANÜ/eligibility blockers land in the same pass).
 2. `POST /api/pipeline/evaluate-tracked` — no-force pass that only picks
    up rows whose scan-time evaluation failed (idempotent otherwise).
+3. `POST /api/pipeline/auto-apply` — funnel tail (gate Q2, 2026-09-02):
+   tailors the top recommended applications into the approval queue and
+   sweeps approved-but-unsent sends. Never sends un-approved
+   (`send_on_approve`: the dashboard Approve click IS the confirmation).
+   503 = auto-apply disabled in config (gate Q1 not flipped) — logged as a
+   WARN, not a failure.
 
 Both endpoints are async + 409-guarded, so an overlap with a
 dashboard-triggered run is harmless. Failures (non-200/409, e.g. a wrong
 key after rotation) fail the unit → onFailure alert.
+
+## Evaluation knobs
+
+- **`pipeline.evaluation.min_day_rate`** (default 0 = off, upstream
+  2026-09-02): EUR-per-day price floor — an advertised rate whose upper
+  bound converts below it skips the verdict regardless of score (hourly
+  rates convert at ×8 first; postings without an advertised rate are
+  never skipped). Set it in `cv.nix` `settings.pipeline.evaluation` when
+  the operator picks a value (CV repo proposed 600; env override
+  `CV_EVALUATION_MIN_DAY_RATE` also exists). A forced re-eval pass
+  (manual command above) re-stamps stored apps after enabling it.
 
 **Forced re-scoring is manual** — when criteria change (keywords, CV data,
 blockers like the 2026-08-29 eligibility axis), run once:
