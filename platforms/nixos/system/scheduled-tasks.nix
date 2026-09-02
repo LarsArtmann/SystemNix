@@ -290,6 +290,7 @@ in
                   pkgs.libnotify
                   pkgs.coreutils
                   pkgs.gnugrep
+                  pkgs.gawk
                 ];
                 text = ''
                   export DISPLAY=:0

@@ -303,6 +303,13 @@ in
       forgejo.enable = true;
       immich.enable = true;
       paperless.enable = true;
+      # Central outbound mail relay (Postfix null client on 127.0.0.1:25 →
+      # authenticated Resend submission). Ships with a PLACEHOLDER sops
+      # credential: every send defers in the postfix queue until the real
+      # API key is set (go-live runbook: docs/services/mail-relay.md).
+      # Consumers wired to it: paperless (outbound), forgejo (notifications),
+      # system/cron mail (root/postmaster aliases).
+      mail-relay.enable = true;
       attic-config = {
         enable = true;
         cachePublicKey = "monitor365:/vu56vS4pTdjoltqqqj80dJ6freEdzEEf4ugdZUPpY8=";

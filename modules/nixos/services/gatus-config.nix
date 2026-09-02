@@ -72,6 +72,17 @@ _: {
       # external chain: public DNS → Firebase CDN → site content. This catches
       # outages the LAN-only checks cannot see (unclaimed web.app targets,
       # missing DNS records, broken deploys).
+      #
+      # REMOVED 2026-09-02 (72h log review): three endpoints were permanently
+      # dead and each burned ~324 failure events/day in gatus alerts:
+      #   - cmdguard.lars.software      — TLS cert mismatch (serves the
+      #     *.firebaseapp.com cert; Firebase custom-domain binding is gone)
+      #   - go-output.lars.software     — HTTP 404 (Firebase site deleted or
+      #     web.app target unclaimed)
+      #   - md-go-validator.lars.software — NXDOMAIN (DNS record removed in
+      #     lars.software.tf but never removed here)
+      # Re-add an endpoint only after `https://<host>/` returns 200 with real
+      # content again (verify the DNS record AND the Firebase hosting target).
       ossWebsites = [
         "lars.software"
         "www.lars.software"
@@ -80,7 +91,6 @@ _: {
         "gogenfilter.larsartmann.com" # alias CNAME from larsartmann.com.tf
         "atomicwrite.lars.software"
         "go-atomic-write.lars.software" # alias of atomicwrite.lars.software
-        "go-output.lars.software"
         "go-workflow-auditlog.lars.software"
         "filewatcher.lars.software"
         "errorfamily.lars.software"
@@ -91,8 +101,6 @@ _: {
         "branded-id.lars.software"
         "emeet-pixyd.lars.software"
         "cleanwizard.lars.software"
-        "cmdguard.lars.software"
-        "md-go-validator.lars.software"
       ];
 
       mkWebsiteCheck =
@@ -2040,6 +2048,36 @@ _: {
                     "[BODY] == pat(*<!DOCTYPE html*)"
                   ];
                   alerts = discordAlert "systemd-timer-monitor report down — timers.home.lan unreachable or stale";
+                })
+              ]
+              ++ lib.optionals (config.services.mail-relay.enable or false) [
+                {
+                  # SMTP is not HTTP — plain TCP connect proves the null
+                  # client accepts submissions (loopback, so no auth probe
+                  # would even be possible). Follows the TaskChampion /
+                  # DNS-Resolver-TCP raw-check shape.
+                  name = "Mail Relay (SMTP)";
+                  group = "Infrastructure";
+                  url = "tcp://127.0.0.1:${toString ports.mail-relay}";
+                  interval = "60s";
+                  conditions = [ "[CONNECTED] == true" ];
+                  alerts = discordAlert "Mail relay down — outbound email is broken (paperless share links, forgejo notifications, system/cron mail queue locally). Check: systemctl status postfix, mailq, journalctl -u postfix -n 50";
+                }
+                (mkHttpCheck {
+                  name = "Mail Relay Service";
+                  group = "Infrastructure";
+                  # Second layer: postfix liveness from the system-health
+                  # collector (catches failed/crash-loop states even when
+                  # the socket is briefly answering). Same shape as the
+                  # fastflowlm/hermes service-state checks.
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_service_state_failed{service=\"postfix\"} 0*)"
+                    "[BODY] == pat(*system_service_start_limit_hit{service=\"postfix\"} 0*)"
+                  ];
+                  alerts = discordAlert "postfix failed or in start-limit crash-loop — outbound mail halted. Check: journalctl -u postfix -n 50, journalctl -u postfix-setup -n 30, sasl credential in /run/secrets-rendered/mail-relay-sasl (placeholder = every send defers)";
                 })
               ]
               ++ map mkWebsiteCheck ossWebsites

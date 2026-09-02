@@ -48,6 +48,12 @@ _: {
       oidcEnabled = config.services.pocket-id-config.enable or false;
       pocketIdDataDir = config.services.pocket-id.dataDir or "/var/lib/pocket-id";
       oidcEnvFile = "/var/lib/paperless-oidc/pocket-id.env";
+
+      # Outbound email (share links, password-protected archives, account
+      # mails) rides the central Postfix null-client relay. Off (VM tests,
+      # relay-less hosts) → the PAPERLESS_EMAIL_* block below is omitted and
+      # paperless keeps Django's inert localhost default (EMAIL_ENABLED false).
+      mailRelayEnabled = config.services.mail-relay.enable or false;
       paperlessUnits = [
         "paperless-consumer.service"
         "paperless-scheduler.service"
@@ -202,6 +208,25 @@ _: {
             PAPERLESS_AI_LLM_EMBEDDING_ENDPOINT = embeddingEndpoint;
             PAPERLESS_AI_LLM_EMBEDDING_MODEL = config.services.llama-rag.embeddingsAlias;
             PAPERLESS_AI_LLM_EMBEDDING_API_KEY = "llama-server-no-auth";
+          }
+          # --- Outbound email via the central mail relay ----------------------
+          # Point Django's SMTP backend at the loopback relay (no auth, no
+          # TLS — the relay is loopback-only and the relay→upstream leg is
+          # where credentials/TLS live). EMAIL_ENABLED flips on precisely
+          # because the host is no longer the literal string "localhost"
+          # (paperless settings.py: EMAIL_HOST != "localhost" or user != "").
+          # DEFAULT_FROM_EMAIL = PAPERLESS_EMAIL_FROM; it MUST be on a domain
+          # the upstream provider verified — locally-generated senders are
+          # rewritten by the relay, but this explicit value is what every
+          # sent mail carries.
+          // lib.optionalAttrs mailRelayEnabled {
+            PAPERLESS_EMAIL_HOST = "127.0.0.1";
+            PAPERLESS_EMAIL_PORT = ports.mail-relay;
+            PAPERLESS_EMAIL_HOST_USER = "";
+            PAPERLESS_EMAIL_HOST_PASSWORD = "";
+            PAPERLESS_EMAIL_USE_TLS = false;
+            PAPERLESS_EMAIL_USE_SSL = false;
+            PAPERLESS_EMAIL_FROM = config.services.mail-relay.fromAddress;
           }
           # --- Layer 1 SSO: native OIDC via Pocket ID ------------------------
           # The provider JSON (with the client secret) rides in the

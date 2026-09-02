@@ -69,11 +69,16 @@ in
       # the Pocket ID client secret (LoadCredential cannot tolerate a missing
       # path). Seed one before the bridge so it runs for real at boot; the
       # skip/degradation semantics are asserted in step 8 of the script.
+      # RemainAfterExit keeps later bridge restarts from re-pulling (and
+      # re-seeding) it — an active(exited) oneshot start job is a no-op.
       systemd.services.vm-pocket-id-secret = {
         description = "VM test: fake Pocket ID client secret";
         wantedBy = [ "paperless-oidc-setup.service" ];
         before = [ "paperless-oidc-setup.service" ];
-        serviceConfig.Type = "oneshot";
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+        };
         script = ''
           mkdir -p /var/lib/pocket-id/client-secrets
           printf 'vm-test-secret' > /var/lib/pocket-id/client-secrets/paperless
@@ -147,9 +152,8 @@ in
     #    cleanly (ConditionPathExists → inactive, NOT failed — LoadCredential
     #    would exit 243/CREDENTIALS), and paperless-web must still boot
     #    local-login-only without the optional env file. The fake-secret
-    #    helper is disabled first — it is wantedBy the bridge and a plain
-    #    restart would re-pull (and re-seed) it.
-    machine.succeed("systemctl disable --now vm-pocket-id-secret.service")
+    #    helper stays active(exited) — RemainAfterExit makes its re-pull a
+    #    no-op, so it does NOT re-seed the secret.
     machine.succeed("rm /var/lib/pocket-id/client-secrets/paperless")
     machine.succeed("systemctl restart paperless-oidc-setup.service")
     machine.succeed("test \"$(systemctl is-active paperless-oidc-setup.service)\" = inactive")

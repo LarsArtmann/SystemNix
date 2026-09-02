@@ -387,6 +387,20 @@ in
                 owner = "root";
                 restartUnits = [ "google-sync.service" ];
               } [ "google_sync_rclone_config" ]
+            )
+            // lib.optionalAttrs (svcEnabled "mail-relay") (
+              # Upstream submission credential for the Postfix null client
+              # (mail-relay.nix). Ships as a PLACEHOLDER — go-live is an
+              # interactive `sudo sops platforms/nixos/secrets/mail-relay.yaml`
+              # (paste the Resend re_... API key as mail_relay_password), then
+              # postfix restarts via the template's restartUnits. Raw secret is
+              # root-owned: only the rendered template (owner postfix) is read
+              # by the daemon.
+              mkSecrets "mail-relay.yaml" {
+                owner = "root";
+                group = "root";
+                restartUnits = [ "postfix.service" ];
+              } [ "mail_relay_password" ]
             );
 
           templates = {
@@ -596,6 +610,22 @@ in
               content = lib.generators.toKeyValue { } {
                 BROWSER_HISTORY_AGENT_TOKEN = config.sops.placeholder.browser_history_agent_token;
               };
+            };
+          }
+          // lib.optionalAttrs (svcEnabled "mail-relay") {
+            # SASL password map for the Postfix null client, rendered as a
+            # postfix-readable texthash source ([host]:port user:password —
+            # smtp_sasl_password_maps syntax). texthash (not hash:) reads
+            # this file LIVE at lookup time: no postmap step that would
+            # never re-run on secret rotation. The smtp client daemon runs
+            # as mail_owner (postfix) and is NOT chrooted (nixpkgs master.cf
+            # renders "-"), hence postfix:postfix 0400.
+            "mail-relay-sasl" = {
+              owner = "postfix";
+              group = "postfix";
+              mode = "0400";
+              restartUnits = [ "postfix.service" ];
+              content = "[${config.services.mail-relay.relayHost}]:${toString config.services.mail-relay.relayPort} ${config.services.mail-relay.smtpUsername}:${config.sops.placeholder.mail_relay_password}";
             };
           }
           // lib.optionalAttrs (svcEnabled "dns-blocker") {

@@ -11,6 +11,10 @@
 
     forgejo = 3000;
 
+    # SMTP submission from local services to the Postfix null-client relay
+    # (modules/nixos/services/mail-relay.nix) — loopback only, never exposed.
+    mail-relay = 25;
+
     homepage = 8082;
 
     immich = 2283;

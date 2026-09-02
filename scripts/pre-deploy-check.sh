@@ -246,7 +246,10 @@ fi
 # "email_state", singular; the upstream test fixture says "email_states" and
 # is NOT prod truth) are lowercase JSON FIELD assertions on non-/metrics
 # endpoints — the extractor cannot tell them apart from metrics, and they
-# never appear in any /metrics scrape.
+# never appear in any /metrics scrape. `oidc` (2026-09-02, paperless Layer 1
+# SSO) is the same class: pat(*oidc/pocket-id*) asserts the allauth login
+# BUTTON on the paperless HTML login page — a body-content pattern, not a
+# metric; the slash-suffix is dropped by the [a-zA-Z0-9_]* extract.
 extract_gatus_metrics() {
   # Also catch the anchored form pat(*\n<metric> — the leading real-newline
   # escape precedes the name there (2026-08-31: signoz-coverage checks were
@@ -255,7 +258,7 @@ extract_gatus_metrics() {
     grep -oE 'pat\(\*(\\n)?[a-zA-Z_][a-zA-Z0-9_]*' |
     sed 's/pat(\*//;s/^\\n//' |
     sort -u |
-    grep -vE '^<|connected|email_states?|[A-Z]'
+    grep -vE '^<|connected|email_states?|oidc$|[A-Z]'
 }
 
 # Fetch metrics from each endpoint separately to avoid false-positive phantom
@@ -371,12 +374,18 @@ if [ -s "$METRICS_FILE" ]; then
   # 2026-09-02 sweep: RETIRED the three entries above (signoz gap budget +
   # both pool_usb_recovery gauges) — the 2026-09-02 pre-deploy run confirmed
   # all three present in :9100/metrics.
-  # system_local_dns_resolves (2026-09-02): new tripwire for resolv.conf
-  # drift (system-resolver *.home.lan probe — catches what the direct :53
-  # gatus probe cannot, see the 2026-09-02 incident). Emitted by the
-  # system-health textfile collector shipping in this same deploy; remove
-  # after the first deploy confirms it in :9100/metrics (expected 1).
-  KNOWN_NEW_METRICS="system_local_dns_resolves"
+  # system_local_dns_resolves (2026-09-02): RETIRED same day — confirmed
+  # live in the system_health textfile (value 1) by the follow-up session.
+  # system_pma_commit_* (2026-09-02): three gauges from the PMA commit
+  # blackout fix (scrape_errors + failures_over_threshold +
+  # fallbacks_over_threshold, "PMA Commit Health" gatus check). Emitted by
+  # the system-health textfile collector shipping in this same deploy; the
+  # running generation's collector predates them. Remove after the first
+  # deploy confirms them in :9100/metrics (expected 0/0/0 once the
+  # backlog drains; failures may legitimately read 1 during the
+  # transition hour — 785 backlog failures sat in the 1h window at
+  # deploy time).
+  KNOWN_NEW_METRICS="system_pma_commit_scrape_errors system_pma_commit_failures_over_threshold system_pma_commit_fallbacks_over_threshold"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"

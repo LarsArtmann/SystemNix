@@ -102,6 +102,14 @@ _: {
         hostname = "auth.${config.networking.domain}";
         maxAttempts = 30;
       };
+
+      # Notifications (issues, PRs, mirrors) ride the central Postfix
+      # null-client relay. Without the relay, the mailer block stays empty →
+      # [mailer] ENABLED stays unset → forgejo silently sends nothing (the
+      # pre-relay status quo). PROTOCOL "" = plain SMTP: the relay is
+      # loopback-only and unauthenticated; TLS/credentials live on the
+      # relay→upstream leg.
+      mailRelayEnabled = config.services.mail-relay.enable or false;
     in
     {
       options = {
@@ -199,6 +207,20 @@ _: {
               CLONE = 600;
               PULL = 600;
             };
+
+            mailer =
+              { }
+              // lib.optionalAttrs mailRelayEnabled {
+                ENABLED = true;
+                PROTOCOL = "";
+                SMTP_ADDR = "127.0.0.1";
+                SMTP_PORT = ports.mail-relay;
+                # User/PASSWD stay unset → no AUTH (the relay only accepts
+                # loopback and authenticates upstream itself). FROM must be
+                # on the provider-verified domain — same constraint as the
+                # relay's fromAddress.
+                FROM = "Forgejo <${config.services.mail-relay.fromAddress}>";
+              };
 
             actions = {
               ENABLED = true;
