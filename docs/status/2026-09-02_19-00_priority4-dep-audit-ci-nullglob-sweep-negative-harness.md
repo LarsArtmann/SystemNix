@@ -51,7 +51,7 @@ TODO_LIST Priority-4 → shipped-note summary line. CHANGELOG: 1 Added (batch), 
 
 ## e) NEXT
 
-1. Watch the first scheduled `go-deps-audit.yml` run (tonight 04:30 UTC) — expect WARN-UNKNOWN for private repos (ls-remote 404) and OK-EXACT for tag-pinned inputs; ERROR-MISSING should be zero on a healthy lock.
+1. Watch the first scheduled `go-deps-audit.yml` run (tonight 04:30 UTC) — the full no-clones CI-simulation run on this tree: **exit 0, 0 errors, 460 unpinned, 1750 WARN-UNKNOWN** (every ancestry check degrades without clones — the CI-mode signal is the ERROR-MISSING count plus the verdict mix in the log; OK verdicts are ~0 because master-rev pins rarely equal tag commits). A private-repo probe confirmed https ls-remote to go-cqrs-lite itself succeeds (repo readable) — `remote-failed` only fires on actual lookup failure (verified with a nonexistent repo).
 2. Consider `negative-test-lints.sh` as a CI job (needs the private-input auth block; runtime ~10 min) — deliberately NOT wired now (local + pre-commit-adjacent use first).
 3. module-shape-lint: the `=`-anchor assumes dotted-form declarations; an attrset-form wrapper (`flake.nixosModules = { x = …; }`) is invisible to it (pre-existing, all modules use dotted form).
 4. The 2 WARN-UNKNOWN clones-freshness items (buildflow `ac84f0fceddf`, `6966285d1255`, from the 05-30 report) remain — unchanged by this session.

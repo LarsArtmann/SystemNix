@@ -1915,6 +1915,27 @@ _: {
                   }
                 ) (config.services.inboxclean.extraAccounts or [ ])
               )
+              # Authenticated probe of the Paperless REST API with the SAME
+              # token inboxclean-sync uploads attachments with — the
+              # unauthenticated Paperless login-page check cannot see token
+              # death, so archiving would degrade silently (upstream treats
+              # upload failures as warnings by design).
+              ++ lib.optionals (config.services.inboxclean.paperless.enable or false) [
+                (mkHttpCheck {
+                  name = "InboxClean Paperless Archive Auth";
+                  group = "Productivity";
+                  url = "http://localhost:${toString ports.paperless}/api/";
+                  interval = "5m";
+                  headers = {
+                    Authorization = "Token $PAPERLESS_TOKEN";
+                  };
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 1000"
+                  ];
+                  alerts = discordAlert "InboxClean Paperless archiving auth failing — Gmail attachments are NOT being archived. Check: token in platforms/nixos/secrets/inboxclean-paperless.yaml vs paperless-manage drf_create_token; journalctl -u inboxclean-sync | grep -i paperless";
+                })
+              ]
               ++ lib.optionals (config.services.cv-server.enable or false) [
                 # Liveness: go-health probe served from the raw mux (always
                 # 200 once the process is up; connection-refused when down).

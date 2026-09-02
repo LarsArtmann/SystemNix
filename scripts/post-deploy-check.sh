@@ -532,6 +532,30 @@ else
   report_skip "InboxClean — service disabled (units absent from systemd)"
 fi
 
+# InboxClean -> Paperless archiving (enable-gated via the sync unit's
+# EnvironmentFile reference). The check runs as the invoking user, so it can
+# NOT hold the token (root-owned sops template) — assert instead that
+# paperless' API route is alive AND auth-enforced: 401 unauthenticated is
+# the healthy answer (route exists, anonymous access rejected). 200 would
+# mean auth is off (misconfig), anything else means paperless is down or
+# the route moved — but paperless has its own smoke checks, so WARN here.
+if grep -q 'inboxclean-paperless-env' /etc/systemd/system/inboxclean-sync.service 2>/dev/null; then
+  paperless_api_code="$(curl -s --compressed -o /dev/null -w '%{http_code}' --max-time 10 http://127.0.0.1:2892/api/)" || true
+  case "$paperless_api_code" in
+  401)
+    report_pass "InboxClean Paperless — API route alive, auth enforced (401 unauth; token check rides the Gatus auth check)"
+    ;;
+  200)
+    report_warn "InboxClean Paperless — paperless /api/ answered 200 WITHOUT a token (auth misconfigured on paperless?)"
+    ;;
+  *)
+    report_warn "InboxClean Paperless — paperless /api/ unreachable or unexpected code '$paperless_api_code' (paperless smoke section owns the failure path)"
+    ;;
+  esac
+else
+  report_skip "InboxClean Paperless — archiving not enabled (no env file on inboxclean-sync)"
+fi
+
 # Hermes: the read-only projects bind and the dubious-ownership gitconfig
 # live ONLY inside the gateway's mount namespace — unit state and the unit
 # file alone cannot prove they reached the running process. The gateway PID's

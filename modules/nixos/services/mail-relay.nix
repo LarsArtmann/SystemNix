@@ -60,6 +60,19 @@ _: {
       # renders "-" = no chroot), so the template is postfix-owned 0400.
       saslPasswordMap = "texthash:${config.sops.templates."mail-relay-sasl".path}";
 
+      # RECIPIENT rewriting for system mail. aliases(5) — what rootAlias
+      # feeds — only applies in local(8) delivery, and a null client has
+      # mydestination="" so local(8) never runs: root@host mail would relay
+      # verbatim and die at the provider as an unroutable recipient. The
+      # recipient canonical map rewrites at CLEANUP time (before queuing),
+      # so root@/postmaster@ on this host (bare, FQDN, and domain forms)
+      # reach systemAlias as a real routable mailbox.
+      recipientCanonicalMap = pkgs.writeText "postfix-canonical-recipient" ''
+        @${hostName} ${systemAlias}
+        @${hostName}.${domain} ${systemAlias}
+        @${domain} ${systemAlias}
+      '';
+
       # System mail (root@, postmaster@, cron output) recipient: the explicit
       # option, defaulting to fromAddress — a null client has no local
       # delivery, so unaliased root mail would be rejected by the provider as
@@ -227,6 +240,10 @@ _: {
 
             # Rewrite local senders to the verified fromAddress
             smtp_generic_maps = "texthash:${genericMap}";
+
+            # Rewrite system recipients (root@, postmaster@) to a routable
+            # mailbox — see recipientCanonicalMap above.
+            recipient_canonical_maps = "texthash:${recipientCanonicalMap}";
           };
 
           # System mail lands in the operator inbox, not a nonexistent local

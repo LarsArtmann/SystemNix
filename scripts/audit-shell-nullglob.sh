@@ -90,12 +90,12 @@ for f in "${files[@]}"; do
   while IFS= read -r line; do
     lineno="${line%%:*}"
     case "$line" in
-      *"$D_EXEMPT"*) continue ;;
-      *'$(find '*) continue ;;
+    *"$D_EXEMPT"*) continue ;;
+    *'$(find '*) continue ;;
     esac
     window=$(code | sed -n "${lineno},$((lineno + 2))p")
     case "$window" in
-      *'[ -e '*|*'|| continue'*) continue ;;
+    *'[ -e '* | *'|| continue'*) continue ;;
     esac
     echo "WARN [$rel] D: for-in glob without existence guard in the next 2 lines (nullglob skips silently):"
     echo "  $line"

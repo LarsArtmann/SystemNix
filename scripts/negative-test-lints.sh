@@ -69,17 +69,23 @@ run_case() {
   local mut
   for mut in "$@"; do
     case "$mut" in
-      append:*)
-        local f="${mut#append:}"; f="${dir}/${f%%:*}"; local line="${mut#append:*:}"
-        printf '%s\n' "$line" >>"$f"
-        ;;
-      sed:*)
-        local rest="${mut#sed:}"; local f="${rest%%:*}"; local expr="${rest#*:}"
-        sed -i "$expr" "$dir/$f"
-        ;;
-      *)
-        say "HARNESS BUG: unknown mutation [$mut]"; failed=$((failed + 1)); return 0
-        ;;
+    append:*)
+      local f="${mut#append:}"
+      f="${dir}/${f%%:*}"
+      local line="${mut#append:*:}"
+      printf '%s\n' "$line" >>"$f"
+      ;;
+    sed:*)
+      local rest="${mut#sed:}"
+      local f="${rest%%:*}"
+      local expr="${rest#*:}"
+      sed -i "$expr" "$dir/$f"
+      ;;
+    *)
+      say "HARNESS BUG: unknown mutation [$mut]"
+      failed=$((failed + 1))
+      return 0
+      ;;
     esac
   done
 
@@ -87,29 +93,29 @@ run_case() {
   out=$(build_check "$dir" "$check") || status=$?
 
   case "$expect" in
-    fail)
-      if [ "$status" -eq 0 ]; then
-        say "FAIL [$group/$name]: mutation PASSED the $check build — phantom-green lint (marker: $marker)"
-        failed=$((failed + 1))
-      elif ! grep -qE "$marker" <<<"$out"; then
-        say "FAIL [$group/$name]: build failed but marker '$marker' absent — caught by EVAL accident, not the lint:"
-        grep -m3 'error:' <<<"$out" | sed 's/^/    /'
-        failed=$((failed + 1))
-      else
-        say "PASS [$group/$name]: $check failed with the expected marker"
-        passed=$((passed + 1))
-      fi
-      ;;
-    pass)
-      if [ "$status" -eq 0 ]; then
-        say "PASS [$group/$name]: $check correctly stayed green"
-        passed=$((passed + 1))
-      else
-        say "FAIL [$group/$name]: $check should have stayed green but failed:"
-        grep -m3 -E 'error:|FAIL' <<<"$out" | sed 's/^/    /'
-        failed=$((failed + 1))
-      fi
-      ;;
+  fail)
+    if [ "$status" -eq 0 ]; then
+      say "FAIL [$group/$name]: mutation PASSED the $check build — phantom-green lint (marker: $marker)"
+      failed=$((failed + 1))
+    elif ! grep -qE "$marker" <<<"$out"; then
+      say "FAIL [$group/$name]: build failed but marker '$marker' absent — caught by EVAL accident, not the lint:"
+      grep -m3 'error:' <<<"$out" | sed 's/^/    /'
+      failed=$((failed + 1))
+    else
+      say "PASS [$group/$name]: $check failed with the expected marker"
+      passed=$((passed + 1))
+    fi
+    ;;
+  pass)
+    if [ "$status" -eq 0 ]; then
+      say "PASS [$group/$name]: $check correctly stayed green"
+      passed=$((passed + 1))
+    else
+      say "FAIL [$group/$name]: $check should have stayed green but failed:"
+      grep -m3 -E 'error:|FAIL' <<<"$out" | sed 's/^/    /'
+      failed=$((failed + 1))
+    fi
+    ;;
   esac
 }
 

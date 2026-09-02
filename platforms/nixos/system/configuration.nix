@@ -431,6 +431,15 @@ in
         # OAuth tokens exist for main + work (verified via /health 2026-09-02),
         # so the sync timer is live (runbook step 5).
         sync.enable = true;
+        # Gmail-attachment archiving into Paperless (uploads ride the sync
+        # hook; ledger + checksum dedup make it idempotent). OFF until
+        # go-live: create the token (`sudo -u paperless paperless-manage
+        # drf_create_token admin`), paste it into
+        # platforms/nixos/secrets/inboxclean-paperless.yaml (sudo sops),
+        # THEN flip this to true — PAPERLESS_URL without a real token is a
+        # config Rejection at every inboxclean process start (web + sync
+        # crash). Runbook: modules/nixos/services/inboxclean.nix header.
+        paperless.enable = false;
       };
 
       # PapDashboard — alert hub: Gatus ingests trigger/resolve events, the
