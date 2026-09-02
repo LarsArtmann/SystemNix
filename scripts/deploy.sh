@@ -21,7 +21,10 @@ sudo find "$DEPLOY_LOG_DIR" -type f -mtime +30 -delete 2>/dev/null || true
 # itself must never mask the original exit code.
 deploy_exit_record() {
   local code=$?
-  local summary="deploy exited code=$code at $(date '+%F %T') after ${SECONDS}s (log: $DEPLOY_LOG_FILE)"
+  # SC2155: declare and assign separately — a single `local x="$(cmd)"`
+  # masks the command's exit status with `local`'s.
+  local summary
+  summary="deploy exited code=$code at $(date '+%F %T') after ${SECONDS}s (log: $DEPLOY_LOG_FILE)"
   echo "$summary" | sudo tee -a "$DEPLOY_LOG_FILE" >/dev/null 2>&1 || true
   printf '%s\n' "$summary" | timeout 10 sudo systemd-cat -t systemnix-deploy 2>/dev/null || true
   tail -n 30 "$DEPLOY_LOG_FILE" 2>/dev/null | timeout 10 sudo systemd-cat -t systemnix-deploy-tail 2>/dev/null || true

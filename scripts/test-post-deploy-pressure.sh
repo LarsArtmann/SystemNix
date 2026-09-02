@@ -79,7 +79,19 @@ echo "=== Fixture: MemAvailable 8% (PSI calm) → WARN ==="
 systemnix_report_pressure "$psi_io_calm" "$psi_mem_calm" "$meminfo_low" "$mmstat_half" "$disksize"
 expect "warn" "avail 8%: WARN MemAvailable below floor"
 
-echo "=== Per-stage verdict text (stage-order-proof) ===
+echo "=== Per-stage verdict text (stage-order-proof) ==="
+out=$(
+  report_pass() {
+    echo "pass:$1"
+  }
+  report_warn() {
+    echo "warn:$1"
+  }
+  report_skip() {
+    echo "skip:$1"
+  }
+  systemnix_report_pressure "$psi_io_calm" "$psi_mem_storm" "$meminfo_ok" "$mmstat_full" "$disksize"
+)
 echo "$out" | grep -q "warn:.*memory PSI some avg10=77" && echo "  ok   [warn] storm PSI 77% verdict text" || {
   echo "  FAIL [warn] storm PSI 77% verdict text"
   TEST_FAILURES=$((TEST_FAILURES + 1))
