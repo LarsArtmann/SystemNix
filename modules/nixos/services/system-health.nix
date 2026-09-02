@@ -862,7 +862,16 @@ _: {
               echo "# HELP system_forgejo_mirror_sync_stalled Stall flag for the freshest pull-mirror sync: 1 when older than ${toString forgejoMirrorStalenessSeconds}s (one 8h interval + slack), 0 otherwise"
               echo "# TYPE system_forgejo_mirror_sync_stalled gauge"
               echo "system_forgejo_mirror_sync_stalled ''${FORGEJO_MIRROR_STALLED}"
-
+            fi
+            # The journal-scan pair is gated on its OWN emptiness (not
+            # LAST_SYNC_AGE): the scan-failure path (timeout 124 / exit >= 2
+            # under IO pressure) empties ONLY these two while the sqlite read
+            # succeeded — emitting "metric " with no value is INVALID
+            # exposition syntax and node_exporter then rejects the ENTIRE
+            # system_health.prom (all 38 system_* metrics dark, every deploy
+            # blocked at pre-deploy §10 — live 2026-09-02, twice). Absent
+            # lines + scrape_errors=1 is the documented fail-closed design.
+            if [ -n "$FORGEJO_MIRROR_ERRORS_30M" ]; then
               echo "# HELP system_forgejo_mirror_errors_30m Forgejo mirror-sync Error journal lines in the last 30 minutes (credential-helper aborts, allowlist rejections, fetch failures)"
               echo "# TYPE system_forgejo_mirror_errors_30m gauge"
               echo "system_forgejo_mirror_errors_30m ''${FORGEJO_MIRROR_ERRORS_30M}"

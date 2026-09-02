@@ -1599,6 +1599,25 @@ _: {
                   ];
                   alerts = discordAlert "PMA health endpoint reports not-ready — the auto-commit daemon or discovery daemon is failing. The process may be alive but non-functional. Check: journalctl -u projects-management-automation -n 50";
                 })
+                # Commit-backlog age: the ONLY check that catches a silently
+                # degraded committer (process healthy, commits not landing).
+                # The 2026-08-22..09-02 blackout ran 11 days with healthz
+                # green because nothing watched change AGE. /backlog serves
+                # {"max_age_seconds": N}; alert when the oldest uncommitted
+                # change exceeds 24h. NOTE: requires pma >= the version with
+                # the /backlog endpoint — on older binaries this check fails
+                # on [STATUS] != 200, which is itself the deploy reminder.
+                (mkHttpCheck {
+                  name = "PMA Commit Backlog";
+                  group = "Monitoring";
+                  url = "http://127.0.0.1:${toString ports.pma-health}/backlog";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY].max_age_seconds < 86400"
+                  ];
+                  alerts = discordAlert "PMA commit backlog exceeds 24h — uncommitted changes are piling up while the daemon looks healthy. Check: pma service backlog (CLI), journalctl -u projects-management-automation | grep -E 'fallback|failed'. If the endpoint 404s, the running binary predates /backlog: redeploy pma.";
+                })
               ]
               ++ lib.optionals (config.services.buildcache.enable or false) [
                 (mkHttpCheck {
@@ -2077,7 +2096,7 @@ _: {
                     "[BODY] == pat(*system_service_state_failed{service=\"postfix\"} 0*)"
                     "[BODY] == pat(*system_service_start_limit_hit{service=\"postfix\"} 0*)"
                   ];
-                  alerts = discordAlert "postfix failed or in start-limit crash-loop — outbound mail halted. Check: journalctl -u postfix -n 50, journalctl -u postfix-setup -n 30, sasl credential in /run/secrets-rendered/mail-relay-sasl (placeholder = every send defers)";
+                  alerts = discordAlert "postfix failed or in start-limit crash-loop — outbound mail halted. Check: journalctl -u postfix -n 50, journalctl -u postfix-setup -n 30, sasl credential in /run/secrets/rendered/mail-relay-sasl (placeholder value = every send defers)";
                 })
               ]
               ++ map mkWebsiteCheck ossWebsites

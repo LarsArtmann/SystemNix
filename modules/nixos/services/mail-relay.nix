@@ -33,7 +33,6 @@ _: {
       inherit (import ../../../lib/default.nix lib)
         ioTier
         onFailure
-        ports
         ;
 
       cfg = config.services.mail-relay;
