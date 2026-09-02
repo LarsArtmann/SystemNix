@@ -235,8 +235,8 @@ _(all 2026-08-22 batch items shipped: monitor cycling, named workspaces, idle DP
 - [ ] **dnsblockd: fix OTEL cardinality leak** (label bucketing)
 - [ ] **DiscordSync: fix chattr ExecStartPre upstream**; **IO-baseline test flake**
 - [ ] **PMA daemon: stop committing broken flake.lock**
-- [ ] **`golangci-lint-auto-configure`: fix incomplete vendoring** (or remove the input)
-- [ ] **hermes**: auto-create dirs on first run; own state migration; sane OLLAMA defaults; PID-file locking
+- [x] **`golangci-lint-auto-configure`: fix incomplete vendoring — DONE 2026-09-02** — root cause was NOT vendoring: the flake's `preBuild` appended `-mod=mod`, flipping the build out of the go-nix-helpers vendored-module mode so every import failed `GOPROXY=off`. Override removed upstream (`5698534`, pushed), package re-enabled in `lib/lars-packages.nix`, flake input re-locked to `6f8c1d7` (also re-encoding the stale tag-pinned lock node to the current `ref=master` URL). Builds green via SystemNix. **Source:** TODO sweep session 2026-09-02
+- [x] **hermes: auto-create dirs, state migration, OLLAMA defaults, PID locking — DONE 2026-09-02 (verified stale; no upstream code change needed)** — audited NousResearch/hermes-agent HEAD (`6064668`) vs the SystemNix pin (`63c6d9a4`): (1) dirs — `SessionDB` mkdirs its parent on open (`hermes_state.py:5462`) plus lock-path mkdirs and the new `mkdir_under_hermes_home` helper; (2) state migration — `hermes_state_schema.py` ships resumable schema migrations (existed at the pin); (3) OLLAMA — cloud default is deliberate design; local ollama needs NO key (host-gated per GHSA-76xc-57q6-vm5m, falls back to `no-key-required` in `runtime_provider.py`), so the module's dummy `OLLAMA_API_KEY=ollama` injection is a harmless leftover — candidate for removal on next hermes deploy; (4) PID locking — gateway runtime lock (`acquire_gateway_runtime_lock`/`get_running_pid`) predates the pin. **Source:** TODO sweep session 2026-09-02
 - [ ] **vendor-hash drift CI for crush-daily, PMA, erraudit**
 - [ ] **BuildFlow: pre-commit needs missing devShell binaries**
 - [ ] **picoclaw: modernc.org/sqlite v1.48.0 → v1.56.0**
