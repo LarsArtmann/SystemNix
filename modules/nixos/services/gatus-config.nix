@@ -966,6 +966,17 @@ _: {
                   alerts = discordAlert "Niri is running with NO graphical session (headless zombie) — it will block the next SDDM login with 'A niri session is already running' (2026-08-18 black-screen class). Recover: reboot, or as the user: systemctl --user stop niri.service niri-session-manager.service. Root cause: something pulled graphical-session.target into the user-manager boot transaction — the session-boot-audit eval guard should have caught it at eval time.";
                 })
                 (mkHttpCheck {
+                  name = "AW Watcher Attached";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*niri_aw_watcher_late 0*)"
+                  ];
+                  alerts = discordAlert "aw-watcher-window-wayland has NOT attached 10+ min into an active graphical session — window activity tracking is silently dead (2026-09-02 live case: panicked exit 101 ×3 into start-limit-hit with zero alerting). Check: journalctl --user -u activitywatch-watcher-aw-watcher-window-wayland -n 30; recover: systemctl --user reset-failed activitywatch-watcher-aw-watcher-window-wayland && systemctl --user start activitywatch-watcher-aw-watcher-window-wayland";
+                })
+                (mkHttpCheck {
                   name = "TLS Certificate Expiry";
                   group = "Infrastructure";
                   url = "https://auth.home.lan";

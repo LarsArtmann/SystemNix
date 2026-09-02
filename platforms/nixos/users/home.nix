@@ -474,7 +474,12 @@ in
 
       # Dark mode preference - respected by many apps and browsers
       GTK_THEME = "${theme.gtkThemeName}:dark";
-      QT_STYLE_OVERRIDE = lib.mkForce "kvantum";
+      # NO QT_STYLE_OVERRIDE here: this mkForce "kvantum" (2026-04-28) beat
+      # the qt.style = "fusion" setting from the 2026-08-18 polkit-crash fix
+      # at every layer — the session ran with an UNRESOLVABLE style override
+      # (no kvantum package was ever deployed; Qt silently fell back) while
+      # the config claimed fusion. Qt style selection belongs to the
+      # qt.platformTheme/style block below, nothing else.
 
       # Cursor theme for Wayland compositors
       # Cursor size is determined by the cursor theme's built-in sizes

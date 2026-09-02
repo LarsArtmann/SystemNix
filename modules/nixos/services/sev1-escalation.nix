@@ -155,9 +155,36 @@ _: {
             fi
           fi
           if [ "$guard_trip" = "1" ]; then
+            # Churn context (2026-09-02 re-wake loop): >=2 trips in the last
+            # hour means an alert-driven consumer re-wakes flm after every
+            # restore — the page must SAY that, not just "guard tripped".
+            g_churn=$(prom_value "$GUARD_PROM" "memory_emergency_guard_trips_last_hour")
+            g_churn="''${g_churn:-0}"
+            churn_note=""
+            if [ "$g_churn" -ge 2 ] 2>/dev/null; then
+              churn_note=" TRIP CHURN: ''${g_churn} trips in the last hour — a consumer is re-waking FastFlowLM after every restore; the daily restore budget will stop this."
+            fi
             titles+=("MEMORY EMERGENCY GUARD TRIPPED")
-            details+=("The machine entered a pre-freeze zone; FastFlowLM + socket were force-stopped (this page clears automatically when the guard restores the sockets). journalctl -u memory-emergency-guard -n 30")
+            details+=("The machine entered a pre-freeze zone; FastFlowLM + socket were force-stopped (this page clears automatically when the guard restores the sockets).''${churn_note} journalctl -u memory-emergency-guard -n 30")
             severities+=("page")
+          fi
+
+          # --- Restore capped (2026-09-02 anti-churn cap): the daily restore
+          #     budget is spent and the socket is still DOWN. The trip page
+          #     covers the acute phase via its own condition; after it
+          #     clears, flm would silently stay unusable — this notify-tier
+          #     condition carries the manual restart path instead. The
+          #     machine is not in danger at this point (the budget is only
+          #     spent after a day of emergencies); it is a degraded-service
+          #     heads-up, not a drop-everything page.
+          if [ "$BOOT_GRACE" = "0" ] && [ "$guard_enabled" = "true" ] && [ -f "$GUARD_PROM" ]; then
+            v=$(prom_value "$GUARD_PROM" "memory_emergency_guard_restore_capped")
+            g_sock=$(prom_value "$GUARD_PROM" "memory_emergency_guard_sacrifice_socket_active")
+            if [ "$v" = "1" ] && [ "$g_sock" = "0" ]; then
+              titles+=("FLM RESTORE CAPPED")
+              details+=("FastFlowLM was sacrificed and the daily restore budget is spent — the socket stays DOWN until a human restarts it (memory-guard anti-churn cap). Restart when memory is healthy: systemctl start fastflowlm.socket")
+              severities+=("notify")
+            fi
           fi
 
           # --- Sustained memory stall (2026-08-31 16:34 freeze class: the
@@ -270,6 +297,38 @@ _: {
             severity=page
           fi
 
+          # Page-duration tracking (alert-fatigue visibility): the 2026-09-02
+          # incident's core complaint was page DURATION (fullscreen for the
+          # metric's whole 30-min window) and nothing measured it. While a
+          # page-tier alert is active, expose the running seconds; on clear,
+          # freeze the last duration for dashboards.
+          PAGE_START_FILE="${stateDir}/page-start-epoch"
+          page_last_duration=0
+          if [ -f "${stateDir}/page-last-duration" ]; then
+            page_last_duration=$(cat "${stateDir}/page-last-duration" 2>/dev/null || echo 0)
+          fi
+          page_last_duration="''${page_last_duration:-0}"
+          page_duration_active=0
+          if [ "$page_active" = "1" ]; then
+            if [ ! -f "$PAGE_START_FILE" ]; then
+              echo "$now" > "$PAGE_START_FILE"
+            fi
+            pstart=$(cat "$PAGE_START_FILE" 2>/dev/null || echo "$now")
+            pstart="''${pstart:-$now}"
+            page_duration_active=$(( now - pstart ))
+          else
+            if [ -f "$PAGE_START_FILE" ]; then
+              pstart=$(cat "$PAGE_START_FILE" 2>/dev/null || echo "$now")
+              pstart="''${pstart:-$now}"
+              page_last_duration=$(( now - pstart ))
+              if [ "$page_last_duration" -lt 0 ]; then
+                page_last_duration=0
+              fi
+              echo "$page_last_duration" > "${stateDir}/page-last-duration"
+              rm -f "$PAGE_START_FILE"
+            fi
+          fi
+
           if [ "$alerts_active" -gt 0 ]; then
             title=$(printf '%s; ' "''${titles[@]}" | sed 's/; $//')
             detail=$(printf '%s | ' "''${details[@]}" | sed 's/ | $//')
@@ -299,8 +358,28 @@ _: {
               if [ "$severity" = "notify" ]; then
                 notify_urgency=normal
                 notify_expiry=30000
+                # PER-KEY cooldown (2026-09-02): the old single
+                # last-notify-epoch let a ZRAM SWAP CRITICAL notify silently
+                # suppress a later SYSTEM MONITORING STALE notify (and vice
+                # versa) within the window — different conditions, unrelated
+                # notifications. Each alert-set key gets its own epoch file;
+                # files older than 2x the cooldown are pruned so the state
+                # dir stays bounded.
+                nkey=$(printf '%s' "$key" | md5sum | cut -d' ' -f1)
+                notify_epoch_file="${stateDir}/last-notify-''${nkey}"
+                for old in "${stateDir}"/last-notify-*; do
+                  [ -f "$old" ] || continue
+                  if [ "$old" != "$notify_epoch_file" ]; then
+                    old_ts=$(stat -c %Y "$old" 2>/dev/null || echo "$now")
+                    if [ $(( now - old_ts )) -gt $(( 2 * ${toString cfg.notifyCooldownSeconds} )) ]; then
+                      rm -f "$old"
+                    fi
+                  fi
+                done
                 last_notify=0
-                [ -f "${stateDir}/last-notify-epoch" ] && last_notify=$(cat "${stateDir}/last-notify-epoch" 2>/dev/null || echo 0)
+                if [ -f "$notify_epoch_file" ]; then
+                  last_notify=$(cat "$notify_epoch_file" 2>/dev/null || echo 0)
+                fi
                 last_notify="''${last_notify:-0}"
                 if [ $(( now - last_notify )) -lt ${toString cfg.notifyCooldownSeconds} ]; then
                   send_notification=0
@@ -308,7 +387,9 @@ _: {
                 fi
               fi
               if [ "$send_notification" = "1" ]; then
-                [ "$severity" = "notify" ] && echo "$now" > "${stateDir}/last-notify-epoch"
+                if [ "$severity" = "notify" ]; then
+                  echo "$now" > "$notify_epoch_file"
+                fi
                 # Best-effort DMS desktop notification via the machined user
                 # bus proxy (AGENTS: root -> user-manager needs --machine).
                 systemd-run --machine="$DESKTOP_USER@.host" --user --collect \
@@ -342,6 +423,12 @@ _: {
             echo "# HELP sev1_bridge_page_alerts_active Number of active PAGE-tier SEV1 conditions (fullscreen overlay eligible)"
             echo "# TYPE sev1_bridge_page_alerts_active gauge"
             echo "sev1_bridge_page_alerts_active ''${page_active}"
+            echo "# HELP sev1_bridge_page_active_seconds Seconds the current page-tier alert has been active (0 when none) — alert-fatigue visibility"
+            echo "# TYPE sev1_bridge_page_active_seconds gauge"
+            echo "sev1_bridge_page_active_seconds ''${page_duration_active}"
+            echo "# HELP sev1_bridge_page_last_duration_seconds Duration in seconds of the most recently cleared page-tier alert"
+            echo "# TYPE sev1_bridge_page_last_duration_seconds gauge"
+            echo "sev1_bridge_page_last_duration_seconds ''${page_last_duration}"
             echo "# HELP sev1_bridge_runs_total Total bridge runs since first deploy"
             echo "# TYPE sev1_bridge_runs_total counter"
             echo "sev1_bridge_runs_total ''${runs}"

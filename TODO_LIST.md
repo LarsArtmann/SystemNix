@@ -94,12 +94,12 @@
 
 ## Priority 2.5: Black-screen / Desktop follow-ups
 
-- [ ] **VM test: linger + SDDM login → exactly one niri, none pre-login** — runtime half the eval guard cannot see. **Source:** 08-18 sessions
-- [ ] **Polkit dialogs render check (adwaita/fusion switch)** — the one runtime check adwaita needs; never eyeballed post-deploy. **Source:** 08-18 15:00 session
-- [ ] **aw-watcher gate monitoring preference (user)** — Gatus alert if the watcher hasn't attached within N min of `niri_graphical_session 1`?
-- [ ] **emeet-pixyd: rate-limit the absent-device probe WARN** (upstream)
-- [ ] **niri-session-manager config hardening (interim while upstream is pending)** — add `gcr-prompter` + audit transient app-ids into `[skip_apps]`; eval-time/CI guard that every terminal app-id appears in `single_instance_apps`; `restartTriggers` on the manager's config.toml; audit emacs for the same single-process-multi-window class. **Source:** `2026-08-31_15-11_*` §f.11-16
-- [ ] **smart-audio: bump RestartSec 5s→30s + widen StartLimitBurst window** (in-process retry exists now; exhausted-120s-wait politeness). **Source:** `2026-08-31_18-44_*` §f.17/47
+- [x] **VM test: linger + SDDM login → exactly one niri, none pre-login** — done 2026-09-02: `tests/test-niri-session.nix` boots linger + SDDM + nixpkgs niri + a gate-canary user unit in the exact aw-watcher shape, asserts NO niri pre-login (OCR-driven greeter), exactly one after real login
+- [x] **Polkit dialogs render check (adwaita/fusion switch)** — done 2026-09-02: found + removed a stale `QT_STYLE_OVERRIDE = mkForce "kvantum"` (2026-04-28) that silently beat the fusion switch at every layer with an UNRESOLVABLE style (kvantum never deployed); post-deploy-check now asserts every deployed Qt style env var RESOLVES + no QQC2 `module ... is not installed` aborts in 24h
+- [x] **aw-watcher gate monitoring preference (user)** — done 2026-09-02 (N=10 min): `niri_aw_watcher_attached` + `niri_aw_watcher_late` metrics (niri-health collector) + Gatus "AW Watcher Attached" — validated live: the watcher was in start-limit-hit (exit 101 ×3) at implementation time with zero alerting
+- [x] **emeet-pixyd: rate-limit the absent-device probe WARN** — done 2026-09-02 in the upstream repo (`ratelimit.go`, once per path per hour, unit + integration tests green); PENDING: push upstream + `nix flake lock --update-input emeet-pixyd`
+- [x] **niri-session-manager config hardening (interim while upstream is pending)** — done 2026-09-02: `gcr-prompter` + `xdg-desktop-portal-gtk` into `[skip_apps]`; app lists extracted to `platforms/nixos/users/niri-session-manager-apps.nix` (single source of truth) with `mkInvariantViolations` asserted at HM eval time AND by `tests/test-niri-session-config.nix` (incl. negative cases); emacs audited (NOT installed — dormant Mod+Shift+E keybind only; "emacs" pinned in single_instance_apps preemptively for the daemon class); restartTriggers DELIBERATELY not wired (upstream restore-on-every-start bug = mid-session restart replays the spawn storm) — replaced by the `niri_session_manager_config_stale` tripwire metric, revisit when the upstream restore-once gate lands. **Source:** `2026-08-31_15-11_*` §f.11-16
+- [x] **smart-audio: bump RestartSec 5s→30s + widen StartLimitBurst window** — done 2026-09-02: RestartSec 30s + StartLimitBurst 5/600s (was 5/120s). **Source:** `2026-08-31_18-44_*` §f.17/47
 
 ## Priority 2.6: Pixel 6 Phone Recovery follow-ups
 

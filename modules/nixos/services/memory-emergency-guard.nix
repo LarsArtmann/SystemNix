@@ -103,6 +103,7 @@ _: {
           TMP="''${OUT}.tmp"
           COUNT_FILE="${stateDir}/tripped.count"
           LAST_TRIP_FILE="${stateDir}/last-trip"
+          RESTORED_COUNT_FILE="${stateDir}/restored.count"
           SOCKET_UNITS="${lib.concatStringsSep " " cfg.socketUnits}"
 
           # Kernel data sources, env-overridable for the VM regression test
@@ -162,6 +163,27 @@ _: {
           fi
           tripped_total="''${tripped_total:-0}"
 
+          # Per-zone trip counters + trip history. trips_last_hour is the
+          # CHURN signal: trip -> restore -> an alert-driven consumer re-wakes
+          # flm (21.6 GB cold load) -> re-trip is a different failure class
+          # from a single bounded trip (live 2026-09-02: the re-wake loop
+          # re-filled memory within ~40 min per cycle).
+          ZONE_FILE="${stateDir}/zone-counts"
+          HISTORY_FILE="${stateDir}/trip-history"
+          zone1=0
+          zone2=0
+          zone3=0
+          zone4=0
+          zone5=0
+          if [ -f "$ZONE_FILE" ]; then
+            read -r zone1 zone2 zone3 zone4 zone5 < "$ZONE_FILE" 2>/dev/null || true
+          fi
+          zone1="''${zone1:-0}"
+          zone2="''${zone2:-0}"
+          zone3="''${zone3:-0}"
+          zone4="''${zone4:-0}"
+          zone5="''${zone5:-0}"
+
           # Episodic-stall leaky bucket (Zone 5): CALIBRATED AGAINST THE REAL
           # 2026-08-31 boot -1 telemetry — node_psi_memory_some_avg60 never
           # exceeded 3.93% in the whole crashed boot (SigNoz, 5-min samples;
@@ -204,29 +226,35 @@ _: {
           #   every few minutes for 2 h, avg60 damped to single digits,
           #   terminal collapse in minutes).
           trip=0
+          zone=0
           reason=""
           if awk -v p="$avail_pct" 'BEGIN { exit !(p < ${toString cfg.absoluteMemAvailableThresholdPercent}) }'; then
             trip=1
+            zone=1
             reason="MemAvailable=''${avail_pct}% below absolute floor"
           elif
             awk -v p="$avail_pct" 'BEGIN { exit !(p < ${toString cfg.memAvailableThresholdPercent}) }' &&
               awk -v z="$zram_pct" 'BEGIN { exit !(z >= ${toString cfg.zramFillThresholdPercent}) }'
           then
             trip=1
+            zone=2
             reason="MemAvailable=''${avail_pct}% AND zram=''${zram_pct}% (shmem-unevictable trap: model pages cannot evict with full zram)"
           elif
             awk -v p="$psi_some_avg10" 'BEGIN { exit !(p >= ${toString cfg.psiSomeThresholdPercent}) }' &&
               awk -v z="$zram_pct" 'BEGIN { exit !(z >= ${toString cfg.zramPsiFillThresholdPercent}) }'
           then
             trip=1
+            zone=3
             reason="PSI some avg10=''${psi_some_avg10}% AND zram=''${zram_pct}% (refault-thrash freeze mode — MemAvailable stays high while the kernel starves on zram decompression)"
           elif
             awk -v p="$psi_some_avg60" 'BEGIN { exit !(p >= ${toString cfg.psiSomeAvg60ThresholdPercent}) }'
           then
             trip=1
+            zone=4
             reason="PSI some avg60=''${psi_some_avg60}% sustained stall with zram=''${zram_pct}% and MemAvailable=''${avail_pct}% (slow-burn refault/writeback stall — the zram-gated zones never fire)"
           elif [ "$psi_episodes" -ge ${toString cfg.psiEpisodeTripCount} ]; then
             trip=1
+            zone=5
             reason="PSI episodic stall: ''${psi_episodes} leaky-bucket episodes of avg10 >= ${toString cfg.psiSomeThresholdPercent}% (avg10=''${psi_some_avg10}%, avg60=''${psi_some_avg60}% stayed LOW — the calibrated 2026-08-31 16:34 signature: episodic spikes for ~2 h, then minutes-fast collapse the averages never saw)"
           fi
 
@@ -258,6 +286,35 @@ _: {
             done
           fi
 
+          # Daily restore budget (default 3): every restore re-arms the flm
+          # cold load, and 2026-09-02 measured the re-wake loop (trip ->
+          # restore -> enricher/PMA reconnect -> 21.6 GB cold load -> re-trip
+          # within ~40 min). Past the cap the socket STAYS DOWN and the
+          # restore_capped metric tells the bridge to hand the restart to a
+          # human. 0 disables the cap (unlimited self-healing).
+          restored_total=0
+          if [ -f "$RESTORED_COUNT_FILE" ]; then
+            restored_total=$(cat "$RESTORED_COUNT_FILE" 2>/dev/null) || restored_total=0
+          fi
+          restored_total="''${restored_total:-0}"
+          today=$(date +%Y%m%d)
+          RESTORE_TODAY_FILE="${stateDir}/restores-''${today}"
+          restores_today=0
+          if [ -f "$RESTORE_TODAY_FILE" ]; then
+            restores_today=$(cat "$RESTORE_TODAY_FILE" 2>/dev/null) || restores_today=0
+          fi
+          restores_today="''${restores_today:-0}"
+          restores_today_plus=$((restores_today + 1))
+          restore_capped=0
+          if
+            [ "$sacrifice_socket_active" = "0" ] &&
+              [ -n "$SOCKET_UNITS" ] &&
+              [ ${toString cfg.maxRestoresPerDay} -gt 0 ] &&
+              [ "$restores_today" -ge ${toString cfg.maxRestoresPerDay} ]
+          then
+            restore_capped=1
+          fi
+
           if [ "$trip" = "1" ]; then
             # Kill the ACTIVATION PATH FIRST, outside the cooldown: stopping
             # only the backend left the socket accepting, and every trip's
@@ -280,7 +337,16 @@ _: {
               echo "$now" > "$LAST_TRIP_FILE"
               tripped_total=$((tripped_total + 1))
               echo "$tripped_total" > "$COUNT_FILE"
-              echo "MEMORY EMERGENCY action taken: sockets + sacrifice units stopped (trip #''${tripped_total})" >&2
+              case "$zone" in
+                1) zone1=$((zone1 + 1)) ;;
+                2) zone2=$((zone2 + 1)) ;;
+                3) zone3=$((zone3 + 1)) ;;
+                4) zone4=$((zone4 + 1)) ;;
+                5) zone5=$((zone5 + 1)) ;;
+              esac
+              echo "$zone1 $zone2 $zone3 $zone4 $zone5" > "$ZONE_FILE"
+              echo "$now" >> "$HISTORY_FILE"
+              echo "MEMORY EMERGENCY action taken: sockets + sacrifice units stopped (trip #''${tripped_total}, zone ''${zone})" >&2
             fi
           elif
             [ "$sacrifice_socket_active" = "0" ] &&
@@ -303,12 +369,35 @@ _: {
             # re-deteriorates memory re-trips within one 30 s tick.
             # Bring the socket back so flm
             # cold-loads on the next real client connection, and clear any
-            # start-limit the repeated stops may have left behind.
-            systemctl reset-failed ${
-              lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
-            } 2>/dev/null || true
-            systemctl start $SOCKET_UNITS 2>/dev/null || true
-            echo "MEMORY EMERGENCY cleared (MemAvailable=''${avail_pct}%, zram=''${zram_pct}%, PSI some avg10=''${psi_some_avg10}%, PSI some avg60=''${psi_some_avg60}%, ''${last_trip_age}s since last trip) — sacrifice sockets restored" >&2
+            # start-limit the repeated stops may have left behind —
+            # UNLESS the daily restore budget is spent, in which case the
+            # socket stays down and restore_capped hands the restart to a
+            # human (a capped state with healthy memory must never look
+            # like a silently working self-heal loop).
+            if [ "$restore_capped" = "1" ]; then
+              echo "MEMORY EMERGENCY restore capped (''${restores_today} restores today >= ${toString cfg.maxRestoresPerDay}) — FastFlowLM socket stays DOWN. Manual restart once memory is healthy: systemctl start $SOCKET_UNITS" >&2
+            else
+              systemctl reset-failed ${
+                lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
+              } 2>/dev/null || true
+              systemctl start $SOCKET_UNITS 2>/dev/null || true
+              restored_total=$((restored_total + 1))
+              echo "$restored_total" > "$RESTORED_COUNT_FILE"
+              echo "$((restores_today + 1))" > "$RESTORE_TODAY_FILE"
+              echo "MEMORY EMERGENCY cleared (MemAvailable=''${avail_pct}%, zram=''${zram_pct}%, PSI some avg10=''${psi_some_avg10}%, PSI some avg60=''${psi_some_avg60}%, ''${last_trip_age}s since last trip, restore #''${restored_total} today: ''${restores_today_plus}) — sacrifice sockets restored" >&2
+            fi
+          fi
+
+          # trips_last_hour: the churn gauge the bridge appends to its trip
+          # page (>=2 = a consumer is re-waking flm after every restore).
+          # Prune the history file to the window while we are here.
+          trips_last_hour=0
+          if [ -f "$HISTORY_FILE" ]; then
+            cutoff=$((now - 3600))
+            trips_last_hour=$(awk -v c="$cutoff" 'BEGIN { n = 0 } $1 >= c { n++ } END { print n }' "$HISTORY_FILE")
+            trips_last_hour="''${trips_last_hour:-0}"
+            awk -v c="$cutoff" '$1 >= c' "$HISTORY_FILE" > "''${HISTORY_FILE}.tmp" || true
+            mv "''${HISTORY_FILE}.tmp" "$HISTORY_FILE" 2>/dev/null || true
           fi
 
           # last_trip_recent: 1 if a trip happened within the last 30 min —
@@ -351,6 +440,38 @@ _: {
             echo "# HELP memory_emergency_guard_last_trip_recent 1 if an emergency stop happened within the last 30 min, 0 otherwise"
             echo "# TYPE memory_emergency_guard_last_trip_recent gauge"
             echo "memory_emergency_guard_last_trip_recent ''${last_trip_recent}"
+
+            echo "# HELP memory_emergency_guard_restored_total Total sacrifice-socket restores performed since first deploy"
+            echo "# TYPE memory_emergency_guard_restored_total counter"
+            echo "memory_emergency_guard_restored_total ''${restored_total}"
+
+            echo "# HELP memory_emergency_guard_trips_last_hour Emergency stops in the last hour — >=2 is the CHURN class (trip -> restore -> consumer re-wakes flm -> re-trip)"
+            echo "# TYPE memory_emergency_guard_trips_last_hour gauge"
+            echo "memory_emergency_guard_trips_last_hour ''${trips_last_hour}"
+
+            echo "# HELP memory_emergency_guard_restore_capped 1 when the socket is down AND the daily restore budget is spent — restart requires manual action (systemctl start <socket>)"
+            echo "# TYPE memory_emergency_guard_restore_capped gauge"
+            echo "memory_emergency_guard_restore_capped ''${restore_capped}"
+
+            echo "# HELP memory_emergency_guard_zone1_trips_total Trips from Zone 1 (MemAvailable below absolute floor)"
+            echo "# TYPE memory_emergency_guard_zone1_trips_total counter"
+            echo "memory_emergency_guard_zone1_trips_total ''${zone1}"
+
+            echo "# HELP memory_emergency_guard_zone2_trips_total Trips from Zone 2 (low MemAvailable AND full zram — the shmem-unevictable trap)"
+            echo "# TYPE memory_emergency_guard_zone2_trips_total counter"
+            echo "memory_emergency_guard_zone2_trips_total ''${zone2}"
+
+            echo "# HELP memory_emergency_guard_zone3_trips_total Trips from Zone 3 (PSI thrash AND mostly-full zram)"
+            echo "# TYPE memory_emergency_guard_zone3_trips_total counter"
+            echo "memory_emergency_guard_zone3_trips_total ''${zone3}"
+
+            echo "# HELP memory_emergency_guard_zone4_trips_total Trips from Zone 4 (sustained PSI avg60 stall)"
+            echo "# TYPE memory_emergency_guard_zone4_trips_total counter"
+            echo "memory_emergency_guard_zone4_trips_total ''${zone4}"
+
+            echo "# HELP memory_emergency_guard_zone5_trips_total Trips from Zone 5 (episodic avg10 leaky bucket — the calibrated 2026-08-31 signature)"
+            echo "# TYPE memory_emergency_guard_zone5_trips_total counter"
+            echo "memory_emergency_guard_zone5_trips_total ''${zone5}"
           } > "$TMP"
           mv "$TMP" "$OUT"
         '';
@@ -412,6 +533,12 @@ _: {
           type = lib.types.int;
           default = 600;
           description = "Minimum seconds between two emergency stop actions (prevents flapping while pressure drains)";
+        };
+
+        maxRestoresPerDay = lib.mkOption {
+          type = lib.types.int;
+          default = 3;
+          description = "Daily budget of sacrifice-socket restores. Every restore re-arms the 21.6 GB flm cold load, and the 2026-09-02 re-wake loop (trip -> restore -> enricher/PMA reconnect -> re-trip within ~40 min) turned unlimited self-healing into an I/O churn engine. Past the cap the socket STAYS DOWN (restore_capped metric = 1) and restart becomes a manual human action; 0 disables the cap";
         };
 
         sacrificeUnits = lib.mkOption {

@@ -274,6 +274,44 @@ _: {
                             crash_loop=1
                           fi
 
+                          # AW watcher attach monitoring: the
+                          # aw-watcher-window-wayland gate wrapper waits for the
+                          # compositor socket indefinitely (2026-08-18 fix), but
+                          # nothing verified the watcher actually ATTACHED once a
+                          # graphical session exists — it can panic into
+                          # start-limit-hit and stay dead for the whole session
+                          # with zero alerting (live 2026-09-02: exit 101 ×3 →
+                          # start-limit-hit within 1s). "Late" = graphical
+                          # session active for >= 10 min while the watcher
+                          # process is absent. NOTE: pgrep -x matches the
+                          # truncated 15-char comm ("aw-watcher-wind") — the
+                          # full name never matches (pgrep limitation; the
+                          # utilization watcher runs as python, no collision).
+                          AW_STATE_FILE="$STATE_DIR/aw_graphical_since"
+                          aw_attached=0
+                          if pgrep -x aw-watcher-wind >/dev/null 2>&1; then
+                            aw_attached=1
+                          fi
+                          aw_watcher_late=0
+                          if [ "$graphical_session" -eq 1 ]; then
+                            if [ "$aw_attached" -eq 1 ]; then
+                              rm -f "$AW_STATE_FILE" 2>/dev/null || true
+                            else
+                              now_epoch=$(date +%s)
+                              aw_since=$(cat "$AW_STATE_FILE" 2>/dev/null || echo "")
+                              if [ -z "$aw_since" ]; then
+                                echo "$now_epoch" > "$AW_STATE_FILE" 2>/dev/null || true
+                              else
+                                aw_age=$((now_epoch - aw_since))
+                                if [ "$aw_age" -ge 600 ]; then
+                                  aw_watcher_late=1
+                                fi
+                              fi
+                            fi
+                          else
+                            rm -f "$AW_STATE_FILE" 2>/dev/null || true
+                          fi
+
                           # Config-staleness tripwire: the manager reads config.toml
                           # ONCE at process start (upstream v0.3.0), so a mid-session
                           # config deploy applies only at the NEXT manager start
@@ -305,6 +343,8 @@ _: {
                             echo "niri_crash_loop $crash_loop"
                             echo "niri_restarts_10m $restarts"
                             echo "niri_drm_errors_30s $drm_errors"
+                            echo "niri_aw_watcher_attached $aw_attached"
+                            echo "niri_aw_watcher_late $aw_watcher_late"
                             echo "niri_session_manager_config_stale $mgr_config_stale"
                           } > "$TMP"
 

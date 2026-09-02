@@ -99,6 +99,10 @@ in
 
       services.memory-emergency-guard.enable = true;
 
+      # Small restore budget so the anti-churn cap scenario can exhaust it
+      # within the test run (production default is 3).
+      services.memory-emergency-guard.maxRestoresPerDay = 2;
+
       # Dummy stand-ins with the real unit names: backend, per-connection
       # template, and the activation socket. sleep(1) processes so systemctl
       # stop is observable.
@@ -222,7 +226,11 @@ in
       def reset_state():
           machine.succeed("rm -f /var/lib/memory-emergency-guard/last-trip"
                           " /var/lib/memory-emergency-guard/tripped.count"
-                          " /var/lib/memory-emergency-guard/psi-episodes")
+                          " /var/lib/memory-emergency-guard/psi-episodes"
+                          " /var/lib/memory-emergency-guard/zone-counts"
+                          " /var/lib/memory-emergency-guard/trip-history"
+                          " /var/lib/memory-emergency-guard/restored.count")
+          machine.succeed("rm -f /var/lib/memory-emergency-guard/restores-*")
           # Bring every sacrifice unit back up (the restore path only
           # restarts the socket; activation would re-spawn the backend).
           # Order matters: the socket FIRST — systemd refuses a socket whose
@@ -339,6 +347,40 @@ in
           "for hours at 53% avail / 0.26% PSI / 97% zram)"
       )
       machine.succeed("systemctl is-active --quiet fastflowlm.socket")
+      prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
+      assert "memory_emergency_guard_restored_total 2" in prom, (
+          "scenarios 6 + 6a each restored once (the daily budget in this VM is 2)"
+      )
+      assert "memory_emergency_guard_zone2_trips_total 2" in prom, (
+          "scenario 3 and 6a each tripped Zone 2 once — per-zone counters "
+          "must attribute trips without journal digging"
+      )
+      assert "memory_emergency_guard_trips_last_hour " in prom
+
+      # --- 6b-cap. Daily restore budget exhausted (maxRestoresPerDay = 2 in
+      #      this VM): the third restore of the day is REFUSED — the socket
+      #      stays down and restore_capped hands the restart to a human.
+      #      The 2026-09-02 re-wake loop (trip -> restore -> consumer
+      #      reconnect -> 21.6 GB cold load -> re-trip within ~40 min) made
+      #      unlimited self-healing an I/O churn engine.
+      machine.succeed(
+          "echo $(( $(date +%s) - 700 )) > /var/lib/memory-emergency-guard/last-trip"
+      )
+      out = run_guard("zone2")
+      assert_all_down()
+      machine.succeed(
+          "echo $(( $(date +%s) - 700 )) > /var/lib/memory-emergency-guard/last-trip"
+      )
+      machine.succeed("${writeFakes "zramfull" restoreZramFull}")
+      out = run_guard("zramfull")
+      assert "restore capped" in out, (
+          "the third restore of the day must be refused (anti-churn cap) — "
+          "socket stays down, restore_capped 1, human restart required"
+      )
+      machine.fail("systemctl is-active --quiet fastflowlm.socket")
+      prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
+      assert "memory_emergency_guard_restore_capped 1" in prom
+      assert "memory_emergency_guard_zone2_trips_total 3" in prom
 
       # --- 6b. Zone 5 (episodic avg10, avg60 LOW) — the CALIBRATED 16:34
       #      signature: the real boot's avg60 peaked at 3.93% (SigNoz); only

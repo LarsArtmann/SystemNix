@@ -1128,6 +1128,55 @@ else
   report_warn "Desktop — ${_qs_errors} error line(s) in quickshell journal (last 1h)"
 fi
 
+# Desktop: polkit dialog render sanity (2026-08-18 adwaita/fusion switch was
+# never eyeballed post-deploy — an unresolvable QT_STYLE_OVERRIDE=kvantum
+# silently beat the fusion setting from 2026-04-28 until 2026-09-02 because
+# nothing ever checked the DEPLOYED env). The polkit agent host is the DMS
+# quickshell instance (QuickAuthDialog.qml, QQC2). Checks the historical
+# crash class without needing a GUI: every Qt style env var the deployed HM
+# sets must RESOLVE, and the QQC2 "module ... is not installed" abort
+# signature (the 49-restart polkit crash-loop) must be absent from the
+# journal.
+_desktop_user=$(id -un)
+_hm_vars="/etc/profiles/per-user/${_desktop_user}/etc/profile.d/hm-session-vars.sh"
+_qt_plugins="/etc/profiles/per-user/${_desktop_user}/lib/qt-6/plugins"
+_qt_qml="/etc/profiles/per-user/${_desktop_user}/lib/qt-6/qml"
+_polkit_problems=""
+if [ -f "$_hm_vars" ]; then
+  # 1. QT_STYLE_OVERRIDE must be empty or name a real QStyle: fusion/windows
+  #    are qtbase built-ins; anything else needs a styles/ plugin deployed.
+  _style=$(sed -n 's/^export QT_STYLE_OVERRIDE="\([^"]*\)".*/\1/p' "$_hm_vars")
+  if [ -n "$_style" ] \
+    && [ "$_style" != "fusion" ] && [ "$_style" != "windows" ] && [ "$_style" != "base" ] \
+    && ! ls "${_qt_plugins}"/styles/lib*"${_style}"*.so >/dev/null 2>&1; then
+    _polkit_problems="${_polkit_problems} QT_STYLE_OVERRIDE='${_style}' does not resolve (no styles plugin deployed);"
+  fi
+  # 2. QT_QUICK_CONTROLS_STYLE, if set, must have its QQC2 style module
+  #    (Basic/Fusion/Imagine/Material/Universal ship with qtdeclarative).
+  _controls=$(sed -n 's/^export QT_QUICK_CONTROLS_STYLE="\([^"]*\)".*/\1/p' "$_hm_vars")
+  if [ -n "$_controls" ]; then
+    case "$_controls" in
+      Basic | Fusion | Imagine | Material | Universal) ;;
+      *)
+        if [ ! -d "${_qt_qml}/QtQuick/Controls.2/${_controls}" ]; then
+          _polkit_problems="${_polkit_problems} QT_QUICK_CONTROLS_STYLE='${_controls}' has no QML module;"
+        fi
+        ;;
+    esac
+  fi
+else
+  _polkit_problems=" hm-session-vars.sh not found;"
+fi
+_qqc_aborts=$(journalctl --user --since "-24 hours" --grep 'is not installed' --no-pager --output cat 2>/dev/null | grep -c 'module' || true)
+if [ "${_qqc_aborts:-0}" -gt 0 ]; then
+  _polkit_problems="${_polkit_problems} ${_qqc_aborts} QQC2 'module ... is not installed' abort(s) in last 24h (the 2026-08-18 polkit crash-loop class);"
+fi
+if [ -z "$_polkit_problems" ]; then
+  report_pass "Desktop — polkit dialog render sanity (Qt style env resolvable, no QQC2 aborts)"
+else
+  report_fail "Desktop — polkit render:${_polkit_problems} auth dialogs may fail to open (check qt.platformTheme/style in home.nix vs deployed Qt plugins)"
+fi
+
 # System: I/O pressure (PSI) — catches the exact condition that caused
 # Helium 3 FPS + WDT crashes during nix build storms on QLC NAND.
 # avg10 > 80% means I/O is saturated for the last 10 seconds.
