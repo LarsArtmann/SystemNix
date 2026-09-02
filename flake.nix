@@ -681,6 +681,34 @@
                 sqlc
                 systemd-timer-monitor
                 ;
+
+              # Pre-deploy batch build (Pareto T17/F65): ONE command
+              # surfaces every stale vendorHash / FOD breakage in the
+              # LarsArtmann Go set BEFORE `nix run .#deploy` pays for a
+              # full toplevel build mid-switch — the domino-deploy class
+              # (2026-08-27: four sequential switch attempts, each dying
+              # at the next FOD; --keep-going enumerates, this PREVENTS).
+              # NOT included: bank-sync (upstream flake still pins a
+              # stale vendorHash; the module-level override unblocks
+              # deploys — drop the exclusion when the DROP-ME override in
+              # bank-sync.nix goes), monitor365 (its wireguard-collector
+              # git dep is a PRIVATE crate that 404s on anonymous fetch —
+              # the documented reason the service is disabled since
+              # 2026-08-12; a permanent red, not drift — first quick-go
+              # run proved exactly this), cv (built with its real
+              # module-level package by checks.x86_64-linux.cv), hermes
+              # (Python/uv2nix, not a vendorHash class).
+              quick-go = pkgs.symlinkJoin {
+                name = "quick-go-batch";
+                paths =
+                  (builtins.attrValues (mkLarsPackages system))
+                  ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
+                    pkgs.dnsblockd
+                    pkgs.emeet-pixyd
+                    pkgs.file-and-image-renamer
+                    pkgs.crush-daily
+                  ];
+              };
             }
             // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
               inherit (pkgs)
