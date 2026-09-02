@@ -58,7 +58,21 @@
 
       config = lib.mkIf cfg.enable {
         services.cv-server = {
-          package = lib.mkDefault inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          # TEMPORARY (2026-09-02): upstream's vendorHash pins went stale
+          # AGAIN — rev 7b2819a pinned BeI+…, its tree actually builds
+          # VOXn…; the relock to d2f2752b carries mybz… ("tree-proven" in
+          # 2aa17b68 — proven against the DIRTY WORKTREE, not the committed
+          # tree; the classic CV source-only-churn class) while the committed
+          # tree builds 9sLO…. Every commit's full `nix flake check` and
+          # every deploy fails on the go-modules FOD until upstream
+          # (LarsArtmann/CV) pushes a correct pin. Overridden with the
+          # measured hash for d2f2752b to unblock; DROP this override the
+          # moment upstream refreshes its vendorHash past d2f2752b.
+          package = lib.mkDefault (
+            inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs (_old: {
+              vendorHash = "sha256-9sLOrucubfamNchRkGrr2DyfY3gEl4fI5Dkqzt9wBsg=";
+            })
+          );
           port = lib.mkDefault ports.cv;
           environmentFile = lib.mkDefault config.sops.templates."cv-env".path;
 
