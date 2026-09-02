@@ -634,15 +634,18 @@ in
       disk-growth-check = {
         description = "Check /data disk growth trend and alert if >5G/day";
         inherit onFailure;
-        # ReadWritePaths namespace setup hard-fails (status=226/NAMESPACE)
-        # when /var/lib/disk-growth does not exist — create it before the
-        # mount namespace is assembled.
-        preStart = "mkdir -p /var/lib/disk-growth";
+        # StateDirectory, NOT ReadWritePaths + preStart mkdir: systemd builds
+        # the mount namespace BEFORE any ExecStartPre, so a ReadWritePaths
+        # entry pointing at a missing dir aborts with status=226/NAMESPACE
+        # and the in-unit mkdir can never create its own namespace path
+        # (live bug: unit failed 226 on every run while /var/lib/disk-growth
+        # was absent, blinding the /data growth alert for days). PID 1
+        # creates StateDirectory dirs before namespace assembly.
         serviceConfig =
           harden {
             MemoryMax = "128M";
             ProtectHome = "read-only";
-            ReadWritePaths = [ "/var/lib/disk-growth" ];
+            StateDirectory = "disk-growth";
           }
           // {
             Type = "oneshot";

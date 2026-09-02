@@ -119,6 +119,7 @@ _: {
           pkgs.coreutils
           pkgs.gnugrep
           pkgs.gawk
+          pkgs.getent
           pkgs.systemd
           pkgs.curl
           pkgs.jq
@@ -349,6 +350,21 @@ _: {
               DNSBLOCKD_STATS_FRESH=1
             else
               DNSBLOCKD_STATS_FRESH=0
+            fi
+
+            # === local-zone via SYSTEM resolver probe ===
+            # The :9090/:53 probes prove dnsblockd itself is alive; they stay
+            # GREEN while /etc/resolv.conf drifts off 127.0.0.1 (2026-09-02:
+            # a manual edit to 1.1.1.1 during a NIC-outage DNS incident
+            # killed *.home.lan for every process on the box for ~10h while
+            # gatus stayed green; the blocked deploy was the only symptom).
+            # 1 = the system resolver (resolv.conf path) resolves a
+            # local-zone name, 0 = drift. getent uses glibc NSS = the same
+            # resolution path every other process on the box uses.
+            if getent hosts auth.home.lan >/dev/null 2>&1; then
+              LOCAL_DNS_RESOLVES=1
+            else
+              LOCAL_DNS_RESOLVES=0
             fi
           fi
 
@@ -757,6 +773,10 @@ _: {
               echo "# HELP system_dnsblockd_metrics_fresh dnsblockd stats API answered HTTP 200 within the probe timeout (yes=1, wedged or unreachable=0)"
               echo "# TYPE system_dnsblockd_metrics_fresh gauge"
               echo "system_dnsblockd_metrics_fresh ''${DNSBLOCKD_STATS_FRESH}"
+
+              echo "# HELP system_local_dns_resolves 1 if the SYSTEM resolver resolves the dnsblockd local zone (catches resolv.conf drift the direct :53/:9090 probes cannot)"
+              echo "# TYPE system_local_dns_resolves gauge"
+              echo "system_local_dns_resolves ''${LOCAL_DNS_RESOLVES}"
             fi
 
             if [ "$collect_gatus" = "true" ]; then

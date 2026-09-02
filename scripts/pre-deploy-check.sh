@@ -27,11 +27,19 @@ echo ""
 echo "1. Flake syntax validation"
 FLAKE_CHECK_OUTPUT="$(nix flake check --no-build 2>&1 || true)"
 
-# Filter out the known "path is not valid" false positive.
-# mkPreparedSource (go-nix-helpers) and similar patterns use builtins.pathExists
-# at eval time; --no-build doesn't realize source derivations, so these checks
-# spuriously fail. The toplevel eval (check #2) is authoritative for deployment.
-REAL_ERRORS="$(echo "$FLAKE_CHECK_OUTPUT" | grep 'error:' | grep -v 'is not valid' || true)"
+# Filter out known-benign error classes:
+# - "path is not valid": mkPreparedSource (go-nix-helpers) and similar
+#   patterns use builtins.pathExists at eval time; --no-build doesn't
+#   realize source derivations, so these checks spuriously fail. The
+#   toplevel eval (check #2) is authoritative for deployment.
+# - "unable to download 'https://.../<hash>.narinfo'": substituter
+#   unreachability (attic DNS-dead during the 2026-09-02 resolv.conf drift;
+#   attic 502s during DAS outages). Nix prints these as `error:` even when it
+#   falls back to building locally: infrastructure noise, not flake
+#   syntax/eval problems.
+#   They must never block a deploy: the deploy that RESTORES DNS is exactly
+#   the one this class would block (chicken-and-egg, live 2026-09-02).
+REAL_ERRORS="$(echo "$FLAKE_CHECK_OUTPUT" | grep 'error:' | grep -vE "is not valid|unable to download 'https?://[^']+\.narinfo" || true)"
 
 if [ -z "$FLAKE_CHECK_OUTPUT" ]; then
   pass "nix flake check --no-build"
@@ -39,7 +47,7 @@ elif [ -n "$REAL_ERRORS" ]; then
   fail "nix flake check --no-build — fix syntax errors before deploying"
   echo "$REAL_ERRORS" | tail -5
 else
-  warn "nix flake check --no-build — only 'path is not valid' errors (known --no-build limitation, toplevel eval is authoritative)"
+  warn "nix flake check --no-build — only known-benign error classes ('path is not valid' --no-build limitation, substituter narinfo unreachability); toplevel eval is authoritative"
 fi
 
 # 1b. Tracked-files trap — flakes only see TRACKED files: a NEW module under
@@ -360,7 +368,15 @@ if [ -s "$METRICS_FILE" ]; then
   # pool-recovery-metrics collector carrying them is a NEW unit in this same
   # deploy — the running system cannot serve them pre-switch. Remove after
   # this deploy confirms them in the textfile.
-  KNOWN_NEW_METRICS="signoz_traces_upstream_gaps_over_threshold pool_usb_recovery_members_present pool_usb_recovery_device_errors"
+  # 2026-09-02 sweep: RETIRED the three entries above (signoz gap budget +
+  # both pool_usb_recovery gauges) — the 2026-09-02 pre-deploy run confirmed
+  # all three present in :9100/metrics.
+  # system_local_dns_resolves (2026-09-02): new tripwire for resolv.conf
+  # drift (system-resolver *.home.lan probe — catches what the direct :53
+  # gatus probe cannot, see the 2026-09-02 incident). Emitted by the
+  # system-health textfile collector shipping in this same deploy; remove
+  # after the first deploy confirms it in :9100/metrics (expected 1).
+  KNOWN_NEW_METRICS="system_local_dns_resolves"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"

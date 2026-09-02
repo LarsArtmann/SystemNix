@@ -1364,6 +1364,23 @@ _: {
                   alerts = discordAlert "dnsblockd :9090 stats API is wedged or unreachable while the DNS resolver may still be healthy (2026-08-27 class). Recovery runbook: sudo systemctl restart dnsblockd — for a goroutine dump FIRST, see scripts/dnsblockd-goroutine-dump.sh (root).";
                 })
                 (mkHttpCheck {
+                  name = "Local DNS System Resolver";
+                  group = "Infrastructure";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  # Anchored forms: the \n MUST reach gatus as a real newline
+                  # (single-backslash in this double-quoted nix string) —
+                  # presence-of-1 at line start + not-0 keep the check
+                  # fail-closed through probe absence (collector down =
+                  # metric absent = both conditions fail = alert fires).
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*system_local_dns_resolves 0\n*)"
+                    "[BODY] == pat(*\nsystem_local_dns_resolves 1*)"
+                  ];
+                  alerts = discordAlert "System resolver cannot resolve *.home.lan — /etc/resolv.conf drifted off 127.0.0.1 (dnsblockd bypassed) while the direct :53 probe stays green (2026-09-02 class: manual resolv.conf edit to 1.1.1.1 during a NIC outage killed local DNS for ~10h and blocked deploys). Fix: restore 'nameserver 127.0.0.1' first in /etc/resolv.conf (a deploy rewrites it via environment.etc), then find what wrote the file.";
+                })
+                (mkHttpCheck {
                   name = "fstrim Duration";
                   group = "Filesystem";
                   url = "http://localhost:${toString nodePort}/metrics";
