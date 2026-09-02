@@ -6,6 +6,7 @@ _: {
       config,
       lib,
       pkgs,
+      options,
       ...
     }:
     let
@@ -524,6 +525,32 @@ _: {
           {
             assertion = !cfg.provision.enable || (config.sops.secrets ? pocket_id_static_api_key);
             message = "pocket-id: provision.enable requires pocket_id_static_api_key to be defined in sops secrets.\n  Generate one with: openssl rand -base64 32\n  Then add it to platforms/nixos/secrets/pocket-id.yaml";
+          }
+          {
+            # Paperless is SSO-ONLY since 2026-09-02 (user decision: no
+            # password logins): if this client registration drifts (wrong
+            # callback, PKCE off, clientId renamed), every paperless login
+            # breaks with NO fallback path. allauth's callback route is FIXED
+            # at /accounts/oidc/<provider_id>/login/callback/ and both sides
+            # run PKCE S256 (OAUTH_PKCE_ENABLED in the provider JSON written
+            # by paperless-oidc-setup). Silent drift here is a full-auth
+            # outage, so it must be an eval-time failure, not a runtime one.
+            # Negative test (extendModules + mutate the callback — the
+            # assertion message MUST appear in config.assertions):
+            #   nix eval --impure --expr 'let f = builtins.getFlake (toString /home/lars/projects/SystemNix); lib = f.inputs.nixpkgs.lib; in f.nixosConfigurations.evo-x2.extendModules { modules = [{ services.pocket-id-config.provision.oidcClients = lib.mkForce [ { name = "Paperless"; clientId = "paperless"; launchURL = "https://paperless.home.lan"; callbackURLs = [ "https://paperless.home.lan/WRONG/callback/" ]; pkceEnabled = true; } ]; }]; }' \
+            #     --apply 'c: builtins.length (builtins.filter (a: builtins.match ".*paperless OIDC client registration.*" a.message != null) c.config.assertions)'
+            #   → must print 1 (0 = the guard stopped guarding).
+            assertion =
+              !cfg.provision.enable
+              || !(options ? services.paperless)
+              || !(config.services.paperless.enable)
+              || (builtins.any
+                (client:
+                  client.clientId == "paperless"
+                  && client.pkceEnabled
+                  && builtins.elem "https://paperless.${domain}/accounts/oidc/pocket-id/login/callback/" client.callbackURLs)
+                cfg.provision.oidcClients);
+            message = ''pocket-id: paperless is SSO-only but the paperless OIDC client registration is missing or malformed (expected clientId "paperless", pkceEnabled = true, exact callback "https://paperless.${domain}/accounts/oidc/pocket-id/login/callback/") — every paperless login would break with no fallback. Fix services.pocket-id-config.provision.oidcClients.'';
           }
         ];
 

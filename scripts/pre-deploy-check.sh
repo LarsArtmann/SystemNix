@@ -23,7 +23,11 @@ warn() {
 # Shared §10 classifier (fixture-tested by scripts/test-pre-deploy-metrics.sh
 # and the pre-deploy-metrics-selftest flake check — the WARN-vs-FAIL cascade
 # decides deploy blocks, so it must not drift untested).
-# shellcheck source=scripts/lib/metrics-gate.sh
+# shellcheck source=scripts/lib/metrics-gate.sh disable=SC1091
+# SC2034 on the producer variables below is EXPECTED: they are read inside
+# the sourced metrics-gate.sh, which shellcheck cannot follow when the
+# sandboxed wrapper build analyzes the script in isolation — hence the
+# per-site disable=SC2034 annotations.
 source "$(dirname "${BASH_SOURCE[0]}")/lib/metrics-gate.sh"
 
 echo "=== Pre-Deploy Validation ==="
@@ -278,6 +282,8 @@ extract_gatus_metrics() {
 METRICS_FILE=$(mktemp)
 trap 'rm -f "$METRICS_FILE"' EXIT
 
+# Read by the sourced metrics-gate.sh (sandbox shellcheck cannot follow it).
+# shellcheck disable=SC2034
 MONITOR365_UP=false
 
 if curl -sf --compressed --max-time 5 "http://127.0.0.1:${NODE_EXPORTER_PORT}/metrics" -o "$METRICS_FILE" 2>/dev/null; then
@@ -302,6 +308,8 @@ fi
 # so resolve each name against lib/ports.nix. Non-fatal per endpoint: a down
 # service already fails its own health checks elsewhere.
 GATUS_SERVICE_METRIC_PORTS=$(grep -oE 'localhost:\$\{toString ports\.[a-zA-Z0-9_-]+\}/metrics' "$GATUS_CONFIG" 2>/dev/null | sed -E 's/.*ports\.([a-zA-Z0-9_-]+)\}.*/\1/' | sort -u)
+# Read by the sourced metrics-gate.sh.
+# shellcheck disable=SC2034
 DISCORDSYNC_API_UP=false
 for port_name in $GATUS_SERVICE_METRIC_PORTS; do
   port_num=$(sed -nE "s/^[[:space:]]*${port_name} = ([0-9]+);.*/\1/p" lib/ports.nix | head -1)
@@ -318,6 +326,8 @@ done
 # Metrics known to come from Monitor365's endpoint (not node exporter textfile).
 # When Monitor365 is down, these are absent for infrastructure reasons, not
 # because they're phantom metrics in the config.
+# Read by the sourced metrics-gate.sh.
+# shellcheck disable=SC2034
 MONITOR365_METRICS="collector_events_collected cloud_sync_consecutive_failures cloud_sync_upload_backlog_size"
 
 # Textfile-collector breakage on the RUNNING system (2026-09-02, live twice):
@@ -328,6 +338,8 @@ MONITOR365_METRICS="collector_events_collected cloud_sync_consecutive_failures c
 # infra-down signal: absent textfile metrics are then an infrastructure
 # signal, not config phantoms — WARN, never block (same doctrine as the
 # monitor365/discordsync down-endpoint exceptions).
+# Read by the sourced metrics-gate.sh.
+# shellcheck disable=SC2034
 TEXTFILE_SCRAPE_ERROR=false
 if [ -s "$METRICS_FILE" ] && grep -qE '^node_textfile_scrape_error 1' "$METRICS_FILE"; then
   TEXTFILE_SCRAPE_ERROR=true
@@ -348,6 +360,8 @@ fi
 # stopped/failed service's endpoint metrics are an infrastructure signal,
 # not a config bug: WARN, never block. The gatus checks for discordsync go
 # red on their own while it is down — that is the correct visibility.)
+# Read by the sourced metrics-gate.sh.
+# shellcheck disable=SC2034
 DISCORDSYNC_METRICS="discordsync_projection_dlq_legacy_depth discordsync_projection_dlq_legacy_unchanged discordsync_turso_local_only_mode"
 
 # Forgejo mirror journal-scan metrics: the collector emits the errors_30m/
@@ -357,6 +371,8 @@ DISCORDSYNC_METRICS="discordsync_projection_dlq_legacy_depth discordsync_project
 # (fail-closed, 2026-09-02 fix). Keyed on the POSITIVE signal, not a name
 # list: when the running system itself reports the scan failed, absence is
 # an infrastructure signal, not a config phantom.
+# Read by the sourced metrics-gate.sh.
+# shellcheck disable=SC2034
 FORGEJO_SCAN_FAILED=false
 if [ -s "$METRICS_FILE" ] && grep -qE '^system_forgejo_mirror_scrape_errors 1' "$METRICS_FILE"; then
   FORGEJO_SCAN_FAILED=true
@@ -365,6 +381,8 @@ fi
 # Same doctrine for the pocket-id SQLITE_BUSY scan (2026-09-02): the busy
 # events/over-threshold pair is emitted ONLY on scan success; on failure
 # system_pocket_id_busy_scrape_errors=1 and the pair is absent BY DESIGN.
+# Read by the sourced metrics-gate.sh.
+# shellcheck disable=SC2034
 POCKET_ID_SCAN_FAILED=false
 if [ -s "$METRICS_FILE" ] && grep -qE '^system_pocket_id_busy_scrape_errors 1' "$METRICS_FILE"; then
   POCKET_ID_SCAN_FAILED=true
@@ -443,6 +461,8 @@ if [ -s "$METRICS_FILE" ]; then
   # collector + checks landed together undeployed in e5ad4901): the metrics
   # ride THIS deploy's collectors — absent from the running scrape only
   # until the switch lands.
+  # Read by the sourced metrics-gate.sh.
+  # shellcheck disable=SC2034
   KNOWN_NEW_METRICS="system_pma_commit_scrape_errors system_pma_commit_failures_over_threshold system_pma_commit_fallbacks_over_threshold niri_aw_watcher_attached niri_aw_watcher_late system_pocket_id_busy_over_threshold system_pocket_id_busy_scrape_errors"
   for metric in $(extract_gatus_metrics); do
     metrics_gate_classify_absence "$metric" || MISSING_METRICS=$((MISSING_METRICS + 1))
