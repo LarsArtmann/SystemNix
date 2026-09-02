@@ -432,14 +432,14 @@ in
         # so the sync timer is live (runbook step 5).
         sync.enable = true;
         # Gmail-attachment archiving into Paperless (uploads ride the sync
-        # hook; ledger + checksum dedup make it idempotent). OFF until
-        # go-live: create the token (`sudo -u paperless paperless-manage
-        # drf_create_token admin`), paste it into
-        # platforms/nixos/secrets/inboxclean-paperless.yaml (sudo sops),
-        # THEN flip this to true — PAPERLESS_URL without a real token is a
-        # config Rejection at every inboxclean process start (web + sync
-        # crash). Runbook: modules/nixos/services/inboxclean.nix header.
-        paperless.enable = false;
+        # hook; ledger + checksum dedup make it idempotent). LIVE since
+        # 2026-09-02: API token provisioned via `paperless-manage
+        # drf_create_token admin` and pasted into
+        # platforms/nixos/secrets/inboxclean-paperless.yaml. Keep the sops
+        # value and this flag in sync — PAPERLESS_URL without a real token
+        # is a config Rejection at every inboxclean process start (web +
+        # sync crash). Runbook: modules/nixos/services/inboxclean.nix header.
+        paperless.enable = true;
       };
 
       # PapDashboard — alert hub: Gatus ingests trigger/resolve events, the

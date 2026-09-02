@@ -54,10 +54,11 @@ in
       # mock-sops provides the options and renders secrets, but NOT
       # templates — create the rendered SASL map exactly as sops-nix would
       # (postfix-owned 0400, the smtp client daemon reads it as mail_owner).
-      sops.templates."mail-relay-sasl".content =
-        "[${relayHost}]:${toString relayPort} resend:PLACEHOLDER";
+      # The tmpfiles `f` ARGUMENT field carries the content (a bare `f` rule
+      # creates an EMPTY file — the credential would vanish).
+      sops.templates."mail-relay-sasl".path = "/run/secrets-rendered/mail-relay-sasl";
       systemd.tmpfiles.rules = [
-        "f /run/secrets-rendered/mail-relay-sasl 0400 postfix postfix -"
+        "f /run/secrets-rendered/mail-relay-sasl 0400 postfix postfix - [${relayHost}]:${toString relayPort} resend:PLACEHOLDER"
       ];
 
       environment.systemPackages = [
@@ -65,13 +66,19 @@ in
         pkgs.netcat
         pkgs.jq
         pkgs.python3
+        pkgs.openssl.bin
       ];
 
       # Fake upstream for the delivery-time E2E: smtp_generic_maps and the
       # SASL handshake happen in the smtp CLIENT at DELIVERY, invisible in
       # the deferred queue record — this captures the actual conversation.
+      # MUST offer STARTTLS: the relay sets smtp_tls_security_level=encrypt,
+      # so the client QUITs immediately when TLS is not offered. encrypt
+      # mandates encryption only (no cert verification), so a self-signed
+      # cert (generated at test runtime) completes the handshake.
       environment.etc."fake-relay/fake-relay.py".text = ''
         import socket
+        import ssl
         s = socket.socket()
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind(("127.0.0.2", ${toString relayPort}))
@@ -88,8 +95,15 @@ in
                 break
             log.append(line)
             u = line.upper()
-            if u.startswith("EHLO") or u.startswith("HELO"):
+            if u == "STARTTLS":
+                send("220 Go ahead")
+                ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+                ctx.load_cert_chain("/tmp/fake-relay-cert.pem", "/tmp/fake-relay-key.pem")
+                c = ctx.wrap_socket(c, server_side=True)
+                f = c.makefile("rwb", 0)
+            elif u.startswith("EHLO") or u.startswith("HELO"):
                 send("250-fake.relay")
+                send("250-STARTTLS")
                 send("250 AUTH PLAIN LOGIN")
             elif u.startswith("AUTH"):
                 send("235 ok")
