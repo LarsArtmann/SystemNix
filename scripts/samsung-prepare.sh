@@ -18,13 +18,16 @@ set -euo pipefail
 
 readonly DEV_BY_ID="/dev/disk/by-id/nvme-Samsung_SSD_970_EVO_Plus_1TB_S4EWNX0RA01856V"
 readonly EXPECT_MODEL="970 EVO Plus"
-readonly MIN_GB=925   # expected 931.5 GiB
+readonly MIN_GB=925 # expected 931.5 GiB
 readonly MAX_GB=938
 readonly POOL_LABEL="tlc"
 readonly ESP_LABEL="SAMSUNG-EFI"
 
 log() { printf '\n==> %s\n' "$*"; }
-die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
+die() {
+  printf 'ERROR: %s\n' "$*" >&2
+  exit 1
+}
 
 [ "$(id -u)" -eq 0 ] || die "run as root: sudo bash $0"
 
@@ -44,7 +47,7 @@ SIGS="$(wipefs -n "$DEV_BY_ID" 2>/dev/null || true)"
 
 printf '  model: %s\n  size:  %s GiB\n' "$MODEL" "$SIZE_GB"
 
-[[ "$MODEL" == *"$EXPECT_MODEL"* ]] || die "model mismatch: expected *$EXPECT_MODEL*, got '$MODEL'"
+[[ $MODEL == *"$EXPECT_MODEL"* ]] || die "model mismatch: expected *$EXPECT_MODEL*, got '$MODEL'"
 [ "$SIZE_GB" -ge "$MIN_GB" ] && [ "$SIZE_GB" -le "$MAX_GB" ] || die "size mismatch: expected ${MIN_GB}-${MAX_GB} GiB, got ${SIZE_GB} GiB"
 [ "$PARTS" -eq 0 ] || die "disk already has $PARTS partition(s) — this script only prepares a BLANK disk. Re-preparing would destroy data; partition manually if that is truly intended."
 [ -z "$SIGS" ] || die "disk has filesystem signatures (not blank):\n$SIGS\nInspect with 'wipefs -n $DEV_BY_ID' and decide manually."
@@ -64,8 +67,8 @@ PLAN
 
 read -r -p "Proceed? [y/N] " ANSWER
 case "$ANSWER" in
-  y | Y | yes) ;;
-  *) die "aborted — nothing was changed" ;;
+y | Y | yes) ;;
+*) die "aborted — nothing was changed" ;;
 esac
 
 # --- Partition ----------------------------------------------------------------

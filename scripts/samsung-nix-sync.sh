@@ -19,7 +19,10 @@ readonly MNT="/mnt/samsung-nix"
 readonly SRC="/nix"
 
 log() { printf '\n==> %s\n' "$*"; }
-die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
+die() {
+  printf 'ERROR: %s\n' "$*" >&2
+  exit 1
+}
 
 [ "$(id -u)" -eq 0 ] || die "run as root: sudo bash $0"
 
@@ -80,11 +83,11 @@ ionice -c 3 nice -n 10 rsync -aHx --delete --numeric-ids --info=progress2,stats2
 RC=$?
 set -e
 case $RC in
-  0 | 24) ;;
-  *) die "rsync failed with exit $RC — target left as-is; re-run when the system is calm (delta sync continues where it left off)" ;;
+0 | 24) ;;
+*) die "rsync failed with exit $RC — target left as-is; re-run when the system is calm (delta sync continues where it left off)" ;;
 esac
 
 log "Sync complete (rsync exit $RC)."
 echo "Next: step 3 — quiesce builds + auto-optimise-store + nix-gc, final delta sync,"
-echo "fileSystems.\"/nix\" (by-label tlc, subvol nix, neededForBoot), deploy, then step-4"
+echo 'fileSystems."/nix" (by-label tlc, subvol nix, neededForBoot), deploy, then step-4'
 echo "delta rsync BEFORE reboot, then the reboot window (user)."

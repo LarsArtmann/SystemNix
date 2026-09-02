@@ -468,7 +468,10 @@ _: {
           #      degraded mode that still lands work; sustained fallbacks mean
           #      the LLM path is dead (visible, non-fatal threshold).
           # Same IO discipline as the forgejo scan: --since bounds the journal
-          # walk, timeout bounds the wall clock, journalctl exit<=1 is a valid
+          # walk, timeout 60 bounds the wall clock (raised from 30 on
+          # 2026-09-02 — under the IO-PSI storm + memory emergency the first
+          # live runs hit the 30s ceiling and fail-closed on their OWN scans,
+          # the exact condition they monitor), journalctl exit<=1 is a valid
           # count (1 = no matches), >=2/timeout fails VISIBLE via
           # scrape_errors — never a phantom green.
           collect_pma_commits=${lib.boolToString cfg.collectPmaCommits}
@@ -480,9 +483,9 @@ _: {
           if [ "$collect_pma_commits" = "true" ]; then
             PMA_COMMIT_SCRAPE_ERRORS=0
             pma_fail_status=0
-            PMA_COMMIT_FAILURES_1H=$(timeout 30 journalctl -u projects-management-automation.service --since "-1h" --grep "commit failed" --output cat --no-pager 2>/dev/null | wc -l) || pma_fail_status=$?
+            PMA_COMMIT_FAILURES_1H=$(timeout 60 journalctl -u projects-management-automation.service --since "-1h" --grep "commit failed" --output cat --no-pager 2>/dev/null | wc -l) || pma_fail_status=$?
             pma_fb_status=0
-            PMA_HEURISTIC_FALLBACKS_24H=$(timeout 30 journalctl -u projects-management-automation.service --since "-24h" --grep "committed via heuristic fallback" --output cat --no-pager 2>/dev/null | wc -l) || pma_fb_status=$?
+            PMA_HEURISTIC_FALLBACKS_24H=$(timeout 60 journalctl -u projects-management-automation.service --since "-24h" --grep "committed via heuristic fallback" --output cat --no-pager 2>/dev/null | wc -l) || pma_fb_status=$?
             if [ "$pma_fail_status" -le 1 ] && [ "$pma_fb_status" -le 1 ]; then
               PMA_COMMIT_FAILURES_1H="''${PMA_COMMIT_FAILURES_1H:-0}"
               PMA_HEURISTIC_FALLBACKS_24H="''${PMA_HEURISTIC_FALLBACKS_24H:-0}"
