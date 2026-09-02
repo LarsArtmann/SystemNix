@@ -274,6 +274,29 @@ _: {
                             crash_loop=1
                           fi
 
+                          # Config-staleness tripwire: the manager reads config.toml
+                          # ONCE at process start (upstream v0.3.0), so a mid-session
+                          # config deploy applies only at the NEXT manager start
+                          # (next login). A literal restartTriggers-style restart is
+                          # deliberately NOT wired: upstream re-runs the FULL restore
+                          # on every process start under Restart=always — a
+                          # mid-session restart replays the spawn storm. This metric
+                          # makes the window observable instead: 1 = the running
+                          # manager predates the deployed config. Revisit (add the
+                          # restart trigger) once the upstream restore-once gate
+                          # lands (TODO_LIST: niri-session-manager upstream).
+                          mgr_config_stale=0
+                          nsm_config="/home/${config.users.primaryUser}/.config/niri-session-manager/config.toml"
+                          nsm_pid=$(pgrep -x niri-session-manager 2>/dev/null | head -1)
+                          if [ -n "$nsm_pid" ] && [ -f "$nsm_config" ]; then
+                            cfg_mtime=$(stat -c %Y "$nsm_config" 2>/dev/null || echo 0)
+                            mgr_start_line=$(ps -o lstart= -p "$nsm_pid" 2>/dev/null)
+                            mgr_start=$(date -d "$mgr_start_line" +%s 2>/dev/null || echo 0)
+                            if [ "$cfg_mtime" -gt 0 ] && [ "$mgr_start" -gt 0 ] && [ "$cfg_mtime" -gt "$mgr_start" ]; then
+                              mgr_config_stale=1
+                            fi
+                          fi
+
                           {
                             echo "niri_running $running"
                             echo "niri_graphical_session $graphical_session"
@@ -282,6 +305,7 @@ _: {
                             echo "niri_crash_loop $crash_loop"
                             echo "niri_restarts_10m $restarts"
                             echo "niri_drm_errors_30s $drm_errors"
+                            echo "niri_session_manager_config_stale $mgr_config_stale"
                           } > "$TMP"
 
                           mv "$TMP" "$OUT"
