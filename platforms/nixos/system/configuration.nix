@@ -428,6 +428,9 @@ in
       # inboxclean.nix header), then flip sync.enable = true.
       inboxclean = {
         enable = true;
+        # OAuth tokens exist for main + work (verified via /health 2026-09-02),
+        # so the sync timer is live (runbook step 5).
+        sync.enable = true;
       };
 
       # PapDashboard — alert hub: Gatus ingests trigger/resolve events, the

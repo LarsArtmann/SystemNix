@@ -444,7 +444,19 @@ _: {
                     '.openid_connect.APPS[0].secret = $secret' \
                     ${oidcProvidersJson}
                 )" > "${oidcEnvFile}"
-                echo "paperless-oidc-setup: Pocket ID OIDC env file written"
+                # Password login is DISABLED only while the Pocket ID secret
+                # is present (user decision 2026-09-02: "I do not like
+                # password logins"): the flags ride in the SAME env file, so
+                # a degraded bridge (secret missing → condition-skip → file
+                # absent → optional "-" prefix) AUTOMATICALLY restores the
+                # password form as break-glass. SSO fully on or fully off —
+                # never a locked-out middle state where neither path answers.
+                # Caveat: DISABLE_REGULAR_LOGIN also blocks username/password
+                # API-token acquisition (mobile app password login); existing
+                # API tokens keep working.
+                printf 'PAPERLESS_DISABLE_REGULAR_LOGIN=true\n' >> "${oidcEnvFile}"
+                printf 'PAPERLESS_REDIRECT_LOGIN_TO_SSO=true\n' >> "${oidcEnvFile}"
+                echo "paperless-oidc-setup: Pocket ID OIDC env file written (password login disabled, redirect-to-SSO on)"
               '';
             };
           };

@@ -340,23 +340,26 @@ _: {
                   name = "Paperless";
                   group = "Documents";
                   url = "http://localhost:${toString config.services.paperless.port}/accounts/login/";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 1000"
-                    # Functional, not just liveness: the real sign-in page
-                    # (not an error/redirect shell) says "Paperless-ngx sign in".
-                    "[BODY] == pat(*Paperless-ngx sign in*)"
-                  ]
-                  # Layer 1 SSO: the login page must render the Pocket ID
-                  # provider button (allauth links to
-                  # /accounts/oidc/pocket-id/login/). A degraded/stale
-                  # paperless-oidc-setup env file silently drops the button
-                  # (empty SOCIALACCOUNT_PROVIDERS) — this condition catches
-                  # the bridge going stale, not just paperless dying.
-                  ++ lib.optionals config.services.pocket-id-config.enable [
-                    "[BODY] == pat(*oidc/pocket-id*)"
-                  ];
-                  alerts = discordAlert "Paperless down — document management unavailable";
+                  # SSO-only mode (2026-09-02): the login page no longer
+                  # renders — it 302s into the Pocket ID provider flow
+                  # (PAPERLESS_REDIRECT_LOGIN_TO_SSO rides in the
+                  # paperless-oidc-setup env file). STATUS is the functional
+                  # signal: 302 = SSO armed; 200 = env file gone → bridge
+                  # degraded → the auto-break-glass password form is serving;
+                  # 5xx = Django settings/stack broken.
+                  conditions =
+                    if config.services.pocket-id-config.enable then
+                      [
+                        "[STATUS] == 302"
+                        "[RESPONSE_TIME] < 1000"
+                      ]
+                    else
+                      [
+                        "[STATUS] == 200"
+                        "[RESPONSE_TIME] < 1000"
+                        "[BODY] == pat(*Paperless-ngx sign in*)"
+                      ];
+                  alerts = discordAlert "Paperless SSO degraded — login no longer redirects to Pocket ID (302 expected; 200 = break-glass password form = paperless-oidc-setup problem)";
                 })
                 (mkHttpCheck {
                   name = "Paperless Tika";

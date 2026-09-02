@@ -93,6 +93,20 @@
         memory_emergency_guard_psi_some_avg10_percent 0.26
         memory_emergency_guard_avail_percent 53.00
       '';
+      # Churn: a trip page with >=2 trips in the last hour - the detail
+      # must carry the re-wake-loop warning (2026-09-02).
+      guardPromChurn = ''
+        memory_emergency_guard_last_trip_recent 1
+        memory_emergency_guard_sacrifice_socket_active 0
+        memory_emergency_guard_trips_last_hour 3
+      '';
+      # Anti-churn cap spent + socket still down: notify tier with the
+      # manual restart path (the trip page has long cleared by then).
+      guardPromCapped = ''
+        memory_emergency_guard_last_trip_recent 0
+        memory_emergency_guard_sacrifice_socket_active 0
+        memory_emergency_guard_restore_capped 1
+      '';
       # 2026-08-31 16:34 freeze signature: sustained stall, guard NOT (yet)
       # tripped, zram/avail invisible to this condition.
       guardPromStall = ''
@@ -317,7 +331,7 @@
       prom = machine.succeed("cat /tmp/sev1/bridge.prom")
       assert "sev1_bridge_alerts_active 1" in prom
       assert "sev1_bridge_page_alerts_active 0" in prom, "stale-only must not count as page-tier"
-      machine.succeed("test -f /var/lib/sev1-escalation/last-notify-epoch")
+      machine.succeed("ls /var/lib/sev1-escalation | grep -q '^last-notify-'")
 
       # Flap: clear, then immediately re-fire stale — within the 1800s
       # cooldown the notify-tier notification must be suppressed (the
@@ -372,6 +386,18 @@
       alert = machine.succeed("cat /tmp/sev1/alert")
       assert alert.strip().split("\n")[3] == "page"
 
+      # 9c. Churn context: >=2 trips in the last hour appends the re-wake
+      #     warning to the trip page detail (same title set -> the dedup
+      #     keeps the notification quiet, but the alert file carries it).
+      machine.succeed("${writeProms "churn" guardPromChurn healthPromHealthy}")
+      out = run_bridge("churn")
+      assert "MEMORY EMERGENCY GUARD TRIPPED" in out
+      alert = machine.succeed("cat /tmp/sev1/alert")
+      assert "TRIP CHURN" in alert, (
+          "trip churn (>=2 trips/hour) must be surfaced in the page detail"
+      )
+      assert alert.strip().split("\n")[3] == "page"
+
       # --- 10. ZRAM SWAP CRITICAL is NOTIFY tier (2026-09-02 user
       #         decision): combined-gated, but the fullscreen overlay is
       #         the guard trip's job — a second overlay for the same cliff
@@ -382,11 +408,20 @@
       assert "severity=notify" in out, "zram critical must be NOTIFY tier (no overlay)"
       alert = machine.succeed("cat /tmp/sev1/alert")
       assert alert.strip().split("\n")[3] == "notify"
+      assert "suppressed (cooldown" not in out, (
+          "a ZRAM notify after a STALE notify must still deliver - the "
+          "notify cooldown is PER-KEY since 2026-09-02 (the old single "
+          "epoch file cross-suppressed unrelated conditions)"
+      )
       prom = machine.succeed("cat /tmp/sev1/bridge.prom")
       assert "sev1_bridge_alerts_active 1" in prom
       assert "sev1_bridge_page_alerts_active 0" in prom, (
           "zram-only must not count as page-tier"
       )
+      assert "sev1_bridge_page_active_seconds 0" in prom, (
+          "notify-tier only: the active page duration must be back to 0"
+      )
+      assert "sev1_bridge_page_last_duration_seconds" in prom
 
       # 10b. The LIVE 2026-09-02 steady state (97% fill, 53% avail,
       #      0.26% PSI) must stay completely silent. The bridge's
@@ -401,5 +436,20 @@
       )
       assert "SEV1 cleared" in out, "the scenario-10 notify alert must clear on healthy margins"
       machine.fail("test -f /tmp/sev1/alert")
+
+      # --- 11. Restore capped (anti-churn budget spent, socket down):
+      #         notify tier with the manual restart path - without this,
+      #         flm would silently stay unusable after the trip page clears.
+      machine.succeed("${writeProms "capped" guardPromCapped healthPromHealthy}")
+      out = run_bridge("capped")
+      assert "FLM RESTORE CAPPED" in out
+      assert "severity=notify" in out
+      alert = machine.succeed("cat /tmp/sev1/alert")
+      assert "systemctl start fastflowlm.socket" in alert
+      assert alert.strip().split("\n")[3] == "notify", (
+          "capped is a degraded-service heads-up, not a drop-everything page"
+      )
+      prom = machine.succeed("cat /tmp/sev1/bridge.prom")
+      assert "sev1_bridge_page_alerts_active 0" in prom
     '';
 }

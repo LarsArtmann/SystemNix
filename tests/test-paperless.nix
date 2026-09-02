@@ -129,31 +129,38 @@ in
     machine.succeed("runuser -u postgres -- psql -tAc \"SELECT 1 FROM pg_roles WHERE rolname='paperless'\" | grep -q 1")
 
     # 6. Layer 1 OIDC — bridge ran at boot with the fake secret: the env file
-    #    is a single line (systemd EnvironmentFile cannot span lines) carrying
-    #    the injected secret + provider structure.
+    #    carries the injected secret + provider structure on ONE line, plus
+    #    the two password-login-off flags (three lines total).
     machine.wait_for_unit("paperless-oidc-setup.service")
-    machine.succeed("test $(wc -l < /var/lib/paperless-oidc/pocket-id.env) -eq 1")
     machine.succeed("grep -q 'vm-test-secret' /var/lib/paperless-oidc/pocket-id.env")
     machine.succeed("grep -q 'client_id' /var/lib/paperless-oidc/pocket-id.env")
     machine.succeed("grep -q 'token_auth_method' /var/lib/paperless-oidc/pocket-id.env")
+    machine.succeed("grep -q '^PAPERLESS_SOCIALACCOUNT_PROVIDERS=' /var/lib/paperless-oidc/pocket-id.env")
+    machine.succeed("grep -q '^PAPERLESS_DISABLE_REGULAR_LOGIN=true$' /var/lib/paperless-oidc/pocket-id.env")
+    machine.succeed("grep -q '^PAPERLESS_REDIRECT_LOGIN_TO_SSO=true$' /var/lib/paperless-oidc/pocket-id.env")
     assert "PAPERLESS_APPS=allauth.socialaccount.providers.openid_connect" in env, "allauth provider app missing from unit env"
     assert "PAPERLESS_SOCIAL_AUTO_SIGNUP=true" in env, "social auto-signup missing from unit env"
     envfiles = machine.succeed("systemctl show paperless-web --property=EnvironmentFiles")
     assert "/var/lib/paperless-oidc/pocket-id.env" in envfiles, "OIDC env file not attached to paperless-web"
 
-    # 7. The login page renders the Pocket ID provider button — Django
-    #    parsed the delivered provider JSON end-to-end (PAPERLESS_APPS +
-    #    SOCIALACCOUNT_PROVIDERS + allauth URL routing all live).
-    machine.succeed(
-      "curl -sf --retry 15 --retry-delay 2 --retry-all-errors http://localhost:2892/accounts/login/ | grep -F 'oidc/pocket-id'"
-    )
+    # 7. SSO-only mode live: the login page no longer renders — it 302s into
+    #    the Pocket ID provider flow (PAPERLESS_REDIRECT_LOGIN_TO_SSO). This
+    #    also proves Django parsed the delivered provider JSON end-to-end: a
+    #    broken SOCIALACCOUNT_PROVIDERS would fail settings init (500), and a
+    #    200 here would mean the SSO env file didn't reach the unit.
+    redirect = machine.succeed(
+      "curl -s -o /dev/null -w '%{http_code} %{redirect_url}' --retry 15 --retry-delay 2 --retry-all-errors http://localhost:2892/accounts/login/?next=/"
+    ).strip()
+    assert redirect.startswith("302"), f"login page must redirect in SSO-only mode, got: {redirect}"
+    assert "pocket-id" in redirect, f"login redirect must target the Pocket ID provider flow, got: {redirect}"
 
     # 8. Degradation semantics: with the secret gone the bridge must SKIP
     #    cleanly (ConditionPathExists → inactive, NOT failed — LoadCredential
-    #    would exit 243/CREDENTIALS), and paperless-web must still boot
-    #    local-login-only without the optional env file. The fake-secret
-    #    helper stays active(exited) — RemainAfterExit makes its re-pull a
-    #    no-op, so it does NOT re-seed the secret.
+    #    would exit 243/CREDENTIALS), and removing the env file must
+    #    AUTOMATICALLY restore the password login form — the disable flags
+    #    ride in the same env file, so bridge degradation = break-glass on.
+    #    The fake-secret helper stays active(exited) — RemainAfterExit makes
+    #    its re-pull a no-op, so it does NOT re-seed the secret.
     machine.succeed("rm /var/lib/pocket-id/client-secrets/paperless")
     machine.succeed("systemctl restart paperless-oidc-setup.service")
     machine.succeed("test \"$(systemctl is-active paperless-oidc-setup.service)\" = inactive")
@@ -164,6 +171,6 @@ in
       "curl -sf --retry 15 --retry-delay 2 --retry-all-errors http://localhost:2892/accounts/login/ | grep -F 'Paperless-ngx sign in'"
     )
 
-    print("Paperless v3 wiring verified — units up, PG backend, AI env, trash, exporter, Pocket ID OIDC bridge")
+    print("Paperless v3 wiring verified — units up, PG backend, AI env, trash, exporter, Pocket ID OIDC bridge, SSO-only + auto-break-glass")
   '';
 }
