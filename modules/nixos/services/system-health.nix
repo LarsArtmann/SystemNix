@@ -432,12 +432,17 @@ _: {
               # UNBOUNDED journal walk was slow enough that FOUR consecutive
               # collector runs hit the 3min unit timeout, wrote NO textfile,
               # and paged SEV1 SYSTEM MONITORING STALE mid-movie on every
-              # flap cycle). `timeout 30` bounds it; journalctl exit 1 (no
-              # matches) is a VALID empty count; exit >= 2 / timeout 124
-              # fails VISIBLE via scrape_errors — never a phantom 0-error
-              # green.
+              # flap cycle). `timeout 60` bounds it (raised from 30 on
+              # 2026-09-02: under a 40-80% IO-PSI storm this 30-minute-window
+              # walk exceeded 30s repeatedly, the scan fail-closed, the
+              # omitted system_forgejo_mirror_erroring blocked every deploy
+              # at pre-deploy §10 and paged on collector health instead of
+              # mirror health — 60s matches the oomd-scan bound); journalctl
+              # exit 1 (no matches) is a VALID empty count; exit >= 2 /
+              # timeout 124 fails VISIBLE via scrape_errors — never a
+              # phantom 0-error green.
               forgejo_scan_status=0
-              FORGEJO_MIRROR_ERRORS_30M=$(timeout 30 journalctl -u forgejo.service --since "-30 min" --grep "AddAuthCredentialHelperForRemote Error|failed to update mirror repository|pull mirror failed to meet migration URL requirements|failed to get remote address" --output cat --no-pager 2>/dev/null | wc -l) || forgejo_scan_status=$?
+              FORGEJO_MIRROR_ERRORS_30M=$(timeout 60 journalctl -u forgejo.service --since "-30 min" --grep "AddAuthCredentialHelperForRemote Error|failed to update mirror repository|pull mirror failed to meet migration URL requirements|failed to get remote address" --output cat --no-pager 2>/dev/null | wc -l) || forgejo_scan_status=$?
               if [ "$forgejo_scan_status" -le 1 ]; then
                 FORGEJO_MIRROR_ERRORS_30M="''${FORGEJO_MIRROR_ERRORS_30M:-0}"
                 FORGEJO_MIRROR_ERRORING=0
