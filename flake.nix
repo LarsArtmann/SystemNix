@@ -949,8 +949,16 @@
                     metrics = toString deadMetrics;
                   }
                   ''
-                    fail=0
-                    # NOTE: stdenv setup.sh enables `shopt -s nullglob` — an
+                  fail=0
+                  # An empty blocklist makes trap 4's `for m in $metrics`
+                  # silently skip (empty-var for-list = zero iterations, even
+                  # without nullglob) — an emptied deadMetrics list must fail
+                  # LOUD, not phantom-green.
+                  if [ -z "$metrics" ]; then
+                  echo "FAIL: dead-metrics blocklist is empty — trap 4 would be a phantom green."
+                  exit 1
+                  fi
+                  # NOTE: stdenv setup.sh enables `shopt -s nullglob` — an
                     # unquoted `$strip` command-string variable would have its
                     # glob-bearing words (the quoted grep pattern) silently
                     # DELETED, turning every trap below phantom-green. Command

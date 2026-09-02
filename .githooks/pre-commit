@@ -51,6 +51,16 @@ if ! templ_out=$(scripts/check-templ-committed.sh 2>&1); then
     exit 1
 fi
 
+# Fast guard: build-time shell (runCommand bodies) must not use unquoted
+# command-variable expansion — stdenv runs builders with nullglob, which
+# silently deletes glob-bearing words and turns checks phantom-green
+# (signoz-query-lint v1, 2026-08-27). Milliseconds of runtime.
+if ! nullglob_out=$(scripts/audit-shell-nullglob.sh 2>&1); then
+    echo "$nullglob_out" >&2
+    log_error "nullglob audit failed — see FAIL lines above."
+    exit 1
+fi
+
 # Fast guard: moved/deleted markdown files must not leave dangling references.
 # The archive-move class (2026-08-18): `git mv docs/status/X.md
 # docs/status/archived/` left stale `docs/status/X.md` links in TODO_LIST and

@@ -91,6 +91,12 @@ jobs:
       - name: Check templ generated files are committed
         run: scripts/check-templ-committed.sh
 
+      # Build-time shell (runCommand bodies) runs under stdenv nullglob —
+      # unquoted command-variable expansion silently deletes glob-bearing
+      # words (signoz-query-lint v1 phantom-green, 2026-08-27).
+      - name: Nullglob audit of runCommand bodies
+        run: scripts/audit-shell-nullglob.sh
+
       - name: Flake input hygiene (ref=master + GOTOOLCHAIN)
         run: |
           # Fail on GOTOOLCHAIN=auto (sandbox purity violation)
