@@ -371,13 +371,20 @@ _: {
             Type = "simple";
             ExecStart = lib.getExe smart-audio-daemon;
             Restart = "always";
-            RestartSec = "5s";
+            # 30s politeness: the daemon's in-process device wait (120s) plus a
+            # fast restart loop must not burn start-rate-limit budget while
+            # boot-time audio enumeration is still settling (2026-08-31 §f.17).
+            RestartSec = "30s";
             MemoryMax = "128M";
           };
 
           unitConfig = {
+            # Widened window (was 5/120s): with the in-process 120s device
+            # retry doing the real waiting, a genuine crash-loop now needs 5
+            # failures inside 10 min to trip the limit instead of racing the
+            # boot enumeration (2026-08-31 §f.47).
             StartLimitBurst = 5;
-            StartLimitIntervalSec = 120;
+            StartLimitIntervalSec = 600;
           };
         };
       };

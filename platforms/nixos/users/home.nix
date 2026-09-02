@@ -11,6 +11,103 @@ let
   colors = colorScheme.palette;
   inherit (import ../../../lib/default.nix lib) wrapWithMemoryLimit;
 
+  # Niri session manager config — single source of truth for the app lists.
+  # The TOML below is GENERATED from these lists, and the terminal-app
+  # invariant is asserted at eval time (see `assertions`): a terminal app-id
+  # that silently disappears from single_instance_apps re-arms the
+  # 2026-08-31 restore-storm growth loop (152 empty terminals per login).
+  niriSessionManagerSingleInstanceApps = [
+    "helium"
+    "firefox"
+    "Firefox"
+    "signal"
+    "Slack"
+    "discord"
+    "vesktop"
+    "telegramdesktop"
+    "Spotify"
+    "spotify"
+    "org.keepassxc.KeePassXC"
+    # ALL terminal app-ids (incl. multi-process ones like kitty/foot) are
+    # single-instance at RESTORE time: restore dedupes each terminal to ONE
+    # spawn — an empty restored shell carries no state worth N copies, and
+    # single-instance terminals (ghostty) MUST be here to stop the storm.
+    "kitty"
+    "foot"
+    "org.wezfurlong.wezterm"
+    "com.mitchellh.ghostty"
+    "alacritty"
+    # emacs: single-process-multi-window when run as a daemon (frames via
+    # emacsclient) — the ghostty class. Not installed today (only the
+    # dormant Mod+Shift+E keybind references it); pinning it preemptively.
+    "emacs"
+  ];
+
+  # Transient/dialog app-ids: never saved, never restored. Restoring a
+  # dialog is nonsense by definition (2026-08-31 report: gcr-prompter was
+  # being "restored" every login).
+  niriSessionManagerSkipApps = [
+    "Jan"
+    "gcr-prompter" # GCR/polkit auth prompt dialog
+    "xdg-desktop-portal-gtk" # portal file chooser + dialog windows
+  ];
+
+  niriSessionManagerTerminalAppIds = [
+    "kitty"
+    "foot"
+    "org.wezfurlong.wezterm"
+    "com.mitchellh.ghostty"
+    "alacritty"
+  ];
+
+  niriSessionManagerShellNames = [
+    "fish"
+    "bash"
+    "zsh"
+    "sh"
+    "dash"
+    "-fish"
+    "-bash"
+    "-zsh"
+    "-sh"
+    "sudo"
+    "doas"
+  ];
+
+  niriSessionManagerAppMappings = {
+    "signal" = [ "signal-desktop" ];
+    "telegramdesktop" = [ "telegram-desktop" ];
+    "org.keepassxc.KeePassXC" = [ "keepassxc" ];
+    "com.mitchellh.ghostty" = [ "ghostty" ];
+    "org.wezfurlong.wezterm" = [ "wezterm" ];
+  };
+
+  niriSessionManagerConfigToml =
+    let
+      tomlQuote = s: "\"" + lib.escape [ "\"" ] s + "\"";
+      tomlArray = indent: xs:
+        "[\n" + lib.concatMapStrings (x: indent + tomlQuote x + ",\n") xs + "  ]";
+      tomlInlineArray = xs: "[" + lib.concatStringsSep ", " (map tomlQuote xs) + "]";
+    in
+    ''
+      [single_instance_apps]
+      apps = ${tomlArray "    " niriSessionManagerSingleInstanceApps}
+
+      [skip_apps]
+      apps = ${tomlArray "    " niriSessionManagerSkipApps}
+
+      [app_mappings]
+      ${lib.concatStringsSep "\n" (lib.mapAttrsToList (k: v: "${tomlQuote k} = ${tomlInlineArray v}") niriSessionManagerAppMappings)}
+
+      [terminal_state]
+      enabled = true
+      terminal_app_ids = ${tomlInlineArray niriSessionManagerTerminalAppIds}
+      shell_names = ${tomlInlineArray niriSessionManagerShellNames}
+      helper_names = ${tomlInlineArray [ "kitten" ]}
+      max_walk_depth = 20
+    '';
+
+
   # `open` — macOS-style file/URL opener that works from ANY context,
   # including SSH sessions that lack the graphical environment.
   # SSH shells have no WAYLAND_DISPLAY/DBus session env, so raw xdg-open
@@ -657,46 +754,10 @@ in
       '';
 
       # Niri session manager — declarative app mappings
-      # Prevents duplicate spawns and maps niri app_ids to actual launch commands
-      "niri-session-manager/config.toml".text = ''
-        [single_instance_apps]
-        apps = [
-            "helium",
-            "firefox",
-            "Firefox",
-            "signal",
-            "Slack",
-            "discord",
-            "vesktop",
-            "telegramdesktop",
-            "Spotify",
-            "spotify",
-            "org.keepassxc.KeePassXC",
-            # ghostty is gtk-single-instance: every surface shares one process.
-            # Without this entry the session restore spawns ONE ghostty per SAVED
-            # WINDOW — restored empty shells get re-saved → the window count only
-            # grows across logins (2026-08-31: 152 empty terminals per login)
-            "com.mitchellh.ghostty",
-        ]
-
-        [skip_apps]
-        apps = [
-            "Jan",
-        ]
-
-        [app_mappings]
-        "signal" = ["signal-desktop"]
-        "telegramdesktop" = ["telegram-desktop"]
-        "org.keepassxc.KeePassXC" = ["keepassxc"]
-        "com.mitchellh.ghostty" = ["ghostty"]
-
-        [terminal_state]
-        enabled = true
-        terminal_app_ids = ["kitty", "foot", "org.wezfurlong.wezterm", "com.mitchellh.ghostty", "alacritty"]
-        shell_names = ["fish", "bash", "zsh", "sh", "dash", "-fish", "-bash", "-zsh", "-sh", "sudo", "doas"]
-        helper_names = ["kitten"]
-        max_walk_depth = 20
-      '';
+      # Prevents duplicate spawns and maps niri app_ids to actual launch commands.
+      # Generated from the niriSessionManager* lists above; the eval-time
+      # assertions below pin the storm-prevention invariants.
+      "niri-session-manager/config.toml".text = niriSessionManagerConfigToml;
 
       "swappy/config".text = ''
         [Default]
@@ -804,6 +865,29 @@ in
       gtk-application-prefer-dark-theme = true;
     };
   };
+
+  # Niri session manager invariants (2026-08-31 terminal-storm class).
+  # These fire at eval/build time — the config lists above are the only
+  # place the entries can silently rot, so pin them here, not in memory.
+  assertions = [
+    {
+      assertion = lib.all (id: builtins.elem id niriSessionManagerSingleInstanceApps) niriSessionManagerTerminalAppIds;
+      message = ''
+        niri-session-manager: every terminal_state terminal_app_id must also appear
+        in single_instance_apps — restore dedupes single-instance apps to ONE spawn,
+        and a terminal missing from that list re-arms the 2026-08-31 restore-storm
+        growth loop. Missing from single_instance_apps: ${
+          lib.concatStringsSep ", " (
+            lib.filter (id: !builtins.elem id niriSessionManagerSingleInstanceApps) niriSessionManagerTerminalAppIds
+          )
+        }
+      '';
+    }
+    {
+      assertion = builtins.elem "gcr-prompter" niriSessionManagerSkipApps;
+      message = "niri-session-manager: gcr-prompter (transient GCR auth dialog) must stay in skip_apps — restoring transient dialogs is nonsense by definition.";
+    }
+  ];
 
   # Qt settings for consistency with GTK.
   # NEVER use gtk2 here: the gtk2 Qt platform/theme plugins are Qt5-only —
