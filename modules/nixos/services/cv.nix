@@ -82,6 +82,12 @@
             pipeline = {
               event_store_driver = "sqlite";
               event_store_dsn = "/var/lib/cv/data/pipeline.sqlite";
+              # EUR/day price floor (owner decision 2026-09-03, ratifying the
+              # CV repo's 600 proposal): below-floor discoveries skip at
+              # evaluation regardless of score (RateFloor axis + `< FLOOR`
+              # dashboard chips, upstream 2026-09-02/03). 615 €/day was the
+              # PEA benchmark; 600 keeps a small negotiation band.
+              evaluation.min_day_rate = 600;
               # The generated config.yaml IS the whole config (settings are
               # not merged over the repo's config.yaml), so the portal list
               # must live HERE or the server has nothing to scan. Keep in
@@ -136,6 +142,14 @@
                   company = "Freelancermap";
                   provider = "freelancermap";
                 }
+                # HN "Who is Hiring" monthly thread (scanner resolves the
+                # current thread via Algolia author-tagged search; premium
+                # remote Go/GCP/platform roles, upstream 2026-09-03).
+                {
+                  url = "https://news.ycombinator.com/hiring";
+                  company = "Hacker News";
+                  provider = "hn";
+                }
               ];
               # One-click funnel tail. EXPLICITLY DISABLED until gate Q1
               # (owner-gate-package-going-live.md): the upstream default is
@@ -147,7 +161,11 @@
               # auto-apply POST activates on its next tick.
               autoapply = {
                 enabled = false;
-                recommendations = [ "apply" ];
+                # worth-trying added 2026-09-03 with the recalibrated score
+                # bands (4.5-max corpus tops out ~3.2): apply-only starves
+                # the funnel to zero candidates. The approval click stays
+                # the human gate either way.
+                recommendations = [ "apply" "worth-trying" ];
                 max_per_pass = 5;
                 strategy = "nudge";
                 send_on_approve = true;
@@ -159,7 +177,13 @@
               # poller provider self-disables without creds. Subscribe the
               # owner calendar once: /calendar/interviews.ics?key=<CV_API_KEY>
               # (the calendar guard reuses the pipeline API key).
-              replyloop.enabled = true;
+              replyloop = {
+                enabled = true;
+                # Alert-mail router (upstream 2026-09-03): platform
+                # new-jobs digests classified + tracked as discoveries.
+                # Same inertness as replyloop itself — no creds, no polls.
+                alert_router = true;
+              };
               # Gate Q1 flip (do ALL of it in one change):
               #   1. sops cv-env template += CV_PIPELINE_AUTOSEND_DRIVER=agentmail
               #      CV_PIPELINE_AGENTMAIL_API_KEY=<am_...>
