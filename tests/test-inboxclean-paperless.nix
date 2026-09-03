@@ -98,6 +98,9 @@ let
     { services.inboxclean.paperless.enable = true; }
   ];
   archivingOff = eval [ { } ];
+  disabled = eval [
+    { services.inboxclean.enable = lib.mkForce false; }
+  ];
 
   syncConfig = c: c.systemd.services.inboxclean-sync.serviceConfig;
   webConfig = c: c.systemd.services.inboxclean-web.serviceConfig;
@@ -136,6 +139,31 @@ let
         (syncConfig archivingOff).EnvironmentFile == [ ]
         && paperlessEnv archivingOff == [ ]
         && (syncConfig archivingOff).EnvironmentFile == (webConfig archivingOff).EnvironmentFile;
+    }
+    # Backup chain (cv-backup pattern, 2026-09-03): the DB holds both
+    # accounts' sync state + the paperless upload ledger. Lock the three
+    # cv-lesson guards: mount-gated (dependency-error instead of
+    # 226/NAMESPACE on a detached DAS), DAC_READ_SEARCH (root otherwise
+    # cannot stat the foreign-owned state dir — silent no-op class), the
+    # online .backup script present, and the whole chain gone when the
+    # service is disabled. (The backup-coordination registration lives in
+    # configuration.nix — host-level, outside this module eval.)
+    {
+      name = "backup-unit-mount-gated-and-dac-capable";
+      pass =
+        archivingOn.systemd.services.inboxclean-backup.unitConfig.RequiresMountsFor
+        == [ "/mnt/pool/backups/inboxclean" ]
+        && archivingOn.systemd.services.inboxclean-backup.serviceConfig.CapabilityBoundingSet
+        == "CAP_DAC_READ_SEARCH"
+        && lib.hasInfix "inboxclean-backup" archivingOn.systemd.services.inboxclean-backup.serviceConfig.ExecStart;
+    }
+    {
+      name = "backup-timer-present-and-chain-gated-on-enable";
+      pass =
+        archivingOn.systemd.timers.inboxclean-backup.timerConfig.OnCalendar == "*-*-* 04:30:00"
+        && !(disabled.systemd.services ? "inboxclean-backup")
+        && !(disabled.systemd.timers ? "inboxclean-backup")
+        && !(disabled.systemd.services ? "inboxclean-backup-dir");
     }
   ];
 
