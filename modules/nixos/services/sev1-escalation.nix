@@ -571,10 +571,17 @@ _: {
 
                     anchors {
                         top: true
-                        bottom: true
+                        bottom: root.isPage
                         left: true
                         right: true
                     }
+
+                    // Warn tier renders as a TOP STRIP (user decision
+                    // 2026-09-03: "non-fullscreen strip") — ~12% of the
+                    // screen height, never covering the whole display.
+                    // Page (reserved) stays fullscreen; implicitHeight is
+                    // ignored when all four anchors are set.
+                    implicitHeight: root.isPage ? 0 : Math.max(96, Math.round(modelData.height * 0.12))
 
                     color: "transparent"
                     mask: Region {}
@@ -599,13 +606,13 @@ _: {
 
                         Column {
                             anchors.centerIn: parent
-                            spacing: 24
+                            spacing: root.isPage ? 24 : 6
 
                             Text {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: root.isPage ? "SEVERE — SYSTEM EMERGENCY" : "WARNING — HARDWARE CRITICAL"
                                 color: root.isPage ? "#ffe0e0" : "#fff3c4"
-                                font.pixelSize: Math.min(overlay.width, overlay.height) * 0.035
+                                font.pixelSize: root.isPage ? Math.min(overlay.width, overlay.height) * 0.035 : 15
                                 font.weight: Font.Black
                                 font.letterSpacing: 10
                             }
@@ -614,11 +621,11 @@ _: {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: root.alertTitle
                                 color: root.isPage ? "#ff2b2b" : "#ffd24d"
-                                font.pixelSize: Math.min(overlay.width, overlay.height) * 0.05
+                                font.pixelSize: root.isPage ? Math.min(overlay.width, overlay.height) * 0.05 : 32
                                 font.weight: Font.Black
                                 font.family: "monospace"
                                 wrapMode: Text.Wrap
-                                width: Math.min(overlay.width * 0.85, 1400)
+                                width: root.isPage ? Math.min(overlay.width * 0.85, 1400) : overlay.width * 0.92
                                 horizontalAlignment: Text.AlignHCenter
                             }
 
@@ -626,11 +633,11 @@ _: {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: root.alertDetail
                                 color: root.isPage ? "#ffd7d7" : "#ffedb8"
-                                font.pixelSize: Math.min(overlay.width, overlay.height) * 0.025
+                                font.pixelSize: root.isPage ? Math.min(overlay.width, overlay.height) * 0.025 : 14
                                 font.weight: Font.Bold
-                                maximumLineCount: 4
+                                maximumLineCount: root.isPage ? 4 : 2
                                 wrapMode: Text.Wrap
-                                width: Math.min(overlay.width * 0.8, 1200)
+                                width: root.isPage ? Math.min(overlay.width * 0.8, 1200) : overlay.width * 0.92
                                 horizontalAlignment: Text.AlignHCenter
                             }
                         }
