@@ -15,6 +15,16 @@ FAIL=0
 SKIP=0
 WARN=0
 
+# Every FAIL records a STABLE name (the text before the " — " detail
+# separator) so the summary can diff this run's fail set against the
+# previous run's baseline: failures already known from the previous deploy
+# stay advisory, while NEW ones are this deploy's regression signal (exit 3).
+SMOKE_FAIL_NAMES="$(mktemp)"
+trap 'rm -f "$SMOKE_FAIL_NAMES"' EXIT
+record_fail() {
+  printf '%s\n' "${1%% — *}" >> "$SMOKE_FAIL_NAMES"
+}
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -38,12 +48,14 @@ check() {
   if [ "$status" = "000" ]; then
     echo -e "${RED}FAIL${NC} $name — $url unreachable"
     FAIL=$((FAIL + 1))
+    record_fail "$name — unreachable"
     return 1
   fi
 
   if [ "$status" != "$expect_status" ]; then
     echo -e "${RED}FAIL${NC} $name — expected HTTP $expect_status, got $status ($url)"
     FAIL=$((FAIL + 1))
+    record_fail "$name — status $status"
     return 1
   fi
 
@@ -58,6 +70,7 @@ check() {
       echo -e "${RED}FAIL${NC} $name — status OK ($status) but body mismatch: expected pattern '$expect_body' not found ($url)"
       echo -e "     first 100 chars: $(head -c 100 /tmp/.smoke-body 2>/dev/null)"
       FAIL=$((FAIL + 1))
+      record_fail "$name — body mismatch"
       return 1
     fi
   fi
@@ -129,6 +142,7 @@ report_pass() {
 report_fail() {
   echo -e "${RED}FAIL${NC} $1"
   FAIL=$((FAIL + 1))
+  record_fail "$1"
 }
 report_skip() {
   echo -e "${YELLOW}SKIP${NC} $1"
@@ -208,6 +222,7 @@ elif pgrep -f discordsync >/dev/null 2>&1; then
 else
   echo -e "${RED}FAIL${NC} DiscordSync (localhost:8085) — process not running and API unreachable"
   FAIL=$((FAIL + 1))
+  record_fail "DiscordSync (localhost:8085)"
 fi
 
 check_local "Manifest" "2099" "/api/v1/health" "200" 2>/dev/null || true
@@ -737,6 +752,7 @@ if crush_reports=$(curl -s --compressed --max-time 5 "http://localhost:8081/api/
     elif [ -n "$latest_date" ]; then
       echo -e "${RED}FAIL${NC} Crush Daily latest report ($latest_date) shows 0 sessions — silent-zero-data regression"
       FAIL=$((FAIL + 1))
+      record_fail "Crush Daily latest report shows 0 sessions"
     fi
   elif echo "$crush_reports" | grep -q '\[\]'; then
     echo -e "${YELLOW}WARN${NC} Crush Daily reports empty — collection may not have run yet"
@@ -785,6 +801,7 @@ if awk '$1 !~ /^#/ && $2 == "/var/lib/clickhouse" { found = 1 } END { exit !foun
   else
     echo -e "${RED}FAIL${NC} /var/lib/clickhouse mounted as '${CH_FSTYPE:-nothing}' (expected xfs) — clickhouse.service is refusing to start by design (ConditionPathIsMountPoint). Check: systemctl status var-lib-clickhouse.mount, dmesg | grep -i xfs"
     FAIL=$((FAIL + 1))
+    record_fail "/var/lib/clickhouse mount not xfs"
   fi
   if curl -sf --compressed --max-time 5 "http://127.0.0.1:8123/ping" 2>/dev/null | grep -q "Ok"; then
     echo -e "${GREEN}PASS${NC} ClickHouse answering /ping on :8123 (running on the XFS mount)"
@@ -792,6 +809,7 @@ if awk '$1 !~ /^#/ && $2 == "/var/lib/clickhouse" { found = 1 } END { exit !foun
   else
     echo -e "${RED}FAIL${NC} ClickHouse not answering :8123/ping — stack down since the XFS migration deploy. Check: systemctl status clickhouse.service"
     FAIL=$((FAIL + 1))
+    record_fail "ClickHouse not answering :8123/ping"
   fi
 fi
 
@@ -804,6 +822,7 @@ if signoz_config=$(curl -s --compressed --max-time 5 "http://localhost:8080/api/
     else
       echo -e "${RED}FAIL${NC} SigNoz impersonation mode NOT enabled — service is exposed without auth"
       FAIL=$((FAIL + 1))
+      record_fail "SigNoz impersonation mode NOT enabled"
     fi
   else
     echo -e "${YELLOW}WARN${NC} SigNoz config endpoint reachable but impersonation key missing"
@@ -824,9 +843,11 @@ if signoz_rules=$(curl -s --compressed --max-time 5 "http://localhost:8080/api/v
   elif [ "$RULE_COUNT" -gt 0 ] 2>/dev/null; then
     echo -e "${RED}FAIL${NC} SigNoz alert rules under-provisioned ($RULE_COUNT rules, expected >15) — re-trigger signoz-provision.service"
     FAIL=$((FAIL + 1))
+    record_fail "SigNoz alert rules under-provisioned"
   else
     echo -e "${RED}FAIL${NC} SigNoz has ZERO alert rules — signoz-provision.service did not run or failed. Observability gap: no alerts will fire"
     FAIL=$((FAIL + 1))
+    record_fail "SigNoz has ZERO alert rules"
   fi
 else
   echo -e "${YELLOW}SKIP${NC} SigNoz rules endpoint not reachable"
@@ -852,6 +873,7 @@ if systemctl list-unit-files 'signoz*' --no-legend 2>/dev/null | grep -q signoz-
   *)
     echo -e "${RED}FAIL${NC} signoz-provision.service Result=${signoz_prov_result} — rules/dashboards are STALE. Check: journalctl -u signoz-provision -n 50"
     FAIL=$((FAIL + 1))
+    record_fail "signoz-provision.service stale"
     ;;
   esac
 fi
@@ -941,6 +963,7 @@ elif ! $m365_enabled; then
 else
   echo -e "${RED}FAIL${NC} Monitor365 agent metrics NOT responding (localhost:9191) — agent may be crashed or circuit-breaker deadlocked"
   FAIL=$((FAIL + 1))
+  record_fail "Monitor365 agent metrics NOT responding (localhost:9191)"
 fi
 
 # Check 3: Server reports agent as connected device.
@@ -972,6 +995,7 @@ if m365_health=$(curl -s --compressed --max-time 5 "http://localhost:3001/health
       else
         echo -e "${RED}FAIL${NC} Monitor365 server reports 0 connected devices after grace period"
         FAIL=$((FAIL + 1))
+        record_fail "Monitor365 server reports 0 connected devices"
       fi
     else
       echo -e "${YELLOW}WARN${NC} Monitor365 health reachable but unexpected realtime format"
@@ -1009,6 +1033,7 @@ if $m365_agent_ok && ! $m365_server_ok; then
       else
         echo -e "${RED}FAIL${NC} Monitor365 agent still not connected after restart — check API key or server logs"
         FAIL=$((FAIL + 1))
+        record_fail "Monitor365 agent still not connected after restart"
       fi
     fi
   else
@@ -1094,6 +1119,7 @@ for vhost in "${AUTH_VHOSTS[@]}"; do
   500 | 502 | 503)
     echo -e "${RED}FAIL${NC} $vhost → $status (auth gateway BROKEN — check oauth2-proxy)"
     FAIL=$((FAIL + 1))
+    record_fail "$vhost → auth gateway broken"
     ;;
   000)
     echo -e "${YELLOW}SKIP${NC} $vhost unreachable"
@@ -1295,6 +1321,30 @@ echo -e "${GREEN}PASS: $PASS${NC}  ${RED}FAIL: $FAIL${NC}  ${YELLOW}SKIP: $SKIP$
 if [ "$FAIL" -gt 0 ]; then
   echo ""
   echo -e "${RED}❌ $FAIL check(s) failed — investigate before proceeding${NC}"
+
+  # Fail-set baseline diff: failures already seen in the previous run are
+  # known-unrelated context (advisory, exit 1); anything NEW is this run's
+  # regression signal and exits 3 so automation can distinguish without
+  # reading logs. The baseline self-updates every run — a persistent outage
+  # is loud ONCE, then advisory, exactly so deploys stay possible while the
+  # fix ships. Missing baseline (first run ever) adopts silently.
+  state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/systemnix"
+  baseline_file="$state_dir/smoke-fail-baseline.txt"
+  mkdir -p "$state_dir"
+  LC_ALL=C sort -u "$SMOKE_FAIL_NAMES" -o "$SMOKE_FAIL_NAMES"
+  new_fails=""
+  if [ -f "$baseline_file" ]; then
+    new_fails="$(comm -13 <(LC_ALL=C sort -u "$baseline_file") "$SMOKE_FAIL_NAMES" || true)"
+  fi
+  cp "$SMOKE_FAIL_NAMES" "$baseline_file"
+
+  if [ -n "$new_fails" ]; then
+    echo ""
+    echo -e "${RED}NEW failures vs the previous run's baseline (regression signal, exit 3):${NC}"
+    printf '  - %s\n' "$new_fails"
+    exit 3
+  fi
+  echo "All FAILs match the previous run's baseline — advisory (exit 1). Baseline: $baseline_file"
   exit 1
 else
   echo ""

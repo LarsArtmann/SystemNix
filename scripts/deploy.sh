@@ -411,10 +411,18 @@ if nix run .#pre-deploy-check; then
 
   echo ""
   echo "=== Post-Deploy Smoke Test ==="
+  smoke_rc=0
   if nix run .#post-deploy-check; then
     echo "✅ Post-deploy smoke test passed"
   else
+    smoke_rc=$?
     echo "⚠ Some smoke checks failed — review above"
+    if [ "$smoke_rc" -eq 3 ]; then
+      echo "❌ NEW smoke failures vs the previous run's baseline — deploy exits 3 (regression signal)"
+    fi
+  fi
+  if [ "$smoke_rc" -eq 3 ]; then
+    exit 3
   fi
 else
   echo ""
