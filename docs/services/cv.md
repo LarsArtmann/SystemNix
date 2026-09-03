@@ -23,6 +23,18 @@ Resume/CV generator (`cv serve`, Go + Typst) from the private
 | Upstream pin      | flake input `cv` (rev-locked, git+ssh; no `follows` — vendorHash stability)                   |
 | Health surfaces   | `/health` (hand-rolled: checks incl. `pipeline-store` ping of the SQLite store; `database` = optional Turso analytics, DISABLED by design — the "Database not configured" message is benign) + go-health probes `/health/live|ready|startup` + `/admin/health` dashboard |
 
+> **Lock-state breadcrumb (2026-09-03):** the 2026-09-02 bump to `6615eec`
+> failed its go-modules FOD upstream (source-only churn; the handoff-era
+> `tH3s…` got-hash went stale the same way). A parallel session rolled the
+> lock back to `7dee7292` to unblock the 00:3x deploy train — the deployed
+> binary therefore predates `pipeline-store`, and the "CV Pipeline Store
+> Health" Gatus check + smoke line stayed red BY DESIGN until the next
+> deploy. Chain repaired 2026-09-03: fresh got-hash probed lock-free at
+> origin/master, pasted upstream (CV `4ac7ca7b`, pushed; CV's own
+> `checks.vendor-hash` CI gate validates it), SystemNix re-locked to
+> `4ac7ca7b`, hermetic FOD + full package build GREEN, `nix flake check
+> --no-build` rc=0. Deploys were pending the IO-PSI gate + the user reboot.
+
 ## State dir contract
 
 - `assets/` and the 8 `data/<content>/` subdirs are **wiped and re-copied**
@@ -99,6 +111,11 @@ store is considered noise).
 #    to push, confirm that rev carries it, and if the FOD still fails it
 #    names the truth — paste the `got:` hash into nix/packages.nix
 #    vendorHash, let the daemon commit, re-bump the input, build again.
+#    Probe the got-hash BEFORE touching the lock (no tree churn, no worktree):
+nix build --impure --no-link --print-out-paths --expr \
+  'let cv = builtins.getFlake "git+ssh://git@github.com/LarsArtmann/CV?rev=<FULL_REV>"; in cv.packages.x86_64-linux.default.goModules'
+#    (fails with `got:` = the hash for EXACTLY that rev; a hash from an older
+#    rev is worthless — source-only churn re-invalidates it, 2026-09-03.)
 nix flake lock --update-input cv   # verify the lock rev includes the vendorHash fix
 nix run .#deploy                   # watch for cv-server + cv-scan units in the switch
 nix run .#post-deploy-check        # CV section: /health/live + /export/pdf

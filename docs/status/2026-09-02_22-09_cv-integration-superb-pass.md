@@ -82,3 +82,32 @@ Audited every CV integration layer (module, Gatus, backups, tests, docs, smoke c
 1. **May I commit + push the one-line vendorHash fix** (`sha256-tH3s4c91…`) in the CV repo and re-lock SystemNix? It is a NEW commit beyond the 6615eec7 push you already authorized, and it is the only blocker between here and deploys working.
 2. **min_day_rate: 600, 700+, or leave off?** (Your rate-floor session proposed 600 = 75 €/h × 8; higher skips more postings outright.)
 3. **Deploy as soon as the chain is green + PSI clears, or leave the deploy to you?** (It restarts cv-server/gatus and ships the new binary; the machine froze yesterday and the pressure gate is still red at ~67%.)
+
+---
+
+## RESOLUTION ADDENDUM (2026-09-03 ~13:00, continuation session)
+
+The user answered with a blanket "keep going until everything works" resume directive; a parallel
+session (`2026-09-03_12-28_sev1-tier-contract-complete-deploy-unblocked.md`) meanwhile ROLLED THE LOCK
+BACK to `7dee7292` to unblock its 00:3x deploy train — correctly: my `6615eec` bump was unbuildable,
+and the deployed cv binary predates `pipeline-store`, so the new Gatus check + smoke line sat red BY
+DESIGN until the chain below landed.
+
+**Q1 — vendorHash chain: DONE.** And the handoff's `tH3s…` got-hash was STALE: a lock-free FOD probe
+at origin/master (`builtins.getFlake "git+ssh://…?rev=<FULL>"` → `.packages.x86_64-linux.default.goModules`)
+returned `got: sha256-OWKH5Vax…` — source-only churn since `6615eec` re-invalidated it, zero
+go.mod/go.sum changes (the documented class, third occurrence). Pasted upstream as CV `4ac7ca7b`
+(pathspec commit after the daemon lagged >2 min; pre-commit full-build hook passed), pushed,
+re-locked SystemNix (`--update-input cv`, subtree nixpkgs rode along 2026-08-31→09-02), and verified
+HERMETICALLY this time: goModules FOD store path printed, FULL `cv-4ac7ca7` package built,
+`nix flake check --no-build` rc=0.
+
+**Q2 — min_day_rate: still the owner's call.** Left unset (default 0 = off); TODO row retained.
+
+**Q3 — deploy: correctly NOT forced.** IO PSI held 66-76% all day (D-state kernel threads per CV's
+own ledger) and the box awaits the user reboot for the NPU wedge; the pressure gate would block
+anyway. The chain is deploy-ready — the next train carries it. Stale worktrees
+(`/tmp/cv-before2`, `/tmp/cvbase/CV`) pruned (trash + `git worktree prune`).
+
+Owed after deploy: post-deploy pipeline-store PASS line, `/health/live` stamp = `4ac7ca7`-short,
+one Gatus cycle, local test-cv VM run on quiet IO (CI runs it on push).

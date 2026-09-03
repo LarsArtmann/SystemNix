@@ -1922,12 +1922,19 @@ _: {
               # token inboxclean-sync uploads attachments with — the
               # unauthenticated Paperless login-page check cannot see token
               # death, so archiving would degrade silently (upstream treats
-              # upload failures as warnings by design).
+              # upload failures as warnings by design). Endpoint is the
+              # auth-required document list, NOT the API root: paperless
+              # serves the root as browsable HTML only (any JSON Accept is
+              # answered 406 regardless of token — the bug that broke the
+              # InboxClean ping upstream, 2026-09-03), and unauthenticated
+              # browser-y requests get a 302 login redirect instead of 401.
+              # /api/documents/ is unambiguous: valid token -> 200,
+              # dead token -> 401.
               ++ lib.optionals (config.services.inboxclean.paperless.enable or false) [
                 (mkHttpCheck {
                   name = "InboxClean Paperless Archive Auth";
                   group = "Productivity";
-                  url = "http://localhost:${toString ports.paperless}/api/";
+                  url = "http://localhost:${toString ports.paperless}/api/documents/";
                   interval = "5m";
                   headers = {
                     Authorization = "Token $PAPERLESS_TOKEN";

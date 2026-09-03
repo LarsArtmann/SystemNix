@@ -555,22 +555,26 @@ fi
 
 # InboxClean -> Paperless archiving (enable-gated via the sync unit's
 # EnvironmentFile reference). The check runs as the invoking user, so it can
-# NOT hold the token (root-owned sops template) — assert instead that
-# paperless' API route is alive AND auth-enforced: 401 unauthenticated is
-# the healthy answer (route exists, anonymous access rejected). 200 would
-# mean auth is off (misconfig), anything else means paperless is down or
-# the route moved — but paperless has its own smoke checks, so WARN here.
+# NOT hold the token (root-owned sops template) — assert instead that the
+# auth-required document list route is alive AND auth-enforced: 401
+# unauthenticated is the healthy answer. The API root is deliberately
+# avoided: paperless serves it as browsable HTML only, so curl's
+# "Accept: */*" is answered 302 (login redirect) and any JSON Accept is
+# answered 406 regardless of token (broke the InboxClean ping upstream,
+# 2026-09-03). 200 would mean auth is off (misconfig); anything else means
+# paperless is down or the route moved — but paperless has its own smoke
+# checks, so WARN here.
 if grep -q 'inboxclean-paperless-env' /etc/systemd/system/inboxclean-sync.service 2>/dev/null; then
-  paperless_api_code="$(curl -s --compressed -o /dev/null -w '%{http_code}' --max-time 10 http://127.0.0.1:2892/api/)" || true
+  paperless_api_code="$(curl -s --compressed -o /dev/null -w '%{http_code}' --max-time 10 http://127.0.0.1:2892/api/documents/)" || true
   case "$paperless_api_code" in
   401)
-    report_pass "InboxClean Paperless — API route alive, auth enforced (401 unauth; token check rides the Gatus auth check)"
+    report_pass "InboxClean Paperless — document API alive, auth enforced (401 unauth; token check rides the Gatus auth check)"
     ;;
   200)
-    report_warn "InboxClean Paperless — paperless /api/ answered 200 WITHOUT a token (auth misconfigured on paperless?)"
+    report_fail "InboxClean Paperless — paperless /api/documents/ answered 200 WITHOUT a token (auth misconfigured on paperless?)"
     ;;
   *)
-    report_warn "InboxClean Paperless — paperless /api/ unreachable or unexpected code '$paperless_api_code' (paperless smoke section owns the failure path)"
+    report_warn "InboxClean Paperless — paperless /api/documents/ unreachable or unexpected code '$paperless_api_code' (paperless smoke section owns the failure path)"
     ;;
   esac
 else
