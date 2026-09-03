@@ -267,9 +267,7 @@
 
       # Reverse scan: EVERY unit carrying the env var must be a registry key (or
       # explicitly untracked) — the structural "no silent noop" rule.
-      unitsWithOtelEnv = lib.filter unitHasOtelEnv (
-        builtins.attrNames config.systemd.services
-      );
+      unitsWithOtelEnv = lib.filter unitHasOtelEnv (builtins.attrNames config.systemd.services);
 
       unregisteredOtelUnits = lib.filter (
         unit: !(cfg.expected ? ${unit}) && !(builtins.elem unit cfg.untrackedOtelUnits)

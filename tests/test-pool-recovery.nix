@@ -24,17 +24,15 @@ let
   poolRecoveryModule =
     (import ../modules/nixos/services/pool-recovery.nix).flake.nixosModules.pool-recovery;
 
-  baseNode =
-    _:
-    {
-      imports = [ poolRecoveryModule ];
-      boot.supportedFilesystems = [ "btrfs" ];
-      system.stateVersion = "25.11";
-      environment.systemPackages = [
-        pkgs.e2fsprogs
-        pkgs.btrfs-progs
-      ];
-    };
+  baseNode = _: {
+    imports = [ poolRecoveryModule ];
+    boot.supportedFilesystems = [ "btrfs" ];
+    system.stateVersion = "25.11";
+    environment.systemPackages = [
+      pkgs.e2fsprogs
+      pkgs.btrfs-progs
+    ];
+  };
 in
 {
   name = "pool-recovery";

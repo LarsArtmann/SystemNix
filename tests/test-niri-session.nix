@@ -26,66 +26,64 @@
   name = "niri-session";
   meta.maintainers = [ ];
 
-  nodes.machine =
-    _:
-    {
-      virtualisation = {
-        # COSMIC-test precedent: Wayland compositors under llvmpipe want headroom
-        memorySize = 4096;
-      };
-
-      users.users.alice = {
-        isNormalUser = true;
-        uid = 1000;
-        password = "alice";
-        # The point of the test: alice's user manager must boot pre-login
-        linger = true;
-      };
-
-      services = {
-        xserver.enable = true; # X11 greeter (nixpkgs sddm-test pattern)
-        displayManager = {
-          sddm.enable = true;
-          defaultSession = "niri";
-        };
-      };
-
-      programs.niri.enable = true;
-
-      # Boot-reachable user unit in the exact aw-watcher gate shape: enabled
-      # via default.target (so the lingering boot transaction starts it),
-      # waits for the compositor socket instead of pulling
-      # graphical-session.target. Adding Wants=graphical-session.target here
-      # would be the 2026-08-18 bug — session-boot-audit blocks that shape at
-      # eval time; this test proves the LEGAL shape stays zombie-free at
-      # runtime.
-      systemd.user.services.niri-session-gate-test = {
-        description = "Linger boot canary: wait for compositor socket (aw-watcher gate shape)";
-        wantedBy = [ "default.target" ];
-        serviceConfig = {
-          Type = "simple";
-          ExecStart = "${pkgs.writeShellScript "niri-session-gate-test" ''
-            while true; do
-              for candidate in "''${XDG_RUNTIME_DIR:-/run/user/1000}"/wayland-[0-9]; do
-                [ -S "$candidate" ] && sleep infinity
-              done
-              sleep 1
-            done
-          ''}";
-          Restart = "always";
-          RestartSec = "5s";
-        };
-        unitConfig = {
-          StartLimitBurst = 5;
-          StartLimitIntervalSec = 300;
-        };
-      };
-
-      # The test drives the SDDM greeter via OCR (nixpkgs sddm-test pattern);
-      # enableOCR is set at the top level of the test spec.
-
-      system.stateVersion = "25.11";
+  nodes.machine = _: {
+    virtualisation = {
+      # COSMIC-test precedent: Wayland compositors under llvmpipe want headroom
+      memorySize = 4096;
     };
+
+    users.users.alice = {
+      isNormalUser = true;
+      uid = 1000;
+      password = "alice";
+      # The point of the test: alice's user manager must boot pre-login
+      linger = true;
+    };
+
+    services = {
+      xserver.enable = true; # X11 greeter (nixpkgs sddm-test pattern)
+      displayManager = {
+        sddm.enable = true;
+        defaultSession = "niri";
+      };
+    };
+
+    programs.niri.enable = true;
+
+    # Boot-reachable user unit in the exact aw-watcher gate shape: enabled
+    # via default.target (so the lingering boot transaction starts it),
+    # waits for the compositor socket instead of pulling
+    # graphical-session.target. Adding Wants=graphical-session.target here
+    # would be the 2026-08-18 bug — session-boot-audit blocks that shape at
+    # eval time; this test proves the LEGAL shape stays zombie-free at
+    # runtime.
+    systemd.user.services.niri-session-gate-test = {
+      description = "Linger boot canary: wait for compositor socket (aw-watcher gate shape)";
+      wantedBy = [ "default.target" ];
+      serviceConfig = {
+        Type = "simple";
+        ExecStart = "${pkgs.writeShellScript "niri-session-gate-test" ''
+          while true; do
+            for candidate in "''${XDG_RUNTIME_DIR:-/run/user/1000}"/wayland-[0-9]; do
+              [ -S "$candidate" ] && sleep infinity
+            done
+            sleep 1
+          done
+        ''}";
+        Restart = "always";
+        RestartSec = "5s";
+      };
+      unitConfig = {
+        StartLimitBurst = 5;
+        StartLimitIntervalSec = 300;
+      };
+    };
+
+    # The test drives the SDDM greeter via OCR (nixpkgs sddm-test pattern);
+    # enableOCR is set at the top level of the test spec.
+
+    system.stateVersion = "25.11";
+  };
 
   enableOCR = true;
 
