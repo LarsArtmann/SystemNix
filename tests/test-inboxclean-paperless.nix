@@ -153,8 +153,9 @@ let
       pass =
         archivingOn.systemd.services.inboxclean-backup.unitConfig.RequiresMountsFor
         == [ "/mnt/pool/backups/inboxclean" ]
-        && archivingOn.systemd.services.inboxclean-backup.serviceConfig.CapabilityBoundingSet
-        == "CAP_DAC_READ_SEARCH"
+        &&
+          archivingOn.systemd.services.inboxclean-backup.serviceConfig.CapabilityBoundingSet
+          == "CAP_DAC_READ_SEARCH"
         && lib.hasInfix "inboxclean-backup" archivingOn.systemd.services.inboxclean-backup.serviceConfig.ExecStart;
     }
     {

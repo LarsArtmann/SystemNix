@@ -22,7 +22,7 @@ WARN=0
 SMOKE_FAIL_NAMES="$(mktemp)"
 trap 'rm -f "$SMOKE_FAIL_NAMES"' EXIT
 record_fail() {
-  printf '%s\n' "${1%% — *}" >> "$SMOKE_FAIL_NAMES"
+  printf '%s\n' "${1%% — *}" >>"$SMOKE_FAIL_NAMES"
 }
 
 # Colors

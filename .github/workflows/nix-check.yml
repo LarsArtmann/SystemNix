@@ -16,7 +16,15 @@ jobs:
         with:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
-            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+            # NIX_GITHUB_RO_TOKEN: read-only PAT covering the owner's PRIVATE
+            # repos. The job-scoped GITHUB_TOKEN only reads THIS repo, so every
+            # `github:`-type lock node pointing at a private LarsArtmann repo
+            # (32 as of 2026-09-03: bank-sync, browser-history, buildflow,
+            # crush-config, ...) 404s on its api.github.com tarball fetch.
+            # Deploy keys cannot fix this class: subtree nodes pinned by
+            # upstream flakes at depth >= 2 are unreachable by follows.
+            # Fallback keeps current behavior until the secret exists.
+            access-tokens = github.com=${{ secrets.NIX_GITHUB_RO_TOKEN || secrets.GITHUB_TOKEN }}
 
       # Private flake inputs (CV, go-cqrs-lite — both git+ssh) need deploy
       # keys; the public go-nix-helpers input rides a git+ssh URL too (also
@@ -144,7 +152,7 @@ jobs:
         with:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
-            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+            access-tokens = github.com=${{ secrets.NIX_GITHUB_RO_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Run NixOS VM tests
         run: |
