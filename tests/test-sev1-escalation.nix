@@ -10,7 +10,8 @@
 # + "yellow, non-flashing, once" refinement):
 #   NO memory-related condition may EVER overlay. page = RESERVED (red
 #   pulsing, no current emitter). warn = infra hardware criticals
-#   (DAS/NIC/btrfs): static amber banner, shown ONCE per alert set (the
+#   (DAS/NIC/btrfs): static amber TOP-STRIP banner (non-fullscreen), shown
+#   ONCE per alert set (the
 #   bridge downgrades same-set refreshes to "warn-seen"). notify = one
 #   self-expiring notification, no overlay.
 #
@@ -334,7 +335,7 @@
       # --- 6. Infra critical: DAS link down — WARN tier (2026-09-02
       #        user decision: yellow, NON-FLASHING, shown ONCE per alert
       #        set). First exposure writes "warn" (the overlay renders
-      #        the static amber banner); refreshing the SAME alert set
+      #        the amber strip); refreshing the SAME alert set
       #        downgrades to "warn-seen" (overlay ignores it). The
       #        "once" lives in the BRIDGE so it survives quickshell
       #        restarts and is testable here.

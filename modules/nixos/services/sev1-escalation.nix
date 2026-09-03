@@ -23,10 +23,11 @@
 #       a state file, so a persistent alert notifies once, not every 10 s.
 #     - Clear: removes the alert file.
 #     - Emits sev1-bridge.prom (fail-closed presence metric).
-#   sev1-overlay.service (user, graphical-session.target):
-#     - Quickshell fullscreen banner while the alert file is fresh AND its
-#       severity line (line 4) says "page" — notify-tier alerts never
-#       fullscreen.
+# sev1-overlay.service (user, graphical-session.target):
+#     - Quickshell banner while the alert file is fresh AND its severity
+#       line (line 4) selects it — red fullscreen pulse for "page"
+#       (reserved), amber top-strip for "warn"; notify-tier alerts never
+#       render.
 #
 # Overlay triggers are TIERED (user decisions 2026-08-31 evening +
 # 2026-09-02 movie-night sessions; HARDENED 2026-09-02 late evening after
@@ -37,7 +38,8 @@
 #   page   = red pulsing fullscreen overlay + persistent critical
 #           notification. RESERVED — no current emitter (true
 #           drop-everything emergencies only).
-#   warn   = STATIC amber fullscreen banner, shown ONCE per alert set,
+#   warn   = STATIC amber TOP-STRIP banner (non-fullscreen, ~12% of
+#           screen height), shown ONCE per alert set,
 #           no animation, + one cooldown-gated notification:
 #           infra hardware criticals (DAS link, LAN NIC, btrfs critical).
 #           Once = the bridge writes "warn" on the first run of a NEW

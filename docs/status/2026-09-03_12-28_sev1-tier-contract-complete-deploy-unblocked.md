@@ -7,7 +7,7 @@
 | Thing | State |
 | ---- | ----- |
 | Memory alerts | `notify` tier — can never overlay (deployed 21:46, gen `r26nn0zq`) |
-| Warn tier (DAS/NIC/btrfs) | static amber banner ONCE per alert set + one cooldown-gated notification (deployed 01:0x, gen `h4w1yz17`) |
+| Warn tier (DAS/NIC/btrfs) | static amber banner ONCE per alert set + one cooldown-gated notification (deployed 01:0x, gen `h4w1yz17`; refined 12:3x per user choice → NON-fullscreen top strip) |
 | `page` (red pulsing fullscreen) | RESERVED — zero current emitters |
 | Warn QML | **verified running**: overlay process launched the new shell (`xknjlls9z…`), "Configuration Loaded", no crash-loop after the restartTriggers switch |
 | `niri-health-metrics` (the deploy blocker) | fixed + live: `niri.prom` freshly written by the root timer |
