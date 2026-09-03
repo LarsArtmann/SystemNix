@@ -57,6 +57,19 @@
       };
 
       config = lib.mkIf cfg.enable {
+        # The cv CLI on the machine PATH. The systemd unit ExecStarts the
+        # store binary directly — invisible to interactive shells — and the
+        # same derivation IS the CLI (cv serve / cv approve / cv track ...).
+        # CLI commands resolve config.yaml + data/ from CWD, so repo work
+        # still runs from the CV checkout (nix run .#cv / go run ./cmd/cv);
+        # this PATH entry exposes the pinned machine version everywhere else.
+        # Freshness = the flake.lock `cv` input: bump the lock and rebuild
+        # to ship new CLI/server features (PATH cv and the service move
+        # together — one derivation).
+        environment.systemPackages = [
+          inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.cv
+        ];
+
         services.cv-server = {
           package = lib.mkDefault inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default;
           port = lib.mkDefault ports.cv;
@@ -165,7 +178,10 @@
                 # bands (4.5-max corpus tops out ~3.2): apply-only starves
                 # the funnel to zero candidates. The approval click stays
                 # the human gate either way.
-                recommendations = [ "apply" "worth-trying" ];
+                recommendations = [
+                  "apply"
+                  "worth-trying"
+                ];
                 max_per_pass = 5;
                 strategy = "nudge";
                 send_on_approve = true;
