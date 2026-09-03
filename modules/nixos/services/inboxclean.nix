@@ -82,6 +82,7 @@
         ;
       cfg = config.services.inboxclean;
       inboxcleanPkg = inputs.inboxclean.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      inboxcleanBackupDir = "/mnt/pool/backups/inboxclean";
     in
     {
       imports = [ inputs.inboxclean.nixosModules.default ];
@@ -153,8 +154,8 @@
           # through extraEnvironment. Upstream applies both to web + sync
           # units (commonServiceConfig), so the /sync dashboard card lights
           # up with upload stats too. No systemd ordering against
-          # paperless-web: the hook pings GET /api/ fail-fast and the next
-          # 30-min tick retries; the ledger keeps it idempotent.
+          # paperless-web: the hook pings the document API fail-fast and the
+          # next 30-min tick retries; the ledger keeps it idempotent.
           environmentFile = lib.mkIf cfg.paperless.enable (
             lib.mkDefault config.sops.templates."inboxclean-paperless-env".path
           );
@@ -198,6 +199,103 @@
             ioTier.background
             { Environment = [ "GOMEMLIMIT=768MiB" ]; }
           ];
+        };
+
+        # Nightly WAL-safe backup of the event-store DB onto the mirrored
+        # HDD pool (cv-backup pattern). The SQLite file holds both Gmail
+        # accounts' sync state AND the paperless upload ledger — losing it
+        # means a full Gmail re-sync plus lost upload idempotency.
+        #
+        # Mount-gated creator for the pool-side dir (atticd-storage-dir /
+        # cv-backup-dir pattern): ReadWritePaths needs the path to exist
+        # BEFORE namespace setup, and tmpfiles would pre-create it on the
+        # root fs, shadowing the pool copy during a DAS outage.
+        systemd.services.inboxclean-backup-dir = {
+          description = "Create InboxClean backup directory on the HDD pool";
+          wantedBy = [ "multi-user.target" ];
+          unitConfig.RequiresMountsFor = [ inboxcleanBackupDir ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = "root";
+              RemainAfterExit = true;
+            }
+            # Targets the PARENT — pointing ReadWritePaths at the leaf
+            # itself would 226/NAMESPACE before it can mkdir (cv lesson).
+            (harden {
+              MemoryMax = "128M";
+              ReadWritePaths = [ "/mnt/pool/backups" ];
+            })
+            (serviceOneshotDefaults { })
+          ];
+          script = ''
+            mkdir -p ${inboxcleanBackupDir}
+            chmod 0755 ${inboxcleanBackupDir}
+          '';
+        };
+
+        systemd.services.inboxclean-backup = {
+          description = "InboxClean event-store SQLite backup (online .backup)";
+          after = [
+            "inboxclean-web.service"
+            "inboxclean-backup-dir.service"
+          ];
+          wants = [
+            "inboxclean-web.service"
+            "inboxclean-backup-dir.service"
+          ];
+          # A detached DAS fails the run as a clean dependency error instead
+          # of 226/NAMESPACE, and boot catch-up waits for the pool mount.
+          unitConfig.RequiresMountsFor = [ inboxcleanBackupDir ];
+          inherit onFailure;
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              ExecStart = pkgs.writeShellScript "inboxclean-backup" ''
+                set -euo pipefail
+                db="${cfg.dataDir}/inboxclean.db"
+                if [ ! -f "$db" ]; then
+                  echo "inboxclean-backup: no inboxclean.db yet — nothing to back up"
+                  exit 0
+                fi
+                ts=$(date +%Y%m%dT%H%M%S)
+                dst="${inboxcleanBackupDir}/inboxclean-$ts.db"
+                ${lib.getExe pkgs.sqlite} "$db" ".backup '$dst'"
+                # 14-day retention (pocket-id/cv pattern): the online .backup
+                # rewrites every page, so nothing dedups between nights.
+                find "${inboxcleanBackupDir}" -name "inboxclean-*.db" -mtime +14 -delete
+                echo "inboxclean-backup: wrote $dst"
+              '';
+              ReadWritePaths = [
+                inboxcleanBackupDir
+                cfg.dataDir
+              ];
+            }
+            (harden {
+              # The state dir is foreign-owned (inboxclean); root with an
+              # EMPTY CapabilityBoundingSet obeys DAC and cannot stat
+              # through it — the cv-backup silent-no-op class.
+              # CAP_DAC_READ_SEARCH = read-only traversal.
+              CapabilityBoundingSet = "CAP_DAC_READ_SEARCH";
+            })
+            (serviceOneshotDefaults { })
+            ioTier.background
+          ];
+        };
+
+        # 04:30 — staggered off the 01:00-03:00 btrbk peak and the
+        # 03:17/03:30/04:00 dump backups (backup-coordination doctrine).
+        systemd.timers.inboxclean-backup = {
+          description = "Nightly InboxClean DB backup (04:30)";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = "*-*-* 04:30:00";
+            Persistent = true;
+            Unit = "inboxclean-backup.service";
+          };
         };
       };
     };

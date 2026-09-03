@@ -848,6 +848,15 @@ in
             filePattern = "pipeline-*.sqlite";
             maxAgeHours = 25;
           };
+        }
+        // lib.optionalAttrs config.services.inboxclean.enable {
+          inboxclean = {
+            # Nightly online .backup of the event-store DB
+            # (inboxclean-backup.timer, 04:30) onto the mirrored pool.
+            directory = "/mnt/pool/backups/inboxclean";
+            filePattern = "inboxclean-*.db";
+            maxAgeHours = 25;
+          };
         };
       };
 

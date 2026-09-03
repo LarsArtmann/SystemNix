@@ -292,7 +292,7 @@ if nix run .#pre-deploy-check; then
   # atticd-bootstrap: re-runs after DAS recovery even when it condition-skipped
   # at boot (2026-08-24 — was missing here, so a skipped bootstrap stayed
   # skipped until the next reboot).
-  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir atticd-bootstrap bank-sync-storage-dir google-sync-dirs cv-backup-dir llama-rag-model-fetch hermes-github-verify; do
+  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir atticd-bootstrap bank-sync-storage-dir google-sync-dirs cv-backup-dir inboxclean-backup-dir llama-rag-model-fetch hermes-github-verify; do
     if systemctl is-enabled --quiet "$provisioner.service" 2>/dev/null; then
       echo "Restarting provisioner: $provisioner.service"
       sudo systemctl restart "$provisioner.service" 2>/dev/null || true
