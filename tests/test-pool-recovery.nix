@@ -25,7 +25,7 @@ let
     (import ../modules/nixos/services/pool-recovery.nix).flake.nixosModules.pool-recovery;
 
   baseNode =
-    { ... }:
+    _:
     {
       imports = [ poolRecoveryModule ];
       boot.supportedFilesystems = [ "btrfs" ];

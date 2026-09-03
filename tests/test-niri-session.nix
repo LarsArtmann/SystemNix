@@ -27,7 +27,7 @@
   meta.maintainers = [ ];
 
   nodes.machine =
-    { ... }:
+    _:
     {
       virtualisation = {
         # COSMIC-test precedent: Wayland compositors under llvmpipe want headroom
