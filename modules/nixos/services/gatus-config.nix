@@ -2001,12 +2001,20 @@ _: {
                   group = "Productivity";
                   url = "http://localhost:${toString ports.cv}/api/pipeline/sse-stats";
                   interval = "30m";
+                  # sse-stats scans the WHOLE event log per call (newest
+                  # job.discovered). Under IO PSI that took 2.4-12s live
+                  # (2026-09-03): the old [RESPONSE_TIME] < 2000 condition
+                  # flapped the check 4x/12h while funnelStale stayed false,
+                  # and the client's default 10s timeout failed the rest —
+                  # every flap paged "funnel stale" for a latency problem.
+                  # Liveness stays guarded by [STATUS] + this 30s ceiling;
+                  # the freshness verdict IS the check's job.
+                  client.timeout = "30s";
                   headers = {
                     X-API-Key = "$CV_API_KEY";
                   };
                   conditions = [
                     "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 2000"
                     "[BODY] == pat(*\"funnelStale\":false*)"
                   ];
                   alerts = discordAlert "CV funnel stale — no new job discovered in 26h+ (cv-scan timer dead or every portal failing). Check: systemctl list-timers | grep cv-scan; journalctl -u cv-scan -u cv-server --since -24h";
