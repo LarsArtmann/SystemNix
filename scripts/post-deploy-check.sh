@@ -1333,7 +1333,9 @@ if [ "$FAIL" -gt 0 ]; then
   mkdir -p "$state_dir"
   LC_ALL=C sort -u "$SMOKE_FAIL_NAMES" -o "$SMOKE_FAIL_NAMES"
   new_fails=""
+  had_baseline=0
   if [ -f "$baseline_file" ]; then
+    had_baseline=1
     new_fails="$(comm -13 <(LC_ALL=C sort -u "$baseline_file") "$SMOKE_FAIL_NAMES" || true)"
   fi
   cp "$SMOKE_FAIL_NAMES" "$baseline_file"
@@ -1344,7 +1346,11 @@ if [ "$FAIL" -gt 0 ]; then
     printf '  - %s\n' "$new_fails"
     exit 3
   fi
-  echo "All FAILs match the previous run's baseline — advisory (exit 1). Baseline: $baseline_file"
+  if [ "$had_baseline" -eq 1 ]; then
+    echo "All FAILs match the previous run's baseline — advisory (exit 1). Baseline: $baseline_file"
+  else
+    echo "First run with a fail baseline — adopting this run's FAIL set (advisory, exit 1). Baseline: $baseline_file"
+  fi
   exit 1
 else
   echo ""
