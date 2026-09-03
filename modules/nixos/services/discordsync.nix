@@ -249,8 +249,20 @@
             # SSD at 100% IO and starving SQLite (zombie gateway, 40s healthz,
             # SIGKILL on shutdown). It cannot finish (30-min timeout < sweep
             # duration, no resume), so sweep off-startup and off-peak instead.
+            # KEEP startup-off until upstream T2 (resumable sweep) ships: even
+            # paced at 100 MB/s a cold 40 GB pass needs ~70 min > the 30-min
+            # sweep timeout, so a re-enabled startup sweep would abort
+            # mid-flight every boot (bounded I/O, but wasted work). Revisit
+            # after the resumable cursor lands.
             INTEGRITY_CHECK_ON_STARTUP = "false";
             INTEGRITY_CHECK_INTERVAL = "12h";
+            # Byte-rate pacing cap for integrity sweeps (upstream T1,
+            # 2026-09-04). Bounds worst-case sweep read throughput so a cold
+            # cache can never storm the shared SSD again. 100 MB/s ≈ the
+            # upstream default, kept explicit here so the operator-visible env
+            # map documents the intent; ~18% of a SATA SSD's sequential
+            # bandwidth and further cushioned by ioTier.background (ionice).
+            INTEGRITY_SWEEP_MAX_MBPS = "100";
           }
           // lib.optionalAttrs (cfg.gcsBucket != null) {
             GCS_BUCKET = cfg.gcsBucket;

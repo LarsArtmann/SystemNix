@@ -468,14 +468,16 @@
     # Rev-pinned (2026-08-25) at 2862b613 = upstream aa56b582 + two commits
     # on branch nix/aa56b582-vendorhash (vendorHash correction + the
     # projection_dlq_legacy_unchanged growth flag the gatus check asserts).
-    # aa56b582 is the LAST tree before upstream's Go toolchain floor bump to
-    # 1.26.6 (ca9c470c, 2026-08-22) — nixpkgs has 1.26.5 + GOTOOLCHAIN=local,
-    # so master's go-modules FOD fails loudly (same class as
-    # file-and-image-renamer). When nixpkgs go >= 1.26.6: rebase the branch
-    # onto master (or cherry-pick the two commits), then switch back to
-    # ?ref=master and update-input.
+    # Unpinned back to ?ref=master (2026-09-04). History of the hold: the pin
+    # at 2862b613 existed because upstream's Go toolchain floor (1.26.6 then
+    # 1.26.7) exceeded the go in the nixpkgs that fed the build. That hazard
+    # is gone: the discordsync input deliberately does NOT follow our nixpkgs
+    # (comment below), so the FOD's go comes from upstream's OWN locked
+    # nixpkgs — which now ships go 1.26.7 (proven: upstream master builds
+    # green on this machine, vendorHash unchanged). Tracking master delivers
+    # the T1 integrity-sweep byte-rate pacing fix (2026-09-03 incident).
     discordsync = {
-      url = "github:LarsArtmann/DiscordSync/2862b613";
+      url = "github:LarsArtmann/DiscordSync?ref=master";
       inputs = {
         # go-nix-helpers AND nixpkgs deliberately NOT followed (bank-sync +
         # qmd precedents): upstream's vendorHash was validated against ITS
@@ -1201,6 +1203,8 @@
               deploy = mkApp "deploy" "Deploy NixOS config to evo-x2 via nh with post-deploy checks" [
                 pkgs.nh
                 pkgs.systemd
+                pkgs.util-linux # flock — concurrent-deploy guard (T13)
+                pkgs.procps # ps/pgrep — wedged switch-to-configuration detection
               ] ./scripts/deploy.sh;
               validate = mkApp "validate" "Validate flake without building" [ pkgs.nix ] ./scripts/validate.sh;
               fix-nixpkgs-lock =

@@ -32,6 +32,24 @@ deploy_exit_record() {
 }
 trap deploy_exit_record EXIT
 
+# Concurrent-deploy guard (T13, 2026-09-04): flock BEFORE any build or check
+# runs. Two overlapping deploys double the build I/O and the loser dies at the
+# switch step (exit 11, "Could not acquire lock") after minutes of wasted
+# work — this turns that race into a clean, immediate abort. The lock file
+# lives on /tmp (tmpfs): it vanishes on reboot (no stale-lock class), and
+# flock itself is released by the kernel the moment the holder exits — even
+# on crash or SIGKILL — so a dead deploy can never wedge the next one. The
+# holder PID is recorded for diagnostics.
+deploy_lock=/tmp/.systemnix-deploy.lock
+exec 9>"$deploy_lock"
+if ! flock -n 9; then
+  lock_holder=$(cat "$deploy_lock" 2>/dev/null || echo "unknown")
+  echo "❌ Another deploy is already running (lock: $deploy_lock, holder PID: $lock_holder)."
+  echo "   Wait for it to finish and re-run — flock releases automatically if that deploy dies."
+  exit 13
+fi
+echo $$ > "$deploy_lock"
+
 echo "=== Pre-Deploy Validation ==="
 if nix run .#pre-deploy-check; then
   echo ""
@@ -57,7 +75,12 @@ if nix run .#pre-deploy-check; then
     stc_pids=$(pgrep -f 'switch-to-configuration' || true)
     wedged=""
     for pid in $stc_pids; do
-      etimes=$(ps -o etimes= -p "$pid" 2>/dev/null | tr -d ' ')
+      # T13 (2026-09-04): a PID can vanish between pgrep and ps. Under
+      # `set -euo pipefail` the failed pipeline used to kill the whole script
+      # SILENTLY (deploy round 7, 2026-09-02, died here mid-line). `|| true`
+      # covers the whole pipeline (pipefail included), a vanished PID yields
+      # an empty etimes, and the -n guard below skips it.
+      etimes=$(ps -o etimes= -p "$pid" 2>/dev/null | tr -d ' ' || true)
       if [ -n "$etimes" ] && [ "$etimes" -gt 1800 ]; then
         wedged="$wedged $pid"
       fi
@@ -89,7 +112,7 @@ if nix run .#pre-deploy-check; then
   if [ -e "$stc_lock" ]; then
     young_stc=""
     for pid in $(pgrep -f 'switch-to-configuration' || true); do
-      etimes=$(ps -o etimes= -p "$pid" 2>/dev/null | tr -d ' ')
+      etimes=$(ps -o etimes= -p "$pid" 2>/dev/null | tr -d ' ' || true)
       if [ -n "$etimes" ] && [ "$etimes" -le 1800 ]; then
         young_stc="$young_stc $pid"
       fi
