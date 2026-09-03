@@ -452,22 +452,14 @@ if [ -s "$METRICS_FILE" ]; then
   # all three present in :9100/metrics.
   # system_local_dns_resolves (2026-09-02): RETIRED same day — confirmed
   # live in the system_health textfile (value 1) by the follow-up session.
-  # system_pma_commit_* (2026-09-02): three gauges from the PMA commit
-  # blackout fix (scrape_errors + failures_over_threshold +
-  # fallbacks_over_threshold, "PMA Commit Health" gatus check). Emitted by
-  # the system-health textfile collector shipping in this same deploy; the
-  # running generation's collector predates them. Remove after the first
-  # deploy confirms them in :9100/metrics (expected 0/0/0 once the
-  # backlog drains; failures may legitimately read 1 during the
-  # transition hour — 785 backlog failures sat in the 1h window at
-  # deploy time).
-  # niri_aw_* (2026-09-02, aw-watcher attach monitoring) and
-  # pocket-id pair retired 2026-09-03: confirmed LIVE in :9100/metrics after
-  # the gen-753 deploy (events_24h=30, scrape_errors=0). Still riding:
-  # PMA trio + niri pair (not yet live as of 2026-09-03 00:5x).
+  # system_pma_commit_* trio + niri_aw_* pair (2026-09-02/03): RETIRED
+  # 2026-09-03 12:5x — all five confirmed LIVE in :9100/metrics on the
+  # h4w1yz17 generation (pocket-id pair retired earlier the same day).
+  # The list is empty; re-add ONLY when a deploy introduces metrics the
+  # running generation's collector cannot yet emit.
   # Read by the sourced metrics-gate.sh.
   # shellcheck disable=SC2034
-  KNOWN_NEW_METRICS="system_pma_commit_scrape_errors system_pma_commit_failures_over_threshold system_pma_commit_fallbacks_over_threshold niri_aw_watcher_attached niri_aw_watcher_late"
+  KNOWN_NEW_METRICS=""
   for metric in $(extract_gatus_metrics); do
     metrics_gate_classify_absence "$metric" || MISSING_METRICS=$((MISSING_METRICS + 1))
   done
