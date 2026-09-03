@@ -106,3 +106,13 @@ Minor: 3 wasted `question`-tool invocations on schema errors; 2 lost multiedits 
 1. Warn banner presentation: ~10-20 s once per event — acceptable, or want it longer/different (top strip vs fullscreen dim)?
 2. Should I force-test the warn tier live now (needs one root command; you'd see the amber banner once), or first real DAS/NIC/btrfs event is the test?
 3. The 8 red smoke checks span four other sessions' domains (pocket-id, flm, llama.cpp, paperless/mail) — want me to drive them to green, or leave each to its owning session?
+
+---
+
+# CLOSURE (2026-09-03 13:15) — user answered the 3 questions
+
+1. **Warn banner = NON-fullscreen top strip** (was fullscreen-dim): QML anchors now top/left/right only with ~12% screen height for the warn tier; `page` (reserved) stays fullscreen. Strip-appropriate font sizes (15/32/14 px, detail max 2 lines, 92% width). Deployed exit 0 — smoke improved to **92 PASS / 2 FAIL** (parallel sessions fixed their domains overnight); the remaining 2 (FastFlowLM socket, paperless PAPERLESS_EMAIL_HOST) belong to their owning sessions per user decision. Overlay verified running the strip QML (`msq6c62…`, "Configuration Loaded", PID alive).
+2. **No live force-test** — first real DAS/NIC/btrfs event is the visual test.
+3. **8→2 smoke fails left to owning sessions.**
+
+Known cosmetic nit (not redeployed for): the `sev1-overlay.service` unit Description still reads "Fullscreen SEV1 emergency overlay" — accurate only for the reserved page tier now.
