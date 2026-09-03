@@ -40,3 +40,25 @@
 3. Token rotation now (one sops edit + rides the same post-reboot train) or later?
 
 *Reported 2026-09-03 13:25. Tree clean, everything committed+pushed; waiting on the reboot + next train.*
+
+---
+
+## OUTCOME (2026-09-03 ~17:45, follow-up session)
+
+The deploy did NOT wait for the reboot: trains ran at 13:16 and **15:46** (gen `wir47mg5`, smoke 91 PASS / 2 FAIL / 5 SKIP). **The 15:46 train carried the entire go-live payload and every verification gate is green:**
+
+| Gate | Result |
+| --- | --- |
+| Deployed binary | `inboxclean-751c556` — smoke asserts "deployed binary matches flake.lock" |
+| Sync journal | ZERO `client_error`/`cannot reach` since 16:05; 16:34 + 17:04 syncs run the Paperless section clean ("Messages scanned: 4, Attachments seen: 0" — no attachment traffic yet) |
+| Post-deploy smoke | PASS "InboxClean Paperless — document API alive, auth enforced (401 unauth)" |
+| Gatus auth oracle | "InboxClean Paperless Archive Auth" `success=true; errors=0` on the real token, every cycle since deploy |
+| Backup chain | `inboxclean-backup-dir` ran at deploy (pool dir exists); `inboxclean-backup` timer armed `*-*-* 04:30:00` Persistent; backup-coordination registration evals correct on the host |
+
+The two smoke FAILs are NOT this domain: FastFlowLM :52625 dead (NPU wedge — rides the user's pending reboot train, TODO_LIST item 1) and Paperless `PAPERLESS_EMAIL_HOST` missing (mail-relay session's relay-gated settings block — pre-existing in the 00:41 + 13:16 logs too).
+
+**Post-deploy find — lock hash flavor (fixed same evening):** the inboxclean lock entry carried a **git+ssh-flavored NAR hash** — the lock was created under the global `insteadOf` rewrite (`https://github.com/` → SSH), while the input URL is `github:`. Locally cached store artifacts masked it (the 15:46 deploy built fine); any COLD-store eval failed `NAR hash mismatch … expected 'sha256-QQap…' but got 'sha256-oxfPpt…'` — which is exactly what CI's go-deps-audit hit (`FATAL: nix eval of input outPaths failed`). Re-locked with `GIT_CONFIG_GLOBAL=/dev/null` → clean GitHub-tarball hash; the update also adopted upstream master `9da6885` (web UI features only, `internal/web/` — vendorHash untouched, package builds green). **Rule of thumb: after any `nix flake lock --update-input` of a LarsArtmann repo, re-verify with `GIT_CONFIG_GLOBAL=/dev/null nix eval` — the daemon happily locks a hash your own gitconfig flavor produced.**
+
+**Also fixed while CI was being triaged:** the tree's three statix warnings that kept CI's statix gate red (pocket-id assertion parens — `!x ? y` precedence equivalence eval-verified before de-parening, lambda hoisted to a named `paperlessOidcClientOk` let-binding; signoz-coverage eta-reduction; two `{ ... }:` empty patterns) + treefmt normalization of the formatter-dirty files. statix now exits 0; evo-x2 toplevel + niri-session VM-test drvs eval clean.
+
+Remaining from this report's questions — answered/owned elsewhere: (1) smoke-FAIL policy stays open (12:28 f.27 owner); (2) 04:30 backup slot shipped as-is (non-conflicting, no complaints possible against a first run); (3) token rotation is a TODO_LIST row now (user, one sops edit). The mail-relay VM test failure still blocks every hooked commit tree-wide — flagging remains outstanding for its owner.
