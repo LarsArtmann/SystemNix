@@ -310,6 +310,12 @@ _: {
           echo "=== Pocket ID Provisioning Complete ==="
         '';
       };
+
+      paperlessOidcClientOk =
+        client:
+        client.clientId == "paperless"
+        && client.pkceEnabled
+        && builtins.elem "https://paperless.${domain}/accounts/oidc/pocket-id/login/callback/" client.callbackURLs;
     in
     {
       options.services.pocket-id-config = {
@@ -557,12 +563,7 @@ _: {
               !cfg.provision.enable
               || !(options ? services.paperless)
               || !(config.services.paperless.enable)
-              || builtins.any (
-                client:
-                client.clientId == "paperless"
-                && client.pkceEnabled
-                && builtins.elem "https://paperless.${domain}/accounts/oidc/pocket-id/login/callback/" client.callbackURLs
-              ) cfg.provision.oidcClients;
+              || builtins.any paperlessOidcClientOk cfg.provision.oidcClients;
             message = ''pocket-id: paperless is SSO-only but the paperless OIDC client registration is missing or malformed (expected clientId "paperless", pkceEnabled = true, exact callback "https://paperless.${domain}/accounts/oidc/pocket-id/login/callback/") — every paperless login would break with no fallback. Fix services.pocket-id-config.provision.oidcClients.'';
           }
         ];
