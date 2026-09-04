@@ -456,12 +456,15 @@ in
     # forensics while leaving headroom on the 2TB QLC NVMe (SLC cache
     # exhaustion is the primary risk — journal writes compete with everything
     # else for SLC cache blocks).
-    journald.extraConfig = ''
-      SystemMaxUse=8G
-      RuntimeMaxUse=2G
-      MaxFileSec=1week
-      MaxRetentionSec=1month
-    '';
+    # settings.Journal (structured) replaces services.journald.extraConfig,
+    # which nixpkgs removed (2026-09-05: surfaced by the discordsync pin
+    # bump pulling nixpkgs 0968519e into the eval graph).
+    journald.settings.Journal = {
+      SystemMaxUse = "8G";
+      RuntimeMaxUse = "2G";
+      MaxFileSec = "1week";
+      MaxRetentionSec = "1month";
+    };
   };
 
   # Force performance governor — desktop/workstation with no battery concern
