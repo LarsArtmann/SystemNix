@@ -110,7 +110,12 @@ _: {
               OOMScoreAdjust = 500;
             }
             (serviceDefaults { })
-            rocm.deviceCgroup
+            # NOTE: nixpkgs' ollama module already sets DevicePolicy=closed with
+            # char-drm/char-kfd DeviceAllow — /dev/accel is SUBSYSTEM=accel, so
+            # the NPU node is already denied (proven live: ollama served through
+            # the 2026-09-04 amdxdna wedge that killed every unprotected ROCm
+            # service). Do NOT add rocm.deviceCgroup here — it conflicts on
+            # DevicePolicy ("closed" vs "strict") and breaks the eval.
             (harden {
               MemoryMax = "32G";
               CPUQuota = "400%"; # Model loading (GGUF quantization) is multi-threaded
