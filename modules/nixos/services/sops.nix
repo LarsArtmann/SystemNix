@@ -490,9 +490,14 @@ in
             };
           }
           // lib.optionalAttrs (svcEnabled "browser-history") {
-            # Shared by server (DynamicUser) and agent (user). Both use
-            # EnvironmentFile= which is read by systemd (root), so root-owned
-            # is correct for both consumers.
+            # Legacy v1 hex env token. The server keeps it as break-glass
+            # (v1 env path = anonymous attribution); remote (non-co-located)
+            # agents fall back to it too. The CO-LOCATED agent gets a real
+            # user-attributed bh_ DB token via the
+            # browser-history-agent-token-provision oneshot instead — the two
+            # values MUST differ (resolveAgentAuth checks the env path first;
+            # equal values short-circuit to anonymous). Root-owned: consumers
+            # read it via systemd EnvironmentFile (PID 1, root).
             "browser-history-env" = {
               owner = "root";
               group = "root";
