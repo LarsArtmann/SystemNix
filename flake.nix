@@ -466,20 +466,23 @@
     };
 
     # DiscordSync — Continuous Discord backup with Turso cloud sync
-    # Rev-pinned at febc42a7 (2026-09-04, second hold LIFTED): the d1df5ff
-    # FOD hash mismatch was upstream's stale vendorHash vs the daemon's
-    # dependency bumps; upstream re-derived it (sha256-LBXjDzuWeOOKyZ4nUuKyWg1tyFX9OgWxrSlA12NzdD8=,
-    # commit 85ef861b) and build-verified, and master moved on to febc42a7
-    # (T2 resumable sweep + sweep-timeout observability). Lift followed the
-    # hold's own rule: `nix build` of the discordsync package ran to
-    # COMPLETION in this flake's context BEFORE deploying. Keep pinning
+    # Rev-pinned at c0604e46 (2026-09-05, third lift): febc42a7 → c0604e46
+    # brings the command-audit search-corruption fixes (URL-escape +
+    # LIKE-wildcard escaping), the storage-growth guild filter, the typed
+    # chart pipeline, the stats-rollup per-message WARN flood fix, ingest
+    # dispatch logs demoted to Debug, and gofumpt folded into verify.
+    # Upstream re-derived vendorHash (sha256-n5OcBbjU+SslcLkZjcZpUDpwOXOWZVy4ZcLfj2CKCMs=)
+    # after the daemon's go-health/go-health-dashboard bumps and
+    # build-verified in its own flake; the lift followed the hold's own
+    # rule: `nix build` of the quick-go batch (discordsync included) ran
+    # to COMPLETION in this flake's context BEFORE deploying. Keep pinning
     # explicit revs — the 02:59 switch failure of 2026-09-04 came from a
     # moving `?ref=master` resolving past the fix. First hold history
     # (2026-08-25 → 2026-09-04, upstream Go floor > nixpkgs go) is moot: the
     # input deliberately does not follow our nixpkgs, so the FOD's go comes
     # from upstream's own lock.
     discordsync = {
-      url = "github:LarsArtmann/DiscordSync/febc42a7";
+      url = "github:LarsArtmann/DiscordSync/c0604e46";
       inputs = {
         # go-nix-helpers AND nixpkgs deliberately NOT followed (bank-sync +
         # qmd precedents): upstream's vendorHash was validated against ITS
