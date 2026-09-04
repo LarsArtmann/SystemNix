@@ -35,7 +35,8 @@ let
       modules = [
         inputs.sops-nix.nixosModules.sops
         audit
-      ] ++ extraModules;
+      ]
+      ++ extraModules;
     }).config.assertions;
 
   failing =
@@ -47,25 +48,49 @@ let
       name = "missing-key-not-caught";
       pass =
         let
-          f = failing (evalAssertions [ { sops.secrets.browser_history_agent_db_token = { sopsFile = fixture; }; } ]);
+          f = failing (evalAssertions [
+            {
+              sops.secrets.browser_history_agent_db_token = {
+                sopsFile = fixture;
+              };
+            }
+          ]);
         in
         f != [ ] && lib.hasInfix "browser_history_agent_db_token" (builtins.head f).message;
     }
     {
       name = "present-key-falsely-flagged";
-      pass = failing (evalAssertions [ { sops.secrets.present_key = { sopsFile = fixture; }; } ]) == [ ];
+      pass =
+        failing (evalAssertions [
+          {
+            sops.secrets.present_key = {
+              sopsFile = fixture;
+            };
+          }
+        ]) == [ ];
     }
     {
       name = "nested-key-not-skipped";
       pass =
-        failing (evalAssertions [ { sops.secrets.other_name = { sopsFile = fixture; key = "present_key"; }; } ])
-        == [ ];
+        failing (evalAssertions [
+          {
+            sops.secrets.other_name = {
+              sopsFile = fixture;
+              key = "present_key";
+            };
+          }
+        ]) == [ ];
     }
     {
       name = "runtime-sopsfile-not-skipped";
       pass =
-        failing (evalAssertions [ { sops.secrets.runtime_thing = { sopsFile = "/run/secrets/does-not-exist"; }; } ])
-        == [ ];
+        failing (evalAssertions [
+          {
+            sops.secrets.runtime_thing = {
+              sopsFile = "/run/secrets/does-not-exist";
+            };
+          }
+        ]) == [ ];
     }
   ];
 

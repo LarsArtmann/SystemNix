@@ -375,6 +375,17 @@ else
   report_fail "Browser History — agent timer NOT active (history collection offline)"
 fi
 
+# Browser History: the agent-token provision oneshot must have converged.
+# The agent's EnvironmentFile IS the provisioned agent.env — a dead
+# provisioner means the agent starts with no DB token (or fails outright).
+if test -e /etc/systemd/system/browser-history-agent.service; then
+  if systemctl is-active --quiet browser-history-agent-token-provision.service; then
+    report_pass "Browser History — agent token provisioned (oneshot active)"
+  else
+    report_fail "Browser History — agent-token-provision NOT active (no DB token for the agent; check its journal)"
+  fi
+fi
+
 # Paperless: the login page BODY proves the full Django + PostgreSQL + redis
 # stack answers, not just the port. In the 2026-08-18 PG bootstrap incident a
 # stale src-version file made the scheduler skip `migrate`, it crash-looped on

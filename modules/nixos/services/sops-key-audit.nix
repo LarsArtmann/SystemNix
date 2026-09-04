@@ -44,10 +44,7 @@
           # unreadable (and forbidden) in pure eval. Repo files are paths.
           # tryEval alone cannot catch the pure-eval absolute-path error.
           parsed =
-            if builtins.isPath secret.sopsFile then
-              builtins.tryEval (topLevelKeys secret.sopsFile)
-            else
-              null;
+            if builtins.isPath secret.sopsFile then builtins.tryEval (topLevelKeys secret.sopsFile) else null;
         in
         if parsed == null then
           null
@@ -61,8 +58,7 @@
             message = "sops-key-audit: secret '${name}' is declared but its key is MISSING from ${toString secret.sopsFile}. The deploy would fail at activation with \"sops-install-secrets: manifest is not valid\". Add the key to the encrypted file (sudo sops <file> from the repo root, or SOPS_AGE_KEY=... sops <file>) or remove the declaration.";
           };
 
-      declaredSecrets =
-        if config ? sops && config.sops ? secrets then config.sops.secrets else { };
+      declaredSecrets = if config ? sops && config.sops ? secrets then config.sops.secrets else { };
 
       results = lib.mapAttrsToList checkSecret declaredSecrets;
     in
