@@ -30,7 +30,9 @@
       topLevelKeys =
         file:
         let
-          lines = builtins.split "\n" (builtins.readFile file);
+          # builtins.split interleaves the separator capture (a list) between
+          # elements — keep only the actual string lines.
+          lines = builtins.filter builtins.isString (builtins.split "\n" (builtins.readFile file));
           keyLines = builtins.filter (l: builtins.match "[A-Za-z0-9_-]+:.*" l != null) lines;
         in
         map (l: builtins.head (builtins.match "([A-Za-z0-9_-]+):.*" l)) keyLines;
@@ -38,9 +40,16 @@
       checkSecret =
         name: secret:
         let
-          parsed = builtins.tryEval (topLevelKeys secret.sopsFile);
+          # String-typed sopsFiles are runtime paths (/run/secrets/...) —
+          # unreadable (and forbidden) in pure eval. Repo files are paths.
+          # tryEval alone cannot catch the pure-eval absolute-path error.
+          parsed =
+            if builtins.isPath secret.sopsFile then
+              builtins.tryEval (topLevelKeys secret.sopsFile)
+            else
+              null;
         in
-        if !parsed.success then
+        if parsed == null then
           null
         else if secret.key != name then
           null

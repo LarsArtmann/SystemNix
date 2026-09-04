@@ -23,14 +23,10 @@ let
   audit = (import ../modules/nixos/services/sops-key-audit.nix).flake.nixosModules.sops-key-audit;
 
   # Encrypted-shaped fixture: key names plaintext (as in real sops files),
-  # values opaque, `sops:` metadata tail mirroring the real files.
-  fixture = builtins.toFile "fixture-sops.yaml" ''
-    present_key: ENC[AES256_GCM,data:AAAA,iv:AAAA,tag:AAAA,type:str]
-    another_key: ENC[AES256_GCM,data:AAAA,iv:AAAA,tag:AAAA,type:str]
-    sops:
-      kms: []
-      age: []
-  '';
+  # values opaque, `sops:` metadata tail mirroring the real files. Must be a
+  # real tracked file (path type) — runtime/string sopsFiles are skipped by
+  # design, and builtins.toFile returns a string, not a path.
+  fixture = ./fixtures/sops-fixture.yaml;
 
   evalAssertions =
     extraModules:

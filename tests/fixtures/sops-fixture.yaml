@@ -1,0 +1,5 @@
+present_key: ENC[AES256_GCM,data:AAAA,iv:AAAA,tag:AAAA,type:str]
+another_key: ENC[AES256_GCM,data:AAAA,iv:AAAA,tag:AAAA,type:str]
+sops:
+  kms: []
+  age: []
