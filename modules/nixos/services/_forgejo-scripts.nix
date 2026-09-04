@@ -357,23 +357,26 @@ in
 
       # 1. user (create-or-verify; password is random and never delivered —
       #    the token is the only credential that leaves this box).
-      #    The user list is the pinned forgejo CLI table (tabwriter with
-      #    padchar '\t', so every cell is terminated by EXACTLY one tab and
-      #    no field can contain one). Parse columns by the header row's
-      #    positions, match the EXACT username, then verify that row's email:
-      #    a plain email grep false-positives on any other user whose address
-      #    merely contains "hermes-agent", skipping creation and failing much
-      #    later at token generation with a confusing user-not-found error.
+      #    Parse the pinned forgejo CLI table (verified against the 15.0.7
+      #    binary + source: header format "ID\tUsername\tEmail\tIsActive\t
+      #    IsAdmin\t2FA" rendered by tabwriter.NewWriter(5, 0, 1, ' ', 0),
+      #    i.e. SPACE-padded columns — no literal tabs in the output).
+      #    Usernames and emails cannot contain whitespace, so whitespace
+      #    field-splitting is exact; mapping columns by the header row keeps
+      #    the parser order-independent. Match the EXACT username first, then
+      #    verify that row's email: a plain email grep false-positives on any
+      #    other user whose address merely contains "hermes-agent", skipping
+      #    creation and failing much later at token generation with a
+      #    confusing user-not-found error.
       USER_LIST=$("$FORGEJO" admin user list) || {
         echo "ERROR: forgejo admin user list failed" >&2
         exit 1
       }
-      FOUND_EMAIL=$(printf '%s\n' "$USER_LIST" | awk -F'\t' -v want="$FORGEJO_USER_NAME" '
+      FOUND_EMAIL=$(printf '%s\n' "$USER_LIST" | awk -v want="$FORGEJO_USER_NAME" '
         NR == 1 {
           for (i = 1; i <= NF; i++) {
-            col = $i; sub(/^[[:space:]]+/, "", col); sub(/[[:space:]]+$/, "", col)
-            if (col == "Username") user_col = i
-            if (col == "Email") email_col = i
+            if ($i == "Username") user_col = i
+            if ($i == "Email") email_col = i
           }
           if (!user_col || !email_col) {
             print "ERROR: forgejo admin user list output has no Username/Email columns" > "/dev/stderr"

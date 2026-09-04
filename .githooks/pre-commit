@@ -106,14 +106,21 @@ STAGED_NIX=$(git diff --cached --name-only --diff-filter=ACM '*.nix')
 all_passed=true
 
 # Fast guard: reject GOTOOLCHAIN=auto in .nix files (breaks sandbox purity).
+# CONTENT-based predicate (a file violates iff it has a line matching auto
+# without off): filtering grep -l FILENAMES for 'off' let a file merely NAMED
+# like GOTOOLCHAIN-auto-off.nix bypass the guard while carrying real =auto.
 if [ -n "$STAGED_NIX" ]; then
-# Paths are fed to xargs NUL-delimited (-z + xargs -0): a newline-separated
-# list lets default xargs split staged filenames on whitespace, formatting or
-# grepping the WRONG paths (or phantom-greening when both halves miss).
-  gotoolchain_violation=$(git diff --cached --name-only --diff-filter=ACM -z '*.nix' | xargs -0 grep -lnE 'GOTOOLCHAIN.*auto' 2>/dev/null | grep -v 'GOTOOLCHAIN.*off' || true)
-  if [ -n "$gotoolchain_violation" ]; then
-    log_error "GOTOOLCHAIN=auto found in staged .nix files — breaks Nix sandbox purity."
-    git diff --cached --name-only --diff-filter=ACM -z '*.nix' | xargs -0 grep -nE 'GOTOOLCHAIN.*auto' 2>/dev/null | grep -v 'GOTOOLCHAIN.*off'
+# Paths are fed NUL-delimited (-z + read -d ''): a newline-separated list lets
+# default splitting break staged filenames containing whitespace.
+  gotoolchain_violation=false
+  while IFS= read -r -d '' f; do
+    if [ -f "$f" ] && grep -E 'GOTOOLCHAIN.*auto' "$f" 2>/dev/null | grep -qvE 'GOTOOLCHAIN.*off'; then
+      log_error "GOTOOLCHAIN=auto found in: $f"
+      gotoolchain_violation=true
+    fi
+  done < <(git diff --cached --name-only --diff-filter=ACM -z '*.nix')
+  if [ "$gotoolchain_violation" = true ]; then
+    log_error "GOTOOLCHAIN=auto breaks Nix sandbox purity — pin the toolchain or set it to off."
     exit 1
   fi
 fi
@@ -159,17 +166,21 @@ if [ -n "$STAGED_NIX" ]; then
     fi
 
     log_info "Running statix (Nix linter) on staged files..."
-    : > /tmp/statix.log
-    while IFS= read -r f; do
-        nix shell nixpkgs#statix --command statix check -o errfmt "$f" 2>&1 \
-            | grep -v ':E:0:' >> /tmp/statix.log || true
-    done <<< "$STAGED_NIX"
-    if [ -s /tmp/statix.log ]; then
-        log_error "Statix found issues in staged files!"
-        cat /tmp/statix.log
+    if ! : > /tmp/statix.log; then
+        log_error "Cannot open /tmp/statix.log for writing — skipping statix (CI gates it)."
         all_passed=false
     else
-        log_success "Statix passed! No antipatterns found."
+        while IFS= read -r f; do
+            nix shell nixpkgs#statix --command statix check -o errfmt "$f" 2>&1 \
+                | grep -v ':E:0:' >> /tmp/statix.log || true
+        done <<< "$STAGED_NIX"
+        if [ -s /tmp/statix.log ]; then
+            log_error "Statix found issues in staged files!"
+            cat /tmp/statix.log
+            all_passed=false
+        else
+            log_success "Statix passed! No antipatterns found."
+        fi
     fi
 
     # MUST be the SAME formatter CI arbitrates with (`nix fmt -- --ci` =
