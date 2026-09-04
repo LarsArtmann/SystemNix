@@ -66,7 +66,7 @@
 
           prev=""
           if [ -f "$ENV_FILE" ]; then
-            # shellcheck disable=SC1090 — root-owned env file we wrote ourselves
+            # shellcheck disable=SC1090 (root-owned env file we wrote ourselves)
             . "$ENV_FILE"
             prev="''${BROWSER_HISTORY_AGENT_TOKEN:-}"
             unset BROWSER_HISTORY_AGENT_TOKEN
@@ -103,13 +103,13 @@
           SERVER_URL="http://127.0.0.1:${toString ports.browser-history}/health"
           echo "browser-history-agent: waiting for server at $SERVER_URL ..."
           # The server's projection drain after a restart takes up to ~5 min
-          # (no persistent checkpoint store upstream — replays ALL events).
+          # (no persistent checkpoint store upstream; replays ALL events).
           # A 60s gate aborted during every deploy window, and with the
           # deliberate startLimitBurst=2 that bricked the agent until a manual
           # reset-failed. 7 min covers the observed worst case (4m50s) + margin.
           curl -sf --max-time 5 --retry 60 --retry-delay 7 --retry-all-errors \
             -o /dev/null "$SERVER_URL" \
-            || { echo "browser-history-agent: server not ready after 7min — aborting" >&2; exit 1; }
+            || { echo "browser-history-agent: server not ready after 7min, aborting" >&2; exit 1; }
           echo "browser-history-agent: server ready"
         '';
       };
@@ -222,7 +222,7 @@
                 SECRET_FILE="''${CREDENTIALS_DIRECTORY}/pocket-id-secret"
 
                 if [ ! -s "$SECRET_FILE" ]; then
-                  echo "browser-history-oidc-setup: Pocket ID secret not found — starting in WebAuthn-only mode"
+                  echo "browser-history-oidc-setup: Pocket ID secret not found, starting in WebAuthn-only mode"
                   rm -f "${oauth2SecretsFile}"
                   exit 0
                 fi
