@@ -38,6 +38,18 @@
 #      token lands at /var/lib/inboxclean/token-work.json. If Google
 #      answers access_denied, add that Google user under "Test users" on
 #      the OAuth consent screen (Cloud Console) and retry.
+#      TOKENS EXPIRE — re-auth is ROUTINE while the OAuth client is in
+#      "Testing" (2026-09-04 incident): Google expires testing-mode refresh
+#      tokens after exactly 7 days (main issued Aug 28 04:54 died Sep 04
+#      07:34-08:04). Symptom: /labels card + sync WARN `could not refresh
+#      OAuth token` → `invalid_grant "Token has been expired or revoked."`,
+#      cursor frozen while other accounts advance, /health still says
+#      `connected` (token-presence only — phantom green). Fix: switch the
+#      OAuth consent screen to "In production" (Cloud Console) FIRST —
+#      testing-issued tokens stay 7-day-bombed even after the flip — then
+#      re-run steps 2 and 3; the auth CLI overwrites the existing token
+#      files. `invalid_grant` is permanent: no retry, restart, or redeploy
+#      fixes it.
 #   4. Verify: curl -s http://127.0.0.1:8099/health | jq .services.gmail
 #      must show every account "connected". NOTE: on InboxClean releases
 #      before the lazy-reconnect fix (web a6ec3df), /health showed the
