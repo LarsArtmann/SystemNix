@@ -457,9 +457,13 @@ if [ -s "$METRICS_FILE" ]; then
   # h4w1yz17 generation (pocket-id pair retired earlier the same day).
   # The list is empty; re-add ONLY when a deploy introduces metrics the
   # running generation's collector cannot yet emit.
+  # system_stuck_dstate_processes (2026-09-04): unkillable-D-state tripwire
+  # from the amdxdna-wedge incident (20 stranded llama-servers); the collector
+  # emitting it ships in THIS deploy. Remove after the first deploy confirms
+  # it in :9100/metrics (expect a nonzero value until the box reboots).
   # Read by the sourced metrics-gate.sh.
   # shellcheck disable=SC2034
-  KNOWN_NEW_METRICS=""
+  KNOWN_NEW_METRICS="system_stuck_dstate_processes"
   for metric in $(extract_gatus_metrics); do
     metrics_gate_classify_absence "$metric" || MISSING_METRICS=$((MISSING_METRICS + 1))
   done
