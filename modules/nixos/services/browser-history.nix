@@ -7,7 +7,9 @@
 #   - Port assignment from the central registry
 #   - WebAuthn/OAuth2 domain configuration
 #   - OTel endpoint
-#   - Agent token via sops (shared between server and agent)
+#   - Agent bearer token provisioning: a co-located agent gets a real bh_ DB
+#     token minted NON-INTERACTIVELY by a provisioner oneshot (upstream
+#     `agent-token ensure` CLI); remote agents fall back to the sops env token
 #   - Pocket ID OIDC secret bridging (oneshot reads Pocket ID's provisioned
 #     secret and writes an EnvironmentFile for browser-history)
 #   - SSL_CERT_FILE for internal CA (OIDC discovery via Caddy's CA-signed cert)
@@ -42,6 +44,54 @@
       primaryUser = config.users.primaryUser or "lars";
       sopsEnvPath = config.sops.templates."browser-history-env".path;
 
+      # Co-located agent token provisioning. The upstream `agent-token ensure`
+      # CLI mints a DB-backed bh_ token directly against the server's SQLite
+      # store — idempotent, converging (revoked token → re-minted, lost file →
+      # labeled rotation), and dashboard-revocable. This kills the manual
+      # "click in the UI + paste into sops" flow entirely: the plaintext never
+      # touches git or sops, it lives only in a root-owned StateDirectory and
+      # is handed to the agent as an EnvironmentFile (systemd reads it as root
+      # at EVERY agent run, so a rotation is picked up on the next timer tick).
+      agentTokenDir = "/var/lib/browser-history-agent-token";
+      agentEnvFile = "${agentTokenDir}/agent.env";
+
+      agentTokenProvisionScript = pkgs.writeShellApplication {
+        name = "browser-history-agent-token-provision";
+        runtimeInputs = [
+          pkgs.coreutils
+        ];
+        text = ''
+          TOKEN_FILE="${agentTokenDir}/token"
+          ENV_FILE="${agentEnvFile}"
+
+          prev=""
+          if [ -f "$ENV_FILE" ]; then
+            # shellcheck disable=SC1090 — root-owned env file we wrote ourselves
+            . "$ENV_FILE"
+            prev="''${BROWSER_HISTORY_AGENT_TOKEN:-}"
+            unset BROWSER_HISTORY_AGENT_TOKEN
+          fi
+
+          "${lib.getExe serverPkg}" agent-token ensure \
+            -db /var/lib/browser-history/data.db \
+            -label "${machineId}" \
+            -out "$TOKEN_FILE"
+
+          token="$(cat "$TOKEN_FILE")"
+
+          if [ "$token" = "$prev" ]; then
+            echo "browser-history-agent-token-provision: already provisioned"
+            exit 0
+          fi
+
+          tmp="$(mktemp "${agentTokenDir}/.agent.env.XXXXXX")"
+          printf 'BROWSER_HISTORY_AGENT_TOKEN=%s\n' "$token" > "$tmp"
+          chmod 0600 "$tmp"
+          mv "$tmp" "$ENV_FILE"
+          echo "browser-history-agent-token-provision: agent env file written"
+        '';
+      };
+
       # Health-gate: wait for the server to answer /health before the agent
       # starts pushing batches. Prevents 502 race during simultaneous restarts
       # (deploy stops both, starts both — server Type=simple is "active" before
@@ -68,6 +118,7 @@
       fqdn = "history.${domain}";
       pocketIdEnabled = config.services.pocket-id-config.enable;
       oauth2SecretsFile = "/var/lib/browser-history-oidc/oauth2-secrets.env";
+      machineId = config.services.browser-history-agent.machineId or "evo-x2";
     in
     {
       imports = [
@@ -261,9 +312,20 @@
         # the agent races ahead, gets 502 from Caddy, fails all 4 retries, exits 1,
         # and blocks the deploy with "Activation (test) failed: exit status 4".
         (lib.mkIf (config.services.browser-history-agent.enable && cfg.enable) {
+          # Co-located: the agent gets a REAL user-attributed bh_ token via the
+          # provisioner oneshot below (overrides the sops fallback above —
+          # mkForce because two mkDefaults on a non-mergeable option conflict).
+          services.browser-history-agent.tokenFile = lib.mkForce agentEnvFile;
+
           systemd.services.browser-history-agent = {
-            after = [ "browser-history.service" ];
-            wants = [ "browser-history.service" ];
+            after = [
+              "browser-history.service"
+              "browser-history-agent-token-provision.service"
+            ];
+            wants = [
+              "browser-history.service"
+              "browser-history-agent-token-provision.service"
+            ];
             # The 5-min timer IS the retry mechanism. Restart=on-failure with
             # RestartSec=5min (previous setting) raced the timer: two start
             # requests land in the same window, the rejected one counts against
@@ -280,6 +342,34 @@
                 ExecStartPre = "+${lib.getExe waitServerReady}";
                 TimeoutStartSec = "9min";
                 Restart = lib.mkForce "no";
+              }
+            ];
+          };
+
+          # Provisions the agent's DB-backed bh_ token non-interactively.
+          # Fails LOUDLY (onFailure alert) until at least one user is
+          # registered — on a fresh host, register via the dashboard once,
+          # then `systemctl start` (or re-deploy) runs the provisioner again.
+          systemd.services.browser-history-agent-token-provision = {
+            inherit onFailure;
+
+            after = [ "browser-history.service" ];
+            wants = [ "browser-history.service" ];
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+
+            serviceConfig = lib.mkMerge [
+              (harden { CapabilityBoundingSet = "CAP_DAC_READ_SEARCH"; })
+              {
+                Type = "oneshot";
+                RemainAfterExit = true;
+                StateDirectory = "browser-history-agent-token";
+                ExecStart = lib.getExe agentTokenProvisionScript;
+                # The server's DynamicUser StateDirectory
+                # (/var/lib/browser-history) is 0700 owned by a random
+                # dynamic UID — root cannot even stat through it without
+                # CAP_DAC_READ_SEARCH (backup-coordination precedent).
+                TimeoutStartSec = "3min";
               }
             ];
           };
