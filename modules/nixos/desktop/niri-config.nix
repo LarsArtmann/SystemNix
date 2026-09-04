@@ -183,9 +183,18 @@ _: {
                         ];
                         text = ''
                           OUT="/var/lib/prometheus-node-exporter/textfile_collectors/niri.prom"
-                          TMP="''${OUT}.tmp"
                           TEXTFILE_DIR="/var/lib/prometheus-node-exporter/textfile_collectors"
                           mkdir -p "$TEXTFILE_DIR"
+                          # Unique tmp per run (mktemp): a fixed .tmp name collides with stale
+                          # foreign-owned leftovers in this sticky 1777 dir, and harden{} strips
+                          # CAP_DAC_OVERRIDE so root cannot truncate a file owned by anyone else
+                          # (live 2026-09-04: one manual run as lars left niri.prom.tmp behind and
+                          # blocked this collector, and every deploy via Exited(4), for ~2 days).
+                          # The unit's CAP_FOWNER + CAP_DAC_OVERRIDE (memory-emergency-guard
+                          # precedent) are the belt-and-braces for the mv over OUT.
+                          TMP="$(mktemp "$TEXTFILE_DIR/niri.prom.XXXXXX")"
+                          chmod 644 "$TMP"
+                          trap 'rm -f "$TMP"' EXIT
 
                           # State files for grace periods — prevent false alerts
                           # during niri's 2s auto-restart window (RestartSec=2s, StartLimitBurst=3)
@@ -362,6 +371,7 @@ _: {
                     "${healthMetricsScript}/bin/niri-health-metrics";
                 }
                 (harden {
+                  CapabilityBoundingSet = "CAP_FOWNER CAP_DAC_OVERRIDE";
                   MemoryMax = "1G";
                   ReadWritePaths = [
                     "/var/lib/prometheus-node-exporter/textfile_collectors"
