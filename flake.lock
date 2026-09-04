@@ -652,11 +652,11 @@
         "treefmt-nix": "treefmt-nix_4"
       },
       "locked": {
-        "lastModified": 1788456739,
-        "narHash": "sha256-v4viuhPFmOvVCCDAlN59RmcUBYJlC2AsGB7ZWTqZmzs=",
+        "lastModified": 1788483898,
+        "narHash": "sha256-qogvDl6iluOQjBk9o+iNuZiC7FXsFVNcmkBuBbkQv5A=",
         "ref": "master",
-        "rev": "6b635cca9bd1429bda54facc5d0863cc5e5b7824",
-        "revCount": 3617,
+        "rev": "10724250b1a017c9bcdadc546b8b213899f9bad2",
+        "revCount": 3663,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/CV"
       },
@@ -1169,11 +1169,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788306937,
-        "narHash": "sha256-lbrI1UYVpFgKSsyrU9oeF7FHfnu8nLD9ja0ou9f2rxk=",
+        "lastModified": 1788450739,
+        "narHash": "sha256-glZLQlzIn1fXH6PazR2iUmTo7kzzyYSshrWhLS9TqCU=",
         "owner": "hercules-ci",
         "repo": "flake-parts",
-        "rev": "f16b25b8c3d2809b87925d0b76652d7821a75c68",
+        "rev": "31729ca8cbdb4fa927b34e5f4353e6a83f39e993",
         "type": "github"
       },
       "original": {
