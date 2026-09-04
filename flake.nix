@@ -152,8 +152,9 @@
     # behavior — TERMINAL_CWD surviving as the terminal default unless
     # config.yaml sets terminal.cwd (gateway/run.py resolve_placeholder_terminal_cwd,
     # cwd_placeholder.py) and HERMES_WRITE_SAFE_ROOT confining write_file/patch.
-    # Both verified against the source 2026-08-21 @ 63c6d9a4 (v0.20.4):
-    # symbols intact; upstream commit 31561e37 additionally BLESSES the
+    # Both verified against the source 2026-08-21 @ 63c6d9a4 (v0.20.4) and
+    # re-verified 2026-09-04 @ d3630f85 (v0.21.0): symbols intact, env flow
+    # unchanged; upstream commit 31561e37 additionally BLESSES the
     # env bridge (the deprecation warning now reads the .env FILE — env
     # TERMINAL_CWD is "legitimate" per its docstring). A bump that changes
     # either silently changes agent workspace/write semantics

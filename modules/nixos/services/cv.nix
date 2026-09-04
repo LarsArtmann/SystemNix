@@ -269,12 +269,18 @@
               User = "root";
               RemainAfterExit = true;
             }
-            # ReadWritePaths targets the PARENT (/mnt/pool/backups), which
-            # always exists — pointing it at backupDir itself would 226 the
-            # creator before it can mkdir the leaf.
+            # ReadWritePaths targets the MOUNT ROOT (/mnt/pool), not a
+            # subdirectory: on a FRESH pool nothing creates /mnt/pool/backups
+            # before this unit's namespace is set up, and a ReadWritePaths
+            # entry under it aborts with 226/NAMESPACE before the script can
+            # mkdir (2026-09-04: caught by the VM test after the 2026-09-02
+            # tmpfiles removal left cv-backup-dir as "the only sanctioned
+            # creator" of a path its own namespace setup required to
+            # pre-exist). RequiresMountsFor guarantees /mnt/pool is mounted,
+            # so the root scope always resolves; the script mkdirs the leaf.
             (harden {
               MemoryMax = "128M";
-              ReadWritePaths = [ "/mnt/pool/backups" ];
+              ReadWritePaths = [ "/mnt/pool" ];
             })
             (serviceOneshotDefaults { })
           ];
