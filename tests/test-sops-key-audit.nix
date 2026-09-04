@@ -20,8 +20,7 @@
 let
   lib = inputs.nixpkgs.lib;
 
-  audit =
-    ((import ../modules/nixos/services/sops-key-audit.nix) { }).flake.nixosModules.sops-key-audit;
+  audit = (import ../modules/nixos/services/sops-key-audit.nix).flake.nixosModules.sops-key-audit;
 
   # Encrypted-shaped fixture: key names plaintext (as in real sops files),
   # values opaque, `sops:` metadata tail mirroring the real files.
@@ -38,7 +37,7 @@ let
     (inputs.nixpkgs.lib.nixosSystem {
       inherit system;
       modules = [
-        inputs.sops-nix.nixosModules.sops-nix
+        inputs.sops-nix.nixosModules.sops
         audit
       ] ++ extraModules;
     }).config.assertions;
