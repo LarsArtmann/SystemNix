@@ -43,6 +43,7 @@ in
   niri-session = makeTest (import ./test-niri-session.nix { inherit pkgs; });
   tmp-cleanup = makeTest (import ./test-tmp-cleanup.nix { inherit pkgs; });
   tmp-cleaner-audit = import ./test-tmp-cleaner-audit.nix { inherit pkgs inputs system; };
+  sops-key-audit = import ./test-sops-key-audit.nix { inherit pkgs inputs system; };
   inboxclean-paperless = import ./test-inboxclean-paperless.nix { inherit pkgs inputs system; };
   mail-relay = makeTest (import ./test-mail-relay.nix { inherit pkgs; });
 }
