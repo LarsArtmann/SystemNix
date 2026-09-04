@@ -41,6 +41,11 @@
       agentPkg = inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-agent;
       primaryUser = config.users.primaryUser or "lars";
       sopsEnvPath = config.sops.templates."browser-history-env".path;
+      # Agent-only env file: the DB-backed bh_ token (minted via the Agent
+      # Tokens UI). MUST differ from the server's env token — resolveAgentAuth
+      # checks the env path first, and an equal value would short-circuit to
+      # anonymous ingest (no user attribution → dashboard shows zero).
+      agentSopsEnvPath = config.sops.templates."browser-history-agent-env".path;
 
       # Health-gate: wait for the server to answer /health before the agent
       # starts pushing batches. Prevents 502 race during simultaneous restarts
@@ -238,7 +243,9 @@
         (lib.mkIf config.services.browser-history-agent.enable {
           services.browser-history-agent = {
             package = lib.mkDefault agentPkg;
-            tokenFile = lib.mkDefault sopsEnvPath;
+            # DB-backed bh_ token (user-attributed ingest) — NOT the shared
+            # server env file (see agentSopsEnvPath note above).
+            tokenFile = lib.mkDefault agentSopsEnvPath;
           };
 
           systemd.services.browser-history-agent = {
