@@ -110,6 +110,7 @@ _: {
               OOMScoreAdjust = 500;
             }
             (serviceDefaults { })
+            rocm.deviceCgroup
             (harden {
               MemoryMax = "32G";
               CPUQuota = "400%"; # Model loading (GGUF quantization) is multi-threaded
