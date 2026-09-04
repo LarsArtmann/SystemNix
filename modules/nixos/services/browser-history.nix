@@ -66,7 +66,8 @@
 
           prev=""
           if [ -f "$ENV_FILE" ]; then
-            # shellcheck disable=SC1090 (root-owned env file we wrote ourselves)
+            # Root-owned env file we wrote ourselves.
+            # shellcheck disable=SC1090
             . "$ENV_FILE"
             prev="''${BROWSER_HISTORY_AGENT_TOKEN:-}"
             unset BROWSER_HISTORY_AGENT_TOKEN
@@ -359,7 +360,12 @@
             startLimitIntervalSec = 300;
 
             serviceConfig = lib.mkMerge [
-              (harden { CapabilityBoundingSet = "CAP_DAC_READ_SEARCH"; })
+              (harden {
+                # DAC_READ_SEARCH alone only reads: minting (or rotating) a
+                # token WRITES the server's foreign-owned 0600 SQLite files
+                # (VM-test-proven SQLITE_READONLY(8) without it).
+                CapabilityBoundingSet = "CAP_DAC_READ_SEARCH CAP_DAC_OVERRIDE";
+              })
               {
                 Type = "oneshot";
                 RemainAfterExit = true;
