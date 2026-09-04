@@ -97,10 +97,13 @@ all_passed=true
 
 # Fast guard: reject GOTOOLCHAIN=auto in .nix files (breaks sandbox purity).
 if [ -n "$STAGED_NIX" ]; then
-  gotoolchain_violation=$(echo "$STAGED_NIX" | xargs grep -lnE 'GOTOOLCHAIN.*auto' 2>/dev/null | grep -v 'GOTOOLCHAIN.*off' || true)
+# Paths are fed to xargs NUL-delimited (-z + xargs -0): a newline-separated
+# list lets default xargs split staged filenames on whitespace, formatting or
+# grepping the WRONG paths (or phantom-greening when both halves miss).
+  gotoolchain_violation=$(git diff --cached --name-only --diff-filter=ACM -z '*.nix' | xargs -0 grep -lnE 'GOTOOLCHAIN.*auto' 2>/dev/null | grep -v 'GOTOOLCHAIN.*off' || true)
   if [ -n "$gotoolchain_violation" ]; then
     log_error "GOTOOLCHAIN=auto found in staged .nix files — breaks Nix sandbox purity."
-    echo "$STAGED_NIX" | xargs grep -nE 'GOTOOLCHAIN.*auto' 2>/dev/null | grep -v 'GOTOOLCHAIN.*off'
+    git diff --cached --name-only --diff-filter=ACM -z '*.nix' | xargs -0 grep -nE 'GOTOOLCHAIN.*auto' 2>/dev/null | grep -v 'GOTOOLCHAIN.*off'
     exit 1
   fi
 fi
@@ -137,7 +140,7 @@ log_success "Trailing whitespace removed."
 # Only run Nix linters if staged .nix files exist
 if [ -n "$STAGED_NIX" ]; then
     log_info "Running deadnix (dead code detector) on staged files..."
-    if echo "$STAGED_NIX" | xargs nix shell nixpkgs#deadnix --command deadnix > /tmp/deadnix.log 2>&1; then
+    if git diff --cached --name-only --diff-filter=ACM -z '*.nix' | xargs -0 nix shell nixpkgs#deadnix --command deadnix > /tmp/deadnix.log 2>&1; then
         log_success "Deadnix passed! No dead code found."
     else
         log_error "Deadnix found issues!"
@@ -146,7 +149,7 @@ if [ -n "$STAGED_NIX" ]; then
     fi
 
     log_info "Running statix (Nix linter) on staged files..."
-    > /tmp/statix.log
+    : > /tmp/statix.log
     while IFS= read -r f; do
         nix shell nixpkgs#statix --command statix check -o errfmt "$f" 2>&1 \
             | grep -v ':E:0:' >> /tmp/statix.log || true
@@ -166,14 +169,22 @@ if [ -n "$STAGED_NIX" ]; then
     # injects whole-file reformats that the repo formatter (and CI's
     # `nix fmt -- --ci`) immediately revert — a formatter split-brain that
     # ships churn in commits (hit on PR #139, 2026-08-19).
-    if ! echo "$STAGED_NIX" | xargs nix fmt --; then
+    if ! git diff --cached --name-only --diff-filter=ACM -z '*.nix' | xargs -0 nix fmt --; then
         log_error "nix fmt failed on staged files — leaving them unformatted."
         all_passed=false
     else
-        echo "$STAGED_NIX" | while read -r f; do
-            git add "$f" 2>/dev/null || true
-        done
-        log_success "Staged .nix files formatted."
+        restage_failed=false
+        while IFS= read -r -d '' f; do
+            if ! git add -- "$f"; then
+                log_error "Failed to re-stage formatted file: $f"
+                restage_failed=true
+            fi
+        done < <(git diff --cached --name-only --diff-filter=ACM -z '*.nix')
+        if [ "$restage_failed" = true ]; then
+            all_passed=false
+        else
+            log_success "Staged .nix files formatted."
+        fi
     fi
 else
     log_info "No staged .nix files — skipping Nix linters."
@@ -183,7 +194,7 @@ fi
 STAGED_SH=$(git diff --cached --name-only --diff-filter=ACM '*.sh')
 if [ -n "$STAGED_SH" ]; then
     log_info "Running shellcheck on staged shell scripts..."
-    if echo "$STAGED_SH" | xargs nix shell nixpkgs#shellcheck --command shellcheck --severity=warning > /tmp/shellcheck.log 2>&1; then
+    if git diff --cached --name-only --diff-filter=ACM -z '*.sh' | xargs -0 nix shell nixpkgs#shellcheck --command shellcheck --severity=warning > /tmp/shellcheck.log 2>&1; then
         log_success "Shellcheck passed! No issues found."
     else
         log_error "Shellcheck found issues!"
@@ -198,7 +209,7 @@ fi
 STAGED_PY=$(git diff --cached --name-only --diff-filter=ACM '*.py')
 if [ -n "$STAGED_PY" ]; then
     log_info "Running ruff on staged Python scripts..."
-    if echo "$STAGED_PY" | xargs nix shell nixpkgs#ruff --command ruff check > /tmp/ruff.log 2>&1; then
+    if git diff --cached --name-only --diff-filter=ACM -z '*.py' | xargs -0 nix shell nixpkgs#ruff --command ruff check > /tmp/ruff.log 2>&1; then
         log_success "Ruff passed! No issues found."
     else
         log_error "Ruff found issues!"

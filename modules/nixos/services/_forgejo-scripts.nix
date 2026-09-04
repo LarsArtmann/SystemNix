@@ -322,6 +322,7 @@ in
     runtimeInputs = [
       pkgs.coreutils
       pkgs.gnugrep
+      pkgs.gawk
       pkgs.curl
     ];
     text = ''
@@ -356,19 +357,45 @@ in
 
       # 1. user (create-or-verify; password is random and never delivered —
       #    the token is the only credential that leaves this box).
-      #    Match by EMAIL: forgejo enforces unique emails, and the username is
-      #    a substring of it (plain username grep would false-positive).
+      #    The user list is the pinned forgejo CLI table (tabwriter with
+      #    padchar '\t', so every cell is terminated by EXACTLY one tab and
+      #    no field can contain one). Parse columns by the header row's
+      #    positions, match the EXACT username, then verify that row's email:
+      #    a plain email grep false-positives on any other user whose address
+      #    merely contains "hermes-agent", skipping creation and failing much
+      #    later at token generation with a confusing user-not-found error.
       USER_LIST=$("$FORGEJO" admin user list) || {
         echo "ERROR: forgejo admin user list failed" >&2
         exit 1
       }
-      if ! printf '%s' "$USER_LIST" | grep -q "$FORGEJO_USER_EMAIL"; then
+      FOUND_EMAIL=$(printf '%s\n' "$USER_LIST" | awk -F'\t' -v want="$FORGEJO_USER_NAME" '
+        NR == 1 {
+          for (i = 1; i <= NF; i++) {
+            col = $i; sub(/^[[:space:]]+/, "", col); sub(/[[:space:]]+$/, "", col)
+            if (col == "Username") user_col = i
+            if (col == "Email") email_col = i
+          }
+          if (!user_col || !email_col) {
+            print "ERROR: forgejo admin user list output has no Username/Email columns" > "/dev/stderr"
+            exit 2
+          }
+          next
+        }
+        $user_col == want { print $email_col }
+      ') || {
+        echo "ERROR: could not parse forgejo admin user list output" >&2
+        exit 1
+      }
+      if [ -z "$FOUND_EMAIL" ]; then
         echo "Creating Forgejo user: $FORGEJO_USER_NAME"
         "$FORGEJO" admin user create \
           --username "$FORGEJO_USER_NAME" \
           --email "$FORGEJO_USER_EMAIL" \
           --random-password \
           --must-change-password=false
+      elif [ "$FOUND_EMAIL" != "$FORGEJO_USER_EMAIL" ]; then
+        echo "ERROR: Forgejo user $FORGEJO_USER_NAME exists with email '$FOUND_EMAIL' (expected '$FORGEJO_USER_EMAIL') — fix the account or the configured email" >&2
+        exit 1
       else
         echo "User $FORGEJO_USER_NAME already exists"
       fi
