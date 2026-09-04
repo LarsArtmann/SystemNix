@@ -2,7 +2,6 @@
 
 ---
 
-
 ## Executive Summary
 
 Fixed two broken Gatus `pat()` pattern conditions that caused **"Monitor365 Agent Connected"** and **"Monitor365 Cloud Sync Health"** to be permanently red. Both services were healthy — the health checks themselves were wrong. Deployed successfully, smoke test 31/31 PASS.
@@ -66,6 +65,7 @@ The sync subsystem is **running but FAILING every single cycle**. 16 consecutive
 I traded a false negative for a false positive. The false positive is **worse** — at least the false negative was triggering alerts that would make a human look. Now the check is silently green while 507M events pile up.
 
 **What I should have done:**
+
 - Noticed the 16 consecutive failures and 507M backlog IMMEDIATELY when reading the metrics
 - Flagged this as a critical finding BEFORE fixing the pattern
 - At minimum, added a comment or separate check that catches `consecutive_failures > 0`

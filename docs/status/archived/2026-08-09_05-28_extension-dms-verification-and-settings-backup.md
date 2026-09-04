@@ -18,43 +18,43 @@ Marked `TODO_LIST.md:28` as `[x]`. User confirmed installation done.
 
 **Method:** Queried Chrome Web Store update endpoint (`clients2.google.com/service/update2/crx`) for each ID, parsed XML response with namespace-aware ET parser.
 
-| Extension | ID | Version |
-|-----------|----|---------|
-| uBlock Origin | `cjpalhdlnbpafiamejdnhcphjbkeiagm` | v1.73.0 |
-| OneTab | `chphlpgkkbolifaimnlloiipkdnihall` | v2.18 |
-| ActivityWatch Web Watcher | `nglaklhklhcoonedhgnpgddginnjdadi` | v0.5.3 |
-| Checker Plus for Gmail | `oeopbcgkkoapgobdbedcemjljbihmemj` | v36.3.1 |
-| YouTube Shorts Blocker | `ckagfhpboagdopichicnebandlofghbc` | v3.6 |
-| BlockTube | `bbeaicapbccfllodepmimpkgecanonai` | v0.4.8 |
-| SponsorBlock | `mnjggcdmjocbbbhaepdhchncahnbgone` | v6.1.6 |
-| DeArrow | `enamippconapkdmgfgjchkhakpfinmaj` | v2.3.10 |
-| YouTube Playback Speed | `hdannnflhlmdablckfkjpleikpphncik` | v0.0.15 |
-| YouTube Full Title | `pgpdaocammeipkkgaeelifgakbhjoiel` | v0.3.7 |
-| Refined GitHub | `hlepfoohegkhhmjieoechaddaejaokhf` | v26.8.8 |
-| GitHub Issue Link Status | `nbiddhncecgemgccalnoanpnenalmkic` | v25.3.18 |
-| GitHub Better Line Counts | `ocfdgncpifmegplaglcnglhioflaimkd` | v1.8.0 |
-| GitHub Milestones Timeline | `pemednoikdemhakcchcmjlckmepoighb` | v1.1.0 |
-| Lovely forks | `ialbpcipalajnakfondkflpkagbkdoib` | v3.7.4 |
-| React Developer Tools | `fmkadmapgofadopljbjfkapdkoienihi` | v7.0.1 |
-| WhatFont | `jabopobgcpjmedljpbcaablpmlmfcogm` | v3.2.0 |
-| DeepL | `cofdbpoegempjloogbagkncekinflcnj` | v1.96.1 |
-| Reddit Image Opener | `iffnacikcgjlndahdgnckeekdefoafbn` | v2.1 |
+| Extension                  | ID                                 | Version  |
+| -------------------------- | ---------------------------------- | -------- |
+| uBlock Origin              | `cjpalhdlnbpafiamejdnhcphjbkeiagm` | v1.73.0  |
+| OneTab                     | `chphlpgkkbolifaimnlloiipkdnihall` | v2.18    |
+| ActivityWatch Web Watcher  | `nglaklhklhcoonedhgnpgddginnjdadi` | v0.5.3   |
+| Checker Plus for Gmail     | `oeopbcgkkoapgobdbedcemjljbihmemj` | v36.3.1  |
+| YouTube Shorts Blocker     | `ckagfhpboagdopichicnebandlofghbc` | v3.6     |
+| BlockTube                  | `bbeaicapbccfllodepmimpkgecanonai` | v0.4.8   |
+| SponsorBlock               | `mnjggcdmjocbbbhaepdhchncahnbgone` | v6.1.6   |
+| DeArrow                    | `enamippconapkdmgfgjchkhakpfinmaj` | v2.3.10  |
+| YouTube Playback Speed     | `hdannnflhlmdablckfkjpleikpphncik` | v0.0.15  |
+| YouTube Full Title         | `pgpdaocammeipkkgaeelifgakbhjoiel` | v0.3.7   |
+| Refined GitHub             | `hlepfoohegkhhmjieoechaddaejaokhf` | v26.8.8  |
+| GitHub Issue Link Status   | `nbiddhncecgemgccalnoanpnenalmkic` | v25.3.18 |
+| GitHub Better Line Counts  | `ocfdgncpifmegplaglcnglhioflaimkd` | v1.8.0   |
+| GitHub Milestones Timeline | `pemednoikdemhakcchcmjlckmepoighb` | v1.1.0   |
+| Lovely forks               | `ialbpcipalajnakfondkflpkagbkdoib` | v3.7.4   |
+| React Developer Tools      | `fmkadmapgofadopljbjfkapdkoienihi` | v7.0.1   |
+| WhatFont                   | `jabopobgcpjmedljpbcaablpmlmfcogm` | v3.2.0   |
+| DeepL                      | `cofdbpoegempjloogbagkncekinflcnj` | v1.96.1  |
+| Reddit Image Opener        | `iffnacikcgjlndahdgnckeekdefoafbn` | v2.1     |
 
 **Initial failure:** First attempt returned NO_APP_TAG for ALL 19 — XML namespace parsing bug (used `.find(".//app")` without namespace). Fixed by adding `{{{NS}}}app` prefix.
 
 ### 3. DMS Wallpaper Management — Verified Working
 
-| Check | Result |
-|-------|--------|
-| swww/awww references in .nix files | **Zero** — fully removed |
+| Check                                | Result                                                        |
+| ------------------------------------ | ------------------------------------------------------------- |
+| swww/awww references in .nix files   | **Zero** — fully removed                                      |
 | Deployed `dms-wallpaper-init` binary | `p3x39p...` — uses `dms ipc call wallpaper get/set` (correct) |
-| `dms-wallpaper-init` last run | Aug 07 00:05 — completed in 17s |
-| DMS service uptime | 24h+ stable (PID 710772) |
-| All 13 plugins loaded | Confirmed via journal |
-| Journal errors | Only benign: polkit duplicate agent, evdev device removal |
-| Wallpapers available | 5 images in `~/.local/share/wallpapers/` |
-| Mod+W keybinding | Wired to `dms ipc call wallpaper next` |
-| Flake app `dms-wallpaper-next` | Exists and correct |
+| `dms-wallpaper-init` last run        | Aug 07 00:05 — completed in 17s                               |
+| DMS service uptime                   | 24h+ stable (PID 710772)                                      |
+| All 13 plugins loaded                | Confirmed via journal                                         |
+| Journal errors                       | Only benign: polkit duplicate agent, evdev device removal     |
+| Wallpapers available                 | 5 images in `~/.local/share/wallpapers/`                      |
+| Mod+W keybinding                     | Wired to `dms ipc call wallpaper next`                        |
+| Flake app `dms-wallpaper-next`       | Exists and correct                                            |
 
 **Historical note:** Aug 04 boots showed stale `swww: not found` crash from old store path `g4zni9...`. The Aug 07 deploy replaced it with the correct DMS IPC binary. Old store path will be GC'd.
 
@@ -65,6 +65,7 @@ Marked `TODO_LIST.md:28` as `[x]`. User confirmed installation done.
 **DMS runtime behavior:** DMS may replace the `settings.json` symlink with a real file containing 530+ keys (19 declarative + ~511 DMS defaults + UI state). This was captured in the Jul 27 `.bak` file (22KB).
 
 **Changes made:**
+
 - `scripts/deploy.sh:14-26`: Auto-backup step that detects real-file (non-symlink) `settings.json`/`plugin_settings.json` and creates timestamped `.bak` before `nh os switch`
 - `AGENTS.md:382`: Corrected from "user-owned/mutable" to accurate symlink architecture description
 - `docs/gotchas-archive.md:58`: Corrected split-brain description

@@ -208,48 +208,48 @@ The only "acceptance" items:
 
 ### P0 — High Impact, Immediate
 
-| #   | Task                                                                                                          | Effort | Impact                                                 |
-| --- | ------------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------ |
-| 1   | **Deploy session 48+49 changes to evo-x2** — `just switch` + verify all services                              | 30min  | Confirm 50-node lockfile reduction works in production |
-| 2   | **Fix `gogenfilter_2` transitive duplicate** — add `project-discovery-sdk` as top-level or make PMA expose it | 1h     | Eliminate last controllable duplicate (73→72 nodes)    |
-| 3   | **Update AGENTS.md** — Flake Inputs table + Go library follows section + lockfile hygiene rules               | 30min  | Accurate documentation for future sessions             |
+| # | Task                                                                                                          | Effort | Impact                                                 |
+| - | ------------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------ |
+| 1 | **Deploy session 48+49 changes to evo-x2** — `just switch` + verify all services                              | 30min  | Confirm 50-node lockfile reduction works in production |
+| 2 | **Fix `gogenfilter_2` transitive duplicate** — add `project-discovery-sdk` as top-level or make PMA expose it | 1h     | Eliminate last controllable duplicate (73→72 nodes)    |
+| 3 | **Update AGENTS.md** — Flake Inputs table + Go library follows section + lockfile hygiene rules               | 30min  | Accurate documentation for future sessions             |
 
 ### P1 — High Impact, Near-term
 
-| #   | Task                                                                                       | Effort | Impact                                           |
-| --- | ------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------ |
-| 4   | **Provision Pi 3 DNS backup node** — hardware + NixOS + sops age key + VRRP testing        | 3-4h   | DNS HA failover operational                      |
-| 5   | **Execute Gitea → Forgejo migration** — plan ready at `docs/migration-gitea-to-forgejo.md` | 4-6h   | Community-governed git hosting, federation-ready |
-| 6   | **Distributed builds** — configure MacBook to offload builds to evo-x2                     | 2h     | Unblocks Darwin builds at 90% disk               |
-| 7   | **Dual-WAN failover testing** — disconnect ethernet, verify ECMP→WiFi transition           | 1h     | Confidence in failover working                   |
-| 8   | **SigNoz per-threshold channel routing** — critical→Discord, warning→log                   | 1h     | Better alert signal-to-noise                     |
-| 9   | **Automated lockfile audit CI** — node count threshold check                               | 1h     | Prevents regression                              |
+| # | Task                                                                                       | Effort | Impact                                           |
+| - | ------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------ |
+| 4 | **Provision Pi 3 DNS backup node** — hardware + NixOS + sops age key + VRRP testing        | 3-4h   | DNS HA failover operational                      |
+| 5 | **Execute Gitea → Forgejo migration** — plan ready at `docs/migration-gitea-to-forgejo.md` | 4-6h   | Community-governed git hosting, federation-ready |
+| 6 | **Distributed builds** — configure MacBook to offload builds to evo-x2                     | 2h     | Unblocks Darwin builds at 90% disk               |
+| 7 | **Dual-WAN failover testing** — disconnect ethernet, verify ECMP→WiFi transition           | 1h     | Confidence in failover working                   |
+| 8 | **SigNoz per-threshold channel routing** — critical→Discord, warning→log                   | 1h     | Better alert signal-to-noise                     |
+| 9 | **Automated lockfile audit CI** — node count threshold check                               | 1h     | Prevents regression                              |
 
 ### P2 — Medium Impact
 
-| #   | Task                                                                               | Effort | Impact                    |
-| --- | ---------------------------------------------------------------------------------- | ------ | ------------------------- |
-| 10  | **Convert go-auto-upgrade `path:` inputs to SSH URLs**                             | 30min  | Clean flake pattern       |
-| 11  | **Photomap re-enablement** — fix podman permission, uncomment in configuration.nix | 1-2h   | Another service running   |
-| 12  | **Memory regression baseline** — record peak `nix eval` RSS for future comparison  | 30min  | Track optimization impact |
-| 13  | **OpenSEO DataForSEO usage monitoring** — set budget alerts                        | 30min  | Cost control              |
-| 14  | **Hermes gateway model rotation** — evaluate newer GLM models                      | 1h     | Better bot responses      |
-| 15  | **Twenty CRM data migration** — populate with actual data                          | 2h     | Useful CRM                |
-| 16  | **GPU memory budget documentation** — verify actual vs configured fractions        | 30min  | Confirm GPU headroom      |
-| 17  | **Deploy Dozzle** — container log tailing at `logs.home.lan`                       | 1h     | Better debugging          |
+| #  | Task                                                                               | Effort | Impact                    |
+| -- | ---------------------------------------------------------------------------------- | ------ | ------------------------- |
+| 10 | **Convert go-auto-upgrade `path:` inputs to SSH URLs**                             | 30min  | Clean flake pattern       |
+| 11 | **Photomap re-enablement** — fix podman permission, uncomment in configuration.nix | 1-2h   | Another service running   |
+| 12 | **Memory regression baseline** — record peak `nix eval` RSS for future comparison  | 30min  | Track optimization impact |
+| 13 | **OpenSEO DataForSEO usage monitoring** — set budget alerts                        | 30min  | Cost control              |
+| 14 | **Hermes gateway model rotation** — evaluate newer GLM models                      | 1h     | Better bot responses      |
+| 15 | **Twenty CRM data migration** — populate with actual data                          | 2h     | Useful CRM                |
+| 16 | **GPU memory budget documentation** — verify actual vs configured fractions        | 30min  | Confirm GPU headroom      |
+| 17 | **Deploy Dozzle** — container log tailing at `logs.home.lan`                       | 1h     | Better debugging          |
 
 ### P3 — Lower Impact, Good to Have
 
-| #   | Task                                                                                  | Effort | Impact                 |
-| --- | ------------------------------------------------------------------------------------- | ------ | ---------------------- |
-| 18  | **Minecraft server enablement** — for fun, module exists                              | 30min  | Gaming                 |
-| 19  | **awww-daemon upstream bug report** — file BrokenPipe issue                           | 30min  | Help upstream          |
-| 20  | **watchdogd nixpkgs bug report** — file `device` section parsing bug                  | 30min  | Help upstream          |
-| 21  | **Darwin disk cleanup automation** — scheduled nix-collect-garbage                    | 1h     | Prevent build failures |
-| 22  | **Security audit of Caddy configs** — review all virtual hosts                        | 1h     | Defense in depth       |
-| 23  | **BTRFS snapshot automation** — verify Timeshift schedules                            | 30min  | Backup reliability     |
-| 24  | **Documentation pass** — update FEATURES.md, TODO_LIST.md, AGENTS.md to current state | 1-2h   | Accurate docs          |
-| 25  | **Git hooks improvement** — add lockfile node count check to pre-commit               | 30min  | Automated hygiene      |
+| #  | Task                                                                                  | Effort | Impact                 |
+| -- | ------------------------------------------------------------------------------------- | ------ | ---------------------- |
+| 18 | **Minecraft server enablement** — for fun, module exists                              | 30min  | Gaming                 |
+| 19 | **awww-daemon upstream bug report** — file BrokenPipe issue                           | 30min  | Help upstream          |
+| 20 | **watchdogd nixpkgs bug report** — file `device` section parsing bug                  | 30min  | Help upstream          |
+| 21 | **Darwin disk cleanup automation** — scheduled nix-collect-garbage                    | 1h     | Prevent build failures |
+| 22 | **Security audit of Caddy configs** — review all virtual hosts                        | 1h     | Defense in depth       |
+| 23 | **BTRFS snapshot automation** — verify Timeshift schedules                            | 30min  | Backup reliability     |
+| 24 | **Documentation pass** — update FEATURES.md, TODO_LIST.md, AGENTS.md to current state | 1-2h   | Accurate docs          |
+| 25 | **Git hooks improvement** — add lockfile node count check to pre-commit               | 30min  | Automated hygiene      |
 
 ---
 

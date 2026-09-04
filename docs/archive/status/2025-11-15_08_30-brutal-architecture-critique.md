@@ -787,16 +787,16 @@ if !pathExists wrapper
 **Recommended Test Pyramid:**
 
 ```
-           /\
-          /  \  E2E Tests (5%)
-         /    \  just switch → verify system
-        /------\
-       /        \  Integration Tests (20%)
-      /          \  just test-wrappers
-     /------------\
-    /              \  Unit Tests (75%)
-   /                \  Nix assertions, function tests
-  /------------------\
+         /\
+        /  \  E2E Tests (5%)
+       /    \  just switch → verify system
+      /------\
+     /        \  Integration Tests (20%)
+    /          \  just test-wrappers
+   /------------\
+  /              \  Unit Tests (75%)
+ /                \  Nix assertions, function tests
+/------------------\
 ```
 
 **Implementation:**

@@ -505,7 +505,7 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "dnsblockd_dns_resolve_duration_ms_sum / dnsblockd_dns_resolve_duration_ms_count",
+                    "query": "{__name__=\"dnsblockd_dns_resolve_duration_ms.sum\"} / {__name__=\"dnsblockd_dns_resolve_duration_ms.count\"}",
                     "disabled": false,
                     "step": 0,
                     "stats": false,

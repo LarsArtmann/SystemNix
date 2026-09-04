@@ -7,7 +7,6 @@
 
 ---
 
-
 ## Session Timeline (what actually happened, in order)
 
 1. **User provided `mount | grep btrfs`** showing `nodiscard` absent from all active mounts
@@ -31,37 +30,37 @@
 
 Full list extracted from kernel scrub log (`journalctl -k --since "2026-08-03 06:51:00" | grep 'checksum error'`):
 
-| # | Path | Category | Recoverable? |
-|---|------|----------|-------------|
-| 1 | `ai/cache/huggingface/.../Z-Image-Turbo/blobs/aeb13307...` | AI model cache | Re-download |
-| 2 | `ai/models/image/illustrij_v21_diffusers/text_encoder/model.safetensors` | AI model | Re-download |
-| 3 | `ai/models/image/illustrij_v21_diffusers/unet/diffusion_pytorch_model.safetensors` | AI model | Re-download |
-| 4 | `ai/models/image/illustrij_v21_diffusers/vae/diffusion_pytorch_model.safetensors` | AI model | Already deleted |
-| 5 | `ai/models/image/Krea-2-Turbo/transformer/diffusion_pytorch_model-00001-of-00003.safetensors` | AI model | Re-download |
-| 6 | `docker/volumes/6d41d7f0.../mysql.ibd` | MySQL tablespace | Container dead, no impact |
-| 7 | `docker/volumes/twenty_db-data/pg_wal/000000010000000000000010` | PostgreSQL WAL | Already recycled by PG |
-| 8 | `llamacpp-models/BAGEL-7B-MoT/ae.safetensors` | AI model | Deleted (prior session) |
-| 9 | `llamacpp-models/qwen3.6-35b-a3b-aggressive/...gguf` | AI model | Re-download |
-| 10 | `models/sdxl/perfectdeliberate-v90-new/text_encoder_2/model.safetensors` | AI model | Re-download |
-| 11 | `models/Z-Anime/diffusers/transformer/diffusion_pytorch_model-00001-of-00002.safetensors` | AI model | Re-download |
-| 12 | `SteamLibrary/.../CS:GO/de_ancient.vpk` | Steam game | Re-download / Steam verify |
-| 13 | `SteamLibrary/.../CS:GO/de_cache.vpk`, `de_cache_vanity.vpk` | Steam game | Re-download / Steam verify |
+| #  | Path                                                                                          | Category         | Recoverable?               |
+| -- | --------------------------------------------------------------------------------------------- | ---------------- | -------------------------- |
+| 1  | `ai/cache/huggingface/.../Z-Image-Turbo/blobs/aeb13307...`                                    | AI model cache   | Re-download                |
+| 2  | `ai/models/image/illustrij_v21_diffusers/text_encoder/model.safetensors`                      | AI model         | Re-download                |
+| 3  | `ai/models/image/illustrij_v21_diffusers/unet/diffusion_pytorch_model.safetensors`            | AI model         | Re-download                |
+| 4  | `ai/models/image/illustrij_v21_diffusers/vae/diffusion_pytorch_model.safetensors`             | AI model         | Already deleted            |
+| 5  | `ai/models/image/Krea-2-Turbo/transformer/diffusion_pytorch_model-00001-of-00003.safetensors` | AI model         | Re-download                |
+| 6  | `docker/volumes/6d41d7f0.../mysql.ibd`                                                        | MySQL tablespace | Container dead, no impact  |
+| 7  | `docker/volumes/twenty_db-data/pg_wal/000000010000000000000010`                               | PostgreSQL WAL   | Already recycled by PG     |
+| 8  | `llamacpp-models/BAGEL-7B-MoT/ae.safetensors`                                                 | AI model         | Deleted (prior session)    |
+| 9  | `llamacpp-models/qwen3.6-35b-a3b-aggressive/...gguf`                                          | AI model         | Re-download                |
+| 10 | `models/sdxl/perfectdeliberate-v90-new/text_encoder_2/model.safetensors`                      | AI model         | Re-download                |
+| 11 | `models/Z-Anime/diffusers/transformer/diffusion_pytorch_model-00001-of-00002.safetensors`     | AI model         | Re-download                |
+| 12 | `SteamLibrary/.../CS:GO/de_ancient.vpk`                                                       | Steam game       | Re-download / Steam verify |
+| 13 | `SteamLibrary/.../CS:GO/de_cache.vpk`, `de_cache_vanity.vpk`                                  | Steam game       | Re-download / Steam verify |
 
 ### 2. SMART analysis — drive flash is healthy
 
-| Metric | Value | Assessment |
-|---|---|---|
-| Overall health | PASSED | |
-| Media and Data Integrity Errors | **0** | Flash cells are fine |
-| Error Log Entries | **0** | Controller reports no errors |
-| Percentage Used | **11%** | 89% endurance remaining |
-| Available Spare | **100%** | No spare blocks consumed |
-| Self-tests (20 total) | All passed | |
-| Power On Hours | 1,625 (~68 days) | |
-| Data Units Written | **145 TB** | ~89 GB/hour avg (very heavy) |
-| **Unsafe Shutdowns** | **58 / 125 (46%)** | **ROOT CAUSE** |
-| Critical Comp. Temp. Time | **114 min** at 95°C+ | Thermal stress contributor |
-| Temperature (current) | 60°C | Normal under load |
+| Metric                          | Value                | Assessment                   |
+| ------------------------------- | -------------------- | ---------------------------- |
+| Overall health                  | PASSED               |                              |
+| Media and Data Integrity Errors | **0**                | Flash cells are fine         |
+| Error Log Entries               | **0**                | Controller reports no errors |
+| Percentage Used                 | **11%**              | 89% endurance remaining      |
+| Available Spare                 | **100%**             | No spare blocks consumed     |
+| Self-tests (20 total)           | All passed           |                              |
+| Power On Hours                  | 1,625 (~68 days)     |                              |
+| Data Units Written              | **145 TB**           | ~89 GB/hour avg (very heavy) |
+| **Unsafe Shutdowns**            | **58 / 125 (46%)**   | **ROOT CAUSE**               |
+| Critical Comp. Temp. Time       | **114 min** at 95°C+ | Thermal stress contributor   |
+| Temperature (current)           | 60°C                 | Normal under load            |
 
 ### 3. Database integrity verified
 
@@ -77,6 +76,7 @@ Full list extracted from kernel scrub log (`journalctl -k --since "2026-08-03 06
 ### 5. Reverted dangerous config changes
 
 Both changes auto-committed as `c2615d09`:
+
 - `discard=none` removed from hardware-configuration.nix (NOT a valid BTRFS option — `-EINVAL` → mount failure → emergency shell)
 - `disable-nvme-discard` systemd service removed from boot.nix (unnecessary + would have killed fstrim)
 
@@ -97,16 +97,21 @@ Both changes auto-committed as `c2615d09`:
 ## B) Partially Done
 
 ### 1. Config changes not deployed
+
 Weekly scrub + monitoring fix are committed but NOT deployed. The running system still has monthly scrub and broken monitoring.
 
 ### 2. No verification scrub run
+
 After deleting all 13 corrupted files, no fresh scrub has been run to confirm the error count drops to 0. The 1.35M errors may include snapshot-referenced blocks that need snapshot expiry to clear.
 
 ### 3. Prior status report not corrected
+
 `docs/status/2026-08-03_06-51_nvme-data-corruption-discovery.md` still says "P0-CRITICAL: nodiscard is a no-op" — this was proven wrong. Needs annotation.
 
 ### 4. AGENTS.md not updated
+
 Multiple corrections needed:
+
 - The `nodiscard` verification method (sysfs counter test, not `/proc/mounts`)
 - The unsafe shutdown root cause
 - The `btrfs_scrub_error_free` false-positive fix
@@ -144,6 +149,7 @@ The user had to explicitly say **"How about you do some fucking research and sto
 ### 2. Trusted prior session conclusions without independent verification
 
 The prior session (06:51 report) concluded `nodiscard` was "silently ignored by kernel 7.1.5 BTRFS." I carried this forward without questioning it. A 10-second sysfs counter test would have disproven it immediately. The prior session never checked:
+
 - Whether the boot log timestamp predated the config change
 - Whether the discard worker was actually running
 

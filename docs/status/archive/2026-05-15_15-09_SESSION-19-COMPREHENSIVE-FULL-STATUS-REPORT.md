@@ -262,33 +262,33 @@ These features are fully implemented, tested, and running in production.
 
 Ranked by impact × effort:
 
-| #   | Task                                                         | Impact   | Effort | Priority |
-| --- | ------------------------------------------------------------ | -------- | ------ | -------- |
-| 1   | **Deploy to evo-x2** — `just switch` + reboot                | Critical | Low    | **P0**   |
-| 2   | **Provision Pi 3 for DNS failover** — HA DNS                 | High     | Medium | **P0**   |
-| 3   | **Root disk cleanup** — `nix-collect-garbage`, Docker prune  | Medium   | Low    | **P1**   |
-| 4   | **Add NixOS VM tests** — Caddy, DNS, SigNoz                  | High     | Medium | P1       |
-| 5   | **Modularize `flake.nix`** — 612→multiple flake-parts files  | High     | Medium | P1       |
-| 6   | **Create `mkDockerService` helper**                          | Medium   | Low    | P1       |
-| 7   | **Deploy Dozzle** — `logs.home.lan`                          | Medium   | Low    | P1       |
-| 8   | **Triage docs sprawl** — Archive 200+ stale reports          | Medium   | Low    | P2       |
-| 9   | **Adopt `mkPackageOverlay` in 8 remaining overlays**         | Low      | Low    | P2       |
-| 10  | **Adopt `systemdServiceIdentity` in 4 remaining services**   | Low      | Low    | P2       |
-| 11  | **SigNoz alert severity routing**                            | Medium   | Low    | P2       |
-| 12  | **Add GPU memory monitoring alert**                          | Medium   | Low    | P2       |
-| 13  | **Move `dns-failover.nix` authPassword to sops**             | Medium   | Low    | P2       |
-| 14  | **Test voice agents** — Verify LiveKit + Whisper             | Medium   | Low    | P2       |
-| 15  | **GitHub Actions: Darwin cross-build check**                 | Medium   | Medium | P2       |
-| 16  | **Create shared Go flake-parts template**                    | Medium   | Medium | P2       |
-| 17  | **Add flake.lock merge conflict resolution**                 | Medium   | Medium | P2       |
-| 18  | **Verify Twenty CRM deployed and functional**                | Medium   | Low    | P2       |
-| 19  | **Consolidate voice-agents Caddy vHost**                     | Low      | Low    | P3       |
-| 20  | **nix-colors full migration** — Replace 17+ hardcoded colors | Low      | Medium | P3       |
-| 21  | **Enable AppArmor profiles**                                 | Medium   | Medium | P3       |
-| 22  | **Clean up `legacy/` directory**                             | Low      | Low    | P3       |
-| 23  | **BTRFS qgroup limits** on `/data`                           | Low      | Low    | P3       |
-| 24  | **Secrets rotation plan**                                    | Medium   | High   | P3       |
-| 25  | **Remove unused shell configs** (Zsh/Bash)                   | Low      | Low    | P4       |
+| #  | Task                                                         | Impact   | Effort | Priority |
+| -- | ------------------------------------------------------------ | -------- | ------ | -------- |
+| 1  | **Deploy to evo-x2** — `just switch` + reboot                | Critical | Low    | **P0**   |
+| 2  | **Provision Pi 3 for DNS failover** — HA DNS                 | High     | Medium | **P0**   |
+| 3  | **Root disk cleanup** — `nix-collect-garbage`, Docker prune  | Medium   | Low    | **P1**   |
+| 4  | **Add NixOS VM tests** — Caddy, DNS, SigNoz                  | High     | Medium | P1       |
+| 5  | **Modularize `flake.nix`** — 612→multiple flake-parts files  | High     | Medium | P1       |
+| 6  | **Create `mkDockerService` helper**                          | Medium   | Low    | P1       |
+| 7  | **Deploy Dozzle** — `logs.home.lan`                          | Medium   | Low    | P1       |
+| 8  | **Triage docs sprawl** — Archive 200+ stale reports          | Medium   | Low    | P2       |
+| 9  | **Adopt `mkPackageOverlay` in 8 remaining overlays**         | Low      | Low    | P2       |
+| 10 | **Adopt `systemdServiceIdentity` in 4 remaining services**   | Low      | Low    | P2       |
+| 11 | **SigNoz alert severity routing**                            | Medium   | Low    | P2       |
+| 12 | **Add GPU memory monitoring alert**                          | Medium   | Low    | P2       |
+| 13 | **Move `dns-failover.nix` authPassword to sops**             | Medium   | Low    | P2       |
+| 14 | **Test voice agents** — Verify LiveKit + Whisper             | Medium   | Low    | P2       |
+| 15 | **GitHub Actions: Darwin cross-build check**                 | Medium   | Medium | P2       |
+| 16 | **Create shared Go flake-parts template**                    | Medium   | Medium | P2       |
+| 17 | **Add flake.lock merge conflict resolution**                 | Medium   | Medium | P2       |
+| 18 | **Verify Twenty CRM deployed and functional**                | Medium   | Low    | P2       |
+| 19 | **Consolidate voice-agents Caddy vHost**                     | Low      | Low    | P3       |
+| 20 | **nix-colors full migration** — Replace 17+ hardcoded colors | Low      | Medium | P3       |
+| 21 | **Enable AppArmor profiles**                                 | Medium   | Medium | P3       |
+| 22 | **Clean up `legacy/` directory**                             | Low      | Low    | P3       |
+| 23 | **BTRFS qgroup limits** on `/data`                           | Low      | Low    | P3       |
+| 24 | **Secrets rotation plan**                                    | Medium   | High   | P3       |
+| 25 | **Remove unused shell configs** (Zsh/Bash)                   | Low      | Low    | P4       |
 
 ---
 
@@ -327,7 +327,7 @@ I cannot verify remotely whether:
 | Gatus        | 8083         | `status.home.lan`  | ✅ Running                                        |
 | Homepage     | 8082         | `home.home.lan`    | ✅ Running                                        |
 | TaskChampion | 10222        | `tasks.home.lan`   | ✅ Running                                        |
-| Twenty       | 3000         | `twenty.home.lan`  | ⚠️ Unverified                                     |
+| Twenty       | 3000         | `twenty.home.lan`  | ⚠️ Unverified                                      |
 | OpenSEO      | 3001         | `seo.home.lan`     | ✅ Running                                        |
 | Hermes       | —            | (Discord bot)      | ✅ Running                                        |
 | Ollama       | 11434        | `ollama.home.lan`  | ✅ Running                                        |

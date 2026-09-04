@@ -6,7 +6,6 @@
 
 ---
 
-
 ## What Was Done
 
 ### Fully Done

@@ -32,15 +32,20 @@ _: {
             "/var/run/docker.sock:/var/run/docker.sock:ro"
           ];
           environment = {
-            DOZZLE_TAILSIZE = "300";
+            # DOZZLE_TAILSIZE removed 2026-08-31: Dozzle v10.6.6 rejects it
+            # ("Unexpected environment variable") and 300 is the default anyway.
             DOZZLE_FILTER = "status=running";
           };
           extraOptions = [
             "--memory=256m"
             "--memory-swap=256m"
-            "--log-driver=json-file"
-            "--log-opt=max-size=5m"
-            "--log-opt=max-file=3"
+            # NO --log-driver override: the daemon default is journald
+            # (default-services.nix), which feeds SigNoz. An explicit
+            # json-file + log-opts here (2026-08-22 regression) silently
+            # removed dozzle container logs from SigNoz — duplicate
+            # --log-driver flags made json-file win.
+            "--security-opt=no-new-privileges:true"
+            "--cap-drop=ALL"
           ];
         };
       };

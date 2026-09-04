@@ -47,7 +47,7 @@ All review fixes implemented, verified, and pushed to PR 139 (`e4a0634a`); merge
 ## d) TOTALLY FUCKED UP
 
 1. **The daemon race I predicted still got me.** I identified the exact risk ("if that branch is pushed, it would ride into PR 139") and asked for instructions — but left the hook change **staged** in the shared tree while waiting. Concurrent session's commit `8302b94b` (05:33, GLM-5.2 attribution) batched my staged `.githooks/pre-commit` change into ITS commit on `forgejo-hermes-agent` and pushed. The hook fix is now PR 139 content. Correctness: yes. Placement per instruction: no. Lesson: in a shared tree, "waiting for instructions" requires FIRST unstashing/quarantining the change (worktree, stash, or separate branch), not leaving it staged.
-2. **My pushed fix contained a real bug the next session had to fix:** `printf > $STAGED_TOKEN_FILE` EACCES on the SECOND regeneration — the staged file is 0400 (read-only even for the forgejo owner), so the reuse-then-regenerate path dies writing to its own staging file. I reasoned carefully about PAM, scopes, and middleware, then chmod'd myself into a corner and never traced the *file permission lifecycle across reruns*. Also present: `2>/dev/null` on `admin user list` hiding locked-DB diagnostics, and `config.services.hermes.user` throwing for standalone module consumers without the hermes module (my `mkIf` guarded the unit but not the script interpolation). All three fixed in `8302b94b` by the follow-up session.
+2. **My pushed fix contained a real bug the next session had to fix:** `printf > $STAGED_TOKEN_FILE` EACCES on the SECOND regeneration — the staged file is 0400 (read-only even for the forgejo owner), so the reuse-then-regenerate path dies writing to its own staging file. I reasoned carefully about PAM, scopes, and middleware, then chmod'd myself into a corner and never traced the _file permission lifecycle across reruns_. Also present: `2>/dev/null` on `admin user list` hiding locked-DB diagnostics, and `config.services.hermes.user` throwing for standalone module consumers without the hermes module (my `mkIf` guarded the unit but not the script interpolation). All three fixed in `8302b94b` by the follow-up session.
 3. **Wasted round trip on the Nix list syntax** (`ExecStartPost = [ "+" + … ]` → parse error → parenthesize) — the gitea-runner precedent with the parenthesized form was already in my context; should have copied it verbatim.
 4. **(Recurred from last session) verified-push-vs-posted-claim discipline** — this time done right (verified before posting the follow-up correction), which is why it's NOT repeated here; noting the improvement explicitly since the failure was named last time.
 
@@ -67,9 +67,10 @@ All review fixes implemented, verified, and pushed to PR 139 (`e4a0634a`); merge
 ## f) NEXT — up to 50 things (ordered)
 
 **Immediate (P0):**
+
 1. Decide hook-fix placement: leave `8302b94b` (hook fix inside PR 139) as-is, or cherry-pick the hook change to master directly so it lands regardless of PR timing.
 2. Verify `8302b94b`'s three fixes to my code (atomic write, stderr visibility, `or {}` guard) — I have NOT reviewed that commit's diff in detail; trust-but-verify the regeneration path now writes via mktemp+install.
-3. Merge PR 139 (MERGEABLE; CI red is pre-existing master-red) or hold for deploy smoke.
+~~3. Merge PR 139 (MERGEABLE; CI red is pre-existing master-red) or hold for deploy smoke.~~ done — merged + deployed (token unit live; deploy.sh restart list carries it)
 4. `nix run .#deploy` after merge; then the smoke: unit state, token file owner/mode, `repos/search` 200 with token, `/user` 403 with token (proves scope).
 
 **Hermes consumer (P1):**
@@ -78,9 +79,9 @@ All review fixes implemented, verified, and pushed to PR 139 (`e4a0634a`); merge
 7. Stale-token cleanup on regen (delete old `hermes-agent-*` tokens via admin API).
 
 **Repo health surfaced by this session (P1-P2):**
-8. Fix `scripts/zfs-vm-{backup,deepdive,survey}.sh` SC2148 (add shebangs) — unblocks the shellcheck CI job.
-9. Fix repo-wide statix findings (paperless.nix×2, default-services.nix, session-boot-audit.nix×many) or scope CI statix to changed files — unblocks nix-check job.
-10. Resolve the dead `branching-flow` flake input (404 in vm-tests) — delete input or restore repo.
+~~8. Fix `scripts/zfs-vm-{backup,deepdive,survey}.sh` SC2148 (add shebangs) — unblocks the shellcheck CI job.~~ done 2026-08-29 (CHANGELOG CI-truth entry)
+~~9. Fix repo-wide statix findings (paperless.nix×2, default-services.nix, session-boot-audit.nix×many) or scope CI statix to changed files — unblocks nix-check job.~~ done — CI green since (nix-check passing through 2026-08-31)
+~~10. Resolve the dead `branching-flow` flake input (404 in vm-tests) — delete input or restore repo.~~ done 2026-08-29 — read-only deploy key + `NIX_DEPLOY_KEY_BRANCHING_FLOW` (CHANGELOG CI-truth entry)
 11. Add CI grep-guard banning `nixpkgs#alejandra`/`nixpkgs#nixfmt` invocations (pinned `nix fmt` only).
 12. Audit `.githooks/pre-commit` for other unpinned `nix shell nixpkgs#*` steps (statix at line 151 is also unpinned — same float risk, currently benign).
 
@@ -110,4 +111,4 @@ All review fixes implemented, verified, and pushed to PR 139 (`e4a0634a`); merge
 
 ---
 
-*Session artifacts: PR 139 head is now `8302b94b` (includes my `e4a0634a` + `7ba8df40` + a follow-up session's fixes + my hook fix). Local branches `pr-139-review` deleted earlier; worktrees cleaned; `/tmp/hooktest` and `/tmp/forgejo-src` removed. Zero uncommitted changes of mine remain (hook fix was consumed by `8302b94b`).*
+_Session artifacts: PR 139 head is now `8302b94b` (includes my `e4a0634a` + `7ba8df40` + a follow-up session's fixes + my hook fix). Local branches `pr-139-review` deleted earlier; worktrees cleaned; `/tmp/hooktest` and `/tmp/forgejo-src` removed. Zero uncommitted changes of mine remain (hook fix was consumed by `8302b94b`)._

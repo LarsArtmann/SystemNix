@@ -135,48 +135,48 @@ The only "fucked up" things found were pre-existing issues in the config itself:
 
 ### Priority 1: Critical Fixes (Do Immediately)
 
-| #   | Task                                                          | Effort | Impact                                      | Risk if Skipped                    |
-| --- | ------------------------------------------------------------- | ------ | ------------------------------------------- | ---------------------------------- |
-| 1   | Move Authelia user password hash to sops-nix encrypted secret | 30 min | Closes plaintext credential exposure in git | Offline bruteforce of password     |
-| 2   | Move Authelia OIDC client secret hash to sops-nix             | 30 min | Closes OAuth client impersonation risk      | Token theft, service impersonation |
-| 3   | Enable sudo passwords (`wheelNeedsPassword = true`)           | 5 min  | Eliminates trivial privilege escalation     | Any process can get root           |
-| 4   | Re-enable IOMMU (remove `amd_iommu=off`)                      | 5 min  | Restores DMA protection                     | Thunderbolt/USB DMA attacks        |
+| # | Task                                                          | Effort | Impact                                      | Risk if Skipped                    |
+| - | ------------------------------------------------------------- | ------ | ------------------------------------------- | ---------------------------------- |
+| 1 | Move Authelia user password hash to sops-nix encrypted secret | 30 min | Closes plaintext credential exposure in git | Offline bruteforce of password     |
+| 2 | Move Authelia OIDC client secret hash to sops-nix             | 30 min | Closes OAuth client impersonation risk      | Token theft, service impersonation |
+| 3 | Enable sudo passwords (`wheelNeedsPassword = true`)           | 5 min  | Eliminates trivial privilege escalation     | Any process can get root           |
+| 4 | Re-enable IOMMU (remove `amd_iommu=off`)                      | 5 min  | Restores DMA protection                     | Thunderbolt/USB DMA attacks        |
 
 ### Priority 2: High Fixes (Do This Week)
 
-| #   | Task                                                                        | Effort  | Impact                                        | Risk if Skipped                     |
-| --- | --------------------------------------------------------------------------- | ------- | --------------------------------------------- | ----------------------------------- |
-| 5   | Remove SigNoz/ClickHouse firewall port openings                             | 15 min  | Closes unauthenticated database access on LAN | Data exfiltration, DB manipulation  |
-| 6   | Fix Gitea token file permissions (644 → 600)                                | 5 min   | Prevents token theft by local users           | Full Gitea admin access             |
-| 7   | Switch Git credential helper to `libsecret` (Linux) / `osxkeychain` (macOS) | 20 min  | Prevents plaintext credential storage on disk | GitHub token theft                  |
-| 8   | Close Steam `localNetworkGameTransfers.openFirewall`                        | 5 min   | Reduces attack surface                        | Unnecessary open ports              |
-| 9   | Evaluate Docker → rootless Docker or Podman migration                       | 2-4 hrs | Removes docker-equivalent-to-root risk        | Privilege escalation via containers |
+| # | Task                                                                        | Effort  | Impact                                        | Risk if Skipped                     |
+| - | --------------------------------------------------------------------------- | ------- | --------------------------------------------- | ----------------------------------- |
+| 5 | Remove SigNoz/ClickHouse firewall port openings                             | 15 min  | Closes unauthenticated database access on LAN | Data exfiltration, DB manipulation  |
+| 6 | Fix Gitea token file permissions (644 → 600)                                | 5 min   | Prevents token theft by local users           | Full Gitea admin access             |
+| 7 | Switch Git credential helper to `libsecret` (Linux) / `osxkeychain` (macOS) | 20 min  | Prevents plaintext credential storage on disk | GitHub token theft                  |
+| 8 | Close Steam `localNetworkGameTransfers.openFirewall`                        | 5 min   | Reduces attack surface                        | Unnecessary open ports              |
+| 9 | Evaluate Docker → rootless Docker or Podman migration                       | 2-4 hrs | Removes docker-equivalent-to-root risk        | Privilege escalation via containers |
 
 ### Priority 3: Medium Fixes (Do This Month)
 
-| #   | Task                                                                 | Effort  | Impact                                         | Risk if Skipped               |
-| --- | -------------------------------------------------------------------- | ------- | ---------------------------------------------- | ----------------------------- |
-| 10  | Reduce swayidle lock timeout (300s → 120s) and suspend (600s → 300s) | 5 min   | Reduces physical access window                 | Unauthorized desktop access   |
-| 11  | Set `accept-flake-config = ask` in nix-settings                      | 5 min   | Prevents arbitrary flake config injection      | Supply chain compromise       |
-| 12  | Change Gitea runner to bridge networking                             | 30 min  | Isolates CI jobs from host network             | CI job accessing all services |
-| 13  | Implement LUKS2 disk encryption for `/` and `/data`                  | 2-3 hrs | Protects data at rest                          | Physical theft data exposure  |
-| 14  | Set UEFI firmware password for boot protection                       | 10 min  | Prevents boot parameter manipulation           | Root shell via init=/bin/bash |
-| 15  | Fix Gitea mirror scripts to use `mktemp`                             | 15 min  | Prevents symlink attacks in /tmp               | Local privilege escalation    |
-| 16  | Set `REQUIRE_SIGNIN_VIEW = true` on Gitea                            | 5 min   | Hides repo metadata from unauthenticated users | Information leakage           |
-| 17  | Enable macOS stealth mode (`enableStealthMode = true`)               | 5 min   | Hides MacBook from port scans                  | Network reconnaissance        |
+| #  | Task                                                                 | Effort  | Impact                                         | Risk if Skipped               |
+| -- | -------------------------------------------------------------------- | ------- | ---------------------------------------------- | ----------------------------- |
+| 10 | Reduce swayidle lock timeout (300s → 120s) and suspend (600s → 300s) | 5 min   | Reduces physical access window                 | Unauthorized desktop access   |
+| 11 | Set `accept-flake-config = ask` in nix-settings                      | 5 min   | Prevents arbitrary flake config injection      | Supply chain compromise       |
+| 12 | Change Gitea runner to bridge networking                             | 30 min  | Isolates CI jobs from host network             | CI job accessing all services |
+| 13 | Implement LUKS2 disk encryption for `/` and `/data`                  | 2-3 hrs | Protects data at rest                          | Physical theft data exposure  |
+| 14 | Set UEFI firmware password for boot protection                       | 10 min  | Prevents boot parameter manipulation           | Root shell via init=/bin/bash |
+| 15 | Fix Gitea mirror scripts to use `mktemp`                             | 15 min  | Prevents symlink attacks in /tmp               | Local privilege escalation    |
+| 16 | Set `REQUIRE_SIGNIN_VIEW = true` on Gitea                            | 5 min   | Hides repo metadata from unauthenticated users | Information leakage           |
+| 17 | Enable macOS stealth mode (`enableStealthMode = true`)               | 5 min   | Hides MacBook from port scans                  | Network reconnaissance        |
 
 ### Priority 4: Low / Hardening (Do Eventually)
 
-| #   | Task                                                                      | Effort  | Impact                                 | Risk if Skipped              |
-| --- | ------------------------------------------------------------------------- | ------- | -------------------------------------- | ---------------------------- |
-| 18  | Enable AppArmor with profiles for critical services                       | 4-8 hrs | Mandatory access control               | Unrestricted process access  |
-| 19  | Re-enable auditd once nixpkgs#483085 is fixed                             | 30 min  | Security audit trail                   | No forensic evidence         |
-| 20  | Move coderabbit `machineId` to environment variable                       | 10 min  | Reduces information disclosure         | User identification          |
-| 21  | Increase Authelia password min length (8 → 15)                            | 5 min   | Stronger authentication                | Weak password bruteforce     |
-| 22  | Remove dead Grafana fail2ban jail configuration                           | 5 min   | Config cleanup / accuracy              | Confusion during incident    |
-| 23  | Add gitleaks pre-commit hook to this repository                           | 15 min  | Automated secret scanning              | Future secret leaks          |
-| 24  | Document incident response procedures                                     | 2-4 hrs | Faster incident response               | Delayed response to breaches |
-| 25  | Set up automated security scanning (nix flake check, vulnerability scans) | 2-4 hrs | Continuous security posture monitoring | Unknown vulnerabilities      |
+| #  | Task                                                                      | Effort  | Impact                                 | Risk if Skipped              |
+| -- | ------------------------------------------------------------------------- | ------- | -------------------------------------- | ---------------------------- |
+| 18 | Enable AppArmor with profiles for critical services                       | 4-8 hrs | Mandatory access control               | Unrestricted process access  |
+| 19 | Re-enable auditd once nixpkgs#483085 is fixed                             | 30 min  | Security audit trail                   | No forensic evidence         |
+| 20 | Move coderabbit `machineId` to environment variable                       | 10 min  | Reduces information disclosure         | User identification          |
+| 21 | Increase Authelia password min length (8 → 15)                            | 5 min   | Stronger authentication                | Weak password bruteforce     |
+| 22 | Remove dead Grafana fail2ban jail configuration                           | 5 min   | Config cleanup / accuracy              | Confusion during incident    |
+| 23 | Add gitleaks pre-commit hook to this repository                           | 15 min  | Automated secret scanning              | Future secret leaks          |
+| 24 | Document incident response procedures                                     | 2-4 hrs | Faster incident response               | Delayed response to breaches |
+| 25 | Set up automated security scanning (nix flake check, vulnerability scans) | 2-4 hrs | Continuous security posture monitoring | Unknown vulnerabilities      |
 
 ---
 
@@ -196,31 +196,31 @@ I can see the repo is `github:LarsArtmann/SystemNix` but I cannot determine its 
 
 ## Findings Summary Table
 
-| ID  | Severity | Component  | Finding                                     | Platform |
-| --- | -------- | ---------- | ------------------------------------------- | -------- |
-| C1  | CRITICAL | Authelia   | Password hash in git-tracked nix config     | NixOS    |
-| C2  | CRITICAL | Authelia   | OIDC client secret hash in nix config       | NixOS    |
-| C3  | CRITICAL | sudo       | Passwordless sudo for wheel group           | NixOS    |
-| C4  | CRITICAL | Kernel     | IOMMU disabled (`amd_iommu=off`)            | NixOS    |
-| H1  | HIGH     | SigNoz     | ClickHouse/Collector ports open on firewall | NixOS    |
-| H2  | HIGH     | Gitea      | Token file world-readable (644)             | NixOS    |
-| H3  | HIGH     | Git        | Plaintext credential helper (`store`)       | Both     |
-| H4  | HIGH     | Docker     | Docker group = root equivalent              | NixOS    |
-| H5  | HIGH     | Steam      | Unnecessary firewall openings               | NixOS    |
-| M1  | MEDIUM   | swayidle   | Lock timeout too long (5 min)               | NixOS    |
-| M2  | MEDIUM   | Nix        | `accept-flake-config = true`                | Both     |
-| M3  | MEDIUM   | Gitea      | CI runner uses host networking              | NixOS    |
-| M4  | MEDIUM   | Filesystem | No disk encryption (LUKS)                   | NixOS    |
-| M5  | MEDIUM   | Boot       | No UEFI/Secure Boot password                | NixOS    |
-| M6  | MEDIUM   | Gitea      | Predictable temp file paths                 | NixOS    |
-| M7  | MEDIUM   | Gitea      | Public repo visibility without auth         | NixOS    |
-| M8  | MEDIUM   | Firewall   | macOS stealth mode disabled                 | macOS    |
-| L1  | LOW      | AppArmor   | MAC disabled                                | NixOS    |
-| L2  | LOW      | auditd     | Audit disabled (upstream bug)               | NixOS    |
-| L3  | LOW      | Git        | coderabbit machineId in config              | Both     |
-| L4  | LOW      | Authelia   | Weak password policy (8 chars)              | NixOS    |
-| L5  | LOW      | Homepage   | Service topology exposed (behind auth)      | NixOS    |
-| L6  | LOW      | NixOS      | Git commit hash in system version           | NixOS    |
+| ID | Severity | Component  | Finding                                     | Platform |
+| -- | -------- | ---------- | ------------------------------------------- | -------- |
+| C1 | CRITICAL | Authelia   | Password hash in git-tracked nix config     | NixOS    |
+| C2 | CRITICAL | Authelia   | OIDC client secret hash in nix config       | NixOS    |
+| C3 | CRITICAL | sudo       | Passwordless sudo for wheel group           | NixOS    |
+| C4 | CRITICAL | Kernel     | IOMMU disabled (`amd_iommu=off`)            | NixOS    |
+| H1 | HIGH     | SigNoz     | ClickHouse/Collector ports open on firewall | NixOS    |
+| H2 | HIGH     | Gitea      | Token file world-readable (644)             | NixOS    |
+| H3 | HIGH     | Git        | Plaintext credential helper (`store`)       | Both     |
+| H4 | HIGH     | Docker     | Docker group = root equivalent              | NixOS    |
+| H5 | HIGH     | Steam      | Unnecessary firewall openings               | NixOS    |
+| M1 | MEDIUM   | swayidle   | Lock timeout too long (5 min)               | NixOS    |
+| M2 | MEDIUM   | Nix        | `accept-flake-config = true`                | Both     |
+| M3 | MEDIUM   | Gitea      | CI runner uses host networking              | NixOS    |
+| M4 | MEDIUM   | Filesystem | No disk encryption (LUKS)                   | NixOS    |
+| M5 | MEDIUM   | Boot       | No UEFI/Secure Boot password                | NixOS    |
+| M6 | MEDIUM   | Gitea      | Predictable temp file paths                 | NixOS    |
+| M7 | MEDIUM   | Gitea      | Public repo visibility without auth         | NixOS    |
+| M8 | MEDIUM   | Firewall   | macOS stealth mode disabled                 | macOS    |
+| L1 | LOW      | AppArmor   | MAC disabled                                | NixOS    |
+| L2 | LOW      | auditd     | Audit disabled (upstream bug)               | NixOS    |
+| L3 | LOW      | Git        | coderabbit machineId in config              | Both     |
+| L4 | LOW      | Authelia   | Weak password policy (8 chars)              | NixOS    |
+| L5 | LOW      | Homepage   | Service topology exposed (behind auth)      | NixOS    |
+| L6 | LOW      | NixOS      | Git commit hash in system version           | NixOS    |
 
 ---
 

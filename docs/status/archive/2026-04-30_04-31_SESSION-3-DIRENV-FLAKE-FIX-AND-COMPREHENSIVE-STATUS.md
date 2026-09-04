@@ -73,25 +73,25 @@ Fixed two blocking issues that prevented `crush -y` from launching: a corrupted 
 
 ### P1 — SECURITY (3/7 = 43%)
 
-| #   | Task                                           | Status     | Blocker                                                    |
-| --- | ---------------------------------------------- | ---------- | ---------------------------------------------------------- |
-| 7   | Move Taskwarrior encryption secret to sops-nix | ⬜ BLOCKED | Needs evo-x2 for sops secret creation                      |
-| 9   | Pin Docker digest for Voice Agents             | ⬜ BLOCKED | Version-tagged (not `latest`), needs evo-x2 to pull SHA256 |
-| 10  | Pin Docker digest for PhotoMap                 | ⬜ BLOCKED | Version-tagged (not `latest`), needs evo-x2 to pull SHA256 |
-| 11  | Secure VRRP auth_pass with sops-nix            | ⬜ BLOCKED | Needs evo-x2 for sops secret                               |
+| #  | Task                                           | Status     | Blocker                                                    |
+| -- | ---------------------------------------------- | ---------- | ---------------------------------------------------------- |
+| 7  | Move Taskwarrior encryption secret to sops-nix | ⬜ BLOCKED | Needs evo-x2 for sops secret creation                      |
+| 9  | Pin Docker digest for Voice Agents             | ⬜ BLOCKED | Version-tagged (not `latest`), needs evo-x2 to pull SHA256 |
+| 10 | Pin Docker digest for PhotoMap                 | ⬜ BLOCKED | Version-tagged (not `latest`), needs evo-x2 to pull SHA256 |
+| 11 | Secure VRRP auth_pass with sops-nix            | ⬜ BLOCKED | Needs evo-x2 for sops secret                               |
 
 **Done:** gitea-ensure-repos hardening (#8), dead ublock-filters removal (#12), gitea-repos restart config (#13).
 
 ### P6 — SERVICES (9/15 = 60%)
 
-| #   | Task                        | Status                                              |
-| --- | --------------------------- | --------------------------------------------------- |
-| 56  | ComfyUI hardcoded paths     | ACCEPTABLE — module defaults designed for override  |
-| 58  | ComfyUI dedicated user      | ACCEPTABLE — needs lars for GPU groups              |
-| 62  | Hermes health check         | PENDING — needs Hermes code change                  |
-| 63  | Hermes key_env migration    | PENDING — low risk cleanup                          |
-| 65  | SigNoz missing metrics      | BLOCKED — needs evo-x2 metric endpoint verification |
-| 66  | Authelia SMTP notifications | BLOCKED — needs SMTP credentials                    |
+| #  | Task                        | Status                                              |
+| -- | --------------------------- | --------------------------------------------------- |
+| 56 | ComfyUI hardcoded paths     | ACCEPTABLE — module defaults designed for override  |
+| 58 | ComfyUI dedicated user      | ACCEPTABLE — needs lars for GPU groups              |
+| 62 | Hermes health check         | PENDING — needs Hermes code change                  |
+| 63 | Hermes key_env migration    | PENDING — low risk cleanup                          |
+| 65 | SigNoz missing metrics      | BLOCKED — needs evo-x2 metric endpoint verification |
+| 66 | Authelia SMTP notifications | BLOCKED — needs SMTP credentials                    |
 
 ### P9 — FUTURE (2/12 = 17%)
 
@@ -106,21 +106,21 @@ Remaining 10 are research/architecture items with no immediate deadline.
 
 ALL 13 tasks require physical evo-x2 access:
 
-| #   | Task                                                 | Est. |
-| --- | ---------------------------------------------------- | ---- |
-| 41  | `just switch` — deploy all pending changes to evo-x2 | 45m+ |
-| 42  | Verify Ollama works after rebuild                    | 5m   |
-| 43  | Verify Steam works after rebuild                     | 5m   |
-| 44  | Verify ComfyUI works after rebuild                   | 5m   |
-| 45  | Verify Caddy HTTPS block page                        | 3m   |
-| 46  | Verify SigNoz collecting metrics/logs/traces         | 5m   |
-| 47  | Check Authelia SSO status                            | 3m   |
-| 48  | Check PhotoMap service status                        | 3m   |
-| 49  | Verify AMD NPU with test workload                    | 10m  |
-| 50  | Build Pi 3 SD image                                  | 30m+ |
-| 51  | Flash SD + boot Pi 3                                 | 15m  |
-| 52  | Test DNS failover                                    | 10m  |
-| 53  | Configure LAN devices for DNS VIP                    | 10m  |
+| #  | Task                                                 | Est. |
+| -- | ---------------------------------------------------- | ---- |
+| 41 | `just switch` — deploy all pending changes to evo-x2 | 45m+ |
+| 42 | Verify Ollama works after rebuild                    | 5m   |
+| 43 | Verify Steam works after rebuild                     | 5m   |
+| 44 | Verify ComfyUI works after rebuild                   | 5m   |
+| 45 | Verify Caddy HTTPS block page                        | 3m   |
+| 46 | Verify SigNoz collecting metrics/logs/traces         | 5m   |
+| 47 | Check Authelia SSO status                            | 3m   |
+| 48 | Check PhotoMap service status                        | 3m   |
+| 49 | Verify AMD NPU with test workload                    | 10m  |
+| 50 | Build Pi 3 SD image                                  | 30m+ |
+| 51 | Flash SD + boot Pi 3                                 | 15m  |
+| 52 | Test DNS failover                                    | 10m  |
+| 53 | Configure LAN devices for DNS VIP                    | 10m  |
 
 ---
 
@@ -145,16 +145,16 @@ ALL 13 tasks require physical evo-x2 access:
 
 ### Critical Improvement Areas
 
-| #   | Area                           | Problem                                                     | Proposed Fix                                                                                                                                          |
-| --- | ------------------------------ | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Regression rate**            | Each session introduces 1-3 bugs while fixing others        | Add `nix flake check --no-build` as mandatory gate BEFORE committing. Add CI checks that catch the most common regressions.                           |
-| 2   | **No integration testing**     | Zero automated verification that services work together     | Add NixOS VM tests for critical services (P9-91). Even one smoke test for the most critical service would catch regressions.                          |
-| 3   | **Deployment bottleneck**      | 13 tasks blocked on evo-x2, no remote deploy capability     | Consider adding SSH-based remote deploy to justfile: `just deploy-remote` that runs `nh os switch` over SSH.                                          |
-| 4   | **Flake evaluation speed**     | `nix flake check` evaluates everything on every platform    | Add `--systems x86_64-linux` to skip darwin evaluation on Linux. Consider `nix eval` targeted checks for faster iteration.                            |
-| 5   | **Direnv robustness**          | Corrupted profile files silently break the dev environment  | Add `just doctor` command that checks direnv health (symlinks, profile validity, flake eval).                                                         |
-| 6   | **Self-reflection discipline** | Self-reflection is manual and inconsistent                  | Formalize: after every change, run `nix flake check --no-build` + `just format` + check `git diff` for unintended changes. Make it a justfile recipe. |
-| 7   | **Documentation freshness**    | MASTER_TODO_PLAN manually updated, can drift                | Add doc freshness check to `just validate` — verify referenced commits exist and file references are valid.                                           |
-| 8   | **Secret management gaps**     | 4 security items still using hardcoded or plaintext secrets | Prioritize sops migration for Taskwarrior encryption and VRRP auth — these are quick wins.                                                            |
+| # | Area                           | Problem                                                     | Proposed Fix                                                                                                                                          |
+| - | ------------------------------ | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Regression rate**            | Each session introduces 1-3 bugs while fixing others        | Add `nix flake check --no-build` as mandatory gate BEFORE committing. Add CI checks that catch the most common regressions.                           |
+| 2 | **No integration testing**     | Zero automated verification that services work together     | Add NixOS VM tests for critical services (P9-91). Even one smoke test for the most critical service would catch regressions.                          |
+| 3 | **Deployment bottleneck**      | 13 tasks blocked on evo-x2, no remote deploy capability     | Consider adding SSH-based remote deploy to justfile: `just deploy-remote` that runs `nh os switch` over SSH.                                          |
+| 4 | **Flake evaluation speed**     | `nix flake check` evaluates everything on every platform    | Add `--systems x86_64-linux` to skip darwin evaluation on Linux. Consider `nix eval` targeted checks for faster iteration.                            |
+| 5 | **Direnv robustness**          | Corrupted profile files silently break the dev environment  | Add `just doctor` command that checks direnv health (symlinks, profile validity, flake eval).                                                         |
+| 6 | **Self-reflection discipline** | Self-reflection is manual and inconsistent                  | Formalize: after every change, run `nix flake check --no-build` + `just format` + check `git diff` for unintended changes. Make it a justfile recipe. |
+| 7 | **Documentation freshness**    | MASTER_TODO_PLAN manually updated, can drift                | Add doc freshness check to `just validate` — verify referenced commits exist and file references are valid.                                           |
+| 8 | **Secret management gaps**     | 4 security items still using hardcoded or plaintext secrets | Prioritize sops migration for Taskwarrior encryption and VRRP auth — these are quick wins.                                                            |
 
 ---
 
@@ -162,33 +162,33 @@ ALL 13 tasks require physical evo-x2 access:
 
 Ordered by impact × feasibility (highest first):
 
-| #   | Task                                                               | Category    | Est. | Blocker?             |
-| --- | ------------------------------------------------------------------ | ----------- | ---- | -------------------- |
-| 1   | **`just switch` on evo-x2** — deploy 54 commits of pending changes | P5-DEPLOY   | 45m  | Needs evo-x2         |
-| 2   | **Verify Ollama works** after rebuild                              | P5-VERIFY   | 5m   | Needs evo-x2         |
-| 3   | **Verify SigNoz** collecting metrics/logs/traces                   | P5-VERIFY   | 5m   | Needs evo-x2         |
-| 4   | **Move Taskwarrior encryption to sops-nix**                        | P1-SECURITY | 10m  | Needs evo-x2         |
-| 5   | **Pin Docker digests** for Voice Agents + PhotoMap                 | P1-SECURITY | 10m  | Needs evo-x2         |
-| 6   | **Secure VRRP auth_pass** with sops-nix                            | P1-SECURITY | 8m   | Needs evo-x2         |
-| 7   | **Add `just doctor`** — health check for direnv, flake, git state  | NEW-TOOLING | 15m  | None                 |
-| 8   | **Add `just pre-commit`** — format + lint + check gate             | NEW-TOOLING | 10m  | None                 |
-| 9   | **Verify ComfyUI** after rebuild                                   | P5-VERIFY   | 5m   | Needs evo-x2         |
-| 10  | **Verify Steam** after rebuild                                     | P5-VERIFY   | 5m   | Needs evo-x2         |
-| 11  | **Verify Caddy HTTPS** block page                                  | P5-VERIFY   | 3m   | Needs evo-x2         |
-| 12  | **Check Authelia SSO** status                                      | P5-VERIFY   | 3m   | Needs evo-x2         |
-| 13  | **Verify AMD NPU** with test workload                              | P5-VERIFY   | 10m  | Needs evo-x2         |
-| 14  | **Build Pi 3 SD image** (`nixosConfigurations.rpi3-dns`)           | P5-DEPLOY   | 30m  | Needs Pi 3 hardware  |
-| 15  | **Flash SD + boot Pi 3**                                           | P5-DEPLOY   | 15m  | Needs Pi 3 hardware  |
-| 16  | **Test DNS failover** between evo-x2 and Pi 3                      | P5-VERIFY   | 10m  | Needs Pi 3           |
-| 17  | **Hermes health check** endpoint                                   | P6-SERVICE  | 30m  | Needs Hermes code    |
-| 18  | **Hermes mergeEnvScript cleanup**                                  | P6-SERVICE  | 15m  | Low risk             |
-| 19  | **SigNoz missing metrics** — add scraping for 10 services          | P6-SERVICE  | 30m  | Needs evo-x2 metrics |
-| 20  | **Authelia SMTP notifications**                                    | P6-SERVICE  | 15m  | Needs SMTP creds     |
-| 21  | **Add NixOS VM test** for at least one critical service            | P9-TESTING  | 2h   | Research             |
-| 22  | **Add Waybar module** for session restore stats                    | P9-FEATURE  | 1h   | None                 |
-| 23  | **Create homeModules pattern** for HM via flake-parts              | P9-ARCH     | 2h   | Research             |
-| 24  | **Investigate binary cache (Cachix)** for faster builds            | P9-PERF     | 1h   | Research             |
-| 25  | **Configure LAN devices** for DNS VIP                              | P5-DEPLOY   | 10m  | Network access       |
+| #  | Task                                                               | Category    | Est. | Blocker?             |
+| -- | ------------------------------------------------------------------ | ----------- | ---- | -------------------- |
+| 1  | **`just switch` on evo-x2** — deploy 54 commits of pending changes | P5-DEPLOY   | 45m  | Needs evo-x2         |
+| 2  | **Verify Ollama works** after rebuild                              | P5-VERIFY   | 5m   | Needs evo-x2         |
+| 3  | **Verify SigNoz** collecting metrics/logs/traces                   | P5-VERIFY   | 5m   | Needs evo-x2         |
+| 4  | **Move Taskwarrior encryption to sops-nix**                        | P1-SECURITY | 10m  | Needs evo-x2         |
+| 5  | **Pin Docker digests** for Voice Agents + PhotoMap                 | P1-SECURITY | 10m  | Needs evo-x2         |
+| 6  | **Secure VRRP auth_pass** with sops-nix                            | P1-SECURITY | 8m   | Needs evo-x2         |
+| 7  | **Add `just doctor`** — health check for direnv, flake, git state  | NEW-TOOLING | 15m  | None                 |
+| 8  | **Add `just pre-commit`** — format + lint + check gate             | NEW-TOOLING | 10m  | None                 |
+| 9  | **Verify ComfyUI** after rebuild                                   | P5-VERIFY   | 5m   | Needs evo-x2         |
+| 10 | **Verify Steam** after rebuild                                     | P5-VERIFY   | 5m   | Needs evo-x2         |
+| 11 | **Verify Caddy HTTPS** block page                                  | P5-VERIFY   | 3m   | Needs evo-x2         |
+| 12 | **Check Authelia SSO** status                                      | P5-VERIFY   | 3m   | Needs evo-x2         |
+| 13 | **Verify AMD NPU** with test workload                              | P5-VERIFY   | 10m  | Needs evo-x2         |
+| 14 | **Build Pi 3 SD image** (`nixosConfigurations.rpi3-dns`)           | P5-DEPLOY   | 30m  | Needs Pi 3 hardware  |
+| 15 | **Flash SD + boot Pi 3**                                           | P5-DEPLOY   | 15m  | Needs Pi 3 hardware  |
+| 16 | **Test DNS failover** between evo-x2 and Pi 3                      | P5-VERIFY   | 10m  | Needs Pi 3           |
+| 17 | **Hermes health check** endpoint                                   | P6-SERVICE  | 30m  | Needs Hermes code    |
+| 18 | **Hermes mergeEnvScript cleanup**                                  | P6-SERVICE  | 15m  | Low risk             |
+| 19 | **SigNoz missing metrics** — add scraping for 10 services          | P6-SERVICE  | 30m  | Needs evo-x2 metrics |
+| 20 | **Authelia SMTP notifications**                                    | P6-SERVICE  | 15m  | Needs SMTP creds     |
+| 21 | **Add NixOS VM test** for at least one critical service            | P9-TESTING  | 2h   | Research             |
+| 22 | **Add Waybar module** for session restore stats                    | P9-FEATURE  | 1h   | None                 |
+| 23 | **Create homeModules pattern** for HM via flake-parts              | P9-ARCH     | 2h   | Research             |
+| 24 | **Investigate binary cache (Cachix)** for faster builds            | P9-PERF     | 1h   | Research             |
+| 25 | **Configure LAN devices** for DNS VIP                              | P5-DEPLOY   | 10m  | Network access       |
 
 ---
 

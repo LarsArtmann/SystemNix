@@ -154,33 +154,33 @@ The data partition is also nearly full. AI models, container images, or other la
 
 ## f) Top #25 Things We Should Get Done Next
 
-| #   | Task                                                 | Impact | Effort | Priority    |
-| --- | ---------------------------------------------------- | ------ | ------ | ----------- |
-| 1   | **Fix `disk-monitor.service` failure**               | High   | 15 min | 🔴 Critical |
-| 2   | **Verify ClickHouse data integrity**                 | High   | 10 min | 🔴 Critical |
-| 3   | **Verify /var/lib/{immich,forgejo,clickhouse} data** | High   | 15 min | 🔴 Critical |
-| 4   | **Add ClickHouse system log TTLs**                   | Medium | 30 min | 🟡 High     |
-| 5   | **Reduce btrbk retention to 7d 1w**                  | Medium | 5 min  | 🟡 High     |
-| 6   | **Add `just snapshot-gc` recipe**                    | Medium | 20 min | 🟡 High     |
-| 7   | **Migrate to Disko for declarative subvolumes**      | High   | 3 hr   | 🟡 High     |
-| 8   | **Clean up Gitea pre-migration (19 GB)**             | Low    | 5 min  | 🟢 Medium   |
-| 9   | **Add `/data` BTRFS subvolume + snapshot**           | Medium | 1 hr   | 🟢 Medium   |
-| 10  | **Journal vacuum automation**                        | Low    | 15 min | 🟢 Medium   |
-| 11  | **Add `just cache-subvol-create` recipe**            | Low    | 15 min | 🟢 Medium   |
-| 12  | **Document cache subvolume setup in AGENTS.md**      | Low    | 10 min | 🟢 Medium   |
-| 13  | **Monitor /data usage (93%)**                        | Medium | 10 min | 🟢 Medium   |
-| 14  | **Add pre-deploy nix-collect-garbage**               | Medium | 20 min | 🟢 Medium   |
-| 15  | **SigNoz alert rule for disk usage**                 | Low    | 30 min | 🔵 Low      |
-| 16  | **BTRFS compression audit**                          | Low    | 30 min | 🔵 Low      |
-| 17  | **Add `@snapshots` subvolume for btrbk**             | Low    | 1 hr   | 🔵 Low      |
-| 18  | **Remove old `.pre-subvol` backups**                 | Low    | 5 min  | 🔵 Low      |
-| 19  | **Add `ensure-btrfs-subvolumes` to `just test`**     | Low    | 30 min | 🔵 Low      |
-| 20  | **Audit all cache dirs for additional subvolumes**   | Low    | 20 min | 🔵 Low      |
-| 21  | **Add `.local/share` as subvolume candidate**        | Low    | 30 min | 🔵 Low      |
-| 22  | **Review Docker image pruning policy**               | Low    | 15 min | 🔵 Low      |
-| 23  | **Add `OLLAMA_MAX_LOADED_MODELS=1` enforcement**     | Low    | 10 min | 🔵 Low      |
-| 24  | **Document rollback procedure in AGENTS.md**         | Low    | 15 min | 🔵 Low      |
-| 25  | **Add snapshot size alerting to btrbk**              | Low    | 30 min | 🔵 Low      |
+| #  | Task                                                 | Impact | Effort | Priority    |
+| -- | ---------------------------------------------------- | ------ | ------ | ----------- |
+| 1  | **Fix `disk-monitor.service` failure**               | High   | 15 min | 🔴 Critical |
+| 2  | **Verify ClickHouse data integrity**                 | High   | 10 min | 🔴 Critical |
+| 3  | **Verify /var/lib/{immich,forgejo,clickhouse} data** | High   | 15 min | 🔴 Critical |
+| 4  | **Add ClickHouse system log TTLs**                   | Medium | 30 min | 🟡 High     |
+| 5  | **Reduce btrbk retention to 7d 1w**                  | Medium | 5 min  | 🟡 High     |
+| 6  | **Add `just snapshot-gc` recipe**                    | Medium | 20 min | 🟡 High     |
+| 7  | **Migrate to Disko for declarative subvolumes**      | High   | 3 hr   | 🟡 High     |
+| 8  | **Clean up Gitea pre-migration (19 GB)**             | Low    | 5 min  | 🟢 Medium   |
+| 9  | **Add `/data` BTRFS subvolume + snapshot**           | Medium | 1 hr   | 🟢 Medium   |
+| 10 | **Journal vacuum automation**                        | Low    | 15 min | 🟢 Medium   |
+| 11 | **Add `just cache-subvol-create` recipe**            | Low    | 15 min | 🟢 Medium   |
+| 12 | **Document cache subvolume setup in AGENTS.md**      | Low    | 10 min | 🟢 Medium   |
+| 13 | **Monitor /data usage (93%)**                        | Medium | 10 min | 🟢 Medium   |
+| 14 | **Add pre-deploy nix-collect-garbage**               | Medium | 20 min | 🟢 Medium   |
+| 15 | **SigNoz alert rule for disk usage**                 | Low    | 30 min | 🔵 Low      |
+| 16 | **BTRFS compression audit**                          | Low    | 30 min | 🔵 Low      |
+| 17 | **Add `@snapshots` subvolume for btrbk**             | Low    | 1 hr   | 🔵 Low      |
+| 18 | **Remove old `.pre-subvol` backups**                 | Low    | 5 min  | 🔵 Low      |
+| 19 | **Add `ensure-btrfs-subvolumes` to `just test`**     | Low    | 30 min | 🔵 Low      |
+| 20 | **Audit all cache dirs for additional subvolumes**   | Low    | 20 min | 🔵 Low      |
+| 21 | **Add `.local/share` as subvolume candidate**        | Low    | 30 min | 🔵 Low      |
+| 22 | **Review Docker image pruning policy**               | Low    | 15 min | 🔵 Low      |
+| 23 | **Add `OLLAMA_MAX_LOADED_MODELS=1` enforcement**     | Low    | 10 min | 🔵 Low      |
+| 24 | **Document rollback procedure in AGENTS.md**         | Low    | 15 min | 🔵 Low      |
+| 25 | **Add snapshot size alerting to btrbk**              | Low    | 30 min | 🔵 Low      |
 
 ---
 

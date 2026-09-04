@@ -17,14 +17,14 @@ System required a **hard power cut** because Hermes's `anime-comic-pipeline` (Py
 
 All 6 layers implemented in `platforms/nixos/system/boot.nix`:
 
-| #   | Layer                    | Setting                       | Effect                                                             |
-| --- | ------------------------ | ----------------------------- | ------------------------------------------------------------------ |
-| 1   | Keyboard recovery        | `kernel.sysrq = 1`            | Alt+SysRq+REISUB emergency reboot now works (was `16` = sync-only) |
-| 2   | Kernel panic auto-reboot | `kernel.panic = 30`           | Reboots 30s after panic (was `0` = hang forever)                   |
-| 3   | Soft lockup panic        | `kernel.softlockup_panic = 1` | Reboots on CPU stuck in kernel with interrupts disabled            |
-| 4   | Hung task panic          | `kernel.hung_task_panic = 1`  | Reboots after 120s of tasks stuck in D state                       |
-| 5   | Hardware watchdog        | `watchdogd` (SP5100 TCO)      | Hard reset if completely unresponsive for 30s (pet every 10s)      |
-| 6   | GPU self-recovery        | `amdgpu.gpu_recovery=1`       | Driver attempts GPU reset on hang instead of staying dead          |
+| # | Layer                    | Setting                       | Effect                                                             |
+| - | ------------------------ | ----------------------------- | ------------------------------------------------------------------ |
+| 1 | Keyboard recovery        | `kernel.sysrq = 1`            | Alt+SysRq+REISUB emergency reboot now works (was `16` = sync-only) |
+| 2 | Kernel panic auto-reboot | `kernel.panic = 30`           | Reboots 30s after panic (was `0` = hang forever)                   |
+| 3 | Soft lockup panic        | `kernel.softlockup_panic = 1` | Reboots on CPU stuck in kernel with interrupts disabled            |
+| 4 | Hung task panic          | `kernel.hung_task_panic = 1`  | Reboots after 120s of tasks stuck in D state                       |
+| 5 | Hardware watchdog        | `watchdogd` (SP5100 TCO)      | Hard reset if completely unresponsive for 30s (pet every 10s)      |
+| 6 | GPU self-recovery        | `amdgpu.gpu_recovery=1`       | Driver attempts GPU reset on hang instead of staying dead          |
 
 Also: `kernel.watchdog_thresh = 20` (raised from 10 to avoid GPU compute false positives), `vm.panic_on_oom = 0` (earlyoom handles OOM, don't double-panic).
 
@@ -159,33 +159,33 @@ Health check service itself is failing — ironic and means service degradation 
 
 ## f) Top 25 Things We Should Get Done Next
 
-| #   | Task                                                                    | Priority | Est. | Impact                                      |
-| --- | ----------------------------------------------------------------------- | -------- | ---- | ------------------------------------------- |
-| 1   | `just switch` — deploy crash recovery + all pending changes             | P0       | 45m  | **All fixes are code-only until deployed**  |
-| 2   | Nix generation cleanup — `nix-collect-garbage -d` + docker system prune | P0       | 15m  | Recover 50-100GB on root partition          |
-| 3   | Fix AMD GPU metrics (`amdgpu.prom` empty value)                         | P1       | 15m  | Stop 30s error spam, restore GPU monitoring |
-| 4   | Fix `service-health-check.service`                                      | P1       | 10m  | Restore service degradation detection       |
-| 5   | Investigate whisper-asr crash loop                                      | P1       | 15m  | Stop container restart spam                 |
-| 6   | Fix or remove clamav-freshclam                                          | P1       | 5m   | Eliminate failed service noise              |
-| 7   | Increase Hermes MemoryMax from 4G → 8G (PyTorch/ROCm)                   | P1       | 5m   | Prevent OOM kills during ML workloads       |
-| 8   | Verify crash recovery works: test SysRq, watchdogd status               | P1       | 10m  | Confirm the entire reason for this session  |
-| 9   | Pin Docker image digests for Voice Agents + PhotoMap (#9, #10)          | P1       | 10m  | Supply chain security                       |
-| 10  | Move Taskwarrior encryption secret to sops (#7)                         | P1       | 10m  | Remove hardcoded secrets                    |
-| 11  | Secure VRRP auth_pass with sops (#11)                                   | P1       | 10m  | Remove plaintext passwords                  |
-| 12  | Verify Ollama works post-rebuild (#42)                                  | P2       | 5m   | Core AI infrastructure                      |
-| 13  | Verify ComfyUI works post-rebuild (#44)                                 | P2       | 5m   | Image generation                            |
-| 14  | Verify SigNoz collecting metrics/logs/traces (#46)                      | P2       | 5m   | Observability                               |
-| 15  | Verify Caddy HTTPS block page (#45)                                     | P2       | 3m   | DNS stack integrity                         |
-| 16  | Check PhotoMap service status (#48)                                     | P2       | 3m   | Photo management                            |
-| 17  | Add Hermes health check endpoint (#62)                                  | P2       | 30m  | Service reliability                         |
-| 18  | Add SigNoz missing metrics for 10 services (#65)                        | P2       | 60m  | Full observability coverage                 |
-| 19  | Build Pi 3 SD image (#50)                                               | P2       | 30m+ | DNS failover cluster                        |
-| 20  | Fix root partition sizing — move more to /data                          | P2       | 30m  | Long-term disk health                       |
-| 21  | Create TODO_LIST.md from all docs                                       | P3       | 15m  | Project tracking                            |
-| 22  | Add real-time niri session save via event-stream (#94)                  | P3       | 60m  | Better crash recovery                       |
-| 23  | Investigate GPU compute/display isolation (cgroups)                     | P3       | 120m | Prevent GPU crash cascading                 |
-| 24  | Add Waybar module for session restore stats (#93)                       | P3       | 30m  | Desktop UX                                  |
-| 25  | Investigate binary cache (Cachix) for faster rebuilds (#92)             | P3       | 60m  | Developer experience                        |
+| #  | Task                                                                    | Priority | Est. | Impact                                      |
+| -- | ----------------------------------------------------------------------- | -------- | ---- | ------------------------------------------- |
+| 1  | `just switch` — deploy crash recovery + all pending changes             | P0       | 45m  | **All fixes are code-only until deployed**  |
+| 2  | Nix generation cleanup — `nix-collect-garbage -d` + docker system prune | P0       | 15m  | Recover 50-100GB on root partition          |
+| 3  | Fix AMD GPU metrics (`amdgpu.prom` empty value)                         | P1       | 15m  | Stop 30s error spam, restore GPU monitoring |
+| 4  | Fix `service-health-check.service`                                      | P1       | 10m  | Restore service degradation detection       |
+| 5  | Investigate whisper-asr crash loop                                      | P1       | 15m  | Stop container restart spam                 |
+| 6  | Fix or remove clamav-freshclam                                          | P1       | 5m   | Eliminate failed service noise              |
+| 7  | Increase Hermes MemoryMax from 4G → 8G (PyTorch/ROCm)                   | P1       | 5m   | Prevent OOM kills during ML workloads       |
+| 8  | Verify crash recovery works: test SysRq, watchdogd status               | P1       | 10m  | Confirm the entire reason for this session  |
+| 9  | Pin Docker image digests for Voice Agents + PhotoMap (#9, #10)          | P1       | 10m  | Supply chain security                       |
+| 10 | Move Taskwarrior encryption secret to sops (#7)                         | P1       | 10m  | Remove hardcoded secrets                    |
+| 11 | Secure VRRP auth_pass with sops (#11)                                   | P1       | 10m  | Remove plaintext passwords                  |
+| 12 | Verify Ollama works post-rebuild (#42)                                  | P2       | 5m   | Core AI infrastructure                      |
+| 13 | Verify ComfyUI works post-rebuild (#44)                                 | P2       | 5m   | Image generation                            |
+| 14 | Verify SigNoz collecting metrics/logs/traces (#46)                      | P2       | 5m   | Observability                               |
+| 15 | Verify Caddy HTTPS block page (#45)                                     | P2       | 3m   | DNS stack integrity                         |
+| 16 | Check PhotoMap service status (#48)                                     | P2       | 3m   | Photo management                            |
+| 17 | Add Hermes health check endpoint (#62)                                  | P2       | 30m  | Service reliability                         |
+| 18 | Add SigNoz missing metrics for 10 services (#65)                        | P2       | 60m  | Full observability coverage                 |
+| 19 | Build Pi 3 SD image (#50)                                               | P2       | 30m+ | DNS failover cluster                        |
+| 20 | Fix root partition sizing — move more to /data                          | P2       | 30m  | Long-term disk health                       |
+| 21 | Create TODO_LIST.md from all docs                                       | P3       | 15m  | Project tracking                            |
+| 22 | Add real-time niri session save via event-stream (#94)                  | P3       | 60m  | Better crash recovery                       |
+| 23 | Investigate GPU compute/display isolation (cgroups)                     | P3       | 120m | Prevent GPU crash cascading                 |
+| 24 | Add Waybar module for session restore stats (#93)                       | P3       | 30m  | Desktop UX                                  |
+| 25 | Investigate binary cache (Cachix) for faster rebuilds (#92)             | P3       | 60m  | Developer experience                        |
 
 ---
 

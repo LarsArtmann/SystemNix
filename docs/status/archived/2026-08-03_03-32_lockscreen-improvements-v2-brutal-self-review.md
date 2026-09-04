@@ -7,13 +7,12 @@
 
 ---
 
-
 ## Iteration History
 
-| Iteration | Change | User Feedback | Outcome |
-|-----------|--------|---------------|---------|
-| v1 | Added 10m lock + 15m monitor-off + themed swaylock with `--screenshots` | "10 min sucks ass", wants media inhibition, wants wallpapers not screenshots | Reverted idle timeouts, added audio inhibitor, switched to wallpaper |
-| v2 | Reverted idle timeouts, added `sway-audio-idle-inhibit`, wallpaper-based lock, extracted `pkgs/dms-lock.nix` | This report | See below |
+| Iteration | Change                                                                                                       | User Feedback                                                                | Outcome                                                              |
+| --------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| v1        | Added 10m lock + 15m monitor-off + themed swaylock with `--screenshots`                                      | "10 min sucks ass", wants media inhibition, wants wallpapers not screenshots | Reverted idle timeouts, added audio inhibitor, switched to wallpaper |
+| v2        | Reverted idle timeouts, added `sway-audio-idle-inhibit`, wallpaper-based lock, extracted `pkgs/dms-lock.nix` | This report                                                                  | See below                                                            |
 
 ---
 
@@ -21,12 +20,12 @@
 
 ### Files Changed
 
-| File | Changes |
-|------|---------|
-| `pkgs/dms-lock.nix` | **NEW** — shared lock package. DMS IPC → wallpaper discovery → swaylock-effects with Catppuccin Mocha |
+| File                                       | Changes                                                                                               |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `pkgs/dms-lock.nix`                        | **NEW** — shared lock package. DMS IPC → wallpaper discovery → swaylock-effects with Catppuccin Mocha |
 | `platforms/nixos/desktop/niri-wrapped.nix` | Inline `dms-lock` → `callPackage ../../../pkgs/dms-lock.nix`. Added `sway-audio-idle-inhibit` service |
-| `flake.nix` | `dms-locks` app → same `callPackage` (eliminated 40-line duplication) |
-| `FEATURES.md` | Updated DMS lock screen + Swayidle entries |
+| `flake.nix`                                | `dms-locks` app → same `callPackage` (eliminated 40-line duplication)                                 |
+| `FEATURES.md`                              | Updated DMS lock screen + Swayidle entries                                                            |
 
 ### Key Decisions Made
 
@@ -181,6 +180,7 @@ Line 2 declares `lib` in the function args but it's never used in the body. `cal
 ### Q1: The `dms` binary is missing from `pkgs/dms-lock.nix` runtimeInputs — should I pass the DMS package as a parameter, or restructure?
 
 The shared `pkgs/dms-lock.nix` can't access flake inputs directly (it's in `pkgs/`, which only receives nixpkgs via `callPackage`). The DMS package comes from the `dankMaterialShell` flake input. Options:
+
 - **(a)** Pass `dms` as a parameter: `callPackage ../../../pkgs/dms-lock.nix { inherit colors dmsPkg; }` — requires both call sites to pass it
 - **(b)** Move `dms-lock.nix` back inline to `niri-wrapped.nix` and have `flake.nix` reference it from there — avoids the pkgs/ dependency
 - **(c)** Make `pkgs/dms-lock.nix` not depend on `dms` at all — use `command -v dms` (already done) and accept that DMS lock only works when `dms` is already on PATH (it IS on PATH via DMS HM module's package installation)

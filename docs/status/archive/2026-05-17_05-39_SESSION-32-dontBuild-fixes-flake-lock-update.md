@@ -18,14 +18,14 @@ Fixed the NixOS build failure by committing uncommitted code fixes in `mr-sync`,
 
 ### This Session — Upstream Repo Fixes (6 repos, 6 commits, all pushed)
 
-| #   | Repo                               | Commit    | Change                                                                                                                       |
-| --- | ---------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **mr-sync**                        | `135299e` | Committed uncommitted code fixes (context propagation to FetchAll, diffContent refactor) + `dontBuild = true` in preparedSrc |
-| 2   | **projects-management-automation** | `9894b10` | `dontBuild = true` in preparedSrc + flake.lock update (cmdguard, go-output, go-commit, go-composable-business-types bumped)  |
-| 3   | **go-structure-linter**            | `f826589` | `dontBuild = true` in preparedSrc                                                                                            |
-| 4   | **go-auto-upgrade**                | `50b9cd2` | `dontBuild = true` in preparedSrc                                                                                            |
-| 5   | **branching-flow**                 | `0cf97f2` | `dontBuild = true` in preparedSrc                                                                                            |
-| 6   | **hierarchical-errors**            | `78faf43` | `dontBuild = true` in preparedSrc                                                                                            |
+| # | Repo                               | Commit    | Change                                                                                                                       |
+| - | ---------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **mr-sync**                        | `135299e` | Committed uncommitted code fixes (context propagation to FetchAll, diffContent refactor) + `dontBuild = true` in preparedSrc |
+| 2 | **projects-management-automation** | `9894b10` | `dontBuild = true` in preparedSrc + flake.lock update (cmdguard, go-output, go-commit, go-composable-business-types bumped)  |
+| 3 | **go-structure-linter**            | `f826589` | `dontBuild = true` in preparedSrc                                                                                            |
+| 4 | **go-auto-upgrade**                | `50b9cd2` | `dontBuild = true` in preparedSrc                                                                                            |
+| 5 | **branching-flow**                 | `0cf97f2` | `dontBuild = true` in preparedSrc                                                                                            |
+| 6 | **hierarchical-errors**            | `78faf43` | `dontBuild = true` in preparedSrc                                                                                            |
 
 ### SystemNix — Flake Lock Update
 
@@ -58,49 +58,49 @@ All items from previous status reports remain done:
 
 ## B) PARTIALLY DONE
 
-| #   | Item                   | What's done                                            | What's missing                                                                                                                                               |
-| --- | ---------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | **Full build**         | 5 of 6 Go repo overlays fixed, `just test-fast` passes | `projects-management-automation` blocked by upstream `project-discovery-sdk` importing deleted `programminglanguage` subpackage (105 references in 14 files) |
-| 2   | **Deploy**             | All local changes validated, flake lock updated        | **10+ sessions of undeployed changes**. Caddy down since session 20                                                                                          |
-| 3   | **SigNoz alert rules** | `signoz-alerts.nix` defines rules with mkRule helper   | Not loaded into SigNoz API                                                                                                                                   |
-| 4   | **TODO_LIST.md**       | Exists                                                 | Stale since session 21 (May 11)                                                                                                                              |
+| # | Item                   | What's done                                            | What's missing                                                                                                                                               |
+| - | ---------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1 | **Full build**         | 5 of 6 Go repo overlays fixed, `just test-fast` passes | `projects-management-automation` blocked by upstream `project-discovery-sdk` importing deleted `programminglanguage` subpackage (105 references in 14 files) |
+| 2 | **Deploy**             | All local changes validated, flake lock updated        | **10+ sessions of undeployed changes**. Caddy down since session 20                                                                                          |
+| 3 | **SigNoz alert rules** | `signoz-alerts.nix` defines rules with mkRule helper   | Not loaded into SigNoz API                                                                                                                                   |
+| 4 | **TODO_LIST.md**       | Exists                                                 | Stale since session 21 (May 11)                                                                                                                              |
 
 ---
 
 ## C) NOT STARTED
 
-| #   | Item                                          | Priority    | Notes                                                                                                            |
-| --- | --------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------- |
-| 1   | **Fix `project-discovery-sdk` broken import** | 🔴 BLOCKING | 105 refs to deleted `programminglanguage` subpackage across 14 files. Needs migration to go-enry or inline type. |
-| 2   | **Full deploy** (`just switch`)               | 🔴 CRITICAL | 10+ sessions undeployed. Caddy down.                                                                             |
-| 3   | **`nix-collect-garbage`** (~15G reclaim)      | 🔴 CRITICAL | Disk at 91%, /nix/store at 88G                                                                                   |
-| 4   | **Automated backups**                         | 🔴 CRITICAL | No scheduled backups for Immich, Gitea, Taskwarrior                                                              |
-| 5   | **nix GC timer** (weekly)                     | 🟡 HIGH     | Prevent disk exhaustion                                                                                          |
-| 6   | **Caddy health check in Gatus**               | 🟡 HIGH     | Only checks /metrics, not proxy pipeline                                                                         |
-| 7   | **Fix Timeshift snapshots**                   | 🟡 HIGH     | Both backup + verify services failed                                                                             |
-| 8   | **Caddy log rotation**                        | 🟡 HIGH     | No logrotate configured                                                                                          |
-| 9   | **Disk space alerting** (85%+)                | 🟡 MEDIUM   | No early warning                                                                                                 |
-| 10  | **TLS cert auto-renewal**                     | 🟡 MEDIUM   | Static cert, no renewal                                                                                          |
-| 11  | **CI/CD pipeline**                            | 🟡 MEDIUM   | Gitea Actions runner not configured                                                                              |
-| 12  | **Deploy SigNoz alert rules**                 | 🟡 MEDIUM   | Rules defined, not loaded                                                                                        |
-| 13  | **Go-output bump automation**                 | 🟡 MEDIUM   | Script to update all downstream repos                                                                            |
-| 14  | **Service self-registration**                 | 🟢 LOW      | Deferred — architecture change                                                                                   |
-| 15  | **Provision Pi 3** for DNS failover           | 🟢 LOW      | Module written, no hardware                                                                                      |
-| 16  | **docs/ cleanup** (80+ files)                 | 🟢 LOW      | Many stale reports                                                                                               |
+| #  | Item                                          | Priority    | Notes                                                                                                            |
+| -- | --------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------- |
+| 1  | **Fix `project-discovery-sdk` broken import** | 🔴 BLOCKING | 105 refs to deleted `programminglanguage` subpackage across 14 files. Needs migration to go-enry or inline type. |
+| 2  | **Full deploy** (`just switch`)               | 🔴 CRITICAL | 10+ sessions undeployed. Caddy down.                                                                             |
+| 3  | **`nix-collect-garbage`** (~15G reclaim)      | 🔴 CRITICAL | Disk at 91%, /nix/store at 88G                                                                                   |
+| 4  | **Automated backups**                         | 🔴 CRITICAL | No scheduled backups for Immich, Gitea, Taskwarrior                                                              |
+| 5  | **nix GC timer** (weekly)                     | 🟡 HIGH     | Prevent disk exhaustion                                                                                          |
+| 6  | **Caddy health check in Gatus**               | 🟡 HIGH     | Only checks /metrics, not proxy pipeline                                                                         |
+| 7  | **Fix Timeshift snapshots**                   | 🟡 HIGH     | Both backup + verify services failed                                                                             |
+| 8  | **Caddy log rotation**                        | 🟡 HIGH     | No logrotate configured                                                                                          |
+| 9  | **Disk space alerting** (85%+)                | 🟡 MEDIUM   | No early warning                                                                                                 |
+| 10 | **TLS cert auto-renewal**                     | 🟡 MEDIUM   | Static cert, no renewal                                                                                          |
+| 11 | **CI/CD pipeline**                            | 🟡 MEDIUM   | Gitea Actions runner not configured                                                                              |
+| 12 | **Deploy SigNoz alert rules**                 | 🟡 MEDIUM   | Rules defined, not loaded                                                                                        |
+| 13 | **Go-output bump automation**                 | 🟡 MEDIUM   | Script to update all downstream repos                                                                            |
+| 14 | **Service self-registration**                 | 🟢 LOW      | Deferred — architecture change                                                                                   |
+| 15 | **Provision Pi 3** for DNS failover           | 🟢 LOW      | Module written, no hardware                                                                                      |
+| 16 | **docs/ cleanup** (80+ files)                 | 🟢 LOW      | Many stale reports                                                                                               |
 
 ---
 
 ## D) TOTALLY FUCKED UP
 
-| #   | Item                                              | Severity | Details                                                                                                                                                                               |
-| --- | ------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **🔴 PMA BUILD BLOCKED**                          | CRITICAL | `project-discovery-sdk` imports `go-composable-business-types/programminglanguage` which was deleted in commit `c9bda50`. 105 references across 14 files need migration to `go-enry`. |
-| 2   | **🔴 Caddy STILL DOWN**                           | CRITICAL | 10+ sessions undeployed. All `*.home.lan` services unreachable since ~session 20.                                                                                                     |
-| 3   | **🔴 Root disk 91%**                              | CRITICAL | /nix/store at 88G. Each failed build adds ~5G. No auto-GC.                                                                                                                            |
-| 4   | **🔴 No backups**                                 | CRITICAL | Zero automated backup for any service data.                                                                                                                                           |
-| 5   | **🔴 10+ sessions without deploy**                | CRITICAL | ~20 commits of validated but undeployed changes.                                                                                                                                      |
-| 6   | **🟡 Upstream dep chain fragility**               | HIGH     | Same `go-output` → `go-branded-id` transitive dep pattern broke 4 repos again this session. `mr-sync` needed `cmdguard`/`go-output`/`go-branded-id` as local deps.                    |
-| 7   | **🟡 `preparedSrc` dontBuild missing in 6 repos** | HIGH     | Fixed this session, but the pattern of forgetting `dontBuild` in source-preparation derivations caused silent build failures.                                                         |
+| # | Item                                              | Severity | Details                                                                                                                                                                               |
+| - | ------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **🔴 PMA BUILD BLOCKED**                          | CRITICAL | `project-discovery-sdk` imports `go-composable-business-types/programminglanguage` which was deleted in commit `c9bda50`. 105 references across 14 files need migration to `go-enry`. |
+| 2 | **🔴 Caddy STILL DOWN**                           | CRITICAL | 10+ sessions undeployed. All `*.home.lan` services unreachable since ~session 20.                                                                                                     |
+| 3 | **🔴 Root disk 91%**                              | CRITICAL | /nix/store at 88G. Each failed build adds ~5G. No auto-GC.                                                                                                                            |
+| 4 | **🔴 No backups**                                 | CRITICAL | Zero automated backup for any service data.                                                                                                                                           |
+| 5 | **🔴 10+ sessions without deploy**                | CRITICAL | ~20 commits of validated but undeployed changes.                                                                                                                                      |
+| 6 | **🟡 Upstream dep chain fragility**               | HIGH     | Same `go-output` → `go-branded-id` transitive dep pattern broke 4 repos again this session. `mr-sync` needed `cmdguard`/`go-output`/`go-branded-id` as local deps.                    |
+| 7 | **🟡 `preparedSrc` dontBuild missing in 6 repos** | HIGH     | Fixed this session, but the pattern of forgetting `dontBuild` in source-preparation derivations caused silent build failures.                                                         |
 
 ---
 
@@ -142,53 +142,53 @@ The Nix `stdenv.mkDerivation` defaults to running `make` in `buildPhase`. Source
 
 ### P0 — BLOCKING (must fix before any deploy)
 
-| #   | Task                                                                                       | Impact                         | Effort |
-| --- | ------------------------------------------------------------------------------------------ | ------------------------------ | ------ |
-| 1   | **Fix `project-discovery-sdk`** — migrate 105 refs from `programminglanguage` to `go-enry` | Unblocks full build            | 2–4h   |
-| 2   | **Update `projects-management-automation`** after PDS fix                                  | Build passes                   | 5 min  |
-| 3   | **`just switch`** — deploy 10+ sessions of changes                                         | Caddy restored, all fixes live | 10 min |
-| 4   | **Verify critical services** after deploy (Caddy, niri, DNS, watchdog)                     | Confirm deployment             | 2 min  |
+| # | Task                                                                                       | Impact                         | Effort |
+| - | ------------------------------------------------------------------------------------------ | ------------------------------ | ------ |
+| 1 | **Fix `project-discovery-sdk`** — migrate 105 refs from `programminglanguage` to `go-enry` | Unblocks full build            | 2–4h   |
+| 2 | **Update `projects-management-automation`** after PDS fix                                  | Build passes                   | 5 min  |
+| 3 | **`just switch`** — deploy 10+ sessions of changes                                         | Caddy restored, all fixes live | 10 min |
+| 4 | **Verify critical services** after deploy (Caddy, niri, DNS, watchdog)                     | Confirm deployment             | 2 min  |
 
 ### P1 — CRITICAL (same day)
 
-| #   | Task                                                      | Impact                              | Effort |
-| --- | --------------------------------------------------------- | ----------------------------------- | ------ |
-| 5   | **`nix-collect-garbage --delete-older-than 3d`**          | Reclaim ~15G (91% → ~80%)           | 10 min |
-| 6   | **Add nix GC timer** (weekly, 3d threshold)               | Prevent disk exhaustion permanently | 30 min |
-| 7   | **Set up backup automation** (Immich, Gitea, Taskwarrior) | Data loss prevention                | 2h     |
+| # | Task                                                      | Impact                              | Effort |
+| - | --------------------------------------------------------- | ----------------------------------- | ------ |
+| 5 | **`nix-collect-garbage --delete-older-than 3d`**          | Reclaim ~15G (91% → ~80%)           | 10 min |
+| 6 | **Add nix GC timer** (weekly, 3d threshold)               | Prevent disk exhaustion permanently | 30 min |
+| 7 | **Set up backup automation** (Immich, Gitea, Taskwarrior) | Data loss prevention                | 2h     |
 
 ### P2 — HIGH (this week)
 
-| #   | Task                                                             | Impact                              | Effort |
-| --- | ---------------------------------------------------------------- | ----------------------------------- | ------ |
-| 8   | **Fix Caddy health check in Gatus** — test actual proxy pipeline | Prevents silent outages             | 30 min |
-| 9   | **Fix Timeshift snapshot service**                               | BTRFS backups running               | 30 min |
-| 10  | **Add disk space alert** (85%+ in Gatus/SigNoz)                  | Early warning                       | 30 min |
-| 11  | **Add Caddy log rotation**                                       | Prevent disk fill                   | 30 min |
-| 12  | **Create `go-output` bump automation**                           | Eliminate whack-a-mole across repos | 2h     |
-| 13  | **Extract `mkPreparedSrc` shared Nix function**                  | DRY across 6 Go repos               | 1h     |
+| #  | Task                                                             | Impact                              | Effort |
+| -- | ---------------------------------------------------------------- | ----------------------------------- | ------ |
+| 8  | **Fix Caddy health check in Gatus** — test actual proxy pipeline | Prevents silent outages             | 30 min |
+| 9  | **Fix Timeshift snapshot service**                               | BTRFS backups running               | 30 min |
+| 10 | **Add disk space alert** (85%+ in Gatus/SigNoz)                  | Early warning                       | 30 min |
+| 11 | **Add Caddy log rotation**                                       | Prevent disk fill                   | 30 min |
+| 12 | **Create `go-output` bump automation**                           | Eliminate whack-a-mole across repos | 2h     |
+| 13 | **Extract `mkPreparedSrc` shared Nix function**                  | DRY across 6 Go repos               | 1h     |
 
 ### P3 — MEDIUM (next 2 weeks)
 
-| #   | Task                                                       | Impact                              | Effort  |
-| --- | ---------------------------------------------------------- | ----------------------------------- | ------- |
-| 14  | **Deploy SigNoz alert rules** from signoz-alerts.nix       | Active monitoring                   | 1h      |
-| 15  | **Add CI build check** to all upstream Go repos            | Catch stale hashes before SystemNix | 2h/repo |
-| 16  | **Refresh TODO_LIST.md** against codebase                  | Accurate planning                   | 1h      |
-| 17  | **Implement TLS cert auto-renewal**                        | Prevent cert expiry                 | 3h      |
-| 18  | **Clean up docs/ directory** — archive stale files         | Reduce clutter (80+ files)          | 1h      |
-| 19  | **Restructure AGENTS.md** — extract reference sections     | Maintainability (927 lines)         | 2h      |
-| 20  | **Add deploy verification** (`just switch` + health check) | Deploy confidence                   | 1h      |
+| #  | Task                                                       | Impact                              | Effort  |
+| -- | ---------------------------------------------------------- | ----------------------------------- | ------- |
+| 14 | **Deploy SigNoz alert rules** from signoz-alerts.nix       | Active monitoring                   | 1h      |
+| 15 | **Add CI build check** to all upstream Go repos            | Catch stale hashes before SystemNix | 2h/repo |
+| 16 | **Refresh TODO_LIST.md** against codebase                  | Accurate planning                   | 1h      |
+| 17 | **Implement TLS cert auto-renewal**                        | Prevent cert expiry                 | 3h      |
+| 18 | **Clean up docs/ directory** — archive stale files         | Reduce clutter (80+ files)          | 1h      |
+| 19 | **Restructure AGENTS.md** — extract reference sections     | Maintainability (927 lines)         | 2h      |
+| 20 | **Add deploy verification** (`just switch` + health check) | Deploy confidence                   | 1h      |
 
 ### P4 — BACKLOG
 
-| #   | Task                                                          | Impact                             | Effort |
-| --- | ------------------------------------------------------------- | ---------------------------------- | ------ |
-| 21  | **Service self-registration** (caddy + gatus auto-wiring)     | New service = fewer steps          | 3h     |
-| 22  | **Set up Gitea Actions CI** for SystemNix                     | Automated build testing            | 3h     |
-| 23  | **Provision Pi 3** for DNS failover cluster                   | HA DNS                             | 4h     |
-| 24  | **Configure Twenty CRM** production setup                     | Business tool                      | 2h     |
-| 25  | **Evaluate Go monorepo** for all private LarsArtmann packages | Eliminate transitive dep fragility | 8h     |
+| #  | Task                                                          | Impact                             | Effort |
+| -- | ------------------------------------------------------------- | ---------------------------------- | ------ |
+| 21 | **Service self-registration** (caddy + gatus auto-wiring)     | New service = fewer steps          | 3h     |
+| 22 | **Set up Gitea Actions CI** for SystemNix                     | Automated build testing            | 3h     |
+| 23 | **Provision Pi 3** for DNS failover cluster                   | HA DNS                             | 4h     |
+| 24 | **Configure Twenty CRM** production setup                     | Business tool                      | 2h     |
+| 25 | **Evaluate Go monorepo** for all private LarsArtmann packages | Eliminate transitive dep fragility | 8h     |
 
 ---
 
@@ -274,7 +274,7 @@ mr-sync-0.1.0-go-modules (buildPhase)
 | **Memory**             | 48G/62G (77%)                                                                        | ✅ Better than session 30 (was 79%) |
 | **Failed services**    | Caddy, niri-health-metrics, service-health-check, timeshift-backup, timeshift-verify | 🔴 Same as session 30               |
 | **Undeployed commits** | ~20 (sessions 23–32)                                                                 | 🔴 Growing                          |
-| **AGENTS.md**          | 927 lines                                                                            | ⚠️ Growing                          |
+| **AGENTS.md**          | 927 lines                                                                            | ⚠️ Growing                           |
 
 ## Codebase Stats
 

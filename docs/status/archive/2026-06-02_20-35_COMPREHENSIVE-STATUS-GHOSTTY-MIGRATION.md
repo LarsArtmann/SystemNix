@@ -221,33 +221,33 @@
 
 ## F) Top 25 Things We Should Get Done Next
 
-| #   | Task                                                          | Priority | Effort   | Impact                    |
-| --- | ------------------------------------------------------------- | -------- | -------- | ------------------------- |
-| 1   | Fix duplicate ghostty (remove from base.nix, keep HM only)    | 🔴       | 5min     | Clean install             |
-| 2   | Fix duplicate swappy (remove from base.nix OR home.nix)       | 🔴       | 5min     | Clean install             |
-| 3   | Fix justfile `gatus-status` port (8083→9110)                  | 🔴       | 2min     | Correct monitoring        |
-| 4   | Fix justfile `update-vendor-hashes` missing `#`               | 🔴       | 2min     | Working recipe            |
-| 5   | Fix justfile `auth-bootstrap` wrong filename                  | 🔴       | 2min     | Working bootstrap         |
-| 6   | Configure Hermes secondary LLM provider                       | 🔴       | 1h       | Resilience                |
-| 7   | Add Hermes git remote SSH deploy key                          | 🔴       | 30min    | Hermes git operations     |
-| 8   | Add memory/swap alerting to SigNoz/Gatus                      | 🔴       | 1h       | Prevent silent OOM        |
-| 9   | Investigate swap exhaustion (7 gopls, 13Gi/13Gi)              | 🔴       | 2h       | System stability          |
-| 10  | Delete stale `authelia-secrets.yaml`                          | 🟡       | 1min     | Clean secrets dir         |
-| 11  | Delete stale `lib/ports.nix.bak`                              | 🟡       | 1min     | Clean lib dir             |
-| 12  | Remove dead script references from FEATURES.md                | 🟡       | 5min     | Accurate docs             |
-| 13  | Consolidate voice-agents Caddy vHost                          | 🟡       | 30min    | Clean caddy config        |
-| 14  | Add per-threshold SigNoz channel routing                      | 🟡       | 1h       | Alert quality             |
-| 15  | Deploy committed changes to evo-x2                            | 🟡       | 30min    | Production parity         |
-| 16  | Verify boot time (~35s target)                                | 🟡       | 10min    | Performance validation    |
-| 17  | Test SigNoz Discord alert channel                             | 🟡       | 15min    | Alert verification        |
-| 18  | Verify Gatus endpoints healthy                                | 🟡       | 10min    | Monitoring verification   |
-| 19  | Bring Darwin home.nix to parity (terminal, editor, theme)     | 🟡       | 4h       | Cross-platform quality    |
-| 20  | Update TODO_LIST.md (last updated session 75 — 3 weeks stale) | 🟡       | 30min    | Accurate task tracking    |
-| 21  | Audit 47 flake inputs for stale/unused                        | 🟢       | 2h       | Maintenance               |
-| 22  | nix-colors integration (17+ hardcoded colors)                 | 🟢       | 6h       | Theme consistency         |
-| 23  | Deploy Dozzle for Docker log viewing                          | 🟢       | 1h       | Observability             |
-| 24  | Create `just status` command                                  | 🟢       | 2h       | Automation                |
-| 25  | Provision Raspberry Pi 3 for DNS failover                     | 🟢       | Hardware | Infrastructure resilience |
+| #  | Task                                                          | Priority | Effort   | Impact                    |
+| -- | ------------------------------------------------------------- | -------- | -------- | ------------------------- |
+| 1  | Fix duplicate ghostty (remove from base.nix, keep HM only)    | 🔴       | 5min     | Clean install             |
+| 2  | Fix duplicate swappy (remove from base.nix OR home.nix)       | 🔴       | 5min     | Clean install             |
+| 3  | Fix justfile `gatus-status` port (8083→9110)                  | 🔴       | 2min     | Correct monitoring        |
+| 4  | Fix justfile `update-vendor-hashes` missing `#`               | 🔴       | 2min     | Working recipe            |
+| 5  | Fix justfile `auth-bootstrap` wrong filename                  | 🔴       | 2min     | Working bootstrap         |
+| 6  | Configure Hermes secondary LLM provider                       | 🔴       | 1h       | Resilience                |
+| 7  | Add Hermes git remote SSH deploy key                          | 🔴       | 30min    | Hermes git operations     |
+| 8  | Add memory/swap alerting to SigNoz/Gatus                      | 🔴       | 1h       | Prevent silent OOM        |
+| 9  | Investigate swap exhaustion (7 gopls, 13Gi/13Gi)              | 🔴       | 2h       | System stability          |
+| 10 | Delete stale `authelia-secrets.yaml`                          | 🟡       | 1min     | Clean secrets dir         |
+| 11 | Delete stale `lib/ports.nix.bak`                              | 🟡       | 1min     | Clean lib dir             |
+| 12 | Remove dead script references from FEATURES.md                | 🟡       | 5min     | Accurate docs             |
+| 13 | Consolidate voice-agents Caddy vHost                          | 🟡       | 30min    | Clean caddy config        |
+| 14 | Add per-threshold SigNoz channel routing                      | 🟡       | 1h       | Alert quality             |
+| 15 | Deploy committed changes to evo-x2                            | 🟡       | 30min    | Production parity         |
+| 16 | Verify boot time (~35s target)                                | 🟡       | 10min    | Performance validation    |
+| 17 | Test SigNoz Discord alert channel                             | 🟡       | 15min    | Alert verification        |
+| 18 | Verify Gatus endpoints healthy                                | 🟡       | 10min    | Monitoring verification   |
+| 19 | Bring Darwin home.nix to parity (terminal, editor, theme)     | 🟡       | 4h       | Cross-platform quality    |
+| 20 | Update TODO_LIST.md (last updated session 75 — 3 weeks stale) | 🟡       | 30min    | Accurate task tracking    |
+| 21 | Audit 47 flake inputs for stale/unused                        | 🟢       | 2h       | Maintenance               |
+| 22 | nix-colors integration (17+ hardcoded colors)                 | 🟢       | 6h       | Theme consistency         |
+| 23 | Deploy Dozzle for Docker log viewing                          | 🟢       | 1h       | Observability             |
+| 24 | Create `just status` command                                  | 🟢       | 2h       | Automation                |
+| 25 | Provision Raspberry Pi 3 for DNS failover                     | 🟢       | Hardware | Infrastructure resilience |
 
 ---
 

@@ -10,13 +10,13 @@
 
 ## System Resources
 
-| Metric            | Value                   | Status           |
-| ----------------- | ----------------------- | ---------------- |
+| Metric            | Value                   | Status          |
+| ----------------- | ----------------------- | --------------- |
 | Root disk (/)     | 430G / 512G (88%)       | ⚠️ Getting tight |
-| Data disk (/data) | 786G / 1.0T (77%)       | ✅ OK            |
+| Data disk (/data) | 786G / 1.0T (77%)       | ✅ OK           |
 | RAM               | 76G / 93G used          | ⚠️ Heavy         |
-| Swap              | 19G / 19G used (99.99%) | 🔴 CRITICAL      |
-| BTRFS snapshots   | 4 daily + 1 pre-deploy  | ✅ Working       |
+| Swap              | 19G / 19G used (99.99%) | 🔴 CRITICAL     |
+| BTRFS snapshots   | 4 daily + 1 pre-deploy  | ✅ Working      |
 
 ### Top Memory Consumers
 
@@ -158,53 +158,53 @@
 
 ### P0 — Immediate (This Session)
 
-| #   | Task                            | Why                                                                  |
-| --- | ------------------------------- | -------------------------------------------------------------------- |
-| 1   | **Test Immich OAuth login**     | The fix is deployed. User must verify at /user-settings → Link OAuth |
-| 2   | **Fix Immich WASM plugin path** | Clear stale 2.6.1 path from DB, restart immich-server                |
-| 3   | **Fix swap exhaustion**         | Kill stale processes, consider swapiness tuning                      |
+| # | Task                            | Why                                                                  |
+| - | ------------------------------- | -------------------------------------------------------------------- |
+| 1 | **Test Immich OAuth login**     | The fix is deployed. User must verify at /user-settings → Link OAuth |
+| 2 | **Fix Immich WASM plugin path** | Clear stale 2.6.1 path from DB, restart immich-server                |
+| 3 | **Fix swap exhaustion**         | Kill stale processes, consider swapiness tuning                      |
 
 ### P1 — High Impact (Next Few Sessions)
 
-| #   | Task                            | Why                                                               |
-| --- | ------------------------------- | ----------------------------------------------------------------- |
-| 4   | **Root disk cleanup**           | 88% → run nix-collect-garbage, clean old profiles, journal vacuum |
-| 5   | **Enable btrbk timer**          | Daily snapshots aren't happening automatically                    |
-| 6   | **Fix DiscordSync**             | Database migration bug in upstream Go code                        |
-| 7   | **Start SigNoz stack**          | Monitoring is completely offline since reboot                     |
-| 8   | **Add service health alerting** | DiscordSync failed silently for days                              |
+| # | Task                            | Why                                                               |
+| - | ------------------------------- | ----------------------------------------------------------------- |
+| 4 | **Root disk cleanup**           | 88% → run nix-collect-garbage, clean old profiles, journal vacuum |
+| 5 | **Enable btrbk timer**          | Daily snapshots aren't happening automatically                    |
+| 6 | **Fix DiscordSync**             | Database migration bug in upstream Go code                        |
+| 7 | **Start SigNoz stack**          | Monitoring is completely offline since reboot                     |
+| 8 | **Add service health alerting** | DiscordSync failed silently for days                              |
 
 ### P2 — Important (This Week)
 
-| #   | Task                                 | Why                                                    |
-| --- | ------------------------------------ | ------------------------------------------------------ |
-| 9   | **Pocket ID email verification**     | Admin user email unverified                            |
-| 10  | **Photomap podman fix**              | Commented out due to permission issue                  |
-| 11  | **Twenty CRM deployment**            | Service inactive, needs investigation                  |
-| 12  | **Homepage monitoring completeness** | Audit all tiles vs actual service state                |
-| 13  | **Gatus endpoint audit**             | Many services are down but no alerts firing            |
-| 14  | **Systemd failure notifications**    | Extend notify-failure@ to all services (not just some) |
+| #  | Task                                 | Why                                                    |
+| -- | ------------------------------------ | ------------------------------------------------------ |
+| 9  | **Pocket ID email verification**     | Admin user email unverified                            |
+| 10 | **Photomap podman fix**              | Commented out due to permission issue                  |
+| 11 | **Twenty CRM deployment**            | Service inactive, needs investigation                  |
+| 12 | **Homepage monitoring completeness** | Audit all tiles vs actual service state                |
+| 13 | **Gatus endpoint audit**             | Many services are down but no alerts firing            |
+| 14 | **Systemd failure notifications**    | Extend notify-failure@ to all services (not just some) |
 
 ### P3 — Improvements (This Month)
 
-| #   | Task                                     | Why                                                 |
-| --- | ---------------------------------------- | --------------------------------------------------- |
-| 15  | **Add provisioning integration test**    | Prevent name-vs-id class bugs                       |
-| 16  | **Automate Immich version upgrade path** | WASM cache invalidation on version bump             |
-| 17  | **Status docs rotation**                 | Archive everything older than 2 weeks               |
-| 18  | **Darwin maintenance**                   | Check disk, update flake, verify HM still works     |
-| 19  | **Memory budget document**               | Define per-service memory limits and total headroom |
-| 20  | **Swap strategy**                        | Document when to use swap vs when to kill processes |
+| #  | Task                                     | Why                                                 |
+| -- | ---------------------------------------- | --------------------------------------------------- |
+| 15 | **Add provisioning integration test**    | Prevent name-vs-id class bugs                       |
+| 16 | **Automate Immich version upgrade path** | WASM cache invalidation on version bump             |
+| 17 | **Status docs rotation**                 | Archive everything older than 2 weeks               |
+| 18 | **Darwin maintenance**                   | Check disk, update flake, verify HM still works     |
+| 19 | **Memory budget document**               | Define per-service memory limits and total headroom |
+| 20 | **Swap strategy**                        | Document when to use swap vs when to kill processes |
 
 ### P4 — Nice To Have
 
-| #   | Task                                | Why                                                      |
-| --- | ----------------------------------- | -------------------------------------------------------- |
-| 21  | **Cross-platform test**             | Verify Darwin still builds after recent changes          |
-| 22  | **NixOS tests**                     | Add actual NixOS VM tests for critical services          |
-| 23  | **Flake CI**                        | Automated build checking on push                         |
-| 24  | **DNS blocklist update automation** | Timer to refresh blocklists                              |
-| 25  | **AI workload sandboxing**          | llama-server + sdxl consuming 16G+ with no cgroup limits |
+| #  | Task                                | Why                                                      |
+| -- | ----------------------------------- | -------------------------------------------------------- |
+| 21 | **Cross-platform test**             | Verify Darwin still builds after recent changes          |
+| 22 | **NixOS tests**                     | Add actual NixOS VM tests for critical services          |
+| 23 | **Flake CI**                        | Automated build checking on push                         |
+| 24 | **DNS blocklist update automation** | Timer to refresh blocklists                              |
+| 25 | **AI workload sandboxing**          | llama-server + sdxl consuming 16G+ with no cgroup limits |
 
 ---
 

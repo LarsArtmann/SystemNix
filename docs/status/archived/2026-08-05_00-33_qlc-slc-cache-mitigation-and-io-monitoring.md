@@ -6,60 +6,72 @@
 
 ---
 
-
 ## a) FULLY DONE (Verified)
 
 All changes evaluated successfully via `nix eval .#nixosConfigurations.evo-x2.config.*`.
 
 ### #6: PSI I/O Stall Rate Monitoring
+
 - **What:** Extended `psi-metrics` script in `_signoz-metrics.nix` to also read `/proc/pressure/io`, emitting `node_psi_io_some_avg300`, `node_psi_io_full_avg300`, and a derived `node_psi_io_alert` boolean (>10% threshold).
 - **Gatus alert:** "I/O Stall Rate" check in group "Filesystem", 1m interval, Discord alert.
 - **BUG FOUND AND FIXED:** Initial implementation used awk field `$5` (= `total=`, a raw counter) instead of `$4` (= `avg300=`, the 5-min proportion). Would have always fired the alert since `total` is always > 0.10. Fixed to `$4`.
 - **Live verification:** During the fstrim run, `/proc/pressure/io` shows `some avg300=52.74` — the metric correctly reflects extreme I/O stall. The alert would fire correctly.
 
 ### #7: fstrim Duration Alert
+
 - **What:** Added `system_fstrim_duration_seconds` + `system_fstrim_duration_over_threshold` to `system-health.nix`. Reads `ExecMainStartTimestamp`/`ExecMainExitTimestamp` from systemd to compute duration. Threshold: 1800s (30 min).
 - **Gatus alert:** "fstrim Duration" check in group "Filesystem", 30m interval.
 
 ### #8: Journald SystemMaxUse Lowered
+
 - **What:** `boot.nix` `SystemMaxUse` changed from `16G` to `8G`.
 - **Rationale:** 8.5 GB was too much; journal writes compete for SLC cache blocks on QLC NAND.
 - **Auto-vacuum:** Existing `MaxFileSec=1week` + new `SystemMaxUse=8G` will rotate away old entries automatically. No manual `journalctl --vacuum` needed.
 
 ### #9: AGENTS.md BTRFS Section Updated
+
 - **What:** Updated TRIM (daily+idle, not weekly), Scrub (weekly, not monthly), added Commit interval section, added SLC cache exhaustion gotcha, updated BTRFS gotchas section with `commit=300` + SLC root cause.
 
 ### #12: BTRFS `commit=300` Mount Option
+
 - **What:** Added `commit=300` to both `/` and `/data` BTRFS mounts in `hardware-configuration.nix`.
 - **Rationale:** Default 30s commits metadata every 30s. On QLC NAND this is ~10x write amplification for metadata alone. `commit=300` batches to every 5 min, preserving SLC cache blocks.
 
 ### #13: fstrim Idle I/O Priority
+
 - **What:** Added `IOSchedulingClass=idle` + `Nice=10` to `systemd.services.fstrim.serviceConfig` in `boot.nix`.
 - **Verified:** `nix eval` confirms `IOSchedulingClass = "idle"` and `Nice = 10`.
 - **NOTE:** The manual `fstrim -v /` currently running does NOT use this — only the systemd timer service gets these settings. This is why the manual run is hammering I/O.
 
 ### #14: Monitor365 Server MemoryMax Raised
+
 - **What:** Added `MemoryMax = lib.mkForce "4G"` + `MemoryHigh = lib.mkForce "3G"` to `monitor365-server` in `monitor365.nix`.
 - **Rationale:** DuckDB's appender falls back to individual INSERTs (100x slowdown) under memory pressure from I/O starvation. 4G gives DuckDB's 2GB PRAGMA memory_limit enough cgroup headroom.
 - **Verified:** `nix eval` confirms `MemoryMax = "4G"`.
 
 ### #22: NVMe Endurance Warning Alert
+
 - **What:** Added `ENDURANCE_WARNING` flag (percentage_used >= 50) to `scripts/nvme-metrics.sh`. Added "NVMe Endurance Warning" Gatus check (1h interval).
 - **IMPORTANT FINDING:** The deployed nvme metrics collector is a DIFFERENT implementation: `pkgs.writeShellApplication` inline in `_signoz-metrics.nix` (lines 123-201), NOT the `scripts/nvme-metrics.sh` file. The inline version uses `jq` (not grep+sed) and does NOT emit `node_nvme_endurance_warning`. **The script change is orphaned** — the Gatus check will fail because the metric doesn't exist in the deployed collector. See section (d).
 
 ### #21: fstrim Timer Review
+
 - **Finding:** `fstrim.enable = true` (configuration.nix) + `OnCalendar = lib.mkForce "daily"` (boot.nix) = NO conflict. `mkForce` properly overrides nixpkgs default. Verified.
 
 ### #23: SLC Cache Exhaustion Documented in gotchas-archive.md
+
 - **What:** Full incident narrative with root-cause chain, timeline, fix list, and lesson. Covers the QLC SLC cache exhaustion pattern, `commit=300`, daily fstrim, and all monitoring additions.
 
 ### #15: /data BTRFS Chunk Investigation
+
 - **Finding:** Data chunks at 96.23% is NORMAL. Device has 297 GiB unallocated (29%). BTRFS allocates new chunks from the unallocated pool. Weekly `-dusage=50` balance will find almost nothing to consolidate. No action needed.
 
 ### #17: Journal Cleanup
+
 - **Finding:** Auto-handled by `SystemMaxUse=8G` + `MaxFileSec=1week`. No manual vacuum needed.
 
 ### #19: Docker overlay2 Location
+
 - **Finding:** Docker Root Dir is already `/data/docker` (on the separate BTRFS partition). No action needed.
 
 ---
@@ -67,6 +79,7 @@ All changes evaluated successfully via `nix eval .#nixosConfigurations.evo-x2.co
 ## b) PARTIALLY DONE
 
 ### #22: NVMe Endurance Warning — METRIC NOT DEPLOYED
+
 The Gatus check was added and evaluates, but the **metric it checks (`node_nvme_endurance_warning`) does not exist in the deployed nvme-metrics collector**. The deployed collector is an inline `pkgs.writeShellApplication` in `_signoz-metrics.nix` (lines 123-201), which I did NOT modify. I edited `scripts/nvme-metrics.sh` instead — a standalone script that is NOT referenced by any Nix module. **The Gatus check will permanently fire (metric not found = condition never matches).**
 
 **Fix needed:** Add the `ENDURANCE_WARNING` logic to the inline nvmeMetrics script in `_signoz-metrics.nix`, not the standalone script.
@@ -76,10 +89,12 @@ The Gatus check was added and evaluates, but the **metric it checks (`node_nvme_
 ## c) NOT STARTED
 
 ### High Priority (From Original Task List)
+
 - **#10:** File upstream Monitor365 issue — headless agent should disable graphical collectors, not spam warnings
 - **#11:** File upstream Monitor365 issue — "Buffer near capacity" should log once, not 119K times
 
 ### Medium Priority (From Original Task List)
+
 - **#16:** Add `node_disk_io_time_weighted_seconds_total` rate dashboard to SigNoz
 - **#18:** Audit all services for I/O patterns — identify sustained writers
 - **#20:** Consider moving ClickHouse data to a separate partition to reduce I/O contention on root
@@ -91,12 +106,14 @@ The Gatus check was added and evaluates, but the **metric it checks (`node_nvme_
 ## d) TOTALLY FUCKED UP
 
 ### BUG 1: PSI I/O awk field index (FIXED)
+
 - **What:** Used `$5` (total stall time counter) instead of `$4` (avg300 proportion) in the awk parser for `/proc/pressure/io`.
 - **Impact:** Would have reported `total=1907016708` instead of `avg300=0.52`, making the `> 0.10` threshold always true — permanent false alarm.
 - **Status:** FIXED before writing this report. Verified against live `/proc/pressure/io` output.
 - **Root cause:** Copy-pasted the field index from memory without checking the PSI format. The existing memory code uses `$2` for avg10, and I assumed `$5` for avg300 without counting fields.
 
 ### BUG 2: nvme-metrics.sh edited instead of inline Nix derivation (NOT FIXED)
+
 - **What:** Edited `scripts/nvme-metrics.sh` (standalone script) to add `node_nvme_endurance_warning`. But the DEPLOYED nvme metrics collector is an inline `pkgs.writeShellApplication` in `_signoz-metrics.nix` that does NOT read from this script.
 - **Impact:** The `node_nvme_endurance_warning` metric will NEVER appear in Prometheus output. The Gatus "NVMe Endurance Warning" check will permanently fire because the condition `[BODY] == pat(*node_nvme_endurance_warning 0*)` never matches.
 - **Status:** NOT FIXED. The fix is to add the endurance warning logic to the inline `nvmeMetrics` script in `_signoz-metrics.nix` lines 154-198.
@@ -123,17 +140,20 @@ The Gatus check was added and evaluates, but the **metric it checks (`node_nvme_
 ## f) Up to 50 Things We Should Get Done Next
 
 ### Critical (Fix bugs from this session)
+
 1. ~~**Fix BUG 2:** Add `node_nvme_endurance_warning` to the inline nvmeMetrics in `_signoz-metrics.nix` (lines 154-198)~~ done at `556dac12`
 2. ~~**Run `nix fmt`** to format all edited Nix files~~ done
 3. ~~**Deploy and verify** — `nix run .#deploy`, then verify new Gatus checks appear and don't false-alarm~~ done
 
 ### High Priority (From original task list)
+
 4. File upstream Monitor365 issue: headless agent should disable graphical collectors gracefully
 5. File upstream Monitor365 issue: "Buffer near capacity" should log once, not spam 119K times
 6. ~~Add `commit=300` to cache subvolume mounts in `snapshots.nix`~~ **NOT-DO/DUPLICATE — `commit=` is filesystem-wide on BTRFS, already applied to `/` mount. Cache subvolumes inherit it.**
 7. Add I/O PSI `avg10` + `avg60` metrics (not just `avg300`) for finer-grained alerting
 
 ### I/O & Disk Health
+
 8. Add `node_disk_io_time_weighted_seconds_total` dashboard to SigNoz
 9. Audit all systemd services for sustained disk writers (identify I/O hogs)
 10. Review all non-critical systemd services for `IOSchedulingClass=idle`
@@ -146,6 +166,7 @@ The Gatus check was added and evaluates, but the **metric it checks (`node_nvme_
 17. Monitor fstrim bytes trimmed per run (track SLC cache health trend)
 
 ### BTRFS & Filesystem
+
 18. Consider BTRFS `commit=600` (10 min) if `commit=300` proves insufficient
 19. Evaluate `compress-force=zstd` for `/data` (force compression on already-compressed media)
 20. Add BTRFS filesystem read-only scrub result history (track corruption trends)
@@ -156,6 +177,7 @@ The Gatus check was added and evaluates, but the **metric it checks (`node_nvme_
 25. Track BTRFS metadata growth rate (alert if metadata growing faster than data)
 
 ### NVMe & SMART
+
 26. Add NVMe thermal throttling event monitoring (alert on throttle_count)
 27. Track NVMe write amplification factor (data_units_written vs logical block writes)
 28. Monitor NVMe error log entries growth rate
@@ -163,6 +185,7 @@ The Gatus check was added and evaluates, but the **metric it checks (`node_nvme_
 30. Consider NVMe power state monitoring for power management optimization
 
 ### Monitoring & Alerting
+
 31. Add Prometheus alert for sustained high I/O wait (>5% for 10min)
 32. Add Gatus check for system_health-metrics service itself (meta-monitoring)
 33. Add textfile collector for systemd journal size tracking
@@ -173,6 +196,7 @@ The Gatus check was added and evaluates, but the **metric it checks (`node_nvme_
 38. Consider adding healthchecks.io external ping for WAN connectivity monitoring
 
 ### System Hardening
+
 39. Lower `MemoryHigh` on Helium (Chromium) to prevent SLC cache pressure from renderer churn
 40. Add `IOSchedulingClass=idle` to `nix-gc` and `nix-build-cleanup`
 41. Consider `systemd-cgroup` I/O weight for critical services (Caddy, DNS, Pocket ID)
@@ -181,6 +205,7 @@ The Gatus check was added and evaluates, but the **metric it checks (`node_nvme_
 44. Consider BTRFS `noCow` attribute on Docker overlay2 lowerdir (reduce CoW churn)
 
 ### Documentation
+
 45. Document the `commit=` per-mount vs filesystem-wide distinction in AGENTS.md
 46. Add a "QLC NAND tuning guide" section to docs/
 47. Document the relationship between SLC cache, CoW, and fstrim frequency

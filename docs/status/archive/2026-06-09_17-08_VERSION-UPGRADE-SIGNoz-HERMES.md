@@ -138,33 +138,33 @@ Root cause: The nix store had **cached pnpm-deps outputs from fetcher v1** that 
 
 ## F) Top 25 Next Tasks
 
-| #   | Task                                                      | Priority | Blocked?  |
-| --- | --------------------------------------------------------- | -------- | --------- |
-| 1   | Deploy to evo-x2 (`just switch`)                          | P0       | No        |
-| 2   | Verify SigNoz dashboards + data post-upgrade              | P0       | On deploy |
-| 3   | Verify Hermes gateway starts clean                        | P0       | On deploy |
-| 4   | Commit current changes (this session)                     | P0       | No        |
-| 5   | Add `openai_api_key` to hermes sops secrets               | P1       | Manual    |
-| 6   | Install hermes SSH deploy key                             | P1       | Manual    |
-| 7   | Fix `golangci-lint-auto-configure` build                  | P1       | No        |
-| 8   | Centralize SigNoz version (single source of truth)        | P2       | No        |
-| 9   | Create `just upgrade-pins` automation                     | P2       | No        |
-| 10  | Verify stale LSP cleanup timer is running                 | P2       | On evo-x2 |
-| 11  | Boot time measurement after deploy                        | P2       | On reboot |
-| 12  | Add Hermes health check to Gatus                          | P2       | No        |
-| 13  | Monitor GLM-5.1 rate limit recovery                       | P2       | On evo-x2 |
-| 14  | Run `just verify` post-deploy verification script         | P2       | On deploy |
-| 15  | Update AGENTS.md hermes section (no fixedHash needed)     | P3       | No        |
-| 16  | Create vendor hash blanking automation script             | P3       | No        |
-| 17  | Clean up old nix store FODs from fetcher v1 era           | P3       | No        |
-| 18  | Provision Pi 3 for DNS failover                           | P3       | Hardware  |
-| 19  | Wire Pi 3 as secondary DNS in dns-failover.nix            | P3       | On Pi 3   |
-| 20  | Darwin disk space audit (90%+ full)                       | P3       | On Darwin |
-| 21  | Template go-flake-parts to go-nix-helpers (commit + push) | P3       | No        |
-| 22  | Add SigNoz smoke test for version bump validation         | P4       | No        |
-| 23  | Review FEATURE.md for accuracy post-upgrades              | P4       | No        |
-| 24  | Audit `docs/status/` archive — move old reports           | P4       | No        |
-| 25  | Consider SigNoz ClickHouse backup pre-upgrade strategy    | P4       | No        |
+| #  | Task                                                      | Priority | Blocked?  |
+| -- | --------------------------------------------------------- | -------- | --------- |
+| 1  | Deploy to evo-x2 (`just switch`)                          | P0       | No        |
+| 2  | Verify SigNoz dashboards + data post-upgrade              | P0       | On deploy |
+| 3  | Verify Hermes gateway starts clean                        | P0       | On deploy |
+| 4  | Commit current changes (this session)                     | P0       | No        |
+| 5  | Add `openai_api_key` to hermes sops secrets               | P1       | Manual    |
+| 6  | Install hermes SSH deploy key                             | P1       | Manual    |
+| 7  | Fix `golangci-lint-auto-configure` build                  | P1       | No        |
+| 8  | Centralize SigNoz version (single source of truth)        | P2       | No        |
+| 9  | Create `just upgrade-pins` automation                     | P2       | No        |
+| 10 | Verify stale LSP cleanup timer is running                 | P2       | On evo-x2 |
+| 11 | Boot time measurement after deploy                        | P2       | On reboot |
+| 12 | Add Hermes health check to Gatus                          | P2       | No        |
+| 13 | Monitor GLM-5.1 rate limit recovery                       | P2       | On evo-x2 |
+| 14 | Run `just verify` post-deploy verification script         | P2       | On deploy |
+| 15 | Update AGENTS.md hermes section (no fixedHash needed)     | P3       | No        |
+| 16 | Create vendor hash blanking automation script             | P3       | No        |
+| 17 | Clean up old nix store FODs from fetcher v1 era           | P3       | No        |
+| 18 | Provision Pi 3 for DNS failover                           | P3       | Hardware  |
+| 19 | Wire Pi 3 as secondary DNS in dns-failover.nix            | P3       | On Pi 3   |
+| 20 | Darwin disk space audit (90%+ full)                       | P3       | On Darwin |
+| 21 | Template go-flake-parts to go-nix-helpers (commit + push) | P3       | No        |
+| 22 | Add SigNoz smoke test for version bump validation         | P4       | No        |
+| 23 | Review FEATURE.md for accuracy post-upgrades              | P4       | No        |
+| 24 | Audit `docs/status/` archive — move old reports           | P4       | No        |
+| 25 | Consider SigNoz ClickHouse backup pre-upgrade strategy    | P4       | No        |
 
 ---
 

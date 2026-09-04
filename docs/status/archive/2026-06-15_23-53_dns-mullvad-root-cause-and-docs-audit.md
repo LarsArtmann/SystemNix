@@ -27,8 +27,8 @@ Three major work items were tackled today: (1) documentation accuracy audit, (2)
 | Custom packages count | 13                                                                                          | 24                                                                                                                  |
 | Overlays count        | "12"                                                                                        | 25 (17 shared + 8 Linux-only)                                                                                       |
 | Gatus health checks   | 30                                                                                          | 33                                                                                                                  |
-| SigNoz alert rules    | 7→18 (first pass), corrected in second pass                                                 |
-| Blocklists            | 10→23 (first pass), 25→23 (second pass)                                                     |
+| SigNoz alert rules    | 7→18 (first pass), corrected in second pass                                                 |                                                                                                                     |
+| Blocklists            | 10→23 (first pass), 25→23 (second pass)                                                     |                                                                                                                     |
 | ADR table             | 5 fictional entries                                                                         | All 8 real ADRs with correct titles                                                                                 |
 | Pre-commit hooks      | Listed 5 non-existent hooks                                                                 | Actual 9 hooks from `.pre-commit-config.yaml`                                                                       |
 | CI/CD section         | Claimed macOS runner + Darwin build                                                         | Corrected: Ubuntu only, actual CI steps                                                                             |
@@ -95,11 +95,11 @@ Two bugs found in dnsblockd Go code:
 
 Three changes in working tree, validated with `just test-fast` (all checks passed):
 
-| File                                       | Change                                               | Status                      |
-| ------------------------------------------ | ---------------------------------------------------- | --------------------------- |
+| File                                       | Change                                               | Status                     |
+| ------------------------------------------ | ---------------------------------------------------- | -------------------------- |
 | `modules/nixos/services/dns-blocker.nix`   | `MemoryMax` 512M → 1G                                | ⚠️ Code ready, not deployed |
 | `platforms/nixos/system/configuration.nix` | Mullvad watchdog timer (every 5min re-applies DNS)   | ⚠️ Code ready, not deployed |
-| `platforms/nixos/system/networking.nix`    | **REVERTED** — resolvconf disable was wrong approach | ✅ Reverted to original     |
+| `platforms/nixos/system/networking.nix`    | **REVERTED** — resolvconf disable was wrong approach | ✅ Reverted to original    |
 
 **What's NOT done:**
 
@@ -108,8 +108,8 @@ Three changes in working tree, validated with `just test-fast` (all checks passe
 
 ### 2. dnsblockd Go Fixes (CODE WRITTEN, TESTS PASS, NOT DEPLOYED)
 
-| File                                           | Change                                              | Status        |
-| ---------------------------------------------- | --------------------------------------------------- | ------------- |
+| File                                           | Change                                              | Status       |
+| ---------------------------------------------- | --------------------------------------------------- | ------------ |
 | `internal/tracking/middleware.go`              | Context fix: `r.Context()` → `context.Background()` | ⚠️ Code ready |
 | `internal/tracking/middleware.go`              | Goroutine semaphore (cap 32, non-blocking)          | ⚠️ Code ready |
 | Other files (ratelimit, tls, stats, templates) | Pre-existing uncommitted changes from earlier work  | ⚠️ Mixed in   |
@@ -187,33 +187,33 @@ Three changes in working tree, validated with `just test-fast` (all checks passe
 
 Sorted by impact × effort (highest first):
 
-| #   | Task                                                                         | Impact   | Effort   | Category       |
-| --- | ---------------------------------------------------------------------------- | -------- | -------- | -------------- |
-| 1   | Deploy DNS fixes (dnsblockd MemoryMax 1G + Mullvad timer)                    | Critical | 5min     | Deploy         |
-| 2   | Commit + push dnsblockd Go fixes (context + semaphore)                       | Critical | 10min    | Code           |
-| 3   | Update SystemNix vendorHash for new dnsblockd                                | Critical | 10min    | Code           |
-| 4   | Fix `mullvad-config` service: `unitConfig.Restart` → `serviceConfig.Restart` | High     | 2min     | Bug fix        |
-| 5   | Decision: disable Mullvad entirely or keep with watchdog timer               | High     | Decision | Decision       |
-| 6   | Deploy updated dnsblockd + SystemNix config                                  | High     | 5min     | Deploy         |
-| 7   | Fix resolv.conf permissions (0777 → 0644)                                    | High     | 2min     | Security       |
-| 8   | Reboot evo-x2 — verify boot time after NVMe APST fix (P0 TODO)               | High     | 10min    | Operations     |
-| 9   | Verify Pocket ID email sending after SMTP wiring (P0 TODO)                   | Medium   | 5min     | Operations     |
-| 10  | Fix Twenty CRM intermittent 502s (P1 TODO)                                   | Medium   | 30min    | Debug          |
-| 11  | Audit Gatus health check URLs for 6 DOWN services (P1 TODO)                  | Medium   | 20min    | Debug          |
-| 12  | Create ROADMAP.md (P4 TODO)                                                  | Low      | 30min    | Docs           |
-| 13  | Create CHANGELOG.md (P4 TODO)                                                | Low      | 30min    | Docs           |
-| 14  | Archive old status reports (P4 TODO)                                         | Low      | 10min    | Cleanup        |
-| 15  | Add DNS resolver health check to Gatus (alert when local DNS breaks)         | Medium   | 15min    | Monitoring     |
-| 16  | Add `just dns-watch` command (inotifywait on resolv.conf + alert)            | Medium   | 10min    | Tooling        |
-| 17  | Fix dnsblockd `domain=` always empty in tracking (mode check)                | Low      | 10min    | Code           |
-| 18  | Investigate dnsblockd request body buffering (per-goroutine payload capture) | Low      | 30min    | Code           |
-| 19  | BTRFS `/data` subvolume migration (P3 TODO)                                  | Medium   | 30min    | Infrastructure |
-| 20  | Provision Pi 3 for DNS failover cluster (P6 TODO)                            | Low      | Hardware | Infrastructure |
-| 21  | Hermes: add OpenAI API key to sops (P2 TODO)                                 | Low      | 5min     | Manual         |
-| 22  | Auditd enablement (blocked on NixOS 26.05 bug)                               | Low      | Blocked  | Security       |
-| 23  | Split large modules: monitor365 (716L), signoz (705L), forgejo (583L)        | Low      | 1hr      | Refactor       |
-| 24  | Consider Mullvad wrapper that blocks talpid_dns from touching resolv.conf    | Medium   | 1hr      | Code           |
-| 25  | Document Mullvad DNS interaction in AGENTS.md gotchas table                  | Low      | 5min     | Docs           |
+| #  | Task                                                                         | Impact   | Effort   | Category       |
+| -- | ---------------------------------------------------------------------------- | -------- | -------- | -------------- |
+| 1  | Deploy DNS fixes (dnsblockd MemoryMax 1G + Mullvad timer)                    | Critical | 5min     | Deploy         |
+| 2  | Commit + push dnsblockd Go fixes (context + semaphore)                       | Critical | 10min    | Code           |
+| 3  | Update SystemNix vendorHash for new dnsblockd                                | Critical | 10min    | Code           |
+| 4  | Fix `mullvad-config` service: `unitConfig.Restart` → `serviceConfig.Restart` | High     | 2min     | Bug fix        |
+| 5  | Decision: disable Mullvad entirely or keep with watchdog timer               | High     | Decision | Decision       |
+| 6  | Deploy updated dnsblockd + SystemNix config                                  | High     | 5min     | Deploy         |
+| 7  | Fix resolv.conf permissions (0777 → 0644)                                    | High     | 2min     | Security       |
+| 8  | Reboot evo-x2 — verify boot time after NVMe APST fix (P0 TODO)               | High     | 10min    | Operations     |
+| 9  | Verify Pocket ID email sending after SMTP wiring (P0 TODO)                   | Medium   | 5min     | Operations     |
+| 10 | Fix Twenty CRM intermittent 502s (P1 TODO)                                   | Medium   | 30min    | Debug          |
+| 11 | Audit Gatus health check URLs for 6 DOWN services (P1 TODO)                  | Medium   | 20min    | Debug          |
+| 12 | Create ROADMAP.md (P4 TODO)                                                  | Low      | 30min    | Docs           |
+| 13 | Create CHANGELOG.md (P4 TODO)                                                | Low      | 30min    | Docs           |
+| 14 | Archive old status reports (P4 TODO)                                         | Low      | 10min    | Cleanup        |
+| 15 | Add DNS resolver health check to Gatus (alert when local DNS breaks)         | Medium   | 15min    | Monitoring     |
+| 16 | Add `just dns-watch` command (inotifywait on resolv.conf + alert)            | Medium   | 10min    | Tooling        |
+| 17 | Fix dnsblockd `domain=` always empty in tracking (mode check)                | Low      | 10min    | Code           |
+| 18 | Investigate dnsblockd request body buffering (per-goroutine payload capture) | Low      | 30min    | Code           |
+| 19 | BTRFS `/data` subvolume migration (P3 TODO)                                  | Medium   | 30min    | Infrastructure |
+| 20 | Provision Pi 3 for DNS failover cluster (P6 TODO)                            | Low      | Hardware | Infrastructure |
+| 21 | Hermes: add OpenAI API key to sops (P2 TODO)                                 | Low      | 5min     | Manual         |
+| 22 | Auditd enablement (blocked on NixOS 26.05 bug)                               | Low      | Blocked  | Security       |
+| 23 | Split large modules: monitor365 (716L), signoz (705L), forgejo (583L)        | Low      | 1hr      | Refactor       |
+| 24 | Consider Mullvad wrapper that blocks talpid_dns from touching resolv.conf    | Medium   | 1hr      | Code           |
+| 25 | Document Mullvad DNS interaction in AGENTS.md gotchas table                  | Low      | 5min     | Docs           |
 
 ---
 
@@ -238,12 +238,12 @@ I cannot decide this alone — it depends on how often you actually use Mullvad 
 | Component          | Status                | Details                                                                             |
 | ------------------ | --------------------- | ----------------------------------------------------------------------------------- |
 | **Unbound**        | ✅ Healthy            | Resolves all domains correctly via DoT upstream                                     |
-| **dnsblockd**      | ⚠️ Degraded           | Running old binary, 319MB RSS, all tracking dispatches fail with `context canceled` |
-| **Mullvad daemon** | ⚠️ Running (unwanted) | PID 4080696, disconnected, talpid_dns actively overwriting resolv.conf              |
+| **dnsblockd**      | ⚠️ Degraded            | Running old binary, 319MB RSS, all tracking dispatches fail with `context canceled` |
+| **Mullvad daemon** | ⚠️ Running (unwanted)  | PID 4080696, disconnected, talpid_dns actively overwriting resolv.conf              |
 | **resolv.conf**    | ❌ Broken             | `nanmeserver 9.9.9.9` (typo), 0777 perms                                            |
 | **DNS resolution** | ❌ Broken             | System uses broken resolv.conf, not unbound                                         |
-| **SystemNix code** | ⚠️ Uncommitted        | 3 files modified, validated with `just test-fast`                                   |
-| **dnsblockd code** | ⚠️ Uncommitted        | Context + semaphore fixes ready, mixed with pre-existing changes                    |
+| **SystemNix code** | ⚠️ Uncommitted         | 3 files modified, validated with `just test-fast`                                   |
+| **dnsblockd code** | ⚠️ Uncommitted         | Context + semaphore fixes ready, mixed with pre-existing changes                    |
 | **Docs audit**     | ✅ Committed + pushed | `1edeb324`                                                                          |
 
 ---

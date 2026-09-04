@@ -168,33 +168,33 @@ The `mkPackageOverlay` + `mkTidyOverride` pattern is fragile:
 
 ## F) Top 25 Things to Get Done Next
 
-| #   | Task                                                                                              | Impact | Effort |
-| --- | ------------------------------------------------------------------------------------------------- | ------ | ------ |
-| 1   | Deploy the build (`nh os switch .`) — monitor365 is re-enabled, DNS hardened                      | HIGH   | LOW    |
-| 2   | Write `just vendor-hash-check` script to detect stale hashes before builds                        | HIGH   | MED    |
-| 3   | Auto-detect subModules in `mkPreparedSource` — end the enrichment/meta cascade forever            | HIGH   | MED    |
-| 4   | Fix art-dupl BDD test timeout (pre-existing, ~600s hang)                                          | MED    | MED    |
-| 5   | Clean up DiscordSync binary PNGs (Git LFS or remove)                                              | LOW    | LOW    |
-| 6   | Document SQLX_OFFLINE requirement in AGENTS.md for Rust projects                                  | MED    | LOW    |
-| 7   | Remove vendorHash overrides from SystemNix overlays — use upstream hashes only                    | HIGH   | MED    |
-| 8   | Add `nix flake check` to CI — catch eval errors before they hit `nh os boot`                      | MED    | LOW    |
-| 9   | Investigate `sandbox-fallback = false` — should we enable fallback for FOD builds?                | MED    | LOW    |
-| 10  | Add DNS sandbox workaround for nix builds (NIX_FORCE_NET or similar)                              | MED    | MED    |
-| 11  | Audit ALL Go repos for `enrichment/meta` subModule completeness                                   | HIGH   | LOW    |
-| 12  | Centralize `SQLX_OFFLINE=true` in a shared Rust build helper (like `harden` for Go)               | MED    | LOW    |
-| 13  | Write integration test that verifies `nh os boot .` passes after every flake update               | HIGH   | LOW    |
-| 14  | Migrate `dnsblockd` vendor-hash.nix to inline `vendorHash` in flake.nix                           | LOW    | LOW    |
-| 15  | Add `just update-all` that updates all inputs, fixes vendorHashes, and verifies build             | HIGH   | HIGH   |
-| 16  | Investigate Go 1.26.3 → module resolution changes that caused this cascade                        | MED    | MED    |
-| 17  | Document the concurrent agent coordination protocol                                               | MED    | LOW    |
-| 18  | Add `.git-blame-ignore-revs` for the mass vendorHash fix commits                                  | LOW    | LOW    |
-| 19  | Check if `proxyVendor = true` is still needed with newer nixpkgs buildGoModule                    | LOW    | LOW    |
-| 20  | Run `nix flake check` on all 15 upstream repos to catch eval errors                               | MED    | LOW    |
-| 21  | Consolidate `mkTidyOverride` usage — only 2 repos still use it                                    | LOW    | LOW    |
-| 22  | Add health check for monitor365 after deploy — verify SQLX_OFFLINE doesn't affect runtime         | MED    | LOW    |
-| 23  | Archive old status reports (docs/status/archive/ has 200+ files)                                  | LOW    | LOW    |
-| 24  | Review and clean up the `go-auto-upgrade` dual-vendorHash pattern (vendorHash + vendorHashTidied) | LOW    | MED    |
-| 25  | Consider `nixpkgs-stable` instead of `nixos-unstable` to reduce vendorHash churn                  | HIGH   | HIGH   |
+| #  | Task                                                                                              | Impact | Effort |
+| -- | ------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 1  | Deploy the build (`nh os switch .`) — monitor365 is re-enabled, DNS hardened                      | HIGH   | LOW    |
+| 2  | Write `just vendor-hash-check` script to detect stale hashes before builds                        | HIGH   | MED    |
+| 3  | Auto-detect subModules in `mkPreparedSource` — end the enrichment/meta cascade forever            | HIGH   | MED    |
+| 4  | Fix art-dupl BDD test timeout (pre-existing, ~600s hang)                                          | MED    | MED    |
+| 5  | Clean up DiscordSync binary PNGs (Git LFS or remove)                                              | LOW    | LOW    |
+| 6  | Document SQLX_OFFLINE requirement in AGENTS.md for Rust projects                                  | MED    | LOW    |
+| 7  | Remove vendorHash overrides from SystemNix overlays — use upstream hashes only                    | HIGH   | MED    |
+| 8  | Add `nix flake check` to CI — catch eval errors before they hit `nh os boot`                      | MED    | LOW    |
+| 9  | Investigate `sandbox-fallback = false` — should we enable fallback for FOD builds?                | MED    | LOW    |
+| 10 | Add DNS sandbox workaround for nix builds (NIX_FORCE_NET or similar)                              | MED    | MED    |
+| 11 | Audit ALL Go repos for `enrichment/meta` subModule completeness                                   | HIGH   | LOW    |
+| 12 | Centralize `SQLX_OFFLINE=true` in a shared Rust build helper (like `harden` for Go)               | MED    | LOW    |
+| 13 | Write integration test that verifies `nh os boot .` passes after every flake update               | HIGH   | LOW    |
+| 14 | Migrate `dnsblockd` vendor-hash.nix to inline `vendorHash` in flake.nix                           | LOW    | LOW    |
+| 15 | Add `just update-all` that updates all inputs, fixes vendorHashes, and verifies build             | HIGH   | HIGH   |
+| 16 | Investigate Go 1.26.3 → module resolution changes that caused this cascade                        | MED    | MED    |
+| 17 | Document the concurrent agent coordination protocol                                               | MED    | LOW    |
+| 18 | Add `.git-blame-ignore-revs` for the mass vendorHash fix commits                                  | LOW    | LOW    |
+| 19 | Check if `proxyVendor = true` is still needed with newer nixpkgs buildGoModule                    | LOW    | LOW    |
+| 20 | Run `nix flake check` on all 15 upstream repos to catch eval errors                               | MED    | LOW    |
+| 21 | Consolidate `mkTidyOverride` usage — only 2 repos still use it                                    | LOW    | LOW    |
+| 22 | Add health check for monitor365 after deploy — verify SQLX_OFFLINE doesn't affect runtime         | MED    | LOW    |
+| 23 | Archive old status reports (docs/status/archive/ has 200+ files)                                  | LOW    | LOW    |
+| 24 | Review and clean up the `go-auto-upgrade` dual-vendorHash pattern (vendorHash + vendorHashTidied) | LOW    | MED    |
+| 25 | Consider `nixpkgs-stable` instead of `nixos-unstable` to reduce vendorHash churn                  | HIGH   | HIGH   |
 
 ---
 

@@ -118,15 +118,15 @@
 
 ### **CRITICAL PATH - Next 90 Minutes**
 
-| ID  | Task                                              | Duration | Impact     | Status     |
-| --- | ------------------------------------------------- | -------- | ---------- | ---------- |
-| T1  | Open System Settings → Privacy → Full Disk Access | 5m       | ⚡⚡⚡⚡⚡ | 🔄 Ready   |
-| T2  | Add Terminal/iTerm2 to Full Disk Access           | 5m       | ⚡⚡⚡⚡⚡ | ⏳ Waiting |
-| T3  | Add VSCode to Full Disk Access                    | 5m       | ⚡⚡⚡⚡   | ⏳ Waiting |
-| T4  | Restart Terminal to apply permissions             | 5m       | ⚡⚡⚡⚡⚡ | ⏳ Waiting |
-| T5  | Test git status command works                     | 5m       | ⚡⚡⚡⚡⚡ | ⏳ Waiting |
-| T6  | Prepare evo-x2 deployment target                  | 15m      | ⚡⚡⚡⚡⚡ | ⏳ Waiting |
-| T7  | Create hardware baseline template                 | 15m      | ⚡⚡⚡⚡⚡ | ⏳ Waiting |
+| ID | Task                                              | Duration | Impact     | Status     |
+| -- | ------------------------------------------------- | -------- | ---------- | ---------- |
+| T1 | Open System Settings → Privacy → Full Disk Access | 5m       | ⚡⚡⚡⚡⚡ | 🔄 Ready   |
+| T2 | Add Terminal/iTerm2 to Full Disk Access           | 5m       | ⚡⚡⚡⚡⚡ | ⏳ Waiting |
+| T3 | Add VSCode to Full Disk Access                    | 5m       | ⚡⚡⚡⚡   | ⏳ Waiting |
+| T4 | Restart Terminal to apply permissions             | 5m       | ⚡⚡⚡⚡⚡ | ⏳ Waiting |
+| T5 | Test git status command works                     | 5m       | ⚡⚡⚡⚡⚡ | ⏳ Waiting |
+| T6 | Prepare evo-x2 deployment target                  | 15m      | ⚡⚡⚡⚡⚡ | ⏳ Waiting |
+| T7 | Create hardware baseline template                 | 15m      | ⚡⚡⚡⚡⚡ | ⏳ Waiting |
 
 ### **HARDWARE VALIDATION - Following 90 Minutes**
 

@@ -1,7 +1,7 @@
 # Discord Alert Spam — Diagnosis Session (Interrupted Mid-Research)
 
 **Date:** 2026-08-16 01:34 CEST
-**Trigger:** User pasted a Discord alert log (9:33 PM–10:51 PM) showing noisy, ugly, duplicated alerts and asked: *"This? Also how can we improve them (Discord Alerts)?"*
+**Trigger:** User pasted a Discord alert log (9:33 PM–10:51 PM) showing noisy, ugly, duplicated alerts and asked: _"This? Also how can we improve them (Discord Alerts)?"_
 **State at interruption:** Root-cause diagnosis ~85% complete, research on fix mechanics ~85% complete. **Zero fixes applied yet.**
 
 ---
@@ -10,13 +10,13 @@
 
 The paste showed 16 Discord messages in ~80 minutes. Decoded against live system state:
 
-| Alert in paste | Verdict | Root cause |
-|---|---|---|
-| "Systemd Service Failed" fired 4x, resolved 3x | Flapping + **duplicate ruleIds** | Provisioning churn + real failed units (unconfirmed source) |
-| "Disk Space Critical (>90%)" fired 2x with DIFFERENT ruleIds | **Duplicate rules** + REAL condition | Provisioning churn + `/` actually at 90.2% |
-| "NVMe SSD Spare Blocks Low" fired/resolved repeatedly | **False alert** | Collector reads wrong JSON keys → always 0 |
-| "PMA Memory Pressure" resolved 9:33 PM → re-fired 10:14 PM | **Guaranteed flapping** | Threshold (5G) contradicts PMA's 12G/16G retune |
-| Messages unreadable: label dumps, `localhost:8080` links, prometheusreceiver internals | Formatting | Default alertmanager templates + missing external URL |
+| Alert in paste                                                                         | Verdict                              | Root cause                                                  |
+| -------------------------------------------------------------------------------------- | ------------------------------------ | ----------------------------------------------------------- |
+| "Systemd Service Failed" fired 4x, resolved 3x                                         | Flapping + **duplicate ruleIds**     | Provisioning churn + real failed units (unconfirmed source) |
+| "Disk Space Critical (>90%)" fired 2x with DIFFERENT ruleIds                           | **Duplicate rules** + REAL condition | Provisioning churn + `/` actually at 90.2%                  |
+| "NVMe SSD Spare Blocks Low" fired/resolved repeatedly                                  | **False alert**                      | Collector reads wrong JSON keys → always 0                  |
+| "PMA Memory Pressure" resolved 9:33 PM → re-fired 10:14 PM                             | **Guaranteed flapping**              | Threshold (5G) contradicts PMA's 12G/16G retune             |
+| Messages unreadable: label dumps, `localhost:8080` links, prometheusreceiver internals | Formatting                           | Default alertmanager templates + missing external URL       |
 
 Also: prior session's open question (i) is now **ANSWERED — alerts ARE delivered** to Discord.
 
@@ -76,6 +76,7 @@ Also: prior session's open question (i) is now **ANSWERED — alerts ARE deliver
 ## f) NEXT — up to 50 items
 
 **Fix batch (this arc, in order):**
+
 1. ~~Finish research: alertmanager external-url YAML key in signoz config schema (g/7)~~ done — `alertmanager.signoz.external_url` (03-09 batch)
 2. ~~Rewrite `_signoz-scripts.nix` rule provisioner: skip-unchanged, dedupe-by-name, verify deletes, convergence assert~~ done — v5 converger (03-09)
 3. ~~Add channel title/message custom templates (minimal: alertname, severity, description, value, rule link)~~ done — custom title/message via `PUT /api/v1/channels/{id}` (03-09)

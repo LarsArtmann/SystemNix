@@ -8,7 +8,6 @@
 
 ---
 
-
 ## Incident Summary: The 2026-06-19 Crash
 
 evo-x2 was found powered off after ~7 hours of unavailability. Forensic analysis of journal logs across boots revealed a classic **OOM cascade → hardware watchdog reset**:
@@ -193,33 +192,33 @@ Layers 0-1 **prevent** the problem. Layers 2-6 **handle** it if prevention fails
 
 Sorted by impact × urgency:
 
-| #   | Task                                                                            | Impact      | Effort | Category   |
-| --- | ------------------------------------------------------------------------------- | ----------- | ------ | ---------- |
-| 1   | **Free root disk space** — `nix-collect-garbage -d`, Docker prune, clear caches | 🔴 Critical | 10min  | Ops        |
-| 2   | **Deploy OOM hardening** — `nix run .#deploy` (after disk cleanup)              | 🔴 Critical | 10min  | Deploy     |
-| 3   | **Commit flake.nix go-nix-helpers** fix (uncommitted build fix)                 | 🔴 Critical | 2min   | Git        |
-| 4   | **Enable MGLRU min_ttl_ms=1000** — prevent desktop thrash                       | 🔴 High     | 5min   | Config     |
-| 5   | **Fix Docker startup failure** — root-cause and repair                          | 🔴 High     | 30min  | Bug        |
-| 6   | **Assess /data BTRFS corruption** — run `btrfs scrub`, determine data loss      | 🔴 High     | 1-4h   | Ops        |
-| 7   | **Enable DAMON_RECLAIM** — proactive cold-page reclaim                          | 🟡 High     | 30min  | Config     |
-| 8   | **BIOS: AC Power Recovery → Power On** — auto-recover after WDT                 | 🟡 High     | Manual | Firmware   |
-| 9   | **Commit uncommitted working tree** — scripts, snapshots, HTML                  | 🟡 Medium   | 5min   | Git        |
-| 10  | **Fix disk-growth-check service** — `/var/lib/disk-growth` missing              | 🟡 Medium   | 10min  | Bug        |
-| 11  | **Fix btrfs-verify-snapshots service** — failing at boot                        | 🟡 Medium   | 10min  | Bug        |
-| 12  | **Fix oauth2-proxy** — intermittent startup failure                             | 🟡 Medium   | 30min  | Bug        |
-| 13  | **Fix monitor365-server + agent** — exit-code failures                          | 🟡 Medium   | 1h     | Bug        |
-| 14  | **Fix dnsblockd-cert-import** — NSS cert import fails                           | 🟡 Medium   | 15min  | Bug        |
-| 15  | **Add automated nix.gc** — prevent recurring disk-full                          | 🟡 Medium   | 10min  | Config     |
-| 16  | **Add Docker log limits** — `log-driver=json-file` with max-size                | 🟡 Medium   | 10min  | Config     |
-| 17  | **Consolidate AI model directories** — deduplicate 828 GB                       | 🟡 Medium   | 2h     | Ops        |
-| 18  | **Add SigNoz/ClickHouse TTL** — retention on all tables                         | 🔵 Low      | 1h     | Config     |
-| 19  | **Reduce OLLAMA_GPU_OVERHEAD** — 8 GB → 4 GB                                    | 🔵 Low      | 5min   | Config     |
-| 20  | **Clean caches** — pip (6.3G), goimports (4G), etc.                             | 🔵 Low      | 5min   | Ops        |
-| 21  | **PSI Grafana dashboard** — visualize pressure trends                           | 🔵 Low      | 30min  | Monitoring |
-| 22  | **Redis `vm.overcommit_memory=1`** — boot warning                               | 🔵 Low      | 2min   | Config     |
-| 23  | **Redis authentication** — no password set                                      | 🔵 Low      | 15min  | Security   |
-| 24  | **Bluetooth `hci0: wmt func ctrl (-22)`** — every boot                          | 🔵 Low      | 15min  | Bug        |
-| 25  | **docs/status/ cleanup** — archive old status reports                           | 🔵 Low      | 15min  | Hygiene    |
+| #  | Task                                                                            | Impact      | Effort | Category   |
+| -- | ------------------------------------------------------------------------------- | ----------- | ------ | ---------- |
+| 1  | **Free root disk space** — `nix-collect-garbage -d`, Docker prune, clear caches | 🔴 Critical | 10min  | Ops        |
+| 2  | **Deploy OOM hardening** — `nix run .#deploy` (after disk cleanup)              | 🔴 Critical | 10min  | Deploy     |
+| 3  | **Commit flake.nix go-nix-helpers** fix (uncommitted build fix)                 | 🔴 Critical | 2min   | Git        |
+| 4  | **Enable MGLRU min_ttl_ms=1000** — prevent desktop thrash                       | 🔴 High     | 5min   | Config     |
+| 5  | **Fix Docker startup failure** — root-cause and repair                          | 🔴 High     | 30min  | Bug        |
+| 6  | **Assess /data BTRFS corruption** — run `btrfs scrub`, determine data loss      | 🔴 High     | 1-4h   | Ops        |
+| 7  | **Enable DAMON_RECLAIM** — proactive cold-page reclaim                          | 🟡 High     | 30min  | Config     |
+| 8  | **BIOS: AC Power Recovery → Power On** — auto-recover after WDT                 | 🟡 High     | Manual | Firmware   |
+| 9  | **Commit uncommitted working tree** — scripts, snapshots, HTML                  | 🟡 Medium   | 5min   | Git        |
+| 10 | **Fix disk-growth-check service** — `/var/lib/disk-growth` missing              | 🟡 Medium   | 10min  | Bug        |
+| 11 | **Fix btrfs-verify-snapshots service** — failing at boot                        | 🟡 Medium   | 10min  | Bug        |
+| 12 | **Fix oauth2-proxy** — intermittent startup failure                             | 🟡 Medium   | 30min  | Bug        |
+| 13 | **Fix monitor365-server + agent** — exit-code failures                          | 🟡 Medium   | 1h     | Bug        |
+| 14 | **Fix dnsblockd-cert-import** — NSS cert import fails                           | 🟡 Medium   | 15min  | Bug        |
+| 15 | **Add automated nix.gc** — prevent recurring disk-full                          | 🟡 Medium   | 10min  | Config     |
+| 16 | **Add Docker log limits** — `log-driver=json-file` with max-size                | 🟡 Medium   | 10min  | Config     |
+| 17 | **Consolidate AI model directories** — deduplicate 828 GB                       | 🟡 Medium   | 2h     | Ops        |
+| 18 | **Add SigNoz/ClickHouse TTL** — retention on all tables                         | 🔵 Low      | 1h     | Config     |
+| 19 | **Reduce OLLAMA_GPU_OVERHEAD** — 8 GB → 4 GB                                    | 🔵 Low      | 5min   | Config     |
+| 20 | **Clean caches** — pip (6.3G), goimports (4G), etc.                             | 🔵 Low      | 5min   | Ops        |
+| 21 | **PSI Grafana dashboard** — visualize pressure trends                           | 🔵 Low      | 30min  | Monitoring |
+| 22 | **Redis `vm.overcommit_memory=1`** — boot warning                               | 🔵 Low      | 2min   | Config     |
+| 23 | **Redis authentication** — no password set                                      | 🔵 Low      | 15min  | Security   |
+| 24 | **Bluetooth `hci0: wmt func ctrl (-22)`** — every boot                          | 🔵 Low      | 15min  | Bug        |
+| 25 | **docs/status/ cleanup** — archive old status reports                           | 🔵 Low      | 15min  | Hygiene    |
 
 ---
 

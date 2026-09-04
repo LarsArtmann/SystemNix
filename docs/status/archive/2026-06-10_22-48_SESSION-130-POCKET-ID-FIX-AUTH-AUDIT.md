@@ -15,15 +15,15 @@ Pocket ID's declarative OIDC client provisioning was silently failing since depl
 
 ### Session 130 Fixes (This Session)
 
-| #   | Item                                               | Commit     | Details                                                                                                                           |
-| --- | -------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Pocket ID provision: API header fix**            | `21ce65fb` | `X-API-KEY` → `X-API-Key` in all curl calls (api_get, api_post, avatar upload, secret generation)                                 |
-| 2   | **Pocket ID provision: URL encoding fix**          | `21ce65fb` | `pagination[limit]` → `pagination%5Blimit%5D` — curl was interpreting square brackets as glob patterns, returning empty responses |
-| 3   | **Pocket ID provision: user creation payload fix** | `21ce65fb` | Removed `emailVerified`, `displayName`, `disabled` fields — Pocket ID API rejects unknown fields with HTTP 400                    |
-| 4   | **Pocket ID provision: race condition handling**   | `21ce65fb` | Added proper "already exists" fallback for OIDC clients (previously only handled users)                                           |
-| 5   | **Pocket ID provision: debug logging**             | `21ce65fb` | Added API response logging, truncated to 200 chars for diagnostics                                                                |
-| 6   | **Pocket ID provision: error resilience**          | `21ce65fb` | Added `2>/dev/null` on all jq calls to prevent pipefail on empty responses                                                        |
-| 7   | **Manifest behind auth**                           | `f679b8fb` | `manifest.home.lan` moved from unprotected to `protectedVHost` — was the only Caddy service without forward-auth                  |
+| # | Item                                               | Commit     | Details                                                                                                                           |
+| - | -------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Pocket ID provision: API header fix**            | `21ce65fb` | `X-API-KEY` → `X-API-Key` in all curl calls (api_get, api_post, avatar upload, secret generation)                                 |
+| 2 | **Pocket ID provision: URL encoding fix**          | `21ce65fb` | `pagination[limit]` → `pagination%5Blimit%5D` — curl was interpreting square brackets as glob patterns, returning empty responses |
+| 3 | **Pocket ID provision: user creation payload fix** | `21ce65fb` | Removed `emailVerified`, `displayName`, `disabled` fields — Pocket ID API rejects unknown fields with HTTP 400                    |
+| 4 | **Pocket ID provision: race condition handling**   | `21ce65fb` | Added proper "already exists" fallback for OIDC clients (previously only handled users)                                           |
+| 5 | **Pocket ID provision: debug logging**             | `21ce65fb` | Added API response logging, truncated to 200 chars for diagnostics                                                                |
+| 6 | **Pocket ID provision: error resilience**          | `21ce65fb` | Added `2>/dev/null` on all jq calls to prevent pipefail on empty responses                                                        |
+| 7 | **Manifest behind auth**                           | `f679b8fb` | `manifest.home.lan` moved from unprotected to `protectedVHost` — was the only Caddy service without forward-auth                  |
 
 ### Verified Working After This Session
 
@@ -61,8 +61,8 @@ Pocket ID's declarative OIDC client provisioning was silently failing since depl
 
 ## b) PARTIALLY DONE ⚠️
 
-| Item                              | Status                          | What's Missing                                                                                                                                                                                                 |
-| --------------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Item                              | Status                         | What's Missing                                                                                                                                                                                                 |
+| --------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Pocket ID OTel metrics**        | ⚠️ functional but noisy         | `failed to upload metrics: Post "https://localhost:4318/v1/metrics": http: server gave HTTP response to HTTPS client` — every 30s. Metrics endpoint is HTTP, Pocket ID tries HTTPS. Low priority but log spam. |
 | **PostgreSQL collation warnings** | ⚠️ noisy                        | `database "postgres" has no actual collation version, but a version was recorded` every 5s from Twenty CRM container. Non-functional impact, pure log noise.                                                   |
 | **Hermes secondary LLM provider** | ⚠️ config done, secrets missing | Nix config has `OPENAI_API_KEY` env var, but `openai_api_key` not yet added to `platforms/nixos/secrets/hermes.yaml` via sops                                                                                  |
@@ -70,35 +70,35 @@ Pocket ID's declarative OIDC client provisioning was silently failing since depl
 | **SigNoz alert verification**     | ⚠️ deployed but untested        | 7 alert rules provisioned but Discord webhook never manually tested                                                                                                                                            |
 | **TODO_LIST.md**                  | ⚠️ stale                        | Last updated session 122 (2026-06-08). Missing sessions 125-130 work.                                                                                                                                          |
 | **FEATURES.md**                   | ⚠️ stale                        | Last updated 2026-06-03. Missing: Pocket ID declarative provisioning, Overview dashboard, Crush Daily, Monitor365, auth audit, Manifest protection                                                             |
-| **Voice agents**                  | 🔧 disabled                     | LiveKit + Whisper ASR, full config exists, disabled in configuration.nix                                                                                                                                       |
-| **PhotoMap AI**                   | 🔧 disabled                     | CLIP embedding visualization, podman permission issue, disabled                                                                                                                                                |
-| **Minecraft server**              | 🔧 disabled                     | Full config with whitelist, client config done, disabled                                                                                                                                                       |
-| **File & Image Renamer**          | 🔧 disabled                     | Go 1.26.3 dependency not in nixpkgs yet                                                                                                                                                                        |
+| **Voice agents**                  | 🔧 disabled                    | LiveKit + Whisper ASR, full config exists, disabled in configuration.nix                                                                                                                                       |
+| **PhotoMap AI**                   | 🔧 disabled                    | CLIP embedding visualization, podman permission issue, disabled                                                                                                                                                |
+| **Minecraft server**              | 🔧 disabled                    | Full config with whitelist, client config done, disabled                                                                                                                                                       |
+| **File & Image Renamer**          | 🔧 disabled                    | Go 1.26.3 dependency not in nixpkgs yet                                                                                                                                                                        |
 
 ---
 
 ## c) NOT STARTED 📋
 
-| #   | Item                                          | Impact | Notes                                                                                                          |
-| --- | --------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------- |
-| 1   | **Provision Raspberry Pi 3** for DNS failover | High   | Hardware required, `rpi3-dns` config defined in flake                                                          |
-| 2   | **Wire Pi 3 as secondary DNS**                | High   | Depends on Pi 3 hardware                                                                                       |
-| 3   | **BTRFS `/data` subvolume migration**         | High   | `/data` is BTRFS toplevel (subvolid=5), cannot be snapshotted. `just snapshot-migrate-data` exists but not run |
-| 4   | **Verify boot time after NVMe APST fix**      | Medium | `eef194c2` committed, needs reboot + `systemd-analyze`                                                         |
-| 5   | **Darwin disk cleanup strategy**              | Medium | 256GB SSD at 90-95%, no automated cleanup                                                                      |
-| 6   | **Darwin Home Manager parity**                | Low    | Only 7 lines of HM config — no terminal, editor, theme parity with NixOS                                       |
-| 7   | **Btrfs-snapshot-bloat Disko migration**      | Low    | Phase 5 in planning doc, low priority                                                                          |
+| # | Item                                          | Impact | Notes                                                                                                          |
+| - | --------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------- |
+| 1 | **Provision Raspberry Pi 3** for DNS failover | High   | Hardware required, `rpi3-dns` config defined in flake                                                          |
+| 2 | **Wire Pi 3 as secondary DNS**                | High   | Depends on Pi 3 hardware                                                                                       |
+| 3 | **BTRFS `/data` subvolume migration**         | High   | `/data` is BTRFS toplevel (subvolid=5), cannot be snapshotted. `just snapshot-migrate-data` exists but not run |
+| 4 | **Verify boot time after NVMe APST fix**      | Medium | `eef194c2` committed, needs reboot + `systemd-analyze`                                                         |
+| 5 | **Darwin disk cleanup strategy**              | Medium | 256GB SSD at 90-95%, no automated cleanup                                                                      |
+| 6 | **Darwin Home Manager parity**                | Low    | Only 7 lines of HM config — no terminal, editor, theme parity with NixOS                                       |
+| 7 | **Btrfs-snapshot-bloat Disko migration**      | Low    | Phase 5 in planning doc, low priority                                                                          |
 
 ---
 
 ## d) TOTALLY FUCKED UP ❌
 
-| #   | Item                                             | Severity     | Root Cause                                                                                                                                                          | Status                  |
-| --- | ------------------------------------------------ | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| 1   | **Pocket ID OIDC client provisioning** (pre-fix) | **CRITICAL** | 3 bugs: (a) curl misinterpreted `pagination[limit]` as glob → empty GET responses, (b) extra fields `emailVerified`/`displayName`/`disabled` caused HTTP 400, (c) ` |                         | true`+`2>/dev/null` silenced all errors | **FIXED this session** |
-| 2   | **Twenty CRM intermittent 502s**                 | Medium       | Caddy logs show `connection refused` and `connection reset by peer` to port 3200 — Twenty container likely crashing/restarting periodically                         | **UNFIXED**             |
-| 3   | **Root disk at 94%**                             | **HIGH**     | 472G / 512G used, 33G free. Was 95% (28G free) earlier. GC-eligible paths exist but can't clear enough                                                              | **UNFIXED**             |
-| 4   | **Swap: 8 GiB used on 128 GiB RAM system**       | Medium       | Anomalous. Likely stale LSP processes (mitigated by daily `stale-lsp-cleanup` timer) but 8GiB still high                                                            | **PARTIALLY MITIGATED** |
+| # | Item                                             | Severity     | Root Cause                                                                                                                                                          | Status                  |
+| - | ------------------------------------------------ | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| 1 | **Pocket ID OIDC client provisioning** (pre-fix) | **CRITICAL** | 3 bugs: (a) curl misinterpreted `pagination[limit]` as glob → empty GET responses, (b) extra fields `emailVerified`/`displayName`/`disabled` caused HTTP 400, (c) ` |                         |
+| 2 | **Twenty CRM intermittent 502s**                 | Medium       | Caddy logs show `connection refused` and `connection reset by peer` to port 3200 — Twenty container likely crashing/restarting periodically                         | **UNFIXED**             |
+| 3 | **Root disk at 94%**                             | **HIGH**     | 472G / 512G used, 33G free. Was 95% (28G free) earlier. GC-eligible paths exist but can't clear enough                                                              | **UNFIXED**             |
+| 4 | **Swap: 8 GiB used on 128 GiB RAM system**       | Medium       | Anomalous. Likely stale LSP processes (mitigated by daily `stale-lsp-cleanup` timer) but 8GiB still high                                                            | **PARTIALLY MITIGATED** |
 
 ---
 
@@ -129,31 +129,31 @@ Pocket ID's declarative OIDC client provisioning was silently failing since depl
 
 ### Critical / High Impact (Do First)
 
-| #   | Task                                                                                          | Category   | Impact      | Effort |
-| --- | --------------------------------------------------------------------------------------------- | ---------- | ----------- | ------ |
-| 1   | **Root disk cleanup**: `nix-collect-garbage -d`, docker system prune, journal vacuum          | Operations | 🔴 Critical | 15 min |
-| 2   | **Investigate Twenty CRM 502s**: Check container logs, OOM, PostgreSQL connections            | Fix        | 🔴 High     | 30 min |
-| 3   | **Fix PostgreSQL collation spam**: `ALTER DATABASE ... REFRESH COLLATION VERSION`             | Fix        | 🟡 Medium   | 10 min |
-| 4   | **Fix Pocket ID OTel HTTPS→HTTP**: Set `OTEL_EXPORTER_PROMETHEUS_ENDPOINT` or disable         | Fix        | 🟡 Medium   | 5 min  |
-| 5   | **Verify NVMe APST fix**: Reboot evo-x2, run `systemd-analyze`, confirm <60s boot             | Verify     | 🟢 High     | 10 min |
-| 6   | **BTRFS `/data` subvolume migration**: Run `just snapshot-migrate-data` for snapshot coverage | Operations | 🔴 High     | 30 min |
+| # | Task                                                                                          | Category   | Impact      | Effort |
+| - | --------------------------------------------------------------------------------------------- | ---------- | ----------- | ------ |
+| 1 | **Root disk cleanup**: `nix-collect-garbage -d`, docker system prune, journal vacuum          | Operations | 🔴 Critical | 15 min |
+| 2 | **Investigate Twenty CRM 502s**: Check container logs, OOM, PostgreSQL connections            | Fix        | 🔴 High     | 30 min |
+| 3 | **Fix PostgreSQL collation spam**: `ALTER DATABASE ... REFRESH COLLATION VERSION`             | Fix        | 🟡 Medium   | 10 min |
+| 4 | **Fix Pocket ID OTel HTTPS→HTTP**: Set `OTEL_EXPORTER_PROMETHEUS_ENDPOINT` or disable         | Fix        | 🟡 Medium   | 5 min  |
+| 5 | **Verify NVMe APST fix**: Reboot evo-x2, run `systemd-analyze`, confirm <60s boot             | Verify     | 🟢 High     | 10 min |
+| 6 | **BTRFS `/data` subvolume migration**: Run `just snapshot-migrate-data` for snapshot coverage | Operations | 🔴 High     | 30 min |
 
 ### Service Health (Fix Broken Things)
 
-| #   | Task                                                                                         | Category | Impact    | Effort |
-| --- | -------------------------------------------------------------------------------------------- | -------- | --------- | ------ |
-| 7   | **Monitor365 SQLite path fix**: Investigate "unable to open database file" error             | Fix      | 🟡 Medium | 20 min |
-| 8   | **dnsblockd-cert-import PATH fix**: Add `nssTools` to service PATH                           | Fix      | 🟡 Medium | 5 min  |
-| 9   | **SigNoz Discord webhook test**: `POST /api/v1/channels/test` to verify alerts reach Discord | Verify   | 🟡 Medium | 5 min  |
-| 10  | **Gatus endpoint health re-audit**: Re-check all 30 endpoints, fix health check URLs         | Fix      | 🟡 Medium | 30 min |
+| #  | Task                                                                                         | Category | Impact    | Effort |
+| -- | -------------------------------------------------------------------------------------------- | -------- | --------- | ------ |
+| 7  | **Monitor365 SQLite path fix**: Investigate "unable to open database file" error             | Fix      | 🟡 Medium | 20 min |
+| 8  | **dnsblockd-cert-import PATH fix**: Add `nssTools` to service PATH                           | Fix      | 🟡 Medium | 5 min  |
+| 9  | **SigNoz Discord webhook test**: `POST /api/v1/channels/test` to verify alerts reach Discord | Verify   | 🟡 Medium | 5 min  |
+| 10 | **Gatus endpoint health re-audit**: Re-check all 30 endpoints, fix health check URLs         | Fix      | 🟡 Medium | 30 min |
 
 ### Manual Steps (Blocked on Human)
 
-| #   | Task                                      | Category | Impact    | Effort |
-| --- | ----------------------------------------- | -------- | --------- | ------ |
-| 11  | **Hermes: add OpenAI API key to sops**    | Manual   | 🟡 Medium | 2 min  |
-| 12  | **Hermes: install SSH deploy key**        | Manual   | 🟡 Medium | 5 min  |
-| 13  | **Hermes: set fallback model in runtime** | Manual   | 🟢 Low    | 2 min  |
+| #  | Task                                      | Category | Impact    | Effort |
+| -- | ----------------------------------------- | -------- | --------- | ------ |
+| 11 | **Hermes: add OpenAI API key to sops**    | Manual   | 🟡 Medium | 2 min  |
+| 12 | **Hermes: install SSH deploy key**        | Manual   | 🟡 Medium | 5 min  |
+| 13 | **Hermes: set fallback model in runtime** | Manual   | 🟢 Low    | 2 min  |
 
 ### Documentation (Update Stale Docs)
 
@@ -164,17 +164,17 @@ Pocket ID's declarative OIDC client provisioning was silently failing since depl
 
 ### Improvements (Make Things Better)
 
-| #   | Task                                                                                       | Category    | Impact    | Effort   |
-| --- | ------------------------------------------------------------------------------------------ | ----------- | --------- | -------- |
-| 17  | **Pocket ID provision: quiet mode**: Suppress debug logging on steady-state boots          | Improve     | 🟢 Low    | 15 min   |
-| 18  | **Remove sops fallback secrets**: Once provision proven stable over multiple boots         | Improve     | 🟢 Low    | 10 min   |
-| 19  | **Swap usage investigation**: 8GiB swap on 128GiB RAM is wrong — identify culprit          | Investigate | 🟡 Medium | 20 min   |
-| 20  | **Provision Raspberry Pi 3**: DNS failover cluster, hardware needed                        | Ops         | 🔴 High   | 2+ hours |
-| 21  | **Disko migration**: Phase 5 of BTRFS planning doc                                         | Improve     | 🟢 Low    | 2+ hours |
-| 22  | **Darwin Home Manager parity**: Terminal, editor, theme from NixOS                         | Improve     | 🟢 Low    | 1 hour   |
-| 23  | **Voice agents re-enable**: Debug why disabled, test LiveKit + Whisper                     | Fix         | 🟢 Low    | 1 hour   |
-| 24  | **File & Image Renamer**: Wait for Go 1.26.3 in nixpkgs or overlay                         | Blocked     | 🟢 Low    | 30 min   |
-| 25  | **Overview service: add to auth or verify localhost-only**: Ensure not exposed unprotected | Security    | 🟢 Low    | 10 min   |
+| #  | Task                                                                                       | Category    | Impact    | Effort   |
+| -- | ------------------------------------------------------------------------------------------ | ----------- | --------- | -------- |
+| 17 | **Pocket ID provision: quiet mode**: Suppress debug logging on steady-state boots          | Improve     | 🟢 Low    | 15 min   |
+| 18 | **Remove sops fallback secrets**: Once provision proven stable over multiple boots         | Improve     | 🟢 Low    | 10 min   |
+| 19 | **Swap usage investigation**: 8GiB swap on 128GiB RAM is wrong — identify culprit          | Investigate | 🟡 Medium | 20 min   |
+| 20 | **Provision Raspberry Pi 3**: DNS failover cluster, hardware needed                        | Ops         | 🔴 High   | 2+ hours |
+| 21 | **Disko migration**: Phase 5 of BTRFS planning doc                                         | Improve     | 🟢 Low    | 2+ hours |
+| 22 | **Darwin Home Manager parity**: Terminal, editor, theme from NixOS                         | Improve     | 🟢 Low    | 1 hour   |
+| 23 | **Voice agents re-enable**: Debug why disabled, test LiveKit + Whisper                     | Fix         | 🟢 Low    | 1 hour   |
+| 24 | **File & Image Renamer**: Wait for Go 1.26.3 in nixpkgs or overlay                         | Blocked     | 🟢 Low    | 30 min   |
+| 25 | **Overview service: add to auth or verify localhost-only**: Ensure not exposed unprotected | Security    | 🟢 Low    | 10 min   |
 
 ---
 

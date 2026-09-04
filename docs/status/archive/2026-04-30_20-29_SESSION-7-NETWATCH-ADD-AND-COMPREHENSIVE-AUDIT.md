@@ -8,15 +8,15 @@
 
 ### This Session
 
-| #   | Task                                                      | Evidence                                                                         |
-| --- | --------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| 1   | Package netwatch v0.14.1 as Nix derivation                | `pkgs/netwatch.nix` — Rust buildRustPackage, fetchFromGitHub                     |
-| 2   | Add netwatchOverlay to flake.nix                          | `netwatchOverlay` in overlays, `linuxOnlyOverlays`, `perSystem`, `packages`      |
-| 3   | Add netwatch to monitoring-tools module                   | `modules/nixos/services/monitoring.nix` — system package alongside nethogs/iftop |
-| 4   | Update AGENTS.md architecture tree                        | `pkgs/` section now lists netwatch.nix                                           |
-| 5   | Build verified — `netwatch --version` → `netwatch 0.14.1` | Binary in `/nix/store/...-netwatch-0.14.1/bin/netwatch`                          |
-| 6   | `just test-fast` passes — all NixOS modules eval clean    | Monitoring module includes netwatch                                              |
-| 7   | awww-daemon hardening in niri-wrapped.nix                 | Restart=always + StartLimitBurst, BindsTo for wallpaper service                  |
+| # | Task                                                      | Evidence                                                                         |
+| - | --------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| 1 | Package netwatch v0.14.1 as Nix derivation                | `pkgs/netwatch.nix` — Rust buildRustPackage, fetchFromGitHub                     |
+| 2 | Add netwatchOverlay to flake.nix                          | `netwatchOverlay` in overlays, `linuxOnlyOverlays`, `perSystem`, `packages`      |
+| 3 | Add netwatch to monitoring-tools module                   | `modules/nixos/services/monitoring.nix` — system package alongside nethogs/iftop |
+| 4 | Update AGENTS.md architecture tree                        | `pkgs/` section now lists netwatch.nix                                           |
+| 5 | Build verified — `netwatch --version` → `netwatch 0.14.1` | Binary in `/nix/store/...-netwatch-0.14.1/bin/netwatch`                          |
+| 6 | `just test-fast` passes — all NixOS modules eval clean    | Monitoring module includes netwatch                                              |
+| 7 | awww-daemon hardening in niri-wrapped.nix                 | Restart=always + StartLimitBurst, BindsTo for wallpaper service                  |
 
 ### Today's Full Commit History (47 commits on 2026-04-30)
 
@@ -67,21 +67,21 @@
 
 All P5 tasks (deployment verification) — blocked on evo-x2 physical access:
 
-| #   | Task                              | Est. |
-| --- | --------------------------------- | ---- |
-| 41  | `just switch` on evo-x2           | 45m+ |
-| 42  | Verify Ollama                     | 5m   |
-| 43  | Verify Steam                      | 5m   |
-| 44  | Verify ComfyUI                    | 5m   |
-| 45  | Verify Caddy HTTPS block page     | 3m   |
-| 46  | Verify SigNoz metrics/logs/traces | 5m   |
-| 47  | Check Authelia SSO                | 3m   |
-| 48  | Check PhotoMap                    | 3m   |
-| 49  | Verify AMD NPU test workload      | 10m  |
-| 50  | Build Pi 3 SD image               | 30m+ |
-| 51  | Flash SD + boot Pi 3              | 15m  |
-| 52  | Test DNS failover                 | 10m  |
-| 53  | Configure LAN devices for DNS VIP | 10m  |
+| #  | Task                              | Est. |
+| -- | --------------------------------- | ---- |
+| 41 | `just switch` on evo-x2           | 45m+ |
+| 42 | Verify Ollama                     | 5m   |
+| 43 | Verify Steam                      | 5m   |
+| 44 | Verify ComfyUI                    | 5m   |
+| 45 | Verify Caddy HTTPS block page     | 3m   |
+| 46 | Verify SigNoz metrics/logs/traces | 5m   |
+| 47 | Check Authelia SSO                | 3m   |
+| 48 | Check PhotoMap                    | 3m   |
+| 49 | Verify AMD NPU test workload      | 10m  |
+| 50 | Build Pi 3 SD image               | 30m+ |
+| 51 | Flash SD + boot Pi 3              | 15m  |
+| 52 | Test DNS failover                 | 10m  |
+| 53 | Configure LAN devices for DNS VIP | 10m  |
 
 ---
 
@@ -112,48 +112,48 @@ All P5 tasks (deployment verification) — blocked on evo-x2 physical access:
 
 ### Priority 1: Deploy & Verify (requires evo-x2)
 
-| #   | Task                                         | Est. | Impact                          |
-| --- | -------------------------------------------- | ---- | ------------------------------- |
-| 1   | `just switch` on evo-x2                      | 45m  | **All pending changes go live** |
-| 2   | Verify netwatch works on evo-x2              | 2m   | New tool validation             |
-| 3   | Verify Caddy HTTPS block page                | 3m   | Security                        |
-| 4   | Verify SigNoz collecting metrics/logs/traces | 5m   | Observability                   |
-| 5   | Verify Ollama + AI stack                     | 5m   | AI tooling                      |
-| 6   | Check Authelia SSO status                    | 3m   | Security                        |
-| 7   | Verify ComfyUI works                         | 5m   | AI tooling                      |
-| 8   | Verify Steam works                           | 5m   | Gaming                          |
-| 9   | Check PhotoMap service status                | 3m   | Services                        |
-| 10  | Verify AMD NPU with test workload            | 10m  | Hardware                        |
+| #  | Task                                         | Est. | Impact                          |
+| -- | -------------------------------------------- | ---- | ------------------------------- |
+| 1  | `just switch` on evo-x2                      | 45m  | **All pending changes go live** |
+| 2  | Verify netwatch works on evo-x2              | 2m   | New tool validation             |
+| 3  | Verify Caddy HTTPS block page                | 3m   | Security                        |
+| 4  | Verify SigNoz collecting metrics/logs/traces | 5m   | Observability                   |
+| 5  | Verify Ollama + AI stack                     | 5m   | AI tooling                      |
+| 6  | Check Authelia SSO status                    | 3m   | Security                        |
+| 7  | Verify ComfyUI works                         | 5m   | AI tooling                      |
+| 8  | Verify Steam works                           | 5m   | Gaming                          |
+| 9  | Check PhotoMap service status                | 3m   | Services                        |
+| 10 | Verify AMD NPU with test workload            | 10m  | Hardware                        |
 
 ### Priority 2: Security (requires evo-x2)
 
-| #   | Task                                     | Est. | Impact                      |
-| --- | ---------------------------------------- | ---- | --------------------------- |
-| 11  | Move Taskwarrior encryption to sops-nix  | 10m  | Eliminates hardcoded secret |
-| 12  | Pin Docker image digest for Voice Agents | 5m   | Supply chain security       |
-| 13  | Pin Docker image digest for PhotoMap     | 5m   | Supply chain security       |
-| 14  | Secure VRRP auth_pass with sops-nix      | 8m   | Network security            |
+| #  | Task                                     | Est. | Impact                      |
+| -- | ---------------------------------------- | ---- | --------------------------- |
+| 11 | Move Taskwarrior encryption to sops-nix  | 10m  | Eliminates hardcoded secret |
+| 12 | Pin Docker image digest for Voice Agents | 5m   | Supply chain security       |
+| 13 | Pin Docker image digest for PhotoMap     | 5m   | Supply chain security       |
+| 14 | Secure VRRP auth_pass with sops-nix      | 8m   | Network security            |
 
 ### Priority 3: Pi 3 DNS Failover Cluster
 
-| #   | Task                                      | Est. | Impact         |
-| --- | ----------------------------------------- | ---- | -------------- |
-| 15  | Build Pi 3 SD image                       | 30m  | Infrastructure |
-| 16  | Flash SD + boot Pi 3                      | 15m  | Infrastructure |
-| 17  | Test DNS failover between evo-x2 and Pi 3 | 10m  | Reliability    |
-| 18  | Configure LAN devices for DNS VIP         | 10m  | Infrastructure |
+| #  | Task                                      | Est. | Impact         |
+| -- | ----------------------------------------- | ---- | -------------- |
+| 15 | Build Pi 3 SD image                       | 30m  | Infrastructure |
+| 16 | Flash SD + boot Pi 3                      | 15m  | Infrastructure |
+| 17 | Test DNS failover between evo-x2 and Pi 3 | 10m  | Reliability    |
+| 18 | Configure LAN devices for DNS VIP         | 10m  | Infrastructure |
 
 ### Priority 4: Codebase Improvements
 
-| #   | Task                                                       | Est. | Impact            |
-| --- | ---------------------------------------------------------- | ---- | ----------------- |
-| 19  | Regenerate MASTER_TODO_PLAN with current state             | 15m  | Accuracy          |
-| 20  | Add netwatch to packages/base.nix (cross-platform)         | 5m   | Availability      |
-| 21  | Create service capability matrix (sd_notify, capabilities) | 15m  | Documentation     |
-| 22  | Investigate Cachix binary cache                            | 30m  | Build performance |
-| 23  | Add Hermes health check endpoint                           | 30m  | Observability     |
-| 24  | Add NixOS VM tests for critical services                   | 2h   | Testing           |
-| 25  | Migrate remaining hardcoded paths to module options        | 20m  | Code quality      |
+| #  | Task                                                       | Est. | Impact            |
+| -- | ---------------------------------------------------------- | ---- | ----------------- |
+| 19 | Regenerate MASTER_TODO_PLAN with current state             | 15m  | Accuracy          |
+| 20 | Add netwatch to packages/base.nix (cross-platform)         | 5m   | Availability      |
+| 21 | Create service capability matrix (sd_notify, capabilities) | 15m  | Documentation     |
+| 22 | Investigate Cachix binary cache                            | 30m  | Build performance |
+| 23 | Add Hermes health check endpoint                           | 30m  | Observability     |
+| 24 | Add NixOS VM tests for critical services                   | 2h   | Testing           |
+| 25 | Migrate remaining hardcoded paths to module options        | 20m  | Code quality      |
 
 ---
 

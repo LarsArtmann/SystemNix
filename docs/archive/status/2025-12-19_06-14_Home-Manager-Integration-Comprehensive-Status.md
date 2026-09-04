@@ -48,15 +48,15 @@ Setup-Mac/
 
 ### Integration Status Matrix
 
-| Component                      | Status              | Issues                                  | Priority  |
-| ------------------------------ | ------------------- | --------------------------------------- | --------- |
-| flake.nix home-manager imports | ❌ **BROKEN**       | Declared but not used in system configs | 🚨 URGENT |
-| darwin.nix integration         | ❌ **MISSING**      | No home-manager configuration block     | 🚨 URGENT |
-| configuration.nix integration  | ❌ **MISSING**      | No home-manager configuration block     | 🚨 URGENT |
+| Component                      | Status             | Issues                                  | Priority  |
+| ------------------------------ | ------------------ | --------------------------------------- | --------- |
+| flake.nix home-manager imports | ❌ **BROKEN**      | Declared but not used in system configs | 🚨 URGENT |
+| darwin.nix integration         | ❌ **MISSING**     | No home-manager configuration block     | 🚨 URGENT |
+| configuration.nix integration  | ❌ **MISSING**     | No home-manager configuration block     | 🚨 URGENT |
 | Shell configurations           | ⚠️ **FRAGMENTED**   | System and user configs mixed           | 🔴 HIGH   |
-| Custom program system          | ❌ **CONFLICTING**  | Competes with home-manager              | 🔴 HIGH   |
+| Custom program system          | ❌ **CONFLICTING** | Competes with home-manager              | 🔴 HIGH   |
 | Cross-platform consistency     | ⚠️ **INCONSISTENT** | Different approaches per platform       | 🔴 HIGH   |
-| Testing framework              | ❌ **MISSING**      | Zero validation of configurations       | 🟡 MEDIUM |
+| Testing framework              | ❌ **MISSING**     | Zero validation of configurations       | 🟡 MEDIUM |
 
 ---
 

@@ -5,7 +5,6 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 ### 1. OWI + SearXNG Semantic Search Research Doc
@@ -13,6 +12,7 @@
 **File:** `docs/research/2026-08-01_open-web-index-searxng-semantic-search.md`
 
 Comprehensive research document covering:
+
 - What the Open Web Index is (EU-funded, 14 institutions, 1 PB pilot, targeting 5-10 PB)
 - Data formats (CIFF inverted index, Parquet metadata, WARC raw crawl, planned `emb` embeddings slot)
 - Embeddings status: OWI data model has `owie` resource type for embeddings but explicitly "not yet available"
@@ -24,6 +24,7 @@ Comprehensive research document covering:
 ### 2. Related GitHub Projects Documentation (Text Search)
 
 Added to the research doc:
+
 - **For SearXNG integration:** harvard-lil/warc-gpt (275★), Orion/SearXNG+Qdrant (closest to native integration), yacy/yacy_expert (694★, FAISS), MultiX0/froxy (21★)
 - **Web crawl → vector pipelines:** commoncrawl/cc-vec (official CC tool, MCP-enabled), demo-semantic-crawl (14-step pipeline)
 - **SearXNG-adjacent:** jcrabapple/searxng-ai (AI summaries, no vector retrieval)
@@ -33,6 +34,7 @@ Added to the research doc:
 ### 3. Related GitHub Projects Documentation (Image Search)
 
 Added to the research doc:
+
 - **Tier 1 (Production):** rom1504/clip-retrieval (2.8k★, powers LAION-5B), rom1504/img2dataset (2.5k★), criteo/autofaiss (1k+)
 - **Tier 2 (Self-hosted):** hv0905/NekoImageGallery (193★, CLIP+Qdrant), flaribbit/imgfind (153★, Rust+candle+CLIP), kingyiusuen/clip-image-search (268★), soulteary/simple-image-search-engine (155★), stg7/clipse (6★, academic)
 - **Vector DB infrastructure:** Qdrant, Milvus, OpenSearch, txtai, Vald, FAISS
@@ -43,6 +45,7 @@ Added to the research doc:
 **File:** `modules/nixos/services/searxng.nix:200-203`
 
 Added 4 new image search engines:
+
 - `bing images` — second-largest image index
 - `duckduckgo images` — privacy-respecting, diverse sources
 - `qwant images` — European engine, good EU content
@@ -55,6 +58,7 @@ Auto-git daemon committed changes in `141ae427`.
 ### 5. NekoImageGallery Deep-Dive Analysis
 
 Researched full deployment requirements for SystemNix:
+
 - 2 containers: Qdrant + NekoImageGallery (CPU-only on evo-x2, no CUDA)
 - CLIP ViT-L/14 (768-dim) + BERT + PaddleOCR (all bundled in Docker image)
 - Token-based auth (admin API + access protection), no OIDC
@@ -106,25 +110,25 @@ Researched full deployment requirements for SystemNix:
 
 There are **25+ more image engines** in SearXNG we haven't enabled:
 
-| Engine | Why it matters |
-|--------|---------------|
-| `brave.images` | Independent index, good quality |
-| `flickr` | Creative Commons photos, large photography corpus |
-| `flickr_api` | Flickr with API (better quality, needs API key) |
-| `openverse` | CC-licensed images aggregated from many sources |
-| `unsplash` | High-quality free stock photography |
-| `wallhaven` | Wallpaper-focused, high quality |
-| `wikicommons.images` | Free/copyright-free images |
-| `pixabay images` | Free stock photos |
-| `500px` | Professional photography |
-| `artstation` | Digital art, concept art, game art |
-| `deviantart` | Digital art community |
-| `startpage images` | Google Images proxy (privacy) |
-| `swisscows images` | Swiss privacy search engine |
-| `naver images` | Korean content (useful for K-pop, K-drama) |
-| `sogou images` | Chinese content |
-| `google cse images` | Custom search engine images |
-| `public domain image archive` | Public domain images |
+| Engine                        | Why it matters                                    |
+| ----------------------------- | ------------------------------------------------- |
+| `brave.images`                | Independent index, good quality                   |
+| `flickr`                      | Creative Commons photos, large photography corpus |
+| `flickr_api`                  | Flickr with API (better quality, needs API key)   |
+| `openverse`                   | CC-licensed images aggregated from many sources   |
+| `unsplash`                    | High-quality free stock photography               |
+| `wallhaven`                   | Wallpaper-focused, high quality                   |
+| `wikicommons.images`          | Free/copyright-free images                        |
+| `pixabay images`              | Free stock photos                                 |
+| `500px`                       | Professional photography                          |
+| `artstation`                  | Digital art, concept art, game art                |
+| `deviantart`                  | Digital art community                             |
+| `startpage images`            | Google Images proxy (privacy)                     |
+| `swisscows images`            | Swiss privacy search engine                       |
+| `naver images`                | Korean content (useful for K-pop, K-drama)        |
+| `sogou images`                | Chinese content                                   |
+| `google cse images`           | Custom search engine images                       |
+| `public domain image archive` | Public domain images                              |
 
 ### Process improvements
 
@@ -146,12 +150,14 @@ There are **25+ more image engines** in SearXNG we haven't enabled:
 ## f) Up to 50 Things We Should Get Done Next
 
 #### Immediate (P0 — unverified changes need deploy)
+
 1. Deploy the SearXNG image engine changes (`nix run .#deploy`)
 2. Run post-deploy smoke test verifying image search returns results from all new engines
 3. Run `nix fmt` on `searxng.nix`
 4. Verify TinEye appears in the right SearXNG category (general, not images)
 
 #### SearXNG improvements (P1)
+
 5. Enable `brave.images` engine
 6. Enable `flickr` engine (or `flickr_api` with a sops-managed API key)
 7. Enable `openverse` engine
@@ -169,6 +175,7 @@ There are **25+ more image engines** in SearXNG we haven't enabled:
 19. Test SearXNG image search latency with 8+ image engines (may need timeout tuning)
 
 #### Documentation (P1)
+
 20. Add NekoImageGallery analysis to the research doc
 21. Add "Decision Matrix" section to research doc (Immich vs NekoImageGallery vs clip-retrieval vs metasearch)
 22. Update AGENTS.md SearXNG section with new image engines list
@@ -177,6 +184,7 @@ There are **25+ more image engines** in SearXNG we haven't enabled:
 25. Add a "Recommendations" section to the OWI research doc
 
 #### Semantic search exploration (P2)
+
 26. Explore whether SearXNG `engine_type = "offline"` can query a local vector DB
 27. Prototype a SearXNG offline engine that queries Qdrant for semantic image search
 28. Test CLIP inference on Strix Halo iGPU (ROCm Direct GEMM or Vulkan backend)
@@ -186,6 +194,7 @@ There are **25+ more image engines** in SearXNG we haven't enabled:
 32. Build a small-scale OWI embedding pipeline (1 day of crawl data → embeddings → vector DB)
 
 #### NekoImageGallery (P2 — only if a use case is identified)
+
 33. Identify the image corpus to index (stock images? memes? web-crawled?)
 34. Create `lib/ports.nix` entries for Qdrant + NekoImageGallery
 35. Create `modules/nixos/services/neko-image-gallery.nix` with Docker containers
@@ -198,6 +207,7 @@ There are **25+ more image engines** in SearXNG we haven't enabled:
 42. Write SearXNG offline engine plugin that queries NekoImageGallery's `/search/text` API
 
 #### clip-retrieval ecosystem (P3 — web-scale, ambitious)
+
 43. Evaluate img2dataset for downloading images from OWI/Common Crawl URLs
 44. Benchmark autofaiss index building on evo-x2 (200M vectors, 3h/15GB RAM claim)
 45. Test clip-retrieval's `clip back` Flask API as a SearXNG backend

@@ -14,15 +14,15 @@
 
 SystemNix is a **production-ready, cross-platform Nix configuration system** managing both macOS (nix-darwin) and NixOS with declarative configuration, type safety, and Home Manager integration. Recent work focused on ActivityWatch improvements, CRUSH upgrade to v0.46.0, and adding the Portless development tool.
 
-| Metric              | Value           | Status                                                            |
-| ------------------- | --------------- | ----------------------------------------------------------------- |
-| **Build Status**    | ✅ Passing      | Darwin & NixOS configs evaluate                                   |
-| **Flake Check**     | ✅ Clean        | No eval errors, portless added                                    |
+| Metric              | Value          | Status                                                            |
+| ------------------- | -------------- | ----------------------------------------------------------------- |
+| **Build Status**    | ✅ Passing     | Darwin & NixOS configs evaluate                                   |
+| **Flake Check**     | ✅ Clean       | No eval errors, portless added                                    |
 | **Health Check**    | ⚠️ Minor Issues | Homebrew warnings, Git config not linked                          |
-| **TODO Count**      | ~611 items      | Stable, ongoing triage                                            |
-| **Documentation**   | 369 files       | +21 since last report                                             |
-| **Nix Files**       | 87              | Well-structured                                                   |
-| **Custom Packages** | 5               | crush-patched, modernize, jscpd, aw-watcher-utilization, portless |
+| **TODO Count**      | ~611 items     | Stable, ongoing triage                                            |
+| **Documentation**   | 369 files      | +21 since last report                                             |
+| **Nix Files**       | 87             | Well-structured                                                   |
+| **Custom Packages** | 5              | crush-patched, modernize, jscpd, aw-watcher-utilization, portless |
 
 ---
 

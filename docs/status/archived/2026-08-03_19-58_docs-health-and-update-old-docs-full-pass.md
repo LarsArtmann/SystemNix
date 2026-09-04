@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Executive Summary
 
 The session executed a full documentation health pass across 44 August status/planning/research files and 4 living docs (TODO_LIST, ROADMAP, FEATURES, CHANGELOG). The work is **functional but incomplete** — the living docs are rebuilt and verified, but the update-old-docs annotation pass skipped per-item resolution on the 4 annotated files, and 38 files were classified as SKIP based on sub-agent summaries rather than primary-agent reading.
@@ -158,27 +157,27 @@ AGENTS.md has factual errors (PMA MemoryMax 12G vs 16G) and missing August gotch
 
 ### Files Modified This Session
 
-| File | Change |
-|------|--------|
-| `TODO_LIST.md` | Rebuilt — removed done items, added 15+ new open items from Aug reports |
-| `ROADMAP.md` | Rebuilt — added Theme 7, updated all themes with Aug findings |
-| `FEATURES.md` | Updated — 9 edits (counts, Attic, SearXNG, llama-cpp, DMS, Fish, BTRFS, Known Gaps, summary) |
-| `CHANGELOG.md` | Appended — 25+ entries in `[Unreleased]` (Added/Changed/Fixed) |
+| File           | Change                                                                                       |
+| -------------- | -------------------------------------------------------------------------------------------- |
+| `TODO_LIST.md` | Rebuilt — removed done items, added 15+ new open items from Aug reports                      |
+| `ROADMAP.md`   | Rebuilt — added Theme 7, updated all themes with Aug findings                                |
+| `FEATURES.md`  | Updated — 9 edits (counts, Attic, SearXNG, llama-cpp, DMS, Fish, BTRFS, Known Gaps, summary) |
+| `CHANGELOG.md` | Appended — 25+ entries in `[Unreleased]` (Added/Changed/Fixed)                               |
 
 ### Historical Files Modified
 
-| File | Change |
-|------|--------|
-| `docs/status/2026-08-03_06-51_nvme-data-corruption-discovery.md` | Corrected false P0 claim, added Resolution section |
-| `docs/status/2026-08-03_03-17_pocket-id-francis-crash-loop-fix.md` | Added Resolution (superseded by 2.12.0) |
-| `docs/status/2026-08-03_04-14_shell-per-command-direnv-caching-*.md` | Added Resolution (wrong segment-buffer diagnosis) |
+| File                                                                         | Change                                                    |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `docs/status/2026-08-03_06-51_nvme-data-corruption-discovery.md`             | Corrected false P0 claim, added Resolution section        |
+| `docs/status/2026-08-03_03-17_pocket-id-francis-crash-loop-fix.md`           | Added Resolution (superseded by 2.12.0)                   |
+| `docs/status/2026-08-03_04-14_shell-per-command-direnv-caching-*.md`         | Added Resolution (wrong segment-buffer diagnosis)         |
 | `docs/status/2026-08-03_03-17_lockscreen-improvements-brutal-self-review.md` | Answered 3 questions, added Resolution (superseded by v2) |
 
 ### Files Archived
 
-| File | Destination |
-|------|-------------|
-| `docs/planning/2026-08-01_21-32_pma-memory-cpu-death-loop-fix.md` | `docs/planning/archived/` |
+| File                                                                                | Destination               |
+| ----------------------------------------------------------------------------------- | ------------------------- |
+| `docs/planning/2026-08-01_21-32_pma-memory-cpu-death-loop-fix.md`                   | `docs/planning/archived/` |
 | `docs/planning/2026-08-02_04-27_dynamic-user-assert-metrics-split-attic-vm-test.md` | `docs/planning/archived/` |
 
 ### Quality Gate

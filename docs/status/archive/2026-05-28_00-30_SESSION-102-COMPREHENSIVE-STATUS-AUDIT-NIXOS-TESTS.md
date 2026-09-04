@@ -78,40 +78,40 @@ SystemNix is a **mature, ambitious cross-platform Nix configuration** managing 2
 
 ### Top Priority (from 100-point audit)
 
-| #   | Item                                                        | Impact                                                        |
-| --- | ----------------------------------------------------------- | ------------------------------------------------------------- |
-| 1   | Binary cache (attic/cachix)                                 | 30-min deploys → 5-min deploys, enables CI builds             |
-| 2   | `just diff` — preview changes before switch                 | #1 DX improvement for any NixOS config                        |
-| 3   | Module assertions (oauth2 requires pocket-id, etc.)         | Catch misconfiguration at eval time                           |
-| 4   | Backup restore testing                                      | Untested backups are not backups                              |
-| 5   | `just new-service` scaffolding generator                    | Eliminates steepest learning curve                            |
-| 6   | `just doctor` unified diagnostic                            | Single command checks everything                              |
-| 7   | Split signoz.nix (684 lines) and monitor365.nix (715 lines) | Unmaintainable single-file modules                            |
-| 8   | Service dependency graph validation                         | Caddy → oauth2 → pocket-id → sops chain is implicit           |
-| 9   | Multi-node nixosTests (DNS failover between 2 VMs)          | Complex networking with zero test coverage                    |
-| 10  | Darwin CI                                                   | Zero coverage for macOS config                                |
-| 11  | `just status` unified service overview                      | 29 services with no single health command                     |
-| 12  | `just preflight` pre-switch validation                      | Check secrets, ports, disk space before 30-min build          |
-| 13  | Prune docs/ — archive 250+ stale session reports            | Finding current info is archaeological work                   |
-| 14  | Vulnerability scanning for Docker images                    | 5+ container services with no CVE checking                    |
-| 15  | CI that actually builds packages                            | `perSystem.checks` only has statix/deadnix, no package builds |
-| 16  | `just changelog` — diff-based config changelog              | Config changes are opaque                                     |
-| 17  | Per-service runbooks                                        | 29 services, all tribal knowledge                             |
-| 18  | Capacity planning / trend analysis                          | No disk/memory/GPU usage tracking over time                   |
-| 19  | Emergency access procedure                                  | If sops keys lost, no break-glass for SSH                     |
-| 20  | Rate limiting on Caddy                                      | All services vulnerable to brute force                        |
-| 21  | Network segmentation between services                       | Docker containers reach each other freely                     |
-| 22  | `disko` declarative partitioning                            | hardware-configuration.nix is hand-maintained                 |
-| 23  | Secret rotation strategy                                    | All secrets in one sops file, no rotation schedule            |
-| 24  | Nix-generated module documentation                          | Most `mkOption` lack `description` strings                    |
-| 25  | Fleet management (multi-node deploy)                        | 3 machines managed independently                              |
+| #  | Item                                                        | Impact                                                        |
+| -- | ----------------------------------------------------------- | ------------------------------------------------------------- |
+| 1  | Binary cache (attic/cachix)                                 | 30-min deploys → 5-min deploys, enables CI builds             |
+| 2  | `just diff` — preview changes before switch                 | #1 DX improvement for any NixOS config                        |
+| 3  | Module assertions (oauth2 requires pocket-id, etc.)         | Catch misconfiguration at eval time                           |
+| 4  | Backup restore testing                                      | Untested backups are not backups                              |
+| 5  | `just new-service` scaffolding generator                    | Eliminates steepest learning curve                            |
+| 6  | `just doctor` unified diagnostic                            | Single command checks everything                              |
+| 7  | Split signoz.nix (684 lines) and monitor365.nix (715 lines) | Unmaintainable single-file modules                            |
+| 8  | Service dependency graph validation                         | Caddy → oauth2 → pocket-id → sops chain is implicit           |
+| 9  | Multi-node nixosTests (DNS failover between 2 VMs)          | Complex networking with zero test coverage                    |
+| 10 | Darwin CI                                                   | Zero coverage for macOS config                                |
+| 11 | `just status` unified service overview                      | 29 services with no single health command                     |
+| 12 | `just preflight` pre-switch validation                      | Check secrets, ports, disk space before 30-min build          |
+| 13 | Prune docs/ — archive 250+ stale session reports            | Finding current info is archaeological work                   |
+| 14 | Vulnerability scanning for Docker images                    | 5+ container services with no CVE checking                    |
+| 15 | CI that actually builds packages                            | `perSystem.checks` only has statix/deadnix, no package builds |
+| 16 | `just changelog` — diff-based config changelog              | Config changes are opaque                                     |
+| 17 | Per-service runbooks                                        | 29 services, all tribal knowledge                             |
+| 18 | Capacity planning / trend analysis                          | No disk/memory/GPU usage tracking over time                   |
+| 19 | Emergency access procedure                                  | If sops keys lost, no break-glass for SSH                     |
+| 20 | Rate limiting on Caddy                                      | All services vulnerable to brute force                        |
+| 21 | Network segmentation between services                       | Docker containers reach each other freely                     |
+| 22 | `disko` declarative partitioning                            | hardware-configuration.nix is hand-maintained                 |
+| 23 | Secret rotation strategy                                    | All secrets in one sops file, no rotation schedule            |
+| 24 | Nix-generated module documentation                          | Most `mkOption` lack `description` strings                    |
+| 25 | Fleet management (multi-node deploy)                        | 3 machines managed independently                              |
 
 ---
 
 ## D) TOTALLY FUCKED UP 💥
 
-| Item                                                | Severity  | Details                                                                                                                                                        |
-| --------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Item                                                | Severity | Details                                                                                                                                                        |
+| --------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Staged but uncommitted changes from session 101** | ⚠️ Medium | 15 files modified but not staged/committed. `git diff` shows ~2000 lines of writeShellApplication migration sitting in working tree. Risk of loss or conflict. |
 | **Untracked files**                                 | ⚠️ Low    | `check-services.sh` and `fix-services.sh` are untracked — unclear if they should be committed or are temporary debug scripts.                                  |
 

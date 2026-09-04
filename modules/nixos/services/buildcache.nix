@@ -175,7 +175,13 @@
             "commit=120"
             "nofail"
             "x-systemd.automount"
-            "x-systemd.device-timeout=10s"
+            # 2s (was 10s): a dead/flapping enclosure must not cost the full
+            # timeout per mount lookup — every D-state probe stalls its caller
+            # (login chain, units, scripts) and fakes IO PSI saturation
+            # (2026-08-24 crash3: phantom PSI from automount waits). A healthy
+            # enumerated device answers instantly; USB enumeration happens
+            # before the automount trigger, not inside this window.
+            "x-systemd.device-timeout=2s"
             "x-systemd.device-bound"
           ];
         };
@@ -190,6 +196,13 @@
         #    than waiting for the next build access or metrics poll.
         services.udev.extraRules = ''
           ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="152d", ATTR{idProduct}=="0567", TEST=="power/control", ATTR{power/control}="on"
+          # Pin all USB host controllers awake: a runtime-suspended (D3cold)
+          # controller on this platform raises no PME wake on hotplug, so
+          # replug events are silently LOST — the host looks blind while the
+          # device is healthy (2026-08-29 DAS recovery: all six USB/USB4
+          # controllers sat suspended with control=auto). Covers xHCI
+          # (0x0c0330) and USB4 (0x0c0340) class devices.
+          ACTION=="add", SUBSYSTEM=="pci", ATTR{class}=="0x0c0330|0x0c0340", TEST=="power/control", ATTR{power/control}="on"
         ''
         + lib.optionalString (deviceSerial != null) ''
           ACTION=="add", SUBSYSTEM=="block", ENV{DEVTYPE}=="partition", ENV{ID_SERIAL}=="${deviceSerial}", ENV{SYSTEMD_WANTS}+="buildcache-usb-recovery.service"

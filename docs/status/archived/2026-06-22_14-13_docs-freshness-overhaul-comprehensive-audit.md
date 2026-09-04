@@ -8,7 +8,6 @@
 
 ---
 
-
 ## a) FULLY DONE ✅
 
 | Area                         | Details                                                                                                                    |
@@ -106,33 +105,33 @@
 
 ## f) Top #25 Things to Get Done Next
 
-| #   | Task                                                                                               | Impact      | Effort | Category     |
-| --- | -------------------------------------------------------------------------------------------------- | ----------- | ------ | ------------ |
-| 1   | **Deploy current config** — OOM hardening, ssh-suspend-guard, doc fixes are uncommitted/undeployed | 🔴 Critical | 5min   | Deploy       |
-| 2   | **Cloud backup setup** — BorgBackup to Hetzner StorageBox                                          | 🔴 Critical | 2h     | Reliability  |
-| 3   | **Fix DiscordSync** — migrate from deleted projection/v2 to watermill                              | 🔴 High     | 4h     | Broken       |
-| 4   | **Archive old status docs** — move pre-session-100 to archive (178 files)                          | 🟡 Medium   | 30min  | Hygiene      |
-| 5   | **Audit Gatus endpoints** — fix 6 DOWN services, verify URLs                                       | 🟡 Medium   | 1h     | Monitoring   |
-| 6   | **Reboot evo-x2** — verify boot time after NVMe APST fix                                           | 🟡 Medium   | 10min  | Deploy       |
-| 7   | **Fix Twenty CRM 502s** — investigate container OOM or PG exhaustion                               | 🟡 Medium   | 2h     | Broken       |
-| 8   | **Pre-deploy BTRFS snapshot** — restore safety net in `scripts/deploy.sh`                          | 🟡 Medium   | 30min  | Reliability  |
-| 9   | **Verify Pocket ID email** — test login notification after SMTP wiring                             | 🟡 Medium   | 10min  | Verify       |
-| 10  | **Reset Monitor365** — `systemctl --user reset-failed monitor365-server`                           | 🟢 Low      | 1min   | Fix          |
-| 11  | **Add Hermes OpenAI key** — sops secret, manual step                                               | 🟡 Medium   | 5min   | Config       |
-| 12  | **Firewall deny-by-default** — explicit allowlist for Caddy/SSH/DNS                                | 🟡 Medium   | 1h     | Security     |
-| 13  | **Bind Immich to localhost** — `host = "127.0.0.1"`                                                | 🟢 Low      | 5min   | Security     |
-| 14  | **BTRFS `/data` subvolume migration** — create subvol, update fstab, rsync                         | 🟡 Medium   | 1h     | Reliability  |
-| 15  | **Split signoz.nix** (778L) — extract ClickHouse, OTel collector, dashboards                       | 🟡 Medium   | 2h     | Architecture |
-| 16  | **Split monitor365.nix** (716L) — extract agent config, server config                              | 🟡 Medium   | 2h     | Architecture |
-| 17  | **Add Monitor365 auth** — token-based agent→server authentication                                  | 🟡 Medium   | 3h     | Security     |
-| 18  | **Investigate Jan llama-server respawn** — cgroup limits or service wrapper                        | 🟡 Medium   | 2h     | AI/ML        |
-| 19  | **Hermes SSH deploy key** — install private key, add public to GitHub                              | 🟢 Low      | 10min  | Config       |
-| 20  | **Swap investigation** — 8 GiB swap on 128 GiB RAM, check stale processes                          | 🟢 Low      | 30min  | Investigate  |
-| 21  | **Upstream PR: KeePassXC Chromium manifests** — trivially generated, benefits all                  | 🟢 Low      | 1h     | Upstream     |
-| 22  | **Upstream PR: aw-watcher-utilization poetry-core** — eliminates custom overlay                    | 🟢 Low      | 1h     | Upstream     |
-| 23  | **Disabled service triage** — voice-agents, minecraft, photomap: enable or remove                  | 🟢 Low      | 30min  | Cleanup      |
-| 24  | **NixOS tests** — expand `tests/` beyond exec-start-paths                                          | 🟡 Medium   | 4h     | Quality      |
-| 25  | **Extract dnsblockd to standalone repo** — 930 lines of Go deserves its own repo                   | 🟡 Medium   | 4h     | Architecture |
+| #  | Task                                                                                               | Impact      | Effort | Category     |
+| -- | -------------------------------------------------------------------------------------------------- | ----------- | ------ | ------------ |
+| 1  | **Deploy current config** — OOM hardening, ssh-suspend-guard, doc fixes are uncommitted/undeployed | 🔴 Critical | 5min   | Deploy       |
+| 2  | **Cloud backup setup** — BorgBackup to Hetzner StorageBox                                          | 🔴 Critical | 2h     | Reliability  |
+| 3  | **Fix DiscordSync** — migrate from deleted projection/v2 to watermill                              | 🔴 High     | 4h     | Broken       |
+| 4  | **Archive old status docs** — move pre-session-100 to archive (178 files)                          | 🟡 Medium   | 30min  | Hygiene      |
+| 5  | **Audit Gatus endpoints** — fix 6 DOWN services, verify URLs                                       | 🟡 Medium   | 1h     | Monitoring   |
+| 6  | **Reboot evo-x2** — verify boot time after NVMe APST fix                                           | 🟡 Medium   | 10min  | Deploy       |
+| 7  | **Fix Twenty CRM 502s** — investigate container OOM or PG exhaustion                               | 🟡 Medium   | 2h     | Broken       |
+| 8  | **Pre-deploy BTRFS snapshot** — restore safety net in `scripts/deploy.sh`                          | 🟡 Medium   | 30min  | Reliability  |
+| 9  | **Verify Pocket ID email** — test login notification after SMTP wiring                             | 🟡 Medium   | 10min  | Verify       |
+| 10 | **Reset Monitor365** — `systemctl --user reset-failed monitor365-server`                           | 🟢 Low      | 1min   | Fix          |
+| 11 | **Add Hermes OpenAI key** — sops secret, manual step                                               | 🟡 Medium   | 5min   | Config       |
+| 12 | **Firewall deny-by-default** — explicit allowlist for Caddy/SSH/DNS                                | 🟡 Medium   | 1h     | Security     |
+| 13 | **Bind Immich to localhost** — `host = "127.0.0.1"`                                                | 🟢 Low      | 5min   | Security     |
+| 14 | **BTRFS `/data` subvolume migration** — create subvol, update fstab, rsync                         | 🟡 Medium   | 1h     | Reliability  |
+| 15 | **Split signoz.nix** (778L) — extract ClickHouse, OTel collector, dashboards                       | 🟡 Medium   | 2h     | Architecture |
+| 16 | **Split monitor365.nix** (716L) — extract agent config, server config                              | 🟡 Medium   | 2h     | Architecture |
+| 17 | **Add Monitor365 auth** — token-based agent→server authentication                                  | 🟡 Medium   | 3h     | Security     |
+| 18 | **Investigate Jan llama-server respawn** — cgroup limits or service wrapper                        | 🟡 Medium   | 2h     | AI/ML        |
+| 19 | **Hermes SSH deploy key** — install private key, add public to GitHub                              | 🟢 Low      | 10min  | Config       |
+| 20 | **Swap investigation** — 8 GiB swap on 128 GiB RAM, check stale processes                          | 🟢 Low      | 30min  | Investigate  |
+| 21 | **Upstream PR: KeePassXC Chromium manifests** — trivially generated, benefits all                  | 🟢 Low      | 1h     | Upstream     |
+| 22 | **Upstream PR: aw-watcher-utilization poetry-core** — eliminates custom overlay                    | 🟢 Low      | 1h     | Upstream     |
+| 23 | **Disabled service triage** — voice-agents, minecraft, photomap: enable or remove                  | 🟢 Low      | 30min  | Cleanup      |
+| 24 | **NixOS tests** — expand `tests/` beyond exec-start-paths                                          | 🟡 Medium   | 4h     | Quality      |
+| 25 | **Extract dnsblockd to standalone repo** — 930 lines of Go deserves its own repo                   | 🟡 Medium   | 4h     | Architecture |
 
 ---
 

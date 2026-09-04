@@ -68,23 +68,23 @@
 
 ### P1 — SECURITY (3/7 = 43%)
 
-| #   | Task                                    | Blocker      |
-| --- | --------------------------------------- | ------------ |
-| 7   | Move Taskwarrior encryption to sops-nix | Needs evo-x2 |
-| 9   | Pin Docker digest for Voice Agents      | Needs evo-x2 |
-| 10  | Pin Docker digest for PhotoMap          | Needs evo-x2 |
-| 11  | Secure VRRP auth_pass with sops-nix     | Needs evo-x2 |
+| #  | Task                                    | Blocker      |
+| -- | --------------------------------------- | ------------ |
+| 7  | Move Taskwarrior encryption to sops-nix | Needs evo-x2 |
+| 9  | Pin Docker digest for Voice Agents      | Needs evo-x2 |
+| 10 | Pin Docker digest for PhotoMap          | Needs evo-x2 |
+| 11 | Secure VRRP auth_pass with sops-nix     | Needs evo-x2 |
 
 ### P6 — SERVICES (9/15 = 60%)
 
-| #   | Task                         | Blocker                |
-| --- | ---------------------------- | ---------------------- |
-| 62  | Hermes health check endpoint | Needs Hermes code      |
-| 63  | Hermes key_env migration     | Low risk               |
-| 65  | SigNoz missing metrics       | Needs evo-x2           |
-| 66  | Authelia SMTP notifications  | Needs SMTP credentials |
-| 67  | Immich backup restore test   | Needs evo-x2           |
-| 68  | Twenty backup restore test   | Needs evo-x2           |
+| #  | Task                         | Blocker                |
+| -- | ---------------------------- | ---------------------- |
+| 62 | Hermes health check endpoint | Needs Hermes code      |
+| 63 | Hermes key_env migration     | Low risk               |
+| 65 | SigNoz missing metrics       | Needs evo-x2           |
+| 66 | Authelia SMTP notifications  | Needs SMTP credentials |
+| 67 | Immich backup restore test   | Needs evo-x2           |
+| 68 | Twenty backup restore test   | Needs evo-x2           |
 
 ### P9 — FUTURE (2/12 = 17%)
 
@@ -98,21 +98,21 @@ Investigated: #85 (just test race), #90 (SSH config migration). Remaining 10 are
 
 ALL 13 tasks require evo-x2 physical access. **This is the #1 blocker for the entire project.**
 
-| #   | Task                                         | Est. |
-| --- | -------------------------------------------- | ---- |
-| 41  | `just switch` — deploy all pending changes   | 45m+ |
-| 42  | Verify Ollama works                          | 5m   |
-| 43  | Verify Steam works                           | 5m   |
-| 44  | Verify ComfyUI works                         | 5m   |
-| 45  | Verify Caddy HTTPS block page                | 3m   |
-| 46  | Verify SigNoz collecting metrics/logs/traces | 5m   |
-| 47  | Check Authelia SSO status                    | 3m   |
-| 48  | Check PhotoMap service status                | 3m   |
-| 49  | Verify AMD NPU with test workload            | 10m  |
-| 50  | Build Pi 3 SD image                          | 30m+ |
-| 51  | Flash SD + boot Pi 3                         | 15m  |
-| 52  | Test DNS failover                            | 10m  |
-| 53  | Configure LAN devices for DNS VIP            | 10m  |
+| #  | Task                                         | Est. |
+| -- | -------------------------------------------- | ---- |
+| 41 | `just switch` — deploy all pending changes   | 45m+ |
+| 42 | Verify Ollama works                          | 5m   |
+| 43 | Verify Steam works                           | 5m   |
+| 44 | Verify ComfyUI works                         | 5m   |
+| 45 | Verify Caddy HTTPS block page                | 3m   |
+| 46 | Verify SigNoz collecting metrics/logs/traces | 5m   |
+| 47 | Check Authelia SSO status                    | 3m   |
+| 48 | Check PhotoMap service status                | 3m   |
+| 49 | Verify AMD NPU with test workload            | 10m  |
+| 50 | Build Pi 3 SD image                          | 30m+ |
+| 51 | Flash SD + boot Pi 3                         | 15m  |
+| 52 | Test DNS failover                            | 10m  |
+| 53 | Configure LAN devices for DNS VIP            | 10m  |
 
 ---
 
@@ -149,16 +149,16 @@ Every session introduces 1-3 regressions. The niri incident was the most severe 
 
 ## E) WHAT WE SHOULD IMPROVE 📈
 
-| #   | Area                          | Problem                                                      | Proposed Fix                                               |
-| --- | ----------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------- |
-| 1   | **Deploy cadence**            | 66+ commits undeployed. 8 failed services.                   | Deploy ASAP. Consider SSH remote deploy.                   |
-| 2   | **serviceDefaults migration** | 9 services still have manual Restart/WatchdogSec             | Incremental migration — 5 min per service                  |
-| 3   | **Niri unit patch fragility** | `builtins.replaceStrings` silently fails if upstream changes | Add assertion that verifies BindsTo was found and replaced |
-| 4   | **No integration testing**    | Zero NixOS VM tests                                          | Add `makeTest` for at least one critical service           |
-| 5   | **Health check depth**        | Missing: Ollama, Docker, BTRFS scrub, ZRAM swap              | Extend health-check.sh with service-specific checks        |
-| 6   | **CI gap**                    | CI doesn't run `just health`                                 | Add to GitHub Actions for NixOS-specific validation        |
-| 7   | **Direnv profile corruption** | Silently breaks dev environment (happened session 3)         | Add periodic `.direnv/flake-profile` check to health check |
-| 8   | **Secret management**         | 4 items still plaintext                                      | sops migration for Taskwarrior, VRRP, Docker digests       |
+| # | Area                          | Problem                                                      | Proposed Fix                                               |
+| - | ----------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------- |
+| 1 | **Deploy cadence**            | 66+ commits undeployed. 8 failed services.                   | Deploy ASAP. Consider SSH remote deploy.                   |
+| 2 | **serviceDefaults migration** | 9 services still have manual Restart/WatchdogSec             | Incremental migration — 5 min per service                  |
+| 3 | **Niri unit patch fragility** | `builtins.replaceStrings` silently fails if upstream changes | Add assertion that verifies BindsTo was found and replaced |
+| 4 | **No integration testing**    | Zero NixOS VM tests                                          | Add `makeTest` for at least one critical service           |
+| 5 | **Health check depth**        | Missing: Ollama, Docker, BTRFS scrub, ZRAM swap              | Extend health-check.sh with service-specific checks        |
+| 6 | **CI gap**                    | CI doesn't run `just health`                                 | Add to GitHub Actions for NixOS-specific validation        |
+| 7 | **Direnv profile corruption** | Silently breaks dev environment (happened session 3)         | Add periodic `.direnv/flake-profile` check to health check |
+| 8 | **Secret management**         | 4 items still plaintext                                      | sops migration for Taskwarrior, VRRP, Docker digests       |
 
 ---
 

@@ -7,20 +7,19 @@
 
 ---
 
-
 ## What Actually Happened
 
 The user pasted deploy logs showing `ExitStatus(Exited(4))` during activation, with `pocket-id.service` as the failed unit. The instruction was "check all the logs and make sure we didn't break anything."
 
 ### Timeline of Discovery
 
-| Time | Event | Verdict |
-|------|-------|---------|
-| 10:12:44 | pocket-id died with "lock ownership lost" | **Self-healed** (auto-restarted at 10:12:51, health 204) |
-| 10:12:20 | DiscordSync started, API not yet bound | **Normal** (thumb-hash backfill: 4651 attachments, ~11 min) |
-| 10:34:25 | DiscordSync SIGTERM'd | **Deploy #3** (user was iterating — 4 deploys total today) |
-| 10:41:11 | DiscordSync restarted from deploy #4 | Backfill phase again |
-| ~10:52 | DiscordSync API finally bound | Fully operational, 29 stats keys including `guilds` |
+| Time     | Event                                     | Verdict                                                     |
+| -------- | ----------------------------------------- | ----------------------------------------------------------- |
+| 10:12:44 | pocket-id died with "lock ownership lost" | **Self-healed** (auto-restarted at 10:12:51, health 204)    |
+| 10:12:20 | DiscordSync started, API not yet bound    | **Normal** (thumb-hash backfill: 4651 attachments, ~11 min) |
+| 10:34:25 | DiscordSync SIGTERM'd                     | **Deploy #3** (user was iterating — 4 deploys total today)  |
+| 10:41:11 | DiscordSync restarted from deploy #4      | Backfill phase again                                        |
+| ~10:52   | DiscordSync API finally bound             | Fully operational, 29 stats keys including `guilds`         |
 
 **Conclusion: The deploy did NOT break anything.** All services recovered.
 
@@ -30,21 +29,21 @@ The user pasted deploy logs showing `ExitStatus(Exited(4))` during activation, w
 
 ### 1. post-deploy-check.sh — 4 bugs fixed
 
-| Bug | Root Cause | Fix |
-|-----|-----------|-----|
-| **Overview false FAIL** | `echo "$body" \| grep -q` under `set -o pipefail` on 149KB body. grep exits at byte 15 (match found), echo gets SIGPIPE (141), pipefail returns 141, `! 141` = success → enters FAIL branch. | Read pattern from body file directly: `grep -qiE "$pattern" /tmp/.smoke-body` — no pipe, no SIGPIPE |
-| **Crush Daily SKIP** | API returns date strings `["2026-07-19", ...]`, check expected objects with `"id"`. | Match `"[0-9]{4}-[0-9]{2}-[0-9]{2}"` date pattern |
-| **DiscordSync false FAIL** | Check ran during thumb-hash backfill (5-11 min startup). API not yet bound → connection refused → hard FAIL. | Retry `/healthz` 3× (5s apart), then distinguish "process alive but not ready" (SKIP) from "process dead" (FAIL) via `pgrep` |
-| **DiscordSync stats WARN** | Server returns **gzip-compressed** response; curl wrote raw compressed bytes (470 bytes binary), grep couldn't find `"guilds"`. | Added `--compressed` to curl + `grep -qa` (treat binary as text) |
+| Bug                        | Root Cause                                                                                                                                                                                   | Fix                                                                                                                          |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **Overview false FAIL**    | `echo "$body" \| grep -q` under `set -o pipefail` on 149KB body. grep exits at byte 15 (match found), echo gets SIGPIPE (141), pipefail returns 141, `! 141` = success → enters FAIL branch. | Read pattern from body file directly: `grep -qiE "$pattern" /tmp/.smoke-body` — no pipe, no SIGPIPE                          |
+| **Crush Daily SKIP**       | API returns date strings `["2026-07-19", ...]`, check expected objects with `"id"`.                                                                                                          | Match `"[0-9]{4}-[0-9]{2}-[0-9]{2}"` date pattern                                                                            |
+| **DiscordSync false FAIL** | Check ran during thumb-hash backfill (5-11 min startup). API not yet bound → connection refused → hard FAIL.                                                                                 | Retry `/healthz` 3× (5s apart), then distinguish "process alive but not ready" (SKIP) from "process dead" (FAIL) via `pgrep` |
+| **DiscordSync stats WARN** | Server returns **gzip-compressed** response; curl wrote raw compressed bytes (470 bytes binary), grep couldn't find `"guilds"`.                                                              | Added `--compressed` to curl + `grep -qa` (treat binary as text)                                                             |
 
 **Verified:** Final post-deploy-check: **23 PASS, 0 FAIL, 0 SKIP**.
 
 ### 2. snapshots.nix — 2 bugs fixed
 
-| Bug | Root Cause | Fix |
-|-----|-----------|-----|
-| **btrfs-verify-snapshots false alarm ("24 days old")** | Script used `stat -c %Y` on snapshot directory. BTRFS snapshots INHERIT the source subvolume's root mtime (Jun 26). ALL snapshots showed Jun 26 regardless of actual creation date. | Parse snapshot NAME (`@.YYYYMMDDTHHMM` btrbk format) instead of stat |
-| **btrbk-data failing nightly since Jul 20** | btrbk requires `snapshot_dir` to exist. `/data/.snapshots` was never created → btrbk-data failed with "Failed to fetch subvolume detail for snapshot_dir" every night. `/data` (Docker volumes, Immich DB, AI models) had **ZERO snapshots** for unknown duration. | Added tmpfiles rule: `d /data/.snapshots 0755 root root -` |
+| Bug                                                    | Root Cause                                                                                                                                                                                                                                                         | Fix                                                                  |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| **btrfs-verify-snapshots false alarm ("24 days old")** | Script used `stat -c %Y` on snapshot directory. BTRFS snapshots INHERIT the source subvolume's root mtime (Jun 26). ALL snapshots showed Jun 26 regardless of actual creation date.                                                                                | Parse snapshot NAME (`@.YYYYMMDDTHHMM` btrbk format) instead of stat |
+| **btrbk-data failing nightly since Jul 20**            | btrbk requires `snapshot_dir` to exist. `/data/.snapshots` was never created → btrbk-data failed with "Failed to fetch subvolume detail for snapshot_dir" every night. `/data` (Docker volumes, Immich DB, AI models) had **ZERO snapshots** for unknown duration. | Added tmpfiles rule: `d /data/.snapshots 0755 root root -`           |
 
 ### 3. AGENTS.md — 6 new gotcha entries documented
 
@@ -55,13 +54,17 @@ All 6 discoveries added to the "Non-Obvious Gotchas" table for future sessions.
 ## b) PARTIALLY DONE
 
 ### Commit hygiene
+
 My changes were silently swept into commit `99ac60a5 feat(qmd): on-device markdown search with persistent HTTP MCP server` by a parallel workflow (`git add . && crush run "git commit"`). The changes ARE committed and live, but:
+
 - The commit message describes ONLY the qmd feature — my post-deploy-check/BTRFS fixes are invisible in git history
 - No attribution to this investigative session
 - The AGENTS.md changes from the qmd session are still uncommitted (additional qmd doc updates)
 
 ### `/data/.snapshots` directory creation
+
 The tmpfiles rule is in the Nix config but has NOT been deployed yet. The directory still doesn't exist on the live system (`ls: cannot access '/data/.snapshots'`). Tonight's btrbk-data run at 23:30 will STILL fail unless:
+
 - A deploy happens before 23:30, OR
 - `sudo mkdir -p /data/.snapshots` is run manually
 
@@ -71,16 +74,17 @@ The tmpfiles rule is in the Nix config but has NOT been deployed yet. The direct
 
 ### Pre-existing issues noticed during the health sweep
 
-| Issue | Severity | Notes |
-|-------|----------|-------|
-| **disk-growth-check failing** | Medium | `/var/lib/disk-growth` directory doesn't exist. Service fails with `status=226/NAMESPACE`. Needs tmpfiles rule like the btrbk-data fix. |
-| **nix-build-cleanup Permission denied** | Low | `rm: cannot remove '.../go/pkg/mod/modernc.org/libc@v1.74.1/...'` — read-only Go mod cache files. Service exits 1. Needs `chmod -R +w` before rm, or skip permission-denied. |
-| **pocket-id SQLITE_BUSY errors** | Medium | Ongoing `database is locked (5) (SQLITE_BUSY)` errors in pocket-id logs. Started after the crash-loop. Likely WAL contention during rapid restarts. Not investigated. |
-| **Turso free-plan block (DiscordSync)** | Low | 13,993+ consecutive turso sync failures: "SQL read operations are forbidden (reads are blocked, do you need to upgrade your plan?)". Pre-existing for days/weeks. Not deploy-related. Needs Turso plan upgrade or turso sync disabling. |
-| **Forgejo mirror sync failures** | Low | `migration/cloning from 'github.com' is not allowed` for BattleKits, NoItemBurn, AutoCont, kafka-clients-kotlin. Forgejo `ALLOWED_DOMAINS` config issue. |
-| **Kernel OOM traces (9 overnight)** | Info | Known Strix Halo GPUActive memory pressure (51+ GiB GTT buffer objects). Pre-existing, not deploy-caused. Documented in AGENTS.md. |
+| Issue                                   | Severity | Notes                                                                                                                                                                                                                                   |
+| --------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **disk-growth-check failing**           | Medium   | `/var/lib/disk-growth` directory doesn't exist. Service fails with `status=226/NAMESPACE`. Needs tmpfiles rule like the btrbk-data fix.                                                                                                 |
+| **nix-build-cleanup Permission denied** | Low      | `rm: cannot remove '.../go/pkg/mod/modernc.org/libc@v1.74.1/...'` — read-only Go mod cache files. Service exits 1. Needs `chmod -R +w` before rm, or skip permission-denied.                                                            |
+| **pocket-id SQLITE_BUSY errors**        | Medium   | Ongoing `database is locked (5) (SQLITE_BUSY)` errors in pocket-id logs. Started after the crash-loop. Likely WAL contention during rapid restarts. Not investigated.                                                                   |
+| **Turso free-plan block (DiscordSync)** | Low      | 13,993+ consecutive turso sync failures: "SQL read operations are forbidden (reads are blocked, do you need to upgrade your plan?)". Pre-existing for days/weeks. Not deploy-related. Needs Turso plan upgrade or turso sync disabling. |
+| **Forgejo mirror sync failures**        | Low      | `migration/cloning from 'github.com' is not allowed` for BattleKits, NoItemBurn, AutoCont, kafka-clients-kotlin. Forgejo `ALLOWED_DOMAINS` config issue.                                                                                |
+| **Kernel OOM traces (9 overnight)**     | Info     | Known Strix Halo GPUActive memory pressure (51+ GiB GTT buffer objects). Pre-existing, not deploy-caused. Documented in AGENTS.md.                                                                                                      |
 
 ### Other post-deploy-check endpoints that might have the gzip bug
+
 Only DiscordSync's `/api/stats` was found to return gzip. Other endpoints (`/healthz`, `/api/health`) return plain text/JSON. But the main `check()` function uses `curl -s` WITHOUT `--compressed` — any endpoint that starts returning gzip will silently break the body-pattern match. The fix should be applied globally to the `check()` function, not just the DiscordSync functional check.
 
 ---
@@ -88,6 +92,7 @@ Only DiscordSync's `/api/stats` was found to return gzip. Other endpoints (`/hea
 ## d) TOTALLY FUCKED UP
 
 ### Nothing was destroyed or corrupted
+
 - No data loss
 - No service permanently broken
 - All fixes verified before committing
@@ -213,18 +218,18 @@ Only DiscordSync's `/api/stats` was found to return gzip. Other endpoints (`/hea
 
 ## Session Metrics
 
-| Metric | Value |
-|--------|-------|
-| Tool calls | ~35 |
-| Bugs found | 6 (4 check-script + 2 BTRFS) |
-| Bugs fixed | 6 |
-| Services verified healthy | 14 |
-| False positives eliminated | 5 (Overview, Crush Daily, DiscordSync ×3) |
-| Pre-existing issues discovered | 6 |
-| Pre-existing issues fixed | 0 (only newly-found issues fixed) |
-| Deploys triggered | 0 (changes committed but not deployed) |
-| Time to root cause (Overview) | ~10 tool calls |
-| Time to root cause (DiscordSync gzip) | ~3 tool calls (after SIGPIPE lesson) |
+| Metric                                | Value                                     |
+| ------------------------------------- | ----------------------------------------- |
+| Tool calls                            | ~35                                       |
+| Bugs found                            | 6 (4 check-script + 2 BTRFS)              |
+| Bugs fixed                            | 6                                         |
+| Services verified healthy             | 14                                        |
+| False positives eliminated            | 5 (Overview, Crush Daily, DiscordSync ×3) |
+| Pre-existing issues discovered        | 6                                         |
+| Pre-existing issues fixed             | 0 (only newly-found issues fixed)         |
+| Deploys triggered                     | 0 (changes committed but not deployed)    |
+| Time to root cause (Overview)         | ~10 tool calls                            |
+| Time to root cause (DiscordSync gzip) | ~3 tool calls (after SIGPIPE lesson)      |
 
 ---
 
@@ -244,56 +249,56 @@ Changes deployed: NO (committed in 99ac60a5 but not activated on live system) �
 
 ## Item Resolution (2026-07-30)
 
-| # | Status | Resolution |
-|---|--------|------------|
-| 1-3 | DONE | Deployed; tmpfiles rule for `/data/.snapshots` active, btrbk-data succeeds |
-| 4 | DONE | `--compressed` added to global `check()` in post-deploy-check.sh |
-| 5 | DONE | disk-growth-check StateDirectory fixed |
-| 6 | DONE | nix-build-cleanup timer works (4h + on boot) |
-| 7 | DONE | pocket-id SQLITE_BUSY investigated — transient, self-resolves |
-| 8 | DONE | `/data` added to btrfs-verify-snapshots |
-| 9 | DONE | btrfs-health.nix Gatus alerts on snapshot freshness + scrub errors |
-| 10 | DONE | Forgejo ALLOWED_DOMAINS includes `github.com` |
-| 11 | DONE | Auto-committed by daemon |
-| 12 | OPEN | TODO_LIST: "Turso plan decision" — DiscordSync switched to sqlite |
-| 13 | REJECTED | Over-engineering for single-admin homelab |
-| 14 | REJECTED | protect-home-audit pre-commit hook covers the systematic case |
-| 15 | REJECTED | CI for bash scripts — shellcheck in pre-commit is sufficient |
-| 16 | REJECTED | Parallel commit risk documented; single-session is the norm |
-| 17 | DONE | `--compressed` added to pre-deploy-check and deploy.sh |
-| 18 | REJECTED | User decision — repo review is manual |
-| 19 | DONE | Pocket ID start-limit documented in AGENTS.md |
-| 20 | DONE | PSI memory pressure metrics + Gatus Discord alerting added |
-| 21 | REJECTED | Bash works fine after SIGPIPE fix; migration not worth the effort |
-| 22 | DONE | btrfs-health.nix collects snapshot metrics |
-| 23 | REJECTED | BTRFS qgroups documented in AGENTS.md as not worth it on QLC NAND |
-| 24 | DONE | DiscordSync startup race documented + Gatus retries |
-| 25 | REJECTED | OnFailure notification works; review unnecessary |
-| 26 | REJECTED | Pre-deploy snapshot for /data — over-engineering |
-| 27 | DONE | protect-home-audit pre-commit hook catches missing dirs |
-| 28 | DONE | shellcheck + shfmt in pre-commit hook |
-| 29 | REJECTED | Documenting gzip behavior per-service — too niche |
-| 30 | DONE | btrfs-health.nix checks btrbk success |
-| 31 | REJECTED | Pocket ID actor-host — transient, not worth investigating |
-| 32 | DONE | `/data` in btrfs-verify-snapshots |
-| 33 | DONE | tmpfiles rule handles `/data/.snapshots` creation |
-| 34 | DONE | nix-build-cleanup timer monitors + cleans sandboxes |
-| 35 | DONE | protect-home-audit pre-commit hook audits `harden {}` services |
-| 36 | DONE | DiscordSync switched to sqlite backend; Turso 403 eliminated |
-| 37 | DONE | DiscordSync startup sequence documented in AGENTS.md |
-| 38 | REJECTED | restartTriggers for post-deploy-check — over-engineering |
-| 39 | REJECTED | Dry-run mode — over-engineering for single-admin |
-| 40 | DONE | SIGPIPE fix applied to all curl-based checks |
-| 41 | DONE | btrfs-health.nix tracks snapshot count/freshness |
-| 42 | DONE | BTRFS layout for /data documented in AGENTS.md |
-| 43 | DONE | btrfs-health.nix provides btrbk health metrics |
-| 44 | DONE | Forgejo sync token fixed (auto-generated token file) |
-| 45 | DONE | disk-growth-check fixed (StateDirectory) |
-| 46 | REJECTED | Zram increase — chronic pressure is GPUActive, not zram size |
-| 47 | DONE | protect-home-audit pre-commit hook |
-| 48 | DONE | post-deploy-check expanded with each new service |
-| 49 | DONE | stat timestamp gotcha documented in AGENTS.md |
-| 50 | REJECTED | btrfs-health.nix already provides unified snapshot health |
+| #   | Status   | Resolution                                                                 |
+| --- | -------- | -------------------------------------------------------------------------- |
+| 1-3 | DONE     | Deployed; tmpfiles rule for `/data/.snapshots` active, btrbk-data succeeds |
+| 4   | DONE     | `--compressed` added to global `check()` in post-deploy-check.sh           |
+| 5   | DONE     | disk-growth-check StateDirectory fixed                                     |
+| 6   | DONE     | nix-build-cleanup timer works (4h + on boot)                               |
+| 7   | DONE     | pocket-id SQLITE_BUSY investigated — transient, self-resolves              |
+| 8   | DONE     | `/data` added to btrfs-verify-snapshots                                    |
+| 9   | DONE     | btrfs-health.nix Gatus alerts on snapshot freshness + scrub errors         |
+| 10  | DONE     | Forgejo ALLOWED_DOMAINS includes `github.com`                              |
+| 11  | DONE     | Auto-committed by daemon                                                   |
+| 12  | OPEN     | TODO_LIST: "Turso plan decision" — DiscordSync switched to sqlite          |
+| 13  | REJECTED | Over-engineering for single-admin homelab                                  |
+| 14  | REJECTED | protect-home-audit pre-commit hook covers the systematic case              |
+| 15  | REJECTED | CI for bash scripts — shellcheck in pre-commit is sufficient               |
+| 16  | REJECTED | Parallel commit risk documented; single-session is the norm                |
+| 17  | DONE     | `--compressed` added to pre-deploy-check and deploy.sh                     |
+| 18  | REJECTED | User decision — repo review is manual                                      |
+| 19  | DONE     | Pocket ID start-limit documented in AGENTS.md                              |
+| 20  | DONE     | PSI memory pressure metrics + Gatus Discord alerting added                 |
+| 21  | REJECTED | Bash works fine after SIGPIPE fix; migration not worth the effort          |
+| 22  | DONE     | btrfs-health.nix collects snapshot metrics                                 |
+| 23  | REJECTED | BTRFS qgroups documented in AGENTS.md as not worth it on QLC NAND          |
+| 24  | DONE     | DiscordSync startup race documented + Gatus retries                        |
+| 25  | REJECTED | OnFailure notification works; review unnecessary                           |
+| 26  | REJECTED | Pre-deploy snapshot for /data — over-engineering                           |
+| 27  | DONE     | protect-home-audit pre-commit hook catches missing dirs                    |
+| 28  | DONE     | shellcheck + shfmt in pre-commit hook                                      |
+| 29  | REJECTED | Documenting gzip behavior per-service — too niche                          |
+| 30  | DONE     | btrfs-health.nix checks btrbk success                                      |
+| 31  | REJECTED | Pocket ID actor-host — transient, not worth investigating                  |
+| 32  | DONE     | `/data` in btrfs-verify-snapshots                                          |
+| 33  | DONE     | tmpfiles rule handles `/data/.snapshots` creation                          |
+| 34  | DONE     | nix-build-cleanup timer monitors + cleans sandboxes                        |
+| 35  | DONE     | protect-home-audit pre-commit hook audits `harden {}` services             |
+| 36  | DONE     | DiscordSync switched to sqlite backend; Turso 403 eliminated               |
+| 37  | DONE     | DiscordSync startup sequence documented in AGENTS.md                       |
+| 38  | REJECTED | restartTriggers for post-deploy-check — over-engineering                   |
+| 39  | REJECTED | Dry-run mode — over-engineering for single-admin                           |
+| 40  | DONE     | SIGPIPE fix applied to all curl-based checks                               |
+| 41  | DONE     | btrfs-health.nix tracks snapshot count/freshness                           |
+| 42  | DONE     | BTRFS layout for /data documented in AGENTS.md                             |
+| 43  | DONE     | btrfs-health.nix provides btrbk health metrics                             |
+| 44  | DONE     | Forgejo sync token fixed (auto-generated token file)                       |
+| 45  | DONE     | disk-growth-check fixed (StateDirectory)                                   |
+| 46  | REJECTED | Zram increase — chronic pressure is GPUActive, not zram size               |
+| 47  | DONE     | protect-home-audit pre-commit hook                                         |
+| 48  | DONE     | post-deploy-check expanded with each new service                           |
+| 49  | DONE     | stat timestamp gotcha documented in AGENTS.md                              |
+| 50  | REJECTED | btrfs-health.nix already provides unified snapshot health                  |
 
 ---
 

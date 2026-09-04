@@ -9,15 +9,15 @@
 
 ## Executive Summary
 
-| Metric             | Value    | Status                              |
-| ------------------ | -------- | ----------------------------------- |
+| Metric             | Value    | Status                             |
+| ------------------ | -------- | ---------------------------------- |
 | **Git Status**     | Diverged | ⚠️ Local behind origin by 4 commits |
-| **Working Commit** | 4836081  | ✅ Last known stable state          |
-| **Origin HEAD**    | 2ab7a97  | ✅ 4 commits ahead                  |
-| **Flake Check**    | Unknown  | ❓ Too slow to verify               |
-| **modules/**       | DELETED  | ❌ Directory doesn't exist          |
-| **TODOs**          | 793      | 📋 In codebase                      |
-| **Status Reports** | 112      | 📊 Accumulated                      |
+| **Working Commit** | 4836081  | ✅ Last known stable state         |
+| **Origin HEAD**    | 2ab7a97  | ✅ 4 commits ahead                 |
+| **Flake Check**    | Unknown  | ❓ Too slow to verify              |
+| **modules/**       | DELETED  | ❌ Directory doesn't exist         |
+| **TODOs**          | 793      | 📋 In codebase                     |
+| **Status Reports** | 112      | 📊 Accumulated                     |
 
 ---
 
@@ -125,33 +125,33 @@ The Go 1.26.1 overlay is duplicated in:
 
 ### 1. Critical Tasks (P0)
 
-| #   | Task                    | Time  | Why                   |
-| --- | ----------------------- | ----- | --------------------- |
-| 1   | Sync local with origin  | 1min  | Recover lost work     |
-| 2   | Verify flake builds     | 5min  | Confirm system health |
-| 3   | Run `just health`       | 5min  | System diagnostics    |
-| 4   | Fix statix W02 warnings | 5min  | Code quality          |
-| 5   | Fix deadnix warnings    | 15min | Code quality          |
+| # | Task                    | Time  | Why                   |
+| - | ----------------------- | ----- | --------------------- |
+| 1 | Sync local with origin  | 1min  | Recover lost work     |
+| 2 | Verify flake builds     | 5min  | Confirm system health |
+| 3 | Run `just health`       | 5min  | System diagnostics    |
+| 4 | Fix statix W02 warnings | 5min  | Code quality          |
+| 5 | Fix deadnix warnings    | 15min | Code quality          |
 
 ### 2. High Priority Tasks (P1)
 
-| #   | Task                                  | Time  | Why              |
-| --- | ------------------------------------- | ----- | ---------------- |
-| 6   | Deduplicate Go 1.26.1 overlay         | 15min | DRY principle    |
-| 7   | Update flake.lock                     | 10min | Security updates |
-| 8   | Archive old docs/status files         | 15min | Cleanup          |
-| 9   | Add statix to pre-commit (fast)       | 10min | CI/CD            |
-| 10  | Create proper vimjoyer migration plan | 30min | Architecture     |
+| #  | Task                                  | Time  | Why              |
+| -- | ------------------------------------- | ----- | ---------------- |
+| 6  | Deduplicate Go 1.26.1 overlay         | 15min | DRY principle    |
+| 7  | Update flake.lock                     | 10min | Security updates |
+| 8  | Archive old docs/status files         | 15min | Cleanup          |
+| 9  | Add statix to pre-commit (fast)       | 10min | CI/CD            |
+| 10 | Create proper vimjoyer migration plan | 30min | Architecture     |
 
 ### 3. Medium Priority Tasks (P2)
 
-| #   | Task                             | Time  | Why            |
-| --- | -------------------------------- | ----- | -------------- |
-| 11  | Extract shared overlay to module | 20min | Reusability    |
-| 12  | Consolidate type system          | 30min | Architecture   |
-| 13  | Add GitHub Actions CI            | 30min | Automation     |
-| 14  | Document vimjoyer pattern        | 20min | Knowledge      |
-| 15  | Review 793 TODOs                 | 2hr   | Debt reduction |
+| #  | Task                             | Time  | Why            |
+| -- | -------------------------------- | ----- | -------------- |
+| 11 | Extract shared overlay to module | 20min | Reusability    |
+| 12 | Consolidate type system          | 30min | Architecture   |
+| 13 | Add GitHub Actions CI            | 30min | Automation     |
+| 14 | Document vimjoyer pattern        | 20min | Knowledge      |
+| 15 | Review 793 TODOs                 | 2hr   | Debt reduction |
 
 ---
 
@@ -287,53 +287,53 @@ git pull origin master
 
 ### Priority 0 (Critical - Do Immediately)
 
-| #   | Task                        | Effort | Impact   | Why               |
-| --- | --------------------------- | ------ | -------- | ----------------- |
-| 1   | `git pull origin master`    | 1min   | Critical | Recover lost work |
-| 2   | Verify flake builds         | 5min   | Critical | System health     |
-| 3   | Run `just health`           | 5min   | High     | Diagnostics       |
-| 4   | Fix statix W02 warnings     | 5min   | Medium   | Code quality      |
-| 5   | Fix deadnix unused bindings | 15min  | Medium   | Code quality      |
+| # | Task                        | Effort | Impact   | Why               |
+| - | --------------------------- | ------ | -------- | ----------------- |
+| 1 | `git pull origin master`    | 1min   | Critical | Recover lost work |
+| 2 | Verify flake builds         | 5min   | Critical | System health     |
+| 3 | Run `just health`           | 5min   | High     | Diagnostics       |
+| 4 | Fix statix W02 warnings     | 5min   | Medium   | Code quality      |
+| 5 | Fix deadnix unused bindings | 15min  | Medium   | Code quality      |
 
 ### Priority 1 (High - This Week)
 
-| #   | Task                           | Effort | Impact | Why          |
-| --- | ------------------------------ | ------ | ------ | ------------ |
-| 6   | Deduplicate Go 1.26.1 overlay  | 15min  | High   | DRY          |
-| 7   | Update flake.lock              | 10min  | High   | Security     |
-| 8   | Archive old status reports     | 15min  | Medium | Cleanup      |
-| 9   | Create vimjoyer migration plan | 30min  | High   | Architecture |
-| 10  | Extract shared overlay module  | 20min  | High   | Reusability  |
+| #  | Task                           | Effort | Impact | Why          |
+| -- | ------------------------------ | ------ | ------ | ------------ |
+| 6  | Deduplicate Go 1.26.1 overlay  | 15min  | High   | DRY          |
+| 7  | Update flake.lock              | 10min  | High   | Security     |
+| 8  | Archive old status reports     | 15min  | Medium | Cleanup      |
+| 9  | Create vimjoyer migration plan | 30min  | High   | Architecture |
+| 10 | Extract shared overlay module  | 20min  | High   | Reusability  |
 
 ### Priority 2 (Medium - This Month)
 
-| #   | Task                        | Effort | Impact | Why          |
-| --- | --------------------------- | ------ | ------ | ------------ |
-| 11  | Implement vimjoyer pattern  | 1hr    | High   | Architecture |
-| 12  | Add GitHub Actions CI       | 30min  | High   | Automation   |
-| 13  | Consolidate type system     | 30min  | Medium | Architecture |
-| 14  | Create TODO tracking system | 1hr    | Medium | Debt         |
-| 15  | Review oldest 50 TODOs      | 1hr    | Medium | Debt         |
+| #  | Task                        | Effort | Impact | Why          |
+| -- | --------------------------- | ------ | ------ | ------------ |
+| 11 | Implement vimjoyer pattern  | 1hr    | High   | Architecture |
+| 12 | Add GitHub Actions CI       | 30min  | High   | Automation   |
+| 13 | Consolidate type system     | 30min  | Medium | Architecture |
+| 14 | Create TODO tracking system | 1hr    | Medium | Debt         |
+| 15 | Review oldest 50 TODOs      | 1hr    | Medium | Debt         |
 
 ### Priority 3 (Lower - Backlog)
 
-| #   | Task                       | Effort | Impact | Why       |
-| --- | -------------------------- | ------ | ------ | --------- |
-| 16  | Add fast syntax pre-commit | 15min  | Medium | CI/CD     |
-| 17  | Document vimjoyer decision | 20min  | Low    | Knowledge |
-| 18  | Create ADR for Go overlay  | 15min  | Low    | Knowledge |
-| 19  | Review HyprlandTypes.nix   | 20min  | Low    | Cleanup   |
-| 20  | Clean unused imports       | 30min  | Low    | Cleanup   |
+| #  | Task                       | Effort | Impact | Why       |
+| -- | -------------------------- | ------ | ------ | --------- |
+| 16 | Add fast syntax pre-commit | 15min  | Medium | CI/CD     |
+| 17 | Document vimjoyer decision | 20min  | Low    | Knowledge |
+| 18 | Create ADR for Go overlay  | 15min  | Low    | Knowledge |
+| 19 | Review HyprlandTypes.nix   | 20min  | Low    | Cleanup   |
+| 20 | Clean unused imports       | 30min  | Low    | Cleanup   |
 
 ### Priority 4 (Nice to Have)
 
-| #   | Task                         | Effort | Impact | Why           |
-| --- | ---------------------------- | ------ | ------ | ------------- |
-| 21  | Add nix eval benchmark       | 15min  | Low    | Performance   |
-| 22  | Create module template       | 20min  | Low    | Consistency   |
-| 23  | Improve error messages       | 30min  | Low    | DX            |
-| 24  | Add shell aliases docs       | 15min  | Low    | Documentation |
-| 25  | Review wrapper-modules usage | 30min  | Low    | Architecture  |
+| #  | Task                         | Effort | Impact | Why           |
+| -- | ---------------------------- | ------ | ------ | ------------- |
+| 21 | Add nix eval benchmark       | 15min  | Low    | Performance   |
+| 22 | Create module template       | 20min  | Low    | Consistency   |
+| 23 | Improve error messages       | 30min  | Low    | DX            |
+| 24 | Add shell aliases docs       | 15min  | Low    | Documentation |
+| 25 | Review wrapper-modules usage | 30min  | Low    | Architecture  |
 
 ---
 

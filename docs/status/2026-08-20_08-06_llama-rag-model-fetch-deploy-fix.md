@@ -57,7 +57,7 @@ My contributions this session: verified the concurrent fix end-to-end (models on
 
 ## b) PARTIALLY DONE
 
-1. **AGENTS.md lesson capture** — the `/run`-mkdir-under-user-unit trap (and the "dead code made live" amplifier) is NOT yet in the Non-Obvious Gotchas section. It's a textbook entry: *a unit running as a non-root user can never `mkdir /run/...`; stage in the target dir or use `RuntimeDirectory`*. This report records it; AGENTS.md does not.
+1. **AGENTS.md lesson capture** — the `/run`-mkdir-under-user-unit trap (and the "dead code made live" amplifier) is NOT yet in the Non-Obvious Gotchas section. It's a textbook entry: _a unit running as a non-root user can never `mkdir /run/...`; stage in the target dir or use `RuntimeDirectory`_. This report records it; AGENTS.md does not.
 2. **Concurrent-session attribution** — per the Critical Rule ("when the tree grows changes you didn't author, flag it"), I flagged the concurrent llama-rag/post-deploy-check edits mid-session, but the batched commits make per-change attribution fuzzy in history.
 
 ## c) NOT STARTED
@@ -75,12 +75,13 @@ My contributions this session: verified the concurrent fix end-to-end (models on
 1. **Commit my own changes immediately** — my em-dash fix sat uncommitted across a deploy; the daemon eventually swept it up into someone else's batch. Small, but it violates "commit after each smallest self-contained change" and muddies attribution.
 2. **Dead code is untested code** — `fetchScript` existed for a full commit cycle (`393d2123` → `321f599e`) without ever executing. When wiring previously-unwired code into a unit, treat it as NEW code: it has never passed even one run. The `nix flake check` green-light covered eval, not execution.
 3. **Verification order worked** — diagnosing from the systemd journal (exact line + exit code) before touching anything, then git archaeology (`git show 321f599e`, `393d2123`) to find when/why, was fast and correct. Keep this pattern.
-4. **Oneshot User= deserves a lint** — three of our hardest-hit incident classes (this one, `bank-sync-storage-dir` 226, activitywatch `runuser` PAM) share a shape: *a script's filesystem assumptions vs the unit's User/sandbox*. A tiny eval-time or pre-deploy grep over ExecStart scripts for absolute `/run/` mkdir calls in non-root units would have caught today's bug pre-deploy.
+4. **Oneshot User= deserves a lint** — three of our hardest-hit incident classes (this one, `bank-sync-storage-dir` 226, activitywatch `runuser` PAM) share a shape: _a script's filesystem assumptions vs the unit's User/sandbox_. A tiny eval-time or pre-deploy grep over ExecStart scripts for absolute `/run/` mkdir calls in non-root units would have caught today's bug pre-deploy.
 5. **Concurrent-session protocol worked as designed** — re-reading files before edit, checking `git status` before deploy, and flagging foreign changes prevented me from double-fixing or clobbering.
 
 ## f) Things we should get done next (sorted by impact ÷ effort)
 
 **High impact, low effort:**
+
 1. Add the `/run`-mkdir-under-non-root-unit gotcha to AGENTS.md (Non-Obvious Gotchas → Systemd section) with this incident as the reference.
 2. Verify Paperless AI actually picks up the now-running embeddings endpoint (`llm_embedding_backend` env → live RAG indexing — the whole point of the stack).
 3. Decide + record the GGUF backup stance (re-fetch-on-loss vs backup-coordination entry) next to the existing `modelDir` docs.
@@ -118,4 +119,4 @@ My contributions this session: verified the concurrent fix end-to-end (models on
 
 ---
 
-*Session artifacts: fix in `modules/nixos/services/llama-rag.nix` (concurrent session + em-dash cleanup), smoke probes in `scripts/post-deploy-check.sh` (concurrent session), deployed generation 2026-08-19 19:12, post-deploy 63/0/5/2.*
+_Session artifacts: fix in `modules/nixos/services/llama-rag.nix` (concurrent session + em-dash cleanup), smoke probes in `scripts/post-deploy-check.sh` (concurrent session), deployed generation 2026-08-19 19:12, post-deploy 63/0/5/2._

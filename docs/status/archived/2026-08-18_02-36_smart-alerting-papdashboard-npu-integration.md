@@ -31,19 +31,19 @@ Gatus ──fail(threshold 3)──► Discord "raw alert" (unchanged fast path)
 
 ## 3. Research findings (verified, this session)
 
-| Fact | Where verified |
-|------|----------------|
-| PapDashboard is mature (~420 specs, clean tree before session) | FEATURES.md, git log |
-| `POST /api/ingest` supports `alert.triggered` (idempotent) but NOT `alert.resolved` | `internal/api/handler_impl.go:258-278` |
-| Outbound notify subsystem already exists: Channel interface, MultiChannel, Discord/Slack/webhook/email channels + event-bus subscriber | `internal/notify/` |
-| No source-app filter on outbound channels (all events → all channels) | `internal/notify/subscriber.go` |
-| API-key auth exists (`Authorization: Bearer` / `X-Api-Key`) | `internal/middleware/auth.go` |
-| Gatus `custom` alert provider: POST + configurable body with placeholders `[ALERT_DESCRIPTION] [ENDPOINT_NAME] [ENDPOINT_GROUP] [ENDPOINT_URL] [RESULT_ERRORS] [RESULT_CONDITIONS] [ALERT_TRIGGERED_OR_RESOLVED]`; placeholder VALUES are customizable (needed to emit lowercase `alert.triggered`/`alert.resolved`); one endpoint may carry multiple alerts (discord + custom); headers get NO placeholder substitution | gatus v5.36.0 source + docs (fetched) |
-| Alert read model has NO find-by-sourceApp+title query (needed for resolve ingest) | `sql/queries/alerts.sql` |
-| `DecideResolve` returns `ErrAlertAlreadyResolved` conflict — resolve-ingest must tolerate it | `internal/domain/alert/decide.go:64-82` |
-| FastFlowLM is socket-activated (1-3 min cold load, 1 h idle TTL); Gatus must not probe :52625 | SystemNix AGENTS.md, `fastflowlm.nix` |
-| Gatus env-var interpolation in config.yaml already used (`$DISCORD_WEBHOOK_URL` via sops template `gatus-env`) | `gatus-config.nix:173-180` |
-| `TitleMaxLen=500`, `BodyMaxLen=10000` | `internal/domain/content.go` |
+| Fact                                                                                                                                                                                                                                                                                                                                                                                                                     | Where verified                          |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------- |
+| PapDashboard is mature (~420 specs, clean tree before session)                                                                                                                                                                                                                                                                                                                                                           | FEATURES.md, git log                    |
+| `POST /api/ingest` supports `alert.triggered` (idempotent) but NOT `alert.resolved`                                                                                                                                                                                                                                                                                                                                      | `internal/api/handler_impl.go:258-278`  |
+| Outbound notify subsystem already exists: Channel interface, MultiChannel, Discord/Slack/webhook/email channels + event-bus subscriber                                                                                                                                                                                                                                                                                   | `internal/notify/`                      |
+| No source-app filter on outbound channels (all events → all channels)                                                                                                                                                                                                                                                                                                                                                    | `internal/notify/subscriber.go`         |
+| API-key auth exists (`Authorization: Bearer` / `X-Api-Key`)                                                                                                                                                                                                                                                                                                                                                              | `internal/middleware/auth.go`           |
+| Gatus `custom` alert provider: POST + configurable body with placeholders `[ALERT_DESCRIPTION] [ENDPOINT_NAME] [ENDPOINT_GROUP] [ENDPOINT_URL] [RESULT_ERRORS] [RESULT_CONDITIONS] [ALERT_TRIGGERED_OR_RESOLVED]`; placeholder VALUES are customizable (needed to emit lowercase `alert.triggered`/`alert.resolved`); one endpoint may carry multiple alerts (discord + custom); headers get NO placeholder substitution | gatus v5.36.0 source + docs (fetched)   |
+| Alert read model has NO find-by-sourceApp+title query (needed for resolve ingest)                                                                                                                                                                                                                                                                                                                                        | `sql/queries/alerts.sql`                |
+| `DecideResolve` returns `ErrAlertAlreadyResolved` conflict — resolve-ingest must tolerate it                                                                                                                                                                                                                                                                                                                             | `internal/domain/alert/decide.go:64-82` |
+| FastFlowLM is socket-activated (1-3 min cold load, 1 h idle TTL); Gatus must not probe :52625                                                                                                                                                                                                                                                                                                                            | SystemNix AGENTS.md, `fastflowlm.nix`   |
+| Gatus env-var interpolation in config.yaml already used (`$DISCORD_WEBHOOK_URL` via sops template `gatus-env`)                                                                                                                                                                                                                                                                                                           | `gatus-config.nix:173-180`              |
+| `TitleMaxLen=500`, `BodyMaxLen=10000`                                                                                                                                                                                                                                                                                                                                                                                    | `internal/domain/content.go`            |
 
 ## 4. What is DONE
 
@@ -72,6 +72,7 @@ Gatus ──fail(threshold 3)──► Discord "raw alert" (unchanged fast path)
 ## 6. NOT STARTED (remaining plan)
 
 ### PapDashboard
+
 - [ ] Fix the lint/spec issues above; write Ginkgo specs (enricher correlation/cooldown/filter/prompt, evidence truncation, LLM client against httptest, parseAnswer)
 - [x] ~~`alert.resolved` ingest: sqlc query `FindActiveAlertsBySourceAppAndTitle` (`sqlc generate`), handler case tolerating `ErrAlertAlreadyResolved`, idempotent "ignored" when no match~~ done at `34f33a51`, `e3995077`
 - [x] ~~Notify source-app filter (`PAP_NOTIFY_SOURCE_APPS` allowlist in `StartSubscriber`)~~ done at `34f33a51` (PAP_NOTIFY_SOURCE_APPS=insight live)
@@ -79,6 +80,7 @@ Gatus ──fail(threshold 3)──► Discord "raw alert" (unchanged fast path)
 - [x] ~~`go test ./...`, `golangci-lint run`, `nix build .#server`~~ done (prerequisite of the deployed flake input `ebbc6fa`)
 
 ### SystemNix
+
 - [x] ~~flake input `papdashboard = github:LarsArtmann/PapDashboard`~~ done at `34f33a51`
 - [x] ~~`lib/ports.nix` port entry~~ done at `34f33a51`
 - [x] ~~`modules/nixos/services/papdashboard.nix`: service (harden, StateDirectory, sops `PAP_API_KEY`, `PAP_ENV=production`, insight env wired to FastFlowLM `http://127.0.0.1:52625/v1` + `qwen3.6-moe:35b-a3b`, journalctl abs path, `systemd-journal` supplementary group), Caddy `protectedVHost "notify"`, DNS localSubdomains, Homepage tile, Gatus `/api/health` check, OTel audit if applicable~~ done at `34f33a51`

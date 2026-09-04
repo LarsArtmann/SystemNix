@@ -9,7 +9,6 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 1. **Root-cause diagnosis** — Caddy had no virtual host for `dnsblock.home.lan` or `dnsblockd.home.lan`. The wildcard `*.home.lan` DNS record resolves both to the server IP, and Caddy’s catch-all `https://*.home.lan` vhost (added in `123a27f5`) redirects every unknown subdomain to `dash.home.lan`. The dnsblockd dashboard actually runs on `localhost:9090`, not behind a Caddy subdomain.
@@ -183,7 +182,6 @@ Run `nix run .#deploy` on evo-x2 to apply the Caddy vhost change, then validate 
 - Should the block-page HTTP server on `192.168.1.200:80` also be exposed through Caddy?
 
 (Question 1 from the original report — "canonical subdomain" — is now resolved.)
-
 
 ---
 

@@ -139,9 +139,9 @@ The first Fish run (208ms) is significantly slower than subsequent runs (39-48ms
 
 | Shell   | Avg Time | Speed vs Bash    | Speed vs Fish | Variance     | Target Status |
 | ------- | -------- | ---------------- | ------------- | ------------ | ------------- |
-| 🅱️ Bash | 43ms     | 1.00x (baseline) | 3ms           | ✅ EXCELLENT |
-| 🅼️ Zsh   | 49ms     | 1.14x slower     | 10ms          | ✅ EXCELLENT |
-| 🐟 Fish | 76ms     | 1.76x slower     | 169ms         | ✅ EXCELLENT |
+| 🅱️ Bash  | 43ms     | 1.00x (baseline) | 3ms           | ✅ EXCELLENT |               |
+| 🅼️ Zsh   | 49ms     | 1.14x slower     | 10ms          | ✅ EXCELLENT |               |
+| 🐟 Fish | 76ms     | 1.76x slower     | 169ms         | ✅ EXCELLENT |               |
 
 ### Speed Analysis
 
@@ -171,10 +171,10 @@ Based on industry standards and ADR-002 performance considerations:
 
 | Target       | Threshold | Status                                        | Rationale |
 | ------------ | --------- | --------------------------------------------- | --------- |
-| ✅ EXCELLENT | < 100ms   | **ALL SHELLS MEET** - Instant user experience |
-| ⊘ GOOD       | < 200ms   | N/A - No shells in this range                 |
-| ✖ ACCEPTABLE | < 500ms   | N/A - No shells in this range                 |
-| ✖ SLOW       | ≥ 500ms   | N/A - No shells in this range                 |
+| ✅ EXCELLENT | < 100ms   | **ALL SHELLS MEET** - Instant user experience |           |
+| ⊘ GOOD       | < 200ms   | N/A - No shells in this range                 |           |
+| ✖ ACCEPTABLE | < 500ms   | N/A - No shells in this range                 |           |
+| ✖ SLOW       | ≥ 500ms   | N/A - No shells in this range                 |           |
 
 ### Target Compliance
 

@@ -16,37 +16,37 @@
 
 ### Session 1 (Prior Session)
 
-| #   | What                                                                                | Files                                           |
-| --- | ----------------------------------------------------------------------------------- | ----------------------------------------------- |
-| 1   | Font system: replaced plain fonts with Nerd Font versions, fixed missing import     | `fonts.nix`, `configuration.nix`                |
-| 2   | Home Manager: removed standalone `homeConfigurations`, unified to NixOS-module-only | `flake.nix`, `justfile`                         |
-| 3   | Waybar: added `systemd.enable = true` to prevent duplicate instances                | `waybar.nix`                                    |
-| 4   | Monitoring stack: Prometheus (9091) + Grafana (3001) + Homepage (8082) from scratch | `monitoring.nix`, `grafana.nix`, `homepage.nix` |
-| 5   | Grafana dashboard: auto-provisioned "evo-x2 Overview" with CPU/memory/disk/network  | `dashboards/overview.json`                      |
-| 6   | Caddy vhosts: 4 reverse proxies (immich.lan, gitea.lan, grafana.lan, home.lan)      | `caddy.nix`                                     |
-| 7   | DNS records: added `*.lan` domains for all new services                             | `dns-blocker-config.nix`                        |
-| 8   | Secrets: sops-nix integration for Grafana admin password and secret key             | `sops.nix`, `grafana.nix`                       |
+| # | What                                                                                | Files                                           |
+| - | ----------------------------------------------------------------------------------- | ----------------------------------------------- |
+| 1 | Font system: replaced plain fonts with Nerd Font versions, fixed missing import     | `fonts.nix`, `configuration.nix`                |
+| 2 | Home Manager: removed standalone `homeConfigurations`, unified to NixOS-module-only | `flake.nix`, `justfile`                         |
+| 3 | Waybar: added `systemd.enable = true` to prevent duplicate instances                | `waybar.nix`                                    |
+| 4 | Monitoring stack: Prometheus (9091) + Grafana (3001) + Homepage (8082) from scratch | `monitoring.nix`, `grafana.nix`, `homepage.nix` |
+| 5 | Grafana dashboard: auto-provisioned "evo-x2 Overview" with CPU/memory/disk/network  | `dashboards/overview.json`                      |
+| 6 | Caddy vhosts: 4 reverse proxies (immich.lan, gitea.lan, grafana.lan, home.lan)      | `caddy.nix`                                     |
+| 7 | DNS records: added `*.lan` domains for all new services                             | `dns-blocker-config.nix`                        |
+| 8 | Secrets: sops-nix integration for Grafana admin password and secret key             | `sops.nix`, `grafana.nix`                       |
 
 ### Session 2 (This Session)
 
-| #   | What                                                                            | Files                          |
-| --- | ------------------------------------------------------------------------------- | ------------------------------ |
-| 9   | dnsblockd port conflict FIXED: `80/443` → `8080/8443`                           | `dns-blocker-config.nix`       |
-| 10  | Health check script: `dig` → `host` (tool was not installed)                    | `scripts/check-services.sh`    |
-| 11  | Service health check: added gitea, ollama, prometheus, grafana, homepage        | `scripts/service-health-check` |
-| 12  | Immich bound to `127.0.0.1` (was `0.0.0.0` + `openFirewall=true`)               | `services/immich.nix`          |
-| 13  | fail2ban enabled with aggressive SSH jail (maxretry=3, bantime=1h)              | `security-hardening.nix`       |
-| 14  | Removed `processor.max_cstate=1` kernel param (blocked CPU deep sleep)          | `boot.nix`                     |
-| 15  | Added `amdgpu` to initrd kernel modules (early KMS)                             | `hardware-configuration.nix`   |
-| 16  | SSD TRIM enabled (`services.fstrim.enable`)                                     | `configuration.nix`            |
-| 17  | Automatic Nix GC: weekly, deletes older than 7d + auto optimise                 | `nix-settings.nix`             |
-| 18  | SMART disk health monitoring enabled (`services.smartd`)                        | `configuration.nix`            |
-| 19  | Deleted dead Technitium DNS files (`dns-config.nix`, `dns.md`)                  | `system/` (removed)            |
-| 20  | Hyprland `$mod,G` conflict: gitui → `$mod SHIFT,G`, togglegroup keeps `$mod,G`  | `hyprland.nix`                 |
-| 21  | Removed duplicate `ollama` package (service already installs `ollama-vulkan`)   | `ai-stack.nix`                 |
-| 22  | Removed stale `chrome-144.0.7559.97` version pin                                | `nix-settings.nix`             |
-| 23  | Fixed duplicate AMD GPU comment in configuration.nix                            | `configuration.nix`            |
-| 24  | Cleaned Technitium/stale refs in networking.nix, set nameservers to `127.0.0.1` | `networking.nix`               |
+| #  | What                                                                            | Files                          |
+| -- | ------------------------------------------------------------------------------- | ------------------------------ |
+| 9  | dnsblockd port conflict FIXED: `80/443` → `8080/8443`                           | `dns-blocker-config.nix`       |
+| 10 | Health check script: `dig` → `host` (tool was not installed)                    | `scripts/check-services.sh`    |
+| 11 | Service health check: added gitea, ollama, prometheus, grafana, homepage        | `scripts/service-health-check` |
+| 12 | Immich bound to `127.0.0.1` (was `0.0.0.0` + `openFirewall=true`)               | `services/immich.nix`          |
+| 13 | fail2ban enabled with aggressive SSH jail (maxretry=3, bantime=1h)              | `security-hardening.nix`       |
+| 14 | Removed `processor.max_cstate=1` kernel param (blocked CPU deep sleep)          | `boot.nix`                     |
+| 15 | Added `amdgpu` to initrd kernel modules (early KMS)                             | `hardware-configuration.nix`   |
+| 16 | SSD TRIM enabled (`services.fstrim.enable`)                                     | `configuration.nix`            |
+| 17 | Automatic Nix GC: weekly, deletes older than 7d + auto optimise                 | `nix-settings.nix`             |
+| 18 | SMART disk health monitoring enabled (`services.smartd`)                        | `configuration.nix`            |
+| 19 | Deleted dead Technitium DNS files (`dns-config.nix`, `dns.md`)                  | `system/` (removed)            |
+| 20 | Hyprland `$mod,G` conflict: gitui → `$mod SHIFT,G`, togglegroup keeps `$mod,G`  | `hyprland.nix`                 |
+| 21 | Removed duplicate `ollama` package (service already installs `ollama-vulkan`)   | `ai-stack.nix`                 |
+| 22 | Removed stale `chrome-144.0.7559.97` version pin                                | `nix-settings.nix`             |
+| 23 | Fixed duplicate AMD GPU comment in configuration.nix                            | `configuration.nix`            |
+| 24 | Cleaned Technitium/stale refs in networking.nix, set nameservers to `127.0.0.1` | `networking.nix`               |
 
 ### Current Service State (All 15 ACTIVE, 0 FAILED)
 
@@ -179,33 +179,33 @@ Nothing is currently broken or in a failed state. All services active, zero fail
 
 ## F. TOP 25 NEXT THINGS TO DO
 
-| #   | Priority | What                                                          | Effort       | File(s)                                 |
-| --- | -------- | ------------------------------------------------------------- | ------------ | --------------------------------------- |
-| 1   | CRITICAL | Enable NixOS firewall (deny-by-default, allow only 22/80/443) | ~20 lines    | `networking.nix` or new `firewall.nix`  |
-| 2   | CRITICAL | Bind Prometheus to `127.0.0.1:9091`                           | 1 line       | `monitoring.nix`                        |
-| 3   | CRITICAL | Bind all exporters to `127.0.0.1`                             | 3 lines      | `monitoring.nix`                        |
-| 4   | CRITICAL | Bind Homepage to `127.0.0.1:8082`                             | 1 line       | `homepage.nix`                          |
-| 5   | CRITICAL | Bind Gitea to `127.0.0.1:3000`                                | 2 lines      | `gitea.nix`                             |
-| 6   | HIGH     | Immich media backup (restic/borg to external)                 | ~40 lines    | new `backup.nix`                        |
-| 7   | HIGH     | Off-disk backup target (NAS/S3/restic)                        | ~40 lines    | new `backup-target.nix`                 |
-| 8   | HIGH     | PostgreSQL tuning for photo library (shared_buffers=4G, etc.) | ~10 lines    | `immich.nix` or new `postgresql.nix`    |
-| 9   | HIGH     | Immich GPU acceleration via ROCm                              | 3-5 lines    | `immich.nix`                            |
-| 10  | HIGH     | Prometheus alerting rules (disk space, service down, SMART)   | ~30 lines    | `monitoring.nix` or new `alerts.nix`    |
-| 11  | HIGH     | Reboot to activate kernel changes (amdgpu initrd, max_cstate) | 0 lines      | just reboot                             |
-| 12  | MEDIUM   | Homepage dashboard: add system stat widgets                   | ~20 lines    | `homepage.nix`                          |
-| 13  | MEDIUM   | Fix justfile for NixOS platform detection                     | ~50 lines    | `justfile`                              |
-| 14  | MEDIUM   | Deduplicate Go overlay (3x → 1x in flake.nix)                 | ~20 lines    | `flake.nix` + new `overlays/go.nix`     |
-| 15  | MEDIUM   | Remove duplicate `foot` package (in 3 files)                  | ~5 lines     | `multi-wm.nix`, `home.nix`              |
-| 16  | MEDIUM   | Add disk space alerting (timer + threshold script)            | ~15 lines    | new `disk-alert.nix`                    |
-| 17  | MEDIUM   | Fix Gitea mirror script bug (`wc -l < /dev/stdin`)            | ~5 lines     | Gitea script                            |
-| 18  | LOW      | Grafana: add SMART disk dashboard                             | ~20 lines    | `dashboards/smart.json`                 |
-| 19  | LOW      | Grafana: add PostgreSQL performance dashboard                 | ~20 lines    | `dashboards/postgres.json`              |
-| 20  | LOW      | dnsblockd: add Prometheus `/metrics` endpoint                 | ~30 lines Go | `dnsblockd/main.go`                     |
-| 21  | LOW      | Fix `SystemAssertions.nix` (3 no-op assertions)               | ~10 lines    | `SystemAssertions.nix`                  |
-| 22  | LOW      | Clean up empty debug stubs (`test-minimal.nix`, etc.)         | Delete files | `platforms/darwin/`, `platforms/nixos/` |
-| 23  | LOW      | Make `*.lan` DNS accessible from LAN devices                  | ~10 lines    | `dns-blocker-config.nix`                |
-| 24  | LOW      | Enable systemd restart policies for all services              | ~15 lines    | per-service files                       |
-| 25  | LOW      | Fix stale `hyprland-system.nix` comment in networking.nix     | 1 line       | `networking.nix`                        |
+| #  | Priority | What                                                          | Effort       | File(s)                                 |
+| -- | -------- | ------------------------------------------------------------- | ------------ | --------------------------------------- |
+| 1  | CRITICAL | Enable NixOS firewall (deny-by-default, allow only 22/80/443) | ~20 lines    | `networking.nix` or new `firewall.nix`  |
+| 2  | CRITICAL | Bind Prometheus to `127.0.0.1:9091`                           | 1 line       | `monitoring.nix`                        |
+| 3  | CRITICAL | Bind all exporters to `127.0.0.1`                             | 3 lines      | `monitoring.nix`                        |
+| 4  | CRITICAL | Bind Homepage to `127.0.0.1:8082`                             | 1 line       | `homepage.nix`                          |
+| 5  | CRITICAL | Bind Gitea to `127.0.0.1:3000`                                | 2 lines      | `gitea.nix`                             |
+| 6  | HIGH     | Immich media backup (restic/borg to external)                 | ~40 lines    | new `backup.nix`                        |
+| 7  | HIGH     | Off-disk backup target (NAS/S3/restic)                        | ~40 lines    | new `backup-target.nix`                 |
+| 8  | HIGH     | PostgreSQL tuning for photo library (shared_buffers=4G, etc.) | ~10 lines    | `immich.nix` or new `postgresql.nix`    |
+| 9  | HIGH     | Immich GPU acceleration via ROCm                              | 3-5 lines    | `immich.nix`                            |
+| 10 | HIGH     | Prometheus alerting rules (disk space, service down, SMART)   | ~30 lines    | `monitoring.nix` or new `alerts.nix`    |
+| 11 | HIGH     | Reboot to activate kernel changes (amdgpu initrd, max_cstate) | 0 lines      | just reboot                             |
+| 12 | MEDIUM   | Homepage dashboard: add system stat widgets                   | ~20 lines    | `homepage.nix`                          |
+| 13 | MEDIUM   | Fix justfile for NixOS platform detection                     | ~50 lines    | `justfile`                              |
+| 14 | MEDIUM   | Deduplicate Go overlay (3x → 1x in flake.nix)                 | ~20 lines    | `flake.nix` + new `overlays/go.nix`     |
+| 15 | MEDIUM   | Remove duplicate `foot` package (in 3 files)                  | ~5 lines     | `multi-wm.nix`, `home.nix`              |
+| 16 | MEDIUM   | Add disk space alerting (timer + threshold script)            | ~15 lines    | new `disk-alert.nix`                    |
+| 17 | MEDIUM   | Fix Gitea mirror script bug (`wc -l < /dev/stdin`)            | ~5 lines     | Gitea script                            |
+| 18 | LOW      | Grafana: add SMART disk dashboard                             | ~20 lines    | `dashboards/smart.json`                 |
+| 19 | LOW      | Grafana: add PostgreSQL performance dashboard                 | ~20 lines    | `dashboards/postgres.json`              |
+| 20 | LOW      | dnsblockd: add Prometheus `/metrics` endpoint                 | ~30 lines Go | `dnsblockd/main.go`                     |
+| 21 | LOW      | Fix `SystemAssertions.nix` (3 no-op assertions)               | ~10 lines    | `SystemAssertions.nix`                  |
+| 22 | LOW      | Clean up empty debug stubs (`test-minimal.nix`, etc.)         | Delete files | `platforms/darwin/`, `platforms/nixos/` |
+| 23 | LOW      | Make `*.lan` DNS accessible from LAN devices                  | ~10 lines    | `dns-blocker-config.nix`                |
+| 24 | LOW      | Enable systemd restart policies for all services              | ~15 lines    | per-service files                       |
+| 25 | LOW      | Fix stale `hyprland-system.nix` comment in networking.nix     | 1 line       | `networking.nix`                        |
 
 ---
 

@@ -24,15 +24,15 @@ The `projects-management-automation` service was broken — it watches `/home/la
 
 All 7 planned items from the inotify scalability improvement plan:
 
-| #   | Item                              | API                                            | Status     |
-| --- | --------------------------------- | ---------------------------------------------- | ---------- |
-| W1  | `.gitignore`-aware walk filtering | `WithGitignore(true)` (default)                | ✅ Shipped |
-| W2  | Graceful ENOSPC handling          | `tryAddPath()` — continues on failure          | ✅ Shipped |
-| W3  | Path-level exclusions             | `WithExcludePaths(paths...)`                   | ✅ Shipped |
-| W4  | Batched watch registration        | 1000-dir batches with `Gosched()`              | ✅ Shipped |
-| W5  | Inotify budget awareness          | `WithMaxWatches(n)` + auto-detect from `/proc` | ✅ Shipped |
-| W6  | `Remove()` subdirectory cleanup   | Cleans subtree watches                         | ✅ Shipped |
-| W7  | `Reset()` method                  | Preserves config, resets state                 | ✅ Shipped |
+| #  | Item                              | API                                            | Status     |
+| -- | --------------------------------- | ---------------------------------------------- | ---------- |
+| W1 | `.gitignore`-aware walk filtering | `WithGitignore(true)` (default)                | ✅ Shipped |
+| W2 | Graceful ENOSPC handling          | `tryAddPath()` — continues on failure          | ✅ Shipped |
+| W3 | Path-level exclusions             | `WithExcludePaths(paths...)`                   | ✅ Shipped |
+| W4 | Batched watch registration        | 1000-dir batches with `Gosched()`              | ✅ Shipped |
+| W5 | Inotify budget awareness          | `WithMaxWatches(n)` + auto-detect from `/proc` | ✅ Shipped |
+| W6 | `Remove()` subdirectory cleanup   | Cleans subtree watches                         | ✅ Shipped |
+| W7 | `Reset()` method                  | Preserves config, resets state                 | ✅ Shipped |
 
 Bonus features shipped in v2.2.0:
 
@@ -152,48 +152,48 @@ However, there are two pre-existing issues worth noting:
 
 ### Immediate (this session / next deploy)
 
-| #   | Task                                                             | Effort | Impact        |
-| --- | ---------------------------------------------------------------- | ------ | ------------- |
-| 1   | Commit & deploy SystemNix changes (`just switch`)                | 5min   | Fixes PMA     |
-| 2   | Verify PMA watch count after deploy                              | 5min   | Confirmation  |
-| 3   | Update SystemNix AGENTS.md with inotify/excludePaths notes       | 10min  | Documentation |
-| 4   | Stop PMA and run go-filewatcher full test suite to confirm green | 5min   | Confidence    |
+| # | Task                                                             | Effort | Impact        |
+| - | ---------------------------------------------------------------- | ------ | ------------- |
+| 1 | Commit & deploy SystemNix changes (`just switch`)                | 5min   | Fixes PMA     |
+| 2 | Verify PMA watch count after deploy                              | 5min   | Confirmation  |
+| 3 | Update SystemNix AGENTS.md with inotify/excludePaths notes       | 10min  | Documentation |
+| 4 | Stop PMA and run go-filewatcher full test suite to confirm green | 5min   | Confidence    |
 
 ### Short-term (this week)
 
-| #   | Task                                                        | Effort | Impact           |
-| --- | ----------------------------------------------------------- | ------ | ---------------- |
-| 5   | Add PMA systemd health check for watch budget > 90%         | 1h     | Alerting         |
-| 6   | Wire PMA watch errors into `notify-failure@` pattern        | 30min  | Observability    |
-| 7   | Fix PMA BDD test timeout (test binary in PATH)              | 2h     | CI green         |
-| 8   | Add `excludePaths` to PMA docs/examples                     | 30min  | Documentation    |
-| 9   | Benchmark go-filewatcher with gitignore enabled vs disabled | 1h     | Performance data |
+| # | Task                                                        | Effort | Impact           |
+| - | ----------------------------------------------------------- | ------ | ---------------- |
+| 5 | Add PMA systemd health check for watch budget > 90%         | 1h     | Alerting         |
+| 6 | Wire PMA watch errors into `notify-failure@` pattern        | 30min  | Observability    |
+| 7 | Fix PMA BDD test timeout (test binary in PATH)              | 2h     | CI green         |
+| 8 | Add `excludePaths` to PMA docs/examples                     | 30min  | Documentation    |
+| 9 | Benchmark go-filewatcher with gitignore enabled vs disabled | 1h     | Performance data |
 
 ### Medium-term (next 2 weeks)
 
-| #   | Task                                                                 | Effort | Impact                 |
-| --- | -------------------------------------------------------------------- | ------ | ---------------------- |
-| 10  | Refactor PMA to watch per-repo instead of `~/projects` monolith      | 4h     | Massive scalability    |
-| 11  | Add `.gitignore` pre-scanning to go-filewatcher (load before walk)   | 3h     | Correctness            |
-| 12  | Replace PMA `matchesPattern` with `filepath.Match` or `doublestar`   | 1h     | Proper glob semantics  |
-| 13  | Add trie-based path exclusion to go-filewatcher for O(log n) lookups | 2h     | Performance            |
-| 14  | Implement lazy/on-demand watching in go-filewatcher                  | 4h     | Eventual full solution |
-| 15  | Add Windows inotify equivalent limits to `WithMaxWatches`            | 2h     | Cross-platform         |
-| 16  | Create PMA Grafana/dashboard for watch metrics                       | 2h     | Observability          |
+| #  | Task                                                                 | Effort | Impact                 |
+| -- | -------------------------------------------------------------------- | ------ | ---------------------- |
+| 10 | Refactor PMA to watch per-repo instead of `~/projects` monolith      | 4h     | Massive scalability    |
+| 11 | Add `.gitignore` pre-scanning to go-filewatcher (load before walk)   | 3h     | Correctness            |
+| 12 | Replace PMA `matchesPattern` with `filepath.Match` or `doublestar`   | 1h     | Proper glob semantics  |
+| 13 | Add trie-based path exclusion to go-filewatcher for O(log n) lookups | 2h     | Performance            |
+| 14 | Implement lazy/on-demand watching in go-filewatcher                  | 4h     | Eventual full solution |
+| 15 | Add Windows inotify equivalent limits to `WithMaxWatches`            | 2h     | Cross-platform         |
+| 16 | Create PMA Grafana/dashboard for watch metrics                       | 2h     | Observability          |
 
 ### Longer-term (next month)
 
-| #   | Task                                                          | Effort | Impact               |
-| --- | ------------------------------------------------------------- | ------ | -------------------- |
-| 17  | Extract go-filewatcher's walk engine as a pluggable interface | 3h     | Testability          |
-| 18  | Add go-filewatcher godoc examples for all public API          | 2h     | Documentation        |
-| 19  | Implement dead letter queue for dropped events                | 3h     | Reliability          |
-| 20  | Add fuzz testing to go-filewatcher                            | 2h     | Robustness           |
-| 21  | Migrate PMA to use `FilterGitignore()` at event level too     | 1h     | Belt-and-suspenders  |
-| 22  | Add go-filewatcher benchmark regression in CI                 | 1h     | Performance guard    |
-| 23  | Write ADR for per-repo vs monolith watching in PMA            | 1h     | Architecture clarity |
-| 24  | Review and close stale TODO_LIST.md items in go-filewatcher   | 1h     | Housekeeping         |
-| 25  | Investigate fsnotify v2 API changes for go-filewatcher        | 2h     | Future-proofing      |
+| #  | Task                                                          | Effort | Impact               |
+| -- | ------------------------------------------------------------- | ------ | -------------------- |
+| 17 | Extract go-filewatcher's walk engine as a pluggable interface | 3h     | Testability          |
+| 18 | Add go-filewatcher godoc examples for all public API          | 2h     | Documentation        |
+| 19 | Implement dead letter queue for dropped events                | 3h     | Reliability          |
+| 20 | Add fuzz testing to go-filewatcher                            | 2h     | Robustness           |
+| 21 | Migrate PMA to use `FilterGitignore()` at event level too     | 1h     | Belt-and-suspenders  |
+| 22 | Add go-filewatcher benchmark regression in CI                 | 1h     | Performance guard    |
+| 23 | Write ADR for per-repo vs monolith watching in PMA            | 1h     | Architecture clarity |
+| 24 | Review and close stale TODO_LIST.md items in go-filewatcher   | 1h     | Housekeeping         |
+| 25 | Investigate fsnotify v2 API changes for go-filewatcher        | 2h     | Future-proofing      |
 
 ---
 

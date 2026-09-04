@@ -271,12 +271,12 @@ Current warnings during `home-manager switch`:
 
 **Status:** Not addressed this session
 
-| #   | Task                              | Priority | Effort |
-| --- | --------------------------------- | -------- | ------ |
-| 1   | Fix Audit Kernel Module (NixOS)   | HIGH     | 20m    |
-| 2   | Fix Sandbox Override (Darwin)     | HIGH     | 15m    |
-| 4   | Re-enable Hyprland Type Safety    | MEDIUM   | 15m    |
-| 9   | Fix LaunchAgent Working Directory | MEDIUM   | 12m    |
+| # | Task                              | Priority | Effort |
+| - | --------------------------------- | -------- | ------ |
+| 1 | Fix Audit Kernel Module (NixOS)   | HIGH     | 20m    |
+| 2 | Fix Sandbox Override (Darwin)     | HIGH     | 15m    |
+| 4 | Re-enable Hyprland Type Safety    | MEDIUM   | 15m    |
+| 9 | Fix LaunchAgent Working Directory | MEDIUM   | 12m    |
 
 ---
 

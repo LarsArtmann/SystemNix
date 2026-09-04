@@ -136,33 +136,33 @@
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| #   | Priority | Effort | Item                                                                 |
-| --- | -------- | ------ | -------------------------------------------------------------------- |
-| 1   | P0       | S      | `just switch` and verify Gitea Actions runner registers              |
-| 2   | P0       | S      | `just switch` and verify ActivityWatch dark theme applied            |
-| 3   | P0       | S      | Remove Hyprland validation from `validate-deployment.sh`             |
-| 4   | P0       | S      | Remove stale "Ghost Systems" comment at `flake.nix:313`              |
-| 5   | P0       | S      | Verify Go overlay: does `go_1_26` exist in current nixpkgs-unstable? |
-| 6   | P1       | M      | Create a test Gitea Actions workflow to verify runner                |
-| 7   | P1       | M      | Archive 170+ stale status reports to `docs/status/archive/`          |
-| 8   | P1       | S      | Create `docs/status/README.md` index with links                      |
-| 9   | P1       | M      | Add CI pipeline for NixOS build (GitHub Actions)                     |
-| 10  | P1       | S      | Wire 6 orphan scripts into justfile or archive                       |
-| 11  | P1       | S      | Clean up stale Setup-Mac references in scripts                       |
-| 12  | P1       | S      | Fix pre-commit devShell: add `gitleaks`, `jq`                        |
-| 13  | P2       | M      | Add `widevine-cdm` support for system Chrome too                     |
-| 14  | P2       | M      | Add NixOS VM smoke tests for service modules                         |
-| 15  | P2       | S      | Add Prometheus alerting rules for monitoring stack                   |
-| 16  | P2       | M      | Test BTRFS/Timeshift backup restore procedure                        |
-| 17  | P2       | S      | Add `libva-utils` to Darwin config for consistency                   |
-| 18  | P2       | M      | Consolidate browser config into single module                        |
-| 19  | P2       | L      | Automated flake input updates (Renovate/Dependabot)                  |
-| 20  | P2       | M      | Add systemd timer for `health-check.sh`                              |
-| 21  | P2       | M      | Add sops secrets rotation documentation                              |
-| 22  | P3       | S      | Add Home Manager test harness                                        |
-| 23  | P3       | M      | Create ADR for Widevine L3 limitation                                |
-| 24  | P3       | S      | Document Gitea Actions setup in AGENTS.md                            |
-| 25  | P3       | M      | Unify Darwin/NixOS Chromium policy management                        |
+| #  | Priority | Effort | Item                                                                 |
+| -- | -------- | ------ | -------------------------------------------------------------------- |
+| 1  | P0       | S      | `just switch` and verify Gitea Actions runner registers              |
+| 2  | P0       | S      | `just switch` and verify ActivityWatch dark theme applied            |
+| 3  | P0       | S      | Remove Hyprland validation from `validate-deployment.sh`             |
+| 4  | P0       | S      | Remove stale "Ghost Systems" comment at `flake.nix:313`              |
+| 5  | P0       | S      | Verify Go overlay: does `go_1_26` exist in current nixpkgs-unstable? |
+| 6  | P1       | M      | Create a test Gitea Actions workflow to verify runner                |
+| 7  | P1       | M      | Archive 170+ stale status reports to `docs/status/archive/`          |
+| 8  | P1       | S      | Create `docs/status/README.md` index with links                      |
+| 9  | P1       | M      | Add CI pipeline for NixOS build (GitHub Actions)                     |
+| 10 | P1       | S      | Wire 6 orphan scripts into justfile or archive                       |
+| 11 | P1       | S      | Clean up stale Setup-Mac references in scripts                       |
+| 12 | P1       | S      | Fix pre-commit devShell: add `gitleaks`, `jq`                        |
+| 13 | P2       | M      | Add `widevine-cdm` support for system Chrome too                     |
+| 14 | P2       | M      | Add NixOS VM smoke tests for service modules                         |
+| 15 | P2       | S      | Add Prometheus alerting rules for monitoring stack                   |
+| 16 | P2       | M      | Test BTRFS/Timeshift backup restore procedure                        |
+| 17 | P2       | S      | Add `libva-utils` to Darwin config for consistency                   |
+| 18 | P2       | M      | Consolidate browser config into single module                        |
+| 19 | P2       | L      | Automated flake input updates (Renovate/Dependabot)                  |
+| 20 | P2       | M      | Add systemd timer for `health-check.sh`                              |
+| 21 | P2       | M      | Add sops secrets rotation documentation                              |
+| 22 | P3       | S      | Add Home Manager test harness                                        |
+| 23 | P3       | M      | Create ADR for Widevine L3 limitation                                |
+| 24 | P3       | S      | Document Gitea Actions setup in AGENTS.md                            |
+| 25 | P3       | M      | Unify Darwin/NixOS Chromium policy management                        |
 
 ---
 
@@ -174,7 +174,7 @@ The configuration is declarative and syntax-valid (`just test-fast` passes), but
 
 1. Whether the runner token generation service runs after Gitea is fully ready (Gitea startup can be slow, 30 retries may not be enough)
 2. Whether `gitea-actions-runner` package from nixpkgs has the correct binary name (it might be `act_runner` not `gitea-actions-runner`)
-3. Whether the `native:host` label actually works — the runner needs ` acts` in `$PATH` for host executor
+3. Whether the `native:host` label actually works — the runner needs `acts` in `$PATH` for host executor
 4. Whether the token file permissions are correct (`chmod 644`) — Gitea runner runs as a different user potentially
 5. Whether the runner survives a system restart — the token is generated once and should persist, but the service dependency ordering might not work correctly
 

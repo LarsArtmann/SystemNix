@@ -6,7 +6,6 @@
 
 ---
 
-
 ## What Was Done (3 commits)
 
 ### Commit 1: `niri-wrapped.nix` — swaylock-effects themed fallback + idle gradient
@@ -24,9 +23,11 @@
   - `before-sleep` → lock (unchanged, but now uses `--daemonize`)
 
 ### Commit 2: `flake.nix` — dms-locks flake app updated
+
 - `dms-locks` app now has the same themed swaylock-effects fallback
 
 ### Commit 3: `FEATURES.md` — documentation updated
+
 - DMS lock screen entry updated to mention themed fallback
 - Swayidle entry updated to reflect 10m/15m/12h gradient
 
@@ -80,6 +81,7 @@ The 15-min idle timeout calls `niri msg action power-off-monitors`. At that poin
 ### D4. **Code duplication: 30+ identical swaylock flags in two files**
 
 The exact same swaylock-effects flag list exists in both:
+
 - `niri-wrapped.nix` (`dms-lock` wrapper)
 - `flake.nix` (`dms-locks` app)
 

@@ -273,43 +273,43 @@ SystemNix is a mature, cross-platform Nix configuration managing two machines (m
 
 ### Immediate (AI-actionable, no evo-x2 needed)
 
-| #   | Task                                                                                           | Effort | Impact            |
-| --- | ---------------------------------------------------------------------------------------------- | ------ | ----------------- |
-| 1   | Fix mr-sync perSystem wiring in flake.nix                                                      | 5 min  | Build works       |
-| 2   | Audit NixOS shells.nix vs Darwin shells.nix divergence                                         | 15 min | Consistency       |
-| 3   | Push emeet-pixyd vendor fix upstream                                                           | 5 min  | Remove workaround |
-| 4   | Fix dnsblockd staticcheck (De Morgan's)                                                        | 2 min  | Code quality      |
-| 5   | Add Hermes health check endpoint                                                               | 30 min | Reliability       |
-| 6   | Harden remaining daemon services (taskchampion, comfyui, voice-agents, file-and-image-renamer) | 1 hr   | Security          |
-| 7   | Adopt serviceDefaults across all daemon services                                               | 30 min | Consistency       |
-| 8   | Move Taskwarrior encryption secret to sops-nix                                                 | 30 min | Security          |
-| 9   | Move VRRP auth password to sops-nix                                                            | 15 min | Security          |
-| 10  | Add catppuccin theme module for Waybar (replace hardcoded CSS)                                 | 30 min | Maintainability   |
+| #  | Task                                                                                           | Effort | Impact            |
+| -- | ---------------------------------------------------------------------------------------------- | ------ | ----------------- |
+| 1  | Fix mr-sync perSystem wiring in flake.nix                                                      | 5 min  | Build works       |
+| 2  | Audit NixOS shells.nix vs Darwin shells.nix divergence                                         | 15 min | Consistency       |
+| 3  | Push emeet-pixyd vendor fix upstream                                                           | 5 min  | Remove workaround |
+| 4  | Fix dnsblockd staticcheck (De Morgan's)                                                        | 2 min  | Code quality      |
+| 5  | Add Hermes health check endpoint                                                               | 30 min | Reliability       |
+| 6  | Harden remaining daemon services (taskchampion, comfyui, voice-agents, file-and-image-renamer) | 1 hr   | Security          |
+| 7  | Adopt serviceDefaults across all daemon services                                               | 30 min | Consistency       |
+| 8  | Move Taskwarrior encryption secret to sops-nix                                                 | 30 min | Security          |
+| 9  | Move VRRP auth password to sops-nix                                                            | 15 min | Security          |
+| 10 | Add catppuccin theme module for Waybar (replace hardcoded CSS)                                 | 30 min | Maintainability   |
 
 ### Requires evo-x2 Physical Access
 
-| #   | Task                                                     | Effort | Impact            |
-| --- | -------------------------------------------------------- | ------ | ----------------- |
-| 11  | `just switch` — deploy all pending changes               | 30 min | Everything        |
-| 12  | Pin Docker image digests for Voice Agents                | 10 min | Security          |
-| 13  | Pin Docker image digests for PhotoMap                    | 10 min | Security          |
-| 14  | Test Immich backup restore                               | 30 min | Disaster recovery |
-| 15  | Test Twenty CRM backup restore                           | 30 min | Disaster recovery |
-| 16  | Verify all hardened services start correctly post-deploy | 15 min | Reliability       |
-| 17  | Add SigNoz metrics for missing services                  | 2 hr   | Observability     |
-| 18  | Configure Authelia SMTP notifications                    | 30 min | Security          |
-| 19  | Test niri session restore on real reboot                 | 10 min | Reliability       |
-| 20  | Verify Prism Launcher opacity fix                        | 2 min  | Visual            |
+| #  | Task                                                     | Effort | Impact            |
+| -- | -------------------------------------------------------- | ------ | ----------------- |
+| 11 | `just switch` — deploy all pending changes               | 30 min | Everything        |
+| 12 | Pin Docker image digests for Voice Agents                | 10 min | Security          |
+| 13 | Pin Docker image digests for PhotoMap                    | 10 min | Security          |
+| 14 | Test Immich backup restore                               | 30 min | Disaster recovery |
+| 15 | Test Twenty CRM backup restore                           | 30 min | Disaster recovery |
+| 16 | Verify all hardened services start correctly post-deploy | 15 min | Reliability       |
+| 17 | Add SigNoz metrics for missing services                  | 2 hr   | Observability     |
+| 18 | Configure Authelia SMTP notifications                    | 30 min | Security          |
+| 19 | Test niri session restore on real reboot                 | 10 min | Reliability       |
+| 20 | Verify Prism Launcher opacity fix                        | 2 min  | Visual            |
 
 ### Longer Term / Infrastructure
 
-| #   | Task                                                               | Effort | Impact            |
-| --- | ------------------------------------------------------------------ | ------ | ----------------- |
-| 21  | Build Pi 3 SD image and test DNS failover                          | 4 hr   | High availability |
-| 22  | Investigate Unbound DoQ re-enablement                              | 2 hr   | Privacy           |
-| 23  | Add GitHub Actions CI to emeet-pixyd repo                          | 1 hr   | Quality           |
-| 24  | Centralize all Catppuccin Mocha colors into a shared Nix let block | 2 hr   | DRY               |
-| 25  | Archive old status reports (pre-2026-04-25)                        | 15 min | Cleanliness       |
+| #  | Task                                                               | Effort | Impact            |
+| -- | ------------------------------------------------------------------ | ------ | ----------------- |
+| 21 | Build Pi 3 SD image and test DNS failover                          | 4 hr   | High availability |
+| 22 | Investigate Unbound DoQ re-enablement                              | 2 hr   | Privacy           |
+| 23 | Add GitHub Actions CI to emeet-pixyd repo                          | 1 hr   | Quality           |
+| 24 | Centralize all Catppuccin Mocha colors into a shared Nix let block | 2 hr   | DRY               |
+| 25 | Archive old status reports (pre-2026-04-25)                        | 15 min | Cleanliness       |
 
 ---
 

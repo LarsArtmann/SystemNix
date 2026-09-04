@@ -58,8 +58,8 @@
 
 ## b) PARTIALLY DONE ⚠️
 
-| Area                                 | Status                                     | Gap                                                                                                                                                                                                                       |
-| ------------------------------------ | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Area                                 | Status                                    | Gap                                                                                                                                                                                                                       |
+| ------------------------------------ | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Homepage Dashboard**               | ⚠️ Fixed in code, NOT deployed             | Three fixes committed to working tree but `just switch` not yet run. Current live instance still broken                                                                                                                   |
 | **SigNoz OTel → Pocket ID scraping** | ⚠️ Noisy                                   | `Failed to scrape Prometheus endpoint` for pocket-id on port 9464 every 30s — pocket-id doesn't expose Prometheus metrics, but OTel collector is configured to scrape it                                                  |
 | **Pocket ID metrics**                | ⚠️ Spamming logs                           | Every 60s: `failed to upload metrics: Post "https://localhost:4318/v1/metrics": dial tcp [::1]:4318: connect: connection refused` — trying to push to OTel endpoint that SigNoz's collector serves on a different address |
@@ -149,48 +149,48 @@
 
 ### Immediate (Deploy or Die)
 
-| #   | Task                                                                 | Effort | Impact                             |
-| --- | -------------------------------------------------------------------- | ------ | ---------------------------------- |
-| 1   | **`just switch`** to deploy Homepage fixes + Hermes icon             | 5min   | Fixes broken dashboard             |
-| 2   | **Fix Caddy boot ordering** — add sops dependency                    | 15min  | Prevents 14-hour outage recurrence |
-| 3   | **Fix status.home.lan DNS** — add to Unbound local-zone              | 10min  | Makes status page accessible       |
-| 4   | **Root disk cleanup** — `nix-collect-garbage -d`, clean `/var/cache` | 20min  | Prevents disk-full crisis          |
+| # | Task                                                                 | Effort | Impact                             |
+| - | -------------------------------------------------------------------- | ------ | ---------------------------------- |
+| 1 | **`just switch`** to deploy Homepage fixes + Hermes icon             | 5min   | Fixes broken dashboard             |
+| 2 | **Fix Caddy boot ordering** — add sops dependency                    | 15min  | Prevents 14-hour outage recurrence |
+| 3 | **Fix status.home.lan DNS** — add to Unbound local-zone              | 10min  | Makes status page accessible       |
+| 4 | **Root disk cleanup** — `nix-collect-garbage -d`, clean `/var/cache` | 20min  | Prevents disk-full crisis          |
 
 ### High Impact
 
-| #   | Task                                                                     | Effort | Impact                       |
-| --- | ------------------------------------------------------------------------ | ------ | ---------------------------- |
-| 5   | **Silence Pocket ID metrics spam** — disable or fix OTel port            | 10min  | Cleans up 1440 log lines/day |
-| 6   | **Fix SigNoz OTel Pocket ID scrape target** — remove non-existent target | 5min   | Eliminates scrape failures   |
-| 7   | **Audit Gatus health checks** — fix 6 DOWN endpoints                     | 30min  | Accurate monitoring          |
-| 8   | **Complete SigNoz initial setup** — create user/org via API              | 10min  | Makes observability usable   |
-| 9   | **Fix DNS blocker TLS log spam** — rate-limit or drop TLS 1.0            | 15min  | Cleaner logs                 |
+| # | Task                                                                     | Effort | Impact                       |
+| - | ------------------------------------------------------------------------ | ------ | ---------------------------- |
+| 5 | **Silence Pocket ID metrics spam** — disable or fix OTel port            | 10min  | Cleans up 1440 log lines/day |
+| 6 | **Fix SigNoz OTel Pocket ID scrape target** — remove non-existent target | 5min   | Eliminates scrape failures   |
+| 7 | **Audit Gatus health checks** — fix 6 DOWN endpoints                     | 30min  | Accurate monitoring          |
+| 8 | **Complete SigNoz initial setup** — create user/org via API              | 10min  | Makes observability usable   |
+| 9 | **Fix DNS blocker TLS log spam** — rate-limit or drop TLS 1.0            | 15min  | Cleaner logs                 |
 
 ### Service Maturity
 
-| #   | Task                                                               | Effort | Impact                                |
-| --- | ------------------------------------------------------------------ | ------ | ------------------------------------- |
-| 10  | **Add Monitor365 Caddy vhost** — expose at monitor.home.lan        | 15min  | Remote access to monitoring dashboard |
-| 11  | **Add Overview Caddy vhost** — expose at overview.home.lan         | 15min  | Remote access to project dashboard    |
-| 12  | **Fix PostgreSQL collation warnings** — REFRESH COLLATION VERSION  | 5min   | Eliminates log spam                   |
-| 13  | **Investigate swap pressure** — check stale processes, memory hogs | 20min  | Better system responsiveness          |
-| 14  | **Add Twenty CRM keepalive** in Caddy upstream                     | 10min  | Reduces intermittent 502s             |
-| 15  | **Create Deer Flow NixOS module** — proper service with options    | 45min  | Consistency with other services       |
+| #  | Task                                                               | Effort | Impact                                |
+| -- | ------------------------------------------------------------------ | ------ | ------------------------------------- |
+| 10 | **Add Monitor365 Caddy vhost** — expose at monitor.home.lan        | 15min  | Remote access to monitoring dashboard |
+| 11 | **Add Overview Caddy vhost** — expose at overview.home.lan         | 15min  | Remote access to project dashboard    |
+| 12 | **Fix PostgreSQL collation warnings** — REFRESH COLLATION VERSION  | 5min   | Eliminates log spam                   |
+| 13 | **Investigate swap pressure** — check stale processes, memory hogs | 20min  | Better system responsiveness          |
+| 14 | **Add Twenty CRM keepalive** in Caddy upstream                     | 10min  | Reduces intermittent 502s             |
+| 15 | **Create Deer Flow NixOS module** — proper service with options    | 45min  | Consistency with other services       |
 
 ### Long-Term / Infrastructure
 
-| #   | Task                                                                                                 | Effort | Impact                               |
-| --- | ---------------------------------------------------------------------------------------------------- | ------ | ------------------------------------ |
-| 16  | **Add Homepage NixOS VM test** — verify YAML structure at eval time                                  | 30min  | Prevents YAML breakage regressions   |
-| 17  | **Monitor365 agent→server auth** — API key or mTLS                                                   | 30min  | Security                             |
-| 18  | **Pi 3 hardware provisioning** — flash SD, boot, wire                                                | 2hr    | DNS failover redundancy              |
-| 19  | **File-and-image-renamer unblock** — bump Go or vendor charm.land                                    | 1hr    | Restores screenshot AI renaming      |
-| 20  | **Voice agents evaluation** — assess LiveKit + Whisper for current needs                             | 1hr    | Decide enable/disable permanently    |
-| 21  | **PhotoMap evaluation** — assess usefulness, enable or remove module                                 | 30min  | Reduce dead code                     |
-| 22  | **BTRFS /data subvolume migration** — convert from toplevel to subvolume for snapshots               | 1hr    | Enables /data snapshots              |
-| 23  | **Darwin Home Manager parity** — terminal, editor, theme matching NixOS                              | 2hr    | Consistent cross-platform experience |
-| 24  | **Caddy cert auto-renewal monitoring** — Gatus TLS expiry check exists but alerting chain incomplete | 30min  | Proactive cert management            |
-| 25  | **NixOS generation cleanup automation** — auto-remove generations older than 30d                     | 15min  | Prevents root disk creep             |
+| #  | Task                                                                                                 | Effort | Impact                               |
+| -- | ---------------------------------------------------------------------------------------------------- | ------ | ------------------------------------ |
+| 16 | **Add Homepage NixOS VM test** — verify YAML structure at eval time                                  | 30min  | Prevents YAML breakage regressions   |
+| 17 | **Monitor365 agent→server auth** — API key or mTLS                                                   | 30min  | Security                             |
+| 18 | **Pi 3 hardware provisioning** — flash SD, boot, wire                                                | 2hr    | DNS failover redundancy              |
+| 19 | **File-and-image-renamer unblock** — bump Go or vendor charm.land                                    | 1hr    | Restores screenshot AI renaming      |
+| 20 | **Voice agents evaluation** — assess LiveKit + Whisper for current needs                             | 1hr    | Decide enable/disable permanently    |
+| 21 | **PhotoMap evaluation** — assess usefulness, enable or remove module                                 | 30min  | Reduce dead code                     |
+| 22 | **BTRFS /data subvolume migration** — convert from toplevel to subvolume for snapshots               | 1hr    | Enables /data snapshots              |
+| 23 | **Darwin Home Manager parity** — terminal, editor, theme matching NixOS                              | 2hr    | Consistent cross-platform experience |
+| 24 | **Caddy cert auto-renewal monitoring** — Gatus TLS expiry check exists but alerting chain incomplete | 30min  | Proactive cert management            |
+| 25 | **NixOS generation cleanup automation** — auto-remove generations older than 30d                     | 15min  | Prevents root disk creep             |
 
 ---
 
@@ -225,15 +225,15 @@ This requires reading the sops-nix module and Caddy module to understand the exa
 | Forgejo      | ✅ Running | ✅ UP        | API responding                                           |
 | Homepage     | ❌ Broken  | ✅ UP        | Service running but serving errors (fix awaiting deploy) |
 | Gatus        | ✅ Running | ✅ UP (self) | 30+ endpoints checked                                    |
-| Immich       | ✅ Running | ⚠️ DOWN      | Health check mismatch                                    |
-| SigNoz       | ✅ Running | ⚠️ DOWN      | Health check port mismatch                               |
+| Immich       | ✅ Running | ⚠️ DOWN       | Health check mismatch                                    |
+| SigNoz       | ✅ Running | ⚠️ DOWN       | Health check port mismatch                               |
 | Twenty CRM   | ✅ Running | ✅ UP        | Intermittent 502s from connection resets                 |
 | Manifest     | ✅ Running | ✅ UP        | Healthy                                                  |
 | TaskChampion | ✅ Running | ✅ UP        | Sync server                                              |
 | Hermes       | ✅ Running | —            | Active, Discord bot functional                           |
-| Crush Daily  | ✅ Running | ⚠️ DOWN      | Health endpoint may not exist                            |
-| Ollama       | ✅ Running | ⚠️ DOWN      | Port or health check issue                               |
-| Monitor365   | ✅ Enabled | ⚠️ DOWN      | Server may not be listening                              |
+| Crush Daily  | ✅ Running | ⚠️ DOWN       | Health endpoint may not exist                            |
+| Ollama       | ✅ Running | ⚠️ DOWN       | Port or health check issue                               |
+| Monitor365   | ✅ Enabled | ⚠️ DOWN       | Server may not be listening                              |
 | OpenSEO      | ✅ Running | —            | Docker container, 200 OK                                 |
 | Deer Flow    | ✅ Running | —            | Docker Compose, no module                                |
 | Redis        | ✅ Running | —            | BGSAVE healthy                                           |
@@ -247,10 +247,10 @@ This requires reading the sops-nix module and Caddy module to understand the exa
 
 | Resource  | Value               | Status        |
 | --------- | ------------------- | ------------- |
-| Root disk | 477G/512G (95%)     | ⚠️ CRITICAL   |
+| Root disk | 477G/512G (95%)     | ⚠️ CRITICAL    |
 | Data disk | 798G/1.0T (78%)     | ✅ OK         |
 | RAM       | 30G/93G used        | ✅ OK         |
-| Swap      | 8.0G/19G used       | ⚠️ High       |
+| Swap      | 8.0G/19G used       | ⚠️ High        |
 | Load      | ~30 active services | ✅ Manageable |
 
 ## Docker Containers (10 running)

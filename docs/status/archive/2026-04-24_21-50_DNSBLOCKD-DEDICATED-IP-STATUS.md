@@ -179,33 +179,33 @@ All orphaned since pre-niri migration. Likely useless.
 
 ## f) Top 25 Things to Get Done Next
 
-| #   | Task                                                               | Est. | Impact                           |
-| --- | ------------------------------------------------------------------ | ---- | -------------------------------- |
-| 1   | `just switch` — deploy all committed changes                       | 45m  | Everything depends on this       |
-| 2   | Verify dnsblockd serves block pages on `192.168.1.200:443`         | 3m   | Confirms the entire fix          |
-| 3   | Verify Ollama works after rebuild (`ollama list` + test inference) | 5m   | ROCm-dependent, was broken       |
-| 4   | Verify Steam + ComfyUI work after rebuild                          | 10m  | ROCm-dependent                   |
-| 5   | `git push` — push all local commits                                | 1m   | Unpushed work at risk            |
-| 6   | `git stash clear` — drop 3 orphaned stashes                        | 1m   | Hygiene                          |
-| 7   | Delete 17 remote `copilot/fix-*` branches                          | 2m   | Hygiene                          |
-| 8   | Ping `192.168.1.200` to confirm no IP conflict                     | 1m   | Pre-deploy validation            |
-| 9   | Archive 39 redundant status docs to `archive/`                     | 5m   | Doc rot                          |
-| 10  | Move Taskwarrior encryption secret to sops-nix                     | 10m  | Security                         |
-| 11  | Pin Docker image digests (Voice Agents + PhotoMap)                 | 10m  | Security                         |
-| 12  | Secure VRRP `auth_pass` with sops-nix                              | 8m   | Security                         |
-| 13  | Add `WatchdogSec=30` to caddy, gitea, authelia, taskchampion       | 10m  | Reliability                      |
-| 14  | Add `Restart=on-failure` to services missing it                    | 8m   | Reliability                      |
-| 15  | Add systemd hardening to `gitea-ensure-repos`                      | 8m   | Only service with zero hardening |
-| 16  | Build Pi 3 SD image (`nix build .#rpi3-dns`)                       | 30m  | DNS HA completion                |
-| 17  | Flash + boot Pi 3                                                  | 15m  | DNS HA completion                |
-| 18  | Test DNS failover (stop Unbound on evo-x2, verify Pi 3 takes over) | 10m  | DNS HA validation                |
-| 19  | Add `.editorconfig` (2-space, UTF-8, LF)                           | 2m   | Code quality                     |
-| 20  | Fix deadnix unused params (batch 1: 6 service modules)             | 10m  | Code quality                     |
-| 21  | Extract `lib/systemd-harden.nix` shared helper                     | 12m  | DRY, 20 lines per service        |
-| 22  | Add GitHub Actions: `nix flake check` on push                      | 10m  | Zero CI exists                   |
-| 23  | Verify SigNoz is collecting metrics/logs/traces                    | 5m   | Unknown status                   |
-| 24  | Verify Authelia SSO login works                                    | 3m   | Unknown since 04-05              |
-| 25  | Add `homeModules` pattern for HM configs via flake-parts           | 12m  | Architecture                     |
+| #  | Task                                                               | Est. | Impact                           |
+| -- | ------------------------------------------------------------------ | ---- | -------------------------------- |
+| 1  | `just switch` — deploy all committed changes                       | 45m  | Everything depends on this       |
+| 2  | Verify dnsblockd serves block pages on `192.168.1.200:443`         | 3m   | Confirms the entire fix          |
+| 3  | Verify Ollama works after rebuild (`ollama list` + test inference) | 5m   | ROCm-dependent, was broken       |
+| 4  | Verify Steam + ComfyUI work after rebuild                          | 10m  | ROCm-dependent                   |
+| 5  | `git push` — push all local commits                                | 1m   | Unpushed work at risk            |
+| 6  | `git stash clear` — drop 3 orphaned stashes                        | 1m   | Hygiene                          |
+| 7  | Delete 17 remote `copilot/fix-*` branches                          | 2m   | Hygiene                          |
+| 8  | Ping `192.168.1.200` to confirm no IP conflict                     | 1m   | Pre-deploy validation            |
+| 9  | Archive 39 redundant status docs to `archive/`                     | 5m   | Doc rot                          |
+| 10 | Move Taskwarrior encryption secret to sops-nix                     | 10m  | Security                         |
+| 11 | Pin Docker image digests (Voice Agents + PhotoMap)                 | 10m  | Security                         |
+| 12 | Secure VRRP `auth_pass` with sops-nix                              | 8m   | Security                         |
+| 13 | Add `WatchdogSec=30` to caddy, gitea, authelia, taskchampion       | 10m  | Reliability                      |
+| 14 | Add `Restart=on-failure` to services missing it                    | 8m   | Reliability                      |
+| 15 | Add systemd hardening to `gitea-ensure-repos`                      | 8m   | Only service with zero hardening |
+| 16 | Build Pi 3 SD image (`nix build .#rpi3-dns`)                       | 30m  | DNS HA completion                |
+| 17 | Flash + boot Pi 3                                                  | 15m  | DNS HA completion                |
+| 18 | Test DNS failover (stop Unbound on evo-x2, verify Pi 3 takes over) | 10m  | DNS HA validation                |
+| 19 | Add `.editorconfig` (2-space, UTF-8, LF)                           | 2m   | Code quality                     |
+| 20 | Fix deadnix unused params (batch 1: 6 service modules)             | 10m  | Code quality                     |
+| 21 | Extract `lib/systemd-harden.nix` shared helper                     | 12m  | DRY, 20 lines per service        |
+| 22 | Add GitHub Actions: `nix flake check` on push                      | 10m  | Zero CI exists                   |
+| 23 | Verify SigNoz is collecting metrics/logs/traces                    | 5m   | Unknown status                   |
+| 24 | Verify Authelia SSO login works                                    | 3m   | Unknown since 04-05              |
+| 25 | Add `homeModules` pattern for HM configs via flake-parts           | 12m  | Architecture                     |
 
 ---
 

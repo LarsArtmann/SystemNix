@@ -75,6 +75,31 @@ let
       device = "/dev/test";
       fsType = "ext4";
     }))
+
+    # Extra fileSystems attrs (neededForBoot, depends, …) MUST pass through.
+    # The `…` pattern used to SILENTLY DROP them — accessing a dropped attr
+    # throws "attribute missing", which tryEval turns into a failed test.
+    (assertPass "passthrough_neededForBoot"
+      (mkFilesystem {
+        device = "/dev/test";
+        fsType = "btrfs";
+        options = [ "subvol=@" ];
+        neededForBoot = true;
+      }).neededForBoot
+    )
+
+    # The passed-through value must be the caller's, not clobbered
+    (assertPass "passthrough_value_intact" (
+      let
+        fs = mkFilesystem {
+          device = "/dev/test";
+          fsType = "btrfs";
+          options = [ "subvol=@" ];
+          depends = [ "/mnt/pool" ];
+        };
+      in
+      builtins.all (d: builtins.elem d fs.depends) [ "/mnt/pool" ]
+    ))
   ];
 
   failures = builtins.filter (r: !r.passed) results;

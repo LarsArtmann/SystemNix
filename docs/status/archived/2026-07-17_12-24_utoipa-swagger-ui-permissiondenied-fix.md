@@ -5,7 +5,6 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 1. **Root cause identified and proven** — `utoipa-swagger-ui` v9.0.2's build script calls `std::fs::copy(nix_store_zip, OUT_DIR/zip)`. Rust's `fs::copy` propagates source file permissions. Nix store files are always 0444 (read-only) after fixup. Crane's `buildDepsOnly` runs `cargo check --release` THEN `cargo build --release`, executing the build script twice in the same `OUT_DIR`. The first run creates a 0444 zip copy; the second run's `fs::copy` tries to truncate the existing 0444 file → `EACCES` (PermissionDenied). Proven with a minimal Nix sandbox reproduction test that showed `fs::copy` succeeds once, copies 0444 perms, then fails on the second attempt.

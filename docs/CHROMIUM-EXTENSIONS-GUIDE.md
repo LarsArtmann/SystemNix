@@ -90,7 +90,7 @@ programs.chromium = {
 | Manifest V2                   | ✅ Yes           | Will maintain MV2 support as long as possible |
 | Manifest V3                   | ✅ Yes           | Fully supported                               |
 | uBlock Origin                 | ✅ Pre-installed | Custom Helium fork included                   |
-| Extension Declarative Install | ⚠️ Manual        | No native Nix module available                |
+| Extension Declarative Install | ⚠️ Manual         | No native Nix module available                |
 
 ### Installing Extensions in Helium
 

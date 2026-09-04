@@ -18,18 +18,18 @@ Successfully implemented Authelia as the centralized identity provider for the e
 
 ## a) FULLY DONE ✅
 
-| #   | Component               | Details                                                                                     |
-| --- | ----------------------- | ------------------------------------------------------------------------------------------- |
-| 1   | **Authelia Foundation** | Complete flake-parts module with SQLite storage, TOTP/WebAuthn 2FA, file-based user backend |
-| 2   | **Sops Secrets**        | 6 secrets declared: 4 Authelia internal + 2 OAuth client secrets (Grafana, Immich)          |
-| 3   | **Caddy Integration**   | forward_auth on all 7 protected vhosts; auth.lan portal vhost; TLS via dnsblockd certs      |
-| 4   | **DNS Records**         | auth.lan → 192.168.1.150 in Unbound local-data                                              |
-| 5   | **Prometheus Port Fix** | Changed from 9091 (conflicted) to 9090                                                      |
-| 6   | **Grafana OIDC**        | auth.generic_oauth wired to Authelia; root_url fixed to HTTPS                               |
-| 7   | **Immich OIDC**         | settings.oauth enabled with autoRegister; _secret sops integration                          |
-| 8   | **Homepage Updates**    | Authelia service card added; Prometheus health check port fixed to 9090                     |
-| 9   | **Authelia Metrics**    | Telemetry enabled on 127.0.0.1:9959; Prometheus scrape job added                            |
-| 10  | **Dagger CI/CD**        | Full module with Nix check, format, lint, and build pipelines                               |
+| #  | Component               | Details                                                                                     |
+| -- | ----------------------- | ------------------------------------------------------------------------------------------- |
+| 1  | **Authelia Foundation** | Complete flake-parts module with SQLite storage, TOTP/WebAuthn 2FA, file-based user backend |
+| 2  | **Sops Secrets**        | 6 secrets declared: 4 Authelia internal + 2 OAuth client secrets (Grafana, Immich)          |
+| 3  | **Caddy Integration**   | forward_auth on all 7 protected vhosts; auth.lan portal vhost; TLS via dnsblockd certs      |
+| 4  | **DNS Records**         | auth.lan → 192.168.1.150 in Unbound local-data                                              |
+| 5  | **Prometheus Port Fix** | Changed from 9091 (conflicted) to 9090                                                      |
+| 6  | **Grafana OIDC**        | auth.generic_oauth wired to Authelia; root_url fixed to HTTPS                               |
+| 7  | **Immich OIDC**         | settings.oauth enabled with autoRegister; _secret sops integration                          |
+| 8  | **Homepage Updates**    | Authelia service card added; Prometheus health check port fixed to 9090                     |
+| 9  | **Authelia Metrics**    | Telemetry enabled on 127.0.0.1:9959; Prometheus scrape job added                            |
+| 10 | **Dagger CI/CD**        | Full module with Nix check, format, lint, and build pipelines                               |
 
 ---
 
@@ -44,18 +44,18 @@ Successfully implemented Authelia as the centralized identity provider for the e
 
 ## c) NOT STARTED 🚧
 
-| #   | Task                                                         | Priority      |
-| --- | ------------------------------------------------------------ | ------------- |
-| 1   | Deploy to evo-x2 (`just switch`)                             | P0 - Critical |
-| 2   | Add 6 secrets to sops.yaml on evo-x2                         | P0 - Critical |
-| 3   | Generate unique OIDC client secrets (not shared placeholder) | P1 - High     |
-| 4   | Generate Argon2id hash for user password                     | P1 - High     |
-| 5   | Wire Gitea OAuth in gitea.nix                                | P1 - High     |
-| 6   | Test SSO flows for all 3 services                            | P1 - High     |
-| 7   | Verify forward_auth on all 7 services                        | P1 - High     |
-| 8   | Configure SMTP for password reset                            | P2 - Medium   |
-| 9   | Set up TOTP backup codes procedure                           | P2 - Medium   |
-| 10  | Test WebAuthn/Passkey registration                           | P2 - Medium   |
+| #  | Task                                                         | Priority      |
+| -- | ------------------------------------------------------------ | ------------- |
+| 1  | Deploy to evo-x2 (`just switch`)                             | P0 - Critical |
+| 2  | Add 6 secrets to sops.yaml on evo-x2                         | P0 - Critical |
+| 3  | Generate unique OIDC client secrets (not shared placeholder) | P1 - High     |
+| 4  | Generate Argon2id hash for user password                     | P1 - High     |
+| 5  | Wire Gitea OAuth in gitea.nix                                | P1 - High     |
+| 6  | Test SSO flows for all 3 services                            | P1 - High     |
+| 7  | Verify forward_auth on all 7 services                        | P1 - High     |
+| 8  | Configure SMTP for password reset                            | P2 - Medium   |
+| 9  | Set up TOTP backup codes procedure                           | P2 - Medium   |
+| 10 | Test WebAuthn/Passkey registration                           | P2 - Medium   |
 
 ---
 

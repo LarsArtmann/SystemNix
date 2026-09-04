@@ -53,8 +53,10 @@ _: {
       googleSyncEnabled = config.services.google-sync.enable or false;
       papdashboardEnabled = config.services.papdashboard.enable or false;
       bankSyncEnabled = config.services.bank-sync.enable or false;
+      inboxcleanEnabled = config.services.inboxclean.enable or false;
       systemdGraphEnabled = config.services.systemd-graph.enable or false;
       systemdTimerMonitorEnabled = config.services.systemd-timer-monitor.enable or false;
+      cvEnabled = config.services.cv-server.enable or false;
 
       theme = import ../../../platforms/common/theme.nix;
       colors = theme.colorScheme.palette;
@@ -146,6 +148,13 @@ _: {
             # closest available finance glyph.
             icon = "google-finance.png";
           }
+        )
+        ++ lib.optional inboxcleanEnabled (
+          mkService "InboxClean" {
+            href = svcUrl "inbox";
+            description = "Gmail AI Assistant — Backup, Sorting & Tagging";
+            icon = "gmail.png";
+          }
         );
 
       mediaServices = [
@@ -173,6 +182,12 @@ _: {
           icon = "forgejo.png";
         })
       ]
+      ++ lib.optional cvEnabled (
+        mkService "CV" {
+          href = svcUrl "cv";
+          description = "Resume Generator & Career Pipeline";
+        }
+      )
       ++ lib.optional overviewEnabled (
         mkService "Overview" {
           href = svcUrl "overview";

@@ -6,7 +6,6 @@
 
 ---
 
-
 ## TL;DR
 
 A 4-month-old jq path bug in `signoz-provision` returned the right answer by accident (it iterated an object whose value was a `[]` empty array, then tried to index `null` with `.rule.name` and failed only when real rules existed). New SigNoz 0.127.1 returns `{"data":{"rules":[...]}}` for `/api/v1/rules` (not `{"data":[…]}` for channels). Channels were already correct; rules were not. Fixed it. Deploy passes. Rules did NOT re-provision because `signoz-provision` is `RemainAfterExit=yes` + `Restart=no` and was already in `active (exited)` state from the failed deploy.
@@ -80,16 +79,19 @@ Priority ordered (P0 = blocking / silent failure today):
 ## g) THREE QUESTIONS I CAN'T FIGURE OUT
 
 **Q1:** Should `signoz-provision` idempotently reconcile rules (delete-then-create on every activation) OR only add missing ones (preserving manual edits)?
-   - Right now it does delete-by-name-then-create. If you create rules in the UI, they'll be blown away on next deploy that touches the same names.
-   - The channels section does the same.
-   - I can't infer what the user wants from existing code.
+
+- Right now it does delete-by-name-then-create. If you create rules in the UI, they'll be blown away on next deploy that touches the same names.
+- The channels section does the same.
+- I can't infer what the user wants from existing code.
 
 **Q2:** What HTTP status does SigNoz POST `/api/v1/rules` return on a malformed body? The script uses `curl -sf ... || true` which swallows errors — we don't know if today's deploy actually PUT the rules successfully or if POST silently failed.
-   - I can verify by manually POSTing one and checking the response, but I don't want to do that without running the service first.
+
+- I can verify by manually POSTing one and checking the response, but I don't want to do that without running the service first.
 
 **Q3:** Should `signoz-provision` get a Gatus health check + alert endpoint, or is the existing failure-routing via `onFailure = notify-failure@%n.service` enough?
-   - Right now it has onFailure (sends a Discord message) but no Gatus check for the **service being healthy & complete** — only post-mortem "it failed" alerts.
-   - Proactive monitoring would catch future silent-success issues, but adds noise.
+
+- Right now it has onFailure (sends a Discord message) but no Gatus check for the **service being healthy & complete** — only post-mortem "it failed" alerts.
+- Proactive monitoring would catch future silent-success issues, but adds noise.
 
 ---
 

@@ -29,14 +29,32 @@
 # at runtime and pulled imperatively via `flm pull`. 13.6 GB binaries do not
 # belong in the nix store.
 #
+# v1.0.3 HELD BACK (2026-08-31): its bundled XRT 2.25.00 userspace NEVER
+# enumerates the NPU on kernel 7.2.0 — strace-verified: it opens NO
+# /dev/accel* path at all and dies "No such device with index '0'" in ~2s,
+# while v1.0.2 opens /sys/bus/pci/.../accel → /dev/accel/accel0 and serves
+# fine on the same kernel (verified live both ways, 2026-08-31 17:30).
+# Release notes are weights-only (Q4_1 → Q4_K) with no documented kernel/
+# driver requirement, so compatibility with the pending 7.2.2 kernel is
+# UNVERIFIED. Retry the 1.0.3 bump only after a reboot into 7.2.2 and a
+# live `flm serve` validation — and note it needs a full weight re-pull.
+#
+# v1.0.3 (2026-08-27): re-quantized Qwen3.5 + Qwen3.6-MoE weights (Q4_1 →
+# Q4_K). REQUIRES a one-time `flm pull qwen3.6-moe:35b-a3b` after deploy —
+# old v1.0.2 weight files hash-mismatch the new manifest and `flm pull`
+# overwrites them in place (same dance as v1.0.1→v1.0.2). The release notes
+# do NOT claim a fix for the v1.0.2 prefill core-dump (4× in one boot,
+# 2026-08-31) — the crash-loop containment is the guard's Zone 4, not this
+# bump; treat the bump as accuracy + best-effort.
+#
 # Output: a single derivation exposing `flm` (the wrapper) on $PATH.
 stdenv.mkDerivation (finalAttrs: {
   pname = "fastflowlm";
-  version = "1.0.1";
+  version = "1.0.2";
 
   src = fetchurl {
     url = "https://github.com/ROCm/FastFlowLM/releases/download/v${finalAttrs.version}/fastflowlm_${finalAttrs.version}_linux.tar.gz";
-    hash = "sha256-vTk2yyyLCZpLkLTSC9j2KuZpOlQg464JWVEgGyv70co=";
+    hash = "sha256-em+KMNs86DLMVGyJzmvG5oYon5OnX0V/rldc+jOkYEo=";
   };
 
   nativeBuildInputs = [
@@ -96,7 +114,14 @@ stdenv.mkDerivation (finalAttrs: {
     #!/bin/sh
     FLM_HOME="@out@"
     export XILINX_XRT="$FLM_HOME"
-    export LD_LIBRARY_PATH="$FLM_HOME/lib:''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    # v1.0.3's flm-real probes libxrt_core.so.2 at a broken prefix first
+    # ("/nix/store/lib/x86_64-linux-gnu/..." — as if resolving
+    # $XILINX_XRT/../lib); that WARNING is unavoidable, but the dlopen
+    # fallback works ONLY when the multiarch dir is on the loader path.
+    # Without it XRT enumerates zero devices and `flm serve` dies
+    # "No such device with index '0'" (live 2026-08-31, v1.0.3's first
+    # deploy — v1.0.2 did not need this). Keep BOTH lib dirs.
+    export LD_LIBRARY_PATH="$FLM_HOME/lib:$FLM_HOME/lib/x86_64-linux-gnu:''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
     exec "$FLM_HOME/flm-real" "$@"
     WRAPPER
     substituteInPlace $out/bin/flm --subst-var out

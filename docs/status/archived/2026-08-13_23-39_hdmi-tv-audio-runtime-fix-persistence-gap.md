@@ -21,11 +21,11 @@
 
 ## a) FULLY DONE
 
-| Item | Status | Detail |
-|------|--------|--------|
-| Runtime sink switch | DONE | `wpctl set-default 50` — audio now routing to LG TV SSCR2 via HDMI 3 |
-| Stream verification | DONE | Helium and cava confirmed connected to TV sink in `wpctl status` |
-| Config investigation | DONE | Read `audio.nix`, understood the WirePlumber profile priority rules |
+| Item                 | Status | Detail                                                               |
+| -------------------- | ------ | -------------------------------------------------------------------- |
+| Runtime sink switch  | DONE   | `wpctl set-default 50` — audio now routing to LG TV SSCR2 via HDMI 3 |
+| Stream verification  | DONE   | Helium and cava confirmed connected to TV sink in `wpctl status`     |
+| Config investigation | DONE   | Read `audio.nix`, understood the WirePlumber profile priority rules  |
 
 ---
 
@@ -38,6 +38,7 @@ The runtime `wpctl set-default 50` works NOW but will be **lost on reboot or Pip
 ### Root cause diagnosis — **INCOMPLETE**
 
 The existing `audio.nix` WirePlumber config (lines 28-57) does NOT solve the problem. It only sets `device.profile.priority.rules` for the Radeon card — this controls **which HDMI profile** is selected on the Radeon card, NOT **which card is the default sink**. The user had this config in the repo and audio was STILL going to the Ryzen analog output. Either:
+
 - The config was never deployed (not checked), OR
 - The config doesn't do what's needed (likely — it only controls profile, not default device selection)
 
@@ -60,7 +61,7 @@ The existing `audio.nix` WirePlumber config (lines 28-57) does NOT solve the pro
 
 **I said:** "Already configured in audio.nix — nix run .#deploy will make it permanent"
 
-**Reality:** The existing config does NOT set the default sink. `device.profile.priority.rules` only controls which HDMI *profile* is preferred on the Radeon card. It does NOT tell WirePlumber to prefer the Radeon HDMI output as the default sink over the Ryzen analog output. Deploying the current config would NOT make the TV the default audio output.
+**Reality:** The existing config does NOT set the default sink. `device.profile.priority.rules` only controls which HDMI _profile_ is preferred on the Radeon card. It does NOT tell WirePlumber to prefer the Radeon HDMI output as the default sink over the Ryzen analog output. Deploying the current config would NOT make the TV the default audio output.
 
 **Fix needed:** Add WirePlumber `default.configured-sinks` config (or equivalent) to `audio.nix`:
 

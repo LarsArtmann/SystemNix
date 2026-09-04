@@ -156,48 +156,48 @@ During the session, the pre-commit hook caused a `fatal: cannot lock ref 'HEAD'`
 
 ### Critical (Services Down or Degraded)
 
-| #   | Task                                                                                 | Impact | Effort |
-| --- | ------------------------------------------------------------------------------------ | ------ | ------ |
-| 1   | Fix Hermes skill file PermissionError — investigate `/home/hermes/skills/` ownership | High   | Low    |
-| 2   | Fix ComfyUI venv path — `/home/lars/projects/anime-comic-pipeline/venv/` missing     | High   | Low    |
-| 3   | Fix prometheus-node-exporter amdgpu.prom empty values                                | Medium | Low    |
+| # | Task                                                                                 | Impact | Effort |
+| - | ------------------------------------------------------------------------------------ | ------ | ------ |
+| 1 | Fix Hermes skill file PermissionError — investigate `/home/hermes/skills/` ownership | High   | Low    |
+| 2 | Fix ComfyUI venv path — `/home/lars/projects/anime-comic-pipeline/venv/` missing     | High   | Low    |
+| 3 | Fix prometheus-node-exporter amdgpu.prom empty values                                | Medium | Low    |
 
 ### High Priority (Architecture / Reliability)
 
-| #   | Task                                                                                 | Impact | Effort |
-| --- | ------------------------------------------------------------------------------------ | ------ | ------ |
-| 4   | Refactor `serviceDefaults` into a proper NixOS module with correct section placement | High   | Medium |
-| 5   | Consolidate all services to use `serviceDefaults` (14 services still inline)         | Medium | Medium |
-| 6   | Add `just health` check that validates no systemd "Unknown key" warnings             | Medium | Low    |
-| 7   | Add pre-commit check for WatchdogSec on non-notify services                          | Medium | Low    |
-| 8   | Fix Gitea mirror sync authentication (GitHub token rotation)                         | Medium | Low    |
+| # | Task                                                                                 | Impact | Effort |
+| - | ------------------------------------------------------------------------------------ | ------ | ------ |
+| 4 | Refactor `serviceDefaults` into a proper NixOS module with correct section placement | High   | Medium |
+| 5 | Consolidate all services to use `serviceDefaults` (14 services still inline)         | Medium | Medium |
+| 6 | Add `just health` check that validates no systemd "Unknown key" warnings             | Medium | Low    |
+| 7 | Add pre-commit check for WatchdogSec on non-notify services                          | Medium | Low    |
+| 8 | Fix Gitea mirror sync authentication (GitHub token rotation)                         | Medium | Low    |
 
 ### Medium Priority (Tech Debt / Quality)
 
-| #   | Task                                                                                                                               | Impact | Effort |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
-| 9   | Remove `Restart = lib.mkForce "on-failure"` when it matches default — cleanup copy-paste                                           | Low    | Low    |
-| 10  | Audit all `mkForce` uses — remove those that match defaults                                                                        | Low    | Low    |
-| 11  | Standardize `startLimitBurst`/`startLimitIntervalSec` across all services (some have none, some have 3/60, some 5/300, some 5/600) | Low    | Low    |
-| 12  | Add systemd service unit tests — verify generated .service files have no warnings                                                  | Low    | Medium |
-| 13  | Move cadvisor `NoNewPrivileges = false` override to a comment explaining WHY                                                       | Low    | Low    |
-| 14  | Fix Hermes deprecated MESSAGING_CWD .env warning                                                                                   | Low    | Low    |
-| 15  | Fix Hermes `GATEWAY_ALLOW_ALL_USERS` — move from .env to Environment (already partially done)                                      | Low    | Low    |
+| #  | Task                                                                                                                               | Impact | Effort |
+| -- | ---------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 9  | Remove `Restart = lib.mkForce "on-failure"` when it matches default — cleanup copy-paste                                           | Low    | Low    |
+| 10 | Audit all `mkForce` uses — remove those that match defaults                                                                        | Low    | Low    |
+| 11 | Standardize `startLimitBurst`/`startLimitIntervalSec` across all services (some have none, some have 3/60, some 5/300, some 5/600) | Low    | Low    |
+| 12 | Add systemd service unit tests — verify generated .service files have no warnings                                                  | Low    | Medium |
+| 13 | Move cadvisor `NoNewPrivileges = false` override to a comment explaining WHY                                                       | Low    | Low    |
+| 14 | Fix Hermes deprecated MESSAGING_CWD .env warning                                                                                   | Low    | Low    |
+| 15 | Fix Hermes `GATEWAY_ALLOW_ALL_USERS` — move from .env to Environment (already partially done)                                      | Low    | Low    |
 
 ### Lower Priority (Improvements / Nice-to-Have)
 
-| #   | Task                                                                                           | Impact | Effort |
-| --- | ---------------------------------------------------------------------------------------------- | ------ | ------ |
-| 16  | Investigate cadvisor `containers.json` missing — podman socket vs docker socket                | Low    | Medium |
-| 17  | Add SigNoz alert for services entering crash-loop (start-limit-hit)                            | Medium | Medium |
-| 18  | Create `just services-health` command that checks all managed services                         | Medium | Low    |
-| 19  | Document all services with their sd_notify status in AGENTS.md table                           | Low    | Low    |
-| 20  | Add `Type = "notify"` comment to Caddy/Gitea serviceConfig for clarity                         | Low    | Low    |
-| 21  | Review all hardened services for missing library paths (like Hermes opus issue pattern)        | Low    | Medium |
-| 22  | Investigate Authelia Go service — does it support sd_notify? Could add WatchdogSec back if yes | Low    | Low    |
-| 23  | Add `just watchdog-audit` command that checks all services for sd_notify compatibility         | Low    | Low    |
-| 24  | Create service module template with correct section placement                                  | Low    | Low    |
-| 25  | Update flake.nix overlays to use shared lib types for service config                           | Low    | Medium |
+| #  | Task                                                                                           | Impact | Effort |
+| -- | ---------------------------------------------------------------------------------------------- | ------ | ------ |
+| 16 | Investigate cadvisor `containers.json` missing — podman socket vs docker socket                | Low    | Medium |
+| 17 | Add SigNoz alert for services entering crash-loop (start-limit-hit)                            | Medium | Medium |
+| 18 | Create `just services-health` command that checks all managed services                         | Medium | Low    |
+| 19 | Document all services with their sd_notify status in AGENTS.md table                           | Low    | Low    |
+| 20 | Add `Type = "notify"` comment to Caddy/Gitea serviceConfig for clarity                         | Low    | Low    |
+| 21 | Review all hardened services for missing library paths (like Hermes opus issue pattern)        | Low    | Medium |
+| 22 | Investigate Authelia Go service — does it support sd_notify? Could add WatchdogSec back if yes | Low    | Low    |
+| 23 | Add `just watchdog-audit` command that checks all services for sd_notify compatibility         | Low    | Low    |
+| 24 | Create service module template with correct section placement                                  | Low    | Low    |
+| 25 | Update flake.nix overlays to use shared lib types for service config                           | Low    | Medium |
 
 ---
 

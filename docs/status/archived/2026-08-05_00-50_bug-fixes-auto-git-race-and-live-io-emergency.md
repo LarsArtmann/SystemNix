@@ -6,21 +6,20 @@
 
 ---
 
-
 ## a) FULLY DONE (Committed by auto-git daemon)
 
 The auto-git daemon committed all changes across 6 commits. Only 2 files remain uncommitted (see section b).
 
 ### Commits (chronological)
 
-| Commit | Description | Files |
-|--------|-------------|-------|
-| `b8d953b8` | Journald 16G→8G, fstrim idle priority, commit=300 mount options | `boot.nix`, `hardware-configuration.nix` |
-| `9f1bd087` | PSI I/O metrics + Monitor365 MemoryMax 2G→4G | `_signoz-metrics.nix`, `monitor365.nix` |
-| `004924be` | fstrim duration + I/O stall rate Gatus checks | `gatus-config.nix`, `system-health.nix` |
+| Commit     | Description                                                         | Files                                                                                                          |
+| ---------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `b8d953b8` | Journald 16G→8G, fstrim idle priority, commit=300 mount options     | `boot.nix`, `hardware-configuration.nix`                                                                       |
+| `9f1bd087` | PSI I/O metrics + Monitor365 MemoryMax 2G→4G                        | `_signoz-metrics.nix`, `monitor365.nix`                                                                        |
+| `004924be` | fstrim duration + I/O stall rate Gatus checks                       | `gatus-config.nix`, `system-health.nix`                                                                        |
 | `864573c7` | BTRFS docs, SLC gotcha, NVMe endurance Gatus check, nvme-metrics.sh | `AGENTS.md`, `gotchas-archive.md`, `gatus-config.nix`, `hardware-configuration.nix`, `scripts/nvme-metrics.sh` |
-| `cf6b06f5` | **BUG 1 FIX:** awk field `$5`→`$4` for PSI I/O avg300 | `_signoz-metrics.nix` |
-| `8fb7fd02` | Status report (previous session) | `docs/status/2026-08-05_00-33_*.md` |
+| `cf6b06f5` | **BUG 1 FIX:** awk field `$5`→`$4` for PSI I/O avg300               | `_signoz-metrics.nix`                                                                                          |
+| `8fb7fd02` | Status report (previous session)                                    | `docs/status/2026-08-05_00-33_*.md`                                                                            |
 
 ### Tasks completed (#6-#23 from original task list)
 
@@ -43,11 +42,13 @@ The auto-git daemon committed all changes across 6 commits. Only 2 files remain 
 ## b) PARTIALLY DONE
 
 ### BUG 2 Fix: NVMe endurance_warning metric — UNCOMMITTED
+
 - **What:** The `node_nvme_endurance_warning` metric was added to the inline `nvmeMetrics` script in `_signoz-metrics.nix` (lines 154-178). This is the fix for the orphaned-script bug identified in the previous status report.
 - **Status:** **UNCOMMITTED** — present in working tree (`git diff HEAD` shows 9 insertions). The auto-git daemon has not picked it up yet.
 - **Impact if deployed without this fix:** The Gatus "NVMe Endurance Warning" check (committed in `864573c7`) would permanently fire because `node_nvme_endurance_warning` doesn't exist in the deployed collector.
 
 ### `nix fmt` reformatting — UNCOMMITTED
+
 - **What:** `nix fmt` reformatted `flake.nix` (the `assert` statement in `nixpkgsTarballGuard` was reformatted by alejandra). Purely cosmetic.
 - **Status:** **UNCOMMITTED** — 1 file changed.
 
@@ -56,6 +57,7 @@ The auto-git daemon committed all changes across 6 commits. Only 2 files remain 
 ## c) NOT STARTED
 
 ### From original task list
+
 - **#10:** File upstream Monitor365 issue — headless agent should disable graphical collectors
 - **#11:** File upstream Monitor365 issue — "Buffer near capacity" should log once, not 119K times
 - **#16:** Add `node_disk_io_time_weighted_seconds_total` rate dashboard to SigNoz
@@ -65,6 +67,7 @@ The auto-git daemon committed all changes across 6 commits. Only 2 files remain 
 - **#25:** Review all systemd services for `IOSchedulingClass=idle` on non-critical services
 
 ### From this session
+
 - **Deploy the changes** — nothing has been deployed yet. All changes are committed/uncommitted but not built or switched.
 - **Verify Gatus checks don't false-alarm after deploy** — especially the I/O stall rate (will fire immediately given current 87% PSI).
 
@@ -73,17 +76,20 @@ The auto-git daemon committed all changes across 6 commits. Only 2 files remain 
 ## d) TOTALLY FUCKED UP
 
 ### BUG 1: PSI I/O awk field index `$5` instead of `$4` (FIXED, COMMITTED `cf6b06f5`)
+
 - **What:** Used `$5` (= `total=`, a raw counter always > 0.10) instead of `$4` (= `avg300=`, the 5-min proportion). Would have made the alert fire permanently.
 - **How I caught it:** Self-review before writing the first status report. Verified against live `/proc/pressure/io` output.
 - **Root cause:** Guessed field positions from memory without checking the PSI format. The existing memory code uses `$2` for avg10, and I assumed the pattern without counting.
 
 ### BUG 2: Edited orphaned `scripts/nvme-metrics.sh` instead of inline Nix derivation (FIXED, UNCOMMITTED)
+
 - **What:** Added `node_nvme_endurance_warning` to `scripts/nvme-metrics.sh`, but the DEPLOYED nvme metrics collector is an inline `pkgs.writeShellApplication` in `_signoz-metrics.nix` that doesn't read from this file.
 - **How I caught it:** Self-review in the first status report. Verified by grepping for how the metric is deployed.
 - **Root cause:** Did not verify the deployment path before editing. Assumed the standalone script was wired in.
 - **Note:** The orphaned edit to `scripts/nvme-metrics.sh` was committed by auto-git (`864573c7`). It's harmless dead code — the script isn't referenced by any Nix module. Could be reverted or left as a reference implementation.
 
 ### NOTHING WAS DEPLOYED
+
 - **What:** All 6 auto-git commits + 2 uncommitted changes exist only in the git working tree. No `nix run .#deploy` was run. The system is running the OLD config.
 - **Impact:** The live I/O PSI at 87% avg300 would NOT trigger any alert right now. The daily fstrim timer still runs at default I/O priority (not idle). The BTRFS mounts still commit every 30s (not 300s). The Monitor365 server still has MemoryMax=2G (not 4G).
 - **Root cause:** I kept finding bugs and stopped to fix them, then the user asked for status reports. Never reached the deploy step.
@@ -111,12 +117,14 @@ The auto-git daemon committed all changes across 6 commits. Only 2 files remain 
 ## f) Up to 50 Things We Should Get Done Next
 
 ### CRITICAL — Do These Before Anything Else
+
 1. ~~**Deploy the changes** — `nix run .#deploy`. Nothing is live yet.~~ done (deployed in subsequent session)
 2. ~~**Verify I/O PSI alert fires** — confirm the Gatus "I/O Stall Rate" check triggers (it should, at 87% avg300).~~ done at `004924be`
 3. ~~**Verify NVMe endurance check does NOT false-alarm** — confirm `node_nvme_endurance_warning` appears in Prometheus after the inline script fix is deployed.~~ done at `556dac12`
 4. ~~**Monitor fstrim duration after deploy** — the daily timer should now run at idle priority. Verify it takes <30 min.~~ done at `e952d7c8` (idle priority deployed)
 
 ### High Priority — I/O & Disk Health
+
 5. File upstream Monitor365 issue: headless agent should disable graphical collectors, not spam warnings
 6. File upstream Monitor365 issue: "Buffer near capacity" should log once, not 119K times
 7. ~~Add `commit=300` to cache subvolume mounts in `snapshots.nix` (`@cache-home`, `@go`, `@npm`, `@cargo`)~~ **NOT-DO/DUPLICATE — `commit=` is filesystem-wide on BTRFS; cache subvolumes inherit from `/` mount**
@@ -130,6 +138,7 @@ The auto-git daemon committed all changes across 6 commits. Only 2 files remain 
 15. Review all non-critical systemd services for `IOSchedulingClass=idle`
 
 ### Medium Priority — Monitoring & Alerting
+
 16. Add BTRFS transaction commit duration monitoring (alert if commit stalls >5s)
 17. Track BTRFS metadata growth rate (alert if metadata growing faster than data)
 18. Add disk I/O latency percentile metrics (p50/p95/p99)
@@ -147,6 +156,7 @@ The auto-git daemon committed all changes across 6 commits. Only 2 files remain 
 30. Add kernel dmesg error scanner (alert on new BUG/WARN/panic in kernel log)
 
 ### BTRFS & Filesystem
+
 31. Consider BTRFS `commit=600` (10 min) if `commit=300` proves insufficient
 32. Add BTRFS device stats monitoring (write_super, write_errors, read_errors)
 33. Track BTRFS free space fragmentation trends
@@ -156,11 +166,13 @@ The auto-git daemon committed all changes across 6 commits. Only 2 files remain 
 37. Add btrfs filesystem df trends to Prometheus
 
 ### NVMe & SMART
+
 38. Monitor NVMe available_spare degradation (alert when spare drops below threshold)
 39. Add NVMe power state monitoring
 40. Track NVMe power_on_hours growth for capacity planning
 
 ### System Hardening
+
 41. Lower `MemoryHigh` on Helium (Chromium) to reduce renderer CoW churn
 42. Consider `systemd-cgroup` I/O weight for critical services (Caddy, DNS, Pocket ID)
 43. Add `LimitNOFILE` audit on all services
@@ -168,6 +180,7 @@ The auto-git daemon committed all changes across 6 commits. Only 2 files remain 
 45. Consider `noCow` on Monitor365 DuckDB file (already on ext4-backed `/data`? verify)
 
 ### Documentation
+
 46. Document the `commit=` per-mount vs filesystem-wide distinction in AGENTS.md
 47. Add a "QLC NAND tuning guide" section to docs/
 48. Create a runbook for WDT crash investigation (step-by-step)

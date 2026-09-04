@@ -5,7 +5,6 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 1. **dnsblockd local DNS records fix** (upstream commit `a8ee3f8` + `114dcd1`)

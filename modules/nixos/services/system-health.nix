@@ -82,6 +82,55 @@ _: {
       # restarts per 2min. 3 restarts in 2 minutes is definitely a crash loop.
       crashLoopRestartThreshold = 3;
 
+      # Crush session pressure: concurrent crush TUI sessions above which a
+      # sustained-pressure alert fires. 2026-08-22 freeze census ran ~12
+      # sessions (52 crush + 50 bun procs) as a major memory consumer;
+      # 6 is roughly double a normal heavy day (user decision: monitor-only).
+      crushSessionAlertThreshold = 6;
+
+      # Forgejo mirror staleness: freshest pull-mirror sync older than this
+      # flags the sync pipeline as stalled. Mirrors run on an 8h interval
+      # with a 30m update_mirrors cron — healthy freshest age is minutes;
+      # 10h = one full interval + slack (2026-08-22 dead-queue outage was
+      # discovered only via frozen mirror.updated_unix).
+      forgejoMirrorStalenessSeconds = 10 * 3600;
+
+      # Forgejo mirror journal-error threshold per 30 min window. The ENOENT
+      # era logged ~100 errors/30min; a single transient git failure should
+      # not page. >=3 = a systematic failure retrying every cron round.
+      forgejoMirrorErrorThreshold = 3;
+
+      # PMA commit-failure threshold per 1h window. The 2026-08-22..09-02
+      # blackout logged hundreds of "commit failed" lines per hour (dead AI
+      # provider, ~3,800 total) while liveness stayed green; a single
+      # transient failure (dirty index race) must not page. >=3/h = the
+      # sustained-failure class.
+      pmaCommitFailureThreshold = 3;
+
+      # PMA heuristic-fallback threshold per 24h window. Fallbacks keep work
+      # landing while the AI provider chain is down (deliberate degraded
+      # mode), so they are visible but non-fatal: a handful per day is normal
+      # FastFlowLM cold-load timing, >=20/day means the LLM path is dead and
+      # every commit message is degraded.
+      pmaHeuristicFallbackThreshold = 20;
+
+      # Pocket ID SQLITE_BUSY event threshold per 24h window. Pocket ID is
+      # the ONLY login path for paperless (SSO-only since 2026-09-02), forgejo,
+      # gatus, immich and every oauth2-proxy vHost — a degraded (locked) DB is
+      # a homelab-wide SPOF event. 2026-09-02 measured 30 events/24h under
+      # memory pressure while the service still served; >=10/24h = sustained
+      # lock contention worth an alert (single transient retries don't page).
+      pocketIdBusyEventThreshold = 10;
+
+      # Slow-churn detection: CUMULATIVE NRestarts since the last explicit
+      # (deploy/manual) start. Catches restart chains that never trip the
+      # per-interval threshold above — e.g. hermes' exit-75 drain-timeout
+      # chain (RestartForceExitStatus=75) restarting once every few minutes
+      # indefinitely while every liveness probe stays green. NRestarts resets
+      # to 0 on every systemctl restart (deploys), so deploy churn itself
+      # cannot accumulate here.
+      restartChurnThreshold = 5;
+
       # Docker container restart alert: restarts per collection interval (2min).
       # The Twenty 235-restart loop had ~12 restarts per 2min. 3 catches rapid loops.
       dockerRestartAlertThreshold = 3;
@@ -92,6 +141,7 @@ _: {
           pkgs.coreutils
           pkgs.gnugrep
           pkgs.gawk
+          pkgs.getent
           pkgs.systemd
           pkgs.curl
           pkgs.jq
@@ -224,7 +274,7 @@ _: {
           RULE_COUNT=0
           RULES_HEALTHY=0
           if [ "$collect_signoz_rules" = "true" ]; then
-            RULE_COUNT=$(curl -sf --max-time 5 http://127.0.0.1:${toString cfg.signoz.port}/api/v1/rules 2>/dev/null | jq '.data.rules | length' 2>/dev/null) || RULE_COUNT=0
+            RULE_COUNT=$(curl -sf --compressed --max-time 5 http://127.0.0.1:${toString cfg.signoz.port}/api/v1/rules 2>/dev/null | jq '.data.rules | length' 2>/dev/null) || RULE_COUNT=0
             RULE_COUNT="''${RULE_COUNT:-0}"
             if [ "$RULE_COUNT" -gt 15 ] 2>/dev/null; then
               RULES_HEALTHY=1
@@ -305,6 +355,189 @@ _: {
             fi
           fi
 
+          # === dnsblockd stats-API wedge probe ===
+          # The :9090 stats API can wedge while DNS stays healthy (2026-08-27:
+          # every HTTP handler stuck mid-request, CLOSE_WAIT pileup, process
+          # idle). The SigNoz scrape-staleness rule catches it via
+          # count(up{service_name="dnsblockd"}); this probe gives Gatus an
+          # INDEPENDENT tripwire that does not depend on dnsblockd's
+          # self-reported OTel labels. 1 = answered HTTP 200 within 5s,
+          # 0 = wedged or unreachable. Emitted ONLY when the probe ran —
+          # absence fails the Gatus anchored presence check fail-closed.
+          collect_dnsblockd_stats=${lib.boolToString cfg.collectDnsblockdStats}
+          DNSBLOCKD_STATS_FRESH=""
+          if [ "$collect_dnsblockd_stats" = "true" ]; then
+            DNSBLOCKD_HTTP_CODE=$(curl -s --compressed --max-time 5 -o /dev/null -w '%{http_code}' "http://127.0.0.1:${toString cfg.dnsblockdStatsPort}/metrics" 2>/dev/null) || DNSBLOCKD_HTTP_CODE="000"
+            if [ "$DNSBLOCKD_HTTP_CODE" = "200" ]; then
+              DNSBLOCKD_STATS_FRESH=1
+            else
+              DNSBLOCKD_STATS_FRESH=0
+            fi
+
+            # === local-zone via SYSTEM resolver probe ===
+            # The :9090/:53 probes prove dnsblockd itself is alive; they stay
+            # GREEN while /etc/resolv.conf drifts off 127.0.0.1 (2026-09-02:
+            # a manual edit to 1.1.1.1 during a NIC-outage DNS incident
+            # killed *.home.lan for every process on the box for ~10h while
+            # gatus stayed green; the blocked deploy was the only symptom).
+            # 1 = the system resolver (resolv.conf path) resolves a
+            # local-zone name, 0 = drift. getent uses glibc NSS = the same
+            # resolution path every other process on the box uses.
+            if getent hosts auth.home.lan >/dev/null 2>&1; then
+              LOCAL_DNS_RESOLVES=1
+            else
+              LOCAL_DNS_RESOLVES=0
+            fi
+          fi
+
+          # === Forgejo pull-mirror sync health ===
+          # Reads forgejo's sqlite DB directly (readonly, gatus pattern):
+          # the API is auth-gated and the journal alone is blind to the
+          # silent failure class. Mirror outages come in two shapes
+          # (2026-08-18..22 incident), each needing its own signal:
+          # 1. ACTIVE failures (forgejo 15.0.6 AddAuthCredentialHelper
+          #    aborting every credentialed sync with ENOENT for 2.5 days;
+          #    DNS-dead allowlist rechecks logging "not allowed") produce
+          #    Error journal lines every cron round — caught by the error
+          #    count. TouchMirror advances mirror.updated_unix on FAILURE
+          #    too, so the DB age alone cannot see this class.
+          # 2. The SILENT dead-queue class: after the 2026-08-22 hard
+          #    freeze every restarted forgejo process had a wedged mirror
+          #    queue — the update_mirrors cron (30m) pushes dedup-skip at
+          #    Trace level and NOTHING is logged; only updated_unix stops
+          #    advancing. Caught by the freshest-sync age. Fail-closed: on
+          #    any read error only system_forgejo_mirror_scrape_errors=1 is
+          #    emitted and the Gatus pat() presence checks go red.
+          collect_forgejo_mirrors=${lib.boolToString cfg.collectForgejoMirrors}
+          FORGEJO_MIRROR_SCRAPE_ERRORS=1
+          FORGEJO_MIRROR_LAST_SYNC_AGE=""
+          FORGEJO_MIRROR_STALLED=""
+          FORGEJO_MIRROR_ERRORS_30M=""
+          FORGEJO_MIRROR_ERRORING=""
+          if [ "$collect_forgejo_mirrors" = "true" ] && [ -r "${cfg.forgejo.dbPath}" ]; then
+            # .timeout: forgejo's DB is hot (action_runner heartbeats every
+            # ~2s) — without a busy-timeout the readonly query dies on the
+            # first SQLITE_BUSY and the check fail-closes permanently.
+            # stderr is captured so failures are diagnosable via
+            # journalctl -u system-health-metrics.
+            FORGEJO_LAST_SYNC=$(sqlite3 -readonly "${cfg.forgejo.dbPath}" ".timeout 5000" "SELECT MAX(updated_unix) FROM mirror" 2>&1) || FORGEJO_LAST_SYNC=""
+            if ! echo "$FORGEJO_LAST_SYNC" | grep -qE '^[0-9]+$'; then
+              echo "system-health: forgejo mirror query failed: $FORGEJO_LAST_SYNC" >&2
+              FORGEJO_LAST_SYNC=""
+            fi
+            if [ -n "$FORGEJO_LAST_SYNC" ]; then
+              FORGEJO_MIRROR_SCRAPE_ERRORS=0
+              FORGEJO_MIRROR_LAST_SYNC_AGE=$((NOW_EPOCH - FORGEJO_LAST_SYNC))
+              if [ "$FORGEJO_MIRROR_LAST_SYNC_AGE" -lt 0 ] 2>/dev/null; then
+                FORGEJO_MIRROR_LAST_SYNC_AGE=0
+              fi
+              FORGEJO_MIRROR_STALLED=0
+              if [ "$FORGEJO_MIRROR_LAST_SYNC_AGE" -ge ${toString forgejoMirrorStalenessSeconds} ] 2>/dev/null; then
+                FORGEJO_MIRROR_STALLED=1
+              fi
+              # BOTH bounds (the 2026-08-31 oomd lesson applies here too —
+              # live the same evening 23:23-23:40: under I/O pressure this
+              # UNBOUNDED journal walk was slow enough that FOUR consecutive
+              # collector runs hit the 3min unit timeout, wrote NO textfile,
+              # and paged SEV1 SYSTEM MONITORING STALE mid-movie on every
+              # flap cycle). `timeout 60` bounds it (raised from 30 on
+              # 2026-09-02: under a 40-80% IO-PSI storm this 30-minute-window
+              # walk exceeded 30s repeatedly, the scan fail-closed, the
+              # omitted system_forgejo_mirror_erroring blocked every deploy
+              # at pre-deploy §10 and paged on collector health instead of
+              # mirror health — 60s matches the oomd-scan bound); journalctl
+              # exit 1 (no matches) is a VALID empty count; exit >= 2 /
+              # timeout 124 fails VISIBLE via scrape_errors — never a
+              # phantom 0-error green.
+              forgejo_scan_status=0
+              FORGEJO_MIRROR_ERRORS_30M=$(timeout 60 journalctl -u forgejo.service --since "-30 min" --grep "AddAuthCredentialHelperForRemote Error|failed to update mirror repository|pull mirror failed to meet migration URL requirements|failed to get remote address" --output cat --no-pager 2>/dev/null | wc -l) || forgejo_scan_status=$?
+              if [ "$forgejo_scan_status" -le 1 ]; then
+                FORGEJO_MIRROR_ERRORS_30M="''${FORGEJO_MIRROR_ERRORS_30M:-0}"
+                FORGEJO_MIRROR_ERRORING=0
+                if [ "$FORGEJO_MIRROR_ERRORS_30M" -ge ${toString forgejoMirrorErrorThreshold} ] 2>/dev/null; then
+                  FORGEJO_MIRROR_ERRORING=1
+                fi
+              else
+                echo "system-health: forgejo mirror journal scan failed (status $forgejo_scan_status)" >&2
+                FORGEJO_MIRROR_ERRORS_30M=""
+                FORGEJO_MIRROR_SCRAPE_ERRORS=1
+              fi
+            fi
+          fi
+
+          # === PMA auto-commit health ===
+          # The 2026-08-22..09-02 blackout: every PMA commit failed against a
+          # dead AI provider (minimax 429, exhausted Token Plan) for 11 days —
+          # ~3,800 failed commits, invisible because nothing watched commit
+          # OUTCOMES (service liveness was green the whole time). Two signals:
+          #   1. "commit failed" lines in the last hour — sustained active
+          #      failure = the blackout class, pages.
+          #   2. "committed via heuristic fallback" lines in 24h — the daemon's
+          #      degraded mode that still lands work; sustained fallbacks mean
+          #      the LLM path is dead (visible, non-fatal threshold).
+          # Same IO discipline as the forgejo scan: --since bounds the journal
+          # walk, timeout 60 bounds the wall clock (raised from 30 on
+          # 2026-09-02 — under the IO-PSI storm + memory emergency the first
+          # live runs hit the 30s ceiling and fail-closed on their OWN scans,
+          # the exact condition they monitor), journalctl exit<=1 is a valid
+          # count (1 = no matches), >=2/timeout fails VISIBLE via
+          # scrape_errors — never a phantom green.
+          collect_pma_commits=${lib.boolToString cfg.collectPmaCommits}
+          PMA_COMMIT_FAILURES_1H=""
+          PMA_COMMIT_FAILURES_OVER=""
+          PMA_HEURISTIC_FALLBACKS_24H=""
+          PMA_HEURISTIC_FALLBACKS_OVER=""
+          PMA_COMMIT_SCRAPE_ERRORS=1
+          if [ "$collect_pma_commits" = "true" ]; then
+            PMA_COMMIT_SCRAPE_ERRORS=0
+            pma_fail_status=0
+            PMA_COMMIT_FAILURES_1H=$(timeout 60 journalctl -u projects-management-automation.service --since "-1h" --grep "commit failed" --output cat --no-pager 2>/dev/null | wc -l) || pma_fail_status=$?
+            pma_fb_status=0
+            PMA_HEURISTIC_FALLBACKS_24H=$(timeout 60 journalctl -u projects-management-automation.service --since "-24h" --grep "committed via heuristic fallback" --output cat --no-pager 2>/dev/null | wc -l) || pma_fb_status=$?
+            if [ "$pma_fail_status" -le 1 ] && [ "$pma_fb_status" -le 1 ]; then
+              PMA_COMMIT_FAILURES_1H="''${PMA_COMMIT_FAILURES_1H:-0}"
+              PMA_HEURISTIC_FALLBACKS_24H="''${PMA_HEURISTIC_FALLBACKS_24H:-0}"
+              PMA_COMMIT_FAILURES_OVER=0
+              [ "$PMA_COMMIT_FAILURES_1H" -ge ${toString pmaCommitFailureThreshold} ] 2>/dev/null && PMA_COMMIT_FAILURES_OVER=1
+              PMA_HEURISTIC_FALLBACKS_OVER=0
+              [ "$PMA_HEURISTIC_FALLBACKS_24H" -ge ${toString pmaHeuristicFallbackThreshold} ] 2>/dev/null && PMA_HEURISTIC_FALLBACKS_OVER=1
+            else
+              echo "system-health: pma commit journal scan failed (fail=$pma_fail_status fallback=$pma_fb_status)" >&2
+              PMA_COMMIT_FAILURES_1H=""
+              PMA_HEURISTIC_FALLBACKS_24H=""
+              PMA_COMMIT_SCRAPE_ERRORS=1
+            fi
+          fi
+
+          # === Pocket ID SQLITE_BUSY (auth SPOF) ===
+          # Pocket ID is the sole identity provider for the SSO-only surface
+          # (paperless has NO second login since 2026-09-02). Under memory/
+          # IO pressure its SQLite journals "database is locked" (2026-08-22:
+          # a fatal locked chain crashed the health check and lost the
+          # dnsblockd client row; 2026-09-02: 30 events/24h during the
+          # zram-full evening while logins still worked — degraded, not dead).
+          # Continuous cover where deploy-time smoke has none. Same journal
+          # doctrine as oomd/forgejo/pma: --since window + timeout ceiling +
+          # journalctl exit<=1 both valid + fail-closed scrape_errors.
+          collect_pocket_id_busy=${lib.boolToString cfg.collectPocketIdBusy}
+          POCKET_ID_BUSY_EVENTS_24H=""
+          POCKET_ID_BUSY_OVER=""
+          POCKET_ID_BUSY_SCRAPE_ERRORS=1
+          if [ "$collect_pocket_id_busy" = "true" ]; then
+            POCKET_ID_BUSY_SCRAPE_ERRORS=0
+            pocket_id_scan_status=0
+            POCKET_ID_BUSY_EVENTS_24H=$(timeout 30 journalctl -u pocket-id.service --since "-24h" --grep "database is locked" --output cat --no-pager 2>/dev/null | wc -l) || pocket_id_scan_status=$?
+            if [ "$pocket_id_scan_status" -le 1 ]; then
+              POCKET_ID_BUSY_EVENTS_24H="''${POCKET_ID_BUSY_EVENTS_24H:-0}"
+              POCKET_ID_BUSY_OVER=0
+              [ "$POCKET_ID_BUSY_EVENTS_24H" -ge ${toString pocketIdBusyEventThreshold} ] 2>/dev/null && POCKET_ID_BUSY_OVER=1
+            else
+              echo "system-health: pocket-id busy journal scan failed (status $pocket_id_scan_status)" >&2
+              POCKET_ID_BUSY_EVENTS_24H=""
+              POCKET_ID_BUSY_SCRAPE_ERRORS=1
+            fi
+          fi
+
           # === Root disk usage ===
           collect_disk_usage=${lib.boolToString cfg.collectDiskUsage}
           DISK_USAGE=0
@@ -341,28 +574,150 @@ _: {
             fi
           fi
 
+          # === Crush agent session census (admission-control monitor) ===
+          # 2026-08-22 freeze census: ~12 concurrent crush sessions (52 crush
+          # + 50 bun procs) were a major RAM consumer. User decision:
+          # monitor-only (no enforcement) — alert when sustained session
+          # pressure exceeds the threshold. Each session = one `crush`
+          # process (TUI); MCP/bun children are excluded by -x.
+          CRUSH_SESSIONS=$(pgrep -x crush 2>/dev/null | wc -l) || CRUSH_SESSIONS=0
+          CRUSH_SESSIONS="''${CRUSH_SESSIONS:-0}"
+          CRUSH_SESSIONS_OVER=0
+          if [ "$CRUSH_SESSIONS" -gt ${toString crushSessionAlertThreshold} ] 2>/dev/null; then
+            CRUSH_SESSIONS_OVER=1
+          fi
+
+          # === Unkillable D-state process census ===
+          # 2026-09-04: a wedged amdxdna driver left 18 llama-server
+          # processes in D-state INSIDE amdxdna_drm_open with a pending,
+          # undeliverable SIGKILL — nothing userspace can kill them, and
+          # every unit restart stranded another corpse. Any process stuck
+          # in uninterruptible sleep for >1h is a driver/firmware wedge;
+          # the only fix is a reboot. Fail-closed: the metric is emitted
+          # ONLY when the /proc scan produced a value.
+          STUCK_DSTATE=$(
+            awk -v now="$(awk '{print int($1)}' /proc/uptime)" '
+              {
+                line = $0
+                sub(/^[^)]*\)[[:space:]]+/, "", line)
+                split(line, f, " ")
+                # f[1] = state (proc(5) field 3); f[20] = starttime
+                # (field 22, USER_HZ=100 ticks) after stripping "pid (comm) ".
+                if (f[1] == "D" && (now - f[20] / 100) >= 3600)
+                  n++
+              }
+              END { print n + 0 }
+            ' /proc/[0-9]*/stat 2>/dev/null || true
+          )
+          STUCK_DSTATE="''${STUCK_DSTATE:-}"
+
+          # === Top-N cgroup memory census ===
+          # The 2026-08-22 freeze postmortem could not answer "who held the
+          # ~30 GiB that kept zram pinned at 98.6% for 2h across 7 guard
+          # trips" without kernel OOM-dump archaeology. This emits the top
+          # cgroups by memory.current with anon/shmem/unevictable breakdown
+          # (memory.stat) — the question becomes a dashboard glance.
+          CENSUS_ENTRIES=$(
+            ${pkgs.findutils}/bin/find /sys/fs/cgroup -xdev -maxdepth 4 -name memory.current 2>/dev/null |
+            while read -r f; do
+              cg=$(dirname "$f")
+              name="''${cg#/sys/fs/cgroup}"
+              name="''${name#/}"
+              [ -n "$name" ] || name=root
+              cur=$(cat "$f" 2>/dev/null) || continue
+              echo "$cur $name"
+            done | sort -rn | head -8 || true
+          )
+
+          # === LAN NIC presence (bus-level disappearance) ===
+          # 2026-08-22: after a hard crash the RTL8125 NIC was absent from
+          # PCI enumeration entirely; r8125 had nothing to probe and the
+          # static-IP stack (networking.interfaces.eno1) never ran — no IP,
+          # SSH dead. Emitted only when lanInterface is set (empty string =
+          # disabled); the matching Gatus check is gated on the SAME
+          # condition — otherwise a NIC-less host would emit a permanent 1
+          # (phantom green).
+          LAN_IF="${cfg.lanInterface}"
+          LAN_NIC_PRESENT=1
+          if [ -n "$LAN_IF" ] && [ ! -e "/sys/class/net/$LAN_IF" ]; then
+            LAN_NIC_PRESENT=0
+          fi
+
+          # === DAS USB link presence (single-link topology root cause) ===
+          # ALL four external disks (2x pool Toshiba, 2x SanDisk incl.
+          # buildcache) share ONE USB link. When it drops without a
+          # reconnect (2026-08-22 00:59), buildcache + pool + SSDs vanish
+          # simultaneously and only consequence alerts fire. This metric
+          # alerts on the CAUSE. Emitted only when dasUsbPath is set (empty
+          # string = disabled); the matching Gatus check is gated identically.
+          DAS_USB_PATH="${cfg.dasUsbPath}"
+          DAS_LINK_PRESENT=1
+          if [ -n "$DAS_USB_PATH" ] && [ ! -e "/sys/bus/usb/devices/$DAS_USB_PATH" ]; then
+            DAS_LINK_PRESENT=0
+          fi
+
+          # === running-system profile anchor (manual-activation detector) ===
+          # Activations outside `nix run .#deploy` (switch-to-configuration
+          # by hand — the banned pattern from the 2026-08-18 google-sync
+          # incident; recurred 2026-08-22 when the ClickHouse XFS migration
+          # was activated with no numbered profile) leave /run/current-system
+          # pointing at a store path no system-N-link references: the next
+          # reboot silently reverts to the last REAL generation and nothing
+          # warns. 1 = anchored to a profile, 0 = revert-on-reboot risk.
+          # Emitted unconditionally (fail-closed).
+          SYSTEM_PROFILED=0
+          RUN_SYS=$(readlink -f /run/current-system 2>/dev/null) || RUN_SYS=""
+          if [ -n "$RUN_SYS" ] && readlink -f /nix/var/nix/profiles/system-*-link 2>/dev/null | grep -qxF "$RUN_SYS"; then
+            SYSTEM_PROFILED=1
+          fi
+
           # === systemd-oomd kills tracking ===
           # systemd-oomd kills (nix-daemon, Twenty worker) went completely
-          # undetected. This counts kill events from the journal since boot
-          # and tracks the delta since last collection to catch new kills.
+          # undetected. This counts kill events from the journal in the
+          # trailing 24h and tracks the delta since last collection to catch
+          # new kills.
+          #
+          # BOTH bounds are load-bearing (2026-08-31 live incident): the
+          # original unbounded scan (no --since) walked the ENTIRE 7.2G
+          # journal under this unit's 128M MemoryMax — page cache charged to
+          # the cgroup thrashed in reclaim and a single run took 11-28 MIN
+          # against a 2min timer interval. The textfile was stale most of
+          # the time and sev1 paged "system_health metrics missing/stale"
+          # on the desktop all afternoon. A 24h window measures ~10s;
+          # `timeout 60` is the hard ceiling so a degraded journal walk can
+          # never wedge the collector again.
+          #
+          # Exit-code semantics matter: journalctl exits 1 when NO entries
+          # match the filter (verified live) — that is a VALID empty count,
+          # NOT a scrape failure; only >=2 (or timeout 124) fail CLOSED via
+          # system_oomd_kills_scrape_errors=1 (Gatus asserts it 0) while
+          # totals are held at last-known: no phantom delta, no phantom
+          # reset.
           collect_oomd=${lib.boolToString cfg.collectOomdKills}
           OOMD_KILLS_TOTAL=0
           OOMD_KILLS_RECENT=0
           OOMD_ALERT=0
+          OOMD_SCRAPE_ERRORS=0
           if [ "$collect_oomd" = "true" ]; then
-            OOMD_KILLS_TOTAL=$(journalctl -u systemd-oomd --grep "Marked.*for killing" --output cat --no-pager 2>/dev/null | wc -l) || OOMD_KILLS_TOTAL=0
-            OOMD_KILLS_TOTAL="''${OOMD_KILLS_TOTAL:-0}"
             prev_oomd=0
             if [ -f "$OOMD_STATE" ]; then
               prev_oomd=$(cat "$OOMD_STATE" 2>/dev/null) || prev_oomd=0
             fi
             prev_oomd="''${prev_oomd:-0}"
+            OOMD_KILLS_TOTAL=$prev_oomd
+            oomd_status=0
+            oomd_out=$(timeout 60 journalctl -u systemd-oomd --since "-24h" --grep "Marked.*for killing" --output cat --no-pager 2>/dev/null | wc -l) || oomd_status=$?
+            if [ "$oomd_status" -le 1 ]; then
+              OOMD_KILLS_TOTAL="''${oomd_out:-0}"
+              echo "$OOMD_KILLS_TOTAL" > "''${OOMD_STATE}.tmp"
+              mv "''${OOMD_STATE}.tmp" "$OOMD_STATE"
+            else
+              OOMD_SCRAPE_ERRORS=1
+            fi
             if [ "$OOMD_KILLS_TOTAL" -gt "$prev_oomd" ] 2>/dev/null; then
               OOMD_KILLS_RECENT=$((OOMD_KILLS_TOTAL - prev_oomd))
               OOMD_ALERT=1
             fi
-            echo "$OOMD_KILLS_TOTAL" > "''${OOMD_STATE}.tmp"
-            mv "''${OOMD_STATE}.tmp" "$OOMD_STATE"
           fi
 
           # === Docker container restart count monitoring ===
@@ -538,6 +893,16 @@ _: {
             echo "# TYPE system_emeet_pixyd_expected_down gauge"
             echo "system_emeet_pixyd_expected_down ''${EMEET_EXPECTED_DOWN}"
 
+            if [ "$collect_dnsblockd_stats" = "true" ]; then
+              echo "# HELP system_dnsblockd_metrics_fresh dnsblockd stats API answered HTTP 200 within the probe timeout (yes=1, wedged or unreachable=0)"
+              echo "# TYPE system_dnsblockd_metrics_fresh gauge"
+              echo "system_dnsblockd_metrics_fresh ''${DNSBLOCKD_STATS_FRESH}"
+
+              echo "# HELP system_local_dns_resolves 1 if the SYSTEM resolver resolves the dnsblockd local zone (catches resolv.conf drift the direct :53/:9090 probes cannot)"
+              echo "# TYPE system_local_dns_resolves gauge"
+              echo "system_local_dns_resolves ''${LOCAL_DNS_RESOLVES}"
+            fi
+
             if [ "$collect_gatus" = "true" ]; then
               echo "# HELP system_gatus_meta_scrape_errors 1 if the gatus sqlite meta-check failed (DB unreadable or query error), 0 otherwise"
               echo "# TYPE system_gatus_meta_scrape_errors gauge"
@@ -551,6 +916,78 @@ _: {
               echo "# HELP system_gatus_results_stale 1 if the gatus result DB has had no writes for >15 minutes, 0 otherwise"
               echo "# TYPE system_gatus_results_stale gauge"
               echo "system_gatus_results_stale ''${GATUS_RESULTS_STALE}"
+            fi
+
+            if [ "$collect_forgejo_mirrors" = "true" ]; then
+              echo "# HELP system_forgejo_mirror_scrape_errors Scrape status of the forgejo mirror sqlite read: 0 = OK, 1 = DB unreadable or mirror table empty (fail-closed)"
+              echo "# TYPE system_forgejo_mirror_scrape_errors gauge"
+              echo "system_forgejo_mirror_scrape_errors ''${FORGEJO_MIRROR_SCRAPE_ERRORS}"
+            fi
+            if [ -n "$FORGEJO_MIRROR_LAST_SYNC_AGE" ]; then
+              echo "# HELP system_forgejo_mirror_last_sync_age_seconds Age of the freshest pull-mirror sync (now - MAX(mirror.updated_unix)). TouchMirror advances updated_unix on failure too, so this goes stale ONLY when nothing runs at all (dead queue / dead scheduler)"
+              echo "# TYPE system_forgejo_mirror_last_sync_age_seconds gauge"
+              echo "system_forgejo_mirror_last_sync_age_seconds ''${FORGEJO_MIRROR_LAST_SYNC_AGE}"
+
+              echo "# HELP system_forgejo_mirror_sync_stalled Stall flag for the freshest pull-mirror sync: 1 when older than ${toString forgejoMirrorStalenessSeconds}s (one 8h interval + slack), 0 otherwise"
+              echo "# TYPE system_forgejo_mirror_sync_stalled gauge"
+              echo "system_forgejo_mirror_sync_stalled ''${FORGEJO_MIRROR_STALLED}"
+            fi
+            # The journal-scan pair is gated on its OWN emptiness (not
+            # LAST_SYNC_AGE): the scan-failure path (timeout 124 / exit >= 2
+            # under IO pressure) empties ONLY these two while the sqlite read
+            # succeeded — emitting "metric " with no value is INVALID
+            # exposition syntax and node_exporter then rejects the ENTIRE
+            # system_health.prom (all 38 system_* metrics dark, every deploy
+            # blocked at pre-deploy §10 — live 2026-09-02, twice). Absent
+            # lines + scrape_errors=1 is the documented fail-closed design.
+            if [ -n "$FORGEJO_MIRROR_ERRORS_30M" ]; then
+              echo "# HELP system_forgejo_mirror_errors_30m Forgejo mirror-sync Error journal lines in the last 30 minutes (credential-helper aborts, allowlist rejections, fetch failures)"
+              echo "# TYPE system_forgejo_mirror_errors_30m gauge"
+              echo "system_forgejo_mirror_errors_30m ''${FORGEJO_MIRROR_ERRORS_30M}"
+
+              echo "# HELP system_forgejo_mirror_erroring Error flag: 1 when >=${toString forgejoMirrorErrorThreshold} mirror-sync Error lines hit the forgejo journal within 30 minutes, 0 otherwise"
+              echo "# TYPE system_forgejo_mirror_erroring gauge"
+              echo "system_forgejo_mirror_erroring ''${FORGEJO_MIRROR_ERRORING}"
+            fi
+
+            if [ "$collect_pma_commits" = "true" ]; then
+              echo "# HELP system_pma_commit_scrape_errors Scrape status of the PMA commit journal scan: 0 = OK, 1 = journalctl failed (fail-closed)"
+              echo "# TYPE system_pma_commit_scrape_errors gauge"
+              echo "system_pma_commit_scrape_errors ''${PMA_COMMIT_SCRAPE_ERRORS}"
+            fi
+            if [ -n "$PMA_COMMIT_FAILURES_1H" ]; then
+              echo "# HELP system_pma_commit_failures_1h PMA commit failures (journal \"commit failed\" lines) in the last hour"
+              echo "# TYPE system_pma_commit_failures_1h gauge"
+              echo "system_pma_commit_failures_1h ''${PMA_COMMIT_FAILURES_1H}"
+
+              echo "# HELP system_pma_commit_failures_over_threshold 1 when the 1h failure count reaches the sustained-failure threshold (${toString pmaCommitFailureThreshold}), 0 otherwise"
+              echo "# TYPE system_pma_commit_failures_over_threshold gauge"
+              echo "system_pma_commit_failures_over_threshold ''${PMA_COMMIT_FAILURES_OVER}"
+
+              echo "# HELP system_pma_commit_heuristic_fallbacks_24h PMA commits landed with a heuristic (non-AI) message in the last 24h — degraded mode that keeps work landing while the AI provider chain is down"
+              echo "# TYPE system_pma_commit_heuristic_fallbacks_24h gauge"
+              echo "system_pma_commit_heuristic_fallbacks_24h ''${PMA_HEURISTIC_FALLBACKS_24H}"
+
+              echo "# HELP system_pma_commit_fallbacks_over_threshold 1 when the 24h heuristic-fallback count means the LLM path is dead (${toString pmaHeuristicFallbackThreshold}+), 0 otherwise"
+              echo "# TYPE system_pma_commit_fallbacks_over_threshold gauge"
+              echo "system_pma_commit_fallbacks_over_threshold ''${PMA_HEURISTIC_FALLBACKS_OVER}"
+            fi
+
+            if [ "$collect_pocket_id_busy" = "true" ]; then
+              echo "# HELP system_pocket_id_busy_scrape_errors Scrape status of the pocket-id SQLITE_BUSY journal scan: 0 = OK, 1 = journalctl failed/timeout (fail-closed)"
+              echo "# TYPE system_pocket_id_busy_scrape_errors gauge"
+              echo "system_pocket_id_busy_scrape_errors ''${POCKET_ID_BUSY_SCRAPE_ERRORS}"
+            fi
+            # Absent pair + scrape_errors=1 is the documented fail-closed
+            # design (a value-less line would dark the whole textfile).
+            if [ -n "$POCKET_ID_BUSY_EVENTS_24H" ]; then
+              echo "# HELP system_pocket_id_busy_events_24h SQLITE_BUSY (\"database is locked\") journal lines from pocket-id in the last 24h — the auth-SPOF degradation signal"
+              echo "# TYPE system_pocket_id_busy_events_24h gauge"
+              echo "system_pocket_id_busy_events_24h ''${POCKET_ID_BUSY_EVENTS_24H}"
+
+              echo "# HELP system_pocket_id_busy_over_threshold 1 when SQLITE_BUSY events reach the sustained-contention threshold (${toString pocketIdBusyEventThreshold}/24h), 0 otherwise"
+              echo "# TYPE system_pocket_id_busy_over_threshold gauge"
+              echo "system_pocket_id_busy_over_threshold ''${POCKET_ID_BUSY_OVER}"
             fi
 
             echo "# HELP system_disk_usage_percent Root filesystem usage percentage (0-100)"
@@ -583,10 +1020,64 @@ _: {
               echo "system_zram_fill_over_threshold ''${ZRAM_OVER}"
             fi
 
+            if [ -n "$LAN_IF" ]; then
+              echo "# HELP system_lan_nic_present 1 if the primary LAN NIC (${cfg.lanInterface}) exists in /sys/class/net, 0 if it fell off the bus"
+              echo "# TYPE system_lan_nic_present gauge"
+              echo "system_lan_nic_present ''${LAN_NIC_PRESENT}"
+            fi
+
+            if [ -n "$DAS_USB_PATH" ]; then
+              echo "# HELP system_das_link_present 1 if the DAS USB link (${cfg.dasUsbPath}) exists in /sys/bus/usb/devices, 0 if it dropped"
+              echo "# TYPE system_das_link_present gauge"
+              echo "system_das_link_present ''${DAS_LINK_PRESENT}"
+            fi
+
+            echo "# HELP system_crush_sessions Concurrent crush agent sessions (main TUI processes, MCP children excluded)"
+            echo "# TYPE system_crush_sessions gauge"
+            echo "system_crush_sessions ''${CRUSH_SESSIONS}"
+
+            echo "# HELP system_crush_sessions_over_threshold 1 if crush sessions exceed ${toString crushSessionAlertThreshold} (sustained session pressure — 2026-08-22 freeze contributing load), 0 otherwise"
+            echo "# TYPE system_crush_sessions_over_threshold gauge"
+            echo "system_crush_sessions_over_threshold ''${CRUSH_SESSIONS_OVER}"
+
+            if [ -n "$STUCK_DSTATE" ]; then
+              echo "# HELP system_stuck_dstate_processes Processes in uninterruptible (D) state for >1h — unkillable even by SIGKILL (driver/firmware wedge, e.g. amdxdna 2026-09-04); reboot is the only fix"
+              echo "# TYPE system_stuck_dstate_processes gauge"
+              echo "system_stuck_dstate_processes ''${STUCK_DSTATE}"
+            fi
+
+            echo "# HELP system_cgroup_mem_bytes memory.current of the top cgroups by usage (who is holding RAM)"
+            echo "# TYPE system_cgroup_mem_bytes gauge"
+            echo "# HELP system_cgroup_mem_anon_bytes anonymous memory (memory.stat anon) of the same top cgroups"
+            echo "# TYPE system_cgroup_mem_anon_bytes gauge"
+            echo "# HELP system_cgroup_mem_shmem_bytes shared/tmpfs/shmem memory (memory.stat shmem — the unevictable-under-full-swap class) of the same top cgroups"
+            echo "# TYPE system_cgroup_mem_shmem_bytes gauge"
+            echo "# HELP system_cgroup_mem_unevictable_bytes mlocked/unevictable memory (memory.stat unevictable) of the same top cgroups"
+            echo "# TYPE system_cgroup_mem_unevictable_bytes gauge"
+            if [ -n "$CENSUS_ENTRIES" ]; then
+              echo "$CENSUS_ENTRIES" | while read -r cur name; do
+                [ -n "$name" ] || continue
+                label=$(echo "$name" | tr '/' '_')
+                cgdir="/sys/fs/cgroup/$name"
+                anon=$(awk '$1 == "anon" {print $2}' "$cgdir/memory.stat" 2>/dev/null) || anon=0
+                shmem=$(awk '$1 == "shmem" {print $2}' "$cgdir/memory.stat" 2>/dev/null) || shmem=0
+                unevict=$(awk '$1 == "unevictable" {print $2}' "$cgdir/memory.stat" 2>/dev/null) || unevict=0
+                echo "system_cgroup_mem_bytes{cgroup=\"$label\"} ''${cur:-0}"
+                echo "system_cgroup_mem_anon_bytes{cgroup=\"$label\"} ''${anon:-0}"
+                echo "system_cgroup_mem_shmem_bytes{cgroup=\"$label\"} ''${shmem:-0}"
+                echo "system_cgroup_mem_unevictable_bytes{cgroup=\"$label\"} ''${unevict:-0}"
+              done
+            fi
+
+            echo "# HELP system_current_system_profiled 1 if /run/current-system matches a numbered nix profile generation (deployed via nix run .#deploy), 0 if manually activated (reboot would revert to the last real generation)"
+            echo "# TYPE system_current_system_profiled gauge"
+            echo "system_current_system_profiled ''${SYSTEM_PROFILED}"
+
             echo "# HELP system_service_crash_loop 1 if service restarted >=${toString crashLoopRestartThreshold} times since last collection, 0 otherwise"
             echo "# TYPE system_service_crash_loop gauge"
 
             ANY_CRASH_LOOP=0
+            ANY_CHURN=0
             ${lib.concatMapStrings (svc: ''
               svc="${svc}"
               cur_r=$(systemctl_value "$svc" -p NRestarts)
@@ -602,13 +1093,23 @@ _: {
                 ANY_CRASH_LOOP=1
               fi
               echo "system_service_crash_loop{service=\"$svc\"} ''${crash_loop}"
+              churn=0
+              if [ "$cur_r" -ge ${toString restartChurnThreshold} ] 2>/dev/null; then
+                churn=1
+                ANY_CHURN=1
+              fi
+              echo "system_service_restart_churn{service=\"$svc\"} ''${churn}"
             '') cfg.monitoredServices}
 
             echo "# HELP system_any_service_crash_loop 1 if ANY monitored service is crash-looping (>=${toString crashLoopRestartThreshold} restarts per interval), 0 otherwise"
             echo "# TYPE system_any_service_crash_loop gauge"
             echo "system_any_service_crash_loop ''${ANY_CRASH_LOOP}"
 
-            echo "# HELP system_oomd_kills_total Total systemd-oomd kill events since boot"
+            echo "# HELP system_any_service_restart_churn 1 if ANY monitored service accumulated >=${toString restartChurnThreshold} automatic restarts since its last explicit start (slow churn under the crash-loop radar), 0 otherwise"
+            echo "# TYPE system_any_service_restart_churn gauge"
+            echo "system_any_service_restart_churn ''${ANY_CHURN}"
+
+            echo "# HELP system_oomd_kills_total systemd-oomd kill events in the trailing 24h (bounded scan, see collector)"
             echo "# TYPE system_oomd_kills_total gauge"
             echo "system_oomd_kills_total ''${OOMD_KILLS_TOTAL}"
 
@@ -620,16 +1121,61 @@ _: {
             echo "# TYPE system_oomd_kills_alert gauge"
             echo "system_oomd_kills_alert ''${OOMD_ALERT}"
 
+            echo "# HELP system_oomd_kills_scrape_errors 1 if the bounded oomd journal scan failed or timed out (totals held at last-known values), 0 otherwise"
+            echo "# TYPE system_oomd_kills_scrape_errors gauge"
+            echo "system_oomd_kills_scrape_errors ''${OOMD_SCRAPE_ERRORS}"
+
+            # === User-manager unit failure monitoring (2026-08-31) ===
+            # smart-audio (a USER unit) sat dead in start-limit-hit the whole
+            # 16:38 boot while every system-level check stayed green: nothing
+            # watched the user manager. Counts failed units per monitored user
+            # via the machined bus proxy (--machine=<user>@.host --user, the
+            # documented root->user-bus pattern). Every call is bounded by
+            # timeout(1) — a wedged user manager must never stall the
+            # collector. Distinguishes logout from wedge: /run/user/<uid>
+            # absent = logged out (legitimate, no alert); present but query
+            # failed = scrape_errors 1 (the dnsblockd-:9090 wedge class).
+            echo "# HELP system_user_units_failed Failed units in the user's systemd --user manager (via machined; 0 = healthy or manager not running)"
+            echo "# TYPE system_user_units_failed gauge"
+            echo "# HELP system_user_manager_reachable 1 if the user manager answered via machined, 0 if not running (logged out) — informational, no alert"
+            echo "# TYPE system_user_manager_reachable gauge"
+            echo "# HELP system_user_units_scrape_errors 1 if the user manager should be reachable (/run/user/<uid> exists) but the query failed or timed out (wedge class), 0 otherwise"
+            echo "# TYPE system_user_units_scrape_errors gauge"
+            # Unquoted interpolation on purpose: usernames are config-set
+            # [a-z0-9_-] identifiers (no glob/space chars possible), and a
+            # quoted single-user list trips shellcheck SC2041.
+            # shellcheck disable=SC2043  # single-user hosts legitimately iterate once; the list is config-generated
+            for u in ${lib.concatMapStringsSep " " (u: "${u}") cfg.monitoredUserManagers}; do
+              user_failed=0
+              user_reachable=0
+              user_scrape_err=0
+              user_uid=$(id -u "$u" 2>/dev/null) || user_uid=""
+              if user_units="$(timeout 10 systemctl --machine="$u"@.host --user --no-legend --plain list-units --state=failed 2>/dev/null)"; then
+                user_reachable=1
+                if [ -n "$user_units" ]; then
+                  user_failed=$(printf '%s\n' "$user_units" | grep -c .) || user_failed=0
+                fi
+              elif [ -n "$user_uid" ] && [ -e "/run/user/$user_uid" ]; then
+                user_scrape_err=1
+              fi
+              echo "system_user_units_failed{user=\"$u\"} ''${user_failed}"
+              echo "system_user_manager_reachable{user=\"$u\"} ''${user_reachable}"
+              echo "system_user_units_scrape_errors{user=\"$u\"} ''${user_scrape_err}"
+            done
+
             echo "# HELP docker_container_restart_count Total restart count per Docker container"
             echo "# TYPE docker_container_restart_count gauge"
 
             echo "# HELP docker_container_restart_alert 1 if container restarted >=${toString dockerRestartAlertThreshold} times since last collection, 0 otherwise"
             echo "# TYPE docker_container_restart_alert gauge"
 
-            if [ "$collect_docker" = "true" ] && docker info >/dev/null 2>&1; then
+            # timeout-bounded: a wedged/slow dockerd must never stall the
+            # collector into its unit timeout (same class as the 2026-08-31
+            # evening forgejo journal walk).
+            if [ "$collect_docker" = "true" ] && timeout 15 docker info >/dev/null 2>&1; then
               : > "''${DOCKER_STATE}.tmp"
-              for cname in $(docker ps --format '{{.Names}}' 2>/dev/null); do
-                cur_rc=$(docker inspect --format '{{.RestartCount}}' "$cname" 2>/dev/null) || cur_rc=0
+              for cname in $(timeout 15 docker ps --format '{{.Names}}' 2>/dev/null); do
+                cur_rc=$(timeout 10 docker inspect --format '{{.RestartCount}}' "$cname" 2>/dev/null) || cur_rc=0
                 cur_rc="''${cur_rc:-0}"
                 echo "$cname $cur_rc" >> "''${DOCKER_STATE}.tmp"
                 prev_rc="''${prev_docker_restarts[$cname]:-0}"
@@ -655,6 +1201,17 @@ _: {
           mv "$TMP" "$OUT"
         '';
       };
+      lanNicWatchdog = pkgs.writeShellApplication {
+        name = "lan-nic-watchdog-check";
+        text = ''
+          IF="${cfg.lanInterface}"
+          if [ ! -e "/sys/class/net/$IF" ]; then
+            echo "LAN NIC '$IF' ABSENT — the PCIe device fell off the bus (2026-08-22: after a hard crash the RTL8125 [10ec:8125] was missing from PCI enumeration entirely; the SDHCI reader shifted into its slot c1:00.0). A warm reboot does NOT reliably retrain it: POWER-CYCLE the machine (shut down, wait ~10s, power on). Until then there is NO wired networking — the static LAN IP is unreachable and SSH is dead." >&2
+            exit 1
+          fi
+          echo "LAN NIC '$IF' present"
+        '';
+      };
     in
     {
       options.services.system-health = {
@@ -678,7 +1235,9 @@ _: {
             "forgejo"
             "gatus"
             "gotenberg"
+            "hermes"
             "homepage-dashboard"
+            "lan-nic-watchdog"
             "llama-embeddings"
             "llama-reranker"
             "monitor365"
@@ -689,6 +1248,7 @@ _: {
             "paperless-task-queue"
             "paperless-web"
             "pocket-id"
+            "postfix"
             "projects-management-automation"
             "signoz"
             "tika"
@@ -732,6 +1292,64 @@ _: {
           description = "Collect Gatus endpoint failure meta-check (monitoring the monitor)";
         };
 
+        collectForgejoMirrors = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = ''
+            Collect forgejo pull-mirror sync health: freshest-sync age from
+            the forgejo sqlite DB (catches the silent dead-queue class where
+            the update_mirrors cron logs nothing) plus mirror-sync Error
+            journal rate (catches active aborts — credential-helper ENOENT,
+            allowlist rejections). Auto-disabled on hosts without forgejo.
+          '';
+        };
+
+        collectPmaCommits = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = ''
+            Collect PMA auto-commit outcome health: "commit failed" journal
+            rate over 1h (the sustained-failure blackout class — 2026-08-22
+            ..09-02 every commit failed on a dead AI provider for 11 days
+            while liveness stayed green) and heuristic-fallback commits over
+            24h (the degraded mode that keeps work landing without the LLM;
+            sustained fallbacks mean the provider chain is down).
+            Auto-disabled on hosts without PMA.
+          '';
+        };
+
+        collectDnsblockdStats = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = ''
+            Probe the dnsblockd stats API (/metrics) for wedge detection —
+            catches the 2026-08-27 class where DNS stays healthy but every
+            HTTP handler on the stats port hangs. Emits
+            system_dnsblockd_metrics_fresh (1 = answered HTTP 200 within 5s,
+            0 = wedged/unreachable). Auto-disabled on hosts without
+            dns-blocker.
+          '';
+        };
+
+        collectPocketIdBusy = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = ''
+            Collect Pocket ID SQLITE_BUSY health: "database is locked"
+            journal events over 24h. Pocket ID is the ONLY login path for
+            the SSO-only surface (paperless since 2026-09-02, plus forgejo/
+            gatus/immich/oauth2-proxy) — sustained lock contention is a
+            homelab-wide auth degradation that deploy-time smoke cannot see.
+            Auto-disabled on hosts without pocket-id.
+          '';
+        };
+
+        dnsblockdStatsPort = lib.mkOption {
+          type = lib.types.port;
+          default = 9090;
+          description = "Port of the dnsblockd stats API to probe (mirrors services.dns-blocker.statsPort)";
+        };
+
         collectDiskUsage = lib.mkOption {
           type = lib.types.bool;
           default = true;
@@ -744,6 +1362,19 @@ _: {
           description = "Collect systemd-oomd kill events from journal";
         };
 
+        monitoredUserManagers = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = lib.optional (config.users ? primaryUser) config.users.primaryUser;
+          description = ''
+            Users whose systemd --user manager is checked for failed units
+            (system_user_units_failed via the machined bus proxy). Catches
+            user-unit deaths invisible to system-level monitoring
+            (2026-08-31: smart-audio sat in start-limit-hit the whole boot
+            with nothing alerting). Empty list disables the section and its
+            Gatus check.
+          '';
+        };
+
         collectDockerRestarts = lib.mkOption {
           type = lib.types.bool;
           default = true;
@@ -754,6 +1385,34 @@ _: {
           type = lib.types.bool;
           default = true;
           description = "Collect zram swap fill metrics from /sys/block/zram0/mm_stat (auto-disabled without zramSwap)";
+        };
+
+        lanInterface = lib.mkOption {
+          type = lib.types.str;
+          default = "eno1";
+          description = ''
+            Primary LAN NIC to watch for bus-level disappearance. When the
+            interface is absent from /sys/class/net, system_lan_nic_present
+            emits 0 and the lan-nic-watchdog unit fails (2026-08-22: after a
+            hard crash the RTL8125 fell off the PCIe bus entirely — PCI
+            enumeration showed no 10ec:8125, the SDHCI reader shifted into
+            its slot, and a WARM reboot did not retrain it; only the second
+            reboot brought it back). Set to "" to disable.
+          '';
+        };
+
+        dasUsbPath = lib.mkOption {
+          type = lib.types.str;
+          default = "8-1";
+          description = ''
+            USB bus path of the DAS link that carries all external disks
+            (pool members + buildcache + spare SSDs). When absent from
+            /sys/bus/usb/devices, system_das_link_present emits 0 and the
+            Gatus "DAS USB Link" check alerts on the root cause instead of
+            N consequence alerts (2026-08-22: link dropped without a single
+            reconnect attempt for 22+ min while buildcache/pool checks were
+            the only signals). Set to "" to disable.
+          '';
         };
 
         signoz.port = lib.mkOption {
@@ -772,6 +1431,12 @@ _: {
           type = lib.types.str;
           default = "/var/lib/private/gatus/gatus.db";
           description = "Host path to the gatus sqlite DB (DynamicUser hides /var/lib/gatus behind /var/lib/private on the host)";
+        };
+
+        forgejo.dbPath = lib.mkOption {
+          type = lib.types.str;
+          default = "/var/lib/forgejo/data/forgejo.db";
+          description = "Host path to the forgejo sqlite DB (read readonly for mirror sync staleness)";
         };
 
         monitor365.stateDir = lib.mkOption {
@@ -798,6 +1463,18 @@ _: {
           // (lib.optionalAttrs (options ? services.gatus) {
             collectGatusHealth = lib.mkDefault (config.services.gatus.enable or false);
           })
+          // (lib.optionalAttrs (options ? services.forgejo) {
+            collectForgejoMirrors = lib.mkDefault (config.services.forgejo.enable or false);
+            collectPmaCommits = lib.mkDefault (config.services.projects-management-automation.enable or false);
+            forgejo.dbPath = lib.mkDefault (config.services.forgejo.stateDir + "/data/forgejo.db");
+          })
+          // (lib.optionalAttrs (options ? services.dns-blocker) {
+            collectDnsblockdStats = lib.mkDefault (config.services.dns-blocker.enable or false);
+            dnsblockdStatsPort = lib.mkDefault (config.services.dns-blocker.statsPort or 9090);
+          })
+          // (lib.optionalAttrs (options ? services.pocket-id) {
+            collectPocketIdBusy = lib.mkDefault (config.services.pocket-id.enable or false);
+          })
           // (lib.optionalAttrs (options ? virtualisation.docker) {
             collectDockerRestarts = lib.mkDefault (config.virtualisation.docker.enable or false);
           })
@@ -816,12 +1493,26 @@ _: {
             serviceConfig = lib.mkMerge [
               (harden {
                 MemoryMax = "128M";
+                # CAP_DAC_READ_SEARCH: the collector runs as root but harden{}
+                # strips all caps — without this it cannot traverse forgejo's
+                # 0700 stateDir to read the mirror-sync sqlite (the -r gate
+                # silently fail-closes system_forgejo_mirror_scrape_errors=1,
+                # 2026-08-22). Same pattern as atticd-storage-dir.
+                CapabilityBoundingSet = "CAP_DAC_READ_SEARCH";
               })
               (serviceOneshotDefaults { })
               {
                 Type = "oneshot";
                 ExecStart = lib.getExe systemHealthMetrics;
                 ReadWritePaths = [ textfileDir ];
+                # Explicit ceiling (2026-08-31): the unbounded oomd journal
+                # scan once wedged this collector for 11-28 min. The global
+                # DefaultTimeoutStartSec=3min DOES apply (rendered into
+                # /etc/systemd/system.conf by timeout-audit.nix — verified
+                # live via `systemctl show -p DefaultTimeoutStartUSec`), but
+                # a collection that cannot finish in 3min is wedged: fail it
+                # into onFailure alerting instead of sitting in activating.
+                TimeoutStartSec = "3min";
               }
             ];
           };
@@ -831,6 +1522,36 @@ _: {
             timerConfig = {
               OnBootSec = "30s";
               OnUnitActiveSec = cfg.interval;
+            };
+          };
+
+          # Fails loudly (systemctl --failed + notify-failure) when the LAN
+          # NIC is absent — either at boot (PCIe vanish after hard crash,
+          # 2026-08-22) or at runtime (the DAS USB link dropped the same
+          # night while running). The Gatus check on system_lan_nic_present
+          # is the alerting path; this unit makes the failure visible on the
+          # host itself.
+          services.lan-nic-watchdog = lib.mkIf (cfg.lanInterface != "") {
+            description = "LAN NIC presence watchdog (fails when ${cfg.lanInterface} falls off the bus — power-cycle required)";
+            inherit onFailure;
+            serviceConfig = lib.mkMerge [
+              (harden {
+                MemoryMax = "32M";
+              })
+              (serviceOneshotDefaults { })
+              {
+                Type = "oneshot";
+                ExecStart = lib.getExe lanNicWatchdog;
+              }
+            ];
+          };
+
+          timers.lan-nic-watchdog = lib.mkIf (cfg.lanInterface != "") {
+            description = "Check LAN NIC presence every 10 minutes (first check 90s after boot)";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnBootSec = "90s";
+              OnUnitActiveSec = "10min";
             };
           };
         };

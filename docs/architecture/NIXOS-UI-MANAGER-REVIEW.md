@@ -11,16 +11,16 @@
 
 ### Your Current Stack
 
-| Component           | Status          | Configuration                                                           |
-| ------------------- | --------------- | ----------------------------------------------------------------------- |
+| Component           | Status         | Configuration                                                           |
+| ------------------- | -------------- | ----------------------------------------------------------------------- |
 | **Display Manager** | ⚠️ Needs Update | SDDM (Wayland **disabled** for AMD stability)                           |
-| **Primary WM**      | ✅ Modern       | Hyprland (type-safe configuration, Xwayland enabled)                    |
+| **Primary WM**      | ✅ Modern      | Hyprland (type-safe configuration, Xwayland enabled)                    |
 | **Alternative WMs** | ⚠️ Overkill     | Sway, Niri, LabWC, Awesome (rarely used)                                |
-| **Terminal**        | ✅ Good         | Kitty + Ghostty                                                         |
-| **Status Bar**      | ✅ Good         | Waybar                                                                  |
-| **Launcher**        | ✅ Good         | Rofi                                                                    |
-| **Screen Lock**     | ✅ Good         | Hyprlock + Swaylock                                                     |
-| **Key Features**    | ✅ Excellent    | Animated wallpapers, workspace rules, blur effects, 10 named workspaces |
+| **Terminal**        | ✅ Good        | Kitty + Ghostty                                                         |
+| **Status Bar**      | ✅ Good        | Waybar                                                                  |
+| **Launcher**        | ✅ Good        | Rofi                                                                    |
+| **Screen Lock**     | ✅ Good        | Hyprlock + Swaylock                                                     |
+| **Key Features**    | ✅ Excellent   | Animated wallpapers, workspace rules, blur effects, 10 named workspaces |
 
 ### Strengths
 
@@ -75,8 +75,8 @@ You have SDDM with Wayland disabled. Most devs with AMD GPUs now successfully ru
 
 **Ranking by Developer Usage (2025):**
 
-| Rank | WM             | Popularity        | Trend       | Why                                                   |
-| ---- | -------------- | ----------------- | ----------- | ----------------------------------------------------- |
+| Rank | WM             | Popularity        | Trend      | Why                                                   |
+| ---- | -------------- | ----------------- | ---------- | ----------------------------------------------------- |
 | 1    | **Hyprland**   | 🚀 Massive growth | ⬆️ Upward   | Smooth animations, Wayland native, active development |
 | 2    | **Sway**       | 📊 Stable         | ↔️ Steady   | i3-like familiar, battle-tested, Wayland support      |
 | 3    | **KDE Plasma** | 💪 Strong         | ⬆️ Upward   | Full DE with tiling option, feature-rich              |
@@ -754,15 +754,15 @@ systemd.user.services.libinput-gestures = {
 
 ## 🚀 Quick Wins (1-2 hours total)
 
-| Priority | Change                     | Impact     | Time   | Risk      |
-| -------- | -------------------------- | ---------- | ------ | --------- |
+| Priority | Change                     | Impact     | Time   | Risk     |
+| -------- | -------------------------- | ---------- | ------ | -------- |
 | 1        | Enable SDDM Wayland        | ⭐⭐⭐⭐⭐ | 5 min  | ⚠️ Medium |
-| 2        | Add `hy3` plugin           | ⭐⭐⭐⭐   | 10 min | ✅ Low    |
-| 3        | Add Quake terminal         | ⭐⭐⭐⭐   | 20 min | ✅ Low    |
-| 4        | Fix cursor size            | ⭐⭐⭐     | 2 min  | ✅ None   |
-| 5        | Screenshot+OCR             | ⭐⭐⭐     | 10 min | ✅ Low    |
-| 6        | Add Waybar GPU/CPU modules | ⭐⭐⭐     | 15 min | ✅ Low    |
-| 7        | Clean up unused WMs        | ⭐⭐       | 10 min | ✅ Low    |
+| 2        | Add `hy3` plugin           | ⭐⭐⭐⭐   | 10 min | ✅ Low   |
+| 3        | Add Quake terminal         | ⭐⭐⭐⭐   | 20 min | ✅ Low   |
+| 4        | Fix cursor size            | ⭐⭐⭐     | 2 min  | ✅ None  |
+| 5        | Screenshot+OCR             | ⭐⭐⭐     | 10 min | ✅ Low   |
+| 6        | Add Waybar GPU/CPU modules | ⭐⭐⭐     | 15 min | ✅ Low   |
+| 7        | Clean up unused WMs        | ⭐⭐       | 10 min | ✅ Low   |
 
 **Total Time:** 1 hour 12 minutes
 **Total Impact:** ⭐⭐⭐⭐ (major productivity and experience improvements)
@@ -962,15 +962,15 @@ Hyprland
 
 | Feature                | You               | Cool Devs 2025                   | Gap | Priority |
 | ---------------------- | ----------------- | -------------------------------- | --- | -------- |
-| **Display Manager**    | SDDM (no Wayland) | Greetd or SDDM Wayland           | ⚠️  | 1        |
+| **Display Manager**    | SDDM (no Wayland) | Greetd or SDDM Wayland           | ⚠️   | 1        |
 | **Primary WM**         | Hyprland ✅       | Hyprland (you're ahead!)         | ✅  | -        |
-| **Plugins**            | hyprwinwrap       | hy3, hyprsplit, virtual-desktops | ⚠️  | 2        |
-| **Productivity Tools** | Basic             | Quake, OCR, gestures             | ⚠️  | 3-6      |
-| **Monitoring**         | Waybar (basic)    | Waybar + Eww widgets             | ⚠️  | 6        |
-| **Gaming Support**     | None              | Gamemode, MangoHUD               | ⚠️  | 7        |
-| **Cursor Size**        | 144px             | 24-48px                          | ⚠️  | 4        |
-| **Multi-WM**           | 4 WMs             | 1-2 WMs                          | ⚠️  | 7        |
-| **Theme**              | Mixed             | Catppuccin/Dracula               | ℹ️  | Optional |
+| **Plugins**            | hyprwinwrap       | hy3, hyprsplit, virtual-desktops | ⚠️   | 2        |
+| **Productivity Tools** | Basic             | Quake, OCR, gestures             | ⚠️   | 3-6      |
+| **Monitoring**         | Waybar (basic)    | Waybar + Eww widgets             | ⚠️   | 6        |
+| **Gaming Support**     | None              | Gamemode, MangoHUD               | ⚠️   | 7        |
+| **Cursor Size**        | 144px             | 24-48px                          | ⚠️   | 4        |
+| **Multi-WM**           | 4 WMs             | 1-2 WMs                          | ⚠️   | 7        |
+| **Theme**              | Mixed             | Catppuccin/Dracula               | ℹ️   | Optional |
 
 **Gap Analysis:**
 

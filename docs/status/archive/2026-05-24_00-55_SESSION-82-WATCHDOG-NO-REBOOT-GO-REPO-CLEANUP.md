@@ -71,12 +71,12 @@ This was committed during the session as part of `8b6d8d5` ("docs: update FEATUR
 
 ### Upstream Repo Commits (NOT YET COMMITTED)
 
-| Repo                             | Modified Files                                | Status                                                                                                 |
-| -------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Repo                             | Modified Files                                | Status                                                                                                |
+| -------------------------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `go-structure-linter`            | `flake.nix`                                   | ⚠️ Uncommitted — removed stale `go-branded-id v0.1.0` requireDep, updated vendorHash, `go_1_26` → `go` |
 | `branching-flow`                 | `flake.nix`                                   | ⚠️ Uncommitted — `go_1_26` → `go`, removed dead GOFLAGS                                                |
 | `projects-management-automation` | `flake.nix`, `flake.lock`, `go.mod`, `go.sum` | ⚠️ Uncommitted — added branching-flow + go-error-family + go-finding deps, removed GOFLAGS             |
-| `buildflow`                      | None                                          | ✅ No changes needed (but 1 unpushed commit + dirty docs)                                              |
+| `buildflow`                      | None                                          | ✅ No changes needed (but 1 unpushed commit + dirty docs)                                             |
 
 ### library-policy Uncommitted (Unrelated)
 
@@ -108,18 +108,18 @@ These are unrelated to nix/build work — appear to be in-progress test refactor
 
 ## C) NOT STARTED
 
-| #   | Item                                                               | Description                                                                                    |
-| --- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| 1   | `just switch` deployment                                           | Cannot proceed until upstream repos committed + pushed + flake.lock updated                    |
-| 2   | Smoke test all 4 binaries on evo-x2                                | Verify buildflow, go-structure-linter, library-policy, PMA work in NixOS env                   |
-| 3   | Publish `branching-flow/pkg/stats` as proper Go module             | Currently only resolves via go.work locally or _local_deps in Nix                              |
-| 4   | Centralize `mkPreparedSource.nix` into shared flake input          | Currently copy-pasted into buildflow, go-structure-linter, library-policy, PMA, branching-flow |
-| 5   | Add `go-error-family` follows to branching-flow input in SystemNix | branching-flow depends on go-error-family (in go.mod) but SystemNix doesn't follow it          |
-| 6   | Add GitHub Actions CI to Go repos                                  | None have CI validating nix builds                                                             |
-| 7   | Create `just update-vendor-hash` recipe                            | Automate vendor hash update cycle                                                              |
-| 8   | Archive old `docs/status/` files                                   | 112 files — all within 2 weeks so not urgent                                                   |
-| 9   | Add version ldflags to library-policy production build             | Other repos have it                                                                            |
-| 10  | Fix `boot.zfs.forceImportRoot` warning                             | Default `true` in rpi3-dns config                                                              |
+| #  | Item                                                               | Description                                                                                    |
+| -- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| 1  | `just switch` deployment                                           | Cannot proceed until upstream repos committed + pushed + flake.lock updated                    |
+| 2  | Smoke test all 4 binaries on evo-x2                                | Verify buildflow, go-structure-linter, library-policy, PMA work in NixOS env                   |
+| 3  | Publish `branching-flow/pkg/stats` as proper Go module             | Currently only resolves via go.work locally or _local_deps in Nix                              |
+| 4  | Centralize `mkPreparedSource.nix` into shared flake input          | Currently copy-pasted into buildflow, go-structure-linter, library-policy, PMA, branching-flow |
+| 5  | Add `go-error-family` follows to branching-flow input in SystemNix | branching-flow depends on go-error-family (in go.mod) but SystemNix doesn't follow it          |
+| 6  | Add GitHub Actions CI to Go repos                                  | None have CI validating nix builds                                                             |
+| 7  | Create `just update-vendor-hash` recipe                            | Automate vendor hash update cycle                                                              |
+| 8  | Archive old `docs/status/` files                                   | 112 files — all within 2 weeks so not urgent                                                   |
+| 9  | Add version ldflags to library-policy production build             | Other repos have it                                                                            |
+| 10 | Fix `boot.zfs.forceImportRoot` warning                             | Default `true` in rpi3-dns config                                                              |
 
 ---
 
@@ -165,48 +165,48 @@ Session 82 was entirely cleanup/fix work with no failed approaches. All changes 
 
 ### Critical (blocking deployment)
 
-| #   | Task                                               | Effort | Why                                  |
-| --- | -------------------------------------------------- | ------ | ------------------------------------ |
-| 1   | Commit changes in `go-structure-linter`            | 2 min  | Blocks flake.lock update             |
-| 2   | Commit changes in `branching-flow`                 | 2 min  | Blocks flake.lock update             |
-| 3   | Commit changes in `projects-management-automation` | 2 min  | Blocks flake.lock update             |
-| 4   | Push all 3 repos + push SystemNix                  | 2 min  | Gets changes to remote               |
-| 5   | Update SystemNix flake.lock for 3 repos            | 2 min  | Resolves non-existent input warnings |
-| 6   | Commit `display-watchdog.sh` in SystemNix          | 1 min  | Auto-reboot removal                  |
-| 7   | `just switch` on evo-x2                            | 5 min  | Deploy everything                    |
+| # | Task                                               | Effort | Why                                  |
+| - | -------------------------------------------------- | ------ | ------------------------------------ |
+| 1 | Commit changes in `go-structure-linter`            | 2 min  | Blocks flake.lock update             |
+| 2 | Commit changes in `branching-flow`                 | 2 min  | Blocks flake.lock update             |
+| 3 | Commit changes in `projects-management-automation` | 2 min  | Blocks flake.lock update             |
+| 4 | Push all 3 repos + push SystemNix                  | 2 min  | Gets changes to remote               |
+| 5 | Update SystemNix flake.lock for 3 repos            | 2 min  | Resolves non-existent input warnings |
+| 6 | Commit `display-watchdog.sh` in SystemNix          | 1 min  | Auto-reboot removal                  |
+| 7 | `just switch` on evo-x2                            | 5 min  | Deploy everything                    |
 
 ### High Priority
 
-| #   | Task                                                               | Effort | Why                                    |
-| --- | ------------------------------------------------------------------ | ------ | -------------------------------------- |
-| 8   | Smoke test all 4 binaries on evo-x2                                | 5 min  | Verify they actually work              |
-| 9   | Audit ALL scripts for `systemctl reboot` calls                     | 5 min  | User rejected auto-reboot pattern      |
-| 10  | Publish `branching-flow` with `pkg/stats` as proper Go module      | 15 min | Eliminates PMA `overrideModAttrs` hack |
-| 11  | Remove `overrideModAttrs` from PMA after branching-flow publish    | 5 min  | Cleanup                                |
-| 12  | Add `go-error-family` follows to branching-flow input in SystemNix | 2 min  | branching-flow depends on it           |
-| 13  | Centralize `mkPreparedSource.nix` into shared flake input          | 30 min | Stop copy-pasting between repos        |
+| #  | Task                                                               | Effort | Why                                    |
+| -- | ------------------------------------------------------------------ | ------ | -------------------------------------- |
+| 8  | Smoke test all 4 binaries on evo-x2                                | 5 min  | Verify they actually work              |
+| 9  | Audit ALL scripts for `systemctl reboot` calls                     | 5 min  | User rejected auto-reboot pattern      |
+| 10 | Publish `branching-flow` with `pkg/stats` as proper Go module      | 15 min | Eliminates PMA `overrideModAttrs` hack |
+| 11 | Remove `overrideModAttrs` from PMA after branching-flow publish    | 5 min  | Cleanup                                |
+| 12 | Add `go-error-family` follows to branching-flow input in SystemNix | 2 min  | branching-flow depends on it           |
+| 13 | Centralize `mkPreparedSource.nix` into shared flake input          | 30 min | Stop copy-pasting between repos        |
 
 ### Medium Priority
 
-| #   | Task                                                   | Effort | Why                          |
-| --- | ------------------------------------------------------ | ------ | ---------------------------- |
-| 14  | Add version ldflags to library-policy production build | 5 min  | All other repos have it      |
-| 15  | Audit all Go repos for stale `GOFLAGS = "-mod=mod"`    | 10 min | Dead config, cargo-culted    |
-| 16  | Audit all Go repos for `go_1_26` vs `go`               | 10 min | Inconsistent version pinning |
-| 17  | Fix `boot.zfs.forceImportRoot` warning in rpi3-dns     | 2 min  | Silences eval warning        |
-| 18  | Clean up `docs/status/` — 112 files                    | 15 min | Clutter                      |
-| 19  | Delete `result` symlink in buildflow repo              | 1 min  | Build artifact in repo root  |
+| #  | Task                                                   | Effort | Why                          |
+| -- | ------------------------------------------------------ | ------ | ---------------------------- |
+| 14 | Add version ldflags to library-policy production build | 5 min  | All other repos have it      |
+| 15 | Audit all Go repos for stale `GOFLAGS = "-mod=mod"`    | 10 min | Dead config, cargo-culted    |
+| 16 | Audit all Go repos for `go_1_26` vs `go`               | 10 min | Inconsistent version pinning |
+| 17 | Fix `boot.zfs.forceImportRoot` warning in rpi3-dns     | 2 min  | Silences eval warning        |
+| 18 | Clean up `docs/status/` — 112 files                    | 15 min | Clutter                      |
+| 19 | Delete `result` symlink in buildflow repo              | 1 min  | Build artifact in repo root  |
 
 ### Lower Priority
 
-| #   | Task                                                                  | Effort | Why                          |
-| --- | --------------------------------------------------------------------- | ------ | ---------------------------- |
-| 20  | Add GitHub Actions CI to all Go repos (nix build check)               | 1 hr   | Catch breakage early         |
-| 21  | `nix flake check` on all repos                                        | 10 min | Validate all repos           |
-| 22  | Create `just update-vendor-hash` recipe for Go repos                  | 15 min | Automate vendor hash cycle   |
-| 23  | Run `just test` (full build) on SystemNix                             | 20 min | More thorough than test-fast |
-| 24  | Archive `docs/status/` files older than 2 weeks                       | 10 min | Housekeeping                 |
-| 25  | Update AGENTS.md with mkPreparedSource patterns + no-auto-reboot rule | 10 min | Documentation                |
+| #  | Task                                                                  | Effort | Why                          |
+| -- | --------------------------------------------------------------------- | ------ | ---------------------------- |
+| 20 | Add GitHub Actions CI to all Go repos (nix build check)               | 1 hr   | Catch breakage early         |
+| 21 | `nix flake check` on all repos                                        | 10 min | Validate all repos           |
+| 22 | Create `just update-vendor-hash` recipe for Go repos                  | 15 min | Automate vendor hash cycle   |
+| 23 | Run `just test` (full build) on SystemNix                             | 20 min | More thorough than test-fast |
+| 24 | Archive `docs/status/` files older than 2 weeks                       | 10 min | Housekeeping                 |
+| 25 | Update AGENTS.md with mkPreparedSource patterns + no-auto-reboot rule | 10 min | Documentation                |
 
 ---
 

@@ -25,7 +25,7 @@ Session 34 focused on **eliminating pnpm from the build chain** and conducting a
 | `pkgs/jscpd.nix`                  | `buildNpmPackage` + `npmDepsHash` + vendored `package-lock.json` | `fetchPnpmDeps` + `pnpmConfigHook` + vendored `pnpm-lock.yaml` | ✅ Migrated |
 | `ai-stack.nix` (unsloth frontend) | `${pkgs.nodejs_22}/bin/npm install/build` (3 calls)              | `${pkgs.pnpm}/bin/pnpm install/build` (3 calls)                | ✅ Migrated |
 | `base.nix` system packages        | `nodejs` + `pnpm` installed                                      | `pnpm` only (bun provides JS runtime)                          | ✅ Removed  |
-| `justfile` clean recipe           | `pnpm cache clean --force`                                        | Removed (pnpm store prune retained)                            | ✅ Removed  |
+| `justfile` clean recipe           | `pnpm cache clean --force`                                       | Removed (pnpm store prune retained)                            | ✅ Removed  |
 | `buildNpmPackage` references      | 1 (`jscpd.nix`)                                                  | 0                                                              | ✅ Zero     |
 | `nodejs` in buildInputs           | `ai-stack.nix` (`nodejs_22`)                                     | Replaced with `pnpm`                                           | ✅ Removed  |
 
@@ -231,53 +231,53 @@ Session 34 focused on **eliminating pnpm from the build chain** and conducting a
 
 ### Priority 1: Critical Fixes (do immediately)
 
-| #   | Task                                                                                  | Impact                     | Effort |
-| --- | ------------------------------------------------------------------------------------- | -------------------------- | ------ |
-| 1   | **Fix jscpd pnpmDeps hash** — build, get `got:` hash, paste in                        | Unblocks jscpd package     | 5 min  |
-| 2   | **Investigate Caddy failure** — check logs, fix TLS/sops/config                       | Restores all reverse proxy | 30 min |
-| 3   | **Fix timeshift-backup/verify** — root cause 4-session persistent failure             | Restores backup capability | 1h     |
-| 4   | **Clean up root disk** — `nix-collect-garbage --delete-older-than 7d`, auto-GC config | Prevents disk exhaustion   | 15 min |
-| 5   | **Trash `pkgs/jscpd-package-lock.json`** — dead pnpm lockfile                          | Cleanup                    | 1 min  |
+| # | Task                                                                                  | Impact                     | Effort |
+| - | ------------------------------------------------------------------------------------- | -------------------------- | ------ |
+| 1 | **Fix jscpd pnpmDeps hash** — build, get `got:` hash, paste in                        | Unblocks jscpd package     | 5 min  |
+| 2 | **Investigate Caddy failure** — check logs, fix TLS/sops/config                       | Restores all reverse proxy | 30 min |
+| 3 | **Fix timeshift-backup/verify** — root cause 4-session persistent failure             | Restores backup capability | 1h     |
+| 4 | **Clean up root disk** — `nix-collect-garbage --delete-older-than 7d`, auto-GC config | Prevents disk exhaustion   | 15 min |
+| 5 | **Trash `pkgs/jscpd-package-lock.json`** — dead pnpm lockfile                         | Cleanup                    | 1 min  |
 
 ### Priority 2: Security Hardening (this week)
 
-| #   | Task                                                                                | Impact                   | Effort |
-| --- | ----------------------------------------------------------------------------------- | ------------------------ | ------ |
-| 6   | **Enable Incus** — `virtualisation.incus.enable = true`, preseed config, nftables   | Workload isolation       | 2h     |
-| 7   | **Create Incus VM for browsers** — move helium to isolated VM                       | Contain browser exploits | 1h     |
-| 8   | **Document `lib.mkForce false` justifications** — add comments to all 6 bypasses    | Auditability             | 30 min |
-| 9   | **Add fail2ban jails for Caddy + Gitea** — HTTP auth failures, API abuse            | Protects web services    | 30 min |
-| 10  | **Enable AppArmor in complain mode** — `apparmor.enable = true`, profile generation | MAC foundation           | 2h     |
+| #  | Task                                                                                | Impact                   | Effort |
+| -- | ----------------------------------------------------------------------------------- | ------------------------ | ------ |
+| 6  | **Enable Incus** — `virtualisation.incus.enable = true`, preseed config, nftables   | Workload isolation       | 2h     |
+| 7  | **Create Incus VM for browsers** — move helium to isolated VM                       | Contain browser exploits | 1h     |
+| 8  | **Document `lib.mkForce false` justifications** — add comments to all 6 bypasses    | Auditability             | 30 min |
+| 9  | **Add fail2ban jails for Caddy + Gitea** — HTTP auth failures, API abuse            | Protects web services    | 30 min |
+| 10 | **Enable AppArmor in complain mode** — `apparmor.enable = true`, profile generation | MAC foundation           | 2h     |
 
 ### Priority 3: Code Quality (this week)
 
-| #   | Task                                                                         | Impact                   | Effort |
-| --- | ---------------------------------------------------------------------------- | ------------------------ | ------ |
-| 11  | **Update TODO_LIST.md** — reflect sessions 33-34 work                        | Accurate tracking        | 15 min |
-| 12  | **Update AGENTS.md** — document pnpm→pnpm migration, remove nodejs references | Knowledge base accuracy  | 20 min |
-| 13  | **Clean gitignore** — remove `pnpm-debug.log*` from git.nix                   | Cleanup                  | 2 min  |
-| 14  | **Consolidate voice-agents Caddy vHost** — into caddy.nix pattern            | Architecture consistency | 30 min |
-| 15  | **Add SigNoz per-threshold channel routing** — critical→Discord, warning→log | Alert quality            | 1h     |
+| #  | Task                                                                          | Impact                   | Effort |
+| -- | ----------------------------------------------------------------------------- | ------------------------ | ------ |
+| 11 | **Update TODO_LIST.md** — reflect sessions 33-34 work                         | Accurate tracking        | 15 min |
+| 12 | **Update AGENTS.md** — document pnpm→pnpm migration, remove nodejs references | Knowledge base accuracy  | 20 min |
+| 13 | **Clean gitignore** — remove `pnpm-debug.log*` from git.nix                   | Cleanup                  | 2 min  |
+| 14 | **Consolidate voice-agents Caddy vHost** — into caddy.nix pattern             | Architecture consistency | 30 min |
+| 15 | **Add SigNoz per-threshold channel routing** — critical→Discord, warning→log  | Alert quality            | 1h     |
 
 ### Priority 4: Infrastructure (next 2 weeks)
 
-| #   | Task                                                                          | Impact               | Effort |
-| --- | ----------------------------------------------------------------------------- | -------------------- | ------ |
-| 16  | **Configure automated Nix GC** — `nix.gc` with `dates = "weekly"`             | Prevents disk bloat  | 15 min |
-| 17  | **Fix niri-health-metrics race condition** — add proper ordering/dependencies | Clean health metrics | 30 min |
-| 18  | **Provision Pi 3 for DNS failover** — flash NixOS, wire as secondary DNS      | HA DNS               | 3h     |
-| 19  | **Deploy Dozzle** — Docker log viewer at `logs.home.lan`                      | Observability gap    | 1h     |
-| 20  | **Set up WireGuard VPN** — encrypted remote access                            | Remote security      | 2h     |
+| #  | Task                                                                          | Impact               | Effort |
+| -- | ----------------------------------------------------------------------------- | -------------------- | ------ |
+| 16 | **Configure automated Nix GC** — `nix.gc` with `dates = "weekly"`             | Prevents disk bloat  | 15 min |
+| 17 | **Fix niri-health-metrics race condition** — add proper ordering/dependencies | Clean health metrics | 30 min |
+| 18 | **Provision Pi 3 for DNS failover** — flash NixOS, wire as secondary DNS      | HA DNS               | 3h     |
+| 19 | **Deploy Dozzle** — Docker log viewer at `logs.home.lan`                      | Observability gap    | 1h     |
+| 20 | **Set up WireGuard VPN** — encrypted remote access                            | Remote security      | 2h     |
 
 ### Priority 5: Long-term Architecture (next month)
 
-| #   | Task                                                                    | Impact              | Effort |
-| --- | ----------------------------------------------------------------------- | ------------------- | ------ |
-| 21  | **Migrate to nix-colors** — eliminate 17+ hardcoded colors              | Theme consistency   | 6h     |
-| 22  | **Enable auditd** — when NixOS 26.05 bug is fixed                       | Forensic capability | 1h     |
-| 23  | **Explore Secure Boot** — custom signing keys, boot chain verification  | Boot security       | 4h     |
-| 24  | **Evaluate off-site backup** — B2/S3 for critical data                  | Disaster recovery   | 3h     |
-| 25  | **Create Incus VM for AI workloads** — isolate Ollama, ComfyUI, Unsloth | Contain AI GPU bugs | 2h     |
+| #  | Task                                                                    | Impact              | Effort |
+| -- | ----------------------------------------------------------------------- | ------------------- | ------ |
+| 21 | **Migrate to nix-colors** — eliminate 17+ hardcoded colors              | Theme consistency   | 6h     |
+| 22 | **Enable auditd** — when NixOS 26.05 bug is fixed                       | Forensic capability | 1h     |
+| 23 | **Explore Secure Boot** — custom signing keys, boot chain verification  | Boot security       | 4h     |
+| 24 | **Evaluate off-site backup** — B2/S3 for critical data                  | Disaster recovery   | 3h     |
+| 25 | **Create Incus VM for AI workloads** — isolate Ollama, ComfyUI, Unsloth | Contain AI GPU bugs | 2h     |
 
 ---
 
@@ -325,11 +325,11 @@ systemctl status caddy.service
 
 | File                                  | Change                                                                |
 | ------------------------------------- | --------------------------------------------------------------------- |
-| `modules/nixos/services/ai-stack.nix` | pnpm → pnpm (3 calls), `nodejs_22` → `pnpm`                            |
+| `modules/nixos/services/ai-stack.nix` | pnpm → pnpm (3 calls), `nodejs_22` → `pnpm`                           |
 | `pkgs/jscpd.nix`                      | `buildNpmPackage` → `fetchPnpmDeps` + `pnpmConfigHook`                |
 | `pkgs/jscpd-pnpm-lock.yaml`           | **NEW** — vendored pnpm lockfile (replaces `jscpd-package-lock.json`) |
 | `platforms/common/packages/base.nix`  | Removed `nodejs` from system packages                                 |
-| `justfile`                            | Removed `pnpm cache clean --force`                                     |
+| `justfile`                            | Removed `pnpm cache clean --force`                                    |
 | `pkgs/README.md`                      | Updated jscpd source description                                      |
 
 ---

@@ -1,0 +1,2479 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      Disk Layout Blueprint · Samsung Role Assignment · SystemNix evo-x2
+    </title>
+    <style>
+      /* =========================================================================
+         BAUHAUS LIGHT — Editorial template
+         Design language: form follows function. Primary colors on warm paper.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Light) --- */
+        --color-paper: #f4f4f0;
+        --color-paper-2: #ffffff;
+        --color-paper-3: #e8e8e2;
+        --color-ink: #111111;
+        --color-red: #e63946;
+        --color-blue: #1d3557;
+        --color-yellow: #f4d35e;
+        --color-hairline: rgba(17, 17, 17, 0.14);
+        --color-hairline-strong: rgba(17, 17, 17, 0.3);
+
+        /* --- Semantic layer --- */
+        --surface: var(--color-paper);
+        --surface-raised: var(--color-paper-2);
+        --surface-sunken: var(--color-paper-3);
+        --text: var(--color-ink);
+        --text-muted: rgba(17, 17, 17, 0.72);
+        --text-faint: rgba(17, 17, 17, 0.5);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-red);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber: var(--warning);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 22%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 12%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 12%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px;
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .sidebar a {
+        font-size: 0.86rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-left: 4px solid transparent;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      h1 {
+        font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+        line-height: 1.05;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px solid var(--text);
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      .prose-ul {
+        margin: 0.5rem 0 1rem 1.2rem;
+      }
+      .prose-ul li {
+        margin: 0.25rem 0;
+        font-size: 0.94rem;
+      }
+
+      .hero {
+        padding: 1.5rem 0 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--text);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin-bottom: 0.9rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0 0 1rem;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.6rem;
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+      }
+      .tag.amber {
+        background: var(--warning);
+        border-color: var(--warning);
+        color: var(--text);
+      }
+      .tag.teal {
+        background: var(--solution);
+        border-color: var(--solution);
+        color: var(--surface);
+      }
+
+      .hero-shapes {
+        position: relative;
+        height: 90px;
+        margin-bottom: 1.2rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        right: 180px;
+        width: 64px;
+        height: 64px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 26px;
+        right: 90px;
+        width: 56px;
+        height: 56px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-left: 32px solid transparent;
+        border-right: 32px solid transparent;
+        border-bottom: 56px solid var(--warning);
+      }
+      .hero-shapes .bar {
+        position: absolute;
+        bottom: 0;
+        right: 230px;
+        width: 100px;
+        height: 14px;
+        background: var(--text);
+      }
+
+      .scorecard,
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        margin: 1.5rem 0 2rem;
+        border: 3px solid var(--text);
+      }
+      .score-card,
+      .stat-card {
+        padding: 1.3rem 1rem;
+        text-align: center;
+        border-right: 3px solid var(--text);
+        background: var(--surface-raised);
+      }
+      .score-card:last-child,
+      .stat-card:last-child {
+        border-right: none;
+      }
+
+      .score,
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.2rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-card .label,
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 0.5rem;
+      }
+      .score-good,
+      .stat-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .score-warn,
+      .stat-warn {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .score-bad,
+      .stat-bad {
+        background: var(--problem);
+        color: var(--surface);
+      }
+
+      .card {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+
+      .issue {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.6rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid var(--text);
+        color: var(--text);
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: var(--warning);
+      }
+      .badge-medium {
+        background: var(--surface-sunken);
+      }
+      .badge-low {
+        background: var(--surface-raised);
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-sunken);
+        font-size: 0.92rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-teal,
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 10%,
+          var(--surface-raised)
+        );
+      }
+      .callout-amber,
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 18%,
+          var(--surface-raised)
+        );
+      }
+
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.3rem;
+        line-height: 1.3;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+        border: 2px solid var(--text);
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--text);
+        color: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border-strong);
+      }
+      th:last-child {
+        border-right: none;
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+      }
+      td:last-child {
+        border-right: none;
+      }
+      tr:nth-child(even) td {
+        background: var(--surface-sunken);
+      }
+      table.compare td.yes {
+        color: var(--solution);
+        font-weight: 700;
+      }
+      table.compare td.no {
+        color: var(--problem);
+        font-weight: 700;
+      }
+
+      pre {
+        background: var(--text);
+        color: var(--surface);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        border: 2px solid var(--text);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--warning);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: #95e1d3;
+      }
+      .tok-comment {
+        color: rgba(244, 244, 240, 0.45);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #6eb5ff;
+      }
+      .tok-number {
+        color: var(--warning);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #6eb5ff;
+      }
+      .tok-punct {
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .tok-attr {
+        color: var(--warning);
+      }
+
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 2px solid var(--text);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--surface-sunken);
+        border: 1px solid var(--text);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      .toc {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      .migration-step {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1.1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.94rem;
+      }
+
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 3px solid var(--text);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+
+      /* =========================================================================
+         Disk-layout visualization components (report-specific)
+         ========================================================================= */
+
+      .bar-caption {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin: 1.2rem 0 0.35rem;
+      }
+
+      .disk {
+        border: 2px solid var(--text);
+        background: var(--surface-raised);
+        margin: 1.25rem 0;
+      }
+      .disk-head {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 0.5rem;
+        padding: 0.9rem 1.2rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .disk-title {
+        font-weight: 900;
+        font-size: 1.05rem;
+        letter-spacing: -0.01em;
+      }
+      .disk-sub {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+      }
+      .disk-body {
+        padding: 0.4rem 1.2rem 1.2rem;
+      }
+      .disk-bar {
+        display: flex;
+        height: 76px;
+        border: 2px solid var(--text);
+      }
+      .seg {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 0.1rem;
+        padding: 0.25rem 0.4rem;
+        overflow: hidden;
+        flex: 1 1 0;
+        min-width: 12px;
+        font-family: var(--font-mono);
+        font-size: 0.64rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        text-align: center;
+        line-height: 1.35;
+        border-right: 2px solid var(--text);
+      }
+      .seg:last-child {
+        border-right: none;
+      }
+      .seg .sz {
+        font-weight: 900;
+        font-size: 0.8rem;
+      }
+      .seg .ph {
+        font-size: 0.54rem;
+        opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+      .seg-blue {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .seg-blue-tint {
+        background: color-mix(
+          in srgb,
+          var(--solution) 16%,
+          var(--surface-raised)
+        );
+        color: var(--text);
+      }
+      .seg-yellow {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .seg-red {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .seg-green {
+        background: color-mix(in srgb, var(--solution) 55%, var(--surface));
+        color: var(--text);
+      }
+      .seg-neutral {
+        background: var(--surface-sunken);
+        color: var(--text-muted);
+      }
+      .seg-optional {
+        background-image: repeating-linear-gradient(
+          45deg,
+          transparent 0,
+          transparent 6px,
+          color-mix(in srgb, var(--surface) 60%, transparent) 6px,
+          color-mix(in srgb, var(--surface) 60%, transparent) 12px
+        );
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem 1.2rem;
+        margin: 0.8rem 0 0.5rem;
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-muted);
+      }
+      .legend .key {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        margin-right: 0.4rem;
+        vertical-align: -1px;
+        border: 1px solid var(--text);
+      }
+      .key-blue {
+        background: var(--solution);
+      }
+      .key-blue-tint {
+        background: color-mix(
+          in srgb,
+          var(--solution) 16%,
+          var(--surface-raised)
+        );
+      }
+      .key-yellow {
+        background: var(--warning);
+      }
+      .key-red {
+        background: var(--problem);
+      }
+      .key-green {
+        background: color-mix(in srgb, var(--solution) 55%, var(--surface));
+      }
+      .key-neutral {
+        background: var(--surface-sunken);
+      }
+      .key-optional {
+        background: repeating-linear-gradient(
+          45deg,
+          var(--surface-raised) 0,
+          var(--surface-raised) 3px,
+          var(--surface-sunken) 3px,
+          var(--surface-sunken) 6px
+        );
+      }
+
+      .tier {
+        display: grid;
+        grid-template-columns: 170px 1fr auto;
+        gap: 1rem;
+        align-items: center;
+        padding: 0.9rem 1.2rem;
+        border: 2px solid var(--text);
+        background: var(--surface-raised);
+        margin-bottom: 0.6rem;
+      }
+      .tier .t-name {
+        font-weight: 900;
+        font-size: 1rem;
+        line-height: 1.25;
+      }
+      .tier .t-name small {
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.2rem;
+      }
+      .tier .t-desc {
+        font-size: 0.92rem;
+        color: var(--text-muted);
+      }
+      .tier .t-lat {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .tier-blue {
+        border-left: 8px solid var(--solution);
+      }
+      .tier-yellow {
+        border-left: 8px solid var(--warning);
+      }
+      .tier-neutral {
+        border-left: 8px solid var(--border-strong);
+      }
+
+      .bootline {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        line-height: 2;
+        padding: 0.9rem 1.1rem;
+        border: 2px solid var(--text);
+        background: var(--surface-sunken);
+        margin: 0.8rem 0;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+      .bootline b {
+        color: var(--accent);
+      }
+      .bootline .stays {
+        color: var(--text-muted);
+      }
+
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .scorecard,
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-right: none;
+        }
+        .score-card:nth-child(1),
+        .stat-card:nth-child(1),
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-bottom: 3px solid var(--text);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+        .hero-shapes {
+          display: none;
+        }
+        .disk-bar {
+          flex-direction: column;
+          height: auto;
+        }
+        .seg {
+          border-right: none;
+          border-bottom: 2px solid var(--text);
+          min-height: 52px;
+        }
+        .seg:last-child {
+          border-bottom: none;
+        }
+        .tier {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-bar">
+      <span>Disk Layout Blueprint · SystemNix / evo-x2</span>
+      <span>2026-08-31 · Rev 2</span>
+      <span>Companion: Samsung Role Assignment</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#tiers">Tier model</a>
+          <a href="#perf">Measured physics</a>
+          <a href="#target">Layout: today &rarr; target</a>
+          <a href="#boot">Boot chain</a>
+          <a href="#beforeafter">Before / After</a>
+          <a href="#stays">Stays on QLC</a>
+          <a href="#support">Supporting tiers</a>
+          <a href="#capacity">Capacity math</a>
+          <a href="#phases">Migration phases</a>
+          <a href="#risks">Risks &amp; rescue</a>
+          <a href="#decisions">Decisions</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <header class="hero">
+          <div class="hero-shapes">
+            <div class="bar"></div>
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="eyebrow">
+            Storage Blueprint &middot; 2026-08-31 &middot; Rev 2
+          </div>
+          <h1>
+            Samsung 970 EVO Plus: the synchronous disk.<br />Lexar QLC: the
+            streaming disk.
+          </h1>
+          <p class="subtitle">
+            Visual companion to the role-assignment decision doc. What lands on
+            the new 1 TB TLC drive, what stays on the 2 TB QLC, where boot
+            lives, and how the migration gets there without a closure gap. Rev
+            2: partition geometry ratified (4 G reserved ESP + one BTRFS pool),
+            hot DBs on a nodatacow <code>hot</code> subvol instead of XFS, and
+            occupancy figures measured live via <code>lsblk</code>/<code
+              >df</code
+            >
+            on this host.
+          </p>
+          <div class="meta">
+            <span class="tag amber">Status: PROPOSED</span>
+            <span class="tag">Host: evo-x2</span>
+            <span class="tag teal">Boot disk: Lexar QLC (unchanged)</span>
+            <span class="tag">ESP reserved: 4 G</span>
+            <span class="tag">Endurance: 600 TBW</span>
+          </div>
+        </header>
+
+        <section class="scorecard" aria-label="Headline numbers">
+          <div class="score-card score-good">
+            <div class="score">27.8 &micro;s</div>
+            <div class="label">exec-path refill (was 1.6 ms)</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">1&ndash;2 ms</div>
+            <div class="label">DB fsync after P2 (QLC today: ~200 ms)</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">+179 G</div>
+            <div class="label">vacated on QLC root</div>
+          </div>
+          <div class="score-card">
+            <div class="score">1.89&times;</div>
+            <div class="label">/nix zstd compression (measured)</div>
+          </div>
+        </section>
+
+        <section id="tiers">
+          <h2><span class="num">00</span>The three-tier model</h2>
+          <p>
+            A machine with 128 GB RAM has three storage tiers. Disk choice only
+            matters where the upper tiers cannot absorb the access. The
+            classifier for every workload:
+            <strong>who waits, synchronously, when this IO happens?</strong>
+          </p>
+
+          <div class="tier tier-neutral">
+            <div class="t-name">
+              RAM / page cache<small
+                >128 G &middot; zram 28.1 G (measured) &middot; /tmp 48 G
+                cap</small
+              >
+            </div>
+            <div class="t-desc">
+              Warm working sets: hot nix binaries, DB pages, project trees. The
+              real hot tier.
+            </div>
+            <div class="t-lat">~0</div>
+          </div>
+          <div class="tier tier-blue">
+            <div class="t-name">
+              Samsung 970 EVO Plus<small
+                >1 TB TLC &middot; PCIe 3.0 x4 &middot; the sync disk</small
+              >
+            </div>
+            <div class="t-desc">
+              Synchronous cold path: process exec, fsync-bound DBs, cache-miss
+              refill. Humans and request handlers wait here.
+            </div>
+            <div class="t-lat">12&ndash;28 &micro;s QD1</div>
+          </div>
+          <div class="tier tier-yellow">
+            <div class="t-name">
+              Lexar QLC + HDD pool<small
+                >2 TB QLC &middot; PCIe 4.0 x4 &middot; the stream disk</small
+              >
+            </div>
+            <div class="t-desc">
+              Streaming bulk: AI models, games, media, telemetry, backups.
+              Nobody waits synchronously; a second axis (tier poisoning) keeps
+              retry-amplified streams serialized.
+            </div>
+            <div class="t-lat">0.1&ndash;2 GB/s</div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Workload</th>
+                <th>Who waits</th>
+                <th>Lands on</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Shell exec, <code>git status</code>, editor open</td>
+                <td>Human, synchronous</td>
+                <td>
+                  <code>/nix</code> &rarr; Samsung p2 subvol
+                  <code>nix</code>
+                  <span class="badge badge-fixed">P1</span>
+                </td>
+              </tr>
+              <tr>
+                <td>Auth token check, photo browse, git push</td>
+                <td>HTTP request path</td>
+                <td>
+                  Hot DBs &rarr; Samsung p2 subvol <code>hot</code>
+                  (nodatacow)
+                  <span class="badge badge-fixed">P2</span>
+                </td>
+              </tr>
+              <tr>
+                <td>Model cold-load (flm, 21.6 G mmap)</td>
+                <td>Nobody (background)</td>
+                <td>
+                  <code>/data</code> QLC stream
+                  <span class="badge badge-medium">stays</span>
+                </td>
+              </tr>
+              <tr>
+                <td>SigNoz dashboard queries</td>
+                <td>Analyst, patient, async ingest</td>
+                <td>
+                  ClickHouse p9 <span class="badge badge-medium">stays</span>
+                </td>
+              </tr>
+              <tr>
+                <td>Compile iteration</td>
+                <td>Semi-interactive</td>
+                <td>
+                  RAM &rarr; GOCACHE &rarr; Samsung p2 subvol
+                  <span class="badge badge-low">P4 optional</span>
+                </td>
+              </tr>
+              <tr>
+                <td>Backups, media, archive</td>
+                <td>Nobody</td>
+                <td>
+                  HDD pool <span class="badge badge-medium">unchanged</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="perf">
+          <h2>
+            <span class="num">01</span>Measured physics (2026-08-31, under live
+            load)
+          </h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Metric</th>
+                  <th>Samsung (raw)</th>
+                  <th>Lexar root (BTRFS)</th>
+                  <th>USB buildcache</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>4K randread QD1</td>
+                  <td class="yes">35,300 IOPS / 27.8 &micro;s</td>
+                  <td class="no">620 IOPS / 1.6 ms</td>
+                  <td>461 IOPS / 2.2 ms</td>
+                </tr>
+                <tr>
+                  <td>4K randwrite QD1</td>
+                  <td class="yes">79,191 IOPS / 12.2 &micro;s</td>
+                  <td class="no">295 IOPS / 3.4 ms</td>
+                  <td>1,263 IOPS</td>
+                </tr>
+                <tr>
+                  <td>4K randread QD32</td>
+                  <td class="yes">304,657 IOPS / 1.19 GB/s</td>
+                  <td>804 IOPS</td>
+                  <td>1,478 IOPS</td>
+                </tr>
+                <tr>
+                  <td>fsync (per-write)</td>
+                  <td class="yes">0.78 ms</td>
+                  <td class="no">~200 ms</td>
+                  <td>1.7 ms</td>
+                </tr>
+                <tr>
+                  <td>1M seq read / write</td>
+                  <td>2,423 / 2,671 MiB/s</td>
+                  <td>contended: unusable</td>
+                  <td>n/a</td>
+                </tr>
+                <tr>
+                  <td>Link</td>
+                  <td>PCIe 3.0 x4 (= drive max)</td>
+                  <td>PCIe 4.0 x4</td>
+                  <td>USB 3.0</td>
+                </tr>
+                <tr>
+                  <td>Endurance budget</td>
+                  <td>600 TBW</td>
+                  <td>unknown (budget QLC)</td>
+                  <td>irrelevant (cache)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout">
+            <strong>
+              Filesystem choice for <code>/nix</code>: benchmarked, resolved
+            </strong>
+            <code>scripts/bench-nix-fs.sh</code> compared ext4 vs XFS
+            (reflink=1) vs BTRFS zstd on the actual Samsung with a 629-path /
+            1.7 GiB store sample: performance was a wash (run variance
+            &plusmn;40% under load exceeded every inter-fs delta), and
+            compression is the separator: measured <strong>1.89&times;</strong>
+            (compsize), turning the 129 G store into
+            <strong>~68 G physical</strong>. Chosen:
+            <code>noatime,compress=zstd</code> (heuristic skip of incompressible
+            files is correct; NOT <code>compress-force</code>).
+          </div>
+          <div class="callout callout-warning">
+            <strong>Live pathology, same day</strong>
+            Device throughput 0.3 MB/s with PSI some 47&ndash;64%,
+            <code>flm-real</code> in D-state inside <code>blk_mq_get_tag</code>,
+            <code>nix</code> in <code>folio_wait_bit_common</code>, btrfs
+            delayed-metadata kworkers stuck. The QLC in SLC/GC crunch completed
+            nothing while every exec queued behind it. This is co-tenancy plus
+            GC, not NAND physics: a quiet QLC streams at 1&ndash;3 GB/s.
+          </div>
+        </section>
+
+        <section id="target">
+          <h2><span class="num">02</span>Layout: today &rarr; target</h2>
+          <p>
+            Both partition bars are drawn from live <code>lsblk</code> on this
+            host (2026-08-31): the Samsung is blank today, the Lexar geometry is
+            measured exactly. Occupancy bars mix df-measured totals with
+            plan-doc category estimates; every segment also lives in the table
+            under its card, because small segments cannot carry readable labels.
+          </p>
+
+          <div class="legend">
+            <span
+              ><span class="key key-blue"></span>Lands on Samsung (sync
+              role)</span
+            >
+            <span
+              ><span class="key key-blue-tint"></span>Samsung BTRFS pool
+              area</span
+            >
+            <span
+              ><span class="key key-optional"></span>Optional phase (hatch, any
+              tint)</span
+            >
+            <span><span class="key key-red"></span>Moves OFF the QLC</span>
+            <span
+              ><span class="key key-yellow"></span>Streams, stays on QLC</span
+            >
+            <span> <span class="key key-green"></span>Unallocated / free</span>
+            <span><span class="key key-neutral"></span>Stays / reserved</span>
+          </div>
+
+          <div class="disk" id="samsung">
+            <div class="disk-head">
+              <span class="disk-title"
+                >Samsung 970 EVO Plus &middot; 1 TB TLC</span
+              >
+              <span class="disk-sub"
+                >931.5 G usable &middot; blank today &middot;
+                lsblk-verified</span
+              >
+            </div>
+            <div class="disk-body">
+              <div class="bar-caption">
+                Partitions &middot; two, forever. Nothing ever moves a partition
+                start.
+              </div>
+              <div class="disk-bar">
+                <div
+                  class="seg seg-neutral"
+                  style="flex-grow: 4"
+                  title="p1: EFI System (ef00), 4 GiB FAT32 label SAMSUNG-EFI, created and formatted now, UNMOUNTED, reserved for a future boot migration. Mirrors the Lexar's own 4 G ESP (p7)."
+                >
+                  <span>p1 &middot; ESP</span><span class="sz">4 G</span
+                  ><span class="ph">reserved, unmounted</span>
+                </div>
+                <div
+                  class="seg seg-blue-tint"
+                  style="flex-grow: 927.5"
+                  title="p2: BTRFS label tlc, rest of disk (~927.5 G). The ONLY data partition. Every role is a subvolume; space flows freely between them."
+                >
+                  <span
+                    >p2 &middot; BTRFS pool <code>tlc</code> &rarr; end of
+                    disk</span
+                  ><span class="sz">~927.5 G</span
+                  ><span
+                    >noatime &middot; compress=zstd &middot; commit 30 s (TLC:
+                    no SLC-preservation doctrine needed)</span
+                  >
+                </div>
+              </div>
+
+              <div class="bar-caption">
+                p2 occupancy after all phases (hatched = optional)
+              </div>
+              <div class="disk-bar">
+                <div
+                  class="seg seg-blue"
+                  style="flex-grow: 68"
+                  title="subvol nix: 129 G raw compressed to ~68 G (measured 1.89x). Lands in Phase 1. neededForBoot=true. Never snapshotted (rebuildable from flake.lock + attic)."
+                >
+                  <span>/nix (zstd)</span><span class="sz">~68 G</span
+                  ><span class="ph">P1 &middot; was 129 G raw</span>
+                </div>
+                <div
+                  class="seg seg-blue-tint"
+                  style="flex-grow: 50"
+                  title="subvol hot, mounted -o nodatacow: pocket-id + postgres (immich+paperless) + forgejo, 50 G or less today, as nested per-service subvol boundaries. Phase 2."
+                >
+                  <span>hot (nodatacow)</span><span class="sz">&le;50 G</span
+                  ><span class="ph">P2 &middot; per-service subvols</span>
+                </div>
+                <div
+                  class="seg seg-blue-tint seg-optional"
+                  style="flex-grow: 268"
+                  title="/home 268 G as subvol home, optional Phase 3, trigger-based"
+                >
+                  <span>/home</span><span class="sz">268 G</span
+                  ><span class="ph">P3 optional</span>
+                </div>
+                <div
+                  class="seg seg-blue-tint seg-optional"
+                  style="flex-grow: 78"
+                  title="GOCACHE 65 G + GOMODCACHE 13 G as subvol caches, optional Phase 4"
+                >
+                  <span>Go caches</span><span class="sz">78 G</span
+                  ><span class="ph">P4 optional</span>
+                </div>
+                <div
+                  class="seg seg-neutral"
+                  style="flex-grow: 463.5"
+                  title="~463 G free after all optional phases"
+                >
+                  <span>free</span><span class="sz">~463 G</span>
+                </div>
+              </div>
+
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Type</th>
+                      <th>Size</th>
+                      <th>Phase</th>
+                      <th>Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>p1</td>
+                      <td>EFI System (ef00)</td>
+                      <td>4 G</td>
+                      <td>day one</td>
+                      <td>
+                        FAT32 <code>SAMSUNG-EFI</code>, created + formatted now,
+                        UNMOUNTED, not in fstab. Boot-migration day becomes
+                        zero-repartition.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>p2</td>
+                      <td>BTRFS <code>tlc</code></td>
+                      <td>~927.5 G</td>
+                      <td>day one</td>
+                      <td>The only data partition; all roles are subvols.</td>
+                    </tr>
+                    <tr>
+                      <td><code>nix</code></td>
+                      <td>subvol, CoW + zstd</td>
+                      <td>~68 G (129 raw)</td>
+                      <td><span class="badge badge-fixed">P1</span></td>
+                      <td><code>neededForBoot</code>; never snapshotted.</td>
+                    </tr>
+                    <tr>
+                      <td><code>hot</code></td>
+                      <td>subvol, nodatacow</td>
+                      <td>&le;50 G today</td>
+                      <td><span class="badge badge-fixed">P2</span></td>
+                      <td>Nested per-service boundaries; see table below.</td>
+                    </tr>
+                    <tr>
+                      <td><code>home</code></td>
+                      <td>subvol</td>
+                      <td>268 G</td>
+                      <td><span class="badge badge-low">P3 opt</span></td>
+                      <td>Trigger-based, no partition work.</td>
+                    </tr>
+                    <tr>
+                      <td><code>caches</code></td>
+                      <td>subvol</td>
+                      <td>78 G</td>
+                      <td><span class="badge badge-low">P4 opt</span></td>
+                      <td>GOCACHE + GOMODCACHE only.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <h3>
+                The <code>hot</code> subvol: one mount, per-service boundaries
+              </h3>
+              <p>
+                Mounted once at <code>/var/lib/hot</code> with
+                <code>-o nodatacow</code>; the per-service subvol boundaries
+                exist in the fs tree regardless of mount points, so snapshots
+                and deletes stay surgical with zero extra mount units.
+                <code>chattr +C</code> is set explicitly per subvol root by the
+                storage-dir oneshot. Attribute granularity is per-directory, so
+                a service that values integrity over latency (gatus's tiny
+                sqlite) simply lives without <code>+C</code> and keeps
+                checksums.
+              </p>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Boundary</th>
+                      <th>FS attr</th>
+                      <th>Size</th>
+                      <th>Phase</th>
+                      <th>Why</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><code>hot/pocket-id</code></td>
+                      <td><code>+C</code></td>
+                      <td>tiny</td>
+                      <td><span class="badge badge-fixed">P2</span></td>
+                      <td>Auth tokens; fsync on every login.</td>
+                    </tr>
+                    <tr>
+                      <td><code>hot/postgres</code></td>
+                      <td><code>+C</code></td>
+                      <td>bulk of &le;50 G</td>
+                      <td><span class="badge badge-fixed">P2</span></td>
+                      <td>immich + paperless metadata; WAL appends.</td>
+                    </tr>
+                    <tr>
+                      <td><code>hot/forgejo</code></td>
+                      <td><code>+C</code></td>
+                      <td>est. ~10 G</td>
+                      <td><span class="badge badge-fixed">P2</span></td>
+                      <td>git push fsync path.</td>
+                    </tr>
+                    <tr>
+                      <td><code>hot/gatus</code> (candidate)</td>
+                      <td>no <code>+C</code></td>
+                      <td>tiny</td>
+                      <td><span class="badge badge-low">candidate</span></td>
+                      <td>
+                        Monitoring store: write volume trivial, so integrity
+                        detection (csums) beats fsync latency.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="callout callout-teal">
+                <strong>Layout doctrine</strong>
+                <ul class="prose-ul">
+                  <li>
+                    Partition starts NEVER move; BTRFS shrinks only from its
+                    end; XFS never shrinks. Therefore: fixed things front, ONE
+                    elastic BTRFS pool behind, future XFS carved fresh from p2's
+                    tail at the moment of need (online
+                    <code>btrfs resize -X</code> &rarr;
+                    <code>parted resizepart</code> end &rarr;
+                    <code>mkfs.xfs</code>). The rejected 64 G mid-disk XFS would
+                    have been permanently un-growable.
+                  </li>
+                  <li>
+                    nodatacow = XFS-like data path (in-place writes, no csums,
+                    no compression) riding on BTRFS CoW metadata: still no
+                    journal, crash consistency unchanged. fsync lands ~1&ndash;2
+                    ms vs raw 0.78 ms vs ~200 ms today.
+                  </li>
+                  <li>
+                    Snapshot landmine: nodatacow holds only for extents not
+                    shared with a snapshot; one scheduled snapshot silently
+                    reverts touched extents to CoW. Policy: no scheduled
+                    snapshots of <code>hot</code>, one-shot checkpoints deleted
+                    after the migration, eval-time assertion keyed on the
+                    <code>hot</code> prefix.
+                  </li>
+                  <li>
+                    qgroups stay OFF (per-write metadata tax) but this is TLC:
+                    the doctrine's own clause permits enabling here later for
+                    per-service accounting (the removed
+                    <code>btrfs_qgroup_referenced_bytes</code> collector is in
+                    git history for re-adding).
+                  </li>
+                  <li>
+                    VDO is dead upstream (removed in RHEL 9) and redundant:
+                    compression is BTRFS-native; dedupe (bees) stays declined on
+                    this hardware.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="disk" id="qlc">
+            <div class="disk-head">
+              <span class="disk-title"
+                >Lexar NQ790 &middot; 2 TB QLC &nbsp;<span class="tag teal"
+                  >stays the BOOT disk</span
+                ></span
+              >
+              <span class="disk-sub"
+                >lsblk-measured: p6 722.5 G &middot; p7 ESP 4 G &middot; p8 1 T
+                &middot; p9 100 G</span
+              >
+            </div>
+            <div class="disk-body">
+              <div class="bar-caption">Partitions (measured)</div>
+              <div class="disk-bar">
+                <div
+                  class="seg seg-neutral"
+                  style="flex-grow: 722.5"
+                  title="p6: BTRFS root fs 722.5 G: @ with /nix, /home, @cache-home; also /mnt/btrfs-root"
+                >
+                  <span>p6 &middot; root BTRFS</span
+                  ><span class="sz">722.5 G</span
+                  ><span
+                    >/ &middot; /nix &middot; /home &middot; @cache-home</span
+                  >
+                </div>
+                <div
+                  class="seg seg-neutral"
+                  style="flex-grow: 4"
+                  title="p7: 4 G vfat ESP mounted at /boot - the existing boot device. Samsung's reserved p1 mirrors this exact size."
+                >
+                  <span>p7 &middot; ESP</span><span class="sz">4 G</span
+                  ><span>/boot, stays</span>
+                </div>
+                <div
+                  class="seg seg-yellow"
+                  style="flex-grow: 1024"
+                  title="p8: BTRFS label data, 1 T: /data streaming tier"
+                >
+                  <span>p8 &middot; /data</span><span class="sz">1 T</span
+                  ><span>streaming, stays</span>
+                </div>
+                <div
+                  class="seg seg-yellow"
+                  style="flex-grow: 100"
+                  title="p9: XFS label clickhouse, 100 G"
+                >
+                  <span>p9 &middot; XFS</span><span class="sz">100 G</span>
+                </div>
+              </div>
+
+              <div class="bar-caption">
+                Root fs p6 (722.5 G) &middot; TODAY: the co-tenancy problem
+              </div>
+              <div class="disk-bar">
+                <div
+                  class="seg seg-red"
+                  style="flex-grow: 129"
+                  title="/nix 129 G raw, moves to Samsung in Phase 1"
+                >
+                  <span>/nix</span><span class="sz">129 G</span
+                  ><span class="ph">moves, P1</span>
+                </div>
+                <div
+                  class="seg seg-red"
+                  style="flex-grow: 50"
+                  title="pocket-id + postgres + forgejo, 50 G or less, move in Phase 2"
+                >
+                  <span>hot DBs</span><span class="sz">&le;50 G</span
+                  ><span class="ph">moves, P2</span>
+                </div>
+                <div
+                  class="seg seg-neutral"
+                  style="flex-grow: 268"
+                  title="/home 268 G, stays by default, Phase 3 trigger"
+                >
+                  <span>/home</span><span class="sz">268 G</span
+                  ><span class="ph">stays (P3 trigger)</span>
+                </div>
+                <div
+                  class="seg seg-neutral"
+                  style="flex-grow: 16"
+                  title="@cache-home ~16 G live caches, stays"
+                >
+                  <span>@cache-home</span><span class="sz">~16 G</span>
+                </div>
+                <div
+                  class="seg seg-neutral"
+                  style="flex-grow: 88"
+                  title="other used: service state, logs, boot (residual of df used minus the categorized items)"
+                >
+                  <span>other used</span><span class="sz">~88 G</span>
+                </div>
+                <div
+                  class="seg seg-green"
+                  style="flex-grow: 128"
+                  title="df avail today: 128 G"
+                >
+                  <span>unallocated</span><span class="sz">128 G</span
+                  ><span class="ph">df, today</span>
+                </div>
+              </div>
+
+              <div class="bar-caption">
+                Root fs p6 &middot; AFTER Phase 1+2: state, with the vacated
+                delta as annotation
+              </div>
+              <div class="disk-bar">
+                <div
+                  class="seg seg-neutral"
+                  style="flex-grow: 268"
+                  title="/home stays"
+                >
+                  <span>/home</span><span class="sz">268 G</span>
+                </div>
+                <div
+                  class="seg seg-neutral"
+                  style="flex-grow: 16"
+                  title="@cache-home stays"
+                >
+                  <span>@cache-home</span><span class="sz">~16 G</span>
+                </div>
+                <div
+                  class="seg seg-neutral"
+                  style="flex-grow: 88"
+                  title="other used stays"
+                >
+                  <span>other used</span><span class="sz">~88 G</span>
+                </div>
+                <div
+                  class="seg seg-green"
+                  style="flex-grow: 307"
+                  title="unallocated grows from 128 G to ~307 G: /nix 129 G + hot DBs ~50 G vacated. The @nix subvol delete frees instantly (sibling subvol, not snapshot-pinned)."
+                >
+                  <span>unallocated</span><span class="sz">~307 G</span
+                  ><span class="ph"
+                    >+179 G vacated: /nix 129 + hot DBs ~50</span
+                  >
+                </div>
+              </div>
+
+              <div class="bar-caption">
+                /data p8 (1 T, df: 888 G used / 142 G avail) &middot; the
+                streaming role, unchanged
+              </div>
+              <div class="disk-bar">
+                <div
+                  class="seg seg-yellow"
+                  style="flex-grow: 287"
+                  title="/data/ai 287 G (plan doc)"
+                >
+                  <span>ai</span><span class="sz">287 G</span>
+                </div>
+                <div
+                  class="seg seg-yellow"
+                  style="flex-grow: 210"
+                  title="/data/models 210 G (plan doc)"
+                >
+                  <span>models</span><span class="sz">210 G</span>
+                </div>
+                <div
+                  class="seg seg-yellow"
+                  style="flex-grow: 106"
+                  title="SteamLibrary 106 G (plan doc)"
+                >
+                  <span>Steam</span><span class="sz">106 G</span>
+                </div>
+                <div
+                  class="seg seg-yellow"
+                  style="flex-grow: 92"
+                  title="/data/llamacpp-models 92 G (plan doc)"
+                >
+                  <span>llamacpp</span><span class="sz">92 G</span>
+                </div>
+                <div
+                  class="seg seg-neutral"
+                  style="flex-grow: 193"
+                  title="unclassified: df used 888 G minus the 695 G of categorized plan-doc figures; containers/cache measured ~0, tmp-crush-test 380 M; the balance is other dirs + snapshot-pinned extents"
+                >
+                  <span>unclassified + pinned</span
+                  ><span class="sz">~193 G</span>
+                </div>
+                <div
+                  class="seg seg-green"
+                  style="flex-grow: 142"
+                  title="df avail: 142 G"
+                >
+                  <span>free</span><span class="sz">142 G</span>
+                </div>
+              </div>
+
+              <div class="bar-caption">
+                p9 XFS (100 G, df: 32 G used) &middot; ClickHouse, the endurance
+                sacrificial disk
+              </div>
+              <div class="disk-bar">
+                <div
+                  class="seg seg-yellow"
+                  style="flex-grow: 32"
+                  title="~32 G measured (df); the plan doc's ~70 G estimate was stale. ~180 G/day async writes stay here on purpose."
+                >
+                  <span>ClickHouse telemetry</span><span class="sz">32 G</span
+                  ><span class="ph"
+                    >~180 G/day writes stay here on purpose</span
+                  >
+                </div>
+                <div
+                  class="seg seg-green"
+                  style="flex-grow: 69"
+                  title="df avail: 69 G"
+                >
+                  <span>free</span><span class="sz">69 G</span>
+                </div>
+              </div>
+
+              <div class="callout">
+                <strong>Sourcing</strong>
+                Partition geometry: live <code>lsblk</code> (2026-08-31). Root
+                fs used/avail: <code>df</code> (551 G used / 128 G avail).
+                Category figures (/nix 129, /home 268, @cache-home ~16, hot DBs
+                &le;50, /data breakdown) are the decision doc's estimates;
+                ClickHouse corrected from the doc's stale ~70 G to the measured
+                32 G, and the pool's true usage is 1.1 T (not the doc's 29 T).
+                Correcting the decision doc's occupancy block is a pending edit.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="boot">
+          <h2>
+            <span class="num">03</span>Boot chain: QLC stays the boot disk
+          </h2>
+          <p>
+            The ESP and systemd-boot stay on the Lexar (p7, 4 G vfat,
+            lsblk-confirmed), untouched. Boot I/O fails the TLC test: read once
+            per boot, sequential, nobody waiting interactively. Root
+            <code>@</code> stays on QLC regardless, so moving the ESP buys zero
+            failure-domain improvement, and keeping the boot path byte-identical
+            is what keeps Phase 1 rollback simple. Samsung p1 reserves exactly 4
+            G for a future ESP, mirroring the Lexar's own ESP size, so a
+            boot-migration one day is zero-repartition.
+          </p>
+
+          <div class="bootline">
+            <b>UEFI</b> &rarr; <b>ESP</b> (Lexar p7, 4 G vfat /boot)
+            <span class="stays">&middot; stays</span> &rarr;
+            <b>systemd-boot</b> &rarr; <b>kernel + initrd</b> (on ESP)
+            <span class="stays">&middot; stays</span> &rarr; initrd mounts
+            <b>root @</b> (Lexar) + <b>/nix</b> (Samsung p2 subvol nix,
+            <b>neededForBoot</b>)
+          </div>
+          <div class="bootline">
+            switch-root &rarr; <b>stage 2</b> &rarr; systemd activates every
+            unit from <b>/nix on the Samsung</b> &middot; root fs, /home, /data
+            remain on the Lexar
+          </div>
+
+          <div class="grid-2">
+            <div class="card card-warning">
+              <h4>Both disks are boot-required</h4>
+              <p>
+                Samsung dead: initrd drops to emergency shell, cannot mount
+                <code>/nix</code>. QLC dead: no bootloader, no root. The failure
+                modes are symmetric; rescue runbooks for both are in the risks
+                section. The reserved Samsung p1 is empty until boot-migration
+                day, so until then it changes nothing about the boot path.
+              </p>
+            </div>
+            <div class="card card-solution">
+              <h4>Why this is still the right call</h4>
+              <p>
+                Post-Phase-1 the boot's heavy reads (systemd units, binaries)
+                already come from the Samsung via <code>/nix</code>. The QLC's
+                pathology is write/GC-side; a quiet boot's sequential read is
+                exactly what it does fine.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="beforeafter">
+          <h2><span class="num">04</span>Before / After</h2>
+          <div class="table-wrap">
+            <table class="compare">
+              <thead>
+                <tr>
+                  <th>Aspect</th>
+                  <th>Today (everything co-tenant on QLC)</th>
+                  <th>After (TLC sync + QLC stream)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Exec-path cache miss</td>
+                  <td class="no">Queue on QLC, 620 IOPS QD1</td>
+                  <td class="yes">TLC refill, 35,300 IOPS / 27.8 &micro;s</td>
+                </tr>
+                <tr>
+                  <td>DB fsync (auth, photo browse, git push)</td>
+                  <td class="no">~200 ms on CoW BTRFS root</td>
+                  <td class="yes">
+                    ~1&ndash;2 ms in the nodatacow <code>hot</code> subvol
+                  </td>
+                </tr>
+                <tr>
+                  <td>Model cold-load co-tenancy</td>
+                  <td class="no">13 MB/s measured under GC crunch</td>
+                  <td class="yes">1&ndash;3 GB/s on a quiet QLC stream</td>
+                </tr>
+                <tr>
+                  <td>Root chunk-unalloc</td>
+                  <td class="no">~6.4 GiB, CRITICAL</td>
+                  <td class="yes">
+                    +179 G structurally vacated, balance pressure resolves
+                  </td>
+                </tr>
+                <tr>
+                  <td>PSI episodes (freeze incident #3 class)</td>
+                  <td class="no">4 stacked full-disk readers on one NAND</td>
+                  <td class="yes">
+                    Full-disk readers serialized by role separation
+                  </td>
+                </tr>
+                <tr>
+                  <td>/nix store footprint</td>
+                  <td>129 G raw on root fs</td>
+                  <td class="yes">
+                    ~68 G physical (measured 1.89&times; zstd)
+                  </td>
+                </tr>
+                <tr>
+                  <td>Boot path</td>
+                  <td>QLC only</td>
+                  <td>QLC ESP + root; binaries from Samsung via /nix</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="stays">
+          <h2>
+            <span class="num">05</span>What stays on QLC, and why (a role, not a
+            demotion)
+          </h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Size</th>
+                  <th>Why it stays</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    AI models (<code>/data/ai</code>,
+                    <code>/data/models</code>,
+                    <code>/data/llamacpp-models</code>)
+                  </td>
+                  <td><strong>589 G</strong></td>
+                  <td>
+                    Bandwidth-bound, not latency-bound; zero synchronous waiter.
+                    Moving 25 G would buy ~10 s of cold-load while spending
+                    capacity the /home and cache phases need. The REAL model
+                    problems were co-tenancy (fixed by this separation) and
+                    retry storms (already mitigated: OOMScoreAdjust, restart
+                    backoff, memory-emergency-guard stops the socket).
+                  </td>
+                </tr>
+                <tr>
+                  <td>Steam</td>
+                  <td>106 G</td>
+                  <td>
+                    Game-launch only; big immutable files read as streams.
+                  </td>
+                </tr>
+                <tr>
+                  <td>ClickHouse (p9 XFS)</td>
+                  <td>32 G used / 100 G (measured)</td>
+                  <td>
+                    ~180 G/day of async telemetry writes makes it the endurance
+                    sacrificial disk; dashboard queries tolerate latency. Moving
+                    it would roughly double Samsung write volume.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Backups, media, archive</td>
+                  <td>1.1 T used (df, measured)</td>
+                  <td>
+                    HDD pool by role; also the home of attic, the /nix
+                    disaster-rebuild source.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Swap</td>
+                  <td>zram 28.1 G (measured)</td>
+                  <td>
+                    No disk swap on this box; zram-only doctrine with swappiness
+                    150.
+                  </td>
+                </tr>
+                <tr>
+                  <td>ESP + bootloader</td>
+                  <td>p7, 4 G vfat</td>
+                  <td>
+                    Read once per boot; QLC stays the boot disk (section 03).
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="support">
+          <h2><span class="num">06</span>Supporting tiers</h2>
+          <div class="grid-3">
+            <div class="card">
+              <h4>RAM: 128 G</h4>
+              <p>
+                zram swap 28.1 G (measured), <code>/tmp</code> capped at 48 G
+                tmpfs, page cache absorbs every warm working set. Nothing in
+                this plan touches the memory doctrine.
+              </p>
+            </div>
+            <div class="card card-warning">
+              <h4>USB buildcache: 240 G ext4</h4>
+              <p>
+                Go caches ~96 G (go-build 65 + go-mod 13 + aux 18). Phase 4
+                moves the 78 G of <code>GOCACHE</code>+<code>GOMODCACHE</code>
+                to Samsung; rust, pnpm and playwright stay (cold, big). No TRIM
+                through the JMS567 bridge.
+              </p>
+            </div>
+            <div class="card">
+              <h4>HDD pool: 2&times;16 T RAID1</h4>
+              <p>
+                Backups, media, archive (1.1 T used, df-measured). Unchanged by
+                the plan. Nightly DB dumps keep landing here after Phase 2. Also
+                hosts attic, the /nix disaster-rebuild source.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="capacity">
+          <h2><span class="num">07</span>Capacity and endurance math</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Phase</th>
+                  <th>Lands on Samsung p2</th>
+                  <th>Size</th>
+                  <th>Cumulative used</th>
+                  <th>Free (of 927.5 G)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>P1</td>
+                  <td>
+                    <code>nix</code>, zstd (129 G raw &rarr; ~68 G, measured
+                    1.89&times;)
+                  </td>
+                  <td>~68 G</td>
+                  <td>~68 G</td>
+                  <td>~859 G</td>
+                </tr>
+                <tr>
+                  <td>P2</td>
+                  <td><code>hot</code> subvol (nodatacow, no compression)</td>
+                  <td>&le;50 G</td>
+                  <td>~118 G</td>
+                  <td>~809 G</td>
+                </tr>
+                <tr>
+                  <td>P4 optional</td>
+                  <td><code>caches</code>: GOCACHE + GOMODCACHE</td>
+                  <td>78 G</td>
+                  <td>~196 G</td>
+                  <td>~731 G</td>
+                </tr>
+                <tr>
+                  <td>P3 optional</td>
+                  <td><code>home</code></td>
+                  <td>~268 G</td>
+                  <td>~464 G</td>
+                  <td>~463 G</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout callout-teal">
+            <strong>Endurance</strong>
+            600 TBW budget; projected 100&ndash;250 G/day worst case gives
+            6.6&ndash;16.4 years. Monitored via the by-id smartd / nvme-health
+            wiring (the enumeration-shift fix: never reference nvme devices by
+            kernel name).
+            <br />
+            <strong>QLC relief</strong>
+            Deleting <code>@nix</code> after the 3-day soak frees 129 G
+            IMMEDIATELY: it is a sibling subvol, deliberately outside btrbk
+            <code>@</code> snapshots since the 2026-08-17 migration, so nothing
+            pins those extents. The hot DBs vacate with Phase 2.
+          </div>
+        </section>
+
+        <section id="phases">
+          <h2>
+            <span class="num">08</span>Migration phases (each gated, review
+            amendments baked in)
+          </h2>
+
+          <div class="migration-step">
+            <div class="migration-num">0</div>
+            <div class="migration-content">
+              <h4>Prerequisites (no hardware)</h4>
+              <p>
+                Deploy the staged balance fix (chunk-unalloc ~6.4 G CRITICAL)
+                and fix the /data EIO inode (P0) so nightly btrbk stops walking
+                86 G into an abort. Both reduce QLC pressure before any
+                migration writes.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step">
+            <div class="migration-num">1</div>
+            <div class="migration-content">
+              <h4>
+                Partitions + /nix &rarr; Samsung p2 subvol <code>nix</code> (the
+                big one)
+              </h4>
+              <p>
+                <code>sgdisk</code>: p1 ef00 +4 G, p2 8300 rest.
+                <code>mkfs.fat -F32 -n SAMSUNG-EFI</code> p1 (formatted,
+                UNMOUNTED, reserved). <code>mkfs.btrfs -L tlc</code> p2 +
+                <code>subvol create nix</code>. Live
+                <code>rsync -aH --delete</code> of the store. Quiesce builds AND
+                <code>auto-optimise-store</code> AND nix-gc timers (the
+                optimiser rewrites hardlinks on every store add), final delta
+                sync. Add <code>fileSystems."/nix"</code> (by-label tlc,
+                <code>subvol = "nix"</code>,
+                <code>neededForBoot = true</code> REQUIRED: stage-2 init lives
+                in /nix/store; nofail OFF) and deploy. CRITICAL ordering: the
+                deploy itself realizes new store paths onto the QLC AFTER your
+                sync, so run a delta rsync AGAIN after deploy and BEFORE reboot,
+                or the new generation's closure is incomplete on the Samsung.
+                Reboot. Verify: <code>readlink /run/current-system</code>,
+                <code>nixos-rebuild</code>, fio sanity, shell-exec latency
+                during a build storm (the acceptance test). Soak 3 days, then
+                delete <code>@nix</code>: 129 G freed immediately.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step">
+            <div class="migration-num">2</div>
+            <div class="migration-content">
+              <h4>
+                Hot DBs &rarr; <code>hot</code> subvol (nodatacow), one service
+                at a time
+              </h4>
+              <p>
+                Mount-gated oneshot creates <code>hot</code> plus nested
+                per-service subvol boundaries (pocket-id, postgres, forgejo),
+                sets <code>chattr +C</code> per subvol root; mount
+                <code>/var/lib/hot</code> with <code>-o nodatacow</code>. Per
+                service: stop &rarr; rsync &rarr; dataDir re-point &rarr;
+                restart &rarr; gatus green. Checkpoints are ONE-SHOT btrfs
+                snapshots, deleted after the migration (scheduled snapshots
+                would silently revert touched extents to CoW); an eval-time
+                assertion keyed on the <code>hot</code> prefix enforces the
+                policy. Candidates by the same classifier: dnsblockd (hottest
+                write DB on root), papdashboard; gatus joins WITHOUT
+                <code>+C</code> (integrity over latency for a monitoring store).
+                Honest RPO note: these DBs leave btrbk snapshot coverage, so
+                nightly dumps become the sole recovery path; postgres WAL
+                archiving is a sensible Phase 2.5.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step">
+            <div class="migration-num">3</div>
+            <div class="migration-content">
+              <h4>/home &rarr; subvol <code>home</code> (trigger-based)</h4>
+              <p>
+                Stays on QLC by default. Trigger: if post-P1/P2 the QLC still
+                feels slow for <code>git status</code> / editor opens during IO
+                storms. <code>subvol create home</code>, no partition work.
+                Cost: btrbk root-snapshot scope change + HM symlink re-point +
+                one offline window.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step">
+            <div class="migration-num">4</div>
+            <div class="migration-content">
+              <h4>Go caches &rarr; subvol <code>caches</code> (optional)</h4>
+              <p>
+                Move GOCACHE + GOMODCACHE only (78 G); rust/pnpm/playwright stay
+                on USB. Compile-iteration cache-hit reads go 2.2 ms &rarr; 27
+                &micro;s. <code>subvol create caches</code>, no partition work.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="risks">
+          <h2><span class="num">09</span>Risks and rescue runbooks</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Risk</th>
+                  <th>Mitigation</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Boot now requires the Samsung</td>
+                  <td>
+                    <code>nofail</code> OFF (must mount),
+                    <code>neededForBoot = true</code> explicit; runbook A below;
+                    QLC boot partitions untouched.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Closure-sync gap bricks the reboot</td>
+                  <td>
+                    Delta rsync AFTER <code>nix run .#deploy</code>, BEFORE
+                    reboot (the deploy writes store paths after the initial
+                    sync).
+                  </td>
+                </tr>
+                <tr>
+                  <td>Hardlink divergence during final sync</td>
+                  <td>
+                    Quiesce builds + <code>auto-optimise-store</code> + nix-gc
+                    timers, not just builds.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Partition geometry mistakes are unfixable in place</td>
+                  <td>
+                    Starts never move: ESP carved day one (4 G), one BTRFS pool
+                    takes the rest, future XFS only ever carved fresh from p2's
+                    tail via online shrink. No mid-disk carve, ever.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Snapshot landmine re-enables CoW on <code>hot</code></td>
+                  <td>
+                    No scheduled snapshots; one-shot checkpoints deleted after
+                    use; eval-time assertion keyed on the <code>hot</code>
+                    prefix (never in btrbk).
+                  </td>
+                </tr>
+                <tr>
+                  <td>Samsung dies: /nix + hot DBs lost</td>
+                  <td>
+                    /nix rebuildable (flake.lock + attic on the pool); DBs have
+                    nightly dump backups on the pool (14d/7d); runbook B below.
+                    Until boot-migration day the reserved p1 is empty: QLC boot
+                    path unaffected.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Endurance</td>
+                  <td>
+                    600 TBW &rarr; 6.6&ndash;16 yr at projected writes; by-id
+                    smartd/nvme monitoring.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Migration writes stress the wedged QLC</td>
+                  <td>
+                    Phase 0 first; deploy pressure gate (exit 12);
+                    <code>--keep-going</code>; ionice the rsync.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Parallel-session tree races</td>
+                  <td>
+                    Run migrations from a quiesced tree; auto-commit daemon
+                    aware.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <pre><code><span class="tok-comment">Runbook A: Samsung dead (initrd emergency shell: cannot mount /nix)</span>
+  1. Boot live media (or a generation with the old layout)
+  2. Remove the fileSystems.&quot;/nix&quot; entry (by-label tlc, subvol nix)
+  3. Re-mount the old @nix subvol at /nix, or rebuild the store:
+     flake.lock + attic (on the HDD pool)</code></pre>
+
+          <pre><code><span class="tok-comment">Runbook B: QLC dead (no bootloader, no root @)</span>
+  1. New root on any disk; install from flake + attic
+  2. Restore DBs from nightly dumps on the HDD pool (14d/7d)
+  3. Re-pull models (bandwidth cost); ClickHouse telemetry has
+     NO backup coverage (accepted loss); Steam re-downloads</code></pre>
+        </section>
+
+        <section id="decisions">
+          <h2><span class="num">10</span>Decisions</h2>
+          <div class="issue issue-nice">
+            <span class="severity severity-nice">Ratified in review</span>
+            <h3>
+              1. Partition layout: ESP 4 G + ONE BTRFS pool, hot DBs on a
+              nodatacow subvol
+            </h3>
+            <div class="where">
+              supersedes the decision doc's "XFS remains the choice for the
+              hot-DB partition" and the Rev 1 64 G XFS p1
+            </div>
+            <p>
+              Partition starts never move; BTRFS shrinks only from its end; XFS
+              never shrinks. A mid-disk XFS (Rev 1's 64 G, 14 G headroom on
+              &le;50 G of DBs) could NEVER grow. Hence: p1 = 4 G ESP (ef00,
+              FAT32 <code>SAMSUNG-EFI</code>, formatted now, unmounted,
+              mirroring the Lexar's own 4 G ESP), p2 = ~927.5 G BTRFS
+              <code>tlc</code> holding every role as subvols; future XFS is
+              carved fresh from the tail at the moment of need. Hot DBs ride a
+              <code>hot</code> subvol with <code>-o nodatacow</code>: fsync
+              ~1&ndash;2 ms vs XFS ~1 ms (noise for these workloads) in exchange
+              for full pool elasticity.
+            </p>
+          </div>
+          <div class="issue issue-nice">
+            <span class="severity severity-nice">Resolved (benchmarked)</span>
+            <h3>2. Filesystem for <code>/nix</code>: BTRFS + compress=zstd</h3>
+            <div class="where">
+              scripts/bench-nix-fs.sh &middot; recorded in the decision doc
+              2026-08-31
+            </div>
+            <p>
+              Performance a wash across ext4/XFS/BTRFS under live load;
+              compression is the separator at a measured 1.89&times; (129 G
+              &rarr; ~68 G). <code>noatime,compress=zstd</code>, NOT
+              <code>compress-force</code>.
+            </p>
+          </div>
+          <div class="issue issue-nice">
+            <span class="severity severity-nice">Resolved in review</span>
+            <h3>3. Boot disk: QLC (ESP + systemd-boot untouched)</h3>
+            <p>
+              Boot I/O fails the TLC classifier, root stays on QLC either way,
+              and an untouched boot path keeps Phase 1 rollback trivial. The
+              reserved Samsung p1 makes any future migration zero-repartition.
+            </p>
+          </div>
+          <div class="issue issue-important">
+            <span class="severity severity-important">User ratification</span>
+            <h3>
+              4. Phase ordering: 0 &rarr; 1 &rarr; 2, then decide 3/4 from data
+            </h3>
+            <p>
+              Phase 0 (balance fix + EIO inode) is the gate; Phase 1 delivers
+              most of the value; Phases 3/4 are trigger- and data-driven.
+            </p>
+          </div>
+          <div class="issue issue-important">
+            <span class="severity severity-important"
+              >Optional, decide at P2</span
+            >
+            <h3>5. Enable qgroups on the Samsung pool?</h3>
+            <p>
+              TLC exempts it from the QLC doctrine; per-service subvols +
+              qgroups give true per-service capacity accounting (collector
+              available in git history). Default OFF until a concrete need.
+            </p>
+          </div>
+          <div class="issue issue-important">
+            <span class="severity severity-important">Scheduling</span>
+            <h3>6. Reboot window for Phase 1</h3>
+            <p>
+              Single reboot, after the post-deploy delta rsync. Expect a full
+              store re-warm of the page cache afterwards (first execs pull from
+              TLC, fast).
+            </p>
+          </div>
+        </section>
+
+        <footer class="footer">
+          <p>
+            Generated 2026-08-31 &middot; Rev 2 &middot; Companion to
+            docs/planning/2026-08-31_samsung-role-assignment-first-principles.md
+            &middot; Partition geometry and used/avail figures measured live on
+            evo-x2 via lsblk/df; category splits marked as plan-doc estimates
+            where noted
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>

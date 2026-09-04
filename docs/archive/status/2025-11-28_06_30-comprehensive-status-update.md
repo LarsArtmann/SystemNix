@@ -34,18 +34,18 @@ A detailed review of the last 15 commits reveals three distinct threads of work 
 
 ## 2. 🛠️ WHAT WE DID (CORRECTIVE ACTIONS)
 
-1.  **Consolidated Flake Configuration**:
-    - Identified the root `flake.nix` as the single source of truth.
-    - Ported the critical fixes (SSH URLs, `crush` package) from the secondary flake.
-    - Renamed the secondary flake to `.redundant` to prevent future confusion.
+1. **Consolidated Flake Configuration**:
+   - Identified the root `flake.nix` as the single source of truth.
+   - Ported the critical fixes (SSH URLs, `crush` package) from the secondary flake.
+   - Renamed the secondary flake to `.redundant` to prevent future confusion.
 
-2.  **Resolved GitHub API Rate Limits**:
-    - Converted all flake inputs to `git+ssh://` protocol.
-    - Updated `flake.lock` (currently verifying).
+2. **Resolved GitHub API Rate Limits**:
+   - Converted all flake inputs to `git+ssh://` protocol.
+   - Updated `flake.lock` (currently verifying).
 
-3.  **Attempted Home Manager Fix**:
-    - Re-enabled `home-manager` integration in the root flake.
-    - Triggered a system build to verify if the updated lockfile/config resolves the `homeDirectory` type error.
+3. **Attempted Home Manager Fix**:
+   - Re-enabled `home-manager` integration in the root flake.
+   - Triggered a system build to verify if the updated lockfile/config resolves the `homeDirectory` type error.
 
 ---
 
@@ -80,21 +80,21 @@ A detailed review of the last 15 commits reveals three distinct threads of work 
 
 ### Priority 1: Stabilization & Verification (Immediate)
 
-1.  [ ] Monitor running `just test` to completion.
-2.  [ ] Verify `nix check` passes (pre-commit).
-3.  [ ] Run `just switch` to apply the consolidated configuration.
-4.  [ ] Verify `crush` is available in the path.
+1. [ ] Monitor running `just test` to completion.
+2. [ ] Verify `nix check` passes (pre-commit).
+3. [ ] Run `just switch` to apply the consolidated configuration.
+4. [ ] Verify `crush` is available in the path.
 
 ### Priority 2: Feature Restoration
 
-5.  [ ] Uncomment `programs.ghost-btop-wallpaper` in `home.nix`.
-6.  [ ] Uncomment shell configurations (bash/zsh/fish) in `home.nix`.
-7.  [ ] Test Btop Wallpaper functionality (launchd agent, kitty transparency).
-8.  [ ] Verify "Ghost" system assertions.
+5. [ ] Uncomment `programs.ghost-btop-wallpaper` in `home.nix`.
+6. [ ] Uncomment shell configurations (bash/zsh/fish) in `home.nix`.
+7. [ ] Test Btop Wallpaper functionality (launchd agent, kitty transparency).
+8. [ ] Verify "Ghost" system assertions.
 
 ### Priority 3: Architecture & Cleanup
 
-9.  [ ] Review `platforms/` directory and decide: Delete or Integrate?
+9. [ ] Review `platforms/` directory and decide: Delete or Integrate?
 10. [ ] Delete `dotfiles/nix/flake.nix.redundant` and lockfile.
 11. [ ] Update `CLAUDE.md` to reference the single flake path.
 12. [ ] Standardize imports to always use relative paths from root.
@@ -111,5 +111,5 @@ A detailed review of the last 15 commits reveals three distinct threads of work 
 
 ## 5. ❓ TOP QUESTIONS
 
-1.  **Ghost Btop**: Do we proceed with enabling the "Ghost Btop" module immediately if the build passes?
-2.  **Cross-Platform Strategy**: Should we delete the orphaned `platforms/` directory to clean up, or start the migration plan now?
+1. **Ghost Btop**: Do we proceed with enabling the "Ghost Btop" module immediately if the build passes?
+2. **Cross-Platform Strategy**: Should we delete the orphaned `platforms/` directory to clean up, or start the migration plan now?

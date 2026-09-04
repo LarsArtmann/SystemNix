@@ -98,16 +98,16 @@ A production-grade Go daemon for the EMEET PIXY dual-camera AI webcam. Full feat
 
 ## C. NOT STARTED
 
-| #   | Task                                                   | Priority | Effort |
-| --- | ------------------------------------------------------ | -------- | ------ |
-| 1   | SigNoz full integration (traces/metrics/logs pipeline) | Medium   | High   |
-| 2   | Authelia SSO for all services                          | Medium   | High   |
-| 3   | NixOS system tests (automated validation)              | Medium   | Medium |
-| 4   | Darwin (macOS) config parity audit                     | Low      | Medium |
-| 5   | Immich external access (beyond LAN)                    | Low      | Low    |
-| 6   | Automated BTRFS snapshot verification                  | Low      | Low    |
-| 7   | Flake lock automated updates (Renovate/bot)            | Low      | Low    |
-| 8   | Photomap production hardening                          | Low      | Medium |
+| # | Task                                                   | Priority | Effort |
+| - | ------------------------------------------------------ | -------- | ------ |
+| 1 | SigNoz full integration (traces/metrics/logs pipeline) | Medium   | High   |
+| 2 | Authelia SSO for all services                          | Medium   | High   |
+| 3 | NixOS system tests (automated validation)              | Medium   | Medium |
+| 4 | Darwin (macOS) config parity audit                     | Low      | Medium |
+| 5 | Immich external access (beyond LAN)                    | Low      | Low    |
+| 6 | Automated BTRFS snapshot verification                  | Low      | Low    |
+| 7 | Flake lock automated updates (Renovate/bot)            | Low      | Low    |
+| 8 | Photomap production hardening                          | Low      | Medium |
 
 ---
 
@@ -154,33 +154,33 @@ The file had `MM` status — staged refactored code vs working tree original cod
 
 ## F. Top 25 Things We Should Get Done Next
 
-| #   | Task                                                                                             | Category      | Priority | Effort |
-| --- | ------------------------------------------------------------------------------------------------ | ------------- | -------- | ------ |
-| 1   | **Complete the rebase** — `git rebase --continue`                                                | Git           | P0       | 1 min  |
-| 2   | **Drop stale stashes** — audit and remove                                                        | Git           | P1       | 5 min  |
-| 3   | **Prune remote branches** — `git remote prune origin` + delete merged copilot branches           | Git           | P1       | 5 min  |
-| 4   | **Archive old status docs** — move 90+ files to `docs/status/archive/`                           | Hygiene       | P1       | 2 min  |
-| 5   | **Add dnsblockd-processor tests** — at minimum: parseHostsFile, domain extraction, dedup         | Testing       | P1       | 2 hr   |
-| 6   | **Increase emeet-pixyd test coverage** — autoManage, socket protocol, edge cases                 | Testing       | P1       | 4 hr   |
-| 7   | **Add GitHub Actions CI** — `go test`, `go vet`, `nix flake check` on push                       | CI/CD         | P1       | 2 hr   |
-| 8   | **SigNoz alerting rules** — PagerDuty/email for service failures                                 | Infra         | P2       | 3 hr   |
-| 9   | **Authelia SSO** — protect all `*.home.lan` services                                             | Security      | P2       | 4 hr   |
-| 10  | **NixOS system tests** — automated validation of service configs                                 | Testing       | P2       | 6 hr   |
-| 11  | **emeet-pixyd: add `version` command** — report daemon version via socket                        | Feature       | P2       | 30 min |
-| 12  | **emeet-pixyd: structured metrics** — expose HID command success/failure counts                  | Observability | P2       | 2 hr   |
-| 13  | **emeet-pixyd: config file support** — `/etc/emeet-pixyd.toml` for poll interval, debounce, etc. | Feature       | P3       | 3 hr   |
-| 14  | **Flake lock automated updates** — GitHub Actions + auto PR                                      | Automation    | P2       | 2 hr   |
-| 15  | **Off-site backup** — BTRFS snapshot sync to S3/B2                                               | Reliability   | P2       | 3 hr   |
-| 16  | **Darwin config audit** — ensure macOS config matches NixOS feature parity where applicable      | Config        | P3       | 2 hr   |
-| 17  | **Immich external access** — Caddy reverse proxy + Authelia                                      | Feature       | P3       | 2 hr   |
-| 18  | **emeet-pixyd: graceful shutdown** — flush state, close HID cleanly on SIGTERM                   | Robustness    | P2       | 1 hr   |
-| 19  | **DNS blocker dashboard** — Grafana panel for blocked query metrics                              | Monitoring    | P3       | 2 hr   |
-| 20  | **Photomap production hardening** — auth, rate limiting, error handling                          | Feature       | P3       | 4 hr   |
-| 21  | **emeet-pixyd man page** — document all commands and socket protocol                             | Docs          | P3       | 1 hr   |
-| 22  | **Go module naming audit** — verify all `go.mod` files match repo structure                      | Hygiene       | P3       | 30 min |
-| 23  | **Automated BTRFS snapshot verification** — cron job that validates snapshots are readable       | Reliability   | P3       | 1 hr   |
-| 24  | **Gitea mirror health check** — alert when GitHub→Gitea sync fails                               | Monitoring    | P3       | 1 hr   |
-| 25  | **Contributing guide** — `CONTRIBUTING.md` for the monorepo                                      | Docs          | P4       | 2 hr   |
+| #  | Task                                                                                             | Category      | Priority | Effort |
+| -- | ------------------------------------------------------------------------------------------------ | ------------- | -------- | ------ |
+| 1  | **Complete the rebase** — `git rebase --continue`                                                | Git           | P0       | 1 min  |
+| 2  | **Drop stale stashes** — audit and remove                                                        | Git           | P1       | 5 min  |
+| 3  | **Prune remote branches** — `git remote prune origin` + delete merged copilot branches           | Git           | P1       | 5 min  |
+| 4  | **Archive old status docs** — move 90+ files to `docs/status/archive/`                           | Hygiene       | P1       | 2 min  |
+| 5  | **Add dnsblockd-processor tests** — at minimum: parseHostsFile, domain extraction, dedup         | Testing       | P1       | 2 hr   |
+| 6  | **Increase emeet-pixyd test coverage** — autoManage, socket protocol, edge cases                 | Testing       | P1       | 4 hr   |
+| 7  | **Add GitHub Actions CI** — `go test`, `go vet`, `nix flake check` on push                       | CI/CD         | P1       | 2 hr   |
+| 8  | **SigNoz alerting rules** — PagerDuty/email for service failures                                 | Infra         | P2       | 3 hr   |
+| 9  | **Authelia SSO** — protect all `*.home.lan` services                                             | Security      | P2       | 4 hr   |
+| 10 | **NixOS system tests** — automated validation of service configs                                 | Testing       | P2       | 6 hr   |
+| 11 | **emeet-pixyd: add `version` command** — report daemon version via socket                        | Feature       | P2       | 30 min |
+| 12 | **emeet-pixyd: structured metrics** — expose HID command success/failure counts                  | Observability | P2       | 2 hr   |
+| 13 | **emeet-pixyd: config file support** — `/etc/emeet-pixyd.toml` for poll interval, debounce, etc. | Feature       | P3       | 3 hr   |
+| 14 | **Flake lock automated updates** — GitHub Actions + auto PR                                      | Automation    | P2       | 2 hr   |
+| 15 | **Off-site backup** — BTRFS snapshot sync to S3/B2                                               | Reliability   | P2       | 3 hr   |
+| 16 | **Darwin config audit** — ensure macOS config matches NixOS feature parity where applicable      | Config        | P3       | 2 hr   |
+| 17 | **Immich external access** — Caddy reverse proxy + Authelia                                      | Feature       | P3       | 2 hr   |
+| 18 | **emeet-pixyd: graceful shutdown** — flush state, close HID cleanly on SIGTERM                   | Robustness    | P2       | 1 hr   |
+| 19 | **DNS blocker dashboard** — Grafana panel for blocked query metrics                              | Monitoring    | P3       | 2 hr   |
+| 20 | **Photomap production hardening** — auth, rate limiting, error handling                          | Feature       | P3       | 4 hr   |
+| 21 | **emeet-pixyd man page** — document all commands and socket protocol                             | Docs          | P3       | 1 hr   |
+| 22 | **Go module naming audit** — verify all `go.mod` files match repo structure                      | Hygiene       | P3       | 30 min |
+| 23 | **Automated BTRFS snapshot verification** — cron job that validates snapshots are readable       | Reliability   | P3       | 1 hr   |
+| 24 | **Gitea mirror health check** — alert when GitHub→Gitea sync fails                               | Monitoring    | P3       | 1 hr   |
+| 25 | **Contributing guide** — `CONTRIBUTING.md` for the monorepo                                      | Docs          | P4       | 2 hr   |
 
 ---
 

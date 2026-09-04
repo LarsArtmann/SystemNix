@@ -13,18 +13,18 @@
 
 ### 1. Research (verified, not assumed)
 
-| Finding | Source | Status |
-|---|---|---|
-| Google Photos Library API closed to third-party originals since **2025-03-31** (apps can only download what they uploaded) | rclone.org/googlephotos docs (updated 2026-07-31), nixpkgs gphotos-sync removal | VERIFIED |
-| rclone gphotos backend is **Tier 5 (deprecated)**; shared client_id retires **during 2026** | rclone docs | VERIFIED |
-| gphotos-sync **archived upstream**, removed from nixpkgs ("API changes ceased its functions") | `nix eval nixpkgs#gphotos-sync` error message | VERIFIED |
-| gphotosdl (rclone author's headless-browser full-res downloader): alive (pushed 2026-05-30, 152 stars), but fragile (1 image at a time, hangs on error, periodic re-login, issue #16 "Deleted my backup") | GitHub API | VERIFIED |
-| Takeout scheduled exports: **every 2 months × 1 year** (only recurring option), 1/2/4/10/**50 GB** splits, **auto-delivers to Drive** (`dest=drive`), albums + JSON sidecars included; partner-shared/other-people's photos **excluded** | Google support + takeoutreader + metadatafixer via research agent | VERIFIED |
-| immich-go 0.32.0 in nixpkgs; `from-google-photos` eats takeout zips, preserves albums/descriptions/GPS/stacking/dedup, 100k+ photos proven | upstream README | VERIFIED |
-| rclone drive backend: Tier 1, md5-in-listings (`--checksum` free), `--fast-list` (39k files: 22min → 4min), Docs export default `docx,xlsx,pptx,svg` (or `pdf`), `use_trash` default true, own client_id now mandatory | rclone drive docs (fetched to /tmp) | VERIFIED |
-| `--drive-skip-checksum-gphotos` exists for Drive-stored photos with mutating md5s | rclone drive docs | VERIFIED |
-| No native Google Drive Desktop for Linux; GNOME Online Accounts/kio-gdrive are browse-only GVfs; no new active 2026 Photos pull-tools (GitHub search) | search + docs | VERIFIED |
-| Insync 3.9.8 in nixpkgs but commercial $30 and unnecessary | nixpkgs eval | VERIFIED |
+| Finding                                                                                                                                                                                                                                  | Source                                                                          | Status   |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | -------- |
+| Google Photos Library API closed to third-party originals since **2025-03-31** (apps can only download what they uploaded)                                                                                                               | rclone.org/googlephotos docs (updated 2026-07-31), nixpkgs gphotos-sync removal | VERIFIED |
+| rclone gphotos backend is **Tier 5 (deprecated)**; shared client_id retires **during 2026**                                                                                                                                              | rclone docs                                                                     | VERIFIED |
+| gphotos-sync **archived upstream**, removed from nixpkgs ("API changes ceased its functions")                                                                                                                                            | `nix eval nixpkgs#gphotos-sync` error message                                   | VERIFIED |
+| gphotosdl (rclone author's headless-browser full-res downloader): alive (pushed 2026-05-30, 152 stars), but fragile (1 image at a time, hangs on error, periodic re-login, issue #16 "Deleted my backup")                                | GitHub API                                                                      | VERIFIED |
+| Takeout scheduled exports: **every 2 months × 1 year** (only recurring option), 1/2/4/10/**50 GB** splits, **auto-delivers to Drive** (`dest=drive`), albums + JSON sidecars included; partner-shared/other-people's photos **excluded** | Google support + takeoutreader + metadatafixer via research agent               | VERIFIED |
+| immich-go 0.32.0 in nixpkgs; `from-google-photos` eats takeout zips, preserves albums/descriptions/GPS/stacking/dedup, 100k+ photos proven                                                                                               | upstream README                                                                 | VERIFIED |
+| rclone drive backend: Tier 1, md5-in-listings (`--checksum` free), `--fast-list` (39k files: 22min → 4min), Docs export default `docx,xlsx,pptx,svg` (or `pdf`), `use_trash` default true, own client_id now mandatory                   | rclone drive docs (fetched to /tmp)                                             | VERIFIED |
+| `--drive-skip-checksum-gphotos` exists for Drive-stored photos with mutating md5s                                                                                                                                                        | rclone drive docs                                                               | VERIFIED |
+| No native Google Drive Desktop for Linux; GNOME Online Accounts/kio-gdrive are browse-only GVfs; no new active 2026 Photos pull-tools (GitHub search)                                                                                    | search + docs                                                                   | VERIFIED |
+| Insync 3.9.8 in nixpkgs but commercial $30 and unnecessary                                                                                                                                                                               | nixpkgs eval                                                                    | VERIFIED |
 
 **Ecosystem verdict:** Drive = rclone. Photos = Takeout (via Drive) + optional immich-go. Everything else is dead.
 
@@ -94,6 +94,7 @@
 ## f) NEXT UP TO 50 (this session's scope only)
 
 **Go-live (blocking on user):**
+
 1. Create Google Cloud OAuth client (Drive API enabled, Desktop type)
 2. Set publishing status **"In production"** (else refresh token dies in 7d)
 3. Run `rclone authorize "drive" "<id> <secret>"` on a desktop browser machine
@@ -138,4 +139,5 @@
 3. **For Photos: do you want me to prep the Takeout-to-Immich pipeline now** (scheduled Takeout + immich-go runbook), or leave Photos entirely alone until the Drive mirror has proven stable for a few weeks?
 
 ---
-*Artifacts this session: `modules/nixos/services/google-sync.nix` (new), `modules/nixos/services/sops.nix` (+google_sync secret), `platforms/nixos/secrets/google-sync.yaml` (new, encrypted placeholder), `AGENTS.md` (+Google Sync section), `TODO_LIST.md` (+P0 go-live entry). All eval/build/lint green. CORRECTION (00:50): the session's final deploy shipped the module ENABLED by accident — crash-looping until the follow-up fix deploys; ships disabled thereafter, pending OAuth token.*
+
+_Artifacts this session: `modules/nixos/services/google-sync.nix` (new), `modules/nixos/services/sops.nix` (+google_sync secret), `platforms/nixos/secrets/google-sync.yaml` (new, encrypted placeholder), `AGENTS.md` (+Google Sync section), `TODO_LIST.md` (+P0 go-live entry). All eval/build/lint green. CORRECTION (00:50): the session's final deploy shipped the module ENABLED by accident — crash-looping until the follow-up fix deploys; ships disabled thereafter, pending OAuth token._

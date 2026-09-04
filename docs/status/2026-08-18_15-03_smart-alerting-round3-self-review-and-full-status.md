@@ -140,10 +140,10 @@
 
 ## f) NEXT (ordered, ~30 real items)
 
-1. Fix `journalUnits` default → `dnsblockd.service` (2 min, known bug)
-2. Remove pointless `TimeoutStartSec = "2min"` from papdashboard.service
+~~1. Fix `journalUnits` default → `dnsblockd.service` (2 min, known bug)~~ done 2026-08-18 (AGENTS.md: dnsblockd evidence fix)
+~~2. Remove pointless `TimeoutStartSec = "2min"` from papdashboard.service~~ done 2026-08-18 (same fix batch — pointless timeout dropped)
 3. ~~Add backup-coordination entry (SQLite dir, maxAge 25h)~~ done at `34f33a51`
-4. Update pre-deploy-check.sh (port 8088) + post-deploy-check.sh
+~~4. Update pre-deploy-check.sh (port 8088) + post-deploy-check.sh~~ done — full post-deploy section live (~line 456; verified 2026-08-31)
    (`/api/health` 200, ingest 401-when-unauthenticated)
 5. ~~Re-verify `origin/master` on PapDashboard contains the insight commits~~ done (flake input re-pinned to ebbc6fa by the 20-52 session (bug 1 of the 405 saga))
 6. ~~`nix flake lock --update-input papdashboard` → fresh rev~~ done at `e3995077`
@@ -154,8 +154,8 @@
    non-empty (`journalctl -u papdashboard | grep insight`)
 10. ~~Verify gatus config reloaded + custom provider firing (journalctl -u gatus)~~ done (verified: gatus POSTs land 200 in the papdashboard journal after the method=POST fix (fceb7e6f))
 11. Synthetic failing endpoint → alert in dashboard UI → NPU insight → Discord
-12. Watch FIRST insight: FastFlowLM cold load 1-3 min, timeout 300s
-13. Verify Discord message pairs (raw + insight, no duplicates of raw)
+~~12. Watch FIRST insight: FastFlowLM cold load 1-3 min, timeout 300s~~ done — enricher insights observed live (2026-08-22 freeze #2: an enricher insight logged 05:34)
+~~13. Verify Discord message pairs (raw + insight, no duplicates of raw)~~ done — dual-path + PAP_NOTIFY_SOURCE_APPS=insight filter verified live (no duplicate raws since deploy)
 14. ~~Delete smoke leftovers if any resurface; confirm `alerts.home.lan` resolves + TLS~~ done (vHost live; homepage tile + Gatus /api/health deployed)
 15. Decide severity mapping (error vs critical per gatus endpoint)
 16. Consider Idempotency-Key or (sourceApp,title)-dedup on trigger ingest
@@ -186,7 +186,7 @@
 2. **Insights channel:** keep the shared alert webhook (current wiring: Discord
    gets raw+insight pairs in one channel), or do you want a dedicated
    channel/webhook for insights (requires you to create it; then one sops key
-   + `PAP_DISCORD_WEBHOOK` swap + redeploy)?
+   - `PAP_DISCORD_WEBHOOK` swap + redeploy)?
 3. **PapDashboard push before deploy:** the flake input must fetch a GitHub rev
    containing today's insight work. OK to rely on the auto-commit daemon's
    pushes to `origin/master` (verify rev, then lock), or do you want to review/

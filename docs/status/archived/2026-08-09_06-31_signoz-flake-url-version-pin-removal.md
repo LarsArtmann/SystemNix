@@ -12,32 +12,32 @@
 
 Audited all **61 flake input URLs** in `flake.nix`. Found exactly **2 inputs** with hardcoded version tags:
 
-| Input | Before | After |
-|---|---|---|
-| `signoz-src` | `github:SigNoz/signoz/v0.127.1` | `github:SigNoz/signoz` |
+| Input                  | Before                                         | After                                 |
+| ---------------------- | ---------------------------------------------- | ------------------------------------- |
+| `signoz-src`           | `github:SigNoz/signoz/v0.127.1`                | `github:SigNoz/signoz`                |
 | `signoz-collector-src` | `github:SigNoz/signoz-otel-collector/v0.144.5` | `github:SigNoz/signoz-otel-collector` |
 
 The remaining **59 inputs already correctly defer** to `flake.lock` (branch refs like `?ref=master`, `/stable`, `/nixos-unstable`, or default branch). No commit-hash pins, no `?ref=v*` tags anywhere else.
 
 ### Changes Made
 
-| File | Lines | Change |
-|---|---|---|
-| `flake.nix` | 108-115 | Dropped `/v0.127.1` and `/v0.144.5` version tags from both SigNoz URLs |
-| `_signoz-packages.nix` | 9-10 | Hardcoded semver → `inputs.signoz-src.shortRev or "latest"` / `inputs.signoz-collector-src.shortRev or "latest"` |
-| `_signoz-packages.nix` | 19 | `collectorVendorHash` recomputed: `sha256-41K2izMlUTpYrIXW+1rpy4F/yosSMQvvbO/EpOwQJvE=` |
-| `_signoz-packages.nix` | 52 | `vendorHash` (signoz) recomputed: `sha256-wl12FQS11YWdE6Gd0zjTlAuCGcuz5DqLnwHJ/pSMsqA=` |
-| `flake.lock` | signoz-src node | Updated to commit `40aa322` (latest main, 2026-08-05) |
-| `flake.lock` | signoz-collector-src node | Updated to commit `75a995d` (latest main, 2026-08-02) |
+| File                   | Lines                     | Change                                                                                                           |
+| ---------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `flake.nix`            | 108-115                   | Dropped `/v0.127.1` and `/v0.144.5` version tags from both SigNoz URLs                                           |
+| `_signoz-packages.nix` | 9-10                      | Hardcoded semver → `inputs.signoz-src.shortRev or "latest"` / `inputs.signoz-collector-src.shortRev or "latest"` |
+| `_signoz-packages.nix` | 19                        | `collectorVendorHash` recomputed: `sha256-41K2izMlUTpYrIXW+1rpy4F/yosSMQvvbO/EpOwQJvE=`                          |
+| `_signoz-packages.nix` | 52                        | `vendorHash` (signoz) recomputed: `sha256-wl12FQS11YWdE6Gd0zjTlAuCGcuz5DqLnwHJ/pSMsqA=`                          |
+| `flake.lock`           | signoz-src node           | Updated to commit `40aa322` (latest main, 2026-08-05)                                                            |
+| `flake.lock`           | signoz-collector-src node | Updated to commit `75a995d` (latest main, 2026-08-02)                                                            |
 
 ### Verification Performed
 
-| Check | Result |
-|---|---|
-| `nix build .#signoz .#signoz-otel-collector .#signoz-schema-migrator` | EXIT=0 — all 3 binaries built (113 MB, 323 MB, 10 MB) |
-| `nix flake check --no-build` | EXIT=0 — "all checks passed!" |
-| Store path versioning | `signoz-40aa322`, `signoz-otel-collector-75a995d` — confirms `shortRev` derivation works on `flake = false` inputs |
-| Binary sanity | All 3 binaries present in `/bin/` with expected names |
+| Check                                                                 | Result                                                                                                             |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `nix build .#signoz .#signoz-otel-collector .#signoz-schema-migrator` | EXIT=0 — all 3 binaries built (113 MB, 323 MB, 10 MB)                                                              |
+| `nix flake check --no-build`                                          | EXIT=0 — "all checks passed!"                                                                                      |
+| Store path versioning                                                 | `signoz-40aa322`, `signoz-otel-collector-75a995d` — confirms `shortRev` derivation works on `flake = false` inputs |
+| Binary sanity                                                         | All 3 binaries present in `/bin/` with expected names                                                              |
 
 ---
 
@@ -153,6 +153,7 @@ The remaining **59 inputs already correctly defer** to `flake.lock` (branch refs
 ### Q1: Should I deploy this SigNoz main-tracking change now, or wait?
 
 The packages build and eval passes, but the upgrade from v0.127.1 to unreleased main is an unknown delta. SigNoz runs ClickHouse schema migrations at startup (`signoz-schema-migration.service`). If a migration is irreversible or data-corrupting, rolling back requires restoring ClickHouse from backup. I cannot assess the migration risk without reviewing the SigNoz changelog, which I have not done. Should I:
+
 - (a) Deploy now and watch closely, or
 - (b) Review the changelog first, take a ClickHouse backup, then deploy?
 

@@ -4,7 +4,6 @@ _2026-08-02 03:12 CEST_
 
 ---
 
-
 ## Context
 
 The user asked "what did you forget, what could be better?" after a session where I resolved the 3 open questions from the second-pass review, fixed the GC caveat, created the sops secret, and added restartTriggers + localhost binding. This report is an honest accounting of this session's work, gaps, and failures.
@@ -84,13 +83,13 @@ The setup guide says `attic cache info monitor365` will show a `Public Key:` lin
 
 All changes are in the working tree but NOT committed. The user's AGENTS.md says "An auto-git commit daemon runs continuously" — but the changes are still uncommitted at session end. Files changed:
 
-| File | Change |
-|------|--------|
-| `modules/nixos/services/attic.nix` | GC comment, restartTriggers, localhost binding |
-| `platforms/nixos/secrets/attic.yaml` | NEW — encrypted RS256 JWT secret |
-| `docs/setup/nix-binary-cache-setup.md` | Steps 1-2 DONE, stale Notes fixed |
-| `AGENTS.md` | GC-on-startup + sops-without-sudo findings |
-| `docs/status/2026-08-02_02-21_attic-cache-second-pass-review.md` | Questions resolved, GC section updated |
+| File                                                             | Change                                         |
+| ---------------------------------------------------------------- | ---------------------------------------------- |
+| `modules/nixos/services/attic.nix`                               | GC comment, restartTriggers, localhost binding |
+| `platforms/nixos/secrets/attic.yaml`                             | NEW — encrypted RS256 JWT secret               |
+| `docs/setup/nix-binary-cache-setup.md`                           | Steps 1-2 DONE, stale Notes fixed              |
+| `AGENTS.md`                                                      | GC-on-startup + sops-without-sudo findings     |
+| `docs/status/2026-08-02_02-21_attic-cache-second-pass-review.md` | Questions resolved, GC section updated         |
 
 ---
 
@@ -144,6 +143,7 @@ When I started this session, I ran `git status` and `git diff --stat` — which 
 ### D3 — Stale values in the setup guide Notes section survived THREE review passes
 
 The Notes section said:
+
 - Storage: `/var/lib/atticd/storage/` → WRONG (it's `/data/atticd/storage/`)
 - GC interval: "12 hours" → WRONG (it's "4 hours")
 - Retention: "30-day default" → WRONG (it's "7-day")
@@ -157,6 +157,7 @@ The second-pass review explicitly documented: "I had sourcegraph access to the A
 ### D5 — No pre-deploy integration test was possible or attempted
 
 I verified Nix semantics (`nix eval`, `nix flake check`) but couldn't verify:
+
 - That atticd actually starts with the DynamicUser + root-owned storage directory
 - That the `atticd-atticadm` wrapper works with our config file path
 - That Caddy proxies correctly to the localhost-only binding
@@ -193,6 +194,7 @@ These are all runtime verifications that require deploy. I accepted this limitat
 ## F) Up to 50 Things to Do Next
 
 ### Critical path — bring cache online (runtime steps)
+
 1. Deploy SystemNix: `nh os switch .`
 2. Verify atticd starts: `systemctl status atticd`
 3. Verify DynamicUser can write to `/data/atticd/storage` (first real test of B1)
@@ -215,6 +217,7 @@ These are all runtime verifications that require deploy. I accepted this limitat
 20. Commit this session's changes if the auto-commit daemon hasn't
 
 ### Code improvements (this repo)
+
 21. Add Prometheus textfile collector for `/data/atticd/storage` size (like `btrfs-health` pattern)
 22. Add Gatus alert on cache size approaching `maxStorageGigabytes` threshold
 23. Add Caddy `after = [ "atticd.service" ]` dependency
@@ -227,6 +230,7 @@ These are all runtime verifications that require deploy. I accepted this limitat
 30. Track cache hit/miss rate (Attic metrics → SigNoz via OTel)
 
 ### Monitor365 repo
+
 31. Commit the nix-cache.yml workflow change (`--accept-flake-config`)
 32. Commit the parallel clippy/encryption-key changes (38 files — NOT authored this session)
 33. Consider adding `nix flake check --no-build` to CI
@@ -234,12 +238,14 @@ These are all runtime verifications that require deploy. I accepted this limitat
 35. Add a `ci.yml` workflow (check/clippy/test/fmt)
 
 ### Multi-project caching
+
 36. Create cache for SystemNix itself: `attic cache create systemnix`
 37. Create cache for dnsblockd
 38. Document the "new project" cache setup pattern
 39. Evaluate shared "nixpkgs-overrides" cache for custom overlays
 
 ### Architecture / scalability
+
 40. Evaluate PostgreSQL backend (share immich's PG) if SQLite bottlenecks
 41. Set up per-project cache retention (monitor365: 7d, systemnix: 3d)
 42. Consider Cloudflare R2 (zero egress) if cache outgrows local disk
@@ -247,6 +253,7 @@ These are all runtime verifications that require deploy. I accepted this limitat
 44. Add cache warming runbook for after nixpkgs bumps
 
 ### Documentation
+
 45. Create architecture diagram for CI → cache → deploy flow
 46. Update FEATURES.md with Attic cache status once deployed
 47. Create runbook: "Attic cache recovery" (corrupt SQLite, full disk, etc.)

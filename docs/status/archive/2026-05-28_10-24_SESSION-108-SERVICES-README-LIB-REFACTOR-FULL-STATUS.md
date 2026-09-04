@@ -252,48 +252,48 @@ Fixed in session 103, but this class of bug (directory vs file in ExecStart) cou
 
 ### P0 — Immediate (<30 min)
 
-| #   | Task                                                                                         | Impact                 | Effort |
-| --- | -------------------------------------------------------------------------------------------- | ---------------------- | ------ |
-| 1   | **Deploy all committed changes** — `just switch` (sessions 101–108)                          | Ship everything        | 10 min |
-| 2   | **Update `TODO_LIST.md`** — mark done items, add new ones                                    | Planning accuracy      | 15 min |
-| 3   | **Commit & push 5 consumer repos** (BuildFlow, Standup-Killer, library-policy, PMA, mr-sync) | Prevents data loss     | 15 min |
-| 4   | **Add `mkSecretCheck` and `mkDesktopNotifyService` to AGENTS.md**                            | Documentation accuracy | 5 min  |
-| 5   | **Run `just test` (full build)** — not just `test-fast`                                      | Confidence             | 30 min |
+| # | Task                                                                                         | Impact                 | Effort |
+| - | -------------------------------------------------------------------------------------------- | ---------------------- | ------ |
+| 1 | **Deploy all committed changes** — `just switch` (sessions 101–108)                          | Ship everything        | 10 min |
+| 2 | **Update `TODO_LIST.md`** — mark done items, add new ones                                    | Planning accuracy      | 15 min |
+| 3 | **Commit & push 5 consumer repos** (BuildFlow, Standup-Killer, library-policy, PMA, mr-sync) | Prevents data loss     | 15 min |
+| 4 | **Add `mkSecretCheck` and `mkDesktopNotifyService` to AGENTS.md**                            | Documentation accuracy | 5 min  |
+| 5 | **Run `just test` (full build)** — not just `test-fast`                                      | Confidence             | 30 min |
 
 ### P1 — This Week (<2 hr)
 
-| #   | Task                                                                           | Impact                 | Effort |
-| --- | ------------------------------------------------------------------------------ | ---------------------- | ------ |
-| 6   | **Fix Standup-Killer Go type errors** — `event.Version` cast                   | Unblocks build         | 30 min |
-| 7   | **Create `FEATURES.md`** — feature inventory with status indicators            | Project visibility     | 1 hr   |
-| 8   | **Add `just test-exec-paths` to CI** — catch ExecStart directory bugs          | Quality gate           | 30 min |
-| 9   | **Input audit** — review 85 flake inputs, remove unused                        | Build speed            | 1 hr   |
-| 10  | **Strip shebangs from external `.sh` files** used with `writeShellApplication` | Cleaner scripts        | 30 min |
-| 11  | **Configure secondary LLM provider for Hermes**                                | Reliability            | 1 hr   |
-| 12  | **Verify all deployed services healthy** — Gatus, SigNoz, journald             | Operational confidence | 30 min |
+| #  | Task                                                                           | Impact                 | Effort |
+| -- | ------------------------------------------------------------------------------ | ---------------------- | ------ |
+| 6  | **Fix Standup-Killer Go type errors** — `event.Version` cast                   | Unblocks build         | 30 min |
+| 7  | **Create `FEATURES.md`** — feature inventory with status indicators            | Project visibility     | 1 hr   |
+| 8  | **Add `just test-exec-paths` to CI** — catch ExecStart directory bugs          | Quality gate           | 30 min |
+| 9  | **Input audit** — review 85 flake inputs, remove unused                        | Build speed            | 1 hr   |
+| 10 | **Strip shebangs from external `.sh` files** used with `writeShellApplication` | Cleaner scripts        | 30 min |
+| 11 | **Configure secondary LLM provider for Hermes**                                | Reliability            | 1 hr   |
+| 12 | **Verify all deployed services healthy** — Gatus, SigNoz, journald             | Operational confidence | 30 min |
 
 ### P2 — Architecture (this sprint)
 
-| #   | Task                                                                           | Impact            | Effort |
-| --- | ------------------------------------------------------------------------------ | ----------------- | ------ |
-| 13  | **Convert `/data` BTRFS to `@data` subvolume**                                 | Enables snapshots | 30 min |
-| 14  | **Consolidate overlays: move Linux-only mkPackageOverlay calls to shared.nix** | Simpler structure | 1 hr   |
-| 15  | **Add `mkPeriodicTask` helper** — timer+oneshot for backups, syncs             | DRY               | 1 hr   |
-| 16  | **Type models for secrets** — Nix-level assertions for cookie_secret, etc.     | Safety            | 1 hr   |
-| 17  | **nix-colors integration** — migrate 17+ hardcoded colors                      | Maintainability   | 2 hr   |
-| 18  | **Textfile collectors: dedicated user** instead of 1777                        | Security          | 30 min |
-| 19  | **Add memory/swap alerting** to SigNoz/Gatus                                   | Early warning     | 1 hr   |
-| 20  | **Create `just new-service <name>` command** — auto-generate boilerplate       | DX                | 1 hr   |
+| #  | Task                                                                           | Impact            | Effort |
+| -- | ------------------------------------------------------------------------------ | ----------------- | ------ |
+| 13 | **Convert `/data` BTRFS to `@data` subvolume**                                 | Enables snapshots | 30 min |
+| 14 | **Consolidate overlays: move Linux-only mkPackageOverlay calls to shared.nix** | Simpler structure | 1 hr   |
+| 15 | **Add `mkPeriodicTask` helper** — timer+oneshot for backups, syncs             | DRY               | 1 hr   |
+| 16 | **Type models for secrets** — Nix-level assertions for cookie_secret, etc.     | Safety            | 1 hr   |
+| 17 | **nix-colors integration** — migrate 17+ hardcoded colors                      | Maintainability   | 2 hr   |
+| 18 | **Textfile collectors: dedicated user** instead of 1777                        | Security          | 30 min |
+| 19 | **Add memory/swap alerting** to SigNoz/Gatus                                   | Early warning     | 1 hr   |
+| 20 | **Create `just new-service <name>` command** — auto-generate boilerplate       | DX                | 1 hr   |
 
 ### P3 — Ecosystem / Nice to Have
 
-| #   | Task                                                                    | Impact          | Effort |
-| --- | ----------------------------------------------------------------------- | --------------- | ------ |
-| 21  | **Deploy Dozzle** — Docker log tailing at `logs.home.lan`               | Observability   | 2 hr   |
-| 22  | **Provision Pi 3** for DNS failover                                     | Resilience      | 2 hr   |
-| 23  | **Create shared flake-parts template** for new Go repos                 | DX              | 2 hr   |
-| 24  | **Add CI flake check to all consumer repos**                            | Early detection | 2 hr   |
-| 25  | **Archive old status docs** — 350+ files in `docs/status/` + `archive/` | Disk space      | 30 min |
+| #  | Task                                                                    | Impact          | Effort |
+| -- | ----------------------------------------------------------------------- | --------------- | ------ |
+| 21 | **Deploy Dozzle** — Docker log tailing at `logs.home.lan`               | Observability   | 2 hr   |
+| 22 | **Provision Pi 3** for DNS failover                                     | Resilience      | 2 hr   |
+| 23 | **Create shared flake-parts template** for new Go repos                 | DX              | 2 hr   |
+| 24 | **Add CI flake check to all consumer repos**                            | Early detection | 2 hr   |
+| 25 | **Archive old status docs** — 350+ files in `docs/status/` + `archive/` | Disk space      | 30 min |
 
 ---
 

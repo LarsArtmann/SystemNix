@@ -6,10 +6,10 @@
 
 ---
 
-
 ## A) FULLY DONE
 
 ### 1. monitor365-server-watchdog journalctl fix (PREVIOUS SESSION — already committed)
+
 - **File:** `modules/nixos/services/monitor365.nix:516`
 - **Before:** `journalctl -u monitor365-server.service --since "5 min ago" --no-pager | grep -c "pool acquire failed"`
 - **After:** `journalctl --grep "pool acquire failed" -u monitor365-server.service --since "5 min ago" -n 21 --no-pager --output cat | wc -l`
@@ -17,6 +17,7 @@
 - **Status:** DONE, committed (dc37a5d0 era)
 
 ### 2. SigNoz journald OTel receiver — priority + unit pruning + toggle
+
 - **File:** `modules/nixos/services/signoz.nix`
 - **Before:** `priority = "info"` with 14 units (continuous `journalctl --follow --output=json`), conditionally enabled via `(nodeExporter || cadvisor)`
 - **After:** `priority = "warning"` with 10 units (dropped docker, postgresql, monitor365-server, projects-management-automation — the 4 chatty ones), new dedicated `journaldLogs` component toggle (default `true`)
@@ -24,6 +25,7 @@
 - **Pipeline fix:** Updated logs pipeline condition from `(nodeExporter || cadvisor)` to `journaldLogs` — decoupled from unrelated component toggles
 
 ### 3. niri-health-metrics journalctl patterns (timer-driven, every 30s!)
+
 - **File:** `modules/nixos/desktop/niri-config.nix:164-165`
 - **Before:** `journalctl _SYSTEMD_USER_UNIT=niri.service --since "10 min" | grep -c "Started niri"` (reads 10 min of logs through pipe every 30 seconds)
 - **After:** `journalctl --grep "Started niri" _SYSTEMD_USER_UNIT=niri.service --since "10 min" --output cat | wc -l`
@@ -32,22 +34,26 @@
 - **Impact:** Eliminates pipe serialization of 10 min of niri journal every 30 seconds — critical during DRM crash-loops where niri restarts rapidly
 
 ### 4. niri-health.sh journalctl patterns
+
 - **File:** `scripts/niri-health.sh:23,32`
 - **Before:** `journalctl --user -u niri --since "$CRASH_WINDOW" | grep -c "Started niri"`
 - **After:** `journalctl --grep "Started niri" --user -u niri --since "$CRASH_WINDOW" --output cat | wc -l`
 - **Impact:** Consistency fix — same anti-pattern, manual-run script (lower frequency but same IO profile)
 
 ### 5. niri-drm-healthcheck.sh journalctl pattern
+
 - **File:** `scripts/niri-drm-healthcheck.sh:83`
 - **Before:** `journalctl --user -u niri -n 20 --since "30 sec ago" | grep -cE "Permission denied|DeviceMissing"`
 - **After:** `journalctl --grep "Permission denied|DeviceMissing" --user -u niri -n 11 --since "30 sec ago" --output cat | wc -l`
 
 ### 6. AGENTS.md documentation
+
 - Added SigNoz journald receiver CPU burn gotcha
 - Added general `journalctl | grep -c` IO trap gotcha
 - Updated monitor365 DuckDB watchdog gotcha with `--grep` requirement
 
 ### 7. Validation
+
 - `nix flake check --no-build` — ALL CHECKS PASSED (both runs, before and after fix-up edits)
 
 ---
@@ -55,14 +61,15 @@
 ## B) PARTIALLY DONE
 
 ### NOT STARTED within this session — manual diagnostic scripts left unchanged
+
 These scripts use `journalctl | grep` but are **manual-run** (not timer-driven), so IO impact is negligible:
 
-| Script | Pattern | Why left alone |
-|--------|---------|----------------|
-| `scripts/usb-diagnostic.sh:53` | `journalctl -k \| grep -i "sda\|san\|usb" \| tail -20` | Manual diagnostic, runs on-demand |
-| `scripts/verify-deployment.sh:46` | `journalctl -u hermes --since "24 hours ago" -n 50 \| grep -qi` | Manual post-deploy check |
-| `scripts/verify-deployment.sh:48` | `journalctl -u hermes --since "24 hours ago" \| grep -i \| tail -5` | Manual post-deploy check |
-| `scripts/internet-diagnostic.sh:97` | `journalctl -u route-health-monitor -n 10` | No grep pipe, already bounded by `-n 10` |
+| Script                              | Pattern                                                             | Why left alone                           |
+| ----------------------------------- | ------------------------------------------------------------------- | ---------------------------------------- |
+| `scripts/usb-diagnostic.sh:53`      | `journalctl -k \| grep -i "sda\|san\|usb" \| tail -20`              | Manual diagnostic, runs on-demand        |
+| `scripts/verify-deployment.sh:46`   | `journalctl -u hermes --since "24 hours ago" -n 50 \| grep -qi`     | Manual post-deploy check                 |
+| `scripts/verify-deployment.sh:48`   | `journalctl -u hermes --since "24 hours ago" \| grep -i \| tail -5` | Manual post-deploy check                 |
+| `scripts/internet-diagnostic.sh:97` | `journalctl -u route-health-monitor -n 10`                          | No grep pipe, already bounded by `-n 10` |
 
 These COULD be improved for consistency but have zero recurring IO impact.
 
@@ -79,15 +86,18 @@ These COULD be improved for consistency but have zero recurring IO impact.
 ## D) TOTALLY FUCKED UP / MISTAKES CAUGHT & FIXED
 
 ### Mistake 1: Misleading comment in signoz.nix (CAUGHT & FIXED)
+
 - I wrote `"Raise to 'notice' for slightly more detail"` in a comment but set `priority = "warning"`. This would confuse future maintainers into thinking "notice" was an alternative when it wasn't.
 - **Fixed:** Removed the misleading sentence.
 
 ### Mistake 2: Missing `coreutils` in niri-config.nix runtimeInputs (CAUGHT & FIXED)
+
 - I changed from `grep` to `wc -l` but forgot to add `pkgs.coreutils` (which provides `wc`) to the `writeShellApplication`'s `runtimeInputs`.
 - `writeShellApplication` prepends runtimeInputs to PATH (doesn't exclusively set it), so system `wc` would likely be found. But undeclared dependencies are bad practice and fragile.
 - **Fixed:** Added `pkgs.coreutils` to runtimeInputs.
 
 ### Mistake 3: First multiedit attempt on monitor365.nix failed (PREVIOUS SESSION)
+
 - One of two edits in a `multiedit` call failed silently (trailing semicolon mismatch in `old_string`). Had to re-read and apply the second edit separately.
 
 ---
@@ -117,6 +127,7 @@ These COULD be improved for consistency but have zero recurring IO impact.
 ## F) NEXT STEPS (up to 50)
 
 ### Immediate (deploy & verify)
+
 1. `nix run .#deploy` — deploy all changes to evo-x2
 2. Verify `iotop`/`atop` no longer shows the SigNoz `journalctl --follow` at 96% CPU
 3. Verify `monitor365-server-watchdog` no longer spikes CPU every 5 min
@@ -125,6 +136,7 @@ These COULD be improved for consistency but have zero recurring IO impact.
 6. Check SigNoz log explorer — confirm warning-level logs still flowing from remaining 10 units
 
 ### Short-term (observability gaps)
+
 7. Consider re-adding `monitor365-server.service` to SigNoz journald units at `warning` level (errors still useful, info was the problem)
 8. Consider re-adding `docker.service` to SigNoz journald units at `warning` level
 9. Consider re-adding `postgresql.service` to SigNoz journald units at `warning` level
@@ -132,17 +144,20 @@ These COULD be improved for consistency but have zero recurring IO impact.
 11. Verify `_SYSTEMD_USER_UNIT=niri.service` actually catches "Started niri.service" lifecycle messages (may need fix to use a different filter)
 
 ### Prevention (stop recurrence)
+
 12. Add pre-commit grep guard for `journalctl.*|.*grep` pattern in `.githooks/pre-commit`
 13. Add eval-time Nix assertion that warns when `journalctl` appears in a systemd `script` without `--grep`
 14. Document the `journalctl --grep` pattern in `docs/CONTRIBUTING.md` module template section
 15. Create a `lib/journal.nix` helper that wraps common journalctl patterns safely
 
 ### Consistency (manual scripts)
+
 16. Fix `scripts/usb-diagnostic.sh:53` — switch to `journalctl --grep`
 17. Fix `scripts/verify-deployment.sh:46,48` — switch to `journalctl --grep`
 18. Fix `scripts/internet-diagnostic.sh:97` — minor, already bounded by `-n 10`
 
 ### Deeper investigation
+
 19. Audit ALL systemd timers for IO-heavy ExecStart scripts (not just journalctl — also find, du, du, tar, etc.)
 20. Check if SigNoz ClickHouse is ingesting the firehose of info-level logs efficiently — the 3.78 GB read might also be causing ClickHouse write amplification
 21. Check journal retention — `SystemMaxUse=8G` with monitor365 generating 270 MB / 5 min means the journal fills and rotates rapidly, causing journalctl to work harder
@@ -151,6 +166,7 @@ These COULD be improved for consistency but have zero recurring IO impact.
 24. Audit `hermes.service` log output — if it's also chatty at info level, it might be the next IO bottleneck even at warning priority
 
 ### Broader system health
+
 25. Run `systemd-cgtop` to find OTHER IO-heavy services not caught by this audit
 26. Check `systemd-journald` itself for IO pressure — it writes all those logs
 27. Consider `journald` storage `volatile` vs `persistent` tradeoffs for this workload
@@ -159,6 +175,7 @@ These COULD be improved for consistency but have zero recurring IO impact.
 30. Review all `systemd.services.*.serviceConfig.IOSchedulingClass` — IO-heavy services should use `idle` or `best-effort` with low priority
 
 ### Testing
+
 31. Add NixOS VM test that asserts `signoz-collector` starts with `journaldLogs` disabled
 32. Add NixOS VM test for monitor365-server-watchdog with mock journal entries
 33. Add eval-time assertion that `journaldLogs` requires `otelCollector` component

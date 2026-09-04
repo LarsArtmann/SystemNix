@@ -162,12 +162,14 @@ away** from succeeding.
 > **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through. (up to 50)
 
 ### Critical (block deploy)
+
 1. Finish deploy attempt 6 (was interrupted mid-build)
 2. If deploy fails on another stale vendorHash, fix it and retry
 3. Verify browser-history server and agent are NOT crash-looping after deploy
 4. Verify the `LOG_LEVEL=debug` output appears in journalctl
 
 ### High priority (fix the actual bug)
+
 5. ~~Read the debug log output from browser-history server to identify the real error cause~~ done (root-caused to SQLite DSN mismatch) from browser-history server to identify the real
    error cause behind `server.create_user_service`
 6. Fix the upstream browser-history/cqrs-htmx projection replay bug
@@ -177,6 +179,7 @@ away** from succeeding.
 10. Remove `LOG_LEVEL=debug` once the bug is fixed (or keep it — it's useful)
 
 ### SystemNix hardening
+
 11. Add a system-wide crash-loop circuit breaker (systemd or system-health module)
 12. Add Gatus alert for any service with `system_service_nrestarts` > 10 in 1h
 13. Add Gatus alert for `system_service_start_limit_hit` on any service
@@ -188,30 +191,35 @@ away** from succeeding.
 19. Add BTRFS emergency reserve check to post-deploy (verify file exists)
 
 ### Upstream repos
+
 20. Fix browser-history `go.work` (broken cqrs-htmx local replace)
 21. Add errorfamily feature request: log cause chain before CLI render
 22. Add CI check to each LarsArtmann Go repo: daily `nix build` vendorHash validation
 23. Consider `vendorHash = lib.fakeHash` pattern for faster iteration
 
 ### Monitoring
+
 24. Add Monitor365 buffer pressure to post-deploy check
 25. Add PSI memory pressure trend to Gatus (not just threshold)
 26. Add system-wide restart-rate metric (total restarts/min across all services)
 27. Add Gatus alert for total system restart rate > 20/min
 
 ### Documentation
+
 28. Write `docs/gotchas-archive.md` entry for this crash (full narrative)
 29. Update `docs/crash-analysis-2026-08-09.md` with cross-reference to this crash
 30. Update FEATURES.md if any feature status changed
 31. Add `docs/vendorHash-batch-fix-procedure.md` runbook
 
 ### Technical debt
+
 32. Clean up stale `flake.lock` entries (inputs no longer used)
 33. Audit all LarsArtmann Go repos for stale vendorHashes (one-time batch fix)
 34. Consider Attic cache for LarsArtmann Go package builds
 35. Add `nix flake check` to pre-commit hook if not already present
 
 ### Lower priority
+
 36. Consider systemd `RestartPreventExitStatus=69` for browser-history (exit 69 = UNAVAILABLE)
 37. Add browser-history integration test (start server, verify no crash)
 38. Add cqrs-htmx projection replay test for unknown event types

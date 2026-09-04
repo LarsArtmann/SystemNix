@@ -6,7 +6,6 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 1. **Root cause diagnosed:** `pkgs.homepage-dashboard` defaults to `enableLocalIcons = false`. No icons bundled. Every service tile requested `/icons/<name>.png` that didn't exist — ~25 browser 404s per page load

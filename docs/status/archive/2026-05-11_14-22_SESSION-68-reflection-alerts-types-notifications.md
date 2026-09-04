@@ -41,17 +41,17 @@ This session started with a self-critical reflection on what session 67 got wron
 
 ### SigNoz Alert Rules (9 total, all declarative)
 
-| #   | Rule                           | Threshold         | Interval |
-| --- | ------------------------------ | ----------------- | -------- |
-| 1   | Disk Space Critical            | >90%              | 5m       |
-| 2   | CPU Sustained High             | >90%              | 5m       |
-| 3   | Memory Critical                | >90%              | 5m       |
-| 4   | Systemd Service Failed         | >0                | 1m       |
-| 5   | GPU Thermal Throttling         | >90°C             | 5m       |
-| 6   | DNS Blocker Down               | up != 1           | 1m       |
-| 7   | EMEET PIXY Daemon Down         | up != 1           | 1m       |
-| 8   | **GPU VRAM Critical** (NEW)    | >85%              | 5m       |
-| 9   | **Niri Compositor Down** (NEW) | niri_running != 1 | 1m       |
+| # | Rule                           | Threshold         | Interval |
+| - | ------------------------------ | ----------------- | -------- |
+| 1 | Disk Space Critical            | >90%              | 5m       |
+| 2 | CPU Sustained High             | >90%              | 5m       |
+| 3 | Memory Critical                | >90%              | 5m       |
+| 4 | Systemd Service Failed         | >0                | 1m       |
+| 5 | GPU Thermal Throttling         | >90°C             | 5m       |
+| 6 | DNS Blocker Down               | up != 1           | 1m       |
+| 7 | EMEET PIXY Daemon Down         | up != 1           | 1m       |
+| 8 | **GPU VRAM Critical** (NEW)    | >85%              | 5m       |
+| 9 | **Niri Compositor Down** (NEW) | niri_running != 1 | 1m       |
 
 ### Gatus Health Checks (25 endpoints)
 
@@ -116,33 +116,33 @@ The 9 alert rules fire inside SigNoz but have **zero delivery targets**. No emai
 
 ### Ranked by Impact × Effort
 
-| #   | Task                                                                  | Impact   | Effort        | Category    |
-| --- | --------------------------------------------------------------------- | -------- | ------------- | ----------- |
-| 1   | **Configure SigNoz alert channels** (Discord webhook or ntfy)         | Critical | 5min          | Monitoring  |
-| 2   | **`just switch` + reboot** — deploy 10 commits, activate kernel fixes | Critical | 20min         | Operations  |
-| 3   | **Kernel update to 7.0.6** (`just update && just switch`)             | High     | 30min         | Security    |
-| 4   | **Wire `onFailure` to remaining 9 critical services**                 | High     | 10min         | Monitoring  |
-| 5   | **Adopt `systemdServiceIdentity` in ai-models.nix**                   | Medium   | 5min          | DX          |
-| 6   | **Extract overlays from flake.nix to `overlays/`** (~200 lines)       | Medium   | 30min         | Maintenance |
-| 7   | **Deploy ntfy-sh** as self-hosted notification relay                  | Medium   | 20min         | Monitoring  |
-| 8   | **BIOS investigation** — Ctrl+F1 for hidden AMD menus                 | High     | 5min          | Performance |
-| 9   | **Test GPU recovery chain** — simulate DRM zombie                     | High     | 10min         | Reliability |
-| 10  | **Fix ComfyUI CHDIR failure** — check-venv script                     | Medium   | 10min         | Reliability |
-| 11  | **Fix Polkit KDE agent** — Qt platform plugin error                   | Medium   | 10min         | Desktop     |
-| 12  | **Archive stale docs/** — 60+ top-level status files                  | Low      | 10min         | Maintenance |
-| 13  | **Nix flake standardization** — 67 tasks across 9 Go repos            | High     | Multi-session | DX          |
-| 14  | **Pi 3 DNS failover provisioning**                                    | High     | Hardware      | Reliability |
-| 15  | **Backup verification** — test restores                               | High     | 30min         | Reliability |
-| 16  | **NixOS VM tests** for critical services                              | Medium   | 60min         | DX          |
-| 17  | **Centralize firewall ports** in one module                           | Medium   | 15min         | Maintenance |
-| 18  | **Split signoz.nix** (738 lines → sub-modules)                        | Medium   | 30min         | Maintenance |
-| 19  | **Document bare-metal disaster recovery**                             | Medium   | 20min         | Reliability |
-| 20  | **Add `just validate-scripts`** (shellcheck)                          | Low      | 10min         | DX          |
-| 21  | **Make `do-ip6` a dns-blocker module option**                         | Low      | 5min          | Maintenance |
-| 22  | **Update FEATURES.md**                                                | Low      | 15min         | Maintenance |
-| 23  | **Add power estimation widget to waybar**                             | Low      | 15min         | Desktop     |
-| 24  | **Fix fzf.nix hardcoded color `#a6adc8`**                             | Low      | 3min          | Theme       |
-| 25  | **Configure Authelia SMTP notifications**                             | Low      | 10min         | Features    |
+| #  | Task                                                                  | Impact   | Effort        | Category    |
+| -- | --------------------------------------------------------------------- | -------- | ------------- | ----------- |
+| 1  | **Configure SigNoz alert channels** (Discord webhook or ntfy)         | Critical | 5min          | Monitoring  |
+| 2  | **`just switch` + reboot** — deploy 10 commits, activate kernel fixes | Critical | 20min         | Operations  |
+| 3  | **Kernel update to 7.0.6** (`just update && just switch`)             | High     | 30min         | Security    |
+| 4  | **Wire `onFailure` to remaining 9 critical services**                 | High     | 10min         | Monitoring  |
+| 5  | **Adopt `systemdServiceIdentity` in ai-models.nix**                   | Medium   | 5min          | DX          |
+| 6  | **Extract overlays from flake.nix to `overlays/`** (~200 lines)       | Medium   | 30min         | Maintenance |
+| 7  | **Deploy ntfy-sh** as self-hosted notification relay                  | Medium   | 20min         | Monitoring  |
+| 8  | **BIOS investigation** — Ctrl+F1 for hidden AMD menus                 | High     | 5min          | Performance |
+| 9  | **Test GPU recovery chain** — simulate DRM zombie                     | High     | 10min         | Reliability |
+| 10 | **Fix ComfyUI CHDIR failure** — check-venv script                     | Medium   | 10min         | Reliability |
+| 11 | **Fix Polkit KDE agent** — Qt platform plugin error                   | Medium   | 10min         | Desktop     |
+| 12 | **Archive stale docs/** — 60+ top-level status files                  | Low      | 10min         | Maintenance |
+| 13 | **Nix flake standardization** — 67 tasks across 9 Go repos            | High     | Multi-session | DX          |
+| 14 | **Pi 3 DNS failover provisioning**                                    | High     | Hardware      | Reliability |
+| 15 | **Backup verification** — test restores                               | High     | 30min         | Reliability |
+| 16 | **NixOS VM tests** for critical services                              | Medium   | 60min         | DX          |
+| 17 | **Centralize firewall ports** in one module                           | Medium   | 15min         | Maintenance |
+| 18 | **Split signoz.nix** (738 lines → sub-modules)                        | Medium   | 30min         | Maintenance |
+| 19 | **Document bare-metal disaster recovery**                             | Medium   | 20min         | Reliability |
+| 20 | **Add `just validate-scripts`** (shellcheck)                          | Low      | 10min         | DX          |
+| 21 | **Make `do-ip6` a dns-blocker module option**                         | Low      | 5min          | Maintenance |
+| 22 | **Update FEATURES.md**                                                | Low      | 15min         | Maintenance |
+| 23 | **Add power estimation widget to waybar**                             | Low      | 15min         | Desktop     |
+| 24 | **Fix fzf.nix hardcoded color `#a6adc8`**                             | Low      | 3min          | Theme       |
+| 25 | **Configure Authelia SMTP notifications**                             | Low      | 10min         | Features    |
 
 ---
 
@@ -214,17 +214,17 @@ I'd recommend option 2 — it would cover all 8 modules instead of just 2, and t
 
 ## System State
 
-| Metric     | Value                             | Trend                               |
-| ---------- | --------------------------------- | ----------------------------------- |
+| Metric     | Value                             | Trend                              |
+| ---------- | --------------------------------- | ---------------------------------- |
 | Kernel     | 7.0.1                             | ⚠️ 7.0.6 available (Dirty Frag CVE) |
 | Generation | 313                               | ⚠️ 10 commits undeployed            |
-| Uptime     | 18h11m                            | GPU OOM residual swap               |
-| Root disk  | 80% (104G free)                   | ↗ from 77%                          |
-| Data disk  | 72% (288G free)                   | Stable                              |
+| Uptime     | 18h11m                            | GPU OOM residual swap              |
+| Root disk  | 80% (104G free)                   | ↗ from 77%                         |
+| Data disk  | 72% (288G free)                   | Stable                             |
 | GPU VRAM   | 57 GiB / 64 GiB                   | ⚠️ 89% — elevated                   |
-| Swap       | 10/25 GiB                         | Persistent OOM residual             |
-| Load       | 1.40                              | Normal                              |
-| Git        | Clean (flake.lock update pending) | 10 commits pushed                   |
+| Swap       | 10/25 GiB                         | Persistent OOM residual            |
+| Load       | 1.40                              | Normal                             |
+| Git        | Clean (flake.lock update pending) | 10 commits pushed                  |
 
 ## Commits Since Session 66
 

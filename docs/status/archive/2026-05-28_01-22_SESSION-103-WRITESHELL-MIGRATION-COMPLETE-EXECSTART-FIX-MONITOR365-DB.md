@@ -167,8 +167,8 @@
 
 | #      | Task                                                                                                                                                            | Effort | Impact                  |
 | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----------------------- |
-| ~~14~~ | ~~Redesign `mkPreparedSource` to auto-generate `require` lines~~ **DONE (S107)** — auto-strips local replaces, auto-normalizes pseudo-versions. See Appendix D. |
-| ~~15~~ | ~~Add `mkPackageOverlay` platform filtering (skip Linux-only on Darwin)~~ **DONE (S107)** — safe fallback via `or null`. See Appendix D.                        |
+| ~~14~~ | ~~Redesign `mkPreparedSource` to auto-generate `require` lines~~ **DONE (S107)** — auto-strips local replaces, auto-normalizes pseudo-versions. See Appendix D. |        |                         |
+| ~~15~~ | ~~Add `mkPackageOverlay` platform filtering (skip Linux-only on Darwin)~~ **DONE (S107)** — safe fallback via `or null`. See Appendix D.                        |        |                         |
 | 16     | Convert `/data` BTRFS from toplevel to `@data` subvolume                                                                                                        | 30 min | Enables /data snapshots |
 | ~~17~~ | ~~Add Gatus health checks for all services~~ **DONE (S104)** — 26 endpoints, Hermes excluded (no HTTP)                                                          | —      | —                       |
 | ~~18~~ | ~~Centralize Docker image tags in `lib/`~~ **DONE (S104)** — `lib/images.nix` registry                                                                          | —      | —                       |
@@ -324,9 +324,7 @@ The `overrideModAttrs` was a no-op in practice — `mkPreparedSource` + `postPat
 
 ### Key Insight
 
-All three packages now follow the same pattern as every other private Go repo in the ecosystem: `mkPackageOverlay` with no manual hash overrides. The FOD hash fragility (especially `todo-list-ai`'s bun node_modules hash, which broke on every upstream dependency change) is eliminated from SystemNix. When upstream dependencies change, the upstream repo's own flake build will fail first — the fix happens there, and SystemNix simply updates the `flake.lock` input.
-<<<<<<< HEAD
-=======
+# All three packages now follow the same pattern as every other private Go repo in the ecosystem: `mkPackageOverlay` with no manual hash overrides. The FOD hash fragility (especially `todo-list-ai`'s bun node_modules hash, which broke on every upstream dependency change) is eliminated from SystemNix. When upstream dependencies change, the upstream repo's own flake build will fail first — the fix happens there, and SystemNix simply updates the `flake.lock` input.<<<<<<< HEAD
 
 ---
 
@@ -376,4 +374,4 @@ All 7 repos: `flake.lock` updated to `go-nix-helpers@89f5236`. 5 repos have unco
 - 5/7 consumer repos build successfully
 - Platform filtering verified: Linux returns package, Darwin returns `{}`
 
-> > > > > > > e4070a45 (docs(status): Session 107 — mkPreparedSource auto-features & mkPackageOverlay platform safety)
+>>>>>>> e4070a45 (docs(status): Session 107 — mkPreparedSource auto-features & mkPackageOverlay platform safety)

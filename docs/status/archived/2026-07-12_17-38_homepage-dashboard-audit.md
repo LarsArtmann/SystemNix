@@ -6,20 +6,19 @@
 
 ---
 
-
 ## What Was Done
 
 ### Fully Done (a)
 
-| #   | Change                                                                                                                      | Lines                  | Verification      |
-| --- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ----------------- |
-| 1   | Added `fileAndImageRenamerEnabled` conditional flag                                                                         | `homepage.nix:46`      | `nix eval` passes |
-| 2   | Added settings.yaml polish: `hideVersion`, `disableUpdateCheck`, `useEqualHeights`, `target="_blank"`, `quicklaunch` config | `homepage.nix:99-107`  | `nix eval` passes |
-| 3   | Added File Renamer tile to Productivity group (was missing despite having vHost + port + Gatus monitoring)                  | `homepage.nix:344-351` | `nix eval` passes |
-| 4   | Added datetime widget (xl text, short time, medium date)                                                                    | `homepage.nix:398-406` | `nix eval` passes |
-| 5   | Added search widget (DuckDuckGo, suggestions, new tab)                                                                      | `homepage.nix:407-413` | `nix eval` passes |
-| 6   | `nix flake check --no-build`                                                                                                | all checks passed      | confirmed         |
-| 7   | Full `nix eval` of evo-x2 toplevel                                                                                          | store path generated   | confirmed         |
+| # | Change                                                                                                                      | Lines                  | Verification      |
+| - | --------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ----------------- |
+| 1 | Added `fileAndImageRenamerEnabled` conditional flag                                                                         | `homepage.nix:46`      | `nix eval` passes |
+| 2 | Added settings.yaml polish: `hideVersion`, `disableUpdateCheck`, `useEqualHeights`, `target="_blank"`, `quicklaunch` config | `homepage.nix:99-107`  | `nix eval` passes |
+| 3 | Added File Renamer tile to Productivity group (was missing despite having vHost + port + Gatus monitoring)                  | `homepage.nix:344-351` | `nix eval` passes |
+| 4 | Added datetime widget (xl text, short time, medium date)                                                                    | `homepage.nix:398-406` | `nix eval` passes |
+| 5 | Added search widget (DuckDuckGo, suggestions, new tab)                                                                      | `homepage.nix:407-413` | `nix eval` passes |
+| 6 | `nix flake check --no-build`                                                                                                | all checks passed      | confirmed         |
+| 7 | Full `nix eval` of evo-x2 toplevel                                                                                          | store path generated   | confirmed         |
 
 ### Partially Done (b)
 

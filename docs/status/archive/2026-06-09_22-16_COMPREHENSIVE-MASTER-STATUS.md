@@ -220,33 +220,33 @@
 
 ## f) Top #25 Things We Should Get Done Next
 
-| #   | Task                                                           | Priority    | Effort | Blocker              |
-| --- | -------------------------------------------------------------- | ----------- | ------ | -------------------- |
-| 1   | Run `nix-collect-garbage -d` on evo-x2                         | 🔥 Critical | 5 min  | None                 |
-| 2   | Fix or delete discordsync (resolve sops activation failure)    | 🔥 Critical | 15 min | None                 |
-| 3   | Fix Dozzle module eval and migrate inline config               | 🔥 Critical | 30 min | None                 |
-| 4   | Enable `file-and-image-renamer`                                | 🔥 High     | 15 min | Go version mismatch  |
-| 5   | Verify post-deploy with `scripts/verify-deployment.sh`         | 🔥 High     | 10 min | Disk space (#1)      |
-| 6   | Add `openai_api_key` to sops + install Hermes SSH key          | High        | 15 min | Manual sops step     |
-| 7   | Migrate `/data` to `@data` BTRFS subvolume                     | High        | 30 min | Disk space (#1)      |
-| 8   | Add NixOS service startup VM tests (Caddy, Pocket ID, Forgejo) | High        | 2h     | None                 |
-| 9   | Implement Pocket ID declarative provisioning service           | High        | 4h     | None                 |
-| 10  | Helium `--ozone-platform-hint=auto` + `--password-store=basic` | High        | 10 min | None                 |
-| 11  | Test SigNoz Discord webhook + alert channel routing            | High        | 15 min | None                 |
-| 12  | Test Gatus endpoints post-deploy                               | High        | 10 min | None                 |
-| 13  | Add automatic Nix GC weekly timer                              | High        | 20 min | None                 |
-| 14  | Push 2 unpushed commits (overview service) to origin           | Medium      | 1 min  | None                 |
-| 15  | ecapture runtime test on evo-x2                                | Medium      | 10 min | None                 |
-| 16  | Monitor365 full SystemNix integration test                     | Medium      | 30 min | None                 |
-| 17  | Voice Agents GPU headroom analysis + enable                    | Medium      | 1h     | GPU budget           |
-| 18  | PhotoMap — enable or remove                                    | Medium      | 10 min | Decision needed      |
-| 19  | Minecraft server — enable or remove                            | Medium      | 10 min | Decision needed      |
-| 20  | Darwin Rust toolchain + Home Manager expansion                 | Medium      | 1h     | Darwin disk          |
-| 21  | Port-hardcoding lint in CI                                     | Medium      | 30 min | None                 |
-| 22  | Jan llama-server cgroup wrapping                               | Medium      | 2h     | Jan architecture     |
-| 23  | Re-enable AppArmor when NixOS bug fixed                        | Low         | 10 min | Upstream bug         |
-| 24  | rpi3-dns hardware provisioning                                 | Low         | 4h     | Hardware acquisition |
-| 25  | Complete nix-colors migration (edge cases)                     | Low         | 1h     | None                 |
+| #  | Task                                                           | Priority    | Effort | Blocker              |
+| -- | -------------------------------------------------------------- | ----------- | ------ | -------------------- |
+| 1  | Run `nix-collect-garbage -d` on evo-x2                         | 🔥 Critical | 5 min  | None                 |
+| 2  | Fix or delete discordsync (resolve sops activation failure)    | 🔥 Critical | 15 min | None                 |
+| 3  | Fix Dozzle module eval and migrate inline config               | 🔥 Critical | 30 min | None                 |
+| 4  | Enable `file-and-image-renamer`                                | 🔥 High     | 15 min | Go version mismatch  |
+| 5  | Verify post-deploy with `scripts/verify-deployment.sh`         | 🔥 High     | 10 min | Disk space (#1)      |
+| 6  | Add `openai_api_key` to sops + install Hermes SSH key          | High        | 15 min | Manual sops step     |
+| 7  | Migrate `/data` to `@data` BTRFS subvolume                     | High        | 30 min | Disk space (#1)      |
+| 8  | Add NixOS service startup VM tests (Caddy, Pocket ID, Forgejo) | High        | 2h     | None                 |
+| 9  | Implement Pocket ID declarative provisioning service           | High        | 4h     | None                 |
+| 10 | Helium `--ozone-platform-hint=auto` + `--password-store=basic` | High        | 10 min | None                 |
+| 11 | Test SigNoz Discord webhook + alert channel routing            | High        | 15 min | None                 |
+| 12 | Test Gatus endpoints post-deploy                               | High        | 10 min | None                 |
+| 13 | Add automatic Nix GC weekly timer                              | High        | 20 min | None                 |
+| 14 | Push 2 unpushed commits (overview service) to origin           | Medium      | 1 min  | None                 |
+| 15 | ecapture runtime test on evo-x2                                | Medium      | 10 min | None                 |
+| 16 | Monitor365 full SystemNix integration test                     | Medium      | 30 min | None                 |
+| 17 | Voice Agents GPU headroom analysis + enable                    | Medium      | 1h     | GPU budget           |
+| 18 | PhotoMap — enable or remove                                    | Medium      | 10 min | Decision needed      |
+| 19 | Minecraft server — enable or remove                            | Medium      | 10 min | Decision needed      |
+| 20 | Darwin Rust toolchain + Home Manager expansion                 | Medium      | 1h     | Darwin disk          |
+| 21 | Port-hardcoding lint in CI                                     | Medium      | 30 min | None                 |
+| 22 | Jan llama-server cgroup wrapping                               | Medium      | 2h     | Jan architecture     |
+| 23 | Re-enable AppArmor when NixOS bug fixed                        | Low         | 10 min | Upstream bug         |
+| 24 | rpi3-dns hardware provisioning                                 | Low         | 4h     | Hardware acquisition |
+| 25 | Complete nix-colors migration (edge cases)                     | Low         | 1h     | None                 |
 
 ---
 
@@ -285,11 +285,11 @@ This is the single most annoying piece of technical debt because it forces inlin
 
 ## Appendix: Build Health
 
-| Check                                                                 | Status                   | Notes                                                                                    |
-| --------------------------------------------------------------------- | ------------------------ | ---------------------------------------------------------------------------------------- |
-| `just test-fast`                                                      | ✅ Pass                  | Syntax validation                                                                        |
-| `just test`                                                           | ✅ Pass                  | Full build (1m56s)                                                                       |
+| Check                                                                 | Status                  | Notes                                                                                    |
+| --------------------------------------------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------- |
+| `just test-fast`                                                      | ✅ Pass                 | Syntax validation                                                                        |
+| `just test`                                                           | ✅ Pass                 | Full build (1m56s)                                                                       |
 | `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel` | ⚠️ Activation test fails | `sops-install-secrets: user 'discordsync': unknown user` — pre-existing                  |
-| Darwin eval                                                           | ✅ Pass                  | `nix flake check --all-systems` would fail on aarch64-darwin app `deploy` due to systemd |
-| monitor365-ui                                                         | ✅ Pass                  | Fixed in session 127                                                                     |
-| monitor365-server                                                     | ✅ Pass                  | Fixed in session 127                                                                     |
+| Darwin eval                                                           | ✅ Pass                 | `nix flake check --all-systems` would fail on aarch64-darwin app `deploy` due to systemd |
+| monitor365-ui                                                         | ✅ Pass                 | Fixed in session 127                                                                     |
+| monitor365-server                                                     | ✅ Pass                 | Fixed in session 127                                                                     |

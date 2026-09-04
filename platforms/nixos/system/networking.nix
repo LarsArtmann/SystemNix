@@ -104,6 +104,18 @@
           # imminent anyway.
           ManagedOOMPreference = "omit";
           OOMScoreAdjust = -1000;
+
+          # ── Workload admission control (2026-08-22 freeze class) ──────────
+          # Every nix build — user- or root-initiated, interactive or CI —
+          # executes inside this unit's cgroup (the daemon multiplexes all
+          # builders). The 2026-08-22 05:49 freeze census counted 10 concurrent
+          # builds × 4-8 GB against a zram-full machine, with NOTHING bounding
+          # their aggregate footprint (oomd-exempt + no MemoryHigh).
+          # MemoryHigh (NOT MemoryMax) throttles instead of killing: past
+          # 32 GB the kernel reclaims/swaps the builders' pages, so builds
+          # slow down while SSH/desktop/services keep headroom. The daemon
+          # itself is tiny — anything above this line is build working set.
+          MemoryHigh = "32G";
         };
       };
     };

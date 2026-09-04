@@ -13,7 +13,7 @@
 2. **Contents mapped.** Complete Windows boot disk of `DESKTOP-U51NGKT`: EFI (100M) / MSR (16M) / **BitLocker v2** C: (930.9G, label dated 2022-03-26) / NTFS recovery (509M).
 3. **BitLocker unlock** — user-executed via provided dislocker instructions (`dislocker-fuse -u` + `mount -o loop,ro -t ntfs3`). Plaintext at `/mnt/win`, read-only.
 4. **Plaintext rescue copy COMPLETE & VERIFIED.** 178 GiB logical, **550,573 entries (444,350 files, 106,157 dirs, 66 symlinks)**, copied in 20m24s at ~148 MB/s. Final rsync itemize dry-run: **0 differences**; independently re-verified by a second dry-run outside the script (`grep -cv` = 0). Excludes: `Windows/`, `Recovery/`, `PerfLogs/`, pagefile (5.1G), hiberfil (34G), swapfile, Recycle Bins, `System Volume Information/`, `$WinREAgent/` — all anchored at volume root.
-5. **Size reconciled.** 240G volume-used − ~65G exclusions ≈ 176G expected ≈ 178G copied ✓. 178G is *logical* (`du`); physical pool footprint smaller under zstd:3 (unmeasured — `compsize` needs root).
+5. **Size reconciled.** 240G volume-used − ~65G exclusions ≈ 176G expected ≈ 178G copied ✓. 178G is _logical_ (`du`); physical pool footprint smaller under zstd:3 (unmeasured — `compsize` needs root).
 6. **Content survey of the interesting parts.** `Users/l-art` (32G: IdeaProjects/DeepBackup, Desktop 1.1G, Downloads 890M, AppData 24G); `tools/MultiMC` incl. **`accounts.json` with live Microsoft session tokens** and Minecraft worlds; JetBrains `c.kdbx` credential DBs; no `.ssh`, no wallet files; ProgramData Duplicati/ssh dirs empty.
 7. **`/data` re-audited** (after user correction): `ai/` 267G, `models/` 210G, `llamacpp-models/` 92G, `SteamLibrary/` 106G, `monitor365-archive/` 32G, plus EMPTY `atticd/ docker/ containers/ cache/ monitor365/` (permissions may mask true content — measured without root). **Immich is NOT on /data** — already at `/mnt/pool/services/immich` (`modules/nixos/services/immich.nix:31`).
 8. **Hardware context delivered.** 970 EVO Plus vs Lexar NQ790 (bridge-capped ~1GB/s here, but TLC sustained-read beats QLC on long model loads); 970 EVO vs EVO Plus vs 970 Pro lineage (no "EVO Pro" exists).
@@ -43,7 +43,7 @@
    - `--itemize` is not a valid long option in rsync 3.4.4 (`-i` is; rsync rejects unambiguous abbreviations)
    - stats output written to the same temp file as the itemize diff → `-s` test always true
    - blank lines in stats output not stripped by the grep filter → whitespace-only "differences"
-   Root cause: I never dry-tested the harness against synthetic input until fix #3 (where a `printf | grep | wc -c` = 0 test caught it instantly). User ran the script 4 times total for one real copy.
+     Root cause: I never dry-tested the harness against synthetic input until fix #3 (where a `printf | grep | wc -c` = 0 test caught it instantly). User ran the script 4 times total for one real copy.
 4. **Stale-knowledge assertion.** Claimed "/data is largely Immich/photos" — contradicted by our own AGENTS.md (Immich lives on the pool since bring-up). Corrected only after user pushback. Lesson: consult known-state docs before asserting current layout.
 
 ## e) WHAT WE SHOULD IMPROVE (process, from this session)
@@ -59,30 +59,31 @@
 ## f) NEXT UP TO 50 THINGS
 
 **Decision & drive prep**
-1. User decides repurposing (games+models? other high-disk workload?)
-2. `sudo smartctl -d sat -a /dev/sde` — wear/endurance check before internal use
-3. Decide: plaintext rescue sufficient, or ALSO want ciphertext dd image? → unlocks wipe decision
-4. `sudo umount /mnt/win /mnt/bitlocker`
-5. Wipe Samsung (no TRIM via bridge — plain dd/overwrite or just re-partition)
-6. Verify GMKtec free M.2 slot + PCIe 3.0 x4 compatibility (970 EVO Plus is Gen3 — fine)
-7. Thermal sanity: sustained model loads in the tiny GMKtec chassis
+
+~~1. User decides repurposing (games+models? other high-disk workload?)~~ **NOT-DO — superseded 2026-08-31:** the disk was wiped (2026-08-30), installed internally, and its role ratified as `/nix` BTRFS + hot-DB XFS (`docs/planning/2026-08-31_samsung-role-assignment-first-principles.md` Rev 2) — the games/models plan is dead
+~~2. `sudo smartctl -d sat -a /dev/sde` — wear/endurance check before internal use~~ done — health checked during the 2026-08-30 wipe/prep session (98% life)
+~~3. Decide: plaintext rescue sufficient, or ALSO want ciphertext dd image? → unlocks wipe decision~~ done — plaintext rescue captured; wipe executed 2026-08-30
+~~4. `sudo umount /mnt/win /mnt/bitlocker`~~ done 2026-08-30
+~~5. Wipe Samsung (no TRIM via bridge — plain dd/overwrite or just re-partition)~~ done — wiped + verified blank 2026-08-30 (`2026-08-30_11-15_samsung-970-1tb-wipe-internal-install-prep.md`)
+~~6. Verify GMKtec free M.2 slot + PCIe 3.0 x4 compatibility (970 EVO Plus is Gen3 — fine)~~ **NOT-DO — superseded 2026-08-31:** the disk was wiped (2026-08-30), installed internally, and its role ratified as `/nix` BTRFS + hot-DB XFS (`docs/planning/2026-08-31_samsung-role-assignment-first-principles.md` Rev 2) — the games/models plan is dead
+~~7. Thermal sanity: sustained model loads in the tiny GMKtec chassis~~ **NOT-DO — superseded 2026-08-31:** the disk was wiped (2026-08-30), installed internally, and its role ratified as `/nix` BTRFS + hot-DB XFS (`docs/planning/2026-08-31_samsung-role-assignment-first-principles.md` Rev 2) — the games/models plan is dead
 
 **If "games + models" lands**
-8. Partition/format plan (BTRFS, by-id, `mkFilesystem` helper registration)
-9. Subvol layout: models vs games (games: `nodatacow` candidate; safetensors mostly incompressible — zstd autotolerance)
-10. Migrate `SteamLibrary` (106G) + Steam library folder repoint
-11. Migrate `/data/ai` (267G)
-12. Migrate `/data/models` (210G)
-13. Migrate `/data/llamacpp-models` (92G)
-14. Repoint FastFlowLM model path (`/data/ai/models/fastflowlm`)
-15. Repoint Ollama model store (`OLLAMA_MODELS`/dataDir)
-16. `RequiresMountsFor` updates on affected units
-17. Gatus presence check for the new mount
-18. fstrim coverage (automatic for internal)
-19. Post-migration balance on `nvme0n1p8` to reclaim ~675G
-20. Revisit `/data` partition fate (shrink/overflow; mind p6↔p8↔p9 non-adjacency)
-21. Revisit frozen-drives plan: sdd "Docker storage" earmark may be obsolete
-22. Empty `/data` dirs audit (`atticd/ docker/ containers/ cache/ monitor365/` — verify truly empty as root)
+~~8. Partition/format plan (BTRFS, by-id, `mkFilesystem` helper registration)~~ **NOT-DO — superseded 2026-08-31:** the disk was wiped (2026-08-30), installed internally, and its role ratified as `/nix` BTRFS + hot-DB XFS (`docs/planning/2026-08-31_samsung-role-assignment-first-principles.md` Rev 2) — the games/models plan is dead
+~~9. Subvol layout: models vs games (games: `nodatacow` candidate; safetensors mostly incompressible — zstd autotolerance)~~ **NOT-DO — superseded 2026-08-31:** the disk was wiped (2026-08-30), installed internally, and its role ratified as `/nix` BTRFS + hot-DB XFS (`docs/planning/2026-08-31_samsung-role-assignment-first-principles.md` Rev 2) — the games/models plan is dead
+~~10. Migrate `SteamLibrary` (106G) + Steam library folder repoint~~ **NOT-DO — superseded 2026-08-31:** the disk was wiped (2026-08-30), installed internally, and its role ratified as `/nix` BTRFS + hot-DB XFS (`docs/planning/2026-08-31_samsung-role-assignment-first-principles.md` Rev 2) — the games/models plan is dead
+~~11. Migrate `/data/ai` (267G)~~ **NOT-DO — superseded 2026-08-31:** the disk was wiped (2026-08-30), installed internally, and its role ratified as `/nix` BTRFS + hot-DB XFS (`docs/planning/2026-08-31_samsung-role-assignment-first-principles.md` Rev 2) — the games/models plan is dead
+~~12. Migrate `/data/models` (210G)~~ **NOT-DO — superseded 2026-08-31:** the disk was wiped (2026-08-30), installed internally, and its role ratified as `/nix` BTRFS + hot-DB XFS (`docs/planning/2026-08-31_samsung-role-assignment-first-principles.md` Rev 2) — the games/models plan is dead
+~~13. Migrate `/data/llamacpp-models` (92G)~~ **NOT-DO — superseded 2026-08-31:** the disk was wiped (2026-08-30), installed internally, and its role ratified as `/nix` BTRFS + hot-DB XFS (`docs/planning/2026-08-31_samsung-role-assignment-first-principles.md` Rev 2) — the games/models plan is dead
+~~14. Repoint FastFlowLM model path (`/data/ai/models/fastflowlm`)~~ **NOT-DO — superseded 2026-08-31:** the disk was wiped (2026-08-30), installed internally, and its role ratified as `/nix` BTRFS + hot-DB XFS (`docs/planning/2026-08-31_samsung-role-assignment-first-principles.md` Rev 2) — the games/models plan is dead
+~~15. Repoint Ollama model store (`OLLAMA_MODELS`/dataDir)~~ **NOT-DO — superseded 2026-08-31:** the disk was wiped (2026-08-30), installed internally, and its role ratified as `/nix` BTRFS + hot-DB XFS (`docs/planning/2026-08-31_samsung-role-assignment-first-principles.md` Rev 2) — the games/models plan is dead
+~~16. `RequiresMountsFor` updates on affected units~~ **NOT-DO — superseded 2026-08-31:** the disk was wiped (2026-08-30), installed internally, and its role ratified as `/nix` BTRFS + hot-DB XFS (`docs/planning/2026-08-31_samsung-role-assignment-first-principles.md` Rev 2) — the games/models plan is dead
+~~17. Gatus presence check for the new mount~~ **NOT-DO — superseded 2026-08-31:** the disk was wiped (2026-08-30), installed internally, and its role ratified as `/nix` BTRFS + hot-DB XFS (`docs/planning/2026-08-31_samsung-role-assignment-first-principles.md` Rev 2) — the games/models plan is dead
+~~18. fstrim coverage (automatic for internal)~~ **NOT-DO — superseded 2026-08-31:** the disk was wiped (2026-08-30), installed internally, and its role ratified as `/nix` BTRFS + hot-DB XFS (`docs/planning/2026-08-31_samsung-role-assignment-first-principles.md` Rev 2) — the games/models plan is dead
+~~19. Post-migration balance on `nvme0n1p8` to reclaim ~675G~~ **NOT-DO — superseded 2026-08-31:** the disk was wiped (2026-08-30), installed internally, and its role ratified as `/nix` BTRFS + hot-DB XFS (`docs/planning/2026-08-31_samsung-role-assignment-first-principles.md` Rev 2) — the games/models plan is dead
+~~20. Revisit `/data` partition fate (shrink/overflow; mind p6↔p8↔p9 non-adjacency)~~ **NOT-DO — superseded 2026-08-31:** the disk was wiped (2026-08-30), installed internally, and its role ratified as `/nix` BTRFS + hot-DB XFS (`docs/planning/2026-08-31_samsung-role-assignment-first-principles.md` Rev 2) — the games/models plan is dead
+~~21. Revisit frozen-drives plan: sdd "Docker storage" earmark may be obsolete~~ **NOT-DO — superseded 2026-08-31:** the disk was wiped (2026-08-30), installed internally, and its role ratified as `/nix` BTRFS + hot-DB XFS (`docs/planning/2026-08-31_samsung-role-assignment-first-principles.md` Rev 2) — the games/models plan is dead
+~~22. Empty `/data` dirs audit (`atticd/ docker/ containers/ cache/ monitor365/` — verify truly empty as root)~~ **NOT-DO — superseded 2026-08-31:** the disk was wiped (2026-08-30), installed internally, and its role ratified as `/nix` BTRFS + hot-DB XFS (`docs/planning/2026-08-31_samsung-role-assignment-first-principles.md` Rev 2) — the games/models plan is dead
 23. `monitor365-archive` (32G): keep or prune? (service disabled since 08-12)
 
 **Archive hygiene**
@@ -121,4 +122,4 @@
 
 ---
 
-**Bottom line:** The 12-year-risk item is closed — DESKTOP-U51NGKT's data is rescued, verified byte-consistent, and resting on the RAID1 pool. The session's failures were all in *my* tooling (guards, harness), not in the data path; three lessons distilled in section e. Open thread: what the Samsung becomes next.
+**Bottom line:** The 12-year-risk item is closed — DESKTOP-U51NGKT's data is rescued, verified byte-consistent, and resting on the RAID1 pool. The session's failures were all in _my_ tooling (guards, harness), not in the data path; three lessons distilled in section e. Open thread: what the Samsung becomes next.

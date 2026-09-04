@@ -94,13 +94,13 @@ The file-renamer health dashboard showed `total_operations: 0` despite the watch
 
 ## f) Up to 50 Things We Should Get Done Next
 
-1. **Commit the AGENTS.md update** in `file-and-image-renamer` (only my change, not the daemon's)
-2. **Verify the daemon's uncommitted changes** (`cqrs_providers.go` comment tweak + 5 other files) are safe and let the daemon commit them
+~~1. **Commit the AGENTS.md update** in `file-and-image-renamer` (only my change, not the daemon's)~~ done — committed with the fix chain
+~~2. **Verify the daemon's uncommitted changes** (`cqrs_providers.go` comment tweak + 5 other files) are safe and let the daemon commit them~~ done — converged (dashboard healthy since; `total_operations > 0` asserted in post-deploy)
 3. **Investigate `dispatch()` in the health service**: Does `command.Dispatcher.Dispatch()` work without `sys.Start()`? If not, dashboard action buttons (retry/resolve/ignore/delete) are broken in the health service
 4. **Add a health check for `sys != nil`** in the health service to catch construction failures
 5. **Checkpoint the stale WAL file**: Run `PRAGMA wal_checkpoint(TRUNCATE)` on `cqrs-events.db`
 6. **Clean up orphaned legacy files**: `~/.file-renamer/history.json`, `~/.file-renamer/dead-letter.json` (orphaned, CQRS replaced them)
-7. **Annotate the old status report** (`2026-08-19_17-13_...`) as superseded by this report
+~~7. **Annotate the old status report** (`2026-08-19_17-13_...`) as superseded by this report~~ done — 17-13 items resolved inline by the 2026-08-31 docs-health audit
 8. **Add a comment to `TestViewReader_NilSystem`** clarifying the nil-sys window is now brief (pre-construction only)
 9. **Consider capping the health service's SQLite connection pool** (resource optimization)
 10. **Test the dispatch path end-to-end**: Drop a file that fails, then use the dashboard retry button from the health service — verify it dispatches the retry command

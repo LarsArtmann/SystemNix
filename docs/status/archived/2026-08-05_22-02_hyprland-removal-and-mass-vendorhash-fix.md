@@ -6,7 +6,6 @@
 
 ---
 
-
 ## The user's question
 
 > hyprland-0.56.1 <-- why do we have it?!??!
@@ -17,18 +16,18 @@
 
 ## a) FULLY DONE
 
-| # | Item | Detail |
-|---|------|--------|
-| 1 | **grimblast removed** | `platforms/nixos/users/home.nix:229` — eliminates hyprland-0.56.1 + all hypr* deps from system closure |
-| 2 | **8 upstream vendorHash fixes** | Committed + pushed to 8 repos: emeet-pixyd (2 commits — package.nix + goBrandedSrc param fix), crush-daily, mr-sync, md-go-validator, go-humanize-linter, branching-flow, hierarchical-errors. BuildFlow was already fixed upstream (lockfile was stale). |
-| 3 | **SystemNix flake.lock updated** | All 8 inputs updated to new upstream revs. nixpkgs confirmed GitHub `e72e4f299401`. Zero tarball-type nodes. |
-| 4 | **hermes-agent follows restored** | My earlier session wrongly removed `inputs.nixpkgs.follows` to fix a phantom eval error. The real cause was a corrupted root nixpkgs rev (0954f7ee from hermes's pinned nixpkgs leaked into root). Reverted. |
-| 5 | **nixpkgs node restored** | Root nixpkgs node was rewritten to tarball by `nix flake update` (user's `nix flake update -v` paste showed this clearly). Fixed via Python script to restore GitHub type. |
-| 6 | **Pre-commit guard active** | `.githooks/pre-commit` now rejects tarball-type nixpkgs before any commit can land |
-| 7 | **Darwin registry override** | `platforms/darwin/nix/settings.nix` mirrors the NixOS `nixpkgs/nixos-unstable` override |
-| 8 | **Boot deploy succeeded** | `nh os boot . --keep-going` → 202 built, 0 failed. 3850→3824 paths, -122 MiB. hyprland-0.56.1 confirmed removed in diff output. |
-| 9 | **PMA vendorHash from prior session** | The upstream PMA fix (vendorHash `sha256-mWaq...`) was already pushed as `34b62ceb`. Lockfile updated in earlier part of session. |
-| 10 | **hierarchical-errors cloned** | Cloned `LarsArtmann/hierarchical-errors` to `~/projects/` to fix vendorHash locally. |
+| #  | Item                                  | Detail                                                                                                                                                                                                                                                    |
+| -- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | **grimblast removed**                 | `platforms/nixos/users/home.nix:229` — eliminates hyprland-0.56.1 + all hypr* deps from system closure                                                                                                                                                    |
+| 2  | **8 upstream vendorHash fixes**       | Committed + pushed to 8 repos: emeet-pixyd (2 commits — package.nix + goBrandedSrc param fix), crush-daily, mr-sync, md-go-validator, go-humanize-linter, branching-flow, hierarchical-errors. BuildFlow was already fixed upstream (lockfile was stale). |
+| 3  | **SystemNix flake.lock updated**      | All 8 inputs updated to new upstream revs. nixpkgs confirmed GitHub `e72e4f299401`. Zero tarball-type nodes.                                                                                                                                              |
+| 4  | **hermes-agent follows restored**     | My earlier session wrongly removed `inputs.nixpkgs.follows` to fix a phantom eval error. The real cause was a corrupted root nixpkgs rev (0954f7ee from hermes's pinned nixpkgs leaked into root). Reverted.                                              |
+| 5  | **nixpkgs node restored**             | Root nixpkgs node was rewritten to tarball by `nix flake update` (user's `nix flake update -v` paste showed this clearly). Fixed via Python script to restore GitHub type.                                                                                |
+| 6  | **Pre-commit guard active**           | `.githooks/pre-commit` now rejects tarball-type nixpkgs before any commit can land                                                                                                                                                                        |
+| 7  | **Darwin registry override**          | `platforms/darwin/nix/settings.nix` mirrors the NixOS `nixpkgs/nixos-unstable` override                                                                                                                                                                   |
+| 8  | **Boot deploy succeeded**             | `nh os boot . --keep-going` → 202 built, 0 failed. 3850→3824 paths, -122 MiB. hyprland-0.56.1 confirmed removed in diff output.                                                                                                                           |
+| 9  | **PMA vendorHash from prior session** | The upstream PMA fix (vendorHash `sha256-mWaq...`) was already pushed as `34b62ceb`. Lockfile updated in earlier part of session.                                                                                                                         |
+| 10 | **hierarchical-errors cloned**        | Cloned `LarsArtmann/hierarchical-errors` to `~/projects/` to fix vendorHash locally.                                                                                                                                                                      |
 
 ### Deploy diff (key removals)
 
@@ -52,22 +51,22 @@ DIFF:  -122 MiB
 
 ## b) PARTIALLY DONE
 
-| Item | Status | What remains |
-|------|--------|--------------|
-| **Pre-commit guard** | Active in `.githooks/pre-commit` | Only protects manual `git commit`. The auto-commit daemon (PMA) runs `nix flake update` + `git commit` and bypasses this hook (or uses its own). The daemon can still commit a tarball regression. |
-| **Registry override (NixOS)** | Deployed as boot profile (not `switch`) | The new boot profile has the registry override, but it's not active until reboot. The currently running system still uses the old registry. |
-| **Registry override (Darwin)** | Written in config | Not deployed to macOS. Needs `nix run .#deploy` from the Mac or `darwin-rebuild`. |
+| Item                           | Status                                  | What remains                                                                                                                                                                                       |
+| ------------------------------ | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Pre-commit guard**           | Active in `.githooks/pre-commit`        | Only protects manual `git commit`. The auto-commit daemon (PMA) runs `nix flake update` + `git commit` and bypasses this hook (or uses its own). The daemon can still commit a tarball regression. |
+| **Registry override (NixOS)**  | Deployed as boot profile (not `switch`) | The new boot profile has the registry override, but it's not active until reboot. The currently running system still uses the old registry.                                                        |
+| **Registry override (Darwin)** | Written in config                       | Not deployed to macOS. Needs `nix run .#deploy` from the Mac or `darwin-rebuild`.                                                                                                                  |
 
 ---
 
 ## c) NOT STARTED
 
-| # | Item |
-|---|------|
-| 1 | Reboot evo-x2 to activate the new boot profile (registry override takes effect) |
-| 2 | Deploy to macOS (Darwin registry override) |
-| ~~3~~ | ~~Add tarball guard to CI / flake checks~~ done at `78a0ed31` |
-| 4 | Investigate whether the PMA auto-commit daemon can add `--no-use-registries` or `--override-input` to its `nix flake update` command to prevent tarball rewrites at the source |
+| #     | Item                                                                                                                                                                           |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1     | Reboot evo-x2 to activate the new boot profile (registry override takes effect)                                                                                                |
+| 2     | Deploy to macOS (Darwin registry override)                                                                                                                                     |
+| ~~3~~ | ~~Add tarball guard to CI / flake checks~~ done at `78a0ed31`                                                                                                                  |
+| 4     | Investigate whether the PMA auto-commit daemon can add `--no-use-registries` or `--override-input` to its `nix flake update` command to prevent tarball rewrites at the source |
 
 ---
 
@@ -224,6 +223,7 @@ Two commits (`4b2efeb4`, `ad5401b8`) have empty commit messages. These were from
 ### Q1: Should I reboot evo-x2 now to activate the new boot profile?
 
 The deploy was `nh os boot` (adds to bootloader, doesn't switch). The registry override and hyprland removal are not active until reboot. But rebooting disrupts running services (Docker containers, Ollama models, SigNoz, etc.). Should I:
+
 - **(a)** Reboot now
 - **(b)** Wait for a planned maintenance window
 - **(c)** Run `nh os switch .` instead to activate immediately without full reboot (riskier — services restart in-place)
@@ -231,6 +231,7 @@ The deploy was `nh os boot` (adds to bootloader, doesn't switch). The registry o
 ### Q2: Should the PMA auto-commit daemon be modified to prevent tarball rewrites?
 
 The daemon runs `nix flake update` which triggers the registry rewrite. I could modify the daemon's update command in `modules/nixos/services/projects-management-automation.nix`, but that's an upstream PMA behavior — changing it in SystemNix means diverging from upstream defaults. Should the fix go in:
+
 - **(a)** SystemNix's PMA module (override the update command)
 - **(b)** Upstream PMA repo (add a `--no-use-registries` or `--override-input` flag option)
 - **(c)** A post-update systemd `ExecStartPost` that reverts nixpkgs to GitHub type

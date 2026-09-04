@@ -16,11 +16,11 @@ dedicated sync daemon (like DiscordSync) is warranted.
 
 One runner registered on host `evo-x2` with three labels (`forgejo.nix:25-35`):
 
-| Label | Executor | Use case |
-|-------|----------|----------|
+| Label                                     | Executor         | Use case                               |
+| ----------------------------------------- | ---------------- | -------------------------------------- |
 | `ubuntu-latest:docker://node:22-bookworm` | Docker container | CI matching GitHub Actions environment |
-| `ubuntu-22.04:docker://node:22-bookworm` | Docker container | Same, pinned version |
-| `native:host` | Direct host exec | Nix builds, system-level tasks |
+| `ubuntu-22.04:docker://node:22-bookworm`  | Docker container | Same, pinned version                   |
+| `native:host`                             | Direct host exec | Nix builds, system-level tasks         |
 
 - Capacity: 2 concurrent jobs
 - `DEFAULT_ACTIONS_URL = "github"` — workflows can reuse standard GitHub Actions (checkout, setup-go, etc.) directly
@@ -76,6 +76,7 @@ labels: true` (`forgejo.nix:127-130`). But they don't sync because of a
 **Mirror repos only sync git refs. Period.**
 
 When `mirror: true`:
+
 - The `issues`, `pull_requests`, `milestones`, `labels` flags are **silently
   ignored** by the migrate endpoint for mirror repos
 - `wiki` and `releases` may get a one-time import, but are never updated by the
@@ -150,12 +151,12 @@ forgejo-generate-token.service
 
 ### Why DiscordSync exists vs why this doesn't warrant one
 
-| Aspect | DiscordSync | Proposed github-local-sync |
-|--------|-------------|---------------------------|
-| Source platform | Discord — no export, no git, no standard format | GitHub — full REST API, git-native, export tools |
-| Data gravity | Discord owns your data, can't clone it | `git clone` exists, mirrors work natively |
-| Sync mechanism | WebSocket gateway (custom bot required) | Forgejo built-in `git fetch` + push mirrors |
-| Current solution | Impossible without a daemon | Already works (shell scripts + Forgejo cron) |
+| Aspect           | DiscordSync                                     | Proposed github-local-sync                       |
+| ---------------- | ----------------------------------------------- | ------------------------------------------------ |
+| Source platform  | Discord — no export, no git, no standard format | GitHub — full REST API, git-native, export tools |
+| Data gravity     | Discord owns your data, can't clone it          | `git clone` exists, mirrors work natively        |
+| Sync mechanism   | WebSocket gateway (custom bot required)         | Forgejo built-in `git fetch` + push mirrors      |
+| Current solution | Impossible without a daemon                     | Already works (shell scripts + Forgejo cron)     |
 
 DiscordSync exists because **there is no other way** to get Discord data. The
 GitHub sync already works — Forgejo's built-in mirror system handles the hard

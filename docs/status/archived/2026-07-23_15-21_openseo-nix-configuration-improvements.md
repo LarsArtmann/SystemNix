@@ -12,20 +12,19 @@
 
 ---
 
-
 ## What Was Done
 
 ### a) FULLY DONE
 
-| # | Change | File(s) | Verified |
-|---|--------|---------|----------|
-| 1 | Version bump v0.0.26 → v0.1.1 (5 releases of new features) | `pkgs/openseo.nix` | `nix build .#openseo` succeeded |
-| 2 | Telemetry opt-out (`OPENSEO_TELEMETRY_DISABLED=1`) | `modules/nixos/services/openseo.nix` | `nix flake check --no-build` passed |
+| # | Change                                                                              | File(s)                              | Verified                            |
+| - | ----------------------------------------------------------------------------------- | ------------------------------------ | ----------------------------------- |
+| 1 | Version bump v0.0.26 → v0.1.1 (5 releases of new features)                          | `pkgs/openseo.nix`                   | `nix build .#openseo` succeeded     |
+| 2 | Telemetry opt-out (`OPENSEO_TELEMETRY_DISABLED=1`)                                  | `modules/nixos/services/openseo.nix` | `nix flake check --no-build` passed |
 | 3 | `restartTriggers = [ pkg ]` to prevent stale vite preview serving GC'd static files | `modules/nixos/services/openseo.nix` | `nix flake check --no-build` passed |
-| 4 | New module options: `googleSearchConsole.enable` + `aiFeatures.enable` | `modules/nixos/services/openseo.nix` | `nix flake check --no-build` passed |
-| 5 | Conditional sops secret + template wiring for GSC and AI features | `modules/nixos/services/sops.nix` | `nix flake check --no-build` passed |
-| 6 | Post-deploy smoke test (HTTP 200 + HTML body) | `scripts/post-deploy-check.sh` | Not yet deployed |
-| 7 | Updated source hash and pnpmDeps hash for v0.1.1 | `pkgs/openseo.nix` | Full build succeeded |
+| 4 | New module options: `googleSearchConsole.enable` + `aiFeatures.enable`              | `modules/nixos/services/openseo.nix` | `nix flake check --no-build` passed |
+| 5 | Conditional sops secret + template wiring for GSC and AI features                   | `modules/nixos/services/sops.nix`    | `nix flake check --no-build` passed |
+| 6 | Post-deploy smoke test (HTTP 200 + HTML body)                                       | `scripts/post-deploy-check.sh`       | Not yet deployed                    |
+| 7 | Updated source hash and pnpmDeps hash for v0.1.1                                    | `pkgs/openseo.nix`                   | Full build succeeded                |
 
 ### b) PARTIALLY DONE
 
@@ -53,6 +52,7 @@
 **Impact:** If anyone enables `services.openseo.googleSearchConsole.enable = true`, it will appear to work (the "Connect with Google" button renders) but the callback will fail with a redirect loop or auth wall.
 
 **Fix needed:** Caddy needs a path exception for `/api/gsc/oauth/callback` that bypasses forward-auth. Something like:
+
 ```nix
 "seo.${domain}" = {
   # GSC OAuth callback must bypass forward-auth (Google's servers have no session cookie)
@@ -70,6 +70,7 @@
   '';
 };
 ```
+
 This requires refactoring `protectedVHost` to allow path exclusions, OR hand-rolling the vHost when GSC is enabled.
 
 #### 2. ~~No Assertion for Missing Sops Keys~~ FIXED (runtime validation instead)
@@ -90,6 +91,7 @@ This requires refactoring `protectedVHost` to allow path exclusions, OR hand-rol
 ### f) Up to 50 Things to Do Next
 
 #### Critical (blocks GSC feature)
+
 1. Add Caddy path exception for `/api/gsc/oauth/callback` to bypass forward-auth
 2. Refactor `protectedVHost` to support per-path forward-auth exclusions (or hand-roll the OpenSEO vHost)
 3. Add `lib.assertMsg` assertion: if `googleSearchConsole.enable` then the 3 sops keys must exist
@@ -97,6 +99,7 @@ This requires refactoring `protectedVHost` to allow path exclusions, OR hand-rol
 5. Document the GSC redirect URI (`https://seo.home.lan/api/gsc/oauth/callback`) in the module comment
 
 #### High Priority
+
 6. Update AGENTS.md OpenSEO section with v0.1.1 version, new options, telemetry opt-out, GSC caveat
 7. Wire OpenSEO MCP server into Crush `mcpServers` config (like qmd MCP)
 8. Add functional post-deploy check (verify DataForSEO API key is configured, not just HTML response)
@@ -106,6 +109,7 @@ This requires refactoring `protectedVHost` to allow path exclusions, OR hand-rol
 12. Consider adding the GSC OAuth callback to the Gatus check set
 
 #### Medium Priority
+
 13. Add D1 database backup (systemd oneshot + timer, like monitor365 backup pattern)
 14. Consider `btrbk` snapshot of `/var/lib/openseo` (currently inside `@`, so already snapshotted, but worth documenting)
 15. Explore OpenSEO `DO_NOT_TRACK=1` as a second telemetry opt-out (belt + suspenders)
@@ -117,12 +121,14 @@ This requires refactoring `protectedVHost` to allow path exclusions, OR hand-rol
 21. Consider adding `journalctl` log rotation awareness for vite preview output
 
 #### MCP-Specific
+
 22. Research OpenSEO MCP endpoint format (HTTP vs stdio)
 23. Configure MCP in Crush `mcpServers` if HTTP-based
 24. Document MCP setup in AGENTS.md or docs/services/
 25. Consider MCP authentication (is it behind protectedVHost or open on localhost?)
 
 #### Monitoring & Alerting
+
 26. Add Gatus check for OpenSEO MCP endpoint (if it exists)
 27. Add response time threshold tuning (2s may be too generous for a vite preview)
 28. Add a Gatus check for DataForSEO connectivity (indirect — check if OpenSEO can reach the API)
@@ -130,6 +136,7 @@ This requires refactoring `protectedVHost` to allow path exclusions, OR hand-rol
 30. Add log-based alerting for vite preview crashes (beyond systemd restart)
 
 #### Documentation
+
 31. Document the GSC setup steps in `docs/services/openseo-gsc-setup.md`
 32. Document the AI/SAM (OpenRouter) setup steps
 33. Add OpenSEO to `docs/DOMAIN_LANGUAGE.md` if SEO terms are used elsewhere
@@ -138,6 +145,7 @@ This requires refactoring `protectedVHost` to allow path exclusions, OR hand-rol
 36. Document the `AUTH_MODE=local_noauth` security model explicitly
 
 #### Code Quality
+
 37. Consider extracting `protectedVHost` path-exclusion support (generic, reusable for other OAuth callbacks)
 38. Audit whether other Layer 2 services have similar OAuth callback gaps
 39. Consider a pre-commit check for `protectedVHost` + OAuth callback path conflicts
@@ -146,6 +154,7 @@ This requires refactoring `protectedVHost` to allow path exclusions, OR hand-rol
 42. Consider `PrivateUsers = true` compatibility (vite preview may need it disabled)
 
 #### Future Features
+
 43. Consider wiring OpenSEO rank tracking results into the Homepage dashboard widget
 44. Consider OpenSEO + Hermes integration (AI agent consuming SEO data)
 45. Consider exposing OpenSEO project defaults (country/language) via Nix options

@@ -4,10 +4,10 @@ This guide describes how to install the `evo-x2` NixOS configuration onto the GM
 
 ## Prerequisites
 
-1.  **USB Stick**: Minimum 4GB.
-2.  **NixOS ISO**: **CRITICAL**: Use the [Latest Unstable GNOME ISO](https://channels.nixos.org/nixos-unstable/latest-nixos-gnome-x86_64-linux.iso).
-    - **Why?** The EVO-X2 requires a very recent Linux kernel (6.10+) for WiFi/Ethernet support. Stable 24.05 (Kernel 6.6) may NOT work.
-3.  **Network**: Wired Ethernet (preferred) or WiFi credentials.
+1. **USB Stick**: Minimum 4GB.
+2. **NixOS ISO**: **CRITICAL**: Use the [Latest Unstable GNOME ISO](https://channels.nixos.org/nixos-unstable/latest-nixos-gnome-x86_64-linux.iso).
+   - **Why?** The EVO-X2 requires a very recent Linux kernel (6.10+) for WiFi/Ethernet support. Stable 24.05 (Kernel 6.6) may NOT work.
+3. **Network**: Wired Ethernet (preferred) or WiFi credentials.
 
 ## Step 1: Create Bootable USB
 
@@ -26,10 +26,10 @@ sudo dd if=path/to/nixos.iso of=/dev/rdiskN bs=4m status=progress
 
 ## Step 2: Boot the EVO-X2
 
-1.  Insert USB stick.
-2.  Power on and press **F7** (or Del/Esc) to enter Boot Menu/BIOS.
-3.  Select the USB partition.
-4.  Boot into "NixOS Installer" (Default).
+1. Insert USB stick.
+2. Power on and press **F7** (or Del/Esc) to enter Boot Menu/BIOS.
+3. Select the USB partition.
+4. Boot into "NixOS Installer" (Default).
 
 ## Step 3: Partitioning
 
@@ -113,6 +113,6 @@ Remove the USB stick. The system should boot into NixOS (Console or GNOME Login)
 
 ## Post-Install Verification
 
-1.  **WiFi 7**: `ip link` should show `wlan0` (mt7925e driver).
-2.  **Ethernet**: `ip link` should show `enp...` (r8125 driver).
-3.  **Graphics**: `radeontop` (if installed) or `glxinfo` should show AMD Radeon graphics.
+1. **WiFi 7**: `ip link` should show `wlan0` (mt7925e driver).
+2. **Ethernet**: `ip link` should show `enp...` (r8125 driver).
+3. **Graphics**: `radeontop` (if installed) or `glxinfo` should show AMD Radeon graphics.

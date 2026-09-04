@@ -10,10 +10,10 @@ Best open-source security tools for the NixOS (evo-x2) machine, organized by imp
 
 ### What's Already Installed
 
-| Tool                | Type                             | Status                      | Location                     |
-| ------------------- | -------------------------------- | --------------------------- | ---------------------------- |
-| fail2ban            | IPS (SSH brute-force)            | ✅ Active                   | `security-hardening.nix:73`  |
-| ClamAV              | Antivirus                        | ✅ Active                   | `security-hardening.nix:96`  |
+| Tool                | Type                             | Status                     | Location                     |
+| ------------------- | -------------------------------- | -------------------------- | ---------------------------- |
+| fail2ban            | IPS (SSH brute-force)            | ✅ Active                  | `security-hardening.nix:73`  |
+| ClamAV              | Antivirus                        | ✅ Active                  | `security-hardening.nix:96`  |
 | nmap                | Network scanning                 | ⚠️ Installed, no automation | `security-hardening.nix:155` |
 | masscan             | Fast port scanning               | ⚠️ Installed, no automation | `security-hardening.nix:144` |
 | nuclei              | Vulnerability scanner            | ⚠️ Installed, no automation | `security-hardening.nix:147` |
@@ -22,15 +22,15 @@ Best open-source security tools for the NixOS (evo-x2) machine, organized by imp
 | lynis               | Security auditing                | ⚠️ Installed, no automation | `security-hardening.nix:156` |
 | aide                | File integrity monitoring        | ⚠️ Installed, no automation | `security-hardening.nix:125` |
 | osquery             | OS monitoring & analytics        | ⚠️ Installed, no automation | `security-hardening.nix:126` |
-| wireshark-cli       | Packet analysis                  | ✅ Available                | `security-hardening.nix:154` |
-| wireshark           | Packet analysis (GUI)            | ✅ Available                | `security-hardening.nix:120` |
-| tcpdump             | Packet capture                   | ✅ Available                | `security-hardening.nix:151` |
-| netsniff-ng         | Network packet capture           | ✅ Available                | `security-hardening.nix:119` |
-| ecapture            | SSL/TLS capture via eBPF         | ✅ Available                | `base.nix:247`               |
-| aircrack-ng         | WiFi security testing            | ✅ Available                | `security-hardening.nix:121` |
-| sleuthkit           | Forensic toolkit                 | ✅ Available                | `security-hardening.nix:150` |
-| gitleaks            | Secret scanning                  | ✅ Available                | `base.nix:94`                |
-| Firewall (nftables) | Default-deny, ports 22/53/80/443 | ✅ Active                   | `networking.nix:11`          |
+| wireshark-cli       | Packet analysis                  | ✅ Available               | `security-hardening.nix:154` |
+| wireshark           | Packet analysis (GUI)            | ✅ Available               | `security-hardening.nix:120` |
+| tcpdump             | Packet capture                   | ✅ Available               | `security-hardening.nix:151` |
+| netsniff-ng         | Network packet capture           | ✅ Available               | `security-hardening.nix:119` |
+| ecapture            | SSL/TLS capture via eBPF         | ✅ Available               | `base.nix:247`               |
+| aircrack-ng         | WiFi security testing            | ✅ Available               | `security-hardening.nix:121` |
+| sleuthkit           | Forensic toolkit                 | ✅ Available               | `security-hardening.nix:150` |
+| gitleaks            | Secret scanning                  | ✅ Available               | `base.nix:94`                |
+| Firewall (nftables) | Default-deny, ports 22/53/80/443 | ✅ Active                  | `networking.nix:11`          |
 
 ### What's Disabled or Missing
 
@@ -68,9 +68,9 @@ Best open-source security tools for the NixOS (evo-x2) machine, organized by imp
 
 ### Tier 2 — Significant Defense-in-Depth
 
-| Tool         | Package    | Type                     | Why                                                                                                                                       |
-| ------------ | ---------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **Suricata** | `suricata` | Network IDS/IPS          | Sits behind firewall inspecting all traffic. Detects malware C2, exploits, scanning, protocol anomalies. Rules from Emerging Threats.     |
+| Tool         | Package    | Type                     | Why                                                                                                                                      |
+| ------------ | ---------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **Suricata** | `suricata` | Network IDS/IPS          | Sits behind firewall inspecting all traffic. Detects malware C2, exploits, scanning, protocol anomalies. Rules from Emerging Threats.    |
 | **USBGuard** | `usbguard` | USB device authorization | Prevents BadUSB/evil maid attacks. Critical for desktop/server hybrid. ⚠️ **High risk of locking out input devices — see caveats below.** |
 
 #### USBGuard Caveats

@@ -6,9 +6,13 @@
 let
   inherit (import ../../../lib/default.nix lib) ioTier;
 
-  # Ceiling for active GPU buffer object allocations — ML model loading needs this high.
-  # 29360128 pages × 4096 = 112 GiB (exceeds ~110 GiB visible, but it's a ceiling not a reservation)
-  ttmPagesLimit = 29360128;
+  # Ceiling for active GPU buffer object allocations (TTM pages, 4 KiB each).
+  # 31457280 pages × 4096 = 120 GiB. GTT-first architecture (2026-09-02): the BIOS
+  # UMA carveout is 512 MiB, so ALL real GPU memory is GTT (= shared system RAM);
+  # the driver reports GTT total ≈ MemTotal (~125 GiB after the small carveout).
+  # This ceiling is ~5 GiB below that so TTM refuses allocations before the box is
+  # fully pinned. Still a CEILING, not a reservation.
+  ttmPagesLimit = 31457280;
 
   # Pool cache for freed BO pages — pages retained for GPU reuse instead of returned to kernel.
   # 6291456 pages × 4096 = 24 GiB (was 112 GiB — same as pages_limit, which meant freed pages
@@ -34,6 +38,19 @@ in
     initrd.verbose = true;
     consoleLogLevel = 7;
 
+    # ── kdump crash capture (2026-08-22 freeze forensics) ────────────────
+    # Both kernel freezes died SILENT (journal cut mid-write, no panic, no
+    # dump). softlockup_panic/hung_task_panic never fired: a scheduler
+    # LIVELOCK (all CPUs burning in zram refault with IRQs enabled, RCU
+    # progressing) pets the hardware watchdog "eventually", never trips the
+    # soft-lockup detector, and starves khungtaskd of CPU. Hang detection
+    # cannot catch that class — admission control + the emergency guard act
+    # BEFORE the cliff; kdump guarantees that when a panic DOES fire (driver
+    # bug, hung_task, future policy change) the vmcore lands in /var/crash
+    # and the postmortem is a 10-minute read instead of archaeology.
+    # Retention is bounded by kdump-retention.service below (root fs is tight).
+    crashDump.enable = true;
+
     # Load I2C module for DDC/CI monitor brightness control
     # Load pstore for kernel panic/oops log capture in UEFI NVRAM
     # Load bfq for responsive I/O scheduling under heavy disk pressure
@@ -41,6 +58,20 @@ in
       "i2c-dev"
       "bfq"
       "usblp"
+      # JMS567 DAS bridge (152d:0567) requires UAS at attach time — when uas
+      # is not available it vanishes entirely instead of falling back to BOT
+      # (private-cloud 2025-11-24: boot-time disappearances until uas was
+      # guaranteed loaded; the standard quirks=152d:0567:u fallback caused
+      # TOTAL enumeration failure on this exact controller). Pre-loading
+      # removes on-demand autoload from the bridge's USB handshake path.
+      "uas"
+      "usb-storage"
+      # Complete the SCSI disk chain resident as well: sd_mod/sg normally
+      # autoload on disk appearance, but this bridge family is documented
+      # to misbehave when any driver of its attach path is not already
+      # resident (see uas note above) — close the whole class.
+      "sd_mod"
+      "sg"
     ];
 
     # AMD GPU + NPU optimization kernel parameters for Strix Halo (128GB unified memory)
@@ -63,8 +94,8 @@ in
       # The ~130W power ceiling is GMKtec firmware PPT — not OS-controllable (no ryzen_smu for
       # Strix Halo yet, no RAPL constraints exposed, no platform profile in BIOS).
       "amd_pstate=performance"
-      # TTM: match GTT limit so GPU page allocations can use the full 112GB
-      # Note: amdgpu.gttsize is deprecated in kernel 7.0+ — use ttm.pages_limit instead
+      # TTM: GTT allocation ceiling. amdgpu.gttsize is GONE in kernel 7.0+ —
+      # ttm.pages_limit (here + extraModprobeConfig below) is the only knob.
       "amdgpu.ttm.pages_limit=${toString ttmPagesLimit}"
       # IOMMU enabled — required for full 128GB memory mapping on Strix Halo.
       # Previously set to "off" for ~6% memory read improvement, but this prevented
@@ -127,14 +158,17 @@ in
   # With only 2 pending requests, the USB pipe idles between transfers, throttling
   # sequential throughput. nr_requests=128 keeps the pipe saturated — drives are
   # 2x Toshiba MG08ACA16TE (16TB 7200RPM) that deliver ~276 MB/s when unchoked.
+  # (REMOVED 2026-08-27: a companion hdparm -S 120 spindown rule matched
+  # KERNEL=="sd[ab]" — written for the RETIRED ZFS pool disks, which are gone.
+  # sd[ab] now letter-collides with LIVE DAS disks on replug (confirmed topology:
+  # sdb+sdd = btrfs pool members, sda = buildcache SSD; letters reshuffle per
+  # enumeration). Never match DAS disks by KERNEL letters — if spindown is ever
+  # wanted again for specific cold disks, match by ID_SERIAL instead. The active
+  # pool must NOT standby anyway: nightly btrbk sends, weekly scrubs, and
+  # pool-backed services (paperless/immich/atticd) make 10-min standby cycles
+  # pure latency + wear.)
   services.udev.extraRules = ''
     ACTION=="add|change", SUBSYSTEM=="block", ATTRS{idVendor}=="152d", ATTRS{idProduct}=="0567", ATTR{queue/nr_requests}="128"
-    # Spindown for idle spinning disks (retired ZFS pool on sda/sdb).
-    # -S 120 = standby after 10 min idle (120 × 5s)
-    # -B 127 = APM level permitting spindown
-    # Without this, any incidental access (blkid, udev probe) spins them up
-    # and they stay spinning forever — heat, wear, noise for a retired pool.
-    ACTION=="add|change", SUBSYSTEM=="block", KERNEL=="sd[ab]", RUN+="${pkgs.hdparm}/bin/hdparm -S 120 -B 127 $devnode"
   '';
 
   # Static /tmp tmpfs mount with explicit 48 GiB size cap.
@@ -152,21 +186,25 @@ in
     }
   ];
 
-  # TTM memory pool configuration for GPU workloads
-  # System has 128 GiB physical RAM but only ~110 GiB visible to Linux (18 GiB BIOS VRAM carveout).
-  # pages_limit = max pages TTM allocator can grab (ceiling, not reservation)
-  # page_pool_size = max pages TTM pool caches for reuse after BO free
-  # Split (2026-07-12): page_pool_size reduced from 112 GiB → 24 GiB to fix the GPUActive black hole.
-  # With pool = 112 GiB, freed GPU BO pages were never returned to kernel → GPUActive=51+ GiB even
-  # with only desktop workloads → chronic memory pressure → BTRFS commit stalls → SQLite lock
-  # renewal failures → Pocket ID crash-loop → auth.home.lan down. See docs/status/ for analysis.
+  # TTM memory pool configuration for GPU workloads (GTT-first, 2026-09-02).
+  # 128 GiB physical RAM; BIOS UMA carveout reduced to 512 MiB — visible RAM
+  # (~125 GiB) is GTT-shared instead of statically reserved by the iGPU.
+  # pages_limit = max pages TTM allocator can grab (ceiling, not reservation):
+  # 120 GiB, ~5 GiB below expected MemTotal so GPU pinning fails before the box.
+  # page_pool_size = max pages the TTM pool caches for reuse after BO free.
+  # MUST STAY SMALL (24 GiB): when pool = pages_limit (112 GiB era), freed GPU
+  # pages were never returned to the kernel → GPUActive=51+ GiB with only desktop
+  # workloads → chronic memory pressure → BTRFS commit stalls → SQLite lock
+  # renewal failures → Pocket ID crash-loop → auth.home.lan down. Do NOT raise it
+  # to "match" pages_limit. See docs/status/ for the analysis.
   boot.extraModprobeConfig = ''
     options ttm pages_limit=${toString ttmPagesLimit}
     options ttm page_pool_size=${toString ttmPagePoolSize}
   '';
 
-  # VM sysctl tuning for AI/ML workloads (AMD Ryzen AI MAX+ 395 — 128 GiB physical, ~110 GiB visible
-  # to Linux after 18 GiB BIOS VRAM carveout. GPU/CPU share same RAM via GTT on this unified-memory APU)
+  # VM sysctl tuning for AI/ML workloads (AMD Ryzen AI MAX+ 395 — 128 GiB physical,
+  # ~125 GiB visible to Linux with the 512 MiB BIOS VRAM carveout (GTT-first,
+  # 2026-09-02). GPU/CPU share the same RAM via GTT on this unified-memory APU)
   #
   # ZRAM-FIRST RECLAIM STRATEGY (2026-08-13):
   # This machine has zram as its ONLY swap (no disk swap). zram compresses in RAM
@@ -195,7 +233,7 @@ in
 
     # Crash recovery — prevent needing hard power cuts when GPU/driver hangs
     "kernel.sysrq" = 1; # Full SysRq — enables REISUB emergency reboot from keyboard
-    "kernel.panic" = 30; # Auto-reboot 30s after kernel panic (time to read/photograph stack trace, then recover)
+    "kernel.panic" = 10; # Auto-reboot 10s after kernel panic — kdump captures the vmcore FIRST (crashkernel path reboots after dump completes); 10s is pure post-dump recovery latency. Was 30 (time to photograph a stack trace) — kdump makes the photo redundant.
     "kernel.softlockup_panic" = 1; # Panic on soft lockup (CPU stuck in kernel with interrupts disabled)
     "kernel.watchdog_thresh" = 20; # Soft lockup detection threshold in seconds (default: 10, raised to avoid GPU compute false positives)
     "kernel.hung_task_panic" = 1; # Panic when a task is stuck in D state for too long
@@ -257,6 +295,43 @@ in
         };
         script = ''
           echo 1000 > /sys/kernel/mm/lru_gen/min_ttl_ms
+        '';
+      };
+
+      # ── kdump vmcore retention ────────────────────────────────────────
+      # vmcores of a 94 GB machine are multi-GB even filtered+compressed;
+      # an unbounded /var/crash on the space-tight root fs would trade one
+      # emergency for another. Keep the 2 newest dumps, hard-cap total at
+      # 20G (oldest deleted first). Timer at boot + weekly — dumps are rare.
+      kdump-retention = {
+        description = "Bound /var/crash vmcore retention (2 newest, max 20G total)";
+        serviceConfig = {
+          Type = "oneshot";
+        };
+        script = ''
+          set -euo pipefail
+          CRASH_DIR="/var/crash"
+          [ -d "$CRASH_DIR" ] || exit 0
+
+          list_entries() {
+            # kdump default layout: timestamp dirs; also tolerate flat vmcore files.
+            ${pkgs.findutils}/bin/find "$CRASH_DIR" -mindepth 1 -maxdepth 1 \( -name 'vmcore*' -o -type d \) -printf '%T@ %p\n' | sort -rn
+          }
+
+          # Keep the 2 newest entries, delete the rest.
+          list_entries | ${pkgs.gawk}/bin/awk 'NR > 2 { $1=""; sub(/^ /, ""); print }' | while read -r old; do
+            [ -n "$old" ] && ${pkgs.coreutils}/bin/rm -rf -- "$old" && echo "kdump-retention: removed old dump $old"
+          done
+
+          # Hard cap: while total exceeds 20G, delete the oldest remaining entry.
+          while :; do
+            total_bytes=$(${pkgs.coreutils}/bin/du -sb "$CRASH_DIR" 2>/dev/null | ${pkgs.gawk}/bin/awk '{print $1}')
+            [ "''${total_bytes:-0}" -lt 21474836480 ] && break
+            oldest=$(list_entries | tail -1 | ${pkgs.gawk}/bin/awk '{ $1=""; sub(/^ /, ""); print }')
+            [ -z "$oldest" ] && break
+            ${pkgs.coreutils}/bin/rm -rf -- "$oldest"
+            echo "kdump-retention: 20G cap exceeded — removed $oldest"
+          done
         '';
       };
     };
@@ -404,6 +479,17 @@ in
   # GiB), taking ~10-15 min instead of 1h14m.
   systemd.timers.fstrim.timerConfig.OnCalendar = lib.mkForce "daily";
 
+  # kdump vmcore retention — bound /var/crash growth (boot + weekly)
+  systemd.timers.kdump-retention = {
+    description = "Run kdump vmcore retention cleanup";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "10min";
+      OnCalendar = "weekly";
+      Persistent = true;
+    };
+  };
+
   # Run fstrim at idle I/O priority so it doesn't compete with host I/O.
   # fstrim is a background maintenance task; a 10-15 min trim run at idle
   # priority is preferable to a 5 min run that starves foreground I/O and
@@ -411,9 +497,10 @@ in
   systemd.services.fstrim.serviceConfig = ioTier.maintenance;
 
   # ZRAM: compressed swap on unified memory APU. This is the ONLY swap — no disk swap.
-  # ~30% of ~110 GiB visible RAM = ~33 GiB virtual device. At ~3.2x zstd compression,
-  # 33 GiB of swap costs ~10.3 GiB of physical RAM while holding ~106 GiB of original data.
-  # GPU and CPU share this RAM, so AI workloads compete directly with system processes.
+  # 50% of ~94 GiB visible RAM = ~47 GiB virtual device. At ~2.6-3.2x zstd compression,
+  # a FULL 47 GiB device costs ~15-18 GiB of physical RAM while holding ~120+ GiB of
+  # original data. GPU and CPU share this RAM, so AI workloads compete directly with
+  # system processes.
   #
   # swappiness=150 (set above) makes the kernel prefer zram swap over page cache reclaim.
   # This is CRITICAL: zram compresses in RAM at ~370 MiB/s, while page cache reclaim hits
@@ -430,6 +517,15 @@ in
   # more headroom before hitting that cliff. At 3.2x ratio, the extra 12 GiB costs only
   # ~3.7 GiB physical RAM — a good trade on a 110 GiB system.
   #
+  # Why 50% not 30% (2026-09-02): the 28.2 GiB device sat at 97% fill (27.4 GiB of
+  # swapped pages compressing to 10.7 GiB physical at 2.6x) as STEADY STATE — with
+  # 53% MemAvailable and 0.26% PSI, i.e. a perfectly healthy machine whose swap-fill
+  # gauge read "critical". Fill-% is only a meaningful cliff signal with headroom:
+  # at 50% the same load reads ~58%, the unevictable-shmem cliff (swap exhaustion)
+  # moves ~19 GiB further out, and the physical cost is bounded by compression.
+  # Idle cost is ZERO: zram allocates physical pages only for actually-stored data.
+  # NOTE: takes effect on REBOOT (zram device is sized at boot, not hot-resizable).
+  #
   # level=1 (not the kernel default of 3): zram compresses individual 4 KiB
   # pages synchronously in the reclaim path. At 4 KiB block sizes, higher zstd
   # levels can't find enough patterns to justify their CPU cost. Benchmark on
@@ -442,7 +538,7 @@ in
   # memory pressure (swap-in/swap-out is synchronous and blocks the reclaim path).
   zramSwap = {
     enable = true;
-    memoryPercent = 30;
+    memoryPercent = 50;
     algorithm = "zstd(level=1)";
   };
 }

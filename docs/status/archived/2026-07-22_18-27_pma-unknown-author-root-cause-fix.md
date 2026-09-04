@@ -8,7 +8,6 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 1. **Root cause identified:** go-git's `repo.Config()` reads ONLY `.git/config` (local scope). It does NOT merge global (`~/.config/git/config`), system (`/etc/gitconfig`), or other config scopes. Home Manager writes `user.name`/`user.email` to `~/.config/git/config` (global scope). Therefore both `getAuthorSignature` implementations (go-commit's and PMA's) always saw empty strings → fell back to `Unknown Author <unknown@example.com>`.
@@ -73,12 +72,14 @@
 ## f) NEXT STEPS (up to 50)
 
 ### Immediate (blocking — fix is not live)
+
 1. Commit SystemNix working tree changes (`flake.lock`, `configuration.nix`, `AGENTS.md`)
 2. Deploy: `nix run .#deploy`
 3. Verify PMA commits now have correct author: trigger a file change → wait → `git log`
 4. Run `nix run .#post-deploy-check` to verify all services healthy after deploy
 
 ### High priority
+
 5. Force-push go-commit to fix the "Unknown Author" v0.4.0 tag commit (if user approves)
 6. Audit all LarsArtmann Go repos for `repo.Config().User` misuse: `grep -rn 'repo.Config()' --include='*.go'`
 7. Add regression test in go-commit: create repo, set global git config, verify commit author
@@ -87,6 +88,7 @@
 10. Clean up the `import` of `"github.com/go-git/go-git/v5"` if `config` import is now unused in `service_gogit_write.go`
 
 ### Medium priority
+
 11. Consider adding `GIT_AUTHOR_NAME` / `GIT_AUTHOR_EMAIL` env var fallback in `getAuthorSignature` (defense-in-depth if `git config` is unavailable)
 12. Review whether PMA's `unified_git_helpers.go` (CLI-based git operations) also needs author identity fixes
 13. Check if `git_commander.go` (`internal/utils/git/`) sets author correctly in its `Commit` method
@@ -94,6 +96,7 @@
 15. Consider extracting `gitConfigValue` into a shared utility (duplicated between go-commit and PMA)
 
 ### Low priority / cleanup
+
 16. Review go-commit's committed binary artifacts (`4e1ef73` adds binaries to the repo — unusual practice)
 17. Check if PMA's debounce=60 / minInterval=120 change needs a service restart note
 18. Update PMA's `FEATURES.md` or `CHANGELOG.md` with the author fix

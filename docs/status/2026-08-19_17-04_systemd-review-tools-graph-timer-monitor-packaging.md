@@ -23,6 +23,7 @@ End-to-end packaged and verified building:
 ### Research / selection
 
 Reviewed 6 candidate tools (GitHub stars 0-11) for "lightweight + read-only + web UI for systemd timers":
+
 - `cappy-dev/systemd-timer-monitor` (Python stdlib, 490 LoC) — selected for the timer audit
 - `icholy/systemd-graph` (Go + React SPA, 11 stars) — selected for the dependency graph
 - 4 others rejected for being either not web (lazycron TUI), not timer-focused (sysd-logs, app-dashboard, systemd_dashboard), or having write-side capabilities (systemctl-dashboard)
@@ -62,6 +63,7 @@ Wiring is complete and committed; **the webui derivation build is blocked**:
 ### Manual smoke test of upstream binary (NOT the Nix build)
 
 To verify the upstream code works on this host, I cloned `icholy/systemd-graph` to `/tmp/sd-graph`, ran `pnpm install && pnpm build && go build -o bin/server ./cmd/server`, and smoke-tested:
+
 - `/` → 200, 455 bytes (HTML shell)
 - `/api/snapshot` → 200, 825 KB (full systemd graph JSON)
 - Both system and user D-Bus scopes connect successfully on evo-x2
@@ -98,6 +100,7 @@ The upstream code works. The Nix packaging is the blocker — not the upstream p
 **The fundamental issue:** pnpm 11's lockfile supply-chain policy check (280 entries) requires fetching metadata for EVERY package from `registry.npmjs.org`. The Nix sandbox blocks DNS. The `--config.*` overrides I tried disable `verify-deps-before-run` (the pre-run check) but do NOT disable the install-time supply-chain policy verification, which is a separate code path. There is no documented pnpm flag to disable the supply-chain check entirely.
 
 **What I did NOT try** (would likely work but I didn't get to them):
+
 - Patching `webui/pnpm-lock.yaml` to set `autoInstallPeers: false` AND `ignoredBuiltDependencies: []` AND `onlyBuiltDependencies: []` (might suppress the metadata fetch)
 - Using `pnpm config set` to set `verify-deps-before-run=false` globally before install (the `--config.` flag may not propagate to the install subcommand)
 - Using `npm` instead of `pnpm` (would require generating a `package-lock.json` — the repo only ships `pnpm-lock.yaml`)
@@ -149,21 +152,21 @@ The upstream code works. The Nix packaging is the blocker — not the upstream p
 
 ### Blockers (must-do before deploy)
 
-1. **Fix the systemd-graph webui build** — try patching `pnpm-lock.yaml` to set `autoInstallPeers: false`, or try `pnpm install --ignore-scripts`, or build with `--option sandbox false` (acceptable for a review tool).
-2. **Compute `vendorHash` for `pkgs/systemd-graph/default.nix`** — once webui builds, `nix build #systemd-graph` will report the correct hash.
-3. **Set `systemd-graph.enable = false` in configuration.nix** until the package builds, to unblock deploys.
-4. **Run `nix flake check --no-build`** to validate syntax of all changes.
-5. **Run `nix run .#deploy`** to bring systemd-timer-monitor live (it builds and evals cleanly).
+~~1. **Fix the systemd-graph webui build** — try patching `pnpm-lock.yaml` to set `autoInstallPeers: false`, or try `pnpm install --ignore-scripts`, or build with `--option sandbox false` (acceptable for a review tool).~~ done — webui builds (18-49 session: both tools deployed + wired)
+~~2. **Compute `vendorHash` for `pkgs/systemd-graph/default.nix`** — once webui builds, `nix build #systemd-graph` will report the correct hash.~~ done — package green; systemd-graph live at graph.home.lan
+~~3. **Set `systemd-graph.enable = false` in configuration.nix** until the package builds, to unblock deploys.~~ done — enabled + serving (superseded by the completed build)
+~~4. **Run `nix flake check --no-build`** to validate syntax of all changes.~~ done — checks green through the chain
+~~5. **Run `nix run .#deploy`** to bring systemd-timer-monitor live (it builds and evals cleanly).~~ done — deployed 2026-08-19
 
 ### Verification (after deploy)
 
-6. **Verify `https://timers.home.lan/`** returns 200 with the audit HTML.
-7. **Verify `systemctl status systemd-timer-monitor-audit.timer`** shows active and next fire time.
-8. **Verify the audit HTML content** — failed services list, timer table, overdue badges.
-9. **Verify `https://timers.home.lan/status.json`** returns valid JSON.
-10. **Verify `systemctl start systemd-timer-monitor-audit.service`** runs the audit immediately.
-11. **Once systemd-graph builds: verify `https://graph.home.lan/`** returns 200 with the React SPA.
-12. **Verify `https://graph.home.lan/api/snapshot`** returns the graph JSON.
+~~6. **Verify `https://timers.home.lan/`** returns 200 with the audit HTML.~~ done — verified (18-49)
+~~7. **Verify `systemctl status systemd-timer-monitor-audit.timer`** shows active and next fire time.~~ done — verified (18-49)
+~~8. **Verify the audit HTML content** — failed services list, timer table, overdue badges.~~ done — verified (18-49)
+~~9. **Verify `https://timers.home.lan/status.json`** returns valid JSON.~~ done — verified (18-49)
+~~10. **Verify `systemctl start systemd-timer-monitor-audit.service`** runs the audit immediately.~~ done — deploy.sh starts it post-switch (AGENTS.md)
+~~11. **Once systemd-graph builds: verify `https://graph.home.lan/`** returns 200 with the React SPA.~~ done — live (18-49 + post-deploy checks since)
+~~12. **Verify `https://graph.home.lan/api/snapshot`** returns the graph JSON.~~ done — verified (18-49)
 13. **Verify `systemctl status systemd-graph.service`** shows active and connected to D-Bus.
 
 ### Hardening & completeness

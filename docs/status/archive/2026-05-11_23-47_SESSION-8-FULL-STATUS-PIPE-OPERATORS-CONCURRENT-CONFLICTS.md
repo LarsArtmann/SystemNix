@@ -64,7 +64,7 @@
 
 | File              | Target           | Current State                                            | Why                                                              |
 | ----------------- | ---------------- | -------------------------------------------------------- | ---------------------------------------------------------------- |
-| `sops.nix`        | ✓ Pipe operators | **3 `                                                    | >` operators in HEAD**                                           | My commit `244c58d8` + GLM-5.1's `b2abbe29` preserved it |
+| `sops.nix`        | ✓ Pipe operators | **3 `                                                    | >` operators in HEAD**                                           |
 | `manifest.nix`    | Pipe operators   | **Reverted** — standard `builtins.listToAttrs(map(...))` | Concurrent session `5820900f` reverted it before my commit       |
 | `niri-config.nix` | Pipe operators   | **Reverted** — standard nested calls                     | Concurrent session `cb36098d` reverted it                        |
 | `hermes.nix`      | Pipe operators   | **Reverted** — standard `builtins.match`                 | Concurrent session `d65d8bc7` reverted it                        |
@@ -152,33 +152,33 @@
 
 ## F) Top 25 Things We Should Get Done Next
 
-| #   | Priority | Task                                                                                                     | Repo          | Est.  |
-| --- | -------- | -------------------------------------------------------------------------------------------------------- | ------------- | ----- |
-| 1   | **P0**   | Wait for concurrent sessions to finish, then re-apply pipe operators to manifest/niri/hermes/taskwarrior | SystemNix     | 10min |
-| 2   | **P0**   | Verify all pipe-operator files survive after concurrent sessions end                                     | SystemNix     | 2min  |
-| 3   | **P0**   | Push SystemNix to ensure remote has latest pipe operators                                                | SystemNix     | 1min  |
-| 4   | **P1**   | Run `buildflow agent fix` end-to-end with NPU (Phi-4 Mini on Lemonade)                                   | BuildFlow     | 30min |
-| 5   | **P1**   | Add more linter complexity/impact classifications (target: 30/109)                                       | BuildFlow     | 1hr   |
-| 6   | **P1**   | Investigate and fix clickhouse service failure                                                           | SystemNix     | 30min |
-| 7   | **P1**   | Investigate niri-health-metrics service failure                                                          | SystemNix     | 15min |
-| 8   | **P2**   | Convert signoz.nix alert rules to pipe operators (10+ `builtins.toJSON` calls)                           | SystemNix     | 20min |
-| 9   | **P2**   | Convert chrome.nix policies to pipe operators                                                            | SystemNix     | 5min  |
-| 10  | **P2**   | Convert scheduled-tasks.nix `builtins.readFile` pipes                                                    | SystemNix     | 5min  |
-| 11  | **P2**   | Add pipe-operator support tracking issue for nixfmt                                                      | upstream      | 10min |
-| 12  | **P2**   | Evaluate `nil` as statix replacement for pipe-operator files                                             | SystemNix     | 20min |
-| 13  | **P2**   | Update AGENTS.md with concurrent session lessons                                                         | BuildFlow     | 10min |
-| 14  | **P2**   | Fix private-cloud sanoid timerConfig → interval migration                                                | private-cloud | 15min |
-| 15  | **P2**   | Convert dnsblockd module Nix files to pipe operators                                                     | dnsblockd     | 10min |
-| 16  | **P3**   | BuildFlow: Add `--dry-run-json` output for CI integration                                                | BuildFlow     | 1hr   |
-| 17  | **P3**   | BuildFlow: Add retry-with-different-prompt on verification failure                                       | BuildFlow     | 30min |
-| 18  | **P3**   | BuildFlow: Add `--max-cost` flag to limit LLM token spend                                                | BuildFlow     | 30min |
-| 19  | **P3**   | SystemNix: Add dual-wan health dashboard to homepage                                                     | SystemNix     | 1hr   |
-| 20  | **P3**   | Convert remaining SystemNix overlays to pipe operators                                                   | SystemNix     | 15min |
-| 21  | **P3**   | Add `pipe-operators` to BuildFlow devShell Nix config                                                    | BuildFlow     | 5min  |
-| 22  | **P3**   | Write benchmark: pipe operators vs nested calls (readability study)                                      | meta          | 30min |
-| 23  | **P3**   | Convert mr-sync flake.nix to pipe operators (if applicable)                                              | mr-sync       | 5min  |
-| 24  | **P3**   | Add pre-commit hook to detect `;;` (double semicolons) in Nix files                                      | SystemNix     | 10min |
-| 25  | **P3**   | BuildFlow: Add `buildflow agent fix --watch` for continuous fixing                                       | BuildFlow     | 2hr   |
+| #  | Priority | Task                                                                                                     | Repo          | Est.  |
+| -- | -------- | -------------------------------------------------------------------------------------------------------- | ------------- | ----- |
+| 1  | **P0**   | Wait for concurrent sessions to finish, then re-apply pipe operators to manifest/niri/hermes/taskwarrior | SystemNix     | 10min |
+| 2  | **P0**   | Verify all pipe-operator files survive after concurrent sessions end                                     | SystemNix     | 2min  |
+| 3  | **P0**   | Push SystemNix to ensure remote has latest pipe operators                                                | SystemNix     | 1min  |
+| 4  | **P1**   | Run `buildflow agent fix` end-to-end with NPU (Phi-4 Mini on Lemonade)                                   | BuildFlow     | 30min |
+| 5  | **P1**   | Add more linter complexity/impact classifications (target: 30/109)                                       | BuildFlow     | 1hr   |
+| 6  | **P1**   | Investigate and fix clickhouse service failure                                                           | SystemNix     | 30min |
+| 7  | **P1**   | Investigate niri-health-metrics service failure                                                          | SystemNix     | 15min |
+| 8  | **P2**   | Convert signoz.nix alert rules to pipe operators (10+ `builtins.toJSON` calls)                           | SystemNix     | 20min |
+| 9  | **P2**   | Convert chrome.nix policies to pipe operators                                                            | SystemNix     | 5min  |
+| 10 | **P2**   | Convert scheduled-tasks.nix `builtins.readFile` pipes                                                    | SystemNix     | 5min  |
+| 11 | **P2**   | Add pipe-operator support tracking issue for nixfmt                                                      | upstream      | 10min |
+| 12 | **P2**   | Evaluate `nil` as statix replacement for pipe-operator files                                             | SystemNix     | 20min |
+| 13 | **P2**   | Update AGENTS.md with concurrent session lessons                                                         | BuildFlow     | 10min |
+| 14 | **P2**   | Fix private-cloud sanoid timerConfig → interval migration                                                | private-cloud | 15min |
+| 15 | **P2**   | Convert dnsblockd module Nix files to pipe operators                                                     | dnsblockd     | 10min |
+| 16 | **P3**   | BuildFlow: Add `--dry-run-json` output for CI integration                                                | BuildFlow     | 1hr   |
+| 17 | **P3**   | BuildFlow: Add retry-with-different-prompt on verification failure                                       | BuildFlow     | 30min |
+| 18 | **P3**   | BuildFlow: Add `--max-cost` flag to limit LLM token spend                                                | BuildFlow     | 30min |
+| 19 | **P3**   | SystemNix: Add dual-wan health dashboard to homepage                                                     | SystemNix     | 1hr   |
+| 20 | **P3**   | Convert remaining SystemNix overlays to pipe operators                                                   | SystemNix     | 15min |
+| 21 | **P3**   | Add `pipe-operators` to BuildFlow devShell Nix config                                                    | BuildFlow     | 5min  |
+| 22 | **P3**   | Write benchmark: pipe operators vs nested calls (readability study)                                      | meta          | 30min |
+| 23 | **P3**   | Convert mr-sync flake.nix to pipe operators (if applicable)                                              | mr-sync       | 5min  |
+| 24 | **P3**   | Add pre-commit hook to detect `;;` (double semicolons) in Nix files                                      | SystemNix     | 10min |
+| 25 | **P3**   | BuildFlow: Add `buildflow agent fix --watch` for continuous fixing                                       | BuildFlow     | 2hr   |
 
 ---
 
@@ -196,12 +196,12 @@ The MiniMax session's commit messages suggest it believes pipe operators cause c
 
 ## Repo State Summary
 
-| Repo          | Branch | Status                      | Build                          | Pushed                                  |
-| ------------- | ------ | --------------------------- | ------------------------------ | --------------------------------------- |
-| BuildFlow     | master | Clean (untracked `result/`) | ✅ Build + Tests pass          | ✅                                      |
-| SystemNix     | master | Clean                       | ✅ `nix flake check` passes    | ✅ (but 4 files missing pipe operators) |
-| mr-sync       | master | Clean                       | ✅                             | ✅                                      |
-| dnsblockd     | master | Clean                       | ✅ `nix flake check` passes    | ✅                                      |
+| Repo          | Branch | Status                      | Build                         | Pushed                                  |
+| ------------- | ------ | --------------------------- | ----------------------------- | --------------------------------------- |
+| BuildFlow     | master | Clean (untracked `result/`) | ✅ Build + Tests pass         | ✅                                      |
+| SystemNix     | master | Clean                       | ✅ `nix flake check` passes   | ✅ (but 4 files missing pipe operators) |
+| mr-sync       | master | Clean                       | ✅                            | ✅                                      |
+| dnsblockd     | master | Clean                       | ✅ `nix flake check` passes   | ✅                                      |
 | private-cloud | master | Clean                       | ⚠️ Pre-existing sanoid failure | ✅                                      |
 
 ## Hardware State

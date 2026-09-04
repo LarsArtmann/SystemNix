@@ -1,5 +1,7 @@
 # Hermes Projects Access — Status & Brutal Self-Review
 
+> **RESOLVED 2026-08-20 (see `docs/status/2026-08-20_10-45_hermes-hardening-plan-execution-status.md` and the follow-up session report):** every P0/P1 harvested here was executed via the pareto plan. Gate outcomes (user, 2026-08-20): Q1 = yes read-only PAT (scaffolded, placeholder awaiting the user's token), Q2 = defer (workspace stays on `@`), Q3 = permanently read-only. Additional fix from the follow-up session: the perms walk's `chmod 0660` had been stripping exec bits from the agent's LSP binaries since 2026-08-16 — now exec-preserving + healed.
+
 **Session:** 2026-08-20 ~09:00–09:15 · **Scope:** `services.hermes.projectsDir` (read-only projects access for the Hermes agent) · **Deploy:** system-69x era, 63 PASS / 0 FAIL
 **Format note:** user requested `.md` (overrides the status-report skill's HTML default).
 
@@ -54,32 +56,33 @@
 ## f) NEXT THINGS (28, priority-sorted)
 
 **P0 — landmines on live system**
-1. Apply `find -xdev` fix to `hermes-fix-permissions` (d)1) + redeploy
-2. Add `GIT_CONFIG_GLOBAL` (store gitconfig, `[safe] directory = "/home/hermes/workspace/projects/*"`) to hermes service env (b)2)
-3. User: Discord E2E — ask Hermes to read `projects/SystemNix/flake.nix` and run `git -C ./projects/SystemNix log -1` (expect success after #2; before it, expect the dubious-ownership error — confirms diagnosis)
+
+~~1. Apply `find -xdev` fix to `hermes-fix-permissions` (d)1) + redeploy~~ done at `962d433d` (2026-08-20) — `-prune` on the exact bind path + `|| true` per walk
+~~2. Add `GIT_CONFIG_GLOBAL` (store gitconfig, `[safe] directory = "/home/hermes/workspace/projects/*"`) to hermes service env (b)2)~~ done 2026-08-20 (projectsDir-gated env; VM-tested incl. negative control)
+~~3. User: Discord E2E — ask Hermes to read `projects/SystemNix/flake.nix` and run `git -C ./projects/SystemNix log -1` (expect success after #2; before it, expect the dubious-ownership error — confirms diagnosis)~~ done — agent git through the bind verified live (journal 10:29, 2026-08-20)
 
 **P1 — close the gaps this session exposed**
-4. Add hermes to `system-health` monitoredServices + Gatus (`system_service_state` active, failed, start-limit — fastflowlm pattern, no HTTP probe needed)
-5. Add hermes section to `scripts/post-deploy-check.sh`: mountinfo contains `workspace/projects … ro`, plus the gitconfig file exists
-6. Write `docs/services/hermes.md` runbook (module map, projectsDir semantics, clone workflow, landmine history)
-7. Workspace disk strategy (see question 2): subvolume-relocate `/home/hermes/workspace` out of `@` snapshots, or btrbk exclude, or quota + GC timer — decide BEFORE clones accumulate
-8. NixOS VM test `tests/test-hermes.nix`: RO enforced (write→EROFS), null→no-bind, env present, revoke idempotent, fixPermissions safe with bind present (regression test for d)1)
-9. Workspace `AGENTS.md` for the agent itself: `./projects` read-only, clone into `./`, git ownership note, "never edit the bind"
+~~4. Add hermes to `system-health` monitoredServices + Gatus (`system_service_state` active, failed, start-limit — fastflowlm pattern, no HTTP probe needed)~~ done 2026-08-20 — "Hermes Agent Gateway" + "Hermes Memory Pressure" checks, verified green live
+~~5. Add hermes section to `scripts/post-deploy-check.sh`: mountinfo contains `workspace/projects … ro`, plus the gitconfig file exists~~ done 2026-08-20 — gateway-PID mountinfo `ro` + deployed-unit GIT_CONFIG_GLOBAL parse check
+~~6. Write `docs/services/hermes.md` runbook (module map, projectsDir semantics, clone workflow, landmine history)~~ done — runbook live (PAT go-live block included)
+~~7. Workspace disk strategy (see question 2): subvolume-relocate `/home/hermes/workspace` out of `@` snapshots, or btrbk exclude, or quota + GC timer — decide BEFORE clones accumulate~~ decided 2026-08-20 — DEFER with revisit trigger (root >90% or clones >20G); re-verified still deferred 2026-08-31
+~~8. NixOS VM test `tests/test-hermes.nix`: RO enforced (write→EROFS), null→no-bind, env present, revoke idempotent, fixPermissions safe with bind present (regression test for d)1)~~ done 2026-08-20 — two-node test GREEN (later grown to 82 assertions incl. D1 regression)
+~~9. Workspace `AGENTS.md` for the agent itself: `./projects` read-only, clone into `./`, git ownership note, "never edit the bind"~~ done — versioned install (`systemnix-workspace-doc: vN` marker)
 
 **P2 — capability & hygiene**
-10. Private-repo read creds decision + wiring (question 1): read-only deploy key or fine-grained PAT, `insteadOf` https, key via sops → EnvironmentFile
-11. Write-back policy decision (question 3): permanent read-only vs agent-pushed branches/PRs
+~~10. Private-repo read creds decision + wiring (question 1): read-only deploy key or fine-grained PAT, `insteadOf` https, key via sops → EnvironmentFile~~ decided + scaffolded 2026-08-20 — read-only PAT approach (sops placeholder + credential helper + verify canary); user PAT go-live remains TODO_LIST
+~~11. Write-back policy decision (question 3): permanent read-only vs agent-pushed branches/PRs~~ decided 2026-08-20 — permanently read-only (no push creds ever)
 12. Schedule `hermes-acl-revoke` deletion (self-neutralize after e.g. 2 clean weeks)
-13. Investigate `mnemosyne` MCP `failed initial connection… parked` (pre-existing, journal 09:05) — hermes memory features degraded?
-14. Investigate hermes `Slash command sync timed out` (existing TODO_LIST P1, still unexplained)
+~~13. Investigate `mnemosyne` MCP `failed initial connection… parked` (pre-existing, journal 09:05) — hermes memory features degraded?~~ done — classified 2026-08-20 (user-configured runtime entry; upstream parks dead servers by design; settings-UI cleanup is user-side)
+~~14. Investigate hermes `Slash command sync timed out` (existing TODO_LIST P1, still unexplained)~~ done — resolved benign 2026-08-20 (zero occurrences; live variant is Discord 429 rate-limit + backoff; deploy-stop exits 1 by design)
 15. Consider `MemoryMax=24G` review for hermes — 24G on a machine that OOM-storms at 94G visible; is that ceiling still right with PyTorch extras?
-16. `/home/hermes` 58G audit (what IS it? state.db, sessions, caches?) — feeds P0 disk item in TODO_LIST
-17. Confirm the 09:09:32 `status=1/FAILURE` on the OLD process was just stop-during-switch (`--replace`), not a crash — journal-only check
-18. quickshell 1-error-line WARN from post-deploy (pre-existing; 1 line, last 1h) — look once
+~~16. `/home/hermes` 58G audit (what IS it? state.db, sessions, caches?) — feeds P0 disk item in TODO_LIST~~ closed 2026-08-21 — STALE CLAIM: re-measured 3.2M; audit script kept as a generic tool
+~~17. Confirm the 09:09:32 `status=1/FAILURE` on the OLD process was just stop-during-switch (`--replace`), not a crash — journal-only check~~ done — classified benign (SIGTERM deploy-stop; gateway shutdown exits 1 by design)
+~~18. quickshell 1-error-line WARN from post-deploy (pre-existing; 1 line, last 1h) — look once~~ done — triaged transient 2026-08-26 (zero error lines in journal over 24h/3h)
 
 **P3 — structural**
-19. Eval-time guard: warn when a hardened service's `fixPermissions`-style recursive chown/chmod targets a path containing a `Bind*Paths` destination (generalizes d)1 beyond hermes)
-20. Generalize the "ACL mask fragility" lesson into AGENTS.md gotchas (one-liner: never grant service access via home-dir ACLs; bind-mount instead) — currently only in the Hermes section
+~~19. Eval-time guard: warn when a hardened service's `fixPermissions`-style recursive chown/chmod targets a path containing a `Bind*Paths` destination (generalizes d)1 beyond hermes)~~ done — `chown-vs-bind-audit` flake check (WARNING tier; promotion to FAIL is TODO_LIST)
+~~20. Generalize the "ACL mask fragility" lesson into AGENTS.md gotchas (one-liner: never grant service access via home-dir ACLs; bind-mount instead) — currently only in the Hermes section~~ done — AGENTS.md systemd section carries the never-home-ACLs rule
 21. `docs/gotchas-archive.md` entry for the ACL-mask kill + the chown-vs-bind namespace interaction (two real incidents for the archive)
 22. Consider exposing more trees read-only later (`/data/ai/workspaces`? `/mnt/pool/services`?) — only if the agent demonstrates need
 23. Review whether `HERMES_WRITE_SAFE_ROOT` should also include a scratch dir outside stateDir (e.g. `/tmp` is PrivateTmp already — document that)

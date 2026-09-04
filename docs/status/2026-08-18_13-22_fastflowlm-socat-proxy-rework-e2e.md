@@ -48,7 +48,7 @@ The P0 cold-load E2E test — the one thing yesterday's session never did — **
 
 ## d) TOTALLY FUCKED UP (own goals, honestly listed)
 
-1. **Deploy #1 wasted a full build+gate cycle on a predictable blocker.** I added the `niri_zombie` bypass preemptively but **did not grep the target config for OTHER new Gatus metrics from the concurrent session's tracked changes** — `btrfs_health_critical` failed the exact same check one cycle later. I treated the symptom I had seen instead of the class: *any* tracked-but-undeployed emitter + its Gatus check will fail pre-deploy. Cost: ~15 min and one aborted deploy.
+1. **Deploy #1 wasted a full build+gate cycle on a predictable blocker.** I added the `niri_zombie` bypass preemptively but **did not grep the target config for OTHER new Gatus metrics from the concurrent session's tracked changes** — `btrfs_health_critical` failed the exact same check one cycle later. I treated the symptom I had seen instead of the class: _any_ tracked-but-undeployed emitter + its Gatus check will fail pre-deploy. Cost: ~15 min and one aborted deploy.
 2. **My first E2E log check went blind for ~75 s** — I `sleep 20`'d, then a `sleep 75` got auto-backgrounded by the shell timeout, so the first failure evidence arrived via a background-job round trip. Minor, but it's the same "don't pipe/block on long waits" lesson from yesterday: the E2E script already wrote to `/tmp/flm_e2e.log`; I should have polled it with short sleeps from the start.
 3. **Yesterday's session (and the 00:57 session) shipped an architecture nobody had ever connected to once** — five review passes, a docs-health EXECUTED banner, a checked-off TODO, and a full deploy report all blessed a design whose proxy binary does not exist in nixpkgs. I inherited that state; the lesson is mine too: **"verified at rest" (units on disk, socket listening) was reported as done while the endpoint was provably dead.** The single honest test — one connection — was deferred as "P0 next" and everything green stayed green.
 4. **Initial Nix option mistake** — `accept = true` placed at socket top level (option doesn't exist; caught by eval). Two-minute fix, zero user impact, but it's a wrong-first-guess I should have checked against the option list before writing.
@@ -64,12 +64,13 @@ The P0 cold-load E2E test — the one thing yesterday's session never did — **
 ## f) NEXT TASKS (prioritized, up to 50)
 
 **P0 — verify the deploy in flight**
+
 1. ~~Confirm deploy #2 activation result (exit 0 vs exit-4-wrapped failure); read `/tmp/deploy-flm3.log`.~~ done (deploy #2 + Bug C resolved in addendum h; later deploys clean)
 2. ~~Run/inspect `nix run .#post-deploy-check` — expect the new "FastFlowLM — /v1/models through socket-activated :52625" PASS.~~ done (FastFlowLM socket smoke PASS in the 20-52 suite (53 PASS / 0 FAIL))
 3. ~~True cold-load E2E through the socat bridge: idle-stop the backend first (`systemctl stop fastflowlm.service`), then `python3 /tmp/flm_e2e.py` — verify TCP-backlog holding (client connects, waits ~55–180 s, gets `/v1/models`), no connection-limit churn in journal.~~ done (cold-load E2E through the bridge verified this session + live since)
-4. Chat completion + decode rate measurement (yesterday's script already does this).
+~~4. Chat completion + decode rate measurement (yesterday's script already does this).~~ done — usage baseline measured 2026-08-18→21 (~87 conns/day, ~14 t/s decode, ~40 completions/day; AGENTS.md)
 5. ~~Idle-TTL lifecycle: verify `fastflowlm-idle` stops `'fastflowlm-proxy@*'` + backend after 1h quiet, socket still LISTENING (0xCD91), next connection re-activates end-to-end.~~ done (idle lifecycle live; idle-check reworked + verified 2026-08-18 19-56 session)
-6. Verify `niri_zombie` and `btrfs_health_critical` now live in the textfile collectors → **remove both from `KNOWN_NEW_METRICS`** (and re-run pre-deploy-check).
+~~6. Verify `niri_zombie` and `btrfs_health_critical` now live in the textfile collectors → **remove both from `KNOWN_NEW_METRICS`** (and re-run pre-deploy-check).~~ done — neither in the allowlist (verified 2026-08-31); the 2026-08-24 harvest pruned the graveyard
 7. ~~Verify Gatus FastFlowLM endpoints green; confirm the new Niri Zombie + BTRFS checks green too.~~ done (Gatus checks green via system-health metrics (flm state, niri_zombie, btrfs_health_critical))
 
 **P1 — hygiene & attribution**
@@ -87,7 +88,7 @@ The P0 cold-load E2E test — the one thing yesterday's session never did — **
 17. `systemd-analyze security fastflowlm-proxy@.service` — review the template unit's hardening (64M cap, harden {}).
 18. Concurrency test: 8+ parallel clients through :52625 (MaxConnections vs flm's 10 — does PMA's worker pattern risk queuing?).
 19. deploy.sh PATH self-hardening (yesterday's e2, still open).
-20. Pre-deploy load/PSI gate (yesterday's e3, still open).
+~~20. Pre-deploy load/PSI gate (yesterday's e3, still open).~~ done — deploy pressure gate shipped with the 2026-08-22 stability plan
 21. ~~Investigate yesterday's deploy #2 `Signal(9)` (16:20–16:40 journal window).~~ done (diagnosed by the 19-56 session (global-OOM pile-drive; OOMScoreAdjust=300 + RestartSec=60 deployed))
 22. PMA `OPENAI_BASE_URL=http://127.0.0.1:52625/v1` end-to-end: verify go-commit ≥ v0.8.0 generates commit messages via the local model.
 23. Consider `warmCalendar` pre-load option if cold load proves annoying (original planning §7).

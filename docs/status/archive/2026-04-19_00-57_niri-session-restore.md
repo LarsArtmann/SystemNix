@@ -14,14 +14,14 @@ Complete crash-recovery system for niri window restoration. All features impleme
 
 **All 6 improvements applied in this session:**
 
-| #   | Fix                                                                                                                                                                           | Status  |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| 1   | **Crush/foreground process detection** — uses `/proc/$pid/stat` tpgid field when shell has no children, catches Crush running as fish's foreground process                    | ✅ Done |
-| 2   | **Workspace-aware restore** — reads `workspaces.json`, pre-creates named workspaces, focuses correct workspace before spawning each app via `niri msg action focus-workspace` | ✅ Done |
-| 3   | **Removed `eval` shell injection** — replaced with bash array expansion `kitty -e "${e_args[@]}"`                                                                             | ✅ Done |
-| 4   | **Atomic writes** — all files (`kitty-state.json`, `timestamp`) now use `mktemp` → write → `mv` pattern                                                                       | ✅ Done |
-| 5   | **Fixed `sudo btop` fallback** — fallback now uses `btop` directly (no sudo needed)                                                                                           | ✅ Done |
-| 6   | **Timer increased to 60s** — from 30s, sufficient for crash recovery with less I/O                                                                                            | ✅ Done |
+| # | Fix                                                                                                                                                                           | Status  |
+| - | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| 1 | **Crush/foreground process detection** — uses `/proc/$pid/stat` tpgid field when shell has no children, catches Crush running as fish's foreground process                    | ✅ Done |
+| 2 | **Workspace-aware restore** — reads `workspaces.json`, pre-creates named workspaces, focuses correct workspace before spawning each app via `niri msg action focus-workspace` | ✅ Done |
+| 3 | **Removed `eval` shell injection** — replaced with bash array expansion `kitty -e "${e_args[@]}"`                                                                             | ✅ Done |
+| 4 | **Atomic writes** — all files (`kitty-state.json`, `timestamp`) now use `mktemp` → write → `mv` pattern                                                                       | ✅ Done |
+| 5 | **Fixed `sudo btop` fallback** — fallback now uses `btop` directly (no sudo needed)                                                                                           | ✅ Done |
+| 6 | **Timer increased to 60s** — from 30s, sufficient for crash recovery with less I/O                                                                                            | ✅ Done |
 
 ### EMEET PIXY Daemon — Staged Changes (from prior sessions)
 

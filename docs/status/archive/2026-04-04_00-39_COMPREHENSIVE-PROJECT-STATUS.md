@@ -49,87 +49,87 @@ These items are **complete and deployed/functional**.
 
 ### Infrastructure & Core
 
-| #   | Item                        | Details                                                                                                                     |
-| --- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **NixOS base system**       | systemd-boot, BTRFS snapshots, ZRAM swap, kernel 6.19.8                                                                     |
-| 2   | **AMD GPU hardware stack**  | Full ROCm: rocblas, hipblaslt, rocminfo, rocwmma, clr.icd, amdgpu_top, rocm-smi, nvtop                                      |
-| 3   | **AMD NPU (XDNA)**          | Kernel driver loaded via `nix-amd-npu`, xrt-fixed package, requires kernel 6.14+                                            |
-| 4   | **Kernel tuning for AI**    | `amdgpu.gttsize=131072` (128GB GTT), `amd_iommu=off`, `vm.max_map_count=2147483642`, `vm.min_free_kbytes=1048576`, ZRAM 25% |
-| 5   | **SOPS secrets management** | Age encryption, SOPS-encrypted secrets.yaml, dnsblockd certs migrated                                                       |
-| 6   | **DNS blocker**             | Unbound + custom Go dnsblockd daemon, 25 blocklists, ~600K domains blocked                                                  |
-| 7   | **SSH config extraction**   | Extracted to standalone `nix-ssh-config` flake (Apr 4)                                                                      |
-| 8   | **Crush AI agent config**   | Integrated into flake inputs with patches                                                                                   |
-| 9   | **Eval warnings**           | 3/4 fixed; 1 upstream (cannot fix)                                                                                          |
-| 10  | **P1 cleanup**              | 10 items done, 51 added/467 removed (Mar 31)                                                                                |
+| #  | Item                        | Details                                                                                                                     |
+| -- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| 1  | **NixOS base system**       | systemd-boot, BTRFS snapshots, ZRAM swap, kernel 6.19.8                                                                     |
+| 2  | **AMD GPU hardware stack**  | Full ROCm: rocblas, hipblaslt, rocminfo, rocwmma, clr.icd, amdgpu_top, rocm-smi, nvtop                                      |
+| 3  | **AMD NPU (XDNA)**          | Kernel driver loaded via `nix-amd-npu`, xrt-fixed package, requires kernel 6.14+                                            |
+| 4  | **Kernel tuning for AI**    | `amdgpu.gttsize=131072` (128GB GTT), `amd_iommu=off`, `vm.max_map_count=2147483642`, `vm.min_free_kbytes=1048576`, ZRAM 25% |
+| 5  | **SOPS secrets management** | Age encryption, SOPS-encrypted secrets.yaml, dnsblockd certs migrated                                                       |
+| 6  | **DNS blocker**             | Unbound + custom Go dnsblockd daemon, 25 blocklists, ~600K domains blocked                                                  |
+| 7  | **SSH config extraction**   | Extracted to standalone `nix-ssh-config` flake (Apr 4)                                                                      |
+| 8  | **Crush AI agent config**   | Integrated into flake inputs with patches                                                                                   |
+| 9  | **Eval warnings**           | 3/4 fixed; 1 upstream (cannot fix)                                                                                          |
+| 10 | **P1 cleanup**              | 10 items done, 51 added/467 removed (Mar 31)                                                                                |
 
 ### Services (Working)
 
-| #   | Service                     | Status                                  |
-| --- | --------------------------- | --------------------------------------- |
-| 11  | **Caddy reverse proxy**     | `*.lan` domains for all services        |
-| 12  | **Gitea**                   | Local Git server with repo mirroring    |
-| 13  | **Immich**                  | Photo/video management with ML pipeline |
-| 14  | **Prometheus + Grafana**    | System monitoring dashboards            |
-| 15  | **Homepage dashboard**      | Service overview at homepage.lan        |
-| 16  | **Podman**                  | Container runtime (storage path fixed)  |
-| 17  | **fail2ban**                | SSH brute-force protection              |
-| 18  | **DNS blocklist expansion** | 15 → 25 blocklists (+600K domains)      |
+| #  | Service                     | Status                                  |
+| -- | --------------------------- | --------------------------------------- |
+| 11 | **Caddy reverse proxy**     | `*.lan` domains for all services        |
+| 12 | **Gitea**                   | Local Git server with repo mirroring    |
+| 13 | **Immich**                  | Photo/video management with ML pipeline |
+| 14 | **Prometheus + Grafana**    | System monitoring dashboards            |
+| 15 | **Homepage dashboard**      | Service overview at homepage.lan        |
+| 16 | **Podman**                  | Container runtime (storage path fixed)  |
+| 17 | **fail2ban**                | SSH brute-force protection              |
+| 18 | **DNS blocklist expansion** | 15 → 25 blocklists (+600K domains)      |
 
 ### Desktop (Working)
 
-| #   | Item                | Status                               |
-| --- | ------------------- | ------------------------------------ |
-| 19  | **Niri compositor** | Wayland WM with custom keybindings   |
-| 20  | **SilentSDDM**      | Login manager                        |
-| 21  | **Waybar**          | Status bar configured                |
-| 22  | **Rofi**            | Grid launcher (fixed invalid params) |
-| 23  | **PipeWire audio**  | Working                              |
-| 24  | **Bluetooth**       | Working                              |
-| 25  | **Chrome**          | Enterprise policies configured       |
+| #  | Item                | Status                               |
+| -- | ------------------- | ------------------------------------ |
+| 19 | **Niri compositor** | Wayland WM with custom keybindings   |
+| 20 | **SilentSDDM**      | Login manager                        |
+| 21 | **Waybar**          | Status bar configured                |
+| 22 | **Rofi**            | Grid launcher (fixed invalid params) |
+| 23 | **PipeWire audio**  | Working                              |
+| 24 | **Bluetooth**       | Working                              |
+| 25 | **Chrome**          | Enterprise policies configured       |
 
 ### Cross-Platform Home Manager
 
-| #   | Item                   | Status                               |
-| --- | ---------------------- | ------------------------------------ |
-| 26  | **Shared Fish config** | Cross-platform aliases               |
-| 27  | **Starship prompt**    | Identical on both platforms          |
-| 28  | **Tmux**               | Cross-platform config                |
-| 29  | **ActivityWatch**      | Linux + macOS (separate LaunchAgent) |
-| 30  | **Git config**         | Cross-platform                       |
+| #  | Item                   | Status                               |
+| -- | ---------------------- | ------------------------------------ |
+| 26 | **Shared Fish config** | Cross-platform aliases               |
+| 27 | **Starship prompt**    | Identical on both platforms          |
+| 28 | **Tmux**               | Cross-platform config                |
+| 29 | **ActivityWatch**      | Linux + macOS (separate LaunchAgent) |
+| 30 | **Git config**         | Cross-platform                       |
 
 ---
 
 ## b) PARTIALLY DONE — In-Progress Work
 
-| #   | Item                         | What's Done                                                                                                  | What's Missing                                                                             |
-| --- | ---------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
-| 1   | **Ollama GPU acceleration**  | `ollama-rocm` installed, flash attention + hipBLASlt enabled                                                 | **Missing `HSA_OVERRIDE_GFX_VERSION=11.5.1`** — GPU layers not offloaded, running CPU-only |
-| 2   | **llama.cpp rocWMMA**        | Custom build with `GGML_HIP_ROCWMMA_FATTN=ON`, installed system-wide                                         | **Never benchmarked on evo-x2**, no performance data vs Ollama                             |
-| 3   | **SigNoz observability**     | Architecture complete: 10 Go packages defined, NixOS module with ClickHouse, OTel Collector, schema migrator | **All 10 builds untested (fake hashes)**, estimated 3-4 hours to complete                  |
-| 4   | **Unsloth Studio**           | Two-service architecture (setup + runtime), LD_LIBRARY_PATH fix committed                                    | **GPU not detected** (`torch.cuda=False`), **never deployed to evo-x2**                    |
-| 5   | **Desktop UX overhaul**      | Rofi grid, Waybar restyle, niri config                                                                       | **Known bugs** in layout, duplicate packages                                               |
-| 6   | **Data partition (`/data`)** | 800GB partition created, 222GB migrated, Ollama data moved                                                   | **Not persisted** — won't survive reboot without rebuild                                   |
-| 7   | **Security hardening**       | fail2ban, AppArmor framework, firewall rules                                                                 | **auditd disabled** (upstream bug), **2 TODOs** in source                                  |
-| 8   | **Strix Halo optimizations** | Kernel params, rocWMMA, GTT size, NPU driver                                                                 | **Pending reboot** to activate, IOMMU/render group tuning incomplete                       |
+| # | Item                         | What's Done                                                                                                  | What's Missing                                                                             |
+| - | ---------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| 1 | **Ollama GPU acceleration**  | `ollama-rocm` installed, flash attention + hipBLASlt enabled                                                 | **Missing `HSA_OVERRIDE_GFX_VERSION=11.5.1`** — GPU layers not offloaded, running CPU-only |
+| 2 | **llama.cpp rocWMMA**        | Custom build with `GGML_HIP_ROCWMMA_FATTN=ON`, installed system-wide                                         | **Never benchmarked on evo-x2**, no performance data vs Ollama                             |
+| 3 | **SigNoz observability**     | Architecture complete: 10 Go packages defined, NixOS module with ClickHouse, OTel Collector, schema migrator | **All 10 builds untested (fake hashes)**, estimated 3-4 hours to complete                  |
+| 4 | **Unsloth Studio**           | Two-service architecture (setup + runtime), LD_LIBRARY_PATH fix committed                                    | **GPU not detected** (`torch.cuda=False`), **never deployed to evo-x2**                    |
+| 5 | **Desktop UX overhaul**      | Rofi grid, Waybar restyle, niri config                                                                       | **Known bugs** in layout, duplicate packages                                               |
+| 6 | **Data partition (`/data`)** | 800GB partition created, 222GB migrated, Ollama data moved                                                   | **Not persisted** — won't survive reboot without rebuild                                   |
+| 7 | **Security hardening**       | fail2ban, AppArmor framework, firewall rules                                                                 | **auditd disabled** (upstream bug), **2 TODOs** in source                                  |
+| 8 | **Strix Halo optimizations** | Kernel params, rocWMMA, GTT size, NPU driver                                                                 | **Pending reboot** to activate, IOMMU/render group tuning incomplete                       |
 
 ---
 
 ## c) NOT STARTED — Planned But Unstarted
 
-| #   | Item                             | Source                                                    | Estimated Effort                     |
-| --- | -------------------------------- | --------------------------------------------------------- | ------------------------------------ |
-| 1   | **vLLM integration**             | AI backend research (Apr 4)                               | 4-8h (pip install + systemd service) |
-| 2   | **vLLM continuous batching**     | Multi-user model serving                                  | Depends on #1                        |
-| 3   | **NPU inference**                | XDNA driver loaded but no backend uses it                 | Future (upstream support needed)     |
-| 4   | **AI model benchmarking**        | `dev/testing/` has framework but incomplete data          | 2-4h                                 |
-| 5   | **Desktop Phase 2 improvements** | TODO_LIST.md: 21 items (privacy, scripts, monitoring)     | 20h+                                 |
-| 6   | **Desktop Phase 3 improvements** | TODO_LIST.md: 13 items (theme, automation)                | 15h+                                 |
-| 7   | **Ghost Systems type safety**    | TODO_LIST.md: 14 items                                    | 30h+                                 |
-| 8   | **Ollama API serving**           | OpenAI-compatible endpoint for multi-app use              | 1h config                            |
-| 9   | **OOM protection for AI**        | `systemd.oomd` not configured                             | 2h                                   |
-| 10  | **Documentation cleanup**        | 140+ status files need archival                           | 4h                                   |
-| 11  | **Justfile sync with scripts/**  | 57 scripts, many not in justfile                          | 3h                                   |
-| 12  | **CI pipeline**                  | `.github/workflows/nix-check.yml` exists but may be stale | 2h                                   |
+| #  | Item                             | Source                                                    | Estimated Effort                     |
+| -- | -------------------------------- | --------------------------------------------------------- | ------------------------------------ |
+| 1  | **vLLM integration**             | AI backend research (Apr 4)                               | 4-8h (pip install + systemd service) |
+| 2  | **vLLM continuous batching**     | Multi-user model serving                                  | Depends on #1                        |
+| 3  | **NPU inference**                | XDNA driver loaded but no backend uses it                 | Future (upstream support needed)     |
+| 4  | **AI model benchmarking**        | `dev/testing/` has framework but incomplete data          | 2-4h                                 |
+| 5  | **Desktop Phase 2 improvements** | TODO_LIST.md: 21 items (privacy, scripts, monitoring)     | 20h+                                 |
+| 6  | **Desktop Phase 3 improvements** | TODO_LIST.md: 13 items (theme, automation)                | 15h+                                 |
+| 7  | **Ghost Systems type safety**    | TODO_LIST.md: 14 items                                    | 30h+                                 |
+| 8  | **Ollama API serving**           | OpenAI-compatible endpoint for multi-app use              | 1h config                            |
+| 9  | **OOM protection for AI**        | `systemd.oomd` not configured                             | 2h                                   |
+| 10 | **Documentation cleanup**        | 140+ status files need archival                           | 4h                                   |
+| 11 | **Justfile sync with scripts/**  | 57 scripts, many not in justfile                          | 3h                                   |
+| 12 | **CI pipeline**                  | `.github/workflows/nix-check.yml` exists but may be stale | 2h                                   |
 
 ---
 
@@ -203,39 +203,39 @@ Hardware detected: CPU (no GPU backend available)
 
 ### Architecture & Code Quality
 
-| #   | Improvement                                                                                                      | Priority | Effort |
-| --- | ---------------------------------------------------------------------------------------------------------------- | -------- | ------ |
-| 1   | **Remove duplicate packages** — kitty, nvtop, swaylock-effects, mako+dunst appear in multiple modules            | HIGH     | 1h     |
-| 2   | **Replace wofi** with maintained alternative (rofi-wayland or fuzzel)                                            | MEDIUM   | 2h     |
-| 3   | **Fix GPU device mode** — 0666 (world-rw) is too permissive; use `render` group instead                          | MEDIUM   | 30min  |
-| 4   | **Add `vm.overcommit_memory=1`** for AI workloads                                                                | MEDIUM   | 15min  |
-| 5   | **Replace `tesseract4`** with `tesseract5`                                                                       | LOW      | 5min   |
-| 6   | **Fix deprecated `bash.initExtra`** (HM 26.05)                                                                   | LOW      | 30min  |
-| 7   | **Replace `pavucontrol`** with `pwvucontrol`                                                                     | LOW      | 5min   |
-| 8   | **Remove orphaned files** — `private-cloud/README.md`, `pkgs/signoz/nixos-module.nix`, `pkgs/dnsblockd-cert.nix` | LOW      | 30min  |
-| 9   | **Consolidate notification daemon** — pick mako OR dunst, not both                                               | MEDIUM   | 1h     |
-| 10  | **Fix duplicate xkb config** between multi-wm.nix and home.nix                                                   | LOW      | 30min  |
+| #  | Improvement                                                                                                      | Priority | Effort |
+| -- | ---------------------------------------------------------------------------------------------------------------- | -------- | ------ |
+| 1  | **Remove duplicate packages** — kitty, nvtop, swaylock-effects, mako+dunst appear in multiple modules            | HIGH     | 1h     |
+| 2  | **Replace wofi** with maintained alternative (rofi-wayland or fuzzel)                                            | MEDIUM   | 2h     |
+| 3  | **Fix GPU device mode** — 0666 (world-rw) is too permissive; use `render` group instead                          | MEDIUM   | 30min  |
+| 4  | **Add `vm.overcommit_memory=1`** for AI workloads                                                                | MEDIUM   | 15min  |
+| 5  | **Replace `tesseract4`** with `tesseract5`                                                                       | LOW      | 5min   |
+| 6  | **Fix deprecated `bash.initExtra`** (HM 26.05)                                                                   | LOW      | 30min  |
+| 7  | **Replace `pavucontrol`** with `pwvucontrol`                                                                     | LOW      | 5min   |
+| 8  | **Remove orphaned files** — `private-cloud/README.md`, `pkgs/signoz/nixos-module.nix`, `pkgs/dnsblockd-cert.nix` | LOW      | 30min  |
+| 9  | **Consolidate notification daemon** — pick mako OR dunst, not both                                               | MEDIUM   | 1h     |
+| 10 | **Fix duplicate xkb config** between multi-wm.nix and home.nix                                                   | LOW      | 30min  |
 
 ### AI Stack
 
-| #   | Improvement                                                                               | Priority | Effort |
-| --- | ----------------------------------------------------------------------------------------- | -------- | ------ |
-| 11  | **Add `HSA_ENABLE_SDMA=0`** to Ollama and Unsloth (gfx11 APU fix)                         | CRITICAL | 5min   |
-| 12  | **Remove redundant `ollama` (CPU) package** from systemPackages (keep only `ollama-rocm`) | LOW      | 5min   |
-| 13  | **Set `OMP_NUM_THREADS`** for AI workloads                                                | MEDIUM   | 15min  |
-| 14  | **Add `systemd.oomd`** OOM protection for AI services                                     | MEDIUM   | 2h     |
-| 15  | **Benchmark llama.cpp rocWMMA** vs Ollama on evo-x2                                       | MEDIUM   | 4h     |
-| 16  | **Consider vLLM** for multi-user API serving                                              | LOW      | 4-8h   |
+| #  | Improvement                                                                               | Priority | Effort |
+| -- | ----------------------------------------------------------------------------------------- | -------- | ------ |
+| 11 | **Add `HSA_ENABLE_SDMA=0`** to Ollama and Unsloth (gfx11 APU fix)                         | CRITICAL | 5min   |
+| 12 | **Remove redundant `ollama` (CPU) package** from systemPackages (keep only `ollama-rocm`) | LOW      | 5min   |
+| 13 | **Set `OMP_NUM_THREADS`** for AI workloads                                                | MEDIUM   | 15min  |
+| 14 | **Add `systemd.oomd`** OOM protection for AI services                                     | MEDIUM   | 2h     |
+| 15 | **Benchmark llama.cpp rocWMMA** vs Ollama on evo-x2                                       | MEDIUM   | 4h     |
+| 16 | **Consider vLLM** for multi-user API serving                                              | LOW      | 4-8h   |
 
 ### Documentation & Operations
 
-| #   | Improvement                                                            | Priority | Effort |
-| --- | ---------------------------------------------------------------------- | -------- | ------ |
-| 17  | **Archive 140+ status docs** — move old ones to `docs/status/archive/` | LOW      | 4h     |
-| 18  | **Update `docs/STATUS.md`** — 3+ months stale                          | MEDIUM   | 2h     |
-| 19  | **Update `docs/TODO-STATUS.md`** — 2.5+ months stale                   | MEDIUM   | 1h     |
-| 20  | **Fix `TODO_LIST.md`** — summary counts are wrong                      | LOW      | 1h     |
-| 21  | **Sync justfile with scripts/** — 57 scripts, many not in justfile     | LOW      | 3h     |
+| #  | Improvement                                                            | Priority | Effort |
+| -- | ---------------------------------------------------------------------- | -------- | ------ |
+| 17 | **Archive 140+ status docs** — move old ones to `docs/status/archive/` | LOW      | 4h     |
+| 18 | **Update `docs/STATUS.md`** — 3+ months stale                          | MEDIUM   | 2h     |
+| 19 | **Update `docs/TODO-STATUS.md`** — 2.5+ months stale                   | MEDIUM   | 1h     |
+| 20 | **Fix `TODO_LIST.md`** — summary counts are wrong                      | LOW      | 1h     |
+| 21 | **Sync justfile with scripts/** — 57 scripts, many not in justfile     | LOW      | 3h     |
 
 ---
 

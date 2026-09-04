@@ -12,13 +12,13 @@ RustFS is an S3-compatible high-performance object storage system written in Rus
 
 ## Technical Profile
 
-| Aspect          | Details                                                                                          |
-| --------------- | ------------------------------------------------------------------------------------------------ |
-| APIs            | S3 + OpenStack Swift; AWS SigV2/V4, presigned URLs                                               |
-| AuthN           | Built-in AWS-style IAM: users, groups, service accounts, STS (`AssumeRole`), OIDC identities     |
-| Deployment      | Single binary, official Nix flake (`nix run github:rustfs/rustfs`), Docker images, distributed mode |
-| Data protection | Erasure coding, bitrot protection, versioning, bucket replication, multi-tenancy                  |
-| Metrics         | **No native `/metrics` endpoint** — pushes `rustfs_*` metrics via OTLP to a collector             |
+| Aspect          | Details                                                                                                |
+| --------------- | ------------------------------------------------------------------------------------------------------ |
+| APIs            | S3 + OpenStack Swift; AWS SigV2/V4, presigned URLs                                                     |
+| AuthN           | Built-in AWS-style IAM: users, groups, service accounts, STS (`AssumeRole`), OIDC identities           |
+| Deployment      | Single binary, official Nix flake (`nix run github:rustfs/rustfs`), Docker images, distributed mode    |
+| Data protection | Erasure coding, bitrot protection, versioning, bucket replication, multi-tenancy                       |
+| Metrics         | **No native `/metrics` endpoint** — pushes `rustfs_*` metrics via OTLP to a collector                  |
 | Nix support     | **Not in nixpkgs** (issue #1897 requests package + module); official flake exists; **no NixOS module** |
 
 ## Motivation (what gap would it fill)
@@ -29,12 +29,12 @@ RustFS is an S3-compatible high-performance object storage system written in Rus
 
 ## Use-case ranking
 
-| Use case                        | Value | Reasoning                                                                                                                                            |
-| ------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **restic target for the MacBook** | High  | restic speaks S3 natively (SigV4 + IAM access keys work). Closes the off-NVMe/off-machine backup gap on near-new pool disks.                          |
-| **Shared sccache backend**      | Med   | sccache S3 mode = one cross-machine Rust compile cache. Replaces/augments the per-machine buildcache islands.                                         |
-| Attic S3 backend                | Low   | Single node — local `/data/atticd/storage` + size-guard already works. Adding an S3 hop is churn for no gain.                                         |
-| Immich storage / pool redesign  | Skip  | BTRFS RAID1 + btrbk-pool snapshots is simpler than an S3 migration; erasure coding on top of RAID1 is pure write amplification.                       |
+| Use case                          | Value | Reasoning                                                                                                                       |
+| --------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **restic target for the MacBook** | High  | restic speaks S3 natively (SigV4 + IAM access keys work). Closes the off-NVMe/off-machine backup gap on near-new pool disks.    |
+| **Shared sccache backend**        | Med   | sccache S3 mode = one cross-machine Rust compile cache. Replaces/augments the per-machine buildcache islands.                   |
+| Attic S3 backend                  | Low   | Single node — local `/data/atticd/storage` + size-guard already works. Adding an S3 hop is churn for no gain.                   |
+| Immich storage / pool redesign    | Skip  | BTRFS RAID1 + btrbk-pool snapshots is simpler than an S3 migration; erasure coding on top of RAID1 is pure write amplification. |
 
 **Honest Pareto caveat:** for the backup use case alone, `restic` over **SFTP** to `/mnt/pool` needs ZERO new services. S3 only earns its keep if the shared-sccache (or future multi-client) use case is also wanted.
 
@@ -52,18 +52,18 @@ RustFS is an S3-compatible high-performance object storage system written in Rus
 
 - **`protectedVHost` breaks S3 clients** — SigV4 signing + oauth2-proxy forward-auth do not compose. Must use plain TLS `reverse_proxy` + native RustFS access keys, LAN/VPN-gated (same exception class as OpenSEO's GSC callback path).
 - **No `/metrics`** — monitoring must go through the OTLP pipeline; Gatus functional checks must be built around probe scripts, not `pat()`.
-- **RC status** — fine as a target for *rebuildable* data (cache, CI artifacts). Wrong for *irreplaceable primary* storage until a stable 1.0 ships. If used as the restic target, the "no remote backup" risk is only partially closed — schedule `restic check` + restore drills.
+- **RC status** — fine as a target for _rebuildable_ data (cache, CI artifacts). Wrong for _irreplaceable primary_ storage until a stable 1.0 ships. If used as the restic target, the "no remote backup" risk is only partially closed — schedule `restic check` + restore drills.
 - **No nixpkgs package / NixOS module** — Docker route avoids the packaging work; a native module would mean vendoring the flake input (upstream flake exists but exports no module).
 
 ## Alternatives
 
-|           | RustFS                          | Garage (Deuxfleurs)                        | SeaweedFS                  | restic-over-SFTP            |
-| --------- | ------------------------------- | ------------------------------------------ | -------------------------- | --------------------------- |
-| nixpkgs   | No (flake only)                 | **Yes, package + NixOS module + tests**    | Yes                        | n/a (no service needed)    |
-| License   | Apache-2.0                      | AGPL-3.0 (fine for internal use)           | Apache-2.0                 | n/a                         |
-| Maturity  | RC (1.0.0-rc.2)                 | Stable (1.3.1 / 2.3.0)                     | Stable                     | Battle-tested               |
-| S3 + IAM  | Full AWS-style IAM              | S3 subset, keys via `garage` CLI           | S3 subset                  | n/a                         |
-| Best for  | MinIO-parity features + OTel    | **Lowest-risk native-Nix S3**              | Filenames/volumes          | **Just the backup gap**     |
+|          | RustFS                       | Garage (Deuxfleurs)                     | SeaweedFS         | restic-over-SFTP        |
+| -------- | ---------------------------- | --------------------------------------- | ----------------- | ----------------------- |
+| nixpkgs  | No (flake only)              | **Yes, package + NixOS module + tests** | Yes               | n/a (no service needed) |
+| License  | Apache-2.0                   | AGPL-3.0 (fine for internal use)        | Apache-2.0        | n/a                     |
+| Maturity | RC (1.0.0-rc.2)              | Stable (1.3.1 / 2.3.0)                  | Stable            | Battle-tested           |
+| S3 + IAM | Full AWS-style IAM           | S3 subset, keys via `garage` CLI        | S3 subset         | n/a                     |
+| Best for | MinIO-parity features + OTel | **Lowest-risk native-Nix S3**           | Filenames/volumes | **Just the backup gap** |
 
 ## Decision
 

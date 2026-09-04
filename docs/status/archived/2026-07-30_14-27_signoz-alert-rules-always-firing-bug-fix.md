@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Executive Summary
 
 The TODO was stale. The v5 API format migration was already deployed on 2026-07-29 (19 rules provision successfully with HTTP 200). But 4 rules had a semantic bug: `target=0` with `above_or_equal` (the default operator) means "alert when metric >= 0" — mathematically always true for non-negative metrics. Three rules were permanently `state: "firing"` in the live API. Fixed all 4 rules, improved the provision script to log response bodies on failure, deployed, and verified all 19 rules are now `state: "inactive"`.
@@ -27,12 +26,12 @@ The stale TODO was written before the v5 fix was deployed. The previous session'
 
 ### 2. Fixed 4 Always-Firing Alert Rules
 
-| Rule | Before | After | Was firing? |
-|---|---|---|---|
-| `service-down` (Systemd Service Failed) | `target=0`, `above_or_equal` | `target=1` | YES — `state: "firing"` |
-| `nvme-critical-warning` | `target=0`, `above_or_equal` | `target=1` | YES — `state: "firing"` |
-| `nvme-media-errors` | `target=0`, `above_or_equal` | `target=1` | YES — `state: "firing"` |
-| `dnsblockd-crashes` | `rate(...) > 0`, `target=0`, `above_or_equal` | `increase(...)`, `target=1` | NO (masked by PromQL `> 0` filter returning no series when idle) |
+| Rule                                    | Before                                        | After                       | Was firing?                                                      |
+| --------------------------------------- | --------------------------------------------- | --------------------------- | ---------------------------------------------------------------- |
+| `service-down` (Systemd Service Failed) | `target=0`, `above_or_equal`                  | `target=1`                  | YES — `state: "firing"`                                          |
+| `nvme-critical-warning`                 | `target=0`, `above_or_equal`                  | `target=1`                  | YES — `state: "firing"`                                          |
+| `nvme-media-errors`                     | `target=0`, `above_or_equal`                  | `target=1`                  | YES — `state: "firing"`                                          |
+| `dnsblockd-crashes`                     | `rate(...) > 0`, `target=0`, `above_or_equal` | `increase(...)`, `target=1` | NO (masked by PromQL `> 0` filter returning no series when idle) |
 
 **Root cause:** `target=0` with `above_or_equal` means "alert when metric value >= 0". For non-negative metrics (counters, gauges, enum flags), this is ALWAYS true. The alert fires on every evaluation cycle.
 
@@ -47,6 +46,7 @@ The stale TODO was written before the v5 fix was deployed. The previous session'
 The previous session's status report flagged this as a key improvement: "Add response body logging to provisioner scripts — even with `|| true`, log the HTTP response so failures are debuggable from journalctl."
 
 Changes:
+
 - All POST calls (channel, rules, dashboards) now capture the response body to a temp file on failure (`curl -s -o "$RESPONSE_FILE" -w "%{http_code}"`)
 - On non-2xx, the response body (first 500 chars) is logged to stderr
 - Removed the now-unused `check_status()` helper function (inline `if/else` replaced it)
@@ -81,6 +81,7 @@ The previous session's report noted "19 rules provisioned" and "the source defin
 ### 2. Provision Script `|| true` on DELETE Calls — NOT Fixed
 
 The DELETE calls in the provision script still use `2>/dev/null || true`:
+
 ```bash
 curl -sf --max-time 10 -X DELETE "$SIGNOZ_URL/api/v1/rules/$EXISTING_ID" 2>/dev/null || true
 ```
@@ -112,6 +113,7 @@ I added the gotcha entry for the `target=0` bug but did NOT add a separate entry
 The TODO said "19 alert rules NOT provisioned — POST silently fails". I could have checked the live API in 2 seconds (`curl localhost:8080/api/v1/rules`) before reading any code. Instead, I read the alert definitions, provision scripts, service modules, two status reports, the post-deploy check, and the Gatus config — all before querying the live API.
 
 If I had checked the live API first, I would have immediately seen:
+
 1. 19 rules exist (provisioning works)
 2. 3 rules are permanently firing (the actual bug)
 
@@ -120,6 +122,7 @@ This would have saved 5 minutes of reading code that was already correct. The le
 ### 2. I Didn't Check Whether the 3 Firing Rules Were Causing Discord Alerts
 
 Three rules (`Systemd Service Failed`, `NVMe SSD Critical Warning`, `NVMe SSD Media Errors Detected`) were permanently `state: "firing"` since 2026-07-29T21:39 — over 15 hours of false alerts. I verified they're now inactive after the fix but did NOT check:
+
 - Whether Discord alert messages were actually sent (the webhook may have been rate-limited or failed)
 - Whether the `Discord Alerts` channel was flooded with false positives
 - Whether the alertmanager state needs clearing (stale firing state in the alertmanager DB)
@@ -231,6 +234,7 @@ The rules are re-created with new IDs on every provision (delete + recreate), so
 ### Q1: Were Discord alert messages sent during the 15-hour false-positive window?
 
 Three rules (`Systemd Service Failed`, `NVMe SSD Critical Warning`, `NVMe SSD Media Errors Detected`) were `state: "firing"` from 2026-07-29T21:39 to 2026-07-30T12:21 (~15 hours). The `Discord Alerts` channel has `send_resolved: true`, so at minimum a "resolved" message was sent when I fixed the rules. But I don't know if:
+
 - SigNoz's alertmanager sent repeated "firing" messages every evaluation cycle (1 min for `service-down` and `nvme-critical-warning`, 5 min for `nvme-media-errors`) — that could be 600+ messages
 - Or if alertmanager deduplicates/coalesces repeated firing states (standard alertmanager behavior — `group_wait`, `group_interval`, `repeat_interval`)
 - Or if the Discord webhook rate-limited and silently dropped messages
@@ -240,6 +244,7 @@ I can't check the Discord channel from the CLI. If the channel was flooded, the 
 ### Q2: Is the missing 20th rule a real problem or expected behavior?
 
 The source defines 20 `mkRule` calls in `_signoz-alerts.nix` (I think — I didn't count them this session). The live API returns 19. The previous session's report also noted "19/20 rules provisioned" and speculated the 20th might be `service-down.json` with `target=0` issues. But `service-down` IS present in the live API (I can see it). So which rule is missing? Is it:
+
 - A rule that fails to POST (format error)?
 - A rule that's deduplicated (same `alert` name as another)?
 - A counting error (there are actually only 19 rules defined)?
@@ -249,6 +254,7 @@ I didn't count the `mkRule` calls this session. The next session should run: `gr
 ### Q3: Should `mkRule` have a compile-time assertion for `target=0` + `above_or_equal`?
 
 I can add a Nix-level `assert` to `mkRule` that throws when `op == "above_or_equal" && target == 0`. This would prevent the entire class of always-firing bug at definition time. But:
+
 - It would break the build if anyone intentionally uses `target=0` with `above_or_equal` (unlikely but possible for metrics that can be negative)
 - It's a value-level assertion in a config-generation function — some may argue this belongs in a linter, not in the Nix eval path
 - There may be other always-true combinations (`target=0` + `below` for negative-only metrics — unlikely but theoretically valid)

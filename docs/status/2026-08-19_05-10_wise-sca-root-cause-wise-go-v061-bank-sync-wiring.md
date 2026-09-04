@@ -6,13 +6,13 @@
 
 ## Executive Summary
 
-| Category | Count |
-|---|---|
-| FULLY DONE | 6 |
-| PARTIALLY DONE | 3 |
-| NOT STARTED | 5 |
-| TOTALLY FUCKED UP | 4 |
-| Next-task candidates | 28 |
+| Category             | Count |
+| -------------------- | ----- |
+| FULLY DONE           | 6     |
+| PARTIALLY DONE       | 3     |
+| NOT STARTED          | 5     |
+| TOTALLY FUCKED UP    | 4     |
+| Next-task candidates | 28    |
 
 **Headline:** The Wise 403 mystery is SOLVED at the root cause: `statement.json` is **SCA-protected** (UK/EEA profiles) — Wise answers 403 with an EMPTY body and puts the verdict + one-time token in `x-2fa-approval*` response headers, which wise-go discarded. The SDK fix is **released as wise-go v0.6.1** (pushed, tests green). bank-sync consumes it (go.mod + flake lock + env wiring) but is **UNCOMMITTED and its nix build is UNVERIFIED** — the session was interrupted right after the vendorHash was set. The SystemNix deploy leg has not started. The final unlock requires a human step: approving the SCA challenge in the Wise app.
 
@@ -86,18 +86,19 @@
 ## f) NEXT — ranked
 
 **P0 — finish the pipeline (blocking the actual data sync):**
-1. `nix build .#default` in bank-sync with the new vendorHash — must be green.
-2. Add bank-sync CHANGELOG `[Unreleased]` entry: SCA approval-token config + wise-go v0.6.1 bump.
+
+~~1. `nix build .#default` in bank-sync with the new vendorHash — must be green.~~ done — built + deployed (wise-go v0.6.1 live)
+~~2. Add bank-sync CHANGELOG `[Unreleased]` entry: SCA approval-token config + wise-go v0.6.1 bump.~~ done — upstream entries shipped with the merge chain
 3. Add a bank-sync test: `BANK_SYNC_WISE_SCA_APPROVAL_TOKEN` set → adapter constructed with the option (factory-level assertion).
-4. Commit bank-sync atomically (8 files, one commit), push.
-5. SystemNix: `nix flake lock --update-input bank-sync`.
+~~4. Commit bank-sync atomically (8 files, one commit), push.~~ done — pushed + relocked
+~~5. SystemNix: `nix flake lock --update-input bank-sync`.~~ done — input relocked through the 08-19/08-21 chain
 6. SystemNix: add the SCA token to the sops `bank-sync-env` template as an OPTIONAL/empty-safe key (verify bank-sync treats empty as unset — the config default is empty, so likely fine; confirm the template renders an empty var harmlessly or omit until needed).
-7. `nix run .#deploy`.
-8. **Verify the diagnostic goal:** journal must now show `wise: sca challenge (403): … x-2fa-approval-result="REJECTED" … x-2fa-approval="<OTT>"` instead of the bare `api error (403):`. If instead it stays a plain AuthError with no 2FA headers → the personal-token regional restriction applies (see question 2).
+~~7. `nix run .#deploy`.~~ done — deployed (15-43 session verified live)
+~~8. **Verify the diagnostic goal:** journal must now show `wise: sca challenge (403): … x-2fa-approval-result="REJECTED" … x-2fa-approval="<OTT>"` instead of the bare `api error (403):`. If instead it stays a plain AuthError with no 2FA headers → the personal-token regional restriction applies (see question 2).~~ done — the OTT journal line verified live (AGENTS.md Wise SCA section)
 
 **P1 — the human unlock + hardening:**
 9. USER: approve the SCA challenge in the Wise app/web (or just view a statement there — counts per docs), then `sops --set` the OTT, redeploy, verify `total_new > 0` on the next sync, then REMOVE the token from sops.
-10. Gatus/alerting for permanent sync failure (metric or log-probe — bank-sync emits `sync failed permanently` WARN; wire `system-health` or a watchdog).
+~~10. Gatus/alerting for permanent sync failure (metric or log-probe — bank-sync emits `sync failed permanently` WARN; wire `system-health` or a watchdog).~~ done — `bank_sync_sync_errors_total` / `bank_sync_last_sync_timestamp_seconds` wired into gatus (metrics in the fleet since; allowlist retirement pending TODO_LIST)
 11. Previous session's still-open P0: `startLimitBurst`/`startLimitIntervalSec`/`onFailure` on `bank-sync-storage-dir` (house rule 5).
 12. post-deploy Bank-Sync body check: log first ~200 bytes of body on failure (previous session's d-2 fix, still open).
 13. wise-go: review concurrent `47655fd` sweep (touches errors modernization — may have reworked my files; verify tag integrity unaffected, it is, but keep an eye).
@@ -129,4 +130,4 @@
 
 ---
 
-*Report written 2026-08-19 05:10 CEST. bank-sync tree intentionally left uncommitted mid-pipeline (P0 items 1-4 next). wise-go clean at v0.6.1 (`88f3e20`). SystemNix untouched this session beyond the previous session's staged docs. Auto-commit daemon will batch this report.*
+_Report written 2026-08-19 05:10 CEST. bank-sync tree intentionally left uncommitted mid-pipeline (P0 items 1-4 next). wise-go clean at v0.6.1 (`88f3e20`). SystemNix untouched this session beyond the previous session's staged docs. Auto-commit daemon will batch this report._

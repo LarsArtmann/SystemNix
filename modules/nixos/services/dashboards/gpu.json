@@ -43,7 +43,7 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "max(node_amdgpu_gpu_temp_celsius)",
+                    "query": "max(node_hwmon_temp_celsius{chip=~\".*c5:00_0\"} or ClickHouseAsyncMetrics_Temperature_amdgpu_edge)",
                     "disabled": false,
                     "step": 0,
                     "stats": false,
@@ -140,54 +140,12 @@
           "links": []
         }
       },
-      "999e2279-73a0-594d-96ad-1ad17abaf264": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Memory Controller Busy",
-            "description": ""
-          },
-          "plugin": {
-            "kind": "signoz/NumberPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time"
-              },
-              "formatting": {
-                "unit": "percent",
-                "decimalPrecision": "2"
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "max(node_amdgpu_mem_busy_percent)",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": ""
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
       "1ef5fa69-d812-5283-84c4-9dca6a7a6478": {
         "kind": "Panel",
         "spec": {
           "display": {
-            "name": "Temperature by Card",
-            "description": ""
+            "name": "Temperature Sources (hwmon vs ClickHouse)",
+            "description": "Both temp sources overlaid: hwmon chip label is PCI-address-keyed (fragile to bus renumbering), ClickHouseAsyncMetrics is CH-dependent — one series flatlining/absent means that source broke while the alert keeps working via the other"
           },
           "plugin": {
             "kind": "signoz/TimeSeriesPanel",
@@ -232,11 +190,11 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "node_amdgpu_gpu_temp_celsius",
+                    "query": "node_hwmon_temp_celsius{chip=~\".*c5:00_0\"} or ClickHouseAsyncMetrics_Temperature_amdgpu_edge",
                     "disabled": false,
                     "step": 0,
                     "stats": false,
-                    "legend": "{{card}} °C"
+                    "legend": ""
                   }
                 }
               }
@@ -339,15 +297,6 @@
               "height": 4,
               "content": {
                 "$ref": "#/spec/panels/4070dc07-ac4e-5bc8-82b3-e4b79f4b2631"
-              }
-            },
-            {
-              "x": 9,
-              "y": 0,
-              "width": 3,
-              "height": 4,
-              "content": {
-                "$ref": "#/spec/panels/999e2279-73a0-594d-96ad-1ad17abaf264"
               }
             },
             {

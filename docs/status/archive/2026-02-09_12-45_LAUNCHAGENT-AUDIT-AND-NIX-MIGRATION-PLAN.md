@@ -359,14 +359,14 @@ Leverage existing `platforms/common/core/` infrastructure:
 | File                                     | Size   | Modified   | Status         |
 | ---------------------------------------- | ------ | ---------- | -------------- |
 | `net.activitywatch.ActivityWatch.plist`  | 918 B  | 2026-01-20 | ✅ Nix-managed |
-| `com.netdata.agent.plist`                | 1.3 KB | 2025-07-20 | ⚠️ Migrate     |
-| `com.ntopng.daemon.plist`                | 1.5 KB | 2025-07-20 | ⚠️ Migrate     |
-| `com.setup-mac.daily-maintenance.plist`  | 1.2 KB | 2025-07-20 | ⚠️ Migrate     |
-| `com.setup-mac.weekly-maintenance.plist` | 1.3 KB | 2025-07-20 | ⚠️ Migrate     |
+| `com.netdata.agent.plist`                | 1.3 KB | 2025-07-20 | ⚠️ Migrate      |
+| `com.ntopng.daemon.plist`                | 1.5 KB | 2025-07-20 | ⚠️ Migrate      |
+| `com.setup-mac.daily-maintenance.plist`  | 1.2 KB | 2025-07-20 | ⚠️ Migrate      |
+| `com.setup-mac.weekly-maintenance.plist` | 1.3 KB | 2025-07-20 | ⚠️ Migrate      |
 | `com.larsartmann.sublime-sync.plist`     | 858 B  | 2025-07-20 | ❓ Evaluate    |
 | `com.larsartmann.ublock-update.plist`    | 785 B  | 2025-07-20 | ❓ Evaluate    |
-| `com.screenshotrenamer.watcher.plist`    | 1.4 KB | 2026-01-27 | ⚠️ Consolidate |
-| `com.user.file-and-image-renamer.plist`  | 1.0 KB | 2026-01-27 | ⚠️ Consolidate |
+| `com.screenshotrenamer.watcher.plist`    | 1.4 KB | 2026-01-27 | ⚠️ Consolidate  |
+| `com.user.file-and-image-renamer.plist`  | 1.0 KB | 2026-01-27 | ⚠️ Consolidate  |
 | `com.valvesoftware.steamclean.plist`     | 882 B  | 2024-12-16 | ❓ Evaluate    |
 | `homebrew.mxcl.postgresql@14.plist`      | 929 B  | 2025-07-17 | ✅ Keep        |
 | `io.podman_desktop.PodmanDesktop.plist`  | 940 B  | 2025-04-16 | ❓ Evaluate    |

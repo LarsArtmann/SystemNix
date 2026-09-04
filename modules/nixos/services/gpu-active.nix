@@ -1,7 +1,8 @@
 # GPUActive / GPUReclaim textfile collector for node_exporter.
 #
-# evo-x2 (Strix Halo) has 128 GiB physical RAM but only ~110 GiB visible to Linux
-# because 18 GiB is BIOS VRAM carveout. GPUActive (GTT buffer objects) can consume
+# evo-x2 (Strix Halo) has 128 GiB physical RAM; since 2026-09-02 the BIOS VRAM
+# carveout is 512 MiB (GTT-first) so ~125 GiB is visible to Linux and ALL GPU
+# memory is GTT (= system RAM). GPUActive (GTT buffer objects) can consume
 # 50+ GiB of that and is invisible to standard tools like `free` and `htop`.
 # This collector exposes the values from /proc/meminfo as Prometheus metrics so
 # SigNoz, Gatus, and dashboards can see them.

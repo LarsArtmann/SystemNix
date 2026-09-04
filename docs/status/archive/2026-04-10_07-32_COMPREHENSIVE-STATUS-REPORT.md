@@ -43,7 +43,7 @@ SystemNix is a **mature, production-grade** cross-platform Nix configuration man
 | `programs/chromium.nix`       | ✅     | Browser with extensions, Catppuccin            |
 | `programs/activitywatch.nix`  | ✅     | Time tracking (fixed theme API)                |
 | `programs/shell-aliases.nix`  | ✅     | Shared aliases for all shells                  |
-| `programs/ublock-filters.nix` | ⚠️     | Installed but **disabled** (time parsing bug)  |
+| `programs/ublock-filters.nix` | ⚠️      | Installed but **disabled** (time parsing bug)  |
 
 ### macOS / Darwin (10 modules)
 
@@ -73,7 +73,7 @@ SystemNix is a **mature, production-grade** cross-platform Nix configuration man
 | `desktop/ai-stack.nix`           | ✅     | Ollama (optimized for multi-agent)           |
 | `desktop/monitoring.nix`         | ✅     | System monitoring tools                      |
 | `desktop/multi-wm.nix`           | ✅     | Multi-window-manager support                 |
-| `desktop/security-hardening.nix` | ⚠️     | Partially done — auditd disabled (NixOS bug) |
+| `desktop/security-hardening.nix` | ⚠️      | Partially done — auditd disabled (NixOS bug) |
 | `programs/rofi.nix`              | ✅     | Launcher with Catppuccin grid theme          |
 | `programs/swaylock.nix`          | ✅     | Screen locker with blur                      |
 | `programs/wlogout.nix`           | ✅     | Power menu                                   |
@@ -86,14 +86,14 @@ SystemNix is a **mature, production-grade** cross-platform Nix configuration man
 
 ### NixOS System (7 modules)
 
-| Module                          | Status | Notes                                                |
-| ------------------------------- | ------ | ---------------------------------------------------- |
-| `system/configuration.nix`      | ✅     | Main system entry                                    |
-| `system/boot.nix`               | ✅     | systemd-boot, kernel params, ZRAM                    |
-| `system/networking.nix`         | ✅     | Static IP, firewall                                  |
-| `system/dns-blocker-config.nix` | ✅     | Unbound + 25 blocklists (2.5M+ domains)              |
-| `system/snapshots.nix`          | ✅     | BTRFS + Timeshift                                    |
-| `system/scheduled-tasks.nix`    | ✅     | Crush provider updates, health checks                |
+| Module                          | Status | Notes                                               |
+| ------------------------------- | ------ | --------------------------------------------------- |
+| `system/configuration.nix`      | ✅     | Main system entry                                   |
+| `system/boot.nix`               | ✅     | systemd-boot, kernel params, ZRAM                   |
+| `system/networking.nix`         | ✅     | Static IP, firewall                                 |
+| `system/dns-blocker-config.nix` | ✅     | Unbound + 25 blocklists (2.5M+ domains)             |
+| `system/snapshots.nix`          | ✅     | BTRFS + Timeshift                                   |
+| `system/scheduled-tasks.nix`    | ✅     | Crush provider updates, health checks               |
 | `system/sudo.nix`               | ✅     | Sudo configuration (⚠️ passwordless — security risk) |
 
 ### NixOS Hardware (4 modules)
@@ -225,48 +225,48 @@ SystemNix is a **mature, production-grade** cross-platform Nix configuration man
 
 ### Priority 1 — Security (Do This Week)
 
-| #   | Task                                                                                             | Effort | Impact       |
-| --- | ------------------------------------------------------------------------------------------------ | ------ | ------------ |
-| 1   | **Move Authelia secrets to sops** — Password hash + OIDC secret out of nix config                | 1h     | CRITICAL fix |
-| 2   | **Enable password sudo** — Remove NOPASSWD for wheel, require password                           | 30min  | CRITICAL fix |
-| 3   | **Enable IOMMU** — Remove `amd_iommu=off` from kernel params, verify boot                        | 15min  | CRITICAL fix |
-| 4   | **Fix Gitea token permissions** — `chmod 600` on token file                                      | 5min   | HIGH fix     |
-| 5   | **Close SigNoz firewall ports** — Remove ClickHouse (9000) + Collector (4317/4318) from firewall | 10min  | HIGH fix     |
-| 6   | **Switch git credential helper to libsecret** — Replace plaintext `store`                        | 30min  | HIGH fix     |
-| 7   | **Close Steam firewall ports** — Remove unnecessary openings                                     | 5min   | HIGH fix     |
+| # | Task                                                                                             | Effort | Impact       |
+| - | ------------------------------------------------------------------------------------------------ | ------ | ------------ |
+| 1 | **Move Authelia secrets to sops** — Password hash + OIDC secret out of nix config                | 1h     | CRITICAL fix |
+| 2 | **Enable password sudo** — Remove NOPASSWD for wheel, require password                           | 30min  | CRITICAL fix |
+| 3 | **Enable IOMMU** — Remove `amd_iommu=off` from kernel params, verify boot                        | 15min  | CRITICAL fix |
+| 4 | **Fix Gitea token permissions** — `chmod 600` on token file                                      | 5min   | HIGH fix     |
+| 5 | **Close SigNoz firewall ports** — Remove ClickHouse (9000) + Collector (4317/4318) from firewall | 10min  | HIGH fix     |
+| 6 | **Switch git credential helper to libsecret** — Replace plaintext `store`                        | 30min  | HIGH fix     |
+| 7 | **Close Steam firewall ports** — Remove unnecessary openings                                     | 5min   | HIGH fix     |
 
 ### Priority 2 — Taskwarrior + AI Integration (This Week)
 
-| #   | Task                                                                                            | Effort | Impact            |
-| --- | ----------------------------------------------------------------------------------------------- | ------ | ----------------- |
-| 8   | **Enable `taskchampion-sync-server`** — New NixOS service module                                | 2h     | New capability    |
-| 9   | **Configure Caddy vhost** — `tasks.home.lan` → sync server                                      | 30min  | Access            |
-| 10  | **Add DNS record** — `tasks` to Unbound local zone                                              | 5min   | Resolution        |
-| 11  | **Home Manager Taskwarrior config** — Both platforms, reports, Catppuccin theme, sync settings  | 1h     | Usability         |
-| 12  | **Define AI Agent task protocol** — Tags (`+agent`), UDAs (`source`, `priority`), workflow docs | 1h     | Agent integration |
-| 13  | **Install TaskStrider on Android** — Connect to sync server                                     | 15min  | Mobile access     |
-| 14  | **Add Taskwarrior to Homepage** — Dashboard entry                                               | 10min  | Visibility        |
+| #  | Task                                                                                            | Effort | Impact            |
+| -- | ----------------------------------------------------------------------------------------------- | ------ | ----------------- |
+| 8  | **Enable `taskchampion-sync-server`** — New NixOS service module                                | 2h     | New capability    |
+| 9  | **Configure Caddy vhost** — `tasks.home.lan` → sync server                                      | 30min  | Access            |
+| 10 | **Add DNS record** — `tasks` to Unbound local zone                                              | 5min   | Resolution        |
+| 11 | **Home Manager Taskwarrior config** — Both platforms, reports, Catppuccin theme, sync settings  | 1h     | Usability         |
+| 12 | **Define AI Agent task protocol** — Tags (`+agent`), UDAs (`source`, `priority`), workflow docs | 1h     | Agent integration |
+| 13 | **Install TaskStrider on Android** — Connect to sync server                                     | 15min  | Mobile access     |
+| 14 | **Add Taskwarrior to Homepage** — Dashboard entry                                               | 10min  | Visibility        |
 
 ### Priority 3 — Monitoring & Reliability (Next Week)
 
-| #   | Task                                                                  | Effort | Impact                |
-| --- | --------------------------------------------------------------------- | ------ | --------------------- |
-| 15  | **Configure SigNoz alerts** — Disk space, service down, OOM           | 2h     | Operational safety    |
-| 16  | **Fix DNS rebuild race condition** — Add proper service ordering deps | 1h     | Reliability           |
-| 17  | **Create monitoring dashboards** — SigNoz or re-add Grafana           | 3h     | Observability         |
-| 18  | **Automate blocklist hash updates** — Scheduled task or GitHub Action | 2h     | Maintenance reduction |
-| 19  | **Test backup restore** — Verify BTRFS snapshot restore works         | 1h     | Disaster recovery     |
+| #  | Task                                                                  | Effort | Impact                |
+| -- | --------------------------------------------------------------------- | ------ | --------------------- |
+| 15 | **Configure SigNoz alerts** — Disk space, service down, OOM           | 2h     | Operational safety    |
+| 16 | **Fix DNS rebuild race condition** — Add proper service ordering deps | 1h     | Reliability           |
+| 17 | **Create monitoring dashboards** — SigNoz or re-add Grafana           | 3h     | Observability         |
+| 18 | **Automate blocklist hash updates** — Scheduled task or GitHub Action | 2h     | Maintenance reduction |
+| 19 | **Test backup restore** — Verify BTRFS snapshot restore works         | 1h     | Disaster recovery     |
 
 ### Priority 4 — Cleanup & Quality (Ongoing)
 
-| #   | Task                                                                        | Effort | Impact                |
-| --- | --------------------------------------------------------------------------- | ------ | --------------------- |
-| 20  | **Archive old status docs** — Move 90+ files older than 2 weeks to archive/ | 15min  | Repo cleanliness      |
-| 21  | **Fix uBlock filter time parsing** — Debug and re-enable                    | 1h     | Feature completion    |
-| 22  | **Evaluate rootless Docker** — Test podman or rootless docker               | 3h     | Security              |
-| 23  | **Add flake.lock auto-update** — GitHub Action with auto-PR                 | 2h     | Maintenance           |
-| 24  | **Write NixOS VM test for dnsblockd** — Smoke test the custom DNS stack     | 2h     | Regression prevention |
-| 25  | **Review and update AGENTS.md** — Reflect all changes since 2026-04-04      | 30min  | Agent accuracy        |
+| #  | Task                                                                        | Effort | Impact                |
+| -- | --------------------------------------------------------------------------- | ------ | --------------------- |
+| 20 | **Archive old status docs** — Move 90+ files older than 2 weeks to archive/ | 15min  | Repo cleanliness      |
+| 21 | **Fix uBlock filter time parsing** — Debug and re-enable                    | 1h     | Feature completion    |
+| 22 | **Evaluate rootless Docker** — Test podman or rootless docker               | 3h     | Security              |
+| 23 | **Add flake.lock auto-update** — GitHub Action with auto-PR                 | 2h     | Maintenance           |
+| 24 | **Write NixOS VM test for dnsblockd** — Smoke test the custom DNS stack     | 2h     | Regression prevention |
+| 25 | **Review and update AGENTS.md** — Reflect all changes since 2026-04-04      | 30min  | Agent accuracy        |
 
 ---
 

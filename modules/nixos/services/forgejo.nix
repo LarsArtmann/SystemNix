@@ -20,6 +20,7 @@ _: {
         ports
         ioTier
         mkDnsGate
+        mkOidcGate
         ;
       forgejoPort = config.services.forgejo.settings.server.HTTP_PORT;
       forgejoUrl = "http://localhost:${toString forgejoPort}";
@@ -75,6 +76,43 @@ _: {
         hostname = "auth.home.lan";
         maxAttempts = 30;
       };
+
+      # DNS resolving is not enough: on the 2026-08-22 crash-recovery boot
+      # forgejo-oidc-setup failed 39s after boot with "dial tcp
+      # 192.168.1.150:443: connection refused" — auth.home.lan resolved fine
+      # (dnsblockd was up) but Caddy had not bound :443 yet. The OIDC gate
+      # polls the discovery endpoint (DNS → TLS → HTTP) for up to 120s,
+      # matching the gatus/oauth2-proxy/browser-history pattern.
+      forgejoOidcGate = mkOidcGate {
+        inherit pkgs;
+        domain = config.networking.domain;
+        serviceName = "forgejo-oidc-setup";
+      };
+
+      # The MAIN forgejo daemon resolves auth.<domain> exactly once at
+      # startup to register the PocketID OIDC auth source, and with
+      # ENABLE_INTERNAL_SIGNIN=false there is no fallback login. On the
+      # 2026-08-22 boot forgejo started seconds before dnsblockd answered
+      # its first query — "Unable to register source: PocketID ... lookup
+      # auth.home.lan: no such host" — and logins stayed dead until the
+      # next restart. DNS gate (getent probe) + ordering behind
+      # dnsblockd/caddy/pocket-id fixes the class without hard-coupling
+      # forgejo's availability to Caddy TLS (ordering only, no probe of
+      # :443 — a hard down Caddy degrades logins, not the whole forge).
+      forgejoMainDnsGate = mkDnsGate {
+        inherit pkgs;
+        serviceName = "forgejo";
+        hostname = "auth.${config.networking.domain}";
+        maxAttempts = 30;
+      };
+
+      # Notifications (issues, PRs, mirrors) ride the central Postfix
+      # null-client relay. Without the relay, the mailer block stays empty →
+      # [mailer] ENABLED stays unset → forgejo silently sends nothing (the
+      # pre-relay status quo). PROTOCOL "" = plain SMTP: the relay is
+      # loopback-only and unauthenticated; TLS/credentials live on the
+      # relay→upstream leg.
+      mailRelayEnabled = config.services.mail-relay.enable or false;
     in
     {
       options = {
@@ -173,6 +211,20 @@ _: {
               PULL = 600;
             };
 
+            mailer =
+              { }
+              // lib.optionalAttrs mailRelayEnabled {
+                ENABLED = true;
+                PROTOCOL = "";
+                SMTP_ADDR = "127.0.0.1";
+                SMTP_PORT = ports.mail-relay;
+                # User/PASSWD stay unset → no AUTH (the relay only accepts
+                # loopback and authenticates upstream itself). FROM must be
+                # on the provider-verified domain — same constraint as the
+                # relay's fromAddress.
+                FROM = "Forgejo <${config.services.mail-relay.fromAddress}>";
+              };
+
             actions = {
               ENABLED = true;
               DEFAULT_ACTIONS_URL = "github";
@@ -191,6 +243,16 @@ _: {
 
         systemd = {
           services.forgejo = {
+            after = [
+              "caddy.service"
+              "pocket-id.service"
+            ]
+            ++ forgejoMainDnsGate.after;
+            wants = [
+              "caddy.service"
+              "pocket-id.service"
+            ]
+            ++ forgejoMainDnsGate.wants;
             unitConfig = {
               StartLimitBurst = lib.mkForce 3;
               StartLimitIntervalSec = lib.mkForce 300;
@@ -203,8 +265,11 @@ _: {
               (serviceDefaults { })
               {
                 ExecStartPre = lib.mkBefore [ ("+" + lib.getExe ensurePasswordFile) ];
-                TimeoutStartSec = "3min";
+                # DNS gate budget is 180s; ceiling must exceed it
+                # (gate-timeout-audit floor: 4min).
+                TimeoutStartSec = "4min";
               }
+              { ExecStartPre = forgejoMainDnsGate.serviceConfig.ExecStartPre; }
             ];
             preStart = lib.getExe adminSetup;
           };
@@ -377,12 +442,14 @@ _: {
             "forgejo.service"
             "pocket-id-provision.service"
             "dnsblockd.service"
-          ];
+          ]
+          ++ forgejoOidcGate.after;
           wants = [
             "forgejo.service"
             "pocket-id-provision.service"
             "dnsblockd.service"
-          ];
+          ]
+          ++ forgejoOidcGate.wants;
           wantedBy = [ "forgejo.service" ];
           restartTriggers = [ (lib.getExe oidcSetupScript) ];
           serviceConfig = lib.mkMerge [
@@ -394,8 +461,10 @@ _: {
               LoadCredential = [
                 "forgejo-oidc-client-secret:${config.services.pocket-id.dataDir}/client-secrets/forgejo"
               ];
-              ExecStartPre = forgejoDnsGate.serviceConfig.ExecStartPre;
-              TimeoutStartSec = "3min";
+              ExecStartPre =
+                forgejoDnsGate.serviceConfig.ExecStartPre ++ forgejoOidcGate.serviceConfig.ExecStartPre;
+              # Must exceed the 300s OIDC gate budget (slow-boot dnsblockd)
+              TimeoutStartSec = "6min";
             }
             (harden { })
             (serviceOneshotDefaults { })

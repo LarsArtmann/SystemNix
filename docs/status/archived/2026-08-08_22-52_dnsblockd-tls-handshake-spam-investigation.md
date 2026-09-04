@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Executive Summary
 
 `192.168.1.62` (Lars's Mac, USB-C Ethernet, Realtek OUI) was generating **224,110 TLS handshake errors/day** against the dnsblockd block-page HTTPS server. Root cause: the Mac did not trust the dnsblockd self-signed CA, causing every blocked-domain HTTPS connection to fail the TLS handshake and retry in a loop. Installing the CA cert into the macOS System keychain reduced errors from ~15,000/hour to ~6/hour (99.96% reduction). Remaining stragglers are from cached daemon TLS sessions that will age out or clear on reboot.
@@ -19,13 +18,13 @@
 
 Investigated all log patterns in the dnsblockd service. Identified and characterized 5 distinct issues:
 
-| # | Issue | Severity | Status |
-|---|-------|----------|--------|
-| 1 | TLS handshake spam (224K errors/day from .62) | High (log noise, wasted CPU) | **Fixed** |
-| 2 | DNS forwarder timeouts (Iroh P2P query storm) | Medium (transient resolution delays) | Transient — self-resolved |
-| 3 | SQLite tracking DB write timeouts (3 errors) | Low (caused by forwarder storm) | Self-resolved |
-| 4 | Orphaned old database (`dnsblockd_tracking.db`, 724 MB) | Low (wasted disk) | Identified — not cleaned up |
-| 5 | Benign noise (http2 stream closed, low_port warning) | None | Expected behavior |
+| # | Issue                                                   | Severity                             | Status                      |
+| - | ------------------------------------------------------- | ------------------------------------ | --------------------------- |
+| 1 | TLS handshake spam (224K errors/day from .62)           | High (log noise, wasted CPU)         | **Fixed**                   |
+| 2 | DNS forwarder timeouts (Iroh P2P query storm)           | Medium (transient resolution delays) | Transient — self-resolved   |
+| 3 | SQLite tracking DB write timeouts (3 errors)            | Low (caused by forwarder storm)      | Self-resolved               |
+| 4 | Orphaned old database (`dnsblockd_tracking.db`, 724 MB) | Low (wasted disk)                    | Identified — not cleaned up |
+| 5 | Benign noise (http2 stream closed, low_port warning)    | None                                 | Expected behavior           |
 
 ### 2. TLS Spam Root Cause Identification — Complete
 
@@ -43,14 +42,16 @@ Mac queries blocked domain (e.g. dns.quad9.net)
   → Loop repeats forever
 ```
 
-**Key finding:** The TLS 1.0 attempts were a *symptom* (downgrade fallback), not the cause. The real problem was cert trust. This was confirmed by reading the dnsblockd source code (`internal/server/tls.go:108-113` — `MinVersion: tls.VersionTLS12`, `internal/server/tls.go:116-125` — per-domain cert minting via SNI).
+**Key finding:** The TLS 1.0 attempts were a _symptom_ (downgrade fallback), not the cause. The real problem was cert trust. This was confirmed by reading the dnsblockd source code (`internal/server/tls.go:108-113` — `MinVersion: tls.VersionTLS12`, `internal/server/tls.go:116-125` — per-domain cert minting via SNI).
 
 **Error type breakdown (pre-fix):**
+
 - `EOF` (cert rejected): 149,605 (67%)
 - `unsupported versions: [301]` (TLS 1.0 downgrade): 74,664 (33%)
 - `illegal parameter`: 167 (<0.1%)
 
 **Top blocked domains from .62:**
+
 - `metrics.icloud.com` (824) — Apple telemetry
 - `dns.quad9.net` (250) — DoH bypass attempt
 - `mask.icloud.com` / `mask-h2.icloud.com` (324) — iCloud Private Relay
@@ -64,16 +65,17 @@ Provided instructions for extracting the CA cert from `/run/secrets/dnsblockd_ca
 
 **Verification results (post-fix):**
 
-| Period | Errors/hour | TLS 1.0 attempts |
-|--------|------------|------------------|
-| Before cert install | ~15,000 | ~5,000 |
-| After cert install (22:25+) | **~6** | **0** |
+| Period                      | Errors/hour | TLS 1.0 attempts |
+| --------------------------- | ----------- | ---------------- |
+| Before cert install         | ~15,000     | ~5,000           |
+| After cert install (22:25+) | **~6**      | **0**            |
 
 The TLS 1.0 downgrade attempts dropped to **zero** immediately — the Mac no longer needs to downgrade because it trusts the CA at TLS 1.2+. The 2 remaining stray `EOF` errors (22:27, 22:42) are from cached daemon TLS sessions (iCloud Private Relay / `cloudd`) that haven't picked up the keychain change yet.
 
 ### 4. Source Code Investigation — Complete
 
 Read dnsblockd source code (`/home/lars/projects/dnsblockd/internal/server/`):
+
 - `tls.go:108-113` — `TLSConfig()` with `MinVersion: tls.VersionTLS12`
 - `tls.go:116-125` — `GetCertificate()` per-domain cert minting via SNI
 - `server.go:611-631` — `startHTTPS()` block page server setup
@@ -81,6 +83,7 @@ Read dnsblockd source code (`/home/lars/projects/dnsblockd/internal/server/`):
 - Confirmed no per-domain block response type exists (global `zero_ip` or `nxdomain` only)
 
 Also read SystemNix module files:
+
 - `modules/nixos/services/dns-blocker.nix` — service module, YAML config generation
 - `modules/nixos/services/dnsblockd-cert-trust.nix` — Firefox/NSS cert trust (NixOS only)
 - `platforms/common/dns-blocklists.nix` — whitelist configuration
@@ -146,12 +149,14 @@ Two stray `EOF` errors at 22:27 and 22:42 are from macOS daemon TLS session cach
 ## f) Next Steps (up to 50)
 
 ### High Priority
+
 1. Clean up orphaned database: `sudo rm /var/lib/dnsblockd/dnsblockd_tracking.db` (724 MB freed)
 2. Reboot Mac to clear remaining cached daemon TLS sessions (2 stray EOF errors)
 3. Update SystemNix `AGENTS.md` with the dnsblockd CA cert macOS installation procedure
 4. Verify TLS errors are fully zero after Mac reboot (check `journalctl -u dnsblockd -f`)
 
 ### Medium Priority
+
 5. Consider whitelisting iCloud Private Relay domains (`mask.icloud.com`, `mask-h2.icloud.com`) — they're privacy-enhancing and can't work through a DNS-blocking resolver anyway
 6. Consider whitelisting `dns.quad9.net` and `one.one.one.one` — DoH bypass attempts are already blocked at resolver level
 7. Identify device at `192.168.1.62` in router DHCP table and give it a stable hostname for future log analysis
@@ -166,6 +171,7 @@ Two stray `EOF` errors at 22:27 and 22:42 are from macOS daemon TLS session cach
 16. Document the `dnsblockd_tracking.db` → `tracking.db` migration in the dnsblockd changelog
 
 ### Low Priority
+
 17. Consider switching `dnsBlockResponse` to `nxdomain` globally if the block page is rarely useful (eliminates all TLS retry storms by design)
 18. Add a dnsblockd log rotation or rate-limiting rule for `TLS handshake error` messages (journald filter)
 19. Check the `false_positive_reports` table in both databases for any actionable user feedback

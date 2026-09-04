@@ -39,12 +39,12 @@ interactively.
 
 ## Module Options
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `enable` | `false` | Enable the service |
-| `package` | `pkgs.systemd-graph` | Package override |
-| `port` | `ports.systemd-graph` (8847) | Listen port |
-| `listenAddress` | `127.0.0.1` | Bind address |
+| Option          | Default                      | Description        |
+| --------------- | ---------------------------- | ------------------ |
+| `enable`        | `false`                      | Enable the service |
+| `package`       | `pkgs.systemd-graph`         | Package override   |
+| `port`          | `ports.systemd-graph` (8847) | Listen port        |
+| `listenAddress` | `127.0.0.1`                  | Bind address       |
 
 ## Service Details
 

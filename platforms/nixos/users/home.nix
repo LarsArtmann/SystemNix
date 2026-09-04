@@ -11,6 +11,44 @@ let
   colors = colorScheme.palette;
   inherit (import ../../../lib/default.nix lib) wrapWithMemoryLimit;
 
+  # Niri session manager app lists + invariant checker — single source of
+  # truth lives in ./niri-session-manager-apps.nix (also consumed by the
+  # pure-eval CI guard test tests/test-niri-session-config.nix). The TOML
+  # below is GENERATED from these lists and the storm-prevention
+  # invariants are asserted at eval time (see `assertions`).
+  nsmApps = import ./niri-session-manager-apps.nix;
+  niriSessionManagerSingleInstanceApps = nsmApps.singleInstanceApps;
+  niriSessionManagerSkipApps = nsmApps.skipApps;
+  niriSessionManagerTerminalAppIds = nsmApps.terminalAppIds;
+  niriSessionManagerShellNames = nsmApps.shellNames;
+  niriSessionManagerAppMappings = nsmApps.appMappings;
+
+  niriSessionManagerConfigToml =
+    let
+      tomlQuote = s: "\"" + lib.escape [ "\"" ] s + "\"";
+      tomlArray = indent: xs: "[\n" + lib.concatMapStrings (x: indent + tomlQuote x + ",\n") xs + "  ]";
+      tomlInlineArray = xs: "[" + lib.concatStringsSep ", " (map tomlQuote xs) + "]";
+    in
+    ''
+      [single_instance_apps]
+      apps = ${tomlArray "    " niriSessionManagerSingleInstanceApps}
+
+      [skip_apps]
+      apps = ${tomlArray "    " niriSessionManagerSkipApps}
+
+      [app_mappings]
+      ${lib.concatStringsSep "\n" (
+        lib.mapAttrsToList (k: v: "${tomlQuote k} = ${tomlInlineArray v}") niriSessionManagerAppMappings
+      )}
+
+      [terminal_state]
+      enabled = true
+      terminal_app_ids = ${tomlInlineArray niriSessionManagerTerminalAppIds}
+      shell_names = ${tomlInlineArray niriSessionManagerShellNames}
+      helper_names = ${tomlInlineArray [ "kitten" ]}
+      max_walk_depth = 20
+    '';
+
   # `open` — macOS-style file/URL opener that works from ANY context,
   # including SSH sessions that lack the graphical environment.
   # SSH shells have no WAYLAND_DISPLAY/DBus session env, so raw xdg-open
@@ -220,6 +258,94 @@ in
     };
   };
 
+  # Go/Rust/lint cache self-healing for a dead or absent /mnt/buildcache.
+  # Fish conf.d (runs BEFORE config.fish, in login AND interactive shells).
+  # 2026-08-24: the original hand-written version probed writability with a
+  # BARE `mkdir -p $val` — on the dead buildcache automount every probe
+  # blocked for the full 10s x-systemd.device-timeout, and SDDM's login
+  # chain (wayland-session -> fish --login, which inherits GOCACHE et al.
+  # from /etc/profile.d/hm-session-vars.sh) spent ~40s in uninterruptible
+  # sleep before niri ever started. display-watchdog restarted the display
+  # manager at ~20s, bouncing every login back to SDDM (black-screen loop).
+  # Probes must be SIGKILL-bounded: SIGTERM/coreutils default stays pending
+  # until the kernel device-timeout releases the syscall; only SIGKILL
+  # interrupts the autofs wait (TASK_KILLABLE) at the 1s bound.
+  xdg.configFile."fish/conf.d/00-go-cache-guard.fish".text = ''
+    # Probe each DISTINCT parent directory once, not each variable: on this
+    # host eight cache vars point into /mnt/buildcache/* — per-var SIGKILL
+    # probes cost ~1s each against a dead automount (9 vars ≈ 8s login, the
+    # exact SDDM black-screen cost class). A dead dir is remembered and the
+    # remaining vars under it redirect without re-probing.
+    set -g __dead_cache_dirs
+    function __cache_dir_alive -a dir
+        if contains -- $dir $__dead_cache_dirs
+            return 1
+        end
+        if timeout --signal=KILL 1 mkdir -p $dir 2>/dev/null; and timeout --signal=KILL 1 touch $dir/.cache-write-probe 2>/dev/null
+            rm -f $dir/.cache-write-probe
+            return 0
+        end
+        set -a __dead_cache_dirs $dir
+        return 1
+    end
+
+    function __go_cache_redirect -a var fallback
+        if not set -q $var
+            return
+        end
+        set -l val $$var
+        if __cache_dir_alive (dirname $val)
+            return
+        end
+        echo "⚠ $var=$val is unwritable or unreachable (dead mount?) — redirecting to $fallback"
+        set -gx $var $fallback
+        timeout --signal=KILL 1 mkdir -p $fallback
+    end
+
+    # 2026-08-27: stale sessions carry UNEXPANDED '$HOME/...' env literals
+    # (exported verbatim from nix print-dev-env attrs — Nix does not expand
+    # $HOME in plain strings; the CV devshell GOPATH attr was the offender,
+    # fixed at source). A literal's dirname is a RELATIVE '$HOME' path, so
+    # the liveness probe above would mkdir it INTO the CWD and call it
+    # alive — Go then writes './$HOME/.go/pkg/sumdb' junk next to every
+    # module. Expand before probing.
+    function __expand_literal_home -a var
+        if set -q $var; and string match -q '*$HOME*' -- $$var
+            echo "⚠ $var=$$var is an unexpanded literal — expanding"
+            set -gx $var (string replace -a '$HOME' -- $HOME $$var)
+        end
+    end
+    __expand_literal_home TMPDIR
+    __expand_literal_home GOCACHE
+    __expand_literal_home GOMODCACHE
+    __expand_literal_home GOLANGCI_LINT_CACHE
+    __expand_literal_home CARGO_HOME
+    __expand_literal_home PIP_CACHE_DIR
+    __expand_literal_home SCCACHE_DIR
+    __expand_literal_home npm_config_cache
+    __expand_literal_home PLAYWRIGHT_BROWSERS_PATH
+    __expand_literal_home GOPATH
+
+    __go_cache_redirect TMPDIR $HOME/tmp
+    __go_cache_redirect GOCACHE $HOME/tmp/go-cache
+    __go_cache_redirect GOMODCACHE $HOME/tmp/go-mod
+    __go_cache_redirect GOLANGCI_LINT_CACHE $HOME/tmp/go-lint
+    # 2026-08-24 follow-up: the login chain inherits EVERY dead-mount cache
+    # var from hm-session-vars.sh, not just the Go ones — an unprobed var
+    # still blocks the full device-timeout per lookup during login
+    # (docs/status/2026-08-24_08-00_sddm §b.1).
+    __go_cache_redirect CARGO_HOME $HOME/tmp/cargo
+    __go_cache_redirect PIP_CACHE_DIR $HOME/tmp/pip
+    __go_cache_redirect SCCACHE_DIR $HOME/tmp/sccache
+    __go_cache_redirect npm_config_cache $HOME/tmp/npm
+    __go_cache_redirect PLAYWRIGHT_BROWSERS_PATH $HOME/tmp/playwright
+
+    if test "$GOTOOLCHAIN" = local
+        echo "⚠ GOTOOLCHAIN=local blocks go.work ≥1.26.6 projects — switching to auto"
+        set -gx GOTOOLCHAIN auto
+    end
+  '';
+
   home = {
     enableNixpkgsReleaseCheck = false;
 
@@ -244,6 +370,39 @@ in
       # store is redirected via symlink at its default location instead —
       # mechanism-independent, survives pnpm config-scheme changes.
       ".local/share/pnpm/store".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/pnpm-store";
+
+      # golangci-lint-lsp wrapper — pins the lint cache to /mnt/buildcache but
+      # falls back to ~/tmp/go-lint when the mount is dead (the fish
+      # 00-go-cache-guard logic, SIGKILL-bounded so a wedged automount can
+      # never hang the LSP launch). Replaces the stray hand-copied wrapper
+      # that pinned $HOME/tmp/golangci-lint-cache UNCONDITIONALLY and grew
+      # ~900M of lint cache on the QLC NVMe even while the buildcache was
+      # healthy. Referenced by the HM crushrc (golangci_lint_ls LSP).
+      ".local/bin/golangci-lint-lsp-wrapper".text = ''
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        pick_cache() {
+          local candidate="''${GOLANGCI_LINT_CACHE:-/mnt/buildcache/golangci-lint}"
+          if timeout --signal=KILL 1 mkdir -p "$candidate" 2>/dev/null \
+            && timeout --signal=KILL 1 touch "$candidate/.cache-write-probe" 2>/dev/null; then
+            rm -f "$candidate/.cache-write-probe"
+            printf '%s' "$candidate"
+            return 0
+          fi
+          candidate="$HOME/tmp/go-lint"
+          mkdir -p "$candidate"
+          printf '%s' "$candidate"
+        }
+
+        CACHE_ROOT="$(pick_cache)"
+        export GOLANGCI_LINT_CACHE="$CACHE_ROOT"
+        export GOLANGCI_LINT_ANALYSIS_CACHE="''${CACHE_ROOT}-analysis"
+        mkdir -p "$GOLANGCI_LINT_ANALYSIS_CACHE"
+
+        exec golangci-lint-langserver "$@"
+      '';
+      ".local/bin/golangci-lint-lsp-wrapper".executable = true;
     };
     # Jan AI: symlink data folder to centralized /data/ai/models/jan
     activation.jan-data-link = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -315,7 +474,12 @@ in
 
       # Dark mode preference - respected by many apps and browsers
       GTK_THEME = "${theme.gtkThemeName}:dark";
-      QT_STYLE_OVERRIDE = lib.mkForce "kvantum";
+      # NO QT_STYLE_OVERRIDE here: this mkForce "kvantum" (2026-04-28) beat
+      # the qt.style = "fusion" setting from the 2026-08-18 polkit-crash fix
+      # at every layer — the session ran with an UNRESOLVABLE style override
+      # (no kvantum package was ever deployed; Qt silently fell back) while
+      # the config claimed fusion. Qt style selection belongs to the
+      # qt.platformTheme/style block below, nothing else.
 
       # Cursor theme for Wayland compositors
       # Cursor size is determined by the cursor theme's built-in sizes
@@ -462,53 +626,84 @@ in
       # Crush provider auth from sops — NEVER store keys in crush's auth store
       # (~/.local/share/crush/crush.json, machine-owned plaintext state that
       # agents can read; the 2026-08-18 leak class). crushrc api_key supports
-      # $(command) expansion at load, so the key flows sops → /run/secrets →
-      # process memory without ever touching a writable file. Guarded by
-      # test -r: absent secret (crush-daily disabled) = provider not defined.
-      # NOTE: do not track a real "crush/crushrc" in the ~/.config/crush
-      # dotfiles repo — it would collide with this HM symlink.
+      # $(command) expansion at load, so each key flows sops → /run/secrets →
+      # process memory without ever touching a writable file. crushrc-declared
+      # keys are never persisted back — synthetic has provably stayed out of
+      # the auth store and session DB snapshots since 2026-08-18. Guarded:
+      # absent secret or PLACEHOLDER value = provider skipped. hyper stays
+      # store-owned on purpose (OAuth refresh state, self-rotating). NOTE: do
+      # not track a real "crush/crushrc" in the ~/.config/crush dotfiles repo
+      # — it collides with this HM symlink.
       "crush/crushrc".text = ''
-        if test -r /run/secrets/synthetic_api_key; then
-          provider add synthetic --api-key "$(cat /run/secrets/synthetic_api_key)"
-        fi
+        crush_key() {
+          local f="/run/secrets/$2" k
+          test -r "$f" || return 0
+          k=$(cat "$f")
+          case "$k" in "" | PLACEHOLDER*) return 0 ;; esac
+          provider add "$1" --api-key "$k"
+        }
+        crush_key synthetic synthetic_api_key
+        crush_key zai zai_api_key
+        crush_key gemini gemini_api_key
+        crush_key minimax minimax_api_key
+        # minimax DISABLED 2026-08-31 (user): Token Plan exhausted
+        # (rate_limit_error 2056 — billing state, the sops key itself is
+        # valid and stays rendered). Session selection is rejected
+        # ("model not found"); NOTE `crush models` still lists the
+        # catalog's minimax entries — the CLI ignores disabled providers.
+        # Re-enable = delete the next line.
+        provider add minimax --disable true
+        crush_key kimi-coding kimi_api_key
+
+        # glm-5.3-flash exists ONLY here: charm's auto-updated zai catalog
+        # does not list it, so deleting the old user crush.json dropped it
+        # from the model list (live regression 2026-08-31, restored same
+        # day). Pricing from the user's known-good def; effort tiers
+        # normalized to z.ai's current xhigh scheme (catalog glm-5.3/5.2
+        # already serve xhigh — the old hand-written "max" was stale
+        # naming). model add has NO reasoning_levels flag (source:
+        # shellconfig/model.go) — the picker tier list for flash falls back
+        # to crush's default handling of default_reasoning_effort.
+        model add zai/glm-5.3-flash --name "GLM-5.3-Flash" --context-window 1000000 --default-max-tokens 131072 --can-reason true --supports-images true --price-input 0.15 --price-output 0.5 --price-cache-hit 0.03 --reasoning-effort xhigh
+
+        # Local llama.cpp (user starts llama-server ad hoc; nothing on
+        # lib/ports.nix serves :8899). discover_models DEFAULTS TO TRUE —
+        # crush queries /v1/models at session start, so whatever GGUF is
+        # loaded shows up with zero hand-maintained entries (the old
+        # crush.json carried a stale hardcoded model with invented pricing).
+        # Server down = provider lists no models; connection refused is
+        # instant, no startup cost.
+        provider add llamacpp --type llamacpp --base-url "http://127.0.0.1:8899/v1"
+
+        # Context files (moved from the user crush.json options.context_paths).
+        option context-path $HOME/.config/crush/AGENTS.md
+        option context-path AGENTS.md
+
+        # LSP servers (moved from the user crush.json lsp section). Deliberately
+        # NO env pins: gopls/oxlint inherit the session env, where
+        # GOCACHE/GOMODCACHE/GOLANGCI_LINT_CACHE point at /mnt/buildcache (the
+        # fish 00-go-cache-guard redirects to ~/tmp only while the mount is
+        # dead). The old crush.json hardcoded $HOME/tmp/* pins that bypassed
+        # the buildcache doctrine and stranded ~48G of Go caches on the QLC
+        # NVMe (removed 2026-08-31). golangci_lint_ls goes through the
+        # HM-managed wrapper, which re-pins the lint cache with the same
+        # alive-check fallback for env-less launch paths.
+        lsp add gopls --command gopls --timeout 60 --options '{"analyses":{"stdversion":false}}'
+        lsp add oxlint --command oxlint --args --lsp --filetypes typescript --filetypes typescriptreact --filetypes javascript --filetypes javascriptreact --root-markers .oxlintrc.json --root-markers .oxlintrc.jsonc --root-markers oxlint.config.ts
+        lsp add golangci_lint_ls --command "$HOME/.local/bin/golangci-lint-lsp-wrapper"
+
+        # qmd — local RAG/hybrid search over markdown + code collections
+        # (BM25 + vector embeddings + LLM rerank, fully on-device). Global CLI
+        # from environment.systemPackages; stdio MCP server. GGUF models
+        # (~2 GB) auto-download to ~/.cache/qmd on first semantic search.
+        mcp add qmd --command qmd --args mcp
       '';
 
       # Niri session manager — declarative app mappings
-      # Prevents duplicate spawns and maps niri app_ids to actual launch commands
-      "niri-session-manager/config.toml".text = ''
-        [single_instance_apps]
-        apps = [
-            "helium",
-            "firefox",
-            "Firefox",
-            "signal",
-            "Slack",
-            "discord",
-            "vesktop",
-            "telegramdesktop",
-            "Spotify",
-            "spotify",
-            "org.keepassxc.KeePassXC",
-        ]
-
-        [skip_apps]
-        apps = [
-            "Jan",
-        ]
-
-        [app_mappings]
-        "signal" = ["signal-desktop"]
-        "telegramdesktop" = ["telegram-desktop"]
-        "org.keepassxc.KeePassXC" = ["keepassxc"]
-        "com.mitchellh.ghostty" = ["ghostty"]
-
-        [terminal_state]
-        enabled = true
-        terminal_app_ids = ["kitty", "foot", "org.wezfurlong.wezterm", "com.mitchellh.ghostty", "alacritty"]
-        shell_names = ["fish", "bash", "zsh", "sh", "dash", "-fish", "-bash", "-zsh", "-sh", "sudo", "doas"]
-        helper_names = ["kitten"]
-        max_walk_depth = 20
-      '';
+      # Prevents duplicate spawns and maps niri app_ids to actual launch commands.
+      # Generated from the niriSessionManager* lists above; the eval-time
+      # assertions below pin the storm-prevention invariants.
+      "niri-session-manager/config.toml".text = niriSessionManagerConfigToml;
 
       "swappy/config".text = ''
         [Default]
@@ -616,6 +811,14 @@ in
       gtk-application-prefer-dark-theme = true;
     };
   };
+
+  # Niri session manager invariants (2026-08-31 terminal-storm class).
+  # Same checker as tests/test-niri-session-config.nix — fires at
+  # eval/build time so the config lists can never silently rot.
+  assertions = map (message: {
+    assertion = false;
+    inherit message;
+  }) (nsmApps.mkInvariantViolations nsmApps);
 
   # Qt settings for consistency with GTK.
   # NEVER use gtk2 here: the gtk2 Qt platform/theme plugins are Qt5-only —

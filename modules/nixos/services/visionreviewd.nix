@@ -20,7 +20,6 @@
 { inputs, ... }: {
   flake.nixosModules.visionreviewd =
     {
-      config,
       lib,
       pkgs,
       ...

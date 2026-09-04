@@ -98,6 +98,7 @@ The fix spans three repos: **cqrs-htmx** (made drain timeout configurable), **br
 ## f) Next Steps (up to 50)
 
 ### Immediate (deploy verification)
+
 1. Re-run `nh os switch .` to verify the build succeeds with the corrected vendorHash
 2. If build succeeds, verify server starts and survives past 30s
 3. Verify agent successfully syncs history to server
@@ -106,12 +107,14 @@ The fix spans three repos: **cqrs-htmx** (made drain timeout configurable), **br
 6. Run `nix run .#post-deploy-check` to verify functional outcomes
 
 ### SystemNix updates
+
 7. Update AGENTS.md browser-history section with drain timeout root cause
 8. Add gotcha entry: "cmd/server/go.mod is the source of truth for Nix builds, not api/go.mod"
 9. Update the existing agent→server race gotcha to note the server crash-loop was the real issue
 10. Consider adding `PROJECTION_DRAIN_TIMEOUT` to the SystemNix module environment explicitly (currently uses the browser-history default of 2m)
 
 ### cqrs-htmx improvements
+
 11. Consider raising the default drain timeout from 30s to 60s
 12. Add drain duration logging in `waitForDrain` (log how long it took)
 13. Add a metric for drain duration (`projection_drain_seconds`)
@@ -119,6 +122,7 @@ The fix spans three repos: **cqrs-htmx** (made drain timeout configurable), **br
 15. Document `DrainTimeout` in the package-level docs / CHANGELOG
 
 ### browser-history improvements
+
 16. Add a persistent checkpoint store (SQLite-backed) to avoid full journal replay on restart
 17. Fix the pre-commit hook workspace-mode build (go-cqrs-lite watermill API mismatches)
 18. Add startup log line showing `ProjectionDrainTimeout` value
@@ -126,12 +130,14 @@ The fix spans three repos: **cqrs-htmx** (made drain timeout configurable), **br
 20. Consider adding `SNAPSHOT_CONFIG` for high-volume aggregates
 
 ### SystemNix infrastructure
+
 21. Fix the `niri_running` phantom metric that blocks `nix run .#deploy`
 22. Add browser-history drain timeout to Gatus monitoring (alert if startup takes >90s)
 23. Consider adding `MemoryMax` increase for browser-history server (saw 335MB peak during replay)
 24. Add browser-history startup time to the system-health textfile collector
 
 ### Process improvements
+
 25. Document the cqrs-htmx → browser-history → SystemNix release chain in AGENTS.md
 26. Add a CI check that verifies `cmd/server/go.mod` and `api/go.mod` are in sync for cqrs-htmx version
 27. Consider automating the vendorHash update in the deploy script
@@ -139,6 +145,7 @@ The fix spans three repos: **cqrs-htmx** (made drain timeout configurable), **br
 29. Consider a `nix flake update --recreate-lock-file` step after multi-repo changes
 
 ### Technical debt
+
 30. The browser-history go.work has 120 lines of replace directives — consider consolidating
 31. The cqrs-htmx go.work has similar replace sprawl — same consideration
 32. The `go-flightrecorder v0.0.0` issue affects multiple projects — publish a real tag
@@ -147,22 +154,26 @@ The fix spans three repos: **cqrs-htmx** (made drain timeout configurable), **br
 35. The ottel endpoint parse error (`parse "127.0.0.1:4317": first path segment in URL cannot contain colon`) appears in every server startup log — should be fixed upstream (missing scheme)
 
 ### Monitoring
+
 36. Add SigNoz alert rule for browser-history startup duration
 37. Add Gatus alert for browser-history server crash-loop detection (>3 restarts in 5min)
 38. Monitor projection drain duration trend over time (growing journal = approaching timeout)
 
 ### Documentation
+
 39. Update browser-history FEATURES.md if it exists
 40. Document the PROJECTION_DRAIN_TIMEOUT env var in browser-history README
 41. Add cqrs-htmx CHANGELOG entry for v4.7.2
 42. Add browser-history CHANGELOG entry for the drain timeout fix
 
 ### Testing
+
 43. Add an integration test in browser-history that verifies server starts with a large event journal
 44. Add a test that verifies `PROJECTION_DRAIN_TIMEOUT=0` falls back to upstream default
 45. Consider a chaos test: deploy under I/O pressure (ionice + sleep) and verify server starts
 
 ### Cleanup
+
 46. Remove the `-config` suffix explanation from AGENTS.md if browser-history module naming is stable
 47. Verify the `browser-history-oidc-setup` oneshot still works after the drain timeout change
 48. Check if the OTel endpoint parse error affects tracing (it logs an error but continues)
@@ -183,12 +194,12 @@ The fix spans three repos: **cqrs-htmx** (made drain timeout configurable), **br
 
 ## Repos & Commits Summary
 
-| Repo | Commit | Description |
-|------|--------|-------------|
-| cqrs-htmx | `546cb704` | `feat(usermgmt): make projection drain timeout configurable` |
-| cqrs-htmx | tag `usermgmt/v4.7.2` | Release tag |
-| browser-history | `4a9e4f9` | `fix(api): configurable projection drain timeout` |
-| browser-history | `c63f118` | `fix(nix): update cqrs-htmx flake input and cmd/server go.mod to v4.7.2` |
-| browser-history | `b277a62` | `fix(nix): bump httputil flake input for Nonce/DefaultNonceConfig API` |
-| browser-history | `5c1a1b7` | `fix(nix): update server vendorHash for cqrs-htmx v4.7.2 + httputil bump` |
-| SystemNix | (uncommitted) | `flake.lock` updated to browser-history `5c1a1b7` |
+| Repo            | Commit                | Description                                                               |
+| --------------- | --------------------- | ------------------------------------------------------------------------- |
+| cqrs-htmx       | `546cb704`            | `feat(usermgmt): make projection drain timeout configurable`              |
+| cqrs-htmx       | tag `usermgmt/v4.7.2` | Release tag                                                               |
+| browser-history | `4a9e4f9`             | `fix(api): configurable projection drain timeout`                         |
+| browser-history | `c63f118`             | `fix(nix): update cqrs-htmx flake input and cmd/server go.mod to v4.7.2`  |
+| browser-history | `b277a62`             | `fix(nix): bump httputil flake input for Nonce/DefaultNonceConfig API`    |
+| browser-history | `5c1a1b7`             | `fix(nix): update server vendorHash for cqrs-htmx v4.7.2 + httputil bump` |
+| SystemNix       | (uncommitted)         | `flake.lock` updated to browser-history `5c1a1b7`                         |

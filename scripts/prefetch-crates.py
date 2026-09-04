@@ -69,7 +69,7 @@ def main() -> int:
             print(f"  FAILED: {name}-{version}: {err[:120]}", file=sys.stderr)
 
         if (i + 1) % 50 == 0 or (i + 1) == len(crates):
-            print(f"  [{i+1}/{len(crates)}] done={done} failed={failed}")
+            print(f"  [{i + 1}/{len(crates)}] done={done} failed={failed}")
 
     print(f"\nComplete: {done} downloaded, {failed} failed")
     return 0 if failed == 0 else 1

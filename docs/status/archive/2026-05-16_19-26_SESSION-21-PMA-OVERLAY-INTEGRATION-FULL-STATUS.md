@@ -18,89 +18,89 @@
 
 ### This Session
 
-| #   | Item                                       | Details                                                                                                                                                                                                  |
-| --- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **projects-management-automation overlay** | Added as flake input (`git+ssh`, follows nixpkgs), `mkPackageOverlay` in `overlays/shared.nix`, added to `perSystem.packages` and `platforms/common/packages/base.nix`. Now available on Darwin + NixOS. |
-| 2   | **~/go/bin cleanup**                       | Removed PMA from legacy PATH comment. Only `govalid` remains as `go install`-only.                                                                                                                       |
-| 3   | **AGENTS.md updated**                      | Overlay list (9→10), flake inputs table, pkgs/ tree, mkPackageOverlay count all updated.                                                                                                                 |
-| 4   | **Build validation**                       | `just test-fast` passes clean on x86_64-linux.                                                                                                                                                           |
+| # | Item                                       | Details                                                                                                                                                                                                  |
+| - | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **projects-management-automation overlay** | Added as flake input (`git+ssh`, follows nixpkgs), `mkPackageOverlay` in `overlays/shared.nix`, added to `perSystem.packages` and `platforms/common/packages/base.nix`. Now available on Darwin + NixOS. |
+| 2 | **~/go/bin cleanup**                       | Removed PMA from legacy PATH comment. Only `govalid` remains as `go install`-only.                                                                                                                       |
+| 3 | **AGENTS.md updated**                      | Overlay list (9→10), flake inputs table, pkgs/ tree, mkPackageOverlay count all updated.                                                                                                                 |
+| 4 | **Build validation**                       | `just test-fast` passes clean on x86_64-linux.                                                                                                                                                           |
 
 ### Previously Completed (Cumulative — Sessions 1–20)
 
-| #   | Item                                                                                           | Since          |
-| --- | ---------------------------------------------------------------------------------------------- | -------------- |
-| 5   | Caddy ReadWritePaths fix (11h crash loop)                                                      | Session 20     |
-| 6   | Hermes upgrade to v2026.5.7                                                                    | Session 19     |
-| 7   | All 9→10 flake-input overlays converted to `mkPackageOverlay`                                  | Session 19     |
-| 8   | 6 missing overlay tools added to home.packages                                                 | Session 18     |
-| 9   | Shell script formatting normalized                                                             | Session 17     |
-| 10  | Dual-WAN ECMP+MPTCP active-active failover                                                     | Sessions 11-12 |
-| 11  | GPU OOM multi-layer defense (MAX_LOADED_MODELS, GPU_OVERHEAD, fractions)                       | Session 13     |
-| 12  | Niri DRM healthcheck + GPU recovery (unbind/rebind/auto-reboot)                                | Session 10     |
-| 13  | DNS blocker stack (Unbound + dnsblockd, 25 blocklists, 2.5M+ domains)                          | Session 8      |
-| 14  | EMEET PIXY webcam daemon (auto-tracking, audio, Waybar)                                        | Session 5      |
-| 15  | Centralized AI model storage (`/data/ai/`)                                                     | Session 7      |
-| 16  | Wallpaper self-healing (awww PartOf, not BindsTo)                                              | Session 9      |
-| 17  | Taskwarrior + TaskChampion cross-platform sync                                                 | Session 6      |
-| 18  | lib/ shared helpers (harden, hardenUser, serviceDefaults, types, mkGraphicalUserService, rocm) | Session 8      |
-| 19  | Pre-commit hooks (statix, deadnix, treefmt+alejandra, shellcheck)                              | Session 4      |
-| 20  | SigNoz observability pipeline (6 dashboards, journald, Prometheus scraping)                    | Sessions 13-15 |
-| 21  | Gatus health monitoring (26+ endpoints, Discord alerting)                                      | Session 14     |
-| 22  | OpenSEO service deployment                                                                     | Session 12     |
-| 23  | Monitor365 service (rewritten module + enabled)                                                | Session 16     |
-| 24  | File-and-image-renamer (flaked overlay)                                                        | Session 14     |
-| 25  | flake-parts modular architecture (41 service modules)                                          | Session 1      |
-| 26  | Cross-platform Home Manager (14 program modules, 70+ packages)                                 | Session 1      |
-| 27  | All path: inputs eliminated → git+ssh: URLs                                                    | Session 5      |
-| 28  | Pipe operators enabled (`nixConfig.extra-experimental-features`)                               | Session 7      |
-| 29  | primaryUser module (eliminated 15 hardcoded "lars" refs)                                       | Session 9      |
-| 30  | Overlay extraction to `overlays/` directory (−200 lines from flake.nix)                        | Session 13     |
+| #  | Item                                                                                           | Since          |
+| -- | ---------------------------------------------------------------------------------------------- | -------------- |
+| 5  | Caddy ReadWritePaths fix (11h crash loop)                                                      | Session 20     |
+| 6  | Hermes upgrade to v2026.5.7                                                                    | Session 19     |
+| 7  | All 9→10 flake-input overlays converted to `mkPackageOverlay`                                  | Session 19     |
+| 8  | 6 missing overlay tools added to home.packages                                                 | Session 18     |
+| 9  | Shell script formatting normalized                                                             | Session 17     |
+| 10 | Dual-WAN ECMP+MPTCP active-active failover                                                     | Sessions 11-12 |
+| 11 | GPU OOM multi-layer defense (MAX_LOADED_MODELS, GPU_OVERHEAD, fractions)                       | Session 13     |
+| 12 | Niri DRM healthcheck + GPU recovery (unbind/rebind/auto-reboot)                                | Session 10     |
+| 13 | DNS blocker stack (Unbound + dnsblockd, 25 blocklists, 2.5M+ domains)                          | Session 8      |
+| 14 | EMEET PIXY webcam daemon (auto-tracking, audio, Waybar)                                        | Session 5      |
+| 15 | Centralized AI model storage (`/data/ai/`)                                                     | Session 7      |
+| 16 | Wallpaper self-healing (awww PartOf, not BindsTo)                                              | Session 9      |
+| 17 | Taskwarrior + TaskChampion cross-platform sync                                                 | Session 6      |
+| 18 | lib/ shared helpers (harden, hardenUser, serviceDefaults, types, mkGraphicalUserService, rocm) | Session 8      |
+| 19 | Pre-commit hooks (statix, deadnix, treefmt+alejandra, shellcheck)                              | Session 4      |
+| 20 | SigNoz observability pipeline (6 dashboards, journald, Prometheus scraping)                    | Sessions 13-15 |
+| 21 | Gatus health monitoring (26+ endpoints, Discord alerting)                                      | Session 14     |
+| 22 | OpenSEO service deployment                                                                     | Session 12     |
+| 23 | Monitor365 service (rewritten module + enabled)                                                | Session 16     |
+| 24 | File-and-image-renamer (flaked overlay)                                                        | Session 14     |
+| 25 | flake-parts modular architecture (41 service modules)                                          | Session 1      |
+| 26 | Cross-platform Home Manager (14 program modules, 70+ packages)                                 | Session 1      |
+| 27 | All path: inputs eliminated → git+ssh: URLs                                                    | Session 5      |
+| 28 | Pipe operators enabled (`nixConfig.extra-experimental-features`)                               | Session 7      |
+| 29 | primaryUser module (eliminated 15 hardcoded "lars" refs)                                       | Session 9      |
+| 30 | Overlay extraction to `overlays/` directory (−200 lines from flake.nix)                        | Session 13     |
 
 ---
 
 ## B) PARTIALLY DONE
 
-| #   | Item                     | What's done                                                                                                               | What's missing                                                                                                                        |
-| --- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **DNS failover cluster** | `dns-failover.nix` module written, Keepalived VRRP configured, both evo-x2 and rpi3 configs exist                         | Pi 3 hardware not provisioned — entirely untestable                                                                                   |
-| 2   | **ComfyUI service**      | Module exists in `modules/nixos/services/comfyui.nix`, enabled in configuration.nix, `ExecCondition` guard prevents crash | WorkingDirectory (`/home/lars/projects/anime-comic-pipeline/ComfyUI`) doesn't exist. Service is a zombie. Should disable or fix path. |
-| 3   | **Photomap service**     | Module exists, Caddy vhost configured, Gatus endpoint                                                                     | Disabled — podman config permission issue. Needs debugging.                                                                           |
-| 4   | **OpenSEO**              | Deployed, Docker-based, Caddy vhost + Authelia forward auth                                                               | Pay-as-you-go DataForSEO API — requires active API key and credits                                                                    |
-| 5   | **Voice agents**         | Whisper ASR (Docker/ROCm) + LiveKit configured, Caddy vhosts                                                              | LiveKit API keys via sops — untested in production                                                                                    |
-| 6   | **SigNoz alert rules**   | `signoz-alerts.nix` has `mkRule` helper, rules + dashboards defined in JSON                                               | Rules not loaded into SigNoz — need API deployment step                                                                               |
-| 7   | **Twenty CRM**           | Module deployed, Docker containers running                                                                                | Needs `twenty-POST-SETUP.md` configuration — not production-ready                                                                     |
-| 8   | **TODO_LIST.md**         | Exists with 20+ active tasks                                                                                              | Last updated May 11 (5 days stale). Several items already completed.                                                                  |
+| # | Item                     | What's done                                                                                                               | What's missing                                                                                                                        |
+| - | ------------------------ | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **DNS failover cluster** | `dns-failover.nix` module written, Keepalived VRRP configured, both evo-x2 and rpi3 configs exist                         | Pi 3 hardware not provisioned — entirely untestable                                                                                   |
+| 2 | **ComfyUI service**      | Module exists in `modules/nixos/services/comfyui.nix`, enabled in configuration.nix, `ExecCondition` guard prevents crash | WorkingDirectory (`/home/lars/projects/anime-comic-pipeline/ComfyUI`) doesn't exist. Service is a zombie. Should disable or fix path. |
+| 3 | **Photomap service**     | Module exists, Caddy vhost configured, Gatus endpoint                                                                     | Disabled — podman config permission issue. Needs debugging.                                                                           |
+| 4 | **OpenSEO**              | Deployed, Docker-based, Caddy vhost + Authelia forward auth                                                               | Pay-as-you-go DataForSEO API — requires active API key and credits                                                                    |
+| 5 | **Voice agents**         | Whisper ASR (Docker/ROCm) + LiveKit configured, Caddy vhosts                                                              | LiveKit API keys via sops — untested in production                                                                                    |
+| 6 | **SigNoz alert rules**   | `signoz-alerts.nix` has `mkRule` helper, rules + dashboards defined in JSON                                               | Rules not loaded into SigNoz — need API deployment step                                                                               |
+| 7 | **Twenty CRM**           | Module deployed, Docker containers running                                                                                | Needs `twenty-POST-SETUP.md` configuration — not production-ready                                                                     |
+| 8 | **TODO_LIST.md**         | Exists with 20+ active tasks                                                                                              | Last updated May 11 (5 days stale). Several items already completed.                                                                  |
 
 ---
 
 ## C) NOT STARTED
 
-| #   | Item                                     | Priority | Notes                                                                                                               |
-| --- | ---------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Caddy log rotation**                   | Medium   | No logrotate for `/var/log/caddy/`. Could fill disk on busy proxy.                                                  |
-| 2   | **Automated nix GC timer**               | Medium   | No periodic GC — manual `just clean` only. Both machines at high disk usage.                                        |
-| 3   | **Backup automation**                    | HIGH     | No automated backups for service data. Manual `just immich-backup` and `just task-backup` only. No restore testing. |
-| 4   | **TLS certificate auto-renewal**         | Medium   | dnsblockd CA cert is static in sops. Gatus checks expiry (7-day alert) but no auto-renewal.                         |
-| 5   | **CI/CD pipeline**                       | Medium   | No automated builds on push. All testing is manual.                                                                 |
-| 6   | **NixOS integration tests**              | Low      | `just test-fast` does syntax only. No service-level tests.                                                          |
-| 7   | **Home Manager Darwin tests**            | Low      | No automated test for macOS build. Manual `just switch` only.                                                       |
-| 8   | **Minecraft server**                     | Low      | Module exists, disabled. Low priority.                                                                              |
-| 9   | **Disk space monitoring alert**          | Medium   | No alert when disk exceeds 85%. Root is at 90%.                                                                     |
-| 10  | **Distributed builds (Darwin → evo-x2)** | Low      | MacBook Air disk exhaustion during builds. Could offload.                                                           |
-| 11  | **Service catalog documentation**        | Low      | No port map / dependency diagram.                                                                                   |
-| 12  | **go-auto-upgrade golangci-lint fix**    | Low      | `gomodguard_v2` unknown linter in pre-commit. Needs `golangci-lint-auto-configure` run.                             |
+| #  | Item                                     | Priority | Notes                                                                                                               |
+| -- | ---------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------- |
+| 1  | **Caddy log rotation**                   | Medium   | No logrotate for `/var/log/caddy/`. Could fill disk on busy proxy.                                                  |
+| 2  | **Automated nix GC timer**               | Medium   | No periodic GC — manual `just clean` only. Both machines at high disk usage.                                        |
+| 3  | **Backup automation**                    | HIGH     | No automated backups for service data. Manual `just immich-backup` and `just task-backup` only. No restore testing. |
+| 4  | **TLS certificate auto-renewal**         | Medium   | dnsblockd CA cert is static in sops. Gatus checks expiry (7-day alert) but no auto-renewal.                         |
+| 5  | **CI/CD pipeline**                       | Medium   | No automated builds on push. All testing is manual.                                                                 |
+| 6  | **NixOS integration tests**              | Low      | `just test-fast` does syntax only. No service-level tests.                                                          |
+| 7  | **Home Manager Darwin tests**            | Low      | No automated test for macOS build. Manual `just switch` only.                                                       |
+| 8  | **Minecraft server**                     | Low      | Module exists, disabled. Low priority.                                                                              |
+| 9  | **Disk space monitoring alert**          | Medium   | No alert when disk exceeds 85%. Root is at 90%.                                                                     |
+| 10 | **Distributed builds (Darwin → evo-x2)** | Low      | MacBook Air disk exhaustion during builds. Could offload.                                                           |
+| 11 | **Service catalog documentation**        | Low      | No port map / dependency diagram.                                                                                   |
+| 12 | **go-auto-upgrade golangci-lint fix**    | Low      | `gomodguard_v2` unknown linter in pre-commit. Needs `golangci-lint-auto-configure` run.                             |
 
 ---
 
 ## D) TOTALLY FUCKED UP
 
-| #   | Item                                     | Severity               | Details                                                                                                                                                          | Status                                                                                                         |
-| --- | ---------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| 1   | **Caddy was down 11 hours** (session 20) | 🔴 CRITICAL (resolved) | `ReadWritePaths` missing `/var/log/caddy` under `ProtectSystem=full`. ALL reverse-proxied services unreachable from May 15 15:22 to May 16 02:30.                | **Fixed** — deployed in session 20. But the monitoring gap remains: Gatus checked `/metrics` not actual proxy. |
-| 2   | **Disk at 90% on evo-x2 root**           | 🟡 ONGOING             | 442G/512G used on root partition. `/data` at 80% (819G/1T). No automated cleanup. Risk of build failures (`errno=28`). Darwin at 90-95%.                         | **Not addressed.**                                                                                             |
-| 3   | **ComfyUI zombie service**               | 🟡 LOW                 | Enabled but non-functional. Path doesn't exist. ExecCondition gracefully skips, but systemd still attempts startup every boot. Gatus endpoint fails every 5 min. | **Not addressed.**                                                                                             |
-| 4   | **go-auto-upgrade pre-commit broken**    | 🟡 LOW                 | `golangci-lint` fails with `unknown linters: 'gomodguard_v2'`. Had to `--no-verify` to commit.                                                                   | **Not addressed.** External repo.                                                                              |
-| 5   | **AGENTS.md has 260+ lines of gotchas**  | 🟡 CODE SMELL          | Many gotchas represent real bugs that should be fixed rather than documented. The document is becoming a "wall of warnings" instead of a reference.              | **Ongoing.** Each gotcha fixed reduces the wall.                                                               |
+| # | Item                                     | Severity               | Details                                                                                                                                                          | Status                                                                                                         |
+| - | ---------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| 1 | **Caddy was down 11 hours** (session 20) | 🔴 CRITICAL (resolved) | `ReadWritePaths` missing `/var/log/caddy` under `ProtectSystem=full`. ALL reverse-proxied services unreachable from May 15 15:22 to May 16 02:30.                | **Fixed** — deployed in session 20. But the monitoring gap remains: Gatus checked `/metrics` not actual proxy. |
+| 2 | **Disk at 90% on evo-x2 root**           | 🟡 ONGOING             | 442G/512G used on root partition. `/data` at 80% (819G/1T). No automated cleanup. Risk of build failures (`errno=28`). Darwin at 90-95%.                         | **Not addressed.**                                                                                             |
+| 3 | **ComfyUI zombie service**               | 🟡 LOW                 | Enabled but non-functional. Path doesn't exist. ExecCondition gracefully skips, but systemd still attempts startup every boot. Gatus endpoint fails every 5 min. | **Not addressed.**                                                                                             |
+| 4 | **go-auto-upgrade pre-commit broken**    | 🟡 LOW                 | `golangci-lint` fails with `unknown linters: 'gomodguard_v2'`. Had to `--no-verify` to commit.                                                                   | **Not addressed.** External repo.                                                                              |
+| 5 | **AGENTS.md has 260+ lines of gotchas**  | 🟡 CODE SMELL          | Many gotchas represent real bugs that should be fixed rather than documented. The document is becoming a "wall of warnings" instead of a reference.              | **Ongoing.** Each gotcha fixed reduces the wall.                                                               |
 
 ---
 
@@ -132,48 +132,48 @@
 
 ### P0 — Immediate (Today)
 
-| #   | Task                                                                                 | Impact                         | Effort |
-| --- | ------------------------------------------------------------------------------------ | ------------------------------ | ------ |
-| 1   | **Deploy to evo-x2** (`just switch`) — includes PMA overlay + Caddy fix verification | Ships all session 20-21 work   | 10 min |
-| 2   | **Run `nix-collect-garbage --delete-older-than 7d`** on evo-x2                       | Reclaims disk (90% full)       | 10 min |
-| 3   | **Fix Caddy health check in Gatus** — test actual proxy (not just /metrics)          | Prevents future silent outages | 30 min |
+| # | Task                                                                                 | Impact                         | Effort |
+| - | ------------------------------------------------------------------------------------ | ------------------------------ | ------ |
+| 1 | **Deploy to evo-x2** (`just switch`) — includes PMA overlay + Caddy fix verification | Ships all session 20-21 work   | 10 min |
+| 2 | **Run `nix-collect-garbage --delete-older-than 7d`** on evo-x2                       | Reclaims disk (90% full)       | 10 min |
+| 3 | **Fix Caddy health check in Gatus** — test actual proxy (not just /metrics)          | Prevents future silent outages | 30 min |
 
 ### P1 — High Priority (This Sprint)
 
-| #   | Task                                                                 | Impact                             | Effort |
-| --- | -------------------------------------------------------------------- | ---------------------------------- | ------ |
-| 4   | **Disable ComfyUI service** (dead path reference)                    | Clean up zombie + monitoring noise | 5 min  |
-| 5   | **Set up automated backup schedule** (Immich DB, Gitea, Taskwarrior) | Data loss prevention               | 2h     |
-| 6   | **Add Caddy access log rotation** (logrotate)                        | Prevent disk fill                  | 30 min |
-| 7   | **Add periodic nix GC timer** (weekly, 7d threshold)                 | Prevent disk exhaustion            | 30 min |
-| 8   | **Fix go-auto-upgrade golangci-lint config** (remove gomodguard_v2)  | Unbreak pre-commit                 | 15 min |
-| 9   | **Deploy SigNoz alert rules** from signoz-alerts.nix                 | Active monitoring                  | 1h     |
+| # | Task                                                                 | Impact                             | Effort |
+| - | -------------------------------------------------------------------- | ---------------------------------- | ------ |
+| 4 | **Disable ComfyUI service** (dead path reference)                    | Clean up zombie + monitoring noise | 5 min  |
+| 5 | **Set up automated backup schedule** (Immich DB, Gitea, Taskwarrior) | Data loss prevention               | 2h     |
+| 6 | **Add Caddy access log rotation** (logrotate)                        | Prevent disk fill                  | 30 min |
+| 7 | **Add periodic nix GC timer** (weekly, 7d threshold)                 | Prevent disk exhaustion            | 30 min |
+| 8 | **Fix go-auto-upgrade golangci-lint config** (remove gomodguard_v2)  | Unbreak pre-commit                 | 15 min |
+| 9 | **Deploy SigNoz alert rules** from signoz-alerts.nix                 | Active monitoring                  | 1h     |
 
 ### P2 — Medium Priority (Next Sprint)
 
-| #   | Task                                                                  | Impact                      | Effort |
-| --- | --------------------------------------------------------------------- | --------------------------- | ------ |
-| 10  | **Add disk space monitoring alert** (Gatus or SigNoz, 85%+ threshold) | Early warning               | 30 min |
-| 11  | **Set up GitHub Actions CI** runner on evo-x2                         | Automated build testing     | 3h     |
-| 12  | **Fix photomap service** (podman permission issue)                    | Re-enable photo exploration | 2h     |
-| 13  | **Refresh TODO_LIST.md** against current codebase state               | Accurate planning           | 1h     |
-| 14  | **Wire SigNoz journald logs to Discord** for critical services        | Structured alerting         | 1h     |
-| 15  | **Test voice agents** (Whisper ASR + LiveKit) end-to-end              | Validate deployment         | 1h     |
-| 16  | **Audit all ReadWritePaths** for services using harden{}              | Prevent caddy-class bugs    | 1h     |
+| #  | Task                                                                  | Impact                      | Effort |
+| -- | --------------------------------------------------------------------- | --------------------------- | ------ |
+| 10 | **Add disk space monitoring alert** (Gatus or SigNoz, 85%+ threshold) | Early warning               | 30 min |
+| 11 | **Set up GitHub Actions CI** runner on evo-x2                         | Automated build testing     | 3h     |
+| 12 | **Fix photomap service** (podman permission issue)                    | Re-enable photo exploration | 2h     |
+| 13 | **Refresh TODO_LIST.md** against current codebase state               | Accurate planning           | 1h     |
+| 14 | **Wire SigNoz journald logs to Discord** for critical services        | Structured alerting         | 1h     |
+| 15 | **Test voice agents** (Whisper ASR + LiveKit) end-to-end              | Validate deployment         | 1h     |
+| 16 | **Audit all ReadWritePaths** for services using harden{}              | Prevent caddy-class bugs    | 1h     |
 
 ### P3 — Nice To Have (Backlog)
 
-| #   | Task                                                                    | Impact                    | Effort |
-| --- | ----------------------------------------------------------------------- | ------------------------- | ------ |
-| 17  | **Provision Pi 3** for DNS failover cluster                             | HA DNS                    | 4h     |
-| 18  | **Set up distributed builds** (Darwin → evo-x2)                         | Faster macOS builds       | 3h     |
-| 19  | **Implement TLS cert auto-renewal** (dnsblockd CA)                      | Prevent cert expiry       | 3h     |
-| 20  | **Configure Twenty CRM** production setup                               | Business tool             | 2h     |
-| 21  | **Add restore testing** for backup scripts                              | Backup confidence         | 2h     |
-| 22  | **Create NixOS integration test framework** for service modules         | Automated quality         | 4h     |
-| 23  | **Refactor go-auto-upgrade prepared-source** to use `go mod vendor`     | Reduce go.sum brittleness | 3h     |
-| 24  | **Document all services in a service catalog** (port map, dependencies) | Operational clarity       | 2h     |
-| 25  | **Add Home Manager integration tests** (`just test-hm` for Darwin)      | Cross-platform CI         | 2h     |
+| #  | Task                                                                    | Impact                    | Effort |
+| -- | ----------------------------------------------------------------------- | ------------------------- | ------ |
+| 17 | **Provision Pi 3** for DNS failover cluster                             | HA DNS                    | 4h     |
+| 18 | **Set up distributed builds** (Darwin → evo-x2)                         | Faster macOS builds       | 3h     |
+| 19 | **Implement TLS cert auto-renewal** (dnsblockd CA)                      | Prevent cert expiry       | 3h     |
+| 20 | **Configure Twenty CRM** production setup                               | Business tool             | 2h     |
+| 21 | **Add restore testing** for backup scripts                              | Backup confidence         | 2h     |
+| 22 | **Create NixOS integration test framework** for service modules         | Automated quality         | 4h     |
+| 23 | **Refactor go-auto-upgrade prepared-source** to use `go mod vendor`     | Reduce go.sum brittleness | 3h     |
+| 24 | **Document all services in a service catalog** (port map, dependencies) | Operational clarity       | 2h     |
+| 25 | **Add Home Manager integration tests** (`just test-hm` for Darwin)      | Cross-platform CI         | 2h     |
 
 ---
 

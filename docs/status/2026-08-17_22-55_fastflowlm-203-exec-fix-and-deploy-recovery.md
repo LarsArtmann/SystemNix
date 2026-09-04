@@ -11,13 +11,13 @@
 
 While reading the module I found **five additional latent bugs** that would have surfaced one-per-deploy after the 203 fix:
 
-| # | Bug | Consequence if unfixed |
-|---|-----|------------------------|
-| 1 | `fastflowlm.socket` had no `Service=` override | Socket triggers the **backend directly**: the listening fd is passed to `flm` (nobody accepts it → clients hang forever) AND bypasses the proxy's cold-load wait gate |
-| 2 | Backend `wantedBy = [ "multi-user.target" ]` | Model pins ~25 GB RAM at every boot — defeats the entire socket-activation design |
-| 3 | `WorkingDirectory = /home/lars` + `harden {}`'s `ProtectHome=true` | Guaranteed `status=200/CHDIR` immediately after fixing 203 |
-| 4 | `idleCheck` stopped `fastflowlm.socket` | Idle TTL kills the :52625 listener permanently — no re-activation until manual intervention |
-| 5 | `XILINX_XRT=${lib.getExe …}` env (bogus `/bin/flm` path) | Harmless in practice (wrapper re-exports the correct value) but a lying config |
+| # | Bug                                                                | Consequence if unfixed                                                                                                                                                |
+| - | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | `fastflowlm.socket` had no `Service=` override                     | Socket triggers the **backend directly**: the listening fd is passed to `flm` (nobody accepts it → clients hang forever) AND bypasses the proxy's cold-load wait gate |
+| 2 | Backend `wantedBy = [ "multi-user.target" ]`                       | Model pins ~25 GB RAM at every boot — defeats the entire socket-activation design                                                                                     |
+| 3 | `WorkingDirectory = /home/lars` + `harden {}`'s `ProtectHome=true` | Guaranteed `status=200/CHDIR` immediately after fixing 203                                                                                                            |
+| 4 | `idleCheck` stopped `fastflowlm.socket`                            | Idle TTL kills the :52625 listener permanently — no re-activation until manual intervention                                                                           |
+| 5 | `XILINX_XRT=${lib.getExe …}` env (bogus `/bin/flm` path)           | Harmless in practice (wrapper re-exports the correct value) but a lying config                                                                                        |
 
 Plus one **pre-existing phantom metric** from the original integration commit (`541a6a1a`): Gatus checks `system_service_state_failed{service="fastflowlm"}` (gatus-config.nix:833) but **no emitter existed anywhere** — permanently-red check + a hard deploy blocker via pre-deploy metric validation.
 
@@ -77,16 +77,17 @@ Plus one **pre-existing phantom metric** from the original integration commit (`
 3. **Load/PSI gate in pre-deploy-check** — refuse (or warn loudly) when 1-min load > ~2× cores or PSI memory full > threshold. Would have saved 1h42m.
 4. **Consider a NixOS VM test for fastflowlm** wiring (socket Service=, proxy wait) — the layout self-check + check #12 catch the static class, not the wiring class.
 5. **eval-time guard idea:** a flake check asserting `builtins.match ".*/bin/.*" ExecStart` where packages are involved — weaker than check #12 but catches at `nix flake check` time on CI.
-6. **Phantom-metric discipline** — the Gatus check for `system_service_state_failed` shipped in `541a6a1a` without an emitter and survived until a *later deploy* happened to be blocked by it. Pre-deploy metric validation only works if new checks and emitters land in the same change set — worth a CONTRIBUTING note.
+6. **Phantom-metric discipline** — the Gatus check for `system_service_state_failed` shipped in `541a6a1a` without an emitter and survived until a _later deploy_ happened to be blocked by it. Pre-deploy metric validation only works if new checks and emitters land in the same change set — worth a CONTRIBUTING note.
 
 ## f) NEXT TASKS (prioritized)
 
 **P0 — finish verifying this fix**
+
 1. ~~Cold-load E2E: `curl 127.0.0.1:52625/v1/models` (accepts 1–3 min cold load), then a chat completion; record TTFT.~~ done at `99301327`
 2. ~~Watch `fastflowlm-proxy` wait-gate behavior during cold load (journal).~~ done at `99301327`
 3. ~~Idle-TTL test: temporarily set `keepAlive = "5min"` (or wait), verify proxy+service stop, **socket still listening**, second curl re-activates.~~ done (idle-check reworked + live (2026-08-18 19-56 session fixes))
 4. ~~Run `nix run .#post-deploy-check` (full smoke suite).~~ done (full suite green 2026-08-18 (53 PASS / 0 FAIL, 20-52 session))
-5. Remove `system_service_state_failed` from `KNOWN_NEW_METRICS` (metric confirmed live).
+~~5. Remove `system_service_state_failed` from `KNOWN_NEW_METRICS` (metric confirmed live).~~ done — no longer in the allowlist (current entries verified 2026-08-31)
 6. ~~Verify Gatus "FastFlowLM" endpoints green (both pat conditions) in the Gatus UI/API.~~ done (wired via system-health state metrics; live since 08-18)
 7. Verify `system-health` crash-loop metric (`system_service_start_limit_hit`) still consistent with new emit order.
 
@@ -100,7 +101,7 @@ Plus one **pre-existing phantom metric** from the original integration commit (`
 
 **P2 — deploy pipeline hardening**
 14. deploy.sh PATH prologue (self-contained coreutils/grep).
-15. Pre-deploy load/PSI gate.
+~~15. Pre-deploy load/PSI gate.~~ done — deploy pressure gate shipped with the 2026-08-22 stability plan (memory PSI/zram/MemAvailable, exit 12); IO-PSI correlation is the open follow-up
 16. Consider `--accept-flake-config` / eval-cache warm check to cut deploy eval time.
 17. VM test for socket-activation wiring (fastflowlm or generic template).
 
@@ -114,7 +115,7 @@ Plus one **pre-existing phantom metric** from the original integration commit (`
 ## g) QUESTIONS (cannot determine myself)
 
 1. **Cold-load test now or later?** It pins ~25 GB RAM + NPU for up to the 1h idle TTL, while the concurrent session's Go build storm still has the box at high load. Verify now, or wait for that storm to finish?
-2. **Post-switch steps for the 16:42 activation were skipped** (provisioner restarts, `buildcache-usb-recovery`, `buildcache-gc`). The 21:08 re-activation by the other session *may* have covered them. My shell cannot run `systemctl`/`sudo` (Crush security policy) — should I verify their state via journal only, or will you run the convergence steps / re-run deploy from a proper shell?
+2. **Post-switch steps for the 16:42 activation were skipped** (provisioner restarts, `buildcache-usb-recovery`, `buildcache-gc`). The 21:08 re-activation by the other session _may_ have covered them. My shell cannot run `systemctl`/`sudo` (Crush security policy) — should I verify their state via journal only, or will you run the convergence steps / re-run deploy from a proper shell?
 3. **The Go test storm (`cqrs-bench`, `gomod-verify`) belongs to your other session.** If deploys will continue tonight, should I gate on it (wait), or are you fine with deploys sharing the box?
 
 ---

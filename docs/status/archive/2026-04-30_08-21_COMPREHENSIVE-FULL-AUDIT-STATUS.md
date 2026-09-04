@@ -43,23 +43,23 @@ This session added `go-arch-lint` to the Go toolchain (1 commit, +8 lines).
 
 ### P1 — SECURITY (3/7 = 43%)
 
-| #   | Task                             | Status     | Blocker                                                |
-| --- | -------------------------------- | ---------- | ------------------------------------------------------ |
-| 7   | Taskwarrior encryption → sops    | ⬜ Blocked | Needs evo-x2 for sops secret creation                  |
-| 9   | Pin Docker digest (Voice Agents) | ⬜ Blocked | Version-tagged (not `latest`), needs evo-x2 for digest |
-| 10  | Pin Docker digest (PhotoMap)     | ✅ Done    | Pinned to SHA256 digest in session 5                   |
-| 11  | Secure VRRP auth_pass with sops  | ⬜ Blocked | Needs evo-x2 for sops secret                           |
+| #  | Task                             | Status     | Blocker                                                |
+| -- | -------------------------------- | ---------- | ------------------------------------------------------ |
+| 7  | Taskwarrior encryption → sops    | ⬜ Blocked | Needs evo-x2 for sops secret creation                  |
+| 9  | Pin Docker digest (Voice Agents) | ⬜ Blocked | Version-tagged (not `latest`), needs evo-x2 for digest |
+| 10 | Pin Docker digest (PhotoMap)     | ✅ Done    | Pinned to SHA256 digest in session 5                   |
+| 11 | Secure VRRP auth_pass with sops  | ⬜ Blocked | Needs evo-x2 for sops secret                           |
 
 ### P6 — SERVICES (9/15 = 60%)
 
-| #   | Task                        | Status        | Notes                                        |
-| --- | --------------------------- | ------------- | -------------------------------------------- |
-| 56  | ComfyUI hardcoded paths     | ⬜ Acceptable | Module option defaults designed for override |
-| 58  | ComfyUI dedicated user      | ⬜ Acceptable | Needs `lars` for GPU group access            |
-| 62  | Hermes health check         | ⬜ Pending    | Needs health endpoint in Hermes itself       |
-| 63  | Hermes key_env migration    | ⬜ Pending    | mergeEnvScript redundant but low risk        |
-| 65  | SigNoz missing metrics      | ⬜ Blocked    | Needs evo-x2 to verify metric endpoints      |
-| 66  | Authelia SMTP notifications | ⬜ Blocked    | Needs SMTP credentials                       |
+| #  | Task                        | Status        | Notes                                        |
+| -- | --------------------------- | ------------- | -------------------------------------------- |
+| 56 | ComfyUI hardcoded paths     | ⬜ Acceptable | Module option defaults designed for override |
+| 58 | ComfyUI dedicated user      | ⬜ Acceptable | Needs `lars` for GPU group access            |
+| 62 | Hermes health check         | ⬜ Pending    | Needs health endpoint in Hermes itself       |
+| 63 | Hermes key_env migration    | ⬜ Pending    | mergeEnvScript redundant but low risk        |
+| 65 | SigNoz missing metrics      | ⬜ Blocked    | Needs evo-x2 to verify metric endpoints      |
+| 66 | Authelia SMTP notifications | ⬜ Blocked    | Needs SMTP credentials                       |
 
 ### P9 — FUTURE (2/12 = 17%)
 
@@ -82,21 +82,21 @@ Research/investigation items — not urgent but important for long-term health:
 
 All require physical access to evo-x2:
 
-| #   | Task                                         | Est. Time |
-| --- | -------------------------------------------- | --------- |
-| 41  | `just switch` — deploy all pending changes   | 45m+      |
-| 42  | Verify Ollama works after rebuild            | 5m        |
-| 43  | Verify Steam works after rebuild             | 5m        |
-| 44  | Verify ComfyUI works after rebuild           | 5m        |
-| 45  | Verify Caddy HTTPS block page                | 3m        |
-| 46  | Verify SigNoz collecting metrics/logs/traces | 5m        |
-| 47  | Check Authelia SSO status                    | 3m        |
-| 48  | Check PhotoMap service status                | 3m        |
-| 49  | Verify AMD NPU with test workload            | 10m       |
-| 50  | Build Pi 3 SD image                          | 30m+      |
-| 51  | Flash SD + boot Pi 3                         | 15m       |
-| 52  | Test DNS failover                            | 10m       |
-| 53  | Configure LAN devices for DNS VIP            | 10m       |
+| #  | Task                                         | Est. Time |
+| -- | -------------------------------------------- | --------- |
+| 41 | `just switch` — deploy all pending changes   | 45m+      |
+| 42 | Verify Ollama works after rebuild            | 5m        |
+| 43 | Verify Steam works after rebuild             | 5m        |
+| 44 | Verify ComfyUI works after rebuild           | 5m        |
+| 45 | Verify Caddy HTTPS block page                | 3m        |
+| 46 | Verify SigNoz collecting metrics/logs/traces | 5m        |
+| 47 | Check Authelia SSO status                    | 3m        |
+| 48 | Check PhotoMap service status                | 3m        |
+| 49 | Verify AMD NPU with test workload            | 10m       |
+| 50 | Build Pi 3 SD image                          | 30m+      |
+| 51 | Flash SD + boot Pi 3                         | 15m       |
+| 52 | Test DNS failover                            | 10m       |
+| 53 | Configure LAN devices for DNS VIP            | 10m       |
 
 ---
 
@@ -200,43 +200,43 @@ Contains historical config dumps (iTerm2 profile, modular zshrc, Chrome plugins,
 
 ### Immediate (can do without evo-x2)
 
-| #   | Task                                               | Est. | Impact                      |
-| --- | -------------------------------------------------- | ---- | --------------------------- |
-| 1   | Remove duplicate fail2ban from configuration.nix   | 5m   | Fix D1 conflict             |
-| 2   | Delete/stub 4 broken justfile recipes              | 10m  | Fix D2 broken commands      |
-| 3   | Archive docs/ root-level stale markdown files      | 10m  | Reduce repo clutter         |
-| 4   | Remove vestigial dotfiles/ directory               | 5m   | Clean up dead code          |
-| 5   | Extract `/home/lars` paths to config references    | 15m  | Proper Nix abstraction      |
-| 6   | Move Authelia client/user secrets to sops-nix      | 15m  | Security fix                |
-| 7   | Add go-arch-lint config to dnsblockd + emeet-pixyd | 20m  | Architecture enforcement    |
-| 8   | Clean up docs/status/ — archive old reports        | 10m  | Repo hygiene                |
-| 9   | Wire or remove nix-visualize specialArgs           | 5m   | Remove dead input reference |
-| 10  | Add Hermes health check systemd watchdog           | 10m  | Reliability                 |
+| #  | Task                                               | Est. | Impact                      |
+| -- | -------------------------------------------------- | ---- | --------------------------- |
+| 1  | Remove duplicate fail2ban from configuration.nix   | 5m   | Fix D1 conflict             |
+| 2  | Delete/stub 4 broken justfile recipes              | 10m  | Fix D2 broken commands      |
+| 3  | Archive docs/ root-level stale markdown files      | 10m  | Reduce repo clutter         |
+| 4  | Remove vestigial dotfiles/ directory               | 5m   | Clean up dead code          |
+| 5  | Extract `/home/lars` paths to config references    | 15m  | Proper Nix abstraction      |
+| 6  | Move Authelia client/user secrets to sops-nix      | 15m  | Security fix                |
+| 7  | Add go-arch-lint config to dnsblockd + emeet-pixyd | 20m  | Architecture enforcement    |
+| 8  | Clean up docs/status/ — archive old reports        | 10m  | Repo hygiene                |
+| 9  | Wire or remove nix-visualize specialArgs           | 5m   | Remove dead input reference |
+| 10 | Add Hermes health check systemd watchdog           | 10m  | Reliability                 |
 
 ### Blocked on evo-x2 (requires SSH or physical access)
 
-| #   | Task                                         | Est. | Impact                 |
-| --- | -------------------------------------------- | ---- | ---------------------- |
-| 11  | `just switch` — deploy ALL pending changes   | 45m  | **THE BIG ONE**        |
-| 12  | Verify all 8 failed systemd services recover | 15m  | Unblock monitoring     |
-| 13  | Move Taskwarrior encryption to sops-nix      | 10m  | Security               |
-| 14  | Secure VRRP auth_pass with sops-nix          | 8m   | Security               |
-| 15  | Pin Voice Agents Docker image digest         | 5m   | Supply chain security  |
-| 16  | Verify SigNoz collecting metrics/logs/traces | 10m  | Observability gap      |
-| 17  | Verify Ollama, Steam, ComfyUI, PhotoMap      | 20m  | Service validation     |
-| 18  | Verify Caddy HTTPS block page                | 5m   | DNS blocker validation |
-| 19  | Verify AMD NPU with test workload            | 10m  | Hardware validation    |
-| 20  | Build Pi 3 SD image                          | 30m  | DNS failover cluster   |
+| #  | Task                                         | Est. | Impact                 |
+| -- | -------------------------------------------- | ---- | ---------------------- |
+| 11 | `just switch` — deploy ALL pending changes   | 45m  | **THE BIG ONE**        |
+| 12 | Verify all 8 failed systemd services recover | 15m  | Unblock monitoring     |
+| 13 | Move Taskwarrior encryption to sops-nix      | 10m  | Security               |
+| 14 | Secure VRRP auth_pass with sops-nix          | 8m   | Security               |
+| 15 | Pin Voice Agents Docker image digest         | 5m   | Supply chain security  |
+| 16 | Verify SigNoz collecting metrics/logs/traces | 10m  | Observability gap      |
+| 17 | Verify Ollama, Steam, ComfyUI, PhotoMap      | 20m  | Service validation     |
+| 18 | Verify Caddy HTTPS block page                | 5m   | DNS blocker validation |
+| 19 | Verify AMD NPU with test workload            | 10m  | Hardware validation    |
+| 20 | Build Pi 3 SD image                          | 30m  | DNS failover cluster   |
 
 ### Longer-term
 
-| #   | Task                                        | Est. | Impact         |
-| --- | ------------------------------------------- | ---- | -------------- |
-| 21  | Add Authelia SMTP notifications             | 15m  | UX improvement |
-| 22  | Create NixOS VM tests for critical services | 2h   | Reliability    |
-| 23  | Package ComfyUI as proper Nix derivation    | 4h   | Architecture   |
-| 24  | Add binary cache (Cachix) for CI            | 1h   | CI performance |
-| 25  | Integration tests for niri session restore  | 2h   | Reliability    |
+| #  | Task                                        | Est. | Impact         |
+| -- | ------------------------------------------- | ---- | -------------- |
+| 21 | Add Authelia SMTP notifications             | 15m  | UX improvement |
+| 22 | Create NixOS VM tests for critical services | 2h   | Reliability    |
+| 23 | Package ComfyUI as proper Nix derivation    | 4h   | Architecture   |
+| 24 | Add binary cache (Cachix) for CI            | 1h   | CI performance |
+| 25 | Integration tests for niri session restore  | 2h   | Reliability    |
 
 ---
 

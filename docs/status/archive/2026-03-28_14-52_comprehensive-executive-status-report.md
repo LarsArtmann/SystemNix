@@ -279,53 +279,53 @@ f8932fe docs: add YouTube frontend alternatives research
 
 ### Immediate (This Week)
 
-| #   | Task                                        | Effort | Impact | Priority |
-| --- | ------------------------------------------- | ------ | ------ | -------- |
-| 1   | Complete Gitea initial setup on evo-x2      | 1h     | HIGH   | P0       |
-| 2   | Create Gitea credentials and run first sync | 30m    | HIGH   | P0       |
-| 3   | Test DNS blocker false positive reporting   | 1h     | MEDIUM | P1       |
-| 4   | Deploy niri-wrapped to evo-x2               | 2h     | HIGH   | P1       |
-| 5   | Document Gitea setup process                | 1h     | MEDIUM | P2       |
+| # | Task                                        | Effort | Impact | Priority |
+| - | ------------------------------------------- | ------ | ------ | -------- |
+| 1 | Complete Gitea initial setup on evo-x2      | 1h     | HIGH   | P0       |
+| 2 | Create Gitea credentials and run first sync | 30m    | HIGH   | P0       |
+| 3 | Test DNS blocker false positive reporting   | 1h     | MEDIUM | P1       |
+| 4 | Deploy niri-wrapped to evo-x2               | 2h     | HIGH   | P1       |
+| 5 | Document Gitea setup process                | 1h     | MEDIUM | P2       |
 
 ### Short-term (This Sprint)
 
-| #   | Task                                        | Effort | Impact | Priority |
-| --- | ------------------------------------------- | ------ | ------ | -------- |
-| 6   | Add HTTPS to Gitea (reverse proxy)          | 2h     | HIGH   | P1       |
-| 7   | Implement per-device DNS filtering profiles | 4h     | HIGH   | P1       |
-| 8   | Add Gitea CI/CD (Actions or Drone)          | 4h     | MEDIUM | P2       |
-| 9   | Create DNS blocker admin dashboard          | 3h     | MEDIUM | P2       |
-| 10  | Self-host Invidious YouTube frontend        | 2h     | MEDIUM | P2       |
+| #  | Task                                        | Effort | Impact | Priority |
+| -- | ------------------------------------------- | ------ | ------ | -------- |
+| 6  | Add HTTPS to Gitea (reverse proxy)          | 2h     | HIGH   | P1       |
+| 7  | Implement per-device DNS filtering profiles | 4h     | HIGH   | P1       |
+| 8  | Add Gitea CI/CD (Actions or Drone)          | 4h     | MEDIUM | P2       |
+| 9  | Create DNS blocker admin dashboard          | 3h     | MEDIUM | P2       |
+| 10 | Self-host Invidious YouTube frontend        | 2h     | MEDIUM | P2       |
 
 ### Medium-term (This Month)
 
-| #   | Task                                       | Effort | Impact | Priority |
-| --- | ------------------------------------------ | ------ | ------ | -------- |
-| 11  | Migrate Gitea to PostgreSQL                | 2h     | LOW    | P3       |
-| 12  | Add Matrix chat server                     | 4h     | MEDIUM | P2       |
-| 13  | Deploy Immich photo backup                 | 2h     | MEDIUM | P2       |
-| 14  | Add time-based DNS blocking                | 3h     | MEDIUM | P2       |
-| 15  | Create unified dashboard (Homarr/Homepage) | 3h     | LOW    | P3       |
+| #  | Task                                       | Effort | Impact | Priority |
+| -- | ------------------------------------------ | ------ | ------ | -------- |
+| 11 | Migrate Gitea to PostgreSQL                | 2h     | LOW    | P3       |
+| 12 | Add Matrix chat server                     | 4h     | MEDIUM | P2       |
+| 13 | Deploy Immich photo backup                 | 2h     | MEDIUM | P2       |
+| 14 | Add time-based DNS blocking                | 3h     | MEDIUM | P2       |
+| 15 | Create unified dashboard (Homarr/Homepage) | 3h     | LOW    | P3       |
 
 ### Long-term (This Quarter)
 
-| #   | Task                                  | Effort | Impact | Priority |
-| --- | ------------------------------------- | ------ | ------ | -------- |
-| 16  | Deploy Jellyfin media server          | 2h     | MEDIUM | P2       |
-| 17  | Add Paperless-ngx document management | 2h     | MEDIUM | P2       |
-| 18  | Implement automated Gitea backups     | 2h     | HIGH   | P1       |
-| 19  | Create comprehensive monitoring       | 4h     | MEDIUM | P2       |
-| 20  | Add VPN (WireGuard/Headscale)         | 3h     | MEDIUM | P2       |
+| #  | Task                                  | Effort | Impact | Priority |
+| -- | ------------------------------------- | ------ | ------ | -------- |
+| 16 | Deploy Jellyfin media server          | 2h     | MEDIUM | P2       |
+| 17 | Add Paperless-ngx document management | 2h     | MEDIUM | P2       |
+| 18 | Implement automated Gitea backups     | 2h     | HIGH   | P1       |
+| 19 | Create comprehensive monitoring       | 4h     | MEDIUM | P2       |
+| 20 | Add VPN (WireGuard/Headscale)         | 3h     | MEDIUM | P2       |
 
 ### Ongoing/Maintenance
 
-| #   | Task                                      | Effort | Impact | Priority |
-| --- | ----------------------------------------- | ------ | ------ | -------- |
-| 21  | Weekly Gitea mirror verification          | 15m/wk | HIGH   | P1       |
-| 22  | Update DNS blocklists                     | 15m/wk | MEDIUM | P2       |
-| 23  | Review false positive reports             | 30m/wk | MEDIUM | P2       |
-| 24  | Security updates for self-hosted services | 1h/wk  | HIGH   | P1       |
-| 25  | Performance monitoring and optimization   | 1h/wk  | LOW    | P3       |
+| #  | Task                                      | Effort | Impact | Priority |
+| -- | ----------------------------------------- | ------ | ------ | -------- |
+| 21 | Weekly Gitea mirror verification          | 15m/wk | HIGH   | P1       |
+| 22 | Update DNS blocklists                     | 15m/wk | MEDIUM | P2       |
+| 23 | Review false positive reports             | 30m/wk | MEDIUM | P2       |
+| 24 | Security updates for self-hosted services | 1h/wk  | HIGH   | P1       |
+| 25 | Performance monitoring and optimization   | 1h/wk  | LOW    | P3       |
 
 ---
 
@@ -412,12 +412,12 @@ Which secret management approach best fits our "declarative infrastructure" phil
 ### Recent Changes (Last 5 Commits)
 
 ```
- docs/research/youtube-frontend-alternatives.md     | 252 +++++++++++++
- docs/status/2026-03-28_09-09_DNS-BLOCKER-STATUS.md |  99 ++++++
- platforms/nixos/modules/dns-blocker.nix            | 138 ++++----
- platforms/nixos/services/gitea.nix                 | 348 +++++++++++++++++
- platforms/nixos/system/configuration.nix           |   1 +
- 5 files changed, 775 insertions(+), 63 deletions(-)
+docs/research/youtube-frontend-alternatives.md     | 252 +++++++++++++
+docs/status/2026-03-28_09-09_DNS-BLOCKER-STATUS.md |  99 ++++++
+platforms/nixos/modules/dns-blocker.nix            | 138 ++++----
+platforms/nixos/services/gitea.nix                 | 348 +++++++++++++++++
+platforms/nixos/system/configuration.nix           |   1 +
+5 files changed, 775 insertions(+), 63 deletions(-)
 ```
 
 ---

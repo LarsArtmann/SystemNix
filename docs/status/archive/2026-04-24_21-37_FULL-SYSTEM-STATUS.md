@@ -195,33 +195,33 @@ Hardcoded secondary IP — not validated on the actual network. Could conflict i
 
 ## F) TOP 25 NEXT ACTIONS
 
-| #   | Action                                                           | Impact      | Effort |
-| --- | ---------------------------------------------------------------- | ----------- | ------ |
-| 1   | **`just switch`** — deploy hipblaslt removal + DNS blocker fixes | 🔴 Critical | ~15min |
-| 2   | **Verify Ollama works** after rebuild                            | High        | Low    |
-| 3   | **Verify Steam works** after rebuild                             | High        | Low    |
-| 4   | **Verify ComfyUI works** after rebuild                           | High        | Low    |
-| 5   | **Verify DNS block page** works on new IP:port                   | High        | Low    |
-| 6   | **Build Pi 3 SD image**                                          | High        | Low    |
-| 7   | **Flash SD + boot Pi 3**                                         | High        | Low    |
-| 8   | **Test DNS failover**                                            | High        | Low    |
-| 9   | **Validate `192.168.1.200`** doesn't conflict on LAN             | High        | 0      |
-| 10  | **Check Authelia** SSO status                                    | High        | Low    |
-| 11  | **Archive 30+ stale status docs**                                | Medium      | Low    |
-| 12  | **Delete untracked REVIEW_DOCS.md** or act on it                 | Low         | 0      |
-| 13  | **Drop orphaned Hyprland stash**                                 | Low         | 0      |
-| 14  | **Clean 18 remote branches**                                     | Low         | Low    |
-| 15  | **Enable `services.udisks2`**                                    | High        | Low    |
-| 16  | **Check SigNoz** collection status                               | Medium      | Low    |
-| 17  | **Check Photomap** service status                                | Medium      | Low    |
-| 18  | **Verify AMD NPU** with test workload                            | Medium      | Medium |
-| 19  | **Secure VRRP auth** with sops-nix                               | Medium      | Low    |
-| 20  | **Convert niri session restore** to NixOS options                | High        | Medium |
-| 21  | **Create `homeModules` pattern**                                 | High        | Medium |
-| 22  | **Add CI pipeline**                                              | High        | Medium |
-| 23  | **Investigate `just test` race**                                 | Medium      | Medium |
-| 24  | **Fix pre-commit statix hook**                                   | Medium      | Low    |
-| 25  | **Setup Taskwarrior backup** timer                               | Medium      | Low    |
+| #  | Action                                                           | Impact      | Effort |
+| -- | ---------------------------------------------------------------- | ----------- | ------ |
+| 1  | **`just switch`** — deploy hipblaslt removal + DNS blocker fixes | 🔴 Critical | ~15min |
+| 2  | **Verify Ollama works** after rebuild                            | High        | Low    |
+| 3  | **Verify Steam works** after rebuild                             | High        | Low    |
+| 4  | **Verify ComfyUI works** after rebuild                           | High        | Low    |
+| 5  | **Verify DNS block page** works on new IP:port                   | High        | Low    |
+| 6  | **Build Pi 3 SD image**                                          | High        | Low    |
+| 7  | **Flash SD + boot Pi 3**                                         | High        | Low    |
+| 8  | **Test DNS failover**                                            | High        | Low    |
+| 9  | **Validate `192.168.1.200`** doesn't conflict on LAN             | High        | 0      |
+| 10 | **Check Authelia** SSO status                                    | High        | Low    |
+| 11 | **Archive 30+ stale status docs**                                | Medium      | Low    |
+| 12 | **Delete untracked REVIEW_DOCS.md** or act on it                 | Low         | 0      |
+| 13 | **Drop orphaned Hyprland stash**                                 | Low         | 0      |
+| 14 | **Clean 18 remote branches**                                     | Low         | Low    |
+| 15 | **Enable `services.udisks2`**                                    | High        | Low    |
+| 16 | **Check SigNoz** collection status                               | Medium      | Low    |
+| 17 | **Check Photomap** service status                                | Medium      | Low    |
+| 18 | **Verify AMD NPU** with test workload                            | Medium      | Medium |
+| 19 | **Secure VRRP auth** with sops-nix                               | Medium      | Low    |
+| 20 | **Convert niri session restore** to NixOS options                | High        | Medium |
+| 21 | **Create `homeModules` pattern**                                 | High        | Medium |
+| 22 | **Add CI pipeline**                                              | High        | Medium |
+| 23 | **Investigate `just test` race**                                 | Medium      | Medium |
+| 24 | **Fix pre-commit statix hook**                                   | Medium      | Low    |
+| 25 | **Setup Taskwarrior backup** timer                               | Medium      | Low    |
 
 ---
 

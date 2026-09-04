@@ -85,18 +85,18 @@ Module is written and wired but hasn't been deployed to evo-x2 yet (`just switch
 
 ## C) NOT STARTED 🔲
 
-| #   | Item                                                    | Priority | Effort |
-| --- | ------------------------------------------------------- | -------- | ------ |
-| 1   | LUKS disk encryption (root + /data)                     | CRITICAL | 2h     |
-| 2   | rpi3-dns hardware provisioning & DNS failover cluster   | P2       | 4h     |
-| 3   | Automated nixpkgs update CI (Dependabot-like)           | P2       | 2h     |
-| 4   | Home Manager Darwin rollback testing                    | P3       | 1h     |
-| 5   | niri-config module option extraction (hardcoded values) | P3       | 1h     |
-| 6   | Wireguard/Tailscale VPN for remote access               | P3       | 3h     |
-| 7   | Restic/Borg automated backup to offsite                 | P2       | 2h     |
-| 8   | Centralized logging beyond journald (Loki?)             | P3       | 3h     |
-| 9   | Automated NixOS generation cleanup timer                | P3       | 30m    |
-| 10  | Theme hot-reload (change theme.nix → all apps update)   | P4       | 4h     |
+| #  | Item                                                    | Priority | Effort |
+| -- | ------------------------------------------------------- | -------- | ------ |
+| 1  | LUKS disk encryption (root + /data)                     | CRITICAL | 2h     |
+| 2  | rpi3-dns hardware provisioning & DNS failover cluster   | P2       | 4h     |
+| 3  | Automated nixpkgs update CI (Dependabot-like)           | P2       | 2h     |
+| 4  | Home Manager Darwin rollback testing                    | P3       | 1h     |
+| 5  | niri-config module option extraction (hardcoded values) | P3       | 1h     |
+| 6  | Wireguard/Tailscale VPN for remote access               | P3       | 3h     |
+| 7  | Restic/Borg automated backup to offsite                 | P2       | 2h     |
+| 8  | Centralized logging beyond journald (Loki?)             | P3       | 3h     |
+| 9  | Automated NixOS generation cleanup timer                | P3       | 30m    |
+| 10 | Theme hot-reload (change theme.nix → all apps update)   | P4       | 4h     |
 
 ---
 
@@ -148,48 +148,48 @@ Multiple changes are staged from a previous session (homepage, preferences, them
 
 ### P0 — Must Fix (Blocks Everything)
 
-| #   | Task                                      | Effort | Why                                              |
-| --- | ----------------------------------------- | ------ | ------------------------------------------------ |
-| 1   | **Fix scheduled-tasks.nix build breaker** | 15m    | Blocks ALL deploys to evo-x2                     |
-| 2   | **Commit all staged+unstaged changes**    | 5m     | Git state is messy, blocks clean work            |
-| 3   | **Deploy disk monitor to evo-x2**         | 10m    | Feature is written but untested on real hardware |
+| # | Task                                      | Effort | Why                                              |
+| - | ----------------------------------------- | ------ | ------------------------------------------------ |
+| 1 | **Fix scheduled-tasks.nix build breaker** | 15m    | Blocks ALL deploys to evo-x2                     |
+| 2 | **Commit all staged+unstaged changes**    | 5m     | Git state is messy, blocks clean work            |
+| 3 | **Deploy disk monitor to evo-x2**         | 10m    | Feature is written but untested on real hardware |
 
 ### P1 — High Impact
 
-| #   | Task                                                    | Effort | Why                                                         |
-| --- | ------------------------------------------------------- | ------ | ----------------------------------------------------------- |
-| 4   | **LUKS disk encryption for root + /data**               | 2h     | CRITICAL security gap — physical access = full data theft   |
-| 5   | **Move shell scripts out of Nix strings**               | 1h     | Prevents future interpolation bugs like rust-target-cleanup |
-| 6   | **Add pre-commit hook for `test-fast`**                 | 30m    | Prevent broken configs from being committed                 |
-| 7   | **Verify disk monitor notifications work**              | 15m    | On actual hardware, test each threshold                     |
-| 8   | **Extract remaining hardcoded ports to module options** | 1h     | Audit all 35 service modules for hardcoded values           |
+| # | Task                                                    | Effort | Why                                                         |
+| - | ------------------------------------------------------- | ------ | ----------------------------------------------------------- |
+| 4 | **LUKS disk encryption for root + /data**               | 2h     | CRITICAL security gap — physical access = full data theft   |
+| 5 | **Move shell scripts out of Nix strings**               | 1h     | Prevents future interpolation bugs like rust-target-cleanup |
+| 6 | **Add pre-commit hook for `test-fast`**                 | 30m    | Prevent broken configs from being committed                 |
+| 7 | **Verify disk monitor notifications work**              | 15m    | On actual hardware, test each threshold                     |
+| 8 | **Extract remaining hardcoded ports to module options** | 1h     | Audit all 35 service modules for hardcoded values           |
 
 ### P2 — Important
 
-| #   | Task                                                    | Effort | Why                                        |
-| --- | ------------------------------------------------------- | ------ | ------------------------------------------ |
-| 9   | **Automated backup (Restic → offsite/S3)**              | 2h     | No offsite backup exists for 128GB machine |
-| 10  | **rpi3-dns hardware setup + DNS failover**              | 4h     | HA DNS cluster planned but unprovisioned   |
-| 11  | **CI pipeline (flake check + lints)**                   | 2h     | No automated quality gate exists           |
-| 12  | **SigNoz alerting rules for disk/CPU/RAM**              | 1h     | Monitoring exists but no automated alerts  |
-| 13  | **NixOS generation cleanup timer**                      | 30m    | `/nix/store` accumulates old generations   |
-| 14  | **Update AGENTS.md with disk-monitor docs**             | 15m    | New service needs documentation            |
-| 15  | **Audit all writeShellScript for interpolation safety** | 1h     | Prevent recurrence of scheduled-tasks bug  |
+| #  | Task                                                    | Effort | Why                                        |
+| -- | ------------------------------------------------------- | ------ | ------------------------------------------ |
+| 9  | **Automated backup (Restic → offsite/S3)**              | 2h     | No offsite backup exists for 128GB machine |
+| 10 | **rpi3-dns hardware setup + DNS failover**              | 4h     | HA DNS cluster planned but unprovisioned   |
+| 11 | **CI pipeline (flake check + lints)**                   | 2h     | No automated quality gate exists           |
+| 12 | **SigNoz alerting rules for disk/CPU/RAM**              | 1h     | Monitoring exists but no automated alerts  |
+| 13 | **NixOS generation cleanup timer**                      | 30m    | `/nix/store` accumulates old generations   |
+| 14 | **Update AGENTS.md with disk-monitor docs**             | 15m    | New service needs documentation            |
+| 15 | **Audit all writeShellScript for interpolation safety** | 1h     | Prevent recurrence of scheduled-tasks bug  |
 
 ### P3 — Nice to Have
 
-| #   | Task                                        | Effort | Why                                            |
-| --- | ------------------------------------------- | ------ | ---------------------------------------------- |
-| 16  | **Wireguard VPN for remote evo-x2 access**  | 3h     | SSH-only remote access is fragile              |
-| 17  | **Centralized theme hot-reload**            | 4h     | Change one file, all apps update               |
-| 18  | **Home Manager Darwin rollback testing**    | 1h     | Never tested rollback on macOS                 |
-| 19  | **nixosTests for critical services**        | 3h     | No automated module testing                    |
-| 20  | **Secret rotation schedule + automation**   | 2h     | sops secrets never rotated                     |
-| 21  | **Automated nixpkgs input update workflow** | 1h     | Manual `just update` is error-prone            |
-| 22  | **Docker volume backup automation**         | 1h     | Immich/Gitea data at risk                      |
-| 23  | **Btrfs scrub results notification**        | 30m    | Scrub runs monthly but results aren't surfaced |
-| 24  | **Boot partition space monitor**            | 15m    | systemd-boot fills up with generations         |
-| 25  | **Comprehensive README rewrite**            | 2h     | Current README is outdated                     |
+| #  | Task                                        | Effort | Why                                            |
+| -- | ------------------------------------------- | ------ | ---------------------------------------------- |
+| 16 | **Wireguard VPN for remote evo-x2 access**  | 3h     | SSH-only remote access is fragile              |
+| 17 | **Centralized theme hot-reload**            | 4h     | Change one file, all apps update               |
+| 18 | **Home Manager Darwin rollback testing**    | 1h     | Never tested rollback on macOS                 |
+| 19 | **nixosTests for critical services**        | 3h     | No automated module testing                    |
+| 20 | **Secret rotation schedule + automation**   | 2h     | sops secrets never rotated                     |
+| 21 | **Automated nixpkgs input update workflow** | 1h     | Manual `just update` is error-prone            |
+| 22 | **Docker volume backup automation**         | 1h     | Immich/Gitea data at risk                      |
+| 23 | **Btrfs scrub results notification**        | 30m    | Scrub runs monthly but results aren't surfaced |
+| 24 | **Boot partition space monitor**            | 15m    | systemd-boot fills up with generations         |
+| 25 | **Comprehensive README rewrite**            | 2h     | Current README is outdated                     |
 
 ---
 

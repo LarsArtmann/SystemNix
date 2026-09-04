@@ -72,6 +72,17 @@ _: {
       # external chain: public DNS → Firebase CDN → site content. This catches
       # outages the LAN-only checks cannot see (unclaimed web.app targets,
       # missing DNS records, broken deploys).
+      #
+      # REMOVED 2026-09-02 (72h log review): three endpoints were permanently
+      # dead and each burned ~324 failure events/day in gatus alerts:
+      #   - cmdguard.lars.software      — TLS cert mismatch (serves the
+      #     *.firebaseapp.com cert; Firebase custom-domain binding is gone)
+      #   - go-output.lars.software     — HTTP 404 (Firebase site deleted or
+      #     web.app target unclaimed)
+      #   - md-go-validator.lars.software — NXDOMAIN (DNS record removed in
+      #     lars.software.tf but never removed here)
+      # Re-add an endpoint only after `https://<host>/` returns 200 with real
+      # content again (verify the DNS record AND the Firebase hosting target).
       ossWebsites = [
         "lars.software"
         "www.lars.software"
@@ -80,7 +91,6 @@ _: {
         "gogenfilter.larsartmann.com" # alias CNAME from larsartmann.com.tf
         "atomicwrite.lars.software"
         "go-atomic-write.lars.software" # alias of atomicwrite.lars.software
-        "go-output.lars.software"
         "go-workflow-auditlog.lars.software"
         "filewatcher.lars.software"
         "errorfamily.lars.software"
@@ -91,8 +101,6 @@ _: {
         "branded-id.lars.software"
         "emeet-pixyd.lars.software"
         "cleanwizard.lars.software"
-        "cmdguard.lars.software"
-        "md-go-validator.lars.software"
       ];
 
       mkWebsiteCheck =
@@ -296,6 +304,30 @@ _: {
                   alerts = discordAlert "Forgejo down — git forge unavailable";
                 })
                 (mkHttpCheck {
+                  name = "Forgejo Mirror Sync";
+                  group = "Development";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_forgejo_mirror_scrape_errors 0*)"
+                    "[BODY] == pat(*system_forgejo_mirror_sync_stalled 0*)"
+                    "[BODY] == pat(*system_forgejo_mirror_erroring 0*)"
+                  ];
+                  alerts = discordAlert "Forgejo pull-mirror syncing broken. stalled=1: freshest mirror sync >10h old — dead queue (restart forgejo.service; the unique queue wedges after a hard freeze, cron pushes then dedup-skip silently). erroring=1: syncs actively failing — journalctl -u forgejo --grep SyncMirrors (credential-helper ENOENT / DNS allowlist rejects). scrape_errors=1: forgejo sqlite unreadable.";
+                })
+                (mkHttpCheck {
+                  name = "Stuck D-State Processes";
+                  group = "Infrastructure";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_stuck_dstate_processes 0*)"
+                  ];
+                  alerts = discordAlert "Processes stuck in uninterruptible D-state for >1h — unkillable even by SIGKILL (driver/firmware wedge, amdxdna class 2026-09-04). Every restart of the owning unit strands another corpse; REBOOT is the only fix. Find them: ps -eo pid,stat,wchan:30,etime,comm, then filter the STAT column for lines starting with D";
+                })
+                (mkHttpCheck {
                   name = "Homepage";
                   group = "Infrastructure";
                   url = "http://localhost:${toString config.services.homepage.port}";
@@ -319,14 +351,31 @@ _: {
                   name = "Paperless";
                   group = "Documents";
                   url = "http://localhost:${toString config.services.paperless.port}/accounts/login/";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 1000"
-                    # Functional, not just liveness: the real sign-in page
-                    # (not an error/redirect shell) says "Paperless-ngx sign in".
-                    "[BODY] == pat(*Paperless-ngx sign in*)"
-                  ];
-                  alerts = discordAlert "Paperless down — document management unavailable";
+                  # SSO-only mode (2026-09-02): the login page must show the
+                  # Pocket ID provider form with the JS auto-submit mounted
+                  # (PAPERLESS_REDIRECT_LOGIN_TO_SSO is a CLIENT-SIDE
+                  # redirect — paperless's template auto-submits the first
+                  # provider form; there is no 302) and NO password input
+                  # (PAPERLESS_DISABLE_REGULAR_LOGIN — the flags ride in the
+                  # paperless-oidc-setup env file, so a 200 with a password
+                  # field means the bridge degraded and break-glass is
+                  # serving: visible, non-silent).
+                  conditions =
+                    if config.services.pocket-id-config.enable then
+                      [
+                        "[STATUS] == 200"
+                        "[RESPONSE_TIME] < 1000"
+                        "[BODY] == pat(*oidc/pocket-id*)"
+                        "[BODY] == pat(*getElementById*)"
+                        "[BODY] != pat(*type=\"password\"*)"
+                      ]
+                    else
+                      [
+                        "[STATUS] == 200"
+                        "[RESPONSE_TIME] < 1000"
+                        "[BODY] == pat(*Paperless-ngx sign in*)"
+                      ];
+                  alerts = discordAlert "Paperless SSO degraded — login page lost the Pocket ID auto-submit flow or the password form is back (bridge problem: journalctl -u paperless-oidc-setup)";
                 })
                 (mkHttpCheck {
                   name = "Paperless Tika";
@@ -389,7 +438,13 @@ _: {
                   group = "Monitoring";
                   url = "http://localhost:${toString nodePort}/metrics";
                   interval = "5m";
-                  conditions = [ "[BODY] == pat(*system_signoz_alert_rules_healthy 1*)" ];
+                  # HELP line is "# HELP system_signoz_alert_rules_healthy 1 if ..." — a bare
+                  # pat(*metric 1*) would match the comment and stay green when the value is 0.
+                  # Assert absence of the 0-value line plus presence of the metric instead.
+                  conditions = [
+                    "[BODY] != pat(*system_signoz_alert_rules_healthy 0\n*)"
+                    "[BODY] == pat(*\nsystem_signoz_alert_rules_healthy *)"
+                  ];
                   alerts = discordAlert "SigNoz alert rules not provisioned — observability gap, no alerts will fire";
                 })
                 (mkHttpCheck {
@@ -401,6 +456,53 @@ _: {
                     "[STATUS] < 500"
                   ];
                   alerts = discordAlert "SigNoz OTLP receiver not responding — distributed tracing will silently fail for all services";
+                })
+                # Telemetry coverage audit (signoz-coverage.nix): the registry
+                # demands spans from every enforced service; missing counts
+                # services whose traces went dark. Anchored value-check form
+                # (real newline in the nix string — the 2026-08-22 escape
+                # trap); [1-9] catches any nonzero value including multi-digit.
+                (mkHttpCheck {
+                  name = "SigNoz Traces Coverage";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nsignoz_traces_missing *)"
+                    "[BODY] != pat(*\nsignoz_traces_missing [1-9]*)"
+                    "[BODY] == pat(*\nsignoz_coverage_scrape_errors *)"
+                    "[BODY] != pat(*\nsignoz_coverage_scrape_errors [1-9]*)"
+                  ];
+                  alerts = discordAlert "SigNoz trace coverage gap — a registered service stopped sending spans (or the coverage collector failed): silent observability hole. Check signoz_traces_reporting in :9100/metrics for which service went dark";
+                })
+                (mkHttpCheck {
+                  name = "SigNoz Logs Pipeline Fresh";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nsignoz_logs_pipeline_stale *)"
+                    "[BODY] != pat(*\nsignoz_logs_pipeline_stale [1-9]*)"
+                  ];
+                  alerts = discordAlert "SigNoz journald logs pipeline stale — no log records ingested for >30 min (all service logs dark)";
+                })
+                # Gap budget ratchet (signoz-coverage.maxUpstreamGaps): fires
+                # when the registry's upstream-gap count GROWS past the budget
+                # — new silent noops may not slip in unnoticed. Lower the
+                # budget as gaps close; raising it is a conscious commit.
+                (mkHttpCheck {
+                  name = "SigNoz Trace Gap Budget";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nsignoz_traces_upstream_gaps_over_threshold *)"
+                    "[BODY] != pat(*\nsignoz_traces_upstream_gaps_over_threshold [1-9]*)"
+                  ];
+                  alerts = discordAlert "SigNoz upstream trace-gap budget exceeded — a new silent-noop service entered the registry. Instrument it upstream and flip its wiring, or consciously raise services.signoz-coverage.maxUpstreamGaps (the ratchet goes DOWN as gaps close)";
                 })
                 (mkHttpCheck {
                   name = "Manifest";
@@ -766,7 +868,7 @@ _: {
                     "[BODY] == pat(*btrfs_metadata_utilization_pct*)"
                     "[BODY] == pat(*btrfs_health_critical 0*)"
                   ];
-                  alerts = discordAlert "BTRFS space health CRITICAL — device-unallocated <5% or metadata pool >90% (metadata-ENOSPC precursor, the 2026-06-26 crash class). nix-gc is auto-blocked below 10% unalloc. Recover: 'sudo systemctl start btrfs-balance-metadata.service' (needs >=5GiB unalloc), expire old btrbk snapshots, or use the 10GiB emergency reserve at /btrfs-emergency-reserve. Live values: btrfs_device_unallocated_pct / btrfs_metadata_utilization_pct.";
+                  alerts = discordAlert "BTRFS space health CRITICAL — device-unallocated <5% or metadata pool >90% (metadata-ENOSPC precursor, the 2026-06-26 crash class). nix-gc is auto-blocked below a 5GiB unalloc floor or metadata >90%. Recover: 'sudo systemctl start btrfs-balance-metadata.service' (needs >=5GiB unalloc), expire old btrbk snapshots, or use the 10GiB emergency reserve at /btrfs-emergency-reserve. Live values: btrfs_device_unallocated_pct / btrfs_metadata_utilization_pct.";
                 })
                 (mkHttpCheck {
                   name = "BTRFS Scrub Health";
@@ -776,7 +878,8 @@ _: {
                   conditions = [
                     "[STATUS] == 200"
                     "[BODY] == pat(*btrfs_scrub_status*)"
-                    "[BODY] == pat(*btrfs_scrub_error_free 1*)"
+                    "[BODY] != pat(*btrfs_scrub_error_free 0\n*)"
+                    "[BODY] == pat(*\nbtrfs_scrub_error_free *)"
                   ];
                   alerts = discordAlert "BTRFS scrub found errors — potential data corruption. Run 'btrfs scrub status /' and 'btrfs scrub status /data' to investigate. Check Prometheus btrfs_scrub_errors_total for details.";
                 })
@@ -787,7 +890,8 @@ _: {
                   interval = "10m";
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*btrfs_emergency_reserve_present 1*)"
+                    "[BODY] != pat(*btrfs_emergency_reserve_present 0\n*)"
+                    "[BODY] == pat(*\nbtrfs_emergency_reserve_present *)"
                   ];
                   alerts = discordAlert "BTRFS emergency reserve missing — the 10 GiB safety net at /btrfs-emergency-reserve was deleted or never created. Re-provision: 'sudo systemctl start btrfs-emergency-reserve'.";
                 })
@@ -879,6 +983,17 @@ _: {
                     "[BODY] == pat(*niri_zombie 0*)"
                   ];
                   alerts = discordAlert "Niri is running with NO graphical session (headless zombie) — it will block the next SDDM login with 'A niri session is already running' (2026-08-18 black-screen class). Recover: reboot, or as the user: systemctl --user stop niri.service niri-session-manager.service. Root cause: something pulled graphical-session.target into the user-manager boot transaction — the session-boot-audit eval guard should have caught it at eval time.";
+                })
+                (mkHttpCheck {
+                  name = "AW Watcher Attached";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*niri_aw_watcher_late 0*)"
+                  ];
+                  alerts = discordAlert "aw-watcher-window-wayland has NOT attached 10+ min into an active graphical session — window activity tracking is silently dead (2026-09-02 live case: panicked exit 101 ×3 into start-limit-hit with zero alerting). Check: journalctl --user -u activitywatch-watcher-aw-watcher-window-wayland -n 30; recover: systemctl --user reset-failed activitywatch-watcher-aw-watcher-window-wayland && systemctl --user start activitywatch-watcher-aw-watcher-window-wayland";
                 })
                 (mkHttpCheck {
                   name = "TLS Certificate Expiry";
@@ -996,6 +1111,26 @@ _: {
                   alerts = discordAlert "PMA cgroup memory exceeds 90% of its MemoryMax (16G) — a legitimate repo-discovery scan rides MemoryHigh=12G, so this alert means the hard OOM-kill ceiling is in reach. Check: systemctl status projects-management-automation and system_service_memory_bytes in the textfile collector. Full narrative: docs/crash-analysis-2026-08-09.md";
                 })
                 (mkHttpCheck {
+                  name = "PMA Commit Health";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  # Anchored forms (real \n): value must sit at line start —
+                  # collector down or section disabled = metric absent = the
+                  # check fails fail-closed. Catches BOTH directions of the
+                  # 2026-08-22..09-02 blackout class: sustained commit
+                  # failures (dead provider, nothing landing) and sustained
+                  # heuristic fallbacks (work landing with degraded messages
+                  # because the whole AI provider chain is down).
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nsystem_pma_commit_scrape_errors 0\n*)"
+                    "[BODY] == pat(*\nsystem_pma_commit_failures_over_threshold 0\n*)"
+                    "[BODY] == pat(*\nsystem_pma_commit_fallbacks_over_threshold 0\n*)"
+                  ];
+                  alerts = discordAlert "PMA commits are failing or riding heuristic fallbacks — the auto-commit pipeline is degraded (2026-08-22..09-02: 11 days, ~3,800 failed commits on a dead AI provider, invisible to liveness). Failures: journalctl -u projects-management-automation --since -1h --grep 'commit failed'. Fallbacks: same with 'heuristic fallback'. Check the provider chain (FastFlowLM :52625 socket, minimax/zai keys) before it becomes a backlog.";
+                })
+                (mkHttpCheck {
                   name = "FastFlowLM NPU LLM";
                   group = "Monitoring";
                   # MUST NOT probe :52625 — every probe is a TCP connection =
@@ -1020,7 +1155,200 @@ _: {
                     "[STATUS] == 200"
                     "[BODY] == pat(*system_service_memory_over_threshold{service=\"fastflowlm\"} 0*)"
                   ];
-                  alerts = discordAlert "FastFlowLM cgroup memory exceeds 90% of its MemoryMax (32G) — the 13.6 GB model mmap'd from /data plus KV cache is reaching the OOM-kill ceiling. Check: flm-loaded models, /data/ai/models/fastflowlm size, pma discovery worker count";
+                  alerts = discordAlert "FastFlowLM cgroup memory exceeds 90% of its MemoryMax (40G) — the 21.6 GB model mmap'd from /data plus KV cache is reaching the OOM-kill ceiling. Check: flm-loaded models, /data/ai/models/fastflowlm size, pma discovery worker count";
+                })
+              ]
+              ++
+                lib.optionals
+                  (
+                    (config.services.system-health.enable or false)
+                    && (config.services.system-health.lanInterface or "") != ""
+                  )
+                  [
+                    (mkHttpCheck {
+                      name = "LAN NIC Present";
+                      group = "Monitoring";
+                      # 2026-08-22: after a hard crash the RTL8125 fell off the
+                      # PCIe bus — PCI enumeration showed no 10ec:8125 at all,
+                      # r8125 had nothing to probe, eno1 never got its static IP
+                      # and SSH was dead until a second reboot. The metric is
+                      # emitted by system-health whenever lanInterface is set, and
+                      # this check is gated on the SAME condition — a host that
+                      # watches no LAN NIC gets neither metric nor check (no
+                      # phantom 1). If this fires, a warm
+                      # reboot is NOT reliable — power-cycle the machine.
+                      url = "http://localhost:${toString nodePort}/metrics";
+                      interval = "2m";
+                      conditions = [
+                        "[STATUS] == 200"
+                        # pat() is a GLOB over the whole /metrics body and '!' is a LITERAL in
+                        # filepath.Match (no negation syntax): the metric's HELP comment
+                        # ("# HELP system_lan_nic_present 1 if ...") itself contains
+                        # "system_lan_nic_present 1", so pat(*metric 1*) stays green when the
+                        # value is 0. Assert the 0-value line is absent + the metric is present.
+                        "[BODY] != pat(*system_lan_nic_present 0\n*)"
+                        "[BODY] == pat(*\nsystem_lan_nic_present *)"
+                      ];
+                      alerts = discordAlert "LAN NIC (eno1 / RTL8125) is ABSENT from the bus — wired networking is DOWN (static IP + SSH unreachable). A warm reboot does NOT retrain it: POWER-CYCLE the machine (shut down, wait 10s, power on). Check: ls /sys/class/net/eno1, journalctl -k -b -1 | grep 10ec:8125, lspci | grep -i network";
+                    })
+                  ]
+              ++
+                lib.optionals
+                  (
+                    (config.services.system-health.enable or false)
+                    && (config.services.system-health.dasUsbPath or "") != ""
+                  )
+                  [
+                    (mkHttpCheck {
+                      name = "DAS USB Link";
+                      group = "Monitoring";
+                      # Root-cause alert for the single-USB-link DAS topology:
+                      # all 4 external disks (2x pool Toshiba, buildcache SSD,
+                      # spare btrfs SSD) sit behind /sys/bus/usb/devices/8-1.
+                      # When the link drops, buildcache + pool + SSD checks all
+                      # fire at once — this check names the CAUSE (2026-08-22:
+                      # zero reconnect attempts for 22+ min). Anchored form is
+                      # mandatory: the metric's HELP embeds "system_das_link_present 1".
+                      url = "http://localhost:${toString nodePort}/metrics";
+                      interval = "2m";
+                      conditions = [
+                        "[STATUS] == 200"
+                        "[BODY] != pat(*system_das_link_present 0\n*)"
+                        "[BODY] == pat(*\nsystem_das_link_present *)"
+                      ];
+                      alerts = discordAlert "DAS USB link (8-1) is DOWN — ALL external disks (pool members, buildcache, spare SSDs) vanished simultaneously. Software recovery is impossible without the link: physically reseat the DAS USB cable + enclosure power, then REBOOT (warm reboot may not re-enumerate). After boot: scripts/das-link-recovery-check.sh, verify findmnt /mnt/pool and /mnt/buildcache, e2fsck decision for buildcache. Runbook: AGENTS.md 'DAS USB link' section.";
+                    })
+                  ]
+              ++ lib.optionals (config.services.system-health.enable or false) [
+                (mkHttpCheck {
+                  name = "System Profile Anchor";
+                  group = "Monitoring";
+                  # Manual activations (switch-to-configuration outside
+                  # `nix run .#deploy` — banned; 2026-08-18 google-sync
+                  # crash-loop, 2026-08-22 hand-activated XFS migration) leave
+                  # /run/current-system anchored to NO numbered profile: a
+                  # reboot silently reverts to the last real generation and
+                  # nothing warns. 0 = revert-on-reboot risk. Emitted
+                  # unconditionally by system-health (fail-closed) and the
+                  # anchored form is mandatory: the HELP embeds
+                  # "system_current_system_profiled 1".
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*system_current_system_profiled 0\n*)"
+                    "[BODY] == pat(*\nsystem_current_system_profiled *)"
+                  ];
+                  alerts = discordAlert "The RUNNING system is not anchored to any numbered nix profile generation — it was activated manually (banned pattern; deploy.sh post-switch steps and the profile/boot-entry trail are missing). A REBOOT WILL REVERT the machine to the last real generation. Fix: run `nix run .#deploy` NOW to persist the current config. Check: readlink /run/current-system vs ls /nix/var/nix/profiles/";
+                })
+                (mkHttpCheck {
+                  name = "Memory Emergency Guard";
+                  group = "Monitoring";
+                  # The 2026-08-22 freezes: #1 (00:27) zram 100% full made
+                  # flm's 25 GB model unevictable; #2 (05:49) the guard tripped
+                  # 7x but flm's activation socket re-woke it via the
+                  # alert→enricher feedback loop, and the final refault-thrash
+                  # freeze (PSI some avg10 >50%, MemAvailable still >=10%) fell
+                  # between the guard's thresholds AND between its 60 s ticks.
+                  # The guard now ALSO stops fastflowlm.socket on trip (restores
+                  # it once memory recovers), trips on PSI>=40% AND zram>=80%,
+                  # and ticks every 30 s. This check alerts when the guard
+                  # FIRED (within the last 30 min) or died (absent metrics).
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*memory_emergency_guard_avail_percent*)"
+                    "[BODY] == pat(*memory_emergency_guard_last_trip_recent 0*)"
+                  ];
+                  alerts = discordAlert "Memory emergency guard TRIPPED (or the guard died): the machine entered a pre-freeze zone (low MemAvailable, near-full zram, or PSI refault thrash) and FastFlowLM + its activation socket were force-stopped. The socket auto-restores once memory recovers; until then LLM clients get connection-refused by design. Check: journalctl -u memory-emergency-guard -n 30, memory_emergency_guard_{avail,zram_fill,psi_some_avg10}_percent in the textfile collector, what is holding RAM (ps aux --sort=-%mem | head)";
+                })
+                (mkHttpCheck {
+                  name = "Memory Pressure Warning";
+                  group = "Monitoring";
+                  # The WARNING tier (2026-08-22): the CRITICAL check fired
+                  # 17s before the 05:49 freeze and 43min before the 00:27
+                  # one. some avg60 >= 20% = the storm FORMING — time to
+                  # look, shed load, or cancel heavy jobs while the machine
+                  # still responds. Alert-only by user decision: NO
+                  # automated action beyond the existing guard.
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "1m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*node_psi_memory_warning 1\n*)"
+                    "[BODY] == pat(*\nnode_psi_memory_warning *)"
+                  ];
+                  alerts = discordAlert "Sustained memory pressure WARNING — PSI some avg60 >= 20% for a full minute. The storm is forming (2026-08-22 freeze precursor profile). No action taken yet (alert-only by design). Check: heavy nix builds / VM tests / crush sessions running? node_psi_memory_some_avg60, system_cgroup_mem_bytes{...} top consumers. Consider stopping heavy jobs while the machine still responds.";
+                })
+                (mkHttpCheck {
+                  name = "Crush Session Pressure";
+                  group = "Monitoring";
+                  # Admission-control monitor (2026-08-22 census: ~12
+                  # concurrent sessions were a major freeze contributor;
+                  # user decision: monitor-only). Anchored form mandatory —
+                  # the HELP text embeds the threshold semantics.
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*system_crush_sessions_over_threshold 1\n*)"
+                    "[BODY] == pat(*\nsystem_crush_sessions_over_threshold *)"
+                  ];
+                  alerts = discordAlert "Crush agent session pressure: more than 6 concurrent crush sessions detected (2026-08-22 freeze census ran ~12 = 52 crush + 50 bun processes as a major memory consumer). Monitor-only by decision — consider closing idle sessions (`crush` TUIs left open), or wrap heavy work in heavy-job.";
+                })
+                (mkHttpCheck {
+                  name = "SEV1 Escalation Bridge";
+                  group = "Monitoring";
+                  # The local escalation path (fullscreen overlay + DMS
+                  # notification) for guard-trip/guard-dead/infra-criticals.
+                  # This check guards the GUARD of the human loop: if the
+                  # bridge dies, criticals still reach Discord (gatus) but
+                  # the desktop overlay/notification path is dead. The
+                  # overlay self-expires after 2 min without bridge
+                  # refreshes, so a dead bridge cannot stick an overlay.
+                  # Tiered since 2026-08-31 (hardened 2026-09-02: NO memory
+                  # condition may overlay; page is RESERVED with no current
+                  # emitter): warn-tier conditions (infra hardware
+                  # criticals) show a static yellow banner ONCE and fire
+                  # this Discord alert; notify-tier (memory/meta) fire the
+                  # alert only. sev1_bridge_page_alerts_active distinguishes
+                  # tiers at the metrics level.
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nsev1_bridge_runs_total *)"
+                    "[BODY] != pat(*sev1_bridge_alerts_active [1-9]\n*)"
+                  ];
+                  alerts = discordAlert "SEV1 escalation bridge problem: either the bridge died (desktop escalation for criticals is DOWN — Discord still works) or SEV1 conditions are ACTIVE. Warn-tier (infra hardware criticals: DAS link, LAN NIC, btrfs critical) = a static yellow banner shows ONCE on the desktop + this Discord alert. Notify-tier (ALL memory conditions, SYSTEM MONITORING STALE, zram critical) = notification + this Discord alert only, NO overlay BY DESIGN (2026-09-02: high memory must never flash the screen). Check: journalctl -u sev1-bridge -n 30, cat /run/systemnix/sev1/alert (line 4 = severity).";
+                })
+                (mkHttpCheck {
+                  name = "Hermes Agent Gateway";
+                  group = "Monitoring";
+                  # No HTTP probe: the gateway's only listener is Discord/
+                  # platform webhooks, not a health endpoint. Unit-state
+                  # metrics from system-health are the liveness signal
+                  # (fail-closed: absent metrics fail the pat()s).
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_service_state_failed{service=\"hermes\"} 0*)"
+                    "[BODY] == pat(*system_service_start_limit_hit{service=\"hermes\"} 0*)"
+                  ];
+                  alerts = discordAlert "Hermes agent gateway failed or in start-limit crash-loop — Discord bot and AI gateway are DOWN. Check: journalctl -u hermes -n 50 (ExecStartPre perms/migration, upstream connectivity, config errors)";
+                })
+                (mkHttpCheck {
+                  name = "Hermes Memory Pressure";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_service_memory_over_threshold{service=\"hermes\"} 0*)"
+                  ];
+                  alerts = discordAlert "Hermes cgroup memory exceeds 90% of its MemoryMax (24G) — PyTorch/ROCm mappings plus active agent sessions are reaching the OOM-kill ceiling. Check: journalctl -u hermes -n 50, active sessions, /home/hermes growth";
                 })
                 (mkHttpCheck {
                   name = "Service Restart Metrics";
@@ -1042,7 +1370,7 @@ _: {
                     "[STATUS] == 200"
                     "[BODY] == pat(*system_gpu_active_over_threshold 0*)"
                   ];
-                  alerts = discordAlert "GPUActive exceeds 60G — GTT buffer objects consuming excessive RAM. Check /proc/meminfo GPUActive. Risk of OOM cascade on Strix Halo (18 GiB VRAM carveout means more workloads spill to GTT).";
+                  alerts = discordAlert "GPUActive exceeds 60G — GTT buffer objects consuming excessive RAM. Check /proc/meminfo GPUActive. Risk of OOM cascade on Strix Halo (GTT-first: with the 512 MiB carveout ALL GPU memory is shared system RAM).";
                 })
                 (mkHttpCheck {
                   name = "User Slice Memory";
@@ -1087,6 +1415,40 @@ _: {
                     "[BODY] == pat(*system_tmpfs_tmp_over_threshold 0*)"
                   ];
                   alerts = discordAlert "/tmp tmpfs exceeds 80% (~38 GiB of 48 GiB cap) — runaway build or temp file accumulation. Check: du -sh /tmp/* | sort -rh | head";
+                })
+                (mkHttpCheck {
+                  name = "DNS Blocker Stats API Fresh";
+                  group = "Infrastructure";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  # Anchored forms: the \n MUST reach gatus as a real newline
+                  # (single-backslash in this double-quoted nix string) —
+                  # presence-of-1 at line start + not-0 keep the check
+                  # fail-closed through probe absence (collector down =
+                  # metric absent = both conditions fail = alert fires).
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*system_dnsblockd_metrics_fresh 0\n*)"
+                    "[BODY] == pat(*\nsystem_dnsblockd_metrics_fresh 1*)"
+                  ];
+                  alerts = discordAlert "dnsblockd :9090 stats API is wedged or unreachable while the DNS resolver may still be healthy (2026-08-27 class). Recovery runbook: sudo systemctl restart dnsblockd — for a goroutine dump FIRST, see scripts/dnsblockd-goroutine-dump.sh (root).";
+                })
+                (mkHttpCheck {
+                  name = "Local DNS System Resolver";
+                  group = "Infrastructure";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  # Anchored forms: the \n MUST reach gatus as a real newline
+                  # (single-backslash in this double-quoted nix string) —
+                  # presence-of-1 at line start + not-0 keep the check
+                  # fail-closed through probe absence (collector down =
+                  # metric absent = both conditions fail = alert fires).
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*system_local_dns_resolves 0\n*)"
+                    "[BODY] == pat(*\nsystem_local_dns_resolves 1*)"
+                  ];
+                  alerts = discordAlert "System resolver cannot resolve *.home.lan — /etc/resolv.conf drifted off 127.0.0.1 (dnsblockd bypassed) while the direct :53 probe stays green (2026-09-02 class: manual resolv.conf edit to 1.1.1.1 during a NIC outage killed local DNS for ~10h and blocked deploys). Fix: restore 'nameserver 127.0.0.1' first in /etc/resolv.conf (a deploy rewrites it via environment.etc), then find what wrote the file.";
                 })
                 (mkHttpCheck {
                   name = "fstrim Duration";
@@ -1146,6 +1508,17 @@ _: {
                   alerts = discordAlert "A monitored service is crash-looping (3+ restarts in 2 min). Check: curl localhost:9100/metrics | grep system_service_crash_loop | grep ' 1$'. Run: sudo systemctl reset-failed <svc> && sudo systemctl start <svc>";
                 })
                 (mkHttpCheck {
+                  name = "Service Restart Churn";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_any_service_restart_churn 0*)"
+                  ];
+                  alerts = discordAlert "A monitored service accumulated 5+ automatic restarts since its last explicit start — a slow crash-churn that never trips the 3-in-2min loop detector (e.g. hermes exit-75 drain chains). Check: curl localhost:9100/metrics | grep system_service_restart_churn | grep ' 1$', then journalctl -u <svc> -n 50";
+                })
+                (mkHttpCheck {
                   name = "OOMD Kills";
                   group = "Monitoring";
                   url = "http://localhost:${toString nodePort}/metrics";
@@ -1153,8 +1526,9 @@ _: {
                   conditions = [
                     "[STATUS] == 200"
                     "[BODY] == pat(*system_oomd_kills_alert 0*)"
+                    "[BODY] == pat(*system_oomd_kills_scrape_errors 0*)"
                   ];
-                  alerts = discordAlert "systemd-oomd killed a process since last check — memory pressure triggered OOM. Check: journalctl -u systemd-oomd --grep 'Killed' -n 20. The killed service may be in start-limit-hit state.";
+                  alerts = discordAlert "systemd-oomd killed a process since last check (memory pressure OOM; check: journalctl -u systemd-oomd --grep 'Killed' -n 20 — the killed service may be in start-limit-hit state), OR the bounded oomd journal scan timed out (system_oomd_kills_scrape_errors=1; check: systemctl status system-health-metrics)";
                 })
                 (mkHttpCheck {
                   name = "Docker Container Restarts";
@@ -1168,6 +1542,27 @@ _: {
                   alerts = discordAlert "A Docker container is rapidly restarting (3+ restarts in 2 min). Check: docker ps -a, docker inspect --format '{{.RestartCount}}' <container>. Likely OOM-killed by systemd-oomd (exit code 137).";
                 })
               ]
+              ++
+                lib.optionals
+                  (
+                    (config.services.system-health.enable or false)
+                    && config.services.system-health.monitoredUserManagers != [ ]
+                  )
+                  [
+                    (mkHttpCheck {
+                      name = "User Unit Failures";
+                      group = "Monitoring";
+                      url = "http://localhost:${toString nodePort}/metrics";
+                      interval = "2m";
+                      conditions = [
+                        "[STATUS] == 200"
+                        "[BODY] == pat(*\nsystem_user_units_failed{*)"
+                        "[BODY] != pat(*\nsystem_user_units_failed{*} [1-9]*)"
+                        "[BODY] != pat(*\nsystem_user_units_scrape_errors{*} 1*)"
+                      ];
+                      alerts = discordAlert "A systemd USER unit is in failed state (2026-08-31: smart-audio sat dead in start-limit-hit the whole boot with nothing alerting), OR the user-manager query is wedged (scrape_errors=1). Check: systemctl --machine=lars@.host --user --failed --no-legend, then journalctl --user -u <unit> -n 50";
+                    })
+                  ]
               ++ [
                 (mkHttpCheck {
                   name = "Crush Daily";
@@ -1220,7 +1615,7 @@ _: {
                   interval = "2m";
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*node_textfile_scrape_error 0*)"
+                    "[BODY] == pat(*\nnode_textfile_scrape_error 0\n*)"
                   ];
                   alerts = discordAlert "node_exporter textfile collector has parse errors — ALL textfile metrics (system_health, psi, nvme, btrfs, niri) are being silently dropped. Check each .prom file in /var/lib/prometheus-node-exporter/textfile_collectors/ for invalid syntax (e.g. [not set] poison values, bare lines). This is a meta-check: when it fires, 14+ Gatus checks go permanently RED because their underlying metrics vanish.";
                 })
@@ -1237,6 +1632,25 @@ _: {
                   ];
                   alerts = discordAlert "PMA health endpoint reports not-ready — the auto-commit daemon or discovery daemon is failing. The process may be alive but non-functional. Check: journalctl -u projects-management-automation -n 50";
                 })
+                # Commit-backlog age: the ONLY check that catches a silently
+                # degraded committer (process healthy, commits not landing).
+                # The 2026-08-22..09-02 blackout ran 11 days with healthz
+                # green because nothing watched change AGE. /backlog serves
+                # {"max_age_seconds": N}; alert when the oldest uncommitted
+                # change exceeds 24h. NOTE: requires pma >= the version with
+                # the /backlog endpoint — on older binaries this check fails
+                # on [STATUS] != 200, which is itself the deploy reminder.
+                (mkHttpCheck {
+                  name = "PMA Commit Backlog";
+                  group = "Monitoring";
+                  url = "http://127.0.0.1:${toString ports.pma-health}/backlog";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY].max_age_seconds < 86400"
+                  ];
+                  alerts = discordAlert "PMA commit backlog exceeds 24h — uncommitted changes are piling up while the daemon looks healthy. Check: pma service backlog (CLI), journalctl -u projects-management-automation | grep -E 'fallback|failed'. If the endpoint 404s, the running binary predates /backlog: redeploy pma.";
+                })
               ]
               ++ lib.optionals (config.services.buildcache.enable or false) [
                 (mkHttpCheck {
@@ -1246,8 +1660,13 @@ _: {
                   interval = "5m";
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*buildcache_mounted 1*)"
-                    "[BODY] == pat(*buildcache_smart_healthy 1*)"
+                    # pat() is a GLOB: HELP comments contain "metric 1", so assert absence
+                    # of the 0-value line plus presence of the metric instead ('!' is a
+                    # literal in filepath.Match — no glob negation exists).
+                    "[BODY] != pat(*buildcache_mounted 0\n*)"
+                    "[BODY] == pat(*\nbuildcache_mounted *)"
+                    "[BODY] != pat(*buildcache_smart_healthy 0\n*)"
+                    "[BODY] == pat(*\nbuildcache_smart_healthy *)"
                   ];
                   alerts = discordAlert "Build cache SSD (/mnt/buildcache) unmounted or SMART-failing — go/cargo/pnpm builds will fail with missing-directory errors. Check: findmnt /mnt/buildcache, sudo smartctl -d sat -H /dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311. If the drive died: revert GOCACHE/GOMODCACHE in platforms/nixos/users/home.nix and rebuild caches on NVMe.";
                 })
@@ -1258,7 +1677,15 @@ _: {
                   interval = "30m";
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*buildcache_usage_over_threshold 0*)"
+                    # Fail-closed on the dead-drive state (2026-08-22 DAS
+                    # outage): with the drive absent the usage metrics vanish
+                    # but over_threshold last wrote "0" via the always-write
+                    # .prom — this check stayed GREEN on a dead drive for
+                    # days while "Build Cache SSD" alone carried the signal.
+                    # Mounted must be 1; anchored form (HELP embeds "metric 1").
+                    "[BODY] != pat(*buildcache_mounted 0\n*)"
+                    "[BODY] == pat(*\nbuildcache_mounted *)"
+                    "[BODY] == pat(*\nbuildcache_usage_over_threshold 0*)"
                   ];
                   alerts = discordAlert "Build cache SSD exceeds 85% — the 240 GB drive is filling. Prune: GOCACHE=/mnt/buildcache/go-build go clean -cache; cargo clean in monitor365; pnpm store prune; rm old Playwright browsers.";
                 })
@@ -1269,7 +1696,9 @@ _: {
                   interval = "5m";
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*pool_mounted 1*)"
+                    # HELP comment contains "pool_mounted 1" — absence-of-0 + presence.
+                    "[BODY] != pat(*pool_mounted 0\n*)"
+                    "[BODY] == pat(*\npool_mounted *)"
                   ];
                   alerts = discordAlert "Mirrored HDD pool (/mnt/pool) unmounted — immich + paperless data, ALL application backups, and the btrbk safety net are offline. Check: findmnt /mnt/pool, systemctl status mnt-pool.mount. If a DAS member died: the raid1 still serves from the other member; replace the drive and btrfs replace.";
                 })
@@ -1283,6 +1712,58 @@ _: {
                     "[BODY] == pat(*pool_usage_over_threshold 0*)"
                   ];
                   alerts = discordAlert "Mirrored HDD pool exceeds 85% — review /mnt/pool usage: backups retention (30d 12w targets, forgejo zips 7d), archive/forensic-snapshots growth.";
+                })
+              ]
+              # pool-recovery module: replug self-heal + RAID1 membership
+              # telemetry (pool_mounted/pool_usage above come from the
+              # snapshots.nix pool-metrics collector; this covers membership).
+              ++ lib.optionals (config.services.pool-recovery.enable or false) [
+                (mkHttpCheck {
+                  name = "Pool RAID1 Membership";
+                  group = "Filesystem";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    # Fires when EXACTLY ONE Toshiba member is present (a
+                    # degraded raid1 that still serves, or a partial DAS
+                    # re-enumeration). 0 members → DAS-link + Pool Mounted own
+                    # that alert; 2 = healthy. Also fail-closed on the
+                    # pool-recovery metrics collector dying (presence check).
+                    "[BODY] != pat(*pool_usb_recovery_members_present 1\n*)"
+                    "[BODY] == pat(*\npool_usb_recovery_members_present *)"
+                    "[BODY] == pat(*\npool_usb_recovery_device_errors *)"
+                  ];
+                  alerts = discordAlert "Pool RAID1 degraded — exactly one Toshiba member present (or pool-recovery metrics died). The pool may be serving from a single member. Check: btrfs device stats /mnt/pool, scripts/das-link-recovery-check.sh. DAS replug procedure: unplug USB cable (VBUS) AND enclosure power 60s, replug; a degraded mount remains a manual decision (never -o degraded automatically).";
+                })
+              ]
+              ++ lib.optionals config.services.signoz.enable [
+                (mkHttpCheck {
+                  name = "ClickHouse Data Mount";
+                  group = "Filesystem";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    # pat() is a GLOB (HELP comments contain "clickhouse_xfs_mounted 1"):
+                    # assert absence of the 0-value line plus presence (buildcache pattern)
+                    "[BODY] != pat(*clickhouse_xfs_mounted 0\n*)"
+                    "[BODY] == pat(*\nclickhouse_xfs_mounted *)"
+                    "[BODY] != pat(*clickhouse_xfs_is_xfs 0\n*)"
+                    "[BODY] == pat(*\nclickhouse_xfs_is_xfs *)"
+                  ];
+                  alerts = discordAlert "ClickHouse XFS data mount (/var/lib/clickhouse) is unmounted, EIO-dead, or not XFS — clickhouse.service refuses to start by design (ConditionPathIsMountPoint, no telemetry written to the root fs). Observability ingestion is DOWN. Check: findmnt /var/lib/clickhouse, systemctl status var-lib-clickhouse.mount, dmesg | grep -i xfs. If the partition/fs is missing: scripts/migrate-clickhouse-xfs.sh (prepare phase), then redeploy.";
+                })
+                (mkHttpCheck {
+                  name = "ClickHouse Data Usage";
+                  group = "Filesystem";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "30m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*clickhouse_xfs_usage_over_threshold 0*)"
+                  ];
+                  alerts = discordAlert "ClickHouse XFS data filesystem exceeds 85% — XFS cannot shrink and telemetry retention grows unboundedly. Check per-table sizes (clickhouse-client 'SELECT database, formatReadableSize(sum(bytes_on_disk)) FROM system.parts GROUP BY database') and tighten TTLs in signoz.nix (clickhouseInternalLogs / signoz_logs / signoz_traces retention).";
                 })
               ]
               ++ lib.optionals config.services.discordsync.enable [
@@ -1301,6 +1782,47 @@ _: {
                     "[RESPONSE_TIME] < 500"
                   ];
                   alerts = discordAlert "DiscordSync backup bot down — Discord messages not being captured";
+                })
+                # M07 alert mirrors (DiscordSync plan F40): an independent
+                # second layer on top of the Prometheus rules in DiscordSync's
+                # monitoring/alerts.yml. /metrics is auth-exempt on localhost.
+                # gatus body patterns can only express "== 0" (prefix match on
+                # the value line), so each check pins a sticky zero-state.
+                # Deliberately NOT mirrored: DB-growth (500 MB/day rate) and
+                # sync-failure COUNT (>5) alerts; a gatus absolute-byte ceiling
+                # or a zero-failure check would false-fire on transients.
+                # Those stay Prometheus-only.
+                (mkHttpCheck {
+                  name = "DiscordSync Legacy DLQ Stable";
+                  group = "Infrastructure";
+                  # Renamed from "Legacy DLQ Empty" (2026-08-25): production
+                  # permanently carries 11,404 frozen legacy dead letters
+                  # until the M09 event-store replay recovers them — a
+                  # depth==0 condition fired Discord every 5 min forever.
+                  # The depth gauge's companion flag (upstream 2862b613)
+                  # pre-computes "unchanged since previous scrape": only NEW
+                  # legacy dead letters (the Jul 3-6 silent-loss class
+                  # regressing) flip it to 0. Anchored form is mandatory —
+                  # the HELP embeds "<metric> 1 if ..." (phantom-green trap).
+                  url = "http://localhost:${toString ports.discordsync-api}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*discordsync_projection_dlq_legacy_unchanged 0\n*)"
+                    "[BODY] == pat(*\ndiscordsync_projection_dlq_legacy_unchanged *)"
+                  ];
+                  alerts = discordAlert "DiscordSync legacy DLQ GREW: new entries joined the frozen pre-v4.3 backlog (Jul 3-6 silent-loss incident class regressing). Check journalctl -u discordsync for decode failures; recovery of the frozen 11,404 remains plan M09";
+                })
+                (mkHttpCheck {
+                  name = "DiscordSync Turso Sync Active";
+                  group = "Infrastructure";
+                  url = "http://localhost:${toString ports.discordsync-api}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*discordsync_turso_local_only_mode 0*)"
+                  ];
+                  alerts = discordAlert "DiscordSync in Turso local-only mode: cloud mirror paused (quota exhausted or sync gave up). Local archive intact, mirror is stale";
                 })
               ]
               ++ lib.optionals (config.services.file-and-image-renamer.enable or false) [
@@ -1342,6 +1864,197 @@ _: {
                   alerts = discordAlert "Browser History server down — browsing analytics unavailable";
                 })
               ]
+              ++ lib.optionals (config.services.inboxclean.enable or false) [
+                # Liveness: /health behind a 3s TimeoutHandler (always 200
+                # once the process is up; connection-refused when down).
+                (mkHttpCheck {
+                  name = "InboxClean";
+                  group = "Productivity";
+                  url = "http://localhost:${toString ports.inboxclean}/health";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 1000"
+                  ];
+                  alerts = discordAlert "InboxClean dashboard down — inbox.home.lan unreachable. Check: systemctl status inboxclean-web, journalctl -u inboxclean-web.";
+                })
+                # Functional: the dashboard renders real HTML from CQRS data
+                # (works even before the Gmail OAuth flow completes).
+                (mkHttpCheck {
+                  name = "InboxClean Dashboard Renders";
+                  group = "Productivity";
+                  url = "http://localhost:${toString ports.inboxclean}/";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*<html*)"
+                    "[RESPONSE_TIME] < 2000"
+                  ];
+                  alerts = discordAlert "InboxClean dashboard not rendering HTML — check inboxclean-web logs";
+                })
+                # Projection readiness: the endpoint 503s while a worker
+                # drains/fails and 404s on pre-c766c44 binaries (where the
+                # 404 JSON would false-alarm), so this probe only makes the
+                # route's absence visible once — acceptable noise for the
+                # one generation it takes to converge.
+                (mkHttpCheck {
+                  name = "InboxClean Projections Ready";
+                  group = "Productivity";
+                  url = "http://localhost:${toString ports.inboxclean}/health/projections";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*email_state*)"
+                  ];
+                  alerts = discordAlert "InboxClean projections endpoint degraded — check /health services.projections and journalctl -u inboxclean-web";
+                })
+              ]
+              # Per-extra-account render probes: the ?account=<name> inbox tab
+              # must render HTML for every configured mailbox (graceful
+              # degradation keeps it 200 even when that account awaits its
+              # one-time OAuth runbook).
+              ++ lib.optionals ((config.services.inboxclean.extraAccounts or [ ]) != [ ]) (
+                map (
+                  account:
+                  mkHttpCheck {
+                    name = "InboxClean ${account.name} Inbox Renders";
+                    group = "Productivity";
+                    url = "http://localhost:${toString ports.inboxclean}/inbox?account=${account.name}";
+                    interval = "5m";
+                    conditions = [
+                      "[STATUS] == 200"
+                      "[BODY] == pat(*<html*)"
+                    ];
+                    alerts = discordAlert "InboxClean ${account.name} inbox tab not rendering — check inboxclean-web logs and the account OAuth runbook";
+                  }
+                ) (config.services.inboxclean.extraAccounts or [ ])
+              )
+              # Authenticated probe of the Paperless REST API with the SAME
+              # token inboxclean-sync uploads attachments with — the
+              # unauthenticated Paperless login-page check cannot see token
+              # death, so archiving would degrade silently (upstream treats
+              # upload failures as warnings by design). Endpoint is the
+              # auth-required document list, NOT the API root: paperless
+              # serves the root as browsable HTML only (any JSON Accept is
+              # answered 406 regardless of token — the bug that broke the
+              # InboxClean ping upstream, 2026-09-03), and unauthenticated
+              # browser-y requests get a 302 login redirect instead of 401.
+              # /api/documents/ is unambiguous: valid token -> 200,
+              # dead token -> 401.
+              ++ lib.optionals (config.services.inboxclean.paperless.enable or false) [
+                (mkHttpCheck {
+                  name = "InboxClean Paperless Archive Auth";
+                  group = "Productivity";
+                  url = "http://localhost:${toString ports.paperless}/api/documents/";
+                  interval = "5m";
+                  headers = {
+                    Authorization = "Token $PAPERLESS_TOKEN";
+                  };
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 1000"
+                  ];
+                  alerts = discordAlert "InboxClean Paperless archiving auth failing — Gmail attachments are NOT being archived. Check: token in platforms/nixos/secrets/inboxclean-paperless.yaml vs paperless-manage drf_create_token; journalctl -u inboxclean-sync | grep -i paperless";
+                })
+              ]
+              ++ lib.optionals (config.services.cv-server.enable or false) [
+                # Liveness: go-health probe served from the raw mux (always
+                # 200 once the process is up; connection-refused when down).
+                (mkHttpCheck {
+                  name = "CV";
+                  group = "Productivity";
+                  url = "http://localhost:${toString ports.cv}/health/live";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 1000"
+                  ];
+                  alerts = discordAlert "CV server down — resume site and PDF export at cv.home.lan unreachable. Check: systemctl status cv-server, journalctl -u cv-server.";
+                })
+                # Functional: the CV page renders real HTML (liveness alone
+                # would stay green through a broken render/config path).
+                (mkHttpCheck {
+                  name = "CV Page Renders";
+                  group = "Productivity";
+                  url = "http://localhost:${toString ports.cv}/cv";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 2000"
+                    "[BODY] == pat(*<html*)"
+                  ];
+                  alerts = discordAlert "CV /cv page no longer renders HTML — content sync, config, or the render layer is broken (cv.home.lan)";
+                })
+                # Functional: the PDF export actually compiles — this stayed
+                # green through a real incident where the typst template
+                # vanished from the state dir and /export/pdf 404'd while
+                # /cv kept rendering (2026-08-27). 5m interval stays far
+                # inside the export rate limit (5/min burst 8 per client).
+                (mkHttpCheck {
+                  name = "CV PDF Export";
+                  group = "Productivity";
+                  url = "http://localhost:${toString ports.cv}/export/pdf";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 10000"
+                    "[BODY] == pat(*%PDF*)"
+                  ];
+                  alerts = discordAlert "CV /export/pdf broken — typst template missing from /var/lib/cv/assets or the typst renderer failed (cv.home.lan). Check: journalctl -u cv-server, restart re-syncs assets.";
+                })
+                # Funnel freshness: the newest job.discovered event must be
+                # younger than 26h (four missed 6h scan ticks). The server
+                # encodes the verdict as the funnelStale boolean so this needs
+                # no JSONPath support; the API key rides the same sops secret
+                # the cv-scan timer uses, rendered into gatus-env.
+                (mkHttpCheck {
+                  name = "CV Funnel Freshness";
+                  group = "Productivity";
+                  url = "http://localhost:${toString ports.cv}/api/pipeline/sse-stats";
+                  interval = "30m";
+                  # sse-stats scans the WHOLE event log per call (newest
+                  # job.discovered). Under IO PSI that took 2.4-12s live
+                  # (2026-09-03): the old [RESPONSE_TIME] < 2000 condition
+                  # flapped the check 4x/12h while funnelStale stayed false,
+                  # and the client's default 10s timeout failed the rest —
+                  # every flap paged "funnel stale" for a latency problem.
+                  # Liveness stays guarded by [STATUS] + this 30s ceiling;
+                  # the freshness verdict IS the check's job.
+                  client.timeout = "30s";
+                  headers = {
+                    X-API-Key = "$CV_API_KEY";
+                  };
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\"funnelStale\":false*)"
+                  ];
+                  alerts = discordAlert "CV funnel stale — no new job discovered in 26h+ (cv-scan timer dead or every portal failing). Check: systemctl list-timers | grep cv-scan; journalctl -u cv-scan -u cv-server --since -24h";
+                })
+                # Funnel DB health: /health's pipeline-store check pings the
+                # SQLite event store (the irreplaceable tracked-applications
+                # state cv-backup protects). Body pattern is deterministic:
+                # Go marshals the checks map with struct field order
+                # (name, status, …), json.MarshalWrite emits compact JSON.
+                # "disabled" (in-memory backend) also fails the pat — in
+                # production event_store_driver=sqlite by config, so a
+                # disabled/absent verdict means the persistence config
+                # regressed (the config-validation gap the CV repo flagged).
+                # DEPLOY-ORDER: ships together with the cv flake-input bump —
+                # binaries before 2026-09-02 have no pipeline-store key and
+                # would sit permanently red on this check.
+                (mkHttpCheck {
+                  name = "CV Pipeline Store Health";
+                  group = "Productivity";
+                  url = "http://localhost:${toString ports.cv}/health";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 2000"
+                    "[BODY] == pat(*\"pipeline-store\":{\"name\":\"pipeline-store\",\"status\":\"healthy\"*)"
+                  ];
+                  alerts = discordAlert "CV pipeline event store unreachable — tracked-applications persistence is degraded (cv.home.lan). Check: journalctl -u cv-server --since -15min; sqlite store at /var/lib/cv/data/pipeline.sqlite.";
+                })
+              ]
               ++ lib.optionals (config.services.bank-sync.enable or false) [
                 (mkHttpCheck {
                   name = "Bank-Sync";
@@ -1356,6 +2069,28 @@ _: {
                     "[BODY] == pat(*Bank-Sync Dashboard*)"
                   ];
                   alerts = discordAlert "Bank-Sync down — Wise transaction sync halted, dashboard at banksync.home.lan unreachable. Check: systemctl status bank-sync, journalctl -u bank-sync.";
+                })
+                # Sync-health probe: the dashboard check above stays GREEN
+                # while every sync cycle fails (the 2026-08 invisible-outage
+                # class). This endpoint pattern-matches /metrics instead:
+                # sync_errors_total must be zero AND at least one successful
+                # sync must have ever happened (the last-sync timestamp
+                # metric only renders after a success). Gatus cannot compute
+                # timestamp AGE — a stale-sync (synced once, then scheduler
+                # died silently) needs PromQL; covered by the sync_total
+                # delta in post-deploy checks until Prometheus alerting
+                # lands here.
+                (mkHttpCheck {
+                  name = "Bank-Sync Sync Health";
+                  group = "Finance";
+                  url = "http://localhost:${toString ports.bank-sync}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*bank_sync_sync_errors_total 0*)"
+                    "[BODY] == pat(*bank_sync_last_sync_timestamp_seconds*)"
+                  ];
+                  alerts = discordAlert "Bank-Sync syncs are failing (or never succeeded) while the dashboard stays green — the August invisible-outage class. Check: journalctl -u bank-sync -n 100, then curl localhost:8097/metrics and read bank_sync_sync_errors_total + bank_sync_last_sync_timestamp_seconds.";
                 })
               ]
               ++ lib.optionals (config.services.papdashboard.enable or false) [
@@ -1380,7 +2115,8 @@ _: {
                   client.timeout = "10s";
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*backup_all_healthy 1*)"
+                    "[BODY] != pat(*backup_all_healthy 0\n*)"
+                    "[BODY] == pat(*\nbackup_all_healthy *)"
                   ];
                   alerts = discordAlert "One or more service backups are stale (>25h)";
                 })
@@ -1394,9 +2130,32 @@ _: {
                   client.timeout = "10s";
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*secret_rotation_all_fresh 1*)"
+                    "[BODY] != pat(*secret_rotation_all_fresh 0\n*)"
+                    "[BODY] == pat(*\nsecret_rotation_all_fresh *)"
                   ];
                   alerts = discordAlert "One or more OIDC client secrets are stale (>90d) — consider rotating";
+                })
+                # Pocket ID is the ONLY login path for the SSO-only surface
+                # (paperless since 2026-09-02 has no second login) plus every
+                # other Layer-1 app — its SQLite locking up under memory/IO
+                # pressure is a homelab-wide auth SPOF event. 2026-08-22: a
+                # fatal locked chain crashed the health check and lost a
+                # client row; 2026-09-02: 30 "database is locked" events/24h
+                # while logins still worked (degraded, not dead). Anchored
+                # patterns (real \n): scan failure = scrape_errors 1 = the
+                # other two conditions fail-closed red.
+                (mkHttpCheck {
+                  name = "Pocket ID SQLite Health";
+                  group = "Infrastructure";
+                  url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                  interval = "5m";
+                  client.timeout = "10s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nsystem_pocket_id_busy_scrape_errors 0\n*)"
+                    "[BODY] == pat(*\nsystem_pocket_id_busy_over_threshold 0\n*)"
+                  ];
+                  alerts = discordAlert "Pocket ID SQLite is locking up (SQLITE_BUSY storm or collector scan failed) — paperless SSO, forgejo/gatus/immich logins and every oauth2-proxy vHost are at risk. Check: journalctl -u pocket-id --since -24h --grep 'database is locked'. Collateral of memory/IO pressure (zram-full evenings); resolves when pressure drains.";
                 })
               ]
               ++ lib.optionals (config.services.systemd-graph.enable or false) [
@@ -1423,6 +2182,60 @@ _: {
                     "[BODY] == pat(*<!DOCTYPE html*)"
                   ];
                   alerts = discordAlert "systemd-timer-monitor report down — timers.home.lan unreachable or stale";
+                })
+              ]
+              ++ lib.optionals (config.services.mail-relay.enable or false) [
+                {
+                  # SMTP is not HTTP — plain TCP connect proves the null
+                  # client accepts submissions (loopback, so no auth probe
+                  # would even be possible). Follows the TaskChampion /
+                  # DNS-Resolver-TCP raw-check shape.
+                  name = "Mail Relay (SMTP)";
+                  group = "Infrastructure";
+                  url = "tcp://127.0.0.1:${toString ports.mail-relay}";
+                  interval = "60s";
+                  conditions = [ "[CONNECTED] == true" ];
+                  alerts = discordAlert "Mail relay down — outbound email is broken (paperless share links, forgejo notifications, system/cron mail queue locally). Check: systemctl status postfix, mailq, journalctl -u postfix -n 50";
+                }
+                (mkHttpCheck {
+                  name = "Mail Relay Service";
+                  group = "Infrastructure";
+                  # Second layer: postfix liveness from the system-health
+                  # collector (catches failed/crash-loop states even when
+                  # the socket is briefly answering). Same shape as the
+                  # fastflowlm/hermes service-state checks.
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_service_state_failed{service=\"postfix\"} 0*)"
+                    "[BODY] == pat(*system_service_start_limit_hit{service=\"postfix\"} 0*)"
+                  ];
+                  alerts = discordAlert "postfix failed or in start-limit crash-loop — outbound mail halted. Check: journalctl -u postfix -n 50, journalctl -u postfix-setup -n 30, sasl credential in /run/secrets/rendered/mail-relay-sasl (placeholder value = every send defers)";
+                })
+                (mkHttpCheck {
+                  name = "Mail Relay Queue";
+                  group = "Infrastructure";
+                  # Third layer: the mail-relay-metrics collector's queue
+                  # state. A deferred queue is the silent failure mode of a
+                  # null client — postfix stays "active", the SMTP socket
+                  # answers, and every send quietly parks in mailq. While the
+                  # sops credential is still the PLACEHOLDER, the first few
+                  # user-triggered sends cross queueAlertThreshold and this
+                  # check fires as the pending go-live signal; after the real
+                  # Resend key + verified larsartmann.cloud land, a firing
+                  # check means genuine upstream rejections (provider outage,
+                  # expired key, unverified sender).
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*mail_relay_scrape_errors 0*)"
+                    "[BODY] == pat(*mail_relay_queue_over_threshold 0*)"
+                    "[BODY] == pat(*mail_relay_queue_messages*)"
+                    "[BODY] == pat(*mail_relay_credential_placeholder*)"
+                  ];
+                  alerts = discordAlert "Mail relay queue backed up — sends are deferring (go-live: sops mail_relay_password is still the PLACEHOLDER and/or larsartmann.cloud is not yet verified in Resend; live: provider rejecting — check mailq + journalctl -u postfix -n 50 for the remote server reply)";
                 })
               ]
               ++ map mkWebsiteCheck ossWebsites
@@ -1462,7 +2275,8 @@ _: {
                   "${lib.getExe gatusOidcEnv}"
                 ]
                 ++ lib.optionals enableOidc oidcGate.serviceConfig.ExecStartPre;
-                TimeoutStartSec = "3min";
+                # Must exceed the 300s OIDC gate budget (slow-boot dnsblockd)
+                TimeoutStartSec = "6min";
                 RuntimeDirectory = "gatus";
                 LoadCredential = lib.optional enableOidc "gatus-oidc-secret:${clientSecretPath}";
                 # Compose the full EnvironmentFile list: the sops template

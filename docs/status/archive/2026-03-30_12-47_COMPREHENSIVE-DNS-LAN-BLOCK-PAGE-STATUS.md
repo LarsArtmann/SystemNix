@@ -269,33 +269,33 @@ DNS blocking works for LAN queries — blocked domains resolve via unbound. Howe
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| #   | Priority | Task                                                                                  | Effort | Impact |
-| --- | -------- | ------------------------------------------------------------------------------------- | ------ | ------ |
-| 1   | **P0**   | Deploy DNS LAN fix (`sudo nixos-rebuild switch --flake .#evo-x2`) and verify from Mac | 5min   | HIGH   |
-| 2   | **P0**   | Configure router DHCP to advertise `192.168.1.162` as DNS server                      | 10min  | HIGH   |
-| 3   | **P0**   | Fix superfile.nix vendorHash — build once, insert real hash                           | 15min  | MEDIUM |
-| 4   | **P0**   | Verify SSH AllowUsers — is "art" a real user? Remove if not                           | 2min   | HIGH   |
-| 5   | **P1**   | Fix CA key security — move dnsblockd CA key out of Nix store                          | 1h     | HIGH   |
-| 6   | **P1**   | Add Grafana alerting rules (disk, CPU, memory, service down)                          | 2h     | HIGH   |
-| 7   | **P1**   | Unify Go overlay (remove duplication between flake.nix and darwin)                    | 1h     | MEDIUM |
-| 8   | **P1**   | Deduplicate dnsblockd package (perSystem + overlay)                                   | 30min  | LOW    |
-| 9   | **P1**   | Remove legacy Technitium DNS + dns-blocklist.nix dead code                            | 15min  | LOW    |
-| 10  | **P1**   | Fix CI Cachix cache inconsistency (use single cache)                                  | 30min  | MEDIUM |
-| 11  | **P1**   | Fix Sublime sync LaunchAgent path (SystemNix -> Setup-Mac)                            | 15min  | LOW    |
-| 12  | **P1**   | Add NixOS build job to GitHub Actions CI                                              | 1h     | HIGH   |
-| 13  | **P2**   | Archive old docs/status/ files (keep last 2 weeks only)                               | 30min  | MEDIUM |
-| 14  | **P2**   | Triage TODO_LIST.md — remove stale items, prioritize remaining                        | 1h     | MEDIUM |
-| 15  | **P2**   | Enable AMD NPU and test with Ollama                                                   | 2h     | HIGH   |
-| 16  | **P2**   | Create DNS performance Grafana dashboard                                              | 2h     | MEDIUM |
-| 17  | **P2**   | Configure NixOS Bluetooth (8 steps in TODO)                                           | 1h     | MEDIUM |
-| 18  | **P2**   | Fix uBlock filter time parsing issue and re-enable                                    | 1h     | LOW    |
-| 19  | **P2**   | Set up automated offsite backup for Immich photos                                     | 3h     | HIGH   |
-| 20  | **P2**   | Audit and clean 55 scripts in scripts/ directory                                      | 1h     | MEDIUM |
-| 21  | **P3**   | Remove unused wrapper-modules flake input                                             | 5min   | LOW    |
-| 22  | **P3**   | Enable DNS-over-TLS on port 853 for LAN clients                                       | 1h     | MEDIUM |
-| 23  | **P3**   | Create NixOS architecture diagram (like Darwin's SVG)                                 | 2h     | MEDIUM |
-| 24  | **P3**   | Write operational runbook for common incidents                                        | 3h     | HIGH   |
-| 25  | **P3**   | Document dnsblockd HTTP API                                                           | 2h     | LOW    |
+| #  | Priority | Task                                                                                  | Effort | Impact |
+| -- | -------- | ------------------------------------------------------------------------------------- | ------ | ------ |
+| 1  | **P0**   | Deploy DNS LAN fix (`sudo nixos-rebuild switch --flake .#evo-x2`) and verify from Mac | 5min   | HIGH   |
+| 2  | **P0**   | Configure router DHCP to advertise `192.168.1.162` as DNS server                      | 10min  | HIGH   |
+| 3  | **P0**   | Fix superfile.nix vendorHash — build once, insert real hash                           | 15min  | MEDIUM |
+| 4  | **P0**   | Verify SSH AllowUsers — is "art" a real user? Remove if not                           | 2min   | HIGH   |
+| 5  | **P1**   | Fix CA key security — move dnsblockd CA key out of Nix store                          | 1h     | HIGH   |
+| 6  | **P1**   | Add Grafana alerting rules (disk, CPU, memory, service down)                          | 2h     | HIGH   |
+| 7  | **P1**   | Unify Go overlay (remove duplication between flake.nix and darwin)                    | 1h     | MEDIUM |
+| 8  | **P1**   | Deduplicate dnsblockd package (perSystem + overlay)                                   | 30min  | LOW    |
+| 9  | **P1**   | Remove legacy Technitium DNS + dns-blocklist.nix dead code                            | 15min  | LOW    |
+| 10 | **P1**   | Fix CI Cachix cache inconsistency (use single cache)                                  | 30min  | MEDIUM |
+| 11 | **P1**   | Fix Sublime sync LaunchAgent path (SystemNix -> Setup-Mac)                            | 15min  | LOW    |
+| 12 | **P1**   | Add NixOS build job to GitHub Actions CI                                              | 1h     | HIGH   |
+| 13 | **P2**   | Archive old docs/status/ files (keep last 2 weeks only)                               | 30min  | MEDIUM |
+| 14 | **P2**   | Triage TODO_LIST.md — remove stale items, prioritize remaining                        | 1h     | MEDIUM |
+| 15 | **P2**   | Enable AMD NPU and test with Ollama                                                   | 2h     | HIGH   |
+| 16 | **P2**   | Create DNS performance Grafana dashboard                                              | 2h     | MEDIUM |
+| 17 | **P2**   | Configure NixOS Bluetooth (8 steps in TODO)                                           | 1h     | MEDIUM |
+| 18 | **P2**   | Fix uBlock filter time parsing issue and re-enable                                    | 1h     | LOW    |
+| 19 | **P2**   | Set up automated offsite backup for Immich photos                                     | 3h     | HIGH   |
+| 20 | **P2**   | Audit and clean 55 scripts in scripts/ directory                                      | 1h     | MEDIUM |
+| 21 | **P3**   | Remove unused wrapper-modules flake input                                             | 5min   | LOW    |
+| 22 | **P3**   | Enable DNS-over-TLS on port 853 for LAN clients                                       | 1h     | MEDIUM |
+| 23 | **P3**   | Create NixOS architecture diagram (like Darwin's SVG)                                 | 2h     | MEDIUM |
+| 24 | **P3**   | Write operational runbook for common incidents                                        | 3h     | HIGH   |
+| 25 | **P3**   | Document dnsblockd HTTP API                                                           | 2h     | LOW    |
 
 ---
 

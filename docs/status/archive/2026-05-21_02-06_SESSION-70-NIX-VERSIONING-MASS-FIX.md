@@ -72,15 +72,15 @@
 
 ## c) NOT STARTED
 
-| #   | Item                              | Priority | Notes                                                                                                                                                                                     |
-| --- | --------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | CI check for version anti-pattern | P2       | Add a GitHub Actions workflow that fails if `self.rev`/`self.shortRev` appears in any `.nix` file. This prevents regression in new repos.                                                 |
-| 2   | `git tag` hook fix                | P3       | Some repos have a `prepare-commit-msg` or `post-commit` hook that tries to open VS Code (`code --wait`). This fails in headless environments. Need to set `GIT_EDITOR=true` or fix hooks. |
-| 3   | Shared flake-parts template       | P3       | Create a `github:LarsArtmann/flake-parts-go-template` with correct `version = "0.1.0"` pattern, `buildGoModule`, `preparedSrc` for `_local_deps`, and `overlays.default`.                 |
-| 4   | Branch name audit                 | P3       | Standardize all repos to `master` or update SystemNix `flake.nix` to use the correct `ref=` for each.                                                                                     |
-| 5   | Pre-commit hook fixes             | P3       | Fix the underlying lint/todo-check/gitleaks failures so `--no-verify` is no longer needed.                                                                                                |
-| 6   | `buildflow` unstaged changes      | P3       | `buildflow` had 50+ unstaged files when we tried to push. The stash/merge worked but indicates the working directory is dirty.                                                            |
-| 7   | Version bump automation           | P4       | Script that bumps `version = "X.Y.Z"` in `flake.nix`, commits, tags, and pushes. Could be triggered by a GitHub Action on merge to main.                                                  |
+| # | Item                              | Priority | Notes                                                                                                                                                                                     |
+| - | --------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | CI check for version anti-pattern | P2       | Add a GitHub Actions workflow that fails if `self.rev`/`self.shortRev` appears in any `.nix` file. This prevents regression in new repos.                                                 |
+| 2 | `git tag` hook fix                | P3       | Some repos have a `prepare-commit-msg` or `post-commit` hook that tries to open VS Code (`code --wait`). This fails in headless environments. Need to set `GIT_EDITOR=true` or fix hooks. |
+| 3 | Shared flake-parts template       | P3       | Create a `github:LarsArtmann/flake-parts-go-template` with correct `version = "0.1.0"` pattern, `buildGoModule`, `preparedSrc` for `_local_deps`, and `overlays.default`.                 |
+| 4 | Branch name audit                 | P3       | Standardize all repos to `master` or update SystemNix `flake.nix` to use the correct `ref=` for each.                                                                                     |
+| 5 | Pre-commit hook fixes             | P3       | Fix the underlying lint/todo-check/gitleaks failures so `--no-verify` is no longer needed.                                                                                                |
+| 6 | `buildflow` unstaged changes      | P3       | `buildflow` had 50+ unstaged files when we tried to push. The stash/merge worked but indicates the working directory is dirty.                                                            |
+| 7 | Version bump automation           | P4       | Script that bumps `version = "X.Y.Z"` in `flake.nix`, commits, tags, and pushes. Could be triggered by a GitHub Action on merge to main.                                                  |
 
 ---
 
@@ -123,48 +123,48 @@
 
 ### P1 — Prevent Regression
 
-| #   | Task                                                                                | Effort | Impact                             |
-| --- | ----------------------------------------------------------------------------------- | ------ | ---------------------------------- |
-| 1   | Create `github:LarsArtmann/flake-parts-go-template` with correct versioning pattern | 1h     | Prevents anti-pattern in new repos |
-| 2   | Add CI check that fails on `self.rev`/`self.shortRev` in `.nix` files               | 15m    | Catches anti-pattern at PR time    |
-| 3   | Add CI check that verifies `version` is hardcoded semver                            | 15m    | Catches dynamic versions           |
+| # | Task                                                                                | Effort | Impact                             |
+| - | ----------------------------------------------------------------------------------- | ------ | ---------------------------------- |
+| 1 | Create `github:LarsArtmann/flake-parts-go-template` with correct versioning pattern | 1h     | Prevents anti-pattern in new repos |
+| 2 | Add CI check that fails on `self.rev`/`self.shortRev` in `.nix` files               | 15m    | Catches anti-pattern at PR time    |
+| 3 | Add CI check that verifies `version` is hardcoded semver                            | 15m    | Catches dynamic versions           |
 
 ### P2 — Cleanup
 
-| #   | Task                                                                     | Effort | Impact                                      |
-| --- | ------------------------------------------------------------------------ | ------ | ------------------------------------------- |
-| 4   | Fix pre-commit hooks in BuildFlow (77 golangci-lint issues)              | 2h     | Enables clean commits without `--no-verify` |
-| 5   | Fix pre-commit hooks in dnsblockd (3 TODO comments)                      | 30m    | Enables clean commits                       |
-| 6   | Fix pre-commit hooks in golangci-lint-auto-configure (nix-fmt, gitleaks) | 30m    | Enables clean commits                       |
-| 7   | Standardize all repos to `master` branch or update `flake.nix` `ref=`    | 1h     | Removes branch-name fragility               |
-| 8   | Clean BuildFlow working directory (50+ unstaged files)                   | 30m    | Hygiene                                     |
+| # | Task                                                                     | Effort | Impact                                      |
+| - | ------------------------------------------------------------------------ | ------ | ------------------------------------------- |
+| 4 | Fix pre-commit hooks in BuildFlow (77 golangci-lint issues)              | 2h     | Enables clean commits without `--no-verify` |
+| 5 | Fix pre-commit hooks in dnsblockd (3 TODO comments)                      | 30m    | Enables clean commits                       |
+| 6 | Fix pre-commit hooks in golangci-lint-auto-configure (nix-fmt, gitleaks) | 30m    | Enables clean commits                       |
+| 7 | Standardize all repos to `master` branch or update `flake.nix` `ref=`    | 1h     | Removes branch-name fragility               |
+| 8 | Clean BuildFlow working directory (50+ unstaged files)                   | 30m    | Hygiene                                     |
 
 ### P3 — Automation
 
-| #   | Task                                                                        | Effort | Impact                            |
-| --- | --------------------------------------------------------------------------- | ------ | --------------------------------- |
-| 9   | Create `version-bump` script: edit `flake.nix` → commit → tag → push        | 30m    | Reduces release to 1 command      |
-| 10  | Create `sync-flake-lock` script: update all LarsArtmann inputs in SystemNix | 30m    | Reduces lock updates to 1 command |
-| 11  | Add `update-vendor-hash.sh` to all Go repos (not just SystemNix)            | 1h     | Consistent vendorHash management  |
-| 12  | Add `justfile`/`flake.nix` recipe for `nix build` to all Go repos           | 1h     | Consistent build interface        |
+| #  | Task                                                                        | Effort | Impact                            |
+| -- | --------------------------------------------------------------------------- | ------ | --------------------------------- |
+| 9  | Create `version-bump` script: edit `flake.nix` → commit → tag → push        | 30m    | Reduces release to 1 command      |
+| 10 | Create `sync-flake-lock` script: update all LarsArtmann inputs in SystemNix | 30m    | Reduces lock updates to 1 command |
+| 11 | Add `update-vendor-hash.sh` to all Go repos (not just SystemNix)            | 1h     | Consistent vendorHash management  |
+| 12 | Add `justfile`/`flake.nix` recipe for `nix build` to all Go repos           | 1h     | Consistent build interface        |
 
 ### P4 — Long-term
 
-| #   | Task                                                                       | Effort | Impact                       |
-| --- | -------------------------------------------------------------------------- | ------ | ---------------------------- |
-| 13  | Write ADR-007: Nix Versioning Convention                                   | 15m    | Permanent record             |
-| 14  | Audit all repos for inline `${self.rev}` in ldflags (not just `version =`) | 30m    | Catch edge cases             |
-| 15  | Create GitHub Action that auto-tags on merge to default branch             | 1h     | Zero-touch releases          |
-| 16  | Add `version` to `nix eval` output for all packages as a health check      | 15m    | Quick verification           |
-| 17  | Document release workflow in each repo's README                            | 1h     | Contributor onboarding       |
-| 18  | Add `flake check` to all Go repos                                          | 1h     | CI-ready                     |
-| 19  | Migrate `docs/status/` reports older than 2 weeks to `archive/`            | 15m    | Hygiene                      |
-| 20  | Update `TODO_LIST.md` — many items from Session 69 still relevant          | 1h     | Accuracy                     |
-| 21  | Create `CONTEXT.md` at SystemNix root                                      | 30m    | Agent onboarding             |
-| 22  | Fix SigNoz JWT secret (`SIGNOZ_TOKENIZER_JWT_SECRET`)                      | 30m    | Security (from Session 69)   |
-| 23  | Add Whisper ASR down alert to SigNoz rules                                 | 15m    | Monitoring (from Session 69) |
-| 24  | Extract hardcoded ports in `voice-agents.nix`, `configuration.nix`         | 30m    | Config consistency           |
-| 25  | Provision Pi 3 as secondary DNS                                            | 2h     | DNS redundancy               |
+| #  | Task                                                                       | Effort | Impact                       |
+| -- | -------------------------------------------------------------------------- | ------ | ---------------------------- |
+| 13 | Write ADR-007: Nix Versioning Convention                                   | 15m    | Permanent record             |
+| 14 | Audit all repos for inline `${self.rev}` in ldflags (not just `version =`) | 30m    | Catch edge cases             |
+| 15 | Create GitHub Action that auto-tags on merge to default branch             | 1h     | Zero-touch releases          |
+| 16 | Add `version` to `nix eval` output for all packages as a health check      | 15m    | Quick verification           |
+| 17 | Document release workflow in each repo's README                            | 1h     | Contributor onboarding       |
+| 18 | Add `flake check` to all Go repos                                          | 1h     | CI-ready                     |
+| 19 | Migrate `docs/status/` reports older than 2 weeks to `archive/`            | 15m    | Hygiene                      |
+| 20 | Update `TODO_LIST.md` — many items from Session 69 still relevant          | 1h     | Accuracy                     |
+| 21 | Create `CONTEXT.md` at SystemNix root                                      | 30m    | Agent onboarding             |
+| 22 | Fix SigNoz JWT secret (`SIGNOZ_TOKENIZER_JWT_SECRET`)                      | 30m    | Security (from Session 69)   |
+| 23 | Add Whisper ASR down alert to SigNoz rules                                 | 15m    | Monitoring (from Session 69) |
+| 24 | Extract hardcoded ports in `voice-agents.nix`, `configuration.nix`         | 30m    | Config consistency           |
+| 25 | Provision Pi 3 as secondary DNS                                            | 2h     | DNS redundancy               |
 
 ---
 

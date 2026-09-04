@@ -82,7 +82,11 @@ _: {
             OLLAMA_KV_CACHE_TYPE = "q8_0";
             OLLAMA_KEEP_ALIVE = "1h";
             OLLAMA_MAX_LOADED_MODELS = "1";
-            OLLAMA_GPU_OVERHEAD = "8589934592";
+            # 1 GiB headroom — hipMemGetInfo on this APU reports the GTT pool
+            # (≈ all system RAM post-carveout-reduction), so this biases ollama's
+            # model accounting to leave desktop headroom. The hard bound is the
+            # service cgroup MemoryMax below.
+            OLLAMA_GPU_OVERHEAD = "1073741824";
             PYTORCH_CUDA_ALLOC_CONF = "per_process_memory_fraction:0.45";
           };
         };
@@ -106,6 +110,12 @@ _: {
               OOMScoreAdjust = 500;
             }
             (serviceDefaults { })
+            # NOTE: nixpkgs' ollama module already sets DevicePolicy=closed with
+            # char-drm/char-kfd DeviceAllow — /dev/accel is SUBSYSTEM=accel, so
+            # the NPU node is already denied (proven live: ollama served through
+            # the 2026-09-04 amdxdna wedge that killed every unprotected ROCm
+            # service). Do NOT add rocm.deviceCgroup here — it conflicts on
+            # DevicePolicy ("closed" vs "strict") and breaks the eval.
             (harden {
               MemoryMax = "32G";
               CPUQuota = "400%"; # Model loading (GGUF quantization) is multi-threaded
@@ -135,10 +145,11 @@ _: {
             '';
           })
           # Wrapper that bakes in LD_LIBRARY_PATH for ROCm runtime libs so the
-          # standalone llama.cpp server uses the dedicated VRAM (18 GiB BIOS
-          # carveout) on Strix Halo. Without this + the session-level HSA env
-          # vars below, llama-server cannot detect gfx1150 and falls back to
-          # CPU — zero VRAM usage, model loaded into GTT/system RAM instead.
+          # standalone llama.cpp server can use the GPU on Strix Halo. With the
+          # 512 MiB BIOS carveout (GTT-first, 2026-09-02) model weights land in
+          # GTT (= system RAM) — amdgpu migrates/falls back automatically. Without
+          # this + the session-level HSA env vars below, llama-server cannot
+          # detect gfx1150 and falls back to CPU — zero GPU usage.
           (pkgs.writeShellApplication {
             name = "llama-server-rocm";
             runtimeInputs = [ pkgs.coreutils ];
@@ -155,7 +166,8 @@ _: {
         # (llama-server, hipblas-bench, custom HIP code) launched from an
         # interactive shell detects the gfx1150 GPU. Without HSA_OVERRIDE_GFX_VERSION,
         # ROCm does not officially support gfx1150 (RDNA 3.5 / Strix Halo) and
-        # silently falls back to CPU — the 18 GiB VRAM carveout stays unused.
+        # silently falls back to CPU — the GTT-backed GPU (512 MiB carveout +
+        # system-RAM GTT) stays unused.
         # HSA_ENABLE_SDMA=0 avoids SDMA hang bugs on gfx11 APUs.
         environment.sessionVariables = rocmEnv // {
           OLLAMA_HOST = "127.0.0.1:${toString ports.ollama}";

@@ -155,48 +155,48 @@ The `forgejo-runner-token` script had `|| TOKEN=""` and `exit 0` even on failure
 
 ### P0 — Immediate (this week)
 
-| #   | Item                                                                        | Effort | Impact                 |
-| --- | --------------------------------------------------------------------------- | ------ | ---------------------- |
-| 1   | **Squash failed runner token commits**                                      | 5min   | Clean git history      |
-| 2   | **Verify Forgejo web UI** — login, browse repos, check Actions tab          | 5min   | Confirm full migration |
-| 3   | **Test push mirrors** — verify Forgejo → GitHub sync works                  | 10min  | Data integrity         |
-| 4   | **Clean up stale runner state** — `/var/lib/gitea-runner/evo-x2/` old files | 5min   | Disk cleanup           |
-| 5   | **Remove old Gitea backup** — `/var/lib/gitea.pre-forgejo-migration`        | 5min   | Disk space             |
+| # | Item                                                                        | Effort | Impact                 |
+| - | --------------------------------------------------------------------------- | ------ | ---------------------- |
+| 1 | **Squash failed runner token commits**                                      | 5min   | Clean git history      |
+| 2 | **Verify Forgejo web UI** — login, browse repos, check Actions tab          | 5min   | Confirm full migration |
+| 3 | **Test push mirrors** — verify Forgejo → GitHub sync works                  | 10min  | Data integrity         |
+| 4 | **Clean up stale runner state** — `/var/lib/gitea-runner/evo-x2/` old files | 5min   | Disk cleanup           |
+| 5 | **Remove old Gitea backup** — `/var/lib/gitea.pre-forgejo-migration`        | 5min   | Disk space             |
 
 ### P1 — High Priority (this week)
 
-| #   | Item                                                                               | Effort | Impact                                  |
-| --- | ---------------------------------------------------------------------------------- | ------ | --------------------------------------- |
-| 6   | **Update TODO_LIST.md** — reflect current state, remove stale items                | 30min  | Organization                            |
-| 7   | **Update FEATURES.md** — mark ComfyUI as removed, fix ghost scripts                | 15min  | Accuracy                                |
-| 8   | **Create a Forgejo Actions test workflow** — run `echo hello` on the runner        | 15min  | Verify runner actually works end-to-end |
-| 9   | **Audit all `mkForce` overrides** — check for other `escapeSystemdPath` mismatches | 30min  | Prevent similar bugs                    |
-| 10  | **Review stale `/var/lib/forgejo/.runner-token`** from attempt 1                   | 5min   | Cleanup                                 |
+| #  | Item                                                                               | Effort | Impact                                  |
+| -- | ---------------------------------------------------------------------------------- | ------ | --------------------------------------- |
+| 6  | **Update TODO_LIST.md** — reflect current state, remove stale items                | 30min  | Organization                            |
+| 7  | **Update FEATURES.md** — mark ComfyUI as removed, fix ghost scripts                | 15min  | Accuracy                                |
+| 8  | **Create a Forgejo Actions test workflow** — run `echo hello` on the runner        | 15min  | Verify runner actually works end-to-end |
+| 9  | **Audit all `mkForce` overrides** — check for other `escapeSystemdPath` mismatches | 30min  | Prevent similar bugs                    |
+| 10 | **Review stale `/var/lib/forgejo/.runner-token`** from attempt 1                   | 5min   | Cleanup                                 |
 
 ### P2 — Medium Priority (next 2 weeks)
 
-| #   | Item                                                              | Effort | Impact                    |
-| --- | ----------------------------------------------------------------- | ------ | ------------------------- |
-| 11  | **Verify Twenty CRM** — check if it's actually running and useful | 30min  | Feature audit             |
-| 12  | **Verify Voice Agents pipeline** — Whisper Docker + ROCm          | 30min  | Feature audit             |
-| 13  | **Test Darwin build** — `just test-fast` on macOS                 | 10min  | Cross-platform            |
-| 14  | **PhotoMap AI** — update SHA256 pin or remove                     | 30min  | Feature decision          |
-| 15  | **Provision Pi 3** for DNS failover cluster                       | 2hr    | Infrastructure resilience |
-| 16  | **Dedicated GitHub PAT** for Forgejo push mirrors                 | 15min  | Security                  |
-| 17  | **Dozzle log viewer** at `logs.home.lan`                          | 1hr    | Observability             |
-| 18  | **SigNoz alert channel routing** — critical→Discord, warning→log  | 1hr    | Alert quality             |
+| #  | Item                                                              | Effort | Impact                    |
+| -- | ----------------------------------------------------------------- | ------ | ------------------------- |
+| 11 | **Verify Twenty CRM** — check if it's actually running and useful | 30min  | Feature audit             |
+| 12 | **Verify Voice Agents pipeline** — Whisper Docker + ROCm          | 30min  | Feature audit             |
+| 13 | **Test Darwin build** — `just test-fast` on macOS                 | 10min  | Cross-platform            |
+| 14 | **PhotoMap AI** — update SHA256 pin or remove                     | 30min  | Feature decision          |
+| 15 | **Provision Pi 3** for DNS failover cluster                       | 2hr    | Infrastructure resilience |
+| 16 | **Dedicated GitHub PAT** for Forgejo push mirrors                 | 15min  | Security                  |
+| 17 | **Dozzle log viewer** at `logs.home.lan`                          | 1hr    | Observability             |
+| 18 | **SigNoz alert channel routing** — critical→Discord, warning→log  | 1hr    | Alert quality             |
 
 ### P3 — Lower Priority (backlog)
 
-| #   | Item                                                            | Effort | Impact                 |
-| --- | --------------------------------------------------------------- | ------ | ---------------------- |
-| 19  | **Multi-WM (Sway) refresh or remove**                           | 2hr    | Backup compositor      |
-| 20  | **Shared flake-parts template** for private Go repos            | 4hr    | Standardization        |
-| 21  | **go-auto-upgrade `path:` → SSH URL** migration                 | 15min  | Consistency            |
-| 22  | **AppArmor re-enablement** after NixOS 26.05 bug fix            | 30min  | Security hardening     |
-| 23  | **Auditd re-enablement** after NixOS 26.05 bug #483085          | 30min  | Security hardening     |
-| 24  | **DNS-over-QUIC overlay** — investigate binary cache breakage   | 2hr    | Performance            |
-| 25  | **Performance benchmark scripts** — create or remove references | 1hr    | Documentation accuracy |
+| #  | Item                                                            | Effort | Impact                 |
+| -- | --------------------------------------------------------------- | ------ | ---------------------- |
+| 19 | **Multi-WM (Sway) refresh or remove**                           | 2hr    | Backup compositor      |
+| 20 | **Shared flake-parts template** for private Go repos            | 4hr    | Standardization        |
+| 21 | **go-auto-upgrade `path:` → SSH URL** migration                 | 15min  | Consistency            |
+| 22 | **AppArmor re-enablement** after NixOS 26.05 bug fix            | 30min  | Security hardening     |
+| 23 | **Auditd re-enablement** after NixOS 26.05 bug #483085          | 30min  | Security hardening     |
+| 24 | **DNS-over-QUIC overlay** — investigate binary cache breakage   | 2hr    | Performance            |
+| 25 | **Performance benchmark scripts** — create or remove references | 1hr    | Documentation accuracy |
 
 ---
 

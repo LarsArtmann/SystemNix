@@ -100,7 +100,7 @@
 
 | Component              | Score | Notes                  |
 | ---------------------- | ----- | ---------------------- |
-| Hardware Utilization   | 7/10  | ⚠️ NPU unused          |
+| Hardware Utilization   | 7/10  | ⚠️ NPU unused           |
 | Software Configuration | 9/10  | ✅ Well optimized      |
 | Security               | 9/10  | ✅ Strong hardening    |
 | Performance            | 8/10  | ✅ Good, NPU potential |

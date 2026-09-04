@@ -86,25 +86,25 @@
 
 ## c) NOT STARTED ❌
 
-| #   | Item                                                  | Priority | Effort |
-| --- | ----------------------------------------------------- | :------: | :----: |
-| 1   | Pi 3 hardware provisioning for DNS failover           |   High   |   2h   |
-| 2   | NixOS VM test suite                                   |   High   |   8h   |
-| 3   | Deploy Dozzle (`logs.home.lan`)                       |  Medium  |   1h   |
-| 4   | `mkDockerService` shared helper                       |  Medium  |   3h   |
-| 5   | Shared Go flake-parts template                        |  Medium  |   4h   |
-| 6   | Per-threshold SigNoz alert routing (critical→Discord) |  Medium  |   2h   |
-| 7   | Move dns-failover `authPassword` to sops              |  Medium  |  30m   |
-| 8   | Consolidate voice-agents Caddy vHost                  |  Medium  |  30m   |
-| 9   | Secret rotation strategy                              |   Low    |   4h   |
-| 10  | AppArmor profiles                                     |   Low    |   4h   |
-| 11  | DNS-over-QUIC overlay                                 |   Low    |   2h   |
-| 12  | Create `flake.nix` for hierarchical-errors repo       |   Low    |   1h   |
-| 13  | Benchmark/storage cleanup scripts                     |   Low    |   2h   |
-| 14  | Compute real `vendorHash` for BuildFlow               |  Medium  |  30m   |
-| 15  | Convert PMA to flake input                            |   Low    |   1h   |
-| 16  | Darwin distributed builds to evo-x2                   |  Medium  |   2h   |
-| 17  | `projects-management-automation` as flake input       |   Low    |   1h   |
+| #  | Item                                                  | Priority | Effort |
+| -- | ----------------------------------------------------- | :------: | :----: |
+| 1  | Pi 3 hardware provisioning for DNS failover           |   High   |   2h   |
+| 2  | NixOS VM test suite                                   |   High   |   8h   |
+| 3  | Deploy Dozzle (`logs.home.lan`)                       |  Medium  |   1h   |
+| 4  | `mkDockerService` shared helper                       |  Medium  |   3h   |
+| 5  | Shared Go flake-parts template                        |  Medium  |   4h   |
+| 6  | Per-threshold SigNoz alert routing (critical→Discord) |  Medium  |   2h   |
+| 7  | Move dns-failover `authPassword` to sops              |  Medium  |  30m   |
+| 8  | Consolidate voice-agents Caddy vHost                  |  Medium  |  30m   |
+| 9  | Secret rotation strategy                              |   Low    |   4h   |
+| 10 | AppArmor profiles                                     |   Low    |   4h   |
+| 11 | DNS-over-QUIC overlay                                 |   Low    |   2h   |
+| 12 | Create `flake.nix` for hierarchical-errors repo       |   Low    |   1h   |
+| 13 | Benchmark/storage cleanup scripts                     |   Low    |   2h   |
+| 14 | Compute real `vendorHash` for BuildFlow               |  Medium  |  30m   |
+| 15 | Convert PMA to flake input                            |   Low    |   1h   |
+| 16 | Darwin distributed builds to evo-x2                   |  Medium  |   2h   |
+| 17 | `projects-management-automation` as flake input       |   Low    |   1h   |
 
 ---
 
@@ -159,33 +159,33 @@ No services are known-broken at this time. The system is functional.
 
 ## f) Top #25 Things We Should Get Done Next
 
-| #   | Priority | Item                                                    | Effort |  Impact  | Category       |
-| --- | :------: | ------------------------------------------------------- | :----: | :------: | -------------- |
-| 1   |  **P0**  | **Deploy to evo-x2** (`just switch` + verify services)  |  30m   | Critical | Deploy         |
-| 2   |  **P1**  | Convert remaining 5 overlays to `mkPackageOverlay`      |  30m   |  Medium  | Consistency    |
-| 3   |  **P1**  | Add NixOS VM test for caddy+authelia (critical path)    |   4h   |   High   | Testing        |
-| 4   |  **P1**  | Modularize `flake.nix` into flake-parts sub-modules     |   4h   |   High   | Architecture   |
-| 5   |  **P1**  | Fix broken justfile commands (remove or create scripts) |  30m   |   Low    | DX             |
-| 6   |  **P1**  | Deploy Dozzle (`logs.home.lan`)                         |   1h   |  Medium  | Observability  |
-| 7   |  **P2**  | Create `mkDockerService` helper (4 services)            |   3h   |  Medium  | DRY            |
-| 8   |  **P2**  | Per-threshold SigNoz alert routing                      |   2h   |  Medium  | Monitoring     |
-| 9   |  **P2**  | Move dns-failover `authPassword` to sops                |  30m   |  Medium  | Security       |
-| 10  |  **P2**  | Adopt `systemdServiceIdentity` in remaining 4 modules   |   1h   |   Low    | Consistency    |
-| 11  |  **P2**  | Consolidate voice-agents Caddy vHost                    |  30m   |   Low    | Code quality   |
-| 12  |  **P2**  | Add Darwin cross-build check to CI                      |   2h   |   High   | CI             |
-| 13  |  **P2**  | Prune `docs/status/archive/` (250+ files)               |  30m   |   Low    | Docs           |
-| 14  |  **P2**  | Wire `projects-management-automation` as flake input    |   1h   |  Medium  | Completeness   |
-| 15  |  **P3**  | Provision Pi 3 for DNS failover cluster                 |   2h   |   High   | Infrastructure |
-| 16  |  **P3**  | Compute real `vendorHash` for BuildFlow                 |  30m   |  Medium  | External repos |
-| 17  |  **P3**  | Create shared Go flake-parts template                   |   4h   |  Medium  | External repos |
-| 18  |  **P3**  | nix-colors full integration (17+ hardcoded colors)      |   6h   |   Low    | Theme          |
-| 19  |  **P3**  | AppArmor profiles                                       |   4h   |  Medium  | Security       |
-| 20  |  **P3**  | Secret rotation strategy                                |   4h   |  Medium  | Security       |
-| 21  |  **P3**  | Add VM tests for all 36 service modules                 |  16h   |   High   | Testing        |
-| 22  |  **P4**  | Darwin distributed builds to evo-x2                     |   2h   |  Medium  | DX             |
-| 23  |  **P4**  | DNS-over-QUIC overlay                                   |   2h   |   Low    | Feature        |
-| 24  |  **P4**  | Create `flake.nix` for hierarchical-errors repo         |   1h   |   Low    | External repos |
-| 25  |  **P4**  | Enforce pre-commit hooks in CI                          |   2h   |  Medium  | CI             |
+| #  | Priority | Item                                                    | Effort |  Impact  | Category       |
+| -- | :------: | ------------------------------------------------------- | :----: | :------: | -------------- |
+| 1  |  **P0**  | **Deploy to evo-x2** (`just switch` + verify services)  |  30m   | Critical | Deploy         |
+| 2  |  **P1**  | Convert remaining 5 overlays to `mkPackageOverlay`      |  30m   |  Medium  | Consistency    |
+| 3  |  **P1**  | Add NixOS VM test for caddy+authelia (critical path)    |   4h   |   High   | Testing        |
+| 4  |  **P1**  | Modularize `flake.nix` into flake-parts sub-modules     |   4h   |   High   | Architecture   |
+| 5  |  **P1**  | Fix broken justfile commands (remove or create scripts) |  30m   |   Low    | DX             |
+| 6  |  **P1**  | Deploy Dozzle (`logs.home.lan`)                         |   1h   |  Medium  | Observability  |
+| 7  |  **P2**  | Create `mkDockerService` helper (4 services)            |   3h   |  Medium  | DRY            |
+| 8  |  **P2**  | Per-threshold SigNoz alert routing                      |   2h   |  Medium  | Monitoring     |
+| 9  |  **P2**  | Move dns-failover `authPassword` to sops                |  30m   |  Medium  | Security       |
+| 10 |  **P2**  | Adopt `systemdServiceIdentity` in remaining 4 modules   |   1h   |   Low    | Consistency    |
+| 11 |  **P2**  | Consolidate voice-agents Caddy vHost                    |  30m   |   Low    | Code quality   |
+| 12 |  **P2**  | Add Darwin cross-build check to CI                      |   2h   |   High   | CI             |
+| 13 |  **P2**  | Prune `docs/status/archive/` (250+ files)               |  30m   |   Low    | Docs           |
+| 14 |  **P2**  | Wire `projects-management-automation` as flake input    |   1h   |  Medium  | Completeness   |
+| 15 |  **P3**  | Provision Pi 3 for DNS failover cluster                 |   2h   |   High   | Infrastructure |
+| 16 |  **P3**  | Compute real `vendorHash` for BuildFlow                 |  30m   |  Medium  | External repos |
+| 17 |  **P3**  | Create shared Go flake-parts template                   |   4h   |  Medium  | External repos |
+| 18 |  **P3**  | nix-colors full integration (17+ hardcoded colors)      |   6h   |   Low    | Theme          |
+| 19 |  **P3**  | AppArmor profiles                                       |   4h   |  Medium  | Security       |
+| 20 |  **P3**  | Secret rotation strategy                                |   4h   |  Medium  | Security       |
+| 21 |  **P3**  | Add VM tests for all 36 service modules                 |  16h   |   High   | Testing        |
+| 22 |  **P4**  | Darwin distributed builds to evo-x2                     |   2h   |  Medium  | DX             |
+| 23 |  **P4**  | DNS-over-QUIC overlay                                   |   2h   |   Low    | Feature        |
+| 24 |  **P4**  | Create `flake.nix` for hierarchical-errors repo         |   1h   |   Low    | External repos |
+| 25 |  **P4**  | Enforce pre-commit hooks in CI                          |   2h   |  Medium  | CI             |
 
 ---
 

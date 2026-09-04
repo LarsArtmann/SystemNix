@@ -22,14 +22,14 @@ Wrote `/tmp/zram-zstd-benchmark.py` — compresses 256 MiB of 4 KiB pages throug
 
 **Results (relative L1 vs L3 comparison is valid):**
 
-| Level | Ratio  | Compress MiB/s | Decompress MiB/s | vs L3 ratio |
-|------:|-------:|---------------:|-----------------:|------------:|
-| 1     | 2.85x  | 373            | 814              | -1.7%       |
-| 3     | 2.90x  | 334            | 803              | baseline    |
-| 5     | 2.96x  | 172            | 791              | +2.0%       |
-| 7     | 2.97x  | 130            | 833              | +2.3%       |
-| 9     | 2.97x  | 84             | 788              | +2.3%       |
-| 19    | 3.04x  | 10             | 726              | +4.7%       |
+| Level | Ratio | Compress MiB/s | Decompress MiB/s | vs L3 ratio |
+| ----: | ----: | -------------: | ---------------: | ----------: |
+|     1 | 2.85x |            373 |              814 |       -1.7% |
+|     3 | 2.90x |            334 |              803 |    baseline |
+|     5 | 2.96x |            172 |              791 |       +2.0% |
+|     7 | 2.97x |            130 |              833 |       +2.3% |
+|     9 | 2.97x |             84 |              788 |       +2.3% |
+|    19 | 3.04x |             10 |              726 |       +4.7% |
 
 **Verdict:** Level 1 gives 1.7% worse ratio for 11.5% faster compression. Levels 5+ are strictly bad (halve speed for <2% ratio).
 
@@ -52,11 +52,13 @@ My benchmark shows **2.85x ratio at level 1**. The live system shows **5.15x rat
 ### 2. Never Tested End-to-End at the Kernel Level
 
 I verified:
+
 - ✅ NixOS eval produces correct generator config string
 - ✅ zram-generator 1.2.1 binary contains "algorithm_params" string
 - ✅ zram-generator man page documents parenthesised param syntax
 
 I did NOT verify:
+
 - ❌ zram-generator 1.2.1 actually parses `zstd(level=1)` and writes to sysfs correctly
 - ❌ Kernel 7.1.7 zstd module honors the `level` parameter via `algorithm_params`
 - ❌ The deployed system creates a working zram device with level 1
@@ -78,6 +80,7 @@ Left at `/tmp/zram-zstd-benchmark.py` — wiped on reboot. Should be in `scripts
 ### 6. Didn't Explore Multi-Compression (recompress)
 
 The kernel supports `CONFIG_ZRAM_MULTI_COMP` — primary algorithm + up to 3 secondary recompress algorithms. This system HAS the sysfs entries (`recompress`, `recomp_algorithm`). A better approach might be:
+
 - Primary: `zstd(level=1)` for fast initial compression
 - Secondary: `zstd(level=19)` for idle/huge page recompression
 
@@ -99,19 +102,19 @@ AGENTS.md and multiple docs reference "zstd compressed ~6G physical" and "2.7:1"
 
 ## Summary Table
 
-| Item | Status |
-|------|--------|
-| Research zram config chain | ✅ FULLY DONE |
-| Benchmark zstd levels (userspace) | ⚠️ PARTIALLY DONE (corpus not representative) |
-| Benchmark zstd levels (kernel-level) | ❌ NOT STARTED |
-| Config change in boot.nix | ⚠️ PARTIALLY DONE (written, not deployed) |
-| Verify zram-generator parses level syntax | ❌ NOT STARTED |
-| Verify kernel honors level parameter | ❌ NOT STARTED |
-| Deploy and runtime verify | ❌ NOT STARTED |
-| Explore multi-compression (recompress) | ❌ NOT STARTED |
-| Save benchmark script to repo | ❌ NOT STARTED |
-| Update AGENTS.md with verified ratio | ❌ NOT STARTED |
-| Consider BTRFS zstd level | ❌ NOT STARTED |
+| Item                                      | Status                                       |
+| ----------------------------------------- | -------------------------------------------- |
+| Research zram config chain                | ✅ FULLY DONE                                |
+| Benchmark zstd levels (userspace)         | ⚠️ PARTIALLY DONE (corpus not representative) |
+| Benchmark zstd levels (kernel-level)      | ❌ NOT STARTED                               |
+| Config change in boot.nix                 | ⚠️ PARTIALLY DONE (written, not deployed)     |
+| Verify zram-generator parses level syntax | ❌ NOT STARTED                               |
+| Verify kernel honors level parameter      | ❌ NOT STARTED                               |
+| Deploy and runtime verify                 | ❌ NOT STARTED                               |
+| Explore multi-compression (recompress)    | ❌ NOT STARTED                               |
+| Save benchmark script to repo             | ❌ NOT STARTED                               |
+| Update AGENTS.md with verified ratio      | ❌ NOT STARTED                               |
+| Consider BTRFS zstd level                 | ❌ NOT STARTED                               |
 
 ---
 

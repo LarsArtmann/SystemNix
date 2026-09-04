@@ -72,6 +72,7 @@
 ## f) NEXT — up to 50 things, sorted by impact
 
 **Critical (deploy/verify this session's work):**
+
 1. ~~Deploy SystemNix (`nix run .#deploy`) — harden primitives, SigNoz GOMEMLIMIT, wrappers~~ done — landed via subsequent deploys (`0fce1ed9`, `9a56c1a7`, then the 18:xx buildcache generation); the 2026-08-14 20:04 reboot restarted every `harden()` service under the new sandbox
 2. ~~Post-deploy: verify display-watchdog still writes `/sys/class/drm` (new `ProtectKernelTunables`)~~ done — boot 0 journal: zero failures/denials, oneshot "Finished Detect dead display" clean
 3. ~~Post-deploy: verify btrfs-health/balance/scrub still work (new kernel-module/control-group directives)~~ done — boot 0 journal: zero btrfs-service failures (scrub interruptions are the separate pre-existing reboot issue)

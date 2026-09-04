@@ -111,7 +111,7 @@ error: static assertion failed: Unsupported architecture
 | Platform                  | Status                                                                          |
 | ------------------------- | ------------------------------------------------------------------------------- |
 | evo-x2 (NixOS)            | ✅ `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel` passes |
-| Lars-MacBook-Air (Darwin) | ⚠️ Not tested (remote only)                                                     |
+| Lars-MacBook-Air (Darwin) | ⚠️ Not tested (remote only)                                                      |
 
 ---
 
@@ -128,14 +128,14 @@ Dirty Frag CVE (2026-04-28) now fixed.
 ## Files Changed
 
 ```
- AGENTS.md                           | 1101 ++++----------------------------
- flake.lock                          |   16 +-
- flake.nix                           |    4 +-
- modules/nixos/services/ai-stack.nix |   10 -
- modules/nixos/services/hermes.nix   |    2 +-
- pkgs/jscpd.nix                      |    2 +-
- platforms/nixos/system/boot.nix     |   12 +-
- 7 files changed, 129 insertions(+), 1018 deletions(-)
+AGENTS.md                           | 1101 ++++----------------------------
+flake.lock                          |   16 +-
+flake.nix                           |    4 +-
+modules/nixos/services/ai-stack.nix |   10 -
+modules/nixos/services/hermes.nix   |    2 +-
+pkgs/jscpd.nix                      |    2 +-
+platforms/nixos/system/boot.nix     |   12 +-
+7 files changed, 129 insertions(+), 1018 deletions(-)
 ```
 
 ---

@@ -16,21 +16,21 @@ Verified that **0 files** have top-banners. All 243 archived reports have their 
 
 Applied `~~strikethrough~~ done` annotations to numbered items in all 13 reports that previously had 0 strikethroughs:
 
-| Report | Struck | Unstruck (Open) |
-|--------|--------|-----------------|
-| 02-20 prevention-plan-partial | 50 | 9 (other section items) |
-| 03-37 browser-history-deployment | 50 | 32 (other section items) |
-| 05-30 prevention-plan-full-push | 50 | 13 |
-| 05-32 helium-3fps | 55 | 18 |
-| 06-37 prevention-plan-m12-m15 | 54 | 12 |
-| 01-28 browser-history-deployment | 30 | 36 |
-| 02-12 browser-history-auth-ui | 50 | 26 |
-| 07-47 browser-history-deploy-deps | 50 | 27 |
-| 10-36 browser-history-oauth2 | 50 | 34 |
-| 10-47 browser-history-auto-provisioning | 50 | 7 |
-| 21-43 vendor-hash-cascade | 50 | 9 |
-| 22-08 pocket-id-sqlite-busy | 5 (table) | 7 (table) |
-| 22-52 dnsblockd-tls-spam | 30 | 12 |
+| Report                                  | Struck    | Unstruck (Open)          |
+| --------------------------------------- | --------- | ------------------------ |
+| 02-20 prevention-plan-partial           | 50        | 9 (other section items)  |
+| 03-37 browser-history-deployment        | 50        | 32 (other section items) |
+| 05-30 prevention-plan-full-push         | 50        | 13                       |
+| 05-32 helium-3fps                       | 55        | 18                       |
+| 06-37 prevention-plan-m12-m15           | 54        | 12                       |
+| 01-28 browser-history-deployment        | 30        | 36                       |
+| 02-12 browser-history-auth-ui           | 50        | 26                       |
+| 07-47 browser-history-deploy-deps       | 50        | 27                       |
+| 10-36 browser-history-oauth2            | 50        | 34                       |
+| 10-47 browser-history-auto-provisioning | 50        | 7                        |
+| 21-43 vendor-hash-cascade               | 50        | 9                        |
+| 22-08 pocket-id-sqlite-busy             | 5 (table) | 7 (table)                |
+| 22-52 dnsblockd-tls-spam                | 30        | 12                       |
 
 **Total: 574 strikethrough markers applied across 13 files.**
 
@@ -58,6 +58,7 @@ The batch script (`resolve_all_done`) struck ALL numbered items in the "f)" sect
 4. **01-28 items about PrivateTmp Caddy fix, go-cqrs-lite SSH** — These were QUESTIONS and architectural decisions, NOT done. Struck as done.
 
 **Root cause:** The script used a blanket `done — work captured in CHANGELOG.md / TODO_LIST.md` annotation for ALL numbered items in the section. It did NOT distinguish between:
+
 - Items that are genuinely DONE (shipped code, committed fixes)
 - Items that are OPEN (still in TODO_LIST, still need work)
 - Items that are QUESTIONS (route to user, not tasks)
@@ -95,13 +96,13 @@ My script marked ALL items as done without checking ANY of them individually. Th
 
 **Specific damage:**
 
-| Report | Item Struck as "Done" | Reality |
-|--------|----------------------|---------|
-| 03-37 #9 | "Consider multi-machine agent setup (macOS, rpi3)" | Future enhancement — NOT done |
-| 03-37 #10 | "Document multi-module workspace pattern" | Not done |
-| 05-32 #12 | "Tell user to check `chrome://gpu`" | User question — NOT a task |
-| 05-32 #1 | "Implement systemd cgroup I/O throttling" | Still in TODO_LIST — NOT done |
-| 01-28 #25 | "Caddy reload failure was known but not addressed" | Still broken — NOT done |
+| Report    | Item Struck as "Done"                              | Reality                       |
+| --------- | -------------------------------------------------- | ----------------------------- |
+| 03-37 #9  | "Consider multi-machine agent setup (macOS, rpi3)" | Future enhancement — NOT done |
+| 03-37 #10 | "Document multi-module workspace pattern"          | Not done                      |
+| 05-32 #12 | "Tell user to check `chrome://gpu`"                | User question — NOT a task    |
+| 05-32 #1  | "Implement systemd cgroup I/O throttling"          | Still in TODO_LIST — NOT done |
+| 01-28 #25 | "Caddy reload failure was known but not addressed" | Still broken — NOT done       |
 
 **This is the verschlimmbesserung the user warned about.** I made the docs WORSE by adding false resolution markers. A reader trusting these strikethroughs will believe work is done when it isn't.
 
@@ -122,6 +123,7 @@ The docs-health skill's entire philosophy is that each item requires **individua
 ### The Pareto Logic Was Sound, Execution Was Wrong
 
 Focusing on the 13 recent reports was the correct priority call. But the execution should have been:
+
 1. Read each report's "f)" section
 2. For each numbered item, check: is it in CHANGELOG? In TODO_LIST? In code?
 3. Strike if done, leave if open, mark questions as questions
@@ -238,6 +240,7 @@ Honest assessment: The living docs (TODO_LIST, FEATURES, CHANGELOG, ROADMAP, AGE
 ## Resolution (2026-08-10)
 
 This was docs-health inline resolution session #3. All work items resolved:
+
 - **13 reports inline-resolved:** 574 strikethrough markers applied. Over-struck items corrected by 06-40 session.
 - **False strikethrough correction:** The 06-40 session re-verified all un-struck items and harvested 14 new actionable items into TODO_LIST.
 - **Forward-looking items:** All 50 "next steps" harvested into TODO_LIST or CHANGELOG.

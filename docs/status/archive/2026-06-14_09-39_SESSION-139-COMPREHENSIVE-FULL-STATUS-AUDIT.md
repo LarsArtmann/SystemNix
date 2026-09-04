@@ -294,33 +294,33 @@ Accumulated across 7 priority levels. Many carried for 10+ sessions.
 
 ## f) Top 25 Things to Get Done Next
 
-| #   | Task                                                                                              | Impact                                     | Effort | Category    |
-| --- | ------------------------------------------------------------------------------------------------- | ------------------------------------------ | ------ | ----------- |
-| 1   | **Kill stale gopls/rust-analyzer processes**                                                      | Reclaim ~5GB swap immediately              | 1min   | 🔴 Critical |
-| 2   | **Lower `stale-lsp-cleanup` timer threshold** from 24h to 4h                                      | Prevent LSP swap accumulation              | 5min   | 🔴 Critical |
-| 3   | **Investigate unbound 1.5GB swap** — check cache config                                           | Fix abnormal DNS memory                    | 15min  | 🔴 Critical |
-| 4   | **Run `nix-collect-garbage --delete-older-than 7d`**                                              | Reclaim 10-20G disk                        | 5min   | 🔴 Critical |
-| 5   | **Add `flake-parts.follows` + `treefmt-nix.follows` + `systems.follows`** to ~10 repos            | Eliminate ~33 more duplicate lock nodes    | 15min  | 🟡 High     |
-| 6   | **Add `go-nix-helpers` as root input** + follow from 10 consumers                                 | Eliminate 10 more dup nodes                | 10min  | 🟡 High     |
-| 7   | **Investigate `go-structure-linter_2` anomaly** in root inputs                                    | Fix weird lock structure                   | 10min  | 🟡 High     |
-| 8   | **Commit correct `go.sum` upstream** for `library-policy` and `mr-sync` → remove `mkTidyOverride` | Eliminate 2 build hacks                    | 30min  | 🟡 High     |
-| 9   | **Fix `go-auto-upgrade` upstream** — migrate to `mkPreparedSource`, fix tests, tag v0.2.0         | Eliminate 3 layers of tech debt            | 2h     | 🟡 High     |
-| 10  | **Investigate Twenty CRM 502s** — `docker logs twenty-server-1`                                   | Fix intermittent outages                   | 30min  | 🟡 High     |
-| 11  | **Audit Gatus DOWN services** — fix wrong check URLs                                              | Restore monitoring accuracy                | 30min  | 🟡 High     |
-| 12  | **Fix `hierarchical-errors` go-finding API break** — update Confidence type usage                 | Eliminate last unfollowed go-finding       | 1h     | 🟡 High     |
-| 13  | **Hermes: add OpenAI API key to sops**                                                            | Unblock Hermes AI features                 | 5min   | 🟡 Blocked  |
-| 14  | **Hermes: install SSH deploy key**                                                                | Enable GitHub deploy access                | 10min  | 🟡 Blocked  |
-| 15  | **Verify boot time** — system was rebooted, check journal for timing                              | Validate NVMe APST fix                     | 5min   | 🟡 Verify   |
-| 16  | **BTRFS `/data` migration** — `just snapshot-migrate-data`                                        | Enable snapshots for Docker/Immich/AI data | 15min  | 🟢 Medium   |
-| 17  | **Create CHANGELOG.md** — structure 185+ commits                                                  | Release note capability                    | 1h     | 🟢 Medium   |
-| 18  | **Archive pre-session-100 status reports** — move 160 files to `docs/status/archive/`             | Reduce noise                               | 30min  | 🟢 Medium   |
-| 19  | **Create ROADMAP.md** — consolidate `docs/planning/`                                              | Strategic direction doc                    | 1h     | 🟢 Medium   |
-| 20  | **Triage disabled services** — voice-agents, minecraft, photomap: enable or remove                | Reduce dead config weight                  | 30min  | 🟢 Medium   |
-| 21  | **Add Helium memory limits** — `MemoryMax` in systemd or Electron `--max-old-space-size`          | Reduce 43 renderer bloat                   | 30min  | 🟢 Medium   |
-| 22  | **Split large modules** — `monitor365.nix` (716L), `signoz.nix` (705L)                            | Maintainability                            | 2h     | 🔵 Low      |
-| 23  | **Pin or document `art-dupl` `fork` branch**                                                      | Prevent silent breakage                    | 15min  | 🔵 Low      |
-| 24  | **Monitor365: add LAN auth** — token-based auth for agent→server                                  | Security                                   | 1h     | 🔵 Low      |
-| 25  | **nixpkgs/Home Manager upstream PRs** — poetry-core, test fixes, flags, manifests                 | Reduce custom overlay maintenance          | 4h     | 🔵 Low      |
+| #  | Task                                                                                              | Impact                                     | Effort | Category    |
+| -- | ------------------------------------------------------------------------------------------------- | ------------------------------------------ | ------ | ----------- |
+| 1  | **Kill stale gopls/rust-analyzer processes**                                                      | Reclaim ~5GB swap immediately              | 1min   | 🔴 Critical |
+| 2  | **Lower `stale-lsp-cleanup` timer threshold** from 24h to 4h                                      | Prevent LSP swap accumulation              | 5min   | 🔴 Critical |
+| 3  | **Investigate unbound 1.5GB swap** — check cache config                                           | Fix abnormal DNS memory                    | 15min  | 🔴 Critical |
+| 4  | **Run `nix-collect-garbage --delete-older-than 7d`**                                              | Reclaim 10-20G disk                        | 5min   | 🔴 Critical |
+| 5  | **Add `flake-parts.follows` + `treefmt-nix.follows` + `systems.follows`** to ~10 repos            | Eliminate ~33 more duplicate lock nodes    | 15min  | 🟡 High     |
+| 6  | **Add `go-nix-helpers` as root input** + follow from 10 consumers                                 | Eliminate 10 more dup nodes                | 10min  | 🟡 High     |
+| 7  | **Investigate `go-structure-linter_2` anomaly** in root inputs                                    | Fix weird lock structure                   | 10min  | 🟡 High     |
+| 8  | **Commit correct `go.sum` upstream** for `library-policy` and `mr-sync` → remove `mkTidyOverride` | Eliminate 2 build hacks                    | 30min  | 🟡 High     |
+| 9  | **Fix `go-auto-upgrade` upstream** — migrate to `mkPreparedSource`, fix tests, tag v0.2.0         | Eliminate 3 layers of tech debt            | 2h     | 🟡 High     |
+| 10 | **Investigate Twenty CRM 502s** — `docker logs twenty-server-1`                                   | Fix intermittent outages                   | 30min  | 🟡 High     |
+| 11 | **Audit Gatus DOWN services** — fix wrong check URLs                                              | Restore monitoring accuracy                | 30min  | 🟡 High     |
+| 12 | **Fix `hierarchical-errors` go-finding API break** — update Confidence type usage                 | Eliminate last unfollowed go-finding       | 1h     | 🟡 High     |
+| 13 | **Hermes: add OpenAI API key to sops**                                                            | Unblock Hermes AI features                 | 5min   | 🟡 Blocked  |
+| 14 | **Hermes: install SSH deploy key**                                                                | Enable GitHub deploy access                | 10min  | 🟡 Blocked  |
+| 15 | **Verify boot time** — system was rebooted, check journal for timing                              | Validate NVMe APST fix                     | 5min   | 🟡 Verify   |
+| 16 | **BTRFS `/data` migration** — `just snapshot-migrate-data`                                        | Enable snapshots for Docker/Immich/AI data | 15min  | 🟢 Medium   |
+| 17 | **Create CHANGELOG.md** — structure 185+ commits                                                  | Release note capability                    | 1h     | 🟢 Medium   |
+| 18 | **Archive pre-session-100 status reports** — move 160 files to `docs/status/archive/`             | Reduce noise                               | 30min  | 🟢 Medium   |
+| 19 | **Create ROADMAP.md** — consolidate `docs/planning/`                                              | Strategic direction doc                    | 1h     | 🟢 Medium   |
+| 20 | **Triage disabled services** — voice-agents, minecraft, photomap: enable or remove                | Reduce dead config weight                  | 30min  | 🟢 Medium   |
+| 21 | **Add Helium memory limits** — `MemoryMax` in systemd or Electron `--max-old-space-size`          | Reduce 43 renderer bloat                   | 30min  | 🟢 Medium   |
+| 22 | **Split large modules** — `monitor365.nix` (716L), `signoz.nix` (705L)                            | Maintainability                            | 2h     | 🔵 Low      |
+| 23 | **Pin or document `art-dupl` `fork` branch**                                                      | Prevent silent breakage                    | 15min  | 🔵 Low      |
+| 24 | **Monitor365: add LAN auth** — token-based auth for agent→server                                  | Security                                   | 1h     | 🔵 Low      |
+| 25 | **nixpkgs/Home Manager upstream PRs** — poetry-core, test fixes, flags, manifests                 | Reduce custom overlay maintenance          | 4h     | 🔵 Low      |
 
 ---
 

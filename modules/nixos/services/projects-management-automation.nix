@@ -57,13 +57,11 @@
           # FastFlowLM (NPU LLM) is the desired local provider. The OpenAI
           # chain (DefaultChainFromEnv) reads OPENAI_BASE_URL + OPENAI_MODEL
           # from its environment — support landed in go-commit v0.8.0, which
-          # this pin (7321133) includes, so the NPU wire-up is active.
-          # The pin follows our `go-commit` input and MUST match the rev PMA's
-          # own flake.lock pins: PMA's vendorHash is computed against it, and
-          # any drift (e.g. a bare `nix flake update go-commit` to master
-          # HEAD) fails PMA's go-modules hash check until PMA re-locks in
-          # step. 2026-08-18: moved off the v0.7.0 hold to 7321133 because
-          # PMA master (7aff6aa6) bumped its deps to v0.8.0.
+          # PMA's own flake.lock pins (7321133, since master 7aff6aa6).
+          # NOTE (2026-08-27): PMA's flake input no longer follows our
+          # nixpkgs/go-commit/go-nix-helpers — its vendorHash is validated
+          # against its OWN lock (DiscordSync/bank-sync/qmd precedent);
+          # following drifts the vendored module set and breaks the FOD.
           extraEnvironment = [
             "OPENAI_API_KEY=local"
             "OPENAI_BASE_URL=http://127.0.0.1:${toString ports.fastflowlm}/v1"

@@ -107,9 +107,9 @@ After false positive issues with markdown headers (`======`), we settled on:
 grep -qE '^<{7} |^={7}$|^>{7} '
 ```
 
-- `^<{7} ` - Match `<<<<<<<` followed by space (conflict marker start)
+- `^<{7}` - Match `<<<<<<<` followed by space (conflict marker start)
 - `^={7}$` - Match exactly `=======` on its own line (conflict marker separator)
-- `^>{7} ` - Match `>>>>>>>` followed by space (conflict marker end)
+- `^>{7}` - Match `>>>>>>>` followed by space (conflict marker end)
 
 This pattern avoids matching markdown headers like `======== Header ========` while reliably catching git conflict markers.
 
@@ -202,9 +202,9 @@ conflict-check:
        - id: flake-lock-validate
          name: Validate flake.lock for conflicts
          entry: bash -c 'if grep -qE "^<{7} |^={7}$|^>{7} " flake.lock; then echo "ERROR: flake.lock contains merge conflict markers!"; exit 1; fi'
-         language: system
-         files: ^flake\.lock$
-         pass_filenames: false
+           language: system
+           files: ^flake\.lock$
+           pass_filenames: false
    ```
 
 3. **Updated `pre-commit-hooks` revision:**

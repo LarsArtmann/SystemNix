@@ -257,33 +257,33 @@ The system is **mostly healthy** with 45 systemd services running, 0 failed. How
 
 ## f) Top 25 Things We Should Get Done Next
 
-| #   | Task                                                                      | Impact | Effort   | Priority   |
-| --- | ------------------------------------------------------------------------- | ------ | -------- | ---------- |
-| 1   | Fix Whisper ASR compose command (remove `python` prefix)                  | High   | 5min     | 🔴 P0      |
-| 2   | Deploy Caddy LAN auth bypass (`just switch`)                              | High   | 10min    | 🔴 P0      |
-| 3   | Fix AWWW daemon systemd unit (StartLimitIntervalSec section)              | Medium | 5min     | 🔴 P0      |
-| 4   | Investigate & fix dead user services (file-and-image-renamer, monitor365) | Medium | 30min    | 🔴 P0      |
-| 5   | Update FEATURES.md: Twenty CRM 🔧→✅                                      | Low    | 2min     | 🟡 P1      |
-| 6   | Pin Twenty CRM Docker image to digest                                     | High   | 5min     | 🟡 P1      |
-| 7   | Disk cleanup: root at 89%                                                 | High   | 30min    | 🟡 P1      |
-| 8   | Investigate 15GB swap usage                                               | Medium | 15min    | 🟡 P1      |
-| 9   | Wire voice-agents systemd service properly                                | Medium | 15min    | 🟡 P1      |
-| 10  | Update Whisper Docker image (20 months old)                               | Medium | 15min    | 🟡 P1      |
-| 11  | Remove or fix missing justfile script references                          | Low    | 10min    | 🟢 P2      |
-| 12  | Enable AppArmor (security-hardening)                                      | Medium | 20min    | 🟢 P2      |
-| 13  | Investigate auditd NixOS 26.05 bug status                                 | Medium | 10min    | 🟢 P2      |
-| 14  | Add Twenty CRM to AGENTS.md with accurate status                          | Low    | 5min     | 🟢 P2      |
-| 15  | Verify all user services start on boot (regression test)                  | Medium | 15min    | 🟢 P2      |
-| 16  | Check if PhotoMap can be updated/re-enabled                               | Low    | 20min    | 🟢 P2      |
-| 17  | Run `nix flake check --no-build` to verify eval                           | Low    | 5min     | 🟢 P2      |
-| 18  | Update flake.lock for stale inputs                                        | Low    | 5min     | 🟢 P2      |
-| 19  | Create missing scripts (benchmark, perf, context, clean-storage)          | Low    | 2h       | ⚪ P3      |
-| 20  | Research Unsloth Studio enablement feasibility                            | Low    | 30min    | ⚪ P3      |
-| 21  | Add backup verification for Twenty CRM DB                                 | Low    | 5min     | ⚪ P3      |
-| 22  | Extract `mkHardenedService` wrapper pattern                               | Low    | 1h       | ⚪ P3      |
-| 23  | Add Nix module typed options for key services                             | Low    | 2h       | ⚪ P3      |
-| 24  | Provision Raspberry Pi 3 for DNS failover                                 | High   | Hardware | 🔵 Blocked |
-| 25  | Implement DNS-over-QUIC with binary cache fix                             | Low    | 2h       | ⚪ P3      |
+| #  | Task                                                                      | Impact | Effort   | Priority   |
+| -- | ------------------------------------------------------------------------- | ------ | -------- | ---------- |
+| 1  | Fix Whisper ASR compose command (remove `python` prefix)                  | High   | 5min     | 🔴 P0      |
+| 2  | Deploy Caddy LAN auth bypass (`just switch`)                              | High   | 10min    | 🔴 P0      |
+| 3  | Fix AWWW daemon systemd unit (StartLimitIntervalSec section)              | Medium | 5min     | 🔴 P0      |
+| 4  | Investigate & fix dead user services (file-and-image-renamer, monitor365) | Medium | 30min    | 🔴 P0      |
+| 5  | Update FEATURES.md: Twenty CRM 🔧→✅                                      | Low    | 2min     | 🟡 P1      |
+| 6  | Pin Twenty CRM Docker image to digest                                     | High   | 5min     | 🟡 P1      |
+| 7  | Disk cleanup: root at 89%                                                 | High   | 30min    | 🟡 P1      |
+| 8  | Investigate 15GB swap usage                                               | Medium | 15min    | 🟡 P1      |
+| 9  | Wire voice-agents systemd service properly                                | Medium | 15min    | 🟡 P1      |
+| 10 | Update Whisper Docker image (20 months old)                               | Medium | 15min    | 🟡 P1      |
+| 11 | Remove or fix missing justfile script references                          | Low    | 10min    | 🟢 P2      |
+| 12 | Enable AppArmor (security-hardening)                                      | Medium | 20min    | 🟢 P2      |
+| 13 | Investigate auditd NixOS 26.05 bug status                                 | Medium | 10min    | 🟢 P2      |
+| 14 | Add Twenty CRM to AGENTS.md with accurate status                          | Low    | 5min     | 🟢 P2      |
+| 15 | Verify all user services start on boot (regression test)                  | Medium | 15min    | 🟢 P2      |
+| 16 | Check if PhotoMap can be updated/re-enabled                               | Low    | 20min    | 🟢 P2      |
+| 17 | Run `nix flake check --no-build` to verify eval                           | Low    | 5min     | 🟢 P2      |
+| 18 | Update flake.lock for stale inputs                                        | Low    | 5min     | 🟢 P2      |
+| 19 | Create missing scripts (benchmark, perf, context, clean-storage)          | Low    | 2h       | ⚪ P3      |
+| 20 | Research Unsloth Studio enablement feasibility                            | Low    | 30min    | ⚪ P3      |
+| 21 | Add backup verification for Twenty CRM DB                                 | Low    | 5min     | ⚪ P3      |
+| 22 | Extract `mkHardenedService` wrapper pattern                               | Low    | 1h       | ⚪ P3      |
+| 23 | Add Nix module typed options for key services                             | Low    | 2h       | ⚪ P3      |
+| 24 | Provision Raspberry Pi 3 for DNS failover                                 | High   | Hardware | 🔵 Blocked |
+| 25 | Implement DNS-over-QUIC with binary cache fix                             | Low    | 2h       | ⚪ P3      |
 
 ---
 

@@ -17,17 +17,17 @@ Two TODO items were executed: the browser-history registration lock and the oomd
 
 ### 1. Browser-history registration lock — code + tests (local, verified)
 
-| Repo | File | Change |
-|------|------|--------|
-| cqrs-htmx | `identity-model/errors.go` | `ErrRegistrationClosed` sentinel (`errorfamily.NewRejection`, code `usermgmt.registration_closed`) |
-| cqrs-htmx | `usermgmt/errors.go` | Re-export with `cqrshtmx.WithHTTPStatus(..., 403 Forbidden)` |
-| cqrs-htmx | `usermgmt/service_core.go` | `MaxUsers int` on `ServiceConfig` (0 = unlimited, N = max users) + `maxUsers` field on `Service` + wired in `NewService` |
-| cqrs-htmx | `usermgmt/service_register.go` | Gate at top of `Register()`: `readModel.Count() >= maxUsers` → `ErrRegistrationClosed` |
-| cqrs-htmx | `usermgmt/service_register_test.go` | 3 new tests: `MaxUsersReached` (1 user then 403-class error), `MaxUsersZero_Unlimited` (5 users OK), `MaxUsersTwo_AllowsThird` |
-| browser-history | `api/config.go` | `MaxUsers int` env `MAX_USERS`, **default 1** |
-| browser-history | `api/server.go` | `MaxUsers: cfg.MaxUsers` passed to `usermgmt.NewService` |
-| browser-history | `go.work` | Added missing `identity-model/v4 => ../cqrs-htmx/identity-model` local replace (fixes pre-existing workspace break) |
-| SystemNix | `modules/nixos/services/browser-history.nix` | `MAX_USERS=1` explicit in service `Environment` |
+| Repo            | File                                         | Change                                                                                                                         |
+| --------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| cqrs-htmx       | `identity-model/errors.go`                   | `ErrRegistrationClosed` sentinel (`errorfamily.NewRejection`, code `usermgmt.registration_closed`)                             |
+| cqrs-htmx       | `usermgmt/errors.go`                         | Re-export with `cqrshtmx.WithHTTPStatus(..., 403 Forbidden)`                                                                   |
+| cqrs-htmx       | `usermgmt/service_core.go`                   | `MaxUsers int` on `ServiceConfig` (0 = unlimited, N = max users) + `maxUsers` field on `Service` + wired in `NewService`       |
+| cqrs-htmx       | `usermgmt/service_register.go`               | Gate at top of `Register()`: `readModel.Count() >= maxUsers` → `ErrRegistrationClosed`                                         |
+| cqrs-htmx       | `usermgmt/service_register_test.go`          | 3 new tests: `MaxUsersReached` (1 user then 403-class error), `MaxUsersZero_Unlimited` (5 users OK), `MaxUsersTwo_AllowsThird` |
+| browser-history | `api/config.go`                              | `MaxUsers int` env `MAX_USERS`, **default 1**                                                                                  |
+| browser-history | `api/server.go`                              | `MaxUsers: cfg.MaxUsers` passed to `usermgmt.NewService`                                                                       |
+| browser-history | `go.work`                                    | Added missing `identity-model/v4 => ../cqrs-htmx/identity-model` local replace (fixes pre-existing workspace break)            |
+| SystemNix       | `modules/nixos/services/browser-history.nix` | `MAX_USERS=1` explicit in service `Environment`                                                                                |
 
 **Design decision:** `MaxUsers int` instead of the requested `registration_open = false` boolean — auto-closes after the Nth user with no flag-flip deploy, generalizes to multi-user, zero = old behavior. Backwards compatible (default env value 1 in browser-history; SystemNix sets it explicitly for visibility).
 
@@ -36,6 +36,7 @@ Two TODO items were executed: the browser-history registration lock and the oomd
 ### 2. oomd pressure threshold — config change (local, verified eval)
 
 `platforms/nixos/system/boot.nix`:
+
 - `DefaultMemoryPressureLimit`: 50% → **60%**
 - `DefaultMemoryPressureDurationSec`: 20s → **30s**
 - Per-slice `ManagedOOMMemoryPressureLimit` (`-`, `system`, `user`): 50% → **60%** for consistency
@@ -114,6 +115,7 @@ Two TODO items were executed: the browser-history registration lock and the oomd
 ## f) Next 50 things (session-derived first, then harvested from TODO_LIST)
 
 **Release & verify this session's work (1–12)**
+
 1. ~~Fix `es_materialize_adapter_test.go` drift vs go-cqrs-lite (`DeleteTypes`/`DeleteInclude`) — blocks cqrs-htmx CI/tagging~~ done — realigned (`b1ad3350`, `cd165417`); `v4.8.0` train tagged past it
 2. ~~Commit cqrs-htmx changes (5 files) with attribution before the auto-git daemon does~~ done at `e5cdc925` (+ `b1ad3350` OAuth2 extension)
 3. ~~Commit browser-history changes (config.go, server.go, go.work, go.work.sum)~~ done at `b750ec5` (tree clean)
@@ -177,10 +179,10 @@ Two TODO items were executed: the browser-history registration lock and the oomd
 
 ## g) Questions I cannot answer myself
 
-1. ~~**Should the OAuth2 (Pocket ID) first-login auto-provisioning also be gated by `MaxUsers`?** Technically trivial to add in cqrs-htmx `OAuth2Service`, but it changes semantics: with the gate, a second person authenticating via Pocket ID would be *rejected* rather than auto-provisioned — which may be exactly right for a single-user homelab, or may break a future multi-user plan. I cannot know who else is enrolled in your Pocket ID or what you intend browser-history's user model to be.~~ **answered** — gate it: implemented in `matchOrCreateUser` (creation branch only; existing users always log in), shipped in the cqrs-htmx `v4.8.0` tag train
+1. ~~**Should the OAuth2 (Pocket ID) first-login auto-provisioning also be gated by `MaxUsers`?** Technically trivial to add in cqrs-htmx `OAuth2Service`, but it changes semantics: with the gate, a second person authenticating via Pocket ID would be _rejected_ rather than auto-provisioned — which may be exactly right for a single-user homelab, or may break a future multi-user plan. I cannot know who else is enrolled in your Pocket ID or what you intend browser-history's user model to be.~~ **answered** — gate it: implemented in `matchOrCreateUser` (creation branch only; existing users always log in), shipped in the cqrs-htmx `v4.8.0` tag train
 2. ~~**Commit + tag now, or do you review first?** The changes span two upstream repos with version implications (identity-model + usermgmt consumers of cqrs-htmx; browser-history go.mod/go.work). If "commit and tag now": which bumps — patch (v4.x.y+1) for both, or minor for usermgmt since `ServiceConfig` gains a field (additive, so patch is defensible)? The auto-git daemon makes delay attribution-risky.~~ **answered** — cqrs-htmx: committed `e5cdc925`/`b1ad3350` and tagged `v4.8.0` (minor). browser-history: committed `b750ec5` but the tag/go.mod/flake chain is STILL OPEN (see f.5–f.8) — next actor must tag browser-history, bump its go.mod to v4.8.0, then bump the SystemNix flake input and deploy
 3. ~~**The foreign working-tree changes in SystemNix** (`lib/systemd.nix` hardening additions, `dns-blocker.nix` reformat, staged `smart-audio.nix`, modified `configuration.nix`) are not mine and predate/parallel this session. Do you want them committed alongside this session's work, kept separate, or are they another agent's in-flight work I should continue to leave untouched?~~ **answered** — they were parallel-session work and landed attributed: `lib/systemd.nix` + `dns-blocker.nix` at `17731861`, `smart-audio.nix` at `7afab3f8`
 
 ---
 
-*Report complete. Waiting for instructions.*
+_Report complete. Waiting for instructions._

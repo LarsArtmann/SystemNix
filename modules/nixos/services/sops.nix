@@ -107,8 +107,17 @@ in
                 restartUnits = [ "paperless-scheduler.service" ];
               };
             }
-            // mkSecrets "dnsblockd-certs.yaml" { } [ "dnsblockd_ca_cert" ]
             // {
+              # The CA cert is PUBLIC material (every browser trust store gets
+              # a copy by design). It MUST be world-readable: the
+              # dnsblockd-cert-import USER unit runs certutil as the session
+              # user, and Firefox policies read the same path at startup.
+              # root:root 0400 made both fail with EACCES (certutil exit 255,
+              # 2026-08-22 boot).
+              dnsblockd_ca_cert = {
+                sopsFile = lib.path.append secretsDir "dnsblockd-certs.yaml";
+                mode = "0444";
+              };
               dnsblockd_ca_key = {
                 sopsFile = lib.path.append secretsDir "dnsblockd-certs.yaml";
                 mode = "0400";
@@ -146,6 +155,28 @@ in
                   hermes_firecrawl_api_key = "firecrawl_api_key";
                 }
             )
+            // lib.optionalAttrs (svcEnabled "hermes") (
+              # Read-only GitHub PAT for private-repo clones (T14, user
+              # decision 2026-08-20: read-only, permanently no-push). Own
+              # file because hermes.yaml is modifiable only with the host
+              # age PRIVATE key — this one was created public-key-only, so
+              # the user can `sops --set` the real token in after creating
+              # a fine-grained PAT (Contents: Read-only). Ships as a
+              # PLACEHOLDER: every consumer treats non-github_pat_/ghp_
+              # values as "no token" and stays inert.
+              mkKeyedSecrets "hermes-github-token.yaml"
+                {
+                  owner = "hermes";
+                  group = "hermes";
+                  restartUnits = [
+                    "hermes.service"
+                    "hermes-github-verify.service"
+                  ];
+                }
+                {
+                  hermes_github_read_token = "github_read_token";
+                }
+            )
             // lib.optionalAttrs (svcEnabled "crush-daily") (
               mkSecrets "crush-daily.yaml" {
                 owner = primaryUser;
@@ -153,6 +184,27 @@ in
                 restartUnits = [ "crush-daily.service" ];
               } [ "synthetic_api_key" ]
             )
+            # Interactive crush provider keys (user sessions), relocated
+            # 2026-08-31 out of the machine auth store
+            # (~/.local/share/crush/crush.json) — plaintext keys readable by
+            # every agent running as the user. Consumed by the HM crushrc
+            # (`provider add --api-key "$(cat /run/secrets/<name>)"`), which
+            # never persists the keys back. No restartUnits: read
+            # interactively at crush session start. hyper stays store-owned
+            # (OAuth refresh state, self-rotating — not a static key).
+            //
+              mkSecrets "crush.yaml"
+                {
+                  owner = primaryUser;
+                  group = "users";
+                  mode = "0400";
+                }
+                [
+                  "zai_api_key"
+                  "gemini_api_key"
+                  "minimax_api_key"
+                  "kimi_api_key"
+                ]
             // lib.optionalAttrs (svcEnabled "bank-sync") (
               # The AES key lives in its own file: bank-sync.yaml holds the
               # real Wise token and is decryptable only with the host key
@@ -285,6 +337,42 @@ in
             // lib.optionalAttrs (svcEnabled "dns-failover") (
               mkSecrets "dns-failover.yaml" { } [ "vrrp_auth_password" ]
             )
+            // lib.optionalAttrs (svcEnabled "cv-server") (
+              # Root-owned raw secret; the service consumes the "cv-env"
+              # template (owner cv) which interpolates the placeholder.
+              mkSecrets "cv.yaml" {
+                owner = "root";
+                group = "root";
+                restartUnits = [ "cv-server.service" ];
+              } [ "cv_api_key" ]
+            )
+            // lib.optionalAttrs (svcEnabled "inboxclean") (
+              # Raw Google OAuth client credentials.json; the upstream module's
+              # ExecStartPre seed script runs as User=inboxclean and copies it
+              # into /var/lib/inboxclean/credentials.json on every start.
+              mkSecrets "inboxclean.yaml" {
+                owner = "inboxclean";
+                group = "inboxclean";
+                restartUnits = [
+                  "inboxclean-web.service"
+                  "inboxclean-sync.service"
+                ];
+              } [ "inboxclean_gmail_credentials" ]
+            )
+            // lib.optionalAttrs (svcEnabled "inboxclean") (
+              # Paperless REST API token for InboxClean's Gmail-attachment
+              # archiving (uploads ride the sync hook). Nothing reads the
+              # raw secret — the inboxclean-paperless-env and gatus-env
+              # templates interpolate it for the inboxclean units and the
+              # Gatus auth check. Ships as PLACEHOLDER; go-live = paste the
+              # real token (paperless-manage drf_create_token) + flip
+              # services.inboxclean.paperless.enable.
+              mkSecrets "inboxclean-paperless.yaml" {
+                owner = "root";
+                group = "root";
+                mode = "0400";
+              } [ "paperless_api_token" ]
+            )
             // lib.optionalAttrs (svcEnabled "attic-config") (
               # atticd runs with DynamicUser=true (nixpkgs module default), so the
               # "atticd" user does NOT exist at sops-decrypt time and cannot own
@@ -298,18 +386,22 @@ in
               } [ "attic_token_rs256_secret_base64" ]
             )
             // lib.optionalAttrs (svcEnabled "browser-history") (
-              mkSecrets "browser-history.yaml" {
-                owner = "root";
-                group = "root";
-                restartUnits = [ "browser-history.service" ];
-              } [ "browser_history_agent_token" ]
-            )
-            // lib.optionalAttrs (svcEnabled "dns-blocker") (
-              mkSecrets "dnsblockd-auth.yaml" {
-                owner = primaryUser;
-                group = "users";
-                restartUnits = [ "dnsblockd.service" ];
-              } [ "dnsblockd_auth_token" ]
+              mkSecrets "browser-history.yaml"
+                {
+                  owner = "root";
+                  group = "root";
+                  restartUnits = [ "browser-history.service" ];
+                }
+                [
+                  "browser_history_agent_token"
+                  # DB-backed per-user agent token (bh_...), minted via the Agent
+                  # Tokens UI (POST /agents/token). Consumed ONLY by the agent
+                  # (browser-history-agent-env template) — it must DIFFER from the
+                  # server's env token above: resolveAgentAuth checks the env path
+                  # FIRST and a matching value would short-circuit to anonymous
+                  # ingest (no user attribution → invisible visits).
+                  "browser_history_agent_db_token"
+                ]
             )
             // lib.optionalAttrs (svcEnabled "google-sync") (
               # Full rclone.conf INI for the Drive mirror (token is a JSON blob —
@@ -320,6 +412,20 @@ in
                 owner = "root";
                 restartUnits = [ "google-sync.service" ];
               } [ "google_sync_rclone_config" ]
+            )
+            // lib.optionalAttrs (svcEnabled "mail-relay") (
+              # Upstream submission credential for the Postfix null client
+              # (mail-relay.nix). Ships as a PLACEHOLDER — go-live is an
+              # interactive `sudo sops platforms/nixos/secrets/mail-relay.yaml`
+              # (paste the Resend re_... API key as mail_relay_password), then
+              # postfix restarts via the template's restartUnits. Raw secret is
+              # root-owned: only the rendered template (owner postfix) is read
+              # by the daemon.
+              mkSecrets "mail-relay.yaml" {
+                owner = "root";
+                group = "root";
+                restartUnits = [ "postfix.service" ];
+              } [ "mail_relay_password" ]
             );
 
           templates = {
@@ -345,19 +451,25 @@ in
                 XIAOMI_API_KEY = config.sops.placeholder.hermes_xiaomi_api_key;
                 FAL_KEY = config.sops.placeholder.hermes_fal_key;
                 FIRECRAWL_API_KEY = config.sops.placeholder.hermes_firecrawl_api_key;
+                HERMES_GITHUB_READ_TOKEN = config.sops.placeholder.hermes_github_read_token;
               };
             };
           }
           // lib.optionalAttrs (svcEnabled "projects-management-automation") {
+            # No AI provider keys by default: the daemon's provider chain runs
+            # against the local FastFlowLM (OPENAI_BASE_URL in
+            # projects-management-automation.nix). MINIMAX_API_KEY lived here
+            # until 2026-09-02: minimax's Token Plan exhausted (429 billing
+            # state) on 2026-08-22 and the dead-first-provider burned ~3,800
+            # failed commits over 11 days while the local provider sat unused
+            # behind a stale go-commit pin. Do not re-add external provider
+            # keys here without a fallback plan (heuristic fallback + the
+            # "PMA Commit Health" gatus check catch this class now).
             "pma-env" = {
               owner = primaryUser;
               group = "users";
               restartUnits = [ "projects-management-automation.service" ];
-              content = lib.generators.toKeyValue { } (
-                lib.optionalAttrs (svcEnabled "hermes") {
-                  MINIMAX_API_KEY = config.sops.placeholder.hermes_minimax_api_key;
-                }
-              );
+              content = "";
             };
           }
           // lib.optionalAttrs (svcEnabled "monitor365-server") {
@@ -427,6 +539,23 @@ in
                   # Bearer key for the PapDashboard ingest custom alerting provider.
                   PAPDASHBOARD_INGEST_KEY = config.sops.placeholder.papdashboard_api_key;
                 }
+                // lib.optionalAttrs (svcEnabled "cv-server") {
+                  # X-API-Key for the "CV Funnel Freshness" check: the same
+                  # secret the cv-scan timer authenticates with, so gatus
+                  # reads the guarded sse-stats endpoint.
+                  CV_API_KEY = config.sops.placeholder.cv_api_key;
+                }
+                //
+                  lib.optionalAttrs
+                    (svcEnabled "inboxclean" && (config.services.inboxclean.paperless.enable or false))
+                    {
+                      # Paperless REST token for the "InboxClean Paperless
+                      # Archive Auth" check — the SAME secret inboxclean-sync
+                      # uploads attachments with, so the check fails exactly
+                      # when the archiving credential is dead (401) or the
+                      # API is unreachable.
+                      PAPERLESS_TOKEN = config.sops.placeholder.paperless_api_token;
+                    }
               );
             };
           }
@@ -474,6 +603,19 @@ in
               };
             };
           }
+          // lib.optionalAttrs (svcEnabled "cv-server") {
+            "cv-env" = {
+              owner = "cv";
+              group = "cv";
+              mode = "0400";
+              restartUnits = [ "cv-server.service" ];
+              content = lib.generators.toKeyValue { } {
+                # Guards mutating/admin API routes (X-API-Key header).
+                # Read/rotate: sudo sops platforms/nixos/secrets/cv.yaml
+                CV_API_KEY = config.sops.placeholder.cv_api_key;
+              };
+            };
+          }
           // lib.optionalAttrs (svcEnabled "attic-config") {
             # RS256 (RSA PEM PKCS1), NOT HS256 — the nixpkgs atticd module reads
             # ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64. Generate with:
@@ -490,39 +632,75 @@ in
             };
           }
           // lib.optionalAttrs (svcEnabled "browser-history") {
-            # Shared by server (DynamicUser) and agent (user). Both use
-            # EnvironmentFile= which is read by systemd (root), so root-owned
-            # is correct for both consumers.
+            # Shared by the SERVER (DynamicUser) — root-owned is correct because
+            # systemd reads EnvironmentFile as root. This is the legacy v1 env
+            # token: kept as break-glass auth (agentAuthConfigured env path);
+            # visits pushed through it are ANONYMOUS (no user attribution).
             "browser-history-env" = {
               owner = "root";
               group = "root";
               mode = "0400";
               restartUnits = [
                 "browser-history.service"
-                "browser-history-agent.service"
               ];
               content = lib.generators.toKeyValue { } {
                 BROWSER_HISTORY_AGENT_TOKEN = config.sops.placeholder.browser_history_agent_token;
               };
             };
-          }
-          // lib.optionalAttrs (svcEnabled "dns-blocker") {
-            # dnsblockd reads DNSBLOCKD_AUTH_TOKEN via koanf env provider,
-            # which overrides the auth_token config key. This keeps the token
-            # out of the nix-store YAML (world-readable) and gates the
-            # dashboard's /stats endpoint behind token auth.
-            # The raw secret (/run/secrets/dnsblockd_auth_token) is owned by
-            # primaryUser so the DMS DnsStatsWidget can read it for its Bearer
-            # header. The template (root-owned) feeds the systemd EnvironmentFile.
-            "dnsblockd-auth-env" = {
+            # AGENT-only env file: the DB-backed bh_ token minted per-user via
+            # the Agent Tokens UI. resolveAgentAuth's env path only short-
+            # circuits when the presented token EQUALS the server's env var —
+            # a bh_ value differs, falls through to the token store, and the
+            # resolved token's user is injected into /ingest (visit attribution).
+            "browser-history-agent-env" = {
               owner = "root";
               group = "root";
               mode = "0400";
-              restartUnits = [ "dnsblockd.service" ];
+              restartUnits = [ "browser-history-agent.service" ];
               content = lib.generators.toKeyValue { } {
-                DNSBLOCKD_AUTH_TOKEN = config.sops.placeholder.dnsblockd_auth_token;
+                BROWSER_HISTORY_AGENT_TOKEN = config.sops.placeholder.browser_history_agent_db_token;
               };
             };
+          }
+          // lib.optionalAttrs (svcEnabled "mail-relay") {
+            # SASL password map for the Postfix null client, rendered as a
+            # postfix-readable texthash source ([host]:port user:password —
+            # smtp_sasl_password_maps syntax). texthash (not hash:) reads
+            # this file LIVE at lookup time: no postmap step that would
+            # never re-run on secret rotation. The smtp client daemon runs
+            # as mail_owner (postfix) and is NOT chrooted (nixpkgs master.cf
+            # renders "-"), hence postfix:postfix 0400.
+            "mail-relay-sasl" = {
+              owner = "postfix";
+              group = "postfix";
+              mode = "0400";
+              restartUnits = [ "postfix.service" ];
+              content = "[${config.services.mail-relay.relayHost}]:${toString config.services.mail-relay.relayPort} ${config.services.mail-relay.smtpUsername}:${config.sops.placeholder.mail_relay_password}";
+            };
+          }
+          //
+            lib.optionalAttrs
+              (svcEnabled "inboxclean" && (config.services.inboxclean.paperless.enable or false))
+              {
+                # PAPERLESS_TOKEN for InboxClean's attachment archiving.
+                # Root-owned ON PURPOSE: systemd reads EnvironmentFile as PID 1
+                # (mail-relay-sasl rationale), the service user never needs it.
+                # Rotation restarts BOTH units so the next sync tick re-reads.
+                "inboxclean-paperless-env" = {
+                  owner = "root";
+                  group = "root";
+                  mode = "0400";
+                  restartUnits = [
+                    "inboxclean-web.service"
+                    "inboxclean-sync.service"
+                  ];
+                  content = "PAPERLESS_TOKEN=${config.sops.placeholder.paperless_api_token}";
+                };
+              }
+          // lib.optionalAttrs (svcEnabled "dns-blocker") {
+            # Retired 2026-08-21: the Bearer token (DNSBLOCKD_AUTH_TOKEN) was
+            # dropped in favor of OIDC SSO as the only dashboard credential.
+            # When Pocket ID grows machine credentials, provision them here.
           };
         };
       };

@@ -57,7 +57,7 @@ rm -f ./nixos.qcow2 2>/dev/null || true
 echo $! >"$VM_PIDFILE"
 
 echo "Waiting for SSH..."
-for i in $(seq 1 60); do
+for _ in $(seq 1 60); do
   ssh_cmd "echo READY" 2>/dev/null | grep -q READY && break
   kill -0 "$(cat "$VM_PIDFILE")" 2>/dev/null || {
     echo "VM died"

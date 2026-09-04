@@ -64,6 +64,7 @@ Helium/Electron renderers grow unbounded in user-1000.slice
 ```
 
 **Key indicators:**
+
 - `user-1000.slice` MemoryCurrent was near MemoryMax (64G)
 - GPUActive was >50G (consuming most of the ~110G visible RAM)
 - zram swap was at 100% capacity
@@ -71,13 +72,13 @@ Helium/Electron renderers grow unbounded in user-1000.slice
 
 ### Other Causes
 
-| Cause | How to Identify |
-|-------|----------------|
-| **BTRFS metadata ENOSPC** | `btrfs filesystem usage /` shows 0% unallocated. Check `journalctl -b -1 -k \| grep btrfs` |
-| **discard=async on QLC NAND** | 253ms discard latencies → 17.7s BTRFS commit freezes. Check `mount \| grep discard` |
-| **Kernel panic** | `journalctl -b -1 -k \| grep -i panic` or check `/var/log/kdump/` if configured |
-| **Power loss** | No journal entries at all from the "crashed" boot (UPS logs if available) |
-| **Hardware fault** | Check `mcelog`, `dmesg \| grep -i mce`, NVMe SMART errors |
+| Cause                         | How to Identify                                                                            |
+| ----------------------------- | ------------------------------------------------------------------------------------------ |
+| **BTRFS metadata ENOSPC**     | `btrfs filesystem usage /` shows 0% unallocated. Check `journalctl -b -1 -k \| grep btrfs` |
+| **discard=async on QLC NAND** | 253ms discard latencies → 17.7s BTRFS commit freezes. Check `mount \| grep discard`        |
+| **Kernel panic**              | `journalctl -b -1 -k \| grep -i panic` or check `/var/log/kdump/` if configured            |
+| **Power loss**                | No journal entries at all from the "crashed" boot (UPS logs if available)                  |
+| **Hardware fault**            | Check `mcelog`, `dmesg \| grep -i mce`, NVMe SMART errors                                  |
 
 ---
 
@@ -141,17 +142,17 @@ systemctl --user --failed
 
 ### Memory Pressure Mitigations Already in Place
 
-| Mitigation | Where | What It Does |
-|------------|-------|-------------|
-| `user-1000.slice` MemoryHigh=56G | `boot.nix` | Throttles user processes before hard limit |
-| `user-1000.slice` MemoryMax=64G | `boot.nix` | Hard kill limit for user processes |
-| systemd-oomd 50%/20s | `boot.nix` | Kills memory-hungry processes before OOM cascade |
-| MGLRU `min_ttl_ms=1000` | `boot.nix` | Protects youngest page generation from eviction |
-| `--disable-gpu-watchdog` | `base.nix` (Helium) | Prevents GPU process kill during display hotplug |
-| Memory-limited test wrappers | `home.nix` | `go-test-memlimit`, `cargo-test-memlimit`, `pnpm-test-memlimit` |
-| Gatus: GPUActive > 60G alert | `gatus-config.nix` | Early warning before critical memory pressure |
-| Gatus: user-slice > 40G alert | `gatus-config.nix` | Early warning before OOM cascade |
-| Gatus: Memory Pressure (PSI) | `gatus-config.nix` | Fires at >50% stall (10s avg) |
+| Mitigation                                          | Where                             | What It Does                                                                       |
+| --------------------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------- |
+| `user-1000.slice` MemoryHigh=56G                    | `boot.nix`                        | Throttles user processes before hard limit                                         |
+| `user-1000.slice` MemoryMax=64G                     | `boot.nix`                        | Hard kill limit for user processes                                                 |
+| systemd-oomd 50%/20s                                | `boot.nix`                        | Kills memory-hungry processes before OOM cascade                                   |
+| MGLRU `min_ttl_ms=1000`                             | `boot.nix`                        | Protects youngest page generation from eviction                                    |
+| `--disable-gpu-watchdog`                            | `base.nix` (Helium)               | Prevents GPU process kill during display hotplug                                   |
+| Memory-limited test wrappers                        | `home.nix`                        | `go-test-memlimit`, `cargo-test-memlimit`, `pnpm-test-memlimit`                    |
+| Gatus: GPUActive > 60G alert                        | `gatus-config.nix`                | Early warning before critical memory pressure                                      |
+| Gatus: user-slice > 40G alert                       | `gatus-config.nix`                | Early warning before OOM cascade                                                   |
+| Gatus: Memory Pressure (PSI)                        | `gatus-config.nix`                | Fires at >50% stall (10s avg)                                                      |
 | `/tmp` tmpfs capped 48G + stale-entry cleanup timer | `boot.nix`, `scheduled-tasks.nix` | Prevents build cache filling RAM-backed tmpfs; timer removes untouched entries >4h |
 
 ### Monitoring the WDT Health

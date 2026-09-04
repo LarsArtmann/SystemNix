@@ -208,33 +208,33 @@ Setup-Mac is a **production-grade, cross-platform Nix configuration** managing a
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| #   | Task                                                    | Priority | Est. Time | Category      |
-| --- | ------------------------------------------------------- | -------- | --------- | ------------- |
-| 1   | **Import immich-config.json into running Immich**       | CRITICAL | 5min      | Immich        |
-| 2   | **Re-run Smart Search on ALL assets** (new CLIP model)  | CRITICAL | Hours     | Immich        |
-| 3   | **Re-run Face Detection on ALL assets** (antelopev2)    | CRITICAL | Hours     | Immich        |
-| 4   | **Re-run Duplicate Detection** (fixed maxDistance)      | HIGH     | Hours     | Immich        |
-| 5   | **Update docs/STATUS.md** to reflect March 2026 reality | HIGH     | 30min     | Documentation |
-| 6   | **Update docs/TODO-STATUS.md** with resolved items      | HIGH     | 30min     | Documentation |
-| 7   | **Research Immich GPU ML via Docker+ROCm**              | HIGH     | 4h        | Immich        |
-| 8   | **Enable NPU** (check kernel 6.14+ availability)        | HIGH     | 2h        | Hardware      |
-| 9   | **Migrate Hyprland audio from pactl to wpctl**          | MED      | 30min     | Desktop       |
-| 10  | **Pin PhotoMap image to specific hash** (not `latest`)  | MED      | 10min     | Services      |
-| 11  | **Add GPU temp to Waybar** (AMD GPU)                    | MED      | 1.5h      | Desktop P1    |
-| 12  | **Add CPU usage to Waybar** (per-core)                  | MED      | 1.5h      | Desktop P1    |
-| 13  | **Add memory usage to Waybar**                          | MED      | 1.5h      | Desktop P1    |
-| 14  | **Create Quake Terminal dropdown** (F12)                | MED      | 2h        | Desktop P1    |
-| 15  | **Add Hyprland hot-reload** (Ctrl+Alt+R)                | MED      | 10min     | Desktop P1    |
-| 16  | **Set up SMTP for Immich notifications**                | MED      | 1h        | Immich        |
-| 17  | **Add Prometheus alerting rules** (disk, service, CPU)  | MED      | 2h        | Monitoring    |
-| 18  | **Import core/Types.nix in flake**                      | MED      | 15min     | Architecture  |
-| 19  | **Import core/State.nix in flake**                      | MED      | 15min     | Architecture  |
-| 20  | **Import core/Validation.nix in flake**                 | MED      | 15min     | Architecture  |
-| 21  | **Consolidate user config** (eliminate split brain)     | MED      | 45min     | Architecture  |
-| 22  | **Set up Bluetooth + Nest Audio**                       | LOW      | 1h        | Hardware      |
-| 23  | **Configure Immich external domain** (remote access)    | LOW      | 2h        | Immich        |
-| 24  | **Create Screenshot + OCR script**                      | LOW      | 2h        | Desktop P1    |
-| 25  | **Add audio visualizer** (real-time)                    | LOW      | 1h        | Desktop P2    |
+| #  | Task                                                    | Priority | Est. Time | Category      |
+| -- | ------------------------------------------------------- | -------- | --------- | ------------- |
+| 1  | **Import immich-config.json into running Immich**       | CRITICAL | 5min      | Immich        |
+| 2  | **Re-run Smart Search on ALL assets** (new CLIP model)  | CRITICAL | Hours     | Immich        |
+| 3  | **Re-run Face Detection on ALL assets** (antelopev2)    | CRITICAL | Hours     | Immich        |
+| 4  | **Re-run Duplicate Detection** (fixed maxDistance)      | HIGH     | Hours     | Immich        |
+| 5  | **Update docs/STATUS.md** to reflect March 2026 reality | HIGH     | 30min     | Documentation |
+| 6  | **Update docs/TODO-STATUS.md** with resolved items      | HIGH     | 30min     | Documentation |
+| 7  | **Research Immich GPU ML via Docker+ROCm**              | HIGH     | 4h        | Immich        |
+| 8  | **Enable NPU** (check kernel 6.14+ availability)        | HIGH     | 2h        | Hardware      |
+| 9  | **Migrate Hyprland audio from pactl to wpctl**          | MED      | 30min     | Desktop       |
+| 10 | **Pin PhotoMap image to specific hash** (not `latest`)  | MED      | 10min     | Services      |
+| 11 | **Add GPU temp to Waybar** (AMD GPU)                    | MED      | 1.5h      | Desktop P1    |
+| 12 | **Add CPU usage to Waybar** (per-core)                  | MED      | 1.5h      | Desktop P1    |
+| 13 | **Add memory usage to Waybar**                          | MED      | 1.5h      | Desktop P1    |
+| 14 | **Create Quake Terminal dropdown** (F12)                | MED      | 2h        | Desktop P1    |
+| 15 | **Add Hyprland hot-reload** (Ctrl+Alt+R)                | MED      | 10min     | Desktop P1    |
+| 16 | **Set up SMTP for Immich notifications**                | MED      | 1h        | Immich        |
+| 17 | **Add Prometheus alerting rules** (disk, service, CPU)  | MED      | 2h        | Monitoring    |
+| 18 | **Import core/Types.nix in flake**                      | MED      | 15min     | Architecture  |
+| 19 | **Import core/State.nix in flake**                      | MED      | 15min     | Architecture  |
+| 20 | **Import core/Validation.nix in flake**                 | MED      | 15min     | Architecture  |
+| 21 | **Consolidate user config** (eliminate split brain)     | MED      | 45min     | Architecture  |
+| 22 | **Set up Bluetooth + Nest Audio**                       | LOW      | 1h        | Hardware      |
+| 23 | **Configure Immich external domain** (remote access)    | LOW      | 2h        | Immich        |
+| 24 | **Create Screenshot + OCR script**                      | LOW      | 2h        | Desktop P1    |
+| 25 | **Add audio visualizer** (real-time)                    | LOW      | 1h        | Desktop P2    |
 
 ---
 

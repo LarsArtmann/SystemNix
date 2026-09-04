@@ -11,7 +11,7 @@
 
 1. **Root cause identified.** `internal/notify/discord.go:40` posted `string(event.Payload)` — the raw serialized payload JSON — as the embed description, and titled the embed `[notification] notification.created`. Hence Discord showed `{"type":"critical","title":"Insight (8 correlated alerts): BTRFS Chunk Health","body":"Root Cause\n\n…"}` with literal `\n` escapes. Same defect existed in Slack (`slack.go:41`), email (`email.go:53-58`), and pushover (`pushover.go:49`).
 2. **Shared renderer built** (`internal/notify/render.go`): `renderEvent(*events.Event) → renderedMessage{Kind, Severity, Title, Body, SourceApp}` — a human-readable projection of any payload family (notification `type`, alert `severity`, question `answer`), with:
-   - lifecycle outcome prefixes (`Resolved: `, `Acknowledged: `, `Escalated: `, `Answered: `)
+   - lifecycle outcome prefixes (`Resolved:`, `Acknowledged:`, `Escalated:`, `Answered:`)
    - unparseable-payload fallback: aggregate+kind title + raw payload in a fenced ```json block (never naked raw text)
    - rune-safe truncation helper for channel field limits
 3. **Discord channel rewritten**: embed title = notification's own title (≤256 runes), description = markdown body (≤4096 runes, Discord renders it), color by payload severity (critical `0xFF3D57`, error `0xE74C3C`, warning `0xFFB300`, info `0x00E5FF`, resolved `0x2ECC71`, acknowledged `0x3498DB` — recovery outcomes override severity), footer `PapDashboard • insight`, timestamp kept.
@@ -52,11 +52,12 @@
 ## f) NEXT: up to 50 things
 
 **Verify / close this session's work**
+
 1. Eyeball the first real Discord insight embed after deploy (user).
-2. Update SystemNix `AGENTS.md` PapDashboard section: human-readable outbound rendering + event-type gate + webhook-contract note.
+~~2. Update SystemNix `AGENTS.md` PapDashboard section: human-readable outbound rendering + event-type gate + webhook-contract note.~~ done — AGENTS.md PapDashboard section documents the rendering contract + dedicated insights channel
 3. Update PapDashboard `AGENTS.md` with the notify rendering contract.
-4. Check SystemNix CHANGELOG convention for input bumps; add entry if warranted.
-5. Decide webhook-channel gating semantics (ungate webhook / per-channel gate / keep).
+~~4. Check SystemNix CHANGELOG convention for input bumps; add entry if warranted.~~ done — CHANGELOG carries the PapDashboard entries
+~~5. Decide webhook-channel gating semantics (ungate webhook / per-channel gate / keep).~~ superseded 2026-08-18 23-51 — dedicated insights webhook channel decided + deployed
 6. Add optional test-insight trigger (CLI flag or env) for deploy-time Discord verification.
 7. Consider adding a `post-deploy-check.sh` assertion: papdashboard webhook config present when enabled.
 
@@ -97,15 +98,15 @@
 
 ## Appendix: live observations snapshot (fetched 2026-08-18 ~21:10, node_exporter :9100)
 
-| Metric | Value | Assessment |
-| --- | --- | --- |
-| `btrfs_health_critical` | **1** | unalloc 3% (<5%), metadata util 80% — matches the insight exactly |
-| `btrfs_device_unallocated_pct` | 3 | CRITICAL band |
-| `btrfs_metadata_utilization_pct` | 80 | warning band (>85% would be critical) |
-| `btrfs_emergency_reserve_present` | 1 | 10 GiB reserve intact — usable for instant relief |
-| `/` free (`node_filesystem_avail_bytes`) | 41.4 GiB | regular free space FINE — this is a metadata-chunk problem |
-| `btrfs_scrub_error_free` | 1 | both mounts scrubbed clean |
-| `node_load1/5/15` | 10.6 / 12.9 / 15.0 | heavy, 32 threads — not critical alone |
-| per-core `iowait` | ~19-25k s since boot | I/O pressure is real and sustained |
-| `k10temp Tctl` | 95.75 °C | hot under load — verify against part spec |
-| gatus / papdashboard | both running, new binary live | monitoring path healthy |
+| Metric                                   | Value                         | Assessment                                                        |
+| ---------------------------------------- | ----------------------------- | ----------------------------------------------------------------- |
+| `btrfs_health_critical`                  | **1**                         | unalloc 3% (<5%), metadata util 80% — matches the insight exactly |
+| `btrfs_device_unallocated_pct`           | 3                             | CRITICAL band                                                     |
+| `btrfs_metadata_utilization_pct`         | 80                            | warning band (>85% would be critical)                             |
+| `btrfs_emergency_reserve_present`        | 1                             | 10 GiB reserve intact — usable for instant relief                 |
+| `/` free (`node_filesystem_avail_bytes`) | 41.4 GiB                      | regular free space FINE — this is a metadata-chunk problem        |
+| `btrfs_scrub_error_free`                 | 1                             | both mounts scrubbed clean                                        |
+| `node_load1/5/15`                        | 10.6 / 12.9 / 15.0            | heavy, 32 threads — not critical alone                            |
+| per-core `iowait`                        | ~19-25k s since boot          | I/O pressure is real and sustained                                |
+| `k10temp Tctl`                           | 95.75 °C                      | hot under load — verify against part spec                         |
+| gatus / papdashboard                     | both running, new binary live | monitoring path healthy                                           |

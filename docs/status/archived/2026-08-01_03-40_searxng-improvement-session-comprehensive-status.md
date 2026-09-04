@@ -6,43 +6,42 @@
 
 ---
 
-
 ## a) FULLY DONE
 
-| Item | Commit | Verification |
-| --- | --- | --- |
-| `autocomplete = "google"` → `"duckduckgo"` | `b473f783` | `nix eval` confirms `duckduckgo` |
-| Google engine re-enabled (general, images, videos) | `b473f783` | `nix eval --json` confirms `inactive = false` |
-| Bing engine re-enabled | `b473f783` | `nix eval --json` confirms `disabled = false` |
-| Hostnames plugin configured (high_priority + remove) | `9f491978` | `nix eval --json` confirms regex patterns |
-| Noise removed (useragent_suffix="", pool_*, suspended_times) | `9f491978` | Diff verified — all removed |
-| `hotkeys = "vim"` reverted (subjective UX) | `9f491978` | Diff verified — removed |
-| AGENTS.md gotcha entries added (2 new rows) | `8c8559f1`, `2f8a0a15` | Grep confirms entries present |
-| `nix flake check --no-build` passes | all | Verified after every change |
-| All commits pushed to `origin/master` | `git push` | `bd380ca0..2f8a0a15` confirmed |
+| Item                                                         | Commit                 | Verification                                  |
+| ------------------------------------------------------------ | ---------------------- | --------------------------------------------- |
+| `autocomplete = "google"` → `"duckduckgo"`                   | `b473f783`             | `nix eval` confirms `duckduckgo`              |
+| Google engine re-enabled (general, images, videos)           | `b473f783`             | `nix eval --json` confirms `inactive = false` |
+| Bing engine re-enabled                                       | `b473f783`             | `nix eval --json` confirms `disabled = false` |
+| Hostnames plugin configured (high_priority + remove)         | `9f491978`             | `nix eval --json` confirms regex patterns     |
+| Noise removed (useragent_suffix="", pool_*, suspended_times) | `9f491978`             | Diff verified — all removed                   |
+| `hotkeys = "vim"` reverted (subjective UX)                   | `9f491978`             | Diff verified — removed                       |
+| AGENTS.md gotcha entries added (2 new rows)                  | `8c8559f1`, `2f8a0a15` | Grep confirms entries present                 |
+| `nix flake check --no-build` passes                          | all                    | Verified after every change                   |
+| All commits pushed to `origin/master`                        | `git push`             | `bd380ca0..2f8a0a15` confirmed                |
 
 ---
 
 ## b) PARTIALLY DONE
 
-| Item | Status | What remains |
-| --- | --- | --- |
-| **Runtime verification** | NOT DEPLOYED | All changes are eval-verified but NOT deployed. `nix run .#deploy` + `nix run .#post-deploy-check` needed to confirm engines actually merge correctly at runtime and Google/Bing results appear |
-| **Hostnames plugin** | Config written, not runtime-verified | Need to deploy and search for e.g. "rust error" to confirm Stack Overflow bubbles to top, Pinterest disappears |
-| **Engine merge behavior** | YAML structure verified correct | SearXNG's `use_default_settings` + `engines` override list merge is well-documented but we have not observed it live |
+| Item                      | Status                               | What remains                                                                                                                                                                                    |
+| ------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Runtime verification**  | NOT DEPLOYED                         | All changes are eval-verified but NOT deployed. `nix run .#deploy` + `nix run .#post-deploy-check` needed to confirm engines actually merge correctly at runtime and Google/Bing results appear |
+| **Hostnames plugin**      | Config written, not runtime-verified | Need to deploy and search for e.g. "rust error" to confirm Stack Overflow bubbles to top, Pinterest disappears                                                                                  |
+| **Engine merge behavior** | YAML structure verified correct      | SearXNG's `use_default_settings` + `engines` override list merge is well-documented but we have not observed it live                                                                            |
 
 ---
 
 ## c) NOT STARTED
 
-| Item | Why it matters |
-| --- | --- |
-| Deploy + post-deploy smoke test | All work is theoretical until deployed |
-| Browser testing (search quality) | Need to verify Google/Bing results actually appear alongside DDG/Brave |
-| `hostnames.replace` for privacy frontends | YouTube→Invidious, Reddit→Redlib — evaluated and deliberately deferred (frontends are chronically unreliable) |
-| `open_metrics` integration | SearXNG has a built-in Prometheus metrics endpoint behind basic auth. Could integrate with SigNoz/Gatus. Not needed — Gatus health check already covers availability |
-| DOI resolver override | `sci-hub.se` as default DOI resolver — legal gray area, not appropriate for this homelab |
-| Autocomplete A/B test | DDG autocomplete may be lower quality than Google's. Should test after deploy and potentially try `brave` as a middle ground |
+| Item                                      | Why it matters                                                                                                                                                       |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Deploy + post-deploy smoke test           | All work is theoretical until deployed                                                                                                                               |
+| Browser testing (search quality)          | Need to verify Google/Bing results actually appear alongside DDG/Brave                                                                                               |
+| `hostnames.replace` for privacy frontends | YouTube→Invidious, Reddit→Redlib — evaluated and deliberately deferred (frontends are chronically unreliable)                                                        |
+| `open_metrics` integration                | SearXNG has a built-in Prometheus metrics endpoint behind basic auth. Could integrate with SigNoz/Gatus. Not needed — Gatus health check already covers availability |
+| DOI resolver override                     | `sci-hub.se` as default DOI resolver — legal gray area, not appropriate for this homelab                                                                             |
+| Autocomplete A/B test                     | DDG autocomplete may be lower quality than Google's. Should test after deploy and potentially try `brave` as a middle ground                                         |
 
 ---
 
@@ -50,21 +49,21 @@
 
 ### Mistakes made and fixed in this session
 
-| # | Mistake | Impact | Fix |
-| --- | --- | --- | --- |
-| 1 | **`useragent_suffix = ""`** — added an empty string that does literally nothing | Noise in config, misleading "what" comment suggesting it "identifies the instance" when it's empty | Removed entirely in self-review pass |
-| 2 | **`pool_connections = 100`, `pool_maxsize = 20`, `keepalive_expiry = 5.0`** — re-stated exact SearXNG defaults | Anti-pattern: re-stating defaults means upstream improvements don't track. Pure maintenance burden for zero value | Removed entirely |
-| 3 | **`suspended_times`** — re-stated all 6 default suspension values | Same anti-pattern as #2. 15 lines of noise | Removed entirely |
-| 4 | **`hotkeys = "vim"`** — imposed subjective UX preference unilaterally | User didn't ask for vim keybindings. This is a personal preference, not a config improvement | Reverted |
-| 5 | **"What" comments** — several comments described what the code does instead of why | Violates AGENTS.md rule 8 ("NEVER ADD COMMENTS... Focus on *why* not *what*") | Cleaned up — remaining comments explain rationale only |
-| 6 | **No deploy verification** — all work is eval-only | Could have runtime merge issues we haven't seen | Identified but not yet deployed (see NOT STARTED) |
+| # | Mistake                                                                                                        | Impact                                                                                                            | Fix                                                    |
+| - | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| 1 | **`useragent_suffix = ""`** — added an empty string that does literally nothing                                | Noise in config, misleading "what" comment suggesting it "identifies the instance" when it's empty                | Removed entirely in self-review pass                   |
+| 2 | **`pool_connections = 100`, `pool_maxsize = 20`, `keepalive_expiry = 5.0`** — re-stated exact SearXNG defaults | Anti-pattern: re-stating defaults means upstream improvements don't track. Pure maintenance burden for zero value | Removed entirely                                       |
+| 3 | **`suspended_times`** — re-stated all 6 default suspension values                                              | Same anti-pattern as #2. 15 lines of noise                                                                        | Removed entirely                                       |
+| 4 | **`hotkeys = "vim"`** — imposed subjective UX preference unilaterally                                          | User didn't ask for vim keybindings. This is a personal preference, not a config improvement                      | Reverted                                               |
+| 5 | **"What" comments** — several comments described what the code does instead of why                             | Violates AGENTS.md rule 8 ("NEVER ADD COMMENTS... Focus on _why_ not _what_")                                     | Cleaned up — remaining comments explain rationale only |
+| 6 | **No deploy verification** — all work is eval-only                                                             | Could have runtime merge issues we haven't seen                                                                   | Identified but not yet deployed (see NOT STARTED)      |
 
 ### Process mistakes
 
-| # | Mistake | Lesson |
-| --- | --- | --- |
-| 7 | **First pass added 6 changes, 4 were noise** | Should have studied SearXNG defaults FIRST before adding anything. The settings.yml from GitHub showed all the defaults — I should have diffed against those before writing |
-| 8 | **Committed via auto-git daemon** | Pre-commit hook caught a pre-existing VM boot test failure (`checks.x86_64-linux.boot` — QEMU `systemctl is-system-running` timeout) that blocked my explicit commit. The auto-git daemon committed anyway without the hook. This is expected behavior per AGENTS.md but means the pre-commit `nix flake check` didn't run on the refactor commit |
+| # | Mistake                                      | Lesson                                                                                                                                                                                                                                                                                                                                            |
+| - | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 7 | **First pass added 6 changes, 4 were noise** | Should have studied SearXNG defaults FIRST before adding anything. The settings.yml from GitHub showed all the defaults — I should have diffed against those before writing                                                                                                                                                                       |
+| 8 | **Committed via auto-git daemon**            | Pre-commit hook caught a pre-existing VM boot test failure (`checks.x86_64-linux.boot` — QEMU `systemctl is-system-running` timeout) that blocked my explicit commit. The auto-git daemon committed anyway without the hook. This is expected behavior per AGENTS.md but means the pre-commit `nix flake check` didn't run on the refactor commit |
 
 ---
 
@@ -156,7 +155,7 @@
 46. Consider adding a SearXNG `hostnames` external YAML file for larger rule sets
 47. Evaluate SearXNG's `plugins.tor_check` if Tor relay is ever added
 48. Consider SearXNG multi-language engine duplicates (e.g. Google DE + Google EN)
-49. Evaluate whether to enable ` Formats = [ "csv" ]` for data export use cases
+49. Evaluate whether to enable `Formats = [ "csv" ]` for data export use cases
 50. Consider integrating SearXNG's `/autocompleter` endpoint with the DMS spotlight launcher
 
 ---

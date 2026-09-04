@@ -70,8 +70,8 @@
 
 ### Token Generation Speed
 
-| Test           | Average    | Rating  | Notes           |
-| -------------- | ---------- | ------- | --------------- |
+| Test           | Average    | Rating | Notes           |
+| -------------- | ---------- | ------ | --------------- |
 | 128-256 tokens | ~23-24 t/s | ⚠️ FAIR | 10-30 t/s range |
 
 **Observations:**

@@ -49,7 +49,7 @@
 | **P1: Docker image pinning**           | Not done | Voice agents + PhotoMap still use `:latest` tags.                     |
 | **P1: VRRP auth to sops**              | Not done | `auth_pass "DNSClusterVRRP"` plaintext in dns-failover.nix.           |
 | **P1: Taskwarrior encryption to sops** | Not done | Deterministic hash visible in repo.                                   |
-| **P2: Eval smoke tests**               | Not done | `                                                                     |     | true` still in test expressions. |
+| **P2: Eval smoke tests**               | Not done | `                                                                     |
 | **P2: Pre-commit statix hook**         | Not done | Failed on wallpapers commit.                                          |
 | **P5: `just switch`**                  | Not done | Many changes deployed to config but not built/applied to evo-x2.      |
 
@@ -108,43 +108,43 @@
 
 ### Immediate (this session, ~30 min)
 
-| #   | Task                                                   | Est. | Impact                   |
-| --- | ------------------------------------------------------ | ---- | ------------------------ |
-| 1   | **`git push`** — push all local commits to origin      | 1m   | Prevents data loss       |
-| 2   | **`git stash clear`** — drop 3 stale stashes           | 1m   | Hygiene                  |
-| 3   | **Delete 17 remote `copilot/fix-*` branches**          | 2m   | Hygiene                  |
-| 4   | **Pin Docker image digests** (voice agents + photomap) | 5m   | Prevents silent breakage |
-| 5   | **Move Taskwarrior encryption to sops**                | 10m  | Security                 |
-| 6   | **Move VRRP auth_pass to sops**                        | 8m   | Security                 |
+| # | Task                                                   | Est. | Impact                   |
+| - | ------------------------------------------------------ | ---- | ------------------------ |
+| 1 | **`git push`** — push all local commits to origin      | 1m   | Prevents data loss       |
+| 2 | **`git stash clear`** — drop 3 stale stashes           | 1m   | Hygiene                  |
+| 3 | **Delete 17 remote `copilot/fix-*` branches**          | 2m   | Hygiene                  |
+| 4 | **Pin Docker image digests** (voice agents + photomap) | 5m   | Prevents silent breakage |
+| 5 | **Move Taskwarrior encryption to sops**                | 10m  | Security                 |
+| 6 | **Move VRRP auth_pass to sops**                        | 8m   | Security                 |
 
 ### This Week (~2 hours)
 
-| #   | Task                                                                                    | Est. | Impact                  |
-| --- | --------------------------------------------------------------------------------------- | ---- | ----------------------- |
-| 7   | **Add `just switch` + smoke test to evo-x2**                                            | 45m  | Verify everything works |
-| 8   | **Verify all 7 services** (authelia, immich, photomap, comfyui, ollama, signoz, hermes) | 15m  | Confidence              |
-| 9   | **Create `lib/systemd-harden.nix`** shared helper                                       | 12m  | DRY, consistency        |
-| 10  | **Add module enable toggles** to 4 core modules (sops, caddy, gitea, immich)            | 12m  | Architecture            |
-| 11  | **Add GitHub Actions** `nix flake check` on push                                        | 10m  | CI baseline             |
-| 12  | **Fix eval smoke tests** (remove `                                                      |      | true`)                  | 5m  | Quality |
-| 13  | **Fix pre-commit statix hook**                                                          | 10m  | Tooling                 |
-| 14  | **Replace `nixpkgs-fmt` with `nixfmt-rfc-style`**                                       | 5m   | Modernization           |
-| 15  | **Add GPG cross-platform path**                                                         | 5m   | Darwin compat           |
+| #  | Task                                                                                    | Est. | Impact                  |
+| -- | --------------------------------------------------------------------------------------- | ---- | ----------------------- |
+| 7  | **Add `just switch` + smoke test to evo-x2**                                            | 45m  | Verify everything works |
+| 8  | **Verify all 7 services** (authelia, immich, photomap, comfyui, ollama, signoz, hermes) | 15m  | Confidence              |
+| 9  | **Create `lib/systemd-harden.nix`** shared helper                                       | 12m  | DRY, consistency        |
+| 10 | **Add module enable toggles** to 4 core modules (sops, caddy, gitea, immich)            | 12m  | Architecture            |
+| 11 | **Add GitHub Actions** `nix flake check` on push                                        | 10m  | CI baseline             |
+| 12 | **Fix eval smoke tests** (remove `                                                      |      | true`)                  |
+| 13 | **Fix pre-commit statix hook**                                                          | 10m  | Tooling                 |
+| 14 | **Replace `nixpkgs-fmt` with `nixfmt-rfc-style`**                                       | 5m   | Modernization           |
+| 15 | **Add GPG cross-platform path**                                                         | 5m   | Darwin compat           |
 
 ### Next Two Weeks (~4 hours)
 
-| #   | Task                                                           | Est. | Impact        |
-| --- | -------------------------------------------------------------- | ---- | ------------- |
-| 16  | **Build Pi 3 SD image** + flash + boot                         | 45m  | DNS HA        |
-| 17  | **Test DNS failover** (VRRP)                                   | 10m  | Reliability   |
-| 18  | **Add module enable toggles** batch 2–4 (remaining 12 modules) | 36m  | Architecture  |
-| 19  | **SigNoz: fix duplicate rules** (POST → PUT)                   | 10m  | Reliability   |
-| 20  | **SigNoz: add missing metrics** for 10 services                | 12m  | Observability |
-| 21  | **Write top-level README.md** update                           | 12m  | Onboarding    |
-| 22  | **Document DNS cluster in AGENTS.md**                          | 8m   | Documentation |
-| 23  | **Hermes: add WatchdogSec + health check**                     | 10m  | Reliability   |
-| 24  | **ComfyUI: replace hardcoded paths** with module options       | 12m  | Architecture  |
-| 25  | **Setup binary cache** (Cachix) for overlay builds             | 30m  | Build perf    |
+| #  | Task                                                           | Est. | Impact        |
+| -- | -------------------------------------------------------------- | ---- | ------------- |
+| 16 | **Build Pi 3 SD image** + flash + boot                         | 45m  | DNS HA        |
+| 17 | **Test DNS failover** (VRRP)                                   | 10m  | Reliability   |
+| 18 | **Add module enable toggles** batch 2–4 (remaining 12 modules) | 36m  | Architecture  |
+| 19 | **SigNoz: fix duplicate rules** (POST → PUT)                   | 10m  | Reliability   |
+| 20 | **SigNoz: add missing metrics** for 10 services                | 12m  | Observability |
+| 21 | **Write top-level README.md** update                           | 12m  | Onboarding    |
+| 22 | **Document DNS cluster in AGENTS.md**                          | 8m   | Documentation |
+| 23 | **Hermes: add WatchdogSec + health check**                     | 10m  | Reliability   |
+| 24 | **ComfyUI: replace hardcoded paths** with module options       | 12m  | Architecture  |
+| 25 | **Setup binary cache** (Cachix) for overlay builds             | 30m  | Build perf    |
 
 ---
 

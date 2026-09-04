@@ -112,33 +112,33 @@
 
 ## F) Top 25 Things to Do Next
 
-| #   | Task                                                          | Impact    | Effort | Repo           | Type           |
-| --- | ------------------------------------------------------------- | --------- | ------ | -------------- | -------------- |
-| 1   | Fix FindGoModFile test (use `t.TempDir()`)                    | 🔴 High   | 5min   | library-policy | Bug fix        |
-| 2   | Remove `--ginkgo.skip` from nix check                         | 🔴 High   | 2min   | library-policy | Cleanup        |
-| 3   | Update SystemNix AGENTS.md (sharedOverlays + inputs table)    | 🟠 High   | 5min   | SystemNix      | Docs           |
-| 4   | Commit & push SystemNix changes                               | 🔴 High   | 5min   | SystemNix      | Ops            |
-| 5   | Research hermetic lint check (remove fixed-output derivation) | 🔴 High   | 60min  | library-policy | Architecture   |
-| 6   | Fix `getProjectGoVersion()` in plugin_analyzer.go             | 🟠 High   | 30min  | library-policy | Bug fix        |
-| 7   | Add `pre-commit-hooks.nix` to library-policy                  | 🟠 High   | 20min  | library-policy | Quality        |
-| 8   | Verify CI passes on GitHub after push                         | 🟠 High   | 10min  | library-policy | Validation     |
-| 9   | `nix flake check --all-systems` on darwin                     | 🟡 Medium | 30min  | library-policy | Validation     |
-| 10  | Add `gomod2nix` to library-policy                             | 🟡 Medium | 30min  | library-policy | Tooling        |
-| 11  | Fix `lib/default.nix` in SystemNix (wire or remove)           | 🟡 Medium | 10min  | SystemNix      | Cleanup        |
-| 12  | Add hermetic TypeSpec generation check                        | 🟡 Medium | 60min  | library-policy | Quality        |
-| 13  | Test `nix run .#lint-custom` end-to-end                       | 🟡 Medium | 15min  | library-policy | Validation     |
-| 14  | Test `nix run .#update-vendor-hash` after go.mod change       | 🟡 Medium | 10min  | library-policy | Validation     |
-| 15  | Run `direnv allow` in library-policy                          | 🟡 Medium | 1min   | library-policy | DevEx          |
-| 16  | Add `nix run .#install` convenience app                       | 🟢 Low    | 5min   | library-policy | Feature        |
-| 17  | Add `nix run .#security` for govulncheck                      | 🟢 Low    | 10min  | library-policy | Security       |
-| 18  | Add `nix run .#coverage` for coverage reports                 | 🟢 Low    | 15min  | library-policy | Feature        |
-| 19  | Add treefmt for .yaml files                                   | 🟢 Low    | 10min  | library-policy | Formatting     |
-| 20  | Delete remaining `scripts/` when fully replaced               | 🟢 Low    | 10min  | library-policy | Cleanup        |
-| 21  | Add binary size regression check to CI                        | 🟢 Low    | 15min  | library-policy | CI             |
-| 22  | Add `nix run .#dogfood` to CI pipeline                        | 🟢 Low    | 10min  | library-policy | CI             |
-| 23  | Publish to FlakeHub                                           | 🟢 Low    | 30min  | library-policy | Distribution   |
-| 24  | Consider `attic` self-hosted cache                            | 🟢 Low    | 60min  | library-policy | Infrastructure |
-| 25  | Add `gci` back to devShell when nixpkgs fixes it              | 🟢 Low    | 5min   | library-policy | DevEx          |
+| #  | Task                                                          | Impact    | Effort | Repo           | Type           |
+| -- | ------------------------------------------------------------- | --------- | ------ | -------------- | -------------- |
+| 1  | Fix FindGoModFile test (use `t.TempDir()`)                    | 🔴 High   | 5min   | library-policy | Bug fix        |
+| 2  | Remove `--ginkgo.skip` from nix check                         | 🔴 High   | 2min   | library-policy | Cleanup        |
+| 3  | Update SystemNix AGENTS.md (sharedOverlays + inputs table)    | 🟠 High   | 5min   | SystemNix      | Docs           |
+| 4  | Commit & push SystemNix changes                               | 🔴 High   | 5min   | SystemNix      | Ops            |
+| 5  | Research hermetic lint check (remove fixed-output derivation) | 🔴 High   | 60min  | library-policy | Architecture   |
+| 6  | Fix `getProjectGoVersion()` in plugin_analyzer.go             | 🟠 High   | 30min  | library-policy | Bug fix        |
+| 7  | Add `pre-commit-hooks.nix` to library-policy                  | 🟠 High   | 20min  | library-policy | Quality        |
+| 8  | Verify CI passes on GitHub after push                         | 🟠 High   | 10min  | library-policy | Validation     |
+| 9  | `nix flake check --all-systems` on darwin                     | 🟡 Medium | 30min  | library-policy | Validation     |
+| 10 | Add `gomod2nix` to library-policy                             | 🟡 Medium | 30min  | library-policy | Tooling        |
+| 11 | Fix `lib/default.nix` in SystemNix (wire or remove)           | 🟡 Medium | 10min  | SystemNix      | Cleanup        |
+| 12 | Add hermetic TypeSpec generation check                        | 🟡 Medium | 60min  | library-policy | Quality        |
+| 13 | Test `nix run .#lint-custom` end-to-end                       | 🟡 Medium | 15min  | library-policy | Validation     |
+| 14 | Test `nix run .#update-vendor-hash` after go.mod change       | 🟡 Medium | 10min  | library-policy | Validation     |
+| 15 | Run `direnv allow` in library-policy                          | 🟡 Medium | 1min   | library-policy | DevEx          |
+| 16 | Add `nix run .#install` convenience app                       | 🟢 Low    | 5min   | library-policy | Feature        |
+| 17 | Add `nix run .#security` for govulncheck                      | 🟢 Low    | 10min  | library-policy | Security       |
+| 18 | Add `nix run .#coverage` for coverage reports                 | 🟢 Low    | 15min  | library-policy | Feature        |
+| 19 | Add treefmt for .yaml files                                   | 🟢 Low    | 10min  | library-policy | Formatting     |
+| 20 | Delete remaining `scripts/` when fully replaced               | 🟢 Low    | 10min  | library-policy | Cleanup        |
+| 21 | Add binary size regression check to CI                        | 🟢 Low    | 15min  | library-policy | CI             |
+| 22 | Add `nix run .#dogfood` to CI pipeline                        | 🟢 Low    | 10min  | library-policy | CI             |
+| 23 | Publish to FlakeHub                                           | 🟢 Low    | 30min  | library-policy | Distribution   |
+| 24 | Consider `attic` self-hosted cache                            | 🟢 Low    | 60min  | library-policy | Infrastructure |
+| 25 | Add `gci` back to devShell when nixpkgs fixes it              | 🟢 Low    | 5min   | library-policy | DevEx          |
 
 ---
 

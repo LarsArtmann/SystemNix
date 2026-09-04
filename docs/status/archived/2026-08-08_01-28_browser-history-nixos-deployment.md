@@ -6,7 +6,6 @@
 
 ---
 
-
 ## A) FULLY DONE
 
 ### Upstream browser-history repo (`/home/lars/projects/browser-history`)
@@ -80,9 +79,10 @@
 27. **Check upstream code before first deploy** — I should have read `api/httpmiddleware/middleware.go` to see `otlptracegrpc` before setting `OTEL_EXPORTER_OTLP_ENDPOINT`. I should have known `WEBAUTHN_RP_NAME` with a space needs quoting in systemd Environment. These are basic checks that would have saved 2 extra deploys.
 
 28. **Fix the Caddy reload issue systematically** — The `PrivateTmp=true` + `systemctl reload` conflict affects every deploy. Either:
-   - Override `PrivateTmp = false` for Caddy specifically (security tradeoff)
-   - Add `ExecReload = systemctl restart caddy` (defeats zero-downtime reload)
-   - Or add a post-deploy Caddy restart to `deploy.sh` (like the provisioner restarts)
+
+- Override `PrivateTmp = false` for Caddy specifically (security tradeoff)
+- Add `ExecReload = systemctl restart caddy` (defeats zero-downtime reload)
+- Or add a post-deploy Caddy restart to `deploy.sh` (like the provisioner restarts)
 
 29. **Fix the pre-deploy phantom metric chicken-and-egg** — The `system_gatus_endpoints_in_error_long` metric is emitted by system-health code that only exists in the NEW deployment. On the OLD deployment, the metric is absent, so `pre-deploy-check` fails, blocking the deploy that would add the metric. Solution: either pre-seed the metric or make the check a warning instead of a hard failure.
 
@@ -122,12 +122,12 @@
 
 13. **Deploy browser-history agent on macOS** — The agent-module.nix supports macOS via nix-darwin. Would sync Safari/Chrome history from the MacBook.
 14. **Fix browser-history OTel to use HTTP (port 4318)** — Align with SystemNix convention. Change `otlptracegrpc` to `otlptracehttp` upstream.
-~~15. **Add Gatus `[RESPONSE_TIME]` threshold tuning** — The 500ms threshold may be too aggressive for a SQLite-backed app with analytics queries. Monitor and adjust.~~ done — threshold adequate, no issues reported
-~~16. **Add Caddy access log rotation for `history.home.lan`** — Currently logs to `/var/log/caddy/access-history.home.lan.log` but no rotation is configured.~~ done — global Caddy log rotation (roll_size 100MB)
-~~17. **Consider Pocket ID OIDC integration** — Browser-history has its own WebAuthn. If Pocket ID SSO is desired, upstream needs OIDC code. Currently NOT feasible (like Homepage/SigNoz — no native OIDC).~~ done — OAuth2 via Pocket ID integrated (see 02-45 report)
-~~18. **Review Caddy vHost pattern for WebAuthn services** — The direct TLS proxy (no forward-auth) pattern should be documented for future WebAuthn services.~~ done — documented in AGENTS.md
-19. **Add browser-history to SystemNix VM tests** — Create a `tests/browser-history.nix` test that verifies the service starts and `/health` returns 200.
-~~20. **Monitor memory usage** — `MemoryMax=512M` may be too low for a CQRS/ES app with SQLite. Watch for OOM kills.~~ done — no OOM issues, peaked at 54.1M
+    ~~15. **Add Gatus `[RESPONSE_TIME]` threshold tuning** — The 500ms threshold may be too aggressive for a SQLite-backed app with analytics queries. Monitor and adjust.~~ done — threshold adequate, no issues reported
+    ~~16. **Add Caddy access log rotation for `history.home.lan`** — Currently logs to `/var/log/caddy/access-history.home.lan.log` but no rotation is configured.~~ done — global Caddy log rotation (roll_size 100MB)
+    ~~17. **Consider Pocket ID OIDC integration** — Browser-history has its own WebAuthn. If Pocket ID SSO is desired, upstream needs OIDC code. Currently NOT feasible (like Homepage/SigNoz — no native OIDC).~~ done — OAuth2 via Pocket ID integrated (see 02-45 report)
+    ~~18. **Review Caddy vHost pattern for WebAuthn services** — The direct TLS proxy (no forward-auth) pattern should be documented for future WebAuthn services.~~ done — documented in AGENTS.md
+15. **Add browser-history to SystemNix VM tests** — Create a `tests/browser-history.nix` test that verifies the service starts and `/health` returns 200.
+    ~~20. **Monitor memory usage** — `MemoryMax=512M` may be too low for a CQRS/ES app with SQLite. Watch for OOM kills.~~ done — no OOM issues, peaked at 54.1M
 
 ### Long-term / nice-to-have
 
@@ -140,7 +140,7 @@
 27. **Configure rate limits for production** — `RATE_LIMIT_RPS=100` default may need tuning for multi-agent ingest.
 28. **Set up CORS for cross-origin agent access** — `CORS_ORIGINS` may need configuration if agents run on different origins.
 29. **Add trusted proxies config** — `TRUSTED_PROXIES` should include `127.0.0.1` for Caddy reverse proxy.
-~~30. **Consider enabling `USE_SQLITE_READ_MODEL`** — Currently `false`. May improve read performance for analytics queries.~~ done — upstream module sets it to `true` by default
+    ~~30. **Consider enabling `USE_SQLITE_READ_MODEL`** — Currently `false`. May improve read performance for analytics queries.~~ done — upstream module sets it to `true` by default
 
 ---
 

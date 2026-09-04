@@ -112,41 +112,48 @@ AGENTS.md at 77.6KB was counted as one Medium-High (0.75). The format's structur
 ## f) NEXT (session-derived, up to 50)
 
 ### Immediate corrections to MY OWN work
+
 ~~1. **Delete the completed "Reboot evo-x2" item** from TODO_LIST Priority 0 (verified done at 20:04/20-35) — note verification in CHANGELOG~~ done — 0 hits in today's TODO_LIST
 ~~2. Re-run health report Fitness after the purge (baseline honesty)~~ done — fresh report 2026-08-17 (scoring judgment documented per e.5)
 ~~3. Route MiniMax quota decision (see g) — carry-count 2~~ done — TODO_LIST Priority 2, carried ×4, owner decision
 
 ### Outage recovery (needs user sudo, then I verify)
+
 ~~4. `sudo systemctl restart monitor365-server` → verify `/health`, watchdog timer, agent circuit-breaker, `backup_healthy{backup="monitor365"}` flips~~ superseded — MOOT (deliberate disable, G7); monitor365 backup entry gated in the undeployed config (TODO_LIST P0 disk item)
 ~~5. `sudo systemctl restart browser-history` → verify `:8087` binds, session-reaper errors, `MAX_USERS` still no-op (expected until chain closes)~~ done in part — binds + healthy; session-reaper error remains TODO_LIST Priority 3; MAX_USERS live-verification remains Priority 1
 ~~6. `systemctl --user reset-failed activitywatch-watcher-aw-watcher-window-wayland && systemctl --user start …` — NO sudo needed (user service); then pull the boot-0 failure lines to see WHY the ordering fix didn't hold~~ done — wayland-socket gate shipped; service healthy (gate idle/resumed 2026-08-17)
 ~~7. Audit Gatus alert delivery for the `backup_all_healthy 0` window (Discord history) — if alerts never fired, monitoring itself is broken~~ done — delivery proven live 2026-08-15 (96% event); the all-healthy alert now has a REAL failing member again (monitor365 gating, TODO_LIST P0 disk item)
 
 ### Investigation (this sandbox CAN do these)
+
 ~~8. aw-watcher boot-0 journal forensics (§c.1)~~ done — gate shipped (activitywatch.nix:17-37)
 ~~9. immich pg_dump backup unit inspection (`systemctl cat`-equivalent via unit files on disk, `journalctl -u`)~~ done — backups green on the pool (10-28 §a.1)
 ~~10. browser-history OTel `parse "127.0.0.1:4317"` upstream fix candidate (repo at `/home/lars/projects/browser-history`)~~ done — zero parse errors since 2026-08-16
 
 ### Release chain (Priority 1, pre-routed)
+
 11. browser-history: go.mod → cqrs-htmx v4.8.0, tag, SystemNix flake bump, deploy, verify 403s (+ fold in the OTel endpoint fix) ← open — input at `4e7604d` (v4.7.0 era); LIVE 403 verification remains TODO_LIST Priority 1
 12. hermes: input bump past v0.20.1, DELETE the `registration_lifecycle` patch ← open — TODO_LIST Priority 2
 13. CRB + Kernovia tags (fixes committed, untagged) ← open — TODO_LIST Priority 6 (upstream tags)
 
 ### Housekeeping
+
 ~~14. `/mnt/buildcache/me/` 22 test photos → trash (manual)~~ done — directory empty (verified 2026-08-17)
 15. Dozzle container recreate (Memory=0 vs 256m config) ← open — TODO_LIST Priority 1
 16. forgejo-oidc-setup boot race fix (`after`/`wants` caddy) ← open in part — DNS gate shipped (boot race fixed); the Caddy-TLS deploy-restart race remains TODO_LIST Priority 1
 
 ### Docs debt (pre-routed to TODO_LIST)
+
 17. AGENTS.md 77.6KB compression session ← open — TODO_LIST docs debt
 18. 11 appendix-only archived reports ← open — TODO_LIST docs debt
 19. `docs/planning/` triage ← open in execution — this pass annotates/archives 4 planning docs (2026-08-17); full triage remains TODO_LIST docs debt
-~~20. `docs/status/12-30` becomes archivable once SSD2's fate is decided~~ done — SSD2 fate decided (Docker-storage role, TODO_LIST Priority 2); 12-30 annotated 2026-08-17, queued for archive
+    ~~20. `docs/status/12-30` becomes archivable once SSD2's fate is decided~~ done — SSD2 fate decided (Docker-storage role, TODO_LIST Priority 2); 12-30 annotated 2026-08-17, queued for archive
 
 ### Structural (from prior sessions, tracked)
+
 21. StartLimit placement eval-time guard (`start-limit-audit.nix`) ← open — TODO_LIST Priority 3
-~~22. Gatus zram-fill alert~~ done — shipped (system_zram_fill_over_threshold, fail-closed)
-23. Scoped polkit rule for service restarts ← open — TODO_LIST Priority 3
+    ~~22. Gatus zram-fill alert~~ done — shipped (system_zram_fill_over_threshold, fail-closed)
+22. Scoped polkit rule for service restarts ← open — TODO_LIST Priority 3
 
 ---
 
@@ -168,17 +175,17 @@ The aw-watcher fix needs NO sudo (it's a `--user` service). The two system outag
 
 ## Audit closure summary
 
-| Pipeline stage (20-31 §c) | Status |
-|---|---|
-| TODO_LIST routing | DONE (`fe36f242`) — purge pass owed (d.1) |
-| Archive pass | DONE (`de989c76`, 32 files) |
-| `nix flake check --no-build` | DONE — all passed |
-| Inline health report | DONE — Accuracy 9.5 / Fitness 7.75 (d.5 caveat) |
-| Final attributed commit + AGENTS notes | DONE (`a9c56aca`) |
-| Foreign 13-15 report | Left alone (default, 5th carry) |
+| Pipeline stage (20-31 §c)              | Status                                          |
+| -------------------------------------- | ----------------------------------------------- |
+| TODO_LIST routing                      | DONE (`fe36f242`) — purge pass owed (d.1)       |
+| Archive pass                           | DONE (`de989c76`, 32 files)                     |
+| `nix flake check --no-build`           | DONE — all passed                               |
+| Inline health report                   | DONE — Accuracy 9.5 / Fitness 7.75 (d.5 caveat) |
+| Final attributed commit + AGENTS notes | DONE (`a9c56aca`)                               |
+| Foreign 13-15 report                   | Left alone (default, 5th carry)                 |
 
 **6-session totals (from summaries + this session):** 35 reports annotated, ~600 inline verdicts, 2 ghost/lying-annotation corrections, 32 reports archived, 15 findings routed, 3 live outages discovered (monitor365, browser-history, aw-watcher), 1 production security no-op exposed (registration gate not deployed), 1 release-chain break localized to one untagged repo step.
 
 ---
 
-*Report generated: 2026-08-14 20:52 CEST — waiting for instructions.*
+_Report generated: 2026-08-14 20:52 CEST — waiting for instructions._

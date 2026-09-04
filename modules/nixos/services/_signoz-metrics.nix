@@ -84,7 +84,7 @@ lib.mkIf cfg.components.nodeExporter {
                       fi
                     done
 
-                    for vram in /sys/class/drm/card*/device/mem_info_vram_total /sys/class/drm/card*/device/mem_info_vram_used; do
+                    for vram in /sys/class/drm/card*/device/mem_info_vram_total /sys/class/drm/card*/device/mem_info_vram_used /sys/class/drm/card*/device/mem_info_gtt_total /sys/class/drm/card*/device/mem_info_gtt_used; do
                       if [ -f "$vram" ]; then
                         bytes=$(cat "$vram" | tr -d '\n')
                         card_name="''${vram#/sys/class/drm/}"; card_name="''${card_name%%/*}"
@@ -275,12 +275,25 @@ lib.mkIf cfg.components.nodeExporter {
 
                     some_avg10=$(awk '/^some/ {split($2, a, "="); print a[2]}' "$PSI")
                     full_avg10=$(awk '/^full/ {split($2, a, "="); print a[2]}' "$PSI")
+                    some_avg60=$(awk '/^some/ {split($3, a, "="); print a[2]}' "$PSI")
+                    some_avg60="''${some_avg60:-0}"
 
                     # Derived alert: 1 when >50% of tasks stalled on memory (10s avg),
                     # or >10% fully stalled — early warning before OOM cascade.
                     alert=0
                     awk "BEGIN{exit !($some_avg10 > 0.50)}" && alert=1
                     awk "BEGIN{exit !($full_avg10 > 0.10)}" && alert=1
+
+                    # Warning tier (2026-08-22): the CRITICAL alert fired 17s
+                    # before the 05:49 freeze and 43min before the 00:27 one —
+                    # nobody was watching Discord. The WARNING tier catches the
+                    # storm FORMING (sustained 1-min stall >= 20%) while there is
+                    # still time to act. Alert-only by user decision: NO automated
+                    # action, no overlay — Discord + the SEV1 escalation bridge's
+                    # notification path handle the human loop; the memory
+                    # emergency guard remains the only automated actor.
+                    warning=0
+                    awk "BEGIN{exit !($some_avg60 >= 0.20)}" && warning=1
 
                     # ── I/O pressure ────────────────────────────────────────────
                     # avg300 = proportion of last 300s (5 min) where tasks stalled
@@ -306,6 +319,12 @@ lib.mkIf cfg.components.nodeExporter {
                       echo "# HELP node_psi_memory_full_avg10 Proportion of last 10s where all tasks stalled on memory"
                       echo "# TYPE node_psi_memory_full_avg10 gauge"
                       echo "node_psi_memory_full_avg10 ''${full_avg10}"
+                      echo "# HELP node_psi_memory_some_avg60 Proportion of last 60s where some tasks stalled on memory (the storm-forming window)"
+                      echo "# TYPE node_psi_memory_some_avg60 gauge"
+                      echo "node_psi_memory_some_avg60 ''${some_avg60}"
+                      echo "# HELP node_psi_memory_warning Derived boolean: 1 when sustained memory stall (some avg60) >= 20% — storm forming, act now; alert-only, no automated action (user decision 2026-08-22)"
+                      echo "# TYPE node_psi_memory_warning gauge"
+                      echo "node_psi_memory_warning ''${warning}"
                       echo "# HELP node_psi_memory_alert Derived boolean: 1 when pressure exceeds early-warning threshold"
                       echo "# TYPE node_psi_memory_alert gauge"
                       echo "node_psi_memory_alert ''${alert}"

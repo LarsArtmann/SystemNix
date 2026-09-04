@@ -197,33 +197,33 @@
 
 ## F) Top 25 Things to Do Next
 
-| #   | Task                                               | Effort    | Impact                 |
-| --- | -------------------------------------------------- | --------- | ---------------------- |
-| 1   | Enable NixOS firewall (deny-by-default)            | ~20 lines | Critical security      |
-| 2   | Bind Immich to localhost, remove openFirewall      | 2 lines   | Critical security      |
-| 3   | Backup Immich media to external storage            | ~30 lines | Data loss prevention   |
-| 4   | Add off-disk backup (restic/borg)                  | ~40 lines | Data loss prevention   |
-| 5   | Enable fail2ban for SSH                            | 1 line    | Brute-force protection |
-| 6   | Fix dnsblockd port conflict with Caddy             | ~10 lines | Service broken         |
-| 7   | Enable Immich GPU acceleration (ROCm)              | ~5 lines  | ML performance         |
-| 8   | Add systemd restart policies to services           | ~15 lines | Reliability            |
-| 9   | Enable SSD TRIM (`fstrim.enable`)                  | 1 line    | SSD health             |
-| 10  | Enable SMART disk monitoring                       | 3 lines   | Disk failure warning   |
-| 11  | Add automatic Nix GC + optimise timer              | 5 lines   | Disk bloat prevention  |
-| 12  | Remove `max_cstate=1` kernel param                 | 1 line    | Power/thermal          |
-| 13  | Fix Hyprland `$mod,G` bind conflict                | 1 line    | Broken keybinding      |
-| 14  | Delete dead Technitium files                       | 2 files   | Code hygiene           |
-| 15  | Deduplicate Go overlay in flake.nix                | ~20 lines | Maintainability        |
-| 16  | Fix justfile for NixOS platform                    | ~50 lines | Developer experience   |
-| 17  | Add Gitea/Ollama to service health check           | ~10 lines | Monitoring gap         |
-| 18  | Add disk space alerts (>85%)                       | ~15 lines | Proactive monitoring   |
-| 19  | Fix `immich.lan` DNS to use LAN IP                 | 2 lines   | LAN accessibility      |
-| 20  | Change Gitea `ROOT_URL` to `gitea.lan`             | 2 lines   | Proper URLs            |
-| 21  | Add `amdgpu` to initrd kernelModules               | 1 line    | Early display          |
-| 22  | Tune PostgreSQL for Immich workload                | ~10 lines | Query performance      |
-| 23  | Fix Gitea mirror script bug (`wc -l < /dev/stdin`) | 2 lines   | Broken metric          |
-| 24  | Add Gitea webhook allowed hosts                    | 1 line    | Push mirrors           |
-| 25  | Remove `chrome-144` pinned insecure version        | 1 line    | Stale override         |
+| #  | Task                                               | Effort    | Impact                 |
+| -- | -------------------------------------------------- | --------- | ---------------------- |
+| 1  | Enable NixOS firewall (deny-by-default)            | ~20 lines | Critical security      |
+| 2  | Bind Immich to localhost, remove openFirewall      | 2 lines   | Critical security      |
+| 3  | Backup Immich media to external storage            | ~30 lines | Data loss prevention   |
+| 4  | Add off-disk backup (restic/borg)                  | ~40 lines | Data loss prevention   |
+| 5  | Enable fail2ban for SSH                            | 1 line    | Brute-force protection |
+| 6  | Fix dnsblockd port conflict with Caddy             | ~10 lines | Service broken         |
+| 7  | Enable Immich GPU acceleration (ROCm)              | ~5 lines  | ML performance         |
+| 8  | Add systemd restart policies to services           | ~15 lines | Reliability            |
+| 9  | Enable SSD TRIM (`fstrim.enable`)                  | 1 line    | SSD health             |
+| 10 | Enable SMART disk monitoring                       | 3 lines   | Disk failure warning   |
+| 11 | Add automatic Nix GC + optimise timer              | 5 lines   | Disk bloat prevention  |
+| 12 | Remove `max_cstate=1` kernel param                 | 1 line    | Power/thermal          |
+| 13 | Fix Hyprland `$mod,G` bind conflict                | 1 line    | Broken keybinding      |
+| 14 | Delete dead Technitium files                       | 2 files   | Code hygiene           |
+| 15 | Deduplicate Go overlay in flake.nix                | ~20 lines | Maintainability        |
+| 16 | Fix justfile for NixOS platform                    | ~50 lines | Developer experience   |
+| 17 | Add Gitea/Ollama to service health check           | ~10 lines | Monitoring gap         |
+| 18 | Add disk space alerts (>85%)                       | ~15 lines | Proactive monitoring   |
+| 19 | Fix `immich.lan` DNS to use LAN IP                 | 2 lines   | LAN accessibility      |
+| 20 | Change Gitea `ROOT_URL` to `gitea.lan`             | 2 lines   | Proper URLs            |
+| 21 | Add `amdgpu` to initrd kernelModules               | 1 line    | Early display          |
+| 22 | Tune PostgreSQL for Immich workload                | ~10 lines | Query performance      |
+| 23 | Fix Gitea mirror script bug (`wc -l < /dev/stdin`) | 2 lines   | Broken metric          |
+| 24 | Add Gitea webhook allowed hosts                    | 1 line    | Push mirrors           |
+| 25 | Remove `chrome-144` pinned insecure version        | 1 line    | Stale override         |
 
 ---
 

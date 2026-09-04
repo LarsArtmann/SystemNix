@@ -263,48 +263,48 @@ platforms/
 
 ### Priority 0 (Critical - Do Now)
 
-| #   | Task                        | File/Location                         | Estimated Time |
-| --- | --------------------------- | ------------------------------------- | -------------- |
-| 1   | Review gitleaks findings    | Run: `gitleaks detect --verbose`      | 30 min         |
-| 2   | Fix statix W20 warnings     | Nix files                             | 1 hour         |
-| 3   | Start TODO triage process   | TODO_LIST.md                          | 1 hour         |
-| 4   | Verify scheduled tasks work | launchagents.nix, scheduled-tasks.nix | 30 min         |
+| # | Task                        | File/Location                         | Estimated Time |
+| - | --------------------------- | ------------------------------------- | -------------- |
+| 1 | Review gitleaks findings    | Run: `gitleaks detect --verbose`      | 30 min         |
+| 2 | Fix statix W20 warnings     | Nix files                             | 1 hour         |
+| 3 | Start TODO triage process   | TODO_LIST.md                          | 1 hour         |
+| 4 | Verify scheduled tasks work | launchagents.nix, scheduled-tasks.nix | 30 min         |
 
 ### Priority 1 (High - This Week)
 
-| #   | Task                                                   | File/Location                            | Estimated Time |
-| --- | ------------------------------------------------------ | ---------------------------------------- | -------------- |
-| 5   | Review docs/GITHUB-ISSUES-RECOMMENDATIONS-REMAINING.md | 36 TODOs                                 | 2 hours        |
-| 6   | Fix statix W04 warnings                                | Nix files                                | 1 hour         |
-| 7   | Fix statix W23 warnings                                | Nix files                                | 30 min         |
-| 8   | Test NixOS scheduled task manually                     | `systemctl start crush-update-providers` | 15 min         |
-| 9   | Review 10 oldest TODOs                                 | TODO-STATUS.md                           | 1 hour         |
-| 10  | Archive completed status reports                       | docs/status/                             | 30 min         |
+| #  | Task                                                   | File/Location                            | Estimated Time |
+| -- | ------------------------------------------------------ | ---------------------------------------- | -------------- |
+| 5  | Review docs/GITHUB-ISSUES-RECOMMENDATIONS-REMAINING.md | 36 TODOs                                 | 2 hours        |
+| 6  | Fix statix W04 warnings                                | Nix files                                | 1 hour         |
+| 7  | Fix statix W23 warnings                                | Nix files                                | 30 min         |
+| 8  | Test NixOS scheduled task manually                     | `systemctl start crush-update-providers` | 15 min         |
+| 9  | Review 10 oldest TODOs                                 | TODO-STATUS.md                           | 1 hour         |
+| 10 | Archive completed status reports                       | docs/status/                             | 30 min         |
 
 ### Priority 2 (Medium - This Month)
 
-| #   | Task                                           | File/Location | Estimated Time |
-| --- | ---------------------------------------------- | ------------- | -------------- |
-| 11  | Review docs/sddm-configuration-report.md       | 17 TODOs      | 1 hour         |
-| 12  | Review docs/crush-advanced-build-strategies.md | 13 TODOs      | 1 hour         |
-| 13  | Test NPU driver on evo-x2                      | AMD XDNA      | 2 hours        |
-| 14  | Verify Hyprland 0.54 config works              | hyprland.nix  | 1 hour         |
-| 15  | Test Ollama Vulkan acceleration                | ollama config | 1 hour         |
+| #  | Task                                           | File/Location | Estimated Time |
+| -- | ---------------------------------------------- | ------------- | -------------- |
+| 11 | Review docs/sddm-configuration-report.md       | 17 TODOs      | 1 hour         |
+| 12 | Review docs/crush-advanced-build-strategies.md | 13 TODOs      | 1 hour         |
+| 13 | Test NPU driver on evo-x2                      | AMD XDNA      | 2 hours        |
+| 14 | Verify Hyprland 0.54 config works              | hyprland.nix  | 1 hour         |
+| 15 | Test Ollama Vulkan acceleration                | ollama config | 1 hour         |
 
 ### Priority 3 (Low - This Quarter)
 
-| #   | Task                               | File/Location              | Estimated Time |
-| --- | ---------------------------------- | -------------------------- | -------------- |
-| 16  | Review programs.nix TODOs          | platforms/common/programs/ | 2 hours        |
-| 17  | Review core.nix TODOs              | platforms/common/core/     | 2 hours        |
-| 18  | Review system.nix TODOs            | platforms/nixos/system/    | 2 hours        |
-| 19  | Consolidate status reports         | docs/status/               | 3 hours        |
-| 20  | Update AGENTS.md with new patterns | AGENTS.md                  | 1 hour         |
-| 21  | Review 50 markdown files           | docs/                      | 4 hours        |
-| 22  | Create documentation index         | docs/README.md             | 1 hour         |
-| 23  | Implement automated TODO tracking  | scripts/                   | 3 hours        |
-| 24  | Test Waybar UTF-8 fixes            | waybar.nix                 | 30 min         |
-| 25  | Verify lockscreen configuration    | hyprland.nix               | 30 min         |
+| #  | Task                               | File/Location              | Estimated Time |
+| -- | ---------------------------------- | -------------------------- | -------------- |
+| 16 | Review programs.nix TODOs          | platforms/common/programs/ | 2 hours        |
+| 17 | Review core.nix TODOs              | platforms/common/core/     | 2 hours        |
+| 18 | Review system.nix TODOs            | platforms/nixos/system/    | 2 hours        |
+| 19 | Consolidate status reports         | docs/status/               | 3 hours        |
+| 20 | Update AGENTS.md with new patterns | AGENTS.md                  | 1 hour         |
+| 21 | Review 50 markdown files           | docs/                      | 4 hours        |
+| 22 | Create documentation index         | docs/README.md             | 1 hour         |
+| 23 | Implement automated TODO tracking  | scripts/                   | 3 hours        |
+| 24 | Test Waybar UTF-8 fixes            | waybar.nix                 | 30 min         |
+| 25 | Verify lockscreen configuration    | hyprland.nix               | 30 min         |
 
 ---
 
@@ -402,10 +402,10 @@ c0825a5 feat(cron): add cross-platform scheduled tasks for Crush AI provider upd
 | Flake Check     | ✅     | All outputs valid          |
 | Build Status    | ✅     | No failures                |
 | Cross-Platform  | ✅     | macOS + NixOS supported    |
-| Documentation   | ⚠️     | 75+ files need review      |
+| Documentation   | ⚠️      | 75+ files need review      |
 | TODO Management | 🔴     | 492 pending, 8.2% complete |
-| Security        | ⚠️     | 6 gitleaks findings        |
-| Code Quality    | ⚠️     | statix warnings            |
+| Security        | ⚠️      | 6 gitleaks findings        |
+| Code Quality    | ⚠️      | statix warnings            |
 
 ---
 

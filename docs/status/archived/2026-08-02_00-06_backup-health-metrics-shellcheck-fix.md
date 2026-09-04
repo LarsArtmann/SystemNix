@@ -6,18 +6,17 @@
 
 ---
 
-
 ## What Was the Problem
 
 The derivation `/nix/store/8qq2zw4lpqyfxp2kn29idig4lyv155zv-backup-health-metrics.drv`
 failed to build because `pkgs.writeShellApplication` runs `shellcheck` as a build
 phase, and the generated script had three classes of warnings:
 
-| Code     | Description                                          | Line(s) |
-|----------|------------------------------------------------------|---------|
-| SC2012   | Use `find` instead of `ls` for non-alphanumeric names | 17, 37, 57, 77 |
-| SC2086   | Double quote `$PATTERN` to prevent globbing/word-split | 17, 37, 57, 77 |
-| SC2129   | Use `{ cmd1; cmd2; } >> file` instead of individual redirects | 29, 49, 69, 89 |
+| Code   | Description                                                   | Line(s)        |
+| ------ | ------------------------------------------------------------- | -------------- |
+| SC2012 | Use `find` instead of `ls` for non-alphanumeric names         | 17, 37, 57, 77 |
+| SC2086 | Double quote `$PATTERN` to prevent globbing/word-split        | 17, 37, 57, 77 |
+| SC2129 | Use `{ cmd1; cmd2; } >> file` instead of individual redirects | 29, 49, 69, 89 |
 
 **Source file:** `modules/nixos/services/backup-coordination.nix`
 
@@ -121,18 +120,18 @@ phase, and the generated script had three classes of warnings:
 
 ## F) NEXT THINGS TO DO (Up to 50)
 
-| #  | Priority | Task |
-|----|----------|------|
-| 1  | P0 | Fix `cut -f2` → `cut -f2-` to handle tab-in-filename edge case |
-| 2  | P1 | Eliminate redundant `stat` call — capture mtime from find output |
-| 3  | P1 | Audit all 21 `writeShellApplication` blocks for SC2012/SC2086/SC2129 |
-| 4  | P1 | Deploy the fix: `nix run .#deploy` |
-| 5  | P2 | Run `nix run .#post-deploy-check` after deploy to verify metrics emit |
-| 6  | P2 | Add shellcheck to the pre-commit hook for embedded shell in Nix strings |
-| 7  | P2 | Consider extracting the backup-check logic into a shared shell function to reduce generated script repetition |
-| 8  | P3 | Document the GNU find `-printf` dependency in the module |
-| 9  | P3 | Consider `find -print0` + `xargs -0` pattern for full null-delimited safety |
-| 10 | P3 | Update AGENTS.md gotcha table with "writeShellApplication runs shellcheck — always format + check embedded shell" |
+| #  | Priority | Task                                                                                                              |
+| -- | -------- | ----------------------------------------------------------------------------------------------------------------- |
+| 1  | P0       | Fix `cut -f2` → `cut -f2-` to handle tab-in-filename edge case                                                    |
+| 2  | P1       | Eliminate redundant `stat` call — capture mtime from find output                                                  |
+| 3  | P1       | Audit all 21 `writeShellApplication` blocks for SC2012/SC2086/SC2129                                              |
+| 4  | P1       | Deploy the fix: `nix run .#deploy`                                                                                |
+| 5  | P2       | Run `nix run .#post-deploy-check` after deploy to verify metrics emit                                             |
+| 6  | P2       | Add shellcheck to the pre-commit hook for embedded shell in Nix strings                                           |
+| 7  | P2       | Consider extracting the backup-check logic into a shared shell function to reduce generated script repetition     |
+| 8  | P3       | Document the GNU find `-printf` dependency in the module                                                          |
+| 9  | P3       | Consider `find -print0` + `xargs -0` pattern for full null-delimited safety                                       |
+| 10 | P3       | Update AGENTS.md gotcha table with "writeShellApplication runs shellcheck — always format + check embedded shell" |
 
 ---
 

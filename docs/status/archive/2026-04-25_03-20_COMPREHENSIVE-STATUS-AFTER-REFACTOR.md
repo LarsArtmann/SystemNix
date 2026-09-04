@@ -13,42 +13,42 @@
 
 ### P0 — CRITICAL (6/6 ✅)
 
-| #   | Task                                           | Status  |
-| --- | ---------------------------------------------- | ------- |
-| 1   | `git push` — all commits pushed to origin      | ✅ Done |
-| 2   | `git stash clear` — dropped 3 stale stashes    | ✅ Done |
-| 3   | Delete 17 remote `copilot/fix-*` branches      | ✅ Done |
-| 4   | Archive 40 redundant status docs to `archive/` | ✅ Done |
-| 5   | Rewrite `docs/status/README.md`                | ✅ Done |
-| 6   | Fix "29 modules" → "27" in docs                | ✅ Done |
+| # | Task                                           | Status  |
+| - | ---------------------------------------------- | ------- |
+| 1 | `git push` — all commits pushed to origin      | ✅ Done |
+| 2 | `git stash clear` — dropped 3 stale stashes    | ✅ Done |
+| 3 | Delete 17 remote `copilot/fix-*` branches      | ✅ Done |
+| 4 | Archive 40 redundant status docs to `archive/` | ✅ Done |
+| 5 | Rewrite `docs/status/README.md`                | ✅ Done |
+| 6 | Fix "29 modules" → "27" in docs                | ✅ Done |
 
 ### P1 — SECURITY (6/7 ✅)
 
-| #   | Task                                                | Status                                        |
-| --- | --------------------------------------------------- | --------------------------------------------- |
-| 7   | Move Taskwarrior encryption to sops-nix             | ❌ Not started (cross-platform blocker)       |
-| 8   | Add systemd hardening to `gitea-ensure-repos`       | ✅ Done (via `mkOneshotHardenedConfig`)       |
-| 9   | Pin Voice Agents Docker image                       | ✅ Done (`latest` → `1.0.0`, TODO for sha256) |
-| 10  | Pin PhotoMap Docker image                           | ✅ Done (`latest` → `1.0.0`, TODO for sha256) |
-| 11  | Secure VRRP auth_pass with sops-nix                 | ✅ Done (added `cfg.authPassword` option)     |
-| 12  | Remove dead `ublock-filters.nix`                    | ✅ Done (file deleted, import removed)        |
-| 13  | Add Restart + StartLimitBurst to gitea-ensure-repos | ✅ Done (via `mkServiceRestartConfig`)        |
+| #  | Task                                                | Status                                        |
+| -- | --------------------------------------------------- | --------------------------------------------- |
+| 7  | Move Taskwarrior encryption to sops-nix             | ❌ Not started (cross-platform blocker)       |
+| 8  | Add systemd hardening to `gitea-ensure-repos`       | ✅ Done (via `mkOneshotHardenedConfig`)       |
+| 9  | Pin Voice Agents Docker image                       | ✅ Done (`latest` → `1.0.0`, TODO for sha256) |
+| 10 | Pin PhotoMap Docker image                           | ✅ Done (`latest` → `1.0.0`, TODO for sha256) |
+| 11 | Secure VRRP auth_pass with sops-nix                 | ✅ Done (added `cfg.authPassword` option)     |
+| 12 | Remove dead `ublock-filters.nix`                    | ✅ Done (file deleted, import removed)        |
+| 13 | Add Restart + StartLimitBurst to gitea-ensure-repos | ✅ Done (via `mkServiceRestartConfig`)        |
 
 ### P2 — RELIABILITY (10/11 ✅)
 
-| #   | Task                                                    | Status                                     |
-| --- | ------------------------------------------------------- | ------------------------------------------ |
-| 14  | Add WatchdogSec to caddy, gitea, authelia, taskchampion | ✅ Done                                    |
-| 15  | Add Restart=on-failure to missing services              | ✅ Done (all via `mkServiceRestartConfig`) |
-| 16  | Fix 3 dead let bindings                                 | ✅ Done                                    |
-| 17  | Fix git.nix core.pager conflict                         | ✅ Done (removed `core.pager="cat"`)       |
-| 18  | Fix fonts.packages darwin compatibility                 | ✅ Done (darwin nix-darwin supports it)    |
-| 19  | Enable services.udisks2 on NixOS                        | ✅ Done                                    |
-| 20  | Add .editorconfig                                       | ✅ Done                                    |
-| 21  | Make deadnix strict (--fail)                            | ✅ Done                                    |
-| 22  | Fix pre-commit statix hook                              | ⬜ Not started                             |
-| 23  | Add date+commit to debug-map.md                         | ⬜ Not started                             |
-| 24  | Add homepage to emeet-pixyd meta                        | ✅ Done                                    |
+| #  | Task                                                    | Status                                     |
+| -- | ------------------------------------------------------- | ------------------------------------------ |
+| 14 | Add WatchdogSec to caddy, gitea, authelia, taskchampion | ✅ Done                                    |
+| 15 | Add Restart=on-failure to missing services              | ✅ Done (all via `mkServiceRestartConfig`) |
+| 16 | Fix 3 dead let bindings                                 | ✅ Done                                    |
+| 17 | Fix git.nix core.pager conflict                         | ✅ Done (removed `core.pager="cat"`)       |
+| 18 | Fix fonts.packages darwin compatibility                 | ✅ Done (darwin nix-darwin supports it)    |
+| 19 | Enable services.udisks2 on NixOS                        | ✅ Done                                    |
+| 20 | Add .editorconfig                                       | ✅ Done                                    |
+| 21 | Make deadnix strict (--fail)                            | ✅ Done                                    |
+| 22 | Fix pre-commit statix hook                              | ⬜ Not started                             |
+| 23 | Add date+commit to debug-map.md                         | ⬜ Not started                             |
+| 24 | Add homepage to emeet-pixyd meta                        | ✅ Done                                    |
 
 ### P3 — CODE QUALITY (7/9 ✅)
 
@@ -135,14 +135,14 @@
 
 ### P8 — Documentation (ALL 6 tasks)
 
-| #   | Task                               |
-| --- | ---------------------------------- |
-| 79  | Write/update top-level README.md   |
-| 80  | Document DNS cluster in AGENTS.md  |
-| 81  | Write ADR for niri session restore |
-| 82  | Add module option descriptions     |
-| 83  | Create CONTRIBUTING.md             |
-| 84  | Add MANPAGER and VISUAL env vars   |
+| #  | Task                               |
+| -- | ---------------------------------- |
+| 79 | Write/update top-level README.md   |
+| 80 | Document DNS cluster in AGENTS.md  |
+| 81 | Write ADR for niri session restore |
+| 82 | Add module option descriptions     |
+| 83 | Create CONTRIBUTING.md             |
+| 84 | Add MANPAGER and VISUAL env vars   |
 
 ### P9 — Future/Research (ALL 12 tasks)
 
@@ -190,48 +190,48 @@
 
 ### TIER 1: Deploy & Verify (you must do these — AI can't)
 
-| #   | Task                                                               | Est. |
-| --- | ------------------------------------------------------------------ | ---- |
-| 1   | `just switch` — deploy all 12 commits to evo-x2                    | 45m  |
-| 2   | Verify Ollama + Steam + ComfyUI after rebuild                      | 15m  |
-| 3   | Verify Caddy HTTPS block page (`curl -k https://blocked.home.lan`) | 3m   |
-| 4   | Verify SigNoz collecting metrics/logs/traces                       | 5m   |
-| 5   | Verify Authelia SSO login                                          | 3m   |
+| # | Task                                                               | Est. |
+| - | ------------------------------------------------------------------ | ---- |
+| 1 | `just switch` — deploy all 12 commits to evo-x2                    | 45m  |
+| 2 | Verify Ollama + Steam + ComfyUI after rebuild                      | 15m  |
+| 3 | Verify Caddy HTTPS block page (`curl -k https://blocked.home.lan`) | 3m   |
+| 4 | Verify SigNoz collecting metrics/logs/traces                       | 5m   |
+| 5 | Verify Authelia SSO login                                          | 3m   |
 
 ### TIER 2: High-impact code changes (AI can do these)
 
-| #   | Task                                                                            | Est. |
-| --- | ------------------------------------------------------------------------------- | ---- |
-| 6   | Wire `preferences.nix` to NixOS home.nix — consolidate 8 hardcoded theme values | 30m  |
-| 7   | Add GitHub Actions CI: `nix flake check` + Go tests on push                     | 20m  |
-| 8   | Pin Docker image sha256 digests (Voice Agents + PhotoMap)                       | 10m  |
-| 9   | Fix SigNoz provision duplicate rules (POST → PUT)                               | 10m  |
-| 10  | Add enable toggles to sops, caddy, gitea, immich modules                        | 45m  |
-| 11  | Add Taskwarrior backup systemd timer                                            | 8m   |
-| 12  | Setup Cachix binary cache for overlay builds                                    | 30m  |
+| #  | Task                                                                            | Est. |
+| -- | ------------------------------------------------------------------------------- | ---- |
+| 6  | Wire `preferences.nix` to NixOS home.nix — consolidate 8 hardcoded theme values | 30m  |
+| 7  | Add GitHub Actions CI: `nix flake check` + Go tests on push                     | 20m  |
+| 8  | Pin Docker image sha256 digests (Voice Agents + PhotoMap)                       | 10m  |
+| 9  | Fix SigNoz provision duplicate rules (POST → PUT)                               | 10m  |
+| 10 | Add enable toggles to sops, caddy, gitea, immich modules                        | 45m  |
+| 11 | Add Taskwarrior backup systemd timer                                            | 8m   |
+| 12 | Setup Cachix binary cache for overlay builds                                    | 30m  |
 
 ### TIER 3: Service improvements
 
-| #   | Task                                          | Est. |
-| --- | --------------------------------------------- | ---- |
-| 13  | Hermes: add health check endpoint             | 10m  |
-| 14  | ComfyUI: fix hardcoded paths → module options | 12m  |
-| 15  | Twenty CRM: add backup rotation               | 8m   |
-| 16  | Voice Agents: add Whisper ASR health check    | 8m   |
-| 17  | Authelia: add SMTP notifications              | 10m  |
+| #  | Task                                          | Est. |
+| -- | --------------------------------------------- | ---- |
+| 13 | Hermes: add health check endpoint             | 10m  |
+| 14 | ComfyUI: fix hardcoded paths → module options | 12m  |
+| 15 | Twenty CRM: add backup rotation               | 8m   |
+| 16 | Voice Agents: add Whisper ASR health check    | 8m   |
+| 17 | Authelia: add SMTP notifications              | 10m  |
 
 ### TIER 4: Quality of life
 
-| #   | Task                                                  | Est. |
-| --- | ----------------------------------------------------- | ---- |
-| 18  | Document DNS cluster architecture in AGENTS.md        | 8m   |
-| 19  | Write ADR for niri session restore design             | 10m  |
-| 20  | Consolidate duplicate justfile recipes                | 8m   |
-| 21  | Replace `nixpkgs-fmt` with `nixfmt-rfc-style`         | 5m   |
-| 22  | Write top-level README.md                             | 12m  |
-| 23  | Add `MANPAGER` + `VISUAL` env vars                    | 2m   |
-| 24  | Fix eval smoke tests (remove `\|\| true`)             | 5m   |
-| 25  | Investigate `just test` intermittent emeet-pixyd race | 12m  |
+| #  | Task                                                  | Est. |
+| -- | ----------------------------------------------------- | ---- |
+| 18 | Document DNS cluster architecture in AGENTS.md        | 8m   |
+| 19 | Write ADR for niri session restore design             | 10m  |
+| 20 | Consolidate duplicate justfile recipes                | 8m   |
+| 21 | Replace `nixpkgs-fmt` with `nixfmt-rfc-style`         | 5m   |
+| 22 | Write top-level README.md                             | 12m  |
+| 23 | Add `MANPAGER` + `VISUAL` env vars                    | 2m   |
+| 24 | Fix eval smoke tests (remove `\|\| true`)             | 5m   |
+| 25 | Investigate `just test` intermittent emeet-pixyd race | 12m  |
 
 ---
 

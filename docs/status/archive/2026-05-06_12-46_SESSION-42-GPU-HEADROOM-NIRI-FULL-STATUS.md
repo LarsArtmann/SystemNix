@@ -129,16 +129,16 @@ AMD APUs lack GPU compute scheduling priority (unlike NVIDIA MPS). The memory fr
 
 | Item                          | Status | What's Missing                                                                                                                                                                                                                                                    |
 | ----------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **GPU headroom for niri**     | ⚠️     | Changes committed and build passes. **NOT deployed yet** — needs `just switch`. Also: `per_process_memory_fraction` caps memory allocation but does NOT directly limit compute utilization. If niri still lags under 95%, may need to lower further (0.90, 0.85). |
-| **Manifest LLM router**       | ⚠️     | `CORS_ORIGIN` fix committed but NOT deployed. Rate limiting warning ("could not determine client IP") — upstream Manifest doesn't expose `trustedProxies` config.                                                                                                 |
-| **Hermes v2026.4.30 upgrade** | ⚠️     | Pinned to release tag, new vendor hash, SQLite auto-recovery added — committed but NOT deployed                                                                                                                                                                   |
-| **DNS failover cluster**      | ⚠️     | Module exists (`dns-failover.nix`), Keepalived VRRP config written — Pi 3 hardware not provisioned                                                                                                                                                                |
-| **Voice agents**              | ⚠️     | LiveKit + Whisper module exists, Docker ROCm — may need verification after last deploy                                                                                                                                                                            |
+| **GPU headroom for niri**     | ⚠️      | Changes committed and build passes. **NOT deployed yet** — needs `just switch`. Also: `per_process_memory_fraction` caps memory allocation but does NOT directly limit compute utilization. If niri still lags under 95%, may need to lower further (0.90, 0.85). |
+| **Manifest LLM router**       | ⚠️      | `CORS_ORIGIN` fix committed but NOT deployed. Rate limiting warning ("could not determine client IP") — upstream Manifest doesn't expose `trustedProxies` config.                                                                                                 |
+| **Hermes v2026.4.30 upgrade** | ⚠️      | Pinned to release tag, new vendor hash, SQLite auto-recovery added — committed but NOT deployed                                                                                                                                                                   |
+| **DNS failover cluster**      | ⚠️      | Module exists (`dns-failover.nix`), Keepalived VRRP config written — Pi 3 hardware not provisioned                                                                                                                                                                |
+| **Voice agents**              | ⚠️      | LiveKit + Whisper module exists, Docker ROCm — may need verification after last deploy                                                                                                                                                                            |
 | **PhotoMap AI**               | 🔧     | Module exists, disabled in config                                                                                                                                                                                                                                 |
 | **Twenty CRM**                | 🔧     | Module exists, Docker Compose, sops secrets — unclear if actively deployed                                                                                                                                                                                        |
 | **Unsloth Studio**            | 🔧     | Module exists, disabled by default                                                                                                                                                                                                                                |
 | **Multi-WM (Sway)**           | 🔧     | Module exists, disabled in config                                                                                                                                                                                                                                 |
-| **AMD NPU driver**            | ⚠️     | `nix-amd-npu` input present, but XDNA driver support is experimental                                                                                                                                                                                              |
+| **AMD NPU driver**            | ⚠️      | `nix-amd-npu` input present, but XDNA driver support is experimental                                                                                                                                                                                              |
 | **Raspberry Pi 3 image**      | 📋     | `nixosConfigurations.rpi3-dns` defined in flake — hardware not provisioned                                                                                                                                                                                        |
 
 ---
@@ -217,53 +217,53 @@ AMD APUs lack GPU compute scheduling priority (unlike NVIDIA MPS). The memory fr
 
 ### Priority 1: Deploy & Verify (IMMEDIATE — do this now)
 
-| #   | Task                                                                                                           | Impact | Effort |
-| --- | -------------------------------------------------------------------------------------------------------------- | ------ | ------ |
-| 1   | **`just switch`** — Deploy GPU limiting + Hermes upgrade + Manifest CORS (3 commits pending)                   | High   | Low    |
-| 2   | **Verify niri responsiveness under AI load** — Run Ollama inference while using desktop, confirm 95% cap helps | High   | Low    |
-| 3   | **Verify Manifest sign-in** after CORS_ORIGIN deploy                                                           | High   | Low    |
-| 4   | **Verify Hermes auto-recovery** — test SQLite malformed DB handling                                            | Medium | Low    |
-| 5   | **Run `just health`** — full cross-platform health check                                                       | Medium | Low    |
+| # | Task                                                                                                           | Impact | Effort |
+| - | -------------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 1 | **`just switch`** — Deploy GPU limiting + Hermes upgrade + Manifest CORS (3 commits pending)                   | High   | Low    |
+| 2 | **Verify niri responsiveness under AI load** — Run Ollama inference while using desktop, confirm 95% cap helps | High   | Low    |
+| 3 | **Verify Manifest sign-in** after CORS_ORIGIN deploy                                                           | High   | Low    |
+| 4 | **Verify Hermes auto-recovery** — test SQLite malformed DB handling                                            | Medium | Low    |
+| 5 | **Run `just health`** — full cross-platform health check                                                       | Medium | Low    |
 
 ### Priority 2: GPU & Desktop Reliability
 
-| #   | Task                                                                                                          | Impact | Effort |
-| --- | ------------------------------------------------------------------------------------------------------------- | ------ | ------ |
-| 6   | **Lower GPU fraction if still laggy** — If 0.95 isn't enough, try 0.90 or 0.85                                | High   | Low    |
-| 7   | **Benchmark niri latency** — Measure frame times with/without AI workloads before/after the change            | Medium | Medium |
-| 8   | **Research AMD HSA queue priority** — Check if ROCm 6.4+ or kernel 6.12+ adds compute queue priority for APUs | Medium | Medium |
-| 9   | **Monitor GPU utilization** — Add `gpu_busy_percent` to SigNoz metrics via node_exporter textfile collector   | Medium | Low    |
+| # | Task                                                                                                          | Impact | Effort |
+| - | ------------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 6 | **Lower GPU fraction if still laggy** — If 0.95 isn't enough, try 0.90 or 0.85                                | High   | Low    |
+| 7 | **Benchmark niri latency** — Measure frame times with/without AI workloads before/after the change            | Medium | Medium |
+| 8 | **Research AMD HSA queue priority** — Check if ROCm 6.4+ or kernel 6.12+ adds compute queue priority for APUs | Medium | Medium |
+| 9 | **Monitor GPU utilization** — Add `gpu_busy_percent` to SigNoz metrics via node_exporter textfile collector   | Medium | Low    |
 
 ### Priority 3: Observability & Reliability
 
-| #   | Task                                                                | Impact | Effort |
-| --- | ------------------------------------------------------------------- | ------ | ------ |
-| 10  | **Configure SigNoz alert notifications** — webhook or email channel | High   | Medium |
-| 11  | **Gatus health checks** — finish module, deploy for all services    | High   | Medium |
-| 12  | **Gitea backup restore test** — verify weekly dumps are valid       | High   | Low    |
-| 13  | **Disaster recovery playbook** — document full rebuild procedure    | Medium | Medium |
-| 14  | **BTRFS snapshot restore test** — verify Timeshift works            | Medium | Low    |
-| 15  | **SOPS secret rotation plan** — document and schedule               | Medium | Medium |
+| #  | Task                                                                | Impact | Effort |
+| -- | ------------------------------------------------------------------- | ------ | ------ |
+| 10 | **Configure SigNoz alert notifications** — webhook or email channel | High   | Medium |
+| 11 | **Gatus health checks** — finish module, deploy for all services    | High   | Medium |
+| 12 | **Gitea backup restore test** — verify weekly dumps are valid       | High   | Low    |
+| 13 | **Disaster recovery playbook** — document full rebuild procedure    | Medium | Medium |
+| 14 | **BTRFS snapshot restore test** — verify Timeshift works            | Medium | Low    |
+| 15 | **SOPS secret rotation plan** — document and schedule               | Medium | Medium |
 
 ### Priority 4: Architecture & Code Quality
 
-| #   | Task                                                                          | Impact | Effort |
-| --- | ----------------------------------------------------------------------------- | ------ | ------ |
-| 16  | **Archive stale status reports** — move everything > 14 days to `archive/`    | Low    | Low    |
-| 17  | **Organize `docs/` top-level** — move research/evaluation to `docs/research/` | Low    | Low    |
-| 18  | **File Manifest upstream issue** — request `trustedProxies` config            | Medium | Low    |
-| 19  | **Service dependency graph** — visualize with D2 diagram                      | Medium | Medium |
-| 20  | **Add module option descriptions** — ensure all `options` have `description`  | Low    | Medium |
+| #  | Task                                                                          | Impact | Effort |
+| -- | ----------------------------------------------------------------------------- | ------ | ------ |
+| 16 | **Archive stale status reports** — move everything > 14 days to `archive/`    | Low    | Low    |
+| 17 | **Organize `docs/` top-level** — move research/evaluation to `docs/research/` | Low    | Low    |
+| 18 | **File Manifest upstream issue** — request `trustedProxies` config            | Medium | Low    |
+| 19 | **Service dependency graph** — visualize with D2 diagram                      | Medium | Medium |
+| 20 | **Add module option descriptions** — ensure all `options` have `description`  | Low    | Medium |
 
 ### Priority 5: Infrastructure & New Features
 
-| #   | Task                                                                       | Impact | Effort |
-| --- | -------------------------------------------------------------------------- | ------ | ------ |
-| 21  | **Automated DNS blocklist updates** — weekly timer or CI job               | Medium | Low    |
-| 22  | **Pi 3 provisioning** — flash SD, boot, verify DNS failover                | High   | High   |
-| 23  | **Voice agents verification** — confirm LiveKit + Whisper works end-to-end | Medium | Medium |
-| 24  | **Twenty CRM deployment verification** — confirm or remove module          | Low    | Low    |
-| 25  | **mr-sync auto-sync timer** — wire as weekly systemd timer                 | Low    | Low    |
+| #  | Task                                                                       | Impact | Effort |
+| -- | -------------------------------------------------------------------------- | ------ | ------ |
+| 21 | **Automated DNS blocklist updates** — weekly timer or CI job               | Medium | Low    |
+| 22 | **Pi 3 provisioning** — flash SD, boot, verify DNS failover                | High   | High   |
+| 23 | **Voice agents verification** — confirm LiveKit + Whisper works end-to-end | Medium | Medium |
+| 24 | **Twenty CRM deployment verification** — confirm or remove module          | Low    | Low    |
+| 25 | **mr-sync auto-sync timer** — wire as weekly systemd timer                 | Low    | Low    |
 
 ---
 

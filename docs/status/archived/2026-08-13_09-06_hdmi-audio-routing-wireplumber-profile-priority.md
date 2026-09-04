@@ -9,10 +9,10 @@
 
 The user asked "Why is my LG Monitor not my speaker?" The system has a Radeon HD Audio Controller (`pci-0000:c5:00.1`) with two HDMI/DisplayPort outputs connected to displays:
 
-| Port | ELD Device | Monitor Name | Speakers | Profile Name |
-|------|-----------|--------------|----------|-------------|
-| HDMI 2 | `eld#0.1` | LG HDR 4K | Stereo (FL/FR) | `output:hdmi-stereo-extra1` |
-| HDMI 3 | `eld#0.2` | LG TV SSCR2 | Full surround (all channels) | `output:hdmi-stereo-extra2` |
+| Port   | ELD Device | Monitor Name | Speakers                     | Profile Name                |
+| ------ | ---------- | ------------ | ---------------------------- | --------------------------- |
+| HDMI 2 | `eld#0.1`  | LG HDR 4K    | Stereo (FL/FR)               | `output:hdmi-stereo-extra1` |
+| HDMI 3 | `eld#0.2`  | LG TV SSCR2  | Full surround (all channels) | `output:hdmi-stereo-extra2` |
 
 WirePlumber was auto-selecting HDMI 3 (the TV) by default. The `audio.nix` module had **zero WirePlumber routing configuration** -- it only enabled PipeWire + ALSA + Pulse + JACK with no `wireplumber.extraConfig`.
 
@@ -74,28 +74,28 @@ WirePlumber was auto-selecting HDMI 3 (the TV) by default. The `audio.nix` modul
 
 ## F) Up to 50 Things to Get Done Next
 
-| # | Task | Priority | Effort |
-|---|------|----------|--------|
-| 1 | Remove em dashes from `audio.nix` comments (replace with commas/parentheses) | HIGH | 1 min |
-| ~~2~~ | ~~Run `nix fmt` to format `audio.nix`~~ done at `0bd8a272` | ~~HIGH~~ | ~~1 min~~ |
-| ~~3~~ | ~~Deploy the audio config change: `nix run .#deploy`~~ done at `cfeee94d`, `0bd8a272` | ~~HIGH~~ | ~~10 min~~ |
-| ~~4~~ | ~~Verify audio works on TV after deploy (play a YouTube video or similar)~~ done (moot, audibly confirmed in `2026-08-13_23-39`) | ~~HIGH~~ | ~~2 min~~ |
-| ~~5~~ | ~~Update AGENTS.md with WirePlumber audio routing gotcha (profile priority vs stored profile ordering)~~ done at `61a2224b` (AGENTS.md "Smart-Audio") | ~~MEDIUM~~ | ~~10 min~~ |
-| ~~6~~ | ~~Investigate per-device `device.restore-profile` scoping instead of global disable~~ done (superseded) by `smart-audio` daemon `8ad493c9` | ~~MEDIUM~~ | ~~30 min~~ |
-| ~~7~~ | ~~Add `services.audio-config` NixOS option for HDMI output selection (monitor vs TV)~~ done (superseded) — `smart-audio` follows focused workspace `8ad493c9` | ~~LOW~~ | ~~30 min~~ |
-| 8 | Consider adding `output:hdmi-surround-extra2` to priority list for TV surround sound | LOW | 5 min |
-| 9 | Override `device.routes.default-sink-volume` to something higher than 6.4% | MEDIUM | 5 min |
-| 10 | Add `alsa-utils` to system packages so `speaker-test`/`amixer` are available for debugging | LOW | 5 min |
-| 11 | Write a quick audio test script that plays a tone via `pw-cat` | LOW | 15 min |
-| 12 | Consider a DMS (DankMaterialShell) widget for audio output switching | LOW | 1 hr |
-| ~~13~~ | ~~Verify the WirePlumber config survives a reboot (after deploy)~~ done (moot) — the static approach was superseded; `smart-audio` re-switches on every focus change | ~~HIGH~~ | ~~5 min~~ |
-| 14 | Check if the Ryzen HD Audio Controller (card 1) has any useful analog output | LOW | 10 min |
-| 15 | Document the ELD inspection process (`/proc/asound/card0/eld*`) as a debugging procedure | LOW | 10 min |
-| ~~16~~ | ~~Consider whether `device.restore-routes = true` (still enabled) causes volume issues~~ done (moot) — no volume regression across subsequent reboots | ~~MEDIUM~~ | ~~10 min~~ |
-| 17 | Add a Gatus check or metric for "default audio sink is the expected device" | LOW | 30 min |
-| ~~18~~ | ~~Pre-commit hook: run it to verify no other issues (deadnix, statix, gitleaks)~~ done (moot) — subsequent commits passed the hooks | ~~MEDIUM~~ | ~~2 min~~ |
-| ~~19~~ | ~~Verify the config file naming (`51-` prefix) follows any SystemNix conventions~~ done (moot) — static approach retired | ~~LOW~~ | ~~5 min~~ |
-| ~~20~~ | ~~Consider making the HDMI port mapping (extra1=HDMI2, extra2=HDMI3) a comment in the config~~ done — documented at `audio.nix:38` (ELD mapping) | ~~LOW~~ | ~~2 min~~ |
+| #      | Task                                                                                                                                                                 | Priority   | Effort     |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ---------- |
+| 1      | Remove em dashes from `audio.nix` comments (replace with commas/parentheses)                                                                                         | HIGH       | 1 min      |
+| ~~2~~  | ~~Run `nix fmt` to format `audio.nix`~~ done at `0bd8a272`                                                                                                           | ~~HIGH~~   | ~~1 min~~  |
+| ~~3~~  | ~~Deploy the audio config change: `nix run .#deploy`~~ done at `cfeee94d`, `0bd8a272`                                                                                | ~~HIGH~~   | ~~10 min~~ |
+| ~~4~~  | ~~Verify audio works on TV after deploy (play a YouTube video or similar)~~ done (moot, audibly confirmed in `2026-08-13_23-39`)                                     | ~~HIGH~~   | ~~2 min~~  |
+| ~~5~~  | ~~Update AGENTS.md with WirePlumber audio routing gotcha (profile priority vs stored profile ordering)~~ done at `61a2224b` (AGENTS.md "Smart-Audio")                | ~~MEDIUM~~ | ~~10 min~~ |
+| ~~6~~  | ~~Investigate per-device `device.restore-profile` scoping instead of global disable~~ done (superseded) by `smart-audio` daemon `8ad493c9`                           | ~~MEDIUM~~ | ~~30 min~~ |
+| ~~7~~  | ~~Add `services.audio-config` NixOS option for HDMI output selection (monitor vs TV)~~ done (superseded) — `smart-audio` follows focused workspace `8ad493c9`        | ~~LOW~~    | ~~30 min~~ |
+| 8      | Consider adding `output:hdmi-surround-extra2` to priority list for TV surround sound                                                                                 | LOW        | 5 min      |
+| 9      | Override `device.routes.default-sink-volume` to something higher than 6.4%                                                                                           | MEDIUM     | 5 min      |
+| 10     | Add `alsa-utils` to system packages so `speaker-test`/`amixer` are available for debugging                                                                           | LOW        | 5 min      |
+| 11     | Write a quick audio test script that plays a tone via `pw-cat`                                                                                                       | LOW        | 15 min     |
+| 12     | Consider a DMS (DankMaterialShell) widget for audio output switching                                                                                                 | LOW        | 1 hr       |
+| ~~13~~ | ~~Verify the WirePlumber config survives a reboot (after deploy)~~ done (moot) — the static approach was superseded; `smart-audio` re-switches on every focus change | ~~HIGH~~   | ~~5 min~~  |
+| 14     | Check if the Ryzen HD Audio Controller (card 1) has any useful analog output                                                                                         | LOW        | 10 min     |
+| 15     | Document the ELD inspection process (`/proc/asound/card0/eld*`) as a debugging procedure                                                                             | LOW        | 10 min     |
+| ~~16~~ | ~~Consider whether `device.restore-routes = true` (still enabled) causes volume issues~~ done (moot) — no volume regression across subsequent reboots                | ~~MEDIUM~~ | ~~10 min~~ |
+| 17     | Add a Gatus check or metric for "default audio sink is the expected device"                                                                                          | LOW        | 30 min     |
+| ~~18~~ | ~~Pre-commit hook: run it to verify no other issues (deadnix, statix, gitleaks)~~ done (moot) — subsequent commits passed the hooks                                  | ~~MEDIUM~~ | ~~2 min~~  |
+| ~~19~~ | ~~Verify the config file naming (`51-` prefix) follows any SystemNix conventions~~ done (moot) — static approach retired                                             | ~~LOW~~    | ~~5 min~~  |
+| ~~20~~ | ~~Consider making the HDMI port mapping (extra1=HDMI2, extra2=HDMI3) a comment in the config~~ done — documented at `audio.nix:38` (ELD mapping)                     | ~~LOW~~    | ~~2 min~~  |
 
 ---
 

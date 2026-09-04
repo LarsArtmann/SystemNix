@@ -62,14 +62,14 @@ File-level and pattern duplication detection.
 #### Repeated Attribute Patterns
 
 ```
- 9× imports = [
- 7× environment.systemPackages = with pkgs; [
- 5× programs = {
- 4× colors = nix-colors.colorSchemes.catppuccin-mocha.palette;
- 3× services = {
- 3× commonAliases = (import ./shell-aliases.nix {}).commonShellAliases;
- 2× networking.nameservers = ["127.0.0.1"];
- 2× home.packages = with pkgs; [
+9× imports = [
+7× environment.systemPackages = with pkgs; [
+5× programs = {
+4× colors = nix-colors.colorSchemes.catppuccin-mocha.palette;
+3× services = {
+3× commonAliases = (import ./shell-aliases.nix {}).commonShellAliases;
+2× networking.nameservers = ["127.0.0.1"];
+2× home.packages = with pkgs; [
 ```
 
 **Recommendations**:

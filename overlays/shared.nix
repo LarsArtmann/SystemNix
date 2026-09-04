@@ -12,6 +12,15 @@
     catppuccin-gtk = prev.catppuccin-gtk.override {
       python3 = prev.python312;
     };
+
+    # ecapture statically links libpcap.a; nixpkgs' default libpcap builds
+    # the rdmasniff module in (--enable-rdma), whose ibv_* symbols have no
+    # static counterpart and broke the link (2026-08-28: "undefined
+    # reference to ibv_get_device_list"). A no-rdma libpcap matches the
+    # static eBPF tool's needs. Drop once upstream picks a compatible pair.
+    ecapture = prev.ecapture.override {
+      libpcap = prev.libpcap.override { withRdma = false; };
+    };
   })
 
   (_final: prev: {

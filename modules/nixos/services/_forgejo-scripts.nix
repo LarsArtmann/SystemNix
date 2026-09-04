@@ -58,7 +58,7 @@ in
 
       page=1
       while true; do
-        response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+        response=$(curl -s --compressed -H "Authorization: token $GITHUB_TOKEN" \
           "https://api.github.com/users/$GITHUB_USER/repos?per_page=100&page=$page&type=all")
         echo "$response" | jq -r '.[] | "\(.name)|\(.clone_url)|\(.private)|\(.description // "")"' >> "$REPOS_FILE"
         [[ $(echo "$response" | jq 'length') -lt 100 ]] && break
@@ -191,7 +191,7 @@ in
 
       page=1
       while true; do
-        response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+        response=$(curl -s --compressed -H "Authorization: token $GITHUB_TOKEN" \
           "https://api.github.com/users/$GITHUB_USER/starred?per_page=100&page=$page")
         echo "$response" | jq -r '.[] | "\(.full_name)|\(.clone_url)|\(.description // "")"' >> "$STARRED_FILE"
         [[ $(echo "$response" | jq 'length') -lt 100 ]] && break
@@ -683,7 +683,7 @@ in
       for user in $(jq -r 'keys[]' "$KEYS_FILE"); do
         echo "Syncing SSH keys for Forgejo user: $user"
 
-        curl -sf -H "Authorization: token $FORGEJO_TOKEN" \
+        curl -sf --compressed -H "Authorization: token $FORGEJO_TOKEN" \
           "${forgejoUrl}/api/v1/users/$user/keys" > "$existing_keys"
 
         mapfile -t keys < <(jq -r --arg user "$user" '.[$user][]' "$KEYS_FILE")
@@ -697,7 +697,7 @@ in
           fi
 
           title="nix-declared"
-          response=$(curl -s -w "\n%{http_code}" \
+          response=$(curl -s --compressed -w "\n%{http_code}" \
             -X POST \
             -H "Authorization: token $FORGEJO_TOKEN" \
             -H "Content-Type: application/json" \

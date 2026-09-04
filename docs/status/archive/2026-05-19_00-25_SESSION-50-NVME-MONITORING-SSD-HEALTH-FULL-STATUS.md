@@ -12,16 +12,16 @@
 
 ## System Health Snapshot
 
-| Metric                     | Value                              | Status          |
-| -------------------------- | ---------------------------------- | --------------- |
+| Metric                     | Value                              | Status         |
+| -------------------------- | ---------------------------------- | -------------- |
 | Root filesystem (/)        | 408G / 512G (83%)                  | ⚠️ Getting full |
 | Data filesystem (/data)    | 827G / 1.0T (81%)                  | ⚠️ Getting full |
-| Boot (/boot)               | 165M / 2.0G (9%)                   | ✅ Fine         |
-| RAM                        | 42G / 62G used, 20G available      | ✅ Fine         |
-| Swap                       | 6.0G / 25G used                    | ✅ Fine         |
-| NVMe SSD (Lexar NQ790 2TB) | 3% endurance, 39°C, 0 media errors | ✅ Excellent    |
-| NVMe PCIe Link             | Gen4 x4 @ 16GT/s                   | ✅ Full speed   |
-| GPU VRAM                   | 434M / 68G used                    | ✅ Headroom     |
+| Boot (/boot)               | 165M / 2.0G (9%)                   | ✅ Fine        |
+| RAM                        | 42G / 62G used, 20G available      | ✅ Fine        |
+| Swap                       | 6.0G / 25G used                    | ✅ Fine        |
+| NVMe SSD (Lexar NQ790 2TB) | 3% endurance, 39°C, 0 media errors | ✅ Excellent   |
+| NVMe PCIe Link             | Gen4 x4 @ 16GT/s                   | ✅ Full speed  |
+| GPU VRAM                   | 434M / 68G used                    | ✅ Headroom    |
 
 ---
 
@@ -194,33 +194,33 @@ Conducted deep health review of Lexar SSD NQ790 2TB:
 
 ## F) Top #25 Things We Should Get Done Next
 
-| #   | Task                                                                | Priority | Effort | Impact                                                              |
-| --- | ------------------------------------------------------------------- | -------- | ------ | ------------------------------------------------------------------- |
-| 1   | **`just switch` to deploy NVMe monitoring**                         | P1       | 5min   | Activates all NVMe alerting + desktop notifications                 |
-| 2   | **Disk space cleanup: `nix-collect-garbage` + Docker prune**        | P1       | 30min  | Recovers 50-100GB, prevents build failures                          |
-| 3   | **Add weekly `nix-collect-garbage` systemd timer**                  | P1       | 30min  | Prevents future disk exhaustion                                     |
-| 4   | **Verify NVMe monitoring end-to-end after deploy**                  | P1       | 15min  | Confirm metrics flow, alerts fire, desktop notifications work       |
-| 5   | **Add Btrfs scrub timer**                                           | P2       | 30min  | Detects silent data corruption on both filesystems                  |
-| 6   | **Update TODO_LIST.md**                                             | P2       | 15min  | Reflect current state accurately                                    |
-| 7   | **Update FEATURES.md**                                              | P2       | 30min  | Add NVMe monitoring, update lockfile stats                          |
-| 8   | **Update AGENTS.md with NVMe monitoring section**                   | P2       | 15min  | Document new module, hardware assessment, SSD details               |
-| 9   | **Forward smartd alerts to Discord**                                | P2       | 1h     | Catches SSD health issues early                                     |
-| 10  | **Separate Discord alert channels (warn vs critical)**              | P2       | 2h     | Reduces alert fatigue                                               |
-| 11  | **Deploy Dozzle for Docker log viewing**                            | P2       | 1h     | Easy container log access at `logs.home.lan`                        |
-| 12  | **Verify Monitor365 agent works with new sops keys**                | P2       | 15min  | Confirm monitoring agent is functional                              |
-| 13  | **Verify Twenty CRM is actually working**                           | P2       | 30min  | End-to-end test of CRM service                                      |
-| 14  | **Verify OpenSEO after deploy**                                     | P2       | 15min  | Confirm bug fix resolved the issue                                  |
-| 15  | **Consolidate voice-agents Caddy vHost**                            | P2       | 1h     | Cleanup duplicate vHost pattern                                     |
-| 16  | **Add automated backup strategy**                                   | P2       | 2h     | Immich, Gitea, Postgres — automated to external storage             |
-| 17  | **Fix hostPlatform deprecation warning**                            | P3       | 15min  | Replace deprecated `nixpkgs.hostPlatform` in hardware-configuration |
-| 18  | **Check for NVMe firmware update (SN19644)**                        | P3       | 15min  | Lexar may have reliability fixes                                    |
-| 19  | **Convert go-auto-upgrade `path:` inputs to SSH URLs**              | P3       | 30min  | Full portability for all repos                                      |
-| 20  | **Create missing referenced scripts (or remove references)**        | P3       | 1h     | Clean up dead references                                            |
-| 21  | **Research TLC SSD options for second M.2 slot**                    | P3       | 1h     | Plan hardware upgrade for write-heavy workloads                     |
-| 22  | **Add Btrfs health metrics to node_exporter textfile**              | P3       | 1h     | Monitor allocation state, data/metadata ratio                       |
-| 23  | **Provision Pi 3 for DNS failover cluster**                         | P4       | 4h     | Hardware + NixOS image + sops integration                           |
-| 24  | **Investigate NPU (XDNA) utilization options**                      | P4       | 4h     | 45 TOPS NPU sitting idle                                            |
-| 25  | **Periodic docs archival (move 60+ old status reports to archive)** | P4       | 30min  | Reduce docs noise                                                   |
+| #  | Task                                                                | Priority | Effort | Impact                                                              |
+| -- | ------------------------------------------------------------------- | -------- | ------ | ------------------------------------------------------------------- |
+| 1  | **`just switch` to deploy NVMe monitoring**                         | P1       | 5min   | Activates all NVMe alerting + desktop notifications                 |
+| 2  | **Disk space cleanup: `nix-collect-garbage` + Docker prune**        | P1       | 30min  | Recovers 50-100GB, prevents build failures                          |
+| 3  | **Add weekly `nix-collect-garbage` systemd timer**                  | P1       | 30min  | Prevents future disk exhaustion                                     |
+| 4  | **Verify NVMe monitoring end-to-end after deploy**                  | P1       | 15min  | Confirm metrics flow, alerts fire, desktop notifications work       |
+| 5  | **Add Btrfs scrub timer**                                           | P2       | 30min  | Detects silent data corruption on both filesystems                  |
+| 6  | **Update TODO_LIST.md**                                             | P2       | 15min  | Reflect current state accurately                                    |
+| 7  | **Update FEATURES.md**                                              | P2       | 30min  | Add NVMe monitoring, update lockfile stats                          |
+| 8  | **Update AGENTS.md with NVMe monitoring section**                   | P2       | 15min  | Document new module, hardware assessment, SSD details               |
+| 9  | **Forward smartd alerts to Discord**                                | P2       | 1h     | Catches SSD health issues early                                     |
+| 10 | **Separate Discord alert channels (warn vs critical)**              | P2       | 2h     | Reduces alert fatigue                                               |
+| 11 | **Deploy Dozzle for Docker log viewing**                            | P2       | 1h     | Easy container log access at `logs.home.lan`                        |
+| 12 | **Verify Monitor365 agent works with new sops keys**                | P2       | 15min  | Confirm monitoring agent is functional                              |
+| 13 | **Verify Twenty CRM is actually working**                           | P2       | 30min  | End-to-end test of CRM service                                      |
+| 14 | **Verify OpenSEO after deploy**                                     | P2       | 15min  | Confirm bug fix resolved the issue                                  |
+| 15 | **Consolidate voice-agents Caddy vHost**                            | P2       | 1h     | Cleanup duplicate vHost pattern                                     |
+| 16 | **Add automated backup strategy**                                   | P2       | 2h     | Immich, Gitea, Postgres — automated to external storage             |
+| 17 | **Fix hostPlatform deprecation warning**                            | P3       | 15min  | Replace deprecated `nixpkgs.hostPlatform` in hardware-configuration |
+| 18 | **Check for NVMe firmware update (SN19644)**                        | P3       | 15min  | Lexar may have reliability fixes                                    |
+| 19 | **Convert go-auto-upgrade `path:` inputs to SSH URLs**              | P3       | 30min  | Full portability for all repos                                      |
+| 20 | **Create missing referenced scripts (or remove references)**        | P3       | 1h     | Clean up dead references                                            |
+| 21 | **Research TLC SSD options for second M.2 slot**                    | P3       | 1h     | Plan hardware upgrade for write-heavy workloads                     |
+| 22 | **Add Btrfs health metrics to node_exporter textfile**              | P3       | 1h     | Monitor allocation state, data/metadata ratio                       |
+| 23 | **Provision Pi 3 for DNS failover cluster**                         | P4       | 4h     | Hardware + NixOS image + sops integration                           |
+| 24 | **Investigate NPU (XDNA) utilization options**                      | P4       | 4h     | 45 TOPS NPU sitting idle                                            |
+| 25 | **Periodic docs archival (move 60+ old status reports to archive)** | P4       | 30min  | Reduce docs noise                                                   |
 
 ---
 

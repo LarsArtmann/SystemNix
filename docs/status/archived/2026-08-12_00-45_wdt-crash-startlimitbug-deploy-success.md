@@ -11,13 +11,13 @@ The system crashed for the **4th time today** at 23:50 CEST via sp5100-tco WDT r
 
 ### Boot History (All crashes on 2026-08-11)
 
-| Boot | Start | End | Duration | Crash Mode |
-|------|-------|-----|----------|------------|
-| -4 | Aug 10 16:28 | Aug 11 11:16 | 18h 48m | WDT reset |
-| -3 | Aug 11 11:18 | Aug 11 13:26 | 2h 8m | WDT reset |
-| -2 | Aug 11 13:28 | Aug 11 20:30 | 7h 2m | WDT reset |
-| -1 | Aug 11 20:34 | Aug 11 23:50 | 3h 16m | WDT reset |
-| 0 | Aug 11 23:52 | now | 0:53 | STABLE |
+| Boot | Start        | End          | Duration | Crash Mode |
+| ---- | ------------ | ------------ | -------- | ---------- |
+| -4   | Aug 10 16:28 | Aug 11 11:16 | 18h 48m  | WDT reset  |
+| -3   | Aug 11 11:18 | Aug 11 13:26 | 2h 8m    | WDT reset  |
+| -2   | Aug 11 13:28 | Aug 11 20:30 | 7h 2m    | WDT reset  |
+| -1   | Aug 11 20:34 | Aug 11 23:50 | 3h 16m   | WDT reset  |
+| 0    | Aug 11 23:52 | now          | 0:53     | STABLE     |
 
 ---
 
@@ -113,20 +113,21 @@ The `service-defaults.nix` helper (lines 21-27) explicitly documented this rule,
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `modules/nixos/services/browser-history.nix` | Moved `startLimitBurst`/`startLimitIntervalSec` from `serviceConfig` to top-level `[Unit]` |
-| `platforms/nixos/system/configuration.nix` | Temporarily disabled Monitor365, DiscordSync, PMA |
-| `lib/lars-packages.nix` | Temporarily removed PMA from system CLI packages |
-| `flake.lock` | browser-history overridden to local path (fixed vendorHash) |
-| `AGENTS.md` | Added StartLimitBurst placement gotcha |
-| `/home/lars/projects/browser-history/flake.nix` | Fixed vendorHash to match actual build output |
+| File                                            | Change                                                                                     |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `modules/nixos/services/browser-history.nix`    | Moved `startLimitBurst`/`startLimitIntervalSec` from `serviceConfig` to top-level `[Unit]` |
+| `platforms/nixos/system/configuration.nix`      | Temporarily disabled Monitor365, DiscordSync, PMA                                          |
+| `lib/lars-packages.nix`                         | Temporarily removed PMA from system CLI packages                                           |
+| `flake.lock`                                    | browser-history overridden to local path (fixed vendorHash)                                |
+| `AGENTS.md`                                     | Added StartLimitBurst placement gotcha                                                     |
+| `/home/lars/projects/browser-history/flake.nix` | Fixed vendorHash to match actual build output                                              |
 
 ---
 
 ## Next Steps
 
 ### Immediate
+
 1. ~~Disable browser-history server+agent entirely~~ done at `a941f88d` (can't start until CheckpointStore upstream fix)
 2. Fix Monitor365 wireguard-collector build
 3. ~~Fix DiscordSync vendorHash~~ done at `992a275a`
@@ -134,6 +135,7 @@ The `service-defaults.nix` helper (lines 21-27) explicitly documented this rule,
 5. Revert flake.lock browser-history to GitHub URL after pushing vendorHash fix upstream
 
 ### Short-term
+
 1. Add persistent `CheckpointStore` to browser-history upstream
 2. Add crash-loop detector metric to system-health
 3. Add I/O PSI Gatus alert
@@ -142,6 +144,7 @@ The `service-defaults.nix` helper (lines 21-27) explicitly documented this rule,
 6. Fix OTel URL parse warning
 
 ### Medium-term
+
 1. Audit all Go projects for `modernc.org/sqlite` vs `mattn/go-sqlite3` DSN mismatch
 2. Add `systemd-analyze verify` start-limit feasibility check to pre-deploy-check.sh
 3. Add Prometheus textfile validity check to pre-deploy-check.sh

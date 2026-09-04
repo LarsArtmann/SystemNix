@@ -171,53 +171,53 @@ SystemNix is in **excellent shape**. All `nix flake check --no-build` passes cle
 
 ### Tier 1: Deploy & Verify (Do First)
 
-| #   | Task                                                                                       | Effort | Impact                                              |
-| --- | ------------------------------------------------------------------------------------------ | ------ | --------------------------------------------------- |
-| 1   | **Deploy to evo-x2**: `just switch` + reboot with kernel 7.0.1→7.0.6                       | 15 min | Critical — multiple fixes untested on real hardware |
-| 2   | **Verify all services start clean**: `systemctl --failed` after reboot                     | 5 min  | Critical — confirm no regressions                   |
-| 3   | **Verify Gatus sops template**: Check `status.home.lan` loads webhook, Discord alerts fire | 10 min | High — sops owner change needs verification         |
-| 4   | **Test Discord alert**: `POST /api/v1/channels/test` via SigNoz                            | 5 min  | High — confirm alert pipeline end-to-end            |
-| 5   | **Commit sops.nix fix**: gatus template owner change                                       | 2 min  | High — uncommitted fix                              |
+| # | Task                                                                                       | Effort | Impact                                              |
+| - | ------------------------------------------------------------------------------------------ | ------ | --------------------------------------------------- |
+| 1 | **Deploy to evo-x2**: `just switch` + reboot with kernel 7.0.1→7.0.6                       | 15 min | Critical — multiple fixes untested on real hardware |
+| 2 | **Verify all services start clean**: `systemctl --failed` after reboot                     | 5 min  | Critical — confirm no regressions                   |
+| 3 | **Verify Gatus sops template**: Check `status.home.lan` loads webhook, Discord alerts fire | 10 min | High — sops owner change needs verification         |
+| 4 | **Test Discord alert**: `POST /api/v1/channels/test` via SigNoz                            | 5 min  | High — confirm alert pipeline end-to-end            |
+| 5 | **Commit sops.nix fix**: gatus template owner change                                       | 2 min  | High — uncommitted fix                              |
 
 ### Tier 2: Quick Wins (Under 1 Hour Each)
 
-| #   | Task                                                                                                           | Effort | Impact                                         |
-| --- | -------------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------- |
-| 6   | **Refresh FEATURES.md**: Remove references to non-existent scripts (benchmark, perf, storage-cleanup, context) | 15 min | Medium — docs accuracy                         |
-| 7   | **Archive stale planning docs**: 28 planning files in `docs/planning/`, most from 2025 — archive pre-2026      | 10 min | Low — clutter reduction                        |
-| 8   | **Fix `dnsblockd` category types**: Define Go `Category` enum instead of stringly-typed categories             | 30 min | Medium — type safety (external repo)           |
-| 9   | **Add `nix-colors` to a single test app** (e.g., kitty) as proof-of-concept                                    | 30 min | Medium — unblocks full migration               |
-| 10  | **Deploy Dozzle**: Docker log viewer at `logs.home.lan`                                                        | 45 min | Medium — evaluation done, needs implementation |
+| #  | Task                                                                                                           | Effort | Impact                                         |
+| -- | -------------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------- |
+| 6  | **Refresh FEATURES.md**: Remove references to non-existent scripts (benchmark, perf, storage-cleanup, context) | 15 min | Medium — docs accuracy                         |
+| 7  | **Archive stale planning docs**: 28 planning files in `docs/planning/`, most from 2025 — archive pre-2026      | 10 min | Low — clutter reduction                        |
+| 8  | **Fix `dnsblockd` category types**: Define Go `Category` enum instead of stringly-typed categories             | 30 min | Medium — type safety (external repo)           |
+| 9  | **Add `nix-colors` to a single test app** (e.g., kitty) as proof-of-concept                                    | 30 min | Medium — unblocks full migration               |
+| 10 | **Deploy Dozzle**: Docker log viewer at `logs.home.lan`                                                        | 45 min | Medium — evaluation done, needs implementation |
 
 ### Tier 3: Important Improvements (1–4 Hours Each)
 
-| #   | Task                                                                          | Effort | Impact                                |
-| --- | ----------------------------------------------------------------------------- | ------ | ------------------------------------- |
-| 11  | **nix-colors full migration**: Wire `colorScheme` to all 17+ hardcoded colors | 6h     | High — single-source-of-truth theming |
-| 12  | **SigNoz alert routing**: critical→Discord, warning→log-only                  | 2h     | Medium — reduce alert noise           |
-| 13  | **Move dns-failover `authPassword` to sops**                                  | 1h     | Medium — secrets hygiene              |
-| 14  | **Consolidate voice-agents Caddy vHost** into caddy.nix pattern               | 1h     | Low — consistency                     |
-| 15  | **Create shared flake-parts Go template**                                     | 3h     | Medium — standardize all Go repos     |
+| #  | Task                                                                          | Effort | Impact                                |
+| -- | ----------------------------------------------------------------------------- | ------ | ------------------------------------- |
+| 11 | **nix-colors full migration**: Wire `colorScheme` to all 17+ hardcoded colors | 6h     | High — single-source-of-truth theming |
+| 12 | **SigNoz alert routing**: critical→Discord, warning→log-only                  | 2h     | Medium — reduce alert noise           |
+| 13 | **Move dns-failover `authPassword` to sops**                                  | 1h     | Medium — secrets hygiene              |
+| 14 | **Consolidate voice-agents Caddy vHost** into caddy.nix pattern               | 1h     | Low — consistency                     |
+| 15 | **Create shared flake-parts Go template**                                     | 3h     | Medium — standardize all Go repos     |
 
 ### Tier 4: External Repo Cleanup
 
-| #   | Task                                                       | Effort | Impact                      |
-| --- | ---------------------------------------------------------- | ------ | --------------------------- |
-| 16  | **Compute real `vendorHash` for BuildFlow** (fix fakeHash) | 30 min | Medium — unblock nix builds |
-| 17  | **Compute real `vendorHash` for PMA** (replace null)       | 30 min | Medium — unblock nix builds |
-| 18  | **Create `flake.nix` for hierarchical-errors**             | 1h     | Low — repo has no flake     |
-| 19  | **Convert go-auto-upgrade `path:` inputs to SSH URLs**     | 30 min | Low — portability           |
+| #  | Task                                                       | Effort | Impact                      |
+| -- | ---------------------------------------------------------- | ------ | --------------------------- |
+| 16 | **Compute real `vendorHash` for BuildFlow** (fix fakeHash) | 30 min | Medium — unblock nix builds |
+| 17 | **Compute real `vendorHash` for PMA** (replace null)       | 30 min | Medium — unblock nix builds |
+| 18 | **Create `flake.nix` for hierarchical-errors**             | 1h     | Low — repo has no flake     |
+| 19 | **Convert go-auto-upgrade `path:` inputs to SSH URLs**     | 30 min | Low — portability           |
 
 ### Tier 5: Future / Blocked
 
-| #   | Task                                                     | Effort   | Impact                      |
-| --- | -------------------------------------------------------- | -------- | --------------------------- |
-| 20  | **Provision Raspberry Pi 3** for DNS failover cluster    | Hardware | High — HA DNS               |
-| 21  | **Wire Pi 3 as secondary DNS** in dns-failover.nix       | 2h       | High — depends on #20       |
-| 22  | **Enable Auditd** after NixOS 26.05 bug #483085 is fixed | 1h       | Medium — security           |
-| 23  | **Enable AppArmor**                                      | 2h       | Medium — security hardening |
-| 24  | **dnsblockd temp-allow persistence** (SQLite)            | 2h       | Low — UX improvement        |
-| 25  | **DNS-over-QUIC** when unbound supports ngtcp2           | Blocked  | Low — upstream              |
+| #  | Task                                                     | Effort   | Impact                      |
+| -- | -------------------------------------------------------- | -------- | --------------------------- |
+| 20 | **Provision Raspberry Pi 3** for DNS failover cluster    | Hardware | High — HA DNS               |
+| 21 | **Wire Pi 3 as secondary DNS** in dns-failover.nix       | 2h       | High — depends on #20       |
+| 22 | **Enable Auditd** after NixOS 26.05 bug #483085 is fixed | 1h       | Medium — security           |
+| 23 | **Enable AppArmor**                                      | 2h       | Medium — security hardening |
+| 24 | **dnsblockd temp-allow persistence** (SQLite)            | 2h       | Low — UX improvement        |
+| 25 | **DNS-over-QUIC** when unbound supports ngtcp2           | Blocked  | Low — upstream              |
 
 ---
 

@@ -33,6 +33,17 @@ in
   port-uniqueness = makeTest (import ./test-port-uniqueness.nix { inherit pkgs; });
   browser-history = makeTest (import ./test-browser-history.nix { inherit pkgs inputs; });
   paperless = makeTest (import ./test-paperless.nix { inherit pkgs; });
+  hermes = makeTest (import ./test-hermes.nix { inherit pkgs inputs; });
+  cv = makeTest (import ./test-cv.nix { inherit pkgs inputs; });
+  memory-emergency-guard = makeTest (import ./test-memory-emergency-guard.nix { inherit pkgs; });
+  sev1-escalation = makeTest (import ./test-sev1-escalation.nix { inherit pkgs; });
+  pool-recovery = makeTest (import ./test-pool-recovery.nix { inherit pkgs; });
   session-boot-audit = import ./test-session-boot-audit.nix { inherit pkgs inputs system; };
+  niri-session-config = import ./test-niri-session-config.nix { inherit pkgs; };
+  niri-session = makeTest (import ./test-niri-session.nix { inherit pkgs; });
+  tmp-cleanup = makeTest (import ./test-tmp-cleanup.nix { inherit pkgs; });
+  tmp-cleaner-audit = import ./test-tmp-cleaner-audit.nix { inherit pkgs inputs system; };
+  inboxclean-paperless = import ./test-inboxclean-paperless.nix { inherit pkgs inputs system; };
+  mail-relay = makeTest (import ./test-mail-relay.nix { inherit pkgs; });
 }
 // (import ./test-scripts.nix { inherit pkgs; })

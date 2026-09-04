@@ -147,48 +147,48 @@ The only "acceptance" items:
 
 ### P0 — High Impact, Immediate
 
-| #   | Task                                                                                                                                       | Effort | Impact                                      |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------ | ------------------------------------------- |
-| 1   | **Create `go-deps` shared flake** — single source of truth for go-output, go-finding, cmdguard, go-branded-id, gogenfilter, go-filewatcher | 2-3h   | Eliminates 23 lock nodes, standardizes revs |
-| 2   | **Provision Pi 3 DNS backup node** — hardware + NixOS + sops age key + VRRP testing                                                        | 3-4h   | DNS HA failover operational                 |
-| 3   | **`just switch` and verify** — apply all session 47+48 changes to evo-x2                                                                   | 30min  | Confirm everything works in production      |
+| # | Task                                                                                                                                       | Effort | Impact                                      |
+| - | ------------------------------------------------------------------------------------------------------------------------------------------ | ------ | ------------------------------------------- |
+| 1 | **Create `go-deps` shared flake** — single source of truth for go-output, go-finding, cmdguard, go-branded-id, gogenfilter, go-filewatcher | 2-3h   | Eliminates 23 lock nodes, standardizes revs |
+| 2 | **Provision Pi 3 DNS backup node** — hardware + NixOS + sops age key + VRRP testing                                                        | 3-4h   | DNS HA failover operational                 |
+| 3 | **`just switch` and verify** — apply all session 47+48 changes to evo-x2                                                                   | 30min  | Confirm everything works in production      |
 
 ### P1 — High Impact, Near-term
 
-| #   | Task                                                                                                | Effort | Impact                             |
-| --- | --------------------------------------------------------------------------------------------------- | ------ | ---------------------------------- |
-| 4   | **Distributed builds** — configure MacBook to offload builds to evo-x2                              | 2h     | Unblocks Darwin builds at 90% disk |
-| 5   | **Dual-WAN failover testing** — disconnect ethernet, verify ECMP→WiFi transition                    | 1h     | Confidence in failover working     |
-| 6   | **Automated lockfile audit** — CI check for node count growth                                       | 1h     | Prevents regression                |
-| 7   | **Update all Go repos to latest shared dep revs** — sync go-output, go-finding across all consumers | 2h     | Reduces fragmentation              |
-| 8   | **Photomap re-enablement** — uncomment in configuration.nix, verify service                         | 30min  | Another service running            |
+| # | Task                                                                                                | Effort | Impact                             |
+| - | --------------------------------------------------------------------------------------------------- | ------ | ---------------------------------- |
+| 4 | **Distributed builds** — configure MacBook to offload builds to evo-x2                              | 2h     | Unblocks Darwin builds at 90% disk |
+| 5 | **Dual-WAN failover testing** — disconnect ethernet, verify ECMP→WiFi transition                    | 1h     | Confidence in failover working     |
+| 6 | **Automated lockfile audit** — CI check for node count growth                                       | 1h     | Prevents regression                |
+| 7 | **Update all Go repos to latest shared dep revs** — sync go-output, go-finding across all consumers | 2h     | Reduces fragmentation              |
+| 8 | **Photomap re-enablement** — uncomment in configuration.nix, verify service                         | 30min  | Another service running            |
 
 ### P2 — Medium Impact
 
-| #   | Task                                                                              | Effort | Impact                    |
-| --- | --------------------------------------------------------------------------------- | ------ | ------------------------- |
-| 9   | **SigNoz alert tuning** — review 26+ Gatus endpoints, add SigNoz-specific alerts  | 1h     | Better observability      |
-| 10  | **Memory regression baseline** — record peak `nix eval` RSS for future comparison | 30min  | Track optimization impact |
-| 11  | **OpenSEO DataForSEO usage monitoring** — set budget alerts                       | 30min  | Cost control              |
-| 12  | **Hermes gateway model rotation** — evaluate newer GLM models                     | 1h     | Better bot responses      |
-| 13  | **Twenty CRM data migration** — populate with actual data                         | 2h     | Useful CRM                |
-| 14  | **GPU memory budget documentation** — verify actual vs configured fractions       | 30min  | Confirm GPU headroom      |
-| 15  | **Wallpaper collection update** — refresh wallpapers-src input                    | 15min  | Fresh wallpapers          |
+| #  | Task                                                                              | Effort | Impact                    |
+| -- | --------------------------------------------------------------------------------- | ------ | ------------------------- |
+| 9  | **SigNoz alert tuning** — review 26+ Gatus endpoints, add SigNoz-specific alerts  | 1h     | Better observability      |
+| 10 | **Memory regression baseline** — record peak `nix eval` RSS for future comparison | 30min  | Track optimization impact |
+| 11 | **OpenSEO DataForSEO usage monitoring** — set budget alerts                       | 30min  | Cost control              |
+| 12 | **Hermes gateway model rotation** — evaluate newer GLM models                     | 1h     | Better bot responses      |
+| 13 | **Twenty CRM data migration** — populate with actual data                         | 2h     | Useful CRM                |
+| 14 | **GPU memory budget documentation** — verify actual vs configured fractions       | 30min  | Confirm GPU headroom      |
+| 15 | **Wallpaper collection update** — refresh wallpapers-src input                    | 15min  | Fresh wallpapers          |
 
 ### P3 — Lower Impact, Good to Have
 
-| #   | Task                                                                       | Effort | Impact                 |
-| --- | -------------------------------------------------------------------------- | ------ | ---------------------- |
-| 16  | **Minecraft server enablement** — for fun, module exists                   | 30min  | Gaming                 |
-| 17  | **awww-daemon upstream bug report** — file BrokenPipe issue                | 30min  | Help upstream          |
-| 18  | **watchdogd nixpkgs bug report** — file `device` section parsing bug       | 30min  | Help upstream          |
-| 19  | **Darwin disk cleanup automation** — scheduled nix-collect-garbage         | 1h     | Prevent build failures |
-| 20  | **niri-session-manager app mappings** — expand for more apps               | 30min  | Better session restore |
-| 21  | **EMEET PIXY audio profiles** — tune noise cancellation settings           | 30min  | Better call quality    |
-| 22  | **Security audit of Caddy configs** — review all virtual hosts             | 1h     | Defense in depth       |
-| 23  | **BTRFS snapshot automation** — verify Timeshift schedules                 | 30min  | Backup reliability     |
-| 24  | **Documentation pass** — update FEATURES.md, TODO_LIST.md to current state | 1h     | Accurate docs          |
-| 25  | **Git hooks improvement** — add lockfile node count check to pre-commit    | 30min  | Automated hygiene      |
+| #  | Task                                                                       | Effort | Impact                 |
+| -- | -------------------------------------------------------------------------- | ------ | ---------------------- |
+| 16 | **Minecraft server enablement** — for fun, module exists                   | 30min  | Gaming                 |
+| 17 | **awww-daemon upstream bug report** — file BrokenPipe issue                | 30min  | Help upstream          |
+| 18 | **watchdogd nixpkgs bug report** — file `device` section parsing bug       | 30min  | Help upstream          |
+| 19 | **Darwin disk cleanup automation** — scheduled nix-collect-garbage         | 1h     | Prevent build failures |
+| 20 | **niri-session-manager app mappings** — expand for more apps               | 30min  | Better session restore |
+| 21 | **EMEET PIXY audio profiles** — tune noise cancellation settings           | 30min  | Better call quality    |
+| 22 | **Security audit of Caddy configs** — review all virtual hosts             | 1h     | Defense in depth       |
+| 23 | **BTRFS snapshot automation** — verify Timeshift schedules                 | 30min  | Backup reliability     |
+| 24 | **Documentation pass** — update FEATURES.md, TODO_LIST.md to current state | 1h     | Accurate docs          |
+| 25 | **Git hooks improvement** — add lockfile node count check to pre-commit    | 30min  | Automated hygiene      |
 
 ---
 

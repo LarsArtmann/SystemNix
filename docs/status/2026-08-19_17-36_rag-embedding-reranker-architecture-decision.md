@@ -1,6 +1,6 @@
 # Status Report: RAG Embedding + Reranker Architecture Decision
 
-**Date:** 2026-08-19 17:36
+**Date:** 2026-08-19 17:36\
 **Session focus:** Evaluating whether to add HuggingFace Text Embeddings Inference (TEI) permanently, and finding the best reranker-capable serving stack for the homelab
 
 ---
@@ -15,19 +15,19 @@ The user asked whether to add [HuggingFace text-embeddings-inference](https://gi
 
 ### Research: TEI vs alternatives vs existing stack
 
-| Item | Status | Notes |
-|---|---|---|
-| Repo scan for existing TEI/embedding/reranker references | ✅ Done | Zero TEI references. Embeddings only exist as: deliberately-disabled `loadEmbed` in fastflowlm.nix, unset `PAPERLESS_AI_LLM_EMBEDDING_*` vars in paperless.nix, and directory paths in ai-models.nix. |
-| Ollama existing config reviewed | ✅ Done | `ai-stack.nix` — ROCm-backed, `:11434`, `OLLAMA_MAX_LOADED_MODELS=1`, always-on (wantedBy multi-user.target). Already serves OpenAI-compatible `/v1/embeddings`. |
-| TEI capabilities + tradeoffs researched | ✅ Done | Rust-based, one model per container, `/rerank` endpoint, lean footprint. No gfx1150 ROCm support listed. |
-| Infinity (michaelfeil/infinity) researched | ✅ Done | Python/FastAPI, multi-model per instance, `/rerank` endpoint, `latest-cpu` Docker image. Reported OOM/timeout under sustained load (not relevant for batch-of-1). |
-| vLLM reranking support researched | ✅ Done | Full `/v1/rerank` endpoint, officially supports gfx1150 (Ryzen AI MAX). But 3GB+ image — sledgehammer for a 568M cross-encoder. |
-| **llama.cpp reranking support researched** | ✅ Done | **This is the finding that changed the recommendation.** Native `/rerank` + `/v1/rerank` endpoints (PR #9510, merged Sept 2024). bge-reranker-v2-m3 is the reference model with a preset flag. BertForSequenceClassification merged (PR #13858). `llama-cpp-rocwmma` already packaged in SystemNix with a `llama-server-rocm` wrapper. |
-| **Ollama reranking support researched** | ✅ Done | **Does NOT support reranking.** No `/rerank` endpoint, no code, issue #3368 open since Mar 2024, multiple unmerged PRs. Confirmed via API docs, OpenAPI spec, source code search, and issue tracker. |
-| Existing Paperless AI config reviewed | ✅ Done | `paperless.nix` lines 111-136: `PAPERLESS_AI_LLM_*` → FastFlowLM. Embedding vars deliberately absent with a 10-line comment explaining why (`--embed 1` breaks the NPU model load). |
-| Existing FastFlowLM module reviewed | ✅ Done | Socket-activated, `:52625`, `loadEmbed` option exists but documented as broken. |
-| Port registry reviewed | ✅ Done | `lib/ports.nix` — no reranker port exists. Ollama at 11434, FastFlowLM at 52625/52626. |
-| Final architecture recommendation delivered | ✅ Done | See "Final Recommendation" below. |
+| Item                                                     | Status  | Notes                                                                                                                                                                                                                                                                                                                                  |
+| -------------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Repo scan for existing TEI/embedding/reranker references | ✅ Done | Zero TEI references. Embeddings only exist as: deliberately-disabled `loadEmbed` in fastflowlm.nix, unset `PAPERLESS_AI_LLM_EMBEDDING_*` vars in paperless.nix, and directory paths in ai-models.nix.                                                                                                                                  |
+| Ollama existing config reviewed                          | ✅ Done | `ai-stack.nix` — ROCm-backed, `:11434`, `OLLAMA_MAX_LOADED_MODELS=1`, always-on (wantedBy multi-user.target). Already serves OpenAI-compatible `/v1/embeddings`.                                                                                                                                                                       |
+| TEI capabilities + tradeoffs researched                  | ✅ Done | Rust-based, one model per container, `/rerank` endpoint, lean footprint. No gfx1150 ROCm support listed.                                                                                                                                                                                                                               |
+| Infinity (michaelfeil/infinity) researched               | ✅ Done | Python/FastAPI, multi-model per instance, `/rerank` endpoint, `latest-cpu` Docker image. Reported OOM/timeout under sustained load (not relevant for batch-of-1).                                                                                                                                                                      |
+| vLLM reranking support researched                        | ✅ Done | Full `/v1/rerank` endpoint, officially supports gfx1150 (Ryzen AI MAX). But 3GB+ image — sledgehammer for a 568M cross-encoder.                                                                                                                                                                                                        |
+| **llama.cpp reranking support researched**               | ✅ Done | **This is the finding that changed the recommendation.** Native `/rerank` + `/v1/rerank` endpoints (PR #9510, merged Sept 2024). bge-reranker-v2-m3 is the reference model with a preset flag. BertForSequenceClassification merged (PR #13858). `llama-cpp-rocwmma` already packaged in SystemNix with a `llama-server-rocm` wrapper. |
+| **Ollama reranking support researched**                  | ✅ Done | **Does NOT support reranking.** No `/rerank` endpoint, no code, issue #3368 open since Mar 2024, multiple unmerged PRs. Confirmed via API docs, OpenAPI spec, source code search, and issue tracker.                                                                                                                                   |
+| Existing Paperless AI config reviewed                    | ✅ Done | `paperless.nix` lines 111-136: `PAPERLESS_AI_LLM_*` → FastFlowLM. Embedding vars deliberately absent with a 10-line comment explaining why (`--embed 1` breaks the NPU model load).                                                                                                                                                    |
+| Existing FastFlowLM module reviewed                      | ✅ Done | Socket-activated, `:52625`, `loadEmbed` option exists but documented as broken.                                                                                                                                                                                                                                                        |
+| Port registry reviewed                                   | ✅ Done | `lib/ports.nix` — no reranker port exists. Ollama at 11434, FastFlowLM at 52625/52626.                                                                                                                                                                                                                                                 |
+| Final architecture recommendation delivered              | ✅ Done | See "Final Recommendation" below.                                                                                                                                                                                                                                                                                                      |
 
 ---
 
@@ -62,7 +62,7 @@ All implementation work — deferred pending user confirmation:
 
 **Round 1 — I recommended TEI without checking the existing stack.**
 
-I did the repo scan (correct), found no TEI references (correct), but then immediately jumped to "add TEI" without asking the most basic question: *can the inference engines already running do this?* I recommended a new Docker dependency, a new module, a new port, a new image — for a workload that needed zero new infrastructure. This is the "fastest solution, not the best solution" anti-pattern from the project's own philosophy docs.
+I did the repo scan (correct), found no TEI references (correct), but then immediately jumped to "add TEI" without asking the most basic question: _can the inference engines already running do this?_ I recommended a new Docker dependency, a new module, a new port, a new image — for a workload that needed zero new infrastructure. This is the "fastest solution, not the best solution" anti-pattern from the project's own philosophy docs.
 
 **Round 2 — I recommended Infinity (Docker) over TEI, still without checking llama.cpp.**
 
@@ -117,17 +117,17 @@ When the user asked "Why is llama-server not enough?", I finally researched llam
 
 ### Immediate — RAG stack implementation (this session's decision)
 
-1. Verify Ollama has `bge-m3` or equivalent strong embedding model in its pullable library
-2. Verify `paperless-ai` exposes a reranker env var/config (search the upstream repo)
-3. Acquire or convert `bge-reranker-v2-m3` GGUF model
-4. Add `reranker` port to `lib/ports.nix`
-5. Create `modules/nixos/services/llama-reranker.nix` module
+~~1. Verify Ollama has `bge-m3` or equivalent strong embedding model in its pullable library~~ **NOT-DO — superseded same-day:** the architecture decision landed on llama-server (`llama-rag.nix`, :8848/:8849) instead of Ollama (reranking unsupported upstream — the deciding factor)
+~~2. Verify `paperless-ai` exposes a reranker env var/config (search the upstream repo)~~ **NOT-DO — superseded same-day:** the architecture decision landed on llama-server (`llama-rag.nix`, :8848/:8849) instead of Ollama (reranking unsupported upstream — the deciding factor)
+~~3. Acquire or convert `bge-reranker-v2-m3` GGUF model~~ **NOT-DO — superseded same-day:** the architecture decision landed on llama-server (`llama-rag.nix`, :8848/:8849) instead of Ollama (reranking unsupported upstream — the deciding factor) (fetched declaratively by `llama-rag-model-fetch`)
+~~4. Add `reranker` port to `lib/ports.nix`~~ done — :8849 in the port registry (llama-rag)
+~~5. Create `modules/nixos/services/llama-reranker.nix` module~~ done in the shipped form — `llama-rag.nix` serves both engines
 6. Enable the module in `configuration.nix`
-7. Wire `PAPERLESS_AI_LLM_EMBEDDING_*` env vars in `paperless.nix` → Ollama `:11434/v1`
-8. Bump `OLLAMA_MAX_LOADED_MODELS` from 1 to 2 in `ai-stack.nix`
-9. Pull `bge-m3` (or chosen embedding model) via Ollama
+~~7. Wire `PAPERLESS_AI_LLM_EMBEDDING_*` env vars in `paperless.nix` → Ollama `:11434/v1`~~ done in the shipped form — wired to llama-server `:8848/v1` (bge-m3)
+~~8. Bump `OLLAMA_MAX_LOADED_MODELS` from 1 to 2 in `ai-stack.nix`~~ **NOT-DO — superseded same-day:** the architecture decision landed on llama-server (`llama-rag.nix`, :8848/:8849) instead of Ollama (reranking unsupported upstream — the deciding factor)
+~~9. Pull `bge-m3` (or chosen embedding model) via Ollama~~ **NOT-DO — superseded same-day:** the architecture decision landed on llama-server (`llama-rag.nix`, :8848/:8849) instead of Ollama (reranking unsupported upstream — the deciding factor)
 10. Add Gatus health check for the reranker `/health` endpoint
-11. Add Gatus health check for the Ollama embeddings endpoint
+~~11. Add Gatus health check for the Ollama embeddings endpoint~~ done in the shipped form — Gatus `:8848/health` + `:8849/health` (llama-rag)
 12. Add Homepage tile for the reranker (optional, if user wants visibility)
 13. Write a VM test for the reranker service (`tests/test-llama-reranker.nix`)
 14. Update `AGENTS.md` with the RAG architecture decision and the llama.cpp reranking finding
@@ -199,6 +199,7 @@ When the user asked "Why is llama-server not enough?", I finally researched llam
 ### 1. Which embedding model for Ollama?
 
 I recommended `bge-m3` but did not verify it exists in Ollama's pullable model library. Ollama's model registry is curated and may not include every HuggingFace model. If `bge-m3` isn't available, the alternatives are:
+
 - `nomic-embed-text` (user said "too weak")
 - `bge-large-en` (if available in Ollama)
 - `mxbai-embed-large` (if available)
@@ -209,11 +210,13 @@ I recommended `bge-m3` but did not verify it exists in Ollama's pullable model l
 ### 2. Should the reranker run on GPU or CPU?
 
 I recommended GPU (via `llama-server-rocm`) since the existing wrapper and ROCm env vars are already set up. But a 568M cross-encoder on CPU is ~50-100ms per query — instant for human perception. Running on CPU would:
+
 - Avoid any GPU VRAM contention with Ollama + FastFlowLM
 - Eliminate gfx1150 ROCm compatibility risk (llama.cpp's ROCm support for gfx1150 is via the WMMA path, but reranking uses different code paths than generation)
 - Simplify the service (no ROCm env vars, no render group)
 
 Running on GPU would:
+
 - Be ~5x faster (~10-20ms per query)
 - Share the existing ROCm setup
 - Risk VRAM pressure if a chat model + embedding model + reranker are all loaded
@@ -223,6 +226,7 @@ Running on GPU would:
 ### 3. Is the reranker for Paperless specifically, or for a broader RAG pipeline?
 
 I assumed the reranker is for Paperless AI's search/RAG. But the user might be planning a broader RAG pipeline (e.g. a custom search interface over multiple data sources, a chatbot with retrieval, etc.). This affects:
+
 - Whether we need to wire it into Paperless at all
 - Whether we need a public-facing endpoint (Caddy vHost) or keep it localhost-only
 - Whether we need to build a custom retrieval service on top of it
@@ -270,4 +274,4 @@ I got there eventually, but the path was embarrassingly long.
 
 ---
 
-*Generated 2026-08-19 17:36*
+_Generated 2026-08-19 17:36_

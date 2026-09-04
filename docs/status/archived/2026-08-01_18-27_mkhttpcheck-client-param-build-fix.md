@@ -6,7 +6,6 @@ Fix a blocking NixOS build failure: `function 'mkHttpCheck' called with unexpect
 
 ---
 
-
 ## What Triggered This Session
 
 A `nix run .#deploy` (or equivalent build) failed with:
@@ -30,10 +29,10 @@ The build could not produce a `nixos-system-evo-x2` toplevel. This is a **hard d
 
 But two call sites in `modules/nixos/services/gatus-config.nix` (added in a recent commit for backup-coordination + secret-rotation monitoring) pass an **extra `client` argument**:
 
-| Line | Endpoint | Extra arg |
-| ---- | -------- | --------- |
-| 824 | "All Backups Healthy" | `client.timeout = "10s"` |
-| 838 | "Secret Rotation Health" | `client.timeout = "10s"` |
+| Line | Endpoint                 | Extra arg                |
+| ---- | ------------------------ | ------------------------ |
+| 824  | "All Backups Healthy"    | `client.timeout = "10s"` |
+| 838  | "Secret Rotation Health" | `client.timeout = "10s"` |
 
 Nix functions reject unexpected named arguments by default (unlike `with`/`let`). The helper signature was never updated when these two checks were added.
 
@@ -56,12 +55,12 @@ mkHttpCheck =
 
 ## Verification
 
-| Check | Result |
-| ----- | ------ |
-| `nix flake check --no-build` | **PASS** — all modules + checks pass |
-| `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel --raw` | **PASS** — produces a store path |
-| Rendered Gatus YAML (`/nix/store/...-gatus.yaml`) contains `client.timeout: 10s` | **CONFIRMED** (lines 617, 629-630) |
-| Other 53 `mkHttpCheck` call sites pass unknown params? | **NO** — audited via grep, all use only `{name, group, url, interval, conditions, alerts}` |
+| Check                                                                            | Result                                                                                     |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `nix flake check --no-build`                                                     | **PASS** — all modules + checks pass                                                       |
+| `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel --raw`       | **PASS** — produces a store path                                                           |
+| Rendered Gatus YAML (`/nix/store/...-gatus.yaml`) contains `client.timeout: 10s` | **CONFIRMED** (lines 617, 629-630)                                                         |
+| Other 53 `mkHttpCheck` call sites pass unknown params?                           | **NO** — audited via grep, all use only `{name, group, url, interval, conditions, alerts}` |
 
 ---
 
@@ -69,7 +68,7 @@ mkHttpCheck =
 
 ### Things I did NOT do this session
 
-1. **Did not verify Gatus actually *honors* `client.timeout` at the endpoint level at runtime.** I confirmed the YAML renders, but Gatus's schema for per-endpoint `client` config is not something I cross-checked against Gatus docs/source. It *is* a valid Gatus field (the call-site author clearly intended it), but I relied on the caller's correctness rather than verifying upstream.
+1. **Did not verify Gatus actually _honors_ `client.timeout` at the endpoint level at runtime.** I confirmed the YAML renders, but Gatus's schema for per-endpoint `client` config is not something I cross-checked against Gatus docs/source. It _is_ a valid Gatus field (the call-site author clearly intended it), but I relied on the caller's correctness rather than verifying upstream.
 
 2. **Did not run a real deploy.** I verified eval + YAML render, but not `nix run .#deploy` + `post-deploy-check`. The original error was at eval time, so eval-passing is sufficient to unblock, but a deploy would be the full proof.
 
@@ -115,7 +114,7 @@ mkHttpCheck =
 1. **Add a pre-commit / CI eval gate on `gatus-config.nix` specifically.** This break was caught only at deploy time. A `nix eval` of the gatus configFile in CI (or pre-commit) would have caught the signature mismatch before it reached `deploy`.
 2. **Make `mkHttpCheck`'s contract explicit.** Either (a) add `...` to the param list so unknown args are silently accepted (hides future bugs — NOT recommended), or (b) document the full accepted-param set in the README and add a comment block above the function. The current "fail on unknown arg" behavior is actually GOOD (it caught this bug) — keep it, but document it.
 3. **Fix the auto-commit daemon's message quality.** Commit `5b2c9e58` is actively misleading. If the daemon can't generate accurate messages, it should at least include the diff summary or a "WIP: auto" tag so humans know to rewrite.
-4. **Consider a `mkGatusCheck` wrapper** that validates the full Gatus endpoint schema (a NixOS submodule type) rather than a loose attrset-returning function. This would make param mismatches a *type error with a helpful message* instead of a raw "unexpected argument" Nix error.
+4. **Consider a `mkGatusCheck` wrapper** that validates the full Gatus endpoint schema (a NixOS submodule type) rather than a loose attrset-returning function. This would make param mismatches a _type error with a helpful message_ instead of a raw "unexpected argument" Nix error.
 
 ### f) Up to 50 Things to Get Done Next
 
@@ -140,7 +139,7 @@ Ranked by impact (P0 = unblock/protect, P1 = quality, P2 = nice-to-have):
 
 ---
 
-*End of report.*
+_End of report._
 
 ---
 

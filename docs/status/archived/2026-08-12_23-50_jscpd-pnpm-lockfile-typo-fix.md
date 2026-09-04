@@ -10,48 +10,48 @@
 
 ## a) FULLY DONE
 
-| # | Item | Evidence |
-|---|------|----------|
-| 1 | **Diagnosed the build failure** | `nix log /nix/store/gpg29vh15hw94r6yndvx65nbmf0jjcfg-jscpd-pnpm-deps.drv` showed `pnpm-run-path` returning 404 from registry.npmjs.org. |
-| 2 | **Confirmed the root cause** | `pnpm-run-path` does not exist on npm; `execa@4.1.0` depends on `npm-run-path@^4.0.0`. The integrity hash in the lockfile already matched `npm-run-path@4.0.1`, confirming a naming typo rather than a missing dependency. |
-| 3 | **Fixed the vendored lockfile** | Replaced all 3 occurrences of `pnpm-run-path` with `npm-run-path` in `pkgs/jscpd-pnpm-lock.yaml`. |
-| 4 | **Verified FOD hash stability** | Rebuilding `jscpd-pnpm-deps` produced the same SRI hash (`sha256-lZQ5I4ovJoYdGlgVx4J+8REDkCV7UIFH1RPTq9r+XLU=`), so the derivation needed only the lockfile typo fix, not a hash bump. |
-| 5 | **Built the package end-to-end** | `nix build .#jscpd` succeeded; output path `/nix/store/8nh69x8pjjf6rq5wl8dplajdmwq5ap51-jscpd-4.0.9`. |
-| 6 | **Smoke-tested the binary** | `result/bin/jscpd --version` returned `4.0.9`. |
-| 7 | **Ran eval-time validation** | `nix flake check --no-build` passed with "all checks passed". |
-| 8 | **Cleaned up build artifacts** | Removed the `result` symlink created by `nix build`. |
+| # | Item                             | Evidence                                                                                                                                                                                                                   |
+| - | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Diagnosed the build failure**  | `nix log /nix/store/gpg29vh15hw94r6yndvx65nbmf0jjcfg-jscpd-pnpm-deps.drv` showed `pnpm-run-path` returning 404 from registry.npmjs.org.                                                                                    |
+| 2 | **Confirmed the root cause**     | `pnpm-run-path` does not exist on npm; `execa@4.1.0` depends on `npm-run-path@^4.0.0`. The integrity hash in the lockfile already matched `npm-run-path@4.0.1`, confirming a naming typo rather than a missing dependency. |
+| 3 | **Fixed the vendored lockfile**  | Replaced all 3 occurrences of `pnpm-run-path` with `npm-run-path` in `pkgs/jscpd-pnpm-lock.yaml`.                                                                                                                          |
+| 4 | **Verified FOD hash stability**  | Rebuilding `jscpd-pnpm-deps` produced the same SRI hash (`sha256-lZQ5I4ovJoYdGlgVx4J+8REDkCV7UIFH1RPTq9r+XLU=`), so the derivation needed only the lockfile typo fix, not a hash bump.                                     |
+| 5 | **Built the package end-to-end** | `nix build .#jscpd` succeeded; output path `/nix/store/8nh69x8pjjf6rq5wl8dplajdmwq5ap51-jscpd-4.0.9`.                                                                                                                      |
+| 6 | **Smoke-tested the binary**      | `result/bin/jscpd --version` returned `4.0.9`.                                                                                                                                                                             |
+| 7 | **Ran eval-time validation**     | `nix flake check --no-build` passed with "all checks passed".                                                                                                                                                              |
+| 8 | **Cleaned up build artifacts**   | Removed the `result` symlink created by `nix build`.                                                                                                                                                                       |
 
 ---
 
 ## b) PARTIALLY DONE
 
-| # | Item | Status | Why |
-|---|------|--------|-----|
+| # | Item                                 | Status  | Why                                                                                                                                                                                                       |
+| - | ------------------------------------ | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | **Full flake build for all systems** | Partial | `nix flake check --no-build` passed, but `--all-systems` was not run; aarch64-darwin checks were intentionally omitted. Actual `nix flake check` with builds was not attempted due to time/session scope. |
-| 2 | **Cache reachability** | Partial | Binary cache `cache.home.lan` is unreachable from the current network; Nix fell back to local builds. This is not blocking but adds latency and should be investigated. |
+| 2 | **Cache reachability**               | Partial | Binary cache `cache.home.lan` is unreachable from the current network; Nix fell back to local builds. This is not blocking but adds latency and should be investigated.                                   |
 
 ---
 
 ## c) NOT STARTED
 
-| # | Item | Reason |
-|---|------|--------|
-| 1 | Deploy the fix to `evo-x2` | Out of scope for this single-build fix session. |
-| 2 | Run `jscpd` against the actual repository | Binary builds; functional validation of the tool was not requested. |
-| 3 | Update `TODO_LIST.md` / `ROADMAP.md` | Left for a follow-up `docs-health` HARVEST pass if requested. |
-| 4 | Upstream the lockfile fix to jscpd project | Not required to unblock local build. |
-| 5 | Add automated detection for similar npm package typos | Would require a new flake check / lint; out of scope. |
-| 6 | Verify the aarch64-darwin build of `jscpd` | System not available locally. |
+| # | Item                                                  | Reason                                                              |
+| - | ----------------------------------------------------- | ------------------------------------------------------------------- |
+| 1 | Deploy the fix to `evo-x2`                            | Out of scope for this single-build fix session.                     |
+| 2 | Run `jscpd` against the actual repository             | Binary builds; functional validation of the tool was not requested. |
+| 3 | Update `TODO_LIST.md` / `ROADMAP.md`                  | Left for a follow-up `docs-health` HARVEST pass if requested.       |
+| 4 | Upstream the lockfile fix to jscpd project            | Not required to unblock local build.                                |
+| 5 | Add automated detection for similar npm package typos | Would require a new flake check / lint; out of scope.               |
+| 6 | Verify the aarch64-darwin build of `jscpd`            | System not available locally.                                       |
 
 ---
 
 ## d) TOTALLY FUCKED UP!
 
-| # | Item | Impact | Mitigation / Status |
-|---|------|--------|---------------------|
-| 1 | **`pnpm-run-path` typo in vendored lockfile** | Broke `jscpd-pnpm-deps`, which in turn blocked any flake build that transitively depends on `jscpd`. | **Fixed** — replaced with `npm-run-path`. |
-| 2 | **Local binary cache `cache.home.lan` unreachable** | Builds cannot substitute from the home cache; everything rebuilds locally. | Not fixed; observed as warning. Likely network/off-site issue. |
-| 3 | **No automated regression test for vendored lockfile integrity** | A typo in a 325-entry vendored lockfile sat in the repo until a manual build exposed it. | Not fixed; consider adding a pre-commit or flake check that resolves every package name against npm or uses `pnpm install --offline` in CI. |
+| # | Item                                                             | Impact                                                                                               | Mitigation / Status                                                                                                                         |
+| - | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **`pnpm-run-path` typo in vendored lockfile**                    | Broke `jscpd-pnpm-deps`, which in turn blocked any flake build that transitively depends on `jscpd`. | **Fixed** — replaced with `npm-run-path`.                                                                                                   |
+| 2 | **Local binary cache `cache.home.lan` unreachable**              | Builds cannot substitute from the home cache; everything rebuilds locally.                           | Not fixed; observed as warning. Likely network/off-site issue.                                                                              |
+| 3 | **No automated regression test for vendored lockfile integrity** | A typo in a 325-entry vendored lockfile sat in the repo until a manual build exposed it.             | Not fixed; consider adding a pre-commit or flake check that resolves every package name against npm or uses `pnpm install --offline` in CI. |
 
 ---
 
@@ -146,7 +146,7 @@
 
 - `nix flake check --no-build` output: all NixOS module checks passed; only warning was omitted aarch64-darwin checks.
 - `nix build .#jscpd` emitted repeated warnings: `unable to download 'https://cache.home.lan/monitor365/...'` → `Could not resolve hostname (6)`.
-- Current working tree after fix: ` M pkgs/jscpd-pnpm-lock.yaml`.
+- Current working tree after fix: `M pkgs/jscpd-pnpm-lock.yaml`.
 - No other files modified or untracked.
 
 ---

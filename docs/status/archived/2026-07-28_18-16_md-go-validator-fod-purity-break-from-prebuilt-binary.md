@@ -76,7 +76,7 @@ corrupts the FOD.
    - `file` confirming it is an ELF executable with `debug_info`
 2. **Read upstream `package.nix` and `flake.nix`** for md-go-validator to
    understand the existing `postPatch` (which injects a `replace` for
-   `go-finding` from a Nix store path — a *second* FOD-purity hazard).
+   `go-finding` from a Nix store path — a _second_ FOD-purity hazard).
 3. **Identified a second, independent FOD-purity hazard**: md-go-validator's
    upstream `postPatch` writes
    `replace github.com/larsartmann/go-finding => ${go-finding-src}` into
@@ -103,7 +103,7 @@ corrupts the FOD.
 1. **The fix is written but NOT VERIFIED end-to-end.** I computed a
    vendorHash that the `go-modules` FOD accepted, but I was interrupted
    before running a final `nix build .#md-go-validator` to confirm the
-   *main* derivation (the binary) builds and the vendoring is consistent.
+   _main_ derivation (the binary) builds and the vendoring is consistent.
    The candidate hash needs a confirming build.
 2. **`lib/lars-packages.nix` is modified** with the workaround but the
    change is uncommitted and unverified by `nix flake check` or a real
@@ -125,7 +125,7 @@ corrupts the FOD.
 6. **Upstream fix**: open an issue/PR on `go-branded-id` to remove the
    committed `namer` binary from the repo (or add it to `.gitattributes`
    as export-ignore, or move it out of the module root). This is the
-   *real* fix; the SystemNix workaround is a band-aid.
+   _real_ fix; the SystemNix workaround is a band-aid.
 7. **TODO_LIST.md entry** for tracking the upstream fix.
 8. **Pre-commit / CI guard** that detects committed ELF binaries in
    LarsArtmann Go module roots.
@@ -146,7 +146,7 @@ corrupts the FOD.
    vendor dir, but left upstream's `postPatch` injecting the absolute
    Nix store path replace. Result: the FOD still referenced the source
    store path (`/nix/store/...-source`) via `vendor/modules.txt`. I
-   should have read the upstream `postPatch` *before* designing the fix,
+   should have read the upstream `postPatch` _before_ designing the fix,
    not after the second failure. **Wasted a second build cycle.**
 3. **My third attempt broke go-finding entirely.** I set
    `go-finding-src = null` to drop the replace, but go-finding is a
@@ -182,7 +182,7 @@ corrupts the FOD.
    I read `package.nix` but skimmed the `postPatch`. The `postPatch`
    contained a second FOD-purity hazard (the absolute-path replace)
    that I only discovered after a failed build. Rule: when a FOD purity
-   break involves `buildGoModule`, read *both* the package expression
+   break involves `buildGoModule`, read _both_ the package expression
    AND every hook that mutates `go.mod`/`go.sum`.
 2. **Verify the fix builds before iterating the hash.** I cycled the
    vendorHash three times against broken configs. Each cycle is a full
@@ -201,9 +201,9 @@ corrupts the FOD.
 5. **Add a CI check** that scans LarsArtmann Go module roots for ELF
    files and fails. This class of bug is silent until someone vendors
    the module.
-6. **Document in AGENTS.md** the general rule: *Go modules must not
+6. **Document in AGENTS.md** the general rule: _Go modules must not
    contain prebuilt binaries — they embed absolute builder paths that
-   break FOD purity.*
+   break FOD purity._
 7. **Don't defer AGENTS.md updates.** The memory-maintenance protocol
    in the global AGENTS.md says "update at the moment of discovery."
    I discovered this gotcha 30 minutes ago and haven't written it down.
@@ -213,6 +213,7 @@ corrupts the FOD.
 ## f) Next Steps (up to 50)
 
 ### Immediate (block deploy)
+
 1. Run `nix build .#md-go-validator` to confirm the candidate vendorHash
    `sha256-X0b5+DXMDNW05HONHZUKw96PDrkCaHbkiMKk4mWqwg8=` produces a
    working binary.
@@ -223,6 +224,7 @@ corrupts the FOD.
 5. Run `nix run .#post-deploy-check` to confirm services are functional.
 
 ### Hardening
+
 6. Audit `branching-flow` for the same go-branded-id FOD break.
 7. Audit every other `lars-packages.nix` entry that transitively
    depends on go-branded-id.
@@ -232,6 +234,7 @@ corrupts the FOD.
    `lars-packages.nix` is shared.
 
 ### Upstream (real fix)
+
 10. Open issue on `go-branded-id`: "Remove committed `namer` binary —
     breaks downstream FOD purity."
 11. Open PR on `go-branded-id` removing `namer` from the repo + adding
@@ -243,6 +246,7 @@ corrupts the FOD.
     upstream ships.
 
 ### Documentation
+
 15. Add AGENTS.md Non-Obvious Gotcha: "Prebuilt binaries in Go modules
     break FOD purity."
 16. Add AGENTS.md entry for the go-finding absolute-path replace hazard.
@@ -250,6 +254,7 @@ corrupts the FOD.
 18. Update this status report with the verified build result.
 
 ### CI / Automation
+
 19. Add a flake check that scans vendored Go modules for ELF files.
 20. Add a pre-commit hook on LarsArtmann Go repos rejecting committed
     ELF binaries in module roots.
@@ -257,6 +262,7 @@ corrupts the FOD.
     FOD-purity hardening.
 
 ### Process
+
 22. Adopt the rule: "Read all upstream packaging hooks before designing
     a buildGoModule workaround."
 23. Adopt the rule: "Verify the fix builds before iterating vendorHash."
@@ -264,8 +270,9 @@ corrupts the FOD.
     end-of-session."
 
 ### Lower priority
+
 25. Check whether `proxyVendor = true` could be revived with a
-    `modPostBuild` that strips the binary from the module cache *and*
+    `modPostBuild` that strips the binary from the module cache _and_
     rewrites `go.sum` — probably not worth it, vendor mode is simpler.
 26. Investigate whether `deleteVendor` + a hand-maintained vendor dir
     would be cleaner than the `cp -r` into `./deps/`.
@@ -273,7 +280,7 @@ corrupts the FOD.
     against nested read-only dirs (it is, but worth a comment).
 28. Check if `go-finding-src` is also a private repo needing the same
     relative-replace treatment in other consumers.
-29. Audit whether any *other* LarsArtmann Go module ships committed
+29. Audit whether any _other_ LarsArtmann Go module ships committed
     binaries (run `find ~/.cache/go-build` / module cache for ELF
     files across all lars-packages inputs).
 30. Add a comment in `stripPrebuiltGoBinaries` linking to the upstream
@@ -284,7 +291,7 @@ corrupts the FOD.
 33. Verify the workaround does not break statix/deadnix checks.
 34. Run the full `checks` attrset after the fix.
 35. Confirm the workaround's `postPatch` does not clobber md-go-validator's
-    own `postPatch` (it currently *replaces* `old.postPatch` rather than
+    own `postPatch` (it currently _replaces_ `old.postPatch` rather than
     appending — verify upstream has none, or append).
 36. If upstream md-go-validator has its own `postPatch`, merge via
     `(old.postPatch or "") + ...`.
@@ -339,8 +346,8 @@ corrupts the FOD.
 
 ## Files Changed This Session
 
-| File | Change | Verified? |
-|------|--------|-----------|
+| File                    | Change                                                                                         | Verified?                             |
+| ----------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------- |
 | `lib/lars-packages.nix` | Added `stripPrebuiltGoBinaries` helper; applied to `md-go-validator` with candidate vendorHash | ❌ NOT verified — build not confirmed |
 
 No other files modified. No commits made. AGENTS.md NOT updated (deferred — should have been immediate per memory protocol).

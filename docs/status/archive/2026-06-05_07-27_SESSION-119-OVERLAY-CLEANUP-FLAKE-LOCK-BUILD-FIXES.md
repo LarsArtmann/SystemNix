@@ -174,48 +174,48 @@ PMA's `postPatch` manually copies cmdguard into `_local_deps/`, fixes test impor
 
 ### Critical (Must Do This Session)
 
-| #   | Task                                                | Impact                       | Effort |
-| --- | --------------------------------------------------- | ---------------------------- | ------ |
-| 1   | **Push PMA to GitHub**                              | Unblocks flake.lock revert   | 30 sec |
-| 2   | **Revert SystemNix PMA flake.lock to `git+ssh://`** | Reproducible builds          | 1 min  |
-| 3   | **Run `just switch`**                               | Deploy all changes to evo-x2 | 3 min  |
+| # | Task                                                | Impact                       | Effort |
+| - | --------------------------------------------------- | ---------------------------- | ------ |
+| 1 | **Push PMA to GitHub**                              | Unblocks flake.lock revert   | 30 sec |
+| 2 | **Revert SystemNix PMA flake.lock to `git+ssh://`** | Reproducible builds          | 1 min  |
+| 3 | **Run `just switch`**                               | Deploy all changes to evo-x2 | 3 min  |
 
 ### High Priority (This Week)
 
-| #   | Task                                                                  | Impact                         | Effort |
-| --- | --------------------------------------------------------------------- | ------------------------------ | ------ |
-| 4   | **Verify boot time** — target ~35s                                    | Performance baseline           | 5 min  |
-| 5   | **Test Discord alert channel** via `POST /api/v1/channels/test`       | Alerting reliability           | 5 min  |
-| 6   | **Check SigNoz provision logs** — channel + rule + dashboard creation | Observability verification     | 10 min |
-| 7   | **Flake inputs audit** — 48 inputs, remove stale/unused               | Maintenance burden reduction   | 30 min |
-| 8   | **Create `just status` command** for automated status reports         | DX improvement                 | 1h     |
-| 9   | **Fix art-dupl upstream** — inline templ/runtime vendor hack          | Last remaining Nix-level patch | 30 min |
+| # | Task                                                                  | Impact                         | Effort |
+| - | --------------------------------------------------------------------- | ------------------------------ | ------ |
+| 4 | **Verify boot time** — target ~35s                                    | Performance baseline           | 5 min  |
+| 5 | **Test Discord alert channel** via `POST /api/v1/channels/test`       | Alerting reliability           | 5 min  |
+| 6 | **Check SigNoz provision logs** — channel + rule + dashboard creation | Observability verification     | 10 min |
+| 7 | **Flake inputs audit** — 48 inputs, remove stale/unused               | Maintenance burden reduction   | 30 min |
+| 8 | **Create `just status` command** for automated status reports         | DX improvement                 | 1h     |
+| 9 | **Fix art-dupl upstream** — inline templ/runtime vendor hack          | Last remaining Nix-level patch | 30 min |
 
 ### Medium Priority (Next 2 Weeks)
 
-| #   | Task                                                        | Impact                               | Effort |
-| --- | ----------------------------------------------------------- | ------------------------------------ | ------ |
-| 10  | **Flake lock consistency check** — detect `follows` drift   | Prevent go-filewatcher-type failures | 2h     |
-| 11  | **Improve `just update-vendor-hashes`** — cascade detection | Reduce manual cascade fixing         | 2h     |
-| 12  | **Convert Dozzle from inline to proper service module**     | Code quality, consistency            | 1h     |
-| 13  | **Configure secondary LLM provider for Hermes**             | Reliability                          | 30 min |
-| 14  | **Fix PMA cmdguard v2 handling in mkPreparedSource**        | Eliminate fragile postPatch          | 2h     |
-| 15  | **nix-colors integration** — wire to Home Manager           | Theme consistency                    | 6h     |
-| 16  | **Add per-threshold SigNoz channel routing**                | Alert quality                        | 30 min |
-| 17  | **Hermes git remote access** — SSH deploy key               | Agent functionality                  | 30 min |
+| #  | Task                                                        | Impact                               | Effort |
+| -- | ----------------------------------------------------------- | ------------------------------------ | ------ |
+| 10 | **Flake lock consistency check** — detect `follows` drift   | Prevent go-filewatcher-type failures | 2h     |
+| 11 | **Improve `just update-vendor-hashes`** — cascade detection | Reduce manual cascade fixing         | 2h     |
+| 12 | **Convert Dozzle from inline to proper service module**     | Code quality, consistency            | 1h     |
+| 13 | **Configure secondary LLM provider for Hermes**             | Reliability                          | 30 min |
+| 14 | **Fix PMA cmdguard v2 handling in mkPreparedSource**        | Eliminate fragile postPatch          | 2h     |
+| 15 | **nix-colors integration** — wire to Home Manager           | Theme consistency                    | 6h     |
+| 16 | **Add per-threshold SigNoz channel routing**                | Alert quality                        | 30 min |
+| 17 | **Hermes git remote access** — SSH deploy key               | Agent functionality                  | 30 min |
 
 ### Lower Priority (Next Month)
 
-| #   | Task                                                                    | Impact                        | Effort        |
-| --- | ----------------------------------------------------------------------- | ----------------------------- | ------------- |
-| 18  | **Darwin Home Manager parity** — terminal, editor, theme                | Cross-platform consistency    | 4h            |
-| 19  | **Go submodule discovery automation** in mkPreparedSource               | Prevent manual listing errors | 3h            |
-| 20  | **Provision Raspberry Pi 3** for DNS failover cluster                   | Infrastructure redundancy     | 4h (hardware) |
-| 21  | **Wire Pi 3 as secondary DNS**                                          | DNS resilience                | 2h            |
-| 22  | **Create shared flake-parts template** (mkGoPackage, checks, devshells) | Ecosystem standardization     | 4h            |
-| 23  | **Convert go-auto-upgrade `path:` inputs to SSH URLs**                  | Reproducibility               | 30 min        |
-| 24  | **Photomap deployment** — enable and test CLIP visualization            | Feature completion            | 1h            |
-| 25  | **Minecraft server deployment** — enable and test                       | Fun                           | 30 min        |
+| #  | Task                                                                    | Impact                        | Effort        |
+| -- | ----------------------------------------------------------------------- | ----------------------------- | ------------- |
+| 18 | **Darwin Home Manager parity** — terminal, editor, theme                | Cross-platform consistency    | 4h            |
+| 19 | **Go submodule discovery automation** in mkPreparedSource               | Prevent manual listing errors | 3h            |
+| 20 | **Provision Raspberry Pi 3** for DNS failover cluster                   | Infrastructure redundancy     | 4h (hardware) |
+| 21 | **Wire Pi 3 as secondary DNS**                                          | DNS resilience                | 2h            |
+| 22 | **Create shared flake-parts template** (mkGoPackage, checks, devshells) | Ecosystem standardization     | 4h            |
+| 23 | **Convert go-auto-upgrade `path:` inputs to SSH URLs**                  | Reproducibility               | 30 min        |
+| 24 | **Photomap deployment** — enable and test CLIP visualization            | Feature completion            | 1h            |
+| 25 | **Minecraft server deployment** — enable and test                       | Fun                           | 30 min        |
 
 ---
 

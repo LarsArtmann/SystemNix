@@ -94,11 +94,28 @@ let
     text = ''
       wallpaper_dir="''${1:-$HOME/.local/share/wallpapers}"
 
-      # Wait for DankMaterialShell to be ready
-      for _ in $(seq 1 30); do
-        dms ipc call wallpaper get &>/dev/null && break
-        sleep 1
-      done
+      # Wait for DankMaterialShell IPC to become reachable. DMS can lag well
+      # past its "Started" journal line during startup/restart churn
+      # (2026-08-22 boot: quickshell not serving IPC until +35s).
+      wait_for_dms() {
+        for _ in $(seq 1 60); do
+          out=$(dms ipc call wallpaper get 2>&1)
+          case "$out" in
+            "No running instances"*) ;;
+            *) return 0 ;;
+          esac
+          sleep 1
+        done
+        return 1
+      }
+
+      # DMS never came up: skip CLEANLY. Attempting the set anyway FATALs
+      # ("Error running IPC command: exit status 255") and fails the unit.
+      # The wallpaper stays at DMS default; next login retries the seed.
+      if ! wait_for_dms; then
+        echo "dms-wallpaper-init: DMS IPC not available after 60s — skipping wallpaper seed" >&2
+        exit 0
+      fi
 
       # Respect user choice — only seed if nothing is set
       if dms ipc call wallpaper get &>/dev/null; then
@@ -107,11 +124,14 @@ let
 
       img=$(find -L "$wallpaper_dir" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | shuf -n1)
       if [ -z "$img" ]; then
-        echo "No wallpaper images found in $wallpaper_dir" >&2
-        exit 1
+        echo "WARNING: no wallpaper images found in $wallpaper_dir" >&2
+        exit 0
       fi
 
-      dms ipc call wallpaper set "$img"
+      dms ipc call wallpaper set "$img" || {
+        echo "WARNING: DMS IPC rejected wallpaper set — skipping" >&2
+        exit 0
+      }
     '';
   };
 
@@ -153,10 +173,11 @@ in
 
       spawn-at-startup = [
         {
+          # Plain btop, NOT `sudo btop`: sudo prompts for a password inside the
+          # window and sits there unanswered at every login
           command = [
             "ghostty"
             "-e"
-            "sudo"
             "btop"
           ];
         }
@@ -339,6 +360,13 @@ in
           "Mod+Ctrl+Shift+K".action.move-window-to-monitor-up = { };
           "Mod+Ctrl+Shift+J".action.move-window-to-monitor-down = { };
 
+          # Multiscreen "Now" batch (TV-not-adjacent plan, agreed 2026-08-16):
+          # Tab cycles monitors without needing edge-crossing rebinds (Mod+H/L).
+          # When a 2nd identical LG arrives: clone DP-1 output entry + rebind Mod+H/L.
+          "Mod+Tab".action.focus-monitor-next = { };
+          "Mod+Shift+Tab".action.move-column-to-monitor-next = { };
+          "Mod+Ctrl+Tab".action.move-workspace-to-monitor-next = { };
+
           "Mod+BracketLeft".action.consume-window-into-column = { };
           "Mod+BracketRight".action.expel-window-from-column = { };
           "Mod+R".action.switch-preset-column-width = { };
@@ -370,6 +398,14 @@ in
           "Mod+Page_Down".action.focus-workspace-down = { };
           "Mod+Shift+Page_Up".action.move-column-to-workspace-up = { };
           "Mod+Shift+Page_Down".action.move-column-to-workspace-down = { };
+
+          # Named-workspace jumps — direct access to the 5 routed workspaces
+          # (main/browser/dev on DP-1, chat/media on DP-2)
+          "Mod+M".action.focus-workspace = "main";
+          "Mod+B".action.focus-workspace = "browser";
+          "Mod+E".action.focus-workspace = "dev";
+          "Mod+C".action.focus-workspace = "chat";
+          "Mod+V".action.focus-workspace = "media";
 
           # App launcher — DMS spotlight (replaces rofi drun, which OOM-killed niri)
           "Mod+D".action.spawn = [
@@ -678,8 +714,15 @@ in
                   systemctl suspend
                 '';
               };
+              swayidleDpmsOff = pkgs.writeShellApplication {
+                name = "swayidle-dpms-off";
+                runtimeInputs = [ pkgs.niri-unstable ];
+                text = ''
+                  niri msg action power-off-monitors
+                '';
+              };
             in
-            "${lib.getExe' pkgs.swayidle "swayidle"} -w timeout 43200 ${lib.getExe swayidleSuspend} before-sleep ${lib.getExe dms-lock}";
+            "${lib.getExe' pkgs.swayidle "swayidle"} -w timeout 1200 ${lib.getExe swayidleDpmsOff} timeout 43200 ${lib.getExe swayidleSuspend} before-sleep ${lib.getExe dms-lock}";
           TimeoutStartSec = "10s";
         };
         Install.WantedBy = [ "graphical-session.target" ];

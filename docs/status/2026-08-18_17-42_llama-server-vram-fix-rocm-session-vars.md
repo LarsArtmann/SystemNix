@@ -23,20 +23,21 @@ The fix adds `rocmEnv` to `environment.sessionVariables` and creates a `llama-se
 
 Traced the complete chain:
 
-| Layer | What was checked | Finding |
-|-------|-----------------|---------|
-| `lib/rocm.nix` (lines 17-20) | Where `HSA_OVERRIDE_GFX_VERSION` and `HSA_ENABLE_SDMA` are defined | `env` attrset exists, exported as `rocm.env` |
-| `modules/nixos/services/ai-stack.nix` (line 79) | Ollama service env | `rocmEnv` injected ✓ |
-| `modules/nixos/services/ai-stack.nix` (lines 125-136) | `gpu-python` wrapper | `rocmEnv` injected ✓ |
-| `modules/nixos/services/voice-agents.nix` (line 34) | Whisper Docker container | `HSA_OVERRIDE_GFX_VERSION` injected ✓ |
-| `platforms/nixos/hardware/amd-gpu.nix` (lines 24-28) | Session variables | Only `LIBVA_DRIVER_NAME`, `AMD_VULKAN_ICD`, `MESA_VK_WSI_PRESENT_MODE` — **NO ROCm compute vars** |
-| `platforms/common/home-base.nix` (lines 56-68) | HM session variables | `MANPAGER`, `VISUAL`, `GOPATH`, `GOPRIVATE` — **NO ROCm vars** |
-| `platforms/common/environment/variables.nix` (line 51) | System environment | `EDITOR`, `LANG`, `NIX_PATH` — **NO ROCm vars** |
-| `platforms/nixos/users/home.nix` (lines 262-285) | NixOS user session vars | Build cache paths, `GOTOOLCHAIN` — **NO ROCm vars** |
-| `modules/nixos/services/ai-models.nix` (lines 84-90) | AI model paths | `OLLAMA_MODELS`, `HF_HOME`, `LLAMA_MODEL_PATH` — **NO ROCm vars** |
-| `modules/nixos/services/ai-stack.nix` (lines 139-141) | AI stack session vars | Only `OLLAMA_HOST` — **NO ROCm vars** |
+| Layer                                                  | What was checked                                                   | Finding                                                                                           |
+| ------------------------------------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `lib/rocm.nix` (lines 17-20)                           | Where `HSA_OVERRIDE_GFX_VERSION` and `HSA_ENABLE_SDMA` are defined | `env` attrset exists, exported as `rocm.env`                                                      |
+| `modules/nixos/services/ai-stack.nix` (line 79)        | Ollama service env                                                 | `rocmEnv` injected ✓                                                                              |
+| `modules/nixos/services/ai-stack.nix` (lines 125-136)  | `gpu-python` wrapper                                               | `rocmEnv` injected ✓                                                                              |
+| `modules/nixos/services/voice-agents.nix` (line 34)    | Whisper Docker container                                           | `HSA_OVERRIDE_GFX_VERSION` injected ✓                                                             |
+| `platforms/nixos/hardware/amd-gpu.nix` (lines 24-28)   | Session variables                                                  | Only `LIBVA_DRIVER_NAME`, `AMD_VULKAN_ICD`, `MESA_VK_WSI_PRESENT_MODE` — **NO ROCm compute vars** |
+| `platforms/common/home-base.nix` (lines 56-68)         | HM session variables                                               | `MANPAGER`, `VISUAL`, `GOPATH`, `GOPRIVATE` — **NO ROCm vars**                                    |
+| `platforms/common/environment/variables.nix` (line 51) | System environment                                                 | `EDITOR`, `LANG`, `NIX_PATH` — **NO ROCm vars**                                                   |
+| `platforms/nixos/users/home.nix` (lines 262-285)       | NixOS user session vars                                            | Build cache paths, `GOTOOLCHAIN` — **NO ROCm vars**                                               |
+| `modules/nixos/services/ai-models.nix` (lines 84-90)   | AI model paths                                                     | `OLLAMA_MODELS`, `HF_HOME`, `LLAMA_MODEL_PATH` — **NO ROCm vars**                                 |
+| `modules/nixos/services/ai-stack.nix` (lines 139-141)  | AI stack session vars                                              | Only `OLLAMA_HOST` — **NO ROCm vars**                                                             |
 
 **Conclusion:** `HSA_OVERRIDE_GFX_VERSION` and `HSA_ENABLE_SDMA` were available ONLY to:
+
 - The Ollama systemd service (via `services.ollama.environmentVariables`)
 - The `gpu-python` wrapper script (hardcoded in the wrapper text)
 - The Whisper Docker container (via container env)
@@ -50,12 +51,15 @@ They were **NOT** available to interactive shells. Running `llama-server` manual
 **File:** `modules/nixos/services/ai-stack.nix` (lines 154-162)
 
 Changed `environment.sessionVariables` from:
+
 ```nix
 environment.sessionVariables = {
   OLLAMA_HOST = "127.0.0.1:${toString ports.ollama}";
 };
 ```
+
 to:
+
 ```nix
 environment.sessionVariables = rocmEnv // {
   OLLAMA_HOST = "127.0.0.1:${toString ports.ollama}";
@@ -84,6 +88,7 @@ Usage: `llama-server-rocm -m model.gguf --port 8080` instead of bare `llama-serv
 ### 5. Documentation
 
 **File:** `AGENTS.md` (line 704) — Updated the Platform Constraints / GPU section to document:
+
 - The session-level ROCm env vars
 - Why `HSA_OVERRIDE_GFX_VERSION` is required for gfx1150
 - The `llama-server-rocm` wrapper and when to use it vs bare `llama-server`
@@ -99,6 +104,7 @@ Usage: `llama-server-rocm -m model.gguf --port 8080` instead of bare `llama-serv
 ### 2. Runtime Verification
 
 The following checks were NOT performed (require deploy + model file):
+
 - `rocm-smi` during `llama-server-rocm` inference — should show GPU compute activity
 - `node_amdgpu_mem_info_vram_used_bytes` during inference — should jump from ~500 MB to multiple GB
 - GPUActive in `/proc/meminfo` — should stay LOW (model in VRAM, not GTT)
@@ -161,6 +167,7 @@ This bug was diagnosed **136 days ago** (2026-04-04) with an explicit "NOT START
 ### 2. "Verified at eval time" is NOT "verified"
 
 I verified the fix with `nix eval` and `nix flake check --no-build`. This proves the Nix expression evaluates to the right values. It does **NOT** prove:
+
 - The `llama-server-rocm` wrapper binary builds
 - The `lib.getExe' llama-cpp-rocwmma "llama-server"` path resolves
 - The `LD_LIBRARY_PATH` in the wrapper actually contains the right libs
@@ -291,14 +298,14 @@ The runtime test (`llama-server-rocm -m <model>.gguf` + `rocm-smi`) requires a m
 
 ## Summary
 
-| Category | Count |
-|----------|-------|
-| Fully done | 5 (diagnosis, session vars, wrapper, eval verification, documentation) |
-| Partially done | 3 (deploy, runtime verification, wrapper build verification) |
-| Not started | 5 (visionreviewd, unsloth-studio audit, Gatus, shell alias, shared ROCm module) |
-| Totally fucked up | 0 (nothing broken, 2 unverified claims) |
-| Things to improve | 5 patterns identified |
-| Things to do next | 50 |
-| Questions for user | 3 |
+| Category           | Count                                                                           |
+| ------------------ | ------------------------------------------------------------------------------- |
+| Fully done         | 5 (diagnosis, session vars, wrapper, eval verification, documentation)          |
+| Partially done     | 3 (deploy, runtime verification, wrapper build verification)                    |
+| Not started        | 5 (visionreviewd, unsloth-studio audit, Gatus, shell alias, shared ROCm module) |
+| Totally fucked up  | 0 (nothing broken, 2 unverified claims)                                         |
+| Things to improve  | 5 patterns identified                                                           |
+| Things to do next  | 50                                                                              |
+| Questions for user | 3                                                                               |
 
 The fix is **correct at the Nix expression level** but **unverified at runtime**. The 136-day-old gap is closed in code but not on the machine. Deploy + `rocm-smi` is the real acceptance test.

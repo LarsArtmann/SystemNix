@@ -127,33 +127,33 @@ This is from a **previous session** that was never committed. Contents unknown u
 
 ## F) TOP 25 THINGS TO GET DONE NEXT
 
-| #   | Priority | Task                                                                         | Where     | Effort |
-| --- | -------- | ---------------------------------------------------------------------------- | --------- | ------ |
-| 1   | **P0**   | Review uncommitted fork implementation (main.rs +170/-34, proc.rs 127 lines) | fork      | 30min  |
-| 2   | **P0**   | Commit or trash the fork implementation based on review                      | fork      | 5min   |
-| 3   | **P0**   | Deploy SystemNix to evo-x2 with `just switch`                                | SystemNix | 5min   |
-| 4   | **P0**   | Create TOML config with app mappings (signal→signal-desktop)                 | SystemNix | 10min  |
-| 5   | **P0**   | Test session restore works after deploy                                      | SystemNix | 10min  |
-| 6   | **P1**   | Build fork on evo-x2: `nix build` in fork repo                               | fork      | 10min  |
-| 7   | **P1**   | Test fork terminal state recovery end-to-end                                 | fork      | 30min  |
-| 8   | **P1**   | Stage flake.lock changes in SystemNix                                        | SystemNix | 2min   |
-| 9   | **P1**   | Evaluate fmuehlis fork for workspace fix (PR #2)                             | SystemNix | 15min  |
-| 10  | **P2**   | Clean old session data `~/.local/state/niri-session/`                        | SystemNix | 2min   |
-| 11  | **P2**   | Make TOML config declarative via Home Manager                                | SystemNix | 15min  |
-| 12  | **P2**   | Test crash recovery: kill niri, verify restore                               | SystemNix | 10min  |
-| 13  | **P2**   | Add `single_instance_apps` and `skip_apps` to TOML config                    | SystemNix | 5min   |
-| 14  | **P2**   | Verify backup rotation works after first save interval                       | SystemNix | 5min   |
-| 15  | **P3**   | Complete fork implementation if review found it incomplete                   | fork      | 2-4h   |
-| 16  | **P3**   | Test GPU recovery script (niri-drm-healthcheck → gpu-recovery)               | SystemNix | 15min  |
-| 17  | **P3**   | Add window rules for floating state (old scripts did this)                   | SystemNix | 15min  |
-| 18  | **P3**   | Run `just test` (full build validation)                                      | SystemNix | 30min+ |
-| 19  | **P4**   | Comment on PR #2 about our interest in workspace fix                         | fork      | 5min   |
-| 20  | **P4**   | Run `just format` on SystemNix                                               | SystemNix | 2min   |
-| 21  | **P4**   | Update AGENTS.md with deploy results                                         | SystemNix | 10min  |
-| 22  | **P4**   | Test niri crash recovery end-to-end on evo-x2                                | SystemNix | 10min  |
-| 23  | **P5**   | Review `docs/tonybtw-things-to-consider.md` for actionable items             | SystemNix | 30min  |
-| 24  | **P5**   | Update `docs/niri-session-migration.md` with real deploy results             | SystemNix | 10min  |
-| 25  | **P5**   | Open PR upstream once fork implementation is tested                          | fork      | 15min  |
+| #  | Priority | Task                                                                         | Where     | Effort |
+| -- | -------- | ---------------------------------------------------------------------------- | --------- | ------ |
+| 1  | **P0**   | Review uncommitted fork implementation (main.rs +170/-34, proc.rs 127 lines) | fork      | 30min  |
+| 2  | **P0**   | Commit or trash the fork implementation based on review                      | fork      | 5min   |
+| 3  | **P0**   | Deploy SystemNix to evo-x2 with `just switch`                                | SystemNix | 5min   |
+| 4  | **P0**   | Create TOML config with app mappings (signal→signal-desktop)                 | SystemNix | 10min  |
+| 5  | **P0**   | Test session restore works after deploy                                      | SystemNix | 10min  |
+| 6  | **P1**   | Build fork on evo-x2: `nix build` in fork repo                               | fork      | 10min  |
+| 7  | **P1**   | Test fork terminal state recovery end-to-end                                 | fork      | 30min  |
+| 8  | **P1**   | Stage flake.lock changes in SystemNix                                        | SystemNix | 2min   |
+| 9  | **P1**   | Evaluate fmuehlis fork for workspace fix (PR #2)                             | SystemNix | 15min  |
+| 10 | **P2**   | Clean old session data `~/.local/state/niri-session/`                        | SystemNix | 2min   |
+| 11 | **P2**   | Make TOML config declarative via Home Manager                                | SystemNix | 15min  |
+| 12 | **P2**   | Test crash recovery: kill niri, verify restore                               | SystemNix | 10min  |
+| 13 | **P2**   | Add `single_instance_apps` and `skip_apps` to TOML config                    | SystemNix | 5min   |
+| 14 | **P2**   | Verify backup rotation works after first save interval                       | SystemNix | 5min   |
+| 15 | **P3**   | Complete fork implementation if review found it incomplete                   | fork      | 2-4h   |
+| 16 | **P3**   | Test GPU recovery script (niri-drm-healthcheck → gpu-recovery)               | SystemNix | 15min  |
+| 17 | **P3**   | Add window rules for floating state (old scripts did this)                   | SystemNix | 15min  |
+| 18 | **P3**   | Run `just test` (full build validation)                                      | SystemNix | 30min+ |
+| 19 | **P4**   | Comment on PR #2 about our interest in workspace fix                         | fork      | 5min   |
+| 20 | **P4**   | Run `just format` on SystemNix                                               | SystemNix | 2min   |
+| 21 | **P4**   | Update AGENTS.md with deploy results                                         | SystemNix | 10min  |
+| 22 | **P4**   | Test niri crash recovery end-to-end on evo-x2                                | SystemNix | 10min  |
+| 23 | **P5**   | Review `docs/tonybtw-things-to-consider.md` for actionable items             | SystemNix | 30min  |
+| 24 | **P5**   | Update `docs/niri-session-migration.md` with real deploy results             | SystemNix | 10min  |
+| 25 | **P5**   | Open PR upstream once fork implementation is tested                          | fork      | 15min  |
 
 ---
 

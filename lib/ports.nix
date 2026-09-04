@@ -11,6 +11,10 @@
 
     forgejo = 3000;
 
+    # SMTP submission from local services to the Postfix null-client relay
+    # (modules/nixos/services/mail-relay.nix) — loopback only, never exposed.
+    mail-relay = 25;
+
     homepage = 8082;
 
     immich = 2283;
@@ -99,5 +103,11 @@
     # exclusive per server instance.
     llama-embeddings = 8848;
     llama-reranker = 8849;
+
+    # CV — resume generator + career pipeline server (services.cv-server)
+    cv = 8098;
+
+    # InboxClean — Gmail AI assistant web dashboard (services.inboxclean)
+    inboxclean = 8099;
   };
 }

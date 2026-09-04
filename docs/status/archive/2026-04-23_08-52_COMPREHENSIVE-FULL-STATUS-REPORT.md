@@ -288,33 +288,33 @@ These systems are production-ready, hardened, and working reliably:
 
 ## F) Top 25 Things to Do Next (Ranked by Impact × Effort)
 
-| #   | Task                                                                              | Impact    | Effort | Category        |
-| --- | --------------------------------------------------------------------------------- | --------- | ------ | --------------- |
-| 1   | Wire `preferences.nix` to actual GTK/Qt/cursor/font theming                       | 🔴 High   | Medium | Consistency     |
-| 2   | Move Taskwarrior encryption secret to sops-nix                                    | 🔴 High   | Low    | Security        |
-| 3   | Add standard hardening to `gitea-ensure-repos` service                            | 🟡 Medium | Low    | Security        |
-| 4   | Pin Docker image digests for Twenty, Voice Agents, PhotoMap                       | 🟡 Medium | Low    | Reproducibility |
-| 5   | Fix `core.pager` vs `pager.diff` conflict in git.nix                              | 🟡 Medium | Low    | Quality         |
-| 6   | Add WatchdogSec + memory limit to ComfyUI service                                 | 🟡 Medium | Low    | Reliability     |
-| 7   | Remove dead `ublock-filters.nix` or fix and re-enable                             | 🟡 Medium | Medium | Cleanup         |
-| 8   | Add Authelia SMTP notifications (or push notifications)                           | 🟡 Medium | Medium | UX              |
-| 9   | Replace `nixpkgs-fmt` with `nixfmt-rfc-style` in pre-commit                       | 🟢 Low    | Low    | Modernization   |
-| 10  | Consolidate duplicate justfile recipes (validate/check-nix-syntax, switch/deploy) | 🟢 Low    | Low    | Cleanup         |
-| 11  | Move SSH host IPs to sops secrets                                                 | 🟡 Medium | Medium | Security        |
-| 12  | Add backup rotation to Twenty CRM                                                 | 🟡 Medium | Low    | Reliability     |
-| 13  | Remove or fix `fonts.packages` darwin compatibility                               | 🟡 Medium | Low    | Cross-platform  |
-| 14  | Add `MANPAGER`, `VISUAL` environment variables                                    | 🟢 Low    | Low    | Quality         |
-| 15  | Package ComfyUI as proper Nix derivation                                          | 🔴 High   | High   | Reproducibility |
-| 16  | Trim system monitors from 4 to 2 (`btop` + one other)                             | 🟢 Low    | Low    | Cleanup         |
-| 17  | Fix Fish `$GOPATH` init timing and fake history variables                         | 🟢 Low    | Low    | Quality         |
-| 18  | Add `compinit` tuning and custom completions to zsh                               | 🟢 Low    | Medium | Quality         |
-| 19  | Enhance bash config with history, completion, shopt                               | 🟢 Low    | Medium | Quality         |
-| 20  | Add health check to Hermes service                                                | 🟡 Medium | Low    | Observability   |
-| 21  | Add health check to Voice Agents whisper-asr                                      | 🟡 Medium | Low    | Observability   |
-| 22  | Prune 200+ redundant status reports in docs/status/                               | 🟢 Low    | Low    | Cleanup         |
-| 23  | Add basic NixOS tests for Authelia + Caddy + DNS blocker                          | 🟡 Medium | High   | Testing         |
-| 24  | Clean up unfree allowlist (remove unused entries)                                 | 🟢 Low    | Low    | Cleanup         |
-| 25  | Investigate lldap/Kanidm for unified Authelia + PAM auth                          | 🔴 High   | High   | Architecture    |
+| #  | Task                                                                              | Impact    | Effort | Category        |
+| -- | --------------------------------------------------------------------------------- | --------- | ------ | --------------- |
+| 1  | Wire `preferences.nix` to actual GTK/Qt/cursor/font theming                       | 🔴 High   | Medium | Consistency     |
+| 2  | Move Taskwarrior encryption secret to sops-nix                                    | 🔴 High   | Low    | Security        |
+| 3  | Add standard hardening to `gitea-ensure-repos` service                            | 🟡 Medium | Low    | Security        |
+| 4  | Pin Docker image digests for Twenty, Voice Agents, PhotoMap                       | 🟡 Medium | Low    | Reproducibility |
+| 5  | Fix `core.pager` vs `pager.diff` conflict in git.nix                              | 🟡 Medium | Low    | Quality         |
+| 6  | Add WatchdogSec + memory limit to ComfyUI service                                 | 🟡 Medium | Low    | Reliability     |
+| 7  | Remove dead `ublock-filters.nix` or fix and re-enable                             | 🟡 Medium | Medium | Cleanup         |
+| 8  | Add Authelia SMTP notifications (or push notifications)                           | 🟡 Medium | Medium | UX              |
+| 9  | Replace `nixpkgs-fmt` with `nixfmt-rfc-style` in pre-commit                       | 🟢 Low    | Low    | Modernization   |
+| 10 | Consolidate duplicate justfile recipes (validate/check-nix-syntax, switch/deploy) | 🟢 Low    | Low    | Cleanup         |
+| 11 | Move SSH host IPs to sops secrets                                                 | 🟡 Medium | Medium | Security        |
+| 12 | Add backup rotation to Twenty CRM                                                 | 🟡 Medium | Low    | Reliability     |
+| 13 | Remove or fix `fonts.packages` darwin compatibility                               | 🟡 Medium | Low    | Cross-platform  |
+| 14 | Add `MANPAGER`, `VISUAL` environment variables                                    | 🟢 Low    | Low    | Quality         |
+| 15 | Package ComfyUI as proper Nix derivation                                          | 🔴 High   | High   | Reproducibility |
+| 16 | Trim system monitors from 4 to 2 (`btop` + one other)                             | 🟢 Low    | Low    | Cleanup         |
+| 17 | Fix Fish `$GOPATH` init timing and fake history variables                         | 🟢 Low    | Low    | Quality         |
+| 18 | Add `compinit` tuning and custom completions to zsh                               | 🟢 Low    | Medium | Quality         |
+| 19 | Enhance bash config with history, completion, shopt                               | 🟢 Low    | Medium | Quality         |
+| 20 | Add health check to Hermes service                                                | 🟡 Medium | Low    | Observability   |
+| 21 | Add health check to Voice Agents whisper-asr                                      | 🟡 Medium | Low    | Observability   |
+| 22 | Prune 200+ redundant status reports in docs/status/                               | 🟢 Low    | Low    | Cleanup         |
+| 23 | Add basic NixOS tests for Authelia + Caddy + DNS blocker                          | 🟡 Medium | High   | Testing         |
+| 24 | Clean up unfree allowlist (remove unused entries)                                 | 🟢 Low    | Low    | Cleanup         |
+| 25 | Investigate lldap/Kanidm for unified Authelia + PAM auth                          | 🔴 High   | High   | Architecture    |
 
 ---
 

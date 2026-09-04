@@ -202,33 +202,33 @@ Until `just switch` deploys the hipblaslt fix, all ROCm-dependent services are b
 
 ## F) TOP 25 NEXT ACTIONS
 
-| #   | Action                                                 | Impact      | Effort |
-| --- | ------------------------------------------------------ | ----------- | ------ |
-| 1   | **`git push`** — push 6 commits NOW                    | 🔴 Critical | 0      |
-| 2   | **`just switch`** — deploy hipblaslt fix + all changes | 🔴 Critical | ~45min |
-| 3   | **Verify Ollama works** after rebuild                  | High        | Low    |
-| 4   | **Verify Steam works** after rebuild                   | High        | Low    |
-| 5   | **Verify ComfyUI works** after rebuild                 | High        | Low    |
-| 6   | **Build Pi 3 SD image**                                | High        | Low    |
-| 7   | **Flash SD + boot Pi 3**                               | High        | Low    |
-| 8   | **Test DNS failover**                                  | High        | Low    |
-| 9   | **Verify Caddy block page** serves HTTPS               | Medium      | Low    |
-| 10  | **Check Authelia** SSO status                          | High        | Low    |
-| 11  | **Check SigNoz** collection status                     | Medium      | Low    |
-| 12  | **Archive 30+ stale status docs**                      | Medium      | Low    |
-| 13  | **Drop orphaned Hyprland stash**                       | Low         | 0      |
-| 14  | **Clean 18 remote branches**                           | Low         | Low    |
-| 15  | **Enable `services.udisks2`**                          | High        | Low    |
-| 16  | **File nixpkgs issue** for hipblaslt Tensile bug       | Medium      | Low    |
-| 17  | **Secure VRRP auth** with sops-nix                     | Medium      | Low    |
-| 18  | **Check Photomap** service status                      | Medium      | Low    |
-| 19  | **Verify AMD NPU** with test workload                  | Medium      | Medium |
-| 20  | **Fix pre-commit statix hook**                         | Medium      | Low    |
-| 21  | **Convert niri session restore** to NixOS options      | High        | Medium |
-| 22  | **Create `homeModules` pattern**                       | High        | Medium |
-| 23  | **Add CI pipeline**                                    | High        | Medium |
-| 24  | **Investigate `just test` race**                       | Medium      | Medium |
-| 25  | **Setup Taskwarrior backup** timer                     | Medium      | Low    |
+| #  | Action                                                 | Impact      | Effort |
+| -- | ------------------------------------------------------ | ----------- | ------ |
+| 1  | **`git push`** — push 6 commits NOW                    | 🔴 Critical | 0      |
+| 2  | **`just switch`** — deploy hipblaslt fix + all changes | 🔴 Critical | ~45min |
+| 3  | **Verify Ollama works** after rebuild                  | High        | Low    |
+| 4  | **Verify Steam works** after rebuild                   | High        | Low    |
+| 5  | **Verify ComfyUI works** after rebuild                 | High        | Low    |
+| 6  | **Build Pi 3 SD image**                                | High        | Low    |
+| 7  | **Flash SD + boot Pi 3**                               | High        | Low    |
+| 8  | **Test DNS failover**                                  | High        | Low    |
+| 9  | **Verify Caddy block page** serves HTTPS               | Medium      | Low    |
+| 10 | **Check Authelia** SSO status                          | High        | Low    |
+| 11 | **Check SigNoz** collection status                     | Medium      | Low    |
+| 12 | **Archive 30+ stale status docs**                      | Medium      | Low    |
+| 13 | **Drop orphaned Hyprland stash**                       | Low         | 0      |
+| 14 | **Clean 18 remote branches**                           | Low         | Low    |
+| 15 | **Enable `services.udisks2`**                          | High        | Low    |
+| 16 | **File nixpkgs issue** for hipblaslt Tensile bug       | Medium      | Low    |
+| 17 | **Secure VRRP auth** with sops-nix                     | Medium      | Low    |
+| 18 | **Check Photomap** service status                      | Medium      | Low    |
+| 19 | **Verify AMD NPU** with test workload                  | Medium      | Medium |
+| 20 | **Fix pre-commit statix hook**                         | Medium      | Low    |
+| 21 | **Convert niri session restore** to NixOS options      | High        | Medium |
+| 22 | **Create `homeModules` pattern**                       | High        | Medium |
+| 23 | **Add CI pipeline**                                    | High        | Medium |
+| 24 | **Investigate `just test` race**                       | Medium      | Medium |
+| 25 | **Setup Taskwarrior backup** timer                     | Medium      | Low    |
 
 ---
 

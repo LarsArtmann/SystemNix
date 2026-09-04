@@ -5,7 +5,6 @@
 
 ---
 
-
 ## Executive Summary
 
 System crashed due to **BTRFS metadata ENOSPC** (100% device allocated, 95% metadata used). This single root cause explains all three reported symptoms: the crash (I/O deadlock → watchdog reset), the 3.5 minute initrd (every BTRFS write stalls), and the 4 minute per-generation switching (same I/O stall). Node processes use 2.1 GB RSS (not 40 GB — that was virtual address space). Docker overlay2 on BTRFS is the primary metadata fragmentation driver. Eight Docker containers run, of which 5-6 are doing little to nothing (Twenty CRM has real data but can't connect; Manifest is unhealthy; OpenSEO gets only health-check traffic).

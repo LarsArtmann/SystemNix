@@ -5,7 +5,6 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 1. **Root cause identified (295% CPU on monitor365 agent):** The cloud sync loop's early-flush optimization bypassed the backoff sleep whenever the segment buffer had ≥200 pending events (`flush_event_threshold`). With a massive backlog and the circuit breaker open (1.15M consecutive failures), every operation (upload, sync, config fetch) short-circuited in microseconds. The loop busy-spun at ~16Hz, consuming ~3 CPU cores for 22+ hours straight.
@@ -68,6 +67,7 @@
 ## f) Up to 50 Things to Do Next
 
 ### Critical (blocking — do first)
+
 1. Push monitor365 commit `750ff4c10` to `origin/master`
 2. `nix flake lock --update-input monitor365` to pick up the pushed fix
 3. Verify `nix build .#monitor365` succeeds (libspa-sys bindgen risk)
@@ -78,6 +78,7 @@
 8. Verify go-commit `fd9a9664` contains the `DefaultChainFromEnv()` fix (`d1d013d2` or later)
 
 ### High Priority (sync root cause)
+
 9. Investigate why `GET /api/v1/devices/evo-x2/config` returns 404 — device not registered on server
 10. Investigate why `GET /api/v1/enrollment` returns 429 — rate limiter too aggressive?
 11. Check if the monitor365 server's device table has `evo-x2` registered
@@ -88,6 +89,7 @@
 16. Check if the server's rate limiter needs tuning for local agent traffic
 
 ### Medium Priority (hardening)
+
 17. Add a Gatus alert for monitor365 agent CPU usage (alert when >50% for 5min)
 18. Add a Gatus alert for monitor365 circuit breaker state (alert when open >1h)
 19. Add an upstream metric: `cloud_sync_busy_loop_detected` (detect when CB open + buffer full)
@@ -98,6 +100,7 @@
 24. Add `monitor365 agent health` CLI command that reports CB state, buffer size, last sync time
 
 ### Flake Hygiene
+
 25. Audit ALL LarsArtmann flake inputs for unnecessary pins (search for hardcoded commit hashes)
 26. Audit all `refs/tags/*` pins — verify the fix has landed on master before unpinning
 27. Consider a CI check that builds all LarsArtmann-dependent packages on input bumps
@@ -107,6 +110,7 @@
 31. Verify all `inputs.*.follows` chains are correct after the input changes
 
 ### Documentation
+
 32. Update AGENTS.md monitor365 libspa-sys gotcha: "unpinned to master, build verified on <date>"
 33. Update AGENTS.md go-commit gotcha: "unpinned to master after verifying fix"
 34. Add AGENTS.md gotcha: "circuit breaker + early-flush busy-loop" root cause + fix
@@ -114,6 +118,7 @@
 36. Document the `should_early_flush` function and its rationale in cloud_sync.rs
 
 ### Monitoring & Observability
+
 37. Add Prometheus metric: `cloud_sync_circuit_breaker_state` (0=closed, 1=open, 2=half-open)
 38. Add Prometheus metric: `cloud_sync_cpu_burn_detected` (boolean: CB open AND buffer > threshold)
 39. Add Gatus check: monitor365 agent `/metrics` endpoint health (port 9191)
@@ -122,6 +127,7 @@
 42. Add a system-health collector for monitor365 sync failure duration
 
 ### Upstream Improvements
+
 43. Make circuit breaker `reset_timeout` configurable via remote config
 44. Add exponential backoff to the enrollment endpoint (currently spams 429s)
 45. Add server-side device auto-registration on first sync (eliminate the 404 → re-register cycle)

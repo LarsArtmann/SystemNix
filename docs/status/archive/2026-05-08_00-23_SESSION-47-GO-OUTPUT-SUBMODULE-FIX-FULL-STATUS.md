@@ -261,33 +261,33 @@ The `dns-failover.nix` module and `rpi3-dns` NixOS config exist but Pi 3 hardwar
 
 ## F) Top #25 Things We Should Get Done Next
 
-| #   | Priority | Task                                                                   | Impact   | Effort  |
-| --- | -------- | ---------------------------------------------------------------------- | -------- | ------- |
-| 1   | **P0**   | **Run `just clean`** — disk at ~90%, imminent build failure risk       | Critical | 5 min   |
-| 2   | **P0**   | **Deploy the fix** — `just switch` to apply file-and-image-renamer fix | Critical | 10 min  |
-| 3   | **P0**   | **Configure Gatus alerting** (Discord webhook)                         | High     | 15 min  |
-| 4   | P1       | **Add automated Nix GC timer** (weekly, 7d threshold)                  | High     | 15 min  |
-| 5   | P1       | **Add whisper-asr + livekit Gatus endpoints**                          | Medium   | 10 min  |
-| 6   | P1       | **Create ADR-001: Go workspace sub-module Nix pattern**                | Medium   | 20 min  |
-| 7   | P1       | **Extract Go sub-module helper function** for `go-output`              | Medium   | 20 min  |
-| 8   | P1       | **Archive old status docs** — keep latest 3, archive rest              | Low      | 10 min  |
-| 9   | P2       | **Create `serviceDefaultsUser` variant** (no mkForce)                  | Low      | 15 min  |
-| 10  | P2       | **Add Docker health check** to service-health-check script             | Medium   | 10 min  |
-| 11  | P2       | **Fix photomap podman permissions** — investigate and fix              | Medium   | 1 hour  |
-| 12  | P2       | **Add `status.home.lan` link** to Homepage dashboard                   | Low      | 10 min  |
-| 13  | P2       | **Create ADR-002: GPU headroom for niri (memory fraction)**            | Low      | 15 min  |
-| 14  | P2       | **Clean up stale DNS cert files** in `platforms/nixos/secrets/`        | Low      | 5 min   |
-| 15  | P2       | **Add disk-monitor → auto-cleanup integration** at 85%                 | Medium   | 30 min  |
-| 16  | P3       | **Consolidate flake.nix overlays** to separate file                    | Medium   | 30 min  |
-| 17  | P3       | **Refactor signoz port options** to top-level serviceTypes             | Low      | 20 min  |
-| 18  | P3       | **BTRFS snapshot health verification** — Timeshift monitoring          | Medium   | 30 min  |
-| 19  | P3       | **Backup restorability test** — verify Immich or Gitea backup          | Medium   | 30 min  |
-| 20  | P3       | **Pi 3 DNS failover provisioning** — build and flash SD card           | High     | 2 hours |
-| 21  | P3       | **Docker module hardening** — add `harden {}` to default.nix           | Low      | 10 min  |
-| 22  | P4       | **Add `just doctor` command** — comprehensive system diagnostics       | Low      | 30 min  |
-| 23  | P4       | **Evaluate `deploy.rs`** for remote Pi 3 deployment                    | Medium   | 1 hour  |
-| 24  | P4       | **Add SigNoz alerts** for disk, service failures, OOM                  | Medium   | 1 hour  |
-| 25  | P4       | **Create ADR-003: DNS CA embedding strategy**                          | Low      | 15 min  |
+| #  | Priority | Task                                                                   | Impact   | Effort  |
+| -- | -------- | ---------------------------------------------------------------------- | -------- | ------- |
+| 1  | **P0**   | **Run `just clean`** — disk at ~90%, imminent build failure risk       | Critical | 5 min   |
+| 2  | **P0**   | **Deploy the fix** — `just switch` to apply file-and-image-renamer fix | Critical | 10 min  |
+| 3  | **P0**   | **Configure Gatus alerting** (Discord webhook)                         | High     | 15 min  |
+| 4  | P1       | **Add automated Nix GC timer** (weekly, 7d threshold)                  | High     | 15 min  |
+| 5  | P1       | **Add whisper-asr + livekit Gatus endpoints**                          | Medium   | 10 min  |
+| 6  | P1       | **Create ADR-001: Go workspace sub-module Nix pattern**                | Medium   | 20 min  |
+| 7  | P1       | **Extract Go sub-module helper function** for `go-output`              | Medium   | 20 min  |
+| 8  | P1       | **Archive old status docs** — keep latest 3, archive rest              | Low      | 10 min  |
+| 9  | P2       | **Create `serviceDefaultsUser` variant** (no mkForce)                  | Low      | 15 min  |
+| 10 | P2       | **Add Docker health check** to service-health-check script             | Medium   | 10 min  |
+| 11 | P2       | **Fix photomap podman permissions** — investigate and fix              | Medium   | 1 hour  |
+| 12 | P2       | **Add `status.home.lan` link** to Homepage dashboard                   | Low      | 10 min  |
+| 13 | P2       | **Create ADR-002: GPU headroom for niri (memory fraction)**            | Low      | 15 min  |
+| 14 | P2       | **Clean up stale DNS cert files** in `platforms/nixos/secrets/`        | Low      | 5 min   |
+| 15 | P2       | **Add disk-monitor → auto-cleanup integration** at 85%                 | Medium   | 30 min  |
+| 16 | P3       | **Consolidate flake.nix overlays** to separate file                    | Medium   | 30 min  |
+| 17 | P3       | **Refactor signoz port options** to top-level serviceTypes             | Low      | 20 min  |
+| 18 | P3       | **BTRFS snapshot health verification** — Timeshift monitoring          | Medium   | 30 min  |
+| 19 | P3       | **Backup restorability test** — verify Immich or Gitea backup          | Medium   | 30 min  |
+| 20 | P3       | **Pi 3 DNS failover provisioning** — build and flash SD card           | High     | 2 hours |
+| 21 | P3       | **Docker module hardening** — add `harden {}` to default.nix           | Low      | 10 min  |
+| 22 | P4       | **Add `just doctor` command** — comprehensive system diagnostics       | Low      | 30 min  |
+| 23 | P4       | **Evaluate `deploy.rs`** for remote Pi 3 deployment                    | Medium   | 1 hour  |
+| 24 | P4       | **Add SigNoz alerts** for disk, service failures, OOM                  | Medium   | 1 hour  |
+| 25 | P4       | **Create ADR-003: DNS CA embedding strategy**                          | Low      | 15 min  |
 
 ---
 

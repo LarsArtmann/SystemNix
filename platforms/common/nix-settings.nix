@@ -17,7 +17,12 @@
       fallback = true;
       http-connections = 25;
       log-lines = 25;
-      max-free = lib.mkDefault 100000000000; # 100GB — stop GC when 100GB free reached
+      # 30G GC stop threshold. At the old 100G the stop condition could NEVER
+      # be reached on the ~95%-full evo-x2 root, so every GC run deleted
+      # through the WHOLE store in one QLC I/O storm (2026-08-21 XFS/nix
+      # advisory, docs/status/2026-08-21_21-16 §e.1). 30G still reclaims
+      # ample headroom (min-free triggers at 5G) while bounding the sweep.
+      max-free = lib.mkDefault 30000000000;
       min-free = lib.mkDefault 5000000000; # 5GB — trigger GC when only 5GB free
       sandbox = lib.mkDefault (!pkgs.stdenv.hostPlatform.isDarwin);
       # Force IPv4-only binary caches

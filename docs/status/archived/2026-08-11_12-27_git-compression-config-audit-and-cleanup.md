@@ -115,6 +115,7 @@
 > **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
 
 ### Direct follow-ups from this session
+
 1. Add a comment in `git.nix` explaining why compression was removed (prevent regression)
 2. Decide whether to keep or revert the `flake.nix` formatter reformat (554-line change)
 3. Check per-repo `.git/config` files for local `compression = 9` overrides
@@ -122,6 +123,7 @@
 5. Run `git repack -a -d` on large repos (SystemNix, DiscordSync) to decompress old level-9 packs
 
 ### Git config improvements
+
 6. Evaluate `git maintenance` (git 2.55) as a replacement for `gc.auto` heuristics
 7. Consider `core.preloadIndex = true` (parallel index operations — big speedup on SSDs)
 8. Consider `core.fsync.objectFiles = true` (crash safety for important repos — costs speed)
@@ -134,6 +136,7 @@
 15. Consider `protocol.version = 2` (default in 2.55, but verify)
 
 ### Config hygiene across the codebase
+
 16. Audit other Home Manager config files for dead defaults (settings that match upstream defaults)
 17. Run a "dead config" sweep on all `platforms/common/programs/*.nix` files
 18. Audit `http.postBuffer = 524288000` (500MB — is this still needed? Was for large pushes)
@@ -141,16 +144,19 @@
 20. Check if `credential.helper` libsecret works correctly on NixOS (known to be flaky)
 
 ### Process improvements
+
 21. Add a pre-commit or CI check that flags git config settings matching git defaults (dead config detection)
 22. Create a "config audit" script that diffs HM-managed config against upstream defaults
 23. Add `nix fmt` as a targeted step in the deploy script (not whole-repo)
 
 ### Documentation
+
 24. Update AGENTS.md if it references git compression (checked — it does not, but worth confirming)
 25. Document the git config philosophy in a `docs/` page (why defaults are preferred over tuning)
 26. Update `docs/status/archive/2026-07-30_15-53_git-insteadOf-restore.md` which incorrectly says `gc.auto = 6700` is "slightly lower than the default 6700" — it IS the default
 
 ### Broader SystemNix improvements (noticed during this session)
+
 27. The `signoz.nix` file has uncommitted changes (`background_pool_size`, `max_threads`) — these need to be committed or investigated
 28. The `security-hardening.nix` file has pre-existing uncommitted changes — investigate
 29. `flake.nix` formatting drift suggests `nix fmt` hasn't been run recently on the full repo — consider a CI formatting check

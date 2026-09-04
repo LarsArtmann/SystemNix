@@ -129,33 +129,33 @@ Nothing catastrophically broken. However:
 
 ## F) TOP 25 THINGS TO GET DONE NEXT
 
-| #   | Priority | Task                                                                                            | Effort       |
-| --- | -------- | ----------------------------------------------------------------------------------------------- | ------------ |
-| 1   | **P0**   | Deploy to evo-x2 with `just switch`                                                             | 5min         |
-| 2   | **P0**   | Verify niri-session-manager actually restores windows                                           | 5min         |
-| 3   | **P0**   | Create TOML config with app mappings (signal→signal-desktop, etc.)                              | 10min        |
-| 4   | **P1**   | Make TOML config declarative via Home Manager `xdg.configFile`                                  | 15min        |
-| 5   | **P1**   | Clean up old session data at `~/.local/state/niri-session/`                                     | 2min         |
-| 6   | **P1**   | Test GPU recovery script during actual DRM corruption                                           | Event-driven |
-| 7   | **P1**   | Consider using `fmuehlis/niri-session-manager` fork (has workspace name fix) until PR #2 merges | 10min        |
-| 8   | **P2**   | File PR or comment on niri-session-manager for PID resolution                                   | 30min        |
-| 9   | **P2**   | Port kitty /proc walking logic into niri-session-manager as Rust contribution                   | 2-4h         |
-| 10  | **P2**   | Test `just session-status` and `just session-restore` after deploy                              | 5min         |
-| 11  | **P2**   | Verify backup rotation works (check `~/.local/share/niri-session-manager/*.bak`)                | 5min         |
-| 12  | **P3**   | Add `single_instance_apps` to TOML config (firefox, signal-desktop, etc.)                       | 5min         |
-| 13  | **P3**   | Add `skip_apps` to TOML config (apps that shouldn't be restored)                                | 5min         |
-| 14  | **P3**   | Update AGENTS.md to reflect GPU recovery system                                                 | 10min        |
-| 15  | **P3**   | Test niri crash recovery end-to-end (kill niri, verify restore on restart)                      | 10min        |
-| 16  | **P3**   | Review `docs/tonybtw-things-to-consider.md` for actionable items                                | 30min        |
-| 17  | **P4**   | Commit `docs/cybersecurity-tools-evo-x2.md`                                                     | 2min         |
-| 18  | **P4**   | Commit or trash `docs/tonybtw-things-to-consider.md`                                            | 2min         |
-| 19  | **P4**   | Test DRM healthcheck + gpu-recovery integration                                                 | 15min        |
-| 20  | **P4**   | Run `just format` on all changed files                                                          | 2min         |
-| 21  | **P5**   | Update `docs/niri-session-migration.md` with deploy results                                     | 10min        |
-| 22  | **P5**   | Consider window rules for floating state (old scripts did this, new tool doesn't)               | 15min        |
-| 23  | **P5**   | Investigate niri IPC `MoveWindowToMonitor` from PR #2 for multi-monitor restore                 | 30min        |
-| 24  | **P5**   | Audit all systemd user services for session integration (awww, swayidle, cliphist)              | 15min        |
-| 25  | **P5**   | Run `just test` (full build validation) to verify everything compiles                           | 30min+       |
+| #  | Priority | Task                                                                                            | Effort       |
+| -- | -------- | ----------------------------------------------------------------------------------------------- | ------------ |
+| 1  | **P0**   | Deploy to evo-x2 with `just switch`                                                             | 5min         |
+| 2  | **P0**   | Verify niri-session-manager actually restores windows                                           | 5min         |
+| 3  | **P0**   | Create TOML config with app mappings (signal→signal-desktop, etc.)                              | 10min        |
+| 4  | **P1**   | Make TOML config declarative via Home Manager `xdg.configFile`                                  | 15min        |
+| 5  | **P1**   | Clean up old session data at `~/.local/state/niri-session/`                                     | 2min         |
+| 6  | **P1**   | Test GPU recovery script during actual DRM corruption                                           | Event-driven |
+| 7  | **P1**   | Consider using `fmuehlis/niri-session-manager` fork (has workspace name fix) until PR #2 merges | 10min        |
+| 8  | **P2**   | File PR or comment on niri-session-manager for PID resolution                                   | 30min        |
+| 9  | **P2**   | Port kitty /proc walking logic into niri-session-manager as Rust contribution                   | 2-4h         |
+| 10 | **P2**   | Test `just session-status` and `just session-restore` after deploy                              | 5min         |
+| 11 | **P2**   | Verify backup rotation works (check `~/.local/share/niri-session-manager/*.bak`)                | 5min         |
+| 12 | **P3**   | Add `single_instance_apps` to TOML config (firefox, signal-desktop, etc.)                       | 5min         |
+| 13 | **P3**   | Add `skip_apps` to TOML config (apps that shouldn't be restored)                                | 5min         |
+| 14 | **P3**   | Update AGENTS.md to reflect GPU recovery system                                                 | 10min        |
+| 15 | **P3**   | Test niri crash recovery end-to-end (kill niri, verify restore on restart)                      | 10min        |
+| 16 | **P3**   | Review `docs/tonybtw-things-to-consider.md` for actionable items                                | 30min        |
+| 17 | **P4**   | Commit `docs/cybersecurity-tools-evo-x2.md`                                                     | 2min         |
+| 18 | **P4**   | Commit or trash `docs/tonybtw-things-to-consider.md`                                            | 2min         |
+| 19 | **P4**   | Test DRM healthcheck + gpu-recovery integration                                                 | 15min        |
+| 20 | **P4**   | Run `just format` on all changed files                                                          | 2min         |
+| 21 | **P5**   | Update `docs/niri-session-migration.md` with deploy results                                     | 10min        |
+| 22 | **P5**   | Consider window rules for floating state (old scripts did this, new tool doesn't)               | 15min        |
+| 23 | **P5**   | Investigate niri IPC `MoveWindowToMonitor` from PR #2 for multi-monitor restore                 | 30min        |
+| 24 | **P5**   | Audit all systemd user services for session integration (awww, swayidle, cliphist)              | 15min        |
+| 25 | **P5**   | Run `just test` (full build validation) to verify everything compiles                           | 30min+       |
 
 ---
 

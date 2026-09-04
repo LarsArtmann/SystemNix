@@ -152,33 +152,33 @@ None — all identified improvements were fully implemented.
 
 ## F) TOP 25 NEXT ACTIONS 🎯
 
-| #   | Priority | Action                                                                       | Est. | Blocked?  |
-| --- | -------- | ---------------------------------------------------------------------------- | ---- | --------- |
-| 1   | P0       | Fix deadnix failures (unused args in 5 files)                                | 10m  | No        |
-| 2   | P0       | Push commits to remote (`git push`)                                          | 1m   | No        |
-| 3   | P1       | Add Docker prune systemd timer (weekly)                                      | 15m  | No        |
-| 4   | P1       | Add `onFailure` to rpi3 crush-update-providers service                       | 5m   | No        |
-| 5   | P1       | Add config backup systemd timer (daily)                                      | 15m  | No        |
-| 6   | P1       | Wire backup rotation into backup service                                     | 10m  | No        |
-| 7   | P2       | Fix storage-cleanup.sh for NixOS (Linux paths)                               | 15m  | No        |
-| 8   | P2       | Document timer inventory in AGENTS.md                                        | 10m  | No        |
-| 9   | P2       | Deploy to evo-x2 and verify `systemctl list-timers --all`                    | 5m   | Needs SSH |
-| 10  | P2       | Verify `notify-failure@` actually works on evo-x2                            | 5m   | Needs SSH |
-| 11  | P2       | Add `fstrim` timer verification (NixOS managed, check schedule)              | 5m   | Needs SSH |
-| 12  | P3       | Add Go binary auto-update timer (weekly, low priority)                       | 10m  | No        |
-| 13  | P3       | Consider centralizing timers into one module                                 | 30m  | No        |
-| 14  | P3       | Add monitoring for timer freshness (alert if timer hasn't fired in N days)   | 20m  | No        |
-| 15  | P3       | Audit `nix.gc` options (weekly is fine, but consider daily for large stores) | 5m   | No        |
-| 16  | P3       | Verify Gitea dump timer actually fires (`systemctl list-timers gitea-dump`)  | 5m   | Needs SSH |
-| 17  | P3       | Check if `smartd` self-tests generate notifications on failure               | 5m   | No        |
-| 18  | P4       | Add `just timers` command to justfile (list all timers + status)             | 10m  | No        |
-| 19  | P4       | Add `just timer-status` command showing last run + next run                  | 10m  | Needs SSH |
-| 20  | P4       | Consider systemd watch dog for long-running services                         | 20m  | No        |
-| 21  | P4       | Add `ExecStopPost` to backup services for success logging                    | 10m  | No        |
-| 22  | P4       | Evaluate migrating Gitea from SQLite to PostgreSQL for better backup story   | 30m  | No        |
-| 23  | P5       | Add ClickHouse/SigNoz backup timer                                           | 20m  | No        |
-| 24  | P5       | Investigate Ollama model cleanup/pruning timer                               | 15m  | No        |
-| 25  | P5       | Consider `systemd-analyze verify` in CI for timer/unit file validation       | 15m  | No        |
+| #  | Priority | Action                                                                       | Est. | Blocked?  |
+| -- | -------- | ---------------------------------------------------------------------------- | ---- | --------- |
+| 1  | P0       | Fix deadnix failures (unused args in 5 files)                                | 10m  | No        |
+| 2  | P0       | Push commits to remote (`git push`)                                          | 1m   | No        |
+| 3  | P1       | Add Docker prune systemd timer (weekly)                                      | 15m  | No        |
+| 4  | P1       | Add `onFailure` to rpi3 crush-update-providers service                       | 5m   | No        |
+| 5  | P1       | Add config backup systemd timer (daily)                                      | 15m  | No        |
+| 6  | P1       | Wire backup rotation into backup service                                     | 10m  | No        |
+| 7  | P2       | Fix storage-cleanup.sh for NixOS (Linux paths)                               | 15m  | No        |
+| 8  | P2       | Document timer inventory in AGENTS.md                                        | 10m  | No        |
+| 9  | P2       | Deploy to evo-x2 and verify `systemctl list-timers --all`                    | 5m   | Needs SSH |
+| 10 | P2       | Verify `notify-failure@` actually works on evo-x2                            | 5m   | Needs SSH |
+| 11 | P2       | Add `fstrim` timer verification (NixOS managed, check schedule)              | 5m   | Needs SSH |
+| 12 | P3       | Add Go binary auto-update timer (weekly, low priority)                       | 10m  | No        |
+| 13 | P3       | Consider centralizing timers into one module                                 | 30m  | No        |
+| 14 | P3       | Add monitoring for timer freshness (alert if timer hasn't fired in N days)   | 20m  | No        |
+| 15 | P3       | Audit `nix.gc` options (weekly is fine, but consider daily for large stores) | 5m   | No        |
+| 16 | P3       | Verify Gitea dump timer actually fires (`systemctl list-timers gitea-dump`)  | 5m   | Needs SSH |
+| 17 | P3       | Check if `smartd` self-tests generate notifications on failure               | 5m   | No        |
+| 18 | P4       | Add `just timers` command to justfile (list all timers + status)             | 10m  | No        |
+| 19 | P4       | Add `just timer-status` command showing last run + next run                  | 10m  | Needs SSH |
+| 20 | P4       | Consider systemd watch dog for long-running services                         | 20m  | No        |
+| 21 | P4       | Add `ExecStopPost` to backup services for success logging                    | 10m  | No        |
+| 22 | P4       | Evaluate migrating Gitea from SQLite to PostgreSQL for better backup story   | 30m  | No        |
+| 23 | P5       | Add ClickHouse/SigNoz backup timer                                           | 20m  | No        |
+| 24 | P5       | Investigate Ollama model cleanup/pruning timer                               | 15m  | No        |
+| 25 | P5       | Consider `systemd-analyze verify` in CI for timer/unit file validation       | 15m  | No        |
 
 ---
 

@@ -12,11 +12,11 @@
 
 ## Device
 
-| Partition | FSType | Size | Mount | Used |
-|---|---|---|---|---|
-| sdf1 | vfat (systemd-boot ESP) | 511M | `/tmp/sdf1-mount` (ro) | 39M (8%) |
-| sdf2 | ext4 | 435G | `/tmp/sdf-mount` (ro) | 83G (21%) |
-| sdf3 | swap | 33.9G | — (inactive) | — |
+| Partition | FSType                  | Size  | Mount                  | Used      |
+| --------- | ----------------------- | ----- | ---------------------- | --------- |
+| sdf1      | vfat (systemd-boot ESP) | 511M  | `/tmp/sdf1-mount` (ro) | 39M (8%)  |
+| sdf2      | ext4                    | 435G  | `/tmp/sdf-mount` (ro)  | 83G (21%) |
+| sdf3      | swap                    | 33.9G | — (inactive)           | —         |
 
 ## sdf2 content (old private-cloud NixOS rootfs, dates Apr–Dec 2025)
 

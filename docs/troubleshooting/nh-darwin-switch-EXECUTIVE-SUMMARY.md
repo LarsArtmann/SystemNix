@@ -308,8 +308,8 @@ sudo "$SYSTEM_PATH/activate"
 | Solution                       | Complexity | Reliability | Features | Temp Issue | Recommendation      |
 | ------------------------------ | ---------- | ----------- | -------- | ---------- | ------------------- |
 | `just switch` (darwin-rebuild) | Low        | ✅ HIGH     | Full     | ✅ FIXED   | ⭐ **USE THIS**     |
-| nh with NH_PRESERVE_ENV        | Low        | ⚠️ MEDIUM   | Full     | ❌ BROKEN  | Try if nh essential |
-| sudo -H -E                     | Low        | ⚠️ MEDIUM   | Full     | ✅ FIXED   | Test first          |
+| nh with NH_PRESERVE_ENV        | Low        | ⚠️ MEDIUM    | Full     | ❌ BROKEN  | Try if nh essential |
+| sudo -H -E                     | Low        | ⚠️ MEDIUM    | Full     | ✅ FIXED   | Test first          |
 | nixos-unified activate         | Medium     | ✅ HIGH     | Medium   | ✅ FIXED   | Consider            |
 | deploy-rs                      | High       | ✅ HIGH     | Full     | ✅ FIXED   | Alternative         |
 | colmena                        | High       | ✅ HIGH     | Full     | ✅ FIXED   | NixOS focus         |

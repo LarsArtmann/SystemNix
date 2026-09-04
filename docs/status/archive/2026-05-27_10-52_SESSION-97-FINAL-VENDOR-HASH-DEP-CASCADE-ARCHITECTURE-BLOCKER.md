@@ -94,13 +94,13 @@ All pushed to master (3 commits: `cacd9ec9`, `87a5a093`, `4400c74c`).
 
 ## C) Not Started
 
-| #   | Item                                         | Why not                               |
-| --- | -------------------------------------------- | ------------------------------------- |
-| 1   | Auto-detect submodules in `mkPreparedSource` | Requires `go-nix-helpers` redesign    |
-| 2   | Add validation to `mkPreparedSource`         | Same                                  |
-| 3   | Deduplicate 6× `go-nix-helpers` inputs       | Needs `follows` in each consumer repo |
-| 4   | CI check for overlay package builds          | New infrastructure                    |
-| 5   | `just check-vendor` recipe                   | Tooling improvement                   |
+| # | Item                                         | Why not                               |
+| - | -------------------------------------------- | ------------------------------------- |
+| 1 | Auto-detect submodules in `mkPreparedSource` | Requires `go-nix-helpers` redesign    |
+| 2 | Add validation to `mkPreparedSource`         | Same                                  |
+| 3 | Deduplicate 6× `go-nix-helpers` inputs       | Needs `follows` in each consumer repo |
+| 4 | CI check for overlay package builds          | New infrastructure                    |
+| 5 | `just check-vendor` recipe                   | Tooling improvement                   |
 
 ---
 
@@ -138,33 +138,33 @@ The `vendorHash` kept changing because the local nixpkgs context differs from Sy
 
 ## F) Top 25 Next Actions
 
-| #   | Action                                                                                                    | Impact             | Effort  | Status      |
-| --- | --------------------------------------------------------------------------------------------------------- | ------------------ | ------- | ----------- |
-| 1   | Publish git tags for `project-discovery-sdk` submodules (`detection/v0.0.0`, `discovery/v0.0.0`)          | 🔴 Unblocks PMA    | 5 min   | Not started |
-| 2   | Publish git tags for `go-output` submodules (`delimited/v0.0.0`, `markup/v0.0.0`, `serialization/v0.0.0`) | 🔴 Unblocks PMA    | 5 min   | Not started |
-| 3   | Add explicit `require` lines in PMA go.mod for submodules + update vendorHash                             | 🔴 Unblocks PMA    | 10 min  | Not started |
-| 4   | Remove `overrideModAttrs` from PMA after tags fix                                                         | 🔴 Unblocks PMA    | 2 min   | Not started |
-| 5   | Verify PMA builds in SystemNix after above                                                                | 🔴 Unblocks system | 5 min   | Not started |
-| 6   | Auto-detect submodules in `mkPreparedSource` (scan for `go.mod` in deps)                                  | 🟡 Prevention      | 30 min  | Not started |
-| 7   | Add validation to `mkPreparedSource` (check replace coverage)                                             | 🟡 Prevention      | 20 min  | Not started |
-| 8   | Deduplicate `go-nix-helpers` inputs (use `follows`)                                                       | 🟡 Cleanup         | 20 min  | Not started |
-| 9   | Remove `sort` from go-output subModules in all repos that still have it                                   | 🟡 Correctness     | 10 min  | Not started |
-| 10  | Fix `file-and-image-renamer` stale vendorHash                                                             | 🟡 Pre-existing    | 5 min   | Not started |
-| 11  | Audit `go-filewatcher` for `go mod tidy` in apps                                                          | 🟡 Correctness     | 5 min   | Not started |
-| 12  | Centralize go-output version across all consumers                                                         | 🟢 Consistency     | 15 min  | Not started |
-| 13  | Add CI check: `nix build` for each overlay package                                                        | 🟢 Prevention      | 30 min  | Not started |
-| 14  | Add `just check-vendor` recipe to SystemNix                                                               | 🟢 Tooling         | 10 min  | Not started |
-| 15  | Fix mr-sync vendorHash nixpkgs-context dependency                                                         | 🟢 Robustness      | 15 min  | Not started |
-| 16  | Review `go-finding` self.rev version usage (appears twice in flake.nix)                                   | 🟢 Correctness     | 5 min   | Not started |
-| 17  | Tag all Go submodule repos with `v0.0.0` as standard practice                                             | 🟢 Prevention      | 30 min  | Not started |
-| 18  | Consider `gomod2nix` as alternative to manual vendorHash                                                  | 🟢 Future          | 60 min  | Not started |
-| 19  | Document safe overrideModAttrs patterns (art-dupl dummy module) in AGENTS.md                              | 🟢 Documentation   | 5 min   | Not started |
-| 20  | Check if `gogenfilter` subModules are needed in any consumer                                              | 🟢 Correctness     | 10 min  | Not started |
-| 21  | Update PMA flake.lock for latest project-discovery-sdk after tags                                         | 🟢 Hygiene         | 2 min   | Not started |
-| 22  | Review all repos for `go-output` pin consistency (`ref=master` vs pinned rev)                             | 🟢 Consistency     | 10 min  | Not started |
-| 23  | Add `gogenfilter` submodule tags if it has sub-packages                                                   | 🟢 Prevention      | 5 min   | Not started |
-| 24  | Consider `go.work` based Nix build instead of mkPreparedSource                                            | 🟢 Future          | 120 min | Not started |
-| 25  | Create ADR for mkPreparedSource + buildGoModule + submodules architecture                                 | 🟢 Documentation   | 15 min  | Not started |
+| #  | Action                                                                                                    | Impact             | Effort  | Status      |
+| -- | --------------------------------------------------------------------------------------------------------- | ------------------ | ------- | ----------- |
+| 1  | Publish git tags for `project-discovery-sdk` submodules (`detection/v0.0.0`, `discovery/v0.0.0`)          | 🔴 Unblocks PMA    | 5 min   | Not started |
+| 2  | Publish git tags for `go-output` submodules (`delimited/v0.0.0`, `markup/v0.0.0`, `serialization/v0.0.0`) | 🔴 Unblocks PMA    | 5 min   | Not started |
+| 3  | Add explicit `require` lines in PMA go.mod for submodules + update vendorHash                             | 🔴 Unblocks PMA    | 10 min  | Not started |
+| 4  | Remove `overrideModAttrs` from PMA after tags fix                                                         | 🔴 Unblocks PMA    | 2 min   | Not started |
+| 5  | Verify PMA builds in SystemNix after above                                                                | 🔴 Unblocks system | 5 min   | Not started |
+| 6  | Auto-detect submodules in `mkPreparedSource` (scan for `go.mod` in deps)                                  | 🟡 Prevention      | 30 min  | Not started |
+| 7  | Add validation to `mkPreparedSource` (check replace coverage)                                             | 🟡 Prevention      | 20 min  | Not started |
+| 8  | Deduplicate `go-nix-helpers` inputs (use `follows`)                                                       | 🟡 Cleanup         | 20 min  | Not started |
+| 9  | Remove `sort` from go-output subModules in all repos that still have it                                   | 🟡 Correctness     | 10 min  | Not started |
+| 10 | Fix `file-and-image-renamer` stale vendorHash                                                             | 🟡 Pre-existing    | 5 min   | Not started |
+| 11 | Audit `go-filewatcher` for `go mod tidy` in apps                                                          | 🟡 Correctness     | 5 min   | Not started |
+| 12 | Centralize go-output version across all consumers                                                         | 🟢 Consistency     | 15 min  | Not started |
+| 13 | Add CI check: `nix build` for each overlay package                                                        | 🟢 Prevention      | 30 min  | Not started |
+| 14 | Add `just check-vendor` recipe to SystemNix                                                               | 🟢 Tooling         | 10 min  | Not started |
+| 15 | Fix mr-sync vendorHash nixpkgs-context dependency                                                         | 🟢 Robustness      | 15 min  | Not started |
+| 16 | Review `go-finding` self.rev version usage (appears twice in flake.nix)                                   | 🟢 Correctness     | 5 min   | Not started |
+| 17 | Tag all Go submodule repos with `v0.0.0` as standard practice                                             | 🟢 Prevention      | 30 min  | Not started |
+| 18 | Consider `gomod2nix` as alternative to manual vendorHash                                                  | 🟢 Future          | 60 min  | Not started |
+| 19 | Document safe overrideModAttrs patterns (art-dupl dummy module) in AGENTS.md                              | 🟢 Documentation   | 5 min   | Not started |
+| 20 | Check if `gogenfilter` subModules are needed in any consumer                                              | 🟢 Correctness     | 10 min  | Not started |
+| 21 | Update PMA flake.lock for latest project-discovery-sdk after tags                                         | 🟢 Hygiene         | 2 min   | Not started |
+| 22 | Review all repos for `go-output` pin consistency (`ref=master` vs pinned rev)                             | 🟢 Consistency     | 10 min  | Not started |
+| 23 | Add `gogenfilter` submodule tags if it has sub-packages                                                   | 🟢 Prevention      | 5 min   | Not started |
+| 24 | Consider `go.work` based Nix build instead of mkPreparedSource                                            | 🟢 Future          | 120 min | Not started |
+| 25 | Create ADR for mkPreparedSource + buildGoModule + submodules architecture                                 | 🟢 Documentation   | 15 min  | Not started |
 
 ---
 

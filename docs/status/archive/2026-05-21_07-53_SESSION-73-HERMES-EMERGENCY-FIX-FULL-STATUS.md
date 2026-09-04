@@ -131,33 +131,33 @@ Hermes AI Agent Gateway was **completely non-functional** due to two missing Pyt
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| #   | Priority | Task                                                                             | Impact | Effort |
-| --- | -------- | -------------------------------------------------------------------------------- | ------ | ------ |
-| 1   | P0       | Add `firecrawl` to hermes `extraDependencyGroups` — web_search broken            | High   | Low    |
-| 2   | P0       | Monitor GLM-5.1 rate limit reset at ~07:32 CEST, verify hermes cron jobs recover | High   | None   |
-| 3   | P0       | Add `edge-tts` to hermes `extraDependencyGroups` — TTS broken in Nix             | Medium | Low    |
-| 4   | P1       | Configure secondary LLM provider for hermes (OpenRouter/OpenAI) as GLM fallback  | High   | Medium |
-| 5   | P1       | Audit memory usage — 9.2GiB swap is unsustainable. Identify hogs                 | High   | Low    |
-| 6   | P1       | Deploy SigNoz channel routing (critical→Discord, warning→log)                    | Medium | Medium |
-| 7   | P1       | Consolidate voice-agents Caddy vHost into caddy.nix pattern                      | Medium | Low    |
-| 8   | P1       | Provision Pi 3 for DNS failover cluster                                          | High   | High   |
-| 9   | P2       | Wire Pi 3 as secondary DNS in dns-failover.nix                                   | High   | Medium |
-| 10  | P2       | Deploy Dozzle at `logs.home.lan` for Docker log tailing                          | Medium | Low    |
-| 11  | P2       | nix-colors integration — migrate 17+ hardcoded colors                            | Medium | High   |
-| 12  | P2       | Convert go-auto-upgrade `path:` inputs to SSH URLs                               | Low    | Low    |
-| 13  | P2       | Create shared flake-parts template (mkGoPackage, checks, devshells)              | Medium | High   |
-| 14  | P2       | Update TODO_LIST.md — mark completed items, add new hermes findings              | Low    | Low    |
-| 15  | P2       | Add hermes `extraDependencyGroups` pattern to AGENTS.md                          | Low    | Low    |
-| 16  | P3       | Hermes git remote access — SSH deploy key for sandbox                            | Medium | Medium |
-| 17  | P3       | Add `fal` to hermes `extraDependencyGroups` — image gen broken                   | Low    | Low    |
-| 18  | P3       | Add `exa` to hermes `extraDependencyGroups` — web search alt backend             | Low    | Low    |
-| 18  | P3       | Investigate hermes `voice` extra (faster-whisper) for Nix compatibility          | Low    | Medium |
-| 20  | P3       | `file-and-image-renamer` — bump Go or find alternative                           | Low    | Medium |
-| 21  | P3       | Flake inputs audit — identify stale/unused among 47 inputs                       | Low    | Medium |
-| 22  | P3       | Create `just status` command for automated status report generation              | Low    | Low    |
-| 23  | P4       | Add `dingtalk` + `feishu` to hermes `extraDependencyGroups` if needed            | Low    | Low    |
-| 24  | P4       | Hermes cron job crash resilience — prevent interpreter shutdown cascade          | Medium | High   |
-| 25  | P4       | GC old Nix store paths — 7,479 eligible, 82% disk usage                          | Low    | Low    |
+| #  | Priority | Task                                                                             | Impact | Effort |
+| -- | -------- | -------------------------------------------------------------------------------- | ------ | ------ |
+| 1  | P0       | Add `firecrawl` to hermes `extraDependencyGroups` — web_search broken            | High   | Low    |
+| 2  | P0       | Monitor GLM-5.1 rate limit reset at ~07:32 CEST, verify hermes cron jobs recover | High   | None   |
+| 3  | P0       | Add `edge-tts` to hermes `extraDependencyGroups` — TTS broken in Nix             | Medium | Low    |
+| 4  | P1       | Configure secondary LLM provider for hermes (OpenRouter/OpenAI) as GLM fallback  | High   | Medium |
+| 5  | P1       | Audit memory usage — 9.2GiB swap is unsustainable. Identify hogs                 | High   | Low    |
+| 6  | P1       | Deploy SigNoz channel routing (critical→Discord, warning→log)                    | Medium | Medium |
+| 7  | P1       | Consolidate voice-agents Caddy vHost into caddy.nix pattern                      | Medium | Low    |
+| 8  | P1       | Provision Pi 3 for DNS failover cluster                                          | High   | High   |
+| 9  | P2       | Wire Pi 3 as secondary DNS in dns-failover.nix                                   | High   | Medium |
+| 10 | P2       | Deploy Dozzle at `logs.home.lan` for Docker log tailing                          | Medium | Low    |
+| 11 | P2       | nix-colors integration — migrate 17+ hardcoded colors                            | Medium | High   |
+| 12 | P2       | Convert go-auto-upgrade `path:` inputs to SSH URLs                               | Low    | Low    |
+| 13 | P2       | Create shared flake-parts template (mkGoPackage, checks, devshells)              | Medium | High   |
+| 14 | P2       | Update TODO_LIST.md — mark completed items, add new hermes findings              | Low    | Low    |
+| 15 | P2       | Add hermes `extraDependencyGroups` pattern to AGENTS.md                          | Low    | Low    |
+| 16 | P3       | Hermes git remote access — SSH deploy key for sandbox                            | Medium | Medium |
+| 17 | P3       | Add `fal` to hermes `extraDependencyGroups` — image gen broken                   | Low    | Low    |
+| 18 | P3       | Add `exa` to hermes `extraDependencyGroups` — web search alt backend             | Low    | Low    |
+| 18 | P3       | Investigate hermes `voice` extra (faster-whisper) for Nix compatibility          | Low    | Medium |
+| 20 | P3       | `file-and-image-renamer` — bump Go or find alternative                           | Low    | Medium |
+| 21 | P3       | Flake inputs audit — identify stale/unused among 47 inputs                       | Low    | Medium |
+| 22 | P3       | Create `just status` command for automated status report generation              | Low    | Low    |
+| 23 | P4       | Add `dingtalk` + `feishu` to hermes `extraDependencyGroups` if needed            | Low    | Low    |
+| 24 | P4       | Hermes cron job crash resilience — prevent interpreter shutdown cascade          | Medium | High   |
+| 25 | P4       | GC old Nix store paths — 7,479 eligible, 82% disk usage                          | Low    | Low    |
 
 ---
 
@@ -177,21 +177,21 @@ My recommendation: **Add them all at once** — `["messaging" "anthropic" "firec
 
 ## System Vital Signs
 
-| Metric               | Value                   | Status             |
-| -------------------- | ----------------------- | ------------------ |
+| Metric               | Value                   | Status            |
+| -------------------- | ----------------------- | ----------------- |
 | **Root disk**        | 82% (90G free / 512G)   | ⚠️ Needs attention |
 | **Memory**           | 45Gi/62Gi (72%)         | ⚠️ Heavy           |
-| **Swap**             | 9.2Gi/13Gi (71%)        | 🔴 Crisis          |
+| **Swap**             | 9.2Gi/13Gi (71%)        | 🔴 Crisis         |
 | **Load avg**         | 6.61 / 8.28 / 11.21     | ⚠️ High (8 cores)  |
-| **Uptime**           | 3h                      | ✅ Fresh boot      |
-| **Nix store paths**  | ~7,500                  | ✅ Recently GC'd   |
-| **Build test**       | `just test-fast` passes | ✅                 |
-| **.nix files**       | 112 files, 14,949 lines | —                  |
-| **Service modules**  | 36                      | —                  |
-| **Flake inputs**     | 47                      | —                  |
-| **Commits (total)**  | 2,527                   | —                  |
+| **Uptime**           | 3h                      | ✅ Fresh boot     |
+| **Nix store paths**  | ~7,500                  | ✅ Recently GC'd  |
+| **Build test**       | `just test-fast` passes | ✅                |
+| **.nix files**       | 112 files, 14,949 lines | —                 |
+| **Service modules**  | 36                      | —                 |
+| **Flake inputs**     | 47                      | —                 |
+| **Commits (total)**  | 2,527                   | —                 |
 | **Unpushed commits** | 4                       | ⚠️                 |
-| **Users**            | 20 sessions             | —                  |
+| **Users**            | 20 sessions             | —                 |
 
 ## Services Status
 

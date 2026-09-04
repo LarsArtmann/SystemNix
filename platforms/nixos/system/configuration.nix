@@ -2,6 +2,7 @@
   config,
   pkgs,
   nix-ssh-config,
+  inputs,
   lib,
   ...
 }:
@@ -228,18 +229,16 @@ in
     };
 
     # Dozzle — Docker container log tailing at logs.home.lan
-    # Inline config (not module) to avoid nix flake check eval issue
     # Backend set to docker to avoid running Podman alongside Docker
+    # Definition lives in modules/nixos/services/dozzle.nix (hardened: memory
+    # cap, no-new-privileges, cap-drop=ALL). The former INLINE definition here
+    # was a split brain: the dormant module's hardening never reached the
+    # container (extraOptions absent from the generated docker run — the
+    # "config sets 256m but running container has Memory=0" TODO mystery).
     virtualisation.oci-containers.backend = "docker";
-    virtualisation.oci-containers.containers.dozzle = {
-      autoStart = true;
-      image = "amir20/dozzle:latest";
-      ports = [ "127.0.0.1:${toString ports.dozzle}:8080" ];
-      volumes = [ "/var/run/docker.sock:/var/run/docker.sock:ro" ];
-      environment = {
-        DOZZLE_TAILSIZE = "300";
-        DOZZLE_FILTER = "status=running";
-      };
+    services.dozzle = {
+      enable = true;
+      port = ports.dozzle;
     };
 
     # EMEET PIXY webcam auto-activation
@@ -262,6 +261,17 @@ in
       # removed from nixpkgs: systemd 258 ships the android udev rules with
       # uaccess tags, granting the active seat user device ACLs directly.
       pkgs.android-tools
+      # qmd — global on-device RAG/hybrid search CLI (BM25 + vectors + LLM
+      # rerank) over markdown/code collections; also the binary Crush spawns
+      # for the `qmd` MCP server (crushrc). Upstream flake pin — see flake.nix
+      # input for why nixpkgs is not followed.
+      inputs.qmd.packages.${pkgs.system}.default
+      # Partitioning for user-run sudo migration scripts (sgdisk). NOT in the
+      # system env before 2026-08-22 — the first migrate-clickhouse-xfs.sh
+      # prepare run died at "sgdisk: command not found" after stopping the
+      # SigNoz stack (sudo's secure PATH hides user-profile tools). Keeping it
+      # installed removes the nix-build fallback dependency entirely.
+      pkgs.gptfdisk
     ];
 
     fonts.fontconfig.defaultFonts = {
@@ -293,6 +303,13 @@ in
       forgejo.enable = true;
       immich.enable = true;
       paperless.enable = true;
+      # Central outbound mail relay (Postfix null client on 127.0.0.1:25 →
+      # authenticated Resend submission). Ships with a PLACEHOLDER sops
+      # credential: every send defers in the postfix queue until the real
+      # API key is set (go-live runbook: docs/services/mail-relay.md).
+      # Consumers wired to it: paperless (outbound), forgejo (notifications),
+      # system/cron mail (root/postmaster aliases).
+      mail-relay.enable = true;
       attic-config = {
         enable = true;
         cachePublicKey = "monitor365:/vu56vS4pTdjoltqqqj80dJ6freEdzEEf4ugdZUPpY8=";
@@ -339,6 +356,7 @@ in
       niri-session-manager.enable = true;
       security-hardening.enable = true;
       gatus-config.enable = true;
+      website-deploy-monitor.enable = true;
       multi-wm.enable = true;
       # Review-only systemd tooling (LAN bypass, no auth) — disabled by
       # default, opt-in for ops review. See modules/nixos/services/.
@@ -393,6 +411,37 @@ in
         enable = true; # Browser history intelligence server
       };
 
+      # CV — resume generator + career pipeline server (cv.home.lan).
+      # Sops: platforms/nixos/secrets/cv.yaml (cv_api_key → CV_API_KEY).
+      cv-server = {
+        enable = true;
+        # Weekly session-validity probe (Mon 09:41): `cv profile accounts
+        # --probe --all` against the operator checkout; exit 3 = a session
+        # went invalid → onPage failures, alerting instead of apply-time
+        # surprises. Adds chromium to the closure (accepted 2026-08-30).
+        profileProbe.enable = true;
+      };
+
+      # InboxClean — Gmail AI assistant dashboard (inbox.home.lan).
+      # Sops: platforms/nixos/secrets/inboxclean.yaml (gmail credentials.json).
+      # Runbook: complete the one-time OAuth flow (see modules/nixos/services/
+      # inboxclean.nix header), then flip sync.enable = true.
+      inboxclean = {
+        enable = true;
+        # OAuth tokens exist for main + work (verified via /health 2026-09-02),
+        # so the sync timer is live (runbook step 5).
+        sync.enable = true;
+        # Gmail-attachment archiving into Paperless (uploads ride the sync
+        # hook; ledger + checksum dedup make it idempotent). LIVE since
+        # 2026-09-02: API token provisioned via `paperless-manage
+        # drf_create_token admin` and pasted into
+        # platforms/nixos/secrets/inboxclean-paperless.yaml. Keep the sops
+        # value and this flag in sync — PAPERLESS_URL without a real token
+        # is a config Rejection at every inboxclean process start (web +
+        # sync crash). Runbook: modules/nixos/services/inboxclean.nix header.
+        paperless.enable = true;
+      };
+
       # PapDashboard — alert hub: Gatus ingests trigger/resolve events, the
       # insight enricher correlates storms, pulls journal + metrics evidence,
       # and asks FastFlowLM (NPU) for root-cause analysis. Outbound Discord
@@ -420,6 +469,7 @@ in
       # NVMe SSD health monitoring with desktop notifications for critical events
       nvme-health-monitor = {
         enable = true;
+        device = "/dev/disk/by-id/nvme-Lexar_SSD_NQ790_2TB_QBC838R010854P220C";
       };
 
       # OpenSEO — self-hosted SEO suite (rank tracking, keyword research, backlinks)
@@ -493,11 +543,39 @@ in
         enable = true;
       };
 
+      # 2026-08-31 coverage audit: registry asserting every service is FULLY
+      # registered with SigNoz (traces/logs), eval-time wiring checks + a
+      # runtime freshness collector + Gatus/SigNoz alerting.
+      signoz-coverage = {
+        enable = true;
+      };
+
       gpu-active = {
         enable = true;
       };
 
       system-health = {
+        enable = true;
+      };
+
+      # 2026-08-22 kernel-freeze prevention: stops the FastFlowLM backend
+      # when MemAvailable/zram enter the pre-freeze zone (see module header
+      # for the full incident narrative).
+      memory-emergency-guard = {
+        enable = true;
+      };
+
+      # 2026-08-22 stability plan: bounding heavy-job demand (flock queue
+      # `heavy-job` wrapper; build memory is separately bounded via
+      # nix-daemon MemoryHigh in networking.nix).
+      workload-admission = {
+        enable = true;
+      };
+
+      # 2026-08-22 stability plan: local SEV1 escalation — DMS notification
+      # + fullscreen overlay for guard-trip/guard-dead/infra-criticals when
+      # a graphical session is online (Discord stays the phone channel).
+      sev1-escalation = {
         enable = true;
       };
 
@@ -659,23 +737,36 @@ in
       # flags were back to 0 within hours). smartmontools 7.5 rejects
       # '-d sat,removable' as an unsupported type, so the fix is retry-based:
       # restart on failure with a 2-min delay until enumeration settles.
-      # Note: Restart= is only useful for the transient-removable class;
-      # absent devices make smartd exit 16 as well (nofail DAS unplugged).
+      # All four USB-DAS disks carry "-d sat -d removable": smartd exits 16
+      # (fatal registration error, NO disk monitored at all — including the
+      # NVMe) when a configured device is absent without the removable
+      # directive (2026-08-22: DAS offline → smartd dead for the whole boot).
+      # Verified against smartmontools 7.5: "-d sat,removable" is INVALID;
+      # only the separate second "-d removable" token tolerates absence.
       smartd = {
         enable = true;
         autodetect = false;
         devices = [
-          { device = "/dev/nvme0n1"; }
+          # Internal NVMe by-id: kernel nvmeXn1 enumeration SHIFTS when drives
+          # are added/removed (2026-08-31: the new Samsung took nvme0, moving
+          # the Lexar system disk to nvme1 — the hardcoded /dev/nvme0n1 then
+          # silently monitored the WRONG disk). by-id is slot-independent.
+          {
+            device = "/dev/disk/by-id/nvme-Lexar_SSD_NQ790_2TB_QBC838R010854P220C";
+          }
+          {
+            device = "/dev/disk/by-id/nvme-Samsung_SSD_970_EVO_Plus_1TB_S4EWNX0RA01856V";
+          }
           # Toshiba MG08ACA16TE 16TB pool members (mirrored BTRFS at
           # /mnt/pool, created 2026-08-16 from the dead private-cloud box).
           # Same USB DAS bridge class as the SanDisks: -d sat is required.
           {
             device = "/dev/disk/by-id/ata-TOSHIBA_MG08ACA16TE_72U0A005FWTG";
-            options = "-d sat";
+            options = "-d sat -d removable";
           }
           {
             device = "/dev/disk/by-id/ata-TOSHIBA_MG08ACA16TE_72U0A0ZUFWTG";
-            options = "-d sat";
+            options = "-d sat -d removable";
           }
           # USB-attached SanDisk SDSSDA240G SSDs. by-id (ata- serial form) is
           # stable across sdb/sdc letter swaps between the two enclosures;
@@ -684,15 +775,20 @@ in
           # SSD 2 = future Docker storage.
           {
             device = "/dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311";
-            options = "-d sat";
+            options = "-d sat -d removable";
           }
           {
             device = "/dev/disk/by-id/ata-SanDisk_SDSSDA240G_174244451713";
-            options = "-d sat";
+            options = "-d sat -d removable";
           }
         ];
         defaults.monitored = "-a -o on -s (S/../.././02|L/../../6/03)";
       };
+
+      # DAS pool replug self-heal: zombie reaper + remount + failed-service
+      # restart + real-IO metrics (the /mnt/pool analogue of
+      # buildcache-usb-recovery; udev-keyed to the two Toshiba serials).
+      pool-recovery.enable = true;
 
       # Cross-service backup health monitoring. Checks all backup dirs for
       # freshness and writes Prometheus metrics. Gatus alerts on Discord
@@ -741,6 +837,24 @@ in
           monitor365 = {
             directory = "/var/lib/monitor365-server";
             filePattern = "*.backup_*.db";
+            maxAgeHours = 25;
+          };
+        }
+        // lib.optionalAttrs config.services.cv-server.enable {
+          cv = {
+            # Nightly online .backup of the pipeline event store
+            # (cv-backup.timer, 03:17) onto the mirrored pool.
+            directory = "/mnt/pool/backups/cv";
+            filePattern = "pipeline-*.sqlite";
+            maxAgeHours = 25;
+          };
+        }
+        // lib.optionalAttrs config.services.inboxclean.enable {
+          inboxclean = {
+            # Nightly online .backup of the event-store DB
+            # (inboxclean-backup.timer, 04:30) onto the mirrored pool.
+            directory = "/mnt/pool/backups/inboxclean";
+            filePattern = "inboxclean-*.db";
             maxAgeHours = 25;
           };
         };

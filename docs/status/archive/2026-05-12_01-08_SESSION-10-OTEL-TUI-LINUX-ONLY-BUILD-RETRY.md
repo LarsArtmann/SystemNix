@@ -194,7 +194,7 @@ The tradeoff: we lose test coverage on macOS, but taskwarrior is primarily used 
 | otel-tui on NixOS          | ✅ Still installed                              |
 | Git working tree           | DIRTY (flake.nix + base.nix — otel-tui changes) |
 | Git branch                 | master (5 ahead of origin)                      |
-| niri-config.nix formatting | ⚠️ Needs fix (pre-commit hook failure)          |
+| niri-config.nix formatting | ⚠️ Needs fix (pre-commit hook failure)           |
 
 ---
 

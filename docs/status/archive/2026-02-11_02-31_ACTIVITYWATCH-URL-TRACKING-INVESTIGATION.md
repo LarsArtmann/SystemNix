@@ -283,7 +283,7 @@ open "http://localhost:5600/api/0/buckets/aw-watcher-web-chrome_Lars-MacBook-Air
 | **macOS**   | Accessibility required | Manual GUI  | ❌ No       |
 | **NixOS**   | Direct window access   | None needed | ✅ Yes      |
 | **Linux**   | X11/Wayland protocols  | None needed | ✅ Yes      |
-| **Windows** | Win32 API              | UAC prompt  | ⚠️ Partial  |
+| **Windows** | Win32 API              | UAC prompt  | ⚠️ Partial   |
 
 ---
 

@@ -76,6 +76,7 @@ Nothing catastrophic this session. The mistakes, ranked:
 ## f) NEXT — up to 50 things, rough priority order
 
 **Close out this arc**
+
 1. Verify the "Gatus Sustained Failures" Discord alert actually fired (gatus sqlite: endpoint status; journal: truncation probe if needed)
 2. Verify Disk >90% RESOLVED message delivered (alert resolved ~85%)
 3. Lint: reject spaced `{{ $value }}`/`{{ $threshold }}` in `_signoz-alerts.nix` (extend gatus-pattern-lint-style check; pre-commit + CI)
@@ -145,7 +146,7 @@ Nothing catastrophic this session. The mistakes, ranked:
 
 ---
 
-*Session ended in WAIT state per directive. No further actions taken after this report.*
+_Session ended in WAIT state per directive. No further actions taken after this report._
 
 ---
 

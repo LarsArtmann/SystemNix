@@ -174,33 +174,33 @@ Likely culprits:
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| #   | Task                                                     | Impact      | Effort | Status      |
-| --- | -------------------------------------------------------- | ----------- | ------ | ----------- |
-| 1   | **Deploy committed changes + reboot**                    | 🔴 Critical | 5min   | Committed   |
-| 2   | **Verify boot time drops to ~35s**                       | 🔴 Critical | 2min   | Waiting     |
-| 3   | **Run Nix store GC** (`nix store gc`)                    | 🔴 High     | 5min   | Ready       |
-| 4   | **Investigate swap exhaustion** (13Gi/13Gi)              | 🔴 High     | 30min  | Not started |
-| 5   | **Git push 1 commit to origin**                          | 🟡 Medium   | 1min   | Ready       |
-| 6   | **Identify memory hogs** (`smem`, `ps --sort=-rss`)      | 🔴 High     | 15min  | Not started |
-| 7   | **Configure `nix.gc` automatic**                         | 🟡 Medium   | 10min  | Not started |
-| 8   | **Add `just deploy` recipe** (nh workaround)             | 🟡 Medium   | 10min  | Not started |
-| 9   | **Fix Hermes Python deps** (firecrawl, edge-tts, fal)    | 🟡 Medium   | 1h     | Not started |
-| 10  | **Verify unbound preStart** (no anchor fetch in journal) | 🟡 Medium   | 2min   | Waiting     |
-| 11  | **Verify hermes fast-path** (no perms fix in journal)    | 🟡 Medium   | 2min   | Waiting     |
-| 12  | **Configure SigNoz alert routing** (critical→Discord)    | 🟡 Medium   | 30min  | Not started |
-| 13  | **Test Discord alert channel**                           | 🟡 Medium   | 5min   | Not started |
-| 14  | **Check SigNoz provision logs** (dashboards, rules)      | 🟡 Medium   | 5min   | Not started |
-| 15  | **Verify Gatus endpoints** (status.home.lan)             | 🟡 Medium   | 5min   | Not started |
-| 16  | **Update TODO_LIST.md** (10+ days stale)                 | 🟢 Low      | 15min  | Not started |
-| 17  | **Audit flake inputs** (47 inputs, find stale ones)      | 🟢 Low      | 1h     | Not started |
-| 18  | **Consolidate status reports** (97 files → archive old)  | 🟢 Low      | 15min  | Not started |
-| 19  | **Deploy Dozzle** (Docker log tailing)                   | 🟢 Low      | 30min  | Planned     |
-| 20  | **Integrate nix-colors** (17+ hardcoded colors)          | 🟢 Low      | 6h     | Not started |
-| 21  | **Provision Pi 3 DNS failover**                          | 🟢 Low      | 2h     | Not started |
-| 22  | **Add memory/swap alerting** to SigNoz/Gatus             | 🟡 Medium   | 30min  | Not started |
-| 23  | **Audit Docker container memory** limits                 | 🟡 Medium   | 20min  | Not started |
-| 24  | **Create `just status` command**                         | 🟢 Low      | 30min  | Not started |
-| 25  | **Convert go-auto-upgrade path: inputs to SSH**          | 🟢 Low      | 15min  | Not started |
+| #  | Task                                                     | Impact      | Effort | Status      |
+| -- | -------------------------------------------------------- | ----------- | ------ | ----------- |
+| 1  | **Deploy committed changes + reboot**                    | 🔴 Critical | 5min   | Committed   |
+| 2  | **Verify boot time drops to ~35s**                       | 🔴 Critical | 2min   | Waiting     |
+| 3  | **Run Nix store GC** (`nix store gc`)                    | 🔴 High     | 5min   | Ready       |
+| 4  | **Investigate swap exhaustion** (13Gi/13Gi)              | 🔴 High     | 30min  | Not started |
+| 5  | **Git push 1 commit to origin**                          | 🟡 Medium   | 1min   | Ready       |
+| 6  | **Identify memory hogs** (`smem`, `ps --sort=-rss`)      | 🔴 High     | 15min  | Not started |
+| 7  | **Configure `nix.gc` automatic**                         | 🟡 Medium   | 10min  | Not started |
+| 8  | **Add `just deploy` recipe** (nh workaround)             | 🟡 Medium   | 10min  | Not started |
+| 9  | **Fix Hermes Python deps** (firecrawl, edge-tts, fal)    | 🟡 Medium   | 1h     | Not started |
+| 10 | **Verify unbound preStart** (no anchor fetch in journal) | 🟡 Medium   | 2min   | Waiting     |
+| 11 | **Verify hermes fast-path** (no perms fix in journal)    | 🟡 Medium   | 2min   | Waiting     |
+| 12 | **Configure SigNoz alert routing** (critical→Discord)    | 🟡 Medium   | 30min  | Not started |
+| 13 | **Test Discord alert channel**                           | 🟡 Medium   | 5min   | Not started |
+| 14 | **Check SigNoz provision logs** (dashboards, rules)      | 🟡 Medium   | 5min   | Not started |
+| 15 | **Verify Gatus endpoints** (status.home.lan)             | 🟡 Medium   | 5min   | Not started |
+| 16 | **Update TODO_LIST.md** (10+ days stale)                 | 🟢 Low      | 15min  | Not started |
+| 17 | **Audit flake inputs** (47 inputs, find stale ones)      | 🟢 Low      | 1h     | Not started |
+| 18 | **Consolidate status reports** (97 files → archive old)  | 🟢 Low      | 15min  | Not started |
+| 19 | **Deploy Dozzle** (Docker log tailing)                   | 🟢 Low      | 30min  | Planned     |
+| 20 | **Integrate nix-colors** (17+ hardcoded colors)          | 🟢 Low      | 6h     | Not started |
+| 21 | **Provision Pi 3 DNS failover**                          | 🟢 Low      | 2h     | Not started |
+| 22 | **Add memory/swap alerting** to SigNoz/Gatus             | 🟡 Medium   | 30min  | Not started |
+| 23 | **Audit Docker container memory** limits                 | 🟡 Medium   | 20min  | Not started |
+| 24 | **Create `just status` command**                         | 🟢 Low      | 30min  | Not started |
+| 25 | **Convert go-auto-upgrade path: inputs to SSH**          | 🟢 Low      | 15min  | Not started |
 
 ---
 

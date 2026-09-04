@@ -139,48 +139,48 @@ Nothing. All changes verified with `nix flake check --no-build --all-systems` (a
 
 ### Tier 1: Immediate (today)
 
-| #   | Task                                                  | Effort | Impact                               |
-| --- | ----------------------------------------------------- | ------ | ------------------------------------ |
-| 1   | Run `just switch` on evo-x2 to deploy all changes     | 5 min  | Critical — untested in production    |
-| 2   | Fix PMA go.work: `go 1.26.2` → `go 1.26.3`            | 2 min  | Unblocks local golangci-lint         |
-| 3   | Fix go-output submodule go.mod versions (9 files)     | 10 min | Consistency                          |
-| 4   | Publish git tags for go-output submodules             | 10 min | Enables PMA overrideModAttrs removal |
-| 5   | Publish git tags for project-discovery-sdk submodules | 10 min | Enables PMA overrideModAttrs removal |
-| 6   | Remove PMA `overrideModAttrs` after tags exist        | 15 min | Eliminates anti-pattern              |
+| # | Task                                                  | Effort | Impact                               |
+| - | ----------------------------------------------------- | ------ | ------------------------------------ |
+| 1 | Run `just switch` on evo-x2 to deploy all changes     | 5 min  | Critical — untested in production    |
+| 2 | Fix PMA go.work: `go 1.26.2` → `go 1.26.3`            | 2 min  | Unblocks local golangci-lint         |
+| 3 | Fix go-output submodule go.mod versions (9 files)     | 10 min | Consistency                          |
+| 4 | Publish git tags for go-output submodules             | 10 min | Enables PMA overrideModAttrs removal |
+| 5 | Publish git tags for project-discovery-sdk submodules | 10 min | Enables PMA overrideModAttrs removal |
+| 6 | Remove PMA `overrideModAttrs` after tags exist        | 15 min | Eliminates anti-pattern              |
 
 ### Tier 2: This Week
 
-| #   | Task                                                        | Effort | Impact                                       |
-| --- | ----------------------------------------------------------- | ------ | -------------------------------------------- |
-| 7   | Move `todo-list-ai` bun FOD management to upstream repo     | 30 min | Eliminates most fragile hash in SystemNix    |
-| 8   | Move `dnsblockd` vendorHash to upstream repo                | 15 min | Eliminates linux.nix hardcode                |
-| 9   | Move `file-and-image-renamer` vendorHash to upstream repo   | 15 min | Eliminates linux.nix hardcode + anti-pattern |
-| 10  | Add GitHub Actions CI: `nix flake check --no-build` on push | 30 min | Catch eval errors pre-deploy                 |
-| 11  | Fix Home Manager version mismatch warning                   | 5 min  | Clean eval output                            |
-| 12  | Set `boot.zfs.forceImportRoot = false` explicitly           | 2 min  | Suppress 26.11 warning                       |
-| 13  | Verify Darwin build still passes (`test-fast` on macOS)     | 5 min  | Cross-platform regression check              |
+| #  | Task                                                        | Effort | Impact                                       |
+| -- | ----------------------------------------------------------- | ------ | -------------------------------------------- |
+| 7  | Move `todo-list-ai` bun FOD management to upstream repo     | 30 min | Eliminates most fragile hash in SystemNix    |
+| 8  | Move `dnsblockd` vendorHash to upstream repo                | 15 min | Eliminates linux.nix hardcode                |
+| 9  | Move `file-and-image-renamer` vendorHash to upstream repo   | 15 min | Eliminates linux.nix hardcode + anti-pattern |
+| 10 | Add GitHub Actions CI: `nix flake check --no-build` on push | 30 min | Catch eval errors pre-deploy                 |
+| 11 | Fix Home Manager version mismatch warning                   | 5 min  | Clean eval output                            |
+| 12 | Set `boot.zfs.forceImportRoot = false` explicitly           | 2 min  | Suppress 26.11 warning                       |
+| 13 | Verify Darwin build still passes (`test-fast` on macOS)     | 5 min  | Cross-platform regression check              |
 
 ### Tier 3: Architecture
 
-| #   | Task                                                                  | Effort | Impact                                       |
-| --- | --------------------------------------------------------------------- | ------ | -------------------------------------------- |
-| 14  | Redesign `mkPreparedSource` to auto-generate `require` lines          | 2 hr   | Eliminates manual `postPatchExtra` sed hacks |
-| 15  | Add `# @module <name>` convention to replace file parsing             | 1 hr   | Faster eval, more explicit                   |
-| 16  | Improve port collision assertion with duplicate names in error        | 30 min | Better DX on collision                       |
-| 17  | Add `mkPackageOverlay` platform filtering (skip Linux-only on Darwin) | 1 hr   | Cleaner overlay separation                   |
-| 18  | Add `just test-hashes` smart mode (only changed packages)             | 1 hr   | Faster pre-commit feedback                   |
+| #  | Task                                                                  | Effort | Impact                                       |
+| -- | --------------------------------------------------------------------- | ------ | -------------------------------------------- |
+| 14 | Redesign `mkPreparedSource` to auto-generate `require` lines          | 2 hr   | Eliminates manual `postPatchExtra` sed hacks |
+| 15 | Add `# @module <name>` convention to replace file parsing             | 1 hr   | Faster eval, more explicit                   |
+| 16 | Improve port collision assertion with duplicate names in error        | 30 min | Better DX on collision                       |
+| 17 | Add `mkPackageOverlay` platform filtering (skip Linux-only on Darwin) | 1 hr   | Cleaner overlay separation                   |
+| 18 | Add `just test-hashes` smart mode (only changed packages)             | 1 hr   | Faster pre-commit feedback                   |
 
 ### Tier 4: Nice to Have
 
-| #   | Task                                                              | Effort | Impact                  |
-| --- | ----------------------------------------------------------------- | ------ | ----------------------- |
-| 19  | Convert /data BTRFS from toplevel to @data subvolume              | 30 min | Enables /data snapshots |
-| 20  | Add Gatus health checks for all services                          | 1 hr   | Observability           |
-| 21  | Audit all services for `WatchdogSec` misuse                       | 30 min | Correctness             |
-| 22  | Centralize Docker image tags in `lib/` (not scattered in modules) | 2 hr   | Single source of truth  |
-| 23  | Add `just test` to GitHub Actions (full build)                    | 1 hr   | Complete CI coverage    |
-| 24  | Create `modules/nixos/services/` README with conventions          | 15 min | Onboarding              |
-| 25  | Benchmark flake eval time before/after auto-discovery             | 10 min | Performance baseline    |
+| #  | Task                                                              | Effort | Impact                  |
+| -- | ----------------------------------------------------------------- | ------ | ----------------------- |
+| 19 | Convert /data BTRFS from toplevel to @data subvolume              | 30 min | Enables /data snapshots |
+| 20 | Add Gatus health checks for all services                          | 1 hr   | Observability           |
+| 21 | Audit all services for `WatchdogSec` misuse                       | 30 min | Correctness             |
+| 22 | Centralize Docker image tags in `lib/` (not scattered in modules) | 2 hr   | Single source of truth  |
+| 23 | Add `just test` to GitHub Actions (full build)                    | 1 hr   | Complete CI coverage    |
+| 24 | Create `modules/nixos/services/` README with conventions          | 15 min | Onboarding              |
+| 25 | Benchmark flake eval time before/after auto-discovery             | 10 min | Performance baseline    |
 
 ---
 

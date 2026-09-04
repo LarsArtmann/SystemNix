@@ -117,6 +117,7 @@ The prior session spent 6 attempts trying to build `systemd-graph-webui` by figh
 ### Partial activation left system in dangerous state
 
 The prior session's first deploy hit a stale `switch-to-configuration` lock and partially activated before dying. This left:
+
 - New unit files on disk (`/etc/systemd/system/systemd-graph.service` etc.)
 - Old generation active (`/run/current-system` → `2jxmi57l`, gen 695)
 - HTTPS broken system-wide (Caddy restarted before sops rendered cert)
@@ -152,7 +153,7 @@ After the first successful deploy, the timer-monitor service crash-looped 4 time
 
 ## f) Up to 50 things we should get done next
 
-1. **Fix `llama-rag-model-fetch.service`** — `/run/llama-rag-model-fetch` permission denied. The oneshot needs `RuntimeDirectory=llama-rag-model-fetch` or `+`-prefixed mkdir. This is from a concurrent session's commit, not mine.
+~~1. **Fix `llama-rag-model-fetch.service`** — `/run/llama-rag-model-fetch` permission denied. The oneshot needs `RuntimeDirectory=llama-rag-model-fetch` or `+`-prefixed mkdir. This is from a concurrent session's commit, not mine.~~ done — fixed by the 19-15 provisioning session (models on disk, servers serving)
 2. **NixOS VM test for systemd-graph** — `tests/test-systemd-graph.nix` verifying the module starts and serves the SPA.
 3. **NixOS VM test for systemd-timer-monitor** — `tests/test-systemd-timer-monitor.nix` verifying the timer fires and writes the report.
 4. **systemd-timer-monitor JSON alerting** — Scrape `status.json` via a Prometheus textfile collector for proactive alerting on failed service counts.
@@ -217,27 +218,27 @@ After the first successful deploy, the timer-monitor service crash-looped 4 time
 
 ## Session Commits (auto-committed by daemon)
 
-| Commit | Time | Description |
-|--------|------|-------------|
-| `995f4f8d` | 17:28 | fix(systemd-graph): fix package build, binary name, and pnpm hook integration (prior session) |
-| `b4eeaffa` | 17:35 | feat(dns): register graph and timers services in local DNS configuration (prior session) |
-| `f05fb244` | 17:58 | docs(status): add status report for systemd-graph package fix (prior session) |
+| Commit     | Time  | Description                                                                                                                                                                                                |
+| ---------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `995f4f8d` | 17:28 | fix(systemd-graph): fix package build, binary name, and pnpm hook integration (prior session)                                                                                                              |
+| `b4eeaffa` | 17:35 | feat(dns): register graph and timers services in local DNS configuration (prior session)                                                                                                                   |
+| `f05fb244` | 17:58 | docs(status): add status report for systemd-graph package fix (prior session)                                                                                                                              |
 | `7bfba47a` | 18:34 | feat(services): add systemd-graph and systemd-timer-monitor for system introspection (this session — batched: AGENTS.md, docs, homepage tiles, timer-monitor python3 + \|\| true fixes, deploy.sh trigger) |
-| `6ddb753f` | 18:34 | feat(monitoring): add health checks for systemd-graph and systemd-timer-monitor (this session — Gatus checks + post-deploy smoke tests) |
-| `c9fb8424` | 18:47 | chore(flake): update flake.lock (this session — bank-sync input update to fix build) |
+| `6ddb753f` | 18:34 | feat(monitoring): add health checks for systemd-graph and systemd-timer-monitor (this session — Gatus checks + post-deploy smoke tests)                                                                    |
+| `c9fb8424` | 18:47 | chore(flake): update flake.lock (this session — bank-sync input update to fix build)                                                                                                                       |
 
 ## Concurrent Session Commits (NOT my work)
 
-| Commit | Time | Description |
-|--------|------|-------------|
-| `485bc2b4` | ~18:00 | chore(deps): update bank-sync flake input (broke build, fixed by my `c9fb8424`) |
-| `04b37358` | ~18:00 | docs(agents): enable Paperless RAG embeddings via llama-rag GPU module |
-| `cb812981` | ~18:00 | feat(services): add llama.cpp embeddings and reranker health monitoring |
-| `83e2b2c2` | ~18:00 | test(paperless): include llama-rag module for embedding model configuration |
-| `cea4f323` | ~18:00 | feat(paperless): enable RAG embeddings via llama-rag embeddings instance |
-| `ce91825a` | ~18:00 | feat(rag): enable llama.cpp RAG stack and wire Paperless to embeddings |
-| `fe8093d4` | ~18:00 | docs(memory): update Strix Halo VRAM carveout figures |
-| `7db09df5` | ~18:00 | refactor(services): extract llama-rag ExecStart commands |
-| `9218a1ac` | ~18:00 | feat(llama-rag): add llama.cpp RAG service ports and rebalance VRAM carveout |
-| `393d2123` | ~18:40 | feat(llama-rag): auto-fetch GGUF models at activation (caused model-fetch.service failure) |
+| Commit     | Time   | Description                                                                                                        |
+| ---------- | ------ | ------------------------------------------------------------------------------------------------------------------ |
+| `485bc2b4` | ~18:00 | chore(deps): update bank-sync flake input (broke build, fixed by my `c9fb8424`)                                    |
+| `04b37358` | ~18:00 | docs(agents): enable Paperless RAG embeddings via llama-rag GPU module                                             |
+| `cb812981` | ~18:00 | feat(services): add llama.cpp embeddings and reranker health monitoring                                            |
+| `83e2b2c2` | ~18:00 | test(paperless): include llama-rag module for embedding model configuration                                        |
+| `cea4f323` | ~18:00 | feat(paperless): enable RAG embeddings via llama-rag embeddings instance                                           |
+| `ce91825a` | ~18:00 | feat(rag): enable llama.cpp RAG stack and wire Paperless to embeddings                                             |
+| `fe8093d4` | ~18:00 | docs(memory): update Strix Halo VRAM carveout figures                                                              |
+| `7db09df5` | ~18:00 | refactor(services): extract llama-rag ExecStart commands                                                           |
+| `9218a1ac` | ~18:00 | feat(llama-rag): add llama.cpp RAG service ports and rebalance VRAM carveout                                       |
+| `393d2123` | ~18:40 | feat(llama-rag): auto-fetch GGUF models at activation (caused model-fetch.service failure)                         |
 | `321f599e` | ~18:44 | feat(services/llama-rag): split model fetching into dedicated oneshot service (caused model-fetch.service failure) |

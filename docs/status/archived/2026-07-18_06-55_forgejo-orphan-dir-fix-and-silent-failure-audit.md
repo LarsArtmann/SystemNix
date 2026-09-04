@@ -8,7 +8,6 @@
 
 ---
 
-
 ## TL;DR
 
 The prior session's `CHANGE_ME` token fix was **deployed but only mirrored 7 of 113 repos**. The other 106 were silently failing with HTTP 409 "Files already exist for this repository" because **orphan git directories** (from past OOM/crash-interrupted migrates) existed on disk without DB records. The script printed `✓ Created mirror` anyway because bare `curl` exits 0 on HTTP errors. I fixed the orphan cleanup + honest error reporting, deployed, and verified the fix is live. **End-to-end mirror verification is still blocked** — the sync timer fires in ~4h and I cannot trigger it manually (no sudo, forgejo-owned token file).
@@ -51,7 +50,7 @@ The prior session's `CHANGE_ME` token fix was **deployed but only mirrored 7 of 
 
 1. **Orphaned sops secret deletion** — `forgejo_token:` still exists encrypted in `platforms/nixos/secrets/secrets.yaml` but is now fully unused (the prior session removed it from `mkSecrets` + template). Requires sops/age key access.
 2. **641 files of formatter damage cleanup** — treefmt/prettier reformatted docs, AGENTS.md tables, dashboards, lock files. I restored AGENTS.md and committed only my 3 files, but the rest sits uncommitted in the working tree. Separate cleanup decision.
-3. **Push-mirror functionality audit** — Are push mirrors (Forgejo→GitHub sync-back) even desired? They were in the original script but never worked (target-not-found). Now they *should* work but nobody has confirmed the user wants two-way sync vs. one-way mirror.
+3. **Push-mirror functionality audit** — Are push mirrors (Forgejo→GitHub sync-back) even desired? They were in the original script but never worked (target-not-found). Now they _should_ work but nobody has confirmed the user wants two-way sync vs. one-way mirror.
 4. **`forgejo-mirror-starred` script** — Has the same `curl &&` pattern as the github-sync script had. Likely has the same silent-failure bug. Not touched this session.
 5. **Monitor365 Overview failure investigation** — Deploy smoke test shows `overview.service` failing (HTTP 000 local, 502 HTTPS). Unrelated to my work but flagged.
 
@@ -94,6 +93,7 @@ Every shell script doing HTTP API calls should use `-w "%{http_code}"` + status 
 ### e.2 — Systemic: Forgejo sync scripts have no integration test
 
 The sync logic is complex (pagination, existence check, orphan cleanup, migrate, push mirror) and has failed silently twice in two sessions. A NixOS VM test that:
+
 1. Stands up a Forgejo instance
 2. Mocks the GitHub API (or uses a fixture)
 3. Runs the sync script
@@ -138,6 +138,7 @@ The `onFailure` referral is useless if the script exits 0 on failure. This is no
 ## f) Up to 50 things to do next (ranked by impact)
 
 ### Priority 0 — Verify / Unblock
+
 1. **Run `sudo systemctl start forgejo-github-sync.service`** and confirm all 113 repos mirror via `curl -sf https://forgejo.home.lan/api/v1/repos/search?limit=200 | jq '.data | length'`
 2. **Run `sudo systemctl start forgejo-ensure-repos.service`** and confirm `dnsblockd` + `BuildFlow` mirror
 3. **Check `journalctl -u forgejo-github-sync.service -n 100`** for any remaining `✗ Failed` lines or HTTP errors
@@ -146,6 +147,7 @@ The `onFailure` referral is useless if the script exits 0 on failure. This is no
 6. **Investigate `overview.service` failure** (502 on HTTPS, 000 local) — unrelated but broken in the last deploy
 
 ### Priority 1 — Correctness / Debt
+
 7. **Delete orphaned `forgejo_token:` from `secrets.yaml`** (requires sops access)
 8. **Fix `forgejo-mirror-starred` script** — same `curl &&` silent-failure bug
 9. **Add pre-commit check** rejecting `curl.*&&` in `.nix` files (grep-based)
@@ -156,12 +158,14 @@ The `onFailure` referral is useless if the script exits 0 on failure. This is no
 14. **Add `restartTriggers` to `forgejo-github-sync`** referencing the script package path, so the service restarts when the script changes (pattern used elsewhere in the codebase)
 
 ### Priority 2 — Testing / Observability
+
 15. **Write NixOS VM test** for Forgejo sync logic (mock GitHub API, assert repo count + no orphans)
 16. **Add Gatus health check** for Forgejo mirror freshness (alert if `mirror_updated` > 24h ago on any repo)
 17. **Add Prometheus metric** for Forgejo repo count (detect silent mirror loss)
 18. **Add Gatus alert** if Forgejo API `/repos/search?limit=1` returns non-200
 
 ### Priority 3 — Cleanup
+
 19. **Decide on 641 files of formatter damage** in working tree — revert all, selectively commit, or ignore
 20. **Audit `forgejo.nix` for other silent-failure patterns** (the runner token scripts, OIDC setup, etc.)
 21. **Document the Forgejo sync architecture** in a runbook (`docs/runbooks/forgejo-sync.md`) — token source, orphan cleanup, push mirrors, failure modes
@@ -169,6 +173,7 @@ The `onFailure` referral is useless if the script exits 0 on failure. This is no
 23. **Consolidate `forgejo.nix` and `forgejo-repos.nix`** — they share ~80% of the migrate logic (DRY violation)
 
 ### Priority 4 — Hardening / Polish
+
 24. **Make sync scripts idempotent** — re-running should be safe and fast (currently re-probes every repo every 6h)
 25. **Add rate limiting** to GitHub API calls (avoid hitting 60/h unauthenticated or 5000/h authenticated limits)
 26. **Handle GitHub pagination edge case** — if exactly N*100 repos, the loop makes one extra empty call (minor)
@@ -178,6 +183,7 @@ The `onFailure` referral is useless if the script exits 0 on failure. This is no
 30. **Pin the Forgejo API version** in scripts (currently `/api/v1/` — if v2 ships, scripts break silently)
 
 ### Priority 5 — Strategic
+
 31. **Evaluate Forgejo Actions CI** — is the runner (`forgejo-runner`) actually being used? If not, remove it
 32. **Evaluate mirror interval** — 8h default + 6h sync timer. Are they aligned? Should the sync trigger a mirror update immediately after migrate?
 33. **Consider Forgejo backup strategy** — all repos are mirrors of GitHub, so Forgejo data loss is recoverable. But the Forgejo config (users, OIDC, tokens) is not mirrored. Document recovery procedure
@@ -185,6 +191,7 @@ The `onFailure` referral is useless if the script exits 0 on failure. This is no
 35. **Document why `uid: 1` is hardcoded** in the migrate payload — fragile if the admin user isn't uid 1
 
 ### Priority 6 — Nice to have
+
 36. **Add repo descriptions** from GitHub to Forgejo mirrors (currently passed but verify they're set)
 37. **Mirror GitHub organizations** (not just personal repos) — the script only fetches `/users/$USER/repos`
 38. **Mirror GitHub gists** — if desired
@@ -207,7 +214,7 @@ The `onFailure` referral is useless if the script exits 0 on failure. This is no
 
 ### g.1 — Do you want push mirrors (Forgejo→GitHub sync-back) at all?
 
-The original script tried to set up push mirrors for every repo (`sync_on_commit: true`). They never worked (target-not-found, because the repo wasn't registered). My fix means they'll now *try* to work. But I don't know if you want two-way sync or one-way GitHub→Forgejo mirror.
+The original script tried to set up push mirrors for every repo (`sync_on_commit: true`). They never worked (target-not-found, because the repo wasn't registered). My fix means they'll now _try_ to work. But I don't know if you want two-way sync or one-way GitHub→Forgejo mirror.
 
 **Why I can't figure this out:** The original script's intent is ambiguous — it could be aspirational (never worked, never noticed) or deliberate (wanted, broken, never reported). The AGENTS.md doesn't mention push mirrors. The migrate payload includes `mirror: true` (one-way pull) AND sets up push mirrors (two-way), which is contradictory unless you want Forgejo commits to flow back to GitHub.
 
@@ -216,6 +223,7 @@ The original script tried to set up push mirrors for every repo (`sync_on_commit
 ### g.2 — Can you trigger the sync so I can verify the fix end-to-end?
 
 The sync timer fires in ~4h (next ~07:58). I cannot trigger it manually:
+
 - `sudo systemctl start forgejo-github-sync.service` — sudo unavailable to me
 - `busctl call ... StartUnit` — Access denied (requires interactive auth)
 - Running the script directly — `FORGEJO_TOKEN` is in `/var/lib/forgejo/.admin-token.env` (0600, forgejo-owned, unreadable by lars)
@@ -229,6 +237,7 @@ The sync timer fires in ~4h (next ~07:58). I cannot trigger it manually:
 The working tree has 641 modified files — almost entirely formatter damage (treefmt/prettier reformatted markdown tables, docs, dashboards, `flake.lock`, `pkgs/jscpd-pnpm-lock.yaml`). Not mine. I restored AGENTS.md and committed only my 3 files.
 
 **Why I can't figure this out:** I don't know if:
+
 - (a) You want these reformatted (commit them all)
 - (b) You want them reverted (`git checkout .` on the non-mine files)
 - (c) They're from a `nix fmt` run you intended to review selectively

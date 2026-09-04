@@ -10,40 +10,40 @@
 
 ### Layer 1: Why renamer.home.lan Shows 3-Week-Old Stale Data
 
-| Finding | Evidence |
-|---------|----------|
-| **Health dashboard is alive but stale** | PID 1374, uptime 4h49m. All events from Jul 13 (3 weeks ago). Last dashboard "check" timestamp: 2026-08-10 07:53:29 |
-| **Watcher process is dead** | `pgrep` found only `file-renamer health` (dashboard), NOT `file-renamer watch`. Dashboard health check confirms: `filechange.Processor` = "processor not started" (degraded) |
-| **Watcher bound to graphical session** | `file-and-image-renamer.nix:148-193` — HM user service with `WantedBy = [ "graphical-session.target" ]`. Current session is `Type=tty` (no graphical session active), so the watcher never starts |
-| **0 successful renames out of 25 operations** | 14 failed with `authentication failed: Authentication Failed: unauthorized: Authentication Failed`. 11 skipped (filename already good). 0 renamed |
-| **Placeholder API key in sops** | `sops.nix:158` — `file_renamer_synthetic_api_key = "synthetic_api_key"` (literal placeholder string, not a real API key) |
-| **Deployed binary 1 commit behind lock** | Running: `d7e1d55` (Aug 8, 19:39 UTC). Locked: `e2156bad` (Aug 9, 10:04 UTC) |
+| Finding                                       | Evidence                                                                                                                                                                                          |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Health dashboard is alive but stale**       | PID 1374, uptime 4h49m. All events from Jul 13 (3 weeks ago). Last dashboard "check" timestamp: 2026-08-10 07:53:29                                                                               |
+| **Watcher process is dead**                   | `pgrep` found only `file-renamer health` (dashboard), NOT `file-renamer watch`. Dashboard health check confirms: `filechange.Processor` = "processor not started" (degraded)                      |
+| **Watcher bound to graphical session**        | `file-and-image-renamer.nix:148-193` — HM user service with `WantedBy = [ "graphical-session.target" ]`. Current session is `Type=tty` (no graphical session active), so the watcher never starts |
+| **0 successful renames out of 25 operations** | 14 failed with `authentication failed: Authentication Failed: unauthorized: Authentication Failed`. 11 skipped (filename already good). 0 renamed                                                 |
+| **Placeholder API key in sops**               | `sops.nix:158` — `file_renamer_synthetic_api_key = "synthetic_api_key"` (literal placeholder string, not a real API key)                                                                          |
+| **Deployed binary 1 commit behind lock**      | Running: `d7e1d55` (Aug 8, 19:39 UTC). Locked: `e2156bad` (Aug 9, 10:04 UTC)                                                                                                                      |
 
 ### Layer 2: Why `nix run .#deploy` Couldn't Update It
 
-| Finding | Evidence |
-|---------|----------|
-| **nixpkgs tarball regression returned** | `flake.lock` nixpkgs node: `type: "tarball"` pointing to January 8, 2026 snapshot (7 months stale). Introduced by commit `3df9896f` (Aug 10, 07:56) |
-| **Eval-time guard blocks all deploys** | `nix eval` throws: `nixpkgs flake.lock regression: original type is "tarball", expected "github"` — every `nix run .#deploy` fails before building |
+| Finding                                        | Evidence                                                                                                                                                                                                                                                                                                                 |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **nixpkgs tarball regression returned**        | `flake.lock` nixpkgs node: `type: "tarball"` pointing to January 8, 2026 snapshot (7 months stale). Introduced by commit `3df9896f` (Aug 10, 07:56)                                                                                                                                                                      |
+| **Eval-time guard blocks all deploys**         | `nix eval` throws: `nixpkgs flake.lock regression: original type is "tarball", expected "github"` — every `nix run .#deploy` fails before building                                                                                                                                                                       |
 | **Root cause: nixos-hardware missing follows** | `nixos-hardware` was the ONLY input without `inputs.nixpkgs.follows = "nixpkgs"`. When `nix flake update` ran, the global registry rewrote nixos-hardware's independent nixpkgs resolution to the stale tarball. This created a duplicate `nixpkgs` (tarball) node; the correct github nixpkgs got pushed to `nixpkgs_2` |
-| **Previous prevention fix was insufficient** | The empty flake-registry (`/etc/nix/nix.conf` confirms deployed) prevents the ROOT's nixpkgs from being rewritten, but nixos-hardware's unfollowed nixpkgs resolved independently through the global registry's `Exact: true` tarball entry — bypassing the prevention entirely |
+| **Previous prevention fix was insufficient**   | The empty flake-registry (`/etc/nix/nix.conf` confirms deployed) prevents the ROOT's nixpkgs from being rewritten, but nixos-hardware's unfollowed nixpkgs resolved independently through the global registry's `Exact: true` tarball entry — bypassing the prevention entirely                                          |
 
 ### Layer 3: The Four nixpkgs Nodes (Pre-Fix)
 
-| Node | Type | Rev Date | Used By | Status |
-|------|------|----------|---------|--------|
-| `nixpkgs` | **tarball** | **Jan 8, 2026** | nixos-hardware | **BROKEN** (7-month stale) |
-| `nixpkgs_2` | github | Aug 2, 2026 | Root flake + all follows | Correct (dedup artifact) |
-| `nixpkgs-darwin` | github | Aug 2, 2026 | helium (macOS) | Intentional |
-| `nixpkgs-stable` | github | nixos-25.11 | niri upstream | Intentional |
+| Node             | Type        | Rev Date        | Used By                  | Status                     |
+| ---------------- | ----------- | --------------- | ------------------------ | -------------------------- |
+| `nixpkgs`        | **tarball** | **Jan 8, 2026** | nixos-hardware           | **BROKEN** (7-month stale) |
+| `nixpkgs_2`      | github      | Aug 2, 2026     | Root flake + all follows | Correct (dedup artifact)   |
+| `nixpkgs-darwin` | github      | Aug 2, 2026     | helium (macOS)           | Intentional                |
+| `nixpkgs-stable` | github      | nixos-25.11     | niri upstream            | Intentional                |
 
 ### Post-Fix State
 
-| Node | Type | Status |
-|------|------|--------|
-| `nixpkgs` | github (rev `f13ff45`) | Fixed — single node, no more `nixpkgs_2` |
-| `nixpkgs-darwin` | github | Unchanged (intentional) |
-| `nixpkgs-stable` | github | Unchanged (intentional) |
+| Node             | Type                   | Status                                   |
+| ---------------- | ---------------------- | ---------------------------------------- |
+| `nixpkgs`        | github (rev `f13ff45`) | Fixed — single node, no more `nixpkgs_2` |
+| `nixpkgs-darwin` | github                 | Unchanged (intentional)                  |
+| `nixpkgs-stable` | github                 | Unchanged (intentional)                  |
 
 **Eval passes cleanly.** Guard does not throw.
 
@@ -83,8 +83,8 @@
 6. **No CI check for missing follows** — A simple grep-based check could verify every input in flake.nix that could have `inputs.nixpkgs.follows` actually does. This would have prevented the regression entirely
 
 ## f) Up to 50 Things to Get Done Next
-> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
 
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
 
 ### Immediate (blocks renamer.home.lan from working)
 
@@ -186,14 +186,14 @@ There's a large unstaged diff on `flake.nix` (275 insertions / 279 deletions) th
 
 ## Session Summary
 
-| Aspect | Status |
-|--------|--------|
-| renamer.home.lan staleness root cause | Diagnosed (3 causes: dead watcher, placeholder key, blocked deploy) |
-| nixpkgs tarball regression root cause | Diagnosed (nixos-hardware missing follows) |
-| Tarball regression fix | Applied by user, verified by me |
-| Permanent prevention (nixos-hardware follows) | Applied by user, verified by me |
-| Eval-time guard | Verified working (correctly blocked, now passes) |
-| Deploy | NOT yet run |
-| Watcher service | Still dead (graphical-session binding) |
-| API key | Still placeholder |
-| Formatting changes | Uncommitted |
+| Aspect                                        | Status                                                              |
+| --------------------------------------------- | ------------------------------------------------------------------- |
+| renamer.home.lan staleness root cause         | Diagnosed (3 causes: dead watcher, placeholder key, blocked deploy) |
+| nixpkgs tarball regression root cause         | Diagnosed (nixos-hardware missing follows)                          |
+| Tarball regression fix                        | Applied by user, verified by me                                     |
+| Permanent prevention (nixos-hardware follows) | Applied by user, verified by me                                     |
+| Eval-time guard                               | Verified working (correctly blocked, now passes)                    |
+| Deploy                                        | NOT yet run                                                         |
+| Watcher service                               | Still dead (graphical-session binding)                              |
+| API key                                       | Still placeholder                                                   |
+| Formatting changes                            | Uncommitted                                                         |

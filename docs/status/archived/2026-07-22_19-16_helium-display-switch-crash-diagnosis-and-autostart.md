@@ -8,10 +8,10 @@
 
 ---
 
-
 ## Context
 
 User asked "Why did Helium crash?" The investigation went through three phases:
+
 1. **Wrong path** — Read docs/AGENTS.md theory about GPU watchdog + DMA-BUF + GPUActive pressure
 2. **Corrected path** — User demanded actual logs; found SIGBUS minidump from Jul 17 but no recent crash dumps
 3. **Root cause** — User pushed again ("happened 2-3 times today"); traced the actual journal and found Helium wasn't crashing at all — **niri was disconnecting DP-2**, killing all Wayland clients
@@ -20,38 +20,38 @@ User asked "Why did Helium crash?" The investigation went through three phases:
 
 ## a) FULLY DONE
 
-| # | Item | Details |
-|---|------|---------|
-| 1 | Root cause identified from actual logs | DP-2 connector disconnects → niri removes the output → all Wayland clients (Helium, DMS, polkit) lose their surfaces and exit. Niri has **no virtual output support** (confirmed via GitHub discussions #714, #3101), so zero outputs = zero clients. |
-| 2 | Timeline reconstructed from journal | Two events today: 13:27:28 and 14:55:26. Both identical: `niri: disconnecting connector: "DP-2"` → "There are no outputs - creating placeholder screen" → client death. DP-2 reconnects 5-7s later. |
-| 3 | Distinguished from the Jul 17 crash | The Jul 17 SIGBUS minidump (`adb06b83...dmp`, `BUS_ADRERR` at `0x792e322e3788`, 2.86 days uptime) is a **real GPU fault** — a stale DMA-BUF access. That's a different failure mode from today's connector disconnects. |
-| 4 | Identified the headless Chromium coredump as unrelated | `/var/lib/systemd/coredump/core.chromium.1000...3205685...zst` is a **headless** process (`--headless --dump-dom https://discordsync.home.lan/static/styles.css`) — not Helium. PID 3205685, SIGTRAP, short uptime. |
-| 5 | Researched niri virtual output support | Niri does NOT support virtual/headless outputs. No `virtual` keyword, no headless backend. Community fork exists (QaidVoid/niri) but is unstable. Workarounds: hardware dummy plug, connect both displays simultaneously. |
-| 6 | Implemented Helium auto-restart service | Added `helium` systemd user service in `niri-wrapped.nix` with `Restart = always; RestartSec = 5; StartLimitBurst = 10`. Auto-starts with graphical session. Chromium's `--restore-last-session` reopens tabs. |
-| 7 | Verified DMS and polkit already auto-restart | DMS: `Restart = always; RestartSec = 2; StartLimitBurst = 30` (`quickshell.nix:148`). Polkit: niri-flake managed, auto-restarts within 1s (confirmed in journal). No changes needed. |
-| 8 | `nix flake check --no-build` passes | All modules, packages, and checks evaluate successfully. |
+| # | Item                                                   | Details                                                                                                                                                                                                                                               |
+| - | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | Root cause identified from actual logs                 | DP-2 connector disconnects → niri removes the output → all Wayland clients (Helium, DMS, polkit) lose their surfaces and exit. Niri has **no virtual output support** (confirmed via GitHub discussions #714, #3101), so zero outputs = zero clients. |
+| 2 | Timeline reconstructed from journal                    | Two events today: 13:27:28 and 14:55:26. Both identical: `niri: disconnecting connector: "DP-2"` → "There are no outputs - creating placeholder screen" → client death. DP-2 reconnects 5-7s later.                                                   |
+| 3 | Distinguished from the Jul 17 crash                    | The Jul 17 SIGBUS minidump (`adb06b83...dmp`, `BUS_ADRERR` at `0x792e322e3788`, 2.86 days uptime) is a **real GPU fault** — a stale DMA-BUF access. That's a different failure mode from today's connector disconnects.                               |
+| 4 | Identified the headless Chromium coredump as unrelated | `/var/lib/systemd/coredump/core.chromium.1000...3205685...zst` is a **headless** process (`--headless --dump-dom https://discordsync.home.lan/static/styles.css`) — not Helium. PID 3205685, SIGTRAP, short uptime.                                   |
+| 5 | Researched niri virtual output support                 | Niri does NOT support virtual/headless outputs. No `virtual` keyword, no headless backend. Community fork exists (QaidVoid/niri) but is unstable. Workarounds: hardware dummy plug, connect both displays simultaneously.                             |
+| 6 | Implemented Helium auto-restart service                | Added `helium` systemd user service in `niri-wrapped.nix` with `Restart = always; RestartSec = 5; StartLimitBurst = 10`. Auto-starts with graphical session. Chromium's `--restore-last-session` reopens tabs.                                        |
+| 7 | Verified DMS and polkit already auto-restart           | DMS: `Restart = always; RestartSec = 2; StartLimitBurst = 30` (`quickshell.nix:148`). Polkit: niri-flake managed, auto-restarts within 1s (confirmed in journal). No changes needed.                                                                  |
+| 8 | `nix flake check --no-build` passes                    | All modules, packages, and checks evaluate successfully.                                                                                                                                                                                              |
 
 ---
 
 ## b) PARTIALLY DONE
 
-| # | Item | What's done | What's missing |
-|---|------|-------------|----------------|
-| 1 | Helium auto-restart service | Service defined, flake check passes | ~~**Not deployed.** No runtime verification.~~ — DONE: deployed and running (per top update, `2026-07-24_06-25`). |
-| 2 | Root cause documentation | Status report written, AGENTS.md gotcha partially understood | ~~**AGENTS.md not updated**~~ — DONE: documented in AGENTS.md (per top update). |
-| 3 | The Jul 17 SIGBUS crash | Minidump decoded (SIGBUS/BUS_ADRERR, crashed in main helium thread, 2.86 day uptime) | **Stack trace unresolved** — no debug symbols in the Nix helium package, `addr2line` returned garbage for offset resolution. The crash address `0x792e322e3788` and the SIGBUS code suggest a stale DMA-BUF/GPU memory access, but without symbols we can't confirm the call path. |
+| # | Item                        | What's done                                                                          | What's missing                                                                                                                                                                                                                                                                     |
+| - | --------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | Helium auto-restart service | Service defined, flake check passes                                                  | ~~**Not deployed.** No runtime verification.~~ — DONE: deployed and running (per top update, `2026-07-24_06-25`).                                                                                                                                                                  |
+| 2 | Root cause documentation    | Status report written, AGENTS.md gotcha partially understood                         | ~~**AGENTS.md not updated**~~ — DONE: documented in AGENTS.md (per top update).                                                                                                                                                                                                    |
+| 3 | The Jul 17 SIGBUS crash     | Minidump decoded (SIGBUS/BUS_ADRERR, crashed in main helium thread, 2.86 day uptime) | **Stack trace unresolved** — no debug symbols in the Nix helium package, `addr2line` returned garbage for offset resolution. The crash address `0x792e322e3788` and the SIGBUS code suggest a stale DMA-BUF/GPU memory access, but without symbols we can't confirm the call path. |
 
 ---
 
 ## c) NOT STARTED
 
-| # | Item | Impact |
-|---|------|--------|
-| 1 | **Deploy and verify** | ~~The helium service is defined but not deployed.~~ — DONE: deployed and running (per top update, `2026-07-24_06-25`). |
-| 2 | **AGENTS.md update** | The existing "Helium crash on display hotplug" entry is misleading — it blames GPU watchdog kills and DMA-BUF invalidation, but today's events were clean connector disconnects. Needs a new entry: "Niri zero-output state kills all Wayland clients during monitor swap." |
-| 3 | **swayidle display power management** | swayidle runs with a 43200s (12h) timeout but has no display power management rules (no `timeout N dpms off`). If the monitor is being manually switched to a TV, there's no DPMS event. Unclear if swayidle is relevant to the disconnect. |
-| 4 | **Multiple monitor setup** | No `outputs` block in niri config. No plan for how to handle a TV on a different connector (HDMI-A-1) alongside or instead of DP-2. The user needs to connect the TV, but there's no niri-side output config. |
-| 5 | **Dummy plug recommendation** | A $5-8 DP/HDMI EDID emulator on an unused connector would prevent the zero-output state entirely. Not purchased or recommended in config. |
+| # | Item                                  | Impact                                                                                                                                                                                                                                                                      |
+| - | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Deploy and verify**                 | ~~The helium service is defined but not deployed.~~ — DONE: deployed and running (per top update, `2026-07-24_06-25`).                                                                                                                                                      |
+| 2 | **AGENTS.md update**                  | The existing "Helium crash on display hotplug" entry is misleading — it blames GPU watchdog kills and DMA-BUF invalidation, but today's events were clean connector disconnects. Needs a new entry: "Niri zero-output state kills all Wayland clients during monitor swap." |
+| 3 | **swayidle display power management** | swayidle runs with a 43200s (12h) timeout but has no display power management rules (no `timeout N dpms off`). If the monitor is being manually switched to a TV, there's no DPMS event. Unclear if swayidle is relevant to the disconnect.                                 |
+| 4 | **Multiple monitor setup**            | No `outputs` block in niri config. No plan for how to handle a TV on a different connector (HDMI-A-1) alongside or instead of DP-2. The user needs to connect the TV, but there's no niri-side output config.                                                               |
+| 5 | **Dummy plug recommendation**         | A $5-8 DP/HDMI EDID emulator on an unused connector would prevent the zero-output state entirely. Not purchased or recommended in config.                                                                                                                                   |
 
 ---
 
@@ -76,6 +76,7 @@ User asked "Why did Helium crash?" The investigation went through three phases:
 **What happened:** I identified the mechanism (DP-2 disconnect → zero outputs → client death) and jumped to the fix (auto-restart). I never investigated the root cause of the disconnect itself.
 
 **What it could be:**
+
 - **Intentional** — user is physically swapping cables to connect a TV (user confirmed: "change my monitor to the TV")
 - **Hardware** — flaky DP cable, loose connector, monitor firmware bug
 - **DPMS** — monitor entering sleep and dropping the DP handshake

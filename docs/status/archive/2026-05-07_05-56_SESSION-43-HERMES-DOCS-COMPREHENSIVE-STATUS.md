@@ -97,18 +97,18 @@
 
 | Item                          | Status | What's Missing                                                                                                                                                                                                 |
 | ----------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **GPU headroom for niri**     | ⚠️     | Committed, build passes. **NOT deployed** — needs `just switch`. `per_process_memory_fraction` caps memory allocation but does NOT directly limit compute utilization. May need to lower further (0.90, 0.85). |
-| **Manifest LLM router**       | ⚠️     | `CORS_ORIGIN` fix committed but NOT deployed. Rate limiting warning ("could not determine client IP") — upstream Manifest doesn't expose `trustedProxies` config.                                              |
-| **Hermes v2026.4.30 upgrade** | ⚠️     | Pinned to release tag, npmDeps hash patched, SQLite auto-recovery added, curator dirs documented — committed but NOT deployed                                                                                  |
-| **DNS failover cluster**      | ⚠️     | Module exists (`dns-failover.nix`), Keepalived VRRP config written — Pi 3 hardware not provisioned                                                                                                             |
-| **Voice agents**              | ⚠️     | LiveKit + Whisper module exists, Docker ROCm — may need verification after deploy                                                                                                                              |
+| **GPU headroom for niri**     | ⚠️      | Committed, build passes. **NOT deployed** — needs `just switch`. `per_process_memory_fraction` caps memory allocation but does NOT directly limit compute utilization. May need to lower further (0.90, 0.85). |
+| **Manifest LLM router**       | ⚠️      | `CORS_ORIGIN` fix committed but NOT deployed. Rate limiting warning ("could not determine client IP") — upstream Manifest doesn't expose `trustedProxies` config.                                              |
+| **Hermes v2026.4.30 upgrade** | ⚠️      | Pinned to release tag, npmDeps hash patched, SQLite auto-recovery added, curator dirs documented — committed but NOT deployed                                                                                  |
+| **DNS failover cluster**      | ⚠️      | Module exists (`dns-failover.nix`), Keepalived VRRP config written — Pi 3 hardware not provisioned                                                                                                             |
+| **Voice agents**              | ⚠️      | LiveKit + Whisper module exists, Docker ROCm — may need verification after deploy                                                                                                                              |
 | **PhotoMap AI**               | 🔧     | Module exists, disabled in config                                                                                                                                                                              |
 | **Twenty CRM**                | 🔧     | Module exists, Docker Compose, sops secrets — unclear if actively deployed                                                                                                                                     |
 | **Unsloth Studio**            | 🔧     | Module exists (`ai-models.nix`), disabled by default                                                                                                                                                           |
 | **Multi-WM (Sway)**           | 🔧     | Module exists, disabled in config                                                                                                                                                                              |
-| **AMD NPU driver**            | ⚠️     | `nix-amd-npu` input present, XDNA driver support experimental                                                                                                                                                  |
+| **AMD NPU driver**            | ⚠️      | `nix-amd-npu` input present, XDNA driver support experimental                                                                                                                                                  |
 | **Raspberry Pi 3 image**      | 📋     | `nixosConfigurations.rpi3-dns` defined in flake — hardware not provisioned                                                                                                                                     |
-| **Service health check**      | ⚠️     | Script exists (`service-health-check`), runs on timer, but **fails every run** — likely a service down or URL check failing. Needs investigation.                                                              |
+| **Service health check**      | ⚠️      | Script exists (`service-health-check`), runs on timer, but **fails every run** — likely a service down or URL check failing. Needs investigation.                                                              |
 
 ---
 
@@ -195,53 +195,53 @@
 
 ### Priority 1: Deploy & Verify (IMMEDIATE)
 
-| #   | Task                                                                                    | Impact | Effort |
-| --- | --------------------------------------------------------------------------------------- | ------ | ------ |
-| 1   | **`just switch`** — Deploy GPU limiting + Hermes upgrade + Manifest CORS                | High   | Low    |
-| 2   | **Fix service-health-check** — Investigate which check fails, fix script                | High   | Low    |
-| 3   | **Verify niri responsiveness under AI load** — Run Ollama inference while using desktop | High   | Low    |
-| 4   | **Verify Manifest sign-in** after CORS_ORIGIN deploy                                    | High   | Low    |
-| 5   | **Verify Hermes auto-recovery** — test SQLite malformed DB handling                     | Medium | Low    |
+| # | Task                                                                                    | Impact | Effort |
+| - | --------------------------------------------------------------------------------------- | ------ | ------ |
+| 1 | **`just switch`** — Deploy GPU limiting + Hermes upgrade + Manifest CORS                | High   | Low    |
+| 2 | **Fix service-health-check** — Investigate which check fails, fix script                | High   | Low    |
+| 3 | **Verify niri responsiveness under AI load** — Run Ollama inference while using desktop | High   | Low    |
+| 4 | **Verify Manifest sign-in** after CORS_ORIGIN deploy                                    | High   | Low    |
+| 5 | **Verify Hermes auto-recovery** — test SQLite malformed DB handling                     | Medium | Low    |
 
 ### Priority 2: Reliability & Monitoring
 
-| #   | Task                                                                           | Impact | Effort |
-| --- | ------------------------------------------------------------------------------ | ------ | ------ |
-| 6   | **Configure SigNoz alert notifications** — webhook or email channel            | High   | Medium |
-| 7   | **Gatus health checks** — finish module, replace ad-hoc script                 | High   | Medium |
-| 8   | **Lower GPU fraction if still laggy** — If 0.95 isn't enough, try 0.90 or 0.85 | High   | Low    |
-| 9   | **Gitea backup restore test** — verify weekly dumps are valid                  | High   | Low    |
-| 10  | **Run `just health`** after deploy — confirm all checks pass                   | Medium | Low    |
+| #  | Task                                                                           | Impact | Effort |
+| -- | ------------------------------------------------------------------------------ | ------ | ------ |
+| 6  | **Configure SigNoz alert notifications** — webhook or email channel            | High   | Medium |
+| 7  | **Gatus health checks** — finish module, replace ad-hoc script                 | High   | Medium |
+| 8  | **Lower GPU fraction if still laggy** — If 0.95 isn't enough, try 0.90 or 0.85 | High   | Low    |
+| 9  | **Gitea backup restore test** — verify weekly dumps are valid                  | High   | Low    |
+| 10 | **Run `just health`** after deploy — confirm all checks pass                   | Medium | Low    |
 
 ### Priority 3: Architecture Cleanup
 
-| #   | Task                                                                          | Impact | Effort |
-| --- | ----------------------------------------------------------------------------- | ------ | ------ |
-| 11  | **Archive stale docs** — move 304 top-level research docs to `docs/research/` | Low    | Low    |
-| 12  | **Add niri-config harden{}** — only module missing systemd hardening          | Low    | Low    |
-| 13  | **Service dependency graph** — D2 diagram of all services                     | Medium | Medium |
-| 14  | **File Manifest upstream issue** — request `trustedProxies` config            | Medium | Low    |
-| 15  | **Add module option descriptions** — ensure all `options` have `description`  | Low    | Medium |
+| #  | Task                                                                          | Impact | Effort |
+| -- | ----------------------------------------------------------------------------- | ------ | ------ |
+| 11 | **Archive stale docs** — move 304 top-level research docs to `docs/research/` | Low    | Low    |
+| 12 | **Add niri-config harden{}** — only module missing systemd hardening          | Low    | Low    |
+| 13 | **Service dependency graph** — D2 diagram of all services                     | Medium | Medium |
+| 14 | **File Manifest upstream issue** — request `trustedProxies` config            | Medium | Low    |
+| 15 | **Add module option descriptions** — ensure all `options` have `description`  | Low    | Medium |
 
 ### Priority 4: GPU & Desktop
 
-| #   | Task                                                                                        | Impact | Effort |
-| --- | ------------------------------------------------------------------------------------------- | ------ | ------ |
-| 16  | **Benchmark niri latency** — Measure frame times with/without AI workloads                  | Medium | Medium |
-| 17  | **Monitor GPU utilization** — Add `gpu_busy_percent` to SigNoz via textfile collector       | Medium | Low    |
-| 18  | **Research AMD HSA queue priority** — Check ROCm 6.4+/kernel 7.x for compute queue priority | Medium | Medium |
-| 19  | **BTRFS snapshot restore test** — verify Timeshift works                                    | Medium | Low    |
-| 20  | **Disaster recovery playbook** — document full rebuild procedure                            | Medium | Medium |
+| #  | Task                                                                                        | Impact | Effort |
+| -- | ------------------------------------------------------------------------------------------- | ------ | ------ |
+| 16 | **Benchmark niri latency** — Measure frame times with/without AI workloads                  | Medium | Medium |
+| 17 | **Monitor GPU utilization** — Add `gpu_busy_percent` to SigNoz via textfile collector       | Medium | Low    |
+| 18 | **Research AMD HSA queue priority** — Check ROCm 6.4+/kernel 7.x for compute queue priority | Medium | Medium |
+| 19 | **BTRFS snapshot restore test** — verify Timeshift works                                    | Medium | Low    |
+| 20 | **Disaster recovery playbook** — document full rebuild procedure                            | Medium | Medium |
 
 ### Priority 5: Infrastructure & New Features
 
-| #   | Task                                                                       | Impact | Effort |
-| --- | -------------------------------------------------------------------------- | ------ | ------ |
-| 21  | **Automated DNS blocklist updates** — weekly timer or CI job               | Medium | Low    |
-| 22  | **Pi 3 provisioning** — flash SD, boot, verify DNS failover                | High   | High   |
-| 23  | **SOPS secret rotation plan** — document and schedule                      | Medium | Medium |
-| 24  | **Voice agents verification** — confirm LiveKit + Whisper works end-to-end | Medium | Medium |
-| 25  | **Twenty CRM deployment verification** — confirm or remove module          | Low    | Low    |
+| #  | Task                                                                       | Impact | Effort |
+| -- | -------------------------------------------------------------------------- | ------ | ------ |
+| 21 | **Automated DNS blocklist updates** — weekly timer or CI job               | Medium | Low    |
+| 22 | **Pi 3 provisioning** — flash SD, boot, verify DNS failover                | High   | High   |
+| 23 | **SOPS secret rotation plan** — document and schedule                      | Medium | Medium |
+| 24 | **Voice agents verification** — confirm LiveKit + Whisper works end-to-end | Medium | Medium |
+| 25 | **Twenty CRM deployment verification** — confirm or remove module          | Low    | Low    |
 
 ---
 

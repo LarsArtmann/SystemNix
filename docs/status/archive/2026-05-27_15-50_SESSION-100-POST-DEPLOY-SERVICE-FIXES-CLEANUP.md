@@ -121,48 +121,48 @@
 
 ### Tier 1: Immediate (today, <30 min each)
 
-| #   | Task                                                                                                                             | Effort | Impact                              |
-| --- | -------------------------------------------------------------------------------------------------------------------------------- | ------ | ----------------------------------- |
-| 1   | Fix `service-health-check` script — remove disabled services (ollama, whisper-asr, livekit, file-and-image-renamer, monitor365*) | 10 min | Stops every-15-min false alerts     |
-| 2   | Add sops/age toolchain docs to AGENTS.md (ssh-to-age, SOPS_AGE_KEY_FILE pattern)                                                 | 10 min | Prevents future sops debugging pain |
-| 3   | Set `boot.zfs.forceImportRoot = false` — suppress 26.11 deprecation warning                                                      | 2 min  | Clean eval output                   |
-| 4   | Verify Darwin build passes (`just test-fast` on macOS)                                                                           | 5 min  | Cross-platform regression check     |
+| # | Task                                                                                                                             | Effort | Impact                              |
+| - | -------------------------------------------------------------------------------------------------------------------------------- | ------ | ----------------------------------- |
+| 1 | Fix `service-health-check` script — remove disabled services (ollama, whisper-asr, livekit, file-and-image-renamer, monitor365*) | 10 min | Stops every-15-min false alerts     |
+| 2 | Add sops/age toolchain docs to AGENTS.md (ssh-to-age, SOPS_AGE_KEY_FILE pattern)                                                 | 10 min | Prevents future sops debugging pain |
+| 3 | Set `boot.zfs.forceImportRoot = false` — suppress 26.11 deprecation warning                                                      | 2 min  | Clean eval output                   |
+| 4 | Verify Darwin build passes (`just test-fast` on macOS)                                                                           | 5 min  | Cross-platform regression check     |
 
 ### Tier 2: This Week (<2 hr each)
 
-| #   | Task                                                                  | Effort | Impact                                       |
-| --- | --------------------------------------------------------------------- | ------ | -------------------------------------------- |
-| 5   | Move `todo-list-ai` bun FOD hash management to upstream repo          | 30 min | Eliminates most fragile hash in SystemNix    |
-| 6   | Move `dnsblockd` vendorHash to upstream repo                          | 15 min | Eliminates linux.nix hardcode                |
-| 7   | Move `file-and-image-renamer` vendorHash to upstream repo             | 15 min | Eliminates linux.nix hardcode + anti-pattern |
-| 8   | Add NixOS module assertion for oauth2-proxy cookie_secret byte length | 30 min | Prevents bad secrets at eval time            |
-| 9   | Fix PMA go.work: `go 1.26.2` → `go 1.26.3`                            | 2 min  | Unblocks local golangci-lint                 |
-| 10  | Publish git tags for go-output submodules (9 tags)                    | 10 min | Enables PMA overrideModAttrs removal         |
-| 11  | Remove PMA `overrideModAttrs` after tags exist                        | 15 min | Eliminates anti-pattern                      |
-| 12  | Add GitHub Actions CI: `nix flake check --no-build` on push           | 30 min | Catch eval errors pre-deploy                 |
+| #  | Task                                                                  | Effort | Impact                                       |
+| -- | --------------------------------------------------------------------- | ------ | -------------------------------------------- |
+| 5  | Move `todo-list-ai` bun FOD hash management to upstream repo          | 30 min | Eliminates most fragile hash in SystemNix    |
+| 6  | Move `dnsblockd` vendorHash to upstream repo                          | 15 min | Eliminates linux.nix hardcode                |
+| 7  | Move `file-and-image-renamer` vendorHash to upstream repo             | 15 min | Eliminates linux.nix hardcode + anti-pattern |
+| 8  | Add NixOS module assertion for oauth2-proxy cookie_secret byte length | 30 min | Prevents bad secrets at eval time            |
+| 9  | Fix PMA go.work: `go 1.26.2` → `go 1.26.3`                            | 2 min  | Unblocks local golangci-lint                 |
+| 10 | Publish git tags for go-output submodules (9 tags)                    | 10 min | Enables PMA overrideModAttrs removal         |
+| 11 | Remove PMA `overrideModAttrs` after tags exist                        | 15 min | Eliminates anti-pattern                      |
+| 12 | Add GitHub Actions CI: `nix flake check --no-build` on push           | 30 min | Catch eval errors pre-deploy                 |
 
 ### Tier 3: Architecture (this sprint)
 
-| #   | Task                                                                        | Effort | Impact                                     |
-| --- | --------------------------------------------------------------------------- | ------ | ------------------------------------------ |
-| 13  | Auto-generate `service-health-check` service list from enabled services     | 1 hr   | Never rots again                           |
-| 14  | Improve port collision assertion with duplicate port names in error message | 30 min | Better DX on collision                     |
-| 15  | Redesign `mkPreparedSource` to auto-generate `require` lines                | 2 hr   | Eliminates manual postPatchExtra sed hacks |
-| 16  | Add `mkPackageOverlay` platform filtering (skip Linux-only on Darwin)       | 1 hr   | Cleaner overlay separation                 |
-| 17  | Convert `writeShellScript` to `writeShellApplication` across all services   | 2 hr   | Shellcheck + bashStrict done automatically |
+| #  | Task                                                                        | Effort | Impact                                     |
+| -- | --------------------------------------------------------------------------- | ------ | ------------------------------------------ |
+| 13 | Auto-generate `service-health-check` service list from enabled services     | 1 hr   | Never rots again                           |
+| 14 | Improve port collision assertion with duplicate port names in error message | 30 min | Better DX on collision                     |
+| 15 | Redesign `mkPreparedSource` to auto-generate `require` lines                | 2 hr   | Eliminates manual postPatchExtra sed hacks |
+| 16 | Add `mkPackageOverlay` platform filtering (skip Linux-only on Darwin)       | 1 hr   | Cleaner overlay separation                 |
+| 17 | Convert `writeShellScript` to `writeShellApplication` across all services   | 2 hr   | Shellcheck + bashStrict done automatically |
 
 ### Tier 4: Nice to Have
 
-| #   | Task                                                                        | Effort | Impact                     |
-| --- | --------------------------------------------------------------------------- | ------ | -------------------------- |
-| 18  | Convert /data BTRFS from toplevel to `@data` subvolume                      | 30 min | Enables /data snapshots    |
-| 19  | Add Gatus health checks for all services                                    | 1 hr   | Full observability         |
-| 20  | Audit all services for `WatchdogSec` misuse                                 | 30 min | Correctness                |
-| 21  | Centralize Docker image tags in `lib/`                                      | 2 hr   | Single source of truth     |
-| 22  | Add `just test` to GitHub Actions (full build)                              | 1 hr   | Complete CI coverage       |
-| 23  | Create `modules/nixos/services/` README with conventions                    | 15 min | Onboarding                 |
-| 24  | Benchmark flake eval time before/after auto-discovery                       | 10 min | Performance baseline       |
-| 25  | Add `# @module <name>` convention to replace file parsing in auto-discovery | 1 hr   | Faster eval, more explicit |
+| #  | Task                                                                        | Effort | Impact                     |
+| -- | --------------------------------------------------------------------------- | ------ | -------------------------- |
+| 18 | Convert /data BTRFS from toplevel to `@data` subvolume                      | 30 min | Enables /data snapshots    |
+| 19 | Add Gatus health checks for all services                                    | 1 hr   | Full observability         |
+| 20 | Audit all services for `WatchdogSec` misuse                                 | 30 min | Correctness                |
+| 21 | Centralize Docker image tags in `lib/`                                      | 2 hr   | Single source of truth     |
+| 22 | Add `just test` to GitHub Actions (full build)                              | 1 hr   | Complete CI coverage       |
+| 23 | Create `modules/nixos/services/` README with conventions                    | 15 min | Onboarding                 |
+| 24 | Benchmark flake eval time before/after auto-discovery                       | 10 min | Performance baseline       |
+| 25 | Add `# @module <name>` convention to replace file parsing in auto-discovery | 1 hr   | Faster eval, more explicit |
 
 ---
 
@@ -216,7 +216,7 @@
 | unbound                  | ✅ active                            |
 | docker                   | ✅ active                            |
 | niri-health-metrics      | ✅ active (fixed this session)       |
-| ollama                   | ⚠️ inactive (not configured?)        |
-| whisper-asr              | ⚠️ inactive (voice agents disabled)  |
-| livekit                  | ⚠️ inactive (voice agents disabled)  |
+| ollama                   | ⚠️ inactive (not configured?)         |
+| whisper-asr              | ⚠️ inactive (voice agents disabled)   |
+| livekit                  | ⚠️ inactive (voice agents disabled)   |
 | service-health-check     | ❌ failed (checks disabled services) |

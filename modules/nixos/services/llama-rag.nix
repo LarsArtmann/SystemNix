@@ -263,6 +263,7 @@ _: {
             {
               ExecStart = embeddingsExecStart;
             }
+            rocm.deviceCgroup
             (harden { })
             ioTier.background
           ];
@@ -290,6 +291,7 @@ _: {
             {
               ExecStart = rerankerExecStart;
             }
+            rocm.deviceCgroup
             (harden { })
             ioTier.background
           ];

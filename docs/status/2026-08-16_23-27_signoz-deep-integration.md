@@ -9,6 +9,7 @@
 ## Category A — Fully Done ✔
 
 ### A1. Traces schema drift: migration 1010 never applied (LIVE HOTFIX)
+
 - **Symptom**: `clickhousetracesexporter` journal error every 1–5 min: `Could not write a batch of spans to tag/tagKey tables: ... (tagType Enum8('tag' = 1, 'resource' = 2)) unknown element "scope"`. Errors deliberately swallowed upstream ("don't want to block the exporter"), so spans kept flowing while attribute-key registration rotted (SigNoz trace filters/autocomplete silently degrade).
 - **Root cause**: `signoz_traces.schema_migrations_v2` shows 1009 → 1011-1014 finished, **1010 has no row at all**. The collector's `migrate sync up` squash logic treats everything below the high-water mark as done — 1010 will never be applied by any restart.
 - **Fix (applied live, verified)**:
@@ -20,6 +21,7 @@
 - **Verified**: 0 "unknown element" errors in collector journal post-fix.
 
 ### A2. Dashboards: 251 zombies → 5 exact, native v2, converging provisioner
+
 - **Found**: every deploy since Jul 18 logged 6× `WARNING dashboard:* (HTTP 400) — "json: unknown field \"title\""` — the JSONs were authored against an imaginary v1 schema and the v2 API (`PostableDashboardV2.UnmarshalJSON` → `DisallowUnknownFields`) rejects them. Masked by the "best-effort" warnings. Worse: the pre-v2 provisioner POSTed a fresh copy per deploy — **251 accumulated dashboards** (verified via `GET /api/v2/dashboards`, total=251).
 - **Source-level research** (pinned rev `c40ebb02`): mapped the full v2 schema — `pkg/types/dashboardtypes/perses_dashboard.go` (`PostableDashboardV2`), `perses_dashboard_data.go` (`DashboardSpec`), `perses_plugin_wrappers.go` (`allowedQueryKinds`: PromQL allowed for every panel kind except List; **exactly one query per panel** enforced), v2 handler routes. Discovered the CreateV2 v1-fallback path (`shadow.Version != "" && SchemaVersion == ""` → `ConvertV1ToV2`) — chose native v2 authoring instead (no reliance on migration path surviving upgrades).
 - **Built**: 5 dashboards (`modules/nixos/services/dashboards/{overview,gpu,dns,docker,caddy}.json`), Perses `schemaVersion: "v6"`, stable slugs (`systemnix-*`), tag `owner=systemnix`, deterministic uuid5 panel IDs, 12-col grids, **only metrics verified live** (enumerated metric families from every endpoint first — including discovering caddy admin needs `Host: localhost:2019`, ollama has NO /metrics at all). Overview gains telemetry-ingestion panels from the collector self-scrape. Old `signoz-overview.json` deleted (was dead: deployed as `overview.json` while a different unused `overview.json` sat on disk).
@@ -28,6 +30,7 @@
 - **Deployed**: first run deleted ~246 zombies, created 5; second run: 5× "Unchanged", `OK 5 dashboards provisioned, exact desired set`, 0 errors.
 
 ### A3. Logs pipeline: from metadata-free dumps to first-class enriched logs
+
 - **Found**: `signoz_logs.logs_v2` rows had `severity_text=''`, `severity_number=0`, `resources_string={}` (no service.name → UI can't group/filter), `body` = the ENTIRE journalctl JSON entry. ~105 rows/day (10 units, warning+). The upstream journaldreceiver v0.144.0 emits `body=Map(all fields)` and nothing else — verified empirically with a debug-exporter dry run.
 - **Built** (in `signoz.nix` collector.yaml):
   - Receiver: `all=true`, `priority=info`, `start_at=end` (NEVER "beginning" — no persistent cursor = full-journal re-ingestion on restart). Whole-journal is safe: measured 5.35 MB/h total (~6 entries/s), 500× below the 2026-08 CPU-burn era; journald per-unit rate limiting (10k/30s) bounds recurrence.
@@ -37,6 +40,7 @@
 - **Result**: ~6,785 enriched rows per 10 min post-deploy; per-service counts verified (discordsync 2162, node-exporter 1207, gatus 946, twenty-worker-1 80, …). Logs TTL = 15 days (per-row `_retention_days`), bounded growth.
 
 ### A4. Phantom alert fixes + 3 new meta-alerts (23 rules total)
+
 - **Ollama Down**: queried `up{job="ollama"}` — no such job, ollama serves 404 on /metrics. Rewritten on `node_systemd_unit_state{name="ollama.service",state="active"}` (real signal, node-exporter systemd collector).
 - **Docker Daemon Down**: watched `up{job="cadvisor"}` (stays 1 while dockerd idles). Now watches `up{job="docker-engine"}` (direct signal).
 - **NEW Telemetry Collector Down**: `up{job="signoz-collector"}` below 1.
@@ -45,24 +49,29 @@
 - **Verified**: 23 rules provisioned, `system_signoz_alert_rules_healthy = 1`, 23 route policies one-per-rule, Discord channel unchanged.
 
 ### A5. Scrape coverage: 9 targets, all UP=1 (verified in ClickHouse)
+
 - Added `signoz-collector` (self, :8888 — otelcol receiver/exporter rates), `clickhouse` (:9363 — `<prometheus>` block in extraServerConfig; nixpkgs does NOT enable it by default), `docker-engine` (:9390 — `metrics-addr`).
 - Ports registered in `lib/ports.nix`: `signoz-collector-metrics 8888`, `signoz-clickhouse-metrics 9363`, `docker-engine-metrics 9390`.
 - All verified via `up` metric query in `signoz_metrics`.
 
 ### A6. restartTriggers for every startup-read config (the recurring trap, closed)
+
 - `signoz-collector` had NO restartTriggers for collector.yaml → my first deploy swapped the symlink and the process kept the OLD config (~1h of "enrichment doesn't work" until noticed). Fixed + documented.
 - `clickhouse` (nixpkgs module has none for extraServerConfig) → 9363 didn't bind until restart. Fixed with trigger on the etc file; verified restart + bind.
 - `signoz-provision` now also triggers on dashboard JSON sources (was rules-only).
 
 ### A7. Incidental blocker fixed: visionreviewd.nix broke ALL evals
+
 - Concurrent session's committed wrapper referenced `packages.<sys>.visionreviewd` (upstream exposes only `default`) AND used top-level `mkIf` for an option that doesn't exist while the input predates the module — the mkIf definition envelope still gets type-checked → hard eval failure for every command.
 - Fixed surgically (their intent preserved): `.default` + `lib.optionalAttrs` instead of mkIf (produces literal `config = {}` — nothing to check, nothing to merge).
 
 ### A8. Docs
+
 - AGENTS.md: journald bullet rewritten (pipeline architecture, OTTL constraints, volume measurements); provisioner bullet extended to v7 + dashboards; external_url bullet updated (UI IS shipped now); NEW bullets: restartTriggers-mandatory, schema-drift/squash-gap, scrape coverage + dashboard authoring notes.
 - CHANGELOG.md: comprehensive Unreleased entry.
 
 ### A9. Deploys verified
+
 - 3 deploys this session (1 blocked by A7 pre-fix, 2 clean). `post-deploy-check`: **44 PASS / 0 FAIL** each time; auth gateway `signoz.home.lan → 200`; Gatus "SigNoz Web UI" success=true every 5m.
 
 ---
@@ -100,6 +109,7 @@
 ## Category F — Next Tasks (Pareto-ordered)
 
 **High value / small:**
+
 1. Browser-eyeball the 5 dashboards (user action — layout/UX check only; data verified). ← open — TODO_LIST Priority 2
 2. Commit working tree (strategy Q1 below), including dashboards + generator moved to `scripts/gen-signoz-dashboards.py`. ← half-done: the tree was committed (`26beaf0c`+); the GENERATOR is still uncommitted (was /tmp-ephemeral, lost) — TODO_LIST Priority 3
 3. Recreate remaining json-file containers (one `docker compose up -d --force-recreate`-class action per stack) so ALL container logs flow. ← open — TODO_LIST Priority 3

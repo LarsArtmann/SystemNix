@@ -141,33 +141,33 @@ Went through many wrong approaches (LD_PRELOAD, GOFLAGS override, proxyVendor=fa
 
 ## F) Top 25 Things We Should Get Done Next
 
-| #   | Priority | Task                                                                                      | Impact        | Effort |
-| --- | -------- | ----------------------------------------------------------------------------------------- | ------------- | ------ |
-| 1   | P0       | **Trash `/home/lars/.hermes` (1.3GB)**                                                    | Cleanup       | 1min   |
-| 2   | P0       | **Trash `/var/lib/hermes` (4KB)**                                                         | Cleanup       | 1min   |
-| 3   | P0       | **Commit flake.lock** — monitor365-src bump uncommitted                                   | Git           | 1min   |
-| 4   | P1       | **Configure Authelia SMTP notifier** — replace filesystem with real email                 | UX            | 30min  |
-| 5   | P1       | **Test hermes Discord bot end-to-end** — send a message, verify response                  | Verification  | 5min   |
-| 6   | P1       | **Test hermes voice playback** — join Discord voice channel                               | Verification  | 5min   |
-| 7   | P1       | **Run `just health`** — full system health check                                          | Monitoring    | 5min   |
-| 8   | P2       | **Add hermes state verification to justfile** — `just hermes-verify`                      | DX            | 15min  |
-| 9   | P2       | **Update AGENTS.md with all session changes** — migration fix, group access, caddy bypass | Docs          | 15min  |
-| 10  | P2       | **Push all commits to origin** — `git push`                                               | Git           | 1min   |
-| 11  | P2       | **Run `just format`** — ensure all Nix files formatted                                    | Hygiene       | 2min   |
-| 12  | P2       | **Document dontFixut + modPostBuild pattern in AGENTS.md**                                | Docs          | 10min  |
-| 13  | P2       | **Document tmpfiles vs migration ordering gotcha**                                        | Docs          | 10min  |
-| 14  | P3       | **Audit all services for ProtectHome conflicts**                                          | Security      | 15min  |
-| 15  | P3       | **Add hermes to SigNoz monitoring**                                                       | Observability | 30min  |
-| 16  | P3       | **Fix dnsblockd dependabot vulnerability** — check high-severity alert                    | Security      | 15min  |
-| 17  | P3       | **Create `lib/buildGoModule.nix` helper** — extract go mod tidy pattern                   | DX            | 30min  |
-| 18  | P3       | **Audit all buildGoModule packages** — dnsblockd, netwatch, monitor365                    | Reliability   | 30min  |
-| 19  | P3       | **Add `just hermes-backup`** — backup state.db                                            | DX            | 15min  |
-| 20  | P3       | **Add hermes service to homepage dashboard**                                              | UX            | 15min  |
-| 21  | P4       | **Consider `ProtectHome = "read-only"` for hermes**                                       | Security      | 10min  |
-| 22  | P4       | **Silence dnsblockd TLS handshake errors** — client unsupported versions noise            | Observability | 5min   |
-| 23  | P4       | **Review systemd hardening across all services**                                          | Security      | 30min  |
-| 24  | P4       | **Add password reset instructions to Authelia login page**                                | UX            | 15min  |
-| 25  | P4       | **Write integration test for hermes migration script**                                    | Reliability   | 30min  |
+| #  | Priority | Task                                                                                      | Impact        | Effort |
+| -- | -------- | ----------------------------------------------------------------------------------------- | ------------- | ------ |
+| 1  | P0       | **Trash `/home/lars/.hermes` (1.3GB)**                                                    | Cleanup       | 1min   |
+| 2  | P0       | **Trash `/var/lib/hermes` (4KB)**                                                         | Cleanup       | 1min   |
+| 3  | P0       | **Commit flake.lock** — monitor365-src bump uncommitted                                   | Git           | 1min   |
+| 4  | P1       | **Configure Authelia SMTP notifier** — replace filesystem with real email                 | UX            | 30min  |
+| 5  | P1       | **Test hermes Discord bot end-to-end** — send a message, verify response                  | Verification  | 5min   |
+| 6  | P1       | **Test hermes voice playback** — join Discord voice channel                               | Verification  | 5min   |
+| 7  | P1       | **Run `just health`** — full system health check                                          | Monitoring    | 5min   |
+| 8  | P2       | **Add hermes state verification to justfile** — `just hermes-verify`                      | DX            | 15min  |
+| 9  | P2       | **Update AGENTS.md with all session changes** — migration fix, group access, caddy bypass | Docs          | 15min  |
+| 10 | P2       | **Push all commits to origin** — `git push`                                               | Git           | 1min   |
+| 11 | P2       | **Run `just format`** — ensure all Nix files formatted                                    | Hygiene       | 2min   |
+| 12 | P2       | **Document dontFixut + modPostBuild pattern in AGENTS.md**                                | Docs          | 10min  |
+| 13 | P2       | **Document tmpfiles vs migration ordering gotcha**                                        | Docs          | 10min  |
+| 14 | P3       | **Audit all services for ProtectHome conflicts**                                          | Security      | 15min  |
+| 15 | P3       | **Add hermes to SigNoz monitoring**                                                       | Observability | 30min  |
+| 16 | P3       | **Fix dnsblockd dependabot vulnerability** — check high-severity alert                    | Security      | 15min  |
+| 17 | P3       | **Create `lib/buildGoModule.nix` helper** — extract go mod tidy pattern                   | DX            | 30min  |
+| 18 | P3       | **Audit all buildGoModule packages** — dnsblockd, netwatch, monitor365                    | Reliability   | 30min  |
+| 19 | P3       | **Add `just hermes-backup`** — backup state.db                                            | DX            | 15min  |
+| 20 | P3       | **Add hermes service to homepage dashboard**                                              | UX            | 15min  |
+| 21 | P4       | **Consider `ProtectHome = "read-only"` for hermes**                                       | Security      | 10min  |
+| 22 | P4       | **Silence dnsblockd TLS handshake errors** — client unsupported versions noise            | Observability | 5min   |
+| 23 | P4       | **Review systemd hardening across all services**                                          | Security      | 30min  |
+| 24 | P4       | **Add password reset instructions to Authelia login page**                                | UX            | 15min  |
+| 25 | P4       | **Write integration test for hermes migration script**                                    | Reliability   | 30min  |
 
 ---
 
@@ -217,15 +217,15 @@ a0b1879 fix(nix): update vendorHash for semconv v1.40.0 migration
 
 ## System State
 
-| Component                    | Status                                                                    |
-| ---------------------------- | ------------------------------------------------------------------------- |
-| Hermes                       | ✅ Running at `/home/hermes`, 1.3GB state, zero warnings                  |
-| dnsblockd                    | ✅ Running, no OTel errors, serving block pages                           |
-| Authelia                     | ✅ Running, processing requests, argon2id hashes                          |
-| Caddy                        | ✅ Running, LAN bypass for forward auth                                   |
-| golangci-lint-auto-configure | ✅ Builds successfully                                                    |
-| Full pipeline                | ✅ update → check → build → switch → boot all pass                        |
-| `/home/lars` perms           | `770 lars:users` — hermes has full access                                 |
-| `/home/hermes` perms         | `2770 hermes:hermes` — service-owned                                      |
+| Component                    | Status                                                                   |
+| ---------------------------- | ------------------------------------------------------------------------ |
+| Hermes                       | ✅ Running at `/home/hermes`, 1.3GB state, zero warnings                 |
+| dnsblockd                    | ✅ Running, no OTel errors, serving block pages                          |
+| Authelia                     | ✅ Running, processing requests, argon2id hashes                         |
+| Caddy                        | ✅ Running, LAN bypass for forward auth                                  |
+| golangci-lint-auto-configure | ✅ Builds successfully                                                   |
+| Full pipeline                | ✅ update → check → build → switch → boot all pass                       |
+| `/home/lars` perms           | `770 lars:users` — hermes has full access                                |
+| `/home/hermes` perms         | `2770 hermes:hermes` — service-owned                                     |
 | Old state dirs               | ⚠️ `/home/lars/.hermes` (1.3GB) + `/var/lib/hermes` (4KB) pending cleanup |
 | flake.lock                   | ⚠️ monitor365-src bump uncommitted                                        |

@@ -198,48 +198,48 @@ Error: failed to find treefmt config file: could not find [treefmt.toml .treefmt
 
 ### P0 — Immediate (Today/Tomorrow)
 
-| #   | Task                                                                                 | Est. Time | Impact                                    |
-| --- | ------------------------------------------------------------------------------------ | --------- | ----------------------------------------- |
-| 1   | **Fix failed systemd services** — `just switch` + verify all 6 failed units recover  | 30 min    | Critical — Caddy down = all services down |
-| 2   | **Run `just clean`** — reclaim disk space (root 86%)                                 | 15 min    | Prevents build failures                   |
-| 3   | **Commit monitor365 sops rename** — uncommitted changes in monitor365.nix + sops.nix | 5 min     | Uncommitted work at risk                  |
-| 4   | **Fix `just format`** — wire treefmt config properly                                 | 30 min    | Code quality gate broken                  |
+| # | Task                                                                                 | Est. Time | Impact                                    |
+| - | ------------------------------------------------------------------------------------ | --------- | ----------------------------------------- |
+| 1 | **Fix failed systemd services** — `just switch` + verify all 6 failed units recover  | 30 min    | Critical — Caddy down = all services down |
+| 2 | **Run `just clean`** — reclaim disk space (root 86%)                                 | 15 min    | Prevents build failures                   |
+| 3 | **Commit monitor365 sops rename** — uncommitted changes in monitor365.nix + sops.nix | 5 min     | Uncommitted work at risk                  |
+| 4 | **Fix `just format`** — wire treefmt config properly                                 | 30 min    | Code quality gate broken                  |
 
 ### P1 — This Week
 
-| #   | Task                                                                         | Est. Time | Impact                   |
-| --- | ---------------------------------------------------------------------------- | --------- | ------------------------ |
-| 5   | **Fix `just validate-scripts`** — resolve shellcheck warnings                | 30 min    | Quality gate             |
-| 6   | **Clean FEATURES.md** — remove 4 ghost script entries                        | 15 min    | Documentation accuracy   |
-| 7   | **Update TODO_LIST.md** — sync with current state, remove stale items        | 30 min    | Task tracking accuracy   |
-| 8   | **Verify voice-agents** — confirm LiveKit + Whisper actually work end-to-end | 1 hr      | Feature verification     |
-| 9   | **Pin Twenty Docker image** — replace `:latest` with SHA256                  | 15 min    | Reproducibility          |
-| 10  | **Add automated disk cleanup** — systemd timer for nix GC + Docker prune     | 30 min    | Prevents disk exhaustion |
+| #  | Task                                                                         | Est. Time | Impact                   |
+| -- | ---------------------------------------------------------------------------- | --------- | ------------------------ |
+| 5  | **Fix `just validate-scripts`** — resolve shellcheck warnings                | 30 min    | Quality gate             |
+| 6  | **Clean FEATURES.md** — remove 4 ghost script entries                        | 15 min    | Documentation accuracy   |
+| 7  | **Update TODO_LIST.md** — sync with current state, remove stale items        | 30 min    | Task tracking accuracy   |
+| 8  | **Verify voice-agents** — confirm LiveKit + Whisper actually work end-to-end | 1 hr      | Feature verification     |
+| 9  | **Pin Twenty Docker image** — replace `:latest` with SHA256                  | 15 min    | Reproducibility          |
+| 10 | **Add automated disk cleanup** — systemd timer for nix GC + Docker prune     | 30 min    | Prevents disk exhaustion |
 
 ### P2 — This Month
 
-| #   | Task                                                                   | Est. Time | Impact                                 |
-| --- | ---------------------------------------------------------------------- | --------- | -------------------------------------- |
-| 11  | **Set up GitHub Actions CI** — `nix flake check` + `nix build` on push | 2 hr      | Prevents regressions                   |
-| 12  | **Set up Cachix binary cache** — push builds to cache                  | 1 hr      | Build time from 30+ min to seconds     |
-| 13  | **Migrate Twenty secrets to central sops.nix**                         | 30 min    | Centralized secret management          |
-| 14  | **Migrate Authelia OIDC client secret to sops**                        | 30 min    | Security improvement                   |
-| 15  | **Provision Pi 3 for DNS failover**                                    | 2 hr      | Eliminates DNS single point of failure |
-| 16  | **Audit 10 `mkForce false` security overrides** — document rationale   | 1 hr      | Security audit trail                   |
-| 17  | **Renumber ADR-005** — two files share same number                     | 10 min    | Documentation correctness              |
-| 18  | **Migrate dns-failover authPassword to sops**                          | 30 min    | Security improvement                   |
+| #  | Task                                                                   | Est. Time | Impact                                 |
+| -- | ---------------------------------------------------------------------- | --------- | -------------------------------------- |
+| 11 | **Set up GitHub Actions CI** — `nix flake check` + `nix build` on push | 2 hr      | Prevents regressions                   |
+| 12 | **Set up Cachix binary cache** — push builds to cache                  | 1 hr      | Build time from 30+ min to seconds     |
+| 13 | **Migrate Twenty secrets to central sops.nix**                         | 30 min    | Centralized secret management          |
+| 14 | **Migrate Authelia OIDC client secret to sops**                        | 30 min    | Security improvement                   |
+| 15 | **Provision Pi 3 for DNS failover**                                    | 2 hr      | Eliminates DNS single point of failure |
+| 16 | **Audit 10 `mkForce false` security overrides** — document rationale   | 1 hr      | Security audit trail                   |
+| 17 | **Renumber ADR-005** — two files share same number                     | 10 min    | Documentation correctness              |
+| 18 | **Migrate dns-failover authPassword to sops**                          | 30 min    | Security improvement                   |
 
 ### P3 — Backlog
 
-| #   | Task                                                                     | Est. Time | Impact                 |
-| --- | ------------------------------------------------------------------------ | --------- | ---------------------- |
-| 19  | **nix-colors integration** — migrate 17+ hardcoded colors                | 6 hr      | Theme consistency      |
-| 20  | **Deploy Dozzle** — Docker container log tailing                         | 2 hr      | Operational visibility |
-| 21  | **Per-threshold SigNoz channel routing** — critical→Discord, warning→log | 1 hr      | Alert quality          |
-| 22  | **Clean up ComfyUI module** — document removal decision or archive       | 30 min    | Codebase cleanliness   |
-| 23  | **Fix BuildFlow/PMA vendorHash** — replace fakeHash/null                 | 1 hr      | Dependency correctness |
-| 24  | **Convert go-auto-upgrade path: inputs to SSH URLs**                     | 30 min    | Flake portability      |
-| 25  | **Create hierarchical-errors flake.nix**                                 | 1 hr      | Ecosystem completeness |
+| #  | Task                                                                     | Est. Time | Impact                 |
+| -- | ------------------------------------------------------------------------ | --------- | ---------------------- |
+| 19 | **nix-colors integration** — migrate 17+ hardcoded colors                | 6 hr      | Theme consistency      |
+| 20 | **Deploy Dozzle** — Docker container log tailing                         | 2 hr      | Operational visibility |
+| 21 | **Per-threshold SigNoz channel routing** — critical→Discord, warning→log | 1 hr      | Alert quality          |
+| 22 | **Clean up ComfyUI module** — document removal decision or archive       | 30 min    | Codebase cleanliness   |
+| 23 | **Fix BuildFlow/PMA vendorHash** — replace fakeHash/null                 | 1 hr      | Dependency correctness |
+| 24 | **Convert go-auto-upgrade path: inputs to SSH URLs**                     | 30 min    | Flake portability      |
+| 25 | **Create hierarchical-errors flake.nix**                                 | 1 hr      | Ecosystem completeness |
 
 ---
 

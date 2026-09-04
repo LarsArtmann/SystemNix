@@ -8,15 +8,15 @@ Companion to `quickshell-nixos-vision.html`.
 
 ## TL;DR — Seven Patterns Found
 
-| #   | Pattern                      | Complexity | Example repo                            | When to use                                        |
-| --- | ---------------------------- | ---------- | --------------------------------------- | -------------------------------------------------- |
-| 1   | **Upstream-module consumer** | Lowest     | `EdenEast/nyx` + DankMaterialShell      | Adopting a shell that ships its own HM module      |
-| 2   | **Dotfiles wrapper**         | Low        | `soymou/illogical-flake` wrapping end-4 | Installing a shell that has no Nix story           |
-| 3   | **Pure wrapper**             | Low        | `noctalia-shell` (now in nixpkgs!)      | Packaging a QML-only shell config                  |
-| 4   | **HM module author**         | Medium     | `caelestia-dots/shell`                  | Building a shell to distribute to others           |
-| 5   | **CMake plugin build**       | High       | `caelestia-dots/shell`                  | Shell needs a custom C++ QML plugin                |
-| 6   | **withModules extension**    | Low        | `liixini/skwd-wall`                     | Adding Qt modules (qtsvg, qt5compat) to Quickshell |
-| 7   | **Single-purpose app**       | Low        | `Ronin-CK/HyprQuickFrame`               | One Quickshell tool, not a full shell              |
+| # | Pattern                      | Complexity | Example repo                            | When to use                                        |
+| - | ---------------------------- | ---------- | --------------------------------------- | -------------------------------------------------- |
+| 1 | **Upstream-module consumer** | Lowest     | `EdenEast/nyx` + DankMaterialShell      | Adopting a shell that ships its own HM module      |
+| 2 | **Dotfiles wrapper**         | Low        | `soymou/illogical-flake` wrapping end-4 | Installing a shell that has no Nix story           |
+| 3 | **Pure wrapper**             | Low        | `noctalia-shell` (now in nixpkgs!)      | Packaging a QML-only shell config                  |
+| 4 | **HM module author**         | Medium     | `caelestia-dots/shell`                  | Building a shell to distribute to others           |
+| 5 | **CMake plugin build**       | High       | `caelestia-dots/shell`                  | Shell needs a custom C++ QML plugin                |
+| 6 | **withModules extension**    | Low        | `liixini/skwd-wall`                     | Adding Qt modules (qtsvg, qt5compat) to Quickshell |
+| 7 | **Single-purpose app**       | Low        | `Ronin-CK/HyprQuickFrame`               | One Quickshell tool, not a full shell              |
 
 **For SystemNix: Pattern 1 (consumer) → then Pattern 4 (author).** Start by consuming DankMaterialShell's upstream module like EdenEast/nyx does. Graduate to your own HM module once the SystemNix-native widgets are ready.
 

@@ -51,13 +51,23 @@ if ! templ_out=$(scripts/check-templ-committed.sh 2>&1); then
     exit 1
 fi
 
+# Fast guard: build-time shell (runCommand bodies) must not use unquoted
+# command-variable expansion — stdenv runs builders with nullglob, which
+# silently deletes glob-bearing words and turns checks phantom-green
+# (signoz-query-lint v1, 2026-08-27). Milliseconds of runtime.
+if ! nullglob_out=$(scripts/audit-shell-nullglob.sh 2>&1); then
+    echo "$nullglob_out" >&2
+    log_error "nullglob audit failed — see FAIL lines above."
+    exit 1
+fi
+
 # Fast guard: moved/deleted markdown files must not leave dangling references.
 # The archive-move class (2026-08-18): `git mv docs/status/X.md
 # docs/status/archived/` left stale `docs/status/X.md` links in TODO_LIST and
 # research docs — the link check belongs IN the move commit, not in a later
 # self-review. Frozen snapshots (archived status reports, planning docs) may
 # keep old paths.
-MOVED_MD=$(git diff --cached --name-status --diff-filter=DR -- '*.md' | awk '/^R/ { print $3 } /^D/ { print $2 }')
+MOVED_MD=$(git diff --cached --name-status --diff-filter=DR -- '*.md' | awk '/^R/ { print $2 } /^D/ { print $2 }')
 if [ -n "$MOVED_MD" ]; then
     dangling=""
     while IFS= read -r old; do
@@ -162,29 +172,41 @@ if [ -n "$STAGED_NIX" ]; then
         log_success "Statix passed! No antipatterns found."
     fi
 
-    log_info "Formatting staged .nix files with the pinned formatter (nix fmt)..."
-    # MUST be the flake-pinned formatter (nix fmt = treefmt-full-flake from
-    # flake.lock), NOT unpinned `nixpkgs#alejandra`: the registry floats to
-    # nixos-unstable whose alejandra style diverges from the pinned one and
-    # injects whole-file reformats that the repo formatter (and CI's
-    # `nix fmt -- --ci`) immediately revert — a formatter split-brain that
-    # ships churn in commits (hit on PR #139, 2026-08-19).
-    if ! git diff --cached --name-only --diff-filter=ACM -z '*.nix' | xargs -0 nix fmt --; then
-        log_error "nix fmt failed on staged files — leaving them unformatted."
-        all_passed=false
-    else
+    # MUST be the SAME formatter CI arbitrates with (`nix fmt -- --ci` =
+    # treefmt-full-flake from the locked inputs). The old `nix shell
+    # nixpkgs#alejandra` call was a SECOND formatter with a DIFFERENT style
+    # (floating nixpkgs on top): every commit re-broke CI's fmt check with
+    # alejandra-shaped output. `--no-update-lock-file` keeps eval from
+    # silently re-locking moving-ref inputs (browser-history, CV, ... ride
+    # ref=master) on every commit; if the locked formatter cannot be built
+    # (stale lock, offline), WARN and skip — CI still gates formatting.
+    log_info "Formatting staged .nix files with the repo formatter (treefmt)..."
+    case "$(uname -m)" in
+        arm64 | aarch64) sys=aarch64-darwin ;;
+        *) sys=x86_64-linux ;;
+    esac
+    if formatter_path="$(nix build ".#formatter.$sys" --no-link --print-out-paths --no-update-lock-file 2>/dev/null)"; then
+        # NUL-delimited path list: default whitespace splitting mangles staged
+        # filenames containing spaces (formats/lints the wrong paths).
+        fmt_failed=false
         restage_failed=false
         while IFS= read -r -d '' f; do
+            if ! "$formatter_path/bin/treefmt" "$f" >/dev/null 2>&1; then
+                log_error "treefmt failed on staged file: $f"
+                fmt_failed=true
+            fi
             if ! git add -- "$f"; then
                 log_error "Failed to re-stage formatted file: $f"
                 restage_failed=true
             fi
         done < <(git diff --cached --name-only --diff-filter=ACM -z '*.nix')
-        if [ "$restage_failed" = true ]; then
+        if [ "$fmt_failed" = true ] || [ "$restage_failed" = true ]; then
             all_passed=false
         else
             log_success "Staged .nix files formatted."
         fi
+    else
+        log_error "Could not build .#formatter.$sys (stale flake.lock or offline?) — skipping Nix formatting; CI gates it."
     fi
 else
     log_info "No staged .nix files — skipping Nix linters."

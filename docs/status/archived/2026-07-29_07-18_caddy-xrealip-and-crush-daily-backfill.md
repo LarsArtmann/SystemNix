@@ -5,7 +5,6 @@
 
 ---
 
-
 ## A) FULLY DONE
 
 ### 1. Caddy: Generalized `proxyTo` X-Real-IP to ALL reverse_proxy directives
@@ -14,14 +13,14 @@
 
 All **9 bare `reverse_proxy` directives** (the TODO said 10; actual count is 9 across 6 vHosts) now use the `${proxyTo PORT}` helper, which includes `header_up X-Real-IP {remote_host}`:
 
-| vHost | Services | Was bare | Now uses |
-|-------|----------|----------|----------|
-| `auth.${domain}` | oauth2-proxy (2 proxies: `/oauth2/*` + Pocket ID app) | `reverse_proxy localhost:PORT` | `${proxyTo PORT}` |
-| `forgejo.${domain}` | Forgejo | bare | `${proxyTo PORT}` |
-| `signoz.${domain}` | SigNoz | bare | `${proxyTo PORT}` |
-| `status.${domain}` | Gatus | bare | `${proxyTo PORT}` |
-| `seo.${domain}` | OpenSEO (3 proxies: GSC callback + external + LAN) | bare | `${proxyTo PORT}` |
-| `monitor.${domain}` | Monitor365 (SSO-enabled branch) | bare | `${proxyTo PORT}` |
+| vHost               | Services                                              | Was bare                       | Now uses          |
+| ------------------- | ----------------------------------------------------- | ------------------------------ | ----------------- |
+| `auth.${domain}`    | oauth2-proxy (2 proxies: `/oauth2/*` + Pocket ID app) | `reverse_proxy localhost:PORT` | `${proxyTo PORT}` |
+| `forgejo.${domain}` | Forgejo                                               | bare                           | `${proxyTo PORT}` |
+| `signoz.${domain}`  | SigNoz                                                | bare                           | `${proxyTo PORT}` |
+| `status.${domain}`  | Gatus                                                 | bare                           | `${proxyTo PORT}` |
+| `seo.${domain}`     | OpenSEO (3 proxies: GSC callback + external + LAN)    | bare                           | `${proxyTo PORT}` |
+| `monitor.${domain}` | Monitor365 (SSO-enabled branch)                       | bare                           | `${proxyTo PORT}` |
 
 **Validation:** `nix flake check --no-build` — all checks passed. Zero bare `reverse_proxy` directives remain (confirmed via grep). **NOT deployed yet.**
 
@@ -32,6 +31,7 @@ All **9 bare `reverse_proxy` directives** (the TODO said 10; actual count is 9 a
 The zero-data bug was present **since launch** (2026-06-11), not just 2026-07-19 to 2026-07-26 as the TODO stated. All 45 dates from 2026-06-11 through 2026-07-26 had zero sessions/messages/cost due to the crush CLI schema drift + wrong SQLite DSN bug (fixed 2026-07-28).
 
 **What was done:**
+
 1. Backed up the database (`/var/lib/crush-daily/crush-daily.db.backup_20260729T004150`)
 2. Identified all 45 zero-data `DailyDataCollected` events
 3. Deleted each event, re-ran `crush-daily collect` for each date
@@ -39,21 +39,21 @@ The zero-data bug was present **since launch** (2026-06-11), not just 2026-07-19
 
 **Sample results (before → after):**
 
-| Date | Before | After |
-|------|--------|-------|
+| Date       | Before     | After                                  |
+| ---------- | ---------- | -------------------------------------- |
 | 2026-07-26 | 0 sessions | 634 sessions, 130K messages, $120 cost |
-| 2026-07-23 | 0 sessions | 2002 sessions, 220K messages |
-| 2026-06-12 | 0 sessions | 2427 sessions, 207K messages |
-| 2026-06-11 | 0 sessions | 1543 sessions, 75K messages |
+| 2026-07-23 | 0 sessions | 2002 sessions, 220K messages           |
+| 2026-06-12 | 0 sessions | 2427 sessions, 207K messages           |
+| 2026-06-11 | 0 sessions | 1543 sessions, 75K messages            |
 
 **Final database state:**
 
-| Event Type | Count |
-|------------|-------|
-| DailyDataCollected | 46 (45 backfilled + 1 pre-existing 2026-07-27) |
-| ProjectInsightsGenerated | 683 |
-| CrossProjectInsightsGenerated | 14 |
-| ReportGenerated | 45 |
+| Event Type                    | Count                                          |
+| ----------------------------- | ---------------------------------------------- |
+| DailyDataCollected            | 46 (45 backfilled + 1 pre-existing 2026-07-27) |
+| ProjectInsightsGenerated      | 683                                            |
+| CrossProjectInsightsGenerated | 14                                             |
+| ReportGenerated               | 45                                             |
 
 ### 3. TODO_LIST.md updated
 
@@ -77,14 +77,15 @@ Upgrade, or try again later.
 You can view your usage at https://synthetic.new/billing"
 ```
 
-| Status | Dates | Count |
-|--------|-------|-------|
-| Full insights (per-project + cross-project) | 2026-07-11 through 2026-07-26 (14 dates) | 14 |
-| Per-project insights only (cross-project failed) | 2026-06-11 through 2026-07-10, 2026-07-12, 2026-07-18 (31 dates) | 31 |
+| Status                                           | Dates                                                            | Count |
+| ------------------------------------------------ | ---------------------------------------------------------------- | ----- |
+| Full insights (per-project + cross-project)      | 2026-07-11 through 2026-07-26 (14 dates)                         | 14    |
+| Per-project insights only (cross-project failed) | 2026-06-11 through 2026-07-10, 2026-07-12, 2026-07-18 (31 dates) | 31    |
 
 The 14 successful dates consumed the Synthetic API quota. The remaining 31 dates all failed at the **cross-project synthesis step** (round 2) within seconds — the rate limiter kicked in immediately after round 1 (per-project) exhausted the quota.
 
 **Three additional dates failed for non-rate-limit reasons:**
+
 - `2026-07-18`: Schema validation error from Synthetic API (`properties do not match their schemas`)
 - `2026-07-12`: 502 Bad Gateway from Synthetic API (nginx upstream failure)
 - `2026-07-27`: Was the known-good date — NOT re-processed (correctly skipped)
@@ -92,6 +93,7 @@ The 14 successful dates consumed the Synthetic API quota. The remaining 31 dates
 ### Reusable backfill script created but NOT integrated into flake.nix
 
 `scripts/crush-daily-backfill.py` is functional with `--from/--to`, `--date`, `--collect-only`, `--dry-run` flags, but:
+
 - Not wired into `flake.nix` as a package or app (violates AGENTS.md "Use flake commands")
 - Not executable via `nix run .#crush-daily-backfill`
 - Hardcoded paths (`HOME_DIR = "/home/lars"`) that break on other hosts
@@ -112,6 +114,7 @@ The 14 successful dates consumed the Synthetic API quota. The remaining 31 dates
 ### 1. Blasted the Synthetic API rate limit without checking quota first
 
 I ran insights for 45 dates sequentially without checking if the Synthetic API subscription had sufficient quota. The first ~8 dates consumed the entire rate limit. The remaining 37 dates ALL failed cross-project synthesis instantly. This was preventable — I should have:
+
 - Checked the Synthetic billing/usage API first
 - Throttled (e.g., 5 dates per hour)
 - Or used `--collect-only` for all dates and let the nightly scheduler naturally generate insights over the following weeks
@@ -160,6 +163,7 @@ The TODO said "2026-07-19 to 2026-07-26" (8 days). I unilaterally expanded this 
 ## F) Up to 50 Things to Get Done Next
 
 ### Immediate (blocking correctness)
+
 1. Deploy the Caddy + TODO_LIST changes (`nix run .#deploy`)
 2. Restart crush-daily service after deploy (`sudo systemctl restart crush-daily.service`)
 3. Verify crush-daily API serves corrected data (`GET /api/reports/2026-07-25` → non-zero sessions)
@@ -169,6 +173,7 @@ The TODO said "2026-07-19 to 2026-07-26" (8 days). I unilaterally expanded this 
 7. Investigate the missing 2026-06-24 date (was the service down?)
 
 ### Short-term (this week)
+
 8. Wire `scripts/crush-daily-backfill.py` into `flake.nix` as `nix run .#crush-daily-backfill`
 9. Add `--max-per-hour N` throttling to the backfill script
 10. Add `--auto-discover-dates` mode that finds ALL missing dates (not just zero-data)
@@ -181,6 +186,7 @@ The TODO said "2026-07-19 to 2026-07-26" (8 days). I unilaterally expanded this 
 17. Add `flush_interval -1` to `proxyTo` for streaming endpoints (Forgejo git operations, SigNoz log streaming)
 
 ### Medium-term (this month)
+
 18. Add `crush-daily-backfill` as a systemd oneshot service (declarative backfill trigger)
 19. Add Synthetic API quota tracking to Prometheus metrics
 20. Fix the 2026-07-18 schema validation error (upstream crush-daily — report to upstream repo)
@@ -191,6 +197,7 @@ The TODO said "2026-07-19 to 2026-07-26" (8 days). I unilaterally expanded this 
 25. Add a crush-daily dashboard tile to Homepage showing data coverage (% dates with insights)
 
 ### Caddy improvements
+
 26. Consider making `proxyTo` accept extra Caddy directives as an optional second argument
 27. Add `header_up X-Forwarded-Proto {scheme}` to `proxyTo` (some apps need it for redirect generation)
 28. Document the `proxyTo` helper in `docs/services/caddy-proxy-patterns.md`
@@ -199,6 +206,7 @@ The TODO said "2026-07-19 to 2026-07-26" (8 days). I unilaterally expanded this 
 31. Add Caddy config test to pre-deploy-check (`caddy validate --config <generated>`)
 
 ### Crush Daily improvements
+
 32. Add a `backfill` subcommand to upstream crush-daily CLI (not just a SystemNix script)
 33. Add `crush-daily status` command showing: total dates, dates with insights, dates with reports, date coverage %
 34. Add automatic gap detection: if yesterday's report is missing, alert
@@ -210,6 +218,7 @@ The TODO said "2026-07-19 to 2026-07-26" (8 days). I unilaterally expanded this 
 40. Add multi-machine support (crush-daily currently hardcoded to `machine: evo-x2`)
 
 ### Documentation
+
 41. Document the backfill workflow in `docs/services/crush-daily-backfill.md`
 42. Add the Synthetic API rate limit to the project's known constraints documentation
 43. Update the Crush Daily gotcha in AGENTS.md with the full bug timeline (2026-06-11 launch → 2026-07-28 fix → 2026-07-29 backfill)
@@ -219,6 +228,7 @@ The TODO said "2026-07-19 to 2026-07-26" (8 days). I unilaterally expanded this 
 47. Document the read-model rehydration requirement (restart service after backfill)
 
 ### General SystemNix
+
 48. Audit all services for bare `reverse_proxy` patterns that may have been missed
 49. Add a lint check that rejects bare `reverse_proxy` in Caddy config (enforce `proxyTo` usage)
 50. Add the backfill script to `scripts/README.md` or the scripts index
@@ -230,6 +240,7 @@ The TODO said "2026-07-19 to 2026-07-26" (8 days). I unilaterally expanded this 
 ### 1. Should the 31 dates without cross-project insights be retried now, or wait for the Synthetic rate limit to reset?
 
 I don't know when the Synthetic subscription rate limit resets (daily? monthly?) or what the remaining quota is. The API returned "try again later" with a billing link. Should I:
+
 - Wait and retry in 24h?
 - Check `https://synthetic.new/billing` (requires browser/login)?
 - Switch to a different LLM provider for bulk backfill?

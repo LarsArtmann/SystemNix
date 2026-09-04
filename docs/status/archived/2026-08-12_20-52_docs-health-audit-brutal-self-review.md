@@ -44,6 +44,7 @@
 These 10 files got the generic `> **Note:** Items below were harvested...` header note but zero `~~strikethrough~~ done at` markers on individual numbered items. This is the #1 failure mode of the docs-health skill: **appendix-only annotation**. The generic note tells the reader nothing about WHICH items are done vs open.
 
 Affected files:
+
 - `2026-08-10_05-49_zfs-vm-investigation-and-strategy.md`
 - `2026-08-10_06-44_zfs-vfio-passthrough-success.md`
 - `2026-08-10_08-47_docs-health-audit-and-archival-self-review.md`
@@ -144,7 +145,7 @@ I used a Python script with hardcoded line numbers to edit FEATURES.md, which sh
 
 1. **Add inline strikethroughs to the 10 appendix-only archived reports** ← still open — tracked in TODO_LIST Priority 6 docs-debt ("Annotate appendix-only ARCHIVED reports"), which cites this file's §b.1/§b.2 lists. Annotation 2026-08-17.
 2. **Annotate the 4 completely unannotated archived files** ← still open — same TODO_LIST P6 item. Annotation 2026-08-17.
-~~3. **Add inline strikethroughs to active 08-12 reports** where items are done~~ done — 14 of 15 08-12 reports are annotated + archived in `docs/status/archived/` (this file is the last; annotated + archived 2026-08-17).
+   ~~3. **Add inline strikethroughs to active 08-12 reports** where items are done~~ done — 14 of 15 08-12 reports are annotated + archived in `docs/status/archived/` (this file is the last; annotated + archived 2026-08-17).
 
 ### High Priority — Living Doc Polish
 
@@ -182,14 +183,14 @@ I used a Python script with hardcoded line numbers to edit FEATURES.md, which sh
 
 ## Files Changed This Session
 
-| File | Change |
-|------|--------|
-| `TODO_LIST.md` | Complete rebuild — removed ~30 done items, added ~15 new open items |
-| `ROADMAP.md` | Complete rewrite — current state, new themes (oomd, Docker limits, crash-loop detection) |
-| `FEATURES.md` | Updated counts (modules 54, Gatus 83, tests 11), status changes (Browser History ⚠️, PMA oomd, Twenty mem_limit) |
-| `CHANGELOG.md` | 25+ new entries across Added/Changed/Fixed for 08-11/08-12 work |
-| `docs/status/archived/2026-08-1*.md` (30 files) | Annotated + `git mv` to archived/ |
-| `docs/planning/archived/2026-08-10_13-53_pareto-execution-plan.md` | Annotated + `git mv` to archived/ |
-| `docs/status/2026-08-12*.md` (9 files) | Added brainstorm header notes |
+| File                                                               | Change                                                                                                          |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `TODO_LIST.md`                                                     | Complete rebuild — removed ~30 done items, added ~15 new open items                                             |
+| `ROADMAP.md`                                                       | Complete rewrite — current state, new themes (oomd, Docker limits, crash-loop detection)                        |
+| `FEATURES.md`                                                      | Updated counts (modules 54, Gatus 83, tests 11), status changes (Browser History ⚠️, PMA oomd, Twenty mem_limit) |
+| `CHANGELOG.md`                                                     | 25+ new entries across Added/Changed/Fixed for 08-11/08-12 work                                                 |
+| `docs/status/archived/2026-08-1*.md` (30 files)                    | Annotated + `git mv` to archived/                                                                               |
+| `docs/planning/archived/2026-08-10_13-53_pareto-execution-plan.md` | Annotated + `git mv` to archived/                                                                               |
+| `docs/status/2026-08-12*.md` (9 files)                             | Added brainstorm header notes                                                                                   |
 
 **Auto-committed by PMA daemon during session:** `59b924ca`, `a1c74411`, `772d952e`, `5bdab81e`, `c9ba9058`

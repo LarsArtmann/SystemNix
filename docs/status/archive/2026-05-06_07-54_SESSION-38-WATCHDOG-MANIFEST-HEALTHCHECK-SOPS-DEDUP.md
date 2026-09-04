@@ -150,33 +150,33 @@ Nothing catastrophic. However:
 
 ## f) Top 25 Things To Do Next
 
-| #   | Priority | Task                                                                                                                             | Effort | Impact |
-| --- | -------- | -------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
-| 1   | P0       | **Clean root disk** — `nix-collect-garbage`, remove old Docker images, clean build artifacts. 88% is dangerous.                  | 30min  | High   |
-| 2   | P0       | **Fix file-and-image-renamer watcher** — Service failing on startup. Check systemd unit config.                                  | 15min  | Medium |
-| 3   | P1       | **Fix blueman-applet ExecStart conflict** — Duplicate ExecStart in user service.                                                 | 10min  | Low    |
-| 4   | P1       | **Upstream watchdogd nixpkgs PR** — Fix the module to generate correct config format for `device` sections.                      | 2hr    | High   |
-| 5   | P1       | **Pin manifest Docker image to digest** — `latest` tag is non-reproducible.                                                      | 10min  | Medium |
-| 6   | P1       | **Audit all sops secrets for correct sopsFile** — Ensure no other services have the same accident-waiting-to-happen as manifest. | 30min  | Medium |
-| 7   | P1       | **Add `--dry-run` to dns-update script** — Safety net for blocklist updates.                                                     | 20min  | Low    |
-| 8   | P2       | **Configure SigNoz alerts** — Service health, disk usage, memory pressure alerts.                                                | 1hr    | Medium |
-| 9   | P2       | **Test `just dns-update` end-to-end** — Run the script when blocklists next update to verify it works.                           | 15min  | Medium |
-| 10  | P2       | **Docker image cleanup** — `docker image prune -a` to remove dangling images, save disk.                                         | 5min   | Medium |
-| 11  | P2       | **NixOS generation cleanup** — Limit to 20 generations (currently 50 in bootloader).                                             | 5min   | Low    |
-| 12  | P2       | **Add watchdogd meminfo script** — Custom script for critical OOM action instead of default reboot.                              | 30min  | Medium |
-| 13  | P2       | **Test watchdogd actually triggers reboot** — Simulate hang to verify hardware watchdog works.                                   | 15min  | High   |
-| 14  | P2       | **Document dnsblockd context canceled errors** — Determine if these are bugs or expected behavior.                               | 30min  | Low    |
-| 15  | P2       | **Provision Pi 3 for DNS failover** — Hardware setup for `rpi3-dns` configuration.                                               | 2hr    | Medium |
-| 16  | P3       | **Consolidate Docker Compose hardening** — Extract common security_opt/cap_drop/mem_limit into helper.                           | 1hr    | Low    |
-| 17  | P3       | **Clean D-Bus duplicate registrations** — Remove conflicting portal/backend packages.                                            | 30min  | Low    |
-| 18  | P3       | **Add nixpkgs watchdogd module issue** — File bug report at github.com/NixOS/nixpkgs.                                            | 20min  | Medium |
-| 19  | P3       | **Review twenty CRM service** — Status unknown, not checked this session.                                                        | 10min  | Low    |
-| 20  | P3       | **Review deer-flow service** — Status unknown, not checked this session.                                                         | 10min  | Low    |
-| 21  | P3       | **Add manifest healthcheck monitoring** — Alert when container is unhealthy.                                                     | 20min  | Low    |
-| 22  | P3       | **Pre-commit hook for SRI hash consistency** — Validate blocklist hashes match URLs.                                             | 1hr    | Low    |
-| 23  | P3       | **Review whisper-asr container** — Check if healthcheck exists and is working.                                                   | 10min  | Low    |
-| 24  | P4       | **Migrate justfile to flake.nix** — Per AGENTS.md policy, justfile is deprecated.                                                | 4hr    | Low    |
-| 25  | P4       | **Automate root disk cleanup** — Systemd timer for garbage collection.                                                           | 30min  | Medium |
+| #  | Priority | Task                                                                                                                             | Effort | Impact |
+| -- | -------- | -------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 1  | P0       | **Clean root disk** — `nix-collect-garbage`, remove old Docker images, clean build artifacts. 88% is dangerous.                  | 30min  | High   |
+| 2  | P0       | **Fix file-and-image-renamer watcher** — Service failing on startup. Check systemd unit config.                                  | 15min  | Medium |
+| 3  | P1       | **Fix blueman-applet ExecStart conflict** — Duplicate ExecStart in user service.                                                 | 10min  | Low    |
+| 4  | P1       | **Upstream watchdogd nixpkgs PR** — Fix the module to generate correct config format for `device` sections.                      | 2hr    | High   |
+| 5  | P1       | **Pin manifest Docker image to digest** — `latest` tag is non-reproducible.                                                      | 10min  | Medium |
+| 6  | P1       | **Audit all sops secrets for correct sopsFile** — Ensure no other services have the same accident-waiting-to-happen as manifest. | 30min  | Medium |
+| 7  | P1       | **Add `--dry-run` to dns-update script** — Safety net for blocklist updates.                                                     | 20min  | Low    |
+| 8  | P2       | **Configure SigNoz alerts** — Service health, disk usage, memory pressure alerts.                                                | 1hr    | Medium |
+| 9  | P2       | **Test `just dns-update` end-to-end** — Run the script when blocklists next update to verify it works.                           | 15min  | Medium |
+| 10 | P2       | **Docker image cleanup** — `docker image prune -a` to remove dangling images, save disk.                                         | 5min   | Medium |
+| 11 | P2       | **NixOS generation cleanup** — Limit to 20 generations (currently 50 in bootloader).                                             | 5min   | Low    |
+| 12 | P2       | **Add watchdogd meminfo script** — Custom script for critical OOM action instead of default reboot.                              | 30min  | Medium |
+| 13 | P2       | **Test watchdogd actually triggers reboot** — Simulate hang to verify hardware watchdog works.                                   | 15min  | High   |
+| 14 | P2       | **Document dnsblockd context canceled errors** — Determine if these are bugs or expected behavior.                               | 30min  | Low    |
+| 15 | P2       | **Provision Pi 3 for DNS failover** — Hardware setup for `rpi3-dns` configuration.                                               | 2hr    | Medium |
+| 16 | P3       | **Consolidate Docker Compose hardening** — Extract common security_opt/cap_drop/mem_limit into helper.                           | 1hr    | Low    |
+| 17 | P3       | **Clean D-Bus duplicate registrations** — Remove conflicting portal/backend packages.                                            | 30min  | Low    |
+| 18 | P3       | **Add nixpkgs watchdogd module issue** — File bug report at github.com/NixOS/nixpkgs.                                            | 20min  | Medium |
+| 19 | P3       | **Review twenty CRM service** — Status unknown, not checked this session.                                                        | 10min  | Low    |
+| 20 | P3       | **Review deer-flow service** — Status unknown, not checked this session.                                                         | 10min  | Low    |
+| 21 | P3       | **Add manifest healthcheck monitoring** — Alert when container is unhealthy.                                                     | 20min  | Low    |
+| 22 | P3       | **Pre-commit hook for SRI hash consistency** — Validate blocklist hashes match URLs.                                             | 1hr    | Low    |
+| 23 | P3       | **Review whisper-asr container** — Check if healthcheck exists and is working.                                                   | 10min  | Low    |
+| 24 | P4       | **Migrate justfile to flake.nix** — Per AGENTS.md policy, justfile is deprecated.                                                | 4hr    | Low    |
+| 25 | P4       | **Automate root disk cleanup** — Systemd timer for garbage collection.                                                           | 30min  | Medium |
 
 ---
 
@@ -196,17 +196,17 @@ Is this worth filing as a nixpkgs bug? The fix would be straightforward: quote s
 
 ## System Health Summary
 
-| Component               | Status          | Details                                     |
-| ----------------------- | --------------- | ------------------------------------------- |
-| NixOS build             | ✅ Clean        | `a106332`, all checks pass                  |
-| watchdogd               | ✅ Fixed        | SP5100 TCO timer active, no parse errors    |
-| manifest                | ✅ Healthy      | Docker reports healthy, port 2099           |
-| Docker (10 containers)  | ✅ All up       | No dead/exited/unhealthy containers         |
-| DNS (unbound+dnsblockd) | ✅ Running      | 25 blocklists, 2.5M+ domains                |
+| Component               | Status         | Details                                     |
+| ----------------------- | -------------- | ------------------------------------------- |
+| NixOS build             | ✅ Clean       | `a106332`, all checks pass                  |
+| watchdogd               | ✅ Fixed       | SP5100 TCO timer active, no parse errors    |
+| manifest                | ✅ Healthy     | Docker reports healthy, port 2099           |
+| Docker (10 containers)  | ✅ All up      | No dead/exited/unhealthy containers         |
+| DNS (unbound+dnsblockd) | ✅ Running     | 25 blocklists, 2.5M+ domains                |
 | Root disk (/)           | ⚠️ 88% used     | 63GB free of 512GB — needs cleanup          |
 | /data disk              | ⚠️ 76% used     | 193GB free of 800GB                         |
 | Memory                  | ⚠️ 48/62GB used | 14GB available, swap 2.6/41GB               |
-| Git working tree        | ✅ Clean        | Committed `a106332`, no uncommitted changes |
+| Git working tree        | ✅ Clean       | Committed `a106332`, no uncommitted changes |
 
 ---
 

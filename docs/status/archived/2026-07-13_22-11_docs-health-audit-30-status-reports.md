@@ -7,7 +7,6 @@
 
 ---
 
-
 ## Executive Summary
 
 Read all 30 July 2026 status reports (~8,500 lines across markdown + HTML), then ran the docs-health AUDIT process across the 6 core documentation files. Found **17 stale claims** (4 critical, 12 medium, 1 low) across 4 of 6 docs. Fixed all 17 in place. The dominant drift: the unbound→dnsblockd DNS migration (committed `076dc778`, same day) had not propagated to any documentation file except AGENTS.md and ROADMAP.md.
@@ -44,25 +43,25 @@ Every file matching `docs/status/2026-07-0*` was read — markdown files in full
 
 ### 3. Fixed 17 stale claims (4 files, 63 lines changed)
 
-| #   | File                                | Severity | What was stale                                                             | Fix applied                                                                 |
-| --- | ----------------------------------- | -------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| 1   | README.md:19                        | Critical | "Unbound DNS"                                                              | → dnsblockd embedded sdns resolver                                          |
-| 2   | README.md:104                       | Critical | "Unbound + dnsblockd" in services table                                    | → dnsblockd (embedded sdns)                                                 |
-| 3   | README.md:108-114                   | Critical | Entire DNS Blocking section described unbound                              | Rewrote for dnsblockd (sdns, DoT, DoH, local zones, LAN ACLs, IPv6 disable) |
-| 4   | TODO_LIST.md:5                      | Critical | "Last commit: 2026-07-08"                                                  | → 2026-07-13 (`076dc778`)                                                   |
-| 5   | README.md:18,81                     | Medium   | SigNoz "6 dashboards"                                                      | → 9 dashboards (verified in `_signoz-alerts.nix`)                           |
-| 6   | README.md:18,81                     | Medium   | Gatus "41+ health checks"                                                  | → 52+ (verified via `rg name = ` count)                                     |
-| 7   | README.md:55                        | Medium   | "7 custom packages"                                                        | → 6 (verified via `ls pkgs/*.nix`)                                          |
-| 8   | README.md:132                       | Medium   | ZRAM "32GB"                                                                | → ~16 GiB (actual: `memoryPercent = 17`)                                    |
-| 9   | FEATURES.md:81                      | Medium   | Gatus "38 endpoints"                                                       | → 52+                                                                       |
-| 10  | FEATURES.md:79                      | Medium   | Monitor365 ⚠️ "server stability uncertain"                                 | → ✅ (deployed Jul 9, running, 5 Gatus checks)                              |
-| 11  | FEATURES.md:69,441                  | Medium   | PhotoMap listed as 🔧 disabled (module deleted)                            | → ❌ Removed (2026-07-04)                                                   |
-| 12  | FEATURES.md:251                     | Medium   | BTRFS /data "async discard"                                                | → removed (QLC NAND I/O choke)                                              |
-| 13  | FEATURES.md:254                     | Medium   | ZRAM "50% of RAM (64GB compressed)"                                        | → 17% (~16 GiB)                                                             |
-| 14  | FEATURES.md:259,265,267,269,418,466 | Medium   | 6 stale "unbound" references                                               | → dnsblockd/sdns equivalents                                                |
-| 15  | TODO_LIST.md:3,4                    | Medium   | Updated/Last deploy dates stale                                            | → 2026-07-13 / 2026-07-09                                                   |
-| 16  | TODO_LIST.md:13                     | Medium   | "discard=async fix needs deploy" (1 sentence summary of a resolved crisis) | → Updated deploy context (DNS migration newer)                              |
-| 17  | TODO_LIST.md:118, ROADMAP.md:53     | Medium   | Stale module line counts (716L/705L/583L)                                  | → 943L/725L/151L (verified via `wc -l`)                                     |
+| #  | File                                | Severity | What was stale                                                             | Fix applied                                                                 |
+| -- | ----------------------------------- | -------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 1  | README.md:19                        | Critical | "Unbound DNS"                                                              | → dnsblockd embedded sdns resolver                                          |
+| 2  | README.md:104                       | Critical | "Unbound + dnsblockd" in services table                                    | → dnsblockd (embedded sdns)                                                 |
+| 3  | README.md:108-114                   | Critical | Entire DNS Blocking section described unbound                              | Rewrote for dnsblockd (sdns, DoT, DoH, local zones, LAN ACLs, IPv6 disable) |
+| 4  | TODO_LIST.md:5                      | Critical | "Last commit: 2026-07-08"                                                  | → 2026-07-13 (`076dc778`)                                                   |
+| 5  | README.md:18,81                     | Medium   | SigNoz "6 dashboards"                                                      | → 9 dashboards (verified in `_signoz-alerts.nix`)                           |
+| 6  | README.md:18,81                     | Medium   | Gatus "41+ health checks"                                                  | → 52+ (verified via `rg name =` count)                                      |
+| 7  | README.md:55                        | Medium   | "7 custom packages"                                                        | → 6 (verified via `ls pkgs/*.nix`)                                          |
+| 8  | README.md:132                       | Medium   | ZRAM "32GB"                                                                | → ~16 GiB (actual: `memoryPercent = 17`)                                    |
+| 9  | FEATURES.md:81                      | Medium   | Gatus "38 endpoints"                                                       | → 52+                                                                       |
+| 10 | FEATURES.md:79                      | Medium   | Monitor365 ⚠️ "server stability uncertain"                                  | → ✅ (deployed Jul 9, running, 5 Gatus checks)                              |
+| 11 | FEATURES.md:69,441                  | Medium   | PhotoMap listed as 🔧 disabled (module deleted)                            | → ❌ Removed (2026-07-04)                                                   |
+| 12 | FEATURES.md:251                     | Medium   | BTRFS /data "async discard"                                                | → removed (QLC NAND I/O choke)                                              |
+| 13 | FEATURES.md:254                     | Medium   | ZRAM "50% of RAM (64GB compressed)"                                        | → 17% (~16 GiB)                                                             |
+| 14 | FEATURES.md:259,265,267,269,418,466 | Medium   | 6 stale "unbound" references                                               | → dnsblockd/sdns equivalents                                                |
+| 15 | TODO_LIST.md:3,4                    | Medium   | Updated/Last deploy dates stale                                            | → 2026-07-13 / 2026-07-09                                                   |
+| 16 | TODO_LIST.md:13                     | Medium   | "discard=async fix needs deploy" (1 sentence summary of a resolved crisis) | → Updated deploy context (DNS migration newer)                              |
+| 17 | TODO_LIST.md:118, ROADMAP.md:53     | Medium   | Stale module line counts (716L/705L/583L)                                  | → 943L/725L/151L (verified via `wc -l`)                                     |
 
 ### 4. AGENTS.md verified clean
 
@@ -194,98 +193,98 @@ The docs-health skill emphasizes cross-file consistency. FEATURES.md lists ~20 s
 
 ### Immediate (docs-health follow-ups)
 
-| #   | Task                                                                                                                          | Impact   | Effort |
-| --- | ----------------------------------------------------------------------------------------------------------------------------- | -------- | ------ |
-| 1   | **Commit the 4 fixed docs** — README, FEATURES, TODO_LIST, ROADMAP are uncommitted                                            | Critical | 1 min  |
-| 2   | **Load docs-health reference files and re-audit** — `verify-checklist.md`, `common-mistakes.md` may surface findings I missed | High     | 20 min |
-| 3   | **Verify README.md flake input count** ("56 inputs") — `nix flake metadata --json \| jq '.locks.nodes \| length'`             | Medium   | 2 min  |
-| 4   | **Verify CHANGELOG.md covers DNS migration** — `rg "dnsblockd\|unbound" CHANGELOG.md`                                         | Medium   | 2 min  |
-| 5   | **Deep FEATURES.md service status audit** — verify every ✅ service has a Gatus endpoint and is actually deployed             | High     | 30 min |
-| 6   | **Count Caddy vhosts** — verify "15 vhosts" claim in FEATURES.md against actual `caddy.nix`                                   | Low      | 5 min  |
-| 7   | **Verify DMS plugin count** — FEATURES.md says 13, `pkgs/dms-plugins/` has 13 dirs (excl _template), verify each is valid     | Low      | 10 min |
+| # | Task                                                                                                                          | Impact   | Effort |
+| - | ----------------------------------------------------------------------------------------------------------------------------- | -------- | ------ |
+| 1 | **Commit the 4 fixed docs** — README, FEATURES, TODO_LIST, ROADMAP are uncommitted                                            | Critical | 1 min  |
+| 2 | **Load docs-health reference files and re-audit** — `verify-checklist.md`, `common-mistakes.md` may surface findings I missed | High     | 20 min |
+| 3 | **Verify README.md flake input count** ("56 inputs") — `nix flake metadata --json \| jq '.locks.nodes \| length'`             | Medium   | 2 min  |
+| 4 | **Verify CHANGELOG.md covers DNS migration** — `rg "dnsblockd\|unbound" CHANGELOG.md`                                         | Medium   | 2 min  |
+| 5 | **Deep FEATURES.md service status audit** — verify every ✅ service has a Gatus endpoint and is actually deployed             | High     | 30 min |
+| 6 | **Count Caddy vhosts** — verify "15 vhosts" claim in FEATURES.md against actual `caddy.nix`                                   | Low      | 5 min  |
+| 7 | **Verify DMS plugin count** — FEATURES.md says 13, `pkgs/dms-plugins/` has 13 dirs (excl _template), verify each is valid     | Low      | 10 min |
 
 ### Short-term (documentation improvements)
 
-| #   | Task                                                                                                                                                                                                | Impact | Effort |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
-| 8   | **Create `docs/DOMAIN_LANGUAGE.md`** — consolidate SSO layers, BTRFS layout, DNS chain, deploy pipeline terms                                                                                       | Medium | 45 min |
-| 9   | **Add Helium to README.md "What You Get" desktop row** — it's the primary browser, not mentioned                                                                                                    | Low    | 2 min  |
-| 10  | **Replace static counts in README.md with computed values or "see FEATURES.md"**                                                                                                                    | Medium | 15 min |
-| 11  | **Archive pre-July 2026 status reports** to `docs/status/archive/` — reduce cognitive load                                                                                                          | Low    | 10 min |
-| 12  | **Add a doc-freshness CI check** — script that verifies doc counts against code                                                                                                                     | Medium | 1h     |
-| 13  | **Add post-deploy FEATURES.md status update reminder** to deploy.sh output                                                                                                                          | Low    | 10 min |
-| 14  | **Consolidate recurring status report themes into AGENTS.md** — disk pressure, GPUActive, no backup, undeployed commits are documented as gotchas but the "pattern" isn't called out as a meta-risk | Medium | 20 min |
+| #  | Task                                                                                                                                                                                                | Impact | Effort |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 8  | **Create `docs/DOMAIN_LANGUAGE.md`** — consolidate SSO layers, BTRFS layout, DNS chain, deploy pipeline terms                                                                                       | Medium | 45 min |
+| 9  | **Add Helium to README.md "What You Get" desktop row** — it's the primary browser, not mentioned                                                                                                    | Low    | 2 min  |
+| 10 | **Replace static counts in README.md with computed values or "see FEATURES.md"**                                                                                                                    | Medium | 15 min |
+| 11 | **Archive pre-July 2026 status reports** to `docs/status/archive/` — reduce cognitive load                                                                                                          | Low    | 10 min |
+| 12 | **Add a doc-freshness CI check** — script that verifies doc counts against code                                                                                                                     | Medium | 1h     |
+| 13 | **Add post-deploy FEATURES.md status update reminder** to deploy.sh output                                                                                                                          | Low    | 10 min |
+| 14 | **Consolidate recurring status report themes into AGENTS.md** — disk pressure, GPUActive, no backup, undeployed commits are documented as gotchas but the "pattern" isn't called out as a meta-risk | Medium | 20 min |
 
 ### DNS migration follow-ups (from reading the status reports)
 
-| #   | Task                                                                                                                        | Impact   | Effort    |
-| --- | --------------------------------------------------------------------------------------------------------------------------- | -------- | --------- |
-| 15  | **Deploy the DNS migration** — commit `076dc778` is the most recent, needs `nix run .#deploy` + reboot                      | Critical | 1 command |
-| 16  | **Run DNS validation after deploy** — `dig @127.0.0.1 forgejo.home.lan.`, `dig @127.0.0.1 google.com.`, blocked domain test | High     | 10 min    |
-| 17  | **Pin dnsblockd flake input to v0.2.0 tag** (if not already — TODO_LIST says "already pinned")                              | Low      | 5 min     |
-| 18  | **Update rpi3 DNS config** — rpi3 should also use dnsblockd embedded resolver (code done, needs deploy)                     | Medium   | Deploy    |
+| #  | Task                                                                                                                        | Impact   | Effort    |
+| -- | --------------------------------------------------------------------------------------------------------------------------- | -------- | --------- |
+| 15 | **Deploy the DNS migration** — commit `076dc778` is the most recent, needs `nix run .#deploy` + reboot                      | Critical | 1 command |
+| 16 | **Run DNS validation after deploy** — `dig @127.0.0.1 forgejo.home.lan.`, `dig @127.0.0.1 google.com.`, blocked domain test | High     | 10 min    |
+| 17 | **Pin dnsblockd flake input to v0.2.0 tag** (if not already — TODO_LIST says "already pinned")                              | Low      | 5 min     |
+| 18 | **Update rpi3 DNS config** — rpi3 should also use dnsblockd embedded resolver (code done, needs deploy)                     | Medium   | Deploy    |
 
 ### Infrastructure (flagged across multiple status reports, still open)
 
-| #   | Task                                                                                                                      | Impact   | Effort        |
-| --- | ------------------------------------------------------------------------------------------------------------------------- | -------- | ------------- |
-| 19  | **Off-site backup** — no DR backup, flagged in every report since Jun 25                                                  | Critical | Medium        |
-| 20  | **Run `sudo btrfs scrub start -r /` and `/data`** — 91K csum errors from NVMe I/O choke, extent unknown                   | Critical | Sudo required |
-| 21  | **Run `sudo smartctl -a /dev/nvme0n1`** — can't determine if Lexar NQ790 is physically degrading                          | Critical | Sudo required |
-| 22  | **BTRFS /data → @data subvolume migration** — Docker/Immich data now has btrbk protection but still not a named subvolume | High     | ~1h downtime  |
-| 23  | **GPUActive monitoring** — 30+ GiB RAM consumed invisibly, no Prometheus/Gatus visibility                                 | Medium   | 1h            |
-| 24  | **TTM page_pool_size reduction** — 112 GiB pool exceeds 94 GiB visible RAM, documented TODO since Jul 2                   | Medium   | 2h + reboot   |
-| 25  | **Firewall deny-by-default** — all inbound allowed, services exposed to LAN                                               | High     | Medium        |
+| #  | Task                                                                                                                      | Impact   | Effort        |
+| -- | ------------------------------------------------------------------------------------------------------------------------- | -------- | ------------- |
+| 19 | **Off-site backup** — no DR backup, flagged in every report since Jun 25                                                  | Critical | Medium        |
+| 20 | **Run `sudo btrfs scrub start -r /` and `/data`** — 91K csum errors from NVMe I/O choke, extent unknown                   | Critical | Sudo required |
+| 21 | **Run `sudo smartctl -a /dev/nvme0n1`** — can't determine if Lexar NQ790 is physically degrading                          | Critical | Sudo required |
+| 22 | **BTRFS /data → @data subvolume migration** — Docker/Immich data now has btrbk protection but still not a named subvolume | High     | ~1h downtime  |
+| 23 | **GPUActive monitoring** — 30+ GiB RAM consumed invisibly, no Prometheus/Gatus visibility                                 | Medium   | 1h            |
+| 24 | **TTM page_pool_size reduction** — 112 GiB pool exceeds 94 GiB visible RAM, documented TODO since Jul 2                   | Medium   | 2h + reboot   |
+| 25 | **Firewall deny-by-default** — all inbound allowed, services exposed to LAN                                               | High     | Medium        |
 
 ### Service-specific (from status reports)
 
-| #   | Task                                                                                                 | Impact | Effort |
-| --- | ---------------------------------------------------------------------------------------------------- | ------ | ------ |
-| 26  | **Twenty CRM: fix PG role** — `twenty-server` crash-loops with `role "twenty" does not exist`        | High   | Medium |
-| 27  | **Fix post-deploy-check empty ports bug** — 14 false FAILs from missing port interpolation           | Medium | 30 min |
-| 28  | **Verify signoz-provision at runtime** — wait-loop fix deployed but not exercised                    | Medium | 5 min  |
-| 29  | **Verify monitor365 WASM dashboard** — CORS removed as workaround, needs browser check               | Medium | 5 min  |
-| 30  | **Audit all `writeShellApplication` scripts for missing runtimeInputs** — gpu-active `awk` bug class | High   | 1h     |
-| 31  | **Fix upstream monitor365 CORS bug** — env var can't represent TOML sequences, needs PR              | Medium | 30 min |
+| #  | Task                                                                                                 | Impact | Effort |
+| -- | ---------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 26 | **Twenty CRM: fix PG role** — `twenty-server` crash-loops with `role "twenty" does not exist`        | High   | Medium |
+| 27 | **Fix post-deploy-check empty ports bug** — 14 false FAILs from missing port interpolation           | Medium | 30 min |
+| 28 | **Verify signoz-provision at runtime** — wait-loop fix deployed but not exercised                    | Medium | 5 min  |
+| 29 | **Verify monitor365 WASM dashboard** — CORS removed as workaround, needs browser check               | Medium | 5 min  |
+| 30 | **Audit all `writeShellApplication` scripts for missing runtimeInputs** — gpu-active `awk` bug class | High   | 1h     |
+| 31 | **Fix upstream monitor365 CORS bug** — env var can't represent TOML sequences, needs PR              | Medium | 30 min |
 
 ### Code quality (from nix anti-pattern reports)
 
-| #   | Task                                                                                                                     | Impact | Effort |
-| --- | ------------------------------------------------------------------------------------------------------------------------ | ------ | ------ |
-| 32  | **Fix `signoz.nix:509-595`** — 6 `grep -oP` instances in metrics scripts → `jq`                                          | Medium | 30 min |
-| 33  | **Add `harden` to `immich.nix:105-129`** db-backup service (unhardened)                                                  | High   | 15 min |
-| 34  | **Convert `minecraft.nix` raw iptables** → declarative `networking.firewall.allowedTCPPorts`                             | Medium | 15 min |
-| 35  | **Convert 6 `activationScripts` → `systemd.tmpfiles.rules`** (hermes, discordsync, crush-daily, configuration, 2 darwin) | Medium | 1h     |
-| 36  | **Split `signoz.nix` (943L) and `forgejo.nix` (725L)** into sub-modules                                                  | Low    | 2h     |
+| #  | Task                                                                                                                     | Impact | Effort |
+| -- | ------------------------------------------------------------------------------------------------------------------------ | ------ | ------ |
+| 32 | **Fix `signoz.nix:509-595`** — 6 `grep -oP` instances in metrics scripts → `jq`                                          | Medium | 30 min |
+| 33 | **Add `harden` to `immich.nix:105-129`** db-backup service (unhardened)                                                  | High   | 15 min |
+| 34 | **Convert `minecraft.nix` raw iptables** → declarative `networking.firewall.allowedTCPPorts`                             | Medium | 15 min |
+| 35 | **Convert 6 `activationScripts` → `systemd.tmpfiles.rules`** (hermes, discordsync, crush-daily, configuration, 2 darwin) | Medium | 1h     |
+| 36 | **Split `signoz.nix` (943L) and `forgejo.nix` (725L)** into sub-modules                                                  | Low    | 2h     |
 
 ### Desktop (from Helium/browser reports)
 
-| #   | Task                                                                                                                | Impact | Effort |
-| --- | ------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
-| 37  | **Runtime-verify Helium wrapper** — double-wrap fix never tested at runtime                                         | High   | 15 min |
-| 38  | **Test removing `--enable-zero-copy`** — may eliminate hotplug crashes, making `--disable-gpu-watchdog` unnecessary | Medium | 30 min |
-| 39  | **Remove `--enable-gpu-rasterization`** — increases GPUActive pressure on Strix Halo                                | Medium | 5 min  |
-| 40  | **Verify browser extension policies actually install in Helium** — ungoogled-chromium may ignore `update_url`       | High   | 10 min |
-| 41  | **Remove 9gag Post Filter** — abandoned ("THIS PROJECT IS DEAD")                                                    | Low    | 2 min  |
-| 42  | **Configure Memory Saver via enterprise policy** — aggressive tab discarding for memory-constrained system          | Medium | 15 min |
+| #  | Task                                                                                                                | Impact | Effort |
+| -- | ------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 37 | **Runtime-verify Helium wrapper** — double-wrap fix never tested at runtime                                         | High   | 15 min |
+| 38 | **Test removing `--enable-zero-copy`** — may eliminate hotplug crashes, making `--disable-gpu-watchdog` unnecessary | Medium | 30 min |
+| 39 | **Remove `--enable-gpu-rasterization`** — increases GPUActive pressure on Strix Halo                                | Medium | 5 min  |
+| 40 | **Verify browser extension policies actually install in Helium** — ungoogled-chromium may ignore `update_url`       | High   | 10 min |
+| 41 | **Remove 9gag Post Filter** — abandoned ("THIS PROJECT IS DEAD")                                                    | Low    | 2 min  |
+| 42 | **Configure Memory Saver via enterprise policy** — aggressive tab discarding for memory-constrained system          | Medium | 15 min |
 
 ### Upstream (from TODO_LIST P5)
 
-| #   | Task                                                                             | Impact | Effort |
-| --- | -------------------------------------------------------------------------------- | ------ | ------ |
-| 43  | **`aw-watcher-utilization` poetry-core migration** — PR to nixpkgs/ActivityWatch | Low    | 30 min |
-| 44  | **KeePassXC Chromium manifests** — PR to nixpkgs                                 | Low    | 30 min |
-| 45  | **`taskwarrior3` build flags** — PR to nixpkgs                                   | Low    | 30 min |
-| 46  | **`jscpd` lockfile publishing** — PR upstream                                    | Low    | 30 min |
-| 47  | **Fix `library-policy` and `mr-sync` stale go.sum** upstream                     | Low    | 30 min |
+| #  | Task                                                                             | Impact | Effort |
+| -- | -------------------------------------------------------------------------------- | ------ | ------ |
+| 43 | **`aw-watcher-utilization` poetry-core migration** — PR to nixpkgs/ActivityWatch | Low    | 30 min |
+| 44 | **KeePassXC Chromium manifests** — PR to nixpkgs                                 | Low    | 30 min |
+| 45 | **`taskwarrior3` build flags** — PR to nixpkgs                                   | Low    | 30 min |
+| 46 | **`jscpd` lockfile publishing** — PR upstream                                    | Low    | 30 min |
+| 47 | **Fix `library-policy` and `mr-sync` stale go.sum** upstream                     | Low    | 30 min |
 
 ### Documentation (ongoing)
 
-| #   | Task                                                                                                                                                                | Impact | Effort |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
-| 48  | **Update `docs/CONTRIBUTING.md`** with DNS migration patterns                                                                                                       | Low    | 15 min |
-| 49  | **Create monitoring runbook** — "what to do when each Discord alert fires" (started in `docs/runbooks/monitoring-runbook.md`, needs completion)                     | Medium | 1h     |
-| 50  | **Add a "documentation freshness" section to AGENTS.md** — document the docs-health skill, the file ownership model, and the "update FEATURES.md after deploy" rule | Low    | 20 min |
+| #  | Task                                                                                                                                                                | Impact | Effort |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 48 | **Update `docs/CONTRIBUTING.md`** with DNS migration patterns                                                                                                       | Low    | 15 min |
+| 49 | **Create monitoring runbook** — "what to do when each Discord alert fires" (started in `docs/runbooks/monitoring-runbook.md`, needs completion)                     | Medium | 1h     |
+| 50 | **Add a "documentation freshness" section to AGENTS.md** — document the docs-health skill, the file ownership model, and the "update FEATURES.md after deploy" rule | Low    | 20 min |
 
 ---
 

@@ -24,83 +24,83 @@ native BOT delivers full throughput. The VFIO VM caps sequential read at 68 MB/s
 
 ### Pool Health Verification
 
-| Check | Result | Details |
-|-------|--------|---------|
-| Pool state | **ONLINE** | `datapool` mirror-0, both vdevs ONLINE |
-| Read errors | **0** | Zero across all tests |
-| Write errors | **0** | Zero across all tests |
-| Checksum errors | **0** | Zero across all tests |
-| Data errors | **0** | `No known data errors` |
-| Previous scrub | **0 errors repaired** | Dec 1, 2025, 01:49:23 duration |
-| Current scrub | **In progress, 0 errors so far** | 45% complete at time of report, 0B repaired |
-| Pool upgrade | **Done** | 3 new features enabled: `block_cloning_endian`, `physical_rewrite`, `dynamic_gang_header` was already enabled |
+| Check           | Result                           | Details                                                                                                       |
+| --------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Pool state      | **ONLINE**                       | `datapool` mirror-0, both vdevs ONLINE                                                                        |
+| Read errors     | **0**                            | Zero across all tests                                                                                         |
+| Write errors    | **0**                            | Zero across all tests                                                                                         |
+| Checksum errors | **0**                            | Zero across all tests                                                                                         |
+| Data errors     | **0**                            | `No known data errors`                                                                                        |
+| Previous scrub  | **0 errors repaired**            | Dec 1, 2025, 01:49:23 duration                                                                                |
+| Current scrub   | **In progress, 0 errors so far** | 45% complete at time of report, 0B repaired                                                                   |
+| Pool upgrade    | **Done**                         | 3 new features enabled: `block_cloning_endian`, `physical_rewrite`, `dynamic_gang_header` was already enabled |
 
 ### SMART Health (Both Drives)
 
-| Attribute | Drive 1 (72U0A005FWTG) | Drive 2 (72U0A0ZUFWTG) | Status |
-|-----------|------------------------|------------------------|--------|
-| Model | TOSHIBA MG08ACA16TE | TOSHIBA MG08ACA16TE | Enterprise Capacity HDD |
-| Firmware | 4303 | 4303 | Same rev |
-| Capacity | 16,000,900,661,248 bytes (16 TB) | Same | |
-| SMART overall | **PASSED** | **PASSED** | |
-| Power-On Hours | 755 | 755 | Very low usage (~31 days) |
-| Power Cycle Count | 9 | 9 | Nearly pristine |
-| Start/Stop Count | 61 | 61 | Low |
-| Reallocated Sectors | **0** | **0** | No bad sectors |
-| Current Pending Sectors | **0** | **0** | No pending failures |
-| Offline Uncorrectable | **0** | **0** | Clean |
-| UDMA CRC Errors | **0** | **0** | Cable/bridge healthy |
-| Raw Read Error Rate | **0** | **0** | Clean |
-| Seek Error Rate | **0** | **0** | Clean |
-| Temperature | 35°C (Min 21, Max 40) | 35°C (Min 21, Max 39) | Normal |
-| Helium Condition | **0** (normal) | **0** (normal) | Helium-sealed, no leak |
-| G-Sense Error Rate | 2 | 3 | Minor vibration events (benign) |
-| Error Log | **No Errors Logged** | **No Errors Logged** | |
-| Self-test Log | 2-3 aborted-by-host extended tests | 2 aborted-by-host extended tests | Aborted = host powered off during test, not a drive failure |
+| Attribute               | Drive 1 (72U0A005FWTG)             | Drive 2 (72U0A0ZUFWTG)           | Status                                                      |
+| ----------------------- | ---------------------------------- | -------------------------------- | ----------------------------------------------------------- |
+| Model                   | TOSHIBA MG08ACA16TE                | TOSHIBA MG08ACA16TE              | Enterprise Capacity HDD                                     |
+| Firmware                | 4303                               | 4303                             | Same rev                                                    |
+| Capacity                | 16,000,900,661,248 bytes (16 TB)   | Same                             |                                                             |
+| SMART overall           | **PASSED**                         | **PASSED**                       |                                                             |
+| Power-On Hours          | 755                                | 755                              | Very low usage (~31 days)                                   |
+| Power Cycle Count       | 9                                  | 9                                | Nearly pristine                                             |
+| Start/Stop Count        | 61                                 | 61                               | Low                                                         |
+| Reallocated Sectors     | **0**                              | **0**                            | No bad sectors                                              |
+| Current Pending Sectors | **0**                              | **0**                            | No pending failures                                         |
+| Offline Uncorrectable   | **0**                              | **0**                            | Clean                                                       |
+| UDMA CRC Errors         | **0**                              | **0**                            | Cable/bridge healthy                                        |
+| Raw Read Error Rate     | **0**                              | **0**                            | Clean                                                       |
+| Seek Error Rate         | **0**                              | **0**                            | Clean                                                       |
+| Temperature             | 35°C (Min 21, Max 40)              | 35°C (Min 21, Max 39)            | Normal                                                      |
+| Helium Condition        | **0** (normal)                     | **0** (normal)                   | Helium-sealed, no leak                                      |
+| G-Sense Error Rate      | 2                                  | 3                                | Minor vibration events (benign)                             |
+| Error Log               | **No Errors Logged**               | **No Errors Logged**             |                                                             |
+| Self-test Log           | 2-3 aborted-by-host extended tests | 2 aborted-by-host extended tests | Aborted = host powered off during test, not a drive failure |
 
 ### ZFS Pool Configuration
 
-| Property | Value | Original Intent (private-cloud) | Match? |
-|-----------|-------|---------------------------------|--------|
-| Layout | mirror | mirror (disko-config.nix) | YES |
-| ashift | 12 | 12 (ZFS_IMPLEMENTATION_GUIDE) | YES |
-| failmode | continue | - | Reasonable |
-| autotrim | off | weekly TRIM via zfs-maintenance.nix | Different but OK (VM has no trim path through USB) |
-| autoexpand | off | - | Standard |
-| multihost | off | - | Standard (single host) |
-| Pool version | Feature flags (5000) | - | Current |
-| Compression (root) | lz4 | lz4 (original) / zstd (later intent) | **MISMATCH** — root dataset still lz4, private-cloud intended zstd upgrade |
-| recordsize (root) | 1M | 1M (disko-config.nix rootFsOptions) | YES |
-| atime | off | off | YES |
-| xattr | sa | sa | YES |
-| primarycache | all | all | YES |
-| logbias | throughput | throughput | YES |
-| acltype | posix | posixacl (ZFS_IMPLEMENTATION_GUIDE) | **MISMATCH** — pool root is `posix`, private-cloud used `posixacl` |
-| dnodesize | auto | - | Good default |
-| sync | standard | - | Standard |
-| mountpoint | legacy | legacy (root), /storage/* (children) | YES |
-| canmount | off | off (root container) | YES |
+| Property           | Value                | Original Intent (private-cloud)      | Match?                                                                     |
+| ------------------ | -------------------- | ------------------------------------ | -------------------------------------------------------------------------- |
+| Layout             | mirror               | mirror (disko-config.nix)            | YES                                                                        |
+| ashift             | 12                   | 12 (ZFS_IMPLEMENTATION_GUIDE)        | YES                                                                        |
+| failmode           | continue             | -                                    | Reasonable                                                                 |
+| autotrim           | off                  | weekly TRIM via zfs-maintenance.nix  | Different but OK (VM has no trim path through USB)                         |
+| autoexpand         | off                  | -                                    | Standard                                                                   |
+| multihost          | off                  | -                                    | Standard (single host)                                                     |
+| Pool version       | Feature flags (5000) | -                                    | Current                                                                    |
+| Compression (root) | lz4                  | lz4 (original) / zstd (later intent) | **MISMATCH** — root dataset still lz4, private-cloud intended zstd upgrade |
+| recordsize (root)  | 1M                   | 1M (disko-config.nix rootFsOptions)  | YES                                                                        |
+| atime              | off                  | off                                  | YES                                                                        |
+| xattr              | sa                   | sa                                   | YES                                                                        |
+| primarycache       | all                  | all                                  | YES                                                                        |
+| logbias            | throughput           | throughput                           | YES                                                                        |
+| acltype            | posix                | posixacl (ZFS_IMPLEMENTATION_GUIDE)  | **MISMATCH** — pool root is `posix`, private-cloud used `posixacl`         |
+| dnodesize          | auto                 | -                                    | Good default                                                               |
+| sync               | standard             | -                                    | Standard                                                                   |
+| mountpoint         | legacy               | legacy (root), /storage/* (children) | YES                                                                        |
+| canmount           | off                  | off (root container)                 | YES                                                                        |
 
 ### Dataset Inventory (Filesystem Only — No Snapshots)
 
-| Dataset | Used | Recordsize | Compression | Mountpoint | Notes |
-|---------|------|------------|-------------|------------|-------|
-| `datapool` (root) | 96K | 1M | lz4 | legacy | Container, canmount=off |
-| `datapool/apps` | 3.44G | 1M | lz4 | /storage/apps | Docker layer datasets (~300+ children) |
-| `datapool/apps/images` | 96K | 128K | zstd | /storage/apps/images | Docker images |
-| `datapool/apps/volumes` | 104K | 128K | zstd | /storage/apps/volumes | Docker volumes |
-| `datapool/backups` | 96K | 1M | lz4 | /storage/backups | Empty |
-| `datapool/cache` | 3.76G | 1M | lz4 | /storage/cache | Redis/cache data |
-| `datapool/config` | 184K | 1M | lz4 | /storage/config | Minimal data |
-| `datapool/databases` | 104K | 1M | lz4 | /storage/databases | Empty |
-| `datapool/dev` | 96K | 1M | lz4 | /storage/dev | Empty |
-| `datapool/documents` | 96K | 1M | lz4 | legacy | Container |
-| `datapool/documents/general` | 96K | 1M | lz4 | /storage/documents/general | Empty |
-| `datapool/documents/paperless` | 136K | 1M | lz4 | /storage/documents/paperless | Minimal |
-| `datapool/logs` | 96K | 1M | lz4 | /storage/logs | Empty |
-| `datapool/media` | 96K | 1M | lz4 | legacy | Container |
-| `datapool/media/general` | 96K | 1M | lz4 | /storage/media/general | Empty |
-| `datapool/media/photos` | 96K | 1M | lz4 | /storage/media/photos | Empty |
+| Dataset                        | Used  | Recordsize | Compression | Mountpoint                   | Notes                                  |
+| ------------------------------ | ----- | ---------- | ----------- | ---------------------------- | -------------------------------------- |
+| `datapool` (root)              | 96K   | 1M         | lz4         | legacy                       | Container, canmount=off                |
+| `datapool/apps`                | 3.44G | 1M         | lz4         | /storage/apps                | Docker layer datasets (~300+ children) |
+| `datapool/apps/images`         | 96K   | 128K       | zstd        | /storage/apps/images         | Docker images                          |
+| `datapool/apps/volumes`        | 104K  | 128K       | zstd        | /storage/apps/volumes        | Docker volumes                         |
+| `datapool/backups`             | 96K   | 1M         | lz4         | /storage/backups             | Empty                                  |
+| `datapool/cache`               | 3.76G | 1M         | lz4         | /storage/cache               | Redis/cache data                       |
+| `datapool/config`              | 184K  | 1M         | lz4         | /storage/config              | Minimal data                           |
+| `datapool/databases`           | 104K  | 1M         | lz4         | /storage/databases           | Empty                                  |
+| `datapool/dev`                 | 96K   | 1M         | lz4         | /storage/dev                 | Empty                                  |
+| `datapool/documents`           | 96K   | 1M         | lz4         | legacy                       | Container                              |
+| `datapool/documents/general`   | 96K   | 1M         | lz4         | /storage/documents/general   | Empty                                  |
+| `datapool/documents/paperless` | 136K  | 1M         | lz4         | /storage/documents/paperless | Minimal                                |
+| `datapool/logs`                | 96K   | 1M         | lz4         | /storage/logs                | Empty                                  |
+| `datapool/media`               | 96K   | 1M         | lz4         | legacy                       | Container                              |
+| `datapool/media/general`       | 96K   | 1M         | lz4         | /storage/media/general       | Empty                                  |
+| `datapool/media/photos`        | 96K   | 1M         | lz4         | /storage/media/photos        | Empty                                  |
 
 **Total used:** 20.3 GB (0.14% of 14.5 TB usable)
 **Snapshot count:** 1,137 snapshots (Sanoid auto-snapshots from private-cloud, Dec 2025 era)
@@ -108,28 +108,28 @@ native BOT delivers full throughput. The VFIO VM caps sequential read at 68 MB/s
 
 ### Speed Tests Completed
 
-| Test | Block | Mode | Result | Notes |
-|------|-------|------|--------|-------|
-| Sequential Write | 1M | O_DIRECT (libaio, QD32) | **106.3 MB/s** | |
-| Sequential Write | 1M | Cached (sync) | **141.2 MB/s** | ARC/ZIL helped |
-| Sequential Read | 1M | O_DIRECT (libaio, QD32) | **67.8 MB/s** | Surprisingly slow |
-| Sequential Read | 1M | Cached (sync) | **69.3 MB/s** | ARC miss (data not in cache) |
-| `dd` Write | 1M | O_DIRECT | **114 MB/s** | Sanity check matches fio |
-| `dd` Read | 1M | Cold cache | **66 MB/s** | Matches fio |
-| Raw disk read (sda) | 1M | O_DIRECT | **95.8 MB/s** | Single drive baseline |
-| Raw disk read (sda) | 4M | O_DIRECT | **85.5 MB/s** | Larger block didn't help |
-| Raw disk read (sdb) | 1M | O_DIRECT | **88.7 MB/s** | Second drive, consistent |
-| Random Read | 4K | O_DIRECT (libaio, QD32) | **71 IOPS** (284 KiB/s) | BOT bottleneck |
-| Random Write | 4K | O_DIRECT (libaio, QD32) | **55 IOPS** (221 KiB/s) | BOT bottleneck |
-| Random Mixed 70/30 | 4K | O_DIRECT (libaio, QD32) | **67 total IOPS** | BOT bottleneck |
+| Test                | Block | Mode                    | Result                  | Notes                        |
+| ------------------- | ----- | ----------------------- | ----------------------- | ---------------------------- |
+| Sequential Write    | 1M    | O_DIRECT (libaio, QD32) | **106.3 MB/s**          |                              |
+| Sequential Write    | 1M    | Cached (sync)           | **141.2 MB/s**          | ARC/ZIL helped               |
+| Sequential Read     | 1M    | O_DIRECT (libaio, QD32) | **67.8 MB/s**           | Surprisingly slow            |
+| Sequential Read     | 1M    | Cached (sync)           | **69.3 MB/s**           | ARC miss (data not in cache) |
+| `dd` Write          | 1M    | O_DIRECT                | **114 MB/s**            | Sanity check matches fio     |
+| `dd` Read           | 1M    | Cold cache              | **66 MB/s**             | Matches fio                  |
+| Raw disk read (sda) | 1M    | O_DIRECT                | **95.8 MB/s**           | Single drive baseline        |
+| Raw disk read (sda) | 4M    | O_DIRECT                | **85.5 MB/s**           | Larger block didn't help     |
+| Raw disk read (sdb) | 1M    | O_DIRECT                | **88.7 MB/s**           | Second drive, consistent     |
+| Random Read         | 4K    | O_DIRECT (libaio, QD32) | **71 IOPS** (284 KiB/s) | BOT bottleneck               |
+| Random Write        | 4K    | O_DIRECT (libaio, QD32) | **55 IOPS** (221 KiB/s) | BOT bottleneck               |
+| Random Mixed 70/30  | 4K    | O_DIRECT (libaio, QD32) | **67 total IOPS**       | BOT bottleneck               |
 
 ### Configuration Mismatches Found
 
-| Property | Current | Private-cloud Intent | Severity |
-|----------|---------|---------------------|----------|
-| Compression (root + most datasets) | **lz4** | **zstd level 3** | Low — lz4 is faster, zstd saves more space. Pool is 99.86% empty so this doesn't matter yet |
-| acltype | **posix** | **posixacl** | Low — `posix` is an alias for `posixacl` in modern ZFS; functionally equivalent |
-| Dataset recordsize tuning | All **1M** except apps/images (128K) and apps/volumes (128K) | Per-dataset: databases=8K, cache=4K, config=16K, logs=64K, documents=128K, media=1M | Medium — private-cloud's `zfs-hdd-optimizations.nix` service was supposed to set these at runtime. It never ran on this pool after migration |
+| Property                           | Current                                                      | Private-cloud Intent                                                                | Severity                                                                                                                                     |
+| ---------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Compression (root + most datasets) | **lz4**                                                      | **zstd level 3**                                                                    | Low — lz4 is faster, zstd saves more space. Pool is 99.86% empty so this doesn't matter yet                                                  |
+| acltype                            | **posix**                                                    | **posixacl**                                                                        | Low — `posix` is an alias for `posixacl` in modern ZFS; functionally equivalent                                                              |
+| Dataset recordsize tuning          | All **1M** except apps/images (128K) and apps/volumes (128K) | Per-dataset: databases=8K, cache=4K, config=16K, logs=64K, documents=128K, media=1M | Medium — private-cloud's `zfs-hdd-optimizations.nix` service was supposed to set these at runtime. It never ran on this pool after migration |
 
 ### UAS Investigation — CORRECTED
 
@@ -148,27 +148,30 @@ native BOT delivers full throughput. The VFIO VM caps sequential read at 68 MB/s
 
 ### ARC Stats
 
-| Metric | Value |
-|--------|-------|
-| ARC hits | 77,389,933 |
-| ARC misses | 122,122 |
-| Hit ratio | **99.84%** |
-| ARC size | 570 MB (of 2.8 GB max) |
-| Demand metadata hits | 67,572,911 |
-| Demand data hits | 7,007 |
+| Metric               | Value                  |
+| -------------------- | ---------------------- |
+| ARC hits             | 77,389,933             |
+| ARC misses           | 122,122                |
+| Hit ratio            | **99.84%**             |
+| ARC size             | 570 MB (of 2.8 GB max) |
+| Demand metadata hits | 67,572,911             |
+| Demand data hits     | 7,007                  |
 
 ---
 
 ## B) PARTIALLY DONE
 
 ### ZFS Scrub — COMPLETED
+
 - **Started:** 2026-08-10 05:39:44 UTC
 - **Completed:** 2026-08-10 07:09:09 UTC (01:29:25 duration)
 - **Errors:** **0** — zero bytes repaired, zero checksum errors
 - **Previous scrub:** Dec 1, 2025 — 01:49:23, 0 errors (similar duration, similar pool size)
 
 ### Speed Test Gaps
+
 The following tests were planned but not executed:
+
 - No test with varying queue depths (1, 4, 8, 16, 64)
 - No test with multiple jobs (parallel I/O)
 - No test with ZFS `recordsize` variants (128K, 256K, 1M)
@@ -214,6 +217,7 @@ passthrough overhead (~4x latency penalty), NOT the BOT protocol. Native BOT at 
 the same ~276 MB/s as the old system's UAS. The entire VM infrastructure is a speed tax.
 
 ### 1. Read Speed Anomaly — ROOT-CAUSED: VFIO Overhead
+
 Sequential read (~68 MB/s) was slower than write (~106 MB/s) in the VM. Root cause: **VFIO
 passthrough adds asymmetric latency** — read commands require data transfer back through the
 VFIO IOMMU translation layer, while write commands are fire-and-forget at the USB level. This
@@ -221,27 +225,32 @@ makes reads proportionally slower than writes through VFIO. On the native host, 
 at QD32 would match the old system's ~276 MB/s.
 
 ### 2. UAS Attempt Risked Pool Availability
+
 The UAS override attempt required exporting the pool, unbinding USB, and attempting rebind.
 If the rebind to usb-storage had also failed, the pool would have been inaccessible with drives
 held by no driver. The recovery worked, but this was an unnecessary risk without a safety net.
 **I should have tested on a dummy USB device first.**
 
 ### 3. Scrub Started Before Speed Tests Were Fully Done
+
 Starting the scrub consumed USB bandwidth, making any subsequent speed tests invalid (scrub
 I/O competes with workload I/O). The test order should have been: all benchmarks first, then
 scrub last.
 
 ### 4. Speed Test Dataset Used `compression=off` But Pool Default is `lz4`
+
 The test dataset was created with `compression=off` to measure raw throughput, but this means
 the results don't reflect real-world ZFS performance where compression is active. Should have
 run both modes.
 
 ### 5. No System-Level Monitoring During Tests
+
 Did not monitor VM CPU usage, I/O wait, USB controller interrupts, or host-side VFIO
 performance during benchmarks. These would have helped isolate whether the bottleneck is in
 the USB bridge, BOT protocol, VFIO translation, or ZFS itself.
 
 ### 6. Never Compared Against the Original Private-Cloud System
+
 The old private-cloud system (`/home/lars/projects/private-cloud/`) ran this exact hardware
 natively on kernel 6.6 LTS and achieved **274 MB/s**. The private-cloud docs contain full
 benchmark results, kernel config, and UAS troubleshooting history. This should have been the
@@ -385,15 +394,15 @@ exact enclosure on a native kernel. The enclosure is NOT the bottleneck — VFIO
 
 ### Test Environment
 
-| Component | Detail |
-|-----------|--------|
-| Host | NixOS 26.11 "Zokor", kernel 7.1.6, AMD Ryzen AI Max+ 395 (Strix Halo) |
-| VM | NixOS kernel 6.18.43, ZFS 2.4.3-1, 4 vCPU, 4 GB RAM (ARC max 2.8 GB) |
-| USB Controller | AMD `0000:c7:00.4` (vendor `0x1022`, device `0x158b`), IOMMU group 29 |
-| USB Bridge | JMicron JMS567 (`152d:0567`), firmware 5203, USB 3.0 SuperSpeed (5 Gbps) |
-| Drives | 2x TOSHIBA MG08ACA16TE, 16TB, 7200 RPM, 4096-byte physical sectors |
-| ZFS Pool | `datapool`, mirror, ashift=12, 14.5 TB usable, 20.3 GB allocated |
-| Benchmark Tool | fio 3.42 (from nixpkgs, shared via virtfs `/nix/store`) |
+| Component      | Detail                                                                   |
+| -------------- | ------------------------------------------------------------------------ |
+| Host           | NixOS 26.11 "Zokor", kernel 7.1.6, AMD Ryzen AI Max+ 395 (Strix Halo)    |
+| VM             | NixOS kernel 6.18.43, ZFS 2.4.3-1, 4 vCPU, 4 GB RAM (ARC max 2.8 GB)     |
+| USB Controller | AMD `0000:c7:00.4` (vendor `0x1022`, device `0x158b`), IOMMU group 29    |
+| USB Bridge     | JMicron JMS567 (`152d:0567`), firmware 5203, USB 3.0 SuperSpeed (5 Gbps) |
+| Drives         | 2x TOSHIBA MG08ACA16TE, 16TB, 7200 RPM, 4096-byte physical sectors       |
+| ZFS Pool       | `datapool`, mirror, ashift=12, 14.5 TB usable, 20.3 GB allocated         |
+| Benchmark Tool | fio 3.42 (from nixpkgs, shared via virtfs `/nix/store`)                  |
 
 ### Raw Speed Test Details
 
@@ -414,12 +423,12 @@ Random Mixed (4K, 70R/30W, O_DIRECT, QD32):     67 total IOPS (47R + 20W)
 
 ### Theoretical vs Actual Performance
 
-| Metric | Drive Capability | USB 3.0 Limit | UAS Expected | BOT Actual | % of Theoretical |
-|--------|-----------------|---------------|-------------|------------|-----------------|
-| Sequential Read | ~250 MB/s (HDD) | 400 MB/s | ~250 MB/s | **68 MB/s** | **27%** |
-| Sequential Write | ~250 MB/s (HDD) | 400 MB/s | ~250 MB/s | **106 MB/s** | **42%** |
-| Random Read | ~150 IOPS (HDD) | N/A | ~150 IOPS | **71 IOPS** | **47%** |
-| Random Write | ~150 IOPS (HDD) | N/A | ~150 IOPS | **55 IOPS** | **37%** |
+| Metric           | Drive Capability | USB 3.0 Limit | UAS Expected | BOT Actual   | % of Theoretical |
+| ---------------- | ---------------- | ------------- | ------------ | ------------ | ---------------- |
+| Sequential Read  | ~250 MB/s (HDD)  | 400 MB/s      | ~250 MB/s    | **68 MB/s**  | **27%**          |
+| Sequential Write | ~250 MB/s (HDD)  | 400 MB/s      | ~250 MB/s    | **106 MB/s** | **42%**          |
+| Random Read      | ~150 IOPS (HDD)  | N/A           | ~150 IOPS    | **71 IOPS**  | **47%**          |
+| Random Write     | ~150 IOPS (HDD)  | N/A           | ~150 IOPS    | **55 IOPS**  | **37%**          |
 
 The BOT protocol is the bottleneck THROUGH VFIO. Native BOT at QD32 delivers ~276 MB/s
 (matching the old system's UAS performance). See Section H for the corrected analysis.
@@ -445,11 +454,11 @@ hierarchy is:
 
 Source: `/home/lars/projects/private-cloud/docs/status/archive/2025-11-20_External-16TB-Drives-ZFS-Readiness-Report.md`
 
-| Test | Old System (Native, Kernel 6.6) | Current VM (VFIO, Kernel 6.18) | Ratio |
-|------|-------------------------------|-------------------------------|-------|
-| Seq Read 1M QD1 | **275 MB/s** (3.81ms lat) | **68 MB/s** (468ms lat) | **4.0x slower** |
-| Seq Write 1M QD1 | **274 MB/s** (3.83ms lat) | **106 MB/s** (300ms lat) | **2.6x slower** |
-| ZFS Scrub | **108 MB/s** (40 sec for 20 GB) | **3.8 MB/s** (89 min for 20 GB) | **28x slower** |
+| Test             | Old System (Native, Kernel 6.6) | Current VM (VFIO, Kernel 6.18)  | Ratio           |
+| ---------------- | ------------------------------- | ------------------------------- | --------------- |
+| Seq Read 1M QD1  | **275 MB/s** (3.81ms lat)       | **68 MB/s** (468ms lat)         | **4.0x slower** |
+| Seq Write 1M QD1 | **274 MB/s** (3.83ms lat)       | **106 MB/s** (300ms lat)        | **2.6x slower** |
+| ZFS Scrub        | **108 MB/s** (40 sec for 20 GB) | **3.8 MB/s** (89 min for 20 GB) | **28x slower**  |
 
 The 274 MB/s on the old system was achieved with the **same JMicron JMS567 bridge, same drives,
 same USB 3.0 cable**. The old system ran kernel 6.6 LTS with `uas` module in initrd.
@@ -457,6 +466,7 @@ same USB 3.0 cable**. The old system ran kernel 6.6 LTS with `uas` module in ini
 ### Evidence: Kernel Quirk Does NOT Disable UAS
 
 From kernel source (`unusual_uas.h`):
+
 ```c
 UNUSUAL_DEV(0x152d, 0x0567, 0x0000, 0x9999,
     "JMicron", "JMS567",
@@ -475,6 +485,7 @@ The old system's firmware may have been different, or the old kernel (6.6) handl
 ### Evidence: Scrub Completed (0 Errors)
 
 The scrub completed during this analysis:
+
 - **Started:** 2026-08-10 05:39:44 UTC
 - **Completed:** 2026-08-10 07:09:09 UTC (01:29:25 duration)
 - **Errors:** **0** — zero bytes repaired, zero checksum errors
@@ -484,16 +495,16 @@ The scrub completed during this analysis:
 
 #### Option 1: BTRFS Native (RECOMMENDED — 276 MB/s, no VM)
 
-| Aspect | Detail |
-|--------|--------|
-| **Speed** | ~276 MB/s sequential (native BOT at QD32, proven by old system) |
-| **Kernel** | Native 7.1.6 support — no module compilation, no risk |
-| **VM needed** | NO — eliminates VFIO overhead entirely |
-| **Data loss** | 20 GB of Docker images (all re-pullable) |
-| **Features** | BTRFS mirror (RAID1), snapshots, compression (zstd), scrub |
-| **NVMe cache** | Can add bcache layer later if random I/O matters |
-| **Expertise** | Host already runs BTRFS (/, /data, /nix) — deep expertise exists |
-| **Future** | Can reformat to ZFS later when kernel 7.1 support stabilizes |
+| Aspect         | Detail                                                           |
+| -------------- | ---------------------------------------------------------------- |
+| **Speed**      | ~276 MB/s sequential (native BOT at QD32, proven by old system)  |
+| **Kernel**     | Native 7.1.6 support — no module compilation, no risk            |
+| **VM needed**  | NO — eliminates VFIO overhead entirely                           |
+| **Data loss**  | 20 GB of Docker images (all re-pullable)                         |
+| **Features**   | BTRFS mirror (RAID1), snapshots, compression (zstd), scrub       |
+| **NVMe cache** | Can add bcache layer later if random I/O matters                 |
+| **Expertise**  | Host already runs BTRFS (/, /data, /nix) — deep expertise exists |
+| **Future**     | Can reformat to ZFS later when kernel 7.1 support stabilizes     |
 
 **Why this is #1:** The user wants speed for media/backup. BTRFS delivers the full 276 MB/s
 that the hardware can provide, with zero VM overhead. The cost is 20 GB of disposable Docker
@@ -501,39 +512,39 @@ layers. The user already manages BTRFS daily on the host NVMe.
 
 #### Option 2: ZFS via Kernel 6.x Dual-Boot (276 MB/s, keeps ZFS)
 
-| Aspect | Detail |
-|--------|--------|
-| **Speed** | ~276 MB/s (native, no VFIO) |
-| **Kernel** | Requires kernel ≤7.0 for ZFS 2.4.x |
-| **Conflict** | User wants kernel 7.1 for Strix Halo CPU support |
-| **VM needed** | NO if kernel is downgraded |
-| **Compromise** | Lose kernel 7.1 CPU features |
+| Aspect         | Detail                                           |
+| -------------- | ------------------------------------------------ |
+| **Speed**      | ~276 MB/s (native, no VFIO)                      |
+| **Kernel**     | Requires kernel ≤7.0 for ZFS 2.4.x               |
+| **Conflict**   | User wants kernel 7.1 for Strix Halo CPU support |
+| **VM needed**  | NO if kernel is downgraded                       |
+| **Compromise** | Lose kernel 7.1 CPU features                     |
 
 **Why this is #2:** Keeps ZFS but sacrifices kernel 7.1. The user explicitly stated they want
 the latest kernel for their CPU. This creates a direct conflict with ZFS.
 
 #### Option 3: Keep VFIO VM (68-106 MB/s, current setup)
 
-| Aspect | Detail |
-|--------|--------|
-| **Speed** | 68 MB/s read, 106 MB/s write (VFIO penalty) |
-| **Kernel** | VM runs kernel 6.18 (ZFS-compatible), host stays 7.1 |
-| **VM needed** | YES — VFIO passthrough required |
-| **Overhead** | ~4x latency penalty from VFIO IOMMU translation |
-| **Use case** | Acceptable for backup target (writes are 106 MB/s) |
+| Aspect        | Detail                                               |
+| ------------- | ---------------------------------------------------- |
+| **Speed**     | 68 MB/s read, 106 MB/s write (VFIO penalty)          |
+| **Kernel**    | VM runs kernel 6.18 (ZFS-compatible), host stays 7.1 |
+| **VM needed** | YES — VFIO passthrough required                      |
+| **Overhead**  | ~4x latency penalty from VFIO IOMMU translation      |
+| **Use case**  | Acceptable for backup target (writes are 106 MB/s)   |
 
 **Why this is #3:** It works today but wastes 60-75% of hardware capability. The VFIO tax is
 permanent — no tuning can fix it.
 
 #### Option 4: NVMe ZIL/L2ARC in VM (improves random I/O only)
 
-| Aspect | Detail |
-|--------|--------|
-| **Speed** | Sequential unchanged (still VFIO-bottlenecked) |
-| **Random I/O** | Sync writes: 10-100x faster via NVMe ZIL |
+| Aspect         | Detail                                                 |
+| -------------- | ------------------------------------------------------ |
+| **Speed**      | Sequential unchanged (still VFIO-bottlenecked)         |
+| **Random I/O** | Sync writes: 10-100x faster via NVMe ZIL               |
 | **Read cache** | Hot blocks served from NVMe L2ARC (skips USB entirely) |
-| **NVMe cost** | 8-64 GB partition on existing NVMe |
-| **Limitation** | Does NOT fix the sequential throughput problem |
+| **NVMe cost**  | 8-64 GB partition on existing NVMe                     |
+| **Limitation** | Does NOT fix the sequential throughput problem         |
 
 **Why this is a supplement, not a solution:** NVMe cache helps random I/O (database workloads)
 but doesn't improve sequential throughput for media/backup. The user's primary use case is
@@ -560,6 +571,7 @@ Host ID: `7dd6fff2` (from `configuration.nix`)
 ### Pool Feature Flags (After Upgrade)
 
 All feature flags now `enabled` or `active`. Newly enabled during this session:
+
 - `block_cloning_endian`
 - `physical_rewrite`
 

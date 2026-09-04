@@ -807,7 +807,7 @@ sudo nixos-rebuild switch --rollback
 | ------------------------- | ---------------------- | ------------------------------------------------------------ |
 | **NixOS Private Cloud**   | ✅ YES                 | Centralized control, network-wide benefits, minimal overhead |
 | **NixOS Laptop (evo-x2)** | ✅ YES                 | Local caching, device-specific control, offline capability   |
-| **MacBook Air M2**        | ⚠️ NO (as server)      | No native support, Docker complexity, mobile device          |
+| **MacBook Air M2**        | ⚠️ NO (as server)       | No native support, Docker complexity, mobile device          |
 | **MacBook Air M2**        | ✅ YES (as client)     | Simple configuration, uses centralized policy                |
 
 ---

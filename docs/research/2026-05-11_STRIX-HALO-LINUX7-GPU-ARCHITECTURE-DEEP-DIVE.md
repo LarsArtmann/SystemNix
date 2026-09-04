@@ -164,12 +164,12 @@ This allows the GPU to address more system RAM for large model loads, but doesn'
 
 AMD APUs **do not have MPS (Multi-Process Service)** equivalent. NVIDIA MPS allows time-slicing GPU compute between processes with priority. AMD has no such mechanism:
 
-| Feature                 | NVIDIA              | AMD (RDNA 3.5)                                  |
-| ----------------------- | ------------------- | ----------------------------------------------- |
-| Per-process VRAM limits | ✅ nvidia-cgroup    | ❌ Not available                                |
-| Compute priority (MPS)  | ✅ CUDA MPS         | ❌ No equivalent                                |
-| GPU time-slicing        | ✅ Time-slice + MPS | ❌ Cooperative only                             |
-| cgroup GPU controller   | ❌ Not merged       | ❌ Not available                                |
+| Feature                 | NVIDIA              | AMD (RDNA 3.5)                                 |
+| ----------------------- | ------------------- | ---------------------------------------------- |
+| Per-process VRAM limits | ✅ nvidia-cgroup    | ❌ Not available                               |
+| Compute priority (MPS)  | ✅ CUDA MPS         | ❌ No equivalent                               |
+| GPU time-slicing        | ✅ Time-slice + MPS | ❌ Cooperative only                            |
+| cgroup GPU controller   | ❌ Not merged       | ❌ Not available                               |
 | DRM scheduler priority  | ✅ Some support     | ⚠️ `drm/sched` exists but no user-space control |
 
 ### What IS Available
@@ -291,26 +291,26 @@ Published 2026-05-07 — local privilege escalation affecting ALL Linux distribu
 
 ### Tier 1: Immediate (prevent re-occurrence)
 
-| #   | Action                                                   | File                                     | Effort |
-| --- | -------------------------------------------------------- | ---------------------------------------- | ------ |
-| 1   | Set `OLLAMA_MAX_LOADED_MODELS = "1"`                     | `modules/nixos/services/ai-stack.nix`    | 1 min  |
-| 2   | Set `OLLAMA_GPU_OVERHEAD = "8589934592"` (8 GiB reserve) | `modules/nixos/services/ai-stack.nix`    | 1 min  |
-| 3   | Raise niri `OOMScoreAdjust` to `-1000`                   | `modules/nixos/services/niri-config.nix` | 1 min  |
-| 4   | Add `OOMScoreAdjust = 500` to Ollama                     | `modules/nixos/services/ai-stack.nix`    | 1 min  |
+| # | Action                                                   | File                                     | Effort |
+| - | -------------------------------------------------------- | ---------------------------------------- | ------ |
+| 1 | Set `OLLAMA_MAX_LOADED_MODELS = "1"`                     | `modules/nixos/services/ai-stack.nix`    | 1 min  |
+| 2 | Set `OLLAMA_GPU_OVERHEAD = "8589934592"` (8 GiB reserve) | `modules/nixos/services/ai-stack.nix`    | 1 min  |
+| 3 | Raise niri `OOMScoreAdjust` to `-1000`                   | `modules/nixos/services/niri-config.nix` | 1 min  |
+| 4 | Add `OOMScoreAdjust = 500` to Ollama                     | `modules/nixos/services/ai-stack.nix`    | 1 min  |
 
 ### Tier 2: DRM Healthcheck Fix
 
-| #   | Action                                                       | File                              | Effort |
-| --- | ------------------------------------------------------------ | --------------------------------- | ------ |
-| 5   | Rewrite healthcheck: count consecutive errors, don't SIGKILL | `scripts/niri-drm-healthcheck.sh` | 30 min |
-| 6   | Add auto-reboot on unrecoverable GPU state                   | `scripts/gpu-recovery.sh`         | 15 min |
+| # | Action                                                       | File                              | Effort |
+| - | ------------------------------------------------------------ | --------------------------------- | ------ |
+| 5 | Rewrite healthcheck: count consecutive errors, don't SIGKILL | `scripts/niri-drm-healthcheck.sh` | 30 min |
+| 6 | Add auto-reboot on unrecoverable GPU state                   | `scripts/gpu-recovery.sh`         | 15 min |
 
 ### Tier 3: Kernel / System
 
-| #   | Action                                                                                   | Effort         |
-| --- | ---------------------------------------------------------------------------------------- | -------------- |
-| 7   | Update kernel to 7.0.6+ (Dirty Frag fix)                                                 | `nixpkgs` bump |
-| 8   | Consider `amdgpu.gttsize` reduction (currently 112 GiB, maybe 64 GiB to limit GTT abuse) | 5 min          |
+| # | Action                                                                                   | Effort         |
+| - | ---------------------------------------------------------------------------------------- | -------------- |
+| 7 | Update kernel to 7.0.6+ (Dirty Frag fix)                                                 | `nixpkgs` bump |
+| 8 | Consider `amdgpu.gttsize` reduction (currently 112 GiB, maybe 64 GiB to limit GTT abuse) | 5 min          |
 
 ### Architecture Reality
 

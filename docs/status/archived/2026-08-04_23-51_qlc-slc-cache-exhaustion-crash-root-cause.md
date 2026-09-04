@@ -6,7 +6,6 @@
 
 ---
 
-
 ## What Happened
 
 evo-x2 crashed AGAIN at 23:02:34 — hard freeze, sp5100-tco WDT reset, journal stops mid-operation. This is the **3rd crash in 3 days** (Aug 1, Aug 3, Aug 4).
@@ -19,16 +18,16 @@ The NVMe controller's FTL loses track of freed blocks between weekly fstrim runs
 
 ### Evidence chain (all from ClickHouse metrics)
 
-| Metric | Value | Proof |
-|--------|-------|-------|
-| Memory available | 55-60 GB throughout | `node_memory_MemAvailable_bytes` flat at ~58 GB — memory was NOT the cause |
-| PSI I/O stall (baseline) | **42%** | `node_pressure_io_stalled_seconds_total` — system chronically I/O starved |
-| I/O queue depth growth | 450/sec → 6,192/sec | `node_disk_io_time_weighted_seconds_total` — **exponential** growth over 3 hours |
-| Disk write rate | 15 → 62 MB/s | `node_disk_written_bytes_total` — accelerating writes |
-| NVMe health | 0 media errors, 0 critical warnings | `node_nvme_*` — hardware is fine |
-| fstrim last run | Aug 3 00:03 | Trimmed **446 GiB** of stale blocks (330 GiB on /data alone) |
-| Time between fstrim and crash | **47 hours** | SLC cache depleted over ~2 days of CoW churn |
-| /data BTRFS chunk fullness | **96.22%** | `btrfs filesystem usage /data` |
+| Metric                        | Value                               | Proof                                                                            |
+| ----------------------------- | ----------------------------------- | -------------------------------------------------------------------------------- |
+| Memory available              | 55-60 GB throughout                 | `node_memory_MemAvailable_bytes` flat at ~58 GB — memory was NOT the cause       |
+| PSI I/O stall (baseline)      | **42%**                             | `node_pressure_io_stalled_seconds_total` — system chronically I/O starved        |
+| I/O queue depth growth        | 450/sec → 6,192/sec                 | `node_disk_io_time_weighted_seconds_total` — **exponential** growth over 3 hours |
+| Disk write rate               | 15 → 62 MB/s                        | `node_disk_written_bytes_total` — accelerating writes                            |
+| NVMe health                   | 0 media errors, 0 critical warnings | `node_nvme_*` — hardware is fine                                                 |
+| fstrim last run               | Aug 3 00:03                         | Trimmed **446 GiB** of stale blocks (330 GiB on /data alone)                     |
+| Time between fstrim and crash | **47 hours**                        | SLC cache depleted over ~2 days of CoW churn                                     |
+| /data BTRFS chunk fullness    | **96.22%**                          | `btrfs filesystem usage /data`                                                   |
 
 ### What did NOT cause the crash (things I wrongly blamed first)
 
@@ -38,38 +37,41 @@ The NVMe controller's FTL loses track of freed blocks between weekly fstrim runs
 
 ### Crash timeline (reconstructed from metrics + journal)
 
-| Time | Event |
-|------|-------|
-| Aug 3 00:03 | fstrim runs, trims 446 GiB — SLC cache fully restored |
-| Aug 3 22:03 | Boot -2 starts |
-| Aug 3 22:00:46 | Boot -2 freezes (journal ends) — **43h after fstrim** |
-| Aug 3 22:03:37 | Boot -1 starts |
-| Aug 4 ~21:30 | I/O queue depth begins exponential growth (visible in metrics) |
-| Aug 4 22:20 | Monitor365 DuckDB hits 953 MiB limit (symptom of I/O pressure) |
-| Aug 4 22:57:35 | `monitor365-server` SIGKILL'd (stop-sigterm timeout — I/O blocked) |
-| Aug 4 22:58:11 | Hermes heartbeat blocked 10-30s (scheduler starved) |
+| Time           | Event                                                                          |
+| -------------- | ------------------------------------------------------------------------------ |
+| Aug 3 00:03    | fstrim runs, trims 446 GiB — SLC cache fully restored                          |
+| Aug 3 22:03    | Boot -2 starts                                                                 |
+| Aug 3 22:00:46 | Boot -2 freezes (journal ends) — **43h after fstrim**                          |
+| Aug 3 22:03:37 | Boot -1 starts                                                                 |
+| Aug 4 ~21:30   | I/O queue depth begins exponential growth (visible in metrics)                 |
+| Aug 4 22:20    | Monitor365 DuckDB hits 953 MiB limit (symptom of I/O pressure)                 |
+| Aug 4 22:57:35 | `monitor365-server` SIGKILL'd (stop-sigterm timeout — I/O blocked)             |
+| Aug 4 22:58:11 | Hermes heartbeat blocked 10-30s (scheduler starved)                            |
 | Aug 4 23:00:00 | btrbk snapshot takes **20 seconds** (should be <1s) — `275ms CPU / 20.4s wall` |
-| Aug 4 23:00:54 | ClickHouse query timeout (11.4s), broken pipes, ZooKeeper 30s timeout |
-| Aug 4 23:01:38 | Hermes Python crash at `os.fsync()` — fsync blocked too long |
-| Aug 4 23:02:34 | Total freeze → WDT fires → hard reset |
+| Aug 4 23:00:54 | ClickHouse query timeout (11.4s), broken pipes, ZooKeeper 30s timeout          |
+| Aug 4 23:01:38 | Hermes Python crash at `os.fsync()` — fsync blocked too long                   |
+| Aug 4 23:02:34 | Total freeze → WDT fires → hard reset                                          |
 
 ---
 
 ## a) FULLY DONE
 
 ### 1. fstrim: weekly → daily (ROOT CAUSE FIX)
+
 - **File:** `platforms/nixos/system/boot.nix:344-357`
 - **Change:** `systemd.timers.fstrim.timerConfig.OnCalendar = lib.mkForce "daily";`
 - **Verified:** `nix eval` confirms timer evaluates to `"daily"`
 - **Why:** Daily fstrim keeps the NVMe FTL informed of freed blocks so the SLC cache stays healthy. Daily runs only trim ~24h of churn (~50-100 GiB), taking ~10-15 min instead of 1h14m.
 
 ### 2. swww-daemon ghost service REMOVED
+
 - **File:** `platforms/nixos/desktop/niri-wrapped.nix`
 - **Change:** Removed the entire `swww-daemon` systemd user service, the `swww-wallpaper` shell application, and all `pkgs.swww` references. Rewrote `dms-wallpaper-init` to use DMS IPC instead of swww. Updated `Mod+W` keybinding from `swww-wallpaper next` to `dms ipc call wallpaper next`.
 - **Why:** swww-daemon was crash-looping 1220+ times per boot (GC'd nix store binary). The binary `/nix/store/1wlvdb4i28np8cbcya1hgwwdzbnln3bk-awww-0.12.1/bin/swww-daemon` did not exist. Every 3 seconds systemd spawned a process, failed, logged, restarted. This is desktop churn, not a crash cause, but it's a ghost that needed killing. AGENTS.md already says "awww is RETIRED" and "DMS owns wallpaper management" — the code was stale.
 - **Verified:** `nix eval` confirms niri config evaluates with `Mod+W` → `dms ipc call wallpaper next`
 
 ### 3. Evaluation verified
+
 - `nix eval .#nixosConfigurations.evo-x2.config.systemd.timers.fstrim.timerConfig.OnCalendar` → `"daily"` ✓
 - `nix eval .#nixosConfigurations.evo-x2.config.home-manager.users.lars.programs.niri.config` → evaluates successfully ✓
 - `rg "pkgs.swww"` → no results (all swww references removed) ✓
@@ -138,6 +140,7 @@ Nothing partial. All changes I made are complete and verified.
 ## f) Next 50 Things to Do
 
 ### Critical (deploy or die)
+
 1. ~~**Deploy the changes** (`nix run .#deploy`)~~ done at `864573c7` (deployed Aug 5)
 2. ~~**Run `sudo fstrim -av` immediately after deploy** to recover SLC cache~~ done (daily fstrim at `1ed97433`)
 3. ~~**Verify fstrim timer is daily** after deploy: `systemctl list-timers fstrim.timer`~~ done at `1ed97433`, `e952d7c8`
@@ -145,6 +148,7 @@ Nothing partial. All changes I made are complete and verified.
 5. ~~**Verify swww-daemon is gone** from `systemctl --user list-units` after deploy~~ done at `fb14ce2a` (swww removed)
 
 ### High priority (this week)
+
 6. ~~**Add Gatus alert for PSI I/O stall rate** — alert when `rate(node_pressure_io_stalled_seconds_total[5m]) > 0.10`~~ done at `004924be`
 7. ~~**Add Gatus alert for fstrim duration** — alert when fstrim service takes >30 min~~ done at `004924be`
 8. ~~**Lower journald `SystemMaxUse` from 16G to 8G** — 8.5 GB is too much~~ done at `b8d953b8`
@@ -157,6 +161,7 @@ Nothing partial. All changes I made are complete and verified.
 15. **Investigate /data BTRFS chunk at 96.22%** — run balance if needed
 
 ### Medium priority (this month)
+
 16. **Add `node_disk_io_time_weighted_seconds_total` rate dashboard** to SigNoz
 17. **Clean up old journal files** — `journalctl --vacuum-time=7d`
 18. **Audit all services for I/O patterns** — identify sustained writers
@@ -169,6 +174,7 @@ Nothing partial. All changes I made are complete and verified.
 25. **Review all systemd services for `IOSchedulingClass=idle`** on non-critical services
 
 ### Monitor365 specific
+
 26. **Fix Monitor365 agent headless mode** — disable clipboard, camera, screenshot collectors when no DISPLAY
 27. **Raise Monitor365 DuckDB memory limit** — 953 MiB causes appender fallback to individual INSERTs
 28. **Add Monitor365 log deduplication** — "Buffer near capacity" should aggregate, not spam
@@ -176,6 +182,7 @@ Nothing partial. All changes I made are complete and verified.
 30. **Review Monitor365 cloud sync circuit breaker** — it ran 30 consecutive failures without backing off
 
 ### Desktop / swww cleanup
+
 31. **Verify DMS wallpaper management works** after deploy (Mod+W, wallpaper cycling, init)
 32. **Remove `pkgs.swww` from runtimeDeps** if it was used elsewhere (it wasn't, but verify)
 33. **Clean up any HM generations** that still reference swww-daemon
@@ -183,6 +190,7 @@ Nothing partial. All changes I made are complete and verified.
 35. **Verify `dms-wallpaper-init` works** with the new DMS IPC approach
 
 ### Crash resilience
+
 36. **Raise WDT timeout from 30s to 60s** — lets hung_task_panic fire first, giving forensics
 37. **Add kernel `printk.time=1`** for better crash timeline reconstruction
 38. **Consider `panic=-1`** to disable auto-reboot on panic (let WDT handle it consistently)
@@ -190,6 +198,7 @@ Nothing partial. All changes I made are complete and verified.
 40. **Review all `Restart=always` services** for crash-loop amplification (like swww-daemon was doing)
 
 ### Documentation
+
 41. **Write incident report** for the 3 crashes (Aug 1, 3, 4) — all same root cause
 42. **Update docs/crash-analysis-2026-06-26.md** with the SLC cache finding
 43. **Create NVMe health dashboard** documentation
@@ -197,6 +206,7 @@ Nothing partial. All changes I made are complete and verified.
 45. **Review and archive old crash reports** that blamed wrong causes
 
 ### System health
+
 46. **Audit all cgroup MemoryMax sums** — verify total doesn't exceed 80G to leave headroom
 47. **Check Hermes memory** — it has 24G MemoryMax but only uses 340M at idle
 48. **Check PMA memory** — 16G MemoryMax but 7.5G observed at idle (page cache from 260 git repos)

@@ -73,6 +73,18 @@ in
   };
 
   systemd.user.services = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+    # The ActivityWatch data dir is a symlink into /mnt/pool (activitywatch-
+    # data-to-pool). When the DAS is detached the symlink DANGLES and
+    # aw-server panic-loops ("Unable to create data dir: AlreadyExists",
+    # EEXIST on mkdir over a dangling symlink) into start-limit-hit, dragging
+    # the theme setter and both watchers into crash-loop cascades
+    # (2026-08-22 boot, pool offline). ConditionPathIsDirectory follows
+    # symlinks (verified live: dangling → skip, live → run), so gating every
+    # unit on the data dir turns "pool absent" into a clean per-session skip.
+    # Pre-migration (real dir) and pool-mounted states both pass.
+    activitywatch.Unit.ConditionPathIsDirectory = "%h/.local/share/activitywatch";
+    activitywatch-watcher-aw-watcher-utilization.Unit.ConditionPathIsDirectory = "%h/.local/share/activitywatch";
+
     activitywatch-watcher-aw-watcher-window-wayland = {
       Unit = {
         After = lib.mkAfter [
@@ -89,6 +101,7 @@ in
         # wrapper above already waits for the compositor socket, so no Wants
         # is needed for the deploy-time ordering case either.
         PartOf = lib.mkAfter [ "graphical-session.target" ];
+        ConditionPathIsDirectory = "%h/.local/share/activitywatch";
         StartLimitBurst = 5;
         StartLimitIntervalSec = 300;
       };
@@ -104,6 +117,7 @@ in
         Description = "Set ActivityWatch theme to dark";
         After = [ "activitywatch.service" ];
         PartOf = [ "activitywatch.service" ];
+        ConditionPathIsDirectory = "%h/.local/share/activitywatch";
       };
       Service = {
         Type = "oneshot";

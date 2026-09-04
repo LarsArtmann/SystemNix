@@ -1,5 +1,7 @@
 # Niri Black Screen on Login + Mystery Power-Off: Root Cause and Fix
 
+> **KEPT LIVE (2026-09-02, user §g.1 decision):** incident forensic record with enduring provenance — archive rule is "numbered action items all closed"; records with zero forward items stay in docs/status/.
+
 **Date:** 2026-08-18 ~08:15
 **Trigger:** User questions — (1) why did we shut down/crash? (2) why does logging into niri give a black screen and the monitor powers off?
 
@@ -38,13 +40,13 @@ Corroborating bugs found on the way:
 
 ## 2. Fixes (all in this session, staged)
 
-| # | File | Change | Layer |
-|---|------|--------|-------|
-| 1 | `platforms/common/programs/activitywatch.nix` | Removed `Wants=graphical-session.target` from the aw-watcher unit (comment now forbids re-adding it, with incident reference); gate wrapper default timeout 60 s → **0 = wait indefinitely** (a lingering boot has no socket until the user logs in — hours later; failing would trip StartLimitBurst and kill the watcher for the whole session) | Removes the boot pull-in edge — the root cause |
-| 2 | `modules/nixos/desktop/niri-config.nix` (niri.service mkUnit) | Added **`ConditionEnvironment=XDG_SESSION_ID`** — the manager env only carries it after a real SDDM login ran `import-environment` (NixOS's session wrapper imports it), so a lingering/SSH context can never start the compositor | Defense-in-depth against any future pull-in regression |
-| 3 | `modules/nixos/desktop/niri-config.nix` (niri.service mkUnit) | `Restart=always` → **`Restart=on-failure`** — a clean niri exit IS logout; `always` respawned a headless niri after logout, which would block the NEXT login the same way. Crashes (signals/nonzero) still auto-restart | Closes the logout→respawn variant of the same bug |
-| 4 | `scripts/niri-drm-healthcheck.sh` | Added the same login-screen guard as `display-watchdog.sh` (loginctl Class=user + Type=wayland/x11, no awk needed): never restart niri when no user graphical session exists — a restarted headless niri is just as headless. Fixed the `wc -l || echo 0` pipefail multi-line bug (`|| true` + digit-normalize) | Stops the 2-minute churn amplifier |
-| 5 | `modules/nixos/desktop/niri-config.nix` (displayWatchdog) | Added `gawk` to `runtimeInputs` — the login-screen guard's `awk` was missing, making the watchdog permanently believe it was at a login screen | Repairs a silently-broken guard |
+| # | File                                                          | Change                                                                                                                                                                                                                                                                                                                                            | Layer                                                  |
+| - | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| 1 | `platforms/common/programs/activitywatch.nix`                 | Removed `Wants=graphical-session.target` from the aw-watcher unit (comment now forbids re-adding it, with incident reference); gate wrapper default timeout 60 s → **0 = wait indefinitely** (a lingering boot has no socket until the user logs in — hours later; failing would trip StartLimitBurst and kill the watcher for the whole session) | Removes the boot pull-in edge — the root cause         |
+| 2 | `modules/nixos/desktop/niri-config.nix` (niri.service mkUnit) | Added **`ConditionEnvironment=XDG_SESSION_ID`** — the manager env only carries it after a real SDDM login ran `import-environment` (NixOS's session wrapper imports it), so a lingering/SSH context can never start the compositor                                                                                                                | Defense-in-depth against any future pull-in regression |
+| 3 | `modules/nixos/desktop/niri-config.nix` (niri.service mkUnit) | `Restart=always` → **`Restart=on-failure`** — a clean niri exit IS logout; `always` respawned a headless niri after logout, which would block the NEXT login the same way. Crashes (signals/nonzero) still auto-restart                                                                                                                           | Closes the logout→respawn variant of the same bug      |
+| 4 | `scripts/niri-drm-healthcheck.sh`                             | Added the same login-screen guard as `display-watchdog.sh` (loginctl Class=user + Type=wayland/x11, no awk needed): never restart niri when no user graphical session exists — a restarted headless niri is just as headless. Fixed the `wc -l                                                                                                    |                                                        |
+| 5 | `modules/nixos/desktop/niri-config.nix` (displayWatchdog)     | Added `gawk` to `runtimeInputs` — the login-screen guard's `awk` was missing, making the watchdog permanently believe it was at a login screen                                                                                                                                                                                                    | Repairs a silently-broken guard                        |
 
 Also: `AGENTS.md` gotcha entry added under "Desktop".
 
@@ -65,14 +67,14 @@ Also: `AGENTS.md` gotcha entry added under "Desktop".
 
 ## 4. NOT done / handover
 
-1. **Deploy** — user command (`nix run .#deploy`). Post-deploy checklist:
+~~1. **Deploy** — user command (`nix run .#deploy`). Post-deploy checklist:~~ done — deployed 2026-08-18 15:00 session; desktop recovered, no zombie recurrence since
    - reboot, then BEFORE logging in: `pgrep -x niri` → empty (no zombie at login screen);
    - login at SDDM → desktop appears within seconds; `journalctl --user -u niri -b --since -2min` shows outputs enabled, no `DeviceMissing` spam;
    - `loginctl show-session <id> -p Type` → wayland; `niri msg outputs` lists DP-1;
    - no `niri-drm-healthcheck` restart lines every 2 min;
    - aw-watcher attaches after login (gate execs once a wayland socket exists).
-2. **Live cleanup of the current zombie** — needs systemctl (blocked in this session); the deploy + reboot supersedes it.
-3. Follow-ups (not blocking): `niri-drm-healthcheck.timer` also arms for the SDDM greeter's user manager (global NixOS user unit) — harmless post-guard, but scoping it to graphical users would remove noise; consider a VM test simulating linger+SDDM login to lock this class in CI; `niri-flake-polkit` QML dialog crash ("module gtk2 is not installed") is cosmetic but crash-loops (restart counter 40) and deserves its own fix.
+~~2. **Live cleanup of the current zombie** — needs systemctl (blocked in this session); the deploy + reboot supersedes it.~~ done — superseded by the reboot; zombie gone
+~~3. Follow-ups (not blocking): `niri-drm-healthcheck.timer` also arms for the SDDM greeter's user manager (global NixOS user unit) — harmless post-guard, but scoping it to graphical users would remove noise; consider a VM test simulating linger+SDDM login to lock this class in CI; `niri-flake-polkit` QML dialog crash ("module gtk2 is not installed") is cosmetic but crash-loops (restart counter 40) and deserves its own fix.~~ mostly done — polkit gtk2→adwaita/fusion fixed same day (15:00 session); eval guard shipped as `session-boot-audit.nix`; the linger+SDDM VM test remains open in TODO_LIST
 4. Linger for `lars` is user-set (not in the repo) and intentionally left alone — the fix makes lingering safe.
 
 ## 5. Reflection

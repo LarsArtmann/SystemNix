@@ -6,6 +6,7 @@ _: {
       config,
       lib,
       pkgs,
+      options,
       ...
     }:
     let
@@ -78,21 +79,21 @@ _: {
           api_get() {
             local path="$1"
             local resp
-            resp=$(curl -s --max-time 10 --retry 3 --retry-delay 2 --retry-all-errors -H "X-API-Key: $API_KEY" "$API_URL$path" 2>&1) || true
+            resp=$(curl -s --compressed --max-time 10 --retry 3 --retry-delay 2 --retry-all-errors -H "X-API-Key: $API_KEY" "$API_URL$path" 2>&1) || true
             echo "$resp"
           }
 
           api_put() {
             local path="$1"
             local body="$2"
-            curl -s --max-time 30 --retry 3 --retry-delay 2 -w '\n%{http_code}' -X PUT -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" \
+            curl -s --compressed --max-time 30 --retry 3 --retry-delay 2 -w '\n%{http_code}' -X PUT -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" \
               -d "$body" "$API_URL$path" 2>&1 || true
           }
 
           api_post() {
             local path="$1"
             local body="$2"
-            curl -s --max-time 30 --retry 3 --retry-delay 2 -w '\n%{http_code}' -X POST -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" \
+            curl -s --compressed --max-time 30 --retry 3 --retry-delay 2 -w '\n%{http_code}' -X POST -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" \
               -d "$body" "$API_URL$path" 2>&1 || true
           }
 
@@ -269,7 +270,12 @@ _: {
               # Upload logo if configured
               upload_logo "$CLIENT_ID" "${logoPath}"
 
-              # Generate client secret (POST /secret rotates — only when file missing)
+              # Generate client secret — only when the file is missing.
+              # Pocket ID's multi-secret API (current): POST /secrets (PLURAL)
+              # with an OPTIONAL body, 201 returns {secret: ...} exactly once.
+              # The old singular /secret route 404s — every NEW client created
+              # after the pocket-id bump silently got no secret (live 2026-09-02:
+              # Paperless provisioned, secret generation failed every run).
               SECRET_FILE="$CLIENT_SECRETS_DIR/${client.clientId}"
               ${lib.optionalString (builtins.elem client.clientId cfg.provision.regenerateSecretsFor) ''
                 # Force regeneration: delete stale file so the skip-if-exists
@@ -283,9 +289,9 @@ _: {
                 echo "  Secret file already exists."
               else
                 echo "  Generating client secret..."
-                SECRET_RESPONSE=$(curl -s --max-time 30 -X POST \
+                SECRET_RESPONSE=$(curl -s --compressed --max-time 30 -X POST \
                   -H "X-API-Key: $API_KEY" \
-                  "$API_URL/api/oidc/clients/$CLIENT_ID/secret" 2>&1 || true)
+                  "$API_URL/api/oidc/clients/$CLIENT_ID/secrets" 2>&1 || true)
                 CLIENT_SECRET=$(echo "$SECRET_RESPONSE" | jq -r '.secret // empty' 2>/dev/null || true)
 
                 if [ -n "$CLIENT_SECRET" ]; then
@@ -304,6 +310,12 @@ _: {
           echo "=== Pocket ID Provisioning Complete ==="
         '';
       };
+
+      paperlessOidcClientOk =
+        client:
+        client.clientId == "paperless"
+        && client.pkceEnabled
+        && builtins.elem "https://paperless.${domain}/accounts/oidc/pocket-id/login/callback/" client.callbackURLs;
     in
     {
       options.services.pocket-id-config = {
@@ -466,6 +478,30 @@ _: {
                 launchURL = "https://history.${domain}";
                 callbackURLs = [ "https://history.${domain}/auth/oauth/pocket-id/callback" ];
               }
+              {
+                # Native OIDC in dnsblockd itself (cqrs-htmx/usermgmt/oauth2
+                # provider, authorization-code + PKCE S256). Binds dashboard
+                # audit entries to the signed-in identity.
+                name = "dnsblockd";
+                clientId = "dnsblockd";
+                launchURL = "https://dnsblock.${domain}";
+                callbackURLs = [ "https://dnsblock.${domain}/auth/oidc/callback" ];
+                pkceEnabled = true;
+              }
+              {
+                # Native OIDC in paperless-ngx via django-allauth
+                # (allauth.socialaccount.providers.openid_connect). Callback
+                # path is fixed by allauth's URL routing:
+                # /accounts/oidc/<provider_id>/login/callback/
+                # allauth sends PKCE (OAUTH_PKCE_ENABLED in the provider JSON).
+                name = "Paperless";
+                clientId = "paperless";
+                launchURL = "https://paperless.${domain}";
+                callbackURLs = [
+                  "https://paperless.${domain}/accounts/oidc/pocket-id/login/callback/"
+                ];
+                pkceEnabled = true;
+              }
             ];
             description = "OIDC clients to create declaratively";
           };
@@ -495,6 +531,40 @@ _: {
           {
             assertion = !cfg.provision.enable || (config.sops.secrets ? pocket_id_static_api_key);
             message = "pocket-id: provision.enable requires pocket_id_static_api_key to be defined in sops secrets.\n  Generate one with: openssl rand -base64 32\n  Then add it to platforms/nixos/secrets/pocket-id.yaml";
+          }
+          {
+            # Paperless is SSO-ONLY since 2026-09-02 (user decision: no
+            # password logins): if this client registration drifts (wrong
+            # callback, PKCE off, clientId renamed), every paperless login
+            # breaks with NO fallback path. allauth's callback route is FIXED
+            # at /accounts/oidc/<provider_id>/login/callback/ and both sides
+            # run PKCE S256 (OAUTH_PKCE_ENABLED in the provider JSON written
+            # by paperless-oidc-setup). Silent drift here is a full-auth
+            # outage, so it must be an eval-time failure, not a runtime one.
+            # Negative test (PROVEN 2026-09-03 — the extendModules eval recipe
+            # below is DEPRECATED: it forces all assertion messages and hits
+            # the sops-template owner=null coercion crash; use the
+            # mutated-tree recipe instead):
+            #   1. git archive HEAD | tar -x -C /tmp/t10; cd /tmp/t10
+            #   2. Copy + `git add -f` the force-tracked gap (plain add -A
+            #      skips ignore rules and eval dies on missing flake-source
+            #      paths): diff the `git ls-files` sets vs the real repo —
+            #      platforms/nixos/secrets/*, assets/avatar.png, .envrc,
+            #      docs/reports/* — then commit.
+            #   3. Mutate ONLY the client registration callback (line with
+            #      `https://paperless.\${domain}/accounts/oidc/pocket-id/login/callback/`
+            #      inside oidcClients' paperless default) — NOT the
+            #      assertion's expected constant (same literal; a blanket sed
+            #      mutates both and the test self-neutralizes, proven the
+            #      hard way).
+            #   4. nix flake check --no-build → "Failed assertions:" naming
+            #      this message. Verified firing 2026-09-03.
+            assertion =
+              !cfg.provision.enable
+              || !options ? services.paperless
+              || !config.services.paperless.enable
+              || builtins.any paperlessOidcClientOk cfg.provision.oidcClients;
+            message = ''pocket-id: paperless is SSO-only but the paperless OIDC client registration is missing or malformed (expected clientId "paperless", pkceEnabled = true, exact callback "https://paperless.${domain}/accounts/oidc/pocket-id/login/callback/") — every paperless login would break with no fallback. Fix services.pocket-id-config.provision.oidcClients.'';
           }
         ];
 

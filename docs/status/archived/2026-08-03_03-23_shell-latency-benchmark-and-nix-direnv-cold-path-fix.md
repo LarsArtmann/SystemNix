@@ -5,19 +5,18 @@
 
 ---
 
-
 ## What Was Done
 
 ### 1. Shell Startup Benchmarks (FULLY DONE)
 
 Measured fish vs bash startup latency using `date +%s%N` wall-clock timing (no `hyperfine` available):
 
-| Shell & mode                          | min    | avg    | max    |
-| ------------------------------------- | ------ | ------ | ------ |
-| `fish -c exit` (non-interactive)      | 35.9ms | 40.5ms | 58.0ms |
-| `fish -i -c exit` (interactive)       | 62.1ms | 67.3ms | 73.6ms |
-| `bash -c exit` (non-interactive)      | 1.8ms  | 2.3ms  | 3.4ms  |
-| `bash -i -c exit` (interactive)       | 16.5ms | 21.4ms | 29.3ms |
+| Shell & mode                     | min    | avg    | max    |
+| -------------------------------- | ------ | ------ | ------ |
+| `fish -c exit` (non-interactive) | 35.9ms | 40.5ms | 58.0ms |
+| `fish -i -c exit` (interactive)  | 62.1ms | 67.3ms | 73.6ms |
+| `bash -c exit` (non-interactive) | 1.8ms  | 2.3ms  | 3.4ms  |
+| `bash -i -c exit` (interactive)  | 16.5ms | 21.4ms | 29.3ms |
 
 **Fish is ~3x slower than bash** for interactive startup.
 
@@ -25,13 +24,13 @@ Measured fish vs bash startup latency using `date +%s%N` wall-clock timing (no `
 
 Used fish 4.8.1's built-in `--profile` to identify where the ~28ms of config load time goes:
 
-| ms     | What |
-|--------|------|
-| 6.8    | `carapace _carapace fish \| source` — completion generator |
-| 2.8    | `fzf --fish \| source` — key bindings |
-| 2.5    | `starship init fish \| source` — prompt |
-| 1.8    | `direnv hook fish \| source` |
-| ~4.5   | `psub` temp-file machinery (mktemp/rm/cat) from `starship init ... \| psub` |
+| ms   | What                                                                        |
+| ---- | --------------------------------------------------------------------------- |
+| 6.8  | `carapace _carapace fish \| source` — completion generator                  |
+| 2.8  | `fzf --fish \| source` — key bindings                                       |
+| 2.5  | `starship init fish \| source` — prompt                                     |
+| 1.8  | `direnv hook fish \| source`                                                |
+| ~4.5 | `psub` temp-file machinery (mktemp/rm/cat) from `starship init ... \| psub` |
 
 **Total profiled config load: ~28.6ms.** The remaining ~40ms is fish's own binary startup.
 
@@ -43,20 +42,20 @@ The user reported the shell "feels a lot slower than that" — which led to disc
 
 Measured the three-step breakdown:
 
-| Step | Time | What happens |
-|------|------|-------------|
-| `nix print-dev-env` | 3.0s | Evaluates the entire SystemNix flake (59 inputs, 257 transitive nodes, hundreds of modules) |
-| `nix flake archive --json` | 0.3s | Enumerates all flake inputs (258 store paths) |
-| **258 x `nix build --out-link`** | **6.4s** | nix-direnv spawns a **separate nix process per flake input** to create GC root symlinks |
+| Step                             | Time     | What happens                                                                                |
+| -------------------------------- | -------- | ------------------------------------------------------------------------------------------- |
+| `nix print-dev-env`              | 3.0s     | Evaluates the entire SystemNix flake (59 inputs, 257 transitive nodes, hundreds of modules) |
+| `nix flake archive --json`       | 0.3s     | Enumerates all flake inputs (258 store paths)                                               |
+| **258 x `nix build --out-link`** | **6.4s** | nix-direnv spawns a **separate nix process per flake input** to create GC root symlinks     |
 
 **Total cold path: ~9.7s** (observed 7-21s depending on cache state and system load).
 
 **Root cause classification:**
 
-| Cost | Whose fault | Why |
-|------|-------------|-----|
-| 258 process spawns (6.4s) | **nix-direnv** | It GC-roots each input with a *separate process* instead of batching. Pure inefficiency. |
-| nix eval (3.0s) | **Split** | Nix evaluator is single-threaded, but SystemNix's 59 inputs + hundreds of modules makes it 5-10x heavier than typical |
+| Cost                      | Whose fault    | Why                                                                                                                   |
+| ------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------- |
+| 258 process spawns (6.4s) | **nix-direnv** | It GC-roots each input with a _separate process_ instead of batching. Pure inefficiency.                              |
+| nix eval (3.0s)           | **Split**      | Nix evaluator is single-threaded, but SystemNix's 59 inputs + hundreds of modules makes it 5-10x heavier than typical |
 
 ### 4. nix-direnv GC Root Override (FULLY DONE)
 
@@ -78,11 +77,11 @@ _nix_add_gcroot() {
 
 **Results:**
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| Cold path (after flake.lock change) | **14.8s** | **2.9s** | **5.1x faster** |
-| Warm path (cache hit) | ~48ms | **45ms** | Unchanged (already fast) |
-| Per-command overhead (warm direnv x2 + starship) | ~102ms | ~102ms | Unchanged (not addressed this session) |
+| Metric                                           | Before    | After    | Improvement                            |
+| ------------------------------------------------ | --------- | -------- | -------------------------------------- |
+| Cold path (after flake.lock change)              | **14.8s** | **2.9s** | **5.1x faster**                        |
+| Warm path (cache hit)                            | ~48ms     | **45ms** | Unchanged (already fast)               |
+| Per-command overhead (warm direnv x2 + starship) | ~102ms    | ~102ms   | Unchanged (not addressed this session) |
 
 **Safety:** The devShell profile closure (134 store paths) already protects all transitive dependencies from GC. The per-input symlinks are defense-in-depth. Worst case after `nix-gc`: `nix flake archive` re-fetches a few source paths (seconds) on next reload.
 

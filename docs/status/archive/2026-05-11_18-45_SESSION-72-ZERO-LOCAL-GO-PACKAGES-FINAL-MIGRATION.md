@@ -217,8 +217,8 @@ Of these 5, only netwatch is a LarsArtmann project that could provide its own ov
 
 | Metric                     | Value                   | Status                                  |
 | -------------------------- | ----------------------- | --------------------------------------- |
-| Root disk (`/`)            | 80% used (101 GB free)  | ⚠️ Clean needed                         |
-| Data disk (`/data`)        | 80% used (206 GB free)  | ⚠️ Watch                                |
+| Root disk (`/`)            | 80% used (101 GB free)  | ⚠️ Clean needed                          |
+| Data disk (`/data`)        | 80% used (206 GB free)  | ⚠️ Watch                                 |
 | Go/Rust projects wired     | 14/14                   | ✅ All via upstream overlays            |
 | Go local packages in pkgs/ | 0                       | ✅ Zero                                 |
 | SystemNix `test-fast`      | Passes (both platforms) | ✅                                      |

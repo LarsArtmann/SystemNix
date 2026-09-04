@@ -605,7 +605,9 @@ _: {
             serviceConfig = lib.mkMerge [
               {
                 ExecStartPre = searxDnsGate.serviceConfig.ExecStartPre;
-                TimeoutStartSec = "3min";
+                # DNS gate budget is 180s (mkDnsGate default since 2026-08-31);
+                # the ceiling must exceed it (gate-timeout-audit floor: 4min).
+                TimeoutStartSec = "4min";
               }
               (harden { MemoryMax = "512M"; })
               (serviceDefaults { })

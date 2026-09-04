@@ -8,7 +8,6 @@
 
 ---
 
-
 ## Executive Summary
 
 Three service fixes and one exposure. **DiscordSync dashboard** is now wired behind Caddy `protectedVHost` (Layer-2 SSO via Pocket ID + oauth2-proxy). **Crush Daily** had a silent failure: `ProtectHome=true` made the Crush database invisible — the nightly collector ran for weeks finding nothing. **Monitor365** `/ui/` 404'd because the server package default pointed at `pkgs.monitor365` (the agent CLI) instead of `pkgs.monitor365-server` (the symlinkJoin with bundled WASM UI). **Overview** identified as the only remaining unexposed web UI — ready to wire.
@@ -154,33 +153,33 @@ All fixes from this session and the prior three sessions are **theoretical** unt
 
 ## f) Top 25 Things to Get Done Next
 
-| #   | Task                                                                                       | Impact   | Effort       | Dependency                     |
-| --- | ------------------------------------------------------------------------------------------ | -------- | ------------ | ------------------------------ |
-| 1   | **Deploy ~17 undeployed commits** (`nix run .#deploy`) + reboot                            | Critical | 1 command    | Physical attendance for reboot |
-| 2   | **Verify crush-daily collection** post-deploy (`systemctl start crush-daily-collect`)      | High     | Low          | Deploy first                   |
-| 3   | **Verify monitor365 `/ui/`** post-deploy (visit `monitor.home.lan`)                        | High     | Low          | Deploy first                   |
-| 4   | **Verify DiscordSync dashboard** post-deploy (`discordsync.home.lan` → Pocket ID SSO)      | High     | Low          | Deploy first                   |
-| 5   | **Expose Overview** (`protectedVHost "overview" ports.overview` + DNS + Homepage)          | Medium   | Low          | —                              |
-| 6   | **Off-site backup** (Hetzner StorageBox + BorgBackup / Restic)                             | Critical | Medium       | Evaluated, needs execution     |
-| 7   | **Audit all `harden {}` services** for ProtectHome data-access bugs                        | High     | Low          | `grep -r ProtectHome modules/` |
-| 8   | **Gatus maintenance windows** (suppress deploy-time alerts)                                | High     | Low          | —                              |
-| 9   | **Firewall deny-by-default** with explicit service allowlist                               | High     | Medium       | —                              |
-| 10  | **BTRFS `/data` → `@data` subvolume** migration                                            | High     | ~1h downtime | USB rescue boot                |
-| 11  | **DNS migration Phase 2a** (dnsblockd module rework for `:53` primary)                     | High     | ~6h          | dnsblockd v0.2.0 pinned        |
-| 12  | **PostgreSQL textfile exporter** (`pg_isready` + conn count)                               | Medium   | Medium       | —                              |
-| 13  | **Caddy access logs → SigNoz** (filelog receiver)                                          | Medium   | Medium       | —                              |
-| 14  | **Caddy admin API hardening** (`admin off` + `:2019 { metrics }`)                          | High     | Medium       | Test `nh os switch` reload     |
-| 15  | **Bind Immich to localhost** (remove `openFirewall`)                                       | Medium   | Low          | Caddy already proxies          |
-| 16  | **Caddy request body size limits** on upload vhosts                                        | Medium   | Low          | —                              |
-| 17  | **Caddy upstream health checks** (`health_uri` on reverse_proxy)                           | High     | Medium       | Per-backend health endpoints   |
-| 18  | **Gatus → Homepage integration** (real-time status dots)                                   | Low      | Low          | —                              |
-| 19  | **DNS migration Phase 2b-2c** (config + dependency updates)                                | High     | ~4h          | Phase 2a done                  |
-| 20  | **DNS migration Phase 3** (deploy + 24h observation)                                       | High     | 24h observe  | 2b-2c done                     |
-| 21  | **Hermes: install SSH deploy key + set fallback model** (manual steps)                     | Medium   | Low          | Blocked on human               |
-| 22  | **Split large modules** (monitor365 830L, signoz 705L, forgejo 583L)                       | Low      | Medium       | —                              |
-| 23  | **Disabled service triage** — remove photomap (decided), decide voice-agents               | Low      | Low          | —                              |
-| 24  | **Upstream nixpkgs PRs** (aw-watcher-utilization, taskwarrior3 flags, KeePassXC manifests) | Low      | Medium       | Community benefit              |
-| 25  | **Monitoring runbook** (what to do when each Discord alert fires)                          | Medium   | Medium       | —                              |
+| #  | Task                                                                                       | Impact   | Effort       | Dependency                     |
+| -- | ------------------------------------------------------------------------------------------ | -------- | ------------ | ------------------------------ |
+| 1  | **Deploy ~17 undeployed commits** (`nix run .#deploy`) + reboot                            | Critical | 1 command    | Physical attendance for reboot |
+| 2  | **Verify crush-daily collection** post-deploy (`systemctl start crush-daily-collect`)      | High     | Low          | Deploy first                   |
+| 3  | **Verify monitor365 `/ui/`** post-deploy (visit `monitor.home.lan`)                        | High     | Low          | Deploy first                   |
+| 4  | **Verify DiscordSync dashboard** post-deploy (`discordsync.home.lan` → Pocket ID SSO)      | High     | Low          | Deploy first                   |
+| 5  | **Expose Overview** (`protectedVHost "overview" ports.overview` + DNS + Homepage)          | Medium   | Low          | —                              |
+| 6  | **Off-site backup** (Hetzner StorageBox + BorgBackup / Restic)                             | Critical | Medium       | Evaluated, needs execution     |
+| 7  | **Audit all `harden {}` services** for ProtectHome data-access bugs                        | High     | Low          | `grep -r ProtectHome modules/` |
+| 8  | **Gatus maintenance windows** (suppress deploy-time alerts)                                | High     | Low          | —                              |
+| 9  | **Firewall deny-by-default** with explicit service allowlist                               | High     | Medium       | —                              |
+| 10 | **BTRFS `/data` → `@data` subvolume** migration                                            | High     | ~1h downtime | USB rescue boot                |
+| 11 | **DNS migration Phase 2a** (dnsblockd module rework for `:53` primary)                     | High     | ~6h          | dnsblockd v0.2.0 pinned        |
+| 12 | **PostgreSQL textfile exporter** (`pg_isready` + conn count)                               | Medium   | Medium       | —                              |
+| 13 | **Caddy access logs → SigNoz** (filelog receiver)                                          | Medium   | Medium       | —                              |
+| 14 | **Caddy admin API hardening** (`admin off` + `:2019 { metrics }`)                          | High     | Medium       | Test `nh os switch` reload     |
+| 15 | **Bind Immich to localhost** (remove `openFirewall`)                                       | Medium   | Low          | Caddy already proxies          |
+| 16 | **Caddy request body size limits** on upload vhosts                                        | Medium   | Low          | —                              |
+| 17 | **Caddy upstream health checks** (`health_uri` on reverse_proxy)                           | High     | Medium       | Per-backend health endpoints   |
+| 18 | **Gatus → Homepage integration** (real-time status dots)                                   | Low      | Low          | —                              |
+| 19 | **DNS migration Phase 2b-2c** (config + dependency updates)                                | High     | ~4h          | Phase 2a done                  |
+| 20 | **DNS migration Phase 3** (deploy + 24h observation)                                       | High     | 24h observe  | 2b-2c done                     |
+| 21 | **Hermes: install SSH deploy key + set fallback model** (manual steps)                     | Medium   | Low          | Blocked on human               |
+| 22 | **Split large modules** (monitor365 830L, signoz 705L, forgejo 583L)                       | Low      | Medium       | —                              |
+| 23 | **Disabled service triage** — remove photomap (decided), decide voice-agents               | Low      | Low          | —                              |
+| 24 | **Upstream nixpkgs PRs** (aw-watcher-utilization, taskwarrior3 flags, KeePassXC manifests) | Low      | Medium       | Community benefit              |
+| 25 | **Monitoring runbook** (what to do when each Discord alert fires)                          | Medium   | Medium       | —                              |
 
 ---
 

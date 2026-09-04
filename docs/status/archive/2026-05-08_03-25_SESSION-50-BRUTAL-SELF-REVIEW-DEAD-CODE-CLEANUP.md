@@ -14,18 +14,18 @@ Comprehensive self-review of the entire SystemNix codebase (106 `.nix` files, 78
 
 ## a) FULLY DONE ✅
 
-| #   | Change                                                          | Files                                               | Impact                                                                                                                                 |
-| --- | --------------------------------------------------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Deleted dead Go CI workflow**                                 | `.github/workflows/go-test.yml`                     | Referenced `pkgs/dnsblockd-processor/` which no longer exists — workflow would never trigger and would fail if it did                  |
-| 2   | **Deleted vestigial `go.mod`**                                  | `go.mod`                                            | 2-line file with zero `require` directives; Go code extracted to external `dnsblockd` repo months ago                                  |
-| 3   | **Deleted duplicate blocklist-hash-updater**                    | `platforms/nixos/scripts/blocklist-hash-updater`    | Duplicates `scripts/dns-update.sh` (the canonical one called from justfile); was never referenced                                      |
-| 4   | **Fixed AGENTS.md stale references**                            | `AGENTS.md`                                         | Removed `dnsblockd-processor/` from architecture diagram; fixed `go-update-tools-manual` (recipe doesn't exist) → plain `go install`   |
-| 5   | **Removed dnsblockd-processor from pkgs/README.md**             | `pkgs/README.md`                                    | Package extracted to external `dnsblockd` repo; documentation was stale                                                                |
-| 6   | **Removed dnsblockd-processor from FEATURES.md**                | `FEATURES.md`                                       | Updated blocklist processing description; removed dead CI entry and package row                                                        |
-| 7   | **Fixed dangerous `rm -rf` in diagnostic script**               | `scripts/nixos-diagnostic.sh`                       | `sudo rm -rf /nix/var/nix/db` destroys the entire Nix database → replaced with safe `nix-collect-garbage -d`                           |
-| 8   | **Adopted `serviceDefaultsUser` in monitor365.nix**             | `modules/nixos/services/monitor365.nix`             | `serviceDefaultsUser` was exported from `lib/systemd/service-defaults.nix` but **never used anywhere** — now adopted                   |
-| 9   | **Adopted `serviceDefaultsUser` in file-and-image-renamer.nix** | `modules/nixos/services/file-and-image-renamer.nix` | Same — inline `Restart`/`RestartSec` replaced with shared library call                                                                 |
-| 10  | **Added `services.default-services.enable` option**             | `modules/nixos/services/default.nix`                | Docker + Nix GC were unconditionally enabled on import; now guarded by explicit enable option (defaults to `true` for backward compat) |
+| #  | Change                                                          | Files                                               | Impact                                                                                                                                 |
+| -- | --------------------------------------------------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | **Deleted dead Go CI workflow**                                 | `.github/workflows/go-test.yml`                     | Referenced `pkgs/dnsblockd-processor/` which no longer exists — workflow would never trigger and would fail if it did                  |
+| 2  | **Deleted vestigial `go.mod`**                                  | `go.mod`                                            | 2-line file with zero `require` directives; Go code extracted to external `dnsblockd` repo months ago                                  |
+| 3  | **Deleted duplicate blocklist-hash-updater**                    | `platforms/nixos/scripts/blocklist-hash-updater`    | Duplicates `scripts/dns-update.sh` (the canonical one called from justfile); was never referenced                                      |
+| 4  | **Fixed AGENTS.md stale references**                            | `AGENTS.md`                                         | Removed `dnsblockd-processor/` from architecture diagram; fixed `go-update-tools-manual` (recipe doesn't exist) → plain `go install`   |
+| 5  | **Removed dnsblockd-processor from pkgs/README.md**             | `pkgs/README.md`                                    | Package extracted to external `dnsblockd` repo; documentation was stale                                                                |
+| 6  | **Removed dnsblockd-processor from FEATURES.md**                | `FEATURES.md`                                       | Updated blocklist processing description; removed dead CI entry and package row                                                        |
+| 7  | **Fixed dangerous `rm -rf` in diagnostic script**               | `scripts/nixos-diagnostic.sh`                       | `sudo rm -rf /nix/var/nix/db` destroys the entire Nix database → replaced with safe `nix-collect-garbage -d`                           |
+| 8  | **Adopted `serviceDefaultsUser` in monitor365.nix**             | `modules/nixos/services/monitor365.nix`             | `serviceDefaultsUser` was exported from `lib/systemd/service-defaults.nix` but **never used anywhere** — now adopted                   |
+| 9  | **Adopted `serviceDefaultsUser` in file-and-image-renamer.nix** | `modules/nixos/services/file-and-image-renamer.nix` | Same — inline `Restart`/`RestartSec` replaced with shared library call                                                                 |
+| 10 | **Added `services.default-services.enable` option**             | `modules/nixos/services/default.nix`                | Docker + Nix GC were unconditionally enabled on import; now guarded by explicit enable option (defaults to `true` for backward compat) |
 
 ---
 
@@ -40,18 +40,18 @@ Comprehensive self-review of the entire SystemNix codebase (106 `.nix` files, 78
 
 ## c) NOT STARTED ❌
 
-| #   | Item                                                                                                                                  | Effort | Impact | Priority |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | -------- |
-| 1   | **Unsloth Studio missing `harden{}`** — `ai-stack.nix` line 250                                                                       | 5 min  | High   | P1       |
-| 2   | **`gpu-recovery` service missing `harden{}` + `serviceDefaults{}`** — `niri-config.nix` line 87                                       | 5 min  | High   | P1       |
-| 3   | **Signoz port options should use `serviceTypes.servicePort`** — lines 105-155 use inline `lib.mkOption` instead of shared `types.nix` | 15 min | Medium | P2       |
-| 4   | **Signoz scrape targets hardcoded** — 6 Prometheus scrape targets use raw `127.0.0.1:PORT` instead of `config.services.*` options     | 30 min | High   | P2       |
-| 5   | **Homepage dashboard hardcoded ports** — 7 `localhost:PORT` URLs should reference service module options                              | 30 min | Medium | P2       |
-| 6   | **Gatus endpoints hardcoded ports** — 7 `http://localhost:PORT` URLs should reference service module options                          | 30 min | Medium | P2       |
-| 7   | **Shell config dedup** — Extract common carapace/starship/nixAliases to `platforms/common/programs/`                                  | 1 hr   | Medium | P3       |
-| 8   | **NixOS VM tests** — No `nixosTests` in flake; only static analysis (statix, deadnix, alejandra)                                      | 2 hr   | High   | P2       |
-| 9   | **Darwin CI** — CI runs on `ubuntu-latest`; Darwin config is never built/checked                                                      | 1 hr   | Medium | P3       |
-| 10  | **Outdated test scripts** — `scripts/test-home-manager.sh` and `scripts/test-shell-aliases.sh` are not in CI or justfile              | 30 min | Low    | P4       |
+| #  | Item                                                                                                                                  | Effort | Impact | Priority |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | -------- |
+| 1  | **Unsloth Studio missing `harden{}`** — `ai-stack.nix` line 250                                                                       | 5 min  | High   | P1       |
+| 2  | **`gpu-recovery` service missing `harden{}` + `serviceDefaults{}`** — `niri-config.nix` line 87                                       | 5 min  | High   | P1       |
+| 3  | **Signoz port options should use `serviceTypes.servicePort`** — lines 105-155 use inline `lib.mkOption` instead of shared `types.nix` | 15 min | Medium | P2       |
+| 4  | **Signoz scrape targets hardcoded** — 6 Prometheus scrape targets use raw `127.0.0.1:PORT` instead of `config.services.*` options     | 30 min | High   | P2       |
+| 5  | **Homepage dashboard hardcoded ports** — 7 `localhost:PORT` URLs should reference service module options                              | 30 min | Medium | P2       |
+| 6  | **Gatus endpoints hardcoded ports** — 7 `http://localhost:PORT` URLs should reference service module options                          | 30 min | Medium | P2       |
+| 7  | **Shell config dedup** — Extract common carapace/starship/nixAliases to `platforms/common/programs/`                                  | 1 hr   | Medium | P3       |
+| 8  | **NixOS VM tests** — No `nixosTests` in flake; only static analysis (statix, deadnix, alejandra)                                      | 2 hr   | High   | P2       |
+| 9  | **Darwin CI** — CI runs on `ubuntu-latest`; Darwin config is never built/checked                                                      | 1 hr   | Medium | P3       |
+| 10 | **Outdated test scripts** — `scripts/test-home-manager.sh` and `scripts/test-shell-aliases.sh` are not in CI or justfile              | 30 min | Low    | P4       |
 
 ---
 
@@ -93,48 +93,48 @@ Nothing broken. All changes are non-breaking:
 
 ### P0 — Immediate (safety / correctness)
 
-| #   | Task                                                                              | Effort | Impact                                           |
-| --- | --------------------------------------------------------------------------------- | ------ | ------------------------------------------------ |
-| 1   | Add `harden{}` to `unsloth-studio` service in ai-stack.nix                        | 5 min  | High — unsandboxed Python running arbitrary code |
-| 2   | Add `harden{}` + `serviceDefaults{}` to `gpu-recovery` service in niri-config.nix | 5 min  | High — system service without sandboxing         |
-| 3   | Validate flake check passes after this session's changes                          | 2 min  | Critical                                         |
+| # | Task                                                                              | Effort | Impact                                           |
+| - | --------------------------------------------------------------------------------- | ------ | ------------------------------------------------ |
+| 1 | Add `harden{}` to `unsloth-studio` service in ai-stack.nix                        | 5 min  | High — unsandboxed Python running arbitrary code |
+| 2 | Add `harden{}` + `serviceDefaults{}` to `gpu-recovery` service in niri-config.nix | 5 min  | High — system service without sandboxing         |
+| 3 | Validate flake check passes after this session's changes                          | 2 min  | Critical                                         |
 
 ### P1 — High Impact, Low Effort
 
-| #   | Task                                                                                                    | Effort | Impact                                   |
-| --- | ------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------- |
-| 4   | Extract signoz port options to use `serviceTypes.servicePort` from types.nix                            | 15 min | Consistency                              |
-| 5   | Replace 6 hardcoded scrape target ports in signoz.nix with config references                            | 30 min | Correctness — won't break on port change |
-| 6   | Replace 7 hardcoded ports in homepage dashboard with config references                                  | 30 min | Same                                     |
-| 7   | Replace 7 hardcoded ports in gatus-config.nix with config references                                    | 30 min | Same                                     |
-| 8   | Add `MemoryMax` to all Docker containers in twenty.nix, manifest.nix, voice-agents.nix                  | 15 min | Prevent OOM                              |
-| 9   | Fix `gitea.nix` `url = "http://localhost:3000"` → use `config.services.gitea.settings.server.HTTP_PORT` | 5 min  | Correctness                              |
+| # | Task                                                                                                    | Effort | Impact                                   |
+| - | ------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------- |
+| 4 | Extract signoz port options to use `serviceTypes.servicePort` from types.nix                            | 15 min | Consistency                              |
+| 5 | Replace 6 hardcoded scrape target ports in signoz.nix with config references                            | 30 min | Correctness — won't break on port change |
+| 6 | Replace 7 hardcoded ports in homepage dashboard with config references                                  | 30 min | Same                                     |
+| 7 | Replace 7 hardcoded ports in gatus-config.nix with config references                                    | 30 min | Same                                     |
+| 8 | Add `MemoryMax` to all Docker containers in twenty.nix, manifest.nix, voice-agents.nix                  | 15 min | Prevent OOM                              |
+| 9 | Fix `gitea.nix` `url = "http://localhost:3000"` → use `config.services.gitea.settings.server.HTTP_PORT` | 5 min  | Correctness                              |
 
 ### P2 — Medium Impact, Medium Effort
 
-| #   | Task                                                                                            | Effort | Impact                |
-| --- | ----------------------------------------------------------------------------------------------- | ------ | --------------------- |
-| 10  | Deduplicate shell config (carapace, starship, nixAliases) between darwin/nixos                  | 1 hr   | DRY                   |
-| 11  | Add basic NixOS VM test for caddy + authelia (can they start? do they respond?)                 | 2 hr   | Reliability           |
-| 12  | Add `harden{}` to user services (monitor365, file-and-image-renamer) — requires adapting for HM | 30 min | Defense in depth      |
-| 13  | Create shared `homeManagerUserService` helper for common Unit/Install boilerplate               | 30 min | DRY                   |
-| 14  | Wire `scripts/health-check.sh` harden audit into CI (`nix-check.yml`)                           | 15 min | Automated enforcement |
-| 15  | Add flake input destructuring consistency — add missing inputs to `outputs` pattern             | 10 min | Style                 |
+| #  | Task                                                                                            | Effort | Impact                |
+| -- | ----------------------------------------------------------------------------------------------- | ------ | --------------------- |
+| 10 | Deduplicate shell config (carapace, starship, nixAliases) between darwin/nixos                  | 1 hr   | DRY                   |
+| 11 | Add basic NixOS VM test for caddy + authelia (can they start? do they respond?)                 | 2 hr   | Reliability           |
+| 12 | Add `harden{}` to user services (monitor365, file-and-image-renamer) — requires adapting for HM | 30 min | Defense in depth      |
+| 13 | Create shared `homeManagerUserService` helper for common Unit/Install boilerplate               | 30 min | DRY                   |
+| 14 | Wire `scripts/health-check.sh` harden audit into CI (`nix-check.yml`)                           | 15 min | Automated enforcement |
+| 15 | Add flake input destructuring consistency — add missing inputs to `outputs` pattern             | 10 min | Style                 |
 
 ### P3 — Nice to Have
 
-| #   | Task                                                                                       | Effort | Impact                     |
-| --- | ------------------------------------------------------------------------------------------ | ------ | -------------------------- |
-| 16  | Add Darwin CI runner (macOS-based GitHub Actions)                                          | 1 hr   | Cross-platform reliability |
-| 17  | Convert `scripts/test-home-manager.sh` and `test-shell-aliases.sh` to justfile recipes     | 30 min | Discoverability            |
-| 18  | Add `services.default-services.dockerPruneDates` option (currently hardcoded `"weekly"`)   | 5 min  | Configurability            |
-| 19  | Add `services.default-services.gcDates` option (currently hardcoded `"weekly"`)            | 5 min  | Configurability            |
-| 20  | Remove outdated `scripts/nixos-diagnostic.sh` — replaced by `just check` and `just health` | 10 min | Cleanup                    |
-| 21  | Add `MemoryMax` to emeet-pixyd user service (currently unlimited)                          | 5 min  | Safety                     |
-| 22  | Extract `photomap.nix` from flake.nix imports if permanently disabled                      | 2 min  | Dead eval reduction        |
-| 23  | Add BTRFS scrub results to SigNoz (currently only monitored by snapshot freshness timer)   | 30 min | Observability              |
-| 24  | Consider `nix-fast-build` for CI to speed up Darwin+NixOS matrix                           | 2 hr   | CI speed                   |
-| 25  | Archive `docs/planning/` files older than 30 days                                          | 10 min | Clean docs                 |
+| #  | Task                                                                                       | Effort | Impact                     |
+| -- | ------------------------------------------------------------------------------------------ | ------ | -------------------------- |
+| 16 | Add Darwin CI runner (macOS-based GitHub Actions)                                          | 1 hr   | Cross-platform reliability |
+| 17 | Convert `scripts/test-home-manager.sh` and `test-shell-aliases.sh` to justfile recipes     | 30 min | Discoverability            |
+| 18 | Add `services.default-services.dockerPruneDates` option (currently hardcoded `"weekly"`)   | 5 min  | Configurability            |
+| 19 | Add `services.default-services.gcDates` option (currently hardcoded `"weekly"`)            | 5 min  | Configurability            |
+| 20 | Remove outdated `scripts/nixos-diagnostic.sh` — replaced by `just check` and `just health` | 10 min | Cleanup                    |
+| 21 | Add `MemoryMax` to emeet-pixyd user service (currently unlimited)                          | 5 min  | Safety                     |
+| 22 | Extract `photomap.nix` from flake.nix imports if permanently disabled                      | 2 min  | Dead eval reduction        |
+| 23 | Add BTRFS scrub results to SigNoz (currently only monitored by snapshot freshness timer)   | 30 min | Observability              |
+| 24 | Consider `nix-fast-build` for CI to speed up Darwin+NixOS matrix                           | 2 hr   | CI speed                   |
+| 25 | Archive `docs/planning/` files older than 30 days                                          | 10 min | Clean docs                 |
 
 ---
 

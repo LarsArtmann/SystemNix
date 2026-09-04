@@ -8,7 +8,6 @@
 
 ---
 
-
 ## Executive Summary
 
 SearXNG (privacy-focused metasearch engine) was integrated into SystemNix following the standard service-add pattern (port → module → Caddy → DNS → Gatus → Homepage → enable → smoke test). All evaluation passes (`nix flake check --no-build`, full system eval). The service is **not yet deployed**.
@@ -17,22 +16,22 @@ SearXNG (privacy-focused metasearch engine) was integrated into SystemNix follow
 
 ## a) FULLY DONE
 
-| # | Task | File(s) | Verified |
-|---|------|---------|----------|
-| 1 | Port `searxng = 8888` registered | `lib/ports.nix` | `nix eval` confirms port in config |
-| 2 | Service module created | `modules/nixos/services/searxng.nix` | `nix flake check` passes, auto-discovered as `nixosModules.searxng` |
-| 3 | Caddy vHost `search.home.lan` | `modules/nixos/services/caddy.nix` | `nix eval` confirms vHost in `virtualHosts` |
-| 4 | DNS subdomain `search` | `platforms/common/dns-local.nix` | Added to `localSubdomains` list |
-| 5 | Gatus health check | `modules/nixos/services/gatus-config.nix` | `/healthz` endpoint, 60s interval, Discord alert |
-| 6 | Homepage service tile | `modules/nixos/services/homepage.nix` | Productivity section, `searxng.png` icon (VERIFIED exists in `enableLocalIcons` pack) |
-| 7 | Homepage bookmark | `modules/nixos/services/homepage.nix` | Search section, "SX" abbreviation |
-| 8 | Homepage search provider | `modules/nixos/services/homepage.nix` | Replaced DuckDuckGo with SearXNG custom provider (`/search?q=`, `/autocompleter?q=`) |
-| 9 | Enabled on evo-x2 | `platforms/nixos/system/configuration.nix` | `services.searx.enable = true` |
-| 10 | Post-deploy smoke test | `scripts/post-deploy-check.sh` | `check_local "SearXNG" "8888" "/healthz" "200"` |
-| 11 | Secret key auto-generation | `modules/nixos/services/searxng.nix` | Oneshot service generates `openssl rand -hex 32`, persists to `/var/lib/searxng/searxng.env` |
-| 12 | Dedicated Redis instance | nixpkgs `redisCreateLocally = true` | Unix socket at `/run/redis-searx/redis.sock`, isolated from Immich's Redis |
-| 13 | `/healthz` endpoint verified | SearXNG source `webapp.py:597` | Confirmed: `@app.route('/healthz')` returns `Response('OK', mimetype='text/plain')` |
-| 14 | Formatting | `nix fmt` (alejandra) | Applied |
+| #  | Task                             | File(s)                                    | Verified                                                                                     |
+| -- | -------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| 1  | Port `searxng = 8888` registered | `lib/ports.nix`                            | `nix eval` confirms port in config                                                           |
+| 2  | Service module created           | `modules/nixos/services/searxng.nix`       | `nix flake check` passes, auto-discovered as `nixosModules.searxng`                          |
+| 3  | Caddy vHost `search.home.lan`    | `modules/nixos/services/caddy.nix`         | `nix eval` confirms vHost in `virtualHosts`                                                  |
+| 4  | DNS subdomain `search`           | `platforms/common/dns-local.nix`           | Added to `localSubdomains` list                                                              |
+| 5  | Gatus health check               | `modules/nixos/services/gatus-config.nix`  | `/healthz` endpoint, 60s interval, Discord alert                                             |
+| 6  | Homepage service tile            | `modules/nixos/services/homepage.nix`      | Productivity section, `searxng.png` icon (VERIFIED exists in `enableLocalIcons` pack)        |
+| 7  | Homepage bookmark                | `modules/nixos/services/homepage.nix`      | Search section, "SX" abbreviation                                                            |
+| 8  | Homepage search provider         | `modules/nixos/services/homepage.nix`      | Replaced DuckDuckGo with SearXNG custom provider (`/search?q=`, `/autocompleter?q=`)         |
+| 9  | Enabled on evo-x2                | `platforms/nixos/system/configuration.nix` | `services.searx.enable = true`                                                               |
+| 10 | Post-deploy smoke test           | `scripts/post-deploy-check.sh`             | `check_local "SearXNG" "8888" "/healthz" "200"`                                              |
+| 11 | Secret key auto-generation       | `modules/nixos/services/searxng.nix`       | Oneshot service generates `openssl rand -hex 32`, persists to `/var/lib/searxng/searxng.env` |
+| 12 | Dedicated Redis instance         | nixpkgs `redisCreateLocally = true`        | Unix socket at `/run/redis-searx/redis.sock`, isolated from Immich's Redis                   |
+| 13 | `/healthz` endpoint verified     | SearXNG source `webapp.py:597`             | Confirmed: `@app.route('/healthz')` returns `Response('OK', mimetype='text/plain')`          |
+| 14 | Formatting                       | `nix fmt` (alejandra)                      | Applied                                                                                      |
 
 ### Configuration details
 
@@ -48,25 +47,25 @@ SearXNG (privacy-focused metasearch engine) was integrated into SystemNix follow
 
 ## b) PARTIALLY DONE
 
-| # | Item | Status | Gap |
-|---|------|--------|-----|
-| 1 | statix lint clean | WARNING | `systemd.services` key repeated 3 times (secret-key, searx, searx-init blocks). statix suggests consolidating into one `systemd = { ... }` block. Cosmetic, not a correctness issue. |
-| 2 | AGENTS.md documentation | NOT STARTED | No SearXNG section added to the gotcha table or service procedures. Every other service has detailed documentation. |
-| 3 | Favicons settings | NOT CONFIGURED | SearXNG has a `faviconsSettings` option (favicon caching DB). Not configured — favicons will still work but without persistent caching. |
-| 4 | Limiter settings | DEFAULTS | `limiterSettings` not explicitly set. Uses SearXNG defaults (botdetection with standard thresholds). Adequate for single-user homelab. |
+| # | Item                    | Status         | Gap                                                                                                                                                                                  |
+| - | ----------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1 | statix lint clean       | WARNING        | `systemd.services` key repeated 3 times (secret-key, searx, searx-init blocks). statix suggests consolidating into one `systemd = { ... }` block. Cosmetic, not a correctness issue. |
+| 2 | AGENTS.md documentation | NOT STARTED    | No SearXNG section added to the gotcha table or service procedures. Every other service has detailed documentation.                                                                  |
+| 3 | Favicons settings       | NOT CONFIGURED | SearXNG has a `faviconsSettings` option (favicon caching DB). Not configured — favicons will still work but without persistent caching.                                              |
+| 4 | Limiter settings        | DEFAULTS       | `limiterSettings` not explicitly set. Uses SearXNG defaults (botdetection with standard thresholds). Adequate for single-user homelab.                                               |
 
 ---
 
 ## c) NOT STARTED
 
-| # | Item | Why It Matters |
-|---|------|----------------|
-| 1 | **Deploy** (`nix run .#deploy`) | Nothing is live. All changes are evaluated but not activated. |
-| 2 | Browser-policies integration | Could set SearXNG as the default search engine in Helium/Chromium via `browser-policies` |
-| 3 | Engine customization | All ~70+ default search engines enabled. May want to disable some (e.g., ones that consistently fail or rate-limit) |
-| 4 | Functional post-deploy verification | `post-deploy-check.sh` only checks `/healthz` returns 200. Doesn't verify search actually returns results. |
-| 5 | SearXNG API integration | SearXNG has a JSON API (`/search?format=json`). Could be used by Crush, Hermes, or other AI tools as a search backend. |
-| 6 | Sops secret for secret_key | Currently auto-generated on first boot and stored plaintext at `/var/lib/searxng/searxng.env`. Could use sops for consistency with other services, though this is a randomly-generated machine-local secret (not a shared credential). |
+| # | Item                                | Why It Matters                                                                                                                                                                                                                         |
+| - | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Deploy** (`nix run .#deploy`)     | Nothing is live. All changes are evaluated but not activated.                                                                                                                                                                          |
+| 2 | Browser-policies integration        | Could set SearXNG as the default search engine in Helium/Chromium via `browser-policies`                                                                                                                                               |
+| 3 | Engine customization                | All ~70+ default search engines enabled. May want to disable some (e.g., ones that consistently fail or rate-limit)                                                                                                                    |
+| 4 | Functional post-deploy verification | `post-deploy-check.sh` only checks `/healthz` returns 200. Doesn't verify search actually returns results.                                                                                                                             |
+| 5 | SearXNG API integration             | SearXNG has a JSON API (`/search?format=json`). Could be used by Crush, Hermes, or other AI tools as a search backend.                                                                                                                 |
+| 6 | Sops secret for secret_key          | Currently auto-generated on first boot and stored plaintext at `/var/lib/searxng/searxng.env`. Could use sops for consistency with other services, though this is a randomly-generated machine-local secret (not a shared credential). |
 
 ---
 
@@ -114,6 +113,7 @@ However, one design decision deserves scrutiny:
 ## f) Up to 50 Things We Should Get Done Next
 
 ### Must-do before deploy
+
 1. Fix statix warning (consolidate `systemd.services` blocks)
 2. Update AGENTS.md with SearXNG section
 3. Run `nix run .#deploy`
@@ -123,6 +123,7 @@ However, one design decision deserves scrutiny:
 7. Verify Gatus health check turns green for SearXNG
 
 ### Functional verification (post-deploy)
+
 8. Perform a search query and verify results return
 9. Verify autocomplete suggestions appear in the search bar
 10. Verify image search works with image_proxy enabled
@@ -136,6 +137,7 @@ However, one design decision deserves scrutiny:
 18. Check `journalctl -u redis-searx` for Redis startup
 
 ### Hardening & polish
+
 19. Add `faviconsSettings` for persistent favicon cache
 20. Consider `limiterSettings` tuning for single-user homelab
 21. Add functional post-deploy check (search query returns JSON results)
@@ -145,6 +147,7 @@ However, one design decision deserves scrutiny:
 25. Consider whether `ProtectHome = true` (from nixpkgs) causes any issues
 
 ### Integration & features
+
 26. Set SearXNG as default search engine in `browser-policies`
 27. Wire SearXNG JSON API into Crush as an MCP tool or search backend
 28. Wire SearXNG JSON API into Hermes for AI web search
@@ -154,6 +157,7 @@ However, one design decision deserves scrutiny:
 32. Consider enabling `open_metrics` for Prometheus scraping
 
 ### Engine tuning
+
 33. Disable engines that consistently timeout or fail (check `/stats` page after deploy)
 34. Tune `outgoing.request_timeout` if searches are slow
 35. Consider enabling `outgoing.proxies` if search engines rate-limit the homelab IP
@@ -161,6 +165,7 @@ However, one design decision deserves scrutiny:
 37. Set `default_lang` to a specific language if "auto" misbehaves
 
 ### Documentation & memory
+
 38. Document the secret-key auto-generation pattern in AGENTS.md gotcha table
 39. Document the Redis isolation pattern (unix socket, not TCP)
 40. Document the Homepage search provider integration
@@ -168,12 +173,14 @@ However, one design decision deserves scrutiny:
 42. Note the `services.searx` (not `services.searxng`) naming convention
 
 ### Monitoring improvements
+
 43. Add a Gatus check for actual search functionality (not just /healthz)
 44. Add response-time threshold tuning after observing real performance
 45. Consider a Gatus check for the Redis socket (TCP check on the socket path)
 46. Add SearXNG to the deploy.sh pre-deploy-check if applicable
 
 ### Future features
+
 47. Consider SearXNG's built-in Tor support for anonymous searches
 48. Explore SearXNG's plugin system (e.g., self-hosted translation, currency conversion)
 49. Consider running a second SearXNG instance for public access (different config)

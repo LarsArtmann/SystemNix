@@ -190,11 +190,11 @@ just test
 
 | Component                  | Health Score | Status                    | Issues                      |
 | -------------------------- | ------------ | ------------------------- | --------------------------- |
-| **Core Nix Configuration** | 6/10         | ⚠️ Functional but fragile | Type safety missing         |
+| **Core Nix Configuration** | 6/10         | ⚠️ Functional but fragile  | Type safety missing         |
 | **Testing & Validation**   | 1/10         | 🚨 BROKEN                 | No safe deployment method   |
 | **Documentation**          | 7/10         | ✅ Improved after cleanup | Some accuracy gaps remain   |
 | **Type Safety**            | 0/10         | 🚨 NON-EXISTENT           | Sophisticated system unused |
-| **Build System**           | 5/10         | ⚠️ Working but unsafe     | No validation pipeline      |
+| **Build System**           | 5/10         | ⚠️ Working but unsafe      | No validation pipeline      |
 
 ### **Overall System Health: 4/10** ⚠️
 

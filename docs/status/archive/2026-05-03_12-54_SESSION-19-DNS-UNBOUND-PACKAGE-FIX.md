@@ -165,33 +165,33 @@
 
 ## F) TOP 25 THINGS TO GET DONE NEXT 🎯
 
-| #   | Task                                                                                          | Impact   | Effort           | Category       |
-| --- | --------------------------------------------------------------------------------------------- | -------- | ---------------- | -------------- |
-| 1   | **Fix `root-hints = ":"`** in RPi3 config                                                     | Critical | 5 min            | Bug            |
-| 2   | **Move VRRP auth password to sops-nix**                                                       | Critical | 15 min           | Security       |
-| 3   | **Remove Darwin Go overlay** (match flake.nix approach)                                       | High     | 10 min           | Performance    |
-| 4   | **Extract niri-session-restore to standalone script**                                         | High     | 1 hr             | Architecture   |
-| 5   | **Clean up justfile ghost recipes**                                                           | Medium   | 15 min           | Code Quality   |
-| 6   | **Archive old status docs** (200+ stale files)                                                | Medium   | 10 min           | Housekeeping   |
-| 7   | **Remove commented-out code blocks** (15+ locations)                                          | Medium   | 30 min           | Code Quality   |
-| 8   | **Verify photomap OCI backend naming**                                                        | Medium   | 10 min           | Bug            |
-| 9   | **Fix hardware-configuration.nix stale header**                                               | Low      | 2 min            | Housekeeping   |
-| 10  | **Centralize WAYLAND_DISPLAY/DISPLAY env vars**                                               | Medium   | 20 min           | Robustness     |
-| 11  | **Track nixpkgs#483085** for auditd re-enable                                                 | High     | N/A (blocked)    | Security       |
-| 12  | **Provision Pi 3 hardware** for DNS failover                                                  | High     | Manual           | Infrastructure |
-| 13  | **Enable DNS failover in configuration.nix**                                                  | High     | 5 min (after Pi) | Infrastructure |
-| 14  | **DNSTAP → OTel bridge** (Go microservice)                                                    | Medium   | 4-6 hr           | Observability  |
-| 15  | **Profile Monitor365 RAM** and tune config                                                    | Medium   | 2 hr             | Performance    |
-| 16  | **Add Caddy `NoNewPrivileges=false` ADR**                                                     | Low      | 10 min           | Documentation  |
-| 17  | **Re-evaluate AppArmor** for key services                                                     | Medium   | Research         | Security       |
-| 18  | **Update AGENTS.md** with session 19 findings                                                 | Medium   | 15 min           | Documentation  |
-| 19  | **Test `just switch`** with current changes                                                   | High     | 10 min           | Validation     |
-| 20  | **Unbound package consistency audit** — ensure all refs use `config.services.unbound.package` | Medium   | 15 min           | Consistency    |
-| 21  | **Flake lock update** — commit pending `flake.lock` + `dns-blocklists.nix` hash updates       | Low      | 5 min            | Maintenance    |
-| 22  | **Consider `unbound-full` for DNSTAP** when pipeline is ready                                 | Low      | 2 min            | Future         |
-| 23  | **Add health checks** for services missing them (homepage dashboard gaps)                     | Medium   | 30 min           | Reliability    |
-| 24  | **Document Darwin-specific quirks** in AGENTS.md                                              | Low      | 10 min           | Documentation  |
-| 25  | **Remove or replace `signal-desktop-bin`** unfree classification comment                      | Trivial  | 2 min            | Cleanup        |
+| #  | Task                                                                                          | Impact   | Effort           | Category       |
+| -- | --------------------------------------------------------------------------------------------- | -------- | ---------------- | -------------- |
+| 1  | **Fix `root-hints = ":"`** in RPi3 config                                                     | Critical | 5 min            | Bug            |
+| 2  | **Move VRRP auth password to sops-nix**                                                       | Critical | 15 min           | Security       |
+| 3  | **Remove Darwin Go overlay** (match flake.nix approach)                                       | High     | 10 min           | Performance    |
+| 4  | **Extract niri-session-restore to standalone script**                                         | High     | 1 hr             | Architecture   |
+| 5  | **Clean up justfile ghost recipes**                                                           | Medium   | 15 min           | Code Quality   |
+| 6  | **Archive old status docs** (200+ stale files)                                                | Medium   | 10 min           | Housekeeping   |
+| 7  | **Remove commented-out code blocks** (15+ locations)                                          | Medium   | 30 min           | Code Quality   |
+| 8  | **Verify photomap OCI backend naming**                                                        | Medium   | 10 min           | Bug            |
+| 9  | **Fix hardware-configuration.nix stale header**                                               | Low      | 2 min            | Housekeeping   |
+| 10 | **Centralize WAYLAND_DISPLAY/DISPLAY env vars**                                               | Medium   | 20 min           | Robustness     |
+| 11 | **Track nixpkgs#483085** for auditd re-enable                                                 | High     | N/A (blocked)    | Security       |
+| 12 | **Provision Pi 3 hardware** for DNS failover                                                  | High     | Manual           | Infrastructure |
+| 13 | **Enable DNS failover in configuration.nix**                                                  | High     | 5 min (after Pi) | Infrastructure |
+| 14 | **DNSTAP → OTel bridge** (Go microservice)                                                    | Medium   | 4-6 hr           | Observability  |
+| 15 | **Profile Monitor365 RAM** and tune config                                                    | Medium   | 2 hr             | Performance    |
+| 16 | **Add Caddy `NoNewPrivileges=false` ADR**                                                     | Low      | 10 min           | Documentation  |
+| 17 | **Re-evaluate AppArmor** for key services                                                     | Medium   | Research         | Security       |
+| 18 | **Update AGENTS.md** with session 19 findings                                                 | Medium   | 15 min           | Documentation  |
+| 19 | **Test `just switch`** with current changes                                                   | High     | 10 min           | Validation     |
+| 20 | **Unbound package consistency audit** — ensure all refs use `config.services.unbound.package` | Medium   | 15 min           | Consistency    |
+| 21 | **Flake lock update** — commit pending `flake.lock` + `dns-blocklists.nix` hash updates       | Low      | 5 min            | Maintenance    |
+| 22 | **Consider `unbound-full` for DNSTAP** when pipeline is ready                                 | Low      | 2 min            | Future         |
+| 23 | **Add health checks** for services missing them (homepage dashboard gaps)                     | Medium   | 30 min           | Reliability    |
+| 24 | **Document Darwin-specific quirks** in AGENTS.md                                              | Low      | 10 min           | Documentation  |
+| 25 | **Remove or replace `signal-desktop-bin`** unfree classification comment                      | Trivial  | 2 min            | Cleanup        |
 
 ---
 

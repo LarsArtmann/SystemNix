@@ -8,7 +8,7 @@
 
 ## a) FULLY DONE
 
-1. **`/tmp` analyzed + cleaned: 42G → 406M (tmpfs, RAM-backed).** Swept open-file check (`lsof +D`) first — active desktop processes (niri, helium, zellij, electron, Xwayland) held only small runtime files, untouched. Deleted: `/tmp/bigtest` (40G benchmark dataset, no open handles, regenerable), session benchmark scratch (`tw-sim`, `sbx{,2,3}`, `bh-tagtest`, `tc`, `fresh-consumer`, `lint-repro`, `bench1.txt`, `BenchmarkStartup…`), `signoz-src` + tarball, 9-month-old `nvme-cli-2.16`, stale `nix-shell.*` dirs. Kept `node-compile-cache`, `bunx-*` (actively reused, tiny). **~41G of RAM/zram freed.** Used `rm` deliberately — trashing tmpfs contents would *copy* 40G onto the 92%-full NVMe (same documented exception as buildcache GC).
+1. **`/tmp` analyzed + cleaned: 42G → 406M (tmpfs, RAM-backed).** Swept open-file check (`lsof +D`) first — active desktop processes (niri, helium, zellij, electron, Xwayland) held only small runtime files, untouched. Deleted: `/tmp/bigtest` (40G benchmark dataset, no open handles, regenerable), session benchmark scratch (`tw-sim`, `sbx{,2,3}`, `bh-tagtest`, `tc`, `fresh-consumer`, `lint-repro`, `bench1.txt`, `BenchmarkStartup…`), `signoz-src` + tarball, 9-month-old `nvme-cli-2.16`, stale `nix-shell.*` dirs. Kept `node-compile-cache`, `bunx-*` (actively reused, tiny). **~41G of RAM/zram freed.** Used `rm` deliberately — trashing tmpfs contents would _copy_ 40G onto the 92%-full NVMe (same documented exception as buildcache GC).
 2. **`/rust-cache` contents inspected and answered:** exactly one thing lived on the entire 98G partition — a stale 32G `monitor365` debug `target/`. Migration copy verified present and complete at `/mnt/buildcache/rust/monitor365` (35G, same 10 top-level entries, Aug 14). Project symlink already points there; sccache additionally covers rebuilds.
 3. **Contents wiped:** 32G → empty (partition now 2.1M used). First `rm -rf` of the dir itself failed (`Permission denied` — root-owned parent); emptied contents instead (owned by `lars`).
 4. **Mount removed from Nix:** `fileSystems."/rust-cache"` deleted from `platforms/nixos/hardware/hardware-configuration.nix` with an explanatory comment pointing at the TODO_LIST remainder. `nix flake check --no-build` passed. Deployed (`nix run .#deploy`). **`findmnt /rust-cache` confirms unmounted** — automount gone.
@@ -29,7 +29,7 @@
 ## c) NOT STARTED (in scope, deliberately deferred or carried)
 
 1. `go test ./...` on the 3 bumped repos (browser-history, go-cqrs-lite, file-and-image-renamer) — carried F3 gap from previous session.
-2. Verification that sibling `66e78231` (alert-spam fixes C1–C5) behaves correctly live — it shipped to production *by my deploy* but is the sibling's work (see d-4).
+2. Verification that sibling `66e78231` (alert-spam fixes C1–C5) behaves correctly live — it shipped to production _by my deploy_ but is the sibling's work (see d-4).
 3. Whether Gatus fired Discord alerts during browser-history's ~9 min deploy downtime (03:26→03:39, double restart × ~4.5 min bind delay) — unverified; ironic given the alert-spam fixes just landed.
 4. Root-cause of browser-history's ~4.5-min pre-bind CPU burn (observed twice this session; what runs between "OAuth2 providers configured" and "server starting" is unexamined).
 5. Which WARN remained in the final post-deploy-check run (I/O pressure vs quickshell journal) — never identified.
@@ -41,7 +41,7 @@
 
 1. **Predictable `rm` failure:** `ls -la /rust-cache/` in the SAME prior tool call showed the root-owned parent (`drwxr-xr-x root root`), and I still attempted `rm -rf /rust-cache/monitor365` on the directory itself. Failed with `Permission denied`. Recovered instantly by emptying contents, but the ownership pre-check should have shaped the first command. Root rule: `stat -c %U` the parent before any rm plan.
 2. **AGENTS.md edit failed twice on stale read:** sibling modified the file at 03:20; the edit tool correctly refused both attempts. I re-located via `rg`, re-viewed, then succeeded. Cost: 2 wasted round trips. Lesson: with active sibling sessions, ALWAYS re-view immediately before edit, not from memory.
-3. **Mild repeat of last session's #1 sin:** my closing summary said the journal "confirms the startup delay is per-restart, not one-time backfill." What the evidence actually supports: the delay occurred on both observed restarts (~4min19s, ~4min06s). Per-restart is now *evidenced* (n=2), but the *cause* ("compute-bound startup", implied backfill) remains unverified — I did not profile what the process does pre-bind. Presented inference with more confidence than the data carries.
+3. **Mild repeat of last session's #1 sin:** my closing summary said the journal "confirms the startup delay is per-restart, not one-time backfill." What the evidence actually supports: the delay occurred on both observed restarts (~4min19s, ~4min06s). Per-restart is now _evidenced_ (n=2), but the _cause_ ("compute-bound startup", implied backfill) remains unverified — I did not profile what the process does pre-bind. Presented inference with more confidence than the data carries.
 4. **Deployed sibling's production changes without acknowledgment:** my 03:26 deploy carried sibling commit `66e78231` (Discord alert templates, nvme-collector key fix, focus-follow, zellij auto-attach) live. I reported "the deploy itself was healthy" without noting the cargo. Nobody verified those changes behave correctly in production — and my deploy is what made them live.
 5. **End-of-session assumptions stated as fact:** "auto-commit daemon will sweep them" — I never verified the daemon's coverage/state for these files; the tree is still uncommitted at report time (sibling edits intermixed in AGENTS.md would make a naive pathspec commit of that file risky).
 6. **Missed cheap quantification:** reclaimed 41G of tmpfs but never captured before/after `/proc/meminfo` or zram `mm_stat` to prove the memory-pressure win; likewise never identified the residual WARN.
@@ -63,6 +63,7 @@
 ## f) NEXT — up to 50, ordered
 
 **Disk crisis (root 92%, 57G free — the through-line):** — _2026-08-17: items 1-3 routed TODO_LIST P2 (partition surgery batch), item 4 → P2 (Docker→SSD2), items 5-7 → P0 free-root / untracked_
+
 1. Partition surgery: delete `nvme0n1p9` (98G), grow adjacent BTRFS partition, `btrfs filesystem resize` — needs a careful adjacency/boot-partition plan (p6=/, p9=?)
 2. `sudo rmdir /rust-cache` leftover root-owned mountpoint
 3. Remove redundant `@cache-home`/`@go`/`@npm`/`@cargo` automounts (hardware-configuration.nix; verify btrbk untouched)
@@ -112,7 +113,7 @@
 
 1. **Partition surgery:** authorize deleting `nvme0n1p9` and growing the root BTRFS partition (p6) into the freed 98G? Online `parted`/`growpart` + `btrfs filesystem resize` is possible without reboot, but it's irreversible disk surgery on a 92%-full production root — and I need your call on timing (now vs a maintenance window with fresh btrbk snapshot verification first).
 2. **Priority sequencing:** disk surgery (f-1) vs monitor365 restoration (f-27) vs alert-fix verification (f-8/9) — all three are open and I keep serializing whichever you last touched. What's the order you want?
-3. **Browser-history slow init semantics:** if the ~4.5-min pre-bind work is event-replay/read-model rebuild, binding the port *before* replay finishes means serving potentially stale/empty reads during warmup. Is bind-early-async-replay acceptable for this app, or is serve-only-after-replay a hard requirement? (Determines whether the fix is upstream code, deploy.sh workaround, or just check-tolerance.)
+3. **Browser-history slow init semantics:** if the ~4.5-min pre-bind work is event-replay/read-model rebuild, binding the port _before_ replay finishes means serving potentially stale/empty reads during warmup. Is bind-early-async-replay acceptable for this app, or is serve-only-after-replay a hard requirement? (Determines whether the fix is upstream code, deploy.sh workaround, or just check-tolerance.)
 
 ---
 

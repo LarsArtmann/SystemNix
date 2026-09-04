@@ -216,6 +216,9 @@ _: {
       # Without restartTriggers, switch-to-configuration may not detect unit-file
       # changes on certain deploys (observed during the unbound→dnsblockd migration:
       # the running process kept old config while unbound was stopped, leaving :53 unbound).
+      # OIDC client-secret env file, written by the dnsblockd-oidc-secret
+      # oneshot (StateDirectory-scoped, separate from dnsblockd's own state).
+      oidcEnvFile = "/var/lib/dnsblockd-oidc/client-secret.env";
       caCert = config.sops.secrets.dnsblockd_ca_cert.path;
       caKey = config.sops.secrets.dnsblockd_ca_key.path;
       dnsblockdConfigFile = pkgs.writeText "dnsblockd-config.yaml" (
@@ -226,6 +229,15 @@ _: {
             tls_port = cfg.blockTLSPort;
             stats_addr = "127.0.0.1";
             stats_port = cfg.statsPort;
+            # OTLP trace export to the local SigNoz collector (Go
+            # otlptracehttp: bare host:port, no scheme — dnsblockd strips an
+            # optional http:// itself, internal/otel/otel.go:97). Full
+            # instrumentation exists upstream (tracking.Dispatch /
+            # tracking.batchFlush + stats-API handler spans) but was dark
+            # until this key was set (2026-08-31 coverage audit). Metrics
+            # cardinality concerns do NOT apply to spans — span attributes
+            # never create unbounded metric series.
+            otlp_endpoint = "localhost:${toString ports.signoz-otlp-http}";
             ca_cert_file = "${caCert}";
             ca_key_file = "${caKey}";
             blocklist_mapping_file = "${processedBlocklist}/mapping.json";
@@ -284,6 +296,27 @@ _: {
           }
           // lib.optionalAttrs (cfg.categories != { }) {
             categories_file = "${categoriesJSON}";
+          }
+          // lib.optionalAttrs (cfg.oidcIssuerURL != "") {
+            # OIDC single sign-on for the dashboard (Pocket ID). The client
+            # secret rides the DNSBLOCKD_OIDC_CLIENT_SECRET env var, bridged
+            # from Pocket ID's client-secrets provisioning by the
+            # dnsblockd-oidc-secret oneshot below.
+            oidc_enabled = true;
+            oidc_issuer_url = cfg.oidcIssuerURL;
+            oidc_client_id = cfg.oidcClientID;
+            oidc_redirect_url = cfg.oidcRedirectURL;
+            oidc_scopes = [
+              "openid"
+              "profile"
+              "email"
+            ];
+            oidc_session_ttl = "12h";
+          }
+          // lib.optionalAttrs (cfg.oidcButtonText != "") {
+            # Provider-specific SSO button label (dnsblockd ≥ this version
+            # falls back to "Sign in with SSO" when unset).
+            oidc_button_text = cfg.oidcButtonText;
           }
         )
       );
@@ -549,6 +582,43 @@ _: {
           '';
         };
 
+        oidcIssuerURL = mkOption {
+          type = types.str;
+          default = "";
+          description = ''
+            OIDC issuer URL for dashboard single sign-on (e.g.
+            "https://auth.example.com"). Empty disables SSO; the auth token
+            stays the only gate. The client secret is bridged from Pocket ID
+            client-secrets provisioning (requires pocket-id-config.provision).
+          '';
+        };
+
+        oidcClientID = mkOption {
+          type = types.str;
+          default = "dnsblockd";
+          description = "OIDC client ID registered at the provider";
+        };
+
+        oidcRedirectURL = mkOption {
+          type = types.str;
+          default = "";
+          description = ''
+            External SSO callback URL, e.g.
+            "https://dnsblock.example.com/auth/oidc/callback" (required when
+            oidcIssuerURL is set).
+          '';
+        };
+
+        oidcButtonText = mkOption {
+          type = types.str;
+          default = "";
+          description = ''
+            Optional provider-specific label for the SSO login button (e.g.
+            "Sign in with Pocket ID"). Empty uses dnsblockd's generic
+            "Sign in with SSO" default.
+          '';
+        };
+
         proxyConnectTimeout = mkOption {
           type = types.str;
           default = "10s";
@@ -593,6 +663,51 @@ _: {
 
         systemd = {
           services = {
+            # Bridges the Pocket ID client secret into an env file dnsblockd
+            # can consume (LoadCredential pattern — mirrors browser-history).
+            # When the secret is missing the unit exits 0 WITHOUT writing the
+            # env file, so SSO stays off instead of crash-looping the DNS
+            # path.
+            dnsblockd-oidc-secret =
+              lib.mkIf (cfg.oidcIssuerURL != "" && (config.services.pocket-id-config.provision.enable or false))
+                {
+                  description = "dnsblockd — Pocket ID OIDC client secret provisioning";
+                  after = [ "pocket-id-provision.service" ];
+                  wants = [ "pocket-id-provision.service" ];
+                  before = [ "dnsblockd.service" ];
+                  wantedBy = [ "dnsblockd.service" ];
+                  startLimitBurst = 5;
+                  startLimitIntervalSec = 300;
+
+                  serviceConfig = {
+                    Type = "oneshot";
+                    RemainAfterExit = true;
+                    StateDirectory = "dnsblockd-oidc";
+                    LoadCredential = [
+                      "pocket-id-secret:${
+                        config.services.pocket-id.dataDir or "/var/lib/pocket-id"
+                      }/client-secrets/${cfg.oidcClientID}"
+                    ];
+                  };
+
+                  path = [ pkgs.coreutils ];
+
+                  script = ''
+                    SECRET_FILE="$CREDENTIALS_DIRECTORY/pocket-id-secret"
+
+                    if [ ! -s "$SECRET_FILE" ]; then
+                      echo "dnsblockd-oidc-secret: Pocket ID secret not found — removing env file so SSO stays off"
+                      rm -f "${oidcEnvFile}"
+                      exit 0
+                    fi
+
+                    install -d -m 0755 "$(dirname "${oidcEnvFile}")"
+                    echo "DNSBLOCKD_OIDC_CLIENT_SECRET=$(cat "$SECRET_FILE")" > "${oidcEnvFile}"
+                    chmod 600 "${oidcEnvFile}"
+                    echo "dnsblockd-oidc-secret: Pocket ID client secret written"
+                  '';
+                };
+
             dnsblockd-attach-ip = {
               description = "Attach dnsblockd block IP to ${cfg.blockInterface}";
               wantedBy = [ "multi-user.target" ];
@@ -628,11 +743,13 @@ _: {
               after = [
                 "dnsblockd-attach-ip.service"
                 "sops-nix.service"
-              ];
+              ]
+              ++ lib.optionals (cfg.oidcIssuerURL != "") [ "dnsblockd-oidc-secret.service" ];
               wants = [
                 "dnsblockd-attach-ip.service"
                 "sops-nix.service"
-              ];
+              ]
+              ++ lib.optionals (cfg.oidcIssuerURL != "") [ "dnsblockd-oidc-secret.service" ];
               wantedBy = [ "multi-user.target" ];
               inherit onFailure;
               restartTriggers = [
@@ -679,14 +796,25 @@ _: {
                   {
                     Type = "simple";
                     # GOMEMLIMIT forces Go GC to run aggressively before MemoryMax.
-                    # dnsblockd has unbounded OTEL cardinality growth (dns_domain,
-                    # http_path, proxy_domain labels) + synchronous SQLite tracking
-                    # writes that accumulate in-memory pages. Without GOMEMLIMIT, Go's
-                    # default GOGC=100 doesn't trigger GC until heap doubles (~1.2G
-                    # from 600M base), but MemoryMax kills first. Fix upstream by
-                    # dropping high-cardinality labels from telemetry.go.
-                    Environment = [ "GOMEMLIMIT=3GiB" ];
-                    EnvironmentFile = [ "/run/secrets/rendered/dnsblockd-auth-env" ];
+                    # dnsblockd's METRICS cardinality was fixed upstream (2026-08):
+                    # the unbounded dns_domain/http_path/proxy_domain labels were
+                    # dropped and domains bucketed into domain_category; a
+                    # regression test (internal/server/cardinality_regression_test.go)
+                    # guards it. Span attributes are exempt (never create metric
+                    # series). The SQLite tracking-write pressure remains: without
+                    # GOMEMLIMIT, Go's default GOGC=100 doesn't trigger GC until
+                    # heap doubles (~1.2G from 600M base), but MemoryMax kills first.
+                    Environment = [
+                      "GOMEMLIMIT=3GiB"
+                      # Full goroutine dump on SIGQUIT (kill -QUIT) — the
+                      # 2026-08-27 stats-API wedge healed before a dump could
+                      # be taken; "all" ensures every goroutine's stack lands
+                      # in the journal when the runbook fires it (default
+                      # GOTRACEBACK=single shows only the signal-handling
+                      # goroutine, which says nothing about a mutex deadlock).
+                      "GOTRACEBACK=all"
+                    ];
+                    EnvironmentFile = lib.optionals (cfg.oidcIssuerURL != "") [ oidcEnvFile ];
                     ExecStartPre = [
                       "+-${lib.getExe initScript}"
                       "${lib.getExe secretCheck}"

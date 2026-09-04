@@ -333,12 +333,12 @@ Rebuilding Qubes OS entirely in NixOS is **technically possible but highly compl
 | GUI Virtualization | ❌ None          | Complete | Very High   | 12-24mo  |
 | Security Policy    | ❌ None          | Complete | Medium      | 4-8mo    |
 | Agent System       | ❌ None          | Complete | Medium-High | 6-10mo   |
-| Template System    | ⚠️ Partial       | Medium   | Medium      | 2-4mo    |
-| DisposableVMs      | ⚠️ Partial       | Medium   | Medium      | 2-4mo    |
-| ServiceVMs         | ⚠️ Partial       | Low      | Low-Medium  | 1-3mo    |
+| Template System    | ⚠️ Partial        | Medium   | Medium      | 2-4mo    |
+| DisposableVMs      | ⚠️ Partial        | Medium   | Medium      | 2-4mo    |
+| ServiceVMs         | ⚠️ Partial        | Low      | Low-Medium  | 1-3mo    |
 | USB Sandboxing     | ✅ Possible      | Minor    | Medium      | 1-2mo    |
-| Network Proxy      | ⚠️ Partial       | Medium   | Medium      | 2-4mo    |
-| GUI Markers        | ⚠️ Partial       | Low      | Low         | 1-2mo    |
+| Network Proxy      | ⚠️ Partial        | Medium   | Medium      | 2-4mo    |
+| GUI Markers        | ⚠️ Partial        | Low      | Low         | 1-2mo    |
 
 ### Overall Feasibility: **Medium** (with caveats)
 

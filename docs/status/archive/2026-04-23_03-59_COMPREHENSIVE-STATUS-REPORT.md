@@ -177,33 +177,33 @@ The 2026-04-22 improvement list (30 items) is **96% complete** — 27 done, 3 de
 
 ## F) Top 25 Next Actions
 
-| #   | Priority | Action                                                                                                                                | Effort | Impact                                              |
-| --- | -------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------ | --------------------------------------------------- |
-| 1   | **P0**   | **Enable LUKS + TPM2 auto-unlock** — Full disk encryption with zero UX change (TPM binds to boot)                                     | High   | Critical — closes physical attack surface           |
-| 2   | **P0**   | **Set `boot.loader.systemd-boot.editor = false`** — One line, prevents boot param editing                                             | Low    | High — prevents init=/bin/sh bypass                 |
-| 3   | **P0**   | **Enable `services.fwupd.enable = true`** — Firmware updates for real hardware                                                        | Low    | High — patches firmware vulnerabilities             |
-| 4   | **P0**   | **Add kernel security sysctls** — `kptr_restrict=2`, `dmesg_restrict=1`, `kexec_load=0`, `rp_filter=1`, `unprivileged_bpf_disabled=1` | Low    | Medium — standard kernel hardening                  |
-| 5   | **P0**   | **Set `SIGNOZ_TOKENIZER_JWT_SECRET`** via sops                                                                                        | Low    | Medium — critical security fix logged every restart |
-| 6   | **P1**   | **Verify Hermes gateway is running** — Check service status, Discord bot connectivity                                                 | Low    | Medium — confirm last night's fix worked            |
-| 7   | **P1**   | **Re-evaluate `wheelNeedsPassword = false`** — Consider `true` with `timestampTimeout = 30`                                           | Low    | Medium — closes privilege escalation path           |
-| 8   | **P1**   | **Add `StartLimitBurst`/`StartLimitIntervalSec`** to all services — prevent infinite restart loops                                    | Low    | Medium — stops 150-restart insanity                 |
-| 9   | **P1**   | **Verify Twenty CRM container** — Check if 0.16.2 image fixed the `/app/python` error                                                 | Low    | Medium — confirm or disable                         |
-| 10  | **P1**   | **Verify Unsloth Studio** — Check if conditional enablement + structlog fix resolved issues                                           | Low    | Medium — confirm or disable                         |
-| 11  | **P1**   | **Enable `security.tpm2.enable = true`** — Prerequisite for LUKS TPM binding, zero cost alone                                         | Low    | Medium — enables future LUKS auto-unlock            |
-| 12  | **P1**   | **Clean root filesystem** — 402G/512G used, find large removable files                                                                | Medium | Medium — prevent disk space emergency               |
-| 13  | **P2**   | **Add disk space alerting** — SigNoz alert for root >85%                                                                              | Low    | Medium — proactive warning                          |
-| 14  | **P2**   | **Add swap usage alerting** — SigNoz alert for swap >5G                                                                               | Low    | Low — anomaly detection                             |
-| 15  | **P2**   | **Fix Gitea GitHub sync auth** — Verify token is valid and not expired                                                                | Low    | Low — restores mirror functionality                 |
-| 16  | **P2**   | **Clean up 3 stale git stashes** — Evaluate and drop                                                                                  | Low    | Low — repo hygiene                                  |
-| 17  | **P2**   | **Update AGENTS.md** — 19 days behind, many changes undocumented                                                                      | Medium | Medium — AI agent accuracy                          |
-| 18  | **P2**   | **Add Hermes SigNoz monitoring** — journald ingestion, alert rules                                                                    | Medium | Medium — observability gap                          |
-| 19  | **P2**   | **Prune `docs/` top-level files** — Archive or delete stale analysis docs                                                             | Medium | Low — repo cleanliness                              |
-| 20  | **P2**   | **Status report auto-archive** — Keep last 10, move rest to archive quarterly                                                         | Low    | Low — prevent unbounded growth                      |
-| 21  | **P3**   | **Validate Darwin build** — Ensure macOS config still builds                                                                          | Low    | Medium — cross-platform health                      |
-| 22  | **P3**   | **Fix amdxdna NPU driver** — SVA bind failure ret -19                                                                                 | Hard   | Medium — NPU unusable                               |
-| 23  | **P3**   | **Monitor auditd NixOS bug** — Re-enable when [#483085](https://github.com/NixOS/nixpkgs/issues/483085) is fixed                      | Low    | Medium — audit trail                                |
-| 24  | **P3**   | **Flake.lock staleness alerting** — Automated check for inputs older than 30 days                                                     | Medium | Low — dependency freshness                          |
-| 25  | **P3**   | **Add NixOS VM tests** — At least smoke tests for critical services (caddy, immich, signoz)                                           | High   | High — prevents regressions                         |
+| #  | Priority | Action                                                                                                                                | Effort | Impact                                              |
+| -- | -------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------ | --------------------------------------------------- |
+| 1  | **P0**   | **Enable LUKS + TPM2 auto-unlock** — Full disk encryption with zero UX change (TPM binds to boot)                                     | High   | Critical — closes physical attack surface           |
+| 2  | **P0**   | **Set `boot.loader.systemd-boot.editor = false`** — One line, prevents boot param editing                                             | Low    | High — prevents init=/bin/sh bypass                 |
+| 3  | **P0**   | **Enable `services.fwupd.enable = true`** — Firmware updates for real hardware                                                        | Low    | High — patches firmware vulnerabilities             |
+| 4  | **P0**   | **Add kernel security sysctls** — `kptr_restrict=2`, `dmesg_restrict=1`, `kexec_load=0`, `rp_filter=1`, `unprivileged_bpf_disabled=1` | Low    | Medium — standard kernel hardening                  |
+| 5  | **P0**   | **Set `SIGNOZ_TOKENIZER_JWT_SECRET`** via sops                                                                                        | Low    | Medium — critical security fix logged every restart |
+| 6  | **P1**   | **Verify Hermes gateway is running** — Check service status, Discord bot connectivity                                                 | Low    | Medium — confirm last night's fix worked            |
+| 7  | **P1**   | **Re-evaluate `wheelNeedsPassword = false`** — Consider `true` with `timestampTimeout = 30`                                           | Low    | Medium — closes privilege escalation path           |
+| 8  | **P1**   | **Add `StartLimitBurst`/`StartLimitIntervalSec`** to all services — prevent infinite restart loops                                    | Low    | Medium — stops 150-restart insanity                 |
+| 9  | **P1**   | **Verify Twenty CRM container** — Check if 0.16.2 image fixed the `/app/python` error                                                 | Low    | Medium — confirm or disable                         |
+| 10 | **P1**   | **Verify Unsloth Studio** — Check if conditional enablement + structlog fix resolved issues                                           | Low    | Medium — confirm or disable                         |
+| 11 | **P1**   | **Enable `security.tpm2.enable = true`** — Prerequisite for LUKS TPM binding, zero cost alone                                         | Low    | Medium — enables future LUKS auto-unlock            |
+| 12 | **P1**   | **Clean root filesystem** — 402G/512G used, find large removable files                                                                | Medium | Medium — prevent disk space emergency               |
+| 13 | **P2**   | **Add disk space alerting** — SigNoz alert for root >85%                                                                              | Low    | Medium — proactive warning                          |
+| 14 | **P2**   | **Add swap usage alerting** — SigNoz alert for swap >5G                                                                               | Low    | Low — anomaly detection                             |
+| 15 | **P2**   | **Fix Gitea GitHub sync auth** — Verify token is valid and not expired                                                                | Low    | Low — restores mirror functionality                 |
+| 16 | **P2**   | **Clean up 3 stale git stashes** — Evaluate and drop                                                                                  | Low    | Low — repo hygiene                                  |
+| 17 | **P2**   | **Update AGENTS.md** — 19 days behind, many changes undocumented                                                                      | Medium | Medium — AI agent accuracy                          |
+| 18 | **P2**   | **Add Hermes SigNoz monitoring** — journald ingestion, alert rules                                                                    | Medium | Medium — observability gap                          |
+| 19 | **P2**   | **Prune `docs/` top-level files** — Archive or delete stale analysis docs                                                             | Medium | Low — repo cleanliness                              |
+| 20 | **P2**   | **Status report auto-archive** — Keep last 10, move rest to archive quarterly                                                         | Low    | Low — prevent unbounded growth                      |
+| 21 | **P3**   | **Validate Darwin build** — Ensure macOS config still builds                                                                          | Low    | Medium — cross-platform health                      |
+| 22 | **P3**   | **Fix amdxdna NPU driver** — SVA bind failure ret -19                                                                                 | Hard   | Medium — NPU unusable                               |
+| 23 | **P3**   | **Monitor auditd NixOS bug** — Re-enable when [#483085](https://github.com/NixOS/nixpkgs/issues/483085) is fixed                      | Low    | Medium — audit trail                                |
+| 24 | **P3**   | **Flake.lock staleness alerting** — Automated check for inputs older than 30 days                                                     | Medium | Low — dependency freshness                          |
+| 25 | **P3**   | **Add NixOS VM tests** — At least smoke tests for critical services (caddy, immich, signoz)                                           | High   | High — prevents regressions                         |
 
 ---
 

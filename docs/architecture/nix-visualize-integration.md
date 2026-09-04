@@ -206,10 +206,10 @@ dot -Tpdf docs/architecture/Setup-Mac-Darwin.svg -o docs/architecture/Setup-Mac-
 #### Pattern 1: Star Topology (One-to-Many)
 
 ```
-     [Core Package]
-           / | \
-          /  |  \
-     [Dep] [Dep] [Dep]
+[Core Package]
+      / | \
+     /  |  \
+[Dep] [Dep] [Dep]
 ```
 
 **Meaning:** Core package is heavily used (e.g., `nixpkgs`, `bash`)
@@ -217,7 +217,7 @@ dot -Tpdf docs/architecture/Setup-Mac-Darwin.svg -o docs/architecture/Setup-Mac-
 #### Pattern 2: Chain Topology (Linear)
 
 ```
-     [App] → [Tool] → [Lib] → [Base Lib]
+[App] → [Tool] → [Lib] → [Base Lib]
 ```
 
 **Meaning:** Direct dependency chain (e.g., `firefox` → `bash` → `glibc`)
@@ -225,9 +225,9 @@ dot -Tpdf docs/architecture/Setup-Mac-Darwin.svg -o docs/architecture/Setup-Mac-
 #### Pattern 3: Diamond Topology (Shared Dependency)
 
 ```
-     [Tool1]  [Tool2]
-          \    /
-          [Shared Lib]
+[Tool1]  [Tool2]
+     \    /
+     [Shared Lib]
 ```
 
 **Meaning:** Multiple tools depend on shared library (good for deduplication)

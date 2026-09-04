@@ -225,58 +225,58 @@ System is **stable but showing wear**. Core infrastructure (Caddy, Pocket ID, OA
 
 ### Priority 0: Operational Urgency
 
-| #   | Task                                                                        | Impact   | Effort | Why                                             |
-| --- | --------------------------------------------------------------------------- | -------- | ------ | ----------------------------------------------- |
-| 1   | **Run `nix-collect-garbage`** — free up 3,874 stale store paths             | Critical | 5 min  | Root disk at 95%, operational risk              |
-| 2   | **Investigate 8 GiB swap usage** — find memory hogs                         | High     | 15 min | Memory pressure on 128 GiB system is suspicious |
-| 3   | **Fix Pocket ID OTel endpoint** — `https://` → `http://` for localhost:4318 | Medium   | 5 min  | Eliminates 1,440 noisy log lines/day            |
+| # | Task                                                                        | Impact   | Effort | Why                                             |
+| - | --------------------------------------------------------------------------- | -------- | ------ | ----------------------------------------------- |
+| 1 | **Run `nix-collect-garbage`** — free up 3,874 stale store paths             | Critical | 5 min  | Root disk at 95%, operational risk              |
+| 2 | **Investigate 8 GiB swap usage** — find memory hogs                         | High     | 15 min | Memory pressure on 128 GiB system is suspicious |
+| 3 | **Fix Pocket ID OTel endpoint** — `https://` → `http://` for localhost:4318 | Medium   | 5 min  | Eliminates 1,440 noisy log lines/day            |
 
 ### Priority 1: Fix Broken Services
 
-| #   | Task                                                                        | Impact | Effort | Why                                  |
-| --- | --------------------------------------------------------------------------- | ------ | ------ | ------------------------------------ |
-| 4   | **Fix Monitor365 DB path** — create state dir + verify SQLite path          | High   | 30 min | Monitoring dashboard completely down |
-| 5   | **Fix dnsblockd-cert-import PATH** — add nssTools to service                | Medium | 10 min | CA cert not imported into NSS DB     |
-| 6   | **Fix aw-watcher-wayland startup** — graphical-session.target dependency    | Low    | 15 min | Wayland watcher panics on boot       |
-| 7   | **Fix PostgreSQL collation warnings** — REINDEX or REFRESH in Twenty CRM PG | Low    | 10 min | Journal noise every 5 seconds        |
+| # | Task                                                                        | Impact | Effort | Why                                  |
+| - | --------------------------------------------------------------------------- | ------ | ------ | ------------------------------------ |
+| 4 | **Fix Monitor365 DB path** — create state dir + verify SQLite path          | High   | 30 min | Monitoring dashboard completely down |
+| 5 | **Fix dnsblockd-cert-import PATH** — add nssTools to service                | Medium | 10 min | CA cert not imported into NSS DB     |
+| 6 | **Fix aw-watcher-wayland startup** — graphical-session.target dependency    | Low    | 15 min | Wayland watcher panics on boot       |
+| 7 | **Fix PostgreSQL collation warnings** — REINDEX or REFRESH in Twenty CRM PG | Low    | 10 min | Journal noise every 5 seconds        |
 
 ### Priority 2: Manual Steps
 
-| #   | Task                                                                                 | Impact | Effort | Why                                   |
-| --- | ------------------------------------------------------------------------------------ | ------ | ------ | ------------------------------------- |
-| 8   | **Add OpenAI API key to Hermes sops** — `sops platforms/nixos/secrets/hermes.yaml`   | High   | 5 min  | Enables LLM fallback for hermes       |
-| 9   | **Install Hermes SSH deploy key** — private key to `/home/hermes/.ssh/`              | Medium | 5 min  | Hermes can't reach git repos          |
-| 10  | **Set Hermes fallback model** — `hermes config set fallback_model openrouter/gpt-4o` | Medium | 2 min  | Automatic fallback on GLM-5.1 failure |
+| #  | Task                                                                                 | Impact | Effort | Why                                   |
+| -- | ------------------------------------------------------------------------------------ | ------ | ------ | ------------------------------------- |
+| 8  | **Add OpenAI API key to Hermes sops** — `sops platforms/nixos/secrets/hermes.yaml`   | High   | 5 min  | Enables LLM fallback for hermes       |
+| 9  | **Install Hermes SSH deploy key** — private key to `/home/hermes/.ssh/`              | Medium | 5 min  | Hermes can't reach git repos          |
+| 10 | **Set Hermes fallback model** — `hermes config set fallback_model openrouter/gpt-4o` | Medium | 2 min  | Automatic fallback on GLM-5.1 failure |
 
 ### Priority 3: Documentation Updates
 
-| #   | Task                                                                                   | Impact | Effort | Why                                     |
-| --- | -------------------------------------------------------------------------------------- | ------ | ------ | --------------------------------------- |
-| 11  | **Update TODO_LIST.md** — reflect current state, remove completed items                | Medium | 30 min | Currently stale since session 122       |
-| 12  | **Update FEATURES.md** — add QDirStat, Overview, Pocket ID provisioning, NVMe APST fix | Medium | 30 min | Last updated 2026-06-03                 |
-| 13  | **Create ROADMAP.md** — consolidate from docs/planning/ into single living doc         | Medium | 1 hr   | No single source of truth for direction |
-| 14  | **Archive old status reports** — move >30 day old reports to archive/                  | Low    | 10 min | 130+ files in docs/status/              |
+| #  | Task                                                                                   | Impact | Effort | Why                                     |
+| -- | -------------------------------------------------------------------------------------- | ------ | ------ | --------------------------------------- |
+| 11 | **Update TODO_LIST.md** — reflect current state, remove completed items                | Medium | 30 min | Currently stale since session 122       |
+| 12 | **Update FEATURES.md** — add QDirStat, Overview, Pocket ID provisioning, NVMe APST fix | Medium | 30 min | Last updated 2026-06-03                 |
+| 13 | **Create ROADMAP.md** — consolidate from docs/planning/ into single living doc         | Medium | 1 hr   | No single source of truth for direction |
+| 14 | **Archive old status reports** — move >30 day old reports to archive/                  | Low    | 10 min | 130+ files in docs/status/              |
 
 ### Priority 4: Improvements
 
-| #   | Task                                                                           | Impact | Effort | Why                            |
-| --- | ------------------------------------------------------------------------------ | ------ | ------ | ------------------------------ |
-| 15  | **DiscordSync: file upstream issue** — INSERT OR IGNORE for UNIQUE constraints | Low    | 10 min | Reduces backfill log noise     |
-| 16  | **Add boot time tracking** — systemd-analyze to a file on each boot            | Low    | 15 min | Verify NVMe APST fix impact    |
-| 17  | **Automated service health timer** — run verify-deployment.sh daily            | Medium | 30 min | Catch service failures early   |
-| 18  | **Nix GC automation** — weekly `nix-collect-garbage` timer                     | High   | 15 min | Prevent disk from hitting 100% |
-| 19  | **Create CHANGELOG.md** — even auto-generated from conventional commits        | Low    | 30 min | Track changes between deploys  |
+| #  | Task                                                                           | Impact | Effort | Why                            |
+| -- | ------------------------------------------------------------------------------ | ------ | ------ | ------------------------------ |
+| 15 | **DiscordSync: file upstream issue** — INSERT OR IGNORE for UNIQUE constraints | Low    | 10 min | Reduces backfill log noise     |
+| 16 | **Add boot time tracking** — systemd-analyze to a file on each boot            | Low    | 15 min | Verify NVMe APST fix impact    |
+| 17 | **Automated service health timer** — run verify-deployment.sh daily            | Medium | 30 min | Catch service failures early   |
+| 18 | **Nix GC automation** — weekly `nix-collect-garbage` timer                     | High   | 15 min | Prevent disk from hitting 100% |
+| 19 | **Create CHANGELOG.md** — even auto-generated from conventional commits        | Low    | 30 min | Track changes between deploys  |
 
 ### Priority 5: Nice-to-Have
 
-| #   | Task                                                          | Impact | Effort | Why                                  |
-| --- | ------------------------------------------------------------- | ------ | ------ | ------------------------------------ |
-| 20  | **Pi 3 DNS failover** — provision hardware, wire VRRP cluster | High   | 4 hr   | But blocked on hardware availability |
-| 21  | **Auditd enablement** — when NixOS 26.05 bug fixed            | Medium | 1 hr   | Security hardening gap               |
-| 22  | **AppArmor profiles** — uncomment and test                    | Medium | 2 hr   | Security hardening gap               |
-| 23  | **Darwin Home Manager parity** — terminal, editor, theme      | Low    | 2 hr   | 256GB SSD nearly full — risky        |
-| 24  | **AGENTS.md gotcha cleanup** — categorize 40+ entries         | Low    | 30 min | Discoverability declining            |
-| 25  | **Push flake template to go-nix-helpers** — commit + push     | Low    | 5 min  | Benefit for new projects             |
+| #  | Task                                                          | Impact | Effort | Why                                  |
+| -- | ------------------------------------------------------------- | ------ | ------ | ------------------------------------ |
+| 20 | **Pi 3 DNS failover** — provision hardware, wire VRRP cluster | High   | 4 hr   | But blocked on hardware availability |
+| 21 | **Auditd enablement** — when NixOS 26.05 bug fixed            | Medium | 1 hr   | Security hardening gap               |
+| 22 | **AppArmor profiles** — uncomment and test                    | Medium | 2 hr   | Security hardening gap               |
+| 23 | **Darwin Home Manager parity** — terminal, editor, theme      | Low    | 2 hr   | 256GB SSD nearly full — risky        |
+| 24 | **AGENTS.md gotcha cleanup** — categorize 40+ entries         | Low    | 30 min | Discoverability declining            |
+| 25 | **Push flake template to go-nix-helpers** — commit + push     | Low    | 5 min  | Benefit for new projects             |
 
 ---
 

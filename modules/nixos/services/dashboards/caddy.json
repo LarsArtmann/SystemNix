@@ -295,7 +295,7 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "sum(rate(caddy_http_response_duration_seconds_sum[5m])) / sum(rate(caddy_http_response_duration_seconds_count[5m]))",
+                    "query": "sum(rate({__name__=\"caddy_http_response_duration_seconds.sum\"}[5m])) / sum(rate({__name__=\"caddy_http_response_duration_seconds.count\"}[5m]))",
                     "disabled": false,
                     "step": 0,
                     "stats": false,
@@ -358,7 +358,7 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "sum(rate(caddy_http_response_size_bytes_sum[5m]))",
+                    "query": "sum(rate({__name__=\"caddy_http_response_size_bytes.sum\"}[5m]))",
                     "disabled": false,
                     "step": 0,
                     "stats": false,

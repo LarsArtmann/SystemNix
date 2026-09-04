@@ -6,7 +6,6 @@ A full system deploy (`nix run .#deploy`) failed after 1h42m with 5 Go module FO
 
 ---
 
-
 ## a) FULLY DONE
 
 ### Root Cause
@@ -15,13 +14,13 @@ All 5 Go packages had their `go.sum` changed by `chore(deps)` commits (bumping g
 
 ### Fixes Applied (all pushed to GitHub)
 
-| # | Repo | Commit | Root Cause | Fix |
-|---|------|--------|------------|-----|
-| 1 | **dnsblockd** | `55d7727` | Commit `8132637` bumped go-health/templ-components/libc, vendorHash not updated | Updated `nix/vendor-hash.nix`: `sha256-TyyX...` → `sha256-mtPE5...` |
-| 2 | **go-humanize-linter** | `32a7704` | Dep refresh changed go.sum, vendorHash stale | Updated `flake.nix:185`: `sha256-yar9...` → `sha256-/ruZ...` |
-| 3 | **browser-history** | `0a10a23` | modernc/libc bump changed go.sum, vendorHash stale | Updated `flake.nix:266`: `sha256-8P/d...` → `sha256-CYdy...` |
-| 4 | **file-and-image-renamer** | `11ed3ac` (2 commits) | Dep bump + flake-pin-drift: templ-components v1.7→v1.8, httputil v0.9→v0.10 changed module graph | (a) Aligned flake.nix input pins with go.mod, (b) Updated vendorHash twice: first `sha256-RJfc...` → `sha256-e9J+...`, then after pin-drift fix → `sha256-/csG...` |
-| 5 | **crush-daily** | `f60c978` | 3 new indirect deps (`go-etag`, `go-idempotency`, `go-retry`) missing from `mkPreparedSource` validation → build failure. Plus stale vendorHash. | Added `publicDeps` list for the 3 public repos + updated vendorHash: `sha256-v917...` → `sha256-N/uM...` |
+| # | Repo                       | Commit                | Root Cause                                                                                                                                       | Fix                                                                                                                                                                |
+| - | -------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1 | **dnsblockd**              | `55d7727`             | Commit `8132637` bumped go-health/templ-components/libc, vendorHash not updated                                                                  | Updated `nix/vendor-hash.nix`: `sha256-TyyX...` → `sha256-mtPE5...`                                                                                                |
+| 2 | **go-humanize-linter**     | `32a7704`             | Dep refresh changed go.sum, vendorHash stale                                                                                                     | Updated `flake.nix:185`: `sha256-yar9...` → `sha256-/ruZ...`                                                                                                       |
+| 3 | **browser-history**        | `0a10a23`             | modernc/libc bump changed go.sum, vendorHash stale                                                                                               | Updated `flake.nix:266`: `sha256-8P/d...` → `sha256-CYdy...`                                                                                                       |
+| 4 | **file-and-image-renamer** | `11ed3ac` (2 commits) | Dep bump + flake-pin-drift: templ-components v1.7→v1.8, httputil v0.9→v0.10 changed module graph                                                 | (a) Aligned flake.nix input pins with go.mod, (b) Updated vendorHash twice: first `sha256-RJfc...` → `sha256-e9J+...`, then after pin-drift fix → `sha256-/csG...` |
+| 5 | **crush-daily**            | `f60c978`             | 3 new indirect deps (`go-etag`, `go-idempotency`, `go-retry`) missing from `mkPreparedSource` validation → build failure. Plus stale vendorHash. | Added `publicDeps` list for the 3 public repos + updated vendorHash: `sha256-v917...` → `sha256-N/uM...`                                                           |
 
 ### SystemNix Changes
 
@@ -95,18 +94,18 @@ Nothing. All 5 packages were fixed correctly, pushed, and verified. The only ine
 4. **Add vendorHash CI check to file-and-image-renamer**
 5. **Add vendorHash CI check to ALL other LarsArtmann Go repos** (herdr, discordsync, monitor365, etc.)
 6. **Add pre-deploy vendorHash validation to SystemNix `scripts/pre-deploy-check.sh`** — scan all Go flake inputs for FOD mismatches before deploy
-~~7. **Commit SystemNix `flake.lock` changes** from this session~~ done — auto-committed
-~~8. **Run `nix flake check --no-build`** on SystemNix to validate all outputs~~ done
+   ~~7. **Commit SystemNix `flake.lock` changes** from this session~~ done — auto-committed
+   ~~8. **Run `nix flake check --no-build`** on SystemNix to validate all outputs~~ done
 
 ### Medium Priority — Correctness
 
 9. **Verify file-and-image-renamer `filechange` sub-module vendorHash** (line 204) — may be stale after flake-pin-drift fix
-~~10. **Run full `nix run .#deploy`** to verify the complete build pipeline succeeds end-to-end~~ done — system deployed
-11. **Verify crush-daily `go mod tidy` in sandbox** — the `preBuild` runs `go mod tidy` which may shift deps further; verify the built binary works
-12. **Check if browser-history's agent sub-module** (`cmd/agent/go.mod`) needs a separate vendorHash update
-13. **Audit all LarsArtmann Go repos for flake-pin-drift** (flake input version vs go.mod require version mismatch)
-14. **Check if go-etag, go-idempotency, go-retry are truly public** on proxy.golang.org (crush-daily assumes they are)
-15. **Review the auto-git daemon's behavior on dnsblockd** — it pushed a commit that broke the build; should it run checks first?
+   ~~10. **Run full `nix run .#deploy`** to verify the complete build pipeline succeeds end-to-end~~ done — system deployed
+10. **Verify crush-daily `go mod tidy` in sandbox** — the `preBuild` runs `go mod tidy` which may shift deps further; verify the built binary works
+11. **Check if browser-history's agent sub-module** (`cmd/agent/go.mod`) needs a separate vendorHash update
+12. **Audit all LarsArtmann Go repos for flake-pin-drift** (flake input version vs go.mod require version mismatch)
+13. **Check if go-etag, go-idempotency, go-retry are truly public** on proxy.golang.org (crush-daily assumes they are)
+14. **Review the auto-git daemon's behavior on dnsblockd** — it pushed a commit that broke the build; should it run checks first?
 
 ### Low Priority — Quality of Life
 

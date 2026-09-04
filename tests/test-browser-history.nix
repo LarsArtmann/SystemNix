@@ -51,6 +51,11 @@ in
 
       sops.templates."browser-history-env" = { };
       sops.secrets.browser_history_agent_token = { };
+      # Agent-side DB-token env file (declared even though the agent is not
+      # enabled here: the module references the template path unconditionally
+      # via sops.templates when the agent module is imported).
+      sops.templates."browser-history-agent-env" = { };
+      sops.secrets.browser_history_agent_db_token = { };
 
       services.browser-history.enable = true;
 

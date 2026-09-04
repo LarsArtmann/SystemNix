@@ -16,7 +16,7 @@ Two avoidable user round-trips were burned on prescribe-first-check-later mistak
 ## a) FULLY DONE
 
 1. **Adjacency analysis (the session's most durable output).** Read partition geometry directly from `/sys/block/nvme0n1/*/start|size`: physical order is p7 `/boot` (1 MiB–4 GiB), p6 `/` (723 GiB), p8 `/data` (1.1 TiB), p9 (last, ends 176 sectors before disk end). **p9's only neighbor is `/data`, NOT root.** The TODO_LIST, AGENTS.md, and four status docs all assumed "optionally grow the adjacent BTRFS partition [root]" — impossible without physically relocating p8 (offline, hours, high risk). Corrected in TODO_LIST.md, AGENTS.md, CHANGELOG.md.
-2. **Decision framework executed via user question:** user chose *delete p9, leave unallocated* + *do the subvolume automount removal in the same pass*.
+2. **Decision framework executed via user question:** user chose _delete p9, leave unallocated_ + _do the subvolume automount removal in the same pass_.
 3. **Content audit of the four cache subvolumes before touching anything:** `@npm` empty (0 bytes); `@cargo` 2.4 GiB (registry, git checkouts, advisory dbs, `bin/`, **`credentials.toml`** — crates.io token); `@go` 3.1 GiB (`bin/` = golines + templ, plus `pkg/`); `@cache-home` 16 GiB **live app caches** (nix eval cache 6.0G, buildflow 1.5G, Helium browser profile 1.3G, gopls 328M, hyperframes, bun, yazi…).
 4. **`@cache-home` deliberately KEPT** — it has no buildcache home; its exclusion from btrbk `@` snapshots + pool sends is its entire job. Removing it would have pushed 16 GiB of churning caches into daily snapshots. Decision documented in `snapshots.nix` comment + AGENTS.md so no future session "finishes" the removal by mistake.
 5. **Seed migration to buildcache (no sudo needed):** `rsync -a` of `~/.cargo` → `/mnt/buildcache/cargo` (2.7 GiB, `bin/` verified byte-identical via `diff -r`) and `~/go/bin` → `/mnt/buildcache/go-bin-salvage` (32 MiB). `credentials.toml` preserved.
@@ -74,7 +74,7 @@ Two avoidable user round-trips were burned on prescribe-first-check-later mistak
 8. ~~**Unallocated-space decision** (g/2): the 100 GiB sits free; nothing needs it today, but it should be a DECISION, not drift.~~ done (DECIDED delete-only, left unallocated (TODO_LIST P2 records the user-run commands))
 9. **Add `gptfdisk` (sgdisk) to system packages** or drop a note in AGENTS.md that disk surgery uses `fdisk` — future sessions shouldn't repeat d/1.
 10. ~~**btrbk/scrub sanity pass after partition surgery** (paranoia): confirm tonight's 23:00/23:30 btrbk runs + pool sends succeed on the reshaped disk — the table rewrite happened while both BTRFS filesystems were mounted and in use.~~ done (first overnight pool cycle green 2026-08-18)
-11. **Root-disk trajectory**: 88% and the session was net-negative on free space. The two big levers stay `/home/hermes` (58 GiB, TODO P2 question) and Docker→SSD2 (TODO P2).
+~~11. **Root-disk trajectory**: 88% and the session was net-negative on free space. The two big levers stay `/home/hermes` (58 GiB, TODO P2 question) and Docker→SSD2 (TODO P2).~~ resolved-by-outcome — root at 82% (2026-08-31); /home/hermes re-measured 3.2M (stale claim); Docker→SSD2 superseded by the Samsung migration
 12. **`docs/gotchas-archive.md`**: add the two runbook lessons (d/1, d/2) as one compact entry — they're cheap, recurring, and exactly the file's purpose.
 
 ## g) QUESTIONS ONLY YOU CAN ANSWER
@@ -87,4 +87,4 @@ Two avoidable user round-trips were burned on prescribe-first-check-later mistak
 
 **Bottom line:** TODO item closed end-to-end (config `71256d6f` deployed in `5ddfe6d4`; subvols + p9 + mountpoint verified gone; `@cache-home` retained with reason). One months-old impossible plan ("grow root") corrected across living docs. Two preventable runbook stumbles cost round-trips but no damage. Open tails: old-shell churn, cargo GC gap, and three questions above.
 
-*Session halted — awaiting instructions.*
+_Session halted — awaiting instructions._

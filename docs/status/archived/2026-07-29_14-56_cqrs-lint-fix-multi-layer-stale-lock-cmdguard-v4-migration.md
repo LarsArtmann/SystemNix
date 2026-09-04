@@ -6,7 +6,6 @@
 
 ---
 
-
 ## What Was Done
 
 ### Root Cause (3 Layers Deep)
@@ -22,6 +21,7 @@ The TODO item described the symptom ("stale flake.lock with SSH URL") but the ac
 ### Changes Made
 
 **Upstream go-cqrs-lite (pushed to master — `e0855503..05d12c05`):**
+
 - Migrated all 4 `.go` files: `cmdguard/v3/pkg/cmdguard/v3` → `cmdguard/v4/pkg/cmdguard/v4`
 - Updated `cmd/cqrs-lint/go.mod`: `cmdguard/v3 v3.1.0` → `cmdguard/v4 v4.0.0`
 - Updated `flake.nix` deps map: `"github.com/larsartmann/cmdguard/v3"` → `"github.com/larsartmann/cmdguard/v4"`
@@ -30,19 +30,20 @@ The TODO item described the symptom ("stale flake.lock with SSH URL") but the ac
 - All cqrs-lint tests pass (12 packages, 0 failures)
 
 **SystemNix (committed — `664f575c`, `0969f025`, `94b115d9`):**
+
 - `lib/lars-packages.nix`: `cqrs-lint = null` → `cqrs-lint = inputs.go-cqrs-lite.packages.${system}.cqrs-lint or null`
 - `flake.lock`: `go-cqrs-lite_3` updated to rev `05d12c05cfa0a062909b3c0d37eeedc11bdfe940` (the fixed upstream commit)
 - `TODO_LIST.md`: task marked done with root cause summary
 
 ### Verification
 
-| Check | Result |
-|-------|--------|
-| `nix flake check --no-build` | ✅ all checks passed |
-| `nix build .#cqrs-lint` | ✅ `cqrs-lint 0.2.2` |
+| Check                            | Result                                                  |
+| -------------------------------- | ------------------------------------------------------- |
+| `nix flake check --no-build`     | ✅ all checks passed                                    |
+| `nix build .#cqrs-lint`          | ✅ `cqrs-lint 0.2.2`                                    |
 | `nix eval .#cqrs-lint.meta.name` | ✅ `cqrs-lint-05d12c05cfa0a062909b3c0d37eeedc11bdfe940` |
-| cqrs-lint in systemPackages | ✅ count = 1 |
-| Upstream `go test ./...` | ✅ 12 packages pass |
+| cqrs-lint in systemPackages      | ✅ count = 1                                            |
+| Upstream `go test ./...`         | ✅ 12 packages pass                                     |
 
 ---
 
@@ -115,12 +116,14 @@ The TODO item described the symptom ("stale flake.lock with SSH URL") but the ac
 ## f) Next Tasks (Up to 50)
 
 ### Immediate (this session's unfinished work)
+
 1. **Deploy to evo-x2** — `nix run .#deploy` to activate cqrs-lint on the live system
 2. **Run post-deploy-check** — `nix run .#post-deploy-check` to verify no silent failures
 3. **Update AGENTS.md** — Replace stale cqrs-lint gotchas (samber-do-auditlog v0.5.0 pin, cmdguard/v3 path, "temporarily disabled" notes) with the v4 migration + go.mod tidying pattern
 4. **Verify `cqrs-lint --version` in a new shell** on evo-x2 after deploy
 
 ### Consolidation & Cleanup
+
 5. **Audit all 4 go-cqrs-lite lock nodes** — determine if crush-daily/discordsync/overview can use `follows` to reduce to 1 node
 6. **Consider consolidating go-cqrs-lite consumers** to a single pinned rev across all SystemNix sub-flakes
 7. **Clean up orphan `go-cqrs-lite` node** (flake=false, SSH URL, rev 92d87145) if crush-daily can follow root instead
@@ -129,6 +132,7 @@ The TODO item described the symptom ("stale flake.lock with SSH URL") but the ac
 10. **Document the 4-node pattern** in flake.nix comments near the go-cqrs-lite input definition
 
 ### cqrs-lint Usage
+
 11. **Add cqrs-lint to `devShells.default`** for explicit dev-tool visibility
 12. **Run cqrs-lint against go-cqrs-lite itself** — dogfood the linter on its own codebase
 13. **Run cqrs-lint against SystemNix Go services** (discordsync, crush-daily, etc.) — validate real-world usage
@@ -136,6 +140,7 @@ The TODO item described the symptom ("stale flake.lock with SSH URL") but the ac
 15. **Consider adding cqrs-lint to CI** — `nix build .#cqrs-lint` as a gate
 
 ### Upstream go-cqrs-lite
+
 16. **Squash intermediate broken commits** or accept them as history (the final state is correct)
 17. **Add a post-build assertion** to `packages.cqrs-lint` — `test -x $out/bin/cqrs-lint` to catch silent empty builds
 18. **Consider adding `packages.cqrs-gen`** to the flake (same pattern as cqrs-lint)
@@ -143,6 +148,7 @@ The TODO item described the symptom ("stale flake.lock with SSH URL") but the ac
 20. **Add CI for cqrs-lint vendorHash drift** — catch upstream dep changes before they break SystemNix builds
 
 ### Lock & Dependency Hygiene
+
 21. **Run `nix flake lock --refresh` on all SystemNix inputs** to catch other stale SSH-URL nodes
 22. **Audit all `flake=false` inputs** for staleness (same pattern as go-cqrs-lite orphan)
 23. **Check if the `git insteadOf` rule** (`url.git@github.com:.insteadof=https://github.com/`) causes other lock issues
@@ -150,17 +156,20 @@ The TODO item described the symptom ("stale flake.lock with SSH URL") but the ac
 25. **Add a pre-commit or CI check** that catches `cqrs-lint = null` regressions
 
 ### Monitoring & Operations
+
 26. **Verify cqrs-lint doesn't break the evo-x2 closure size** significantly
 27. **Run `nix path-info -r .#cqrs-lint` to check closure size**
 28. **Monitor deploy for any start-limit-hit** or service restart issues
 
 ### Documentation
+
 29. **Document the mkPreparedSource go.mod tidying pattern** as a reusable recipe
 30. **Update docs/DOMAIN_LANGUAGE.md** if cqrs-lint concepts need domain definitions
 31. **Add cqrs-lint to FEATURES.md** if it's a user-facing dev tool
 32. **Update README.md** if cqrs-lint should be mentioned in dev tool setup
 
 ### Broader SystemNix
+
 33. **Run `nix flake check --all-systems`** to verify Darwin evaluation too
 34. **Check if any other LarsArtmann Go tools have the same cmdguard v3→v4 issue**
 35. **Audit all Go tool flake inputs for `flake=false` orphan patterns**
@@ -169,12 +178,14 @@ The TODO item described the symptom ("stale flake.lock with SSH URL") but the ac
 38. **Add a vendorHash CI check for all Go tool packages** in lars-packages.nix
 
 ### Testing
+
 39. **Write a test that builds cqrs-lint from SystemNix** — catch regressions
 40. **Write a test that cqrs-lint is in systemPackages** — catch `null` regressions
 41. **Write a test that cqrs-lint version matches expected** — catch upstream drift
 42. **Test cqrs-lint on a real go-cqrs-lite consumer project** — validate lint rules work
 
 ### Technical Debt
+
 43. **The `go-cqrs-lite` flake.nix comment says "Go dep inputs are NOT followed"** — update with rationale for the 4-node pattern
 44. **The cqrs-lint vendorHash is still fragile** — it breaks every time a transitive dep updates. Consider a more robust approach
 45. **The `samber-do-auditlog` version drift gotcha in AGENTS.md** (lines 379) is now partially stale — the v0.5.0 pin was removed, v0.8.1 resolves transitively

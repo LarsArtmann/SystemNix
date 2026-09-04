@@ -31,12 +31,12 @@
 
 **Tasks:** Integrate existing ghost systems (15-30 min each)
 
-| #   | Task                           | Effort | Value | File      | Why Critical            |
-| --- | ------------------------------ | ------ | ----- | --------- | ----------------------- |
-| 1   | Import core/Types.nix in flake | 15min  | 15%   | flake.nix | Enables all type safety |
-| 2   | Import core/State.nix in flake | 15min  | 12%   | flake.nix | Single source of truth  |
-| 3   | Import core/Validation.nix     | 15min  | 12%   | flake.nix | Platform validation     |
-| 4   | Enable TypeSafetySystem        | 30min  | 12%   | flake.nix | Compile-time checks     |
+| # | Task                           | Effort | Value | File      | Why Critical            |
+| - | ------------------------------ | ------ | ----- | --------- | ----------------------- |
+| 1 | Import core/Types.nix in flake | 15min  | 15%   | flake.nix | Enables all type safety |
+| 2 | Import core/State.nix in flake | 15min  | 12%   | flake.nix | Single source of truth  |
+| 3 | Import core/Validation.nix     | 15min  | 12%   | flake.nix | Platform validation     |
+| 4 | Enable TypeSafetySystem        | 30min  | 12%   | flake.nix | Compile-time checks     |
 
 **Total 1%:** 75 minutes = **51% value unlocked** ✅
 
@@ -48,12 +48,12 @@
 
 **Tasks:** Eliminate split brains + assertions (30-45 min each)
 
-| #   | Task                                            | Effort | Value | Files                           | Why Important           |
-| --- | ----------------------------------------------- | ------ | ----- | ------------------------------- | ----------------------- |
-| 5   | Consolidate user config (eliminate split brain) | 45min  | 5%    | users.nix + core/UserConfig.nix | Single source of truth  |
-| 6   | Consolidate path config                         | 30min  | 3%    | All .nix files                  | Centralized paths       |
-| 7   | Enable SystemAssertions                         | 30min  | 3%    | flake.nix                       | System-level validation |
-| 8   | Enable ModuleAssertions                         | 30min  | 2%    | wrappers/default.nix            | Module validation       |
+| # | Task                                            | Effort | Value | Files                           | Why Important           |
+| - | ----------------------------------------------- | ------ | ----- | ------------------------------- | ----------------------- |
+| 5 | Consolidate user config (eliminate split brain) | 45min  | 5%    | users.nix + core/UserConfig.nix | Single source of truth  |
+| 6 | Consolidate path config                         | 30min  | 3%    | All .nix files                  | Centralized paths       |
+| 7 | Enable SystemAssertions                         | 30min  | 3%    | flake.nix                       | System-level validation |
+| 8 | Enable ModuleAssertions                         | 30min  | 2%    | wrappers/default.nix            | Module validation       |
 
 **Total 4%:** 135 minutes (2.25 hours) = **13% additional value** (64% cumulative) ✅
 
@@ -65,14 +65,14 @@
 
 **Tasks:** Split files + refactor enums (45-90 min each)
 
-| #   | Task                                   | Effort | Value | Files                                                | Reason          |
-| --- | -------------------------------------- | ------ | ----- | ---------------------------------------------------- | --------------- |
-| 9   | Split system.nix (397 lines → 3 files) | 90min  | 4%    | system.nix → system/{defaults,activation,checks}.nix | Maintainability |
-| 10  | Replace bool with State enum           | 60min  | 3%    | All config files                                     | Type safety     |
-| 11  | Replace debug bool with LogLevel enum  | 45min  | 2%    | wrappers/                                            | Better control  |
-| 12  | Split BehaviorDrivenTests.nix          | 60min  | 2%    | testing/                                             | Separation      |
-| 13  | Split ErrorManagement.nix              | 60min  | 2%    | errors/                                              | Modularity      |
-| 14  | Add ConfigAssertions integration       | 45min  | 3%    | All modules                                          | Validation      |
+| #  | Task                                   | Effort | Value | Files                                                | Reason          |
+| -- | -------------------------------------- | ------ | ----- | ---------------------------------------------------- | --------------- |
+| 9  | Split system.nix (397 lines → 3 files) | 90min  | 4%    | system.nix → system/{defaults,activation,checks}.nix | Maintainability |
+| 10 | Replace bool with State enum           | 60min  | 3%    | All config files                                     | Type safety     |
+| 11 | Replace debug bool with LogLevel enum  | 45min  | 2%    | wrappers/                                            | Better control  |
+| 12 | Split BehaviorDrivenTests.nix          | 60min  | 2%    | testing/                                             | Separation      |
+| 13 | Split ErrorManagement.nix              | 60min  | 2%    | errors/                                              | Modularity      |
+| 14 | Add ConfigAssertions integration       | 45min  | 3%    | All modules                                          | Validation      |
 
 **Total 20%:** 360 minutes (6 hours) = **16% additional value** (80% cumulative) ✅
 

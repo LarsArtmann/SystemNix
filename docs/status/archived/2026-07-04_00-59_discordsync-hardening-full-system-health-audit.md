@@ -8,7 +8,6 @@
 
 ---
 
-
 ## Executive Summary
 
 SystemNix is a **mature, production-grade cross-platform Nix configuration** running 39 auto-discovered service modules across two active systems (NixOS `evo-x2` desktop, macOS `Lars-MacBook-Air`). This session audited the `discordsync.nix` module against the DiscordSync Go source (verdict: well-configured, one monitoring convention gap fixed), then compiled a full-system status snapshot.
@@ -188,33 +187,33 @@ SystemNix is a **mature, production-grade cross-platform Nix configuration** run
 
 ## f) Top 25 Things to Get Done Next
 
-| #   | Task                                                                                       | Impact   | Effort       | Dependency                             |
-| --- | ------------------------------------------------------------------------------------------ | -------- | ------------ | -------------------------------------- |
-| 1   | **Deploy the ~14 undeployed commits** (`nix run .#deploy`)                                 | Critical | 1 command    | Reboot after (verify boot time)        |
-| 2   | **Off-site backup** (Hetzner StorageBox + BorgBackup / Restic)                             | Critical | Medium       | Evaluated, needs execution             |
-| 3   | **Fix Monitor365 upstream** (Axum 0.7 `{param}` route syntax)                              | High     | Low          | Update flake input after               |
-| 4   | **Gatus maintenance windows** (suppress deploy-time alerts)                                | High     | Low          | —                                      |
-| 5   | **Caddy admin API hardening** (`admin off` + `:2019 { metrics }`)                          | High     | Medium       | Test `nh os switch` reload still works |
-| 6   | **DNS migration Phase 2a** (dnsblockd module rework for `:53` primary)                     | High     | ~6h          | dnsblockd v0.2.0 pinned                |
-| 7   | **Firewall deny-by-default** with explicit service allowlist                               | High     | Medium       | Test all services reachable            |
-| 8   | **BTRFS `/data` → `@data` subvolume** migration                                            | High     | ~1h downtime | USB rescue boot                        |
-| 9   | **PostgreSQL textfile exporter** (`pg_isready` + conn count)                               | Medium   | Medium       | —                                      |
-| 10  | **Caddy access logs → SigNoz** (filelog receiver)                                          | Medium   | Medium       | —                                      |
-| 11  | **Gatus `/metrics` → SigNoz** scrape config                                                | Medium   | Low          | —                                      |
-| 12  | **Bind Immich to localhost** (remove `openFirewall`)                                       | Medium   | Low          | Caddy already proxies                  |
-| 13  | **Caddy request body size limits** on upload vhosts                                        | Medium   | Low          | —                                      |
-| 14  | **Caddy upstream health checks** (`health_uri` on reverse_proxy)                           | High     | Medium       | Per-backend health endpoints           |
-| 15  | **Gatus → Homepage integration** (real-time status dots)                                   | Low      | Low          | —                                      |
-| 16  | **DNS migration Phase 2b-2c** (config + dependency updates)                                | High     | ~4h          | Phase 2a done                          |
-| 17  | **DNS migration Phase 3** (deploy + 24h observation)                                       | High     | 24h observe  | 2b-2c done                             |
-| 18  | **DNS migration Phase 4** (remove unbound entirely)                                        | Medium   | Low          | 24h stable                             |
-| 19  | **Cloud sync for DiscordSync attachments** verified (check GCS bucket has data)            | Medium   | Low          | `gsutil ls gs://discordsync-backup`    |
-| 20  | **Split large modules** (monitor365 716L, signoz 705L, forgejo 583L)                       | Low      | Medium       | —                                      |
-| 21  | **Hermes: install SSH deploy key + set fallback model** (manual steps)                     | Medium   | Low          | Blocked on human                       |
-| 22  | **Typed NixOS module options** (ports, paths, timeouts)                                    | Low      | High         | Incremental                            |
-| 23  | **Disabled service triage** — remove photomap (decided), decide voice-agents               | Low      | Low          | —                                      |
-| 24  | **Upstream nixpkgs PRs** (aw-watcher-utilization, taskwarrior3 flags, KeePassXC manifests) | Low      | Medium       | Community benefit                      |
-| 25  | **Monitoring runbook** (what to do when each Discord alert fires)                          | Medium   | Medium       | —                                      |
+| #  | Task                                                                                       | Impact   | Effort       | Dependency                             |
+| -- | ------------------------------------------------------------------------------------------ | -------- | ------------ | -------------------------------------- |
+| 1  | **Deploy the ~14 undeployed commits** (`nix run .#deploy`)                                 | Critical | 1 command    | Reboot after (verify boot time)        |
+| 2  | **Off-site backup** (Hetzner StorageBox + BorgBackup / Restic)                             | Critical | Medium       | Evaluated, needs execution             |
+| 3  | **Fix Monitor365 upstream** (Axum 0.7 `{param}` route syntax)                              | High     | Low          | Update flake input after               |
+| 4  | **Gatus maintenance windows** (suppress deploy-time alerts)                                | High     | Low          | —                                      |
+| 5  | **Caddy admin API hardening** (`admin off` + `:2019 { metrics }`)                          | High     | Medium       | Test `nh os switch` reload still works |
+| 6  | **DNS migration Phase 2a** (dnsblockd module rework for `:53` primary)                     | High     | ~6h          | dnsblockd v0.2.0 pinned                |
+| 7  | **Firewall deny-by-default** with explicit service allowlist                               | High     | Medium       | Test all services reachable            |
+| 8  | **BTRFS `/data` → `@data` subvolume** migration                                            | High     | ~1h downtime | USB rescue boot                        |
+| 9  | **PostgreSQL textfile exporter** (`pg_isready` + conn count)                               | Medium   | Medium       | —                                      |
+| 10 | **Caddy access logs → SigNoz** (filelog receiver)                                          | Medium   | Medium       | —                                      |
+| 11 | **Gatus `/metrics` → SigNoz** scrape config                                                | Medium   | Low          | —                                      |
+| 12 | **Bind Immich to localhost** (remove `openFirewall`)                                       | Medium   | Low          | Caddy already proxies                  |
+| 13 | **Caddy request body size limits** on upload vhosts                                        | Medium   | Low          | —                                      |
+| 14 | **Caddy upstream health checks** (`health_uri` on reverse_proxy)                           | High     | Medium       | Per-backend health endpoints           |
+| 15 | **Gatus → Homepage integration** (real-time status dots)                                   | Low      | Low          | —                                      |
+| 16 | **DNS migration Phase 2b-2c** (config + dependency updates)                                | High     | ~4h          | Phase 2a done                          |
+| 17 | **DNS migration Phase 3** (deploy + 24h observation)                                       | High     | 24h observe  | 2b-2c done                             |
+| 18 | **DNS migration Phase 4** (remove unbound entirely)                                        | Medium   | Low          | 24h stable                             |
+| 19 | **Cloud sync for DiscordSync attachments** verified (check GCS bucket has data)            | Medium   | Low          | `gsutil ls gs://discordsync-backup`    |
+| 20 | **Split large modules** (monitor365 716L, signoz 705L, forgejo 583L)                       | Low      | Medium       | —                                      |
+| 21 | **Hermes: install SSH deploy key + set fallback model** (manual steps)                     | Medium   | Low          | Blocked on human                       |
+| 22 | **Typed NixOS module options** (ports, paths, timeouts)                                    | Low      | High         | Incremental                            |
+| 23 | **Disabled service triage** — remove photomap (decided), decide voice-agents               | Low      | Low          | —                                      |
+| 24 | **Upstream nixpkgs PRs** (aw-watcher-utilization, taskwarrior3 flags, KeePassXC manifests) | Low      | Medium       | Community benefit                      |
+| 25 | **Monitoring runbook** (what to do when each Discord alert fires)                          | Medium   | Medium       | —                                      |
 
 ---
 

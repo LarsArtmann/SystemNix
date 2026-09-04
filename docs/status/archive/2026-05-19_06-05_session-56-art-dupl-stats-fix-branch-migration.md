@@ -76,33 +76,33 @@ When a templ/sqlc/protobuf file was filtered, `filterStats.TotalFiltered() > 0` 
 
 ## C) NOT STARTED
 
-| #   | Item                                                                                     | Priority | Effort  | Impact                     |
-| --- | ---------------------------------------------------------------------------------------- | -------- | ------- | -------------------------- |
-| 1   | Migrate go-auto-upgrade to `mkPreparedSource` pattern                                    | Low      | Medium  | Code consistency           |
-| 2   | Add overlay package build verification to `just test`                                    | Medium   | Small   | Catch build failures in CI |
-| 3   | Fix `projects-management-automation` eval failure                                        | Low      | Unknown | Completeness               |
-| 4   | Fix `hostPlatform` deprecation warning                                                   | Low      | Small   | Clean eval output          |
-| 5   | Add CI pipeline (GitHub Actions) for SystemNix                                           | Low      | Medium  | Automated validation       |
-| 6   | Deduplicate lockfile — Go private repo transitive deps (23 suffixed nodes)               | Low      | Large   | ~3-5 GB eval memory        |
-| 7   | Merge remaining art-dupl `fork` branch ref to master (DONE but fork branch still exists) | Trivial  | Trivial | Cleanup                    |
-| 8   | Raspberry Pi 3 DNS failover node provisioning                                            | Planned  | Large   | HA DNS                     |
-| 9   | Add BDD tests for art-dupl CSV/JSON stats output formats                                 | Low      | Small   | Test coverage              |
-| 10  | Investigate art-dupl `gogenfilter` using `os.DirFS(".")` with absolute paths             | Low      | Small   | Correctness                |
-| 11  | Add `SetFilterStats` to art-dupl Go API docs/examples                                    | Low      | Trivial | API discoverability        |
-| 12  | Publish art-dupl v1.0.0 tag on master                                                    | Low      | Trivial | Release tracking           |
-| 13  | Review art-dupl `ApplyStatsConfig` for other partial-call sites                          | Low      | Small   | Prevent recurrence         |
-| 14  | Extend `just test` to build all 13 overlay packages (not just eval)                      | Medium   | Small   | Build verification         |
-| 15  | Add `nix flake check` to pre-commit or CI                                                | Medium   | Small   | Automated quality          |
-| 16  | Investigate art-dupl semantic detection producing no matches for simple duplicates       | Low      | Medium  | Detection quality          |
-| 17  | Clean up art-dupl fork branch on GitHub (delete after master is confirmed stable)        | Trivial  | Trivial | Branch hygiene             |
-| 18  | Document art-dupl stats bug in AGENTS.md as a gotcha                                     | Low      | Trivial | Knowledge sharing          |
-| 19  | Migrate art-dupl CI to use `nix flake check` instead of raw `go test`                    | Low      | Medium  | Nix-native CI              |
-| 20  | Add integration test: art-dupl stats with filtered files produces non-empty output       | Low      | Small   | Regression prevention      |
-| 21  | Investigate why Forgejo services fail on deploy                                          | High     | Medium  | Core service               |
-| 22  | Add Forgejo health check endpoint to Gatus                                               | Low      | Trivial | Monitoring                 |
-| 23  | Review and update Forgejo sops secrets after migration                                   | High     | Small   | Secrets management         |
-| 24  | Add `just test-overlays` recipe to build all 13 overlay packages                         | Medium   | Small   | Developer UX               |
-| 25  | Document mkPreparedSource pattern in AGENTS.md for new repo onboarding                   | Low      | Small   | Knowledge sharing          |
+| #  | Item                                                                                     | Priority | Effort  | Impact                     |
+| -- | ---------------------------------------------------------------------------------------- | -------- | ------- | -------------------------- |
+| 1  | Migrate go-auto-upgrade to `mkPreparedSource` pattern                                    | Low      | Medium  | Code consistency           |
+| 2  | Add overlay package build verification to `just test`                                    | Medium   | Small   | Catch build failures in CI |
+| 3  | Fix `projects-management-automation` eval failure                                        | Low      | Unknown | Completeness               |
+| 4  | Fix `hostPlatform` deprecation warning                                                   | Low      | Small   | Clean eval output          |
+| 5  | Add CI pipeline (GitHub Actions) for SystemNix                                           | Low      | Medium  | Automated validation       |
+| 6  | Deduplicate lockfile — Go private repo transitive deps (23 suffixed nodes)               | Low      | Large   | ~3-5 GB eval memory        |
+| 7  | Merge remaining art-dupl `fork` branch ref to master (DONE but fork branch still exists) | Trivial  | Trivial | Cleanup                    |
+| 8  | Raspberry Pi 3 DNS failover node provisioning                                            | Planned  | Large   | HA DNS                     |
+| 9  | Add BDD tests for art-dupl CSV/JSON stats output formats                                 | Low      | Small   | Test coverage              |
+| 10 | Investigate art-dupl `gogenfilter` using `os.DirFS(".")` with absolute paths             | Low      | Small   | Correctness                |
+| 11 | Add `SetFilterStats` to art-dupl Go API docs/examples                                    | Low      | Trivial | API discoverability        |
+| 12 | Publish art-dupl v1.0.0 tag on master                                                    | Low      | Trivial | Release tracking           |
+| 13 | Review art-dupl `ApplyStatsConfig` for other partial-call sites                          | Low      | Small   | Prevent recurrence         |
+| 14 | Extend `just test` to build all 13 overlay packages (not just eval)                      | Medium   | Small   | Build verification         |
+| 15 | Add `nix flake check` to pre-commit or CI                                                | Medium   | Small   | Automated quality          |
+| 16 | Investigate art-dupl semantic detection producing no matches for simple duplicates       | Low      | Medium  | Detection quality          |
+| 17 | Clean up art-dupl fork branch on GitHub (delete after master is confirmed stable)        | Trivial  | Trivial | Branch hygiene             |
+| 18 | Document art-dupl stats bug in AGENTS.md as a gotcha                                     | Low      | Trivial | Knowledge sharing          |
+| 19 | Migrate art-dupl CI to use `nix flake check` instead of raw `go test`                    | Low      | Medium  | Nix-native CI              |
+| 20 | Add integration test: art-dupl stats with filtered files produces non-empty output       | Low      | Small   | Regression prevention      |
+| 21 | Investigate why Forgejo services fail on deploy                                          | High     | Medium  | Core service               |
+| 22 | Add Forgejo health check endpoint to Gatus                                               | Low      | Trivial | Monitoring                 |
+| 23 | Review and update Forgejo sops secrets after migration                                   | High     | Small   | Secrets management         |
+| 24 | Add `just test-overlays` recipe to build all 13 overlay packages                         | Medium   | Small   | Developer UX               |
+| 25 | Document mkPreparedSource pattern in AGENTS.md for new repo onboarding                   | Low      | Small   | Knowledge sharing          |
 
 ---
 

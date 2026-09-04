@@ -96,30 +96,30 @@ SystemNix is a cross-platform Nix flake managing two machines through ~12,200 li
 
 ### P1 — SECURITY (0/4 remaining started) — 43% complete
 
-| #   | Task                                    | Blocker                               |
-| --- | --------------------------------------- | ------------------------------------- |
-| 7   | Move Taskwarrior encryption to sops-nix | Needs evo-x2 for sops secret creation |
-| 9   | Pin Docker digest for Voice Agents      | Needs evo-x2 to pull digest           |
-| 10  | Pin Docker digest for PhotoMap          | Needs evo-x2 to pull digest           |
-| 11  | Secure VRRP auth_pass with sops         | Needs evo-x2 for sops secret          |
+| #  | Task                                    | Blocker                               |
+| -- | --------------------------------------- | ------------------------------------- |
+| 7  | Move Taskwarrior encryption to sops-nix | Needs evo-x2 for sops secret creation |
+| 9  | Pin Docker digest for Voice Agents      | Needs evo-x2 to pull digest           |
+| 10 | Pin Docker digest for PhotoMap          | Needs evo-x2 to pull digest           |
+| 11 | Secure VRRP auth_pass with sops         | Needs evo-x2 for sops secret          |
 
 ### P5 — DEPLOYMENT & VERIFICATION (0/13 started) — 0% complete
 
-| #   | Task                              | Blocker               |
-| --- | --------------------------------- | --------------------- |
-| 41  | `just switch` on evo-x2           | Physical access / SSH |
-| 42  | Verify Ollama works               | After P5-41           |
-| 43  | Verify Steam works                | After P5-41           |
-| 44  | Verify ComfyUI works              | After P5-41           |
-| 45  | Verify Caddy HTTPS block page     | After P5-41           |
-| 46  | Verify SigNoz metrics/logs/traces | After P5-41           |
-| 47  | Check Authelia SSO status         | After P5-41           |
-| 48  | Check PhotoMap service status     | After P5-41           |
-| 49  | Verify AMD NPU with test workload | After P5-41           |
-| 50  | Build Pi 3 SD image               | 30m+ build on evo-x2  |
-| 51  | Flash SD + boot Pi 3              | Physical access       |
-| 52  | Test DNS failover                 | After P5-51           |
-| 53  | Configure LAN devices for DNS VIP | Network access        |
+| #  | Task                              | Blocker               |
+| -- | --------------------------------- | --------------------- |
+| 41 | `just switch` on evo-x2           | Physical access / SSH |
+| 42 | Verify Ollama works               | After P5-41           |
+| 43 | Verify Steam works                | After P5-41           |
+| 44 | Verify ComfyUI works              | After P5-41           |
+| 45 | Verify Caddy HTTPS block page     | After P5-41           |
+| 46 | Verify SigNoz metrics/logs/traces | After P5-41           |
+| 47 | Check Authelia SSO status         | After P5-41           |
+| 48 | Check PhotoMap service status     | After P5-41           |
+| 49 | Verify AMD NPU with test workload | After P5-41           |
+| 50 | Build Pi 3 SD image               | 30m+ build on evo-x2  |
+| 51 | Flash SD + boot Pi 3              | Physical access       |
+| 52 | Test DNS failover                 | After P5-51           |
+| 53 | Configure LAN devices for DNS VIP | Network access        |
 
 ### P6 — SERVICES (4 remaining)
 
@@ -132,18 +132,18 @@ SystemNix is a cross-platform Nix flake managing two machines through ~12,200 li
 
 ### P9 — FUTURE (10 remaining)
 
-| #   | Task                                  | Category     | Effort |
-| --- | ------------------------------------- | ------------ | ------ |
-| 86  | homeModules pattern via flake-parts   | Architecture | 12m    |
-| 87  | Package ComfyUI as Nix derivation     | Architecture | 60m+   |
-| 88  | Unified auth (lldap/Kanidm)           | Architecture | 60m+   |
-| 89  | Migrate Pi 3 to nixos-hardware        | Architecture | 12m    |
-| 91  | NixOS VM tests for services           | Testing      | 60m+   |
-| 92  | Binary cache (Cachix)                 | Performance  | 30m+   |
-| 93  | Waybar session restore stats          | Feature      | 10m    |
-| 94  | Real-time save via niri event-stream  | Feature      | 12m    |
-| 95  | Integration tests for session restore | Testing      | 12m    |
-| 96  | File nixpkgs issue for hipblaslt      | Upstream     | 10m    |
+| #  | Task                                  | Category     | Effort |
+| -- | ------------------------------------- | ------------ | ------ |
+| 86 | homeModules pattern via flake-parts   | Architecture | 12m    |
+| 87 | Package ComfyUI as Nix derivation     | Architecture | 60m+   |
+| 88 | Unified auth (lldap/Kanidm)           | Architecture | 60m+   |
+| 89 | Migrate Pi 3 to nixos-hardware        | Architecture | 12m    |
+| 91 | NixOS VM tests for services           | Testing      | 60m+   |
+| 92 | Binary cache (Cachix)                 | Performance  | 30m+   |
+| 93 | Waybar session restore stats          | Feature      | 10m    |
+| 94 | Real-time save via niri event-stream  | Feature      | 12m    |
+| 95 | Integration tests for session restore | Testing      | 12m    |
+| 96 | File nixpkgs issue for hipblaslt      | Upstream     | 10m    |
 
 ---
 
@@ -185,58 +185,58 @@ Nothing is fundamentally broken. Closest items:
 
 ### Immediate (unblocks everything else)
 
-| #   | Task                               | Why                                                                                  | Est. |
-| --- | ---------------------------------- | ------------------------------------------------------------------------------------ | ---- |
-| 1   | **P5-41: `just switch` on evo-x2** | Every other deploy/verify task is blocked on this. 6 sessions of changes undeployed. | 45m  |
-| 2   | **P5-42: Verify Ollama**           | Core AI service, ROCBLAS_USE_HIPBLASLT flag removed, needs runtime verification      | 5m   |
-| 3   | **P5-44: Verify ComfyUI**          | rocmEnv changed, hipblaslt dependency removed                                        | 5m   |
-| 4   | **P5-46: Verify SigNoz**           | Largest service module (747 lines), complex OTel pipeline                            | 5m   |
+| # | Task                               | Why                                                                                  | Est. |
+| - | ---------------------------------- | ------------------------------------------------------------------------------------ | ---- |
+| 1 | **P5-41: `just switch` on evo-x2** | Every other deploy/verify task is blocked on this. 6 sessions of changes undeployed. | 45m  |
+| 2 | **P5-42: Verify Ollama**           | Core AI service, ROCBLAS_USE_HIPBLASLT flag removed, needs runtime verification      | 5m   |
+| 3 | **P5-44: Verify ComfyUI**          | rocmEnv changed, hipblaslt dependency removed                                        | 5m   |
+| 4 | **P5-46: Verify SigNoz**           | Largest service module (747 lines), complex OTel pipeline                            | 5m   |
 
 ### Security (should do soon after deploy)
 
-| #   | Task                                          | Why                                                          | Est. |
-| --- | --------------------------------------------- | ------------------------------------------------------------ | ---- |
-| 5   | **P1-7: Move Taskwarrior encryption to sops** | Current key is public in repo (hardcoded hash)               | 10m  |
-| 6   | **P1-9/10: Pin Docker digests**               | `latest` tags for voice-agents + photomap can break silently | 10m  |
-| 7   | **P1-11: Secure VRRP auth_pass with sops**    | Plaintext in dns-failover.nix                                | 8m   |
+| # | Task                                          | Why                                                          | Est. |
+| - | --------------------------------------------- | ------------------------------------------------------------ | ---- |
+| 5 | **P1-7: Move Taskwarrior encryption to sops** | Current key is public in repo (hardcoded hash)               | 10m  |
+| 6 | **P1-9/10: Pin Docker digests**               | `latest` tags for voice-agents + photomap can break silently | 10m  |
+| 7 | **P1-11: Secure VRRP auth_pass with sops**    | Plaintext in dns-failover.nix                                | 8m   |
 
 ### Service reliability
 
-| #   | Task                                          | Why                                                    | Est. |
-| --- | --------------------------------------------- | ------------------------------------------------------ | ---- |
-| 8   | **P6-63: Test Hermes without mergeEnvScript** | Redundant env vars, clean up after evo-x2 verification | 10m  |
-| 9   | **P5-45: Verify Caddy HTTPS block page**      | DNS blocker stack depends on this                      | 3m   |
-| 10  | **P5-47: Check Authelia SSO**                 | Gateway to all services                                | 3m   |
-| 11  | **P5-48: Check PhotoMap**                     | Service using `latest` Docker tag                      | 3m   |
-| 12  | **P5-49: Verify AMD NPU**                     | XDNA driver + test workload                            | 10m  |
+| #  | Task                                          | Why                                                    | Est. |
+| -- | --------------------------------------------- | ------------------------------------------------------ | ---- |
+| 8  | **P6-63: Test Hermes without mergeEnvScript** | Redundant env vars, clean up after evo-x2 verification | 10m  |
+| 9  | **P5-45: Verify Caddy HTTPS block page**      | DNS blocker stack depends on this                      | 3m   |
+| 10 | **P5-47: Check Authelia SSO**                 | Gateway to all services                                | 3m   |
+| 11 | **P5-48: Check PhotoMap**                     | Service using `latest` Docker tag                      | 3m   |
+| 12 | **P5-49: Verify AMD NPU**                     | XDNA driver + test workload                            | 10m  |
 
 ### Infrastructure
 
-| #   | Task                                 | Why                               | Est. |
-| --- | ------------------------------------ | --------------------------------- | ---- |
-| 13  | **P5-50: Build Pi 3 SD image**       | Required for DNS failover testing | 30m+ |
-| 14  | **P5-51: Flash + boot Pi 3**         | Physical step                     | 15m  |
-| 15  | **P5-52: Test DNS failover**         | Validates dns-failover.nix module | 10m  |
-| 16  | **P5-53: Configure LAN for DNS VIP** | Final DNS infrastructure step     | 10m  |
+| #  | Task                                 | Why                               | Est. |
+| -- | ------------------------------------ | --------------------------------- | ---- |
+| 13 | **P5-50: Build Pi 3 SD image**       | Required for DNS failover testing | 30m+ |
+| 14 | **P5-51: Flash + boot Pi 3**         | Physical step                     | 15m  |
+| 15 | **P5-52: Test DNS failover**         | Validates dns-failover.nix module | 10m  |
+| 16 | **P5-53: Configure LAN for DNS VIP** | Final DNS infrastructure step     | 10m  |
 
 ### Quick wins on evo-x2
 
-| #   | Task                               | Why                                    | Est. |
-| --- | ---------------------------------- | -------------------------------------- | ---- |
-| 17  | **P6-66: Authelia SMTP**           | Needs user to provide SMTP credentials | 10m  |
-| 18  | **P6-65: SigNoz missing metrics**  | Verify 10 service metric endpoints     | 15m  |
-| 19  | **P6-67/68: Backup restore tests** | Immich + Twenty backup verification    | 15m  |
+| #  | Task                               | Why                                    | Est. |
+| -- | ---------------------------------- | -------------------------------------- | ---- |
+| 17 | **P6-66: Authelia SMTP**           | Needs user to provide SMTP credentials | 10m  |
+| 18 | **P6-65: SigNoz missing metrics**  | Verify 10 service metric endpoints     | 15m  |
+| 19 | **P6-67/68: Backup restore tests** | Immich + Twenty backup verification    | 15m  |
 
 ### Architecture (future session, lower priority)
 
-| #   | Task                                            | Why                                                 | Est. |
-| --- | ----------------------------------------------- | --------------------------------------------------- | ---- |
-| 20  | **P9-93: Waybar session restore stats**         | Nice UX improvement                                 | 10m  |
-| 21  | **P9-94: Real-time save via niri event-stream** | Eliminates 60s polling interval                     | 12m  |
-| 22  | **P9-92: Binary cache (Cachix)**                | hipblaslt build took 47min; cache prevents rebuilds | 30m  |
-| 23  | **P9-87: Package ComfyUI as Nix derivation**    | Currently Docker-only                               | 60m+ |
-| 24  | **P9-91: NixOS VM tests**                       | Catch regressions before deploy                     | 60m+ |
-| 25  | **Clean up `with pkgs;` instances**             | Reduce implicit scoping risk                        | 60m  |
+| #  | Task                                            | Why                                                 | Est. |
+| -- | ----------------------------------------------- | --------------------------------------------------- | ---- |
+| 20 | **P9-93: Waybar session restore stats**         | Nice UX improvement                                 | 10m  |
+| 21 | **P9-94: Real-time save via niri event-stream** | Eliminates 60s polling interval                     | 12m  |
+| 22 | **P9-92: Binary cache (Cachix)**                | hipblaslt build took 47min; cache prevents rebuilds | 30m  |
+| 23 | **P9-87: Package ComfyUI as Nix derivation**    | Currently Docker-only                               | 60m+ |
+| 24 | **P9-91: NixOS VM tests**                       | Catch regressions before deploy                     | 60m+ |
+| 25 | **Clean up `with pkgs;` instances**             | Reduce implicit scoping risk                        | 60m  |
 
 ---
 

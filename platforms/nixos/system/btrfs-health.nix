@@ -7,7 +7,13 @@
 # Five components:
 #   1. btrfs-health.service — collects Prometheus metrics every 5 min
 #   2. ExecStartPre guard on nix-gc + nix-build-cleanup — aborts reclamation
-#      when device-unallocated < 10% (the deadlock threshold)
+#      when device-unallocated is below an absolute GiB floor (metadata
+#      churn headroom) or metadata utilization is >90% (the real ENOSPC
+#      precursor). NEVER gate on a % of the device: 10% of a 723 GiB device
+#      is 72 GiB — a level GC itself cannot restore (deleting files frees
+#      extents WITHIN allocated chunks; only balance returns chunks), so a
+#      %-gate deadlocks exactly when reclamation is most needed (live
+#      2026-08-17..21: GC blocked 5 nights at 3% unalloc = 21 GiB idle).
 #   3. btrfs-balance-metadata.timer — weekly metadata chunk consolidation
 #   4. btrfs-balance-data.timer — weekly bounded data chunk consolidation
 #   5. btrfs-emergency-reserve.service — 10 GiB fallocated recovery reserve
@@ -29,8 +35,13 @@ let
   textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
   stateDir = "/var/lib/btrfs-health";
 
-  # Below this % of device-unallocated, GC is blocked (metadata ENOSPC risk).
-  gcBlockThreshold = 10;
+  # GC needs a few GiB of device-unallocated for its metadata (extent-tree)
+  # churn — the same 5 GiB floor the balance jobs in this module use.
+  gcMinUnallocBytes = 5 * 1024 * 1024 * 1024;
+
+  # Metadata utilization above this is the actual 2026-06-26 crash precursor:
+  # block GC before metadata-pool ENOSPC, independent of unallocated bytes.
+  gcMetaBlockPct = 90;
 
   # ── Shared parser: btrfs filesystem usage → KEY=VALUE pairs on stdout ──────
   # Used by both the metrics collector and the GC guard.
@@ -111,20 +122,34 @@ let
     runtimeInputs = [ btrfsChunkCheck ];
     text = ''
       set -uo pipefail
-      eval "$(btrfs-chunk-check / 2>/dev/null)"
+      # timeout: same ioctl-wedge class as the metrics collector (2026-08-31);
+      # on timeout the UNALLOC_BYTES default of 0 makes the guard ABORT GC —
+      # fail-closed (no GC on unknown chunk headroom), never a hang on nix-gc.
+      eval "$(timeout 30 btrfs-chunk-check / 2>/dev/null)"
+      : "''${UNALLOC_BYTES:=0}"
       : "''${UNALLOC_PCT:=100}"
       : "''${META_PCT:=0}"
 
-      if [ "$UNALLOC_PCT" -lt ${toString gcBlockThreshold} ]; then
-        echo "BTRFS GUARD: ABORT — device-unallocated at ''${UNALLOC_PCT}% (threshold ${toString gcBlockThreshold}%). GC would cause metadata ENOSPC deadlock." >&2
-        echo "Free space first: grow partition, delete old snapshots, or run 'btrfs balance start -musage=50 /'" >&2
+      if [ "$UNALLOC_BYTES" -lt ${toString gcMinUnallocBytes} ]; then
+        echo "BTRFS GUARD: ABORT — device-unallocated at ''${UNALLOC_BYTES} bytes (''${UNALLOC_PCT}%), below the ${toString gcMinUnallocBytes}-byte floor. GC metadata churn risks ENOSPC." >&2
+        echo "Chunk-headroom recovery runbook (in order):" >&2
+        echo "  1. Free extents: rm /btrfs-emergency-reserve (instant 10 GiB), let old btrbk snapshots expire" >&2
+        echo "  2. Wait for QUIET: zram <80% AND low IO pressure. Balance during pressure FROZE the machine (2026-08-24)" >&2
+        echo "  3. One bounded balance at idle IO: sudo ionice -c 3 btrfs balance start -dusage=5 -dlimit=2 /" >&2
+        echo "  4. Re-provision the reserve: sudo systemctl start btrfs-emergency-reserve" >&2
+        echo "NEVER 'btrfs balance start' without step 1: with no freed extents there is no relocation write room and the IO livelock freezes the box (2026-08-24 crash #3: manual balance at 0% unalloc + zram 85%, dead in 2.5 min)." >&2
+        exit 1
+      fi
+
+      if [ "$META_PCT" -gt ${toString gcMetaBlockPct} ]; then
+        echo "BTRFS GUARD: ABORT — metadata utilization at ''${META_PCT}% (> ${toString gcMetaBlockPct}%), the 2026-06-26 ENOSPC precursor. Run 'sudo systemctl start btrfs-balance-metadata.service' BEFORE reclaiming." >&2
         exit 1
       fi
 
       if [ "$META_PCT" -gt 85 ]; then
         echo "BTRFS GUARD: WARNING — metadata at ''${META_PCT}% — GC proceeding but may increase metadata pressure" >&2
       else
-        echo "BTRFS GUARD: OK — device-unallocated=''${UNALLOC_PCT}% metadata=''${META_PCT}%"
+        echo "BTRFS GUARD: OK — device-unallocated=''${UNALLOC_PCT}% (''${UNALLOC_BYTES} bytes) metadata=''${META_PCT}%"
       fi
     '';
   };
@@ -146,7 +171,10 @@ let
 
       mkdir -p "${textfileDir}" "${stateDir}"
 
-      eval "$(btrfs-chunk-check / 2>/dev/null)"
+      # timeout: `btrfs filesystem usage` is the same wedge-prone ioctl
+      # family as scrub status (2026-08-31). Bounded here too — on timeout
+      # the defaults below apply and the cycle degrades instead of hanging.
+      eval "$(timeout 30 btrfs-chunk-check / 2>/dev/null)"
       : "''${DEVICE_SIZE_BYTES:=0}"
       : "''${UNALLOC_BYTES:=0}"
       : "''${ALLOC_BYTES:=0}"
@@ -228,7 +256,7 @@ let
         scrub_total_errors=0
         scrub_all_finished=1
         for scrub_mnt in / /data; do
-          scrub_out=$(btrfs scrub status "$scrub_mnt" 2>/dev/null) || continue
+          scrub_out=$(timeout 30 btrfs scrub status "$scrub_mnt" 2>/dev/null) || continue
           scrub_err=$(echo "$scrub_out" | awk '
             /no errors found/ {e=0}
             /with [0-9]+ error/ {match($0, /with ([0-9]+)/, a); e=a[1]}
@@ -315,6 +343,9 @@ let
     runtimeInputs = [
       btrfsChunkCheck
       pkgs.btrfs-progs
+      pkgs.gawk
+      pkgs.coreutils
+      pkgs.gnugrep
     ];
     text = ''
       set -uo pipefail
@@ -328,12 +359,27 @@ let
         exit 0
       fi
 
+      # Guard 0: never balance under IO or zram pressure
+      # (2026-08-24: a manual balance at 99% IO PSI + zram 85% froze the machine solid)
+      PSI_IO_SOME=$(awk '/^some/ {for (i = 2; i <= NF; i++) if ($i ~ /^avg10=/) {sub(/^avg10=/, "", $i); printf "%d", $i; exit}}' /proc/pressure/io)
+      : "''${PSI_IO_SOME:=0}"
+      ZRAM_ORIG=$(awk '{print $1}' /sys/block/zram0/mm_stat 2>/dev/null)
+      : "''${ZRAM_ORIG:=0}"
+      ZRAM_SIZE=$(cat /sys/block/zram0/disksize 2>/dev/null)
+      : "''${ZRAM_SIZE:=1}"
+      ZRAM_PCT=$(( ZRAM_ORIG * 100 / ZRAM_SIZE ))
+      if [ "$PSI_IO_SOME" -ge 20 ] || [ "$ZRAM_PCT" -ge 80 ]; then
+        echo "btrfs-balance-metadata: skipping — IO PSI some avg10=''${PSI_IO_SOME}% (>=20) or zram ''${ZRAM_PCT}% full (>=80); balance during pressure froze the machine (2026-08-24)"
+        exit 0
+      fi
+
       # Guard 2: need >= 5 GiB unallocated as bounce room
       eval "$(btrfs-chunk-check "$MOUNT" 2>/dev/null)"
       : "''${UNALLOC_BYTES:=0}"
       : "''${META_PCT:=0}"
       if [ "$UNALLOC_BYTES" -lt 5368709120 ]; then
         echo "btrfs-balance-metadata: insufficient unallocated ($((UNALLOC_BYTES / 1073741824)) GiB < 5 GiB), skipping"
+        echo "If chunk headroom is needed: rm /btrfs-emergency-reserve first (frees extents), then on a QUIET system run 'sudo ionice -c 3 btrfs balance start -dusage=5 -dlimit=2 /'. NEVER balance while IO pressure is high or zram >=80% (2026-08-24 freeze)"
         exit 0
       fi
 
@@ -353,6 +399,9 @@ let
     runtimeInputs = [
       btrfsChunkCheck
       pkgs.btrfs-progs
+      pkgs.gawk
+      pkgs.coreutils
+      pkgs.gnugrep
     ];
     text = ''
       set -uo pipefail
@@ -366,11 +415,26 @@ let
         exit 0
       fi
 
+      # Guard 0: never balance under IO or zram pressure
+      # (2026-08-24: a manual balance at 99% IO PSI + zram 85% froze the machine solid)
+      PSI_IO_SOME=$(awk '/^some/ {for (i = 2; i <= NF; i++) if ($i ~ /^avg10=/) {sub(/^avg10=/, "", $i); printf "%d", $i; exit}}' /proc/pressure/io)
+      : "''${PSI_IO_SOME:=0}"
+      ZRAM_ORIG=$(awk '{print $1}' /sys/block/zram0/mm_stat 2>/dev/null)
+      : "''${ZRAM_ORIG:=0}"
+      ZRAM_SIZE=$(cat /sys/block/zram0/disksize 2>/dev/null)
+      : "''${ZRAM_SIZE:=1}"
+      ZRAM_PCT=$(( ZRAM_ORIG * 100 / ZRAM_SIZE ))
+      if [ "$PSI_IO_SOME" -ge 20 ] || [ "$ZRAM_PCT" -ge 80 ]; then
+        echo "btrfs-balance-data: skipping — IO PSI some avg10=''${PSI_IO_SOME}% (>=20) or zram ''${ZRAM_PCT}% full (>=80); balance during pressure froze the machine (2026-08-24)"
+        exit 0
+      fi
+
       # Guard 2: need >= 10 GiB unallocated as bounce room
       eval "$(btrfs-chunk-check "$MOUNT" 2>/dev/null)"
       : "''${UNALLOC_BYTES:=0}"
       if [ "$UNALLOC_BYTES" -lt 10737418240 ]; then
         echo "btrfs-balance-data: insufficient unallocated ($((UNALLOC_BYTES / 1073741824)) GiB < 10 GiB), skipping"
+        echo "If chunk headroom is needed: rm /btrfs-emergency-reserve first (frees extents), then on a QUIET system run 'sudo ionice -c 3 btrfs balance start -dusage=5 -dlimit=2 /'. NEVER balance while IO pressure is high or zram >=80% (2026-08-24 freeze)"
         exit 0
       fi
 
@@ -483,14 +547,24 @@ in
           {
             Type = "oneshot";
             ExecStart = lib.getExe btrfsHealthMetrics;
+            # 2026-08-31: `btrfs scrub status /` hung 1h+ with no unit-level
+            # timeout (the global DefaultTimeoutStartSec was NOT live on the
+            # deployed system — /etc/systemd/system.conf.d/ empty). Fail a
+            # wedged collection into onFailure alerting instead of pinning
+            # "activating" forever and staling btrfs.prom.
+            TimeoutStartSec = "3min";
           }
         ];
       };
 
       # ── GC guard: ExecStartPre on nix-gc ────────────────────────────────────
-      # If device-unallocated < 10%, the guard exits 1 → systemd marks nix-gc
-      # as failed → OnFailure triggers notify-failure (desktop notification).
-      # This PREVENTS the 2026-06-26 crash: GC on a metadata-starved filesystem.
+      # Gates (fixed 2026-08-21, was the 5-night deadlock): absolute
+      # device-unallocated floor (< 5 GiB) + metadata >90% hard block. The
+      # old "<10% of device" gate demanded 72 GiB of chunk-level unalloc that
+      # GC itself can never restore (only balance returns chunks). On abort
+      # the guard exits 1 → systemd marks nix-gc as failed → OnFailure
+      # triggers notify-failure (desktop notification). This PREVENTS the
+      # 2026-06-26 crash: GC on a metadata-starved filesystem.
       nix-gc = {
         inherit onFailure;
         serviceConfig = {

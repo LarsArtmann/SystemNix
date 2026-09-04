@@ -324,33 +324,33 @@ Podman permission issue, never investigated. Either fix it or remove the module 
 
 ## F) Top #25 Things We Should Get Done Next
 
-| #   | Priority | Task                                                                          | Impact   | Effort  |
-| --- | -------- | ----------------------------------------------------------------------------- | -------- | ------- |
-| 1   | **P0**   | **Deploy all changes** — `just switch` to activate GC timer + Gatus endpoints | Critical | 15 min  |
-| 2   | **P0**   | **Configure Gatus Discord alerting** via Hermes webhook                       | High     | 15 min  |
-| 3   | P1       | **Add Minecraft TCP check** to Gatus (tcp://127.0.0.1:25565)                  | Low      | 5 min   |
-| 4   | P1       | **Fix photomap podman permissions** or remove the module entirely             | Medium   | 1 hour  |
-| 5   | P1       | **Homepage ↔ Gatus integration** — replace siteMonitor with Gatus data        | Medium   | 30 min  |
-| 6   | P1       | **Backup restorability test** — verify Immich or Gitea backup restore         | High     | 30 min  |
-| 7   | P1       | **Create ADR-005: DNS CA embedding strategy**                                 | Low      | 15 min  |
-| 8   | P1       | **Add `status.home.lan` link** to Homepage dashboard                          | Low      | 5 min   |
-| 9   | P2       | **Disk monitor → auto-cleanup** at 85% threshold                              | Medium   | 30 min  |
-| 10  | P2       | **Consolidate flake.nix overlays** to separate file                           | Medium   | 30 min  |
-| 11  | P2       | **Refactor signoz port options** to top-level serviceTypes                    | Low      | 20 min  |
-| 12  | P2       | **BTRFS snapshot health verification** — Timeshift monitoring                 | Medium   | 30 min  |
-| 13  | P2       | **Create `just doctor` command** — comprehensive system diagnostics           | Low      | 30 min  |
-| 14  | P2       | **Secret rotation plan** — document steps for CA and age keys                 | Low      | 15 min  |
-| 15  | P3       | **Pi 3 DNS failover provisioning** — build and flash SD card                  | High     | 2 hours |
-| 16  | P3       | **Docker module hardening** — add `harden {}` to default.nix                  | Low      | 10 min  |
-| 17  | P3       | **SigNoz alert rules** for disk, service failures, OOM                        | Medium   | 1 hour  |
-| 18  | P3       | **Evaluate `deploy.rs`** for remote Pi 3 deployment                           | Medium   | 1 hour  |
-| 19  | P3       | **Create ADR-006: allowBroken=false hard rule**                               | Low      | 10 min  |
-| 20  | P3       | **flake.nix module list auto-generation** from imports                        | Medium   | 30 min  |
-| 21  | P4       | **Add `just backup-test` command** for restore verification                   | Medium   | 30 min  |
-| 22  | P4       | **Current-STATUS.md symlink** pattern from latest status                      | Low      | 5 min   |
-| 23  | P4       | **EMEET PIXY metrics → Gatus** (user-level endpoint)                          | Low      | 15 min  |
-| 24  | P4       | **Hermes health endpoint** — request upstream `/health` route                 | Medium   | 1 hour  |
-| 25  | P4       | **Overlay deduplication** — shared overlay attrset pattern                    | Low      | 20 min  |
+| #  | Priority | Task                                                                          | Impact   | Effort  |
+| -- | -------- | ----------------------------------------------------------------------------- | -------- | ------- |
+| 1  | **P0**   | **Deploy all changes** — `just switch` to activate GC timer + Gatus endpoints | Critical | 15 min  |
+| 2  | **P0**   | **Configure Gatus Discord alerting** via Hermes webhook                       | High     | 15 min  |
+| 3  | P1       | **Add Minecraft TCP check** to Gatus (tcp://127.0.0.1:25565)                  | Low      | 5 min   |
+| 4  | P1       | **Fix photomap podman permissions** or remove the module entirely             | Medium   | 1 hour  |
+| 5  | P1       | **Homepage ↔ Gatus integration** — replace siteMonitor with Gatus data        | Medium   | 30 min  |
+| 6  | P1       | **Backup restorability test** — verify Immich or Gitea backup restore         | High     | 30 min  |
+| 7  | P1       | **Create ADR-005: DNS CA embedding strategy**                                 | Low      | 15 min  |
+| 8  | P1       | **Add `status.home.lan` link** to Homepage dashboard                          | Low      | 5 min   |
+| 9  | P2       | **Disk monitor → auto-cleanup** at 85% threshold                              | Medium   | 30 min  |
+| 10 | P2       | **Consolidate flake.nix overlays** to separate file                           | Medium   | 30 min  |
+| 11 | P2       | **Refactor signoz port options** to top-level serviceTypes                    | Low      | 20 min  |
+| 12 | P2       | **BTRFS snapshot health verification** — Timeshift monitoring                 | Medium   | 30 min  |
+| 13 | P2       | **Create `just doctor` command** — comprehensive system diagnostics           | Low      | 30 min  |
+| 14 | P2       | **Secret rotation plan** — document steps for CA and age keys                 | Low      | 15 min  |
+| 15 | P3       | **Pi 3 DNS failover provisioning** — build and flash SD card                  | High     | 2 hours |
+| 16 | P3       | **Docker module hardening** — add `harden {}` to default.nix                  | Low      | 10 min  |
+| 17 | P3       | **SigNoz alert rules** for disk, service failures, OOM                        | Medium   | 1 hour  |
+| 18 | P3       | **Evaluate `deploy.rs`** for remote Pi 3 deployment                           | Medium   | 1 hour  |
+| 19 | P3       | **Create ADR-006: allowBroken=false hard rule**                               | Low      | 10 min  |
+| 20 | P3       | **flake.nix module list auto-generation** from imports                        | Medium   | 30 min  |
+| 21 | P4       | **Add `just backup-test` command** for restore verification                   | Medium   | 30 min  |
+| 22 | P4       | **Current-STATUS.md symlink** pattern from latest status                      | Low      | 5 min   |
+| 23 | P4       | **EMEET PIXY metrics → Gatus** (user-level endpoint)                          | Low      | 15 min  |
+| 24 | P4       | **Hermes health endpoint** — request upstream `/health` route                 | Medium   | 1 hour  |
+| 25 | P4       | **Overlay deduplication** — shared overlay attrset pattern                    | Low      | 20 min  |
 
 ---
 

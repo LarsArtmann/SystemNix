@@ -7,7 +7,6 @@
 
 ---
 
-
 ## a) FULLY DONE — Correct Findings
 
 ### 1. Confirmed: System hard-crashed, not graceful reboot

@@ -8,11 +8,11 @@
 
 ## Executive Summary
 
-| Service | OTel deps in binary | Exporter wired & running | Spans in SigNoz | Verdict |
-|---|---|---|---|---|
-| **BuildFlow** | ❌ none (0 otel deps in `go.mod`) | n/a — CLI tool, no systemd service | 0 | **No OTel support at all** |
-| **Overview** | ✅ full SDK + otlptracehttp | ✅ `localhost:4318`, journal confirms "OTel tracing enabled" | **0 spans — ever** | **Infrastructure without instrumentation** |
-| **PMA** | ✅ full SDK + otlptracehttp | ✅ `localhost:4318`, journal confirms "OTel tracing enabled" | **0 spans — ever** | **Infrastructure without instrumentation** |
+| Service       | OTel deps in binary               | Exporter wired & running                                     | Spans in SigNoz    | Verdict                                    |
+| ------------- | --------------------------------- | ------------------------------------------------------------ | ------------------ | ------------------------------------------ |
+| **BuildFlow** | ❌ none (0 otel deps in `go.mod`) | n/a — CLI tool, no systemd service                           | 0                  | **No OTel support at all**                 |
+| **Overview**  | ✅ full SDK + otlptracehttp       | ✅ `localhost:4318`, journal confirms "OTel tracing enabled" | **0 spans — ever** | **Infrastructure without instrumentation** |
+| **PMA**       | ✅ full SDK + otlptracehttp       | ✅ `localhost:4318`, journal confirms "OTel tracing enabled" | **0 spans — ever** | **Infrastructure without instrumentation** |
 
 **Root cause (verified at every layer):** both repos ship an identical
 `telemetry.SetupFromEnv()` that registers a global `TracerProvider` when
@@ -134,6 +134,7 @@ browser-history 3.9M, crush-daily 1.9k, file-and-image-renamer 2.
 ## f) Things to get done next (impact-ordered; scoped to this session's findings)
 
 **Upstream instrumentation (the actual fix)**
+
 1. overview: `otelhttp` middleware around the HTTP server → request spans with
    routes (upstream repo, with tests)
 2. overview: span around discovery-daemon RPC calls (unix-socket client)
@@ -152,38 +153,38 @@ browser-history 3.9M, crush-daily 1.9k, file-and-image-renamer 2.
 
 **Same bug class elsewhere (spotted in this session's data, uninvestigated)**
 10. hermes: registered as `http-url` expectation but ABSENT from the span index
-    — same phantom pattern? Check whether the Python SDK is instrumented at all
+— same phantom pattern? Check whether the Python SDK is instrumented at all
 11. file-and-image-renamer: 2 spans EVER, last 2026-08-16 02:40 — dead tracer,
-    rare traced path, or stopped export?
+rare traced path, or stopped export?
 12. discordsync: 35M spans and growing — sanity-check span cardinality/retention
-    (TTLs) before the table becomes the next 52 GiB ClickHouse problem
+(TTLs) before the table becomes the next 52 GiB ClickHouse problem
 
 **Detection & prevention (SystemNix)**
 13. system-health textfile collector: emit `telemetry_spans_last_24h{service}`
-    from a ClickHouse query over expected services; Gatus alert when a service
-    with OTel env exports 0
+from a ClickHouse query over expected services; Gatus alert when a service
+with OTel env exports 0
 14. SigNoz dashboard: "Telemetry Coverage" — expected vs observed span-emitting
-    services, last-24h freshness
+services, last-24h freshness
 15. Consider a comment-convention or separate option in otel-endpoint-audit for
-    "instrumentation verified <date>" so wiring/instrumentation drift is greppable
+"instrumentation verified <date>" so wiring/instrumentation drift is greppable
 16. After instrumentation lands: add span-freshness smoke to post-deploy-check.sh
-    for overview + PMA
+for overview + PMA
 17. Define a sampling policy (ParentBased/TraceIDRatioBased) once more services
-    emit — discordsync shows how fast 35M spans accumulate
+emit — discordsync shows how fast 35M spans accumulate
 
 **Complete this session's answer**
 18. Query `signoz_logs` for overview/PMA presence — close the logs leg of
-    "is telemetry in SigNoz"
+"is telemetry in SigNoz"
 19. Cross-check collector `otelcol_receiver_accepted_spans` for the same
 
 **Docs (harvest from this report)**
 20. ~~AGENTS.md gotcha: "OTEL_EXPORTER_OTLP_ENDPOINT wired ≠ instrumented —~~ done (AGENTS.md Prevention layer 10 documents wired != instrumented (noop without SDK call sites))
-    overview/PMA exported zero spans 2026-08-18; verify span call sites when
-    adding the env var"
+overview/PMA exported zero spans 2026-08-18; verify span call sites when
+adding the env var"
 21. ~~TODO_LIST.md: harvest items 1-11, 13-16 from this report~~ done (docs-health pass 2026-08-18)
 22. CHANGELOG entry when instrumentation ships
 23. BuildFlow: record the no-telemetry decision wherever BuildFlow docs live
-    (pending user answer to Q3)
+(pending user answer to Q3)
 
 ## g) Questions I can NOT figure out myself
 
@@ -204,15 +205,15 @@ browser-history 3.9M, crush-daily 1.9k, file-and-image-renamer 2.
 
 ## Verification Chain (evidence summary)
 
-| Layer | Method | Result |
-|---|---|---|
-| Nix config | `overview.nix:112`, `projects-management-automation.nix:83` | env var set, both registered in audit expectations |
-| Deployed state | `/etc/systemd/system/*.service` | `OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4318` live |
-| Binary content | flake.lock revs vs telemetry commit dates | pins (08-14) postdate telemetry (08-01) |
-| Runtime | `journalctl` | "OTel tracing enabled endpoint=localhost:4318" both services |
-| Code | exhaustive grep both upstream repos | 0 span call sites outside telemetry pkgs |
-| Storage | ClickHouse `signoz_traces.signoz_index_v3` GROUP BY serviceName | overview: 0, PMA: 0; discordsync 35.0M, browser-history 3.9M, crush-daily 1.9k, file-and-image-renamer 2 |
+| Layer          | Method                                                          | Result                                                                                                   |
+| -------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Nix config     | `overview.nix:112`, `projects-management-automation.nix:83`     | env var set, both registered in audit expectations                                                       |
+| Deployed state | `/etc/systemd/system/*.service`                                 | `OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4318` live                                                        |
+| Binary content | flake.lock revs vs telemetry commit dates                       | pins (08-14) postdate telemetry (08-01)                                                                  |
+| Runtime        | `journalctl`                                                    | "OTel tracing enabled endpoint=localhost:4318" both services                                             |
+| Code           | exhaustive grep both upstream repos                             | 0 span call sites outside telemetry pkgs                                                                 |
+| Storage        | ClickHouse `signoz_traces.signoz_index_v3` GROUP BY serviceName | overview: 0, PMA: 0; discordsync 35.0M, browser-history 3.9M, crush-daily 1.9k, file-and-image-renamer 2 |
 
-*No files were modified this session. This report is the only artifact. Per
+_No files were modified this session. This report is the only artifact. Per
 session policy, not committed — the auto-git daemon or an explicit instruction
-handles that.*
+handles that._

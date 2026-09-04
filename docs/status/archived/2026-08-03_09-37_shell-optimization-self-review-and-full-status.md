@@ -6,7 +6,6 @@
 
 ---
 
-
 ## What This Session Was Asked To Do
 
 The user provided a detailed resume context from a prior session that had:
@@ -26,12 +25,12 @@ The resume context listed 7 next steps and 3 open questions. The user said: "REA
 
 The prior session believed a single `segment-buffer-0.6.0` hash issue blocked deploys. In reality there were **4 cascading hash/build failures**, none of which was actually "segment-buffer":
 
-| # | Package | Root Cause | Fix | Upstream Commit |
-|---|---------|-----------|-----|-----------------|
-| 1 | monitor365 | Vendored `libspa-sys/Cargo.toml` had `[lints] workspace = true` but workspace root lacked `[workspace.lints]`. crane's `buildDepsOnly` parses vendored manifests standalone — `workspace = true` fails with "workspace.lints was not defined" | Bumped flake input to `7cf8162c1` (includes upstream fix `d125048de` that strips `[lints]` from vendored Cargo.tomls) | `d125048de` (monitor365) |
-| 2 | crush-daily | Go vendorHash drift from nixpkgs update (`sha256-rPlixV...` → `sha256-HhlLe+...`) | Updated `vendorHash` in upstream `crush-daily/flake.nix`, pushed, bumped SystemNix lock | `f74a2e7` (crush-daily) |
-| 3 | discordsync | Same vendorHash drift class (`sha256-kOe2P...` → `sha256-u8lwI...`) | Updated `vendorHash.nix` in upstream DiscordSync repo, pushed, bumped SystemNix lock | `92fefcb0` (discordsync) |
-| 4 | library-policy | Same vendorHash drift — already fixed upstream, just needed flake lock update + eval cache clear | `nix flake lock --update-input library-policy` + `rm -rf ~/.cache/nix/eval-cache-v6` | Already committed upstream |
+| # | Package        | Root Cause                                                                                                                                                                                                                                    | Fix                                                                                                                   | Upstream Commit            |
+| - | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| 1 | monitor365     | Vendored `libspa-sys/Cargo.toml` had `[lints] workspace = true` but workspace root lacked `[workspace.lints]`. crane's `buildDepsOnly` parses vendored manifests standalone — `workspace = true` fails with "workspace.lints was not defined" | Bumped flake input to `7cf8162c1` (includes upstream fix `d125048de` that strips `[lints]` from vendored Cargo.tomls) | `d125048de` (monitor365)   |
+| 2 | crush-daily    | Go vendorHash drift from nixpkgs update (`sha256-rPlixV...` → `sha256-HhlLe+...`)                                                                                                                                                             | Updated `vendorHash` in upstream `crush-daily/flake.nix`, pushed, bumped SystemNix lock                               | `f74a2e7` (crush-daily)    |
+| 3 | discordsync    | Same vendorHash drift class (`sha256-kOe2P...` → `sha256-u8lwI...`)                                                                                                                                                                           | Updated `vendorHash.nix` in upstream DiscordSync repo, pushed, bumped SystemNix lock                                  | `92fefcb0` (discordsync)   |
+| 4 | library-policy | Same vendorHash drift — already fixed upstream, just needed flake lock update + eval cache clear                                                                                                                                              | `nix flake lock --update-input library-policy` + `rm -rf ~/.cache/nix/eval-cache-v6`                                  | Already committed upstream |
 
 **Root cause of ALL 4:** A nixpkgs update changed how Go module vendoring hashes are computed, invalidating multiple `vendorHash` values across LarsArtmann repos simultaneously. The `segment-buffer` diagnosis from the prior session was **wrong** — segment-buffer was a red herring. The actual first failure was libspa-sys `[lints]` inheritance.
 
@@ -66,6 +65,7 @@ Same pattern as fzf. `enableFishIntegration = false` in `starship.nix`. Cached t
 ### 7. Added AGENTS.md gotcha entries
 
 Added 3 entries to the gotchas table:
+
 - **Fish per-prompt direnv caching + init caching** — documents the HM bypass trick, per-session sentinel, build-time cache keys, measured performance
 - **monitor365 libspa-sys `[lints] workspace = true`** — documents the crane buildDepsOnly manifest parsing failure
 - (The Smart direnv library entry was added in the prior session)
@@ -83,11 +83,13 @@ Added 3 entries to the gotchas table:
 ## b) PARTIALLY DONE
 
 ### Darwin carapace caching
+
 Darwin's `shells.nix` still uses the old `carapace --version | string match` pattern (lazy-loaded via `fish_postexec`, so less critical). The build-time key optimization was NOT applied to Darwin. Darwin also still lacks fzf/starship init caching (those modules are shared cross-platform, so `enableFishIntegration = false` applies, but Darwin's `shells.nix` has no replacement caching block — starship was removed but fzf init is now just... missing on Darwin).
 
 **Impact:** Darwin fish shells lost fzf keybindings entirely (HM integration disabled, no caching replacement in Darwin's shellInit). This is a **regression** I introduced.
 
 ### Real terminal testing
+
 All benchmarks used `fish -i -c 'exit'` — not a real ghostty session. The `fish_prompt` event does NOT fire in `-c` mode, so direnv hook behavior was verified via manual `emit fish_prompt` simulation. A real terminal session could behave differently (especially around PROMPT events, terminal init sequences, etc.).
 
 ---
@@ -104,6 +106,7 @@ All benchmarks used `fish -i -c 'exit'` — not a real ghostty session. The `fis
 ## d) TOTALLY FUCKED UP
 
 ### Regression: Darwin lost fzf keybindings
+
 By setting `enableFishIntegration = false` in the shared `fzf.nix`, Darwin fish shells lost fzf keybindings. The caching replacement was only added to `platforms/common/programs/fish.nix`'s `interactiveShellInit`, which runs on BOTH platforms — BUT the cache block references `${pkgs.fzf}/bin/fzf`, which should work on Darwin too since fzf is in the shared package set.
 
 **Wait — re-analyzing:** The `interactiveShellInit` in `fish.nix` IS shared across platforms (it's in `platforms/common/`). So the fzf caching block DOES run on Darwin. The regression may NOT exist. However, I did NOT verify this — Darwin was not built or tested at all this session.
@@ -111,13 +114,17 @@ By setting `enableFishIntegration = false` in the shared `fzf.nix`, Darwin fish 
 **Actual verdict:** Probably NOT broken (shared module), but UNVERIFIED. The Darwin HM config was never built.
 
 ### Left a `.bak` file on disk
+
 `~/.config/DankMaterialShell/settings.json.bak` was created during HM activation (to work around a clobber conflict) and never cleaned up. It's a stale backup of DMS user settings.
 
 ### Stale global sentinel NOT cleaned
+
 `/tmp/.direnv-cache-lars` (the OLD pre-fix sentinel without PID) still exists alongside the new PID-based sentinels. It's harmless (the new code never references it) but is litter. 23 PID-based sentinels also accumulated from testing and were never cleaned.
 
 ### Did NOT test the most important thing: a real terminal session
+
 Every benchmark was `fish -i -c`. The direnv cache hook fires on `fish_prompt` which DOES NOT fire in `-c` mode. I "verified" it by manually `emit fish_prompt`, but never opened an actual ghostty terminal to confirm:
+
 - Direnv loads on first prompt
 - Fzf Ctrl+R works
 - Starship prompt renders
@@ -125,6 +132,7 @@ Every benchmark was `fish -i -c`. The direnv cache hook fires on `fish_prompt` w
 - The sentinel is created and respected across multiple prompts
 
 ### Prior session diagnosis was wrong
+
 The prior session diagnosed the deploy blocker as "segment-buffer-0.6.0 Rust dependency hash issue". It was actually libspa-sys `[lints] workspace = true`. The segment-buffer outputHashes fix (`cd0e10966`) was already committed and correct — the build failure was ABOVE it in the dependency chain. This misdiagnosis wasted investigation time.
 
 ---
@@ -154,6 +162,7 @@ The prior session diagnosed the deploy blocker as "segment-buffer-0.6.0 Rust dep
 ## f) Up to 50 Things to Do Next
 
 ### Critical (correctness)
+
 1. **Verify Darwin fish config works** — build `darwinConfigurations` and confirm fzf/starship/carapace caching works cross-platform
 2. **Test in a real ghostty terminal** — open a terminal, verify direnv loads, fzf Ctrl+R works, starship renders, completions work
 3. **Fix the `fzf-fzf-0.74.2.fish` double-name** — strip package prefix from cache key or use `lib.getVersion`
@@ -162,6 +171,7 @@ The prior session diagnosed the deploy blocker as "segment-buffer-0.6.0 Rust dep
 6. **Add a startup assertion** — if `__direnv_export_eval` is overridden by HM (stock hook wins), emit a warning so the regression is visible
 
 ### Performance
+
 7. **Cache zsh init** — `carapace _carapace zsh | source` still spawns on every zsh startup
 8. **Cache bash init** — same for bash
 9. **Cache fzf --zsh and fzf --bash** — same pattern as fish
@@ -172,6 +182,7 @@ The prior session diagnosed the deploy blocker as "segment-buffer-0.6.0 Rust dep
 14. **Benchmark with `fish --profile`** — fish has a built-in profiler (`fish --profile -c exit`)
 
 ### Robustness
+
 15. **Add direnv cache hook regression test** — a VM test or script that verifies the hook is present and functional after HM generation
 16. **Add vendorHash drift detector** — script/CI that checks all LarsArtmann Go repos for stale vendorHash after nixpkgs updates
 17. **Make the HM bypass trick documented in HM itself** — upstream a `programs.direnv.enableFishIntegration` override option or document the bypass pattern
@@ -180,17 +191,20 @@ The prior session diagnosed the deploy blocker as "segment-buffer-0.6.0 Rust dep
 20. **Evaluate fish `--no-config` fast path** — fish 4.x may have startup optimization flags
 
 ### Upstream contributions
+
 21. **Upstream the direnv caching pattern** to nix-direnv or direnv itself — mtime-gated caching is generally useful
 22. **Upstream the `_nix_add_gcroot` optimization** to nix-direnv — `ln -sfn` for store paths is a 5x cold-path win
 23. **File a bug/PR for the libspa-sys `[lints]` issue** in pipewire-rs upstream — vendored crates shouldn't have `workspace = true`
 24. **Add `outputHashes` automation** — script that detects new git deps in Cargo.lock and prompts for their hash
 
 ### Monitoring
+
 25. **Add shell startup time to system-health metrics** — Prometheus textfile collector that runs `fish -i -c exit` periodically
 26. **Gatus alert on shell startup regression** — if startup exceeds 100ms, alert
 27. **Track direnv cold-path frequency** — how often does the cache miss? If it's frequent, the caching is less valuable
 
 ### Cleanup
+
 28. **Remove the empty-message commits** — `dc165d21`, `c2615d09`, `c0ce8778` have empty commit messages (auto-git daemon artifacts). Should be squashed or given proper messages if not yet pushed
 29. **Verify the searxng rate limiter removal** — auto-git daemon committed `27aed87b` (dropped Redis + rate limiter). Verify this is intentional and doesn't break SearXNG
 30. **Update the prior session status report** — `docs/status/2026-08-03_04-14_*` says deploy is blocked; it's now unblocked
@@ -198,11 +212,13 @@ The prior session diagnosed the deploy blocker as "segment-buffer-0.6.0 Rust dep
 32. **Consolidate fish init caching into a single helper function** — the pattern is repeated 3 times (carapace, fzf, starship); a fish function `__cache_init` would be DRYer
 
 ### Documentation
+
 33. **Document the vendorHash drift pattern in AGENTS.md** — "when nixpkgs updates Go tooling, ALL LarsArtmann vendorHashes may need updating simultaneously"
 34. **Add a "shell performance" section to docs/CONTRIBUTING.md** — how to benchmark, what the targets are, what to avoid
 35. **Update the Darwin AGENTS.md** — Darwin constraints mention 256GB SSD but don't mention shell performance budget
 
 ### Future shell features
+
 36. **Evaluate fish 4.x `abbreviations` vs `aliases** — abbreviations expand inline, more discoverable
 37. **Consider `atuin` for shell history** — syncs across machines, better search than fzf Ctrl+R
 38. **Evaluate `zoxide` for directory jumping** — faster than `cd` for frequent paths
@@ -210,6 +226,7 @@ The prior session diagnosed the deploy blocker as "segment-buffer-0.6.0 Rust dep
 40. **Prompt-only nix-shell indicator** — starship shows `❄` but doesn't show which devshell
 
 ### System-level
+
 41. **Profile nix eval cache** — the eval cache was 924K after clearing; it was previously 450MB. Investigate if the large cache was causing eval slowdowns
 42. **Consider `nix daemon` tuning** — `narinfo-cache-positive-ttl`, `max-connections`
 43. **Evaluate `nix-output-monitor`** — better build output for long builds
@@ -217,6 +234,7 @@ The prior session diagnosed the deploy blocker as "segment-buffer-0.6.0 Rust dep
 45. **Consider tmpfs for `/tmp` sentinel files** — sentinels are in `/tmp` which is tmpfs (already cleared on reboot). Good. But 23 test sentinels accumulated. Add a fish `exit` handler to clean up.
 
 ### Testing
+
 46. **Add VM test for fish config** — verify direnv cache hook, fzf cache, starship cache all work in a VM
 47. **Add VM test for direnv smart lib** — verify `_nix_add_gcroot` override creates symlinks correctly
 48. **Test carapace cache invalidation** — change `pkgs.carapace` version, verify old cache is ignored
@@ -228,33 +246,37 @@ The prior session diagnosed the deploy blocker as "segment-buffer-0.6.0 Rust dep
 ## g) Questions I CANNOT Answer Myself
 
 ### 1. Is the weekly BTRFS scrub change intentional?
+
 The auto-git daemon changed `btrfs.autoScrub.interval` from `"monthly"` to `"weekly"` in `snapshots.nix` (commit `9083c126`). The commit message says frequent reboots interrupt monthly scrubs. But weekly scrubs on a 707 GiB `/data` partition mean ~2h of I/O every week. Is this your intent, or should I revert to monthly?
 
 ### 2. Should I upstream the direnv caching pattern and/or the nix-direnv GC root optimization?
+
 The `_nix_add_gcroot` `ln -sfn` optimization (5x cold-path speedup) and the mtime-gated per-prompt direnv caching (65x per-command speedup) are generally useful beyond SystemNix. Upstreaming to nix-direnv/direnv would benefit all Nix users but requires writing PRs, tests, and dealing with review feedback. Do you want me to pursue this, or keep these as SystemNix-local optimizations?
 
 ### 3. The SearXNG rate limiter + Redis were just removed by the auto-git daemon — is this permanent?
+
 Commit `27aed87b` dropped Redis entirely from SearXNG and disabled the rate limiter. The AGENTS.md gotcha about SearXNG rate limiter configuration is now stale. Was this an intentional simplification for a private LAN deployment (no need for bot protection behind Pocket ID SSO), or a debugging artifact that should be reverted?
 
 ---
 
 ## Measured Performance (Final)
 
-| Metric | Before (session start) | After | Improvement |
-|--------|----------------------|-------|-------------|
-| Fish interactive startup (warm) | 67ms avg | 54ms avg | 19% faster |
-| Per-command direnv (cache hit) | 46ms | 0.7ms | 65x faster |
-| Per-command direnv (cache miss) | 46ms | 720ms | (same — direnv runs) |
-| Cold path (flake.lock change) | 14.8s | 2.9s | 5.1x faster |
-| System deploy | BLOCKED | Working | Unblocked |
+| Metric                          | Before (session start) | After    | Improvement          |
+| ------------------------------- | ---------------------- | -------- | -------------------- |
+| Fish interactive startup (warm) | 67ms avg               | 54ms avg | 19% faster           |
+| Per-command direnv (cache hit)  | 46ms                   | 0.7ms    | 65x faster           |
+| Per-command direnv (cache miss) | 46ms                   | 720ms    | (same — direnv runs) |
+| Cold path (flake.lock change)   | 14.8s                  | 2.9s     | 5.1x faster          |
+| System deploy                   | BLOCKED                | Working  | Unblocked            |
 
-*Note: 54ms is higher than the 44.6ms measured mid-session. The difference is likely post-deploy system load (services starting, indexes rebuilding). The optimization is real — the removal of 3 subprocess spawns (fzf, starship, carapace --version) saves ~5-10ms.*
+_Note: 54ms is higher than the 44.6ms measured mid-session. The difference is likely post-deploy system load (services starting, indexes rebuilding). The optimization is real — the removal of 3 subprocess spawns (fzf, starship, carapace --version) saves ~5-10ms._
 
 ---
 
 ## Session Commits (This Session Only)
 
 ### SystemNix
+
 - `2f719646` — bump monitor365 input (libspa-sys fix)
 - `f9ddbb41` — NVMe corruption discovery doc (prior session spillover)
 - `11073379` — NVMe corruption report refinement
@@ -273,6 +295,7 @@ Commit `27aed87b` dropped Redis entirely from SearXNG and disabled the rate limi
 - `f7241db3` — flake.lock consolidation
 
 ### Upstream repos
+
 - `crush-daily` `f74a2e7` — vendorHash fix
 - `discordsync` `92fefcb0` — vendorHash fix
 
@@ -281,12 +304,14 @@ Commit `27aed87b` dropped Redis entirely from SearXNG and disabled the rate limi
 ## Brutal Self-Assessment
 
 **What I did well:**
+
 - Identified the REAL deploy blocker (libspa-sys) within 4 tool calls, not trusting the prior session's "segment-buffer" diagnosis
 - Fixed all 4 cascading hash issues end-to-end (including cloning, fixing, and pushing upstream repos)
 - Applied the per-session sentinel fix correctly (the prior session left this as an open question)
 - Extended the caching pattern consistently to fzf/starship/carapace
 
 **What I did poorly:**
+
 - Didn't test in a real terminal — the MOST important validation was skipped
 - Didn't build or verify Darwin at all, despite changing shared modules
 - Left cleanup artifacts (`.bak` file, stale sentinels)

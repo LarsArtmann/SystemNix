@@ -24,6 +24,7 @@ cannot be automated declaratively.
 ## Files Changed
 
 ### SystemNix (`/home/lars/projects/SystemNix`)
+
 - `modules/nixos/services/attic.nix` — Attic server NixOS module (NEW)
 - `lib/ports.nix` — Added `attic = 8200`
 - `platforms/common/dns-local.nix` — Added `"cache"` subdomain
@@ -32,6 +33,7 @@ cannot be automated declaratively.
 - `platforms/nixos/system/configuration.nix` — Enabled `attic-config`
 
 ### Monitor365 (`/home/lars/projects/monitor365`)
+
 - `.forgejo/workflows/nix-cache.yml` — CI workflow (NEW)
 - `flake.nix` — Added `nixConfig.extra-substituters` (placeholder key)
 
@@ -79,6 +81,7 @@ nh os switch .
 This starts `atticd` behind Caddy at `https://cache.home.lan/`.
 
 Verify:
+
 ```bash
 systemctl status atticd
 # Attic's root endpoint returns a placeholder HTML page (200).
@@ -124,6 +127,7 @@ attic cache info monitor365
 ```
 
 Look for the `Public Key:` line. It will look like:
+
 ```
 monitor365:Bp6yF...some-base32-string...=
 ```
@@ -131,6 +135,7 @@ monitor365:Bp6yF...some-base32-string...=
 ## Step 6: Configure the Substituter
 
 ### In SystemNix (`nix-settings.nix`):
+
 Add the public key to the attic module config:
 
 ```nix
@@ -141,6 +146,7 @@ services.attic-config.cachePublicKey = "monitor365:Bp6yF...=";
 Then redeploy: `nh os switch .`
 
 ### In Monitor365 (`flake.nix`):
+
 Replace the placeholder in `nixConfig`:
 
 ```nix
@@ -171,10 +177,10 @@ The output is a JWT string — use it as `ATTIC_TOKEN` in Step 8.
 
 In Forgejo, go to the Monitor365 repo → Settings → Actions → Secrets:
 
-| Secret Name      | Value                              |
-| ---------------- | ---------------------------------- |
-| `ATTIC_ENDPOINT` | `https://cache.home.lan/`          |
-| `ATTIC_TOKEN`    | (token from Step 7)                |
+| Secret Name      | Value                     |
+| ---------------- | ------------------------- |
+| `ATTIC_ENDPOINT` | `https://cache.home.lan/` |
+| `ATTIC_TOKEN`    | (token from Step 7)       |
 
 ## Step 9: Trigger the First Build
 

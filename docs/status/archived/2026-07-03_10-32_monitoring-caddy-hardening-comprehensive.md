@@ -7,7 +7,6 @@
 
 ---
 
-
 ## Executive Summary
 
 Comprehensive monitoring and reverse-proxy hardening pass across Gatus health
@@ -112,33 +111,33 @@ bind logic, not introduced by our changes.
 
 ## f) Top 25 Things to Get Done Next
 
-| #   | Task                                            | Impact   | Effort             | Notes                                                                                         |
-| --- | ----------------------------------------------- | -------- | ------------------ | --------------------------------------------------------------------------------------------- |
-| 1   | **Deploy the 7 undeployed commits**             | Critical | `nix run .#deploy` | Everything passes eval                                                                        |
-| 2   | **Caddy admin API hardening**                   | Critical | Medium             | `admin off` + standalone metrics listener, or access_control allow-list                       |
-| 3   | **Gatus maintenance windows**                   | High     | Low                | Suppress false alerts during deploys                                                          |
-| 4   | **Caddy access logs → SigNoz filelog receiver** | High     | Medium             | Add `filelog` receiver to OtelCollector config in `signoz.nix`                                |
-| 5   | **Gatus `/metrics` → SigNoz scrape config**     | High     | Low                | Add gatus job to prometheus scrape_configs in signoz.nix                                      |
-| 6   | **PostgreSQL textfile exporter**                | High     | Medium             | `pg_isready` + connection count via textfile collector                                        |
-| 7   | **Caddy request body size limits**              | Medium   | Low                | `request_body { max_size 100MB }` on file-upload vhosts (Immich)                              |
-| 8   | **Gatus → Homepage integration**                | Medium   | Low                | Homepage `statusStyle: dot` with Gatus API for real-time status                               |
-| 9   | **Endpoint group cleanup**                      | Low      | Low                | Fold "Filesystem" into "Monitoring"                                                           |
-| 10  | **Response-time threshold tuning**              | Medium   | Low                | Check actual baselines post-deploy, adjust thresholds                                         |
-| 11  | **Caddy upstream health checks**                | High     | Medium             | Add `health_uri` / `health_port` to reverse_proxy blocks — Caddy won't proxy to dead backends |
-| 12  | **SigNoz alert for Caddy 5xx rate**             | High     | Low                | Query `caddy_http_response_total{status >= 500}`                                              |
-| 13  | **Gatus default client timeout**                | Medium   | Low                | Add default `client.timeout: 10s` to prevent hanging checks                                   |
-| 14  | **Discord alert deduplication**                 | Medium   | Medium             | Gatus fires per-endpoint; group critical+infra into a single Discord channel vs separate      |
-| 15  | **Caddy log sampling**                          | Low      | Low                | High-traffic vhosts produce excessive JSON logs; add `sample` directive                       |
-| 16  | **Gatus SSH check for Forgejo**                 | Low      | Low                | Verify SSH git access (port 22) not just HTTP API                                             |
-| 17  | **BTRFS scrub monitoring**                      | Medium   | Low                | Add a textfile exporter for `btrfs scrub status`                                              |
-| 18  | **Caddy graceful shutdown timeout**             | Low      | Low                | Add `grace_period 10s` to prevent dropped connections during reload                           |
-| 19  | **Docker health check integration**             | Medium   | Medium             | Container health status → Gatus via custom script                                             |
-| 20  | **SigNoz SLO dashboards**                       | Medium   | High               | Define error-budget SLOs for critical services                                                |
-| +   | **Gatus endpoint for Hermes**                   | Medium   | Medium             | No HTTP endpoint exists — needs upstream health endpoint                                      |
-| 22  | **Caddy OCSP stapling**                         | Low      | Low                | Verify OCSP staple is configured with self-managed certs                                      |
-| 23  | **Monitoring runbook**                          | High     | Medium             | Document what to do when each Discord alert fires                                             |
-| 24  | **Gatus backup**                                | Low      | Low                | SQLite DB at `/var/lib/gatus/gatus.db` — add to btrbk snapshots                               |
-| 25  | **Caddy metrics dashboard**                     | Medium   | Medium             | Create dedicated Caddy dashboard in SigNoz (requests/sec, latency p50/p99, upstream errors)   |
+| #  | Task                                            | Impact   | Effort             | Notes                                                                                         |
+| -- | ----------------------------------------------- | -------- | ------------------ | --------------------------------------------------------------------------------------------- |
+| 1  | **Deploy the 7 undeployed commits**             | Critical | `nix run .#deploy` | Everything passes eval                                                                        |
+| 2  | **Caddy admin API hardening**                   | Critical | Medium             | `admin off` + standalone metrics listener, or access_control allow-list                       |
+| 3  | **Gatus maintenance windows**                   | High     | Low                | Suppress false alerts during deploys                                                          |
+| 4  | **Caddy access logs → SigNoz filelog receiver** | High     | Medium             | Add `filelog` receiver to OtelCollector config in `signoz.nix`                                |
+| 5  | **Gatus `/metrics` → SigNoz scrape config**     | High     | Low                | Add gatus job to prometheus scrape_configs in signoz.nix                                      |
+| 6  | **PostgreSQL textfile exporter**                | High     | Medium             | `pg_isready` + connection count via textfile collector                                        |
+| 7  | **Caddy request body size limits**              | Medium   | Low                | `request_body { max_size 100MB }` on file-upload vhosts (Immich)                              |
+| 8  | **Gatus → Homepage integration**                | Medium   | Low                | Homepage `statusStyle: dot` with Gatus API for real-time status                               |
+| 9  | **Endpoint group cleanup**                      | Low      | Low                | Fold "Filesystem" into "Monitoring"                                                           |
+| 10 | **Response-time threshold tuning**              | Medium   | Low                | Check actual baselines post-deploy, adjust thresholds                                         |
+| 11 | **Caddy upstream health checks**                | High     | Medium             | Add `health_uri` / `health_port` to reverse_proxy blocks — Caddy won't proxy to dead backends |
+| 12 | **SigNoz alert for Caddy 5xx rate**             | High     | Low                | Query `caddy_http_response_total{status >= 500}`                                              |
+| 13 | **Gatus default client timeout**                | Medium   | Low                | Add default `client.timeout: 10s` to prevent hanging checks                                   |
+| 14 | **Discord alert deduplication**                 | Medium   | Medium             | Gatus fires per-endpoint; group critical+infra into a single Discord channel vs separate      |
+| 15 | **Caddy log sampling**                          | Low      | Low                | High-traffic vhosts produce excessive JSON logs; add `sample` directive                       |
+| 16 | **Gatus SSH check for Forgejo**                 | Low      | Low                | Verify SSH git access (port 22) not just HTTP API                                             |
+| 17 | **BTRFS scrub monitoring**                      | Medium   | Low                | Add a textfile exporter for `btrfs scrub status`                                              |
+| 18 | **Caddy graceful shutdown timeout**             | Low      | Low                | Add `grace_period 10s` to prevent dropped connections during reload                           |
+| 19 | **Docker health check integration**             | Medium   | Medium             | Container health status → Gatus via custom script                                             |
+| 20 | **SigNoz SLO dashboards**                       | Medium   | High               | Define error-budget SLOs for critical services                                                |
+| +  | **Gatus endpoint for Hermes**                   | Medium   | Medium             | No HTTP endpoint exists — needs upstream health endpoint                                      |
+| 22 | **Caddy OCSP stapling**                         | Low      | Low                | Verify OCSP staple is configured with self-managed certs                                      |
+| 23 | **Monitoring runbook**                          | High     | Medium             | Document what to do when each Discord alert fires                                             |
+| 24 | **Gatus backup**                                | Low      | Low                | SQLite DB at `/var/lib/gatus/gatus.db` — add to btrbk snapshots                               |
+| 25 | **Caddy metrics dashboard**                     | Medium   | Medium             | Create dedicated Caddy dashboard in SigNoz (requests/sec, latency p50/p99, upstream errors)   |
 
 ---
 

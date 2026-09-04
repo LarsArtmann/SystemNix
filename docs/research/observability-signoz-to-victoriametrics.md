@@ -14,13 +14,13 @@
 
 ## Recommended target stack (when migration is justified)
 
-| Signal | Component | Why |
-|---|---|---|
-| Metrics | **VictoriaMetrics** `vmsingle` 1.149.0 | Single binary, Apache-2.0, ~7x compression claims, low-IOPS design (QLC-friendly), stock NixOS module (`services.victoriametrics`) |
-| Logs | **VictoriaLogs** 1.52.0 | Built-in web UI, schema-free, single binary; this host's ~5 MB/h journal volume is trivial |
-| Traces | **Tempo 3.0.2** monolithic + local-disk backend | Stable Parquet format (vParquet5 prod-ready), stock NixOS module (`services.tempo`), no Kafka/object-store needed at this scale, `metrics-generator` remote-writes span-metrics into VM |
-| UI / dashboards | **Grafana** | One pane over all three; Tempo↔VictoriaLogs correlation via `trace_id`; nixpkgs-native |
-| Alerting | **Keep Gatus + Discord** | Already proven; not coupled to the backend |
+| Signal          | Component                                       | Why                                                                                                                                                                                     |
+| --------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Metrics         | **VictoriaMetrics** `vmsingle` 1.149.0          | Single binary, Apache-2.0, ~7x compression claims, low-IOPS design (QLC-friendly), stock NixOS module (`services.victoriametrics`)                                                      |
+| Logs            | **VictoriaLogs** 1.52.0                         | Built-in web UI, schema-free, single binary; this host's ~5 MB/h journal volume is trivial                                                                                              |
+| Traces          | **Tempo 3.0.2** monolithic + local-disk backend | Stable Parquet format (vParquet5 prod-ready), stock NixOS module (`services.tempo`), no Kafka/object-store needed at this scale, `metrics-generator` remote-writes span-metrics into VM |
+| UI / dashboards | **Grafana**                                     | One pane over all three; Tempo↔VictoriaLogs correlation via `trace_id`; nixpkgs-native                                                                                                  |
+| Alerting        | **Keep Gatus + Discord**                        | Already proven; not coupled to the backend                                                                                                                                              |
 
 Net effect: ~2.5 GiB → well under 1 GiB; deletes the entire SigNoz/ClickHouse/provisioner maintenance surface and its documented silent-failure bug classes; every component becomes a stock nixpkgs module (~100 lines total). Only genuinely new component: Grafana (~300M RAM).
 
@@ -30,12 +30,12 @@ If **VictoriaTraces reaches v1.0 with a stable on-disk format before migration h
 
 ## Rejected alternatives (why)
 
-| Option | Reason |
-|---|---|
-| Jaeger v2 (Badger) | Functionally ideal (single Apache-2.0 binary, embedded storage, own UI, 23k★ CNCF) but **absent from nixpkgs** with no open packaging PR — requires a hand-rolled `buildGoModule`. High-leverage weekend packaging project if ever desired; otherwise loses to Tempo's zero-work |
-| Quickwit | Datadog-acquired (Jan 2025) — long-term OSS commitment risk; nixpkgs package lags (0.8.2) with config wiring gap (nixpkgs#289000) |
-| HyperDX / Uptrace | ClickHouse-backed full platforms (4-8 GB RAM) — reintroduce the exact engine class the migration removes; neither in nixpkgs |
-| SigNoz traces-only hybrid | Keeps ClickHouse's RAM + ops burden while still adding VM components — worst of both |
+| Option                    | Reason                                                                                                                                                                                                                                                                           |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Jaeger v2 (Badger)        | Functionally ideal (single Apache-2.0 binary, embedded storage, own UI, 23k★ CNCF) but **absent from nixpkgs** with no open packaging PR — requires a hand-rolled `buildGoModule`. High-leverage weekend packaging project if ever desired; otherwise loses to Tempo's zero-work |
+| Quickwit                  | Datadog-acquired (Jan 2025) — long-term OSS commitment risk; nixpkgs package lags (0.8.2) with config wiring gap (nixpkgs#289000)                                                                                                                                                |
+| HyperDX / Uptrace         | ClickHouse-backed full platforms (4-8 GB RAM) — reintroduce the exact engine class the migration removes; neither in nixpkgs                                                                                                                                                     |
+| SigNoz traces-only hybrid | Keeps ClickHouse's RAM + ops burden while still adding VM components — worst of both                                                                                                                                                                                             |
 
 ## Revisit triggers
 

@@ -32,32 +32,32 @@
 
 ### NixOS Services (32 modules, 26 enabled)
 
-| Service            | Enabled | Harden | MemoryMax | Status                    |
-| ------------------ | :-----: | :----: | :-------: | ------------------------- |
-| Docker (default)   |   ✅    |  N/A   |    N/A    | ✅ Working                |
-| Sops               |   ✅    |  N/A   |    N/A    | ✅ Working                |
-| Caddy              |   ✅    |   ✅   |   512M    | ✅ Working                |
-| Gitea              |   ✅    |   ✅   |   512M    | ✅ Working                |
-| Immich             |   ✅    |   ✅   |   2G/4G   | ✅ Working                |
-| Authelia           |   ✅    |   ✅   |   512M    | ✅ Working                |
-| Homepage           |   ✅    |   ✅   |   512M    | ✅ Working                |
-| SigNoz             |   ✅    |   ✅   |   1G/1G   | ✅ Working                |
-| Twenty             |   ✅    |   ✅   |    2G     | ✅ Working                |
-| Hermes             |   ✅    |   ✅   |    24G    | ✅ Working                |
-| Voice Agents       |   ✅    |   ✅   |   512M    | ✅ Working                |
-| ComfyUI            |   ✅    |   ✅   |    8G     | ✅ Working                |
+| Service            | Enabled | Harden | MemoryMax | Status                   |
+| ------------------ | :-----: | :----: | :-------: | ------------------------ |
+| Docker (default)   |   ✅    |  N/A   |    N/A    | ✅ Working               |
+| Sops               |   ✅    |  N/A   |    N/A    | ✅ Working               |
+| Caddy              |   ✅    |   ✅   |   512M    | ✅ Working               |
+| Gitea              |   ✅    |   ✅   |   512M    | ✅ Working               |
+| Immich             |   ✅    |   ✅   |   2G/4G   | ✅ Working               |
+| Authelia           |   ✅    |   ✅   |   512M    | ✅ Working               |
+| Homepage           |   ✅    |   ✅   |   512M    | ✅ Working               |
+| SigNoz             |   ✅    |   ✅   |   1G/1G   | ✅ Working               |
+| Twenty             |   ✅    |   ✅   |    2G     | ✅ Working               |
+| Hermes             |   ✅    |   ✅   |    24G    | ✅ Working               |
+| Voice Agents       |   ✅    |   ✅   |   512M    | ✅ Working               |
+| ComfyUI            |   ✅    |   ✅   |    8G     | ✅ Working               |
 | AI Stack           |   ✅    |   ✅   |    ❌     | ⚠️ No MemoryMax on ollama |
-| AI Models          |   ✅    |  N/A   |    N/A    | ✅ Working                |
-| Minecraft          |   ✅    |   ✅   |    4G     | ✅ Working                |
-| Monitor365         |   ❌    |   ❌   |    Bug    | 🔴 Disabled               |
-| Monitoring         |   ✅    |  N/A   |    N/A    | ✅ Working                |
-| TaskChampion       |   ✅    |   ✅   |   512M    | ✅ Working                |
-| Disk Monitor       |   ✅    |   ✅   |    ✅     | ✅ Working                |
-| Gitea Repos        |   ✅    |   ✅   |   512M    | ✅ Working                |
-| Manifest           |   ✅    |   ✅   |    ✅     | ✅ Working                |
-| **Gatus**          |   ✅    |   ✅   |   512M    | ✅ NEW                    |
-| DNS Failover       |   ❌    |  N/A   |    N/A    | 📋 Not deployed           |
-| PhotoMap           |   ❌    |   ✅   |   512M    | 🔴 Disabled               |
+| AI Models          |   ✅    |  N/A   |    N/A    | ✅ Working               |
+| Minecraft          |   ✅    |   ✅   |    4G     | ✅ Working               |
+| Monitor365         |   ❌    |   ❌   |    Bug    | 🔴 Disabled              |
+| Monitoring         |   ✅    |  N/A   |    N/A    | ✅ Working               |
+| TaskChampion       |   ✅    |   ✅   |   512M    | ✅ Working               |
+| Disk Monitor       |   ✅    |   ✅   |    ✅     | ✅ Working               |
+| Gitea Repos        |   ✅    |   ✅   |   512M    | ✅ Working               |
+| Manifest           |   ✅    |   ✅   |    ✅     | ✅ Working               |
+| **Gatus**          |   ✅    |   ✅   |   512M    | ✅ NEW                   |
+| DNS Failover       |   ❌    |  N/A   |    N/A    | 📋 Not deployed          |
+| PhotoMap           |   ❌    |   ✅   |   512M    | 🔴 Disabled              |
 | Security Hardening |   ✅    |  N/A   |    N/A    | ⚠️ auditd off             |
 
 **Totals:** 32 modules, 26 enabled, 19 hardened, 1 new (Gatus), 2 disabled (PhotoMap, Monitor365)
@@ -97,49 +97,49 @@
 
 | Item                      | Status | What's Missing                                                                            |
 | ------------------------- | ------ | ----------------------------------------------------------------------------------------- |
-| GPU headroom for niri     | ⚠️     | Committed, NOT deployed. Memory cap only, not compute.                                    |
-| Manifest CORS fix         | ⚠️     | Committed, NOT deployed. `trustedProxies` upstream limitation.                            |
-| Hermes v2026.4.30 upgrade | ⚠️     | Committed, NOT deployed.                                                                  |
-| DNS failover cluster      | ⚠️     | Module exists — Pi 3 hardware not provisioned                                             |
+| GPU headroom for niri     | ⚠️      | Committed, NOT deployed. Memory cap only, not compute.                                    |
+| Manifest CORS fix         | ⚠️      | Committed, NOT deployed. `trustedProxies` upstream limitation.                            |
+| Hermes v2026.4.30 upgrade | ⚠️      | Committed, NOT deployed.                                                                  |
+| DNS failover cluster      | ⚠️      | Module exists — Pi 3 hardware not provisioned                                             |
 | PhotoMap AI               | 🔴     | Module exists, disabled — podman perms                                                    |
-| Voice agents              | ⚠️     | Module exists — not in health check script                                                |
-| AI Stack hardening        | ⚠️     | No `MemoryMax` or `harden()` on ollama                                                    |
-| Security hardening        | ⚠️     | auditd disabled — NixOS 26.05 bug                                                         |
-| DNS blocker CA trust      | ⚠️     | CA in user NSS DB only, NOT system-wide                                                   |
-| serviceDefaults adoption  | ⚠️     | 6 modules use `harden{}` but manual `Restart`/`RestartSec` instead of `serviceDefaults{}` |
-| servicePort adoption      | ⚠️     | 9 modules manually define port options instead of using `serviceTypes.servicePort`        |
+| Voice agents              | ⚠️      | Module exists — not in health check script                                                |
+| AI Stack hardening        | ⚠️      | No `MemoryMax` or `harden()` on ollama                                                    |
+| Security hardening        | ⚠️      | auditd disabled — NixOS 26.05 bug                                                         |
+| DNS blocker CA trust      | ⚠️      | CA in user NSS DB only, NOT system-wide                                                   |
+| serviceDefaults adoption  | ⚠️      | 6 modules use `harden{}` but manual `Restart`/`RestartSec` instead of `serviceDefaults{}` |
+| servicePort adoption      | ⚠️      | 9 modules manually define port options instead of using `serviceTypes.servicePort`        |
 
 ---
 
 ## c) NOT STARTED 📋
 
-| #   | Item                                                         | Priority | Effort |
-| --- | ------------------------------------------------------------ | -------- | ------ |
-| 1   | **`just switch`** — deploy ALL pending changes (5 sessions)  | P0       | 5min   |
-| 2   | **Verify Gatus** — check `status.home.lan`, all 15 endpoints | P0       | 5min   |
-| 3   | **Verify service-health-check** — confirm exit 0             | P0       | 2min   |
-| 4   | **Taskwarrior encryption → sops**                            | P1       | 1hr    |
-| 5   | **VRRP auth → sops**                                         | P1       | 30min  |
-| 6   | **DNS CA → system-wide** (`security.pki.certificates`)       | P1       | 30min  |
-| 7   | **ClickHouse MemoryMax**                                     | P2       | 5min   |
-| 8   | **Harden ai-stack** — ollama MemoryMax                       | P2       | 10min  |
-| 9   | **Adopt `serviceTypes.servicePort`** in 9 modules            | P2       | 30min  |
-| 10  | **Adopt `serviceDefaults`** in 6 modules                     | P2       | 20min  |
-| 11  | **Fix monitor365 MemoryMax bug**                             | P2       | 2min   |
-| 12  | **Add `whisper-asr`** to health check script                 | P2       | 2min   |
-| 13  | **SigNoz alert notifications**                               | P2       | 30min  |
-| 14  | **Archive 300+ stale docs**                                  | P3       | 15min  |
-| 15  | **Gitea backup restore test**                                | P3       | 15min  |
-| 16  | **BTRFS snapshot restore test**                              | P3       | 15min  |
-| 17  | **SOPS secret rotation**                                     | P3       | 1hr    |
-| 18  | **Disaster recovery playbook**                               | P3       | 2hr    |
-| 19  | **Pi 3 provisioning**                                        | P4       | 2hr    |
-| 20  | **PhotoMap podman fix**                                      | P2       | 1hr    |
-| 21  | **Service dependency graph (D2)**                            | P3       | 1hr    |
-| 22  | **Module option descriptions**                               | P3       | 1hr    |
-| 23  | **CI/CD for `just test`**                                    | P4       | 1hr    |
-| 24  | **Automated DNS blocklist updates**                          | P3       | 30min  |
-| 25  | **Voice agents verification**                                | P3       | 30min  |
+| #  | Item                                                         | Priority | Effort |
+| -- | ------------------------------------------------------------ | -------- | ------ |
+| 1  | **`just switch`** — deploy ALL pending changes (5 sessions)  | P0       | 5min   |
+| 2  | **Verify Gatus** — check `status.home.lan`, all 15 endpoints | P0       | 5min   |
+| 3  | **Verify service-health-check** — confirm exit 0             | P0       | 2min   |
+| 4  | **Taskwarrior encryption → sops**                            | P1       | 1hr    |
+| 5  | **VRRP auth → sops**                                         | P1       | 30min  |
+| 6  | **DNS CA → system-wide** (`security.pki.certificates`)       | P1       | 30min  |
+| 7  | **ClickHouse MemoryMax**                                     | P2       | 5min   |
+| 8  | **Harden ai-stack** — ollama MemoryMax                       | P2       | 10min  |
+| 9  | **Adopt `serviceTypes.servicePort`** in 9 modules            | P2       | 30min  |
+| 10 | **Adopt `serviceDefaults`** in 6 modules                     | P2       | 20min  |
+| 11 | **Fix monitor365 MemoryMax bug**                             | P2       | 2min   |
+| 12 | **Add `whisper-asr`** to health check script                 | P2       | 2min   |
+| 13 | **SigNoz alert notifications**                               | P2       | 30min  |
+| 14 | **Archive 300+ stale docs**                                  | P3       | 15min  |
+| 15 | **Gitea backup restore test**                                | P3       | 15min  |
+| 16 | **BTRFS snapshot restore test**                              | P3       | 15min  |
+| 17 | **SOPS secret rotation**                                     | P3       | 1hr    |
+| 18 | **Disaster recovery playbook**                               | P3       | 2hr    |
+| 19 | **Pi 3 provisioning**                                        | P4       | 2hr    |
+| 20 | **PhotoMap podman fix**                                      | P2       | 1hr    |
+| 21 | **Service dependency graph (D2)**                            | P3       | 1hr    |
+| 22 | **Module option descriptions**                               | P3       | 1hr    |
+| 23 | **CI/CD for `just test`**                                    | P4       | 1hr    |
+| 24 | **Automated DNS blocklist updates**                          | P3       | 30min  |
+| 25 | **Voice agents verification**                                | P3       | 30min  |
 
 ---
 
@@ -195,53 +195,53 @@
 
 ### Priority 1: Deploy & Verify (IMMEDIATE)
 
-| #   | Task                                                                 | Impact   | Effort |
-| --- | -------------------------------------------------------------------- | -------- | ------ |
-| 1   | **`just switch`** — Deploy everything accumulated since session 40   | CRITICAL | 5min   |
-| 2   | **Verify Gatus** — `https://status.home.lan`, all 15 endpoints       | HIGH     | 5min   |
-| 3   | **Verify service-health-check** — run manually, confirm exit 0       | HIGH     | 2min   |
-| 4   | **Verify niri under AI load** — Ollama inference while using desktop | HIGH     | 5min   |
-| 5   | **Verify Hermes auto-recovery** — test SQLite malformed DB           | MEDIUM   | 5min   |
+| # | Task                                                                 | Impact   | Effort |
+| - | -------------------------------------------------------------------- | -------- | ------ |
+| 1 | **`just switch`** — Deploy everything accumulated since session 40   | CRITICAL | 5min   |
+| 2 | **Verify Gatus** — `https://status.home.lan`, all 15 endpoints       | HIGH     | 5min   |
+| 3 | **Verify service-health-check** — run manually, confirm exit 0       | HIGH     | 2min   |
+| 4 | **Verify niri under AI load** — Ollama inference while using desktop | HIGH     | 5min   |
+| 5 | **Verify Hermes auto-recovery** — test SQLite malformed DB           | MEDIUM   | 5min   |
 
 ### Priority 2: Code Quality (high impact, low effort)
 
-| #   | Task                                                                            | Impact | Effort |
-| --- | ------------------------------------------------------------------------------- | ------ | ------ |
-| 6   | **Adopt `serviceDefaults`** in 6 modules — replace manual Restart/RestartSec    | MEDIUM | 20min  |
-| 7   | **Adopt `serviceTypes.servicePort`** in 9 modules — replace manual port options | MEDIUM | 30min  |
-| 8   | **Add `whisper-asr`** to health check script                                    | LOW    | 2min   |
-| 9   | **Fix monitor365 MemoryMax bug** — merge order (disabled)                       | LOW    | 2min   |
-| 10  | **Harden ai-stack** — add MemoryMax to ollama                                   | HIGH   | 10min  |
+| #  | Task                                                                            | Impact | Effort |
+| -- | ------------------------------------------------------------------------------- | ------ | ------ |
+| 6  | **Adopt `serviceDefaults`** in 6 modules — replace manual Restart/RestartSec    | MEDIUM | 20min  |
+| 7  | **Adopt `serviceTypes.servicePort`** in 9 modules — replace manual port options | MEDIUM | 30min  |
+| 8  | **Add `whisper-asr`** to health check script                                    | LOW    | 2min   |
+| 9  | **Fix monitor365 MemoryMax bug** — merge order (disabled)                       | LOW    | 2min   |
+| 10 | **Harden ai-stack** — add MemoryMax to ollama                                   | HIGH   | 10min  |
 
 ### Priority 3: Security
 
-| #   | Task                              | Impact | Effort |
-| --- | --------------------------------- | ------ | ------ |
-| 11  | **Taskwarrior encryption → sops** | HIGH   | 1hr    |
-| 12  | **VRRP auth → sops**              | HIGH   | 30min  |
-| 13  | **DNS CA → system-wide**          | HIGH   | 30min  |
-| 14  | **ClickHouse MemoryMax**          | MEDIUM | 5min   |
-| 15  | **SOPS secret rotation plan**     | MEDIUM | 1hr    |
+| #  | Task                              | Impact | Effort |
+| -- | --------------------------------- | ------ | ------ |
+| 11 | **Taskwarrior encryption → sops** | HIGH   | 1hr    |
+| 12 | **VRRP auth → sops**              | HIGH   | 30min  |
+| 13 | **DNS CA → system-wide**          | HIGH   | 30min  |
+| 14 | **ClickHouse MemoryMax**          | MEDIUM | 5min   |
+| 15 | **SOPS secret rotation plan**     | MEDIUM | 1hr    |
 
 ### Priority 4: Reliability
 
-| #   | Task                                                 | Impact | Effort |
-| --- | ---------------------------------------------------- | ------ | ------ |
-| 16  | **SigNoz alert notifications**                       | MEDIUM | 30min  |
-| 17  | **Gitea backup restore test**                        | MEDIUM | 15min  |
-| 18  | **BTRFS snapshot restore test**                      | MEDIUM | 15min  |
-| 19  | **Lower GPU fraction** if still laggy (0.90 or 0.85) | MEDIUM | 5min   |
-| 20  | **Disaster recovery playbook**                       | HIGH   | 2hr    |
+| #  | Task                                                 | Impact | Effort |
+| -- | ---------------------------------------------------- | ------ | ------ |
+| 16 | **SigNoz alert notifications**                       | MEDIUM | 30min  |
+| 17 | **Gitea backup restore test**                        | MEDIUM | 15min  |
+| 18 | **BTRFS snapshot restore test**                      | MEDIUM | 15min  |
+| 19 | **Lower GPU fraction** if still laggy (0.90 or 0.85) | MEDIUM | 5min   |
+| 20 | **Disaster recovery playbook**                       | HIGH   | 2hr    |
 
 ### Priority 5: Infrastructure
 
-| #   | Task                                | Impact | Effort |
-| --- | ----------------------------------- | ------ | ------ |
-| 21  | **Archive stale docs** (300+ files) | LOW    | 15min  |
-| 22  | **PhotoMap: fix or remove**         | MEDIUM | 1hr    |
-| 23  | **Pi 3 provisioning**               | HIGH   | 2hr    |
-| 24  | **Service dependency graph (D2)**   | MEDIUM | 1hr    |
-| 25  | **CI/CD for `just test`**           | MEDIUM | 1hr    |
+| #  | Task                                | Impact | Effort |
+| -- | ----------------------------------- | ------ | ------ |
+| 21 | **Archive stale docs** (300+ files) | LOW    | 15min  |
+| 22 | **PhotoMap: fix or remove**         | MEDIUM | 1hr    |
+| 23 | **Pi 3 provisioning**               | HIGH   | 2hr    |
+| 24 | **Service dependency graph (D2)**   | MEDIUM | 1hr    |
+| 25 | **CI/CD for `just test`**           | MEDIUM | 1hr    |
 
 ---
 

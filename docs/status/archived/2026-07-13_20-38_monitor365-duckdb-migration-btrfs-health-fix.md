@@ -7,7 +7,6 @@
 
 ---
 
-
 ## Executive Summary
 
 A deploy failed because `monitor365-server.service` crashed with `Binder Error: SQLite databases do not support creating sequences`. The root cause was NOT that monitor365's schema was wrong (it intentionally uses DuckDB syntax) — it was that SystemNix passed a `sqlite:` connection string with a `.db` extension, causing DuckDB to open the file in SQLite compatibility mode where DuckDB syntax is rejected. Fixed at the source in the monitor365 repo. Also discovered and fixed a secondary `btrfs-health.service` failure (missing `gawk` in `runtimeInputs`).

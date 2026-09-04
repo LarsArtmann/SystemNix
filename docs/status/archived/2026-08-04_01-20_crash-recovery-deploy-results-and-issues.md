@@ -7,7 +7,6 @@
 
 ---
 
-
 ## Executive Summary
 
 The **memory cap fix IS LIVE** (90G/80G deployed and verified in cgroups). The full system built and deployed successfully after resolving all 3 Go vendorHash blockers. However, the deploy introduced **two new issues**: a broken DiscordSync `chattr` ExecStartPre (from upstream module) causing start-limit-hit, and a DNS resolution regression where `getent`/`curl` can't resolve `*.home.lan` (resolv.conf ordering). The dbHeal BTRFS snapshot cascade ran but its result is unclear (can't access the DB without root).
@@ -27,11 +26,11 @@ The **memory cap fix IS LIVE** (90G/80G deployed and verified in cgroups). The f
 
 ### 2. Build Blockers Resolved — ALL 3 FIXED
 
-| Blocker | Status | Fix |
-|---|---|---|
-| monitor365 libspa-sys `[lints] workspace = true` | FIXED | Stripped from vendored Cargo.tomls upstream (`e64fba72d`) |
-| cqrs-lint zero pseudo-version + go.sum drift | FIXED | Restored `v1.4.1`, synced go.sum, updated vendorHash upstream |
-| buildflow vendorHash mismatch | FIXED | Pushed 3 unpushed BuildFlow commits to origin/master, updated flake.lock |
+| Blocker                                          | Status | Fix                                                                      |
+| ------------------------------------------------ | ------ | ------------------------------------------------------------------------ |
+| monitor365 libspa-sys `[lints] workspace = true` | FIXED  | Stripped from vendored Cargo.tomls upstream (`e64fba72d`)                |
+| cqrs-lint zero pseudo-version + go.sum drift     | FIXED  | Restored `v1.4.1`, synced go.sum, updated vendorHash upstream            |
+| buildflow vendorHash mismatch                    | FIXED  | Pushed 3 unpushed BuildFlow commits to origin/master, updated flake.lock |
 
 ### 3. Full System Build — SUCCEEDED
 
@@ -110,6 +109,7 @@ The **memory cap fix IS LIVE** (90G/80G deployed and verified in cgroups). The f
 ### 1. The chattr ExecStartPre Bug Should Have Been Caught
 
 The upstream DiscordSync module ships a broken `chattr -R +C /var/lib/discordsync 2>/dev/null || true` as an ExecStartPre. This is a **systemd ExecStartPre**, not a shell command — the `2>/dev/null || true` is passed as literal file arguments to chattr. I should have:
+
 - Reviewed ALL ExecStartPre entries from the upstream module during the dbHeal work
 - Caught this when I was reading the service definition
 - Added a SystemNix override to fix or remove the broken chattr directive
@@ -119,6 +119,7 @@ The upstream DiscordSync module ships a broken `chattr -R +C /var/lib/discordsyn
 ### 2. DNS Resolution Broken — Possibly Deploy-Introduced
 
 The resolv.conf ordering (`9.9.9.9` before `127.0.0.1`) breaks `*.home.lan` resolution via glibc. All external vHost smoke checks fail. I should have:
+
 - Checked DNS resolution BEFORE deploying
 - Checked DNS resolution AFTER deploying
 - Caught this in the first post-deploy smoke test instead of moving on

@@ -143,10 +143,31 @@ _: {
             };
 
             "immich.${domain}" = protectedVHost "immich" config.services.immich.port;
-            # Paperless keeps its own Django login behind the forward-auth gate
-            # (no remote-user passthrough: the LAN-bypass path would let LAN
-            # clients spoof auth headers). Layer 2 SSO = the house default.
-            "paperless.${domain}" = protectedVHost "paperless" config.services.paperless.port;
+            # Paperless: native OIDC via Pocket ID (django-allauth) — Layer 1,
+            # plain reverse_proxy like Forgejo/Gatus. protectedVHost would
+            # double-auth (forward-auth + the app's own login). SSO-ONLY:
+            # password login is disabled via the paperless-oidc-setup env
+            # file (auto-break-glass restores it if the bridge degrades).
+            # /admin/* stays hard-blocked: PAPERLESS_DISABLE_REGULAR_LOGIN
+            # does NOT cover the Django admin login (documented), and nobody
+            # uses it here — paperless-manage covers admin operations.
+            # The exact-match handle /admin (2026-09-02) kills the bare
+            # /admin → /admin/ 301 hop that used to leak through to the app.
+            "paperless.${domain}" = {
+              extraConfig = ''
+                ${tlsConfig}
+                ${commonConfig}
+                handle /admin/* {
+                  respond 403
+                }
+                handle /admin {
+                  respond 403
+                }
+                handle {
+                  ${proxyTo config.services.paperless.port}
+                }
+              '';
+            };
             "forgejo.${domain}" = {
               extraConfig = ''
                 ${tlsConfig}
@@ -155,6 +176,14 @@ _: {
               '';
             };
             "dash.${domain}" = protectedVHost "dash" config.services.homepage.port;
+            # CV server — resume site + Typst PDF export + pipeline dashboard.
+            # LAN bypass direct proxy; external via forward-auth. The pipeline
+            # dashboard's mutating routes are additionally guarded by
+            # CV_API_KEY inside the app.
+            "cv.${domain}" = protectedVHost "cv" ports.cv;
+            # InboxClean — Gmail AI assistant dashboard. Renders from CQRS
+            # data even before the one-time OAuth flow completes.
+            "inbox.${domain}" = protectedVHost "inbox" ports.inboxclean;
             # SigNoz runs in impersonation mode (no internal auth — every request
             # is root admin). Layer 2: LAN bypass (direct proxy, no auth) + external
             # forward-auth via oauth2-proxy. The previous unconditional forward-auth
@@ -199,7 +228,17 @@ _: {
             };
             "daily.${domain}" = protectedVHost "daily" config.services.crush-daily.port;
 
-            "dnsblock.${domain}" = protectedVHost "dnsblock" config.services.dns-blocker.statsPort;
+            # dnsblockd has NATIVE OIDC auth since the SSO feature (Pocket ID,
+            # authorization-code + PKCE) — plain TLS proxy like Forgejo/Gatus;
+            # oauth2-proxy forward-auth would fight the OIDC callback flow.
+            # dnsblockd's own token gate remains the inner defense layer.
+            "dnsblock.${domain}" = {
+              extraConfig = ''
+                ${tlsConfig}
+                ${commonConfig}
+                ${proxyTo config.services.dns-blocker.statsPort}
+              '';
+            };
             "dnsblockd.${domain}" = {
               extraConfig = ''
                 ${tlsConfig}
@@ -331,16 +370,23 @@ _: {
           443
         ];
 
+        # oauth2-proxy is deliberately NOT ordered here: its ExecStartPre OIDC
+        # gate probes https://auth.<domain>/... which is served BY Caddy.
+        # Ordering Caddy after oauth2-proxy deadlocks that gate for its full
+        # 120s timeout on EVERY boot, guarantees a first-start failure of
+        # oauth2-proxy/gatus/browser-history (OnFailure alerts included), and
+        # delays the whole web stack by 2 minutes (observed 2026-08-22 boot:
+        # Caddy "Started" 2min05s in, one second after the gates gave up).
+        # Cost of the removed ordering: a few seconds of 502s on external
+        # forward-auth paths at boot; LAN bypass is unaffected.
         systemd.services.caddy = {
           after = [
             "pocket-id.service"
-            "oauth2-proxy.service"
             "sops-nix.service"
           ]
           ++ lib.optional (config.services.attic-config.enable or false) "atticd.service";
           wants = [
             "pocket-id.service"
-            "oauth2-proxy.service"
             "sops-nix.service"
           ]
           ++ lib.optional (config.services.attic-config.enable or false) "atticd.service";

@@ -123,33 +123,33 @@
 
 ## C) NOT STARTED 📋
 
-| #   | Item                                                            | Priority | Effort   | Notes                               |
-| --- | --------------------------------------------------------------- | -------- | -------- | ----------------------------------- |
-| 1   | Configure Hermes secondary LLM provider                         | 🔴 P0    | 1h       | Needs API key                       |
-| 2   | Hermes git remote SSH deploy key                                | 🔴 P0    | 30min    | Needs key provisioning              |
-| 3   | Deploy committed changes to evo-x2                              | 🔴 P0    | 30min    | `just switch`                       |
-| 4   | Verify boot time (~35s target)                                  | 🔴 P0    | 10min    | Needs live system                   |
-| 5   | Test SigNoz Discord alert channel                               | 🔴 P0    | 15min    | End-to-end verification             |
-| 6   | Verify Gatus endpoints healthy                                  | 🔴 P0    | 10min    | Confirm new checks active           |
-| 7   | Investigate swap exhaustion (7 gopls, 13Gi/13Gi)                | 🔴 P0    | 2h       | Root cause analysis                 |
-| 8   | Add per-threshold SigNoz channel routing                        | 🟡 P1    | 1h       | critical→Discord, warning→log       |
-| 9   | Bring Darwin home.nix to parity                                 | 🟡 P1    | 4h       | Terminal, editor, theme, xdg        |
-| 10  | Extract go-finding patches upstream                             | 🟡 P1    | 3h       | Fork or contribute                  |
-| 11  | Create `mkHardenedService` wrapper                              | 🟡 P1    | 1h       | Combine harden + serviceDefaults    |
-| 12  | Resolve port 8050 conflict (dns-blocker-block vs photomap)      | 🟡 P1    | 15min    | Reassign one                        |
-| 13  | Remove duplicate zellij from base.nix                           | 🟡 P1    | 2min     | HM programs.zellij already installs |
-| 14  | Audit 46 flake inputs for stale/unused                          | 🟡 P2    | 2h       | Maintenance                         |
-| 15  | Convert go-auto-upgrade `path:` inputs to SSH URLs              | 🟡 P2    | 30min    | Remove path: anti-pattern           |
-| 16  | Shared flake-parts template for Go repos                        | 🟡 P2    | 3h       | Standardization                     |
-| 17  | Remove orphan modules (ai-stack, default-services) or wire them | 🟡 P2    | 30min    | Dead code                           |
-| 18  | Remove go-structure-linter flake input                          | 🟢 P3    | 5min     | Clean flake.lock                    |
-| 19  | nix-colors integration (17+ hardcoded colors)                   | 🟢 P3    | 6h       | Theme consistency                   |
-| 20  | Deploy Dozzle for Docker log viewing                            | 🟢 P3    | 1h       | Observability                       |
-| 21  | Create `just status` command                                    | 🟢 P3    | 2h       | Automation                          |
-| 22  | Add integration tests beyond eval-time                          | 🟢 P3    | 4h       | Reliability                         |
-| 23  | Persist dnsblockd temp-allows across restarts                   | 🟢 P3    | 2h       | Data durability                     |
-| 24  | Provision Raspberry Pi 3 for DNS failover                       | 🟢 P4    | Hardware | Needs physical access               |
-| 25  | Wire Pi 3 as secondary DNS                                      | 🟢 P4    | 2h       | DNS redundancy                      |
+| #  | Item                                                            | Priority | Effort   | Notes                               |
+| -- | --------------------------------------------------------------- | -------- | -------- | ----------------------------------- |
+| 1  | Configure Hermes secondary LLM provider                         | 🔴 P0    | 1h       | Needs API key                       |
+| 2  | Hermes git remote SSH deploy key                                | 🔴 P0    | 30min    | Needs key provisioning              |
+| 3  | Deploy committed changes to evo-x2                              | 🔴 P0    | 30min    | `just switch`                       |
+| 4  | Verify boot time (~35s target)                                  | 🔴 P0    | 10min    | Needs live system                   |
+| 5  | Test SigNoz Discord alert channel                               | 🔴 P0    | 15min    | End-to-end verification             |
+| 6  | Verify Gatus endpoints healthy                                  | 🔴 P0    | 10min    | Confirm new checks active           |
+| 7  | Investigate swap exhaustion (7 gopls, 13Gi/13Gi)                | 🔴 P0    | 2h       | Root cause analysis                 |
+| 8  | Add per-threshold SigNoz channel routing                        | 🟡 P1    | 1h       | critical→Discord, warning→log       |
+| 9  | Bring Darwin home.nix to parity                                 | 🟡 P1    | 4h       | Terminal, editor, theme, xdg        |
+| 10 | Extract go-finding patches upstream                             | 🟡 P1    | 3h       | Fork or contribute                  |
+| 11 | Create `mkHardenedService` wrapper                              | 🟡 P1    | 1h       | Combine harden + serviceDefaults    |
+| 12 | Resolve port 8050 conflict (dns-blocker-block vs photomap)      | 🟡 P1    | 15min    | Reassign one                        |
+| 13 | Remove duplicate zellij from base.nix                           | 🟡 P1    | 2min     | HM programs.zellij already installs |
+| 14 | Audit 46 flake inputs for stale/unused                          | 🟡 P2    | 2h       | Maintenance                         |
+| 15 | Convert go-auto-upgrade `path:` inputs to SSH URLs              | 🟡 P2    | 30min    | Remove path: anti-pattern           |
+| 16 | Shared flake-parts template for Go repos                        | 🟡 P2    | 3h       | Standardization                     |
+| 17 | Remove orphan modules (ai-stack, default-services) or wire them | 🟡 P2    | 30min    | Dead code                           |
+| 18 | Remove go-structure-linter flake input                          | 🟢 P3    | 5min     | Clean flake.lock                    |
+| 19 | nix-colors integration (17+ hardcoded colors)                   | 🟢 P3    | 6h       | Theme consistency                   |
+| 20 | Deploy Dozzle for Docker log viewing                            | 🟢 P3    | 1h       | Observability                       |
+| 21 | Create `just status` command                                    | 🟢 P3    | 2h       | Automation                          |
+| 22 | Add integration tests beyond eval-time                          | 🟢 P3    | 4h       | Reliability                         |
+| 23 | Persist dnsblockd temp-allows across restarts                   | 🟢 P3    | 2h       | Data durability                     |
+| 24 | Provision Raspberry Pi 3 for DNS failover                       | 🟢 P4    | Hardware | Needs physical access               |
+| 25 | Wire Pi 3 as secondary DNS                                      | 🟢 P4    | 2h       | DNS redundancy                      |
 
 ---
 
@@ -216,33 +216,33 @@
 
 Sorted by impact/effort ratio (highest first):
 
-| #   | Task                                                    | Priority | Effort   | Impact                     |
-| --- | ------------------------------------------------------- | -------- | -------- | -------------------------- |
-| 1   | Deploy committed changes to evo-x2                      | 🔴       | 30min    | 6 commits in production    |
-| 2   | Remove duplicate zellij from base.nix                   | 🔴       | 2min     | Clean install              |
-| 3   | Verify boot time (~35s target)                          | 🔴       | 10min    | Performance validation     |
-| 4   | Test SigNoz Discord alert channel                       | 🔴       | 15min    | Alert delivery verified    |
-| 5   | Verify Gatus endpoints healthy                          | 🔴       | 10min    | Monitoring confirmed       |
-| 6   | Resolve port 8050 conflict                              | 🟡       | 15min    | Prevent future collision   |
-| 7   | Remove go-structure-linter flake input                  | 🟡       | 5min     | Clean flake.lock           |
-| 8   | Remove/wire orphan modules (ai-stack, default-services) | 🟡       | 30min    | Dead code elimination      |
-| 9   | Configure Hermes secondary LLM provider                 | 🔴       | 1h       | Resilience                 |
-| 10  | Add per-threshold SigNoz channel routing                | 🟡       | 1h       | Alert quality              |
-| 11  | Create `mkHardenedService` wrapper                      | 🟡       | 1h       | DRY systemd config         |
-| 12  | Add Hermes git remote SSH deploy key                    | 🔴       | 30min    | Hermes git operations      |
-| 13  | Convert go-auto-upgrade `path:` inputs to SSH URLs      | 🟡       | 30min    | Remove path: anti-pattern  |
-| 14  | Investigate swap exhaustion (7 gopls instances)         | 🔴       | 2h       | System stability           |
-| 15  | Audit 46 flake inputs for stale/unused                  | 🟡       | 2h       | Maintenance                |
-| 16  | Extract go-finding patches upstream                     | 🟡       | 3h       | Remove fragile sed patches |
-| 17  | Shared flake-parts template for Go repos                | 🟡       | 3h       | Standardization            |
-| 18  | Bring Darwin home.nix to parity                         | 🟡       | 4h       | Cross-platform quality     |
-| 19  | Add integration tests beyond eval-time                  | 🟢       | 4h       | Reliability                |
-| 20  | nix-colors integration (17+ hardcoded colors)           | 🟢       | 6h       | Theme consistency          |
-| 21  | Persist dnsblockd temp-allows across restarts           | 🟢       | 2h       | Data durability            |
-| 22  | Deploy Dozzle for Docker log viewing                    | 🟢       | 1h       | Observability              |
-| 23  | Create `just status` command                            | 🟢       | 2h       | Automation                 |
-| 24  | Provision Raspberry Pi 3 for DNS failover               | 🟢       | Hardware | Infrastructure resilience  |
-| 25  | Wire Pi 3 as secondary DNS                              | 🟢       | 2h       | DNS redundancy             |
+| #  | Task                                                    | Priority | Effort   | Impact                     |
+| -- | ------------------------------------------------------- | -------- | -------- | -------------------------- |
+| 1  | Deploy committed changes to evo-x2                      | 🔴       | 30min    | 6 commits in production    |
+| 2  | Remove duplicate zellij from base.nix                   | 🔴       | 2min     | Clean install              |
+| 3  | Verify boot time (~35s target)                          | 🔴       | 10min    | Performance validation     |
+| 4  | Test SigNoz Discord alert channel                       | 🔴       | 15min    | Alert delivery verified    |
+| 5  | Verify Gatus endpoints healthy                          | 🔴       | 10min    | Monitoring confirmed       |
+| 6  | Resolve port 8050 conflict                              | 🟡       | 15min    | Prevent future collision   |
+| 7  | Remove go-structure-linter flake input                  | 🟡       | 5min     | Clean flake.lock           |
+| 8  | Remove/wire orphan modules (ai-stack, default-services) | 🟡       | 30min    | Dead code elimination      |
+| 9  | Configure Hermes secondary LLM provider                 | 🔴       | 1h       | Resilience                 |
+| 10 | Add per-threshold SigNoz channel routing                | 🟡       | 1h       | Alert quality              |
+| 11 | Create `mkHardenedService` wrapper                      | 🟡       | 1h       | DRY systemd config         |
+| 12 | Add Hermes git remote SSH deploy key                    | 🔴       | 30min    | Hermes git operations      |
+| 13 | Convert go-auto-upgrade `path:` inputs to SSH URLs      | 🟡       | 30min    | Remove path: anti-pattern  |
+| 14 | Investigate swap exhaustion (7 gopls instances)         | 🔴       | 2h       | System stability           |
+| 15 | Audit 46 flake inputs for stale/unused                  | 🟡       | 2h       | Maintenance                |
+| 16 | Extract go-finding patches upstream                     | 🟡       | 3h       | Remove fragile sed patches |
+| 17 | Shared flake-parts template for Go repos                | 🟡       | 3h       | Standardization            |
+| 18 | Bring Darwin home.nix to parity                         | 🟡       | 4h       | Cross-platform quality     |
+| 19 | Add integration tests beyond eval-time                  | 🟢       | 4h       | Reliability                |
+| 20 | nix-colors integration (17+ hardcoded colors)           | 🟢       | 6h       | Theme consistency          |
+| 21 | Persist dnsblockd temp-allows across restarts           | 🟢       | 2h       | Data durability            |
+| 22 | Deploy Dozzle for Docker log viewing                    | 🟢       | 1h       | Observability              |
+| 23 | Create `just status` command                            | 🟢       | 2h       | Automation                 |
+| 24 | Provision Raspberry Pi 3 for DNS failover               | 🟢       | Hardware | Infrastructure resilience  |
+| 25 | Wire Pi 3 as secondary DNS                              | 🟢       | 2h       | DNS redundancy             |
 
 ---
 
@@ -325,8 +325,8 @@ This determines whether Darwin parity (#18) is P0 or P5.
 | **voice-agents**               | ❌      | Disabled                 |
 | **minecraft** (server)         | ❌      | Disabled                 |
 | **photomap**                   | ❌      | Disabled (commented out) |
-| **ai-stack**                   | ⚠️      | Orphan — not imported    |
-| **default-services**           | ⚠️      | Orphan — not imported    |
+| **ai-stack**                   | ⚠️       | Orphan — not imported    |
+| **default-services**           | ⚠️       | Orphan — not imported    |
 | **dns-failover**               | ✅      | rpi3 config only         |
 
 **33 enabled, 4 disabled, 2 orphan, 1 rpi3-only.**

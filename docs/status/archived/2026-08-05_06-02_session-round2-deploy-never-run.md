@@ -8,12 +8,12 @@
 
 ---
 
-
 ## The Elephant in the Room
 
 **System generation 603 is still running from 2026-08-04 01:50.** That is 28+ hours old.
 
 The user's original error was:
+
 ```
 error: nixpkgs flake.lock regression: original type is "tarball", expected "github".
 → Failed to build configuration → Command exited with status ExitStatus(Exited(1))
@@ -155,6 +155,7 @@ This is the single biggest miss of the session, and my first status report didn'
 ## What the First Report Got Right
 
 To be fair to myself:
+
 - The `git+file://` mistake was correctly identified as the worst code-level error.
 - The root cause analysis (tarball regression + masked vendorHash mismatch) was accurate.
 - The chronological narrative was honest about the sequence of mistakes.
@@ -184,29 +185,29 @@ To be fair to myself:
 
 ## Timeline
 
-| Time | Event |
-|------|-------|
-| 04:48 | User reports deploy failure (tarball regression) |
-| ~04:50 | I read flake.lock, found tarball node |
-| ~04:52 | First tarball fix attempt (original only, narHash wrong) |
-| ~04:55 | Auto-git commits wrong intermediate (`e173dac1`) |
-| ~04:57 | Computed correct narHash, fixed locked field |
-| ~05:00 | PMA vendorHash mismatch surfaces |
-| ~05:02 | **Wrong: changed to `git+file://`** |
-| ~05:03 | Auto-git commits mistake (`b625e492`) |
-| ~05:05 | User says "READ, UNDERSTAND, RESEARCH, REFLECT" |
-| ~05:06 | Reverted git+file://, auto-git commits revert (`cfd946cc`) |
-| ~05:10 | Found upstream PMA already had the fix (`b2b6ea70`) |
-| ~05:12 | Pushed upstream PMA to origin |
-| ~05:14 | Updated SystemNix flake.lock for PMA |
-| ~05:18 | Verified PMA builds, flake check passes, eval passes |
+| Time   | Event                                                             |
+| ------ | ----------------------------------------------------------------- |
+| 04:48  | User reports deploy failure (tarball regression)                  |
+| ~04:50 | I read flake.lock, found tarball node                             |
+| ~04:52 | First tarball fix attempt (original only, narHash wrong)          |
+| ~04:55 | Auto-git commits wrong intermediate (`e173dac1`)                  |
+| ~04:57 | Computed correct narHash, fixed locked field                      |
+| ~05:00 | PMA vendorHash mismatch surfaces                                  |
+| ~05:02 | **Wrong: changed to `git+file://`**                               |
+| ~05:03 | Auto-git commits mistake (`b625e492`)                             |
+| ~05:05 | User says "READ, UNDERSTAND, RESEARCH, REFLECT"                   |
+| ~05:06 | Reverted git+file://, auto-git commits revert (`cfd946cc`)        |
+| ~05:10 | Found upstream PMA already had the fix (`b2b6ea70`)               |
+| ~05:12 | Pushed upstream PMA to origin                                     |
+| ~05:14 | Updated SystemNix flake.lock for PMA                              |
+| ~05:18 | Verified PMA builds, flake check passes, eval passes              |
 | ~05:30 | Declared "Both issues resolved and verified" — **did not deploy** |
-| 05:50 | First status report written |
-| 06:02 | This report — realizing the deploy was never run |
+| 05:50  | First status report written                                       |
+| 06:02  | This report — realizing the deploy was never run                  |
 
 ---
 
-*End of report. The deploy has not been run. Waiting for instructions.*
+_End of report. The deploy has not been run. Waiting for instructions._
 
 ---
 

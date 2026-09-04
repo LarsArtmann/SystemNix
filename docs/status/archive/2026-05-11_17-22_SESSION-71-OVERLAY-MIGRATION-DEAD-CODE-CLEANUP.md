@@ -245,7 +245,7 @@ bridgeOverlay = flakeInput: pkgName: _final: prev: {
 
 | Metric                           | Value                                                | Status          |
 | -------------------------------- | ---------------------------------------------------- | --------------- |
-| Root disk (`/`)                  | 80% used (101 GB free)                               | ⚠️ Watch        |
+| Root disk (`/`)                  | 80% used (101 GB free)                               | ⚠️ Watch         |
 | Data disk (`/data`)              | 78% used (232 GB free)                               | ✅ OK           |
 | Go projects wired                | 10/10                                                | ✅              |
 | Go projects building via overlay | 10/10                                                | ✅              |

@@ -4,7 +4,6 @@ _2026-08-02 00:50_
 
 ---
 
-
 ## Goal
 
 Set up a proper Nix binary cache CI pipeline for Monitor365, leveraging the existing Forgejo Actions runner on the SystemNix NixOS host (evo-x2).
@@ -19,22 +18,22 @@ Attic deployed on evo-x2, with Forgejo Actions CI building Monitor365 on the `na
 
 ### SystemNix changes (7 files, +373 lines — staged)
 
-| File | Change | Status |
-| --- | --- | --- |
-| `modules/nixos/services/attic.nix` | **NEW** — Attic server NixOS module (SQLite backend, local storage, 12h GC, 30-day retention, hardened systemd) | **DONE** — evaluates clean, verified |
-| `lib/ports.nix` | Added `attic = 8200` | **DONE** — port collision check passes |
-| `platforms/common/dns-local.nix` | Added `"cache"` subdomain | **DONE** — dnsblockd will resolve `cache.home.lan` |
-| `modules/nixos/services/caddy.nix` | Added `cache.${domain}` reverse proxy (plain proxy, no forward-auth) | **DONE** — vhost verified in eval |
-| `modules/nixos/services/sops.nix` | Added Attic JWT secret + env template | **DONE** — template renders to `/run/secrets/rendered/attic-env` |
-| `platforms/nixos/system/configuration.nix` | Enabled `attic-config.enable = true` | **DONE** |
-| `docs/setup/nix-binary-cache-setup.md` | **NEW** — 9-step setup walkthrough | **DONE** |
+| File                                       | Change                                                                                                          | Status                                                           |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `modules/nixos/services/attic.nix`         | **NEW** — Attic server NixOS module (SQLite backend, local storage, 12h GC, 30-day retention, hardened systemd) | **DONE** — evaluates clean, verified                             |
+| `lib/ports.nix`                            | Added `attic = 8200`                                                                                            | **DONE** — port collision check passes                           |
+| `platforms/common/dns-local.nix`           | Added `"cache"` subdomain                                                                                       | **DONE** — dnsblockd will resolve `cache.home.lan`               |
+| `modules/nixos/services/caddy.nix`         | Added `cache.${domain}` reverse proxy (plain proxy, no forward-auth)                                            | **DONE** — vhost verified in eval                                |
+| `modules/nixos/services/sops.nix`          | Added Attic JWT secret + env template                                                                           | **DONE** — template renders to `/run/secrets/rendered/attic-env` |
+| `platforms/nixos/system/configuration.nix` | Enabled `attic-config.enable = true`                                                                            | **DONE**                                                         |
+| `docs/setup/nix-binary-cache-setup.md`     | **NEW** — 9-step setup walkthrough                                                                              | **DONE**                                                         |
 
 ### Monitor365 changes (2 files — committed in `ae55ce08e`, workflow re-fixed)
 
-| File | Change | Status |
-| --- | --- | --- |
-| `.forgejo/workflows/nix-cache.yml` | **NEW** — CI workflow: build + push to Attic | **DONE** (after bugfixes — see section D) |
-| `flake.nix` | Added `nixConfig.extra-substituters` | **DONE** — placeholder public key (intentional) |
+| File                               | Change                                       | Status                                          |
+| ---------------------------------- | -------------------------------------------- | ----------------------------------------------- |
+| `.forgejo/workflows/nix-cache.yml` | **NEW** — CI workflow: build + push to Attic | **DONE** (after bugfixes — see section D)       |
+| `flake.nix`                        | Added `nixConfig.extra-substituters`         | **DONE** — placeholder public key (intentional) |
 
 ### Verification performed
 
@@ -53,12 +52,15 @@ Attic deployed on evo-x2, with Forgejo Actions CI building Monitor365 on the `na
 ## B) PARTIALLY DONE
 
 ### Secret file not created
+
 The sops-encrypted secret file `platforms/nixos/secrets/attic.yaml` does NOT exist yet. The sops template evaluates with `PLACEHOLDER` — deploying now would crash-loop `atticd` (JWT secret literally = "PLACEHOLDER"). The setup guide documents the manual `openssl rand -base64 32` + `sops -e` step but it hasn't been executed.
 
 ### Public key not filled in
+
 Both `nix-settings.nix` (`cachePublicKey = ""`) and `flake.nix` (`extra-trusted-public-keys = []`) have empty/placeholder values. These can't be filled until the Attic cache is actually created and its key extracted. This is an inherent chicken-and-egg — documented in the setup guide.
 
 ### No actual deployment test
+
 Nothing has been deployed to evo-x2. `nix eval` confirms the config is valid, but `nh os switch` has not been run. No runtime verification that `atticd` starts, that Caddy proxies correctly, or that the `attic` CLI can authenticate.
 
 ---
@@ -159,6 +161,7 @@ Commit `ae55ce08e` ("chore(session): commit all uncommitted changes from clippy 
 ## F) Up to 50 Things to Do Next
 
 ### Critical path (bring cache online)
+
 1. Generate JWT secret: `openssl rand -base64 32`
 2. Create `platforms/nixos/secrets/attic.yaml` with sops
 3. Deploy SystemNix: `nh os switch .`
@@ -178,6 +181,7 @@ Commit `ae55ce08e` ("chore(session): commit all uncommitted changes from clippy 
 17. Test substituter from evo-x2: `nix build .#monitor365 --substituters ... -v`
 
 ### Hardening
+
 18. Add Gatus health check for `cache.home.lan`
 19. Add Caddy `after = [ "atticd.service" ]` dependency
 20. Increase runner MemoryMax from 4G to 8-16G for Rust builds
@@ -187,6 +191,7 @@ Commit `ae55ce08e` ("chore(session): commit all uncommitted changes from clippy 
 24. Add firewall rule to restrict atticd port 8200 to localhost only (Caddy handles external)
 
 ### CI expansion
+
 25. Write proper `.forgejo/workflows/ci.yml` with check/clippy/test/fmt jobs
 26. Add `nix flake check --no-build` to CI
 27. Add NixOS VM tests to CI (`nix build .#checks.x86_64-linux.server-vm-test`)
@@ -196,6 +201,7 @@ Commit `ae55ce08e` ("chore(session): commit all uncommitted changes from clippy 
 31. Add cache for the devShell (`nix develop` profile)
 
 ### Multi-project caching
+
 32. Create cache for SystemNix itself: `attic cache create systemnix`
 33. Create cache for dnsblockd
 34. Create cache for other LarsArtmann Rust/Go projects
@@ -203,6 +209,7 @@ Commit `ae55ce08e` ("chore(session): commit all uncommitted changes from clippy 
 36. Consider a shared "nixpkgs-overrides" cache for custom overlays
 
 ### Attic optimization
+
 37. Evaluate PostgreSQL backend (share immich's PG instance)
 38. Tune chunking parameters based on real-world NAR sizes
 39. Set up cache retention policy per-project (Monitor365: 30d, SystemNix: 7d)
@@ -210,12 +217,14 @@ Commit `ae55ce08e` ("chore(session): commit all uncommitted changes from clippy 
 41. Evaluate attic watch store mode (auto-push anything built locally)
 
 ### Monitoring
+
 42. Add Attic metrics to SigNoz/Gatus
 43. Alert on cache miss rate spikes
 44. Track cache size growth over time
 45. Monitor GC effectiveness
 
 ### Documentation
+
 46. Add Attic to SystemNix README service table
 47. Document the cache in Monitor365 AGENTS.md
 48. Add architecture diagram for the CI → cache → deploy flow
@@ -284,6 +293,7 @@ systemd timer (`atticd-size-guard`) checks `/data/atticd/storage` every 30min:
   large paths are pushed within the retention window
 
 Verified via `nix eval`:
+
 - `services.attic-config.storagePath` → `/data/atticd/storage`
 - `services.attic-config.maxStorageGigabytes` → `20`
 - `services.attic-config.retentionPeriod` → `"7 days"`
@@ -310,8 +320,8 @@ setting — no other code changes needed.
 
 The `attic.nix` entry should now read:
 
-| File | Change | Status |
-| --- | --- | --- |
+| File                               | Change                                                                                                    | Status                          |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------- |
 | `modules/nixos/services/attic.nix` | Attic server module (SQLite, `/data` storage, 4h GC, 7-day retention, size guard timer, hardened systemd) | **DONE** — updated and verified |
 
 ### Updates to section E (improvements)
@@ -339,6 +349,7 @@ The nixpkgs `atticd` module reads **`ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64`**
 setup guide generated it with `openssl rand -base64 32`.
 
 Both the name **and** the value type are wrong:
+
 - Name: `..._HS256_...` → `..._RS256_...`
 - Value: random bytes → RSA private key (`openssl genrsa -traditional 4096 | base64 -w0`)
 
@@ -382,6 +393,7 @@ The report admitted this in E6 but left it undone. **Fixed:** added an
 `notify-failure@%n.service`.
 
 ### Minor improvements applied
+
 - `atticd-size-guard` now uses `serviceOneshotDefaults {}` + `harden {}`
   (was a raw hand-rolled `serviceConfig`).
 - Setup guide Step 4 rewritten: the old `sudo -u atticd atticd-queue` and

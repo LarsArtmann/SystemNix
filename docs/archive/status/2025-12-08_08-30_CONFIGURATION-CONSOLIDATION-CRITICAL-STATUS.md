@@ -287,10 +287,10 @@ services.printing = { /* Printing */ };
 | P2-02 | **GPU-specific package selection**   | ❌ TODO | 🚀       | 15min | HIGH   |
 | P2-03 | **Type safety assertions framework** | ❌ TODO | 🚀       | 20min | MEDIUM |
 | P2-04 | **Configuration validation system**  | ❌ TODO | 🚀       | 20min | MEDIUM |
-| P2-05 | **Automated fallback mechanisms**    | ❌ TODO | 🏗️       | 15min | MEDIUM |
-| P2-06 | **Self-healing architecture**        | ❌ TODO | 🏗️       | 20min | LOW    |
-| P2-07 | **Automated rollback system**        | ❌ TODO | 🏗️       | 15min | LOW    |
-| P2-08 | **Health monitoring dashboard**      | ❌ TODO | 🏗️       | 20min | LOW    |
+| P2-05 | **Automated fallback mechanisms**    | ❌ TODO | 🏗️        | 15min | MEDIUM |
+| P2-06 | **Self-healing architecture**        | ❌ TODO | 🏗️        | 20min | LOW    |
+| P2-07 | **Automated rollback system**        | ❌ TODO | 🏗️        | 15min | LOW    |
+| P2-08 | **Health monitoring dashboard**      | ❌ TODO | 🏗️        | 20min | LOW    |
 
 ### **⚡ P3-MAINTENANCE: OPTIMIZATION (THIS WEEK - 15min each)**
 

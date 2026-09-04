@@ -93,14 +93,14 @@ These polling-based scripts are exactly the kind of thing QuickShell replaces wi
 
 ### CAN Replace (built-in QuickShell support)
 
-| #   | Current              | QuickShell Module                             | Impact                                                       | Effort |
-| --- | -------------------- | --------------------------------------------- | ------------------------------------------------------------ | ------ |
-| 1   | **No OSD**           | `Pipewire` + `UPower` native bindings         | **HIGH** — new capability, currently missing                 | Medium |
-| 2   | **Waybar**           | `PanelWindow` + native Pipewire/MPRIS/Network | **HIGH** — eliminates 6 polling scripts, unified reactive UI | High   |
-| 3   | **Dunst**            | `NotificationServer`                          | **MEDIUM** — shared theme with bar, tighter integration      | Low    |
-| 4   | **wlogout**          | `FloatingWindow` power menu                   | **MEDIUM** — unified theme                                   | Low    |
-| 5   | **Rofi** (launcher)  | `DesktopEntries` + `PopupWindow`              | **MEDIUM** — native app launcher                             | Medium |
-| 6   | **swaylock-effects** | `WlSessionLock` + `PamContext`                | **LOW** — works fine, cosmetic upgrade                       | Medium |
+| # | Current              | QuickShell Module                             | Impact                                                       | Effort |
+| - | -------------------- | --------------------------------------------- | ------------------------------------------------------------ | ------ |
+| 1 | **No OSD**           | `Pipewire` + `UPower` native bindings         | **HIGH** — new capability, currently missing                 | Medium |
+| 2 | **Waybar**           | `PanelWindow` + native Pipewire/MPRIS/Network | **HIGH** — eliminates 6 polling scripts, unified reactive UI | High   |
+| 3 | **Dunst**            | `NotificationServer`                          | **MEDIUM** — shared theme with bar, tighter integration      | Low    |
+| 4 | **wlogout**          | `FloatingWindow` power menu                   | **MEDIUM** — unified theme                                   | Low    |
+| 5 | **Rofi** (launcher)  | `DesktopEntries` + `PopupWindow`              | **MEDIUM** — native app launcher                             | Medium |
+| 6 | **swaylock-effects** | `WlSessionLock` + `PamContext`                | **LOW** — works fine, cosmetic upgrade                       | Medium |
 
 ### COULD Replace (but risky/low-value)
 

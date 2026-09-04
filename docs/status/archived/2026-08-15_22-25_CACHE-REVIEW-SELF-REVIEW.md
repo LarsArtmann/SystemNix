@@ -30,11 +30,11 @@
 ## c) NOT STARTED ⬜
 
 1. VM test for buildcache-gc (prior P0 #7 — the only P0 not closed; manual execution substituted). ← open — untracked (module VM test queued, TODO_LIST Priority 3)
-~~2. `post-deploy-check.sh` assertion that `buildcache-gc.timer` is active (prior P2 #29).~~ done better — deploy.sh STARTS buildcache-gc post-switch (stronger than asserting the timer)
-3. Alert re-nag mechanism — the ≥85% alert fired ONCE at 03:37 and sat unacknowledged ~18h (Gatus sends trigger+resolve, no reminders). Single-shot alerts are missable by a sleeping human. ← open — untracked (adjacent: TODO_LIST P3 escalation-semantics item)
-4. pip/playwright GC steps — deliberately not added (mtime pruning would delete ACTIVE artifacts; mtimes don't refresh on use); no alternative strategy designed yet. ← LEAVE ALONE (deliberate; ≥90% go-clean backstop covers the disk-wedge class)
-5. sccache hit-ratio Prometheus metric (prior P2 #24). ← open — untracked
-6. All carried backlog: satellite sweep (21 repos), btrfs conversion window, go-codec floor, gopls consolidation, monitor365/browser-history outages, off-site backup. ← open — sweep/btrfs/floor TODO_LIST Priority 2; gopls untracked; outages moot/fixed; off-site Priority 0
+   ~~2. `post-deploy-check.sh` assertion that `buildcache-gc.timer` is active (prior P2 #29).~~ done better — deploy.sh STARTS buildcache-gc post-switch (stronger than asserting the timer)
+2. Alert re-nag mechanism — the ≥85% alert fired ONCE at 03:37 and sat unacknowledged ~18h (Gatus sends trigger+resolve, no reminders). Single-shot alerts are missable by a sleeping human. ← open — untracked (adjacent: TODO_LIST P3 escalation-semantics item)
+3. pip/playwright GC steps — deliberately not added (mtime pruning would delete ACTIVE artifacts; mtimes don't refresh on use); no alternative strategy designed yet. ← LEAVE ALONE (deliberate; ≥90% go-clean backstop covers the disk-wedge class)
+4. sccache hit-ratio Prometheus metric (prior P2 #24). ← open — untracked
+5. All carried backlog: satellite sweep (21 repos), btrfs conversion window, go-codec floor, gopls consolidation, monitor365/browser-history outages, off-site backup. ← open — sweep/btrfs/floor TODO_LIST Priority 2; gopls untracked; outages moot/fixed; off-site Priority 0
 
 ## d) TOTALLY FUCKED UP ❌ (honest ledger)
 
@@ -56,16 +56,17 @@
 ## f) NEXT — up to 50, ordered by impact/effort
 
 **P0 — close this session's loops:**
+
 1. Empty `/mnt/buildcache/.Trash-1000` (undo d.1; frees the 33M and the pre-existing junk): `rm -rf /mnt/buildcache/.Trash-1000` ← open — STILL PRESENT on the drive (verified 2026-08-17; dir mtime Aug 16 22:40)
-~~2. Run the hardened unit once: `sudo systemctl start buildcache-gc` + read journal (closes b.1) — or `systemd-run` equivalent~~ done — ran (and failed revealingly) 2026-08-16; fixed; now runs on every deploy
-~~3. User confirms Discord receipt of the 03:37/21:58 buildcache alerts (closes b.2 / prior g.1)~~ superseded — delivery verified end-to-end by later sessions' notifier probes
-~~4. Commit the 6 uncommitted files (attribution) — needs user's call per g.2~~ done — daemon swept (attribution question itself stays open as g.2)
-~~5. Check Sunday 05:00 journal: first scheduled hardened GC run~~ done — checked 2026-08-16: prune had been silently failing; root-caused + fixed
-~~6. Annotate the 21-46 report: "P0 items 1–6 closed by 22-05 report, #7 substituted"~~ done — 2026-08-17 pass
-7. VM test for buildcache-gc (upgrades b.1 from one-shot to regression-proof) ← open — untracked (TODO_LIST Priority 3 covers the module test)
-~~8. First REAL cargo build in monitor365 + `sccache --show-stats` + target-symlink sanity~~ MOOT — monitor365 disabled (G7); sccache mechanism proven synthetically; monitor365 target preserved at /mnt/buildcache/rust/monitor365
-9. `CARGO_INCREMENTAL=0` globally (home.nix) — sccache effectiveness prerequisite ← open — untracked (absent from home.nix, verified 2026-08-17)
-10. Gatus critical-alert reminder/repeat mechanism design (18h-silent class) ← open — untracked
+   ~~2. Run the hardened unit once: `sudo systemctl start buildcache-gc` + read journal (closes b.1) — or `systemd-run` equivalent~~ done — ran (and failed revealingly) 2026-08-16; fixed; now runs on every deploy
+   ~~3. User confirms Discord receipt of the 03:37/21:58 buildcache alerts (closes b.2 / prior g.1)~~ superseded — delivery verified end-to-end by later sessions' notifier probes
+   ~~4. Commit the 6 uncommitted files (attribution) — needs user's call per g.2~~ done — daemon swept (attribution question itself stays open as g.2)
+   ~~5. Check Sunday 05:00 journal: first scheduled hardened GC run~~ done — checked 2026-08-16: prune had been silently failing; root-caused + fixed
+   ~~6. Annotate the 21-46 report: "P0 items 1–6 closed by 22-05 report, #7 substituted"~~ done — 2026-08-17 pass
+2. VM test for buildcache-gc (upgrades b.1 from one-shot to regression-proof) ← open — untracked (TODO_LIST Priority 3 covers the module test)
+   ~~8. First REAL cargo build in monitor365 + `sccache --show-stats` + target-symlink sanity~~ MOOT — monitor365 disabled (G7); sccache mechanism proven synthetically; monitor365 target preserved at /mnt/buildcache/rust/monitor365
+3. `CARGO_INCREMENTAL=0` globally (home.nix) — sccache effectiveness prerequisite ← open — untracked (absent from home.nix, verified 2026-08-17)
+4. Gatus critical-alert reminder/repeat mechanism design (18h-silent class) ← open — untracked
 
 **P1 — carried 20% + generalization:**
 11. Generalize the pnpm lesson: audit ALL user-run services with `ProtectHome=read-only` whose scripts invoke npm/pnpm/go — same silent-failure class elsewhere? ← open — untracked
@@ -120,4 +121,5 @@
 ~~3. **Run the hardened GC now or wait for Sunday?** I can't `sudo`. Either you run `sudo systemctl start buildcache-gc` (~1 min, closes b.1 today), or we accept Sunday 05:00 as the first evidence point. Preference?~~ superseded — moot: the run happened, failed, was fixed, and now runs on every deploy
 
 ---
+
 **Bottom line:** executed every P0 the prior report left open (GC, sccache, alert evidence, init fix — all with runtime proof), fixed 3 real bugs the execution exposed, deployed clean. Honest ledger: trashed-onto-the-cache-drive (d.1), a repeated overclaim (d.2), uncommitted tree (d.3), and one verification level still owed — the hardened unit's first true run.

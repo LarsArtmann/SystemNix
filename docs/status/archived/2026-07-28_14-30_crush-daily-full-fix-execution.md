@@ -10,7 +10,6 @@
 
 ---
 
-
 ## TL;DR
 
 In one session: five distinct bugs in crush-daily (one architectural, four code-level) were fixed, pushed upstream, pinned in SystemNix, and shipped via `nix run .#deploy`. The final post-deploy check shows **29 PASS / 0 FAIL** including a brand-new `silent-zero-data` assertion that catches the entire class of bug that hid this outage for ~10 days.
@@ -20,6 +19,7 @@ In one session: five distinct bugs in crush-daily (one architectural, four code-
 ## a) FULLY DONE
 
 ### Code-level upstream fixes (crush-daily repo)
+
 1. **Bug #5 — `file:` URI prefix** in `internal/collector/collector.go` sql.Open. Without `file:`, modernc.org/sqlite treats `?_loc=...` as part of filename and opens an empty in-memory DB. Fix shipped in upstream commit `83cb19d`.
 2. **Bug #4 — crush CLI v0.86 schema drift** (`m.prompt_tokens` no longer on `messages`). Replaced the broken `scanModelBreakdown` SQL with a CTE that JOINs `sessions` and aggregates per-model. Upstream commit `4b94ed8`.
 3. **Bug #2 — Go 1.26 html/template printf arg-order** in `internal/server/index.go:83`. Pipeline `{{"%.2f"|printf .TotalCost}}` → direct `{{printf "%.2f" .TotalCost}}`. Upstream commit `b8095de`.
@@ -29,6 +29,7 @@ In one session: five distinct bugs in crush-daily (one architectural, four code-
 7. **`go test ./...`** — all 20 packages pass, including 11.5s of BDD-style integration tests.
 
 ### SystemNix-side changes
+
 8. **Removed `runAsUser` declaration** from the SystemNix wrapper after upstream added its own (avoiding duplicate-option conflict that broke `nix flake check`). Now SystemNix relies on the upstream option.
 9. **Added `preStart` chown** to SystemNix wrapper — when `runAsUser` is set, takes ownership of the existing data dir so the first collect after deploy doesn't crash on files owned by `crush-daily:crush-daily`.
 10. **SystemNix wrapper tmpl/env policy** simplified — drops the now-redundant `SupplementaryGroups = users` and `ReadOnlyPaths` when `runAsUser` is set (those were only needed for the system-user path that's no longer used).
@@ -38,6 +39,7 @@ In one session: five distinct bugs in crush-daily (one architectural, four code-
 14. **`AGENTS.md`** gained two new gotcha rows: "Crush Daily silent-zero-data — three independent bugs (FIXED 2026-07-28)" and "upstream crush-daily data_dir resolution for sub-projects". The first row documents the full chain of root causes + the verified ACL analysis + the post-deploy-check fix.
 
 ### Deploy + verification
+
 15. **`nix flake check --no-build`** — all module checks pass.
 16. **`nix run .#deploy`** — completed; generated a fresh NixOS system with the upstream crush-daily pinned; activated without rolling back.
 17. **Manual `/api/collect` POST** — committed real data with 16 projects, 93 sessions, 13,124 messages, $4.16 cost for 2026-07-27.
@@ -47,6 +49,7 @@ In one session: five distinct bugs in crush-daily (one architectural, four code-
 21. **`nix run .#post-deploy-check`** — **29 PASS / 0 FAIL / 0 SKIP** including the new `Crush Daily latest report (2026-07-27) has session_count >0` assertion.
 
 ### What didn't need doing (verified, skipped)
+
 22. **Gatus probe was already correct** — SystemNix uses `/api/health` on `daily.home.lan`, not the (defunct) `/api/prometheus`. The prior session's claim that we needed to fix a probe was wrong; verified and dropped from the plan.
 
 ---
@@ -55,7 +58,7 @@ In one session: five distinct bugs in crush-daily (one architectural, four code-
 
 1. **Fix documentation in feedback doc** — Bug 1's root-cause section was sharpened with verified `getfacl` output and the cross-reference to "Bug 4", "Bug 5", "Bug 6 with verified live working state". However the **"Verified live working state" block is now slightly stale** because the data is from the manual collect run, not from a naturally scheduled run. The numbers ARE real (`93 sessions, 13124 messages, $4.16` matches what's now in the DB).
 
-2. **AGENTS.md updated for the crush-daily lessons**, but the existing **"silent-zero-data" linter** from the prior session's "Things we could improve" list is NOT yet added. The post-deploy-check assertion is the runtime equivalent, but a CI-time linter that catches the pattern when *adding* a new service (zero-data-collecting job with no error counter) would close the gap before merge.
+2. **AGENTS.md updated for the crush-daily lessons**, but the existing **"silent-zero-data" linter** from the prior session's "Things we could improve" list is NOT yet added. The post-deploy-check assertion is the runtime equivalent, but a CI-time linter that catches the pattern when _adding_ a new service (zero-data-collecting job with no error counter) would close the gap before merge.
 
 3. **`runAsUser` option** declared in upstream `flake.nix` — **good** — but SystemNix's earlier `runAsUserOpt` declaration (now removed) means the wrapper lost some defensive validation (`throw` when `runAsUser != primaryUser`). Not needed at present (we only set it to primaryUser), but worth re-adding if non-primary data-owners become a pattern.
 
@@ -79,7 +82,7 @@ In one session: five distinct bugs in crush-daily (one architectural, four code-
 ## d) TOTALLY FUCKED UP
 
 1. **The previous status report (`2026-07-28_11-57_crush-daily-silent-zero-data-investigation.md`)** had its root-cause framing right at the shape level (ACL traversal, schema, template, prometheus) but several specific claims were factually wrong:
-   - It claimed `/home/lars` mode 700 blocked traversal. **Truth:** the mode-700 detail is misleading; the *real* blocker is the ACL `mask::---` (verified live with `getfacl`).
+   - It claimed `/home/lars` mode 700 blocked traversal. **Truth:** the mode-700 detail is misleading; the _real_ blocker is the ACL `mask::---` (verified live with `getfacl`).
    - It claimed upstream had NO `runAsUser` option. **Truth:** the upstream flake.nix added it, in a commit shipped before my session began (caught when `nix flake check` failed with "already declared").
    - It claimed SystemNix needed to declare `runAsUser`. **Truth:** removing the duplicate fixed the conflict.
    - It pitched a defensive doctor probe as P0. **Truth:** a much simpler fix (post-deploy smoke test on the report endpoint's session_count) caught the bug more directly. Doctor probe is still a good defense-in-depth, but it's not the primary guard.
@@ -111,6 +114,7 @@ In one session: five distinct bugs in crush-daily (one architectural, four code-
 ## e) WHAT WE SHOULD IMPROVE
 
 ### Immediate (before this incident fully closes)
+
 1. **The post-deploy-check `silent-zero-data` assertion is good but reactive.** Convert it from "fail if most recent report is zero" to "fail if ALL reports in last 7 days are zero". Even better: "fail if no collect event was logged in the last 25h" (matches the 24h schedule cadence with safety margin).
 2. **Generalize the silent-zero pattern.** Apply the same `field > 0` assertion to: DiscordSync (guilds), Immich (albums), Monitor365 (connected_devices), Forgejo (repos), Taskchampion (backlog). Each service producing numerical reports needs the assertion. Project for the next session.
 3. **Add the meta-observation that the prior session's status report was wrong.** A static-analysis check on `docs/status/*.md` that finds claims like "ACL mode 700 blocks X" and cross-references `getfacl` evidence would have caught the error. Low ROI but documents the lesson.
@@ -123,10 +127,11 @@ In one session: five distinct bugs in crush-daily (one architectural, four code-
 10. **Make the new post-deploy-check assertion emit machine-readable output.** Other tools (n8n, alerts) could read a JSON block from post-deploy-check, but currently they can only pattern-parse ANSI-colored text.
 
 ### Short-term (this week)
+
 11. **Add a Gatus metric for crush-daily** that asserts `requests_total > N` over 24h. If zero, alert via Discord.
 12. **Audit ALL SystemNix wrapper modules for the same "runs-as-system-user-but-reads-user-data" pattern.** Any service that shells out to user-installed CLIs (crush, gh, dms, etc.) is at risk.
 13. **Stand up the doctor probe that crush-daily's doctor module already exposes** at `/api/doctor`. Add a post-deploy-check assertion on it.
-14. **Convert the manual find/awk verification of SQLite events I did with `sqlite3 /var/lib/crush-daily/crush-daily.db` ...` into a SystemNix-admin CLI script** at `scripts/crush-daily-inspect.sh`.
+14. **Convert the manual find/awk verification of SQLite events I did with `sqlite3 /var/lib/crush-daily/crush-daily.db` ...`into a SystemNix-admin CLI script** at`scripts/crush-daily-inspect.sh`.
 15. **Run `nix flake update --all`** and verify no other dependencies regressed during my targeted crush-daily update.
 16. **Document the `runAsUser = config.users.primaryUser` decision** in `configuration.nix` with rationale comments so future readers understand the choice.
 17. **Define the `runAsUser` validation predicate** in SystemNix wrapper: at minimum, throw if it's set to a UID not associated with a real user; ideally cross-check it's the `users.primaryUser`.
@@ -135,6 +140,7 @@ In one session: five distinct bugs in crush-daily (one architectural, four code-
 20. **Document the runAsUser contract** in `crush-daily/flake.nix` upstream docstring so downstream consumers understand when they need to set it.
 
 ### Medium-term (this month)
+
 21. **`buildflow --fix deadnix`** on SystemNix — the AGENTS.md mentions a deadnix trap; my additions shouldn't have introduced `let-in-let` patterns but worth running.
 22. **Add per-service "data freshness" Gatus probes** to DetectOps: each service that produces numerical reports should be probed via Prometheus (`requests_total` rate, `*_created_at` metric, etc.).
 23. **Write integration tests for the runAsUser override path.** SystemNix wraps upstream modules but tests are rarely written. Add a NixOS VM test that deploys crush-daily with runAsUser set and verifies the data is collected.
@@ -147,6 +153,7 @@ In one session: five distinct bugs in crush-daily (one architectural, four code-
 30. **Static check for "shells out to user CLI"** in service modules (e.g., grep for `exec.CommandContext` with first arg like `crush`, `gh`, etc.).
 
 ### Long-term (this quarter)
+
 31. **Replace the per-user shell-out pattern in crush-daily with a parser for `/home/<user>/.local/share/crush/projects.json` directly**. Eliminates the silent-ENOENT failure mode permanently.
 32. **Move all per-user state reads to a dedicated `crushctl` socket or HTTP API** instead of CLI subcommands. Cleaner separation of concerns.
 33. **Open upstream issue** in `LarsArtmann/crush-daily` for the `crush projects --json` swallowing ENOENT behavior in crush CLI — even though I fixed the crush-daily-side workaround, the underlying issue remains in charmbracelet/crush.
@@ -159,6 +166,7 @@ In one session: five distinct bugs in crush-daily (one architectural, four code-
 40. **Document a SystemNix-wide convention**: when a service supports `runAsUser = dataOwner`, that's ALWAYS preferable for stateful services reading per-user data. Add this to AGENTS.md "Architecture" tier.
 
 ### Architectural
+
 41. **The crush-daily architecture is fundamentally "the collector shells out to the user's crush CLI"** — a fragile pattern. Propose a replacement: crush exposes a stable gRPC or unix-socket API for project enumeration.
 42. **SystemNix-wide audit** for similar architectural issues: every service that uses a CLI to discover user state has the same risk. Examples I haven't audited: `hermes` (uses pip-installed tools), `qmd` (reads user qmd collections from `~/.cache/qmd`).
 43. **Pattern library entry**: the "verify functional outcomes, not just HTTP 200" lesson applies broadly. Build a SystemNix-wide test harness that collects actual outputs from each service for testing.
@@ -166,11 +174,13 @@ In one session: five distinct bugs in crush-daily (one architectural, four code-
 45. **Add a regression-test workflow**: every fix in `feedback/` gets a test added to `nix run .#test` (if we set one up). Pull from the past two weeks' worth of inline fixes.
 
 ### Lessons-learned for feedback doc
+
 46. **Document the "validated-by-deploy" loop** explicitly: any nix module change should be verified via real deploy, not just `nix eval`. The "evaluated but never started" class of failure is silent.
 47. **Document the auto-git-commit daemon's behavior** in AGENTS.md. Currently a separate document; needs a "what to expect and how to work with it" section.
 48. **Document the `nix flake check` failure-shapes** (e.g., "option X is already declared in Y" → check upstream first).
 
 ### Hygiene
+
 49. **Update SystemNix CHANGELOG.md** with the 2026-07-28 entry.
 50. **Update crush-daily CHANGELOG.md** with the 5 bugs fixed today.
 
@@ -179,18 +189,21 @@ In one session: five distinct bugs in crush-daily (one architectural, four code-
 ## f) UP TO 50 NEXT-ACTION ITEMS (prioritized)
 
 ### P0 (this session, before close)
+
 1. Manually POST `/api/collect` for each date from 2026-07-19 through 2026-07-26 to backfill real data (per c.5).
 2. Verify the homepage at `daily.home.lan` visually shows real numbers in the trends box.
 3. Update SystemNix AGENTS.md "Post-deploy smoke test" row to mention the new silent-zero-data assertion.
 4. Update crush-daily CHANGELOG.md with the 5 bugs entry.
 
 ### P1 (tomorrow)
+
 5. Stand up the `services.crush-daily.backfill` option (improvement e.5).
 6. Add the silent-zero-data pattern generalization to DiscordSync + Immich + Monitor365 checks (e.2).
 7. Run `nix flake update --all` + verify full project still builds.
 8. Verify `ProtectHome = "read-only"` + state-in-$HOME audit pattern (`scripts/protect-home-audit`) actually exists.
 
 ### P2 (this week)
+
 9. Document the `runAsUser` upstream contract in SystemNix comments (e.4).
 10. Verify `deadnix` clean after all my Nix edits.
 11. Document the `services.crush-daily.backfill` option design.
@@ -200,6 +213,7 @@ In one session: five distinct bugs in crush-daily (one architectural, four code-
 15. Investigate the BuildFlow daemon's non-my-work commits in crush-daily.
 
 ### P3 (next week)
+
 16. Open upstream issue in `LarsArtmann/crush-daily` for the `crush projects --json` swallowing ENOENT.
 17. Open upstream issue in go-cqrs-lite about read-model staleness.
 18. Add NixOS VM integration test for runAsUser override path.
@@ -207,6 +221,7 @@ In one session: five distinct bugs in crush-daily (one architectural, four code-
 20. Add static check for "shells out to user CLI" in service modules (e.30).
 
 ### P4 (this month)
+
 21. Plan the structural fix: replace `crush projects --json` shelling with direct JSON parse (e.7).
 22. Decide whether crush-daily's `runAsUser = primaryUser` workaround is permanent or transitional.
 23. Refactor SystemNix's `lib/systemd.nix` to add a `protectHomeAndChown` helper (e.37).
@@ -214,6 +229,7 @@ In one session: five distinct bugs in crush-daily (one architectural, four code-
 25. Document BuildFlow daemon behavior in AGENTS.md (e.47).
 
 ### Backlog
+
 26. Audit Hermes and Qmd for similar CLI-shellout patterns.
 27. Build a SystemNix-wide test harness that collects actual service outputs.
 28. Split AGENTS.md into per-service docs.

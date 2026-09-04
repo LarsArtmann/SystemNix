@@ -21,8 +21,19 @@
         "sops-nix.service"
         "dnsblockd.service"
       ],
-      requires ? [ "docker.service" ],
+      # docker.service is deliberately in `wants`, NOT `requires`: a Requires=
+      # dependency failure at boot (e.g. dockerd's containerd startup timing
+      # out once under I/O storms, then self-healing via Restart) fails the
+      # compose unit's start JOB with result=dependency — and job failures
+      # NEVER re-trigger Restart=always (restarts only apply to executed
+      # processes), so the whole stack stays down until a deploy/manual
+      # restart (live 2026-08-31: manifest + twenty both). With Wants=, the
+      # unit still orders after docker but its own ExecStart failure against
+      # a not-yet-ready daemon feeds the normal Restart=always loop, which
+      # converges as soon as docker returns.
+      requires ? [ ],
       wants ? [
+        "docker.service"
         "sops-nix.service"
         "dnsblockd.service"
       ],
@@ -106,8 +117,8 @@
                 "network-online.target"
                 "dnsblockd.service"
               ];
-              requires = [ "docker.service" ];
               wants = [
+                "docker.service"
                 "network-online.target"
                 "dnsblockd.service"
               ];

@@ -144,48 +144,48 @@ The user explicitly asked to "remove all vendorHash overrides" which forced the 
 
 ### Critical (Do Soon)
 
-| #   | Task                                                                     | Why                                     |
-| --- | ------------------------------------------------------------------------ | --------------------------------------- |
-| 1   | **`just switch`** to deploy the new configuration                        | Built but not activated — reboot needed |
-| 2   | **Update `AGENTS.md`** with sub-modules pattern and vendorHash ownership | Future sessions need this context       |
-| 3   | **Tag `go-output/graph` and `go-output/d2`** with `v0.1.0`               | Pseudo-versions are fragile             |
-| 4   | **`/data` BTRFS migration** (`just snapshot-migrate-data`)               | 89% full, no snapshots possible         |
-| 5   | **Monitor swap usage** post-deploy — 6.1 GiB is elevated                 | May indicate memory leak or OOM risk    |
+| # | Task                                                                     | Why                                     |
+| - | ------------------------------------------------------------------------ | --------------------------------------- |
+| 1 | **`just switch`** to deploy the new configuration                        | Built but not activated — reboot needed |
+| 2 | **Update `AGENTS.md`** with sub-modules pattern and vendorHash ownership | Future sessions need this context       |
+| 3 | **Tag `go-output/graph` and `go-output/d2`** with `v0.1.0`               | Pseudo-versions are fragile             |
+| 4 | **`/data` BTRFS migration** (`just snapshot-migrate-data`)               | 89% full, no snapshots possible         |
+| 5 | **Monitor swap usage** post-deploy — 6.1 GiB is elevated                 | May indicate memory leak or OOM risk    |
 
 ### High Impact (Do This Week)
 
-| #   | Task                                                                | Why                                                   |
-| --- | ------------------------------------------------------------------- | ----------------------------------------------------- |
-| 6   | **Add CI to `go-output`** that builds sub-modules without `replace` | Prevents this exact class of bug                      |
-| 7   | **Darwin build verification** (`just test-fast` on macOS)           | Cross-platform regressions are invisible until deploy |
-| 8   | **`just test` (full build check)** on NixOS                         | Only syntax check was run                             |
-| 9   | **Deprecation policy for `go-output` public API**                   | `MermaidFlowchartRenderer` deletion broke consumers   |
-| 10  | **Create dependency graph** of Go repos → `cmdguard`/`go-output`    | Makes cascade prediction possible                     |
+| #  | Task                                                                | Why                                                   |
+| -- | ------------------------------------------------------------------- | ----------------------------------------------------- |
+| 6  | **Add CI to `go-output`** that builds sub-modules without `replace` | Prevents this exact class of bug                      |
+| 7  | **Darwin build verification** (`just test-fast` on macOS)           | Cross-platform regressions are invisible until deploy |
+| 8  | **`just test` (full build check)** on NixOS                         | Only syntax check was run                             |
+| 9  | **Deprecation policy for `go-output` public API**                   | `MermaidFlowchartRenderer` deletion broke consumers   |
+| 10 | **Create dependency graph** of Go repos → `cmdguard`/`go-output`    | Makes cascade prediction possible                     |
 
 ### Important (Do Eventually)
 
-| #   | Task                                                             | Why                                                 |
-| --- | ---------------------------------------------------------------- | --------------------------------------------------- |
-| 11  | **`rpi3-dns` build verification**                                | Different overlay set, may have issues              |
-| 12  | **Review `nix-amd-npu`** — last updated April 8                  | Stale input, possibly broken                        |
-| 13  | **NixOS 26.05 → 26.11 tracking**                                 | Currently on unstable, watch for breaking changes   |
-| 14  | **Audit all `flake = false` inputs** for correctness             | Some may need updates                               |
-| 15  | **`sops-nix` secrets rotation audit**                            | Last major rotation unknown                         |
-| 16  | **Unbound `do-ip6 = false`** — ensure new instances get it       | Documented gotcha, easy to miss                     |
-| 17  | **Ollama GPU headroom check** — `OLLAMA_GPU_OVERHEAD=8589934592` | Verify compositor stability after deploy            |
-| 18  | **Homebrew inputs audit** — `homebrew-bundle` from April 2025    | Very stale                                          |
-| 19  | **`niri-session-manager`** — last updated July 2025              | Check if upstream has fixes                         |
-| 20  | **SigNoz build time optimization**                               | Built from source (Go 1.25), takes significant time |
+| #  | Task                                                             | Why                                                 |
+| -- | ---------------------------------------------------------------- | --------------------------------------------------- |
+| 11 | **`rpi3-dns` build verification**                                | Different overlay set, may have issues              |
+| 12 | **Review `nix-amd-npu`** — last updated April 8                  | Stale input, possibly broken                        |
+| 13 | **NixOS 26.05 → 26.11 tracking**                                 | Currently on unstable, watch for breaking changes   |
+| 14 | **Audit all `flake = false` inputs** for correctness             | Some may need updates                               |
+| 15 | **`sops-nix` secrets rotation audit**                            | Last major rotation unknown                         |
+| 16 | **Unbound `do-ip6 = false`** — ensure new instances get it       | Documented gotcha, easy to miss                     |
+| 17 | **Ollama GPU headroom check** — `OLLAMA_GPU_OVERHEAD=8589934592` | Verify compositor stability after deploy            |
+| 18 | **Homebrew inputs audit** — `homebrew-bundle` from April 2025    | Very stale                                          |
+| 19 | **`niri-session-manager`** — last updated July 2025              | Check if upstream has fixes                         |
+| 20 | **SigNoz build time optimization**                               | Built from source (Go 1.25), takes significant time |
 
 ### Nice to Have
 
-| #   | Task                                                                | Why                                                      |
-| --- | ------------------------------------------------------------------- | -------------------------------------------------------- |
-| 21  | **`just update-and-build` recipe**                                  | One-command flake update + build cycle                   |
-| 22  | **Auto-detect `subModules` in `mkPreparedSource`**                  | Eliminates manual sub-module lists                       |
-| 23  | **Monitor365 check** — verify uptime monitoring is reporting        | Service was rebuilt, verify it's working                 |
-| 24  | **DNS blocker effectiveness audit**                                 | Verify blocklists are current                            |
-| 25  | **Consider `GOWORK` instead of `_local_deps` + `mkPreparedSource`** | Go workspace is the native solution for multi-module dev |
+| #  | Task                                                                | Why                                                      |
+| -- | ------------------------------------------------------------------- | -------------------------------------------------------- |
+| 21 | **`just update-and-build` recipe**                                  | One-command flake update + build cycle                   |
+| 22 | **Auto-detect `subModules` in `mkPreparedSource`**                  | Eliminates manual sub-module lists                       |
+| 23 | **Monitor365 check** — verify uptime monitoring is reporting        | Service was rebuilt, verify it's working                 |
+| 24 | **DNS blocker effectiveness audit**                                 | Verify blocklists are current                            |
+| 25 | **Consider `GOWORK` instead of `_local_deps` + `mkPreparedSource`** | Go workspace is the native solution for multi-module dev |
 
 ---
 

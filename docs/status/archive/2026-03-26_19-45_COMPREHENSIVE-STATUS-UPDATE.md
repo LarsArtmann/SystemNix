@@ -12,7 +12,7 @@
 | Metric               | Value         | Status                        |
 | -------------------- | ------------- | ----------------------------- |
 | **Git Status**       | Clean         | ✅ Working tree clean         |
-| **Unpushed Commits** | 1             | ⚠️ a50cad8 - Lake tooling     |
+| **Unpushed Commits** | 1             | ⚠️ a50cad8 - Lake tooling      |
 | **Flake Check**      | Pending       | 🔄 Not verified this session  |
 | **Nix Files**        | 90+           | ✅ Active configuration       |
 | **Documentation**    | 100+ MD files | ✅ Comprehensive              |
@@ -180,29 +180,29 @@ platforms/
 
 ### 1. P0 Critical Tasks (Not Started)
 
-| #   | Task                                    | Time  | Priority |
-| --- | --------------------------------------- | ----- | -------- |
-| 1   | Run `nix flake check --no-build`        | 5min  | P0       |
-| 2   | Fix statix W20 warnings (repeated keys) | 10min | P0       |
-| 3   | Fix statix W04 warnings (inherit)       | 10min | P0       |
-| 4   | Fix statix W23 warnings (empty concat)  | 5min  | P0       |
-| 5   | Run `just test-fast` to verify syntax   | 5min  | P0       |
-| 6   | Run `just health` for system check      | 5min  | P0       |
-| 7   | Verify scheduled tasks run correctly    | 10min | P0       |
-| 8   | Run `just conflict-check`               | 5min  | P0       |
+| # | Task                                    | Time  | Priority |
+| - | --------------------------------------- | ----- | -------- |
+| 1 | Run `nix flake check --no-build`        | 5min  | P0       |
+| 2 | Fix statix W20 warnings (repeated keys) | 10min | P0       |
+| 3 | Fix statix W04 warnings (inherit)       | 10min | P0       |
+| 4 | Fix statix W23 warnings (empty concat)  | 5min  | P0       |
+| 5 | Run `just test-fast` to verify syntax   | 5min  | P0       |
+| 6 | Run `just health` for system check      | 5min  | P0       |
+| 7 | Verify scheduled tasks run correctly    | 10min | P0       |
+| 8 | Run `just conflict-check`               | 5min  | P0       |
 
 ### 2. P1 High Priority Tasks (Not Started)
 
-| #   | Task                                    | Time  | Priority |
-| --- | --------------------------------------- | ----- | -------- |
-| 9   | Re-count actual TODOs in codebase       | 10min | P1       |
-| 10  | Verify darwin configuration builds      | 10min | P1       |
-| 11  | Verify nixos configuration builds       | 10min | P1       |
-| 12  | Update flake.lock                       | 10min | P1       |
-| 13  | Archive docs/status older than Feb 2026 | 12min | P1       |
-| 14  | Add statix to devShells                 | 10min | P1       |
-| 15  | Run deadnix scan                        | 10min | P1       |
-| 16  | Deduplicate Go 1.26.1 overlay           | 12min | P1       |
+| #  | Task                                    | Time  | Priority |
+| -- | --------------------------------------- | ----- | -------- |
+| 9  | Re-count actual TODOs in codebase       | 10min | P1       |
+| 10 | Verify darwin configuration builds      | 10min | P1       |
+| 11 | Verify nixos configuration builds       | 10min | P1       |
+| 12 | Update flake.lock                       | 10min | P1       |
+| 13 | Archive docs/status older than Feb 2026 | 12min | P1       |
+| 14 | Add statix to devShells                 | 10min | P1       |
+| 15 | Run deadnix scan                        | 10min | P1       |
+| 16 | Deduplicate Go 1.26.1 overlay           | 12min | P1       |
 
 ### 3. NixOS Hardware Testing (Not Started)
 
@@ -386,43 +386,43 @@ packages = with pkgs; [
 
 ### Priority 0 (Critical - Do Now)
 
-| #   | Task                             | Time  | Status  |
-| --- | -------------------------------- | ----- | ------- |
-| 1   | Push unpushed commit to origin   | 2min  | READY   |
-| 2   | Run `just test-fast`             | 5min  | READY   |
-| 3   | Run `nix flake check --no-build` | 5min  | READY   |
-| 4   | Run `just health`                | 5min  | READY   |
-| 5   | Add statix to devShells          | 10min | READY   |
-| 6   | Run statix check (not fix first) | 5min  | READY   |
-| 7   | Fix statix W20 warnings          | 10min | PENDING |
-| 8   | Fix statix W04 warnings          | 10min | PENDING |
-| 9   | Fix statix W23 warnings          | 5min  | PENDING |
-| 10  | Run `just conflict-check`        | 5min  | READY   |
+| #  | Task                             | Time  | Status  |
+| -- | -------------------------------- | ----- | ------- |
+| 1  | Push unpushed commit to origin   | 2min  | READY   |
+| 2  | Run `just test-fast`             | 5min  | READY   |
+| 3  | Run `nix flake check --no-build` | 5min  | READY   |
+| 4  | Run `just health`                | 5min  | READY   |
+| 5  | Add statix to devShells          | 10min | READY   |
+| 6  | Run statix check (not fix first) | 5min  | READY   |
+| 7  | Fix statix W20 warnings          | 10min | PENDING |
+| 8  | Fix statix W04 warnings          | 10min | PENDING |
+| 9  | Fix statix W23 warnings          | 5min  | PENDING |
+| 10 | Run `just conflict-check`        | 5min  | READY   |
 
 ### Priority 1 (High - This Week)
 
-| #   | Task                                          | Time  | Status |
-| --- | --------------------------------------------- | ----- | ------ |
-| 11  | Re-count actual TODOs in codebase             | 10min | READY  |
-| 12  | Verify darwin configuration builds            | 10min | READY  |
-| 13  | Verify nixos configuration builds             | 10min | READY  |
-| 14  | Update flake.lock                             | 10min | READY  |
-| 15  | Archive docs/status older than Feb 2026       | 12min | READY  |
-| 16  | Run deadnix scan                              | 10min | READY  |
-| 17  | Deduplicate Go 1.26.1 overlay                 | 12min | READY  |
-| 18  | Move Python scripts to scripts/ai/            | 10min | READY  |
-| 19  | Review 10 oldest TODOs                        | 12min | READY  |
-| 20  | Test manual trigger of crush-update-providers | 5min  | READY  |
+| #  | Task                                          | Time  | Status |
+| -- | --------------------------------------------- | ----- | ------ |
+| 11 | Re-count actual TODOs in codebase             | 10min | READY  |
+| 12 | Verify darwin configuration builds            | 10min | READY  |
+| 13 | Verify nixos configuration builds             | 10min | READY  |
+| 14 | Update flake.lock                             | 10min | READY  |
+| 15 | Archive docs/status older than Feb 2026       | 12min | READY  |
+| 16 | Run deadnix scan                              | 10min | READY  |
+| 17 | Deduplicate Go 1.26.1 overlay                 | 12min | READY  |
+| 18 | Move Python scripts to scripts/ai/            | 10min | READY  |
+| 19 | Review 10 oldest TODOs                        | 12min | READY  |
+| 20 | Test manual trigger of crush-update-providers | 5min  | READY  |
 
 ### Priority 2 (Medium - This Month)
 
-| #   | Task                                    | Time  | Status  |
-| --- | --------------------------------------- | ----- | ------- |
-| 21  | Extract nix-error-lib as reusable flake | 12min | PENDING |
-| 22  | Add GitHub Actions CI                   | 12min | PENDING |
-| 23  | Fix netbandwidth Waybar module          | 12min | PENDING |
-| 24  | Add error handling to Waybar scripts    | 12min | PENDING |
-| 25  | SSH to evo-x2 and check system health   | 10min | BLOCKED |
+| #  | Task                                    | Time  | Status  |
+| -- | --------------------------------------- | ----- | ------- |
+| 21 | Extract nix-error-lib as reusable flake | 12min | PENDING |
+| 22 | Add GitHub Actions CI                   | 12min | PENDING |
+| 23 | Fix netbandwidth Waybar module          | 12min | PENDING |
+| 24 | Add error handling to Waybar scripts    | 12min | PENDING |
+| 25 | SSH to evo-x2 and check system health   | 10min | BLOCKED |
 
 ---
 
@@ -494,8 +494,8 @@ devShells.default = pkgs.mkShell {
 
 ### Unpushed Commits
 
-| Commit  | Message                                             | Status        |
-| ------- | --------------------------------------------------- | ------------- |
+| Commit  | Message                                             | Status       |
+| ------- | --------------------------------------------------- | ------------ |
 | a50cad8 | chore(build): add Lake tooling and module structure | ⚠️ Needs push |
 
 ---
@@ -510,9 +510,9 @@ devShells.default = pkgs.mkShell {
 | Cross-Platform  | ✅     | macOS + NixOS supported   |
 | Documentation   | ✅     | Comprehensive             |
 | TODO Management | ✅     | Plan created              |
-| Statix          | ⚠️     | Not integrated            |
+| Statix          | ⚠️      | Not integrated            |
 | Security        | ✅     | Gitleaks reviewed         |
-| Code Quality    | ⚠️     | W20/W04/W23 pending       |
+| Code Quality    | ⚠️      | W20/W04/W23 pending       |
 
 ---
 

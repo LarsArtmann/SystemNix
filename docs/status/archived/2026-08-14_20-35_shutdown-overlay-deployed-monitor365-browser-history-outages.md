@@ -36,6 +36,7 @@
 ~~- TODO_LIST.md entries for both outages + the Gatus-silence question (f) below~~ done — outage items tracked then closed moot (TODO_LIST header note 2026-08-17); Gatus-silence folded into g.3
 ~~- Root-causing the browser-history OTel URL parse error (upstream fix candidate in the browser-history repo)~~ done — zero `first path segment` errors since 2026-08-16; service healthy (endpoint wiring resolved upstream)
 ~~- `nix flake check --no-build` after adding the module (toplevel eval + successful deploy build are strong signals, but the canonical check wasn't run post-change)~~ done — green on every pass since (incl. 2026-08-17)
+
 - `hardenUser` on the overlay's user service (repo rule: user services use `hardenUser` — I matched smart-audio's minimal style instead of the rule) ← open — untracked (only MemoryMax=256M present, f.18)
 - Investigating why Gatus didn't page for a 3-day Monitor365 outage ← folded into g.3 — outage itself closed moot (G7)
 
@@ -117,4 +118,4 @@
 
 ---
 
-*Point-in-time snapshot. Waiting for instructions.*
+_Point-in-time snapshot. Waiting for instructions._

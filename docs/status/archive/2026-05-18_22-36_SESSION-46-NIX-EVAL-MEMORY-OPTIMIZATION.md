@@ -240,8 +240,8 @@ The estimate of ~25-28GB remaining is based on architectural analysis (5 nixpkgs
 ## Diff Summary
 
 ```
- AGENTS.md  |  47 +++++++-
- flake.lock | 362 +++++++++----------------------------------------------------
- flake.nix  |  11 +-
- 3 files changed, 103 insertions(+), 317 deletions(-)
+AGENTS.md  |  47 +++++++-
+flake.lock | 362 +++++++++----------------------------------------------------
+flake.nix  |  11 +-
+3 files changed, 103 insertions(+), 317 deletions(-)
 ```

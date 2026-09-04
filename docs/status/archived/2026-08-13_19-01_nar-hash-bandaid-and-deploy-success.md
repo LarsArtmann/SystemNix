@@ -24,41 +24,41 @@ The user ran `nh os boot .` and hit a NAR hash mismatch on `go-nix-helpers`. The
 
 ## a) FULLY DONE
 
-| Item | Status | Notes |
-|------|--------|-------|
-| Diagnose NAR hash mismatch root cause | DONE | Daemon in-memory cache serves stale `git+ssh:` hash |
-| Revert narHash to cached value | DONE | `Pqzzz...` matches daemon cache |
-| `nh os boot .` | DONE | Build succeeded, bootloader updated (3795→3801 paths, +577 MiB) |
-| `nix flake check --no-build` | DONE | All checks passed |
-| `nix fmt` | DONE | 2 files reformatted (alejandra style) |
-| AGENTS.md updated with daemon cache insight | DONE | Added recovery instructions for the cache trap |
+| Item                                        | Status | Notes                                                           |
+| ------------------------------------------- | ------ | --------------------------------------------------------------- |
+| Diagnose NAR hash mismatch root cause       | DONE   | Daemon in-memory cache serves stale `git+ssh:` hash             |
+| Revert narHash to cached value              | DONE   | `Pqzzz...` matches daemon cache                                 |
+| `nh os boot .`                              | DONE   | Build succeeded, bootloader updated (3795→3801 paths, +577 MiB) |
+| `nix flake check --no-build`                | DONE   | All checks passed                                               |
+| `nix fmt`                                   | DONE   | 2 files reformatted (alejandra style)                           |
+| AGENTS.md updated with daemon cache insight | DONE   | Added recovery instructions for the cache trap                  |
 
 ## b) PARTIALLY DONE
 
-| Item | Status | What Remains |
-|------|--------|--------------|
-| ~~NAR hash fix~~ done — BAND-AID superseded: the lock now pins a fresh `github` tarball rev (`064a269e`, new narHash); the machine has rebooted repeatedly since 08-13 with all nix ops green. The time bomb is defused |
-| `nix flake check --all-systems` | PARTIAL | Darwin eval fails on `dms-shell` (Linux-only). This is pre-existing, NOT a regression. All other Darwin packages eval fine |
-| flake.nix follows declarations | OPEN — CONFIRMED 08-14: `file-and-image-renamer` still has NO `go-nix-helpers.follows`; flake.lock carries a divergent `go-nix-helpers` node (root pins `go-nix-helpers_2`) |
+| Item                                                                                                                                                                                                                    | Status                                                                                                                                                                      | What Remains                                                                                                               |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| ~~NAR hash fix~~ done — BAND-AID superseded: the lock now pins a fresh `github` tarball rev (`064a269e`, new narHash); the machine has rebooted repeatedly since 08-13 with all nix ops green. The time bomb is defused |                                                                                                                                                                             |                                                                                                                            |
+| `nix flake check --all-systems`                                                                                                                                                                                         | PARTIAL                                                                                                                                                                     | Darwin eval fails on `dms-shell` (Linux-only). This is pre-existing, NOT a regression. All other Darwin packages eval fine |
+| flake.nix follows declarations                                                                                                                                                                                          | OPEN — CONFIRMED 08-14: `file-and-image-renamer` still has NO `go-nix-helpers.follows`; flake.lock carries a divergent `go-nix-helpers` node (root pins `go-nix-helpers_2`) |                                                                                                                            |
 
 ## c) NOT STARTED
 
-| Item | Why It Matters |
-|------|----------------|
-| ~~**SigNoz collectorVendorHash verification**~~ done (moot) — SigNoz builds green since; the collector hash was correct |
-| ~~**Pre-deploy check** (`scripts/pre-deploy-check.sh`)~~ done (moot) — integrated into `deploy.sh`; runs on every deploy |
-| ~~**Post-deploy check** (`scripts/post-deploy-check.sh`)~~ done (moot) — same |
-| ~~**Reboot to activate**~~ done (moot) — the machine has rebooted many times since; the generation is long live |
-| ~~**Commit uncommitted changes**~~ done (moot) — auto-commit daemon swept them; working tree clean |
-| **Vendor-hash CI for upstream repos** | Prior session noted crush-daily, PMA, erraudit should get vendor-hash CI like dnsblockd has |
+| Item                                                                                                                     | Why It Matters                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| ~~**SigNoz collectorVendorHash verification**~~ done (moot) — SigNoz builds green since; the collector hash was correct  |                                                                                             |
+| ~~**Pre-deploy check** (`scripts/pre-deploy-check.sh`)~~ done (moot) — integrated into `deploy.sh`; runs on every deploy |                                                                                             |
+| ~~**Post-deploy check** (`scripts/post-deploy-check.sh`)~~ done (moot) — same                                            |                                                                                             |
+| ~~**Reboot to activate**~~ done (moot) — the machine has rebooted many times since; the generation is long live          |                                                                                             |
+| ~~**Commit uncommitted changes**~~ done (moot) — auto-commit daemon swept them; working tree clean                       |                                                                                             |
+| **Vendor-hash CI for upstream repos**                                                                                    | Prior session noted crush-daily, PMA, erraudit should get vendor-hash CI like dnsblockd has |
 
 ## d) TOTALLY FUCKED UP
 
-| Item | What Went Wrong | Impact |
-|------|-----------------|--------|
-| **The narHash band-aid is fragile** | Reverted to `Pqzzz...` instead of fixing the daemon cache permanently (no sudo access). The lock file now has a hash that only works because the daemon happens to have the matching store path in memory. On next daemon restart, `nix flake check` will fail with the same error. | **HIGH** — Next reboot/update silently breaks all nix operations |
-| **Prior session committed unformatted code** | `_signoz-packages.nix` and `overlays/linux.nix` were committed in `caf2cab8` without running `nix fmt`. The formatting diff is 198 insertions, 192 deletions of pure whitespace/style changes. | **LOW** — Cosmetic, but pollutes git history with formatting-only commits |
-| **AGENTS.md entry may be partially wrong** | I wrote that "`nix flake lock --update-input` does NOT re-encode follows overrides in the root node." This is actually how Nix represents follows — consumers with `['go-nix-helpers']` in their inputs ARE following root correctly (list path syntax = follows). The real issue is just the daemon cache, not follows encoding. The AGENTS.md text conflates two separate issues. | **MEDIUM** — Future sessions may be confused by the misleading documentation ~~— resolved: the AGENTS.md entry was rewritten to current truth in the 08-14 docs-health audit (`61a2224b`); root cause documented as the fetch-type NAR difference~~ |
+| Item                                         | What Went Wrong                                                                                                                                                                                                                                                                                                                                                                     | Impact                                                                                                                                                                                                                                              |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **The narHash band-aid is fragile**          | Reverted to `Pqzzz...` instead of fixing the daemon cache permanently (no sudo access). The lock file now has a hash that only works because the daemon happens to have the matching store path in memory. On next daemon restart, `nix flake check` will fail with the same error.                                                                                                 | **HIGH** — Next reboot/update silently breaks all nix operations                                                                                                                                                                                    |
+| **Prior session committed unformatted code** | `_signoz-packages.nix` and `overlays/linux.nix` were committed in `caf2cab8` without running `nix fmt`. The formatting diff is 198 insertions, 192 deletions of pure whitespace/style changes.                                                                                                                                                                                      | **LOW** — Cosmetic, but pollutes git history with formatting-only commits                                                                                                                                                                           |
+| **AGENTS.md entry may be partially wrong**   | I wrote that "`nix flake lock --update-input` does NOT re-encode follows overrides in the root node." This is actually how Nix represents follows — consumers with `['go-nix-helpers']` in their inputs ARE following root correctly (list path syntax = follows). The real issue is just the daemon cache, not follows encoding. The AGENTS.md text conflates two separate issues. | **MEDIUM** — Future sessions may be confused by the misleading documentation ~~— resolved: the AGENTS.md entry was rewritten to current truth in the 08-14 docs-health audit (`61a2224b`); root cause documented as the fetch-type NAR difference~~ |
 
 ## e) WHAT WE SHOULD IMPROVE
 

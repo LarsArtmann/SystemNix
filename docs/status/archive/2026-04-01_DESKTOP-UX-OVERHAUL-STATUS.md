@@ -117,17 +117,17 @@
 
 ### Critical
 
-| #   | Bug                                      | Impact                                                      | File                       | Fix                            |
-| --- | ---------------------------------------- | ----------------------------------------------------------- | -------------------------- | ------------------------------ |
-| 1   | **`wl-clipboard` removed from home.nix** | Clipboard completely broken — `wl-copy`/`wl-paste` missing  | `home.nix:132-135`         | Restore `wl-clipboard` package |
-| 2   | **Screenshots use `tee >()`**            | Process substitution is bash-only, niri spawns with `sh -c` | `niri-wrapped.nix:220-222` | Use temp file approach instead |
+| # | Bug                                      | Impact                                                      | File                       | Fix                            |
+| - | ---------------------------------------- | ----------------------------------------------------------- | -------------------------- | ------------------------------ |
+| 1 | **`wl-clipboard` removed from home.nix** | Clipboard completely broken — `wl-copy`/`wl-paste` missing  | `home.nix:132-135`         | Restore `wl-clipboard` package |
+| 2 | **Screenshots use `tee >()`**            | Process substitution is bash-only, niri spawns with `sh -c` | `niri-wrapped.nix:220-222` | Use temp file approach instead |
 
 ### Minor
 
-| #   | Bug                        | Impact                                                                        | File                         | Fix                                   |
-| --- | -------------------------- | ----------------------------------------------------------------------------- | ---------------------------- | ------------------------------------- |
-| 3   | **`bemoji` redundant**     | `rofi-emoji` includes its own emoji database                                  | `home.nix:135`               | Remove `bemoji`                       |
-| 4   | **Zed settings not wired** | `settings.json` exists but Home Manager doesn't deploy it to `~/.config/zed/` | `programs/zed/settings.json` | Add `xdg.configFile` or HM zed module |
+| # | Bug                        | Impact                                                                        | File                         | Fix                                   |
+| - | -------------------------- | ----------------------------------------------------------------------------- | ---------------------------- | ------------------------------------- |
+| 3 | **`bemoji` redundant**     | `rofi-emoji` includes its own emoji database                                  | `home.nix:135`               | Remove `bemoji`                       |
+| 4 | **Zed settings not wired** | `settings.json` exists but Home Manager doesn't deploy it to `~/.config/zed/` | `programs/zed/settings.json` | Add `xdg.configFile` or HM zed module |
 
 ---
 

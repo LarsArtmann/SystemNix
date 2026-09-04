@@ -13,8 +13,8 @@ This directory contains ActivityWatch configuration and utilities for both macOS
 
 ### Custom Watchers
 
-| Watcher                  | Description                      | NixOS   | macOS     |
-| ------------------------ | -------------------------------- | ------- | --------- |
+| Watcher                  | Description                      | NixOS   | macOS    |
+| ------------------------ | -------------------------------- | ------- | -------- |
 | `aw-watcher-utilization` | CPU, RAM, disk, network, sensors | ✅ Auto | ⚠️ Manual |
 
 ## aw-watcher-utilization

@@ -103,8 +103,8 @@ SystemNix is a **mature, production-grade cross-platform Nix configuration** man
 | **photomap disabled**                         | 🟡 P3       | Commented out in configuration.nix due to Podman config permission issue.                                                                                                      | Not investigated.                                                                     |
 | **whisper-asr.service pre-existing failure**  | 🟡 P3       | Reported in Session 45 status. Not investigated.                                                                                                                               | Needs live debugging on evo-x2.                                                       |
 | **ollama/engine binary collision**            | ⚪ Noise    | `pkgs.buildEnv` warning: ollama's `engine` binary collides with mesa-demos `engine`. Cosmetic only.                                                                            | Could exclude mesa-demos or rename.                                                   |
-| **wireshark-cli/wireshark-qt collision**      | ✅ Fixed    | Removed redundant `wireshark-cli` — `wireshark` (Qt) already ships all CLI tools (tshark, dumpcap, etc.). Committed as `e9dc95a9`.                                             |
-| **modernize/gotools collision**               | ✅ Resolved | Removed custom `pkgs/modernize.nix` — nixpkgs Go is already 1.26.2, gopls bundles `modernize`. No wrapper needed.                                                              |
+| **wireshark-cli/wireshark-qt collision**      | ✅ Fixed    | Removed redundant `wireshark-cli` — `wireshark` (Qt) already ships all CLI tools (tshark, dumpcap, etc.). Committed as `e9dc95a9`.                                             |                                                                                       |
+| **modernize/gotools collision**               | ✅ Resolved | Removed custom `pkgs/modernize.nix` — nixpkgs Go is already 1.26.2, gopls bundles `modernize`. No wrapper needed.                                                              |                                                                                       |
 
 ---
 
@@ -143,24 +143,24 @@ SystemNix is a **mature, production-grade cross-platform Nix configuration** man
 
 ### P0 — Immediate (Do Now)
 
-| #   | Task                                                                  | Effort | Impact                                            |
-| --- | --------------------------------------------------------------------- | ------ | ------------------------------------------------- |
-| 1   | **Deploy openseo fix + Session 46 changes** (`just switch` on evo-x2) | 5 min  | Fixes broken service, deploys memory optimization |
-| 2   | **Verify all services start clean after deploy**                      | 10 min | Confidence in system health                       |
-| 3   | **Check openseo.service is running**                                  | 2 min  | Confirms fix worked                               |
-| 4   | **Verify monitor365 works with renamed sops keys**                    | 5 min  | Closes open question from Session 43              |
+| # | Task                                                                  | Effort | Impact                                            |
+| - | --------------------------------------------------------------------- | ------ | ------------------------------------------------- |
+| 1 | **Deploy openseo fix + Session 46 changes** (`just switch` on evo-x2) | 5 min  | Fixes broken service, deploys memory optimization |
+| 2 | **Verify all services start clean after deploy**                      | 10 min | Confidence in system health                       |
+| 3 | **Check openseo.service is running**                                  | 2 min  | Confirms fix worked                               |
+| 4 | **Verify monitor365 works with renamed sops keys**                    | 5 min  | Closes open question from Session 43              |
 
 ### P1 — This Week
 
-| #   | Task                                                                  | Effort | Impact                          |
-| --- | --------------------------------------------------------------------- | ------ | ------------------------------- |
-| 5   | **Fix `hostPlatform` deprecation warning**                            | 5 min  | Clean evaluation                |
-| 6   | **Eliminate remaining package collisions** (modernize, ollama/engine) | 20 min | Clean builds, smaller closure   |
-| 7   | **Add `imagePull` to openseo, manifest, twenty**                      | 30 min | Reliable first-start            |
-| 8   | **Update TODO_LIST.md** — remove done items, add new ones             | 20 min | Accurate tracking               |
-| 9   | **Update FEATURES.md** — add OpenSEO, Twenty, Manifest                | 30 min | Accurate feature inventory      |
-| 10  | **Investigate whisper-asr.service failure**                           | 30 min | Fix pre-existing broken service |
-| 11  | **Investigate photomap podman permission issue**                      | 30 min | Enable disabled service         |
+| #  | Task                                                                  | Effort | Impact                          |
+| -- | --------------------------------------------------------------------- | ------ | ------------------------------- |
+| 5  | **Fix `hostPlatform` deprecation warning**                            | 5 min  | Clean evaluation                |
+| 6  | **Eliminate remaining package collisions** (modernize, ollama/engine) | 20 min | Clean builds, smaller closure   |
+| 7  | **Add `imagePull` to openseo, manifest, twenty**                      | 30 min | Reliable first-start            |
+| 8  | **Update TODO_LIST.md** — remove done items, add new ones             | 20 min | Accurate tracking               |
+| 9  | **Update FEATURES.md** — add OpenSEO, Twenty, Manifest                | 30 min | Accurate feature inventory      |
+| 10 | **Investigate whisper-asr.service failure**                           | 30 min | Fix pre-existing broken service |
+| 11 | **Investigate photomap podman permission issue**                      | 30 min | Enable disabled service         |
 
 ### P2 — This Month
 
@@ -176,15 +176,15 @@ SystemNix is a **mature, production-grade cross-platform Nix configuration** man
 
 ### P3 — Next Quarter
 
-| #   | Task                                            | Effort | Impact                      |
-| --- | ----------------------------------------------- | ------ | --------------------------- |
-| 19  | **Provision Pi 3 for DNS failover cluster**     | 4h     | HA DNS                      |
-| 20  | **Compute real vendorHash for buildflow**       | 1h     | Unblocks buildflow updates  |
-| 21  | **Compute real vendorHash for PMA**             | 1h     | Unblocks PMA updates        |
-| 22  | **Create flake.nix for hierarchical-errors**    | 2h     | Nix standardization         |
-| 23  | **Convert go-auto-upgrade `path:` to SSH URLs** | 1h     | Portable flake              |
-| 24  | **Audit go-structure-linter vendorHash**        | 30 min | Prevent stale hash failures |
-| 25  | **Enable Linux audit framework (auditd)**       | 2h     | Security hardening          |
+| #  | Task                                            | Effort | Impact                      |
+| -- | ----------------------------------------------- | ------ | --------------------------- |
+| 19 | **Provision Pi 3 for DNS failover cluster**     | 4h     | HA DNS                      |
+| 20 | **Compute real vendorHash for buildflow**       | 1h     | Unblocks buildflow updates  |
+| 21 | **Compute real vendorHash for PMA**             | 1h     | Unblocks PMA updates        |
+| 22 | **Create flake.nix for hierarchical-errors**    | 2h     | Nix standardization         |
+| 23 | **Convert go-auto-upgrade `path:` to SSH URLs** | 1h     | Portable flake              |
+| 24 | **Audit go-structure-linter vendorHash**        | 30 min | Prevent stale hash failures |
+| 25 | **Enable Linux audit framework (auditd)**       | 2h     | Security hardening          |
 
 ---
 
@@ -204,14 +204,14 @@ This can only be verified by visiting `https://seo.home.lan` in a browser on the
 
 ## Build & Deploy Status
 
-| Aspect                    | Status                                                               |
-| ------------------------- | -------------------------------------------------------------------- |
-| **Build**                 | ✅ PASSING (20 derivations, 19s, no errors)                          |
+| Aspect                    | Status                                                              |
+| ------------------------- | ------------------------------------------------------------------- |
+| **Build**                 | ✅ PASSING (20 derivations, 19s, no errors)                         |
 | **Evaluation**            | ⚠️ 1 warning (`hostPlatform` deprecated)                             |
-| **Deploy (nh os boot)**   | ✅ Succeeded (boot generation created)                               |
+| **Deploy (nh os boot)**   | ✅ Succeeded (boot generation created)                              |
 | **Deploy (nh os switch)** | ⚠️ Activation succeeded but `openseo.service` failed (fixed locally) |
-| **Closure size**          | 41.4 GiB (unchanged)                                                 |
-| **Diff**                  | 9.81 KiB (minimal — ZRAM/swappiness change only)                     |
+| **Closure size**          | 41.4 GiB (unchanged)                                                |
+| **Diff**                  | 9.81 KiB (minimal — ZRAM/swappiness change only)                    |
 
 ## Uncommitted Changes
 

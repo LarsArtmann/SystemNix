@@ -7,7 +7,6 @@ and diagnosed the Pocket ID Mac Touch ID registration blocker (untrusted CA).
 
 ---
 
-
 ## A) FULLY DONE ✅
 
 ### 1. Gatus Endpoint Fixes (Deployed)
@@ -170,33 +169,33 @@ load average: 1.41, 7.03, 25.65
 
 ## F) TOP 25 NEXT TASKS
 
-| #   | Priority    | Task                                                                                                             | Impact                                     |
-| --- | ----------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| 1   | 🔴 CRITICAL | **Deploy undeployed commits** (Forgejo SSO, crush-daily fix, flake.lock updates)                                 | Unblocks everything                        |
-| 2   | 🔴 CRITICAL | **Free disk space** — `nix-collect-garbage -d`, prune old BTRFS snapshots, clean `/nix/var/nix/builds/`          | Prevents ENOSPC crash                      |
-| 3   | 🔴 CRITICAL | **Restart Ollama** — `systemctl start ollama` or deploy                                                          | Restores AI services                       |
-| 4   | 🟡 HIGH     | **Install dnsblockd-CA on Mac** — user action, then restart Chrome + Helium                                      | Unblocks Touch ID for all *.home.lan sites |
-| 5   | 🟡 HIGH     | **Register Mac Touch ID passkey** in Pocket ID after CA installed                                                | Unblocks Gatus SSO, Forgejo SSO            |
-| 6   | 🟡 HIGH     | **Verify Forgejo SSO-only** after deploy — confirm password form gone, OIDC button present                       | Validates deploy                           |
-| 7   | 🟡 HIGH     | **Verify Forgejo git HTTPS** still works with tokens after `ENABLE_BASIC_AUTHENTICATION = false`                 | Prevents lockout                           |
-| 8   | 🟡 HIGH     | **Fix EMEET PIXY service** — investigate why it dies after session restart                                       | Restores monitoring                        |
-| 9   | 🟡 HIGH     | **Update flake.lock for crush-daily** — `nix flake lock --update-input crush-daily` to pull vendorHash fix       | Required for deploy                        |
-| 10  | 🟡 MEDIUM   | **Fix broken logo** (`/img/static-logo-rounded-512.png` 404) — identify source service                           | Polish                                     |
-| 11  | 🟡 MEDIUM   | **BTRFS metadata check** — verify `btrfs-health` guard is gating GC correctly                                    | Prevents crash                             |
-| 12  | 🟡 MEDIUM   | **Swap pressure** — investigate why 7.3 GB swap is consumed, tune `oomd` or `MemoryHigh`                         | Prevents OOM                               |
-| 13  | 🟡 MEDIUM   | **Document Mac CA bootstrap** in AGENTS.md — permanent instructions for new devices                              | Reduces future friction                    |
-| 14  | 🟡 MEDIUM   | **Consider MDM profile** for dnsblockd-CA distribution to Mac                                                    | Eliminates manual step                     |
-| 15  | 🟢 LOW      | **Wire SLO (Single Logout)** for Layer 1 OIDC apps                                                               | Improves UX                                |
-| 16  | 🟢 LOW      | **Add Ollama auto-restart** policy (`Restart=on-failure`) if not set                                             | Self-healing                               |
-| 17  | 🟢 LOW      | **Gatus OIDC integration test** — automated check that OIDC token exchange works                                 | Catches regressions                        |
-| 18  | 🟢 LOW      | **Clean `/nix/var/nix/builds/`** — stale sandboxes from OOM crashes                                              | Reclaims space                             |
-| 19  | 🟢 LOW      | **Review `excludeCredentials`** — consider disabling passkey dedup in Pocket ID if it causes registration issues | Smoother UX                                |
-| 20  | 🟢 LOW      | **Monitor365 agent deploy** — agent binary CLI changed, verify it's running correctly                            | Monitoring completeness                    |
-| 21  | 🟢 LOW      | **Add `pocket-id-login-code` to AGENTS.md** gotchas table                                                        | Discoverability                            |
-| 22  | 🟢 LOW      | **Audit all Gatus endpoints** — proactively check every URL has the right health path                            | Prevents future false alarms               |
-| 23  | 🟢 LOW      | **Pocket ID `requiresReauthentication`** — consider enabling for sensitive clients (Forgejo)                     | Security hardening                         |
-| 24  | 🟢 LOW      | **Document SSO-only Forgejo** in AGENTS.md — record that password auth is disabled                               | Knowledge preservation                     |
-| 25  | 🟢 LOW      | **Consider `vendorHash = null`** for internal LarsArtmann repos to avoid hash drift blocking deploys             | Deploy reliability                         |
+| #  | Priority    | Task                                                                                                             | Impact                                     |
+| -- | ----------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| 1  | 🔴 CRITICAL | **Deploy undeployed commits** (Forgejo SSO, crush-daily fix, flake.lock updates)                                 | Unblocks everything                        |
+| 2  | 🔴 CRITICAL | **Free disk space** — `nix-collect-garbage -d`, prune old BTRFS snapshots, clean `/nix/var/nix/builds/`          | Prevents ENOSPC crash                      |
+| 3  | 🔴 CRITICAL | **Restart Ollama** — `systemctl start ollama` or deploy                                                          | Restores AI services                       |
+| 4  | 🟡 HIGH     | **Install dnsblockd-CA on Mac** — user action, then restart Chrome + Helium                                      | Unblocks Touch ID for all *.home.lan sites |
+| 5  | 🟡 HIGH     | **Register Mac Touch ID passkey** in Pocket ID after CA installed                                                | Unblocks Gatus SSO, Forgejo SSO            |
+| 6  | 🟡 HIGH     | **Verify Forgejo SSO-only** after deploy — confirm password form gone, OIDC button present                       | Validates deploy                           |
+| 7  | 🟡 HIGH     | **Verify Forgejo git HTTPS** still works with tokens after `ENABLE_BASIC_AUTHENTICATION = false`                 | Prevents lockout                           |
+| 8  | 🟡 HIGH     | **Fix EMEET PIXY service** — investigate why it dies after session restart                                       | Restores monitoring                        |
+| 9  | 🟡 HIGH     | **Update flake.lock for crush-daily** — `nix flake lock --update-input crush-daily` to pull vendorHash fix       | Required for deploy                        |
+| 10 | 🟡 MEDIUM   | **Fix broken logo** (`/img/static-logo-rounded-512.png` 404) — identify source service                           | Polish                                     |
+| 11 | 🟡 MEDIUM   | **BTRFS metadata check** — verify `btrfs-health` guard is gating GC correctly                                    | Prevents crash                             |
+| 12 | 🟡 MEDIUM   | **Swap pressure** — investigate why 7.3 GB swap is consumed, tune `oomd` or `MemoryHigh`                         | Prevents OOM                               |
+| 13 | 🟡 MEDIUM   | **Document Mac CA bootstrap** in AGENTS.md — permanent instructions for new devices                              | Reduces future friction                    |
+| 14 | 🟡 MEDIUM   | **Consider MDM profile** for dnsblockd-CA distribution to Mac                                                    | Eliminates manual step                     |
+| 15 | 🟢 LOW      | **Wire SLO (Single Logout)** for Layer 1 OIDC apps                                                               | Improves UX                                |
+| 16 | 🟢 LOW      | **Add Ollama auto-restart** policy (`Restart=on-failure`) if not set                                             | Self-healing                               |
+| 17 | 🟢 LOW      | **Gatus OIDC integration test** — automated check that OIDC token exchange works                                 | Catches regressions                        |
+| 18 | 🟢 LOW      | **Clean `/nix/var/nix/builds/`** — stale sandboxes from OOM crashes                                              | Reclaims space                             |
+| 19 | 🟢 LOW      | **Review `excludeCredentials`** — consider disabling passkey dedup in Pocket ID if it causes registration issues | Smoother UX                                |
+| 20 | 🟢 LOW      | **Monitor365 agent deploy** — agent binary CLI changed, verify it's running correctly                            | Monitoring completeness                    |
+| 21 | 🟢 LOW      | **Add `pocket-id-login-code` to AGENTS.md** gotchas table                                                        | Discoverability                            |
+| 22 | 🟢 LOW      | **Audit all Gatus endpoints** — proactively check every URL has the right health path                            | Prevents future false alarms               |
+| 23 | 🟢 LOW      | **Pocket ID `requiresReauthentication`** — consider enabling for sensitive clients (Forgejo)                     | Security hardening                         |
+| 24 | 🟢 LOW      | **Document SSO-only Forgejo** in AGENTS.md — record that password auth is disabled                               | Knowledge preservation                     |
+| 25 | 🟢 LOW      | **Consider `vendorHash = null`** for internal LarsArtmann repos to avoid hash drift blocking deploys             | Deploy reliability                         |
 
 ---
 
@@ -218,19 +217,19 @@ But there is **zero infrastructure** for cross-platform CA distribution. The Mac
 
 ## System Snapshot
 
-| Metric             | Value                       | Status              |
-| ------------------ | --------------------------- | ------------------- |
-| Uptime             | 1 day 16h                   | ✅                  |
+| Metric             | Value                       | Status             |
+| ------------------ | --------------------------- | ------------------ |
+| Uptime             | 1 day 16h                   | ✅                 |
 | Load (1/5/15 min)  | 1.41 / 7.03 / 25.65         | ⚠️ Recovering       |
-| Memory             | 22 GB / 93 GB (71 GB avail) | ✅                  |
+| Memory             | 22 GB / 93 GB (71 GB avail) | ✅                 |
 | Swap               | 7.3 GB / 9.4 GB (78%)       | ⚠️ High             |
-| Disk               | 651 GB / 723 GB (92%)       | 🔴 Critical         |
-| BTRFS Metadata     | 50.19 / 56.70 GiB (88.5%)   | 🔴 Critical         |
-| Failed Units       | 0                           | ✅                  |
+| Disk               | 651 GB / 723 GB (92%)       | 🔴 Critical        |
+| BTRFS Metadata     | 50.19 / 56.70 GiB (88.5%)   | 🔴 Critical        |
+| Failed Units       | 0                           | ✅                 |
 | Gatus Failing      | EMEET PIXY, Ollama          | ⚠️                  |
-| Git HEAD           | `c5d45de2`                  | —                   |
+| Git HEAD           | `c5d45de2`                  | —                  |
 | Deployed Gen       | `e73de5b` (Jun 26)          | ⚠️ 3 commits behind |
-| Undeployed Commits | 3                           | 🔴                  |
+| Undeployed Commits | 3                           | 🔴                 |
 
 ---
 

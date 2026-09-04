@@ -25,10 +25,10 @@ The `/data` partition is now the concern at **89% (118 GB free)**, driven by AI 
 | RAM used     | 46/62 GiB (74%)     | 19/62 GiB (31%)               | ✅ −43 GiB    |
 | Swap used    | 8.5/16 GiB (53%)    | 2.6/16 GiB (16%)              | ✅ −5.9 GiB   |
 | Root disk    | 504/512 GB (100%)   | 258/512 GB (53%)              | ✅ −246 GB    |
-| /data disk   | 854/1024 GB (84%)   | 906/1024 GB (89%)             | ⚠️ +52 GB     |
+| /data disk   | 854/1024 GB (84%)   | 906/1024 GB (89%)             | ⚠️ +52 GB      |
 | Load avg     | 4.28 / 5.79 / 12.95 | 1.84 / 1.49 / 1.99            | ✅ Normalized |
 | OOM kills    | 0                   | 0                             | ✅ Clean      |
-| IO scheduler | `[none]`            | `[none]` (BFQ pending deploy) | ⚠️ Fix ready  |
+| IO scheduler | `[none]`            | `[none]` (BFQ pending deploy) | ⚠️ Fix ready   |
 | Boot time    | 4m 22s              | Unknown (likely ~50s)         | ✅ Improved   |
 
 ---
@@ -135,18 +135,18 @@ Root went from 100% → 53%. But `/data` went from 84% → 89% (+52 GB). Main `/
 
 ### 3. Cache Bloat — Partially Cleaned
 
-| Cache                       | Size       | Safe to Clear?   |
-| --------------------------- | ---------- | ---------------- |
-| `~/.cache/pip`              | 6.3 GB     | ✅ Fully safe    |
-| `~/.cache/goimports`        | 4.0 GB     | ✅ Fully safe    |
-| `~/.cache/nix`              | 2.9 GB     | ✅ Fully safe    |
-| `~/.cache/.bun`             | 2.3 GB     | ✅ Fully safe    |
-| `~/.cache/gopls`            | 1.8 GB     | ✅ Fully safe    |
-| `~/.cache/puppeteer`        | 1.2 GB     | ✅ Fully safe    |
+| Cache                       | Size       | Safe to Clear?  |
+| --------------------------- | ---------- | --------------- |
+| `~/.cache/pip`              | 6.3 GB     | ✅ Fully safe   |
+| `~/.cache/goimports`        | 4.0 GB     | ✅ Fully safe   |
+| `~/.cache/nix`              | 2.9 GB     | ✅ Fully safe   |
+| `~/.cache/.bun`             | 2.3 GB     | ✅ Fully safe   |
+| `~/.cache/gopls`            | 1.8 GB     | ✅ Fully safe   |
+| `~/.cache/puppeteer`        | 1.2 GB     | ✅ Fully safe   |
 | `~/.cache/mozilla`          | 1.1 GB     | ⚠️ Browser cache |
-| `~/.cache/golangci-lint`    | 909 MB     | ✅ Fully safe    |
+| `~/.cache/golangci-lint`    | 909 MB     | ✅ Fully safe   |
 | `~/.cache/net.imput.helium` | 859 MB     | ⚠️ App cache     |
-| **Total**                   | **~25 GB** |                  |
+| **Total**                   | **~25 GB** |                 |
 
 ---
 
@@ -246,33 +246,33 @@ SigNoz ingests metrics, traces, and logs continuously but has **no TTL or retent
 
 Sorted by impact × effort (highest first):
 
-| #   | Task                                                                                                   | Impact      | Effort | Category     |
-| --- | ------------------------------------------------------------------------------------------------------ | ----------- | ------ | ------------ |
-| 1   | **Deploy BFQ scheduler** (`just switch` + verify)                                                      | 🔴 Critical | 5min   | Deploy       |
-| 2   | **Consolidate AI model directories** — deduplicate `/data/models`, `/data/llamacpp-models`, `/data/ai` | 🔴 Critical | 2h     | Ops          |
-| 3   | **Add Docker global log limits** — prevent unbounded container log growth                              | 🔴 Critical | 15min  | Config       |
-| 4   | **Add SigNoz/ClickHouse retention policy** — TTL on all tables                                         | 🟡 High     | 1h     | Config       |
-| 5   | **Clean caches** — `~/.cache/pip` (6.3G), `goimports` (4G), `go-build`, `gopls`                        | 🟡 High     | 5min   | Ops          |
-| 6   | **Fix monitor365-server** user service failures                                                        | 🟡 High     | 1h     | Bug          |
-| 7   | **Fix activitywatch-watcher** service failure                                                          | 🟡 High     | 30min  | Bug          |
-| 8   | **Fix oauth2-proxy** intermittent startup failure                                                      | 🟡 High     | 1h     | Bug          |
-| 9   | **Set `vm.overcommit_memory = 1`** for Redis                                                           | 🟡 High     | 5min   | Config       |
-| 10  | **Run /data BTRFS migration** (`just snapshot-migrate-data`)                                           | 🟡 Medium   | 1h     | Ops          |
-| 11  | **Add disk space alerting** to Gatus                                                                   | 🟡 Medium   | 30min  | Monitoring   |
-| 12  | **Add IO pressure metrics** via node-exporter textfile                                                 | 🟡 Medium   | 30min  | Monitoring   |
-| 13  | **Add boot time tracking** (systemd-analyze in timer)                                                  | 🟡 Medium   | 30min  | Monitoring   |
-| 14  | **Fix dnsblockd-cert-import** user service failure                                                     | 🟡 Medium   | 30min  | Bug          |
-| 15  | **Archive old status reports** (keep last 10, archive rest)                                            | 🟢 Low      | 15min  | Housekeeping |
-| 16  | **Enforce service target convention** via NixOS assertion                                              | 🟢 Low      | 30min  | Code quality |
-| 17  | **Auto-gate Caddy vHosts** behind service enable flags                                                 | 🟢 Low      | 2h     | Refactor     |
-| 18  | **Auto-gate Gatus endpoints** behind service enable flags                                              | 🟢 Low      | 1h     | Refactor     |
-| 19  | **Fix IPv6 tempaddr errors** on Docker veths                                                           | 🟢 Low      | 30min  | Config       |
-| 20  | **Investigate firmware 33s** — check BIOS fast boot options                                            | 🟢 Low      | 15min  | Perf         |
-| 21  | **Redis authentication** — set a password                                                              | 🟢 Low      | 15min  | Security     |
-| 22  | **fstrim redundancy** — remove fstrim for /data (already has `discard=async`)                          | 🟢 Low      | 5min   | Config       |
-| 23  | **Pi 3 DNS hardware provisioning**                                                                     | 🟢 Low      | 4h+    | Infra        |
-| 24  | **Bluetooth hci0 wmt error** — investigate RTL driver issue                                            | 🟢 Low      | 2h     | Bug          |
-| 25  | **SigNoz container DNS timing** — psql "db" host resolution on first start                             | 🟢 Low      | 1h     | Bug          |
+| #  | Task                                                                                                   | Impact      | Effort | Category     |
+| -- | ------------------------------------------------------------------------------------------------------ | ----------- | ------ | ------------ |
+| 1  | **Deploy BFQ scheduler** (`just switch` + verify)                                                      | 🔴 Critical | 5min   | Deploy       |
+| 2  | **Consolidate AI model directories** — deduplicate `/data/models`, `/data/llamacpp-models`, `/data/ai` | 🔴 Critical | 2h     | Ops          |
+| 3  | **Add Docker global log limits** — prevent unbounded container log growth                              | 🔴 Critical | 15min  | Config       |
+| 4  | **Add SigNoz/ClickHouse retention policy** — TTL on all tables                                         | 🟡 High     | 1h     | Config       |
+| 5  | **Clean caches** — `~/.cache/pip` (6.3G), `goimports` (4G), `go-build`, `gopls`                        | 🟡 High     | 5min   | Ops          |
+| 6  | **Fix monitor365-server** user service failures                                                        | 🟡 High     | 1h     | Bug          |
+| 7  | **Fix activitywatch-watcher** service failure                                                          | 🟡 High     | 30min  | Bug          |
+| 8  | **Fix oauth2-proxy** intermittent startup failure                                                      | 🟡 High     | 1h     | Bug          |
+| 9  | **Set `vm.overcommit_memory = 1`** for Redis                                                           | 🟡 High     | 5min   | Config       |
+| 10 | **Run /data BTRFS migration** (`just snapshot-migrate-data`)                                           | 🟡 Medium   | 1h     | Ops          |
+| 11 | **Add disk space alerting** to Gatus                                                                   | 🟡 Medium   | 30min  | Monitoring   |
+| 12 | **Add IO pressure metrics** via node-exporter textfile                                                 | 🟡 Medium   | 30min  | Monitoring   |
+| 13 | **Add boot time tracking** (systemd-analyze in timer)                                                  | 🟡 Medium   | 30min  | Monitoring   |
+| 14 | **Fix dnsblockd-cert-import** user service failure                                                     | 🟡 Medium   | 30min  | Bug          |
+| 15 | **Archive old status reports** (keep last 10, archive rest)                                            | 🟢 Low      | 15min  | Housekeeping |
+| 16 | **Enforce service target convention** via NixOS assertion                                              | 🟢 Low      | 30min  | Code quality |
+| 17 | **Auto-gate Caddy vHosts** behind service enable flags                                                 | 🟢 Low      | 2h     | Refactor     |
+| 18 | **Auto-gate Gatus endpoints** behind service enable flags                                              | 🟢 Low      | 1h     | Refactor     |
+| 19 | **Fix IPv6 tempaddr errors** on Docker veths                                                           | 🟢 Low      | 30min  | Config       |
+| 20 | **Investigate firmware 33s** — check BIOS fast boot options                                            | 🟢 Low      | 15min  | Perf         |
+| 21 | **Redis authentication** — set a password                                                              | 🟢 Low      | 15min  | Security     |
+| 22 | **fstrim redundancy** — remove fstrim for /data (already has `discard=async`)                          | 🟢 Low      | 5min   | Config       |
+| 23 | **Pi 3 DNS hardware provisioning**                                                                     | 🟢 Low      | 4h+    | Infra        |
+| 24 | **Bluetooth hci0 wmt error** — investigate RTL driver issue                                            | 🟢 Low      | 2h     | Bug          |
+| 25 | **SigNoz container DNS timing** — psql "db" host resolution on first start                             | 🟢 Low      | 1h     | Bug          |
 
 ---
 

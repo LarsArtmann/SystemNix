@@ -239,33 +239,33 @@ Still inline (system configs, machine-specific — lower priority):
 
 ## F) Top 25 Next Actions (Impact × Effort)
 
-| #   | Action                                                                                           | Impact | Effort | Category      |
-| --- | ------------------------------------------------------------------------------------------------ | ------ | ------ | ------------- |
-| 1   | **Push to origin** (`git push`)                                                                  | High   | 0      | Immediate     |
-| 2   | **Build Pi 3 SD image** (`nix build .#nixosConfigurations.rpi3-dns.config.system.build.sdImage`) | High   | Low    | DNS Cluster   |
-| 3   | **Flash SD + boot Pi 3** — verify DNS resolution                                                 | High   | Low    | DNS Cluster   |
-| 4   | **Test DNS failover** — stop Unbound on evo-x2, verify Pi 3 takes over                           | High   | Low    | DNS Cluster   |
-| 5   | **Archive 30+ stale status docs** to `docs/status/archive/`                                      | High   | Low    | Hygiene       |
-| 6   | **Drop orphaned Hyprland stash** (`stash@{2}`)                                                   | Low    | 0      | Hygiene       |
-| 7   | **Review/apply vendorHash stash** (`stash@{0}`)                                                  | Medium | Low    | EMEET PIXY    |
-| 8   | **Clean up 18 remote branches** (`copilot/fix-*`)                                                | Low    | Low    | Hygiene       |
-| 9   | **Fix pre-commit statix hook** — investigate failure on wallpapers commit                        | Medium | Low    | Tooling       |
-| 10  | **Enable `services.udisks2`** for auto-mounting USB/SD                                           | High   | Low    | NixOS         |
-| 11  | **Migrate Pi 3 to nixos-hardware** — fix linux-rpi deprecation                                   | Medium | Medium | DNS Cluster   |
-| 12  | **Secure VRRP auth** — use sops-nix for Keepalived password                                      | Medium | Low    | Security      |
-| 13  | **Convert niri session restore** to proper NixOS module options                                  | High   | Medium | Architecture  |
-| 14  | **Add Waybar module** for session restore stats                                                  | Medium | Low    | Niri          |
-| 15  | **Verify SigNoz** is collecting traces/metrics/logs                                              | Medium | Low    | Monitoring    |
-| 16  | **Check Photomap** service status and fix if broken                                              | Medium | Low    | Services      |
-| 17  | **Check Authelia** SSO deployment status                                                         | High   | Low    | Security      |
-| 18  | **Investigate `just test` race** — pin down root cause                                           | Medium | Medium | Reliability   |
-| 19  | **Create `homeModules` pattern** for HM configs via flake-parts                                  | High   | Medium | Architecture  |
-| 20  | **Verify AMD NPU** driver is functional with test workload                                       | Medium | Medium | Hardware      |
-| 21  | **Add CI pipeline** — at minimum `just test-fast` on push                                        | High   | Medium | DevOps        |
-| 22  | **Write ADR for niri session restore** design decisions                                          | Low    | Low    | Documentation |
-| 23  | **Setup Taskwarrior backup automation** via systemd timer                                        | Medium | Low    | Automation    |
-| 24  | **Test `just switch` on evo-x2** — deploy Keepalived + binfmt + new modules                      | High   | Low    | Deployment    |
-| 25  | **Document DNS cluster** in AGENTS.md                                                            | Medium | Low    | Documentation |
+| #  | Action                                                                                           | Impact | Effort | Category      |
+| -- | ------------------------------------------------------------------------------------------------ | ------ | ------ | ------------- |
+| 1  | **Push to origin** (`git push`)                                                                  | High   | 0      | Immediate     |
+| 2  | **Build Pi 3 SD image** (`nix build .#nixosConfigurations.rpi3-dns.config.system.build.sdImage`) | High   | Low    | DNS Cluster   |
+| 3  | **Flash SD + boot Pi 3** — verify DNS resolution                                                 | High   | Low    | DNS Cluster   |
+| 4  | **Test DNS failover** — stop Unbound on evo-x2, verify Pi 3 takes over                           | High   | Low    | DNS Cluster   |
+| 5  | **Archive 30+ stale status docs** to `docs/status/archive/`                                      | High   | Low    | Hygiene       |
+| 6  | **Drop orphaned Hyprland stash** (`stash@{2}`)                                                   | Low    | 0      | Hygiene       |
+| 7  | **Review/apply vendorHash stash** (`stash@{0}`)                                                  | Medium | Low    | EMEET PIXY    |
+| 8  | **Clean up 18 remote branches** (`copilot/fix-*`)                                                | Low    | Low    | Hygiene       |
+| 9  | **Fix pre-commit statix hook** — investigate failure on wallpapers commit                        | Medium | Low    | Tooling       |
+| 10 | **Enable `services.udisks2`** for auto-mounting USB/SD                                           | High   | Low    | NixOS         |
+| 11 | **Migrate Pi 3 to nixos-hardware** — fix linux-rpi deprecation                                   | Medium | Medium | DNS Cluster   |
+| 12 | **Secure VRRP auth** — use sops-nix for Keepalived password                                      | Medium | Low    | Security      |
+| 13 | **Convert niri session restore** to proper NixOS module options                                  | High   | Medium | Architecture  |
+| 14 | **Add Waybar module** for session restore stats                                                  | Medium | Low    | Niri          |
+| 15 | **Verify SigNoz** is collecting traces/metrics/logs                                              | Medium | Low    | Monitoring    |
+| 16 | **Check Photomap** service status and fix if broken                                              | Medium | Low    | Services      |
+| 17 | **Check Authelia** SSO deployment status                                                         | High   | Low    | Security      |
+| 18 | **Investigate `just test` race** — pin down root cause                                           | Medium | Medium | Reliability   |
+| 19 | **Create `homeModules` pattern** for HM configs via flake-parts                                  | High   | Medium | Architecture  |
+| 20 | **Verify AMD NPU** driver is functional with test workload                                       | Medium | Medium | Hardware      |
+| 21 | **Add CI pipeline** — at minimum `just test-fast` on push                                        | High   | Medium | DevOps        |
+| 22 | **Write ADR for niri session restore** design decisions                                          | Low    | Low    | Documentation |
+| 23 | **Setup Taskwarrior backup automation** via systemd timer                                        | Medium | Low    | Automation    |
+| 24 | **Test `just switch` on evo-x2** — deploy Keepalived + binfmt + new modules                      | High   | Low    | Deployment    |
+| 25 | **Document DNS cluster** in AGENTS.md                                                            | Medium | Low    | Documentation |
 
 ---
 

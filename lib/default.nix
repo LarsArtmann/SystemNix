@@ -128,6 +128,7 @@ in
       conditions ? [ "[STATUS] == 200" ],
       alerts ? [ ],
       client ? { },
+      headers ? { },
     }:
     {
       inherit
@@ -139,7 +140,8 @@ in
         alerts
         ;
     }
-    // lib.optionalAttrs (client != { }) { inherit client; };
+    // lib.optionalAttrs (client != { }) { inherit client; }
+    // lib.optionalAttrs (headers != { }) { inherit headers; };
 
   ports =
     let
@@ -274,6 +276,16 @@ in
   # Returns: { after, wants, serviceConfig.ExecStartPre }
   # Merge with: systemd.services.foo = lib.mkMerge [ (mkOidcGate {...}) {...} ];
   #
+  # Gate budget is 300s (150 retries × 2s): dnsblockd needs ~2min at boot to
+  # load its 3.9M-entry blocklist mapping before it answers *.home.lan DNS
+  # (measured 2026-08-31: DNS ready at 16:39:58 while the old 120s budget
+  # expired at 16:40:01 — oauth2-proxy + gatus + browser-history failed into
+  # OnFailure Discord alerts on every slow boot, then self-healed 5s later).
+  # The fragment sets TimeoutStartSec = mkDefault "6min" so consumers that
+  # merge the whole serviceConfig get a matching ceiling automatically;
+  # consumers that pick only ExecStartPre must set their own — enforced at
+  # eval time by gate-timeout-audit.nix (≥ 6min for oidc gates).
+  #
   # Example:
   #   mkOidcGate { inherit pkgs domain; serviceName = "gatus"; }
   #   → { after = ["network-online.target" "pocket-id.service" ...];
@@ -297,10 +309,10 @@ in
         runtimeInputs = [ pkgs.curl ];
         text = ''
           echo "${serviceName}: waiting for OIDC endpoint at auth.${domain}..."
-          curl -sf --max-time 5 --retry 60 --retry-delay 2 --retry-all-errors \
+          curl -sf --max-time 5 --retry 150 --retry-delay 2 --retry-all-errors \
             -o /dev/null "https://auth.${domain}/.well-known/openid-configuration" \
             || {
-              echo "${serviceName}: OIDC endpoint unreachable after 120s" >&2
+              echo "${serviceName}: OIDC endpoint unreachable after 300s" >&2
               exit 1
             }
           echo "${serviceName}: OIDC endpoint ready (TLS verified)"
@@ -310,7 +322,10 @@ in
     {
       after = deps;
       wants = deps;
-      serviceConfig.ExecStartPre = [ "+${lib.getExe script}" ];
+      serviceConfig = {
+        ExecStartPre = [ "+${lib.getExe script}" ];
+        TimeoutStartSec = lib.mkDefault "6min";
+      };
     };
 
   # mkDnsGate: generates a systemd config fragment that gates service startup
@@ -319,7 +334,14 @@ in
   # Use for services that need DNS resolution at init time but don't depend
   # on the OIDC stack (e.g., searxng engine init, forgejo OIDC DNS resolution).
   #
-  # Returns: { after, wants, serviceConfig.ExecStartPre }
+  # Returns: { after, wants, serviceConfig }
+  #
+  # Default budget is 180s (90 attempts × 2s), raised from 120s on 2026-08-31:
+  # dnsblockd needs ~2min at boot to load its blocklist mapping (same measured
+  # boot that broke the OIDC gate's old 120s budget), so a 120s DNS gate is
+  # marginally expired on every slow boot. The fragment sets
+  # TimeoutStartSec = mkDefault "4min" (budget + margin); gate-timeout-audit.nix
+  # enforces ≥ 4min on every consumer (≥ 6min for -wait-oidc units).
   #
   # Example:
   #   mkDnsGate { inherit pkgs serviceName; hostname = "wikidata.org"; fatal = false; }
@@ -328,7 +350,7 @@ in
       pkgs,
       serviceName,
       hostname,
-      maxAttempts ? 60,
+      maxAttempts ? 90,
       intervalSec ? 2,
       fatal ? true,
     }:
@@ -359,6 +381,9 @@ in
         "network-online.target"
         "dnsblockd.service"
       ];
-      serviceConfig.ExecStartPre = [ "+${lib.getExe script}" ];
+      serviceConfig = {
+        ExecStartPre = [ "+${lib.getExe script}" ];
+        TimeoutStartSec = lib.mkDefault "4min";
+      };
     };
 }

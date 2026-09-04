@@ -31,6 +31,8 @@ let
         "subvol=${subvol}"
         "compress=zstd"
         "noatime"
+        "nodiscard"
+        "commit=300"
         "noauto"
         "x-systemd.automount"
         "x-systemd.idle-timeout=10min"
@@ -49,6 +51,63 @@ let
   rustCacheLinks = builtins.map (
     p: "L+ /home/${primaryUser}/projects/${p}/target - - - - /mnt/buildcache/rust/${p}"
   ) rustCacheProjects;
+
+  # Scrub deferral guard (2026-08-31 freeze lesson). The nixpkgs autoScrub
+  # units run `btrfs scrub start -B <mnt>` at IOSchedulingClass=idle, but BFQ
+  # priority does not stop the BYTES: a scrub is a full-filesystem read, and
+  # stacked on the same QLC NVMe as a btrbk send (or a flm cold load) it
+  # saturates the NAND, drives sustained memory-PSI refault stalls, and —
+  # live 2026-08-31 16:34 — froze the box with zram empty and zero OOM kills.
+  # Weekly scrub is deferrable housekeeping: skip the run when anything
+  # heavier is already streaming (next week retries). The skip is NOT silent:
+  # btrfs-health metrics keep reporting scrub status, so a perpetually
+  # skipped scrub shows up as never-finished (Gatus-visible), not phantom-green.
+  scrubGuard = pkgs.writeShellApplication {
+    name = "btrfs-scrub-guard";
+    runtimeInputs = [
+      pkgs.btrfs-progs
+      pkgs.coreutils
+      pkgs.gawk
+      pkgs.systemd
+    ];
+    text = ''
+      set -euo pipefail
+      mnt="''${1:?usage: btrfs-scrub-guard <mountpoint>}"
+
+      # Guard 0 (same doctrine as btrfs-balance-*): never scrub under IO or
+      # zram pressure — a manual balance at 99% IO PSI froze the machine
+      # (2026-08-24); scrub is the same full-device reader class.
+      PSI_IO_SOME=$(awk '/^some/ {for (i = 2; i <= NF; i++) if ($i ~ /^avg10=/) {sub(/^avg10=/, "", $i); printf "%d", $i; exit}}' /proc/pressure/io)
+      ZRAM_ORIG=$(awk '{print $1}' /sys/block/zram0/mm_stat 2>/dev/null) || ZRAM_ORIG=0
+      ZRAM_DISKSIZE=$(cat /sys/block/zram0/disksize 2>/dev/null) || ZRAM_DISKSIZE=0
+      ZRAM_PCT=0
+      if [ "''${ZRAM_DISKSIZE:-0}" -gt 0 ] 2>/dev/null; then
+        ZRAM_PCT=$(( ''${ZRAM_ORIG:-0} * 100 / ZRAM_DISKSIZE ))
+      fi
+      if [ "''${PSI_IO_SOME:-0}" -ge 20 ] || [ "$ZRAM_PCT" -ge 80 ]; then
+        echo "btrfs-scrub: deferring scrub of $mnt — IO PSI some avg10=''${PSI_IO_SOME}% (>=20) or zram ''${ZRAM_PCT}% full (>=80); scrubbing under pressure froze the machine (2026-08-24/31 classes). Next weekly window retries."
+        exit 0
+      fi
+
+      # Guard 1: never stack a full-fs read on a live btrbk send or balance —
+      # the 2026-08-31 16:34 freeze stacked scrub on / AND /data (Persistent
+      # boot catch-up after the 9-day DAS outage) on top of the btrbk-data
+      # full re-send and four flm cold loads. NOTE: btrbk/balance units are
+      # Type=oneshot — mid-send they sit in "activating", and
+      # `systemctl is-active --quiet` returns NON-ZERO for that state, so the
+      # naive check would miss exactly the streaming case it exists for
+      # (self-review catch, 2026-08-31 17:25). Compare ActiveState explicitly.
+      for heavy in btrbk-root.service btrbk-data.service btrbk-pool.service btrfs-balance-metadata.service btrfs-balance-data.service; do
+        heavy_state=$(systemctl show -p ActiveState --value "$heavy" 2>/dev/null || echo inactive)
+        if [ "$heavy_state" = "active" ] || [ "$heavy_state" = "activating" ]; then
+          echo "btrfs-scrub: deferring scrub of $mnt — $heavy is streaming (state=$heavy_state); stacking full-device readers saturated the QLC NVMe and froze the box (2026-08-31 16:34). Next weekly window retries."
+          exit 0
+        fi
+      done
+
+      exec btrfs scrub start -B "$mnt"
+    '';
+  };
 in
 {
   fileSystems = {
@@ -58,6 +117,8 @@ in
       options = [
         "noatime"
         "compress=zstd"
+        "nodiscard"
+        "commit=300"
         "noauto"
         "x-systemd.automount"
         "x-systemd.idle-timeout=10min"
@@ -81,12 +142,19 @@ in
       onCalendar = "23:00";
       snapshotOnly = false;
       settings = {
-        snapshot_preserve_min = "7d";
-        snapshot_preserve = "14d 4w";
-        # Received copies on the pool keep longer retention than the local
-        # snapshots — the pool is the safety net, not scratch space.
-        target_preserve_min = "7d";
-        target_preserve = "30d 12w";
+        # LOCAL retention ~1/4 of the old policy (was 14d 4w, user decision
+        # 2026-08-21): snapshots pin deleted extents on the space-tight QLC
+        # NVMe; local tier only needs rollback + incremental-send-parent duty.
+        # The pool (below) is the real history tier.
+        snapshot_preserve_min = "2d";
+        snapshot_preserve = "3d 1w";
+        # Pool = FOREVER (user decision 2026-08-21): target_preserve_min = "all"
+        # disables automatic deletion of received backups entirely. Space cost
+        # stays near raw data churn — received subvolumes share extents via CoW
+        # on the pool (snapshot count is ~free; every DELETED byte on the NVMe
+        # is pinned pool-side forever, which is the point). 16T RAID1 headroom
+        # makes this viable for years; revisit only if pool usage crosses ~50%.
+        target_preserve_min = "all";
         volume."/mnt/btrfs-root" = {
           snapshot_dir = "/mnt/btrfs-root/.snapshots";
           subvolume."@" = {
@@ -213,6 +281,82 @@ in
         unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
         serviceConfig.TimeoutStartSec = "1h";
         inherit onFailure;
+      };
+
+      # ── scrub deferral (2026-08-31 freeze lesson) ─────────────────────────
+      # Replace the nixpkgs autoScrub ExecStart with the guarded wrapper.
+      # ExecStop (btrfs-scrub-maybe-cancel) from the nixpkgs module is kept —
+      # it only matters for the shutdown-cancel path, which the wrapper's
+      # `exec btrfs scrub start -B` preserves.
+      "btrfs-scrub--".serviceConfig.ExecStart = lib.mkForce "${scrubGuard} /";
+      btrfs-scrub-data.serviceConfig.ExecStart = lib.mkForce "${scrubGuard} /data";
+      btrfs-scrub-mnt-pool.serviceConfig.ExecStart = lib.mkForce "${scrubGuard} /mnt/pool";
+
+      # ── btrbk clean: GC for garbled receive targets ────────────────────────
+      # `btrbk clean` is btrbk's sanctioned garbage collector for incomplete
+      # (interrupted-receive) target subvolumes. It deletes ONLY subvolumes
+      # whose receive never committed (no received_uuid) — never complete
+      # backups, never sources — and is REQUIRED after any interrupted send:
+      # a garbled target subvolume with the target name BLOCKS btrbk from
+      # re-sending that snapshot ("exists, but is not a receive target" →
+      # "Skipping backup" → permanent history gap under keep-forever target
+      # retention). Live case 2026-08-21: root @.20260814/15T2300 (Aug 17
+      # seed-era TimeoutStartSec interruptions; local sources still existed →
+      # clean unblocked the automatic nightly re-send, healing the chain) and
+      # data.20260721T2330 (source long pruned → garbage removal only; the
+      # /data seed itself still aborts on the known EIO inode, TODO P0).
+      # Timer 23:50 = after all three btrbk windows; After= holds the start
+      # while a long seed (24h TimeoutStartSec) is still streaming, so clean
+      # never races a live receive. deploy.sh starts it --no-block post-switch
+      # so deploy-time heals land before the next nightly window.
+      btrbk-pool-clean = {
+        description = "btrbk clean: delete incomplete (garbled) receive targets on the pool";
+        unitConfig = {
+          RequiresMountsFor = [ "/mnt/pool" ];
+          After = [
+            "btrbk-root.service"
+            "btrbk-data.service"
+            "btrbk-pool.service"
+          ];
+        };
+        path = [
+          pkgs.btrbk
+          pkgs.btrfs-progs
+          pkgs.coreutils
+        ];
+        startLimitBurst = 3;
+        startLimitIntervalSec = 3600;
+        inherit onFailure;
+        serviceConfig = lib.mkMerge [
+          {
+            Type = "oneshot";
+            # Runs as the btrbk user: the sudo allowlist (backend
+            # btrfs-progs-sudo) already covers subvolume list/show/delete —
+            # the same commands nightly pruning uses. Deliberately NOT
+            # harden {}: NoNewPrivileges would break the setuid sudo
+            # wrapper, and User=btrbk must keep its sudo identity.
+            User = "btrbk";
+            Group = "btrbk";
+            StateDirectory = "btrbk";
+            Nice = 10;
+            IOSchedulingClass = "best-effort";
+            TimeoutStartSec = "30min";
+          }
+          (serviceOneshotDefaults { })
+        ];
+        script = ''
+          # Aggregate failures: one bad config must never mask the others.
+          export PATH=/run/wrappers/bin:$PATH
+          failed=0
+          for conf in root data pool; do
+            echo ":: btrbk clean ($conf)"
+            if ! btrbk -c /etc/btrbk/$conf.conf clean; then
+              echo "ERROR: btrbk clean failed for $conf.conf" >&2
+              failed=1
+            fi
+          done
+          exit $failed
+        '';
       };
 
       # Mirrored-pool Prometheus metrics (mount presence with real-I/O gate,
@@ -442,6 +586,19 @@ in
         RandomizedDelaySec = "1h";
       };
       wantedBy = [ "timers.target" ];
+    };
+
+    # 23:50 = after all three btrbk windows (23:00/23:30/23:45). The service's
+    # After= ordering additionally holds the start while any btrbk run is still
+    # active (e.g. a 24h seed), so clean never races a live receive.
+    timers.btrbk-pool-clean = {
+      description = "Nightly btrbk clean (garbled-receive GC) after all btrbk runs";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = "23:50";
+        Persistent = true;
+        AccuracySec = "5min";
+      };
     };
   };
 }

@@ -642,8 +642,8 @@ time ./pkgs/update-crush-patched.sh
 
 ### Pending Tests (⏸️)
 
-| Test ID | Name                            | Status     | Blocking                |
-| ------- | ------------------------------- | ---------- | ----------------------- |
+| Test ID | Name                            | Status    | Blocking                |
+| ------- | ------------------------------- | --------- | ----------------------- |
 | IT-1    | Full Update (same version)      | ⏸️ PENDING | None                    |
 | IT-2    | Full Update (v0.39.1 → v0.39.3) | ⏸️ PENDING | Disk space + vendor fix |
 | IT-3    | Rollback on Build Failure       | ⏸️ PENDING | Execution               |

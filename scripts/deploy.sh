@@ -1,6 +1,55 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Persist the FULL deploy + smoke output (2026-08-31: an unexplained transient
+# smoke FAIL could not be root-caused afterwards because the middle of every
+# run was lost to scrollback). tee keeps stdout on the terminal AND in the log;
+# 30d retention. Command substitutions (nh_output capture below) are unaffected
+# by the redirect — they read their own pipes.
+DEPLOY_LOG_DIR=/var/log/systemnix-deploys
+sudo mkdir -p "$DEPLOY_LOG_DIR"
+DEPLOY_LOG_FILE="$DEPLOY_LOG_DIR/$(date +%Y-%m-%d_%H-%M-%S).log"
+exec > >(sudo tee -a "$DEPLOY_LOG_FILE") 2>&1
+sudo find "$DEPLOY_LOG_DIR" -type f -mtime +30 -delete 2>/dev/null || true
+
+# Exit-path recording (2026-09-02, deploy round 7 died silently and was never
+# root-caused): the tee above persists OUTPUT but not the OUTCOME — a log
+# ending mid-line is indistinguishable from a successful one. On EVERY exit
+# path append a structured final line to the log AND the systemd journal
+# (query: journalctl -t systemnix-deploy), plus a 30-line context tail so a
+# post-mortem never depends on the terminal that died. Best-effort: the trap
+# itself must never mask the original exit code.
+deploy_exit_record() {
+  local code=$?
+  # SC2155: declare and assign separately — a single `local x="$(cmd)"`
+  # masks the command's exit status with `local`'s.
+  local summary
+  summary="deploy exited code=$code at $(date '+%F %T') after ${SECONDS}s (log: $DEPLOY_LOG_FILE)"
+  echo "$summary" | sudo tee -a "$DEPLOY_LOG_FILE" >/dev/null 2>&1 || true
+  printf '%s\n' "$summary" | timeout 10 sudo systemd-cat -t systemnix-deploy 2>/dev/null || true
+  tail -n 30 "$DEPLOY_LOG_FILE" 2>/dev/null | timeout 10 sudo systemd-cat -t systemnix-deploy-tail 2>/dev/null || true
+  return "$code"
+}
+trap deploy_exit_record EXIT
+
+# Concurrent-deploy guard (T13, 2026-09-04): flock BEFORE any build or check
+# runs. Two overlapping deploys double the build I/O and the loser dies at the
+# switch step (exit 11, "Could not acquire lock") after minutes of wasted
+# work — this turns that race into a clean, immediate abort. The lock file
+# lives on /tmp (tmpfs): it vanishes on reboot (no stale-lock class), and
+# flock itself is released by the kernel the moment the holder exits — even
+# on crash or SIGKILL — so a dead deploy can never wedge the next one. The
+# holder PID is recorded for diagnostics.
+deploy_lock=/tmp/.systemnix-deploy.lock
+exec 9>"$deploy_lock"
+if ! flock -n 9; then
+  lock_holder=$(cat "$deploy_lock" 2>/dev/null || echo "unknown")
+  echo "❌ Another deploy is already running (lock: $deploy_lock, holder PID: $lock_holder)."
+  echo "   Wait for it to finish and re-run — flock releases automatically if that deploy dies."
+  exit 13
+fi
+echo $$ >"$deploy_lock"
+
 echo "=== Pre-Deploy Validation ==="
 if nix run .#pre-deploy-check; then
   echo ""
@@ -26,7 +75,12 @@ if nix run .#pre-deploy-check; then
     stc_pids=$(pgrep -f 'switch-to-configuration' || true)
     wedged=""
     for pid in $stc_pids; do
-      etimes=$(ps -o etimes= -p "$pid" 2>/dev/null | tr -d ' ')
+      # T13 (2026-09-04): a PID can vanish between pgrep and ps. Under
+      # `set -euo pipefail` the failed pipeline used to kill the whole script
+      # SILENTLY (deploy round 7, 2026-09-02, died here mid-line). `|| true`
+      # covers the whole pipeline (pipefail included), a vanished PID yields
+      # an empty etimes, and the -n guard below skips it.
+      etimes=$(ps -o etimes= -p "$pid" 2>/dev/null | tr -d ' ' || true)
       if [ -n "$etimes" ] && [ "$etimes" -gt 1800 ]; then
         wedged="$wedged $pid"
       fi
@@ -44,6 +98,30 @@ if nix run .#pre-deploy-check; then
         echo "   Verify no deploy is legitimately activating, then either run:"
         echo "     sudo kill $wedged"
         echo "   or re-run with:  DEPLOY_KILL_WEDGED_STC=1 nix run .#deploy"
+        exit 11
+      fi
+    fi
+  fi
+
+  # Concurrent-activation detection (2026-08-21, generalizes the 2026-08-20
+  # session's deploy #1 collision): a YOUNG (<30 min) live switch-to-configuration
+  # means another deploy/activation is running RIGHT NOW. Aborting HERE avoids
+  # burning the full build only to die with exit 11 at the switch step. A young
+  # stc alone is not evidence of a wedge — it is evidence of CONCURRENCY, so
+  # unlike the wedged case there is nothing to kill: just wait it out.
+  if [ -e "$stc_lock" ]; then
+    young_stc=""
+    for pid in $(pgrep -f 'switch-to-configuration' || true); do
+      etimes=$(ps -o etimes= -p "$pid" 2>/dev/null | tr -d ' ' || true)
+      if [ -n "$etimes" ] && [ "$etimes" -le 1800 ]; then
+        young_stc="$young_stc $pid"
+      fi
+    done
+    if [ -n "$young_stc" ]; then
+      echo "❌ A concurrent activation is running (switch-to-configuration PIDs:$young_stc, <30 min old)."
+      echo "   Two deployments cannot hold ${stc_lock} — this one would abort at the switch step."
+      echo "   Wait for the other deploy to finish (or DEPLOY_FORCE_CONCURRENT=1 to try anyway):"
+      if [ "${DEPLOY_FORCE_CONCURRENT:-0}" != "1" ]; then
         exit 11
       fi
     fi
@@ -92,7 +170,84 @@ if nix run .#pre-deploy-check; then
   done
 
   echo ""
+  echo "=== Hermes active-session check ==="
+  # A deploy restarts hermes, draining any in-flight agent sessions (the
+  # 2026-08-20 session interrupted live agent turns 3 times). Non-blocking
+  # WARN: the deploy proceeds — but the operator should know what they are
+  # about to interrupt. Covers interactive turns (tool_executor activity)
+  # and cron/scheduler work in the last 10 minutes.
+  if systemctl is-active --quiet hermes.service 2>/dev/null; then
+    activity=$(journalctl -u hermes --since "-10min" --no-pager 2>/dev/null | grep -cE "agent\.tool_executor|scheduler|Executing cron" || true)
+    if [ "${activity:-0}" -gt 0 ]; then
+      echo "⚠ hermes shows agent activity ($activity lines in last 10 min) — the deploy will restart it and drain in-flight sessions"
+    else
+      echo "  hermes idle (no agent activity in last 10 min)"
+    fi
+  fi
+
+  echo ""
+  echo "=== Memory pressure gate (2026-08-22 stability plan) ==="
+  # A deploy is itself a multi-GB build + an activation storm; both freezes
+  # had heavy builds as contributing load. Deploying INTO pressure adds fuel
+  # — but deploying the FIX from pressure is sometimes exactly what is
+  # needed, hence DEPLOY_FORCE_PRESSURE=1 as the escape hatch. Reads the
+  # kernel directly (no curl, no metrics dependency).
+  psi_avg10=$(awk '/^some/ {split($2, a, "="); print a[2]}' /proc/pressure/memory 2>/dev/null || echo 0)
+  zram_fill=""
+  if [ -r /sys/block/zram0/mm_stat ] && [ -r /sys/block/zram0/disksize ]; then
+    zram_orig=$(awk '{print $1}' /sys/block/zram0/mm_stat 2>/dev/null || echo 0)
+    zram_size=$(cat /sys/block/zram0/disksize 2>/dev/null || echo 0)
+    if [ "${zram_size:-0}" -gt 0 ] 2>/dev/null; then
+      zram_fill=$(awk -v o="$zram_orig" -v d="$zram_size" 'BEGIN { printf "%.1f", o * 100.0 / d }')
+    fi
+  fi
+  avail_pct=$(awk '/^MemAvailable:/ {a=$2} /^MemTotal:/ {t=$2} END { if (t > 0) printf "%.1f", a * 100.0 / t }' /proc/meminfo 2>/dev/null || echo 100)
+  pressure_blocked=0
+  if awk "BEGIN{exit !(${psi_avg10:-0} >= 20)}"; then
+    pressure_blocked=1
+    echo "✗ PSI memory some avg10 = ${psi_avg10}% (>= 20% — storm forming)"
+  fi
+  if awk "BEGIN{exit !(${avail_pct:-100} < 10)}"; then
+    pressure_blocked=1
+    echo "✗ MemAvailable = ${avail_pct}% (< 10% floor)"
+  fi
+  # zram near-full ALONE is NOT an emergency on this box: swappiness=150
+  # keeps cold anon compressed in zram by design (steady state sits at
+  # 90-99% with PSI 0.00 — measured 2026-08-22 evening, avail 25%). The
+  # freeze precursor is zram full AND degraded margins (nothing left to
+  # swap new pages while already stalling) — mirror the emergency guard's
+  # combined-zone semantics.
+  if [ -n "$zram_fill" ] && awk "BEGIN{exit !(${zram_fill:-0} >= 95)}" && awk "BEGIN{exit !(${psi_avg10:-0} >= 5)}"; then
+    pressure_blocked=1
+    echo "✗ zram swap fill = ${zram_fill}% (>= 95%) WITH PSI some avg10 = ${psi_avg10}% (>= 5%) — combined pre-freeze zone"
+  fi
+  if [ "$pressure_blocked" = "1" ]; then
+    echo ""
+    echo "  Deploying under this pressure risks contributing to a kernel freeze"
+    echo "  (both 2026-08-22 freezes had builds as contributing load)."
+    echo "  Options: wait for pressure to drain, shed heavy jobs — or override:"
+    echo "    DEPLOY_FORCE_PRESSURE=1 nix run .#deploy"
+    if [ "${DEPLOY_FORCE_PRESSURE:-0}" != "1" ]; then
+      exit 12
+    fi
+    echo "  DEPLOY_FORCE_PRESSURE=1 set — proceeding anyway"
+  else
+    echo "  OK (PSI some avg10 = ${psi_avg10}%, zram = ${zram_fill:-n/a}%, MemAvailable = ${avail_pct}%)"
+  fi
+
+  echo ""
   echo "=== Deploying NixOS config to evo-x2 ==="
+  latest_system_generation() {
+    local link num
+    for link in /nix/var/nix/profiles/system-*-link; do
+      [ -L "$link" ] || continue
+      num=${link##*/system-}
+      num=${num%-link}
+      case $num in '' | *[!0-9]*) continue ;; esac
+      printf '%s\n' "$num"
+    done | sort -n | tail -1
+  }
+  prev_gen=$(latest_system_generation)
   set +e
   nh_output="$(nh os switch . 2>&1 | tee /dev/stderr)"
   switch_exit=$?
@@ -119,6 +274,21 @@ if nix run .#pre-deploy-check; then
     fi
   fi
 
+  # Generation trail (2026-08-24 crash3 lesson: a stale rollback boot ran
+  # for days unnoticed): print the generation this deploy produced and
+  # verify the RUNNING system is anchored to it — an unanchored
+  # /run/current-system means a manual activation (banned) and a reboot
+  # would silently revert to the last real generation.
+  new_gen=$(latest_system_generation)
+  if [ -n "$new_gen" ] && [ "$new_gen" != "$prev_gen" ]; then
+    echo "✓ New profile generation: system-${new_gen} (was system-${prev_gen:-none})"
+  elif [ -n "$new_gen" ]; then
+    echo "ℹ No new profile generation (system-${new_gen} unchanged — config already active)"
+  fi
+  if [ -n "$new_gen" ] && [ "$(readlink /run/current-system 2>/dev/null)" != "$(readlink "/nix/var/nix/profiles/system-${new_gen}-link" 2>/dev/null)" ]; then
+    echo "⚠ /run/current-system is NOT anchored to the newest generation (system-${new_gen}) — manual activation detected; a REBOOT WILL REVERT. Re-run: nix run .#deploy"
+  fi
+
   # Start critical services that deploy may have left in inactive/dead state.
   # reset-failed only clears the failure counter — it does NOT start the service.
   # The monitor365 agent in particular dies on start-limit-hit and never recovers
@@ -142,7 +312,13 @@ if nix run .#pre-deploy-check; then
   # after their first run. switch-to-configuration does NOT restart them even
   # when restartTriggers change. This means provisioning fixes deployed to the
   # Nix store never re-run without an explicit restart.
-  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir bank-sync-storage-dir google-sync-dirs llama-rag-model-fetch; do
+  # atticd-bootstrap: re-runs after DAS recovery even when it condition-skipped
+  # at boot (2026-08-24 — was missing here, so a skipped bootstrap stayed
+  # skipped until the next reboot).
+  # forgejo-hermes-token: RemainAfterExit oneshot — re-runs re-install the
+  # staged token as /run/hermes-forgejo-token after deploys that change the
+  # hermes user/group or the token scripts.
+  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir atticd-bootstrap bank-sync-storage-dir google-sync-dirs cv-backup-dir inboxclean-backup-dir llama-rag-model-fetch hermes-github-verify; do
     if systemctl is-enabled --quiet "$provisioner.service" 2>/dev/null; then
       echo "Restarting provisioner: $provisioner.service"
       sudo systemctl restart "$provisioner.service" 2>/dev/null || true
@@ -157,6 +333,40 @@ if nix run .#pre-deploy-check; then
     sudo systemctl restart browser-history.service 2>/dev/null || true
   fi
 
+  # Restart dnsblockd AFTER dnsblockd-oidc-secret so a rotated Pocket ID client
+  # secret takes effect. The bridge oneshot is RemainAfterExit=true and only
+  # wantedBy=dnsblockd.service (is-enabled returns rc=1 for indirect units —
+  # the provisioner loop above skips it), and dnsblockd reads the env file via
+  # EnvironmentFile at process start only. Without this, a provisioner-rotated
+  # secret never reaches the running daemon (2026-08-22: dnsblockd SSO broken
+  # after a crash-recovery secret regeneration because neither unit restarted).
+  if systemctl is-active --quiet dnsblockd-oidc-secret.service 2>/dev/null; then
+    echo "Restarting dnsblockd-oidc-secret.service + dnsblockd.service (reload OIDC client secret)"
+    sudo systemctl restart dnsblockd-oidc-secret.service 2>/dev/null || true
+    sudo systemctl restart dnsblockd.service 2>/dev/null || true
+  fi
+
+  # Restart paperless-web AFTER paperless-oidc-setup so it reloads the Pocket
+  # ID SSO env file (same secret-bridge class as dnsblockd above: paperless
+  # reads EnvironmentFile at process start only). Gated on paperless-WEB, not
+  # the bridge: the bridge is ConditionPathExists-gated on the Pocket ID
+  # secret and sits INACTIVE (condition-skipped) until pocket-id-provision
+  # has created the client — gating on it would skip the very first converge
+  # (chicken-and-egg, live 2026-09-02). A bridge restart without the secret
+  # is a clean condition-skip no-op.
+  if systemctl is-active --quiet paperless-web.service 2>/dev/null; then
+    echo "Restarting paperless-oidc-setup.service + paperless-web.service (reload OIDC env file)"
+    sudo systemctl restart paperless-oidc-setup.service 2>/dev/null || true
+    sudo systemctl restart paperless-web.service 2>/dev/null || true
+  fi
+
+  # Heal garbled btrbk receive targets at deploy time (before the next nightly
+  # window) — see snapshots.nix btrbk-pool-clean for why this must not race a
+  # live send. --no-block: the unit's After= ordering makes it WAIT behind any
+  # still-running 24h btrbk seed; a blocking restart would hang the deploy.
+  echo "Enqueueing btrbk-pool-clean.service (garbled-receive GC)"
+  sudo systemctl start --no-block btrbk-pool-clean.service 2>/dev/null || true
+
   # Trigger the systemd-timer-monitor audit so the report is fresh after deploy.
   # The timer-driven oneshot (OnBootSec=2min) may not fire immediately after
   # activation. Using `start` (not `restart`) — it's a plain oneshot without
@@ -166,12 +376,30 @@ if nix run .#pre-deploy-check; then
     sudo systemctl start systemd-timer-monitor-audit.service 2>/dev/null || true
   fi
 
+  # Refresh SigNoz coverage metrics right after switch: the collector is
+  # timer-only (up to 5-min lag otherwise), and the post-deploy smoke asserts
+  # signoz_traces_missing 0 — without this the smoke races the timer (the
+  # unexplained transient-FAIL-then-green class, 2026-08-31). `restart` (not
+  # `start`) so it re-runs even if the unit sits active(exited).
+  if systemctl cat signoz-coverage-metrics.service >/dev/null 2>&1; then
+    echo "Restarting signoz-coverage-metrics.service (fresh coverage data for smoke)"
+    sudo systemctl restart signoz-coverage-metrics.service 2>/dev/null || true
+  fi
+
   # Reap zombie buildcache mounts + re-verify real I/O after switch. The unit is
   # ConditionPathExists-gated on the by-id device node: no-ops safely when the
   # USB SSD is unplugged, heals the mount when it is present.
   if systemctl cat buildcache-usb-recovery.service >/dev/null 2>&1; then
     echo "Running buildcache-usb-recovery.service (zombie reaper + remount)"
     sudo systemctl start buildcache-usb-recovery.service 2>/dev/null || true
+  fi
+
+  # Same convergence for the pool: verifies the mount devt matches a live
+  # member, remounts if stale, and restarts failed pool consumers. Exits
+  # cleanly when the whole DAS is absent (DAS-link Gatus check owns that).
+  if systemctl cat pool-usb-recovery.service >/dev/null 2>&1; then
+    echo "Running pool-usb-recovery.service (pool zombie reaper + remount)"
+    sudo systemctl start pool-usb-recovery.service 2>/dev/null || true
   fi
 
   # Run the buildcache GC after recovery so every deploy verifies the prune
@@ -209,10 +437,18 @@ if nix run .#pre-deploy-check; then
 
   echo ""
   echo "=== Post-Deploy Smoke Test ==="
+  smoke_rc=0
   if nix run .#post-deploy-check; then
     echo "✅ Post-deploy smoke test passed"
   else
+    smoke_rc=$?
     echo "⚠ Some smoke checks failed — review above"
+    if [ "$smoke_rc" -eq 3 ]; then
+      echo "❌ NEW smoke failures vs the previous run's baseline — deploy exits 3 (regression signal)"
+    fi
+  fi
+  if [ "$smoke_rc" -eq 3 ]; then
+    exit 3
   fi
 else
   echo ""

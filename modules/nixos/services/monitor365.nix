@@ -411,7 +411,7 @@
               # This catches the circuit-breaker deadlock: agent is alive and
               # metrics respond, but it can't upload to the server (CB open
               # with 700K+ failures). Restarting clears the in-memory CB.
-              REALTIME=$(curl -sf -m 5 "$SERVER_HEALTH" 2>/dev/null \
+              REALTIME=$(curl -sf --compressed -m 5 "$SERVER_HEALTH" 2>/dev/null \
                 | jq -r '.realtime // empty' 2>/dev/null || echo "")
               if [ -n "$REALTIME" ] && echo "$REALTIME" | grep -q "connected (0 devices)"; then
                 echo "monitor365-agent-watchdog: server reports 0 devices — circuit breaker deadlock, restarting agent"

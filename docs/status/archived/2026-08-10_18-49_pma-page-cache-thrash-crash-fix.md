@@ -24,16 +24,17 @@ The fix is committed, pushed, and SystemNix's flake input is updated. The Nix ev
 
 **Crash signature:** sp5100-tco hardware watchdog timer expired (0x02000800), identical to 2026-08-09.
 
-| Evidence | Value |
-|----------|-------|
-| Previous boot end | 2026-08-10 16:22 CEST (uptime ~13h) |
-| Kernel reset reason | `[0x02000800]: hardware watchdog timer expired` |
-| Memory pressure (PSI) | 95% sustained for 8+ minutes before crash |
-| Monitor365 | "Buffer near capacity — N events dropped, pressure_pct: 95" every 30s |
-| Gatus | "PMA Memory Pressure" endpoint `success=false` at 16:15, 16:20, 16:22 |
-| PMA cgroup (current boot) | 907,885 MemoryHigh hits in 3 minutes — actively thrashing |
+| Evidence                  | Value                                                                 |
+| ------------------------- | --------------------------------------------------------------------- |
+| Previous boot end         | 2026-08-10 16:22 CEST (uptime ~13h)                                   |
+| Kernel reset reason       | `[0x02000800]: hardware watchdog timer expired`                       |
+| Memory pressure (PSI)     | 95% sustained for 8+ minutes before crash                             |
+| Monitor365                | "Buffer near capacity — N events dropped, pressure_pct: 95" every 30s |
+| Gatus                     | "PMA Memory Pressure" endpoint `success=false` at 16:15, 16:20, 16:22 |
+| PMA cgroup (current boot) | 907,885 MemoryHigh hits in 3 minutes — actively thrashing             |
 
 **Root cause chain:**
+
 ```
 PMA discovery daemon reads 159+ git repos every 60s
   → packfiles, indices, directory entries pulled into page cache
@@ -53,14 +54,15 @@ PMA discovery daemon reads 159+ git repos every 60s
 
 Created `internal/infrastructure/pagecache/evict.go` with:
 
-| Function | Purpose |
-|----------|---------|
+| Function                           | Purpose                                                                                                                                      |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `EvictPaths(projectPaths, logger)` | Walks `.git` directories, calls `fadvise(FADV_DONTNEED)` on every file. Handles both single repos and directories containing multiple repos. |
-| `ReleaseGoHeap()` | Calls `runtime.GC()` + `debug.FreeOSMemory()` to return Go heap to OS after burst workloads |
-| `dropPages(path)` | Opens a file, advises kernel to drop cached pages, closes file |
-| `evictTree(root)` | Walks a directory tree and drops page-cache for every regular file |
+| `ReleaseGoHeap()`                  | Calls `runtime.GC()` + `debug.FreeOSMemory()` to return Go heap to OS after burst workloads                                                  |
+| `dropPages(path)`                  | Opens a file, advises kernel to drop cached pages, closes file                                                                               |
+| `evictTree(root)`                  | Walks a directory tree and drops page-cache for every regular file                                                                           |
 
 **6 test cases** in `evict_test.go` — all passing:
+
 - Non-existent dir (graceful no-op)
 - Single git repo (5 files evicted)
 - Multiple repos in one directory (2 repos detected)
@@ -80,12 +82,12 @@ Two integration points:
 
 ### 4. Flake Input Updates
 
-| Repo | Action | Commit |
-|------|--------|--------|
-| `projects-management-automation` | Page cache fix + flake fix | `c65e2252` (pushed to GitHub) |
-| SystemNix `flake.lock` | PMA input updated to `c65e2252` | Staged, not committed |
-| SystemNix `flake.lock` | `go-nix-helpers` updated to match PMA's required version | Staged, not committed |
-| SystemNix `flake.nix` | Removed stale `treefmt-nix`/`systems`/`go-nix-helpers` overrides from PMA input (PMA's migration removed those inputs) | Staged, not committed |
+| Repo                             | Action                                                                                                                 | Commit                        |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| `projects-management-automation` | Page cache fix + flake fix                                                                                             | `c65e2252` (pushed to GitHub) |
+| SystemNix `flake.lock`           | PMA input updated to `c65e2252`                                                                                        | Staged, not committed         |
+| SystemNix `flake.lock`           | `go-nix-helpers` updated to match PMA's required version                                                               | Staged, not committed         |
+| SystemNix `flake.nix`            | Removed stale `treefmt-nix`/`systems`/`go-nix-helpers` overrides from PMA input (PMA's migration removed those inputs) | Staged, not committed         |
 
 ### 5. PMA Flake Fix
 
@@ -283,38 +285,38 @@ The discovery background refresh runs every 60 seconds. The eviction goroutine d
 
 ### Crash Timeline (2026-08-10)
 
-| Time (CEST) | Event |
-|-------------|-------|
-| 03:03 | Boot -2 started (previous crash recovery) |
-| ~03:15 | PMA auto-started, discovery daemon began scanning |
-| 14:03 | Boot -1 (reboot — likely manual or deploy) |
-| 16:14 | Memory PSI hit 95% — Monitor365 started dropping events |
-| 16:15 | Gatus "PMA Memory Pressure" endpoint `success=false` |
-| 16:19 | Monitor365: "Buffer near capacity — 28 events dropped, pressure_pct: 95" |
-| 16:20 | Gatus "PMA Memory Pressure" still failing |
-| 16:22 | Monitor365: "Buffer near capacity — 244 events dropped, pressure_pct: 95" — last log |
-| 16:22 | **System freeze → sp5100-tco WDT reset** |
-| 16:28 | Boot 0 started (current boot) |
-| 16:28 | Kernel: `Previous system reset reason [0x02000800]: hardware watchdog timer expired` |
-| 16:28 | PMA auto-started, immediately re-entered thrash loop (907K MemoryHigh events in 3 min) |
-| 16:30 | Investigation began |
+| Time (CEST) | Event                                                                                  |
+| ----------- | -------------------------------------------------------------------------------------- |
+| 03:03       | Boot -2 started (previous crash recovery)                                              |
+| ~03:15      | PMA auto-started, discovery daemon began scanning                                      |
+| 14:03       | Boot -1 (reboot — likely manual or deploy)                                             |
+| 16:14       | Memory PSI hit 95% — Monitor365 started dropping events                                |
+| 16:15       | Gatus "PMA Memory Pressure" endpoint `success=false`                                   |
+| 16:19       | Monitor365: "Buffer near capacity — 28 events dropped, pressure_pct: 95"               |
+| 16:20       | Gatus "PMA Memory Pressure" still failing                                              |
+| 16:22       | Monitor365: "Buffer near capacity — 244 events dropped, pressure_pct: 95" — last log   |
+| 16:22       | **System freeze → sp5100-tco WDT reset**                                               |
+| 16:28       | Boot 0 started (current boot)                                                          |
+| 16:28       | Kernel: `Previous system reset reason [0x02000800]: hardware watchdog timer expired`   |
+| 16:28       | PMA auto-started, immediately re-entered thrash loop (907K MemoryHigh events in 3 min) |
+| 16:30       | Investigation began                                                                    |
 
 ### Files Changed
 
-| Repo | File | Change |
-|------|------|--------|
-| PMA | `internal/infrastructure/pagecache/evict.go` | NEW — page-cache eviction package |
-| PMA | `internal/infrastructure/pagecache/evict_test.go` | NEW — 6 test cases |
-| PMA | `internal/application/commands/service_runners.go` | Added eviction goroutine + post-purge eviction |
-| PMA | `flake.nix` | Removed non-existent `requireDeps` option |
-| PMA | `go.mod` | `golang.org/x/sys` promoted from indirect to direct dep |
-| SystemNix | `flake.nix` | Removed stale PMA input overrides (`treefmt-nix`, `systems`, `go-nix-helpers`) |
-| SystemNix | `flake.lock` | PMA input → `c65e2252`, go-nix-helpers → `2f3b6b2b` |
+| Repo      | File                                               | Change                                                                         |
+| --------- | -------------------------------------------------- | ------------------------------------------------------------------------------ |
+| PMA       | `internal/infrastructure/pagecache/evict.go`       | NEW — page-cache eviction package                                              |
+| PMA       | `internal/infrastructure/pagecache/evict_test.go`  | NEW — 6 test cases                                                             |
+| PMA       | `internal/application/commands/service_runners.go` | Added eviction goroutine + post-purge eviction                                 |
+| PMA       | `flake.nix`                                        | Removed non-existent `requireDeps` option                                      |
+| PMA       | `go.mod`                                           | `golang.org/x/sys` promoted from indirect to direct dep                        |
+| SystemNix | `flake.nix`                                        | Removed stale PMA input overrides (`treefmt-nix`, `systems`, `go-nix-helpers`) |
+| SystemNix | `flake.lock`                                       | PMA input → `c65e2252`, go-nix-helpers → `2f3b6b2b`                            |
 
 ### Commits
 
-| Repo | Hash | Message |
-|------|------|---------|
-| PMA | `6dcf15dd` | `fix(pagecache): evict .git page cache to prevent cgroup thrash crashes` |
-| PMA | `c65e2252` | `fix(flake): remove non-existent requireDeps option from go-standard config` |
-| SystemNix | (unstaged) | flake.lock + flake.nix changes |
+| Repo      | Hash       | Message                                                                      |
+| --------- | ---------- | ---------------------------------------------------------------------------- |
+| PMA       | `6dcf15dd` | `fix(pagecache): evict .git page cache to prevent cgroup thrash crashes`     |
+| PMA       | `c65e2252` | `fix(flake): remove non-existent requireDeps option from go-standard config` |
+| SystemNix | (unstaged) | flake.lock + flake.nix changes                                               |

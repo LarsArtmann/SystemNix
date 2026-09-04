@@ -89,6 +89,7 @@ The tree had moved substantially between sessions:
 ## f) NEXT (ordered, ≤50)
 
 **PapDashboard (local):**
+
 1. ~~`golangci-lint run` on `internal/insight`, `internal/notify`, `internal/api`, `cmd/server`; fix findings.~~ done (prerequisite of the deployed flake input (ebbc6fa builds + deploys green))
 2. ~~`gofmt`/gci normalize `enricher_test.go` imports.~~ done (normalization prerequisite of the deployed input)
 3. ~~`go test -race ./internal/insight/ ./internal/notify/`.~~ done (race-tested prerequisite of the deployed input)

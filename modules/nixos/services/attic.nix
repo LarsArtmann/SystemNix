@@ -356,6 +356,17 @@ _: {
           startLimitBurst = 3;
           startLimitIntervalSec = 300;
           inherit onFailure;
+          # Skip cleanly (result=condition) while the DAS is detached: atticd is
+          # down BY DESIGN then and the bootstrap can only die with "connection
+          # refused" — failing every activation/switch with exit 4 (2026-08-22 +
+          # 2026-08-24 DAS outages). The storage dir is created by the
+          # mount-gated atticd-storage-dir ONLY while the pool is mounted, so
+          # its absence == pool absent == atticd intentionally down. Monitoring
+          # is unaffected: atticd.service OnFailure + the Gatus "Attic Binary
+          # Cache" endpoint still alert on the outage. Real failures stay loud:
+          # with the pool mounted but atticd wedged, the readiness probe below
+          # exits 1 with a clear message.
+          unitConfig.ConditionPathIsDirectory = [ cfg.storagePath ];
           path = [
             config.services.atticd.package
             pkgs.attic-client
@@ -378,21 +389,34 @@ _: {
           script = ''
                       set -euo pipefail
 
-                      # Wait for atticd to be ready (migrations run on first start)
-                      for i in $(seq 1 30); do
-                        if python3 -c "
+                      atticd_ready() {
+                        python3 -c "
             import urllib.request, sys
             try:
                 urllib.request.urlopen('http://127.0.0.1:${toString atticPort}/', timeout=2)
             except Exception:
                 sys.exit(1)
-            " 2>/dev/null; then
+            " 2>/dev/null
+                      }
+
+                      # Wait for atticd to be ready (migrations run on first start)
+                      for i in $(seq 1 30); do
+                        if atticd_ready; then
                           echo "atticd is ready"
                           break
                         fi
                         echo "Waiting for atticd... ($i)"
                         sleep 1
                       done
+
+                      # Fail LOUD and CLEAR when atticd never became ready (pool
+                      # detached mid-run or atticd crashed). Without this the
+                      # failure surfaces later as an opaque "error sending
+                      # request" from an attic client HTTP call.
+                      if ! atticd_ready; then
+                        echo "ERROR: atticd did not become ready on 127.0.0.1:${toString atticPort} within 30s — check 'journalctl -u atticd.service' (pool detached?)"
+                        exit 1
+                      fi
 
                       # Source the RS256 secret (sops-rendered env file, root-readable).
                       # atticadm make-token only needs the RS256 key to sign a JWT —

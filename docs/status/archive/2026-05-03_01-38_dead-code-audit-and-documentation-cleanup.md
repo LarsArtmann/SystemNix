@@ -202,33 +202,33 @@ Add a justfile recipe or CI check that verifies every package in `perSystem.pack
 
 ## f) Top 25 Things We Should Get Done Next
 
-| #   | Priority | Task                                                                                                   | Impact               | Effort |
-| --- | -------- | ------------------------------------------------------------------------------------------------------ | -------------------- | ------ |
-| 1   | **P0**   | `just switch` — verify full build+deploy succeeds on evo-x2                                            | Build validation     | 30min  |
-| 2   | **P0**   | `just test` (full build) — confirm no compilation errors                                               | Build validation     | 60min  |
-| 3   | **P1**   | Audit `perSystem.packages` — verify modernize, sqlc, jscpd, signoz are actually needed                 | Cleanup              | 15min  |
-| 4   | **P1**   | Add Darwin runner to CI (`.github/workflows/nix-check.yml`)                                            | Cross-platform CI    | 30min  |
-| 5   | **P1**   | Audit `platforms/common/programs/` for dead HM options                                                 | Cleanup              | 60min  |
-| 6   | **P1**   | Add `just inputs-status` recipe showing all inputs, URLs, last-updated                                 | Observability        | 20min  |
-| 7   | **P1**   | Add pre-commit check or justfile recipe validating `ref=` matches default branch                       | Developer experience | 30min  |
-| 8   | **P2**   | Audit 31 NixOS service modules for unused options                                                      | Cleanup              | 120min |
-| 9   | **P2**   | Archive more status docs (>1 week) to reduce root clutter                                              | Cleanup              | 10min  |
-| 10  | **P2**   | Write ADR-005: "SSH URLs for private repos, github: for public"                                        | Architecture docs    | 15min  |
-| 11  | **P2**   | Move disabled `unboundDoQOverlay` comment block to doc/adr/                                            | Code cleanliness     | 10min  |
-| 12  | **P2**   | Audit `justfile` (163 recipes) for dead recipes referencing removed tools                              | Cleanup              | 20min  |
-| 13  | **P2**   | Verify all sops secrets in `platforms/nixos/secrets/` are still used                                   | Security cleanup     | 15min  |
-| 14  | **P2**   | Add `packages` section to each NixOS service module (which packages it provides)                       | Documentation        | 60min  |
-| 15  | **P2**   | Consolidate `mr-sync.nix` `cleanSourceWith` filter into a reusable helper                              | DRY                  | 10min  |
-| 16  | **P2**   | Verify `emeet-pixyd` NixOS module works with upstream overlay (no local package)                       | Build validation     | 15min  |
-| 17  | **P3**   | Add `nix eval` CI step to check NixOS module option types                                              | CI/CD                | 30min  |
-| 18  | **P3**   | Investigate `nix flakehub` or `nix-cache` for faster CI builds                                         | Performance          | 60min  |
-| 19  | **P3**   | Add justfile recipe to count packages installed vs packages available                                  | Observability        | 15min  |
-| 20  | **P3**   | Document remaining 21 NixOS service modules in AGENTS.md                                               | Documentation        | 90min  |
-| 21  | **P3**   | Investigate `nixpkgs.lib.packagesFromDirectoryRecursive` for auto-package discovery                    | Simplification       | 30min  |
-| 22  | **P3**   | Add `just flake-graph` recipe using `nix-visualize`                                                    | Observability        | 20min  |
-| 23  | **P3**   | Consider merging `fileAndImageRenamerOverlay` + `golangciLintAutoConfigureOverlay` into shared pattern | DRY                  | 30min  |
-| 24  | **P3**   | Add `.editorconfig` for consistent file formatting across all file types                               | Consistency          | 10min  |
-| 25  | **P3**   | Investigate `treefmt-nix` for declarative formatter config                                             | Simplification       | 30min  |
+| #  | Priority | Task                                                                                                   | Impact               | Effort |
+| -- | -------- | ------------------------------------------------------------------------------------------------------ | -------------------- | ------ |
+| 1  | **P0**   | `just switch` — verify full build+deploy succeeds on evo-x2                                            | Build validation     | 30min  |
+| 2  | **P0**   | `just test` (full build) — confirm no compilation errors                                               | Build validation     | 60min  |
+| 3  | **P1**   | Audit `perSystem.packages` — verify modernize, sqlc, jscpd, signoz are actually needed                 | Cleanup              | 15min  |
+| 4  | **P1**   | Add Darwin runner to CI (`.github/workflows/nix-check.yml`)                                            | Cross-platform CI    | 30min  |
+| 5  | **P1**   | Audit `platforms/common/programs/` for dead HM options                                                 | Cleanup              | 60min  |
+| 6  | **P1**   | Add `just inputs-status` recipe showing all inputs, URLs, last-updated                                 | Observability        | 20min  |
+| 7  | **P1**   | Add pre-commit check or justfile recipe validating `ref=` matches default branch                       | Developer experience | 30min  |
+| 8  | **P2**   | Audit 31 NixOS service modules for unused options                                                      | Cleanup              | 120min |
+| 9  | **P2**   | Archive more status docs (>1 week) to reduce root clutter                                              | Cleanup              | 10min  |
+| 10 | **P2**   | Write ADR-005: "SSH URLs for private repos, github: for public"                                        | Architecture docs    | 15min  |
+| 11 | **P2**   | Move disabled `unboundDoQOverlay` comment block to doc/adr/                                            | Code cleanliness     | 10min  |
+| 12 | **P2**   | Audit `justfile` (163 recipes) for dead recipes referencing removed tools                              | Cleanup              | 20min  |
+| 13 | **P2**   | Verify all sops secrets in `platforms/nixos/secrets/` are still used                                   | Security cleanup     | 15min  |
+| 14 | **P2**   | Add `packages` section to each NixOS service module (which packages it provides)                       | Documentation        | 60min  |
+| 15 | **P2**   | Consolidate `mr-sync.nix` `cleanSourceWith` filter into a reusable helper                              | DRY                  | 10min  |
+| 16 | **P2**   | Verify `emeet-pixyd` NixOS module works with upstream overlay (no local package)                       | Build validation     | 15min  |
+| 17 | **P3**   | Add `nix eval` CI step to check NixOS module option types                                              | CI/CD                | 30min  |
+| 18 | **P3**   | Investigate `nix flakehub` or `nix-cache` for faster CI builds                                         | Performance          | 60min  |
+| 19 | **P3**   | Add justfile recipe to count packages installed vs packages available                                  | Observability        | 15min  |
+| 20 | **P3**   | Document remaining 21 NixOS service modules in AGENTS.md                                               | Documentation        | 90min  |
+| 21 | **P3**   | Investigate `nixpkgs.lib.packagesFromDirectoryRecursive` for auto-package discovery                    | Simplification       | 30min  |
+| 22 | **P3**   | Add `just flake-graph` recipe using `nix-visualize`                                                    | Observability        | 20min  |
+| 23 | **P3**   | Consider merging `fileAndImageRenamerOverlay` + `golangciLintAutoConfigureOverlay` into shared pattern | DRY                  | 30min  |
+| 24 | **P3**   | Add `.editorconfig` for consistent file formatting across all file types                               | Consistency          | 10min  |
+| 25 | **P3**   | Investigate `treefmt-nix` for declarative formatter config                                             | Simplification       | 30min  |
 
 ---
 

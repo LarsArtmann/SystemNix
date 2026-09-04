@@ -111,4 +111,5 @@ Resumed from the round-1 pause. Re-verified the tree instead of trusting the sum
 3. **Deploy SystemNix?** The tree bundles unrelated in-flight changes from parallel sessions (fastflowlm, gatus-config, configuration.nix, btrfs-health, niri-config, ...); a deploy activates them all. Confirm scope.
 
 ---
+
 **STATUS: STOPPED AS ORDERED. Tree state: `internal/insight` has one compile error (my last edit); everything else builds; full suite was green at the 13:33 checkpoint. Awaiting instructions.**

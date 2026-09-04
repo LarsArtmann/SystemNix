@@ -100,14 +100,14 @@ Once monitor365 is clean, run `nh os boot .` on evo-x2 to verify the ecapture ad
 
 ## 5. Execution Plan (Sorted by Impact vs Effort)
 
-| #   | Task                                                                         | Effort    | Impact                                          | Owner          |
-| --- | ---------------------------------------------------------------------------- | --------- | ----------------------------------------------- | -------------- |
-| 1   | **Decide fate of monitor365 audio/mic feature** — commit WIP or stash/revert | 5 min     | 🔥 Critical — unblocks all SystemNix deploys    | User           |
-| 2   | **Run `nh os boot .` on evo-x2** to verify full system closure               | 15-30 min | High — confirms ecapture + monitor365 both work | User           |
-| 3   | **Verify ecapture runtime** — `ecapture --help` on evo-x2 after deploy       | 2 min     | Low — sanity check                              | User           |
-| 4   | **Document ecapture usage** in `docs/cybersecurity-tools-evo-x2.md`          | 10 min    | Medium — operational value                      | Optional       |
-| 5   | **Monitor365: complete audio/mic monitoring feature**                        | 1-4 hours | Medium — feature completion                     | Future session |
-| 6   | **Re-enable wasm-opt** in monitor365 when binaryen catches up                | 5 min     | Low — performance optimization                  | Future         |
+| # | Task                                                                         | Effort    | Impact                                          | Owner          |
+| - | ---------------------------------------------------------------------------- | --------- | ----------------------------------------------- | -------------- |
+| 1 | **Decide fate of monitor365 audio/mic feature** — commit WIP or stash/revert | 5 min     | 🔥 Critical — unblocks all SystemNix deploys    | User           |
+| 2 | **Run `nh os boot .` on evo-x2** to verify full system closure               | 15-30 min | High — confirms ecapture + monitor365 both work | User           |
+| 3 | **Verify ecapture runtime** — `ecapture --help` on evo-x2 after deploy       | 2 min     | Low — sanity check                              | User           |
+| 4 | **Document ecapture usage** in `docs/cybersecurity-tools-evo-x2.md`          | 10 min    | Medium — operational value                      | Optional       |
+| 5 | **Monitor365: complete audio/mic monitoring feature**                        | 1-4 hours | Medium — feature completion                     | Future session |
+| 6 | **Re-enable wasm-opt** in monitor365 when binaryen catches up                | 5 min     | Low — performance optimization                  | Future         |
 
 ---
 

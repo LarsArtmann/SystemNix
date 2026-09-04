@@ -14,62 +14,62 @@
 
 ### Session 1 (commits 1-6): Docs review + security fixes
 
-| #   | Task                                                    | Category    |
-| --- | ------------------------------------------------------- | ----------- |
-| 1   | `git push` — all commits pushed                         | DEPLOY      |
-| 2   | `git stash clear` — dropped 3 stale stashes             | HYGIENE     |
-| 3   | Delete 17 remote `copilot/fix-*` branches               | HYGIENE     |
-| 4   | Archive 40 redundant status docs                        | DOCS        |
-| 5   | Rewrite `docs/status/README.md`                         | DOCS        |
-| 6   | Fix "29 modules" → "27" in docs                         | DOCS        |
-| 7   | Add systemd hardening to `gitea-ensure-repos`           | SECURITY    |
-| 8   | Pin Voice Agents Docker image (`latest` → `1.0.0`)      | SECURITY    |
-| 9   | Pin PhotoMap Docker image (`latest` → `1.0.0`)          | SECURITY    |
-| 10  | Secure VRRP auth_pass with sops-nix                     | SECURITY    |
-| 11  | Remove dead `ublock-filters.nix` module                 | CLEANUP     |
-| 12  | Add Restart + StartLimitBurst to gitea-ensure-repos     | RELIABILITY |
-| 13  | Add WatchdogSec to caddy, gitea, authelia, taskchampion | RELIABILITY |
-| 14  | Add Restart=on-failure to missing services              | RELIABILITY |
-| 15  | Fix 3 dead let bindings                                 | CLEANUP     |
-| 16  | Fix git.nix `core.pager="cat"` conflict                 | QUALITY     |
-| 17  | Enable `services.udisks2`                               | USABILITY   |
-| 18  | Add `.editorconfig`                                     | QUALITY     |
-| 19  | Make deadnix check strict (`--fail`)                    | QUALITY     |
-| 20  | Add homepage to emeet-pixyd meta                        | QUALITY     |
-| 21  | Fix 9 deadnix warnings across 9 files                   | QUALITY     |
-| 22  | Make GPG path cross-platform                            | CROSS-PLAT  |
-| 23  | Remove 7 duplicate git ignores                          | QUALITY     |
-| 24  | Clean unfree allowlist                                  | CLEANUP     |
+| #  | Task                                                    | Category    |
+| -- | ------------------------------------------------------- | ----------- |
+| 1  | `git push` — all commits pushed                         | DEPLOY      |
+| 2  | `git stash clear` — dropped 3 stale stashes             | HYGIENE     |
+| 3  | Delete 17 remote `copilot/fix-*` branches               | HYGIENE     |
+| 4  | Archive 40 redundant status docs                        | DOCS        |
+| 5  | Rewrite `docs/status/README.md`                         | DOCS        |
+| 6  | Fix "29 modules" → "27" in docs                         | DOCS        |
+| 7  | Add systemd hardening to `gitea-ensure-repos`           | SECURITY    |
+| 8  | Pin Voice Agents Docker image (`latest` → `1.0.0`)      | SECURITY    |
+| 9  | Pin PhotoMap Docker image (`latest` → `1.0.0`)          | SECURITY    |
+| 10 | Secure VRRP auth_pass with sops-nix                     | SECURITY    |
+| 11 | Remove dead `ublock-filters.nix` module                 | CLEANUP     |
+| 12 | Add Restart + StartLimitBurst to gitea-ensure-repos     | RELIABILITY |
+| 13 | Add WatchdogSec to caddy, gitea, authelia, taskchampion | RELIABILITY |
+| 14 | Add Restart=on-failure to missing services              | RELIABILITY |
+| 15 | Fix 3 dead let bindings                                 | CLEANUP     |
+| 16 | Fix git.nix `core.pager="cat"` conflict                 | QUALITY     |
+| 17 | Enable `services.udisks2`                               | USABILITY   |
+| 18 | Add `.editorconfig`                                     | QUALITY     |
+| 19 | Make deadnix check strict (`--fail`)                    | QUALITY     |
+| 20 | Add homepage to emeet-pixyd meta                        | QUALITY     |
+| 21 | Fix 9 deadnix warnings across 9 files                   | QUALITY     |
+| 22 | Make GPG path cross-platform                            | CROSS-PLAT  |
+| 23 | Remove 7 duplicate git ignores                          | QUALITY     |
+| 24 | Clean unfree allowlist                                  | CLEANUP     |
 
 ### Session 2 (commits 7-12): systemd helpers + shell fixes
 
-| #   | Task                                                          | Category |
-| --- | ------------------------------------------------------------- | -------- |
-| 25  | Create `lib/systemd.nix` with 3 composable functions          | ARCH     |
-| 26  | Refactor taskchampion to use `lib/systemd.nix`                | ARCH     |
-| 27  | Refactor photomap, gitea-repos, twenty                        | ARCH     |
-| 28  | Refactor hermes (gold standard), signoz (5 blocks)            | ARCH     |
-| 29  | Refactor caddy, gitea (3 blocks), immich (mkForce)            | ARCH     |
-| 30  | Refactor authelia, homepage, comfyui, minecraft, voice-agents | ARCH     |
-| 31  | **All 16 hardened services** now use `lib/systemd.nix`        | ARCH     |
-| 32  | Remove Fish fake variables (`fish_history_size`, etc.)        | QUALITY  |
-| 33  | Guard Fish `$GOPATH` PATH addition                            | QUALITY  |
-| 34  | Add bash history config (HISTCONTROL, shopt)                  | QUALITY  |
+| #  | Task                                                          | Category |
+| -- | ------------------------------------------------------------- | -------- |
+| 25 | Create `lib/systemd.nix` with 3 composable functions          | ARCH     |
+| 26 | Refactor taskchampion to use `lib/systemd.nix`                | ARCH     |
+| 27 | Refactor photomap, gitea-repos, twenty                        | ARCH     |
+| 28 | Refactor hermes (gold standard), signoz (5 blocks)            | ARCH     |
+| 29 | Refactor caddy, gitea (3 blocks), immich (mkForce)            | ARCH     |
+| 30 | Refactor authelia, homepage, comfyui, minecraft, voice-agents | ARCH     |
+| 31 | **All 16 hardened services** now use `lib/systemd.nix`        | ARCH     |
+| 32 | Remove Fish fake variables (`fish_history_size`, etc.)        | QUALITY  |
+| 33 | Guard Fish `$GOPATH` PATH addition                            | QUALITY  |
+| 34 | Add bash history config (HISTCONTROL, shopt)                  | QUALITY  |
 
 ### Session 3 (commits 13-17): Quality, consolidation, theme
 
-| #   | Task                                                                      | Category    |
-| --- | ------------------------------------------------------------------------- | ----------- |
-| 35  | Fix SigNoz provision duplicate rules (idempotent)                         | RELIABILITY |
-| 36  | Remove unused `pipecatPort` from voice-agents                             | CLEANUP     |
-| 37  | Fix eval smoke tests (remove `\|\| true`, honest stubs)                   | QUALITY     |
-| 38  | Consolidate 3 duplicate justfile recipes → aliases                        | QUALITY     |
-| 39  | Add MANPAGER + VISUAL environment variables                               | QUALITY     |
-| 40  | Add Taskwarrior daily backup systemd timer                                | AUTOMATION  |
-| 41  | Remove dead `platforms/nixos/desktop/display-manager.nix`                 | CLEANUP     |
-| 42  | Consolidate Catppuccin: `colorScheme` via extraSpecialArgs (3 HM modules) | ARCH        |
-| 43  | Create `platforms/common/theme.nix` shared theme config                   | ARCH        |
-| 44  | Wire theme.nix to NixOS home.nix (GTK/cursor/font/icon)                   | ARCH        |
+| #  | Task                                                                      | Category    |
+| -- | ------------------------------------------------------------------------- | ----------- |
+| 35 | Fix SigNoz provision duplicate rules (idempotent)                         | RELIABILITY |
+| 36 | Remove unused `pipecatPort` from voice-agents                             | CLEANUP     |
+| 37 | Fix eval smoke tests (remove `\|\| true`, honest stubs)                   | QUALITY     |
+| 38 | Consolidate 3 duplicate justfile recipes → aliases                        | QUALITY     |
+| 39 | Add MANPAGER + VISUAL environment variables                               | QUALITY     |
+| 40 | Add Taskwarrior daily backup systemd timer                                | AUTOMATION  |
+| 41 | Remove dead `platforms/nixos/desktop/display-manager.nix`                 | CLEANUP     |
+| 42 | Consolidate Catppuccin: `colorScheme` via extraSpecialArgs (3 HM modules) | ARCH        |
+| 43 | Create `platforms/common/theme.nix` shared theme config                   | ARCH        |
+| 44 | Wire theme.nix to NixOS home.nix (GTK/cursor/font/icon)                   | ARCH        |
 
 ### Summary of Architecture Changes
 
@@ -153,7 +153,7 @@
 | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
 | gitea-repos.nix structural bug (session 2)        | ExecStartPre/ExecStart placed outside `serviceConfig` during initial refactor — service would fail to start | Fixed immediately. Caught by `nix fmt` syntax check.  |
 | Taskwarrior `home.file` addition (session 2)      | Added `home.file` pointing to nonexistent path — not functional, no security improvement                    | Reverted in commit `1670737`.                         |
-| Eval smoke test removal (session 3)               | Removed `                                                                                                   |                                                       | true` → darwin eval failed in sandbox (`nix-instantiate`doesn't support flake refs, sandbox blocks`nix eval`) | Replaced with honest stubs. `nix flake check --no-build` already validates everything these tested. |
+| Eval smoke test removal (session 3)               | Removed `                                                                                                   |                                                       |
 | rpi3 extraSpecialArgs edit (session 3)            | My edit ate the closing `};` and `inputs.self.nixosModules.dns-failover` line, breaking the rpi3 config     | Fixed immediately. `just test-fast` caught it.        |
 | Statix warnings in theme.nix/home.nix (session 3) | Used `{}: rec` and `x = theme.x` patterns that statix flags                                                 | Fixed: `_` for unused arg, `inherit` for assignments. |
 
@@ -190,48 +190,48 @@
 
 ### TIER 1: Deploy & Verify (requires human)
 
-| #   | Task                                          | Est. |
-| --- | --------------------------------------------- | ---- |
-| 1   | `just switch` — deploy 17 commits to evo-x2   | 45m  |
-| 2   | Verify Ollama + Steam + ComfyUI after rebuild | 15m  |
-| 3   | Verify Caddy HTTPS block page                 | 3m   |
-| 4   | Verify SigNoz collecting metrics/logs/traces  | 5m   |
-| 5   | Verify Authelia SSO login                     | 3m   |
-| 6   | Verify Taskwarrior backup timer fires         | 2m   |
+| # | Task                                          | Est. |
+| - | --------------------------------------------- | ---- |
+| 1 | `just switch` — deploy 17 commits to evo-x2   | 45m  |
+| 2 | Verify Ollama + Steam + ComfyUI after rebuild | 15m  |
+| 3 | Verify Caddy HTTPS block page                 | 3m   |
+| 4 | Verify SigNoz collecting metrics/logs/traces  | 5m   |
+| 5 | Verify Authelia SSO login                     | 3m   |
+| 6 | Verify Taskwarrior backup timer fires         | 2m   |
 
 ### TIER 2: High-impact code (AI can do)
 
-| #   | Task                                                              | Est. |
-| --- | ----------------------------------------------------------------- | ---- |
-| 7   | Add enable toggles to core 4 modules (sops, caddy, gitea, immich) | 45m  |
-| 8   | Wire `theme.nix` to darwin (consolidate `default.nix`)            | 15m  |
-| 9   | Pin Docker sha256 digests (Voice Agents + PhotoMap)               | 10m  |
-| 10  | Setup Cachix binary cache for overlay builds                      | 30m  |
-| 11  | Add GitHub Actions: flake.lock auto-update PRs                    | 15m  |
-| 12  | Fix SigNoz dashboard provisioning (same duplicate issue as rules) | 10m  |
-| 13  | Document DNS cluster in AGENTS.md                                 | 10m  |
+| #  | Task                                                              | Est. |
+| -- | ----------------------------------------------------------------- | ---- |
+| 7  | Add enable toggles to core 4 modules (sops, caddy, gitea, immich) | 45m  |
+| 8  | Wire `theme.nix` to darwin (consolidate `default.nix`)            | 15m  |
+| 9  | Pin Docker sha256 digests (Voice Agents + PhotoMap)               | 10m  |
+| 10 | Setup Cachix binary cache for overlay builds                      | 30m  |
+| 11 | Add GitHub Actions: flake.lock auto-update PRs                    | 15m  |
+| 12 | Fix SigNoz dashboard provisioning (same duplicate issue as rules) | 10m  |
+| 13 | Document DNS cluster in AGENTS.md                                 | 10m  |
 
 ### TIER 3: Service improvements
 
-| #   | Task                                          | Est. |
-| --- | --------------------------------------------- | ---- |
-| 14  | Hermes: add health check endpoint             | 10m  |
-| 15  | ComfyUI: fix hardcoded paths → module options | 12m  |
-| 16  | Twenty CRM: add backup rotation               | 8m   |
-| 17  | Voice agents: add Whisper ASR health check    | 8m   |
-| 18  | Authelia: add SMTP notifications              | 10m  |
+| #  | Task                                          | Est. |
+| -- | --------------------------------------------- | ---- |
+| 14 | Hermes: add health check endpoint             | 10m  |
+| 15 | ComfyUI: fix hardcoded paths → module options | 12m  |
+| 16 | Twenty CRM: add backup rotation               | 8m   |
+| 17 | Voice agents: add Whisper ASR health check    | 8m   |
+| 18 | Authelia: add SMTP notifications              | 10m  |
 
 ### TIER 4: Quality of life
 
-| #   | Task                                                      | Est. |
-| --- | --------------------------------------------------------- | ---- |
-| 19  | Write ADR for niri session restore design                 | 10m  |
-| 20  | Add `mkUserHardenedServiceConfig` for HM services         | 10m  |
-| 21  | Remove `preferences.nix` or wire it properly              | 15m  |
-| 22  | Write/update top-level README.md                          | 12m  |
-| 23  | Add missing metrics for 8 services                        | 12m  |
-| 24  | Investigate `just test` intermittent emeet-pixyd race     | 12m  |
-| 25  | File nixpkgs issue for hipblaslt Tensile gfx908 rejection | 10m  |
+| #  | Task                                                      | Est. |
+| -- | --------------------------------------------------------- | ---- |
+| 19 | Write ADR for niri session restore design                 | 10m  |
+| 20 | Add `mkUserHardenedServiceConfig` for HM services         | 10m  |
+| 21 | Remove `preferences.nix` or wire it properly              | 15m  |
+| 22 | Write/update top-level README.md                          | 12m  |
+| 23 | Add missing metrics for 8 services                        | 12m  |
+| 24 | Investigate `just test` intermittent emeet-pixyd race     | 12m  |
+| 25 | File nixpkgs issue for hipblaslt Tensile gfx908 rejection | 10m  |
 
 ---
 

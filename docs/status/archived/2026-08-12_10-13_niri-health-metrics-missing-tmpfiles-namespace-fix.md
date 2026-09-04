@@ -74,7 +74,7 @@ Verified: `nix flake check --no-build` passes.
 
 1. **Did NOT deploy to verify the fix actually works** — I confirmed eval passes but did NOT run `nix run .#deploy`. The user must do this. I should have at least suggested the exact command clearly.
 
-2. **Did NOT update AGENTS.md** — This is a systemic gotcha: *"Every path in `ReadWritePaths` MUST have either a `StateDirectory` declaration OR a tmpfiles `mkStateDir` rule. systemd fails at `status=226/NAMESPACE` before `ExecStart` if the path doesn't exist — the script's `mkdir -p` never runs."* This belongs in the Non-Obvious Gotchas → Systemd section. I noticed it, flagged it mentally, but did not write it down. **This is a memory protocol violation per my own AGENTS.md rules.**
+2. **Did NOT update AGENTS.md** — This is a systemic gotcha: _"Every path in `ReadWritePaths` MUST have either a `StateDirectory` declaration OR a tmpfiles `mkStateDir` rule. systemd fails at `status=226/NAMESPACE` before `ExecStart` if the path doesn't exist — the script's `mkdir -p` never runs."_ This belongs in the Non-Obvious Gotchas → Systemd section. I noticed it, flagged it mentally, but did not write it down. **This is a memory protocol violation per my own AGENTS.md rules.**
 
 3. **Did NOT propose an eval-time guard** — The ideal fix is not just patching this one service. It's an eval-time assertion that cross-references `ReadWritePaths` with `StateDirectory`/tmpfiles rules, catching this class of bug for ALL services forever. SystemNix already has this pattern (`port-audit.nix`, `timeout-audit.nix`, `dynamic-user-audit.nix`). A `tmpfiles-audit.nix` would be the right systemic fix. I did not propose this.
 
@@ -103,35 +103,35 @@ Verified: `nix flake check --no-build` passes.
 
 ### a) FULLY DONE
 
-| # | Item | File | Status |
-|---|------|------|--------|
-| 1 | Root cause identified: missing tmpfiles rule for `/var/lib/niri-health-metrics` | `niri-config.nix` | ✔ |
-| 2 | Tmpfiles rule added via `mkStateDir` matching sibling pattern | `niri-config.nix:51` | ✔ |
-| 3 | `nix flake check --no-build` passes | — | ✔ |
-| 4 | Quick audit: no other service has the same missing-tmpfiles bug | — | ✔ |
+| # | Item                                                                            | File                 | Status |
+| - | ------------------------------------------------------------------------------- | -------------------- | ------ |
+| 1 | Root cause identified: missing tmpfiles rule for `/var/lib/niri-health-metrics` | `niri-config.nix`    | ✔      |
+| 2 | Tmpfiles rule added via `mkStateDir` matching sibling pattern                   | `niri-config.nix:51` | ✔      |
+| 3 | `nix flake check --no-build` passes                                             | —                    | ✔      |
+| 4 | Quick audit: no other service has the same missing-tmpfiles bug                 | —                    | ✔      |
 
 ### b) PARTIALLY DONE
 
-| # | Item | What's missing |
-|---|------|----------------|
-| 1 | Fix verification | Eval passes but NOT deployed. Runtime behavior unconfirmed. |
+| # | Item                | What's missing                                                                  |
+| - | ------------------- | ------------------------------------------------------------------------------- |
+| 1 | Fix verification    | Eval passes but NOT deployed. Runtime behavior unconfirmed.                     |
 | 2 | Systemic prevention | Identified the need for a `tmpfiles-audit.nix` eval guard but did not build it. |
 
 ### c) NOT STARTED
 
-| # | Item |
-|---|------|
-| 1 | AGENTS.md update with the `ReadWritePaths` + tmpfiles gotcha |
-| 2 | `tmpfiles-audit.nix` eval-time assertion module |
+| # | Item                                                                              |
+| - | --------------------------------------------------------------------------------- |
+| 1 | AGENTS.md update with the `ReadWritePaths` + tmpfiles gotcha                      |
+| 2 | `tmpfiles-audit.nix` eval-time assertion module                                   |
 | 3 | Investigation of `browser-history-agent.service` failure (also in the deploy log) |
-| 4 | Deploy and runtime verification |
+| 4 | Deploy and runtime verification                                                   |
 
 ### d) TOTALLY FUCKED UP
 
-| # | Item | Impact |
-|---|------|--------|
+| # | Item                               | Impact                                                                                                                                                                                                                            |
+| - | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | Ignored the second failing service | The deploy log shows `Failed to start browser-history-agent.service` AND `niri-health-metrics.service`. I fixed one and completely ignored the other. The user's deploy will STILL fail if browser-history-agent doesn't come up. |
-| 2 | Did not update AGENTS.md | Violated my own memory protocol. This is a textbook gotcha (systemd fails before ExecStart, mkdir can't save you) that will recur. |
+| 2 | Did not update AGENTS.md           | Violated my own memory protocol. This is a textbook gotcha (systemd fails before ExecStart, mkdir can't save you) that will recur.                                                                                                |
 
 ### e) WHAT WE SHOULD IMPROVE
 
@@ -139,7 +139,7 @@ Verified: `nix flake check --no-build` passes.
 
 2. **Deploy-blocking service audit** — When `nh os switch` reports "exit status 4", the deploy script should list ALL failing services, not just the first one. The user should not have to paste a raw log to discover a second failure.
 
-3. **Tmpfiles-before-namespace documentation** — AGENTS.md Systemd section needs an entry: *"systemd sets up mount namespaces BEFORE ExecStart. Any path in `ReadWritePaths` that doesn't exist at activation time causes `status=226/NAMESPACE` — the script's `mkdir -p` never runs. Every `ReadWritePaths` entry MUST have a `StateDirectory` declaration OR a tmpfiles `mkStateDir` rule."*
+3. **Tmpfiles-before-namespace documentation** — AGENTS.md Systemd section needs an entry: _"systemd sets up mount namespaces BEFORE ExecStart. Any path in `ReadWritePaths` that doesn't exist at activation time causes `status=226/NAMESPACE` — the script's `mkdir -p` never runs. Every `ReadWritePaths` entry MUST have a `StateDirectory` declaration OR a tmpfiles `mkStateDir` rule."_
 
 4. **Sibling-consistency lint** — When three services are defined in the same module, a lint should check that all three have the same level of setup (tmpfiles, hardening, onFailure, etc.). `niri-health-metrics` was the odd one out — no tmpfiles, no `onFailure`, no `OOMScoreAdjust`.
 

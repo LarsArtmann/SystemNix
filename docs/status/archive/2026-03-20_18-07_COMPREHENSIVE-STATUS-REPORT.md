@@ -69,17 +69,17 @@ The SystemNix project is in excellent production state. Today's work focused on 
 
 ### ⚠️ Documentation Bloat
 
-| Aspect         | Status                | Details                      |
-| -------------- | --------------------- | ---------------------------- |
+| Aspect         | Status               | Details                      |
+| -------------- | -------------------- | ---------------------------- |
 | Status reports | ⚠️ 100+ files         | Many historical/AI-generated |
-| Archive plan   | ❌ Not done           | Proposed in previous report  |
+| Archive plan   | ❌ Not done          | Proposed in previous report  |
 | IDE impact     | ⚠️ Cluttered searches | Low priority issue           |
 
 ### ⚠️ ActivityWatch (macOS)
 
-| Bucket        | Status         | Details                     |
-| ------------- | -------------- | --------------------------- |
-| Heartbeat     | ✅ Working     | 4 of 5 buckets              |
+| Bucket        | Status        | Details                     |
+| ------------- | ------------- | --------------------------- |
+| Heartbeat     | ✅ Working    | 4 of 5 buckets              |
 | Input watcher | ⚠️ Permissions | Not fully working on Darwin |
 
 ---
@@ -176,33 +176,33 @@ The SystemNix project is in excellent production state. Today's work focused on 
 
 ## f) TOP 25 THINGS TO GET DONE NEXT
 
-| #   | Priority | Task                                        | Status                |
-| --- | -------- | ------------------------------------------- | --------------------- |
-| 1   | P0       | Fix oxfmt panic on gomod2nix.toml           | NOT STARTED           |
-| 2   | P0       | Monitor XRT upstream for Boost fix          | MONITORING            |
-| 3   | P1       | Execute Homebrew /usr/local → /opt/homebrew | DECISION PENDING      |
-| 4   | P1       | Archive docs/status older than Feb 2026     | NOT STARTED           |
-| 5   | P1       | Resolve ActivityWatch macOS permissions     | NOT STARTED           |
-| 6   | P1       | Move root Python scripts to scripts/ai/     | NOT STARTED           |
-| 7   | P2       | Deduplicate Go overlay in flake.nix         | NOT STARTED           |
-| 8   | P2       | Extract nix-error-lib into reusable flake   | NOT STARTED           |
-| 9   | P2       | Extract nix-types-lib into reusable flake   | NOT STARTED           |
-| 10  | P2       | Align stateVersion between configs          | NOT STARTED           |
-| 11  | P2       | Add GitHub Actions CI                       | NOT STARTED           |
-| 12  | P2       | Delete stale remote branches                | NOT STARTED           |
-| 13  | P2       | Implement niri keybindings/layout           | PARTIAL (stub exists) |
-| 14  | P2       | Add VS Code Nix LSP integration             | NOT STARTED           |
-| 15  | P2       | Test NixOS Bluetooth on EVO-X2              | NOT TESTED            |
-| 16  | P2       | Re-enable ublock-filters.nix or remove      | NOT STARTED           |
-| 17  | P2       | Add deadnix checks to justfile              | NOT STARTED           |
-| 18  | P3       | Update TODO_LIST.md with completions        | NOT STARTED           |
-| 19  | P3       | Update TODO-STATUS.md with accurate states  | NOT STARTED           |
-| 20  | P3       | Fix netbandwidth Waybar module              | NOT STARTED           |
-| 21  | P3       | Add error handling to Waybar scripts        | NOT STARTED           |
-| 22  | P3       | Implement Program Discovery System          | NOT STARTED           |
-| 23  | P3       | Implement just organize recipe              | NOT STARTED           |
-| 24  | P3       | Document allowBroken = false rationale      | NOT STARTED           |
-| 25  | P3       | Add Quake terminal dropdown                 | NOT STARTED           |
+| #  | Priority | Task                                        | Status                |
+| -- | -------- | ------------------------------------------- | --------------------- |
+| 1  | P0       | Fix oxfmt panic on gomod2nix.toml           | NOT STARTED           |
+| 2  | P0       | Monitor XRT upstream for Boost fix          | MONITORING            |
+| 3  | P1       | Execute Homebrew /usr/local → /opt/homebrew | DECISION PENDING      |
+| 4  | P1       | Archive docs/status older than Feb 2026     | NOT STARTED           |
+| 5  | P1       | Resolve ActivityWatch macOS permissions     | NOT STARTED           |
+| 6  | P1       | Move root Python scripts to scripts/ai/     | NOT STARTED           |
+| 7  | P2       | Deduplicate Go overlay in flake.nix         | NOT STARTED           |
+| 8  | P2       | Extract nix-error-lib into reusable flake   | NOT STARTED           |
+| 9  | P2       | Extract nix-types-lib into reusable flake   | NOT STARTED           |
+| 10 | P2       | Align stateVersion between configs          | NOT STARTED           |
+| 11 | P2       | Add GitHub Actions CI                       | NOT STARTED           |
+| 12 | P2       | Delete stale remote branches                | NOT STARTED           |
+| 13 | P2       | Implement niri keybindings/layout           | PARTIAL (stub exists) |
+| 14 | P2       | Add VS Code Nix LSP integration             | NOT STARTED           |
+| 15 | P2       | Test NixOS Bluetooth on EVO-X2              | NOT TESTED            |
+| 16 | P2       | Re-enable ublock-filters.nix or remove      | NOT STARTED           |
+| 17 | P2       | Add deadnix checks to justfile              | NOT STARTED           |
+| 18 | P3       | Update TODO_LIST.md with completions        | NOT STARTED           |
+| 19 | P3       | Update TODO-STATUS.md with accurate states  | NOT STARTED           |
+| 20 | P3       | Fix netbandwidth Waybar module              | NOT STARTED           |
+| 21 | P3       | Add error handling to Waybar scripts        | NOT STARTED           |
+| 22 | P3       | Implement Program Discovery System          | NOT STARTED           |
+| 23 | P3       | Implement just organize recipe              | NOT STARTED           |
+| 24 | P3       | Document allowBroken = false rationale      | NOT STARTED           |
+| 25 | P3       | Add Quake terminal dropdown                 | NOT STARTED           |
 
 ---
 

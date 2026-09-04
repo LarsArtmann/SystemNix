@@ -109,7 +109,8 @@ _: {
                   "+${lib.getExe checkCookieSecret}"
                 ]
                 ++ oidcGate.serviceConfig.ExecStartPre;
-                TimeoutStartSec = "3min";
+                # Must exceed the 300s OIDC gate budget (slow-boot dnsblockd)
+                TimeoutStartSec = "6min";
                 ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 30 --retry-delay 1 --retry-all-errors http://127.0.0.1:${toString proxyPort}/ping";
               }
             ];

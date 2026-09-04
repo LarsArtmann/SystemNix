@@ -47,20 +47,20 @@ Implemented a robust SSH configuration:
 
 ## 📋 Next Steps (User Action Required)
 
-1.  **Sync & Apply:**
+1. **Sync & Apply:**
 
-    ```bash
-    # On Evo-X2
-    git pull
-    sudo nixos-rebuild switch --flake .#evo-x2
-    ```
+   ```bash
+   # On Evo-X2
+   git pull
+   sudo nixos-rebuild switch --flake .#evo-x2
+   ```
 
-2.  **SSH Key Setup:**
-    - Since password auth is now **DISABLED**, ensure your public key (`id_ed25519.pub`) is added to `dotfiles/nixos/configuration.nix` (lines 130+) **BEFORE** applying, or manually added to `~/.ssh/authorized_keys` on the target machine. Otherwise, you will be locked out of SSH.
+2. **SSH Key Setup:**
+   - Since password auth is now **DISABLED**, ensure your public key (`id_ed25519.pub`) is added to `dotfiles/nixos/configuration.nix` (lines 130+) **BEFORE** applying, or manually added to `~/.ssh/authorized_keys` on the target machine. Otherwise, you will be locked out of SSH.
 
-3.  **Verify Graphics:**
-    - Check if OpenCL is working: `clinfo` (might need to add `clinfo` package).
-    - Verify Hyprland starts correctly from SDDM.
+3. **Verify Graphics:**
+   - Check if OpenCL is working: `clinfo` (might need to add `clinfo` package).
+   - Verify Hyprland starts correctly from SDDM.
 
 ## 🔮 Future Work
 

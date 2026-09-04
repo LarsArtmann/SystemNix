@@ -226,33 +226,33 @@
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| #   | Priority | Task                                                                      | Effort | Impact |
-| --- | -------- | ------------------------------------------------------------------------- | ------ | ------ |
-| 1   | **P0**   | Commit staged DNS/TLS changes and deploy (`nixos-rebuild switch`)         | 5min   | HIGH   |
-| 2   | **P0**   | Verify from Mac: `dig @192.168.1.162 pornhub.com` returns `192.168.1.163` | 2min   | HIGH   |
-| 3   | **P0**   | Verify from Mac: `curl http://192.168.1.163` shows block page             | 2min   | HIGH   |
-| 4   | **P0**   | Fix XSS in dnsblockd HTML responses (`html/template` or escape)           | 30min  | HIGH   |
-| 5   | **P0**   | Fix `unbound-control` bare path in Go code                                | 15min  | HIGH   |
-| 6   | **P0**   | Configure router DHCP to advertise `192.168.1.162` as DNS                 | 10min  | HIGH   |
-| 7   | **P1**   | Move CA key out of Nix store (runtime generation or sops)                 | 1h     | HIGH   |
-| 8   | **P1**   | Verify SSH AllowUsers — is "art" intentional?                             | 2min   | MEDIUM |
-| 9   | **P1**   | Unify Go overlay (flake.nix + darwin/default.nix)                         | 1h     | MEDIUM |
-| 10  | **P1**   | Deduplicate dnsblockd package definitions                                 | 30min  | LOW    |
-| 11  | **P1**   | Remove dead code (Technitium, dns-blocklist.nix, wrapper-modules input)   | 15min  | LOW    |
-| 12  | **P1**   | Add Grafana alerting rules (disk, CPU, memory, service down)              | 2h     | HIGH   |
-| 13  | **P1**   | Fix CI Cachix cache inconsistency                                         | 30min  | MEDIUM |
-| 14  | **P1**   | Add NixOS build job to GitHub Actions CI                                  | 1h     | HIGH   |
-| 15  | **P2**   | Fix superfile.nix vendorHash                                              | 15min  | MEDIUM |
-| 16  | **P2**   | Archive old docs/status/ files (keep last 2 weeks)                        | 30min  | MEDIUM |
-| 17  | **P2**   | Audit and consolidate 58 scripts                                          | 2h     | MEDIUM |
-| 18  | **P2**   | Enable AMD NPU and test with Ollama                                       | 2h     | HIGH   |
-| 19  | **P2**   | Create DNS performance Grafana dashboard                                  | 2h     | MEDIUM |
-| 20  | **P2**   | Set up automated offsite backup for Immich photos                         | 3h     | HIGH   |
-| 21  | **P2**   | Fix Sublime sync LaunchAgent path                                         | 15min  | LOW    |
-| 22  | **P3**   | Add Go tests for dnsblockd and dnsblockd-processor                        | 2h     | MEDIUM |
-| 23  | **P3**   | Enable DNS-over-TLS on port 853 for LAN clients                           | 1h     | MEDIUM |
-| 24  | **P3**   | Write operational runbook for common incidents                            | 3h     | HIGH   |
-| 25  | **P3**   | Document dnsblockd HTTP API                                               | 2h     | LOW    |
+| #  | Priority | Task                                                                      | Effort | Impact |
+| -- | -------- | ------------------------------------------------------------------------- | ------ | ------ |
+| 1  | **P0**   | Commit staged DNS/TLS changes and deploy (`nixos-rebuild switch`)         | 5min   | HIGH   |
+| 2  | **P0**   | Verify from Mac: `dig @192.168.1.162 pornhub.com` returns `192.168.1.163` | 2min   | HIGH   |
+| 3  | **P0**   | Verify from Mac: `curl http://192.168.1.163` shows block page             | 2min   | HIGH   |
+| 4  | **P0**   | Fix XSS in dnsblockd HTML responses (`html/template` or escape)           | 30min  | HIGH   |
+| 5  | **P0**   | Fix `unbound-control` bare path in Go code                                | 15min  | HIGH   |
+| 6  | **P0**   | Configure router DHCP to advertise `192.168.1.162` as DNS                 | 10min  | HIGH   |
+| 7  | **P1**   | Move CA key out of Nix store (runtime generation or sops)                 | 1h     | HIGH   |
+| 8  | **P1**   | Verify SSH AllowUsers — is "art" intentional?                             | 2min   | MEDIUM |
+| 9  | **P1**   | Unify Go overlay (flake.nix + darwin/default.nix)                         | 1h     | MEDIUM |
+| 10 | **P1**   | Deduplicate dnsblockd package definitions                                 | 30min  | LOW    |
+| 11 | **P1**   | Remove dead code (Technitium, dns-blocklist.nix, wrapper-modules input)   | 15min  | LOW    |
+| 12 | **P1**   | Add Grafana alerting rules (disk, CPU, memory, service down)              | 2h     | HIGH   |
+| 13 | **P1**   | Fix CI Cachix cache inconsistency                                         | 30min  | MEDIUM |
+| 14 | **P1**   | Add NixOS build job to GitHub Actions CI                                  | 1h     | HIGH   |
+| 15 | **P2**   | Fix superfile.nix vendorHash                                              | 15min  | MEDIUM |
+| 16 | **P2**   | Archive old docs/status/ files (keep last 2 weeks)                        | 30min  | MEDIUM |
+| 17 | **P2**   | Audit and consolidate 58 scripts                                          | 2h     | MEDIUM |
+| 18 | **P2**   | Enable AMD NPU and test with Ollama                                       | 2h     | HIGH   |
+| 19 | **P2**   | Create DNS performance Grafana dashboard                                  | 2h     | MEDIUM |
+| 20 | **P2**   | Set up automated offsite backup for Immich photos                         | 3h     | HIGH   |
+| 21 | **P2**   | Fix Sublime sync LaunchAgent path                                         | 15min  | LOW    |
+| 22 | **P3**   | Add Go tests for dnsblockd and dnsblockd-processor                        | 2h     | MEDIUM |
+| 23 | **P3**   | Enable DNS-over-TLS on port 853 for LAN clients                           | 1h     | MEDIUM |
+| 24 | **P3**   | Write operational runbook for common incidents                            | 3h     | HIGH   |
+| 25 | **P3**   | Document dnsblockd HTTP API                                               | 2h     | LOW    |
 
 ---
 

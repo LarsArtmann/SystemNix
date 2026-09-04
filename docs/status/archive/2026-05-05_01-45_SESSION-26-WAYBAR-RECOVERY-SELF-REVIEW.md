@@ -43,18 +43,18 @@ modules/nixos/services/niri-config.nix:40
 
 ### Session 25–26 Completed Work
 
-| #   | Item                                                                                                   | Commit               | Status    |
-| --- | ------------------------------------------------------------------------------------------------------ | -------------------- | --------- |
-| 1   | **Waybar root cause fix** — `PartOf` → `Wants`                                                         | `8ed4eae`            | Committed |
-| 2   | **niri-config rationale comment** — documents BindsTo→Wants choice                                     | `7371bdb`            | Committed |
-| 3   | **lib/systemd.nix mkDefault refactoring** — curried `{lib}:` pattern, `mkDefault'` preserves overrides | `173f605`            | Committed |
-| 4   | **15 service modules migrated** to `{inherit lib;}` harden import                                      | session 24           | Committed |
-| 5   | **file-and-image-renamer** restored shared `harden()` (was inlined)                                    | session 24           | Committed |
-| 6   | **Unsloth removed** from caddy vhosts, homepage dashboard, DNS records                                 | session 24           | Committed |
-| 7   | **AGENTS.md updated** — BindsTo→Wants rationale documented                                             | `8ed4eae`            | Committed |
-| 8   | **signoz GPU metrics fix** — strip newlines from sysfs reads                                           | `b6ec972`            | Committed |
-| 9   | **hermes-agent vendorHash update**                                                                     | `22f2181`            | Committed |
-| 10  | **HaGeZi DNS blocklist hash updates**                                                                  | `d44004d`, `22f2181` | Committed |
+| #  | Item                                                                                                   | Commit               | Status    |
+| -- | ------------------------------------------------------------------------------------------------------ | -------------------- | --------- |
+| 1  | **Waybar root cause fix** — `PartOf` → `Wants`                                                         | `8ed4eae`            | Committed |
+| 2  | **niri-config rationale comment** — documents BindsTo→Wants choice                                     | `7371bdb`            | Committed |
+| 3  | **lib/systemd.nix mkDefault refactoring** — curried `{lib}:` pattern, `mkDefault'` preserves overrides | `173f605`            | Committed |
+| 4  | **15 service modules migrated** to `{inherit lib;}` harden import                                      | session 24           | Committed |
+| 5  | **file-and-image-renamer** restored shared `harden()` (was inlined)                                    | session 24           | Committed |
+| 6  | **Unsloth removed** from caddy vhosts, homepage dashboard, DNS records                                 | session 24           | Committed |
+| 7  | **AGENTS.md updated** — BindsTo→Wants rationale documented                                             | `8ed4eae`            | Committed |
+| 8  | **signoz GPU metrics fix** — strip newlines from sysfs reads                                           | `b6ec972`            | Committed |
+| 9  | **hermes-agent vendorHash update**                                                                     | `22f2181`            | Committed |
+| 10 | **HaGeZi DNS blocklist hash updates**                                                                  | `d44004d`, `22f2181` | Committed |
 
 ### Existing Working Systems (pre-session)
 
@@ -72,34 +72,34 @@ modules/nixos/services/niri-config.nix:40
 
 ## b) PARTIALLY DONE
 
-| #   | Item                          | What's Left                                                                                                                                                                         | Impact                 |
-| --- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| 1   | **Waybar fix deployment**     | Fix committed but `just switch` not run. Waybar still dead on live system.                                                                                                          | HIGH — user has no bar |
-| 2   | **Harden adoption audit**     | 18/31 service modules import `harden`, but 11 `// harden` calls are active code (not commented). Remaining 13 modules don't need harden (config-only, like ai-models, audio, sops). | MEDIUM — mostly done   |
-| 3   | **Service defaults adoption** | Only 5/31 modules use `serviceDefaults`. Many services manually set `Restart=always` instead of using the shared helper.                                                            | LOW — works fine       |
+| # | Item                          | What's Left                                                                                                                                                                         | Impact                 |
+| - | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| 1 | **Waybar fix deployment**     | Fix committed but `just switch` not run. Waybar still dead on live system.                                                                                                          | HIGH — user has no bar |
+| 2 | **Harden adoption audit**     | 18/31 service modules import `harden`, but 11 `// harden` calls are active code (not commented). Remaining 13 modules don't need harden (config-only, like ai-models, audio, sops). | MEDIUM — mostly done   |
+| 3 | **Service defaults adoption** | Only 5/31 modules use `serviceDefaults`. Many services manually set `Restart=always` instead of using the shared helper.                                                            | LOW — works fine       |
 
 ---
 
 ## c) NOT STARTED
 
-| #   | Item                                                                          | Priority | Notes                             |
-| --- | ----------------------------------------------------------------------------- | -------- | --------------------------------- |
-| 1   | **Deploy waybar fix** (`just switch` + relogin)                               | P0       | User must do this                 |
-| 2   | **Root partition cleanup** — 89% full (56GB free)                             | P1       | `/nix/store` garbage collection   |
-| 3   | **Gitea sops token** — `GITEA_TOKEN not set in sops secrets` error every sync | P1       | Scheduled tasks spamming journal  |
-| 4   | **helium.desktop missing Icon** key — waybar warns on every tray scan         | P2       | Upstream helium package issue     |
-| 5   | **DNS failover Pi 3** — hardware not provisioned                              | P3       | Module written, awaiting hardware |
-| 6   | **Darwin (macOS) platform** — untested with recent niri changes               | P3       | No changes made to darwin         |
+| # | Item                                                                          | Priority | Notes                             |
+| - | ----------------------------------------------------------------------------- | -------- | --------------------------------- |
+| 1 | **Deploy waybar fix** (`just switch` + relogin)                               | P0       | User must do this                 |
+| 2 | **Root partition cleanup** — 89% full (56GB free)                             | P1       | `/nix/store` garbage collection   |
+| 3 | **Gitea sops token** — `GITEA_TOKEN not set in sops secrets` error every sync | P1       | Scheduled tasks spamming journal  |
+| 4 | **helium.desktop missing Icon** key — waybar warns on every tray scan         | P2       | Upstream helium package issue     |
+| 5 | **DNS failover Pi 3** — hardware not provisioned                              | P3       | Module written, awaiting hardware |
+| 6 | **Darwin (macOS) platform** — untested with recent niri changes               | P3       | No changes made to darwin         |
 
 ---
 
 ## d) TOTALLY FUCKED UP
 
-| #   | What                                 | How Bad                                                                     | Recovery                                                                       |
-| --- | ------------------------------------ | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| 1   | **Waybar dead 4 days** (May 1–5)     | SEVERE — no system bar, no workspace indicator, no clock, no volume control | Fix committed (`8ed4eae`), pending deployment                                  |
-| 2   | **PartOf mistake introduced Apr 30** | HIGH — broke graphical session activation for all future boots              | Fixed in `8ed4eae` with `Wants=`                                               |
-| 3   | **May 1 EAGAIN fork storm**          | MEDIUM — waybar couldn't exec custom modules, cascading module disable      | Transient — resolved on reboot. `cgroup pids.current=2420/4194304` now healthy |
+| # | What                                 | How Bad                                                                     | Recovery                                                                       |
+| - | ------------------------------------ | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| 1 | **Waybar dead 4 days** (May 1–5)     | SEVERE — no system bar, no workspace indicator, no clock, no volume control | Fix committed (`8ed4eae`), pending deployment                                  |
+| 2 | **PartOf mistake introduced Apr 30** | HIGH — broke graphical session activation for all future boots              | Fixed in `8ed4eae` with `Wants=`                                               |
+| 3 | **May 1 EAGAIN fork storm**          | MEDIUM — waybar couldn't exec custom modules, cascading module disable      | Transient — resolved on reboot. `cgroup pids.current=2420/4194304` now healthy |
 
 ---
 
@@ -130,48 +130,48 @@ modules/nixos/services/niri-config.nix:40
 
 ### P0 — Do Immediately
 
-| #   | Task                                                              | Effort | Impact   |
-| --- | ----------------------------------------------------------------- | ------ | -------- |
-| 1   | **Deploy waybar fix** — `just switch` + relogin                   | 5min   | CRITICAL |
-| 2   | **Verify waybar starts** — check `systemctl --user status waybar` | 1min   | CRITICAL |
+| # | Task                                                              | Effort | Impact   |
+| - | ----------------------------------------------------------------- | ------ | -------- |
+| 1 | **Deploy waybar fix** — `just switch` + relogin                   | 5min   | CRITICAL |
+| 2 | **Verify waybar starts** — check `systemctl --user status waybar` | 1min   | CRITICAL |
 
 ### P1 — High Impact, Low Effort
 
-| #   | Task                                                                                               | Effort | Impact                |
-| --- | -------------------------------------------------------------------------------------------------- | ------ | --------------------- |
-| 3   | **Patch waybar.service Restart=always** — override in HM config to survive clean exits             | 10min  | HIGH                  |
-| 4   | **Fix gitea sops token** — add `gitea_token` to `secrets/hermes.yaml` or create separate sops file | 15min  | HIGH                  |
-| 5   | **Add graphical-session health check** — `just health` should verify target is active              | 20min  | HIGH                  |
-| 6   | **Nix GC** — `nix-collect-garbage -d` to reclaim disk space (root at 89%)                          | 5min   | HIGH                  |
-| 7   | **Verify swappiness=10 deployed** — check if `boot.nix` setting is active                          | 2min   | MEDIUM                |
-| 8   | **Add helium.desktop Icon fix** — patch or override the .desktop file                              | 10min  | LOW (noise reduction) |
+| # | Task                                                                                               | Effort | Impact                |
+| - | -------------------------------------------------------------------------------------------------- | ------ | --------------------- |
+| 3 | **Patch waybar.service Restart=always** — override in HM config to survive clean exits             | 10min  | HIGH                  |
+| 4 | **Fix gitea sops token** — add `gitea_token` to `secrets/hermes.yaml` or create separate sops file | 15min  | HIGH                  |
+| 5 | **Add graphical-session health check** — `just health` should verify target is active              | 20min  | HIGH                  |
+| 6 | **Nix GC** — `nix-collect-garbage -d` to reclaim disk space (root at 89%)                          | 5min   | HIGH                  |
+| 7 | **Verify swappiness=10 deployed** — check if `boot.nix` setting is active                          | 2min   | MEDIUM                |
+| 8 | **Add helium.desktop Icon fix** — patch or override the .desktop file                              | 10min  | LOW (noise reduction) |
 
 ### P2 — High Impact, Medium Effort
 
-| #   | Task                                                                                                              | Effort | Impact |
-| --- | ----------------------------------------------------------------------------------------------------------------- | ------ | ------ |
-| 9   | **Consolidate serviceDefaults adoption** — audit all services with manual `Restart=` and migrate to shared helper | 1h     | MEDIUM |
-| 10  | **Add user-unit monitoring to SigNoz** — journald receiver for `user-*.service`                                   | 30min  | MEDIUM |
-| 11  | **file-and-image-renamer → system service** — migrate from HM user unit to system-level like other watchers       | 30min  | MEDIUM |
-| 12  | **Add `just waybar-restart` command** — convenience for future recovery                                           | 5min   | LOW    |
-| 13  | **Create harden adoption linter** — CI check that services with `serviceConfig` use `harden {}`                   | 1h     | MEDIUM |
-| 14  | **Root partition monitoring** — disk warning threshold in waybar (already has `disk` module)                      | 5min   | LOW    |
+| #  | Task                                                                                                              | Effort | Impact |
+| -- | ----------------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 9  | **Consolidate serviceDefaults adoption** — audit all services with manual `Restart=` and migrate to shared helper | 1h     | MEDIUM |
+| 10 | **Add user-unit monitoring to SigNoz** — journald receiver for `user-*.service`                                   | 30min  | MEDIUM |
+| 11 | **file-and-image-renamer → system service** — migrate from HM user unit to system-level like other watchers       | 30min  | MEDIUM |
+| 12 | **Add `just waybar-restart` command** — convenience for future recovery                                           | 5min   | LOW    |
+| 13 | **Create harden adoption linter** — CI check that services with `serviceConfig` use `harden {}`                   | 1h     | MEDIUM |
+| 14 | **Root partition monitoring** — disk warning threshold in waybar (already has `disk` module)                      | 5min   | LOW    |
 
 ### P3 — Lower Priority
 
-| #   | Task                                                                                                | Effort | Impact           |
-| --- | --------------------------------------------------------------------------------------------------- | ------ | ---------------- |
-| 15  | **Provision Pi 3 for DNS failover** — hardware setup, flash NixOS image                             | 2h     | HIGH (when done) |
-| 16  | **Clean up SSH session leak** — 27 stale sessions, investigate `sshd_config` keepalive              | 15min  | LOW              |
-| 17  | **Migrate justfile recipes to flake apps** — follow AGENTS.md policy (justfile deprecated)          | 2h     | MEDIUM           |
-| 18  | **Add `nix.settings.max-free` for automatic GC** — prevent future disk full                         | 10min  | MEDIUM           |
-| 19  | **Monitor365 hardening review** — verify `// harden {}` works with X11 DISPLAY access               | 15min  | LOW              |
-| 20  | **Hermes hardening review** — verify 24G MemoryMax is still needed                                  | 10min  | LOW              |
-| 21  | **Signoz hardening** — re-enable `// harden {}` for cadvisor and collector                          | 15min  | MEDIUM           |
-| 22  | **Twenty CRM hardening** — re-enable `// harden { MemoryMax = "2G"; ReadWritePaths = [stateDir]; }` | 10min  | MEDIUM           |
-| 23  | **Homepage hardening** — re-enable `// harden {}` + `// serviceDefaults {}`                         | 5min   | LOW              |
-| 24  | **Gitea services hardening** — re-enable `// harden {}` for token-gen and runner-token scripts      | 10min  | LOW              |
-| 25  | **Darwin platform test** — verify `just switch` still works on macOS                                | 30min  | MEDIUM           |
+| #  | Task                                                                                                | Effort | Impact           |
+| -- | --------------------------------------------------------------------------------------------------- | ------ | ---------------- |
+| 15 | **Provision Pi 3 for DNS failover** — hardware setup, flash NixOS image                             | 2h     | HIGH (when done) |
+| 16 | **Clean up SSH session leak** — 27 stale sessions, investigate `sshd_config` keepalive              | 15min  | LOW              |
+| 17 | **Migrate justfile recipes to flake apps** — follow AGENTS.md policy (justfile deprecated)          | 2h     | MEDIUM           |
+| 18 | **Add `nix.settings.max-free` for automatic GC** — prevent future disk full                         | 10min  | MEDIUM           |
+| 19 | **Monitor365 hardening review** — verify `// harden {}` works with X11 DISPLAY access               | 15min  | LOW              |
+| 20 | **Hermes hardening review** — verify 24G MemoryMax is still needed                                  | 10min  | LOW              |
+| 21 | **Signoz hardening** — re-enable `// harden {}` for cadvisor and collector                          | 15min  | MEDIUM           |
+| 22 | **Twenty CRM hardening** — re-enable `// harden { MemoryMax = "2G"; ReadWritePaths = [stateDir]; }` | 10min  | MEDIUM           |
+| 23 | **Homepage hardening** — re-enable `// harden {}` + `// serviceDefaults {}`                         | 5min   | LOW              |
+| 24 | **Gitea services hardening** — re-enable `// harden {}` for token-gen and runner-token scripts      | 10min  | LOW              |
+| 25 | **Darwin platform test** — verify `just switch` still works on macOS                                | 30min  | MEDIUM           |
 
 ---
 

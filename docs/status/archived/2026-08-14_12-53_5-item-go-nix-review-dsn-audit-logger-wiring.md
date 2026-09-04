@@ -11,16 +11,19 @@
 ## a) FULLY DONE
 
 ### 1. file-and-image-renamer: pin 3 inputs from `ref=master` to tags ✅
+
 - **Status:** Already completed upstream before this session.
 - **Evidence:** Upstream `flake.nix` (rev `25d32b2`, locked in SystemNix) uses go-standard with tagged deps: `go-filewatcher-src` v2.3.0, `vision-review-agent-src` v0.5.1, `go-nix-helpers` @ commit `064a269`.
 - **SystemNix lock:** `25d32b2` — already at HEAD. No action needed.
 
 ### 2. file-and-image-renamer: GOTOOLCHAIN=auto → local ✅
+
 - **Status:** Already completed upstream before this session.
 - **Evidence:** `flake.nix` lines 133, 210, 407 all set `export GOTOOLCHAIN=local`. go-standard auto-wires `GOTOOLCHAIN=local` in devShells. The old `GOTOOLCHAIN=auto` in build phases was intentionally permissive for vendored deps (documented in upstream status report `2026-08-05_11-12_nix-flake-review-brutal-self-review.md`), but was replaced with `local` during the go-standard migration.
 - **Pre-commit guard:** SystemNix `.githooks/pre-commit` and `scripts/check-flake-inputs.sh` reject `GOTOOLCHAIN.*auto` — defense in depth.
 
 ### 3. browser-history DSN mismatch — core fix + cross-repo audit ✅
+
 - **Core fix:** Already landed upstream (`dc3de07` — `fix: correct SQLite DSN pragmas for modernc driver`). The DSN was changed from `_journal_mode=WAL&_busy_timeout=5000` (which modernc < v1.50 silently ignores) to `_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)`.
 - **Cross-repo audit:** Scanned ALL LarsArtmann Go repos that use `modernc.org/sqlite`. Found and fixed 2 additional bugs:
   - **CreditReformBilanzampel** — INVERSE bug: mattn driver + modernc `_pragma=` DSN → ALL pragmas silently dropped (no WAL, no FK, no synchronous=NORMAL). Fixed to mattn shorthands (`_journal_mode`, `_synchronous`, `_foreign_keys`, `_cache_size`, `_busy_timeout`). Removed dead `formatBool` function.
@@ -33,12 +36,14 @@
 - **Modernc DSN param support reference (v1.56.0):** Valid shorthands: `_busy_timeout`/`_timeout`, `_foreign_keys`/`_fk`, `_journal_mode`/`_journal`, `_synchronous`/`_sync`, `_auto_vacuum`/`_vacuum`, `_query_only`. Unknown keys are silently ignored. `_pragma=foo(bar)` is always valid. mattn does NOT support `_pragma` at all (silently ignores it).
 
 ### 4. errorfamily: flush logger before os.Exit ✅
+
 - **Root cause correction:** The TODO premise was WRONG. `HandleError` never calls `os.Exit` — it returns an exit code int, and the CALLER calls `os.Exit`. The library's `HandleConfig.Logger` field (type `*slog.Logger`) receives structured log entries via `logErrorInternal()` before returning. The real issue was that browser-history called `HandleError(err)` WITHOUT passing `HandleConfig.Logger`, so no structured log was emitted on startup failure.
 - **Fix:** Changed all 3 post-logger `HandleError` call sites in `browser-history/cmd/browser-history-server/main.go` to `HandleErrorWithConfig(err, HandleConfig{Logger: logger})`. Line 17 (pre-logger `LoadConfig` failure) correctly uses bare `HandleError` (no logger exists yet).
 - **Build:** `GOEXPERIMENT=jsonv2 go build ./cmd/browser-history-server/` = PASS
 - **Tests:** `GOEXPERIMENT=jsonv2 go test ./api/` = PASS (31.5s)
 
 ### 5. go-auto-upgrade: fix charm.land/lipgloss/v2/table vendoring ✅
+
 - **Status:** Vendoring fixed upstream (`c2722b2` — `build(deps): refresh deps, fix vendorHash, cut CHANGELOG for v0.4.0`). Upstream builds clean (`nix build .` = PASS).
 - **SystemNix changes:**
   - `lib/lars-packages.nix`: Changed `go-auto-upgrade = null;` → `go-auto-upgrade = flakePkg inputs.go-auto-upgrade;`
@@ -47,6 +52,7 @@
 - **Flake check:** `nix flake check --no-build` = PASS (all NixOS modules evaluated successfully)
 
 ### TODO_LIST.md update ✅
+
 - Marked 6 items as `[x]` (the 5 review items + the stale `go-standard migration for file-and-image-renamer` which was also already done).
 - Each `[x]` item includes a detailed explanation of what was done, where, and the verification evidence.
 
@@ -55,18 +61,21 @@
 ## b) PARTIALLY DONE
 
 ### ~~CreditReformBilanzampel DSN fix — committed but untagged~~ committed at `b1e5e701` ("fix SQLite DSN pragmas", bundled with the npm→pnpm switch); repo has NO tags at all — still untagged
+
 - The `connection.go` fix is applied and compiles (`go build ./infrastructure/db/...` = PASS), but:
   - No test files exist for the `db` package (`[no test files]`)
   - ~~The fix is uncommitted in the repo (auto-git daemon may sweep it)~~ committed (tree clean, verified 08-14)
   - No tag or version bump — downstream consumers (if any) won't get the fix until tagged
 
 ### ~~Kernovia event-sourced-plugin DSN fix — committed but untagged~~ committed (bundled into `d139446d` pnpm-migration commit); not contained in any tag — still untagged
+
 - The `sqlite_store.go` fix is applied, but:
   - The package has `//go:build example` constraint — cannot compile without `-tags example`
   - Even with the tag, it needs `GOEXPERIMENT=jsonv2` (pre-existing, unrelated to the DSN fix)
   - No test coverage for this example plugin
 
 ### ~~browser-history HandleConfig.Logger wiring — committed but untagged~~ committed at `b350c96` ("switch error handler to HandleWithConfig") — still untagged, still undeployed (flake input predates it)
+
 - The `main.go` fix is applied and compiles, API tests pass, but:
   - No tag or version bump — the fix won't reach SystemNix's deployed browser-history until the flake input is bumped to a new tag (same open chain as the registration lock — see the 10-04 annotations)
   - The `go.work.sum` file also changed (3 lines) — unclear if this was from my edit or a parallel session
@@ -76,6 +85,7 @@
 ## c) NOT STARTED
 
 ### Tagging and bumping upstream repos
+
 - CreditReformBilanzampel, Kernovia, and browser-history all have uncommitted/uncommitted fixes that need:
   1. Commit (if auto-git hasn't already)
   2. Tag with semver
@@ -83,9 +93,11 @@
   4. Rebuild and verify from SystemNix flake
 
 ### Kernovia `database.go` (line 99) — uses only `_busy_timeout` on modernc v1.56.0
+
 - This is actually CORRECT (`_busy_timeout` is a valid shorthand in v1.56.0). No fix needed. But no PRAGMA for journal_mode or foreign_keys is set via DSN — these may or may not be set elsewhere. Did not investigate further (not a SystemNix-consumed repo).
 
 ### CreditReformBilanzampel `go.work.sum` changes
+
 - The `go.work.sum` file changed during my session (3 lines). This may be from `go build` or `go mod download` side effects. Not investigated.
 
 ---
@@ -93,6 +105,7 @@
 ## d) TOTALLY FUCKED UP
 
 ### Nothing
+
 - No regressions introduced.
 - All builds pass.
 - All tests pass.
@@ -138,6 +151,7 @@
 ## f) Up to 50 Things We Should Get Done Next
 
 ### Immediate (SystemNix)
+
 1. **Tag browser-history upstream** — cut a new semver tag so SystemNix can bump the flake input and deploy the `HandleConfig.Logger` fix
 2. **Tag CreditReformBilanzampel upstream** — cut a tag so the DSN fix is pinned
 3. **Tag Kernovia upstream** — cut a tag for the event-sourced-plugin DSN fix (if this repo is tagged; it may not be)
@@ -151,6 +165,7 @@
 11. ~~**Run pre-commit hooks** — `.githooks/pre-commit` should pass (gitleaks, deadnix, statix, alejandra, nix flake check)~~ done — passed at `42674b5e`, `2c9be5ca`, `e5dfe0ae`, `fbf0156b`, `cbbba3fa` (2026-08-14 evening session)
 
 ### Short-Term (This Week)
+
 12. **Audit ALL LarsArtmann Go repos for `HandleError` without `HandleConfig.Logger`** — same pattern as browser-history
 13. **Migrate CreditReformBilanzampel from mattn to modernc** — pure-Go driver, no CGO, aligns with the rest of the LarsArtmann ecosystem
 14. **Add tests for CreditReformBilanzampel `connection.go`** — `ConnectionString()` should have table-driven tests validating DSN output
@@ -167,6 +182,7 @@
 25. **Verify CreditReformBilanzampel DSN fix at runtime** — `go test` or manual run to confirm pragmas are applied
 
 ### Medium-Term (This Month)
+
 26. **Consolidate SQLite DSN patterns across all LarsArtmann repos** — create a shared `sqliteDSN()` helper in `go-output` or a new `go-sqlite-helpers` repo
 27. **Add `go vet` or `staticcheck` to all LarsArtmann CI pipelines** — catches unused functions like `formatBool` before they land
 28. **Standardize all LarsArtmann repos on modernc.org/sqlite** — eliminate mattn dependency (CGO-free builds, simpler Nix packaging)
@@ -184,6 +200,7 @@
 40. **Browser-history: add `HandleError` call to `cmd/browser-history-agent/main.go`** — agent uses `os.Exit(run(logger, config))` without error-family at all
 
 ### Long-Term
+
 41. **Create a shared `sqliteDSN` builder in `go-output` or a new shared repo** — one function, tested, correct for each driver
 42. **Migrate ALL LarsArtmann repos from mattn to modernc** — eliminates CGO, simplifies Nix builds, aligns with the ecosystem
 43. **Add a linter for SQLite DSN construction** — static analysis that flags driver/DSN mismatches
@@ -202,6 +219,7 @@
 ### Q1: ~~Should I tag browser-history, CreditReformBilanzampel, and Kernovia now?~~ **answered** — all three fixes are now COMMITTED but all three remain UNTAGGED: browser-history `b750ec5`/`b350c96` (part of the open registration-lock chain — see 10-04 annotations), CreditReformBilanzampel `b1e5e701` (repo has no tags at all), Kernovia `d139446d` (not contained in `v0.5.0-watermill`). Tagging + flake bumps are still owed.
 
 ### Q2: Should CreditReformBilanzampel migrate from mattn/go-sqlite3 to modernc.org/sqlite?
+
 The mattn driver requires CGO (C compiler in the Nix build). modernc is pure-Go. All other LarsArtmann repos use modernc. But CreditReformBilanzampel may have a reason to use mattn (performance, specific features). I cannot make this architectural decision.
 
 ### Q3: ~~Should the browser-history `HandleConfig.Logger` fix be deployed immediately?~~ **answered by events, partially** — multiple deploys happened since, but the flake input still points at `a1b78afa` (08-12), which predates the `b350c96` logger fix — so the fix remains undeployed, blocked on the same tag+flake chain as the registration lock
@@ -210,14 +228,14 @@ The mattn driver requires CGO (C compiler in the Nix build). modernc is pure-Go.
 
 ## Session Metrics
 
-| Metric | Value |
-|--------|-------|
-| Repos touched | 4 (SystemNix, browser-history, CreditReformBilanzampel, Kernovia) |
-| Files modified | 5 (lars-packages.nix, TODO_LIST.md, main.go, connection.go, sqlite_store.go) |
-| Builds verified | 4 (go-auto-upgrade upstream, go-auto-upgrade SystemNix, file-and-image-renamer dry-run, CreditReformBilanzampel db package) |
-| Tests run | 1 (browser-history API tests — PASS, 31.5s) |
-| Flake check | PASS (`nix flake check --no-build`) |
-| TODO items closed | 6 (5 review items + 1 stale go-standard migration) |
-| Upstream bugs found | 2 (CreditReformBilanzampel inverse DSN, Kernovia mattn-only params on modernc) |
-| TODO premises corrected | 1 ("HandleError calls os.Exit" — it doesn't) |
-| Auto-git commits intercepted | 1 (commit `93f38bd4` swept SystemNix changes) |
+| Metric                       | Value                                                                                                                       |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Repos touched                | 4 (SystemNix, browser-history, CreditReformBilanzampel, Kernovia)                                                           |
+| Files modified               | 5 (lars-packages.nix, TODO_LIST.md, main.go, connection.go, sqlite_store.go)                                                |
+| Builds verified              | 4 (go-auto-upgrade upstream, go-auto-upgrade SystemNix, file-and-image-renamer dry-run, CreditReformBilanzampel db package) |
+| Tests run                    | 1 (browser-history API tests — PASS, 31.5s)                                                                                 |
+| Flake check                  | PASS (`nix flake check --no-build`)                                                                                         |
+| TODO items closed            | 6 (5 review items + 1 stale go-standard migration)                                                                          |
+| Upstream bugs found          | 2 (CreditReformBilanzampel inverse DSN, Kernovia mattn-only params on modernc)                                              |
+| TODO premises corrected      | 1 ("HandleError calls os.Exit" — it doesn't)                                                                                |
+| Auto-git commits intercepted | 1 (commit `93f38bd4` swept SystemNix changes)                                                                               |

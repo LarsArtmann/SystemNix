@@ -139,33 +139,33 @@ All these failures would have been caught by CI on push. None of the private Lar
 
 ## F) Top 25 Things to Do Next
 
-| #   | Priority | Task                                                                                                                                                                             | Category      |
-| --- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| 1   | P0       | Verify `just switch` works on evo-x2 (live deploy)                                                                                                                               | Build         |
-| 2   | P0       | Audit ALL remaining Go overlay repos for stale vendorHash (buildflow, go-structure-linter, hierarchical-errors, projects-management-automation, art-dupl, dnsblockd, monitor365) | Build         |
-| 3   | P0       | Standardize `mkPreparedSource.nix` across all repos — ensure all have `proxyVendor`, `overrideModAttrs` tidy, and `preBuild` tidy                                                | Architecture  |
-| 4   | P1       | Add `nix run .#update-vendor-hash` to all Go repos that lack it                                                                                                                  | DX            |
-| 5   | P1       | Add CI (GitHub Actions) to private repos that builds the Nix derivation                                                                                                          | CI            |
-| 6   | P1       | Run `just test` on Darwin (MacBook Air) — verify cross-platform build                                                                                                            | Build         |
-| 7   | P2       | Fix monitor365.service "Unit not found" during activation (likely ordering issue in systemd)                                                                                     | Services      |
-| 8   | P2       | Fix whisper-asr.service start failure during activation                                                                                                                          | Services      |
-| 9   | P2       | Verify all new services (monitor365-server, openseo, twenty) are functional after deploy                                                                                         | Services      |
-| 10  | P2       | Run `just health` and verify all Gatus endpoints pass                                                                                                                            | Monitoring    |
-| 11  | P2       | Update AGENTS.md with the `proxyVendor + preBuild go mod tidy` pattern as a known requirement                                                                                    | Documentation |
-| 12  | P3       | Create a `scripts/check-vendor-hashes.sh` that iterates all Go overlay inputs and validates vendorHash                                                                           | DX            |
-| 13  | P3       | Investigate if `mkPreparedSource.nix` can auto-add `proxyVendor = true` to the buildGoModule args                                                                                | Architecture  |
-| 14  | P3       | Review buildflow flake.nix for the same `_local_deps` pattern issues                                                                                                             | Build         |
-| 15  | P3       | Review go-structure-linter flake.nix for the same pattern                                                                                                                        | Build         |
-| 16  | P3       | Review hierarchical-errors flake.nix for the same pattern                                                                                                                        | Build         |
-| 17  | P3       | Review projects-management-automation flake.nix for the same pattern                                                                                                             | Build         |
-| 18  | P3       | Review art-dupl flake.nix — it uses different build system (fork)                                                                                                                | Build         |
-| 19  | P4       | Disk cleanup on evo-x2 after multiple nix builds                                                                                                                                 | Maintenance   |
-| 20  | P4       | Run `just dns-diagnostics` and verify DNS stack after rebuild                                                                                                                    | Services      |
-| 21  | P4       | Check dual-WAN status after rebuild (`just wan-status`)                                                                                                                          | Networking    |
-| 22  | P4       | Verify sops secrets decrypted correctly on live system (`sops -d`)                                                                                                               | Security      |
-| 23  | P5       | Consider adding `vendorHash` staleness check to `just test-fast`                                                                                                                 | DX            |
-| 24  | P5       | Document the "proxyVendor + preBuild tidy" pattern in a shared reference doc                                                                                                     | Documentation |
-| 25  | P5       | Review if any repos have `overrideModAttrs` WITHOUT `preBuild` tidy (incomplete fix)                                                                                             | Build         |
+| #  | Priority | Task                                                                                                                                                                             | Category      |
+| -- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| 1  | P0       | Verify `just switch` works on evo-x2 (live deploy)                                                                                                                               | Build         |
+| 2  | P0       | Audit ALL remaining Go overlay repos for stale vendorHash (buildflow, go-structure-linter, hierarchical-errors, projects-management-automation, art-dupl, dnsblockd, monitor365) | Build         |
+| 3  | P0       | Standardize `mkPreparedSource.nix` across all repos — ensure all have `proxyVendor`, `overrideModAttrs` tidy, and `preBuild` tidy                                                | Architecture  |
+| 4  | P1       | Add `nix run .#update-vendor-hash` to all Go repos that lack it                                                                                                                  | DX            |
+| 5  | P1       | Add CI (GitHub Actions) to private repos that builds the Nix derivation                                                                                                          | CI            |
+| 6  | P1       | Run `just test` on Darwin (MacBook Air) — verify cross-platform build                                                                                                            | Build         |
+| 7  | P2       | Fix monitor365.service "Unit not found" during activation (likely ordering issue in systemd)                                                                                     | Services      |
+| 8  | P2       | Fix whisper-asr.service start failure during activation                                                                                                                          | Services      |
+| 9  | P2       | Verify all new services (monitor365-server, openseo, twenty) are functional after deploy                                                                                         | Services      |
+| 10 | P2       | Run `just health` and verify all Gatus endpoints pass                                                                                                                            | Monitoring    |
+| 11 | P2       | Update AGENTS.md with the `proxyVendor + preBuild go mod tidy` pattern as a known requirement                                                                                    | Documentation |
+| 12 | P3       | Create a `scripts/check-vendor-hashes.sh` that iterates all Go overlay inputs and validates vendorHash                                                                           | DX            |
+| 13 | P3       | Investigate if `mkPreparedSource.nix` can auto-add `proxyVendor = true` to the buildGoModule args                                                                                | Architecture  |
+| 14 | P3       | Review buildflow flake.nix for the same `_local_deps` pattern issues                                                                                                             | Build         |
+| 15 | P3       | Review go-structure-linter flake.nix for the same pattern                                                                                                                        | Build         |
+| 16 | P3       | Review hierarchical-errors flake.nix for the same pattern                                                                                                                        | Build         |
+| 17 | P3       | Review projects-management-automation flake.nix for the same pattern                                                                                                             | Build         |
+| 18 | P3       | Review art-dupl flake.nix — it uses different build system (fork)                                                                                                                | Build         |
+| 19 | P4       | Disk cleanup on evo-x2 after multiple nix builds                                                                                                                                 | Maintenance   |
+| 20 | P4       | Run `just dns-diagnostics` and verify DNS stack after rebuild                                                                                                                    | Services      |
+| 21 | P4       | Check dual-WAN status after rebuild (`just wan-status`)                                                                                                                          | Networking    |
+| 22 | P4       | Verify sops secrets decrypted correctly on live system (`sops -d`)                                                                                                               | Security      |
+| 23 | P5       | Consider adding `vendorHash` staleness check to `just test-fast`                                                                                                                 | DX            |
+| 24 | P5       | Document the "proxyVendor + preBuild tidy" pattern in a shared reference doc                                                                                                     | Documentation |
+| 25 | P5       | Review if any repos have `overrideModAttrs` WITHOUT `preBuild` tidy (incomplete fix)                                                                                             | Build         |
 
 ---
 

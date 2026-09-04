@@ -31,16 +31,16 @@ This session (131) started as a recovery from yesterday's GPU crash cascade (ses
 
 ### This Session — All Committed & Pushed
 
-| #   | Item                                | Commit     | Files                                                     | Details                                                                                                                                                                                                                                                                                                                           |
-| --- | ----------------------------------- | ---------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Caddy boot ordering (attempt 1)** | `24c779ec` | `caddy.nix`, `dns-blocker-config.nix`, `rpi3/default.nix` | Added `bindsTo + after sops-nix.service` + 5 DNS A records                                                                                                                                                                                                                                                                        |
-| 2   | **Status report session 131a**      | `c600e2cb` | `docs/status/...`                                         | Comprehensive audit                                                                                                                                                                                                                                                                                                               |
-| 3   | **Caddy boot ordering (fix)**       | `8a939063` | `caddy.nix`                                               | Changed `bindsTo` → `wants` — `bindsTo` caused `Unit sops-nix.service not found` during `nh os switch` because systemd stops/restarts units during activation and `bindsTo` requires the unit to exist in runtime state. All other services (discordsync, hermes, dns-blocker, docker factory) use `wants` — matched that pattern |
-| 4   | **Pocket ID OTel fix**              | `e616de4b` | `pocket-id.nix`                                           | `OTEL_METRICS_EXPORTER = "prometheus"` — switches from push mode (POST to `https://localhost:4318` every 60s, which fails because it tries HTTPS on an HTTP-only endpoint) to pull mode (expose `/metrics` for scraping). Removed unnecessary `OTEL_TRACES_EXPORTER` and `OTEL_LOGS_EXPORTER` that were cargo-culted              |
-| 5   | **Sops atomic guards**              | `e616de4b` | `sops.nix`                                                | Wrapped 6 services' secrets + 6 templates in `lib.optionalAttrs config.services.X.enable (...)`. Session 128 proved one bad owner blocks ALL secrets. Now disabling any service won't cascade                                                                                                                                     |
-| 6   | **TODO_LIST.md rewrite**            | `e616de4b` | `TODO_LIST.md`                                            | 26 completed items, 23 active tasks. Was stale since session 122 (Jun 8)                                                                                                                                                                                                                                                          |
-| 7   | **FEATURES.md update**              | `e616de4b` | `FEATURES.md`                                             | 12 entries updated. Was stale since Jun 3 (8 days). Module count 36→39, DNS 8→13 subdomains                                                                                                                                                                                                                                       |
-| 8   | **Pocket ID SMTP via Resend**       | `ace83cc1` | `pocket-id.nix`, `sops.nix`                               | `SMTP_HOST=smtp.resend.com`, `SMTP_PORT=465`, `SMTP_FROM=noreply@cloud.larsartmann.com`. Secret `pocket_id_smtp_password` added to sops config                                                                                                                                                                                    |
+| # | Item                                | Commit     | Files                                                     | Details                                                                                                                                                                                                                                                                                                                           |
+| - | ----------------------------------- | ---------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Caddy boot ordering (attempt 1)** | `24c779ec` | `caddy.nix`, `dns-blocker-config.nix`, `rpi3/default.nix` | Added `bindsTo + after sops-nix.service` + 5 DNS A records                                                                                                                                                                                                                                                                        |
+| 2 | **Status report session 131a**      | `c600e2cb` | `docs/status/...`                                         | Comprehensive audit                                                                                                                                                                                                                                                                                                               |
+| 3 | **Caddy boot ordering (fix)**       | `8a939063` | `caddy.nix`                                               | Changed `bindsTo` → `wants` — `bindsTo` caused `Unit sops-nix.service not found` during `nh os switch` because systemd stops/restarts units during activation and `bindsTo` requires the unit to exist in runtime state. All other services (discordsync, hermes, dns-blocker, docker factory) use `wants` — matched that pattern |
+| 4 | **Pocket ID OTel fix**              | `e616de4b` | `pocket-id.nix`                                           | `OTEL_METRICS_EXPORTER = "prometheus"` — switches from push mode (POST to `https://localhost:4318` every 60s, which fails because it tries HTTPS on an HTTP-only endpoint) to pull mode (expose `/metrics` for scraping). Removed unnecessary `OTEL_TRACES_EXPORTER` and `OTEL_LOGS_EXPORTER` that were cargo-culted              |
+| 5 | **Sops atomic guards**              | `e616de4b` | `sops.nix`                                                | Wrapped 6 services' secrets + 6 templates in `lib.optionalAttrs config.services.X.enable (...)`. Session 128 proved one bad owner blocks ALL secrets. Now disabling any service won't cascade                                                                                                                                     |
+| 6 | **TODO_LIST.md rewrite**            | `e616de4b` | `TODO_LIST.md`                                            | 26 completed items, 23 active tasks. Was stale since session 122 (Jun 8)                                                                                                                                                                                                                                                          |
+| 7 | **FEATURES.md update**              | `e616de4b` | `FEATURES.md`                                             | 12 entries updated. Was stale since Jun 3 (8 days). Module count 36→39, DNS 8→13 subdomains                                                                                                                                                                                                                                       |
+| 8 | **Pocket ID SMTP via Resend**       | `ace83cc1` | `pocket-id.nix`, `sops.nix`                               | `SMTP_HOST=smtp.resend.com`, `SMTP_PORT=465`, `SMTP_FROM=noreply@cloud.larsartmann.com`. Secret `pocket_id_smtp_password` added to sops config                                                                                                                                                                                    |
 
 ### Sops Guard Coverage (Complete)
 
@@ -113,26 +113,26 @@ All 30+ services that were restored in the GPU crash recovery are still running:
 
 ## c) NOT STARTED 📋
 
-| #   | Item                                  | Priority | Blocker                                                          |
-| --- | ------------------------------------- | -------- | ---------------------------------------------------------------- |
-| 1   | **Monitor365 DB path fix**            | HIGH     | Investigate stateDir, add tmpfiles rule                          |
-| 2   | **aw-watcher-wayland startup race**   | MEDIUM   | Needs upstream HM module fix or override                         |
-| 3   | **Twenty CRM intermittent 502s**      | MEDIUM   | Run `docker logs twenty-server-1` on evo-x2                      |
-| 4   | **BTRFS `/data` subvolume migration** | HIGH     | `just snapshot-migrate-data` exists, requires downtime           |
-| 5   | **Add weekly Nix GC timer**           | HIGH     | Prevents root disk creep                                         |
-| 6   | **PostgreSQL collation fix**          | MEDIUM   | `ALTER DATABASE postgres REFRESH COLLATION VERSION` in Docker PG |
-| 7   | **Swap investigation**                | MEDIUM   | 8 GiB swap on 128 GiB RAM — run `smem` + `swapoff -a`            |
-| 8   | **Reboot to verify boot time**        | LOW      | NVMe APST fix + Caddy sops ordering need reboot to verify        |
-| 9   | **Archive old status reports**        | LOW      | 177 → ~30 files                                                  |
-| 10  | **Create ROADMAP.md**                 | LOW      | No single source of truth for direction                          |
-| 11  | **Create CHANGELOG.md**               | LOW      | 185 commits, no changelog                                        |
-| 12  | **Pi 3 DNS failover**                 | LOW      | Hardware required                                                |
-| 13  | **Auditd**                            | LOW      | Blocked: NixOS 26.05 bug #483085                                 |
-| 14  | **AppArmor**                          | LOW      | Commented out in security-hardening                              |
-| 15  | **Monitor365 agent→server auth**      | LOW      | No auth on LAN                                                   |
-| 16  | **Disabled service triage**           | LOW      | voice-agents, minecraft, photomap: enable or remove              |
-| 17  | **Darwin Home Manager parity**        | LOW      | Disk constraint                                                  |
-| 18  | **Split large modules**               | LOW      | monitor365 716L, signoz 705L, forgejo 583L                       |
+| #  | Item                                  | Priority | Blocker                                                          |
+| -- | ------------------------------------- | -------- | ---------------------------------------------------------------- |
+| 1  | **Monitor365 DB path fix**            | HIGH     | Investigate stateDir, add tmpfiles rule                          |
+| 2  | **aw-watcher-wayland startup race**   | MEDIUM   | Needs upstream HM module fix or override                         |
+| 3  | **Twenty CRM intermittent 502s**      | MEDIUM   | Run `docker logs twenty-server-1` on evo-x2                      |
+| 4  | **BTRFS `/data` subvolume migration** | HIGH     | `just snapshot-migrate-data` exists, requires downtime           |
+| 5  | **Add weekly Nix GC timer**           | HIGH     | Prevents root disk creep                                         |
+| 6  | **PostgreSQL collation fix**          | MEDIUM   | `ALTER DATABASE postgres REFRESH COLLATION VERSION` in Docker PG |
+| 7  | **Swap investigation**                | MEDIUM   | 8 GiB swap on 128 GiB RAM — run `smem` + `swapoff -a`            |
+| 8  | **Reboot to verify boot time**        | LOW      | NVMe APST fix + Caddy sops ordering need reboot to verify        |
+| 9  | **Archive old status reports**        | LOW      | 177 → ~30 files                                                  |
+| 10 | **Create ROADMAP.md**                 | LOW      | No single source of truth for direction                          |
+| 11 | **Create CHANGELOG.md**               | LOW      | 185 commits, no changelog                                        |
+| 12 | **Pi 3 DNS failover**                 | LOW      | Hardware required                                                |
+| 13 | **Auditd**                            | LOW      | Blocked: NixOS 26.05 bug #483085                                 |
+| 14 | **AppArmor**                          | LOW      | Commented out in security-hardening                              |
+| 15 | **Monitor365 agent→server auth**      | LOW      | No auth on LAN                                                   |
+| 16 | **Disabled service triage**           | LOW      | voice-agents, minecraft, photomap: enable or remove              |
+| 17 | **Darwin Home Manager parity**        | LOW      | Disk constraint                                                  |
+| 18 | **Split large modules**               | LOW      | monitor365 716L, signoz 705L, forgejo 583L                       |
 
 ---
 
@@ -204,58 +204,58 @@ All 30+ services that were restored in the GPU crash recovery are still running:
 
 ### Priority 0: Deploy & Verify
 
-| #   | Task                                                                     | Impact                                      | Effort |
-| --- | ------------------------------------------------------------------------ | ------------------------------------------- | ------ |
-| 1   | **Add Resend API key to sops** on evo-x2 (see manual step above)         | Unblocks Pocket ID email                    | 2 min  |
-| 2   | **`just switch`** — deploy all session 131 changes                       | Caddy boot fix, OTel fix, SMTP, sops guards | 5 min  |
-| 3   | **Reboot evo-x2** — verify boot time (~35s target) + Caddy sops ordering | Confirms 3 sessions of boot fixes           | 5 min  |
+| # | Task                                                                     | Impact                                      | Effort |
+| - | ------------------------------------------------------------------------ | ------------------------------------------- | ------ |
+| 1 | **Add Resend API key to sops** on evo-x2 (see manual step above)         | Unblocks Pocket ID email                    | 2 min  |
+| 2 | **`just switch`** — deploy all session 131 changes                       | Caddy boot fix, OTel fix, SMTP, sops guards | 5 min  |
+| 3 | **Reboot evo-x2** — verify boot time (~35s target) + Caddy sops ordering | Confirms 3 sessions of boot fixes           | 5 min  |
 
 ### Priority 1: Fix Broken Services
 
-| #   | Task                                                                               | Impact                        | Effort |
-| --- | ---------------------------------------------------------------------------------- | ----------------------------- | ------ |
-| 4   | **Fix Monitor365 DB path** — stateDir + tmpfiles rule                              | Monitoring dashboard restored | 20 min |
-| 5   | **Fix Twenty CRM 502s** — docker logs investigation                                | CRM stability                 | 30 min |
-| 6   | **PostgreSQL collation fix** — `ALTER DATABASE postgres REFRESH COLLATION VERSION` | Eliminates 15K log lines/day  | 5 min  |
-| 7   | **Audit Gatus health checks** — verify 6 DOWN endpoints                            | Reliable monitoring           | 30 min |
+| # | Task                                                                               | Impact                        | Effort |
+| - | ---------------------------------------------------------------------------------- | ----------------------------- | ------ |
+| 4 | **Fix Monitor365 DB path** — stateDir + tmpfiles rule                              | Monitoring dashboard restored | 20 min |
+| 5 | **Fix Twenty CRM 502s** — docker logs investigation                                | CRM stability                 | 30 min |
+| 6 | **PostgreSQL collation fix** — `ALTER DATABASE postgres REFRESH COLLATION VERSION` | Eliminates 15K log lines/day  | 5 min  |
+| 7 | **Audit Gatus health checks** — verify 6 DOWN endpoints                            | Reliable monitoring           | 30 min |
 
 ### Priority 2: High-Value Quick Wins
 
-| #   | Task                                                                          | Impact                     | Effort |
-| --- | ----------------------------------------------------------------------------- | -------------------------- | ------ |
-| 8   | **Add weekly Nix GC timer** — prevent root disk from refilling                | Long-term disk health      | 15 min |
-| 9   | **Swap investigation** — `smem -t -k \| tail -20` + `swapoff -a && swapon -a` | Memory efficiency          | 15 min |
-| 10  | **Wire Hermes OpenAI fallback** — add API key to sops                         | LLM gateway resilience     | 5 min  |
-| 11  | **Install Hermes SSH deploy key**                                             | Hermes can reach git repos | 5 min  |
+| #  | Task                                                                          | Impact                     | Effort |
+| -- | ----------------------------------------------------------------------------- | -------------------------- | ------ |
+| 8  | **Add weekly Nix GC timer** — prevent root disk from refilling                | Long-term disk health      | 15 min |
+| 9  | **Swap investigation** — `smem -t -k \| tail -20` + `swapoff -a && swapon -a` | Memory efficiency          | 15 min |
+| 10 | **Wire Hermes OpenAI fallback** — add API key to sops                         | LLM gateway resilience     | 5 min  |
+| 11 | **Install Hermes SSH deploy key**                                             | Hermes can reach git repos | 5 min  |
 
 ### Priority 3: Infrastructure
 
-| #   | Task                                                                         | Impact                                   | Effort          |
-| --- | ---------------------------------------------------------------------------- | ---------------------------------------- | --------------- |
-| 12  | **`/data` BTRFS subvolume migration**                                        | Snapshot protection for Docker/Immich/AI | 1 hr + downtime |
-| 13  | **Verify Pocket ID email sending** — test login notification or verification | Confirms SMTP end-to-end                 | 5 min           |
-| 14  | **Archive old status reports** — pre-session-100 to `docs/status/archive/`   | 177 → ~30 files                          | 10 min          |
-| 15  | **Create ROADMAP.md**                                                        | Single source of truth                   | 1 hr            |
+| #  | Task                                                                         | Impact                                   | Effort          |
+| -- | ---------------------------------------------------------------------------- | ---------------------------------------- | --------------- |
+| 12 | **`/data` BTRFS subvolume migration**                                        | Snapshot protection for Docker/Immich/AI | 1 hr + downtime |
+| 13 | **Verify Pocket ID email sending** — test login notification or verification | Confirms SMTP end-to-end                 | 5 min           |
+| 14 | **Archive old status reports** — pre-session-100 to `docs/status/archive/`   | 177 → ~30 files                          | 10 min          |
+| 15 | **Create ROADMAP.md**                                                        | Single source of truth                   | 1 hr            |
 
 ### Priority 4: Service Maturity
 
-| #   | Task                                                                     | Impact                 | Effort |
-| --- | ------------------------------------------------------------------------ | ---------------------- | ------ |
-| 16  | **DiscordSync upstream issue** — INSERT OR IGNORE for UNIQUE constraints | Reduces backfill noise | 10 min |
-| 17  | **Monitor365 agent→server auth** — API key or mTLS                       | Security               | 30 min |
-| 18  | **Create Deer Flow NixOS module** — proper service with options          | Consistency            | 45 min |
-| 19  | **Disabled service triage** — voice-agents, minecraft, photomap: decide  | Reduce dead code       | 30 min |
-| 20  | **Dozzle proper module** — investigate eval failure                      | Clean architecture     | 30 min |
+| #  | Task                                                                     | Impact                 | Effort |
+| -- | ------------------------------------------------------------------------ | ---------------------- | ------ |
+| 16 | **DiscordSync upstream issue** — INSERT OR IGNORE for UNIQUE constraints | Reduces backfill noise | 10 min |
+| 17 | **Monitor365 agent→server auth** — API key or mTLS                       | Security               | 30 min |
+| 18 | **Create Deer Flow NixOS module** — proper service with options          | Consistency            | 45 min |
+| 19 | **Disabled service triage** — voice-agents, minecraft, photomap: decide  | Reduce dead code       | 30 min |
+| 20 | **Dozzle proper module** — investigate eval failure                      | Clean architecture     | 30 min |
 
 ### Priority 5: Long-Term
 
-| #   | Task                                                                  | Impact                    | Effort |
-| --- | --------------------------------------------------------------------- | ------------------------- | ------ |
-| 21  | **Split large modules** — monitor365 716L, signoz 705L, forgejo 583L  | Maintainability           | 3 hr   |
-| 22  | **Pi 3 DNS failover** — hardware provisioning                         | Network resilience        | 4 hr   |
-| 23  | **Darwin Home Manager parity**                                        | Consistent cross-platform | 2 hr   |
-| 24  | **Auditd + AppArmor** — when NixOS bugs fixed                         | Security hardening        | 2 hr   |
-| 25  | **DNS ↔ Caddy single source of truth** — derive DNS from vhost config | Eliminate sync risk       | 1 hr   |
+| #  | Task                                                                  | Impact                    | Effort |
+| -- | --------------------------------------------------------------------- | ------------------------- | ------ |
+| 21 | **Split large modules** — monitor365 716L, signoz 705L, forgejo 583L  | Maintainability           | 3 hr   |
+| 22 | **Pi 3 DNS failover** — hardware provisioning                         | Network resilience        | 4 hr   |
+| 23 | **Darwin Home Manager parity**                                        | Consistent cross-platform | 2 hr   |
+| 24 | **Auditd + AppArmor** — when NixOS bugs fixed                         | Security hardening        | 2 hr   |
+| 25 | **DNS ↔ Caddy single source of truth** — derive DNS from vhost config | Eliminate sync risk       | 1 hr   |
 
 ---
 

@@ -8,18 +8,18 @@
 
 ## a) FULLY DONE ✅
 
-| #   | What                                       | Commit                                  | Impact                                                                                                                                                                                |
-| --- | ------------------------------------------ | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Helium "RESTORE TABS" root cause & fix** | session 38                              | Added `--restore-last-session --disable-session-crashed-bubble` to wrapper. Chromium `exit_type=Crashed` was caused by SIGTERM without clean JS shutdown.                             |
-| 2   | **niri-session-manager TOML — expanded**   | `467cabe`                               | 3→11 app IDs. Added Slack, discord, vesktop, telegramdesktop, Spotify, spotify, keepassxc. Added app_mappings for signal→signal-desktop, telegramdesktop→telegram-desktop, keepassxc. |
-| 3   | **rofi-calc + rofi-emoji plugins**         | `8791d6f`                               | `Mod+Shift+C` (calc) and `Mod+period` (emoji) keybindings were silently broken. Now using `pkgs.rofi.override { plugins = [rofi-calc rofi-emoji]; }`.                                 |
-| 4   | **waybar hwmon hardcode fix**              | `e1945b1`                               | `hwmon-path = "/sys/class/hwmon/hwmon2/temp1_input"` → `thermal-zone = 0`. Eliminates fragile hwmon2 index dependency.                                                                |
-| 5   | **file-and-image-renamer Go fix**          | `d266da4` (file-and-image-renamer repo) | Added `loadSecretFromEnv()` to support `ZAI_API_KEY_FILE` env var. Go app now reads API key from file, matching what NixOS module expected.                                           |
-| 6   | **file-and-image-renamer key file**        | `5ddc3e0` (this repo)                   | Created `~/.zai_api_key` with the API key. Reverted sops wiring (sops needs root-owned SSH host key, inaccessible from user context). Module now uses plaintext file path.            |
-| 7   | **watchdogd parse error**                  | `a106332` (session 38)                  | Removed broken `device` key. SP5100 TCO timer was silently non-functional since first configured.                                                                                     |
-| 8   | **Manifest healthcheck URL**               | `a106332` (session 38)                  | `$${p}` → `:$${p}` in Docker compose healthcheck. Was always reporting unhealthy.                                                                                                     |
-| 9   | **Manifest sops dedup**                    | `a106332` (session 38)                  | Removed duplicate secrets from sops.nix, added missing sopsFile to manifest.nix.                                                                                                      |
-| 10  | **DNS blocklist automation**               | `28cbfef` (session 38)                  | `scripts/dns-update.sh` + `just dns-update` for reproducible blocklist pinning.                                                                                                       |
+| #  | What                                       | Commit                                  | Impact                                                                                                                                                                                |
+| -- | ------------------------------------------ | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | **Helium "RESTORE TABS" root cause & fix** | session 38                              | Added `--restore-last-session --disable-session-crashed-bubble` to wrapper. Chromium `exit_type=Crashed` was caused by SIGTERM without clean JS shutdown.                             |
+| 2  | **niri-session-manager TOML — expanded**   | `467cabe`                               | 3→11 app IDs. Added Slack, discord, vesktop, telegramdesktop, Spotify, spotify, keepassxc. Added app_mappings for signal→signal-desktop, telegramdesktop→telegram-desktop, keepassxc. |
+| 3  | **rofi-calc + rofi-emoji plugins**         | `8791d6f`                               | `Mod+Shift+C` (calc) and `Mod+period` (emoji) keybindings were silently broken. Now using `pkgs.rofi.override { plugins = [rofi-calc rofi-emoji]; }`.                                 |
+| 4  | **waybar hwmon hardcode fix**              | `e1945b1`                               | `hwmon-path = "/sys/class/hwmon/hwmon2/temp1_input"` → `thermal-zone = 0`. Eliminates fragile hwmon2 index dependency.                                                                |
+| 5  | **file-and-image-renamer Go fix**          | `d266da4` (file-and-image-renamer repo) | Added `loadSecretFromEnv()` to support `ZAI_API_KEY_FILE` env var. Go app now reads API key from file, matching what NixOS module expected.                                           |
+| 6  | **file-and-image-renamer key file**        | `5ddc3e0` (this repo)                   | Created `~/.zai_api_key` with the API key. Reverted sops wiring (sops needs root-owned SSH host key, inaccessible from user context). Module now uses plaintext file path.            |
+| 7  | **watchdogd parse error**                  | `a106332` (session 38)                  | Removed broken `device` key. SP5100 TCO timer was silently non-functional since first configured.                                                                                     |
+| 8  | **Manifest healthcheck URL**               | `a106332` (session 38)                  | `$${p}` → `:$${p}` in Docker compose healthcheck. Was always reporting unhealthy.                                                                                                     |
+| 9  | **Manifest sops dedup**                    | `a106332` (session 38)                  | Removed duplicate secrets from sops.nix, added missing sopsFile to manifest.nix.                                                                                                      |
+| 10 | **DNS blocklist automation**               | `28cbfef` (session 38)                  | `scripts/dns-update.sh` + `just dns-update` for reproducible blocklist pinning.                                                                                                       |
 
 ---
 
@@ -36,23 +36,23 @@
 
 ## c) NOT STARTED 📋
 
-| #   | Item                                       | Priority   | Effort |
-| --- | ------------------------------------------ | ---------- | ------ |
-| 1   | **Clean 81GB go-build cache**              | 🔴 P0      | 1 min  |
-| 2   | **Fix blueman-applet ExecStart conflict**  | 🟡 P1      | 10 min |
-| 3   | **Adopt serviceDefaults in 10 services**   | 🟡 Quality | 45 min |
-| 4   | **Extract hardcoded ports (5 services)**   | 🟡 Quality | 1 hr   |
-| 5   | **Pi 3 DNS failover — hardware provision** | Planned    | 4 hrs  |
-| 6   | **PhotoMap AI — update SHA, re-enable**    | Medium     | 15 min |
-| 7   | **Twenty CRM — verify deployment status**  | Medium     | 15 min |
-| 8   | **Voice agents — verify**                  | Medium     | 30 min |
-| 9   | **watchdogd nixpkgs PR**                   | P1         | 2 hrs  |
-| 10  | **Create missing justfile scripts**        | Low        | 1 hr   |
-| 11  | **Auditd NixOS 26.05 bug #483085**         | Medium     | 1 hr   |
-| 12  | **Re-enable AppArmor**                     | Medium     | 30 min |
-| 13  | **Update FEATURES.md**                     | Low        | 30 min |
-| 14  | **Remove yazi.nix dead config**            | Low        | 5 min  |
-| 15  | **Consolidate 30+ planning docs**          | Low        | 30 min |
+| #  | Item                                       | Priority   | Effort |
+| -- | ------------------------------------------ | ---------- | ------ |
+| 1  | **Clean 81GB go-build cache**              | 🔴 P0      | 1 min  |
+| 2  | **Fix blueman-applet ExecStart conflict**  | 🟡 P1      | 10 min |
+| 3  | **Adopt serviceDefaults in 10 services**   | 🟡 Quality | 45 min |
+| 4  | **Extract hardcoded ports (5 services)**   | 🟡 Quality | 1 hr   |
+| 5  | **Pi 3 DNS failover — hardware provision** | Planned    | 4 hrs  |
+| 6  | **PhotoMap AI — update SHA, re-enable**    | Medium     | 15 min |
+| 7  | **Twenty CRM — verify deployment status**  | Medium     | 15 min |
+| 8  | **Voice agents — verify**                  | Medium     | 30 min |
+| 9  | **watchdogd nixpkgs PR**                   | P1         | 2 hrs  |
+| 10 | **Create missing justfile scripts**        | Low        | 1 hr   |
+| 11 | **Auditd NixOS 26.05 bug #483085**         | Medium     | 1 hr   |
+| 12 | **Re-enable AppArmor**                     | Medium     | 30 min |
+| 13 | **Update FEATURES.md**                     | Low        | 30 min |
+| 14 | **Remove yazi.nix dead config**            | Low        | 5 min  |
+| 15 | **Consolidate 30+ planning docs**          | Low        | 30 min |
 
 ---
 
@@ -94,33 +94,33 @@
 
 ## f) Top 25 Things to Do Next (sorted by impact/effort)
 
-| #   | Task                                               | Impact         | Effort |
-| --- | -------------------------------------------------- | -------------- | ------ |
-| 1   | `rm -rf ~/.cache/go-build/` (free 81GB)            | 🔴 Disk        | 1 min  |
-| 2   | Update file-and-image-renamer flake input + deploy | 🔴 Broken      | 5 min  |
-| 3   | Verify file-and-image-renamer service after deploy | 🔴 Verify      | 5 min  |
-| 4   | Fix blueman-applet duplicate ExecStart             | 🟡 Broken      | 10 min |
-| 5   | Add go-build cache GC to home-manager              | 🔴 Disk        | 15 min |
-| 6   | Remove yazi.nix dead config (empty plugin arrays)  | 🟢 Cleanup     | 5 min  |
-| 7   | Update PhotoMap AI SHA and re-enable               | 🟢 Feature     | 15 min |
-| 8   | Extract gitea hardcoded port (3000)                | 🟡 Quality     | 15 min |
-| 9   | Extract voice-agents hardcoded ports               | 🟡 Quality     | 15 min |
-| 10  | Extract ai-stack hardcoded ports                   | 🟡 Quality     | 15 min |
-| 11  | Extract signoz scrape port hardcodes               | 🟡 Quality     | 20 min |
-| 12  | Adopt serviceDefaults in remaining 10 services     | 🟡 Quality     | 45 min |
-| 13  | Verify Twenty CRM deployment                       | 🟢 Feature     | 15 min |
-| 14  | Verify voice agents (LiveKit + Whisper)            | 🟢 Feature     | 30 min |
-| 15  | Migrate file-renamer key to sops (manual)          | 🟡 Security    | 10 min |
-| 16  | Patch niri-session-manager save-interval           | 🟢 Quality     | 10 min |
-| 17  | Update FEATURES.md                                 | 🟢 Docs        | 30 min |
-| 18  | Create missing justfile scripts                    | 🟢 Polish      | 1 hr   |
-| 19  | Submit watchdogd nixpkgs PR                        | 🟡 Upstream    | 2 hrs  |
-| 20  | Investigate auditd NixOS 26.05 bug                 | 🟡 Security    | 1 hr   |
-| 21  | Re-enable AppArmor                                 | 🟡 Security    | 30 min |
-| 22  | Investigate D-Bus duplicate service names          | 🟢 Quality     | 1 hr   |
-| 23  | Consolidate docs/planning/ (30+ files)             | 🟢 Cleanup     | 30 min |
-| 24  | Update AGENTS.md with session 39+40 changes        | 🟢 Docs        | 15 min |
-| 25  | Provision Pi 3 for DNS failover cluster            | 🔴 Reliability | 4 hrs  |
+| #  | Task                                               | Impact         | Effort |
+| -- | -------------------------------------------------- | -------------- | ------ |
+| 1  | `rm -rf ~/.cache/go-build/` (free 81GB)            | 🔴 Disk        | 1 min  |
+| 2  | Update file-and-image-renamer flake input + deploy | 🔴 Broken      | 5 min  |
+| 3  | Verify file-and-image-renamer service after deploy | 🔴 Verify      | 5 min  |
+| 4  | Fix blueman-applet duplicate ExecStart             | 🟡 Broken      | 10 min |
+| 5  | Add go-build cache GC to home-manager              | 🔴 Disk        | 15 min |
+| 6  | Remove yazi.nix dead config (empty plugin arrays)  | 🟢 Cleanup     | 5 min  |
+| 7  | Update PhotoMap AI SHA and re-enable               | 🟢 Feature     | 15 min |
+| 8  | Extract gitea hardcoded port (3000)                | 🟡 Quality     | 15 min |
+| 9  | Extract voice-agents hardcoded ports               | 🟡 Quality     | 15 min |
+| 10 | Extract ai-stack hardcoded ports                   | 🟡 Quality     | 15 min |
+| 11 | Extract signoz scrape port hardcodes               | 🟡 Quality     | 20 min |
+| 12 | Adopt serviceDefaults in remaining 10 services     | 🟡 Quality     | 45 min |
+| 13 | Verify Twenty CRM deployment                       | 🟢 Feature     | 15 min |
+| 14 | Verify voice agents (LiveKit + Whisper)            | 🟢 Feature     | 30 min |
+| 15 | Migrate file-renamer key to sops (manual)          | 🟡 Security    | 10 min |
+| 16 | Patch niri-session-manager save-interval           | 🟢 Quality     | 10 min |
+| 17 | Update FEATURES.md                                 | 🟢 Docs        | 30 min |
+| 18 | Create missing justfile scripts                    | 🟢 Polish      | 1 hr   |
+| 19 | Submit watchdogd nixpkgs PR                        | 🟡 Upstream    | 2 hrs  |
+| 20 | Investigate auditd NixOS 26.05 bug                 | 🟡 Security    | 1 hr   |
+| 21 | Re-enable AppArmor                                 | 🟡 Security    | 30 min |
+| 22 | Investigate D-Bus duplicate service names          | 🟢 Quality     | 1 hr   |
+| 23 | Consolidate docs/planning/ (30+ files)             | 🟢 Cleanup     | 30 min |
+| 24 | Update AGENTS.md with session 39+40 changes        | 🟢 Docs        | 15 min |
+| 25 | Provision Pi 3 for DNS failover cluster            | 🔴 Reliability | 4 hrs  |
 
 ---
 

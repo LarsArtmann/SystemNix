@@ -8,7 +8,6 @@
 
 ---
 
-
 ## TL;DR
 
 **ALL 113 GitHub repos are now mirrored in Forgejo. 0 failures. End-to-end verified.** The orphan-dir fix worked exactly as designed on first run at 07:02. My honest error reporting surfaced a **new** pre-existing bug: HTTP 400 on every push-mirror setup (silently swallowed before my fix). This bug remains unfixed.
@@ -114,7 +113,7 @@ The HTTP 400 warning will print 113 times every 6 hours forever. That's 452 log 
 
 ### e.5 — The migrate API is async; my "✓ Created" may lie
 
-Forgejo's `/repos/migrate` returns 201 immediately and clones in the background. My HTTP 201 check confirms the repo was *registered*, not that it *cloned successfully*. A repo could be created empty and fail to clone. The sync should verify `mirror_updated` is recent on a follow-up run, or query repo size > 0.
+Forgejo's `/repos/migrate` returns 201 immediately and clones in the background. My HTTP 201 check confirms the repo was _registered_, not that it _cloned successfully_. A repo could be created empty and fail to clone. The sync should verify `mirror_updated` is recent on a follow-up run, or query repo size > 0.
 
 ### e.6 — The `forgejo-mirror-starred` script has the same bugs
 
@@ -133,12 +132,14 @@ The URL is `https://$GITHUB_USER:$TOKEN@github.com/$GITHUB_USER/$name.git`. GitH
 ## f) Up to 50 things to do next (ranked by impact)
 
 ### Priority 0 — Finish this work
+
 1. **Remove the push-mirror code block** from both `forgejo.nix` and `forgejo-repos.nix` (broken-by-design, never worked, log noise)
 2. **OR get the HTTP 400 error body** and fix push mirrors if they're actually wanted
 3. **Verify `forgejo-ensure-repos.service`** works for `dnsblockd` + `BuildFlow` (same fix applied, unverified)
 4. **Commit the push-mirror removal** (or fix) and redeploy
 
 ### Priority 1 — Correctness
+
 5. **Fix `forgejo-mirror-starred`** — same `curl &&` + push-mirror bugs
 6. **Add async-clone verification** — after migrate, check `mirror_updated` is recent on next run
 7. **Delete orphaned `forgejo_token:`** from `secrets.yaml`
@@ -147,6 +148,7 @@ The URL is `https://$GITHUB_USER:$TOKEN@github.com/$GITHUB_USER/$name.git`. GitH
 10. **Document Forgejo API `limit` cap (50)** in AGENTS.md
 
 ### Priority 2 — Testing / Observability
+
 11. **Write NixOS VM test** for Forgejo sync (mock GitHub, assert repo count)
 12. **Add Gatus check** for Forgejo mirror freshness (alert if `mirror_updated` > 24h)
 13. **Add Gatus check** for Forgejo repo count (alert if < 100, detects silent mirror loss)
@@ -154,6 +156,7 @@ The URL is `https://$GITHUB_USER:$TOKEN@github.com/$GITHUB_USER/$name.git`. GitH
 15. **Add Prometheus metric** for Forgejo repo count
 
 ### Priority 3 — Disk / System Health
+
 16. **Grow BTRFS partition** — device-unallocated was 1 MiB, still critical
 17. **Add device-unallocated < 5% check** to pre-deploy-check (FAIL not WARN)
 18. **Set up periodic `go clean -cache`** timer (the 69 GB cache will regrow)
@@ -161,6 +164,7 @@ The URL is `https://$GITHUB_USER:$TOKEN@github.com/$GITHUB_USER/$name.git`. GitH
 20. **Audit all oneshot services** for exit-0-on-failure patterns
 
 ### Priority 4 — Cleanup
+
 21. **Decide on 641 files of formatter damage** (revert / commit / ignore)
 22. **Consolidate `forgejo.nix` + `forgejo-repos.nix`** — 80% duplicated migrate logic
 23. **Write Forgejo sync runbook** (`docs/runbooks/forgejo-sync.md`)
@@ -168,6 +172,7 @@ The URL is `https://$GITHUB_USER:$TOKEN@github.com/$GITHUB_USER/$name.git`. GitH
 25. **Add `restartTriggers`** to sync services referencing script package
 
 ### Priority 5 — Hardening
+
 26. **Handle GitHub pagination edge case** (exactly N×100 repos)
 27. **Add rate-limit awareness** to GitHub API calls
 28. **Pin Forgejo API version** in scripts
@@ -180,6 +185,7 @@ The URL is `https://$GITHUB_USER:$TOKEN@github.com/$GITHUB_USER/$name.git`. GitH
 35. **Document `uid: 1` hardcode** fragility
 
 ### Priority 6 — Strategic
+
 36. **Evaluate Forgejo Actions runner** — is it used? Remove if not
 37. **Evaluate native Forgejo mirroring** (UI/config) vs API script
 38. **Document Forgejo recovery procedure** (config isn't mirrored)

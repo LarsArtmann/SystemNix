@@ -6,7 +6,6 @@
 
 ---
 
-
 ## The inciting problem
 
 **The repo was committed in a non-evaluating state.** Between the prior session (22:02) and this session (22:45), the PMA auto-commit daemon ran `nix flake update`, rewrote the nixpkgs node to tarball type (`3497aa5c9457` via `channels.nixos.org`), and committed it as `bc44085b`. The eval-time `nixpkgsTarballGuard` correctly fired, meaning **`nix flake check`, `nix eval`, `nix build`, and `nix run .#deploy` were all broken on master**. This is the 4th+ occurrence of this regression across sessions.
@@ -15,50 +14,50 @@
 
 ## a) FULLY DONE
 
-| # | Item | Detail |
-|---|------|--------|
-| 1 | **Broken lockfile restored** | `flake.lock` nixpkgs node rewritten from tarball to github type at same rev (`3497aa5c9457`). `nix flake check --no-build` passes again. Committed as `ad6f3f79` (daemon) + `78a0ed31` (my consolidation). |
-| 2 | **`scripts/fix-nixpkgs-lock.sh` created** | One-command recovery. Uses `nix flake prefetch` (immune to registry interception — `--override-input` and `--no-use-registries` both fail to prevent the rewrite). Two modes: default (pin current rev, no cascade) and `--latest` (newest nixos-unstable). Tested break→fix→verify in pin-current mode. |
-| 3 | **Flake app wired** | `nix run .#fix-nixpkgs-lock` registered in `flake.nix:672-676` via `mkApp`. Verified in `nix flake show` output. |
-| 4 | **`flake-update.yml` CI hardened** | Was running `nix flake update --commit-lock-file` (the EXACT command that causes the regression). Now runs `nix flake update` → `bash scripts/fix-nixpkgs-lock.sh --latest` → `nix flake check --no-build` → manual commit → PR. The normalization happens BEFORE commit, so PRs will always have github-type nixpkgs. |
-| 5 | **`service-health-check` de-junked** | Removed 3 retired services that produced permanent false-negatives: `unbound` (replaced by dnsblockd), `waybar` (replaced by DMS), `awww-daemon` (retired, DMS owns wallpapers). Bash syntax verified. |
-| 6 | **AGENTS.md gotcha upgraded** | Expanded the tarball regression entry from a 1-liner to a full paragraph: recurring nature, daemon-bypass, `nix run .#fix-nixpkgs-lock` recovery command, 4-layer defense inventory. |
-| 7 | **All changes committed** | Daemon auto-committed as `bc44085b` + `ad6f3f79`; my consolidation as `78a0ed31`. Working tree clean. `nix flake check --no-build` passes on HEAD. |
+| # | Item                                      | Detail                                                                                                                                                                                                                                                                                                                 |
+| - | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Broken lockfile restored**              | `flake.lock` nixpkgs node rewritten from tarball to github type at same rev (`3497aa5c9457`). `nix flake check --no-build` passes again. Committed as `ad6f3f79` (daemon) + `78a0ed31` (my consolidation).                                                                                                             |
+| 2 | **`scripts/fix-nixpkgs-lock.sh` created** | One-command recovery. Uses `nix flake prefetch` (immune to registry interception — `--override-input` and `--no-use-registries` both fail to prevent the rewrite). Two modes: default (pin current rev, no cascade) and `--latest` (newest nixos-unstable). Tested break→fix→verify in pin-current mode.               |
+| 3 | **Flake app wired**                       | `nix run .#fix-nixpkgs-lock` registered in `flake.nix:672-676` via `mkApp`. Verified in `nix flake show` output.                                                                                                                                                                                                       |
+| 4 | **`flake-update.yml` CI hardened**        | Was running `nix flake update --commit-lock-file` (the EXACT command that causes the regression). Now runs `nix flake update` → `bash scripts/fix-nixpkgs-lock.sh --latest` → `nix flake check --no-build` → manual commit → PR. The normalization happens BEFORE commit, so PRs will always have github-type nixpkgs. |
+| 5 | **`service-health-check` de-junked**      | Removed 3 retired services that produced permanent false-negatives: `unbound` (replaced by dnsblockd), `waybar` (replaced by DMS), `awww-daemon` (retired, DMS owns wallpapers). Bash syntax verified.                                                                                                                 |
+| 6 | **AGENTS.md gotcha upgraded**             | Expanded the tarball regression entry from a 1-liner to a full paragraph: recurring nature, daemon-bypass, `nix run .#fix-nixpkgs-lock` recovery command, 4-layer defense inventory.                                                                                                                                   |
+| 7 | **All changes committed**                 | Daemon auto-committed as `bc44085b` + `ad6f3f79`; my consolidation as `78a0ed31`. Working tree clean. `nix flake check --no-build` passes on HEAD.                                                                                                                                                                     |
 
 ---
 
 ## b) PARTIALLY DONE
 
-| # | Item | What's done | What's missing |
-|---|------|-------------|----------------|
-| 1 | **Defense-in-depth (4 layers)** | Eval guard (flake.nix:519), pre-commit hook (.githooks/pre-commit), CI normalization (flake-update.yml), recovery script (fix-nixpkgs-lock.sh) | The NixOS registry override (configuration.nix:42) is committed but NOT active until reboot. Darwin override committed but NOT deployed. |
-| 2 | **Health-check audit** | Removed 3 retired services (unbound, waybar, awww-daemon) | Did NOT add missing active services (see section d below) |
-| 3 | **`fix-nixpkgs-lock.sh` testing** | Pin-current mode: full break→fix→verify cycle, output diffed against known-good backup (identical) | `--latest` mode: **NEVER TESTED** — and it's the mode CI uses |
+| # | Item                              | What's done                                                                                                                                    | What's missing                                                                                                                           |
+| - | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Defense-in-depth (4 layers)**   | Eval guard (flake.nix:519), pre-commit hook (.githooks/pre-commit), CI normalization (flake-update.yml), recovery script (fix-nixpkgs-lock.sh) | The NixOS registry override (configuration.nix:42) is committed but NOT active until reboot. Darwin override committed but NOT deployed. |
+| 2 | **Health-check audit**            | Removed 3 retired services (unbound, waybar, awww-daemon)                                                                                      | Did NOT add missing active services (see section d below)                                                                                |
+| 3 | **`fix-nixpkgs-lock.sh` testing** | Pin-current mode: full break→fix→verify cycle, output diffed against known-good backup (identical)                                             | `--latest` mode: **NEVER TESTED** — and it's the mode CI uses                                                                            |
 
 ---
 
 ## c) NOT STARTED
 
-| # | Item | Why it matters |
-|---|------|----------------|
-| 1 | **Test `--latest` mode** | CI's `flake-update.yml` calls `bash scripts/fix-nixpkgs-lock.sh --latest`. This code path has never been executed. If `nix flake prefetch github:NixOS/nixpkgs/nixos-unstable` behaves differently than `...github:NixOS/nixpkgs/<rev>`, CI will fail silently. |
-| 2 | **Add missing services to health-check** | 4 active services are NOT monitored by the desktop health-check notification: `discordsync`, `searxng` (service name `searx`), `qmd-mcp`, `emeet-pixyd`. These run as user/system services but failures won't trigger the desktop notification. (Note: Gatus monitors HTTP endpoints separately, but systemd-state failures are only caught by this script.) |
-| 3 | **PMA daemon root cause** | The daemon runs `nix flake update` and commits the result, bypassing pre-commit hooks. It re-introduced the regression between sessions. The daemon config is NOT in this repo (couldn't locate it). Until the daemon is modified to normalize the lockfile before committing, the regression WILL recur. |
-| 4 | **Verify re-lock step doesn't re-tarball** | The script runs `nix flake lock --no-use-registries` at the end to re-lock dependents. Since the nixpkgs node is already github-typed, this *should* be safe — but `--no-use-registries` was proven unreliable earlier. If any dependent input re-resolves nixpkgs through the registry, it could re-introduce the tarball. UNTESTED. |
-| 5 | **Reboot evo-x2** | The registry override and hyprland purge from the prior session are in the boot profile but not active. |
-| 6 | **Deploy to macOS** | Darwin registry override (`platforms/darwin/nix/settings.nix`) is committed but not deployed. |
-| 7 | **Upstream BuildFlow CI failures** | 4 repos have failing BuildFlow pre-commit steps on push (emeet-pixyd, mr-sync, md-go-validator, branching-flow). Not addressed this session. |
+| # | Item                                       | Why it matters                                                                                                                                                                                                                                                                                                                                               |
+| - | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1 | **Test `--latest` mode**                   | CI's `flake-update.yml` calls `bash scripts/fix-nixpkgs-lock.sh --latest`. This code path has never been executed. If `nix flake prefetch github:NixOS/nixpkgs/nixos-unstable` behaves differently than `...github:NixOS/nixpkgs/<rev>`, CI will fail silently.                                                                                              |
+| 2 | **Add missing services to health-check**   | 4 active services are NOT monitored by the desktop health-check notification: `discordsync`, `searxng` (service name `searx`), `qmd-mcp`, `emeet-pixyd`. These run as user/system services but failures won't trigger the desktop notification. (Note: Gatus monitors HTTP endpoints separately, but systemd-state failures are only caught by this script.) |
+| 3 | **PMA daemon root cause**                  | The daemon runs `nix flake update` and commits the result, bypassing pre-commit hooks. It re-introduced the regression between sessions. The daemon config is NOT in this repo (couldn't locate it). Until the daemon is modified to normalize the lockfile before committing, the regression WILL recur.                                                    |
+| 4 | **Verify re-lock step doesn't re-tarball** | The script runs `nix flake lock --no-use-registries` at the end to re-lock dependents. Since the nixpkgs node is already github-typed, this _should_ be safe — but `--no-use-registries` was proven unreliable earlier. If any dependent input re-resolves nixpkgs through the registry, it could re-introduce the tarball. UNTESTED.                        |
+| 5 | **Reboot evo-x2**                          | The registry override and hyprland purge from the prior session are in the boot profile but not active.                                                                                                                                                                                                                                                      |
+| 6 | **Deploy to macOS**                        | Darwin registry override (`platforms/darwin/nix/settings.nix`) is committed but not deployed.                                                                                                                                                                                                                                                                |
+| 7 | **Upstream BuildFlow CI failures**         | 4 repos have failing BuildFlow pre-commit steps on push (emeet-pixyd, mr-sync, md-go-validator, branching-flow). Not addressed this session.                                                                                                                                                                                                                 |
 
 ---
 
 ## d) TOTALLY FUCKED UP
 
-| # | What went wrong | Impact | Root cause |
-|---|----------------|--------|------------|
-| 1 | **Repo committed BROKEN on master** | `nix flake check`, `nix eval`, `nix build`, `nix run .#deploy` ALL failed on HEAD between ~22:07 and ~22:45. Anyone pulling or CI running would get broken eval. | PMA daemon ran `nix flake update` after the prior session, rewrote nixpkgs to tarball, committed it. The eval-time guard catches this at eval time but the daemon doesn't run eval before committing. |
-| 2 | **`--latest` mode shipped UNTESTED to CI** | The `flake-update.yml` workflow I wrote calls `bash scripts/fix-nixpkgs-lock.sh --latest`, a code path I never executed. If it fails, the weekly automated PR will be broken. | I tested pin-current mode thoroughly but ran out of time / didn't prioritize testing the mode that CI actually uses. |
-| 3 | **Health-check removals done, additions skipped** | I removed 3 retired services but left 4 active services unmonitored. The script is now "less wrong" but still wrong. | I scoped only to "remove dead references" and didn't audit for missing additions until writing this report. |
-| 4 | **Script re-lock step is potentially dangerous** | `nix flake lock --no-use-registries` at the end of the script could re-tarball if any dependent re-resolves nixpkgs. | I added it for dependent consistency but didn't verify it's safe. It may need to be removed or made conditional. |
+| # | What went wrong                                   | Impact                                                                                                                                                                        | Root cause                                                                                                                                                                                            |
+| - | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Repo committed BROKEN on master**               | `nix flake check`, `nix eval`, `nix build`, `nix run .#deploy` ALL failed on HEAD between ~22:07 and ~22:45. Anyone pulling or CI running would get broken eval.              | PMA daemon ran `nix flake update` after the prior session, rewrote nixpkgs to tarball, committed it. The eval-time guard catches this at eval time but the daemon doesn't run eval before committing. |
+| 2 | **`--latest` mode shipped UNTESTED to CI**        | The `flake-update.yml` workflow I wrote calls `bash scripts/fix-nixpkgs-lock.sh --latest`, a code path I never executed. If it fails, the weekly automated PR will be broken. | I tested pin-current mode thoroughly but ran out of time / didn't prioritize testing the mode that CI actually uses.                                                                                  |
+| 3 | **Health-check removals done, additions skipped** | I removed 3 retired services but left 4 active services unmonitored. The script is now "less wrong" but still wrong.                                                          | I scoped only to "remove dead references" and didn't audit for missing additions until writing this report.                                                                                           |
+| 4 | **Script re-lock step is potentially dangerous**  | `nix flake lock --no-use-registries` at the end of the script could re-tarball if any dependent re-resolves nixpkgs.                                                          | I added it for dependent consistency but didn't verify it's safe. It may need to be removed or made conditional.                                                                                      |
 
 ---
 
@@ -161,6 +160,7 @@
 ### Q1: Where is the PMA auto-commit daemon configured?
 
 The daemon runs `nix flake update` + `git commit` automatically and bypasses pre-commit hooks. It re-introduced the tarball regression between sessions. I searched this repo but found no daemon config, systemd timer, or script. Is it:
+
 - (a) An external script/cron on evo-x2?
 - (b) A Crush hook or MCP tool?
 - (c) A GitHub Action I missed?
@@ -171,6 +171,7 @@ The daemon runs `nix flake update` + `git commit` automatically and bypasses pre
 ### Q2: Should health-check be hand-maintained or auto-generated?
 
 I removed 3 retired services but found 4 missing active ones. Hand-maintaining this list guarantees drift. Options:
+
 - (a) Generate from `systemctl list-units --type=service --state=active` at runtime (dynamic but includes noise)
 - (b) Generate from Nix config at build time (declarative but complex)
 - (c) Keep hand-maintained but add a CI test that compares against enabled services
@@ -190,14 +191,14 @@ The daemon commits directly to master, bypassing CI. If master had branch protec
 
 ### Defense-in-depth layers (tarball regression)
 
-| Layer | Location | Active? | Catches |
-|-------|----------|---------|---------|
-| Eval guard | `flake.nix:519-534` | YES (committed) | `nix flake check`, `nix eval`, `nix build` at eval time |
-| Pre-commit hook | `.githooks/pre-commit:23-34` | YES (committed) | Local commits (not daemon — daemon bypasses hooks) |
-| CI normalization | `.github/workflows/flake-update.yml` | YES (committed) | Automated weekly PR (runs script after update) |
-| Recovery script | `scripts/fix-nixpkgs-lock.sh` | YES (committed) | Manual one-command recovery (`nix run .#fix-nixpkgs-lock`) |
-| NixOS registry override | `configuration.nix:42-49` | NO (needs reboot) | Prevents `nix flake update` from rewriting to tarball at all |
-| Darwin registry override | `platforms/darwin/nix/settings.nix:14-25` | NO (needs deploy) | Same, for macOS |
+| Layer                    | Location                                  | Active?           | Catches                                                      |
+| ------------------------ | ----------------------------------------- | ----------------- | ------------------------------------------------------------ |
+| Eval guard               | `flake.nix:519-534`                       | YES (committed)   | `nix flake check`, `nix eval`, `nix build` at eval time      |
+| Pre-commit hook          | `.githooks/pre-commit:23-34`              | YES (committed)   | Local commits (not daemon — daemon bypasses hooks)           |
+| CI normalization         | `.github/workflows/flake-update.yml`      | YES (committed)   | Automated weekly PR (runs script after update)               |
+| Recovery script          | `scripts/fix-nixpkgs-lock.sh`             | YES (committed)   | Manual one-command recovery (`nix run .#fix-nixpkgs-lock`)   |
+| NixOS registry override  | `configuration.nix:42-49`                 | NO (needs reboot) | Prevents `nix flake update` from rewriting to tarball at all |
+| Darwin registry override | `platforms/darwin/nix/settings.nix:14-25` | NO (needs deploy) | Same, for macOS                                              |
 
 ### Commands that work for tarball recovery
 
@@ -225,14 +226,14 @@ nix flake lock --no-use-registries                  # Still tarball
 
 ### Files changed this session
 
-| File | Change | Commit |
-|------|--------|--------|
-| `flake.lock` | nixpkgs node: tarball → github (same rev `3497aa5c9457`) | `ad6f3f79`, `78a0ed31` |
-| `scripts/fix-nixpkgs-lock.sh` | NEW — one-command recovery script | `bc44085b`, `78a0ed31` |
-| `flake.nix:672-676` | Added `fix-nixpkgs-lock` app via `mkApp` | `78a0ed31` |
-| `.github/workflows/flake-update.yml` | Rewrote: add normalization step after update | `78a0ed31` |
-| `platforms/nixos/scripts/service-health-check` | Removed `unbound`, `waybar`, `awww-daemon` | `78a0ed31` |
-| `AGENTS.md:251` | Expanded tarball gotcha to full paragraph | `78a0ed31` |
+| File                                           | Change                                                   | Commit                 |
+| ---------------------------------------------- | -------------------------------------------------------- | ---------------------- |
+| `flake.lock`                                   | nixpkgs node: tarball → github (same rev `3497aa5c9457`) | `ad6f3f79`, `78a0ed31` |
+| `scripts/fix-nixpkgs-lock.sh`                  | NEW — one-command recovery script                        | `bc44085b`, `78a0ed31` |
+| `flake.nix:672-676`                            | Added `fix-nixpkgs-lock` app via `mkApp`                 | `78a0ed31`             |
+| `.github/workflows/flake-update.yml`           | Rewrote: add normalization step after update             | `78a0ed31`             |
+| `platforms/nixos/scripts/service-health-check` | Removed `unbound`, `waybar`, `awww-daemon`               | `78a0ed31`             |
+| `AGENTS.md:251`                                | Expanded tarball gotcha to full paragraph                | `78a0ed31`             |
 
 ---
 

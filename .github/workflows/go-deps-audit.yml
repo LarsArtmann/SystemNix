@@ -1,0 +1,72 @@
+# Cross-reference every LarsArtmann consumer go.mod `require` against the
+# revs SystemNix pins in flake.lock (scripts/audit-go-deps.sh).
+#
+# Trigger map:
+#   - push (flake.lock / flake.nix / the script): gate every lock change —
+#     the ERROR-MISSING class (consumer requires a tag that does not exist
+#     upstream) must never land silently.
+#   - nightly schedule: re-validate the committed lock against CURRENT
+#     upstream (catches upstream-side drift, e.g. force-pushed tags).
+#   - workflow_dispatch: manual runs.
+#
+# Owner decisions embedded (Q1-Q3 of the 2026-08-22 05-30 report were never
+# answered; these are the safe defaults, revisit on owner input):
+#   Q1 WARN-DIVERGED stays ADVISORY (exit 0) — the ecosystem rebases master,
+#      so "pin older" is unprovable; nothing blocks on it.
+#   Q2 CI, not pre-deploy — the audit costs minutes per run; deploys must
+#      not pay that when CI covers it nightly + on every lock push.
+#   Q3 fetch-free — CI has NO local clones by design (PROJECTS_DIR points at
+#      an empty dir); tag resolution rides anonymous ls-remote, and a FAILED
+#      lookup downgrades to WARN-UNKNOWN (never a false ERROR-MISSING red —
+#      private repos 404 on anonymous https by design).
+name: Go deps audit
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - flake.lock
+      - flake.nix
+      - scripts/audit-go-deps.sh
+      - .github/workflows/go-deps-audit.yml
+  schedule:
+    - cron: "30 4 * * *" # nightly, offset from the Monday flake-update job
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: DeterminateSystems/nix-installer-action@e50d5f73bfe71c2dd0aa4218de8f4afa59f8f81d # v16
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes pipe-operators
+            # NIX_GITHUB_RO_TOKEN: see nix-check.yml — GITHUB_TOKEN cannot read
+            # the owner's other private repos; 32 github:-type lock nodes need it.
+            access-tokens = github.com=${{ secrets.NIX_GITHUB_RO_TOKEN || secrets.GITHUB_TOKEN }}
+
+      # The audit's `nix eval` of input outPaths forces every private input
+      # tree (CV, go-cqrs-lite, branching-flow — all git+ssh). Same auth
+      # block as nix-check.yml; go-nix-helpers rides an HTTPS rewrite.
+      - name: Configure private flake-input auth
+        env:
+          NIX_DEPLOY_KEY_CV: ${{ secrets.NIX_DEPLOY_KEY_CV }}
+          NIX_DEPLOY_KEY_GO_CQRS_LITE: ${{ secrets.NIX_DEPLOY_KEY_GO_CQRS_LITE }}
+          NIX_DEPLOY_KEY_BRANCHING_FLOW: ${{ secrets.NIX_DEPLOY_KEY_BRANCHING_FLOW }}
+        run: |
+          eval "$(ssh-agent -s)" >/dev/null
+          printf '%s\n' "$NIX_DEPLOY_KEY_CV" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_GO_CQRS_LITE" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_BRANCHING_FLOW" | ssh-add -
+          git config --global url."https://github.com/LarsArtmann/go-nix-helpers".insteadOf "git@github.com:LarsArtmann/go-nix-helpers"
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          echo "GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=accept-new" >> "$GITHUB_ENV"
+
+      # Exit 1 only on ERROR-MISSING (tag genuinely absent upstream) or FATAL
+      # (lock parse broken). WARN-DIVERGED / WARN-UNKNOWN are advisory.
+      - name: Run Go dependency audit
+        env:
+          PROJECTS_DIR: ${{ runner.temp }}/no-local-clones
+        run: bash scripts/audit-go-deps.sh

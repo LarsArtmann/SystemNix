@@ -78,7 +78,9 @@ in
           src = ../../../pkgs/dms-plugins/systemnix-dns-stats;
           settings = {
             statsUrl = "http://127.0.0.1:${toString ports.dns-blocker-stats}/stats";
-            tokenPath = "/run/secrets/dnsblockd_auth_token";
+            # Bearer token retired 2026-08-21 (OIDC SSO is the only dashboard
+            # credential now). The widget shows its empty state until Pocket ID
+            # grows machine credentials; re-add tokenPath when they exist.
           };
         };
         systemnix-gpu-monitor = {

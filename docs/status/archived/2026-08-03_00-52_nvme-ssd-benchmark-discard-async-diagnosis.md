@@ -7,13 +7,12 @@
 
 ---
 
-
 ## What Happened (Chronological)
 
 1. User requested an SSD speed test
 2. I ran `fio` benchmarks **on `/tmp`** — which is **tmpfs (RAM)**, not BTRFS
 3. Got absurdly fast numbers (21.6 GiB/s read) that were measuring **memory bandwidth**, not the SSD
-4. User caught the error: *"Did you test via BTRFS?"*
+4. User caught the error: _"Did you test via BTRFS?"_
 5. I verified `/tmp` is tmpfs, re-ran on `/data` (BTRFS, `/dev/nvme0n1p8`)
 6. Got **catastrophically bad numbers** — orders of magnitude below the drive's rated spec
 7. I initially tried to dismiss the results as a "testing artifact" (O_DIRECT + background I/O)
@@ -27,32 +26,32 @@
 
 ### Test 1: BOGUS — `/tmp` (tmpfs/RAM, NOT the SSD)
 
-| Test | Throughput | Verdict |
-|------|-----------|---------|
-| Sequential Read (1M) | 21.6 GiB/s | **INVALID** — measured RAM |
+| Test                  | Throughput | Verdict                    |
+| --------------------- | ---------- | -------------------------- |
+| Sequential Read (1M)  | 21.6 GiB/s | **INVALID** — measured RAM |
 | Sequential Write (1M) | 10.0 GiB/s | **INVALID** — measured RAM |
 
 ### Test 2: BTRFS `/data` — O_DIRECT (libaio, QD32, 30s)
 
-| Test | Throughput | IOPS | p99 Latency |
-|------|-----------|------|-------------|
-| Sequential Read (1M) | **14.4 MiB/s** | 14 | **8.2 seconds** |
-| Sequential Write (1M) | **2.9 MiB/s** | 3 | **17.1 seconds** |
-| Random Read (4K×4) | **1.9 MiB/s** | 496 | **6.5 seconds** |
-| Random Write (4K×4) | **735 KiB/s** | 183 | **8.9 seconds** |
+| Test                  | Throughput     | IOPS | p99 Latency      |
+| --------------------- | -------------- | ---- | ---------------- |
+| Sequential Read (1M)  | **14.4 MiB/s** | 14   | **8.2 seconds**  |
+| Sequential Write (1M) | **2.9 MiB/s**  | 3    | **17.1 seconds** |
+| Random Read (4K×4)    | **1.9 MiB/s**  | 496  | **6.5 seconds**  |
+| Random Write (4K×4)   | **735 KiB/s**  | 183  | **8.9 seconds**  |
 
 ### Test 3: BTRFS `/data` — Buffered IO (iodepth=1, 15s)
 
-| Test | Throughput | Verdict |
-|------|-----------|---------|
-| Sequential Read (1M) | **3.4 MiB/s** | Confirms drive is genuinely choking |
+| Test                  | Throughput     | Verdict                                   |
+| --------------------- | -------------- | ----------------------------------------- |
+| Sequential Read (1M)  | **3.4 MiB/s**  | Confirms drive is genuinely choking       |
 | Sequential Write (1M) | **15.3 MiB/s** | Slightly better but still 400x below spec |
 
 ### Lexar NQ790 Rated Spec (for comparison)
 
-| Metric | Rated | Measured | Delta |
-|--------|-------|----------|-------|
-| Sequential Read | 7,000 MB/s | 3.4-14.4 MiB/s | **486-2058x slower** |
+| Metric           | Rated      | Measured       | Delta                |
+| ---------------- | ---------- | -------------- | -------------------- |
+| Sequential Read  | 7,000 MB/s | 3.4-14.4 MiB/s | **486-2058x slower** |
 | Sequential Write | 6,000 MB/s | 2.9-15.3 MiB/s | **392-2068x slower** |
 
 ---
@@ -73,11 +72,11 @@ $ cat /proc/mounts | grep btrfs | grep discard
 
 ### Fix Status: Deployed but NOT Active
 
-| Layer | Status | Detail |
-|-------|--------|--------|
-| Nix config (`hardware-configuration.nix:52-56`) | ✅ Fixed | `discard=async` removed, comments document why |
-| Deployed fstab (`/run/current-system/etc/fstab`) | ✅ Clean | No `discard` entries |
-| **Live mounts (`/proc/mounts`)** | ❌ **STILL BROKEN** | All 9 BTRFS mounts have `discard=async` |
+| Layer                                            | Status              | Detail                                         |
+| ------------------------------------------------ | ------------------- | ---------------------------------------------- |
+| Nix config (`hardware-configuration.nix:52-56`)  | ✅ Fixed            | `discard=async` removed, comments document why |
+| Deployed fstab (`/run/current-system/etc/fstab`) | ✅ Clean            | No `discard` entries                           |
+| **Live mounts (`/proc/mounts`)**                 | ❌ **STILL BROKEN** | All 9 BTRFS mounts have `discard=async`        |
 
 **Root cause:** BTRFS mount options only apply at mount time. `nixos-rebuild switch` / `nh os switch` updates the fstab in the new generation but does NOT remount filesystems. The fix was committed but has **never taken effect** — the system has not been rebooted since the fix was deployed.
 
@@ -119,9 +118,9 @@ QLC NAND has slow program/erase cycles. `discard=async` continuously fires TRIM 
 
 2. **Used invalid fio options TWICE** (`refresh_workloads=1`, then `new_workload`) — wasted two full benchmark cycles on syntax errors I should have caught by checking the fio manpage or doing a `--dry-run` first.
 
-3. **Initially tried to DISMISS the terrible BTRFS numbers as a "testing artifact."** When the O_DIRECT test showed 14 MiB/s seq read (500x below spec), my first instinct was to explain it away rather than investigate. I said *"the drive itself is almost certainly fine"* and *"those numbers are a testing artifact"* — I was WRONG. The drive WAS genuinely choking, and the root cause was staring me in the face in the AGENTS.md. I should have immediately checked mount options.
+3. **Initially tried to DISMISS the terrible BTRFS numbers as a "testing artifact."** When the O_DIRECT test showed 14 MiB/s seq read (500x below spec), my first instinct was to explain it away rather than investigate. I said _"the drive itself is almost certainly fine"_ and _"those numbers are a testing artifact"_ — I was WRONG. The drive WAS genuinely choking, and the root cause was staring me in the face in the AGENTS.md. I should have immediately checked mount options.
 
-4. **Did NOT read the AGENTS.md before starting.** The `discard=async` issue is documented RIGHT THERE as a known critical problem with this exact drive. The AGENTS.md even has a table row: *"discard=async on QLC NAND = I/O latency death spiral."* If I had read the relevant context before benchmarking, I would have checked for this FIRST. Instead, the USER had to point it out to me.
+4. **Did NOT read the AGENTS.md before starting.** The `discard=async` issue is documented RIGHT THERE as a known critical problem with this exact drive. The AGENTS.md even has a table row: _"discard=async on QLC NAND = I/O latency death spiral."_ If I had read the relevant context before benchmarking, I would have checked for this FIRST. Instead, the USER had to point it out to me.
 
 5. **Ran a second buffered-IO test that was ALSO bad** — and STILL tried to frame it as recoverable. The buffered seq read was 3.4 MiB/s. That's not a "testing artifact." That's a sick drive. I should have stopped benchmarking and started diagnosing.
 
@@ -241,6 +240,7 @@ Subsequent investigation in the follow-up report (`2026-08-03_02-53`) found:
 4. The claim that "BTRFS auto-enables discard=async on SSDs" (from the follow-up report) was ALSO unverified and likely false
 
 The terrible benchmark numbers (14 MiB/s read) were most likely caused by:
+
 - Background I/O from 30+ services (60-84% disk utilization measured during tests)
 - QLC SLC cache pressure at 69% fill on `/data`
 - The fio O_DIRECT benchmark competing with all of the above

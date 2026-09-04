@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Incident Summary
 
 Pocket ID v2.10.0 crash-looped for ~2 hours (Aug 02 15:05 – Aug 03 03:01),
@@ -170,6 +169,7 @@ However:
 ## f) Up to 50 Things We Should Get Done Next
 
 ### Immediate (P0)
+
 1. Verify Gatus was Discord-alerting during the 2h Pocket ID outage
 2. Clean up 5 systemd-coredump entries from pocket-id panics
 3. Investigate the 3 pre-existing failed services (disk-growth-check,
@@ -179,6 +179,7 @@ However:
 6. Verify the pocket-id fix survives a reboot (cold test)
 
 ### Short-term (P1)
+
 7. Investigate whether Pocket ID uses SQLite WAL mode — if not, enable it
 8. Check if the SQLITE_BUSY alarm-loop errors cause functional degradation
    (expired sessions, stale rate-limit rules)
@@ -193,6 +194,7 @@ However:
     the outage, requiring re-login
 
 ### Medium-term (P2)
+
 16. Pin pocket-id to a specific nixpkgs commit known to work (instead of
     relying on the 7-month-old channel)
 17. Add a VM test for pocket-id startup (similar to test-attic.nix)
@@ -211,6 +213,7 @@ However:
 25. Check `/nix/var/nix/builds/` for stale sandboxes and clean them
 
 ### Operational (P3)
+
 26. Add a pre-deploy hook that checks for SQLITE_BUSY in recent journal
     logs and warns
 27. Create a runbook for "auth.home.lan is down" scenarios
@@ -285,10 +288,10 @@ However:
 
 ## Files Changed This Session
 
-| File | Change |
-|------|--------|
+| File                                   | Change                                                                      |
+| -------------------------------------- | --------------------------------------------------------------------------- |
 | `modules/nixos/services/pocket-id.nix` | Added `clearStaleWal` ExecStartPre, `ACTORS_HOST=127.0.0.1`, `MemoryMax=1G` |
-| `AGENTS.md` | Added Pocket ID francis crash-loop gotcha to Non-Obvious Gotchas table |
+| `AGENTS.md`                            | Added Pocket ID francis crash-loop gotcha to Non-Obvious Gotchas table      |
 
 ## Deploy Verification
 

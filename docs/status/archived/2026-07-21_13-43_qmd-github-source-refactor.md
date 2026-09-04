@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Done
 
 - [x] Confirmed the upstream qmd flake exists (`github:tobi/qmd`) but rejected it because it uses Bun and only has `nodeModulesHashes` for x86_64-linux and aarch64-darwin.
@@ -66,17 +65,20 @@
 ## Next things (up to 50, prioritized)
 
 ### P0 — Blockers before deploy
+
 1. Reconcile staged/unstaged state and commit the GitHub-source refactor.
 2. Re-run `nix flake check --no-build` and `nix build .#qmd` on the clean commit.
 3. Verify `nix flake check --all-systems` if possible, or at least think through aarch64-linux / aarch64-darwin / x86_64-darwin paths.
 
 ### P1 — Deploy + runtime validation
+
 4. Run `nix run .#deploy` on evo-x2.
 5. Open a new user session and check `systemctl --user status qmd-mcp`.
 6. Confirm `http://localhost:8181/health` returns uptime JSON.
 7. Check Gatus "qmd MCP HTTP Server" endpoint is green.
 
 ### P2 — Content + integration
+
 8. Decide on a bootstrap collection (e.g., `~/notes` or `~/projects`) and set it in `configuration.nix`.
 9. Run `qmd update` and `qmd embed` for the first collection.
 10. Configure Crush MCP (`~/.config/crush/crush.json`) to point to `http://localhost:8181/mcp`.
@@ -84,6 +86,7 @@
 12. Test stdio MCP mode (`qmd mcp`) as a fallback.
 
 ### P3 — Hardening + polish
+
 13. Investigate `node_modules` closure pruning (second prod install or manual removal of non-host GPU backends).
 14. Add `restartTriggers = [ cfg.package ]` to the HM user service.
 15. Audit `qmd-mcp` memory usage during first model load and during idle.

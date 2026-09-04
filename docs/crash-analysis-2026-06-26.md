@@ -544,15 +544,15 @@ reboot
 
 ## The Escape Attempts (from `paste_1.txt` timeline)
 
-| #   | Method                                       | Result                            | Root Cause                                                                                                                                                                                                       |
-| --- | -------------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Wait for activation to complete              | Hung 10+ minutes                  | NixOS activation is a metadata storm (symlink tree rebuild). BTRFS can't commit the transactions.                                                                                                                |
-| 2   | Rollback to gen 433 (GRUB menu)              | Still hangs                       | Same filesystem, same metadata ENOSPC. The generation doesn't matter — activation for any generation requires the same metadata operations.                                                                      |
-| 3   | Ctrl+Alt+F2/F3/F4                            | No TTY                            | systemd never reached `getty.target`. It was stuck at the `nixos-activation.service` unit, which is a boot-critical dependency. No target past activation can start.                                             |
-| 4   | GRUB `e` → `systemd.unit=emergency.target`   | Activation still runs             | NixOS activation (`boot.systemd.initrdStoresPaths` → `nixos-activation.service`) runs as part of `sysinit.target`, which executes BEFORE any user-selected target. You can't skip it by changing the target.     |
-| 5   | GRUB `e` → `init=/bin/sh`                    | "root account locked"             | NixOS replaces `/bin/sh` with a `sulogin` wrapper for passwordless root. When PID 1 is replaced, `sulogin` intercepts and demands a password. NixOS's root account has `!` (locked) in `/etc/shadow` by default. |
-| 6   | `init=/run/current-system/sw/bin/bash`       | Same "root account locked"        | Same `sulogin` intercept — it's baked into the NixOS boot process, not the shell path.                                                                                                                           |
-| 7   | `rd.systemd.unit=rescue.target + loglevel=7` | BTRFS debug info but still locked | Showed BTRFS kernel messages (confirming the filesystem was alive) but `sulogin` still intercepted in the initrd phase.                                                                                          |
+| # | Method                                       | Result                            | Root Cause                                                                                                                                                                                                       |
+| - | -------------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | Wait for activation to complete              | Hung 10+ minutes                  | NixOS activation is a metadata storm (symlink tree rebuild). BTRFS can't commit the transactions.                                                                                                                |
+| 2 | Rollback to gen 433 (GRUB menu)              | Still hangs                       | Same filesystem, same metadata ENOSPC. The generation doesn't matter — activation for any generation requires the same metadata operations.                                                                      |
+| 3 | Ctrl+Alt+F2/F3/F4                            | No TTY                            | systemd never reached `getty.target`. It was stuck at the `nixos-activation.service` unit, which is a boot-critical dependency. No target past activation can start.                                             |
+| 4 | GRUB `e` → `systemd.unit=emergency.target`   | Activation still runs             | NixOS activation (`boot.systemd.initrdStoresPaths` → `nixos-activation.service`) runs as part of `sysinit.target`, which executes BEFORE any user-selected target. You can't skip it by changing the target.     |
+| 5 | GRUB `e` → `init=/bin/sh`                    | "root account locked"             | NixOS replaces `/bin/sh` with a `sulogin` wrapper for passwordless root. When PID 1 is replaced, `sulogin` intercepts and demands a password. NixOS's root account has `!` (locked) in `/etc/shadow` by default. |
+| 6 | `init=/run/current-system/sw/bin/bash`       | Same "root account locked"        | Same `sulogin` intercept — it's baked into the NixOS boot process, not the shell path.                                                                                                                           |
+| 7 | `rd.systemd.unit=rescue.target + loglevel=7` | BTRFS debug info but still locked | Showed BTRFS kernel messages (confirming the filesystem was alive) but `sulogin` still intercepted in the initrd phase.                                                                                          |
 
 ## Why the Hardware Watchdog Didn't Help During Recovery
 
@@ -663,29 +663,29 @@ In the final 30 minutes (23:30–00:02), the following signals were present:
 The system had four mechanisms that _should_ have produced a diagnostic record before death. None of them fired. Here's why:
 
 ```
-                    BTRFS Metadata ENOSPC
-                            │
-                    ┌───────┴───────┐
-                    ▼               ▼
-          I/O threads park     watchdogd can't
-          in D-state           get scheduled
-           (uninterruptible     to pet WDT
-           sleep on I/O)             │
-                    │                ▼
-                    │     ┌── 30s timeout ──┐
-                    │     │   (watchdogd)    │
-                    │     ▼                  │
-                    │  sp5100-tco FIRES      │
-                    │  (hardware reset)      │
-                    │  ~00:02:30             │
-                    │                        │
-         ┌──────────┴──────────┐             │
-         ▼                     ▼             ▼
-   hung_task_panic       softlockup_panic   SYSTEM DEAD
-   timeout=120s          threshold=20s     No pstore
-   (never reached —      (never triggered   No journal
-    WDT fired at 30s      — D-state is      No panic log
-    before 120s)          NOT soft lockup)
+                 BTRFS Metadata ENOSPC
+                         │
+                 ┌───────┴───────┐
+                 ▼               ▼
+       I/O threads park     watchdogd can't
+       in D-state           get scheduled
+        (uninterruptible     to pet WDT
+        sleep on I/O)             │
+                 │                ▼
+                 │     ┌── 30s timeout ──┐
+                 │     │   (watchdogd)    │
+                 │     ▼                  │
+                 │  sp5100-tco FIRES      │
+                 │  (hardware reset)      │
+                 │  ~00:02:30             │
+                 │                        │
+      ┌──────────┴──────────┐             │
+      ▼                     ▼             ▼
+hung_task_panic       softlockup_panic   SYSTEM DEAD
+timeout=120s          threshold=20s     No pstore
+(never reached —      (never triggered   No journal
+ WDT fired at 30s      — D-state is      No panic log
+ before 120s)          NOT soft lockup)
 ```
 
 ### Layer 1: Why `softlockup_panic=1` Didn't Fire

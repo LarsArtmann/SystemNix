@@ -1,5 +1,5 @@
 lib:
-{
+fsArgs@{
   device,
   fsType,
   options ? [ ],
@@ -100,6 +100,10 @@ if violations != [ ] then
     mkFilesystem: invalid mount options for ${fsType} on ${device}:
       ${violationMsg}''
 else
-  {
+  # Pass through any extra fileSystems attrs the caller set (neededForBoot,
+  # depends, format, …) — the `…` pattern would otherwise SILENTLY DROP them
+  # (a future `mkFilesystem { neededForBoot = true; … }` must not be ignored).
+  fsArgs
+  // {
     inherit device fsType options;
   }

@@ -9,8 +9,85 @@ let
   inherit (config.users) primaryUser;
   uid = builtins.toString config.users.users.${primaryUser}.uid;
   inherit (import ../../../lib/default.nix lib) harden onFailure;
+
+  # tmp-cleanup script text — hoisted here (NOT inline in the unit) so the
+  # eval-time assertion below can prove the systemd-private-* exclusion
+  # survives refactors. A store-path ExecStart is invisible to cross-module
+  # audits (tmp-cleaner-audit.nix); this text is the one thing eval CAN see.
+  tmpCleanupText = ''
+    THRESHOLD_MIN=240 # 4 hours — active builds touch files constantly
+
+    # -x prevents crossing into bind-mounted filesystems under /tmp
+    before_kb=$(du -skx /tmp 2>/dev/null | cut -f1 || true)
+    before_kb=''${before_kb:-0}
+
+    removed=0
+    # Only top-level non-dotfile entries — dotfiles (.X11-unix, .font-unix,
+    # lock files) are protected. Per-entry descendant check prevents
+    # removing dirs that contain recently-touched files (active builds
+    # writing into a dir created hours ago: dir mtime stays old but file
+    # mtimes are fresh). This is MORE conservative than cleanOnBoot (which
+    # wipes everything on reboot). -xdev prevents find from descending
+    # into mount points on other filesystems (defense-in-depth).
+    for entry in /tmp/*; do
+      [ -e "$entry" ] || continue
+      [ -L "$entry" ] && continue  # never follow symlinks
+      [ -S "$entry" ] && continue  # skip sockets
+      [ -p "$entry" ] && continue  # skip named pipes
+      case "$entry" in
+        # systemd-managed PrivateTmp instance dirs are live service
+        # infrastructure, not stale tmp: deleting the backing dir
+        # invalidates the private /tmp mount inside the unit's
+        # namespace, and forgejo then failed EVERY mirror sync for
+        # 12 days with "open /tmp/forgejo-clone-credentials-N: no
+        # such file or directory" (2026-08-18..30). systemd's own
+        # tmpfiles-clean excludes them; this script must too. The
+        # mtime check below cannot protect them — an idle or
+        # already-broken service writes nothing into its private
+        # tmp for hours, which is exactly the stale profile this
+        # script targets.
+        /tmp/systemd-private-*) continue ;;
+      esac
+      # If ANY descendant was touched in the last THRESHOLD_MIN, the
+      # entry is active — skip it.
+      if find "$entry" -xdev -mmin "-$THRESHOLD_MIN" -print -quit 2>/dev/null | grep -q .; then
+        continue
+      fi
+      # rm errors (permission denied on other users' files) are
+      # non-fatal — suppress stderr and continue to next entry.
+      rm -rf --one-file-system -- "$entry" 2>/dev/null && removed=$((removed + 1)) || true
+    done
+
+    after_kb=$(du -skx /tmp 2>/dev/null | cut -f1 || true)
+    after_kb=''${after_kb:-0}
+    freed_kb=$((before_kb - after_kb))
+    freed_human=$(numfmt --to=iec --suffix=B "$((freed_kb * 1024))" 2>/dev/null || echo "''${freed_kb}KB")
+    echo "tmp-cleanup: removed $removed stale entries, freed $freed_human from /tmp"
+  '';
 in
 {
+  # Eval-time self-check on the hoisted text above: removing the exclusion
+  # must fail `nix flake check`, not wait for the next 12-day outage
+  # (2026-08-18..30: forgejo 16,318 mirror errors, discordsync 550 attachment
+  # download failures, paperless celery, immich-ml — full story in
+  # modules/nixos/services/tmp-cleaner-audit.nix).
+  assertions = [
+    {
+      assertion = lib.hasInfix "systemd-private-*) continue" tmpCleanupText;
+      message = ''
+        tmp-cleanup guard: the systemd-private-* exclusion was removed from
+        the tmp-cleanup script text (platforms/nixos/system/scheduled-tasks.nix).
+        Those dirs are systemd PrivateTmp backing infrastructure: deleting one
+        unlinks the bind-mount source, and every file creation inside the
+        unit's private /tmp then fails ENOENT — self-perpetuating, because a
+        broken service writes nothing and its dir always profiles as stale.
+        Restore the case-arm exclusion (tests/test-tmp-cleanup.nix asserts the
+        behavior). See AGENTS.md "NEVER let any /tmp cleaner touch
+        systemd-private-*".
+      '';
+    }
+  ];
+
   systemd = {
     timers = {
       crush-update-providers = {
@@ -213,6 +290,7 @@ in
                   pkgs.libnotify
                   pkgs.coreutils
                   pkgs.gnugrep
+                  pkgs.gawk
                 ];
                 text = ''
                   export DISPLAY=:0
@@ -309,9 +387,18 @@ in
         description = lib.mkForce "Prune unused Docker resources";
         inherit onFailure;
         path = [ pkgs.docker ];
+        # WHY granular, not `system prune`: on docker 29.x `system prune --filter
+        # until=168h` logged 0B reclaimed while 8 GB build cache + 2-3-week-old
+        # dangling images sat eligible (2026-08-31), and without `-a` tagged-but-unused
+        # images (old version tags) are NEVER collectible. Volumes stay out on purpose.
         serviceConfig = lib.mkForce {
           Type = "oneshot";
-          ExecStart = "${lib.getExe pkgs.docker} system prune -f --filter until=168h";
+          ExecStart = [
+            "${lib.getExe pkgs.docker} container prune -f"
+            "${lib.getExe pkgs.docker} network prune -f"
+            "${lib.getExe pkgs.docker} image prune -af --filter until=168h"
+            "${lib.getExe pkgs.docker} builder prune -f --filter until=168h"
+          ];
           StandardOutput = "journal";
           StandardError = "journal";
         };
@@ -535,42 +622,7 @@ in
                     pkgs.findutils
                     pkgs.coreutils
                   ];
-                  text = ''
-                    THRESHOLD_MIN=240 # 4 hours — active builds touch files constantly
-
-                    # -x prevents crossing into bind-mounted filesystems under /tmp
-                    before_kb=$(du -skx /tmp 2>/dev/null | cut -f1 || true)
-                    before_kb=''${before_kb:-0}
-
-                    removed=0
-                    # Only top-level non-dotfile entries — dotfiles (.X11-unix, .font-unix,
-                    # lock files) are protected. Per-entry descendant check prevents
-                    # removing dirs that contain recently-touched files (active builds
-                    # writing into a dir created hours ago: dir mtime stays old but file
-                    # mtimes are fresh). This is MORE conservative than cleanOnBoot (which
-                    # wipes everything on reboot). -xdev prevents find from descending
-                    # into mount points on other filesystems (defense-in-depth).
-                    for entry in /tmp/*; do
-                      [ -e "$entry" ] || continue
-                      [ -L "$entry" ] && continue  # never follow symlinks
-                      [ -S "$entry" ] && continue  # skip sockets
-                      [ -p "$entry" ] && continue  # skip named pipes
-                      # If ANY descendant was touched in the last THRESHOLD_MIN, the
-                      # entry is active — skip it.
-                      if find "$entry" -xdev -mmin "-$THRESHOLD_MIN" -print -quit 2>/dev/null | grep -q .; then
-                        continue
-                      fi
-                      # rm errors (permission denied on other users' files) are
-                      # non-fatal — suppress stderr and continue to next entry.
-                      rm -rf --one-file-system -- "$entry" 2>/dev/null && removed=$((removed + 1)) || true
-                    done
-
-                    after_kb=$(du -skx /tmp 2>/dev/null | cut -f1 || true)
-                    after_kb=''${after_kb:-0}
-                    freed_kb=$((before_kb - after_kb))
-                    freed_human=$(numfmt --to=iec --suffix=B "$((freed_kb * 1024))" 2>/dev/null || echo "''${freed_kb}KB")
-                    echo "tmp-cleanup: removed $removed stale entries, freed $freed_human from /tmp"
-                  '';
+                  text = tmpCleanupText;
                 };
               in
               "${tmpCleanup}/bin/tmp-cleanup";
@@ -583,15 +635,18 @@ in
       disk-growth-check = {
         description = "Check /data disk growth trend and alert if >5G/day";
         inherit onFailure;
-        # ReadWritePaths namespace setup hard-fails (status=226/NAMESPACE)
-        # when /var/lib/disk-growth does not exist — create it before the
-        # mount namespace is assembled.
-        preStart = "mkdir -p /var/lib/disk-growth";
+        # StateDirectory, NOT ReadWritePaths + preStart mkdir: systemd builds
+        # the mount namespace BEFORE any ExecStartPre, so a ReadWritePaths
+        # entry pointing at a missing dir aborts with status=226/NAMESPACE
+        # and the in-unit mkdir can never create its own namespace path
+        # (live bug: unit failed 226 on every run while /var/lib/disk-growth
+        # was absent, blinding the /data growth alert for days). PID 1
+        # creates StateDirectory dirs before namespace assembly.
         serviceConfig =
           harden {
             MemoryMax = "128M";
             ProtectHome = "read-only";
-            ReadWritePaths = [ "/var/lib/disk-growth" ];
+            StateDirectory = "disk-growth";
           }
           // {
             Type = "oneshot";

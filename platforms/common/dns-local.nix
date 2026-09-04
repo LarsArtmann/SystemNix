@@ -26,5 +26,7 @@
     "banksync"
     "graph"
     "timers"
+    "cv"
+    "inbox"
   ];
 }

@@ -47,22 +47,22 @@
 
 ### Wave 2 — Memory Limits ✅ (5/5 done)
 
-| #   | Task                                     | Done In                            |
-| --- | ---------------------------------------- | ---------------------------------- |
-| 10  | MemoryMax on gitea (via harden{})        | Session 53                         |
-| 11  | MemoryMax on homepage (via harden{})     | Already done (harden{} covers it)  |
-| 12  | MemoryMax on taskchampion (via harden{}) | Already done (harden{} covers it)  |
-| 13  | MemoryMax on voice-agents (via harden{}) | Already done (harden{} covers it)  |
-| 14  | MemoryMax on sops services               | N/A — sops has no systemd services |
+| #  | Task                                     | Done In                            |
+| -- | ---------------------------------------- | ---------------------------------- |
+| 10 | MemoryMax on gitea (via harden{})        | Session 53                         |
+| 11 | MemoryMax on homepage (via harden{})     | Already done (harden{} covers it)  |
+| 12 | MemoryMax on taskchampion (via harden{}) | Already done (harden{} covers it)  |
+| 13 | MemoryMax on voice-agents (via harden{}) | Already done (harden{} covers it)  |
+| 14 | MemoryMax on sops services               | N/A — sops has no systemd services |
 
 ### Wave 3 — primaryUser DRY ✅ (4/4 done)
 
-| #   | Task                                                     | Done In    |
-| --- | -------------------------------------------------------- | ---------- |
-| 3   | Create primary-user.nix module                           | Session 29 |
-| 4   | Replace hardcoded `"lars"` (5 files with defaults)       | Session 29 |
-| 5   | Replace hardcoded `"lars"` (4 files with primaryUser)    | Session 29 |
-| 6   | Replace hardcoded `"lars"` (sops, config, ssh — partial) | Session 29 |
+| # | Task                                                     | Done In    |
+| - | -------------------------------------------------------- | ---------- |
+| 3 | Create primary-user.nix module                           | Session 29 |
+| 4 | Replace hardcoded `"lars"` (5 files with defaults)       | Session 29 |
+| 5 | Replace hardcoded `"lars"` (4 files with primaryUser)    | Session 29 |
+| 6 | Replace hardcoded `"lars"` (sops, config, ssh — partial) | Session 29 |
 
 ### Wave 4 — Harden Adoption ✅ (10/10 done)
 
@@ -88,13 +88,13 @@
 
 ### Wave 6 — Features & DRY (partial)
 
-| #   | Task                              | Status                                          |
-| --- | --------------------------------- | ----------------------------------------------- |
-| 39  | Enable Gatus                      | ✅ Session 44                                   |
-| 40  | Personalize Gatus ntfy topic      | ✅ Session 44                                   |
-| 35  | Fix fzf.nix hardcoded color       | ❌ NOT DONE                                     |
-| 16  | Extract shared DNS subdomain list | ❌ NOT DONE (drifted — rpi3 missing "manifest") |
-| 47  | Centralize firewall ports         | ❌ NOT DONE                                     |
+| #  | Task                              | Status                                          |
+| -- | --------------------------------- | ----------------------------------------------- |
+| 39 | Enable Gatus                      | ✅ Session 44                                   |
+| 40 | Personalize Gatus ntfy topic      | ✅ Session 44                                   |
+| 35 | Fix fzf.nix hardcoded color       | ❌ NOT DONE                                     |
+| 16 | Extract shared DNS subdomain list | ❌ NOT DONE (drifted — rpi3 missing "manifest") |
+| 47 | Centralize firewall ports         | ❌ NOT DONE                                     |
 
 ### Wave 7 — Theme ❌ (0/6 done)
 
@@ -110,45 +110,45 @@
 
 ### Wave 9 — Maintenance ✅ (8/11 done)
 
-| #   | Task                                                    | Done In                                    |
-| --- | ------------------------------------------------------- | ------------------------------------------ |
-| 79  | Remove unsloth from AGENTS.md                           | ✅ Session 25                              |
-| 17  | Remove dead justfile recipes                            | ✅ Session 30                              |
-| 19  | Archive old status reports                              | ✅ Session 29 (archived 85 files)          |
-| 43  | Update AGENTS.md (primaryUser, harden status)           | ✅ Session 30                              |
-| 44  | Update AGENTS.md (Gatus)                                | ✅ Session 44                              |
-| 69  | Docker overlay cleanup                                  | ✅ Session 33                              |
-| —   | _lib/default.nix cleanup_ (removed dead central import) | ✅ Session 29                              |
-| —   | _justfile DRY dns-diagnostics_                          | ✅ Session 30                              |
-| —   | _justfile trash instead of rm_                          | ✅ Session 30                              |
-| 42  | Update FEATURES.md                                      | ❌ NOT DONE                                |
-| 45  | Update justfile help recipe                             | ❌ NOT DONE (help recipe removed entirely) |
-| 46  | Fix justfile backup/restore dotfiles refs               | ❌ NOT DONE                                |
-| 61  | Audit tmpfiles.rules consistency                        | ❌ NOT DONE                                |
-| 78  | Write docs/TODO_LIST.md                                 | ❌ NOT DONE                                |
+| #  | Task                                                    | Done In                                    |
+| -- | ------------------------------------------------------- | ------------------------------------------ |
+| 79 | Remove unsloth from AGENTS.md                           | ✅ Session 25                              |
+| 17 | Remove dead justfile recipes                            | ✅ Session 30                              |
+| 19 | Archive old status reports                              | ✅ Session 29 (archived 85 files)          |
+| 43 | Update AGENTS.md (primaryUser, harden status)           | ✅ Session 30                              |
+| 44 | Update AGENTS.md (Gatus)                                | ✅ Session 44                              |
+| 69 | Docker overlay cleanup                                  | ✅ Session 33                              |
+| —  | _lib/default.nix cleanup_ (removed dead central import) | ✅ Session 29                              |
+| —  | _justfile DRY dns-diagnostics_                          | ✅ Session 30                              |
+| —  | _justfile trash instead of rm_                          | ✅ Session 30                              |
+| 42 | Update FEATURES.md                                      | ❌ NOT DONE                                |
+| 45 | Update justfile help recipe                             | ❌ NOT DONE (help recipe removed entirely) |
+| 46 | Fix justfile backup/restore dotfiles refs               | ❌ NOT DONE                                |
+| 61 | Audit tmpfiles.rules consistency                        | ❌ NOT DONE                                |
+| 78 | Write docs/TODO_LIST.md                                 | ❌ NOT DONE                                |
 
 ### Wave 10 — Deploy & Verify ✅ (5/6 done)
 
-| #   | Task                        | Done In              |
-| --- | --------------------------- | -------------------- |
-| 63  | `just switch` on evo-x2     | ✅ Multiple sessions |
-| 64  | Verify pstore               | ✅ Session 24        |
-| 65  | Verify GPU memory           | ✅ Session 24        |
-| 66  | Verify all services healthy | ✅ Session 33        |
-| 67  | Test Ollama inference       | ✅ Session 33        |
-| 68  | Test BTRFS snapshot restore | ❌ NOT DONE          |
+| #  | Task                        | Done In              |
+| -- | --------------------------- | -------------------- |
+| 63 | `just switch` on evo-x2     | ✅ Multiple sessions |
+| 64 | Verify pstore               | ✅ Session 24        |
+| 65 | Verify GPU memory           | ✅ Session 24        |
+| 66 | Verify all services healthy | ✅ Session 33        |
+| 67 | Test Ollama inference       | ✅ Session 33        |
+| 68 | Test BTRFS snapshot restore | ❌ NOT DONE          |
 
 ### Wave 11 — Quality (partial)
 
-| #   | Task                                       | Status                              |
-| --- | ------------------------------------------ | ----------------------------------- |
-| 57  | coredumpctl vacuum timer                   | ✅ Done (boot.nix coredump limits)  |
-| 41  | Gatus health checks for all services       | ✅ Session 47 (18+ endpoints)       |
-| 58  | Simplify lib/systemd.nix mkDefault         | ❌ NOT DONE (still uses mkDefault') |
-| 59  | ReadWritePaths for hardened services       | ❌ NOT DONE                         |
-| 60  | NixOS test harness                         | ❌ NOT DONE                         |
-| 70  | Update ancient flake inputs                | ❌ NOT DONE                         |
-| 81  | Health check endpoints for custom services | ❌ NOT DONE                         |
+| #  | Task                                       | Status                              |
+| -- | ------------------------------------------ | ----------------------------------- |
+| 57 | coredumpctl vacuum timer                   | ✅ Done (boot.nix coredump limits)  |
+| 41 | Gatus health checks for all services       | ✅ Session 47 (18+ endpoints)       |
+| 58 | Simplify lib/systemd.nix mkDefault         | ❌ NOT DONE (still uses mkDefault') |
+| 59 | ReadWritePaths for hardened services       | ❌ NOT DONE                         |
+| 60 | NixOS test harness                         | ❌ NOT DONE                         |
+| 70 | Update ancient flake inputs                | ❌ NOT DONE                         |
+| 81 | Health check endpoints for custom services | ❌ NOT DONE                         |
 
 ### Wave 12 — Future ❌ (0/7 done)
 
@@ -207,13 +207,13 @@
 
 ### 🆕 NEW Tasks (Discovered Post-Plan)
 
-| #   | Category | Task                                                    | Impact | CustVal | Effort | Score | Status              |
-| --- | -------- | ------------------------------------------------------- | ------ | ------- | ------ | ----- | ------------------- |
-| N1  | BUG      | Fix DNS drift — rpi3 missing "manifest" subdomain       | 4      | 3       | 2      | 30    | ✅ Done: Session 53 |
-| N2  | CLEANUP  | Remove stale photomap refs (caddy vhost, homepage, DNS) | 3      | 2       | 5      | 12    | ✅ Done: Session 53 |
-| N3  | DRY      | Parameterize ssh-config.nix `"lars"` via primaryUser    | 3      | 1       | 5      | 6     | ❌ NOT DONE         |
-| N4  | MAINT    | Write docs/TODO_LIST.md from this plan                  | 2      | 2       | 8      | 5     | ❌ NOT DONE         |
-| N5  | MAINT    | Audit tmpfiles.rules for consistency                    | 2      | 2       | 8      | 5     | ❌ NOT DONE         |
+| #  | Category | Task                                                    | Impact | CustVal | Effort | Score | Status              |
+| -- | -------- | ------------------------------------------------------- | ------ | ------- | ------ | ----- | ------------------- |
+| N1 | BUG      | Fix DNS drift — rpi3 missing "manifest" subdomain       | 4      | 3       | 2      | 30    | ✅ Done: Session 53 |
+| N2 | CLEANUP  | Remove stale photomap refs (caddy vhost, homepage, DNS) | 3      | 2       | 5      | 12    | ✅ Done: Session 53 |
+| N3 | DRY      | Parameterize ssh-config.nix `"lars"` via primaryUser    | 3      | 1       | 5      | 6     | ❌ NOT DONE         |
+| N4 | MAINT    | Write docs/TODO_LIST.md from this plan                  | 2      | 2       | 8      | 5     | ❌ NOT DONE         |
+| N5 | MAINT    | Audit tmpfiles.rules for consistency                    | 2      | 2       | 8      | 5     | ❌ NOT DONE         |
 
 ---
 
@@ -221,68 +221,68 @@
 
 ### Wave A — Critical Reliability ✅ (DONE in Session 53)
 
-| #   | Task                                         | Status                             |
-| --- | -------------------------------------------- | ---------------------------------- |
-| 7   | Add WatchdogSec=30 to Caddy                  | ✅ Done                            |
-| 8   | Add MemoryMax to Caddy (via harden{})        | ✅ Was already done                |
-| 9   | Add MemoryMax to authelia (via harden{})     | ✅ Was already done                |
-| 10  | Add MemoryMax to gitea (via harden{})        | ✅ Done: Session 53                |
-| N1  | Fix DNS drift — add "manifest" to rpi3       | ✅ Done (manifest already present) |
-| 11  | Add MemoryMax to homepage (via harden{})     | ✅ Was already done                |
-| 12  | Add MemoryMax to taskchampion (via harden{}) | ✅ Was already done                |
-| 13  | Add MemoryMax to voice-agents (via harden{}) | ✅ Was already done                |
-| 35  | Fix fzf.nix hardcoded color                  | ❌ NOT DONE                        |
-| N2  | Remove stale photomap references             | ✅ Done: Session 53                |
+| #  | Task                                         | Status                             |
+| -- | -------------------------------------------- | ---------------------------------- |
+| 7  | Add WatchdogSec=30 to Caddy                  | ✅ Done                            |
+| 8  | Add MemoryMax to Caddy (via harden{})        | ✅ Was already done                |
+| 9  | Add MemoryMax to authelia (via harden{})     | ✅ Was already done                |
+| 10 | Add MemoryMax to gitea (via harden{})        | ✅ Done: Session 53                |
+| N1 | Fix DNS drift — add "manifest" to rpi3       | ✅ Done (manifest already present) |
+| 11 | Add MemoryMax to homepage (via harden{})     | ✅ Was already done                |
+| 12 | Add MemoryMax to taskchampion (via harden{}) | ✅ Was already done                |
+| 13 | Add MemoryMax to voice-agents (via harden{}) | ✅ Was already done                |
+| 35 | Fix fzf.nix hardcoded color                  | ❌ NOT DONE                        |
+| N2 | Remove stale photomap references             | ✅ Done: Session 53                |
 
 ### Wave B — Maintenance (Est: ~25min)
 
-| #   | Task                                 | Time |
-| --- | ------------------------------------ | ---- |
-| 42  | Update FEATURES.md                   | 5min |
-| 46  | Fix justfile backup/restore dotfiles | 5min |
-| N3  | Parameterize ssh-config.nix          | 5min |
-| N4  | Write docs/TODO_LIST.md              | 8min |
-| N5  | Audit tmpfiles.rules                 | 8min |
+| #  | Task                                 | Time |
+| -- | ------------------------------------ | ---- |
+| 42 | Update FEATURES.md                   | 5min |
+| 46 | Fix justfile backup/restore dotfiles | 5min |
+| N3 | Parameterize ssh-config.nix          | 5min |
+| N4 | Write docs/TODO_LIST.md              | 8min |
+| N5 | Audit tmpfiles.rules                 | 8min |
 
 ### Wave C — Theme Adoption (Est: ~60min)
 
-| #   | Task                        | Time  |
-| --- | --------------------------- | ----- |
-| 30  | colorScheme in yazi.nix     | 12min |
-| 31  | colorScheme in waybar.nix   | 12min |
-| 32  | colorScheme in rofi.nix     | 10min |
-| 33  | colorScheme in wlogout.nix  | 12min |
-| 34  | colorScheme in homepage.nix | 8min  |
+| #  | Task                        | Time  |
+| -- | --------------------------- | ----- |
+| 30 | colorScheme in yazi.nix     | 12min |
+| 31 | colorScheme in waybar.nix   | 12min |
+| 32 | colorScheme in rofi.nix     | 10min |
+| 33 | colorScheme in wlogout.nix  | 12min |
+| 34 | colorScheme in homepage.nix | 8min  |
 
 ### Wave D — Signoz Split + Firewall (Est: ~35min)
 
-| #   | Task                          | Time  |
-| --- | ----------------------------- | ----- |
-| 36  | Split signoz into sub-modules | 12min |
-| 37  | Extract signoz scrapers       | 10min |
-| 38  | Update flake.nix imports      | 3min  |
-| 47  | Centralize firewall ports     | 10min |
+| #  | Task                          | Time  |
+| -- | ----------------------------- | ----- |
+| 36 | Split signoz into sub-modules | 12min |
+| 37 | Extract signoz scrapers       | 10min |
+| 38 | Update flake.nix imports      | 3min  |
+| 47 | Centralize firewall ports     | 10min |
 
 ### Wave E — Quality & Advanced (Est: ~45min)
 
-| #   | Task                                 | Time  |
-| --- | ------------------------------------ | ----- |
-| 59  | ReadWritePaths for hardened services | 12min |
-| 60  | NixOS test harness                   | 12min |
-| 68  | Test BTRFS snapshot restore          | 12min |
-| 70  | Update ancient flake inputs          | 10min |
+| #  | Task                                 | Time  |
+| -- | ------------------------------------ | ----- |
+| 59 | ReadWritePaths for hardened services | 12min |
+| 60 | NixOS test harness                   | 12min |
+| 68 | Test BTRFS snapshot restore          | 12min |
+| 70 | Update ancient flake inputs          | 10min |
 
 ### Wave F — Future (External/Hardware)
 
-| #   | Task              | Dependency |
-| --- | ----------------- | ---------- |
-| 71  | Pi 3 DNS failover | Hardware   |
-| 72  | kdump             | —          |
-| 73  | UPS integration   | Hardware   |
-| 74  | LUKS + TPM        | —          |
-| 75  | NIC bonding       | Hardware   |
-| 76  | CI/CD pipeline    | GitHub     |
-| 77  | SSH CA            | —          |
+| #  | Task              | Dependency |
+| -- | ----------------- | ---------- |
+| 71 | Pi 3 DNS failover | Hardware   |
+| 72 | kdump             | —          |
+| 73 | UPS integration   | Hardware   |
+| 74 | LUKS + TPM        | —          |
+| 75 | NIC bonding       | Hardware   |
+| 76 | CI/CD pipeline    | GitHub     |
+| 77 | SSH CA            | —          |
 
 ---
 

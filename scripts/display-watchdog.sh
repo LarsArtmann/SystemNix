@@ -81,6 +81,7 @@ done
 # later, producing an infinite restart loop. Only recover when a user session
 # exists (e.g. the compositor died mid-session and left the output wedged).
 has_graphical_session=0
+newest_session_monotonic_us=0
 if command -v loginctl >/dev/null 2>&1; then
   found=$(
     loginctl list-sessions --no-legend 2>/dev/null |
@@ -90,17 +91,42 @@ if command -v loginctl >/dev/null 2>&1; then
         t=$(loginctl show-session "$sid" -p Type --value 2>/dev/null || true)
         if [ "$c" = "user" ] && { [ "$t" = "wayland" ] || [ "$t" = "x11" ]; }; then
           echo 1
+          # TimestampMonotonic is ABSOLUTE µs since boot (same trap as the
+          # fastflowlm idle-check bug) — age = /proc/uptime µs minus this.
+          ts=$(loginctl show-session "$sid" -p TimestampMonotonic --value 2>/dev/null || echo 0)
+          echo "ts $ts"
         fi
       done
   ) || found=""
   case "$found" in
   *1*) has_graphical_session=1 ;;
   esac
+  newest_session_monotonic_us=$(
+    printf '%s\n' "$found" | awk '/^ts /{if ($2+0>max) max=$2+0} END{print max+0}'
+  )
 fi
 if [ "$has_graphical_session" -eq 0 ]; then
   echo "Login screen (no user graphical session): display idle/DPMS-off is normal — not recovering."
   state_reset
   exit 0
+fi
+
+# ── Session-creation grace ──────────────────────────────────────────────────
+# A graphical session younger than 60s may simply be MID-LOGIN: the shell
+# login chain (fish conf.d cache guards, hm-session-vars) can take tens of
+# seconds and niri may not have enabled its DRM outputs yet. Restarting SDDM
+# or niri here kills a LEGITIMATE in-progress login — during the 2026-08-24
+# black-screen incident the watchdog bounced two real logins while fish was
+# blocked on the dead buildcache automount. Skip this tick WITHOUT resetting
+# the failure counter: if the display is genuinely dead, the next tick after
+# the grace window still recovers.
+if [ "$newest_session_monotonic_us" -gt 0 ]; then
+  uptime_us=$(awk '{printf "%d", $1 * 1000000}' /proc/uptime)
+  session_age_us=$((uptime_us - newest_session_monotonic_us))
+  if [ "$session_age_us" -lt 60000000 ]; then
+    echo "Graphical session is $((session_age_us / 1000000))s old (<60s grace) — login may still be in progress, not recovering this tick."
+    exit 0
+  fi
 fi
 
 # ── Scenario 1: niri alive but display dead (GPU pipeline corruption) ──────

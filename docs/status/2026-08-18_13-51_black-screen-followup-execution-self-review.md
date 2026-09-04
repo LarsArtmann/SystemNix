@@ -61,13 +61,14 @@
 ## f) Up to 50 things to get done next
 
 **P0 — ship this session's work:**
+
 1. ~~`nix run .#deploy` — ships: black-screen fix (prior session), session-boot-audit, healthcheck condition, zombie tripwire, Qt fix, agent timer fix, crush-daily fix, BTRFS alert — PLUS the concurrent session's fastflowlm socat / smartd / data-to-pool changes riding the same tree (review before shipping if unwanted).~~ done (deploys through gen 690; the full batch shipped (a34ba608 + 34217be3))
-2. Reboot; pre-login `pgrep -x niri` → empty; SDDM login → desktop in seconds (08-15 §4 checklist governs).
+~~2. Reboot; pre-login `pgrep -x niri` → empty; SDDM login → desktop in seconds (08-15 §4 checklist governs).~~ done — reboot + login verified clean 2026-08-18 (no zombie recurrence since)
 3. Post-deploy settle check (TODO §2.5): smart-audio, shutdown-overlay, niri-flake-polkit, DMS all recover in the real session; then `nix run .#post-deploy-check`.
-4. Verify `niri_zombie 0` appears in `/metrics` and the Gatus check is green (fail-closed: absence = red).
-5. Verify `btrfs_health_critical` reflects the live unalloc=4% state → expect the new Gatus alert to FIRE (that's correct behavior, not a false positive) — then address the underlying space pressure.
-6. Verify one real crush-daily boot: no "Bad system call", ownership migration log line present.
-7. Verify browser-history-agent timer cadence: no more alternating start-limit-hit lines over a few hours.
+~~4. Verify `niri_zombie 0` appears in `/metrics` and the Gatus check is green (fail-closed: absence = red).~~ done — metric + check live and green since
+~~5. Verify `btrfs_health_critical` reflects the live unalloc=4% state → expect the new Gatus alert to FIRE (that's correct behavior, not a false positive) — then address the underlying space pressure.~~ done — the alert fired as designed; the underlying pressure resolved by 2026-08-31 (root 82%, GC-guard fix)
+~~6. Verify one real crush-daily boot: no "Bad system call", ownership migration log line present.~~ done — crush-daily healthy since (API 200s verified by the 2026-08-26 0-sessions investigation)
+~~7. Verify browser-history-agent timer cadence: no more alternating start-limit-hit lines over a few hours.~~ done — timer-is-the-retry doctrine deployed; no recurrence reported since 2026-08-18
 
 **P1 — data protection:**
 8. ~~Decide the btrbk-data nightly-failure stance (see §g Q3): leave failing until master-plan T04-T08, or suspend/adjust until repaired.~~ done (stance DECIDED 14:45 session: keep failing until T04-T08 (documented in TODO_LIST P0))
@@ -99,4 +100,4 @@
 
 ---
 
-*All work committed; verification ended at the edge of my permissions. The deploy — and the choice of what rides with it — is yours.*
+_All work committed; verification ended at the edge of my permissions. The deploy — and the choice of what rides with it — is yours._

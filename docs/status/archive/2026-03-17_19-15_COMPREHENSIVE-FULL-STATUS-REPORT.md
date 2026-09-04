@@ -140,7 +140,7 @@ SystemNix is a cross-platform Nix configuration managing macOS (nix-darwin, `Lar
 | aw-watcher-utilization                                  | Working | Recently fixed (pip -> Nix LaunchAgent)                    |
 | aw-watcher-input                                        | Broken  | Permissions issue, not reporting                           |
 | aw-watcher-screenshot                                   | Missing | Not deployed                                               |
-| **Score: 3/5 working, 1 degraded, 1 broken, 1 missing** |
+| **Score: 3/5 working, 1 degraded, 1 broken, 1 missing** |         |                                                            |
 
 ### NixOS evo-x2 Hardware (~75%)
 
@@ -379,33 +379,33 @@ nix-homebrew with `autoMigrate = true` and `enableRosetta = true` kept the Intel
 
 ## f) Top #25 Things We Should Get Done Next
 
-| #   | Task                                                                       | Priority | Effort          | Impact                           |
-| --- | -------------------------------------------------------------------------- | -------- | --------------- | -------------------------------- |
-| 1   | Run `just test` / `nix flake check` to establish build baseline            | P0       | 10m             | Unknown until done               |
-| 2   | Fix Hyprland orphaned hy3 keybindings (lines 393-396)                      | P0       | 5m              | Prevents runtime crash           |
-| 3   | Fix Hyprland `$mod,G` double-bind conflict                                 | P0       | 5m              | Prevents silent keybinding loss  |
-| 4   | Deduplicate Go 1.26 overlay in flake.nix (3 -> 1 copy)                     | P0       | 1-2h            | Reduces maintenance burden       |
-| 5   | Evaluate: Is global Go 1.26 override still needed (crush-patched removed)? | P0       | 30m             | Could simplify entire build      |
-| 6   | Purge docs/status/ reports older than 30 days                              | P1       | 2h              | Massive navigability improvement |
-| 7   | Decide on Homebrew `/usr/local` -> `/opt/homebrew` migration               | P1       | 15-30m decision | Unblocks brew improvements       |
-| 8   | Fix home-base.nix stateVersion (24.05 -> 25.11)                            | P1       | 5m              | Prevents HM migration issues     |
-| 9   | Clean up stale remote branches (14 copilot/* branches)                     | P1       | 15m             | Git hygiene                      |
-| 10  | Re-enable or remove uBlock Origin filter module                            | P1       | 1h              | Reduce dead code                 |
-| 11  | Add actual Niri configuration or document as experimental stub             | P1       | 4h              | Complete the feature             |
-| 12  | Verify and update TODO_LIST.md against current code                        | P1       | 1 day           | Reliable tracking                |
-| 13  | Fix `netbandwidth` Waybar module (shows IP, not bandwidth)                 | P2       | 30m             | Accuracy                         |
-| 14  | Add error handling to Waybar shell scripts (no `set -euo pipefail`)        | P2       | 1h              | Robustness                       |
-| 15  | Remove or document the TODO at flake.nix:197 (HM config extraction)        | P2       | 15m             | Code clarity                     |
-| 16  | Replace `permittedInsecurePackages` Chrome exception with proper fix       | P2       | 2h              | Security                         |
-| 17  | Test NixOS Bluetooth on actual hardware                                    | P2       | 1h              | Hardware coverage                |
-| 18  | Add VS Code Nix integration (lsp, formatter)                               | P2       | 4h              | Dev experience                   |
-| 19  | Add `statix` to devShell and fix all warnings                              | P2       | 2h              | Code quality                     |
-| 20  | Add `deadnix` check to justfile and CI                                     | P2       | 1h              | Code quality                     |
-| 21  | Create `just organize` recipe for automated file organization              | P2       | 4h              | Maintenance                      |
-| 22  | Add `nix eval` or `nix-instantiate` checks to CI pipeline                  | P2       | 2h              | CI quality                       |
-| 23  | Implement Phase 1 desktop quick wins (2h total)                            | P2       | 2h              | UX improvement                   |
-| 24  | Move remaining root files to proper directories                            | P2       | 1h              | Organization                     |
-| 25  | Document why `allowBroken = false` must always be false (flake.nix:98)     | P3       | 15m             | Knowledge preservation           |
+| #  | Task                                                                       | Priority | Effort          | Impact                           |
+| -- | -------------------------------------------------------------------------- | -------- | --------------- | -------------------------------- |
+| 1  | Run `just test` / `nix flake check` to establish build baseline            | P0       | 10m             | Unknown until done               |
+| 2  | Fix Hyprland orphaned hy3 keybindings (lines 393-396)                      | P0       | 5m              | Prevents runtime crash           |
+| 3  | Fix Hyprland `$mod,G` double-bind conflict                                 | P0       | 5m              | Prevents silent keybinding loss  |
+| 4  | Deduplicate Go 1.26 overlay in flake.nix (3 -> 1 copy)                     | P0       | 1-2h            | Reduces maintenance burden       |
+| 5  | Evaluate: Is global Go 1.26 override still needed (crush-patched removed)? | P0       | 30m             | Could simplify entire build      |
+| 6  | Purge docs/status/ reports older than 30 days                              | P1       | 2h              | Massive navigability improvement |
+| 7  | Decide on Homebrew `/usr/local` -> `/opt/homebrew` migration               | P1       | 15-30m decision | Unblocks brew improvements       |
+| 8  | Fix home-base.nix stateVersion (24.05 -> 25.11)                            | P1       | 5m              | Prevents HM migration issues     |
+| 9  | Clean up stale remote branches (14 copilot/* branches)                     | P1       | 15m             | Git hygiene                      |
+| 10 | Re-enable or remove uBlock Origin filter module                            | P1       | 1h              | Reduce dead code                 |
+| 11 | Add actual Niri configuration or document as experimental stub             | P1       | 4h              | Complete the feature             |
+| 12 | Verify and update TODO_LIST.md against current code                        | P1       | 1 day           | Reliable tracking                |
+| 13 | Fix `netbandwidth` Waybar module (shows IP, not bandwidth)                 | P2       | 30m             | Accuracy                         |
+| 14 | Add error handling to Waybar shell scripts (no `set -euo pipefail`)        | P2       | 1h              | Robustness                       |
+| 15 | Remove or document the TODO at flake.nix:197 (HM config extraction)        | P2       | 15m             | Code clarity                     |
+| 16 | Replace `permittedInsecurePackages` Chrome exception with proper fix       | P2       | 2h              | Security                         |
+| 17 | Test NixOS Bluetooth on actual hardware                                    | P2       | 1h              | Hardware coverage                |
+| 18 | Add VS Code Nix integration (lsp, formatter)                               | P2       | 4h              | Dev experience                   |
+| 19 | Add `statix` to devShell and fix all warnings                              | P2       | 2h              | Code quality                     |
+| 20 | Add `deadnix` check to justfile and CI                                     | P2       | 1h              | Code quality                     |
+| 21 | Create `just organize` recipe for automated file organization              | P2       | 4h              | Maintenance                      |
+| 22 | Add `nix eval` or `nix-instantiate` checks to CI pipeline                  | P2       | 2h              | CI quality                       |
+| 23 | Implement Phase 1 desktop quick wins (2h total)                            | P2       | 2h              | UX improvement                   |
+| 24 | Move remaining root files to proper directories                            | P2       | 1h              | Organization                     |
+| 25 | Document why `allowBroken = false` must always be false (flake.nix:98)     | P3       | 15m             | Knowledge preservation           |
 
 ---
 

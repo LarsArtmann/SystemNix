@@ -74,22 +74,22 @@ To override these, we'd need to patch `ExecStart` in the systemd service. Not cr
 
 ## c) NOT STARTED 📋
 
-| #   | Item                                                                     | Priority | Effort |
-| --- | ------------------------------------------------------------------------ | -------- | ------ |
-| 1   | **File & Image Renamer failing on startup**                              | P0       | Medium |
-| 2   | **Root disk at 88% (62GB free)** — 81GB go-build cache                   | P0       | Low    |
-| 3   | **blueman-applet ExecStart conflict** — duplicate ExecStart              | P1       | Low    |
-| 4   | **D-Bus duplicate service names** (18+ on every activation)              | P3       | Medium |
-| 5   | **Pi 3 DNS failover cluster** — hardware not provisioned                 | Planned  | High   |
-| 6   | **PhotoMap AI** — pinned old SHA, disabled                               | Medium   | Low    |
-| 7   | **Twenty CRM** — module exists, deployment status unknown                | Medium   | Low    |
-| 8   | **Voice agents** — enabled but unverified                                | Medium   | Medium |
-| 9   | **Multi-WM (Sway backup)** — may have bitrot                             | Low      | Medium |
-| 10  | **watchdogd nixpkgs PR** — module broken for `device` and `reset-reason` | P1       | Medium |
-| 11  | **Auditd disabled** — NixOS 26.05 bug #483085                            | Medium   | High   |
-| 12  | **AppArmor** — commented out in security-hardening                       | Medium   | Medium |
-| 13  | **justfile missing scripts** — benchmark, perf, context, storage-cleanup | Low      | Medium |
-| 14  | **FEATURES.md stale** — doesn't reflect disk space or watchdogd issues   | Low      | Low    |
+| #  | Item                                                                     | Priority | Effort |
+| -- | ------------------------------------------------------------------------ | -------- | ------ |
+| 1  | **File & Image Renamer failing on startup**                              | P0       | Medium |
+| 2  | **Root disk at 88% (62GB free)** — 81GB go-build cache                   | P0       | Low    |
+| 3  | **blueman-applet ExecStart conflict** — duplicate ExecStart              | P1       | Low    |
+| 4  | **D-Bus duplicate service names** (18+ on every activation)              | P3       | Medium |
+| 5  | **Pi 3 DNS failover cluster** — hardware not provisioned                 | Planned  | High   |
+| 6  | **PhotoMap AI** — pinned old SHA, disabled                               | Medium   | Low    |
+| 7  | **Twenty CRM** — module exists, deployment status unknown                | Medium   | Low    |
+| 8  | **Voice agents** — enabled but unverified                                | Medium   | Medium |
+| 9  | **Multi-WM (Sway backup)** — may have bitrot                             | Low      | Medium |
+| 10 | **watchdogd nixpkgs PR** — module broken for `device` and `reset-reason` | P1       | Medium |
+| 11 | **Auditd disabled** — NixOS 26.05 bug #483085                            | Medium   | High   |
+| 12 | **AppArmor** — commented out in security-hardening                       | Medium   | Medium |
+| 13 | **justfile missing scripts** — benchmark, perf, context, storage-cleanup | Low      | Medium |
+| 14 | **FEATURES.md stale** — doesn't reflect disk space or watchdogd issues   | Low      | Low    |
 
 ---
 
@@ -134,33 +134,33 @@ To override these, we'd need to patch `ExecStart` in the systemd service. Not cr
 
 ## f) Top 25 Things We Should Get Done Next (sorted by impact/effort)
 
-| #   | Task                                                              | Impact         | Effort | File(s)                                             |
-| --- | ----------------------------------------------------------------- | -------------- | ------ | --------------------------------------------------- |
-| 1   | Clean go-build cache (81GB)                                       | 🔴 Disk        | 1 min  | CLI only                                            |
-| 2   | Add periodic go-build cache GC to home-manager                    | 🔴 Disk        | 15 min | `home.nix`                                          |
-| 3   | Fix file-and-image-renamer startup failure                        | 🔴 Broken      | 30 min | `modules/nixos/services/file-and-image-renamer.nix` |
-| 4   | Fix blueman-applet ExecStart conflict                             | 🟡 Broken      | 10 min | `hardware/bluetooth.nix` or HM                      |
-| 5   | Adopt serviceDefaults in remaining 10 services                    | 🟡 Quality     | 45 min | All service modules                                 |
-| 6   | Extract gitea hardcoded port (3000) to config ref                 | 🟡 Quality     | 15 min | `gitea.nix`, `gitea-repos.nix`                      |
-| 7   | Extract signoz scrape port hardcodes                              | 🟡 Quality     | 20 min | `signoz.nix`                                        |
-| 8   | Extract voice-agents hardcoded ports                              | 🟡 Quality     | 15 min | `voice-agents.nix`                                  |
-| 9   | Extract authelia telemetry port hardcode                          | 🟡 Quality     | 10 min | `authelia.nix`                                      |
-| 10  | Extract ai-stack hardcoded ports                                  | 🟡 Quality     | 15 min | `ai-stack.nix`                                      |
-| 11  | Patch niri-session-manager save-interval to 30min                 | 🟢 Quality     | 10 min | `configuration.nix`                                 |
-| 12  | Submit watchdogd nixpkgs PR                                       | 🟡 Upstream    | 2 hrs  | nixpkgs repo                                        |
-| 13  | Update PhotoMap AI SHA and re-enable                              | 🟢 Feature     | 15 min | `photomap.nix`                                      |
-| 14  | Verify Twenty CRM deployment status                               | 🟢 Feature     | 15 min | `twenty.nix`                                        |
-| 15  | Verify voice agents (LiveKit + Whisper)                           | 🟢 Feature     | 30 min | `voice-agents.nix`                                  |
-| 16  | Create missing justfile scripts (benchmark, perf, context, clean) | 🟢 Polish      | 1 hr   | `scripts/`                                          |
-| 17  | Update FEATURES.md to reflect current state                       | 🟢 Docs        | 30 min | `FEATURES.md`                                       |
-| 18  | Remove dead config from yazi.nix (empty plugin arrays)            | 🟢 Cleanup     | 5 min  | `yazi.nix`                                          |
-| 19  | Add rofi-calc/rofi-emoji to FEATURES.md                           | 🟢 Docs        | 5 min  | `FEATURES.md`                                       |
-| 20  | Investigate D-Bus duplicate service names (18+)                   | 🟢 Quality     | 1 hr   | Unknown                                             |
-| 21  | Consolidate planning docs (30+ files in docs/planning/)           | 🟢 Cleanup     | 30 min | `docs/planning/`                                    |
-| 22  | Archive old status reports (200+ in docs/status/archive/)         | 🟢 Cleanup     | 5 min  | `docs/status/`                                      |
-| 23  | Investigate auditd NixOS 26.05 bug #483085                        | 🟡 Security    | 1 hr   | `security-hardening.nix`                            |
-| 24  | Re-enable AppArmor in security-hardening                          | 🟡 Security    | 30 min | `security-hardening.nix`                            |
-| 25  | Provision Pi 3 for DNS failover cluster                           | 🔴 Reliability | 4 hrs  | Hardware + `dns-failover.nix`                       |
+| #  | Task                                                              | Impact         | Effort | File(s)                                             |
+| -- | ----------------------------------------------------------------- | -------------- | ------ | --------------------------------------------------- |
+| 1  | Clean go-build cache (81GB)                                       | 🔴 Disk        | 1 min  | CLI only                                            |
+| 2  | Add periodic go-build cache GC to home-manager                    | 🔴 Disk        | 15 min | `home.nix`                                          |
+| 3  | Fix file-and-image-renamer startup failure                        | 🔴 Broken      | 30 min | `modules/nixos/services/file-and-image-renamer.nix` |
+| 4  | Fix blueman-applet ExecStart conflict                             | 🟡 Broken      | 10 min | `hardware/bluetooth.nix` or HM                      |
+| 5  | Adopt serviceDefaults in remaining 10 services                    | 🟡 Quality     | 45 min | All service modules                                 |
+| 6  | Extract gitea hardcoded port (3000) to config ref                 | 🟡 Quality     | 15 min | `gitea.nix`, `gitea-repos.nix`                      |
+| 7  | Extract signoz scrape port hardcodes                              | 🟡 Quality     | 20 min | `signoz.nix`                                        |
+| 8  | Extract voice-agents hardcoded ports                              | 🟡 Quality     | 15 min | `voice-agents.nix`                                  |
+| 9  | Extract authelia telemetry port hardcode                          | 🟡 Quality     | 10 min | `authelia.nix`                                      |
+| 10 | Extract ai-stack hardcoded ports                                  | 🟡 Quality     | 15 min | `ai-stack.nix`                                      |
+| 11 | Patch niri-session-manager save-interval to 30min                 | 🟢 Quality     | 10 min | `configuration.nix`                                 |
+| 12 | Submit watchdogd nixpkgs PR                                       | 🟡 Upstream    | 2 hrs  | nixpkgs repo                                        |
+| 13 | Update PhotoMap AI SHA and re-enable                              | 🟢 Feature     | 15 min | `photomap.nix`                                      |
+| 14 | Verify Twenty CRM deployment status                               | 🟢 Feature     | 15 min | `twenty.nix`                                        |
+| 15 | Verify voice agents (LiveKit + Whisper)                           | 🟢 Feature     | 30 min | `voice-agents.nix`                                  |
+| 16 | Create missing justfile scripts (benchmark, perf, context, clean) | 🟢 Polish      | 1 hr   | `scripts/`                                          |
+| 17 | Update FEATURES.md to reflect current state                       | 🟢 Docs        | 30 min | `FEATURES.md`                                       |
+| 18 | Remove dead config from yazi.nix (empty plugin arrays)            | 🟢 Cleanup     | 5 min  | `yazi.nix`                                          |
+| 19 | Add rofi-calc/rofi-emoji to FEATURES.md                           | 🟢 Docs        | 5 min  | `FEATURES.md`                                       |
+| 20 | Investigate D-Bus duplicate service names (18+)                   | 🟢 Quality     | 1 hr   | Unknown                                             |
+| 21 | Consolidate planning docs (30+ files in docs/planning/)           | 🟢 Cleanup     | 30 min | `docs/planning/`                                    |
+| 22 | Archive old status reports (200+ in docs/status/archive/)         | 🟢 Cleanup     | 5 min  | `docs/status/`                                      |
+| 23 | Investigate auditd NixOS 26.05 bug #483085                        | 🟡 Security    | 1 hr   | `security-hardening.nix`                            |
+| 24 | Re-enable AppArmor in security-hardening                          | 🟡 Security    | 30 min | `security-hardening.nix`                            |
+| 25 | Provision Pi 3 for DNS failover cluster                           | 🔴 Reliability | 4 hrs  | Hardware + `dns-failover.nix`                       |
 
 ---
 

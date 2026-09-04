@@ -226,33 +226,33 @@ Every boot logs: `amdgpu: unknown parameter 'deepfl' ignored`. The parameter nam
 
 ## f) Top 25 Things We Should Get Done Next
 
-| #   | Priority | Task                                                                                          | Impact              | Effort |
-| --- | -------- | --------------------------------------------------------------------------------------------- | ------------------- | ------ |
-| 1   | **P0**   | **Deploy GTT fix**: `just switch` to activate 112GB GTT ceiling                               | System stability    | 5 min  |
-| 2   | **P0**   | **Fix awww-daemon crash loop** — upgrade to fixed version or add backoff                      | Desktop wallpaper   | 30 min |
-| 3   | **P0**   | **Clean root filesystem** — `nix-collect-garbage -d`, remove old generations, clean coredumps | Disk space          | 15 min |
-| 4   | **P0**   | **Fix `amdgpu.deepfl=1`** — find correct parameter or remove                                  | Boot noise          | 15 min |
-| 5   | **P1**   | Fix ComfyUI CHDIR failure — update working directory path                                     | AI image generation | 20 min |
-| 6   | **P1**   | Fix Polkit KDE agent Qt platform plugin error                                                 | Authentication UX   | 30 min |
-| 7   | **P1**   | Add coredump auto-cleanup tmpfiles rule                                                       | Disk hygiene        | 10 min |
-| 8   | **P1**   | Verify Darwin build still works after recent changes                                          | Cross-platform      | 20 min |
-| 9   | **P1**   | Add GPU memory metrics to SigNoz/Gatus                                                        | Observability       | 1h     |
-| 10  | **P1**   | Clean up commented-out imports in configuration.nix                                           | Code cleanliness    | 5 min  |
-| 11  | **P2**   | Extract shared DNS blocklist module (deduplicate RPi3 + evo-x2)                               | DRY                 | 2h     |
-| 12  | **P2**   | Provision Pi 3 hardware for DNS failover cluster                                              | HA DNS              | 2h     |
-| 13  | **P2**   | Add boot crash detection service (previous boot < 5 min alert)                                | Reliability         | 1h     |
-| 14  | **P2**   | Test bare-metal BTRFS restore procedure                                                       | Disaster recovery   | 2h     |
-| 15  | **P2**   | Implement secrets rotation schedule for sops                                                  | Security            | 3h     |
-| 16  | **P2**   | Enable NPU workloads with AMD XDNA driver                                                     | AI capability       | 4h     |
-| 17  | **P2**   | Add automated `nix flake check` to git pre-push hook                                          | Quality gate        | 30 min |
-| 18  | **P2**   | Fix Monitor365 RAM usage or find lighter alternative                                          | Device monitoring   | 2h     |
-| 19  | **P2**   | Document bare-metal disaster recovery procedure                                               | Operations          | 2h     |
-| 20  | **P3**   | Investigate pstore crash log collection automation                                            | Forensics           | 2h     |
-| 21  | **P3**   | Add IPv6 connectivity plan and gradual rollout                                                | Networking          | 4h     |
-| 22  | **P3**   | Verify Timeshift backup restore works end-to-end                                              | Backup integrity    | 1h     |
-| 23  | **P3**   | Add cross-platform health check to justfile (Darwin + NixOS)                                  | Operations          | 1h     |
-| 24  | **P3**   | Audit all 35+ flake-parts modules for consistent option patterns                              | Code quality        | 3h     |
-| 25  | **P3**   | Create automated deployment pipeline (build → test → switch)                                  | DevOps              | 4h     |
+| #  | Priority | Task                                                                                          | Impact              | Effort |
+| -- | -------- | --------------------------------------------------------------------------------------------- | ------------------- | ------ |
+| 1  | **P0**   | **Deploy GTT fix**: `just switch` to activate 112GB GTT ceiling                               | System stability    | 5 min  |
+| 2  | **P0**   | **Fix awww-daemon crash loop** — upgrade to fixed version or add backoff                      | Desktop wallpaper   | 30 min |
+| 3  | **P0**   | **Clean root filesystem** — `nix-collect-garbage -d`, remove old generations, clean coredumps | Disk space          | 15 min |
+| 4  | **P0**   | **Fix `amdgpu.deepfl=1`** — find correct parameter or remove                                  | Boot noise          | 15 min |
+| 5  | **P1**   | Fix ComfyUI CHDIR failure — update working directory path                                     | AI image generation | 20 min |
+| 6  | **P1**   | Fix Polkit KDE agent Qt platform plugin error                                                 | Authentication UX   | 30 min |
+| 7  | **P1**   | Add coredump auto-cleanup tmpfiles rule                                                       | Disk hygiene        | 10 min |
+| 8  | **P1**   | Verify Darwin build still works after recent changes                                          | Cross-platform      | 20 min |
+| 9  | **P1**   | Add GPU memory metrics to SigNoz/Gatus                                                        | Observability       | 1h     |
+| 10 | **P1**   | Clean up commented-out imports in configuration.nix                                           | Code cleanliness    | 5 min  |
+| 11 | **P2**   | Extract shared DNS blocklist module (deduplicate RPi3 + evo-x2)                               | DRY                 | 2h     |
+| 12 | **P2**   | Provision Pi 3 hardware for DNS failover cluster                                              | HA DNS              | 2h     |
+| 13 | **P2**   | Add boot crash detection service (previous boot < 5 min alert)                                | Reliability         | 1h     |
+| 14 | **P2**   | Test bare-metal BTRFS restore procedure                                                       | Disaster recovery   | 2h     |
+| 15 | **P2**   | Implement secrets rotation schedule for sops                                                  | Security            | 3h     |
+| 16 | **P2**   | Enable NPU workloads with AMD XDNA driver                                                     | AI capability       | 4h     |
+| 17 | **P2**   | Add automated `nix flake check` to git pre-push hook                                          | Quality gate        | 30 min |
+| 18 | **P2**   | Fix Monitor365 RAM usage or find lighter alternative                                          | Device monitoring   | 2h     |
+| 19 | **P2**   | Document bare-metal disaster recovery procedure                                               | Operations          | 2h     |
+| 20 | **P3**   | Investigate pstore crash log collection automation                                            | Forensics           | 2h     |
+| 21 | **P3**   | Add IPv6 connectivity plan and gradual rollout                                                | Networking          | 4h     |
+| 22 | **P3**   | Verify Timeshift backup restore works end-to-end                                              | Backup integrity    | 1h     |
+| 23 | **P3**   | Add cross-platform health check to justfile (Darwin + NixOS)                                  | Operations          | 1h     |
+| 24 | **P3**   | Audit all 35+ flake-parts modules for consistent option patterns                              | Code quality        | 3h     |
+| 25 | **P3**   | Create automated deployment pipeline (build → test → switch)                                  | DevOps              | 4h     |
 
 ---
 

@@ -116,33 +116,33 @@ All committed but **NOT deployed** to evo-x2:
 
 ## f) Top 25 Things We Should Get Done Next
 
-| #   | Priority | Item                                                                                                                     | Effort  | Impact                                         |
-| --- | -------- | ------------------------------------------------------------------------------------------------------------------------ | ------- | ---------------------------------------------- |
-| 1   | P0       | **Deploy sessions 29–32 to evo-x2** (`nh os switch` or `just switch`)                                                    | 10 min  | Activates 28 undeployed commits                |
-| 2   | P0       | **Create `manifest.yaml` sops secrets** on evo-x2                                                                        | 5 min   | Unblocks Manifest deployment                   |
-| 3   | P0       | **Root disk deep cleanup** — `nix-collect-garbage -d` (as root), `docker system prune -af`, remove `/data/testfile` (4G) | 15 min  | Prevents disk-full. Could reclaim 20+ GB       |
-| 4   | P0       | **Delete old system generations** (`nix-env --delete-generations +3 --profile /nix/var/nix/profiles/system`)             | 5 min   | 571 generations → 3. Massive Nix store savings |
-| 5   | P1       | **Fix `harden()` priority model** — add priority parameter or switch to `mkOverride 200`                                 | 30 min  | Makes hardening actually effective             |
-| 6   | P1       | **Fix podman config permissions** — investigate `containers.conf.d: permission denied`                                   | 20 min  | Re-enables photomap                            |
-| 7   | P1       | **Verify service-health-check passes after deploy**                                                                      | 5 min   | Stops 15min notification spam                  |
-| 8   | P1       | **Pin Docker images to SHA256** — Twenty, whisper, Manifest, redis, postgres                                             | 15 min  | Reproducible deploys                           |
-| 9   | P1       | **Move VRRP password to sops**                                                                                           | 10 min  | Security fix                                   |
-| 10  | P1       | **Migrate 6 remaining modules to serviceDefaults{}**                                                                     | 20 min  | DRY compliance                                 |
-| 11  | P2       | **Extract Catppuccin colors to `lib/catppuccin.nix`**                                                                    | 30 min  | 140 hardcoded values → 1 source                |
-| 12  | P2       | **Split signoz.nix** into sub-modules                                                                                    | 45 min  | 746 lines → manageable                         |
-| 13  | P2       | **Add priority option to harden()** — support mkForce for services that need it                                          | 30 min  | Architecture fix                               |
-| 14  | P2       | **Add post-deploy health check** to justfile (`just deploy-check`)                                                       | 15 min  | Catch failures immediately                     |
-| 15  | P2       | **Whisper image: pin to digest or rebuild smaller**                                                                      | 20 min  | 37.5 GB is insane                              |
-| 16  | P2       | **Update SigNoz versions**                                                                                               | 30 min  | Security + features                            |
-| 17  | P2       | **Create FEATURES.md** from code audit                                                                                   | 30 min  | Project documentation                          |
-| 18  | P2       | **Create TODO_LIST.md** verified against code                                                                            | 30 min  | Project tracking                               |
-| 19  | P2       | **Fix 21 files with stale justfile refs** in docs/                                                                       | 30 min  | Doc accuracy                                   |
-| 20  | P2       | **Archive 2025 planning docs**                                                                                           | 10 min  | Reduce noise                                   |
-| 21  | P3       | **Provision Pi 3 hardware** for DNS failover                                                                             | 2 hours | HA DNS                                         |
-| 22  | P3       | **Enable AppArmor**                                                                                                      | 30 min  | MAC security                                   |
-| 23  | P3       | **Adopt lib/types.nix broadly** or inline                                                                                | 20 min  | Reduce dead code                               |
-| 24  | P3       | **Add ComfyUI pip check to ExecCondition**                                                                               | 10 min  | Early failure detection                        |
-| 25  | P3       | **ComfyUI: wrap in Nix derivation** instead of mutable venv                                                              | 4 hours | Eliminates dependency fragility                |
+| #  | Priority | Item                                                                                                                     | Effort  | Impact                                         |
+| -- | -------- | ------------------------------------------------------------------------------------------------------------------------ | ------- | ---------------------------------------------- |
+| 1  | P0       | **Deploy sessions 29–32 to evo-x2** (`nh os switch` or `just switch`)                                                    | 10 min  | Activates 28 undeployed commits                |
+| 2  | P0       | **Create `manifest.yaml` sops secrets** on evo-x2                                                                        | 5 min   | Unblocks Manifest deployment                   |
+| 3  | P0       | **Root disk deep cleanup** — `nix-collect-garbage -d` (as root), `docker system prune -af`, remove `/data/testfile` (4G) | 15 min  | Prevents disk-full. Could reclaim 20+ GB       |
+| 4  | P0       | **Delete old system generations** (`nix-env --delete-generations +3 --profile /nix/var/nix/profiles/system`)             | 5 min   | 571 generations → 3. Massive Nix store savings |
+| 5  | P1       | **Fix `harden()` priority model** — add priority parameter or switch to `mkOverride 200`                                 | 30 min  | Makes hardening actually effective             |
+| 6  | P1       | **Fix podman config permissions** — investigate `containers.conf.d: permission denied`                                   | 20 min  | Re-enables photomap                            |
+| 7  | P1       | **Verify service-health-check passes after deploy**                                                                      | 5 min   | Stops 15min notification spam                  |
+| 8  | P1       | **Pin Docker images to SHA256** — Twenty, whisper, Manifest, redis, postgres                                             | 15 min  | Reproducible deploys                           |
+| 9  | P1       | **Move VRRP password to sops**                                                                                           | 10 min  | Security fix                                   |
+| 10 | P1       | **Migrate 6 remaining modules to serviceDefaults{}**                                                                     | 20 min  | DRY compliance                                 |
+| 11 | P2       | **Extract Catppuccin colors to `lib/catppuccin.nix`**                                                                    | 30 min  | 140 hardcoded values → 1 source                |
+| 12 | P2       | **Split signoz.nix** into sub-modules                                                                                    | 45 min  | 746 lines → manageable                         |
+| 13 | P2       | **Add priority option to harden()** — support mkForce for services that need it                                          | 30 min  | Architecture fix                               |
+| 14 | P2       | **Add post-deploy health check** to justfile (`just deploy-check`)                                                       | 15 min  | Catch failures immediately                     |
+| 15 | P2       | **Whisper image: pin to digest or rebuild smaller**                                                                      | 20 min  | 37.5 GB is insane                              |
+| 16 | P2       | **Update SigNoz versions**                                                                                               | 30 min  | Security + features                            |
+| 17 | P2       | **Create FEATURES.md** from code audit                                                                                   | 30 min  | Project documentation                          |
+| 18 | P2       | **Create TODO_LIST.md** verified against code                                                                            | 30 min  | Project tracking                               |
+| 19 | P2       | **Fix 21 files with stale justfile refs** in docs/                                                                       | 30 min  | Doc accuracy                                   |
+| 20 | P2       | **Archive 2025 planning docs**                                                                                           | 10 min  | Reduce noise                                   |
+| 21 | P3       | **Provision Pi 3 hardware** for DNS failover                                                                             | 2 hours | HA DNS                                         |
+| 22 | P3       | **Enable AppArmor**                                                                                                      | 30 min  | MAC security                                   |
+| 23 | P3       | **Adopt lib/types.nix broadly** or inline                                                                                | 20 min  | Reduce dead code                               |
+| 24 | P3       | **Add ComfyUI pip check to ExecCondition**                                                                               | 10 min  | Early failure detection                        |
+| 25 | P3       | **ComfyUI: wrap in Nix derivation** instead of mutable venv                                                              | 4 hours | Eliminates dependency fragility                |
 
 ---
 
@@ -198,7 +198,7 @@ I lean toward option 3, but this is an architectural decision that affects all 1
 | **CPU**                | AMD Ryzen AI Max+ 395             |
 | **RAM**                | 21G/62G used (34%), 41G available |
 | **Swap**               | 11G/41G used                      |
-| **Root disk**          | 439G/512G (89%) — ⚠️ WORSENING    |
+| **Root disk**          | 439G/512G (89%) — ⚠️ WORSENING     |
 | **Data disk**          | 607G/800G (76%)                   |
 | **Nix store**          | 81 GB                             |
 | **Docker images**      | 39.6 GB (whisper: 37.5 GB)        |

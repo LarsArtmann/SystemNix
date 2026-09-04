@@ -5,10 +5,10 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 ### 1. Root Cause Diagnosis: dnsblockd Memory Leak
+
 **The answer to "why is our DNS resolver so unstable":** dnsblockd has a genuine memory leak caused by unbounded OTEL cardinality.
 
 - **Evidence collected:** 20+ OOM-kills in 7 days (almost hourly — Jul 31 alone had kills at 02:42, 03:45, 04:45, 05:45, 07:45, 08:46, 09:46, 10:46, ..., 23:51). Each kill = ~10s DNS outage. ~4 minutes of cumulative DNS downtime per day spread across micro-outages.
@@ -18,31 +18,37 @@
 - **Bounded structures confirmed NOT the leak:** stats hits map (≤1000), rate limiter (≤10K LRU), sdns cache (≤256K entries), recent ring (100 entries), latency buffer (1000 samples), allowlist (≤1000 lazy expiry).
 
 ### 2. dnsblockd Memory Mitigation Deployed
+
 - **`MemoryMax` raised from 1G → 2G** in `modules/nixos/services/dns-blocker.nix`
 - **`GOMEMLIMIT=1500MiB` added** — forces Go GC to run aggressively below MemoryMax, collecting reachable-but-stale heap before the OOM wall
 - **Verified live:** `memory.max = 2147483648` (2G), `GOMEMLIMIT=1500MiB` in deployed unit file. Current RSS: 590 MB (healthy, just restarted).
 
 ### 3. DiscordSync chattr ExecStartPre Fixed
+
 - **Bug:** Upstream module ships `chattr -R +C /var/lib/discordsync 2>/dev/null || true` as ExecStartPre. systemd ExecStartPre is NOT shell — `2>/dev/null` and `|| true` are passed as LITERAL FILE ARGUMENTS to chattr. Log evidence: `chattr: No such file or directory while trying to stat 2>/dev/null`, `stat ||`, `stat true`. Also lacks `+` prefix → runs as `discordsync` user → `Operation not permitted`.
 - **Fix:** `modules/nixos/services/discordsync.nix` uses `ExecStartPre = lib.mkForce [...]` to REPLACE the upstream list entirely. The broken chattr is gone. BTRFS +C (nodatacow) is nice-to-have but not required — DiscordSync uses WAL mode.
 - **Verified live:** No chattr errors in discordsync journal since deploy.
 
 ### 4. resolv.conf Restored to Correct State
+
 - **Bug:** The user had manually replaced the Nix-managed symlink with a regular file containing `nameserver 9.9.9.9` BEFORE `nameserver 127.0.0.1`. glibc queries nameservers in order and accepts the first NXDOMAIN — Quad9 returns NXDOMAIN for `*.home.lan` (private TLD), so glibc never fell through to dnsblockd on 127.0.0.1. `getent hosts dash.home.lan` returned exit 2 (NOT FOUND). All external vHost smoke checks failed.
 - **Fix:** The deploy restored the Nix-managed symlink (`/run/current-system/etc/resolv.conf` → store path with only `127.0.0.1`).
 - **Verified live:** `cat /etc/resolv.conf` shows only `nameserver 127.0.0.1`, `search home.lan`, `options edns0 trust-ad`. `getent hosts dash.home.lan` returns `192.168.1.150`.
 
 ### 5. Deploy Verified: 29 PASS, 0 FAIL
+
 - **Post-deploy smoke test:** 29 PASS, 0 FAIL, 2 SKIP (DiscordSync API not ready — expected during startup backfill)
 - **All external vHost checks pass:** Homepage, Forgejo, Status, Immich, Overview (all HTTPS 200)
 - **All functional checks pass:** Crush Daily reports, SigNoz impersonation mode, SigNoz alert rules, Monitor365 agent↔server connectivity, File Renamer history
 - **dnsblockd:** 0 OOM-kills since deploy (10 min uptime so far)
 
 ### 6. AGENTS.md Updated
+
 - Added 3 new gotcha entries: dnsblockd OOM memory leak, manual resolv.conf 9.9.9.9 addition, DiscordSync upstream chattr shell-syntax bug
 - Updated memory cap verification value from 64G → 90G in the `builtins.toString null` gotcha
 
 ### 7. All Commits Clean (auto-committed by daemon)
+
 - `9bf6fc47` fix(nixos-services): resolve dns-blocker OOM kills and discordsync startup failure
 - `fa43db84` docs(agents): add dnsblockd OOM, resolv.conf, and discord sync bugfixes to known issues
 
@@ -51,15 +57,18 @@
 ## b) PARTIALLY DONE
 
 ### 1. dnsblockd Memory Leak — Mitigated, NOT Fixed
+
 - **What's done:** GOMEMLIMIT + 2G MemoryMax will significantly reduce OOM frequency (GOMEMLIMIT forces GC before the wall, 2G gives 500MB more headroom).
 - **What's NOT done:** The actual leak is upstream in dnsblockd (`internal/server/telemetry.go`). The high-cardinality OTEL labels (`dns_domain`, `http_path`, `proxy_domain`) will still grow memory indefinitely — GOMEMLIMIT just makes GC collect faster. Over very long uptimes (days/weeks), memory may still creep toward 2G. The real fix is to drop or bucket those labels in dnsblockd's Go code.
 - **Risk:** If GOMEMLIMIT isn't enough, we'll see OOM-kills at 2G instead of 1G — less frequent but still happening.
 
 ### 2. DiscordSync Service Health — chattr Fixed, Turso Sync Failing
+
 - **What's done:** The broken chattr ExecStartPre is removed. The dbHeal cascade ran successfully (corrupt backup created at 01:00:26). The service starts, loads 3367 attachments for thumb-hash backfill.
 - **What's NOT done:** DiscordSync is now failing with `turso: error: sync engine operation failed: database sync engine error: unexpected EOF`. This is a SEPARATE issue from the chattr bug — the dbHeal cascade created a fresh local DB, and Turso cloud sync is failing to initialize. The service crash-loops on this error. May need Turso re-authentication or sync state reset. This is the same Turso quota/connection class of issue documented in AGENTS.md.
 
 ### 3. Generation Mismatch — Deployed vs Evaluated
+
 - **Deployed:** `/nix/store/ki7kj54i9s9xznxdh1jlmw5bvi2ryzfs-...`
 - **Evaluated now:** `/nix/store/x8fb3fzmrhn5gm0k0da1cm81754i5isx-...`
 - **Cause:** AGENTS.md was edited and auto-committed (fa43db84) AFTER the deploy. The documentation change causes a new system generation to evaluate (the toplevel derivation includes `/etc/static` which includes AGENTS.md content). This is cosmetic — the actual service configs are identical. A re-deploy would sync them.
@@ -80,18 +89,23 @@
 ## d) TOTALLY FUCKED UP
 
 ### 1. Did NOT Audit Upstream ExecStartPre Entries
+
 When working with the DiscordSync module in the prior session, I added `dbHeal` and `waitDnsReady` as ExecStartPre entries but NEVER reviewed the upstream module's existing ExecStartPre. The broken chattr was there the entire time. I should have run `systemctl cat discordsync.service` or read the upstream module source to audit ALL ExecStartPre entries before deploying.
 
 ### 2. Did NOT Check DNS Resolution Before Deploying
+
 The DNS issue (9.9.9.9 in resolv.conf) was not discovered until post-deploy smoke tests revealed all external vHosts failing. I should have verified `getent hosts dash.home.lan` BEFORE starting any build work. The issue was pre-existing (user manually edited resolv.conf at some earlier point).
 
 ### 3. Did NOT Investigate dnsblockd Stability When User Asked About DNS
+
 When the user asked "why is our DNS resolver so unstable", my first instinct should been to check dnsblockd's crash history (`journalctl -u dnsblockd --since "7 days ago" | grep oom-kill`), not jump to the resolv.conf content. The OOM-kill pattern was the smoking gun, and I only found it after being prompted to "READ, UNDERSTAND, RESEARCH, REFLECT".
 
 ### 4. Did NOT Fix DiscordSync Turso Sync Issue
+
 The chattr fix was necessary but not sufficient. DiscordSync still crash-loops because Turso sync fails after the dbHeal cascade created a fresh DB. I deployed a fix that stops the chattr error but left the service in a crash-loop on a DIFFERENT error. I should have verified the service actually starts successfully before declaring victory.
 
 ### 5. The GOMEMLIMIT Value is a Guess
+
 `1500MiB` was chosen as "500MB below MemoryMax" but I have no empirical data showing this is the right threshold. If the OTEL leak grows faster than GC can collect, the process will still OOM at 2G. I should monitor memory growth over the next hours/days and adjust.
 
 ---
@@ -111,11 +125,13 @@ The chattr fix was necessary but not sufficient. DiscordSync still crash-loops b
 ## f) Up to 50 Things We Should Get Done Next
 
 ### Critical (P0)
+
 1. **Fix DiscordSync Turso sync failure** — service is crash-looping on `unexpected EOF` from Turso. Likely needs Turso token/credentials check or sync state reset.
 2. **Monitor dnsblockd memory over 24h** — verify GOMEMLIMIT+2G actually stops the hourly OOM pattern. Check `journalctl -u dnsblockd --since "24 hours ago" | grep -c oom-kill`.
 3. **Fix monitor365-server DuckDB pool timeout** — `pool acquire failed: timed out waiting for connection`. Background tasks (offline_alerts, correlation_engine, policy_violations) all failing.
 
 ### High Priority (P1)
+
 4. **Fix upstream dnsblockd OTEL labels** — drop `dns_domain`, `http_path`, `proxy_domain` from `telemetry.go` or bucket them. This is the real fix for the memory leak.
 5. **Push chattr fix upstream** to DiscordSync NixOS module.
 6. **Add DNS check to pre-deploy-check.sh** — `getent hosts dash.home.lan` must resolve.
@@ -126,6 +142,7 @@ The chattr fix was necessary but not sufficient. DiscordSync still crash-loops b
 11. **Push 2 unpushed commits** — `9bf6fc47` and `fa43db84` are ahead of origin/master.
 
 ### Medium Priority (P2)
+
 12. **Write standalone BTRFS DB recovery script** (`scripts/recover-db.sh`) — generalize the discordsync dbHeal pattern for any SQLite DB on BTRFS.
 13. **Add ExecStartPre shell-syntax linter** to pre-commit hooks — catch `2>/dev/null` / `|| true` in systemd ExecStart lines.
 14. **Audit all upstream NixOS modules** consumed by SystemNix for ExecStartPre shell-syntax bugs (monitor365, PMA, overview, file-renamer, crush-daily).
@@ -142,6 +159,7 @@ The chattr fix was necessary but not sufficient. DiscordSync still crash-loops b
 25. **Audit all services for `ProtectHome` + MemoryMax interaction** — any service reading user data under a memory cap could silent-fail like the crush-daily bug.
 
 ### Lower Priority (P3)
+
 26. **Add BTRFS filesystem health to post-deploy check** — verify scrub status, device-unallocated space, and snapshot freshness.
 27. **Consider switching dnsblockd to `tracking_mode = "OFF"` or `"METADATA_ONLY"` with shorter retention** — reduces SQLite write pressure.
 28. **Add Prometheus alert for Turso sync failures** — DiscordSync crash-loops silently on Turso errors.
@@ -173,23 +191,28 @@ The chattr fix was necessary but not sufficient. DiscordSync still crash-loops b
 ## g) Questions for User
 
 ### Q1: DiscordSync Turso Sync — Re-initialize or Skip?
+
 DiscordSync is crash-looping on `turso: error: sync engine operation failed: database sync engine error: unexpected EOF`. This happened after the dbHeal cascade created a fresh local DB. The Turso cloud sync needs to re-initialize from scratch. Options:
+
 - **A) Disable Turso sync temporarily** — set `syncHandle=nil` so it runs local-only until we sort out Turso. DiscordSync has an upstream config for this.
 - **B) Re-authenticate Turso** — the Turso token may have expired or the database may have been suspended. Needs `turso db shell` access to verify.
 - **C) Leave it crash-looping** — the start-limit burst (10) will eventually stop it. Data is still stored locally; nothing is lost.
 
 ### Q2: dnsblockd Upstream Fix — When?
+
 The GOMEMLIMIT+2G mitigation will reduce OOM frequency but the real fix is dropping high-cardinality OTEL labels in dnsblockd's Go code (`/home/lars/projects/dnsblockd/internal/server/telemetry.go`). Should I:
+
 - **A) Fix it now** — go to the dnsblockd repo, drop/bucket the labels, run tests, bump flake input.
 - **B) Monitor first** — wait 24h to see if GOMEMLIMIT+2G is sufficient, then decide if the upstream fix is urgent.
 - **C) Just increase MemoryMax to 4G** — throw RAM at it (you have 93G) and defer the code fix.
 
 ### Q3: Should I Push the 2 Unpushed SystemNix Commits?
+
 `9bf6fc47` (fix) and `fa43db84` (docs) are ahead of origin/master. The auto-commit daemon created them but hasn't pushed. Should I push now, or do you want to review first?
 
 ---
 
-*Status generated 2026-08-04 02:01. System: evo-x2, NixOS 26.11 unstable, kernel 7.1.5, 93 GB RAM.*
+_Status generated 2026-08-04 02:01. System: evo-x2, NixOS 26.11 unstable, kernel 7.1.5, 93 GB RAM._
 
 ---
 

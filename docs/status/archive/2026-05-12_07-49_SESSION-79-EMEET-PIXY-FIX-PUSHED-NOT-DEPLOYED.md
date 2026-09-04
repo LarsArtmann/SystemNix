@@ -59,18 +59,18 @@ Fix: uevent-based probing with hex-normalized integer comparison. All changes pu
 
 ## c) NOT STARTED
 
-| #   | Task                                                                      | Impact                | Effort |
-| --- | ------------------------------------------------------------------------- | --------------------- | ------ |
-| 1   | Deploy `just switch` on evo-x2                                            | Fix takes effect      | 5 min  |
-| 2   | Verify camera detection: `emeet-pixy status`                              | Confirm fix           | 1 min  |
-| 3   | Verify Waybar camera indicator changes from `---` to actual state         | UX validation         | 1 min  |
-| 4   | Test call auto-tracking cycle (start call → tracking, end call → privacy) | End-to-end validation | 5 min  |
-| 5   | Test `emeet-pixy toggle-privacy`, `audio`, `track` commands               | CLI validation        | 3 min  |
-| 6   | Test web UI at `http://127.0.0.1:8090`                                    | UI validation         | 2 min  |
-| 7   | Update AGENTS.md emeet-pixy section with fix details                      | Documentation         | 5 min  |
-| 8   | Add Gatus health check for webcam daemon state                            | Monitoring            | 10 min |
-| 9   | Add ADR for uevent-based probing vs sysfs id files                        | Decision record       | 10 min |
-| 10  | Add `TestProbeVideo4linux_RealSysfs` integration test (skip if no device) | Prevent regression    | 10 min |
+| #  | Task                                                                      | Impact                | Effort |
+| -- | ------------------------------------------------------------------------- | --------------------- | ------ |
+| 1  | Deploy `just switch` on evo-x2                                            | Fix takes effect      | 5 min  |
+| 2  | Verify camera detection: `emeet-pixy status`                              | Confirm fix           | 1 min  |
+| 3  | Verify Waybar camera indicator changes from `---` to actual state         | UX validation         | 1 min  |
+| 4  | Test call auto-tracking cycle (start call → tracking, end call → privacy) | End-to-end validation | 5 min  |
+| 5  | Test `emeet-pixy toggle-privacy`, `audio`, `track` commands               | CLI validation        | 3 min  |
+| 6  | Test web UI at `http://127.0.0.1:8090`                                    | UI validation         | 2 min  |
+| 7  | Update AGENTS.md emeet-pixy section with fix details                      | Documentation         | 5 min  |
+| 8  | Add Gatus health check for webcam daemon state                            | Monitoring            | 10 min |
+| 9  | Add ADR for uevent-based probing vs sysfs id files                        | Decision record       | 10 min |
+| 10 | Add `TestProbeVideo4linux_RealSysfs` integration test (skip if no device) | Prevent regression    | 10 min |
 
 ---
 
@@ -106,53 +106,53 @@ Fix: uevent-based probing with hex-normalized integer comparison. All changes pu
 
 ### Immediate — Deploy & Verify
 
-| #   | Task                                                       | Impact               | Effort |
-| --- | ---------------------------------------------------------- | -------------------- | ------ |
-| 1   | `just switch` to deploy emeet-pixyd fix                    | **Fix takes effect** | 5 min  |
-| 2   | `emeet-pixy status` — verify camera detected               | Confirm              | 1 min  |
-| 3   | Check Waybar indicator — should show state, not `---`      | UX                   | 1 min  |
-| 4   | Test call cycle: start call → tracking, end call → privacy | E2E                  | 5 min  |
-| 5   | Test CLI: toggle-privacy, audio cycle, track, center       | CLI                  | 3 min  |
-| 6   | Test web UI at `http://127.0.0.1:8090`                     | UI                   | 2 min  |
+| # | Task                                                       | Impact               | Effort |
+| - | ---------------------------------------------------------- | -------------------- | ------ |
+| 1 | `just switch` to deploy emeet-pixyd fix                    | **Fix takes effect** | 5 min  |
+| 2 | `emeet-pixy status` — verify camera detected               | Confirm              | 1 min  |
+| 3 | Check Waybar indicator — should show state, not `---`      | UX                   | 1 min  |
+| 4 | Test call cycle: start call → tracking, end call → privacy | E2E                  | 5 min  |
+| 5 | Test CLI: toggle-privacy, audio cycle, track, center       | CLI                  | 3 min  |
+| 6 | Test web UI at `http://127.0.0.1:8090`                     | UI                   | 2 min  |
 
 ### Monitoring & Observability
 
-| #   | Task                                                                           | Impact       | Effort |
-| --- | ------------------------------------------------------------------------------ | ------------ | ------ |
-| 7   | Add Gatus check for emeet-pixyd: `emeet-pixy status` should return non-offline | Alerting     | 10 min |
-| 8   | Add journald alert rule for persistent "camera=offline"                        | Proactive    | 15 min |
-| 9   | Add `just cam-status` to daily health check script                             | Workflow     | 2 min  |
-| 10  | Verify WatchdogSec=30 is working (check systemd for watchdog keepalives)       | Verification | 2 min  |
+| #  | Task                                                                           | Impact       | Effort |
+| -- | ------------------------------------------------------------------------------ | ------------ | ------ |
+| 7  | Add Gatus check for emeet-pixyd: `emeet-pixy status` should return non-offline | Alerting     | 10 min |
+| 8  | Add journald alert rule for persistent "camera=offline"                        | Proactive    | 15 min |
+| 9  | Add `just cam-status` to daily health check script                             | Workflow     | 2 min  |
+| 10 | Verify WatchdogSec=30 is working (check systemd for watchdog keepalives)       | Verification | 2 min  |
 
 ### Documentation & Records
 
-| #   | Task                                                               | Impact          | Effort |
-| --- | ------------------------------------------------------------------ | --------------- | ------ |
-| 11  | Update AGENTS.md emeet-pixy section with fix + new module settings | Knowledge       | 5 min  |
-| 12  | Write ADR-XXX for uevent-based sysfs probing                       | Decision record | 10 min |
-| 13  | Update emeet-pixyd CHANGELOG.md                                    | Release notes   | 2 min  |
+| #  | Task                                                               | Impact          | Effort |
+| -- | ------------------------------------------------------------------ | --------------- | ------ |
+| 11 | Update AGENTS.md emeet-pixy section with fix + new module settings | Knowledge       | 5 min  |
+| 12 | Write ADR-XXX for uevent-based sysfs probing                       | Decision record | 10 min |
+| 13 | Update emeet-pixyd CHANGELOG.md                                    | Release notes   | 2 min  |
 
 ### Code Quality — emeet-pixyd
 
-| #   | Task                                                                | Impact                | Effort |
-| --- | ------------------------------------------------------------------- | --------------------- | ------ |
-| 14  | Add `TestProbeVideo4linux_RealSysfs` (skip if no device)            | Regression prevention | 10 min |
-| 15  | Fix `TestAutoManage_NoDevice_Returns` isolation (mock probeDevices) | Test correctness      | 15 min |
-| 16  | Extract uevent parsing into a shared helper type                    | DRY                   | 20 min |
-| 17  | Consider branded `VendorID`/`ProductID` types via go-branded-id     | Type safety           | 15 min |
-| 18  | Add startup log for probe result (found vs not found per subsystem) | Observability         | 5 min  |
+| #  | Task                                                                | Impact                | Effort |
+| -- | ------------------------------------------------------------------- | --------------------- | ------ |
+| 14 | Add `TestProbeVideo4linux_RealSysfs` (skip if no device)            | Regression prevention | 10 min |
+| 15 | Fix `TestAutoManage_NoDevice_Returns` isolation (mock probeDevices) | Test correctness      | 15 min |
+| 16 | Extract uevent parsing into a shared helper type                    | DRY                   | 20 min |
+| 17 | Consider branded `VendorID`/`ProductID` types via go-branded-id     | Type safety           | 15 min |
+| 18 | Add startup log for probe result (found vs not found per subsystem) | Observability         | 5 min  |
 
 ### Broader SystemNix
 
-| #   | Task                                                                          | Impact       | Effort |
-| --- | ----------------------------------------------------------------------------- | ------------ | ------ |
-| 19  | Audit other hardware probes for similar sysfs path bugs                       | Preventive   | 15 min |
-| 20  | Review all user services for missing OOMScoreAdjust                           | Hardening    | 15 min |
-| 21  | Verify Ollama GPU OOM defense is still holding (5 days since incident)        | Safety       | 5 min  |
-| 22  | Check if `mptcp-endpoint-manager.service` Restart=always warning needs fixing | Correctness  | 5 min  |
-| 23  | Review pre-commit hook for empty commit detection                             | Process      | 10 min |
-| 24  | Clean up /tmp/emeet-pixyd-review clone                                        | Housekeeping | 1 min  |
-| 25  | Run `just health` for full system check post-fix                              | Verification | 2 min  |
+| #  | Task                                                                          | Impact       | Effort |
+| -- | ----------------------------------------------------------------------------- | ------------ | ------ |
+| 19 | Audit other hardware probes for similar sysfs path bugs                       | Preventive   | 15 min |
+| 20 | Review all user services for missing OOMScoreAdjust                           | Hardening    | 15 min |
+| 21 | Verify Ollama GPU OOM defense is still holding (5 days since incident)        | Safety       | 5 min  |
+| 22 | Check if `mptcp-endpoint-manager.service` Restart=always warning needs fixing | Correctness  | 5 min  |
+| 23 | Review pre-commit hook for empty commit detection                             | Process      | 10 min |
+| 24 | Clean up /tmp/emeet-pixyd-review clone                                        | Housekeeping | 1 min  |
+| 25 | Run `just health` for full system check post-fix                              | Verification | 2 min  |
 
 ---
 

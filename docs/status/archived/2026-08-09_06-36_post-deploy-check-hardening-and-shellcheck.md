@@ -14,11 +14,11 @@
 
 **Fix:** `|| echo "000"` → `|| true` at all 3 sites:
 
-| Line | Context | Fix |
-|------|---------|-----|
-| 32 | `check()` function — main HTTP check | `|| true` preserves curl's `000` output |
-| 138 | DiscordSync readiness retry loop | Same pattern |
-| 443 | Auth gateway vHost health loop | Same pattern |
+| Line | Context                              | Fix          |
+| ---- | ------------------------------------ | ------------ |
+| 32   | `check()` function — main HTTP check | `            |
+| 138  | DiscordSync readiness retry loop     | Same pattern |
+| 443  | Auth gateway vHost health loop       | Same pattern |
 
 **Verification:** `grep -rn '|| echo "000"' scripts/` — zero remaining instances across all `.sh` files.
 
@@ -26,17 +26,17 @@
 
 Expanded from `[curl jq]` (2 packages) to 9 packages covering every command the script invokes:
 
-| Package | Provides | Used at |
-|---------|----------|---------|
-| `coreutils` | `date`, `wc`, `head`, `tr`, `sleep`, `id` | Multiple sites |
-| `curl` | `curl` | All HTTP checks |
-| `fish` | `fish` | Shell startup time check (L505) |
-| `glibc` | `getent` | DNS resolution check (L111) |
-| `gnugrep` | `grep` | Pattern matching throughout |
-| `jq` | `jq` | SigNoz rule count (L271) |
-| `nix` | `nix` | Registry check (L483) |
-| `procps` | `pgrep` | DiscordSync process check (L147) |
-| `systemd` | `systemctl`, `journalctl` | Service state, journal scanning |
+| Package     | Provides                                  | Used at                          |
+| ----------- | ----------------------------------------- | -------------------------------- |
+| `coreutils` | `date`, `wc`, `head`, `tr`, `sleep`, `id` | Multiple sites                   |
+| `curl`      | `curl`                                    | All HTTP checks                  |
+| `fish`      | `fish`                                    | Shell startup time check (L505)  |
+| `glibc`     | `getent`                                  | DNS resolution check (L111)      |
+| `gnugrep`   | `grep`                                    | Pattern matching throughout      |
+| `jq`        | `jq`                                      | SigNoz rule count (L271)         |
+| `nix`       | `nix`                                     | Registry check (L483)            |
+| `procps`    | `pgrep`                                   | DiscordSync process check (L147) |
+| `systemd`   | `systemctl`, `journalctl`                 | Service state, journal scanning  |
 
 **Verification:** `nix eval .#apps.x86_64-linux.post-deploy-check.program` — resolves to store path. `nix flake check --no-build` — passes.
 
@@ -71,11 +71,11 @@ fi
 
 Running `nix fmt` to verify my edits triggered `shfmt`/`alejandra` reformatting on **pre-existing** code I did not author:
 
-| File | Lines changed | Cause |
-|------|--------------|-------|
-| `scripts/post-deploy-check.sh` | 20 | shfmt expanded one-liner functions, removed `$(( ))` spaces |
-| `modules/nixos/services/browser-history.nix` | 5 | alejandra formatting drift |
-| `modules/nixos/services/monitor365.nix` | 1101 | alejandra formatting drift (massive) |
+| File                                         | Lines changed | Cause                                                       |
+| -------------------------------------------- | ------------- | ----------------------------------------------------------- |
+| `scripts/post-deploy-check.sh`               | 20            | shfmt expanded one-liner functions, removed `$(( ))` spaces |
+| `modules/nixos/services/browser-history.nix` | 5             | alejandra formatting drift                                  |
+| `modules/nixos/services/monitor365.nix`      | 1101          | alejandra formatting drift (massive)                        |
 
 **These changes are uncommitted** in the working tree. They are NOT my edits — they are pre-existing formatting drift that the formatter surfaced. The auto-git daemon has not yet committed them.
 
@@ -126,6 +126,7 @@ Running `nix fmt` to verify my edits triggered `shfmt`/`alejandra` reformatting 
 ## f) Up to 50 Things to Get Done Next
 
 #### High Priority — Correctness & Safety
+
 1. ~~Verify `deploy.sh` invocation path for post-deploy-check (hermetic vs system PATH)~~ done — uses `nix run .#post-deploy-check`
 2. Add shellcheck to `.github/workflows/nix-check.yml` CI job
 3. ~~Clean up uncommitted formatting drift in `monitor365.nix` (1101 lines — commit or revert)~~ done at `0a67e776`
@@ -135,6 +136,7 @@ Running `nix fmt` to verify my edits triggered `shfmt`/`alejandra` reformatting 
 7. Run shellcheck on `.githooks/pre-commit` itself
 
 #### Medium Priority — Hermeticity & Tooling
+
 8. Replace `nix shell nixpkgs#shellcheck` in pre-commit with devShell PATH lookup
 9. Replace `nix shell nixpkgs#deadnix` in pre-commit with devShell PATH lookup
 10. Replace `nix shell nixpkgs#statix` in pre-commit with devShell PATH lookup
@@ -146,12 +148,14 @@ Running `nix fmt` to verify my edits triggered `shfmt`/`alejandra` reformatting 
 16. Add `deploy.sh` runtimeInputs audit (same pattern)
 
 #### Shellcheck Enhancements
+
 17. Consider `--severity=style` for new shell code (catches more issues)
 18. Add `.shellcheckrc` to configure excludes globally (SC2312 for command substitution, etc.)
 19. Add shellcheck to the `checks` section of flake.nix (runs on every `nix flake check`)
 20. Create a `scripts/.shellcheckrc` with project-specific excludes
 
 #### Post-Deploy Check Improvements
+
 21. Add `/proc/pressure/io` avg10 check (>80% sustained = I/O contention warning)
 22. Add oauth2-proxy itself as a Gatus health check target
 23. Add Caddy config reload success check (detects `PrivateTmp=true` blocking reload)
@@ -161,6 +165,7 @@ Running `nix fmt` to verify my edits triggered `shfmt`/`alejandra` reformatting 
 27. Consider splitting post-deploy-check.sh into separate check modules for maintainability
 
 #### Pre-Commit Hook Improvements
+
 28. Add `--no-commit` dry-run mode to pre-commit hook for testing
 29. Add timing output to each pre-commit stage (identify slow stages)
 30. Cache `nix shell` invocations across hook runs (nix-shell cache)
@@ -168,6 +173,7 @@ Running `nix fmt` to verify my edits triggered `shfmt`/`alejandra` reformatting 
 32. Add hook for `statix fix` (auto-fix statix issues, not just detect)
 
 #### Documentation
+
 33. Document the shellcheck pre-commit hook in AGENTS.md prevention layers table
 34. Update TODO_LIST.md to mark the 3 items as done
 35. Document the `|| true` vs `|| echo "000"` gotcha in `docs/gotchas-archive.md`
@@ -175,6 +181,7 @@ Running `nix fmt` to verify my edits triggered `shfmt`/`alejandra` reformatting 
 37. Create a `scripts/README.md` documenting each script and its runtimeInputs
 
 #### Broader Quality
+
 38. Audit all flake apps for complete runtimeInputs (not just post-deploy-check)
 39. Add a flake check that verifies all `writeShellApplication` apps have non-empty runtimeInputs
 40. Run `statix check` on the entire repo (not just staged files) for a baseline
@@ -203,18 +210,18 @@ Running `nix fmt` to verify my edits triggered `shfmt`/`alejandra` reformatting 
 
 ## Session Metrics
 
-| Metric | Value |
-|--------|-------|
-| Tasks assigned | 3 |
-| Tasks completed | 3 |
-| Files edited by me | 4 (`post-deploy-check.sh`, `flake.nix`, `.githooks/pre-commit`, `doc-freshness-check.sh`) |
-| Files accidentally reformatted | 3 (`post-deploy-check.sh`, `browser-history.nix`, `monitor365.nix`) |
-| Lines of formatting churn | ~1126 (mostly monitor365.nix) |
-| Shell bugs fixed | 3 (double-000 at 3 sites) |
-| Dead variables removed | 1 (`DESKTOP_MODULES`) |
-| Pre-commit hooks added | 1 (shellcheck) |
-| Verification commands run | 5 (grep, shellcheck, nix eval, nix flake check, nix fmt) |
-| Things I should have done differently | 2 (ran nix fmt globally, didn't check deploy.sh invocation) |
+| Metric                                | Value                                                                                     |
+| ------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Tasks assigned                        | 3                                                                                         |
+| Tasks completed                       | 3                                                                                         |
+| Files edited by me                    | 4 (`post-deploy-check.sh`, `flake.nix`, `.githooks/pre-commit`, `doc-freshness-check.sh`) |
+| Files accidentally reformatted        | 3 (`post-deploy-check.sh`, `browser-history.nix`, `monitor365.nix`)                       |
+| Lines of formatting churn             | ~1126 (mostly monitor365.nix)                                                             |
+| Shell bugs fixed                      | 3 (double-000 at 3 sites)                                                                 |
+| Dead variables removed                | 1 (`DESKTOP_MODULES`)                                                                     |
+| Pre-commit hooks added                | 1 (shellcheck)                                                                            |
+| Verification commands run             | 5 (grep, shellcheck, nix eval, nix flake check, nix fmt)                                  |
+| Things I should have done differently | 2 (ran nix fmt globally, didn't check deploy.sh invocation)                               |
 
 ---
 

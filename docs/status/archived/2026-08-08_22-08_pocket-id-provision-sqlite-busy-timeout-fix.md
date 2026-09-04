@@ -5,7 +5,6 @@
 
 ---
 
-
 ## What Happened
 
 A deploy (`nix run .#deploy`) completed the build and activation, but `pocket-id-provision.service` failed with `exit-code` when trying to create the "Browser History" OIDC client. This blocked the deploy (exit status 4 from `switch-to-configuration`).
@@ -44,29 +43,29 @@ Three changes in `modules/nixos/services/pocket-id.nix` (lines 83-95, 239-263, 2
 
 ## (a) FULLY DONE
 
-| Item | Status |
-|------|--------|
-| Root cause analysis (3 compounding issues) | DONE |
-| Fix applied to `pocket-id.nix` (timeout increase + re-fetch + exit guard + HTTP_CODE extraction) | DONE |
-| Deployed and verified on evo-x2 | DONE |
-| Pocket ID provision completed successfully | DONE |
-| Browser History OIDC client created + secret generated | DONE |
+| Item                                                                                             | Status |
+| ------------------------------------------------------------------------------------------------ | ------ |
+| Root cause analysis (3 compounding issues)                                                       | DONE   |
+| Fix applied to `pocket-id.nix` (timeout increase + re-fetch + exit guard + HTTP_CODE extraction) | DONE   |
+| Deployed and verified on evo-x2                                                                  | DONE   |
+| Pocket ID provision completed successfully                                                       | DONE   |
+| Browser History OIDC client created + secret generated                                           | DONE   |
 
 ## (b) PARTIALLY DONE
 
-| Item | Status | What remains |
-|------|--------|-------------|
-| AGENTS.md gotcha update | NOT DONE | The SQLITE_BUSY provisioning timeout is an enduring lesson that belongs in the Pocket ID gotchas section |
-| Downstream verification chain | PARTIAL | Verified pocket-id-provision succeeded, but did not explicitly verify `browser-history-oidc-setup.service` wrote the env file or that `browser-history.service` started with OAuth2 enabled |
+| Item                          | Status   | What remains                                                                                                                                                                                |
+| ----------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AGENTS.md gotcha update       | NOT DONE | The SQLITE_BUSY provisioning timeout is an enduring lesson that belongs in the Pocket ID gotchas section                                                                                    |
+| Downstream verification chain | PARTIAL  | Verified pocket-id-provision succeeded, but did not explicitly verify `browser-history-oidc-setup.service` wrote the env file or that `browser-history.service` started with OAuth2 enabled |
 
 ## (c) NOT STARTED
 
-| Item |
-|------|
-| Update AGENTS.md with the SQLite BUSY / curl timeout gotcha |
+| Item                                                                                                                   |
+| ---------------------------------------------------------------------------------------------------------------------- |
+| Update AGENTS.md with the SQLite BUSY / curl timeout gotcha                                                            |
 | Verify browser-history OAuth2 login actually works end-to-end (visit `history.home.lan`, click "Login with Pocket ID") |
-| Investigate whether Pocket ID's SQLite needs `PRAGMA busy_timeout` tuning (upstream concern) |
-| Address auth gateway health warnings from post-deploy check (see below) |
+| Investigate whether Pocket ID's SQLite needs `PRAGMA busy_timeout` tuning (upstream concern)                           |
+| Address auth gateway health warnings from post-deploy check (see below)                                                |
 
 ## (d) TOTALLY FUCKED UP
 
@@ -90,20 +89,20 @@ Nothing this session. The fix was correct and verified. However:
 
 ## (f) Up to 50 Things to Get Done Next
 
-| # | Task | Priority |
-|---|------|----------|
-| ~~1~~ | ~~Update AGENTS.md with SQLite BUSY / provisioning timeout gotcha~~ done — AGENTS.md updated | ~~HIGH~~ |
-| ~~2~~ | ~~Verify `browser-history.service` has OAuth2 env file loaded and is running~~ done — deployed, 2,927 events | ~~HIGH~~ |
-| 3 | Test Browser History OAuth2 login end-to-end (visit history.home.lan) | HIGH |
-| ~~4~~ | ~~Add `TimeoutStartSec = "3min"` to pocket-id-provision service~~ done — global DefaultTimeoutStartSec=3min | ~~MEDIUM~~ |
-| 5 | Increase `api_get` timeout from 10s to 30s for consistency | MEDIUM |
-| 6 | Investigate auth gateway health warnings (6 vHosts returning 000000) | MEDIUM |
-| 7 | Investigate `cache.home.lan` DNS resolution failure during builds | MEDIUM |
-| 8 | Add `--retry` to provisioning curl calls for SQLITE_BUSY resilience | LOW |
-| 9 | Consider upstream Pocket ID issue: SQLite `PRAGMA busy_timeout` tuning | LOW |
-| ~~10~~ | ~~Add Gatus health check for Browser History service~~ done — `gatus-config.nix:890-901` | ~~MEDIUM~~ |
-| ~~11~~ | ~~Run `nix flake check --no-build` to validate full flake after changes~~ done — passes | ~~MEDIUM~~ |
-| 12 | Verify Browser History appears in Pocket ID admin UI with correct callback URL | LOW |
+| #      | Task                                                                                                         | Priority   |
+| ------ | ------------------------------------------------------------------------------------------------------------ | ---------- |
+| ~~1~~  | ~~Update AGENTS.md with SQLite BUSY / provisioning timeout gotcha~~ done — AGENTS.md updated                 | ~~HIGH~~   |
+| ~~2~~  | ~~Verify `browser-history.service` has OAuth2 env file loaded and is running~~ done — deployed, 2,927 events | ~~HIGH~~   |
+| 3      | Test Browser History OAuth2 login end-to-end (visit history.home.lan)                                        | HIGH       |
+| ~~4~~  | ~~Add `TimeoutStartSec = "3min"` to pocket-id-provision service~~ done — global DefaultTimeoutStartSec=3min  | ~~MEDIUM~~ |
+| 5      | Increase `api_get` timeout from 10s to 30s for consistency                                                   | MEDIUM     |
+| 6      | Investigate auth gateway health warnings (6 vHosts returning 000000)                                         | MEDIUM     |
+| 7      | Investigate `cache.home.lan` DNS resolution failure during builds                                            | MEDIUM     |
+| 8      | Add `--retry` to provisioning curl calls for SQLITE_BUSY resilience                                          | LOW        |
+| 9      | Consider upstream Pocket ID issue: SQLite `PRAGMA busy_timeout` tuning                                       | LOW        |
+| ~~10~~ | ~~Add Gatus health check for Browser History service~~ done — `gatus-config.nix:890-901`                     | ~~MEDIUM~~ |
+| ~~11~~ | ~~Run `nix flake check --no-build` to validate full flake after changes~~ done — passes                      | ~~MEDIUM~~ |
+| 12     | Verify Browser History appears in Pocket ID admin UI with correct callback URL                               | LOW        |
 
 ## (g) Questions I Cannot Answer Myself
 

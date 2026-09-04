@@ -25,9 +25,9 @@ This report provides a comprehensive analysis of the Setup-Mac Nix configuration
 | Metric             | Value                         | Status                  |
 | ------------------ | ----------------------------- | ----------------------- |
 | Total Nix Files    | 77                            | ✅ Production-scale     |
-| Shell Scripts      | 39                            | ⚠️ High maintenance     |
+| Shell Scripts      | 39                            | ⚠️ High maintenance      |
 | CI Platforms       | 2 (macOS, Ubuntu)             | ✅ Cross-platform       |
-| Test Coverage      | 79 integration tests          | ⚠️ No unit tests        |
+| Test Coverage      | 79 integration tests          | ⚠️ No unit tests         |
 | Pre-commit Hooks   | 6 (gitleaks, alejandra, etc.) | ✅ Comprehensive        |
 | Build Status       | `result` symlink present      | ✅ Last build succeeded |
 | Open TODOs         | 11 in production code         | 🔴 Unaddressed debt     |

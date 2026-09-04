@@ -153,33 +153,33 @@ All Docker-based services (Immich, SigNoz, Twenty, PhotoMap, Voice Agents) remai
 
 ## F) TOP 25 THINGS TO DO NEXT (Prioritized)
 
-| Priority | #   | Task                                                            | Category      | Est. |
-| -------- | --- | --------------------------------------------------------------- | ------------- | ---- |
-| 🔴 P0    | 1   | **`just switch` — deploy all 10+ committed changes**            | DEPLOY        | 45m  |
-| 🔴 P0    | 2   | **Kill duplicate llama-server (PID 1210173)**                   | OPS           | 1m   |
-| 🔴 P0    | 3   | **`nix-collect-garbage -d` — reclaim disk space**               | DISK          | 5m   |
-| 🔴 P0    | 4   | **Add `harden` to ai-stack.nix (Ollama, Unsloth)**              | RELIABILITY   | 15m  |
-| 🔴 P0    | 5   | **Clean coredumps: `coredumpctl vacuum`**                       | OPS           | 1m   |
-| 🟠 P1    | 6   | **Verify niri nproc fix took effect**                           | VERIFY        | 2m   |
-| 🟠 P1    | 7   | **Verify emeet-pixyd auto enum works**                          | VERIFY        | 2m   |
-| 🟠 P1    | 8   | **Start Docker + verify Immich, SigNoz, Twenty**                | DEPLOY        | 15m  |
-| 🟠 P1    | 9   | **Migrate 5 services to `harden()` function**                   | SECURITY      | 30m  |
-| 🟠 P1    | 10  | **Audit `/data/llamacpp-models` vs `/data/models` for dedup**   | DISK          | 15m  |
-| 🟡 P2    | 11  | **Hermes health check endpoint**                                | OBSERVABILITY | 20m  |
-| 🟡 P2    | 12  | **Move Taskwarrior encryption to sops-nix**                     | SECURITY      | 10m  |
-| 🟡 P2    | 13  | **Pin Docker image digests (Voice Agents + PhotoMap)**          | SECURITY      | 10m  |
-| 🟡 P2    | 14  | **Secure VRRP auth_pass with sops**                             | SECURITY      | 8m   |
-| 🟡 P2    | 15  | **Complete `/data/ai/` migration**                              | ARCH          | 20m  |
-| 🟡 P2    | 16  | **Verify SigNoz metrics collection post-deploy**                | OBSERVABILITY | 10m  |
-| 🟡 P2    | 17  | **Add `LimitNPROC=infinity` to waybar, pipewire user services** | RELIABILITY   | 5m   |
-| 🟢 P3    | 18  | **Close idle editor sessions** (30 gopls instances)             | PERF          | 2m   |
-| 🟢 P3    | 19  | **Verify Authelia SSO + SMTP notifications**                    | SECURITY      | 10m  |
-| 🟢 P3    | 20  | **Build Pi 3 SD image for DNS failover cluster**                | DEPLOY        | 30m+ |
-| 🟢 P3    | 21  | **Add ComfyUI `MemoryHigh` (soft limit)**                       | RELIABILITY   | 5m   |
-| 🟢 P3    | 22  | **Wire `mr-sync` into perSystem.packages**                      | BUILD         | 10m  |
-| 🟢 P3    | 23  | **Remove `with lib;` from signoz.nix**                          | STYLE         | 5m   |
-| 🔵 P4    | 24  | **Add NixOS VM tests for critical services**                    | TESTING       | 2h+  |
-| 🔵 P4    | 25  | **Investigate Committed_AS overcommit (100GB vs 76GB)**         | RESEARCH      | 30m  |
+| Priority | #  | Task                                                            | Category      | Est. |
+| -------- | -- | --------------------------------------------------------------- | ------------- | ---- |
+| 🔴 P0    | 1  | **`just switch` — deploy all 10+ committed changes**            | DEPLOY        | 45m  |
+| 🔴 P0    | 2  | **Kill duplicate llama-server (PID 1210173)**                   | OPS           | 1m   |
+| 🔴 P0    | 3  | **`nix-collect-garbage -d` — reclaim disk space**               | DISK          | 5m   |
+| 🔴 P0    | 4  | **Add `harden` to ai-stack.nix (Ollama, Unsloth)**              | RELIABILITY   | 15m  |
+| 🔴 P0    | 5  | **Clean coredumps: `coredumpctl vacuum`**                       | OPS           | 1m   |
+| 🟠 P1    | 6  | **Verify niri nproc fix took effect**                           | VERIFY        | 2m   |
+| 🟠 P1    | 7  | **Verify emeet-pixyd auto enum works**                          | VERIFY        | 2m   |
+| 🟠 P1    | 8  | **Start Docker + verify Immich, SigNoz, Twenty**                | DEPLOY        | 15m  |
+| 🟠 P1    | 9  | **Migrate 5 services to `harden()` function**                   | SECURITY      | 30m  |
+| 🟠 P1    | 10 | **Audit `/data/llamacpp-models` vs `/data/models` for dedup**   | DISK          | 15m  |
+| 🟡 P2    | 11 | **Hermes health check endpoint**                                | OBSERVABILITY | 20m  |
+| 🟡 P2    | 12 | **Move Taskwarrior encryption to sops-nix**                     | SECURITY      | 10m  |
+| 🟡 P2    | 13 | **Pin Docker image digests (Voice Agents + PhotoMap)**          | SECURITY      | 10m  |
+| 🟡 P2    | 14 | **Secure VRRP auth_pass with sops**                             | SECURITY      | 8m   |
+| 🟡 P2    | 15 | **Complete `/data/ai/` migration**                              | ARCH          | 20m  |
+| 🟡 P2    | 16 | **Verify SigNoz metrics collection post-deploy**                | OBSERVABILITY | 10m  |
+| 🟡 P2    | 17 | **Add `LimitNPROC=infinity` to waybar, pipewire user services** | RELIABILITY   | 5m   |
+| 🟢 P3    | 18 | **Close idle editor sessions** (30 gopls instances)             | PERF          | 2m   |
+| 🟢 P3    | 19 | **Verify Authelia SSO + SMTP notifications**                    | SECURITY      | 10m  |
+| 🟢 P3    | 20 | **Build Pi 3 SD image for DNS failover cluster**                | DEPLOY        | 30m+ |
+| 🟢 P3    | 21 | **Add ComfyUI `MemoryHigh` (soft limit)**                       | RELIABILITY   | 5m   |
+| 🟢 P3    | 22 | **Wire `mr-sync` into perSystem.packages**                      | BUILD         | 10m  |
+| 🟢 P3    | 23 | **Remove `with lib;` from signoz.nix**                          | STYLE         | 5m   |
+| 🔵 P4    | 24 | **Add NixOS VM tests for critical services**                    | TESTING       | 2h+  |
+| 🔵 P4    | 25 | **Investigate Committed_AS overcommit (100GB vs 76GB)**         | RESEARCH      | 30m  |
 
 ---
 
@@ -202,8 +202,8 @@ This is now **blocking all P5 verification tasks** (42-49). Without Docker, none
 | Metric                | Value                    | Status | Change from Session 9 |
 | --------------------- | ------------------------ | ------ | --------------------- |
 | **Uptime**            | 8d 1.3h                  | Long   | +6h                   |
-| **RAM**               | 47/62 GB (76%)           | ⚠️     | ↑ from 74%            |
-| **Swap (ZRAM)**       | 14.8/31.2 GB (47%)       | ⚠️     | ↓ from 49%            |
+| **RAM**               | 47/62 GB (76%)           | ⚠️      | ↑ from 74%            |
+| **Swap (ZRAM)**       | 14.8/31.2 GB (47%)       | ⚠️      | ↓ from 49%            |
 | **Root disk**         | 441/512 GB (88%)         | 🔴     | ↑ from 86%            |
 | **Data disk**         | 685/800 GB (86%)         | 🔴     | Same                  |
 | **Load avg**          | 3.5/32 cores             | ✅     | ↓ from 29             |

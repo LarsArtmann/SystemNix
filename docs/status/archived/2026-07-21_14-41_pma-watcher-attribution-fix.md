@@ -9,7 +9,6 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 1. **Root cause identified** — `watcher.convertEvent` attributed every file event to the watch root (`/home/lars/projects`) instead of the actual git repository root. Since the watch root is not a git repo, `git status` failed with exit 128 in an infinite loop, and `MarkDirty` continuously invalidated the entire discovery cache (forcing 33s full re-discovery that exceeded the SDK daemon client's 30s timeout).
@@ -69,6 +68,7 @@
 ## f) NEXT — UP TO 50 THINGS
 
 ### P0 — Blockers / correctness
+
 1. Remove dead `projectPath` param from `watchLoop` + the goroutine in watcher.go
 2. Add TTL/eviction to `gitRootCache` (especially for negative results) so newly-init'd repos are detected
 3. Investigate + fix the missing AI provider keys (MINIMAX/GROQ/OPENAI) so auto-commit actually works end-to-end
@@ -76,6 +76,7 @@
 5. Handle the case where `.git` is a FILE (git worktree/submodule pointer), not a directory — `os.Stat` succeeds on both, but worth an explicit test
 
 ### P1 — Hardening
+
 6. Add a watcher integration test: create a parent dir + 2 child repos, fire events in both, assert events attributed to correct roots
 7. Add a watcher test for `git init` after caching (negative-then-positive transition)
 8. Add a watcher test for symlinked `.git` (worktrees)
@@ -87,6 +88,7 @@
 14. Verify the `MarkDirty` call path no longer receives the watch root anywhere
 
 ### P2 — Documentation
+
 15. Add SystemNix AGENTS.md gotcha entry for the watcher-attribution bug + 3-symptom cascade
 16. Update the existing "Overview OOM-kills when PMA discovery daemon is absent" gotcha with the cache-starvation variant
 17. Document the SDK's camelCase `searchPaths` JSON field in PMA AGENTS.md (cost me a round trip)
@@ -95,6 +97,7 @@
 20. Commit or trash the pre-existing PMA `errors.AsType` refactoring changes
 
 ### P3 — Quality of life
+
 21. Add a `pma daemon status` CLI subcommand that probes the socket and reports cache hit/miss stats
 22. Add metrics export from the daemon (DirtyCount, cache size, avg discovery time)
 23. Wire DirtyCount into a Grafana panel via the existing Prometheus stack
@@ -105,6 +108,7 @@
 28. Add a `pma doctor` command that runs the self-checks (daemon reachable, cache warming, AI provider configured, watch roots valid)
 
 ### P4 — SystemNix-side
+
 29. Verify the SystemNix PMA module sets a sane `MemoryMax` (currently 8G — confirm appropriate)
 30. Add a `restartTriggers` on the PMA package to force restart on binary change (the Type=exec override may suppress it)
 31. Consider adding `StartLimitBurst`/`StartLimitIntervalSec` to PMA's systemd unit (per the SystemNix harden convention)
@@ -113,6 +117,7 @@
 34. Check if the pre-existing SystemNix working-tree changes (`git.nix`, `post-deploy-check.sh`, `AGENTS.md`) are safe to commit
 
 ### P5 — The watcher fix, deeper
+
 35. Benchmark `findGitRoot` against a tree with 10k directories to confirm cache effectiveness
 36. Consider using `filepath.EvalSymlinks` once at watch-start to normalize all paths (avoids per-event symlink resolution)
 37. Add a negative-cache TTL constant (e.g., 5 min) vs positive-cache (process lifetime)
@@ -123,6 +128,7 @@
 42. Add a doc comment to `findGitRoot` explaining the negative-cache eviction gap
 
 ### P6 — Adjacent improvements noticed
+
 43. The daemon's `maxSearchPaths = 100` limit (SDK server.go:29) — document it
 44. The daemon has a `/v1/discover-batch` endpoint — verify PMA uses it where appropriate (batch enrichment)
 45. The daemon's `IdleTimeout = 120s` — confirm this is sane for long-lived CLI sessions
@@ -146,16 +152,16 @@
 
 ## Timeline
 
-| Time (UTC) | Event |
-|---|---|
-| ~10:43 | User reported `projects-management-automation stats` timing out with "daemon unreachable mid-call" |
-| ~11:00 | Investigated: daemon socket up, PMA crash-looping on `git status failed: exit 128` for `/home/lars/projects` (non-repo) |
-| ~11:15 | Traced root cause to `watcher.convertEvent` attributing all events to watch root |
-| ~11:30 | Implemented `findGitRoot` + `convertEvent` fix |
-| ~11:45 | Added 7 unit tests; full internal + api test suites pass |
-| ~12:00 | Committed `52c01b18`, pushed to GitHub |
-| ~12:15 | Updated SystemNix flake lock, deployed |
-| ~12:30 | Verified: daemon 1.4s, CLI 2.0s, 0 git-status errors |
+| Time (UTC) | Event                                                                                                                   |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------- |
+| ~10:43     | User reported `projects-management-automation stats` timing out with "daemon unreachable mid-call"                      |
+| ~11:00     | Investigated: daemon socket up, PMA crash-looping on `git status failed: exit 128` for `/home/lars/projects` (non-repo) |
+| ~11:15     | Traced root cause to `watcher.convertEvent` attributing all events to watch root                                        |
+| ~11:30     | Implemented `findGitRoot` + `convertEvent` fix                                                                          |
+| ~11:45     | Added 7 unit tests; full internal + api test suites pass                                                                |
+| ~12:00     | Committed `52c01b18`, pushed to GitHub                                                                                  |
+| ~12:15     | Updated SystemNix flake lock, deployed                                                                                  |
+| ~12:30     | Verified: daemon 1.4s, CLI 2.0s, 0 git-status errors                                                                    |
 
 ---
 

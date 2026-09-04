@@ -34,9 +34,13 @@
         runtimeInputs = [ pkgs.curl ];
         text = ''
           echo "discordsync: waiting for DNS resolution..."
-          curl -sf --max-time 5 --retry 60 --retry-delay 2 --retry-all-errors \
+          # 150 retries × 2s = 300s budget: dnsblockd needs ~2min at boot to
+          # load its blocklist mapping (2026-08-31 boot class). The unit's
+          # TimeoutStartSec (6min) MUST stay above this budget —
+          # gate-timeout-audit.nix enforces it at eval time.
+          curl -sf --max-time 5 --retry 150 --retry-delay 2 --retry-all-errors \
             -o /dev/null "https://discord.com" \
-            || { echo "discordsync: DNS/network not ready after 120s — dnsblockd may not be initialized" >&2; exit 1; }
+            || { echo "discordsync: DNS/network not ready after 300s — dnsblockd may not be initialized" >&2; exit 1; }
           echo "discordsync: DNS resolution ready"
         '';
       };
@@ -240,6 +244,24 @@
             # expects host:port WITHOUT scheme — the SDK constructs the full URL
             # internally (http://<endpoint>/v1/traces). WithInsecure() = plain HTTP.
             OTEL_EXPORTER_OTLP_ENDPOINT = "localhost:${toString ports.signoz-otlp-http}";
+            # 2026-09-02 incident: the startup integrity sweep re-read and
+            # re-hashed the whole ~40 GB archive on every boot, saturating the
+            # SSD at 100% IO and starving SQLite (zombie gateway, 40s healthz,
+            # SIGKILL on shutdown). Re-enabled 2026-09-04 after upstream T1
+            # (byte-rate pacing) + T2 (resumable oldest-first sweep) shipped:
+            # reads are paced at 100 MB/s and ionice'd, and an interrupted
+            # pass resumes from the oldest-unverified frontier on the next
+            # pass — a 30-min timeout abort is now bounded I/O with retained
+            # progress, and the SweepInterrupted alert makes it observable.
+            INTEGRITY_CHECK_ON_STARTUP = "true";
+            INTEGRITY_CHECK_INTERVAL = "12h";
+            # Byte-rate pacing cap for integrity sweeps (upstream T1,
+            # 2026-09-04). Bounds worst-case sweep read throughput so a cold
+            # cache can never storm the shared SSD again. 100 MB/s ≈ the
+            # upstream default, kept explicit here so the operator-visible env
+            # map documents the intent; ~18% of a SATA SSD's sequential
+            # bandwidth and further cushioned by ioTier.background (ionice).
+            INTEGRITY_SWEEP_MAX_MBPS = "100";
           }
           // lib.optionalAttrs (cfg.gcsBucket != null) {
             GCS_BUCKET = cfg.gcsBucket;
@@ -249,19 +271,20 @@
           serviceConfig = lib.mkMerge [
             {
               # mkForce replaces the upstream ExecStartPre entirely.
-              # The upstream module ships a broken chattr: "chattr -R +C ... 2>/dev/null || true"
-              # — systemd ExecStartPre is NOT shell, so "2>/dev/null" and "|| true" are
-              # passed as literal file arguments to chattr. Also lacks "+" prefix so runs
-              # as the service user → "Operation not permitted". BTRFS +C (nodatacow) is
-              # nice-to-have for SQLite but not required — DiscordSync uses WAL mode.
-              # Fix upstream: wrap in pkgs.writeShellApplication or use ExecStartPre=+/bin/sh -c '...'.
+              # Upstream's chattr ExecStartPre was repaired 2026-08-05
+              # (0e72e7b1: writeShellApplication wrapper + "+" privileged prefix),
+              # so the drop below is NO LONGER about the chattr bug — the
+              # remaining reason is replacing upstream's ExecStartPre chain with
+              # the DNS-gate only (db-heal lives in discordsync-db-heal.service;
+              # NOCOW is nice-to-have for SQLite, WAL mode already bounds the
+              # write-amplification damage).
               #
               # DB heal extracted to discordsync-db-heal.service oneshot (see above).
               # Only DNS wait remains in ExecStartPre — fast (~2-10s).
               ExecStartPre = lib.mkForce [
                 "+${lib.getExe waitDnsReady}"
               ];
-              TimeoutStartSec = "2min";
+              TimeoutStartSec = "6min";
             }
             (harden {
               # Backfill bursts + turso-sync need more than upstream's 512M.

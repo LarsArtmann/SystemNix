@@ -890,13 +890,13 @@ These files were corrupted during copy or original download, causing patch appli
 | Metric                     | Value             | Status          |
 | -------------------------- | ----------------- | --------------- |
 | **Original Approach**      | fetchpatch        | ✅ 100% WORKING |
-| **Nix-Native Approach**    | Local patches     | ⚠️ 33% DONE     |
+| **Nix-Native Approach**    | Local patches     | ⚠️ 33% DONE      |
 | **Patch Files Fixed**      | 1/3               | 🔄 IN PROGRESS  |
 | **Build Success Rate**     | 1/2               | 50%             |
 | **Documentation Complete** | 90%               | ✅ NEARLY DONE  |
-| **Automated Script**       | Written, untested | ⚠️ PENDING      |
+| **Automated Script**       | Written, untested | ⚠️ PENDING       |
 | **Time Invested**          | ~2 hours          | 💰 HIGH         |
-| **Remaining Work**         | 5-30 minutes      | ⏱️ SHORT        |
+| **Remaining Work**         | 5-30 minutes      | ⏱️ SHORT         |
 | **Decision Required**      | Yes               | 🚨 BLOCKING     |
 
 ---

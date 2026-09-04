@@ -202,7 +202,7 @@ The last 7 sessions (25-31) were dominated by a cascade of build failures:
 | --------------------------------- | ---------------------------------------------- | -------------------------------- |
 | GMKtec 130W power ceiling         | CPU throttled under sustained load             | Accepted — firmware limit        |
 | awww-daemon 0.12.0 BrokenPipe     | Wallpaper daemon crashes on Wayland disconnect | Mitigated — `Restart=always`     |
-| statix pipe operator parse errors | Pre-commit hook false positives on `           | >`                               | Mitigated — grep filter |
+| statix pipe operator parse errors | Pre-commit hook false positives on `           | >`                               |
 | watchdogd nixpkgs module broken   | `device` and `reset-reason` sections fail      | Workaround — omit broken options |
 | niri-session-manager limitation   | Cannot restore terminal child processes        | Accepted — upstream issue        |
 | Darwin disk (229 GB)              | Regularly at 90-95% capacity                   | Ongoing — manual cleanup         |
@@ -264,48 +264,48 @@ The pre-commit config runs statix and alejandra but doesn't validate that `nix e
 
 ### Priority 1: Critical (Do This Week)
 
-| #   | Task                                                          | Impact                                   | Effort  |
-| --- | ------------------------------------------------------------- | ---------------------------------------- | ------- |
-| 1   | **Migrate `twenty.nix` to `mkDockerService`**                 | Eliminates 80+ lines of boilerplate      | Low     |
-| 2   | **Migrate `voice-agents.nix` to `mkDockerService`**           | Eliminates 60+ lines of boilerplate      | Low     |
-| 3   | **Add `nix eval` to pre-commit hook**                         | Prevents 7-session build error marathons | Low     |
-| 4   | **Commit the `flake.lock` update** (1 commit ahead of origin) | Keeps origin in sync                     | Trivial |
-| 5   | **Add `just hash-check` recipe** to detect vendor hash drift  | Early warning on upstream changes        | Medium  |
+| # | Task                                                          | Impact                                   | Effort  |
+| - | ------------------------------------------------------------- | ---------------------------------------- | ------- |
+| 1 | **Migrate `twenty.nix` to `mkDockerService`**                 | Eliminates 80+ lines of boilerplate      | Low     |
+| 2 | **Migrate `voice-agents.nix` to `mkDockerService`**           | Eliminates 60+ lines of boilerplate      | Low     |
+| 3 | **Add `nix eval` to pre-commit hook**                         | Prevents 7-session build error marathons | Low     |
+| 4 | **Commit the `flake.lock` update** (1 commit ahead of origin) | Keeps origin in sync                     | Trivial |
+| 5 | **Add `just hash-check` recipe** to detect vendor hash drift  | Early warning on upstream changes        | Medium  |
 
 ### Priority 2: High (Do This Month)
 
-| #   | Task                                                                  | Impact                               | Effort  |
-| --- | --------------------------------------------------------------------- | ------------------------------------ | ------- |
-| 6   | **Migrate remaining ~11 ports to `serviceTypes.servicePort`**         | Single source of truth for all ports | Medium  |
-| 7   | **Adopt `mkStateDir` across all services with tmpfiles**              | DRY tmpfiles boilerplate             | Low     |
-| 8   | **Write first NixOS VM test** (e.g., DNS resolver test)               | Validates actual service behavior    | High    |
-| 9   | **Archive old status reports** (>30 days) to `docs/status/archive/`   | Reduces docs noise                   | Trivial |
-| 10  | **Add session lock mechanism** to prevent parallel session collisions | Prevents build breakage              | Medium  |
-| 11  | **Set up remote deploy pipeline** from macOS → evo-x2                 | Faster, safer deployments            | Medium  |
+| #  | Task                                                                  | Impact                               | Effort  |
+| -- | --------------------------------------------------------------------- | ------------------------------------ | ------- |
+| 6  | **Migrate remaining ~11 ports to `serviceTypes.servicePort`**         | Single source of truth for all ports | Medium  |
+| 7  | **Adopt `mkStateDir` across all services with tmpfiles**              | DRY tmpfiles boilerplate             | Low     |
+| 8  | **Write first NixOS VM test** (e.g., DNS resolver test)               | Validates actual service behavior    | High    |
+| 9  | **Archive old status reports** (>30 days) to `docs/status/archive/`   | Reduces docs noise                   | Trivial |
+| 10 | **Add session lock mechanism** to prevent parallel session collisions | Prevents build breakage              | Medium  |
+| 11 | **Set up remote deploy pipeline** from macOS → evo-x2                 | Faster, safer deployments            | Medium  |
 
 ### Priority 3: Medium (Next Quarter)
 
-| #   | Task                                                            | Impact                   | Effort |
-| --- | --------------------------------------------------------------- | ------------------------ | ------ |
-| 12  | **Provision Pi 3** for DNS failover cluster                     | HA DNS                   | Medium |
-| 13  | **Split AGENTS.md** into domain-specific files                  | Reduces context loading  | Medium |
-| 14  | **Add automated secret rotation** via sops + cron               | Security hygiene         | High   |
-| 15  | **Write `just runbook <service>` command**                      | Faster incident response | Medium |
-| 16  | **Migrate `minecraft.nix` to use `harden` + `serviceDefaults`** | Consistency              | Low    |
-| 17  | **Add health check endpoints** to services lacking them         | Observability            | Medium |
+| #  | Task                                                            | Impact                   | Effort |
+| -- | --------------------------------------------------------------- | ------------------------ | ------ |
+| 12 | **Provision Pi 3** for DNS failover cluster                     | HA DNS                   | Medium |
+| 13 | **Split AGENTS.md** into domain-specific files                  | Reduces context loading  | Medium |
+| 14 | **Add automated secret rotation** via sops + cron               | Security hygiene         | High   |
+| 15 | **Write `just runbook <service>` command**                      | Faster incident response | Medium |
+| 16 | **Migrate `minecraft.nix` to use `harden` + `serviceDefaults`** | Consistency              | Low    |
+| 17 | **Add health check endpoints** to services lacking them         | Observability            | Medium |
 
 ### Priority 4: Nice-to-Have
 
-| #   | Task                                                                   | Impact                         | Effort |
-| --- | ---------------------------------------------------------------------- | ------------------------------ | ------ |
-| 18  | **Extract Caddy virtual hosts to a helper**                            | DRY reverse proxy config       | Medium |
-| 19  | **Add Dozzle** for Docker log viewer                                   | Better container observability | Low    |
-| 20  | **Write integration tests** for critical services (Caddy, DNS, SigNoz) | Correctness validation         | High   |
-| 21  | **Automate Darwin disk cleanup** via LaunchAgent                       | Prevents disk exhaustion       | Low    |
-| 22  | **Add `nix flake check` to CI** (even manual `just ci`)                | Full flake validation          | Low    |
-| 23  | **Monitor365 alerting rules** in Gatus/SigNoz                          | Device monitoring coverage     | Low    |
-| 24  | **Twenty CRM backup** via `mkDockerService` `backup` parameter         | Data protection                | Low    |
-| 25  | **Consolidate `signoz-alerts.nix` mkRule helper** into shared lib      | Reusable alert definitions     | Medium |
+| #  | Task                                                                   | Impact                         | Effort |
+| -- | ---------------------------------------------------------------------- | ------------------------------ | ------ |
+| 18 | **Extract Caddy virtual hosts to a helper**                            | DRY reverse proxy config       | Medium |
+| 19 | **Add Dozzle** for Docker log viewer                                   | Better container observability | Low    |
+| 20 | **Write integration tests** for critical services (Caddy, DNS, SigNoz) | Correctness validation         | High   |
+| 21 | **Automate Darwin disk cleanup** via LaunchAgent                       | Prevents disk exhaustion       | Low    |
+| 22 | **Add `nix flake check` to CI** (even manual `just ci`)                | Full flake validation          | Low    |
+| 23 | **Monitor365 alerting rules** in Gatus/SigNoz                          | Device monitoring coverage     | Low    |
+| 24 | **Twenty CRM backup** via `mkDockerService` `backup` parameter         | Data protection                | Low    |
+| 25 | **Consolidate `signoz-alerts.nix` mkRule helper** into shared lib      | Reusable alert definitions     | Medium |
 
 ---
 

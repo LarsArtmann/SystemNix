@@ -153,48 +153,48 @@ All changes validated with `just test-fast`. 17 files, 37 insertions, 21 deletio
 
 ### Critical (P0)
 
-| #   | Task                                                        | Est.  |
-| --- | ----------------------------------------------------------- | ----- |
-| 1   | Deploy this session's changes: `just test && just switch`   | 10min |
-| 2   | Verify awww-daemon restarts after `just switch`             | 2min  |
-| 3   | Fix pre-commit statix hook (broken since wallpapers commit) | 15min |
+| # | Task                                                        | Est.  |
+| - | ----------------------------------------------------------- | ----- |
+| 1 | Deploy this session's changes: `just test && just switch`   | 10min |
+| 2 | Verify awww-daemon restarts after `just switch`             | 2min  |
+| 3 | Fix pre-commit statix hook (broken since wallpapers commit) | 15min |
 
 ### High (P1)
 
-| #   | Task                                                                                 | Est.  |
-| --- | ------------------------------------------------------------------------------------ | ----- |
-| 4   | Add `OnFailure` notification to all user systemd services (awww, cliphist, swayidle) | 15min |
-| 5   | Add wallpaper rotation timer (every 30min, random from wallpaperDir)                 | 10min |
-| 6   | Consolidate remaining inline restart config into `serviceDefaults` calls             | 20min |
-| 7   | Extract wallpaper logic from niri-wrapped.nix into dedicated module                  | 30min |
-| 8   | Add Mod+Shift+W (next wallpaper) and Mod+Ctrl+W (prev wallpaper) keybinds            | 10min |
-| 9   | File upstream awww bug report for BrokenPipe panic                                   | 10min |
+| # | Task                                                                                 | Est.  |
+| - | ------------------------------------------------------------------------------------ | ----- |
+| 4 | Add `OnFailure` notification to all user systemd services (awww, cliphist, swayidle) | 15min |
+| 5 | Add wallpaper rotation timer (every 30min, random from wallpaperDir)                 | 10min |
+| 6 | Consolidate remaining inline restart config into `serviceDefaults` calls             | 20min |
+| 7 | Extract wallpaper logic from niri-wrapped.nix into dedicated module                  | 30min |
+| 8 | Add Mod+Shift+W (next wallpaper) and Mod+Ctrl+W (prev wallpaper) keybinds            | 10min |
+| 9 | File upstream awww bug report for BrokenPipe panic                                   | 10min |
 
 ### Medium (P2)
 
-| #   | Task                                                                                      | Est.           |
-| --- | ----------------------------------------------------------------------------------------- | -------------- |
-| 10  | Add ExecStartPost health checks to services missing them (Authelia has one, others don't) | 30min          |
-| 11  | Update AGENTS.md with new Restart=always policy and rationale                             | 5min           |
-| 12  | Provision Pi 3 hardware for DNS failover cluster                                          | 1hr (hardware) |
-| 13  | Add Docker container health → systemd status propagation                                  | 20min          |
-| 14  | Configure SigNoz alert channels (email/Discord/webhook)                                   | 15min          |
-| 15  | Add Immich backup restore test (verify backups actually work)                             | 30min          |
-| 16  | Add Gitea backup restore test                                                             | 20min          |
-| 17  | Wire monitor365 back up (investigate RAM usage, tune or add MemoryMax)                    | 20min          |
-| 18  | Add ActivityWatch NixOS systemd service (currently only Darwin)                           | 15min          |
+| #  | Task                                                                                      | Est.           |
+| -- | ----------------------------------------------------------------------------------------- | -------------- |
+| 10 | Add ExecStartPost health checks to services missing them (Authelia has one, others don't) | 30min          |
+| 11 | Update AGENTS.md with new Restart=always policy and rationale                             | 5min           |
+| 12 | Provision Pi 3 hardware for DNS failover cluster                                          | 1hr (hardware) |
+| 13 | Add Docker container health → systemd status propagation                                  | 20min          |
+| 14 | Configure SigNoz alert channels (email/Discord/webhook)                                   | 15min          |
+| 15 | Add Immich backup restore test (verify backups actually work)                             | 30min          |
+| 16 | Add Gitea backup restore test                                                             | 20min          |
+| 17 | Wire monitor365 back up (investigate RAM usage, tune or add MemoryMax)                    | 20min          |
+| 18 | Add ActivityWatch NixOS systemd service (currently only Darwin)                           | 15min          |
 
 ### Low (P3)
 
-| #   | Task                                                                        | Est.  |
-| --- | --------------------------------------------------------------------------- | ----- |
-| 19  | Audit all services for missing `ReadWritePaths` (systemd hardening)         | 30min |
-| 20  | Add `PrivateUsers=true` to services that don't need UID manipulation        | 20min |
-| 21  | Review all `TimeoutStartSec` values (some may be too aggressive)            | 15min |
-| 22  | Add `LogRateLimitIntervalSec` / `LogRateLimitBurst` for noisy services      | 10min |
-| 23  | Investigate niri-wrapped.nix line count (866 lines) — further decomposition | 1hr   |
-| 24  | Add nix flake check CI (already have workflows but not wired)               | 20min |
-| 25  | Audit all `mkForce` usage — some may be unnecessary                         | 15min |
+| #  | Task                                                                        | Est.  |
+| -- | --------------------------------------------------------------------------- | ----- |
+| 19 | Audit all services for missing `ReadWritePaths` (systemd hardening)         | 30min |
+| 20 | Add `PrivateUsers=true` to services that don't need UID manipulation        | 20min |
+| 21 | Review all `TimeoutStartSec` values (some may be too aggressive)            | 15min |
+| 22 | Add `LogRateLimitIntervalSec` / `LogRateLimitBurst` for noisy services      | 10min |
+| 23 | Investigate niri-wrapped.nix line count (866 lines) — further decomposition | 1hr   |
+| 24 | Add nix flake check CI (already have workflows but not wired)               | 20min |
+| 25 | Audit all `mkForce` usage — some may be unnecessary                         | 15min |
 
 ---
 

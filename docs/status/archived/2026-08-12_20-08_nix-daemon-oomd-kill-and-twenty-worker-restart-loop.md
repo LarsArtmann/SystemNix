@@ -16,6 +16,7 @@ User attempted `nix flake update browser-history` and `nh os switch` — both fa
 ### 1. Root Cause Diagnosis: nix-daemon killed by systemd-oomd
 
 **Evidence chain:**
+
 - `journalctl -u nix-daemon` showed: `Main process exited, code=killed, status=9/KILL` repeated rapidly, then `Failed with result 'start-limit-hit'`
 - `journalctl -u systemd-oomd` showed the exact kill decision:
   ```
@@ -32,6 +33,7 @@ User attempted `nix flake update browser-history` and `nh os switch` — both fa
 **File:** `platforms/nixos/system/networking.nix`
 
 Added two directives to nix-daemon's serviceConfig:
+
 - `ManagedOOMPreference = "omit"` — systemd-oomd will NEVER select nix-daemon for killing
 - `OOMScoreAdjust = -1000` — kernel OOM killer scores nix-daemon at -1000 (absolute lowest priority; only killed when system is completely exhausted with no other victims)
 
@@ -40,9 +42,11 @@ These are the maximum protections available. Same `ManagedOOMPreference` pattern
 ### 3. Monitoring: nix-daemon added to system-health + Gatus
 
 **File:** `modules/nixos/services/system-health.nix`
+
 - Added `"nix-daemon"` to `monitoredServices` default list (emits `system_service_active`, `system_service_start_limit_hit`, `system_service_nrestarts` metrics)
 
 **File:** `modules/nixos/services/gatus-config.nix`
+
 - Added Gatus health check "Nix Daemon" — checks both `system_service_active{service="nix-daemon"} 1` AND `system_service_start_limit_hit{service="nix-daemon"} 0`
 - Discord alert with recovery instructions: `sudo systemctl reset-failed nix-daemon && sudo systemctl start nix-daemon`
 - 1-minute interval (critical infrastructure)
@@ -52,6 +56,7 @@ This outage previously went **completely undetected** — no alerting existed fo
 ### 4. Root Cause Diagnosis: Twenty worker 235-restart crash loop
 
 **Evidence chain:**
+
 - `docker inspect twenty-worker-1`: `RestartCount: 235` (initially 136, grew to 235 during our session)
 - `docker events`: every die event shows `exitCode=137` (SIGKILL) with `execDuration=14-15s`
 - `docker inspect`: `OOMKilled: false` — Docker's own OOM handler did NOT kill it
@@ -68,6 +73,7 @@ This outage previously went **completely undetected** — no alerting existed fo
 **File:** `modules/nixos/services/twenty.nix`
 
 Added to the worker container in docker-compose:
+
 - `mem_limit = "2g"` — hard 2G cgroup ceiling
 - `memswap_limit = "2g"` — no swap (mem+swap = 2G, so swap = 0)
 - `NODE_OPTIONS = "--max-old-space-size=1536"` — V8 GC runs aggressively at 1.5G heap, keeping RSS lower so the worker is less likely to be oomd's top candidate
@@ -75,6 +81,7 @@ Added to the worker container in docker-compose:
 ### 6. Documentation: AGENTS.md updated
 
 Added two entries to the Non-Obvious Gotchas section:
+
 - **Systemd section**: "systemd-oomd kills nix-daemon during builds (2026-08-12 outage)" — full root cause, fix, recovery command
 - **Docker section**: "systemd-oomd kills Docker containers under system-slice pressure (Twenty worker)" — exitCode=137 pattern, Docker OOMKilled=false misleading behavior, mem_limit + NODE_OPTIONS fix
 
@@ -86,15 +93,15 @@ Added two entries to the Non-Obvious Gotchas section:
 
 Only `twenty-worker-1` got `mem_limit`/`memswap_limit`. Current memory snapshot:
 
-| Container | Memory | Limit? | Restart count |
-|-----------|--------|--------|---------------|
-| twenty-worker-1 | 856MB | **2G (new)** | 235 |
-| twenty-server-1 | 529MB | **NONE** | 0 |
-| twenty-db-1 | 31MB | **NONE** | 0 |
-| twenty-redis-1 | 13MB | **NONE** | 0 |
-| mnfst-manifest-1 | unknown | **NONE** | 0 |
-| mnfst-postgres-1 | unknown | **NONE** | 0 |
-| dozzle | unknown | **NONE** | 0 |
+| Container        | Memory  | Limit?       | Restart count |
+| ---------------- | ------- | ------------ | ------------- |
+| twenty-worker-1  | 856MB   | **2G (new)** | 235           |
+| twenty-server-1  | 529MB   | **NONE**     | 0             |
+| twenty-db-1      | 31MB    | **NONE**     | 0             |
+| twenty-redis-1   | 13MB    | **NONE**     | 0             |
+| mnfst-manifest-1 | unknown | **NONE**     | 0             |
+| mnfst-postgres-1 | unknown | **NONE**     | 0             |
+| dozzle           | unknown | **NONE**     | 0             |
 
 Every Docker container without a `mem_limit` is a potential oomd victim and a potential unbounded memory consumer. The worker was just the first to get killed because it's the biggest.
 
@@ -143,16 +150,18 @@ The current oomd config (`boot.nix`): `DefaultMemoryPressureLimit = 50%`, `Defau
 ---
 
 ## f) Up to 50 Things to Get Done Next
+
 > **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
 
-
 ### Critical (blocks all Nix operations)
+
 1. ~~**Restart nix-daemon** — `sudo systemctl reset-failed nix-daemon.service && sudo systemctl start nix-daemon.service`~~ done — recovered; nix operations working since
 2. ~~**Run `nix flake check --no-build`** — verify all changes from this session eval cleanly~~ done — passes on every deploy since
 3. ~~**Deploy** — `nix run .#deploy` to apply nix-daemon oomd exemption, Gatus monitoring, and Twenty worker mem_limit~~ done at `505ac4de` (deployed via subsequent sessions)
 4. ~~**Verify Twenty worker stops crash-looping** after deploy — check `docker inspect twenty-worker-1 --format '{{.RestartCount}}'` is stable~~ done (pending post-reboot confirmation) — mem limits live, oomd raised to 60%/30s (`17731861`), docker restart monitoring live (`9b6590bf`)
 
 ### Monitoring Gaps
+
 5. ~~Add `system_oomd_kills_total` metric — textfile collector grepping `journalctl -u systemd-oomd --grep "killed"` per unit~~ done at `9b6590bf` (`system_oomd_kills_total`/`_recent`/`_alert`; grep pattern verified live: `"Marked.*for killing"`)
 6. ~~Add Docker container restart count collector — `docker inspect --format '{{.RestartCount}}'` for all containers → Prometheus metrics~~ done at `9b6590bf`
 7. ~~Add Gatus alert on Docker container restart count > threshold (e.g., > 10 in 1h)~~ done at `9b6590bf` ("Docker Container Restarts" alert)
@@ -161,6 +170,7 @@ The current oomd config (`boot.nix`): `DefaultMemoryPressureLimit = 50%`, `Defau
 10. **Consider a Gatus check for nix-daemon socket connectivity (not just metrics-based liveness)**
 
 ### Docker Memory Limits
+
 11. ~~Add `mem_limit` + `memswap_limit` to twenty-server-1 (529MB, #2 consumer)~~ done at `8ad493c9` (1g + 768M heap)
 12. ~~Add `mem_limit` + `memswap_limit` to twenty-db-1 (PostgreSQL — should have a defined limit)~~ done (2g)
 13. ~~Add `mem_limit` + `memswap_limit` to twenty-redis-1~~ done (256m)
@@ -171,6 +181,7 @@ The current oomd config (`boot.nix`): `DefaultMemoryPressureLimit = 50%`, `Defau
 18. **Consider adding `mem_limit` support to `mkDockerServiceFactory` as a per-container option**
 
 ### oomd / Memory Pressure
+
 19. ~~Evaluate raising `DefaultMemoryPressureLimit` from 50% to 60-70% — builds are legitimate burst pressure~~ done at `17731861` (60%)
 20. ~~Evaluate raising `DefaultMemoryPressureDurationSec` from 20s to 30s — give bursts time to self-resolve~~ done at `17731861` (30s; activation pending reboot)
 21. Audit ALL services under `/system.slice` for `ManagedOOMPreference` — which ones should be exempt vs killable?
@@ -180,12 +191,14 @@ The current oomd config (`boot.nix`): `DefaultMemoryPressureLimit = 50%`, `Defau
 25. Review the `user-1000.slice` MemoryHigh=80G / MemoryMax=90G — is this still appropriate?
 
 ### nix-daemon Resilience
+
 26. Add `StartLimitBurst`/`StartLimitIntervalSec` to nix-daemon via `unitConfig` (NOT serviceConfig) — give it more restart attempts before giving up
 27. Consider `RestartSec = "2s"` on nix-daemon to slow the restart loop slightly (avoid start-limit-hit from rapid socket re-trigger)
 28. Add nix-daemon socket file existence check to pre-deploy-check.sh
 29. Add nix-daemon connectivity test to post-deploy-check.sh (`nix ping store` or `nix doctor`)
 
 ### Twenty CRM
+
 30. Investigate why Twenty worker uses 856MB — is this normal NestJS overhead or a memory leak?
 31. Check if Twenty has a memory leak issue reported upstream (github.com/twentyhq/twenty)
 32. Consider `NODE_OPTIONS = "--max-old-space-size=1024"` (1G instead of 1.5G) if the worker doesn't need it
@@ -194,26 +207,31 @@ The current oomd config (`boot.nix`): `DefaultMemoryPressureLimit = 50%`, `Defau
 35. Review Twenty v2.7.3 changelog for known memory issues
 
 ### Manifest
+
 36. Investigate `mnfst-manifest-1` unhealthy status — root cause unknown
 37. Add Manifest health check to Gatus if not already present
 
 ### System Health
+
 38. Review the `harden()` function — should `ManagedOOMPreference` be a default for critical services?
 39. Consider adding `OOMScoreAdjust` to `serviceDefaults` for all services (default 500 = killable, override to -1000 for critical)
 40. Review all services with `ManagedOOMPreference = "omit"` — too many exemptions defeat oomd's purpose
 41. Add a "critical services" list to system-health that gets `OOMScoreAdjust = -1000` automatically
 
 ### Code Quality
+
 42. The `lib/docker.nix` `mkDockerService` should support per-container `mem_limit` in the compose service definition
 43. Consider a `mkDockerServiceFactory` option for `defaultMemLimit` that applies to all containers in a compose stack
 44. Add an eval-time assertion that warns when a Docker service has containers without `mem_limit`
 
 ### Testing
+
 45. Write a VM test for nix-daemon oomd exemption — verify oomd doesn't kill it under pressure
 46. Write a VM test for Docker container memory limits — verify `mem_limit` is applied
 47. Add a test that verifies Gatus alerts fire when `system_service_start_limit_hit` is 1
 
 ### Documentation
+
 48. Document the oomd kill → socket activation → start-limit-hit chain in `docs/gotchas-archive.md` with full incident narrative
 49. Add a "memory pressure incident response" runbook to docs/
 50. Update `docs/CONTRIBUTING.md` with guidance on when to add `ManagedOOMPreference` and `OOMScoreAdjust`
@@ -223,10 +241,13 @@ The current oomd config (`boot.nix`): `DefaultMemoryPressureLimit = 50%`, `Defau
 ## g) Questions (cannot determine without user input)
 
 ### 1. Is nix-daemon still down?
+
 All our changes are undeployed because nix-daemon was down the entire session. Have you restarted it? If not: `sudo systemctl reset-failed nix-daemon.service && sudo systemctl start nix-daemon.service`. Without this, nothing we changed can be built, verified, or deployed.
 
 ### 2. Should we raise the oomd pressure threshold?
+
 The 50%/20s threshold is tight — it killed both nix-daemon (mid-build) and the Twenty worker (steady-state). Options:
+
 - **Keep 50%/20s** — aggressive, protects the desktop, kills services frequently
 - **Raise to 60%/30s** — gives builds and Node.js init bursts more time to settle
 - **Per-slice** — different thresholds for system.slice vs user.slice vs a new docker.slice
@@ -234,7 +255,9 @@ The 50%/20s threshold is tight — it killed both nix-daemon (mid-build) and the
 This is a judgment call about risk tolerance that I can't make for you.
 
 ### 3. Should the Twenty worker be exempt from oomd entirely?
+
 The `mem_limit + NODE_OPTIONS` fix reduces the worker's memory footprint, but doesn't guarantee oomd won't kill it. The only guaranteed protection (`ManagedOOMPreference=omit`) can't be set on Docker transient scopes from NixOS. Alternatives:
+
 - **Accept occasional kills** — worker is stateless, `restart: always` recovers it (just not every 15s)
 - **Move Docker to a dedicated slice** with its own oomd config (significant refactoring)
 - **Disable oomd for system.slice** and rely only on per-service MemoryMax (less safe)
@@ -243,12 +266,12 @@ The `mem_limit + NODE_OPTIONS` fix reduces the worker's memory footprint, but do
 
 ## Files Changed This Session
 
-| File | Change |
-|------|--------|
-| `platforms/nixos/system/networking.nix` | `ManagedOOMPreference = "omit"` + `OOMScoreAdjust = -1000` on nix-daemon |
-| `modules/nixos/services/system-health.nix` | Added `"nix-daemon"` to monitoredServices |
-| `modules/nixos/services/gatus-config.nix` | Added "Nix Daemon" Gatus health check (active + start-limit-hit, 1m interval, Discord alert) |
-| `modules/nixos/services/twenty.nix` | Added `mem_limit`, `memswap_limit`, `NODE_OPTIONS` to worker container |
-| `AGENTS.md` | Added 2 gotchas: nix-daemon oomd kill + Docker container oomd kill pattern |
+| File                                       | Change                                                                                       |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `platforms/nixos/system/networking.nix`    | `ManagedOOMPreference = "omit"` + `OOMScoreAdjust = -1000` on nix-daemon                     |
+| `modules/nixos/services/system-health.nix` | Added `"nix-daemon"` to monitoredServices                                                    |
+| `modules/nixos/services/gatus-config.nix`  | Added "Nix Daemon" Gatus health check (active + start-limit-hit, 1m interval, Discord alert) |
+| `modules/nixos/services/twenty.nix`        | Added `mem_limit`, `memswap_limit`, `NODE_OPTIONS` to worker container                       |
+| `AGENTS.md`                                | Added 2 gotchas: nix-daemon oomd kill + Docker container oomd kill pattern                   |
 
 **Verification status: UNVERIFIED** — nix-daemon was down the entire session. All changes need `nix flake check --no-build` after daemon restart.

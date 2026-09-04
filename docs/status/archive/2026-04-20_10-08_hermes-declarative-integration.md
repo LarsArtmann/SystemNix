@@ -126,33 +126,33 @@ sops-nix encrypted secrets, and a proper NixOS module with options.
 
 ## F) Top #25 Things to Do Next
 
-| #   | Task                                                      | Impact   | Effort |
-| --- | --------------------------------------------------------- | -------- | ------ |
-| 1   | `just switch` to activate new hermes module               | Critical | 5min   |
-| 2   | `nix profile remove hermes-agent` after verification      | High     | 1min   |
-| 3   | Verify hermes-gateway starts with new HM service          | Critical | 2min   |
-| 4   | Test Discord voice (opus codec) after deploy              | High     | 1min   |
-| 5   | Verify cron jobs run (OLLAMA_API_KEY from sops .env)      | High     | 2min   |
-| 6   | Add `~/.hermes/.env` symlink to `.gitignore`              | Medium   | 1min   |
-| 7   | Configure auxiliary vision model to use local Ollama      | Medium   | 10min  |
-| 8   | Enable smart_model_routing with local cheap model         | Medium   | 10min  |
-| 9   | Add hermes to SigNoz journald receiver                    | Medium   | 5min   |
-| 10  | Investigate intermittent DNS failures for discord.com     | Medium   | 30min  |
-| 11  | Migrate Google OAuth credentials to sops                  | Medium   | 15min  |
-| 12  | Add health check script for hermes-gateway                | Medium   | 15min  |
-| 13  | Create hermes SigNoz dashboard                            | Medium   | 20min  |
-| 14  | Set `session_reset.mode: idle` for session rotation       | Low      | 1min   |
-| 15  | Configure compression auxiliary to use local model        | Low      | 5min   |
-| 16  | Configure session_search auxiliary to use local model     | Low      | 5min   |
-| 17  | Add `just hermes-status` command to justfile              | Low      | 5min   |
-| 18  | Add `just hermes-restart` command to justfile             | Low      | 2min   |
-| 19  | Consider `browser.backend: local` to remove firecrawl dep | Low      | 10min  |
-| 20  | Add hermes to AGENTS.md documentation                     | Low      | 10min  |
-| 21  | Add ADR for hermes deployment model                       | Low      | 15min  |
-| 22  | Pin hermes-agent flake input to specific ref              | Low      | 2min   |
-| 23  | Add memory limits to hermes-gateway service               | Low      | 5min   |
-| 24  | Consider ReadWritePaths restriction for hermes service    | Low      | 10min  |
-| 25  | Create systemd timer for hermes session cleanup           | Low      | 10min  |
+| #  | Task                                                      | Impact   | Effort |
+| -- | --------------------------------------------------------- | -------- | ------ |
+| 1  | `just switch` to activate new hermes module               | Critical | 5min   |
+| 2  | `nix profile remove hermes-agent` after verification      | High     | 1min   |
+| 3  | Verify hermes-gateway starts with new HM service          | Critical | 2min   |
+| 4  | Test Discord voice (opus codec) after deploy              | High     | 1min   |
+| 5  | Verify cron jobs run (OLLAMA_API_KEY from sops .env)      | High     | 2min   |
+| 6  | Add `~/.hermes/.env` symlink to `.gitignore`              | Medium   | 1min   |
+| 7  | Configure auxiliary vision model to use local Ollama      | Medium   | 10min  |
+| 8  | Enable smart_model_routing with local cheap model         | Medium   | 10min  |
+| 9  | Add hermes to SigNoz journald receiver                    | Medium   | 5min   |
+| 10 | Investigate intermittent DNS failures for discord.com     | Medium   | 30min  |
+| 11 | Migrate Google OAuth credentials to sops                  | Medium   | 15min  |
+| 12 | Add health check script for hermes-gateway                | Medium   | 15min  |
+| 13 | Create hermes SigNoz dashboard                            | Medium   | 20min  |
+| 14 | Set `session_reset.mode: idle` for session rotation       | Low      | 1min   |
+| 15 | Configure compression auxiliary to use local model        | Low      | 5min   |
+| 16 | Configure session_search auxiliary to use local model     | Low      | 5min   |
+| 17 | Add `just hermes-status` command to justfile              | Low      | 5min   |
+| 18 | Add `just hermes-restart` command to justfile             | Low      | 2min   |
+| 19 | Consider `browser.backend: local` to remove firecrawl dep | Low      | 10min  |
+| 20 | Add hermes to AGENTS.md documentation                     | Low      | 10min  |
+| 21 | Add ADR for hermes deployment model                       | Low      | 15min  |
+| 22 | Pin hermes-agent flake input to specific ref              | Low      | 2min   |
+| 23 | Add memory limits to hermes-gateway service               | Low      | 5min   |
+| 24 | Consider ReadWritePaths restriction for hermes service    | Low      | 10min  |
+| 25 | Create systemd timer for hermes session cleanup           | Low      | 10min  |
 
 ---
 

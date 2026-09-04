@@ -373,7 +373,7 @@ Anki → Tools → Add-ons → Get Add-ons → Enter code
 | Watcher                    | Repository                           | What It Tracks                   | Recommendation                                          |
 | -------------------------- | ------------------------------------ | -------------------------------- | ------------------------------------------------------- |
 | **aw-watcher-utilization** | `Alwinator/aw-watcher-utilization`   | CPU, RAM, disk, network, sensors | ⭐ HIGH - Production ready (100 stars, active Oct 2024) |
-| **aw-watcher-netstatus**   | `sameersismail/aw-watcher-netstatus` | Online/offline status            | ⚠️ LOW - Minimal, stale (Jan 2023)                      |
+| **aw-watcher-netstatus**   | `sameersismail/aw-watcher-netstatus` | Online/offline status            | ⚠️ LOW - Minimal, stale (Jan 2023)                       |
 
 **Note:** `aw-watcher-utilization` is recommended over `aw-watcher-netstatus` since it includes network I/O counters plus comprehensive system metrics.
 

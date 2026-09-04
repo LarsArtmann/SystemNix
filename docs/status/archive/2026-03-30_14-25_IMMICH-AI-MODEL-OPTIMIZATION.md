@@ -133,33 +133,33 @@ Audited and optimized the Immich photo management server's AI/ML configuration. 
 
 ## F) TOP 25 THINGS TO DO NEXT 🎯
 
-| #   | Task                                                           | Priority | Est. Time | Category     |
-| --- | -------------------------------------------------------------- | -------- | --------- | ------------ |
-| 1   | **Import updated immich-config.json into running Immich**      | CRITICAL | 5min      | Immich       |
-| 2   | **Re-run Smart Search on ALL assets** (new CLIP model)         | CRITICAL | Hours     | Immich       |
-| 3   | **Re-run Face Detection on ALL assets** (new antelopev2 model) | CRITICAL | Hours     | Immich       |
-| 4   | **Re-run Duplicate Detection** (new maxDistance)               | HIGH     | Hours     | Immich       |
-| 5   | **Commit hyprland wallpaperDir fix**                           | HIGH     | 2min      | Desktop      |
-| 6   | **Research Immich GPU ML via Docker+ROCm**                     | HIGH     | 4h        | Immich       |
-| 7   | **Enable NPU (kernel 6.14+ check)**                            | HIGH     | 2h        | Hardware     |
-| 8   | **Add GPU temp to Waybar** (AMD GPU)                           | MED      | 1.5h      | Desktop P1   |
-| 9   | **Add CPU usage to Waybar** (per-core)                         | MED      | 1.5h      | Desktop P1   |
-| 10  | **Add memory usage to Waybar**                                 | MED      | 1.5h      | Desktop P1   |
-| 11  | **Create Quake Terminal dropdown** (F12)                       | MED      | 2h        | Desktop P1   |
-| 12  | **Add Hyprland hot-reload** (Ctrl+Alt+R)                       | MED      | 10min     | Desktop P1   |
-| 13  | **Add screenshot detection indicator**                         | MED      | 1h        | Desktop P1   |
-| 14  | **Set up SMTP for Immich notifications**                       | MED      | 1h        | Immich       |
-| 14  | **Import core/Types.nix in flake**                             | MED      | 15min     | Architecture |
-| 16  | **Import core/State.nix in flake**                             | MED      | 15min     | Architecture |
-| 17  | **Import core/Validation.nix in flake**                        | MED      | 15min     | Architecture |
-| 18  | **Consolidate user config** (eliminate split brain)            | MED      | 45min     | Architecture |
-| 19  | **Add lock screen blur** (hyprlock)                            | LOW      | 1h        | Desktop P1   |
-| 20  | **Configure Immich external domain** (remote access)           | LOW      | 2h        | Immich       |
-| 21  | **Set up Bluetooth + Nest Audio**                              | LOW      | 1h        | Hardware     |
-| 22  | **Add audio visualizer** (real-time)                           | LOW      | 1h        | Desktop P2   |
-| 23  | **Create Screenshot + OCR script**                             | LOW      | 2h        | Desktop P1   |
-| 24  | **Add media player integration** (Waybar Now Playing)          | LOW      | 1h        | Desktop P2   |
-| 25  | **Create automated config backups**                            | LOW      | 3h        | Desktop P3   |
+| #  | Task                                                           | Priority | Est. Time | Category     |
+| -- | -------------------------------------------------------------- | -------- | --------- | ------------ |
+| 1  | **Import updated immich-config.json into running Immich**      | CRITICAL | 5min      | Immich       |
+| 2  | **Re-run Smart Search on ALL assets** (new CLIP model)         | CRITICAL | Hours     | Immich       |
+| 3  | **Re-run Face Detection on ALL assets** (new antelopev2 model) | CRITICAL | Hours     | Immich       |
+| 4  | **Re-run Duplicate Detection** (new maxDistance)               | HIGH     | Hours     | Immich       |
+| 5  | **Commit hyprland wallpaperDir fix**                           | HIGH     | 2min      | Desktop      |
+| 6  | **Research Immich GPU ML via Docker+ROCm**                     | HIGH     | 4h        | Immich       |
+| 7  | **Enable NPU (kernel 6.14+ check)**                            | HIGH     | 2h        | Hardware     |
+| 8  | **Add GPU temp to Waybar** (AMD GPU)                           | MED      | 1.5h      | Desktop P1   |
+| 9  | **Add CPU usage to Waybar** (per-core)                         | MED      | 1.5h      | Desktop P1   |
+| 10 | **Add memory usage to Waybar**                                 | MED      | 1.5h      | Desktop P1   |
+| 11 | **Create Quake Terminal dropdown** (F12)                       | MED      | 2h        | Desktop P1   |
+| 12 | **Add Hyprland hot-reload** (Ctrl+Alt+R)                       | MED      | 10min     | Desktop P1   |
+| 13 | **Add screenshot detection indicator**                         | MED      | 1h        | Desktop P1   |
+| 14 | **Set up SMTP for Immich notifications**                       | MED      | 1h        | Immich       |
+| 14 | **Import core/Types.nix in flake**                             | MED      | 15min     | Architecture |
+| 16 | **Import core/State.nix in flake**                             | MED      | 15min     | Architecture |
+| 17 | **Import core/Validation.nix in flake**                        | MED      | 15min     | Architecture |
+| 18 | **Consolidate user config** (eliminate split brain)            | MED      | 45min     | Architecture |
+| 19 | **Add lock screen blur** (hyprlock)                            | LOW      | 1h        | Desktop P1   |
+| 20 | **Configure Immich external domain** (remote access)           | LOW      | 2h        | Immich       |
+| 21 | **Set up Bluetooth + Nest Audio**                              | LOW      | 1h        | Hardware     |
+| 22 | **Add audio visualizer** (real-time)                           | LOW      | 1h        | Desktop P2   |
+| 23 | **Create Screenshot + OCR script**                             | LOW      | 2h        | Desktop P1   |
+| 24 | **Add media player integration** (Waybar Now Playing)          | LOW      | 1h        | Desktop P2   |
+| 25 | **Create automated config backups**                            | LOW      | 3h        | Desktop P3   |
 
 ---
 

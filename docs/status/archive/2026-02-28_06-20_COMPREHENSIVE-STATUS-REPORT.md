@@ -99,7 +99,7 @@ just format           # ✅ treefmt formatting
 | Aspect              | Status      | Notes                                         |
 | ------------------- | ----------- | --------------------------------------------- |
 | NixOS               | ✅ Complete | Fully Nix-managed with systemd                |
-| Darwin              | ⚠️ Partial  | Homebrew-based, custom watcher manual install |
+| Darwin              | ⚠️ Partial   | Homebrew-based, custom watcher manual install |
 | URL Tracking        | ✅ Fixed    | Requires Accessibility permissions            |
 | Utilization Watcher | ✅ Packaged | NixOS auto, macOS manual                      |
 
@@ -107,35 +107,35 @@ just format           # ✅ treefmt formatting
 
 ### 2. Security Hardening
 
-| Feature     | Status      | Issue                                    |
-| ----------- | ----------- | ---------------------------------------- |
+| Feature     | Status     | Issue                                    |
+| ----------- | ---------- | ---------------------------------------- |
 | Audit Rules | ⚠️ Disabled | NixOS audit-rules service bug (upstream) |
 | AppArmor    | ⚠️ Disabled | Conflicts with audit kernel module       |
-| PAM TouchID | ✅ Working  | But more auth options could be added     |
+| PAM TouchID | ✅ Working | But more auth options could be added     |
 
 ### 3. NixOS Desktop Experience
 
-| Component      | Status              | Issue                                         |
-| -------------- | ------------------- | --------------------------------------------- |
-| Hyprland       | ✅ Working          | Type safety assertions disabled (path issues) |
+| Component      | Status             | Issue                                         |
+| -------------- | ------------------ | --------------------------------------------- |
+| Hyprland       | ✅ Working         | Type safety assertions disabled (path issues) |
 | SDDM           | ⚠️ Working          | Wayland disabled for AMD GPU stability        |
 | Bluetooth      | ⚠️ Configured       | Hardware present but not paired               |
 | NPU (Ryzen AI) | ⚠️ Hardware present | Linux support in Early Access (unused)        |
 
 ### 4. Build Performance
 
-| Metric               | Status   | Target         |
-| -------------------- | -------- | -------------- |
+| Metric               | Status  | Target         |
+| -------------------- | ------- | -------------- |
 | Shell startup (Fish) | ⚠️ 334ms | Target: <200ms |
-| ZSH startup          | ✅ 72ms  | Good           |
-| Nix eval             | ✅ Fast  | Good           |
+| ZSH startup          | ✅ 72ms | Good           |
+| Nix eval             | ✅ Fast | Good           |
 
 ### 5. Pre-commit Hooks
 
 | Hook                | Status     | Issue                                 |
 | ------------------- | ---------- | ------------------------------------- |
-| Gitleaks            | ⚠️ Working | 6 findings need review                |
-| Statix              | ⚠️ Working | W20, W04, W23 warnings (not blocking) |
+| Gitleaks            | ⚠️ Working  | 6 findings need review                |
+| Statix              | ⚠️ Working  | W20, W04, W23 warnings (not blocking) |
 | Trailing whitespace | ✅ Working | Auto-fix enabled                      |
 
 ---

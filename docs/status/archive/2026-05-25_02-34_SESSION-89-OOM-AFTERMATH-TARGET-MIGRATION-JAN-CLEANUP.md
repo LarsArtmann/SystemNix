@@ -29,13 +29,13 @@ evo-x2 is **up but stressed**. A fresh boot (56 min) shows the system recovering
 
 | Metric              | Value                                 | Status                        |
 | ------------------- | ------------------------------------- | ----------------------------- |
-| RAM                 | 44/62 GiB used (71%)                  | ⚠️ Elevated                   |
-| Swap                | 8.4/16 GiB used (51%)                 | ⚠️ Half full on fresh boot    |
+| RAM                 | 44/62 GiB used (71%)                  | ⚠️ Elevated                    |
+| Swap                | 8.4/16 GiB used (51%)                 | ⚠️ Half full on fresh boot     |
 | Root disk           | 504/512 GB used (100%)                | 🔴 **CRITICAL** — 2.5 GB free |
-| /data disk          | 854/1024 GB used (84%)                | ⚠️ Growing                    |
+| /data disk          | 854/1024 GB used (84%)                | ⚠️ Growing                     |
 | /boot               | 312M/2.0 GB (16%)                     | ✅                            |
-| Load avg            | 5.35 / 8.19 / 22.95                   | ⚠️ High for 56 min uptime     |
-| ZRAM                | 5.7/6.2 GiB used                      | ⚠️ Nearly full                |
+| Load avg            | 5.35 / 8.19 / 22.95                   | ⚠️ High for 56 min uptime      |
+| ZRAM                | 5.7/6.2 GiB used                      | ⚠️ Nearly full                 |
 | OOM kills this boot | 0                                     | ✅                            |
 | earlyoom status     | Active, `helium`+`electron` in prefer | ✅ Fixed                      |
 | Uptime              | 56 min                                | Fresh boot                    |
@@ -139,35 +139,35 @@ Docker Whisper (ROCm) service explicitly disabled in `configuration.nix`.
 
 ### Infrastructure
 
-| #   | Task                                                                                | Effort  | Impact                                     |
-| --- | ----------------------------------------------------------------------------------- | ------- | ------------------------------------------ |
-| 1   | Execute `just snapshot-migrate-data` — convert /data to @data subvolume             | 30 min  | Enable /data snapshots                     |
-| 2   | Add btrbk instance for /data after migration                                        | 10 min  | Complete snapshot coverage                 |
-| 3   | Add `just verify-packages` recipe to build all Go packages after flake.lock updates | 15 min  | **#1 defense** against stale vendor hashes |
-| 4   | GitHub Actions CI for all Go repos                                                  | 1-2 hrs | Catch build breakage before SystemNix      |
-| 5   | Pre-push hook to verify Go packages build                                           | 15 min  | Last line of defense                       |
-| 6   | `just update-vendor-hash` recipe (set `""`, build, extract `got:`)                  | 15 min  | Automate tedious hash cycle                |
-| 7   | Fix Pocket ID OTel metrics endpoint (HTTP vs HTTPS)                                 | 15 min  | Stop error spam                            |
-| 8   | Fix node_exporter pocket-id credentials mountpoint error                            | 10 min  | Stop error spam                            |
+| # | Task                                                                                | Effort  | Impact                                     |
+| - | ----------------------------------------------------------------------------------- | ------- | ------------------------------------------ |
+| 1 | Execute `just snapshot-migrate-data` — convert /data to @data subvolume             | 30 min  | Enable /data snapshots                     |
+| 2 | Add btrbk instance for /data after migration                                        | 10 min  | Complete snapshot coverage                 |
+| 3 | Add `just verify-packages` recipe to build all Go packages after flake.lock updates | 15 min  | **#1 defense** against stale vendor hashes |
+| 4 | GitHub Actions CI for all Go repos                                                  | 1-2 hrs | Catch build breakage before SystemNix      |
+| 5 | Pre-push hook to verify Go packages build                                           | 15 min  | Last line of defense                       |
+| 6 | `just update-vendor-hash` recipe (set `""`, build, extract `got:`)                  | 15 min  | Automate tedious hash cycle                |
+| 7 | Fix Pocket ID OTel metrics endpoint (HTTP vs HTTPS)                                 | 15 min  | Stop error spam                            |
+| 8 | Fix node_exporter pocket-id credentials mountpoint error                            | 10 min  | Stop error spam                            |
 
 ### Services
 
-| #   | Task                                                             | Effort | Impact                 |
-| --- | ---------------------------------------------------------------- | ------ | ---------------------- |
-| 9   | Fix photomap podman permission issue and re-enable               | 1 hr   | Photo visualization    |
-| 10  | Fix file-and-image-renamer (Go 1.26.3 blocked by nixpkgs 1.26.2) | 30 min | AI screenshot renaming |
-| 11  | Minecraft server `enable = false` — needs enabling if wanted     | 5 min  |                        |
-| 12  | Configure secondary LLM provider for Hermes (OpenRouter/OpenAI)  | 30 min | GLM-5.1 fallback       |
+| #  | Task                                                             | Effort | Impact                 |
+| -- | ---------------------------------------------------------------- | ------ | ---------------------- |
+| 9  | Fix photomap podman permission issue and re-enable               | 1 hr   | Photo visualization    |
+| 10 | Fix file-and-image-renamer (Go 1.26.3 blocked by nixpkgs 1.26.2) | 30 min | AI screenshot renaming |
+| 11 | Minecraft server `enable = false` — needs enabling if wanted     | 5 min  |                        |
+| 12 | Configure secondary LLM provider for Hermes (OpenRouter/OpenAI)  | 30 min | GLM-5.1 fallback       |
 
 ### Documentation & Housekeeping
 
-| #   | Task                                                   | Effort | Impact              |
-| --- | ------------------------------------------------------ | ------ | ------------------- |
-| 13  | Archive `docs/status/` — 115 files in root             | 10 min | Clutter reduction   |
-| 14  | Fix 3 remaining stale Timeshift docs                   | 5 min  | Accuracy            |
-| 15  | Update TODO_LIST.md and FEATURES.md to current state   | 15 min | Accuracy            |
-| 16  | D2 architecture diagram of Go dependency graph         | 20 min | Visualization       |
-| 17  | Publish `branching-flow/pkg/stats` as proper Go module | 15 min | Eliminates PMA hack |
+| #  | Task                                                   | Effort | Impact              |
+| -- | ------------------------------------------------------ | ------ | ------------------- |
+| 13 | Archive `docs/status/` — 115 files in root             | 10 min | Clutter reduction   |
+| 14 | Fix 3 remaining stale Timeshift docs                   | 5 min  | Accuracy            |
+| 15 | Update TODO_LIST.md and FEATURES.md to current state   | 15 min | Accuracy            |
+| 16 | D2 architecture diagram of Go dependency graph         | 20 min | Visualization       |
+| 17 | Publish `branching-flow/pkg/stats` as proper Go module | 15 min | Eliminates PMA hack |
 
 ---
 
@@ -236,48 +236,48 @@ Forward auth has been broken since the Authelia → Pocket ID migration. All ser
 
 ### Critical — Fix Broken Things
 
-| #   | Task                                                              | Effort | Why                                                    |
-| --- | ----------------------------------------------------------------- | ------ | ------------------------------------------------------ |
-| 1   | **Free root disk space** — `just clean` or `nix-collect-garbage`  | 5 min  | 2.5 GB free = system will break on next build          |
-| 2   | **Deploy uncommitted changes** (`just test-fast && just switch`)  | 15 min | OOM fix, target migration, udev fix — all sitting idle |
-| 3   | **Fix oauth2-proxy** — create Pocket ID OAuth client, update sops | 30 min | Forward auth down for days = security gap              |
-| 4   | **Investigate health-check.service failure**                      | 15 min | No automated service alerting                          |
-| 5   | **Execute /data BTRFS migration** (`just snapshot-migrate-data`)  | 30 min | 827 GB with zero snapshots                             |
+| # | Task                                                              | Effort | Why                                                    |
+| - | ----------------------------------------------------------------- | ------ | ------------------------------------------------------ |
+| 1 | **Free root disk space** — `just clean` or `nix-collect-garbage`  | 5 min  | 2.5 GB free = system will break on next build          |
+| 2 | **Deploy uncommitted changes** (`just test-fast && just switch`)  | 15 min | OOM fix, target migration, udev fix — all sitting idle |
+| 3 | **Fix oauth2-proxy** — create Pocket ID OAuth client, update sops | 30 min | Forward auth down for days = security gap              |
+| 4 | **Investigate health-check.service failure**                      | 15 min | No automated service alerting                          |
+| 5 | **Execute /data BTRFS migration** (`just snapshot-migrate-data`)  | 30 min | 827 GB with zero snapshots                             |
 
 ### High — Prevent Future Failures
 
-| #   | Task                                                              | Effort  | Why                                    |
-| --- | ----------------------------------------------------------------- | ------- | -------------------------------------- |
-| 6   | Add `just verify-packages` recipe                                 | 15 min  | #1 defense against stale vendor hashes |
-| 7   | GitHub Actions CI for Go repos                                    | 1-2 hrs | Catch stale hashes at source           |
-| 8   | Automate vendor hash discovery (`just update-vendor-hash`)        | 15 min  | Reduce 5-min manual cycle              |
-| 9   | Fix Pocket ID OTel metrics endpoint (HTTP vs HTTPS)               | 15 min  | Stop log spam                          |
-| 10  | Fix node_exporter pocket-id credentials mountpoint error          | 10 min  | Stop log spam                          |
-| 11  | Add `MemoryHigh` overrides for known memory hogs (SigNoz, Twenty) | 10 min  | Prevent future OOM                     |
+| #  | Task                                                              | Effort  | Why                                    |
+| -- | ----------------------------------------------------------------- | ------- | -------------------------------------- |
+| 6  | Add `just verify-packages` recipe                                 | 15 min  | #1 defense against stale vendor hashes |
+| 7  | GitHub Actions CI for Go repos                                    | 1-2 hrs | Catch stale hashes at source           |
+| 8  | Automate vendor hash discovery (`just update-vendor-hash`)        | 15 min  | Reduce 5-min manual cycle              |
+| 9  | Fix Pocket ID OTel metrics endpoint (HTTP vs HTTPS)               | 15 min  | Stop log spam                          |
+| 10 | Fix node_exporter pocket-id credentials mountpoint error          | 10 min  | Stop log spam                          |
+| 11 | Add `MemoryHigh` overrides for known memory hogs (SigNoz, Twenty) | 10 min  | Prevent future OOM                     |
 
 ### Medium — Upstream Hygiene
 
-| #   | Task                                                   | Effort | Why                                         |
-| --- | ------------------------------------------------------ | ------ | ------------------------------------------- |
-| 12  | Clean up `docs/status/` (archive ~100 old reports)     | 10 min | 115 files is noise                          |
-| 13  | Fix 3 remaining stale Timeshift doc references         | 5 min  | Accuracy                                    |
-| 14  | Update TODO_LIST.md and FEATURES.md to current state   | 15 min | Both are stale (last updated session 75/83) |
-| 15  | Commit library-policy test refactoring                 | 5 min  | 18 dirty files                              |
-| 16  | Fix file-and-image-renamer Go 1.26.3 issue             | 30 min | Service is disabled                         |
-| 17  | Publish `branching-flow/pkg/stats` as proper Go module | 15 min | Eliminates PMA hack                         |
-| 18  | Add Gatus endpoints for Hermes, Monitor365, disk/nvme  | 15 min | Complete observability                      |
-| 19  | Configure secondary LLM provider for Hermes            | 30 min | GLM-5.1 rate limit fallback                 |
+| #  | Task                                                   | Effort | Why                                         |
+| -- | ------------------------------------------------------ | ------ | ------------------------------------------- |
+| 12 | Clean up `docs/status/` (archive ~100 old reports)     | 10 min | 115 files is noise                          |
+| 13 | Fix 3 remaining stale Timeshift doc references         | 5 min  | Accuracy                                    |
+| 14 | Update TODO_LIST.md and FEATURES.md to current state   | 15 min | Both are stale (last updated session 75/83) |
+| 15 | Commit library-policy test refactoring                 | 5 min  | 18 dirty files                              |
+| 16 | Fix file-and-image-renamer Go 1.26.3 issue             | 30 min | Service is disabled                         |
+| 17 | Publish `branching-flow/pkg/stats` as proper Go module | 15 min | Eliminates PMA hack                         |
+| 18 | Add Gatus endpoints for Hermes, Monitor365, disk/nvme  | 15 min | Complete observability                      |
+| 19 | Configure secondary LLM provider for Hermes            | 30 min | GLM-5.1 rate limit fallback                 |
 
 ### Lower — Polish & Future-proofing
 
-| #   | Task                                            | Effort  | Why                        |
-| --- | ----------------------------------------------- | ------- | -------------------------- |
-| 20  | D2 architecture diagram of Go dependency graph  | 20 min  | Visualize cascade chain    |
-| 21  | Pre-push hook to verify Go packages build       | 15 min  | Last line of defense       |
-| 22  | Port-centric test (all `ports.*` unique)        | 15 min  | Prevent port conflicts     |
-| 23  | Reduce flake inputs from 48                     | 1-2 hrs | Simplify maintenance       |
-| 24  | Darwin parity testing                           | Ongoing | d2 overlay hack is fragile |
-| 25  | Add snapshot count to `just disk-status` output | 5 min   | Visibility                 |
+| #  | Task                                            | Effort  | Why                        |
+| -- | ----------------------------------------------- | ------- | -------------------------- |
+| 20 | D2 architecture diagram of Go dependency graph  | 20 min  | Visualize cascade chain    |
+| 21 | Pre-push hook to verify Go packages build       | 15 min  | Last line of defense       |
+| 22 | Port-centric test (all `ports.*` unique)        | 15 min  | Prevent port conflicts     |
+| 23 | Reduce flake inputs from 48                     | 1-2 hrs | Simplify maintenance       |
+| 24 | Darwin parity testing                           | Ongoing | d2 overlay hack is fragile |
+| 25 | Add snapshot count to `just disk-status` output | 5 min   | Visibility                 |
 
 ---
 

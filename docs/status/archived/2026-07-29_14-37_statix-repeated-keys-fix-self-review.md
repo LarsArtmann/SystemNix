@@ -6,12 +6,12 @@
 
 ---
 
-
 ## What Was Done
 
 Fixed statix warning `[20]` ("Avoid repeated keys in attribute sets") in `platforms/nixos/system/configuration.nix`.
 
 Three `programs.*` dotted-key assignments were scattered across the file:
+
 - `programs.obs-studio` (line 137)
 - `programs.fish.enable` (line 143)
 - `programs.chromium` (line 517, conditional on SearXNG)
@@ -19,6 +19,7 @@ Three `programs.*` dotted-key assignments were scattered across the file:
 Consolidated all three into a single `programs = { ... }` block at line 137. The conditional `lib.mkIf config.services.searx.enable` on chromium was preserved inside the block.
 
 **Verification:**
+
 - `statix check` — clean (exit 0, no warnings across entire project)
 - `nix eval --raw .#nixosConfigurations.evo-x2.config.system.build.toplevel` — succeeds
 

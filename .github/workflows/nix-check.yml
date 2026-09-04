@@ -16,7 +16,33 @@ jobs:
         with:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
-            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+            # NIX_GITHUB_RO_TOKEN: read-only PAT covering the owner's PRIVATE
+            # repos. The job-scoped GITHUB_TOKEN only reads THIS repo, so every
+            # `github:`-type lock node pointing at a private LarsArtmann repo
+            # (32 as of 2026-09-03: bank-sync, browser-history, buildflow,
+            # crush-config, ...) 404s on its api.github.com tarball fetch.
+            # Deploy keys cannot fix this class: subtree nodes pinned by
+            # upstream flakes at depth >= 2 are unreachable by follows.
+            # Fallback keeps current behavior until the secret exists.
+            access-tokens = github.com=${{ secrets.NIX_GITHUB_RO_TOKEN || secrets.GITHUB_TOKEN }}
+
+      # Private flake inputs (CV, go-cqrs-lite — both git+ssh) need deploy
+      # keys; the public go-nix-helpers input rides a git+ssh URL too (also
+      # transitively through go-cqrs-lite), so rewrite that repo to
+      # anonymous HTTPS instead of a third deploy key.
+      - name: Configure private flake-input auth
+        env:
+          NIX_DEPLOY_KEY_CV: ${{ secrets.NIX_DEPLOY_KEY_CV }}
+          NIX_DEPLOY_KEY_GO_CQRS_LITE: ${{ secrets.NIX_DEPLOY_KEY_GO_CQRS_LITE }}
+          NIX_DEPLOY_KEY_BRANCHING_FLOW: ${{ secrets.NIX_DEPLOY_KEY_BRANCHING_FLOW }}
+        run: |
+          eval "$(ssh-agent -s)" >/dev/null
+          printf '%s\n' "$NIX_DEPLOY_KEY_CV" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_GO_CQRS_LITE" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_BRANCHING_FLOW" | ssh-add -
+          git config --global url."https://github.com/LarsArtmann/go-nix-helpers".insteadOf "git@github.com:LarsArtmann/go-nix-helpers"
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          echo "GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=accept-new" >> "$GITHUB_ENV"
 
       - name: Validate flake structure
         run: nix flake show --allow-import-from-derivation 2>&1 | head -20
@@ -32,6 +58,21 @@ jobs:
 
       - name: Evaluate flake (no build)
         run: nix flake check --no-build
+
+      # Trap-lints are pure runCommand checks (no VM, seconds to build).
+      # `flake check --no-build` only EVALUATES them — a check whose script
+      # logic is broken (phantom-green) or whose fixtures drift still passes
+      # eval. Building them executes the actual grep/lint logic. This is the
+      # class that let 7 gatus checks sit red-for-hours (2026-08-22) and the
+      # signoz query-lint v1 nullglob phantom-green (2026-08-27) through.
+      - name: Build trap-lint checks (pattern/query/module-shape audits)
+        run: |
+          nix build .#checks.x86_64-linux.gatus-pattern-lint --no-link --print-out-paths
+          nix build .#checks.x86_64-linux.signoz-query-lint --no-link --print-out-paths
+          nix build .#checks.x86_64-linux.module-shape-lint --no-link --print-out-paths
+          nix build .#checks.x86_64-linux.chown-vs-bind-audit --no-link --print-out-paths
+          nix build .#checks.x86_64-linux.binary-coverage-lint --no-link --print-out-paths
+          nix build .#checks.x86_64-linux.binary-coverage-selftest --no-link --print-out-paths
 
       - name: Check for unregistered port numbers
         run: |
@@ -58,6 +99,12 @@ jobs:
       - name: Check templ generated files are committed
         run: scripts/check-templ-committed.sh
 
+      # Build-time shell (runCommand bodies) runs under stdenv nullglob —
+      # unquoted command-variable expansion silently deletes glob-bearing
+      # words (signoz-query-lint v1 phantom-green, 2026-08-27).
+      - name: Nullglob audit of runCommand bodies
+        run: scripts/audit-shell-nullglob.sh
+
       - name: Flake input hygiene (ref=master + GOTOOLCHAIN)
         run: |
           # Fail on GOTOOLCHAIN=auto (sandbox purity violation)
@@ -77,6 +124,24 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
+      # Same auth as the nix-check job: VM-test BUILDS force the source of
+      # every private input (branching-flow went private 2026-08 and its
+      # anonymous tarball fetch 404s when lars-packages forces its flake
+      # outputs — see lib/lars-packages.nix).
+      - name: Configure private flake-input auth
+        env:
+          NIX_DEPLOY_KEY_CV: ${{ secrets.NIX_DEPLOY_KEY_CV }}
+          NIX_DEPLOY_KEY_GO_CQRS_LITE: ${{ secrets.NIX_DEPLOY_KEY_GO_CQRS_LITE }}
+          NIX_DEPLOY_KEY_BRANCHING_FLOW: ${{ secrets.NIX_DEPLOY_KEY_BRANCHING_FLOW }}
+        run: |
+          eval "$(ssh-agent -s)" >/dev/null
+          printf '%s\n' "$NIX_DEPLOY_KEY_CV" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_GO_CQRS_LITE" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_BRANCHING_FLOW" | ssh-add -
+          git config --global url."https://github.com/LarsArtmann/go-nix-helpers".insteadOf "git@github.com:LarsArtmann/go-nix-helpers"
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          echo "GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=accept-new" >> "$GITHUB_ENV"
+
       - name: Enable KVM for VM tests
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -87,7 +152,7 @@ jobs:
         with:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
-            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+            access-tokens = github.com=${{ secrets.NIX_GITHUB_RO_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Run NixOS VM tests
         run: |
@@ -95,6 +160,7 @@ jobs:
           nix build .#checks.x86_64-linux.attic --no-link --print-out-paths
           nix build .#checks.x86_64-linux.searxng --no-link --print-out-paths
           nix build .#checks.x86_64-linux.browser-history --no-link --print-out-paths
+          nix build .#checks.x86_64-linux.cv --no-link --print-out-paths
 
   shellcheck:
     runs-on: ubuntu-latest

@@ -15,24 +15,97 @@
 #  - Barcode separation (PATCHT) + Code-39 ASN tagging for scanner workflows.
 #  - Filename format {created_year}/{correspondent}/{title} (private-cloud
 #    heritage) with REMOVE_NONE so empty correspondents don't litter paths.
+#  - Layer 1 native OIDC SSO via Pocket ID (django-allauth openid_connect):
+#    client registered in pocket-id.nix, secret bridged at runtime by the
+#    paperless-oidc-setup oneshot, Caddy on plain reverse_proxy.
 _: {
   flake.nixosModules.paperless =
     {
       config,
       lib,
+      pkgs,
       ...
     }:
     let
       inherit (import ../../../lib/default.nix lib)
+        harden
         ioTier
         onFailure
         ports
+        serviceOneshotDefaults
         ;
 
       cfg = config.services.paperless;
       inherit (cfg) dataDir;
       llmEndpoint = "http://127.0.0.1:${toString ports.fastflowlm}/v1";
       embeddingEndpoint = "http://127.0.0.1:${toString ports.llama-embeddings}/v1";
+
+      # ── Layer 1 native OIDC via Pocket ID ────────────────────────────────────
+      # Optional-dependency refs (dns-blocker `or false` idiom): hosts
+      # without the Pocket ID modules degrade to local-login-only instead of
+      # failing eval. A silently-disabled bridge is caught by the Gatus
+      # login-page condition + the post-deploy SSO-button smoke.
+      oidcEnabled = config.services.pocket-id-config.enable or false;
+      pocketIdDataDir = config.services.pocket-id.dataDir or "/var/lib/pocket-id";
+      oidcEnvFile = "/var/lib/paperless-oidc/pocket-id.env";
+
+      # Outbound email (share links, password-protected archives, account
+      # mails) rides the central Postfix null-client relay. Off (VM tests,
+      # relay-less hosts) → the PAPERLESS_EMAIL_* block below is omitted and
+      # paperless keeps Django's inert localhost default (EMAIL_ENABLED false).
+      mailRelayEnabled = config.services.mail-relay.enable or false;
+      paperlessUnits = [
+        "paperless-consumer.service"
+        "paperless-scheduler.service"
+        "paperless-task-queue.service"
+        "paperless-web.service"
+      ];
+
+      # Provider config WITHOUT the secret (store-safe); the
+      # paperless-oidc-setup bridge injects the secret at runtime via jq.
+      # server_url is the bare issuer: allauth's wk_server_url() appends
+      # /.well-known/openid-configuration when the URL doesn't already
+      # contain /.well-known/ (allauth openid_connect/provider.py).
+      # token_auth_method is pinned per the paperless v3 migration note —
+      # allauth 65.x no longer guesses, and an unpinned method surfaces as
+      # invalid_client at the token exchange, past every smoke check.
+      oidcProvidersJson = pkgs.writeText "paperless-socialaccount-providers.json" (
+        builtins.toJSON {
+          openid_connect = {
+            SCOPE = [
+              "openid"
+              "profile"
+              "email"
+            ];
+            OAUTH_PKCE_ENABLED = true;
+            APPS = [
+              {
+                provider_id = "pocket-id";
+                name = "Pocket ID";
+                client_id = "paperless";
+                secret = "__INJECTED_AT_RUNTIME__";
+                settings = {
+                  server_url = "https://auth.${config.networking.domain}";
+                  token_auth_method = "client_secret_basic";
+                };
+              }
+            ];
+          };
+        }
+      );
+
+      # The secret-carrying env file MUST NOT go through the nixpkgs module's
+      # environmentFile option: the paperless-manage wrapper bash-`source`s
+      # that file, and bash strips the inner quotes of a raw JSON value
+      # (VAR={"a":"b"} → {a:b}, verified empirically) — the corrupted value
+      # then fails json.loads inside Django settings and breaks every manage
+      # command incl. the daily exporter. systemd's EnvironmentFile parser
+      # takes unquoted values literally, so the file is attached to the
+      # units directly instead. "-" prefix = optional: an absent file
+      # degrades to no-SSO instead of failing the unit.
+      oidcEnvFragment = lib.optionalAttrs oidcEnabled {
+        EnvironmentFile = [ "-${oidcEnvFile}" ];
+      };
     in
     {
       config = lib.mkIf cfg.enable {
@@ -120,10 +193,11 @@ _: {
             PAPERLESS_AI_LLM_ENDPOINT = llmEndpoint;
             PAPERLESS_AI_LLM_MODEL = config.services.fastflowlm.model;
             PAPERLESS_AI_LLM_API_KEY = "fastflowlm-local-no-auth";
-            # Socket activation cold-loads the 13.6 GB model in 1-3 min; the
+            # Socket activation cold-loads the 21.6 GB model in 2-5 min; the
             # default 120s timeout would abort the first AI request after an
-            # idle unload. 300s mirrors the papdashboard insight enricher.
-            PAPERLESS_AI_LLM_REQUEST_TIMEOUT = 300;
+            # idle unload. 480s matches the fastflowlm proxy deadline (v1.0.2
+            # weights grew 13.6 GB → 21.6 GB — 300s sat exactly at the boundary).
+            PAPERLESS_AI_LLM_REQUEST_TIMEOUT = 480;
             # --- Embeddings (RAG semantic search) on llama-server (GPU) -------
             # Served by the llama-rag module's embeddings instance (bge-m3)
             # at :8848. llama-server is OpenAI-compatible and ignores the
@@ -134,6 +208,33 @@ _: {
             PAPERLESS_AI_LLM_EMBEDDING_ENDPOINT = embeddingEndpoint;
             PAPERLESS_AI_LLM_EMBEDDING_MODEL = config.services.llama-rag.embeddingsAlias;
             PAPERLESS_AI_LLM_EMBEDDING_API_KEY = "llama-server-no-auth";
+          }
+          # --- Outbound email via the central mail relay ----------------------
+          # Point Django's SMTP backend at the loopback relay (no auth, no
+          # TLS — the relay is loopback-only and the relay→upstream leg is
+          # where credentials/TLS live). EMAIL_ENABLED flips on precisely
+          # because the host is no longer the literal string "localhost"
+          # (paperless settings.py: EMAIL_HOST != "localhost" or user != "").
+          # DEFAULT_FROM_EMAIL = PAPERLESS_EMAIL_FROM; it MUST be on a domain
+          # the upstream provider verified — locally-generated senders are
+          # rewritten by the relay, but this explicit value is what every
+          # sent mail carries.
+          // lib.optionalAttrs mailRelayEnabled {
+            PAPERLESS_EMAIL_HOST = "127.0.0.1";
+            PAPERLESS_EMAIL_PORT = ports.mail-relay;
+            PAPERLESS_EMAIL_HOST_USER = "";
+            PAPERLESS_EMAIL_HOST_PASSWORD = "";
+            PAPERLESS_EMAIL_USE_TLS = false;
+            PAPERLESS_EMAIL_USE_SSL = false;
+            PAPERLESS_EMAIL_FROM = config.services.mail-relay.fromAddress;
+          }
+          # --- Layer 1 SSO: native OIDC via Pocket ID ------------------------
+          # The provider JSON (with the client secret) rides in the
+          # paperless-oidc-setup env file, never in the store. AUTO_SIGNUP:
+          # the first Pocket ID login provisions the paperless user.
+          // lib.optionalAttrs oidcEnabled {
+            PAPERLESS_APPS = "allauth.socialaccount.providers.openid_connect";
+            PAPERLESS_SOCIAL_AUTO_SIGNUP = true;
           };
         };
 
@@ -146,6 +247,14 @@ _: {
             group = config.users.users.${cfg.user}.group;
           };
         };
+
+        # nixpkgs ships the exporter timer WITHOUT Persistent=true — the only
+        # backup timer in the fleet that misses boot catch-up. Proven live
+        # 2026-08-31: with the machine off at the 01:30 window during the DAS
+        # outage, the export stayed 254h stale after recovery while every
+        # Persistent backup timer re-fired at the 14:30 boot. Missed windows
+        # now fire as soon as the timer unit comes back.
+        systemd.timers.paperless-exporter.timerConfig.Persistent = true;
 
         systemd.services =
           let
@@ -167,6 +276,7 @@ _: {
                   MemoryMax = "2G";
                   CPUQuota = "200%";
                 }
+                oidcEnvFragment
               ];
             };
             # Scheduler runs DB migrations + superuser bootstrap in preStart;
@@ -180,6 +290,7 @@ _: {
                   CPUQuota = "100%";
                   TimeoutStartSec = "5min";
                 }
+                oidcEnvFragment
               ];
             };
             # Task queue does OCR + classification + AI indexing — the heavyweight.
@@ -190,6 +301,7 @@ _: {
                   MemoryMax = "2G";
                   CPUQuota = "200%";
                 }
+                oidcEnvFragment
               ];
             };
             paperless-consumer = mountGate // {
@@ -199,6 +311,7 @@ _: {
                   MemoryMax = "1G";
                   CPUQuota = "200%";
                 }
+                oidcEnvFragment
               ];
             };
 
@@ -265,6 +378,86 @@ _: {
                   CPUQuota = "200%";
                 }
               ];
+            };
+          }
+          # Bridges the Pocket ID client secret into the OIDC env file read by
+          # all four paperless units (LoadCredential = PID 1 reads the file as
+          # root, crossing pocket-id's 0700-ish dataDir). A missing secret is
+          # FATAL for LoadCredential (systemd.exec: with a path given, absence
+          # is an error — no optional prefix exists), so ConditionPathExists
+          # gates the whole unit: before pocket-id-provision has created the
+          # client, the bridge skips cleanly (inactive, NOT failed) and the
+          # units' optional (-) env file makes paperless boot
+          # local-login-only instead of failing. Indirect unit (wantedBy =
+          # paperless-*) — deploy.sh restarts it in the dedicated OIDC-bridge
+          # block (the provisioner loop's is-enabled gate skips indirect
+          # units, the dnsblockd 2026-08-22 lesson).
+          // lib.optionalAttrs oidcEnabled {
+            paperless-oidc-setup = {
+              description = "Paperless — Pocket ID OIDC secret bridge";
+              after = [ "pocket-id-provision.service" ];
+              wants = [ "pocket-id-provision.service" ];
+              before = paperlessUnits;
+              wantedBy = paperlessUnits;
+              startLimitBurst = 5;
+              startLimitIntervalSec = 300;
+              unitConfig.ConditionPathExists = [
+                "${pocketIdDataDir}/client-secrets/paperless"
+              ];
+
+              serviceConfig = lib.mkMerge [
+                {
+                  Type = "oneshot";
+                  RemainAfterExit = true;
+                  StateDirectory = "paperless-oidc";
+                  LoadCredential = [
+                    "pocket-id-secret:${pocketIdDataDir}/client-secrets/paperless"
+                  ];
+                }
+                (harden { ProtectSystem = "strict"; })
+                (serviceOneshotDefaults { })
+              ];
+
+              path = [
+                pkgs.coreutils
+                pkgs.jq
+              ];
+
+              script = ''
+                secret_file="''${CREDENTIALS_DIRECTORY}/pocket-id-secret"
+                umask 077
+
+                # Defense-in-depth: the ConditionPathExists gate should make
+                # this unreachable, but never hard-fail the stack on a race —
+                # an empty-providers value keeps Django parsing.
+                if [ ! -s "$secret_file" ]; then
+                  printf 'PAPERLESS_SOCIALACCOUNT_PROVIDERS={}\n' > "${oidcEnvFile}"
+                  echo "paperless-oidc-setup: Pocket ID secret missing — paperless starts local-login-only (check pocket-id-provision)"
+                  exit 0
+                fi
+
+                # jq -c keeps the JSON on ONE line (multi-line values are not
+                # valid in systemd EnvironmentFiles); --arg is injection-safe
+                # against quotes inside the secret.
+                printf 'PAPERLESS_SOCIALACCOUNT_PROVIDERS=%s\n' "$(
+                  jq -c --arg secret "$(cat "$secret_file")" \
+                    '.openid_connect.APPS[0].secret = $secret' \
+                    ${oidcProvidersJson}
+                )" > "${oidcEnvFile}"
+                # Password login is DISABLED only while the Pocket ID secret
+                # is present (user decision 2026-09-02: "I do not like
+                # password logins"): the flags ride in the SAME env file, so
+                # a degraded bridge (secret missing → condition-skip → file
+                # absent → optional "-" prefix) AUTOMATICALLY restores the
+                # password form as break-glass. SSO fully on or fully off —
+                # never a locked-out middle state where neither path answers.
+                # Caveat: DISABLE_REGULAR_LOGIN also blocks username/password
+                # API-token acquisition (mobile app password login); existing
+                # API tokens keep working.
+                printf 'PAPERLESS_DISABLE_REGULAR_LOGIN=true\n' >> "${oidcEnvFile}"
+                printf 'PAPERLESS_REDIRECT_LOGIN_TO_SSO=true\n' >> "${oidcEnvFile}"
+                echo "paperless-oidc-setup: Pocket ID OIDC env file written (password login disabled, redirect-to-SSO on)"
+              '';
             };
           };
       };

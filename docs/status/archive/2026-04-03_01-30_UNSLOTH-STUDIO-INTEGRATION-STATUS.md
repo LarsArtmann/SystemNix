@@ -157,53 +157,53 @@ chmod 600 /var/lib/unsloth/unsloth.env
 
 ### P0 — Immediate (blocks functionality)
 
-| #   | Task                                                                                 | Impact                       | Effort |
-| --- | ------------------------------------------------------------------------------------ | ---------------------------- | ------ |
-| 1   | Deploy to evo-x2: `sudo nixos-rebuild switch --flake .#evo-x2`                       | Container actually runs      | 5 min  |
-| 2   | Create `/var/lib/unsloth/unsloth.env` with Jupyter password on evo-x2                | Security                     | 2 min  |
-| 3   | Add `--add-host=host.docker.internal:host-gateway` to unsloth container extraOptions | Ollama access from container | 2 min  |
-| 4   | Restart container after env file: `docker restart unsloth-studio`                    | Password takes effect        | 1 min  |
+| # | Task                                                                                 | Impact                       | Effort |
+| - | ------------------------------------------------------------------------------------ | ---------------------------- | ------ |
+| 1 | Deploy to evo-x2: `sudo nixos-rebuild switch --flake .#evo-x2`                       | Container actually runs      | 5 min  |
+| 2 | Create `/var/lib/unsloth/unsloth.env` with Jupyter password on evo-x2                | Security                     | 2 min  |
+| 3 | Add `--add-host=host.docker.internal:host-gateway` to unsloth container extraOptions | Ollama access from container | 2 min  |
+| 4 | Restart container after env file: `docker restart unsloth-studio`                    | Password takes effect        | 1 min  |
 
 ### P1 — High Impact (completes the feature)
 
-| #   | Task                                                                 | Impact                          | Effort |
-| --- | -------------------------------------------------------------------- | ------------------------------- | ------ |
-| 5   | Verify `https://unsloth.lan` loads in browser                        | End-to-end confirmation         | 5 min  |
-| 6   | Verify Homepage health check turns green                             | Dashboard accuracy              | 2 min  |
-| 7   | Add Docker health check to unsloth container (like PhotoMap pattern) | Auto-restart on failure         | 10 min |
-| 8   | Add `unsloth_jupyter_password` to secrets.yaml on evo-x2             | Encrypted secret                | 5 min  |
-| 9   | Switch env file back to sops template after secret is added          | Consistency with other services | 5 min  |
+| # | Task                                                                 | Impact                          | Effort |
+| - | -------------------------------------------------------------------- | ------------------------------- | ------ |
+| 5 | Verify `https://unsloth.lan` loads in browser                        | End-to-end confirmation         | 5 min  |
+| 6 | Verify Homepage health check turns green                             | Dashboard accuracy              | 2 min  |
+| 7 | Add Docker health check to unsloth container (like PhotoMap pattern) | Auto-restart on failure         | 10 min |
+| 8 | Add `unsloth_jupyter_password` to secrets.yaml on evo-x2             | Encrypted secret                | 5 min  |
+| 9 | Switch env file back to sops template after secret is added          | Consistency with other services | 5 min  |
 
 ### P2 — Quality of Life
 
-| #   | Task                                                      | Impact                                 | Effort |
-| --- | --------------------------------------------------------- | -------------------------------------- | ------ |
-| 10  | Document all service ports in a single reference doc      | Operational clarity                    | 20 min |
-| 11  | Standardize `host.docker.internal` for all OCI containers | Pattern consistency                    | 15 min |
-| 12  | Pre-seed HuggingFace cache volume from existing models    | Faster first run                       | 15 min |
-| 13  | Add `unsloth.lan` to DNS resolver (if using custom DNS)   | Name resolution from other LAN devices | 5 min  |
-| 14  | Verify `jupyter.png` icon exists in Homepage's icon pack  | Visual polish                          | 2 min  |
+| #  | Task                                                      | Impact                                 | Effort |
+| -- | --------------------------------------------------------- | -------------------------------------- | ------ |
+| 10 | Document all service ports in a single reference doc      | Operational clarity                    | 20 min |
+| 11 | Standardize `host.docker.internal` for all OCI containers | Pattern consistency                    | 15 min |
+| 12 | Pre-seed HuggingFace cache volume from existing models    | Faster first run                       | 15 min |
+| 13 | Add `unsloth.lan` to DNS resolver (if using custom DNS)   | Name resolution from other LAN devices | 5 min  |
+| 14 | Verify `jupyter.png` icon exists in Homepage's icon pack  | Visual polish                          | 2 min  |
 
 ### P3 — Structural Improvements
 
-| #   | Task                                                                     | Impact             | Effort  |
-| --- | ------------------------------------------------------------------------ | ------------------ | ------- |
-| 15  | Extract all OCI container configs into `modules/nixos/services/` modules | Modularity         | 1 hr    |
-| 16  | Create a `sops-add-secret` just recipe for the add-secret checklist      | Process safety     | 20 min  |
-| 17  | Add `networking.nix` firewall rules comment documenting all open ports   | Documentation      | 15 min  |
-| 18  | Add monitoring for container health in Prometheus/Grafana                | Observability      | 30 min  |
-| 19  | Track unsloth ROCm image upstream and add GPU when available             | Future GPU support | ongoing |
+| #  | Task                                                                     | Impact             | Effort  |
+| -- | ------------------------------------------------------------------------ | ------------------ | ------- |
+| 15 | Extract all OCI container configs into `modules/nixos/services/` modules | Modularity         | 1 hr    |
+| 16 | Create a `sops-add-secret` just recipe for the add-secret checklist      | Process safety     | 20 min  |
+| 17 | Add `networking.nix` firewall rules comment documenting all open ports   | Documentation      | 15 min  |
+| 18 | Add monitoring for container health in Prometheus/Grafana                | Observability      | 30 min  |
+| 19 | Track unsloth ROCm image upstream and add GPU when available             | Future GPU support | ongoing |
 
 ### P4 — Broader Project
 
-| #   | Task                                                                           | Impact               | Effort |
-| --- | ------------------------------------------------------------------------------ | -------------------- | ------ |
-| 20  | Clean up 140+ status reports in `docs/status/` — archive old ones              | Repo cleanliness     | 30 min |
-| 21  | Consolidate port 8888 docs — host Jupyter also uses 8888, document coexistence | Avoid confusion      | 10 min |
-| 22  | Add `just unsloth-shell` command for quick container exec access               | Developer UX         | 5 min  |
-| 23  | Review and update AGENTS.md with Unsloth Studio architecture section           | Knowledge capture    | 15 min |
-| 24  | Test container auto-restart on failure (kill process, verify recovery)         | Reliability          | 10 min |
-| 25  | Evaluate community `unsloth-rocm` Docker image as alternative                  | Possible GPU support | 1 hr   |
+| #  | Task                                                                           | Impact               | Effort |
+| -- | ------------------------------------------------------------------------------ | -------------------- | ------ |
+| 20 | Clean up 140+ status reports in `docs/status/` — archive old ones              | Repo cleanliness     | 30 min |
+| 21 | Consolidate port 8888 docs — host Jupyter also uses 8888, document coexistence | Avoid confusion      | 10 min |
+| 22 | Add `just unsloth-shell` command for quick container exec access               | Developer UX         | 5 min  |
+| 23 | Review and update AGENTS.md with Unsloth Studio architecture section           | Knowledge capture    | 15 min |
+| 24 | Test container auto-restart on failure (kill process, verify recovery)         | Reliability          | 10 min |
+| 25 | Evaluate community `unsloth-rocm` Docker image as alternative                  | Possible GPU support | 1 hr   |
 
 ---
 

@@ -16,17 +16,17 @@
 
 ### 2. All 9 remaining 2026-08-13 reports annotated (every numbered item resolved)
 
-| Report | Verdicts | Highlights |
-|---|---|---|
-| `04-47` buildflow-templ | ~40 (§c 10, §e 7, §f 30, §g 3 Q) | templ sweep closed at `43e11db3`/`6ee6c3c`/`2322979`/`f8ea2f4`; signoz churn Won't-implement (alejandra makes revert a no-op); sandbox timer `c39b6d50` |
-| `05-48` fix-sweep | ~45 (§b 2 inline, §c 10, §f 30, §g 3 Q) | BuildFlow→v0.9.2 done at `4e4b5538` (verified in upstream repo); browser-history `expires_at` moot (column since `6d4622c` 06-23, DB rebuilt) |
-| `09-06` hdmi-wireplumber | SUPERSEDED banner + ~25 + §F table 13 rows + 3 Q | Marked superseded by `smart-audio` (`8ad493c9`) — the 09-06 "solved" claims were wrong, exactly as `23-39` §d.1 said |
-| `15-04` zram-io-pressure | ~60 (§c 6, §e 10, §f 50, §g 3 Q) | 6 sysctls done at `0bd8a272`; PSI checks exist at `004924be`; commit=120 and qgroups Won't-implement with AGENTS.md-documented rationale |
-| `15-09` tv-display | ~25 + 3 Q | HaGeZi → `88c594cc`; nix.gc.automatic exists; pre-deploy disk thresholds verified at 85%/95% (`pre-deploy-check.sh:135`); go-cqrs-lite dupes CONFIRMED STILL OPEN |
-| `16-11` hagezi-mirror | ~15 (tables + §f 20 + 3 Q) | AGENTS.md mirror note added at `61a2224b`; **rpi3-dns eval verified clean** with shared GitLab blocklists; archived session-37 note left open |
-| `18-36` flake-lock-repair | ~25 + §f table 19 rows + 3 Q | Deploy confirmed same evening (`990fcd66`); follows dedup done `82963f04`/`caf2cab8`; vendor-CI for crush-daily/PMA/erraudit left open |
-| `19-01` nar-hash | ~55 (§b/§c/§d tables, §f 50, §g 3 Q) | NAR time-bomb DEFUSED — lock now pins fresh `github` tarball rev `064a269e`, machine rebooted repeatedly with nix ops green; renamer follows confirmed STILL missing (lock forensics: root pins `go-nix-helpers_2`, renamer pins divergent `go-nix-helpers`) |
-| `23-39` hdmi-persistence | ~35 + 3 Q | Persistence gap RESOLVED by `smart-audio` (`8ad493c9`); 09-06 reconciliation done; FEATURES.md Smart-Audio row exists (`61a2224b`) |
+| Report                    | Verdicts                                         | Highlights                                                                                                                                                                                                                                                   |
+| ------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `04-47` buildflow-templ   | ~40 (§c 10, §e 7, §f 30, §g 3 Q)                 | templ sweep closed at `43e11db3`/`6ee6c3c`/`2322979`/`f8ea2f4`; signoz churn Won't-implement (alejandra makes revert a no-op); sandbox timer `c39b6d50`                                                                                                      |
+| `05-48` fix-sweep         | ~45 (§b 2 inline, §c 10, §f 30, §g 3 Q)          | BuildFlow→v0.9.2 done at `4e4b5538` (verified in upstream repo); browser-history `expires_at` moot (column since `6d4622c` 06-23, DB rebuilt)                                                                                                                |
+| `09-06` hdmi-wireplumber  | SUPERSEDED banner + ~25 + §F table 13 rows + 3 Q | Marked superseded by `smart-audio` (`8ad493c9`) — the 09-06 "solved" claims were wrong, exactly as `23-39` §d.1 said                                                                                                                                         |
+| `15-04` zram-io-pressure  | ~60 (§c 6, §e 10, §f 50, §g 3 Q)                 | 6 sysctls done at `0bd8a272`; PSI checks exist at `004924be`; commit=120 and qgroups Won't-implement with AGENTS.md-documented rationale                                                                                                                     |
+| `15-09` tv-display        | ~25 + 3 Q                                        | HaGeZi → `88c594cc`; nix.gc.automatic exists; pre-deploy disk thresholds verified at 85%/95% (`pre-deploy-check.sh:135`); go-cqrs-lite dupes CONFIRMED STILL OPEN                                                                                            |
+| `16-11` hagezi-mirror     | ~15 (tables + §f 20 + 3 Q)                       | AGENTS.md mirror note added at `61a2224b`; **rpi3-dns eval verified clean** with shared GitLab blocklists; archived session-37 note left open                                                                                                                |
+| `18-36` flake-lock-repair | ~25 + §f table 19 rows + 3 Q                     | Deploy confirmed same evening (`990fcd66`); follows dedup done `82963f04`/`caf2cab8`; vendor-CI for crush-daily/PMA/erraudit left open                                                                                                                       |
+| `19-01` nar-hash          | ~55 (§b/§c/§d tables, §f 50, §g 3 Q)             | NAR time-bomb DEFUSED — lock now pins fresh `github` tarball rev `064a269e`, machine rebooted repeatedly with nix ops green; renamer follows confirmed STILL missing (lock forensics: root pins `go-nix-helpers_2`, renamer pins divergent `go-nix-helpers`) |
+| `23-39` hdmi-persistence  | ~35 + 3 Q                                        | Persistence gap RESOLVED by `smart-audio` (`8ad493c9`); 09-06 reconciliation done; FEATURES.md Smart-Audio row exists (`61a2224b`)                                                                                                                           |
 
 ### 3. Live system findings verified during annotation
 
@@ -110,11 +110,13 @@ The blocked commit was left blocked; the buildcache fix was left half-applied. N
 ## f) Up to 50 Things To Get Done Next
 
 ### Immediate (unblock the commit)
+
 ~~1. Apply `buildcache.nix` inherit fixes~~ done — `inherit (cfg) device;` :165, `inherit onFailure;` :266.
 ~~2. Correct the 2 "zero git+ssh" annotations~~ done — corrections in both archived files.
 ~~3. Re-run the staged commit for the 08-13 annotation batch~~ done — chain continued.
 
 ### 08-14 annotation batch (13 files, hash research in 15-24 report §f)
+
 ~~4. `08-23` boot-failure-qmd-activitywatch~~ done — archived.
 ~~5. `08-24` smart-audio-daemon-built-deployed-with-gaps~~ done — archived (audibility item lives on in TODO_LIST P2).
 ~~6. `08-24` twenty-crm-pg-role-investigation~~ done — archived.
@@ -130,30 +132,33 @@ The blocked commit was left blocked; the buildcache fix was left half-applied. N
 ~~16. `13-44` hermes-registration-lifecycle-fixed~~ done — archived.
 
 ### Living-doc routing (verified-open items found this session)
+
 17. TODO_LIST: disk 97% cleanup plan ← open — evolved into TODO_LIST P0 "Free root below 95%" (root hit 95% on 2026-08-17; pool migration changed the math).
 18. TODO_LIST: add `file-and-image-renamer.inputs.go-nix-helpers.follows` ← open — TODO_LIST P3.
 19. TODO_LIST: switch root `go-cqrs-lite` flake input from `git+ssh://` to `github:` ← open — TODO_LIST P3.
-~~20. TODO_LIST: remove 2 em dashes from `audio.nix` comments~~ done — 0 em dashes in `modules/nixos/desktop/audio.nix` today.
-21. TODO_LIST: add `alsa-utils` or `pw-cat` test-tone tooling ← open — TODO_LIST P5 (blocks the smart-audio audibility verification).
-22. TODO_LIST: ADR for zram-only swap decision ← open — TODO_LIST P3.
-~~23. TODO_LIST: eval-time check that gRPC OTel endpoints carry no `http://` scheme~~ done — `otel-endpoint-audit.nix` shipped (`1f7fc720`): gRPC 4317 ⇒ scheme REQUIRED, host allowlist, port registry.
-~~24. TODO_LIST: CI check that `*_templ.go` files are committed wherever `*.templ` exists~~ done — `scripts/check-templ-committed.sh` in pre-commit + CI; plus go-nix-helpers `checks.templ-committed` eval-time throw.
-25. TODO_LIST: vendor-hash CI for crush-daily, PMA, erraudit ← open — TODO_LIST P6.
-~~26. TODO_LIST: Gatus alert for zram fill > 90%~~ done — `system_zram_fill_over_threshold` + Gatus "ZRAM Fill" check alerts Discord (AGENTS.md ZRAM section).
-27. TODO_LIST: note in archived `2026-05-06_07-10` session-37 report ← open — TODO_LIST P6.
+    ~~20. TODO_LIST: remove 2 em dashes from `audio.nix` comments~~ done — 0 em dashes in `modules/nixos/desktop/audio.nix` today.
+20. TODO_LIST: add `alsa-utils` or `pw-cat` test-tone tooling ← open — TODO_LIST P5 (blocks the smart-audio audibility verification).
+21. TODO_LIST: ADR for zram-only swap decision ← open — TODO_LIST P3.
+    ~~23. TODO_LIST: eval-time check that gRPC OTel endpoints carry no `http://` scheme~~ done — `otel-endpoint-audit.nix` shipped (`1f7fc720`): gRPC 4317 ⇒ scheme REQUIRED, host allowlist, port registry.
+    ~~24. TODO_LIST: CI check that `*_templ.go` files are committed wherever `*.templ` exists~~ done — `scripts/check-templ-committed.sh` in pre-commit + CI; plus go-nix-helpers `checks.templ-committed` eval-time throw.
+22. TODO_LIST: vendor-hash CI for crush-daily, PMA, erraudit ← open — TODO_LIST P6.
+    ~~26. TODO_LIST: Gatus alert for zram fill > 90%~~ done — `system_zram_fill_over_threshold` + Gatus "ZRAM Fill" check alerts Discord (AGENTS.md ZRAM section).
+23. TODO_LIST: note in archived `2026-05-06_07-10` session-37 report ← open — TODO_LIST P6.
 
 ### Closure
+
 ~~28. ARCHIVE pass~~ done.
 ~~29. Quality gate: `nix flake check --no-build`~~ done — green 2026-08-17.
 30. Inline health report ← open at annotation time — owed by the 2026-08-17 docs-health pass.
 ~~31. Final attributed commit of archive + remaining changes~~ done — daemon sweeps.
 
 ### Structural debt observed
+
 32. AGENTS.md at ~72.6KB ← open — ~80 KB now; TODO_LIST P6 "AGENTS.md compression session".
 33. 11 archived reports confirmed appendix-only annotated ← debt open, now TRACKED — TODO_LIST P6 "Annotate appendix-only ARCHIVED reports" (cites the authoritative lists).
-~~34. `nix flake check --all-systems` Darwin eval~~ done — documented intentional in AGENTS.md ("Build & Deploy": aarch64-darwin skip EXPECTED, do not add --all-systems).
-~~35. Pre-commit statix gate scope~~ resolved — hook lints STAGED `.nix` files only (AGENTS.md gotcha "Pre-commit statix lints STAGED .nix files only"); pre-existing debt no longer blocks commits.
-36. Auto-git daemon sweeps mid-session ← process rule absorbed — per-batch commits are now the documented practice (AGENTS.md Git Workflow). No open action.
+    ~~34. `nix flake check --all-systems` Darwin eval~~ done — documented intentional in AGENTS.md ("Build & Deploy": aarch64-darwin skip EXPECTED, do not add --all-systems).
+    ~~35. Pre-commit statix gate scope~~ resolved — hook lints STAGED `.nix` files only (AGENTS.md gotcha "Pre-commit statix lints STAGED .nix files only"); pre-existing debt no longer blocks commits.
+34. Auto-git daemon sweeps mid-session ← process rule absorbed — per-batch commits are now the documented practice (AGENTS.md Git Workflow). No open action.
 
 ---
 
@@ -173,5 +178,5 @@ Carried over unanswered from the 15-24 report. It needs a dedicated read-compres
 
 ---
 
-*Report generated: 2026-08-14 16:20 CEST*
-*Session delta: 9 reports annotated (~340 inline verdicts), 0 commits landed, 1 pre-commit blocker (buildcache.nix statix), 2 annotations needing correction*
+_Report generated: 2026-08-14 16:20 CEST_
+_Session delta: 9 reports annotated (~340 inline verdicts), 0 commits landed, 1 pre-commit blocker (buildcache.nix statix), 2 annotations needing correction_

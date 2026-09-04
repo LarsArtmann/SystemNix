@@ -159,48 +159,48 @@
 
 ### Immediate (Today)
 
-| #   | Task                        | File/Location | Est. Time |
-| --- | --------------------------- | ------------- | --------- |
-| 1   | Push 3 unpushed commits     | `git push`    | 1 min     |
-| 2   | Review gitleaks findings    | Pre-commit    | 15 min    |
-| 3   | Fix Git config link         | Dotfiles      | 5 min     |
-| 4   | Test ActivityWatch on macOS | LaunchAgent   | 10 min    |
+| # | Task                        | File/Location | Est. Time |
+| - | --------------------------- | ------------- | --------- |
+| 1 | Push 3 unpushed commits     | `git push`    | 1 min     |
+| 2 | Review gitleaks findings    | Pre-commit    | 15 min    |
+| 3 | Fix Git config link         | Dotfiles      | 5 min     |
+| 4 | Test ActivityWatch on macOS | LaunchAgent   | 10 min    |
 
 ### This Week
 
-| #   | Task                            | File/Location    | Est. Time |
-| --- | ------------------------------- | ---------------- | --------- |
-| 5   | Implement Quake terminal        | `hyprland.nix`   | 2h        |
-| 6   | Add GPU temp to Waybar          | `waybar.nix`     | 1.5h      |
-| 7   | Create clipboard history viewer | New script       | 2h        |
-| 8   | Consolidate Bluetooth docs      | `docs/archives/` | 30 min    |
-| 9   | Implement `just organize`       | `justfile`       | 1h        |
-| 10  | Add path constants library      | `scripts/lib/`   | 30 min    |
+| #  | Task                            | File/Location    | Est. Time |
+| -- | ------------------------------- | ---------------- | --------- |
+| 5  | Implement Quake terminal        | `hyprland.nix`   | 2h        |
+| 6  | Add GPU temp to Waybar          | `waybar.nix`     | 1.5h      |
+| 7  | Create clipboard history viewer | New script       | 2h        |
+| 8  | Consolidate Bluetooth docs      | `docs/archives/` | 30 min    |
+| 9  | Implement `just organize`       | `justfile`       | 1h        |
+| 10 | Add path constants library      | `scripts/lib/`   | 30 min    |
 
 ### This Sprint
 
-| #   | Task                            | File/Location  | Est. Time |
-| --- | ------------------------------- | -------------- | --------- |
-| 11  | SDDM Wayland disable            | `sddm.nix`     | 20 min    |
-| 12  | Keyboard repeat optimization    | `hyprland.nix` | 20 min    |
-| 13  | Memory usage Waybar module      | `waybar.nix`   | 1.5h      |
-| 14  | Network bandwidth Waybar module | `waybar.nix`   | 1.5h      |
-| 15  | Disk usage Waybar module        | `waybar.nix`   | 1.5h      |
+| #  | Task                            | File/Location  | Est. Time |
+| -- | ------------------------------- | -------------- | --------- |
+| 11 | SDDM Wayland disable            | `sddm.nix`     | 20 min    |
+| 12 | Keyboard repeat optimization    | `hyprland.nix` | 20 min    |
+| 13 | Memory usage Waybar module      | `waybar.nix`   | 1.5h      |
+| 14 | Network bandwidth Waybar module | `waybar.nix`   | 1.5h      |
+| 15 | Disk usage Waybar module        | `waybar.nix`   | 1.5h      |
 
 ### This Month
 
-| #   | Task                             | File/Location  | Est. Time |
-| --- | -------------------------------- | -------------- | --------- |
-| 16  | Triage TODO_LIST.md              | Documentation  | 2h        |
-| 17  | Fix statix warnings              | Nix files      | 1h        |
-| 18  | Update AGENTS.md                 | Documentation  | 30 min    |
-| 19  | Create backup automation         | New module     | 3h        |
-| 20  | Implement config versioning      | New module     | 3h        |
-| 21  | Add dev environment launcher     | New script     | 1h        |
-| 22  | Terminal multiplexer integration | `waybar.nix`   | 1h        |
-| 23  | Editor window rules              | `hyprland.nix` | 30 min    |
-| 24  | GTK/Qt theme integration         | `nix-colors`   | 2h        |
-| 25  | Review Awesome Dotfiles          | Research       | 2h        |
+| #  | Task                             | File/Location  | Est. Time |
+| -- | -------------------------------- | -------------- | --------- |
+| 16 | Triage TODO_LIST.md              | Documentation  | 2h        |
+| 17 | Fix statix warnings              | Nix files      | 1h        |
+| 18 | Update AGENTS.md                 | Documentation  | 30 min    |
+| 19 | Create backup automation         | New module     | 3h        |
+| 20 | Implement config versioning      | New module     | 3h        |
+| 21 | Add dev environment launcher     | New script     | 1h        |
+| 22 | Terminal multiplexer integration | `waybar.nix`   | 1h        |
+| 23 | Editor window rules              | `hyprland.nix` | 30 min    |
+| 24 | GTK/Qt theme integration         | `nix-colors`   | 2h        |
+| 25 | Review Awesome Dotfiles          | Research       | 2h        |
 
 ---
 

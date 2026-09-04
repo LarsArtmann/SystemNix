@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Executive Summary
 
 A routine `nh os switch` triggered an **emergency shell** requiring two reboots and a rollback. Root cause: a BTRFS-only mount option (`discard=async`) was used on an ext4 filesystem, causing mount failure → `local-fs.target` failure → emergency mode. A secondary issue (malformed systemd unit from a `harden()` function silently swallowing arguments) compounded the failure.
@@ -19,25 +18,25 @@ During recovery, **four additional cascading failures** were discovered and fixe
 
 ### Root Cause Fixes
 
-| #   | Fix                                             | File(s)                                        | Impact                                                                                                                         |
-| --- | ----------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | **ext4 `discard=async` → `discard` + `nofail`** | `hardware-configuration.nix:46`                | 🔴 Primary cause of emergency shell. BTRFS-only option on ext4 → mount fails → `local-fs.target` fails → emergency             |
-| 2   | **`harden()` passthrough fix**                  | `lib/systemd.nix`                              | 🔴 `harden {}` silently discarded `ExecStart`/`Type`/`RemainAfterExit` via `...` rest args. Now passes through extra arguments |
-| 3   | **`twenty-fix-collation` ExecStart**            | `modules/nixos/services/twenty.nix:170`        | 🟡 Moved `ExecStart`/`Type` outside `harden()`, merged with `//`                                                               |
-| 4   | **dnsblockd WorkingDirectory**                  | `modules/nixos/services/dns-blocker.nix:333`   | 🟡 SQLite CANTOPEN under `ProtectSystem=strict` — added `WorkingDirectory = "/var/lib/dnsblockd"`                              |
-| 5   | **Docker 29.x userland-proxy**                  | `modules/nixos/services/default-services.nix`  | 🔴 Docker daemon couldn't start — `docker-proxy` moved to internal moby derivation. Set `userland-proxy = false`               |
-| 6   | **Eliminate Podman/Docker split-brain**         | `platforms/nixos/system/configuration.nix:123` | 🟡 `oci-containers.backend` defaulted to `"podman"`, running two container runtimes. Set `backend = "docker"`                  |
+| # | Fix                                             | File(s)                                        | Impact                                                                                                                         |
+| - | ----------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 1 | **ext4 `discard=async` → `discard` + `nofail`** | `hardware-configuration.nix:46`                | 🔴 Primary cause of emergency shell. BTRFS-only option on ext4 → mount fails → `local-fs.target` fails → emergency             |
+| 2 | **`harden()` passthrough fix**                  | `lib/systemd.nix`                              | 🔴 `harden {}` silently discarded `ExecStart`/`Type`/`RemainAfterExit` via `...` rest args. Now passes through extra arguments |
+| 3 | **`twenty-fix-collation` ExecStart**            | `modules/nixos/services/twenty.nix:170`        | 🟡 Moved `ExecStart`/`Type` outside `harden()`, merged with `//`                                                               |
+| 4 | **dnsblockd WorkingDirectory**                  | `modules/nixos/services/dns-blocker.nix:333`   | 🟡 SQLite CANTOPEN under `ProtectSystem=strict` — added `WorkingDirectory = "/var/lib/dnsblockd"`                              |
+| 5 | **Docker 29.x userland-proxy**                  | `modules/nixos/services/default-services.nix`  | 🔴 Docker daemon couldn't start — `docker-proxy` moved to internal moby derivation. Set `userland-proxy = false`               |
+| 6 | **Eliminate Podman/Docker split-brain**         | `platforms/nixos/system/configuration.nix:123` | 🟡 `oci-containers.backend` defaulted to `"podman"`, running two container runtimes. Set `backend = "docker"`                  |
 
 ### Prevention Systems
 
-| #   | Feature                          | File(s)                             | Impact                                                                                                |
-| --- | -------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| 7   | **`mkFilesystem` helper**        | `lib/filesystems.nix` (new)         | 🔴 Validates mount options at eval time. Catches `discard=async` on ext4, `subvol` on non-btrfs, etc. |
-| 8   | **mkFilesystem test suite**      | `tests/test-mkFilesystem.nix` (new) | 🟡 7 tests covering all cross-fs contamination scenarios                                              |
-| 9   | **Refactored all 4 mounts**      | `hardware-configuration.nix`        | 🟡 `/`, `/data`, `/boot`, `/rust-cache` now use `mkFilesystem`                                        |
-| 10  | **Pre-deploy validation script** | `scripts/pre-deploy-check.sh` (new) | 🟡 Checks flake, mounts, units, container backend, harden usage before switch                         |
-| 11  | **Deploy script with pre-check** | `scripts/deploy.sh` + `flake.nix`   | 🟡 `nix run .#deploy` now runs validation before `nh os switch`                                       |
-| 12  | **AGENTS.md gotchas**            | `AGENTS.md`                         | 📚 6 new entries for all discovered issues + recovery procedures                                      |
+| #  | Feature                          | File(s)                             | Impact                                                                                                |
+| -- | -------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| 7  | **`mkFilesystem` helper**        | `lib/filesystems.nix` (new)         | 🔴 Validates mount options at eval time. Catches `discard=async` on ext4, `subvol` on non-btrfs, etc. |
+| 8  | **mkFilesystem test suite**      | `tests/test-mkFilesystem.nix` (new) | 🟡 7 tests covering all cross-fs contamination scenarios                                              |
+| 9  | **Refactored all 4 mounts**      | `hardware-configuration.nix`        | 🟡 `/`, `/data`, `/boot`, `/rust-cache` now use `mkFilesystem`                                        |
+| 10 | **Pre-deploy validation script** | `scripts/pre-deploy-check.sh` (new) | 🟡 Checks flake, mounts, units, container backend, harden usage before switch                         |
+| 11 | **Deploy script with pre-check** | `scripts/deploy.sh` + `flake.nix`   | 🟡 `nix run .#deploy` now runs validation before `nh os switch`                                       |
+| 12 | **AGENTS.md gotchas**            | `AGENTS.md`                         | 📚 6 new entries for all discovered issues + recovery procedures                                      |
 
 ### Runtime Recovery (manual, not committed)
 
@@ -104,48 +103,48 @@ During recovery, **four additional cascading failures** were discovered and fixe
 
 ### P0 — Critical (do this week)
 
-| #   | Task                                                                               | Impact                                                    | Effort          |
-| --- | ---------------------------------------------------------------------------------- | --------------------------------------------------------- | --------------- |
-| 1   | **Fix Twenty CRM PostgreSQL** — `pg_resetwal` or re-init database                  | 🔴 CRM is down                                            | 30m             |
-| 2   | **Fix OpenSEO container** — same checkpoint corruption pattern                     | 🟡 Service down                                           | 15m             |
-| 3   | **Run BTRFS scrub on /data** — verify integrity after OOM corruption               | 🔴 Silent data corruption risk                            | 5m + scrub time |
-| 4   | **Deploy latest config** (mkFilesystem + pre-deploy-check) and verify clean reboot | 🔴 Current generation doesn't have the prevention systems | 20m             |
-| 5   | **Commit flake.lock** — it's been dirty since session start                        | 🟡 Hygiene                                                | 1m              |
+| # | Task                                                                               | Impact                                                    | Effort          |
+| - | ---------------------------------------------------------------------------------- | --------------------------------------------------------- | --------------- |
+| 1 | **Fix Twenty CRM PostgreSQL** — `pg_resetwal` or re-init database                  | 🔴 CRM is down                                            | 30m             |
+| 2 | **Fix OpenSEO container** — same checkpoint corruption pattern                     | 🟡 Service down                                           | 15m             |
+| 3 | **Run BTRFS scrub on /data** — verify integrity after OOM corruption               | 🔴 Silent data corruption risk                            | 5m + scrub time |
+| 4 | **Deploy latest config** (mkFilesystem + pre-deploy-check) and verify clean reboot | 🔴 Current generation doesn't have the prevention systems | 20m             |
+| 5 | **Commit flake.lock** — it's been dirty since session start                        | 🟡 Hygiene                                                | 1m              |
 
 ### P1 — High value (do this sprint)
 
-| #   | Task                                                                                    | Impact                                  | Effort |
-| --- | --------------------------------------------------------------------------------------- | --------------------------------------- | ------ |
-| 6   | **Snapshot before deploy** — add `btrfs subvolume snapshot` to deploy script            | 🔴 Instant rollback capability          | 15m    |
-| 7   | **Container restart-loop alerting** — add Docker health check to `service-health-check` | 🟡 Early warning for crashes            | 30m    |
-| 8   | **PostgreSQL backup restore test** — verify Twenty CRM backups work                     | 🔴 Data safety                          | 30m    |
-| 9   | **Disk alerting at 92%** — add to `disk-monitor` or `service-health-check`              | 🟡 Prevent disk-full boot loops         | 20m    |
-| 10  | **Pre-deploy check: build dry-run** — add `nix build --dry-run` to validation           | 🟡 Catches build failures before switch | 15m    |
+| #  | Task                                                                                    | Impact                                  | Effort |
+| -- | --------------------------------------------------------------------------------------- | --------------------------------------- | ------ |
+| 6  | **Snapshot before deploy** — add `btrfs subvolume snapshot` to deploy script            | 🔴 Instant rollback capability          | 15m    |
+| 7  | **Container restart-loop alerting** — add Docker health check to `service-health-check` | 🟡 Early warning for crashes            | 30m    |
+| 8  | **PostgreSQL backup restore test** — verify Twenty CRM backups work                     | 🔴 Data safety                          | 30m    |
+| 9  | **Disk alerting at 92%** — add to `disk-monitor` or `service-health-check`              | 🟡 Prevent disk-full boot loops         | 20m    |
+| 10 | **Pre-deploy check: build dry-run** — add `nix build --dry-run` to validation           | 🟡 Catches build failures before switch | 15m    |
 
 ### P2 — Architecture improvements (do this month)
 
-| #   | Task                                                                                                      | Impact                             | Effort |
-| --- | --------------------------------------------------------------------------------------------------------- | ---------------------------------- | ------ |
-| 11  | **Enforce `mkFilesystem` everywhere** — refactor `snapshots.nix` cache mounts                             | 🟡 Consistency                     | 15m    |
-| 12  | **Docker Compose health checks** — add restart-limit + healthcheck to all compose services                | 🟡 Prevents infinite restart loops | 45m    |
-| 13  | **Container volume backup automation** — automated pg_dump for all database containers                    | 🔴 Data safety                     | 45m    |
-| 14  | **OOM playbook** — document the full OOM kill chain + recovery steps in AGENTS.md                         | 🟡 Runbook                         | 30m    |
-| 15  | **Memory pressure dashboard** — PSI metrics exist but no visualization                                    | 🟢 Observability                   | 45m    |
-| 16  | **Migrate Docker data-root to dedicated partition** — Docker on BTRFS toplevel is fragile                 | 🟡 Stability                       | 2h     |
-| 17  | **Audit all systemd services for `startLimitBurst`** — some have no limit, causing infinite restart loops | 🟡 Stability                       | 30m    |
-| 18  | **Network namespace cleanup** — stale `run-docker-netns-*` mounts after container purges                  | 🟢 Hygiene                         | 15m    |
-| 19  | **sigstore/cosign image verification** — verify container image signatures before running                 | 🟢 Security                        | 1h     |
+| #  | Task                                                                                                      | Impact                             | Effort |
+| -- | --------------------------------------------------------------------------------------------------------- | ---------------------------------- | ------ |
+| 11 | **Enforce `mkFilesystem` everywhere** — refactor `snapshots.nix` cache mounts                             | 🟡 Consistency                     | 15m    |
+| 12 | **Docker Compose health checks** — add restart-limit + healthcheck to all compose services                | 🟡 Prevents infinite restart loops | 45m    |
+| 13 | **Container volume backup automation** — automated pg_dump for all database containers                    | 🔴 Data safety                     | 45m    |
+| 14 | **OOM playbook** — document the full OOM kill chain + recovery steps in AGENTS.md                         | 🟡 Runbook                         | 30m    |
+| 15 | **Memory pressure dashboard** — PSI metrics exist but no visualization                                    | 🟢 Observability                   | 45m    |
+| 16 | **Migrate Docker data-root to dedicated partition** — Docker on BTRFS toplevel is fragile                 | 🟡 Stability                       | 2h     |
+| 17 | **Audit all systemd services for `startLimitBurst`** — some have no limit, causing infinite restart loops | 🟡 Stability                       | 30m    |
+| 18 | **Network namespace cleanup** — stale `run-docker-netns-*` mounts after container purges                  | 🟢 Hygiene                         | 15m    |
+| 19 | **sigstore/cosign image verification** — verify container image signatures before running                 | 🟢 Security                        | 1h     |
 
 ### P3 — Quality of life
 
-| #   | Task                                                                                        | Impact                    | Effort |
-| --- | ------------------------------------------------------------------------------------------- | ------------------------- | ------ |
-| 20  | **`overview.service` fix upstream** — move StartLimitIntervalSec to [Unit] in overview repo | 🟢 Clean boot logs        | 10m    |
-| 21  | **`nix fmt` pre-commit hook coverage** — ensure all .nix files formatted                    | 🟢 Consistency            | 10m    |
-| 22  | **Flake lock automated updates** — schedule weekly `nix flake update` via timer             | 🟢 Fresh deps             | 30m    |
-| 23  | **Status dashboard** — the existing status HTML could be auto-generated weekly              | 🟢 Observability          | 1h     |
-| 24  | **Service dependency graph** — D2 diagram of all services + dependencies                    | 🟢 Onboarding             | 45m    |
-| 25  | **Emergency recovery cheatsheet** — one-page runbook for emergency shell recovery           | 🟡 Operational resilience | 20m    |
+| #  | Task                                                                                        | Impact                    | Effort |
+| -- | ------------------------------------------------------------------------------------------- | ------------------------- | ------ |
+| 20 | **`overview.service` fix upstream** — move StartLimitIntervalSec to [Unit] in overview repo | 🟢 Clean boot logs        | 10m    |
+| 21 | **`nix fmt` pre-commit hook coverage** — ensure all .nix files formatted                    | 🟢 Consistency            | 10m    |
+| 22 | **Flake lock automated updates** — schedule weekly `nix flake update` via timer             | 🟢 Fresh deps             | 30m    |
+| 23 | **Status dashboard** — the existing status HTML could be auto-generated weekly              | 🟢 Observability          | 1h     |
+| 24 | **Service dependency graph** — D2 diagram of all services + dependencies                    | 🟢 Onboarding             | 45m    |
+| 25 | **Emergency recovery cheatsheet** — one-page runbook for emergency shell recovery           | 🟡 Operational resilience | 20m    |
 
 ---
 

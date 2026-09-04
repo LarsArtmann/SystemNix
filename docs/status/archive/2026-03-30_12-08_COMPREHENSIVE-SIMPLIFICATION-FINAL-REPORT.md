@@ -225,53 +225,53 @@ All removals were clean with no breaking changes.
 
 ### Immediate (This Week)
 
-| #   | Task                                     | Effort | Impact | Priority |
-| --- | ---------------------------------------- | ------ | ------ | -------- |
-| 1   | Verify flake builds after simplification | 30m    | HIGH   | P0       |
-| 2   | Test DNS blocker LAN access              | 1h     | HIGH   | P0       |
-| 3   | Update AGENTS.md documentation links     | 1h     | MEDIUM | P1       |
-| 4   | Decide on TypeSafetySystem fate          | 30m    | MEDIUM | P1       |
-| 5   | Audit scripts/ for unused files          | 2h     | MEDIUM | P2       |
+| # | Task                                     | Effort | Impact | Priority |
+| - | ---------------------------------------- | ------ | ------ | -------- |
+| 1 | Verify flake builds after simplification | 30m    | HIGH   | P0       |
+| 2 | Test DNS blocker LAN access              | 1h     | HIGH   | P0       |
+| 3 | Update AGENTS.md documentation links     | 1h     | MEDIUM | P1       |
+| 4 | Decide on TypeSafetySystem fate          | 30m    | MEDIUM | P1       |
+| 5 | Audit scripts/ for unused files          | 2h     | MEDIUM | P2       |
 
 ### Short-term (This Sprint)
 
-| #   | Task                                 | Effort | Impact | Priority |
-| --- | ------------------------------------ | ------ | ------ | -------- |
-| 6   | Implement secret management (agenix) | 4h     | HIGH   | P1       |
-| 7   | Complete Gitea setup with secrets    | 2h     | HIGH   | P1       |
-| 8   | Remove HyprlandTypes.nix if unused   | 1h     | LOW    | P3       |
-| 9   | Document simplification process      | 2h     | LOW    | P3       |
-| 10  | Add pre-commit hook for complexity   | 1h     | MEDIUM | P2       |
+| #  | Task                                 | Effort | Impact | Priority |
+| -- | ------------------------------------ | ------ | ------ | -------- |
+| 6  | Implement secret management (agenix) | 4h     | HIGH   | P1       |
+| 7  | Complete Gitea setup with secrets    | 2h     | HIGH   | P1       |
+| 8  | Remove HyprlandTypes.nix if unused   | 1h     | LOW    | P3       |
+| 9  | Document simplification process      | 2h     | LOW    | P3       |
+| 10 | Add pre-commit hook for complexity   | 1h     | MEDIUM | P2       |
 
 ### Medium-term (This Month)
 
-| #   | Task                            | Effort | Impact | Priority |
-| --- | ------------------------------- | ------ | ------ | -------- |
-| 11  | Archive old status reports      | 2h     | LOW    | P3       |
-| 12  | Implement automated cleanup     | 3h     | MEDIUM | P2       |
-| 13  | Create complexity metrics       | 2h     | LOW    | P3       |
-| 14  | Document architecture decisions | 3h     | MEDIUM | P2       |
-| 15  | Add simplification checklist    | 1h     | LOW    | P3       |
+| #  | Task                            | Effort | Impact | Priority |
+| -- | ------------------------------- | ------ | ------ | -------- |
+| 11 | Archive old status reports      | 2h     | LOW    | P3       |
+| 12 | Implement automated cleanup     | 3h     | MEDIUM | P2       |
+| 13 | Create complexity metrics       | 2h     | LOW    | P3       |
+| 14 | Document architecture decisions | 3h     | MEDIUM | P2       |
+| 15 | Add simplification checklist    | 1h     | LOW    | P3       |
 
 ### Long-term (This Quarter)
 
-| #   | Task                            | Effort | Impact | Priority |
-| --- | ------------------------------- | ------ | ------ | -------- |
-| 16  | Quarterly complexity audits     | 4h/qtr | HIGH   | P1       |
-| 17  | Automated unused code detection | 4h     | MEDIUM | P2       |
-| 18  | Performance benchmarking        | 3h     | LOW    | P3       |
-| 19  | Documentation automation        | 4h     | LOW    | P3       |
-| 20  | Community contribution guide    | 3h     | LOW    | P3       |
+| #  | Task                            | Effort | Impact | Priority |
+| -- | ------------------------------- | ------ | ------ | -------- |
+| 16 | Quarterly complexity audits     | 4h/qtr | HIGH   | P1       |
+| 17 | Automated unused code detection | 4h     | MEDIUM | P2       |
+| 18 | Performance benchmarking        | 3h     | LOW    | P3       |
+| 19 | Documentation automation        | 4h     | LOW    | P3       |
+| 20 | Community contribution guide    | 3h     | LOW    | P3       |
 
 ### Ongoing/Maintenance
 
-| #   | Task                      | Effort  | Impact | Priority |
-| --- | ------------------------- | ------- | ------ | -------- |
-| 21  | Weekly flake update       | 30m/wk  | HIGH   | P1       |
-| 22  | Monthly script audit      | 1h/mo   | MEDIUM | P2       |
-| 23  | Quarterly doc cleanup     | 2h/qtr  | LOW    | P3       |
-| 24  | Build time monitoring     | Ongoing | MEDIUM | P2       |
-| 25  | Complexity trend tracking | Ongoing | LOW    | P3       |
+| #  | Task                      | Effort  | Impact | Priority |
+| -- | ------------------------- | ------- | ------ | -------- |
+| 21 | Weekly flake update       | 30m/wk  | HIGH   | P1       |
+| 22 | Monthly script audit      | 1h/mo   | MEDIUM | P2       |
+| 23 | Quarterly doc cleanup     | 2h/qtr  | LOW    | P3       |
+| 24 | Build time monitoring     | Ongoing | MEDIUM | P2       |
+| 25 | Complexity trend tracking | Ongoing | LOW    | P3       |
 
 ---
 

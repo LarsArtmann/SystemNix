@@ -100,4 +100,4 @@
 
 ---
 
-*Session artifacts: homepage.nix restructure (+300/−274), CHANGELOG.md entry, AGENTS.md line 45 correction. Deployed toplevel `a43qwyb…` verified live 2026-08-18 ~01:57. Nothing hand-committed (auto-commit daemon owns commits).*
+_Session artifacts: homepage.nix restructure (+300/−274), CHANGELOG.md entry, AGENTS.md line 45 correction. Deployed toplevel `a43qwyb…` verified live 2026-08-18 ~01:57. Nothing hand-committed (auto-commit daemon owns commits)._

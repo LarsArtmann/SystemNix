@@ -4,7 +4,6 @@
 
 ---
 
-
 ## A) FULLY DONE
 
 ### Browser-History Go Code (upstream repo)
@@ -26,7 +25,7 @@
     - `browser-history-oidc-setup.service` oneshot that bridges the Pocket ID client secret into `${dataDir}/oauth2-secrets.env`
     - Ordering: `after` pocket-id + provision + oidc-setup, `wants` oidc-setup
     - Graceful degradation: missing secret → WebAuthn-only mode
-    Committed in `35ddbbbf`.
+      Committed in `35ddbbbf`.
 11. **Caddy comment updated** — Reflects dual-auth reality (WebAuthn + OAuth2/OIDC). Committed in `35ddbbbf`.
 12. **Nix syntax validation** — `nix-instantiate --parse` passes on all 3 modified files.
 13. **`nix flake check --no-build`** passed BEFORE the nixpkgs tarball regression hit.

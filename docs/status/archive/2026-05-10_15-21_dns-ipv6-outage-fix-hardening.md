@@ -164,33 +164,33 @@ Nothing. Clean execution with one lesson learned: the pre-commit `--no-verify` b
 
 ## f) Top 25 Things to Do Next
 
-| #   | Priority | Task                                                | Rationale                                                          | Effort  |
-| --- | -------- | --------------------------------------------------- | ------------------------------------------------------------------ | ------- |
-| 1   | P0       | **Push all commits to origin**                      | 4 commits ahead of origin                                          | 1 min   |
-| 2   | P0       | **Deploy to evo-x2 via `just switch`**              | Fix is committed but not deployed                                  | 10 min  |
-| 3   | P0       | **Reboot evo-x2 and verify DNS survives**           | Confirm fix persists across boots                                  | 5 min   |
-| 4   | P1       | **Add Gatus alerting (ntfy backend)**               | 20 endpoints with no alerts = monitoring theater                   | 30 min  |
-| 5   | P1       | **Add alerts to critical Gatus endpoints**          | DNS Resolver, Caddy, Authelia, SigNoz at minimum                   | 15 min  |
-| 6   | P1       | **Add DNS resolution step to service-health-check** | Every-15-min script misses DNS despite checking unbound status     | 10 min  |
-| 7   | P1       | **Verify DNS failover actually works**              | rpi3 has same fix now, but VRRP failover never tested end-to-end   | 30 min  |
-| 8   | P2       | **Test DNS from other LAN clients**                 | Confirm no downstream impact remains                               | 10 min  |
-| 9   | P2       | **Make `do-ip6` a dns-blocker module option**       | Type-safe, documented, configurable per-node                       | 15 min  |
-| 10  | P2       | **Make Keepalived health check a module option**    | Configurable per-node instead of hardcoded                         | 15 min  |
-| 11  | P2       | **Consider `drill` over `host` for Keepalived**     | Lighter dependency for health check script                         | 10 min  |
-| 12  | P2       | **Add Gatus endpoint for upstream DNS test**        | Test Quad9/Cloudflare reachability to catch upstream issues        | 5 min   |
-| 13  | P2       | **Review unbound verbose logging level**            | Verbosity 3 generates significant logs; set to 1 for production    | 5 min   |
-| 14  | P3       | **File upstream bug report to unbound**             | do-ip6 should consider route availability, not just kernel support | 20 min  |
-| 15  | P3       | **Contribute conditional do-ip6 to nixpkgs**        | Auto-detect global IPv6 presence, set do-ip6 accordingly           | 60 min  |
-| 16  | P3       | **Add NixOS integration test for DNS**              | Catch this class of issue during `nix flake check`                 | 60 min  |
-| 17  | P3       | **Set up log-based anomaly detection**              | SigNoz can alert on DNS SERVFAIL patterns in journald              | 30 min  |
-| 18  | P3       | **Audit Docker bridge IPv6 config**                 | Docker creates multiple bridges — ensure no IPv6 leaks             | 15 min  |
-| 19  | P3       | **Review ISP IPv6 support**                         | Can global IPv6 be enabled? Long-term fix for the root cause       | 15 min  |
-| 20  | P4       | **Create NixOS test VM for staging**                | Test config changes before deploying to production                 | 120 min |
-| 21  | P4       | **Document DNS diagnostic runbook**                 | "Ping works but DNS doesn't" diagnostic path in docs/              | 15 min  |
-| 22  | P4       | **Document Fish shell SSH workaround**              | `cat > /tmp/remote-script.sh` pattern for remote execution         | 10 min  |
-| 23  | P4       | **Clean up /tmp diagnostic scripts on evo-x2**      | Housekeeping from debugging session                                | 5 min   |
-| 24  | P5       | **Review nixpkgs `services.unbound` module**        | Check if upstream has options for IPv6 transport control           | 10 min  |
-| 25  | P5       | **Add IPv6 connectivity check to NixOS activation** | Fail early if config assumes global IPv6 but it's unavailable      | 20 min  |
+| #  | Priority | Task                                                | Rationale                                                          | Effort  |
+| -- | -------- | --------------------------------------------------- | ------------------------------------------------------------------ | ------- |
+| 1  | P0       | **Push all commits to origin**                      | 4 commits ahead of origin                                          | 1 min   |
+| 2  | P0       | **Deploy to evo-x2 via `just switch`**              | Fix is committed but not deployed                                  | 10 min  |
+| 3  | P0       | **Reboot evo-x2 and verify DNS survives**           | Confirm fix persists across boots                                  | 5 min   |
+| 4  | P1       | **Add Gatus alerting (ntfy backend)**               | 20 endpoints with no alerts = monitoring theater                   | 30 min  |
+| 5  | P1       | **Add alerts to critical Gatus endpoints**          | DNS Resolver, Caddy, Authelia, SigNoz at minimum                   | 15 min  |
+| 6  | P1       | **Add DNS resolution step to service-health-check** | Every-15-min script misses DNS despite checking unbound status     | 10 min  |
+| 7  | P1       | **Verify DNS failover actually works**              | rpi3 has same fix now, but VRRP failover never tested end-to-end   | 30 min  |
+| 8  | P2       | **Test DNS from other LAN clients**                 | Confirm no downstream impact remains                               | 10 min  |
+| 9  | P2       | **Make `do-ip6` a dns-blocker module option**       | Type-safe, documented, configurable per-node                       | 15 min  |
+| 10 | P2       | **Make Keepalived health check a module option**    | Configurable per-node instead of hardcoded                         | 15 min  |
+| 11 | P2       | **Consider `drill` over `host` for Keepalived**     | Lighter dependency for health check script                         | 10 min  |
+| 12 | P2       | **Add Gatus endpoint for upstream DNS test**        | Test Quad9/Cloudflare reachability to catch upstream issues        | 5 min   |
+| 13 | P2       | **Review unbound verbose logging level**            | Verbosity 3 generates significant logs; set to 1 for production    | 5 min   |
+| 14 | P3       | **File upstream bug report to unbound**             | do-ip6 should consider route availability, not just kernel support | 20 min  |
+| 15 | P3       | **Contribute conditional do-ip6 to nixpkgs**        | Auto-detect global IPv6 presence, set do-ip6 accordingly           | 60 min  |
+| 16 | P3       | **Add NixOS integration test for DNS**              | Catch this class of issue during `nix flake check`                 | 60 min  |
+| 17 | P3       | **Set up log-based anomaly detection**              | SigNoz can alert on DNS SERVFAIL patterns in journald              | 30 min  |
+| 18 | P3       | **Audit Docker bridge IPv6 config**                 | Docker creates multiple bridges — ensure no IPv6 leaks             | 15 min  |
+| 19 | P3       | **Review ISP IPv6 support**                         | Can global IPv6 be enabled? Long-term fix for the root cause       | 15 min  |
+| 20 | P4       | **Create NixOS test VM for staging**                | Test config changes before deploying to production                 | 120 min |
+| 21 | P4       | **Document DNS diagnostic runbook**                 | "Ping works but DNS doesn't" diagnostic path in docs/              | 15 min  |
+| 22 | P4       | **Document Fish shell SSH workaround**              | `cat > /tmp/remote-script.sh` pattern for remote execution         | 10 min  |
+| 23 | P4       | **Clean up /tmp diagnostic scripts on evo-x2**      | Housekeeping from debugging session                                | 5 min   |
+| 24 | P5       | **Review nixpkgs `services.unbound` module**        | Check if upstream has options for IPv6 transport control           | 10 min  |
+| 25 | P5       | **Add IPv6 connectivity check to NixOS activation** | Fail early if config assumes global IPv6 but it's unavailable      | 20 min  |
 
 ---
 

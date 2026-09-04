@@ -51,10 +51,10 @@ To ensure stability and plugin compatibility, we refactored `flake.nix`:
 
 ## 📋 Next Steps
 
-1.  **Deploy to Hardware**: Run `sudo nixos-rebuild switch --flake .#evo-x2` on the target machine.
-2.  **Verify Plugin Behavior**: Confirm `hyprwinwrap` successfully pins `btop` to the background on real hardware.
-3.  **Ghost Systems Phase 2**: Continue integrating TypeSafetySystem into more modules.
-4.  **Security**: Verify `gitleaks` and other pre-commit hooks continue to pass with new configs.
+1. **Deploy to Hardware**: Run `sudo nixos-rebuild switch --flake .#evo-x2` on the target machine.
+2. **Verify Plugin Behavior**: Confirm `hyprwinwrap` successfully pins `btop` to the background on real hardware.
+3. **Ghost Systems Phase 2**: Continue integrating TypeSafetySystem into more modules.
+4. **Security**: Verify `gitleaks` and other pre-commit hooks continue to pass with new configs.
 
 ## 📝 Notes
 

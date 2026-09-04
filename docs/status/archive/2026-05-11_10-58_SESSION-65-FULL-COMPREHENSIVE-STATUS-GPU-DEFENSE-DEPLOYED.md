@@ -26,94 +26,94 @@ Since the GPU OOM crash incident on 2026-05-10 (~15 hours ago), we have:
 
 ### GPU OOM Defense (Sessions 61-63, all committed)
 
-| #   | Item                                                               | File                      | Commit     |
-| --- | ------------------------------------------------------------------ | ------------------------- | ---------- |
-| 1   | `OLLAMA_MAX_LOADED_MODELS=1` — prevents dual-runner OOM            | `ai-stack.nix`            | `0056a683` |
-| 2   | `OLLAMA_GPU_OVERHEAD=8589934592` (8 GiB reserved for compositor)   | `ai-stack.nix`            | `0056a683` |
-| 3   | `OOMScoreAdjust=500` on Ollama — OOM killer prefers killing Ollama | `ai-stack.nix`            | `0056a683` |
-| 4   | `OOMScoreAdjust=-1000` on niri — maximum OOM protection (was -900) | `niri-config.nix`         | `0056a683` |
-| 5   | DRM healthcheck: consecutive failure thresholding (3 strikes)      | `niri-drm-healthcheck.sh` | `0056a683` |
-| 6   | GPU recovery: auto-reboot on all unrecoverable states              | `gpu-recovery.sh`         | `0056a683` |
-| 7   | GPU recovery: 5s post-niri-start verification window (was 3s)      | `gpu-recovery.sh`         | `0056a683` |
-| 8   | DRM healthcheck: state file auto-reset when errors clear           | `niri-drm-healthcheck.sh` | `0056a683` |
+| # | Item                                                               | File                      | Commit     |
+| - | ------------------------------------------------------------------ | ------------------------- | ---------- |
+| 1 | `OLLAMA_MAX_LOADED_MODELS=1` — prevents dual-runner OOM            | `ai-stack.nix`            | `0056a683` |
+| 2 | `OLLAMA_GPU_OVERHEAD=8589934592` (8 GiB reserved for compositor)   | `ai-stack.nix`            | `0056a683` |
+| 3 | `OOMScoreAdjust=500` on Ollama — OOM killer prefers killing Ollama | `ai-stack.nix`            | `0056a683` |
+| 4 | `OOMScoreAdjust=-1000` on niri — maximum OOM protection (was -900) | `niri-config.nix`         | `0056a683` |
+| 5 | DRM healthcheck: consecutive failure thresholding (3 strikes)      | `niri-drm-healthcheck.sh` | `0056a683` |
+| 6 | GPU recovery: auto-reboot on all unrecoverable states              | `gpu-recovery.sh`         | `0056a683` |
+| 7 | GPU recovery: 5s post-niri-start verification window (was 3s)      | `gpu-recovery.sh`         | `0056a683` |
+| 8 | DRM healthcheck: state file auto-reset when errors clear           | `niri-drm-healthcheck.sh` | `0056a683` |
 
 ### Power & Performance (Sessions 63-64, all committed)
 
-| #   | Item                                                             | File           | Commit     |
-| --- | ---------------------------------------------------------------- | -------------- | ---------- |
-| 9   | `amd_pstate=guided` → `amd_pstate=performance`                   | `boot.nix`     | `99495f22` |
-| 10  | `powerManagement.cpuFreqGovernor = "performance"`                | `boot.nix`     | `99495f22` |
-| 11  | 130W power ceiling documented in Known Issues                    | `AGENTS.md`    | `3577431a` |
-| 12  | Power ceiling root cause analysis (firmware PPT, no OS override) | `docs/status/` | `99495f22` |
-| 13  | GMKtec BIOS version audit (v1.11, newer `251028b` exists)        | `docs/status/` | `f519fcb3` |
+| #  | Item                                                             | File           | Commit     |
+| -- | ---------------------------------------------------------------- | -------------- | ---------- |
+| 9  | `amd_pstate=guided` → `amd_pstate=performance`                   | `boot.nix`     | `99495f22` |
+| 10 | `powerManagement.cpuFreqGovernor = "performance"`                | `boot.nix`     | `99495f22` |
+| 11 | 130W power ceiling documented in Known Issues                    | `AGENTS.md`    | `3577431a` |
+| 12 | Power ceiling root cause analysis (firmware PPT, no OS override) | `docs/status/` | `99495f22` |
+| 13 | GMKtec BIOS version audit (v1.11, newer `251028b` exists)        | `docs/status/` | `f519fcb3` |
 
 ### Research & Documentation (Sessions 61-64, all committed)
 
-| #   | Item                                                          | File                                                                                     | Lines       |
-| --- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ----------- |
-| 14  | Strix Halo + Linux 7 GPU architecture deep dive               | `docs/research/2026-05-11_STRIX-HALO-LINUX7-GPU-ARCHITECTURE-DEEP-DIVE.md`               | 320         |
-| 15  | Session 61: Crash forensics + GPU budget                      | `docs/status/2026-05-10_21-13_SESSION-61-CRASH-FORENSICS-GPU-BUDGET-RESILIENCE.md`       | —           |
-| 16  | Session 62: Full status + GPU recovery prioritization         | `docs/status/2026-05-11_09-39_SESSION-62-FULL-STATUS-GPU-RECOVERY-PRIORITIZATION.md`     | 299         |
-| 17  | Session 63: Power ceiling + GPU recovery + Ollama stability   | `docs/status/2026-05-11_10-49_SESSION-63-POWER-CEILING-GPU-RECOVERY-OLLAMA-STABILITY.md` | 177         |
-| 18  | Session 64: GMKtec BIOS discovery                             | `docs/status/2026-05-11_10-57_SESSION-64-GMKTEC-BIOS-DISCOVERY-POWER-CEILING-PATH.md`    | 174         |
-| 19  | AGENTS.md updated with GPU defense details                    | `AGENTS.md`                                                                              | +26 lines   |
-| 20  | AGENTS.md updated with DRM healthcheck + GPU recovery section | `AGENTS.md`                                                                              | new section |
+| #  | Item                                                          | File                                                                                     | Lines       |
+| -- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ----------- |
+| 14 | Strix Halo + Linux 7 GPU architecture deep dive               | `docs/research/2026-05-11_STRIX-HALO-LINUX7-GPU-ARCHITECTURE-DEEP-DIVE.md`               | 320         |
+| 15 | Session 61: Crash forensics + GPU budget                      | `docs/status/2026-05-10_21-13_SESSION-61-CRASH-FORENSICS-GPU-BUDGET-RESILIENCE.md`       | —           |
+| 16 | Session 62: Full status + GPU recovery prioritization         | `docs/status/2026-05-11_09-39_SESSION-62-FULL-STATUS-GPU-RECOVERY-PRIORITIZATION.md`     | 299         |
+| 17 | Session 63: Power ceiling + GPU recovery + Ollama stability   | `docs/status/2026-05-11_10-49_SESSION-63-POWER-CEILING-GPU-RECOVERY-OLLAMA-STABILITY.md` | 177         |
+| 18 | Session 64: GMKtec BIOS discovery                             | `docs/status/2026-05-11_10-57_SESSION-64-GMKTEC-BIOS-DISCOVERY-POWER-CEILING-PATH.md`    | 174         |
+| 19 | AGENTS.md updated with GPU defense details                    | `AGENTS.md`                                                                              | +26 lines   |
+| 20 | AGENTS.md updated with DRM healthcheck + GPU recovery section | `AGENTS.md`                                                                              | new section |
 
 ### Previously Completed (Sessions 58-60)
 
-| #   | Item                                                                               | Status               |
-| --- | ---------------------------------------------------------------------------------- | -------------------- |
-| 21  | Ollama `per_process_memory_fraction` lowered from 0.95 → 0.45                      | Committed & deployed |
-| 22  | System-wide `PYTORCH_CUDA_ALLOC_CONF` session variable removed                     | Committed & deployed |
-| 23  | Earlyoom config: niri in `--avoid`, Ollama in `--prefer`                           | Committed & deployed |
-| 24  | GPU recovery script created (unbind/rebind amdgpu)                                 | Committed & deployed |
-| 25  | DRM healthcheck timer (60s) created                                                | Committed & deployed |
-| 26  | awww-daemon crash loop prevention (ExecStartPre Wayland check, StartLimitBurst=3)  | Committed & deployed |
-| 27  | awww-daemon basic sandboxing                                                       | Committed & deployed |
-| 28  | `amdgpu.gttsize=112` kernel parameter                                              | Committed & deployed |
-| 29  | Kernel hardening: `sysrq=1`, `panic=30`, `softlockup_panic=1`, `hung_task_panic=1` | Committed & deployed |
-| 30  | `amdgpu.gpu_recovery=1` kernel parameter                                           | Committed & deployed |
-| 31  | watchdogd SP5100 TCO configuration                                                 | Committed & deployed |
-| 32  | Helium `--restore-last-session --disable-session-crashed-bubble`                   | Committed & deployed |
-| 33  | DNS IPv6 outage fix (unbound `do-ip6=false`)                                       | Committed & deployed |
-| 34  | Architecture relocation (modules → proper flake-parts)                             | Committed & deployed |
-| 35  | Script arithmetic normalization                                                    | Committed & deployed |
-| 36  | `OLLAMA_NUM_PARALLEL` reduced from 4 → 2                                           | Committed & deployed |
-| 37  | `OLLAMA_KV_CACHE_TYPE=q8_0` for memory efficiency                                  | Committed & deployed |
+| #  | Item                                                                               | Status               |
+| -- | ---------------------------------------------------------------------------------- | -------------------- |
+| 21 | Ollama `per_process_memory_fraction` lowered from 0.95 → 0.45                      | Committed & deployed |
+| 22 | System-wide `PYTORCH_CUDA_ALLOC_CONF` session variable removed                     | Committed & deployed |
+| 23 | Earlyoom config: niri in `--avoid`, Ollama in `--prefer`                           | Committed & deployed |
+| 24 | GPU recovery script created (unbind/rebind amdgpu)                                 | Committed & deployed |
+| 25 | DRM healthcheck timer (60s) created                                                | Committed & deployed |
+| 26 | awww-daemon crash loop prevention (ExecStartPre Wayland check, StartLimitBurst=3)  | Committed & deployed |
+| 27 | awww-daemon basic sandboxing                                                       | Committed & deployed |
+| 28 | `amdgpu.gttsize=112` kernel parameter                                              | Committed & deployed |
+| 29 | Kernel hardening: `sysrq=1`, `panic=30`, `softlockup_panic=1`, `hung_task_panic=1` | Committed & deployed |
+| 30 | `amdgpu.gpu_recovery=1` kernel parameter                                           | Committed & deployed |
+| 31 | watchdogd SP5100 TCO configuration                                                 | Committed & deployed |
+| 32 | Helium `--restore-last-session --disable-session-crashed-bubble`                   | Committed & deployed |
+| 33 | DNS IPv6 outage fix (unbound `do-ip6=false`)                                       | Committed & deployed |
+| 34 | Architecture relocation (modules → proper flake-parts)                             | Committed & deployed |
+| 35 | Script arithmetic normalization                                                    | Committed & deployed |
+| 36 | `OLLAMA_NUM_PARALLEL` reduced from 4 → 2                                           | Committed & deployed |
+| 37 | `OLLAMA_KV_CACHE_TYPE=q8_0` for memory efficiency                                  | Committed & deployed |
 
 ---
 
 ## b) PARTIALLY DONE (7 items)
 
-| #   | Item                                 | What's Done                                                         | What's Missing                                                    |
-| --- | ------------------------------------ | ------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| 1   | **Deploy all GPU defense changes**   | Committed, `test-fast` passes                                       | `just switch` not run — **requires reboot first**                 |
-| 2   | **GPU driver recovery**              | gpu-recovery.sh rewritten with auto-reboot                          | Amdgpu still wedged, reboot needed to clear                       |
-| 3   | **BIOS power ceiling investigation** | Root cause found (firmware PPT), newer BIOS identified (`251028b`)  | Not extracted, not flashed, BIOS menus not checked                |
-| 4   | **Root disk cleanup**                | `just clean` freed 2.5 GiB (93% → 90%)                              | Still at 90%, coredumps not cleaned, old generations remain       |
-| 5   | **DRM healthcheck state file**       | Implemented with `/tmp/` path                                       | Should move to `/var/lib/` for persistence across tmpfiles resets |
-| 6   | **Kernel update (7.0.1 → 7.0.6)**    | Identified as needed (Dirty Frag vulnerability)                     | Not updated — requires nixpkgs input update + rebuild             |
-| 7   | **DNS failover cluster**             | Module written (`dns-failover.nix`), Pi 3 image config in flake.nix | Pi 3 hardware not provisioned                                     |
+| # | Item                                 | What's Done                                                         | What's Missing                                                    |
+| - | ------------------------------------ | ------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| 1 | **Deploy all GPU defense changes**   | Committed, `test-fast` passes                                       | `just switch` not run — **requires reboot first**                 |
+| 2 | **GPU driver recovery**              | gpu-recovery.sh rewritten with auto-reboot                          | Amdgpu still wedged, reboot needed to clear                       |
+| 3 | **BIOS power ceiling investigation** | Root cause found (firmware PPT), newer BIOS identified (`251028b`)  | Not extracted, not flashed, BIOS menus not checked                |
+| 4 | **Root disk cleanup**                | `just clean` freed 2.5 GiB (93% → 90%)                              | Still at 90%, coredumps not cleaned, old generations remain       |
+| 5 | **DRM healthcheck state file**       | Implemented with `/tmp/` path                                       | Should move to `/var/lib/` for persistence across tmpfiles resets |
+| 6 | **Kernel update (7.0.1 → 7.0.6)**    | Identified as needed (Dirty Frag vulnerability)                     | Not updated — requires nixpkgs input update + rebuild             |
+| 7 | **DNS failover cluster**             | Module written (`dns-failover.nix`), Pi 3 image config in flake.nix | Pi 3 hardware not provisioned                                     |
 
 ---
 
 ## c) NOT STARTED (13 items)
 
-| #   | Item                                                        | Priority | Effort |
-| --- | ----------------------------------------------------------- | -------- | ------ |
-| 1   | Reboot system to deploy all changes and clear wedged GPU    | P0       | 5min   |
-| 2   | `just switch` after reboot                                  | P0       | 30min  |
-| 3   | Verify Ollama stability under load with MAX_LOADED_MODELS=1 | P1       | 30min  |
-| 4   | Test GPU recovery auto-reboot flow (simulate DRM zombie)    | P1       | 20min  |
-| 5   | Reboot into BIOS → check AMD CBS/AMD PBS menus for PPT      | P1       | 10min  |
-| 6   | Try Ctrl+F1 in BIOS Advanced tab for hidden menus           | P1       | 2min   |
-| 7   | Download `251028b` image on another machine (85 GB)         | P2       | 2hr+   |
-| 8   | Extract BIOS `.cap` from `251028b` image                    | P2       | 30min  |
-| 9   | Contact GMKtec support for standalone BIOS                  | P2       | 20min  |
-| 10  | Move healthcheck state file from `/tmp` to `/var/lib`       | P2       | 5min   |
-| 11  | Update nixpkgs input for kernel 7.0.6 (Dirty Frag fix)      | P2       | 15min  |
-| 12  | Add power estimation to waybar (RAPL energy_uj delta)       | P3       | 30min  |
-| 13  | Write AMI IFR parser for EFI variable analysis              | P4       | 1hr    |
+| #  | Item                                                        | Priority | Effort |
+| -- | ----------------------------------------------------------- | -------- | ------ |
+| 1  | Reboot system to deploy all changes and clear wedged GPU    | P0       | 5min   |
+| 2  | `just switch` after reboot                                  | P0       | 30min  |
+| 3  | Verify Ollama stability under load with MAX_LOADED_MODELS=1 | P1       | 30min  |
+| 4  | Test GPU recovery auto-reboot flow (simulate DRM zombie)    | P1       | 20min  |
+| 5  | Reboot into BIOS → check AMD CBS/AMD PBS menus for PPT      | P1       | 10min  |
+| 6  | Try Ctrl+F1 in BIOS Advanced tab for hidden menus           | P1       | 2min   |
+| 7  | Download `251028b` image on another machine (85 GB)         | P2       | 2hr+   |
+| 8  | Extract BIOS `.cap` from `251028b` image                    | P2       | 30min  |
+| 9  | Contact GMKtec support for standalone BIOS                  | P2       | 20min  |
+| 10 | Move healthcheck state file from `/tmp` to `/var/lib`       | P2       | 5min   |
+| 11 | Update nixpkgs input for kernel 7.0.6 (Dirty Frag fix)      | P2       | 15min  |
+| 12 | Add power estimation to waybar (RAPL energy_uj delta)       | P3       | 30min  |
+| 13 | Write AMI IFR parser for EFI variable analysis              | P4       | 1hr    |
 
 ---
 
@@ -167,33 +167,33 @@ No standalone BIOS updates. Only 85 GB Windows images. No changelog. No document
 
 ## f) Top #25 Things We Should Get Done Next
 
-| #   | Priority | Task                                                                                     | Effort | Impact                     |
-| --- | -------- | ---------------------------------------------------------------------------------------- | ------ | -------------------------- |
-| 1   | **P0**   | **Reboot the system** to clear wedged amdgpu driver                                      | 5min   | Unblocks everything        |
-| 2   | **P0**   | **`just switch`** to deploy all GPU defense changes                                      | 30min  | Activates protections      |
-| 3   | **P0**   | **Verify niri starts cleanly** after reboot + deploy                                     | 5min   | Confirms recovery          |
-| 4   | **P1**   | **Test Ollama with MAX_LOADED_MODELS=1** — load a model, verify only one runner          | 15min  | Validates fix              |
-| 5   | **P1**   | **Test GPU recovery auto-reboot** — simulate DRM zombie                                  | 20min  | Validates safety net       |
-| 6   | **P1**   | **Reboot into BIOS → check AMD CBS menus** for PPT/TDP controls                          | 10min  | Could unlock power ceiling |
-| 7   | **P1**   | **Try Ctrl+F1 in BIOS Advanced tab** for hidden AMD menus                                | 2min   | Could reveal PPT options   |
-| 8   | **P1**   | **Root disk deep cleanup** — `/var/lib/systemd/coredump/`, docker system prune, old logs | 30min  | Prevents build failures    |
-| 9   | **P1**   | **Push to origin** — 3 commits behind remote                                             | 1min   | Safety backup              |
-| 10  | **P2**   | **Update nixpkgs** for kernel 7.0.6 (Dirty Frag CVE fix)                                 | 15min  | Security                   |
-| 11  | **P2**   | **Move healthcheck state file** from `/tmp/` to `/var/lib/`                              | 5min   | Correctness                |
-| 12  | **P2**   | **Add Ollama GPU monitoring** to SigNoz (VRAM usage, runner count)                       | 1hr    | Observability              |
-| 13  | **P2**   | **Add niri crash rate alerting** to SigNoz or gatus                                      | 30min  | Early warning              |
-| 14  | **P2**   | **Add disk space monitoring** to gatus (90% root threshold)                              | 15min  | Proactive                  |
-| 15  | **P2**   | **Download `251028b` image** on another machine (85 GB)                                  | 2hr+   | BIOS upgrade path          |
-| 16  | **P2**   | **Contact GMKtec support** for standalone BIOS + PPT info                                | 20min  | BIOS path                  |
-| 17  | **P2**   | **Provision Pi 3** for DNS failover cluster                                              | 2hr    | HA DNS                     |
-| 18  | **P3**   | **Extract BIOS `.cap` from `251028b`** image                                             | 30min  | BIOS upgrade               |
-| 19  | **P3**   | **Add power estimation widget** to waybar                                                | 30min  | Visibility                 |
-| 20  | **P3**   | **Test dual-WAN failover** (mptcp-endpoint-manager)                                      | 1hr    | Network resilience         |
-| 21  | **P3**   | **Audit all 17 gatus health check endpoints**                                            | 15min  | Monitoring accuracy        |
-| 22  | **P3**   | **Add GPU memory pressure alert** (VRAM > 85%)                                           | 30min  | Preventive                 |
-| 23  | **P3**   | **Review awww-daemon sandboxing** completeness                                           | 15min  | Security                   |
-| 24  | **P4**   | **Write AMI IFR parser** for EFI variable analysis                                       | 1hr    | BIOS exploration           |
-| 25  | **P4**   | **Test full recovery chain**: GPU hang → auto-reboot → session restore → niri healthy    | 30min  | End-to-end validation      |
+| #  | Priority | Task                                                                                     | Effort | Impact                     |
+| -- | -------- | ---------------------------------------------------------------------------------------- | ------ | -------------------------- |
+| 1  | **P0**   | **Reboot the system** to clear wedged amdgpu driver                                      | 5min   | Unblocks everything        |
+| 2  | **P0**   | **`just switch`** to deploy all GPU defense changes                                      | 30min  | Activates protections      |
+| 3  | **P0**   | **Verify niri starts cleanly** after reboot + deploy                                     | 5min   | Confirms recovery          |
+| 4  | **P1**   | **Test Ollama with MAX_LOADED_MODELS=1** — load a model, verify only one runner          | 15min  | Validates fix              |
+| 5  | **P1**   | **Test GPU recovery auto-reboot** — simulate DRM zombie                                  | 20min  | Validates safety net       |
+| 6  | **P1**   | **Reboot into BIOS → check AMD CBS menus** for PPT/TDP controls                          | 10min  | Could unlock power ceiling |
+| 7  | **P1**   | **Try Ctrl+F1 in BIOS Advanced tab** for hidden AMD menus                                | 2min   | Could reveal PPT options   |
+| 8  | **P1**   | **Root disk deep cleanup** — `/var/lib/systemd/coredump/`, docker system prune, old logs | 30min  | Prevents build failures    |
+| 9  | **P1**   | **Push to origin** — 3 commits behind remote                                             | 1min   | Safety backup              |
+| 10 | **P2**   | **Update nixpkgs** for kernel 7.0.6 (Dirty Frag CVE fix)                                 | 15min  | Security                   |
+| 11 | **P2**   | **Move healthcheck state file** from `/tmp/` to `/var/lib/`                              | 5min   | Correctness                |
+| 12 | **P2**   | **Add Ollama GPU monitoring** to SigNoz (VRAM usage, runner count)                       | 1hr    | Observability              |
+| 13 | **P2**   | **Add niri crash rate alerting** to SigNoz or gatus                                      | 30min  | Early warning              |
+| 14 | **P2**   | **Add disk space monitoring** to gatus (90% root threshold)                              | 15min  | Proactive                  |
+| 15 | **P2**   | **Download `251028b` image** on another machine (85 GB)                                  | 2hr+   | BIOS upgrade path          |
+| 16 | **P2**   | **Contact GMKtec support** for standalone BIOS + PPT info                                | 20min  | BIOS path                  |
+| 17 | **P2**   | **Provision Pi 3** for DNS failover cluster                                              | 2hr    | HA DNS                     |
+| 18 | **P3**   | **Extract BIOS `.cap` from `251028b`** image                                             | 30min  | BIOS upgrade               |
+| 19 | **P3**   | **Add power estimation widget** to waybar                                                | 30min  | Visibility                 |
+| 20 | **P3**   | **Test dual-WAN failover** (mptcp-endpoint-manager)                                      | 1hr    | Network resilience         |
+| 21 | **P3**   | **Audit all 17 gatus health check endpoints**                                            | 15min  | Monitoring accuracy        |
+| 22 | **P3**   | **Add GPU memory pressure alert** (VRAM > 85%)                                           | 30min  | Preventive                 |
+| 23 | **P3**   | **Review awww-daemon sandboxing** completeness                                           | 15min  | Security                   |
+| 24 | **P4**   | **Write AMI IFR parser** for EFI variable analysis                                       | 1hr    | BIOS exploration           |
+| 25 | **P4**   | **Test full recovery chain**: GPU hang → auto-reboot → session restore → niri healthy    | 30min  | End-to-end validation      |
 
 ---
 

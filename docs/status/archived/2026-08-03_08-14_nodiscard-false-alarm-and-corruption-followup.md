@@ -7,7 +7,6 @@
 
 ---
 
-
 ## Executive Summary
 
 1. **1,351,271 uncorrectable checksum errors** across **33 unique physical blocks** on `/data` — amplified by BTRFS snapshot references
@@ -25,36 +24,36 @@
 
 ### 1. Identified and deleted all 13 corrupted files
 
-| # | File | Category | Status |
-|---|------|----------|--------|
-| 1 | `ai/cache/huggingface/.../Z-Image-Turbo/...` | AI model | Deleted |
-| 2 | `ai/models/image/illustrij_v21_diffusers/text_encoder/model.safetensors` | AI model | Deleted |
-| 3 | `ai/models/image/illustrij_v21_diffusers/unet/diffusion_pytorch_model.safetensors` | AI model | Deleted |
-| 4 | `ai/models/image/illustrij_v21_diffusers/vae/diffusion_pytorch_model.safetensors` | AI model | Deleted (prior session) |
-| 5 | `ai/models/image/Krea-2-Turbo/transformer/...00001-of-00003.safetensors` | AI model | Deleted |
-| 6 | `docker/volumes/6d41d7f0.../mysql.ibd` | MySQL system tablespace | Container dead, no impact |
-| 7 | `docker/volumes/twenty_db-data/pg_wal/000000010000000000000010` | PostgreSQL WAL segment | Already recycled by PG (LSN moved past it) |
-| 8 | `llamacpp-models/BAGEL-7B-MoT/ae.safetensors` | AI model | Deleted (prior session) |
-| 9 | `llamacpp-models/qwen3.6-35b-a3b-aggressive/...gguf` | AI model | Deleted |
-| 10 | `models/sdxl/perfectdeliberate-v90-new/text_encoder_2/model.safetensors` | AI model | Deleted |
-| 11 | `models/Z-Anime/diffusers/transformer/...00001-of-00002.safetensors` | AI model | Deleted |
-| 12-13 | CS:GO `de_ancient.vpk`, `de_cache.vpk`, `de_cache_vanity.vpk` | Steam game | Deleted |
+| #     | File                                                                               | Category                | Status                                     |
+| ----- | ---------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------ |
+| 1     | `ai/cache/huggingface/.../Z-Image-Turbo/...`                                       | AI model                | Deleted                                    |
+| 2     | `ai/models/image/illustrij_v21_diffusers/text_encoder/model.safetensors`           | AI model                | Deleted                                    |
+| 3     | `ai/models/image/illustrij_v21_diffusers/unet/diffusion_pytorch_model.safetensors` | AI model                | Deleted                                    |
+| 4     | `ai/models/image/illustrij_v21_diffusers/vae/diffusion_pytorch_model.safetensors`  | AI model                | Deleted (prior session)                    |
+| 5     | `ai/models/image/Krea-2-Turbo/transformer/...00001-of-00003.safetensors`           | AI model                | Deleted                                    |
+| 6     | `docker/volumes/6d41d7f0.../mysql.ibd`                                             | MySQL system tablespace | Container dead, no impact                  |
+| 7     | `docker/volumes/twenty_db-data/pg_wal/000000010000000000000010`                    | PostgreSQL WAL segment  | Already recycled by PG (LSN moved past it) |
+| 8     | `llamacpp-models/BAGEL-7B-MoT/ae.safetensors`                                      | AI model                | Deleted (prior session)                    |
+| 9     | `llamacpp-models/qwen3.6-35b-a3b-aggressive/...gguf`                               | AI model                | Deleted                                    |
+| 10    | `models/sdxl/perfectdeliberate-v90-new/text_encoder_2/model.safetensors`           | AI model                | Deleted                                    |
+| 11    | `models/Z-Anime/diffusers/transformer/...00001-of-00002.safetensors`               | AI model                | Deleted                                    |
+| 12-13 | CS:GO `de_ancient.vpk`, `de_cache.vpk`, `de_cache_vanity.vpk`                      | Steam game              | Deleted                                    |
 
 ### 2. SMART analysis complete
 
-| SMART Metric | Value | Assessment |
-|---|---|---|
-| Overall health | **PASSED** | |
-| Media and Data Integrity Errors | **0** | Flash cells are healthy |
-| Error Log Entries | **0** | Controller reports no errors |
-| Percentage Used | **11%** | 89% write endurance remaining |
-| Available Spare | **100%** | No spare blocks consumed |
-| All self-tests (20 total) | **Passed** | |
-| Power On Hours | 1,625 (~68 days) | |
-| Data Units Written | **145 TB** in 68 days | Heavy: ~89 GB/hour avg |
-| **Unsafe Shutdowns** | **58 / 125** | **46% — ROOT CAUSE of corruption** |
-| Critical Comp. Temp. Time | **114 min** at 95°C+ | Possible thermal throttling events |
-| Temperature (current) | 60°C | Normal under load |
+| SMART Metric                    | Value                 | Assessment                         |
+| ------------------------------- | --------------------- | ---------------------------------- |
+| Overall health                  | **PASSED**            |                                    |
+| Media and Data Integrity Errors | **0**                 | Flash cells are healthy            |
+| Error Log Entries               | **0**                 | Controller reports no errors       |
+| Percentage Used                 | **11%**               | 89% write endurance remaining      |
+| Available Spare                 | **100%**              | No spare blocks consumed           |
+| All self-tests (20 total)       | **Passed**            |                                    |
+| Power On Hours                  | 1,625 (~68 days)      |                                    |
+| Data Units Written              | **145 TB** in 68 days | Heavy: ~89 GB/hour avg             |
+| **Unsafe Shutdowns**            | **58 / 125**          | **46% — ROOT CAUSE of corruption** |
+| Critical Comp. Temp. Time       | **114 min** at 95°C+  | Possible thermal throttling events |
+| Temperature (current)           | 60°C                  | Normal under load                  |
 
 ### 3. Verified `nodiscard` IS working
 
@@ -89,9 +88,11 @@
 ## B) Partially Done
 
 ### 1. Fresh scrub verification
+
 User needs to run `sudo btrfs scrub start -B /data` after the deploy to confirm the 1.35M error count drops to 0 (or near 0) after deleting all corrupted files.
 
 ### 2. Root filesystem scrub
+
 `/` partition has 0 corruption_errs in `btrfs device stats` but has never been scrubbed. Needs `sudo btrfs scrub start -B /`.
 
 ---
@@ -112,15 +113,19 @@ User needs to run `sudo btrfs scrub start -B /data` after the deploy to confirm 
 ## D) Totally Fucked Up
 
 ### 1. Added `discard=none` without research
+
 NOT a valid BTRFS option. Would have caused mount failure → emergency shell on next boot. The user had to say "do some fucking research" before I checked the kernel source.
 
 ### 2. Added unnecessary block-layer service
+
 `disable-nvme-discard` would have killed `fstrim` (a legitimate, separate operation from async discard). Based on false conclusion that `nodiscard` was broken.
 
 ### 3. Trusted prior session conclusions without verification
+
 The prior session concluded `nodiscard` was "silently ignored" based on boot log showing "turning on async discard". I built on this without checking timestamps. The boot log predated the config change by 35 hours.
 
 ### 4. Didn't check the scrub kernel log until forced
+
 The scrub kernel log (`journalctl -k | grep 'checksum error'`) contained the full list of corrupted files with paths, physical addresses, and logical addresses. I should have extracted this immediately instead of recommending `find /data -exec dd` (which can't detect this type of corruption).
 
 ---
@@ -128,12 +133,14 @@ The scrub kernel log (`journalctl -k | grep 'checksum error'`) contained the ful
 ## E) What We Should Improve
 
 ### Process
+
 1. **RESEARCH BEFORE EDITING** — Read docs, check kernel source, verify hypothesis before making config changes
 2. **Check timestamps** — "X is in the boot log" is meaningless without checking when the boot happened vs when the config changed
 3. **Read kernel logs early** — `journalctl -k | grep 'checksum error'` immediately gives file paths and physical addresses. Don't recommend slow `dd` scans.
 4. **Verify runtime state before changing config** — The sysfs `discardable_extents` counter test takes 10 seconds
 
 ### Technical
+
 5. **Weekly scrub instead of monthly** — More retry opportunities between reboots
 6. **Scrub monitoring must check for "finished" status** — Interrupted scrubs are not "error-free"
 7. **Track unsafe shutdowns** — 58 out of 125 is a systemic problem. Each one risks new corruption.

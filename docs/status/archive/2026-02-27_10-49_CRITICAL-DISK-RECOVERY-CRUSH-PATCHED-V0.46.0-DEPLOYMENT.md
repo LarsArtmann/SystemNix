@@ -222,12 +222,12 @@ Successfully recovered from a **CRITICAL SYSTEM FAILURE** (100% disk utilization
 
 ## System Health Snapshot
 
-| Metric             | Value            | Status                 |
-| ------------------ | ---------------- | ---------------------- |
+| Metric             | Value            | Status                |
+| ------------------ | ---------------- | --------------------- |
 | `/nix/store` Usage | 217G/229G (95%)  | ⚠️ High but manageable |
-| Available Space    | 13GB             | ✅ Adequate            |
-| Flake Status       | Updated          | ✅ Current             |
-| crush-patched      | v0.46.0          | ✅ Latest              |
+| Available Space    | 13GB             | ✅ Adequate           |
+| Flake Status       | Updated          | ✅ Current            |
+| crush-patched      | v0.46.0          | ✅ Latest             |
 | Git Status         | 2 modified files | ⏸️ Uncommitted         |
 
 ---

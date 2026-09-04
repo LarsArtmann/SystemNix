@@ -5,7 +5,6 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 ### Upstream fix (file-and-image-renamer repo, commit `8bf60bd`, pushed to master)
@@ -67,23 +66,27 @@
 ## e) WHAT WE SHOULD IMPROVE
 
 ### Code Quality
+
 1. **Add explicit regression test** — `TestFallbackProvider_AuthErrorTriggersFallback` that verifies the secondary provider is called when the primary returns `ErrorTypeAuth`.
 2. **Add integration test** — end-to-end test that simulates a 401 from GLM and verifies Synthetic is used.
 3. **Consider `ErrorTypeAuth` in the deadletter package** — `deadletter.go` has `ErrorTypeAPIError` but no `ErrorTypeAuthError` alias. Auth failures in the dead-letter queue will show as `"auth_error"` which is correct, but the package should export the constant for consistency.
 
 ### SystemNix Module
+
 4. **Add `zaiApiKeyFile` sops secret** — If ZAI is ever re-enabled, it should also be sops-managed, not a plaintext file. Currently `apiKeyFile` defaults to `null` (ZAI disabled).
 5. **Add Gatus check for AI processing health** — The existing health check only verifies the HTTP server is alive. A check that monitors `dead-letter.json` growth rate or `history.json` operation count would catch silent AI failures.
 6. **Add `restartTriggers`** — The module has no `restartTriggers` on the watcher service. If the sops secret is rotated, the service won't restart automatically.
 7. **Consider `LoadCredential` instead of env var** — The watcher passes the secret path via `SYNTHETIC_API_KEY_FILE` env var. Using systemd `LoadCredential` would be more secure (secret in `$CREDENTIALS_DIRECTORY`, not in `/proc/<pid>/environ`).
 
 ### Operational
+
 8. **Remove stale plaintext files** — `~/.zai_api_key` and any `~/.synthetic_api_key` should be `trash`ed after deploy confirms the sops path works.
 9. **Clear dead-letter queue** — 157 entries from Jul 13 are permanently stuck. They need either manual clearing or a `retry` command run.
 10. **Verify Synthetic API key is valid** — The sops secret was originally for crush-daily. It SHOULD be the same key, but this was not verified end-to-end.
 11. **Fix the auto-commit hook** — The hook generates misleading messages. Either disable it, improve its message generation, or manually amend the commits.
 
 ### Documentation
+
 12. **Document the `ErrorTypeAuth` in upstream AGENTS.md** — The upstream repo's docs should explain the error type taxonomy and fallback behavior.
 13. **Add upstream CHANGELOG entry** — The `8bf60bd` commit has no CHANGELOG entry.
 
@@ -91,33 +94,33 @@
 
 ## f) Up to 50 Things We Should Get Done Next
 
-| # | Task | Priority | Effort |
-|---|------|----------|--------|
-| 1 | **Deploy** the changes (`nix run .#deploy`) | P0 | 5min |
-| 2 | **Clear dead-letter queue** after deploy | P0 | 1min |
-| 3 | **Run post-deploy smoke test** (`nix run .#post-deploy-check`) | P0 | 2min |
-| 4 | **Verify** Synthetic API key works by dropping a test image in `~/Downloads` | P0 | 2min |
-| 5 | **Trash stale `~/.zai_api_key`** after confirming Synthetic works | P1 | 1min |
-| 6 | **Add regression test** `TestFallbackProvider_AuthErrorTriggersFallback` upstream | P1 | 15min |
-| 7 | **Add CHANGELOG entry** to upstream repo for `8bf60bd` | P2 | 5min |
-| 8 | **Add `restartTriggers`** to watcher service for sops secret rotation | P1 | 10min |
-| 9 | **Add Gatus check** for dead-letter queue growth (alert if >5 new entries in 1h) | P2 | 20min |
-| 10 | **Migrate `SYNTHETIC_API_KEY_FILE` to systemd `LoadCredential`** for better security | P2 | 15min |
-| 11 | **Fix or disable auto-commit hook** — misleading commit messages | P1 | 30min |
-| 12 | **Investigate `/tmp` cap effectiveness** — 24GB used despite documented 16GB cap | P1 | 15min |
-| 13 | **Add `ErrorTypeAuthError` alias** to deadletter package for consistency | P3 | 5min |
-| 14 | **Add ZAI sops secret** if ZAI provider is ever re-enabled | P3 | 10min |
-| 15 | **Add health dashboard view** for auth failure count (track `ErrorTypeAuth` in dead-letter) | P3 | 30min |
-| 16 | **Consider provider health metrics** — expose primary/secondary success ratio to Prometheus | P3 | 45min |
-| 17 | **Add circuit breaker state** to health dashboard — currently invisible | P3 | 20min |
-| 18 | **Document provider selection logic** in upstream README | P3 | 15min |
-| 19 | **Review all other LarsArtmann Go services** for the same ErrorTypeAPI/auth classification bug | P2 | 60min |
-| 20 | **Add pre-deploy check** that verifies sops secret exists and is readable | P2 | 15min |
-| 21 | **Consider encrypting `~/.file-renamer/history.json`** — contains file paths and AI descriptions | P4 | 30min |
-| 22 | **Add log rotation** for `~/.file-renamer/logs/watcher.log` — grows unbounded | P3 | 10min |
-| 23 | **Add file size limit** for dead-letter.json — 157 entries already, could grow to thousands | P3 | 10min |
-| 24 | **Add dead-letter auto-retry timer** — periodically retry `pending` entries after provider key rotation | P3 | 45min |
-| 25 | **Review crush-daily** — shares the same Synthetic key, verify it's also not using a plaintext file | P2 | 10min |
+| #  | Task                                                                                                    | Priority | Effort |
+| -- | ------------------------------------------------------------------------------------------------------- | -------- | ------ |
+| 1  | **Deploy** the changes (`nix run .#deploy`)                                                             | P0       | 5min   |
+| 2  | **Clear dead-letter queue** after deploy                                                                | P0       | 1min   |
+| 3  | **Run post-deploy smoke test** (`nix run .#post-deploy-check`)                                          | P0       | 2min   |
+| 4  | **Verify** Synthetic API key works by dropping a test image in `~/Downloads`                            | P0       | 2min   |
+| 5  | **Trash stale `~/.zai_api_key`** after confirming Synthetic works                                       | P1       | 1min   |
+| 6  | **Add regression test** `TestFallbackProvider_AuthErrorTriggersFallback` upstream                       | P1       | 15min  |
+| 7  | **Add CHANGELOG entry** to upstream repo for `8bf60bd`                                                  | P2       | 5min   |
+| 8  | **Add `restartTriggers`** to watcher service for sops secret rotation                                   | P1       | 10min  |
+| 9  | **Add Gatus check** for dead-letter queue growth (alert if >5 new entries in 1h)                        | P2       | 20min  |
+| 10 | **Migrate `SYNTHETIC_API_KEY_FILE` to systemd `LoadCredential`** for better security                    | P2       | 15min  |
+| 11 | **Fix or disable auto-commit hook** — misleading commit messages                                        | P1       | 30min  |
+| 12 | **Investigate `/tmp` cap effectiveness** — 24GB used despite documented 16GB cap                        | P1       | 15min  |
+| 13 | **Add `ErrorTypeAuthError` alias** to deadletter package for consistency                                | P3       | 5min   |
+| 14 | **Add ZAI sops secret** if ZAI provider is ever re-enabled                                              | P3       | 10min  |
+| 15 | **Add health dashboard view** for auth failure count (track `ErrorTypeAuth` in dead-letter)             | P3       | 30min  |
+| 16 | **Consider provider health metrics** — expose primary/secondary success ratio to Prometheus             | P3       | 45min  |
+| 17 | **Add circuit breaker state** to health dashboard — currently invisible                                 | P3       | 20min  |
+| 18 | **Document provider selection logic** in upstream README                                                | P3       | 15min  |
+| 19 | **Review all other LarsArtmann Go services** for the same ErrorTypeAPI/auth classification bug          | P2       | 60min  |
+| 20 | **Add pre-deploy check** that verifies sops secret exists and is readable                               | P2       | 15min  |
+| 21 | **Consider encrypting `~/.file-renamer/history.json`** — contains file paths and AI descriptions        | P4       | 30min  |
+| 22 | **Add log rotation** for `~/.file-renamer/logs/watcher.log` — grows unbounded                           | P3       | 10min  |
+| 23 | **Add file size limit** for dead-letter.json — 157 entries already, could grow to thousands             | P3       | 10min  |
+| 24 | **Add dead-letter auto-retry timer** — periodically retry `pending` entries after provider key rotation | P3       | 45min  |
+| 25 | **Review crush-daily** — shares the same Synthetic key, verify it's also not using a plaintext file     | P2       | 10min  |
 
 ---
 

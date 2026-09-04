@@ -4,7 +4,6 @@ _2026-08-02 03:51 CEST_
 
 ---
 
-
 ## Context
 
 The user asked me to implement items 21-30 from the previous status report's
@@ -20,11 +19,11 @@ The user asked me to implement items 21-30 from the previous status report's
 The `atticd-size-guard` script now emits Prometheus metrics to
 `/var/lib/prometheus-node-exporter/textfile_collectors/attic.prom`:
 
-| Metric | Type | Description |
-|--------|------|-------------|
-| `attic_storage_bytes` | gauge | Total bytes in `/data/atticd/storage` |
-| `attic_storage_gb` | gauge | Same in integer GB |
-| `attic_storage_max_gb` | gauge | Configured `maxStorageGigabytes` threshold |
+| Metric                         | Type  | Description                                 |
+| ------------------------------ | ----- | ------------------------------------------- |
+| `attic_storage_bytes`          | gauge | Total bytes in `/data/atticd/storage`       |
+| `attic_storage_gb`             | gauge | Same in integer GB                          |
+| `attic_storage_max_gb`         | gauge | Configured `maxStorageGigabytes` threshold  |
 | `attic_storage_over_threshold` | gauge | 1 if over limit (GC triggered), 0 otherwise |
 
 Added the textfile dir to the service `ReadWritePaths` so the script can write.
@@ -133,6 +132,7 @@ pressure is irresponsible.
 I modified `caddy.nix`, `forgejo.nix`, `homepage.nix`, and `.githooks/pre-commit`
 — none of which are attic-specific. If any of these changes has a bug, it affects
 services unrelated to the cache. I should have been more surgical:
+
 - The Caddy change is safe (additive `lib.optional`).
 - The MemoryMax change is a blind guess (D1).
 - The Homepage tile change is additive but I didn't verify `svcUrl "cache"`
@@ -204,6 +204,7 @@ status reporting. It makes the todo list lie about what was actually done.
 ## F) Up to 50 Things to Do Next
 
 ### Deploy the cache (CRITICAL — nothing works until this happens)
+
 1. Commit all changes from this + previous sessions
 2. Deploy SystemNix: `nh os switch .`
 3. Verify atticd starts: `systemctl status atticd`
@@ -226,6 +227,7 @@ status reporting. It makes the todo list lie about what was actually done.
 20. Test substituter from LAN machine
 
 ### Fix issues from this session
+
 21. Verify the Prometheus heredoc produces valid metrics (eval the script string)
 22. Verify `svcUrl "cache"` resolves correctly in homepage.nix
 23. Verify Forgejo runner 16G MemoryMax doesn't cause memory pressure with GPUActive
@@ -234,30 +236,35 @@ status reporting. It makes the todo list lie about what was actually done.
 26. Write the nixosTests VM test (#27 — actually do it this time)
 
 ### Parallel session cleanup
+
 27. Commit or discard the hermes-agent unpinning in `flake.nix`
 28. Commit or discard the duckdb addition in `base.nix`
 29. Commit or discard the `agentStoragePath` change in `monitor365.nix`
 30. Commit the 38 files in the monitor365 repo (clippy + encryption key zeroize)
 
 ### Monitoring improvements
+
 31. Add Grafana dashboard panel for Attic storage growth trend
 32. Add Gatus alert for when `atticd-size-guard` timer hasn't run in >1h
 33. Add a "cache hit ratio" metric once Attic is running (custom script reading atticd logs)
 34. Track NAR push/pull counts over time
 
 ### Multi-project caching
+
 35. Create cache for SystemNix itself: `attic cache create systemnix`
 36. Create cache for dnsblockd
 37. Document the "new project" cache setup pattern
 38. Evaluate shared nixpkgs-overrides cache for custom overlays
 
 ### Architecture
+
 39. Evaluate PostgreSQL backend if SQLite bottlenecks
 40. Set up per-project cache retention (monitor365: 7d, systemnix: 3d)
 41. Consider Cloudflare R2 if cache outgrows local disk
 42. Add cache warming runbook for after nixpkgs bumps
 
 ### Documentation
+
 43. Create architecture diagram for CI → cache → deploy flow
 44. Update FEATURES.md with Attic cache status once deployed
 45. Create runbook: "Attic cache recovery" (corrupt SQLite, full disk)
@@ -266,6 +273,7 @@ status reporting. It makes the todo list lie about what was actually done.
 48. Add a "pre-deploy checklist" to the setup guide (what to verify before `nh os switch`)
 
 ### Hardening
+
 49. Add atticd to the `protect-home-audit` pre-commit hook scope
 50. Consider adding `RestrictAddressFamilies=AF_UNIX AF_INET` to atticd (only needs local socket)
 

@@ -7,7 +7,6 @@
 
 ---
 
-
 ## a) FULLY DONE
 
 ### 1. Root cause identified: `discard=async` destroying I/O performance

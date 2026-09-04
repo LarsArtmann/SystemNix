@@ -196,33 +196,33 @@ Major session accomplishments:
 
 ## F) TOP #25 THINGS TO GET DONE NEXT 🎯
 
-| #   | Task                                     | Priority  | Effort | Impact              |
-| --- | ---------------------------------------- | --------- | ------ | ------------------- |
-| 1   | Add dunst to Niri spawn-at-startup       | 🔴 High   | 5 min  | Reliability         |
-| 2   | Configure swayidle (dim/lock/suspend)    | 🔴 High   | 15 min | Security + power    |
-| 3   | Delete orphaned regreet.css              | 🔴 High   | 1 min  | Cleanup             |
-| 4   | Extract wallpaper path to variable       | 🟡 Medium | 10 min | Maintainability     |
-| 5   | Add `just reload` recipe for niri        | 🟡 Medium | 5 min  | Developer UX        |
-| 6   | Commit photomap.nix Immich wait logic    | 🟡 Medium | 2 min  | Service reliability |
-| 7   | Theme swaylock with Catppuccin           | 🟡 Medium | 15 min | Visual consistency  |
-| 8   | Add wallpaper prev/next keybinds         | 🟡 Medium | 10 min | User experience     |
-| 9   | Consolidate monitoring stack             | 🟡 Medium | 30 min | Resource savings    |
-| 10  | Enable DNS-over-HTTPS in unbound         | 🟡 Medium | 20 min | Privacy             |
-| 11  | Verify dunst auto-starts after boot      | 🟡 Medium | 5 min  | Validation          |
-| 12  | Add wallpaper rotation systemd timer     | 🟢 Low    | 15 min | Visual variety      |
-| 13  | Automated flake update schedule          | 🟢 Low    | 15 min | Maintenance         |
-| 14  | Remove Sway backup WM (multi-wm.nix)     | 🟢 Low    | 10 min | Simplification      |
-| 15  | CI/CD GitHub Actions pipeline            | 🟢 Low    | 30 min | Quality assurance   |
-| 16  | Niri cachix binary cache                 | 🟢 Low    | 20 min | Build speed         |
-| 17  | Git push reminder pre-push hook          | 🟢 Low    | 10 min | Workflow            |
-| 18  | Immich ML NPU acceleration research      | 🟢 Low    | 60 min | Performance         |
-| 19  | Audit flake inputs for unused ones       | 🟢 Low    | 20 min | Cleanup             |
-| 20  | Document Niri keybinds cheatsheet        | 🟢 Low    | 15 min | Documentation       |
-| 21  | Clean up old status reports (100+)       | 🟢 Low    | 5 min  | Docs hygiene        |
-| 22  | Update AGENTS.md with Niri patterns      | 🟢 Low    | 15 min | Documentation       |
-| 23  | Test suspend/resume with Niri            | 🟢 Low    | 10 min | Validation          |
-| 24  | Add firewall hardening rules             | 🟢 Low    | 20 min | Security            |
-| 25  | Investigate SilentSDDM settings override | 🟢 Low    | 10 min | Customization       |
+| #  | Task                                     | Priority  | Effort | Impact              |
+| -- | ---------------------------------------- | --------- | ------ | ------------------- |
+| 1  | Add dunst to Niri spawn-at-startup       | 🔴 High   | 5 min  | Reliability         |
+| 2  | Configure swayidle (dim/lock/suspend)    | 🔴 High   | 15 min | Security + power    |
+| 3  | Delete orphaned regreet.css              | 🔴 High   | 1 min  | Cleanup             |
+| 4  | Extract wallpaper path to variable       | 🟡 Medium | 10 min | Maintainability     |
+| 5  | Add `just reload` recipe for niri        | 🟡 Medium | 5 min  | Developer UX        |
+| 6  | Commit photomap.nix Immich wait logic    | 🟡 Medium | 2 min  | Service reliability |
+| 7  | Theme swaylock with Catppuccin           | 🟡 Medium | 15 min | Visual consistency  |
+| 8  | Add wallpaper prev/next keybinds         | 🟡 Medium | 10 min | User experience     |
+| 9  | Consolidate monitoring stack             | 🟡 Medium | 30 min | Resource savings    |
+| 10 | Enable DNS-over-HTTPS in unbound         | 🟡 Medium | 20 min | Privacy             |
+| 11 | Verify dunst auto-starts after boot      | 🟡 Medium | 5 min  | Validation          |
+| 12 | Add wallpaper rotation systemd timer     | 🟢 Low    | 15 min | Visual variety      |
+| 13 | Automated flake update schedule          | 🟢 Low    | 15 min | Maintenance         |
+| 14 | Remove Sway backup WM (multi-wm.nix)     | 🟢 Low    | 10 min | Simplification      |
+| 15 | CI/CD GitHub Actions pipeline            | 🟢 Low    | 30 min | Quality assurance   |
+| 16 | Niri cachix binary cache                 | 🟢 Low    | 20 min | Build speed         |
+| 17 | Git push reminder pre-push hook          | 🟢 Low    | 10 min | Workflow            |
+| 18 | Immich ML NPU acceleration research      | 🟢 Low    | 60 min | Performance         |
+| 19 | Audit flake inputs for unused ones       | 🟢 Low    | 20 min | Cleanup             |
+| 20 | Document Niri keybinds cheatsheet        | 🟢 Low    | 15 min | Documentation       |
+| 21 | Clean up old status reports (100+)       | 🟢 Low    | 5 min  | Docs hygiene        |
+| 22 | Update AGENTS.md with Niri patterns      | 🟢 Low    | 15 min | Documentation       |
+| 23 | Test suspend/resume with Niri            | 🟢 Low    | 10 min | Validation          |
+| 24 | Add firewall hardening rules             | 🟢 Low    | 20 min | Security            |
+| 25 | Investigate SilentSDDM settings override | 🟢 Low    | 10 min | Customization       |
 
 ---
 

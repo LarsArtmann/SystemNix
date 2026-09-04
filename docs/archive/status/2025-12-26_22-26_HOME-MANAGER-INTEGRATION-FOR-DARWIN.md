@@ -33,9 +33,9 @@ Successfully implemented Home Manager integration for macOS (Darwin) to enable c
 | Darwin home.nix created             | ✅ COMPLETE | Full configuration with platform overrides |
 | Shell configs migrated              | ✅ COMPLETE | Fish moved from nix-darwin to Home Manager |
 | Starship/Tmux configured            | ✅ COMPLETE | Imported via home-base.nix                 |
-| Configuration builds successfully   | ⚠️ BLOCKED  | Hung processes preventing verification     |
-| Programs work correctly             | ⚠️ PENDING  | Depends on successful build                |
-| Cross-platform consistency verified | ⚠️ PENDING  | Depends on successful build                |
+| Configuration builds successfully   | ⚠️ BLOCKED   | Hung processes preventing verification     |
+| Programs work correctly             | ⚠️ PENDING   | Depends on successful build                |
+| Cross-platform consistency verified | ⚠️ PENDING   | Depends on successful build                |
 
 ---
 
@@ -815,12 +815,12 @@ Integrate Home Manager into Darwin configuration to enable cross-platform progra
 
 | Metric                     | Target | Current | Status               |
 | -------------------------- | ------ | ------- | -------------------- |
-| Starship works on Darwin   | ✅     | ⚠️      | Pending verification |
-| Tmux works on Darwin       | ✅     | ⚠️      | Pending verification |
-| Fish works on Darwin       | ✅     | ⚠️      | Pending verification |
+| Starship works on Darwin   | ✅     | ⚠️       | Pending verification |
+| Tmux works on Darwin       | ✅     | ⚠️       | Pending verification |
+| Fish works on Darwin       | ✅     | ⚠️       | Pending verification |
 | Build succeeds             | ✅     | 🔴      | Blocked by processes |
 | Switch succeeds            | ✅     | 🔴      | Blocked by build     |
-| Cross-platform consistency | ✅     | ⚠️      | Pending verification |
+| Cross-platform consistency | ✅     | ⚠️       | Pending verification |
 
 ### Timeline Metrics
 

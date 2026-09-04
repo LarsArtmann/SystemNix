@@ -64,23 +64,23 @@ The niri restart fix is **coded and staged but not deployed**. This is a catch-2
 
 ### P1 — SECURITY (3/7 = 43%)
 
-| #   | Task                                           | Status     | Blocker                                     |
-| --- | ---------------------------------------------- | ---------- | ------------------------------------------- |
-| 7   | Move Taskwarrior encryption secret to sops-nix | ⬜ BLOCKED | Needs evo-x2 for sops secret creation       |
-| 9   | Pin Docker digest for Voice Agents             | ⬜ BLOCKED | Version-tagged, needs evo-x2 to pull SHA256 |
-| 10  | Pin Docker digest for PhotoMap                 | ⬜ BLOCKED | Version-tagged, needs evo-x2 to pull SHA256 |
-| 11  | Secure VRRP auth_pass with sops-nix            | ⬜ BLOCKED | Needs evo-x2 for sops secret                |
+| #  | Task                                           | Status     | Blocker                                     |
+| -- | ---------------------------------------------- | ---------- | ------------------------------------------- |
+| 7  | Move Taskwarrior encryption secret to sops-nix | ⬜ BLOCKED | Needs evo-x2 for sops secret creation       |
+| 9  | Pin Docker digest for Voice Agents             | ⬜ BLOCKED | Version-tagged, needs evo-x2 to pull SHA256 |
+| 10 | Pin Docker digest for PhotoMap                 | ⬜ BLOCKED | Version-tagged, needs evo-x2 to pull SHA256 |
+| 11 | Secure VRRP auth_pass with sops-nix            | ⬜ BLOCKED | Needs evo-x2 for sops secret                |
 
 ### P6 — SERVICES (9/15 = 60%)
 
-| #   | Task                        | Status                                              |
-| --- | --------------------------- | --------------------------------------------------- |
-| 56  | ComfyUI hardcoded paths     | ACCEPTABLE — module defaults designed for override  |
-| 58  | ComfyUI dedicated user      | ACCEPTABLE — needs lars for GPU groups              |
-| 62  | Hermes health check         | PENDING — needs Hermes code change                  |
-| 63  | Hermes key_env migration    | PENDING — low risk cleanup                          |
-| 65  | SigNoz missing metrics      | BLOCKED — needs evo-x2 metric endpoint verification |
-| 66  | Authelia SMTP notifications | BLOCKED — needs SMTP credentials                    |
+| #  | Task                        | Status                                              |
+| -- | --------------------------- | --------------------------------------------------- |
+| 56 | ComfyUI hardcoded paths     | ACCEPTABLE — module defaults designed for override  |
+| 58 | ComfyUI dedicated user      | ACCEPTABLE — needs lars for GPU groups              |
+| 62 | Hermes health check         | PENDING — needs Hermes code change                  |
+| 63 | Hermes key_env migration    | PENDING — low risk cleanup                          |
+| 65 | SigNoz missing metrics      | BLOCKED — needs evo-x2 metric endpoint verification |
+| 66 | Authelia SMTP notifications | BLOCKED — needs SMTP credentials                    |
 
 ### P9 — FUTURE (2/12 = 17%)
 
@@ -95,21 +95,21 @@ Remaining 10 are research/architecture items with no immediate deadline.
 
 ALL 13 tasks require evo-x2 physical access. The niri fix makes this MORE urgent — we have 55+ commits of undeployed changes.
 
-| #   | Task                                                 | Est. |
-| --- | ---------------------------------------------------- | ---- |
-| 41  | `just switch` — deploy all pending changes to evo-x2 | 45m+ |
-| 42  | Verify Ollama works after rebuild                    | 5m   |
-| 43  | Verify Steam works after rebuild                     | 5m   |
-| 44  | Verify ComfyUI works after rebuild                   | 5m   |
-| 45  | Verify Caddy HTTPS block page                        | 3m   |
-| 46  | Verify SigNoz collecting metrics/logs/traces         | 5m   |
-| 47  | Check Authelia SSO status                            | 3m   |
-| 48  | Check PhotoMap service status                        | 3m   |
-| 49  | Verify AMD NPU with test workload                    | 10m  |
-| 50  | Build Pi 3 SD image                                  | 30m+ |
-| 51  | Flash SD + boot Pi 3                                 | 15m  |
-| 52  | Test DNS failover                                    | 10m  |
-| 53  | Configure LAN devices for DNS VIP                    | 10m  |
+| #  | Task                                                 | Est. |
+| -- | ---------------------------------------------------- | ---- |
+| 41 | `just switch` — deploy all pending changes to evo-x2 | 45m+ |
+| 42 | Verify Ollama works after rebuild                    | 5m   |
+| 43 | Verify Steam works after rebuild                     | 5m   |
+| 44 | Verify ComfyUI works after rebuild                   | 5m   |
+| 45 | Verify Caddy HTTPS block page                        | 3m   |
+| 46 | Verify SigNoz collecting metrics/logs/traces         | 5m   |
+| 47 | Check Authelia SSO status                            | 3m   |
+| 48 | Check PhotoMap service status                        | 3m   |
+| 49 | Verify AMD NPU with test workload                    | 10m  |
+| 50 | Build Pi 3 SD image                                  | 30m+ |
+| 51 | Flash SD + boot Pi 3                                 | 15m  |
+| 52 | Test DNS failover                                    | 10m  |
+| 53 | Configure LAN devices for DNS VIP                    | 10m  |
 
 ---
 
@@ -157,18 +157,18 @@ ALL 13 tasks require evo-x2 physical access. The niri fix makes this MORE urgent
 
 ## E) WHAT WE SHOULD IMPROVE 📈
 
-| #   | Area                                          | Problem                                                    | Proposed Fix                                                                                                                                                                                  |
-| --- | --------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Compositor resilience**                     | Niri can be killed by any rebuild that touches its package | DONE (this session) — `PartOf` + `Restart=on-failure`. But needs deploy.                                                                                                                      |
-| 2   | **Deploy safety net**                         | No fallback if compositor dies during rebuild              | Add `just safe-switch` that runs rebuild in background and only activates after verifying the new config builds. Or add a systemd rescue target that auto-starts niri after a failed rebuild. |
-| 3   | **Regression rate**                           | Each session introduces 1-3 regressions                    | Add `nix flake check --no-build` as mandatory gate. The self-reflection loop works for code bugs but misses runtime issues.                                                                   |
-| 4   | **No integration testing**                    | Zero automated verification that services work together    | Add NixOS VM tests for critical services. Even one smoke test would catch compositor restart failures.                                                                                        |
-| 5   | **Deployment bottleneck**                     | 13 tasks + niri fix blocked on evo-x2                      | Consider SSH-based remote deploy (`just deploy-remote`).                                                                                                                                      |
-| 6   | **Flake evaluation speed**                    | `nix flake check` evaluates everything                     | Add `--systems x86_64-linux` to skip darwin evaluation on Linux.                                                                                                                              |
-| 7   | **Direnv robustness**                         | Corrupted profiles silently break dev env                  | Add `just doctor` command checking direnv health.                                                                                                                                             |
-| 8   | **Secret management gaps**                    | 4 security items still using hardcoded/plaintext secrets   | Prioritize sops migration for Taskwarrior and VRRP auth.                                                                                                                                      |
-| 9   | **Missing: compositor-specific deploy guard** | Niri is special — it IS the session                        | Add a justfile check: before `switch`, verify niri package path didn't change. If it did, warn the user or auto-add `Restart=on-failure` verification.                                        |
-| 10  | **AGENTS.md outdated for niri**               | AGENTS.md doesn't document the `BindsTo` risk or the fix   | Update AGENTS.md with the niri restart behavior and recovery steps.                                                                                                                           |
+| #  | Area                                          | Problem                                                    | Proposed Fix                                                                                                                                                                                  |
+| -- | --------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | **Compositor resilience**                     | Niri can be killed by any rebuild that touches its package | DONE (this session) — `PartOf` + `Restart=on-failure`. But needs deploy.                                                                                                                      |
+| 2  | **Deploy safety net**                         | No fallback if compositor dies during rebuild              | Add `just safe-switch` that runs rebuild in background and only activates after verifying the new config builds. Or add a systemd rescue target that auto-starts niri after a failed rebuild. |
+| 3  | **Regression rate**                           | Each session introduces 1-3 regressions                    | Add `nix flake check --no-build` as mandatory gate. The self-reflection loop works for code bugs but misses runtime issues.                                                                   |
+| 4  | **No integration testing**                    | Zero automated verification that services work together    | Add NixOS VM tests for critical services. Even one smoke test would catch compositor restart failures.                                                                                        |
+| 5  | **Deployment bottleneck**                     | 13 tasks + niri fix blocked on evo-x2                      | Consider SSH-based remote deploy (`just deploy-remote`).                                                                                                                                      |
+| 6  | **Flake evaluation speed**                    | `nix flake check` evaluates everything                     | Add `--systems x86_64-linux` to skip darwin evaluation on Linux.                                                                                                                              |
+| 7  | **Direnv robustness**                         | Corrupted profiles silently break dev env                  | Add `just doctor` command checking direnv health.                                                                                                                                             |
+| 8  | **Secret management gaps**                    | 4 security items still using hardcoded/plaintext secrets   | Prioritize sops migration for Taskwarrior and VRRP auth.                                                                                                                                      |
+| 9  | **Missing: compositor-specific deploy guard** | Niri is special — it IS the session                        | Add a justfile check: before `switch`, verify niri package path didn't change. If it did, warn the user or auto-add `Restart=on-failure` verification.                                        |
+| 10 | **AGENTS.md outdated for niri**               | AGENTS.md doesn't document the `BindsTo` risk or the fix   | Update AGENTS.md with the niri restart behavior and recovery steps.                                                                                                                           |
 
 ---
 

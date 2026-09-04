@@ -6,7 +6,6 @@
 
 ---
 
-
 ## What This Session Did
 
 The user asked "What did you forget? What could you have done better?" about the prior session's monitor365 API key desync fix. A critical review found **9 issues** — 7 in the fix itself, 2 in the pre-commit hook. All were fixed, committed (5 commits), and pushed.

@@ -3,7 +3,7 @@ name: nixpkgs compatibility
 on:
   schedule:
     # Daily at 06:00 UTC
-    - cron: '0 6 * * *'
+    - cron: "0 6 * * *"
   workflow_dispatch:
 
 jobs:
@@ -16,7 +16,9 @@ jobs:
         with:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
-            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+            # NIX_GITHUB_RO_TOKEN: see nix-check.yml — GITHUB_TOKEN cannot read
+            # the owner's other private repos; 32 github:-type lock nodes need it.
+            access-tokens = github.com=${{ secrets.NIX_GITHUB_RO_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Verify flake.lock nixpkgs is github type (pre-update)
         run: |

@@ -75,7 +75,7 @@
 | **SigNoz dashboard**             | 13 panels for system metrics, Caddy, containers | No panels for dnsblockd, emeet-pixyd, Authelia, or AMD GPU metrics                                                            |
 | **dnsblockd-processor CI**       | —                                               | No build, vet, or test coverage in any workflow                                                                               |
 | **dnsblockd tests**              | —                                               | Zero test files; CI only runs `go build` + `go vet`                                                                           |
-| **signoz-provision idempotency** | Deploys rules + dashboard on boot               | No deletion of stale rules; `                                                                                                 |     | true` swallows errors; creates duplicates on reboot |
+| **signoz-provision idempotency** | Deploys rules + dashboard on boot               | No deletion of stale rules; `                                                                                                 |
 | **Service metrics coverage**     | 6 of ~16 services have scrape targets           | 10 services have no metrics: gitea, immich, twenty, hermes, taskchampion, voice-agents, photomap, homepage, postgresql, redis |
 | **Hermes integration**           | Module written + staged                         | Not committed; no metrics; no SigNoz alert; no Homepage card                                                                  |
 
@@ -83,35 +83,35 @@
 
 ## C) NOT STARTED ❌
 
-| #   | Item                                        | Impact                                           | Effort                            |
-| --- | ------------------------------------------- | ------------------------------------------------ | --------------------------------- |
-| 1   | dnsblockd unit tests                        | High — 933 lines of untested Go code             | Medium                            |
-| 2   | dnsblockd-processor unit tests              | Medium — 254 lines untested                      | Low                               |
-| 3   | SigNoz dashboard panels for custom services | Medium — metrics exist but no visualization      | Medium                            |
-| 4   | Gitea metrics endpoint + SigNoz scraping    | Medium — major service without monitoring        | Low (Gitea has built-in /metrics) |
-| 5   | Immich metrics + SigNoz scraping            | Low — Docker service, limited prometheus support | Low                               |
-| 6   | TaskChampion metrics                        | Low — simple sync server                         | Low                               |
-| 7   | Voice-agents metrics                        | Low — AI agent session services                  | Low                               |
-| 8   | Homepage card for Hermes                    | Low — service exists but no dashboard entry      | Low                               |
-| 9   | NixOS build job in CI                       | Medium — only Darwin config is built in CI       | Medium                            |
-| 10  | dnsblockd-processor CI job                  | Medium — no coverage at all                      | Low                               |
-| 11  | SigNoz alert for GPU VRAM usage             | Low — data available via textfile collector      | Low                               |
-| 12  | SigNoz alert for high DNS block rate        | Low — metric exists                              | Low                               |
-| 13  | Idempotent signoz-provision                 | Medium — current approach creates duplicates     | Medium                            |
-| 14  | Security-hardening.nix TODOs                | Low — audit rules disabled pending NixOS fixes   | Blocked upstream                  |
-| 15  | PostgreSQL metrics (pg_exporter)            | Medium — database without monitoring             | Medium                            |
+| #  | Item                                        | Impact                                           | Effort                            |
+| -- | ------------------------------------------- | ------------------------------------------------ | --------------------------------- |
+| 1  | dnsblockd unit tests                        | High — 933 lines of untested Go code             | Medium                            |
+| 2  | dnsblockd-processor unit tests              | Medium — 254 lines untested                      | Low                               |
+| 3  | SigNoz dashboard panels for custom services | Medium — metrics exist but no visualization      | Medium                            |
+| 4  | Gitea metrics endpoint + SigNoz scraping    | Medium — major service without monitoring        | Low (Gitea has built-in /metrics) |
+| 5  | Immich metrics + SigNoz scraping            | Low — Docker service, limited prometheus support | Low                               |
+| 6  | TaskChampion metrics                        | Low — simple sync server                         | Low                               |
+| 7  | Voice-agents metrics                        | Low — AI agent session services                  | Low                               |
+| 8  | Homepage card for Hermes                    | Low — service exists but no dashboard entry      | Low                               |
+| 9  | NixOS build job in CI                       | Medium — only Darwin config is built in CI       | Medium                            |
+| 10 | dnsblockd-processor CI job                  | Medium — no coverage at all                      | Low                               |
+| 11 | SigNoz alert for GPU VRAM usage             | Low — data available via textfile collector      | Low                               |
+| 12 | SigNoz alert for high DNS block rate        | Low — metric exists                              | Low                               |
+| 13 | Idempotent signoz-provision                 | Medium — current approach creates duplicates     | Medium                            |
+| 14 | Security-hardening.nix TODOs                | Low — audit rules disabled pending NixOS fixes   | Blocked upstream                  |
+| 15 | PostgreSQL metrics (pg_exporter)            | Medium — database without monitoring             | Medium                            |
 
 ---
 
 ## D) TOTALLY FUCKED UP 💥
 
-| #   | Issue                                             | Severity  | Details                                                                                         |
-| --- | ------------------------------------------------- | --------- | ----------------------------------------------------------------------------------------------- |
-| 1   | **Duplicate package definitions in flake.nix**    | 🔴 High   | 5 packages defined in BOTH `perSystem.packages` AND overlays — divergent builds possible        |
-| 2   | **dnsblockd go.mod version mismatch**             | 🟡 Medium | `go.mod` says `go 1.23.0` but flake overlay pins Go 1.26.1 — may cause subtle incompatibilities |
-| 3   | **signoz-provision silently swallows all errors** | 🟡 Medium | Every `curl` uses `                                                                             |     | true` — failed provisioning is invisible |
-| 4   | **No `go test` for dnsblockd in CI**              | 🟡 Medium | dnsblockd job only runs `go build` + `go vet` — no actual test execution                        |
-| 5   | **emeet-pixyd `go vet` issues unaddressed**       | 🟢 Low    | `strings.CutPrefix` simplification, unwrapped errors, function length                           |
+| # | Issue                                             | Severity  | Details                                                                                         |
+| - | ------------------------------------------------- | --------- | ----------------------------------------------------------------------------------------------- |
+| 1 | **Duplicate package definitions in flake.nix**    | 🔴 High   | 5 packages defined in BOTH `perSystem.packages` AND overlays — divergent builds possible        |
+| 2 | **dnsblockd go.mod version mismatch**             | 🟡 Medium | `go.mod` says `go 1.23.0` but flake overlay pins Go 1.26.1 — may cause subtle incompatibilities |
+| 3 | **signoz-provision silently swallows all errors** | 🟡 Medium | Every `curl` uses `                                                                             |
+| 4 | **No `go test` for dnsblockd in CI**              | 🟡 Medium | dnsblockd job only runs `go build` + `go vet` — no actual test execution                        |
+| 5 | **emeet-pixyd `go vet` issues unaddressed**       | 🟢 Low    | `strings.CutPrefix` simplification, unwrapped errors, function length                           |
 
 ---
 

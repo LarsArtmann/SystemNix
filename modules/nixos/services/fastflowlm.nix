@@ -38,9 +38,10 @@
 # established" entries for ≥ keepAlive (default 1h) AND the backend has been
 # active for ≥ 10 min (don't kill a cold load in progress).
 #
-# WHY socket activation: the model is 13.6 GB mmap'd from /data. Pinned in RAM
-# 24/7, it would reserve ~25 GB of the 94 GB CPU-visible pool at idle. That's
-# only affordable when the model is actually in use. Cold load is 1-3 min
+# WHY socket activation: the model is 21.6 GB mmap'd from /data (v1.0.2
+# re-quantized weights). Pinned in RAM
+# 24/7, it would reserve ~30 GB of the 94 GB CPU-visible pool at idle. That's
+# only affordable when the model is actually in use. Cold load is 2-5 min
 # (acceptable for a background LLM); if it isn't, the warmCalendar option
 # pre-loads before work hours.
 #
@@ -78,18 +79,19 @@ _: {
       # made in between queue in the kernel backlog — that queue IS the
       # cold-load hold, which is why this probes with bare TCP connects and
       # never HTTP (HTTP probes consumed flm's hard 10-connection limit —
-      # live incident 2026-08-18). Deadline 300 s: cold load is 1-3 min worst
-      # case; each refused probe closes instantly and consumes no slot.
+      # live incident 2026-08-18). Deadline 480 s (2026-08-21): v1.0.2
+      # re-quantized weights grew the mmap from 13.6 GB to 21.6 GB — worst-case
+      # cold read is now ~5 min; each refused probe closes instantly and consumes no slot.
       proxyConn = pkgs.writeShellApplication {
         name = "fastflowlm-proxy-conn";
         runtimeInputs = [ pkgs.coreutils ];
         text = ''
           host="127.0.0.1"
           port="${toString cfg.backendPort}"
-          deadline=$((SECONDS + 300))
+          deadline=$((SECONDS + 480))
           until (exec 3<>"/dev/tcp/$host/$port") 2>/dev/null; do
             if [ "$SECONDS" -ge "$deadline" ]; then
-              echo "fastflowlm-proxy: backend $host:$port not reachable within 300 s" >&2
+              echo "fastflowlm-proxy: backend $host:$port not reachable within 480 s" >&2
               exit 1
             fi
             sleep 1
@@ -220,7 +222,7 @@ _: {
           }
           {
             assertion = cfg.host == "127.0.0.1" || cfg.host == "::1";
-            message = "services.fastflowlm.host must be loopback. The NPU model is 13.6 GB mmap'd; expose via reverse proxy if you need remote access.";
+            message = "services.fastflowlm.host must be loopback. The NPU model is 21.6 GB mmap'd; expose via reverse proxy if you need remote access.";
           }
         ];
 
@@ -321,8 +323,17 @@ _: {
               # faulted 22 GB from disk into a full RAM). The triggering
               # socket connection queues in the kernel backlog meanwhile —
               # 60s costs one delayed request instead of an I/O storm.
+              # Exponential backoff (2026-08-21): flat 60s still re-payed the
+              # 22.5 GB cold load every 2-3 min while oomd kept killing the
+              # backend under sustained slice pressure (18:09-18:25: 8 kills,
+              # ~180 GB reads in 20 min; start-limit then wedged activation).
+              # Delay doubles per retry (60→120→240→480→900s) and resets after
+              # a healthy run — pressure storms space out to 15 min, giving
+              # the machine time to recover instead of feeding it I/O bombs.
               Restart = "on-failure";
               RestartSec = "60";
+              RestartSteps = 5;
+              RestartMaxDelaySec = "15min";
               # Preferred global-OOM victim: this unit is stateless,
               # socket-activated and self-heals on the next connection.
               # Without the boost the kernel slaughtered user-session
@@ -331,8 +342,13 @@ _: {
               # cold load was the actual pressure source). 300 > user
               # slice's 200 so flm is always chosen first.
               OOMScoreAdjust = 300;
-              MemoryMax = "32G";
-              MemoryHigh = "26G";
+              # Ceilings re-sized for v1.0.2 (2026-08-21): the re-quantized
+              # model.q4nx grew 13.6 GB → 21.6 GB. The OLD 13.6 G model already
+              # peaked at 26G (model + KV + runtime), so 32G/26G would have
+              # cgroup-OOM-killed the 21.6 G load on arrival. 40G hard / 32G
+              # reclaim — costs nothing while idle (socket-activated).
+              MemoryMax = "40G";
+              MemoryHigh = "32G";
               MemorySwapMax = "20G";
               TimeoutStartSec = "3min";
             }
@@ -372,10 +388,11 @@ _: {
           };
         };
 
-        # OTel traces → local SigNoz OTLP/HTTP collector (Go OTel SDK format).
-        # Noop tracer when collector is absent.
-        systemd.services.fastflowlm.environment.OTEL_EXPORTER_OTLP_ENDPOINT =
-          lib.mkDefault "localhost:${toString ports.signoz-otlp-http}";
+        # NOTE: flm is a PREBUILT upstream binary with no OpenTelemetry
+        # support — it carried a noop OTEL_EXPORTER_OTLP_ENDPOINT here until
+        # 2026-08-31 (removed by the signoz-coverage audit: env vars that
+        # cannot produce spans are silent lies). Liveness is covered by the
+        # system-health fastflowlm_failed / crash-loop metrics instead.
 
         # Gatus MUST NOT probe :52625 (every probe is a TCP connection =
         # permanent keepalive). The system-health textfile collector emits

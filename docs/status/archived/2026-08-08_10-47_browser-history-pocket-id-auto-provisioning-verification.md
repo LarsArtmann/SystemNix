@@ -6,7 +6,6 @@
 
 ---
 
-
 ## A. Fully Done
 
 ### A1. Traced the Full OAuth2 User Provisioning Code Path (THIS SESSION)
@@ -24,11 +23,11 @@ Read, understood, and verified the complete user-creation flow across 3 module l
 
 ### A2. Answered All 3 Open Questions from Prior Session
 
-| Question | Answer | Source |
-|----------|--------|--------|
-| Does `usermgmt` auto-create users on first OAuth2 login? | **YES** — `matchOrCreateUser` tier 3 auto-registers | `service_oauth2_extracted.go:201-249` |
-| Should the Pocket ID client use PKCE? | **No change needed** — `oauth2prov` unconditionally applies PKCE S256 on every flow (`provider.go:197-200`). `pkceEnabled = false` in Pocket ID just means it doesn't *require* PKCE; sending it is valid. | `oauth2/v4@v4.7.0/provider.go` |
-| Will auto-created users have access to all features? | **YES** — browser-history has zero role-based gating. Auth is a boolean `UserID.IsZero()` check. | `browser-history/api/handlers_auth.go` |
+| Question                                                 | Answer                                                                                                                                                                                                     | Source                                 |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| Does `usermgmt` auto-create users on first OAuth2 login? | **YES** — `matchOrCreateUser` tier 3 auto-registers                                                                                                                                                        | `service_oauth2_extracted.go:201-249`  |
+| Should the Pocket ID client use PKCE?                    | **No change needed** — `oauth2prov` unconditionally applies PKCE S256 on every flow (`provider.go:197-200`). `pkceEnabled = false` in Pocket ID just means it doesn't _require_ PKCE; sending it is valid. | `oauth2/v4@v4.7.0/provider.go`         |
+| Will auto-created users have access to all features?     | **YES** — browser-history has zero role-based gating. Auth is a boolean `UserID.IsZero()` check.                                                                                                           | `browser-history/api/handlers_auth.go` |
 
 ### A3. Verified Email Auto-Verification Side-Effect
 
@@ -47,11 +46,13 @@ browser-history uses `go.work` with `replace` directives pointing all `cqrs-htmx
 All implementation from the prior session is committed and intact:
 
 **browser-history repo** (8 commits past pushed `eff518c`, all local-only):
+
 - `4eb0007` — feat: Pocket ID OAuth2 provider + config fields + test (PUSHED in prior session)
 - `6fb09a6` — chore: vendorHash fix (LOCAL)
 - `f4508a4` through `9035f9a` — docs, tests, dep updates (LOCAL)
 
 **SystemNix repo** (3 commits, all committed):
+
 - `2bf7029f` — Pocket ID OIDC client registration
 - `35ddbbbf` — browser-history.nix rewrite with conditional Pocket ID integration
 - `39801923` — flake.lock update (contains tarball regression)
@@ -80,6 +81,7 @@ We confirmed PKCE S256 is unconditionally applied by the `oauth2prov` library. H
 ### C1. End-to-End Testing
 
 No browser test of the actual OAuth2 flow has been done:
+
 - Navigate to `https://history.home.lan/register`
 - Click "Login with Pocket ID"
 - Complete passkey challenge at `auth.home.lan`
@@ -108,7 +110,7 @@ The vendorHash fix (`6fb09a6`) is among 8 local-only commits. SystemNix's flake.
 
 ### D3. Flake Input Version Drift
 
-SystemNix flake.lock has `browser-history` locked at `eff518c`, but the actual HEAD is `9035f9a`. After pushing, the flake input must be updated. The `eff518c` commit was a refactor that bumped module deps — the vendorHash shift was a *consequence* of that dep bump. Without both the push AND the flake.lock update, SystemNix cannot build.
+SystemNix flake.lock has `browser-history` locked at `eff518c`, but the actual HEAD is `9035f9a`. After pushing, the flake input must be updated. The `eff518c` commit was a refactor that bumped module deps — the vendorHash shift was a _consequence_ of that dep bump. Without both the push AND the flake.lock update, SystemNix cannot build.
 
 ---
 
@@ -171,11 +173,11 @@ browser-history's `go.work` replaces `cqrs-htmx/*` with local source paths (`../
 ### Documentation & Cleanup
 
 18. **Update browser-history AGENTS.md** with the OAuth2/Pocket ID architecture and auto-provisioning behavior
-~~19. **Update SystemNix AGENTS.md** browser-history section with the OAuth2 integration details~~ done — AGENTS.md:148-160
-20. **Document the `matchOrCreateUser` 3-tier strategy** in browser-history's domain docs
-21. **Add the PKCE-always-on behavior** to the Pocket ID OIDC client notes
-22. **Mark prior status report as resolved** with link to this report
-23. **Remove empty commit** `10d13bb` from browser-history history (if rebase is safe)
+    ~~19. **Update SystemNix AGENTS.md** browser-history section with the OAuth2 integration details~~ done — AGENTS.md:148-160
+19. **Document the `matchOrCreateUser` 3-tier strategy** in browser-history's domain docs
+20. **Add the PKCE-always-on behavior** to the Pocket ID OIDC client notes
+21. **Mark prior status report as resolved** with link to this report
+22. **Remove empty commit** `10d13bb` from browser-history history (if rebase is safe)
 
 ### Testing
 

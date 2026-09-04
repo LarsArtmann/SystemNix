@@ -82,6 +82,13 @@ _: {
             };
             postgres = {
               image = images.manifest-postgres.ref;
+              # restart=always is LOAD-BEARING: docker auto-starts these
+              # containers when the daemon comes up (boot, post-crash). The
+              # manifest app has restart=always but historically postgres did
+              # NOT — any docker daemon restart left the app crash-looping
+              # against a dead DB until manual intervention (live 2026-08-31:
+              # postgres Exited(255) at boot, gatus red for 15+ min).
+              restart = "always";
               environment = {
                 POSTGRES_USER = "manifest";
                 POSTGRES_PASSWORD = "\${DB_PASSWORD}";

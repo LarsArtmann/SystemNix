@@ -64,7 +64,7 @@ in
 {
   name = "ksm";
 
-  nodes.machine = { pkgs, ... }: {
+  nodes.machine = _: {
     virtualisation.memorySize = 4096;
     environment.systemPackages = [ ksmProbe ];
   };

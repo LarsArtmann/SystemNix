@@ -12,36 +12,36 @@ The PMA auto-commit daemon was **not broken** — 171 commit failures across 11 
 
 ## Timeline (session-local)
 
-| Time | Event |
-|------|-------|
-| ~12:46 | Session start. Journal shows PMA `git retry exhausted` loops, `exit status 1`, commit messages generated fine. |
-| 12:50 | Counted **171 failures since Aug 17 21:34** across SystemNix (54), CV (56), overview (26), BuildFlow (15), PapDashboard/KeyHolderAI/file-and-image-renamer (12 each), vision-review-agent (11), go-appkit (10), emeet-pixyd (7), browser-history (4), DiscordSync (3). **Zero failures before Aug 17 21:00.** |
-| ~12:52 | Reproduced SystemNix pre-commit failure: `nix flake check` → `deadnix-check` fails — unused `onFailure`/`mkStateDir` let-bindings in `fastflowlm.nix`, introduced by commit `fbc60ed5` (08-18 00:57). |
-| ~12:56 | Second blocker found: staged `configuration.nix` had `smartd.enable` defined **twice** (eval error). A concurrent session collapsed the duplicate at 12:57. |
-| ~12:58 | **Fixed** `fastflowlm.nix` (removed unused bindings). |
-| ~13:00 | CV hook re-run: **passes** (~2 min, full build) — CV failures were transient mid-refactor states. |
-| ~13:05 | Full `nix flake check` → **GREEN**. |
-| ~13:07 | **Crush identity found**: 162 commits on CV `origin/master` (08-15 21:03 → 08-18 03:10) authored `Crush <crush@larsartmann.com>`, set ONLY in CV's `.git/config` (local override). Root enabler: no global git identity existed at the time; hundreds of repos have no local identity either. |
-| ~13:12 | Removed CV local identity override; added CV `.mailmap` mapping Crush→Lars Artmann. |
-| ~13:14 | Set global git identity (`Lars Artmann <git@lars.software>`) via `git config --global` (see §d — imperfect mechanism). |
-| ~13:16 | Verified headless SSH signing works in exact daemon env (scratch repo commit came out **signed**). Ruled out signing as failure cause. |
-| ~13:17 | Root-caused the non-SystemNix failures: **BuildFlow auto-installed `.git/hooks/pre-commit`** running `buildflow --build-mode pre-commit --staged-only` — e.g. file-and-image-renamer fails `gomod-check` (43 findings: vendor/modules.txt explicit-marking drift) + `go-structure-linter` (5 findings) + `eslint-fix` (exit 2). DiscordSync passed its gates → committed fine at 02:33–02:57. **Gates working as designed.** |
-| 13:19:04 | PMA went **silent mid-batch** (go-cqrs-lite, 313 events). No children, 41% CPU, 31 GB read — wedged committer (silent journal later revealed as partly journald's fault too). |
-| ~13:21 | I SIGTERM'd pid 1470 assuming `Restart=on-failure` would cycle it — **wrong**: clean exit ≠ failure, daemon stayed DOWN. SIGKILL hit "no such process". D-Bus StartUnit denied (needs interactive auth). |
-| ~13:23:51 | `pma-daemon-watchdog` (5-min socket probe) restarted PMA → pid 2891946. |
-| 13:25:36 | **journald froze** (last system-wide entry) — masked the watchdog recovery; I discovered PMA was healthy only by cross-checking process state. |
-| 13:26 | **Verified recovery**: fresh commits in go-appkit + browser-history, authored `Lars Artmann <git@lars.software>`. |
-| 13:26–13:39 | Waited for SystemNix backlog commit — not landed (concurrent session keeps touching the tree; 60s debounce + 120s min-interval + minutes-long flake-check hook restart the window every edit). SystemNix staged set grew to 21 files — that session is actively working. |
-| ~13:40 | Cleaned up scratch artifacts via `trash`. |
+| Time        | Event                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~12:46      | Session start. Journal shows PMA `git retry exhausted` loops, `exit status 1`, commit messages generated fine.                                                                                                                                                                                                                                                                                                               |
+| 12:50       | Counted **171 failures since Aug 17 21:34** across SystemNix (54), CV (56), overview (26), BuildFlow (15), PapDashboard/KeyHolderAI/file-and-image-renamer (12 each), vision-review-agent (11), go-appkit (10), emeet-pixyd (7), browser-history (4), DiscordSync (3). **Zero failures before Aug 17 21:00.**                                                                                                                |
+| ~12:52      | Reproduced SystemNix pre-commit failure: `nix flake check` → `deadnix-check` fails — unused `onFailure`/`mkStateDir` let-bindings in `fastflowlm.nix`, introduced by commit `fbc60ed5` (08-18 00:57).                                                                                                                                                                                                                        |
+| ~12:56      | Second blocker found: staged `configuration.nix` had `smartd.enable` defined **twice** (eval error). A concurrent session collapsed the duplicate at 12:57.                                                                                                                                                                                                                                                                  |
+| ~12:58      | **Fixed** `fastflowlm.nix` (removed unused bindings).                                                                                                                                                                                                                                                                                                                                                                        |
+| ~13:00      | CV hook re-run: **passes** (~2 min, full build) — CV failures were transient mid-refactor states.                                                                                                                                                                                                                                                                                                                            |
+| ~13:05      | Full `nix flake check` → **GREEN**.                                                                                                                                                                                                                                                                                                                                                                                          |
+| ~13:07      | **Crush identity found**: 162 commits on CV `origin/master` (08-15 21:03 → 08-18 03:10) authored `Crush <crush@larsartmann.com>`, set ONLY in CV's `.git/config` (local override). Root enabler: no global git identity existed at the time; hundreds of repos have no local identity either.                                                                                                                                |
+| ~13:12      | Removed CV local identity override; added CV `.mailmap` mapping Crush→Lars Artmann.                                                                                                                                                                                                                                                                                                                                          |
+| ~13:14      | Set global git identity (`Lars Artmann <git@lars.software>`) via `git config --global` (see §d — imperfect mechanism).                                                                                                                                                                                                                                                                                                       |
+| ~13:16      | Verified headless SSH signing works in exact daemon env (scratch repo commit came out **signed**). Ruled out signing as failure cause.                                                                                                                                                                                                                                                                                       |
+| ~13:17      | Root-caused the non-SystemNix failures: **BuildFlow auto-installed `.git/hooks/pre-commit`** running `buildflow --build-mode pre-commit --staged-only` — e.g. file-and-image-renamer fails `gomod-check` (43 findings: vendor/modules.txt explicit-marking drift) + `go-structure-linter` (5 findings) + `eslint-fix` (exit 2). DiscordSync passed its gates → committed fine at 02:33–02:57. **Gates working as designed.** |
+| 13:19:04    | PMA went **silent mid-batch** (go-cqrs-lite, 313 events). No children, 41% CPU, 31 GB read — wedged committer (silent journal later revealed as partly journald's fault too).                                                                                                                                                                                                                                                |
+| ~13:21      | I SIGTERM'd pid 1470 assuming `Restart=on-failure` would cycle it — **wrong**: clean exit ≠ failure, daemon stayed DOWN. SIGKILL hit "no such process". D-Bus StartUnit denied (needs interactive auth).                                                                                                                                                                                                                     |
+| ~13:23:51   | `pma-daemon-watchdog` (5-min socket probe) restarted PMA → pid 2891946.                                                                                                                                                                                                                                                                                                                                                      |
+| 13:25:36    | **journald froze** (last system-wide entry) — masked the watchdog recovery; I discovered PMA was healthy only by cross-checking process state.                                                                                                                                                                                                                                                                               |
+| 13:26       | **Verified recovery**: fresh commits in go-appkit + browser-history, authored `Lars Artmann <git@lars.software>`.                                                                                                                                                                                                                                                                                                            |
+| 13:26–13:39 | Waited for SystemNix backlog commit — not landed (concurrent session keeps touching the tree; 60s debounce + 120s min-interval + minutes-long flake-check hook restart the window every edit). SystemNix staged set grew to 21 files — that session is actively working.                                                                                                                                                     |
+| ~13:40      | Cleaned up scratch artifacts via `trash`.                                                                                                                                                                                                                                                                                                                                                                                    |
 
 ---
 
 ## a) FULLY DONE
 
 1. **Root-caused all 171 PMA commit failures** — three distinct classes:
-   - *SystemNix tree breakage* (deadnix unused bindings + duplicate `smartd` attrset) — both fixed, `nix flake check` verified green.
-   - *Legitimate gate rejections* in other repos (buildflow/house hooks vs mid-dev staged content) — by design, self-resolving when owning sessions finish.
-   - *Daemon wedge* at 13:19 — recovered by the existing watchdog.
+   - _SystemNix tree breakage_ (deadnix unused bindings + duplicate `smartd` attrset) — both fixed, `nix flake check` verified green.
+   - _Legitimate gate rejections_ in other repos (buildflow/house hooks vs mid-dev staged content) — by design, self-resolving when owning sessions finish.
+   - _Daemon wedge_ at 13:19 — recovered by the existing watchdog.
 2. **Fixed `fastflowlm.nix`** unused let-bindings (`modules/nixos/services/fastflowlm.nix`).
 3. **Crush identity contained**:
    - CV local `user.name`/`user.email` override removed (verified gone from `.git/config`).
@@ -79,7 +79,7 @@ The PMA auto-commit daemon was **not broken** — 171 commit failures across 11 
 
 ## e) WHAT WE SHOULD IMPROVE (systemic, from this incident)
 
-1. **Identity failsafe is still heuristic.** The Unknown-Author guard in SystemNix's pre-commit rejects `Unknown Author`, but nothing rejects *newly invented* identities like `Crush`. The real gap: 100+ repos had NO resolvable identity at all — an AI session will always invent something. The global identity helps, but a declarative, enforced identity (HM config + guard against local overrides) is the durable fix.
+1. **Identity failsafe is still heuristic.** The Unknown-Author guard in SystemNix's pre-commit rejects `Unknown Author`, but nothing rejects _newly invented_ identities like `Crush`. The real gap: 100+ repos had NO resolvable identity at all — an AI session will always invent something. The global identity helps, but a declarative, enforced identity (HM config + guard against local overrides) is the durable fix.
 2. **PMA's failures are invisible.** 171 failures over 16 hours, zero alerts. Gatus should watch PMA commit-failure counts (journal textfile collector pattern already exists via system-health).
 3. **journald has no self-monitoring.** A frozen journald silently blinded everything, including the watchdog's recovery evidence. A staleness check (last-entry age) belongs in monitoring.
 4. **Watchdog covers only the discovery socket.** The committer wedged mid-batch (313-event batch, no git subprocess, no timeout) — the socket probe never noticed. Upstream PMA needs git-op timeouts and/or batch-worker liveness.
@@ -91,6 +91,7 @@ The PMA auto-commit daemon was **not broken** — 171 commit failures across 11 
 ## f) NEXT TASKS (priority order)
 
 **P0 — operational, today**
+
 1. Restart journald: `sudo systemctl restart systemd-journald` (user; frozen since 13:25:36).
 2. ~~Verify the SystemNix backlog commit lands once the concurrent session pauses; if not, investigate.~~ done (backlog commits landed (f-f series through 2026-08-18 evening))
 3. Decide Crush-commit remediation (§g Q1) and execute.
@@ -129,4 +130,4 @@ The PMA auto-commit daemon was **not broken** — 171 commit failures across 11 
 
 ---
 
-*Report written 2026-08-18 13:53 CEST. Awaiting instructions.*
+_Report written 2026-08-18 13:53 CEST. Awaiting instructions._

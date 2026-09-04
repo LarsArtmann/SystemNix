@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Executive Summary
 
 A batch job is backfilling cross-project insights for 31 dates that had **zero** `ProjectInsightsGenerated` events due to two upstream bugs in crush-daily (`errgroup.WithContext` cancelling on first error + partial results discarded before storage). Both bugs were fixed, a binary built, and a 31-date batch is processing fewest-projects-first. The batch has been running for ~4.5 hours. 20 of 31 dates completed successfully. 2 dates failed during a transient Synthetic API outage (~5 min window around 18:26). 9 dates remain in the queue. No rate limit has been hit.
@@ -37,14 +36,14 @@ A batch job is backfilling cross-project insights for 31 dates that had **zero**
 
 1. **Batch backfill** — 20 of 31 dates completed successfully (65%). 2 failed (transient API outage). 9 remaining in queue (batch still running, shell `0BA`). Estimated ~45 min remaining.
 
-   | # | Date | Status |
-   |---|------|--------|
-   | 1-15 | 2026-06-25 through 2026-07-08 | ✅ OK |
-   | 16 | 2026-06-13 | ❌ FAILED — Synthetic API "Request timed out" |
-   | 17 | 2026-07-09 | ❌ FAILED — Synthetic API "Connection error" |
-   | 18-22 | 2026-06-29 through 2026-07-02 | ✅ OK |
-   | 23 | 2026-06-19 | 🔄 IN PROGRESS |
-   | 24-31 | 2026-06-22 through 2026-07-18 | ⏳ QUEUED |
+   | #     | Date                          | Status                                        |
+   | ----- | ----------------------------- | --------------------------------------------- |
+   | 1-15  | 2026-06-25 through 2026-07-08 | ✅ OK                                         |
+   | 16    | 2026-06-13                    | ❌ FAILED — Synthetic API "Request timed out" |
+   | 17    | 2026-07-09                    | ❌ FAILED — Synthetic API "Connection error"  |
+   | 18-22 | 2026-06-29 through 2026-07-02 | ✅ OK                                         |
+   | 23    | 2026-06-19                    | 🔄 IN PROGRESS                                |
+   | 24-31 | 2026-06-22 through 2026-07-18 | ⏳ QUEUED                                     |
 
 2. **DB state** (live query):
    - 46 total collected dates
@@ -204,10 +203,10 @@ A batch job is backfilling cross-project insights for 31 dates that had **zero**
 
 ### Files Modified (upstream crush-daily — auto-committed + pushed)
 
-| File | Change | Commit |
-|------|--------|--------|
-| `internal/insights/insights.go` | Replaced `errgroup.WithContext` with plain `errgroup.Group` + mutex-guarded error collection | `dab8c19` + `868fe33` |
-| `internal/app/insights_service.go` | Moved storage before error return + added `alignInsightsToProjects` reuse path | `dab8c19` + `868fe33` |
+| File                               | Change                                                                                       | Commit                |
+| ---------------------------------- | -------------------------------------------------------------------------------------------- | --------------------- |
+| `internal/insights/insights.go`    | Replaced `errgroup.WithContext` with plain `errgroup.Group` + mutex-guarded error collection | `dab8c19` + `868fe33` |
+| `internal/app/insights_service.go` | Moved storage before error return + added `alignInsightsToProjects` reuse path               | `dab8c19` + `868fe33` |
 
 ### Runtime State
 

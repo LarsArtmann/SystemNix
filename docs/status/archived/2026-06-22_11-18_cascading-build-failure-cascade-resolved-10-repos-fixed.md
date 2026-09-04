@@ -6,7 +6,6 @@
 
 ---
 
-
 ## TL;DR
 
 A routine `nix flake update` pulled new revisions for 8 repos. This triggered a
@@ -64,17 +63,17 @@ wire them into the flake.nix `deps` map and `subModules` list.
 
 ## a) FULLY DONE ✅
 
-| #   | Repo                               | What was done                                                                                                                                                              | Commits |
-| --- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| 1   | **go-cqrs-lite**                   | Replaced `errorfamily.Compose` → `errors.Join` in event/, command/, query/                                                                                                 | 1       |
-| 2   | **crush-daily**                    | Migrated `memory/v2` → `storage/memory/v2` + `watermill/v2`; renamed `Fold` → `Apply`; updated vendorHash                                                                  | 3       |
-| 3   | **overview**                       | Added `gogenfilter` dep; fixed go-cqrs-lite subModules (`memory/v2` → `storage/memory/v2`); fixed `SimpleNav` templ calls; fixed `Page` int→uint casts; updated vendorHash | 4       |
-| 4   | **projects-management-automation** | Added `cmdguard`, `samber-do-auditlog` deps + self sub-modules (`pkg/coreutils`, `pkg/domain`); stripped relative-path replaces; updated vendorHash                        | 3       |
-| 5   | **go-auto-upgrade**                | Upgraded `samber-do-auditlog` v0.2.0 → v0.3.0; updated vendorHash                                                                                                          | 2       |
-| 6   | **file-and-image-renamer**         | Upgraded `samber-do-auditlog` v0.2.0 → v0.3.0 + sqlite v1.53.0; updated vendorHash                                                                                         | 2       |
-| 7   | **BuildFlow**                      | Updated stale vendorHash                                                                                                                                                   | 1       |
-| 8   | **mr-sync**                        | Unpinned `samber-do-auditlog` from v0.1.0 tag → master; updated vendorHash twice                                                                                           | 3       |
-| 9   | **SystemNix**                      | Updated flake.lock for all repos; disabled discordsync temporarily; committed                                                                                              | 1       |
+| # | Repo                               | What was done                                                                                                                                                              | Commits |
+| - | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| 1 | **go-cqrs-lite**                   | Replaced `errorfamily.Compose` → `errors.Join` in event/, command/, query/                                                                                                 | 1       |
+| 2 | **crush-daily**                    | Migrated `memory/v2` → `storage/memory/v2` + `watermill/v2`; renamed `Fold` → `Apply`; updated vendorHash                                                                  | 3       |
+| 3 | **overview**                       | Added `gogenfilter` dep; fixed go-cqrs-lite subModules (`memory/v2` → `storage/memory/v2`); fixed `SimpleNav` templ calls; fixed `Page` int→uint casts; updated vendorHash | 4       |
+| 4 | **projects-management-automation** | Added `cmdguard`, `samber-do-auditlog` deps + self sub-modules (`pkg/coreutils`, `pkg/domain`); stripped relative-path replaces; updated vendorHash                        | 3       |
+| 5 | **go-auto-upgrade**                | Upgraded `samber-do-auditlog` v0.2.0 → v0.3.0; updated vendorHash                                                                                                          | 2       |
+| 6 | **file-and-image-renamer**         | Upgraded `samber-do-auditlog` v0.2.0 → v0.3.0 + sqlite v1.53.0; updated vendorHash                                                                                         | 2       |
+| 7 | **BuildFlow**                      | Updated stale vendorHash                                                                                                                                                   | 1       |
+| 8 | **mr-sync**                        | Unpinned `samber-do-auditlog` from v0.1.0 tag → master; updated vendorHash twice                                                                                           | 3       |
+| 9 | **SystemNix**                      | Updated flake.lock for all repos; disabled discordsync temporarily; committed                                                                                              | 1       |
 
 **Total: 20 commits across 9 repos, all pushed to GitHub**
 

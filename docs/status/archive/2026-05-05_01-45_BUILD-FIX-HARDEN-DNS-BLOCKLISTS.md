@@ -59,33 +59,33 @@ Both are **upstream issues** that require fixes in their respective GitHub repos
 
 ## F) Top 25 Next Actions
 
-| #   | Action                                                       | Impact  | Effort |
-| --- | ------------------------------------------------------------ | ------- | ------ |
-| 1   | Fix todo-list-ai upstream lockfile (PR or push)              | 🔴 HIGH | LOW    |
-| 2   | Fix file-and-image-renamer upstream go.mod                   | 🔴 HIGH | LOW    |
-| 3   | `just switch` after upstream fixes                           | 🔴 HIGH | LOW    |
-| 4   | Create `just update-blocklists` recipe                       | 🟡 MED  | LOW    |
-| 5   | Update AGENTS.md with new harden signature                   | 🟡 MED  | LOW    |
-| 6   | Add `just build-packages` recipe (builds all custom pkgs)    | 🟡 MED  | LOW    |
-| 7   | Test `just switch` on darwin (Lars-MacBook-Air)              | 🟡 MED  | MED    |
-| 8   | Review harden mkDefault interactions with all NixOS services | 🟢 LOW  | MED    |
-| 9   | Audit all Go packages for stale vendorHashes                 | 🟡 MED  | MED    |
-| 10  | Add `nix flake check --no-build` to justfile                 | 🟢 LOW  | LOW    |
-| 11  | Enable SigNoz build test in CI                               | 🟢 LOW  | HIGH   |
-| 12  | Update flake.lock for all upstream fixes                     | 🟡 MED  | LOW    |
-| 13  | Test Immich backup restore procedure                         | 🟢 LOW  | MED    |
-| 14  | Review GPU hang recovery (Hermes anime pipeline)             | 🟢 LOW  | HIGH   |
-| 15  | DNS failover: provision Pi 3 hardware                        | 🟡 MED  | HIGH   |
-| 16  | Add Authelia SSO to remaining services                       | 🟡 MED  | MED    |
-| 17  | Centralized AI model storage migration verification          | 🟢 LOW  | LOW    |
-| 18  | Niri session restore testing after harden changes            | 🟢 LOW  | LOW    |
-| 19  | Review wallpaper self-healing with awww 0.12.0               | 🟢 LOW  | LOW    |
-| 20  | Update Crush config deployment (just update && just switch)  | 🟢 LOW  | LOW    |
-| 21  | Gitea repo sync automation test                              | 🟢 LOW  | MED    |
-| 22  | Twenty CRM build status check                                | 🟢 LOW  | MED    |
-| 23  | Gatus endpoint monitoring review                             | 🟢 LOW  | LOW    |
-| 24  | Library policy package build verification                    | 🟢 LOW  | LOW    |
-| 25  | Disk monitoring setup for BTRFS snapshots                    | 🟢 LOW  | MED    |
+| #  | Action                                                       | Impact  | Effort |
+| -- | ------------------------------------------------------------ | ------- | ------ |
+| 1  | Fix todo-list-ai upstream lockfile (PR or push)              | 🔴 HIGH | LOW    |
+| 2  | Fix file-and-image-renamer upstream go.mod                   | 🔴 HIGH | LOW    |
+| 3  | `just switch` after upstream fixes                           | 🔴 HIGH | LOW    |
+| 4  | Create `just update-blocklists` recipe                       | 🟡 MED  | LOW    |
+| 5  | Update AGENTS.md with new harden signature                   | 🟡 MED  | LOW    |
+| 6  | Add `just build-packages` recipe (builds all custom pkgs)    | 🟡 MED  | LOW    |
+| 7  | Test `just switch` on darwin (Lars-MacBook-Air)              | 🟡 MED  | MED    |
+| 8  | Review harden mkDefault interactions with all NixOS services | 🟢 LOW  | MED    |
+| 9  | Audit all Go packages for stale vendorHashes                 | 🟡 MED  | MED    |
+| 10 | Add `nix flake check --no-build` to justfile                 | 🟢 LOW  | LOW    |
+| 11 | Enable SigNoz build test in CI                               | 🟢 LOW  | HIGH   |
+| 12 | Update flake.lock for all upstream fixes                     | 🟡 MED  | LOW    |
+| 13 | Test Immich backup restore procedure                         | 🟢 LOW  | MED    |
+| 14 | Review GPU hang recovery (Hermes anime pipeline)             | 🟢 LOW  | HIGH   |
+| 15 | DNS failover: provision Pi 3 hardware                        | 🟡 MED  | HIGH   |
+| 16 | Add Authelia SSO to remaining services                       | 🟡 MED  | MED    |
+| 17 | Centralized AI model storage migration verification          | 🟢 LOW  | LOW    |
+| 18 | Niri session restore testing after harden changes            | 🟢 LOW  | LOW    |
+| 19 | Review wallpaper self-healing with awww 0.12.0               | 🟢 LOW  | LOW    |
+| 20 | Update Crush config deployment (just update && just switch)  | 🟢 LOW  | LOW    |
+| 21 | Gitea repo sync automation test                              | 🟢 LOW  | MED    |
+| 22 | Twenty CRM build status check                                | 🟢 LOW  | MED    |
+| 23 | Gatus endpoint monitoring review                             | 🟢 LOW  | LOW    |
+| 24 | Library policy package build verification                    | 🟢 LOW  | LOW    |
+| 25 | Disk monitoring setup for BTRFS snapshots                    | 🟢 LOW  | MED    |
 
 ## G) Top #1 Question
 

@@ -110,21 +110,21 @@ Added three-layer defense to guarantee `.lan` local domains are **never** blocke
 
 ## C) NOT STARTED ❌
 
-| #   | Item                                               | Effort | Priority     |
-| --- | -------------------------------------------------- | ------ | ------------ |
-| 1   | swayidle for Niri (dim/lock/suspend)               | 15 min | 🔴 Critical  |
-| 2   | Dunst in Niri spawn-at-startup                     | 5 min  | 🔴 Critical  |
-| 3   | Delete orphaned `regreet.css`                      | 1 min  | 🔴 Quick win |
-| 4   | Extract wallpaper path to variable                 | 10 min | 🟡           |
-| 5   | Add `just reload` recipe for Niri                  | 5 min  | 🟡           |
-| 6   | Wallpaper prev/next keybinds                       | 10 min | 🟡           |
-| 7   | Immich ML on AMD NPU                               | 1-2 hr | 🟠           |
-| 8   | Automated flake updates (CI)                       | 30 min | 🟠           |
-| 9   | CI/CD pipeline (GitHub Actions)                    | 1 hr   | 🟠           |
-| 10  | keybind cheatsheet overlay                         | 20 min | 🟢           |
-| 11  | Consolidate terminals (kitty + ghostty + foot → 2) | 15 min | 🟢           |
-| 12  | Remove sway from multi-wm.nix                      | 5 min  | 🟢           |
-| 13  | Stale docs cleanup (STATUS.md, TODO-STATUS.md)     | 30 min | 🟢           |
+| #  | Item                                               | Effort | Priority     |
+| -- | -------------------------------------------------- | ------ | ------------ |
+| 1  | swayidle for Niri (dim/lock/suspend)               | 15 min | 🔴 Critical  |
+| 2  | Dunst in Niri spawn-at-startup                     | 5 min  | 🔴 Critical  |
+| 3  | Delete orphaned `regreet.css`                      | 1 min  | 🔴 Quick win |
+| 4  | Extract wallpaper path to variable                 | 10 min | 🟡           |
+| 5  | Add `just reload` recipe for Niri                  | 5 min  | 🟡           |
+| 6  | Wallpaper prev/next keybinds                       | 10 min | 🟡           |
+| 7  | Immich ML on AMD NPU                               | 1-2 hr | 🟠           |
+| 8  | Automated flake updates (CI)                       | 30 min | 🟠           |
+| 9  | CI/CD pipeline (GitHub Actions)                    | 1 hr   | 🟠           |
+| 10 | keybind cheatsheet overlay                         | 20 min | 🟢           |
+| 11 | Consolidate terminals (kitty + ghostty + foot → 2) | 15 min | 🟢           |
+| 12 | Remove sway from multi-wm.nix                      | 5 min  | 🟢           |
+| 13 | Stale docs cleanup (STATUS.md, TODO-STATUS.md)     | 30 min | 🟢           |
 
 ---
 
@@ -133,11 +133,11 @@ Added three-layer defense to guarantee `.lan` local domains are **never** blocke
 | Item                               | Severity | Details                                                                                                                                      |
 | ---------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | **130+ status reports, 71K lines** | 💀       | Massive documentation bloat. Most reports are redundant duplicates. No one will ever read these. They accumulate faster than they're useful. |
-| **3 commits ahead of origin**      | ⚠️       | No pre-push hook to warn. Risk of diverged branches.                                                                                         |
-| **Stale TODO tracking**            | ⚠️       | `docs/TODO-STATUS.md` last updated 2026-01-13 (2.5 months stale). `TODO_LIST.md` counts are wrong.                                           |
-| **Stale `docs/STATUS.md`**         | ⚠️       | 3 months out of date.                                                                                                                        |
-| **auditd kernel module**           | ⚠️       | Disabled due to AppArmor conflict (2 TODOs in `security-hardening.nix:14,21`). Blocked by nixpkgs#483085.                                    |
-| **Security-hardening audit-rules** | ⚠️       | Service bug, re-enable after NixOS fix.                                                                                                      |
+| **3 commits ahead of origin**      | ⚠️        | No pre-push hook to warn. Risk of diverged branches.                                                                                         |
+| **Stale TODO tracking**            | ⚠️        | `docs/TODO-STATUS.md` last updated 2026-01-13 (2.5 months stale). `TODO_LIST.md` counts are wrong.                                           |
+| **Stale `docs/STATUS.md`**         | ⚠️        | 3 months out of date.                                                                                                                        |
+| **auditd kernel module**           | ⚠️        | Disabled due to AppArmor conflict (2 TODOs in `security-hardening.nix:14,21`). Blocked by nixpkgs#483085.                                    |
+| **Security-hardening audit-rules** | ⚠️        | Service bug, re-enable after NixOS fix.                                                                                                      |
 
 ---
 
@@ -170,33 +170,33 @@ Added three-layer defense to guarantee `.lan` local domains are **never** blocke
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| #   | Task                                               | Effort | Impact | Category    |
-| --- | -------------------------------------------------- | ------ | ------ | ----------- |
-| 1   | **Commit homepage.nix changes**                    | 2 min  | 🔴     | Hygiene     |
-| 2   | **Push 4 commits to origin**                       | 1 min  | 🔴     | Hygiene     |
-| 3   | **Add swayidle for Niri** (dim/lock/suspend)       | 15 min | 🔴     | Desktop     |
-| 4   | **Add dunst to Niri spawn-at-startup**             | 5 min  | 🔴     | Desktop     |
-| 5   | **Delete orphaned regreet.css**                    | 1 min  | 🔴     | Cleanup     |
-| 6   | **Fix 3 Go lint warnings**                         | 5 min  | 🟡     | Quality     |
-| 7   | **Add `just reload` recipe for Niri**              | 5 min  | 🟡     | DevEx       |
-| 8   | **Extract wallpaper path to variable**             | 10 min | 🟡     | Refactor    |
-| 9   | **Theme swaylock with Catppuccin**                 | 15 min | 🟡     | Desktop     |
-| 10  | **Add pre-push hook** (warn >3 ahead)              | 10 min | 🟡     | Hygiene     |
-| 11  | **Archive old status reports** (>2 weeks)          | 10 min | 🟡     | Docs        |
-| 12  | **Consolidate terminals** (remove ghostty or foot) | 15 min | 🟡     | Cleanup     |
-| 13  | **Remove sway from multi-wm.nix**                  | 5 min  | 🟢     | Cleanup     |
-| 14  | **Add wallpaper keybinds** (Mod+Shift/Ctrl+W)      | 10 min | 🟢     | Desktop     |
-| 15  | **Update TODO_LIST.md** with accurate counts       | 30 min | 🟢     | Docs        |
-| 16  | **Consolidate monitoring** (4→2 tools)             | 30 min | 🟠     | Infra       |
-| 17  | **Enable DNS-over-HTTPS upstream**                 | 20 min | 🟠     | Security    |
-| 18  | **Automate flake updates** (weekly timer)          | 30 min | 🟠     | Infra       |
-| 19  | **Add GitHub Actions CI** (nix flake check)        | 1 hr   | 🟠     | Infra       |
-| 20  | **Immich ML on AMD NPU**                           | 1-2 hr | 🟠     | Performance |
-| 21  | **Resolve auditd/AppArmor conflict**               | 1 hr   | 🟠     | Security    |
-| 22  | **Delete stale docs/STATUS.md**                    | 1 min  | 🟢     | Docs        |
-| 23  | **Add keybind cheatsheet overlay**                 | 20 min | 🟢     | Desktop     |
-| 24  | **Clean up Hyprland comment references**           | 15 min | 🟢     | Cleanup     |
-| 25  | **Bluetooth Nest Audio pairing**                   | 30 min | 🟢     | Hardware    |
+| #  | Task                                               | Effort | Impact | Category    |
+| -- | -------------------------------------------------- | ------ | ------ | ----------- |
+| 1  | **Commit homepage.nix changes**                    | 2 min  | 🔴     | Hygiene     |
+| 2  | **Push 4 commits to origin**                       | 1 min  | 🔴     | Hygiene     |
+| 3  | **Add swayidle for Niri** (dim/lock/suspend)       | 15 min | 🔴     | Desktop     |
+| 4  | **Add dunst to Niri spawn-at-startup**             | 5 min  | 🔴     | Desktop     |
+| 5  | **Delete orphaned regreet.css**                    | 1 min  | 🔴     | Cleanup     |
+| 6  | **Fix 3 Go lint warnings**                         | 5 min  | 🟡     | Quality     |
+| 7  | **Add `just reload` recipe for Niri**              | 5 min  | 🟡     | DevEx       |
+| 8  | **Extract wallpaper path to variable**             | 10 min | 🟡     | Refactor    |
+| 9  | **Theme swaylock with Catppuccin**                 | 15 min | 🟡     | Desktop     |
+| 10 | **Add pre-push hook** (warn >3 ahead)              | 10 min | 🟡     | Hygiene     |
+| 11 | **Archive old status reports** (>2 weeks)          | 10 min | 🟡     | Docs        |
+| 12 | **Consolidate terminals** (remove ghostty or foot) | 15 min | 🟡     | Cleanup     |
+| 13 | **Remove sway from multi-wm.nix**                  | 5 min  | 🟢     | Cleanup     |
+| 14 | **Add wallpaper keybinds** (Mod+Shift/Ctrl+W)      | 10 min | 🟢     | Desktop     |
+| 15 | **Update TODO_LIST.md** with accurate counts       | 30 min | 🟢     | Docs        |
+| 16 | **Consolidate monitoring** (4→2 tools)             | 30 min | 🟠     | Infra       |
+| 17 | **Enable DNS-over-HTTPS upstream**                 | 20 min | 🟠     | Security    |
+| 18 | **Automate flake updates** (weekly timer)          | 30 min | 🟠     | Infra       |
+| 19 | **Add GitHub Actions CI** (nix flake check)        | 1 hr   | 🟠     | Infra       |
+| 20 | **Immich ML on AMD NPU**                           | 1-2 hr | 🟠     | Performance |
+| 21 | **Resolve auditd/AppArmor conflict**               | 1 hr   | 🟠     | Security    |
+| 22 | **Delete stale docs/STATUS.md**                    | 1 min  | 🟢     | Docs        |
+| 23 | **Add keybind cheatsheet overlay**                 | 20 min | 🟢     | Desktop     |
+| 24 | **Clean up Hyprland comment references**           | 15 min | 🟢     | Cleanup     |
+| 25 | **Bluetooth Nest Audio pairing**                   | 30 min | 🟢     | Hardware    |
 
 ---
 

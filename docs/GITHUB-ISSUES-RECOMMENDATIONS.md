@@ -11,36 +11,36 @@
 
 | #         | Title                                  | Status             | Reality Check                                                       | Action Required |
 | --------- | -------------------------------------- | ------------------ | ------------------------------------------------------------------- | --------------- |
-| **134**   | Isolated Program Modules (flake-parts) | 🟡 OUTDATED        | flake-parts already implemented, issue description incorrect        |
-| **133**   | Advanced Network Configuration         | ✅ ACCURATE        | Only basic networking exists, no VPN/VLAN/QoS                       |
-| **132**   | Deploy EVO-X2 NixOS                    | ⏳ NOT VERIFIED    | Need to check EVO-X2 config status                                  |
-| **131**   | Performance Baselines                  | ⏳ NOT VERIFIED    | Need to check if baselines exist                                    |
-| **130**   | RISC-V Support                         | ❌ NOT IMPLEMENTED | No RISC-V configs found                                             |
-| **125**   | Dynamic Library Management             | ❌ NOT IMPLEMENTED | No wrapper system found                                             |
-| **122**   | Fix Nix Testing Pipeline               | ✅ ALREADY FIXED   | test command exists with sudo, issue may be outdated                |
-| **119**   | SublimeText Config                     | ✅ IMPLEMENTED     | Sublime configured as default via duti                              |
-| **118**   | SublimeText Default .md                | ✅ IMPLEMENTED     | duti sets Sublime as .md editor                                     |
-| **117**   | CLI Productivity Tools                 | ⏳ PARTIAL         | Need to check base.nix for tools                                    |
-| **116**   | Terminal Multiplexer                   | ✅ IMPLEMENTED     | tmux configured in platforms/common/programs/tmux.nix               |
-| **115**   | Rust Toolchain                         | ❌ NOT FOUND       | No rust/rustc/cargo in configs                                      |
-| **114**   | Python Environment                     | ✅ PARTIAL         | python311 exists in AI stack (platforms/nixos/desktop/ai-stack.nix) |
-| **113**   | Node.js & TypeScript                   | ⏳ NOT VERIFIED    | Need to check configs                                               |
-| **105**   | Wrapper Documentation                  | ❌ NOT FOUND       | No wrapper directory or docs                                        |
-| **104**   | Wrapper Performance                    | ❌ NOT FOUND       | No wrapper system to optimize                                       |
-| **98-97** | Portable Dev Environments              | ⏳ NOT VERIFIED    | Need to check                                                       |
-| **92**    | Objective-See Apps                     | ⏳ NOT VERIFIED    | Need to check                                                       |
-| **42**    | Headlamp Nix Package                   | ⏳ NOT VERIFIED    | Need to check                                                       |
-| **39**    | Keyboard Shortcuts                     | ⏳ NOT VERIFIED    | Need to check                                                       |
-| **38**    | package.json Update Scripts            | ❌ NOT FOUND       | No scripts section in package.json                                  |
-| **22**    | Awesome Dotfiles                       | ⏳ NOT VERIFIED    | Need to check                                                       |
-| **17**    | System Cleanup                         | ⏳ NOT VERIFIED    | Need to check                                                       |
-| **15**    | Maintenance Tools                      | ⏳ NOT VERIFIED    | Need to check                                                       |
-| **12**    | programs.nix TODOs                     | ✅ COMPLETE        | No TODOs found in configs                                           |
-| **10**    | core.nix TODOs                         | ✅ COMPLETE        | No TODOs found in configs                                           |
-| **9**     | system.nix TODOs                       | ⏳ NOT VERIFIED    | Need to check                                                       |
-| **7,6,5** | manual-linking.sh                      | ❌ NOT FOUND       | Script doesn't exist                                                |
-| **100**   | Analysis Complete                      | ✅ ADMIN           | Archive as milestone                                                |
-| **99**    | Create Milestones                      | 📋 ADMIN           | Optional - project organization                                     |
+| **134**   | Isolated Program Modules (flake-parts) | 🟡 OUTDATED        | flake-parts already implemented, issue description incorrect        |                 |
+| **133**   | Advanced Network Configuration         | ✅ ACCURATE        | Only basic networking exists, no VPN/VLAN/QoS                       |                 |
+| **132**   | Deploy EVO-X2 NixOS                    | ⏳ NOT VERIFIED    | Need to check EVO-X2 config status                                  |                 |
+| **131**   | Performance Baselines                  | ⏳ NOT VERIFIED    | Need to check if baselines exist                                    |                 |
+| **130**   | RISC-V Support                         | ❌ NOT IMPLEMENTED | No RISC-V configs found                                             |                 |
+| **125**   | Dynamic Library Management             | ❌ NOT IMPLEMENTED | No wrapper system found                                             |                 |
+| **122**   | Fix Nix Testing Pipeline               | ✅ ALREADY FIXED   | test command exists with sudo, issue may be outdated                |                 |
+| **119**   | SublimeText Config                     | ✅ IMPLEMENTED     | Sublime configured as default via duti                              |                 |
+| **118**   | SublimeText Default .md                | ✅ IMPLEMENTED     | duti sets Sublime as .md editor                                     |                 |
+| **117**   | CLI Productivity Tools                 | ⏳ PARTIAL         | Need to check base.nix for tools                                    |                 |
+| **116**   | Terminal Multiplexer                   | ✅ IMPLEMENTED     | tmux configured in platforms/common/programs/tmux.nix               |                 |
+| **115**   | Rust Toolchain                         | ❌ NOT FOUND       | No rust/rustc/cargo in configs                                      |                 |
+| **114**   | Python Environment                     | ✅ PARTIAL         | python311 exists in AI stack (platforms/nixos/desktop/ai-stack.nix) |                 |
+| **113**   | Node.js & TypeScript                   | ⏳ NOT VERIFIED    | Need to check configs                                               |                 |
+| **105**   | Wrapper Documentation                  | ❌ NOT FOUND       | No wrapper directory or docs                                        |                 |
+| **104**   | Wrapper Performance                    | ❌ NOT FOUND       | No wrapper system to optimize                                       |                 |
+| **98-97** | Portable Dev Environments              | ⏳ NOT VERIFIED    | Need to check                                                       |                 |
+| **92**    | Objective-See Apps                     | ⏳ NOT VERIFIED    | Need to check                                                       |                 |
+| **42**    | Headlamp Nix Package                   | ⏳ NOT VERIFIED    | Need to check                                                       |                 |
+| **39**    | Keyboard Shortcuts                     | ⏳ NOT VERIFIED    | Need to check                                                       |                 |
+| **38**    | package.json Update Scripts            | ❌ NOT FOUND       | No scripts section in package.json                                  |                 |
+| **22**    | Awesome Dotfiles                       | ⏳ NOT VERIFIED    | Need to check                                                       |                 |
+| **17**    | System Cleanup                         | ⏳ NOT VERIFIED    | Need to check                                                       |                 |
+| **15**    | Maintenance Tools                      | ⏳ NOT VERIFIED    | Need to check                                                       |                 |
+| **12**    | programs.nix TODOs                     | ✅ COMPLETE        | No TODOs found in configs                                           |                 |
+| **10**    | core.nix TODOs                         | ✅ COMPLETE        | No TODOs found in configs                                           |                 |
+| **9**     | system.nix TODOs                       | ⏳ NOT VERIFIED    | Need to check                                                       |                 |
+| **7,6,5** | manual-linking.sh                      | ❌ NOT FOUND       | Script doesn't exist                                                |                 |
+| **100**   | Analysis Complete                      | ✅ ADMIN           | Archive as milestone                                                |                 |
+| **99**    | Create Milestones                      | 📋 ADMIN           | Optional - project organization                                     |                 |
 
 ---
 
@@ -819,11 +819,11 @@ test-ci:
 
 | Category           | Issues | Effort    | Duration     | Priority |
 | ------------------ | ------ | --------- | ------------ | -------- |
-| **Close as Done**  | 12     | 0 hrs     | ✅ IMMEDIATE |
-| **High Priority**  | 5      | 22-31 hrs | 🔴 WEEK 1-3  |
-| **Verify**         | 1      | 1-2 hrs   | ⏳ WEEK 1    |
-| **Defer/Skip**     | 10     | 0 hrs     | ⚪ FUTURE    |
-| **Administrative** | 1      | 0 hrs     | 📋 OPTIONAL  |
+| **Close as Done**  | 12     | 0 hrs     | ✅ IMMEDIATE |          |
+| **High Priority**  | 5      | 22-31 hrs | 🔴 WEEK 1-3  |          |
+| **Verify**         | 1      | 1-2 hrs   | ⏳ WEEK 1    |          |
+| **Defer/Skip**     | 10     | 0 hrs     | ⚪ FUTURE    |          |
+| **Administrative** | 1      | 0 hrs     | 📋 OPTIONAL  |          |
 
 **Total Immediate Effort:** 23-33 hours (3-5 weeks)
 **Total Deferred Effort:** 0 hours (until needed)

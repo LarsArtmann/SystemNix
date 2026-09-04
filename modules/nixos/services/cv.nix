@@ -1,0 +1,519 @@
+# CV — SystemNix wrapper around the upstream NixOS module.
+#
+# The upstream module (inputs.cv.nixosModules.default → services.cv-server)
+# owns the service shape: package, typst pin (kept lockstep with the
+# golden-tested compiler), generated config.yaml, content sync from the
+# package share dir into the state dir, and baseline hardening.
+#
+# This file layers ONLY the SystemNix-specific concerns on top: sops
+# EnvironmentFile wiring (CV_API_KEY), port registry, GOMEMLIMIT/MemoryMax,
+# onFailure alert routing, and the reverse proxy / dashboard / monitoring
+# integrations (caddy.nix, homepage.nix, gatus-config.nix).
+{ inputs, ... }: {
+  flake.nixosModules.cv =
+    {
+      config,
+      pkgs,
+      lib,
+      ...
+    }:
+    let
+      inherit (import ../../../lib/default.nix lib)
+        ports
+        onFailure
+        harden
+        ioTier
+        serviceOneshotDefaults
+        ;
+      cfg = config.services.cv-server;
+      domain = config.networking.domain;
+      backupDir = "/mnt/pool/backups/cv";
+    in
+    {
+      imports = [ inputs.cv.nixosModules.default ];
+
+      options.services.cv-server.profileProbe = {
+        enable = lib.mkEnableOption ''
+          Weekly platform-session validity probe: runs
+          `cv profile accounts --probe --all` against the operator checkout.
+          Exit 0 = all sessions valid; exit 3 = at least one INVALID session,
+          which FAILS the unit so onFailure alerts — logins rot visibly
+          instead of at apply-time. Disabled by default: the probe is
+          operator-local state (never a server surface) and pulls chromium
+          into the closure.
+        '';
+
+        chromiumPackage = lib.mkOption {
+          type = lib.types.package;
+          default = pkgs.chromium;
+          description = "Chromium derivation exported as CHROMIUM_EXECUTABLE_PATH for the Playwright-based probe (tests substitute a stub to keep the VM closure light).";
+        };
+
+        workingDirectory = lib.mkOption {
+          type = lib.types.str;
+          default = "/home/lars/projects/CV";
+          description = "CV checkout the probe runs from; session state (data/accounts) and the generated bun probe scripts live under it.";
+        };
+      };
+
+      config = lib.mkIf cfg.enable {
+        # The cv CLI on the machine PATH. The systemd unit ExecStarts the
+        # store binary directly — invisible to interactive shells — and the
+        # same derivation IS the CLI (cv serve / cv approve / cv track ...).
+        # CLI commands resolve config.yaml + data/ from CWD, so repo work
+        # still runs from the CV checkout (nix run .#cv / go run ./cmd/cv);
+        # this PATH entry exposes the pinned machine version everywhere else.
+        # Freshness = the flake.lock `cv` input: bump the lock and rebuild
+        # to ship new CLI/server features (PATH cv and the service move
+        # together — one derivation).
+        environment.systemPackages = [
+          inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.cv
+        ];
+
+        services.cv-server = {
+          package = lib.mkDefault inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          port = lib.mkDefault ports.cv;
+          environmentFile = lib.mkDefault config.sops.templates."cv-env".path;
+
+          settings = {
+            # Forms (chat, A.Team, contact) POST same-origin through the
+            # Caddy vHost — OriginCheck/CORS/nosurf require the vHost origin
+            # in the allowlist. Loopback covers local curl/LAN-IP access.
+            server.allowed_origins = [
+              "https://cv.${domain}"
+              "http://127.0.0.1:${toString ports.cv}"
+              "http://localhost:${toString ports.cv}"
+            ];
+            # CV_ENVIRONMENT drives CSP strictness (production blocks inline
+            # scripts without nonces) and skips dev rate-limit bypasses.
+            environment = "production";
+            # Tracked applications/evaluations must survive restarts: the
+            # memory store (default) evaporates on every service restart,
+            # and cv-backup below protects exactly this file. data/ ROOT
+            # files are never touched by the upstream content sync (it only
+            # replaces the 8 content SUBDIRS).
+            pipeline = {
+              event_store_driver = "sqlite";
+              event_store_dsn = "/var/lib/cv/data/pipeline.sqlite";
+              # EUR/day price floor (owner decision 2026-09-03, ratifying the
+              # CV repo's 600 proposal): below-floor discoveries skip at
+              # evaluation regardless of score (RateFloor axis + `< FLOOR`
+              # dashboard chips, upstream 2026-09-02/03). 615 €/day was the
+              # PEA benchmark; 600 keeps a small negotiation band.
+              evaluation.min_day_rate = 600;
+              # The generated config.yaml IS the whole config (settings are
+              # not merged over the repo's config.yaml), so the portal list
+              # must live HERE or the server has nothing to scan. Keep in
+              # sync with the CV repo's config.yaml pipeline.portals.
+              # freelance.de is deliberately absent (WAF + crawling
+              # guideline: detail-page URLs only). Skill-slug URLs
+              # (/projects/golang, ...) are dead anonymously — never add
+              # them (see CV AGENTS.md, Portal Scanners).
+              portals = [
+                {
+                  url = "https://www.freelancermap.com/projects";
+                  company = "Freelancermap";
+                  provider = "freelancermap";
+                }
+                {
+                  url = "https://www.freelancermap.com/projects/remote";
+                  company = "Freelancermap";
+                  provider = "freelancermap";
+                }
+                {
+                  url = "https://www.freelancermap.com/projects/germany";
+                  company = "Freelancermap";
+                  provider = "freelancermap";
+                }
+                {
+                  url = "https://www.freelancermap.com/projects/austria";
+                  company = "Freelancermap";
+                  provider = "freelancermap";
+                }
+                {
+                  url = "https://www.freelancermap.com/projects/switzerland";
+                  company = "Freelancermap";
+                  provider = "freelancermap";
+                }
+                {
+                  url = "https://www.freelancermap.com/projects/development";
+                  company = "Freelancermap";
+                  provider = "freelancermap";
+                }
+                {
+                  url = "https://www.freelancermap.com/projects/it";
+                  company = "Freelancermap";
+                  provider = "freelancermap";
+                }
+                {
+                  url = "https://www.freelancermap.com/projects/engineering";
+                  company = "Freelancermap";
+                  provider = "freelancermap";
+                }
+                {
+                  url = "https://www.freelancermap.com/projects/software-development";
+                  company = "Freelancermap";
+                  provider = "freelancermap";
+                }
+                # HN "Who is Hiring" monthly thread (scanner resolves the
+                # current thread via Algolia author-tagged search; premium
+                # remote Go/GCP/platform roles, upstream 2026-09-03).
+                {
+                  url = "https://news.ycombinator.com/hiring";
+                  company = "Hacker News";
+                  provider = "hn";
+                }
+              ];
+              # One-click funnel tail. EXPLICITLY DISABLED until gate Q1
+              # (owner-gate-package-going-live.md): the upstream default is
+              # enabled=true (dev demo shape), but under the default dry-run
+              # sender an approve-click marks the application SENT without a
+              # real email — burning it. Flip enabled=true ONLY together
+              # with autosend_driver=agentmail + the agentmail env creds
+              # (see agentmail comment below); then the cv-scan timer's
+              # auto-apply POST activates on its next tick.
+              autoapply = {
+                enabled = false;
+                # worth-trying added 2026-09-03 with the recalibrated score
+                # bands (4.5-max corpus tops out ~3.2): apply-only starves
+                # the funnel to zero candidates. The approval click stays
+                # the human gate either way.
+                recommendations = [
+                  "apply"
+                  "worth-trying"
+                ];
+                max_per_pass = 5;
+                strategy = "nudge";
+                send_on_approve = true;
+                never_reapply_rejected_companies = true;
+              };
+              # Reply loop + calendar feed (interview replies → /pipeline
+              # Interviews stage → /calendar/interviews.ics). enabled=true
+              # is INERT until the agentmail env vars below exist — the
+              # poller provider self-disables without creds. Subscribe the
+              # owner calendar once: /calendar/interviews.ics?key=<CV_API_KEY>
+              # (the calendar guard reuses the pipeline API key).
+              replyloop = {
+                enabled = true;
+                # Alert-mail router (upstream 2026-09-03): platform
+                # new-jobs digests classified + tracked as discoveries.
+                # Same inertness as replyloop itself — no creds, no polls.
+                alert_router = true;
+              };
+              # Gate Q1 flip (do ALL of it in one change):
+              #   1. sops cv-env template += CV_PIPELINE_AUTOSEND_DRIVER=agentmail
+              #      CV_PIPELINE_AGENTMAIL_API_KEY=<am_...>
+              #      CV_PIPELINE_AGENTMAIL_INBOX_ID=<inbox id>
+              #      (identity: lars.artmann@agentmail.to — PERMANENT, gate Q3:
+              #      switching it later orphans SentTo reply matching)
+              #   2. settings: pipeline.autoapply.enabled = true
+              #   3. rebuild; verify boot log "Application sender: AgentMail"
+              #   4. first real send probe per gate-package A2, then done.
+              # Keys stay empty here so env overrides win and no secret
+              # ever lands in the nix store.
+              agentmail = {
+                api_key = "";
+                inbox_id = "";
+              };
+            };
+            # journald/SigNoz ingestion friendliness: structured JSON lines
+            # instead of the text default (internal/config LogFormatJSON).
+            logging.format = "json";
+            # Absolute state-dir path: the default (data/graphrag.sqlite) is
+            # CWD-relative, which happens to resolve correctly today but only
+            # because WorkingDirectory = /var/lib/cv. Pin it so graphrag can
+            # be enabled later without a relative-path surprise (module is
+            # disabled by default; the key is inert until then).
+            graphrag.store_dsn = "/var/lib/cv/data/graphrag.sqlite";
+          };
+        };
+
+        systemd.services.cv-server = {
+          after = [ "sops-nix.service" ];
+          wants = [ "sops-nix.service" ];
+          inherit onFailure;
+
+          serviceConfig = lib.mkMerge [
+            (harden {
+              # Mostly idle; renders spike only during PDF export bursts.
+              MemoryMax = "1G";
+            })
+            {
+              # Keep GC headroom below the 1G cgroup cap (validate-gomemlimit).
+              # OTEL_*: Go otlptracehttp — bare host:port, NO scheme (the SDK
+              # builds the URL itself); registered in otel-endpoint-audit.
+              Environment = [
+                "GOMEMLIMIT=768MiB"
+                "OTEL_EXPORTER_OTLP_ENDPOINT=localhost:${toString ports.signoz-otlp-http}"
+                "OTEL_ENVIRONMENT=production"
+              ];
+            }
+          ];
+        };
+
+        # Mount-gated creator for the pool-side backup dir (atticd-storage-dir
+        # pattern). cv-backup's ReadWritePaths requires the path to EXIST
+        # before namespace setup: during the 9-day DAS outage a root-fs shadow
+        # dir under /mnt/pool let cv-backup pass setup while early-exiting
+        # ("no pipeline.sqlite yet"); the 2026-08-31 pool remount then failed
+        # the boot catch-up run with 226/NAMESPACE because the POOL filesystem
+        # never had the dir. tmpfiles must NOT create it either — pre-mount it
+        # would land on the root fs and shadow the pool copy.
+        systemd.services.cv-backup-dir = {
+          description = "Create CV backup directory on the HDD pool";
+          wantedBy = [ "multi-user.target" ];
+          unitConfig.RequiresMountsFor = [ backupDir ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = "root";
+              RemainAfterExit = true;
+            }
+            # ReadWritePaths targets the MOUNT ROOT (/mnt/pool), not a
+            # subdirectory: on a FRESH pool nothing creates /mnt/pool/backups
+            # before this unit's namespace is set up, and a ReadWritePaths
+            # entry under it aborts with 226/NAMESPACE before the script can
+            # mkdir (2026-09-04: caught by the VM test after the 2026-09-02
+            # tmpfiles removal left cv-backup-dir as "the only sanctioned
+            # creator" of a path its own namespace setup required to
+            # pre-exist). RequiresMountsFor guarantees /mnt/pool is mounted,
+            # so the root scope always resolves; the script mkdirs the leaf.
+            (harden {
+              MemoryMax = "128M";
+              ReadWritePaths = [ "/mnt/pool" ];
+            })
+            (serviceOneshotDefaults { })
+          ];
+          script = ''
+            mkdir -p ${backupDir}
+            chmod 0755 ${backupDir}
+          '';
+        };
+
+        # Pipeline event-store backup: the tracked-applications state
+        # (data/pipeline.sqlite) is irreplaceable. Online SQLite backup
+        # (safe against the live WAL writer) onto the mirrored pool.
+        systemd.services.cv-backup = {
+          description = "CV pipeline SQLite backup (online .backup)";
+          after = [
+            "cv-server.service"
+            "cv-backup-dir.service"
+          ];
+          wants = [
+            "cv-server.service"
+            "cv-backup-dir.service"
+          ];
+          # Orders the unit AFTER the pool mount (a detached DAS fails the
+          # run as a clean dependency error instead of 226/NAMESPACE — the
+          # btrbk doctrine), and fixes the boot-race where Persistent timer
+          # catch-up fires seconds before mnt-pool.mount completes.
+          unitConfig.RequiresMountsFor = [ backupDir ];
+          inherit onFailure;
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              ExecStart = pkgs.writeShellScript "cv-backup" ''
+                set -euo pipefail
+                db="/var/lib/cv/data/pipeline.sqlite"
+                if [ ! -f "$db" ]; then
+                  echo "cv-backup: no pipeline.sqlite yet — nothing to back up"
+                  exit 0
+                fi
+                ts=$(date +%Y%m%dT%H%M%S)
+                dst="${backupDir}/pipeline-$ts.sqlite"
+                ${lib.getExe pkgs.sqlite} "$db" ".backup '$dst'"
+                # 14-day retention (pocket-id-backup pattern): the online
+                # .backup rewrites every page, so nothing is shared between
+                # nights — without pruning the pool dir grows forever.
+                find "${backupDir}" -name "pipeline-*.sqlite" -mtime +14 -delete
+                echo "cv-backup: wrote $dst"
+              '';
+              ReadWritePaths = [
+                backupDir
+                "/var/lib/cv"
+              ];
+            }
+            (harden {
+              # cv-server's data/ is 0750 cv:cv. Root with an EMPTY
+              # CapabilityBoundingSet obeys DAC bits and cannot even stat
+              # through that dir: `[ ! -f $db ]` was TRUE with the DB sitting
+              # right there, and every run exited 0 "no pipeline.sqlite yet" —
+              # a silently green no-op backup since deployment (caught by the
+              # 2026-08-31 VM regression test, masked until then by the 226).
+              # CAP_DAC_READ_SEARCH = read-only traversal, the exact
+              # backup-health-metrics precedent for root collectors reading
+              # foreign-owned trees. Writing still targets root-owned paths.
+              CapabilityBoundingSet = "CAP_DAC_READ_SEARCH";
+            })
+            (serviceOneshotDefaults { })
+            ioTier.background
+          ];
+        };
+
+        systemd.timers.cv-backup = {
+          description = "Nightly CV pipeline backup (03:17, staggered off the 01:00-03:00 peak)";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = "*-*-* 03:17:00";
+            Persistent = true;
+            Unit = "cv-backup.service";
+          };
+        };
+
+        # Continuous funnel automation: every 6h, scan ALL configured portals
+        # and bulk-evaluate tracked-but-unscored applications. Drives the
+        # server over HTTP (the server owns the SQLite lease — a CLI timer
+        # against the same store file would conflict with it). Both endpoints
+        # are async and 409-guarded against double runs, so an overlap with a
+        # dashboard-triggered run is harmless. The scan itself evaluates every
+        # newly ingested job inline; the follow-up no-force evaluate pass only
+        # catches rows whose scan-time evaluation failed. Forced re-scoring of
+        # the whole inventory stays MANUAL (criteria/keyword changes) — a
+        # periodic force pass would append one job.evaluated event per tracked
+        # application per run for identical verdicts.
+        #
+        # Requires a CV package whose server skips CSRF for X-API-Key-bearing
+        # requests (CV repo 2026-08-29 or later); older servers answer 403
+        # csrf_invalid to these POSTs. Deploy the flake-input bump together
+        # with this timer.
+        systemd.services.cv-scan = {
+          description = "CV pipeline portal scan + bulk evaluation (HTTP, lease-safe)";
+          after = [ "cv-server.service" ];
+          wants = [ "cv-server.service" ];
+          inherit onFailure;
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              # Same sops template the server reads — the systemd manager
+              # injects it, so the hardened sandbox never touches the
+              # secret file itself.
+              EnvironmentFile = lib.mkIf (cfg.environmentFile != null) [
+                cfg.environmentFile
+              ];
+              ExecStart = pkgs.writeShellScript "cv-scan" ''
+                set -euo pipefail
+                base="http://127.0.0.1:${toString cfg.port}"
+                key="''${CV_API_KEY:?CV_API_KEY missing — check the cv-env sops template}"
+                curl_bin="${lib.getExe pkgs.curl}"
+
+                # 200 = accepted, 409 = a scan/evaluation is already running
+                # (dashboard button or previous tick) — both fine. Anything
+                # else fails the unit so onFailure alerting picks it up.
+                post() {
+                  code=$("$curl_bin" -sS -o /dev/null -w '%{http_code}' -X POST \
+                    -H "X-API-Key: $key" -H 'Content-Type: application/json' "$1")
+                  case "$code" in
+                    200|409) echo "cv-scan: $1 -> $code (ok)" ;;
+                    *) echo "cv-scan: $1 -> $code (unexpected)" >&2; exit 1 ;;
+                  esac
+                }
+
+                # Funnel-tail variant: 503 (auto-apply disabled in config)
+                # is a WARN, not a unit failure — the funnel tail is opt-in
+                # (gate Q1: flip pipeline.autoapply.enabled together with
+                # autosend_driver=agentmail + creds) and its absence must
+                # not fail the scan/evaluate core alerting. 404 still fails:
+                # that means the deployed server predates the endpoint and
+                # this script needs a flake-input bump.
+                post_funnel_tail() {
+                  code=$("$curl_bin" -sS -o /dev/null -w '%{http_code}' -X POST \
+                    -H "X-API-Key: $key" -H 'Content-Type: application/json' -d '{}' "$1")
+                  case "$code" in
+                    200|409) echo "cv-scan: $1 -> $code (ok)" ;;
+                    503) echo "cv-scan: $1 -> 503 (auto-apply disabled — flip with gate Q1, not an error)" ;;
+                    *) echo "cv-scan: $1 -> $code (unexpected)" >&2; exit 1 ;;
+                  esac
+                }
+
+                post "$base/api/pipeline/scan"
+                post "$base/api/pipeline/evaluate-tracked"
+                # Funnel tail (2026-09-02, gate Q2): tailor the top
+                # recommended applications into the approval queue every
+                # tick + sweep approved-but-unsent sends. It never sends
+                # anything un-approved (send_on_approve: the dashboard
+                # Approve click IS the send confirmation).
+                post_funnel_tail "$base/api/pipeline/auto-apply"
+              '';
+            }
+            (harden { })
+            (serviceOneshotDefaults { })
+          ];
+        };
+
+        systemd.timers.cv-scan = {
+          description = "Continuous CV pipeline scanning (every 6h, :23 stagger off the top of the hour)";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = "*-*-* 00/6:23:00";
+            Persistent = true;
+            Unit = "cv-scan.service";
+          };
+        };
+
+        # Platform-session validity probe (plan T23, 2026-08-30): weekly
+        # `cv profile accounts --probe --all` against the operator checkout.
+        # The probe reads/WRITES operator-local state (the accounts ledger +
+        # session files under the checkout), so it runs as the operator user
+        # with home access — deliberately NOT part of the hardened server
+        # surface. Exit 3 (>=1 invalid session) fails the unit on purpose:
+        # onFailure alerting is the entire value of the timer.
+        systemd.services.cv-profile-probe = lib.mkIf cfg.profileProbe.enable {
+          description = "CV platform session validity probe (exit 3 = invalid session -> alert)";
+          inherit onFailure;
+          startLimitBurst = 2;
+          startLimitIntervalSec = 600;
+
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = "lars";
+              Group = "users";
+              WorkingDirectory = cfg.profileProbe.workingDirectory;
+              Environment = [
+                "HOME=/home/lars"
+                "CHROMIUM_EXECUTABLE_PATH=${cfg.profileProbe.chromiumPackage}/bin/chromium"
+                "PLAYWRIGHT_BROWSERS_PATH=/home/lars/tmp/playwright"
+                "PATH=${
+                  lib.makeBinPath [
+                    pkgs.bun
+                    pkgs.coreutils
+                    pkgs.gnugrep
+                  ]
+                }:/run/current-system/sw/bin"
+              ];
+              ExecStart = "${lib.getExe cfg.package} profile accounts --probe --all";
+            }
+            (harden {
+              # The probe mutates operator state under /home and runs a
+              # browser; the server-grade home protection must not apply.
+              ProtectHome = false;
+            })
+            (serviceOneshotDefaults { })
+          ];
+        };
+
+        systemd.timers.cv-profile-probe = lib.mkIf cfg.profileProbe.enable {
+          description = "Weekly CV platform session validity probe (Mon 09:41, off the backup window)";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = "Mon *-*-* 09:41:00";
+            Persistent = true;
+            Unit = "cv-profile-probe.service";
+          };
+        };
+
+        # NO tmpfiles rule for ${backupDir} — deliberately (atticd-storage-dir
+        # doctrine): /mnt/pool is nofail, so local-fs.target does NOT wait for
+        # it and systemd-tmpfiles-setup (After=local-fs.target) can run BEFORE
+        # the pool mounts — a rule would create a ROOT-fs shadow dir during
+        # every DAS outage (the exact 226/NAMESPACE masking class fixed
+        # 2026-08-31). cv-backup-dir above is the only sanctioned creator.
+      };
+    };
+}

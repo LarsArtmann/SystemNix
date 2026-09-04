@@ -8,16 +8,16 @@
 
 ## Context & Ground Truth Established
 
-| Fact | Value | Source |
-|---|---|---|
-| Latest paperless-ngx | **v3.0.5** (2026-08-01) | GitHub releases |
-| SystemNix package | **3.0.5 already** (nixpkgs `2fcb964`) | `nix eval ...package.version` |
-| v3 headline features | Tantivy search, **Paperless AI** (LLM suggestions/chat/embeddings), trash, doc versions, share links, remote OCR | settings.py + release notes (read from the installed package source — docs.paperless-ngx.com 403s fetches) |
-| Private-cloud heritage | PG via unix socket, OCR deu+eng, Berlin TZ, filename format, 2 workers, ZFS storage | `/home/lars/projects/private-cloud/nixos/hosts/onprem/nixos-0/services/native-apps.nix` |
-| FastFlowLM auth | **None** — no Authorization handling in the binary; dummy API key is safe | binary grep |
-| Embedding model | `embed-gemma:300m` → `Embedding-Gemma-300M-NPU2`, in flm catalog | `model_list.json` |
+| Fact                   | Value                                                                                                            | Source                                                                                                     |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Latest paperless-ngx   | **v3.0.5** (2026-08-01)                                                                                          | GitHub releases                                                                                            |
+| SystemNix package      | **3.0.5 already** (nixpkgs `2fcb964`)                                                                            | `nix eval ...package.version`                                                                              |
+| v3 headline features   | Tantivy search, **Paperless AI** (LLM suggestions/chat/embeddings), trash, doc versions, share links, remote OCR | settings.py + release notes (read from the installed package source — docs.paperless-ngx.com 403s fetches) |
+| Private-cloud heritage | PG via unix socket, OCR deu+eng, Berlin TZ, filename format, 2 workers, ZFS storage                              | `/home/lars/projects/private-cloud/nixos/hosts/onprem/nixos-0/services/native-apps.nix`                    |
+| FastFlowLM auth        | **None** — no Authorization handling in the binary; dummy API key is safe                                        | binary grep                                                                                                |
+| Embedding model        | `embed-gemma:300m` → `Embedding-Gemma-300M-NPU2`, in flm catalog                                                 | `model_list.json`                                                                                          |
 
-**Conclusion:** "latest version" was already pinned; the work became *configuring v3 superbly* — AI on the NPU, PostgreSQL, Tika/Gotenberg, trash, barcodes, monitoring, tests.
+**Conclusion:** "latest version" was already pinned; the work became _configuring v3 superbly_ — AI on the NPU, PostgreSQL, Tika/Gotenberg, trash, barcodes, monitoring, tests.
 
 ---
 
@@ -53,7 +53,7 @@
 1. **Live verification of the new stack** — deployed but NOT verified: paperless units' post-switch state, admin login against PG, the migration oneshot's actual run, Tika/Gotenberg responding, Gatus' three checks green. The post-deploy smoke covers none of these (paperless isn't in it; see (f) #5).
 2. **Documentation** — explicitly deferred "until live-verified", and live verification never happened: AGENTS.md Paperless section still describes the old sqlite setup; FEATURES.md row stale; CHANGELOG entry missing. The auto-commit daemon committed the CODE (good) but the docs debt is real.
 3. **AI end-to-end** — config + model pull done; an actual suggestion request, chat query, and embedding call (`/v1/embeddings`) have NOT been exercised. Blocked by the FastFlowLM failure below.
-4. **Data continuity sqlite→PG** — the superuser bootstrap is handled (oneshot), but the old SQLite *content* (the single 2026-08-17 verification document + its metadata) is NOT in the fresh PG DB. Recoverable from `/mnt/pool/services/paperless/export` (manifest includes the admin user with password hash) via `document_importer`, or disposable. Decision needed (question 1).
+4. **Data continuity sqlite→PG** — the superuser bootstrap is handled (oneshot), but the old SQLite _content_ (the single 2026-08-17 verification document + its metadata) is NOT in the fresh PG DB. Recoverable from `/mnt/pool/services/paperless/export` (manifest includes the admin user with password hash) via `document_importer`, or disposable. Decision needed (question 1).
 
 ---
 
@@ -93,6 +93,7 @@
 ## f) NEXT — up to 50 things, priority-ordered
 
 **P0 — investigate the two FAILs (now)**
+
 1. ~~`journalctl -u 'fastflowlm*' -n 50` — did `--embed 1` break backend startup?~~ done (YES — embed co-load broke the main model; loadEmbed reverted off (2026-08-18 19-56 session, CHANGELOG entry))
 2. ~~Test `:52625/v1/models` E2E (240s cold-load budget); confirm socket + bridge + backend chain.~~ done (E2E green via the 20-52 deploys (post-deploy smoke 53 PASS / 0 FAIL))
 3. ~~Test `:52625/v1/embeddings` with `embed-gemma:300m` (does the embed model co-load on NPU?).~~ done (moot — embed co-load reverted; embeddings deliberately OFF (RAG gates on embedding backend))

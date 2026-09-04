@@ -9,42 +9,42 @@
 
 ### P0 — CRITICAL (all 6/6 done)
 
-| #   | Task                             | Evidence                                                   |
-| --- | -------------------------------- | ---------------------------------------------------------- |
-| 1   | `git push`                       | All commits pushed to origin. Working tree clean.          |
-| 2   | `git stash clear`                | `git stash list` returns empty.                            |
-| 3   | Delete copilot branches          | `git branch -r \| grep copilot` returns nothing.           |
-| 4   | Archive redundant status docs    | 242 files in `archive/`. 12 active docs remain.            |
-| 5   | Rewrite docs/status/README.md    | 3 lines: current status, archive pointer, policy.          |
-| 6   | Fix "29 modules" → correct count | Done in prior session (`821d829`). No remaining instances. |
+| # | Task                             | Evidence                                                   |
+| - | -------------------------------- | ---------------------------------------------------------- |
+| 1 | `git push`                       | All commits pushed to origin. Working tree clean.          |
+| 2 | `git stash clear`                | `git stash list` returns empty.                            |
+| 3 | Delete copilot branches          | `git branch -r \| grep copilot` returns nothing.           |
+| 4 | Archive redundant status docs    | 242 files in `archive/`. 12 active docs remain.            |
+| 5 | Rewrite docs/status/README.md    | 3 lines: current status, archive pointer, policy.          |
+| 6 | Fix "29 modules" → correct count | Done in prior session (`821d829`). No remaining instances. |
 
 ### P1 — SECURITY (3/7 done, 4 require evo-x2)
 
-| #   | Task                                             | Status                                                                                                |
-| --- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| 7   | Move Taskwarrior encryption to sops              | **BLOCKED** — requires evo-x2                                                                         |
-| 8   | Add systemd hardening to gitea-ensure-repos      | **DONE** — already has PrivateTmp, NoNewPrivileges, ProtectHome, ProtectSystem=strict, MemoryMax=512M |
-| 9   | Pin Voice Agents Docker digest                   | **BLOCKED** — requires evo-x2 to pull digest                                                          |
-| 10  | Pin PhotoMap Docker digest                       | **BLOCKED** — requires evo-x2 to pull digest                                                          |
-| 11  | Secure VRRP auth_pass with sops                  | **BLOCKED** — requires evo-x2                                                                         |
-| 12  | Remove dead ublock-filters.nix                   | **DONE** — file deleted, import removed                                                               |
-| 13  | Fix gitea-ensure-repos Restart + StartLimitBurst | **DONE** — Restart=on-failure, RestartSec=5, StartLimitBurst=3, StartLimitIntervalSec=300             |
+| #  | Task                                             | Status                                                                                                |
+| -- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| 7  | Move Taskwarrior encryption to sops              | **BLOCKED** — requires evo-x2                                                                         |
+| 8  | Add systemd hardening to gitea-ensure-repos      | **DONE** — already has PrivateTmp, NoNewPrivileges, ProtectHome, ProtectSystem=strict, MemoryMax=512M |
+| 9  | Pin Voice Agents Docker digest                   | **BLOCKED** — requires evo-x2 to pull digest                                                          |
+| 10 | Pin PhotoMap Docker digest                       | **BLOCKED** — requires evo-x2 to pull digest                                                          |
+| 11 | Secure VRRP auth_pass with sops                  | **BLOCKED** — requires evo-x2                                                                         |
+| 12 | Remove dead ublock-filters.nix                   | **DONE** — file deleted, import removed                                                               |
+| 13 | Fix gitea-ensure-repos Restart + StartLimitBurst | **DONE** — Restart=on-failure, RestartSec=5, StartLimitBurst=3, StartLimitIntervalSec=300             |
 
 ### P2 — RELIABILITY (11/11 done)
 
-| #   | Task                                                              | Evidence                                                                                 |
-| --- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| 14  | WatchdogSec for caddy, gitea, authelia, taskchampion              | All have `WatchdogSec = lib.mkForce "30"`                                                |
-| 15  | Restart=on-failure for caddy, gitea, authelia, taskchampion, sops | All present. Gitea has separate block at line 325.                                       |
-| 16  | Fix dead let bindings                                             | No dead bindings found in twenty.nix, dns-blocker-config.nix, aw-watcher-utilization.nix |
-| 17  | Fix core.pager vs pager.diff conflict                             | No conflict — `core.pager` not set, only `pager.diff = "bat"`                            |
-| 18  | Fix fonts.packages darwin compat                                  | Already guarded: `fonts = lib.mkIf pkgs.stdenv.isLinux { packages = ...; }`              |
-| 19  | Enable udisks2 on NixOS                                           | `services.udisks2.enable = true` in configuration.nix                                    |
-| 20  | Add .editorconfig                                                 | **NOT DONE** — no .editorconfig exists                                                   |
-| 21  | Make deadnix strict with --fail                                   | **DONE** — `deadnix --fail --no-lambda-pattern-names .` in flake.nix                     |
-| 22  | Fix pre-commit statix hook                                        | **DONE** — statix hook present and working                                               |
-| 23  | Add date + commit hash to debug-map.md                            | **DONE** — `Date: 2026-04-25                                                             | Commit: 0a3c318` |
-| 24  | Add homepage URL to emeet-pixyd meta                              | **DONE** — `meta.homepage` points to GitHub tree                                         |
+| #  | Task                                                              | Evidence                                                                                 |
+| -- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| 14 | WatchdogSec for caddy, gitea, authelia, taskchampion              | All have `WatchdogSec = lib.mkForce "30"`                                                |
+| 15 | Restart=on-failure for caddy, gitea, authelia, taskchampion, sops | All present. Gitea has separate block at line 325.                                       |
+| 16 | Fix dead let bindings                                             | No dead bindings found in twenty.nix, dns-blocker-config.nix, aw-watcher-utilization.nix |
+| 17 | Fix core.pager vs pager.diff conflict                             | No conflict — `core.pager` not set, only `pager.diff = "bat"`                            |
+| 18 | Fix fonts.packages darwin compat                                  | Already guarded: `fonts = lib.mkIf pkgs.stdenv.isLinux { packages = ...; }`              |
+| 19 | Enable udisks2 on NixOS                                           | `services.udisks2.enable = true` in configuration.nix                                    |
+| 20 | Add .editorconfig                                                 | **NOT DONE** — no .editorconfig exists                                                   |
+| 21 | Make deadnix strict with --fail                                   | **DONE** — `deadnix --fail --no-lambda-pattern-names .` in flake.nix                     |
+| 22 | Fix pre-commit statix hook                                        | **DONE** — statix hook present and working                                               |
+| 23 | Add date + commit hash to debug-map.md                            | **DONE** — `Date: 2026-04-25                                                             |
+| 24 | Add homepage URL to emeet-pixyd meta                              | **DONE** — `meta.homepage` points to GitHub tree                                         |
 
 ### P3 — CODE QUALITY (7/9 done)
 
@@ -59,30 +59,30 @@
 
 ### P4 — ARCHITECTURE (4/7 done)
 
-| #   | Task                                                                             | Status       | Commit                            |
-| --- | -------------------------------------------------------------------------------- | ------------ | --------------------------------- |
-| 34  | Create lib/systemd.nix shared helper                                             | **DONE**     | Pre-existing at `lib/systemd.nix` |
-| 35  | Wire preferences.nix to GTK/Qt theming                                           | **NOT DONE** |                                   |
-| 36  | Convert niri session restore to module options                                   | **NOT DONE** |                                   |
-| 37  | Enable toggles batch 1 (sops, caddy, gitea, immich)                              | **DONE**     | `bcfe724`                         |
-| 38  | Enable toggles batch 2 (authelia, photomap, homepage, taskchampion)              | **DONE**     | `02b8474`                         |
-| 39  | Enable toggles batch 3 (display-manager, audio, niri-config, security-hardening) | **DONE**     | `eb02fcc`                         |
-| 40  | Enable toggles batch 4 (monitoring, multi-wm, chromium-policies, steam)          | **DONE**     | `8dd8ccc`                         |
+| #  | Task                                                                             | Status       | Commit                            |
+| -- | -------------------------------------------------------------------------------- | ------------ | --------------------------------- |
+| 34 | Create lib/systemd.nix shared helper                                             | **DONE**     | Pre-existing at `lib/systemd.nix` |
+| 35 | Wire preferences.nix to GTK/Qt theming                                           | **NOT DONE** |                                   |
+| 36 | Convert niri session restore to module options                                   | **NOT DONE** |                                   |
+| 37 | Enable toggles batch 1 (sops, caddy, gitea, immich)                              | **DONE**     | `bcfe724`                         |
+| 38 | Enable toggles batch 2 (authelia, photomap, homepage, taskchampion)              | **DONE**     | `02b8474`                         |
+| 39 | Enable toggles batch 3 (display-manager, audio, niri-config, security-hardening) | **DONE**     | `eb02fcc`                         |
+| 40 | Enable toggles batch 4 (monitoring, multi-wm, chromium-policies, steam)          | **DONE**     | `8dd8ccc`                         |
 
 ### P7 — TOOLING & CI (7/10 done)
 
-| #   | Task                                    | Status                                                                                                              |
-| --- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| 69  | GitHub Actions: nix flake check         | **DONE** — `.github/workflows/nix-check.yml`                                                                        |
-| 70  | GitHub Actions: Go test                 | **DONE** — `.github/workflows/go-test.yml`                                                                          |
-| 71  | GitHub Actions: flake.lock auto-update  | **DONE** — `.github/workflows/flake-update.yml`                                                                     |
-| 72  | Fix eval smoke tests (remove \|\| true) | **DONE** — no `                                                                                                     |     | true` in checks, only in shell script apps |
-| 73  | Consolidate duplicate justfile recipes  | **DONE** — `validate` is alias for `test-fast`. No `check-nix-syntax` exists. `deploy` is `deploy-evo` (different). |
-| 74  | Replace nixpkgs-fmt with alejandra      | **DONE** — pre-commit uses alejandra                                                                                |
-| 75  | Trim system monitors from 4 to 2        | **DONE** — only btop + bottom in base.nix                                                                           |
-| 76  | Fix LC_ALL override redundancy          | **NOT DONE** — LANG and LC_ALL both set to same value                                                               |
-| 77  | Remove allowUnsupportedSystem           | **DONE** — already set to `false`                                                                                   |
-| 78  | Setup Taskwarrior backup timer          | **DONE** — per prior session (`673883a`)                                                                            |
+| #  | Task                                    | Status                                                                                                              |
+| -- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 69 | GitHub Actions: nix flake check         | **DONE** — `.github/workflows/nix-check.yml`                                                                        |
+| 70 | GitHub Actions: Go test                 | **DONE** — `.github/workflows/go-test.yml`                                                                          |
+| 71 | GitHub Actions: flake.lock auto-update  | **DONE** — `.github/workflows/flake-update.yml`                                                                     |
+| 72 | Fix eval smoke tests (remove \|\| true) | **DONE** — no `                                                                                                     |
+| 73 | Consolidate duplicate justfile recipes  | **DONE** — `validate` is alias for `test-fast`. No `check-nix-syntax` exists. `deploy` is `deploy-evo` (different). |
+| 74 | Replace nixpkgs-fmt with alejandra      | **DONE** — pre-commit uses alejandra                                                                                |
+| 75 | Trim system monitors from 4 to 2        | **DONE** — only btop + bottom in base.nix                                                                           |
+| 76 | Fix LC_ALL override redundancy          | **NOT DONE** — LANG and LC_ALL both set to same value                                                               |
+| 77 | Remove allowUnsupportedSystem           | **DONE** — already set to `false`                                                                                   |
+| 78 | Setup Taskwarrior backup timer          | **DONE** — per prior session (`673883a`)                                                                            |
 
 ---
 

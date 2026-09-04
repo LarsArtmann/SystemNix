@@ -151,48 +151,48 @@ SystemNix is a **mature, production-grade cross-platform Nix configuration** man
 
 ### P0 — Immediate (Do Now)
 
-| #   | Task                                                                                  | Effort | Impact                                                         |
-| --- | ------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------- |
-| 1   | **Deploy Session 49 changes** (`just switch` on evo-x2)                               | 5 min  | Activates VRRP auto-provision, Go lib dedup, modernize cleanup |
-| 2   | **Verify VRRP auto-provision** — check `secrets.yaml` has new key, keepalived running | 2 min  | Confirms security fix works end-to-end                         |
-| 3   | **Verify keepalived VRRP auth** — `journalctl -u keepalived` shows auth working       | 2 min  | Confirms no regression in DNS failover                         |
-| 4   | **Check all services start clean** — `systemctl --failed` after deploy                | 2 min  | Confidence in system health                                    |
+| # | Task                                                                                  | Effort | Impact                                                         |
+| - | ------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------- |
+| 1 | **Deploy Session 49 changes** (`just switch` on evo-x2)                               | 5 min  | Activates VRRP auto-provision, Go lib dedup, modernize cleanup |
+| 2 | **Verify VRRP auto-provision** — check `secrets.yaml` has new key, keepalived running | 2 min  | Confirms security fix works end-to-end                         |
+| 3 | **Verify keepalived VRRP auth** — `journalctl -u keepalived` shows auth working       | 2 min  | Confirms no regression in DNS failover                         |
+| 4 | **Check all services start clean** — `systemctl --failed` after deploy                | 2 min  | Confidence in system health                                    |
 
 ### P1 — This Week
 
-| #   | Task                                                       | Effort | Impact                                |
-| --- | ---------------------------------------------------------- | ------ | ------------------------------------- |
-| 5   | **Fix `hostPlatform` deprecation warning**                 | 5 min  | Clean evaluation                      |
-| 6   | **Investigate whisper-asr.service failure**                | 30 min | Fix pre-existing broken service       |
-| 7   | **Investigate photomap podman permission issue**           | 30 min | Enable disabled service               |
-| 8   | **OpenSEO end-to-end verification**                        | 15 min | Confirm service actually works        |
-| 9   | **Monitor365 verification**                                | 5 min  | Confirm agent works with renamed keys |
-| 10  | **Update TODO_LIST.md** — archive done items, add new ones | 20 min | Accurate tracking                     |
-| 11  | **Update FEATURES.md** — add OpenSEO, Twenty, Manifest     | 30 min | Accurate feature inventory            |
+| #  | Task                                                       | Effort | Impact                                |
+| -- | ---------------------------------------------------------- | ------ | ------------------------------------- |
+| 5  | **Fix `hostPlatform` deprecation warning**                 | 5 min  | Clean evaluation                      |
+| 6  | **Investigate whisper-asr.service failure**                | 30 min | Fix pre-existing broken service       |
+| 7  | **Investigate photomap podman permission issue**           | 30 min | Enable disabled service               |
+| 8  | **OpenSEO end-to-end verification**                        | 15 min | Confirm service actually works        |
+| 9  | **Monitor365 verification**                                | 5 min  | Confirm agent works with renamed keys |
+| 10 | **Update TODO_LIST.md** — archive done items, add new ones | 20 min | Accurate tracking                     |
+| 11 | **Update FEATURES.md** — add OpenSEO, Twenty, Manifest     | 30 min | Accurate feature inventory            |
 
 ### P2 — This Month
 
-| #   | Task                                               | Effort | Impact                         |
-| --- | -------------------------------------------------- | ------ | ------------------------------ |
-| 12  | **Per-threshold SigNoz channel routing**           | 2h     | Better alert prioritization    |
-| 13  | **Deploy Dozzle** (`logs.home.lan`)                | 1h     | Easy Docker log access         |
-| 14  | **Consolidate voice-agents Caddy vHost**           | 1h     | Architecture consistency       |
-| 15  | **Add SigNoz dashboards for new services**         | 2h     | Full observability coverage    |
-| 16  | **Add `imagePull` to openseo, manifest, twenty**   | 30 min | Reliable first-start           |
-| 17  | **Convert go-auto-upgrade `path:` to SSH URLs**    | 1h     | Portable flake                 |
-| 18  | **Add `lib.mkForce false` justification comments** | 1h     | Security audit trail           |
-| 19  | **Create shared flake-parts Go template**          | 2h     | Standardize all Go repo flakes |
+| #  | Task                                               | Effort | Impact                         |
+| -- | -------------------------------------------------- | ------ | ------------------------------ |
+| 12 | **Per-threshold SigNoz channel routing**           | 2h     | Better alert prioritization    |
+| 13 | **Deploy Dozzle** (`logs.home.lan`)                | 1h     | Easy Docker log access         |
+| 14 | **Consolidate voice-agents Caddy vHost**           | 1h     | Architecture consistency       |
+| 15 | **Add SigNoz dashboards for new services**         | 2h     | Full observability coverage    |
+| 16 | **Add `imagePull` to openseo, manifest, twenty**   | 30 min | Reliable first-start           |
+| 17 | **Convert go-auto-upgrade `path:` to SSH URLs**    | 1h     | Portable flake                 |
+| 18 | **Add `lib.mkForce false` justification comments** | 1h     | Security audit trail           |
+| 19 | **Create shared flake-parts Go template**          | 2h     | Standardize all Go repo flakes |
 
 ### P3 — Next Quarter
 
-| #   | Task                                                           | Effort | Impact                       |
-| --- | -------------------------------------------------------------- | ------ | ---------------------------- |
-| 20  | **Provision Pi 3 for DNS failover cluster**                    | 4h     | HA DNS                       |
-| 21  | **Add Pi 3 sops identity** (SSH host key → age → `.sops.yaml`) | 1h     | Encrypted secrets on Pi      |
-| 22  | **Enable Linux audit framework (auditd)**                      | 2h     | Security hardening           |
-| 23  | **Consolidate status doc archive**                             | 30 min | Clean docs                   |
-| 24  | **Eliminate ollama/engine collision**                          | 30 min | Clean build output           |
-| 25  | **Standardize `_local_deps` across all Go repos**              | 4h     | Consistency, fewer breakages |
+| #  | Task                                                           | Effort | Impact                       |
+| -- | -------------------------------------------------------------- | ------ | ---------------------------- |
+| 20 | **Provision Pi 3 for DNS failover cluster**                    | 4h     | HA DNS                       |
+| 21 | **Add Pi 3 sops identity** (SSH host key → age → `.sops.yaml`) | 1h     | Encrypted secrets on Pi      |
+| 22 | **Enable Linux audit framework (auditd)**                      | 2h     | Security hardening           |
+| 23 | **Consolidate status doc archive**                             | 30 min | Clean docs                   |
+| 24 | **Eliminate ollama/engine collision**                          | 30 min | Clean build output           |
+| 25 | **Standardize `_local_deps` across all Go repos**              | 4h     | Consistency, fewer breakages |
 
 ---
 

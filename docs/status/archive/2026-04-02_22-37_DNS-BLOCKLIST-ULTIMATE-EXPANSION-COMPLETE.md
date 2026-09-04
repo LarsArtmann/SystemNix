@@ -22,7 +22,7 @@ Successfully expanded SystemNix DNS blocking infrastructure from 15 to 25 blockl
 
 | Format      | Pattern                | Example                 | Status               |
 | ----------- | ---------------------- | ----------------------- | -------------------- |
-| AdBlock     | `                      |                         | domain.com^`         | `   |     | tracker.com^` | ✅ Implemented |
+| AdBlock     | `                      |                         | domain.com^`         |
 | DNSMasq     | `local=/domain.com/`   | `local=/ads.com/`       | ✅ Implemented       |
 | DNSMasq     | `address=/domain.com/` | `address=/malware.com/` | ✅ Implemented       |
 | Hosts       | `0.0.0.0 domain`       | `0.0.0.0 ads.com`       | ✅ Already Supported |
@@ -38,18 +38,18 @@ Successfully expanded SystemNix DNS blocking infrastructure from 15 to 25 blockl
 
 ### 2. HaGeZi Blocklist Integration - 10 New Lists
 
-| #   | Blocklist            | Format  | Domains  | Purpose                             |
-| --- | -------------------- | ------- | -------- | ----------------------------------- |
-| 5   | doh-vpn-proxy-bypass | dnsmasq | ~17,000  | DoH/VPN/TOR/Proxy bypass prevention |
-| 17  | gambling             | dnsmasq | ~209,000 | Gambling site blocking              |
-| 18  | nsfw                 | dnsmasq | ~76,000  | Adult content blocking              |
-| 19  | social               | dnsmasq | ~900     | Social media blocking               |
-| 20  | anti-piracy          | dnsmasq | ~12,000  | Piracy site blocking                |
-| 21  | dyndns               | dnsmasq | ~1,500   | Malicious dynamic DNS services      |
-| 22  | hoster               | dnsmasq | ~1,200   | Malicious hosting providers         |
-| 23  | urlshortener         | dnsmasq | ~10,000  | Link shortener blocking             |
-| 24  | nosafesearch         | dnsmasq | ~200     | Force safesearch on engines         |
-| 25  | dga7                 | domains | ~506,000 | DGA malware domains (7-day)         |
+| #  | Blocklist            | Format  | Domains  | Purpose                             |
+| -- | -------------------- | ------- | -------- | ----------------------------------- |
+| 5  | doh-vpn-proxy-bypass | dnsmasq | ~17,000  | DoH/VPN/TOR/Proxy bypass prevention |
+| 17 | gambling             | dnsmasq | ~209,000 | Gambling site blocking              |
+| 18 | nsfw                 | dnsmasq | ~76,000  | Adult content blocking              |
+| 19 | social               | dnsmasq | ~900     | Social media blocking               |
+| 20 | anti-piracy          | dnsmasq | ~12,000  | Piracy site blocking                |
+| 21 | dyndns               | dnsmasq | ~1,500   | Malicious dynamic DNS services      |
+| 22 | hoster               | dnsmasq | ~1,200   | Malicious hosting providers         |
+| 23 | urlshortener         | dnsmasq | ~10,000  | Link shortener blocking             |
+| 24 | nosafesearch         | dnsmasq | ~200     | Force safesearch on engines         |
+| 25 | dga7                 | domains | ~506,000 | DGA malware domains (7-day)         |
 
 **Total New Domains:** ~834,000 (before deduplication with existing lists)
 

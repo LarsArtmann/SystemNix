@@ -19,6 +19,11 @@ let
     btrfs_scrub_status 1
     btrfs_scrub_error_free 1
     btrfs_emergency_reserve_present 1
+    pool_usb_recovery_mounted 1
+    pool_usb_recovery_members_present 2
+    pool_usb_recovery_device_errors 0
+    pool_usb_recovery_recoveries_total 1
+    pool_usb_recovery_last_recovery_seconds 1760000000
     btrfs_device_unallocated_pct 42
     btrfs_metadata_utilization_pct 55
     system_emeet_pixyd_expected_down 0
@@ -49,6 +54,28 @@ let
     niri_running 1
     attic_storage_over_threshold 0
     system_gatus_endpoints_in_error_long 0
+    # bank-sync sync-health surface (mirrors the "Bank-Sync Sync Health"
+    # endpoint in gatus-config.nix): errors counter zero + last-sync
+    # timestamp present (that metric only renders after a successful sync —
+    # its absence is exactly the never-synced outage class).
+    # HELP bank_sync_sync_errors_total Total number of failed sync cycles.
+    # TYPE bank_sync_sync_errors_total counter
+    bank_sync_sync_errors_total 0
+    # HELP bank_sync_last_sync_timestamp_seconds Unix timestamp of last successful sync.
+    # TYPE bank_sync_last_sync_timestamp_seconds gauge
+    bank_sync_last_sync_timestamp_seconds 1760000000
+    # signoz-coverage textfile metrics (HELP lines deliberately present — the
+    # anchored forms must reject value-matches inside comments):
+    # HELP signoz_traces_missing enforced services without a span inside their budget, healthy value is zero
+    # TYPE signoz_traces_missing gauge
+    signoz_traces_missing 0
+    # HELP signoz_coverage_scrape_errors 1 if the ClickHouse coverage queries failed, healthy value is zero
+    # TYPE signoz_coverage_scrape_errors gauge
+    signoz_coverage_scrape_errors 0
+    # HELP signoz_traces_upstream_gaps_over_threshold 1 if upstream gaps exceed the budget, healthy value is zero
+    # TYPE signoz_traces_upstream_gaps_over_threshold gauge
+    signoz_traces_upstream_gaps_over_threshold 0
+    signoz_logs_pipeline_stale 0
   '';
 
   mockMetricsServer = pkgs.writeShellApplication {
@@ -142,7 +169,82 @@ in
             conditions = [
               "[STATUS] == 200"
               "[BODY] == pat(*btrfs_scrub_status*)"
-              "[BODY] == pat(*btrfs_scrub_error_free 1*)"
+              "[BODY] == pat(*node_nvme_percentage_used*)"
+            ];
+          }
+          {
+            # Anchored form regression (2026-08-22): the "\n" in these
+            # patterns must reach gatus as a REAL newline. A literal
+            # backslash-n is filepath.Match's ESCAPE for a literal 'n' and
+            # can NEVER match — the positive condition goes permanently red
+            # (7 deployed checks sat red on exactly this). A phantom-green
+            # regression (bare pat(*metric 1*)) would pass here vacuously
+            # via the HELP-less body, so the lint + pre-deploy check cover
+            # that half; this endpoint covers the newline-escaping half.
+            name = "[TEST] Anchored value assertion";
+            url = "http://127.0.0.1:9100/metrics";
+            interval = "5s";
+            conditions = [
+              "[STATUS] == 200"
+              "[BODY] != pat(*btrfs_scrub_error_free 0\n*)"
+              "[BODY] == pat(*\nbtrfs_scrub_error_free *)"
+            ];
+          }
+          {
+            name = "[TEST] Bank-Sync sync health (errors zero + ever synced)";
+            url = "http://127.0.0.1:9100/metrics";
+            interval = "5s";
+            conditions = [
+              "[STATUS] == 200"
+              "[BODY] == pat(*bank_sync_sync_errors_total 0*)"
+              "[BODY] == pat(*bank_sync_last_sync_timestamp_seconds*)"
+            ];
+          }
+          {
+            # Pool RAID1 Membership (pool-recovery module): the production
+            # conditions verbatim against the HEALTHY mock (members_present 2
+            # must NOT match the " 1\n" line; device_errors must be present).
+            name = "[TEST] Pool RAID1 membership (healthy = 2 members)";
+            url = "http://127.0.0.1:9100/metrics";
+            interval = "5s";
+            conditions = [
+              "[STATUS] == 200"
+              "[BODY] != pat(*pool_usb_recovery_members_present 1\n*)"
+              "[BODY] == pat(*\npool_usb_recovery_members_present *)"
+              "[BODY] == pat(*\npool_usb_recovery_device_errors *)"
+            ];
+          }
+          {
+            # SigNoz coverage checks (gatus-config.nix "SigNoz Traces
+            # Coverage" + "SigNoz Trace Gap Budget") verbatim against the
+            # healthy mock: the [1-9] anchored forms must NOT match the 0-value
+            # lines NOR the HELP comments ("... healthy value is zero" never
+            # contains "<metric> <digit>").
+            name = "[TEST] SigNoz coverage (anchored zero-value)";
+            url = "http://127.0.0.1:9100/metrics";
+            interval = "5s";
+            conditions = [
+              "[STATUS] == 200"
+              "[BODY] == pat(*\nsignoz_traces_missing *)"
+              "[BODY] != pat(*\nsignoz_traces_missing [1-9]*)"
+              "[BODY] == pat(*\nsignoz_traces_upstream_gaps_over_threshold *)"
+              "[BODY] != pat(*\nsignoz_traces_upstream_gaps_over_threshold [1-9]*)"
+              "[BODY] == pat(*\nsignoz_logs_pipeline_stale *)"
+              "[BODY] != pat(*\nsignoz_logs_pipeline_stale [1-9]*)"
+            ];
+          }
+          {
+            # INVERSE of the above (expected RED, see testScript): the [1-9]
+            # form as a POSITIVE condition must NOT match the healthy 0-value
+            # body — proving the anchored rejection is real and not vacuous.
+            # If this endpoint ever goes GREEN, the anchored forms have lost
+            # their meaning (glob regression / gatus pattern engine change).
+            name = "[TEST-RED] SigNoz coverage phantom-value rejection";
+            url = "http://127.0.0.1:9100/metrics";
+            interval = "5s";
+            conditions = [
+              "[STATUS] == 200"
+              "[BODY] == pat(*\nsignoz_traces_missing [1-9]*)"
             ];
           }
         ];
@@ -165,7 +267,13 @@ in
     # Query Gatus API for endpoint statuses
     result = machine.succeed("curl -sf http://127.0.0.1:8081/api/v1/endpoints/statuses")
 
-    # All endpoints should be GREEN (health status 200)
+    # All endpoints should be GREEN — EXCEPT those named [TEST-RED], which
+    # assert that a condition that MUST NOT match really does not (the
+    # phantom-green protection half: a green [TEST-RED] endpoint means the
+    # pattern lost its meaning). NOTE: gatus's per-result `status` is the
+    # HTTP status code ONLY — a failed BODY condition keeps status=200, so
+    # asserting on status alone (the original form) never caught condition
+    # failures. Assert `errors`/`success` for conditions, status for HTTP.
     import json
     statuses = json.loads(result)
 
@@ -174,9 +282,18 @@ in
         name = endpoint.get("name", "unknown")
         results = endpoint.get("results", [])
         if results:
-            health = results[-1].get("status", "")
-            if health != 200:
-                failures.append(f"{name}: status={health}")
+            last = results[-1]
+            http_status = last.get("status", 0)
+            errors = last.get("errors") or []
+            conditions_ok = last.get("success", len(errors) == 0)
+            if name.startswith("[TEST-RED]"):
+                if conditions_ok:
+                    failures.append(f"{name}: expected condition FAILURE but none (pattern vacuous or conditions not enforced)")
+            else:
+                if http_status != 200:
+                    failures.append(f"{name}: http status={http_status}")
+                if not conditions_ok:
+                    failures.append(f"{name}: condition errors: {errors}")
 
     if failures:
         machine.fail(f"Gatus pattern test FAILURES: {'; '.join(failures)}")

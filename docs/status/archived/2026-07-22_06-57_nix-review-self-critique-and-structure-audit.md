@@ -6,7 +6,6 @@
 
 ---
 
-
 ## What This Session Actually Did
 
 1. Loaded the `nix-review` skill (SKILL.md + both reference files)
@@ -25,78 +24,78 @@
 
 ## a) FULLY DONE
 
-| # | What | Quality |
-|---|------|---------|
-| 1 | Purity audit (getEnv, nixpkgs lookup, exec, fake hashes) | Exhaustive — zero findings |
-| 2 | `statix` lint run | Clean — 0 findings |
-| 3 | `deadnix` unused bindings run | Clean — 0 findings |
-| 4 | Overlay architecture review (shared.nix, linux.nix, default.nix) | All 3 files read fully, architecture understood |
-| 5 | Core lib review (default.nix, systemd.nix, ports.nix, types.nix, images.nix, docker.nix, lars-packages.nix) | All read fully |
-| 6 | `flake.nix` full read (725 lines, all sections) | Inputs, outputs, perSystem, flake, systems — all reviewed |
-| 7 | Anti-pattern scan (10 categories via agent) | Exhaustive — every category reported with file:line |
-| 8 | mkForce audit (43 occurrences catalogued) | Every instance listed with file:line and expression |
-| 9 | `meta` section audit on all pkgs/ packages | All 7 packages have complete meta |
-| 10 | Module guarding check (mkIf cfg.enable) | All modules properly guarded |
-| 11 | Option typing check (missing `type =`) | Zero violations |
-| 12 | Port collision detection review | `lib/default.nix` eval-time throw verified |
-| 13 | Skill loading (nix-review SKILL.md + common-problems.md + best-practices.md) | Full read before action |
+| #  | What                                                                                                        | Quality                                                   |
+| -- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| 1  | Purity audit (getEnv, nixpkgs lookup, exec, fake hashes)                                                    | Exhaustive — zero findings                                |
+| 2  | `statix` lint run                                                                                           | Clean — 0 findings                                        |
+| 3  | `deadnix` unused bindings run                                                                               | Clean — 0 findings                                        |
+| 4  | Overlay architecture review (shared.nix, linux.nix, default.nix)                                            | All 3 files read fully, architecture understood           |
+| 5  | Core lib review (default.nix, systemd.nix, ports.nix, types.nix, images.nix, docker.nix, lars-packages.nix) | All read fully                                            |
+| 6  | `flake.nix` full read (725 lines, all sections)                                                             | Inputs, outputs, perSystem, flake, systems — all reviewed |
+| 7  | Anti-pattern scan (10 categories via agent)                                                                 | Exhaustive — every category reported with file:line       |
+| 8  | mkForce audit (43 occurrences catalogued)                                                                   | Every instance listed with file:line and expression       |
+| 9  | `meta` section audit on all pkgs/ packages                                                                  | All 7 packages have complete meta                         |
+| 10 | Module guarding check (mkIf cfg.enable)                                                                     | All modules properly guarded                              |
+| 11 | Option typing check (missing `type =`)                                                                      | Zero violations                                           |
+| 12 | Port collision detection review                                                                             | `lib/default.nix` eval-time throw verified                |
+| 13 | Skill loading (nix-review SKILL.md + common-problems.md + best-practices.md)                                | Full read before action                                   |
 
 ---
 
 ## b) PARTIALLY DONE
 
-| # | What | What's Missing |
-|---|------|----------------|
-| 1 | Module quality review | Only read `monitor365.nix` (50 lines) + `niri-config.nix` (70 lines) deeply. 28+ other service modules NOT individually reviewed for quality patterns |
-| 2 | IFD analysis | Identified 1 real IFD (`niri-config.nix:57,61`) but did NOT verify whether it's actually slow in practice or measure eval-time impact |
-| 3 | `//` merge risk analysis | Catalogued 5 sites but did NOT check whether ANY of them have overlapping keys that actually lose `mkDefault` priority. The key question ("does this cause a real bug?") was answered theoretically, not verified |
-| 4 | mkForce assessment | Listed all 43 but did NOT assess which ones could be replaced with `mkDefault` or module priority ordering. Just flagged "high but mostly justified" |
-| 5 | Monolithic file identification | Identified 9 files over 300 lines but did NOT propose concrete split plans for any of them |
-| 6 | `follows` consistency | Read all inputs visually but did NOT systematically cross-check that EVERY input using nixpkgs has `follows`. Some inputs (nix-homebrew, nixos-hardware) may not follow |
-| 7 | Hardcoded username audit | Found `"lars"` in 5 places + `users.users.lars` in configuration.nix, but did NOT assess whether these are acceptable (platform config vs module) or need option-ification |
+| # | What                           | What's Missing                                                                                                                                                                                                    |
+| - | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | Module quality review          | Only read `monitor365.nix` (50 lines) + `niri-config.nix` (70 lines) deeply. 28+ other service modules NOT individually reviewed for quality patterns                                                             |
+| 2 | IFD analysis                   | Identified 1 real IFD (`niri-config.nix:57,61`) but did NOT verify whether it's actually slow in practice or measure eval-time impact                                                                             |
+| 3 | `//` merge risk analysis       | Catalogued 5 sites but did NOT check whether ANY of them have overlapping keys that actually lose `mkDefault` priority. The key question ("does this cause a real bug?") was answered theoretically, not verified |
+| 4 | mkForce assessment             | Listed all 43 but did NOT assess which ones could be replaced with `mkDefault` or module priority ordering. Just flagged "high but mostly justified"                                                              |
+| 5 | Monolithic file identification | Identified 9 files over 300 lines but did NOT propose concrete split plans for any of them                                                                                                                        |
+| 6 | `follows` consistency          | Read all inputs visually but did NOT systematically cross-check that EVERY input using nixpkgs has `follows`. Some inputs (nix-homebrew, nixos-hardware) may not follow                                           |
+| 7 | Hardcoded username audit       | Found `"lars"` in 5 places + `users.users.lars` in configuration.nix, but did NOT assess whether these are acceptable (platform config vs module) or need option-ification                                        |
 
 ---
 
 ## c) NOT STARTED
 
-| # | What | Why It Matters |
-|---|------|----------------|
-| 1 | **`nix flake check --no-build`** | The ultimate validation. I mentioned it in the report but NEVER RAN IT. This is the single most important verification command and I skipped it |
-| 2 | **`nix fmt -- --check`** (formatting verification) | The `treefmt` file in repo root returned empty on `cat` — possible broken formatter config. Never investigated |
-| 3 | **`nix eval` smoke test** | Never verified the flake actually evaluates. `statix`/`deadnix` are linters, not evaluators |
-| 4 | **`systems/*.nix` host assembly review** | The 3 host files (`evo-x2.nix`, `darwin.nix`, `rpi3-dns.nix`) were NEVER READ. These are the thin entry points — are they actually thin? |
-| 5 | **`platforms/nixos/system/configuration.nix` review** | 508 lines, the central wiring file. NEVER READ. This is where all modules come together |
-| 6 | **`tests/` directory quality review** | Ran deadnix on them but never read `exec-start-paths.nix`, `mock-sops.nix`, `test-mkFilesystem.nix` to assess test quality |
-| 7 | **`.github/workflows/` CI review** | NEVER LOOKED. Is there CI? What does it check? Does it run `nix flake check`? |
-| 8 | **`.githooks/pre-commit` review** | AGENTS.md describes a custom hook with statix + alejandra. NEVER VERIFIED its correctness |
-| 9 | **`template/go-flake-parts/flake.nix` review** | The template has a placeholder `AAAA...` vendorHash. NEVER ASSESSED template quality |
-| 10 | **`lib/filesystems.nix` review** | Mentioned in AGENTS.md as mount option validator. NEVER READ |
-| 11 | **`pkgs/dms-plugins/` review** | 13 SystemNix widgets + 2 community plugins. NEVER EXAMINED |
-| 12 | **`scripts/` directory quality** | 40+ shell scripts. NEVER ASSESSED for robustness, error handling, or nix integration |
-| 13 | **Darwin platform quality** | `platforms/darwin/` has 9 files. NEVER REVIEWED. Is it maintained or neglected? |
-| 14 | **`rpi3-dns` system consistency** | Third NixOS system. NEVER CHECKED if it's consistent with evo-x2 patterns |
-| 15 | **`inputs.self.packages` anti-pattern check** | NEVER SEARCHED for this |
-| 16 | **`lib.fileset` modern source filtering check** | NEVER ASSESSED whether packages use modern `lib.fileset` vs legacy `cleanSource` |
-| 17 | **`empty overlays` check** | NEVER VERIFIED no empty overlay blocks exist in upstream flake overlays consumed |
-| 18 | **Secret exposure check** | NEVER SEARCHED for secrets/API keys/passwords in .nix files (the nix store is world-readable) |
-| 19 | **`pre-commit-config.yaml` review** | NEVER READ — is there a pre-commit framework config alongside the custom `.githooks/`? |
-| 20 | **`flake.lock` freshness** | NEVER CHECKED when inputs were last updated, whether any are stale |
-| 21 | **Build verification of any package** | NEVER RAN `nix build .#X` on any of the custom packages |
-| 22 | **Cross-module dependency analysis** | NEVER MAPPED which modules depend on which (e.g., everything depends on sops, caddy, dnsblockd) |
-| 23 | **`home-manager` module quality** | NEVER ASSESSED HM module patterns separately (home.nix, programs/*.nix) |
-| 24 | **Eval-time performance** | NEVER MEASURED eval time or checked for slow eval patterns beyond IFD |
-| 25 | **`maintainers` field in meta** | NOTED all packages have `meta` but did NOT check if `maintainers` is populated (best practice) |
+| #  | What                                                  | Why It Matters                                                                                                                                  |
+| -- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | **`nix flake check --no-build`**                      | The ultimate validation. I mentioned it in the report but NEVER RAN IT. This is the single most important verification command and I skipped it |
+| 2  | **`nix fmt -- --check`** (formatting verification)    | The `treefmt` file in repo root returned empty on `cat` — possible broken formatter config. Never investigated                                  |
+| 3  | **`nix eval` smoke test**                             | Never verified the flake actually evaluates. `statix`/`deadnix` are linters, not evaluators                                                     |
+| 4  | **`systems/*.nix` host assembly review**              | The 3 host files (`evo-x2.nix`, `darwin.nix`, `rpi3-dns.nix`) were NEVER READ. These are the thin entry points — are they actually thin?        |
+| 5  | **`platforms/nixos/system/configuration.nix` review** | 508 lines, the central wiring file. NEVER READ. This is where all modules come together                                                         |
+| 6  | **`tests/` directory quality review**                 | Ran deadnix on them but never read `exec-start-paths.nix`, `mock-sops.nix`, `test-mkFilesystem.nix` to assess test quality                      |
+| 7  | **`.github/workflows/` CI review**                    | NEVER LOOKED. Is there CI? What does it check? Does it run `nix flake check`?                                                                   |
+| 8  | **`.githooks/pre-commit` review**                     | AGENTS.md describes a custom hook with statix + alejandra. NEVER VERIFIED its correctness                                                       |
+| 9  | **`template/go-flake-parts/flake.nix` review**        | The template has a placeholder `AAAA...` vendorHash. NEVER ASSESSED template quality                                                            |
+| 10 | **`lib/filesystems.nix` review**                      | Mentioned in AGENTS.md as mount option validator. NEVER READ                                                                                    |
+| 11 | **`pkgs/dms-plugins/` review**                        | 13 SystemNix widgets + 2 community plugins. NEVER EXAMINED                                                                                      |
+| 12 | **`scripts/` directory quality**                      | 40+ shell scripts. NEVER ASSESSED for robustness, error handling, or nix integration                                                            |
+| 13 | **Darwin platform quality**                           | `platforms/darwin/` has 9 files. NEVER REVIEWED. Is it maintained or neglected?                                                                 |
+| 14 | **`rpi3-dns` system consistency**                     | Third NixOS system. NEVER CHECKED if it's consistent with evo-x2 patterns                                                                       |
+| 15 | **`inputs.self.packages` anti-pattern check**         | NEVER SEARCHED for this                                                                                                                         |
+| 16 | **`lib.fileset` modern source filtering check**       | NEVER ASSESSED whether packages use modern `lib.fileset` vs legacy `cleanSource`                                                                |
+| 17 | **`empty overlays` check**                            | NEVER VERIFIED no empty overlay blocks exist in upstream flake overlays consumed                                                                |
+| 18 | **Secret exposure check**                             | NEVER SEARCHED for secrets/API keys/passwords in .nix files (the nix store is world-readable)                                                   |
+| 19 | **`pre-commit-config.yaml` review**                   | NEVER READ — is there a pre-commit framework config alongside the custom `.githooks/`?                                                          |
+| 20 | **`flake.lock` freshness**                            | NEVER CHECKED when inputs were last updated, whether any are stale                                                                              |
+| 21 | **Build verification of any package**                 | NEVER RAN `nix build .#X` on any of the custom packages                                                                                         |
+| 22 | **Cross-module dependency analysis**                  | NEVER MAPPED which modules depend on which (e.g., everything depends on sops, caddy, dnsblockd)                                                 |
+| 23 | **`home-manager` module quality**                     | NEVER ASSESSED HM module patterns separately (home.nix, programs/*.nix)                                                                         |
+| 24 | **Eval-time performance**                             | NEVER MEASURED eval time or checked for slow eval patterns beyond IFD                                                                           |
+| 25 | **`maintainers` field in meta**                       | NOTED all packages have `meta` but did NOT check if `maintainers` is populated (best practice)                                                  |
 
 ---
 
 ## d) TOTALLY FUCKED UP
 
-| # | What | Honest Assessment |
-|---|------|-------------------|
-| 1 | **Never ran `nix flake check`** | This is the #1 command in the AGENTS.md ("Test first"). I reviewed 133 files for quality but never verified the flake actually evaluates. A review without evaluation is incomplete — the flake could have an eval error right now and my report would still say "clean" |
-| 2 | **Never investigated the empty `treefmt` config** | `cat treefmt` returned NOTHING. The formatter config might be broken, meaning `nix fmt` might not work. I noticed this in the bash output and moved on without investigating |
+| # | What                                                                       | Honest Assessment                                                                                                                                                                                                                                                                                                  |
+| - | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1 | **Never ran `nix flake check`**                                            | This is the #1 command in the AGENTS.md ("Test first"). I reviewed 133 files for quality but never verified the flake actually evaluates. A review without evaluation is incomplete — the flake could have an eval error right now and my report would still say "clean"                                           |
+| 2 | **Never investigated the empty `treefmt` config**                          | `cat treefmt` returned NOTHING. The formatter config might be broken, meaning `nix fmt` might not work. I noticed this in the bash output and moved on without investigating                                                                                                                                       |
 | 3 | **Reported "zero statix findings" without verifying statix ran correctly** | The `nix run .#statix` failed (statix not a flake output). The fallback `nix develop -c statix` produced empty output — but I didn't verify that statix actually scanned files (empty output could mean "clean" OR "nothing scanned"). I should have run `statix check ./flake.nix` explicitly to confirm it works |
-| 4 | **The `//` merge analysis is theoretical, not verified** | I claimed `//` is safe between `harden` and `serviceDefaults` because they set non-overlapping keys, but I NEVER ACTUALLY VERIFIED this by comparing the key sets. If they DO overlap, the report is wrong |
+| 4 | **The `//` merge analysis is theoretical, not verified**                   | I claimed `//` is safe between `harden` and `serviceDefaults` because they set non-overlapping keys, but I NEVER ACTUALLY VERIFIED this by comparing the key sets. If they DO overlap, the report is wrong                                                                                                         |
 
 ---
 
@@ -217,21 +216,21 @@ The review found the codebase clean (0 statix, 0 deadnix, 0 purity violations). 
 
 ## Item Resolution (2026-07-30)
 
-| # | Status | Resolution |
-|---|--------|------------|
-| 1-5 | DONE | `nix flake check --no-build` passes; statix/deadnix clean; nix fmt works |
-| 6-9 | DONE | flake.lock checked; CI exists (.github/workflows/); pre-commit hooks verified |
-| 10-14 | DONE | All host/platform files read in later sessions; structure verified |
-| 15-20 | DONE | All module/package/lib files read in later nix-review sessions |
-| 21-29 | DONE | All platform/pkg files read; quality assessed |
-| 30 | REJECTED | maintainers field — not required for personal config |
-| 31-32 | DONE | lib.fileset verified; lib/filesystems.nix validated |
-| 33-35 | DONE | lib/rocm.nix, lib/types.nix reviewed |
-| 36-40 | REJECTED | Module-level assertions — over-engineering for personal config |
-| 41 | DONE | lib/images.nix rec attrsets fixed |
-| 42 | DONE | Hardcoded /home/lars/notes in qmd-config.nix documented |
-| 43-46 | DONE | All `//` chains converted to `lib.mkMerge` |
-| 47-50 | DONE | signoz.nix split (943→511L), forgejo.nix split (725→353L); others are acceptable size |
+| #     | Status   | Resolution                                                                            |
+| ----- | -------- | ------------------------------------------------------------------------------------- |
+| 1-5   | DONE     | `nix flake check --no-build` passes; statix/deadnix clean; nix fmt works              |
+| 6-9   | DONE     | flake.lock checked; CI exists (.github/workflows/); pre-commit hooks verified         |
+| 10-14 | DONE     | All host/platform files read in later sessions; structure verified                    |
+| 15-20 | DONE     | All module/package/lib files read in later nix-review sessions                        |
+| 21-29 | DONE     | All platform/pkg files read; quality assessed                                         |
+| 30    | REJECTED | maintainers field — not required for personal config                                  |
+| 31-32 | DONE     | lib.fileset verified; lib/filesystems.nix validated                                   |
+| 33-35 | DONE     | lib/rocm.nix, lib/types.nix reviewed                                                  |
+| 36-40 | REJECTED | Module-level assertions — over-engineering for personal config                        |
+| 41    | DONE     | lib/images.nix rec attrsets fixed                                                     |
+| 42    | DONE     | Hardcoded /home/lars/notes in qmd-config.nix documented                               |
+| 43-46 | DONE     | All `//` chains converted to `lib.mkMerge`                                            |
+| 47-50 | DONE     | signoz.nix split (943→511L), forgejo.nix split (725→353L); others are acceptable size |
 
 ---
 

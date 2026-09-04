@@ -4,7 +4,6 @@ _2026-08-02 02:21 CEST_
 
 ---
 
-
 ## Context
 
 This session was triggered by the user's reaction to question Q3 from the
@@ -24,46 +23,46 @@ discovered 3 additional bugs the previous review missed.
 
 ### Bugs found and fixed (this session)
 
-| # | Bug | Severity | Fix |
-|---|-----|----------|-----|
-| RS6 | **`/api/v1/server-info` does NOT EXIST** in the Attic server. Sourcegraph audit of `server/src/api/mod.rs` + `v1/mod.rs` + `binary_cache.rs` shows the complete route table: `/` (placeholder HTML), `/{cache}/nix-cache-info`, `/{cache}/{path}`, `/{cache}/nar/{path}`, `/_api/v1/*` (internal API with underscore prefix). Zero matches for "server-info" in the entire repo. | **SHOWSTOPPER** — Gatus health check would ALWAYS return 404, generating permanent false alarms. The previous review session ADDED this broken endpoint while fixing RS3 (missing health check) — introduced a bug while fixing a bug. | Gatus check changed from `/api/v1/server-info` to `GET /` (returns 200 when server is up). Setup guide Step 3 verification updated. |
-| RS7 | **`attic token` subcommand does NOT EXIST.** The `attic` client CLI has: `login`, `use`, `push`, `cache`, `watch-store`. There is no `token` subcommand. | **Broken setup guide** — Step 7 (`attic token --endpoint ...`) would fail at runtime. | Replaced with `atticadm make-token --sub ci-monitor365 --validity 100y --pull monitor365 --push monitor365 --create-cache monitor365 ...` (server-side admin tool with scoped permissions). |
-| RS8 | **`atticadm make-token` had ZERO permission flags.** The previous review's Step 4 used `--sub admin --validity 1d` — no `--pull`, `--push`, `--create-cache`, etc. A token without permissions is useless: the admin can't create caches, push, or pull. | **Broken bootstrap flow** — following the setup guide would produce a token that can do nothing. | Added full permission flags: `--pull '*' --push '*' --create-cache '*' --configure-cache '*' --configure-cache-retention '*' --destroy-cache '*'` for admin bootstrap token. Scoped to `monitor365` for CI token. |
+| #   | Bug                                                                                                                                                                                                                                                                                                                                                                              | Severity                                                                                                                                                                                                                               | Fix                                                                                                                                                                                                               |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RS6 | **`/api/v1/server-info` does NOT EXIST** in the Attic server. Sourcegraph audit of `server/src/api/mod.rs` + `v1/mod.rs` + `binary_cache.rs` shows the complete route table: `/` (placeholder HTML), `/{cache}/nix-cache-info`, `/{cache}/{path}`, `/{cache}/nar/{path}`, `/_api/v1/*` (internal API with underscore prefix). Zero matches for "server-info" in the entire repo. | **SHOWSTOPPER** — Gatus health check would ALWAYS return 404, generating permanent false alarms. The previous review session ADDED this broken endpoint while fixing RS3 (missing health check) — introduced a bug while fixing a bug. | Gatus check changed from `/api/v1/server-info` to `GET /` (returns 200 when server is up). Setup guide Step 3 verification updated.                                                                               |
+| RS7 | **`attic token` subcommand does NOT EXIST.** The `attic` client CLI has: `login`, `use`, `push`, `cache`, `watch-store`. There is no `token` subcommand.                                                                                                                                                                                                                         | **Broken setup guide** — Step 7 (`attic token --endpoint ...`) would fail at runtime.                                                                                                                                                  | Replaced with `atticadm make-token --sub ci-monitor365 --validity 100y --pull monitor365 --push monitor365 --create-cache monitor365 ...` (server-side admin tool with scoped permissions).                       |
+| RS8 | **`atticadm make-token` had ZERO permission flags.** The previous review's Step 4 used `--sub admin --validity 1d` — no `--pull`, `--push`, `--create-cache`, etc. A token without permissions is useless: the admin can't create caches, push, or pull.                                                                                                                         | **Broken bootstrap flow** — following the setup guide would produce a token that can do nothing.                                                                                                                                       | Added full permission flags: `--pull '*' --push '*' --create-cache '*' --configure-cache '*' --configure-cache-retention '*' --destroy-cache '*'` for admin bootstrap token. Scoped to `monitor365` for CI token. |
 
 ### All three open questions resolved
 
-| Q | Resolution |
-|---|------------|
-| Q1 — `harden{}` dead-code | **Removed.** The `harden {}` call now contains ONLY `MemoryMax = "2G"`. `ProtectSystem` and `ReadWritePaths` were dead code (nixpkgs sets both at default priority, stricter than our `mkDefault`). Verified via `nix eval`: `ProtectSystem = "strict"` (nixpkgs wins), `ReadWritePaths = [ "/data/atticd/storage" ]` (nixpkgs wins), `MemoryMax = "2G"` (ours). |
-| Q2 — Monitor365 CI workflow | **Fixed.** Added `--accept-flake-config` to the `nix build` command in `.forgejo/workflows/nix-cache.yml`. Without it, Nix silently ignores the flake-level `nixConfig` (extra-substituters + extra-trusted-public-keys) in CI. |
-| Q3 — Disk budget on `/data` | **Resolved with evidence.** `/data`: 1.1 TB total, 367 GB free. Snapshots: 0 bytes exclusive (CoW). Docker + Immich share the partition. 20 GB = 5.5% of free space for a single-project 7-day cache with dedup. The question should never have been open. |
+| Q                           | Resolution                                                                                                                                                                                                                                                                                                                                                       |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q1 — `harden{}` dead-code   | **Removed.** The `harden {}` call now contains ONLY `MemoryMax = "2G"`. `ProtectSystem` and `ReadWritePaths` were dead code (nixpkgs sets both at default priority, stricter than our `mkDefault`). Verified via `nix eval`: `ProtectSystem = "strict"` (nixpkgs wins), `ReadWritePaths = [ "/data/atticd/storage" ]` (nixpkgs wins), `MemoryMax = "2G"` (ours). |
+| Q2 — Monitor365 CI workflow | **Fixed.** Added `--accept-flake-config` to the `nix build` command in `.forgejo/workflows/nix-cache.yml`. Without it, Nix silently ignores the flake-level `nixConfig` (extra-substituters + extra-trusted-public-keys) in CI.                                                                                                                                  |
+| Q3 — Disk budget on `/data` | **Resolved with evidence.** `/data`: 1.1 TB total, 367 GB free. Snapshots: 0 bytes exclusive (CoW). Docker + Immich share the partition. 20 GB = 5.5% of free space for a single-project 7-day cache with dedup. The question should never have been open.                                                                                                       |
 
 ### CLI verification performed (not from memory — from real binaries)
 
 Built `nixpkgs#attic-server` and `nixpkgs#attic-client` from source and ran
 `--help` on every subcommand. Every setup guide command is now verified:
 
-| Command | Source | Verified Against |
-|---------|--------|------------------|
-| `atticadm make-token --sub <SUB> --validity <P> [--pull <PAT> --push <PAT> ...]` | `atticadm --help` + `atticadm make-token --help` | attic-server 0.1.0 (`/nix/store/abx2lc9...`) |
-| `attic login <NAME> <ENDPOINT> [TOKEN]` | `attic login --help` | attic-client (`/nix/store/p0cnf8...`) |
-| `attic cache create <CACHE> --public` | `attic cache create --help` | attic-client |
-| `attic cache configure <CACHE> --retention-period <P>` | `attic cache configure --help` | attic-client |
-| `attic cache info <CACHE>` | `attic cache info --help` | attic-client |
-| `GET /` returns 200 | Sourcegraph: `server/src/api/mod.rs:14` — `.route("/", get(placeholder))` returns `Html(&'static str)` | Source audit |
-| `/_api/v1/*` (internal, underscore prefix) | Sourcegraph: `server/src/api/v1/mod.rs` | Source audit |
+| Command                                                                          | Source                                                                                                 | Verified Against                             |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------- |
+| `atticadm make-token --sub <SUB> --validity <P> [--pull <PAT> --push <PAT> ...]` | `atticadm --help` + `atticadm make-token --help`                                                       | attic-server 0.1.0 (`/nix/store/abx2lc9...`) |
+| `attic login <NAME> <ENDPOINT> [TOKEN]`                                          | `attic login --help`                                                                                   | attic-client (`/nix/store/p0cnf8...`)        |
+| `attic cache create <CACHE> --public`                                            | `attic cache create --help`                                                                            | attic-client                                 |
+| `attic cache configure <CACHE> --retention-period <P>`                           | `attic cache configure --help`                                                                         | attic-client                                 |
+| `attic cache info <CACHE>`                                                       | `attic cache info --help`                                                                              | attic-client                                 |
+| `GET /` returns 200                                                              | Sourcegraph: `server/src/api/mod.rs:14` — `.route("/", get(placeholder))` returns `Html(&'static str)` | Source audit                                 |
+| `/_api/v1/*` (internal, underscore prefix)                                       | Sourcegraph: `server/src/api/v1/mod.rs`                                                                | Source audit                                 |
 
 ### Files changed this session
 
-| File | Changes |
-|------|---------|
-| `modules/nixos/services/attic.nix` | Removed dead-code `ProtectSystem`/`ReadWritePaths` from `harden {}` (only `MemoryMax` remains — verified via `nix eval`). Updated comment. |
-| `modules/nixos/services/gatus-config.nix` | Changed Gatus endpoint from `/api/v1/server-info` (non-existent) to `GET /` |
-| `docs/setup/nix-binary-cache-setup.md` | Step 3: updated verification (`curl /` not `/api/v1/server-info`). Step 4: added permission flags to `make-token`, explained token requires permissions. Step 7: replaced non-existent `attic token` with `atticadm make-token`. |
-| `docs/status/2026-08-02_01-35_attic-cache-review-and-bugfixes.md` | Resolved Q1/Q2/Q3, updated all status sections, fixed stale `/api/v1/server-info` references, added D4/D5 findings. |
-| `docs/status/2026-08-02_00-50_nix-binary-cache-ci.md` | Fixed stale endpoint reference in appendix. |
-| `AGENTS.md` | Updated Attic gotcha row: added endpoint discovery, `attic token` non-existence, `make-token` permission requirement, harden{} dead-code note. |
-| `/home/lars/projects/monitor365/.forgejo/workflows/nix-cache.yml` | Added `--accept-flake-config` to `nix build`. |
+| File                                                              | Changes                                                                                                                                                                                                                          |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `modules/nixos/services/attic.nix`                                | Removed dead-code `ProtectSystem`/`ReadWritePaths` from `harden {}` (only `MemoryMax` remains — verified via `nix eval`). Updated comment.                                                                                       |
+| `modules/nixos/services/gatus-config.nix`                         | Changed Gatus endpoint from `/api/v1/server-info` (non-existent) to `GET /`                                                                                                                                                      |
+| `docs/setup/nix-binary-cache-setup.md`                            | Step 3: updated verification (`curl /` not `/api/v1/server-info`). Step 4: added permission flags to `make-token`, explained token requires permissions. Step 7: replaced non-existent `attic token` with `atticadm make-token`. |
+| `docs/status/2026-08-02_01-35_attic-cache-review-and-bugfixes.md` | Resolved Q1/Q2/Q3, updated all status sections, fixed stale `/api/v1/server-info` references, added D4/D5 findings.                                                                                                              |
+| `docs/status/2026-08-02_00-50_nix-binary-cache-ci.md`             | Fixed stale endpoint reference in appendix.                                                                                                                                                                                      |
+| `AGENTS.md`                                                       | Updated Attic gotcha row: added endpoint discovery, `attic token` non-existence, `make-token` permission requirement, harden{} dead-code note.                                                                                   |
+| `/home/lars/projects/monitor365/.forgejo/workflows/nix-cache.yml` | Added `--accept-flake-config` to `nix build`.                                                                                                                                                                                    |
 
 ### Verification
 
@@ -235,6 +234,7 @@ and understood what was already changed before adding my own edits.
 ## F) Up to 50 Things to Do Next
 
 ### Critical path (bring cache online)
+
 1. Generate RS256 JWT secret: `openssl genrsa -traditional 4096 | base64 -w0`
 2. Create `platforms/nixos/secrets/attic.yaml` with sops (needs age key — requires sudo)
 3. Deploy SystemNix: `nix run .#deploy`
@@ -257,6 +257,7 @@ and understood what was already changed before adding my own edits.
 20. Test substituter: `nix build .#monitor365 --substituters "https://cache.home.lan/monitor365" -v 2>&1 | grep copying`
 
 ### Code fixes (this repo)
+
 21. Verify Attic GC startup behavior (read `server/src/gc.rs` via sourcegraph)
 22. If GC doesn't run on startup, redesign size guard (use `--mode garbage-collector` or shorten interval)
 23. Add Caddy `after = [ "atticd.service" ]` dependency
@@ -267,12 +268,14 @@ and understood what was already changed before adding my own edits.
 28. Add firewall rule restricting port 8200 to localhost (Caddy handles external)
 
 ### Monitor365 repo
+
 29. Uncomment `extra-trusted-public-keys` placeholder after cache creation
 30. Consider adding `nix flake check --no-build` to CI
 31. Evaluate `attic watch-store` mode (auto-push anything built locally)
 32. Consider a `ci.yml` workflow (check/clippy/test/fmt)
 
 ### Hardening & monitoring
+
 33. Verify Attic storage write permissions under DynamicUser (root-owned `/data/atticd/storage` — can dynamic user write?)
 34. Increase Forgejo runner MemoryMax from 4G to 8-16G for Rust builds
 35. Track cache hit/miss rate over time (Attic metrics → SigNoz)
@@ -280,12 +283,14 @@ and understood what was already changed before adding my own edits.
 37. Write a pre-commit check for DynamicUser + sops owner pattern (catch Gatus/crush-daily/Attic class of bugs)
 
 ### Multi-project caching
+
 38. Create cache for SystemNix itself: `attic cache create systemnix`
 39. Create cache for dnsblockd
 40. Document the "new project" cache setup pattern
 41. Evaluate shared "nixpkgs-overrides" cache for custom overlays
 
 ### Architecture
+
 42. Evaluate PostgreSQL backend (share immich's PG instance) if SQLite bottlenecks
 43. Set up per-project cache retention (monitor365: 7d, systemnix: 3d)
 44. Consider Cloudflare R2 (zero egress) if cache outgrows local disk
@@ -293,6 +298,7 @@ and understood what was already changed before adding my own edits.
 46. Add cache warming runbook for after nixpkgs bumps
 
 ### Documentation
+
 47. Document the RS256 + DynamicUser + no-server-info pattern in a "NixOS module wrapping guide"
 48. Create architecture diagram for CI → cache → deploy flow
 49. Update FEATURES.md with Attic cache status once deployed

@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Executive Summary
 
 DiscordSync was **completely dead** — crash-looping on `start-limit-hit` for weeks, blocking every deploy. The root cause was a **three-layer cascading migration failure** on old schema-drifted databases. All three bugs are now fixed, deployed, and verified live. The bot is connected to Discord, dispatching events, and serving health checks.
@@ -130,48 +129,48 @@ DiscordSync was **completely dead** — crash-looping on `start-limit-hit` for w
 
 ### High Impact / Low Effort (do first)
 
-| #   | Task                                                                                      | Repo        | Effort |
-| --- | ----------------------------------------------------------------------------------------- | ----------- | ------ |
-| 1   | **Verify GCS bucket has data** — check `gs://discordsync-backup` for uploaded attachments | SystemNix   | 5 min  |
-| 2   | **Monitor backfill completion** — watch for `database is locked` errors to drop to 0      | DiscordSync | 10 min |
-| 3   | **Add `TestMigrate_TursoDriver` to CI** — run Migrate() against `:memory:` turso DB       | DiscordSync | 30 min |
-| 4   | **Tune connection pool for backfill** — increase MaxOpenConns or batch writes             | DiscordSync | 30 min |
-| 5   | **Poll `/healthz` in deploy.sh** instead of `sleep 10`                                    | SystemNix   | 15 min |
+| # | Task                                                                                      | Repo        | Effort |
+| - | ----------------------------------------------------------------------------------------- | ----------- | ------ |
+| 1 | **Verify GCS bucket has data** — check `gs://discordsync-backup` for uploaded attachments | SystemNix   | 5 min  |
+| 2 | **Monitor backfill completion** — watch for `database is locked` errors to drop to 0      | DiscordSync | 10 min |
+| 3 | **Add `TestMigrate_TursoDriver` to CI** — run Migrate() against `:memory:` turso DB       | DiscordSync | 30 min |
+| 4 | **Tune connection pool for backfill** — increase MaxOpenConns or batch writes             | DiscordSync | 30 min |
+| 5 | **Poll `/healthz` in deploy.sh** instead of `sleep 10`                                    | SystemNix   | 15 min |
 
 ### High Impact / Medium Effort
 
-| #   | Task                                                                                  | Repo        | Effort |
-| --- | ------------------------------------------------------------------------------------- | ----------- | ------ |
-| 6   | **Type-safe schema definition** — replace DDL string parsing with Go struct schema    | DiscordSync | 2-3h   |
-| 7   | **SSE event filtering** (`?channel_id=`)                                              | DiscordSync | 1-2h   |
-| 8   | **SSE Last-Event-ID replay**                                                          | DiscordSync | 1-2h   |
-| 9   | **E2E integration test** against a real turso DB (free tier)                          | DiscordSync | 1-2h   |
-| 10  | **Pre-deploy-check: allow start-limit-hit units being updated**                       | SystemNix   | 30 min |
-| 11  | **HTTP request metrics** — latency histograms per endpoint                            | DiscordSync | 1h     |
-| 12  | **`GuildMember.Roles` typed field** — replace JSON string with `[]string`             | DiscordSync | 1h     |
-| 13  | **Reboot evo-x2** — verify boot time after NVMe APST fix (target ~35s)                | SystemNix   | 15 min |
-| 14  | **BTRFS `/data` subvolume migration** — snapshot protection for Docker/Immich/AI data | SystemNix   | 2-3h   |
-| 15  | **Verify Pocket ID email sending** — test SMTP wiring                                 | SystemNix   | 10 min |
+| #  | Task                                                                                  | Repo        | Effort |
+| -- | ------------------------------------------------------------------------------------- | ----------- | ------ |
+| 6  | **Type-safe schema definition** — replace DDL string parsing with Go struct schema    | DiscordSync | 2-3h   |
+| 7  | **SSE event filtering** (`?channel_id=`)                                              | DiscordSync | 1-2h   |
+| 8  | **SSE Last-Event-ID replay**                                                          | DiscordSync | 1-2h   |
+| 9  | **E2E integration test** against a real turso DB (free tier)                          | DiscordSync | 1-2h   |
+| 10 | **Pre-deploy-check: allow start-limit-hit units being updated**                       | SystemNix   | 30 min |
+| 11 | **HTTP request metrics** — latency histograms per endpoint                            | DiscordSync | 1h     |
+| 12 | **`GuildMember.Roles` typed field** — replace JSON string with `[]string`             | DiscordSync | 1h     |
+| 13 | **Reboot evo-x2** — verify boot time after NVMe APST fix (target ~35s)                | SystemNix   | 15 min |
+| 14 | **BTRFS `/data` subvolume migration** — snapshot protection for Docker/Immich/AI data | SystemNix   | 2-3h   |
+| 15 | **Verify Pocket ID email sending** — test SMTP wiring                                 | SystemNix   | 10 min |
 
 ### Medium Impact / Medium Effort
 
-| #   | Task                                                                         | Repo      | Effort  |
-| --- | ---------------------------------------------------------------------------- | --------- | ------- |
-| 16  | **Hermes: install SSH deploy key**                                           | SystemNix | 10 min  |
-| 17  | **Hermes: set fallback model**                                               | SystemNix | 5 min   |
-| 18  | **Fix Twenty CRM 502s** — monitor for recurrence                             | SystemNix | Ongoing |
-| 19  | **`llama-cpp` ROCm MMFMA flag** — package option upstream                    | SystemNix | 30 min  |
-| 20  | **KeePassXC Chromium manifests** — generate Chromium-format native messaging | SystemNix | 30 min  |
-| 21  | **Swap investigation** — 8 GiB swap on 128 GiB RAM                           | SystemNix | 30 min  |
-| 22  | **ActivityWatch Wayland watcher deps** — add compositor target               | SystemNix | 30 min  |
-| 23  | **`aw-watcher-utilization` poetry-core migration**                           | SystemNix | 30 min  |
+| #  | Task                                                                         | Repo      | Effort  |
+| -- | ---------------------------------------------------------------------------- | --------- | ------- |
+| 16 | **Hermes: install SSH deploy key**                                           | SystemNix | 10 min  |
+| 17 | **Hermes: set fallback model**                                               | SystemNix | 5 min   |
+| 18 | **Fix Twenty CRM 502s** — monitor for recurrence                             | SystemNix | Ongoing |
+| 19 | **`llama-cpp` ROCm MMFMA flag** — package option upstream                    | SystemNix | 30 min  |
+| 20 | **KeePassXC Chromium manifests** — generate Chromium-format native messaging | SystemNix | 30 min  |
+| 21 | **Swap investigation** — 8 GiB swap on 128 GiB RAM                           | SystemNix | 30 min  |
+| 22 | **ActivityWatch Wayland watcher deps** — add compositor target               | SystemNix | 30 min  |
+| 23 | **`aw-watcher-utilization` poetry-core migration**                           | SystemNix | 30 min  |
 
 ### Lower Priority
 
-| #   | Task                                                                             | Repo      | Effort  |
-| --- | -------------------------------------------------------------------------------- | --------- | ------- |
-| 24  | **`taskwarrior3` build flags** — should be nixpkgs defaults                      | SystemNix | 30 min  |
-| 25  | **Custom package submissions** (`netwatch`, `govalid`, `openaudible`) to nixpkgs | SystemNix | 2h each |
+| #  | Task                                                                             | Repo      | Effort  |
+| -- | -------------------------------------------------------------------------------- | --------- | ------- |
+| 24 | **`taskwarrior3` build flags** — should be nixpkgs defaults                      | SystemNix | 30 min  |
+| 25 | **Custom package submissions** (`netwatch`, `govalid`, `openaudible`) to nixpkgs | SystemNix | 2h each |
 
 ---
 

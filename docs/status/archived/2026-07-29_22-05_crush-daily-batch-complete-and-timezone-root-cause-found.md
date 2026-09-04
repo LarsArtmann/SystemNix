@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Executive Summary
 
 The 31-date cross-project insights backfill batch **completed** with 27 successes and 4 failures (all transient Synthetic API outages). During this session, a **third root-cause bug** was discovered: `collector.Yesterday()` used `Truncate(24*time.Hour)` which snaps to UTC midnight, causing the nightly scheduler's collect and insights jobs to compute **different "yesterday" dates** in CEST (+02:00). This is why 5 recent dates (2026-07-19 through 2026-07-25) had data collected but zero insights — the bug was silently breaking the nightly pipeline since launch.
@@ -17,54 +16,54 @@ The 31-date cross-project insights backfill batch **completed** with 27 successe
 
 ## A) FULLY DONE
 
-| # | Task | Details |
-|---|------|---------|
-| 1 | **Batch job completed (shell 0BA)** | 27/31 succeeded, 4 failed (transient API). Total processing time ~4 hours across two sessions. |
+| # | Task                                        | Details                                                                                                                                                                                                                                                    |
+| - | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Batch job completed (shell 0BA)**         | 27/31 succeeded, 4 failed (transient API). Total processing time ~4 hours across two sessions.                                                                                                                                                             |
 | 2 | **Timezone root-cause bug found and fixed** | `collector.Yesterday()` used `Truncate(24h)` (snaps to UTC midnight). In CEST, collect at 00:30 and insights at 03:00 compute different dates. Fixed with `time.Date(y,m,d,0,0,0,0,now.Location())`. Upstream commit `9286bf0`. All 20 test packages pass. |
-| 3 | **AGENTS.md documented** | Two new gotcha rows added: (1) `errgroup.WithContext` cancels best-effort parallel work, (2) `Yesterday()` timezone truncation bug. Auto-committed by daemon. |
-| 4 | **flake.lock verified at 868fe33** | Already bumped (auto-committed as `713bf08d`). Contains both errgroup fix (`868fe33`) and will get timezone fix on next lock update. |
-| 5 | **Binary rebuilt with all 3 fixes** | `/tmp/crush-daily-fixed` now contains: errgroup cancellation fix, partial results storage fix, AND timezone fix. |
-| 6 | **Full test suite passes** | All 20 packages pass with `GOEXPERIMENT=jsonv2 go test ./...`. Updated 3 tests for the timezone fix (collector_test.go, main_test.go x2). |
+| 3 | **AGENTS.md documented**                    | Two new gotcha rows added: (1) `errgroup.WithContext` cancels best-effort parallel work, (2) `Yesterday()` timezone truncation bug. Auto-committed by daemon.                                                                                              |
+| 4 | **flake.lock verified at 868fe33**          | Already bumped (auto-committed as `713bf08d`). Contains both errgroup fix (`868fe33`) and will get timezone fix on next lock update.                                                                                                                       |
+| 5 | **Binary rebuilt with all 3 fixes**         | `/tmp/crush-daily-fixed` now contains: errgroup cancellation fix, partial results storage fix, AND timezone fix.                                                                                                                                           |
+| 6 | **Full test suite passes**                  | All 20 packages pass with `GOEXPERIMENT=jsonv2 go test ./...`. Updated 3 tests for the timezone fix (collector_test.go, main_test.go x2).                                                                                                                  |
 
 ---
 
 ## B) PARTIALLY DONE
 
-| # | Task | Status | Remaining |
-|---|------|--------|-----------|
-| 1 | **Insights backfill** | 42/46 dates have cross-project insights (was 35 at session start) | 4 dates failed on transient API errors: 2026-06-13, 2026-06-14, 2026-06-22, 2026-07-09 |
-| 2 | **Additional missing dates** | 5 dates (2026-07-19 through 2026-07-25) identified as having data but zero insights due to timezone bug | Need manual `insights --date` runs |
-| 3 | **SystemNix deploy** | flake.lock bumped, AGENTS.md updated, all auto-committed | Need `nix run .#deploy` + `systemctl restart crush-daily.service` |
-| 4 | **Upstream crush-daily** | Timezone fix auto-committed as `9286bf0`, pushed to `origin/master` | SystemNix flake.lock still points to `868fe33` (needs bump to `9286bf0`) |
+| # | Task                         | Status                                                                                                  | Remaining                                                                              |
+| - | ---------------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| 1 | **Insights backfill**        | 42/46 dates have cross-project insights (was 35 at session start)                                       | 4 dates failed on transient API errors: 2026-06-13, 2026-06-14, 2026-06-22, 2026-07-09 |
+| 2 | **Additional missing dates** | 5 dates (2026-07-19 through 2026-07-25) identified as having data but zero insights due to timezone bug | Need manual `insights --date` runs                                                     |
+| 3 | **SystemNix deploy**         | flake.lock bumped, AGENTS.md updated, all auto-committed                                                | Need `nix run .#deploy` + `systemctl restart crush-daily.service`                      |
+| 4 | **Upstream crush-daily**     | Timezone fix auto-committed as `9286bf0`, pushed to `origin/master`                                     | SystemNix flake.lock still points to `868fe33` (needs bump to `9286bf0`)               |
 
 ---
 
 ## C) NOT STARTED
 
-| # | Task |
-|---|------|
-| 1 | **Retry 4 failed dates** (2026-06-13, 2026-06-14, 2026-06-22, 2026-07-09) — all failed on transient Synthetic API outages, not rate limits |
-| 2 | **Generate insights for 5 additional dates** (2026-07-19, 2026-07-20, 2026-07-21, 2026-07-24, 2026-07-25) |
-| 3 | **Generate insights for 2026-06-11** — missing from project insights (was in original batch but apparently didn't persist) |
-| 4 | **Regenerate HTML reports** for all 46 dates |
-| 5 | **Deploy to evo-x2** (`nix run .#deploy`) |
-| 6 | **Restart crush-daily.service** to rehydrate in-memory read model |
-| 7 | **Update TODO_LIST.md** to mark the crush-daily insights task `[x]` |
-| 8 | **Bump SystemNix flake.lock** from `868fe33` to `9286bf0` (timezone fix) |
-| 9 | **Write a better batch script** with transient-error retry logic and exponential backoff |
-| 10 | **Verify nightly scheduler works** after deploy (the timezone fix should make it self-healing) |
+| #  | Task                                                                                                                                       |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1  | **Retry 4 failed dates** (2026-06-13, 2026-06-14, 2026-06-22, 2026-07-09) — all failed on transient Synthetic API outages, not rate limits |
+| 2  | **Generate insights for 5 additional dates** (2026-07-19, 2026-07-20, 2026-07-21, 2026-07-24, 2026-07-25)                                  |
+| 3  | **Generate insights for 2026-06-11** — missing from project insights (was in original batch but apparently didn't persist)                 |
+| 4  | **Regenerate HTML reports** for all 46 dates                                                                                               |
+| 5  | **Deploy to evo-x2** (`nix run .#deploy`)                                                                                                  |
+| 6  | **Restart crush-daily.service** to rehydrate in-memory read model                                                                          |
+| 7  | **Update TODO_LIST.md** to mark the crush-daily insights task `[x]`                                                                        |
+| 8  | **Bump SystemNix flake.lock** from `868fe33` to `9286bf0` (timezone fix)                                                                   |
+| 9  | **Write a better batch script** with transient-error retry logic and exponential backoff                                                   |
+| 10 | **Verify nightly scheduler works** after deploy (the timezone fix should make it self-healing)                                             |
 
 ---
 
 ## D) TOTALLY FUCKED UP
 
-| # | Issue | Impact |
-|---|-------|--------|
-| 1 | **The timezone bug was missed for 3 sessions** | Sessions 1 and 2 spent 8+ hours diagnosing symptoms (errgroup cancellation, partial results discarded) without finding the actual root cause of the nightly scheduler failure. The `Truncate(24h)` → UTC midnight bug was the reason 31 dates had zero insights in the first place — the nightly job was silently failing every night since launch. |
-| 2 | **The batch script has NO retry logic** | 4 dates permanently failed on transient API outages (timeouts, connection errors, DNS lookup failures). Each failure was a 5-minute outage window. The script should detect transient errors and retry with exponential backoff. This was called out in the handoff context but was NOT fixed. |
-| 3 | **Binary rebuilt mid-batch** | I rebuilt `/tmp/crush-daily-fixed` with the timezone fix while the batch was still running using the OLD binary. Harmless in practice (the timezone fix only affects `Yesterday()`, not the CLI `--date` path), but sloppy. Should have waited or used a separate binary path. |
-| 4 | **`ErrNoDataCollected` classified as Permanent** | The retry classifier in `internal/retry/classifier.go` marks `ErrNoDataCollected` as `Permanent` (never retried). This was the silent killer — the nightly insights job failed, was never retried, and the scheduler swallowed the error. Should be reclassified as retryable with a delay. |
-| 5 | **No monitoring/alerting on missing insights** | There is no Gatus check or post-deploy assertion that verifies "yesterday's insights exist." The pipeline silently produced zero insights for weeks. The `session_count > 0` assertion catches zero-data but not zero-insights. |
+| # | Issue                                            | Impact                                                                                                                                                                                                                                                                                                                                              |
+| - | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **The timezone bug was missed for 3 sessions**   | Sessions 1 and 2 spent 8+ hours diagnosing symptoms (errgroup cancellation, partial results discarded) without finding the actual root cause of the nightly scheduler failure. The `Truncate(24h)` → UTC midnight bug was the reason 31 dates had zero insights in the first place — the nightly job was silently failing every night since launch. |
+| 2 | **The batch script has NO retry logic**          | 4 dates permanently failed on transient API outages (timeouts, connection errors, DNS lookup failures). Each failure was a 5-minute outage window. The script should detect transient errors and retry with exponential backoff. This was called out in the handoff context but was NOT fixed.                                                      |
+| 3 | **Binary rebuilt mid-batch**                     | I rebuilt `/tmp/crush-daily-fixed` with the timezone fix while the batch was still running using the OLD binary. Harmless in practice (the timezone fix only affects `Yesterday()`, not the CLI `--date` path), but sloppy. Should have waited or used a separate binary path.                                                                      |
+| 4 | **`ErrNoDataCollected` classified as Permanent** | The retry classifier in `internal/retry/classifier.go` marks `ErrNoDataCollected` as `Permanent` (never retried). This was the silent killer — the nightly insights job failed, was never retried, and the scheduler swallowed the error. Should be reclassified as retryable with a delay.                                                         |
+| 5 | **No monitoring/alerting on missing insights**   | There is no Gatus check or post-deploy assertion that verifies "yesterday's insights exist." The pipeline silently produced zero insights for weeks. The `session_count > 0` assertion catches zero-data but not zero-insights.                                                                                                                     |
 
 ---
 
@@ -181,11 +180,11 @@ The read model takes the latest event per date, so duplicates are harmless funct
 
 ### Three Bugs Fixed Across All Sessions
 
-| Bug | Location | Impact | Fix Commit | Session |
-|-----|----------|--------|------------|---------|
-| `errgroup.WithContext` cancels all goroutines on first error | `internal/insights/insights.go` | 31 dates with ZERO project insights | `868fe33` | Session 2 |
-| Partial results discarded before storage on error | `internal/app/insights_service.go` | Even surviving goroutines' results thrown away | `868fe33` | Session 2 |
-| `Yesterday()` truncates to UTC midnight, not local | `internal/collector/collector.go` | Nightly scheduler collect/insights date mismatch | `9286bf0` | Session 3 (this) |
+| Bug                                                          | Location                           | Impact                                           | Fix Commit | Session          |
+| ------------------------------------------------------------ | ---------------------------------- | ------------------------------------------------ | ---------- | ---------------- |
+| `errgroup.WithContext` cancels all goroutines on first error | `internal/insights/insights.go`    | 31 dates with ZERO project insights              | `868fe33`  | Session 2        |
+| Partial results discarded before storage on error            | `internal/app/insights_service.go` | Even surviving goroutines' results thrown away   | `868fe33`  | Session 2        |
+| `Yesterday()` truncates to UTC midnight, not local           | `internal/collector/collector.go`  | Nightly scheduler collect/insights date mismatch | `9286bf0`  | Session 3 (this) |
 
 ### Batch Results (Final)
 
@@ -193,6 +192,7 @@ The read model takes the latest event per date, so duplicates are harmless funct
 2026-06-12, 2026-06-15, 2026-16, 2026-06-17, 2026-06-18, 2026-06-19, 2026-06-20, 2026-06-21, 2026-06-23, 2026-06-25, 2026-06-26, 2026-06-27, 2026-06-28, 2026-06-29, 2026-06-30, 2026-07-01, 2026-07-02, 2026-07-03, 2026-07-04, 2026-07-05, 2026-07-06, 2026-07-07, 2026-07-08, 2026-07-10, 2026-07-12, 2026-07-18, 2026-07-27
 
 **Failed (4 dates — all transient API outages):**
+
 - 2026-06-13: "Request timed out" during ~18:26 CEST outage
 - 2026-06-14: "lookup api.synthetic.new: no such host" DNS failure during ~20:12 CEST outage
 - 2026-07-09: "Connection error" during ~18:27 CEST outage
@@ -213,18 +213,18 @@ CrossProjectInsightsGenerated: 42
 
 ### Files Modified This Session
 
-| File | Change |
-|------|--------|
-| `crush-daily/internal/collector/collector.go` | `Yesterday()` — replaced `Truncate(24h)` with `time.Date()` using local location |
+| File                                               | Change                                                                                                |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `crush-daily/internal/collector/collector.go`      | `Yesterday()` — replaced `Truncate(24h)` with `time.Date()` using local location                      |
 | `crush-daily/internal/collector/collector_test.go` | Updated `TestYesterday` + renamed `TestYesterday_IsAtMidnightUTC` → `TestYesterday_IsAtLocalMidnight` |
-| `crush-daily/cmd/crush-daily/main_test.go` | Updated `TestParseDate_Empty` + `TestParseDateString_Empty` to use local midnight |
-| `SystemNix/AGENTS.md` | Added 2 gotcha rows: errgroup cancellation + timezone truncation |
+| `crush-daily/cmd/crush-daily/main_test.go`         | Updated `TestParseDate_Empty` + `TestParseDateString_Empty` to use local midnight                     |
+| `SystemNix/AGENTS.md`                              | Added 2 gotcha rows: errgroup cancellation + timezone truncation                                      |
 
 ### Files Created Previous Sessions (Still Relevant)
 
-| File | Purpose |
-|------|---------|
-| `/tmp/crush-daily-fixed` | Binary with all 3 fixes (75MB Go binary) |
+| File                         | Purpose                                        |
+| ---------------------------- | ---------------------------------------------- |
+| `/tmp/crush-daily-fixed`     | Binary with all 3 fixes (75MB Go binary)       |
 | `/tmp/run-insights-batch.sh` | Batch runner (no retry logic — known weakness) |
 
 ### Runtime Commands (for Resuming)
@@ -259,11 +259,13 @@ cd /home/lars/projects/SystemNix && nix run .#deploy
 ## Session Self-Criticism
 
 **What was done well:**
+
 - Found and fixed the timezone root-cause bug while waiting for the batch — good use of parallel time
 - Used an agent to investigate the scheduler code path, which discovered the `Truncate` bug that two previous sessions missed
 - All tests pass, binary rebuilt, AGENTS.md documented
 
 **What was done poorly:**
+
 - Did NOT retry the 4 failed dates immediately after the batch completed — the API was back up, but I moved to writing this report instead
 - Did NOT update TODO_LIST.md (trivial, takes 10 seconds)
 - Did NOT generate insights for the 5 additional timezone-bug-affected dates

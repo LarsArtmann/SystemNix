@@ -114,16 +114,16 @@ SigNoz is deployed and running, but **starved for data**:
 
 ### Niri Session Save/Restore — **85% Complete**
 
-| Feature                          | Status                                              |
-| -------------------------------- | --------------------------------------------------- |
-| Save timer (60s)                 | ✅                                                  |
-| Window/workspace snapshot        | ✅                                                  |
-| Kitty state (CWD, child process) | ✅                                                  |
-| Restore on startup               | ✅                                                  |
-| Floating state restore           | ✅                                                  |
-| Column width restore             | ✅                                                  |
-| Focus order restore              | ✅                                                  |
-| JSON validation + fallback       | ✅                                                  |
+| Feature                          | Status                                             |
+| -------------------------------- | -------------------------------------------------- |
+| Save timer (60s)                 | ✅                                                 |
+| Window/workspace snapshot        | ✅                                                 |
+| Kitty state (CWD, child process) | ✅                                                 |
+| Restore on startup               | ✅                                                 |
+| Floating state restore           | ✅                                                 |
+| Column width restore             | ✅                                                 |
+| Focus order restore              | ✅                                                 |
+| JSON validation + fallback       | ✅                                                 |
 | **Non-kitty app restore**        | ⚠️ Limited — skips apps without clear respawn logic |
 
 ### EMEET PIXY Daemon — **90% Complete**
@@ -142,18 +142,18 @@ SigNoz is deployed and running, but **starved for data**:
 
 ## C) NOT STARTED 📋
 
-| #   | Item                                            | Priority | Effort |
-| --- | ----------------------------------------------- | -------- | ------ |
-| 1   | SigNoz data producers (node_exporter, cAdvisor) | P0       | 2-4 hr |
-| 2   | SigNoz alert rules                              | P1       | 2 hr   |
-| 3   | SigNoz custom dashboards                        | P1       | 3 hr   |
-| 4   | Journald → OTel log pipeline                    | P2       | 2 hr   |
-| 5   | App-level OTel instrumentation                  | P2       | 4+ hr  |
-| 6   | Notification channel (email/webhook/Telegram)   | P1       | 1 hr   |
-| 7   | Grafana Pyroscope for profiling                 | P3       | 2 hr   |
-| 8   | DNS blocker /metrics endpoint                   | P3       | 1 hr   |
-| 9   | Automated backup verification                   | P3       | 1 hr   |
-| 10  | GPU monitoring pipeline (ROCm → SigNoz)         | P3       | 1 hr   |
+| #  | Item                                            | Priority | Effort |
+| -- | ----------------------------------------------- | -------- | ------ |
+| 1  | SigNoz data producers (node_exporter, cAdvisor) | P0       | 2-4 hr |
+| 2  | SigNoz alert rules                              | P1       | 2 hr   |
+| 3  | SigNoz custom dashboards                        | P1       | 3 hr   |
+| 4  | Journald → OTel log pipeline                    | P2       | 2 hr   |
+| 5  | App-level OTel instrumentation                  | P2       | 4+ hr  |
+| 6  | Notification channel (email/webhook/Telegram)   | P1       | 1 hr   |
+| 7  | Grafana Pyroscope for profiling                 | P3       | 2 hr   |
+| 8  | DNS blocker /metrics endpoint                   | P3       | 1 hr   |
+| 9  | Automated backup verification                   | P3       | 1 hr   |
+| 10 | GPU monitoring pipeline (ROCm → SigNoz)         | P3       | 1 hr   |
 
 ---
 
@@ -203,48 +203,48 @@ The pre-commit hook runs trailing-whitespace removal + alejandra on ALL tracked 
 
 ### P0 — Critical
 
-| #   | Task                                                                 | Effort | Why                                |
-| --- | -------------------------------------------------------------------- | ------ | ---------------------------------- |
-| 1   | **Deploy node_exporter** — system CPU/RAM/disk/network metrics       | 1 hr   | SigNoz has zero data               |
-| 2   | **Deploy cAdvisor** — Docker container metrics                       | 1 hr   | Can't see container resource usage |
-| 3   | **Configure OTel scraping** — point SigNoz collector at exporters    | 1 hr   | Connect data producers to SigNoz   |
-| 4   | **Build SigNoz system dashboard** — CPU, RAM, disk, network overview | 2 hr   | Visualize what exporters send      |
+| # | Task                                                                 | Effort | Why                                |
+| - | -------------------------------------------------------------------- | ------ | ---------------------------------- |
+| 1 | **Deploy node_exporter** — system CPU/RAM/disk/network metrics       | 1 hr   | SigNoz has zero data               |
+| 2 | **Deploy cAdvisor** — Docker container metrics                       | 1 hr   | Can't see container resource usage |
+| 3 | **Configure OTel scraping** — point SigNoz collector at exporters    | 1 hr   | Connect data producers to SigNoz   |
+| 4 | **Build SigNoz system dashboard** — CPU, RAM, disk, network overview | 2 hr   | Visualize what exporters send      |
 
 ### P1 — High
 
-| #   | Task                                                              | Effort | Why                                    |
-| --- | ----------------------------------------------------------------- | ------ | -------------------------------------- |
-| 5   | **SigNoz alert rules** — service down, disk >90%, CPU sustained   | 2 hr   | No notification when things break      |
-| 6   | **Notification channel** — Telegram/webhook for SigNoz alerts     | 1 hr   | Alerts useless if nobody receives them |
-| 7   | **Journald → OTel logs** — centralize all service logs            | 2 hr   | Currently ssh + journalctl per service |
-| 8   | **Instrument Caddy metrics** — HTTP rates, latencies, errors      | 1 hr   | Reverse proxy observability            |
-| 9   | **Instrument Authelia metrics** — already exposes :9959           | 30 min | SSO health visibility                  |
-| 10  | **SigNoz service dashboard** — per-service health, uptime, errors | 2 hr   | Service-specific visualization         |
+| #  | Task                                                              | Effort | Why                                    |
+| -- | ----------------------------------------------------------------- | ------ | -------------------------------------- |
+| 5  | **SigNoz alert rules** — service down, disk >90%, CPU sustained   | 2 hr   | No notification when things break      |
+| 6  | **Notification channel** — Telegram/webhook for SigNoz alerts     | 1 hr   | Alerts useless if nobody receives them |
+| 7  | **Journald → OTel logs** — centralize all service logs            | 2 hr   | Currently ssh + journalctl per service |
+| 8  | **Instrument Caddy metrics** — HTTP rates, latencies, errors      | 1 hr   | Reverse proxy observability            |
+| 9  | **Instrument Authelia metrics** — already exposes :9959           | 30 min | SSO health visibility                  |
+| 10 | **SigNoz service dashboard** — per-service health, uptime, errors | 2 hr   | Service-specific visualization         |
 
 ### P2 — Medium
 
-| #   | Task                                                            | Effort | Why                              |
-| --- | --------------------------------------------------------------- | ------ | -------------------------------- |
-| 11  | **DNS blocker /metrics** — blocked query rates, top domains     | 1 hr   | DNS blocking observability       |
-| 12  | **GPU monitoring** — ROCm/amdgpu metrics to SigNoz              | 1 hr   | GPU critical for AI/ML           |
-| 13  | **Automated backup verification** — weekly restore test         | 1 hr   | Untested backups are not backups |
-| 14  | **Niri non-kitty app restore** — improve respawn logic          | 2 hr   | Currently skips many apps        |
-| 15  | **macOS monitoring parity** — ActivityWatch + system metrics    | 2 hr   | macOS has no observability       |
-| 16  | **Flake lock auto-update** — weekly GitHub Actions PR           | 1 hr   | Security updates shouldn't wait  |
-| 17  | **emeet-pixyd /metrics endpoint** — camera state, call duration | 1 hr   | Production observability         |
+| #  | Task                                                            | Effort | Why                              |
+| -- | --------------------------------------------------------------- | ------ | -------------------------------- |
+| 11 | **DNS blocker /metrics** — blocked query rates, top domains     | 1 hr   | DNS blocking observability       |
+| 12 | **GPU monitoring** — ROCm/amdgpu metrics to SigNoz              | 1 hr   | GPU critical for AI/ML           |
+| 13 | **Automated backup verification** — weekly restore test         | 1 hr   | Untested backups are not backups |
+| 14 | **Niri non-kitty app restore** — improve respawn logic          | 2 hr   | Currently skips many apps        |
+| 15 | **macOS monitoring parity** — ActivityWatch + system metrics    | 2 hr   | macOS has no observability       |
+| 16 | **Flake lock auto-update** — weekly GitHub Actions PR           | 1 hr   | Security updates shouldn't wait  |
+| 17 | **emeet-pixyd /metrics endpoint** — camera state, call duration | 1 hr   | Production observability         |
 
 ### P3 — Nice To Have
 
-| #   | Task                                                           | Effort | Why                          |
-| --- | -------------------------------------------------------------- | ------ | ---------------------------- |
-| 18  | **Native Whisper NixOS package** — replace Docker              | 4 hr   | Cleaner, faster startup      |
-| 19  | **Grafana Pyroscope** — continuous profiling for Go services   | 2 hr   | Performance debugging        |
-| 20  | **emeet-pixyd CI tests** — run `_test.go` in GitHub Actions    | 1 hr   | Catch regressions            |
-| 21  | **Homepage health widgets** — live status per service          | 30 min | Visual health at a glance    |
-| 22  | **Daily health check timer** — systemd timer for `just health` | 30 min | Proactive issue detection    |
-| 23  | **Docs cleanup** — archive old status reports                  | 2 hr   | 50+ status files, many stale |
-| 24  | **Secret rotation automation** — auto-rotate SOPS keys         | 2 hr   | Security hygiene             |
-| 25  | **Network diagram auto-generation** — Mermaid from Nix config  | 3 hr   | Docs drift from reality      |
+| #  | Task                                                           | Effort | Why                          |
+| -- | -------------------------------------------------------------- | ------ | ---------------------------- |
+| 18 | **Native Whisper NixOS package** — replace Docker              | 4 hr   | Cleaner, faster startup      |
+| 19 | **Grafana Pyroscope** — continuous profiling for Go services   | 2 hr   | Performance debugging        |
+| 20 | **emeet-pixyd CI tests** — run `_test.go` in GitHub Actions    | 1 hr   | Catch regressions            |
+| 21 | **Homepage health widgets** — live status per service          | 30 min | Visual health at a glance    |
+| 22 | **Daily health check timer** — systemd timer for `just health` | 30 min | Proactive issue detection    |
+| 23 | **Docs cleanup** — archive old status reports                  | 2 hr   | 50+ status files, many stale |
+| 24 | **Secret rotation automation** — auto-rotate SOPS keys         | 2 hr   | Security hygiene             |
+| 25 | **Network diagram auto-generation** — Mermaid from Nix config  | 3 hr   | Docs drift from reality      |
 
 ---
 

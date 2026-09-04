@@ -117,43 +117,43 @@ Sorted by impact/effort ratio:
 
 ### High Impact, Low Effort (Quick Wins)
 
-| #   | Task                                                                                                                   | Effort | Impact                                  |
-| --- | ---------------------------------------------------------------------------------------------------------------------- | ------ | --------------------------------------- |
-| 1   | **Add `shellcheck` to pre-commit hook**                                                                                | 15 min | Prevents script regressions             |
-| 2   | **Add setup assertions to comfyui.nix** — fail if `package` path doesn't exist                                         | 10 min | Catches misconfig early                 |
-| 3   | **Extract `authelia.nix` hardcoded bcrypt hash to sops**                                                               | 15 min | Security — no creds in repo             |
-| 4   | **Add `signoz-alerts.nix` to serviceModules list** — it's a data file, not a flake-parts module, but should be tracked | 5 min  | Consistency                             |
-| 5   | **Add `just validate-scripts` to `just test-fast`**                                                                    | 5 min  | Script validation in the fast test path |
-| 6   | **Replace `192.168.1.100` in ssh-config.nix with `networking.local.lanIP`** — needs HM→NixOS bridge                    | 20 min | Removes hardcoded IP                    |
+| # | Task                                                                                                                   | Effort | Impact                                  |
+| - | ---------------------------------------------------------------------------------------------------------------------- | ------ | --------------------------------------- |
+| 1 | **Add `shellcheck` to pre-commit hook**                                                                                | 15 min | Prevents script regressions             |
+| 2 | **Add setup assertions to comfyui.nix** — fail if `package` path doesn't exist                                         | 10 min | Catches misconfig early                 |
+| 3 | **Extract `authelia.nix` hardcoded bcrypt hash to sops**                                                               | 15 min | Security — no creds in repo             |
+| 4 | **Add `signoz-alerts.nix` to serviceModules list** — it's a data file, not a flake-parts module, but should be tracked | 5 min  | Consistency                             |
+| 5 | **Add `just validate-scripts` to `just test-fast`**                                                                    | 5 min  | Script validation in the fast test path |
+| 6 | **Replace `192.168.1.100` in ssh-config.nix with `networking.local.lanIP`** — needs HM→NixOS bridge                    | 20 min | Removes hardcoded IP                    |
 
 ### Medium Impact, Medium Effort
 
-| #   | Task                                                                                                            | Effort | Impact                                    |
-| --- | --------------------------------------------------------------------------------------------------------------- | ------ | ----------------------------------------- |
-| 7   | **Write a basic `nixosTests` suite** — test that key services start (caddy, gitea, unbound)                     | 2 hrs  | Catches runtime breakage                  |
-| 8   | **Extract gitea scripts to `scripts/` with env var injection**                                                  | 1 hr   | Reduces gitea.nix from 555→250 lines      |
-| 9   | **Create `platforms/common/ssh-hosts.nix`** — derive SSH config from `networking.local.*` + sops for public IPs | 1 hr   | Eliminates 6 hardcoded IPs                |
-| 10  | **Automate `todoListAiFixedHash` update** — script that detects hash mismatch and updates                       | 30 min | Prevents manual hash breakage             |
-| 11  | **Consolidate hermes npmDepsHash patching** — upstream fix or auto-detection                                    | 1 hr   | Fragile patch that breaks on upgrades     |
-| 12  | **Add `perSystem` checks for script path references**                                                           | 30 min | Prevents `dns-update.sh` style bugs       |
-| 13  | **Create `platforms/common/preferences.nix` → shared options module** — `primaryUser`, `stateVersion`, etc.     | 1 hr   | More shared config between platforms      |
-| 14  | **Write justfile recipes for `browser-policies` changes**                                                       | 15 min | Easy testing when browser policies change |
-| 15  | **Audit all `environment.systemPackages` for duplicates across modules**                                        | 30 min | Likely packages listed in multiple places |
+| #  | Task                                                                                                            | Effort | Impact                                    |
+| -- | --------------------------------------------------------------------------------------------------------------- | ------ | ----------------------------------------- |
+| 7  | **Write a basic `nixosTests` suite** — test that key services start (caddy, gitea, unbound)                     | 2 hrs  | Catches runtime breakage                  |
+| 8  | **Extract gitea scripts to `scripts/` with env var injection**                                                  | 1 hr   | Reduces gitea.nix from 555→250 lines      |
+| 9  | **Create `platforms/common/ssh-hosts.nix`** — derive SSH config from `networking.local.*` + sops for public IPs | 1 hr   | Eliminates 6 hardcoded IPs                |
+| 10 | **Automate `todoListAiFixedHash` update** — script that detects hash mismatch and updates                       | 30 min | Prevents manual hash breakage             |
+| 11 | **Consolidate hermes npmDepsHash patching** — upstream fix or auto-detection                                    | 1 hr   | Fragile patch that breaks on upgrades     |
+| 12 | **Add `perSystem` checks for script path references**                                                           | 30 min | Prevents `dns-update.sh` style bugs       |
+| 13 | **Create `platforms/common/preferences.nix` → shared options module** — `primaryUser`, `stateVersion`, etc.     | 1 hr   | More shared config between platforms      |
+| 14 | **Write justfile recipes for `browser-policies` changes**                                                       | 15 min | Easy testing when browser policies change |
+| 15 | **Audit all `environment.systemPackages` for duplicates across modules**                                        | 30 min | Likely packages listed in multiple places |
 
 ### Higher Effort, High Impact
 
-| #   | Task                                                                                                                      | Effort | Impact                                                       |
-| --- | ------------------------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------ |
-| 16  | **Extract `flaky test` packages to `disabledTests` module** — centralize all test-skipping overlays                       | 1 hr   | Single place for all test overrides                          |
-| 17  | **Add `pre-commit` hooks for `statix`, `deadnix`, `alejandra`**                                                           | 1 hr   | Prevents Nix code quality regressions                        |
-| 18  | **Create a `just bootstrap` command** — one-command setup for new machines                                                | 2 hrs  | Reproducible machine provisioning                            |
-| 19  | **Split `configuration.nix` (320 lines) into focused sub-modules** — services, packages, hardware are all in one file     | 2 hrs  | Better separation of concerns                                |
-| 20  | **Add `services.gitea.admin-password` to sops** — currently stored as plain file                                          | 30 min | Security                                                     |
-| 21  | **Audit `pkgs/` for stale vendored files** — `jscpd-package-lock.json` may be stale                                       | 15 min | Package freshness                                            |
-| 22  | **Test rpi3-dns build** — verify the minimal Pi image still evaluates                                                     | 20 min | The Pi config uses different overlays and hasn't been tested |
-| 23  | **Add Darwin-specific overlay file** — move `d2DarwinOverlay` out of shared.nix properly                                  | 30 min | Correct abstraction placement                                |
-| 24  | **Create `modules/nixos/services/firewall.nix`** — centralize all port opens instead of scattering across modules         | 1 hr   | Security audit surface                                       |
-| 25  | **Document `services.enable` convention** — some use `services.<name>.enable`, others use `services.<name>-config.enable` | 30 min | Naming consistency                                           |
+| #  | Task                                                                                                                      | Effort | Impact                                                       |
+| -- | ------------------------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------ |
+| 16 | **Extract `flaky test` packages to `disabledTests` module** — centralize all test-skipping overlays                       | 1 hr   | Single place for all test overrides                          |
+| 17 | **Add `pre-commit` hooks for `statix`, `deadnix`, `alejandra`**                                                           | 1 hr   | Prevents Nix code quality regressions                        |
+| 18 | **Create a `just bootstrap` command** — one-command setup for new machines                                                | 2 hrs  | Reproducible machine provisioning                            |
+| 19 | **Split `configuration.nix` (320 lines) into focused sub-modules** — services, packages, hardware are all in one file     | 2 hrs  | Better separation of concerns                                |
+| 20 | **Add `services.gitea.admin-password` to sops** — currently stored as plain file                                          | 30 min | Security                                                     |
+| 21 | **Audit `pkgs/` for stale vendored files** — `jscpd-package-lock.json` may be stale                                       | 15 min | Package freshness                                            |
+| 22 | **Test rpi3-dns build** — verify the minimal Pi image still evaluates                                                     | 20 min | The Pi config uses different overlays and hasn't been tested |
+| 23 | **Add Darwin-specific overlay file** — move `d2DarwinOverlay` out of shared.nix properly                                  | 30 min | Correct abstraction placement                                |
+| 24 | **Create `modules/nixos/services/firewall.nix`** — centralize all port opens instead of scattering across modules         | 1 hr   | Security audit surface                                       |
+| 25 | **Document `services.enable` convention** — some use `services.<name>.enable`, others use `services.<name>-config.enable` | 30 min | Naming consistency                                           |
 
 ---
 

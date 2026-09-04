@@ -68,6 +68,11 @@ _: {
           # BANK_SYNC_SECURITY_ENCRYPTION_KEY=... (KEY=VALUE env file).
           wiseApiKeyFile = config.sops.templates."bank-sync-env".path;
           encryptionKeyFile = config.sops.templates."bank-sync-env".path;
+
+          # vendorHash override DROPPED 2026-09-03: upstream at lock rev
+          # c6342780 now ships the SAME vendorHash the override carried
+          # (sha256-xkA6…, verified via nix eval on the locked input's
+          # package) — the override had become an identity no-op.
         };
 
         # The pool mounts nofail — systemd-tmpfiles could create the dir on the
@@ -125,6 +130,13 @@ _: {
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
           inherit onFailure;
+          # OTel traces → local SigNoz collector (Go otlptracehttp: bare
+          # host:port, no scheme). Upstream gained OTLP exporter support
+          # 2026-08-31 (cmd/bank-sync/tracing.go, DiscordSync pattern); with
+          # older pinned revs this is a harmless noop until the flake bump.
+          # Enforced by services.signoz-coverage (wiring "upstream" → "env"
+          # after the input bump lands spans).
+          environment.OTEL_EXPORTER_OTLP_ENDPOINT = "localhost:${toString ports.signoz-otlp-http}";
           serviceConfig = lib.mkMerge [
             {
               ExecStartPre = [ (lib.getExe checkEncryptionKey) ];

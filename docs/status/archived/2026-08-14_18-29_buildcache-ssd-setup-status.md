@@ -55,7 +55,7 @@ Two earlier iterations were burned on an impossible idea (ext4 refuses `data=wri
 3. **Deployed a never-tested unit script twice** — neither the chown failure nor the `FS_OPTIONS` typo nor the wantedBy omission would have survived a 10-second `systemd-run --wait` smoke test of the exact unit script. I verified eval output extensively but runtime not at all — then paid 3 deploy cycles for it.
 4. **Left the failed unit to poison subsequent deploys** — after deploy (2) failed I diagnosed via ad-hoc scripts but did not `reset-failed` + re-run init cleanly before the next deploy, so the failed state carried into the next switch.
 
-*(Also observed, not mine, not investigated: `nix-build-cleanup.service` is in failed state — pre-existing or collateral; needs a look.)*
+_(Also observed, not mine, not investigated: `nix-build-cleanup.service` is in failed state — pre-existing or collateral; needs a look.)_
 
 ## e) WHAT WE SHOULD IMPROVE (session lessons)
 
@@ -121,7 +121,7 @@ Two earlier iterations were burned on an impossible idea (ext4 refuses `data=wri
 
 ---
 
-*Sources this session: docs/status/2026-08-14_13-15_ssd-repurposing-options.md (analysis), docs/status/2026-08-14_12-30_ssd-recovery-benchmarking-session.md (benchmarks), live system via /tmp scripts (bc-verify, bc-diag, bc-state).*
+_Sources this session: docs/status/2026-08-14_13-15_ssd-repurposing-options.md (analysis), docs/status/2026-08-14_12-30_ssd-recovery-benchmarking-session.md (benchmarks), live system via /tmp scripts (bc-verify, bc-diag, bc-state)._
 
 ---
 

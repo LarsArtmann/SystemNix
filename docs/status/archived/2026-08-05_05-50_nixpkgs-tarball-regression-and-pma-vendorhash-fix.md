@@ -8,7 +8,6 @@
 
 ---
 
-
 ## Session Narrative
 
 ### What the user reported
@@ -23,27 +22,27 @@ The `nixpkgsTarballGuard` assertion at `flake.nix:526` fired correctly — the n
 
 ### What I actually did (chronological, with mistakes marked)
 
-| Step | What | Verdict |
-|------|------|---------|
-| 1 | Read flake.lock, found nixpkgs node at line 3814 with `type: "tarball"` | OK |
-| 2 | Read `nixpkgsTarballGuard` in flake.nix — understood the assertion | OK |
-| 3 | Edited `original` field from tarball → github | **MISTAKE: only changed `original`, not `locked`** |
-| 4 | Ran `nix flake check --no-build` — failed with `path not valid` | Expected — locked still had tarball narHash |
-| 5 | Ran `nix flake lock --update-input nixpkgs` to try to fix cleanly | **WASTED STEP** — only updated `original`, didn't fix `locked` |
-| 6 | Computed narHash manually with `nix-prefetch-url --unpack` | OK |
-| 7 | Edited `locked` field: changed type to github, replaced narHash | **MISTAKE: wrote narHash without trailing `=`** |
-| 8 | `nix flake check --no-build` — narHash without `=` accepted, eval got further | PMA vendorHash error surfaced |
-| 9 | Fixed narHash `=` suffix | OK |
-| 10 | Saw PMA vendorHash mismatch: `LsNslb…` vs `ruKyds…` | Correct diagnosis |
-| 11 | **Changed SystemNix flake.nix to `git+file:///home/lars/projects/projects-management-automation`** | **WORST MISTAKE OF THE SESSION** |
-| 12 | User said "READ, UNDERSTAND, RESEARCH, REFLECT" | I stopped and thought |
-| 13 | Reverted git+file:// change (auto-git already committed it as `b625e492`) | OK — auto-git committed revert as `cfd946cc` |
-| 14 | Discovered upstream PMA repo already had the vendorHash fix at `b2b6ea70` (local, unpushed) | Should have checked this FIRST |
-| 15 | Pushed `b2b6ea70..88a088f4` to origin | OK |
-| 16 | Updated SystemNix flake.lock: `nix flake lock --update-input projects-management-automation` | OK |
-| 17 | Built PMA from SystemNix: success | OK |
-| 18 | `nix flake check --no-build`: all checks passed | OK |
-| 19 | `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel`: success | OK |
+| Step | What                                                                                               | Verdict                                                        |
+| ---- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| 1    | Read flake.lock, found nixpkgs node at line 3814 with `type: "tarball"`                            | OK                                                             |
+| 2    | Read `nixpkgsTarballGuard` in flake.nix — understood the assertion                                 | OK                                                             |
+| 3    | Edited `original` field from tarball → github                                                      | **MISTAKE: only changed `original`, not `locked`**             |
+| 4    | Ran `nix flake check --no-build` — failed with `path not valid`                                    | Expected — locked still had tarball narHash                    |
+| 5    | Ran `nix flake lock --update-input nixpkgs` to try to fix cleanly                                  | **WASTED STEP** — only updated `original`, didn't fix `locked` |
+| 6    | Computed narHash manually with `nix-prefetch-url --unpack`                                         | OK                                                             |
+| 7    | Edited `locked` field: changed type to github, replaced narHash                                    | **MISTAKE: wrote narHash without trailing `=`**                |
+| 8    | `nix flake check --no-build` — narHash without `=` accepted, eval got further                      | PMA vendorHash error surfaced                                  |
+| 9    | Fixed narHash `=` suffix                                                                           | OK                                                             |
+| 10   | Saw PMA vendorHash mismatch: `LsNslb…` vs `ruKyds…`                                                | Correct diagnosis                                              |
+| 11   | **Changed SystemNix flake.nix to `git+file:///home/lars/projects/projects-management-automation`** | **WORST MISTAKE OF THE SESSION**                               |
+| 12   | User said "READ, UNDERSTAND, RESEARCH, REFLECT"                                                    | I stopped and thought                                          |
+| 13   | Reverted git+file:// change (auto-git already committed it as `b625e492`)                          | OK — auto-git committed revert as `cfd946cc`                   |
+| 14   | Discovered upstream PMA repo already had the vendorHash fix at `b2b6ea70` (local, unpushed)        | Should have checked this FIRST                                 |
+| 15   | Pushed `b2b6ea70..88a088f4` to origin                                                              | OK                                                             |
+| 16   | Updated SystemNix flake.lock: `nix flake lock --update-input projects-management-automation`       | OK                                                             |
+| 17   | Built PMA from SystemNix: success                                                                  | OK                                                             |
+| 18   | `nix flake check --no-build`: all checks passed                                                    | OK                                                             |
+| 19   | `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel`: success                      | OK                                                             |
 
 ---
 
@@ -166,27 +165,33 @@ The `nixpkgsTarballGuard` assertion at `flake.nix:526` fired correctly — the n
 ## Session Self-Review (Brutal Honesty)
 
 ### What did I forget?
+
 - I forgot to check the upstream repo state before changing SystemNix. The fix was already there.
 - I forgot that SystemNix is a multi-machine config — `git+file://` only works on one machine.
 - I forgot that `nix flake lock --update-input` doesn't fix `locked` type changes.
 
 ### What is stupid that we do anyway?
+
 - The auto-git daemon commits wrong intermediate states. This is inherent to the daemon but makes the git history unreadable for incident analysis. 5 commits for 2 logical changes.
 - The nix global registry can rewrite lock types. This is a known nix design issue that the `nixpkgsTarballGuard` catches but cannot prevent.
 
 ### What could I have done better?
+
 - Checked upstream FIRST (30 seconds saved → entire `git+file://` detour avoided).
 - Run `nix flake check --no-build` after the FIRST lock fix to see ALL issues.
 - Not panicked. The vendorHash error gave me the correct hash. The fix was mechanical.
 
 ### Did I lie?
+
 - No. All reported results are verified. But I initially presented the `git+file://` approach as if it were a valid fix, which was misleading — it was a hack that would break other machines.
 
 ### Did I create any split brains?
+
 - **Yes, temporarily.** The `git+file://` commit (`b625e492`) created a state where the flake.nix input diverged from what the flake.lock expected. This was corrected by `cfd946cc` within minutes, but the intermediate state was committed.
 - The auto-git daemon's commits `e173dac1` (my first tarball fix attempt, before narHash correction) and `488514e5` (corrected version) represent another temporary split brain.
 
 ### How are we doing on tests?
+
 - N/A for this session — this was a config/lock fix, not a code change. The existing VM tests (`boot`, `attic`, `searxng`) all evaluate correctly per `nix flake check`.
 
 ---
@@ -204,23 +209,25 @@ The `nixpkgsTarballGuard` assertion at `flake.nix:526` fired correctly — the n
 ## Commits This Session
 
 ### SystemNix (`/home/lars/projects/SystemNix`)
-| Commit | Description | Assessment |
-|--------|-------------|------------|
+
+| Commit     | Description                                           | Assessment                                                    |
+| ---------- | ----------------------------------------------------- | ------------------------------------------------------------- |
 | `e173dac1` | nixpkgs tarball→github (first attempt, narHash wrong) | **Wrong intermediate** — auto-git committed before I finished |
-| `488514e5` | nixpkgs tarball→github (corrected narHash) | **Correct fix** |
-| `b625e492` | PMA input → git+file:// (my mistake) | **Wrong — reverted by cfd946cc** |
-| `cfd946cc` | PMA input reverted to github | **Correct revert** |
-| `15288ff5` | PMA flake.lock updated to rev 88a088f4 | **Correct fix** |
+| `488514e5` | nixpkgs tarball→github (corrected narHash)            | **Correct fix**                                               |
+| `b625e492` | PMA input → git+file:// (my mistake)                  | **Wrong — reverted by cfd946cc**                              |
+| `cfd946cc` | PMA input reverted to github                          | **Correct revert**                                            |
+| `15288ff5` | PMA flake.lock updated to rev 88a088f4                | **Correct fix**                                               |
 
 ### Upstream PMA (`/home/lars/projects/projects-management-automation`)
-| Commit | Description | Assessment |
-|--------|-------------|------------|
+
+| Commit     | Description                      | Assessment                                          |
+| ---------- | -------------------------------- | --------------------------------------------------- |
 | `b2b6ea70` | vendorHash `LsNslb…` → `ruKyds…` | **Correct fix** (pre-existing, pushed this session) |
-| `88a088f4` | Pareto status doc | Pre-existing, pushed this session |
+| `88a088f4` | Pareto status doc                | Pre-existing, pushed this session                   |
 
 ---
 
-*End of report. Waiting for instructions.*
+_End of report. Waiting for instructions._
 
 ---
 

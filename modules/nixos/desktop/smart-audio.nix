@@ -18,7 +18,12 @@ _: {
         import sys
         import time
 
-        DEVICE_NAME = os.environ.get("SMART_AUDIO_DEVICE_NAME", "alsa_card.pci-0000_c5_00.1")
+        # "auto" resolves the GPU HDMI audio card at runtime — PCI addresses
+        # on this host renumber after hard crashes (c5:00.1 -> c6:00.1,
+        # 2026-08-31), which brickwalled every hardcoded variant into a
+        # start-limit-hit crash-loop.
+        DEVICE_NAME = os.environ.get("SMART_AUDIO_DEVICE_NAME", "auto")
+        DEVICE_WAIT_SEC = 120
 
         try:
             OUTPUT_MAP = json.loads(os.environ.get("SMART_AUDIO_OUTPUTS", "{}"))
@@ -29,6 +34,8 @@ _: {
         DEBOUNCE_SEC = 0.5
 
         device_id = None
+        device_name = ""
+        card_token = ""
         profile_map = {}
         current_output = None
         last_switch = 0.0
@@ -63,21 +70,45 @@ _: {
                 return []
 
 
+        def device_from_obj(obj):
+            props = obj.get("info", {}).get("props", {})
+            params = obj.get("info", {}).get("params", {})
+            pmap = {}
+            for p in params.get("EnumProfile", []):
+                name = p.get("name", "")
+                idx = p.get("index")
+                if name and idx is not None:
+                    pmap[name] = idx
+            return obj.get("id"), pmap, props.get("device.name", "")
+
+
         def init_device():
-            data = pw_dump()
-            for obj in data:
+            """Resolve the HDMI audio device.
+
+            An explicit SMART_AUDIO_DEVICE_NAME (full PipeWire device name)
+            wins if it exists. "auto" (or an explicit name that no longer
+            resolves) falls back to the first ALSA card whose profiles
+            include HDMI outputs — i.e. the GPU's audio function. That makes
+            the daemon immune to the post-crash PCI renumbering this host
+            exhibits.
+            """
+            hdmi = None
+            for obj in pw_dump():
                 props = obj.get("info", {}).get("props", {})
-                if props.get("device.name") == DEVICE_NAME:
-                    dev_id = obj.get("id")
-                    params = obj.get("info", {}).get("params", {})
-                    pmap = {}
-                    for p in params.get("EnumProfile", []):
-                        name = p.get("name", "")
-                        idx = p.get("index")
-                        if name and idx is not None:
-                            pmap[name] = idx
-                    return dev_id, pmap
-            return None, {}
+                name = props.get("device.name", "")
+                if not name.startswith("alsa_card."):
+                    continue
+                if DEVICE_NAME != "auto" and name == DEVICE_NAME:
+                    return device_from_obj(obj)
+                profiles = [
+                    p.get("name", "")
+                    for p in obj.get("info", {}).get("params", {}).get("EnumProfile", [])
+                ]
+                if hdmi is None and any("hdmi" in p for p in profiles):
+                    hdmi = obj
+            if hdmi is not None:
+                return device_from_obj(hdmi)
+            return None, {}, ""
 
 
         def find_sink_id(sink_name):
@@ -104,7 +135,7 @@ _: {
 
             out_cfg = OUTPUT_MAP[target_output]
             profile_name = out_cfg.get("profileName", "")
-            sink_name = out_cfg.get("sinkName", "")
+            sink_name = out_cfg.get("sinkName", "").replace("{card}", card_token)
             profile_idx = profile_map.get(profile_name)
 
             if profile_idx is None:
@@ -195,7 +226,7 @@ _: {
 
 
         def main():
-            global device_id, profile_map
+            global device_id, profile_map, device_name, card_token
 
             sock = find_niri_socket()
             if not sock:
@@ -203,12 +234,26 @@ _: {
                 sys.exit(1)
             os.environ["NIRI_SOCKET"] = sock
 
-            device_id, profile_map = init_device()
-            if device_id is None:
-                log(f"FATAL: audio device '{DEVICE_NAME}' not found")
-                sys.exit(1)
+            deadline = time.time() + DEVICE_WAIT_SEC
+            while True:
+                device_id, profile_map, device_name = init_device()
+                if device_id is not None:
+                    break
+                if time.time() >= deadline:
+                    log(
+                        "FATAL: no HDMI-capable ALSA device found after "
+                        f"{DEVICE_WAIT_SEC}s (is PipeWire running?)"
+                    )
+                    sys.exit(1)
+                log("waiting for PipeWire to enumerate the HDMI audio device...")
+                time.sleep(2)
+            card_token = (
+                device_name[len("alsa_card."):]
+                if device_name.startswith("alsa_card.")
+                else device_name
+            )
 
-            log(f"Started (device={DEVICE_NAME} id={device_id})")
+            log(f"Started (device={device_name} id={device_id} card={card_token})")
             log(f"Outputs: {list(OUTPUT_MAP.keys())}")
 
             # Prime workspace→output mapping from current niri state
@@ -258,8 +303,13 @@ _: {
 
         deviceName = lib.mkOption {
           type = lib.types.str;
-          default = "alsa_card.pci-0000_c5_00.1";
-          description = "PipeWire device name of the HDMI audio controller";
+          default = "auto";
+          description = ''
+            PipeWire device name of the HDMI audio controller, or "auto" to
+            resolve the ALSA card offering HDMI profiles (the GPU audio
+            function) at startup. PCI addresses on this host renumber after
+            hard crashes (c5:00.1 -> c6:00.1, 2026-08-31) — prefer "auto".
+          '';
         };
 
         outputs = lib.mkOption {
@@ -272,7 +322,11 @@ _: {
                 };
                 sinkName = lib.mkOption {
                   type = lib.types.str;
-                  description = "PipeWire node name of the sink for this output";
+                  description = ''
+                    PipeWire node name of the sink for this output. The
+                    literal `{card}` placeholder is replaced at runtime with
+                    the resolved card token (e.g. pci-0000_c6_00.1).
+                  '';
                 };
               };
             }
@@ -280,11 +334,11 @@ _: {
           default = {
             "DP-1" = {
               profileName = "output:hdmi-stereo-extra1";
-              sinkName = "alsa_output.pci-0000_c5_00.1.hdmi-stereo-extra1";
+              sinkName = "alsa_output.{card}.hdmi-stereo-extra1";
             };
             "DP-2" = {
               profileName = "output:hdmi-stereo-extra2";
-              sinkName = "alsa_output.pci-0000_c5_00.1.hdmi-stereo-extra2";
+              sinkName = "alsa_output.{card}.hdmi-stereo-extra2";
             };
           };
           description = "Mapping of niri output names to audio profiles and sinks";
@@ -317,13 +371,20 @@ _: {
             Type = "simple";
             ExecStart = lib.getExe smart-audio-daemon;
             Restart = "always";
-            RestartSec = "5s";
+            # 30s politeness: the daemon's in-process device wait (120s) plus a
+            # fast restart loop must not burn start-rate-limit budget while
+            # boot-time audio enumeration is still settling (2026-08-31 §f.17).
+            RestartSec = "30s";
             MemoryMax = "128M";
           };
 
           unitConfig = {
+            # Widened window (was 5/120s): with the in-process 120s device
+            # retry doing the real waiting, a genuine crash-loop now needs 5
+            # failures inside 10 min to trip the limit instead of racing the
+            # boot enumeration (2026-08-31 §f.47).
             StartLimitBurst = 5;
-            StartLimitIntervalSec = 120;
+            StartLimitIntervalSec = 600;
           };
         };
       };

@@ -102,13 +102,13 @@ assert lib.assertMsg
 
 ## Priority Matrix
 
-| #   | Improvement                           | Effort | Impact | Priority |
-| --- | ------------------------------------- | ------ | ------ | -------- |
-| 1   | Hash-check gate on `just switch`      | Low    | High   | P0       |
-| 2   | Move todo-list-ai FOD upstream        | Medium | High   | P0       |
-| 5   | `just test-hashes` command            | Low    | Medium | P1       |
-| 7   | Port collision assertion              | Low    | Medium | P1       |
-| 3   | Remove linux.nix vendorHash overrides | Medium | Medium | P1       |
-| 4   | Pre-commit + CI                       | Medium | High   | P2       |
-| 6   | Auto-discover service modules         | Medium | Medium | P2       |
-| 8   | Darwin overlay isolation              | Low    | Low    | P3       |
+| # | Improvement                           | Effort | Impact | Priority |
+| - | ------------------------------------- | ------ | ------ | -------- |
+| 1 | Hash-check gate on `just switch`      | Low    | High   | P0       |
+| 2 | Move todo-list-ai FOD upstream        | Medium | High   | P0       |
+| 5 | `just test-hashes` command            | Low    | Medium | P1       |
+| 7 | Port collision assertion              | Low    | Medium | P1       |
+| 3 | Remove linux.nix vendorHash overrides | Medium | Medium | P1       |
+| 4 | Pre-commit + CI                       | Medium | High   | P2       |
+| 6 | Auto-discover service modules         | Medium | Medium | P2       |
+| 8 | Darwin overlay isolation              | Low    | Low    | P3       |

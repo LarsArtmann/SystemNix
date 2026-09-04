@@ -79,33 +79,33 @@ Hermes Gateway service is **offline** since 2026-04-27 ~20:46 CEST (~14 hours). 
 
 ## F) Top 25 Things We Should Get Done Next
 
-| #   | Priority | Task                                                   | Why                                 |
-| --- | -------- | ------------------------------------------------------ | ----------------------------------- |
-| 1   | **P0**   | Run `just switch` to activate Hermes fix               | Service offline 14h                 |
-| 2   | **P0**   | Verify Hermes is running: `just hermes-status`         | Confirm fix worked                  |
-| 3   | **P0**   | Run `nh os boot .` to make fix survive reboot          | switch is test-only                 |
-| 4   | **P1**   | Add `OnFailure` notification to hermes.service         | Prevent silent outages              |
-| 5   | **P1**   | Remove dead `oldStateDir` code from hermes.nix         | Cleanup, reduce confusion           |
-| 6   | **P1**   | Add `just switch-status` command to detect stale locks | Operational improvement             |
-| 7   | **P1**   | Run AI model migration: `just ai-migrate`              | Centralize AI storage to /data/ai/  |
-| 8   | **P2**   | Verify all services healthy: `just health`             | Post-activation check               |
-| 9   | **P2**   | Check Immich service post-watchdog fix                 | Verify 0c4d21f works                |
-| 10  | **P2**   | Add Hermes health check to justfile                    | `just hermes-health` for deep check |
-| 11  | **P2**   | Review SigNoz dashboards for Hermes                    | Observability gap                   |
-| 12  | **P2**   | Test `just dns-diagnostics`                            | DNS stack validation                |
-| 13  | **P3**   | Raspberry Pi 3 provisioning for DNS failover           | HA DNS                              |
-| 14  | **P3**   | Add Hermes to homepage dashboard                       | Service visibility                  |
-| 15  | **P3**   | Audit all service modules for ReadWritePaths issues    | Prevent class of bugs               |
-| 16  | **P3**   | Add nix flake check to CI/CD                           | Catch build conflicts early         |
-| 17  | **P3**   | Document the activation lock issue                     | Knowledge base                      |
-| 18  | **P3**   | Review all `lib.mkForce` uses in scheduled-tasks.nix   | Ensure no unintended overrides      |
-| 19  | **P4**   | Set up automated service monitoring alerts             | Proactive detection                 |
-| 20  | **P4**   | Create Hermes backup/restore procedure                 | Disaster recovery                   |
-| 21  | **P4**   | Review and update AGENTS.md with Hermes fix learnings  | Knowledge persistence               |
-| 22  | **P4**   | Audit all systemd hardening configs                    | Systematic review                   |
-| 23  | **P4**   | Add `just rollback` documentation                      | Recovery procedures                 |
-| 24  | **P4**   | Review flake.lock for outdated inputs                  | Maintenance                         |
-| 25  | **P4**   | Clean up temp build results in /tmp/nh-os*             | Disk space                          |
+| #  | Priority | Task                                                   | Why                                 |
+| -- | -------- | ------------------------------------------------------ | ----------------------------------- |
+| 1  | **P0**   | Run `just switch` to activate Hermes fix               | Service offline 14h                 |
+| 2  | **P0**   | Verify Hermes is running: `just hermes-status`         | Confirm fix worked                  |
+| 3  | **P0**   | Run `nh os boot .` to make fix survive reboot          | switch is test-only                 |
+| 4  | **P1**   | Add `OnFailure` notification to hermes.service         | Prevent silent outages              |
+| 5  | **P1**   | Remove dead `oldStateDir` code from hermes.nix         | Cleanup, reduce confusion           |
+| 6  | **P1**   | Add `just switch-status` command to detect stale locks | Operational improvement             |
+| 7  | **P1**   | Run AI model migration: `just ai-migrate`              | Centralize AI storage to /data/ai/  |
+| 8  | **P2**   | Verify all services healthy: `just health`             | Post-activation check               |
+| 9  | **P2**   | Check Immich service post-watchdog fix                 | Verify 0c4d21f works                |
+| 10 | **P2**   | Add Hermes health check to justfile                    | `just hermes-health` for deep check |
+| 11 | **P2**   | Review SigNoz dashboards for Hermes                    | Observability gap                   |
+| 12 | **P2**   | Test `just dns-diagnostics`                            | DNS stack validation                |
+| 13 | **P3**   | Raspberry Pi 3 provisioning for DNS failover           | HA DNS                              |
+| 14 | **P3**   | Add Hermes to homepage dashboard                       | Service visibility                  |
+| 15 | **P3**   | Audit all service modules for ReadWritePaths issues    | Prevent class of bugs               |
+| 16 | **P3**   | Add nix flake check to CI/CD                           | Catch build conflicts early         |
+| 17 | **P3**   | Document the activation lock issue                     | Knowledge base                      |
+| 18 | **P3**   | Review all `lib.mkForce` uses in scheduled-tasks.nix   | Ensure no unintended overrides      |
+| 19 | **P4**   | Set up automated service monitoring alerts             | Proactive detection                 |
+| 20 | **P4**   | Create Hermes backup/restore procedure                 | Disaster recovery                   |
+| 21 | **P4**   | Review and update AGENTS.md with Hermes fix learnings  | Knowledge persistence               |
+| 22 | **P4**   | Audit all systemd hardening configs                    | Systematic review                   |
+| 23 | **P4**   | Add `just rollback` documentation                      | Recovery procedures                 |
+| 24 | **P4**   | Review flake.lock for outdated inputs                  | Maintenance                         |
+| 25 | **P4**   | Clean up temp build results in /tmp/nh-os*             | Disk space                          |
 
 ---
 

@@ -85,36 +85,36 @@ Services with **zero hardening**:
 
 ### P5 — Deployment & Verification (13 tasks, all require evo-x2)
 
-| #   | Task                                         | Est. |
-| --- | -------------------------------------------- | ---- |
-| 41  | `just switch` — deploy all pending changes   | 45m+ |
-| 42  | Verify Ollama works after rebuild            | 5m   |
-| 43  | Verify Steam works after rebuild             | 5m   |
-| 44  | Verify ComfyUI works after rebuild           | 5m   |
-| 45  | Verify Caddy HTTPS block page                | 3m   |
-| 46  | Verify SigNoz collecting metrics/logs/traces | 5m   |
-| 47  | Check Authelia SSO status                    | 3m   |
-| 48  | Check PhotoMap service status                | 3m   |
-| 49  | Verify AMD NPU with test workload            | 10m  |
-| 50  | Build Pi 3 SD image                          | 30m+ |
-| 51  | Flash SD + boot Pi 3                         | 15m  |
-| 52  | Test DNS failover                            | 10m  |
-| 53  | Configure LAN devices for DNS VIP            | 10m  |
+| #  | Task                                         | Est. |
+| -- | -------------------------------------------- | ---- |
+| 41 | `just switch` — deploy all pending changes   | 45m+ |
+| 42 | Verify Ollama works after rebuild            | 5m   |
+| 43 | Verify Steam works after rebuild             | 5m   |
+| 44 | Verify ComfyUI works after rebuild           | 5m   |
+| 45 | Verify Caddy HTTPS block page                | 3m   |
+| 46 | Verify SigNoz collecting metrics/logs/traces | 5m   |
+| 47 | Check Authelia SSO status                    | 3m   |
+| 48 | Check PhotoMap service status                | 3m   |
+| 49 | Verify AMD NPU with test workload            | 10m  |
+| 50 | Build Pi 3 SD image                          | 30m+ |
+| 51 | Flash SD + boot Pi 3                         | 15m  |
+| 52 | Test DNS failover                            | 10m  |
+| 53 | Configure LAN devices for DNS VIP            | 10m  |
 
 ### P9 — Future/Research (10 tasks)
 
-| #   | Task                                              |
-| --- | ------------------------------------------------- |
-| 86  | Create homeModules pattern for HM via flake-parts |
-| 87  | Package ComfyUI as proper Nix derivation          |
-| 88  | Investigate lldap/Kanidm for unified auth         |
-| 89  | Migrate Pi 3 from linux-rpi to nixos-hardware     |
-| 91  | Add NixOS VM tests for critical services          |
-| 92  | Investigate binary cache (Cachix)                 |
-| 93  | Add Waybar module for session restore stats       |
-| 94  | Add real-time save via niri event-stream          |
-| 95  | Add integration tests for session restore         |
-| 96  | File nixpkgs issue for hipblaslt Tensile          |
+| #  | Task                                              |
+| -- | ------------------------------------------------- |
+| 86 | Create homeModules pattern for HM via flake-parts |
+| 87 | Package ComfyUI as proper Nix derivation          |
+| 88 | Investigate lldap/Kanidm for unified auth         |
+| 89 | Migrate Pi 3 from linux-rpi to nixos-hardware     |
+| 91 | Add NixOS VM tests for critical services          |
+| 92 | Investigate binary cache (Cachix)                 |
+| 93 | Add Waybar module for session restore stats       |
+| 94 | Add real-time save via niri event-stream          |
+| 95 | Add integration tests for session restore         |
+| 96 | File nixpkgs issue for hipblaslt Tensile          |
 
 ---
 
@@ -250,33 +250,33 @@ Unknown key 'StartLimitIntervalSec' in section [Service], ignoring.
 
 ## F) TOP 25 THINGS TO DO NEXT (Prioritized)
 
-| Priority | #   | Task                                                                    | Category      | Est. | Impact                                                        |
-| -------- | --- | ----------------------------------------------------------------------- | ------------- | ---- | ------------------------------------------------------------- |
-| 🔴 P0    | 1   | **`just switch` — deploy all committed changes**                        | DEPLOY        | 45m  | Activates niri nproc fix, Go package fixes                    |
-| 🔴 P0    | 2   | **Kill duplicate llama-server (PID 1210173, Jan AI)**                   | OPS           | 1m   | Recovers ~500MB GPU VRAM + RAM                                |
-| 🔴 P0    | 3   | **Add `harden` to ai-stack.nix (Ollama, Unsloth)**                      | RELIABILITY   | 15m  | Prevents GPU OOM cascades                                     |
-| 🔴 P0    | 4   | **Clean coredumps: `coredumpctl vacuum`**                               | OPS           | 1m   | Reclaims disk space                                           |
-| 🟠 P1    | 5   | **Migrate 6 services to `harden()` function**                           | SECURITY      | 30m  | Uniform security posture                                      |
-| 🟠 P1    | 6   | **Nix store GC + delete old generations**                               | DISK          | 10m  | Root at 86%, reclaim 10-50GB                                  |
-| 🟠 P1    | 7   | **Audit `/data/llamacpp-models` vs `/data/models` for dedup**           | DISK          | 15m  | Potential 142GB reclaim                                       |
-| 🟠 P1    | 8   | **Fix remaining 3 Nix-side Go package builds**                          | BUILD         | 30m  | buildflow, go-functional-fixer, terraform-diagrams-aggregator |
-| 🟠 P1    | 9   | **`just update` — refresh flake.lock**                                  | MAINT         | 5m   | Security patches from upstream                                |
-| 🟠 P1    | 10  | **Start Docker + verify Immich, SigNoz, Twenty**                        | DEPLOY        | 15m  | 0 containers running currently                                |
-| 🟡 P2    | 11  | **Hermes health check endpoint**                                        | OBSERVABILITY | 20m  | Enables WatchdogSec + alerting                                |
-| 🟡 P2    | 12  | **Move Taskwarrior encryption to sops-nix**                             | SECURITY      | 10m  | P1-7 from master plan                                         |
-| 🟡 P2    | 13  | **Pin Docker image digests (Voice Agents + PhotoMap)**                  | SECURITY      | 10m  | Supply chain protection                                       |
-| 🟡 P2    | 14  | **Secure VRRP auth_pass with sops**                                     | SECURITY      | 8m   | P1-11 from master plan                                        |
-| 🟡 P2    | 15  | **Complete `/data/ai/` migration (`just ai-migrate`)**                  | ARCH          | 20m  | Centralize model storage                                      |
-| 🟡 P2    | 16  | **Verify SigNoz metrics collection post-deploy**                        | OBSERVABILITY | 10m  | P6-65 from master plan                                        |
-| 🟡 P2    | 17  | **Add `LimitNPROC=infinity` to other user services** (waybar, pipewire) | RELIABILITY   | 5m   | Same issue as niri could affect others                        |
-| 🟢 P3    | 18  | **Close idle editor sessions** (34 gopls instances)                     | PERF          | 2m   | ~8GB RSS recovery                                             |
-| 🟢 P3    | 19  | **Verify Authelia SSO + SMTP notifications**                            | SECURITY      | 10m  | P6-66 from master plan                                        |
-| 🟢 P3    | 20  | **Build Pi 3 SD image for DNS failover cluster**                        | DEPLOY        | 30m+ | P5-50 from master plan                                        |
-| 🟢 P3    | 21  | **Add ComfyUI MemoryHigh (soft limit before MemoryMax)**                | RELIABILITY   | 5m   | Graceful throttling before hard kill                          |
-| 🟢 P3    | 22  | **Wire `mr-sync` into perSystem.packages**                              | BUILD         | 10m  | Package exists but not exposed                                |
-| 🟢 P3    | 23  | **Remove `with lib;` from signoz.nix**                                  | STYLE         | 5m   | Consistency with rest of codebase                             |
-| 🔵 P4    | 24  | **Add NixOS VM tests for critical services**                            | TESTING       | 2h+  | P9-91, automated validation                                   |
-| 🔵 P4    | 25  | **Investigate Committed_AS overcommit (111GB vs 76GB limit)**           | RESEARCH      | 30m  | Understanding memory pressure                                 |
+| Priority | #  | Task                                                                    | Category      | Est. | Impact                                                        |
+| -------- | -- | ----------------------------------------------------------------------- | ------------- | ---- | ------------------------------------------------------------- |
+| 🔴 P0    | 1  | **`just switch` — deploy all committed changes**                        | DEPLOY        | 45m  | Activates niri nproc fix, Go package fixes                    |
+| 🔴 P0    | 2  | **Kill duplicate llama-server (PID 1210173, Jan AI)**                   | OPS           | 1m   | Recovers ~500MB GPU VRAM + RAM                                |
+| 🔴 P0    | 3  | **Add `harden` to ai-stack.nix (Ollama, Unsloth)**                      | RELIABILITY   | 15m  | Prevents GPU OOM cascades                                     |
+| 🔴 P0    | 4  | **Clean coredumps: `coredumpctl vacuum`**                               | OPS           | 1m   | Reclaims disk space                                           |
+| 🟠 P1    | 5  | **Migrate 6 services to `harden()` function**                           | SECURITY      | 30m  | Uniform security posture                                      |
+| 🟠 P1    | 6  | **Nix store GC + delete old generations**                               | DISK          | 10m  | Root at 86%, reclaim 10-50GB                                  |
+| 🟠 P1    | 7  | **Audit `/data/llamacpp-models` vs `/data/models` for dedup**           | DISK          | 15m  | Potential 142GB reclaim                                       |
+| 🟠 P1    | 8  | **Fix remaining 3 Nix-side Go package builds**                          | BUILD         | 30m  | buildflow, go-functional-fixer, terraform-diagrams-aggregator |
+| 🟠 P1    | 9  | **`just update` — refresh flake.lock**                                  | MAINT         | 5m   | Security patches from upstream                                |
+| 🟠 P1    | 10 | **Start Docker + verify Immich, SigNoz, Twenty**                        | DEPLOY        | 15m  | 0 containers running currently                                |
+| 🟡 P2    | 11 | **Hermes health check endpoint**                                        | OBSERVABILITY | 20m  | Enables WatchdogSec + alerting                                |
+| 🟡 P2    | 12 | **Move Taskwarrior encryption to sops-nix**                             | SECURITY      | 10m  | P1-7 from master plan                                         |
+| 🟡 P2    | 13 | **Pin Docker image digests (Voice Agents + PhotoMap)**                  | SECURITY      | 10m  | Supply chain protection                                       |
+| 🟡 P2    | 14 | **Secure VRRP auth_pass with sops**                                     | SECURITY      | 8m   | P1-11 from master plan                                        |
+| 🟡 P2    | 15 | **Complete `/data/ai/` migration (`just ai-migrate`)**                  | ARCH          | 20m  | Centralize model storage                                      |
+| 🟡 P2    | 16 | **Verify SigNoz metrics collection post-deploy**                        | OBSERVABILITY | 10m  | P6-65 from master plan                                        |
+| 🟡 P2    | 17 | **Add `LimitNPROC=infinity` to other user services** (waybar, pipewire) | RELIABILITY   | 5m   | Same issue as niri could affect others                        |
+| 🟢 P3    | 18 | **Close idle editor sessions** (34 gopls instances)                     | PERF          | 2m   | ~8GB RSS recovery                                             |
+| 🟢 P3    | 19 | **Verify Authelia SSO + SMTP notifications**                            | SECURITY      | 10m  | P6-66 from master plan                                        |
+| 🟢 P3    | 20 | **Build Pi 3 SD image for DNS failover cluster**                        | DEPLOY        | 30m+ | P5-50 from master plan                                        |
+| 🟢 P3    | 21 | **Add ComfyUI MemoryHigh (soft limit before MemoryMax)**                | RELIABILITY   | 5m   | Graceful throttling before hard kill                          |
+| 🟢 P3    | 22 | **Wire `mr-sync` into perSystem.packages**                              | BUILD         | 10m  | Package exists but not exposed                                |
+| 🟢 P3    | 23 | **Remove `with lib;` from signoz.nix**                                  | STYLE         | 5m   | Consistency with rest of codebase                             |
+| 🔵 P4    | 24 | **Add NixOS VM tests for critical services**                            | TESTING       | 2h+  | P9-91, automated validation                                   |
+| 🔵 P4    | 25 | **Investigate Committed_AS overcommit (111GB vs 76GB limit)**           | RESEARCH      | 30m  | Understanding memory pressure                                 |
 
 ---
 
@@ -305,12 +305,12 @@ The system has been up for **7 days 21 hours**. ClickHouse (PID 3399046) is runn
 | Metric                | Value                         | Status                              |
 | --------------------- | ----------------------------- | ----------------------------------- |
 | **Uptime**            | 7d 21h                        | Long — consider reboot after deploy |
-| **RAM**               | 46/62 GB (74%)                | ⚠️ High                             |
-| **Swap (ZRAM)**       | 15.2/31.2 GB (49%)            | ⚠️ Under pressure                   |
+| **RAM**               | 46/62 GB (74%)                | ⚠️ High                              |
+| **Swap (ZRAM)**       | 15.2/31.2 GB (49%)            | ⚠️ Under pressure                    |
 | **Root disk**         | 436/512 GB (86%)              | 🔴 Tight                            |
 | **Data disk**         | 685/800 GB (86%)              | 🔴 Tight                            |
-| **Load avg**          | 29/32 cores                   | ⚠️ Near saturation                  |
-| **User threads**      | 4,608 across 285 procs        | ⚠️ Near old 4096 limit              |
+| **Load avg**          | 29/32 cores                   | ⚠️ Near saturation                   |
+| **User threads**      | 4,608 across 285 procs        | ⚠️ Near old 4096 limit               |
 | **Coredumps**         | 174                           | 🟡 Needs cleanup                    |
 | **Docker containers** | 0                             | ❓ Unexpected                       |
 | **gopls instances**   | 34 (~8GB RSS)                 | 🟡 Instance sprawl                  |

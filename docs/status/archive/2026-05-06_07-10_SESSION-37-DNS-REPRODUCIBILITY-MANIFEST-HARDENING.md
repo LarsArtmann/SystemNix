@@ -135,33 +135,33 @@ Fixed a build-breaking hash mismatch caused by mutable DNS blocklist URLs (point
 
 ## F. Top #25 Things to Do Next
 
-| #   | Priority | Task                                                                                   | Impact   | Effort |
-| --- | -------- | -------------------------------------------------------------------------------------- | -------- | ------ |
-| 1   | P0       | Fix watchdogd config parse error (hardware watchdog non-functional)                    | Critical | Low    |
-| 2   | P0       | Fix manifest Docker healthcheck URL                                                    | Medium   | Low    |
-| 3   | P1       | Create `just dns-update` recipe for blocklist pin+hash updates                         | Medium   | Medium |
-| 4   | P1       | Verify Darwin (macOS) build still passes with blocklist changes                        | Medium   | Low    |
-| 5   | P1       | Investigate dnsblockd `context canceled` errors                                        | Low      | Medium |
-| 6   | P1       | Deduplicate manifest sops secrets between manifest.nix and sops.nix                    | Low      | Low    |
-| 7   | P2       | Create niri-session-manager upstream fork PR                                           | Medium   | Medium |
-| 8   | P2       | Add `After=network-online.target` to manifest.service for first-boot reliability       | Medium   | Low    |
-| 9   | P2       | Update AGENTS.md with blocklist pinning pattern and update procedure                   | Low      | Low    |
-| 10  | P2       | Add SigNoz health checks for manifest, dnsblockd, hermes                               | Medium   | Medium |
-| 11  | P2       | Create automated blocklist freshness check (alert when commit is >30 days old)         | Low      | Medium |
-| 12  | P3       | Migrate manifest from docker-compose to podman (podman was removed but Docker remains) | Medium   | High   |
-| 13  | P3       | Add BTRFS snapshot before `just switch` for rollback safety                            | Medium   | Medium |
-| 14  | P3       | Provision Pi 3 for DNS failover cluster                                                | Medium   | High   |
-| 15  | P3       | Add immich database backup verification (restore test)                                 | Medium   | Medium |
-| 16  | P3       | Review and clean up Docker images/volumes (42% of /data used)                          | Low      | Low    |
-| 17  | P3       | Add home-manager activation script for niri-session-manager app→command mapping        | Medium   | Low    |
-| 18  | P3       | Configure Twenty CRM behind Caddy reverse proxy                                        | Medium   | Medium |
-| 19  | P4       | Add GPU temperature monitoring to SigNoz                                               | Low      | Low    |
-| 20  | P4       | Create justfile recipe for GPU recovery testing                                        | Low      | Low    |
-| 21  | P4       | Add disk usage alerting via SigNoz (root 88%, /data 76%)                               | Medium   | Low    |
-| 22  | P4       | Review deer-flow Docker stack — not behind Caddy, no reverse proxy                     | Medium   | Medium |
-| 23  | P4       | Document GPU hang recovery procedure (REISUB) in justfile                              | Low      | Low    |
-| 24  | P4       | Add niri-drm-healthcheck timer validation                                              | Low      | Low    |
-| 25  | P5       | Investigate whisper-asr Docker container — no health check, no restart policy          | Low      | Low    |
+| #  | Priority | Task                                                                                   | Impact   | Effort |
+| -- | -------- | -------------------------------------------------------------------------------------- | -------- | ------ |
+| 1  | P0       | Fix watchdogd config parse error (hardware watchdog non-functional)                    | Critical | Low    |
+| 2  | P0       | Fix manifest Docker healthcheck URL                                                    | Medium   | Low    |
+| 3  | P1       | Create `just dns-update` recipe for blocklist pin+hash updates                         | Medium   | Medium |
+| 4  | P1       | Verify Darwin (macOS) build still passes with blocklist changes                        | Medium   | Low    |
+| 5  | P1       | Investigate dnsblockd `context canceled` errors                                        | Low      | Medium |
+| 6  | P1       | Deduplicate manifest sops secrets between manifest.nix and sops.nix                    | Low      | Low    |
+| 7  | P2       | Create niri-session-manager upstream fork PR                                           | Medium   | Medium |
+| 8  | P2       | Add `After=network-online.target` to manifest.service for first-boot reliability       | Medium   | Low    |
+| 9  | P2       | Update AGENTS.md with blocklist pinning pattern and update procedure                   | Low      | Low    |
+| 10 | P2       | Add SigNoz health checks for manifest, dnsblockd, hermes                               | Medium   | Medium |
+| 11 | P2       | Create automated blocklist freshness check (alert when commit is >30 days old)         | Low      | Medium |
+| 12 | P3       | Migrate manifest from docker-compose to podman (podman was removed but Docker remains) | Medium   | High   |
+| 13 | P3       | Add BTRFS snapshot before `just switch` for rollback safety                            | Medium   | Medium |
+| 14 | P3       | Provision Pi 3 for DNS failover cluster                                                | Medium   | High   |
+| 15 | P3       | Add immich database backup verification (restore test)                                 | Medium   | Medium |
+| 16 | P3       | Review and clean up Docker images/volumes (42% of /data used)                          | Low      | Low    |
+| 17 | P3       | Add home-manager activation script for niri-session-manager app→command mapping        | Medium   | Low    |
+| 18 | P3       | Configure Twenty CRM behind Caddy reverse proxy                                        | Medium   | Medium |
+| 19 | P4       | Add GPU temperature monitoring to SigNoz                                               | Low      | Low    |
+| 20 | P4       | Create justfile recipe for GPU recovery testing                                        | Low      | Low    |
+| 21 | P4       | Add disk usage alerting via SigNoz (root 88%, /data 76%)                               | Medium   | Low    |
+| 22 | P4       | Review deer-flow Docker stack — not behind Caddy, no reverse proxy                     | Medium   | Medium |
+| 23 | P4       | Document GPU hang recovery procedure (REISUB) in justfile                              | Low      | Low    |
+| 24 | P4       | Add niri-drm-healthcheck timer validation                                              | Low      | Low    |
+| 25 | P5       | Investigate whisper-asr Docker container — no health check, no restart policy          | Low      | Low    |
 
 ---
 

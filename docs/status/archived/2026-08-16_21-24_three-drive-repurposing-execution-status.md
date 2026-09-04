@@ -17,7 +17,8 @@
 
 ## b) Partially done
 
-_2026-08-17: all resolved by the 00-59 continuation session — b.1 (forensics fully relocated, verified), b.2 (all Phase-2 config deployed), b.3 (plan amendment done by docs-health)._  
+_2026-08-17: all resolved by the 00-59 continuation session — b.1 (forensics fully relocated, verified), b.2 (all Phase-2 config deployed), b.3 (plan amendment done by docs-health)._
+
 ## c) Not started
 
 _All items in this section were completed by the 00-59 continuation session (paperless module+secret+enable, btrbk safety net, smartd, Caddy/Homepage/Gatus, backup-coordination, deploy, verification, old-immich removal, docs) — see the Resolution appendix._
@@ -41,6 +42,7 @@ _All items in this section were completed by the 00-59 continuation session (pap
 ## f) Next items (grouped, with rough estimates)
 
 **Immediate stabilization**
+
 1. ~~Check forensics-move job completion; verify all 4 dirs relocated + /data freed (2 min)~~ done — verified in the 00-59 continuation (§a.2: all 4 dirs, count+size verified, /data 85%→82%)
 2. ~~Reconcile foreign edits: read `flake.nix`, `gatus-config.nix`, `post-deploy-check.sh`, the 20-41 status doc; keep intentional work, merge with mine (15 min)~~ done — the 00-59 session resolved all 3 open questions autonomously (§a.1)
 3. ~~Identify the live generation + why immich is inactive (10 min)~~ done — deployed generation verified to predate the config edits; went straight to pool deploy

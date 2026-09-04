@@ -95,33 +95,33 @@
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| #   | Task                                                                                  | Priority | Effort | Category       |
-| --- | ------------------------------------------------------------------------------------- | -------- | ------ | -------------- |
-| 1   | Fix "Setup-Mac" → "SystemNix" in scripts + justfile dep-graph names                   | P0       | 30min  | Stale refs     |
-| 2   | Remove Hyprland validation from `validate-deployment.sh`                              | P0       | 15min  | Broken code    |
-| 3   | Fix `flake.nix:313` Ghost Systems comment                                             | P0       | 1min   | Stale ref      |
-| 4   | Add `gitleaks` and `jq` to devShell packages                                          | P1       | 5min   | Pre-commit     |
-| 5   | Verify full `nix flake check --all-systems` passes                                    | P1       | 30min  | Build health   |
-| 6   | Wire orphan scripts into justfile or archive                                          | P1       | 30min  | Scripts        |
-| 7   | Archive docs/status/ files older than 30 days                                         | P2       | 15min  | Docs cleanup   |
-| 8   | Create `docs/README.md` index pointing to key docs                                    | P2       | 30min  | Docs structure |
-| 9   | Remove or plan `platforms/nixos/private-cloud/`                                       | P2       | 10min  | Dead code      |
-| 10  | Consolidate duplicate DNS scripts (`dns-diagnostics.sh` vs justfile `dns-*` commands) | P2       | 30min  | Scripts        |
-| 11  | Update `docs/README.test.md` — still references Setup-Mac and Hyprland                | P2       | 15min  | Stale docs     |
-| 12  | Add NixOS build job to CI workflow                                                    | P2       | 1hr    | CI/CD          |
-| 13  | Verify Go 1.26 overlay works with current nixpkgs-unstable                            | P2       | 30min  | Build health   |
-| 14  | Rename `docs/architecture/Setup-Mac-*.svg` files                                      | P3       | 5min   | Stale refs     |
-| 15  | Clean up `dotfiles/` — no .nix files there, all managed by HM                         | P3       | 1hr    | Tech debt      |
-| 16  | Add Prometheus alerting rules for critical services                                   | P3       | 2hr    | Monitoring     |
-| 17  | Write NixOS test for dnsblockd service                                                | P3       | 2hr    | Testing        |
-| 18  | Write NixOS test for Caddy reverse proxy                                              | P3       | 2hr    | Testing        |
-| 19  | Implement backup restore testing                                                      | P3       | 2hr    | Reliability    |
-| 20  | Add Cachix or GitHub Actions cache to CI                                              | P3       | 1hr    | CI/CD          |
-| 21  | Set up automated flake input updates (Renovate)                                       | P3       | 2hr    | Automation     |
-| 22  | Create ADR-005 for flake-parts service module pattern                                 | P3       | 30min  | Documentation  |
-| 23  | Audit and clean up `docs/planning/` (19 files, may be stale)                          | P3       | 1hr    | Docs cleanup   |
-| 24  | Verify Immich ML with GPU acceleration on evo-x2                                      | P3       | 1hr    | Services       |
-| 25  | Document the DNS blocker architecture in a proper ADR                                 | P4       | 1hr    | Documentation  |
+| #  | Task                                                                                  | Priority | Effort | Category       |
+| -- | ------------------------------------------------------------------------------------- | -------- | ------ | -------------- |
+| 1  | Fix "Setup-Mac" → "SystemNix" in scripts + justfile dep-graph names                   | P0       | 30min  | Stale refs     |
+| 2  | Remove Hyprland validation from `validate-deployment.sh`                              | P0       | 15min  | Broken code    |
+| 3  | Fix `flake.nix:313` Ghost Systems comment                                             | P0       | 1min   | Stale ref      |
+| 4  | Add `gitleaks` and `jq` to devShell packages                                          | P1       | 5min   | Pre-commit     |
+| 5  | Verify full `nix flake check --all-systems` passes                                    | P1       | 30min  | Build health   |
+| 6  | Wire orphan scripts into justfile or archive                                          | P1       | 30min  | Scripts        |
+| 7  | Archive docs/status/ files older than 30 days                                         | P2       | 15min  | Docs cleanup   |
+| 8  | Create `docs/README.md` index pointing to key docs                                    | P2       | 30min  | Docs structure |
+| 9  | Remove or plan `platforms/nixos/private-cloud/`                                       | P2       | 10min  | Dead code      |
+| 10 | Consolidate duplicate DNS scripts (`dns-diagnostics.sh` vs justfile `dns-*` commands) | P2       | 30min  | Scripts        |
+| 11 | Update `docs/README.test.md` — still references Setup-Mac and Hyprland                | P2       | 15min  | Stale docs     |
+| 12 | Add NixOS build job to CI workflow                                                    | P2       | 1hr    | CI/CD          |
+| 13 | Verify Go 1.26 overlay works with current nixpkgs-unstable                            | P2       | 30min  | Build health   |
+| 14 | Rename `docs/architecture/Setup-Mac-*.svg` files                                      | P3       | 5min   | Stale refs     |
+| 15 | Clean up `dotfiles/` — no .nix files there, all managed by HM                         | P3       | 1hr    | Tech debt      |
+| 16 | Add Prometheus alerting rules for critical services                                   | P3       | 2hr    | Monitoring     |
+| 17 | Write NixOS test for dnsblockd service                                                | P3       | 2hr    | Testing        |
+| 18 | Write NixOS test for Caddy reverse proxy                                              | P3       | 2hr    | Testing        |
+| 19 | Implement backup restore testing                                                      | P3       | 2hr    | Reliability    |
+| 20 | Add Cachix or GitHub Actions cache to CI                                              | P3       | 1hr    | CI/CD          |
+| 21 | Set up automated flake input updates (Renovate)                                       | P3       | 2hr    | Automation     |
+| 22 | Create ADR-005 for flake-parts service module pattern                                 | P3       | 30min  | Documentation  |
+| 23 | Audit and clean up `docs/planning/` (19 files, may be stale)                          | P3       | 1hr    | Docs cleanup   |
+| 24 | Verify Immich ML with GPU acceleration on evo-x2                                      | P3       | 1hr    | Services       |
+| 25 | Document the DNS blocker architecture in a proper ADR                                 | P4       | 1hr    | Documentation  |
 
 ---
 

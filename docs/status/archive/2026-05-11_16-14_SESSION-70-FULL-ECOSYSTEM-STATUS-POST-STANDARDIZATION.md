@@ -182,15 +182,15 @@ Currently this helper generates `require`+`replace` directives for go-output's 4
 
 ## System Health
 
-| Metric                      | Value                                                             | Status            |
-| --------------------------- | ----------------------------------------------------------------- | ----------------- |
+| Metric                      | Value                                                             | Status           |
+| --------------------------- | ----------------------------------------------------------------- | ---------------- |
 | Root disk (`/`)             | 80% used (103 GB free)                                            | ⚠️ Watch          |
-| Data disk (`/data`)         | 73% used (280 GB free)                                            | ✅ OK             |
-| Go projects building        | 9/9                                                               | ✅                |
-| SystemNix `test-fast`       | Passes                                                            | ✅                |
+| Data disk (`/data`)         | 73% used (280 GB free)                                            | ✅ OK            |
+| Go projects building        | 9/9                                                               | ✅               |
+| SystemNix `test-fast`       | Passes                                                            | ✅               |
 | Dead `pkgs/` files          | 2                                                                 | ⚠️ Cleanup needed |
 | Dead flake inputs           | 3 (`*-src` for golangci-lint-auto-configure, go-finding, mr-sync) | ⚠️ Cleanup needed |
-| Flakes needing upstream fix | 2 (file-and-image-renamer, monitor365)                            | 🔧 In progress    |
+| Flakes needing upstream fix | 2 (file-and-image-renamer, monitor365)                            | 🔧 In progress   |
 
 ---
 

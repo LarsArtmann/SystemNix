@@ -40,20 +40,20 @@
 
 ### a) ✅ FULLY DONE
 
-1.  **Home Manager for macOS (Flake):** Enabled in `flake.nix`.
-2.  **Validation:** Baseline validation complete. We know where the bodies are buried (syntax errors in Ghost Systems).
+1. **Home Manager for macOS (Flake):** Enabled in `flake.nix`.
+2. **Validation:** Baseline validation complete. We know where the bodies are buried (syntax errors in Ghost Systems).
 
 ### b) 🚧 PARTIALLY DONE
 
-1.  **macOS `home.nix`:** Enabled in flake, but internal compatibility with new `specialArgs` is unverified.
-2.  **NixOS Configuration:** Functional, but using deprecated options and missing Home Manager.
+1. **macOS `home.nix`:** Enabled in flake, but internal compatibility with new `specialArgs` is unverified.
+2. **NixOS Configuration:** Functional, but using deprecated options and missing Home Manager.
 
 ### c) ❌ NOT STARTED
 
-1.  **Home Manager for NixOS (Flake):** Needs to be enabled in `flake.nix`.
-2.  **NixOS `home.nix`:** File does not exist.
-3.  **Platform Abstraction:** `core/Platform.nix` logic still needs implementation.
-4.  **Ghost Systems Repair:** The syntax errors found by `deadnix` need addressing (Low Priority for _this_ specific migration, but High for system health).
+1. **Home Manager for NixOS (Flake):** Needs to be enabled in `flake.nix`.
+2. **NixOS `home.nix`:** File does not exist.
+3. **Platform Abstraction:** `core/Platform.nix` logic still needs implementation.
+4. **Ghost Systems Repair:** The syntax errors found by `deadnix` need addressing (Low Priority for _this_ specific migration, but High for system health).
 
 ---
 

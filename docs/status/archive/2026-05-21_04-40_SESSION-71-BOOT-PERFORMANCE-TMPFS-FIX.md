@@ -68,20 +68,20 @@
 
 ## c) NOT STARTED
 
-| #   | Item                                  | Priority | Notes                                                                                   |
-| --- | ------------------------------------- | -------- | --------------------------------------------------------------------------------------- |
-| 1   | CI check for `self.rev` anti-pattern  | P2       | GitHub Actions workflow to grep `.nix` files                                            |
-| 2   | Shared `flake-parts-go-template` repo | P2       | Prevent anti-pattern in new repos                                                       |
-| 3   | `version-bump` automation script      | P3       | Edit `flake.nix` → commit → tag → push in one command                                   |
-| 4   | `sync-flake-lock` script              | P3       | Update all LarsArtmann inputs in SystemNix                                              |
-| 5   | Dozzle deployment                     | P3       | Docker container log tailing at `logs.home.lan` — evaluation done, needs implementation |
-| 6   | nix-colors integration                | P3       | Wire to Home Manager, migrate 17+ hardcoded colors                                      |
-| 7   | ADR-007: Nix Versioning Convention    | P3       | Permanent ADR in `docs/adr/`                                                            |
-| 8   | `CONTEXT.md` at SystemNix root        | P3       | Agent onboarding document                                                               |
-| 9   | `docs/status/` archive sweep          | P4       | Move reports older than 2 weeks to `archive/`                                           |
-| 10  | Darwin disk cleanup                   | P4       | 229GB, 90-95% full — `nix-collect-garbage` hangs, manual cache clearing needed          |
-| 11  | SigNoz JWT secret fix                 | P4       | `SIGNOZ_TOKENIZER_JWT_SECRET` hardcoded or missing                                      |
-| 12  | Whisper ASR down alert                | P4       | Add to SigNoz rules                                                                     |
+| #  | Item                                  | Priority | Notes                                                                                   |
+| -- | ------------------------------------- | -------- | --------------------------------------------------------------------------------------- |
+| 1  | CI check for `self.rev` anti-pattern  | P2       | GitHub Actions workflow to grep `.nix` files                                            |
+| 2  | Shared `flake-parts-go-template` repo | P2       | Prevent anti-pattern in new repos                                                       |
+| 3  | `version-bump` automation script      | P3       | Edit `flake.nix` → commit → tag → push in one command                                   |
+| 4  | `sync-flake-lock` script              | P3       | Update all LarsArtmann inputs in SystemNix                                              |
+| 5  | Dozzle deployment                     | P3       | Docker container log tailing at `logs.home.lan` — evaluation done, needs implementation |
+| 6  | nix-colors integration                | P3       | Wire to Home Manager, migrate 17+ hardcoded colors                                      |
+| 7  | ADR-007: Nix Versioning Convention    | P3       | Permanent ADR in `docs/adr/`                                                            |
+| 8  | `CONTEXT.md` at SystemNix root        | P3       | Agent onboarding document                                                               |
+| 9  | `docs/status/` archive sweep          | P4       | Move reports older than 2 weeks to `archive/`                                           |
+| 10 | Darwin disk cleanup                   | P4       | 229GB, 90-95% full — `nix-collect-garbage` hangs, manual cache clearing needed          |
+| 11 | SigNoz JWT secret fix                 | P4       | `SIGNOZ_TOKENIZER_JWT_SECRET` hardcoded or missing                                      |
+| 12 | Whisper ASR down alert                | P4       | Add to SigNoz rules                                                                     |
 
 ---
 
@@ -135,48 +135,48 @@
 
 ### P1 — Verify & Deploy
 
-| #   | Task                                                       | Effort | Impact                                  |
-| --- | ---------------------------------------------------------- | ------ | --------------------------------------- |
-| 1   | `just switch` + reboot to verify tmpfs boot fix            | 5m     | Confirms 45s boot time reduction        |
-| 2   | Run `systemd-analyze` after reboot, log result             | 1m     | Baseline for future comparison          |
-| 3   | `nix store gc --delete-older-than 7d`                      | 10m    | Frees disk space (7,479 paths eligible) |
-| 4   | Update `TODO_LIST.md` — mark done items, remove stale ones | 15m    | Accurate project state                  |
+| # | Task                                                       | Effort | Impact                                  |
+| - | ---------------------------------------------------------- | ------ | --------------------------------------- |
+| 1 | `just switch` + reboot to verify tmpfs boot fix            | 5m     | Confirms 45s boot time reduction        |
+| 2 | Run `systemd-analyze` after reboot, log result             | 1m     | Baseline for future comparison          |
+| 3 | `nix store gc --delete-older-than 7d`                      | 10m    | Frees disk space (7,479 paths eligible) |
+| 4 | Update `TODO_LIST.md` — mark done items, remove stale ones | 15m    | Accurate project state                  |
 
 ### P2 — Prevent Regression
 
-| #   | Task                                                                    | Effort | Impact                             |
-| --- | ----------------------------------------------------------------------- | ------ | ---------------------------------- |
-| 5   | Create `github:LarsArtmann/flake-parts-go-template`                     | 1h     | Prevents anti-pattern in new repos |
-| 6   | Add CI check that fails on `self.rev`/`self.shortRev` in `.nix` files   | 15m    | Catches anti-pattern at PR time    |
-| 7   | Add CI check that verifies `version` is hardcoded semver                | 15m    | Catches dynamic versions           |
-| 8   | Remove redundant `boot.tmp.cleanOnBoot = true` (tmpfs makes it a no-op) | 2m     | Cleanliness                        |
+| # | Task                                                                    | Effort | Impact                             |
+| - | ----------------------------------------------------------------------- | ------ | ---------------------------------- |
+| 5 | Create `github:LarsArtmann/flake-parts-go-template`                     | 1h     | Prevents anti-pattern in new repos |
+| 6 | Add CI check that fails on `self.rev`/`self.shortRev` in `.nix` files   | 15m    | Catches anti-pattern at PR time    |
+| 7 | Add CI check that verifies `version` is hardcoded semver                | 15m    | Catches dynamic versions           |
+| 8 | Remove redundant `boot.tmp.cleanOnBoot = true` (tmpfs makes it a no-op) | 2m     | Cleanliness                        |
 
 ### P3 — Cleanup
 
-| #   | Task                                                                     | Effort | Impact                                      |
-| --- | ------------------------------------------------------------------------ | ------ | ------------------------------------------- |
-| 9   | Fix pre-commit hooks in BuildFlow (77 golangci-lint issues)              | 2h     | Enables clean commits without `--no-verify` |
-| 10  | Fix pre-commit hooks in dnsblockd (3 TODO comments)                      | 30m    | Enables clean commits                       |
-| 11  | Fix pre-commit hooks in golangci-lint-auto-configure (nix-fmt, gitleaks) | 30m    | Enables clean commits                       |
-| 12  | Standardize all repos to `master` branch or update `flake.nix` `ref=`    | 1h     | Removes branch-name fragility               |
-| 13  | Clean BuildFlow working directory (50+ unstaged files)                   | 30m    | Hygiene                                     |
-| 14  | Archive `docs/status/` reports older than 2 weeks                        | 15m    | Hygiene                                     |
+| #  | Task                                                                     | Effort | Impact                                      |
+| -- | ------------------------------------------------------------------------ | ------ | ------------------------------------------- |
+| 9  | Fix pre-commit hooks in BuildFlow (77 golangci-lint issues)              | 2h     | Enables clean commits without `--no-verify` |
+| 10 | Fix pre-commit hooks in dnsblockd (3 TODO comments)                      | 30m    | Enables clean commits                       |
+| 11 | Fix pre-commit hooks in golangci-lint-auto-configure (nix-fmt, gitleaks) | 30m    | Enables clean commits                       |
+| 12 | Standardize all repos to `master` branch or update `flake.nix` `ref=`    | 1h     | Removes branch-name fragility               |
+| 13 | Clean BuildFlow working directory (50+ unstaged files)                   | 30m    | Hygiene                                     |
+| 14 | Archive `docs/status/` reports older than 2 weeks                        | 15m    | Hygiene                                     |
 
 ### P4 — Automation & Features
 
-| #   | Task                                                                 | Effort | Impact                            |
-| --- | -------------------------------------------------------------------- | ------ | --------------------------------- |
-| 15  | Create `version-bump` script: edit `flake.nix` → commit → tag → push | 30m    | Reduces release to 1 command      |
-| 16  | Create `sync-flake-lock` script: update all LarsArtmann inputs       | 30m    | Reduces lock updates to 1 command |
-| 17  | Deploy Dozzle at `logs.home.lan`                                     | 1h     | Docker container log tailing      |
-| 18  | Write ADR-007: Nix Versioning Convention                             | 15m    | Permanent record                  |
-| 19  | Create `CONTEXT.md` at SystemNix root                                | 30m    | Agent onboarding                  |
-| 20  | Fix SigNoz JWT secret (`SIGNOZ_TOKENIZER_JWT_SECRET`)                | 30m    | Security                          |
-| 21  | Add Whisper ASR down alert to SigNoz rules                           | 15m    | Monitoring                        |
-| 22  | Add boot time alert (alert if `systemd-analyze` > 60s)               | 15m    | Performance monitoring            |
-| 23  | Weekly nix store GC systemd timer                                    | 15m    | Prevents disk exhaustion          |
-| 24  | Extract hardcoded ports in `voice-agents.nix`, `configuration.nix`   | 30m    | Config consistency                |
-| 25  | Provision Pi 3 as secondary DNS                                      | 2h     | DNS redundancy                    |
+| #  | Task                                                                 | Effort | Impact                            |
+| -- | -------------------------------------------------------------------- | ------ | --------------------------------- |
+| 15 | Create `version-bump` script: edit `flake.nix` → commit → tag → push | 30m    | Reduces release to 1 command      |
+| 16 | Create `sync-flake-lock` script: update all LarsArtmann inputs       | 30m    | Reduces lock updates to 1 command |
+| 17 | Deploy Dozzle at `logs.home.lan`                                     | 1h     | Docker container log tailing      |
+| 18 | Write ADR-007: Nix Versioning Convention                             | 15m    | Permanent record                  |
+| 19 | Create `CONTEXT.md` at SystemNix root                                | 30m    | Agent onboarding                  |
+| 20 | Fix SigNoz JWT secret (`SIGNOZ_TOKENIZER_JWT_SECRET`)                | 30m    | Security                          |
+| 21 | Add Whisper ASR down alert to SigNoz rules                           | 15m    | Monitoring                        |
+| 22 | Add boot time alert (alert if `systemd-analyze` > 60s)               | 15m    | Performance monitoring            |
+| 23 | Weekly nix store GC systemd timer                                    | 15m    | Prevents disk exhaustion          |
+| 24 | Extract hardcoded ports in `voice-agents.nix`, `configuration.nix`   | 30m    | Config consistency                |
+| 25 | Provision Pi 3 as secondary DNS                                      | 2h     | DNS redundancy                    |
 
 ---
 

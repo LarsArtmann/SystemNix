@@ -8,7 +8,6 @@
 
 ---
 
-
 ## TL;DR
 
 `crush-daily` service is **up, serving HTTP, but collecting nothing**. Every nightly `collect` job at 00:30 logs `collect done projects=0 sessions=0 messages=0 cost=0` — silently successful with empty data. The `insights` and `report` jobs at 03:00 and 03:30 then fail with `read model: no data collected for date: YYYY-MM-DD`. Reports exist for the last week but every one shows "0 sessions" and "Insights pending".
@@ -174,6 +173,7 @@ Prioritized. P0 = blocking, P1 = this week, P2 = next sprint.
 ### Q1: What's your preference for the fix path?
 
 Three options in the feedback doc:
+
 - **A.** Per-user systemd service (cleanest, biggest blast radius)
 - **B.** `runAsUser = "lars"` in SystemNix wrapper (smallest change, fastest ship)
 - **C.** Defensive doctor probe + Gatus nonzero assertion (no upstream coupling)
@@ -221,6 +221,7 @@ _Session end._
 ---
 
 > **Update 2026-07-29:** Three factual errors in this report were corrected by the fix report (`2026-07-29_07-18_caddy-xrealip-and-crush-daily-backfill.md`): (1) The `/home/lars` mode-700 claim was wrong — the real blocker was the ACL mask (`mask::---` zeroing out `users:r-x`). (2) The claim that upstream has NO `runAsUser` was false — upstream DID add `services.crush-daily.runAsUser`, and SystemNix now sets `runAsUser = config.users.primaryUser`. (3) The schema drift + SQLite DSN bugs were fixed upstream (commits `4b94ed8`, `83cb19d`). All 45 zero-data dates (2026-06-11 through 2026-07-26) were backfilled. The `file:` prefix DSN fix was the critical missing piece.
+
 ---
 
 ## Item Resolution (2026-07-30)

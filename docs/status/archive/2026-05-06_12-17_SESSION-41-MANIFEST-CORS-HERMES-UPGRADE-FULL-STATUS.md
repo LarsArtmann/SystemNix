@@ -82,15 +82,15 @@
 
 | Item                          | Status | What's Missing                                                                                                                                                                                               |
 | ----------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Manifest LLM router**       | ⚠️     | `CORS_ORIGIN` fix committed but NOT deployed. Rate limiting warning ("could not determine client IP") — upstream Manifest doesn't expose `trustedProxies` config. First-run setup done (admin user created). |
-| **Hermes v2026.4.30 upgrade** | ⚠️     | Pinned to release tag, new vendor hash, SQLite auto-recovery added, `logs/curator` subdirectory — committed but NOT deployed                                                                                 |
-| **DNS failover cluster**      | ⚠️     | Module exists (`dns-failover.nix`), Keepalived VRRP config written — Pi 3 hardware not provisioned                                                                                                           |
-| **Voice agents**              | ⚠️     | LiveKit + Whisper module exists, Docker ROCm — may need verification after last deploy                                                                                                                       |
+| **Manifest LLM router**       | ⚠️      | `CORS_ORIGIN` fix committed but NOT deployed. Rate limiting warning ("could not determine client IP") — upstream Manifest doesn't expose `trustedProxies` config. First-run setup done (admin user created). |
+| **Hermes v2026.4.30 upgrade** | ⚠️      | Pinned to release tag, new vendor hash, SQLite auto-recovery added, `logs/curator` subdirectory — committed but NOT deployed                                                                                 |
+| **DNS failover cluster**      | ⚠️      | Module exists (`dns-failover.nix`), Keepalived VRRP config written — Pi 3 hardware not provisioned                                                                                                           |
+| **Voice agents**              | ⚠️      | LiveKit + Whisper module exists, Docker ROCm — may need verification after last deploy                                                                                                                       |
 | **PhotoMap AI**               | 🔧     | Module exists, disabled in config                                                                                                                                                                            |
 | **Twenty CRM**                | 🔧     | Module exists, Docker Compose, sops secrets — unclear if actively deployed                                                                                                                                   |
 | **Unsloth Studio**            | 🔧     | Module exists, disabled by default                                                                                                                                                                           |
 | **Multi-WM (Sway)**           | 🔧     | Module exists, disabled in config                                                                                                                                                                            |
-| **AMD NPU driver**            | ⚠️     | `nix-amd-npu` input present, but XDNA driver support is experimental                                                                                                                                         |
+| **AMD NPU driver**            | ⚠️      | `nix-amd-npu` input present, but XDNA driver support is experimental                                                                                                                                         |
 | **Raspberry Pi 3 image**      | 📋     | `nixosConfigurations.rpi3-dns` defined in flake — hardware not provisioned                                                                                                                                   |
 
 ---
@@ -161,53 +161,53 @@
 
 ### Priority 1: Deploy & Verify (Immediate)
 
-| #   | Task                                                                               | Impact | Effort |
-| --- | ---------------------------------------------------------------------------------- | ------ | ------ |
-| 1   | **Deploy pending changes** (`just switch`) — Hermes v2026.4.30 + Manifest CORS fix | High   | Low    |
-| 2   | **Verify Manifest sign-in works** after CORS_ORIGIN deploy                         | High   | Low    |
-| 3   | **Verify Hermes auto-recovery** — test SQLite malformed DB handling                | Medium | Low    |
-| 4   | **Run `just health`** — full cross-platform health check                           | Medium | Low    |
+| # | Task                                                                               | Impact | Effort |
+| - | ---------------------------------------------------------------------------------- | ------ | ------ |
+| 1 | **Deploy pending changes** (`just switch`) — Hermes v2026.4.30 + Manifest CORS fix | High   | Low    |
+| 2 | **Verify Manifest sign-in works** after CORS_ORIGIN deploy                         | High   | Low    |
+| 3 | **Verify Hermes auto-recovery** — test SQLite malformed DB handling                | Medium | Low    |
+| 4 | **Run `just health`** — full cross-platform health check                           | Medium | Low    |
 
 ### Priority 2: Observability & Reliability
 
-| #   | Task                                                                | Impact | Effort |
-| --- | ------------------------------------------------------------------- | ------ | ------ |
-| 5   | **Configure SigNoz alert notifications** — webhook or email channel | High   | Medium |
-| 6   | **Gatus health checks** — finish module, deploy for all services    | High   | Medium |
-| 7   | **Gitea backup restore test** — verify weekly dumps are valid       | High   | Low    |
-| 8   | **Disaster recovery playbook** — document full rebuild procedure    | Medium | Medium |
-| 9   | **BTRFS snapshot restore test** — verify Timeshift works            | Medium | Low    |
-| 10  | **SOPS secret rotation plan** — document and schedule               | Medium | Medium |
+| #  | Task                                                                | Impact | Effort |
+| -- | ------------------------------------------------------------------- | ------ | ------ |
+| 5  | **Configure SigNoz alert notifications** — webhook or email channel | High   | Medium |
+| 6  | **Gatus health checks** — finish module, deploy for all services    | High   | Medium |
+| 7  | **Gitea backup restore test** — verify weekly dumps are valid       | High   | Low    |
+| 8  | **Disaster recovery playbook** — document full rebuild procedure    | Medium | Medium |
+| 9  | **BTRFS snapshot restore test** — verify Timeshift works            | Medium | Low    |
+| 10 | **SOPS secret rotation plan** — document and schedule               | Medium | Medium |
 
 ### Priority 3: Architecture & Code Quality
 
-| #   | Task                                                                          | Impact | Effort |
-| --- | ----------------------------------------------------------------------------- | ------ | ------ |
-| 11  | **Archive stale status reports** — move everything > 14 days to `archive/`    | Low    | Low    |
-| 12  | **Organize `docs/` top-level** — move research/evaluation to `docs/research/` | Low    | Low    |
-| 13  | **File Manifest upstream issue** — request `trustedProxies` config support    | Medium | Low    |
-| 14  | **Add module option descriptions** — ensure all `options` have `description`  | Low    | Medium |
-| 15  | **Service dependency graph** — visualize with D2 diagram                      | Medium | Medium |
+| #  | Task                                                                          | Impact | Effort |
+| -- | ----------------------------------------------------------------------------- | ------ | ------ |
+| 11 | **Archive stale status reports** — move everything > 14 days to `archive/`    | Low    | Low    |
+| 12 | **Organize `docs/` top-level** — move research/evaluation to `docs/research/` | Low    | Low    |
+| 13 | **File Manifest upstream issue** — request `trustedProxies` config support    | Medium | Low    |
+| 14 | **Add module option descriptions** — ensure all `options` have `description`  | Low    | Medium |
+| 15 | **Service dependency graph** — visualize with D2 diagram                      | Medium | Medium |
 
 ### Priority 4: Infrastructure
 
-| #   | Task                                                             | Impact | Effort |
-| --- | ---------------------------------------------------------------- | ------ | ------ |
-| 16  | **Automated DNS blocklist updates** — weekly timer or CI job     | Medium | Low    |
-| 17  | **Pi 3 provisioning** — flash SD, boot, verify DNS failover      | High   | High   |
-| 18  | **DNS failover cluster testing** — verify VRRP failover works    | High   | Medium |
-| 19  | **CI Darwin build check** — ensure Darwin config doesn't regress | Medium | Low    |
-| 20  | **Impermanence research** — evaluate tmpfs root for evo-x2       | High   | High   |
+| #  | Task                                                             | Impact | Effort |
+| -- | ---------------------------------------------------------------- | ------ | ------ |
+| 16 | **Automated DNS blocklist updates** — weekly timer or CI job     | Medium | Low    |
+| 17 | **Pi 3 provisioning** — flash SD, boot, verify DNS failover      | High   | High   |
+| 18 | **DNS failover cluster testing** — verify VRRP failover works    | High   | Medium |
+| 19 | **CI Darwin build check** — ensure Darwin config doesn't regress | Medium | Low    |
+| 20 | **Impermanence research** — evaluate tmpfs root for evo-x2       | High   | High   |
 
 ### Priority 5: New Features & Polish
 
-| #   | Task                                                                             | Impact | Effort |
-| --- | -------------------------------------------------------------------------------- | ------ | ------ |
-| 21  | **Voice agents verification** — confirm LiveKit + Whisper stack works end-to-end | Medium | Medium |
-| 22  | **Twenty CRM deployment verification** — confirm or remove module                | Low    | Low    |
-| 23  | **PhotoMap AI re-enablement** — evaluate if CLIP visualization is worth running  | Low    | Medium |
-| 24  | **mr-sync auto-sync timer** — wire `mr-sync` as a weekly systemd timer           | Low    | Low    |
-| 25  | **GolangCI-lint auto-configure CI step** — integrate into Go project workflows   | Low    | Medium |
+| #  | Task                                                                             | Impact | Effort |
+| -- | -------------------------------------------------------------------------------- | ------ | ------ |
+| 21 | **Voice agents verification** — confirm LiveKit + Whisper stack works end-to-end | Medium | Medium |
+| 22 | **Twenty CRM deployment verification** — confirm or remove module                | Low    | Low    |
+| 23 | **PhotoMap AI re-enablement** — evaluate if CLIP visualization is worth running  | Low    | Medium |
+| 24 | **mr-sync auto-sync timer** — wire `mr-sync` as a weekly systemd timer           | Low    | Low    |
+| 25 | **GolangCI-lint auto-configure CI step** — integrate into Go project workflows   | Low    | Medium |
 
 ---
 

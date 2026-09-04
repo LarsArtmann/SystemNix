@@ -7,15 +7,14 @@
 
 ---
 
-
 ## Timeline — What Actually Happened Across Both Sessions
 
-| Time      | Commit      | Action                                                                    | Correct? |
-| --------- | ----------- | ------------------------------------------------------------------------- | -------- |
-| 21:10     | `8a34163d`  | Bumped go-finding to v1.4.1 (fix from first session)                      | YES      |
-| ~21:33    | `b0d76b68`  | **Reverted** to pseudo-version, claiming "v1.4.1 not published"           | **NO**   |
-| ~21:33    | `d0792702`  | Status report written documenting the (now wrong) pseudo-version fix      | Stale    |
-| 22:01     | `649bcd5f`  | Re-applied v1.4.1 (this session)                                          | YES      |
+| Time   | Commit     | Action                                                               | Correct? |
+| ------ | ---------- | -------------------------------------------------------------------- | -------- |
+| 21:10  | `8a34163d` | Bumped go-finding to v1.4.1 (fix from first session)                 | YES      |
+| ~21:33 | `b0d76b68` | **Reverted** to pseudo-version, claiming "v1.4.1 not published"      | **NO**   |
+| ~21:33 | `d0792702` | Status report written documenting the (now wrong) pseudo-version fix | Stale    |
+| 22:01  | `649bcd5f` | Re-applied v1.4.1 (this session)                                     | YES      |
 
 **Critical insight:** The previous session already diagnosed and fixed this
 exact problem. A subsequent commit (`b0d76b68`) **reverted the fix** based on a
@@ -27,25 +26,25 @@ new bug.
 
 ## a) FULLY DONE
 
-| Item                                                       | Status  | Evidence                                              |
-| ---------------------------------------------------------- | ------- | ----------------------------------------------------- |
-| Root-caused the Nix build failure                          | Done    | Traced to pseudo-version in go.mod + `go mod tidy`    |
-| Verified `v1.4.1` IS published                             | Done    | `git tag -l 'v*'` on go-finding shows `v1.4.1`        |
-| Fixed go.mod in go-cqrs-lite (pseudo-version -> v1.4.1)    | Done    | Commit `649bcd5f`                                     |
-| Ran `go mod tidy` to ensure go.sum consistency             | Done    | Clean exit, only go.mod line changed                  |
-| Built cqrs-lint from go-cqrs-lite via Nix                  | Done    | 3 derivations built successfully                      |
-| Pushed fix to go-cqrs-lite remote                          | Done    | `b0d76b68..649bcd5f master -> master`                 |
-| Updated SystemNix `flake.lock` for go-cqrs-lite            | Done    | Lock updated to `649bcd5fec26338...`                  |
-| Built cqrs-lint from SystemNix                             | Done    | 3 derivations built successfully                      |
-| Verified binary runs                                       | Done    | `cqrs-lint version 0.2.2`                             |
-| Cleaned up debug artifacts (/tmp/cqrs-lint-debug)          | Done    | `rm -rf` executed                                     |
+| Item                                                    | Status | Evidence                                           |
+| ------------------------------------------------------- | ------ | -------------------------------------------------- |
+| Root-caused the Nix build failure                       | Done   | Traced to pseudo-version in go.mod + `go mod tidy` |
+| Verified `v1.4.1` IS published                          | Done   | `git tag -l 'v*'` on go-finding shows `v1.4.1`     |
+| Fixed go.mod in go-cqrs-lite (pseudo-version -> v1.4.1) | Done   | Commit `649bcd5f`                                  |
+| Ran `go mod tidy` to ensure go.sum consistency          | Done   | Clean exit, only go.mod line changed               |
+| Built cqrs-lint from go-cqrs-lite via Nix               | Done   | 3 derivations built successfully                   |
+| Pushed fix to go-cqrs-lite remote                       | Done   | `b0d76b68..649bcd5f master -> master`              |
+| Updated SystemNix `flake.lock` for go-cqrs-lite         | Done   | Lock updated to `649bcd5fec26338...`               |
+| Built cqrs-lint from SystemNix                          | Done   | 3 derivations built successfully                   |
+| Verified binary runs                                    | Done   | `cqrs-lint version 0.2.2`                          |
+| Cleaned up debug artifacts (/tmp/cqrs-lint-debug)       | Done   | `rm -rf` executed                                  |
 
 ---
 
 ## b) PARTIALLY DONE
 
 1. **SystemNix flake.lock commit** — The lock file is updated and the build
-   passes, but the change is **UNCOMMITTED** (` M flake.lock`). It needs to be
+   passes, but the change is **UNCOMMITTED** (`M flake.lock`). It needs to be
    committed to take effect on deploy.
 
 2. **SystemNix AGENTS.md gotcha documentation** — I identified that the
@@ -196,13 +195,13 @@ new bug.
 ### Broader go-cqrs-lite Health (spotted during session)
 
 21. **39 GitHub vulnerabilities** were flagged on push (21 critical, 6 high,
-     12 moderate). These are likely Dependabot alerts — review and address.
+    12 moderate). These are likely Dependabot alerts — review and address.
 22. **govalid-generate failed** on 6 modules during BuildFlow (catalog, schema,
-     dispatcher, example/getting-started). Investigate.
+    dispatcher, example/getting-started). Investigate.
 23. **gomod-check flagged 74 findings** — direct/indirect requires mixed in
-     74 go.mod files. This is a formatting issue across the monorepo.
+    74 go.mod files. This is a formatting issue across the monorepo.
 24. **go-cqrs-lite AGENTS.md is 944 lines** — should be trimmed to <377 per
-     go-structure-linter.
+    go-structure-linter.
 
 ### Build Infrastructure
 
@@ -210,7 +209,7 @@ new bug.
     the go.mod change — the hash didn't change this time but confirm.
 26. **Check if `proxyVendor = true`** is still needed now that go-finding is
     properly versioned.
-27. **Audit all cmd/* go.mod files** in go-cqrs-lite for the same pseudo-version
+27. __Audit all cmd/_ go.mod files_* in go-cqrs-lite for the same pseudo-version
     bug class (cqrs-gen, cqrs-bench, api-stability, doc-check).
 28. **Run `go work sync`** in go-cqrs-lite to ensure workspace versions are
     aligned after the fix.
@@ -218,7 +217,7 @@ new bug.
 ### SystemNix Integration
 
 29. **Verify cqrs-lint is actually used in SystemNix** — check
-     `lib/lars-packages.nix` and any modules that reference it.
+    `lib/lars-packages.nix` and any modules that reference it.
 30. **Check if cqrs-lint is in any devShell** or pre-commit config in SystemNix.
 31. **Run the SystemNix pre-deploy-check** to confirm nothing else broke.
 32. **Verify the SystemNix post-deploy-check** still passes with the new binary.
@@ -226,32 +225,32 @@ new bug.
 ### Future Prevention
 
 33. **Add a `verify-nix` target to go-cqrs-lite** that builds all Nix packages
-     (`cqrs-lint`, `default`) as part of CI.
+    (`cqrs-lint`, `default`) as part of CI.
 34. **Consider pinning go-cqrs-lite to tags** instead of `ref=master` in
-     SystemNix flake inputs to prevent regressions from unreviewed commits.
+    SystemNix flake inputs to prevent regressions from unreviewed commits.
 35. **Add a `CODEOWNERS` rule** for go.mod files in go-cqrs-lite requiring
-     review before changes.
+    review before changes.
 36. **Document the daemon's interaction with go.mod** — if an auto-commit daemon
-     runs `go mod tidy`, it can introduce pseudo-versions when local replaces
-     are active.
+    runs `go mod tidy`, it can introduce pseudo-versions when local replaces
+    are active.
 37. **Add a regression test** that builds cqrs-lint from a clean Nix store to
-     catch mkPreparedSource issues.
+    catch mkPreparedSource issues.
 
 ### Lower Priority
 
 38. **Review go-finding's release process** — ensure tags are pushed BEFORE
-     consumers reference them.
+    consumers reference them.
 39. **Consider versioning go-finding/pipeline** separately if it diverges.
 40. **Audit go-cqrs-lite's `deps` map** in mkCqrsLintSource for completeness.
 41. **Check if cqrs-lint's `vendorHash` needs a comment** explaining how to
-     update it when deps change.
+    update it when deps change.
 42. **Review whether the `-config` naming convention** applies to cqrs-lint
-     in SystemNix.
+    in SystemNix.
 43. **Verify cqrs-lint overlay** (`overlays.cqrs-lint`) works with the new
-     version.
+    version.
 44. **Check if any SystemNix service depends on cqrs-lint at runtime** (unlikely
-     but worth confirming).
-45-50. _(Reserved for items discovered during follow-up work.)_
+    but worth confirming).
+    45-50. _(Reserved for items discovered during follow-up work.)_
 
 ---
 

@@ -7,10 +7,10 @@
 
 ---
 
-
 ## What Was Done
 
 ### Problem
+
 SigNoz at `signoz.home.lan` was returning oauth2-proxy 500 errors. The original
 config used **unconditional** Caddy `forward_auth` (no LAN bypass) — every
 request, including LAN, went through oauth2-proxy. When oauth2-proxy hiccuped,
@@ -42,26 +42,29 @@ the entire service was inaccessible.
 ### Decision: protectedVHost (Layer 2)
 
 Switched SigNoz from the ungated plain proxy to `protectedVHost`:
+
 - **LAN access:** direct proxy, NO auth gate (fixes the 500 — oauth2-proxy
   never touched for LAN requests)
 - **External access:** oauth2-proxy forward-auth (defense-in-depth for port 443)
 
 This is strictly better than both:
+
 - Old approach (unconditional forward-auth = 500 for ALL when oauth2-proxy fails)
 - Previous fix (ungated plain proxy = potential security risk if 443 forwarded)
 
 ### Changes Made (uncommitted)
 
-| File | Change |
-|------|--------|
-| `modules/nixos/services/caddy.nix` | SigNoz vHost: inline ungated → `protectedVHost "signoz"` |
-| `modules/nixos/services/signoz.nix` | Header comment + impersonation script comment → Layer 2 |
-| `AGENTS.md` | SSO table: SigNoz back in Layer 2 row; gotcha updated; callout rewritten |
-| `tests/test-caddy-auth.nix` | NEW — VM test for Caddy auth patterns (plain + protectedVHost) |
+| File                                | Change                                                                   |
+| ----------------------------------- | ------------------------------------------------------------------------ |
+| `modules/nixos/services/caddy.nix`  | SigNoz vHost: inline ungated → `protectedVHost "signoz"`                 |
+| `modules/nixos/services/signoz.nix` | Header comment + impersonation script comment → Layer 2                  |
+| `AGENTS.md`                         | SSO table: SigNoz back in Layer 2 row; gotcha updated; callout rewritten |
+| `tests/test-caddy-auth.nix`         | NEW — VM test for Caddy auth patterns (plain + protectedVHost)           |
 
 ### Test Added
 
 **`tests/test-caddy-auth.nix`** — standalone VM test verifying:
+
 1. Plain proxy gives direct access (Layer 1 pattern)
 2. protectedVHost LAN bypass: `127.0.0.1` reaches backend directly (the KEY
    assertion — LAN traffic never touches oauth2-proxy)

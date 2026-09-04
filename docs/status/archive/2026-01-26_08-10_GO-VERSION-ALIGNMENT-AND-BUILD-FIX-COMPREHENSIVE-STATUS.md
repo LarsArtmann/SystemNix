@@ -714,7 +714,6 @@ EOF
 )"
 
 ````
-
 **Commit 3: Document netscanner build fix**
 ```bash
 git commit -m "$(cat <<'EOF'

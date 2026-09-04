@@ -27,13 +27,13 @@
 
 ## c) NOT STARTED
 
-1. **TODO_LIST.md harvest** — the repo's documented workflow; none of this session's follow-ups were added there.
-2. **CHANGELOG.md entry** for the fix.
+~~1. **TODO_LIST.md harvest** — the repo's documented workflow; none of this session's follow-ups were added there.~~ done — docs-health pass 2026-08-18 + the 2026-08-31 audit (follow-ups live in TODO_LIST P2.5)
+~~2. **CHANGELOG.md entry** for the fix.~~ done — CHANGELOG Unreleased carries the black-screen hardening entry
 3. **VM test** (linger + SDDM login simulation) to lock this bug class into CI — noted as follow-up only.
-4. **Eval-time regression guard** — a check that no unit reachable from `default.target` carries `Wants=graphical-session.target`. The repo's whole prevention-layer style (see AGENTS.md table) begs for this; I documented the rule in prose instead of enforcing it in eval.
+~~4. **Eval-time regression guard** — a check that no unit reachable from `default.target` carries `Wants=graphical-session.target`. The repo's whole prevention-layer style (see AGENTS.md table) begs for this; I documented the rule in prose instead of enforcing it in eval.~~ done — `session-boot-audit.nix` shipped the same day (15:00 session), CI-negative-tested
 5. **Scoping `niri-drm-healthcheck.timer`** away from non-graphical user managers (SDDM greeter's manager instance runs it; harmless post-guard but noisy).
 6. **`niri-session-manager.service` gating** — left unconditioned on purpose (fails loudly if the target ever starts again) but not reviewed for its OnFailure routing.
-7. **Live zombie cleanup** — blocked by systemctl permissions in this session; superseded by the deploy+reboot anyway.
+~~7. **Live zombie cleanup** — blocked by systemctl permissions in this session; superseded by the deploy+reboot anyway.~~ done — superseded by the reboot
 
 ## d) TOTALLY FUCKED UP!
 
@@ -54,6 +54,7 @@
 ## f) Up to 50 things to get done next
 
 **P0 — ship and verify this fix:**
+
 1. ~~User runs `nix run .#deploy` (also ships the earlier google-sync fix already in the tree).~~ done (deploys through gen 690; black-screen fix shipped)
 2. Reboot; BEFORE login: `pgrep -x niri` → must be empty.
 3. Login at SDDM → desktop appears in seconds; monitor stays on.
@@ -99,4 +100,4 @@
 
 ---
 
-*Fix verified to the edge of my permissions; the deploy is yours.*
+_Fix verified to the edge of my permissions; the deploy is yours._

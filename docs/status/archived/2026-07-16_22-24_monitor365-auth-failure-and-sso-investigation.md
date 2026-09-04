@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Hardening Session (2026-07-16 23:00)
 
 Critical review of the initial fix identified 7 issues. All code-level issues fixed:

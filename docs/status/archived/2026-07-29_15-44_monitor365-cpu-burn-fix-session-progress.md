@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Executive Summary
 
 The monitor365 agent (PID 589624) was burning **295% CPU (~3 cores) for 23+ hours** due to a busy-loop in the cloud sync code. The circuit breaker was open (1.15M failures), and the early-flush optimization bypassed the backoff sleep when buffer ≥200 events, causing a ~16Hz spin with zero progress.
@@ -19,33 +18,33 @@ This session executed the deployment and prevention plan. **4 of 11 tasks comple
 
 ## a) FULLY DONE
 
-| # | Task | What Was Done | Verified |
-|---|------|---------------|----------|
-| T2 | Verify go-commit master safety | Confirmed `git config` CLI fix IS on go-commit master (`fd9a966`). PMA's auto-commit daemon delegates to go-commit's `commit.New()` which calls `getAuthorSignature()` → `gitConfigValue()` → `exec.CommandContext("git", "config", key)`. The unpin from `refs/tags/v0.4.0` to `ref=master` is **SAFE**. No revert needed. | Read `pkg/commit/git/gogit.go` lines 100-140. Fix present. |
-| T3 | Push monitor365 fix to GitHub | Commit `f72cf1073` pushed to `origin/master`. Initially failed pre-push `cargo fmt --check` (rustfmt wanted the `should_early_flush()` call broken across lines). Fixed with `cargo fmt --all`, amended, pushed successfully. | `git push` succeeded. Lockfile resolved to `f72cf1073`. |
-| T9 | Add CPUQuota to harden() | Added `CPUQuota ? "200%"` parameter to `lib/systemd.nix` — in the function signature, `shared` attrset, and `namedKeys` list. All services using `harden {}` or `hardenUser {}` now inherit a 2-core CPU cap by default. Uses `mkDefault'` so individual services can override with `lib.mkForce` or by passing `CPUQuota = "400%"` etc. | `nix flake check --no-build` passed. |
-| T11 | Add per-service CPU alerting | Extended `system-health.nix` collector to track `CPUUsageNSec` per monitored service between collection intervals. Computes average CPU% since last run using delta/elapsed. Emits two new metrics: `system_service_cpu_percent{service=...}` (raw value) and `system_service_cpu_over_threshold{service=...}` (boolean flag, threshold=150%). Added Gatus check "Monitor365 CPU Runaway" that alerts on Discord when monitor365 exceeds 150% average CPU over a 5-min collection window. | `nix flake check --no-build` passed. Runtime NOT yet verified (not deployed). |
+| #   | Task                           | What Was Done                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Verified                                                                      |
+| --- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| T2  | Verify go-commit master safety | Confirmed `git config` CLI fix IS on go-commit master (`fd9a966`). PMA's auto-commit daemon delegates to go-commit's `commit.New()` which calls `getAuthorSignature()` → `gitConfigValue()` → `exec.CommandContext("git", "config", key)`. The unpin from `refs/tags/v0.4.0` to `ref=master` is **SAFE**. No revert needed.                                                                                                                                                               | Read `pkg/commit/git/gogit.go` lines 100-140. Fix present.                    |
+| T3  | Push monitor365 fix to GitHub  | Commit `f72cf1073` pushed to `origin/master`. Initially failed pre-push `cargo fmt --check` (rustfmt wanted the `should_early_flush()` call broken across lines). Fixed with `cargo fmt --all`, amended, pushed successfully.                                                                                                                                                                                                                                                             | `git push` succeeded. Lockfile resolved to `f72cf1073`.                       |
+| T9  | Add CPUQuota to harden()       | Added `CPUQuota ? "200%"` parameter to `lib/systemd.nix` — in the function signature, `shared` attrset, and `namedKeys` list. All services using `harden {}` or `hardenUser {}` now inherit a 2-core CPU cap by default. Uses `mkDefault'` so individual services can override with `lib.mkForce` or by passing `CPUQuota = "400%"` etc.                                                                                                                                                  | `nix flake check --no-build` passed.                                          |
+| T11 | Add per-service CPU alerting   | Extended `system-health.nix` collector to track `CPUUsageNSec` per monitored service between collection intervals. Computes average CPU% since last run using delta/elapsed. Emits two new metrics: `system_service_cpu_percent{service=...}` (raw value) and `system_service_cpu_over_threshold{service=...}` (boolean flag, threshold=150%). Added Gatus check "Monitor365 CPU Runaway" that alerts on Discord when monitor365 exceeds 150% average CPU over a 5-min collection window. | `nix flake check --no-build` passed. Runtime NOT yet verified (not deployed). |
 
 ---
 
 ## b) PARTIALLY DONE
 
-| # | Task | What's Done | What Remains |
-|---|------|-------------|--------------|
-| T4 | Update flake.lock + build-verify | Lockfile updated: `monitor365` resolved from `8ac70ec13` (pre-fix) → `f72cf1073` (fix commit). `nix flake check --no-build` passes. | `nix build .#monitor365` is running in background (shell ID: `052`). Build includes libspa-sys `[patch.crates-io]` interaction risk — untested until build completes. Build started deps derivation, hasn't finished yet. |
-| T13 | Update AGENTS.md | Not started, but all findings are gathered. | Need to add: CB+early-flush busy-loop gotcha, CPUQuota pattern, CPU alerting, go-commit/master status, libspa-sys pin removal. |
+| #   | Task                             | What's Done                                                                                                                         | What Remains                                                                                                                                                                                                              |
+| --- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T4  | Update flake.lock + build-verify | Lockfile updated: `monitor365` resolved from `8ac70ec13` (pre-fix) → `f72cf1073` (fix commit). `nix flake check --no-build` passes. | `nix build .#monitor365` is running in background (shell ID: `052`). Build includes libspa-sys `[patch.crates-io]` interaction risk — untested until build completes. Build started deps derivation, hasn't finished yet. |
+| T13 | Update AGENTS.md                 | Not started, but all findings are gathered.                                                                                         | Need to add: CB+early-flush busy-loop gotcha, CPUQuota pattern, CPU alerting, go-commit/master status, libspa-sys pin removal.                                                                                            |
 
 ---
 
 ## c) NOT STARTED
 
-| # | Task | Why | Dependencies |
-|---|------|-----|--------------|
-| T6 | Deploy (`nix run .#deploy`) | Blocked on T4 build verification | T4 must pass first. Deploy will also restart monitor365 = stops CPU burn. |
-| T7 | Investigate sync root cause (404/429) | Blocked on deploy (need new binary running) | The server returns 404 for `GET /api/v1/devices/evo-x2/config` and 429 for enrollment. Root cause unknown. Need to check DuckDB device table, sops API key, rate limiter. |
-| T8 | Fix sync root cause | Blocked on T7 investigation | Cannot fix what we haven't diagnosed. |
-| T15 | End-to-end verification | Blocked on T6 (deploy) + T8 (sync fix) | Full smoke test: CPU <5%, sync working, Gatus green, post-deploy-check passes. |
-| T14 | Upstream CB improvements | Deferred (P3) | Cap `consecutive_failures` at threshold*2. Add exponential probe interval (60s→5min→15min→1h). Not urgent — busy-loop fix + CPUQuota already prevent CPU burn. |
+| #   | Task                                  | Why                                         | Dependencies                                                                                                                                                              |
+| --- | ------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T6  | Deploy (`nix run .#deploy`)           | Blocked on T4 build verification            | T4 must pass first. Deploy will also restart monitor365 = stops CPU burn.                                                                                                 |
+| T7  | Investigate sync root cause (404/429) | Blocked on deploy (need new binary running) | The server returns 404 for `GET /api/v1/devices/evo-x2/config` and 429 for enrollment. Root cause unknown. Need to check DuckDB device table, sops API key, rate limiter. |
+| T8  | Fix sync root cause                   | Blocked on T7 investigation                 | Cannot fix what we haven't diagnosed.                                                                                                                                     |
+| T15 | End-to-end verification               | Blocked on T6 (deploy) + T8 (sync fix)      | Full smoke test: CPU <5%, sync working, Gatus green, post-deploy-check passes.                                                                                            |
+| T14 | Upstream CB improvements              | Deferred (P3)                               | Cap `consecutive_failures` at threshold*2. Add exponential probe interval (60s→5min→15min→1h). Not urgent — busy-loop fix + CPUQuota already prevent CPU burn.            |
 
 ---
 
@@ -84,6 +83,7 @@ This session executed the deployment and prevention plan. **4 of 11 tasks comple
 ## f) Next 50 Things To Do
 
 ### Immediate (block deploy)
+
 1. Wait for `nix build .#monitor365` to complete (background shell `052`)
 2. If build fails: diagnose libspa-sys error, fix overlay or restore `0615301` pin with cherry-picked CPU fix
 3. Tell user to run `sudo systemctl restart monitor365.service` to stop CPU burn NOW
@@ -92,6 +92,7 @@ This session executed the deployment and prevention plan. **4 of 11 tasks comple
 6. Verify CPU dropped to <5% (`ps -p <pid> -o %cpu`)
 
 ### Sync root cause investigation
+
 7. Check `journalctl -u monitor365-server -n 200` for device registration errors
 8. Check DuckDB devices table: `sudo duckdb /var/lib/monitor365-server/monitor365.duckdb "SELECT * FROM devices"`
 9. Check if `evo-x2` device exists in the server's device table
@@ -106,6 +107,7 @@ This session executed the deployment and prevention plan. **4 of 11 tasks comple
 18. Check `cloud_sync_consecutive_failures` metric drops to 0
 
 ### Post-deploy verification
+
 19. Run `nix run .#post-deploy-check` — full smoke test
 20. Check Gatus dashboard — all monitor365 checks green
 21. Verify CPU alert metric appears: `curl localhost:9100/metrics | grep system_service_cpu`
@@ -114,6 +116,7 @@ This session executed the deployment and prevention plan. **4 of 11 tasks comple
 24. If AI services throttled: add `CPUQuota = lib.mkForce "400%"` overrides
 
 ### CPU alerting improvements
+
 25. Generalize Gatus CPU alert to cover ALL monitored services, not just monitor365
 26. Add a second threshold tier (e.g., warn at 100%, critical at 200%)
 27. Add CPU alert for hermes (PyTorch can burn CPU during inference)
@@ -123,6 +126,7 @@ This session executed the deployment and prevention plan. **4 of 11 tasks comple
 31. Test the CPU collector with a synthetic CPU hog service
 
 ### Defense-in-depth
+
 32. Verify the `CPUQuota=200%` default doesn't break `nix run .#deploy` itself (deploy is CPU-intensive)
 33. Check if `systemd-oomd` uses CPUQuota (it shouldn't, but verify)
 34. Add `CPUQuota` to `serviceDefaults` and `serviceOneshotDefaults` documentation
@@ -130,6 +134,7 @@ This session executed the deployment and prevention plan. **4 of 11 tasks comple
 36. Add CPUQuota to the pre-deploy-check script (validate no service has CPUQuota >400%)
 
 ### Upstream improvements (monitor365)
+
 37. Cap `consecutive_failures` at `failure_threshold * 2` (10) in `circuit_breaker.rs`
 38. Add exponential probe interval (60s → 5min → 15min → 1h) in the CB half-open state
 39. Add `cloud_sync_zero_accept_cycles` gauge + ERROR after 3 consecutive zero-accept cycles (catches "false victory")
@@ -140,6 +145,7 @@ This session executed the deployment and prevention plan. **4 of 11 tasks comple
 44. Add a `cloud_sync.cpu_spin_detected` self-diagnostic metric
 
 ### Documentation
+
 45. Update AGENTS.md: "monitor365 circuit breaker + early-flush busy-loop" gotcha
 46. Update AGENTS.md: "CPUQuota defense-in-depth in harden()" gotcha
 47. Update AGENTS.md: "per-service CPU alerting via system-health" pattern

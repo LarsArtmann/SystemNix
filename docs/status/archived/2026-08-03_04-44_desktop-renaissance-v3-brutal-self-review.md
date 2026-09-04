@@ -3,20 +3,20 @@
 **Date:** 2026-08-03 04:44
 **Session goal:** Make the desktop "superb awesome ALL AROUND"
 **Previous reports:**
+
 - `docs/status/2026-08-03_03-17_lockscreen-improvements-brutal-self-review.md` (v1)
 - `docs/status/2026-08-03_03-32_lockscreen-improvements-v2-brutal-self-review.md` (v2)
-**Status:** MAJOR PROGRESS — 7 features implemented, but ZERO runtime testing and several unfinished threads
+  **Status:** MAJOR PROGRESS — 7 features implemented, but ZERO runtime testing and several unfinished threads
 
 ---
 
-
 ## Session Arc
 
-| Iteration | Focus | Outcome |
-|-----------|-------|---------|
-| v1 | Lockscreen: 10m idle lock + swaylock themed | User rejected 10m lock, wanted media inhibition + wallpapers |
-| v2 | Lockscreen: reverted idle, added sway-audio-idle-inhibit, wallpaper-based lock, extracted pkg | Code duplication fixed, but dms not in PATH bug |
-| v3 | Full desktop: fire shaders, blur, swww, dock, lock screen config | This report |
+| Iteration | Focus                                                                                         | Outcome                                                      |
+| --------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| v1        | Lockscreen: 10m idle lock + swaylock themed                                                   | User rejected 10m lock, wanted media inhibition + wallpapers |
+| v2        | Lockscreen: reverted idle, added sway-audio-idle-inhibit, wallpaper-based lock, extracted pkg | Code duplication fixed, but dms not in PATH bug              |
+| v3        | Full desktop: fire shaders, blur, swww, dock, lock screen config                              | This report                                                  |
 
 ---
 
@@ -24,14 +24,14 @@
 
 ### Files Changed
 
-| File | Changes |
-|------|---------|
-| `assets/shaders/fire-close.glsl` | **NEW** — GLSL fire shader for window-close animation |
-| `assets/shaders/circle-open.glsl` | **NEW** — GLSL expanding circle shader for window-open animation |
+| File                                       | Changes                                                                                                                                         |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `assets/shaders/fire-close.glsl`           | **NEW** — GLSL fire shader for window-close animation                                                                                           |
+| `assets/shaders/circle-open.glsl`          | **NEW** — GLSL expanding circle shader for window-open animation                                                                                |
 | `platforms/nixos/desktop/niri-wrapped.nix` | Shaders wired, swww daemon + wallpaper switcher, terminal transparency rules, enhanced focus ring + shadow, DMS wallpaper-init migrated to swww |
-| `platforms/nixos/desktop/quickshell.nix` | DMS settings: dock, lock screen, fonts, corner radius, icon theme, notifications |
-| `pkgs/dms-lock.nix` | Removed unused `lib` param |
-| `flake.lock` | swww/awww package resolved |
+| `platforms/nixos/desktop/quickshell.nix`   | DMS settings: dock, lock screen, fonts, corner radius, icon theme, notifications                                                                |
+| `pkgs/dms-lock.nix`                        | Removed unused `lib` param                                                                                                                      |
+| `flake.lock`                               | swww/awww package resolved                                                                                                                      |
 
 ---
 
@@ -81,6 +81,7 @@
 ### D1. **Fire shader is UNTESTED GLSL — likely has visual artifacts or may not compile**
 
 The fire shader was written from scratch based on the niri shader API documentation. It has:
+
 - **No visual testing** — the flame colors, noise patterns, dissolve thresholds, and band width are ALL guesses
 - **Potential compile errors** — GLSL ES 2.0 is restrictive; `texture2D` usage and loop/if patterns could fail on some drivers
 - **Performance unknown** — fragment shaders run per-pixel; a complex noise + smoothstep chain could tank frame rate on close animations
@@ -97,6 +98,7 @@ If the user already has `~/.config/DankMaterialShell/settings.json` with custom 
 ### D3. **swww migration leaves DMS wallpaper management in a split state**
 
 DMS still thinks it owns wallpaper management (`dms ipc call wallpaper get/set`). The `swww-wallpaper` script syncs TO DMS (`dms ipc call wallpaper set "$selected"`), but:
+
 - DMS's internal wallpaper state may not match what swww actually displays
 - DMS's `dms-wallpaper-init` was rewritten to use swww, but DMS's own QML wallpaper layer might try to render its own wallpaper behind swww
 - DMS wallpaper widgets/plugins that query `dms ipc call wallpaper get` might get stale data
@@ -187,22 +189,22 @@ DMS SettingsSpec.js uses numeric position values. `2` was guessed as "bottom" bu
 33. **Consider `mpvpaper` for animated/video wallpapers** (user initially had it as an option)
 34. **Add keyboard shortcut for wallpaper previous** (currently only next on Mod+W)
 35. **Add a wallpaper favorites system** (star wallpapers, cycle only favorites)
-35. **Test dock autohide behavior with fullscreen apps**
-36. **Add dock launchers for common apps** (terminal, browser, editor)
-37. **Verify dock doesn't overlap with niri's struts**
-38. **Consider a DMS desktop widget for system stats** (CPU/RAM/GPU rings)
-39. **Add a custom DMS theme JSON for hybrid Catppuccin+wallpaper**
-40. **Test the circle-open shader performance on multiple rapid window opens**
-41. **Add a resize shader** (smooth crossfade between window sizes)
-42. **Consider window-open fire shader variant** (fire on open too, not just close)
-43. **Add a toggle keybinding to switch between fire and spring animations**
-44. **Test all animations with different spring stiffness values**
-45. **Add a DMS plugin for screen recording** (if not already available)
-46. **Review GPU memory impact of shaders + transparency + AI workloads**
-47. **Consider `hyprpaper` as alternative to swww** (if swww has issues)
-48. **Add a wallpaper change notification** ("Now playing: wallpaper_name.jpg")
-49. **Document the shader architecture in a separate docs/ page**
-50. **Create a desktop showcase README** with screenshots after deploy
+36. **Test dock autohide behavior with fullscreen apps**
+37. **Add dock launchers for common apps** (terminal, browser, editor)
+38. **Verify dock doesn't overlap with niri's struts**
+39. **Consider a DMS desktop widget for system stats** (CPU/RAM/GPU rings)
+40. **Add a custom DMS theme JSON for hybrid Catppuccin+wallpaper**
+41. **Test the circle-open shader performance on multiple rapid window opens**
+42. **Add a resize shader** (smooth crossfade between window sizes)
+43. **Consider window-open fire shader variant** (fire on open too, not just close)
+44. **Add a toggle keybinding to switch between fire and spring animations**
+45. **Test all animations with different spring stiffness values**
+46. **Add a DMS plugin for screen recording** (if not already available)
+47. **Review GPU memory impact of shaders + transparency + AI workloads**
+48. **Consider `hyprpaper` as alternative to swww** (if swww has issues)
+49. **Add a wallpaper change notification** ("Now playing: wallpaper_name.jpg")
+50. **Document the shader architecture in a separate docs/ page**
+51. **Create a desktop showcase README** with screenshots after deploy
 
 ---
 
@@ -215,6 +217,7 @@ The declarative DMS `settings` block (dock, lock screen, fonts, etc.) will OVERW
 ### Q2: The niri HM module doesn't expose a `blur {}` option — how do you want me to handle blur?
 
 Options:
+
 - **(a)** Add blur via raw KDL in `programs.niri.config` (escape hatch — bypasses the typed settings module)
 - **(b)** Wait for niri-flake to add blur support (could be days or weeks)
 - **(c)** Drop terminal transparency entirely until blur is available (avoid readability issues)

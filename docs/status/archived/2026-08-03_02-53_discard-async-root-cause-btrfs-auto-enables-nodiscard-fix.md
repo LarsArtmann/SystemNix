@@ -7,12 +7,11 @@
 
 ---
 
-
 ## Timeline of the Discovery
 
 1. User requested SSD speed test
 2. I benchmarked `/tmp` (tmpfs/RAM) — got bogus 21.6 GiB/s numbers
-3. User caught the error: *"Did you test via BTRFS?"*
+3. User caught the error: _"Did you test via BTRFS?"_
 4. Benchmarked `/data` (BTRFS) with `direct=1` — got **14.4 MiB/s** read (500x below spec)
 5. User pointed out `discard=async` from AGENTS.md
 6. I found `discard=async` still in all 9 live BTRFS mounts despite being removed from config on 2026-07-08
@@ -55,9 +54,10 @@ The booted generation's fstab was clean — no `discard` anywhere. But the live 
 
 ### Why the 2026-07-08 Fix Failed
 
-The 2026-07-08 commit (`7b7b20f3`) removed `discard=async` from `/data` options and `discard` from `/rust-cache`. It also added a comment saying *"Root filesystem has never had discard=async and has been fine"* — **this was a false assumption**. Root was NOT fine. It had `discard=async` from kernel auto-detection the entire time.
+The 2026-07-08 commit (`7b7b20f3`) removed `discard=async` from `/data` options and `discard` from `/rust-cache`. It also added a comment saying _"Root filesystem has never had discard=async and has been fine"_ — **this was a false assumption**. Root was NOT fine. It had `discard=async` from kernel auto-detection the entire time.
 
 The fix was incomplete because:
+
 1. Removing `discard=async` from config is a **no-op** — the kernel adds it back
 2. Nobody verified `/proc/mounts` AFTER a reboot to confirm the fix took effect
 3. The comment on line 55 ("Root filesystem has never had discard=async and has been fine") was factually wrong — it WAS getting `discard=async`, just not from fstab
@@ -69,29 +69,29 @@ The fix was incomplete because:
 
 ### Before `discard=async` removal (all 9 BTRFS mounts had it)
 
-| Test | `/data` (discard=async) | `/data` (nodiscard, remounted) | Improvement |
-|------|------------------------|-------------------------------|-------------|
-| **Seq Read** (1M, QD32) | 14.4 MiB/s | **1,276 MiB/s** | **89x** |
-| **Seq Write** (1M, QD32) | 2.9 MiB/s | 29.6 MiB/s | 10x |
-| **Rand Read** (4K×4, QD32) | 496 IOPS | **7,603 IOPS** | **15x** |
-| **Rand Write** (4K×4, QD32) | 183 IOPS | **5,989 IOPS** | **33x** |
-| Seq Read p99 latency | 8.2 seconds | 129 ms | 64x |
-| Rand Read p99 latency | 6.5 seconds | 284 ms | 23x |
+| Test                        | `/data` (discard=async) | `/data` (nodiscard, remounted) | Improvement |
+| --------------------------- | ----------------------- | ------------------------------ | ----------- |
+| **Seq Read** (1M, QD32)     | 14.4 MiB/s              | **1,276 MiB/s**                | **89x**     |
+| **Seq Write** (1M, QD32)    | 2.9 MiB/s               | 29.6 MiB/s                     | 10x         |
+| **Rand Read** (4K×4, QD32)  | 496 IOPS                | **7,603 IOPS**                 | **15x**     |
+| **Rand Write** (4K×4, QD32) | 183 IOPS                | **5,989 IOPS**                 | **33x**     |
+| Seq Read p99 latency        | 8.2 seconds             | 129 ms                         | 64x         |
+| Rand Read p99 latency       | 6.5 seconds             | 284 ms                         | 23x         |
 
 ### Lexar NQ790 Rated Spec vs Measured (after fix)
 
-| Metric | Rated | Measured (post-fix) | Gap |
-|--------|-------|---------------------|-----|
-| Sequential Read | 7,000 MB/s | 1,276 MiB/s (~18%) | Still 5.5x below spec |
-| Sequential Write | 6,000 MB/s | 29.6 MiB/s (~0.5%) | Still 200x below spec |
+| Metric           | Rated      | Measured (post-fix) | Gap                   |
+| ---------------- | ---------- | ------------------- | --------------------- |
+| Sequential Read  | 7,000 MB/s | 1,276 MiB/s (~18%)  | Still 5.5x below spec |
+| Sequential Write | 6,000 MB/s | 29.6 MiB/s (~0.5%)  | Still 200x below spec |
 
 **Remaining gap explanation:** Background I/O from 30+ services (60-84% disk utilization during tests) + QLC SLC cache exhaustion (`/data` is 69% full). A clean benchmark with services stopped would show higher numbers. The random IOPS numbers (7.6K read, 6K write) are in the right ballpark for a QLC drive under load.
 
 ### The First Benchmark (Bogus — `/tmp` is tmpfs)
 
-| Test | Throughput | Verdict |
-|------|-----------|---------|
-| Sequential Read (1M) | 21.6 GiB/s | **INVALID** — measured RAM, not SSD |
+| Test                  | Throughput | Verdict                             |
+| --------------------- | ---------- | ----------------------------------- |
+| Sequential Read (1M)  | 21.6 GiB/s | **INVALID** — measured RAM, not SSD |
 | Sequential Write (1M) | 10.0 GiB/s | **INVALID** — measured RAM, not SSD |
 
 ---
@@ -100,18 +100,18 @@ The fix was incomplete because:
 
 ### What's Fixed Right Now (Live)
 
-| Filesystem | `discard=async` | How |
-|------------|-----------------|-----|
-| `/data` (nvme0n1p8) | ❌ Gone | User manually remounted with `nodiscard` |
-| `/` + 7 subvolumes (nvme0n1p6) | ✅ **STILL PRESENT** | Not yet remounted |
+| Filesystem                     | `discard=async`      | How                                      |
+| ------------------------------ | -------------------- | ---------------------------------------- |
+| `/data` (nvme0n1p8)            | ❌ Gone              | User manually remounted with `nodiscard` |
+| `/` + 7 subvolumes (nvme0n1p6) | ✅ **STILL PRESENT** | Not yet remounted                        |
 
 ### What's Fixed in Config
 
-| Filesystem | `nodiscard` added? | Status |
-|------------|-------------------|--------|
-| `/` | ✅ Yes | Ready to deploy |
-| `/data` | ✅ Yes | Ready to deploy |
-| `/rust-cache` | ✅ Yes | Ready to deploy (ext4, also auto-applies) |
+| Filesystem    | `nodiscard` added? | Status                                    |
+| ------------- | ------------------ | ----------------------------------------- |
+| `/`           | ✅ Yes             | Ready to deploy                           |
+| `/data`       | ✅ Yes             | Ready to deploy                           |
+| `/rust-cache` | ✅ Yes             | Ready to deploy (ext4, also auto-applies) |
 
 ### Config Verification
 
@@ -145,7 +145,7 @@ nix flake check --no-build → all checks passed
 
 1. ❌ Did not remount `/` with `nodiscard` (user needs to run `sudo mount -o remount,nodiscard /`)
 2. ❌ Did not run `fstrim` manually to clear the TRIM backlog that accumulated during the 26 days of choke
-3. `igned how the system survived 26 days of `discard=async` without a WDT hard reset (the documented crash mode)
+3. `igned how the system survived 26 days of`discard=async` without a WDT hard reset (the documented crash mode)
 4. ❌ Did not verify whether SMART data shows elevated media errors from 26 days of TRIM abuse
 5. ❌ Did not write a monitoring check / pre-deploy-check to catch this class of bug
 6. ❌ Did not update AGENTS.md with the `nodiscard` finding (BTRFS auto-enables discard on SSDs)
@@ -158,13 +158,13 @@ nix flake check --no-build → all checks passed
 
 2. **Used invalid fio options TWICE** (`refresh_workloads=1`, then `new_workload`) — wasted two full benchmark cycles on syntax errors I should have caught by checking the fio manpage or doing a `--parse-only` dry run first.
 
-3. **Initially tried to DISMISS the terrible BTRFS numbers as a "testing artifact."** When the O_DIRECT test showed 14 MiB/s seq read (500x below spec), my first instinct was to explain it away as O_DIRECT + background I/O. I said *"the drive itself is almost certainly fine"* — I was WRONG. The drive WAS genuinely choking, and the root cause was documented in AGENTS.md. I should have immediately checked mount options.
+3. **Initially tried to DISMISS the terrible BTRFS numbers as a "testing artifact."** When the O_DIRECT test showed 14 MiB/s seq read (500x below spec), my first instinct was to explain it away as O_DIRECT + background I/O. I said _"the drive itself is almost certainly fine"_ — I was WRONG. The drive WAS genuinely choking, and the root cause was documented in AGENTS.md. I should have immediately checked mount options.
 
-4. **Did NOT read the AGENTS.md before starting.** The `discard=async` issue is documented RIGHT THERE as a known critical problem. The AGENTS.md even has a table row: *"discard=async on QLC NAND = I/O latency death spiral."* The user had to point it out to me.
+4. **Did NOT read the AGENTS.md before starting.** The `discard=async` issue is documented RIGHT THERE as a known critical problem. The AGENTS.md even has a table row: _"discard=async on QLC NAND = I/O latency death spiral."_ The user had to point it out to me.
 
 5. **Ran a second buffered-IO test that was ALSO bad** — and STILL tried to frame it as recoverable. The buffered seq read was 3.4 MiB/s. That's not a "testing artifact." That's a sick drive. I should have stopped benchmarking and started diagnosing.
 
-6. **Diagnosed the wrong root cause initially.** When I first found `discard=async` in live mounts, I said *"the fix was never deployed" / "you need a reboot"*. When the user pointed out they HAD rebooted, I had to rethink. I then investigated booted-vs-current generation fstabs, initrds, kernel cmdlines — all dead ends until the key insight: root NEVER had `discard` in config, yet it appeared live. That was the clue that the kernel was auto-applying it.
+6. **Diagnosed the wrong root cause initially.** When I first found `discard=async` in live mounts, I said _"the fix was never deployed" / "you need a reboot"_. When the user pointed out they HAD rebooted, I had to rethink. I then investigated booted-vs-current generation fstabs, initrds, kernel cmdlines — all dead ends until the key insight: root NEVER had `discard` in config, yet it appeared live. That was the clue that the kernel was auto-applying it.
 
 ### e) WHAT WE SHOULD IMPROVE
 
@@ -252,10 +252,10 @@ nix flake check --no-build → all checks passed
 31. **Verify `ssd` mount option is still beneficial** for NVMe (was designed for SATA SSDs)
 32. **Review if `space_cache=v2` performance** is optimal
 33. **Document the "deploy ≠ active for mount options" gotcha** more prominently
-35. **Consider a post-deploy warning** when mount options changed since last boot: "mount options changed — reboot to apply"
-36. **Add a generation comparison tool** that shows what changed between booted and current generation
-37. **Review the deploy.sh flow** — does it warn about pending mount option changes?
-38. **Check if `nh os switch` has any mount-option-awareness** that we're missing
+34. **Consider a post-deploy warning** when mount options changed since last boot: "mount options changed — reboot to apply"
+35. **Add a generation comparison tool** that shows what changed between booted and current generation
+36. **Review the deploy.sh flow** — does it warn about pending mount option changes?
+37. **Check if `nh os switch` has any mount-option-awareness** that we're missing
 
 ### Priority 4 — System Health Verification
 
@@ -298,6 +298,7 @@ Evidence discovered during follow-up verification:
 The terrible benchmark numbers (14 MiB/s) were likely caused by background I/O contention and QLC SLC cache pressure, NOT by `discard=async`.
 
 **However, the `nodiscard` config fix is still correct as defense-in-depth:**
+
 - It makes the "no continuous TRIM" intent EXPLICIT
 - It documents the QLC NAND constraint at the mount level
 - It guards against any future kernel change

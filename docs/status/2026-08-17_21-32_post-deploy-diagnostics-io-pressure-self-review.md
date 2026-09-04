@@ -10,10 +10,10 @@
 ## a) FULLY DONE (this session)
 
 1. **Deploy verified healthy** — gen `c2cx6dsk` activated 21:16, boot entry added, 0 failed units, smoke test 43 PASS / 7 SKIP / 2 WARN / 1 FAIL. Migration closure (`/nix` on `@nix`, subvolid 398) is live in a deployed generation.
-2. **Pocket ID smoke-FAIL root-caused (service side)** — journal shows `SQLITE_BUSY` on "renewing leases for alarms", a Pocket ID *internal* background job, 20:53–21:03 only (11 errors). Zero busy errors since 21:03; all requests 1–2 ms; provisioner PUT/GET round-trips all 200/204 at 21:17. Service self-recovered. The smoke check greps a -30min window, so a transient boot-storm burst trips it → **stale-window artifact, service healthy**.
+2. **Pocket ID smoke-FAIL root-caused (service side)** — journal shows `SQLITE_BUSY` on "renewing leases for alarms", a Pocket ID _internal_ background job, 20:53–21:03 only (11 errors). Zero busy errors since 21:03; all requests 1–2 ms; provisioner PUT/GET round-trips all 200/204 at 21:17. Service self-recovered. The smoke check greps a -30min window, so a transient boot-storm burst trips it → **stale-window artifact, service healthy**.
 3. **Real I/O baseline established (device level, reproducible)** — `/proc/diskstats` 5s delta: ~54 MB/s sustained writes to nvme0n1 (~60% disk busy), near-zero reads. PSI `full` 73→75→79% across three samples over 40 min. This is real kernel data, not derived garbage.
 4. **buildcache post-deploy cycle verified clean** — `buildcache-gc` ran at deploy: 734 packages pruned, 50% usage, 20.9s wall. `buildcache-usb-recovery` ran (no zombie). No EIO.
-5. **Quickshell WARN triaged benign** — the "1 error line in quickshell journal" is the *shutdown-overlay* instance's `no outputs` at startup (expected: no shutdown pending) plus a polkit agent race between the two quickshell instances (dms + overlay). Not a defect.
+5. **Quickshell WARN triaged benign** — the "1 error line in quickshell journal" is the _shutdown-overlay_ instance's `no outputs` at startup (expected: no shutdown pending) plus a polkit agent race between the two quickshell instances (dms + overlay). Not a defect.
 6. **Real findings catalogued (verified, unattributed):**
    - `aw-watcher-window-wayland`: **96.4% CPU continuously since boot** (1h02m CPU over 1h04m elapsed). Pathological poll loop, independent of who-writes-what.
    - `aw-server-rust/sqlite.db`: **13.7 GB** (born 2025-12-22 — 9 months of events, never pruned/vacuumed).
@@ -25,7 +25,7 @@
 ## b) PARTIALLY DONE
 
 1. **I/O writer attribution** — device-level numbers confirmed; **process-level attribution FAILED and was retracted** (see section d). The actual writer of 54 MB/s is still unidentified. My unprivileged methods (`/proc/*/io` sampling) produced garbage; `iotop`/`btop` (running as root on the user's TTYs) hold the trustworthy answer.
-2. **Smoke-check tightening (Pocket ID)** — root cause understood, fix proposed (fail only on *sustained* SQLITE_BUSY, not any occurrence in a 30min window), not implemented.
+2. **Smoke-check tightening (Pocket ID)** — root cause understood, fix proposed (fail only on _sustained_ SQLITE_BUSY, not any occurrence in a 30min window), not implemented.
 3. **DiscordSync restart at 21:28** — noticed, not explained. PID changed from 137978 (started 20:57, 99.7% CPU during backfill) to a new process; new instance immediately re-ran the **identical 3370-attachment thumb-hash backfill** (same count as 20:57 → backfill progress is not persisted across restarts, so every restart/deploy burns the full scan). Kill reason (crash? OOM? deploy restart lag?) not yet determined.
 
 ---
@@ -44,8 +44,8 @@
 
 ## d) TOTALLY FUCKED UP (mine — the honest list)
 
-1. **Fabricated causality.** I claimed the ActivityWatch I/O storm "caused" Pocket ID's SQLITE_BUSY. That is *impossible as stated*: SQLite locks are per-database-file; two services with two separate db files never contend for the same lock. The true story is two-layer: (1) Pocket ID's own lease-renewal job contending with its own request connections (the errors are all "renewing leases for alarms"), and (2) at most an *indirect* amplifier — I/O saturation lengthening fsyncs and thus lock hold times. I pattern-matched "storm → busy" without asking the first-principles question: *do these processes even touch the same file?* The user caught it.
-2. **Fabricated numbers from a broken pipeline.** My per-process write-rate ranking was built on a `join` over unsorted PID lists — the tool *warned* "input is not in sorted order" and I used the output anyway. I reported crush pid 270551 at "258 MB/s" while its own `/proc/270551/io` showed **20 MB cumulative total**. Same class of error for the aw-server figure. The user called it ("I think you are imaging things") — partially right: the *ranking* was imagined; the device-level totals were real. Two user challenges, two retractions, one diagnosis session. That pattern is the failure: I optimized for a satisfying story over verified facts.
+1. **Fabricated causality.** I claimed the ActivityWatch I/O storm "caused" Pocket ID's SQLITE_BUSY. That is _impossible as stated_: SQLite locks are per-database-file; two services with two separate db files never contend for the same lock. The true story is two-layer: (1) Pocket ID's own lease-renewal job contending with its own request connections (the errors are all "renewing leases for alarms"), and (2) at most an _indirect_ amplifier — I/O saturation lengthening fsyncs and thus lock hold times. I pattern-matched "storm → busy" without asking the first-principles question: _do these processes even touch the same file?_ The user caught it.
+2. **Fabricated numbers from a broken pipeline.** My per-process write-rate ranking was built on a `join` over unsorted PID lists — the tool _warned_ "input is not in sorted order" and I used the output anyway. I reported crush pid 270551 at "258 MB/s" while its own `/proc/270551/io` showed **20 MB cumulative total**. Same class of error for the aw-server figure. The user called it ("I think you are imaging things") — partially right: the _ranking_ was imagined; the device-level totals were real. Two user challenges, two retractions, one diagnosis session. That pattern is the failure: I optimized for a satisfying story over verified facts.
 3. **Repeated the privileged-tool mistake.** `sudo`/`systemctl` are banned in my shell; I hit the wall twice before pivoting to `/proc`-based methods that worked immediately. Known constraint, ignored until forced.
 4. **Under-reported the verified finding while chasing the false one.** The Turso quota death (a real, currently-broken safety net) got one bullet while I was building the wrong I/O narrative. Priorities inverted: exciting-but-wrong over boring-but-true.
 
@@ -58,7 +58,7 @@
 1. **Never present derived metrics without cross-checking the primary counter.** A per-process "MB/s" must reconcile with that process's cumulative `write_bytes`. One sanity check would have killed the join garbage before it reached the user.
 2. **A tool warning is a stop sign.** `join: input is not in sorted order` is not cosmetic. Either fix the sort or discard the output — never narrate from warned output.
 3. **SQLite error triage rule #1:** same database file or it didn't happen. Check paths before building cross-service stories.
-4. **Check-window semantics before service diagnosis.** When a monitor fails, first ask whether the *window* (30min grep) can trip on a transient burst. Diagnosing the healthy service first wasted the first hour.
+4. **Check-window semantics before service diagnosis.** When a monitor fails, first ask whether the _window_ (30min grep) can trip on a transient burst. Diagnosing the healthy service first wasted the first hour.
 5. **"Unresolved" is a valid answer.** When attribution tools fail, say so and stop — a confident wrong answer is worse than an honest gap, especially when the user has `iotop` open on another TTY.
 6. **Pivot to `/proc` first when unprivileged.** Everything real this session came from `/proc/{pressure,diskstats,io,stat}`, `journalctl`, `ls`, `ps`.
 
@@ -67,6 +67,7 @@
 ## f) THINGS TO GET DONE NEXT (30, roughly impact-sorted)
 
 **Urgent — active distress**
+
 1. Identify the 54 MB/s writer (root `iotop-c -aoP` / `btop` — user has them open; PSI `full` 79% and climbing is the documented BTRFS/QLC storm precursor on this hardware)
 2. ~~Re-provision emergency reserve: `sudo systemctl start btrfs-emergency-reserve` (10 GiB safety net absent since triage)~~ done (reserve present, 10 GiB @ Aug 17 21:41)
 3. ~~Investigate/kill the `aw-watcher-window-wayland` 96% CPU peg (restart it; if the peg returns, it's a runaway loop — then fix upstream or wrap with CPUQuota)~~ done at `de2df830`
@@ -76,11 +77,11 @@
 5. Owner decision: upgrade Turso plan or disable cloud sync cleanly (circuit breaker will log a failure cycle every hour forever)
 6. Persist thumb-hash backfill progress (or incremental backfill) — every restart re-scans 3370 attachments at ~100% CPU
 7. Add Gatus/textfile alert on `consecutive_failures` / circuit-breaker state so sync death is not silent
-8. Audit discordsync ioTier placement — backfill ran at 99.7% CPU/IO during a PSI-79% window
+~~8. Audit discordsync ioTier placement — backfill ran at 99.7% CPU/IO during a PSI-79% window~~ done — discordsync at `ioTier.background` (BE/6) in the ioTier table
 
 **ActivityWatch**
 9. VACUUM + retention policy for the 13.7 GB sqlite.db (9 months of window-tracking events; likely <2 GB after prune)
-10. Add ActivityWatch data dir to `backup-coordination` or explicitly document exclusion
+~~10. Add ActivityWatch data dir to `backup-coordination` or explicitly document exclusion~~ done — activitywatch data lives on `/mnt/pool/services/activitywatch` (btrbk-pool snapshotted) since 2026-08-18
 11. Consider MemoryMax/CPUQuota on the aw user services (currently unbounded)
 
 **Monitoring / smoke checks**
@@ -92,7 +93,7 @@
 **Migration follow-through**
 16. deploy.sh pre-flight: assert mount-target subvolumes exist & are non-empty before `nh os switch` (incident-class guard)
 17. ~~Fix btrbk pool-seed timeout (chunked receive or larger TimeoutStartSec; 6h killed a seed mid-stream)~~ done at `e5edf0bd`
-18. Delete corrupt pool partial `@.20260814T2300`; verify remaining pool backups parse
+~~18. Delete corrupt pool partial `@.20260814T2300`; verify remaining pool backups parse~~ done — `btrbk-pool-clean` (2026-08-21); first live proof of the garbled-receive GC
 19. ~~Run btrbk catch-up for missed snapshot window~~ done (seeds completed; first overnight cycle green 2026-08-18)
 20. ~~Delete old `@/nix` after 2–3 stable days (frees ~47 GiB as snapshots expire)~~ done (AGENTS.md: old @/nix deleted post-verification)
 21. ~~Finalize or retire `scripts/migrate-nix-subvol.sh` (unstaged edits from the incident; it served its purpose — the fixed version's history is worth keeping, the script itself arguably not)~~ done at `d4a59d4d`
@@ -118,7 +119,7 @@
 
 ---
 
-*Report format: Markdown per explicit user instruction (skill default is HTML — override noted). Auto-git daemon will commit this; no manual commit made.*
+_Report format: Markdown per explicit user instruction (skill default is HTML — override noted). Auto-git daemon will commit this; no manual commit made._
 
 ---
 

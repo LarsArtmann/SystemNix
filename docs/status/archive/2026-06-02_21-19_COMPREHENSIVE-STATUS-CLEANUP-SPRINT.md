@@ -205,33 +205,33 @@
 
 ## F) Top 25 Things We Should Get Done Next
 
-| #   | Task                                                       | Priority | Effort   | Impact                      |
-| --- | ---------------------------------------------------------- | -------- | -------- | --------------------------- |
-| 1   | Deploy committed changes to evo-x2                         | 🔴       | 30min    | Production parity           |
-| 2   | Verify boot time (~35s target)                             | 🔴       | 10min    | Performance validation      |
-| 3   | Test SigNoz Discord alert channel                          | 🔴       | 15min    | Alert verification          |
-| 4   | Verify Gatus endpoints healthy                             | 🔴       | 10min    | Monitoring verification     |
-| 5   | Configure Hermes secondary LLM provider                    | 🔴       | 1h       | Resilience                  |
-| 6   | Add Hermes git remote SSH deploy key                       | 🔴       | 30min    | Hermes git operations       |
-| 7   | Investigate swap exhaustion (7 gopls instances)            | 🔴       | 2h       | System stability            |
-| 8   | Resolve port 8050 conflict (dns-blocker-block vs photomap) | 🟡       | 15min    | Prevent future collision    |
-| 9   | Add per-threshold SigNoz channel routing                   | 🟡       | 1h       | Alert quality               |
-| 10  | Audit 46 flake inputs for stale/unused                     | 🟡       | 2h       | Maintenance                 |
-| 11  | Bring Darwin home.nix to parity                            | 🟡       | 4h       | Cross-platform quality      |
-| 12  | Extract go-finding patches upstream                        | 🟡       | 3h       | Remove fragile sed patches  |
-| 13  | Create `mkHardenedService` wrapper                         | 🟡       | 1h       | DRY systemd config          |
-| 14  | Remove go-structure-linter flake input                     | 🟡       | 5min     | Clean flake.lock            |
-| 15  | Convert go-auto-upgrade `path:` inputs to SSH URLs         | 🟡       | 30min    | Remove path: anti-pattern   |
-| 16  | Shared flake-parts template for Go repos                   | 🟡       | 3h       | Standardization             |
-| 17  | nix-colors integration (17+ hardcoded colors)              | 🟢       | 6h       | Theme consistency           |
-| 18  | Deploy Dozzle for Docker log viewing                       | 🟢       | 1h       | Observability               |
-| 19  | Create `just status` command                               | 🟢       | 2h       | Automation                  |
-| 20  | Add integration tests beyond eval-time                     | 🟢       | 4h       | Reliability                 |
-| 21  | Persist dnsblockd temp-allows across restarts              | 🟢       | 2h       | Data durability             |
-| 22  | Provision Raspberry Pi 3 for DNS failover                  | 🟢       | Hardware | Infrastructure resilience   |
-| 23  | Wire Pi 3 as secondary DNS                                 | 🟢       | 2h       | DNS redundancy              |
-| 24  | Port collision detection for ports.nix entries             | 🟢       | 1h       | Prevent future conflicts    |
-| 25  | Test deploy on Darwin                                      | 🟢       | 30min    | Cross-platform verification |
+| #  | Task                                                       | Priority | Effort   | Impact                      |
+| -- | ---------------------------------------------------------- | -------- | -------- | --------------------------- |
+| 1  | Deploy committed changes to evo-x2                         | 🔴       | 30min    | Production parity           |
+| 2  | Verify boot time (~35s target)                             | 🔴       | 10min    | Performance validation      |
+| 3  | Test SigNoz Discord alert channel                          | 🔴       | 15min    | Alert verification          |
+| 4  | Verify Gatus endpoints healthy                             | 🔴       | 10min    | Monitoring verification     |
+| 5  | Configure Hermes secondary LLM provider                    | 🔴       | 1h       | Resilience                  |
+| 6  | Add Hermes git remote SSH deploy key                       | 🔴       | 30min    | Hermes git operations       |
+| 7  | Investigate swap exhaustion (7 gopls instances)            | 🔴       | 2h       | System stability            |
+| 8  | Resolve port 8050 conflict (dns-blocker-block vs photomap) | 🟡       | 15min    | Prevent future collision    |
+| 9  | Add per-threshold SigNoz channel routing                   | 🟡       | 1h       | Alert quality               |
+| 10 | Audit 46 flake inputs for stale/unused                     | 🟡       | 2h       | Maintenance                 |
+| 11 | Bring Darwin home.nix to parity                            | 🟡       | 4h       | Cross-platform quality      |
+| 12 | Extract go-finding patches upstream                        | 🟡       | 3h       | Remove fragile sed patches  |
+| 13 | Create `mkHardenedService` wrapper                         | 🟡       | 1h       | DRY systemd config          |
+| 14 | Remove go-structure-linter flake input                     | 🟡       | 5min     | Clean flake.lock            |
+| 15 | Convert go-auto-upgrade `path:` inputs to SSH URLs         | 🟡       | 30min    | Remove path: anti-pattern   |
+| 16 | Shared flake-parts template for Go repos                   | 🟡       | 3h       | Standardization             |
+| 17 | nix-colors integration (17+ hardcoded colors)              | 🟢       | 6h       | Theme consistency           |
+| 18 | Deploy Dozzle for Docker log viewing                       | 🟢       | 1h       | Observability               |
+| 19 | Create `just status` command                               | 🟢       | 2h       | Automation                  |
+| 20 | Add integration tests beyond eval-time                     | 🟢       | 4h       | Reliability                 |
+| 21 | Persist dnsblockd temp-allows across restarts              | 🟢       | 2h       | Data durability             |
+| 22 | Provision Raspberry Pi 3 for DNS failover                  | 🟢       | Hardware | Infrastructure resilience   |
+| 23 | Wire Pi 3 as secondary DNS                                 | 🟢       | 2h       | DNS redundancy              |
+| 24 | Port collision detection for ports.nix entries             | 🟢       | 1h       | Prevent future conflicts    |
+| 25 | Test deploy on Darwin                                      | 🟢       | 30min    | Cross-platform verification |
 
 ---
 

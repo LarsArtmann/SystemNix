@@ -10,12 +10,12 @@
 
 ### Debt Fixes From Prior Session Self-Review
 
-| ID | Issue | Resolution | Verified? |
-|----|-------|------------|-----------|
-| D1 | CHANGELOG missing entries for 11 of 12 changes | Added entries across Added/Changed/Removed/Fixed sections covering: GOMEMLIMIT expansion, crush-daily cap, boot.nix ioTier conversion, Pocket ID retry, CI port check, PMA flake decoupling, test infrastructure, dead script deletion, ruff pre-commit, browser-history VM test, memory.events monitoring | Yes — grep verified all entries present |
-| D2 | memory.events collector might fail silently under `ProtectSystem=strict` | **FALSE ALARM.** The service runs as root with `ProtectSystem=full` (not `strict`). `full` only mounts `/usr`/`/boot`/`/efi`/`/etc` read-only — `/sys/fs/cgroup` is NOT affected. Added documenting comment to the code | Yes — verified by reading `lib/systemd.nix` |
-| D3 | browser-history VM test never run at runtime | Built + ran. First run: **FAILED** (curl exit 7 — Go server hadn't bound yet). Fixed: added `wait_for_open_port(8087, timeout=30)`. Second run: **PASSES** (25s, health 200) | Yes — `nix build .#checks.x86_64-linux.browser-history` exits 0, logs show `GET /health 200` |
-| D4 | Upstream fixes assumed missing (both repos clean) | **BOTH FIXES ALREADY EXIST.** Prior session's `rg` searches were wrong. PMA `isNothingToCommit()` at `committer.go:289`, browser-history `ClientSecret` guard at `oauth2.go:64`. Both repos pushed to remote. PMA flake input already at HEAD. Browser-history flake input bumped 2 commits (`5c1a1b7` → `451fa4d`) | Yes — `git log`, `git rev-parse`, flake.lock verified |
+| ID | Issue                                                                    | Resolution                                                                                                                                                                                                                                                                                                          | Verified?                                                                                    |
+| -- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| D1 | CHANGELOG missing entries for 11 of 12 changes                           | Added entries across Added/Changed/Removed/Fixed sections covering: GOMEMLIMIT expansion, crush-daily cap, boot.nix ioTier conversion, Pocket ID retry, CI port check, PMA flake decoupling, test infrastructure, dead script deletion, ruff pre-commit, browser-history VM test, memory.events monitoring          | Yes — grep verified all entries present                                                      |
+| D2 | memory.events collector might fail silently under `ProtectSystem=strict` | **FALSE ALARM.** The service runs as root with `ProtectSystem=full` (not `strict`). `full` only mounts `/usr`/`/boot`/`/efi`/`/etc` read-only — `/sys/fs/cgroup` is NOT affected. Added documenting comment to the code                                                                                             | Yes — verified by reading `lib/systemd.nix`                                                  |
+| D3 | browser-history VM test never run at runtime                             | Built + ran. First run: **FAILED** (curl exit 7 — Go server hadn't bound yet). Fixed: added `wait_for_open_port(8087, timeout=30)`. Second run: **PASSES** (25s, health 200)                                                                                                                                        | Yes — `nix build .#checks.x86_64-linux.browser-history` exits 0, logs show `GET /health 200` |
+| D4 | Upstream fixes assumed missing (both repos clean)                        | **BOTH FIXES ALREADY EXIST.** Prior session's `rg` searches were wrong. PMA `isNothingToCommit()` at `committer.go:289`, browser-history `ClientSecret` guard at `oauth2.go:64`. Both repos pushed to remote. PMA flake input already at HEAD. Browser-history flake input bumped 2 commits (`5c1a1b7` → `451fa4d`) | Yes — `git log`, `git rev-parse`, flake.lock verified                                        |
 
 ### New Work Completed
 
@@ -60,26 +60,26 @@
 
 These were in the 88-task Pareto plan but were not attempted this session (no sudo, no deploy, deferred by user choice):
 
-| Task | Why Not Started |
-|------|-----------------|
-| **F01-F02: git push** | Requires user action. 27 files changed, all local. Auto-git daemon may commit. |
-| **F04-F12: Deploy + reboot** | User said "no" to deploy. All changes are unactivated. |
-| **F25-F29: BTRFS scrub, dnsblockd cleanup, /data fill, smartctl** | Requires sudo. |
-| **F30: ClickHouse backup** | Requires deploy first. |
-| **F31-F32: Twenty CRM PG role fix** | Requires sudo + deploy. |
-| **F40-F42: Attic cache + CI token** | Requires deploy first. |
-| **F43-F45: node_exporter textfile phantom metrics** | Requires deploy + runtime investigation. 14 Gatus checks may be permanently RED. Root cause unknown. |
-| **F49-F55: SigNoz dashboard v2 rewrite** | 6 dashboards need Perses v2 schema rewrite. Deferred. |
-| **F59: test-home-manager.sh TESTS_TOTAL inflation** | Audit 20+ increment sites. Not attempted. |
-| **F68: deploy.sh backup retention** | Add cleanup of `.bak` files older than 3 deploys. Not attempted. |
-| **F70: GOTOOLCHAIN=local on Go devShells** | Plan says "all Go devShells" but there are no Go devShells in this flake. Verified — task is N/A. |
-| **F76-F80: Documentation freshness** | README, CONTRIBUTING, DOMAIN_LANGUAGE checks. Not attempted. |
-| **F81-F88: Long-term/deferred** | ZFS native test, pool assessment, dep audit, dnsblockd CA cert. All deferred. |
-| **F84: PMA GenerateMessage handler leak** | Upstream audit of `defer Close()` pattern. Not attempted. |
-| **F85: file-and-image-renamer pin 3 inputs from ref=master to tags** | Not attempted. |
-| **F86: Monitor365 DuckDB pool size metric** | Not attempted. |
-| **F87: dep-audit script for LarsArtmann Go repos** | Not attempted. |
-| **F88: dnsblockd CA cert deployment automation** | Not attempted. |
+| Task                                                                 | Why Not Started                                                                                      |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| **F01-F02: git push**                                                | Requires user action. 27 files changed, all local. Auto-git daemon may commit.                       |
+| **F04-F12: Deploy + reboot**                                         | User said "no" to deploy. All changes are unactivated.                                               |
+| **F25-F29: BTRFS scrub, dnsblockd cleanup, /data fill, smartctl**    | Requires sudo.                                                                                       |
+| **F30: ClickHouse backup**                                           | Requires deploy first.                                                                               |
+| **F31-F32: Twenty CRM PG role fix**                                  | Requires sudo + deploy.                                                                              |
+| **F40-F42: Attic cache + CI token**                                  | Requires deploy first.                                                                               |
+| **F43-F45: node_exporter textfile phantom metrics**                  | Requires deploy + runtime investigation. 14 Gatus checks may be permanently RED. Root cause unknown. |
+| **F49-F55: SigNoz dashboard v2 rewrite**                             | 6 dashboards need Perses v2 schema rewrite. Deferred.                                                |
+| **F59: test-home-manager.sh TESTS_TOTAL inflation**                  | Audit 20+ increment sites. Not attempted.                                                            |
+| **F68: deploy.sh backup retention**                                  | Add cleanup of `.bak` files older than 3 deploys. Not attempted.                                     |
+| **F70: GOTOOLCHAIN=local on Go devShells**                           | Plan says "all Go devShells" but there are no Go devShells in this flake. Verified — task is N/A.    |
+| **F76-F80: Documentation freshness**                                 | README, CONTRIBUTING, DOMAIN_LANGUAGE checks. Not attempted.                                         |
+| **F81-F88: Long-term/deferred**                                      | ZFS native test, pool assessment, dep audit, dnsblockd CA cert. All deferred.                        |
+| **F84: PMA GenerateMessage handler leak**                            | Upstream audit of `defer Close()` pattern. Not attempted.                                            |
+| **F85: file-and-image-renamer pin 3 inputs from ref=master to tags** | Not attempted.                                                                                       |
+| **F86: Monitor365 DuckDB pool size metric**                          | Not attempted.                                                                                       |
+| **F87: dep-audit script for LarsArtmann Go repos**                   | Not attempted.                                                                                       |
+| **F88: dnsblockd CA cert deployment automation**                     | Not attempted.                                                                                       |
 
 ---
 
@@ -90,6 +90,7 @@ These were in the 88-task Pareto plan but were not attempted this session (no su
 The prior session's self-review (status report `2026-08-11_04-15`) listed as finding D4: "Upstream fix assumptions were wrong (repos are clean)." It claimed `rg -l "isNothingToCommit"` returned nothing for PMA and `rg -l "ClientSecret"` returned nothing for browser-history.
 
 **This was wrong.** Both functions exist:
+
 - PMA: `isNothingToCommit()` at `pma-daemon/committer/committer.go:289-302` — fully implemented, tested (`committer_test.go:194-266`), with TOCTOU race comment block
 - browser-history: Provider silently skipped when ClientID or ClientSecret is empty at `api/oauth2.go:44,53,64` — with test at `oauth2_test.go:79-80`
 
@@ -224,6 +225,7 @@ The prior session added `ruff check` to `.githooks/pre-commit` but didn't create
 ### Q1: Should the memory.events threshold be per-service instead of a flat 100?
 
 The flat threshold of 100 is applied to ALL monitored services. But different services have different memory patterns:
+
 - **PMA** (260+ repos, page-cache heavy): 100 is appropriate (it hit 27,312 before crashing)
 - **dnsblockd** (embedded DNS resolver, low memory): 100 might be too high — it might never fire even if something is wrong
 - **SigNoz** (ClickHouse + OTel collector, memory-intensive): 100 might be too low — it might fire frequently under normal load

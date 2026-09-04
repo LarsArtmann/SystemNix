@@ -283,9 +283,9 @@ platforms/nixos/
 | Fish Shell      | ✅     | ✅    | ✅     | Same shared module   |
 | Starship Prompt | ✅     | ✅    | ✅     | Same shared module   |
 | Tmux            | ✅     | ✅    | ✅     | Same shared module   |
-| ActivityWatch   | ❌     | ✅    | ⚠️     | Platform-conditional |
+| ActivityWatch   | ❌     | ✅    | ⚠️      | Platform-conditional |
 | Aliases (l, t)  | ✅     | ✅    | ✅     | Same shared module   |
-| Aliases (nix\*) | ✅     | ✅    | ⚠️     | Different commands   |
+| Aliases (nix\*) | ✅     | ✅    | ⚠️      | Different commands   |
 | Session Vars    | ✅     | ✅    | ✅     | Same shared module   |
 | Wayland Vars    | ❌     | ✅    | ❌     | NixOS-only           |
 | Homebrew        | ✅     | ❌    | ❌     | Darwin-only          |

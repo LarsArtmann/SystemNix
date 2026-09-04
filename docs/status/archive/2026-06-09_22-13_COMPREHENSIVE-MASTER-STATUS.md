@@ -341,48 +341,48 @@ All services migrated from hardcoded port numbers to `lib/ports.nix`:
 
 ### 🔥 Critical (Do Now)
 
-| #   | Task                                                        | Why                                                                 |
-| --- | ----------------------------------------------------------- | ------------------------------------------------------------------- |
-| 1   | **Run `nix-collect-garbage -d` on evo-x2**                  | 99% disk = cannot deploy, cannot snapshot, crash risk               |
-| 2   | **Fix monitor365 uncommitted changes**                      | Blocks ALL SystemNix `just switch` / `nh os boot`                   |
-| 3   | **Deploy current changes to evo-x2**                        | Port centralization, Nautilus, Rust toolchain, WebAuthn — all ready |
-| 4   | **Verify `just switch` succeeds after GC + monitor365 fix** | Full system closure must build                                      |
+| # | Task                                                        | Why                                                                 |
+| - | ----------------------------------------------------------- | ------------------------------------------------------------------- |
+| 1 | **Run `nix-collect-garbage -d` on evo-x2**                  | 99% disk = cannot deploy, cannot snapshot, crash risk               |
+| 2 | **Fix monitor365 uncommitted changes**                      | Blocks ALL SystemNix `just switch` / `nh os boot`                   |
+| 3 | **Deploy current changes to evo-x2**                        | Port centralization, Nautilus, Rust toolchain, WebAuthn — all ready |
+| 4 | **Verify `just switch` succeeds after GC + monitor365 fix** | Full system closure must build                                      |
 
 ### High Priority (This Week)
 
-| #   | Task                                                                 | Why                                                             |
-| --- | -------------------------------------------------------------------- | --------------------------------------------------------------- |
-| 5   | **Run `scripts/verify-deployment.sh` on evo-x2**                     | Validate all services post-deploy                               |
-| 6   | **Check SigNoz dashboards/rules/Discord alerts**                     | Session 122 added per-threshold routing — needs verification    |
-| 7   | **Complete Hermes manual setup** (sops secrets + SSH key)            | Enables OpenRouter fallback, prevents GLM-5.1 rate limit stalls |
-| 8   | **Audit remaining hardcoded ports** in scripts/docs/gatus            | Port centralization must be 100% complete                       |
-| 9   | **Test Nautilus file picker** in Electron/Niri apps                  | New file manager needs validation                               |
-| 10  | **Enable `file-and-image-renamer`** when nixpkgs Go bumps to 1.26.3  | Feature disabled unnecessarily                                  |
-| 11  | **Re-evaluate monitor365 build** — commit or stash WIP audio feature | Prevents future deployment blockers                             |
-| 12  | **Set up automatic Nix GC** (weekly timer or `max-free` in nix.conf) | Prevents 99% disk recurrence                                    |
+| #  | Task                                                                 | Why                                                             |
+| -- | -------------------------------------------------------------------- | --------------------------------------------------------------- |
+| 5  | **Run `scripts/verify-deployment.sh` on evo-x2**                     | Validate all services post-deploy                               |
+| 6  | **Check SigNoz dashboards/rules/Discord alerts**                     | Session 122 added per-threshold routing — needs verification    |
+| 7  | **Complete Hermes manual setup** (sops secrets + SSH key)            | Enables OpenRouter fallback, prevents GLM-5.1 rate limit stalls |
+| 8  | **Audit remaining hardcoded ports** in scripts/docs/gatus            | Port centralization must be 100% complete                       |
+| 9  | **Test Nautilus file picker** in Electron/Niri apps                  | New file manager needs validation                               |
+| 10 | **Enable `file-and-image-renamer`** when nixpkgs Go bumps to 1.26.3  | Feature disabled unnecessarily                                  |
+| 11 | **Re-evaluate monitor365 build** — commit or stash WIP audio feature | Prevents future deployment blockers                             |
+| 12 | **Set up automatic Nix GC** (weekly timer or `max-free` in nix.conf) | Prevents 99% disk recurrence                                    |
 
 ### Medium Priority (Next 2 Weeks)
 
-| #   | Task                                                              | Why                                                   |
-| --- | ----------------------------------------------------------------- | ----------------------------------------------------- |
-| 13  | **Migrate `/data` to `@data` subvolume**                          | Enables BTRFS snapshots for /data                     |
-| 14  | **Provision Raspberry Pi 3** for DNS failover                     | DNS redundancy currently planned-only                 |
-| 15  | **Enable voice-agents** (LiveKit + Whisper)                       | Module exists, just disabled — test ROCm GPU pipeline |
-| 16  | **Add `rustup` to NixOS packages**                                | Multi-toolchain Rust management                       |
-| 17  | **Update `FEATURES.md`** with ecapture, Rust toolchain, WebAuthn  | Documentation drift                                   |
-| 18  | **Clean up `TODO_LIST.md`** — check off completed items           | Many session 121/122 items still unchecked            |
-| 19  | **Test WebAuthn hybrid transport** with phone passkey             | New feature needs real-world validation               |
-| 20  | **Add port-hardcoding lint to CI**                                | Prevent regression of hardcoded ports                 |
-| 21  | **Re-enable AppArmor** when NixOS bug fixed                       | Security hardening gap                                |
-| 22  | **Add `cargo-sweep` to user packages** (not just cleanup scripts) | Rust dev workflow                                     |
+| #  | Task                                                              | Why                                                   |
+| -- | ----------------------------------------------------------------- | ----------------------------------------------------- |
+| 13 | **Migrate `/data` to `@data` subvolume**                          | Enables BTRFS snapshots for /data                     |
+| 14 | **Provision Raspberry Pi 3** for DNS failover                     | DNS redundancy currently planned-only                 |
+| 15 | **Enable voice-agents** (LiveKit + Whisper)                       | Module exists, just disabled — test ROCm GPU pipeline |
+| 16 | **Add `rustup` to NixOS packages**                                | Multi-toolchain Rust management                       |
+| 17 | **Update `FEATURES.md`** with ecapture, Rust toolchain, WebAuthn  | Documentation drift                                   |
+| 18 | **Clean up `TODO_LIST.md`** — check off completed items           | Many session 121/122 items still unchecked            |
+| 19 | **Test WebAuthn hybrid transport** with phone passkey             | New feature needs real-world validation               |
+| 20 | **Add port-hardcoding lint to CI**                                | Prevent regression of hardcoded ports                 |
+| 21 | **Re-enable AppArmor** when NixOS bug fixed                       | Security hardening gap                                |
+| 22 | **Add `cargo-sweep` to user packages** (not just cleanup scripts) | Rust dev workflow                                     |
 
 ### Lower Priority (Nice to Have)
 
-| #   | Task                                                  | Why                       |
-| --- | ----------------------------------------------------- | ------------------------- |
-| 23  | **Enable Minecraft server** when playing again        | Just a config toggle      |
-| 24  | **Evaluate PhotoMap AI re-enable**                    | Depends on AI model setup |
-| 25  | **Add `just gc` recipe** for one-command disk cleanup | Convenience               |
+| #  | Task                                                  | Why                       |
+| -- | ----------------------------------------------------- | ------------------------- |
+| 23 | **Enable Minecraft server** when playing again        | Just a config toggle      |
+| 24 | **Evaluate PhotoMap AI re-enable**                    | Depends on AI model setup |
+| 25 | **Add `just gc` recipe** for one-command disk cleanup | Convenience               |
 
 ---
 

@@ -59,7 +59,7 @@
 
 ## d) TOTALLY FUCKED UP (honest list)
 
-1. **Asked the user to run `sudo mkdir`** when the repo already contained the exact house pattern (`data-to-pool-migration.nix`: deploy-time root unit for agent sessions without sudo). User response: *"just fucking use nix"* — correct. **Lesson: search repo conventions BEFORE requesting manual intervention.**
+1. **Asked the user to run `sudo mkdir`** when the repo already contained the exact house pattern (`data-to-pool-migration.nix`: deploy-time root unit for agent sessions without sudo). User response: _"just fucking use nix"_ — correct. **Lesson: search repo conventions BEFORE requesting manual intervention.**
 2. **Silently never applied the `.ini` edit** — the `multiedit` failed in the same tool block as the toml read-only failure and I never revisited it. Saved only by the empirical discovery that aw-core ignores the ini. The file is now misleading.
 3. **Question tool misuse** — three failed `question` calls (empty `type`, missing `description`) before the options landed. Wasted round trips.
 4. **~13 min ActivityWatch downtime** during the first decimation pass (stop → 705s DELETE + VACUUM → restart). Acceptable for a personal tracker, but a `PRAGMA journal_mode` + batched delete would have been faster.
@@ -81,10 +81,11 @@
 ## f) NEXT UP (prioritized)
 
 **Deploy-critical (blocks the happy live):**
-1. Run `nix run .#deploy` (user) — activates declarative poll_time + starts the pool migration.
-2. Watch `journalctl -u activitywatch-data-to-pool` through copy → verify → symlink cutover (first run of brand-new script; expect the possibility of a fix round).
-3. Verify post-migration: `ls -la ~/.local/share/activitywatch` is a symlink; aw-server journal shows DB path resolving through it; first btrbk snapshot at 23:45 includes `services/activitywatch`.
-4. Verify the runtime toml → store symlink converges on deploy (HM backup file `.backup` appears, poll_time still 300).
+
+~~1. Run `nix run .#deploy` (user) — activates declarative poll_time + starts the pool migration.~~ done — deployed 2026-08-18/19 (gen 690+)
+~~2. Watch `journalctl -u activitywatch-data-to-pool` through copy → verify → symlink cutover (first run of brand-new script; expect the possibility of a fix round).~~ done — migration completed verified (AGENTS.md: data on pool, self-neutralizing unit)
+~~3. Verify post-migration: `ls -la ~/.local/share/activitywatch` is a symlink; aw-server journal shows DB path resolving through it; first btrbk snapshot at 23:45 includes `services/activitywatch`.~~ done — btrbk-pool snapshotted since (AGENTS.md)
+~~4. Verify the runtime toml → store symlink converges on deploy (HM backup file `.backup` appears, poll_time still 300).~~ done — poll_time 300 live (~1.6MB/day, AGENTS.md)
 
 **Data hygiene:**
 5. VACUUM the 246MB/0-row persistqueue `data.db` before the migration copies it (or accept the 246MB).
@@ -117,4 +118,4 @@
 
 ---
 
-*Report generated from session memory only — no new research performed.*
+_Report generated from session memory only — no new research performed._

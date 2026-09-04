@@ -91,10 +91,17 @@ def get_zero_data_events(conn: sqlite3.Connection, date_filter: set[str] | None 
         stats = payload.get("total_stats", payload.get("stats", {}))
         sessions = stats.get("session_count", 0)
         if sessions == 0 and (date_filter is None or d in date_filter):
-            results.append({
-                "id": row[0], "aggregate_id": row[1], "aggregate_type": row[2],
-                "version": row[3], "date": d, "occurred_at": row[5], "payload": row[4],
-            })
+            results.append(
+                {
+                    "id": row[0],
+                    "aggregate_id": row[1],
+                    "aggregate_type": row[2],
+                    "version": row[3],
+                    "date": d,
+                    "occurred_at": row[5],
+                    "payload": row[4],
+                }
+            )
     return results
 
 
@@ -209,8 +216,12 @@ def main() -> int:
                     "INSERT INTO events (id, aggregate_id, aggregate_type, version, event_type, payload, occurred_at) "
                     "VALUES (?, ?, ?, ?, 'DailyDataCollected', ?, ?)",
                     (
-                        event["id"], event["aggregate_id"], event["aggregate_type"],
-                        event["version"], event.get("payload", ""), event["occurred_at"],
+                        event["id"],
+                        event["aggregate_id"],
+                        event["aggregate_type"],
+                        event["version"],
+                        event.get("payload", ""),
+                        event["occurred_at"],
                     ),
                 )
                 conn.commit()
@@ -247,7 +258,7 @@ def main() -> int:
     finally:
         conn.close()
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Backfill complete: {succeeded} succeeded, {failed} failed out of {len(zero_events)}")
     if failed > 0:
         print("WARNING: Some dates failed. Check output above.")

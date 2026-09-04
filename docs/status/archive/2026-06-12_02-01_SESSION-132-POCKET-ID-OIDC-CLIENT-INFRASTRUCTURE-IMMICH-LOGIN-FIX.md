@@ -102,33 +102,33 @@
 
 ## F) Top 25 Things We Should Get Done Next (Pareto-Sorted)
 
-| #   | Task                                                                    | Impact   | Effort | Category     |
-| --- | ----------------------------------------------------------------------- | -------- | ------ | ------------ |
-| 1   | **Deploy with `just switch` and verify Immich login works**             | CRITICAL | 5min   | Deploy       |
-| 2   | **Commit zellij.nix separately** (unrelated change in working tree)     | Medium   | 1min   | Git          |
-| 3   | **Add NixOS assertion: Immich callback URLs match Pocket ID client**    | High     | 15min  | Types        |
-| 4   | **oauth2-proxy: add launch URL + logo**                                 | Medium   | 10min  | Config       |
-| 5   | **Replace `or` defaults with proper `mkDefault` in clientAttrs**        | Medium   | 10min  | Code         |
-| 6   | **Logo upload: add hash-based skip**                                    | Low      | 20min  | Code         |
-| 7   | **Add `requiresReauthentication` for sensitive services**               | Medium   | 5min   | Security     |
-| 8   | **Verify all services in Homepage have statusStyle: dot**               | Low      | 5min   | Config       |
-| 9   | **Run `just test-fast` to check pre-existing build error**              | High     | 2min   | CI           |
-| 10  | **Fix pre-existing `lib.fileset.unions` error in flake**                | High     | 30min  | Build        |
-| 11  | **Create `lib/service-assets.nix` for centralized logos**               | Medium   | 20min  | Architecture |
-| 12  | **Add Pocket ID client for OpenSEO** (when ready)                       | Low      | 10min  | Feature      |
-| 13  | **Admin user update path in provision script**                          | Medium   | 20min  | Code         |
-| 14  | **Provision script unit test** (mock API)                               | High     | 60min  | Testing      |
-| 15  | **Add `just provision-dry-run` for safe testing**                       | Medium   | 30min  | DX           |
-| 16  | **Centralize all OIDC client definitions in one place**                 | Medium   | 45min  | Architecture |
-| 17  | **AGENTS.md: document PKCE requirement for Immich v2**                  | Low      | 2min   | Docs         |
-| 18  | **AGENTS.md: document `builtins.toJSON` pattern for provision scripts** | Low      | 2min   | Docs         |
-| 19  | **Audit all services for missing OIDC integration**                     | Low      | 15min  | Audit        |
-| 20  | **Add Gatus health check for Pocket ID provision service**              | Low      | 10min  | Monitoring   |
-| 21  | **Homepage: add Pocket ID provision status indicator**                  | Low      | 5min   | UI           |
-| 22  | **Sops secret rotation strategy for client secrets**                    | Medium   | 60min  | Security     |
-| 23  | **Pocket ID backup strategy** (SQLite DB)                               | High     | 15min  | Backup       |
-| 24  | **BTRFS snapshot before provision runs**                                | Medium   | 10min  | Safety       |
-| 25  | **Review all other services' OAuth configs for v1→v2 URL drift**        | Medium   | 30min  | Audit        |
+| #  | Task                                                                    | Impact   | Effort | Category     |
+| -- | ----------------------------------------------------------------------- | -------- | ------ | ------------ |
+| 1  | **Deploy with `just switch` and verify Immich login works**             | CRITICAL | 5min   | Deploy       |
+| 2  | **Commit zellij.nix separately** (unrelated change in working tree)     | Medium   | 1min   | Git          |
+| 3  | **Add NixOS assertion: Immich callback URLs match Pocket ID client**    | High     | 15min  | Types        |
+| 4  | **oauth2-proxy: add launch URL + logo**                                 | Medium   | 10min  | Config       |
+| 5  | **Replace `or` defaults with proper `mkDefault` in clientAttrs**        | Medium   | 10min  | Code         |
+| 6  | **Logo upload: add hash-based skip**                                    | Low      | 20min  | Code         |
+| 7  | **Add `requiresReauthentication` for sensitive services**               | Medium   | 5min   | Security     |
+| 8  | **Verify all services in Homepage have statusStyle: dot**               | Low      | 5min   | Config       |
+| 9  | **Run `just test-fast` to check pre-existing build error**              | High     | 2min   | CI           |
+| 10 | **Fix pre-existing `lib.fileset.unions` error in flake**                | High     | 30min  | Build        |
+| 11 | **Create `lib/service-assets.nix` for centralized logos**               | Medium   | 20min  | Architecture |
+| 12 | **Add Pocket ID client for OpenSEO** (when ready)                       | Low      | 10min  | Feature      |
+| 13 | **Admin user update path in provision script**                          | Medium   | 20min  | Code         |
+| 14 | **Provision script unit test** (mock API)                               | High     | 60min  | Testing      |
+| 15 | **Add `just provision-dry-run` for safe testing**                       | Medium   | 30min  | DX           |
+| 16 | **Centralize all OIDC client definitions in one place**                 | Medium   | 45min  | Architecture |
+| 17 | **AGENTS.md: document PKCE requirement for Immich v2**                  | Low      | 2min   | Docs         |
+| 18 | **AGENTS.md: document `builtins.toJSON` pattern for provision scripts** | Low      | 2min   | Docs         |
+| 19 | **Audit all services for missing OIDC integration**                     | Low      | 15min  | Audit        |
+| 20 | **Add Gatus health check for Pocket ID provision service**              | Low      | 10min  | Monitoring   |
+| 21 | **Homepage: add Pocket ID provision status indicator**                  | Low      | 5min   | UI           |
+| 22 | **Sops secret rotation strategy for client secrets**                    | Medium   | 60min  | Security     |
+| 23 | **Pocket ID backup strategy** (SQLite DB)                               | High     | 15min  | Backup       |
+| 24 | **BTRFS snapshot before provision runs**                                | Medium   | 10min  | Safety       |
+| 25 | **Review all other services' OAuth configs for v1→v2 URL drift**        | Medium   | 30min  | Audit        |
 
 ---
 

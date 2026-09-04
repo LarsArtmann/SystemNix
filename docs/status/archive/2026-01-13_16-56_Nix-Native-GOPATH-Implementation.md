@@ -232,7 +232,7 @@ $ nix eval .#darwinConfigurations.Lars-MacBook-Air.config.home-manager.users.lar
 | -------------- | --------------------------- |
 | GOPATH in Zsh  | ✅ Available                |
 | GOPATH in Fish | ❌ Missing                  |
-| GOPATH in Bash | ⚠️ Inherited from system    |
+| GOPATH in Bash | ⚠️ Inherited from system     |
 | Declarative    | ❌ Imperative shell exports |
 | Cross-platform | ❌ Inconsistent             |
 | Nix-native     | ❌ Shell-specific           |

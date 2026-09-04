@@ -49,7 +49,7 @@ SystemNix is a mature, production-grade cross-platform Nix configuration managin
 | Default services (Docker + GC)  | ✅     | N/A       | N/A                   |
 | Disk monitor                    | ✅     | ✅        | ✅                    |
 | Display manager (SDDM)          | ✅     | N/A       | N/A                   |
-| DNS blocker (Unbound+dnsblockd) | ✅     | ⚠️ inline | Should use shared lib |
+| DNS blocker (Unbound+dnsblockd) | ✅     | ⚠️ inline  | Should use shared lib |
 | DNS failover (keepalived)       | ✅     | N/A       | N/A                   |
 | Dual-WAN (ECMP+MPTCP)           | ✅     | ✅        | ✅                    |
 | File-and-image-renamer          | ✅     | ✅ (user) | ✅ (user)             |
@@ -135,7 +135,7 @@ SystemNix is a mature, production-grade cross-platform Nix configuration managin
 | **SigNoz dashboards**           | 🔧 Partial | 6 JSON dashboards exist in `modules/nixos/services/dashboards/` but no auto-provisioning wired — likely need manual import |
 | **DNS failover cluster**        | 🔧 Partial | Module complete, Pi 3 hardware not provisioned                                                                             |
 | **Security hardening (auditd)** | 🔧 Partial | Commented-out auditd section — "Re-enable after NixOS resolves audit-rules bug"                                            |
-| **pipe-operators migration**    | 🔧 Partial | Only `sops.nix` uses `                                                                                                     | >`currently. Other modules converted back during session 77-78 after statix compatibility concerns.`nixConfig` now declares it for future use. |
+| **pipe-operators migration**    | 🔧 Partial | Only `sops.nix` uses `                                                                                                     |
 
 ---
 
@@ -144,7 +144,7 @@ SystemNix is a mature, production-grade cross-platform Nix configuration managin
 | Item                                            | Priority | Notes                                                    |
 | ----------------------------------------------- | -------- | -------------------------------------------------------- |
 | **Pi 3 DNS backup node provisioning**           | P3       | Hardware needed                                          |
-| **Statix compatibility with pipe-operators**    | P3       | statix 0.5.8 can't parse `                               | >` — blocked on upstream |
+| **Statix compatibility with pipe-operators**    | P3       | statix 0.5.8 can't parse `                               |
 | **SigNoz dashboard auto-provisioning**          | P3       | 6 JSON files exist, need provisioning config             |
 | **NixOS tests for service modules**             | P3       | No NixOS-level integration tests exist                   |
 | **Darwin-specific service expansion**           | P4       | LaunchAgents for ActivityWatch + Crush updates only      |
@@ -221,33 +221,33 @@ SystemNix is a mature, production-grade cross-platform Nix configuration managin
 
 ## f) Top #25 Things We Should Get Done Next
 
-| #   | Priority | Item                                                                                 | Effort                             | Impact                               |
-| --- | -------- | ------------------------------------------------------------------------------------ | ---------------------------------- | ------------------------------------ |
-| 1   | **P0**   | Fix `dns-update.sh` path: `platforms/shared/` → `platforms/common/`                  | 1 min                              | High — broken since directory rename |
-| 2   | **P1**   | Migrate `dns-blocker.nix` to shared lib helpers (`harden {}` + `serviceDefaults {}`) | 15 min                             | Medium — consistency                 |
-| 3   | **P1**   | Add own options to `caddy.nix` (enable + port) for consistency with other modules    | 10 min                             | Medium — pattern consistency         |
-| 4   | **P1**   | Add own options to `gitea.nix` (enable + port)                                       | 10 min                             | Medium                               |
-| 5   | **P1**   | Add own options to `immich.nix` (enable + port)                                      | 10 min                             | Medium                               |
-| 6   | **P1**   | Wire SigNoz dashboard auto-provisioning from JSON files                              | 30 min                             | Medium — observability UX            |
-| 7   | **P1**   | Test `just switch` on NixOS after pipe-operators fix (build was blocked)             | 5 min                              | High — unblock deployment            |
-| 8   | **P2**   | Write NixOS integration test for at least one service module                         | 1 hr                               | High — confidence                    |
-| 9   | **P2**   | Upgrade statix or find alternative that supports pipe-operators                      | 30 min                             | Medium — unblocks `                  | >` migration     |
-| 10  | **P2**   | Add `just test-services` recipe that checks all service modules evaluate             | 30 min                             | Medium — CI readiness                |
-| 11  | **P2**   | Verify Gatus Discord alerting works with a test endpoint                             | 5 min                              | Medium — monitoring confidence       |
-| 12  | **P2**   | Test BTRFS + Timeshift disaster recovery procedure                                   | 30 min                             | High — backup confidence             |
-| 13  | **P2**   | Wire Twenty CRM Authelia OAuth integration                                           | 1 hr                               | Medium                               |
-| 14  | **P2**   | Add `flake.lock` automated update bot (GitHub Actions)                               | 1 hr                               | Medium — maintenance                 |
-| 15  | **P2**   | Expand pipe-operators to other modules (cleaner than nested builtins)                | 1 hr                               | Low — code style                     |
-| 16  | **P3**   | Add NixOS module-level tests (NixOS VM tests for key services)                       | 4 hr                               | High — production confidence         |
-| 17  | **P3**   | Provision Pi 3 as DNS backup node                                                    | 2 hr                               | Medium — HA DNS                      |
-| 18  | **P3**   | Re-enable auditd once NixOS fixes audit-rules service bug                            | 15 min                             | Medium — security                    |
-| 19  | **P3**   | Add automated sops secret rotation schedule                                          | 2 hr                               | Medium — security hygiene            |
-| 20  | **P3**   | Build custom SigNoz dashboards for home infrastructure                               | 2 hr                               | Medium — observability               |
-| 21  | **P3**   | Add `just health-full` recipe that runs all diagnostic scripts                       | 15 min                             | Low — convenience                    |
-| 22  | **P3**   | Document BTRFS snapshot restore procedure in README/docs                             | 30 min                             | Medium — operational                 |
-| 23  | **P4**   | Add Darwin-specific launch agents beyond ActivityWatch + Crush                       | 1 hr                               | Low                                  |
-| 24  | **P4**   | Migrate remaining `                                                                  | >` candidates from nested builtins | 1 hr                                 | Low — code style |
-| 25  | **P4**   | AGENTS.md freshness check — verify all module references match current state         | 30 min                             | Low — documentation                  |
+| #  | Priority | Item                                                                                 | Effort                             | Impact                               |
+| -- | -------- | ------------------------------------------------------------------------------------ | ---------------------------------- | ------------------------------------ |
+| 1  | **P0**   | Fix `dns-update.sh` path: `platforms/shared/` → `platforms/common/`                  | 1 min                              | High — broken since directory rename |
+| 2  | **P1**   | Migrate `dns-blocker.nix` to shared lib helpers (`harden {}` + `serviceDefaults {}`) | 15 min                             | Medium — consistency                 |
+| 3  | **P1**   | Add own options to `caddy.nix` (enable + port) for consistency with other modules    | 10 min                             | Medium — pattern consistency         |
+| 4  | **P1**   | Add own options to `gitea.nix` (enable + port)                                       | 10 min                             | Medium                               |
+| 5  | **P1**   | Add own options to `immich.nix` (enable + port)                                      | 10 min                             | Medium                               |
+| 6  | **P1**   | Wire SigNoz dashboard auto-provisioning from JSON files                              | 30 min                             | Medium — observability UX            |
+| 7  | **P1**   | Test `just switch` on NixOS after pipe-operators fix (build was blocked)             | 5 min                              | High — unblock deployment            |
+| 8  | **P2**   | Write NixOS integration test for at least one service module                         | 1 hr                               | High — confidence                    |
+| 9  | **P2**   | Upgrade statix or find alternative that supports pipe-operators                      | 30 min                             | Medium — unblocks `                  |
+| 10 | **P2**   | Add `just test-services` recipe that checks all service modules evaluate             | 30 min                             | Medium — CI readiness                |
+| 11 | **P2**   | Verify Gatus Discord alerting works with a test endpoint                             | 5 min                              | Medium — monitoring confidence       |
+| 12 | **P2**   | Test BTRFS + Timeshift disaster recovery procedure                                   | 30 min                             | High — backup confidence             |
+| 13 | **P2**   | Wire Twenty CRM Authelia OAuth integration                                           | 1 hr                               | Medium                               |
+| 14 | **P2**   | Add `flake.lock` automated update bot (GitHub Actions)                               | 1 hr                               | Medium — maintenance                 |
+| 15 | **P2**   | Expand pipe-operators to other modules (cleaner than nested builtins)                | 1 hr                               | Low — code style                     |
+| 16 | **P3**   | Add NixOS module-level tests (NixOS VM tests for key services)                       | 4 hr                               | High — production confidence         |
+| 17 | **P3**   | Provision Pi 3 as DNS backup node                                                    | 2 hr                               | Medium — HA DNS                      |
+| 18 | **P3**   | Re-enable auditd once NixOS fixes audit-rules service bug                            | 15 min                             | Medium — security                    |
+| 19 | **P3**   | Add automated sops secret rotation schedule                                          | 2 hr                               | Medium — security hygiene            |
+| 20 | **P3**   | Build custom SigNoz dashboards for home infrastructure                               | 2 hr                               | Medium — observability               |
+| 21 | **P3**   | Add `just health-full` recipe that runs all diagnostic scripts                       | 15 min                             | Low — convenience                    |
+| 22 | **P3**   | Document BTRFS snapshot restore procedure in README/docs                             | 30 min                             | Medium — operational                 |
+| 23 | **P4**   | Add Darwin-specific launch agents beyond ActivityWatch + Crush                       | 1 hr                               | Low                                  |
+| 24 | **P4**   | Migrate remaining `                                                                  | >` candidates from nested builtins | 1 hr                                 |
+| 25 | **P4**   | AGENTS.md freshness check — verify all module references match current state         | 30 min                             | Low — documentation                  |
 
 ---
 

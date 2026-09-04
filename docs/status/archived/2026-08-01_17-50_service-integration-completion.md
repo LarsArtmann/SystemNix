@@ -6,7 +6,6 @@
 
 ---
 
-
 ## Executive Summary
 
 Completed ALL remaining work from the previous session's status report. All NixOS-level changes pass `nix flake check --no-build`. All 5 upstream repos are committed, pushed, flake inputs bumped, vendor hashes updated, and verified to build. The monitor365 `otel` cargo feature compilation bug was found and fixed. The only remaining step is **deployment** (`nix run .#deploy`) and runtime verification.
@@ -28,6 +27,7 @@ Completed ALL remaining work from the previous session's status report. All NixO
 **Before:** Service ran as root with only `ReadWritePaths` — no `harden {}`, no `serviceOneshotDefaults`, no `NoNewPrivileges`, no `PrivateTmp`. Inconsistent with every other service in SystemNix.
 
 **After:** Added proper hardening via `lib.mkMerge`:
+
 - `harden { MemoryMax = "128M"; ReadWritePaths = [ textfileDir ]; }`
 - `serviceOneshotDefaults { }` (Restart=no for oneshot)
 - `onFailure` alert routing
@@ -44,6 +44,7 @@ Added "SigNoz OTLP Receiver" health check: probes `http://localhost:4318/` every
 **Files:** `modules/nixos/services/monitor365.nix`, `modules/nixos/services/gatus-config.nix`
 
 **Before:** TWO overlapping backup monitors for monitor365:
+
 - `monitor365-backup-health` service (writes `monitor365_backup_*` metrics)
 - `backup-coordination` module (writes `backup_healthy{backup="monitor365"}`)
 
@@ -61,12 +62,14 @@ Both are noop until upstream repos add OTel instrumentation, but the env vars ar
 ### 6. Wrote unit tests for SetupFromEnv (4 Go repos)
 
 **Files:**
+
 - `crush-daily/internal/telemetry/telemetry_test.go`
 - `projects-management-automation/internal/telemetry/telemetry_test.go`
 - `overview/internal/telemetry/telemetry_test.go`
 - `file-and-image-renamer/pkg/telemetry/telemetry_test.go`
 
 Each test suite verifies:
+
 1. `SetupFromEnv` with no endpoint → returns noop shutdown, nil error
 2. `SetupFromEnv` with endpoint → returns real provider, nil error
 
@@ -75,6 +78,7 @@ All 4 suites pass (`go test ./.../telemetry/...`).
 ### 7. Updated AGENTS.md
 
 Added 4 new gotcha entries + 2 new "Adding a Service" steps:
+
 - OTLP tracing endpoint format is language-specific (Go/Rust/Python/Docker)
 - `backup-coordination` module replaces per-service backup monitors
 - Homepage `siteMonitor` entries removed — Gatus owns health alerting
@@ -86,23 +90,23 @@ Added 4 new gotcha entries + 2 new "Adding a Service" steps:
 
 All 5 repos were pushed to GitHub:
 
-| Repo | Commits Pushed | Key Changes |
-|---|---|---|
-| crush-daily | 3 | telemetry code + const fix + vendorHash |
-| monitor365 | 30 | collectors + otel feature + cargo fmt + otel import fix |
-| PMA | 4 | telemetry code + test + vendorHash |
-| overview | 3 | telemetry code + test + vendorHash |
-| file-and-image-renamer | 3 | telemetry code + test + vendorHash |
+| Repo                   | Commits Pushed | Key Changes                                             |
+| ---------------------- | -------------- | ------------------------------------------------------- |
+| crush-daily            | 3              | telemetry code + const fix + vendorHash                 |
+| monitor365             | 30             | collectors + otel feature + cargo fmt + otel import fix |
+| PMA                    | 4              | telemetry code + test + vendorHash                      |
+| overview               | 3              | telemetry code + test + vendorHash                      |
+| file-and-image-renamer | 3              | telemetry code + test + vendorHash                      |
 
 ### 9. Updated vendor hashes for all 4 Go repos
 
 The OTLP dependency additions changed `go.sum`, requiring new vendor hashes:
 
-| Repo | Old Hash | New Hash |
-|---|---|---|
-| crush-daily | `sha256-2e/irE5Y...` | `sha256-rPlixV/A...` |
-| PMA | `sha256-pAWMnCpZ...` | `sha256-jgyqsAN5...` |
-| overview | `sha256-cNkBrB4W...` | `sha256-dbn9TszY...` |
+| Repo                   | Old Hash             | New Hash             |
+| ---------------------- | -------------------- | -------------------- |
+| crush-daily            | `sha256-2e/irE5Y...` | `sha256-rPlixV/A...` |
+| PMA                    | `sha256-pAWMnCpZ...` | `sha256-jgyqsAN5...` |
+| overview               | `sha256-cNkBrB4W...` | `sha256-dbn9TszY...` |
 | file-and-image-renamer | `sha256-39J48HFc...` | `sha256-iNJykM5y...` |
 
 PMA verified to build successfully from SystemNix (`nix build .#projects-management-automation`).
@@ -110,10 +114,12 @@ PMA verified to build successfully from SystemNix (`nix build .#projects-managem
 ### 10. Fixed monitor365 otel feature compilation bug
 
 **Problem:** Enabling `--features otel` caused 6 compilation errors:
+
 - `with_endpoint` not found on `SpanExporterBuilder` / `MetricExporterBuilder` (missing `WithExportConfig` trait import)
 - `with` not found on `Registry` (missing `SubscriberExt` / `SubscriberInitExt` trait imports)
 
 **Fix:** Added 3 trait imports to `init_telemetry()`:
+
 ```rust
 use opentelemetry_otlp::WithExportConfig;
 use tracing_subscriber::layer::SubscriberExt;
@@ -132,16 +138,16 @@ All 5 inputs updated in `flake.lock` with the latest upstream commits.
 
 All services have correct OTLP endpoints wired:
 
-| Service | Language | Endpoint | Scheme | Port | Verified |
-|---|---|---|---|---|---|
-| DiscordSync | Go | `localhost:4318` | none (HTTP) | 4318 | ✅ `nix eval` |
-| Crush Daily | Go | `localhost:4318` | none (HTTP) | 4318 | ✅ `nix eval` |
-| Monitor365 | Rust | `http://localhost:4317` | http (gRPC) | 4317 | ✅ `nix eval` |
-| PMA | Go | `localhost:4318` | none (HTTP) | 4318 | ✅ `nix eval` |
-| Overview | Go | `localhost:4318` | none (HTTP) | 4318 | ✅ `nix eval` |
-| File-Renamer | Go | `localhost:4318` | none (HTTP) | 4318 | ✅ `nix eval` |
-| Hermes | Python | `http://localhost:4318` | http (HTTP) | 4318 | ✅ `nix eval` |
-| Manifest | Docker | `http://host.docker.internal:4318` | http (HTTP) | 4318 | ✅ `nix eval` |
+| Service      | Language | Endpoint                           | Scheme      | Port | Verified      |
+| ------------ | -------- | ---------------------------------- | ----------- | ---- | ------------- |
+| DiscordSync  | Go       | `localhost:4318`                   | none (HTTP) | 4318 | ✅ `nix eval` |
+| Crush Daily  | Go       | `localhost:4318`                   | none (HTTP) | 4318 | ✅ `nix eval` |
+| Monitor365   | Rust     | `http://localhost:4317`            | http (gRPC) | 4317 | ✅ `nix eval` |
+| PMA          | Go       | `localhost:4318`                   | none (HTTP) | 4318 | ✅ `nix eval` |
+| Overview     | Go       | `localhost:4318`                   | none (HTTP) | 4318 | ✅ `nix eval` |
+| File-Renamer | Go       | `localhost:4318`                   | none (HTTP) | 4318 | ✅ `nix eval` |
+| Hermes       | Python   | `http://localhost:4318`            | http (HTTP) | 4318 | ✅ `nix eval` |
+| Manifest     | Docker   | `http://host.docker.internal:4318` | http (HTTP) | 4318 | ✅ `nix eval` |
 
 ---
 
@@ -177,16 +183,16 @@ Everything is ready for deployment. The only remaining steps require running on 
 
 ## E. What Was NOT Done (Deferred)
 
-| Item | Reason |
-|---|---|
-| Hermes upstream OTel instrumentation | Repo not available locally (`/home/lars/projects/hermes` missing) |
-| Manifest upstream OTel instrumentation | Repo not available locally (`/home/lars/projects/manifest` missing) |
-| Phase 3A: AI routing through Manifest | P2 — deferred to separate session |
-| Phase 3D: Homepage dynamic service discovery | P2 — deferred |
-| Phase 3E: Forgejo ↔ PMA discovery | P2 — deferred |
-| Phase 4A: QMD ↔ SearXNG adapter | P3 — optional |
-| Phase 4B: QMD → Crush Daily context | P3 — optional |
-| Gatus badge integration on Homepage | Low priority — visual only |
+| Item                                         | Reason                                                              |
+| -------------------------------------------- | ------------------------------------------------------------------- |
+| Hermes upstream OTel instrumentation         | Repo not available locally (`/home/lars/projects/hermes` missing)   |
+| Manifest upstream OTel instrumentation       | Repo not available locally (`/home/lars/projects/manifest` missing) |
+| Phase 3A: AI routing through Manifest        | P2 — deferred to separate session                                   |
+| Phase 3D: Homepage dynamic service discovery | P2 — deferred                                                       |
+| Phase 3E: Forgejo ↔ PMA discovery            | P2 — deferred                                                       |
+| Phase 4A: QMD ↔ SearXNG adapter              | P3 — optional                                                       |
+| Phase 4B: QMD → Crush Daily context          | P3 — optional                                                       |
+| Gatus badge integration on Homepage          | Low priority — visual only                                          |
 
 ---
 

@@ -102,15 +102,15 @@ This is clean but not documented. If it becomes the standard, AGENTS.md should e
 
 ## System Health
 
-| Metric                     | Value                      | Status          |
-| -------------------------- | -------------------------- | --------------- |
+| Metric                     | Value                      | Status         |
+| -------------------------- | -------------------------- | -------------- |
 | Root disk (`/`)            | 80% used (100 GB free)     | ⚠️ Clean needed |
 | Data disk (`/data`)        | 80% used (206 GB free)     | ⚠️ Watch        |
-| Go/Rust projects wired     | 14/14                      | ✅              |
-| Go local packages in pkgs/ | 0                          | ✅ Zero         |
-| Overlays in separate files | 3 (default, shared, linux) | ✅ Clean        |
-| SystemNix `test-fast`      | Passes (both platforms)    | ✅              |
-| Uncommitted changes        | 0 (after this commit)      | ✅              |
+| Go/Rust projects wired     | 14/14                      | ✅             |
+| Go local packages in pkgs/ | 0                          | ✅ Zero        |
+| Overlays in separate files | 3 (default, shared, linux) | ✅ Clean       |
+| SystemNix `test-fast`      | Passes (both platforms)    | ✅             |
+| Uncommitted changes        | 0 (after this commit)      | ✅             |
 
 ---
 

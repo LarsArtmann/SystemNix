@@ -5,7 +5,6 @@
 
 ---
 
-
 ## A. FULLY DONE
 
 1. **Browser-history server deployed with auth UI** — Binary at rev `cd589cc` running as systemd service on port 8087. `/health` returns 200. All auth routes verified working:
@@ -89,30 +88,33 @@
 ## F. UP TO 50 THINGS TO DO NEXT
 
 ### High Priority
+
 1. Test WebAuthn passkey registration in a real browser on `history.home.lan`
-~~2. Deploy browser-history agent (enable in configuration.nix + sops token)~~ done — 2,927 events synced
-3. Lock registration after first user (add `registration_open` config flag)
-4. Fix BuildFlow pre-commit hook for missing binaries (biome, nixfmt)
-5. Document `publicDeps` pattern in browser-history AGENTS.md
-6. Document Caddy restart workaround in SystemNix AGENTS.md
-7. Investigate `PrivateTmp = lib.mkForce false` for Caddy service
-8. Make deploy.sh Caddy restart conditional on config change
+   ~~2. Deploy browser-history agent (enable in configuration.nix + sops token)~~ done — 2,927 events synced
+2. Lock registration after first user (add `registration_open` config flag)
+3. Fix BuildFlow pre-commit hook for missing binaries (biome, nixfmt)
+4. Document `publicDeps` pattern in browser-history AGENTS.md
+5. Document Caddy restart workaround in SystemNix AGENTS.md
+6. Investigate `PrivateTmp = lib.mkForce false` for Caddy service
+7. Make deploy.sh Caddy restart conditional on config change
 
 ### Medium Priority
+
 9. Write integration test for full registration → passkey → login flow
 10. Add CSRF token to registration form tests (currently only checks HTML content)
 11. Add test for `GET /register` when authenticated (should redirect to `/`)
 12. Add test for `GET /login` when authenticated (should redirect to `/`)
 13. Create a dep-audit script that checks LarsArtmann pins vs go.mod requires
 14. Add `home.lan` WebAuthn RP ID validation (browsers may reject passkeys on `.lan` domains)
-~~15. Consider Pocket ID OIDC as fallback if WebAuthn on `.lan` fails~~ done — OAuth2 via Pocket ID integrated
-16. Add Gatus health check response-time condition for browser-history
-~~17. Verify Homepage tile for browser-history is correct~~ done — tile present
-18. Add browser-history to post-deploy-check.sh smoke tests
-~~19. Check if `history` subdomain is in dnsblockd local zones~~ done — registered in dns-local.nix
-20. Add OTel tracing verification for browser-history (OTLP gRPC to 127.0.0.1:4317)
+    ~~15. Consider Pocket ID OIDC as fallback if WebAuthn on `.lan` fails~~ done — OAuth2 via Pocket ID integrated
+15. Add Gatus health check response-time condition for browser-history
+    ~~17. Verify Homepage tile for browser-history is correct~~ done — tile present
+16. Add browser-history to post-deploy-check.sh smoke tests
+    ~~19. Check if `history` subdomain is in dnsblockd local zones~~ done — registered in dns-local.nix
+17. Add OTel tracing verification for browser-history (OTLP gRPC to 127.0.0.1:4317)
 
 ### Lower Priority
+
 21. Add backup coordination for browser-history SQLite database
 22. Write a deploy pre-check that builds the Go package before updating flake.lock
 23. Consider running browser-history agent on macOS (MacBook)
@@ -124,25 +126,25 @@
 29. Consider adding a "forgot passkey" recovery flow
 30. Add browser-history version endpoint (`GET /version`)
 31. Add structured logging for auth events
-~~32. Consider adding OIDC provider support alongside WebAuthn~~ done — OAuth2 via Pocket ID integrated
-33. Add CORS headers for browser extension agent
-34. Document browser-history API in OpenAPI/Swagger
-35. Add health check for SQLite WAL mode
-36. Consider read replica for browser-history queries
-37. Add data retention policy for browser history visits
-38. Add export/import functionality for history data
-39. Consider adding search filters (date range, domain, visit count)
-40. Add dashboard analytics (most visited domains, browsing patterns)
-41. Consider adding a REST API for programmatic access
-42. Add API key authentication for agent (alternative to token)
-43. Consider adding real-time sync via WebSocket
-44. Add incremental sync support (delta updates from last sync)
-45. Consider adding multi-device support (sync across browsers)
-46. Add data encryption at rest for sensitive visit data
-47. Consider adding differential privacy for analytics
-48. Add compliance/GDPR considerations (right to erasure)
-49. Consider adding a public API for browser extension marketplace
-50. Add monitoring dashboard for browser-history service metrics
+    ~~32. Consider adding OIDC provider support alongside WebAuthn~~ done — OAuth2 via Pocket ID integrated
+32. Add CORS headers for browser extension agent
+33. Document browser-history API in OpenAPI/Swagger
+34. Add health check for SQLite WAL mode
+35. Consider read replica for browser-history queries
+36. Add data retention policy for browser history visits
+37. Add export/import functionality for history data
+38. Consider adding search filters (date range, domain, visit count)
+39. Add dashboard analytics (most visited domains, browsing patterns)
+40. Consider adding a REST API for programmatic access
+41. Add API key authentication for agent (alternative to token)
+42. Consider adding real-time sync via WebSocket
+43. Add incremental sync support (delta updates from last sync)
+44. Consider adding multi-device support (sync across browsers)
+45. Add data encryption at rest for sensitive visit data
+46. Consider adding differential privacy for analytics
+47. Add compliance/GDPR considerations (right to erasure)
+48. Consider adding a public API for browser extension marketplace
+49. Add monitoring dashboard for browser-history service metrics
 
 ---
 

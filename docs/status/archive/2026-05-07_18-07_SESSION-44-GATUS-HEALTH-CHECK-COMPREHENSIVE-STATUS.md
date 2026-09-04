@@ -39,32 +39,32 @@
 
 ### NixOS Services (32 modules, 26 enabled)
 
-| Service            | Enabled | Harden | Health | MemoryMax | Status                              |
-| ------------------ | :-----: | :----: | :----: | :-------: | ----------------------------------- |
-| Docker (default)   |   ✅    |  N/A   |  N/A   |    N/A    | ✅ Working                          |
-| Sops               |   ✅    |  N/A   |  N/A   |    N/A    | ✅ Working                          |
-| Caddy              |   ✅    |   ✅   |   ✅   |   512M    | ✅ Working                          |
-| Gitea              |   ✅    |   ✅   |   ❌   |   512M    | ✅ Working                          |
-| Immich             |   ✅    |   ✅   |   ❌   |   2G/4G   | ✅ Working                          |
-| Authelia           |   ✅    |   ✅   |   ✅   |   512M    | ✅ Working                          |
-| Homepage           |   ✅    |   ✅   |   ❌   |   512M    | ✅ Working                          |
-| SigNoz             |   ✅    |   ✅   |   ✅   |   1G/1G   | ✅ Working                          |
-| Twenty             |   ✅    |   ✅   |   ❌   |    2G     | ✅ Working                          |
-| Hermes             |   ✅    |   ✅   |   ❌   |    24G    | ✅ Working                          |
-| Voice Agents       |   ✅    |   ✅   |   ❌   |   512M    | ✅ Working                          |
-| ComfyUI            |   ✅    |   ✅   |   ❌   |    8G     | ✅ Working                          |
+| Service            | Enabled | Harden | Health | MemoryMax | Status                             |
+| ------------------ | :-----: | :----: | :----: | :-------: | ---------------------------------- |
+| Docker (default)   |   ✅    |  N/A   |  N/A   |    N/A    | ✅ Working                         |
+| Sops               |   ✅    |  N/A   |  N/A   |    N/A    | ✅ Working                         |
+| Caddy              |   ✅    |   ✅   |   ✅   |   512M    | ✅ Working                         |
+| Gitea              |   ✅    |   ✅   |   ❌   |   512M    | ✅ Working                         |
+| Immich             |   ✅    |   ✅   |   ❌   |   2G/4G   | ✅ Working                         |
+| Authelia           |   ✅    |   ✅   |   ✅   |   512M    | ✅ Working                         |
+| Homepage           |   ✅    |   ✅   |   ❌   |   512M    | ✅ Working                         |
+| SigNoz             |   ✅    |   ✅   |   ✅   |   1G/1G   | ✅ Working                         |
+| Twenty             |   ✅    |   ✅   |   ❌   |    2G     | ✅ Working                         |
+| Hermes             |   ✅    |   ✅   |   ❌   |    24G    | ✅ Working                         |
+| Voice Agents       |   ✅    |   ✅   |   ❌   |   512M    | ✅ Working                         |
+| ComfyUI            |   ✅    |   ✅   |   ❌   |    8G     | ✅ Working                         |
 | AI Stack           |   ✅    |   ✅   |   ❌   |    ❌     | ⚠️ Partial — no MemoryMax on ollama |
-| AI Models          |   ✅    |  N/A   |  N/A   |    N/A    | ✅ Working                          |
-| Minecraft          |   ✅    |   ✅   |   ❌   |    4G     | ✅ Working                          |
-| Monitor365         |   ❌    |   ❌   |   ❌   |    Bug    | 🔴 Disabled — MemoryMax bug         |
-| Monitoring         |   ✅    |  N/A   |  N/A   |    N/A    | ✅ Working                          |
-| TaskChampion       |   ✅    |   ✅   |   ❌   |   512M    | ✅ Working                          |
-| Disk Monitor       |   ✅    |   ✅   |   ❌   |    ✅     | ✅ Working                          |
-| Gitea Repos        |   ✅    |   ✅   |   ❌   |   512M    | ✅ Working                          |
-| Manifest           |   ✅    |   ✅   |   ❌   |    ✅     | ✅ Working                          |
-| **Gatus**          |   ✅    |   ✅   |  N/A   |   512M    | ✅ NEW — 15 endpoints               |
-| DNS Failover       |   ❌    |  N/A   |   ✅   |    N/A    | 📋 Not deployed — Pi 3              |
-| PhotoMap           |   ❌    |   ✅   |   ✅   |   512M    | 🔴 Disabled — podman perms          |
+| AI Models          |   ✅    |  N/A   |  N/A   |    N/A    | ✅ Working                         |
+| Minecraft          |   ✅    |   ✅   |   ❌   |    4G     | ✅ Working                         |
+| Monitor365         |   ❌    |   ❌   |   ❌   |    Bug    | 🔴 Disabled — MemoryMax bug        |
+| Monitoring         |   ✅    |  N/A   |  N/A   |    N/A    | ✅ Working                         |
+| TaskChampion       |   ✅    |   ✅   |   ❌   |   512M    | ✅ Working                         |
+| Disk Monitor       |   ✅    |   ✅   |   ❌   |    ✅     | ✅ Working                         |
+| Gitea Repos        |   ✅    |   ✅   |   ❌   |   512M    | ✅ Working                         |
+| Manifest           |   ✅    |   ✅   |   ❌   |    ✅     | ✅ Working                         |
+| **Gatus**          |   ✅    |   ✅   |  N/A   |   512M    | ✅ NEW — 15 endpoints              |
+| DNS Failover       |   ❌    |  N/A   |   ✅   |    N/A    | 📋 Not deployed — Pi 3             |
+| PhotoMap           |   ❌    |   ✅   |   ✅   |   512M    | 🔴 Disabled — podman perms         |
 | Security Hardening |   ✅    |  N/A   |  N/A   |    N/A    | ⚠️ auditd off                       |
 
 **Totals:** 32 modules, 26 enabled, 19 hardened, 3 health-checked, 1 new (Gatus), 1 dead code (PhotoMap disabled)
@@ -109,48 +109,48 @@
 
 | Item                      | Status | What's Missing                                                                                                          |
 | ------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------- |
-| GPU headroom for niri     | ⚠️     | Committed, build passes. **NOT deployed** — needs `just switch`. `per_process_memory_fraction` caps memory not compute. |
-| Manifest CORS fix         | ⚠️     | Committed but **NOT deployed**. Rate limiting warning — upstream doesn't expose `trustedProxies`.                       |
-| Hermes v2026.4.30 upgrade | ⚠️     | Pinned, npmDeps patched, SQLite auto-recovery, **NOT deployed**                                                         |
-| DNS failover cluster      | ⚠️     | Module exists, Keepalived VRRP written — Pi 3 hardware not provisioned                                                  |
+| GPU headroom for niri     | ⚠️      | Committed, build passes. **NOT deployed** — needs `just switch`. `per_process_memory_fraction` caps memory not compute. |
+| Manifest CORS fix         | ⚠️      | Committed but **NOT deployed**. Rate limiting warning — upstream doesn't expose `trustedProxies`.                       |
+| Hermes v2026.4.30 upgrade | ⚠️      | Pinned, npmDeps patched, SQLite auto-recovery, **NOT deployed**                                                         |
+| DNS failover cluster      | ⚠️      | Module exists, Keepalived VRRP written — Pi 3 hardware not provisioned                                                  |
 | PhotoMap AI               | 🔴     | Module exists, disabled — podman config permission issue                                                                |
-| Voice agents              | ⚠️     | Module exists, Docker ROCm — may need verification after deploy                                                         |
+| Voice agents              | ⚠️      | Module exists, Docker ROCm — may need verification after deploy                                                         |
 | Twenty CRM                | 🔧     | Module exists, Docker Compose, sops secrets                                                                             |
-| AI Stack hardening        | ⚠️     | `per_process_memory_fraction=0.95` added but no `harden()` or `MemoryMax` on ollama/llama-cpp                           |
-| Security hardening        | ⚠️     | auditd disabled — NixOS 26.05 bug                                                                                       |
-| DNS blocker CA trust      | ⚠️     | CA installed in user NSS DB only, NOT in `security.pki.certificates` system-wide                                        |
+| AI Stack hardening        | ⚠️      | `per_process_memory_fraction=0.95` added but no `harden()` or `MemoryMax` on ollama/llama-cpp                           |
+| Security hardening        | ⚠️      | auditd disabled — NixOS 26.05 bug                                                                                       |
+| DNS blocker CA trust      | ⚠️      | CA installed in user NSS DB only, NOT in `security.pki.certificates` system-wide                                        |
 
 ---
 
 ## c) NOT STARTED 📋
 
-| #   | Item                                                                           | Priority | Effort | Blocker         |
-| --- | ------------------------------------------------------------------------------ | -------- | ------ | --------------- |
-| 1   | **`just switch`** — deploy ALL pending changes                                 | P0       | 5min   | None            |
-| 2   | **Verify Gatus** — check `status.home.lan` dashboard shows all 15 endpoints    | P0       | 5min   | Post-deploy     |
-| 3   | **Verify service-health-check** — confirm it passes after deploy               | P0       | 2min   | Post-deploy     |
-| 4   | **Taskwarrior encryption → sops** — still hardcoded hash in taskwarrior.nix:87 | P1       | 1hr    | None            |
-| 5   | **VRRP auth → sops** — Keepalived password plaintext                           | P1       | 30min  | None            |
-| 6   | **PhotoMap podman fix** — disabled due to config permission issue              | P2       | 1hr    | Debug needed    |
-| 7   | **ClickHouse MemoryMax** — no cap on SigNoz database                           | P2       | 5min   | None            |
-| 8   | **Harden ai-stack** — ollama/llama-cpp have no MemoryMax or harden             | P2       | 10min  | None            |
-| 9   | **Fix monitor365 MemoryMax bug** — merge order fix (disabled)                  | P2       | 2min   | None            |
-| 10  | **SigNoz alert notifications** — alerts defined, no notification channel       | P2       | 30min  | None            |
-| 11  | **Archive 300+ stale docs** — `docs/status/archive/` and 71 top-level docs     | P3       | 15min  | None            |
-| 12  | **Gitea backup restore test** — weekly dumps never verified                    | P3       | 15min  | None            |
-| 13  | **BTRFS snapshot restore test** — Timeshift never tested                       | P3       | 15min  | None            |
-| 14  | **SOPS secret rotation** — never rotated since initial setup                   | P3       | 1hr    | None            |
-| 15  | **Disaster recovery playbook** — no tested procedure for full rebuild          | P3       | 2hr    | None            |
-| 16  | **DNS CA → system-wide trust** — `security.pki.certificates`                   | P2       | 30min  | None            |
-| 17  | **Pi 3 provisioning** — DNS failover cluster hardware                          | P4       | 2hr    | Hardware        |
-| 18  | **Gatus monitoring** — already done ✅                                         | —        | —      | —               |
-| 19  | **TODO_LIST.md** — does not exist, FEATURES.md serves this role                | P4       | 30min  | None            |
-| 20  | **Kernel crash dumps (kdump)**                                                 | P4       | 30min  | None            |
-| 21  | **LUKS disk encryption**                                                       | P5       | 1hr    | None            |
-| 22  | **TPM auto-unlock**                                                            | P5       | 30min  | Depends on LUKS |
-| 23  | **UPS monitoring**                                                             | P5       | 30min  | None            |
-| 24  | **Network bonding**                                                            | P5       | 30min  | None            |
-| 25  | **CI/CD for `just test`**                                                      | P4       | 1hr    | None            |
+| #  | Item                                                                           | Priority | Effort | Blocker         |
+| -- | ------------------------------------------------------------------------------ | -------- | ------ | --------------- |
+| 1  | **`just switch`** — deploy ALL pending changes                                 | P0       | 5min   | None            |
+| 2  | **Verify Gatus** — check `status.home.lan` dashboard shows all 15 endpoints    | P0       | 5min   | Post-deploy     |
+| 3  | **Verify service-health-check** — confirm it passes after deploy               | P0       | 2min   | Post-deploy     |
+| 4  | **Taskwarrior encryption → sops** — still hardcoded hash in taskwarrior.nix:87 | P1       | 1hr    | None            |
+| 5  | **VRRP auth → sops** — Keepalived password plaintext                           | P1       | 30min  | None            |
+| 6  | **PhotoMap podman fix** — disabled due to config permission issue              | P2       | 1hr    | Debug needed    |
+| 7  | **ClickHouse MemoryMax** — no cap on SigNoz database                           | P2       | 5min   | None            |
+| 8  | **Harden ai-stack** — ollama/llama-cpp have no MemoryMax or harden             | P2       | 10min  | None            |
+| 9  | **Fix monitor365 MemoryMax bug** — merge order fix (disabled)                  | P2       | 2min   | None            |
+| 10 | **SigNoz alert notifications** — alerts defined, no notification channel       | P2       | 30min  | None            |
+| 11 | **Archive 300+ stale docs** — `docs/status/archive/` and 71 top-level docs     | P3       | 15min  | None            |
+| 12 | **Gitea backup restore test** — weekly dumps never verified                    | P3       | 15min  | None            |
+| 13 | **BTRFS snapshot restore test** — Timeshift never tested                       | P3       | 15min  | None            |
+| 14 | **SOPS secret rotation** — never rotated since initial setup                   | P3       | 1hr    | None            |
+| 15 | **Disaster recovery playbook** — no tested procedure for full rebuild          | P3       | 2hr    | None            |
+| 16 | **DNS CA → system-wide trust** — `security.pki.certificates`                   | P2       | 30min  | None            |
+| 17 | **Pi 3 provisioning** — DNS failover cluster hardware                          | P4       | 2hr    | Hardware        |
+| 18 | **Gatus monitoring** — already done ✅                                         | —        | —      | —               |
+| 19 | **TODO_LIST.md** — does not exist, FEATURES.md serves this role                | P4       | 30min  | None            |
+| 20 | **Kernel crash dumps (kdump)**                                                 | P4       | 30min  | None            |
+| 21 | **LUKS disk encryption**                                                       | P5       | 1hr    | None            |
+| 22 | **TPM auto-unlock**                                                            | P5       | 30min  | Depends on LUKS |
+| 23 | **UPS monitoring**                                                             | P5       | 30min  | None            |
+| 24 | **Network bonding**                                                            | P5       | 30min  | None            |
+| 25 | **CI/CD for `just test`**                                                      | P4       | 1hr    | None            |
 
 ---
 
@@ -216,53 +216,53 @@
 
 ### Priority 1: Deploy & Verify (IMMEDIATE)
 
-| #   | Task                                                                                                | Impact   | Effort |
-| --- | --------------------------------------------------------------------------------------------------- | -------- | ------ |
-| 1   | **`just switch`** — Deploy GPU limiting + Hermes upgrade + Manifest CORS + Gatus + health check fix | CRITICAL | 5min   |
-| 2   | **Verify Gatus dashboard** — `https://status.home.lan`, all 15 endpoints                            | HIGH     | 5min   |
-| 3   | **Verify service-health-check** — run manually, confirm exit 0                                      | HIGH     | 2min   |
-| 4   | **Verify niri under AI load** — Run Ollama inference while using desktop                            | HIGH     | 5min   |
-| 5   | **Verify Hermes auto-recovery** — test SQLite malformed DB handling                                 | MEDIUM   | 5min   |
+| # | Task                                                                                                | Impact   | Effort |
+| - | --------------------------------------------------------------------------------------------------- | -------- | ------ |
+| 1 | **`just switch`** — Deploy GPU limiting + Hermes upgrade + Manifest CORS + Gatus + health check fix | CRITICAL | 5min   |
+| 2 | **Verify Gatus dashboard** — `https://status.home.lan`, all 15 endpoints                            | HIGH     | 5min   |
+| 3 | **Verify service-health-check** — run manually, confirm exit 0                                      | HIGH     | 2min   |
+| 4 | **Verify niri under AI load** — Run Ollama inference while using desktop                            | HIGH     | 5min   |
+| 5 | **Verify Hermes auto-recovery** — test SQLite malformed DB handling                                 | MEDIUM   | 5min   |
 
 ### Priority 2: Security (P1)
 
-| #   | Task                                                             | Impact | Effort |
-| --- | ---------------------------------------------------------------- | ------ | ------ |
-| 6   | **Taskwarrior encryption → sops** — hardcoded hash → sops secret | HIGH   | 1hr    |
-| 7   | **VRRP auth → sops** — Keepalived password plaintext             | HIGH   | 30min  |
-| 8   | **DNS CA → system-wide** — `security.pki.certificates`           | HIGH   | 30min  |
-| 9   | **ClickHouse MemoryMax** — no cap on SigNoz database             | MEDIUM | 5min   |
+| # | Task                                                             | Impact | Effort |
+| - | ---------------------------------------------------------------- | ------ | ------ |
+| 6 | **Taskwarrior encryption → sops** — hardcoded hash → sops secret | HIGH   | 1hr    |
+| 7 | **VRRP auth → sops** — Keepalived password plaintext             | HIGH   | 30min  |
+| 8 | **DNS CA → system-wide** — `security.pki.certificates`           | HIGH   | 30min  |
+| 9 | **ClickHouse MemoryMax** — no cap on SigNoz database             | MEDIUM | 5min   |
 
 ### Priority 3: Reliability
 
-| #   | Task                                                                | Impact | Effort |
-| --- | ------------------------------------------------------------------- | ------ | ------ |
-| 10  | **Harden ai-stack** — add MemoryMax + harden to ollama              | HIGH   | 10min  |
-| 11  | **Fix monitor365 MemoryMax** — merge order fix (disabled but wrong) | LOW    | 2min   |
-| 12  | **Configure SigNoz alerts** — webhook or email channel              | MEDIUM | 30min  |
-| 13  | **Gitea backup restore test** — verify weekly dumps are valid       | MEDIUM | 15min  |
-| 14  | **BTRFS snapshot restore test** — verify Timeshift works            | MEDIUM | 15min  |
+| #  | Task                                                                | Impact | Effort |
+| -- | ------------------------------------------------------------------- | ------ | ------ |
+| 10 | **Harden ai-stack** — add MemoryMax + harden to ollama              | HIGH   | 10min  |
+| 11 | **Fix monitor365 MemoryMax** — merge order fix (disabled but wrong) | LOW    | 2min   |
+| 12 | **Configure SigNoz alerts** — webhook or email channel              | MEDIUM | 30min  |
+| 13 | **Gitea backup restore test** — verify weekly dumps are valid       | MEDIUM | 15min  |
+| 14 | **BTRFS snapshot restore test** — verify Timeshift works            | MEDIUM | 15min  |
 
 ### Priority 4: Architecture Cleanup
 
-| #   | Task                                                                   | Impact | Effort |
-| --- | ---------------------------------------------------------------------- | ------ | ------ |
-| 15  | **Archive stale docs** — 300+ status files, 71 top-level research docs | LOW    | 15min  |
-| 16  | **PhotoMap: fix or remove** — podman config issue                      | MEDIUM | 1hr    |
-| 17  | **Service dependency graph** — D2 diagram of all services              | MEDIUM | 1hr    |
-| 18  | **Module option descriptions** — ensure all options have description   | LOW    | 1hr    |
-| 19  | **SOPS secret rotation plan** — document and schedule                  | MEDIUM | 1hr    |
+| #  | Task                                                                   | Impact | Effort |
+| -- | ---------------------------------------------------------------------- | ------ | ------ |
+| 15 | **Archive stale docs** — 300+ status files, 71 top-level research docs | LOW    | 15min  |
+| 16 | **PhotoMap: fix or remove** — podman config issue                      | MEDIUM | 1hr    |
+| 17 | **Service dependency graph** — D2 diagram of all services              | MEDIUM | 1hr    |
+| 18 | **Module option descriptions** — ensure all options have description   | LOW    | 1hr    |
+| 19 | **SOPS secret rotation plan** — document and schedule                  | MEDIUM | 1hr    |
 
 ### Priority 5: Infrastructure & Future
 
-| #   | Task                                                             | Impact | Effort |
-| --- | ---------------------------------------------------------------- | ------ | ------ |
-| 20  | **Disaster recovery playbook** — document full rebuild procedure | HIGH   | 2hr    |
-| 21  | **Pi 3 provisioning** — flash SD, boot, verify DNS failover      | HIGH   | 2hr    |
-| 22  | **Lower GPU fraction if still laggy** — try 0.90 or 0.85         | MEDIUM | 5min   |
-| 23  | **Automated DNS blocklist updates** — weekly timer or CI job     | MEDIUM | 30min  |
-| 24  | **Voice agents verification** — confirm LiveKit + Whisper works  | MEDIUM | 30min  |
-| 25  | **CI/CD for `just test`** — automate validation on push          | MEDIUM | 1hr    |
+| #  | Task                                                             | Impact | Effort |
+| -- | ---------------------------------------------------------------- | ------ | ------ |
+| 20 | **Disaster recovery playbook** — document full rebuild procedure | HIGH   | 2hr    |
+| 21 | **Pi 3 provisioning** — flash SD, boot, verify DNS failover      | HIGH   | 2hr    |
+| 22 | **Lower GPU fraction if still laggy** — try 0.90 or 0.85         | MEDIUM | 5min   |
+| 23 | **Automated DNS blocklist updates** — weekly timer or CI job     | MEDIUM | 30min  |
+| 24 | **Voice agents verification** — confirm LiveKit + Whisper works  | MEDIUM | 30min  |
+| 25 | **CI/CD for `just test`** — automate validation on push          | MEDIUM | 1hr    |
 
 ---
 

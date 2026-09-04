@@ -136,33 +136,33 @@ Beyond Manifest, the system carries forward **3 critical issues from session 28*
 
 ## f) Top 25 Things We Should Get Done Next
 
-| #   | Priority | Item                                                                                   | Effort  | Impact                                   |
-| --- | -------- | -------------------------------------------------------------------------------------- | ------- | ---------------------------------------- |
-| 1   | P0       | **Create `manifest.yaml` sops secrets** on evo-x2                                      | 5 min   | Unblocks Manifest deployment             |
-| 2   | P0       | **Deploy to evo-x2** (`just switch`) — sessions 29+30                                  | 10 min  | Activates all recent work                |
-| 3   | P0       | **Fix caddy service** — CRITICAL, all `*.home.lan` down                                | 15 min  | Restores all web services                |
-| 4   | P0       | **Fix comfyui service**                                                                | 15 min  | Restores AI image generation             |
-| 5   | P0       | **Fix photomap service**                                                               | 15 min  | Restores photo exploration               |
-| 6   | P0       | **Disk cleanup** — `nix-collect-garbage -d && docker system prune -af`                 | 10 min  | Prevents disk-full crash                 |
-| 7   | P1       | **Migrate 13 remaining modules to `serviceDefaults{}`**                                | 30 min  | Eliminates #1 DRY violation              |
-| 8   | P1       | **Pin Docker image versions** — Twenty, Manifest                                       | 10 min  | Reproducible deployments                 |
-| 9   | P1       | **Move rpi3 VRRP password to sops**                                                    | 10 min  | Security fix                             |
-| 10  | P1       | **Clean up commented-out imports in configuration.nix**                                | 5 min   | Removes dead noise                       |
-| 11  | P1       | **Verify all 32 services start after deploy**                                          | 15 min  | Confidence in system state               |
-| 12  | P2       | **Extract Catppuccin colors to shared lib**                                            | 30 min  | 140 hardcoded values → 1 source of truth |
-| 13  | P2       | **Split signoz.nix** (746 lines) into sub-modules                                      | 45 min  | Maintainability                          |
-| 14  | P2       | **Adopt lib/types.nix across services** or inline into hermes                          | 20 min  | Reduce dead helper code                  |
-| 15  | P2       | **Update SigNoz versions** — currently v0.117.1/v0.144.2                               | 30 min  | Security + features                      |
-| 16  | P2       | **Add post-deploy health check to justfile** (`just health-deploy`)                    | 15 min  | Catches failures immediately             |
-| 17  | P2       | **Create FEATURES.md** — full feature inventory from code                              | 30 min  | Project documentation                    |
-| 18  | P2       | **Create TODO_LIST.md** — comprehensive, verified against code                         | 30 min  | Project tracking                         |
-| 19  | P2       | **Archive stale planning docs** (23 files, many from 2025)                             | 10 min  | Reduce noise                             |
-| 20  | P2       | **Delete stale private-cloud-planning/** or update                                     | 10 min  | Remove misleading docs                   |
-| 21  | P3       | **Provision Pi 3 hardware** for DNS failover                                           | 2 hours | High-availability DNS                    |
-| 22  | P3       | **Add auditd back** when NixOS 26.05 bug #483085 is fixed                              | 10 min  | Security hardening                       |
-| 23  | P3       | **Enable AppArmor** in security-hardening.nix                                          | 30 min  | Mandatory access control                 |
-| 24  | P3       | **Add Docker health checks** to Twenty module (currently missing)                      | 10 min  | Service reliability                      |
-| 25  | P3       | **Consider building Manifest from source** (NestJS → Nix derivation) instead of Docker | 4 hours | Full Nix-native, no Docker dependency    |
+| #  | Priority | Item                                                                                   | Effort  | Impact                                   |
+| -- | -------- | -------------------------------------------------------------------------------------- | ------- | ---------------------------------------- |
+| 1  | P0       | **Create `manifest.yaml` sops secrets** on evo-x2                                      | 5 min   | Unblocks Manifest deployment             |
+| 2  | P0       | **Deploy to evo-x2** (`just switch`) — sessions 29+30                                  | 10 min  | Activates all recent work                |
+| 3  | P0       | **Fix caddy service** — CRITICAL, all `*.home.lan` down                                | 15 min  | Restores all web services                |
+| 4  | P0       | **Fix comfyui service**                                                                | 15 min  | Restores AI image generation             |
+| 5  | P0       | **Fix photomap service**                                                               | 15 min  | Restores photo exploration               |
+| 6  | P0       | **Disk cleanup** — `nix-collect-garbage -d && docker system prune -af`                 | 10 min  | Prevents disk-full crash                 |
+| 7  | P1       | **Migrate 13 remaining modules to `serviceDefaults{}`**                                | 30 min  | Eliminates #1 DRY violation              |
+| 8  | P1       | **Pin Docker image versions** — Twenty, Manifest                                       | 10 min  | Reproducible deployments                 |
+| 9  | P1       | **Move rpi3 VRRP password to sops**                                                    | 10 min  | Security fix                             |
+| 10 | P1       | **Clean up commented-out imports in configuration.nix**                                | 5 min   | Removes dead noise                       |
+| 11 | P1       | **Verify all 32 services start after deploy**                                          | 15 min  | Confidence in system state               |
+| 12 | P2       | **Extract Catppuccin colors to shared lib**                                            | 30 min  | 140 hardcoded values → 1 source of truth |
+| 13 | P2       | **Split signoz.nix** (746 lines) into sub-modules                                      | 45 min  | Maintainability                          |
+| 14 | P2       | **Adopt lib/types.nix across services** or inline into hermes                          | 20 min  | Reduce dead helper code                  |
+| 15 | P2       | **Update SigNoz versions** — currently v0.117.1/v0.144.2                               | 30 min  | Security + features                      |
+| 16 | P2       | **Add post-deploy health check to justfile** (`just health-deploy`)                    | 15 min  | Catches failures immediately             |
+| 17 | P2       | **Create FEATURES.md** — full feature inventory from code                              | 30 min  | Project documentation                    |
+| 18 | P2       | **Create TODO_LIST.md** — comprehensive, verified against code                         | 30 min  | Project tracking                         |
+| 19 | P2       | **Archive stale planning docs** (23 files, many from 2025)                             | 10 min  | Reduce noise                             |
+| 20 | P2       | **Delete stale private-cloud-planning/** or update                                     | 10 min  | Remove misleading docs                   |
+| 21 | P3       | **Provision Pi 3 hardware** for DNS failover                                           | 2 hours | High-availability DNS                    |
+| 22 | P3       | **Add auditd back** when NixOS 26.05 bug #483085 is fixed                              | 10 min  | Security hardening                       |
+| 23 | P3       | **Enable AppArmor** in security-hardening.nix                                          | 30 min  | Mandatory access control                 |
+| 24 | P3       | **Add Docker health checks** to Twenty module (currently missing)                      | 10 min  | Service reliability                      |
+| 25 | P3       | **Consider building Manifest from source** (NestJS → Nix derivation) instead of Docker | 4 hours | Full Nix-native, no Docker dependency    |
 
 ---
 

@@ -11,7 +11,7 @@
 
 ### What did I forget?
 
-1. **The DETECTION gap — the biggest miss of the session.** The whole incident was "bank-sync silently synced zero transactions for weeks". I fixed the *diagnosis* (journal now prints the full SCA verdict + OTT) and the *unlock mechanism* (token plumbing), but **nothing alerts** on `sync failed` / `total_new=0`. The next SCA cycle (~90 days) will again run silently broken unless someone reads journals. AGENTS.md rule 9 ("every new service MUST be monitored — silent failures are unacceptable") is not satisfied for this failure mode. I declared victory on the stated diagnostic goal without closing the loop on the system-level goal.
+1. **The DETECTION gap — the biggest miss of the session.** The whole incident was "bank-sync silently synced zero transactions for weeks". I fixed the _diagnosis_ (journal now prints the full SCA verdict + OTT) and the _unlock mechanism_ (token plumbing), but **nothing alerts** on `sync failed` / `total_new=0`. The next SCA cycle (~90 days) will again run silently broken unless someone reads journals. AGENTS.md rule 9 ("every new service MUST be monitored — silent failures are unacceptable") is not satisfied for this failure mode. I declared victory on the stated diagnostic goal without closing the loop on the system-level goal.
 2. **bank-sync-side follow-up docs.** The original plan said "write the SCA runbook (bank-sync AGENTS.md + SystemNix ops pointer)". I wrote only the SystemNix runbook + AGENTS.md gotcha. bank-sync's AGENTS.md got nothing; its TODO_LIST got no entries for the 5 known stdlib CVEs (fixed in go1.26.6; we ship 1.26.5) or the go-codec floor patch decision.
 3. **`git branch --show-current` before committing.** I checked `git status` and log, assumed master, and committed — onto `forgejo-hermes-agent`, which a concurrent PR #139 session had switched the shared tree to mid-deploy. My `git add -A` also swept in their untracked status report. Recovered via cherry-pick + amend, but it should never have happened: branch identity is a one-command check I skipped.
 4. **Runbook precision on multi-OTT semantics.** The journal shows a DIFFERENT OTT per failed balance-statement request (EUR/USD/PLN each got their own `x-2fa-approval` value). My runbook says "drop the OTT in" and "grep tail -1 for the latest" but does not explain that each 403 carries its own token, nor what to do if the first OTT retry 403s with a NEW OTT (approve once → retry with the newest token → SCA clock resets account-wide, per Wise docs — the "account-wide reset" part is my reading, not doc-verified line-by-line).
@@ -89,21 +89,22 @@ No. Everything claimed as verified was verified live (build green, tests green, 
 ## f) Things to get done next (impact-ordered)
 
 **User steps (the critical path):**
+
 1. Approve the pending access request in the Wise app (Settings → Security and privacy → Approvals).
 2. Run the renewal: latest OTT from journal → `/var/lib/bank-sync-sca/token.env` → `systemctl restart bank-sync` → verify `total_new > 0` → remove file (full commands in `docs/services/bank-sync-sca.md`).
 3. Decide: leave or drop duplicate commit `8ca25e18` on the PR #139 branch.
-4. Confirm master push of `3af48067` (daemon or manual).
+~~4. Confirm master push of `3af48067` (daemon or manual).~~ done — pushed (relock chain completed)
 
 **Alerting (closes the incident class):**
-5. Inspect bank-sync `/metrics` for error/last-sync counters.
-6. Add a Gatus check (or system-health textfile) alerting on sync errors / sustained zero-new — the thing that would have caught this incident on day 1.
-7. If no suitable metric exists upstream, add `bank_sync_last_sync_errors` / `bank_sync_last_sync_new` in bank-sync.
+~~5. Inspect bank-sync `/metrics` for error/last-sync counters.~~ done — counters live (`bank_sync_sync_errors_total`, `bank_sync_last_sync_timestamp_seconds`)
+~~6. Add a Gatus check (or system-health textfile) alerting on sync errors / sustained zero-new — the thing that would have caught this incident on day 1.~~ done — wired into gatus conditions
+~~7. If no suitable metric exists upstream, add `bank_sync_last_sync_errors` / `bank_sync_last_sync_new` in bank-sync.~~ done — the metrics exist upstream and are scraped
 8. Make post-deploy check WARN (not fail) if fresh journal shows `sca challenge` — a deploy-time nudge for the 90-day ritual.
 
 **bank-sync repo health:**
 9. Fix `dprint.json` exit-14 (markdown plugin / includes / BuildFlow allowNoFiles).
-10. TODO_LIST: 5 stdlib CVEs pending nixpkgs go1.26.6; revisit floor patch then.
-11. AGENTS.md: SCA operational pointer to the SystemNix runbook.
+~~10. TODO_LIST: 5 stdlib CVEs pending nixpkgs go1.26.6; revisit floor patch then.~~ moot — nixpkgs ships go 1.26.7 (≥ floor) since 2026-08-29
+~~11. AGENTS.md: SCA operational pointer to the SystemNix runbook.~~ done — AGENTS.md Wise SCA bullet links `docs/services/bank-sync-sca.md`
 12. Adapter spec: `SCAChallengeError` message survives `wrapSDKCall` classification (Rejection family preserved).
 13. `go.mod` line 56 direct/indirect mixing (gomod-check debt).
 14. Triage the 2 import-level + 2 module-level govulncheck findings (not called by our code).
@@ -133,4 +134,4 @@ No. Everything claimed as verified was verified live (build green, tests green, 
 
 ---
 
-*Report written from session memory + verified live outputs (journal quotes, build results, git state at 15:43). Waiting for instructions.*
+_Report written from session memory + verified live outputs (journal quotes, build results, git state at 15:43). Waiting for instructions._

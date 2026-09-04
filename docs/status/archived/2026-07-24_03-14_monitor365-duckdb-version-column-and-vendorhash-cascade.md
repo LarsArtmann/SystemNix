@@ -1,6 +1,6 @@
 # Monitor365 DuckDB Version Column + VendorHash Cascade
 
-**Date:** 2026-07-24  
+**Date:** 2026-07-24\
 **Status:** ~~IN PROGRESS — monitor365-server crash-looping, build broken by vendorHash cascade~~ **RESOLVED** — see update below.
 
 > **Update 2026-07-24:** Build and runtime both fixed. Upstream `0615301` added the `version` column migration; SystemNix pins monitor365 to `06153013945baa16d83a81bd7497433537235240`. `monitor365-schema-migrate.service` runs the migration before server start. All vendorHash cascades resolved (overview, crush-daily, discordsync). Server is healthy and deployed — `/health` returns `{"status":"ok","database":"connected"}`, agent running (PID alive). Full resolution documented in `2026-07-24_14-44_session-retrospective`.
@@ -10,14 +10,18 @@
 ## What Happened
 
 ### The Original Task
+
 Fix two Nix build failures blocking `nixos-rebuild`:
+
 1. monitor365-deps: 699 Rust compilation errors from empty `spa_sys` bindgen output
 2. cqrs-lint: Go type mismatch (`string` vs `auditlog.ServiceName`)
 
 Both were fixed and the system built successfully. The deploy activated but monitor365-server crash-looped at runtime.
 
 ### The Runtime Failure
+
 monitor365-server crashes with:
+
 ```
 Binder Error: Table "tenants" does not have a column named "version"
 ```
@@ -39,6 +43,7 @@ Binder Error: Table "tenants" does not have a column named "version"
 ### Current State (as of 2026-07-24 03:14)
 
 **Code changes (all committed by concurrent sessions):**
+
 - `flake.nix`: monitor365 pinned to 0615301, samber-do-auditlog follows
 - `lib/lars-packages.nix`: overrideVendorHash helper + branching-flow hash override
 - `overlays/linux.nix`: crush-daily, discordsync, dnsblockd vendorHash overrides
