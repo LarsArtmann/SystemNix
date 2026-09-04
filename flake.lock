@@ -216,8 +216,8 @@
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "master",
         "repo": "browser-history",
+        "rev": "0971fe9c4487b7c8636195fe922a2476803d7d33",
         "type": "github"
       }
     },
