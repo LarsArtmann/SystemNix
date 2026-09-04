@@ -8,8 +8,14 @@
   nix = {
     enable = true;
     settings = {
-      # Necessary for using flakes on this system
-      experimental-features = "nix-command flakes pipe-operators";
+      # Necessary for using flakes on this system. List-of-strings form:
+      # newer nixpkgs tightened the option type (the old space-separated
+      # string fails the `list of string` check, 2026-09-05).
+      experimental-features = [
+        "nix-command"
+        "flakes"
+        "pipe-operators"
+      ];
 
       # Enhanced Nix settings for better performance and reliability
       builders-use-substitutes = true;
