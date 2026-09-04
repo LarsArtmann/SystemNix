@@ -52,7 +52,7 @@
 
     # Helium Browser
     helium = {
-      url = "github:vikingnope/helium-browser-nix-flake";
+      url = "github:schembriaiden/helium-browser-nix-flake";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.utils.follows = "flake-utils";
     };
