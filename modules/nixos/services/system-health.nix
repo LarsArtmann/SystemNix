@@ -587,6 +587,30 @@ _: {
             CRUSH_SESSIONS_OVER=1
           fi
 
+          # === Unkillable D-state process census ===
+          # 2026-09-04: a wedged amdxdna driver left 18 llama-server
+          # processes in D-state INSIDE amdxdna_drm_open with a pending,
+          # undeliverable SIGKILL — nothing userspace can kill them, and
+          # every unit restart stranded another corpse. Any process stuck
+          # in uninterruptible sleep for >1h is a driver/firmware wedge;
+          # the only fix is a reboot. Fail-closed: the metric is emitted
+          # ONLY when the /proc scan produced a value.
+          STUCK_DSTATE=$(
+            awk -v now="$(awk '{print int($1)}' /proc/uptime)" '
+              {
+                line = $0
+                sub(/^[^)]*\)[[:space:]]+/, "", line)
+                split(line, f, " ")
+                # f[1] = state (proc(5) field 3); f[20] = starttime
+                # (field 22, USER_HZ=100 ticks) after stripping "pid (comm) ".
+                if (f[1] == "D" && (now - f[20] / 100) >= 3600)
+                  n++
+              }
+              END { print n + 0 }
+            ' /proc/[0-9]*/stat 2>/dev/null || true
+          )
+          STUCK_DSTATE="''${STUCK_DSTATE:-}"
+
           # === Top-N cgroup memory census ===
           # The 2026-08-22 freeze postmortem could not answer "who held the
           # ~30 GiB that kept zram pinned at 98.6% for 2h across 7 guard
@@ -1015,6 +1039,12 @@ _: {
             echo "# HELP system_crush_sessions_over_threshold 1 if crush sessions exceed ${toString crushSessionAlertThreshold} (sustained session pressure — 2026-08-22 freeze contributing load), 0 otherwise"
             echo "# TYPE system_crush_sessions_over_threshold gauge"
             echo "system_crush_sessions_over_threshold ''${CRUSH_SESSIONS_OVER}"
+
+            if [ -n "$STUCK_DSTATE" ]; then
+              echo "# HELP system_stuck_dstate_processes Processes in uninterruptible (D) state for >1h — unkillable even by SIGKILL (driver/firmware wedge, e.g. amdxdna 2026-09-04); reboot is the only fix"
+              echo "# TYPE system_stuck_dstate_processes gauge"
+              echo "system_stuck_dstate_processes ''${STUCK_DSTATE}"
+            fi
 
             echo "# HELP system_cgroup_mem_bytes memory.current of the top cgroups by usage (who is holding RAM)"
             echo "# TYPE system_cgroup_mem_bytes gauge"

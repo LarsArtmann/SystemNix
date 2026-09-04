@@ -317,6 +317,17 @@ _: {
                   alerts = discordAlert "Forgejo pull-mirror syncing broken. stalled=1: freshest mirror sync >10h old — dead queue (restart forgejo.service; the unique queue wedges after a hard freeze, cron pushes then dedup-skip silently). erroring=1: syncs actively failing — journalctl -u forgejo --grep SyncMirrors (credential-helper ENOENT / DNS allowlist rejects). scrape_errors=1: forgejo sqlite unreadable.";
                 })
                 (mkHttpCheck {
+                  name = "Stuck D-State Processes";
+                  group = "Infrastructure";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_stuck_dstate_processes 0*)"
+                  ];
+                  alerts = discordAlert "Processes stuck in uninterruptible D-state for >1h — unkillable even by SIGKILL (driver/firmware wedge, amdxdna class 2026-09-04). Every restart of the owning unit strands another corpse; REBOOT is the only fix. Find them: ps -eo pid,stat,wchan:30,etime,comm | awk '\$2 ~ /^D/'";
+                })
+                (mkHttpCheck {
                   name = "Homepage";
                   group = "Infrastructure";
                   url = "http://localhost:${toString config.services.homepage.port}";
