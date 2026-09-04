@@ -4922,11 +4922,11 @@
         "treefmt-nix": "treefmt-nix_8"
       },
       "locked": {
-        "lastModified": 1788484504,
-        "narHash": "sha256-javJ8jzA/ktlZleM9VVLN9xAVIhbj1lURfNKo7C9DhA=",
+        "lastModified": 1788490636,
+        "narHash": "sha256-u54zGZX03/stk3DTx95JWKLXXP3r08KbMTDp53+e6rk=",
         "owner": "LarsArtmann",
         "repo": "InboxClean",
-        "rev": "8eedf6b710031b10be9e321345ae6e4d4580e2b9",
+        "rev": "5c1e78f175d7240e4b34ac8342acafc61dbeb547",
         "type": "github"
       },
       "original": {
