@@ -318,7 +318,7 @@ if nix run .#pre-deploy-check; then
   # forgejo-hermes-token: RemainAfterExit oneshot — re-runs re-install the
   # staged token as /run/hermes-forgejo-token after deploys that change the
   # hermes user/group or the token scripts.
-  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir atticd-bootstrap bank-sync-storage-dir google-sync-dirs cv-backup-dir inboxclean-backup-dir llama-rag-model-fetch hermes-github-verify; do
+  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup browser-history-agent-token-provision forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir atticd-bootstrap bank-sync-storage-dir google-sync-dirs cv-backup-dir inboxclean-backup-dir llama-rag-model-fetch hermes-github-verify; do
     if systemctl is-enabled --quiet "$provisioner.service" 2>/dev/null; then
       echo "Restarting provisioner: $provisioner.service"
       sudo systemctl restart "$provisioner.service" 2>/dev/null || true

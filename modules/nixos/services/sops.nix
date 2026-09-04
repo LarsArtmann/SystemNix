@@ -386,22 +386,11 @@ in
               } [ "attic_token_rs256_secret_base64" ]
             )
             // lib.optionalAttrs (svcEnabled "browser-history") (
-              mkSecrets "browser-history.yaml"
-                {
-                  owner = "root";
-                  group = "root";
-                  restartUnits = [ "browser-history.service" ];
-                }
-                [
-                  "browser_history_agent_token"
-                  # DB-backed per-user agent token (bh_...), minted via the Agent
-                  # Tokens UI (POST /agents/token). Consumed ONLY by the agent
-                  # (browser-history-agent-env template) — it must DIFFER from the
-                  # server's env token above: resolveAgentAuth checks the env path
-                  # FIRST and a matching value would short-circuit to anonymous
-                  # ingest (no user attribution → invisible visits).
-                  "browser_history_agent_db_token"
-                ]
+              mkSecrets "browser-history.yaml" {
+                owner = "root";
+                group = "root";
+                restartUnits = [ "browser-history.service" ];
+              } [ "browser_history_agent_token" ]
             )
             // lib.optionalAttrs (svcEnabled "google-sync") (
               # Full rclone.conf INI for the Drive mirror (token is a JSON blob —
@@ -632,10 +621,14 @@ in
             };
           }
           // lib.optionalAttrs (svcEnabled "browser-history") {
-            # Shared by the SERVER (DynamicUser) — root-owned is correct because
-            # systemd reads EnvironmentFile as root. This is the legacy v1 env
-            # token: kept as break-glass auth (agentAuthConfigured env path);
-            # visits pushed through it are ANONYMOUS (no user attribution).
+            # Legacy v1 hex env token. The server keeps it as break-glass
+            # (v1 env path = anonymous attribution); remote (non-co-located)
+            # agents fall back to it too. The CO-LOCATED agent gets a real
+            # user-attributed bh_ DB token via the
+            # browser-history-agent-token-provision oneshot instead — the two
+            # values MUST differ (resolveAgentAuth checks the env path first;
+            # equal values short-circuit to anonymous). Root-owned: consumers
+            # read it via systemd EnvironmentFile (PID 1, root).
             "browser-history-env" = {
               owner = "root";
               group = "root";
@@ -645,20 +638,6 @@ in
               ];
               content = lib.generators.toKeyValue { } {
                 BROWSER_HISTORY_AGENT_TOKEN = config.sops.placeholder.browser_history_agent_token;
-              };
-            };
-            # AGENT-only env file: the DB-backed bh_ token minted per-user via
-            # the Agent Tokens UI. resolveAgentAuth's env path only short-
-            # circuits when the presented token EQUALS the server's env var —
-            # a bh_ value differs, falls through to the token store, and the
-            # resolved token's user is injected into /ingest (visit attribution).
-            "browser-history-agent-env" = {
-              owner = "root";
-              group = "root";
-              mode = "0400";
-              restartUnits = [ "browser-history-agent.service" ];
-              content = lib.generators.toKeyValue { } {
-                BROWSER_HISTORY_AGENT_TOKEN = config.sops.placeholder.browser_history_agent_db_token;
               };
             };
           }

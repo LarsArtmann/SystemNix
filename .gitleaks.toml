@@ -47,4 +47,7 @@ regexes = [
   '''49749626dc5197479c2da08105a52544f96b7da7''',
   # Prose ("Immich/Forgejo integration") caught by generic-api-key
   '''(?i)^immich/(forgejo|twenty)$''',
+  # Canonical example ULID from the ULID spec (users_view.key parseability
+  # fixture in VM tests + session docs) — a well-known literal, not a credential
+  '''01ARZ3NDEKTSV4RRFFQ69G5FAV''',
 ]
