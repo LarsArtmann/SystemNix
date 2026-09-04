@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # ZFS Deep Dive — inspect specific non-Docker datasets
 set -euo pipefail
 

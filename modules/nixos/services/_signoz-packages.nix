@@ -28,8 +28,7 @@ let
     sourceRoot = "source/frontend";
 
     pnpmDeps = pkgs.fetchPnpmDeps {
-      inherit (finalAttrs) src sourceRoot;
-      pname = finalAttrs.pname;
+      inherit (finalAttrs) src sourceRoot pname;
       pnpm = pkgs.pnpm_10;
       fetcherVersion = 3;
       hash = "sha256-gbwNnGuSgAEvN+gnZquzF4EYCGO3wwm3X48YvSjq1Uw=";

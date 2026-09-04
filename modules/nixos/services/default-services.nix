@@ -8,7 +8,7 @@ _: {
     }:
     let
       cfg = config.services.default-services;
-      ports = (import ../../../lib/ports.nix).ports;
+      inherit ((import ../../../lib/ports.nix)) ports;
     in
     {
       options.services.default-services = {

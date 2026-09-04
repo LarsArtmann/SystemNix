@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # ZFS Pool Survey Script — VFIO VM approach
 #
 # Boots a headless NixOS VM (kernel 6.18 + ZFS) with the USB controller

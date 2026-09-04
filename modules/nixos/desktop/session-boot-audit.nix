@@ -72,21 +72,16 @@
           lib.mapAttrsToList (
             name: u:
             let
-              enabled = if u ? enable then u.enable else true;
-              unitConfig = if u ? unitConfig then u.unitConfig else null;
+              enabled = u.enable or true;
+              unitConfig = u.unitConfig or null;
             in
-            lib.optionals enabled ([
+            lib.optionals enabled [
               {
                 inherit name;
-                deps =
-                  (if u ? wants then u.wants else [ ])
-                  ++ (if u ? requires then u.requires else [ ])
-                  ++ (if u ? bindsTo then u.bindsTo else [ ])
-                  ++ sectionToList unitConfig pullKeys;
-                installs =
-                  (if u ? wantedBy then u.wantedBy else [ ]) ++ (if u ? requiredBy then u.requiredBy else [ ]);
+                deps = u.wants or [ ] ++ u.requires or [ ] ++ u.bindsTo or [ ] ++ sectionToList unitConfig pullKeys;
+                installs = u.wantedBy or [ ] ++ u.requiredBy or [ ];
               }
-            ])
+            ]
           ) kindUnits
         );
 
@@ -98,8 +93,8 @@
           lib.mapAttrsToList (
             name: u:
             let
-              unitSection = if u ? Unit then u.Unit else null;
-              installSection = if u ? Install then u.Install else null;
+              unitSection = u.Unit or null;
+              installSection = u.Install or null;
             in
             [
               {
@@ -159,7 +154,7 @@
             [
               {
                 inherit name;
-                deps = parsed.deps;
+                inherit (parsed) deps;
                 installs = parsed.installs ++ optionInstalls;
               }
             ]

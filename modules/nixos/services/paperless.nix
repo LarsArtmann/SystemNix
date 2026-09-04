@@ -30,7 +30,7 @@ _: {
         ;
 
       cfg = config.services.paperless;
-      dataDir = cfg.dataDir;
+      inherit (cfg) dataDir;
       llmEndpoint = "http://127.0.0.1:${toString ports.fastflowlm}/v1";
       embeddingEndpoint = "http://127.0.0.1:${toString ports.llama-embeddings}/v1";
     in
@@ -142,7 +142,7 @@ _: {
 
         systemd.tmpfiles.settings."20-paperless-trash" = {
           "${dataDir}/trash".d = {
-            user = cfg.user;
+            inherit (cfg) user;
             group = config.users.users.${cfg.user}.group;
           };
         };

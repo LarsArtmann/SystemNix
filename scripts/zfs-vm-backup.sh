@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # ZFS Pool Backup v2 — copy ONLY real data with SHA256 verification
 #
 # Excludes:
