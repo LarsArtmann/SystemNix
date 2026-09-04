@@ -325,7 +325,7 @@ _: {
                     "[STATUS] == 200"
                     "[BODY] == pat(*system_stuck_dstate_processes 0*)"
                   ];
-                  alerts = discordAlert "Processes stuck in uninterruptible D-state for >1h — unkillable even by SIGKILL (driver/firmware wedge, amdxdna class 2026-09-04). Every restart of the owning unit strands another corpse; REBOOT is the only fix. Find them: ps -eo pid,stat,wchan:30,etime,comm | awk '\$2 ~ /^D/'";
+                  alerts = discordAlert "Processes stuck in uninterruptible D-state for >1h — unkillable even by SIGKILL (driver/firmware wedge, amdxdna class 2026-09-04). Every restart of the owning unit strands another corpse; REBOOT is the only fix. Find them: ps -eo pid,stat,wchan:30,etime,comm, then filter the STAT column for lines starting with D";
                 })
                 (mkHttpCheck {
                   name = "Homepage";
