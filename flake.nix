@@ -465,19 +465,19 @@
     };
 
     # DiscordSync — Continuous Discord backup with Turso cloud sync
-    # Rev-pinned (2026-08-25) at 2862b613 = upstream aa56b582 + two commits
-    # on branch nix/aa56b582-vendorhash (vendorHash correction + the
-    # projection_dlq_legacy_unchanged growth flag the gatus check asserts).
-    # Unpinned back to ?ref=master (2026-09-04). History of the hold: the pin
-    # at 2862b613 existed because upstream's Go toolchain floor (1.26.6 then
-    # 1.26.7) exceeded the go in the nixpkgs that fed the build. That hazard
-    # is gone: the discordsync input deliberately does NOT follow our nixpkgs
-    # (comment below), so the FOD's go comes from upstream's OWN locked
-    # nixpkgs — which now ships go 1.26.7 (proven: upstream master builds
-    # green on this machine, vendorHash unchanged). Tracking master delivers
-    # the T1 integrity-sweep byte-rate pacing fix (2026-09-03 incident).
+    # Rev-pinned (2026-09-04, second hold) at 2862b613: master (d1df5ff,
+    # 2026-09-03 21:53) fails the go-modules FOD INSIDE this flake —
+    # "hash mismatch … discordsync-d1df5ff-go-modules" — while upstream's
+    # own checkout still builds (stale vendorHash vs a module-set change
+    # upstream only noticed via cache). History of the first hold
+    # (2026-08-25 → 2026-09-04): upstream's Go toolchain floor (1.26.6
+    # then 1.26.7) exceeded the go in the nixpkgs that fed the build; that
+    # hazard IS gone (the input deliberately does not follow our nixpkgs,
+    # so the FOD's go comes from upstream's own lock). Rebase the pin to
+    # master once upstream lands a vendorHash that matches d1df5ff or
+    # newer — verify with `nix build` of the toplevel BEFORE deploying.
     discordsync = {
-      url = "github:LarsArtmann/DiscordSync?ref=master";
+      url = "github:LarsArtmann/DiscordSync/2862b613";
       inputs = {
         # go-nix-helpers AND nixpkgs deliberately NOT followed (bank-sync +
         # qmd precedents): upstream's vendorHash was validated against ITS
