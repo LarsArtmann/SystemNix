@@ -961,11 +961,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785627969,
-        "narHash": "sha256-4dtXQk/NMePegK/nWp5NSeuZKLATItOq61lpEvmXqGw=",
+        "lastModified": 1788306937,
+        "narHash": "sha256-lbrI1UYVpFgKSsyrU9oeF7FHfnu8nLD9ja0ou9f2rxk=",
         "owner": "hercules-ci",
         "repo": "flake-parts",
-        "rev": "427bf4bd9435fdf21321c8cc628c24efc14c0f7a",
+        "rev": "f16b25b8c3d2809b87925d0b76652d7821a75c68",
         "type": "github"
       },
       "original": {
@@ -2042,6 +2042,23 @@
         "ref": "master",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
+      }
+    },
+    "go-cqrs-lite_7": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1786847008,
+        "narHash": "sha256-U2c1EWayQe71b1mLZahHhtdvqDC9ES23MNDecizEp6w=",
+        "ref": "refs/tags/command/v4.7.1",
+        "rev": "d57862aa27a4f80247629e7223123f82399ddc96",
+        "revCount": 5641,
+        "type": "git",
+        "url": "ssh://git@github.com/larsartmann/go-cqrs-lite"
+      },
+      "original": {
+        "ref": "refs/tags/command/v4.7.1",
+        "type": "git",
+        "url": "ssh://git@github.com/larsartmann/go-cqrs-lite"
       }
     },
     "go-crush-data": {
@@ -3396,6 +3413,23 @@
         "ref": "master",
         "repo": "go-nix-helpers",
         "type": "github"
+      }
+    },
+    "go-nix-helpers_4": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1787824862,
+        "narHash": "sha256-eMcvLUn3oObJ1SVkwV44PTgIn7hp5OrcELRQf4n/GG8=",
+        "ref": "master",
+        "rev": "58f72570f8962004dbb2e910493d9b6a595e2fc1",
+        "revCount": 141,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-nix-helpers"
+      },
+      "original": {
+        "ref": "master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-nix-helpers"
       }
     },
     "go-output": {
@@ -5066,6 +5100,8 @@
     "papdashboard": {
       "inputs": {
         "flake-parts": "flake-parts_12",
+        "go-cqrs-lite": "go-cqrs-lite_7",
+        "go-nix-helpers": "go-nix-helpers_4",
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -5073,11 +5109,11 @@
         "treefmt-nix": "treefmt-nix_8"
       },
       "locked": {
-        "lastModified": 1787080036,
-        "narHash": "sha256-IJ7vOgJ/9JUExOC+f0hyCKhnquHHdbHacGK5e8gWFqY=",
+        "lastModified": 1788537314,
+        "narHash": "sha256-5weRLXGQoP9kXlKohPG0UygLdTOH8k0aGcTXyGWzEmo=",
         "owner": "LarsArtmann",
         "repo": "PapDashboard",
-        "rev": "51765a179d0d78f1349da0a78b5bc735761dded6",
+        "rev": "d5ac09d7cb91257213f9728edd2e246ea685d852",
         "type": "github"
       },
       "original": {
