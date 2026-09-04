@@ -26,7 +26,7 @@ let
   '';
 
   # Canonical example ULID — users_view.key must be parseable as a ULID.
-  vmUserKey = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
+  vmUserULID = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
 
   # Mock pocket-id-config option (not imported in this minimal test)
   mockPocketId =
@@ -100,7 +100,7 @@ in
       "sqlite3 /var/lib/browser-history/data.db \"INSERT INTO users_view "
       "(key, email, display_name, email_verified, totp_enabled, created_at, "
       "updated_at, data, tombstoned) VALUES "
-      "('${vmUserKey}','vm@test.local','vm',0,0,"
+      "('${vmUserULID}','vm@test.local','vm',0,0,"
       "'2026-01-01T00:00:00Z','2026-01-01T00:00:00Z','{}',0);\""
     )
     machine.succeed("systemctl start browser-history-agent-token-provision.service")
