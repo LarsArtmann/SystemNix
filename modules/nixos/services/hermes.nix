@@ -24,12 +24,16 @@
       cfg = config.services.hermes;
       hermesPkg =
         let
-          # Upstream (since v2026.7.20, still true at v0.20.4) uses fetcherVersion=2 in nix/lib.nix, no hash patching needed.
+          # Upstream packaging needs no hash patching (true since v2026.7.20
+          # through v0.21.0 / d3630f85 — the uv2nix machinery now lives in
+          # nix/python.nix, fetcherVersion is gone, extras set unchanged).
           baseOverlay = inputs.hermes-agent.overlays.default;
-          # registration_lifecycle is shipped upstream in [tool.setuptools]
-          # py-modules since v0.20.1 (verified in the locked source): the
-          # former downstream extraction + PYTHONPATH-suffix patch was a
-          # second source of truth and was deleted 2026-08-21.
+          # registration_lifecycle ships upstream: v0.20.x carried it in a
+          # static [tool.setuptools] py-modules list; since v0.21.0 setup.py's
+          # _root_py_modules() derives all root-level modules from the source
+          # tree at build time (no static list to drift). The former
+          # downstream extraction + PYTHONPATH-suffix patch was a second
+          # source of truth and was deleted 2026-08-21.
           patchedOverlay =
             final: prev:
             let
