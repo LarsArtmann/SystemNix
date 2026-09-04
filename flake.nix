@@ -465,19 +465,20 @@
     };
 
     # DiscordSync — Continuous Discord backup with Turso cloud sync
-    # Rev-pinned (2026-09-04, second hold) at 2862b613: master (d1df5ff,
-    # 2026-09-03 21:53) fails the go-modules FOD INSIDE this flake —
-    # "hash mismatch … discordsync-d1df5ff-go-modules" — while upstream's
-    # own checkout still builds (stale vendorHash vs a module-set change
-    # upstream only noticed via cache). History of the first hold
-    # (2026-08-25 → 2026-09-04): upstream's Go toolchain floor (1.26.6
-    # then 1.26.7) exceeded the go in the nixpkgs that fed the build; that
-    # hazard IS gone (the input deliberately does not follow our nixpkgs,
-    # so the FOD's go comes from upstream's own lock). Rebase the pin to
-    # master once upstream lands a vendorHash that matches d1df5ff or
-    # newer — verify with `nix build` of the toplevel BEFORE deploying.
+    # Rev-pinned at febc42a7 (2026-09-04, second hold LIFTED): the d1df5ff
+    # FOD hash mismatch was upstream's stale vendorHash vs the daemon's
+    # dependency bumps; upstream re-derived it (sha256-LBXjDzuWeOOKyZ4nUuKyWg1tyFX9OgWxrSlA12NzdD8=,
+    # commit 85ef861b) and build-verified, and master moved on to febc42a7
+    # (T2 resumable sweep + sweep-timeout observability). Lift followed the
+    # hold's own rule: `nix build` of the discordsync package ran to
+    # COMPLETION in this flake's context BEFORE deploying. Keep pinning
+    # explicit revs — the 02:59 switch failure of 2026-09-04 came from a
+    # moving `?ref=master` resolving past the fix. First hold history
+    # (2026-08-25 → 2026-09-04, upstream Go floor > nixpkgs go) is moot: the
+    # input deliberately does not follow our nixpkgs, so the FOD's go comes
+    # from upstream's own lock.
     discordsync = {
-      url = "github:LarsArtmann/DiscordSync/2862b613";
+      url = "github:LarsArtmann/DiscordSync/febc42a7";
       inputs = {
         # go-nix-helpers AND nixpkgs deliberately NOT followed (bank-sync +
         # qmd precedents): upstream's vendorHash was validated against ITS

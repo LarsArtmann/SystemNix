@@ -247,14 +247,13 @@
             # 2026-09-02 incident: the startup integrity sweep re-read and
             # re-hashed the whole ~40 GB archive on every boot, saturating the
             # SSD at 100% IO and starving SQLite (zombie gateway, 40s healthz,
-            # SIGKILL on shutdown). It cannot finish (30-min timeout < sweep
-            # duration, no resume), so sweep off-startup and off-peak instead.
-            # KEEP startup-off until upstream T2 (resumable sweep) ships: even
-            # paced at 100 MB/s a cold 40 GB pass needs ~70 min > the 30-min
-            # sweep timeout, so a re-enabled startup sweep would abort
-            # mid-flight every boot (bounded I/O, but wasted work). Revisit
-            # after the resumable cursor lands.
-            INTEGRITY_CHECK_ON_STARTUP = "false";
+            # SIGKILL on shutdown). Re-enabled 2026-09-04 after upstream T1
+            # (byte-rate pacing) + T2 (resumable oldest-first sweep) shipped:
+            # reads are paced at 100 MB/s and ionice'd, and an interrupted
+            # pass resumes from the oldest-unverified frontier on the next
+            # pass — a 30-min timeout abort is now bounded I/O with retained
+            # progress, and the SweepInterrupted alert makes it observable.
+            INTEGRITY_CHECK_ON_STARTUP = "true";
             INTEGRITY_CHECK_INTERVAL = "12h";
             # Byte-rate pacing cap for integrity sweeps (upstream T1,
             # 2026-09-04). Bounds worst-case sweep read throughput so a cold
