@@ -52,7 +52,7 @@
 
     # Helium Browser
     helium = {
-      url = "github:vikingnope/helium-browser-nix-flake";
+      url = "github:schembriaiden/helium-browser-nix-flake";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.utils.follows = "flake-utils";
     };
@@ -517,7 +517,7 @@
 
     # browser-history — Browser history intelligence server (CQRS/ES, WebAuthn)
     browser-history = {
-      url = "github:LarsArtmann/browser-history?ref=master";
+      url = "github:LarsArtmann/browser-history/0971fe9c4487b7c8636195fe922a2476803d7d33";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
