@@ -252,11 +252,11 @@
         "systems": "systems_2"
       },
       "locked": {
-        "lastModified": 1788519553,
-        "narHash": "sha256-L/618WfW9WAgG8OxBcEsGoryF8DQVMQf/3lPAenpMlk=",
+        "lastModified": 1788565553,
+        "narHash": "sha256-WG4rjXSgQ43R6Ns5mSA/DgDiPitMoQjxTTUIIWmkMHE=",
         "owner": "LarsArtmann",
         "repo": "BuildFlow",
-        "rev": "aff568b20c396e14758539c72f76615a02dfa1ce",
+        "rev": "9efaef695e13b38552bd450d4d19fb00f0c7682b",
         "type": "github"
       },
       "original": {
