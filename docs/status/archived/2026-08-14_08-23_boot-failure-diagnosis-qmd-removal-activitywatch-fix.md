@@ -1,7 +1,7 @@
 # Status: Boot Failure Diagnosis, qmd Removal, ActivityWatch Fix
 
-**Date:** 2026-08-14 08:23  
-**Session start:** User reported many service failures + unsafe shutdowns on reboot, and a boot hang at GLMtec logo  
+**Date:** 2026-08-14 08:23
+**Session start:** User reported many service failures + unsafe shutdowns on reboot, and a boot hang at GLMtec logo
 **Session end:** 08:23 — changes made, NOT deployed
 
 ---

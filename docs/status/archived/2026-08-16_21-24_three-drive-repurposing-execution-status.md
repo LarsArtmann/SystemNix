@@ -17,7 +17,7 @@
 
 ## b) Partially done
 
-_2026-08-17: all resolved by the 00-59 continuation session — b.1 (forensics fully relocated, verified), b.2 (all Phase-2 config deployed), b.3 (plan amendment done by docs-health)._  
+_2026-08-17: all resolved by the 00-59 continuation session — b.1 (forensics fully relocated, verified), b.2 (all Phase-2 config deployed), b.3 (plan amendment done by docs-health)._
 ## c) Not started
 
 _All items in this section were completed by the 00-59 continuation session (paperless module+secret+enable, btrbk safety net, smartd, Caddy/Homepage/Gatus, backup-coordination, deploy, verification, old-immich removal, docs) — see the Resolution appendix._

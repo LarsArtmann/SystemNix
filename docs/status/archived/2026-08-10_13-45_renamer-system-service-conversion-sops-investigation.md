@@ -1,7 +1,7 @@
 # Status Report: Renamer System Service Conversion & Sops Investigation
 
-**Date:** 2026-08-10 13:45 CEST  
-**Session scope:** Investigate sops redesign question → fix root cause → deploy  
+**Date:** 2026-08-10 13:45 CEST
+**Session scope:** Investigate sops redesign question → fix root cause → deploy
 **Machine:** evo-x2 (NixOS 26.11, nixos-unstable @ f13ff45)
 
 ---

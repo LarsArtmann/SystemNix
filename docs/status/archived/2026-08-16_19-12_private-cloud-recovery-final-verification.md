@@ -104,7 +104,7 @@ key, Secure Boot keys, bash histories, journal, service configs — all recovere
 
 ## B) PARTIALLY DONE
 
-_2026-08-17 resolution: B.1 (fresh manifests) never regenerated — /tmp manifests lost on reboot; the pool-side forensic archive (`/mnt/pool/archive/private-cloud-forensics`) is the retained copy, fresh-manifest regeneration dropped. B.2 resolved — sdf unmounted 2026-08-16 20:41, drives repurposed (MG08s → backup pool) / frozen (sdf). B.3 resolved — §I corrected inline the same evening (see the CORRECTION note in §I)._  
+_2026-08-17 resolution: B.1 (fresh manifests) never regenerated — /tmp manifests lost on reboot; the pool-side forensic archive (`/mnt/pool/archive/private-cloud-forensics`) is the retained copy, fresh-manifest regeneration dropped. B.2 resolved — sdf unmounted 2026-08-16 20:41, drives repurposed (MG08s → backup pool) / frozen (sdf). B.3 resolved — §I corrected inline the same evening (see the CORRECTION note in §I)._
 ### 1. Verification manifests not persisted with the backups
 - Definitive manifests live in `/tmp` (`def-src.sha256`, `def-dst.sha256`,
   `pool-src.sha256`) — **lost on reboot**
