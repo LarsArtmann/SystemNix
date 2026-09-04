@@ -454,6 +454,9 @@ in
         enable = true; # Extract local browser history → push to server
         serverUrl = "https://history.${config.networking.domain}";
         machineId = "evo-x2";
+        # The prod DB has multiple bring-up users — the provisioner must
+        # attribute the agent token to lars's Pocket ID identity.
+        tokenUserEmail = "lars@larsartmann.cloud";
       };
 
       # Manifest — Smart LLM router for AI agents (cost optimization)

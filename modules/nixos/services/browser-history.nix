@@ -76,6 +76,7 @@
           "${lib.getExe serverPkg}" agent-token ensure \
             -db /var/lib/browser-history/data.db \
             -label "${machineId}" \
+            ${lib.optionalString (config.services.browser-history-agent.tokenUserEmail != null) ''-user-email "${config.services.browser-history-agent.tokenUserEmail}" \''}
             -out "$TOKEN_FILE"
 
           token="$(cat "$TOKEN_FILE")"
@@ -126,6 +127,18 @@
         inputs.browser-history.nixosModules.browser-history-server
         inputs.browser-history.nixosModules.browser-history-agent
       ];
+
+      options.services.browser-history-agent.tokenUserEmail = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = ''
+          Email of the user the agent-token provisioner mints the DB token
+          for. REQUIRED once the server has more than one registered user —
+          the CLI refuses to pick one (live 2026-09-04: 5 bring-up users,
+          provision oneshot failing "pass -user-email to disambiguate"
+          every agent tick). null keeps the single-user auto-resolution.
+        '';
+      };
 
       config = lib.mkMerge [
         # ── Server: deployment-specific values (upstream defaults handle the rest) ──
