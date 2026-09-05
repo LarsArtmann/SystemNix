@@ -252,11 +252,11 @@
         "systems": "systems_2"
       },
       "locked": {
-        "lastModified": 1788570673,
-        "narHash": "sha256-uGObdLp6n06V1IYRelYnZdZPSFzzWn42Eiv2PYYfUwg=",
+        "lastModified": 1788571688,
+        "narHash": "sha256-ZpPKHeSxx6A1blmuLg6WT2wttMK1ZtsX/P6BNIzme/w=",
         "owner": "LarsArtmann",
         "repo": "BuildFlow",
-        "rev": "1c6826cc0c855078b9dce8e988f3cc84def9aac3",
+        "rev": "a3168a2c4d2f89abd6d9731ffe1e703ed6a3b429",
         "type": "github"
       },
       "original": {
@@ -5557,11 +5557,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788570715,
-        "narHash": "sha256-dHZov5TFaEPn10iQlOjgmEExOljRnHNRab13YZD41XA=",
+        "lastModified": 1788571407,
+        "narHash": "sha256-DQJc4hq0jRyK5c0E9NVXzR9EIJFm2wu6eSG57dswo8c=",
         "owner": "LarsArtmann",
         "repo": "overview",
-        "rev": "48652cc98436574b7cad82669c9cb924c8da59f7",
+        "rev": "73738794dcaadc242519e98042c942ab3df96df2",
         "type": "github"
       },
       "original": {
@@ -6518,17 +6518,16 @@
     "templ-components_6": {
       "flake": false,
       "locked": {
-        "lastModified": 1785227154,
-        "narHash": "sha256-RcM7Ohwp1QDU7bFGSDsdKKo/HK9A7Dib97dwwcSCt44=",
+        "lastModified": 1788565955,
+        "narHash": "sha256-hINU5QzexDtgZ9Zkjr5UeDK88APP+vefCOc+DTyVgdE=",
         "ref": "master",
-        "rev": "a5e0b0b6b9a1e159be116ea367f99dff068b5932",
-        "revCount": 777,
+        "rev": "23a61ae0afe36afa0bffc78a9a40d771396e3468",
+        "revCount": 1222,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/templ-components"
       },
       "original": {
         "ref": "master",
-        "rev": "a5e0b0b6b9a1e159be116ea367f99dff068b5932",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/templ-components"
       }
