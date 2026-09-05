@@ -653,11 +653,11 @@
         "treefmt-nix": "treefmt-nix_4"
       },
       "locked": {
-        "lastModified": 1788631280,
-        "narHash": "sha256-mhg9vQ+u3jA9vCuLW+JH8kZlSgqyQVIr++4pSliZMSU=",
+        "lastModified": 1788632330,
+        "narHash": "sha256-YztVg0RCrVfSuERasr/wELzOhlnXaiacCIqj4xxGeVo=",
         "ref": "master",
-        "rev": "7f5458c8217749626f5f5cc503587f62cd74fefd",
-        "revCount": 3912,
+        "rev": "9005758d85bceb3fc87f272c789056d1c7736808",
+        "revCount": 3920,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/CV"
       },
