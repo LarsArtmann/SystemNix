@@ -222,6 +222,8 @@ in
   boot.kernel.sysctl = {
     "vm.overcommit_memory" = lib.mkForce 0; # Heuristic overcommit — prevents wild allocation beyond capacity (overrides Redis's "1")
     "vm.swappiness" = 150; # zram-only: prefer zram swap (in RAM, ~370 MiB/s) over page cache reclaim (disk I/O, ~253ms/write on QLC NAND). Old value 10 caused BTRFS I/O storms.
+    "vm.page-cluster" = 0; # zram-only: swap readahead of 8 pages (default 3) is an HDD seek optimization; on zram it wastes CPU decompressing unneeded pages. Fedora/Pop!_OS/ChromeOS all ship 0 (2026-09-05 internet sweep: docs/research/2026-09-05_btrfs-internet-sweep-vs-systemnix.md §2.1).
+    "vm.watermark_boost_factor" = 0; # zram-only: watermark boosting force-reclaims on fragmentation signals — kswapd boost storms are the stutter/freeze class this box is prone to. Pop!_OS + Clear Linux ship 0 (same sweep).
     "vm.watermark_scale_factor" = 100; # Start background reclaim earlier & gradually (default 100). Old value 10 caused "panic reclaim" — sudden large I/O bursts when memory ran low.
     "vm.vfs_cache_pressure" = 150; # Prefer reclaiming dentry/inode cache (cheap, no disk I/O) over page cache (expensive). Default 100.
     "vm.dirty_ratio" = 5; # Start foreground writeback at 5% memory (~4.7GB) — lower than old 10% to reduce BTRFS writeback bursts on QLC NAND
