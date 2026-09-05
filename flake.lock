@@ -436,6 +436,22 @@
         "url": "ssh://git@github.com/LarsArtmann/cmdguard"
       }
     },
+    "collector-utils": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1788643750,
+        "narHash": "sha256-mxdmN/loIy1Zc3dTHH0EsjXtjQm3IHOfDkZKJ1Sghs4=",
+        "ref": "refs/heads/master",
+        "rev": "6048eaa3e873b5e00d307c97c24f45a9afa55681",
+        "revCount": 74,
+        "type": "git",
+        "url": "file:///home/lars/projects/collector-utils"
+      },
+      "original": {
+        "type": "git",
+        "url": "file:///home/lars/projects/collector-utils"
+      }
+    },
     "cqrs-htmx": {
       "flake": false,
       "locked": {
@@ -563,6 +579,21 @@
         "owner": "ipetkov",
         "repo": "crane",
         "rev": "2c71e194474d13de031d729b729c968ddbe3507f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ipetkov",
+        "repo": "crane",
+        "type": "github"
+      }
+    },
+    "crane_2": {
+      "locked": {
+        "lastModified": 1788465171,
+        "narHash": "sha256-Y1/TTVXjYXGF068IThQH9fPSZ0SIE74PABlUxnWTUH0=",
+        "owner": "ipetkov",
+        "repo": "crane",
+        "rev": "eb35abda9f232cc6610b1d1e3200d15c49b7ac54",
         "type": "github"
       },
       "original": {
@@ -1136,6 +1167,24 @@
       }
     },
     "flake-parts_16": {
+      "inputs": {
+        "nixpkgs-lib": "nixpkgs-lib"
+      },
+      "locked": {
+        "lastModified": 1788450739,
+        "narHash": "sha256-glZLQlzIn1fXH6PazR2iUmTo7kzzyYSshrWhLS9TqCU=",
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "rev": "31729ca8cbdb4fa927b34e5f4353e6a83f39e993",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "type": "github"
+      }
+    },
+    "flake-parts_17": {
       "inputs": {
         "nixpkgs-lib": [
           "todo-list-ai",
@@ -5345,6 +5394,21 @@
         "type": "github"
       }
     },
+    "nixpkgs-lib": {
+      "locked": {
+        "lastModified": 1788057806,
+        "narHash": "sha256-DTQSMxzDWmT0zhguthvegnVkn7CFqGCv4IHCzk5ZUpM=",
+        "owner": "nix-community",
+        "repo": "nixpkgs.lib",
+        "rev": "596e2e3940e09b2abbeb03f75fa1828c57fcd72c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "nixpkgs.lib",
+        "type": "github"
+      }
+    },
     "nixpkgs-stable": {
       "locked": {
         "lastModified": 1782847189,
@@ -5945,6 +6009,7 @@
         "signoz-src": "signoz-src",
         "silent-sddm": "silent-sddm",
         "sops-nix": "sops-nix",
+        "storage-collector": "storage-collector",
         "systems": "systems_13",
         "todo-list-ai": "todo-list-ai",
         "treefmt-full-flake": "treefmt-full-flake",
@@ -6201,6 +6266,29 @@
         "owner": "Mic92",
         "repo": "sops-nix",
         "type": "github"
+      }
+    },
+    "storage-collector": {
+      "inputs": {
+        "collector-utils": "collector-utils",
+        "crane": "crane_2",
+        "flake-parts": "flake-parts_16",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1788646980,
+        "narHash": "sha256-/s3avFyizFMsUhFWcVl3VLywdF67o3q8z2AN2Dd0rIM=",
+        "ref": "refs/heads/master",
+        "rev": "83c5ca0952ef0cd5f76cb0f5c6fce117d5093b96",
+        "revCount": 1,
+        "type": "git",
+        "url": "file:///home/lars/projects/storage-collector"
+      },
+      "original": {
+        "type": "git",
+        "url": "file:///home/lars/projects/storage-collector"
       }
     },
     "systems": {
@@ -6534,7 +6622,7 @@
     },
     "todo-list-ai": {
       "inputs": {
-        "flake-parts": "flake-parts_16",
+        "flake-parts": "flake-parts_17",
         "nixpkgs": [
           "nixpkgs"
         ],

@@ -172,6 +172,16 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # storage-collector — filesystem capacity tracking daemon (Rust).
+    # Local git+file input while the repo is unpublished; a plain
+    # `path:../` input leaves a `..`-relative outPath that cannot become
+    # a derivation input ("too short to be a valid store path"). Requires
+    # the working tree committed — git inputs ignore uncommitted files.
+    storage-collector = {
+      url = "git+file:///home/lars/projects/storage-collector";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # PapDashboard — event-sourced alert hub with NPU insight enricher (Go)
     papdashboard = {
       url = "github:LarsArtmann/PapDashboard?ref=master";

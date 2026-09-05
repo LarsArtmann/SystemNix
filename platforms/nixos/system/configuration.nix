@@ -703,6 +703,15 @@ in
         };
       };
 
+      # storage-collector — long-term filesystem capacity tracking (JSONL).
+      # The storage-trend data source that works while monitor365 is
+      # disabled above: tracks /, /data, /mnt/pool, /tmp, ... every cycle,
+      # rotating JSONL under /var/lib/storage-collector (~60 MiB bounded),
+      # threshold events at 85 % with 80 % re-arm hysteresis.
+      storage-collector = {
+        enable = true;
+      };
+
       # Monitor365 server (dashboard + API) runs on the same machine
       # Same private-git-dep blocker as the agent above (wireguard-collector).
       monitor365-server = {
