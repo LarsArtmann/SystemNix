@@ -34,6 +34,7 @@ die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 # --- Serialize: never two syncs at once
 exec 9>/run/samsung-nix-sync.lock
 flock -n 9 || die "another samsung-nix-sync is running"
+log "Lock acquired. Preflight: checking tools..."
 
 # --- Preflight: every binary BEFORE any mount/change (clickhouse-migration lesson)
 for bin in rsync ionice nice mount umount findmnt awk grep mkdir flock btrfs df find systemctl nix; do
@@ -67,10 +68,12 @@ if [ "${SYNC_FORCE_PRESSURE:-0}" != "1" ]; then
   [ "$ZRAM_PCT" -lt 90 ] || die "zram ${ZRAM_PCT}% >= 90% — not now"
   PASS=$(awk -v p="$IO_PSI" -v m="$PSI_MAX" 'BEGIN {print (p < m) ? 1 : 0}')
   if [ "$PASS" -eq 1 ]; then
-    GATE="psi<20"
+    GATE="psi<${PSI_MAX}"
   else
     # PSI bypass: measure REAL io on the source (QLC root disk) + target (Samsung)
-    SRC_PART=$(findmnt -rn -S "$SRC" -o SOURCE)
+    log "PSI ${IO_PSI}% >= ${PSI_MAX}% (corpse-inflated). Measuring REAL disk IO over 2x5s..."
+    SRC_PART=$(findmnt -rn -T "$SRC" -o SOURCE)
+    SRC_PART="${SRC_PART%%\[*}" # findmnt appends "[/subvol]" — strip for lsblk
     SRC_DISK=$(lsblk -no pkname "$SRC_PART")
     TGT_DISK=$(lsblk -no pkname "${DEV_BY_ID}-part2")
     QLC_MB=$(( $(disk_io_sectors_5s "$SRC_DISK") / 2048 ))
@@ -85,11 +88,11 @@ if [ "${SYNC_FORCE_PRESSURE:-0}" != "1" ]; then
 else
   GATE="forced"
 fi
-log "Pressure gate PASSED via: $GATE (io PSI some avg10=${IO_PSI}% zram=${ZRAM_PCT}% MemAvail=${MEMAVAIL_PCT}%)"
+log "Pressure gate PASSED via: $GATE (io PSI some avg10=${IO_PSI}% zram=${ZRAM_PCT}% MemAvail=${MEMAVAIL_PCT}%). Mounting + rsync next..."
 
 # --- Source sanity: /nix must be a real mountpoint on a DIFFERENT fs than target
-findmnt -rn -S "$SRC" >/dev/null || die "$SRC is not a mountpoint — refusing to copy a directory into itself"
-SRC_UUID=$(findmnt -rn -S "$SRC" -o UUID)
+findmnt -rn -T "$SRC" >/dev/null || die "$SRC is not a mountpoint — refusing to copy a directory into itself"
+SRC_UUID=$(findmnt -rn -T "$SRC" -o UUID)
 [ -n "$SRC_UUID" ] || die "could not read source fs UUID"
 
 [ -b "${DEV_BY_ID}-part2" ] || die "${DEV_BY_ID}-part2 missing — did scripts/samsung-prepare.sh run?"
@@ -109,7 +112,7 @@ if ! findmnt -rn -S "${DEV_BY_ID}-part2" -o TARGET | grep -qx "$MNT"; then
   WE_MOUNTED=1
 fi
 
-TGT_UUID=$(findmnt -rn -S "$MNT" -o UUID)
+TGT_UUID=$(findmnt -rn -T "$MNT" -o UUID)
 [ -n "$TGT_UUID" ] || die "could not read target fs UUID"
 [ "$SRC_UUID" != "$TGT_UUID" ] || die "source and target are the SAME filesystem — /nix already on tlc? Aborting (post-migration footgun)"
 
