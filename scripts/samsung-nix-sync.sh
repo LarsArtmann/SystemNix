@@ -27,7 +27,10 @@ FINAL=0
 [ "${1:-}" = "--final" ] && FINAL=1
 
 log() { printf '\n==> %s\n' "$*"; }
-die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
+die() {
+  printf 'ERROR: %s\n' "$*" >&2
+  exit 1
+}
 
 [ "$(id -u)" -eq 0 ] || die "run as root: sudo bash $0"
 
@@ -76,8 +79,8 @@ if [ "${SYNC_FORCE_PRESSURE:-0}" != "1" ]; then
     SRC_PART="${SRC_PART%%\[*}" # findmnt appends "[/subvol]" — strip for lsblk
     SRC_DISK=$(lsblk -no pkname "$SRC_PART")
     TGT_DISK=$(lsblk -no pkname "${DEV_BY_ID}-part2")
-    QLC_MB=$(( $(disk_io_sectors_5s "$SRC_DISK") / 2048 ))
-    TLC_MB=$(( $(disk_io_sectors_5s "$TGT_DISK") / 2048 ))
+    QLC_MB=$(($(disk_io_sectors_5s "$SRC_DISK") / 2048))
+    TLC_MB=$(($(disk_io_sectors_5s "$TGT_DISK") / 2048))
     log "Disk-idle test (5s): source ${SRC_DISK}=${QLC_MB}MB, target ${TGT_DISK}=${TLC_MB}MB (PSI ${IO_PSI}% is corpse-inflated)"
     if [ "$QLC_MB" -le 64 ] && [ "$TLC_MB" -le 64 ]; then
       GATE="disks-idle"
@@ -138,11 +141,11 @@ ionice -c 3 nice -n 10 rsync -aHx --delete --numeric-ids --info=progress2,stats2
 RC=$?
 set -e
 case $RC in
-  0 | 24) ;;
-  *)
-    FAILED=1
-    die "rsync failed with exit $RC — re-run when calm (delta continues)"
-    ;;
+0 | 24) ;;
+*)
+  FAILED=1
+  die "rsync failed with exit $RC — re-run when calm (delta continues)"
+  ;;
 esac
 
 # --- Parity report
@@ -165,7 +168,10 @@ if [ "$FINAL" -eq 1 ]; then
   while read -r P; do
     TOTAL=$((TOTAL + 1))
     REL="${P#/nix}"
-    [ -e "$MNT$REL" ] || { MISSING=$((MISSING + 1)); echo "  MISSING: $P"; }
+    [ -e "$MNT$REL" ] || {
+      MISSING=$((MISSING + 1))
+      echo "  MISSING: $P"
+    }
   done < <(nix path-info -r /run/current-system 2>/dev/null)
   log "Closure check: $TOTAL paths, $MISSING missing"
   if [ "$MISSING" -gt 0 ]; then

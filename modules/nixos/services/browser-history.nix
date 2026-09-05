@@ -75,9 +75,11 @@
 
           "${lib.getExe serverPkg}" agent-token ensure \
             -db /var/lib/browser-history/data.db \
-            -label "${machineId}" ${lib.optionalString (
-              config.services.browser-history-agent.tokenUserEmail != null
-            ) "-user-email \"${config.services.browser-history-agent.tokenUserEmail}\""} \
+            -label "${machineId}" ${
+              lib.optionalString (
+                config.services.browser-history-agent.tokenUserEmail != null
+              ) "-user-email \"${config.services.browser-history-agent.tokenUserEmail}\""
+            } \
             -out "$TOKEN_FILE"
 
           token="$(cat "$TOKEN_FILE")"
