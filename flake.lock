@@ -6278,10 +6278,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1788646980,
-        "narHash": "sha256-/s3avFyizFMsUhFWcVl3VLywdF67o3q8z2AN2Dd0rIM=",
+        "lastModified": 1788647393,
+        "narHash": "sha256-5zRJThLE8Sup1WGZK9/rpoNC2RM6I1OgKyZcX8HDKh8=",
         "ref": "refs/heads/master",
-        "rev": "83c5ca0952ef0cd5f76cb0f5c6fce117d5093b96",
+        "rev": "d5eb0befc38acaebec7f52a5ce091481ca0e725d",
         "revCount": 1,
         "type": "git",
         "url": "file:///home/lars/projects/storage-collector"
