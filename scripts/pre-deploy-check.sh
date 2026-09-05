@@ -51,11 +51,16 @@ FLAKE_CHECK_OUTPUT="$(nix flake check --no-build 2>&1 || true)"
 #   the one this class would block (chicken-and-egg, live 2026-09-02).
 REAL_ERRORS="$(echo "$FLAKE_CHECK_OUTPUT" | grep 'error:' | grep -vE "is not valid|unable to download 'https?://[^']+\.narinfo" || true)"
 
+# Nix >= 2.26 prints multi-line errors where the FIRST line is a bare
+# `error:` and the actual message lives on the following indented lines.
+# Grep for 'error:' keeps only the headline, so a real eval failure can
+# surface as a context-free `error:` (blocked a deploy 2026-09-05 with
+# zero diagnostic output). Always print raw tail in the fail branch.
 if [ -z "$FLAKE_CHECK_OUTPUT" ]; then
   pass "nix flake check --no-build"
 elif [ -n "$REAL_ERRORS" ]; then
   fail "nix flake check --no-build — fix syntax errors before deploying"
-  echo "$REAL_ERRORS" | tail -5
+  echo "$FLAKE_CHECK_OUTPUT" | tail -30
 else
   warn "nix flake check --no-build — only known-benign error classes ('path is not valid' --no-build limitation, substituter narinfo unreachability); toplevel eval is authoritative"
 fi
