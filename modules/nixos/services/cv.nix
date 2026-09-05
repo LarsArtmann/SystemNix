@@ -175,6 +175,24 @@
                   url = "https://jobs.workable.com/search?query=Google+Cloud&employment_type=contract&employment_type=other";
                   provider = "workable";
                 }
+                # Workable portfolio v2 (owner-approved 2026-09-05, live-
+                # verified variants; each returns full result pages):
+                # broaden discovery within the proven surface. German
+                # surface note (upstream AGENTS): location=Germany works,
+                # translated queries mangle — add a DE portal only via
+                # the location filter.
+                {
+                  url = "https://jobs.workable.com/search?query=golang&employment_type=contract&employment_type=other";
+                  provider = "workable";
+                }
+                {
+                  url = "https://jobs.workable.com/search?query=Terraform&employment_type=contract&employment_type=other";
+                  provider = "workable";
+                }
+                {
+                  url = "https://jobs.workable.com/search?query=Google+Cloud&workplace=remote&employment_type=contract&employment_type=other";
+                  provider = "workable";
+                }
               ];
               # One-click funnel tail. EXPLICITLY DISABLED until gate Q1
               # (owner-gate-package-going-live.md): the upstream default is
