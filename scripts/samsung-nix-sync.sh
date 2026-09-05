@@ -1,93 +1,172 @@
 #!/usr/bin/env bash
-# Samsung Phase 1, step 2: initial LIVE rsync of /nix (QLC) -> tlc pool, subvol nix
+# Samsung Phase 1: rsync /nix (QLC) -> tlc pool, subvol nix
 #
-# Safe to run anytime (delta-syncable, re-runnable). The store mutates under us
-# during builds — that is EXPECTED and fine: the final delta sync (step 3, after
-# quiescing builds/optimizer/gc) is what makes it exact. rsync exit 24 (source
-# files vanished mid-copy) is treated as success for exactly this reason.
+# Re-runnable delta sync. Plain run = initial/interim live sync.
+# --final = post-flip-deploy delta: stops nix-gc timer, syncs, then verifies
+#           every path of the boot closure exists on the Samsung.
 #
-# Guards: pressure gate (same thresholds as deploy.sh), source!=target device,
-# /nix must be a mountpoint. I/O is ionice idle-class so the QLC stays responsive.
+# Guards: root-only, flock-serialized, pressure gate with a DISK-IDLE bypass —
+# io PSI on this box is permanently inflated by wedged D-state tasks (corpse
+# pile re-forms at boot: diskstats deltas of ~0 with PSI ~70-80%), so the
+# authoritative "is it safe to add bulk IO" signal is REAL disk activity over a
+# 5s window, not PSI. Gate passes if PSI<20 OR measured disks idle.
 #
-# Run as:  sudo bash scripts/samsung-nix-sync.sh
-# (129 GiB off a busy QLC: expect 30 min - a few hours. Use tmux/zellij.)
+# Target is mounted WITH compress=zstd — btrfs compresses at WRITE time; a
+# mount without it stores everything raw and the 1.89x store win evaporates.
+# If pre-existing (uncompressed) partial data is detected, a one-time
+# `btrfs defragment -r -czstd` recompresses it after the sync.
+#
+# Run as:  sudo bash scripts/samsung-nix-sync.sh [--final]
 
 set -euo pipefail
 
 readonly DEV_BY_ID="/dev/disk/by-id/nvme-Samsung_SSD_970_EVO_Plus_1TB_S4EWNX0RA01856V"
 readonly MNT="/mnt/samsung-nix"
 readonly SRC="/nix"
+FINAL=0
+[ "${1:-}" = "--final" ] && FINAL=1
 
 log() { printf '\n==> %s\n' "$*"; }
-die() {
-  printf 'ERROR: %s\n' "$*" >&2
-  exit 1
-}
+die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 
 [ "$(id -u)" -eq 0 ] || die "run as root: sudo bash $0"
 
+# --- Serialize: never two syncs at once
+exec 9>/run/samsung-nix-sync.lock
+flock -n 9 || die "another samsung-nix-sync is running"
+
 # --- Preflight: every binary BEFORE any mount/change (clickhouse-migration lesson)
-for bin in rsync ionice nice mount umount findmnt awk grep mkdir rmdir; do
+for bin in rsync ionice nice mount umount findmnt awk grep mkdir flock btrfs df find systemctl nix; do
   command -v "$bin" >/dev/null 2>&1 || die "missing tool '$bin' — aborting before any change"
 done
 
-# --- Pressure gate (deploy.sh doctrine: never add QLC bulk IO under pressure)
-IO_PSI=$(awk '/^some/ {gsub(/[^0-9.]/, "", $2); print $2; exit}' /proc/pressure/io)
+# --- Pressure gate: zram + MemAvail hard; PSI fast-path OR real-disk-idle bypass
 MEMAVAIL_KB=$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)
 MEMTOTAL_KB=$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)
 MEMAVAIL_PCT=$((MEMAVAIL_KB * 100 / MEMTOTAL_KB))
 ZRAM_ORIG=$(awk '{print $2}' /sys/block/zram0/mm_stat)
-ZRAM_DISK=$(cat /sys/block/zram0/disksize)
-ZRAM_PCT=$((ZRAM_ORIG * 100 / ZRAM_DISK))
-log "Pressure check: io PSI some avg10=${IO_PSI}% zram=${ZRAM_PCT}% MemAvail=${MEMAVAIL_PCT}%"
-if [ "${SYNC_FORCE_PRESSURE:-0}" != "1" ]; then
-  AWK_OK=$(awk -v psi="$IO_PSI" -v z="$ZRAM_PCT" -v m="$MEMAVAIL_PCT" 'BEGIN {print (psi < 20 && z < 90 && m >= 10) ? 1 : 0}')
-  [ "$AWK_OK" -eq 1 ] || die "system under pressure (want PSI<20, zram<90, MemAvail>=10). Retry when quiet, or SYNC_FORCE_PRESSURE=1 $0"
-fi
+ZRAM_PCT=$((ZRAM_ORIG * 100 / $(cat /sys/block/zram0/disksize)))
+IO_PSI=$(awk '/^some/ {gsub(/[^0-9.]/, "", $2); print $2; exit}' /proc/pressure/io)
 
-# --- Source sanity: /nix must be a real mountpoint (the QLC @nix subvol)
+disk_io_sectors_5s() { # $1 = whole-disk kernel name
+  local a b
+  a=$(awk -v d="$1" '$3 == d {print $6 + $10}' /proc/diskstats)
+  sleep 5
+  b=$(awk -v d="$1" '$3 == d {print $6 + $10}' /proc/diskstats)
+  echo $((b - a))
+}
+
+GATE="undecided"
+if [ "${SYNC_FORCE_PRESSURE:-0}" != "1" ]; then
+  [ "$MEMAVAIL_PCT" -ge 10 ] || die "MemAvail ${MEMAVAIL_PCT}% < 10% — not now"
+  [ "$ZRAM_PCT" -lt 90 ] || die "zram ${ZRAM_PCT}% >= 90% — not now"
+  PASS=$(awk -v p="$IO_PSI" 'BEGIN {print (p < 20) ? 1 : 0}')
+  if [ "$PASS" -eq 1 ]; then
+    GATE="psi<20"
+  else
+    # PSI bypass: measure REAL io on the source (QLC root disk) + target (Samsung)
+    SRC_PART=$(findmnt -rn -S "$SRC" -o SOURCE)
+    SRC_DISK=$(lsblk -no pkname "$SRC_PART")
+    TGT_DISK=$(lsblk -no pkname "${DEV_BY_ID}-part2")
+    QLC_MB=$(( $(disk_io_sectors_5s "$SRC_DISK") / 2048 ))
+    TLC_MB=$(( $(disk_io_sectors_5s "$TGT_DISK") / 2048 ))
+    log "Disk-idle test (5s): source ${SRC_DISK}=${QLC_MB}MB, target ${TGT_DISK}=${TLC_MB}MB (PSI ${IO_PSI}% is corpse-inflated)"
+    if [ "$QLC_MB" -le 64 ] && [ "$TLC_MB" -le 64 ]; then
+      GATE="disks-idle"
+    else
+      die "disks busy (QLC ${QLC_MB}MB/5s, TLC ${TLC_MB}MB/5s) with PSI ${IO_PSI}% — retry when calm, or SYNC_FORCE_PRESSURE=1"
+    fi
+  fi
+else
+  GATE="forced"
+fi
+log "Pressure gate PASSED via: $GATE (io PSI some avg10=${IO_PSI}% zram=${ZRAM_PCT}% MemAvail=${MEMAVAIL_PCT}%)"
+
+# --- Source sanity: /nix must be a real mountpoint on a DIFFERENT fs than target
 findmnt -rn -S "$SRC" >/dev/null || die "$SRC is not a mountpoint — refusing to copy a directory into itself"
 SRC_UUID=$(findmnt -rn -S "$SRC" -o UUID)
 [ -n "$SRC_UUID" ] || die "could not read source fs UUID"
 
-# --- Target: tlc pool, subvol nix
 [ -b "${DEV_BY_ID}-part2" ] || die "${DEV_BY_ID}-part2 missing — did scripts/samsung-prepare.sh run?"
 mkdir -p "$MNT"
-MOUNTED=0
+WE_MOUNTED=0
+FAILED=0
 cleanup() {
-  if [ "$MOUNTED" -eq 1 ]; then
+  if [ "$WE_MOUNTED" -eq 1 ] && [ "$FAILED" -eq 1 ]; then
     umount "$MNT" || true
   fi
 }
 trap cleanup EXIT
 
-if ! findmnt -rn -S "$DEV_BY_ID-part2" -o TARGET | grep -qx "$MNT"; then
-  mount -o subvol=nix,noatime "${DEV_BY_ID}-part2" "$MNT"
-  MOUNTED=1
+if ! findmnt -rn -S "${DEV_BY_ID}-part2" -o TARGET | grep -qx "$MNT"; then
+  # compress=zstd is load-bearing: btrfs compresses at WRITE time
+  mount -o subvol=nix,noatime,compress=zstd "${DEV_BY_ID}-part2" "$MNT"
+  WE_MOUNTED=1
 fi
 
 TGT_UUID=$(findmnt -rn -S "$MNT" -o UUID)
 [ -n "$TGT_UUID" ] || die "could not read target fs UUID"
 [ "$SRC_UUID" != "$TGT_UUID" ] || die "source and target are the SAME filesystem — /nix already on tlc? Aborting (post-migration footgun)"
 
-if [ -z "$(ls -A "$MNT")" ]; then
+PRE_EXISTING=1
+[ -z "$(ls -A "$MNT")" ] && PRE_EXISTING=0
+if [ "$PRE_EXISTING" -eq 0 ]; then
   log "Target empty — initial full sync"
 else
-  log "Target non-empty — delta sync (previous run or partial)"
+  log "Target non-empty — delta sync"
 fi
 
-# --- Sync: hardlinks are load-bearing (store dedup), idle I/O class, one fs
-log "rsync $SRC/ -> $MNT/ (idle I/O class; exit 24 'files vanished' = OK for live source)"
+# --- Optional final-mode quiesce
+if [ "$FINAL" -eq 1 ]; then
+  log "--final: stopping nix-gc.timer (store must not mutate during exactness sync)"
+  systemctl stop nix-gc.timer 2>/dev/null || log "WARN: could not stop nix-gc.timer (continuing)"
+  log "Ensure NO builds/deploys are running — this sync must be the exact final state"
+fi
+
+# --- Sync: hardlinks load-bearing (store dedup), idle I/O class, one fs
+log "rsync $SRC/ -> $MNT/ (exit 24 'files vanished' = OK for live source)"
 set +e
 ionice -c 3 nice -n 10 rsync -aHx --delete --numeric-ids --info=progress2,stats2 "$SRC/" "$MNT/"
 RC=$?
 set -e
 case $RC in
-0 | 24) ;;
-*) die "rsync failed with exit $RC — target left as-is; re-run when the system is calm (delta sync continues where it left off)" ;;
+  0 | 24) ;;
+  *)
+    FAILED=1
+    die "rsync failed with exit $RC — re-run when calm (delta continues)"
+    ;;
 esac
 
-log "Sync complete (rsync exit $RC)."
-echo "Next: step 3 — quiesce builds + auto-optimise-store + nix-gc, final delta sync,"
-echo 'fileSystems."/nix" (by-label tlc, subvol nix, neededForBoot), deploy, then step-4'
-echo "delta rsync BEFORE reboot, then the reboot window (user)."
+# --- Parity report
+SRC_FILES=$(find "$SRC" -xdev | wc -l)
+TGT_FILES=$(find "$MNT" | wc -l)
+log "Parity: source $SRC_FILES entries, target $TGT_FILES entries (live source drifts; --final is exact)"
+df -h "$MNT" | tail -1 | awk '{print "  tlc usage: "$3" used / "$2" total ("$5")"}'
+
+# --- Recompress pre-existing partial data (was possibly written without compress mount)
+if [ "$PRE_EXISTING" -eq 1 ] && [ "$FINAL" -eq 0 ]; then
+  log "Target had pre-existing data: running one-time btrfs defragment -r -czstd (recompress)"
+  ionice -c 3 btrfs filesystem defragment -r -czstd "$MNT" || log "WARN: defrag failed — data written this run IS compressed; earlier partials may not be"
+fi
+
+# --- Final-mode closure verification: every boot path must exist on Samsung
+if [ "$FINAL" -eq 1 ]; then
+  log "--final: verifying boot closure exists on Samsung"
+  MISSING=0
+  TOTAL=0
+  while read -r P; do
+    TOTAL=$((TOTAL + 1))
+    REL="${P#/nix}"
+    [ -e "$MNT$REL" ] || { MISSING=$((MISSING + 1)); echo "  MISSING: $P"; }
+  done < <(nix path-info -r /run/current-system 2>/dev/null)
+  log "Closure check: $TOTAL paths, $MISSING missing"
+  if [ "$MISSING" -gt 0 ]; then
+    FAILED=1
+    systemctl start nix-gc.timer 2>/dev/null || true
+    die "closure INCOMPLETE — DO NOT REBOOT. Re-run this script (builds realized more paths), then re-check"
+  fi
+  systemctl start nix-gc.timer 2>/dev/null || true
+  log "Closure COMPLETE — safe to reboot into the Samsung store."
+fi
+
+log "Sync complete (rsync exit $RC). Target left mounted at $MNT (umount when done: umount $MNT)"
