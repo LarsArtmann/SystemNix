@@ -160,6 +160,31 @@ in
   # Quickshell desktop shell — replaces Waybar, Dunst, Wlogout, polkit_gnome
   programs.systemnix-quickshell.enable = true;
 
+  # Crush configuration — the crushrc itself is owned by the crush-config
+  # repo (github:LarsArtmann/crush-config, private) via programs.crush-config.
+  # The repo owns the renderer and the machine-independent set (provider key
+  # wiring, glm-5.3-flash model declaration, gopls/oxlint LSPs, context
+  # paths); ONLY host-coupled values live here: the host-managed golangci
+  # wrapper command and the qmd MCP (both exist only on this machine).
+  #
+  # Secrets doctrine (unchanged): provider keys NEVER live in crush's auth
+  # store (~/.local/share/crush/crush.json, machine-owned plaintext state
+  # that agents can read; the 2026-08-18 leak class). They stay in sops
+  # (secrets/crush.yaml) → /run/secrets → process memory at crushrc load
+  # time (crush_key helper skips absent files and PLACEHOLDER values).
+  # hyper stays store-owned on purpose (OAuth refresh state,
+  # self-rotating). NOTE: do not track a real "crush/crushrc" in the
+  # ~/.config/crush dotfiles repo — it collides with this HM symlink.
+  programs.crush-config = {
+    enable = true;
+    # secretsDir defaults to "/run/secrets" (the sops-nix render dir).
+    golangciLintLspCommand = "$HOME/.local/bin/golangci-lint-lsp-wrapper";
+    mcps.qmd = {
+      command = "qmd";
+      args = [ "mcp" ];
+    };
+  };
+
   # SSH hosts defined in common/programs/ssh-config.nix
 
   # D-Bus/GSettings dark mode — read by xdg-desktop-portal-gtk Settings interface,
@@ -623,82 +648,6 @@ in
       "xdg-desktop-portal/config".text = ''
         [preferred]
         color-scheme=dark
-      '';
-
-      # Crush provider auth from sops — NEVER store keys in crush's auth store
-      # (~/.local/share/crush/crush.json, machine-owned plaintext state that
-      # agents can read; the 2026-08-18 leak class). crushrc api_key supports
-      # $(command) expansion at load, so each key flows sops → /run/secrets →
-      # process memory without ever touching a writable file. crushrc-declared
-      # keys are never persisted back — synthetic has provably stayed out of
-      # the auth store and session DB snapshots since 2026-08-18. Guarded:
-      # absent secret or PLACEHOLDER value = provider skipped. hyper stays
-      # store-owned on purpose (OAuth refresh state, self-rotating). NOTE: do
-      # not track a real "crush/crushrc" in the ~/.config/crush dotfiles repo
-      # — it collides with this HM symlink.
-      "crush/crushrc".text = ''
-        crush_key() {
-          local f="/run/secrets/$2" k
-          test -r "$f" || return 0
-          k=$(cat "$f")
-          case "$k" in "" | PLACEHOLDER*) return 0 ;; esac
-          provider add "$1" --api-key "$k"
-        }
-        crush_key synthetic synthetic_api_key
-        crush_key zai zai_api_key
-        crush_key gemini gemini_api_key
-        crush_key minimax minimax_api_key
-        # minimax DISABLED 2026-08-31 (user): Token Plan exhausted
-        # (rate_limit_error 2056 — billing state, the sops key itself is
-        # valid and stays rendered). Session selection is rejected
-        # ("model not found"); NOTE `crush models` still lists the
-        # catalog's minimax entries — the CLI ignores disabled providers.
-        # Re-enable = delete the next line.
-        provider add minimax --disable true
-        crush_key kimi-coding kimi_api_key
-
-        # glm-5.3-flash exists ONLY here: charm's auto-updated zai catalog
-        # does not list it, so deleting the old user crush.json dropped it
-        # from the model list (live regression 2026-08-31, restored same
-        # day). Pricing from the user's known-good def; effort tiers
-        # normalized to z.ai's current xhigh scheme (catalog glm-5.3/5.2
-        # already serve xhigh — the old hand-written "max" was stale
-        # naming). model add has NO reasoning_levels flag (source:
-        # shellconfig/model.go) — the picker tier list for flash falls back
-        # to crush's default handling of default_reasoning_effort.
-        model add zai/glm-5.3-flash --name "GLM-5.3-Flash" --context-window 1000000 --default-max-tokens 131072 --can-reason true --supports-images true --price-input 0.15 --price-output 0.5 --price-cache-hit 0.03 --reasoning-effort xhigh
-
-        # Local llama.cpp (user starts llama-server ad hoc; nothing on
-        # lib/ports.nix serves :8899). discover_models DEFAULTS TO TRUE —
-        # crush queries /v1/models at session start, so whatever GGUF is
-        # loaded shows up with zero hand-maintained entries (the old
-        # crush.json carried a stale hardcoded model with invented pricing).
-        # Server down = provider lists no models; connection refused is
-        # instant, no startup cost.
-        provider add llamacpp --type llamacpp --base-url "http://127.0.0.1:8899/v1"
-
-        # Context files (moved from the user crush.json options.context_paths).
-        option context-path $HOME/.config/crush/AGENTS.md
-        option context-path AGENTS.md
-
-        # LSP servers (moved from the user crush.json lsp section). Deliberately
-        # NO env pins: gopls/oxlint inherit the session env, where
-        # GOCACHE/GOMODCACHE/GOLANGCI_LINT_CACHE point at /mnt/buildcache (the
-        # fish 00-go-cache-guard redirects to ~/tmp only while the mount is
-        # dead). The old crush.json hardcoded $HOME/tmp/* pins that bypassed
-        # the buildcache doctrine and stranded ~48G of Go caches on the QLC
-        # NVMe (removed 2026-08-31). golangci_lint_ls goes through the
-        # HM-managed wrapper, which re-pins the lint cache with the same
-        # alive-check fallback for env-less launch paths.
-        lsp add gopls --command gopls --timeout 60 --options '{"analyses":{"stdversion":false}}'
-        lsp add oxlint --command oxlint --args --lsp --filetypes typescript --filetypes typescriptreact --filetypes javascript --filetypes javascriptreact --root-markers .oxlintrc.json --root-markers .oxlintrc.jsonc --root-markers oxlint.config.ts
-        lsp add golangci_lint_ls --command "$HOME/.local/bin/golangci-lint-lsp-wrapper"
-
-        # qmd — local RAG/hybrid search over markdown + code collections
-        # (BM25 + vector embeddings + LLM rerank, fully on-device). Global CLI
-        # from environment.systemPackages; stdio MCP server. GGUF models
-        # (~2 GB) auto-download to ~/.cache/qmd on first semantic search.
-        mcp add qmd --command qmd --args mcp
       '';
 
       # Niri session manager — declarative app mappings
