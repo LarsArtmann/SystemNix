@@ -4,9 +4,15 @@ How the `crush` AI assistant is configured on evo-x2: providers, keys,
 models, LSPs, and the verification workflow for changing any of it.
 
 - **Config**: HM-managed `~/.config/crush/crushrc` (Bash, loaded at every
-  crush start) — source: `platforms/nixos/users/home.nix`
+  crush start) — source: `github:LarsArtmann/crush-config` (PRIVATE) via
+  `programs.crush-config` (module `homeManagerModules.crush`). SystemNix's
+  `platforms/nixos/users/home.nix` only sets host-coupled values:
+  `golangciLintLspCommand` (the HM wrapper) and the `qmd` MCP entry.
+  Provider/model/LSP changes happen in the crush-config repo → push →
+  `nix flake lock --update-input crush-config`
 - **Secrets**: sops `platforms/nixos/secrets/crush.yaml` → `/run/secrets/<name>`
-  (lars:users 0400), injected at load via the `crush_key` helper
+  (lars:users 0400), injected at load via the `crush_key` helper rendered by
+  the module
 - **Auth store**: `~/.local/share/crush/crush.json` — machine-owned; ONLY
   hyper's OAuth state lives there (self-rotating, by design). Never manage or
   symlink this file; never put static keys back into it
@@ -23,7 +29,7 @@ models, LSPs, and the verification workflow for changing any of it.
 | `synthetic`  | sops `crush-daily.yaml` | injected since 2026-08-18                              |
 | `zai`        | sops `crush.yaml`     | `glm-5.3-flash` declared via `model add` (not in catalog) |
 | `gemini`     | sops `crush.yaml`     |                                                          |
-| `minimax`    | sops `crush.yaml`     | **DISABLED** 2026-08-31: Token Plan exhausted (2056). `provider add minimax --disable true` in crushrc; key stays rendered. Re-enable = delete that line |
+| `minimax`    | sops `crush.yaml`     | **DISABLED** 2026-08-31: Token Plan exhausted (2056). `providers.minimax.disabled = true` in the crush-config repo; key stays rendered. Re-enable = flip the flag |
 | `kimi-coding`| sops `crush.yaml`     |                                                          |
 | `llamacpp`   | none (local)          | `:8899`, ad-hoc llama-server; models auto-discovered     |
 | `hyper`      | auth store (OAuth)    | stays store-owned: tokens self-rotate hourly             |
@@ -43,7 +49,10 @@ models, LSPs, and the verification workflow for changing any of it.
    i.e. a sudo session), or regenerate the file the public-key way.
 2. Declare it in `modules/nixos/services/sops.nix` (the `crush.yaml`
    `mkSecrets` block): add `"newkey_api_key"` to the name list.
-3. Inject it in the HM crushrc (`home.nix`): `crush_key newprovider newkey_api_key`.
+3. Declare the provider in the crush-config repo
+   (`/home/lars/projects/crush-config`, `modules/home-manager/crush.nix`):
+   `providers.<name>.apiKeyFile = "<name>_api_key";` in the module's
+   defaults — then push and `nix flake lock --update-input crush-config`.
 4. Test WITHOUT a deploy: `bash scripts/crush-rc-test.sh` (loads the rc in an
    isolated `XDG_CONFIG_HOME`; `EXTRA='…'` appends a candidate line;
    `--probe` + `PROBE_MODEL=provider/model` fires one real completion).
@@ -71,6 +80,12 @@ makes old plaintext residue in session DBs inert.
 
 ## Gotchas
 
+- The flake input is `github:`-type for a PRIVATE repo — works locally
+  (user gh token in `~/.config/nix/nix.conf` access-tokens) but CI needs
+  `NIX_GITHUB_RO_TOKEN` (same pending fix as the other private `github:`
+  lock nodes) — until then CI stays dark for this input
+- `nix flake lock --update-input crush-config` is a NO-OP while the repo's
+  default branch ref (`?ref=master`) hasn't moved — push first, then re-lock
 - `model add` has NO `reasoning_levels` flag (source:
   `internal/shellconfig/model.go`) — tier lists come from the catalog or
   crush's default handling; `--reasoning-effort` is an unvalidated string
