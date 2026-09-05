@@ -1297,15 +1297,18 @@ if [ -e /etc/systemd/system/postfix.service ]; then
     report_warn "Mail relay — rendered SASL map missing (sops template not rendered; sends defer)"
   fi
 
-  # Paperless consumes the relay via PAPERLESS_* settings rendered into
-  # paperless.conf (NOT unit Environment — the nixpkgs module writes a conf
-  # file). Gate on the deployed unit file, not systemctl is-enabled (the
-  # requiredBy rc=1 trap).
+  # Paperless consumes the relay via PAPERLESS_* settings. The nixpkgs
+  # module renders services.paperless.settings as Environment= directives
+  # in the DEPLOYED UNIT FILE (verified live 2026-09-05) — it never writes
+  # a paperless.conf; the old grep of /var/lib/paperless/paperless.conf was
+  # a permanent phantom-FAIL against a file nothing generates (and a stale
+  # pre-pool dataDir). Gate on the deployed unit, not systemctl is-enabled
+  # (the requiredBy rc=1 trap); grep follows the store symlink.
   if [ -e /etc/systemd/system/paperless-web.service ]; then
-    if grep -q "^PAPERLESS_EMAIL_HOST=" /var/lib/paperless/paperless.conf 2>/dev/null; then
-      report_pass "Paperless — mail wiring rendered into paperless.conf (PAPERLESS_EMAIL_HOST set)"
+    if grep -qE '^Environment="?PAPERLESS_EMAIL_HOST=' /etc/systemd/system/paperless-web.service; then
+      report_pass "Paperless — mail wiring rendered into paperless-web.service (PAPERLESS_EMAIL_HOST set)"
     else
-      report_fail "Paperless — PAPERLESS_EMAIL_HOST missing from paperless.conf despite relay enabled (relay-gated settings block broke)"
+      report_fail "Paperless — PAPERLESS_EMAIL_HOST missing from deployed unit despite relay enabled (relay-gated settings block broke)"
     fi
   else
     report_skip "Paperless — not deployed (mail wiring check skipped)"
