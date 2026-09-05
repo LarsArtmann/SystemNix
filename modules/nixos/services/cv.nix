@@ -163,6 +163,18 @@
                   company = "Hacker News";
                   provider = "hn";
                 }
+                # Workable aggregate search (10th zero-auth scanner,
+                # upstream 2026-09-05): the public JSON API the search page
+                # itself calls carries the full JD per job. Filters map 1:1
+                # from the search URL (query, repeatable employment_type,
+                # workplace, location); limit<=20/page, pageToken cursor.
+                # No portal `company` — workable is an aggregate across
+                # per-posting employers (the scanner resolves each job's
+                # own company; a portal company would only be a fallback).
+                {
+                  url = "https://jobs.workable.com/search?query=Google+Cloud&employment_type=contract&employment_type=other";
+                  provider = "workable";
+                }
               ];
               # One-click funnel tail. EXPLICITLY DISABLED until gate Q1
               # (owner-gate-package-going-live.md): the upstream default is
