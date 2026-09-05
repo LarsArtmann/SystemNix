@@ -65,22 +65,25 @@ in
         "commit=300"
       ];
     };
-    # /nix on its OWN subvolume so btrbk snapshots of @ (and the pool sends)
-    # exclude the ~47 GiB nix store. Sibling subvolumes are never part of a
-    # snapshot of @ — the store is fully rebuildable and needs no CoW pinning.
-    # Populated by scripts/migrate-nix-subvol.sh BEFORE the first deploy with
-    # this entry; the old /nix dir inside @ is removed post-verification.
+    # /nix on the Samsung 970 EVO Plus 1TB (by-id
+    # nvme-Samsung_SSD_970_EVO_Plus_1TB_S4EWNX0RA01856V — nvme1n1 on the 2026-09-05
+    # boot; never pin kernel names). The exec-path disk: every store cache-miss
+    # refills at 2.4GB/s / 27us instead of queueing on the QLC. Synced by
+    # scripts/samsung-nix-sync.sh (delta re-runnable; --final verifies the boot
+    # closure). The old @nix subvol on the QLC stays until the 3-day soak passes.
+    # commit stays DEFAULT (30s): commit=300 is a QLC/SLC-preservation measure,
+    # not needed on TLC (docs/planning/2026-08-31_samsung-role-assignment-*.md).
     "/nix" = mkFilesystem {
-      device = "/dev/disk/by-uuid/0b629b65-a1b7-40df-a7dc-9ea5e0b04959";
+      device = "/dev/disk/by-label/tlc";
       fsType = "btrfs";
       options = [
-        "subvol=@nix"
+        "subvol=nix"
         "compress=zstd"
         "noatime"
         "nodiscard"
         "space_cache=v2"
-        "commit=300"
       ];
+      neededForBoot = true;
     };
     "/data" = mkFilesystem {
       device = "/dev/disk/by-uuid/046ea663-da55-48b7-b516-0dcdb87ba710";
