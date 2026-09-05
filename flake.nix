@@ -173,12 +173,15 @@
     };
 
     # storage-collector — filesystem capacity tracking daemon (Rust).
-    # Local git+file input while the repo is unpublished; a plain
-    # `path:../` input leaves a `..`-relative outPath that cannot become
-    # a derivation input ("too short to be a valid store path"). Requires
-    # the working tree committed — git inputs ignore uncommitted files.
+    # Private GitHub repo. Flake-input fetches happen outside the build
+    # sandbox with the user's git credentials, so `github:` works where
+    # in-build cargo git deps broke monitor365. NOTE: its nested
+    # `collector-utils` sub-input is pinned to a LOCAL git+file path
+    # (~/projects/collector-utils, ahead of origin) — builds need that
+    # sibling checkout until collector-utils is pushed and the sub-input
+    # moves to `github:`.
     storage-collector = {
-      url = "git+file:///home/lars/projects/storage-collector";
+      url = "github:LarsArtmann/storage-collector?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

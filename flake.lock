@@ -6278,17 +6278,18 @@
         ]
       },
       "locked": {
-        "lastModified": 1788647393,
-        "narHash": "sha256-5zRJThLE8Sup1WGZK9/rpoNC2RM6I1OgKyZcX8HDKh8=",
-        "ref": "refs/heads/master",
-        "rev": "d5eb0befc38acaebec7f52a5ce091481ca0e725d",
-        "revCount": 1,
-        "type": "git",
-        "url": "file:///home/lars/projects/storage-collector"
+        "lastModified": 1788648790,
+        "narHash": "sha256-qNcNx/XnWCX/Hztdn7oC+rOF8NPJ5dcazvKtwbQRNt0=",
+        "owner": "LarsArtmann",
+        "repo": "storage-collector",
+        "rev": "36364b59108e309bdf646d46bb60b1644eae38ba",
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "file:///home/lars/projects/storage-collector"
+        "owner": "LarsArtmann",
+        "ref": "master",
+        "repo": "storage-collector",
+        "type": "github"
       }
     },
     "systems": {
