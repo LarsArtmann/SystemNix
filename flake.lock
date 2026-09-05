@@ -6542,11 +6542,11 @@
         "treefmt-nix": "treefmt-nix_12"
       },
       "locked": {
-        "lastModified": 1788613742,
-        "narHash": "sha256-Mh0e4PoVEY0Bmth6L+ptEJMjH45UJHEdXR7NXdwMAE4=",
+        "lastModified": 1788614050,
+        "narHash": "sha256-XTPMkq1i0U2yXDtvOwp+p9Jt8fgNNwVhPCDUL6g1hqE=",
         "owner": "LarsArtmann",
         "repo": "todo-list-ai",
-        "rev": "448b941e165ee05c591376bee3c255bc07f102de",
+        "rev": "f9f3b33586d647df09c7e35fe8da9ad02cf579d2",
         "type": "github"
       },
       "original": {
