@@ -252,11 +252,11 @@
         "systems": "systems_2"
       },
       "locked": {
-        "lastModified": 1788565553,
-        "narHash": "sha256-WG4rjXSgQ43R6Ns5mSA/DgDiPitMoQjxTTUIIWmkMHE=",
+        "lastModified": 1788570673,
+        "narHash": "sha256-uGObdLp6n06V1IYRelYnZdZPSFzzWn42Eiv2PYYfUwg=",
         "owner": "LarsArtmann",
         "repo": "BuildFlow",
-        "rev": "9efaef695e13b38552bd450d4d19fb00f0c7682b",
+        "rev": "1c6826cc0c855078b9dce8e988f3cc84def9aac3",
         "type": "github"
       },
       "original": {
@@ -772,7 +772,6 @@
           "go-nix-helpers"
         ],
         "go-retry": "go-retry_5",
-        "go-src": "go-src",
         "go-sse": "go-sse_5",
         "nixpkgs": [
           "nixpkgs"
@@ -780,11 +779,11 @@
         "templ-components": "templ-components_5"
       },
       "locked": {
-        "lastModified": 1788554680,
-        "narHash": "sha256-KoTKn6PqxelTO32iG9wmr3PDu/LCl8IEI62g0+0kd/4=",
+        "lastModified": 1788570828,
+        "narHash": "sha256-TZQ4r3U6svSUXDznUwr5CfRgIw5ywhOGHH4LVvAre0Q=",
         "owner": "LarsArtmann",
         "repo": "dnsblockd",
-        "rev": "897a6d71008ae6f9cf97e71d8aa9e517a9ef77b9",
+        "rev": "3c9c438da599c751a91735ff5c92d517f30a5fdb",
         "type": "github"
       },
       "original": {
@@ -4102,19 +4101,6 @@
         "url": "ssh://git@github.com/larsartmann/go-retry"
       }
     },
-    "go-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1786408852,
-        "narHash": "sha256-KBd2vX1uNGBkFMkSfz1jvNSecqhLnexdVbhPYlIT8Js=",
-        "type": "tarball",
-        "url": "https://go.dev/dl/go1.26.6.src.tar.gz"
-      },
-      "original": {
-        "type": "tarball",
-        "url": "https://go.dev/dl/go1.26.6.src.tar.gz"
-      }
-    },
     "go-sse": {
       "flake": false,
       "locked": {
@@ -5571,11 +5557,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788514244,
-        "narHash": "sha256-FrWXJx0qlrArRBSRkRKhu4SfojefZ3Cqp04du7Hb1lI=",
+        "lastModified": 1788570715,
+        "narHash": "sha256-dHZov5TFaEPn10iQlOjgmEExOljRnHNRab13YZD41XA=",
         "owner": "LarsArtmann",
         "repo": "overview",
-        "rev": "d3aebf4aff261ed0141bebafa7c886a621bcb1ab",
+        "rev": "48652cc98436574b7cad82669c9cb924c8da59f7",
         "type": "github"
       },
       "original": {
@@ -5753,11 +5739,11 @@
         "project-discovery-sdk": "project-discovery-sdk_3"
       },
       "locked": {
-        "lastModified": 1788514120,
-        "narHash": "sha256-Q2wUdxsVJhIssnKTnHtxJGlOM8eZ2wQTDOl4SCDJCXQ=",
+        "lastModified": 1788570727,
+        "narHash": "sha256-UzmQ7SDlDNAgZ2O3TsZsj06WHWARPv2GP4wXl1+2Clw=",
         "owner": "LarsArtmann",
         "repo": "project-meta",
-        "rev": "c54417c39a47cacd7929dc5eff70349ea4bb5a66",
+        "rev": "deade7f9a23bdc50e91b33ca945f38d3d7d2590f",
         "type": "github"
       },
       "original": {
