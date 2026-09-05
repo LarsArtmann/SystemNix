@@ -56,11 +56,16 @@ disk_io_sectors_5s() { # $1 = whole-disk kernel name
   echo $((b - a))
 }
 
+# io PSI on this box idles corpse-inflated at ~60-83% with provably idle
+# disks, so the usable fast-path threshold is SYNC_PSI_MAX (default 62 — user
+# decision 2026-09-05). The DISK-IDLE bypass remains the authoritative safety:
+# above the threshold we REQUIRE measured disk idleness, not the PSI number.
 GATE="undecided"
+PSI_MAX="${SYNC_PSI_MAX:-62}"
 if [ "${SYNC_FORCE_PRESSURE:-0}" != "1" ]; then
   [ "$MEMAVAIL_PCT" -ge 10 ] || die "MemAvail ${MEMAVAIL_PCT}% < 10% — not now"
   [ "$ZRAM_PCT" -lt 90 ] || die "zram ${ZRAM_PCT}% >= 90% — not now"
-  PASS=$(awk -v p="$IO_PSI" 'BEGIN {print (p < 20) ? 1 : 0}')
+  PASS=$(awk -v p="$IO_PSI" -v m="$PSI_MAX" 'BEGIN {print (p < m) ? 1 : 0}')
   if [ "$PASS" -eq 1 ]; then
     GATE="psi<20"
   else
@@ -74,7 +79,7 @@ if [ "${SYNC_FORCE_PRESSURE:-0}" != "1" ]; then
     if [ "$QLC_MB" -le 64 ] && [ "$TLC_MB" -le 64 ]; then
       GATE="disks-idle"
     else
-      die "disks busy (QLC ${QLC_MB}MB/5s, TLC ${TLC_MB}MB/5s) with PSI ${IO_PSI}% — retry when calm, or SYNC_FORCE_PRESSURE=1"
+      die "disks busy (QLC ${QLC_MB}MB/5s, TLC ${TLC_MB}MB/5s) with PSI ${IO_PSI}% >= ${PSI_MAX}% — retry when calm, or SYNC_FORCE_PRESSURE=1"
     fi
   fi
 else
