@@ -878,11 +878,11 @@
         "vision-review-agent-src": "vision-review-agent-src"
       },
       "locked": {
-        "lastModified": 1788522002,
-        "narHash": "sha256-KNoaGgWw6Wh/HzzurpFL0tYAJXTYAenns78GFp7LKNE=",
+        "lastModified": 1788569832,
+        "narHash": "sha256-7vKsNq4fIAmFxnlIVMUvrKZRsvyQgnwLSL4orScgpTQ=",
         "owner": "LarsArtmann",
         "repo": "file-and-image-renamer",
-        "rev": "691343fc1ccbd3b2891b2a183949ca4c37bd04db",
+        "rev": "2cea5f190382d200786b006b736bd4e308aaa873",
         "type": "github"
       },
       "original": {
@@ -2249,11 +2249,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788549902,
-        "narHash": "sha256-7962EqI5s8aHuYIObWQuJN2K6Yz3WnjLzUBzHbtCVBc=",
+        "lastModified": 1788569831,
+        "narHash": "sha256-gysgFbsI3Gt+en97FAKb4RgGZ2yrbyjs9AIWom6pzkY=",
         "ref": "master",
-        "rev": "a9122c1513b4aa2f584d1407a2e62e631974ada9",
-        "revCount": 6039,
+        "rev": "31b2e1bd845872b692a182b9b82a9b796d515d88",
+        "revCount": 6040,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
       },
