@@ -83,9 +83,11 @@
 21. Add the sweep's "exceeds list" claims to FEATURES.md inventory (docs-health BUILD mode pass).
 22. Re-run `nix flake check --no-build` + post-deploy-check after the Samsung reboot lands both the sysctls and the /nix flip in one boot.
 
-## g) Questions I cannot answer myself
+## g) Questions I cannot answer myself — ANSWERED 2026-09-05 ~23:00
 
-(Question tool follows in chat.)
+1. Offsite backup leg → **DEFER** (all options reviewed; stays on the roadmap).
+2. Formatter-touched files → **KEEP** (canonical, CI-green).
+3. pgdata NOCOW → **standalone change NOW** (TODO updated with the plan + premise check).
 
 ## Evidence
 
