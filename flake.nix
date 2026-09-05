@@ -570,6 +570,7 @@
       flake-parts,
       nixpkgs,
       nix-ssh-config,
+      crush-config,
       treefmt-full-flake,
       ...
     }:
@@ -620,7 +621,7 @@
 
       # Shared extraSpecialArgs for Home Manager — available in all platform home.nix files
       sharedHomeManagerSpecialArgs = {
-        inherit nix-ssh-config;
+        inherit nix-ssh-config crush-config;
         inherit (theme) colorScheme;
       };
 

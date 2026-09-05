@@ -3,6 +3,7 @@
   lib,
   config,
   nix-ssh-config,
+  crush-config,
   colorScheme,
   ...
 }:
@@ -143,6 +144,7 @@ in
     ../../common/home-base.nix
     ../programs/shells.nix # NixOS shell configuration
     nix-ssh-config.homeManagerModules.ssh
+    crush-config.homeManagerModules.crush # Declarative crushrc — github:LarsArtmann/crush-config (private)
     ../programs/rofi.nix # Rofi launcher — Sway backup WM only (niri uses DMS spotlight)
     # wlogout removed — DankMaterialShell provides power menu
     # swaylock module removed — DMS provides lock screen via dms ipc lock lock
