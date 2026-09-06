@@ -39,20 +39,40 @@ has_v4_default() {
   ip -4 route show default 2>/dev/null | grep -Eq "dev ${ENO1_IF}( |$)"
 }
 
+del_route_line() {
+  # The kernel ANNOTATES routes of a carrier-down link with the `linkdown`
+  # keyword (ip-route(8)) — `ip route del` rejects it ("linkdown is garbage"),
+  # so strip every annotation occurrence before handing the line back.
+  local line="$1"
+  local -a words=() clean=()
+  read -r -a words <<<"$line"
+  local w
+  for w in "${words[@]}"; do
+    if [ "$w" != "linkdown" ]; then
+      clean+=("$w")
+    fi
+  done
+  ip route del "${clean[@]}"
+}
+
 del_pinned_defaults() {
   # Delete every default route bound to the ethernet interface, v4 then v6.
   # Loop-guarded: each pass must delete one route or bail out.
   while ip -4 route show default 2>/dev/null | grep -Eq "dev ${ENO1_IF}( |$)"; do
     line="$(ip -4 route show default | grep -E "dev ${ENO1_IF}( |$)" | head -1)"
     log "FAILOVER: carrier lost on ${ENO1_IF} — removing pinned default route (${line})"
-    read -r -a route_words <<<"$line"
-    ip route del "${route_words[@]}" || break
+    del_route_line "$line" || {
+      log "WARN: failed to delete v4 default route — traffic may still pin to ${ENO1_IF}"
+      break
+    }
   done
   while ip -6 route show default 2>/dev/null | grep -Eq "dev ${ENO1_IF}( |$)"; do
     line="$(ip -6 route show default | grep -E "dev ${ENO1_IF}( |$)" | head -1)"
     log "FAILOVER: removing pinned IPv6 default route (${line})"
-    read -r -a route_words6 <<<"$line"
-    ip -6 route del "${route_words6[@]}" || break
+    del_route_line "$line" || {
+      log "WARN: failed to delete v6 default route"
+      break
+    }
   done
   ip route flush cache 2>/dev/null || true
 }
