@@ -673,7 +673,10 @@ in
                     "inboxclean-web.service"
                     "inboxclean-sync.service"
                   ];
-                  content = "PAPERLESS_TOKEN=${config.sops.placeholder.paperless_api_token}";
+                  content = ''
+                    PAPERLESS_TOKEN=${config.sops.placeholder.paperless_api_token}
+                    PAPERLESS_DECRYPT_PASSWORD=${config.sops.placeholder.paperless_decrypt_password}
+                  '';
                 };
               }
           // lib.optionalAttrs (svcEnabled "dns-blocker") {

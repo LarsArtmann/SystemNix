@@ -202,6 +202,12 @@
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
 
+          # qpdf decrypts password-protected PDF attachments before upload
+          # (upstream papersync PAPERLESS_DECRYPT_PASSWORD feature; resolved
+          # via PATH lookup at runner construction). Without it the feature
+          # degrades to tagging such uploads "encrypted".
+          path = lib.mkIf cfg.paperless.enable [ pkgs.qpdf ];
+
           serviceConfig = lib.mkMerge [
             (harden {
               MemoryMax = "1G";

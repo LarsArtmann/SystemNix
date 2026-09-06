@@ -182,6 +182,17 @@ _: {
             PAPERLESS_CONSUMER_ENABLE_BARCODES = true;
             PAPERLESS_CONSUMER_ENABLE_ASN_BARCODE = true;
 
+            # Reject duplicate content at the door (delete the incoming file,
+            # fail the task with document_already_exists). Paperless's DEFAULT
+            # only WARNS and stores the duplicate — proven live 2026-09-03:
+            # the same bank statement mailed to two mailboxes arrived via
+            # InboxClean's per-account ledgers within seconds and Paperless
+            # archived every byte-identical copy ("Consuming duplicate … 1
+            # existing document(s) share the same content", then succeeded
+            # anyway). InboxClean's fire-and-forget upload still records its
+            # ledger entry, so a rejected duplicate never re-uploads.
+            PAPERLESS_CONSUMER_DELETE_DUPLICATES = true;
+
             # --- Paperless AI (v3) on the local NPU LLM -------------------
             # FastFlowLM is OpenAI-compatible and ignores the Authorization
             # header entirely (verified: no auth handling in the binary), so
