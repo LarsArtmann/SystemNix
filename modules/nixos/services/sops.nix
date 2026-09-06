@@ -373,6 +373,25 @@ in
                 mode = "0400";
               } [ "paperless_api_token" ]
             )
+            // lib.optionalAttrs (svcEnabled "inboxclean") (
+              # Decrypt password for password-protected PDF attachments
+              # (Polish bank statements). InboxClean's papersync decrypts
+              # them with qpdf before upload — without it, Paperless-ngx
+              # archives the statement with EMPTY content (pdftotext fails,
+              # ocrmypdf refuses) and the doc is unsearchable. A PLACEHOLDER
+              # value is inert by design (papersync skips decryption and
+              # tags such uploads "encrypted"). Go-live = paste the bank's
+              # PDF password: sudo sops platforms/nixos/secrets/inboxclean-decrypt.yaml
+              mkSecrets "inboxclean-decrypt.yaml" {
+                owner = "root";
+                group = "root";
+                mode = "0400";
+                restartUnits = [
+                  "inboxclean-web.service"
+                  "inboxclean-sync.service"
+                ];
+              } [ "paperless_decrypt_password" ]
+            )
             // lib.optionalAttrs (svcEnabled "attic-config") (
               # atticd runs with DynamicUser=true (nixpkgs module default), so the
               # "atticd" user does NOT exist at sops-decrypt time and cannot own
