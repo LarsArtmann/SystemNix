@@ -119,6 +119,9 @@ in
     assert "PAPERLESS_TRASH_DIR=/var/lib/paperless/trash" in env, "trash dir setting missing from unit env"
     assert "PAPERLESS_FILENAME_FORMAT={{ created_year }}/{{ correspondent }}/{{ title }}" in env, "filename format missing from unit env"
     assert "PAPERLESS_DBHOST=/run/postgresql" in env, "postgres backend missing from unit env"
+    # Duplicate rejection (2026-09-03 incident: per-account papersync uploads
+    # stored byte-identical copies because the paperless default only warns).
+    assert "PAPERLESS_CONSUMER_DELETE_DUPLICATES=true" in env, "duplicate rejection missing from unit env"
 
     # 4. Trash dir provisioned; exporter unit + timer wired
     machine.succeed("test -d /var/lib/paperless/trash")

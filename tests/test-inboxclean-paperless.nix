@@ -125,6 +125,23 @@ let
       name = "enabled-wires-env-file-on-web-too";
       pass = (webConfig archivingOn).EnvironmentFile == [ envFile ];
     }
+    # Encrypted-statement decryption (2026-09-03 incident follow-up): the
+    # sync unit must carry qpdf on its PATH whenever archiving is on (upstream
+    # papersync resolves it at runner construction; absence silently degrades
+    # to tagging locked statements "encrypted"), and never otherwise.
+    {
+      name = "sync-unit-carries-qpdf-when-archiving-on";
+      pass =
+        let
+          paths = archivingOn.systemd.services.inboxclean-sync.path or [ ];
+          baseNames = map (p: builtins.baseNameOf (builtins.toString p)) paths;
+        in
+        builtins.any (name: lib.hasInfix "qpdf" name) baseNames;
+    }
+    {
+      name = "sync-unit-no-qpdf-when-archiving-off";
+      pass = (archivingOff.systemd.services.inboxclean-sync.path or [ ]) == [ ];
+    }
     {
       name = "missing-paperless-assertion-fires";
       pass = failingPaperlessAssertions archivingWithoutPaperless != [ ];
