@@ -795,6 +795,24 @@ _: {
                   (serviceDefaults { RestartSec = "3s"; })
                   {
                     Type = "simple";
+                    # OOM-kill immunity for the sole DNS resolver. dnsblockd was
+                    # oomd-killed 730x/day at the old 50%/20s threshold (2026-08-04
+                    # root cause); the 60%/30s threshold + MemoryMax=4G +
+                    # GOMEMLIMIT below tamed it, but under /system.slice PSI
+                    # >60%/30s oomd still ranks it by memory.current. Killing DNS
+                    # cascades: local *.home.lan zones die, deploys block on
+                    # cache.home.lan resolution (2026-09-02 class), and
+                    # sev1/Discord alerting goes blind with the resolver down.
+                    #   ManagedOOMPreference = "omit": oomd NEVER selects this
+                    #     unit as a kill candidate (nix-daemon + PMA precedent;
+                    #     the directive DEFAULT "auto" means oomd WILL kill).
+                    #   OOMScoreAdjust = -1000: the kernel global-OOM killer
+                    #     picks it last (nix-daemon doctrine). A kernel kill
+                    #     costs ~2min of DNS while the 3.9M-entry blocklist
+                    #     reloads, and a kill loop hits StartLimitBurst →
+                    #     start-limit-hit → dead sole resolver.
+                    ManagedOOMPreference = "omit";
+                    OOMScoreAdjust = -1000;
                     # GOMEMLIMIT forces Go GC to run aggressively before MemoryMax.
                     # dnsblockd's METRICS cardinality was fixed upstream (2026-08):
                     # the unbounded dns_domain/http_path/proxy_domain labels were
