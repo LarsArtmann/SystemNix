@@ -382,6 +382,9 @@ in
           }
           (harden {
             ReadWritePaths = [ "/var/lib/prometheus-node-exporter/textfile_collectors" ];
+            # Sticky-dir rename over a foreign-owned prom (mail-relay
+            # 2026-09-02..06 class).
+            CapabilityBoundingSet = "CAP_FOWNER";
             MemoryMax = "128M";
           })
           (serviceOneshotDefaults { })
@@ -389,7 +392,13 @@ in
         script = ''
           set -eu
           OUT="/var/lib/prometheus-node-exporter/textfile_collectors/pool.prom"
-          TMP="''${OUT}.tmp"
+          # Unique tmp per run (mktemp): a fixed .tmp name collides with
+          # stale foreign-owned leftovers in the sticky 1777 textfile dir
+          # (mail-relay 2026-09-02..06 outage class).
+          mkdir -p "/var/lib/prometheus-node-exporter/textfile_collectors"
+          TMP="$(mktemp "/var/lib/prometheus-node-exporter/textfile_collectors/pool.prom.XXXXXX")"
+          chmod 644 "$TMP"
+          trap 'rm -f "$TMP"' EXIT
           mnt="/mnt/pool"
           threshold=85
 

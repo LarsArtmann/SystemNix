@@ -105,7 +105,8 @@ lib.mkIf cfg.components.nodeExporter {
                 '';
               };
             in
-            lib.getExe amdgpuMetrics;        };
+            lib.getExe amdgpuMetrics;
+        };
       };
 
       timers.amdgpu-metrics = {

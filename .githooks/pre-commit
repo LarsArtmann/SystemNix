@@ -61,6 +61,19 @@ if ! nullglob_out=$(scripts/audit-shell-nullglob.sh 2>&1); then
     exit 1
 fi
 
+# Fast guard: textfile collectors must write via unique mktemp tmps + CAP_FOWNER
+# (fixed .tmp names collide with foreign-owned leftovers in the sticky 1777
+# textfile dir and block the final mv — mail-relay 2026-09-02..06, 845+ failed
+# runs, Gatus red 4 days; niri 2026-09-04) and must never hardcode the phantom
+# /run/secrets-rendered sops path (real sops-nix renders under
+# /run/secrets/rendered — the divergent literal probed a nonexistent file on
+# every run while the VM test fixture validated it). Milliseconds of runtime.
+if ! textfile_out=$(scripts/audit-textfile-tmp.sh 2>&1); then
+    echo "$textfile_out" >&2
+    log_error "textfile-tmp audit failed — see FAIL lines above."
+    exit 1
+fi
+
 # Fast guard: moved/deleted markdown files must not leave dangling references.
 # The archive-move class (2026-08-18): `git mv docs/status/X.md
 # docs/status/archived/` left stale `docs/status/X.md` links in TODO_LIST and

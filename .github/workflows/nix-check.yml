@@ -105,6 +105,13 @@ jobs:
       - name: Nullglob audit of runCommand bodies
         run: scripts/audit-shell-nullglob.sh
 
+      # Textfile collectors: fixed .tmp writes collide with foreign-owned
+      # leftovers in the sticky 1777 dir and block the final mv (mail-relay
+      # 2026-09-02..06 outage), and /run/secrets-rendered is a phantom path
+      # real sops-nix never renders (divergent mock default validated it).
+      - name: Textfile tmp-path audit
+        run: scripts/audit-textfile-tmp.sh
+
       - name: Flake input hygiene (ref=master + GOTOOLCHAIN)
         run: |
           # Fail on GOTOOLCHAIN=auto (sandbox purity violation)
