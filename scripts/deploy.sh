@@ -325,14 +325,6 @@ if nix run .#pre-deploy-check; then
     fi
   done
 
-  # Restart browser-history AFTER browser-history-oidc-setup so it picks up the
-  # freshly-written OAuth2 env file. Without this, browser-history keeps running
-  # with stale (or missing) OAuth2 config from a prior boot.
-  if systemctl is-enabled --quiet browser-history.service 2>/dev/null; then
-    echo "Restarting browser-history.service (reload OAuth2 env file)"
-    sudo systemctl restart browser-history.service 2>/dev/null || true
-  fi
-
   # Restart dnsblockd AFTER dnsblockd-oidc-secret so a rotated Pocket ID client
   # secret takes effect. The bridge oneshot is RemainAfterExit=true and only
   # wantedBy=dnsblockd.service (is-enabled returns rc=1 for indirect units —
@@ -344,6 +336,17 @@ if nix run .#pre-deploy-check; then
     echo "Restarting dnsblockd-oidc-secret.service + dnsblockd.service (reload OIDC client secret)"
     sudo systemctl restart dnsblockd-oidc-secret.service 2>/dev/null || true
     sudo systemctl restart dnsblockd.service 2>/dev/null || true
+  fi
+
+  # Restart browser-history AFTER browser-history-oidc-setup (fresh OAuth2 env
+  # file) AND AFTER dnsblockd above: its mkOidcGate only proves DNS was up when
+  # the gate ran — restarting dnsblockd after browser-history leaves a window
+  # where the gate passed, dnsblockd stops mid-deploy, and the Go resolver falls
+  # through to 9.9.9.9 → exit 69 (live 2026-09-06 18:00, self-healed 2min later).
+  # dnsblockd-first lets the gate's 300s curl-poll wait out the blocklist reload.
+  if systemctl is-enabled --quiet browser-history.service 2>/dev/null; then
+    echo "Restarting browser-history.service (reload OAuth2 env file)"
+    sudo systemctl restart browser-history.service 2>/dev/null || true
   fi
 
   # Restart paperless-web AFTER paperless-oidc-setup so it reloads the Pocket
@@ -408,6 +411,16 @@ if nix run .#pre-deploy-check; then
   if systemctl cat buildcache-gc.service >/dev/null 2>&1; then
     echo "Running buildcache-gc.service (prune verification + reclaim)"
     sudo systemctl start buildcache-gc.service 2>/dev/null || true
+  fi
+
+  # Same per-deploy verification for sandbox cleanup: stc never restarts
+  # inactive oneshots, so a unit change (e.g. hardening caps) would sit
+  # unverified until the 4h timer — and this unit has silently failed across
+  # multiple incidents (2026-07-18, 2026-08-16, 2026-09-06 EACCES on
+  # nixbld-owned Go modcache trees). `start` re-runs a failed/inactive oneshot.
+  if systemctl cat nix-build-cleanup.service >/dev/null 2>&1; then
+    echo "Running nix-build-cleanup.service (sandbox cleanup verification)"
+    sudo systemctl start nix-build-cleanup.service 2>/dev/null || true
   fi
 
   # One-time /data → pool migration (atticd, monitor365, monitor365-archive).
