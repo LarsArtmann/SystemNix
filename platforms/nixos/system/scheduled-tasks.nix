@@ -562,6 +562,9 @@ in
         inherit onFailure;
         serviceConfig =
           harden {
+            # Build sandboxes are nixbld-owned (0700 dirs + read-only Go modcache
+            # trees) — rm needs DAC override or every run dies EACCES (2026-09-06).
+            CapabilityBoundingSet = "CAP_DAC_OVERRIDE";
             MemoryMax = "128M";
             ProtectHome = true;
             ReadWritePaths = [ "/nix/var/nix/builds" ];
