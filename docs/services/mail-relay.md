@@ -56,7 +56,8 @@ admin-UI-only: *Administration → Settings → Notification settings*, point th
 3. **Set the credential** (interactive editor, never on a command line — the
    fish_history leak class):
    ```
-   sudo sops platforms/nixos/secrets/mail-relay.yaml   # replace the PLACEHOLDER value
+   SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) \
+     sops platforms/nixos/secrets/mail-relay.yaml   # replace the PLACEHOLDER value (as your user)
    sudo systemctl restart postfix
    ```
    The sops template restartUnits also restarts postfix on the NEXT deploy; the
@@ -91,7 +92,8 @@ vars, stored in its PostgreSQL. The polling task runs every 10 min by default
   the PLACEHOLDER, or provider rejects the from-domain. Upstream 4xx/5xx lines
   land in `journalctl -u postfix`.
 - **`Authentication failed`**: key rotated at the provider but sops not updated →
-  `sudo sops platforms/nixos/secrets/mail-relay.yaml`, restart postfix.
+  sops-edit `platforms/nixos/secrets/mail-relay.yaml` with the SOPS_AGE_KEY one-liner
+  (go-live step 3), restart postfix.
 - **Config changed but postfix didn't pick it up**: shouldn't happen — the module
   stamps settings into a `postfix-config-stamp` restartTrigger (the nixpkgs
   module has none of its own). Secret changes ride the sops template
