@@ -58,7 +58,15 @@ _: {
       # its own unit definition changes). The smtp client daemon runs as
       # mail_owner (postfix, unchrooted in the NixOS module — master.cf
       # renders "-" = no chroot), so the template is postfix-owned 0400.
-      saslPasswordMap = "texthash:${config.sops.templates."mail-relay-sasl".path}";
+      # saslRenderedPath is the SINGLE SOURCE OF TRUTH: postfix's texthash
+      # lookup AND the metrics collector's credential probe must read the
+      # same file. Never copy the path into a literal — the real sops-nix
+      # renders under /run/secrets/rendered, and a hand-written
+      # /run/secrets-rendered literal (2026-09-02..06 incident) probed a
+      # path that does not exist and flagged the credential missing on
+      # every run.
+      saslRenderedPath = config.sops.templates."mail-relay-sasl".path;
+      saslPasswordMap = "texthash:${saslRenderedPath}";
 
       # RECIPIENT rewriting for system mail. aliases(5) — what rootAlias
       # feeds — only applies in local(8) delivery, and a null client has
@@ -91,7 +99,18 @@ _: {
         ];
         text = ''
           OUT="${textfileDir}/mail-relay.prom"
-          TMP="''${OUT}.tmp"
+          mkdir -p "${textfileDir}"
+          # Unique tmp per run (mktemp): a fixed .tmp name collides with stale
+          # foreign-owned leftovers, and in this sticky 1777 dir NOBODY can
+          # rename over a file owned by someone else without CAP_FOWNER —
+          # including "root" under harden{} (all capabilities stripped). Live
+          # 2026-09-02..06: the last root-era run left a root-owned prom and
+          # every postfix-user run failed at mv (845+ failures, Gatus Queue
+          # red for 4 days). mktemp + the unit's CAP_FOWNER (niri 2026-09-05
+          # pattern) make the swap self-healing.
+          TMP="$(mktemp "${textfileDir}/mail-relay.prom.XXXXXX")"
+          chmod 644 "$TMP"
+          trap 'rm -f "$TMP"' EXIT
 
           errors=0
           queue=-1
@@ -101,7 +120,7 @@ _: {
           # be readable, and NOT carry the PLACEHOLDER go-live marker. A
           # missing file means sops never rendered it — same operational
           # state as a placeholder (every send will fail).
-          sasl="/run/secrets-rendered/mail-relay-sasl"
+          sasl="${saslRenderedPath}"
           if [ -r "$sasl" ]; then
             if timeout 5 grep -q "PLACEHOLDER" "$sasl"; then
               placeholder=1
@@ -132,7 +151,6 @@ _: {
             over=1
           fi
 
-          mkdir -p "${textfileDir}"
           {
             echo "# HELP mail_relay_queue_messages Deferred and active messages in the postfix queue"
             echo "# TYPE mail_relay_queue_messages gauge"
@@ -309,9 +327,13 @@ _: {
               # CapabilityBoundingSet has NO DAC bypass: it cannot read the
               # postfix-owned 0400 SASL map nor connect to the postfix-owned
               # showq socket (both fail with EACCES — VM-test-proven). The
-              # postfix user reads both natively, and the textfile dir is
-              # 1777 so the write still lands. Least privilege, no caps.
+              # postfix user reads both natively. Least privilege, with ONE
+              # cap: CAP_FOWNER — in the sticky 1777 textfile dir, renaming
+              # over a prom left by another era's run (root-owned, live
+              # 2026-09-02..06 outage) needs it, and mktemp-unique tmps make
+              # every write a fresh inode so the swap self-heals.
               User = config.services.postfix.user;
+              CapabilityBoundingSet = "CAP_FOWNER";
             }
           ];
         };

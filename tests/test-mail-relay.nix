@@ -55,10 +55,12 @@ in
       # templates — create the rendered SASL map exactly as sops-nix would
       # (postfix-owned 0400, the smtp client daemon reads it as mail_owner).
       # The tmpfiles `f` ARGUMENT field carries the content (a bare `f` rule
-      # creates an EMPTY file — the credential would vanish).
-      sops.templates."mail-relay-sasl".path = "/run/secrets-rendered/mail-relay-sasl";
+      # creates an EMPTY file — the credential would vanish). The path is the
+      # mock's default = real sops-nix (/run/secrets/rendered) — the fixture
+      # used to pin the WRONG path (/run/secrets-rendered) and validated the
+      # collector's phantom literal that failed on every real boot.
       systemd.tmpfiles.rules = [
-        "f /run/secrets-rendered/mail-relay-sasl 0400 postfix postfix - [${relayHost}]:${toString relayPort} resend:PLACEHOLDER"
+        "f /run/secrets/rendered/mail-relay-sasl 0400 postfix postfix - [${relayHost}]:${toString relayPort} resend:PLACEHOLDER"
       ];
 
       environment.systemPackages = [
@@ -223,6 +225,36 @@ in
         "mail_relay_credential_placeholder 1" in prom
     ), f"placeholder not flagged:\n{chr(10).join(prom)}"
     assert "mail_relay_scrape_errors 0" in prom, f"scrape errors:\n{chr(10).join(prom)}"
+
+    # 4b. Incident regression (2026-09-02..06, 845+ live failures): the
+    #     collector runs as the postfix user, but the last ROOT-era run left
+    #     a root-owned mail-relay.prom behind. In the sticky 1777 textfile
+    #     dir nobody can rename over a foreign-owned file without
+    #     CAP_FOWNER — every run died at mv and the textfile froze for 4
+    #     days. The unit's CAP_FOWNER + unique mktemp tmp must make the
+    #     swap self-healing (no manual rm). The journal assertion also
+    #     proves the SASL probe reads the REAL rendered path — the old
+    #     hardcoded /run/secrets-rendered literal logged "missing or
+    #     unreadable" on every run even though the map existed.
+    machine.succeed(
+        "printf '# stale root-era garbage\\nmail_relay_queue_messages 999\\n' "
+        "> /var/lib/prometheus-node-exporter/textfile_collectors/mail-relay.prom"
+    )
+    machine.succeed(
+        "chown root:root /var/lib/prometheus-node-exporter/textfile_collectors/mail-relay.prom"
+    )
+    machine.succeed("systemctl restart mail-relay-metrics.service")
+    prom = machine.succeed(
+        "cat /var/lib/prometheus-node-exporter/textfile_collectors/mail-relay.prom"
+    ).splitlines()
+    assert "mail_relay_queue_messages 1" in prom, (
+        f"collector did not recover over a foreign-owned target:\n{chr(10).join(prom)}"
+    )
+    assert "mail_relay_scrape_errors 0" in prom, (
+        f"scrape errors after recovery:\n{chr(10).join(prom)}"
+    )
+    j = machine.succeed("journalctl -u mail-relay-metrics --since -3min --no-pager")
+    assert "missing or unreadable" not in j, f"SASL map probed at a phantom path:\n{j}"
 
     # 5. Delivery-time E2E against a fake upstream: proves the smtp client
     #    rewrote the envelope sender (generic map), authenticated with the
