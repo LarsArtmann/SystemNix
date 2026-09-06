@@ -239,12 +239,15 @@ in
     #     proves the SASL probe reads the REAL rendered path — the old
     #     hardcoded /run/secrets-rendered literal logged "missing or
     #     unreadable" on every run even though the map existed.
+    # Seed via rm + fresh create: root itself cannot O_TRUNC a postfix-owned
+    # file in the sticky dir (fs.protected_regular=2 denies even root), and
+    # a fresh root create IS the stale root-era artifact being simulated.
+    machine.succeed(
+        "rm -f /var/lib/prometheus-node-exporter/textfile_collectors/mail-relay.prom"
+    )
     machine.succeed(
         "printf '# stale root-era garbage\\nmail_relay_queue_messages 999\\n' "
         "> /var/lib/prometheus-node-exporter/textfile_collectors/mail-relay.prom"
-    )
-    machine.succeed(
-        "chown root:root /var/lib/prometheus-node-exporter/textfile_collectors/mail-relay.prom"
     )
     machine.succeed("systemctl restart mail-relay-metrics.service")
     prom = machine.succeed(
