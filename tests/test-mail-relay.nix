@@ -55,10 +55,13 @@ in
       # templates — create the rendered SASL map exactly as sops-nix would
       # (postfix-owned 0400, the smtp client daemon reads it as mail_owner).
       # The tmpfiles `f` ARGUMENT field carries the content (a bare `f` rule
-      # creates an EMPTY file — the credential would vanish). The path is the
-      # mock's default = real sops-nix (/run/secrets/rendered) — the fixture
-      # used to pin the WRONG path (/run/secrets-rendered) and validated the
-      # collector's phantom literal that failed on every real boot.
+      # creates an EMPTY file — the credential would vanish). The path comes
+      # from the mock's default = real sops-nix (/run/secrets/rendered) —
+      # the fixture used to pin the WRONG path (/run/secrets-rendered) and
+      # validated the collector's phantom literal that failed on every real
+      # boot. The entry itself must still be DECLARED: the mock defines no
+      # templates, and the module interpolates this template's .path.
+      sops.templates."mail-relay-sasl" = { };
       systemd.tmpfiles.rules = [
         "f /run/secrets/rendered/mail-relay-sasl 0400 postfix postfix - [${relayHost}]:${toString relayPort} resend:PLACEHOLDER"
       ];
