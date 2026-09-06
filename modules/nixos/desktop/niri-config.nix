@@ -56,11 +56,27 @@ _: {
           user = {
             units =
               let
-                unitFiles = builtins.readDir "${niriPkg}/lib/systemd/user";
+                # Read unit texts from the niri SOURCE tree (resources/), not
+                # the built package output: readDir/readFile on a package
+                # output forces niri's realization at eval time, so every
+                # `nix eval` and `nix flake check --no-build` failed with
+                # "path '<niri>.drv' is not valid" after each nixpkgs bump
+                # until niri happened to be built (live 2026-09-06). Source
+                # reads are pure. niri-flake installs
+                # resources/{niri.service,niri-shutdown.target} verbatim except
+                # one substitution (ExecStart=niri -> $out/bin/niri), replicated
+                # below so the generated units stay byte-identical to the
+                # packaged ones.
+                resourceDir = "${niriPkg.src}/resources";
+                unitFiles = builtins.readDir resourceDir;
                 mkUnit =
                   name:
                   let
-                    baseText = builtins.readFile "${niriPkg}/lib/systemd/user/${name}";
+                    baseText =
+                      builtins.replaceStrings
+                        [ "ExecStart=niri" ]
+                        [ "ExecStart=${niriPkg}/bin/niri" ]
+                        (builtins.readFile "${resourceDir}/${name}");
                     text =
                       if name == "niri.service" then
                         let
