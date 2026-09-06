@@ -332,7 +332,13 @@ _: {
               # over a prom left by another era's run (root-owned, live
               # 2026-09-02..06 outage) needs it, and mktemp-unique tmps make
               # every write a fresh inode so the swap self-heals.
+              # AmbientCapabilities (NOT just the bounding set!): a non-root
+              # User= starts with an EMPTY capability set — the bounding set
+              # only LIMITS what root could keep. VM-test-caught: bounding
+              # alone still EPERM'd the mv (the regression step replays the
+              # exact incident inside the test).
               User = config.services.postfix.user;
+              AmbientCapabilities = "CAP_FOWNER";
               CapabilityBoundingSet = "CAP_FOWNER";
             }
           ];
