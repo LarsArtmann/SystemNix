@@ -31,8 +31,7 @@
       imports = [
         # flake-parts wrapper (top-level lambda) — apply, then pull the
         # NixOS module out of the flake.nixosModules option it declares.
-        ((import ../modules/nixos/services/wifi-failover.nix) { })
-        .flake.nixosModules.wifi-failover
+        ((import ../modules/nixos/services/wifi-failover.nix) { }).flake.nixosModules.wifi-failover
         # The module reads config.networking.local.gateway (SystemNix-specific
         # option, normally provided by platforms/nixos/system/local-network.nix).
         (import ../platforms/nixos/system/local-network.nix)
