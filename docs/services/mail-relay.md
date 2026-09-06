@@ -103,6 +103,13 @@ vars, stored in its PostgreSQL. The polling task runs every 10 min by default
   check with postfix active = listen socket wedged (restart postfix). A firing
   queue check AFTER go-live = genuine upstream rejections (provider outage,
   expired key, unverified sender) — read `mailq` + `journalctl -u postfix`.
+  The collector itself failing (`mv ... Operation not permitted`) is the
+  textfile foreign-owner class — fixed 2026-09-06 (mktemp + AmbientCapabilities
+  CAP_FOWNER, self-healing; regression-tested), guarded by
+  `scripts/audit-textfile-tmp.sh` (pre-commit + CI). Do NOT reintroduce a
+  fixed `.tmp` name or a hardcoded `/run/secrets-rendered` path — real sops
+  renders under `/run/secrets/rendered`, and the SASL path must stay
+  interpolated from the sops template definition.
 
 **Verification**: `tests/test-mail-relay.nix` (VM: loopback-only listener, null-client
 config, sender+recipient rewrite E2E, collector fail-closed) and
