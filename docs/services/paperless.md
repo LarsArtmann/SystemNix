@@ -68,6 +68,66 @@ Definitive gatus state (root): `sudo sqlite3 -readonly /var/lib/private/gatus/ga
 
 **Recommended closure (not yet implemented — needs user go, Q2 answer was "unsure"):** Caddy-level, zero app change — under `/api/*`, respond 403 when `Authorization` starts with `Basic` (header-prefix matcher), plus an exact block of `/api/token/`. Token consumers (`Authorization: Token …`) pass untouched. Side effect: the official mobile app's password login breaks (it uses `/api/token/`); if the mobile app matters, keep `/api/token/` open and accept Basic being closed only. Ask: "Do you use, or plan to use, the paperless mobile app or any password-based API client?"
 
+## Classifier / auto-matching semantics (2026-09-06 incident)
+
+The hourly **Train Classifier** task (`PAPERLESS_TRAIN_TASK_CRON`, default
+`5 */1 * * *`) trains paperless's ML auto-matching from documents carrying
+labels whose matching algorithm is **auto**:
+
+- No auto labels at all → task SUCCEEDS ("No automatic matching items, not
+  training") and any stale model file is deleted.
+- Auto labels + zero non-inbox documents → fails "No training data available."
+- Auto labels + documents whose content is ALL empty → fails with sklearn's
+  **"empty vocabulary; perhaps the documents only contain stop words"** —
+  the CountVectorizer runs unconditionally before any classifier fit.
+
+Live chain Sep 3–4 2026: an older InboxClean papersync created the `gmail`
+tag with matching **auto**, then four password-protected Polish bank
+statements arrived with EMPTY content (pdftotext exit 1 "invalid password",
+ocrmypdf "encrypted and/or signed, OCR is impossible" → "the content will
+be empty") — 22 h of hourly red tasks until an OCR-able JPG provided
+vocabulary. Fixes: InboxClean now creates tags with matching **none** and
+self-heals legacy auto tags via PATCH on the next sync (correspondents
+deliberately keep auto — sender prediction on manual scans is the useful
+ML). ML matching is opt-in per label in the UI, never a default.
+
+## Duplicate documents
+
+`PAPERLESS_CONSUMER_DELETE_DUPLICATES=true` (2026-09-06) rejects
+byte-identical uploads at the door: the paperless default only WARNED and
+stored every copy ("Consuming duplicate … 1 existing document(s) share the
+same content", then succeeded with a new document id) — the same statement
+mailed to two mailboxes arrived twice within seconds via InboxClean's
+per-account ledgers. Repair the four 2026-09-03 documents (two are
+duplicates):
+
+```bash
+# preview: sudo -u inboxclean … inboxclean paperless --backfill --dry-run
+# repair (keeps the OLDEST document per checksum, deletes the rest):
+sudo -u inboxclean env \
+  PAPERLESS_URL=http://127.0.0.1:2892 \
+  PAPERLESS_TOKEN="$(sudo grep -oP 'PAPERLESS_TOKEN=\K\S+' /run/secrets/rendered/inboxclean-paperless-env)" \
+  INBOXCLEAN_TOKEN_FILE=/var/lib/inboxclean/token.json \
+  DB_PATH=/var/lib/inboxclean/inboxclean.db \
+  /run/current-system/sw/bin/inboxclean paperless --backfill --prune
+```
+
+## Encrypted bank statements
+
+Bank statement PDFs (Polish banks) arrive password-protected. Without the
+password paperless archives them with EMPTY content — unsearchable, invisible
+to AI — tagged `encrypted` so the gap is visible. With the password set,
+InboxClean decrypts them with qpdf BEFORE upload:
+
+```bash
+sudo sops platforms/nixos/secrets/inboxclean-decrypt.yaml
+# set paperless_decrypt_password to the bank's PDF password, then deploy
+```
+
+A PLACEHOLDER value is inert by design (detection + tagging only). The
+ledger records the DECRYPTED checksum, so the same statement via the second
+mailbox dedups instead of re-uploading.
+
 ## Known traps (pointers)
 
 - Engine-switch bootstrap (sqlite→PG `src-version`/`superuser-state` survival) — AGENTS Paperless section

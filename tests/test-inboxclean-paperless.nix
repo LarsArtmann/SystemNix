@@ -140,7 +140,13 @@ let
     }
     {
       name = "sync-unit-no-qpdf-when-archiving-off";
-      pass = (archivingOff.systemd.services.inboxclean-sync.path or [ ]) == [ ];
+      pass =
+        let
+          baseNames = map (p: builtins.baseNameOf (builtins.toString p)) (
+            archivingOff.systemd.services.inboxclean-sync.path or [ ]
+          );
+        in
+        !builtins.any (name: lib.hasInfix "qpdf" name) baseNames;
     }
     {
       name = "missing-paperless-assertion-fires";
