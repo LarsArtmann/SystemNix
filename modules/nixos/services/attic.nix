@@ -225,6 +225,11 @@ _: {
               ReadWritePaths = [
                 "/var/lib/prometheus-node-exporter/textfile_collectors"
               ];
+              # Sticky-dir rename over a foreign-owned prom (mail-relay
+              # 2026-09-02..06 class): harden{} strips every capability and
+              # even root cannot rename others' files in a 1777 dir without
+              # CAP_FOWNER.
+              CapabilityBoundingSet = "CAP_FOWNER";
             })
             (serviceOneshotDefaults { })
           ];
@@ -252,7 +257,13 @@ _: {
 
             mkdir -p "$textfile_dir"
             prom_file="$textfile_dir/attic.prom"
-            tmp_file="''${prom_file}.tmp"
+            # Unique tmp per run (mktemp): a fixed .tmp name collides with
+            # stale foreign-owned leftovers in the sticky 1777 textfile dir
+            # (mail-relay 2026-09-02..06 outage class). trap keeps a failed
+            # run from littering.
+            tmp_file="$(mktemp "$textfile_dir/attic.prom.XXXXXX")"
+            chmod 644 "$tmp_file"
+            trap 'rm -f "$tmp_file"' EXIT
             cat > "$tmp_file" <<METRICS
             # HELP attic_storage_bytes Total bytes used by Attic NAR storage
             # TYPE attic_storage_bytes gauge

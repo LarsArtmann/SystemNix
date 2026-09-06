@@ -30,13 +30,15 @@ _: {
         text = ''
           OUT="${textfileDir}/backups.prom"
           NOW="$(date +%s)"
-          TEMP="$OUT.tmp"
-          ANY_UNHEALTHY=0
-
-          # Ensure the textfile collector directory exists (defense-in-depth —
-          # ReadWritePaths should handle this, but the dir may be missing on
-          # first boot before prometheus-node-exporter has run).
+          # Unique tmp per run (mktemp): a fixed .tmp name collides with stale
+          # foreign-owned leftovers in the sticky 1777 textfile dir, and
+          # rename-over-foreign needs CAP_FOWNER (mail-relay 2026-09-02..06
+          # outage class — harden{} strips every capability, even for root).
           mkdir -p "${textfileDir}"
+          TEMP="$(mktemp "${textfileDir}/backups.prom.XXXXXX")"
+          chmod 644 "$TEMP"
+          trap 'rm -f "$TEMP"' EXIT
+          ANY_UNHEALTHY=0
 
           ${lib.concatStringsSep "\n" (
             lib.mapAttrsToList (
@@ -120,7 +122,7 @@ _: {
               # INVISIBLE to find: backup_healthy stayed 0 forever while
               # backups actually landed fine. CAP_DAC_READ_SEARCH grants
               # read-only traversal of those dirs without a write bypass.
-              CapabilityBoundingSet = "CAP_DAC_READ_SEARCH";
+              CapabilityBoundingSet = "CAP_DAC_READ_SEARCH CAP_FOWNER";
               ReadWritePaths = [ textfileDir ];
             })
             (serviceOneshotDefaults { })

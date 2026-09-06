@@ -374,7 +374,9 @@
             }
             (harden {
               ReadWritePaths = [ textfileDir ];
-              CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_SYS_RAWIO";
+              # CAP_SYS_ADMIN/SYS_RAWIO for SMART; CAP_FOWNER for the sticky-dir
+              # rename over a foreign-owned prom (mail-relay 2026-09-02..06 class).
+              CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_SYS_RAWIO CAP_FOWNER";
               MemoryMax = "128M";
             })
             (serviceOneshotDefaults { })
@@ -382,7 +384,13 @@
           script = ''
             set -eu
             OUT="${textfileDir}/buildcache.prom"
-            TMP="''${OUT}.tmp"
+            # Unique tmp per run (mktemp): a fixed .tmp name collides with
+            # stale foreign-owned leftovers in the sticky 1777 textfile dir
+            # (mail-relay 2026-09-02..06 outage class).
+            mkdir -p "${textfileDir}"
+            TMP="$(mktemp "${textfileDir}/buildcache.prom.XXXXXX")"
+            chmod 644 "$TMP"
+            trap 'rm -f "$TMP"' EXIT
             mnt="${cfg.mountPoint}"
             dev="${cfg.wholeDiskDevice}"
             threshold=${toString cfg.usageThresholdPercent}
@@ -418,8 +426,7 @@
             fi
 
             mkdir -p "${textfileDir}"
-            cat > "$TMP" <<METRICS
-            # HELP buildcache_mounted 1 if the build cache SSD is mounted, 0 otherwise
+            cat > "$TMP" <<METRICS            # HELP buildcache_mounted 1 if the build cache SSD is mounted, 0 otherwise
             # TYPE buildcache_mounted gauge
             buildcache_mounted ''${mounted}
             # HELP buildcache_smart_healthy 1 if SMART overall-health self-assessment is PASSED

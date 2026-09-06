@@ -57,7 +57,14 @@ lib.mkIf cfg.components.nodeExporter {
                 ];
                 text = ''
                   OUT="/var/lib/prometheus-node-exporter/textfile_collectors/amdgpu.prom"
-                  TMP="''${OUT}.tmp"
+                  # Unique tmp per run (mktemp): a fixed .tmp name collides with
+                  # stale foreign-owned leftovers in the sticky 1777 textfile
+                  # dir, and rename-over-foreign needs CAP_FOWNER (the
+                  # 2026-09-02..06 mail-relay outage class).
+                  mkdir -p "/var/lib/prometheus-node-exporter/textfile_collectors"
+                  TMP="$(mktemp "/var/lib/prometheus-node-exporter/textfile_collectors/amdgpu.prom.XXXXXX")"
+                  chmod 644 "$TMP"
+                  trap 'rm -f "$TMP"' EXIT
 
                   {
                     for card in /sys/class/drm/card*/device/gpu_busy_percent; do
@@ -98,8 +105,7 @@ lib.mkIf cfg.components.nodeExporter {
                 '';
               };
             in
-            lib.getExe amdgpuMetrics;
-        };
+            lib.getExe amdgpuMetrics;        };
       };
 
       timers.amdgpu-metrics = {
@@ -129,7 +135,13 @@ lib.mkIf cfg.components.nodeExporter {
                   ];
                   text = ''
                     OUT="/var/lib/prometheus-node-exporter/textfile_collectors/nvme.prom"
-                    TMP="''${OUT}.tmp"
+                    # Unique tmp per run (mktemp): see amdgpu-metrics — fixed
+                    # .tmp names collide with foreign-owned leftovers in the
+                    # sticky textfile dir (mail-relay 2026-09-02..06 class).
+                    mkdir -p "/var/lib/prometheus-node-exporter/textfile_collectors"
+                    TMP="$(mktemp "/var/lib/prometheus-node-exporter/textfile_collectors/nvme.prom.XXXXXX")"
+                    chmod 644 "$TMP"
+                    trap 'rm -f "$TMP"' EXIT
                     DEVICE="/dev/nvme0n1"
 
                     if ! command -v nvme &>/dev/null; then
@@ -240,7 +252,9 @@ lib.mkIf cfg.components.nodeExporter {
               "${nvmeMetrics}/bin/nvme-metrics";
           }
           (harden {
-            CapabilityBoundingSet = "CAP_SYS_ADMIN";
+            # CAP_SYS_ADMIN for the nvme smart-log ioctl; CAP_FOWNER for the
+            # sticky-dir rename over a foreign-owned prom (mail-relay class).
+            CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_FOWNER";
           })
         ];
       };
@@ -265,10 +279,19 @@ lib.mkIf cfg.components.nodeExporter {
               let
                 psiMetrics = pkgs.writeShellApplication {
                   name = "psi-metrics";
-                  runtimeInputs = [ pkgs.gawk ];
+                  runtimeInputs = [
+                    pkgs.gawk
+                    pkgs.coreutils
+                  ];
                   text = ''
                     OUT="/var/lib/prometheus-node-exporter/textfile_collectors/psi.prom"
-                    TMP="''${OUT}.tmp"
+                    # Unique tmp per run (mktemp): see amdgpu-metrics — fixed
+                    # .tmp names collide with foreign-owned leftovers in the
+                    # sticky textfile dir (mail-relay 2026-09-02..06 class).
+                    mkdir -p "/var/lib/prometheus-node-exporter/textfile_collectors"
+                    TMP="$(mktemp "/var/lib/prometheus-node-exporter/textfile_collectors/psi.prom.XXXXXX")"
+                    chmod 644 "$TMP"
+                    trap 'rm -f "$TMP"' EXIT
 
                     PSI="/proc/pressure/memory"
                     [ -f "$PSI" ] || exit 0
@@ -347,6 +370,8 @@ lib.mkIf cfg.components.nodeExporter {
           }
           (harden {
             ReadWritePaths = [ "/var/lib/prometheus-node-exporter/textfile_collectors" ];
+            # Sticky-dir rename over a foreign-owned prom (mail-relay class).
+            CapabilityBoundingSet = "CAP_FOWNER";
           })
         ];
       };
