@@ -1286,15 +1286,27 @@ if [ -e /etc/systemd/system/postfix.service ]; then
 
   # Go-live gate: the placeholder credential defers every send. Expected
   # WARN (not FAIL) until the user pastes the real Resend key and verifies
-  # larsartmann.cloud — same pattern as the google-sync config check.
-  if [ -r /run/secrets/rendered/mail-relay-sasl ]; then
-    if grep -q "PLACEHOLDER" /run/secrets/rendered/mail-relay-sasl; then
-      report_warn "Mail relay — sops credential still the PLACEHOLDER (go-live: sudo sops platforms/nixos/secrets/mail-relay.yaml, then sudo systemctl restart postfix; larsartmann.cloud must be verified in Resend first)"
+  # larsartmann.cloud. Same pattern as the google-sync config check.
+  # NOTE: the rendered SASL map is 0400 postfix:postfix under the 0700 root
+  # sops render dir, so this user-run smoke can NEVER read it directly. A
+  # direct read is a permanent false "missing" WARN (live 2026-09-06 deploy,
+  # with the real key already rendered). Derive the verdict from the
+  # collector textfile instead: it probes the rendered map via the
+  # interpolated sops template path and fail-closes through scrape_errors.
+  # A missing textfile is reported by the collector block below.
+  _relay_prom=/var/lib/prometheus-node-exporter/textfile_collectors/mail-relay.prom
+  if [ -f "$_relay_prom" ]; then
+    _relay_ph="$(sed -n 's/^mail_relay_credential_placeholder //p' "$_relay_prom" | tail -n1)"
+    _relay_scrape="$(sed -n 's/^mail_relay_scrape_errors //p' "$_relay_prom" | tail -n1)"
+    if [ "$_relay_scrape" = "1" ]; then
+      report_fail "Mail relay: collector last scrape failed (rendered SASL map or queue probe broken; journalctl -u mail-relay-metrics -n 20)"
     else
-      report_pass "Mail relay — real upstream credential rendered"
+      case "$_relay_ph" in
+      0) report_pass "Mail relay: real upstream credential rendered (collector verdict)" ;;
+      1) report_warn "Mail relay: sops credential still the PLACEHOLDER (go-live: sops-edit platforms/nixos/secrets/mail-relay.yaml with the SOPS_AGE_KEY pattern, redeploy; larsartmann.cloud must be verified in Resend first)" ;;
+      *) report_fail "Mail relay: collector textfile carries no credential verdict (stale or partial output)" ;;
+      esac
     fi
-  else
-    report_warn "Mail relay — rendered SASL map missing (sops template not rendered; sends defer)"
   fi
 
   # Paperless consumes the relay via PAPERLESS_* settings. The nixpkgs
