@@ -484,7 +484,16 @@ in
       # Dual-WAN with MPTCP and route health monitoring
       # DISABLED: route-health-monitor evicts the eno1 default route on transient
       # ISP probe failures (2s timeout to 1.1.1.1), pinning traffic to WiFi-only.
+      # Also ECMP would split packets over the metered phone hotspot.
+      # Use services.wifi-failover instead: carrier-based standby failover (no
+      # probes, no ECMP) — deletes the pinned eno1 default route on carrier loss
+      # so the NM WiFi route (metric 100) takes over, restores it when the cable
+      # returns. Without it, pulling the cable blackholes ALL traffic: kernel
+      # routes are NOT removed on carrier loss, so the metric-0 static default
+      # outranks the connected wlan0 route forever.
       dual-wan.enable = false;
+
+      wifi-failover.enable = true;
 
       # Mullvad VPN daemon — DISABLED.
       # talpid_dns periodically overwrites /etc/resolv.conf even when disconnected,

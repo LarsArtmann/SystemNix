@@ -1259,6 +1259,7 @@ _: {
             "projects-management-automation"
             "signoz"
             "tika"
+            "wifi-failover"
           ];
           description = "Systemd services to monitor for state, restart count, crash-loop detection, and start-limit-hit";
         };
