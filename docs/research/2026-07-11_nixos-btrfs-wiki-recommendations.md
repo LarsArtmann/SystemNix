@@ -1,5 +1,7 @@
 # NixOS + Btrfs: Wiki Recommendations vs. SystemNix Reality
 
+> **SUPERSEDED (2026-09-05)** by `docs/research/2026-09-05_btrfs-internet-sweep-vs-systemnix.md` — a broader sweep (kernel docs, distro zram defaults, community dotfiles) that rechecks each gap below: 2 closed since July, 1 partially, the rest by-choice.
+
 **Date:** 2026-07-11
 **Sources:** NixOS Wiki (wiki.nixos.org), Arch Wiki, Disko docs, community guides (notashelf, Haseeb Majid, NixOS Discourse, Btrfs readthedocs.io)
 **Scope:** Every Btrfs recommendation for NixOS, compared against what SystemNix (evo-x2) actually does, with gaps and risks identified.
