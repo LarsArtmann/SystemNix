@@ -274,6 +274,20 @@ in
       pkgs.gptfdisk
     ];
 
+    # nix-ld: run dynamically-linked foreign binaries (Jan's self-updating
+    # llama.cpp engine downloads, AppImages). Replaces the manual /lib64
+    # stub-ld symlink hack (2026-08-28) — the module owns the stub AND sets
+    # NIX_LD/NIX_LD_LIBRARY_PATH session-wide. vulkan-loader appended so
+    # llama.cpp's libggml-vulkan.so can dlopen libvulkan at runtime (the
+    # loader's nixpkgs-patched default ICD paths find RADV in
+    # /run/opengl-driver automatically). The nixpkgs jan package is
+    # FHS-wrapped and does not need this, but its engine child processes
+    # benefit when launched outside the FHS namespace.
+    programs.nix-ld = {
+      enable = true;
+      libraries = [ pkgs.vulkan-loader ];
+    };
+
     fonts.fontconfig.defaultFonts = {
       monospace = [
         theme.font.mono

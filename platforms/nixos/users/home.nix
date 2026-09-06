@@ -431,16 +431,37 @@ in
       '';
       ".local/bin/golangci-lint-lsp-wrapper".executable = true;
     };
-    # Jan AI: symlink data folder to centralized /data/ai/models/jan
+    # Jan AI (v0.8.x, Tauri): data folder on /data. Jan reads `data_folder`
+    # from settings.json (set to /data/ai/models/jan) and rejects model paths
+    # outside the data folder — so the 92G llama.cpp model tree lives INSIDE
+    # it at <data>/llamacpp/models (moved from /data/llamacpp-models on
+    # 2026-09-06; a compat symlink keeps the old path working). The default
+    # ~/.local/share/Jan/data path is symlinked too, so a settings reset
+    # still lands on /data. The activation also migrates a fresh real-dir
+    # data folder onto /data and removes the stray manually-copied
+    # ~/.local/bin/jan (AppImage binary; fails on NixOS stub-ld) so the
+    # nixpkgs FHS-wrapped jan wins on PATH.
     activation.jan-data-link = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      JAN_DATA="$HOME/.config/Jan/data"
+      JAN_DATA="$HOME/.local/share/Jan/data"
       JAN_TARGET="/data/ai/models/jan"
+      JAN_LEGACY="$HOME/.config/Jan/data"
+      JAN_STRAY_BIN="$HOME/.local/bin/jan"
       if [ -d "$JAN_TARGET" ]; then
         $DRY_RUN_CMD mkdir -p "$(dirname "$JAN_DATA")"
-        if [ ! -L "$JAN_DATA" ]; then
-          $DRY_RUN_CMD rm -rf "$JAN_DATA"
+        if [ ! -L "$JAN_DATA" ] && [ -e "$JAN_DATA" ]; then
+          if [ ! -e "$JAN_TARGET" ] || [ -z "$(ls -A "$JAN_TARGET" 2>/dev/null)" ]; then
+            $DRY_RUN_CMD mv "$JAN_DATA" "$JAN_TARGET"
+          fi
         fi
-        $DRY_RUN_CMD ln -sfn "$JAN_TARGET" "$JAN_DATA"
+        if [ ! -e "$JAN_DATA" ] || [ -L "$JAN_DATA" ]; then
+          $DRY_RUN_CMD ln -sfn "$JAN_TARGET" "$JAN_DATA"
+        fi
+        if [ -L "$JAN_LEGACY" ]; then
+          $DRY_RUN_CMD rm -f "$JAN_LEGACY"
+        fi
+      fi
+      if [ -f "$JAN_STRAY_BIN" ] && [ ! -L "$JAN_STRAY_BIN" ]; then
+        $DRY_RUN_CMD rm -f "$JAN_STRAY_BIN"
       fi
     '';
 
@@ -525,7 +546,7 @@ in
       signal-desktop # Secure messaging application
 
       # AI Tools
-      jan # Local AI assistant (data → /data/ai/models/jan via activation)
+      jan # Local AI assistant — nixpkgs FHS-wrapped Tauri app (data → /data/ai/models/jan via activation)
 
       # XL Cursor theme for TV viewing (2 meters away)
       bibata-cursors
