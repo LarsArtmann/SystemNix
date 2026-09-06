@@ -151,7 +151,14 @@ _: {
         ];
         text = ''
           OUT="${textfileDir}/system_health.prom"
-          TMP="''${OUT}.tmp"
+          # Unique tmp per run (mktemp): a fixed .tmp name collides with
+          # stale foreign-owned leftovers in the sticky 1777 textfile dir,
+          # and rename-over-foreign needs CAP_FOWNER (mail-relay
+          # 2026-09-02..06 outage class).
+          mkdir -p "${textfileDir}"
+          TMP="$(mktemp "${textfileDir}/system_health.prom.XXXXXX")"
+          chmod 644 "$TMP"
+          trap 'rm -f "$TMP"' EXIT
           CPU_STATE="${textfileDir}/.system_health_cpu_state"
           RESTART_STATE="${textfileDir}/.system_health_restart_state"
           OOMD_STATE="${textfileDir}/.system_health_oomd_state"
@@ -1498,7 +1505,9 @@ _: {
                 # 0700 stateDir to read the mirror-sync sqlite (the -r gate
                 # silently fail-closes system_forgejo_mirror_scrape_errors=1,
                 # 2026-08-22). Same pattern as atticd-storage-dir.
-                CapabilityBoundingSet = "CAP_DAC_READ_SEARCH";
+                # CAP_FOWNER: sticky-dir rename over a foreign-owned prom
+                # (mail-relay 2026-09-02..06 class).
+                CapabilityBoundingSet = "CAP_DAC_READ_SEARCH CAP_FOWNER";
               })
               (serviceOneshotDefaults { })
               {

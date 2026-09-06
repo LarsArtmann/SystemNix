@@ -293,7 +293,9 @@
               # on hosts without node_exporter (VM tests); a plain entry
               # aborts the unit with 226/NAMESPACE before mkdir can run.
               ReadWritePaths = [ "-${textfileDir}" ];
-              CapabilityBoundingSet = "CAP_SYS_ADMIN";
+              # CAP_SYS_ADMIN for btrfs ioctls; CAP_FOWNER for the sticky-dir
+              # rename over a foreign-owned prom (mail-relay 2026-09-02..06 class).
+              CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_FOWNER";
               MemoryMax = "128M";
             })
             (serviceOneshotDefaults { })
@@ -301,7 +303,13 @@
           script = ''
             set -eu
             OUT="${textfileDir}/pool-recovery.prom"
-            TMP="''${OUT}.tmp"
+            # Unique tmp per run (mktemp): a fixed .tmp name collides with
+            # stale foreign-owned leftovers in the sticky 1777 textfile dir
+            # (mail-relay 2026-09-02..06 outage class).
+            mkdir -p "${textfileDir}" 2>/dev/null || true
+            TMP="$(mktemp "${textfileDir}/pool-recovery.prom.XXXXXX")"
+            chmod 644 "$TMP"
+            trap 'rm -f "$TMP"' EXIT
             mnt="${cfg.mountPoint}"
 
             # Mount-table presence is not health: gate on real I/O.
@@ -330,7 +338,6 @@
             recoveries=$(cat "${stateDir}/recoveries" 2>/dev/null || echo 0)
             last_ts=$(cat "${stateDir}/last_recovery" 2>/dev/null || echo 0)
 
-            mkdir -p "${textfileDir}"
             cat > "$TMP" <<METRICS
             # HELP pool_usb_recovery_mounted 1 if the pool is mounted AND answers real I/O
             # TYPE pool_usb_recovery_mounted gauge

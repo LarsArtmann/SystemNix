@@ -612,6 +612,9 @@ in
                   }
                   (harden {
                     ReadWritePaths = [ textfileDir ];
+                    # Sticky-dir rename over a foreign-owned prom (mail-relay
+                    # 2026-09-02..06 class).
+                    CapabilityBoundingSet = "CAP_FOWNER";
                     MemoryMax = "128M";
                   })
                   (serviceOneshotDefaults { })
@@ -619,7 +622,13 @@ in
                 script = ''
                   set -eu
                   OUT="${textfileDir}/clickhouse-xfs.prom"
-                  TMP="''${OUT}.tmp"
+                  # Unique tmp per run (mktemp): a fixed .tmp name collides with
+                  # stale foreign-owned leftovers in the sticky 1777 textfile
+                  # dir (mail-relay 2026-09-02..06 outage class).
+                  mkdir -p "${textfileDir}"
+                  TMP="$(mktemp "${textfileDir}/clickhouse-xfs.prom.XXXXXX")"
+                  chmod 644 "$TMP"
+                  trap 'rm -f "$TMP"' EXIT
                   mnt="${mnt}"
                   threshold=${toString usageThresholdPercent}
 

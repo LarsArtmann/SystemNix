@@ -425,8 +425,8 @@
               fi
             fi
 
-            mkdir -p "${textfileDir}"
-            cat > "$TMP" <<METRICS            # HELP buildcache_mounted 1 if the build cache SSD is mounted, 0 otherwise
+            cat > "$TMP" <<METRICS
+            # HELP buildcache_mounted 1 if the build cache SSD is mounted, 0 otherwise
             # TYPE buildcache_mounted gauge
             buildcache_mounted ''${mounted}
             # HELP buildcache_smart_healthy 1 if SMART overall-health self-assessment is PASSED

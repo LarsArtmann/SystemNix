@@ -677,8 +677,12 @@ _: {
                 NOW="$(${pkgs.coreutils}/bin/date +%s)"
                 MAX_AGE_DAYS=90
                 ANY_STALE=0
-                TEMP="$OUT.tmp"
-                : > "$TEMP"
+                # Unique tmp per run (mktemp): a fixed .tmp name collides with
+                # stale foreign-owned leftovers in the sticky 1777 textfile
+                # dir (mail-relay 2026-09-02..06 outage class).
+                TEMP="$(${pkgs.coreutils}/bin/mktemp "/var/lib/prometheus-node-exporter/textfile_collectors/secret-rotation.prom.XXXXXX")"
+                ${pkgs.coreutils}/bin/chmod 644 "$TEMP"
+                trap 'rm -f "$TEMP"' EXIT
 
                 if [ -d "${clientSecretsDir}" ]; then
                   for f in "${clientSecretsDir}"/*; do

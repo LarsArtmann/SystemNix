@@ -36,7 +36,13 @@ _: {
         ];
         text = ''
           OUT="${textfileDir}/gpu_active.prom"
-          TMP="''${OUT}.tmp"
+          # Unique tmp per run (mktemp): a fixed .tmp name collides with
+          # stale foreign-owned leftovers in the sticky 1777 textfile dir
+          # (mail-relay 2026-09-02..06 outage class).
+          mkdir -p "${textfileDir}"
+          TMP="$(mktemp "${textfileDir}/gpu_active.prom.XXXXXX")"
+          chmod 644 "$TMP"
+          trap 'rm -f "$TMP"' EXIT
           MEMINFO="/proc/meminfo"
 
           if [ ! -r "$MEMINFO" ]; then
@@ -104,6 +110,8 @@ _: {
             serviceConfig = lib.mkMerge [
               (harden {
                 MemoryMax = "64M";
+                # Sticky-dir rename over a foreign-owned prom (mail-relay class).
+                CapabilityBoundingSet = "CAP_FOWNER";
               })
               (serviceOneshotDefaults { })
               {
