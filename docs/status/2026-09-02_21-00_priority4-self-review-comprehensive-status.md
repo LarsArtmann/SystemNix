@@ -87,3 +87,7 @@
 ---
 
 **WAITING for instructions.** No further work will be started until answers/direction arrive.
+
+---
+
+**Resolution 2026-09-06 (docs-health pass):** the whole priority-4 batch shipped 2026-09-02 — TODO_LIST Priority 4 header records it (`audit-go-deps.sh` CI workflow, nullglob audit persisted + wired, negative-test harness with the module-shape-lint catch). CI-executes-lints follow-up is a P1.5 row. Archived as an execution-complete record.

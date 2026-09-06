@@ -89,3 +89,7 @@
 ---
 
 *Reported 2026-09-03 15:58. Chain repaired and verified hermetically; deploy pending gates; CI darkness (branching-flow 404) is the newly-found systemic blocker for all CI-validated claims. Waiting for instructions.*
+
+---
+
+**Resolution 2026-09-06 (docs-health pass):** chain repaired (`4ac7ca7b`), deployed (`6b635cca`), live-verified 23:40 2026-09-03 (version=lock rev, store-health green, PDF 200) — TODO row closed [x]. The got:`-hash-is-rev-scoped lesson and lock-free FOD probe protocol are in AGENTS. Archived as an execution-complete record.

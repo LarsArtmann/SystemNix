@@ -116,3 +116,7 @@ Minor: 3 wasted `question`-tool invocations on schema errors; 2 lost multiedits 
 3. **8→2 smoke fails left to owning sessions.**
 
 Known cosmetic nit (not redeployed for): the `sev1-overlay.service` unit Description still reads "Fullscreen SEV1 emergency overlay" — accurate only for the reserved page tier now.
+
+---
+
+**Resolution 2026-09-06 (docs-health pass):** tier contract complete, deployed, and CI-green; exercised live by the 2026-09-03 collector storm without a single overlay page. Archived as an execution-complete record.

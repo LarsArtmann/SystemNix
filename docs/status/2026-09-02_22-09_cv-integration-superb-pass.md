@@ -111,3 +111,7 @@ anyway. The chain is deploy-ready — the next train carries it. Stale worktrees
 
 Owed after deploy: post-deploy pipeline-store PASS line, `/health/live` stamp = `4ac7ca7`-short,
 one Gatus cycle, local test-cv VM run on quiet IO (CI runs it on push).
+
+---
+
+**Resolution 2026-09-06 (docs-health pass):** superb pass deployed 2026-09-02; follow-on state (funnel checks, pipeline-store health, auto-apply, backups self-creating, VM test) verified through the 2026-09-03 closeout (`2026-09-03_23-58_cv-closeout-ci-unblocked.md`, TODO row `CV: deploy the re-bumped input` — DONE 2026-09-03, superseded chain documented). Archived as an execution-complete record.

@@ -185,3 +185,7 @@ Also verified during review (no change needed): overlay TTL is correctly 120 s i
 - Commits: daemon-heuristic batches `dedcaab9`, `b8a1a03f` carry this round's code (mixed with parallel sessions' InboxClean commit `cd797970` per the shared-tree convention).
 
 **NEXT: WAITING FOR INSTRUCTIONS.**
+
+---
+
+**Resolution 2026-09-06 (docs-health pass):** round 2 deployed and live-verified 2026-09-02 (CHANGELOG `SEV1 alerting overhaul + zram 30%→50%`). The reboot-dependent items landed at the 2026-09-05 13:16 boot (MemTotal 124.3 GiB, zram auto-scaled 62.2 GiB — verified, AGENTS GPU section). Remaining unstruck items are consider-level/monitoring ideas and flm-dependent observations; the actionable subset lives in TODO_LIST (sev1/guard rows). Archived as an execution-complete record.

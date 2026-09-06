@@ -120,3 +120,7 @@ Lies told: none found on re-read. Scope creep: none (collector was phantom-green
 ---
 
 *Point-in-time snapshot. Living source: TODO_LIST.md. Full task explosion: `docs/planning/2026-09-02_17_20-mail-relay-completion-full-backlog-pareto-plan.html`.*
+
+---
+
+**Resolution 2026-09-06 (docs-health pass):** the hardening finish landed the same evening (TODO row `Mail relay hardening finish` [x] DONE 2026-09-02: queue Gatus check, `tests/test-mail-relay.nix`, post-deploy §12, docs) — CHANGELOG `Mail Relay — central outbound SMTP null client`. Remaining go-live steps are the user-gated TODO row. Archived as an execution-complete record.

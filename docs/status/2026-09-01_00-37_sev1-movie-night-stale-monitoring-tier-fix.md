@@ -106,3 +106,7 @@
 ---
 
 *Report written 2026-09-01 00:37 CEST. Waiting for instructions.*
+
+---
+
+**Resolution 2026-09-06 (docs-health pass):** the tier contract this session started was completed, deployed, and live-exercised through 2026-09-02/03 (notify tiers, per-key cooldowns, STALE demotion — see `2026-09-02_17-29`, `22-10`, `2026-09-03_12-28`). The `system-health` 500s rework it flagged is a P1.5 row. Archived as an execution-complete record.

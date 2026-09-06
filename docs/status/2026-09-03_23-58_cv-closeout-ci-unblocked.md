@@ -83,3 +83,7 @@ signal. Also noted: the full Context7 key lives in AGENTS.md's own purge-runbook
 2. **Deploy of the freshness-check fix** — same PSI gate; next deploy train carries it
    (tonight's trains ran at similar PSI, but the gate + doctrine decide, not me).
 3. **min_day_rate, reboot, deploy-trigger ownership** — owner decisions, unchanged from 15:58 §g.
+
+---
+
+**Resolution 2026-09-06 (docs-health pass):** CI unblock path (`NIX_GITHUB_RO_TOKEN` fallback) committed 2026-09-03 and documented in AGENTS CI-auth section + CHANGELOG; the single user step (create the PAT, `gh secret set`) is TODO_LIST P2 `CI read-only GitHub PAT`. Archived as an execution-complete record.

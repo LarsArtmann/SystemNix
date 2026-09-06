@@ -109,3 +109,7 @@ Mechanics: the bridge computes severity `page > warn > notify`; on writing the a
 - Switched: `/run/current-system = h4w1yz17…` — warn tier + niri fix live; cv rolled back to buildable `7dee729` (the CV session's own status report confirms the locked `6615eec` FOD fails vendorHash upstream; they own the re-bump).
 - Live verification: deployed sev1 script carries 3 `warn` severities + the `warn-seen` downgrade; `niri.prom` freshly written by the root timer; sev1 prom healthy (`alerts_active 0`).
 - Post-deploy smoke: 84 PASS / 8 FAIL / 5 WARN — **none sev1- or niri-related**: Pocket ID SQLITE_BUSY (transient under IO), FastFlowLM socket unreachable (IO storm avg10 67% blocks the smoke's cold-pin), CV pipeline-store (EXPECTED: rolled-back binary predates that check), llama.cpp embed/rerank unreachable (other domain), paperless PAPERLESS_EMAIL_HOST (mail-relay wiring, other session). The CV smoke goes green at the next upstream re-bump.
+
+---
+
+**Resolution 2026-09-06 (docs-health pass):** deployed 2026-09-02 and exercised live through the 2026-09-03 00:31 collector-storm (notify-tier fired correctly every 30-min cooldown; no overlay spam — the movie-night hard rule held). Full tier contract + tests verified 2026-09-03 12:28. Archived as an execution-complete record.

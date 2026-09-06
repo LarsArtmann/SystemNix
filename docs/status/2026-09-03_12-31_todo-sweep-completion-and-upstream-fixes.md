@@ -167,3 +167,7 @@ Radical honesty. These are the things that were broken, wrong, or actively harmf
 ---
 
 **Closing note:** the skill's canonical format is a styled HTML dashboard; the user's explicit `.md` instruction wins for this report (flagged per spec). Section (f) items #10, #34-36, #39, #40, #45, #50 are NOT yet in TODO_LIST — harvest pending your go (the rest were harvested during the session).
+
+---
+
+**Resolution 2026-09-06 (docs-health pass):** all 13 sweep rows resolved with evidence (the [x] LarsArtmann-apps block in TODO_LIST Priority 6 is the record); c-section opens are user/owner items tracked in TODO_LIST (GitHub billing/PAT, pushes, hermes OLLAMA leftover note). The BuildFlow hook-materialization follow-up is the TODO row's own note; go-output v0.37.1 + BuildFlow flip-flopper are new P6 rows (2026-09-06 harvest). Archived as an execution-complete record.

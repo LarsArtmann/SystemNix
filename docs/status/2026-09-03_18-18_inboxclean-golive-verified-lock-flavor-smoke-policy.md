@@ -122,3 +122,7 @@ Each item: what + evidence + scope.
 ---
 
 *Reported 2026-09-03 18:18 CEST. Format note: user explicitly requested `.md`; the skill's canonical HTML dashboard format was skipped per the user's explicit instruction (one-off override, not a new default). Tree clean at write time; 10+ commits awaiting daemon push. WAITING FOR INSTRUCTIONS.*
+
+---
+
+**Resolution 2026-09-06 (docs-health pass):** go-live verified; the smoke exit-3 policy landed 2026-09-03 (CHANGELOG); f-item 27 (PAPERLESS_EMAIL_HOST) is a tracked TODO row; the lock-flavor class is documented in AGENTS. Remaining unstruck items are consider-level. Archived as an execution-complete record.

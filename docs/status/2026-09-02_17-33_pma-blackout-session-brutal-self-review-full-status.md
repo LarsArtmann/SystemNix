@@ -133,3 +133,7 @@
 ---
 
 **Session state: STOPPED — awaiting instructions.**
+
+---
+
+**Resolution 2026-09-06 (docs-health pass):** blackout fixes all deployed 2026-09-02 (input `22f0e4c`, heuristic fallback + escalating cooldown, MINIMAX key dropped, `system_pma_commit_*` metrics + `PMA Commit Health` Gatus check) — AGENTS PMA section carries the full story; CHANGELOG entry pending-free (recorded in TODO P4 header + AGENTS). First FastFlowLM-bound commits verified post-warm. Archived as an execution-complete record.

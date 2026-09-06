@@ -125,3 +125,7 @@ User pasted a failed `nh` deploy: `cv-db30fa6-go-modules` FOD hash mismatch
 ---
 
 **State at report time:** evo-x2 on the new generation, CV serving `7dee729` (healthy), 2 known-red smoke items (dnsblockd :9090 wedge, flm socket down — both pre-existing classes, both needing root or memory headroom), 3rd deploy FAIL unidentified, working tree carries the relock + override removal.
+
+---
+
+**Resolution 2026-09-06 (docs-health pass):** fix deployed and verified same day; the vendorHash chain recurred and was repaired again 2026-09-03 (`4ac7ca7b`, parallel deploys `d08abc7`/`6b635cca` — see `2026-09-03_15-58_cv-vendorhash-chain-repaired-self-review.md`, live-verified 23:40: `/health/live` = lock rev, Pipeline Store Health green, PDF export 200). Archived as an execution-complete record.

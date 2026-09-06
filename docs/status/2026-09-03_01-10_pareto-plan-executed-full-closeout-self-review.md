@@ -74,3 +74,7 @@
 - `nix flake check --no-build` (final, real tree, covering bank-sync override drop + textfile-emission-lint + pocket-id comment + pre-deploy-check retirement): **result recorded in the session log — GREEN at time of final commit** (run completed during report writing; any failure would have blocked the commit).
 
 *Reported 2026-09-03 ~01:1x. Plan T01–T19: all closed or dispositioned. The box needs its reboot.*
+
+---
+
+**Resolution 2026-09-06 (docs-health pass):** T01–T19 all closed or dispositioned in-file; the three user questions were answered by later sessions (reboot pending is the standing P0; T13 mobile-app question is a TODO_LIST P2 row; UMA resolved to the 1 GiB BIOS floor 2026-09-05). Deploy-exit records + pressure verdicts + textfile-emission-lint are in the CHANGELOG `Pareto T01–T19 execution batch`. Archived as an execution-complete record.

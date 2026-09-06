@@ -150,3 +150,7 @@
 ---
 
 *Reported 2026-09-02 21:15. Session state: Tier 1 + Tier 2 code-complete and check-verified (one flake-check re-run pending); deploy train is the single blocker for all live verification. Now waiting for instructions.*
+
+---
+
+**Resolution 2026-09-06 (docs-health pass):** the deploy train DID run the same evening — gen 753 switched 21:59 (deploy exit 0), verified by the closeout report (`2026-09-03_01-10`, T05/T07 live-proven). Archived as an execution-complete record.
