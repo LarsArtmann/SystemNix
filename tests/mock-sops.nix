@@ -69,7 +69,14 @@ in
             freeformType = types.anything;
             options.path = mkOption {
               type = types.str;
-              default = "/run/secrets-rendered/${name}";
+              # MUST match real sops-nix: templates render under the secrets
+              # dir's "rendered" subdir (/run/secrets + rendered). The old
+              # /run/secrets-rendered default diverged from production and
+              # HID a prod-only collector bug (mail-relay 2026-09-02..06: a
+              # hardcoded /run/secrets-rendered probe passed the VM test
+              # while failing on every real boot). Tests may still override
+              # .path explicitly, but the default must never lie.
+              default = "/run/secrets/rendered/${name}";
             };
           }
         )
