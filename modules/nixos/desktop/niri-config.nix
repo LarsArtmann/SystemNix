@@ -72,11 +72,9 @@ _: {
                 mkUnit =
                   name:
                   let
-                    baseText =
-                      builtins.replaceStrings
-                        [ "ExecStart=niri" ]
-                        [ "ExecStart=${niriPkg}/bin/niri" ]
-                        (builtins.readFile "${resourceDir}/${name}");
+                    baseText = builtins.replaceStrings [ "ExecStart=niri" ] [ "ExecStart=${niriPkg}/bin/niri" ] (
+                      builtins.readFile "${resourceDir}/${name}"
+                    );
                     text =
                       if name == "niri.service" then
                         let
