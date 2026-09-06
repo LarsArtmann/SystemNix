@@ -86,7 +86,9 @@ _: {
       config = lib.mkIf cfg.enable {
         assertions = [
           {
-            assertion = !(config.services.dual-wan.enable && cfg.enable);
+            # `or false`: the isolated-VM eval of this module has no dual-wan
+            # module imported — the option tree simply lacks the attribute.
+            assertion = !(cfg.enable && (config.services.dual-wan.enable or false));
             message = ''
               services.wifi-failover conflicts with services.dual-wan — both manage
               the ${cfg.ethernetInterface}/fallback default route. dual-wan is

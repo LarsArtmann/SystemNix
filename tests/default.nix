@@ -46,5 +46,6 @@ in
   sops-key-audit = import ./test-sops-key-audit.nix { inherit pkgs inputs system; };
   inboxclean-paperless = import ./test-inboxclean-paperless.nix { inherit pkgs inputs system; };
   mail-relay = makeTest (import ./test-mail-relay.nix { inherit pkgs; });
+  wifi-failover = makeTest (import ./test-wifi-failover.nix { inherit pkgs; });
 }
 // (import ./test-scripts.nix { inherit pkgs; })
