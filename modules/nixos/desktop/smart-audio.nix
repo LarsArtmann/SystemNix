@@ -111,6 +111,41 @@ _: {
             return None, {}, ""
 
 
+        def resolve_device():
+            """Re-resolve the HDMI device and its profile map.
+
+            PipeWire object ids drift whenever a device re-registers
+            (hotplug, profile flips). An id cached at startup can later
+            point at a DIFFERENT card (2026-09-06 live incident: cached
+            id 69 silently became the Ryzen analog card, so every
+            "switch to DP-2" set the profile on the wrong device, the
+            HDMI sink never appeared, and the check=False wpctl call
+            swallowed the failure). The device NAME is stable, so it is
+            resolved fresh before every profile switch.
+            """
+            global device_id, profile_map, device_name, card_token
+            for obj in pw_dump():
+                props = obj.get("info", {}).get("props", {})
+                if props.get("device.name", "") == device_name:
+                    did, pmap, _ = device_from_obj(obj)
+                    if did is not None:
+                        device_id, profile_map = did, pmap
+                        return True
+            # Name no longer resolves (e.g. PCI renumber after a crash):
+            # fall back to the startup auto scan.
+            did, pmap, name = init_device()
+            if did is None:
+                return False
+            device_id, profile_map, device_name = did, pmap, name
+            card_token = (
+                device_name[len("alsa_card."):]
+                if device_name.startswith("alsa_card.")
+                else device_name
+            )
+            log(f"Device re-resolved to {device_name} (id={device_id})")
+            return True
+
+
         def find_sink_id(sink_name):
             for obj in pw_dump():
                 if obj.get("type") != "PipeWire:Interface:Node":
@@ -119,6 +154,17 @@ _: {
                 if props.get("node.name") == sink_name:
                     return obj.get("id")
             return None
+
+
+        def hdmi_sink_names():
+            names = []
+            for obj in pw_dump():
+                if obj.get("type") != "PipeWire:Interface:Node":
+                    continue
+                name = obj.get("info", {}).get("props", {}).get("node.name", "")
+                if "hdmi" in name:
+                    names.append(name)
+            return sorted(names)
 
 
         def switch_audio(target_output):
@@ -133,6 +179,10 @@ _: {
                 # rapid focus changes must still end on the final target.
                 time.sleep(DEBOUNCE_SEC - (now - last_switch))
 
+            if not resolve_device():
+                log("ERROR: HDMI device not present in PipeWire - cannot switch")
+                return
+
             out_cfg = OUTPUT_MAP[target_output]
             profile_name = out_cfg.get("profileName", "")
             sink_name = out_cfg.get("sinkName", "").replace("{card}", card_token)
@@ -142,14 +192,15 @@ _: {
                 log(f"WARNING: profile '{profile_name}' not in profile map")
                 return
 
-            if device_id is None:
-                return
-
-            log(f"Switching to {target_output} (profile={profile_name})")
-            subprocess.run(
+            log(f"Switching to {target_output} (device={device_id} profile={profile_name})")
+            r = subprocess.run(
                 ["wpctl", "set-profile", str(device_id), str(profile_idx)],
-                check=False,
+                capture_output=True, text=True,
             )
+            if r.returncode != 0:
+                detail = (r.stderr or r.stdout or "").strip()
+                log(f"ERROR: wpctl set-profile rc={r.returncode}: {detail}")
+                return
 
             time.sleep(0.3)
             sink_node = find_sink_id(sink_name)
@@ -158,7 +209,10 @@ _: {
                 sink_node = find_sink_id(sink_name)
 
             if sink_node is None:
-                log(f"ERROR: sink '{sink_name}' not found after profile switch")
+                log(
+                    f"ERROR: sink '{sink_name}' not found after profile switch; "
+                    f"hdmi sinks: {hdmi_sink_names()}"
+                )
                 return
 
             subprocess.run(["wpctl", "set-default", str(sink_node)], check=False)
