@@ -1,7 +1,7 @@
 # Paperless SSO Closeout & Box Stability — Pareto Execution Plan
 
 **Created:** 2026-09-02 19:13 (CLI date) · **Planner session:** continuation of the Paperless Pocket-ID OIDC / SSO-only session
-**Inputs:** `docs/status/2026-09-02_17-49_paperless-pocketid-oidc-layer1-self-review.md`, `docs/status/2026-09-02_18-51_paperless-sso-only-password-login-eliminated-self-review.md` (§f lists 24 open items — ALL mapped below), live read-only telemetry pulled 19:06–19:13.
+**Inputs:** `docs/status/archived/2026-09-02_17-49_paperless-pocketid-oidc-layer1-self-review.md`, `docs/status/archived/2026-09-02_18-51_paperless-sso-only-password-login-eliminated-self-review.md` (§f lists 24 open items — ALL mapped below), live read-only telemetry pulled 19:06–19:13.
 **Customer:** Lars, single operator. What he values: (1) the box never freezes, (2) paperless login just works and is locked down, (3) deploys are boring and debuggable, (4) alerts are trustworthy (no phantom greens/reds).
 
 ---
