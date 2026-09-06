@@ -55,10 +55,13 @@ let
     # fail the unit before any assertion runs.
     sops.templates."hermes-env" = {
       content = "HERMES_VM_TEST=1";
-      path = "/run/secrets-rendered/hermes-env";
+      # path: the mock default — real sops-nix renders under
+      # /run/secrets/rendered (was pinned to the divergent
+      # /run/secrets-rendered path; that convention hid a prod-only
+      # collector bug in test-mail-relay, 2026-09-02..06).
     };
     systemd.tmpfiles.rules = [
-      "f /run/secrets-rendered/hermes-env 0400 root root -"
+      "f /run/secrets/rendered/hermes-env 0400 root root -"
     ];
 
     users.users.testuser = {

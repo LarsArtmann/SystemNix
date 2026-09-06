@@ -95,13 +95,16 @@
         ];
         text = ''
           OUT="${textfileDir}/signoz-coverage.prom"
-          TMP="''${OUT}.tmp.$$"
-
-          # Reap strays from killed earlier runs (fresh PID suffix each run —
-          # a crashed/killed run would otherwise litter .tmp.<pid> forever,
-          # 2026-08-31). All root-owned (this unit's own files), sticky-bit
-          # dir permits deleting files one owns.
-          rm -f "''${OUT}".tmp.*
+          # Unique tmp per run (mktemp) + CAP_FOWNER on the unit: in this
+          # sticky 1777 dir a fixed/pid tmp can collide with FOREIGN-owned
+          # leftovers, and rename-over-foreign needs CAP_FOWNER (the
+          # 2026-09-02..06 mail-relay outage class — harden{} strips every
+          # capability, even for root). The old pid-suffix + stray-reap
+          # scheme only ever cleaned this unit's OWN files.
+          mkdir -p "${textfileDir}"
+          TMP="$(mktemp "${textfileDir}/signoz-coverage.prom.XXXXXX")"
+          chmod 644 "$TMP"
+          trap 'rm -f "$TMP"' EXIT
 
           # Every unit script must list every binary it execs (gawk lesson,
           # 2026-08-31): timeout is coreutils, clickhouse-client is pkgs.clickhouse.
@@ -434,7 +437,11 @@
               # 256M: measured peak 100M (page cache from the clickhouse/jq
               # store reads is charged to the cgroup and counts toward the
               # limit) — headroom for registry growth instead of a 3am OOM.
-              (harden { MemoryMax = "256M"; })
+              (harden {
+                MemoryMax = "256M";
+                # Sticky-dir rename over a foreign-owned prom (mail-relay class).
+                CapabilityBoundingSet = "CAP_FOWNER";
+              })
               (serviceOneshotDefaults { })
               {
                 Type = "oneshot";
