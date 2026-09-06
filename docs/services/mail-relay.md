@@ -48,11 +48,16 @@ admin-UI-only: *Administration → Settings → Notification settings*, point th
 
 1. **Resend account** (or any provider with an SMTP submission endpoint):
    create an API key (`re_...`). Resend's SMTP username is the literal string
-   `resend`; the API key is the password.
+   `resend`; the API key is the password. Leave the key's domain restriction on
+   "All domains" (or scope it to `larsartmann.cloud`) — a key scoped to another
+   domain gets `550 ... not authorized to send emails from larsartmann.cloud`.
 2. **Verify `larsartmann.cloud` in Resend** (*Domains → Add domain* → add the
    shown SPF + DKIM DNS records → wait for "Verified"). Until then sends from
-   `noreply@larsartmann.cloud` are REJECTED and defer — the Gatus "Mail Relay
-   Queue" check fires as the pending go-live signal (expected).
+   `noreply@larsartmann.cloud` are REJECTED with
+   `550 This API key is not authorized to send emails from larsartmann.cloud` —
+   the message BOUNCES and the queue drains instantly (live 2026-09-06), so
+   `mailq` stays empty and the "Mail Relay Queue" check stays green; the
+   `status=bounced` line in the postfix journal is the real signal.
 3. **Set the credential** (interactive editor, never on a command line — the
    fish_history leak class):
    ```
@@ -67,13 +72,11 @@ admin-UI-only: *Administration → Settings → Notification settings*, point th
    Override `services.mail-relay.fromAddress` / `systemMailRecipient` only if
    system mail (root@, cron output) should land somewhere other than the
    from address's mailbox.
-5. **End-to-end test** (no `mail`/`sendmail` on the system PATH — use the
-   postfix package's sendmail binary):
+5. **End-to-end test** (`sendmail` IS on the system PATH as the postfix
+   setgid wrapper, live-verified 2026-09-06):
    ```
-   sp="$(ls -d /nix/store/*-postfix-*/bin/sendmail 2>/dev/null | head -1)"
-   printf 'To: you@example.com\nSubject: mail relay test\n\nrelay test body\n' | sudo "$sp" -t
-   mailq                        # must drain within ~30s
-   journalctl -u postfix -n 50  # status=sent (2xx from upstream)
+   printf 'Subject: relay test\n\nok\n' | sudo sendmail -f noreply@larsartmann.cloud you@example.com
+   journalctl -u postfix -n 50   # status=sent (2xx from upstream)
    ```
    Paperless: *Settings → Share links* → create a link with "Email" → check inbox.
    Forgejo: trigger a test notification (close an issue you're subscribed to).
@@ -88,6 +91,15 @@ vars, stored in its PostgreSQL. The polling task runs every 10 min by default
 
 ## Troubleshooting
 
+- **`550 This API key is not authorized to send emails from larsartmann.cloud`
+  (`status=bounced`, queue drains instantly)**: the credential AUTHENTICATED —
+  the from-domain lacks authorization. Either `larsartmann.cloud` is not yet
+  Verified in Resend (go-live step 2) or the API key is domain-scoped to a
+  different domain (recreate with "All domains" / `larsartmann.cloud`).
+- **No bounce notifications ever arrive**: by design — Resend rejects
+  null-sender DSNs (`MAIL FROM <>` → `550 Invalid from field`, live
+  2026-09-06), so postfix's NDRs are discarded. No loop, but failed sends are
+  visible ONLY in `journalctl -u postfix`.
 - **Everything defers (`mailq` non-empty, `status=deferred`)**: credential still
   the PLACEHOLDER, or provider rejects the from-domain. Upstream 4xx/5xx lines
   land in `journalctl -u postfix`.
