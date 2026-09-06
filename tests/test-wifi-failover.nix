@@ -44,6 +44,8 @@
         fallbackInterface = "wlanfail";
         pollIntervalSeconds = 1;
       };
+      # Poll-level debug lines into the journal — the test asserts on them.
+      systemd.services.wifi-failover.environment.DEBUG_POLL = "1";
       networking.local.gateway = lib.mkForce "10.99.0.1";
     };
 
@@ -79,12 +81,25 @@
         "ip -4 route show default | grep -q 'via 10.99.1.1 dev wlanfail metric 100'"
     )
     machine.succeed("ip -4 route show default | grep -q 'dev ethfail'")
+    # The daemon must have OBSERVED the carrier transition (this is what makes
+    # scenario 3 work — without a seen 'up', the down transition is not armed).
+    machine.wait_until_succeeds(
+        "journalctl -u wifi-failover --no-pager -o cat | grep -q 'carrier UP'"
+    )
     primary_first = machine.succeed("ip -4 route show default | head -1").strip()
     assert "dev ethfail" in primary_first, f"primary route must sort first, got: {primary_first}"
 
     # --- Scenario 3: cable out (peer down -> NO-CARRIER, admin stays up).
     #     The kernel KEEPS the metric-0 route; the daemon must evict it and
     #     leave the standby intact. ---
+    print(
+        "DEBUG: ethfail carrier file -> ",
+        machine.execute("cat /sys/class/net/ethfail/carrier; ip link show ethfail | head -2")[1],
+    )
+    print(
+        "DEBUG: daemon journal tail -> ",
+        machine.execute("journalctl -u wifi-failover --no-pager -n 15 -o cat")[1],
+    )
     machine.succeed("ip link set ethpeer down")
     machine.wait_until_succeeds(
         "! ip -4 route show default | grep -q 'dev ethfail'"

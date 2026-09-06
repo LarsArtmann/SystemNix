@@ -25,6 +25,7 @@ ENO1_IF="${ENO1_IF:-eno1}"
 FALLBACK_IF="${FALLBACK_IF:-wlan0}"
 GW="${GW:-192.168.1.1}"
 POLL="${POLL_INTERVAL:-1}"
+DEBUG_POLL="${DEBUG_POLL:-0}"
 
 log() { echo "wifi-failover: $*"; }
 
@@ -71,8 +72,13 @@ add_primary_default() {
 log "starting carrier watch (primary=${ENO1_IF} gw=${GW}, fallback=${FALLBACK_IF}, poll=${POLL}s)"
 
 last="init"
+polls=0
 while true; do
   c="$(carrier)"
+  if [ "$DEBUG_POLL" = "1" ]; then
+    polls=$((polls + 1))
+    log "DEBUG poll=$polls carrier=$c last=$last"
+  fi
   if [ "$c" = "1" ]; then
     if [ "$last" != "up" ]; then
       log "${ENO1_IF} carrier UP"
