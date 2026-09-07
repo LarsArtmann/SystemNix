@@ -1395,7 +1395,7 @@
     },
     "flake-utils_2": {
       "inputs": {
-        "systems": "systems_12"
+        "systems": "systems_13"
       },
       "locked": {
         "lastModified": 1731533236,
@@ -3792,7 +3792,7 @@
           "projects-management-automation",
           "nixpkgs"
         ],
-        "systems": "systems_11",
+        "systems": "systems_12",
         "treefmt-nix": "treefmt-nix_11"
       },
       "locked": {
@@ -5679,6 +5679,35 @@
       }
     },
     "project-discovery-daemon": {
+      "inputs": {
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "go-nix-helpers": [
+          "go-nix-helpers"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "project-discovery-sdk": "project-discovery-sdk_3",
+        "systems": "systems_11"
+      },
+      "locked": {
+        "lastModified": 1788800134,
+        "narHash": "sha256-s3yvJZi0nc2yIB/uTnjWMWW5a4IH1ZvQxPTzo/J6wtU=",
+        "owner": "LarsArtmann",
+        "repo": "project-discovery-daemon",
+        "rev": "4f6e3c83a5a7958324ccb4e4ee54a19257fa643f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "master",
+        "repo": "project-discovery-daemon",
+        "type": "github"
+      }
+    },
+    "project-discovery-daemon_2": {
       "flake": false,
       "locked": {
         "lastModified": 1788369878,
@@ -5751,6 +5780,24 @@
     "project-discovery-sdk_3": {
       "flake": false,
       "locked": {
+        "lastModified": 1788368751,
+        "narHash": "sha256-rbxTWMJjGVWPuZa5VvjnhYPldYGUuCC+8gS8Y4dbSz0=",
+        "ref": "master",
+        "rev": "4d946136dd4a5f3662e038f3b7f80f0f07990786",
+        "revCount": 1272,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
+      },
+      "original": {
+        "ref": "master",
+        "rev": "4d946136dd4a5f3662e038f3b7f80f0f07990786",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
+      }
+    },
+    "project-discovery-sdk_4": {
+      "flake": false,
+      "locked": {
         "lastModified": 1787377662,
         "narHash": "sha256-haMjCRmaw1OYlb4pmvb5maCmLiTJUP0TYwDnX6I8UwU=",
         "ref": "master",
@@ -5765,7 +5812,7 @@
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
       }
     },
-    "project-discovery-sdk_4": {
+    "project-discovery-sdk_5": {
       "flake": false,
       "locked": {
         "lastModified": 1788368751,
@@ -5800,7 +5847,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "project-discovery-sdk": "project-discovery-sdk_3"
+        "project-discovery-sdk": "project-discovery-sdk_4"
       },
       "locked": {
         "lastModified": 1788572253,
@@ -5856,8 +5903,8 @@
         "go-sse": "go-sse_8",
         "gogenfilter": "gogenfilter_15",
         "nixpkgs": "nixpkgs_5",
-        "project-discovery-daemon": "project-discovery-daemon",
-        "project-discovery-sdk": "project-discovery-sdk_4",
+        "project-discovery-daemon": "project-discovery-daemon_2",
+        "project-discovery-sdk": "project-discovery-sdk_5",
         "project-meta": "project-meta_2",
         "samber-do-auditlog": "samber-do-auditlog_8"
       },
@@ -6002,6 +6049,7 @@
         "otel-tui": "otel-tui",
         "overview": "overview",
         "papdashboard": "papdashboard",
+        "project-discovery-daemon": "project-discovery-daemon",
         "project-meta": "project-meta",
         "projects-management-automation": "projects-management-automation",
         "qmd": "qmd",
@@ -6010,7 +6058,7 @@
         "silent-sddm": "silent-sddm",
         "sops-nix": "sops-nix",
         "storage-collector": "storage-collector",
-        "systems": "systems_13",
+        "systems": "systems_14",
         "todo-list-ai": "todo-list-ai",
         "treefmt-full-flake": "treefmt-full-flake",
         "treefmt-nix": "treefmt-nix_13",
@@ -6382,6 +6430,21 @@
         "type": "github"
       }
     },
+    "systems_15": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
     "systems_2": {
       "locked": {
         "lastModified": 1681028828,
@@ -6627,7 +6690,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "systems": "systems_14",
+        "systems": "systems_15",
         "treefmt-nix": "treefmt-nix_12"
       },
       "locked": {

@@ -465,6 +465,9 @@
       inputs = {
         nixpkgs.follows = "nixpkgs";
         flake-parts.follows = "flake-parts";
+        # go-nix-helpers master tip is currently broken (undefined `mod` in
+        # mkPreparedSource.nix, 2a74b8b4); follow this flake's known-good pin.
+        go-nix-helpers.follows = "go-nix-helpers";
       };
     };
 
