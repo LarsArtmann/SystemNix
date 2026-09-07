@@ -2085,11 +2085,11 @@
     "go-commit_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1786469281,
-        "narHash": "sha256-Oo0VDMexHvPxXblJ3U677qrYgcU4u5eut8uM6x8vud8=",
+        "lastModified": 1788519518,
+        "narHash": "sha256-9Ox53k2H0wA3YzqZaLSXPm4mt9z+It1CP6VJOL8k7o8=",
         "ref": "master",
-        "rev": "73211339b8e6b4b09efc63bf9d7a083f044d1275",
-        "revCount": 512,
+        "rev": "9dfbf1e0c3084804bc55466aa45df1a6e5189ba5",
+        "revCount": 515,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-commit"
       },
@@ -5862,11 +5862,11 @@
         "samber-do-auditlog": "samber-do-auditlog_8"
       },
       "locked": {
-        "lastModified": 1788370294,
-        "narHash": "sha256-ameu8m+TS9pzBXoY5sgE4sbLsPQCUt7B10WKanpRQy0=",
+        "lastModified": 1788798408,
+        "narHash": "sha256-fEcByaeOokxSyjmveDWvasWptvj7vaZvjSSr+ocoZLE=",
         "owner": "LarsArtmann",
         "repo": "projects-management-automation",
-        "rev": "49e889a404a646a876ca30235bd0e04b0fbbb9f6",
+        "rev": "1c144c8d2b0a30d582b7e4407f8280d70c2c96d1",
         "type": "github"
       },
       "original": {
