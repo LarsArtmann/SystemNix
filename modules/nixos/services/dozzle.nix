@@ -9,7 +9,7 @@ _: {
     let
       cfg = config.services.dozzle;
       inherit (lib) mkEnableOption mkOption types;
-      inherit (import ../../../lib/default.nix lib) ports;
+      inherit (import ../../../lib/default.nix lib) ports images;
       dozzlePort = ports.dozzle;
     in
     {
@@ -26,7 +26,7 @@ _: {
       config = lib.mkIf cfg.enable {
         virtualisation.oci-containers.containers.dozzle = {
           autoStart = true;
-          image = "amir20/dozzle:latest";
+          image = images.dozzle.ref;
           ports = [ "127.0.0.1:${toString cfg.port}:8080" ];
           volumes = [
             "/var/run/docker.sock:/var/run/docker.sock:ro"

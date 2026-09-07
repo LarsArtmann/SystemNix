@@ -43,4 +43,10 @@ in
     digest = "sha256:1fa17f91846d30748751089a7ef37b490a8e3ec46e8ba4a1df15c28d1e60d3c1";
     ref = mkRef { inherit image tag digest; };
   };
+  dozzle = rec {
+    image = "amir20/dozzle";
+    tag = "v10.10.0";
+    digest = "sha256:2875e3c1f31f2244ee99d6067b53852b30666b3e2fb293d179bc8be94b1da5eb";
+    ref = mkRef { inherit image tag digest; };
+  };
 }

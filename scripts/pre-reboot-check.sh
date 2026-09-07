@@ -73,10 +73,16 @@ if [ -n "$DEFAULT_ENTRY" ]; then
   ILINE="$(awk '$1 == "initrd" { print $2; exit }' "$E" || true)"
   DEFAULT_INIT="$(grep -ao 'init=[^ ]*' "$E" | head -1 | cut -d= -f2- || true)"
 
-  [ -n "$KLINE" ] && [ -f "$(efi_path "$KLINE")" ] \
-    && pass "kernel on ESP: $KLINE" || fail "kernel missing on ESP: ${KLINE:-<no linux line>}"
-  [ -n "$ILINE" ] && [ -f "$(efi_path "$ILINE")" ] \
-    && pass "initrd on ESP: $ILINE" || fail "initrd missing on ESP: ${ILINE:-<no initrd line>}"
+  if [ -n "$KLINE" ] && [ -f "$(efi_path "$KLINE")" ]; then
+    pass "kernel on ESP: $KLINE"
+  else
+    fail "kernel missing on ESP: ${KLINE:-<no linux line>}"
+  fi
+  if [ -n "$ILINE" ] && [ -f "$(efi_path "$ILINE")" ]; then
+    pass "initrd on ESP: $ILINE"
+  else
+    fail "initrd missing on ESP: ${ILINE:-<no initrd line>}"
+  fi
 
   if [ -n "$DEFAULT_INIT" ] && [ -x "$DEFAULT_INIT" ]; then
     pass "init exists on live store: $DEFAULT_INIT"
@@ -189,7 +195,7 @@ echo "8. Zombie mount probe"
 ZOMBIE=0
 while read -r TARGET FSTYPE; do
   case "$FSTYPE" in
-    tmpfs|proc|sysfs|devtmpfs|devpts|cgroup*|efivarfs|bpf|fuse*|securityfs|debugfs|tracefs|configfs|pstore|mqueue|hugetlbfs|ramfs|overlay|autofs|binfmt*|tracefs|nsfs|rpc_pipefs|squashfs|erofs|iso9660) continue ;;
+    tmpfs|proc|sysfs|devtmpfs|devpts|cgroup*|efivarfs|bpf|fuse*|securityfs|debugfs|tracefs|configfs|pstore|mqueue|hugetlbfs|ramfs|overlay|autofs|binfmt*|nsfs|rpc_pipefs|squashfs|erofs|iso9660) continue ;;
   esac
   if ! timeout 5 stat -f "$TARGET" >/dev/null 2>&1; then
     warn "mount not answering stat: $TARGET ($FSTYPE) — possible zombie (buildcache-class stale mountinfo)"
