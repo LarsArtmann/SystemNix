@@ -24,7 +24,7 @@ let
   inherit (config.networking) domain;
   inherit (config.networking.local) blockIP virtualIP;
   blocklists = import ../../common/dns-blocklists.nix;
-  ports = (import ../../../lib/default.nix lib).ports;
+  inherit (import ../../../lib/default.nix lib) ports;
   dnsLocal = import ../../common/dns-local.nix;
   lanIP = builtins.head config.networking.interfaces.eno1.ipv4.addresses;
   serverIP = lanIP.address;

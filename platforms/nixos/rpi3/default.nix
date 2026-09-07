@@ -7,7 +7,7 @@
 }:
 let
   blocklists = import ../../common/dns-blocklists.nix;
-  ports = (import ../../../lib/default.nix lib).ports;
+  inherit (import ../../../lib/default.nix lib) ports;
   dnsLocal = import ../../common/dns-local.nix;
   inherit (config.networking.local)
     lanIP
