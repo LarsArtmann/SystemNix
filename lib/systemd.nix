@@ -20,9 +20,7 @@ let
   # MemoryMax — on a 128G host a literal MemoryHigh = "80%" (~102G) sits far
   # above the default MemoryMax = 512M and the throttle never engages before
   # the hard kill. Derive the default from MemoryMax instead.
-  memoryValue =
-    v:
-    if isOverride v then v.content else v;
+  memoryValue = v: if isOverride v then v.content else v;
   parseMemoryBytes =
     v:
     let
@@ -38,7 +36,8 @@ let
             G = 1024 * 1024 * 1024;
             T = 1024 * 1024 * 1024 * 1024;
             "" = 1;
-          }.${builtins.elemAt match 1};
+          }
+          .${builtins.elemAt match 1};
     in
     if match == null then null else (lib.toInt (builtins.elemAt match 0)) * multiplier;
   defaultMemoryHigh =

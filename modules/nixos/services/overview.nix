@@ -63,7 +63,7 @@
         ];
         text = ''
           set -u
-          ov_status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 3 http://127.0.0.1:8083/ 2>/dev/null || echo 000)
+          ov_status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 3 http://127.0.0.1:${toString ports.overview}/ 2>/dev/null || echo 000)
           # Only act on an explicit 503. Other codes (200, 000/down, redirects)
           # mean Overview is fine or not worth restarting.
           [ "$ov_status" = "503" ] || exit 0

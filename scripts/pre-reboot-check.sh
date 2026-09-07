@@ -17,17 +17,35 @@ set -euo pipefail
 BOOT_DIR="${BOOT_DIR:-/boot}"
 
 # /boot and /nix/var/nix/profiles are root-only on this box; re-exec once.
+# NOTE: a nix-store sudo can never be setuid (read-only store) — the real one
+# is NixOS's security wrapper, addressed by absolute path because the packaged
+# app's PATH excludes it (live failure 2026-09-07: "must be owned by uid 0").
 if [ "$(id -u)" -ne 0 ]; then
-  exec sudo env BOOT_DIR="$BOOT_DIR" bash "$0" "$@"
+  SUDO=/run/wrappers/bin/sudo
+  [ -x "$SUDO" ] || SUDO="$(command -v sudo || true)"
+  if [ -z "$SUDO" ]; then
+    echo "✗ this audit needs root (reads /boot) and no sudo was found"
+    exit 1
+  fi
+  exec "$SUDO" env BOOT_DIR="$BOOT_DIR" bash "$0" "$@"
 fi
 
 PASS=0
 FAIL=0
 WARN=0
 
-pass() { echo "  ✓ $1"; PASS=$((PASS + 1)); }
-fail() { echo "  ✗ $1"; FAIL=$((FAIL + 1)); }
-warn() { echo "  ⚠ $1"; WARN=$((WARN + 1)); }
+pass() {
+  echo "  ✓ $1"
+  PASS=$((PASS + 1))
+}
+fail() {
+  echo "  ✗ $1"
+  FAIL=$((FAIL + 1))
+}
+warn() {
+  echo "  ⚠ $1"
+  WARN=$((WARN + 1))
+}
 
 # Resolve a kernel/initrd line ("/EFI/nixos/...") against the ESP mount.
 efi_path() { printf '%s%s' "$BOOT_DIR" "$1"; }
@@ -160,11 +178,14 @@ while read -r SPEC MOUNTPOINT _; do
   INITRD_DEVS=$((INITRD_DEVS + 1))
   RESOLVED=""
   case "$SPEC" in
-    /dev/disk/by-label/*|/dev/disk/by-uuid/*|/dev/*)
-      [ -e "$SPEC" ] && RESOLVED="$SPEC" ;;
-    LABEL=*|UUID=*)
-      KIND="${SPEC%%=*}"; VAL="${SPEC#*=}"
-      [ -e "/dev/disk/by-${KIND,,}/${VAL}" ] && RESOLVED="/dev/disk/by-${KIND,,}/${VAL}" ;;
+  /dev/disk/by-label/* | /dev/disk/by-uuid/* | /dev/*)
+    [ -e "$SPEC" ] && RESOLVED="$SPEC"
+    ;;
+  LABEL=* | UUID=*)
+    KIND="${SPEC%%=*}"
+    VAL="${SPEC#*=}"
+    [ -e "/dev/disk/by-${KIND,,}/${VAL}" ] && RESOLVED="/dev/disk/by-${KIND,,}/${VAL}"
+    ;;
   esac
   if [ -n "$RESOLVED" ]; then
     pass "$MOUNTPOINT <- $RESOLVED"
@@ -195,7 +216,7 @@ echo "8. Zombie mount probe"
 ZOMBIE=0
 while read -r TARGET FSTYPE; do
   case "$FSTYPE" in
-    tmpfs|proc|sysfs|devtmpfs|devpts|cgroup*|efivarfs|bpf|fuse*|securityfs|debugfs|tracefs|configfs|pstore|mqueue|hugetlbfs|ramfs|overlay|autofs|binfmt*|nsfs|rpc_pipefs|squashfs|erofs|iso9660) continue ;;
+  tmpfs | proc | sysfs | devtmpfs | devpts | cgroup* | efivarfs | bpf | fuse* | securityfs | debugfs | tracefs | configfs | pstore | mqueue | hugetlbfs | ramfs | overlay | autofs | binfmt* | nsfs | rpc_pipefs | squashfs | erofs | iso9660) continue ;;
   esac
   if ! timeout 5 stat -f "$TARGET" >/dev/null 2>&1; then
     warn "mount not answering stat: $TARGET ($FSTYPE) — possible zombie (buildcache-class stale mountinfo)"

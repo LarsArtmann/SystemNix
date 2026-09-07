@@ -15,11 +15,16 @@
 # (sdns root recursion requires middleware.Setup() which dnsblockd doesn't
 # call — the queryer/store needed for NS lookups are never wired, causing
 # "No reachable authoritative servers" for all non-local queries)
-{ config, ... }:
+{
+  config,
+  lib,
+  ...
+}:
 let
   inherit (config.networking) domain;
   inherit (config.networking.local) blockIP virtualIP;
   blocklists = import ../../common/dns-blocklists.nix;
+  ports = (import ../../../lib/default.nix lib).ports;
   dnsLocal = import ../../common/dns-local.nix;
   lanIP = builtins.head config.networking.interfaces.eno1.ipv4.addresses;
   serverIP = lanIP.address;
@@ -34,7 +39,7 @@ in
       blockTLSPort = 443;
       blockInterface = "eno1";
       blockIPPrefix = 24;
-      statsPort = 9090;
+      statsPort = ports.dns-blocker-stats;
 
       inherit (blocklists)
         blocklists

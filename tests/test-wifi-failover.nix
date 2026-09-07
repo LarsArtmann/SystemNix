@@ -21,7 +21,7 @@
 #   4. Cable back (peer up): daemon re-adds the metric-0 primary.
 #   5. Unit survives everything: still active, journal carries FAILOVER and
 #      RESTORE markers.
-{ pkgs }:
+{ ... }:
 {
   name = "wifi-failover";
 

@@ -285,7 +285,7 @@ _: {
                 (mkHttpCheck {
                   name = "ClickHouse";
                   group = "Infrastructure";
-                  url = "http://127.0.0.1:8123/ping";
+                  url = "http://127.0.0.1:${toString ports.signoz-clickhouse-http}/ping";
                   interval = "5m";
                   conditions = [
                     "[STATUS] == 200"

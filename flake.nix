@@ -1306,7 +1306,6 @@
                     pkgs.gawk # loader.conf/entry parsing
                     pkgs.gnugrep
                     pkgs.nix # path-info closure sanity
-                    pkgs.sudo # self-elevation: /boot is root-only
                     pkgs.systemd # systemctl (quiet-window advisories)
                     pkgs.util-linux # findmnt
                   ]

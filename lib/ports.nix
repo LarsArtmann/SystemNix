@@ -38,6 +38,9 @@
     signoz-node-exporter = 9100;
     signoz-collector-metrics = 8888;
     signoz-clickhouse = 9000;
+    # ClickHouse HTTP interface (the /ping gatus check and any HTTP client);
+    # the native TCP protocol keeps 9000 above.
+    signoz-clickhouse-http = 8123;
     signoz-clickhouse-metrics = 9363;
     signoz-clickhouse-keeper = 9181;
     signoz-clickhouse-raft = 9234;

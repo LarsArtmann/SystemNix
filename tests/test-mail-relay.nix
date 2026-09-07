@@ -34,7 +34,7 @@ in
   name = "mail-relay";
 
   nodes.machine =
-    { lib, ... }:
+    { ... }:
     {
       imports = [
         mailRelayModule

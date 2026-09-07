@@ -141,10 +141,13 @@ _: {
               # restart-looped the zombie every 2 min. The script keeps its own
               # login-screen guard as defense-in-depth.
               unitConfig.ConditionEnvironment = "XDG_SESSION_ID";
-              serviceConfig = hardenUser { MemoryMax = "256M"; } // {
-                Type = "oneshot";
-                ExecStart = lib.getExe drmHealthcheck;
-              };
+              serviceConfig = lib.mkMerge [
+                (hardenUser { MemoryMax = "256M"; })
+                {
+                  Type = "oneshot";
+                  ExecStart = lib.getExe drmHealthcheck;
+                }
+              ];
             };
 
             timers.niri-drm-healthcheck = {
