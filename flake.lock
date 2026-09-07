@@ -660,11 +660,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788806973,
-        "narHash": "sha256-NR7I3+NXmtTS40ydiMrpkQLC2EYv+Rw9DIvadiNVnEc=",
+        "lastModified": 1788809556,
+        "narHash": "sha256-3lj+jg8UmMH9Qmnolrk9DOLrcPv39+EHoZERclMQCIc=",
         "owner": "LarsArtmann",
         "repo": "crush-daily",
-        "rev": "534f8250fb2c9e15e7d0af9413edbd145af237ae",
+        "rev": "6f824474b90ebe2b8e90f2bb88196dc6c92b7733",
         "type": "github"
       },
       "original": {
