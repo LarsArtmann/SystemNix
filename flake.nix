@@ -1297,6 +1297,20 @@
                   }/bin/post-deploy-check";
                   meta.description = "Post-deploy smoke test: verifies services are functional, not just alive";
                 };
+              pre-reboot-check =
+                mkApp "pre-reboot-check"
+                  "Pre-reboot boot-chain audit: loader default -> ESP assets -> init on live store -> profile anchoring -> initrd devices (built after the 2026-09-07 stuck boot)"
+                  [
+                    pkgs.btrfs-progs # filesystem show (MISSING device audit)
+                    pkgs.coreutils # stat, timeout, awk-free parsing helpers
+                    pkgs.gawk # loader.conf/entry parsing
+                    pkgs.gnugrep
+                    pkgs.nix # path-info closure sanity
+                    pkgs.sudo # self-elevation: /boot is root-only
+                    pkgs.systemd # systemctl (quiet-window advisories)
+                    pkgs.util-linux # findmnt
+                  ]
+                  ./scripts/pre-reboot-check.sh;
               btrfs-inventory = mkApp "btrfs-inventory" "List all BTRFS subvolumes, snapshots, and mount points" [
                 pkgs.btrfs-progs
                 pkgs.util-linux
