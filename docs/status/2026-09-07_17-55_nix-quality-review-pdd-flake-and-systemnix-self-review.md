@@ -124,3 +124,7 @@
 ---
 
 *Arte in Aeternum — report written from session memory only; no new research performed. Waiting for instructions.*
+
+---
+
+**Post-commit resolution (17:59):** the commit-retry pre-commit hook re-ran the FULL `nix flake check` on the identical tree — **all checks passed, including `pool-recovery`**. The b.1 failure is confirmed a load-induced VM-test flake (5-min device timeout under three concurrent build storms), not a regression. Flake-vs-regression: RESOLVED (flake). Deploy-blocker concern downgraded; item f.2 isolation run is now optional confidence, not a gate.
