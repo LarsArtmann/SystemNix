@@ -669,6 +669,23 @@ in
         memoryMax = "512M";
       };
 
+      # Standalone discovery daemon — owns /run/project-discovery/daemon.sock.
+      # Flipped from PMA's co-located embedded daemon (2026-09-07): the socket
+      # now survives PMA restarts, and PMA's 8G cgroup no longer pays the
+      # discovery spike. Cache TTL 24h matches the PMA-era daemon (the watcher
+      # + background refresh keep entries fresh; the TTL is only the ceiling).
+      # Socket 0666 preserves the PMA-era access model until consumer users
+      # are group-managed (then tighten to 0660).
+      project-discovery-daemon = {
+        enable = true;
+        searchPaths = [ "/home/${config.users.primaryUser}/projects" ];
+        cacheTTL = "24h";
+        socketMode = "0666";
+        extraEnvironment = {
+          PROJECT_DISCOVERY_REFRESH_INTERVAL = "60s";
+        };
+      };
+
       # Minecraft server (local network only, whitelisted)
       minecraft = {
         enable = false;
@@ -950,7 +967,10 @@ in
         autoPush = false;
         debounceSeconds = 60;
         minCommitIntervalSeconds = 120;
-        enableDiscoveryDaemon = true;
+        # Flipped 2026-09-07: the standalone project-discovery-daemon service
+        # above owns the socket now. PMA must NOT bind it too (bind conflict
+        # → start-limit) and no longer pays the discovery memory spike.
+        enableDiscoveryDaemon = false;
         memoryMax = "8G";
         goMemLimit = "6GiB";
         # 6h integrity purge: the watcher + 60s background refresh keep the

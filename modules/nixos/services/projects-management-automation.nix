@@ -165,23 +165,32 @@
           ioTier.build
         ];
 
-        systemd.services.pma-daemon-watchdog = {
-          description = "Restart PMA when its discovery daemon hangs (responsive-socket probe)";
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStart = lib.getExe pmaDaemonWatchdog;
-          };
-        };
+        # Watchdog only makes sense while PMA HOSTS the daemon. Once the
+        # standalone project-discovery-daemon service owns the socket
+        # (enableDiscoveryDaemon = false), restarting PMA can never heal a
+        # dead socket — the probe would restart PMA every 5 minutes for
+        # nothing. The standalone unit carries its own WatchdogSec.
+        systemd.services.pma-daemon-watchdog =
+          lib.mkIf config.services.projects-management-automation.enableDiscoveryDaemon
+            {
+              description = "Restart PMA when its discovery daemon hangs (responsive-socket probe)";
+              serviceConfig = {
+                Type = "oneshot";
+                ExecStart = lib.getExe pmaDaemonWatchdog;
+              };
+            };
 
-        systemd.timers.pma-daemon-watchdog = {
-          description = "Probe the PMA discovery daemon every 5 minutes";
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnBootSec = "5min";
-            OnUnitActiveSec = "5min";
-            AccuracySec = "1min";
-          };
-        };
+        systemd.timers.pma-daemon-watchdog =
+          lib.mkIf config.services.projects-management-automation.enableDiscoveryDaemon
+            {
+              description = "Probe the PMA discovery daemon every 5 minutes";
+              wantedBy = [ "timers.target" ];
+              timerConfig = {
+                OnBootSec = "5min";
+                OnUnitActiveSec = "5min";
+                AccuracySec = "1min";
+              };
+            };
       };
     };
 }

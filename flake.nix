@@ -456,6 +456,18 @@
       };
     };
 
+    # project-discovery-daemon — standalone discovery daemon owning
+    # /run/project-discovery/daemon.sock (flipped from PMA's co-located
+    # embedded daemon 2026-09-07). Must be at a rev that supports
+    # PROJECT_DISCOVERY_SEARCH_PATHS and PROJECT_DISCOVERY_SOCKET_MODE.
+    project-discovery-daemon = {
+      url = "github:LarsArtmann/project-discovery-daemon?ref=master";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+      };
+    };
+
     # project-meta — Per-project metadata management CLI
     project-meta = {
       url = "github:LarsArtmann/project-meta?ref=master";
