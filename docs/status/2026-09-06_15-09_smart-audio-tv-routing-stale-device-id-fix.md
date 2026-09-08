@@ -77,6 +77,7 @@ Nothing destructive or lasting. Honest damage ledger for the session:
 ## f) NEXT UP TO 50 (session-scoped backlog, roughly Pareto-ordered)
 
 **Verification / confidence:**
+
 1. User confirms audio audibly plays from TV speakers during Helium playback (the one thing SSH cannot prove).
 2. While a stream plays, capture `pw-dump` stream→sink link to prove playback follows the default on a DP-1↔DP-2 flip.
 3. Investigate missing `[LG TV SSCR2]` ELD label on the TV sink (WirePlumber route/ELD refresh; compare `pw-dump` route props for both jacks).

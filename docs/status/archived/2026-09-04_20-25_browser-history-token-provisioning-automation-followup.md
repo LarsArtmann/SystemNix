@@ -248,7 +248,7 @@ browser-history token again.**
 44. Consider CHANGELOG "Unreleased" → release cut if other items landed.
 45. Verify `notify-failure@` stub in test-helpers (VM warning noise).
 46. Backfill runbook: exact one-liner in docs/services (needs root env file
-    + agent binary path).
+    - agent binary path).
 47. Measure backfill duration on evo-x2 (19.7k entries, 10-min ctx budget).
 48. Confirm no OTHER service consumed the old hex token as its agent path
     (only evo-x2 agent exists today).

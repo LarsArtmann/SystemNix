@@ -68,10 +68,10 @@ The P0 cold-load E2E test — the one thing yesterday's session never did — **
 1. ~~Confirm deploy #2 activation result (exit 0 vs exit-4-wrapped failure); read `/tmp/deploy-flm3.log`.~~ done (deploy #2 + Bug C resolved in addendum h; later deploys clean)
 2. ~~Run/inspect `nix run .#post-deploy-check` — expect the new "FastFlowLM — /v1/models through socket-activated :52625" PASS.~~ done (FastFlowLM socket smoke PASS in the 20-52 suite (53 PASS / 0 FAIL))
 3. ~~True cold-load E2E through the socat bridge: idle-stop the backend first (`systemctl stop fastflowlm.service`), then `python3 /tmp/flm_e2e.py` — verify TCP-backlog holding (client connects, waits ~55–180 s, gets `/v1/models`), no connection-limit churn in journal.~~ done (cold-load E2E through the bridge verified this session + live since)
-~~4. Chat completion + decode rate measurement (yesterday's script already does this).~~ done — usage baseline measured 2026-08-18→21 (~87 conns/day, ~14 t/s decode, ~40 completions/day; AGENTS.md)
-5. ~~Idle-TTL lifecycle: verify `fastflowlm-idle` stops `'fastflowlm-proxy@*'` + backend after 1h quiet, socket still LISTENING (0xCD91), next connection re-activates end-to-end.~~ done (idle lifecycle live; idle-check reworked + verified 2026-08-18 19-56 session)
-~~6. Verify `niri_zombie` and `btrfs_health_critical` now live in the textfile collectors → **remove both from `KNOWN_NEW_METRICS`** (and re-run pre-deploy-check).~~ done — neither in the allowlist (verified 2026-08-31); the 2026-08-24 harvest pruned the graveyard
-7. ~~Verify Gatus FastFlowLM endpoints green; confirm the new Niri Zombie + BTRFS checks green too.~~ done (Gatus checks green via system-health metrics (flm state, niri_zombie, btrfs_health_critical))
+   ~~4. Chat completion + decode rate measurement (yesterday's script already does this).~~ done — usage baseline measured 2026-08-18→21 (~87 conns/day, ~14 t/s decode, ~40 completions/day; AGENTS.md)
+4. ~~Idle-TTL lifecycle: verify `fastflowlm-idle` stops `'fastflowlm-proxy@*'` + backend after 1h quiet, socket still LISTENING (0xCD91), next connection re-activates end-to-end.~~ done (idle lifecycle live; idle-check reworked + verified 2026-08-18 19-56 session)
+   ~~6. Verify `niri_zombie` and `btrfs_health_critical` now live in the textfile collectors → **remove both from `KNOWN_NEW_METRICS`** (and re-run pre-deploy-check).~~ done — neither in the allowlist (verified 2026-08-31); the 2026-08-24 harvest pruned the graveyard
+5. ~~Verify Gatus FastFlowLM endpoints green; confirm the new Niri Zombie + BTRFS checks green too.~~ done (Gatus checks green via system-health metrics (flm state, niri_zombie, btrfs_health_critical))
 
 **P1 — hygiene & attribution**
 8. ~~Deliberate commit: "fix(fastflowlm): replace nonexistent systemd-socket-proxyd with Accept=true socat bridge" (+ smoke check + metric-bypass cleanup + smartd int fix).~~ done at `99301327`

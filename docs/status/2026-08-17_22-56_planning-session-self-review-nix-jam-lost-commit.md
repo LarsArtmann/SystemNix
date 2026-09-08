@@ -82,7 +82,7 @@ This session ran in two active phases with a 6.5h gap between my turns (16:20 �
 1. ~~T01: delete `/mnt/pool/backups/root/@.20260814T2300` (broken receive) — needs user OK (Q1)~~ done (re-received cleanly by the resumed nightly chain (0812-0815 all present pool-side; overnight cycles green since 2026-08-18))
 2. ~~Watch tonight's 23:00 btrbk-root run; verify clean chain resume (or at minimum a loud, clean failure)~~ done (overnight cycle green 2026-08-18)
 3. ~~Verify whether the fix batch is LIVE (deployed unit has `TimeoutStartSec=24h`; pre-deploy-check byte gate; pool-metrics service exists) — if not, deploy it~~ done (24h timeouts + pool metrics live in snapshots.nix)
-~~4. Make the 3d retention edit (root+data instances) and bundle into the next deploy — needs exact numbers OK (Q2)~~ done 2026-08-21 — root retention quartered to 3d+1w (QLC extent-pinning; AGENTS.md BTRFS section)
+   ~~4. Make the 3d retention edit (root+data instances) and bundle into the next deploy — needs exact numbers OK (Q2)~~ done 2026-08-21 — root retention quartered to 3d+1w (QLC extent-pinning; AGENTS.md BTRFS section)
 
 **Tomorrow morning (IO window):**
 ~~5. T05: run find-corrupt2.sh → corrupt-file map (move script into `scripts/` first)~~ done — 13 corrupted files mapped (2026-08-17 10:28 report); script shipped as `scripts/find-corrupted-files.sh`

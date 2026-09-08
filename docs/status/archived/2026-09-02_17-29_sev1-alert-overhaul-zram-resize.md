@@ -22,17 +22,17 @@ All three are fixed, both VM regression tests extended and green. Additionally t
 
 ## Timeline (this session)
 
-| Time | Event |
-|------|-------|
-| pre-16:29 | Guard tripped 2× today (cumulative trip counter #14); ZRAM SWAP CRITICAL paged standalone; overlay re-armed every 10 s |
-| 16:35:18 | Trip #2 today: MemAvail 9.9% + zram 97.4% → flm + socket stopped (correct action) |
-| ~16:40 | User complaint; live diagnosis begins |
-| 16:36-16:44 | Root causes mapped (all three bugs confirmed from code + live proms) |
+| Time        | Event                                                                                                                                                                                    |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| pre-16:29   | Guard tripped 2× today (cumulative trip counter #14); ZRAM SWAP CRITICAL paged standalone; overlay re-armed every 10 s                                                                   |
+| 16:35:18    | Trip #2 today: MemAvail 9.9% + zram 97.4% → flm + socket stopped (correct action)                                                                                                        |
+| ~16:40      | User complaint; live diagnosis begins                                                                                                                                                    |
+| 16:36-16:44 | Root causes mapped (all three bugs confirmed from code + live proms)                                                                                                                     |
 | 16:44-17:02 | Edits: guard module, bridge module, boot.nix zram 50%, 2 VM tests, AGENTS.md — repeatedly interrupted by mtime-staleness (concurrent session + auto-commit daemon committing mid-flight) |
-| 17:05-17:15 | First VM-test run: syntax error (my `\"` in interpolations) → 3 fix attempts → second run: my own bad assertion (scenario 10b) → fixed → **both tests green** |
-| 17:20 | `nix fmt --ci` reformatted 2 in-flight files of the parallel session (my mistake, disclosed) |
-| 17:21-17:22 | **NEW genuine emergency**: MemAvail 5.8% + zram 97.5% (partly caused by my own 2× QEMU VM tests + parallel session builds). Trip in cooldown; overlay legitimately armed |
-| 17:29 | Recovered to 21.1% avail; socket active again — the old deployed gate cannot have restored it (zram 97.5 ≥ 92), so a manual start happened (user or parallel session; unverified) |
+| 17:05-17:15 | First VM-test run: syntax error (my `\"` in interpolations) → 3 fix attempts → second run: my own bad assertion (scenario 10b) → fixed → **both tests green**                            |
+| 17:20       | `nix fmt --ci` reformatted 2 in-flight files of the parallel session (my mistake, disclosed)                                                                                             |
+| 17:21-17:22 | **NEW genuine emergency**: MemAvail 5.8% + zram 97.5% (partly caused by my own 2× QEMU VM tests + parallel session builds). Trip in cooldown; overlay legitimately armed                 |
+| 17:29       | Recovered to 21.1% avail; socket active again — the old deployed gate cannot have restored it (zram 97.5 ≥ 92), so a manual start happened (user or parallel session; unverified)        |
 
 ---
 
@@ -55,7 +55,7 @@ All three are fixed, both VM regression tests extended and green. Additionally t
 1. **The alerting overhaul end-to-end**: code + tests + docs done; **NOT deployed** — the running system still has the old guard/bridge. The user's live experience is unchanged until `nix run .#deploy`.
 2. **zram 50%**: config done; **needs a reboot** to activate (zram is sized at boot).
 3. **Live-state remediation**: at 17:29 the socket is up again and memory recovered (21.1%), but via manual intervention, not the fix.
-4. **Alert-fatigue instrumentation**: the fixes stop the false pages but nothing yet *measures* page duration/churn (see improvements below).
+4. **Alert-fatigue instrumentation**: the fixes stop the false pages but nothing yet _measures_ page duration/churn (see improvements below).
 5. **This report's section (f)**: harvested into the doc but NOT yet into `TODO_LIST.md` (docs-health HARVEST pending; parallel session currently owns TODO_LIST.md in the working tree).
 
 ## c) NOT STARTED
@@ -105,6 +105,7 @@ All three are fixed, both VM regression tests extended and green. Additionally t
 ## f) Next 50 (brainstorm, impact-ordered-ish — ROUTE through docs-health HARVEST, most are ROADMAP fuel)
 
 **Deploy & activate**
+
 1. Deploy the overhaul (`nix run .#deploy`) once the tree is quiescent; page experience changes within one guard tick + 30 s.
 2. Reboot to activate zram `memoryPercent = 50` (~47 GiB).
 3. Verify rendered zram disksize ≈ 46.9 GiB post-reboot (confirm nixpkgs `memoryPercent` base = post-carveout MemTotal).

@@ -88,4 +88,4 @@ Four stacked blockers were found and fixed in sequence. Two of my own mistakes w
 
 ---
 
-*Report scope: this session only (flake eval fix → CV vendorHash → gatus pattern → two activations). No unrelated research performed. No secrets included. Format: user-requested `.md` (repo status-report skill defaults to HTML; explicit instruction wins).*
+_Report scope: this session only (flake eval fix → CV vendorHash → gatus pattern → two activations). No unrelated research performed. No secrets included. Format: user-requested `.md` (repo status-report skill defaults to HTML; explicit instruction wins)._

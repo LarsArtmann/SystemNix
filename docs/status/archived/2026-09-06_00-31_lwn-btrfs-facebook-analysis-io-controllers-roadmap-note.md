@@ -19,24 +19,24 @@
 
 ## a) FULLY DONE
 
-| Item | Detail |
-| --- | --- |
-| LWN 824855 fetched + analyzed in full | Article body AND comment thread (RAID-controller corruption story, WhatsApp tiny-file metadata workload, raid56/qgroups warnings, degraded-mount fix history, io.cost/io.latency Btrfs-only claim, "hardware is worse than Btrfs" verdict). |
-| Article→SystemNix mapping | 4 validations of existing decisions (qgroups off 2026-08-17; RAID1-only pool; `compress=zstd` as *flash-endurance* lever on QLC — reframed from space-savings; ENOSPC defensive stack: balance/gc-guard/reserve/chunk-health), 2 applications (csum-error trust policy; @nix tiny-file containment), 1 research note (io controllers). |
-| ROADMAP.md edit | Theme 1 gained "**Snapshot-drop cleanup for big tree churn (Btrfs-at-Facebook pattern, noted 2026-09-05)**" with honest NOT-actionable-today framing (buildcache-gc completes in minutes; @nix already avoids pinning); `Updated:` header bumped to 2026-09-05 (one day off — file written 09-06 00:31, see §d). |
-| io.cost/io.latency deep-dive | Delivered: cost model + vrate feedback vs measured-latency hard targets; work-conserving distinction; systemd knobs (`IOWeight=` / `IODeviceLatencyTargetSec=`); cgroup-writeback + bio-attribution as the reason for the "Btrfs-only" claim; BFQ mutual exclusion; **QLC SLC-cache bimodality defeats io.cost model calibration → io.latency is the only viable pilot on this box**; verdict: research-only until post-Samsung. |
-| /data correction absorbed + repair path sketched | Bounded-vs-progressing discriminator (`smartctl` media_errors + scrub delta), repair sequence (logical-resolve → delete files → mind 14d+4w snapshot pinning → scrub → btrbk-data resumes, also ending the oom-kill second failure mode). |
-| Scope discipline | Zero unrelated research, zero deploys, zero risky ops — per user instruction. No daemon/state touched. |
+| Item                                             | Detail                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| LWN 824855 fetched + analyzed in full            | Article body AND comment thread (RAID-controller corruption story, WhatsApp tiny-file metadata workload, raid56/qgroups warnings, degraded-mount fix history, io.cost/io.latency Btrfs-only claim, "hardware is worse than Btrfs" verdict).                                                                                                                                                                                      |
+| Article→SystemNix mapping                        | 4 validations of existing decisions (qgroups off 2026-08-17; RAID1-only pool; `compress=zstd` as _flash-endurance_ lever on QLC — reframed from space-savings; ENOSPC defensive stack: balance/gc-guard/reserve/chunk-health), 2 applications (csum-error trust policy; @nix tiny-file containment), 1 research note (io controllers).                                                                                           |
+| ROADMAP.md edit                                  | Theme 1 gained "**Snapshot-drop cleanup for big tree churn (Btrfs-at-Facebook pattern, noted 2026-09-05)**" with honest NOT-actionable-today framing (buildcache-gc completes in minutes; @nix already avoids pinning); `Updated:` header bumped to 2026-09-05 (one day off — file written 09-06 00:31, see §d).                                                                                                                 |
+| io.cost/io.latency deep-dive                     | Delivered: cost model + vrate feedback vs measured-latency hard targets; work-conserving distinction; systemd knobs (`IOWeight=` / `IODeviceLatencyTargetSec=`); cgroup-writeback + bio-attribution as the reason for the "Btrfs-only" claim; BFQ mutual exclusion; **QLC SLC-cache bimodality defeats io.cost model calibration → io.latency is the only viable pilot on this box**; verdict: research-only until post-Samsung. |
+| /data correction absorbed + repair path sketched | Bounded-vs-progressing discriminator (`smartctl` media_errors + scrub delta), repair sequence (logical-resolve → delete files → mind 14d+4w snapshot pinning → scrub → btrbk-data resumes, also ending the oom-kill second failure mode).                                                                                                                                                                                        |
+| Scope discipline                                 | Zero unrelated research, zero deploys, zero risky ops — per user instruction. No daemon/state touched.                                                                                                                                                                                                                                                                                                                           |
 
 ## b) PARTIALLY DONE
 
-| Item | Gap |
-| --- | --- |
-| "csum-error growth rate is the discriminator" gotcha | I explicitly said it is *worth noting in docs/gotchas-archive.md* — then did NOT write it. Exists only in this conversation + this report (§a above). |
-| /data P0 reframing | User's root-cause clarification is NOT yet written into TODO_LIST.md P0 (which still reads with an implicit hardware-damage framing) nor AGENTS.md. The repair-relevant fact (operator-inflicted, likely bounded) lives in chat only — violates the repo's own memory doctrine ("if it's new information, write it down"). |
-| /data verification | Proposed `smartctl` + scrub-delta probes but ran NEITHER (both need sudo; session user is blocked). Hypothesis "bounded, not growing" remains UNVERIFIED. |
-| io.latency pilot verdict | "Pilot io.latency on interactive cgroups if the freeze class recurs post-Samsung" is not persisted anywhere durable — only this report. |
-| ROADMAP Updated-line accuracy | Says 2026-09-05; actual write time is 2026-09-06 00:31. Cosmetic, but the repo timestamps deliberately. |
+| Item                                                 | Gap                                                                                                                                                                                                                                                                                                                        |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "csum-error growth rate is the discriminator" gotcha | I explicitly said it is _worth noting in docs/gotchas-archive.md_ — then did NOT write it. Exists only in this conversation + this report (§a above).                                                                                                                                                                      |
+| /data P0 reframing                                   | User's root-cause clarification is NOT yet written into TODO_LIST.md P0 (which still reads with an implicit hardware-damage framing) nor AGENTS.md. The repair-relevant fact (operator-inflicted, likely bounded) lives in chat only — violates the repo's own memory doctrine ("if it's new information, write it down"). |
+| /data verification                                   | Proposed `smartctl` + scrub-delta probes but ran NEITHER (both need sudo; session user is blocked). Hypothesis "bounded, not growing" remains UNVERIFIED.                                                                                                                                                                  |
+| io.latency pilot verdict                             | "Pilot io.latency on interactive cgroups if the freeze class recurs post-Samsung" is not persisted anywhere durable — only this report.                                                                                                                                                                                    |
+| ROADMAP Updated-line accuracy                        | Says 2026-09-05; actual write time is 2026-09-06 00:31. Cosmetic, but the repo timestamps deliberately.                                                                                                                                                                                                                    |
 
 ## c) NOT STARTED (identified, deliberately deferred — none was in-scope to execute this session)
 
@@ -48,7 +48,7 @@
 
 ## d) TOTALLY FUCKED UP (honest ledger — nothing broken, but two real misses)
 
-1. **I over-applied the article's heuristic to the user's own P0.** My first answer told the user to "treat csum failures as media/hardware signals first" — for THEIR known /data EIO. The user then supplied the actual cause (their own unsafe shrink, months ago). Lesson encoded: imported external heuristics are claims, not ground truth; local operator history outranks them. This is the *inbound* cousin of the repo's verify-external-claims doctrine, and I verified nothing about /data before pontificating on it.
+1. **I over-applied the article's heuristic to the user's own P0.** My first answer told the user to "treat csum failures as media/hardware signals first" — for THEIR known /data EIO. The user then supplied the actual cause (their own unsafe shrink, months ago). Lesson encoded: imported external heuristics are claims, not ground truth; local operator history outranks them. This is the _inbound_ cousin of the repo's verify-external-claims doctrine, and I verified nothing about /data before pontificating on it.
 2. **Said "worth noting in docs/gotchas-archive.md" and did not note it.** A promise of memory-persistence made and immediately dropped — exactly the "I'll remember → you won't" anti-pattern the global AGENTS.md forbids. Mitigation: this report now carries the content verbatim (§a), but the target file is still untouched.
 3. Minor: ROADMAP `Updated:` line stamped 2026-09-05 for a 2026-09-06 00:31 edit (I anchored to the session's conversational "today" instead of the clock I was about to be told to run).
 
@@ -65,6 +65,7 @@ No system damage possible this session: the only write was a markdown bullet. No
 ## f) UP TO 50 THINGS TO GET DONE NEXT (ordered: session follow-ups first, then adjacent items noticed in TODO_LIST.md during this session)
 
 **Direct session follow-ups:**
+
 1. Rewrite TODO_LIST P0 `/data` item with corrected root cause (unsafe shrink; bounded-damage hypothesis) + explicit verification-first gate.
 2. Write the csum-growth-rate discriminator into docs/gotchas-archive.md (one paragraph + the two probes).
 3. Add the compression-as-flash-endurance framing to AGENTS.md BTRFS section (one sentence — it reframes an existing config decision).
@@ -92,7 +93,7 @@ No system damage possible this session: the only write was a markdown bullet. No
 23. Rogue git-identity audit across repos + declarative global identity + rewrite-or-leave decision.
 24. Sweep LarsArtmann repos for `InvokeNamed[interface]` samber/do trap.
 25. IO-PSI vs disk-%util correlation in deploy pressure gate + gatus (phantom-saturation class).
-26. IO-PSI emergency guard tier (freeze-#3 class un-prevented; Zones 4/5 are memory-only) — *natural companion to the io.latency idea; if this lands, the sysfs pilot rides it*.
+26. IO-PSI emergency guard tier (freeze-#3 class un-prevented; Zones 4/5 are memory-only) — _natural companion to the io.latency idea; if this lands, the sysfs pilot rides it_.
 27. Niri gatus endpoints false-negative during hard-down (sddm incident fix).
 28. Post-DAS convergence final leg: confirm tonight's root incremental + btrbk-verify green + bank-sync 9-day gap backfill.
 29. btrbk-data oom-kill containment (MemoryHigh/OOMScoreAdjust or split the send) — pairs with the /data repair (28/29 unblock the same unit).
@@ -120,7 +121,7 @@ No system damage possible this session: the only write was a markdown bullet. No
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF (max 3)
 
-1. **The unsafe shrink — when, and under what conditions?** (Roughly when was `/data`'s partition resized, was the filesystem mounted/in use at the time, and did you run any repair attempt afterwards?) This decides whether "bounded static damage" is even plausible — a resize on a live, mounted FS can also leave a damage *pattern* that keeps spreading via metadata churn, which would change the repair plan.
+1. **The unsafe shrink — when, and under what conditions?** (Roughly when was `/data`'s partition resized, was the filesystem mounted/in use at the time, and did you run any repair attempt afterwards?) This decides whether "bounded static damage" is even plausible — a resize on a live, mounted FS can also leave a damage _pattern_ that keeps spreading via metadata churn, which would change the repair plan.
 2. **Do you want the P0 stance flipped NOW** (schedule the /data repair window — docker-down + DuckDB safety-copy — as its own session, coordinated with or before the Samsung migration and the pending reboot), or keep "keep failing until planned repair"?
 3. **Persist the LWN lessons durably or not?** Options: (a) full treatment — gotchas-archive note + AGENTS.md compression/endurance sentence + ROADMAP io.latency bullet; (b) report-only, revisit if the topics resurface. I can't decide this for the repo's noise budget.
 

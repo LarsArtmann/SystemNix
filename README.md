@@ -15,7 +15,7 @@ SystemNix manages both macOS (nix-darwin) and NixOS systems through a single, re
 | **Self-Hosted Services** | Immich (photos), Forgejo (Git), Paperless-ngx (documents + AI), SigNoz (observability), SearXNG (privacy search), Pocket ID (SSO), Hermes AI, Gatus, Homepage, PapDashboard (alert hub), Browser History, InboxClean (Gmail assistant), CV server, Crush Daily, Dozzle, Attic (binary cache) |
 | **AI/ML**                | FastFlowLM (Qwen MoE on AMD NPU), llama-rag (embeddings + reranking on GPU), Ollama (ROCm), llama.cpp, AMD XDNA NPU driver                                                                                                                                                                   |
 | **Security**             | Gitleaks, sops-nix, AppArmor, Fail2ban, ClamAV, Touch ID for sudo (macOS)                                                                                                                                                                                                                    |
-| **Monitoring**           | SigNoz (31 alert rules, 6 dashboards), Gatus (133 health checks, Discord alerting), system-health textfile collectors, sev1 desktop escalation                                                                                                                                              |
+| **Monitoring**           | SigNoz (31 alert rules, 6 dashboards), Gatus (133 health checks, Discord alerting), system-health textfile collectors, sev1 desktop escalation                                                                                                                                               |
 | **Networking**           | Caddy reverse proxy (TLS), dnsblockd embedded resolver (sdns: DNSSEC, DoT, DoH), SearXNG metasearch, 3.9M+ blocked domains                                                                                                                                                                   |
 | **Storage**              | BTRFS with btrbk snapshots (daily, sent to a 2×16TB RAID1 HDD pool), ZRAM swap (~62 GiB at 50% of visible RAM), weekly scrub, daily fstrim                                                                                                                                                   |
 
@@ -86,7 +86,7 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 | **Caddy**           | 443              | `*.home.lan`         | Reverse proxy with sops-managed TLS certs                                                           |
 | **Immich**          | 2283             | `immich.home.lan`    | Self-hosted Google Photos alternative (PostgreSQL + Redis + ML)                                     |
 | **Forgejo**         | 3000             | `forgejo.home.lan`   | Self-hosted Git forge with GitHub mirror sync & Actions                                             |
-| **SigNoz**          | 4317, 4318, 8080 | `signoz.home.lan`    | Observability: traces, metrics, logs + node_exporter + cAdvisor, 6 dashboards                       || **Homepage**        | 8082             | `dash.home.lan`      | Service overview dashboard                                                                          |
+| **SigNoz**          | 4317, 4318, 8080 | `signoz.home.lan`    | Observability: traces, metrics, logs + node_exporter + cAdvisor, 6 dashboards                       |
 | **Pocket ID**       | 1411             | `auth.home.lan`      | Passkey-based SSO/IDP + oauth2-proxy forward auth                                                   |
 | **Hermes**          | —                | —                    | AI agent gateway (Discord bot, cron scheduler, multi-provider LLM)                                  |
 | **Twenty CRM**      | 3200             | `crm.home.lan`       | Self-hosted CRM (Docker Compose: PostgreSQL + Redis)                                                |
@@ -101,9 +101,9 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 | **Manifest**        | 2099             | `manifest.home.lan`  | Smart LLM router for AI agents (cost optimization)                                                  |
 | **Overview**        | 8083             | —                    | Local project dashboard (git repo discovery, stats, activity)                                       |
 | **Dozzle**          | 8084             | `logs.home.lan`      | Real-time Docker container log viewer                                                               |
-| **Mail Relay**       | 25               | —                    | Central outbound SMTP null client (loopback-only, relays via Resend; Paperless/Forgejo/system mail) |
-| **bank-sync**        | 8097             | `banksync.home.lan`  | Wise bank-sync dashboard (Layer 2 protected; disabled until sops go-live)                           |
-| **File Renamer**     | 8086             | `renamer.home.lan`   | AI file-and-image renamer service                                                                   |
+| **Mail Relay**      | 25               | —                    | Central outbound SMTP null client (loopback-only, relays via Resend; Paperless/Forgejo/system mail) |
+| **bank-sync**       | 8097             | `banksync.home.lan`  | Wise bank-sync dashboard (Layer 2 protected; disabled until sops go-live)                           |
+| **File Renamer**    | 8086             | `renamer.home.lan`   | AI file-and-image renamer service                                                                   |
 | **Monitor365**      | 3001             | `monitor.home.lan`   | Device monitoring agent + server dashboard — disabled (private wireguard-collector dep)             |
 | **OpenSEO**         | 3002             | `seo.home.lan`       | Self-hosted SEO suite (rank tracking, keyword research)                                             |
 | **Crush Daily**     | 8081             | `daily.home.lan`     | AI-powered development insights from Crush databases                                                |
@@ -145,7 +145,7 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 | **CPU**     | AMD Ryzen AI Max+ 395 (Strix Halo), amd_pstate=guided                                                                                                                                |
 | **GPU**     | AMD integrated (amdgpu), Mesa latest, ROCm compute stack                                                                                                                             |
 | **NPU**     | AMD XDNA via nix-amd-npu, XRT runtime                                                                                                                                                |
-| **Memory**  | 128GB physical (~124 GiB visible after the 1 GiB BIOS-floor GPU carveout), ZRAM swap (~62 GiB at 50%, zram-only), tuned for AI/ML workloads                                                        |
+| **Memory**  | 128GB physical (~124 GiB visible after the 1 GiB BIOS-floor GPU carveout), ZRAM swap (~62 GiB at 50%, zram-only), tuned for AI/ML workloads                                          |
 | **Storage** | BTRFS root (zstd, QLC-tuned: commit=300, daily fstrim) + `/data` (zstd:3) + ClickHouse XFS partition + 2×16TB BTRFS RAID1 HDD pool; btrbk snapshots (daily) sent to the pool nightly |
 | **Boot**    | systemd-boot (50 generations), latest Linux kernel                                                                                                                                   |
 | **Network** | Realtek 2.5G Ethernet, MediaTek WiFi                                                                                                                                                 |

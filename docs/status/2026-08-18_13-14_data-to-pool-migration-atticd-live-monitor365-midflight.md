@@ -57,10 +57,10 @@
 
 1. ~~Watch monitor365 copy to completion: `journalctl -u data-to-pool-migration -f`~~ done (ADDENDUM 16:10 — all three trees migrated, verified)
 2. ~~On success: confirm all three sources gone (`ls /data`), unit skips on next boot, sources recoverable only via snapshots~~ done (ADDENDUM: complete; sources recoverable via snapshots)
-~~3. On COPY FAILED with EIO: extract the unreadable-file list from the journal — that's the corrupt-file map (T05 partial) for this tree~~ moot — the copy completed verified (addendum); the corrupt-file map exists via the 10:28 session (13 files)
-4. ~~Verify tonight's 23:45 btrbk-pool run snapshots the populated atticd + monitor365 subvols~~ done (overnight btrbk-pool cycle green 2026-08-18)
-5. ~~Verify btrbk-data 23:30 behaves as expected (fails loudly on known /data corruption — standing state, not caused by us)~~ done (standing state — btrbk-data fails loudly by design (stance decided 14:45 session))
-6. ~~Commit the session's changes (mind the concurrent session's files — separate carefully)~~ done at `23b19c25`
+   ~~3. On COPY FAILED with EIO: extract the unreadable-file list from the journal — that's the corrupt-file map (T05 partial) for this tree~~ moot — the copy completed verified (addendum); the corrupt-file map exists via the 10:28 session (13 files)
+3. ~~Verify tonight's 23:45 btrbk-pool run snapshots the populated atticd + monitor365 subvols~~ done (overnight btrbk-pool cycle green 2026-08-18)
+4. ~~Verify btrbk-data 23:30 behaves as expected (fails loudly on known /data corruption — standing state, not caused by us)~~ done (standing state — btrbk-data fails loudly by design (stance decided 14:45 session))
+5. ~~Commit the session's changes (mind the concurrent session's files — separate carefully)~~ done at `23b19c25`
 
 **Derived from what I noticed (in passing)**
 7. ~~smartd runtime-verification TODO (TODO_LIST P2) can now be closed — verified live this session ("Monitoring 4 ATA/SATA + 1 NVMe")~~ done (verified live this session (Monitoring 4 ATA/SATA + 1 NVMe); TODO_LIST item closed)

@@ -1,6 +1,6 @@
 # Docs-Health AUDIT — August Corpus Sweep + Self-Review
 
-**Date:** 2026-08-31 22:57 CEST · **Session:** ~21:20→22:57 · **Task:** "View ALL **/2026-08-* files! Execute the docs-health SKILL! PROPERLY! SUPERBLY!" + full self-review demand
+**Date:** 2026-08-31 22:57 CEST · **Session:** ~21:20→22:57 · **Task:** "View ALL *_/2026-08-_ files! Execute the docs-health SKILL! PROPERLY! SUPERBLY!" + full self-review demand
 **Scope:** the full docs-health AUDIT (BUILD+HARVEST+VERIFY+ANNOTATE) over the 2026-08 corpus + the six living docs. **Nothing committed** (auto-commit daemon owns commits; no explicit commit instruction).
 
 ---
@@ -46,7 +46,7 @@ Loaded the docs-health skill + 3 references, inventoried all **154 unarchived `2
 ## d) TOTALLY FUCKED UP (honest column)
 
 1. **Wrapped-line strikes are PARTIAL strikethroughs.** The 9 fallback `strike_first_line` edits (27-16-08 ×4, 29-18-41 ×3, 18-45-syshealth ×2) struck only the FIRST physical line of multi-line items — the continuation lines sit outside the `~~`, so the item is half-struck. The skill demands striking the ENTIRE item. Cosmetic-but-real defect on exactly the items that were hardest to match.
-2. **One EMPTY-marker strike shipped.** In 28-04-51 I included a pair that struck the `**Deploy-blocking / immediate:**` heading with an empty marker (`~~heading~~ ` + nothing) — violates the "So what?" test (an annotation that cites nothing is noise). Should be reverted or given evidence.
+2. **One EMPTY-marker strike shipped.** In 28-04-51 I included a pair that struck the `**Deploy-blocking / immediate:**` heading with an empty marker (`~~heading~~` + nothing) — violates the "So what?" test (an annotation that cites nothing is noise). Should be reverted or given evidence.
 3. **At least one evidence-imprecise strike.** 03-58 item 5 marked "done — wired into flake checks (runs in CI)" — but CI runs `nix flake check --no-build` and does NOT execute VM tests (the exact gap I added a TODO row for in the same session). The marker overstates.
 4. **My link checker was buggy** (false BROKENs on every relative link), I eyeballed it away instead of fixing the check — the repo's own "verification commands should be right the first time" lesson, repeated.
 5. **Concurrent-session flagging was under-played** (see b.5) — and three MORE sessions were actively writing reports (21:33/21:35) while I swept; my final report treated that as a footnote.

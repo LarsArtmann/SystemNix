@@ -8,13 +8,13 @@
 
 ## Decisions (user, 2026-08-31)
 
-| # | Question | Decision |
-|---|----------|----------|
+| # | Question                  | Decision                                                                                 |
+| - | ------------------------- | ---------------------------------------------------------------------------------------- |
 | 1 | Off-LAN access to homelab | **NOT a goal** — LAN-only is deliberate; GitHub mirror remains the off-site read surface |
-| 2 | Flip scope | **ALL repos canonical on Forgejo** (incl. public: templ-components, go-nix-helpers) |
-| 3 | GitHub's fate | **Keep as live push-mirror** (indefinite; re-evaluate later) |
-| 4 | Off-precinct backup | **After the flip**, not a prerequisite |
-| 5 | Motivation | **Sovereignty/control + free unlimited runners for private repos** |
+| 2 | Flip scope                | **ALL repos canonical on Forgejo** (incl. public: templ-components, go-nix-helpers)      |
+| 3 | GitHub's fate             | **Keep as live push-mirror** (indefinite; re-evaluate later)                             |
+| 4 | Off-precinct backup       | **After the flip**, not a prerequisite                                                   |
+| 5 | Motivation                | **Sovereignty/control + free unlimited runners for private repos**                       |
 
 ## Why this works with near-zero migration cost
 
@@ -115,6 +115,7 @@ find ~/projects -maxdepth 4 -name .git -type d 2>/dev/null \
 ## Phased todos
 
 ### P1 — finish staging (before any flip)
+
 - [ ] Forgejo runner: CI token + Attic cache (TODO_LIST:154 — `attic cache create`, `atticadm
       make-token`, configure runner; push `signoz-frontend` + `hermes-agent` build trees)
 - [ ] Port the 4 GitHub workflows to `.forgejo/workflows/` (nix-check, nixpkgs-compat,
@@ -124,6 +125,7 @@ find ~/projects -maxdepth 4 -name .git -type d 2>/dev/null \
 - [ ] Gatus: mirror-freshness check (newest `mirror.updated_unix` age across tracked repos)
 
 ### P2 — flip private repos first (lowest blast radius)
+
 - [ ] Run the remote audit (see mechanics section) on evo-x2 AND Lars-MacBook-Air; reconcile
       strays against the `forgejo-repos` mirror list (add missing or leave on GitHub deliberately)
 - [ ] Install the scoped `insteadOf` shim on both machines (declaratively via HM `programs.git`)
@@ -136,12 +138,14 @@ find ~/projects -maxdepth 4 -name .git -type d 2>/dev/null \
       every active checkout has a real Forgejo remote
 
 ### P3 — flip public repos
+
 - [ ] Same per-repo flip; confirm proxy.golang.org still resolves new tags of a public Go lib
       (module path unchanged + tags present on mirror)
 - [ ] templ-components consumers: nothing to change (github: URLs keep working); document in
       README that canonical development moved to Forgejo
 
 ### P4 — harden + offsite (after flip, per decision #4)
+
 - [ ] restic backup of forgejo dump zips → Hetzner Storage Box/B2 (metadata: issues/PRs/releases
       exist nowhere else); restore rehearsal
 - [ ] GitHub branch protection on active mirrored repos (read-only seatbelt)
@@ -151,6 +155,7 @@ find ~/projects -maxdepth 4 -name .git -type d 2>/dev/null \
       stale public interface)
 
 ### Explicitly deferred (only if GitHub is ever cut off)
+
 - flake input rewrite (~40 inputs, narHash re-locks, per-machine auth)
 - vanity Go import path for public libs
 - GitHub account deletion/archival

@@ -82,6 +82,7 @@ The task looked like "tune some settings." It was actually four stacked breakage
 ## f) NEXT (prioritized, session-scoped; impact vs effort ordered)
 
 **P0 — prove the thing works / stop active bleeding**
+
 1. E2E generation test: load a small model in Jan (or POST to the router's `/v1/chat/completions`), verify streamed tokens + Vulkan util. (30 min, closes §b1)
 2. Re-read both `settings.json` AFTER a Jan relaunch; if Jan rewrites `data_folder` to the default path, decide: accept (symlink covers it) or make it declarative (HM home.file + backupFileExtension). (15 min)
 3. Root-cause Jan's 18:45 death: `journalctl --user` around the deploy window; if nh-switch/activation kills user-launched apps, document + consider a `systemd-run --user` launch wrapper for Jan. (45 min)

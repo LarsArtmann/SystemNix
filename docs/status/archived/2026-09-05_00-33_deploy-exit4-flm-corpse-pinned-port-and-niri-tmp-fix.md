@@ -7,9 +7,9 @@
 
 ## Executive Summary
 
-| Unit | Verdict | Action |
-| --- | --- | --- |
-| `fastflowlm.service` (exit 1, `bind: Address already in use` on :52626) | **Environmental corpse, NOT a config bug.** The Sep-02 `flm-real` thread group died mid-exit; its shared fd table still pins the :52626 LISTEN socket. No live process to kill; SIGKILL meaningless. | **Reboot is the only fix.** No module change. Documented. |
+| Unit                                                                                   | Verdict                                                                                                                                                                                                  | Action                                                                                                                                                               |
+| -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fastflowlm.service` (exit 1, `bind: Address already in use` on :52626)                | **Environmental corpse, NOT a config bug.** The Sep-02 `flm-real` thread group died mid-exit; its shared fd table still pins the :52626 LISTEN socket. No live process to kill; SIGKILL meaningless.     | **Reboot is the only fix.** No module change. Documented.                                                                                                            |
 | `niri-health-metrics.service` (`Permission denied` on `niri.prom.tmp`, every 30s tick) | **Real config bug. FIXED this session.** Stale foreign-owned fixed-name `.tmp` in the sticky 1777 textfile dir + `harden{}`'s empty CapabilityBoundingSet = root cannot truncate a file it does not own. | `mktemp`-unique tmp + `chmod 644` + `trap` cleanup + `CAP_FOWNER CAP_DAC_OVERRIDE`. Committed `e2ee6182`. Verified. Deploys unblocked after next `nix run .#deploy`. |
 
 The deploy itself DID activate (config switched) but nh reported `Exited(4)` because of the failed units. Both failures are now fully explained; one is fixed in HEAD; one requires the already-owed reboot.
@@ -85,6 +85,7 @@ Nothing was destroyed or broken by this session (lars-run test provably side-eff
 ## f) NEXT UP TO 50 (prioritized; P0 = before/with next reboot, P1 = this week)
 
 **P0 — recovery path**
+
 1. `nix run .#deploy` — land the niri fix, stop the Exited(4) churn.
 2. `nix run .#post-deploy-check` after the switch.
 3. Decide reboot window (clears flm corpse, NPU wedge, 33 D-state corpses, 1.7k CLOSE_WAIT sockets, and activates zram 50% + 512 MiB carveout).

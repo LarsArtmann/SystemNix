@@ -8,15 +8,15 @@
 
 ## Architecture
 
-| Piece | What / Where |
-|---|---|
-| App | nixpkgs `services.paperless` 3.x, PostgreSQL backend (peer-auth, shared with Immich), `dataDir = /mnt/pool/services/paperless` |
-| Identity | Pocket ID (`auth.home.lan`), client id `paperless`, PKCE S256 both sides, callback `https://paperless.home.lan/accounts/oidc/pocket-id/login/callback/` (allauth-fixed path) — registered in `pocket-id.nix` `oidcClients` default |
-| Secret bridge | `paperless-oidc-setup.service` oneshot: reads the Pocket ID client secret via `LoadCredential`, writes the allauth provider JSON (single-line via `jq -c`) + `PAPERLESS_DISABLE_REGULAR_LOGIN=true` + `PAPERLESS_REDIRECT_LOGIN_TO_SSO=true` into `/var/lib/paperless-oidc/oidc.env` |
-| Env attach | `EnvironmentFile = ["-/var/lib/paperless-oidc/oidc.env"]` — attached DIRECTLY via systemd, **never** via the nixpkgs `environmentFile` option (bash `source` strips JSON quotes — the reason the bridge exists) |
-| Caddy | plain `reverse_proxy` (native OIDC ⇒ `protectedVHost` would double-auth). `/admin/*` AND exact `/admin` → 403 |
-| Sidecars | Tika (:9998) + Gotenberg (:3199) for Office/E-Mail consume; paperless-ai on FastFlowLM + llama-rag embeddings |
-| Deploy ordering | deploy.sh restarts `paperless-oidc-setup` BEFORE `paperless-web` (env file read at process start only) |
+| Piece           | What / Where                                                                                                                                                                                                                                                                         |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| App             | nixpkgs `services.paperless` 3.x, PostgreSQL backend (peer-auth, shared with Immich), `dataDir = /mnt/pool/services/paperless`                                                                                                                                                       |
+| Identity        | Pocket ID (`auth.home.lan`), client id `paperless`, PKCE S256 both sides, callback `https://paperless.home.lan/accounts/oidc/pocket-id/login/callback/` (allauth-fixed path) — registered in `pocket-id.nix` `oidcClients` default                                                   |
+| Secret bridge   | `paperless-oidc-setup.service` oneshot: reads the Pocket ID client secret via `LoadCredential`, writes the allauth provider JSON (single-line via `jq -c`) + `PAPERLESS_DISABLE_REGULAR_LOGIN=true` + `PAPERLESS_REDIRECT_LOGIN_TO_SSO=true` into `/var/lib/paperless-oidc/oidc.env` |
+| Env attach      | `EnvironmentFile = ["-/var/lib/paperless-oidc/oidc.env"]` — attached DIRECTLY via systemd, **never** via the nixpkgs `environmentFile` option (bash `source` strips JSON quotes — the reason the bridge exists)                                                                      |
+| Caddy           | plain `reverse_proxy` (native OIDC ⇒ `protectedVHost` would double-auth). `/admin/*` AND exact `/admin` → 403                                                                                                                                                                        |
+| Sidecars        | Tika (:9998) + Gotenberg (:3199) for Office/E-Mail consume; paperless-ai on FastFlowLM + llama-rag embeddings                                                                                                                                                                        |
+| Deploy ordering | deploy.sh restarts `paperless-oidc-setup` BEFORE `paperless-web` (env file read at process start only)                                                                                                                                                                               |
 
 ## SSO-only semantics (the non-obvious parts)
 
@@ -48,12 +48,12 @@ The sops value only **seeds bootstrap** (the nixpkgs scheduler's `superuser-stat
 
 ## Monitoring
 
-| Signal | Where | Meaning |
-|---|---|---|
-| Gatus "Paperless" | `http://localhost:2892/accounts/login/` | `[STATUS]==200` + body has `oidc/pocket-id` + `getElementById` + NO `type="password"` — catches BOTH the bridge degrading (password form back = visible) and the SSO flow breaking |
-| Gatus "Pocket ID SQLite Health" | `:9100/metrics` | `system_pocket_id_busy_*` — SQLITE_BUSY storm on the auth SPOF (this app's ONLY login path) |
-| Gatus Tika/Gotenberg | `:9998/`, `:3199/health` | consume-path sidecars |
-| Post-deploy smoke | login body + both sidecars | functional, not liveness |
+| Signal                          | Where                                   | Meaning                                                                                                                                                                            |
+| ------------------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Gatus "Paperless"               | `http://localhost:2892/accounts/login/` | `[STATUS]==200` + body has `oidc/pocket-id` + `getElementById` + NO `type="password"` — catches BOTH the bridge degrading (password form back = visible) and the SSO flow breaking |
+| Gatus "Pocket ID SQLite Health" | `:9100/metrics`                         | `system_pocket_id_busy_*` — SQLITE_BUSY storm on the auth SPOF (this app's ONLY login path)                                                                                        |
+| Gatus Tika/Gotenberg            | `:9998/`, `:3199/health`                | consume-path sidecars                                                                                                                                                              |
+| Post-deploy smoke               | login body + both sidecars              | functional, not liveness                                                                                                                                                           |
 
 Definitive gatus state (root): `sudo sqlite3 -readonly /var/lib/private/gatus/gatus.db 'select name,status from endpoints;'` — the gatus HTTP API sits behind OIDC and 401s plain curl.
 

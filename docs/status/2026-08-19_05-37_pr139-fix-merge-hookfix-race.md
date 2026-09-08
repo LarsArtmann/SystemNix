@@ -70,8 +70,8 @@ All review fixes implemented, verified, and pushed to PR 139 (`e4a0634a`); merge
 
 1. Decide hook-fix placement: leave `8302b94b` (hook fix inside PR 139) as-is, or cherry-pick the hook change to master directly so it lands regardless of PR timing.
 2. Verify `8302b94b`'s three fixes to my code (atomic write, stderr visibility, `or {}` guard) — I have NOT reviewed that commit's diff in detail; trust-but-verify the regeneration path now writes via mktemp+install.
-~~3. Merge PR 139 (MERGEABLE; CI red is pre-existing master-red) or hold for deploy smoke.~~ done — merged + deployed (token unit live; deploy.sh restart list carries it)
-4. `nix run .#deploy` after merge; then the smoke: unit state, token file owner/mode, `repos/search` 200 with token, `/user` 403 with token (proves scope).
+   ~~3. Merge PR 139 (MERGEABLE; CI red is pre-existing master-red) or hold for deploy smoke.~~ done — merged + deployed (token unit live; deploy.sh restart list carries it)
+3. `nix run .#deploy` after merge; then the smoke: unit state, token file owner/mode, `repos/search` 200 with token, `/user` 403 with token (proves scope).
 
 **Hermes consumer (P1):**
 5. Decide consumption mechanism (env file path vs LoadCredential on hermes unit) — question g.3 below.

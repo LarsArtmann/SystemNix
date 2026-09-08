@@ -4,7 +4,7 @@ _2026-09-05 15:56 · evo-x2 · scope: this session's run (follow-up to 15-39 rep
 
 ## TL;DR
 
-During pre-reboot verification I found that **deploy #4 activated the flip system but never wrote a profile generation or boot entry** — nh aborted at *test-activation* (exit 4, two failed units) before its profile+bootloader phase, and deploy.sh's exit-4 rescue path masked it. Rebooting then would have silently booted the day-old system-760: the migration would not have taken effect and nobody would have noticed until much later. Repaired with the canonical `nix-env --profile --set` + `switch-to-configuration boot`; generation **761** + default entry verified pointing at the flip system whose closure is proven on the Samsung. **Reboot-ready for real now.**
+During pre-reboot verification I found that **deploy #4 activated the flip system but never wrote a profile generation or boot entry** — nh aborted at _test-activation_ (exit 4, two failed units) before its profile+bootloader phase, and deploy.sh's exit-4 rescue path masked it. Rebooting then would have silently booted the day-old system-760: the migration would not have taken effect and nobody would have noticed until much later. Repaired with the canonical `nix-env --profile --set` + `switch-to-configuration boot`; generation **761** + default entry verified pointing at the flip system whose closure is proven on the Samsung. **Reboot-ready for real now.**
 
 ## a) FULLY DONE ✅
 

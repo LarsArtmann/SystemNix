@@ -8,21 +8,21 @@
 
 ## Deployment facts (verified, not assumed)
 
-| Signal | Value | Source |
-| --- | --- | --- |
-| `mail_relay_credential_placeholder` | **0** (real Resend key rendered + live) | collector textfile, post-deploy |
-| Postfix queue | **0** messages | collector textfile |
-| `mail-relay-metrics` collector | **WRITING** (first green since 2026-09-02; the 4-day outage is over) | post-deploy smoke PASS |
-| §12 credential check | **PASS** "real upstream credential rendered (collector verdict)" — fix live-verified | standalone smoke run 05:39 |
-| pocket-id.yaml (new Resend key) | committed `467983e8` | git log |
-| §12 script fix | committed `1e171324` | git log |
-| mail-relay.yaml key save | lastmodified 2026-09-06T02:35:45Z (user edit), daemon-committed `04e5118b` | sops metadata + git |
-| Bank-sync DNS failures 03:42/04:12 | transient name-resolution outage; **recovered 05:28** ("sync completed successfully") | journal |
-| Wise SCA challenge | **NEW challenge live** — statements degraded, OTT `30a5f530-…` issued in journal | journal 05:28 |
-| CV `/export/pdf` FAIL at 05:39 | **I/O casualty** (`sqlite … context deadline exceeded`), not typst/assets; deploy-time PASS proved the render path | journal 05:47 |
-| I/O saturation (avg10 83%) | post-deploy background wave: activitywatch-data-to-pool + buildcache-gc, both **completed 05:45** | journal + /proc/pressure/io |
-| freshclam | self-recovered 05:00 | journal |
-| service-health-check | aggregator only: inboxclean-sync (auth) + stale `aw-watcher-window-wayland` user-unit state (no journal entries this boot) | journal |
+| Signal                              | Value                                                                                                                      | Source                          |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| `mail_relay_credential_placeholder` | **0** (real Resend key rendered + live)                                                                                    | collector textfile, post-deploy |
+| Postfix queue                       | **0** messages                                                                                                             | collector textfile              |
+| `mail-relay-metrics` collector      | **WRITING** (first green since 2026-09-02; the 4-day outage is over)                                                       | post-deploy smoke PASS          |
+| §12 credential check                | **PASS** "real upstream credential rendered (collector verdict)" — fix live-verified                                       | standalone smoke run 05:39      |
+| pocket-id.yaml (new Resend key)     | committed `467983e8`                                                                                                       | git log                         |
+| §12 script fix                      | committed `1e171324`                                                                                                       | git log                         |
+| mail-relay.yaml key save            | lastmodified 2026-09-06T02:35:45Z (user edit), daemon-committed `04e5118b`                                                 | sops metadata + git             |
+| Bank-sync DNS failures 03:42/04:12  | transient name-resolution outage; **recovered 05:28** ("sync completed successfully")                                      | journal                         |
+| Wise SCA challenge                  | **NEW challenge live** — statements degraded, OTT `30a5f530-…` issued in journal                                           | journal 05:28                   |
+| CV `/export/pdf` FAIL at 05:39      | **I/O casualty** (`sqlite … context deadline exceeded`), not typst/assets; deploy-time PASS proved the render path         | journal 05:47                   |
+| I/O saturation (avg10 83%)          | post-deploy background wave: activitywatch-data-to-pool + buildcache-gc, both **completed 05:45**                          | journal + /proc/pressure/io     |
+| freshclam                           | self-recovered 05:00                                                                                                       | journal                         |
+| service-health-check                | aggregator only: inboxclean-sync (auth) + stale `aw-watcher-window-wayland` user-unit state (no journal entries this boot) | journal                         |
 
 ---
 
@@ -68,7 +68,7 @@
 
 1. **Verify every operational command before giving it to the user** — especially when repo docs disagree. The correct pattern was one screen away in the skill I had just loaded.
 2. **Smoke checks must declare their assumed privilege context.** Add a header note in post-deploy-check.sh ("runs as unprivileged user; never assert on root-only paths") and prefer `[ -f ]` + readable-surface probes; where a permission denial is possible, distinguish missing from unreadable instead of conflating both into "missing".
-3. **Operational command patterns need ONE canonical home** (the sops skill doc) and every other mention should reference it instead of restating — restatement is how the 6 landmines diverged. A doc-lint that greps for `sudo sops ` outside the canonical pattern would have caught this class.
+3. **Operational command patterns need ONE canonical home** (the sops skill doc) and every other mention should reference it instead of restating — restatement is how the 6 landmines diverged. A doc-lint that greps for `sudo sops` outside the canonical pattern would have caught this class.
 4. **Cumulative-counter smoke checks need windowed semantics** (bank-sync class): a check that can only un-FAIL via a unit restart is a false alarm generator.
 5. **Post-deploy background jobs should respect I/O pressure** — deploy.sh fired activitywatch-data-to-pool + buildcache-gc + data-to-pool concurrently; IO PSI avg300 hit 81% and took out CV's SQLite deadlines (deploy-time smoke PASSed only because it ran before saturation peaked). Reuse the scrub-guard pattern (skip/defer on IO PSI) for deploy.sh's post-switch section.
 6. **Re-verify deploy-time PASSes that touch slow paths** (CV export) — the 04:40 PASS and the 05:39 FAIL are both real; time-of-check under an I/O wave is not a stable signal.
@@ -77,6 +77,7 @@
 ## f) NEXT TASKS (prioritized)
 
 **P0 — user actions blocking go-lives (this week):**
+
 1. Approve the Wise SCA challenge in the Wise app; drop the OTT into `/var/lib/bank-sync-sca/token.env` (runbook `docs/services/bank-sync-sca.md`), restart bank-sync, then remove the file.
 2. Verify `larsartmann.cloud` in Resend (Domains → SPF/DKIM → "Verified"), then one real send: `printf 'Subject: relay test\n\nok\n' | sudo sendmail -f noreply@larsartmann.cloud <your mailbox>`; confirm arrival + postfix journal.
 3. InboxClean: flip the Google OAuth consent screen to "In production" FIRST, then re-auth BOTH accounts via the AGENTS.md runbook (work account needs the `INBOXCLEAN_CONFIG` env), verify `/health` both connected, re-enable `services.inboxclean.sync`.
@@ -88,7 +89,7 @@
 7. Gatus textfile freshness conditions for all collectors (frozen-file phantom green).
 8. §12: add mtime staleness assertion on the collector textfile it now trusts.
 9. Bank-sync smoke check: replace cumulative-counter FAIL with windowed/last-cycle semantics.
-10. Doc-lint: reject `sudo sops ` occurrences outside the canonical SOPS_AGE_KEY pattern (pre-commit grep, same shape as audit-textfile-tmp.sh).
+10. Doc-lint: reject `sudo sops` occurrences outside the canonical SOPS_AGE_KEY pattern (pre-commit grep, same shape as audit-textfile-tmp.sh).
 11. Re-verify CV `/export/pdf` PASS after the I/O wave drained (should self-heal; if not, journal dig).
 12. Deploy.sh: gate/stagger post-switch background jobs on I/O PSI (scrub-guard pattern).
 13. `tests/test-oauth2-proxy.nix`: register in tests/default.nix or trash.

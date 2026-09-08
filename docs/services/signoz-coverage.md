@@ -69,11 +69,11 @@ services.signoz-coverage.expected.my-unit = {
 The two tables have INCOMPATIBLE timestamp types — schema-verify before
 writing SQL:
 
-| Table | timestamp column | Convert to epoch ms |
-|---|---|---|
-| `signoz_traces.distributed_signoz_index_v3` | `timestamp` DateTime64(9) | `toUnixTimestamp64Milli(timestamp)` |
-| `signoz_logs.distributed_logs_v2` | `timestamp` **UInt64 NANOSECONDS** | `intDiv(max(timestamp), 1000000)` |
-| `signoz_metrics.distributed_samples_v4` | `unix_milli` (already ms) | as-is; join `time_series_v4` on fingerprint for labels; `samples_v2` is EMPTY |
+| Table                                       | timestamp column                   | Convert to epoch ms                                                           |
+| ------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------- |
+| `signoz_traces.distributed_signoz_index_v3` | `timestamp` DateTime64(9)          | `toUnixTimestamp64Milli(timestamp)`                                           |
+| `signoz_logs.distributed_logs_v2`           | `timestamp` **UInt64 NANOSECONDS** | `intDiv(max(timestamp), 1000000)`                                             |
+| `signoz_metrics.distributed_samples_v4`     | `unix_milli` (already ms)          | as-is; join `time_series_v4` on fingerprint for labels; `samples_v2` is EMPTY |
 
 Service name columns: traces = `serviceName`; logs = `resources_string['service.name']`.
 
@@ -92,16 +92,16 @@ WHERE timestamp > toUnixTimestamp(now() - INTERVAL 1 DAY) * 1000000000;
 
 ## Metrics reference
 
-| Metric | Meaning |
-|---|---|
-| `signoz_traces_expected{service}` | 1 per registry entry |
-| `signoz_traces_reporting{service}` | 1 = span within its freshness budget |
-| `signoz_traces_last_span_age_seconds{service}` | -1 = never seen |
-| `signoz_traces_missing` | enforced services dark RIGHT NOW (healthy: 0) |
-| `signoz_traces_upstream_gaps` | instrumentation debt count |
-| `signoz_traces_upstream_gaps_over_threshold` | budget breach (healthy: 0) — fires Gatus |
-| `signoz_logs_pipeline_{age_seconds,stale}` | journald pipeline freshness (stale > 30 min) |
-| `signoz_coverage_scrape_errors` | collector ClickHouse queries failed (fail-closed pair with forced-high missing) |
+| Metric                                         | Meaning                                                                         |
+| ---------------------------------------------- | ------------------------------------------------------------------------------- |
+| `signoz_traces_expected{service}`              | 1 per registry entry                                                            |
+| `signoz_traces_reporting{service}`             | 1 = span within its freshness budget                                            |
+| `signoz_traces_last_span_age_seconds{service}` | -1 = never seen                                                                 |
+| `signoz_traces_missing`                        | enforced services dark RIGHT NOW (healthy: 0)                                   |
+| `signoz_traces_upstream_gaps`                  | instrumentation debt count                                                      |
+| `signoz_traces_upstream_gaps_over_threshold`   | budget breach (healthy: 0) — fires Gatus                                        |
+| `signoz_logs_pipeline_{age_seconds,stale}`     | journald pipeline freshness (stale > 30 min)                                    |
+| `signoz_coverage_scrape_errors`                | collector ClickHouse queries failed (fail-closed pair with forced-high missing) |
 
 ## Known gaps (2026-08-31, post bank-sync flip)
 

@@ -19,19 +19,19 @@
 
 ## a) FULLY DONE (verified this session)
 
-| Item | Proof |
-|---|---|
-| Resumed state correctly | Todos rebuilt per handoff; deploy logs read FIRST (the 12-31 session's own lesson, followed) |
-| Parallel-session reality absorbed | Lock rollback to `7dee7292` (12-28 session, 00:11) + 00:3x deploy train discovered from `/var/log/systemnix-deploys/` before acting |
-| Live-session detection | 5 crush procs + fresh `.crush` logs in CV repo → verified no intent collision (its ledger note = flaky test), sequenced around it |
-| **Lock-free FOD probe at exact rev** | `builtins.getFlake "git+ssh://…?rev=7bc16e09…"` → `.packages.x86_64-linux.default.goModules` → `got: sha256-OWKH5Vax…` — caught the STALE handoff hash (`tH3s…`) before any paste |
-| Upstream fix landed | CV `4ac7ca7b`: vendorHash pasted at `nix/packages.nix:166`; daemon lagged >2 min → documented PATHSPEC commit; CV pre-commit (incl. full workspace build) passed; **pushed** under the user's blanket directive + the 12-28 session's explicit delegation |
-| SystemNix re-locked | `nix flake lock --update-input cv` → `4ac7ca7b` (cv subtree nixpkgs rode 2026-08-31→09-02; validated by build, not assumed) |
-| **Hermetic verification (the real gate)** | goModules FOD **printed a store path** (`cv-4ac7ca7-go-modules`); FULL `cv-4ac7ca7` package built; `nix flake check --no-build` **rc=0** |
-| Worktree hygiene | `/tmp/cv-before2`, `/tmp/cvbase/CV` trashed + `git worktree prune` (the 12-28 session's ask) |
-| Docs closeout | cv.md lock-state breadcrumb + probe protocol in the ignition runbook; TODO_LIST deploy row; status-report RESOLUTION ADDENDUM answering the 3 carried questions; AGENTS.md lock-free-probe + rollback-etiquette lesson |
-| CI triage | Latest run's failures enumerated: `vm-tests` + `nix-check` both die on `branching-flow` tarball 404 — PRE-EXISTING (red before this session), NOT cv-related; `shellcheck` green |
-| Tree state at 15:56 | Clean, 0 unpushed, AGENTS.md committed (`2758b23e`) |
+| Item                                      | Proof                                                                                                                                                                                                                                                     |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Resumed state correctly                   | Todos rebuilt per handoff; deploy logs read FIRST (the 12-31 session's own lesson, followed)                                                                                                                                                              |
+| Parallel-session reality absorbed         | Lock rollback to `7dee7292` (12-28 session, 00:11) + 00:3x deploy train discovered from `/var/log/systemnix-deploys/` before acting                                                                                                                       |
+| Live-session detection                    | 5 crush procs + fresh `.crush` logs in CV repo → verified no intent collision (its ledger note = flaky test), sequenced around it                                                                                                                         |
+| **Lock-free FOD probe at exact rev**      | `builtins.getFlake "git+ssh://…?rev=7bc16e09…"` → `.packages.x86_64-linux.default.goModules` → `got: sha256-OWKH5Vax…` — caught the STALE handoff hash (`tH3s…`) before any paste                                                                         |
+| Upstream fix landed                       | CV `4ac7ca7b`: vendorHash pasted at `nix/packages.nix:166`; daemon lagged >2 min → documented PATHSPEC commit; CV pre-commit (incl. full workspace build) passed; **pushed** under the user's blanket directive + the 12-28 session's explicit delegation |
+| SystemNix re-locked                       | `nix flake lock --update-input cv` → `4ac7ca7b` (cv subtree nixpkgs rode 2026-08-31→09-02; validated by build, not assumed)                                                                                                                               |
+| **Hermetic verification (the real gate)** | goModules FOD **printed a store path** (`cv-4ac7ca7-go-modules`); FULL `cv-4ac7ca7` package built; `nix flake check --no-build` **rc=0**                                                                                                                  |
+| Worktree hygiene                          | `/tmp/cv-before2`, `/tmp/cvbase/CV` trashed + `git worktree prune` (the 12-28 session's ask)                                                                                                                                                              |
+| Docs closeout                             | cv.md lock-state breadcrumb + probe protocol in the ignition runbook; TODO_LIST deploy row; status-report RESOLUTION ADDENDUM answering the 3 carried questions; AGENTS.md lock-free-probe + rollback-etiquette lesson                                    |
+| CI triage                                 | Latest run's failures enumerated: `vm-tests` + `nix-check` both die on `branching-flow` tarball 404 — PRE-EXISTING (red before this session), NOT cv-related; `shellcheck` green                                                                          |
+| Tree state at 15:56                       | Clean, 0 unpushed, AGENTS.md committed (`2758b23e`)                                                                                                                                                                                                       |
 
 ## b) PARTIALLY DONE
 
@@ -88,7 +88,7 @@
 
 ---
 
-*Reported 2026-09-03 15:58. Chain repaired and verified hermetically; deploy pending gates; CI darkness (branching-flow 404) is the newly-found systemic blocker for all CI-validated claims. Waiting for instructions.*
+_Reported 2026-09-03 15:58. Chain repaired and verified hermetically; deploy pending gates; CI darkness (branching-flow 404) is the newly-found systemic blocker for all CI-validated claims. Waiting for instructions._
 
 ---
 

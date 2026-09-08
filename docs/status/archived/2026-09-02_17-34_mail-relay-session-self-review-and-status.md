@@ -7,17 +7,17 @@
 
 ## a) FULLY DONE
 
-| Item | Proof |
-|---|---|
-| Email inventory across ALL services (grep + module reads + upstream research) | pocket-id (Resend :465, dead key, TLS fail-closed via go-kit), forgejo (no mailer), immich (UI-only, verified zero nixpkgs options), twenty (nothing found), system/cron mail (nowhere); paperless 3.1.0 settings.py ground truth read from the store package (`EMAIL_ENABLED` flips on host≠"localhost", `PAPERLESS_EMAIL_FROM`, USE_TLS/SSL bools, mail task `PAPERLESS_EMAIL_TASK_CRON` */10) |
-| `modules/nixos/services/mail-relay.nix` — Postfix null client, COMMITTED | loopback-only `:25` (`ports.mail-relay=25`), `mydestination=""`, relay `[smtp.resend.com]:587`, mandatory TLS, sasl `texthash:` from sops template, generic-map sender rewrite, root/postmaster aliases, `systemMailRecipient` + `queueAlertThreshold` options, ioTier + onFailure, `restartTriggers` config stamp (nixpkgs module has none), `mail-relay-metrics` collector (queue depth / over-threshold / placeholder / scrape_errors, fail-closed, timeout-bounded) |
-| sops wiring COMMITTED | `platforms/nixos/secrets/mail-relay.yaml` (placeholder, public-key encrypted, gitleaks-clean) + `mail-relay-sasl` template (postfix:postfix 0400, restartUnits postfix) |
-| Consumers COMMITTED | paperless `PAPERLESS_EMAIL_*` relay-gated block; forgejo `[mailer]` plain SMTP relay-gated; configuration.nix enable |
-| Monitoring COMMITTED | Gatus "Mail Relay (SMTP)" TCP + "Mail Relay Service" state checks; `postfix` in system-health defaults (index 22 verified) |
-| Verification at commit time | targeted evals of postfix main.cf / paperless env / forgejo mailer / sops template / gatus endpoints (JSON) all correct; `nix flake check --no-build` green ×2; formatter clean; pre-commit hook green (837541ce) |
-| Docs | `docs/services/mail-relay.md` runbook; AGENTS.md "Mail Relay" section + Paperless bullet; TODO_LIST go-live item + PERSISTENT-NAG cross-ref |
-| User Q&A | postfix explainer; why-standard + alternatives table; relation to `reports/open-source-email-monitoring-tools-report.md` + `selfhosted-email-guide.md` (both READ; conclusion: what we built IS the report's hybrid-relay recommendation; Layer-2 gap = optional postfix_exporter fork) |
-| Pareto plan (user-ordered) | 232 tasks ≤12min, 6 tiers, sorted impact/effort — `docs/planning/2026-09-02_17_20-mail-relay-completion-full-backlog-pareto-plan.html` (91KB, D2 graph) + `/tmp/plan-table.md`; new TODO row for the relay-finish gap |
+| Item                                                                          | Proof                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Email inventory across ALL services (grep + module reads + upstream research) | pocket-id (Resend :465, dead key, TLS fail-closed via go-kit), forgejo (no mailer), immich (UI-only, verified zero nixpkgs options), twenty (nothing found), system/cron mail (nowhere); paperless 3.1.0 settings.py ground truth read from the store package (`EMAIL_ENABLED` flips on host≠"localhost", `PAPERLESS_EMAIL_FROM`, USE_TLS/SSL bools, mail task `PAPERLESS_EMAIL_TASK_CRON` */10)                                                                        |
+| `modules/nixos/services/mail-relay.nix` — Postfix null client, COMMITTED      | loopback-only `:25` (`ports.mail-relay=25`), `mydestination=""`, relay `[smtp.resend.com]:587`, mandatory TLS, sasl `texthash:` from sops template, generic-map sender rewrite, root/postmaster aliases, `systemMailRecipient` + `queueAlertThreshold` options, ioTier + onFailure, `restartTriggers` config stamp (nixpkgs module has none), `mail-relay-metrics` collector (queue depth / over-threshold / placeholder / scrape_errors, fail-closed, timeout-bounded) |
+| sops wiring COMMITTED                                                         | `platforms/nixos/secrets/mail-relay.yaml` (placeholder, public-key encrypted, gitleaks-clean) + `mail-relay-sasl` template (postfix:postfix 0400, restartUnits postfix)                                                                                                                                                                                                                                                                                                 |
+| Consumers COMMITTED                                                           | paperless `PAPERLESS_EMAIL_*` relay-gated block; forgejo `[mailer]` plain SMTP relay-gated; configuration.nix enable                                                                                                                                                                                                                                                                                                                                                    |
+| Monitoring COMMITTED                                                          | Gatus "Mail Relay (SMTP)" TCP + "Mail Relay Service" state checks; `postfix` in system-health defaults (index 22 verified)                                                                                                                                                                                                                                                                                                                                              |
+| Verification at commit time                                                   | targeted evals of postfix main.cf / paperless env / forgejo mailer / sops template / gatus endpoints (JSON) all correct; `nix flake check --no-build` green ×2; formatter clean; pre-commit hook green (837541ce)                                                                                                                                                                                                                                                       |
+| Docs                                                                          | `docs/services/mail-relay.md` runbook; AGENTS.md "Mail Relay" section + Paperless bullet; TODO_LIST go-live item + PERSISTENT-NAG cross-ref                                                                                                                                                                                                                                                                                                                             |
+| User Q&A                                                                      | postfix explainer; why-standard + alternatives table; relation to `reports/open-source-email-monitoring-tools-report.md` + `selfhosted-email-guide.md` (both READ; conclusion: what we built IS the report's hybrid-relay recommendation; Layer-2 gap = optional postfix_exporter fork)                                                                                                                                                                                 |
+| Pareto plan (user-ordered)                                                    | 232 tasks ≤12min, 6 tiers, sorted impact/effort — `docs/planning/2026-09-02_17_20-mail-relay-completion-full-backlog-pareto-plan.html` (91KB, D2 graph) + `/tmp/plan-table.md`; new TODO row for the relay-finish gap                                                                                                                                                                                                                                                   |
 
 ## b) PARTIALLY DONE
 
@@ -58,58 +58,58 @@ Lies told: none found on re-read. Scope creep: none (collector was phantom-green
 
 ## f) Next tasks (top 50, ordered — full 232 in the plan file)
 
-| # | Task | Owner |
-|---|---|---|
-| 1 | Diagnose attic VM test failure (`/var/lib/atticd/storage` missing; suspect fa4309ce flake.lock churn or timing) — repo is RED, blocks all commits | A |
-| 2 | Re-add Gatus "Mail Relay Queue" check (anchored forms) + eval | A |
-| 3 | Investigate/justify flake.lock churn in fa4309ce (plain-nix-fmt re-lock trap) | A |
-| 4 | Commit staged plan HTML + TODO row once hook green | A |
-| 5 | Write tests/test-mail-relay.nix | A |
-| 6 | Run + fix mail-relay VM test | A |
-| 7 | post-deploy-check §12 (banner, placeholder WARN, paperless env) | A |
-| 8 | Document collector + queue check in AGENTS.md + runbook | A |
-| 9 | U: create NEW Resend API key | U |
-| 10 | U: `sudo sops` mail-relay.yaml + pocket-id.yaml, restart postfix | U |
-| 11 | U: verify sending domain in Resend | U |
-| 12 | A: set fromAddress + deploy | A |
-| 13 | A: E2E (sendmail, paperless share link, mailq drain, Pocket ID email) | A |
-| 14 | U: Immich SMTP in admin UI (127.0.0.1:25) | U |
-| 15 | U: Paperless inbound mailbox + Mail rules | U |
-| 16 | A: post-go-live TODO/AGENTS status flip | A |
-| 17 | A: present /data repair T04-T08 runbook | A |
-| 18 | U: /data docker-down window decision | U |
-| 19 | A: DuckDB 54G safety copy → pool archive | A |
-| 20 | A: read-only `btrfs check --mode=low-risk` in window | A |
-| 21 | A/U: /data minimal fix + scrub verify | A/U |
-| 22 | A: resume btrbk-data, confirm first full receive | A |
-| 23 | A: btrbk-data oom containment (MemoryHigh/OOMScoreAdjust) | A |
-| 24 | A: dnsblockd `ManagedOOMPreference=omit` | A |
-| 25 | A: deploy pressure gate + IO PSI/disk %util | A |
-| 26 | A: IO-PSI emergency guard zone | A |
-| 27 | A: boot-generation freshness Gatus check | A |
-| 28 | A: journald SystemMaxUse=2G + bounds audit | A |
-| 29 | A: SIGPIPE/pipefail collector audit | A |
-| 30 | A: Post-DAS convergence final-leg verify | A |
-| 31 | U: reboot into kernel 7.2.2 | U |
-| 32 | A: amdxdna ABI diff + booted==current verify | A |
-| 33 | A: flm v1.0.3 pull + validate + retune (or revert) | A |
-| 34 | A: XRT/kernel upstream issue (verify-before-filing) | A |
-| 35 | U: off-site backup decision (StorageBox/vault/Photos) | U |
-| 36 | A/U: Context7 rotation + MCP config update | A/U |
-| 37 | U: Turso decision (DiscordSync offsite) | U |
-| 38 | A: boot-catch-up stampede staggering | A |
-| 39 | A: CI executes lint derivations | A |
-| 40 | A: shellcheck + unit binary-coverage pre-commit | A |
-| 41 | A: eval audits (ReadWritePaths⇒RequiresMountsFor, Persistent timers) | A |
-| 42 | A: backup_ever_succeeded + catchup report | A |
-| 43 | A: dnsblockd upstream OTLP push+tag+relock+flip | A |
-| 44 | A: bank-sync upstream OTLP push+tag+relock+flip | A |
-| 45 | A: niri-session-manager restore-once gate upstream | A |
-| 46 | A: Samsung P1 rsync → fileSystems swap → acceptance | A |
-| 47 | A: test-cv `virtualisation.fileSystems` fix + re-verify | A |
-| 48 | A: browser-history registration-gate LIVE verify | A |
-| 49 | A: import_export.go registration gate (cqrs-htmx) | A |
-| 50 | A: samber/do InvokeNamed sweep (2-day-outage class) | A |
+| #  | Task                                                                                                                                              | Owner |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| 1  | Diagnose attic VM test failure (`/var/lib/atticd/storage` missing; suspect fa4309ce flake.lock churn or timing) — repo is RED, blocks all commits | A     |
+| 2  | Re-add Gatus "Mail Relay Queue" check (anchored forms) + eval                                                                                     | A     |
+| 3  | Investigate/justify flake.lock churn in fa4309ce (plain-nix-fmt re-lock trap)                                                                     | A     |
+| 4  | Commit staged plan HTML + TODO row once hook green                                                                                                | A     |
+| 5  | Write tests/test-mail-relay.nix                                                                                                                   | A     |
+| 6  | Run + fix mail-relay VM test                                                                                                                      | A     |
+| 7  | post-deploy-check §12 (banner, placeholder WARN, paperless env)                                                                                   | A     |
+| 8  | Document collector + queue check in AGENTS.md + runbook                                                                                           | A     |
+| 9  | U: create NEW Resend API key                                                                                                                      | U     |
+| 10 | U: `sudo sops` mail-relay.yaml + pocket-id.yaml, restart postfix                                                                                  | U     |
+| 11 | U: verify sending domain in Resend                                                                                                                | U     |
+| 12 | A: set fromAddress + deploy                                                                                                                       | A     |
+| 13 | A: E2E (sendmail, paperless share link, mailq drain, Pocket ID email)                                                                             | A     |
+| 14 | U: Immich SMTP in admin UI (127.0.0.1:25)                                                                                                         | U     |
+| 15 | U: Paperless inbound mailbox + Mail rules                                                                                                         | U     |
+| 16 | A: post-go-live TODO/AGENTS status flip                                                                                                           | A     |
+| 17 | A: present /data repair T04-T08 runbook                                                                                                           | A     |
+| 18 | U: /data docker-down window decision                                                                                                              | U     |
+| 19 | A: DuckDB 54G safety copy → pool archive                                                                                                          | A     |
+| 20 | A: read-only `btrfs check --mode=low-risk` in window                                                                                              | A     |
+| 21 | A/U: /data minimal fix + scrub verify                                                                                                             | A/U   |
+| 22 | A: resume btrbk-data, confirm first full receive                                                                                                  | A     |
+| 23 | A: btrbk-data oom containment (MemoryHigh/OOMScoreAdjust)                                                                                         | A     |
+| 24 | A: dnsblockd `ManagedOOMPreference=omit`                                                                                                          | A     |
+| 25 | A: deploy pressure gate + IO PSI/disk %util                                                                                                       | A     |
+| 26 | A: IO-PSI emergency guard zone                                                                                                                    | A     |
+| 27 | A: boot-generation freshness Gatus check                                                                                                          | A     |
+| 28 | A: journald SystemMaxUse=2G + bounds audit                                                                                                        | A     |
+| 29 | A: SIGPIPE/pipefail collector audit                                                                                                               | A     |
+| 30 | A: Post-DAS convergence final-leg verify                                                                                                          | A     |
+| 31 | U: reboot into kernel 7.2.2                                                                                                                       | U     |
+| 32 | A: amdxdna ABI diff + booted==current verify                                                                                                      | A     |
+| 33 | A: flm v1.0.3 pull + validate + retune (or revert)                                                                                                | A     |
+| 34 | A: XRT/kernel upstream issue (verify-before-filing)                                                                                               | A     |
+| 35 | U: off-site backup decision (StorageBox/vault/Photos)                                                                                             | U     |
+| 36 | A/U: Context7 rotation + MCP config update                                                                                                        | A/U   |
+| 37 | U: Turso decision (DiscordSync offsite)                                                                                                           | U     |
+| 38 | A: boot-catch-up stampede staggering                                                                                                              | A     |
+| 39 | A: CI executes lint derivations                                                                                                                   | A     |
+| 40 | A: shellcheck + unit binary-coverage pre-commit                                                                                                   | A     |
+| 41 | A: eval audits (ReadWritePaths⇒RequiresMountsFor, Persistent timers)                                                                              | A     |
+| 42 | A: backup_ever_succeeded + catchup report                                                                                                         | A     |
+| 43 | A: dnsblockd upstream OTLP push+tag+relock+flip                                                                                                   | A     |
+| 44 | A: bank-sync upstream OTLP push+tag+relock+flip                                                                                                   | A     |
+| 45 | A: niri-session-manager restore-once gate upstream                                                                                                | A     |
+| 46 | A: Samsung P1 rsync → fileSystems swap → acceptance                                                                                               | A     |
+| 47 | A: test-cv `virtualisation.fileSystems` fix + re-verify                                                                                           | A     |
+| 48 | A: browser-history registration-gate LIVE verify                                                                                                  | A     |
+| 49 | A: import_export.go registration gate (cqrs-htmx)                                                                                                 | A     |
+| 50 | A: samber/do InvokeNamed sweep (2-day-outage class)                                                                                               | A     |
 
 ## g) Questions I cannot answer myself
 
@@ -119,7 +119,7 @@ Lies told: none found on re-read. Scope creep: none (collector was phantom-green
 
 ---
 
-*Point-in-time snapshot. Living source: TODO_LIST.md. Full task explosion: `docs/planning/2026-09-02_17_20-mail-relay-completion-full-backlog-pareto-plan.html`.*
+_Point-in-time snapshot. Living source: TODO_LIST.md. Full task explosion: `docs/planning/2026-09-02_17_20-mail-relay-completion-full-backlog-pareto-plan.html`._
 
 ---
 

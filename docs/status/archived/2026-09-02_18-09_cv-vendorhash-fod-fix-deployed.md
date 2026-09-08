@@ -28,19 +28,19 @@ User pasted a failed `nh` deploy: `cv-db30fa6-go-modules` FOD hash mismatch
 
 ## Execution timeline
 
-| Time (approx) | Step | Result |
-|---|---|---|
-| 16:35 | deploy failure pasted; root-cause enumeration | 1 FOD failure identified |
-| 16:40 | lock/checkout/diff forensics; override + subtree drift found | done |
-| ~17:00 | FOD hash measured under CV's own lock (no tree edits) | `iI0N…` |
-| ~17:12 | parallel session had already committed identical fix in CV (`7dee7292`); my edit attempt raced and was abandoned | verified, not duplicated |
-| ~17:15 | CV push (turned out already pushed by parallel session; verified `origin/master == HEAD == 7dee7292`) | up-to-date |
-| ~17:2x | SystemNix `nix flake lock --update-input cv` → `7dee7292` (subtree intentionally NOT re-synced — update-input quirk; proven harmless) | done |
-| ~17:3x | dropped the whole override in cv.nix (re-read first — another mid-edit race had meanwhile re-pinned it to `iI0N…`; upstream now pins it itself) | done |
-| ~17:4x | `nix build …toplevel --keep-going` | **PASSED** — `cv-7dee729-go-modules` green |
-| ~17:5x | `nix run .#deploy` | switch OK; smoke 83 PASS / 3 FAIL |
-| ~18:0x | post-deploy-check re-run | 83 PASS / **2 FAIL** (dnsblockd :9090, FastFlowLM :52625) |
-| 18:0x | CV verified live: `/health/live` → **version 7dee729**, `/export/pdf` compiles a real PDF | **goal achieved** |
+| Time (approx) | Step                                                                                                                                            | Result                                                    |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| 16:35         | deploy failure pasted; root-cause enumeration                                                                                                   | 1 FOD failure identified                                  |
+| 16:40         | lock/checkout/diff forensics; override + subtree drift found                                                                                    | done                                                      |
+| ~17:00        | FOD hash measured under CV's own lock (no tree edits)                                                                                           | `iI0N…`                                                   |
+| ~17:12        | parallel session had already committed identical fix in CV (`7dee7292`); my edit attempt raced and was abandoned                                | verified, not duplicated                                  |
+| ~17:15        | CV push (turned out already pushed by parallel session; verified `origin/master == HEAD == 7dee7292`)                                           | up-to-date                                                |
+| ~17:2x        | SystemNix `nix flake lock --update-input cv` → `7dee7292` (subtree intentionally NOT re-synced — update-input quirk; proven harmless)           | done                                                      |
+| ~17:3x        | dropped the whole override in cv.nix (re-read first — another mid-edit race had meanwhile re-pinned it to `iI0N…`; upstream now pins it itself) | done                                                      |
+| ~17:4x        | `nix build …toplevel --keep-going`                                                                                                              | **PASSED** — `cv-7dee729-go-modules` green                |
+| ~17:5x        | `nix run .#deploy`                                                                                                                              | switch OK; smoke 83 PASS / 3 FAIL                         |
+| ~18:0x        | post-deploy-check re-run                                                                                                                        | 83 PASS / **2 FAIL** (dnsblockd :9090, FastFlowLM :52625) |
+| 18:0x         | CV verified live: `/health/live` → **version 7dee729**, `/export/pdf` compiles a real PDF                                                       | **goal achieved**                                         |
 
 ---
 
@@ -87,6 +87,7 @@ User pasted a failed `nh` deploy: `cv-db30fa6-go-modules` FOD hash mismatch
 ## f) NEXT (session-derived, priority order)
 
 **P0 — open failures from this deploy:**
+
 1. Root: run `sudo bash scripts/dnsblockd-goroutine-dump.sh` on the wedged :9090 (capture-then-restart; first-ever dump of the recurring wedge — do NOT plain-restart).
 2. Analyze the dump → root-cause the `batch writer flush` / handler-stuck wedge (2026-08-27 suspect: `healthProbe.Evaluate()` DB check or shared mutex).
 3. Decide FastFlowLM: wait for guard auto-restore (needs MemAvail ≥15%) vs. free memory deliberately (what is holding ~60 GiB anon? top consumer audit) vs. accept down.

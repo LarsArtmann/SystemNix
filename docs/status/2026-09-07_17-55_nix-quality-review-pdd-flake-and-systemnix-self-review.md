@@ -123,7 +123,7 @@
 
 ---
 
-*Arte in Aeternum — report written from session memory only; no new research performed. Waiting for instructions.*
+_Arte in Aeternum — report written from session memory only; no new research performed. Waiting for instructions._
 
 ---
 

@@ -144,14 +144,14 @@
 ~~2. Remove pointless `TimeoutStartSec = "2min"` from papdashboard.service~~ done 2026-08-18 (same fix batch — pointless timeout dropped)
 3. ~~Add backup-coordination entry (SQLite dir, maxAge 25h)~~ done at `34f33a51`
 ~~4. Update pre-deploy-check.sh (port 8088) + post-deploy-check.sh~~ done — full post-deploy section live (~line 456; verified 2026-08-31)
-   (`/api/health` 200, ingest 401-when-unauthenticated)
+(`/api/health` 200, ingest 401-when-unauthenticated)
 5. ~~Re-verify `origin/master` on PapDashboard contains the insight commits~~ done (flake input re-pinned to ebbc6fa by the 20-52 session (bug 1 of the 405 saga))
 6. ~~`nix flake lock --update-input papdashboard` → fresh rev~~ done at `e3995077`
 7. ~~Coordinate deploy window with parallel session (tree carries~~ done (deploys completed 2026-08-18 evening)
-   secret-history-scan workflow, session-boot-audit tests, manifest/twenty tweaks)
+secret-history-scan workflow, session-boot-audit tests, manifest/twenty tweaks)
 8. ~~`nix run .#deploy`~~ done (deployed; alerts.home.lan live at gen 690)
 9. Post-deploy: `systemctl status papdashboard` + journal evidence actually
-   non-empty (`journalctl -u papdashboard | grep insight`)
+non-empty (`journalctl -u papdashboard | grep insight`)
 10. ~~Verify gatus config reloaded + custom provider firing (journalctl -u gatus)~~ done (verified: gatus POSTs land 200 in the papdashboard journal after the method=POST fix (fceb7e6f))
 11. Synthetic failing endpoint → alert in dashboard UI → NPU insight → Discord
 ~~12. Watch FIRST insight: FastFlowLM cold load 1-3 min, timeout 300s~~ done — enricher insights observed live (2026-08-22 freeze #2: an enricher insight logged 05:34)

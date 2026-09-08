@@ -56,11 +56,12 @@ Everything I touched this session is safe and verified. The session's real failu
 3. **Document that referencing a not-yet-pasted sops key is a tree-wide deploy freeze.** The browser-history session wired the key before the value existed; every other session's deploy died on it. Go-live order should be: paste (placeholder at minimum) → wire → deploy. Placeholder-first is established repo doctrine (mail-relay, hermes PAT, google-sync).
 4. **Watcher/monitor discipline for agents: watch STATE, not single variables.** Branch, HEAD, key files, logs, runtime signals — anything that invalidates the premises of the current plan should interrupt the wait, not wait for the wait to end.
 5. **AGENTS.md lore update on sudo.** Either the NOPASSWD grant is new (→ security review: every crush session is root-equivalent; secret-hygiene assumptions like "agents can't read `/var/lib/private/*`" are false) or the lore is stale (→ fix the lore). Either way the docs and reality must converge. Not changed by me — user decision.
-6. **Multi-session coordination protocol is thin.** Three sessions (llama fix, browser-history go-live, forgejo-hermes-agent branch) shared one checkout tonight. The lock file protected deploys, but nothing protected *what* a deploy ships. A lightweight "deploy intent" note (who plans to deploy, from which ref) would prevent tonight's triangle.
+6. **Multi-session coordination protocol is thin.** Three sessions (llama fix, browser-history go-live, forgejo-hermes-agent branch) shared one checkout tonight. The lock file protected deploys, but nothing protected _what_ a deploy ships. A lightweight "deploy intent" note (who plans to deploy, from which ref) would prevent tonight's triangle.
 
 ## f) NEXT — up to 50 things, grouped by phase
 
 **Unblock + deploy (order matters):**
+
 1. Confirm with the forgejo-hermes-agent session: merge or switch-back plan; NEVER deploy from the branch until master's afternoon commits are in it (my fix + browser-history + inboxclean).
 2. Return the shared checkout to master once their session is done (`git switch master`; verify tip `6184f9ce`+).
 3. User pastes `browser_history_agent_db_token` (mint via browser-history Agent Tokens UI; `sudo sops platforms/nixos/secrets/browser-history.yaml` FROM REPO ROOT).
@@ -134,7 +135,7 @@ Everything I touched this session is safe and verified. The session's real failu
 
 ---
 
-*Report scope: this session only (17:00-20:45). No new research beyond the tree/branch state needed to report accurately. Waiting for instructions.*
+_Report scope: this session only (17:00-20:45). No new research beyond the tree/branch state needed to report accurately. Waiting for instructions._
 
 ---
 

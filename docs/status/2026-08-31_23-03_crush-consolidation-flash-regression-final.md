@@ -32,10 +32,10 @@
 > **RESOLUTION (23:40):** items 1 and 2 are DONE — the parallel session's `f00a33ec` ("deploy/smoke hardening" among others) resolved the §10 gate and a deploy landed (`/run/current-system` → `74nx21dm…`); the flash + llamacpp crushrc is LIVE (`crush models` lists `zai/glm-5.3-flash`), and the user confirmed their running session is served by glm-5.3-flash — the exact model-identity end-to-end proof the original verification lacked. The daemon swept the flash fix into `f00a33ec`. Items 3-6 below remain as stated.
 
 1. ~~**Deploy 3 (llamacpp + flash) is BLOCKED**~~ — RESOLVED: gate cleared by the pool-recovery session's hardening work; deploy landed. The §10 chicken-and-egg class (task f12) is still worth the regression case.
-3. **Provider-key functional coverage is 1 of 4** — the fallback smoke runs actually prove the **zai** key end-to-end (glm-5.2 requires it). gemini, minimax, kimi render and load but have never served a request.
-4. **NVMe reclaim is ~7G visible / ~30G pending** — freed extents are pinned by live btrbk snapshots; full space lands as 3d+1w retention rotates (expect early September).
-5. **Session-DB residue contained, not eliminated** — no NEW key material accumulates (crushrc keys proven never snapshotted — synthetic: 0 hits since 2026-08-18), but both `crush.db` files retain store-era bytes of the four LIVE keys until rotation.
-6. **AGENTS.md mid-merge** — my doctrine lines are in the working tree while the parallel session reorganizes the same file (MM state); final shape lands with their sweep.
+2. **Provider-key functional coverage is 1 of 4** — the fallback smoke runs actually prove the **zai** key end-to-end (glm-5.2 requires it). gemini, minimax, kimi render and load but have never served a request.
+3. **NVMe reclaim is ~7G visible / ~30G pending** — freed extents are pinned by live btrbk snapshots; full space lands as 3d+1w retention rotates (expect early September).
+4. **Session-DB residue contained, not eliminated** — no NEW key material accumulates (crushrc keys proven never snapshotted — synthetic: 0 hits since 2026-08-18), but both `crush.db` files retain store-era bytes of the four LIVE keys until rotation.
+5. **AGENTS.md mid-merge** — my doctrine lines are in the working tree while the parallel session reorganizes the same file (MM state); final shape lands with their sweep.
 
 ## c) NOT STARTED
 
@@ -139,6 +139,7 @@
 ## Self-Reflection
 
 **What I forgot:**
+
 - `crush models` existed the whole time. One command in the deploy-1 verification would have surfaced the missing flash immediately; instead I shipped two "green" smoke runs that were model-blind and reported the deletion as a clean win.
 - The entity-diff before deletion. I checked crush.json was "down to $schema + providers" and treated that as empty — providers was exactly the section where a catalog-gap entity (flash) lived. Structural emptiness is not semantic emptiness.
 - Sequencing. I had already articulated "land B before removing A" as a doctrine (mount-gated oneshots, storage-dir pattern) and then violated it the same evening because the second deploy had gone smoothly and I assumed the third would follow immediately. It didn't — the gate belonged to someone else.

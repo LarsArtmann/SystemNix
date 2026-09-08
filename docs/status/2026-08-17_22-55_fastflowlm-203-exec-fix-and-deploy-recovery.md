@@ -87,9 +87,9 @@ Plus one **pre-existing phantom metric** from the original integration commit (`
 2. ~~Watch `fastflowlm-proxy` wait-gate behavior during cold load (journal).~~ done at `99301327`
 3. ~~Idle-TTL test: temporarily set `keepAlive = "5min"` (or wait), verify proxy+service stop, **socket still listening**, second curl re-activates.~~ done (idle-check reworked + live (2026-08-18 19-56 session fixes))
 4. ~~Run `nix run .#post-deploy-check` (full smoke suite).~~ done (full suite green 2026-08-18 (53 PASS / 0 FAIL, 20-52 session))
-~~5. Remove `system_service_state_failed` from `KNOWN_NEW_METRICS` (metric confirmed live).~~ done — no longer in the allowlist (current entries verified 2026-08-31)
-6. ~~Verify Gatus "FastFlowLM" endpoints green (both pat conditions) in the Gatus UI/API.~~ done (wired via system-health state metrics; live since 08-18)
-7. Verify `system-health` crash-loop metric (`system_service_start_limit_hit`) still consistent with new emit order.
+   ~~5. Remove `system_service_state_failed` from `KNOWN_NEW_METRICS` (metric confirmed live).~~ done — no longer in the allowlist (current entries verified 2026-08-31)
+5. ~~Verify Gatus "FastFlowLM" endpoints green (both pat conditions) in the Gatus UI/API.~~ done (wired via system-health state metrics; live since 08-18)
+6. Verify `system-health` crash-loop metric (`system_service_start_limit_hit`) still consistent with new emit order.
 
 **P1 — hygiene & durability**
 8. ~~Deliberate git commit documenting the 203 fix + latent-bug fixes (clean attribution; the auto-daemon commit is not self-describing).~~ done at `e70a11b2`

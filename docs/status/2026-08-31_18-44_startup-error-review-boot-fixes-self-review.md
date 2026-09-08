@@ -55,51 +55,51 @@ _Outcome: 7 root causes fixed + deployed; 1 regression (flm 1.0.3) diagnosed and
 3. Retry flm 1.0.3: `flm list`/serve validation on 7.2.2; expect 21.6 GB weight re-pull; revert if it still can't enumerate.
 4. Diff 7.2.0→7.2.2 amdxdna driver source before the retry — does the ABI actually change?
 5. File/subscribe to an upstream FastFlowLM issue on XRT 2.25 + kernel 7.2.0 enumeration (verify-before-filing first).
-~~6. Positive test of wants-docker semantics: stop/start docker, watch manifest/twenty compose units converge.~~ done 2026-08-31 — live positive test (20-30 report §3: postgres healthy in ~17s; dozzle design gap found + documented)
-7. Add mkDockerService VM test (docker blip at boot simulation).
-~~8. mkDnsGate budget 120s → 180s+ (same class as the OIDC gate fix).~~ done 2026-08-31 — 180s + eval-enforced floors (`gate-timeout-audit.nix`)
-~~9. Eval-time assertion: mkOidcGate consumers' TimeoutStartSec ≥ 6min.~~ done 2026-08-31 — `gate-timeout-audit.nix` (positive + negative verified)
-10. Pre-deploy-check addition: diffstat of foreign undeployed changes since last generation.
-11. deploy.sh pressure gate: add IO PSI some avg10 ≥ 20% (escape hatch exists).
-12. Restart-policy audit script/check for running containers (RestartPolicy != always).
-~~13. User-unit failure monitoring (system_health metric + Gatus check for `systemctl --user --failed` output).~~ done 2026-08-31 — `system_user_units_failed{user}` + "User Unit Failures" Gatus check (20-30 report)
-~~14. Investigate buildcache-init 15/TERM at 16:37:24 (who ordered the stop mid-run).~~ done — classified BENIGN (coldplug job replacement; 20-30 report §5)
-~~15. Re-run post-deploy-check for a clean on-record summary.~~ done — 83 PASS / 0 FAIL (2026-08-31)
-16. Verify Dozzle v10 default tail size in docs (confirm dropping DOZZLE_TAILSIZE is a true no-op).
-17. smart-audio: bump RestartSec 5s → 30s (exhausted-120s-wait failure mode politeness).
-18. smart-audio DP-2 cross-output test when DP-2 is connected (still untested path).
-~~19. Review other session's shipped changes line-by-line (cv.nix, system-health.nix, btrfs-health.nix, guard Zone 4, deploy.sh).~~ done 2026-08-31 — 20-30 report §6 line-review: sound, VM-tested; one factual error corrected
-20. BTRFS chunk health P0: root unalloc ~6.4 GiB CRITICAL — schedule balance when IO settles.
-21. Shadow-dir cleanup under /mnt/pool, /data, /var/lib/clickhouse ("mount over not empty").
-22. flm smoke timeout vs Zone-4 stretched cold loads (27–43 min under contention) — smoke will fail under high PSI; add a PSI-skip like the balance Guard 0.
-23. dnsblockd blocklist load profiling (79s for mapping.json) — lazy-load or warm-cache options.
-24. Hermes: decouple the 1.1 GB state check from the boot critical path (background it) — 50s+ every start under load.
-25. Suppress/handle OnFailure alert noise for self-healing boot races (alert-after-N-retries convention).
-26. Triage current red Gatus set (all real, not config): All Backups Healthy (DAS backlog), BTRFS Chunk/Scrub, I/O Stall Rate, Memory Events Thrash, Crush Session Pressure.
-27. Backup-age convergence watch: nightly timers catching up the 9-day DAS gap (~250h ages).
-28. dbus duplicate-name spam reduction (xdg portal service dedup) — cosmetic.
-29. blueman: disable GameControllerWakelock plugin (X11-only warning every boot).
-30. quickshell UAF: track upstream fix / plan upgrade.
-~~31. Update TODO_LIST.md with this session's follow-ups.~~ done — 2026-08-31 docs-health audit
-32. Add "review foreign undeployed tree changes before deploying" to AGENTS.md Critical Rules (if policy approved).
-33. Gatus/dashboard check for "compose unit inactive while its containers run" split-brain state (manifest this boot).
-34. docker containerd boot timeout: consider ioTier or longer wait for docker.service under boot storms.
-35. Consider kdump vmcore review of freeze #3 if a dump landed in /var/crash.
-36. Sev1 boot-grace tradeoff: DAS/NIC-down-at-boot stays un-paged for 10 min — confirm Gatus covers that window adequately.
-37. md-go-validator / go-output / cmdguard Gatus failures — external repo health, triage owners.
-38. Clean up the /tmp/smart-audio-test.py scratch file from my syntax check.
-39. qmd collections re-index after the doc changes (AGENTS.md/README updates).
-40. Consider systemd-analyze blame snapshot at a quiet boot to baseline the new boot curve.
-41. Manifest backup verify (pool-side dumps fresh after outage catch-up).
-42. Consider watching flm journal for recurrence of the v1.0.2 heap SIGABRT (post-freeze stability window).
-43. Hermes RestartForceExitStatus=75 drain-loop: confirm no churn since the 6min timeout change.
-44. Dozzle image digest pinning check (image-updates workflow covers it — verify green).
-45. Wiki/runbook: add "NPU invisible after flm bump → check kernel/XRT pairing" to the fastflowlm runbook (docs/services/).
-46. Review whether `nix fmt --no-update-lock-file -- --ci` should be a pre-deploy-check step (formatting was clean this time by luck).
-47. Consider converting smart-audio StartLimitBurst 5/120s to a wider window now that in-process retry exists.
-48. Balance-job runtimeInputs audit lesson (gawk exit-127 class) — generalize to ALL unit scripts? (one-off lint for runtimeInputs vs commands used).
-49. Gatus pattern for smart-audio absence (niri audio routing regression detection) once user-unit monitoring exists.
-50. Plan a maintenance window: reboot + flm 1.0.3 retry + balance + shadow cleanup in one go.
+   ~~6. Positive test of wants-docker semantics: stop/start docker, watch manifest/twenty compose units converge.~~ done 2026-08-31 — live positive test (20-30 report §3: postgres healthy in ~17s; dozzle design gap found + documented)
+6. Add mkDockerService VM test (docker blip at boot simulation).
+   ~~8. mkDnsGate budget 120s → 180s+ (same class as the OIDC gate fix).~~ done 2026-08-31 — 180s + eval-enforced floors (`gate-timeout-audit.nix`)
+   ~~9. Eval-time assertion: mkOidcGate consumers' TimeoutStartSec ≥ 6min.~~ done 2026-08-31 — `gate-timeout-audit.nix` (positive + negative verified)
+7. Pre-deploy-check addition: diffstat of foreign undeployed changes since last generation.
+8. deploy.sh pressure gate: add IO PSI some avg10 ≥ 20% (escape hatch exists).
+9. Restart-policy audit script/check for running containers (RestartPolicy != always).
+   ~~13. User-unit failure monitoring (system_health metric + Gatus check for `systemctl --user --failed` output).~~ done 2026-08-31 — `system_user_units_failed{user}` + "User Unit Failures" Gatus check (20-30 report)
+   ~~14. Investigate buildcache-init 15/TERM at 16:37:24 (who ordered the stop mid-run).~~ done — classified BENIGN (coldplug job replacement; 20-30 report §5)
+   ~~15. Re-run post-deploy-check for a clean on-record summary.~~ done — 83 PASS / 0 FAIL (2026-08-31)
+10. Verify Dozzle v10 default tail size in docs (confirm dropping DOZZLE_TAILSIZE is a true no-op).
+11. smart-audio: bump RestartSec 5s → 30s (exhausted-120s-wait failure mode politeness).
+12. smart-audio DP-2 cross-output test when DP-2 is connected (still untested path).
+    ~~19. Review other session's shipped changes line-by-line (cv.nix, system-health.nix, btrfs-health.nix, guard Zone 4, deploy.sh).~~ done 2026-08-31 — 20-30 report §6 line-review: sound, VM-tested; one factual error corrected
+13. BTRFS chunk health P0: root unalloc ~6.4 GiB CRITICAL — schedule balance when IO settles.
+14. Shadow-dir cleanup under /mnt/pool, /data, /var/lib/clickhouse ("mount over not empty").
+15. flm smoke timeout vs Zone-4 stretched cold loads (27–43 min under contention) — smoke will fail under high PSI; add a PSI-skip like the balance Guard 0.
+16. dnsblockd blocklist load profiling (79s for mapping.json) — lazy-load or warm-cache options.
+17. Hermes: decouple the 1.1 GB state check from the boot critical path (background it) — 50s+ every start under load.
+18. Suppress/handle OnFailure alert noise for self-healing boot races (alert-after-N-retries convention).
+19. Triage current red Gatus set (all real, not config): All Backups Healthy (DAS backlog), BTRFS Chunk/Scrub, I/O Stall Rate, Memory Events Thrash, Crush Session Pressure.
+20. Backup-age convergence watch: nightly timers catching up the 9-day DAS gap (~250h ages).
+21. dbus duplicate-name spam reduction (xdg portal service dedup) — cosmetic.
+22. blueman: disable GameControllerWakelock plugin (X11-only warning every boot).
+23. quickshell UAF: track upstream fix / plan upgrade.
+    ~~31. Update TODO_LIST.md with this session's follow-ups.~~ done — 2026-08-31 docs-health audit
+24. Add "review foreign undeployed tree changes before deploying" to AGENTS.md Critical Rules (if policy approved).
+25. Gatus/dashboard check for "compose unit inactive while its containers run" split-brain state (manifest this boot).
+26. docker containerd boot timeout: consider ioTier or longer wait for docker.service under boot storms.
+27. Consider kdump vmcore review of freeze #3 if a dump landed in /var/crash.
+28. Sev1 boot-grace tradeoff: DAS/NIC-down-at-boot stays un-paged for 10 min — confirm Gatus covers that window adequately.
+29. md-go-validator / go-output / cmdguard Gatus failures — external repo health, triage owners.
+30. Clean up the /tmp/smart-audio-test.py scratch file from my syntax check.
+31. qmd collections re-index after the doc changes (AGENTS.md/README updates).
+32. Consider systemd-analyze blame snapshot at a quiet boot to baseline the new boot curve.
+33. Manifest backup verify (pool-side dumps fresh after outage catch-up).
+34. Consider watching flm journal for recurrence of the v1.0.2 heap SIGABRT (post-freeze stability window).
+35. Hermes RestartForceExitStatus=75 drain-loop: confirm no churn since the 6min timeout change.
+36. Dozzle image digest pinning check (image-updates workflow covers it — verify green).
+37. Wiki/runbook: add "NPU invisible after flm bump → check kernel/XRT pairing" to the fastflowlm runbook (docs/services/).
+38. Review whether `nix fmt --no-update-lock-file -- --ci` should be a pre-deploy-check step (formatting was clean this time by luck).
+39. Consider converting smart-audio StartLimitBurst 5/120s to a wider window now that in-process retry exists.
+40. Balance-job runtimeInputs audit lesson (gawk exit-127 class) — generalize to ALL unit scripts? (one-off lint for runtimeInputs vs commands used).
+41. Gatus pattern for smart-audio absence (niri audio routing regression detection) once user-unit monitoring exists.
+42. Plan a maintenance window: reboot + flm 1.0.3 retry + balance + shadow cleanup in one go.
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 

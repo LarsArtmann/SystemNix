@@ -9,19 +9,22 @@
 ## Direct answers first (the questions asked)
 
 **What did I forget?**
+
 - The repo's own pre-deploy advice: **batch-build the Go packages before the full deploy**. I let the deploy discover the second failure (cv) — it worked out, but that's luck of the lock, not method.
 - That a **fresh worktree lacks generated `*_templ.go` files** — CV's pre-commit `go vet` hook caught it, not me. I should have anticipated the templ-generate-at-build design before the first commit attempt.
 - `curl` and `systemctl` are blocked in this environment — I attempted both and burned two roundtrips that `fetch`/journald alternatives cover.
 - Rule #1 (View before Edit) on the first worktree edit — the tool rejected it; sloppy.
 
 **What could I have done better?**
+
 - **Separate commit → verify → push.** My first CV attempt bundled commit + fetch + push; when the hook failed, the output ("Everything up-to-date") was misleading. A real upstream bug (broken import) was caught by the hook — the gate worked, my command hygiene didn't.
 - **Capture the full deploy log** (`tee` to a file). I piped `tail -40`, so the first view of smoke results was truncated and I had to re-run the entire post-deploy-check for the complete FAIL list.
 - **Pre-verify the other ~22 pending builds** from the failed deploy instead of relying on the deploy itself to enumerate breakage.
 - Fix my own tooling friction: two failed Python parses of flake.lock (root-node structure) and one deprecated `nix hash to-sri` before landing on the right invocations.
 
 **What could I still improve (systemically)?**
-- The **vendorHash mental model** was wrong in the ecosystem docs: I proved the FOD's module set is resolved from *actual source imports*, so "go.mod/go.sum unchanged" does NOT mean "hash unchanged". Documented in SystemNix AGENTS.md — but CV's own docs and CI still encode the wrong model.
+
+- The **vendorHash mental model** was wrong in the ecosystem docs: I proved the FOD's module set is resolved from _actual source imports_, so "go.mod/go.sum unchanged" does NOT mean "hash unchanged". Documented in SystemNix AGENTS.md — but CV's own docs and CI still encode the wrong model.
 - **Upstream CI gaps are the real root cause.** CV master was simultaneously (1) unbuildable via Nix (stale vendorHash) and (2) failing `go vet` on a missing generated package — and no upstream gate caught either. go-cqrs-lite learned this lesson 2026-08-16; CV still hasn't.
 - **Known-outage noise:** post-deploy-check reports the 8 pool-down FAILs identically to true regressions — alarm fatigue is how the 43-minute pre-freeze Discord warning went unactioned.
 
@@ -29,44 +32,44 @@
 
 ## a) FULLY DONE
 
-| # | What | Evidence |
-|---|------|----------|
-| 1 | Diagnosed `cqrs-lint` failure: go-cqrs-lite's flake pinned tarball Go 1.26.6 while its own floors moved to 1.26.7 (`go: module ./_local_deps/samber-do-auditlog requires go >= 1.26.7`) | FOD error in deploy log; `nix eval nixpkgs#go_1_26.version` → `1.26.7`; go-cqrs-lite `go.mod:4 → go 1.26.7` |
-| 2 | Diagnosed `cv` failure: stale `vendorHash` upstream, **reproduced standalone** in a clean worktree | `specified: sha256-3wfBqj…aSbs=` / `got: sha256-pzxfHX…8+VQ=`; root cause: 117 files of source-only churn (imports reshaped, package deleted) with ZERO go.mod/go.sum/flake.lock changes |
-| 3 | go-cqrs-lite fixed upstream: dropped the go-tarball override (doctrine drop-day — nixpkgs 1.26.7 ≥ every floor), vendorHash untouched (FOD proved toolchain-independent) | commit `684f93dcf` pushed fast-forward to `LarsArtmann/go-cqrs-lite@master`; `nix build .#cqrs-lint` green in worktree |
-| 4 | CV fixed upstream: vendorHash refreshed to the got-hash | commit `4004de64` pushed fast-forward to `LarsArtmann/CV@master`; `nix build .#cv` green (full build incl. templ/tailwind) |
-| 5 | Passed CV's `go vet` pre-commit gate by running `templ generate` in the worktree (generated files are deliberately gitignored; Nix regenerates at build) | "All pre-commit checks passed!" on second commit attempt |
-| 6 | SystemNix relocked: `go-cqrs-lite → 684f93dcf`, `cv → 4004de64` | `nix flake lock --update-input` ×2 (GIT_CONFIG_GLOBAL=/dev/null); revs verified in flake.lock |
-| 7 | `nix flake check --no-build` — all checks passed | aarch64-darwin omission = expected per AGENTS |
-| 8 | **Deploy completed**: `nix run .#deploy` — build + switch + post-deploy checks ran | 68 PASS / 8 FAIL / 5 SKIP / 5 WARN; all 8 FAILs classified (see #9) |
-| 9 | Verified the 8 FAILs are the pre-existing DAS/pool outage, not this deploy: Immich (×2), Attic cache, Paperless, Bank-Sync (×4) — all pool-dependent | `findmnt /mnt/pool` rc=1, zero pool mounts; AGENTS documents this exact failure mode since 2026-08-22 |
-| 10 | Live verification of both fixes on the running system | `/run/current-system/sw/bin/cqrs-lint version` → `4.7.0 (commit: 684f93d, built: 20260829144726)`; `https://cv.home.lan/` serves the rendered CV app |
-| 11 | AGENTS.md updated: drop-day paragraph, CV bullet corrected, two new durable lessons (source-only-churn vendorHash staleness; templ-generate worktree trap) | 2 edits applied to `/home/lars/projects/SystemNix/AGENTS.md` |
-| 12 | Cleanup: both worktrees removed, go1.26.7 src SRI recorded (`sha256-DtJOrHVRBQhbif6cq8J0K5GgrXuUtZ0602SRjryJVq0=`) for any future re-pin | `git worktree list` shows none |
+| #  | What                                                                                                                                                                                    | Evidence                                                                                                                                                                                 |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | Diagnosed `cqrs-lint` failure: go-cqrs-lite's flake pinned tarball Go 1.26.6 while its own floors moved to 1.26.7 (`go: module ./_local_deps/samber-do-auditlog requires go >= 1.26.7`) | FOD error in deploy log; `nix eval nixpkgs#go_1_26.version` → `1.26.7`; go-cqrs-lite `go.mod:4 → go 1.26.7`                                                                              |
+| 2  | Diagnosed `cv` failure: stale `vendorHash` upstream, **reproduced standalone** in a clean worktree                                                                                      | `specified: sha256-3wfBqj…aSbs=` / `got: sha256-pzxfHX…8+VQ=`; root cause: 117 files of source-only churn (imports reshaped, package deleted) with ZERO go.mod/go.sum/flake.lock changes |
+| 3  | go-cqrs-lite fixed upstream: dropped the go-tarball override (doctrine drop-day — nixpkgs 1.26.7 ≥ every floor), vendorHash untouched (FOD proved toolchain-independent)                | commit `684f93dcf` pushed fast-forward to `LarsArtmann/go-cqrs-lite@master`; `nix build .#cqrs-lint` green in worktree                                                                   |
+| 4  | CV fixed upstream: vendorHash refreshed to the got-hash                                                                                                                                 | commit `4004de64` pushed fast-forward to `LarsArtmann/CV@master`; `nix build .#cv` green (full build incl. templ/tailwind)                                                               |
+| 5  | Passed CV's `go vet` pre-commit gate by running `templ generate` in the worktree (generated files are deliberately gitignored; Nix regenerates at build)                                | "All pre-commit checks passed!" on second commit attempt                                                                                                                                 |
+| 6  | SystemNix relocked: `go-cqrs-lite → 684f93dcf`, `cv → 4004de64`                                                                                                                         | `nix flake lock --update-input` ×2 (GIT_CONFIG_GLOBAL=/dev/null); revs verified in flake.lock                                                                                            |
+| 7  | `nix flake check --no-build` — all checks passed                                                                                                                                        | aarch64-darwin omission = expected per AGENTS                                                                                                                                            |
+| 8  | **Deploy completed**: `nix run .#deploy` — build + switch + post-deploy checks ran                                                                                                      | 68 PASS / 8 FAIL / 5 SKIP / 5 WARN; all 8 FAILs classified (see #9)                                                                                                                      |
+| 9  | Verified the 8 FAILs are the pre-existing DAS/pool outage, not this deploy: Immich (×2), Attic cache, Paperless, Bank-Sync (×4) — all pool-dependent                                    | `findmnt /mnt/pool` rc=1, zero pool mounts; AGENTS documents this exact failure mode since 2026-08-22                                                                                    |
+| 10 | Live verification of both fixes on the running system                                                                                                                                   | `/run/current-system/sw/bin/cqrs-lint version` → `4.7.0 (commit: 684f93d, built: 20260829144726)`; `https://cv.home.lan/` serves the rendered CV app                                     |
+| 11 | AGENTS.md updated: drop-day paragraph, CV bullet corrected, two new durable lessons (source-only-churn vendorHash staleness; templ-generate worktree trap)                              | 2 edits applied to `/home/lars/projects/SystemNix/AGENTS.md`                                                                                                                             |
+| 12 | Cleanup: both worktrees removed, go1.26.7 src SRI recorded (`sha256-DtJOrHVRBQhbif6cq8J0K5GgrXuUtZ0602SRjryJVq0=`) for any future re-pin                                                | `git worktree list` shows none                                                                                                                                                           |
 
 ## b) PARTIALLY DONE
 
-| # | Item | Works | Open | Blocker / Effort |
-|---|------|-------|------|------------------|
-| 1 | Override-drop doctrine | go-cqrs-lite dropped | browser-history, papdashboard, crush-daily, PMA, CV-inline still carry now-droppable Go overrides (none break today) | None; S each |
-| 2 | Post-deploy verification breadth | Fixed packages + smoke gate + pool classification verified | No full `nix flake check` (VM tests) — deliberately skipped under memory-pressure doctrine; no Go test suites run; no upstream `nix flake check` for either repo | Time + pressure budget; M |
-| 3 | go-cqrs-lite other packages | cqrs-lint verified | `benchstat` (separate buildGoModule, default pkgs.go) not rebuilt/verified under nixpkgs 1.26.7; not consumed by SystemNix | None; S |
-| 4 | SystemNix tree state | flake.lock + AGENTS.md edits in working tree, deployed from them | NOT committed by me (no explicit commit instruction) — the auto-commit daemon owns message/attribution | Policy; S |
-| 5 | Deploy observability | Smoke summary captured | Full deploy + first smoke run logs not archived (tail -40 only); second smoke run re-derived the list | None; S |
+| # | Item                             | Works                                                            | Open                                                                                                                                                             | Blocker / Effort          |
+| - | -------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| 1 | Override-drop doctrine           | go-cqrs-lite dropped                                             | browser-history, papdashboard, crush-daily, PMA, CV-inline still carry now-droppable Go overrides (none break today)                                             | None; S each              |
+| 2 | Post-deploy verification breadth | Fixed packages + smoke gate + pool classification verified       | No full `nix flake check` (VM tests) — deliberately skipped under memory-pressure doctrine; no Go test suites run; no upstream `nix flake check` for either repo | Time + pressure budget; M |
+| 3 | go-cqrs-lite other packages      | cqrs-lint verified                                               | `benchstat` (separate buildGoModule, default pkgs.go) not rebuilt/verified under nixpkgs 1.26.7; not consumed by SystemNix                                       | None; S                   |
+| 4 | SystemNix tree state             | flake.lock + AGENTS.md edits in working tree, deployed from them | NOT committed by me (no explicit commit instruction) — the auto-commit daemon owns message/attribution                                                           | Policy; S                 |
+| 5 | Deploy observability             | Smoke summary captured                                           | Full deploy + first smoke run logs not archived (tail -40 only); second smoke run re-derived the list                                                            | None; S                   |
 
 ## c) NOT STARTED
 
-*(noticed this session, zero work done — pre-existing incident items included for completeness, clearly marked)*
+_(noticed this session, zero work done — pre-existing incident items included for completeness, clearly marked)_
 
-| # | Item | Why not started | Still wanted? |
-|---|------|-----------------|---------------|
-| 1 | **DAS physical recovery** (front USB4-C replug: cable + VBUS + enclosure power, 60+s) | Hardware is user-only | YES — gates 8 services |
-| 2 | Post-DAS-return checklist: by-label/pool verify, pool-service recovery, btrbk catch-up monitoring, uas-at-attach confirmation, record outcome in AGENTS | Blocked on #1 | YES |
-| 3 | CV upstream CI: Nix-build / vendor-hash gate (would have caught BOTH of today's bugs) | Out of session scope per instructions | YES — High |
-| 4 | CV repo's own AGENTS.md: vendorHash-from-source-churn + templ lessons | Only SystemNix AGENTS updated | YES; S |
-| 5 | go-cqrs-lite `.go-version` mirror check (flake comment demands go.work + .go-version stay in sync with floor) | Not inspected | Probably; S |
-| 6 | TODO_LIST.md harvest from this report | Report first | YES |
-| 7 | Pre-existing security incidents (NOT touched this session): Context7 key rotation (still LIVE), Resend key + pocket-id SMTP repair, history-purge push decision, Gemini GCP key deletion, crush plaintext provider-key migration | Out of scope | Per standing decisions |
+| # | Item                                                                                                                                                                                                                             | Why not started                       | Still wanted?          |
+| - | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ---------------------- |
+| 1 | **DAS physical recovery** (front USB4-C replug: cable + VBUS + enclosure power, 60+s)                                                                                                                                            | Hardware is user-only                 | YES — gates 8 services |
+| 2 | Post-DAS-return checklist: by-label/pool verify, pool-service recovery, btrbk catch-up monitoring, uas-at-attach confirmation, record outcome in AGENTS                                                                          | Blocked on #1                         | YES                    |
+| 3 | CV upstream CI: Nix-build / vendor-hash gate (would have caught BOTH of today's bugs)                                                                                                                                            | Out of session scope per instructions | YES — High             |
+| 4 | CV repo's own AGENTS.md: vendorHash-from-source-churn + templ lessons                                                                                                                                                            | Only SystemNix AGENTS updated         | YES; S                 |
+| 5 | go-cqrs-lite `.go-version` mirror check (flake comment demands go.work + .go-version stay in sync with floor)                                                                                                                    | Not inspected                         | Probably; S            |
+| 6 | TODO_LIST.md harvest from this report                                                                                                                                                                                            | Report first                          | YES                    |
+| 7 | Pre-existing security incidents (NOT touched this session): Context7 key rotation (still LIVE), Resend key + pocket-id SMTP repair, history-purge push decision, Gemini GCP key deletion, crush plaintext provider-key migration | Out of scope                          | Per standing decisions |
 
 ## d) TOTALLY FUCKED UP
 
@@ -99,7 +102,7 @@
 
 ## f) NEXT: 50 things to get done (HARVEST input — route to TODO_LIST/ROADMAP)
 
-*Impact / Effort (S<30min, M 30min–2h, L>2h) / Category*
+_Impact / Effort (S<30min, M 30min–2h, L>2h) / Category_
 
 **Critical**
 ~~1. DAS physical replug on front USB4-C (cable + VBUS + enclosure power, 60+s); record outcome — User / S / Ops~~ done 2026-08-31 — OUTCOME RECORDED in AGENTS.md: bridge recovered; all four targets enumerated

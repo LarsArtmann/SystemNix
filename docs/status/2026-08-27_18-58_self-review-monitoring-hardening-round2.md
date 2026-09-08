@@ -56,54 +56,54 @@
 
 1. CI: execute trap-lint derivations (e.1) — highest leverage, 15 min.
 2. Diagnose `website-deploy-monitor.service` FAILED unit (critical firing since 14:43, other session's — see Q3).
-~~3. DAS cable swap per `scripts/das-link-recovery-check.sh` — unblocks the 8 post-deploy FAILs (Immich/Bank-Sync/Attic/Paperless).~~ done 2026-08-31 — outage closed; 83 PASS / 0 FAIL
-4. Wedge-rule Discord delivery proof (controlled stop, root) — see Q2.
-5. emeet/niri gate verification on next graphical login.
-6. GOTRACEBACK=all sweep over Go daemons (e.9).
-7. Provisioner-Result assertion generalization (e.4).
-8. Zero-series sweep automation (e.3).
-9. Lint v2: proper string extraction (e.2).
-10. nullglob audit: `grep -rn '\$[a-z]* "\?' flake.nix`-style scan for unquoted command-variable expansion in ALL runCommand checks.
-11. Caddy deploy-restart Discord ping observed 17:59 — Q2 data point; revisit suppression if annoying (see Q1).
-12. post-deploy-check WARN counter fix (b.4).
-13. Dashboard-count assertion (e.6).
-14. Collector-before-gatus deploy ordering (e.7).
-15. Negative-test harness as repo script (e.8).
-16. SigNoz-side rule for `system_dnsblockd_metrics_fresh` (currently Gatus-only).
-17. Temp-source drift ALERT (hwmon vs ClickHouse >10°C) — the new panel is visual-only.
-18. Dead-metric blocklist growth documented in CONTRIBUTING.md (verify command + when to add).
-19. gatus-pattern-lint trailing-comment edge case (inline `# comment` after code defeats the line-strip; known 2026-08-07, still open).
-20. KNOWN_NEW_METRICS churn: auto-derive "new metrics in this deploy" from the gatus-config diff instead of manual allowlist.
-21. Post-deploy route-policy assertion (v1 API list non-empty per ruleId — the restart-wipes-policies class).
-22. system-health gauge: age of oldest firing SigNoz alert (trend visibility beyond the WARN line).
-23. Lint: cover `service_name` on non-up metrics (other self-reported labels — currently unlinted).
-24. fish startup 1091 ms (WARN threshold 200 ms — seen in post-deploy output, degrading).
-25. quickshell 1 error line/h (post-deploy WARN — triage).
-26. Runbook dry-run (e.5).
-27. VM/regression test for the freshness-gauge emission shape (consider — collector is simple).
-28. docs/services/dnsblockd.md runbook page linking the dump script.
-29. Read-only zombie ClickHouse tables: human DROP decision (~10 GiB, AGENTS-documented).
-30. btrbk `/data` EIO inode repair (TODO_LIST P0, pre-existing).
-31. nixpkgs go_1_26 ≥ 1.26.6 → drop CV tarball override (drop-list).
-32. Attic 502s during builds (cache.home.lan down with DAS) — note or gate.
-33. chown-vs-bind-audit promotion WARN→fail (its own comment says "after one clean cycle" — cycles passed).
-34. Dashboard-panel-removal layout-$ref lesson → make the provisioner's failure message name the orphaned $ref explicitly (it failed unhelpfully once already).
-35. Post-deploy: assert `system_signoz_alert_rules_total` equals the nix rule count (exact, not >15).
-36. gatus-config: consider `client.timeout` audit vs the new 5s probe semantics (probe timeout < scrape interval hygiene).
-37. Two-source panel UI check (legend rendering with two series) — cosmetic.
-38. Deploy-window gatus "maintenance window" feasibility study (alternative to Q1 suppression).
-39. website-deploy-monitor's own Gatus checks (other session) — overlap/triage review once landed.
-40. Signoz `Telemetry Export Failures` regex-form suffixes: lint the `=~` dotted regex variant for typos too.
-41. Lint: reject `job` in `by (job)` groupings too (same phantom class, unmatchable).
-42. Commit-attribution check once the daemon batches this session with inboxclean (AGENTS concurrent rule).
-~~43. docs-health sweep: annotate/retire stale items in the 08-22→08-27 status chain.~~ done — the 2026-08-31 docs-health audit (this pass)
-44. emeet gate HELP text vs SigNoz rule description drift check (cosmetic consistency).
-45. Q2 noise ledger: count deploy-window TRIGGERED alerts per deploy in post-deploy-check output (one grep on the gatus journal).
-46. Consider `RestartMinDelaySec`-style anti-churn for dnsblockd (restart-storm insurance) — evaluate against its SLA.
-47. Pocket ID SMTP (Resend key still dead per incident table — verify current state, likely still broken).
-48. `system_health.prom` size trend (adding gauges each session — cheap now, watch cardinality).
-49. Pre-deploy-check §12 "binary not built yet" warnings for unit-script binaries — make them post-build re-verified (they warn every deploy).
-50. Revisit Q1/Q2/Q3 decisions after one week of deploy noise data.
+   ~~3. DAS cable swap per `scripts/das-link-recovery-check.sh` — unblocks the 8 post-deploy FAILs (Immich/Bank-Sync/Attic/Paperless).~~ done 2026-08-31 — outage closed; 83 PASS / 0 FAIL
+3. Wedge-rule Discord delivery proof (controlled stop, root) — see Q2.
+4. emeet/niri gate verification on next graphical login.
+5. GOTRACEBACK=all sweep over Go daemons (e.9).
+6. Provisioner-Result assertion generalization (e.4).
+7. Zero-series sweep automation (e.3).
+8. Lint v2: proper string extraction (e.2).
+9. nullglob audit: `grep -rn '\$[a-z]* "\?' flake.nix`-style scan for unquoted command-variable expansion in ALL runCommand checks.
+10. Caddy deploy-restart Discord ping observed 17:59 — Q2 data point; revisit suppression if annoying (see Q1).
+11. post-deploy-check WARN counter fix (b.4).
+12. Dashboard-count assertion (e.6).
+13. Collector-before-gatus deploy ordering (e.7).
+14. Negative-test harness as repo script (e.8).
+15. SigNoz-side rule for `system_dnsblockd_metrics_fresh` (currently Gatus-only).
+16. Temp-source drift ALERT (hwmon vs ClickHouse >10°C) — the new panel is visual-only.
+17. Dead-metric blocklist growth documented in CONTRIBUTING.md (verify command + when to add).
+18. gatus-pattern-lint trailing-comment edge case (inline `# comment` after code defeats the line-strip; known 2026-08-07, still open).
+19. KNOWN_NEW_METRICS churn: auto-derive "new metrics in this deploy" from the gatus-config diff instead of manual allowlist.
+20. Post-deploy route-policy assertion (v1 API list non-empty per ruleId — the restart-wipes-policies class).
+21. system-health gauge: age of oldest firing SigNoz alert (trend visibility beyond the WARN line).
+22. Lint: cover `service_name` on non-up metrics (other self-reported labels — currently unlinted).
+23. fish startup 1091 ms (WARN threshold 200 ms — seen in post-deploy output, degrading).
+24. quickshell 1 error line/h (post-deploy WARN — triage).
+25. Runbook dry-run (e.5).
+26. VM/regression test for the freshness-gauge emission shape (consider — collector is simple).
+27. docs/services/dnsblockd.md runbook page linking the dump script.
+28. Read-only zombie ClickHouse tables: human DROP decision (~10 GiB, AGENTS-documented).
+29. btrbk `/data` EIO inode repair (TODO_LIST P0, pre-existing).
+30. nixpkgs go_1_26 ≥ 1.26.6 → drop CV tarball override (drop-list).
+31. Attic 502s during builds (cache.home.lan down with DAS) — note or gate.
+32. chown-vs-bind-audit promotion WARN→fail (its own comment says "after one clean cycle" — cycles passed).
+33. Dashboard-panel-removal layout-$ref lesson → make the provisioner's failure message name the orphaned $ref explicitly (it failed unhelpfully once already).
+34. Post-deploy: assert `system_signoz_alert_rules_total` equals the nix rule count (exact, not >15).
+35. gatus-config: consider `client.timeout` audit vs the new 5s probe semantics (probe timeout < scrape interval hygiene).
+36. Two-source panel UI check (legend rendering with two series) — cosmetic.
+37. Deploy-window gatus "maintenance window" feasibility study (alternative to Q1 suppression).
+38. website-deploy-monitor's own Gatus checks (other session) — overlap/triage review once landed.
+39. Signoz `Telemetry Export Failures` regex-form suffixes: lint the `=~` dotted regex variant for typos too.
+40. Lint: reject `job` in `by (job)` groupings too (same phantom class, unmatchable).
+41. Commit-attribution check once the daemon batches this session with inboxclean (AGENTS concurrent rule).
+    ~~43. docs-health sweep: annotate/retire stale items in the 08-22→08-27 status chain.~~ done — the 2026-08-31 docs-health audit (this pass)
+42. emeet gate HELP text vs SigNoz rule description drift check (cosmetic consistency).
+43. Q2 noise ledger: count deploy-window TRIGGERED alerts per deploy in post-deploy-check output (one grep on the gatus journal).
+44. Consider `RestartMinDelaySec`-style anti-churn for dnsblockd (restart-storm insurance) — evaluate against its SLA.
+45. Pocket ID SMTP (Resend key still dead per incident table — verify current state, likely still broken).
+46. `system_health.prom` size trend (adding gauges each session — cheap now, watch cardinality).
+47. Pre-deploy-check §12 "binary not built yet" warnings for unit-script binaries — make them post-build re-verified (they warn every deploy).
+48. Revisit Q1/Q2/Q3 decisions after one week of deploy noise data.
 
 ## g) Questions I cannot figure out myself (max 3)
 

@@ -38,7 +38,7 @@
 
 ## d) TOTALLY FUCKED UP
 
-1. **Ran a whole-repo formatter check on an actively-owned tree.** AGENTS.md explicitly forbids `nix fmt` while a parallel session owns the tree, and ROADMAP.md was being edited *during* my run (treefmt itself errored on the mid-run change). Damage was contained — the two touched files got formatting-only canonical changes, both verified and now CI-green — but it was a known-trap action taken for a verification I could have scoped to my single file. 
+1. **Ran a whole-repo formatter check on an actively-owned tree.** AGENTS.md explicitly forbids `nix fmt` while a parallel session owns the tree, and ROADMAP.md was being edited _during_ my run (treefmt itself errored on the mid-run change). Damage was contained — the two touched files got formatting-only canonical changes, both verified and now CI-green — but it was a known-trap action taken for a verification I could have scoped to my single file.
 2. **Skipped the verify-external-claims discipline.** The repo's skill doctrine is: verify external claims BEFORE encoding them into documentation. I encoded provider tables, version numbers, and one performance quote from search-agent output into a committed research doc without opening the primary pages. Nothing found contradicts the sources so far, but the doc's epistemic status is "well-corroborated summaries", not "primary-verified" — and parts of §2.2's quotes should be re-anchored to the pages themselves.
 3. Minor: first `nix eval` call used multiple installables (unsupported, wasted a round trip); one search-agent in batch 1 returned empty (re-framed and retried — recovered).
 
@@ -54,6 +54,7 @@
 ## f) NEXT (prioritized; ~30)
 
 **Immediate, this-session follow-ups (I can do):**
+
 1. Update AGENTS.md ZRAM & Memory Reclaim section with page-cluster=0 + watermark_boost_factor=0 (+ sweep reference) — the missed memory update.
 2. Forward-link the 2026-07-11 research doc to the 2026-09-05 superseder.
 3. `lsattr -d /data/docker /data/docker/volumes` → confirm or kill the NOCOW TODO premise.
@@ -91,12 +92,12 @@
 
 ## Evidence
 
-| Check | Command | Result |
-| --- | --- | --- |
-| Sysctl eval | `nix eval …config.boot.kernel.sysctl --json` | pc=0, wb=0, sw=150 |
-| Eval gate | `nix flake check --no-build` | all checks passed (×2) |
-| Format gate | `nix fmt --no-update-lock-file -- --ci` | boot.nix clean; 2 foreign files formatter-canonicalized |
-| Commits | daemon | 82673061 (report+boot.nix), 99cf9e62 (TODO_LIST+2 fmt files+ROADMAP.md foreign) |
+| Check       | Command                                      | Result                                                                          |
+| ----------- | -------------------------------------------- | ------------------------------------------------------------------------------- |
+| Sysctl eval | `nix eval …config.boot.kernel.sysctl --json` | pc=0, wb=0, sw=150                                                              |
+| Eval gate   | `nix flake check --no-build`                 | all checks passed (×2)                                                          |
+| Format gate | `nix fmt --no-update-lock-file -- --ci`      | boot.nix clean; 2 foreign files formatter-canonicalized                         |
+| Commits     | daemon                                       | 82673061 (report+boot.nix), 99cf9e62 (TODO_LIST+2 fmt files+ROADMAP.md foreign) |
 
 **Session file changes:** `docs/research/2026-09-05_btrfs-internet-sweep-vs-systemnix.md` (new), `platforms/nixos/system/boot.nix` (+2 sysctls), `TODO_LIST.md` (+2 entries), incidental: `browser-history.nix`, `samsung-nix-sync.sh` (formatting-only, via my fmt run).
 

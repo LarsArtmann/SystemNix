@@ -4,15 +4,15 @@
 
 ## Final state (verified 12:28)
 
-| Thing | State |
-| ---- | ----- |
-| Memory alerts | `notify` tier — can never overlay (deployed 21:46, gen `r26nn0zq`) |
-| Warn tier (DAS/NIC/btrfs) | static amber banner ONCE per alert set + one cooldown-gated notification (deployed 01:0x, gen `h4w1yz17`; refined 12:3x per user choice → NON-fullscreen top strip) |
-| `page` (red pulsing fullscreen) | RESERVED — zero current emitters |
-| Warn QML | **verified running**: overlay process launched the new shell (`xknjlls9z…`), "Configuration Loaded", no crash-loop after the restartTriggers switch |
-| `niri-health-metrics` (the deploy blocker) | fixed + live: `niri.prom` freshly written by the root timer |
-| cv input | rolled back to buildable `7dee729` (revCount 3465) — still the lock state; nobody re-bumped yet |
-| Deploy exit | 0 (final), smoke 84 PASS / 8 FAIL (none sev1/niri; enumerated below) |
+| Thing                                      | State                                                                                                                                                               |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Memory alerts                              | `notify` tier — can never overlay (deployed 21:46, gen `r26nn0zq`)                                                                                                  |
+| Warn tier (DAS/NIC/btrfs)                  | static amber banner ONCE per alert set + one cooldown-gated notification (deployed 01:0x, gen `h4w1yz17`; refined 12:3x per user choice → NON-fullscreen top strip) |
+| `page` (red pulsing fullscreen)            | RESERVED — zero current emitters                                                                                                                                    |
+| Warn QML                                   | **verified running**: overlay process launched the new shell (`xknjlls9z…`), "Configuration Loaded", no crash-loop after the restartTriggers switch                 |
+| `niri-health-metrics` (the deploy blocker) | fixed + live: `niri.prom` freshly written by the root timer                                                                                                         |
+| cv input                                   | rolled back to buildable `7dee729` (revCount 3465) — still the lock state; nobody re-bumped yet                                                                     |
+| Deploy exit                                | 0 (final), smoke 84 PASS / 8 FAIL (none sev1/niri; enumerated below)                                                                                                |
 
 ## a) FULLY DONE (this session)
 
@@ -62,6 +62,7 @@ Minor: 3 wasted `question`-tool invocations on schema errors; 2 lost multiedits 
 ## f) NEXT (curated, grouped — ~30 items)
 
 **Deploy-blocking / correctness (soonest):**
+
 1. cv upstream vendorHash fix → push → re-lock `nix flake lock --update-input cv` → deploy (CV session; unblocks 2 red checks).
 2. Root-cause llama.cpp embed/rerank (:8848/:8849) being down — smoke FAIL ×4 (Requires= the HF fetch unit? GPU unit dead?).
 3. paperless `PAPERLESS_EMAIL_HOST` relay-gated block — real regression or check bug (mail-relay session).

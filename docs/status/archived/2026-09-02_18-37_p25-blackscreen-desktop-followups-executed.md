@@ -51,6 +51,7 @@
 ## f) NEXT — up to 50, ordered by impact
 
 **Deploy & activate (blocking everything):**
+
 1. `nix run .#deploy` — the entire batch is inert until then; the polkit check intentionally FAILS pre-deploy (live kvantum drift)
 2. Post-deploy: confirm polkit render check flips FAIL→PASS; `grep QT_STYLE_OVERRIDE hm-session-vars.sh` → fusion
 3. Post-deploy: confirm the 3 new metrics appear in node_exporter textfile output

@@ -24,15 +24,15 @@ models, LSPs, and the verification workflow for changing any of it.
 
 ## Current Providers
 
-| Provider     | Key source            | Notes                                                    |
-| ------------ | --------------------- | -------------------------------------------------------- |
-| `synthetic`  | sops `crush-daily.yaml` | injected since 2026-08-18                              |
-| `zai`        | sops `crush.yaml`     | `glm-5.3-flash` declared via `model add` (not in catalog) |
-| `gemini`     | sops `crush.yaml`     |                                                          |
-| `minimax`    | sops `crush.yaml`     | **DISABLED** 2026-08-31: Token Plan exhausted (2056). `providers.minimax.disabled = true` in the crush-config repo; key stays rendered. Re-enable = flip the flag |
-| `kimi-coding`| sops `crush.yaml`     |                                                          |
-| `llamacpp`   | none (local)          | `:8899`, ad-hoc llama-server; models auto-discovered     |
-| `hyper`      | auth store (OAuth)    | stays store-owned: tokens self-rotate hourly             |
+| Provider      | Key source              | Notes                                                                                                                                                             |
+| ------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `synthetic`   | sops `crush-daily.yaml` | injected since 2026-08-18                                                                                                                                         |
+| `zai`         | sops `crush.yaml`       | `glm-5.3-flash` declared via `model add` (not in catalog)                                                                                                         |
+| `gemini`      | sops `crush.yaml`       |                                                                                                                                                                   |
+| `minimax`     | sops `crush.yaml`       | **DISABLED** 2026-08-31: Token Plan exhausted (2056). `providers.minimax.disabled = true` in the crush-config repo; key stays rendered. Re-enable = flip the flag |
+| `kimi-coding` | sops `crush.yaml`       |                                                                                                                                                                   |
+| `llamacpp`    | none (local)            | `:8899`, ad-hoc llama-server; models auto-discovered                                                                                                              |
+| `hyper`       | auth store (OAuth)      | stays store-owned: tokens self-rotate hourly                                                                                                                      |
 
 ## Adding a Provider Key
 

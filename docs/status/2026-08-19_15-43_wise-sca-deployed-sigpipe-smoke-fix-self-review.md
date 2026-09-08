@@ -93,7 +93,7 @@ No. Everything claimed as verified was verified live (build green, tests green, 
 1. Approve the pending access request in the Wise app (Settings → Security and privacy → Approvals).
 2. Run the renewal: latest OTT from journal → `/var/lib/bank-sync-sca/token.env` → `systemctl restart bank-sync` → verify `total_new > 0` → remove file (full commands in `docs/services/bank-sync-sca.md`).
 3. Decide: leave or drop duplicate commit `8ca25e18` on the PR #139 branch.
-~~4. Confirm master push of `3af48067` (daemon or manual).~~ done — pushed (relock chain completed)
+   ~~4. Confirm master push of `3af48067` (daemon or manual).~~ done — pushed (relock chain completed)
 
 **Alerting (closes the incident class):**
 ~~5. Inspect bank-sync `/metrics` for error/last-sync counters.~~ done — counters live (`bank_sync_sync_errors_total`, `bank_sync_last_sync_timestamp_seconds`)

@@ -27,12 +27,12 @@ The real neighbor is **VDO (dm-vdo)**, mainlined in kernel 6.9 (Red Hat dedupe+c
 
 Could keep the existing btrfs and mount `nodatacow` for the Go cache — but `nodatacow` implies `nodatasum` and disables compression (btrfs(5)), leaving btrfs's worst property for this workload: **CoW metadata churn on millions of small files**. Measured on THIS EXACT DRIVE PAIR (2026-08-14 benchmarking session, `docs/status/archived/2026-08-14_12-30_ssd-recovery-benchmarking-session.md`):
 
-| Metric (incompressible data, direct IO)            | ext4            | btrfs (zstd)    |
-| -------------------------------------------------- | --------------- | --------------- |
-| 4K random read IOPS / latency                      | 1,756 / 234 µs  | 2,037 / 503 µs  |
-| 4K random write IOPS / latency                     | 751 / 112 µs    | 869 / 173 µs    |
-| Sequential write (fdatasync)                       | 136 MB/s        | 342 MB/s        |
-| Sequential write with ext4 `data=writeback`        | ~2x (est. 280)  | n/a             |
+| Metric (incompressible data, direct IO)     | ext4           | btrfs (zstd)   |
+| ------------------------------------------- | -------------- | -------------- |
+| 4K random read IOPS / latency               | 1,756 / 234 µs | 2,037 / 503 µs |
+| 4K random write IOPS / latency              | 751 / 112 µs   | 869 / 173 µs   |
+| Sequential write (fdatasync)                | 136 MB/s       | 342 MB/s       |
+| Sequential write with ext4 `data=writeback` | ~2x (est. 280) | n/a            |
 
 Build caches are small-file, stat-heavy → the 2x random-read latency gap is the number that matters; ext4's seq-write deficit was diagnosed as the ordered-mode journal tax and is already fixed on the recipe via `data=writeback`.
 
@@ -40,8 +40,8 @@ Build caches are small-file, stat-heavy → the 2x random-read latency gap is th
 
 **Both are good; the delta for Go-cache workloads is modest.** What the research (xfs(5), kernel docs, LWN 476263, Phoronix Linux 7.0 FS suite, OpenBenchmarking 5.14 SSD suite) establishes:
 
-- **XFS journals metadata only — there is no data-journaling mode at all**, so no `data=writeback`-style tradeoff exists. Crash consistency is unconditional (metadata always recoverable via log replay). ext4+`data=writeback` buys speed by *relinquishing* the data-vs-metadata ordering guarantee; XFS gives metadata-only-journal performance shape without giving up the guarantee. For a content-verified cache both are safe; XFS is simply the cleaner story.
-- **XFS enforces the same data-before-metadata-commit flush ordering as ext4 ordered mode** — the win over ext4 is *amortization*: delayed logging (CIL) coalesces hot metadata in RAM and batches log writes (LWN: pre-CIL XFS "almost all I/O traffic was the journal"; post-CIL "metadata performance and scalability can be considered a solved problem"). On a DRAM-less controller behind a USB bridge — where every flush costs real latency — batching matters.
+- **XFS journals metadata only — there is no data-journaling mode at all**, so no `data=writeback`-style tradeoff exists. Crash consistency is unconditional (metadata always recoverable via log replay). ext4+`data=writeback` buys speed by _relinquishing_ the data-vs-metadata ordering guarantee; XFS gives metadata-only-journal performance shape without giving up the guarantee. For a content-verified cache both are safe; XFS is simply the cleaner story.
+- **XFS enforces the same data-before-metadata-commit flush ordering as ext4 ordered mode** — the win over ext4 is _amortization_: delayed logging (CIL) coalesces hot metadata in RAM and batches log writes (LWN: pre-CIL XFS "almost all I/O traffic was the journal"; post-CIL "metadata performance and scalability can be considered a solved problem"). On a DRAM-less controller behind a USB bridge — where every flush costs real latency — batching matters.
 - **Parallelism is XFS's territory**: XFS scales metadata ops linearly to ~8 threads while ext4 degrades (LWN); 4K random writes and sequential writes led by XFS in the Linux 7.0 Phoronix suite; geomean FS-Mark-class suites XFS 185% vs ext4 163%. `go build -p N` is exactly the many-thread metadata case. Single-threaded metadata ops remain slightly ext4-favoring.
 - **lazytime works on XFS** (since 4.17) — pairs with `noatime` for the stat-heavy case.
 - **Precedent on this box**: the analogous hot-data role (ClickHouse, `/var/lib/clickhouse`) already runs XFS (`noatime,inode64,logbufs=8,logbsize=32k`). Consistency argument.

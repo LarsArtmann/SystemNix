@@ -72,7 +72,7 @@ dead.
 - **`system_health.prom` whole-file poisoning** (fixed by the parallel
   mail-relay session in `360e9a03` before it blocked this deploy): the
   forgejo journal-scan failure path (timeout 124 under IO pressure) emitted
-  `system_forgejo_mirror_errors_30m ` with an EMPTY value — invalid
+  `system_forgejo_mirror_errors_30m` with an EMPTY value — invalid
   exposition syntax made node_exporter drop the ENTIRE file (all 38
   `system_*` metrics dark, §10 fails 37 checks). The scan pair is now gated
   on its own emptiness.
@@ -94,7 +94,7 @@ dead.
 
 - Worktree build of PMA (HEAD + fix + fresh vendorHash) green; binary
   strings confirm `OPENAI_BASE_URL` + `committed via heuristic fallback`.
-- `go test ./pma-daemon/... ` green (committer + daemon packages).
+- `go test ./pma-daemon/...` green (committer + daemon packages).
 - evo-x2 toplevel build green; deploy passed all gates (after the pressure
   window and the concurrent mail-relay session's index lock cleared).
 - Post-deploy: backlog commits resumed, 429s gone, metrics live, gatus green.

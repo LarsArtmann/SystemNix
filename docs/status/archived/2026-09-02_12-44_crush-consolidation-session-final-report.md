@@ -117,6 +117,7 @@
 ## Self-Reflection
 
 **What I forgot:**
+
 - **Shell history is a plaintext key store.** A session whose entire premise was "no more plaintext keys" audited stores, configs, wrappers, and sqlite DBs — and left `fish_history`, the most obvious plaintext sink with a documented prior incident, until the final round. The audit checklist should have been written BEFORE the first cleanup, not discovered piecemeal across three rounds.
 - **The probe step existed in my plan from day one and kept being deferred** — "config loads + one provider works" quietly substituted for "all four keys work". minimax's dead plan sat undiscovered for a full day because of it.
 - **The verification gap that bit me (model identity) was visible in advance**: `crush models` was one command away the whole time; the tool to prevent the flash regression shipped only after the user found the regression.

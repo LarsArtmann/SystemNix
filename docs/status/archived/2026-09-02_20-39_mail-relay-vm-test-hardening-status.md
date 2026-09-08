@@ -58,58 +58,58 @@
 
 ## f) TOP 50 NEXT TASKS (ranked: impact → effort; HARVEST fuel for TODO_LIST/ROADMAP)
 
-| #  | Task                                                                                                                         | Impact  | Effort | Category      |
-| -- | ---------------------------------------------------------------------------------------------------------------------------- | ------- | ------ | ------------- |
-| 1  | Verify `larsartmann.cloud` in Resend (Domains → SPF/DKIM records → Verified)                                                  | Critical | S | Go-live (user) |
-| 2  | Rotate Resend API key; paste into `mail-relay.yaml` sops interactively + restart postfix                                       | Critical | S | Go-live (user) |
-| 3  | Same new key into Pocket ID sops → unbreak Pocket ID email (broken since 2026-08-18)                                           | Critical | S | Bug (user) |
-| 4  | `nix run .#deploy` → relay live on evo-x2 → run `post-deploy-check.sh` §12 live                                                | Critical | S | Go-live |
-| 5  | Live E2E: sendmail → mailq drains, journal `status=sent`                                                                       | High | S | Verification |
-| 6  | Live E2E: paperless share-link email arrives                                                                                   | High | S | Verification |
-| 7  | Live E2E: forgejo notification email arrives                                                                                   | High | S | Verification |
-| 8  | Configure Immich SMTP in admin UI (127.0.0.1:25, no auth)                                                                      | Medium | S | Feature |
-| 9  | Confirm Gatus queue check flips placeholder→green after go-live; verify live .prom values                                      | High | S | Verification |
-| 10 | Decide where system mail (root@/cron) should actually LAND — does a real mailbox exist behind `noreply@larsartmann.cloud`?      | High | S | Decision |
-| 11 | Flip TODO_LIST/AGENTS relay status to LIVE after §12 green                                                                     | Medium | S | Documentation |
-| 12 | Negative-test the Gatus queue check via the mutation method (repo doctrine)                                                    | High | S | Quality |
-| 13 | Negative-test §12 smoke branches (placeholder→WARN, paperless-gate skip)                                                        | Medium | S | Quality |
-| 14 | Execute T0 tier of the approved 232-task plan (18 tasks) — needs explicit GO                                                    | High | M | Plan |
-| 15 | Execute T1 /data repair tier — needs explicit GO (EIO inode blocks btrbk-data)                                                  | Critical | L | Bug |
-| 16 | Investigate the 17:21 attic VM-test red root cause; add retry-once + log preservation for flaky VM checks in CI                  | Medium | M | Quality |
-| 17 | Stop the daemon's plain-`nix fmt` from re-locking moving-ref inputs (use `--no-update-lock-file` daemon-side)                    | Medium | S | Cleanup |
-| 18 | Commit the 232-task table into the repo as markdown (currently /tmp-only)                                                       | Medium | S | Documentation |
-| 19 | Queue-AGE textfile metric (oldest deferred message age, not just depth) + Gatus condition                                       | Medium | M | Feature |
-| 20 | SPF alignment + DMARC policy review for `larsartmann.cloud` (envelope-from is aligned; DMARC policy is user DNS)                 | Medium | S | Deliverability |
-| 21 | Resend rate-limit headroom check (free tier vs cron burst storms)                                                               | Medium | S | Deliverability |
-| 22 | Watch postqueue growth under the placeholder era (is unbounded mailq growth possible before go-live?)                            | Medium | S | Verification |
-| 23 | Register postfix in `signoz-coverage.expected` semantics (no OTel — document as upstream gap or exempt)                          | Low | S | Monitoring |
-| 24 | SigNoz dashboard panel: `mail_relay_queue_messages` / `_over_threshold` / `_credential_placeholder`                              | Low | M | Monitoring |
-| 25 | Runbook drill: simulate provider 4xx/5xx storm → verify queue check fires → resolves                                            | Medium | M | Verification |
-| 26 | CHANGELOG entry for the relay module + VM test (verify daemon captured it)                                                      | Low | S | Documentation |
-| 27 | FEATURES.md entry for the mail relay                                                                                            | Low | S | Documentation |
-| 28 | Rotate remaining leaked keys (Synthetic live-assumed, Context7 `ctx7sk-…`) — PERSISTENT NAG                                      | High | S | Security (user) |
-| 29 | History-purge push decision (still HELD by user; rotation-first doctrine)                                                        | Medium | S | Security (user) |
-| 30 | `systemMailRecipient`: set explicitly in configuration.nix once #10 decided (implicit default is a footgun)                      | Medium | S | Cleanup |
-| 31 | paperless-task-queue celery `/tmp` post-fix verification (tmp-cleaner fix shipped — confirm clean)                               | Medium | S | Verification |
-| 32 | immich-machine-learning wgunicorn `/tmp` post-fix verification (same class)                                                      | Low | S | Verification |
-| 33 | CV test: convert `/mnt/pool` to `virtualisation.fileSystems` and re-verify cv-backup under a real mount                          | Medium | M | Quality |
-| 34 | ClickHouse telemetry backup coverage (btrbk excludes it — `clickhouse-backup` follow-up)                                        | High | L | Bug |
-| 35 | Verify browser-history registration gate is LIVE in the deployed binary (tag → flake bump → deploy chain)                        | Medium | M | Verification |
-| 36 | Gate `importUsers()` CSV path (registration lock hole #3, upstream cqrs-htmx)                                                    | Medium | M | Bug (upstream) |
-| 37 | Hermes post-deploy smoke: Discord gateway-ready journal line                                                                     | Low | S | Quality |
-| 38 | Verify Paperless AI actually uses llama-rag embeddings E2E (+ reranker wiring)                                                   | Low | M | Verification |
-| 39 | Samsung 970 EVO role assignment execution (design doc exists; user decision pending)                                             | High | L | Feature |
-| 40 | Confirm no relay consumer depends on inbound/reply mail (PapDashboard insights are Discord-only; nothing waits on an email reply) | Low | S | Verification |
-| 41 | Consider `delay_warning_time` on the relay (postfix DSN spam after N hours deferring) — decide OFF or tuned                      | Low | S | Feature |
-| 42 | Confirm forgejo FROM rendering (`Forgejo <noreply@larsartmann.cloud>`) passes Resend's sender validation live                     | Medium | S | Verification |
-| 43 | Add mail-relay runbook to Homepage tiles/docs index if service docs are linked anywhere                                           | Low | S | Documentation |
-| 44 | Post-go-live: watch first cron-burst for SMTP concurrency limits (Resend connection caps)                                        | Medium | S | Verification |
-| 45 | Document the `smtp_generic_maps` delivery-time gotcha (invisible in queue) in AGENTS.md Mail Relay section                       | Low | S | Documentation |
-| 46 | Add `tests/test-mail-relay.nix` to CI docs listing (CONTRIBUTING test matrix)                                                    | Low | S | Documentation |
-| 47 | Split-brain audit: relay defaults in docs vs module (`fromAddress`, threshold) — single source of truth pass                     | Low | S | Cleanup |
-| 48 | Consider relay-local rate limiting or `smtp_destination_concurrency_limit` guardrails for burst safety                            | Low | S | Hardening |
-| 49 | Review whether noreply@ should be excluded from auto-replies/loop risk (paperless ↔ inbound mailbox interplay, post-Q)           | Low | S | Hardening |
-| 50 | Re-run the full self-review checklist against the NEXT relay touchpoint (docs-health ANNOTATE this report when go-live lands)     | Low | S | Process |
+| #  | Task                                                                                                                              | Impact   | Effort | Category        |
+| -- | --------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | --------------- |
+| 1  | Verify `larsartmann.cloud` in Resend (Domains → SPF/DKIM records → Verified)                                                      | Critical | S      | Go-live (user)  |
+| 2  | Rotate Resend API key; paste into `mail-relay.yaml` sops interactively + restart postfix                                          | Critical | S      | Go-live (user)  |
+| 3  | Same new key into Pocket ID sops → unbreak Pocket ID email (broken since 2026-08-18)                                              | Critical | S      | Bug (user)      |
+| 4  | `nix run .#deploy` → relay live on evo-x2 → run `post-deploy-check.sh` §12 live                                                   | Critical | S      | Go-live         |
+| 5  | Live E2E: sendmail → mailq drains, journal `status=sent`                                                                          | High     | S      | Verification    |
+| 6  | Live E2E: paperless share-link email arrives                                                                                      | High     | S      | Verification    |
+| 7  | Live E2E: forgejo notification email arrives                                                                                      | High     | S      | Verification    |
+| 8  | Configure Immich SMTP in admin UI (127.0.0.1:25, no auth)                                                                         | Medium   | S      | Feature         |
+| 9  | Confirm Gatus queue check flips placeholder→green after go-live; verify live .prom values                                         | High     | S      | Verification    |
+| 10 | Decide where system mail (root@/cron) should actually LAND — does a real mailbox exist behind `noreply@larsartmann.cloud`?        | High     | S      | Decision        |
+| 11 | Flip TODO_LIST/AGENTS relay status to LIVE after §12 green                                                                        | Medium   | S      | Documentation   |
+| 12 | Negative-test the Gatus queue check via the mutation method (repo doctrine)                                                       | High     | S      | Quality         |
+| 13 | Negative-test §12 smoke branches (placeholder→WARN, paperless-gate skip)                                                          | Medium   | S      | Quality         |
+| 14 | Execute T0 tier of the approved 232-task plan (18 tasks) — needs explicit GO                                                      | High     | M      | Plan            |
+| 15 | Execute T1 /data repair tier — needs explicit GO (EIO inode blocks btrbk-data)                                                    | Critical | L      | Bug             |
+| 16 | Investigate the 17:21 attic VM-test red root cause; add retry-once + log preservation for flaky VM checks in CI                   | Medium   | M      | Quality         |
+| 17 | Stop the daemon's plain-`nix fmt` from re-locking moving-ref inputs (use `--no-update-lock-file` daemon-side)                     | Medium   | S      | Cleanup         |
+| 18 | Commit the 232-task table into the repo as markdown (currently /tmp-only)                                                         | Medium   | S      | Documentation   |
+| 19 | Queue-AGE textfile metric (oldest deferred message age, not just depth) + Gatus condition                                         | Medium   | M      | Feature         |
+| 20 | SPF alignment + DMARC policy review for `larsartmann.cloud` (envelope-from is aligned; DMARC policy is user DNS)                  | Medium   | S      | Deliverability  |
+| 21 | Resend rate-limit headroom check (free tier vs cron burst storms)                                                                 | Medium   | S      | Deliverability  |
+| 22 | Watch postqueue growth under the placeholder era (is unbounded mailq growth possible before go-live?)                             | Medium   | S      | Verification    |
+| 23 | Register postfix in `signoz-coverage.expected` semantics (no OTel — document as upstream gap or exempt)                           | Low      | S      | Monitoring      |
+| 24 | SigNoz dashboard panel: `mail_relay_queue_messages` / `_over_threshold` / `_credential_placeholder`                               | Low      | M      | Monitoring      |
+| 25 | Runbook drill: simulate provider 4xx/5xx storm → verify queue check fires → resolves                                              | Medium   | M      | Verification    |
+| 26 | CHANGELOG entry for the relay module + VM test (verify daemon captured it)                                                        | Low      | S      | Documentation   |
+| 27 | FEATURES.md entry for the mail relay                                                                                              | Low      | S      | Documentation   |
+| 28 | Rotate remaining leaked keys (Synthetic live-assumed, Context7 `ctx7sk-…`) — PERSISTENT NAG                                       | High     | S      | Security (user) |
+| 29 | History-purge push decision (still HELD by user; rotation-first doctrine)                                                         | Medium   | S      | Security (user) |
+| 30 | `systemMailRecipient`: set explicitly in configuration.nix once #10 decided (implicit default is a footgun)                       | Medium   | S      | Cleanup         |
+| 31 | paperless-task-queue celery `/tmp` post-fix verification (tmp-cleaner fix shipped — confirm clean)                                | Medium   | S      | Verification    |
+| 32 | immich-machine-learning wgunicorn `/tmp` post-fix verification (same class)                                                       | Low      | S      | Verification    |
+| 33 | CV test: convert `/mnt/pool` to `virtualisation.fileSystems` and re-verify cv-backup under a real mount                           | Medium   | M      | Quality         |
+| 34 | ClickHouse telemetry backup coverage (btrbk excludes it — `clickhouse-backup` follow-up)                                          | High     | L      | Bug             |
+| 35 | Verify browser-history registration gate is LIVE in the deployed binary (tag → flake bump → deploy chain)                         | Medium   | M      | Verification    |
+| 36 | Gate `importUsers()` CSV path (registration lock hole #3, upstream cqrs-htmx)                                                     | Medium   | M      | Bug (upstream)  |
+| 37 | Hermes post-deploy smoke: Discord gateway-ready journal line                                                                      | Low      | S      | Quality         |
+| 38 | Verify Paperless AI actually uses llama-rag embeddings E2E (+ reranker wiring)                                                    | Low      | M      | Verification    |
+| 39 | Samsung 970 EVO role assignment execution (design doc exists; user decision pending)                                              | High     | L      | Feature         |
+| 40 | Confirm no relay consumer depends on inbound/reply mail (PapDashboard insights are Discord-only; nothing waits on an email reply) | Low      | S      | Verification    |
+| 41 | Consider `delay_warning_time` on the relay (postfix DSN spam after N hours deferring) — decide OFF or tuned                       | Low      | S      | Feature         |
+| 42 | Confirm forgejo FROM rendering (`Forgejo <noreply@larsartmann.cloud>`) passes Resend's sender validation live                     | Medium   | S      | Verification    |
+| 43 | Add mail-relay runbook to Homepage tiles/docs index if service docs are linked anywhere                                           | Low      | S      | Documentation   |
+| 44 | Post-go-live: watch first cron-burst for SMTP concurrency limits (Resend connection caps)                                         | Medium   | S      | Verification    |
+| 45 | Document the `smtp_generic_maps` delivery-time gotcha (invisible in queue) in AGENTS.md Mail Relay section                        | Low      | S      | Documentation   |
+| 46 | Add `tests/test-mail-relay.nix` to CI docs listing (CONTRIBUTING test matrix)                                                     | Low      | S      | Documentation   |
+| 47 | Split-brain audit: relay defaults in docs vs module (`fromAddress`, threshold) — single source of truth pass                      | Low      | S      | Cleanup         |
+| 48 | Consider relay-local rate limiting or `smtp_destination_concurrency_limit` guardrails for burst safety                            | Low      | S      | Hardening       |
+| 49 | Review whether noreply@ should be excluded from auto-replies/loop risk (paperless ↔ inbound mailbox interplay, post-Q)            | Low      | S      | Hardening       |
+| 50 | Re-run the full self-review checklist against the NEXT relay touchpoint (docs-health ANNOTATE this report when go-live lands)     | Low      | S      | Process         |
 
 HARVEST routing: #1–13 TODO_LIST (go-live chain), #14–15 gated on GO, #16–27 TODO_LIST P1/P2, #28–29 standing nag, #30–50 mostly ROADMAP/P2.
 
@@ -121,7 +121,7 @@ HARVEST routing: #1–13 TODO_LIST (go-live chain), #14–15 gated on GO, #16–
 
 ---
 
-*Prepared by Crush (glm-5.3-flash). Point-in-time snapshot — will go stale; annotate via docs-health, never rewrite.*
+_Prepared by Crush (glm-5.3-flash). Point-in-time snapshot — will go stale; annotate via docs-health, never rewrite._
 
 ---
 

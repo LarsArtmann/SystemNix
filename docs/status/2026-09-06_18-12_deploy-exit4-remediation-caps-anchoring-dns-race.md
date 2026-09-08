@@ -6,15 +6,15 @@
 
 ## What the pasted deploy actually contained (diagnosis chain)
 
-| # | Symptom in deploy output | Root cause found | Class |
-|---|---|---|---|
-| 1 | `nix-build-cleanup.service` failed → activation exit 4 | `harden{}`'s empty `CapabilityBoundingSet` strips root's DAC override; sandboxes are `nixbld`-owned (0700 dirs + Go modcache made read-only) → wall of `rm: Permission denied` | Known-since-2026-07-21, never fixed |
-| 2 | `/run/current-system` NOT anchored to system-770 (reboot would revert) | nh advances `/run/current-system` but **skips the numbered-profile bump** when activation exit-4s; profile 770 still pointed at the OLD build while the new one ran | First time this mechanism was pinned down |
-| 3 | `service-health-check.service` failed | Symptom unit — it exits 1 by design whenever ANY unit is failed; greens itself when the underlying failures clear (verified: "OK 4/4" at 18:04) | Not a bug |
-| 4 | `inboxclean-sync.service` failed (Gmail main `auth_expired`) | Refresh token for `main` genuinely revoked (`invalid_grant`). `work` account healthy → NOT the blanket 7-day Testing-mode expiry (both were re-issued together 2026-09-04) — main was specifically revoked/expired | Human step |
-| 5 | Bank-Sync smoke FAIL (`sync_errors_total > 0`) | Two documented pending classes: `[corruption] db.scan` fix sits **5 commits ahead, unpushed** in `/home/lars/projects/bank-sync`; Wise SCA approval pending | Human/permission steps |
-| 6 | IO PSI avg10 44%→82% during session | Documented D-state corpse-pile signature (2026-08-31 boot, owed reboot) + post-deploy heavy jobs (data-to-pool, activitywatch-data-to-pool, buildcache-gc) | Known, reboot-gated |
-| 7 | (Deploy #2 only) Browser-history :8087 unreachable — NEW smoke failure | deploy.sh restarted browser-history **before** dnsblockd: the mkOidcGate polled the OLD daemon, then dnsblockd stopped/reloaded its 3.9M blocklist mid-flight → Go resolver fell through to 9.9.9.9 → `no such host` → exit 69; self-healed after 2-min RestartSec | Ordering race in deploy.sh itself |
+| # | Symptom in deploy output                                               | Root cause found                                                                                                                                                                                                                                                   | Class                                     |
+| - | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| 1 | `nix-build-cleanup.service` failed → activation exit 4                 | `harden{}`'s empty `CapabilityBoundingSet` strips root's DAC override; sandboxes are `nixbld`-owned (0700 dirs + Go modcache made read-only) → wall of `rm: Permission denied`                                                                                     | Known-since-2026-07-21, never fixed       |
+| 2 | `/run/current-system` NOT anchored to system-770 (reboot would revert) | nh advances `/run/current-system` but **skips the numbered-profile bump** when activation exit-4s; profile 770 still pointed at the OLD build while the new one ran                                                                                                | First time this mechanism was pinned down |
+| 3 | `service-health-check.service` failed                                  | Symptom unit — it exits 1 by design whenever ANY unit is failed; greens itself when the underlying failures clear (verified: "OK 4/4" at 18:04)                                                                                                                    | Not a bug                                 |
+| 4 | `inboxclean-sync.service` failed (Gmail main `auth_expired`)           | Refresh token for `main` genuinely revoked (`invalid_grant`). `work` account healthy → NOT the blanket 7-day Testing-mode expiry (both were re-issued together 2026-09-04) — main was specifically revoked/expired                                                 | Human step                                |
+| 5 | Bank-Sync smoke FAIL (`sync_errors_total > 0`)                         | Two documented pending classes: `[corruption] db.scan` fix sits **5 commits ahead, unpushed** in `/home/lars/projects/bank-sync`; Wise SCA approval pending                                                                                                        | Human/permission steps                    |
+| 6 | IO PSI avg10 44%→82% during session                                    | Documented D-state corpse-pile signature (2026-08-31 boot, owed reboot) + post-deploy heavy jobs (data-to-pool, activitywatch-data-to-pool, buildcache-gc)                                                                                                         | Known, reboot-gated                       |
+| 7 | (Deploy #2 only) Browser-history :8087 unreachable — NEW smoke failure | deploy.sh restarted browser-history **before** dnsblockd: the mkOidcGate polled the OLD daemon, then dnsblockd stopped/reloaded its 3.9M blocklist mid-flight → Go resolver fell through to 9.9.9.9 → `no such host` → exit 69; self-healed after 2-min RestartSec | Ordering race in deploy.sh itself         |
 
 ## a) FULLY DONE (verified live)
 
@@ -57,6 +57,7 @@
 ## f) Next up to 50 (session-derived, priority order)
 
 **User-gated (blocking full green):**
+
 1. InboxClean main re-consent (desktop): `sudo -u inboxclean GMAIL_CREDENTIALS_FILE=/var/lib/inboxclean/credentials.json GMAIL_TOKEN_FILE=/var/lib/inboxclean/token.json DB_PATH=/var/lib/inboxclean/inboxclean.db inboxclean auth`
 2. Approve bank-sync push (5 commits, `/home/lars/projects/bank-sync`) → then flake lock update + deploy here
 3. Wise SCA approval in app → OTT → `/var/lib/bank-sync-sca/token.env` → `systemctl restart bank-sync` → remove file (runbook: `docs/services/bank-sync-sca.md`)

@@ -43,27 +43,27 @@ The P0 is closed in the repo: `dnsblockd.service` now carries `ManagedOOMPrefere
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-| --- | --- |
-| `ManagedOOMPreference = "omit"` on dnsblockd.service | dns-blocker.nix; evo-x2 eval returns `"omit"` |
-| `OOMScoreAdjust = -1000` on dnsblockd.service (deliberate scope extension, see §e) | dns-blocker.nix; eval returns `-1000` |
-| Rationale comment in module (why BOTH layers; kill history; cascade argument) | dns-blocker.nix |
-| Eval verification on the real host config | nix eval × 4 (directives + untouched 4G/GOMEMLIMIT) |
-| `nix flake check --no-build` | all checks passed |
-| Formatting parity with the repo arbiter | `nix fmt -- --ci` 0 changed, no lock churn |
-| TODO_LIST row closed per docs-health contract (0 done items) | TODO_LIST.md header + row removed |
-| CHANGELOG entry | CHANGELOG.md `### Changed` top |
-| AGENTS.md gotcha (enduring rule, right section, no duplication) | DNS (dnsblockd) section |
-| Working tree clean; commits attributed | `797563db`, `3eaf8cae` |
+| Item                                                                               | Evidence                                            |
+| ---------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `ManagedOOMPreference = "omit"` on dnsblockd.service                               | dns-blocker.nix; evo-x2 eval returns `"omit"`       |
+| `OOMScoreAdjust = -1000` on dnsblockd.service (deliberate scope extension, see §e) | dns-blocker.nix; eval returns `-1000`               |
+| Rationale comment in module (why BOTH layers; kill history; cascade argument)      | dns-blocker.nix                                     |
+| Eval verification on the real host config                                          | nix eval × 4 (directives + untouched 4G/GOMEMLIMIT) |
+| `nix flake check --no-build`                                                       | all checks passed                                   |
+| Formatting parity with the repo arbiter                                            | `nix fmt -- --ci` 0 changed, no lock churn          |
+| TODO_LIST row closed per docs-health contract (0 done items)                       | TODO_LIST.md header + row removed                   |
+| CHANGELOG entry                                                                    | CHANGELOG.md `### Changed` top                      |
+| AGENTS.md gotcha (enduring rule, right section, no duplication)                    | DNS (dnsblockd) section                             |
+| Working tree clean; commits attributed                                             | `797563db`, `3eaf8cae`                              |
 
 ## b) PARTIALLY DONE
 
-| Item | State | Missing |
-| --- | --- | --- |
-| **The fix itself** | Repo-complete, eval-verified | **NOT DEPLOYED** — the live unit still runs without the directives (`systemctl show dnsblockd` has no ManagedOOMPreference today). The entire protective value is unrealized until `nix run .#deploy`. Post-deploy verify = `systemctl show dnsblockd -p ManagedOOMPreference -p OOMScoreAdjust` (expect `omit` / `-1000`); `oomctl` shows the preference in its cgroup dump. |
-| Historical claim verification | Re-verified the CURRENT era (0 oomd kills in 7d journal) | Did not re-derive 730x/day from archived journals (likely rotated out); relied on the 2026-08-04 root-cause report + 10+ status reports. Acceptable, but it is a claim accepted from docs, not re-measured. |
-| oomd exemption coverage | Applied for the memory-pressure kill path | Did not explicitly verify that `omit` also covers the **swap-pressure** path (`SwapUsedLimit=90%` in oomd.conf — zram-full is this box's real cliff). systemd docs say the preference is consulted for oomd kill decisions generally; not source-verified here. |
-| Regression protection | Eval-checked once by hand | No automated test (see §c). |
+| Item                          | State                                                    | Missing                                                                                                                                                                                                                                                                                                                                                                       |
+| ----------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **The fix itself**            | Repo-complete, eval-verified                             | **NOT DEPLOYED** — the live unit still runs without the directives (`systemctl show dnsblockd` has no ManagedOOMPreference today). The entire protective value is unrealized until `nix run .#deploy`. Post-deploy verify = `systemctl show dnsblockd -p ManagedOOMPreference -p OOMScoreAdjust` (expect `omit` / `-1000`); `oomctl` shows the preference in its cgroup dump. |
+| Historical claim verification | Re-verified the CURRENT era (0 oomd kills in 7d journal) | Did not re-derive 730x/day from archived journals (likely rotated out); relied on the 2026-08-04 root-cause report + 10+ status reports. Acceptable, but it is a claim accepted from docs, not re-measured.                                                                                                                                                                   |
+| oomd exemption coverage       | Applied for the memory-pressure kill path                | Did not explicitly verify that `omit` also covers the **swap-pressure** path (`SwapUsedLimit=90%` in oomd.conf — zram-full is this box's real cliff). systemd docs say the preference is consulted for oomd kill decisions generally; not source-verified here.                                                                                                               |
+| Regression protection         | Eval-checked once by hand                                | No automated test (see §c).                                                                                                                                                                                                                                                                                                                                                   |
 
 ## c) NOT STARTED
 
@@ -94,6 +94,7 @@ Nothing broke. Honest misses, ranked:
 ## f) NEXT (up to 50, ordered: session follow-ups → pasted TODO context → adjacent items noticed this session)
 
 **Direct follow-ups from this session:**
+
 1. **Deploy** (`nix run .#deploy`) + verify: `systemctl show dnsblockd -p ManagedOOMPreference -p OOMScoreAdjust` = `omit`/`-1000`, `oomctl` shows the preference, service healthy, :53 + :9090 answering.
 2. **Confirm omit covers the oomd swap-kill path** (SwapUsedLimit=90% — zram-full cliff): systemd docs/source check; if swap kills can still take dnsblockd, the exemption is incomplete.
 3. **Add the class guard**: eval-time audit — allowlist of critical-infra units (nix-daemon, dnsblockd, PMA) MUST carry `ManagedOOMPreference=omit`; any new service with `MemoryMax ≥ N` must either carry it or be explicitly allowlisted (dynamic-user-audit / otel-endpoint-audit pattern). Negative-test it.
@@ -136,7 +137,7 @@ Nothing broke. Honest misses, ranked:
 36. When the oomd-exemption audit (item 3) lands, add the exemption facts to `docs/gotchas-archive.md` if a narrative entry is warranted.
 37. CHANGELOG "2,927 commits" counter will drift — cosmetic, fix on sight next touch.
 
-*(Stopped at 37 — the remaining slots would be padding; better filled from the next docs-health harvest.)*
+_(Stopped at 37 — the remaining slots would be padding; better filled from the next docs-health harvest.)_
 
 ## g) Questions (cannot answer myself)
 
@@ -146,4 +147,4 @@ Nothing broke. Honest misses, ranked:
 
 ---
 
-*Point-in-time report. Post-deploy verification pending. No secrets in this report.*
+_Point-in-time report. Post-deploy verification pending. No secrets in this report._

@@ -23,7 +23,7 @@ Phase 1 of the ratified Samsung migration is **fully executed through every pre-
 
 1. **The flip itself**: deployed in config + fstab, NOT yet in runtime — stage-1 mounts `tlc` only at next boot. Running store = QLC until then (by design; rollback = old generation boots QLC `@nix` untouched)
 2. **Post-reboot acceptance** (plan step 5): `readlink /run/current-system` resolves, dry-run rebuild, fio sanity, exec-latency-under-buildstorm — all blocked on the reboot
-3. **Deploy #4 smoke exit 3**: 83 PASS / 8 FAIL — attic/immich/paperless/bank-sync recovered manually, but the *baseline drift* (attic flagged "new failure") and the stopped-not-restarted class are unhandled structurally
+3. **Deploy #4 smoke exit 3**: 83 PASS / 8 FAIL — attic/immich/paperless/bank-sync recovered manually, but the _baseline drift_ (attic flagged "new failure") and the stopped-not-restarted class are unhandled structurally
 4. **Two failed units remain**: `mail-relay-metrics` (SASL placeholder — known pre-existing go-live state, not this deploy) and `service-health-check` (restarted, state unverified)
 
 ## c) NOT STARTED ⏳

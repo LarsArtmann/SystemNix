@@ -192,11 +192,11 @@ A third failure (self-inflicted, recovered) and a **systemic monitoring gap**
 **P0 — outage closure & monitoring**
 
 1. SCA renewal (human): approve in Wise app → OTT → `/var/lib/bank-sync-sca/token.env` → `systemctl restart bank-sync` → remove file.
-~~2. Verify which metric bank-sync `/metrics` exposes for sync failures; if none, add one upstream (counter: failed syncs per provider).~~ done — `bank_sync_sync_errors_total` + `bank_sync_last_sync_timestamp_seconds` live
-~~3. Add Gatus check on that failure metric (pat() presence + value 0), Discord alerting, fail-closed per phantom-metric rule.~~ done — wired into gatus conditions (allowlist retirement pending TODO_LIST)
-4. Strengthen post-deploy smoke: Bank-Sync section asserts "no `manual sync failed` in journal since restart".
-5. After SCA renewal: verify the 2.5-day outage window backfilled via statements (sync-window advancement semantics under `fail_sync`).
-6. Investigate why NO alert reached Discord for 2.5 days — enumerate every bank-sync Gatus check and its conditions; fix coverage holes.
+   ~~2. Verify which metric bank-sync `/metrics` exposes for sync failures; if none, add one upstream (counter: failed syncs per provider).~~ done — `bank_sync_sync_errors_total` + `bank_sync_last_sync_timestamp_seconds` live
+   ~~3. Add Gatus check on that failure metric (pat() presence + value 0), Discord alerting, fail-closed per phantom-metric rule.~~ done — wired into gatus conditions (allowlist retirement pending TODO_LIST)
+2. Strengthen post-deploy smoke: Bank-Sync section asserts "no `manual sync failed` in journal since restart".
+3. After SCA renewal: verify the 2.5-day outage window backfilled via statements (sync-window advancement semantics under `fail_sync`).
+4. Investigate why NO alert reached Discord for 2.5 days — enumerate every bank-sync Gatus check and its conditions; fix coverage holes.
 
 **P1 — correctness & debt from this session**
 7. bank-sync upstream: stop retrying `rejection`-family errors (422 wrong.date.format was retried ~2,220×).

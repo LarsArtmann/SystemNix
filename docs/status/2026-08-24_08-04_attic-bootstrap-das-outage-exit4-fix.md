@@ -130,12 +130,12 @@ exit 4 on `atticd-bootstrap.service` (connection refused to 127.0.0.1:8200).
 
 ~~1. Reseat DAS USB cable AND enclosure power connector~~ done 2026-08-31 — after the 08-29 fixes (uas preloaded, controllers pinned, letter-rule blocked), the replug enumerated all four targets
 ~~2. Power-cycle reboot (~10s off — warm reboot may not re-enumerate; NIC-vanish~~ done — 14:30 boot recovered everything
-   precedent)
+precedent)
 ~~3. Re-run `bash scripts/das-link-recovery-check.sh` — expect [1][2][3] green~~ done — recovery verified by the 16-29 session (pool by-label, both members, zero device errors)
 4. Re-run it with `sudo` for the full shadow triage ([6])
 ~~5. Verify buildcache self-healed (`buildcache-usb-recovery.service` status)~~ done — buildcache attached + serving post-recovery
 6. If the runbook flags ext4 damage on sda1 in either boot: run its printed
-   e2fsfsck command, then `systemctl start buildcache-init.service`
+e2fsfsck command, then `systemctl start buildcache-init.service`
 
 **Post-recovery verification (self-healing expected — confirm it):**
 ~~7. `/mnt/pool` mounted, BOTH Toshiba members present; `btrfs device stats`~~ done 2026-08-31 — all zeros (16-29 verified-live table)

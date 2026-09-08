@@ -10,40 +10,40 @@ The box froze **with zram EMPTY, MemAvailable healthy, and ZERO OOM kills** — 
 
 ## Timeline (all CEST, boot -1)
 
-| Time | Event |
-| --- | --- |
-| 14:30:33 | Boot after 9-day DAS outage. ALL Persistent backup timers re-fire at once; **autoScrub starts on `/` AND `/data` at 14:30:41** (missed weekly window); dump backups run 14:30–14:59; btrbk-pool snapshots+prunes 14:30:45 |
-| 14:30–14:33 | `btrbk-data` starts the FULL re-send of `data.20260726T2330` (1.1 TB-class sequential read → USB pool) |
-| 14:31:29 | Gatus "Memory Pressure CRITICAL" first fails — **one minute after boot** |
-| 14:33:58 | flm backend starts (client connection ~3 min after boot) → cold load #1 |
-| 14:51:03 | flm "Start prefill" after 17-min load → **core-dump at 14:51:33** (segfault `libqwen2_npu.so`, the v1.0.2 heap bug) |
-| 14:52:33 | Restart → cold load #2 (takes ~43 min under IO contention) |
-| 14:56–15:26 | Memory-pressure CRITICAL/WARNING alerts flap TRIGGER/RESOLVE repeatedly (Discord, unseen) |
-| 15:35:19 | flm serving after load #2 → segfault 15:38:29 → restart 15:39:29 → cold load #3 (~27 min) |
-| 15:46–16:21 | User prints photos (Canon attached 16:06); `.imagetoraster` segfaults ×4 (separate libcups bug, harmless to the freeze) |
-| 16:00–16:28 | `systemd-journald: Under memory pressure, flushing caches` recurs every 10–60 s |
-| 16:06:45 | flm serving after load #3 → core-dump 16:11:03 → restart 16:12:46 → cold load #4 |
-| 16:33:07 | **PSI textfile collector completes its last cycle**; guard's last completion 16:32:51 — even 64M oneshots stop finishing |
-| 16:33:38–16:34:42 | journald flushes entries 30–60 s late (timestamps jump backwards); DNS check times out at 10 s; niri zombie probe starts |
-| 16:34:42 | **Journal cut mid-entry. Total freeze.** No panic, no OOM dump, no shutdown trail |
-| 16:36:56 | Boot 0 (hard reset) |
+| Time              | Event                                                                                                                                                                                                                     |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 14:30:33          | Boot after 9-day DAS outage. ALL Persistent backup timers re-fire at once; **autoScrub starts on `/` AND `/data` at 14:30:41** (missed weekly window); dump backups run 14:30–14:59; btrbk-pool snapshots+prunes 14:30:45 |
+| 14:30–14:33       | `btrbk-data` starts the FULL re-send of `data.20260726T2330` (1.1 TB-class sequential read → USB pool)                                                                                                                    |
+| 14:31:29          | Gatus "Memory Pressure CRITICAL" first fails — **one minute after boot**                                                                                                                                                  |
+| 14:33:58          | flm backend starts (client connection ~3 min after boot) → cold load #1                                                                                                                                                   |
+| 14:51:03          | flm "Start prefill" after 17-min load → **core-dump at 14:51:33** (segfault `libqwen2_npu.so`, the v1.0.2 heap bug)                                                                                                       |
+| 14:52:33          | Restart → cold load #2 (takes ~43 min under IO contention)                                                                                                                                                                |
+| 14:56–15:26       | Memory-pressure CRITICAL/WARNING alerts flap TRIGGER/RESOLVE repeatedly (Discord, unseen)                                                                                                                                 |
+| 15:35:19          | flm serving after load #2 → segfault 15:38:29 → restart 15:39:29 → cold load #3 (~27 min)                                                                                                                                 |
+| 15:46–16:21       | User prints photos (Canon attached 16:06); `.imagetoraster` segfaults ×4 (separate libcups bug, harmless to the freeze)                                                                                                   |
+| 16:00–16:28       | `systemd-journald: Under memory pressure, flushing caches` recurs every 10–60 s                                                                                                                                           |
+| 16:06:45          | flm serving after load #3 → core-dump 16:11:03 → restart 16:12:46 → cold load #4                                                                                                                                          |
+| 16:33:07          | **PSI textfile collector completes its last cycle**; guard's last completion 16:32:51 — even 64M oneshots stop finishing                                                                                                  |
+| 16:33:38–16:34:42 | journald flushes entries 30–60 s late (timestamps jump backwards); DNS check times out at 10 s; niri zombie probe starts                                                                                                  |
+| 16:34:42          | **Journal cut mid-entry. Total freeze.** No panic, no OOM dump, no shutdown trail                                                                                                                                         |
+| 16:36:56          | Boot 0 (hard reset)                                                                                                                                                                                                       |
 
 ## Root cause chain
 
 1. **The storm backbone:** 9-day DAS outage ended → every Persistent timer caught up at boot SIMULTANEOUSLY, including weekly scrub on both BTRFS filesystems — three full-filesystem readers (btrbk-data re-send + scrub ×2) stacked on the same QLC NVMe that also serves root, /data, ClickHouse XFS (separate partition, same NAND), and all builds.
 2. **The amplifier:** flm v1.0.2's prefill heap bug core-dumped EVERY attempt; systemd's restart cycle re-paid a 21.6 GB cold load each time — ×4, each 5–20× slower than normal due to the storm, keeping the page cache churning and the NAND saturated for the entire 2-hour boot.
-3. **The kill mechanism:** sustained memory-PSI *some* stalls (refault/writeback) — NOT memory exhaustion. MemAvailable stayed healthy (51 GiB page cache headroom), zram stayed ~0%, oomd never fired. The kernel died the scheduler-livelock death (same class as Aug 22 #1/#2, but without the zram leg).
+3. **The kill mechanism:** sustained memory-PSI _some_ stalls (refault/writeback) — NOT memory exhaustion. MemAvailable stayed healthy (51 GiB page cache headroom), zram stayed ~0%, oomd never fired. The kernel died the scheduler-livelock death (same class as Aug 22 #1/#2, but without the zram leg).
 
 ## Why every defense missed
 
-| Defense | Why it didn't fire |
-| --- | --- |
-| memory-emergency-guard Zones 1–3 | Zone 1/2 need low MemAvailable (never happened); Zone 3 needs zram ≥80% (zram was ~0%) — **the zram gate blinded it** |
-| oomd / kernel OOM | Nothing exceeded memory — the stall was refault, not exhaustion |
-| Gatus "Memory pressure CRITICAL" | Fired constantly for ~2 h (Discord) — the 43-min-warning-nobody-saw failure mode again; sev1 overlay has no memory-PSI condition (PSI warning tier is Discord-only by design) |
-| 30 s hardware WDT / softlockup detectors | Livelocks pet the WDT "eventually" (known class) |
-| IO priority tiers (BFQ) | Scrub ran `IOSchedulingClass=idle`, btrbk/flm at BE/6 — priorities were honored, but BFQ cannot stop the BYTES; at 100% NAND utilization every class starves |
-| kdump | No panic occurred (livelock), so no vmcore — expected for this class |
+| Defense                                  | Why it didn't fire                                                                                                                                                            |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| memory-emergency-guard Zones 1–3         | Zone 1/2 need low MemAvailable (never happened); Zone 3 needs zram ≥80% (zram was ~0%) — **the zram gate blinded it**                                                         |
+| oomd / kernel OOM                        | Nothing exceeded memory — the stall was refault, not exhaustion                                                                                                               |
+| Gatus "Memory pressure CRITICAL"         | Fired constantly for ~2 h (Discord) — the 43-min-warning-nobody-saw failure mode again; sev1 overlay has no memory-PSI condition (PSI warning tier is Discord-only by design) |
+| 30 s hardware WDT / softlockup detectors | Livelocks pet the WDT "eventually" (known class)                                                                                                                              |
+| IO priority tiers (BFQ)                  | Scrub ran `IOSchedulingClass=idle`, btrbk/flm at BE/6 — priorities were honored, but BFQ cannot stop the BYTES; at 100% NAND utilization every class starves                  |
+| kdump                                    | No panic occurred (livelock), so no vmcore — expected for this class                                                                                                          |
 
 Contributing but not causal: kernel 7.1.8→7.2.0 first boot (no kernel-fault evidence in the journal — no MCE/oops/xhci/NVMe errors; same freeze class as 7.1.8), the crash-recovery-era imagetoraster segfaults, parallel agent/build load.
 
@@ -62,7 +62,7 @@ Tonight 23:00/23:30 the btrbk root+data sends run again (the actual catch-up). T
 
 1. flm client identity at 14:33 (3 min after boot): PMA go-commit is the documented heaviest flm consumer (starts at boot, 9 days of pending commits to make). PapDashboard enricher also qualifies via the alert storm. Not conclusively attributed.
 2. Whether v1.0.3 actually fixes the prefill core-dump — observe after upgrade.
-~~3. `btrfs scrub status /data` post-crash: the interrupted boot scrub may have logged csum errors against the KNOWN /data EIO inode (P0 since Aug 18) — check `btrfs-health` metrics before panicking at a red "BTRFS Scrub Health" (it was already red at 16:40 in boot 0).~~ done — observed: scrub status 3 (interrupted) both mounts, `btrfs_scrub_error_free 0` red (20-02 report); ties into the P0
+   ~~3. `btrfs scrub status /data` post-crash: the interrupted boot scrub may have logged csum errors against the KNOWN /data EIO inode (P0 since Aug 18) — check `btrfs-health` metrics before panicking at a red "BTRFS Scrub Health" (it was already red at 16:40 in boot 0).~~ done — observed: scrub status 3 (interrupted) both mounts, `btrfs_scrub_error_free 0` red (20-02 report); ties into the P0
 
 ---
 

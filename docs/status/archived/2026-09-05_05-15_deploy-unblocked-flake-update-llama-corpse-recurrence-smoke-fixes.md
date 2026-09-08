@@ -8,18 +8,18 @@
 
 ## a) FULLY DONE
 
-| # | Item | Evidence |
-|---|------|----------|
-| 1 | **Deploy unblocked + activated** — full flake-update wave live: crush-daily `65d6fdc`, cv `60dc2492`, herdr `3a822e81`, hermes-agent `79445a49`, NUR, homebrew-cask | `nix run .#deploy` completed; `/run/current-system` is the new generation; smoke 92 PASS / 2 FAIL / 4 SKIP |
-| 2 | **FOD probes before building** (documented protocol): cv `60dc249` and crush-daily `4462cc1` go-modules verified hermetically pre-deploy — no vendorHash surprise | Both returned store paths lock-free via `builtins.getFlake` expr |
-| 3 | **crush-daily golden-test build failure root-caused** — 7 `TestGolden_*` failures at `4462cc1`; upstream fix (`65d6fdc test: regenerate golden files`) already pushed; lock advanced; FOD re-probed at new rev; redeploy green | `nix log` of the failed drv; lock now `65d6fdcc…` |
-| 4 | **pre-deploy-check.sh error-capture fix** — Nix ≥2.26 multi-line errors (bare `error:` headline, message on following lines) were filtered to a context-free `error:`; fail branch now prints raw output tail | `scripts/pre-deploy-check.sh` step 1; `bash -n` clean |
-| 5 | **Paperless smoke phantom-RED fixed and verified live** — old check grepped `/var/lib/paperless/paperless.conf`, a file NOTHING generates (nixpkgs renders `Environment=` directives in the deployed unit; that path is also the legacy pre-pool dataDir). New check greps `/etc/systemd/system/paperless-web.service` | Re-run shows `PASS Paperless — mail wiring rendered into paperless-web.service`; live unit verified: `PAPERLESS_EMAIL_HOST=127.0.0.1`, `PORT=25`, `FROM=noreply@larsartmann.cloud` |
-| 6 | **llama-embeddings outage diagnosed + recovery verified** — deploy restart hung mid-load (972 MB read, 1.9 s CPU / 5m53s = flaky driver state), hit global 3-min `DefaultTimeoutStartSec` → `Failed with result 'timeout'` → stop wedged on unkillable corpses. Auto-restart at 05:01 succeeded (4 s cold load). Both functional checks green: `:8848` health 200, `/v1/embeddings` returns 1024-dim vector | journal + live ps (S-state, 948 MB RSS) + smoke PASS |
-| 7 | **Pocket ID smoke FAIL root-caused as benign** — deploy-window "Slow SQL statement" journal noise (grep matches SQLITE_BUSY-class text); `/healthz` answers 204; transient collateral, self-heals | journalctl -u pocket-id |
-| 8 | **Smoke baseline converged correctly** — end-state baseline: `{FastFlowLM, Pocket ID}`; `llama.cpp Embeddings` and `Paperless` dropped out after healing/fix (no stale advisory pollution) | `~/.local/state/systemnix/smoke-fail-baseline.txt` |
-| 9 | **AGENTS.md memory updated (3 lessons)** — llama corpse recurrence + phantom IO-PSI signature; Paperless smoke surface rule; grep-drops-error-bodies rule | AGENTS.md llama-rag bullet, Paperless monitoring bullet, Nix gotchas bullet |
-| 10 | **Tree handed off clean** — auto-commit daemon swept all session changes (flake.lock, both scripts, AGENTS.md); working tree clean | `git status` empty |
+| #  | Item                                                                                                                                                                                                                                                                                                                                                                                                        | Evidence                                                                                                                                                                           |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | **Deploy unblocked + activated** — full flake-update wave live: crush-daily `65d6fdc`, cv `60dc2492`, herdr `3a822e81`, hermes-agent `79445a49`, NUR, homebrew-cask                                                                                                                                                                                                                                         | `nix run .#deploy` completed; `/run/current-system` is the new generation; smoke 92 PASS / 2 FAIL / 4 SKIP                                                                         |
+| 2  | **FOD probes before building** (documented protocol): cv `60dc249` and crush-daily `4462cc1` go-modules verified hermetically pre-deploy — no vendorHash surprise                                                                                                                                                                                                                                           | Both returned store paths lock-free via `builtins.getFlake` expr                                                                                                                   |
+| 3  | **crush-daily golden-test build failure root-caused** — 7 `TestGolden_*` failures at `4462cc1`; upstream fix (`65d6fdc test: regenerate golden files`) already pushed; lock advanced; FOD re-probed at new rev; redeploy green                                                                                                                                                                              | `nix log` of the failed drv; lock now `65d6fdcc…`                                                                                                                                  |
+| 4  | **pre-deploy-check.sh error-capture fix** — Nix ≥2.26 multi-line errors (bare `error:` headline, message on following lines) were filtered to a context-free `error:`; fail branch now prints raw output tail                                                                                                                                                                                               | `scripts/pre-deploy-check.sh` step 1; `bash -n` clean                                                                                                                              |
+| 5  | **Paperless smoke phantom-RED fixed and verified live** — old check grepped `/var/lib/paperless/paperless.conf`, a file NOTHING generates (nixpkgs renders `Environment=` directives in the deployed unit; that path is also the legacy pre-pool dataDir). New check greps `/etc/systemd/system/paperless-web.service`                                                                                      | Re-run shows `PASS Paperless — mail wiring rendered into paperless-web.service`; live unit verified: `PAPERLESS_EMAIL_HOST=127.0.0.1`, `PORT=25`, `FROM=noreply@larsartmann.cloud` |
+| 6  | **llama-embeddings outage diagnosed + recovery verified** — deploy restart hung mid-load (972 MB read, 1.9 s CPU / 5m53s = flaky driver state), hit global 3-min `DefaultTimeoutStartSec` → `Failed with result 'timeout'` → stop wedged on unkillable corpses. Auto-restart at 05:01 succeeded (4 s cold load). Both functional checks green: `:8848` health 200, `/v1/embeddings` returns 1024-dim vector | journal + live ps (S-state, 948 MB RSS) + smoke PASS                                                                                                                               |
+| 7  | **Pocket ID smoke FAIL root-caused as benign** — deploy-window "Slow SQL statement" journal noise (grep matches SQLITE_BUSY-class text); `/healthz` answers 204; transient collateral, self-heals                                                                                                                                                                                                           | journalctl -u pocket-id                                                                                                                                                            |
+| 8  | **Smoke baseline converged correctly** — end-state baseline: `{FastFlowLM, Pocket ID}`; `llama.cpp Embeddings` and `Paperless` dropped out after healing/fix (no stale advisory pollution)                                                                                                                                                                                                                  | `~/.local/state/systemnix/smoke-fail-baseline.txt`                                                                                                                                 |
+| 9  | **AGENTS.md memory updated (3 lessons)** — llama corpse recurrence + phantom IO-PSI signature; Paperless smoke surface rule; grep-drops-error-bodies rule                                                                                                                                                                                                                                                   | AGENTS.md llama-rag bullet, Paperless monitoring bullet, Nix gotchas bullet                                                                                                        |
+| 10 | **Tree handed off clean** — auto-commit daemon swept all session changes (flake.lock, both scripts, AGENTS.md); working tree clean                                                                                                                                                                                                                                                                          | `git status` empty                                                                                                                                                                 |
 
 ## b) PARTIALLY DONE
 
@@ -43,17 +43,20 @@
 ## e) WHAT WE SHOULD IMPROVE (brutal self-review of this session)
 
 **What did I forget?**
+
 - Negative-testing my own check fixes: the Paperless check's FAIL path (HOST genuinely absent → does it fail?) and the pre-deploy error-capture fix (inject a failing check → do details print?) are untested. This repo's own doctrine (`scripts/negative-test-lints.sh`, mutation method) demands it; I applied `bash -n` + one positive live run and called it done. Hypocritical by this repo's standards.
 - Alert-resolution follow-through after an incident window.
 - Post-deploy re-verification of every unit the pre-deploy listed as failed (I leaned on the smoke net instead of closing the loop explicitly).
 
 **What could I have done better?**
+
 - Not accepted "transient" as a verdict for the flake-check failure without a journal sweep for evidence. Cheap to do, skipped.
 - Noticed the deploy-gate contradiction EARLIER — it was visible in the user's own paste ("the deploy gate blocks new deploys at this level" WARN at 67% PSI… and then the deploy ran). I read past it twice.
 - Reported corpse count as "12 pairs" loosely; the precise inventory (10 pairs + 2 zombies + 1 `--help` corpse + 2 user `llama serve` procs) was in my ps output. Precision costs nothing.
 - Considered an explicit `TimeoutStartSec` for the llama-rag server units (the 3-min global produced the corpse cycle). I chose "do not fix the unit for this" — defensible while the wedge is boot-bound, but the tradeoff (fail faster vs delay the inevitable) deserves a documented decision.
 
 **What could still be improved?**
+
 - The pre-deploy step-6 "failed units" list should auto-annotate which units have known-owner fixes pending vs unknown failures — right now it dumps 7 rows and every session re-archaeologizes them.
 - Smoke checks that grep files should assert the file's PRODUCER exists (the Paperless check failed silently-wrong for its whole life because the premise "nixpkgs writes paperless.conf" was never verified).
 - A "corpse counter" metric (D-state llama/flm processes) would make the reboot-urgency visible on a dashboard instead of requiring a ps inspection.
@@ -63,6 +66,7 @@
 ## f) THINGS TO GET DONE NEXT (prioritized, session-derived)
 
 **P0 — urgent**
+
 1. **REBOOT evo-x2** (user-scheduled). Clears: ~12 llama corpse pairs, flm `:52626` pin (FastFlowLM dark), applies zram 50% (~47 G) sizing + 512 MiB VRAM carveout, drops phantom IO PSI. Single highest-impact action available.
 2. **Investigate the deploy pressure gate discrepancy** — reproduce its decision inputs at PSI ~75%/zram ~92% and find why no exit 12. Fix gate or fix AGENTS.md doc.
 3. **Identify the quickshell crash-loop instance** (5 core dumps/10 min) — if main DMS shell, user-facing breakage.
@@ -102,7 +106,7 @@
 
 ---
 
-*Report format: Markdown per explicit user instruction (overrides the skill's HTML default for this instance only). Auto-commit daemon will sweep this file; not committing manually per repo workflow.*
+_Report format: Markdown per explicit user instruction (overrides the skill's HTML default for this instance only). Auto-commit daemon will sweep this file; not committing manually per repo workflow._
 
 ---
 

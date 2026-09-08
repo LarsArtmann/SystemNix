@@ -14,23 +14,23 @@ Auto-commit DOES have an LLM (FastFlowLM via go-commit's `OPENAI_BASE_URL` chain
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-| --- | --- |
-| Root cause identified with three-way proof | PMA lock pin `7321133`; `git show 7321133:...chain.go` has NO `OPENAI_BASE_URL` read; zero connections to :52625 while 401-RTT-length (170–900ms) fallbacks fired |
-| Deployed-binary truth established | `go version -m` on `/proc/1601/exe`: go.mod *requirement* `v0.8.0` but `=> ./_local_deps/go-commit (devel)` replace wins — the requirement version lies about vendored code |
-| Environment/sandbox exonerated | Reproduced the exact `DefaultChainFromEnv` → `commit.New` → `GenerateMessage` path under the daemon's own environment (`env -i`): **success in 13.4s** |
-| flm endpoint exonerated | Raw Go probe: HTTP 200 in 3.9s with the exact payload shape |
-| Failure-mode taxonomy established | instant fallback (170–900ms) = config-dead/401 class · 30s fallback = cold-load/crash-window timeout class · 10–20s no-tag = healthy LLM commit |
-| PMA fix upstream + pushed | `1c144c8d` (re-lock go-commit → `9dfbf1e`, gains SSRF `withTrustedBaseURL` bypass required for loopback URLs) + `9bbc7dfb` (vendorHash refresh) |
-| SystemNix re-lock + deploy | input → PMA `9bbc7dfb`; `nix flake check --no-build` clean; deployed 18:39:13 (daemon PID 3761059) |
-| End-to-end live verification | `journalctl`: **CV committed 18:40:35, `committed changes`, 15.9s, no fallback tag** — first AI-generated auto-commit message in 5 days |
-| Docs recorded | AGENTS.md gotcha "PMA LLM-commit REGRESSION RECURRENCE" (daemon commit `b3b0a81b`); TODO_LIST guard item (upstream CI check) |
-| Lock-bump commit message quality | SystemNix `00d43c01` and both PMA commits carry full narrative messages (daemon's heuristic messages amended away) |
+| Item                                       | Evidence                                                                                                                                                                    |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Root cause identified with three-way proof | PMA lock pin `7321133`; `git show 7321133:...chain.go` has NO `OPENAI_BASE_URL` read; zero connections to :52625 while 401-RTT-length (170–900ms) fallbacks fired           |
+| Deployed-binary truth established          | `go version -m` on `/proc/1601/exe`: go.mod _requirement_ `v0.8.0` but `=> ./_local_deps/go-commit (devel)` replace wins — the requirement version lies about vendored code |
+| Environment/sandbox exonerated             | Reproduced the exact `DefaultChainFromEnv` → `commit.New` → `GenerateMessage` path under the daemon's own environment (`env -i`): **success in 13.4s**                      |
+| flm endpoint exonerated                    | Raw Go probe: HTTP 200 in 3.9s with the exact payload shape                                                                                                                 |
+| Failure-mode taxonomy established          | instant fallback (170–900ms) = config-dead/401 class · 30s fallback = cold-load/crash-window timeout class · 10–20s no-tag = healthy LLM commit                             |
+| PMA fix upstream + pushed                  | `1c144c8d` (re-lock go-commit → `9dfbf1e`, gains SSRF `withTrustedBaseURL` bypass required for loopback URLs) + `9bbc7dfb` (vendorHash refresh)                             |
+| SystemNix re-lock + deploy                 | input → PMA `9bbc7dfb`; `nix flake check --no-build` clean; deployed 18:39:13 (daemon PID 3761059)                                                                          |
+| End-to-end live verification               | `journalctl`: **CV committed 18:40:35, `committed changes`, 15.9s, no fallback tag** — first AI-generated auto-commit message in 5 days                                     |
+| Docs recorded                              | AGENTS.md gotcha "PMA LLM-commit REGRESSION RECURRENCE" (daemon commit `b3b0a81b`); TODO_LIST guard item (upstream CI check)                                                |
+| Lock-bump commit message quality           | SystemNix `00d43c01` and both PMA commits carry full narrative messages (daemon's heuristic messages amended away)                                                          |
 
 ## b) PARTIALLY DONE
 
 1. **Sustained LLM-commit rate unproven.** One live success, then flm crashed (`double free or corruption (fasttop)`, core dumps 19:01:47 and 19:09:36 — the known held-back v1.0.2 heap bug). flm is on its 3rd/4th cold load today; every commit during a load window 30s-times-out. The fix's real benefit (≥90% LLM commits over 24h) can only be measured after the AI stack is stable (reboot-gated).
-2. **Backward-pin *mechanism* mitigated only implicitly.** The new lock node's `original.url` is clean (no `?rev=`), so the backward re-pin trigger is gone — but nothing PREVENTS someone re-adding a rev pin or the daemon re-locking badly. The upstream CI guard is TODO (not started).
+2. **Backward-pin _mechanism_ mitigated only implicitly.** The new lock node's `original.url` is clean (no `?rev=`), so the backward re-pin trigger is gone — but nothing PREVENTS someone re-adding a rev pin or the daemon re-locking badly. The upstream CI guard is TODO (not started).
 3. **Post-fix monitoring state unverified.** Did "PMA Commit Health" flip green? Is Discord quiet? Does `system_pma_commit_heuristic_fallbacks_24h` still show the pre-fix burst (24h window)? Not checked.
 4. **AI-stack health.** Deploy's own post-deploy-check flags 5 FAILs (FastFlowLM + llama embeddings/reranker ×2 each) — pre-existing NPU-wedge state, correctly NOT misattributed, but left failing. Only the reboot clears it.
 5. **`ai commit --dry-run` CLI** (the binary's own generation path): still unexercised end-to-end — my attempt died on a confusing discovery-daemon error (`http://localhost/v1/discover: terminated signal received`) in the daemon-env shell. The daemon path is proven; the CLI path isn't.
@@ -52,7 +52,7 @@ Auto-commit DOES have an LLM (FastFlowLM via go-commit's `OPENAI_BASE_URL` chain
 2. **I rewrote pushed history with an amend.** `git commit --amend` turned the already-pushed `1c144c8d` into `d7f44c10`, diverging from origin; two rejected pushes followed; recovery needed backup-branch + `switch -C` + `restore --source` gymnastics. The `2>/dev/null` on the amend hid the first failure — sloppy shell compounding a sloppy git move. (No force-push was used; remote history was preserved.)
 3. **The auto-commit daemon is still allowed to write flake.lock — and it caused this whole incident.** The 313-file heuristic commit that regressed the pin, and the daemon committing my fix as "chore: auto-commit 1 changed file(s) (heuristic)" before I could message it properly, are the same systemic hole. Unprotected lock + heuristic-messaging daemon = self-sabotaging loop. Not fixed today (upstream decision).
 4. **~30 minutes of live diagnosis that one jq command could have truncated.** The 2026-08-22..09-02 blackout bullet in AGENTS.md documents the EXACT failure signature (pin `7321133` predates env support; requests to api.openai.com with dummy key). Resolving the vendored rev in PMA's lock subtree — one jq — was the decisive check and I reached it only after probes, socket-watching, and env bisection. Diagnosis was rigorous but order-of-operations was wrong: pin-check first, live-probing second.
-5. **The benefit of the fix is currently latent** — flm crash-loops on its known heap bug and the llama servers sit in the D-state wedge. Today's work restored the *wiring*; the *outcome* (AI messages on every commit) stays degraded until the reboot that's been pending since 2026-09-03.
+5. **The benefit of the fix is currently latent** — flm crash-loops on its known heap bug and the llama servers sit in the D-state wedge. Today's work restored the _wiring_; the _outcome_ (AI messages on every commit) stays degraded until the reboot that's been pending since 2026-09-03.
 
 ## e) WHAT WE SHOULD IMPROVE
 
@@ -60,12 +60,12 @@ Auto-commit DOES have an LLM (FastFlowLM via go-commit's `OPENAI_BASE_URL` chain
 - **Probe-then-lock must be mechanical, not aspirational.** I skipped it because nothing forced it. A `scripts/probe-input-fod.sh <input> <rev>` helper (generalizing the CV protocol) + a pre-deploy gate would make the skip impossible.
 - **Make commit provenance loud.** Heuristic fallback commits are already WARN-logged and `Result.Fallback`-marked, but git history itself carries only the message string. A trailer (e.g. `Auto-Message: heuristic|ai`) would make `git log` self-auditing — and today's regression would have been visible in any repo's history months ago.
 - **Log the generation error.** PMA never says WHY generation failed; I reconstructed the reason indirectly. One `Err(...)` line kills the whole class of blind diagnosis.
-- **Duration-class alerting.** Sustained *instant* fallbacks (config-dead) and sustained *30s* fallbacks (model-down) are different incidents with different owners. A textfile metric splitting them would page the right person for the right reason.
+- **Duration-class alerting.** Sustained _instant_ fallbacks (config-dead) and sustained _30s_ fallbacks (model-down) are different incidents with different owners. A textfile metric splitting them would page the right person for the right reason.
 - **The self-review skill says HTML, the user said .md** — user instruction wins; flagged here so the format divergence is visible (per skill contract, not propagating the one-off back into the skill).
 
 ## f) 50 THINGS TO GET DONE NEXT
 
-*Impact-ordered; items 1–12 are real work, 13–50 are the brainstorm tail (ROADMAP fuel — do not HARVEST blindly).*
+_Impact-ordered; items 1–12 are real work, 13–50 are the brainstorm tail (ROADMAP fuel — do not HARVEST blindly)._
 
 1. **Reboot evo-x2 into kernel 7.2.2** (TODO_LIST #14, URGENT since 09-03) — clears the NPU D-state wedge, the zombie :52626 socket, and resets the flm crash-loop. Kills all sessions incl. this one.
 2. **Retry flm v1.0.3/v1.0.4 post-reboot** (held-back bump; expect one-time 21.6 GB weight re-pull; live serve validation; revert if NPU enumeration still fails).

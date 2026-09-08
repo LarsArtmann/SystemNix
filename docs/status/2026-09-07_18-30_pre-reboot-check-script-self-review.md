@@ -107,6 +107,7 @@ not researched (per instruction).
 ## f) NEXT — up to 50 things
 
 **Close out this tool**
+
 1. User runs the confirming reboot (script verdict: SAFE TO REBOOT); report results
 2. After that reboot: remove `/boot/loader/loader.conf.bak-stuckboot`
 3. Fixture-test the 4 unproven paths (profile-mismatch WARN, no-loader.conf FAIL, no-default WARN, missing-device FAIL)

@@ -1,13 +1,13 @@
 # Status Report — WiFi Standby Failover Shipped (evo-x2)
 
-| | |
-| --- | --- |
-| **Date** | 2026-09-06 05:58 CEST |
-| **Host** | evo-x2 |
-| **Session scope** | "Ethernet unplugged → evo-x2 NOT using the (connected) WiFi" — diagnose, fix, test, deploy |
-| **Artifacts** | `modules/nixos/services/wifi-failover.nix`, `scripts/wifi-failover-watch.sh`, `tests/test-wifi-failover.nix`, wiring in `configuration.nix` + `system-health.nix`, AGENTS.md section |
-| **Git state** | All work committed by the auto-commit daemon (module first committed `2026-09-06 04:32:50 +0200`, "chore: auto-commit 3 changed file(s)"); working tree clean |
-| **Deploy state** | DEPLOYED LIVE via `nix run .#deploy`; post-deploy smoke: 92 PASS / 2 FAIL (pre-existing baseline) / 4 SKIP / 4 WARN; daemon live-verified on the host |
+|                   |                                                                                                                                                                                      |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Date**          | 2026-09-06 05:58 CEST                                                                                                                                                                |
+| **Host**          | evo-x2                                                                                                                                                                               |
+| **Session scope** | "Ethernet unplugged → evo-x2 NOT using the (connected) WiFi" — diagnose, fix, test, deploy                                                                                           |
+| **Artifacts**     | `modules/nixos/services/wifi-failover.nix`, `scripts/wifi-failover-watch.sh`, `tests/test-wifi-failover.nix`, wiring in `configuration.nix` + `system-health.nix`, AGENTS.md section |
+| **Git state**     | All work committed by the auto-commit daemon (module first committed `2026-09-06 04:32:50 +0200`, "chore: auto-commit 3 changed file(s)"); working tree clean                        |
+| **Deploy state**  | DEPLOYED LIVE via `nix run .#deploy`; post-deploy smoke: 92 PASS / 2 FAIL (pre-existing baseline) / 4 SKIP / 4 WARN; daemon live-verified on the host                                |
 
 ---
 
@@ -30,38 +30,38 @@
 
 ## a) FULLY DONE (verifiable)
 
-| # | What | Evidence | Files |
-| --- | --- | --- | --- |
-| 1 | Root-cause diagnosis of the failover blackhole | `/proc/net/route` + `nmcli` captured; kernel carrier-vs-admin-down semantics | — |
-| 2 | Carrier-watch daemon (1s poll; evicts pinned eno1 defaults v4+v6 on carrier loss; re-adds metric-0 primary on restore; never touches the fallback route; `linkdown`-aware; `DEBUG_POLL` knob) | VM test run 3 green; live journal `wifi-failover: eno1 carrier UP` | `scripts/wifi-failover-watch.sh` |
-| 3 | Module with options (`ethernetInterface`, `fallbackInterface`, `pollIntervalSeconds`, `trustFallbackInterface`), eval-time dual-wan conflict assertion, harden{}+serviceDefaults unit, onFailure, startLimit 5/300 | `nix eval` renders unit; `ExecStart` store path resolves | `modules/nixos/services/wifi-failover.nix` |
-| 4 | Firewall trust wiring: wlan0 added to `trustedInterfaces` when enabled | `nix eval` → `["wlan0","eno1","lo"]` on evo-x2 | same module |
-| 5 | VM regression test (5 scenarios: missing-interface boot tolerance, carrier-UP observation, eviction with standby serving, restore to metric-0 primary, journal markers) | `nix build .#checks.x86_64-linux.wifi-failover` PASS (320s) | `tests/test-wifi-failover.nix`, registered in `tests/default.nix` |
-| 6 | Conflict guard negative test (dual-wan + wifi-failover together) | `extendModules` eval shows `assertion = false` with the conflict message | module |
-| 7 | Host wiring: enabled in configuration.nix; dual-wan disable comment updated with pointer; `wifi-failover` added to system-health `monitoredServices` | eval + deployed unit | `configuration.nix`, `system-health.nix` |
-| 8 | `nix fmt` clean; `nix flake check --no-build` passes ("all checks passed!") | CLI output | — |
-| 9 | Deployed + live-verified (daemon active, correct route topology, cgroup procs present) | `nix run .#deploy`; journal + `/proc/net/route` post-deploy | — |
-| 10 | AGENTS.md documentation (module section + `linkdown` kernel lesson + DEBUG_POLL knob) | AGENTS.md "WiFi Failover" section | `AGENTS.md` |
+| #  | What                                                                                                                                                                                                               | Evidence                                                                     | Files                                                             |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| 1  | Root-cause diagnosis of the failover blackhole                                                                                                                                                                     | `/proc/net/route` + `nmcli` captured; kernel carrier-vs-admin-down semantics | —                                                                 |
+| 2  | Carrier-watch daemon (1s poll; evicts pinned eno1 defaults v4+v6 on carrier loss; re-adds metric-0 primary on restore; never touches the fallback route; `linkdown`-aware; `DEBUG_POLL` knob)                      | VM test run 3 green; live journal `wifi-failover: eno1 carrier UP`           | `scripts/wifi-failover-watch.sh`                                  |
+| 3  | Module with options (`ethernetInterface`, `fallbackInterface`, `pollIntervalSeconds`, `trustFallbackInterface`), eval-time dual-wan conflict assertion, harden{}+serviceDefaults unit, onFailure, startLimit 5/300 | `nix eval` renders unit; `ExecStart` store path resolves                     | `modules/nixos/services/wifi-failover.nix`                        |
+| 4  | Firewall trust wiring: wlan0 added to `trustedInterfaces` when enabled                                                                                                                                             | `nix eval` → `["wlan0","eno1","lo"]` on evo-x2                               | same module                                                       |
+| 5  | VM regression test (5 scenarios: missing-interface boot tolerance, carrier-UP observation, eviction with standby serving, restore to metric-0 primary, journal markers)                                            | `nix build .#checks.x86_64-linux.wifi-failover` PASS (320s)                  | `tests/test-wifi-failover.nix`, registered in `tests/default.nix` |
+| 6  | Conflict guard negative test (dual-wan + wifi-failover together)                                                                                                                                                   | `extendModules` eval shows `assertion = false` with the conflict message     | module                                                            |
+| 7  | Host wiring: enabled in configuration.nix; dual-wan disable comment updated with pointer; `wifi-failover` added to system-health `monitoredServices`                                                               | eval + deployed unit                                                         | `configuration.nix`, `system-health.nix`                          |
+| 8  | `nix fmt` clean; `nix flake check --no-build` passes ("all checks passed!")                                                                                                                                        | CLI output                                                                   | —                                                                 |
+| 9  | Deployed + live-verified (daemon active, correct route topology, cgroup procs present)                                                                                                                             | `nix run .#deploy`; journal + `/proc/net/route` post-deploy                  | —                                                                 |
+| 10 | AGENTS.md documentation (module section + `linkdown` kernel lesson + DEBUG_POLL knob)                                                                                                                              | AGENTS.md "WiFi Failover" section                                            | `AGENTS.md`                                                       |
 
 ## b) PARTIALLY DONE
 
-| # | Item | What works | What's open | Effort |
-| --- | --- | --- | --- | --- |
-| 1 | IPv6 handling | Pinned **v6** defaults deleted on carrier loss (same `linkdown`-aware path) | **Restore** of v6 is deliberately left to RA re-advertisement — an UNVERIFIED claim; zero v6 coverage in the VM test | S–M |
-| 2 | Failover observability | Unit death → system-health/Gatus (`monitoredServices`); events → journal only | An actual **failover event** produces no metric, no Gatus check, no notification — "cable pulled" is invisible beyond the journal | S |
-| 3 | Runbook | AGENTS.md section exists | No `docs/services/wifi-failover.md` (repo convention for services: test steps, journal reading, DEBUG_POLL usage) | S |
-| 4 | Test determinism | Run 3 deterministic (test now waits for the daemon to OBSERVE `carrier UP` before arming the down-scenario) | Run 1's silent non-observation was never root-caused — see (d)1 | M |
-| 5 | Hardening | harden{} + CAP_NET_ADMIN only | `NoNewPrivileges=false` copied from the dual-wan precedent without testing whether `true` works (script execs no setuid binaries) | S |
+| # | Item                   | What works                                                                                                  | What's open                                                                                                                       | Effort |
+| - | ---------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 1 | IPv6 handling          | Pinned **v6** defaults deleted on carrier loss (same `linkdown`-aware path)                                 | **Restore** of v6 is deliberately left to RA re-advertisement — an UNVERIFIED claim; zero v6 coverage in the VM test              | S–M    |
+| 2 | Failover observability | Unit death → system-health/Gatus (`monitoredServices`); events → journal only                               | An actual **failover event** produces no metric, no Gatus check, no notification — "cable pulled" is invisible beyond the journal | S      |
+| 3 | Runbook                | AGENTS.md section exists                                                                                    | No `docs/services/wifi-failover.md` (repo convention for services: test steps, journal reading, DEBUG_POLL usage)                 | S      |
+| 4 | Test determinism       | Run 3 deterministic (test now waits for the daemon to OBSERVE `carrier UP` before arming the down-scenario) | Run 1's silent non-observation was never root-caused — see (d)1                                                                   | M      |
+| 5 | Hardening              | harden{} + CAP_NET_ADMIN only                                                                               | `NoNewPrivileges=false` copied from the dual-wan precedent without testing whether `true` works (script execs no setuid binaries) | S      |
 
 ## c) NOT STARTED
 
-| # | Item | Why not started | Wanted? |
-| --- | --- | --- | --- |
+| # | Item                                                                                                       | Why not started                                                                        | Wanted?                         |
+| - | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------- |
 | 1 | **Real-cable acceptance test** on evo-x2 (physical pull, verify journal FAILOVER → WiFi serving → restore) | Physical action; would interrupt the user's connectivity; VM test covers the mechanism | Yes — it is THE acceptance test |
-| 2 | Failover-event metric + Gatus check (`wifi_failover_active`, failover/restore counters) | Design decision on alert tier is user's (alert-fatigue doctrine) | Yes |
-| 3 | dual-wan disposition (fix probe design or delete module+scripts) | Out of scope this session; pointer comment added instead | Decision needed |
-| 4 | Reconciling (state-based) eviction to kill the missed-transition class (see d1) | Design change, not a patch | Yes — top improvement |
-| 5 | Automated eval test for the firewall-trust wiring (trustedInterfaces iff enabled+trust) | Manually verified this session; no pinned regression test | Nice-to-have |
+| 2 | Failover-event metric + Gatus check (`wifi_failover_active`, failover/restore counters)                    | Design decision on alert tier is user's (alert-fatigue doctrine)                       | Yes                             |
+| 3 | dual-wan disposition (fix probe design or delete module+scripts)                                           | Out of scope this session; pointer comment added instead                               | Decision needed                 |
+| 4 | Reconciling (state-based) eviction to kill the missed-transition class (see d1)                            | Design change, not a patch                                                             | Yes — top improvement           |
+| 5 | Automated eval test for the firewall-trust wiring (trustedInterfaces iff enabled+trust)                    | Manually verified this session; no pinned regression test                              | Nice-to-have                    |
 
 ## d) TOTALLY FUCKED UP (radical honesty)
 
@@ -83,33 +83,33 @@
 
 Impact/effort: Critical/High/Medium/Low; S <30min, M 30min–2h, L >2h. **[S]** = session-derived, **[N]** = noticed this session.
 
-| # | Task | Impact | Effort | Category |
-| --- | --- | --- | --- | --- |
-| 1 | [S] Make eviction reconciling (state-based) in `wifi-failover-watch.sh` + update VM test | Critical | S | Bug |
-| 2 | [S] Root-cause VM run-1 carrier-observation anomaly (rerun with DEBUG_POLL on, inspect linkwatch timing + dhcpcd interplay) | Critical | M | Bug |
-| 3 | [S] Real-cable acceptance test with the user (pull → FAILOVER journal + wlan0 serving → replug → RESTORE) | High | S | Quality |
-| 4 | [S] Failover-event metric + Gatus check (active gauge, failover/restore counters); decide alert tier | High | S–M | Feature |
-| 5 | [S] Verify/establish v6 restore behavior (RA re-advertisement claim) + add v6 coverage to the VM test | Medium | M | Quality |
-| 6 | [S] Write `docs/services/wifi-failover.md` runbook (test steps, journal reading, DEBUG_POLL, manual restore) | Medium | S | Documentation |
-| 7 | [S] Drop or justify the device-unit dependency (300s delayed guard start when interface absent, observed in VM) | Medium | S | Quality |
-| 8 | [S] dual-wan disposition: delete module+scripts (git history archives it) or fix probe design; update comment | Medium | S | Cleanup |
-| 9 | [S] Add eval-level regression test for firewall trust wiring (trustedInterfaces iff enabled+trust) | Low | S | Quality |
-| 10 | [S] Tighten unit hardening: try `NoNewPrivileges=true`; `MemoryMax` 64M→32M (measured 5M peak) | Low | S | Quality |
-| 11 | [S] Flap-storm consideration: cable bounce churn (evict+re-add cycles) — count flap events in the metric, consider log rate-limit | Low | S | Quality |
-| 12 | [S] Confirm CI green on the auto-committed session files (nix-check runs the full check incl. the new VM test) | Medium | S | Quality |
-| 13 | [S] Confirm the auto-committed attribution (daemon heuristic commits) is acceptable for this feature, or reword with a pathspec commit | Low | S | Cleanup |
-| 14 | [N] Identify the 2 pre-existing baseline FAILs in the post-deploy smoke (uninvestigated this session) | Medium | S | Bug |
-| 15 | [N] Quickshell journal error lines (1 line last 1h, post-deploy WARN) — identify and fix or baseline | Low | S | Bug |
-| 16 | [N] Fish startup 366ms vs 200ms threshold (post-deploy WARN) — profile | Low | S | Quality |
-| 17 | [N] The owed REBOOT (clears D-state corpse pile, IO-PSI signature, flm :52626 EADDRINUSE corpse, predates zram/carveout changes) — needs a user-chosen window | High | S | Ops |
-| 18 | [S] Harvest this report's (f) items into TODO_LIST.md (docs-health HARVEST) | Medium | S | Documentation |
-| 19 | [S] Document the `linkdown`/`route show`-round-trip trap in `docs/gotchas-archive.md` | Low | S | Documentation |
-| 20 | [S] Decide event-driven alternative (NM dispatcher / `ip monitor link`) vs 1s poll — document the decision either way | Low | S | Cleanup |
-| 21 | [N] Audit other repo scripts that parse `ip route show` output back into `ip route del` for the same annotation trap | Medium | M | Bug |
-| 22 | [R] Context7 key rotation (live key in public git history — rotation is the real fix; purge decision currently HELD) | Critical | S | Security |
-| 23 | [R] /data EIO inode (TODO_LIST P0): btrbk-data sends still abort; pool `/backups/data` has zero complete received subvols | High | L | Bug |
-| 24 | [R] clickhouse-backup coverage gap (telemetry DB has no backup leg) | Medium | M | Feature |
-| 25 | [R] Samsung 970 EVO Plus role assignment implementation (design doc + /nix-on-BTRFS decision exist; move not executed) | Medium | L | Feature |
+| #  | Task                                                                                                                                                          | Impact   | Effort | Category      |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
+| 1  | [S] Make eviction reconciling (state-based) in `wifi-failover-watch.sh` + update VM test                                                                      | Critical | S      | Bug           |
+| 2  | [S] Root-cause VM run-1 carrier-observation anomaly (rerun with DEBUG_POLL on, inspect linkwatch timing + dhcpcd interplay)                                   | Critical | M      | Bug           |
+| 3  | [S] Real-cable acceptance test with the user (pull → FAILOVER journal + wlan0 serving → replug → RESTORE)                                                     | High     | S      | Quality       |
+| 4  | [S] Failover-event metric + Gatus check (active gauge, failover/restore counters); decide alert tier                                                          | High     | S–M    | Feature       |
+| 5  | [S] Verify/establish v6 restore behavior (RA re-advertisement claim) + add v6 coverage to the VM test                                                         | Medium   | M      | Quality       |
+| 6  | [S] Write `docs/services/wifi-failover.md` runbook (test steps, journal reading, DEBUG_POLL, manual restore)                                                  | Medium   | S      | Documentation |
+| 7  | [S] Drop or justify the device-unit dependency (300s delayed guard start when interface absent, observed in VM)                                               | Medium   | S      | Quality       |
+| 8  | [S] dual-wan disposition: delete module+scripts (git history archives it) or fix probe design; update comment                                                 | Medium   | S      | Cleanup       |
+| 9  | [S] Add eval-level regression test for firewall trust wiring (trustedInterfaces iff enabled+trust)                                                            | Low      | S      | Quality       |
+| 10 | [S] Tighten unit hardening: try `NoNewPrivileges=true`; `MemoryMax` 64M→32M (measured 5M peak)                                                                | Low      | S      | Quality       |
+| 11 | [S] Flap-storm consideration: cable bounce churn (evict+re-add cycles) — count flap events in the metric, consider log rate-limit                             | Low      | S      | Quality       |
+| 12 | [S] Confirm CI green on the auto-committed session files (nix-check runs the full check incl. the new VM test)                                                | Medium   | S      | Quality       |
+| 13 | [S] Confirm the auto-committed attribution (daemon heuristic commits) is acceptable for this feature, or reword with a pathspec commit                        | Low      | S      | Cleanup       |
+| 14 | [N] Identify the 2 pre-existing baseline FAILs in the post-deploy smoke (uninvestigated this session)                                                         | Medium   | S      | Bug           |
+| 15 | [N] Quickshell journal error lines (1 line last 1h, post-deploy WARN) — identify and fix or baseline                                                          | Low      | S      | Bug           |
+| 16 | [N] Fish startup 366ms vs 200ms threshold (post-deploy WARN) — profile                                                                                        | Low      | S      | Quality       |
+| 17 | [N] The owed REBOOT (clears D-state corpse pile, IO-PSI signature, flm :52626 EADDRINUSE corpse, predates zram/carveout changes) — needs a user-chosen window | High     | S      | Ops           |
+| 18 | [S] Harvest this report's (f) items into TODO_LIST.md (docs-health HARVEST)                                                                                   | Medium   | S      | Documentation |
+| 19 | [S] Document the `linkdown`/`route show`-round-trip trap in `docs/gotchas-archive.md`                                                                         | Low      | S      | Documentation |
+| 20 | [S] Decide event-driven alternative (NM dispatcher / `ip monitor link`) vs 1s poll — document the decision either way                                         | Low      | S      | Cleanup       |
+| 21 | [N] Audit other repo scripts that parse `ip route show` output back into `ip route del` for the same annotation trap                                          | Medium   | M      | Bug           |
+| 22 | [R] Context7 key rotation (live key in public git history — rotation is the real fix; purge decision currently HELD)                                          | Critical | S      | Security      |
+| 23 | [R] /data EIO inode (TODO_LIST P0): btrbk-data sends still abort; pool `/backups/data` has zero complete received subvols                                     | High     | L      | Bug           |
+| 24 | [R] clickhouse-backup coverage gap (telemetry DB has no backup leg)                                                                                           | Medium   | M      | Feature       |
+| 25 | [R] Samsung 970 EVO Plus role assignment implementation (design doc + /nix-on-BTRFS decision exist; move not executed)                                        | Medium   | L      | Feature       |
 
 (Stopping at 25 substantive items — the rest of the 50 would be padding; HARVEST routing prefers specific over volume. Extension candidates if wanted: per-service `TimeoutStartSec` audit follow-ups, TODO_LIST P0 sweep, resolv.conf blind-spot metric follow-ups — all already tracked in existing docs.)
 
@@ -121,4 +121,4 @@ Impact/effort: Critical/High/Medium/Low; S <30min, M 30min–2h, L >2h. **[S]** 
 
 ---
 
-*Point-in-time snapshot — goes stale by design. Section (f) is the HARVEST input for TODO_LIST.md/ROADMAP.md. Written per the status-report skill; **format override flagged**: the skill's canonical output is a styled HTML dashboard, the user explicitly requested `.md` — honored. The skill's "commit the report" step was skipped per the never-commit-without-explicit-instruction rule; the auto-commit daemon owns commits in this repo.*
+_Point-in-time snapshot — goes stale by design. Section (f) is the HARVEST input for TODO_LIST.md/ROADMAP.md. Written per the status-report skill; **format override flagged**: the skill's canonical output is a styled HTML dashboard, the user explicitly requested `.md` — honored. The skill's "commit the report" step was skipped per the never-commit-without-explicit-instruction rule; the auto-commit daemon owns commits in this repo._

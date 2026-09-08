@@ -10,15 +10,15 @@
 
 SigNoz's **Services page is trace-driven**: a service appears there ONLY if its binary actively pushes OTLP spans. The journald logs pipeline covers 80+ services and the prometheus receiver scrapes 9 jobs — both invisible on `/services`. ClickHouse ground truth: exactly 6 services **ever** sent spans all-time (cv-application, crush-daily, browser-history, discordsync, file-and-image-renamer, gotenberg — `signoz_traces.distributed_signoz_index_v3`). The collector itself was healthy (0 failed/refused spans). Every other gap was per-binary:
 
-| Service | Env var set? | Instrumentation reality | Class |
-|---|---|---|---|
-| dnsblockd | no (config-based) | FULL span instrumentation upstream, `otlp_endpoint` YAML key never set → dark. Enabling it exposed a **latent upstream bug**: exporter omits `WithInsecure()` → every export died `https://localhost:4318 … server gave HTTP response to HTTPS client` | config gap + upstream bug |
-| bank-sync | no | `cqrsotel.Setup` wired for stdout/noop ONLY — no OTLP path | upstream gap (small) |
-| overview | yes | `telemetry.SetupFromEnv` runs (journal: "OTel tracing enabled") but **ZERO `tracer.Start` sites** — perfect noop | upstream gap |
-| projects-management-automation | yes | same class as overview | upstream gap |
-| papdashboard | yes | OTel METRICS only (prometheus registry), no trace SDK | upstream gap |
-| hermes | yes | Python; opentelemetry-sdk not wired into the agent runtime | upstream gap |
-| fastflowlm | yes | prebuilt binary, no OTel at all — env var was a pure lie | removed |
+| Service                        | Env var set?      | Instrumentation reality                                                                                                                                                                                                                                | Class                     |
+| ------------------------------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------- |
+| dnsblockd                      | no (config-based) | FULL span instrumentation upstream, `otlp_endpoint` YAML key never set → dark. Enabling it exposed a **latent upstream bug**: exporter omits `WithInsecure()` → every export died `https://localhost:4318 … server gave HTTP response to HTTPS client` | config gap + upstream bug |
+| bank-sync                      | no                | `cqrsotel.Setup` wired for stdout/noop ONLY — no OTLP path                                                                                                                                                                                             | upstream gap (small)      |
+| overview                       | yes               | `telemetry.SetupFromEnv` runs (journal: "OTel tracing enabled") but **ZERO `tracer.Start` sites** — perfect noop                                                                                                                                       | upstream gap              |
+| projects-management-automation | yes               | same class as overview                                                                                                                                                                                                                                 | upstream gap              |
+| papdashboard                   | yes               | OTel METRICS only (prometheus registry), no trace SDK                                                                                                                                                                                                  | upstream gap              |
+| hermes                         | yes               | Python; opentelemetry-sdk not wired into the agent runtime                                                                                                                                                                                             | upstream gap              |
+| fastflowlm                     | yes               | prebuilt binary, no OTel at all — env var was a pure lie                                                                                                                                                                                               | removed                   |
 
 ---
 
@@ -86,6 +86,7 @@ SigNoz's **Services page is trace-driven**: a service appears there ONLY if its 
 ## f) NEXT — up to 50 things, ordered
 
 **P0 — finish tonight's thread (all unblock the 2 flips):**
+
 1. User pushes dnsblockd master (+ tag if versioned) → `nix flake lock --update-input dnsblockd` (+ vendorHash dance if FOD changes) → flip `dnsblockd` wiring `"upstream"`→`"config"` → deploy → verify first dnsblockd spans in ClickHouse + `missing 0` with dnsblockd ENFORCED.
 2. Same for bank-sync (push + tag; `--update-input bank-sync`; vendorHash refresh expected — go.mod gained otlptracehttp) → flip to `"env"` → verify `bank-sync` service appears in `/services`.
 3. Remove `signoz_traces_missing`/`signoz_coverage_scrape_errors`/`signoz_logs_pipeline_stale`/`signoz_traces_reporting` (+ `system_user_units_*`, `discordsync_turso_local_only_mode`) from KNOWN_NEW_METRICS once the textfile confirms them (verify: `grep signoz_traces /var/lib/prometheus-node-exporter/textfile_collectors/signoz-coverage.prom`).

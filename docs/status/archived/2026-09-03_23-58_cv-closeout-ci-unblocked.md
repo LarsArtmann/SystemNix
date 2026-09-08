@@ -6,12 +6,12 @@ had moved twice again.
 
 ## a) What this session found on resume (re-verify doctrine paid off again)
 
-| Handoff said | Reality at 23:38 |
-| --- | --- |
+| Handoff said                              | Reality at 23:38                                                                                                           |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | Lock at `4ac7ca7b`, deploy blocked on PSI | Lock at `6b635cca` (moved twice: `d08abc7` @ 18:07 deploy, then `6b635cca` @ 22:00 re-lock + switch by a parallel session) |
-| Pipeline-store check red BY DESIGN | **GREEN** — Gatus journal 23:46:09: `CV Pipeline Store Health success=true errors=0 duration=15ms` |
-| `/health/live` stamp = 4ac7ca7 expected | Live = `6b635cc` (= current lock rev — deployed and current) |
-| CI dark since ≥ 09-02 20:04 | Dark for **120+ runs** (no green nix-check in the last 120); systemic, not fresh |
+| Pipeline-store check red BY DESIGN        | **GREEN** — Gatus journal 23:46:09: `CV Pipeline Store Health success=true errors=0 duration=15ms`                         |
+| `/health/live` stamp = 4ac7ca7 expected   | Live = `6b635cc` (= current lock rev — deployed and current)                                                               |
+| CI dark since ≥ 09-02 20:04               | Dark for **120+ runs** (no green nix-check in the last 120); systemic, not fresh                                           |
 
 ## b) CV integration — CLOSED (live-verified)
 

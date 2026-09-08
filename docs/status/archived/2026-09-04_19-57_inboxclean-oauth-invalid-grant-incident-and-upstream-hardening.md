@@ -61,7 +61,7 @@
 
 - **Handoff of user-bound steps:** irreversible-criticality steps (production flip, re-auth) deserve a top-of-message block with deadline + exact commands, repeated every message until done — not buried in a long report.
 - **Health checks must probe, not trust presence** — now fixed upstream; apply the same audit question to every "connected"-style status in the stack (cv, discordsync, paperless tokens).
-- **Error classification doctrine:** "transient" must mean *retryable*; permanent auth failures need their own family + actionable Fix text — upstream now models this; watch for the same mislabeling elsewhere (e.g. Pocket ID secret desyncs were historically "transient"-flavored too).
+- **Error classification doctrine:** "transient" must mean _retryable_; permanent auth failures need their own family + actionable Fix text — upstream now models this; watch for the same mislabeling elsewhere (e.g. Pocket ID secret desyncs were historically "transient"-flavored too).
 - **Alert dedup** for timer-driven failures (1 alert per incident, not per tick) — design decision pending (questions).
 - **Concurrent-session discipline:** check `git branch --show-current` + `git status` BEFORE writing to a shared tree, and re-check after long analysis gaps; prefer pathspec commits when daemons are loose.
 - **Open-anomaly ledger:** anomalies noticed mid-investigation (identical outputs, Sep 02 blip) should land in the status report immediately, not stay in working memory.
@@ -69,6 +69,7 @@
 ## f) NEXT TASKS (prioritized, ≤50)
 
 **Immediate — outage closure (user, deadline Sep 05 ~19:00 for work)**
+
 1. GCP Console → OAuth consent screen → Publishing status → "In production" (InboxClean's project).
 2. Re-auth `main` (runbook command; browser on evo-x2 desktop).
 3. Re-auth `work` (same, with `INBOXCLEAN_CONFIG` env + `--account work`).
@@ -134,7 +135,7 @@
 
 ---
 
-*Report by the InboxClean incident session; live state re-verified at write time (main still dead, work alive).*
+_Report by the InboxClean incident session; live state re-verified at write time (main still dead, work alive)._
 
 ---
 

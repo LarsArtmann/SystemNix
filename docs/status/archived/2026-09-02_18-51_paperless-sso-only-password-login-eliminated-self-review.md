@@ -51,6 +51,7 @@
 ## f) NEXT — tasks (new first, then carried)
 
 **SSO-only closeout**
+
 1. User: open paperless.home.lan in a fresh browser tab — confirm seamless auto-login straight to the dashboard.
 2. User/agent: test LOGOUT behavior; decide if logout-then-instant-relogin is acceptable, or paperless session lifetime should shorten.
 3. Verify gatus evaluates the new Paperless conditions green (gatus sqlite or one alert cycle).
@@ -58,7 +59,7 @@
 5. If the mobile app matters: investigate paperless token/OIDC-headless auth for it before gating the API.
 6. Add exact `handle /admin` (no-slash) to the Caddy block.
 7. Rotate the sops `paperless_admin_password` (it was printed to a terminal earlier; now break-glass-only — cheap to rotate, cheap to keep).
-**Reliability of the new SPOF**
+   **Reliability of the new SPOF**
 8. Continuous pocket-id SQLITE_BUSY/streak monitoring (system-health textfile + gatus alert) — paperless has no second login.
 9. Investigate the pocket-id slow statements (2.4s) — WAL/busy_timeout or the documented discordsync-collateral class under pressure.
 10. Root-cause the box's sustained zram ~97% / MemAvailable ~8% window (census metrics) — it degraded flm, pocket-id, and deploy gates all session.
@@ -67,7 +68,7 @@
 13. Root-cause deploy round-7's silent death (deploy.sh trap/logging).
 14. Add gatus check: `node_textfile_scrape_error == 0` (round-1 item, still open).
 15. Audit post-deploy-check's I/O-pressure "healthy" logic (printed healthy at avg10 48–77%).
-**Carried (concurrent session / other)**
+    **Carried (concurrent session / other)**
 16. mail-relay go-live (placeholder secret) + paperless email wiring verification — their session.
 17. CV typst `/export/pdf` failure — their session.
 18. PMA KNOWN_NEW_METRICS retirement; bank-sync vendorHash override drop check; flake.lock intent check before any push.

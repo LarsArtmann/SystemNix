@@ -108,6 +108,7 @@ no unrelated research). Basis: this session's run log, `dep*.log`, evidence dump
 ## f) NEXT — up to 50 things
 
 **Boot/migration closure**
+
 1. Confirming reboot (user) — then remove `loader.conf.bak-stuckboot` from ESP
 2. Verify `system_current_system_profiled` green after that reboot
 3. `scripts/audit-boot-entries.sh` — per-entry init-exists-on-live-store guard (pre-deploy + flake check)

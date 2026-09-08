@@ -36,30 +36,30 @@ The real blocker chain, fully diagnosed:
 
 ## a) FULLY DONE
 
-| # | Item | Evidence |
-|---|------|----------|
-| 1 | Premise verified: PapDashboard deployed, integrated, healthy | PID 2228 since Aug 31 16:37, `papdashboard-ee67d8e` binary, :8088 LISTEN, `/api/health` = healthy (97h uptime, database/eventBus/metrics green) |
-| 2 | Integration surface verified complete | `papdashboard.nix` module, `enable = true` (configuration.nix:449), Gatus ingest provider + health check, Caddy `alerts.home.lan` protectedVHost, Homepage tile, sops `papdashboard.yaml` + `papdashboard-discord.yaml` |
-| 3 | Root cause chain diagnosed (3 independent layers) | lock frozen at `ee67d8e`; pushed `8efbbdd` broken (conflict markers, proven via `git show 8efbbdd:flake.nix`); go.mod floor 1.26.7 vs pinned tarball 1.26.6 |
-| 4 | Drop-day condition verified | `nix eval` on pinned nixpkgs: `go_1_26.version` = **1.26.7** ≥ floor |
-| 5 | Upstream fix verified buildable — local state | `nix build /home/lars/projects/PapDashboard#server` → `/nix/store/d6946vcd…-papdashboard-726c043` GREEN |
-| 6 | Upstream fix verified buildable — exact GitHub fetch | `nix build github:LarsArtmann/PapDashboard/d5ac09d#server` → `/nix/store/xzp1nh6p…-papdashboard-d5ac09d` GREEN |
-| 7 | Upstream pushed + marker-free confirmed | `ls-remote` = `d5ac09d`; `d5ac09d:flake.nix` marker grep = 0; newest 2 commits trivial (+8 idempotency.go, docs) |
-| 8 | flake.lock regression DETECTED + mechanism reconstructed | lock = `51765a1` (Aug 18) vs deployed `ee67d8e` (Aug 27); confirmed via `nix flake metadata` (authoritative); last flake.lock commit Aug 19; mtime moved 17:46:45 today; status clean |
-| 9 | Lock fixed forward | `nix flake lock --update-input papdashboard` → **`d5ac09d`** (working tree, uncommitted) |
-| 10 | Eval + assertions pass | `nix flake check --no-build`: "all checks passed!" (aarch64-darwin omission = expected warning) |
-| 11 | Deploy blocker #1 root-caused | shellcheck (Haskell) `commitBuffer: invalid argument (cannot encode character '\8212')` — em-dash U+2014 in script strings under C locale |
-| 12 | 4 em-dashes removed from script strings in `browser-history.nix` | lines 69, 106, 112 (mine, committed by daemon 18:34) + line 225 class fixed |
-| 13 | One-pass failure enumeration executed | `nix build …toplevel --keep-going` surfaced BOTH remaining failures (SC1125 + HaGeZi) — Critical-Rules rule worked as designed |
+| #  | Item                                                             | Evidence                                                                                                                                                                                                                |
+| -- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | Premise verified: PapDashboard deployed, integrated, healthy     | PID 2228 since Aug 31 16:37, `papdashboard-ee67d8e` binary, :8088 LISTEN, `/api/health` = healthy (97h uptime, database/eventBus/metrics green)                                                                         |
+| 2  | Integration surface verified complete                            | `papdashboard.nix` module, `enable = true` (configuration.nix:449), Gatus ingest provider + health check, Caddy `alerts.home.lan` protectedVHost, Homepage tile, sops `papdashboard.yaml` + `papdashboard-discord.yaml` |
+| 3  | Root cause chain diagnosed (3 independent layers)                | lock frozen at `ee67d8e`; pushed `8efbbdd` broken (conflict markers, proven via `git show 8efbbdd:flake.nix`); go.mod floor 1.26.7 vs pinned tarball 1.26.6                                                             |
+| 4  | Drop-day condition verified                                      | `nix eval` on pinned nixpkgs: `go_1_26.version` = **1.26.7** ≥ floor                                                                                                                                                    |
+| 5  | Upstream fix verified buildable — local state                    | `nix build /home/lars/projects/PapDashboard#server` → `/nix/store/d6946vcd…-papdashboard-726c043` GREEN                                                                                                                 |
+| 6  | Upstream fix verified buildable — exact GitHub fetch             | `nix build github:LarsArtmann/PapDashboard/d5ac09d#server` → `/nix/store/xzp1nh6p…-papdashboard-d5ac09d` GREEN                                                                                                          |
+| 7  | Upstream pushed + marker-free confirmed                          | `ls-remote` = `d5ac09d`; `d5ac09d:flake.nix` marker grep = 0; newest 2 commits trivial (+8 idempotency.go, docs)                                                                                                        |
+| 8  | flake.lock regression DETECTED + mechanism reconstructed         | lock = `51765a1` (Aug 18) vs deployed `ee67d8e` (Aug 27); confirmed via `nix flake metadata` (authoritative); last flake.lock commit Aug 19; mtime moved 17:46:45 today; status clean                                   |
+| 9  | Lock fixed forward                                               | `nix flake lock --update-input papdashboard` → **`d5ac09d`** (working tree, uncommitted)                                                                                                                                |
+| 10 | Eval + assertions pass                                           | `nix flake check --no-build`: "all checks passed!" (aarch64-darwin omission = expected warning)                                                                                                                         |
+| 11 | Deploy blocker #1 root-caused                                    | shellcheck (Haskell) `commitBuffer: invalid argument (cannot encode character '\8212')` — em-dash U+2014 in script strings under C locale                                                                               |
+| 12 | 4 em-dashes removed from script strings in `browser-history.nix` | lines 69, 106, 112 (mine, committed by daemon 18:34) + line 225 class fixed                                                                                                                                             |
+| 13 | One-pass failure enumeration executed                            | `nix build …toplevel --keep-going` surfaced BOTH remaining failures (SC1125 + HaGeZi) — Critical-Rules rule worked as designed                                                                                          |
 
 ## b) PARTIALLY DONE
 
-| # | Item | Gap |
-|---|------|-----|
-| 1 | **The deploy itself** | Attempted once, failed at BUILD; `nh` aborted cleanly ("config NOT activated"). Running system UNTOUCHED (still `papdashboard-ee67d8e`, healthy). |
+| # | Item                     | Gap                                                                                                                                                                                                                                                            |
+| - | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **The deploy itself**    | Attempted once, failed at BUILD; `nh` aborted cleanly ("config NOT activated"). Running system UNTOUCHED (still `papdashboard-ee67d8e`, healthy).                                                                                                              |
 | 2 | Em-dash / shellcheck fix | Em-dashes gone; my directive fix was incomplete (SC1125 persisted). Concurrent session has since landed the correct split (verified in-tree: line 69-70 now `# Root-owned…` / bare `# shellcheck disable=SC1090`) — **but the fix is NOT yet build-verified**. |
-| 3 | Lock-regression incident | Diagnosed + worked around (lock now at `d5ac09d`), but actor unidentified and policy undecided; `flake.lock` change still uncommitted. |
-| 4 | Upstream health | PapDashboard master is buildable and pushed, but the process failures that produced `8efbbdd` (daemon committing a stash-pop conflict to public master) are unaddressed. |
+| 3 | Lock-regression incident | Diagnosed + worked around (lock now at `d5ac09d`), but actor unidentified and policy undecided; `flake.lock` change still uncommitted.                                                                                                                         |
+| 4 | Upstream health          | PapDashboard master is buildable and pushed, but the process failures that produced `8efbbdd` (daemon committing a stash-pop conflict to public master) are unaddressed.                                                                                       |
 
 ## c) NOT STARTED
 
@@ -95,6 +95,7 @@ The real blocker chain, fully diagnosed:
 ## f) NEXT — prioritized (40 items)
 
 **Deploy-critical (now):**
+
 1. Verify/keep the corrected shellcheck directive (in-tree; needs one build to confirm)
 2. Refresh HaGeZi-dga7 SRI hash (got-hash flow; GitLab mirror `main` drifted)
 3. `nix build …toplevel --keep-going` → zero failures

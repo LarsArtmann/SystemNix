@@ -59,18 +59,18 @@ flow can never work in that dir — only fresh-create + rename.
 
 ## 2. a) FULLY DONE
 
-| Item | Evidence |
-| --- | --- |
-| mail-relay collector: SASL path interpolated from `config.sops.templates."mail-relay-sasl".path` (single source of truth with postfix) | eval `CAP_FOWNER`/ambient confirmed; unit succeeds in VM |
-| Unique `mktemp` + `chmod 644` + `trap rm EXIT` + `AmbientCapabilities` + `CapabilityBoundingSet = "CAP_FOWNER"` | self-heals stale root-owned prom — **no manual rm needed** |
-| VM regression: seeds root-owned prom + asserts recovery + asserts journal never says "missing or unreadable" | `checks.x86_64-linux.mail-relay` GREEN (iteration 4) |
-| mock-sops default corrected to `/run/secrets/rendered/` | hermes + mail-relay fixtures updated; both VM tests green |
-| **Class sweep: 12 collectors converted** to mktemp+caps: `_signoz-metrics` (amdgpu/nvme/psi), `attic`, `backup-coordination`, `buildcache`, `gpu-active`, `system-health`, `pool-recovery`, `signoz` (clickhouse-xfs), `signoz-coverage`, `pocket-id` (secret-rotation), `platforms/nixos/system/snapshots.nix` (pool-metrics) | toplevel build green (bash -n on every script); pool-recovery VM test green |
-| `scripts/audit-textfile-tmp.sh` (new): FAILs fixed-`.tmp` writes + `/run/secrets-rendered` literals; reasoned allowlist (guard/sev1) | 187 files scanned clean; negative test (mutation) FAILs; wired into `.githooks/pre-commit` + `nix-check.yml` |
-| AGENTS.md: full incident entry in Mail Relay section + enforcement note on the niri textfile lesson | committed |
-| `docs/services/mail-relay.md` runbook: failure-class entry + never-reintroduce warning | committed |
-| Formatting via repo formatter (15 files, 1 reformatted); no flake.lock churn | `git status flake.lock` clean |
-| Verification matrix: mail-relay VM ✅, hermes VM ✅, pool-recovery VM ✅, toplevel build ✅, eval of remaining mock-sops consumers (attic/cv/paperless/browser-history drivers) ✅ | all rc=0 |
+| Item                                                                                                                                                                                                                                                                                                                           | Evidence                                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| mail-relay collector: SASL path interpolated from `config.sops.templates."mail-relay-sasl".path` (single source of truth with postfix)                                                                                                                                                                                         | eval `CAP_FOWNER`/ambient confirmed; unit succeeds in VM                                                     |
+| Unique `mktemp` + `chmod 644` + `trap rm EXIT` + `AmbientCapabilities` + `CapabilityBoundingSet = "CAP_FOWNER"`                                                                                                                                                                                                                | self-heals stale root-owned prom — **no manual rm needed**                                                   |
+| VM regression: seeds root-owned prom + asserts recovery + asserts journal never says "missing or unreadable"                                                                                                                                                                                                                   | `checks.x86_64-linux.mail-relay` GREEN (iteration 4)                                                         |
+| mock-sops default corrected to `/run/secrets/rendered/`                                                                                                                                                                                                                                                                        | hermes + mail-relay fixtures updated; both VM tests green                                                    |
+| **Class sweep: 12 collectors converted** to mktemp+caps: `_signoz-metrics` (amdgpu/nvme/psi), `attic`, `backup-coordination`, `buildcache`, `gpu-active`, `system-health`, `pool-recovery`, `signoz` (clickhouse-xfs), `signoz-coverage`, `pocket-id` (secret-rotation), `platforms/nixos/system/snapshots.nix` (pool-metrics) | toplevel build green (bash -n on every script); pool-recovery VM test green                                  |
+| `scripts/audit-textfile-tmp.sh` (new): FAILs fixed-`.tmp` writes + `/run/secrets-rendered` literals; reasoned allowlist (guard/sev1)                                                                                                                                                                                           | 187 files scanned clean; negative test (mutation) FAILs; wired into `.githooks/pre-commit` + `nix-check.yml` |
+| AGENTS.md: full incident entry in Mail Relay section + enforcement note on the niri textfile lesson                                                                                                                                                                                                                            | committed                                                                                                    |
+| `docs/services/mail-relay.md` runbook: failure-class entry + never-reintroduce warning                                                                                                                                                                                                                                         | committed                                                                                                    |
+| Formatting via repo formatter (15 files, 1 reformatted); no flake.lock churn                                                                                                                                                                                                                                                   | `git status flake.lock` clean                                                                                |
+| Verification matrix: mail-relay VM ✅, hermes VM ✅, pool-recovery VM ✅, toplevel build ✅, eval of remaining mock-sops consumers (attic/cv/paperless/browser-history drivers) ✅                                                                                                                                             | all rc=0                                                                                                     |
 
 ## 3. b) PARTIALLY DONE
 
@@ -156,6 +156,7 @@ flow can never work in that dir — only fresh-create + rename.
 ## 7. f) NEXT — up to 50 tasks
 
 **Go-live (user, blocking mail sending):**
+
 1. Paste real Resend key: `sudo sops platforms/nixos/secrets/mail-relay.yaml` (repo root!)
 2. Verify `larsartmann.cloud` in Resend dashboard (SPF/DKIM records)
 3. `nix run .#deploy` (deploys collector fixes + re-renders SASL template)

@@ -109,7 +109,6 @@
 - [ ] **Paperless T13: block REST-API password auth at Caddy (one user answer + one-line deploy)** — `DISABLE_REGULAR_LOGIN` does NOT close HTTP Basic or `/api/token/` (externally reachable, root-caused 2026-09-03); designed fix = `Authorization: Basic*` matcher under `/api/*` + exact `/api/token/` block. BLOCKED on: do you use (or plan) the paperless mobile app or any password-based API client? No → ship; Yes → keep and document. **Source:** `docs/status/archived/2026-09-03_01-10_*` §a T13/§f.2
 - [ ] **Immich/paperless DB integrity checks post-pool-return** — history of unclean USB removals; run before trusting the migrated DBs long-term. **Source:** `2026-08-29_17-29_*` §f.42
 
-
 ## Priority 2.6: Pixel 6 Phone Recovery follow-ups
 
 _Extraction DONE: ~62.7 GB / 17.5k files verified on `/mnt/pool/backups/pixel6/2026-08-20/`. **Source:** `docs/status/2026-08-20_09-46_*` + `2026-08-21_05-19_*`_
@@ -210,8 +209,6 @@ _Extraction DONE: ~62.7 GB / 17.5k files verified on `/mnt/pool/backups/pixel6/2
 - [ ] **DiscordSync: rebase the `nix/aa56b582-vendorhash` branch into master now that nixpkgs ships go 1.26.7** — the input sits on a side branch pinned below master; rebase + relock (master requires ≥1.26.6). Also: file the `TestIOBaseline_DiskWriteBytes` environmental flake upstream. **Source:** `docs/status/2026-08-26_06-06_*` §c/§f.4-5
 - [ ] **flm upstream release watch (T3.4)** — v1.0.2 SIGABRT heap bug recurrence watch (20:17 coredump 08-31); v1.0.3 retry gated on the 7.2.2 reboot. **Source:** stability plan T3.4
 
-
-
 ## Priority 6: Upstream Contributions
 
 ### nixpkgs
@@ -240,6 +237,7 @@ _Extraction DONE: ~62.7 GB / 17.5k files verified on `/mnt/pool/backups/pixel6/2
 - [ ] **Migrate `overview` + `project-dependency-graph` off the removed `project-discovery-sdk/daemon` module** — both still pin `…sdk/daemon v0.19.2` (overview also pins sdk v0.21.0 mixed); the proxy still serves v0.19.2 so builds work TODAY, but any sdk bump past the daemon-removal point breaks the module graph. Migration pattern is PMA (import rewrite `project-discovery-sdk/daemon` → `project-discovery-daemon` v0.1.1+). Both repos had active parallel-session WIP 2026-09-02 — migrate on touch, not blind. **Source:** TODO sweep session 2026-09-02 (§f.49 sweep hit)
 - [ ] **BuildFlow: materialize the pre-commit hook on evo-x2** — the 2026-09-02 fixes (hooksPath-aware installer, devShell binary) are upstream and pushed; run `nix run .#reinstall && buildflow precommit install` once so `.githooks/pre-commit` actually exists — the commit gates have never fired on this machine (phantom-green class). **Source:** cross-repo sweep 2026-09-02
 - [ ] **picoclaw: triage the latent test failures exposed by the sqlite v1.56 bump** (config security-yaml, BM25 ranking, edit/shell/codex tool tests — pre-existing, NOT sqlite regressions) + check whether picoclaw CI runs `go test` at all. **Source:** cross-repo sweep 2026-09-02 / archived `2026-09-03_12-31` §c.7
+
 ### SystemNix docs debt
 
 - [ ] **Annotate appendix-only ARCHIVED reports** — 11 archived 2026-08-1x files (authoritative list in archived `2026-08-12_20-52` §b.1/§b.2)

@@ -57,8 +57,8 @@ root-only forensics step. Several polish items were consciously left.
      for later adoption).
    - `platforms/nixos/users/home.nix`: 75-line inline crushrc block →
      `programs.crush-config { enable; golangciLintLspCommand; mcps.qmd }`
-     + module import + doctrine comment (secrets/store/hyper rules
-     preserved).
+     - module import + doctrine comment (secrets/store/hyper rules
+       preserved).
    - flake.lock re-locked to `e0138e7` (subtree treefmt-nix drift also
      resynced — the documented subtree-resync behavior).
 4. **Verification (the gates that matter)**:
@@ -77,14 +77,14 @@ root-only forensics step. Several polish items were consciously left.
      header.
 5. **Hygiene / memory**:
    - Local `~/.config/crush` dotfiles repo: crushrc symlink UNTRACKED +
-   gitignored (kills the "repoint symlink to rebuilt Nix store path"
-   churn class; the file's own comment demanded this since 2026-08-31).
+     gitignored (kills the "repoint symlink to rebuilt Nix store path"
+     churn class; the file's own comment demanded this since 2026-08-31).
    - `docs/services/crush.md` updated (source-of-truth pointer, provider
-   change workflow = repo → push → re-lock → deploy, CI caveat, gotchas).
+     change workflow = repo → push → re-lock → deploy, CI caveat, gotchas).
    - SystemNix `AGENTS.md` "Crush Provider Keys" section updated.
    - `TODO_LIST.md` Priority 3: phase-2 item recorded.
    - All commits pathspec-scoped; pre-commit hooks green (gitleaks,
-   flake check); nothing of mine left uncommitted in any of the 3 repos.
+     flake check); nothing of mine left uncommitted in any of the 3 repos.
 
 ---
 
@@ -121,7 +121,7 @@ root-only forensics step. Several polish items were consciously left.
 2. SystemNix-side integration test (e.g. `tests/test-crush-config.nix`)
    pinning the wiring renders a loadable rc.
 3. Automated crush smoke in `post-deploy-check.sh` (crushrc store-symlink
-   + generated-header grep; today it was manual).
+   - generated-header grep; today it was manual).
 4. Post-push verification of the crush-config `auto-tag.yml` workflow
    (my flake.nix change triggers it; expected no-op without a semver —
    unverified via `gh run list`).
@@ -191,6 +191,7 @@ root-only forensics step. Several polish items were consciously left.
 ## f) NEXT (categorized, ~30 real items — no padding)
 
 **Close out this session:**
+
 1. USER: `sudo bash scripts/dnsblockd-goroutine-dump.sh` — capture the
    wedge dump (root cause still unknown upstream; this is the 2nd+
    occurrence) and let it restart.
@@ -206,77 +207,77 @@ root-only forensics step. Several polish items were consciously left.
 
 **Phase 2 (user decision required):**
 6. Move AGENTS.md + references install into `homeManagerModules.crush`
-   (`xdg.configFile`), retire the local `~/.config/crush` git repo
-   (untrack/remove files; decide history fate).
+(`xdg.configFile`), retire the local `~/.config/crush` git repo
+(untrack/remove files; decide history fate).
 7. Decide skills story: `~/.config/crush/skills` symlinks → `~/projects/SKILLS`
-   (separate repo, mostly) — document ownership in README architecture
-   section.
+(separate repo, mostly) — document ownership in README architecture
+section.
 8. Decide the local dotfiles repo's remaining purpose (hooks/,
-   suggestions/, references/) — fold into crush-config or keep local-only.
+suggestions/, references/) — fold into crush-config or keep local-only.
 
 **Testing/automation:**
 9. `tests/test-crush-config.nix` — VM/eval integration test of the
-   SystemNix wiring.
+SystemNix wiring.
 10. Add crush smoke to `scripts/post-deploy-check.sh`.
 11. Golden-file the rendered rc inside the repo checks (full-file compare,
-    not just greps).
+not just greps).
 12. Add `--probe` end-to-end completion to the parity workflow docs (one
-    paid completion proves key+model serving; today skipped to avoid
-    spend).
+paid completion proves key+model serving; today skipped to avoid
+spend).
 
 **Repo quality:**
 13. crush-config: CONTRIBUTING or README section for "consumers + checks +
-    change workflow" (edit → flake check → push → consumer re-lock).
+change workflow" (edit → flake check → push → consumer re-lock).
 14. Consider `packages.default` (repo-copy derivation) retirement or
-    documentation review — its only consumer is the rpi.
+documentation review — its only consumer is the rpi.
 15. Sync-check script or check asserting repo AGENTS.md == live AGENTS.md
-    (drift alarm until phase 2 removes the duality) — also covers the
-    known 1-line `references/architecture.md` npm→pnpm drift.
+(drift alarm until phase 2 removes the duality) — also covers the
+known 1-line `references/architecture.md` npm→pnpm drift.
 16. Repo gitleaks in CI (currently only local pre-commit on SystemNix
-    pushes; crush-config has no secret-scan workflow).
+pushes; crush-config has no secret-scan workflow).
 
 **CI/access:**
 17. Decide: `NIX_GITHUB_RO_TOKEN` (fixes ALL 33 private `github:` lock
-    nodes at once) vs per-repo deploy keys — then implement.
+nodes at once) vs per-repo deploy keys — then implement.
 18. If deploy-key route: add `NIX_DEPLOY_KEY_CRUSH_CONFIG` +
-    ssh-agent step + optional git+ssh input switch (mind the
-    github-tarball vs git+ssh narHash difference).
+ssh-agent step + optional git+ssh input switch (mind the
+github-tarball vs git+ssh narHash difference).
 
 **Bigger-picture observations from this session (not researched further,
 per scope):**
 19. The crush-config repo's `checks` block duplicates large inline bash —
-    a `lib/` helper or `nix/tests/` split would age better.
+a `lib/` helper or `nix/tests/` split would age better.
 20. `docs/services/crush.md` "Adding a Provider Key" step 3 now points at
-    the repo — consider a tiny wrapper script (`scripts/crush-add-provider`)
-    to encode the full sops+repo+relock sequence.
+the repo — consider a tiny wrapper script (`scripts/crush-add-provider`)
+to encode the full sops+repo+relock sequence.
 21. dnsblockd wedge is now a RECURRING deploy-restart artifact — the
-    upstream fix (healthProbe mutex suspicion) is still owed; the dump
-    from item 1 is the input.
+upstream fix (healthProbe mutex suspicion) is still owed; the dump
+from item 1 is the input.
 22. The IO-PSI deploy-gate gap (existing P1 TODO) was visible again in
-    this session's WARN — unchanged priority.
+this session's WARN — unchanged priority.
 23. `~/.local/share/crush/crush.json` auth store: only hyper's OAuth
-    remains (correct); no further action — but the store-era key material
-    in session DBs still awaits ROTATION (existing P0 nag, unchanged).
+remains (correct); no further action — but the store-era key material
+in session DBs still awaits ROTATION (existing P0 nag, unchanged).
 24. The `qmd` MCP + AGENTS.md context-path still assume host-local paths
-    — fine today; revisit if crush-config ever serves multiple users.
+— fine today; revisit if crush-config ever serves multiple users.
 25. Repo README "History" section should get the extraction commit hash
-    (`e0138e7`) for traceability.
+(`e0138e7`) for traceability.
 26. Consider tagging crush-config `v4.0.0` (breaking repo scope change)
-    once polish lands — gives the rpi consumer a stable pin.
+once polish lands — gives the rpi consumer a stable pin.
 27. SystemNix `lib/ports.nix`: :8899 (llamacpp) is still undocumented
-    there ("nothing on lib/ports.nix serves :8899" — ad-hoc by design, but
-    the module option now owns the URL; note the coupling in the option
-    description if the port ever formalizes).
+there ("nothing on lib/ports.nix serves :8899" — ad-hoc by design, but
+the module option now owns the URL; note the coupling in the option
+description if the port ever formalizes).
 28. Live AGENTS.md is the user's ACTIVE global context file — phase 2
-    must preserve edit ergonomics (currently: edit live + commit locally;
-    after: edit repo + deploy) — UX decision belongs to the user.
+must preserve edit ergonomics (currently: edit live + commit locally;
+after: edit repo + deploy) — UX decision belongs to the user.
 29. The 36-line AGENTS.md diff direction (live → repo) was verified
-    one-directional; future syncs should diff BOTH ways before copying
-    (this time repo-side had only the intentional pnpm line).
+one-directional; future syncs should diff BOTH ways before copying
+(this time repo-side had only the intentional pnpm line).
 30. My deploy rode the auto-commit daemon's commits (ee88c593/ebe02c02) —
-    attribution survived via this report; consider whether daemon commits
-    should carry richer messages for load-bearing changes (existing
-    "Unknown Author"-adjacent theme, milder).
+attribution survived via this report; consider whether daemon commits
+should carry richer messages for load-bearing changes (existing
+"Unknown Author"-adjacent theme, milder).
 
 ---
 
@@ -300,11 +301,11 @@ per scope):**
 
 ---
 
-*Verification artifacts from this session: repo checks 8/8 green;
+_Verification artifacts from this session: repo checks 8/8 green;
 SystemNix flake check green; 1609-model byte-identical parity diff;
 crush-rc-test PASS pre- and post-deploy; deploy 92 PASS / 1 FAIL
 (dnsblockd wedge, documented); three repos clean and committed; deploy
-live via module-rendered crushrc store path.*
+live via module-rendered crushrc store path._
 
 ---
 

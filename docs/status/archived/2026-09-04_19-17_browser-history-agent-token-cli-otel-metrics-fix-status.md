@@ -115,6 +115,7 @@ everything green.
 ## f) NEXT UP TO 50 (prioritized, realistic for this ecosystem)
 
 **P0 — unblock & ship:**
+
 1. User decision: oneshot vs sops route for the agent token (see questions).
 2. Push browser-history master (CLI + OTel fix) — needs explicit user go.
 3. `nix flake lock --update-input browser-history` in SystemNix (after push).
@@ -140,38 +141,38 @@ everything green.
 **P1 — hardening:**
 16. Root-cause the worktree flake.lock transient (daemon cross-worktree behavior).
 17. Add a regression test pinning "second Server construction keeps /metrics gatherable"
-    (the exact class I fixed — currently only indirectly covered by the suite).
+(the exact class I fixed — currently only indirectly covered by the suite).
 18. Upstream: consider giving the service a non-empty `service.instance.id` (hostname) —
-    makes duplicate bridges detectable instead of gather-fatal… actually no: still fatal; skip
-    unless multi-instance is ever real. Re-evaluate then.
+makes duplicate bridges detectable instead of gather-fatal… actually no: still fatal; skip
+unless multi-instance is ever real. Re-evaluate then.
 19. Browser-history flake check: run `nix flake check --no-build` + `.#ci`-style lint set
-    before pushing (I ran go build/vet/tests but NOT the nix-side checks: cqrs-lint,
-    templ-committed, vendor-hash).
+before pushing (I ran go build/vet/tests but NOT the nix-side checks: cqrs-lint,
+templ-committed, vendor-hash).
 20. Check whether the parallel session's CLI work included a CHANGELOG-tested `nix run .#test`
-    integration — if their flake `.#test` uses `go test ./...` (root only) it has the same
-    multi-module blind spot I hit (verify; fix if so).
+integration — if their flake `.#test` uses `go test ./...` (root only) it has the same
+multi-module blind spot I hit (verify; fix if so).
 21. sops.nix: the `browser-history-agent-env` template should carry a comment that the oneshot
-    route supersedes it (if oneshot wins) — or delete it outright with the declaration.
+route supersedes it (if oneshot wins) — or delete it outright with the declaration.
 22. Negative-test the oneshot: DB absent (server never started) must skip cleanly, not
-    crash-loop (atticd-storage-dir pattern).
+crash-loop (atticd-storage-dir pattern).
 23. Gatus check for agent-token provisioning health (file exists + agent 401-free ingest)
-    if the oneshot lands.
+if the oneshot lands.
 24. Consider `RequiresMountsFor`/ordering analysis for the oneshot vs DynamicUser
-    StateDirectory (browser-history state is on the pool? verify — it wasn't in my scope).
+StateDirectory (browser-history state is on the pool? verify — it wasn't in my scope).
 
 **P2 — cleanup & follow-through:**
 25. Remove `/tmp/sn-master` worktree after the deploy lands (or keep as staging with a README).
 26. Reconcile PR139 branch's stale hermes pin before/after merge (flake.lock conflict).
 27. Purge `/tmp/bh-e2e`, `/tmp/bh-server`, `/tmp/bh-*.log` leftovers.
 28. hermes tag-pinning question from last session remains unanswered (nag semantics say:
-    keep tracking main HEAD; revisit only if the nag becomes annoying again).
+keep tracking main HEAD; revisit only if the nag becomes annoying again).
 29. The manifest-FOD anomaly from last session ("first build succeeded without rc check")
-    is still open as a lesson, not a bug — keep in memory, close it as documentation-only.
+is still open as a lesson, not a bug — keep in memory, close it as documentation-only.
 30. If oneshot route: add the runbook to `docs/services/` for browser-history token rotation
-    (revoke in UI → next ensure auto-rotates).
+(revoke in UI → next ensure auto-rotates).
 
-*(31–50: nothing further honestly justifiable from THIS session's observations — padding the
-list to 50 would be lying to you.)*
+_(31–50: nothing further honestly justifiable from THIS session's observations — padding the
+list to 50 would be lying to you.)_
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF (max 3)
 
@@ -194,7 +195,7 @@ CLI (not mine — verified), one real upstream bug fixed with evidence-driven ro
 (mine), one suite turned red→green, and a sharply reduced set of remaining decisions —
 three of which only the user can make.
 
-*Written 2026-09-04 19:17 CEST. WAITING FOR INSTRUCTIONS.*
+_Written 2026-09-04 19:17 CEST. WAITING FOR INSTRUCTIONS._
 
 ---
 

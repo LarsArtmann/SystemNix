@@ -22,14 +22,14 @@ Also verified during review (no change needed): overlay TTL is correctly 120 s i
 
 ## Timeline (this round)
 
-| Time | Event |
-|------|-------|
-| 17:29 | Round-1 report committed; user ordered continued execution |
-| 17:35-17:50 | Review pass: overlay TTL / Gatus / system-health / deploy gate — all already correct; gaps list produced (churn, cap, per-key, duration, zones) |
-| 17:50-18:10 | Guard module: zone counters, trip history, restore budget; Bridge: per-key cooldown, churn context, capped condition, duration metrics |
-| 18:10-18:30 | Test extensions; SC2050 shellcheck failure (constant `[ 2 -gt 0 ]`) found + fixed; guard test failed once on my own reset-vs-counter interaction → restructured the cap scenario to burn the budget realistically |
-| 18:30-18:40 | Both VM tests green; `nix flake check --no-build` passed |
-| ~18:45 | **Deployed.** Smoke: 84 PASS / 1 FAIL (Pocket ID SQLITE_BUSY — activation-storm transient) |
+| Time        | Event                                                                                                                                                                                                                              |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 17:29       | Round-1 report committed; user ordered continued execution                                                                                                                                                                         |
+| 17:35-17:50 | Review pass: overlay TTL / Gatus / system-health / deploy gate — all already correct; gaps list produced (churn, cap, per-key, duration, zones)                                                                                    |
+| 17:50-18:10 | Guard module: zone counters, trip history, restore budget; Bridge: per-key cooldown, churn context, capped condition, duration metrics                                                                                             |
+| 18:10-18:30 | Test extensions; SC2050 shellcheck failure (constant `[ 2 -gt 0 ]`) found + fixed; guard test failed once on my own reset-vs-counter interaction → restructured the cap scenario to burn the budget realistically                  |
+| 18:30-18:40 | Both VM tests green; `nix flake check --no-build` passed                                                                                                                                                                           |
+| ~18:45      | **Deployed.** Smoke: 84 PASS / 1 FAIL (Pocket ID SQLITE_BUSY — activation-storm transient)                                                                                                                                         |
 | 18:50-19:04 | Live verification: all new metrics flowing; alert file cleared; socket up; no trip. Pocket ID self-healed (0 errors in last 5 min, healthz 204). 19:04: a REAL stale-collector notify appeared — correctly notify-tier, no overlay |
 
 ---

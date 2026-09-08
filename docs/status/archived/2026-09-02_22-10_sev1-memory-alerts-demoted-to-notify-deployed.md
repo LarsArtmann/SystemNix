@@ -12,9 +12,9 @@ At 21:23 the alert file held `MEMORY EMERGENCY GUARD TRIPPED` with severity line
 
 ## New tier contract (user decision recorded in module header + AGENTS.md)
 
-| Tier | Behavior | Conditions |
-| ---- | -------- | ---------- |
-| `page` | fullscreen overlay + persistent critical notification | **infra hardware criticals ONLY**: DAS link down, LAN NIC absent, btrfs critical |
+| Tier     | Behavior                                                                                  | Conditions                                                                                                                                                        |
+| -------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `page`   | fullscreen overlay + persistent critical notification                                     | **infra hardware criticals ONLY**: DAS link down, LAN NIC absent, btrfs critical                                                                                  |
 | `notify` | one self-expiring normal-urgency notification + Gatus/Discord, NO overlay, cooldown-gated | guard trip, sustained memory stall (avg60 ≥45 or episodic bucket ≥4), guard dead, system monitoring stale, zram swap critical (combined gate), FLM restore capped |
 
 Actual system shutdowns already have their own dedicated countdown overlay (`shutdown-overlay.nix`) — untouched.
@@ -46,11 +46,13 @@ Actual system shutdowns already have their own dedicated countdown overlay (`shu
 ## Six-question self-review
 
 ### Edge cases not handled
+
 - If the bridge itself dies, memory alerts never reach the desktop — but the Gatus "SEV1 Escalation Bridge" check + Discord still fire, and the guard (not the desktop) is the layer that saves the machine.
 - DAS/NIC/btrfs pages will still fullscreen during a movie — that is the intended contract, but it is the user's call (asked at end of session).
 - The VM test enforces the tier per CURRENT condition; a future NEW memory condition written as `page` would not be caught by a generic invariant (see improvements).
 
 ### Feature interactions checked
+
 - `memory-emergency-guard`: unchanged; trip still feeds the bridge, now notify; `maxRestoresPerDay` / FLM RESTORE CAPPED path intact (test scenario 11).
 - `sev1-overlay` QML: unchanged; `severityIsPage` still fails LOUD (missing severity line = page) so a parse gap can never silence a real emergency.
 - Gatus: conditions unchanged (any `alerts_active ≥ 1` alerts); alert text updated; zram/stale notify delivery + per-key cooldown all green in tests.
@@ -58,16 +60,20 @@ Actual system shutdowns already have their own dedicated countdown overlay (`shu
 - Shutdown countdown overlay: separate module, untouched.
 
 ### Data-integrity risks
+
 - None. No stores, databases, or secrets touched. Bridge state-file semantics unchanged. The lock rollback was superseded by the CV session's proper re-bump; git history shows both moves.
 
 ### Security vulnerabilities
+
 - None introduced. No new PATH binaries, no secrets, no auth changes; alert file remains root-owned 0644 in boot-ephemeral `/run`.
 
 ### Empty-context danger
+
 - Mitigated: the tier contract lives in three synced places (module header, AGENTS.md sev1 bullet, VM test header) with the user quote — a fresh session cannot re-page memory conditions without contradicting documented decisions, and the VM test enforces it mechanically for all six memory/meta conditions.
 - Residual: a brand-new memory condition could be authored as `page`; only a generic lint would catch it (not built).
 
 ### If starting from an empty context
+
 - The tier of every condition is asserted in `tests/test-sev1-escalation.nix` (scenarios 2, 3b, 3c, 4, 6, 9, 10, 11); the only page-tier conditions are DAS/NIC/btrfs (scenario 6). cv=`6615eec` is locked but undeployed; check the post-deploy-check app packaging before the next deploy.
 
 ## Improvements (ranked, intentionally NOT done — scope discipline)
@@ -91,12 +97,12 @@ Actual system shutdowns already have their own dedicated countdown overlay (`shu
 
 The user refined the tiering: infra hardware criticals should not hard-page either — they get a **yellow, non-flashing banner shown ONCE**. Final contract:
 
-| Severity (alert-file line 4) | Behavior | Conditions |
-| ---- | -------- | ---------- |
-| `page` | red pulsing fullscreen + persistent critical notification | **RESERVED — no current emitter** |
-| `warn` | static amber fullscreen banner, NO animation + one cooldown-gated notification | DAS link down, LAN NIC absent, btrfs critical |
-| `warn-seen` | overlay ignores it | same-set refreshes after the first `warn` exposure (bridge-side downgrade so "once" survives quickshell restarts; a CHANGED alert set re-arms) |
-| `notify` | one self-expiring normal notification + Gatus/Discord, no overlay | ALL memory conditions + stale + zram + FLM capped |
+| Severity (alert-file line 4) | Behavior                                                                       | Conditions                                                                                                                                     |
+| ---------------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `page`                       | red pulsing fullscreen + persistent critical notification                      | **RESERVED — no current emitter**                                                                                                              |
+| `warn`                       | static amber fullscreen banner, NO animation + one cooldown-gated notification | DAS link down, LAN NIC absent, btrfs critical                                                                                                  |
+| `warn-seen`                  | overlay ignores it                                                             | same-set refreshes after the first `warn` exposure (bridge-side downgrade so "once" survives quickshell restarts; a CHANGED alert set re-arms) |
+| `notify`                     | one self-expiring normal notification + Gatus/Discord, no overlay              | ALL memory conditions + stale + zram + FLM capped                                                                                              |
 
 Mechanics: the bridge computes severity `page > warn > notify`; on writing the alert file, a `warn` whose alert-set key is unchanged from the previous run is downgraded to `warn-seen`. The QML renders red/pulsing for `page`, static amber for `warn`, nothing otherwise.
 

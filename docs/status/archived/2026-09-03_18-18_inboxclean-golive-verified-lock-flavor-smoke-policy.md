@@ -33,7 +33,7 @@ Each item: what + evidence + scope.
 1. **Archiving first-upload observation** — works now: pipeline live, both accounts scan clean. Missing: the first `uploaded: N>0` journal line (every new mail so far had 0 attachments). Not a defect — the token-200 Gatus oracle covers the API path. Effort to close: S (one journal check after attachment traffic).
 2. **Smoke exit-3 in production** — implemented + matrix-verified, but **unexercised by a real deploy** (deploy gate shut all session). The next deploy's run is the real test, including first-baseline adoption (expected: exits 1, "first run … adopting"). Effort: S (observe one deploy).
 3. **Token rotation** — user chose NOW; runbook finalized in TODO_LIST (drf_create_token → sops from repo root → deploy → Gatus verify). All steps are sudo — user-run. Blocked on: user + the reboot train (rotation rides the same deploy).
-4. **CI verification of this session's fixes** — 10 commits ahead of origin at session end; the daemon owns pushes (had pushed all earlier batches today). Until push+CI: statix/go-deps-audit flips are *expected* green, not proven green. Note: even after push, vm-tests (branching-flow 404) and secret-scan (known residues) stay red until their owners act — the CI dashboard will NOT be fully green from this session's work alone.
+4. **CI verification of this session's fixes** — 10 commits ahead of origin at session end; the daemon owns pushes (had pushed all earlier batches today). Until push+CI: statix/go-deps-audit flips are _expected_ green, not proven green. Note: even after push, vm-tests (branching-flow 404) and secret-scan (known residues) stay red until their owners act — the CI dashboard will NOT be fully green from this session's work alone.
 5. **Packaging proof of the new smoke script** — shellcheck (0.11.0) + bash -n pass locally, but the store build (`writeShellApplication`'s own shellcheck gate via the app derivation) was not realized this session (app .drv not directly buildable; attempts flailed — see d.6). The next `nix run .#deploy` builds it for real. Effort: S (it happens automatically at next deploy).
 6. **sev1-escalation.nix foreign edit** — a concurrent session's uncommitted edit existed at session start; by session end the tree was clean (landed via daemon commits), but I never confirmed WHO owns the final shape of that file. Watch item, not mine.
 
@@ -70,48 +70,48 @@ Each item: what + evidence + scope.
 
 ## f) NEXT THINGS (brainstorm to 40 — HARVEST fuel; impact/effort/category per row)
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | Run the reboot + deploy train (carries lock `063fbd71`, BIOS flip, NPU fix, smoke exit-3 first exercise) | Critical | S | Bug |
-| 2 | Rotate Paperless token per TODO_LIST runbook (ride the same train) | Critical | S | Security |
-| 3 | Verify 04:30 `inboxclean-*.db` lands pool-side + backup-coordination ages green | High | S | Verification |
-| 4 | Observe first `uploaded: N>0` journal line (send/await an attachment mail) | High | S | Verification |
-| 5 | Push + watch CI: statix/go-deps-audit/eval flips expected green | High | S | Verification |
-| 6 | Fix mail-relay VM test race (unblocks ALL hooked commits) — owner session | Critical | M | Bug |
-| 7 | Add branching-flow CI deploy key (or publish repo) — owner session | High | S | Bug |
-| 8 | Add lock-flavor guard: clean-env `nix flake` eval in CI/pre-commit | High | M | Quality |
-| 9 | Sweep ALL LarsArtmann lock inputs with clean-env eval for polluted hashes | High | S | Bug |
-| 10 | Document smoke exit-code contract + baseline path in AGENTS.md | Medium | S | Documentation |
-| 11 | Add record_fail/FAIL-count desync assertion to smoke summary | Medium | S | Quality |
-| 12 | `SMOKE_FAST=1` liveness-only mode for pressure-window deploys | Medium | M | Feature |
-| 13 | TODO_LIST HARVEST from this report (docs-health) | High | S | Documentation |
-| 14 | InboxClean backup restore drill (a backup is real when restored once) | Medium | S | Quality |
-| 15 | Decide secret-scan policy: allowlist known blob hashes vs red-as-reminder | Medium | S | Decision |
-| 16 | Post-reboot: confirm zram auto-scaled + NPU wedge gone + FastFlowLM serves | Critical | S | Verification |
-| 17 | Confirm the concurrent sev1-escalation.nix edit's final shape has an owner | Medium | S | Cleanup |
-| 18 | FastFlowLM v1.0.3 NPU enumeration validation after kernel bump (held item) | High | M | Verification |
-| 19 | Sweep for remaining `/api/`-root probes in any script/dashboard (406 class) | Medium | S | Bug |
-| 20 | Change Unreleased → release cut if CHANGELOG keeps accumulating | Low | S | Documentation |
-| 21 | Gatus auth check: consider `/api/documents/` body-match (list JSON) vs bare 200 | Low | S | Quality |
-| 22 | Smoke baseline: decide sticky-vs-green-reset for long incidents (see questions) | Medium | S | Decision |
-| 23 | Watch signoz-coverage registry for the new `inboxclean-backup` units (collector registrations) | Low | S | Cleanup |
-| 24 | deploy.sh: surface exit-3 smoke events to Discord alongside the log line | Medium | S | Feature |
-| 25 | Archive deploy logs' FAIL sets for trend analysis (regression frequency) | Low | M | Quality |
-| 26 | mail-relay go-live user steps (Resend key + domain) — still open from 09-02 | High | S | Bug |
-| 27 | PAPERLESS_EMAIL_HOST smoke FAIL fix — owner session (relay-gated settings block) | High | M | Bug |
-| 28 | Verify gatus 406-class: any OTHER JSON client pinging HTML-only roots? | Medium | S | Bug |
-| 29 | Add the `!x ? y` precedence gotcha to AGENTS.md Nix section | Low | S | Documentation |
-| 30 | Consider `niri-session` VM test lint-cleanliness in CI fmt gate (done, verify stable) | Low | S | Quality |
-| 31 | Document daemon-race protocol: pathspec commits + `--no-verify` under blocker (formalize in AGENTS.md critical rules) | Medium | S | Documentation |
-| 32 | scripts/lib sourcing sweep (handoff leftover, packaging class) | Low | S | Cleanup |
-| 33 | CV: confirm 04:30 slot doesn't collide with cv-backup schedule (04:30 vs 04:00 ok) | Low | S | Verification |
-| 34 | Inkove docs-health VERIFY on AGENTS.md InboxClean section vs live state | Medium | S | Documentation |
-| 35 | Rotation cadence policy for Paperless tokens (annual? on-suspicion?) | Low | S | Decision |
-| 36 | Check whether `~/.local/state/systemnix` baseline belongs in btrbk scope docs | Low | S | Documentation |
-| 37 | Consider smoke: per-group timing to catch slow-endpoint drift (post-incident baseline) | Low | M | Quality |
-| 38 | papdashboard enricher: verify it survived the deploy train (insight path uses flm — down until reboot) | Medium | S | Verification |
-| 39 | Confirm `leak-canary` fake blob can't false-trip future purge replacements files | Low | S | Security |
-| 40 | Re-evaluate deploy pressure gate thresholds vs the observed 61-80% day (gate shut all afternoon — is 20% right for this box?) | Medium | S | Decision |
+| #  | Task                                                                                                                          | Impact   | Effort | Category      |
+| -- | ----------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
+| 1  | Run the reboot + deploy train (carries lock `063fbd71`, BIOS flip, NPU fix, smoke exit-3 first exercise)                      | Critical | S      | Bug           |
+| 2  | Rotate Paperless token per TODO_LIST runbook (ride the same train)                                                            | Critical | S      | Security      |
+| 3  | Verify 04:30 `inboxclean-*.db` lands pool-side + backup-coordination ages green                                               | High     | S      | Verification  |
+| 4  | Observe first `uploaded: N>0` journal line (send/await an attachment mail)                                                    | High     | S      | Verification  |
+| 5  | Push + watch CI: statix/go-deps-audit/eval flips expected green                                                               | High     | S      | Verification  |
+| 6  | Fix mail-relay VM test race (unblocks ALL hooked commits) — owner session                                                     | Critical | M      | Bug           |
+| 7  | Add branching-flow CI deploy key (or publish repo) — owner session                                                            | High     | S      | Bug           |
+| 8  | Add lock-flavor guard: clean-env `nix flake` eval in CI/pre-commit                                                            | High     | M      | Quality       |
+| 9  | Sweep ALL LarsArtmann lock inputs with clean-env eval for polluted hashes                                                     | High     | S      | Bug           |
+| 10 | Document smoke exit-code contract + baseline path in AGENTS.md                                                                | Medium   | S      | Documentation |
+| 11 | Add record_fail/FAIL-count desync assertion to smoke summary                                                                  | Medium   | S      | Quality       |
+| 12 | `SMOKE_FAST=1` liveness-only mode for pressure-window deploys                                                                 | Medium   | M      | Feature       |
+| 13 | TODO_LIST HARVEST from this report (docs-health)                                                                              | High     | S      | Documentation |
+| 14 | InboxClean backup restore drill (a backup is real when restored once)                                                         | Medium   | S      | Quality       |
+| 15 | Decide secret-scan policy: allowlist known blob hashes vs red-as-reminder                                                     | Medium   | S      | Decision      |
+| 16 | Post-reboot: confirm zram auto-scaled + NPU wedge gone + FastFlowLM serves                                                    | Critical | S      | Verification  |
+| 17 | Confirm the concurrent sev1-escalation.nix edit's final shape has an owner                                                    | Medium   | S      | Cleanup       |
+| 18 | FastFlowLM v1.0.3 NPU enumeration validation after kernel bump (held item)                                                    | High     | M      | Verification  |
+| 19 | Sweep for remaining `/api/`-root probes in any script/dashboard (406 class)                                                   | Medium   | S      | Bug           |
+| 20 | Change Unreleased → release cut if CHANGELOG keeps accumulating                                                               | Low      | S      | Documentation |
+| 21 | Gatus auth check: consider `/api/documents/` body-match (list JSON) vs bare 200                                               | Low      | S      | Quality       |
+| 22 | Smoke baseline: decide sticky-vs-green-reset for long incidents (see questions)                                               | Medium   | S      | Decision      |
+| 23 | Watch signoz-coverage registry for the new `inboxclean-backup` units (collector registrations)                                | Low      | S      | Cleanup       |
+| 24 | deploy.sh: surface exit-3 smoke events to Discord alongside the log line                                                      | Medium   | S      | Feature       |
+| 25 | Archive deploy logs' FAIL sets for trend analysis (regression frequency)                                                      | Low      | M      | Quality       |
+| 26 | mail-relay go-live user steps (Resend key + domain) — still open from 09-02                                                   | High     | S      | Bug           |
+| 27 | PAPERLESS_EMAIL_HOST smoke FAIL fix — owner session (relay-gated settings block)                                              | High     | M      | Bug           |
+| 28 | Verify gatus 406-class: any OTHER JSON client pinging HTML-only roots?                                                        | Medium   | S      | Bug           |
+| 29 | Add the `!x ? y` precedence gotcha to AGENTS.md Nix section                                                                   | Low      | S      | Documentation |
+| 30 | Consider `niri-session` VM test lint-cleanliness in CI fmt gate (done, verify stable)                                         | Low      | S      | Quality       |
+| 31 | Document daemon-race protocol: pathspec commits + `--no-verify` under blocker (formalize in AGENTS.md critical rules)         | Medium   | S      | Documentation |
+| 32 | scripts/lib sourcing sweep (handoff leftover, packaging class)                                                                | Low      | S      | Cleanup       |
+| 33 | CV: confirm 04:30 slot doesn't collide with cv-backup schedule (04:30 vs 04:00 ok)                                            | Low      | S      | Verification  |
+| 34 | Inkove docs-health VERIFY on AGENTS.md InboxClean section vs live state                                                       | Medium   | S      | Documentation |
+| 35 | Rotation cadence policy for Paperless tokens (annual? on-suspicion?)                                                          | Low      | S      | Decision      |
+| 36 | Check whether `~/.local/state/systemnix` baseline belongs in btrbk scope docs                                                 | Low      | S      | Documentation |
+| 37 | Consider smoke: per-group timing to catch slow-endpoint drift (post-incident baseline)                                        | Low      | M      | Quality       |
+| 38 | papdashboard enricher: verify it survived the deploy train (insight path uses flm — down until reboot)                        | Medium   | S      | Verification  |
+| 39 | Confirm `leak-canary` fake blob can't false-trip future purge replacements files                                              | Low      | S      | Security      |
+| 40 | Re-evaluate deploy pressure gate thresholds vs the observed 61-80% day (gate shut all afternoon — is 20% right for this box?) | Medium   | S      | Decision      |
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF (3)
 
@@ -121,7 +121,7 @@ Each item: what + evidence + scope.
 
 ---
 
-*Reported 2026-09-03 18:18 CEST. Format note: user explicitly requested `.md`; the skill's canonical HTML dashboard format was skipped per the user's explicit instruction (one-off override, not a new default). Tree clean at write time; 10+ commits awaiting daemon push. WAITING FOR INSTRUCTIONS.*
+_Reported 2026-09-03 18:18 CEST. Format note: user explicitly requested `.md`; the skill's canonical HTML dashboard format was skipped per the user's explicit instruction (one-off override, not a new default). Tree clean at write time; 10+ commits awaiting daemon push. WAITING FOR INSTRUCTIONS._
 
 ---
 

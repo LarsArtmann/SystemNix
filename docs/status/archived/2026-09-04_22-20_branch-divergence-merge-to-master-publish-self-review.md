@@ -7,18 +7,18 @@
 
 ## Timeline of this session (compressed)
 
-| Time | Event |
-|------|-------|
-| 20:30–20:50 | Diagnosed divergence: local = stale 2026-08-19 tip + today's unique browser-history token-provisioning work; remote = 402 commits that already absorbed bank-sync SCA. `git cherry`: zero patch-id overlap. |
-| 20:50–21:10 | Built the merge in a daemon-safe worktree (`/tmp/systemnix-integration`); resolved 11 conflicts; reconciled the agent-token split brain to the provision-oneshot architecture. |
-| 21:07 | First commit attempt → **gitleaks block** (canonical ULID-spec fixture) → allowlisted in `.gitleaks.toml`. |
-| 21:08–21:16 | Second commit attempt → hook's full `nix flake check` **caught a real bug**: the provision oneshot started the full server at lock pin `9b2fe69` (CLI dispatch didn't exist yet) → re-pinned to `0971fe9`. |
-| 21:2x | **My `&&`/`;` chain bug**: commit ran without staging the lock fix. Caught minutes later via a follow-up merge refusal; fixed by amend. |
+| Time        | Event                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 20:30–20:50 | Diagnosed divergence: local = stale 2026-08-19 tip + today's unique browser-history token-provisioning work; remote = 402 commits that already absorbed bank-sync SCA. `git cherry`: zero patch-id overlap.                                                                                                                                                                                             |
+| 20:50–21:10 | Built the merge in a daemon-safe worktree (`/tmp/systemnix-integration`); resolved 11 conflicts; reconciled the agent-token split brain to the provision-oneshot architecture.                                                                                                                                                                                                                          |
+| 21:07       | First commit attempt → **gitleaks block** (canonical ULID-spec fixture) → allowlisted in `.gitleaks.toml`.                                                                                                                                                                                                                                                                                              |
+| 21:08–21:16 | Second commit attempt → hook's full `nix flake check` **caught a real bug**: the provision oneshot started the full server at lock pin `9b2fe69` (CLI dispatch didn't exist yet) → re-pinned to `0971fe9`.                                                                                                                                                                                              |
+| 21:2x       | **My `&&`/`;` chain bug**: commit ran without staging the lock fix. Caught minutes later via a follow-up merge refusal; fixed by amend.                                                                                                                                                                                                                                                                 |
 | 21:3x–21:5x | Concurrent sessions kept committing on main; absorbed their commits; `nix flake lock --update-input helium` cascaded into a full lock re-resolution; then the **nix-daemon stale fetch-cache saga** (ref=master kept resolving to the pre-push `8af2d39`; `--override-input` silently no-op'd; sudo blocked in sandbox). Ended by committing the known-good index lock + explicit-rev pin in flake.nix. |
-| 21:5x–22:02 | Fast-forwarded `forgejo-hermes-agent` (twice, absorbing remote `779dbff0`); hooks fully green both times; cleaned up worktree/branch. |
-| 22:05–22:11 | Merged into **master** (fast-forward via the `/tmp/sn-master` worktree where master was checked out; detached it; switched main tree to master, zero churn). |
-| 22:15–22:16 | User's `git sync` exploded (git-town `sync-perennial-strategy=rebase` replayed the 33 unpushed commits → deploy.sh conflict). Rebase had been aborted cleanly before I looked. |
-| 22:19 | Verified origin/master had **0** new commits → pushed master: `6184f9ce..c467168b` (pure fast-forward). **Published.** |
+| 21:5x–22:02 | Fast-forwarded `forgejo-hermes-agent` (twice, absorbing remote `779dbff0`); hooks fully green both times; cleaned up worktree/branch.                                                                                                                                                                                                                                                                   |
+| 22:05–22:11 | Merged into **master** (fast-forward via the `/tmp/sn-master` worktree where master was checked out; detached it; switched main tree to master, zero churn).                                                                                                                                                                                                                                            |
+| 22:15–22:16 | User's `git sync` exploded (git-town `sync-perennial-strategy=rebase` replayed the 33 unpushed commits → deploy.sh conflict). Rebase had been aborted cleanly before I looked.                                                                                                                                                                                                                          |
+| 22:19       | Verified origin/master had **0** new commits → pushed master: `6184f9ce..c467168b` (pure fast-forward). **Published.**                                                                                                                                                                                                                                                                                  |
 
 ---
 
@@ -38,7 +38,7 @@
 
 ## b) PARTIALLY DONE
 
-1. **Lock pin reproducibility** — flake.nix pins `browser-history` by explicit rev (immune to the daemon's stale ref cache), but the *intended* convention `?ref=master` is not restored; requires a one-time `sudo systemctl restart nix-daemon` (blocked in my sandbox).
+1. **Lock pin reproducibility** — flake.nix pins `browser-history` by explicit rev (immune to the daemon's stale ref cache), but the _intended_ convention `?ref=master` is not restored; requires a one-time `sudo systemctl restart nix-daemon` (blocked in my sandbox).
 2. **`/tmp/sn-master` worktree** — master fast-forwarded there, then detached HEAD; the worktree itself still exists (belongs to the papdashboard session; idle since 18:05).
 3. **Feature-branch retirement** — `forgejo-hermes-agent` is fully merged into master but still exists locally and on origin; deletion commands handed to user, not executed (destructive, user's call).
 4. **HaGeZi blocklist hash mismatch** — identified as the remaining deploy-time build blocker (pre-existing, documented by the papdashboard session); flagged in handoff, not fixed.
@@ -74,6 +74,7 @@
 ## f) UP TO 50 THINGS TO DO NEXT (prioritized, impact × effort)
 
 **Unblock the box (P0)**
+
 1. Refresh HaGeZi blocklist SRI hashes (dnsblockd) — the only known deploy build blocker.
 2. `sudo systemctl restart nix-daemon` (clears the stale ref-resolution cache machine-wide).
 3. Revert flake.nix browser-history pin to `?ref=master` + `nix flake lock --update-input browser-history` (should land on 0971fe9 once cache is clean).
@@ -143,7 +144,7 @@
 
 ---
 
-*Session artifacts: merge commits `3ce4414b`, `a8fdf611`; canonical lock via daemon `c467168b`; master published `6184f9ce..c467168b`; integration worktree + branch removed; `/tmp/sn-master` detached, left in place. Zero uncommitted changes remain.*
+_Session artifacts: merge commits `3ce4414b`, `a8fdf611`; canonical lock via daemon `c467168b`; master published `6184f9ce..c467168b`; integration worktree + branch removed; `/tmp/sn-master` detached, left in place. Zero uncommitted changes remain._
 
 ---
 

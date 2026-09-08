@@ -120,27 +120,28 @@ global `DefaultTimeoutStartSec` being phantom on the deployed system.
 ## f) NEXT UP TO 50 (from this session's observations only)
 
 **Directly from this incident:**
+
 1. Verify Gatus "OOMD Kills" check green via gatus sqlite (read-only, per repo doctrine).
-~~2. Root-cause phantom `DefaultTimeoutStartSec`: check how nixpkgs renders `systemd.settings.Manager` in the
+   ~~2. Root-cause phantom `DefaultTimeoutStartSec`: check how nixpkgs renders `systemd.settings.Manager` in the
    pinned rev; check whether the booted generation ever contained it; fix or replace the mechanism.~~ done — gotcha CORRECTED 2026-08-31 (20-30 report §5): nixpkgs renders the whole system.conf; the setting IS live; per-unit ceilings kept as good practice
-3. Eval-time audit module: every `systemd.services.<name>` with a timer AND Type=oneshot MUST carry explicit
+2. Eval-time audit module: every `systemd.services.<name>` with a timer AND Type=oneshot MUST carry explicit
    `TimeoutStartSec` (the phantom-default defense).
-4. Audit ALL `journalctl` invocations repo-wide for `--since`/`-n`/`timeout` bounds (monitor365-server-watchdog,
+3. Audit ALL `journalctl` invocations repo-wide for `--since`/`-n`/`timeout` bounds (monitor365-server-watchdog,
    niri-health-metrics, watchdogs, deploy/post-deploy scripts).
-5. Audit all `| sort | head` / `| grep -q` pipelines in collector scripts for SIGPIPE-under-pipefail.
-6. Write a unit test for the oomd collector block (fixture journal: no-match/has-match/timeout paths).
-7. Bump `system-health-metrics` MemoryMax 128M → 256M (journal-growth headroom).
-8. Add journald `SystemMaxUse` cap (e.g. 2-3G) — shrinks every future journal-walk.
-9. Watch one full day of `system_oomd_kills_scrape_errors` for timeout false-positives; tune window/ceiling if any.
-10. Consider `-n` early-termination cap on the oomd query (semantics allow "≥N kills" if alerting only needs ≥1).
+4. Audit all `| sort | head` / `| grep -q` pipelines in collector scripts for SIGPIPE-under-pipefail.
+5. Write a unit test for the oomd collector block (fixture journal: no-match/has-match/timeout paths).
+6. Bump `system-health-metrics` MemoryMax 128M → 256M (journal-growth headroom).
+7. Add journald `SystemMaxUse` cap (e.g. 2-3G) — shrinks every future journal-walk.
+8. Watch one full day of `system_oomd_kills_scrape_errors` for timeout false-positives; tune window/ceiling if any.
+9. Consider `-n` early-termination cap on the oomd query (semantics allow "≥N kills" if alerting only needs ≥1).
 
 **Flagged side-conditions (other owners / user decisions):**
 ~~11. Land the flm v1.0.2 holdback deploy (parallel session's `pkgs/fastflowlm.nix` dirty change) — flm has been
-    down since 14:30 boot (15× `No such device with index '0'` under XRT 2.25).~~ done — holdback deployed + serving (18-44 report §a.8)
+down since 14:30 boot (15× `No such device with index '0'` under XRT 2.25).~~ done — holdback deployed + serving (18-44 report §a.8)
 12. After flm is back: confirm the PapDashboard enricher cold-load feedback loop guard still holds (alert →
-    insight → flm socket → 21.6G load — AGENTS-documented risk).
+insight → flm socket → 21.6G load — AGENTS-documented risk).
 13. BTRFS chunk headroom (CRITICAL, 5.6 GiB unalloc): user decision — emergency-reserve runbook now vs waiting
-    for Monday 04:00 balance (gawk fix deployed today; last night's balance died awk-missing).
+for Monday 04:00 balance (gawk fix deployed today; last night's balance died awk-missing).
 14. Scrub status `3` (interrupted) on both mounts with `btrfs_scrub_error_free 0` — ties into 13 / scrub deferral.
 ~~15. Post-deploy smoke currently ends FAIL:1 (flm) on EVERY deploy — alert-fatigue risk; clears when 11 lands.~~ done — flm E2E smoke passes again (18-45 report §a.6)
 16. discordsync 5-11 min API gap per deploy — consider deploy.sh wait-or-skip logic.
@@ -149,10 +150,10 @@ global `DefaultTimeoutStartSec` being phantom on the deployed system.
 17. Pre-deploy WARN "fish startup 267ms" under deploy IO pressure (was 60ms when calm) — threshold flapping?
 18. Post-deploy WARN "1 error line in quickshell journal (last 1h)" — not inspected.
 19. Deploy-time IO PSI avg10 hits 75-80% (healthy threshold 80%) — deploys themselves are the pressure source;
-    consider ionice on build/switch phases.
+consider ionice on build/switch phases.
 20. `monitor365-backup.prom` mtime Aug 2 — service disabled, expected; confirm intentional in a docs-health pass.
 21. The `.system_health_oomd_state` now holds window-semantics values while any OLD dashboards may assume
-    all-history — check SigNoz dashboards for `system_oomd_kills_total` panels.
+all-history — check SigNoz dashboards for `system_oomd_kills_total` panels.
 
 ## g) QUESTIONS FOR THE USER (cannot be determined from the system)
 
@@ -168,6 +169,6 @@ global `DefaultTimeoutStartSec` being phantom on the deployed system.
 
 ---
 
-*State at session end: collector runs 1.27s/2min, `system_oomd_kills_*` truthful, sev1 clear, 0 unit failures.
+_State at session end: collector runs 1.27s/2min, `system_oomd_kills_*` truthful, sev1 clear, 0 unit failures.
 Tree edits (system-health.nix, btrfs-health.nix, gatus-config.nix, pre-deploy-check.sh, AGENTS.md) committed by
-the auto-commit daemon; no secrets touched; deploys left the system on a green collector + flagged flm/btrfs.*
+the auto-commit daemon; no secrets touched; deploys left the system on a green collector + flagged flm/btrfs._

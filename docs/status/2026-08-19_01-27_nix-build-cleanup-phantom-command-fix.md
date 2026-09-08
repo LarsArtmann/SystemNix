@@ -69,23 +69,23 @@ Nothing catastrophic, but two honest mistakes this session:
 1. **User runs:** `sudo systemctl start nix-build-cleanup.service` — clears the 10 sandboxes (age-safe, guard-gated).
 2. Fix `docs/gotchas-archive.md:62` — add the live-build age-guard caveat to the manual `rm -rf` line (same hazard I shipped and reverted).
 3. Investigate why the 4h timer left 10 sandboxes: `systemctl list-timers nix-build-cleanup*` + `journalctl -u nix-build-cleanup.service -n 50` (guard abort vs. young sandboxes vs. unit failure).
-~~4. Investigate `nix-gc.service` FAILED (from deploy log) — likely `btrfsGcGuard` abort at <10% device-unallocated → ties into the P0 /data EIO / disk crisis (TODO_LIST P0).~~ done — root-caused 2026-08-21 (the %-gate GC deadlock); guard re-based on absolute 5 GiB floor + META>90
-~~5. Investigate `activitywatch-data-to-pool.service` FAILED (from deploy log) — the one-shot migration keeps failing post-deploy restarts.~~ done — migration completed verified 2026-08-18/19 (self-neutralizing unit)
-~~6. Investigate smoke FAIL **Bank-Sync body lacks "Bank-Sync Dashboard"** (`:8097` answers, `/metrics` passes, Wise data present) — started right after flake bump `c888f497` (bank-sync 7cd756f). Upstream repo fix per AGENTS.md policy, not a SystemNix patch.~~ done — resolved via the bank-sync upstream chain (SCA/wise-go fixes); bank-sync checks PASS in the 2026-08-31 83/0 run
-7. Investigate smoke FAIL **Pocket ID SQLITE_BUSY in recent journal** — per AGENTS.md this is known discordsync-IO-storm collateral; verify it's still that and not a new source (paperless PG migration era is over).
-8. Add AGENTS.md gotcha entry: "pre-deploy check warnings must reference runnable commands; internal writeShellApplication names are not commands" (this session's lesson).
-9. Add shellcheck to pre-commit/CI for `scripts/*.sh`.
-10. Run full `pre-deploy-check.sh` once to confirm end-to-end health after the edit.
-11. Consider adding `nix-build-cleanup` (or a `systemd-run`-style alias) to root's PATH via `environment.systemPackages` if manual invocation is a recurring need — better than editing advice text each time.
-~~12. Monitor365 metrics endpoint (`:9191`) down in pre-deploy — expected while service is disabled, but the check could auto-skip on disabled units instead of warning (it does for others).~~ done — Monitor365 auto-SKIP when disabled is live (pre-deploy-check §9 gate)
-13. The 6 `vendorHash freshness — unable to determine status` warnings in pre-deploy check #11 — the check can't see through mkLarsPackages' indirection; worth wiring or silencing deliberately.
-14. Two "ExecStart binary not built yet" warnings (network-local-commands, pocket-id-provision) — known-benign pre-build state, but the check could label them SKIP instead of WARN.
-15. `/data` EIO corruption repair (pre-existing TODO_LIST P0) — upstream cause of `btrbk-data` aborts; unblocks nix-gc health too.
-16. Root-disk at 91% (64G free) — trending toward the 15G warn threshold; revisit after sandbox cleanup + nix-gc recovery.
-17. DMS/quickshell journal shows 1 error line in the last hour (WARN in smoke) — quick look next session.
-18. File Renamer dashboard shows 0 operations (WARN) — split-brain or fresh-install; unresolved from prior sessions.
-19. PapDashboard "no ingest 200s in last 30 min" WARN — expected when no alert transitioned; consider re-checking after a deliberate test alert to prove the pipeline end-to-end.
-20. `activitywatch-data-to-pool` keeps getting restarted by deploy.sh post-switch — if the migration is wedged (item 5), each deploy re-fails it; self-neutralize or fix.
+   ~~4. Investigate `nix-gc.service` FAILED (from deploy log) — likely `btrfsGcGuard` abort at <10% device-unallocated → ties into the P0 /data EIO / disk crisis (TODO_LIST P0).~~ done — root-caused 2026-08-21 (the %-gate GC deadlock); guard re-based on absolute 5 GiB floor + META>90
+   ~~5. Investigate `activitywatch-data-to-pool.service` FAILED (from deploy log) — the one-shot migration keeps failing post-deploy restarts.~~ done — migration completed verified 2026-08-18/19 (self-neutralizing unit)
+   ~~6. Investigate smoke FAIL **Bank-Sync body lacks "Bank-Sync Dashboard"** (`:8097` answers, `/metrics` passes, Wise data present) — started right after flake bump `c888f497` (bank-sync 7cd756f). Upstream repo fix per AGENTS.md policy, not a SystemNix patch.~~ done — resolved via the bank-sync upstream chain (SCA/wise-go fixes); bank-sync checks PASS in the 2026-08-31 83/0 run
+4. Investigate smoke FAIL **Pocket ID SQLITE_BUSY in recent journal** — per AGENTS.md this is known discordsync-IO-storm collateral; verify it's still that and not a new source (paperless PG migration era is over).
+5. Add AGENTS.md gotcha entry: "pre-deploy check warnings must reference runnable commands; internal writeShellApplication names are not commands" (this session's lesson).
+6. Add shellcheck to pre-commit/CI for `scripts/*.sh`.
+7. Run full `pre-deploy-check.sh` once to confirm end-to-end health after the edit.
+8. Consider adding `nix-build-cleanup` (or a `systemd-run`-style alias) to root's PATH via `environment.systemPackages` if manual invocation is a recurring need — better than editing advice text each time.
+   ~~12. Monitor365 metrics endpoint (`:9191`) down in pre-deploy — expected while service is disabled, but the check could auto-skip on disabled units instead of warning (it does for others).~~ done — Monitor365 auto-SKIP when disabled is live (pre-deploy-check §9 gate)
+9. The 6 `vendorHash freshness — unable to determine status` warnings in pre-deploy check #11 — the check can't see through mkLarsPackages' indirection; worth wiring or silencing deliberately.
+10. Two "ExecStart binary not built yet" warnings (network-local-commands, pocket-id-provision) — known-benign pre-build state, but the check could label them SKIP instead of WARN.
+11. `/data` EIO corruption repair (pre-existing TODO_LIST P0) — upstream cause of `btrbk-data` aborts; unblocks nix-gc health too.
+12. Root-disk at 91% (64G free) — trending toward the 15G warn threshold; revisit after sandbox cleanup + nix-gc recovery.
+13. DMS/quickshell journal shows 1 error line in the last hour (WARN in smoke) — quick look next session.
+14. File Renamer dashboard shows 0 operations (WARN) — split-brain or fresh-install; unresolved from prior sessions.
+15. PapDashboard "no ingest 200s in last 30 min" WARN — expected when no alert transitioned; consider re-checking after a deliberate test alert to prove the pipeline end-to-end.
+16. `activitywatch-data-to-pool` keeps getting restarted by deploy.sh post-switch — if the migration is wedged (item 5), each deploy re-fails it; self-neutralize or fix.
 
 ## g) QUESTIONS (cannot figure out myself)
 

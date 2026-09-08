@@ -51,6 +51,7 @@ Nothing destructive went wrong — the target verification held up under challen
 ## f) NEXT THINGS (up to 50, roughly ordered)
 
 **This drive's lifecycle:**
+
 1. SMART health read over USB now (`sudo smartctl -d sat -a /dev/sda`): TBW, % used, reallocs, power-on hours — go/no-go for internal install.
 2. Check firmware version in SMART output (970 EVO Plus known-issue era) — note Windows-only update path.
 3. Safe-eject the USB enclosure when done with SMART (`udisksctl power-off -b /dev/sda` or unplug).

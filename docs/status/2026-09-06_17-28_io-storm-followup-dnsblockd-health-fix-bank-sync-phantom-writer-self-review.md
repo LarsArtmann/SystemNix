@@ -72,6 +72,7 @@
 ## f) NEXT TASKS (prioritized, ≤50)
 
 **P0 — unblock the deployed state (all gated on §g Q1 unless noted):**
+
 1. Get push OK → push bank-sync (`a9b0b8e..e380e8b`).
 2. Push dnsblockd master (includes cache-first /health + parallel session's lan-stats work — coordinate, their WIP may need finishing first).
 3. Tag dnsblockd release (their repo convention: tag → SystemNix flake bump).
@@ -114,7 +115,7 @@
 34. The `reports/jscpd-report.json` in dnsblockd matched grep noise today — consider gitignoring generated reports.
 35. Monitor IO PSI decay to baseline; if avg60 stays >15% with no visible writers, hunt the remaining D-state/processes (corpse-pile signature from AGENTS).
 
-*(36–50 intentionally unused — no padding.)*
+_(36–50 intentionally unused — no padding.)_
 
 ## g) QUESTIONS (cannot be answered by me)
 
@@ -126,4 +127,4 @@
 
 **Session self-review scorecard (brutal-self-review skill):** 11 self-review questions engaged; 6 fuck-ups/overruns recorded (§d); 0 lies told (one inherited stale claim corrected); 0 ghost systems created (one extraction — `degradeStaleHealth` — is wired into the handler and directly tested); 0 split brains (the stale 15:31 conclusions are superseded by this report + AGENTS.md, forward-link queued as §f.16); scope creep: YES, the writer investigation (§d.3), contained without damage; tests: +3 regression tests landed with the dnsblockd fix, suite stable 6/6.
 
-*Point-in-time snapshot. Machine state may have moved since 17:28.*
+_Point-in-time snapshot. Machine state may have moved since 17:28._

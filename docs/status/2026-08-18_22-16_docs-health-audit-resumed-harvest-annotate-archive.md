@@ -72,9 +72,9 @@
 
 1. Verify `@.20260814T2300` Received UUID: `sudo btrfs subvolume show /mnt/pool/backups/root/@.20260814T2300` (user-run; confirms or refutes my "re-received cleanly" claim)
 2. Read last night's `btrfs-verify-pool-backups` journal (same validation, second source)
-~~3. Harvest 17-42 §F 6/9/49 → TODO items (visionreviewd/hermes `rocmEnv` audit; runtime llama-server verify)~~ done — both live in TODO_LIST P3 (visionreviewd rocmEnv; hermes ROCm verify)
-4. Scope-correct 15-03 item 30 marker (append "; 13-33/13-38/14-51 annotated + kept live for open items")
-5. Verify 22-55 item 12 marker (TODO reconciliation covered it? adjust wording if not)
+   ~~3. Harvest 17-42 §F 6/9/49 → TODO items (visionreviewd/hermes `rocmEnv` audit; runtime llama-server verify)~~ done — both live in TODO_LIST P3 (visionreviewd rocmEnv; hermes ROCm verify)
+3. Scope-correct 15-03 item 30 marker (append "; 13-33/13-38/14-51 annotated + kept live for open items")
+4. Verify 22-55 item 12 marker (TODO reconciliation covered it? adjust wording if not)
 
 **Pending user-gated actions surfaced this pass (blocking, from prior sessions):**
 6. Rotate Resend key — Pocket ID email is BROKEN (revoked key still in sops)

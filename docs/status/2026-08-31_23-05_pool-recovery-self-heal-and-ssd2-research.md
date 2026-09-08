@@ -10,18 +10,18 @@ Two deliverables. (1) **SSD-2 filesystem research** → recommendation: XFS for 
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-| --- | --- |
-| SSD-2 fs research + recommendation (XFS; ext4-recipe equal-second; btrfs/VDO/VDA rejected with sources) | `docs/planning/2026-08-31_go-cache-ssd2-filesystem-research.md` |
-| Docker-on-SSD2 tenant analysis + prune-first counter-proposal (data-root truth: `/data/docker`, overlay2-on-btrfs, ~20.5 GB / 88% garbage) | addendum in same doc; AGENTS.md stale-claim fix |
-| "buildcache ext4→XFS" doctrine: convert at next natural reformat, never as scheduled migration | follow-up section in same doc |
-| `modules/nixos/services/pool-recovery.nix` — udev rules (both Toshiba `ID_SERIAL`s), recovery oneshot (settle → scan → real-IO + UUID health gate → fstab remount **never degraded** → is-failed service restarts → counters), metrics collector + 5-min timer (always-write `.prom`, `-` ReadWritePaths = 226-proof) | VM-tested, flake-check green |
-| Wiring: `configuration.nix` enable, `deploy.sh` post-switch convergence, Gatus "Pool RAID1 Membership" (gated `pool-recovery.enable`), tests registered in `tests/default.nix` | `nix eval` verified: unit oneshot/burst=5, timer config, 2 udev serial rules, endpoint present |
-| `tests/test-pool-recovery.nix` — 3 nodes: healthy no-op ✓, foreign-mount UUID reaping + remount ✓, partial-member loud-fail with nothing mounted ✓, absent clean-exit ✓, fail-closed metrics ✓ | `nix build .#checks.x86_64-linux.pool-recovery` → exit 0 |
-| Gatus-pattern test extension (new mock metrics + verbatim-pattern endpoint, proves the anchored `\n` patterns match) | `.#checks.x86_64-linux.gatus-patterns` → exit 0 |
-| Two new AGENTS.md gotchas: btrfs `findmnt MAJ:MIN` = anonymous devt (never comparable to members); VM tests must use `virtualisation.fileSystems` (qemu-vm `mkVMOverride` replaces the whole option) | AGENTS.md, both negative-tested this session |
-| `AGENTS.md` stale-fact fix: `/data/docker` IS the live data-root (old "EMPTY, docker in /var/lib" claim deleted) | verified via `docker info` live |
-| deploy.sh syntax check (`bash -n` OK); fmt/statix/deadnix clean on all touched files; `mountUnitName` derived from option (not hardcoded) | final eval + proven derivation `mnt-pool` |
+| Item                                                                                                                                                                                                                                                                                                                  | Evidence                                                                                       |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| SSD-2 fs research + recommendation (XFS; ext4-recipe equal-second; btrfs/VDO/VDA rejected with sources)                                                                                                                                                                                                               | `docs/planning/2026-08-31_go-cache-ssd2-filesystem-research.md`                                |
+| Docker-on-SSD2 tenant analysis + prune-first counter-proposal (data-root truth: `/data/docker`, overlay2-on-btrfs, ~20.5 GB / 88% garbage)                                                                                                                                                                            | addendum in same doc; AGENTS.md stale-claim fix                                                |
+| "buildcache ext4→XFS" doctrine: convert at next natural reformat, never as scheduled migration                                                                                                                                                                                                                        | follow-up section in same doc                                                                  |
+| `modules/nixos/services/pool-recovery.nix` — udev rules (both Toshiba `ID_SERIAL`s), recovery oneshot (settle → scan → real-IO + UUID health gate → fstab remount **never degraded** → is-failed service restarts → counters), metrics collector + 5-min timer (always-write `.prom`, `-` ReadWritePaths = 226-proof) | VM-tested, flake-check green                                                                   |
+| Wiring: `configuration.nix` enable, `deploy.sh` post-switch convergence, Gatus "Pool RAID1 Membership" (gated `pool-recovery.enable`), tests registered in `tests/default.nix`                                                                                                                                        | `nix eval` verified: unit oneshot/burst=5, timer config, 2 udev serial rules, endpoint present |
+| `tests/test-pool-recovery.nix` — 3 nodes: healthy no-op ✓, foreign-mount UUID reaping + remount ✓, partial-member loud-fail with nothing mounted ✓, absent clean-exit ✓, fail-closed metrics ✓                                                                                                                        | `nix build .#checks.x86_64-linux.pool-recovery` → exit 0                                       |
+| Gatus-pattern test extension (new mock metrics + verbatim-pattern endpoint, proves the anchored `\n` patterns match)                                                                                                                                                                                                  | `.#checks.x86_64-linux.gatus-patterns` → exit 0                                                |
+| Two new AGENTS.md gotchas: btrfs `findmnt MAJ:MIN` = anonymous devt (never comparable to members); VM tests must use `virtualisation.fileSystems` (qemu-vm `mkVMOverride` replaces the whole option)                                                                                                                  | AGENTS.md, both negative-tested this session                                                   |
+| `AGENTS.md` stale-fact fix: `/data/docker` IS the live data-root (old "EMPTY, docker in /var/lib" claim deleted)                                                                                                                                                                                                      | verified via `docker info` live                                                                |
+| deploy.sh syntax check (`bash -n` OK); fmt/statix/deadnix clean on all touched files; `mountUnitName` derived from option (not hardcoded)                                                                                                                                                                             | final eval + proven derivation `mnt-pool`                                                      |
 
 ## b) PARTIALLY DONE
 
@@ -71,6 +71,7 @@ Two deliverables. (1) **SSD-2 filesystem research** → recommendation: XFS for 
 ## f) NEXT ACTIONS (prioritized, ~50)
 
 **Deploy & verify (P0)**
+
 1. Deploy `nix run .#deploy` (coordination decision — see Q1).
 2. Post-deploy: confirm `pool-usb-recovery` + `pool-recovery-metrics` units exist and the timer registers.
 3. Post-deploy: Gatus "Pool RAID1 Membership" green with both members; `pool_usb_recovery_mounted 1`.

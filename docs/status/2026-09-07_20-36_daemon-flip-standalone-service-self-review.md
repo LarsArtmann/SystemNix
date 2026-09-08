@@ -93,4 +93,4 @@
 
 ---
 
-*Arte in Aeternum — report from session memory + grep-verified claims only. Waiting for instructions.*
+_Arte in Aeternum — report from session memory + grep-verified claims only. Waiting for instructions._

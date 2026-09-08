@@ -61,26 +61,26 @@ Resume the paused paperless v3 "superb" upgrade at its two unresolved post-deplo
 4. ~~E2E fastflowlm probe again — fresh, timed right after an idle-tick, with memory headroom visible~~ done (E2E green in the 20-52 deploys)
 5. Verify `/v1/models` response actually contains `qwen3.6-moe:35b-a3b` (gate strength — see e.3)
 6. ~~If OOM recurs on cold load: quantify headroom needed; consider llama-server ceiling (user decision — it's theirs)~~ done (mitigations deployed (OOMScoreAdjust=300, RestartSec=60); no recurrence since)
-~~7. Verify PMA auto-commit resumes LLM usage (journal: heuristic-fallback gone)~~ done — PMA is the heaviest flm consumer per the 2026-08-22 usage forensics
-~~8. Verify PapDashboard enricher end-to-end (trigger a test Gatus alert)~~ done — enricher insights observed live during the 2026-08-22 incident storms
-9. `nix build .#checks.x86_64-linux.scripts`
-~~10. Re-run paperless VM test post-unblock~~ done — test-paperless.nix green in CI since
-11. Paperless: consume a real German PDF → OCR deu → check filename layout
-12. Paperless: AI suggestion smoke (classify/tag/title on the consumed doc)
-13. Paperless: `.docx` consume via Gotenberg
-14. Paperless: `.eml` consume via Tika
-15. Paperless: trash delete → dir → restore round-trip
-16. ~~Gatus: confirm "Paperless", "Paperless Tika", "Paperless Gotenberg" green ≥1 cycle~~ done (all three paperless Gatus checks deployed and green (20-52 smoke 53 PASS))
-17. Ask user the 3 pending questions (see g)
-18. After PG stable ≥1 day: `rm /mnt/pool/services/paperless/db.sqlite3*` (neutralizes migration oneshot)
-19. Decide old-export fate (`/mnt/pool/services/paperless/export`): import or discard
-20. If RAG wanted: dedicated embed-only flm instance on its own port + re-add `PAPERLESS_AI_LLM_EMBEDDING_*`
-21. Strengthen post-deploy flm smoke (model-name assertion) per e.3
-22. Consider a fastflowlm idle-check unit test (the script is pure shell — cheap shellcheck + fixture test)
-23. Consider otel-endpoint-audit `url-parser` expectation type (autoexport consumers)
-24. Monitor swap pressure (22/28 GiB) — machine runs hot; revisit zram sizing only if OOMs recur
-25. ~~Update TODO_LIST.md with any of the above that become owned tasks~~ done (docs-health pass 2026-08-18)
-26. Watch pocket-id SQLITE_BUSY recurrence (only if discordsync-style IO storms return)
+   ~~7. Verify PMA auto-commit resumes LLM usage (journal: heuristic-fallback gone)~~ done — PMA is the heaviest flm consumer per the 2026-08-22 usage forensics
+   ~~8. Verify PapDashboard enricher end-to-end (trigger a test Gatus alert)~~ done — enricher insights observed live during the 2026-08-22 incident storms
+7. `nix build .#checks.x86_64-linux.scripts`
+   ~~10. Re-run paperless VM test post-unblock~~ done — test-paperless.nix green in CI since
+8. Paperless: consume a real German PDF → OCR deu → check filename layout
+9. Paperless: AI suggestion smoke (classify/tag/title on the consumed doc)
+10. Paperless: `.docx` consume via Gotenberg
+11. Paperless: `.eml` consume via Tika
+12. Paperless: trash delete → dir → restore round-trip
+13. ~~Gatus: confirm "Paperless", "Paperless Tika", "Paperless Gotenberg" green ≥1 cycle~~ done (all three paperless Gatus checks deployed and green (20-52 smoke 53 PASS))
+14. Ask user the 3 pending questions (see g)
+15. After PG stable ≥1 day: `rm /mnt/pool/services/paperless/db.sqlite3*` (neutralizes migration oneshot)
+16. Decide old-export fate (`/mnt/pool/services/paperless/export`): import or discard
+17. If RAG wanted: dedicated embed-only flm instance on its own port + re-add `PAPERLESS_AI_LLM_EMBEDDING_*`
+18. Strengthen post-deploy flm smoke (model-name assertion) per e.3
+19. Consider a fastflowlm idle-check unit test (the script is pure shell — cheap shellcheck + fixture test)
+20. Consider otel-endpoint-audit `url-parser` expectation type (autoexport consumers)
+21. Monitor swap pressure (22/28 GiB) — machine runs hot; revisit zram sizing only if OOMs recur
+22. ~~Update TODO_LIST.md with any of the above that become owned tasks~~ done (docs-health pass 2026-08-18)
+23. Watch pocket-id SQLITE_BUSY recurrence (only if discordsync-style IO storms return)
 
 ## g) QUESTIONS (cannot figure out myself)
 

@@ -51,6 +51,7 @@ The complete causal chain, every link verified against live evidence:
 ## 2. What was shipped (FULLY DONE)
 
 ### Upstream InboxClean (repo `/home/lars/projects/InboxClean`, pushed to
+
 `origin/master` as `c65c797`, deployed via flake bump the same night)
 
 - **Tags → matching NONE (0) + legacy AUTO self-heal**: `EnsureTag` creates
@@ -76,7 +77,7 @@ The complete causal chain, every link verified against live evidence:
 - **Lint 0 issues, `go vet` clean, full suite green** (repo conventions
   followed: `nix run .#lint`, `nix fmt` on touched files only, spec
   `docs/spec/paperless.md` updated — matching semantics + new pipeline step
-  + config row).
+  - config row).
 
 ### SystemNix (deployed to evo-x2, post-deploy 93 PASS / 0 FAIL)
 
@@ -129,7 +130,7 @@ The complete causal chain, every link verified against live evidence:
   degrade gracefully when the corpus yields an empty vocabulary (skip/ warn
   instead of failing the task). External project; would follow
   verify-before-filing. Not filed this session.
-~~**Retroactive repair of the 4 existing encrypted statements**:~~ routed — folded into the TODO_LIST P1 `Paperless statement decryption go-live + duplicate cleanup + retro-repair` row (2026-09-06 harvest); once the
+  ~~**Retroactive repair of the 4 existing encrypted statements**:~~ routed — folded into the TODO_LIST P1 `Paperless statement decryption go-live + duplicate cleanup + retro-repair` row (2026-09-06 harvest); once the
   password is filled, NEW statements decrypt, but the EXISTING four stay
   encrypted + empty. Re-uploading decrypted copies would NOT dedup against
   the encrypted originals (different bytes) — needs a small repair path
@@ -202,6 +203,7 @@ The complete causal chain, every link verified against live evidence:
 ## 7. Up to 50 next tasks (rough Pareto order)
 
 **Unblock (user-gated, P1):**
+
 1. Cloud Console → OAuth consent screen → "In production" (if not already).
 2. Re-run `inboxclean auth` for `main` (browser, on the evo-x2 desktop).
 3. Verify `inboxclean-sync` green + both accounts sync again (cursor moves).
@@ -213,102 +215,102 @@ The complete causal chain, every link verified against live evidence:
 6. `inboxclean paperless --backfill --prune` (preview `--dry-run` first) to
    drop the 2 duplicate statements.
 7. Send yourself a test encrypted statement mail → verify it lands decrypted
-   + searchable (title/content in paperless UI).
+   - searchable (title/content in paperless UI).
 
 **Paperless quality:**
 8. Design the retro-decrypt repair for the 4 existing encrypted statements
-   (delete + papersync re-upload of those messages post-password).
+(delete + papersync re-upload of those messages post-password).
 9. Consider `pol` tesseract language for scanned Polish docs (package + OCR_LANGUAGE).
 10. File the upstream paperless-ngx issue/PR: empty-vocabulary should
-    degrade, not fail the task (verify-before-filing first).
+degrade, not fail the task (verify-before-filing first).
 11. Consider a "paperless failed tasks" textfile collector + Gatus check
-    (forgejo-mirror pattern) — the class is currently UI-only.
+(forgejo-mirror pattern) — the class is currently UI-only.
 12. Consider a Gatus/log alert when docs carry `encrypted` while a decrypt
-    password IS configured (wrong-password detection).
+password IS configured (wrong-password detection).
 13. Review the remaining 2 statement docs' titles/filenames (duplicate-named
-    `_01/_02` variants may confuse after cleanup).
+`_01/_02` variants may confuse after cleanup).
 14. Decide on correspondents: keep AUTO (current) or flip to NONE in the UI.
 15. Check the paperless-ai title/tag suggestions now work on real content
-    (they were the source of the good Polish titles).
+(they were the source of the good Polish titles).
 
 **Upstream InboxClean follow-ups:**
 16. Add a live-instance E2E for the decrypt path to the owner-run checklist
-    (docs/spec/paperless.md §E2E).
+(docs/spec/paperless.md §E2E).
 17. Consider decrypting `.eml` body uploads? (out of scope — bodies are
-    never encrypted; document the decision).
+never encrypted; document the decision).
 18. `--backfill` could also repair documents whose ledger recorded ENCRYPTED
-    bytes (re-download, decrypt, replace) — natural home for task 8.
+bytes (re-download, decrypt, replace) — natural home for task 8.
 19. Consider a per-sender decrypt password map (multiple banks).
 20. Consider surfacing `encrypted-tagged docs` count in `paperless_status`
-    agent tool output.
+agent tool output.
 21. Cross-account checksum set: consider a SHARED in-flight checksum guard
-    so the second account skips instead of relying on paperless rejection.
+so the second account skips instead of relying on paperless rejection.
 
 **SystemNix hygiene:**
 22. Test the runbook's `--backfill --prune` command for real; fix the env
-    reconstruction if `INBOXCLEAN_CONFIG` is needed.
+reconstruction if `INBOXCLEAN_CONFIG` is needed.
 23. The `docs/services/paperless.md` "monitoring map" row about task
-    failures — link the collector if task 11 gets built.
+failures — link the collector if task 11 gets built.
 24. Reboot the box (owed since 2026-08-31): clears the flm zombie, D-state
-    corpses, NPU wedge — dozens of P0/P1 items depend on it (pre-existing).
+corpses, NPU wedge — dozens of P0/P1 items depend on it (pre-existing).
 25. attic VM check red (pre-existing P1) — unrelated but blocking clean
-    `nix flake check` CI runs.
+`nix flake check` CI runs.
 26. Consider `nix flake check` re-run cadence after daemon commits when
-    multiple sessions are active (a daemon commit can carry a merge loss).
+multiple sessions are active (a daemon commit can carry a merge loss).
 27. Add the decrypt env var to post-deploy smoke (grep the sync unit env or
-    a WARN when placeholder + paperless enabled).
+a WARN when placeholder + paperless enabled).
 
 **InboxClean OAuth (rooted in the Sep-4 incident, still biting):**
 28. Verify the OAuth client is ACTUALLY in "In production" now (the Sep-4
-    fix instructions may never have been executed — token died again).
+fix instructions may never have been executed — token died again).
 29. Upstream: `/health` should validate refresh tokens, not presence
-    (phantom green — the known candidate).
+(phantom green — the known candidate).
 30. Add a Gatus check on `inboxclean-sync` exit 75/1 patterns (token death
-    currently pages only via OnFailure unit failure — which DOES fire; ok,
-    verify it fired).
+currently pages only via OnFailure unit failure — which DOES fire; ok,
+verify it fired).
 31. Consider a weekly `inboxclean auth --probe`-style canary for token
-    validity (cv profileProbe pattern).
+validity (cv profileProbe pattern).
 
 **Nice-to-have / deferred:**
 32. Monitoring for classifier model staleness (if the user opts into AUTO
-    labels later).
+labels later).
 33. Document the pdfDecryptor in InboxClean's FEATURES.md (spec done,
-    FEATURES not touched).
+FEATURES not touched).
 34. CHANGELOG entry for InboxClean decrypt feature (repo has CHANGELOG.md).
 35. Consider qpdf version pin note (12.3.2 via nixpkgs — flake test apps).
 36. Review whether `PAPERLESS_EMAIL_TASK_CRON` mail-account consumption
-    should be configured now that statements decrypt properly (native
-    paperless mail rules vs papersync division).
+should be configured now that statements decrypt properly (native
+paperless mail rules vs papersync division).
 37. Consider a paperless `encrypted`-tag dashboard widget / saved view.
 38. Re-check the paperless tasks page UI after the tag flip (should show
-    successes only).
+successes only).
 39. Sweep old failing task rows (Tasks UI keeps history; "Check all" →
-    acknowledge) so the next real failure is obvious.
+acknowledge) so the next real failure is obvious.
 40. Consider whether `PAPERLESS_TRAIN_TASK_CRON` should be daily instead of
-    hourly while there are no AUTO labels at all (cosmetic; early-out is
-    cheap and green).
+hourly while there are no AUTO labels at all (cosmetic; early-out is
+cheap and green).
 41. If the user wants ML matching later: pick specific labels (e.g.
-    correspondent "mBank") and flip to AUTO in the UI — the classifier then
-    trains on the decrypted statements.
+correspondent "mBank") and flip to AUTO in the UI — the classifier then
+trains on the decrypted statements.
 42. Backfill-decrypt + re-ingest could also RESTORE text to the 4 docs via
-    paperless's reprocess API once decrypted copies exist (needs auth).
+paperless's reprocess API once decrypted copies exist (needs auth).
 43. Add the "empty vocabulary" incident to the InboxClean AGENTS.md gotchas
-    (tag AUTO poison) — SystemNix AGENTS has it; upstream repo does not.
+(tag AUTO poison) — SystemNix AGENTS has it; upstream repo does not.
 44. Consider unit-hardening: the sync unit's `path` addition means qpdf
-    failure (missing binary) degrades silently — a startup log line exists
-    (feature-off WARN) — verify it prints once per run.
+failure (missing binary) degrades silently — a startup log line exists
+(feature-off WARN) — verify it prints once per run.
 45. Post-reboot: re-verify llama-rag + flm so paperless-ai embeddings work
-    on the decrypted statements (RAG semantic search).
+on the decrypted statements (RAG semantic search).
 46. Consider archiving the `.eml` bodies of the bank mails (currently
-    off) — the statement password often arrives in a separate mail.
+off) — the statement password often arrives in a separate mail.
 47. If both mailboxes receive the same bank mail routinely: consider
-    per-account tag overrides (`paperless_tags` per account) to distinguish
-    provenance.
+per-account tag overrides (`paperless_tags` per account) to distinguish
+provenance.
 48. Review `paperless-backup` coverage: export freshness check green? (it
-    was in post-deploy PASS list).
+was in post-deploy PASS list).
 49. The stale `/var/lib/paperless/db.sqlite3` self-neutralizing oneshot:
-    confirm `db.sqlite3*` removal happened (P0-era instruction) so the
-    engine-swap trap can't recur.
+confirm `db.sqlite3*` removal happened (P0-era instruction) so the
+engine-swap trap can't recur.
 50. Retire this incident's status doc into the archive once ①-⑦ verified.
 
 ## 8. Questions I can NOT answer myself (max 3)

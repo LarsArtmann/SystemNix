@@ -12,17 +12,18 @@ stay on the 2 TB Lexar QLC? Answer from workload physics, not from "the QLC felt
 Measured head-to-head on the actual Samsung (`scripts/bench-nix-fs.sh`, final valid run;
 629 real store paths / 1.7 GiB sample; box under live load PSI 26–70%, load 3–6):
 
-| Metric (file-based, on target) | ext4 | XFS (reflink=1) | BTRFS (zstd) |
-|---|---|---|---|
-| 4K randread QD1 | 18.1k IOPS / 55 µs | 17.0k / 58 µs | 17.9k / 55 µs |
-| 4K randwrite QD1 | 65–71k / 14 µs | 35–38k / 27 µs | 38–42k / 25 µs |
-| fsync-per-4K-write | ~338 IOPS (≈3 ms) | ~344 (≈2.9 ms) | ~315 (≈3.2 ms) |
-| create 20k small files + sync | 7.7–13.7 s | 8.0–9.3 s | 7.6–11.2 s |
-| delete 20k files | 0.36–0.66 s | 0.4–1.35 s | 0.6–1.4 s |
-| copy real 1.7 G store sample | 4.7 s | 2.2 s | 1.9 s |
-| **physical space (compsize)** | 1730 MiB | 1711 MiB | **913 MiB (1.89×)** |
+| Metric (file-based, on target) | ext4               | XFS (reflink=1) | BTRFS (zstd)        |
+| ------------------------------ | ------------------ | --------------- | ------------------- |
+| 4K randread QD1                | 18.1k IOPS / 55 µs | 17.0k / 58 µs   | 17.9k / 55 µs       |
+| 4K randwrite QD1               | 65–71k / 14 µs     | 35–38k / 27 µs  | 38–42k / 25 µs      |
+| fsync-per-4K-write             | ~338 IOPS (≈3 ms)  | ~344 (≈2.9 ms)  | ~315 (≈3.2 ms)      |
+| create 20k small files + sync  | 7.7–13.7 s         | 8.0–9.3 s       | 7.6–11.2 s          |
+| delete 20k files               | 0.36–0.66 s        | 0.4–1.35 s      | 0.6–1.4 s           |
+| copy real 1.7 G store sample   | 4.7 s              | 2.2 s           | 1.9 s               |
+| **physical space (compsize)**  | 1730 MiB           | 1711 MiB        | **913 MiB (1.89×)** |
 
 Key findings:
+
 - **Performance is a wash.** Run-to-run variance under load (±40%) exceeded every
   inter-filesystem difference. No fs separates for nix workloads on this hardware.
   (QD32 was CPU-contention-limited to ~19k IOPS in file mode; raw-device QD32 measured
@@ -51,11 +52,11 @@ Benchmark tooling: `scripts/bench-disk.sh` (raw device) and `scripts/bench-nix-f
 A machine with **128 GB RAM** has three storage tiers. Disk choice only matters where the
 upper tiers cannot absorb the access:
 
-| Tier | What it serves | Latency |
-|---|---|---|
-| RAM / page cache | Warm working sets (hot nix binaries, DB pages, project trees) | ~0 |
-| **Samsung TLC** | **Synchronous cold path: exec, fsync, cache-miss refill** | 12–28 µs QD1 |
-| QLC + HDD pool | Streaming bulk: models, games, media, telemetry, backups | 0.1–2 GB/s |
+| Tier             | What it serves                                                | Latency      |
+| ---------------- | ------------------------------------------------------------- | ------------ |
+| RAM / page cache | Warm working sets (hot nix binaries, DB pages, project trees) | ~0           |
+| **Samsung TLC**  | **Synchronous cold path: exec, fsync, cache-miss refill**     | 12–28 µs QD1 |
+| QLC + HDD pool   | Streaming bulk: models, games, media, telemetry, backups      | 0.1–2 GB/s   |
 
 **The classifier for every workload: "who waits, synchronously, when this IO happens?"**
 
@@ -70,15 +71,15 @@ kills) is the classic poison.
 
 ## Measured facts (2026-08-31, all under live load — see AGENTS.md Samsung section)
 
-| Metric | Samsung (raw) | Lexar root (BTRFS) | USB buildcache |
-|---|---|---|---|
-| 4K randread QD1 | 35,300 IOPS / 27.8 µs | 620 IOPS / 1.6 ms | 461 IOPS / 2.2 ms |
-| 4K randwrite QD1 | 79,191 IOPS / 12.2 µs | 295 IOPS / 3.4 ms | 1,263 IOPS |
-| 4K randread QD32 | 304,657 IOPS / 1.19 GB/s | 804 IOPS | 1,478 IOPS |
-| fsync (per-write) | **0.78 ms** | **~200 ms** | 1.7 ms |
-| 1M seq read/write | 2,423 / 2,671 MiB/s | (contended: unusable) | — |
-| Link | PCIe 3.0 x4 (= drive max) | PCIe 4.0 x4 | USB 3.0 |
-| Endurance budget | 600 TBW | unknown (budget QLC) | irrelevant (cache) |
+| Metric            | Samsung (raw)             | Lexar root (BTRFS)    | USB buildcache     |
+| ----------------- | ------------------------- | --------------------- | ------------------ |
+| 4K randread QD1   | 35,300 IOPS / 27.8 µs     | 620 IOPS / 1.6 ms     | 461 IOPS / 2.2 ms  |
+| 4K randwrite QD1  | 79,191 IOPS / 12.2 µs     | 295 IOPS / 3.4 ms     | 1,263 IOPS         |
+| 4K randread QD32  | 304,657 IOPS / 1.19 GB/s  | 804 IOPS              | 1,478 IOPS         |
+| fsync (per-write) | **0.78 ms**               | **~200 ms**           | 1.7 ms             |
+| 1M seq read/write | 2,423 / 2,671 MiB/s       | (contended: unusable) | —                  |
+| Link              | PCIe 3.0 x4 (= drive max) | PCIe 4.0 x4           | USB 3.0            |
+| Endurance budget  | 600 TBW                   | unknown (budget QLC)  | irrelevant (cache) |
 
 Live pathology captured same day: device throughput 0.3 MB/s with PSI some=47–64%,
 `flm-real` D-state in `blk_mq_get_tag`, `nix` in `folio_wait_bit_common`, btrfs
@@ -87,16 +88,16 @@ every exec queues behind it.
 
 ## Current occupancy (measured)
 
-| Data | Size | Where today | Who waits on it |
-|---|---|---|---|
-| `/nix` store | 129 G | QLC root (`@nix` subvol, NOT snapshotted) | **Every process spawn, every shell Enter** |
-| Sync DBs: pocket-id, postgres (immich+paperless), forgejo | est. ≤ 50 G (root-only dirs) | QLC `/var/lib` | **Every auth token, photo browse, git push** |
-| `/home/lars` | 268 G | QLC `@` (snapshotted → pool) | Interactive dev (git, editors, browsers) |
-| Go caches (go-build 65 G + go-mod 13 G + ~18 G aux) | ~96 G | USB SSD | Compile iteration waits (semi-interactive) |
-| AI models (`/data/ai` 287 G, `/data/models` 210 G, `/data/llamacpp-models` 92 G) | **589 G** | QLC `/data` | Nobody synchronously — cold-load bandwidth |
-| Steam | 106 G | QLC `/data` | Game launch only |
-| ClickHouse telemetry | 32 G used / 100 G part (df, measured) | QLC p9 (XFS) | Nobody (analytics) |
-| Backups, media, service data | 1.1 T used (df, measured) | HDD pool | Nobody |
+| Data                                                                             | Size                                  | Where today                               | Who waits on it                              |
+| -------------------------------------------------------------------------------- | ------------------------------------- | ----------------------------------------- | -------------------------------------------- |
+| `/nix` store                                                                     | 129 G                                 | QLC root (`@nix` subvol, NOT snapshotted) | **Every process spawn, every shell Enter**   |
+| Sync DBs: pocket-id, postgres (immich+paperless), forgejo                        | est. ≤ 50 G (root-only dirs)          | QLC `/var/lib`                            | **Every auth token, photo browse, git push** |
+| `/home/lars`                                                                     | 268 G                                 | QLC `@` (snapshotted → pool)              | Interactive dev (git, editors, browsers)     |
+| Go caches (go-build 65 G + go-mod 13 G + ~18 G aux)                              | ~96 G                                 | USB SSD                                   | Compile iteration waits (semi-interactive)   |
+| AI models (`/data/ai` 287 G, `/data/models` 210 G, `/data/llamacpp-models` 92 G) | **589 G**                             | QLC `/data`                               | Nobody synchronously — cold-load bandwidth   |
+| Steam                                                                            | 106 G                                 | QLC `/data`                               | Game launch only                             |
+| ClickHouse telemetry                                                             | 32 G used / 100 G part (df, measured) | QLC p9 (XFS)                              | Nobody (analytics)                           |
+| Backups, media, service data                                                     | 1.1 T used (df, measured)             | HDD pool                                  | Nobody                                       |
 
 Note (measured 2026-08-31): the `/data` category figures above sum to 695 G while df
 reports 888 G used on p8; the ~193 G balance is unclassified dirs + snapshot-pinned
@@ -138,7 +139,7 @@ p2  BTRFS  ~927.5 G  # label `tlc`, to end of disk. The ONLY data partition.
 - **NOT on Samsung**: models (589 G — doesn't fit, doesn't need latency), games, media,
   telemetry, backups, swap (zram covers it).
 
-### QLC keeps — and this is a *role*, not a demotion
+### QLC keeps — and this is a _role_, not a demotion
 
 - `/data` models + Steam (695 G): big immutable files, read as streams. QLC sequential
   read on an otherwise-quiet disk is 1–3 GB/s — cold-load 10–20 s, exactly what the
@@ -181,6 +182,7 @@ moment exec-path misses refill from TLC at 2.4 GB/s.
 QLC pressure immediately.
 
 **Phase 1 — partitions + `/nix` → Samsung p2 subvol `nix`** (the big one):
+
 1. `sgdisk`: p1 ef00 +4 G, p2 8300 rest. `mkfs.fat -F32 -n SAMSUNG-EFI` p1 (formatted,
    UNMOUNTED, reserved). `mkfs.btrfs -L tlc` p2 + `btrfs subvolume create` `nix`.
 2. Initial `rsync -aH --delete` (live; store is mostly idle between builds)
@@ -224,15 +226,15 @@ create caches`, no partition work.
 
 ## Risks & mitigations
 
-| Risk | Mitigation |
-|---|---|
-| Boot now requires Samsung | `nofail` OFF (must mount), `neededForBoot = true` explicit, rescue documented; store rebuildable from flake.lock + attic + upstreams; QLC boot partition untouched |
-| Samsung failure loses `/nix` + hot DBs | `/nix` rebuildable; DBs have nightly dump backups on pool (14d/7d); reserved p1 is empty until boot-migration day, so the QLC boot path is unaffected by it |
-| Partition geometry mistakes are unfixable in place | Starts never move: ESP carved day one (4 G), ONE BTRFS pool takes the rest, future XFS only ever carved fresh from p2's tail via online shrink |
-| Snapshot landmine re-enables CoW on `hot` | No scheduled snapshots; one-shot checkpoints deleted after use; eval-time assertion keyed on the `hot` prefix (never in btrbk) |
-| Endurance (600 TBW) | Projected ~100–250 G/day worst case → 6–16 years; monitored via the (fixed) by-id smartd/nvme-monitor |
-| Migration writes stress the wedged QLC | Phase 0 first; deploy pressure gate; `--keep-going`; ionice the rsync |
-| Parallel-session tree races | Run migrations from a quiesced tree; auto-commit daemon aware |
+| Risk                                               | Mitigation                                                                                                                                                         |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Boot now requires Samsung                          | `nofail` OFF (must mount), `neededForBoot = true` explicit, rescue documented; store rebuildable from flake.lock + attic + upstreams; QLC boot partition untouched |
+| Samsung failure loses `/nix` + hot DBs             | `/nix` rebuildable; DBs have nightly dump backups on pool (14d/7d); reserved p1 is empty until boot-migration day, so the QLC boot path is unaffected by it        |
+| Partition geometry mistakes are unfixable in place | Starts never move: ESP carved day one (4 G), ONE BTRFS pool takes the rest, future XFS only ever carved fresh from p2's tail via online shrink                     |
+| Snapshot landmine re-enables CoW on `hot`          | No scheduled snapshots; one-shot checkpoints deleted after use; eval-time assertion keyed on the `hot` prefix (never in btrbk)                                     |
+| Endurance (600 TBW)                                | Projected ~100–250 G/day worst case → 6–16 years; monitored via the (fixed) by-id smartd/nvme-monitor                                                              |
+| Migration writes stress the wedged QLC             | Phase 0 first; deploy pressure gate; `--keep-going`; ionice the rsync                                                                                              |
+| Parallel-session tree races                        | Run migrations from a quiesced tree; auto-commit daemon aware                                                                                                      |
 
 ## Open decisions for the user
 

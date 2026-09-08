@@ -168,6 +168,7 @@ metrics-freshness layer (P2); everything else in §f.
 ## f) NEXT — ordered
 
 **P0:**
+
 1. User commits+pushes dnsblockd → `nix flake lock --update-input dnsblockd`
    → flip wiring `upstream` → `config` → **lower maxUpstreamGaps to 4** →
    deploy → verify first dnsblockd spans (config key already live).
@@ -184,65 +185,65 @@ metrics-freshness layer (P2); everything else in §f.
 
 **P2 (breadth — metrics side next):**
 9. Metrics-freshness layer: per-scrape-job last-sample age →
-   `signoz_scrape_job_fresh{job}` + Gatus (wedge-but-200 class).
+`signoz_scrape_job_fresh{job}` + Gatus (wedge-but-200 class).
 10. Scrape papdashboard's own /metrics (exists, nothing reads it).
 11. Register the 9 scrape jobs + textfile collectors in the coverage concept.
 12. Forgejo metrics scrape (token plumbing decision).
 13. immich/paperless-ai/twenty/manifest internal metrics inventory.
 14. docker containers (twenty/manifest): verify OTel SDK presence BEFORE
-    wiring `OTEL_EXPORTER_OTLP_ENDPOINT` (a noop env in a container is the
-    same lie class; the reverse assertion cannot see oci envs).
+wiring `OTEL_EXPORTER_OTLP_ENDPOINT` (a noop env in a container is the
+same lie class; the reverse assertion cannot see oci envs).
 15. gatus: confirm no upstream OTel trace support, document as
-    logs+metrics-only in the registry comments.
+logs+metrics-only in the registry comments.
 
 **P3 (quality/hygiene):**
 16. Dashboard pre-deploy validation (e1).
 17. Extend gatus-pattern-lint to ENFORCE anchored value-checks (predecessor
-    e5 — still open).
+e5 — still open).
 18. otel-endpoint-audit `configExpression` support (dnsblockd YAML key; both
-    audits share one truth).
+audits share one truth).
 19. bank-sync upstream CHANGELOG + tag (vendorHash refresh upstream would let
-    SystemNix DROP the override).
+SystemNix DROP the override).
 20. dnsblockd upstream CHANGELOG + transport-selection test.
 21. `tests/test-signoz-coverage.nix` (eval-assertion + generated-registry
-    shape; mock CH optional).
+shape; mock CH optional).
 22. Collector: emit `signoz_traces_expected` for enforced entries only, or
-    keep documented double-count (currently documented in runbook).
+keep documented double-count (currently documented in runbook).
 23. I/O pressure smoke threshold investigation (e3).
 24. fish startup 976ms WARN at quiescence + quickshell 1 error line —
-    recheck outside deploy contention.
+recheck outside deploy contention.
 25. Monitor bank-sync span volume (first 24h) for the 26h budget's sanity;
-    same for crush-daily (timer cadence).
+same for crush-daily (timer cadence).
 26. Sampling policy if dnsblockd span volume proves heavy (tail_sampling or
-    upstream span-drop for hot DNS paths).
+upstream span-drop for hot DNS paths).
 27. cv-application service-name normalization (upstream hardcode vs unit
-    name).
+name).
 28. Registry as a visible SigNoz dashboard annotation/table.
 29. Per-service "no logs while unit active" alerting (hermes-class silent
-    hangs).
+hangs).
 30. `OTEL_SERVICE_NAME` explicit on overview/PMA while instrumenting.
 31. Verify PapDashboard receives the coverage Gatus transitions end-to-end
-    on the first real trip.
+on the first real trip.
 32. Stale-docs sweep for pre-audit "sends traces" claims.
 33. Homepage "Monitoring" tile description mention (cosmetic).
 34. Ask CV upstream about the service name (single-source-of-truth naming).
 35. `scripts/bump-lars-inputs.sh` if push policy ever changes (mechanical
-    push+tag+lock+vendorHash+flip).
+push+tag+lock+vendorHash+flip).
 36. Nightly coverage snapshot to Discord (ask user first — may be spam).
 37. `signoz_coverage_{expected,reporting}_total` counters for trivial PromQL
-    ratios.
+ratios.
 38. Add a [TEST-RED] case for the HELP-comment phantom (bare
-    `pat(*metric 1*)` matching comments) — green-side proof of that trap.
+`pat(*metric 1*)` matching comments) — green-side proof of that trap.
 39. Consider `pool-recovery-metrics` in deploy.sh's post-switch list (same
-    timer-lag class as the coverage collector — verify whether the other
-    session handled it).
+timer-lag class as the coverage collector — verify whether the other
+session handled it).
 40. Trash `/tmp/cov-test.sh` + `/tmp/signoz-coverage-test.prom` scratch
-    (session debris).
+(session debris).
 41. AGENTS.md: add the gatus-API-status lesson (e4) + read-only-overlays
-    collision (e5) + link the new runbook in Key Procedures.
+collision (e5) + link the new runbook in Key Procedures.
 42. heavy-job wrap for any full `nix flake check` that builds VM tests.
 43. Review the concurrent session's remaining in-flight tree state at a
-    quiescent moment (their crush-consolidation work was mid-edit tonight).
+quiescent moment (their crush-consolidation work was mid-edit tonight).
 
 ## g) Questions for the user (cannot answer myself)
 

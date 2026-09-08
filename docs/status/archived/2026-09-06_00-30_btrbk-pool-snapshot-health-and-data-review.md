@@ -52,48 +52,48 @@
 
 ## f) NEXT TASKS (ranked; brainstorm for docs-health HARVEST — nothing here is committed yet)
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | Execute `/data` corruption repair T04–T08 (master plan: docs/planning/2026-08-17_14-41) | Critical | L | Bug |
-| 2 | Reboot into kernel 7.2.2 + flm v1.0.3 retry (releases :52626 zombie; whole AI stack down until then) | Critical | L | Bug |
-| 3 | Add marker-gate fast-fail to `btrbk-data` until repair done (stop nightly 258G burn) | High | S | Quality |
-| 4 | Rotate leaked keys: Resend (→ Pocket ID email + mail relay go-live), Context7, verify Synthetic | Critical | S | Security |
-| 5 | Root-cause mystery snapshot `data.20260905T2330` (`sudo btrfs subvolume list/show`, session audit) | Medium | S | Bug |
-| 6 | Fix attic VM test (deterministic RED at `checks.x86_64-linux.attic`, found 2026-09-04) | High | M | Bug |
-| 7 | `/data` rename: decide name, then execute with mountpoint change (hardware-configuration.nix et al.) | Medium | L | Feature |
-| 8 | Consolidate 3 model roots under `/data/ai/models` (absorb `/data/models` + `/data/llamacpp-models`) | Medium | M | Cleanup |
-| 9 | Carve out `saves/` (compatdata + docker volumes); verify NFS HPRE/Upload Labs Cloud status | Medium | S | Feature |
-| 10 | Mail relay go-live: verify `larsartmann.cloud` in Resend + paste API key (queue check stays red by design until then) | High | S | Feature |
-| 11 | Google Sync: go-live (OAuth client + rclone authorize + sops fill) or annotate DORMANT in AGENTS | High | M | Decision |
-| 12 | Off-site 3-2-1 decision (Google acceptable? StorageBox+Borg? sdf rotation?) | High | S | Decision |
-| 13 | DiscordSync Turso cloud-sync decision (quota dead since 2026-08-16; local healthy) | Medium | S | Decision |
-| 14 | `ManagedOOMPreference=omit` on dnsblockd (sole resolver, killed 730×/day pre-mitigation) | High | S | Bug |
-| 15 | Root reserve file snapshot-pin caveat (T14): periodic rewrite timer or documented caveat | Medium | S | Quality |
-| 16 | Re-measure + prune `/data/docker` (~88% pruneable) before any docker data-root move | Medium | S | Cleanup |
-| 17 | Docker data-root move runbook (docker down → rsync → re-point → verify volumes) | Medium | M | Documentation |
-| 18 | Steam library re-add step for the rename runbook (Steam stores library paths in its own config) | Low | S | Documentation |
-| 19 | Model-path migration steps: flm modelDir, llama-rag modelDir, Jan activation symlink, ollama | Medium | M | Feature |
-| 20 | gatus-config.nix alert-text path updates (`/data/ai/models/...` strings) on rename | Low | S | Cleanup |
-| 21 | snapshots.nix updates on rename (btrbk-data volume path, tmpfiles, RequiresMountsFor) | Medium | S | Feature |
-| 22 | pre/post-deploy script + bench scripts: grep for `/data` path assumptions before rename | Low | S | Quality |
-| 23 | Register compatdata in backup-coordination (if saves decision = yes) | Medium | S | Feature |
-| 24 | btrbk delay SLO: textfile metric + Gatus check "snapshot age on pool ≤ N hours" for root leg | Medium | M | Quality |
-| 25 | Multi-night btrbk-root timing sample (≥3 nights) to replace the single-sample 41-min figure | Low | S | Quality |
-| 26 | `.crush` session-DB sweep policy for bulk/scratch disks (or teach crush to co-locate them) | Low | S | Cleanup |
-| 27 | Remove legacy empty dirs `/data/cache`, `/data/containers` during the rename wave | Low | S | Cleanup |
-| 28 | Clean `/data/tmp-crush-test` (380M scratch) | Low | S | Cleanup |
-| 29 | AGENTS gotchas: "no sudo/systemctl in Crush sessions — use journalctl + /proc + fs reads" | Low | S | Documentation |
-| 30 | AGENTS gotcha: never hand-rename snapshots in `.snapshots` (audit-trail rule) | Low | S | Documentation |
-| 31 | Samsung migration phase execution (pre-existing TODO clusters; rename should ride this wave) | High | L | Feature |
-| 32 | `/nix` on Samsung: build + switch per the decided BTRFS-zstd design (1.89× compression) | High | L | Feature |
-| 33 | pg_dump restore drill for twenty/manifest (prove the dumps that justify "nothing else needs backup") | Medium | M | Quality |
-| 34 | Verify btrfs-verify-pool-backups covers the data leg's permanent failure as loudly as assumed | Medium | S | Quality |
-| 35 | docs: extend the `/data` rename idea into a planning runbook when scheduled (touchpoint list is in ROADMAP) | Low | S | Documentation |
-| 36 | Harvest this f-list into TODO_LIST/ROADMAP (docs-health HARVEST) | Medium | S | Documentation |
-| 37 | CHANGELOG entry for this session's doc edits | Low | S | Documentation |
-| 38 | Consider excluding `.snapshots` churn sources (e.g. redirect scratch-heavy CWDs off `/data`) | Low | S | Quality |
-| 39 | flm v1.0.3 module retune post-reboot (MemoryMax sizing for Q4_K weights, smoke timeout re-check) | Medium | M | Bug |
-| 40 | Immich/paperless restore-path documentation review (backup-coordination coverage map) | Low | M | Documentation |
+| #  | Task                                                                                                                  | Impact   | Effort | Category      |
+| -- | --------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
+| 1  | Execute `/data` corruption repair T04–T08 (master plan: docs/planning/2026-08-17_14-41)                               | Critical | L      | Bug           |
+| 2  | Reboot into kernel 7.2.2 + flm v1.0.3 retry (releases :52626 zombie; whole AI stack down until then)                  | Critical | L      | Bug           |
+| 3  | Add marker-gate fast-fail to `btrbk-data` until repair done (stop nightly 258G burn)                                  | High     | S      | Quality       |
+| 4  | Rotate leaked keys: Resend (→ Pocket ID email + mail relay go-live), Context7, verify Synthetic                       | Critical | S      | Security      |
+| 5  | Root-cause mystery snapshot `data.20260905T2330` (`sudo btrfs subvolume list/show`, session audit)                    | Medium   | S      | Bug           |
+| 6  | Fix attic VM test (deterministic RED at `checks.x86_64-linux.attic`, found 2026-09-04)                                | High     | M      | Bug           |
+| 7  | `/data` rename: decide name, then execute with mountpoint change (hardware-configuration.nix et al.)                  | Medium   | L      | Feature       |
+| 8  | Consolidate 3 model roots under `/data/ai/models` (absorb `/data/models` + `/data/llamacpp-models`)                   | Medium   | M      | Cleanup       |
+| 9  | Carve out `saves/` (compatdata + docker volumes); verify NFS HPRE/Upload Labs Cloud status                            | Medium   | S      | Feature       |
+| 10 | Mail relay go-live: verify `larsartmann.cloud` in Resend + paste API key (queue check stays red by design until then) | High     | S      | Feature       |
+| 11 | Google Sync: go-live (OAuth client + rclone authorize + sops fill) or annotate DORMANT in AGENTS                      | High     | M      | Decision      |
+| 12 | Off-site 3-2-1 decision (Google acceptable? StorageBox+Borg? sdf rotation?)                                           | High     | S      | Decision      |
+| 13 | DiscordSync Turso cloud-sync decision (quota dead since 2026-08-16; local healthy)                                    | Medium   | S      | Decision      |
+| 14 | `ManagedOOMPreference=omit` on dnsblockd (sole resolver, killed 730×/day pre-mitigation)                              | High     | S      | Bug           |
+| 15 | Root reserve file snapshot-pin caveat (T14): periodic rewrite timer or documented caveat                              | Medium   | S      | Quality       |
+| 16 | Re-measure + prune `/data/docker` (~88% pruneable) before any docker data-root move                                   | Medium   | S      | Cleanup       |
+| 17 | Docker data-root move runbook (docker down → rsync → re-point → verify volumes)                                       | Medium   | M      | Documentation |
+| 18 | Steam library re-add step for the rename runbook (Steam stores library paths in its own config)                       | Low      | S      | Documentation |
+| 19 | Model-path migration steps: flm modelDir, llama-rag modelDir, Jan activation symlink, ollama                          | Medium   | M      | Feature       |
+| 20 | gatus-config.nix alert-text path updates (`/data/ai/models/...` strings) on rename                                    | Low      | S      | Cleanup       |
+| 21 | snapshots.nix updates on rename (btrbk-data volume path, tmpfiles, RequiresMountsFor)                                 | Medium   | S      | Feature       |
+| 22 | pre/post-deploy script + bench scripts: grep for `/data` path assumptions before rename                               | Low      | S      | Quality       |
+| 23 | Register compatdata in backup-coordination (if saves decision = yes)                                                  | Medium   | S      | Feature       |
+| 24 | btrbk delay SLO: textfile metric + Gatus check "snapshot age on pool ≤ N hours" for root leg                          | Medium   | M      | Quality       |
+| 25 | Multi-night btrbk-root timing sample (≥3 nights) to replace the single-sample 41-min figure                           | Low      | S      | Quality       |
+| 26 | `.crush` session-DB sweep policy for bulk/scratch disks (or teach crush to co-locate them)                            | Low      | S      | Cleanup       |
+| 27 | Remove legacy empty dirs `/data/cache`, `/data/containers` during the rename wave                                     | Low      | S      | Cleanup       |
+| 28 | Clean `/data/tmp-crush-test` (380M scratch)                                                                           | Low      | S      | Cleanup       |
+| 29 | AGENTS gotchas: "no sudo/systemctl in Crush sessions — use journalctl + /proc + fs reads"                             | Low      | S      | Documentation |
+| 30 | AGENTS gotcha: never hand-rename snapshots in `.snapshots` (audit-trail rule)                                         | Low      | S      | Documentation |
+| 31 | Samsung migration phase execution (pre-existing TODO clusters; rename should ride this wave)                          | High     | L      | Feature       |
+| 32 | `/nix` on Samsung: build + switch per the decided BTRFS-zstd design (1.89× compression)                               | High     | L      | Feature       |
+| 33 | pg_dump restore drill for twenty/manifest (prove the dumps that justify "nothing else needs backup")                  | Medium   | M      | Quality       |
+| 34 | Verify btrfs-verify-pool-backups covers the data leg's permanent failure as loudly as assumed                         | Medium   | S      | Quality       |
+| 35 | docs: extend the `/data` rename idea into a planning runbook when scheduled (touchpoint list is in ROADMAP)           | Low      | S      | Documentation |
+| 36 | Harvest this f-list into TODO_LIST/ROADMAP (docs-health HARVEST)                                                      | Medium   | S      | Documentation |
+| 37 | CHANGELOG entry for this session's doc edits                                                                          | Low      | S      | Documentation |
+| 38 | Consider excluding `.snapshots` churn sources (e.g. redirect scratch-heavy CWDs off `/data`)                          | Low      | S      | Quality       |
+| 39 | flm v1.0.3 module retune post-reboot (MemoryMax sizing for Q4_K weights, smoke timeout re-check)                      | Medium   | M      | Bug           |
+| 40 | Immich/paperless restore-path documentation review (backup-coordination coverage map)                                 | Low      | M      | Documentation |
 
 **HARVEST note:** items 1–6, 10–14, 31 are already in TODO_LIST/P0-P1 (no new entries needed — verify, don't duplicate). New harvest candidates: 3, 5, 7–9, 16–28, 30, 34, 39.
 

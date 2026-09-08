@@ -62,6 +62,7 @@
 ## f) NEXT TASKS (from this session's observations; ~50 max, grouped)
 
 **P0 — tonight/next boot:**
+
 1. Repair the profile: re-run `nix run .#deploy` (warm store, fast) or `sudo nix-env --profile /nix/var/nix/profiles/system --set $(readlink /run/current-system)`; verify `system_current_system_profiled` = 1 and a 746 boot entry exists.
 2. Re-stop discordsync (user decision stands): `sudo systemctl stop discordsync.service` — and decide a durable mechanism (module `enable = false` vs. leaving stopped) so future deploys can't revive it.
 3. Let the QLC SLC cache recover: quiet period + `sudo systemctl start fstrim.service` (idle priority).
@@ -105,7 +106,7 @@
 
 ---
 
-*Report written 2026-09-01 00:37 CEST. Waiting for instructions.*
+_Report written 2026-09-01 00:37 CEST. Waiting for instructions._
 
 ---
 

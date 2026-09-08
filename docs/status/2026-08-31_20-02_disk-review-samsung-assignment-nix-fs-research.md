@@ -19,6 +19,7 @@ _2026-08-31, started ~14:30, reported 20:02. All times same-day. Live session on
 ## 2. FULLY DONE (a)
 
 ### Disk inventory & health (the original review)
+
 - Full inventory: nvme1n1 Lexar QLC 1.8T (system: `/` 81% w/ 135G free, `/data` 87%, clickhouse XFS p9 31%), **nvme0n1 Samsung 970 EVO Plus 1TB (blank, internal, new)**, DAS all four targets back (pool RAID1 both members, **zero device errors**, 8% used), buildcache USB (81%, SMART ok), sdc spare SanDisk unmounted
 - **DAS fully recovered this boot (14:30)** after the 9-day outage — recorded the outcome in AGENTS.md as instructed by the runbook
 - Pool-dependent services all started (atticd, immich, paperless, bank-sync); btrbk-pool snapshotted fresh at boot
@@ -26,11 +27,13 @@ _2026-08-31, started ~14:30, reported 20:02. All times same-day. Live session on
 - smartd config parsed + onecheck-verified with both NVMe by-id entries
 
 ### Production bugs found & fixed (in tree, flake-check-verified)
+
 1. **Both weekly btrfs balance jobs dead since ~Aug 25** — `fa9e56b7` added an awk Guard 0 without `gawk` in runtimeInputs → exit 127 every run while root sat at 6.4G chunk-unalloc CRITICAL. Fixed (`gawk`+`coreutils`+`gnugrep` in both scripts); built artifact verified to contain gawk in PATH
 2. **System disk lost ALL SMART/nvme telemetry** — hardcoded `/dev/nvme0n1` in smartd + nvme-health-monitor silently pointed at the new Samsung after enumeration shift; Lexar unmonitored. Fixed with by-id paths for BOTH NVMe drives
 3. AGENTS.md: DAS recovery outcome recorded; enumeration-shift gotcha; balance awk recurrence; Samsung facts section
 
 ### Benchmarks (all on-target, measured)
+
 - Samsung raw (scripts/bench-disk.sh): 4K QD1 rr 35.3k IOPS/27.8µs, rw 79.2k/12.2µs, QD32 304k/1.19GB/s, **fsync 0.78ms**, seq 2.4/2.7 GB/s, PCIe 3.0 x4 (= drive max)
 - QLC root under same load: 620/295 IOPS QD1, **fsync ~200ms**, live wedge captured (0.3 MB/s @ PSI 47-79%, `blk_mq_get_tag`, `folio_wait_bit_common`, stuck btrfs delayed-meta kworkers)
 - USB buildcache: 461 IOPS QD1, fsync 1.7ms
@@ -38,6 +41,7 @@ _2026-08-31, started ~14:30, reported 20:02. All times same-day. Live session on
 - **Filesystem comparison on the Samsung** (scripts/bench-nix-fs.sh, 629 real store paths / 1.7G sample): ext4 vs XFS(reflink) vs BTRFS(zstd) — performance a wash under load variance; **BTRFS compression measured 1.89×** (1727 MiB apparent → 913 MiB physical, compsize-verified)
 
 ### Research & decisions
+
 - Web research (discourse topics 3566/28486/75795/61199 + Nix PR #4094 + wiki): no official fs recommendation; btrfs+zstd is the community standard for /nix; nix disabled preallocate-contents FOR btrfs compression; ZFS excluded (5s sqlite txg stalls); f2fs excluded (power loss); XFS has NO compression (verified empirically + VDO explanation)
 - **/nix filesystem DECIDED: BTRFS `noatime,compress=zstd`** — rationale + full table in design doc
 - Design doc written: `docs/planning/2026-08-31_samsung-role-assignment-first-principles.md` — three-tier model (RAM/Samsung/QLC+pool), allocation table, mount-options doctrine (Samsung gets default commit interval, not 300), 4 migration phases with gates, risks
@@ -45,6 +49,7 @@ _2026-08-31, started ~14:30, reported 20:02. All times same-day. Live session on
 - QLC-as-HDD-cache question: answered no (tiering not caching) with reasons
 
 ### Tooling left behind
+
 - `scripts/bench-disk.sh` — raw-device fio suite, mounted-device guards, self-healing fio path
 - `scripts/bench-nix-fs.sh` — ext4/XFS/BTRFS head-to-head with nix-like workloads (fio + 20k-file metadata + real-store-copy + compression), same guards
 - Enduring gotcha recorded: `rsync --files-from` silently drops `-a`'s recursion (needs explicit `--recursive`) — cost 4 benchmark runs to find

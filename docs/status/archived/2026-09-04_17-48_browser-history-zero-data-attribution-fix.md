@@ -24,21 +24,21 @@ The dashboard showed zero data for a week because browser-history's `/ingest` ne
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-| --- | --- |
-| Root cause traced to exact lines (middleware, ingest, projection payload flow) | `api/agent_middleware.go`, `api/ingest.go`, `projection/visit_projection.go:214`, `domain/aggregate/decider.go:71` |
-| Upstream fix: DB-token owner injected into request context; `/ingest` stamps `vd.UserID`; env-token path stays anonymous by design | browser-history `9b2fe69` (pushed `fff1de5..9b2fe69`), files: `api/agent_middleware.go`, `api/ingest.go` |
-| Regression tests pinning both directions (attribution + env-token anonymity) | `api/ingest_attribution_test.go` — both PASS; full `go test ./api/` green (minus pre-existing broken gauge test) |
-| CHANGELOG entry (conventional commit, proper message) | browser-history `9b2fe69` |
-| SystemNix agent token split: new `browser-history-agent-env` sops template + `browser_history_agent_db_token` secret; server keeps legacy env token as break-glass; CRITICAL trap documented (agent and server tokens MUST differ — env path short-circuits before the DB lookup) | `modules/nixos/services/sops.nix`, `modules/nixos/services/browser-history.nix` |
-| VM test mocks updated for the new template/secret | `tests/test-browser-history.nix` |
-| flake.lock bumped to fix rev `7f2ad91 → 9b2fe69` | `flake.lock` |
-| Full `nix flake check` green (all VM tests, all modules, both hosts) | ran twice; final: "all checks passed" |
-| AGENTS.md gotcha with complete root cause + runbook (incl. full-sync backfill mechanics and the token-must-differ trap) | SystemNix `AGENTS.md` Browser History section |
-| Shared-gate unblock #1: `cv-backup-dir` 226/NAMESPACE on fresh pools — ReadWritePaths scoped to the mount root so the creator can create its own leaf | `modules/nixos/services/cv.nix`; `checks.x86_64-linux.cv` now green |
-| Shared-gate unblock #2: binary-coverage-lint false positive (word "awk" in a Gatus alert *description* read as missing runtimeInput) — reworded the prose | `modules/nixos/services/gatus-config.nix` |
-| `--full-sync` backfill mechanics verified (flag exists; deterministic visit IDs + `INSERT OR REPLACE` on `visits` PK `id` stamp rows in place; per-batch cursor advance makes it resumable/idempotent) | `cmd/browser-history-agent/config.go:64`, `storage/sqlite_store.go:40` |
-| Diagnosis of the two empty pages the user hit (devices = passkeys, agent tokens = DB tokens only) | `api/devices.go`, `api/agent_token_handlers.go` |
+| Item                                                                                                                                                                                                                                                                              | Evidence                                                                                                           |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Root cause traced to exact lines (middleware, ingest, projection payload flow)                                                                                                                                                                                                    | `api/agent_middleware.go`, `api/ingest.go`, `projection/visit_projection.go:214`, `domain/aggregate/decider.go:71` |
+| Upstream fix: DB-token owner injected into request context; `/ingest` stamps `vd.UserID`; env-token path stays anonymous by design                                                                                                                                                | browser-history `9b2fe69` (pushed `fff1de5..9b2fe69`), files: `api/agent_middleware.go`, `api/ingest.go`           |
+| Regression tests pinning both directions (attribution + env-token anonymity)                                                                                                                                                                                                      | `api/ingest_attribution_test.go` — both PASS; full `go test ./api/` green (minus pre-existing broken gauge test)   |
+| CHANGELOG entry (conventional commit, proper message)                                                                                                                                                                                                                             | browser-history `9b2fe69`                                                                                          |
+| SystemNix agent token split: new `browser-history-agent-env` sops template + `browser_history_agent_db_token` secret; server keeps legacy env token as break-glass; CRITICAL trap documented (agent and server tokens MUST differ — env path short-circuits before the DB lookup) | `modules/nixos/services/sops.nix`, `modules/nixos/services/browser-history.nix`                                    |
+| VM test mocks updated for the new template/secret                                                                                                                                                                                                                                 | `tests/test-browser-history.nix`                                                                                   |
+| flake.lock bumped to fix rev `7f2ad91 → 9b2fe69`                                                                                                                                                                                                                                  | `flake.lock`                                                                                                       |
+| Full `nix flake check` green (all VM tests, all modules, both hosts)                                                                                                                                                                                                              | ran twice; final: "all checks passed"                                                                              |
+| AGENTS.md gotcha with complete root cause + runbook (incl. full-sync backfill mechanics and the token-must-differ trap)                                                                                                                                                           | SystemNix `AGENTS.md` Browser History section                                                                      |
+| Shared-gate unblock #1: `cv-backup-dir` 226/NAMESPACE on fresh pools — ReadWritePaths scoped to the mount root so the creator can create its own leaf                                                                                                                             | `modules/nixos/services/cv.nix`; `checks.x86_64-linux.cv` now green                                                |
+| Shared-gate unblock #2: binary-coverage-lint false positive (word "awk" in a Gatus alert _description_ read as missing runtimeInput) — reworded the prose                                                                                                                         | `modules/nixos/services/gatus-config.nix`                                                                          |
+| `--full-sync` backfill mechanics verified (flag exists; deterministic visit IDs + `INSERT OR REPLACE` on `visits` PK `id` stamp rows in place; per-batch cursor advance makes it resumable/idempotent)                                                                            | `cmd/browser-history-agent/config.go:64`, `storage/sqlite_store.go:40`                                             |
+| Diagnosis of the two empty pages the user hit (devices = passkeys, agent tokens = DB tokens only)                                                                                                                                                                                 | `api/devices.go`, `api/agent_token_handlers.go`                                                                    |
 
 ## b) PARTIALLY DONE
 
@@ -85,6 +85,7 @@ The dashboard showed zero data for a week because browser-history's `/ingest` ne
 ## f) NEXT — up to 50 things to get done
 
 **Blockers / immediate (1–6)**
+
 1. USER: mint `bh_` token in Agent Tokens UI (label `evo-x2`, scope `write`).
 2. USER: `sudo sops platforms/nixos/secrets/browser-history.yaml` from repo root; add `browser_history_agent_db_token: <bh_…>`.
 3. Deploy SystemNix (`nix run .#deploy`).

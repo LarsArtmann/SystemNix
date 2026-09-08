@@ -25,25 +25,25 @@
 
 ## a) FULLY DONE (verified this session)
 
-| Item | Proof |
-|---|---|
-| **Resumed state correctly** | Todos recreated; plan + 21:15 status read; tree state checked before acting |
-| **Gate-input check** | IO PSI 64% / load 40 / zram 97.7% measured → correctly declined to deploy into the storm |
-| **Deploy-train discovery** | `/var/log/systemnix-deploys/` — gen 753 switched 21:59 by concurrent sessions; exit records for all 6 evening deploys (T05 live-proven) |
-| **Gen-753 live verification** | `system_pocket_id_busy_*` LIVE (events_24h=30, over_threshold=1 truthful, scrape_errors=0); `node_textfile_scrape_error 0`; paperless login 5-conditions green; `/admin` + `/admin/documents` → 403 |
+| Item                                          | Proof                                                                                                                                                                                                                                            |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Resumed state correctly**                   | Todos recreated; plan + 21:15 status read; tree state checked before acting                                                                                                                                                                      |
+| **Gate-input check**                          | IO PSI 64% / load 40 / zram 97.7% measured → correctly declined to deploy into the storm                                                                                                                                                         |
+| **Deploy-train discovery**                    | `/var/log/systemnix-deploys/` — gen 753 switched 21:59 by concurrent sessions; exit records for all 6 evening deploys (T05 live-proven)                                                                                                          |
+| **Gen-753 live verification**                 | `system_pocket_id_busy_*` LIVE (events_24h=30, over_threshold=1 truthful, scrape_errors=0); `node_textfile_scrape_error 0`; paperless login 5-conditions green; `/admin` + `/admin/documents` → 403                                              |
 | **CRITICAL FIX: post-deploy-check app build** | 21:57 deploy's smoke app failed its own shellcheck gate (SC1091 unstaged lib + SC2016) → gen-753 smoke never ran. Fixed with sibling-lib staging + `disable=` directives + `gawk`; app builds; smoke ran: 84 PASS / 8 FAIL, all FAILs attributed |
-| **AI-stack outage root-caused** | NPU-driver wedge since ~21:28: flm-real zombie holds :52626 (bind EADDRINUSE → start-limit-hit), llama pair D-state in `amdxdna_drm_open` (SIGKILL-immune). P0 reboot TODO updated URGENT |
-| **T02 closed** | Disposition in plan §9 (holders, guard-zone mapping, accept-until-BIOS verdict) + TODO_LIST P2 re-baseline checklist incl. UMA-semantics warning |
-| **T10 closed — PROVEN** | Mutated-tree flake check → "Failed assertions:" + scoped eval extracts the exact pocket-id paperless-client message; in-module comment rewritten to the proven recipe (old extendModules recipe = sops-crash class) |
-| **T12 closed** | Verdict: unrecoverable to direct attribution; window was a VERIFIED kernel global-OOM sweep storm (kswapd kills 15:50/15:54/17:26). T05 = the guard, live-proven |
-| **T13 closed (research per Q2)** | Source + live-probe: `DISABLE_REGULAR_LOGIN` does NOT close Basic/`/api/token/` (externally reachable!). Runbook's wrong claim corrected. Caddy `Authorization: Basic*` matcher + `/api/token/` block designed; awaits user go |
-| **T15 closed** | `textfile-emission-lint` flake check shipped, built green; zero real findings; `# emission-ok` exemption; fail-level deviation from plan documented |
-| **T16 closed (escalated, honestly)** | Live: collector timed out EVERY run 00:31+ (forgejo scan status 124, textfile stale, sev1 paging). Structural: ≈500s worst-case sum vs 180s ceiling. TODO filed; NO band-aid mid-storm |
-| **T17 closed** | Dump script + preconditions + `GOTRACEBACK=all` (dns-blocker.nix:815) verified |
-| **T18 closed** | bank-sync vendorHash override DROPPED (upstream ships identical hash — eval-verified); ledger for mail-relay/CV/PMA owners written |
-| **T19 closed** | Survey: forgejo/immich/gatus/browser-history ALL already password-free; only paperless REST API remains (= T13) |
-| **F30 + harvest** | AGENTS.md runbook link; TODO_LIST: 2 new items, reboot item escalated, retirement done; plan §9 annotations complete; KNOWN_NEW_METRICS pocket-id pair retired (PMA trio + niri pair kept — not yet live) |
-| **Final validation** | `nix fmt --no-update-lock-file -- --ci` = 0 changed / 1912 files; final `nix flake check --no-build` GREEN (rc=0); status report written; all work committed+pushed (0 unpushed at 12:31) |
+| **AI-stack outage root-caused**               | NPU-driver wedge since ~21:28: flm-real zombie holds :52626 (bind EADDRINUSE → start-limit-hit), llama pair D-state in `amdxdna_drm_open` (SIGKILL-immune). P0 reboot TODO updated URGENT                                                        |
+| **T02 closed**                                | Disposition in plan §9 (holders, guard-zone mapping, accept-until-BIOS verdict) + TODO_LIST P2 re-baseline checklist incl. UMA-semantics warning                                                                                                 |
+| **T10 closed — PROVEN**                       | Mutated-tree flake check → "Failed assertions:" + scoped eval extracts the exact pocket-id paperless-client message; in-module comment rewritten to the proven recipe (old extendModules recipe = sops-crash class)                              |
+| **T12 closed**                                | Verdict: unrecoverable to direct attribution; window was a VERIFIED kernel global-OOM sweep storm (kswapd kills 15:50/15:54/17:26). T05 = the guard, live-proven                                                                                 |
+| **T13 closed (research per Q2)**              | Source + live-probe: `DISABLE_REGULAR_LOGIN` does NOT close Basic/`/api/token/` (externally reachable!). Runbook's wrong claim corrected. Caddy `Authorization: Basic*` matcher + `/api/token/` block designed; awaits user go                   |
+| **T15 closed**                                | `textfile-emission-lint` flake check shipped, built green; zero real findings; `# emission-ok` exemption; fail-level deviation from plan documented                                                                                              |
+| **T16 closed (escalated, honestly)**          | Live: collector timed out EVERY run 00:31+ (forgejo scan status 124, textfile stale, sev1 paging). Structural: ≈500s worst-case sum vs 180s ceiling. TODO filed; NO band-aid mid-storm                                                           |
+| **T17 closed**                                | Dump script + preconditions + `GOTRACEBACK=all` (dns-blocker.nix:815) verified                                                                                                                                                                   |
+| **T18 closed**                                | bank-sync vendorHash override DROPPED (upstream ships identical hash — eval-verified); ledger for mail-relay/CV/PMA owners written                                                                                                               |
+| **T19 closed**                                | Survey: forgejo/immich/gatus/browser-history ALL already password-free; only paperless REST API remains (= T13)                                                                                                                                  |
+| **F30 + harvest**                             | AGENTS.md runbook link; TODO_LIST: 2 new items, reboot item escalated, retirement done; plan §9 annotations complete; KNOWN_NEW_METRICS pocket-id pair retired (PMA trio + niri pair kept — not yet live)                                        |
+| **Final validation**                          | `nix fmt --no-update-lock-file -- --ci` = 0 changed / 1912 files; final `nix flake check --no-build` GREEN (rc=0); status report written; all work committed+pushed (0 unpushed at 12:31)                                                        |
 
 ## b) PARTIALLY DONE
 
@@ -124,7 +124,7 @@
 
 ---
 
-*Reported 2026-09-03 12:31. Session state: plan T01–T19 fully closed or dispositioned; my closeout changes committed+pushed, awaiting the next deploy train; the box awaits its reboot. Now waiting for instructions.*
+_Reported 2026-09-03 12:31. Session state: plan T01–T19 fully closed or dispositioned; my closeout changes committed+pushed, awaiting the next deploy train; the box awaits its reboot. Now waiting for instructions._
 
 ---
 

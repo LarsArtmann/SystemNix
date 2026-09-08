@@ -10,17 +10,17 @@ The JMS567 bridge wedge (Aug 22 00:59 → Aug 31 14:30 boot) left `/mnt/pool` ab
 
 ## Verified live state (16:29)
 
-| Thing | State |
-| --- | --- |
-| `/mnt/pool` | mounted by-label, BOTH raid1 members, `btrfs device stats` all zeros |
-| Pool root backups | newest `@.20260820T2300` (Aug 21 send died mid-stream in the bridge storm) |
-| Local root snapshots | newest `@.20260821T2300`; **zero snapshots taken Aug 22–30** (btrbk is also the snapshotter; it failed at the mount gate nightly) |
-| `btrbk-data` | **running since 14:30 boot catch-up** (pid 1608): full re-send of `data.20260726T2330` (the Jul 21 stray broke the parent chain); last target write 16:06 |
-| Dump backups | forgejo, pocket-id, immich, twenty, manifest: **green** (boot catch-up 14:30–14:59) |
-| cv backup | **red** — `/mnt/pool/backups/cv` does not exist on the pool fs |
-| paperless export | **red, 254h** — nixpkgs timer lacks `Persistent` |
-| `btrfs-verify-pool-backups` | failed 14:41 (root backup 11d > 3d) — expected red until tonight's send |
-| google-sync | **no units deployed at all** (still ships disabled; AGENTS procedure text reads as if live) |
+| Thing                       | State                                                                                                                                                     |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/mnt/pool`                 | mounted by-label, BOTH raid1 members, `btrfs device stats` all zeros                                                                                      |
+| Pool root backups           | newest `@.20260820T2300` (Aug 21 send died mid-stream in the bridge storm)                                                                                |
+| Local root snapshots        | newest `@.20260821T2300`; **zero snapshots taken Aug 22–30** (btrbk is also the snapshotter; it failed at the mount gate nightly)                         |
+| `btrbk-data`                | **running since 14:30 boot catch-up** (pid 1608): full re-send of `data.20260726T2330` (the Jul 21 stray broke the parent chain); last target write 16:06 |
+| Dump backups                | forgejo, pocket-id, immich, twenty, manifest: **green** (boot catch-up 14:30–14:59)                                                                       |
+| cv backup                   | **red** — `/mnt/pool/backups/cv` does not exist on the pool fs                                                                                            |
+| paperless export            | **red, 254h** — nixpkgs timer lacks `Persistent`                                                                                                          |
+| `btrfs-verify-pool-backups` | failed 14:41 (root backup 11d > 3d) — expected red until tonight's send                                                                                   |
+| google-sync                 | **no units deployed at all** (still ships disabled; AGENTS procedure text reads as if live)                                                               |
 
 ---
 

@@ -86,4 +86,4 @@
 
 **Bottom line:** all six living docs verified and updated to current truth; the entire September corpus (55 reports) resolved, annotated, and archived with references fixed; 17 CHANGELOG entries + 12 TODO rows + ~35 doc fixes shipped; quality gate green. Honest gaps: appendix-heavy annotations, the August second pass, and two count overclaims in my own summary (corrected above: 17 entries, 12 rows).
 
-*Waiting for instructions.*
+_Waiting for instructions._

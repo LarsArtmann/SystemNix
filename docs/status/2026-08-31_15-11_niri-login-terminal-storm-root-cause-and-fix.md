@@ -41,15 +41,15 @@ source `src/main.rs` restore loop (lines 646–652: dedup only for listed apps).
 
 ## 3. What Was Done (fully)
 
-| # | Action | Verification |
-|---|--------|--------------|
-| 1 | Root-cause diagnosis end-to-end (scopes, journals, session.json, upstream source) | Confirmed by 3 independent signals |
-| 2 | Killed ghostty pid 18293 → all 152 empty surfaces closed | `pgrep` clean afterwards |
-| 3 | Sanitized `session.json` (dropped ghostty entries, kept 4 windows) + **trashed all `session-*.bak`** (a "corrupt" file makes the manager fall back to the newest valid BACKUP — backups would have resurrected the storm) | File rewritten, backups gone |
-| 4 | `platforms/nixos/users/home.nix`: added `com.mitchellh.ghostty` to `[single_instance_apps]` with an explanatory comment | `nix flake check --no-build` passes |
-| 5 | `platforms/nixos/desktop/niri-wrapped.nix`: `spawn-at-startup` `sudo btop` → `btop` (the sudo window sat at an unanswered password prompt every login — pid 18181's `sudo btop` was still waiting 18 min in) | flake check passes |
-| 6 | AGENTS.md: documented the gotcha (restore-storm class, cleanup ordering, backup-fallback trap, upstream hazards) | Entry added under Desktop section |
-| 7 | Post-cleanup verification: the 14:48:45 periodic save recorded a clean live state (helium×2, signal×1, gcr-prompter×1 — zero ghostty) | Read back + counted |
+| # | Action                                                                                                                                                                                                                    | Verification                        |
+| - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| 1 | Root-cause diagnosis end-to-end (scopes, journals, session.json, upstream source)                                                                                                                                         | Confirmed by 3 independent signals  |
+| 2 | Killed ghostty pid 18293 → all 152 empty surfaces closed                                                                                                                                                                  | `pgrep` clean afterwards            |
+| 3 | Sanitized `session.json` (dropped ghostty entries, kept 4 windows) + **trashed all `session-*.bak`** (a "corrupt" file makes the manager fall back to the newest valid BACKUP — backups would have resurrected the storm) | File rewritten, backups gone        |
+| 4 | `platforms/nixos/users/home.nix`: added `com.mitchellh.ghostty` to `[single_instance_apps]` with an explanatory comment                                                                                                   | `nix flake check --no-build` passes |
+| 5 | `platforms/nixos/desktop/niri-wrapped.nix`: `spawn-at-startup` `sudo btop` → `btop` (the sudo window sat at an unanswered password prompt every login — pid 18181's `sudo btop` was still waiting 18 min in)              | flake check passes                  |
+| 6 | AGENTS.md: documented the gotcha (restore-storm class, cleanup ordering, backup-fallback trap, upstream hazards)                                                                                                          | Entry added under Desktop section   |
+| 7 | Post-cleanup verification: the 14:48:45 periodic save recorded a clean live state (helium×2, signal×1, gcr-prompter×1 — zero ghostty)                                                                                     | Read back + counted                 |
 
 ## 4. Partially Done
 
@@ -57,7 +57,7 @@ source `src/main.rs` restore loop (lines 646–652: dedup only for listed apps).
   `github.com/LarsArtmann/niri-session-manager` to `/tmp/nsm-src`, read the
   restore/save logic, identified 3 concrete upstream bugs (see §7) — but wrote no
   code, filed nothing, bumped nothing. Per repo policy ("fix application bugs
-  upstream"), the *real* fix belongs there; my SystemNix change is a config
+  upstream"), the _real_ fix belongs there; my SystemNix change is a config
   mitigation, not the cure.
 - **Forensics incomplete:** trashed the five `session-*.bak` files (2026-08-24,
   05:39→07:09) without counting windows per backup — the +N-per-login growth

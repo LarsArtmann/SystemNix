@@ -10,14 +10,14 @@ I owned that leading with `sudo mkdir` was the wrong answer, built the NixOS VM 
 
 ## Verified end state (17:22)
 
-| Thing | State |
-| --- | --- |
-| `tests/test-cv.nix` steps 9-10 | **GREEN** in VM: dir self-creates at boot, deploy-style restart recreates after `rm -rf`, real `pipeline-*.sqlite` lands on the pool mount, "no pipeline.sqlite" line asserted ABSENT |
-| `nix flake check --no-build` | all checks passed |
-| cv.nix / paperless.nix / test-cv.nix formatting | clean (scoped `nix fmt`, 0 changed; the repo-wide `--ci` "1 changed" was a mid-run race on the PARALLEL session's `scripts/bench-disk.sh`) |
-| `btrbk-data` (started 14:30 boot catch-up) | **FINISHED ~17:02 — FAILED again** (the known /data EIO class); `btrbk-pool-clean` then correctly removed BOTH incomplete receives (`data.20260726T2330` garbled + the old `data.20260721T2330` stray) — `/mnt/pool/backups/data` is now clean-empty awaiting tonight's 23:30 retry (which fails again until the EIO P0 repair; expected/documented) |
-| cv / paperless in `backups.prom` | still red (999h / 255h) — exactly the two things the undeployed fixes address |
-| Production cv-backup | STILL BROKEN (three stacked defects, all fixed repo-side only): no pool dir → 226 tonight; even with dir → DAC no-op |
+| Thing                                           | State                                                                                                                                                                                                                                                                                                                                                |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tests/test-cv.nix` steps 9-10                  | **GREEN** in VM: dir self-creates at boot, deploy-style restart recreates after `rm -rf`, real `pipeline-*.sqlite` lands on the pool mount, "no pipeline.sqlite" line asserted ABSENT                                                                                                                                                                |
+| `nix flake check --no-build`                    | all checks passed                                                                                                                                                                                                                                                                                                                                    |
+| cv.nix / paperless.nix / test-cv.nix formatting | clean (scoped `nix fmt`, 0 changed; the repo-wide `--ci` "1 changed" was a mid-run race on the PARALLEL session's `scripts/bench-disk.sh`)                                                                                                                                                                                                           |
+| `btrbk-data` (started 14:30 boot catch-up)      | **FINISHED ~17:02 — FAILED again** (the known /data EIO class); `btrbk-pool-clean` then correctly removed BOTH incomplete receives (`data.20260726T2330` garbled + the old `data.20260721T2330` stray) — `/mnt/pool/backups/data` is now clean-empty awaiting tonight's 23:30 retry (which fails again until the EIO P0 repair; expected/documented) |
+| cv / paperless in `backups.prom`                | still red (999h / 255h) — exactly the two things the undeployed fixes address                                                                                                                                                                                                                                                                        |
+| Production cv-backup                            | STILL BROKEN (three stacked defects, all fixed repo-side only): no pool dir → 226 tonight; even with dir → DAC no-op                                                                                                                                                                                                                                 |
 
 ---
 
@@ -40,12 +40,12 @@ I owned that leading with `sudo mkdir` was the wrong answer, built the NixOS VM 
 1. Repo-wide sweep for the silent-noop class (hardened root oneshots reading/`-f`-checking paths under foreign-owned dirs — this is the THIRD DAC incident: attic chown EPERM 2026-08-18, backup-health-metrics cap, now cv-backup).
 2. Eval-time audit: `ReadWritePaths` under `/mnt/pool` ⇒ `RequiresMountsFor` + a declared creator.
 3. Backup-timer `Persistent=true` lint (flake check).
-~~4. `TODO_LIST.md` migration of the durable items (still not done across two reports!).~~ done — 2026-08-31 docs-health audit (eval-audit cluster rows)
-5. `backup_ever_succeeded` metric (never-worked vs stale distinction — today proved the difference matters: cv rode "all red" outage noise for days while being never-green since birth).
-6. paperless `RandomizedDelaySec` (or fix the lying comment in configuration.nix).
-7. Prod shadow-dir cleanup under `/mnt/pool` (cv + root/data tmpfiles shadows).
-8. `btrbk-root` post-deploy/`--no-block` catch-up trigger.
-9. `scripts/backup-catchup-report.sh`.
+   ~~4. `TODO_LIST.md` migration of the durable items (still not done across two reports!).~~ done — 2026-08-31 docs-health audit (eval-audit cluster rows)
+4. `backup_ever_succeeded` metric (never-worked vs stale distinction — today proved the difference matters: cv rode "all red" outage noise for days while being never-green since birth).
+5. paperless `RandomizedDelaySec` (or fix the lying comment in configuration.nix).
+6. Prod shadow-dir cleanup under `/mnt/pool` (cv + root/data tmpfiles shadows).
+7. `btrbk-root` post-deploy/`--no-block` catch-up trigger.
+8. `scripts/backup-catchup-report.sh`.
 
 ## d) TOTALLY FUCKED UP (honest ledger)
 

@@ -56,19 +56,19 @@ hypothesis is recorded as correct for the recovery-attempt blocker.
 
 ## a) FULLY DONE (this session, verified)
 
-| # | Item | Proof |
-|---|------|-------|
-| 1 | Deploy gen 732: `uas` + `usb-storage` resident | `lsmod` live check post-deploy |
-| 2 | hdparm `sd[ab]` poison rule confirmed gone from live system | `grep -rn hdparm /etc/udev/rules.d/` → zero |
-| 3 | Udev hardening live: JMicron `152d:0567` power-pin, all xHCI+USB4 controllers `power/control=on` (class `0x0c0330\|0x0c0340`), buildcache auto-recovery SYSTEMD_WANTS | live `99-local.rules` content |
-| 4 | Eval-time guard `udev-block-letter-audit.nix` committed (commit `cc9b55c1`) — any `KERNEL=="sd[…]"` + `RUN+=` rule throws at flake check | committed; negative-tested pre-session |
-| 5 | Deploy gen 733: `sd_mod` + `sg` resident (full storage chain) | `lsmod`: 4/4 modules |
-| 6 | AGENTS.md honesty repair: front-port slander RETRACTED (circular-test trap documented), "failure is electrical" RETRACTED, "instant bridge/PSU death" RETRACTED, uas-unloaded-on-all-recovery-boots fact + user hypothesis vindication recorded | 4 edits applied + verified by grep |
-| 7 | Runbook `das-link-recovery-check.sh` decision tree: front USB4-C preferred (user preference), rear = fallback diagnostic, "silent on BOTH ports" wording | edits applied |
-| 8 | Exhaustive host exculpation: `usb-storage` quirks param EMPTY, kernel cmdline clean, `authorized_default=1`, zero over-current/disable events across ALL boots, 6/6 controllers `on/active`, root hubs `active`, 4 devices hotplapping fine on this boot | sysfs + journal reads, captured in session |
-| 9 | Bridge absence confirmed across full history: `journalctl -g '152d'` → zero kernel hits since 2026-08-22 | full-journal check |
-| 10 | USB4/Type-C audit: `thunderbolt` loaded, domains 0/1 up (`security=user`), no UCSI ACPI device exists → empty `/sys/class/typec` is NORMAL, not a config gap | sysfs audit |
-| 11 | Kernel journal since 14:00 verified EMPTY (unfiltered, docker spam only removed) — replugs produced genuinely zero kernel lines | unfiltered dump |
+| #  | Item                                                                                                                                                                                                                                                     | Proof                                       |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| 1  | Deploy gen 732: `uas` + `usb-storage` resident                                                                                                                                                                                                           | `lsmod` live check post-deploy              |
+| 2  | hdparm `sd[ab]` poison rule confirmed gone from live system                                                                                                                                                                                              | `grep -rn hdparm /etc/udev/rules.d/` → zero |
+| 3  | Udev hardening live: JMicron `152d:0567` power-pin, all xHCI+USB4 controllers `power/control=on` (class `0x0c0330\|0x0c0340`), buildcache auto-recovery SYSTEMD_WANTS                                                                                    | live `99-local.rules` content               |
+| 4  | Eval-time guard `udev-block-letter-audit.nix` committed (commit `cc9b55c1`) — any `KERNEL=="sd[…]"` + `RUN+=` rule throws at flake check                                                                                                                 | committed; negative-tested pre-session      |
+| 5  | Deploy gen 733: `sd_mod` + `sg` resident (full storage chain)                                                                                                                                                                                            | `lsmod`: 4/4 modules                        |
+| 6  | AGENTS.md honesty repair: front-port slander RETRACTED (circular-test trap documented), "failure is electrical" RETRACTED, "instant bridge/PSU death" RETRACTED, uas-unloaded-on-all-recovery-boots fact + user hypothesis vindication recorded          | 4 edits applied + verified by grep          |
+| 7  | Runbook `das-link-recovery-check.sh` decision tree: front USB4-C preferred (user preference), rear = fallback diagnostic, "silent on BOTH ports" wording                                                                                                 | edits applied                               |
+| 8  | Exhaustive host exculpation: `usb-storage` quirks param EMPTY, kernel cmdline clean, `authorized_default=1`, zero over-current/disable events across ALL boots, 6/6 controllers `on/active`, root hubs `active`, 4 devices hotplapping fine on this boot | sysfs + journal reads, captured in session  |
+| 9  | Bridge absence confirmed across full history: `journalctl -g '152d'` → zero kernel hits since 2026-08-22                                                                                                                                                 | full-journal check                          |
+| 10 | USB4/Type-C audit: `thunderbolt` loaded, domains 0/1 up (`security=user`), no UCSI ACPI device exists → empty `/sys/class/typec` is NORMAL, not a config gap                                                                                             | sysfs audit                                 |
+| 11 | Kernel journal since 14:00 verified EMPTY (unfiltered, docker spam only removed) — replugs produced genuinely zero kernel lines                                                                                                                          | unfiltered dump                             |
 
 ## b) PARTIALLY DONE
 
@@ -79,7 +79,7 @@ hypothesis is recorded as correct for the recovery-attempt blocker.
    - **Full AC drain**: shutdown → unplug wall power → hold power button 30 s → 60 s wait → boot **with DAS
      attached** (uas/sd_mod/sg resident from boot; coldplug path armed).
 2. **Kernel watcher (shell 03D)** — running, but its pattern is now known blind to `high-speed` connects;
-     must be replaced with an unfiltered/speed-complete pattern before the next plug attempt.
+   must be replaced with an unfiltered/speed-complete pattern before the next plug attempt.
 3. **AGENTS.md ROOT CAUSE block outcome record** — placeholder added ("RECORD THE OUTCOME here"); awaits
    the replug/AC-drain result.
 4. **Working tree** — clean; all session changes committed by the auto-commit daemon (possibly batched with
@@ -88,15 +88,15 @@ hypothesis is recorded as correct for the recovery-attempt blocker.
 ## c) NOT STARTED (blocked on DAS returning)
 
 ~~1. Post-recovery verification chain: disks (`by-id` Toshiba/SanDisk) → `/mnt/pool` mount (both members;
-   one-member `-o degraded` is a USER decision) → `buildcache-usb-recovery.service` fires → Gatus
-   "Build Cache SSD" + "DAS USB Link" flip green → sev1 DAS alert clears.~~ done 2026-08-31 — full chain verified (16-29 report: by-label mount, both members, zero errors, checks green)
+one-member `-o degraded` is a USER decision) → `buildcache-usb-recovery.service` fires → Gatus
+"Build Cache SSD" + "DAS USB Link" flip green → sev1 DAS alert clears.~~ done 2026-08-31 — full chain verified (16-29 report: by-label mount, both members, zero errors, checks green)
 ~~2. Pool-dependent service catch-up: atticd (+storage-dir/bootstrap), immich, paperless, bank-sync —
-   may need `systemctl reset-failed` + start (root) after days failed.~~ done — 83 PASS / 0 FAIL on 2026-08-31
+may need `systemctl reset-failed` + start (root) after days failed.~~ done — 83 PASS / 0 FAIL on 2026-08-31
 ~~3. `btrbk-pool` snapshot catch-up (missed since Aug 22) + pool scrub + `btrfs device stats` check.~~ done — catch-up verified; scrub cadence resumed (deferred-scrub guard now IO-aware)
 ~~4. smartd long tests on both Toshibas (one member already failed to enumerate at the Aug 22 boot —
-   pre-incident disk problem possible).~~ done — both members healthy on recovery (zero device errors); long-test scheduling remains optional hygiene
+pre-incident disk problem possible).~~ done — both members healthy on recovery (zero device errors); long-test scheduling remains optional hygiene
 5. NVMe fallback-cache decision (~6.7 GB `~/.cache/{gobuild,gocache,gomod}`) — user decision pending
-   since before this session.
+since before this session.
 6. e2fsck on buildcache SSD if the earlier ext4 damage flags recur.
 
 ## d) TOTALLY FUCKED UP
@@ -130,6 +130,7 @@ hypothesis is recorded as correct for the recovery-attempt blocker.
 ## f) NEXT TASKS (up to 50)
 
 **Decisive / immediate**
+
 1. User: mouse-dongle port test on the exact DAS-silent port → report result.
 2. User: full AC drain (wall plug out, power button 30 s, 60 s wait) → boot WITH DAS attached.
 3. Replace watcher 03D with speed-complete pattern (or plain `journalctl -k -f` unfiltered).
@@ -142,7 +143,7 @@ hypothesis is recorded as correct for the recovery-attempt blocker.
 10. Record the OUTCOME in AGENTS.md ROOT CAUSE block (whichever way it lands).
 
 **Post-recovery service catch-up**
-11. `systemctl reset-failed` + restart pool-dependent units (atticd, immich-*, paperless-*, bank-sync).
+11. `systemctl reset-failed` + restart pool-dependent units (atticd, immich-_, paperless-_, bank-sync).
 12. `atticd-storage-dir` + `atticd-bootstrap` restart post-switch (deploy.sh handles on next deploy anyway).
 13. btrbk-pool catch-up run; verify garbled-target GC path still clean.
 14. Pool `btrfs device stats` + scrub; compare against pre-incident baseline.
@@ -165,13 +166,13 @@ hypothesis is recorded as correct for the recovery-attempt blocker.
 **Pre-existing issues noticed this session (not DAS)**
 28. `website-deploy-monitor.service` failed (pre-deploy warning, gen 733 run).
 29. SigNoz "Swap Usage Critical (>80%)" firing >24h — zram 94.9%→97.0% across deploys; guard armed but
-    investigate (flm idle? swap contents?).
+investigate (flm idle? swap contents?).
 30. fish startup 1090–1157 ms warning (deploy smoke).
 31. quickshell 1 error line in last 1h (deploy smoke).
 32. Monitor365 substituter 502 spam during deploys (attic on pool) — cosmetic while pool down.
 33. bank-sync smoke FAILs — pool-dependent, expected to clear.
 34. Concurrent-session commits noticed: `979a76f7` (inboxclean Gatus probes), `7542cf3a` (go 1.26.7
-    override drops) — not mine, flagged per AGENTS concurrent-session rule.
+override drops) — not mine, flagged per AGENTS concurrent-session rule.
 
 **If the verdict lands enclosure-side (bridge dead)**
 35. Disks out; Toshiba #1 into any SATA-USB adapter/dock → degraded read-only mount first (user decision).
@@ -179,15 +180,15 @@ hypothesis is recorded as correct for the recovery-attempt blocker.
 37. Buildcache SanDisk into adapter → verify + remount (disposable-by-design fallback: reformat).
 38. Consider replacement 4-bay (or two 2-bay) enclosure decision — user.
 39. If one Toshiba is ALSO dead (smartd hint): single-member degraded mount + `btrfs device replace` onto
-    a new disk — user decision, data first.
+a new disk — user decision, data first.
 40. Re-home DAS to a different controller group than c7:00.4 (spread across controllers) once mapping is known.
 
 **Structural (backlog, non-urgent)**
 41. Controller-liveness health signal: metric for "USB controller with zero lifetime child devices" or
-    periodic dongle-probe — catches the wedged-controller class in minutes, not days.
+periodic dongle-probe — catches the wedged-controller class in minutes, not days.
 42. Gatus check for kernel-module residency of critical modules (uas/sd_mod) — textfile collector.
 43. Review remaining stale text in the DAS bullet's old isolation-order paragraphs (retraction markers in
-    place, prose could be condensed).
+place, prose could be condensed).
 44. VM test for `udev-block-letter-audit` if not already covered (manual negative test exists).
 45. Repo-wide sweep for other `RUN+=` udev rules touching block devices (guard covers `extraRules` only).
 46. Consider `usbcore.authorized_default` monitoring (trivial, but completes the exculpation matrix).

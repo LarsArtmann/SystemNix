@@ -31,12 +31,12 @@
 
 ## c) NOT STARTED (deliberate or missed — honest labels)
 
-1. *(deliberate)* go-commit retry middleware remains wired in nowhere — documented, skipped; fallback covers the daemon's case.
-2. *(deliberate)* go-commit HTTP timeout not configurable — first-commit-after-flm-idle will time out at 30s vs 2-5min cold load and ride the fallback.
-3. *(missed)* No SystemNix VM test for the new wiring (env template, metric emission validity, scan-failure paths).
-4. *(missed)* No SigNoz dashboard/rules for `system_pma_commit_*` (Gatus-only).
-5. *(flagged, other sessions own)* signoz-coverage duplicate series (`node_textfile_scrape_error 1`); glob v1.0.0 sweep completion in PMA + project-discovery-sdk upstream; CV upstream vendorHash (then drop my override refresh).
-6. *(missed)* Push-state of the daemon's heuristic commits: 91+ commits landed locally — I never checked whether AutoPush delivered them to GitHub.
+1. _(deliberate)_ go-commit retry middleware remains wired in nowhere — documented, skipped; fallback covers the daemon's case.
+2. _(deliberate)_ go-commit HTTP timeout not configurable — first-commit-after-flm-idle will time out at 30s vs 2-5min cold load and ride the fallback.
+3. _(missed)_ No SystemNix VM test for the new wiring (env template, metric emission validity, scan-failure paths).
+4. _(missed)_ No SigNoz dashboard/rules for `system_pma_commit_*` (Gatus-only).
+5. _(flagged, other sessions own)_ signoz-coverage duplicate series (`node_textfile_scrape_error 1`); glob v1.0.0 sweep completion in PMA + project-discovery-sdk upstream; CV upstream vendorHash (then drop my override refresh).
+6. _(missed)_ Push-state of the daemon's heuristic commits: 91+ commits landed locally — I never checked whether AutoPush delivered them to GitHub.
 
 ## d) TOTALLY FUCKED UP (mistakes, owned)
 
@@ -63,6 +63,7 @@
 ## f) NEXT — up to 50, roughly ordered
 
 **Close out this incident (P0)**
+
 1. Correct the false "gatus green" line in `docs/status/2026-09-02_15-40_…md`.
 2. Verify gatus actually loaded "PMA Commit Health" (gatus API/UI), then watch failures_1h drain to 0 and the check flip green.
 3. Retire the 3 KNOWN_NEW_METRICS loan entries (live-confirmed).
@@ -83,11 +84,11 @@
 14. go-commit: configurable HTTP timeout via env (flm cold load 2-5min vs 30s default).
 15. PMA: commit-outcome counters on `/v1/health` (replaces journal grep eventually).
 16. PMA: native OTel commit metrics (OTel already wired).
-17. VM test: pma-env renders empty, unit env has OPENAI_*, no MINIMAX, fallback log line appears.
+17. VM test: pma-env renders empty, unit env has OPENAI__, no MINIMAX, fallback log line appears.
 18. VM/unit test for system-health scan-failure paths (fail-closed without file poisoning).
 19. Build-time exposition lint for all textfile collectors (§e.2).
 20. §10 against to-be-deployed collector output (§e.1).
-21. SigNoz dashboard + rules for system_pma_commit_*.
+21. SigNoz dashboard + rules for system_pma_commit__.
 22. gatus "PMA Commit Health": add RESPONSE_TIME budget + consider failure-threshold to smooth the transition-hour red.
 23. Enable-gate the four unconditional PMA gatus checks like the line-1562 optionals pattern.
 24. Flake check: LarsArtmann go-dep input-rev vs go.mod-requirement drift (§e.4).

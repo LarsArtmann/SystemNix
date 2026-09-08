@@ -8,27 +8,27 @@
 
 ## 1. Verdict table
 
-| Domain                          | Internet consensus (2024-2026)                                             | SystemNix (live 2026-09-05)                                                      | Verdict                     |
-| ------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | --------------------------- |
-| Subvolume layout                | Flat top-level `@`, `@home`, `@nix` (+ `@snapshots`/`@persist` variants)    | `@` (root+home), `@nix` (migrating to Samsung `nix` subvol), `@cache-home`, pool | **Aligned** (home shared by choice) |
-| Snapshot `/nix`?                | No — redundant, generations are the rollback                                | Excluded since @nix 2026-08-17                                                    | **Aligned (was a gap, closed)** |
-| Retention                       | 16h-24h / 7d-14d / 2w-4w ("Goldilocks")                                     | Root 3d+1w local + FOREVER pool-side; data 14d+4w                                 | **Aligned+** (pool beats consensus) |
-| Offsite backup                  | Local snapshots are NOT backup; need remote leg                             | Pool is same-chassis HDD; NO offsite BTRFS leg                                    | **GAP (top one)**           |
-| Compression                     | `compress=zstd` (not -force); level 3 default is the sweet spot             | `compress=zstd:3` everywhere, measured 1.89x on store; -force rejected            | **Aligned (validated)**     |
-| commit=                         | 30 default; 120-300 for slow/QLC storage; kernel warns >300                 | `commit=300` on ALL btrfs mounts (exactly at the warning boundary, no warning)    | **Aligned**                 |
-| noatime                         | Yes, especially under CoW                                                   | All mounts                                                                        | **Aligned**                 |
-| TRIM                            | `discard=async` default since 6.2, safe + periodic fstrim                   | `nodiscard` + DAILY idle fstrim — QLC 253ms discard latency is a live-proven deviation | **Deliberate deviation (justified)** |
-| Scrub                           | Monthly (both wikis)                                                        | Weekly + deferral guard (PSI/zram/btrbk-aware)                                    | **Exceeds**                 |
-| Balance/ENOSPC                  | `usage=0` first, `-musage=50`/`-dusage=50` compaction, btrfs-headroom tool  | Weekly bounded balance + GC guard + emergency reserve + chunk metrics             | **Exceeds**                 |
-| qgroups                         | Avoid — commit latency, snapshot-deletion stalls (upstream doc warning)     | Not enabled                                                                       | **Aligned**                 |
-| Dedup                           | bees / duperemove recommended generically                                   | Rejected on QLC random-IO grounds (auto-optimise-store only)                      | **Aligned for QLC; revisit post-Samsung** |
-| Swap on btrfs                   | NOCOW subvol, `btrfs filesystem mkswapfile`                                 | N/A — zram-only (correct for 124G unified-memory APU)                             | **N/A**                     |
-| zram-only sysctls               | swappiness 100-200, **page-cluster=0**, **watermark_boost_factor=0**, scale 100-125, MGLRU min_ttl | swappiness 150 ✓, scale 100 ✓, MGLRU 1000ms ✓, **page-cluster 3 ✗**, **boost 15000 ✗** | **2 GAPS → fixed this sweep** |
-| Docker on btrfs                 | overlay2 (not the deprecated btrfs driver); consider NOCOW on data-root     | overlay2 on /data btrfs; no NOCOW                                                 | **Consideration (open)**    |
-| VM images/DBs on CoW            | `chattr +C` or separate fs                                                  | ClickHouse → dedicated XFS (better than +C); pg containers on CoW /data           | **Mostly aligned; pg is a consideration** |
-| space_cache                     | v2 default                                                                  | v2 everywhere (explicit)                                                          | **Aligned**                 |
-| block-group-tree                | For huge/slow-mount filesystems                                             | New Samsung `tlc` pool created WITH it; 32 TB HDD pool not converted              | **Aligned (new disk); pool optional** |
-| btrfs check --repair            | Danger — never casual                                                       | Runbooks forbid; low-risk mode planned for the /data P0 only                      | **Aligned**                 |
+| Domain               | Internet consensus (2024-2026)                                                                     | SystemNix (live 2026-09-05)                                                            | Verdict                                   |
+| -------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------- |
+| Subvolume layout     | Flat top-level `@`, `@home`, `@nix` (+ `@snapshots`/`@persist` variants)                           | `@` (root+home), `@nix` (migrating to Samsung `nix` subvol), `@cache-home`, pool       | **Aligned** (home shared by choice)       |
+| Snapshot `/nix`?     | No — redundant, generations are the rollback                                                       | Excluded since @nix 2026-08-17                                                         | **Aligned (was a gap, closed)**           |
+| Retention            | 16h-24h / 7d-14d / 2w-4w ("Goldilocks")                                                            | Root 3d+1w local + FOREVER pool-side; data 14d+4w                                      | **Aligned+** (pool beats consensus)       |
+| Offsite backup       | Local snapshots are NOT backup; need remote leg                                                    | Pool is same-chassis HDD; NO offsite BTRFS leg                                         | **GAP (top one)**                         |
+| Compression          | `compress=zstd` (not -force); level 3 default is the sweet spot                                    | `compress=zstd:3` everywhere, measured 1.89x on store; -force rejected                 | **Aligned (validated)**                   |
+| commit=              | 30 default; 120-300 for slow/QLC storage; kernel warns >300                                        | `commit=300` on ALL btrfs mounts (exactly at the warning boundary, no warning)         | **Aligned**                               |
+| noatime              | Yes, especially under CoW                                                                          | All mounts                                                                             | **Aligned**                               |
+| TRIM                 | `discard=async` default since 6.2, safe + periodic fstrim                                          | `nodiscard` + DAILY idle fstrim — QLC 253ms discard latency is a live-proven deviation | **Deliberate deviation (justified)**      |
+| Scrub                | Monthly (both wikis)                                                                               | Weekly + deferral guard (PSI/zram/btrbk-aware)                                         | **Exceeds**                               |
+| Balance/ENOSPC       | `usage=0` first, `-musage=50`/`-dusage=50` compaction, btrfs-headroom tool                         | Weekly bounded balance + GC guard + emergency reserve + chunk metrics                  | **Exceeds**                               |
+| qgroups              | Avoid — commit latency, snapshot-deletion stalls (upstream doc warning)                            | Not enabled                                                                            | **Aligned**                               |
+| Dedup                | bees / duperemove recommended generically                                                          | Rejected on QLC random-IO grounds (auto-optimise-store only)                           | **Aligned for QLC; revisit post-Samsung** |
+| Swap on btrfs        | NOCOW subvol, `btrfs filesystem mkswapfile`                                                        | N/A — zram-only (correct for 124G unified-memory APU)                                  | **N/A**                                   |
+| zram-only sysctls    | swappiness 100-200, **page-cluster=0**, **watermark_boost_factor=0**, scale 100-125, MGLRU min_ttl | swappiness 150 ✓, scale 100 ✓, MGLRU 1000ms ✓, **page-cluster 3 ✗**, **boost 15000 ✗** | **2 GAPS → fixed this sweep**             |
+| Docker on btrfs      | overlay2 (not the deprecated btrfs driver); consider NOCOW on data-root                            | overlay2 on /data btrfs; no NOCOW                                                      | **Consideration (open)**                  |
+| VM images/DBs on CoW | `chattr +C` or separate fs                                                                         | ClickHouse → dedicated XFS (better than +C); pg containers on CoW /data                | **Mostly aligned; pg is a consideration** |
+| space_cache          | v2 default                                                                                         | v2 everywhere (explicit)                                                               | **Aligned**                               |
+| block-group-tree     | For huge/slow-mount filesystems                                                                    | New Samsung `tlc` pool created WITH it; 32 TB HDD pool not converted                   | **Aligned (new disk); pool optional**     |
+| btrfs check --repair | Danger — never casual                                                                              | Runbooks forbid; low-risk mode planned for the /data P0 only                           | **Aligned**                               |
 
 **Score: aligned or exceeding on 20 of 23 domains; 1 standing gap (offsite), 2 sysctl gaps (fixed), several conscious documented deviations.**
 
@@ -40,9 +40,9 @@
 
 The single concrete divergence from every mainstream zram deployment (Fedora, Pop!_OS, ChromeOS, Clear Linux, ArchWiki ZRAM page):
 
-| Sysctl                      | Was (kernel default) | Now | Why (sources)                                                                                                                              |
-| --------------------------- | -------------------- | --- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `vm.page-cluster`           | 3                    | 0   | Readahead of 8 pages per swap fault is an HDD-era seek optimization; on zram it wastes CPU and decompresses unneeded pages (ArchWiki ZRAM, Fedora SwapOnZRAM, Pop!_OS, ChromeOS all ship 0). |
+| Sysctl                      | Was (kernel default) | Now | Why (sources)                                                                                                                                                                                                                                            |
+| --------------------------- | -------------------- | --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vm.page-cluster`           | 3                    | 0   | Readahead of 8 pages per swap fault is an HDD-era seek optimization; on zram it wastes CPU and decompresses unneeded pages (ArchWiki ZRAM, Fedora SwapOnZRAM, Pop!_OS, ChromeOS all ship 0).                                                             |
 | `vm.watermark_boost_factor` | 15000                | 0   | Watermark boosting force-reclaims on fragmentation signals and is widely reported to cause stutter/freezes with zram ("inherently broken feature", Pop!_OS + Clear Linux ship 0). On this box kswapd boost storms are exactly the freeze-incident class. |
 
 Implemented in `platforms/nixos/system/boot.nix` (boot.kernel.sysctl). Both are runtime-tunable and reversible; swappiness/watermark_scale/MGLRU values were re-checked against the same sources and stay as-is (150/100/1000ms are inside every recommendation band).
@@ -51,7 +51,7 @@ Implemented in `platforms/nixos/system/boot.nix` (boot.kernel.sysctl). Both are 
 
 - **compress-force is officially discouraged**: btrfs.readthedocs.io — "Using the forcing compression is not recommended, the heuristics are supposed to decide that." Our `compress` choice and its AGENTS.md rationale are now upstream-quote-backed.
 - **commit=300 is the documented ceiling**: "a warning is printed if it's more than 300 seconds" — we sit exactly at 300. Community reports for QLC/turtle storage converge on 120-300. No change.
-- **`discard=async` default since kernel 6.2 + "preferred mode" upstream**: our blanket `nodiscard` is a *documented, live-verified* hardware deviation (QLC 253ms discard latency → 17.7s commit stalls → WDT resets, 2026-08-03 incident), covered by DAILY fstrim instead. The internet's "async is safe" does not hold on this NAND; keep nodiscard. NOTE: the live Samsung staging mount showed `discard=async` while the staged `/nix` entry is `nodiscard` — after reboot the config wins; for TLC either is defensible, consistency with the doctrine is fine.
+- **`discard=async` default since kernel 6.2 + "preferred mode" upstream**: our blanket `nodiscard` is a _documented, live-verified_ hardware deviation (QLC 253ms discard latency → 17.7s commit stalls → WDT resets, 2026-08-03 incident), covered by DAILY fstrim instead. The internet's "async is safe" does not hold on this NAND; keep nodiscard. NOTE: the live Samsung staging mount showed `discard=async` while the staged `/nix` entry is `nodiscard` — after reboot the config wins; for TLC either is defensible, consistency with the doctrine is fine.
 - **Excluding `/nix` from snapshots**: unanimous community practice (pinpox, ryan4yin, joshsymonds, bydmiller configs; NixOS Wiki "trivially reconstructable"). Our @nix split (2026-08-17) and Samsung migration achieve exactly this.
 - **qgroups**: upstream warning ("can slow down transaction commits... unacceptable latencies") validates our no-quotas stance. New kernel 6.7 "simple quotas" (`btrfs quota enable --simple`) noted for IF per-subvolume accounting is ever needed.
 - **Local snapshots ≠ backup**: every source; we have pool-side send/receive (beyond most single-disk setups) but see the gap below.
@@ -67,14 +67,14 @@ Implemented in `platforms/nixos/system/boot.nix` (boot.kernel.sysctl). Both are 
 
 ### 2.4 Gaps from the 2026-07-11 doc — status recheck
 
-| Old gap                              | Status 2026-09-05                                                                     |
-| ------------------------------------ | ------------------------------------------------------------------------------------- |
-| `/nix` inside `@`                    | **CLOSED** — `@nix` since 2026-08-17; store migrating to Samsung `tlc` pool (block-group-tree, zstd, measured 3.6x logical→physical) |
-| No remote/backup target              | **PARTIALLY CLOSED** — pool RAID1 send/receive since 2026-08-16; offsite leg still open |
-| `/home` inside `@`                   | Still open **by choice** (home IS worth snapshotting with root; rollback semantics documented) |
-| No bees                              | Still out **by choice** (QLC); revisit post-Samsung (§2.3.4)                          |
-| Scrub monthly                        | **EXCEEDED** — weekly + deferral guard since 2026-08-31                               |
-| GC guard unalloc %-threshold bug     | **CLOSED** — absolute 5 GiB floor + meta% block since 2026-08-21                      |
+| Old gap                          | Status 2026-09-05                                                                                                                    |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `/nix` inside `@`                | **CLOSED** — `@nix` since 2026-08-17; store migrating to Samsung `tlc` pool (block-group-tree, zstd, measured 3.6x logical→physical) |
+| No remote/backup target          | **PARTIALLY CLOSED** — pool RAID1 send/receive since 2026-08-16; offsite leg still open                                              |
+| `/home` inside `@`               | Still open **by choice** (home IS worth snapshotting with root; rollback semantics documented)                                       |
+| No bees                          | Still out **by choice** (QLC); revisit post-Samsung (§2.3.4)                                                                         |
+| Scrub monthly                    | **EXCEEDED** — weekly + deferral guard since 2026-08-31                                                                              |
+| GC guard unalloc %-threshold bug | **CLOSED** — absolute 5 GiB floor + meta% block since 2026-08-21                                                                     |
 
 ---
 

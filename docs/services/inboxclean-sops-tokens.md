@@ -17,7 +17,7 @@ re-seeds the stale one, and re-auth then fails with `invalid_grant` in a way
 that is painful to diagnose.
 
 sops is the right home for **static** secrets — that is why
-`inboxclean_gmail_credentials` (the OAuth *client* credentials.json, which
+`inboxclean_gmail_credentials` (the OAuth _client_ credentials.json, which
 never rotates) is already sops-managed. Rotating tokens belong in writable
 service state, which is where the current module puts them (seeding is
 only-if-absent; the runbook in `modules/nixos/services/inboxclean.nix`
@@ -29,24 +29,24 @@ documents the one-time auth flow).
 
 ```yaml
 inboxclean_gmail_token:
-    description: >
-        main-account Gmail OAuth refresh token (JSON, format of
-        ~/.inboxclean/token.json). WARNING: Google may rotate refresh
-        tokens; a rotated token invalidates this static copy on the next
-        redeploy. Re-encrypt after every auth flow.
-    inboxclean_gmail_token: |
-        {
-          "access_token": "ya29.…",
-          "refresh_token": "1//…",
-          "token_type": "Bearer",
-          "expiry": "2026-08-30T00:00:00Z"
-        }
+  description: >
+    main-account Gmail OAuth refresh token (JSON, format of
+    ~/.inboxclean/token.json). WARNING: Google may rotate refresh
+    tokens; a rotated token invalidates this static copy on the next
+    redeploy. Re-encrypt after every auth flow.
+  inboxclean_gmail_token: |
+    {
+      "access_token": "ya29.…",
+      "refresh_token": "1//…",
+      "token_type": "Bearer",
+      "expiry": "2026-08-30T00:00:00Z"
+    }
 inboxclean_gmail_token_work:
-    description: >
-        work-account (Workspace) OAuth refresh token, same format and same
-        rotation caveat. Re-encrypt after every `auth --account work` flow.
-    inboxclean_gmail_token_work: |
-        { … }
+  description: >
+    work-account (Workspace) OAuth refresh token, same format and same
+    rotation caveat. Re-encrypt after every `auth --account work` flow.
+  inboxclean_gmail_token_work: |
+    { … }
 ```
 
 2. Module wiring (`modules/nixos/services/inboxclean.nix`, inside

@@ -20,7 +20,7 @@
 let
   lib = inputs.nixpkgs.lib;
   house = ((import ../modules/nixos/services/tq-agent-pool.nix) { }).flake.nixosModules.tq-agent-pool;
-  ports = (import ../lib/default.nix lib).ports;
+  inherit ((import ../lib/default.nix lib)) ports;
 
   fakeTq = pkgs.writeShellScriptBin "tq" "exit 0";
 

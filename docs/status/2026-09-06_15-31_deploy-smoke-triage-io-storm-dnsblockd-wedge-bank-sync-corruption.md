@@ -5,11 +5,11 @@
 
 ## The 3 smoke failures — final verdicts
 
-| Smoke FAIL | Verdict | State at 15:31 |
-|---|---|---|
-| DNS Blocker :9090 unreachable | Stats-API wedge under IO pressure (see §wedge). DNS itself NEVER stopped resolving. | RECOVERED (restart 09:16, `/health` + `/metrics` 200, `dbHealthy:true`) |
-| Pocket ID SQLITE_BUSY/panic in journal | Transient collateral of the IO storm (54.7s slow SQL during peak; known BTRFS-collateral class). Service served 200s throughout. | RECOVERED (0 occurrences in final 20-min window) |
-| Bank-Sync sync_errors_total > 0 | Two causes: (a) whole-cycle failures 03:42 + 04:12 — `lookup api.wise.com: Temporary failure in name resolution` (dnsblockd degraded hours BEFORE the deploy); (b) `[corruption] db.scan: unparseable sync_states.statement_coverage` — real upstream bug, FIXED in bank-sync master (local). Counter resets on next restart/deploy. | Fix committed, NOT pushed/deployed. SCA approval still pending (user). |
+| Smoke FAIL                             | Verdict                                                                                                                                                                                                                                                                                                                              | State at 15:31                                                          |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| DNS Blocker :9090 unreachable          | Stats-API wedge under IO pressure (see §wedge). DNS itself NEVER stopped resolving.                                                                                                                                                                                                                                                  | RECOVERED (restart 09:16, `/health` + `/metrics` 200, `dbHealthy:true`) |
+| Pocket ID SQLITE_BUSY/panic in journal | Transient collateral of the IO storm (54.7s slow SQL during peak; known BTRFS-collateral class). Service served 200s throughout.                                                                                                                                                                                                     | RECOVERED (0 occurrences in final 20-min window)                        |
+| Bank-Sync sync_errors_total > 0        | Two causes: (a) whole-cycle failures 03:42 + 04:12 — `lookup api.wise.com: Temporary failure in name resolution` (dnsblockd degraded hours BEFORE the deploy); (b) `[corruption] db.scan: unparseable sync_states.statement_coverage` — real upstream bug, FIXED in bank-sync master (local). Counter resets on next restart/deploy. | Fix committed, NOT pushed/deployed. SCA approval still pending (user).  |
 
 ## The IO storm (the underlying driver of everything)
 
@@ -85,33 +85,33 @@ Statements paused pending Wise SCA approval (OTTs printed in journal per balance
 
 ## f) Top next tasks (ranked)
 
-| # | Task | Impact | Effort | Category |
-|---|---|---|---|---|
-| 1 | USER: approve Wise SCA + set OTT (docs/services/bank-sync-sca.md), restart bank-sync, remove token | Critical | S | Bug/ops |
-| 2 | Push bank-sync master (a9b0b8e..60015cc) — needs user OK | High | S | Bug |
-| 3 | SystemNix: `nix flake lock --update-input bank-sync`, vendorHash check, deploy (once IO < gate) | High | M | Bug |
-| 4 | Post-deploy verify: corruption ERROs gone, `sync_errors_total` reset, smoke green (known WARNs only) | High | S | Bug |
-| 5 | dnsblockd: bounded health-probe ctx (5s) upstream | High | S | Bug |
-| 6 | dnsblockd: confirm /metrics hang mechanism (Collect callback vs pool) | High | M | Bug |
-| 7 | dnsblockd: reserved health-only sqlite conn / pool reservation | Medium | M | Feature |
-| 8 | dnsblockd: saturation regression test (pool exhausted → /health answers bounded) | Medium | M | Quality |
-| 9 | Push+tag dnsblockd + SystemNix flake bump | High | S | Bug |
-| 10 | USER: InboxClean main OAuth re-auth (consent "In production" first) | High | S | Bug |
-| 11 | Verify inboxclean-sync + service-health-check green after re-auth | Medium | S | Bug |
-| 12 | SystemNix AGENTS.md: record session lessons (storm→smoke mapping, sdb=buildcache letters, bank-sync V10, dnsblockd hypothesis + SIGKILL forensics) | High | S | Documentation |
-| 13 | IO PSI sustained alert (Gatus/SigNoz, >40% for 15 min) | Medium | S | Feature |
-| 14 | heavy-job discipline for go test/cargo nextest in agent sessions (wrapper + docs) | Medium | M | Quality |
-| 15 | Check journal for any accidental goroutine dump at 09:15 stop (last 90s window) | Medium | S | Bug |
-| 16 | Re-run full `post-deploy-check` after deploys 3+9 land | High | S | Bug |
-| 17 | git-archaeology: `git log -S payload.SyncedAt` in bank-sync to close the RFC3339-writer mystery | Low | S | Quality |
-| 18 | Promote the DSN bind probe to a permanent bank-sync regression test | Low | S | Quality |
-| 19 | quickshell 1-error-line triage (last 1h journal) | Low | S | Bug |
-| 20 | fish 250 ms startup re-measure at calm IO | Low | S | Bug |
-| 21 | Verify data-to-pool-migration + activitywatch-data-to-pool completed; pool consumers green | Medium | S | Ops |
-| 22 | Watch load/PSI normalize once the current Go test suites finish | Medium | S | Ops |
-| 23 | dnsblockd batch-writer flush ctx review (batchFlushTimeout actually bounding the txn?) | Medium | M | Quality |
-| 24 | Consider deploy gate addition: IO PSI some avg10 (currently memory-only) | Medium | S | Feature |
-| 25 | HARVEST this report's tasks into TODO_LIST.md (docs-health) | Medium | S | Documentation |
+| #  | Task                                                                                                                                               | Impact   | Effort | Category      |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
+| 1  | USER: approve Wise SCA + set OTT (docs/services/bank-sync-sca.md), restart bank-sync, remove token                                                 | Critical | S      | Bug/ops       |
+| 2  | Push bank-sync master (a9b0b8e..60015cc) — needs user OK                                                                                           | High     | S      | Bug           |
+| 3  | SystemNix: `nix flake lock --update-input bank-sync`, vendorHash check, deploy (once IO < gate)                                                    | High     | M      | Bug           |
+| 4  | Post-deploy verify: corruption ERROs gone, `sync_errors_total` reset, smoke green (known WARNs only)                                               | High     | S      | Bug           |
+| 5  | dnsblockd: bounded health-probe ctx (5s) upstream                                                                                                  | High     | S      | Bug           |
+| 6  | dnsblockd: confirm /metrics hang mechanism (Collect callback vs pool)                                                                              | High     | M      | Bug           |
+| 7  | dnsblockd: reserved health-only sqlite conn / pool reservation                                                                                     | Medium   | M      | Feature       |
+| 8  | dnsblockd: saturation regression test (pool exhausted → /health answers bounded)                                                                   | Medium   | M      | Quality       |
+| 9  | Push+tag dnsblockd + SystemNix flake bump                                                                                                          | High     | S      | Bug           |
+| 10 | USER: InboxClean main OAuth re-auth (consent "In production" first)                                                                                | High     | S      | Bug           |
+| 11 | Verify inboxclean-sync + service-health-check green after re-auth                                                                                  | Medium   | S      | Bug           |
+| 12 | SystemNix AGENTS.md: record session lessons (storm→smoke mapping, sdb=buildcache letters, bank-sync V10, dnsblockd hypothesis + SIGKILL forensics) | High     | S      | Documentation |
+| 13 | IO PSI sustained alert (Gatus/SigNoz, >40% for 15 min)                                                                                             | Medium   | S      | Feature       |
+| 14 | heavy-job discipline for go test/cargo nextest in agent sessions (wrapper + docs)                                                                  | Medium   | M      | Quality       |
+| 15 | Check journal for any accidental goroutine dump at 09:15 stop (last 90s window)                                                                    | Medium   | S      | Bug           |
+| 16 | Re-run full `post-deploy-check` after deploys 3+9 land                                                                                             | High     | S      | Bug           |
+| 17 | git-archaeology: `git log -S payload.SyncedAt` in bank-sync to close the RFC3339-writer mystery                                                    | Low      | S      | Quality       |
+| 18 | Promote the DSN bind probe to a permanent bank-sync regression test                                                                                | Low      | S      | Quality       |
+| 19 | quickshell 1-error-line triage (last 1h journal)                                                                                                   | Low      | S      | Bug           |
+| 20 | fish 250 ms startup re-measure at calm IO                                                                                                          | Low      | S      | Bug           |
+| 21 | Verify data-to-pool-migration + activitywatch-data-to-pool completed; pool consumers green                                                         | Medium   | S      | Ops           |
+| 22 | Watch load/PSI normalize once the current Go test suites finish                                                                                    | Medium   | S      | Ops           |
+| 23 | dnsblockd batch-writer flush ctx review (batchFlushTimeout actually bounding the txn?)                                                             | Medium   | M      | Quality       |
+| 24 | Consider deploy gate addition: IO PSI some avg10 (currently memory-only)                                                                           | Medium   | S      | Feature       |
+| 25 | HARVEST this report's tasks into TODO_LIST.md (docs-health)                                                                                        | Medium   | S      | Documentation |
 
 ## g) Top question
 
@@ -119,4 +119,4 @@ Statements paused pending Wise SCA approval (OTTs printed in journal per balance
 
 ---
 
-*Point-in-time snapshot. Status reports go stale — annotate, never rewrite (docs-health ANNOTATE).*
+_Point-in-time snapshot. Status reports go stale — annotate, never rewrite (docs-health ANNOTATE)._

@@ -16,12 +16,12 @@
 
 ## Failed units in the user's paste — dispositions
 
-| Unit | Verdict |
-| --- | --- |
-| `discordsync` | OOM-cycle casualty, dead since 23:46; needs manual start; memory behavior needs upstream investigation |
-| `btrbk-data` | Known chronic /data EIO + oom-kill class (TODO_LIST P0), unchanged by this session |
-| `btrfs-verify-pool-backups` | Downstream of btrbk-data ("no received backups found in /mnt/pool/backups/data") |
-| `disk-growth-check` | REAL repo bug found + fixed this session: `status=226/NAMESPACE`, `/var/lib/disk-growth` missing; unit had ReadWritePaths + too-late preStart mkdir (the documented anti-pattern). Means the /data >5G/day alert has been dead for days. |
+| Unit                        | Verdict                                                                                                                                                                                                                                  |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `discordsync`               | OOM-cycle casualty, dead since 23:46; needs manual start; memory behavior needs upstream investigation                                                                                                                                   |
+| `btrbk-data`                | Known chronic /data EIO + oom-kill class (TODO_LIST P0), unchanged by this session                                                                                                                                                       |
+| `btrfs-verify-pool-backups` | Downstream of btrbk-data ("no received backups found in /mnt/pool/backups/data")                                                                                                                                                         |
+| `disk-growth-check`         | REAL repo bug found + fixed this session: `status=226/NAMESPACE`, `/var/lib/disk-growth` missing; unit had ReadWritePaths + too-late preStart mkdir (the documented anti-pattern). Means the /data >5G/day alert has been dead for days. |
 
 ---
 
@@ -72,6 +72,7 @@
 ## f) NEXT UP TO 50 (ordered by impact)
 
 **P0 — unblock & stabilize tonight**
+
 1. `nix run .#deploy` (user) — carries my fixes + the concurrent session's staged flake.nix/flake.lock/cv.nix work.
 2. Post-deploy: verify `getent hosts cache.home.lan` resolves (resolv.conf restored); if NOT restored, `printf 'nameserver 127.0.0.1\nnameserver 9.9.9.9\nsearch home.lan\noptions edns0 trust-ad\n' | sudo tee /etc/resolv.conf`.
 3. `sudo systemctl start discordsync.service`; watch memory for 30 min (if it climbs to 2G again → upstream bug, stop-gap: leave down + page).

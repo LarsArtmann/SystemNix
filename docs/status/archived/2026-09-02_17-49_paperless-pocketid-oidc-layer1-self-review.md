@@ -21,7 +21,7 @@
    - **Live verification:** login page shows the Pocket ID button; simulated POST flow → `302 https://auth.home.lan/authorize?client_id=paperless&scope=openid+email+profile&response_type=code` with PKCE S256 and the **exact registered callback** — through the real vHost with the house CA. Provisioner journal: `Secret written to /var/lib/pocket-id/client-secrets/paperless`; bridge journal: `Pocket ID OIDC env file written`.
    - `nix flake check --no-build` green; formatter converged; `tests/test-caddy-auth.nix` checked — no stale paperless assertion.
 3. **Pre-existing bug fixed: system-health collector killed the ENTIRE metrics file (live, blocking all deploys)**
-   - The forgejo journal-scan failure path (30s timeout under I/O pressure) emptied only `FORGEJO_MIRROR_ERRORS_30M`/`ERRORING` while the emission block was gated on the still-set `LAST_SYNC_AGE` → emitted `system_forgejo_mirror_errors_30m ` (name, no value) → invalid exposition syntax → node_exporter rejected the whole `system_health.prom` → **all 38 `system_*` metrics dark simultaneously**, gatus red fleet-wide, every deploy blocked at pre-deploy §10. Root-caused via a live scrape (`node_textfile_scrape_error 1`) + a local exposition-format validator (2 bad lines of 548).
+   - The forgejo journal-scan failure path (30s timeout under I/O pressure) emptied only `FORGEJO_MIRROR_ERRORS_30M`/`ERRORING` while the emission block was gated on the still-set `LAST_SYNC_AGE` → emitted `system_forgejo_mirror_errors_30m` (name, no value) → invalid exposition syntax → node_exporter rejected the whole `system_health.prom` → **all 38 `system_*` metrics dark simultaneously**, gatus red fleet-wide, every deploy blocked at pre-deploy §10. Root-caused via a live scrape (`node_textfile_scrape_error 1`) + a local exposition-format validator (2 bad lines of 548).
    - Fix: the journal-scan pair is now gated on its own emptiness (true fail-closed absence, matching the documented design).
 4. **Pre-existing bug fixed: pocket-id provisioner secret generation dead on arrival**
    - Provisioner called `POST /api/oidc/clients/{id}/secret` (singular) — 404 on current pocket-id (multi-secret API: plural `/secrets`, optional body, 201 returns `.secret` once; verified against upstream source). **Every client FIRST provisioned after the pocket-id bump silently got no secret** — paperless was the first new client since the bump; forgejo/gatus/dnsblockd files predate it. Fixed + verified live.
@@ -63,6 +63,7 @@
 ## f) NEXT — up to 50 tasks (ordered by impact)
 
 **Paperless / SSO closeout**
+
 1. User performs first passkey login; if `invalid_client` at callback → set/adjust `token_auth_method` (one line, redeploy).
 2. Fix the silent-skip in my post-deploy SSO smoke (explicit SKIP print).
 3. Link the existing `admin` account to the Pocket ID identity (login as admin → My Profile → connect) OR decide auto-signup user is enough.
