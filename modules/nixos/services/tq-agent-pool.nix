@@ -151,11 +151,13 @@ _: {
         # without one complete tasks without proof (bootstrap WARN).
         systemd.services.tq-bootstrap = {
           description = "tq bootstrap — ensure dogfood rails (.tq-verify, .crushrc) in harvested repos";
-          after = [
-            "tq-storage-dir.service"
-            "network-online.target"
-          ];
-          wants = [ "network-online.target" ];
+          # Purely local (TODO_LIST parse + git commits in $HOME repos) — no
+          # network-online dependency. Failure tolerance is deliberate: the
+          # pool does NOT depend on this unit (a failed bootstrap costs
+          # verify rails, not the pool), failures alert via onFailure, and
+          # the deploy.sh provisioner loop re-runs it every deploy
+          # (idempotent --no-run; no RemainAfterExit so restart = re-run).
+          after = [ "tq-storage-dir.service" ];
           wantedBy = [ "multi-user.target" ];
           unitConfig.RequiresMountsFor = [ "/mnt/pool/services/tq" ];
           startLimitBurst = 5;

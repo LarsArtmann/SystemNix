@@ -186,6 +186,21 @@ if nix run .#pre-deploy-check; then
   fi
 
   echo ""
+  echo "=== Manual tq pool check (double-pool guard) ==="
+  # A leftover manual round-9 pool (/tmp/tq) racing the systemd tq-agent-pool
+  # double-harvests TODO_LISTs and runs concurrent agents inside the same
+  # repos against the same journal. Non-blocking WARN; the cutover runbook is
+  # docs/services/tq.md §"Cutover from the manual round-9 pool" (kill -INT).
+  manual_tq=$(pgrep -af '/tmp/tq' || true)
+  if [ -n "$manual_tq" ]; then
+    echo "⚠ manual tq processes detected — the systemd pool would double-run:"
+    echo "$manual_tq" | sed 's/^/    /'
+    echo "  → cutover per docs/services/tq.md before relying on the systemd pool"
+  else
+    echo "  no manual /tmp/tq processes — systemd pool is sole owner"
+  fi
+
+  echo ""
   echo "=== Memory pressure gate (2026-08-22 stability plan) ==="
   # A deploy is itself a multi-GB build + an activation storm; both freezes
   # had heavy builds as contributing load. Deploying INTO pressure adds fuel
