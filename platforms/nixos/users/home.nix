@@ -479,6 +479,10 @@ in
       # (see the pnpm store symlink above) — its metadata cache only.
       npm_config_cache = "/mnt/buildcache/npm";
 
+      # go-taskqueue: `tq` CLI operates on the systemd pool's journal
+      # (services.tq-agent-pool) — tq stats / dlq / tail / rescue just work.
+      TQ_DB = "/mnt/pool/services/tq/tq.db";
+
       # ── Cache-key unification (2026-08-15; docs/planning/2026-08-15_21-23_SMART-BUILDCACHE-OVERHAUL.md) ──
       # The build cache grew 2-3x because identical packages were compiled
       # under multiple cache keys. Both vars below collapse it to ONE key.

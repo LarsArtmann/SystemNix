@@ -57,6 +57,7 @@ _: {
       systemdGraphEnabled = config.services.systemd-graph.enable or false;
       systemdTimerMonitorEnabled = config.services.systemd-timer-monitor.enable or false;
       cvEnabled = config.services.cv-server.enable or false;
+      tqAgentPoolEnabled = config.services.tq-agent-pool.enable or false;
 
       theme = import ../../../platforms/common/theme.nix;
       colors = theme.colorScheme.palette;
@@ -197,7 +198,14 @@ _: {
       );
 
       aiServices =
-        lib.optional crushDailyEnabled (
+        lib.optional tqAgentPoolEnabled (
+          mkService "tq Agent Pool" {
+            href = svcUrl "tq";
+            description = "TODO_LIST Harvest + Headless Crush Agents";
+            icon = "mdi-checkbox-marked-circle-outline";
+          }
+        )
+        ++ lib.optional crushDailyEnabled (
           mkService "Crush Daily" {
             href = svcUrl "daily";
             description = "AI-Powered Development Insights";

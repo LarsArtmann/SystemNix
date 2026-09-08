@@ -663,6 +663,17 @@ in
         enable = true;
       };
 
+      # tq agent pool — go-taskqueue dogfood (ROUND8 plan): harvests
+      # TODO_LIST.md items from CV/SystemNix/go-taskqueue and runs headless
+      # crush agents (model pinned per-repo by the tq-bootstrap oneshot's
+      # .crushrc managed block). House defaults (pool journal on the HDD
+      # pool, budget 30/day, Caddy tq.<domain> dashboard) live in
+      # modules/nixos/services/tq-agent-pool.nix. Cutover runbook for the
+      # manually-run round-9 pool: docs/services/tq.md.
+      tq-agent-pool = {
+        enable = true;
+      };
+
       # Overview — local project dashboard (discovers git repos, shows stats/activity)
       overview = {
         enable = true;

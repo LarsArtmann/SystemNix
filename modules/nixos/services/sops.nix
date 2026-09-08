@@ -581,6 +581,23 @@ in
               };
             };
           }
+          # tq agent pool PapDashboard bridge (dead letters + budget
+          # exhaustion → alerts). DELIBERATELY a dedicated template rendering
+          # ONLY this key: the pool unit's environment is inherited by the
+          # headless crush agents it spawns (arbitrary payloads), so sharing
+          # papdashboard-env (PAP_DISCORD_WEBHOOK) or gatus-env would leak
+          # other services' secrets into every agent process tree.
+          // lib.optionalAttrs (svcEnabled "tq-agent-pool") {
+            "tq-agent-pool-env" = {
+              owner = "root";
+              group = "root";
+              mode = "0400";
+              restartUnits = [ "tq-agent-pool.service" ];
+              content = lib.generators.toKeyValue { } {
+                TQ_PAP_API_KEY = config.sops.placeholder.papdashboard_api_key;
+              };
+            };
+          }
           // lib.optionalAttrs (svcEnabled "discordsync") {
             "discordsync-env" = {
               owner = "discordsync";
