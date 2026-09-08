@@ -168,7 +168,7 @@ _: {
               Group = "users";
               Environment = [ "TQ_DB=${toString cfg.dbPath}" ];
               ExecStart = lib.escapeShellArgs [
-                (lib.getExe cfg.package)
+                (lib.getExe' cfg.package "tq")
                 "bootstrap"
                 "CV"
                 "SystemNix"

@@ -492,6 +492,37 @@ else
   report_skip "Bank-Sync — service disabled (units absent from systemd)"
 fi
 
+# tq agent pool (port from lib/ports.nix: 8100). The dashboard body proves
+# the templ UI + journal tailer are live; the pool unit itself has NO HTTP
+# surface by design (Gatus watches it via system_service_state_failed, dead
+# letters alert through the PapDashboard bridge). The pool may legitimately
+# be mid-drain after a deploy restart (in-flight agents, 45min stop window)
+# — active state is enough, agent completions are async by nature.
+tq_enabled=false
+test -e /etc/systemd/system/tq-agent-pool.service && tq_enabled=true
+if $tq_enabled; then
+  tq_body="$(wait_body_pattern "http://127.0.0.1:8100/" "Live, read-only projection of the tq task-queue journal" 6 5)" || true
+  if grep -q "Live, read-only projection of the tq task-queue journal" <<<"$tq_body"; then
+    report_pass "tq — dashboard answers (journal tailer + templ UI live)"
+  elif [ -z "$tq_body" ]; then
+    report_fail "tq — :8100 unreachable after 6 attempts (journalctl -u tq-serve -n 30)"
+  else
+    report_fail 'tq — :8100 answered but the body lacks the dashboard shell (journalctl -u tq-serve -n 30)'
+  fi
+  if systemctl is-active --quiet tq-agent-pool.service; then
+    report_pass "tq — agent pool active (harvest + agents running)"
+  else
+    report_fail "tq — agent pool NOT active (systemctl status tq-agent-pool; common cause: pool.conf key typo fails loudly at start)"
+  fi
+  if test -f /mnt/pool/services/tq/tq.db; then
+    report_pass "tq — journal exists on the pool (/mnt/pool/services/tq/tq.db)"
+  else
+    report_warn "tq — journal file absent: first start may still be creating it (or tq-storage-dir failed — check the DAS mount)"
+  fi
+else
+  report_skip "tq — service disabled (units absent from systemd)"
+fi
+
 # InboxClean (port from lib/ports.nix: 8099). /health proves the CQRS stack
 # (SQLite + event store migrations ran); the dashboard body proves templ
 # rendering. Per-account Gmail states: "main" must be connected; extra
