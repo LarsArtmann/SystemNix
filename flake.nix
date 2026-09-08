@@ -300,7 +300,7 @@
     # deliberately NOT followed (bank-sync FOD-mismatch trap above): the
     # vendorHash was validated with upstream's locked helper.
     go-taskqueue = {
-      url = "git+file:///home/lars/projects/go-taskqueue?rev=7890cc971d7c84bc04e5527f49224dd7c9a924c4";
+      url = "git+file:///home/lars/projects/go-taskqueue?rev=ca8a2f4cba88ae77545e3d53f04b5b9f7db74508";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
