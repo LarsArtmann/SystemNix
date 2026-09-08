@@ -301,6 +301,13 @@ _: {
           // lib.optionalAttrs (config.services.bank-sync.enable or false) {
             "banksync.${domain}" = protectedVHost "banksync" ports.bank-sync;
           }
+          # tq dashboard — read-only projection of the agent-pool journal;
+          # renders task payloads + error tails, so external access sits
+          # behind forward-auth (LAN bypass like every Layer 2 vHost).
+          # SSE live-updates stream fine through the standard proxyTo.
+          // lib.optionalAttrs (config.services.tq-agent-pool.serve.enable or false) {
+            "tq.${domain}" = protectedVHost "tq" ports.tq;
+          }
           // lib.optionalAttrs config.services.overview.enable {
             "overview.${domain}" = protectedVHost "overview" ports.overview;
           }

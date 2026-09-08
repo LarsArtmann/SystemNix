@@ -204,16 +204,18 @@ _: {
           # root-owned 0400 template stays unreadable to the pool process
           # tree except through the injected env (deliberately a DEDICATED
           # template: agent payloads inherit the environment).
-          serviceConfig = {
-            EnvironmentFile = [ config.sops.templates."tq-agent-pool-env".path ];
-            # The pool's children are LLM agents + builds: generous memory
-            # ceiling (2 concurrent agents) and CPU headroom beyond the
-            # harden{} 200% default, lowest-but-one BFQ tier like the other
-            # build machinery.
-            MemoryMax = "8G";
-            CPUQuota = "400%";
-          };
-          serviceConfig = ioTier.build;
+          serviceConfig = lib.mkMerge [
+            {
+              EnvironmentFile = [ config.sops.templates."tq-agent-pool-env".path ];
+              # The pool's children are LLM agents + builds: generous memory
+              # ceiling (2 concurrent agents) and CPU headroom beyond the
+              # harden{} 200% default, lowest-but-one BFQ tier like the other
+              # build machinery.
+              MemoryMax = "8G";
+              CPUQuota = "400%";
+            }
+            ioTier.build
+          ];
         };
 
         systemd.services.tq-serve = {

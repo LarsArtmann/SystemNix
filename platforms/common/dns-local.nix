@@ -28,5 +28,6 @@
     "timers"
     "cv"
     "inbox"
+    "tq"
   ];
 }

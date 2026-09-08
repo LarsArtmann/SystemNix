@@ -210,6 +210,9 @@ in
           subvolume."services/browser-history" = { };
           subvolume."services/bank-sync" = { };
           subvolume."services/activitywatch" = { };
+          # go-taskqueue journal (services.tq-agent-pool) — task history +
+          # watermarks are worth nightly pool snapshots.
+          subvolume."services/tq" = { };
         };
       };
     };

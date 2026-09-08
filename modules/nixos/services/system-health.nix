@@ -1259,6 +1259,9 @@ _: {
             "projects-management-automation"
             "signoz"
             "tika"
+            "tq-agent-pool"
+            "tq-bootstrap"
+            "tq-serve"
             "wifi-failover"
           ];
           description = "Systemd services to monitor for state, restart count, crash-loop detection, and start-limit-hit";

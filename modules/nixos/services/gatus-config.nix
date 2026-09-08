@@ -2093,6 +2093,40 @@ _: {
                   alerts = discordAlert "Bank-Sync syncs are failing (or never succeeded) while the dashboard stays green — the August invisible-outage class. Check: journalctl -u bank-sync -n 100, then curl localhost:8097/metrics and read bank_sync_sync_errors_total + bank_sync_last_sync_timestamp_seconds.";
                 })
               ]
+              ++ lib.optionals (config.services.tq-agent-pool.serve.enable or false) [
+                # Functional, not just liveness: the constant meta
+                # description of the real dashboard shell (live-verified
+                # against tq serve; the <title> carries a dynamic count).
+                (mkHttpCheck {
+                  name = "tq Dashboard";
+                  group = "Development";
+                  url = "http://localhost:${toString ports.tq}/";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 2000"
+                    "[BODY] == pat(*Live, read-only projection of the tq task-queue journal*)"
+                  ];
+                  alerts = discordAlert "tq dashboard down — the agent-pool journal view at tq.home.lan is unreachable. Check: systemctl status tq-serve, journalctl -u tq-serve.";
+                })
+              ]
+              # Pool liveness from the system-health collector: the pool has
+              # no HTTP surface by design (same shape as postfix/fastflowlm).
+              # Dead letters + budget exhaustion alert separately through the
+              # PapDashboard bridge (alert-url in poolSettings).
+              ++ lib.optionals (config.services.tq-agent-pool.enable or false) [
+                (mkHttpCheck {
+                  name = "tq Agent Pool Service";
+                  group = "Development";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_service_state_failed{service=\"tq-agent-pool\"} 0*)"
+                  ];
+                  alerts = discordAlert "tq agent-pool unit failed — TODO_LIST harvest + agent execution halted (dashboard keeps serving from the journal). Check: systemctl status tq-agent-pool, journalctl -u tq-agent-pool -n 100.";
+                })
+              ]
               ++ lib.optionals (config.services.papdashboard.enable or false) [
                 (mkHttpCheck {
                   name = "PapDashboard";

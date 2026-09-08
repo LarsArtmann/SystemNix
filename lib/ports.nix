@@ -112,5 +112,8 @@
 
     # InboxClean — Gmail AI assistant web dashboard (services.inboxclean)
     inboxclean = 8099;
+
+    # go-taskqueue — read-only tq serve dashboard (services.tq-agent-pool)
+    tq = 8100;
   };
 }
