@@ -178,6 +178,15 @@ in
     # User account
     users.users.lars = {
       isNormalUser = true;
+      # The UID is pinned because `config.users.users.lars.uid` is null at eval
+      # time (isNormalUser assigns the UID at activation, not eval), and
+      # `attr or default` does NOT catch null — `toString null` = "" (proven
+      # 2026-09-08). Every `${uid}` interpolation (scheduled-tasks.nix
+      # notify-failure@ + service-health-check) silently rendered
+      # XDG_RUNTIME_DIR=/run/user/ (empty), so notify-send could never reach
+      # the session bus and every OnFailure alert fell back to journal-only.
+      # Same root cause as boot.nix's hardcoded "user-1000" slice.
+      uid = 1000;
       description = "Lars";
       extraGroups = [
         "networkmanager"

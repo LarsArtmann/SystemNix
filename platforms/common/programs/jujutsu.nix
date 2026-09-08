@@ -1,7 +1,7 @@
 # Jujutsu (jj) — Git-compatible DVCS. Mirrors the identity/signing setup in git.nix.
 # NOTE: pkgs.jj is a JSON stream editor, NOT this tool. The HM module installs
 # pkgs.jujutsu and renders ~/.config/jj/config.toml.
-{ ... }: {
+_: {
   programs.jujutsu = {
     enable = true;
 
