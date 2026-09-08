@@ -112,7 +112,8 @@ let
       gh # GitHub CLI
       git-town # High-level Git workflow management
       git-filter-repo # Rewrite git history
-      jj # Git-compatible version control system
+      # NOTE: pkgs.jj is a JSON stream editor, NOT Jujutsu — do not re-add here.
+      # Jujutsu is installed via programs.jujutsu in platforms/common/programs/jujutsu.nix.
       mr # myrepos — manage multiple repositories via a single command
 
       # Essential editors

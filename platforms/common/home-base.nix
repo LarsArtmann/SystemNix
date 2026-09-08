@@ -23,6 +23,7 @@ in
     ./programs/activitywatch.nix
     ./programs/tmux.nix
     ./programs/git.nix
+    ./programs/jujutsu.nix
     ./programs/fzf.nix
     ./programs/direnv.nix
     ./programs/pre-commit.nix
