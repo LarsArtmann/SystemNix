@@ -17,7 +17,7 @@ Resume/CV generator (`cv serve`, Go + Typst) from the private
 | Persistence       | `/var/lib/cv/data/pipeline.sqlite` (event store; `pipeline.event_store_driver=sqlite`)        |
 | Backups           | `/mnt/pool/backups/cv/pipeline-<ts>.sqlite`, nightly 03:17 (`cv-backup.timer`)                |
 | Scan automation    | `cv-scan.timer` every 6h (:23): POST `/api/pipeline/scan` + `/evaluate-tracked` + `/auto-apply` (X-API-Key) |
-| Session probe     | `cv-profile-probe.timer` weekly Mon 09:41: `cv profile accounts --probe --all` — exit 3 = invalid session → onFailure alert (chromium in the closure) |
+| Session probe     | `cv-profile-probe.timer` weekly Mon 09:41: `cv profile accounts --probe --all` — exit 3 = invalid session → unit fails → `OnFailure=notify-failure@%n` (critical desktop notification via notify-send, syslog-error fallback when the desktop session is absent). Alert routing was journal-only in practice until 2026-09-08: the `XDG_RUNTIME_DIR=/run/user/${uid}` interpolation rendered EMPTY (`users.users.lars.uid` is null at eval and Nix `or` does not catch null) so notify-send could never reach the session bus — fixed by pinning `uid = 1000` in configuration.nix (same root cause as boot.nix's hardcoded user-1000 slice); live on the NEXT deploy |
 | Monitoring        | Gatus: `CV` (liveness 60s), `CV Page Renders` (/cv HTML 5m), `CV PDF Export` (%PDF 5m), `CV Funnel Freshness` (sse-stats 30m), `CV Pipeline Store Health` (/health 5m) |
 | Tracing           | OTLP-HTTP → localhost:4318, service `cv-application` (SigNoz)                                 |
 | Upstream pin      | flake input `cv` (rev-locked, git+ssh; no `follows` — vendorHash stability)                   |
@@ -65,6 +65,30 @@ the same `CV_API_KEY` the server reads (sops `cv-env` template):
 Both endpoints are async + 409-guarded, so an overlap with a
 dashboard-triggered run is harmless. Failures (non-200/409, e.g. a wrong
 key after rotation) fail the unit → onFailure alert.
+
+## Weekly gun.io check (user timer, no root)
+
+`scripts/gunio-weekly-check.sh` (CV checkout) is the monitoring cluster's
+weekly core: profile verify (session + criteria + baseline diff), jobs-feed
+diff, and the funnel bridge. Registered 2026-09-08 as a systemd USER timer
+(deadportals no-root precedent), with the rc semantics wired:
+
+- **rc 1 (drift/probe failure) = ALERT** — the unit fails, `OnFailure`
+  triggers the user unit `~/.config/systemd/user/cv-gunio-weekly-alert.service`
+  (critical desktop notification, syslog fallback).
+- **rc 3 (funnel candidates) = TO-DO** — `SuccessExitStatus=3` keeps the unit
+  green; the runbook lands in `journalctl --user -u cv-gunio-weekly`.
+- Transient timer `cv-gunio-weekly.timer`, Sun 21:00 — dies at user logout;
+  re-register with `bash scripts/gunio-weekly-check.sh --print-timer`.
+
+Registration env (the user manager has NO devshell env — verified by live
+runs 2026-09-08): `WorkingDirectory=/home/lars/projects/CV`,
+`PATH=/run/current-system/sw/bin:/etc/profiles/per-user/lars/bin`,
+`CHROMIUM_EXECUTABLE_PATH=<nix-store chromium>` and
+`PLAYWRIGHT_BROWSERS_PATH=$HOME/tmp/playwright` (the verify step launches
+the session probe). The script itself now pins `GOEXPERIMENT=jsonv2`
+(defaulted) — without it `go run ./cmd/cv` cannot compile outside the
+devshell and EVERY timer run false-drifts rc 1.
 
 ## Evaluation knobs
 
@@ -178,11 +202,20 @@ journalctl -u cv-server --since "-10 min" | grep -E 'scan completed|bulk evaluat
 
 ## Pending root-gated proofs (paste into ONE root shell)
 
-Most 2026-08-27 deployment claims have since been verified live: nightly
-backups LAND pool-side (`pipeline-20260901T031700.sqlite` 970K,
-`pipeline-20260902T031700.sqlite` 1.67M — the event store grows with the
-funnel; 14-day retention since 2026-09-02), and the 03:17 timer is green in
-backup-coordination. Still open for a root shell when convenient:
+Non-root verification completed 2026-09-08 (evidence below): nightly backups
+land pool-side through TODAY (`pipeline-20260908T031700.sqlite` 7.3M, 8
+artifacts, 14-day retention), `backup_healthy{backup="cv"} 1` in the
+backup-coordination textfile metrics (age 17h, maxAge 25h), the prod
+`/pipeline` dashboard shows **0 dead portals** with all 14 configured portals
+`ok`, OTel spans for `cv-application` are LIVE in SigNoz (12,169 spans in
+`signoz_traces.signoz_index_v3`; a hand-triggered `/export/pdf` at 20:34:45
+produced its span at 20:34:45.28 — same second), the Gatus `CV PDF Export`
+cycle was observed end-to-end (200s at 5m cadence, ~160-170ms each, in the
+cv-server journal), and the server's peak RSS under `MemoryMax=1G` /
+`GOMEMLIMIT=768MiB` is **187 MiB** (`VmHWM 191852 kB`, `VmRSS` ~71-76 MB
+steady-state) with Gatus driving an export every 5 minutes.
+
+Still open for a root shell when convenient:
 
 ```bash
 # 1. Asset-vanishing incident forensics (2026-08-27, ~10:15–10:45 window):
@@ -195,18 +228,10 @@ curl -s http://localhost:8098/health/live        # baseline healthy
 systemctl restart cv-server && sleep 8
 curl -s http://localhost:8098/health/live        # back up, same version
 #    then compare tracked applications before/after via the dashboard
-
-# 3. First PDF-export RSS under MemoryMax=1G / GOMEMLIMIT=768MiB
-curl -s -o /dev/null http://localhost:8098/export/pdf
-systemctl status cv-server --no-pager | grep -E 'Memory|Tasks'
-journalctl -u cv-server --since "-10 min" | grep -iE 'oom|killed|memory'
+#    (state-dir listing is the same root shell: ls -la /var/lib/cv/data/)
 ```
 
-Also observe one full Gatus `CV PDF Export` cycle (5m) and the
-`cv-application` service in SigNoz traces (traces.home.lan, last 1h) —
-both were config-level-verified only.
-
-## Restore drill
+## Restore drill (root)
 
 ```bash
 systemctl stop cv-server
@@ -214,6 +239,9 @@ cp /mnt/pool/backups/cv/pipeline-<ts>.sqlite /var/lib/cv/data/pipeline.sqlite
 chown cv:cv /var/lib/cv/data/pipeline.sqlite && chmod 600 /var/lib/cv/data/pipeline.sqlite
 systemctl start cv-server   # rehydration replays events, no snapshot needed
 ```
+
+A real restore drill remains pending (owner root shell; the 8 backup
+artifacts above are restorable round-trip-tested upstream).
 
 ## Rotating `CV_API_KEY`
 
