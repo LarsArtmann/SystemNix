@@ -4450,15 +4450,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1788901745,
-        "narHash": "sha256-k2hPM9FEmu1H5pM3+jfRaQ4d2RXMpB5gPi4Mx8xC5Aw=",
+        "lastModified": 1788902484,
+        "narHash": "sha256-LyaHjnVEN2wKRr1tH/m3XekWzMyMWTnuWw7tNNJB+tk=",
         "ref": "refs/heads/master",
-        "rev": "c0a0918345fff39bdbed92ef18f94af074909436",
-        "revCount": 323,
+        "rev": "7890cc971d7c84bc04e5527f49224dd7c9a924c4",
+        "revCount": 327,
         "type": "git",
         "url": "file:///home/lars/projects/go-taskqueue"
       },
       "original": {
+        "rev": "7890cc971d7c84bc04e5527f49224dd7c9a924c4",
         "type": "git",
         "url": "file:///home/lars/projects/go-taskqueue"
       }
