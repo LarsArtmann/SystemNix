@@ -286,6 +286,19 @@
       };
     };
 
+    # go-taskqueue — projects-aware task work queue + agent pool (tq CLI).
+    # git+file INTERIM (upstream ROUND8 plan B0): the local master sits ahead
+    # of origin (owner-blocked push), so the input pins the LOCAL repo —
+    # flip to "github:LarsArtmann/go-taskqueue?ref=master" after the push
+    # lands and drop this comment. CI cannot fetch git+file inputs (local
+    # path) — same window as the storage-collector collector-utils pin.
+    # go-nix-helpers deliberately NOT followed (bank-sync FOD-mismatch trap
+    # above): the vendorHash was validated with upstream's locked helper.
+    go-taskqueue = {
+      url = "git+file:///home/lars/projects/go-taskqueue";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # qmd — on-device hybrid search (BM25 + vector embeddings + LLM rerank)
     # for markdown and code; global CLI + MCP server (stdio/HTTP) for Crush.
     # nixpkgs is deliberately NOT followed: upstream's nodeModules FOD hash

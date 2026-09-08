@@ -73,6 +73,7 @@ nixpkgs.lib.nixosSystem {
     inputs.emeet-pixyd.nixosModules.default
     inputs.crush-daily.nixosModules.crush-daily
     inputs.bank-sync.nixosModules.default
+    inputs.go-taskqueue.nixosModules.default
     ../platforms/nixos/system/configuration.nix
   ];
 }
