@@ -488,10 +488,26 @@ in
           fi
 
           for dir in /mnt/pool/backups/root /mnt/pool/backups/data; do
+            # /data is WARN-only while the /data EIO corruption stance holds
+            # (TODO_LIST P0): btrbk-data has not completed a receive since
+            # 2026-08-20, so a hard FAIL here exit-4'd EVERY activation that
+            # touched this unit file (2026-09-08/09: two un-anchored
+            # generations, reboot-revert hazard). The gap stays visible via
+            # btrbk-data OnFailure, backup-coordination, and Gatus
+            # backup_all_healthy. Restore hard-FAIL after the corruption repair.
+            if [ "$dir" = "/mnt/pool/backups/data" ]; then
+              fatal=no
+            else
+              fatal=yes
+            fi
             latest=$(find "$dir" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort | tail -1)
             if [ -z "$latest" ]; then
-              echo "FAIL: no received backups found in $dir"
-              exit 1
+              if [ "$fatal" = "yes" ]; then
+                echo "FAIL: no received backups found in $dir"
+                exit 1
+              fi
+              echo "WARN: no received backups found in $dir (known /data EIO stance, see unit comment)"
+              continue
             fi
 
             # Received subvols keep the snapshot name: @.YYYYMMDDTHHMM /
@@ -507,8 +523,12 @@ in
             snap_epoch=$(date -d "''${datestr:0:4}-''${datestr:4:2}-''${datestr:6:2}" +%s)
             age_days=$(( ($(date +%s) - snap_epoch) / 86400 ))
             if [ "$age_days" -gt "$MAX_AGE_DAYS" ]; then
-              echo "FAIL: newest backup in $dir is $age_days days old (threshold: $MAX_AGE_DAYS)"
-              exit 1
+              if [ "$fatal" = "yes" ]; then
+                echo "FAIL: newest backup in $dir is $age_days days old (threshold: $MAX_AGE_DAYS)"
+                exit 1
+              fi
+              echo "WARN: newest backup in $dir is $age_days days old (known /data EIO stance, see unit comment)"
+              continue
             fi
             echo "OK: $dir newest backup is $age_days day(s) old"
           done
