@@ -291,6 +291,15 @@ trap 'rm -f "$METRICS_FILE"' EXIT
 # shellcheck disable=SC2034
 MONITOR365_UP=false
 
+# cv /metrics is X-API-Key gated (verified live 2026-09-09: unauthenticated
+# probes get 401, so this loop's curl can never append cv metrics to the
+# body — the authenticated gatus check owns their visibility). Read by the
+# sourced metrics-gate.sh.
+# shellcheck disable=SC2034
+CV_ENDPOINT_UP=false
+# shellcheck disable=SC2034
+CV_METRICS="cv_autoapply_passes cv_autoapply_pass_errors"
+
 if curl -sf --compressed --max-time 5 "http://127.0.0.1:${NODE_EXPORTER_PORT}/metrics" -o "$METRICS_FILE" 2>/dev/null; then
   pass "Node exporter (port ${NODE_EXPORTER_PORT}) responding"
 else
@@ -324,6 +333,10 @@ for port_name in $GATUS_SERVICE_METRIC_PORTS; do
     if [ "${port_name}" = "discordsync-api" ]; then
       # shellcheck disable=SC2034
       DISCORDSYNC_API_UP=true
+    fi
+    if [ "${port_name}" = "cv" ]; then
+      # shellcheck disable=SC2034
+      CV_ENDPOINT_UP=true
     fi
   else
     warn "Service metrics '${port_name}' (port ${port_num:-unresolved}) not responding — its gatus pats will flag absent"
@@ -465,15 +478,16 @@ if [ -s "$METRICS_FILE" ]; then
   # system_stuck_dstate_processes (2026-09-04): RETIRED 2026-09-09 — this
   # gate's own run confirmed it live in :9100/metrics (nonzero until the
   # owed reboot clears the amdxdna corpse pile).
-  # cv_autoapply_passes / cv_autoapply_pass_errors (2026-09-09): the "CV
-  # auto-apply gauges" gatus check references them; the RUNNING cv-server
-  # predates the gauges but the locked cv rev 43b3f931 verifiably emits
-  # both (internal/features/metrics/handlers/metrics.go initAutoApplyGauges,
-  # git-grep-confirmed at the locked rev). One-deploy loan: remove after the
-  # first deploy confirms them in :8098/metrics.
+  # cv_autoapply_passes / cv_autoapply_pass_errors (2026-09-09): RETIRED same
+  # day — all five cv_autoapply_* gauges confirmed LIVE via the authenticated
+  # probe (X-API-Key, --compressed); the gate's unauthenticated probe can
+  # never see them (401), so they are handled by the CV_ENDPOINT_UP branch
+  # in metrics-gate.sh, not by this one-deploy loan.
+  # The list is empty; re-add ONLY when a deploy introduces metrics the
+  # running generation's collector cannot yet emit.
   # Read by the sourced metrics-gate.sh.
   # shellcheck disable=SC2034
-  KNOWN_NEW_METRICS="cv_autoapply_passes cv_autoapply_pass_errors"
+  KNOWN_NEW_METRICS=""
   for metric in $(extract_gatus_metrics); do
     metrics_gate_classify_absence "$metric" || MISSING_METRICS=$((MISSING_METRICS + 1))
   done

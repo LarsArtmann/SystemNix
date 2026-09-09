@@ -10,6 +10,7 @@
 #   B  FORGEJO_SCAN_FAILED    → WARN
 #   B2 POCKET_ID_SCAN_FAILED  → WARN
 #   D  KNOWN_NEW_METRICS      → WARN (absent until the switch lands)
+#   F  CV_ENDPOINT_UP=false    → WARN (auth-gated /metrics, probe-blind)
 #   C  present metric         → PASS
 #   E  absent + no flags      → FAIL (the phantom-metric hard block — must
 #                                never silently pass: no phantom green)
@@ -47,6 +48,8 @@ reset_env() {
   MONITOR365_UP=false
   DISCORDSYNC_METRICS="discordsync_turso_local_only_mode"
   DISCORDSYNC_API_UP=false
+  CV_METRICS="cv_autoapply_passes cv_autoapply_pass_errors"
+  CV_ENDPOINT_UP=false
   FORGEJO_SCAN_FAILED=false
   POCKET_ID_SCAN_FAILED=false
   TEXTFILE_SCRAPE_ERROR=false
@@ -127,6 +130,14 @@ system_pocket_id_busy_scrape_errors 1
 EOF
 metrics_gate_classify_absence "system_pocket_id_busy_over_threshold"
 expect "warn" "known-new classification still WARN under scan-failed (any warn is acceptable)"
+
+echo "=== Fixture F: cv endpoint auth-gated (401 to probe) — cv_* absence is not a phantom ==="
+reset_env
+cat >"$METRICS_FILE" <<'EOF'
+node_textfile_scrape_error 0
+EOF
+metrics_gate_classify_absence "cv_autoapply_passes"
+expect "warn" "cv metric absent while endpoint probe-blind → WARN (gatus check owns visibility)"
 
 if [ "$TEST_FAILURES" -gt 0 ]; then
   echo ""

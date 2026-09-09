@@ -12,6 +12,7 @@
 #   KNOWN_NEW_METRICS — space-separated metrics shipping in THIS deploy
 #   MONITOR365_METRICS / MONITOR365_UP
 #   DISCORDSYNC_METRICS / DISCORDSYNC_API_UP
+#   CV_METRICS / CV_ENDPOINT_UP
 #   FORGEJO_SCAN_FAILED / POCKET_ID_SCAN_FAILED / TEXTFILE_SCRAPE_ERROR
 metrics_gate_classify_absence() {
   local metric="$1"
@@ -23,6 +24,8 @@ metrics_gate_classify_absence() {
     warn "Metric '$metric' absent (Monitor365 endpoint down — not a phantom metric)"
   elif echo "$DISCORDSYNC_METRICS" | grep -qw "$metric" && [ "$DISCORDSYNC_API_UP" = false ]; then
     warn "Metric '$metric' absent (discordsync endpoint down/stopped — not a phantom metric)"
+  elif echo "$CV_METRICS" | grep -qw "$metric" && [ "$CV_ENDPOINT_UP" = false ]; then
+    warn "Metric '$metric' absent (cv /metrics answers 401 to the unauthenticated probe — auth-gated, not a phantom metric; the authenticated gatus check owns its visibility)"
   elif [ "$FORGEJO_SCAN_FAILED" = true ]; then
     warn "Metric '$metric' absent — running system reports forgejo mirror journal scan FAILED (system_forgejo_mirror_scrape_errors=1): fail-closed absence, infrastructure signal"
   elif [ "$POCKET_ID_SCAN_FAILED" = true ]; then
