@@ -194,7 +194,9 @@ if nix run .#pre-deploy-check; then
   manual_tq=$(pgrep -af '/tmp/tq' || true)
   if [ -n "$manual_tq" ]; then
     echo "⚠ manual tq processes detected — the systemd pool would double-run:"
-    echo "$manual_tq" | sed 's/^/    /'
+    while IFS= read -r tq_line; do
+      echo "    $tq_line"
+    done <<< "$manual_tq"
     echo "  → cutover per docs/services/tq.md before relying on the systemd pool"
   else
     echo "  no manual /tmp/tq processes — systemd pool is sole owner"
