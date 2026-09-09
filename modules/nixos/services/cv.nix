@@ -110,6 +110,18 @@
               # (/projects/golang, ...) are dead anonymously — never add
               # them (see CV AGENTS.md, Portal Scanners).
               portals = [
+                # The operator's primary German GCP search (upstream
+                # config.yaml portal #1, live-pinned by
+                # TestLiveContract_FreelancermapGermanGCPSearch; path-aware
+                # canonicalization sends /projekte... paths to the .de
+                # host). Missing here since the 2026-09-01 upstream sync —
+                # the highest-paying project class was invisible to the
+                # production funnel (upstream issue #563).
+                {
+                  url = "https://www.freelancermap.de/projekte/web-und-softwareentwicklung?categories%5B0%5D=8&categories%5B1%5D=11&projectContractTypes%5B0%5D=contracting&query=%28%22Google+Cloud%22+OR+CGP+OR+%22Google+Cloud+Platform%22%29&sort=1&pagenr=1";
+                  company = "Freelancermap";
+                  provider = "freelancermap";
+                }
                 {
                   url = "https://www.freelancermap.com/projects";
                   company = "Freelancermap";
