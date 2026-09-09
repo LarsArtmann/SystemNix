@@ -5802,11 +5802,11 @@
         "systems": "systems_12"
       },
       "locked": {
-        "lastModified": 1788800134,
-        "narHash": "sha256-s3yvJZi0nc2yIB/uTnjWMWW5a4IH1ZvQxPTzo/J6wtU=",
+        "lastModified": 1788899032,
+        "narHash": "sha256-FWKjX/EdkxVaugwy3wqIihqhR8oUIUoF5hyayDHKgNE=",
         "owner": "LarsArtmann",
         "repo": "project-discovery-daemon",
-        "rev": "4f6e3c83a5a7958324ccb4e4ee54a19257fa643f",
+        "rev": "1a31c1a307e75b531e86c1e81c706c00bd166c37",
         "type": "github"
       },
       "original": {
