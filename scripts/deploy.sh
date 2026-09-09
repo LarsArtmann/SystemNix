@@ -341,6 +341,24 @@ if nix run .#pre-deploy-check; then
     sudo systemctl start monitor365.service 2>/dev/null || true
   fi
 
+  # Re-stop a wedged FastFlowLM (EADDRINUSE corpse) AFTER the switch: the
+  # switch transaction's target cascade re-arms a stopped-but-enabled socket
+  # (observed 2026-09-09 17:19:33 — "Listening on" seconds into activation),
+  # after which every :52625 client connection re-triggers a doomed backend
+  # start that churns toward start-limit-hit — and one such start landing
+  # inside a FUTURE switch transaction is the exit-4 profile-skip class
+  # (2026-09-09 16:20). Only a reboot clears the corpse; until then keep both
+  # units down post-deploy so consumers fail fast instead of churning.
+  if journalctl -u fastflowlm.service -n 30 --no-pager 2>/dev/null | grep -q 'bind: Address already in use'; then
+    flm_post_state=$(systemctl show fastflowlm.service -p ActiveState --value 2>/dev/null || echo inactive)
+    flm_post_socket_state=$(systemctl show fastflowlm.socket -p ActiveState --value 2>/dev/null || echo inactive)
+    if [ "$flm_post_state" != "inactive" ] || [ "$flm_post_socket_state" != "inactive" ]; then
+      echo "⚠ re-stopping wedged flm socket+service (the switch re-armed them; only a reboot clears the corpse)"
+      sudo systemctl stop fastflowlm.socket fastflowlm.service 2>/dev/null || true
+      sudo systemctl reset-failed fastflowlm.service 2>/dev/null || true
+    fi
+  fi
+
   # Restart Caddy after every deploy. The harden() helper sets PrivateTmp=true
   # which blocks systemd's mount-namespace reload path — switch-to-configuration
   # silently fails to reload Caddy (exit code 4), leaving new vHosts unloaded.
