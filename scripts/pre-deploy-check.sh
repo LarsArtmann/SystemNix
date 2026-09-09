@@ -462,13 +462,18 @@ if [ -s "$METRICS_FILE" ]; then
   # h4w1yz17 generation (pocket-id pair retired earlier the same day).
   # The list is empty; re-add ONLY when a deploy introduces metrics the
   # running generation's collector cannot yet emit.
-  # system_stuck_dstate_processes (2026-09-04): unkillable-D-state tripwire
-  # from the amdxdna-wedge incident (20 stranded llama-servers); the collector
-  # emitting it ships in THIS deploy. Remove after the first deploy confirms
-  # it in :9100/metrics (expect a nonzero value until the box reboots).
+  # system_stuck_dstate_processes (2026-09-04): RETIRED 2026-09-09 — this
+  # gate's own run confirmed it live in :9100/metrics (nonzero until the
+  # owed reboot clears the amdxdna corpse pile).
+  # cv_autoapply_passes / cv_autoapply_pass_errors (2026-09-09): the "CV
+  # auto-apply gauges" gatus check references them; the RUNNING cv-server
+  # predates the gauges but the locked cv rev 43b3f931 verifiably emits
+  # both (internal/features/metrics/handlers/metrics.go initAutoApplyGauges,
+  # git-grep-confirmed at the locked rev). One-deploy loan: remove after the
+  # first deploy confirms them in :8098/metrics.
   # Read by the sourced metrics-gate.sh.
   # shellcheck disable=SC2034
-  KNOWN_NEW_METRICS="system_stuck_dstate_processes"
+  KNOWN_NEW_METRICS="cv_autoapply_passes cv_autoapply_pass_errors"
   for metric in $(extract_gatus_metrics); do
     metrics_gate_classify_absence "$metric" || MISSING_METRICS=$((MISSING_METRICS + 1))
   done
