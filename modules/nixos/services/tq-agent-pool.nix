@@ -73,7 +73,10 @@ _: {
           poolSettings = lib.mkDefault {
             projects-dir = "/home/${primaryUser}/projects";
             repos = "CV,SystemNix,go-taskqueue";
-            concurrency = "2";
+            # 3 = one agent per repo in parallel (project-exclusive still
+            # paces each repo to one in-flight task; GLM-5.3-Flash is
+            # cheap, daily-budget remains the real spend cap)
+            concurrency = "3";
             interval = "5m";
             task-timeout = "45m";
             max-per-tick = "3";
@@ -83,6 +86,12 @@ _: {
             yolo = "true";
             "project-exclusive" = "true";
             review = "true";
+            # Close the Flash-workforce loop (proposed 2026-09-10):
+            # request_changes verdicts mint fix tasks, and every 5
+            # completions per repo mint a done-prompt status report that
+            # appends next TODO items — the pool keeps feeding itself.
+            "review-autofix" = "true";
+            "status-every" = "5";
             "log-dir" = "/home/${primaryUser}/.local/state/tq/logs";
             "log-dir-max-age" = "168h";
             # Dead letters + budget exhaustion → PapDashboard (raw Gatus
