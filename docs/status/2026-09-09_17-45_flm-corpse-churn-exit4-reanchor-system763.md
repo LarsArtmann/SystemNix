@@ -96,3 +96,30 @@ the running system.
    count ~0, then remove `/boot/loader/loader.conf.bak-stuckboot`.
 2. Samsung p1 ESP mirror fate (keep static / automate / drop) — carried.
 3. Wise SCA approval + InboxClean main re-auth (both browser/app steps).
+
+## Addendum (same evening, 18:35–19:30): system-764 + guard validation + second re-armer
+
+- The 18:35 deploy (carrying the parallel tq/cv work) exercised both new
+  corpse guards end-to-end: pre-switch stop 18:34:58 → stc cascade re-arm
+  18:35:28 → post-switch re-stop 18:35:29 (1 s later). Clean activation,
+  profile bumped 763→**764 (`50z91iw1…`)**, 0 failed units at settle,
+  smoke 89 PASS / 7 baseline-FAIL / 6 SKIP.
+- **Second socket re-armer found (corrects this report's memory-guard
+  rule-out):** the guard's RESTORE branch fired at 17:56:24 and 18:44:55
+  ("sacrifice sockets restored", 2 of maxRestoresPerDay=3) — it sees the
+  deploy guards' stop, assumes its own past sacrifice, and restores the
+  socket while memory is healthy. The rule-out above was a filter
+  artifact: guard script output logs under syslog id
+  `memory-emergency-guard-check`; `journalctl -u memory-emergency-guard`
+  never shows it. Churn between deploys is therefore expected and
+  self-extinguishing at the daily restore cap; only the reboot ends the
+  class.
+- **llama :8848/:8849 wedged mid-load** (503 for ~1 h, processes alive,
+  no D-state, ports bound — llama-server listens before model load, so
+  port-liveness looks green while /health 503s): the flaky-driver class.
+  Reboot clears.
+- pre-reboot-check re-run at 764: 14 PASS, 5/5 menu entries bootable,
+  **SAFE TO REBOOT** (kernel 7.2.3, entry `nixos-15d96c24…`). Post-reboot
+  verification target: **gen 764 / `50z91iw1…`** (not 763).
+- P1 candidate (post-soak): corpse-aware guard restore — skip restoring
+  fastflowlm sockets when the backend journal shows recent EADDRINUSE.
