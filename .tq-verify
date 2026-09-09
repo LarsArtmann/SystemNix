@@ -1,0 +1,1 @@
+nix flake check --no-build
