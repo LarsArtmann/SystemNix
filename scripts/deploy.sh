@@ -253,6 +253,31 @@ if nix run .#pre-deploy-check; then
   fi
 
   echo ""
+  echo "=== FastFlowLM wedged-backend guard (EADDRINUSE corpse class, 2026-09-09) ==="
+  # A dead flm thread group (Z+X pair) pins the backend port :52626 until the
+  # next REBOOT; every backend start then dies "bind: Address already in use"
+  # in <1s. Socket activation turns each :52625 client connection into a start
+  # request ("restart immediately on client request"), so a doomed start can
+  # land INSIDE the switch transaction, exit-4 the activation and skip the
+  # profile bump — the 2026-09-09 16:20 un-anchoring. Until the corpse is
+  # rebooted away, stop socket+backend pre-switch so nothing can wake the
+  # backend mid-transaction. Consumers fail fast (ECONNREFUSED, PMA falls
+  # back to heuristic commits); the socket returns on the post-reboot boot.
+  if journalctl -u fastflowlm.service -n 30 --no-pager 2>/dev/null | grep -q 'bind: Address already in use'; then
+    flm_state=$(systemctl show fastflowlm.service -p ActiveState --value 2>/dev/null || echo inactive)
+    flm_socket_state=$(systemctl show fastflowlm.socket -p ActiveState --value 2>/dev/null || echo inactive)
+    if [ "$flm_state" != "inactive" ] || [ "$flm_socket_state" != "inactive" ]; then
+      echo "⚠ wedged flm backend (EADDRINUSE corpse) still active/failed — stopping socket+service pre-switch"
+      sudo systemctl stop fastflowlm.socket fastflowlm.service 2>/dev/null || true
+      sudo systemctl reset-failed fastflowlm.service 2>/dev/null || true
+    else
+      echo "  wedged flm backend already stopped (only a reboot clears the corpse)"
+    fi
+  else
+    echo "  no recent flm bind errors — backend not in the corpse class"
+  fi
+
+  echo ""
   echo "=== Deploying NixOS config to evo-x2 ==="
   latest_system_generation() {
     local link num
