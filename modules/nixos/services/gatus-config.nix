@@ -2054,6 +2054,30 @@ _: {
                   ];
                   alerts = discordAlert "CV pipeline event store unreachable — tracked-applications persistence is degraded (cv.home.lan). Check: journalctl -u cv-server --since -15min; sqlite store at /var/lib/cv/data/pipeline.sqlite.";
                 })
+                # Auto-apply surface check: the cv_autoapply_* gauges must be
+                # REGISTERED on /metrics. Presence-only by decision — the
+                # counters are cumulative, so any pat on a VALUE ("errors 0")
+                # permanently breaks after the first transient 429 and pages
+                # forever (the same value-threshold trap as the funnel
+                # freshness RESPONSE_TIME flap). Pass CADENCE is covered by
+                # Funnel Freshness (the timer POSTs scan→evaluate→auto-apply
+                # in sequence; a dead auto-apply leg alone is a CV-side
+                # last-pass-file gap, not alertable here).
+                (mkHttpCheck {
+                  name = "CV Auto-Apply Metrics";
+                  group = "Productivity";
+                  url = "http://localhost:${toString ports.cv}/metrics";
+                  interval = "30m";
+                  headers = {
+                    X-API-Key = "$CV_API_KEY";
+                  };
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*cv_autoapply_passes*)"
+                    "[BODY] == pat(*cv_autoapply_pass_errors*)"
+                  ];
+                  alerts = discordAlert "CV auto-apply gauges missing from /metrics — the autoapply DI provider or metrics registration regressed (cv.home.lan). Check: journalctl -u cv-server --since -15min; GET /metrics | grep cv_autoapply.";
+                })
               ]
               ++ lib.optionals (config.services.bank-sync.enable or false) [
                 (mkHttpCheck {
