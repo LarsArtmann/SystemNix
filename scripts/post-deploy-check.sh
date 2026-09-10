@@ -338,6 +338,20 @@ if $cv_enabled; then
     report_fail "CV — pipeline-store not healthy (${cv_store:-check absent from /health}) — deployed cv binary predates 2026-09-02 or the sqlite store is unreachable (journalctl -u cv-server -n 50)"
     ;;
   esac
+  # Browser-level render check (cv repo, 2026-09-10): curl string pins pass
+  # while a real render is broken (broken CSP, half-served stylesheet). One
+  # headless-chromium pass asserting rendered DOM text on /cv + /admin.
+  # SKIP-tolerant: needs the cv checkout + bun/chromium on the host; its
+  # absence is a tooling gap (skip), a BROKEN render is a deploy failure.
+  if [ -f /home/lars/projects/CV/scripts/render-smoke.ts ] && command -v bun >/dev/null 2>&1; then
+    if bun /home/lars/projects/CV/scripts/render-smoke.ts http://127.0.0.1:8098 >/tmp/.smoke-cv-render.log 2>&1; then
+      report_pass "CV — browser render smoke (cv + admin render real DOM text in chromium)"
+    else
+      report_fail "CV — browser render smoke failed: pages load but do not RENDER (see /tmp/.smoke-cv-render.log) — string pins can pass while renders break"
+    fi
+  else
+    report_skip "CV — browser render smoke (cv checkout or bun absent on host)"
+  fi
 else
   report_skip "CV — service disabled (units absent from systemd)"
 fi
