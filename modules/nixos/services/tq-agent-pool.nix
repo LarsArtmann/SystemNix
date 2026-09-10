@@ -92,6 +92,9 @@ _: {
             # appends next TODO items — the pool keeps feeding itself.
             "review-autofix" = "true";
             "status-every" = "5";
+            # Second conversation turn per task: the brutal self-review +
+            # per-task status report (2026-09-10 loops).
+            "task-closeout" = "true";
             "log-dir" = "/home/${primaryUser}/.local/state/tq/logs";
             "log-dir-max-age" = "168h";
             # Dead letters + budget exhaustion → PapDashboard (raw Gatus
