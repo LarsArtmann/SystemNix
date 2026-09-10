@@ -119,6 +119,15 @@ record where the evidence contradicted it. No deploys, no config changes this se
    changed-unit ∩ failed-unit set (the "3 failed units arm the next deploy" advisory
    is only true for units whose FILES change — the 18:35 deploy activated cleanly
    with inboxclean-sync failed).
+   **[DONE 2026-09-10, user-requested]** — shipped in `scripts/pre-reboot-check.sh`:
+   §4 three-way anchor (ESP default = profile = running, catches the 2026-09-05
+   exit-4 bootloader-skip class), §5 profile-closure check when profile ≠ current,
+   §9 predictor + baseline age, §10 GC anchoring (default-entry roots, ladder pins,
+   booted-system gcroot, next nix-gc time). Also: EMPTY loader.conf = hard fail,
+   @saved/glob defaults → strict per-entry asset audit, no-default no longer
+   silently skips §2. Fixture-tested via BOOT_DIR (f1–f5) + live-verified
+   (18 PASS / 0 FAIL; predictor correctly names inboxclean-sync +
+   service-health-check, correctly absolves fastflowlm).
 6. **No silent pipelines**: every verification probe should assert its own output is
    non-empty.
 
@@ -154,7 +163,7 @@ record where the evidence contradicted it. No deploys, no config changes this se
    memory-emergency-guard.nix + VM-test negative case.
 10. llama mid-load wedge tripwire (503 >15 min) in Gatus or textfile collector.
 11. pre-reboot-check §10: gcroots/profiles resolution; smoke-baseline age-stamp;
-    changed-unit ∩ failed-unit exit-4 predictor.
+    changed-unit ∩ failed-unit exit-4 predictor. **(DONE 2026-09-10 — see §e5.)**
 12. `nix diff-closures 8zzq0b1i… pgvbfp20…` — what the Sep-8 unanchored era actually
     changed (06-02 §f).
 13. Sweep journal for ALL unexplained fastflowlm.socket "Listening on" events
@@ -204,7 +213,9 @@ record where the evidence contradicted it. No deploys, no config changes this se
 38. ActivityWatch 13GB pre-decimation backup deletion after settling.
 39. Secret-purge: GitHub support GC request (if push ever happens).
 40. pre-reboot-check: fold "failed units that WILL exit-4" advisory into a hard
-    gate once predictor (item 11) exists.
+    gate once predictor (item 11) exists. **(Predictor shipped 2026-09-10; hard-gate
+    fold deliberately DECLINED — exit-4 is a deploy concern that deploy.sh
+    reset-failed already recovers from, not a boot-safety one; stays advisory.)**
 
 *(40 items — remaining backlog tracked in TODO_LIST + 06-02 self-review §f.)*
 

@@ -115,5 +115,9 @@
 
     # go-taskqueue — read-only tq serve dashboard (services.tq-agent-pool)
     tq = 8100;
+
+    # Miniflux — self-hosted RSS reader (services.miniflux), loopback-only;
+    # Caddy proxies rss.home.lan to it.
+    miniflux = 8101;
   };
 }

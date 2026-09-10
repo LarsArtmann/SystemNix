@@ -5,8 +5,11 @@
 # 2026-09-05 near-miss (activation exit-4 skipped the profile/bootloader write).
 #
 # Boot chain audited: loader.conf default -> entry file -> kernel+initrd on the
-# ESP -> init path on the LIVE store -> profile anchoring -> initrd-required
-# devices present -> btrfs health -> no zombie mounts -> quiet-window advisories.
+# ESP -> init path on the LIVE store -> profile anchoring (THREE-WAY: entry =
+# profile = running system) -> closure sanity (incl. the generation the reboot
+# will actually boot) -> initrd-required devices present -> btrfs health -> no
+# zombie mounts -> quiet-window advisories (incl. the exit-4 predictor: failed
+# units whose unit FILES changed) -> GC anchoring of boot entries (§10).
 #
 # Run: nix run .#pre-reboot-check   (self-elevates to root; /boot is root-only)
 # Exit: 0 = safe to reboot (warnings allowed), 1 = REBOOT BLOCKED (fix first).
@@ -61,15 +64,35 @@ if [ ! -f "$LOADER_CONF" ]; then
   fail "missing $LOADER_CONF — bootloader config unreadable"
 elif [ ! -d "$BOOT_DIR/loader/entries" ]; then
   fail "missing $BOOT_DIR/loader/entries/"
+elif [ ! -s "$LOADER_CONF" ]; then
+  # No silent probes: an EMPTY loader.conf parses fine and silently degrades to
+  # sort-key ordering — that must be a finding, not an invisible skip.
+  fail "$LOADER_CONF is EMPTY — systemd-boot falls back to sort-key order with no auditable default"
 else
   DEFAULT_ENTRY="$(awk '$1 == "default" { print $2; exit }' "$LOADER_CONF" || true)"
   if [ -z "$DEFAULT_ENTRY" ]; then
-    warn "loader.conf has no 'default' line — systemd-boot will pick by sort-key; auditing ALL entries strictly"
-  elif [ ! -f "$BOOT_DIR/loader/entries/$DEFAULT_ENTRY" ]; then
-    fail "default entry file missing: $DEFAULT_ENTRY"
+    warn "loader.conf has no 'default' line — systemd-boot will pick by sort-key; auditing ALL entries strictly (§3)"
+  elif [ "${DEFAULT_ENTRY#@}" != "$DEFAULT_ENTRY" ]; then
+    warn "default is the special selector '$DEFAULT_ENTRY' (EFI-var state, not statically readable) — auditing ALL entries strictly (§3)"
     DEFAULT_ENTRY=""
-  else
+  elif [ -f "$BOOT_DIR/loader/entries/$DEFAULT_ENTRY" ]; then
     pass "default entry present: $DEFAULT_ENTRY"
+  else
+    # loader.conf(5) allows entry-ID GLOBS in 'default' — expand before declaring it dead
+    mapfile -t GLOB_MATCHES < <(
+      compgen -G "$BOOT_DIR/loader/entries/$DEFAULT_ENTRY"
+      compgen -G "$BOOT_DIR/loader/entries/$DEFAULT_ENTRY.conf"
+    )
+    if [ "${#GLOB_MATCHES[@]}" -eq 1 ]; then
+      DEFAULT_ENTRY="$(basename "${GLOB_MATCHES[0]}")"
+      pass "default glob resolved to one entry: $DEFAULT_ENTRY"
+    elif [ "${#GLOB_MATCHES[@]}" -gt 1 ]; then
+      warn "default glob matches ${#GLOB_MATCHES[@]} entries — systemd-boot sorts by version; auditing ALL strictly (§3)"
+      DEFAULT_ENTRY=""
+    else
+      fail "default entry file missing: $DEFAULT_ENTRY"
+      DEFAULT_ENTRY=""
+    fi
   fi
 fi
 
@@ -109,6 +132,8 @@ if [ -n "$DEFAULT_ENTRY" ]; then
   else
     fail "default entry has no init= line"
   fi
+else
+  echo "  (no single default resolved — every entry's assets are audited in §3)"
 fi
 
 # 3. Whole menu audit — emergency menu picks must never land on a landmine.
@@ -118,6 +143,8 @@ echo ""
 echo "3. Boot menu audit"
 ENTRY_COUNT=0
 DEAD_ENTRIES=0
+STRICT_MODE=0
+[ -z "$DEFAULT_ENTRY" ] && STRICT_MODE=1
 for E in "$BOOT_DIR"/loader/entries/nixos-*.conf; do
   [ -f "$E" ] || continue
   ENTRY_COUNT=$((ENTRY_COUNT + 1))
@@ -125,6 +152,18 @@ for E in "$BOOT_DIR"/loader/entries/nixos-*.conf; do
   if [ -z "$INIT" ] || [ ! -e "$INIT" ]; then
     DEAD_ENTRIES=$((DEAD_ENTRIES + 1))
     warn "unbootable menu entry: $(basename "$E") -> ${INIT:-<no init=>}"
+  fi
+  # Strict mode (no statically resolvable default): the sort-key winner is
+  # unknown, so EVERY entry gets the full §2 asset audit, not just init=.
+  if [ "$STRICT_MODE" -eq 1 ]; then
+    KLINE="$(awk '$1 == "linux" { print $2; exit }' "$E" || true)"
+    ILINE="$(awk '$1 == "initrd" { print $2; exit }' "$E" || true)"
+    if [ -z "$KLINE" ] || [ ! -f "$(efi_path "$KLINE")" ]; then
+      warn "strict: kernel missing on ESP for $(basename "$E"): ${KLINE:-<no linux line>}"
+    fi
+    if [ -z "$ILINE" ] || [ ! -f "$(efi_path "$ILINE")" ]; then
+      warn "strict: initrd missing on ESP for $(basename "$E"): ${ILINE:-<no initrd line>}"
+    fi
   fi
 done
 if [ "$ENTRY_COUNT" -eq 0 ]; then
@@ -154,6 +193,17 @@ else
   else
     pass "profile anchored to running system"
   fi
+  # Three-way anchor: the ESP default must boot the SAME generation the profile
+  # holds. A divergence is the 2026-09-05 class — exit-4 activation skipped the
+  # profile/bootloader write, so the reboot would silently boot the older one.
+  if [ -n "$DEFAULT_INIT" ] && [ -x "$DEFAULT_INIT" ]; then
+    ENTRY_STORE="$(dirname "$DEFAULT_INIT")"
+    if [ "$ENTRY_STORE" = "$PROFILE_TARGET" ]; then
+      pass "default entry generation = system profile (three-way anchor holds)"
+    else
+      fail "default entry boots $(basename "$ENTRY_STORE") but profile holds $(basename "$PROFILE_TARGET") — reboot would boot the WRONG generation; re-run nix run .#deploy"
+    fi
+  fi
 fi
 
 # 5. Store/DB consistency of the running closure (catches store drift and a
@@ -164,6 +214,15 @@ if nix path-info -r /run/current-system >/dev/null 2>&1; then
   pass "closure of /run/current-system resolves in the store DB"
 else
   fail "nix path-info -r /run/current-system failed — store/DB drift or daemon wedged (restart nix-daemon)"
+fi
+# A fresh deploy means the reboot boots the PROFILE closure, not the running
+# one — audit that closure too whenever they diverge.
+if [ -n "${PROFILE_TARGET:-}" ] && [ -n "${CURRENT_TARGET:-}" ] && [ "$PROFILE_TARGET" != "$CURRENT_TARGET" ]; then
+  if nix path-info -r "$PROFILE_TARGET" >/dev/null 2>&1; then
+    pass "closure of the PROFILE generation (what the reboot boots) resolves"
+  else
+    fail "profile generation closure does not resolve — the machine would boot into an unresolvable store"
+  fi
 fi
 
 # 6. Initrd-required devices present NOW. Every fstab mount flagged
@@ -232,14 +291,106 @@ FAILED_UNITS="$(systemctl --failed --no-legend --plain 2>/dev/null | grep -c . |
 if [ "${FAILED_UNITS:-0}" -eq 0 ]; then
   pass "no failed units"
 else
-  warn "$FAILED_UNITS failed unit(s) — harmless for boot, but they arm the NEXT deploy's exit-4 profile-skip"
+  warn "$FAILED_UNITS failed unit(s) — harmless for boot itself"
+  # Exit-4 predictor (2026-09-09 lesson): a failed unit only trips the NEXT
+  # deploy's activation when its unit FILE changes between the booted and the
+  # incoming system. Failed-but-unchanged units deploy cleanly (18:35 deploy
+  # activated fine with inboxclean-sync failed).
+  CHANGED_FAILED=""
+  while read -r UNIT; do
+    [ -n "$UNIT" ] || continue
+    case "$UNIT" in
+    *.mount | *.target | *.device) continue ;; # runtime-generated: no unit file to diff
+    esac
+    B="/run/booted-system/etc/systemd/system/$UNIT"
+    C="/run/current-system/etc/systemd/system/$UNIT"
+    if [ -e "$C" ] && { [ ! -e "$B" ] || ! cmp -s "$B" "$C"; }; then
+      CHANGED_FAILED="$CHANGED_FAILED $UNIT"
+    fi
+  done < <(systemctl --failed --no-legend --plain 2>/dev/null | awk '{print $1}')
+  if [ -n "$CHANGED_FAILED" ]; then
+    warn "failed unit(s) with CHANGED unit files:$CHANGED_FAILED — the next deploy will exit-4 over them (deploy.sh reset-failed recovers; fix or acknowledge)"
+  else
+    pass "no failed unit carries a changed unit file — the next deploy activates cleanly over them"
+  fi
 fi
 for UNIT in btrbk-root.service btrbk-data.service btrbk-pool.service nix-gc.service; do
   if systemctl is-active --quiet "$UNIT" 2>/dev/null; then
     warn "$UNIT is running right now — let it finish (interrupted sends/GC recover, but noisily)"
   fi
 done
+# Smoke-fail baseline age: how stale is the known-FAIL list the next post-deploy
+# smoke gets compared against? Reboot-clearable classes only drop out of it via
+# one post-reboot deploy.
+for BASELINE in /home/*/.local/state/systemnix/smoke-fail-baseline.txt; do
+  [ -f "$BASELINE" ] || continue
+  BASELINE_COUNT="$(grep -c . "$BASELINE" 2>/dev/null || true)"
+  BASELINE_AGE_D=$((($(date +%s) - $(stat -c %Y "$BASELINE")) / 86400))
+  warn "smoke-fail baseline: ${BASELINE_COUNT:-0} known FAIL(s), ${BASELINE_AGE_D}d old — reboot-clearable classes leave it after the next deploy refreshes it"
+done
 echo "  (none listed above = quiet window)"
+
+# 10. GC anchoring — an entry can be perfectly intact NOW and still be a
+#     stuck-boot-in-waiting: if nothing gc-roots its closure, the next nix-gc
+#     (nightly) reaps the store side while the ESP files linger on. Audits the
+#     default entry's closure, the boot-rollback ladder pins, and the
+#     booted-system gcroot that flips at the next boot.
+echo ""
+echo "10. GC anchoring"
+if [ -n "$DEFAULT_INIT" ] && [ -x "$DEFAULT_INIT" ]; then
+  case "$DEFAULT_INIT" in
+  /nix/store/*)
+    ENTRY_ROOTS="$(nix-store --query --roots "$DEFAULT_INIT" 2>/dev/null | grep -c . || true)"
+    if [ "${ENTRY_ROOTS:-0}" -gt 0 ]; then
+      pass "default entry closure is gc-rooted ($ENTRY_ROOTS root(s) keep it alive)"
+    else
+      fail "default entry closure has ZERO gc roots — the next nix-gc would reap it before the reboot; re-run nix run .#deploy to re-anchor"
+    fi
+    ;;
+  *)
+    warn "default init is not a /nix/store path — skipping gc-root audit"
+    ;;
+  esac
+else
+  warn "no default entry resolved — gc-root audit skipped"
+fi
+LADDER_DIR=/nix/var/nix/gcroots/boot-rollback-ladder
+if [ -d "$LADDER_DIR" ]; then
+  LADDER_OK=0
+  LADDER_BAD=0
+  for PIN in "$LADDER_DIR"/*; do
+    [ -e "$PIN" ] || continue
+    PIN_TARGET="$(readlink -f "$PIN" 2>/dev/null || true)"
+    if [ -n "$PIN_TARGET" ] && [ -d "$PIN_TARGET" ]; then
+      LADDER_OK=$((LADDER_OK + 1))
+    else
+      LADDER_BAD=$((LADDER_BAD + 1))
+      warn "dangling ladder pin: $PIN -> ${PIN_TARGET:-unresolvable}"
+    fi
+  done
+  if [ "$LADDER_OK" -gt 0 ]; then
+    pass "rollback ladder: $LADDER_OK pin(s) resolve into the store"
+  fi
+  if [ "$LADDER_BAD" -gt 0 ]; then
+    warn "$LADDER_BAD dangling ladder pin(s)"
+  fi
+else
+  echo "  ℹ no boot-rollback-ladder pins present (optional convention)"
+fi
+if [ -e /nix/var/nix/gcroots/booted-system ]; then
+  BOOTED_GCROOT_TARGET="$(readlink -f /nix/var/nix/gcroots/booted-system 2>/dev/null || true)"
+  if [ -n "$BOOTED_GCROOT_TARGET" ] && [ -d "$BOOTED_GCROOT_TARGET" ]; then
+    pass "booted-system gcroot intact ($(basename "$BOOTED_GCROOT_TARGET")) — flips to the new generation at the next boot"
+  else
+    warn "booted-system gcroot exists but does not resolve"
+  fi
+else
+  warn "booted-system gcroot missing — running closure anchored only by /run + profiles"
+fi
+NEXT_GC="$(systemctl show nix-gc.timer --property=NextElapseUSecRealtime --value 2>/dev/null || true)"
+if [ -n "$NEXT_GC" ]; then
+  echo "  ℹ next nix-gc: $NEXT_GC (rooting audited above)"
+fi
 
 echo ""
 echo "=== Summary: $PASS passed, $WARN warnings, $FAIL failed ==="

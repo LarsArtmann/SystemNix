@@ -8,9 +8,10 @@ let
 
   # Ceiling for active GPU buffer object allocations (TTM pages, 4 KiB each).
   # 31457280 pages × 4096 = 120 GiB. GTT-first architecture (2026-09-02): the BIOS
-  # UMA carveout is 512 MiB, so ALL real GPU memory is GTT (= shared system RAM);
-  # the driver reports GTT total ≈ MemTotal (~125 GiB after the small carveout).
-  # This ceiling is ~5 GiB below that so TTM refuses allocations before the box is
+  # UMA carveout is 1 GiB (BIOS floor, user-confirmed 2026-09-05 — the earlier
+  # 512 MiB target was never settable), so ALL real GPU memory is GTT (= shared
+  # system RAM); the driver reports GTT total ≈ MemTotal (~124.3 GiB post-flip).
+  # This ceiling is ~4 GiB below that so TTM refuses allocations before the box is
   # fully pinned. Still a CEILING, not a reservation.
   ttmPagesLimit = 31457280;
 
@@ -200,6 +201,29 @@ in
   boot.extraModprobeConfig = ''
     options ttm pages_limit=${toString ttmPagesLimit}
     options ttm page_pool_size=${toString ttmPagePoolSize}
+    # Kernel attack-surface reduction (2026-09-10, adopted from paepckehh/nixos
+    # siteconfig kernel hardening): hard-disable exotic network protocol
+    # families this host never uses. install-to-/bin/false blocks BOTH alias
+    # auto-load AND manual modprobe (boot.blacklistedKernelModules only stops
+    # alias auto-load). SCTP/DCCP/TIPC/RDS/X25/AX25 have a long pre-auth CVE
+    # history and zero use here (Docker bridge/veth, WireGuard, and the LAN
+    # stack need none of them). Deliberately NOT blacklisted: esp4/esp6
+    # (IPsec may be needed by future VPN tooling), k10temp (temperature
+    # telemetry for the collectors).
+    install sctp /bin/false
+    install sctp_diag /bin/false
+    install dccp /bin/false
+    install dccp_diag /bin/false
+    install tipc /bin/false
+    install tipc_diag /bin/false
+    install rds /bin/false
+    install rds_rdma /bin/false
+    install rds_tcp /bin/false
+    install x25 /bin/false
+    install ax25 /bin/false
+    install netrom /bin/false
+    install rose /bin/false
+    install ipx /bin/false
   '';
 
   # VM sysctl tuning for AI/ML workloads (AMD Ryzen AI MAX+ 395 — 128 GiB physical,
@@ -241,7 +265,45 @@ in
     "kernel.hung_task_panic" = 1; # Panic when a task is stuck in D state for too long
     "kernel.hung_task_timeout_secs" = 120; # Hung task timeout (default: 120 = 2 min)
     "vm.panic_on_oom" = 0; # Don't panic on OOM — let cgroup limits + systemd-oomd handle it
+
+    # ── Network-layer hardening (2026-09-10, adopted from paepckehh/nixos
+    #    siteconfig sysctl set; scoped to what is safe on THIS box) ────────
+    # ICMP redirects + source routing are only useful on routers; on a LAN
+    # client they are pure attack surface (redirect spoofing → MITM).
+    "net.ipv4.conf.all.accept_redirects" = 0;
+    "net.ipv4.conf.default.accept_redirects" = 0;
+    "net.ipv4.conf.all.secure_redirects" = 0;
+    "net.ipv4.conf.default.secure_redirects" = 0;
+    "net.ipv4.conf.all.accept_source_route" = 0;
+    "net.ipv4.conf.default.accept_source_route" = 0;
+    "net.ipv4.conf.all.send_redirects" = 0; # not a router — never emit redirects
+    "net.ipv4.conf.default.send_redirects" = 0;
+    "net.ipv4.icmp_ignore_bogus_error_responses" = 1;
+    "net.ipv4.tcp_rfc1337" = 1; # TIME-WAIT assassination / RST stale-attack fix
+    # IPv6 is enabled on this host — apply the same redirect/source-route deny.
+    "net.ipv6.conf.all.accept_redirects" = 0;
+    "net.ipv6.conf.default.accept_redirects" = 0;
+    "net.ipv6.conf.all.accept_source_route" = 0;
+    "net.ipv6.conf.default.accept_source_route" = 0;
+    # rp_filter LOOSE (2), not strict (1): strict drops packets when the reply
+    # route uses a different interface — that is exactly the state during
+    # eno1→wlan0 wifi-failover windows. Loose keeps anti-spoofing without
+    # fighting the failover daemon.
+    "net.ipv4.conf.all.rp_filter" = 2;
+    "net.ipv4.conf.default.rp_filter" = 2;
   };
+  # Deliberately NOT adopted from the same source set (with reasons):
+  # - kernel.kptr_restrict=2: would break bpftrace/bcc kallsyms-based
+  #   forensics (an explicit diagnostic tool class on this box). Live value 1
+  #   (privileged-only) is the right tradeoff here.
+  # - kernel.kexec_load_disabled / security.protectKernelImage: kdump
+  #   preloads its capture kernel via kexec_load at boot; disabling the
+  #   syscall risks an ordering fight with the kdump unit and would forfeit
+  #   the crash forensics capability added 2026-08-22.
+  # - kernel.sysrq=0 (their default): full SysRq REISUB is deliberate here —
+  #   this box has a freeze history and needs the rescue path.
+  # - perf_event_paranoid=3: would block user-space perf profiling on a dev
+  #   workstation.
 
   # Raise per-user process limit — default 4096 is too low for desktop + AI workloads
   # (4832 threads across 297 processes observed, causing niri EAGAIN on thread spawn)

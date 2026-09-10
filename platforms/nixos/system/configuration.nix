@@ -326,6 +326,11 @@ in
       forgejo.enable = true;
       immich.enable = true;
       paperless.enable = true;
+      # Miniflux RSS reader (rss.home.lan). Admin password rides sops
+      # platforms/nixos/secrets/miniflux.yaml — retrieve with the Sops + Age
+      # one-liner; daily login is Pocket ID OIDC (rss.home.lan → sign in with
+      # Pocket ID auto-creates the account). Runbook: docs/services/miniflux.md
+      miniflux.enable = true;
       # Central outbound mail relay (Postfix null client on 127.0.0.1:25 →
       # authenticated Resend submission). Ships with a PLACEHOLDER sops
       # credential: every send defers in the postfix queue until the real
@@ -927,6 +932,15 @@ in
             # (inboxclean-backup.timer, 04:30) onto the mirrored pool.
             directory = "/mnt/pool/backups/inboxclean";
             filePattern = "inboxclean-*.db";
+            maxAgeHours = 25;
+          };
+        }
+        // lib.optionalAttrs config.services.miniflux.enable {
+          miniflux = {
+            # Nightly pg_dump (custom format) of the RSS reader DB
+            # (miniflux-backup.timer, 02:45) onto the mirrored pool.
+            directory = "/mnt/pool/backups/miniflux";
+            filePattern = "miniflux-*.dump";
             maxAgeHours = 25;
           };
         };

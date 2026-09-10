@@ -502,6 +502,17 @@ _: {
                 ];
                 pkceEnabled = true;
               }
+              {
+                # Native OIDC in Miniflux (OAUTH2_PROVIDER=oidc, generic OIDC
+                # provider). The redirect URL is derived from BASE_URL
+                # upstream at /oauth2/oidc/callback; the client secret reaches
+                # the DynamicUser service via systemd LoadCredential +
+                # OAUTH2_CLIENT_SECRET_FILE (no bridge env file).
+                name = "Miniflux";
+                clientId = "miniflux";
+                launchURL = "https://rss.${domain}";
+                callbackURLs = [ "https://rss.${domain}/oauth2/oidc/callback" ];
+              }
             ];
             description = "OIDC clients to create declaratively";
           };

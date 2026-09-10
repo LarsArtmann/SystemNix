@@ -1332,14 +1332,15 @@
                 };
               pre-reboot-check =
                 mkApp "pre-reboot-check"
-                  "Pre-reboot boot-chain audit: loader default -> ESP assets -> init on live store -> profile anchoring -> initrd devices (built after the 2026-09-07 stuck boot)"
+                  "Pre-reboot boot-chain audit: loader default -> ESP assets -> init on live store -> three-way profile anchor -> closure sanity -> initrd devices -> GC anchoring (built after the 2026-09-07 stuck boot; hardened 2026-09-09)"
                   [
                     pkgs.btrfs-progs # filesystem show (MISSING device audit)
-                    pkgs.coreutils # stat, timeout, awk-free parsing helpers
+                    pkgs.coreutils # stat, timeout, dirname, awk-free parsing helpers
+                    pkgs.diffutils # cmp (exit-4 predictor unit-file diffing)
                     pkgs.gawk # loader.conf/entry parsing
                     pkgs.gnugrep
-                    pkgs.nix # path-info closure sanity
-                    pkgs.systemd # systemctl (quiet-window advisories)
+                    pkgs.nix # path-info closure sanity + nix-store gc-root queries
+                    pkgs.systemd # systemctl (quiet-window advisories, nix-gc timer)
                     pkgs.util-linux # findmnt
                   ]
                   ./scripts/pre-reboot-check.sh;

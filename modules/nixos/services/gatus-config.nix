@@ -1957,6 +1957,34 @@ _: {
                   alerts = discordAlert "InboxClean Paperless archiving auth failing — Gmail attachments are NOT being archived. Check: token in platforms/nixos/secrets/inboxclean-paperless.yaml vs paperless-manage drf_create_token; journalctl -u inboxclean-sync | grep -i paperless";
                 })
               ]
+              ++ lib.optionals (config.services.miniflux.enable or false) [
+                # Functional: /healthcheck verifies the DATABASE round-trip
+                # (200 "OK" when healthy, 503 on DB failure) — liveness of the
+                # process alone would stay green through a dead DB.
+                (mkHttpCheck {
+                  name = "Miniflux";
+                  group = "Media";
+                  url = "http://127.0.0.1:${toString ports.miniflux}/healthcheck";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 1000"
+                    "[BODY] == pat(*OK*)"
+                  ];
+                  alerts = discordAlert "Miniflux down — rss.${domain} unreachable (service or PostgreSQL failure). Check: systemctl status miniflux, journalctl -u miniflux";
+                })
+                (mkHttpCheck {
+                  name = "Miniflux Login Renders";
+                  group = "Media";
+                  url = "http://127.0.0.1:${toString ports.miniflux}/";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*<html*)"
+                  ];
+                  alerts = discordAlert "Miniflux login page not rendering HTML — check journalctl -u miniflux";
+                })
+              ]
               ++ lib.optionals (config.services.cv-server.enable or false) [
                 # Liveness: go-health probe served from the raw mux (always
                 # 200 once the process is up; connection-refused when down).

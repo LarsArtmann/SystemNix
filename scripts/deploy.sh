@@ -196,7 +196,7 @@ if nix run .#pre-deploy-check; then
     echo "⚠ manual tq processes detected — the systemd pool would double-run:"
     while IFS= read -r tq_line; do
       echo "    $tq_line"
-    done <<< "$manual_tq"
+    done <<<"$manual_tq"
     echo "  → cutover per docs/services/tq.md before relying on the systemd pool"
   else
     echo "  no manual /tmp/tq processes — systemd pool is sole owner"
@@ -378,7 +378,7 @@ if nix run .#pre-deploy-check; then
   # forgejo-hermes-token: RemainAfterExit oneshot — re-runs re-install the
   # staged token as /run/hermes-forgejo-token after deploys that change the
   # hermes user/group or the token scripts.
-  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup browser-history-agent-token-provision forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir atticd-bootstrap bank-sync-storage-dir google-sync-dirs cv-backup-dir inboxclean-backup-dir llama-rag-model-fetch hermes-github-verify tq-storage-dir tq-bootstrap; do
+  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup browser-history-agent-token-provision forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir atticd-bootstrap bank-sync-storage-dir google-sync-dirs cv-backup-dir inboxclean-backup-dir miniflux-backup-dir llama-rag-model-fetch hermes-github-verify tq-storage-dir tq-bootstrap; do
     if systemctl is-enabled --quiet "$provisioner.service" 2>/dev/null; then
       echo "Restarting provisioner: $provisioner.service"
       sudo systemctl restart "$provisioner.service" 2>/dev/null || true
@@ -407,6 +407,18 @@ if nix run .#pre-deploy-check; then
   if systemctl is-enabled --quiet browser-history.service 2>/dev/null; then
     echo "Restarting browser-history.service (reload OAuth2 env file)"
     sudo systemctl restart browser-history.service 2>/dev/null || true
+  fi
+
+  # Restart miniflux AFTER pocket-id-provision so a rotated Pocket ID client
+  # secret re-binds via LoadCredential: the credential file is bind-mounted at
+  # PROCESS START, so a running miniflux keeps answering OIDC logins with the
+  # stale secret otherwise (same class as the paperless-web restart below —
+  # miniflux just skips the env-file bridge because it reads the secret
+  # directly via OAUTH2_CLIENT_SECRET_FILE=%d/...). is-active gate: a stopped
+  # unit is converged by the next start, no restart needed.
+  if systemctl is-active --quiet miniflux.service 2>/dev/null; then
+    echo "Restarting miniflux.service (re-bind OIDC LoadCredential)"
+    sudo systemctl restart miniflux.service 2>/dev/null || true
   fi
 
   # Restart paperless-web AFTER paperless-oidc-setup so it reloads the Pocket

@@ -53,6 +53,22 @@
     defaultGateway = config.networking.local.gateway;
   };
 
+  # GitHub SSH host-key pinning (2026-09-10, adopted from paepckehh/nixos
+  # siteconfig). The `git insteadOf` rewrite sends github.com traffic over
+  # git+ssh (deploy keys, private flake inputs, pushes) — pinning the host
+  # key system-wide turns any SSH MITM into a loud failure instead of a
+  # silent TOFU accept. Key verified against https://api.github.com/meta
+  # (ssh_keys + SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU) at pin
+  # time. GitHub rotates keys RARELY but DOES rotate (RSA 2023-03) — a
+  # rotation fails LOUDLY here (every git+ssh op); fix = update this pin.
+  programs.ssh.knownHosts.github = {
+    hostNames = [
+      "github.com"
+      "ssh.github.com"
+    ];
+    publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl";
+  };
+
   # dhcpcd disabled - using static IP
   networking.dhcpcd.enable = false;
 

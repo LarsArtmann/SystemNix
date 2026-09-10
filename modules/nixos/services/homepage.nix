@@ -58,6 +58,7 @@ _: {
       systemdTimerMonitorEnabled = config.services.systemd-timer-monitor.enable or false;
       cvEnabled = config.services.cv-server.enable or false;
       tqAgentPoolEnabled = config.services.tq-agent-pool.enable or false;
+      minifluxEnabled = config.services.miniflux.enable or false;
 
       theme = import ../../../platforms/common/theme.nix;
       colors = theme.colorScheme.palette;
@@ -174,7 +175,14 @@ _: {
           description = "DNS Block Stats";
           icon = "blocky.png";
         })
-      ];
+      ]
+      ++ lib.optional minifluxEnabled (
+        mkService "Miniflux" {
+          href = svcUrl "rss";
+          description = "RSS Reader (Pocket ID SSO, Keyboard-Driven)";
+          icon = "miniflux.png";
+        }
+      );
 
       devServices = [
         (mkService "Forgejo" {
