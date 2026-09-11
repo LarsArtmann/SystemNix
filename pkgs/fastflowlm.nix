@@ -29,15 +29,12 @@
 # at runtime and pulled imperatively via `flm pull`. 13.6 GB binaries do not
 # belong in the nix store.
 #
-# v1.0.3 HELD BACK (2026-08-31): its bundled XRT 2.25.00 userspace NEVER
-# enumerates the NPU on kernel 7.2.0 — strace-verified: it opens NO
-# /dev/accel* path at all and dies "No such device with index '0'" in ~2s,
-# while v1.0.2 opens /sys/bus/pci/.../accel → /dev/accel/accel0 and serves
-# fine on the same kernel (verified live both ways, 2026-08-31 17:30).
-# Release notes are weights-only (Q4_1 → Q4_K) with no documented kernel/
-# driver requirement, so compatibility with the pending 7.2.2 kernel is
-# UNVERIFIED. Retry the 1.0.3 bump only after a reboot into 7.2.2 and a
-# live `flm serve` validation — and note it needs a full weight re-pull.
+# RETRIED 2026-09-11: held back on 2026-08-31 because its bundled XRT 2.25.00
+# never enumerated the NPU on kernel 7.2.0 (no /dev/accel* open, died
+# "No such device with index '0'" in ~2s — strace-verified both ways live).
+# The retry gate (reboot into kernel ≥ 7.2.2, live `flm serve` validation)
+# is met since the 2026-09-07 boot (kernel 7.2.3). Release notes for
+# v1.0.3-1.0.5 remain weights-only — no kernel/XRT requirement documented.
 #
 # v1.0.3 (2026-08-27): re-quantized Qwen3.5 + Qwen3.6-MoE weights (Q4_1 →
 # Q4_K). REQUIRES a one-time `flm pull qwen3.6-moe:35b-a3b` after deploy —
@@ -50,11 +47,11 @@
 # Output: a single derivation exposing `flm` (the wrapper) on $PATH.
 stdenv.mkDerivation (finalAttrs: {
   pname = "fastflowlm";
-  version = "1.0.2";
+  version = "1.0.3";
 
   src = fetchurl {
     url = "https://github.com/ROCm/FastFlowLM/releases/download/v${finalAttrs.version}/fastflowlm_${finalAttrs.version}_linux.tar.gz";
-    hash = "sha256-em+KMNs86DLMVGyJzmvG5oYon5OnX0V/rldc+jOkYEo=";
+    hash = "sha256-9yElTmoeBsvXKYg+ikvVg/o5aq3nYdWbtDM86o9Z69E=";
   };
 
   nativeBuildInputs = [
