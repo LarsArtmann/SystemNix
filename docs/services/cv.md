@@ -258,3 +258,10 @@ artifacts above are restorable round-trip-tested upstream).
   writes go through HTTP; bulk CLI work happens in the dev checkout.
 - **GraphRAG/CRM/AI coaching off**: 503-with-hint until their config keys
   are set (each would need its own sops entry).
+- **Operator sign-in (since the 2026-09-11 deploy, cv 68e5f99)**: the guarded
+  operator pages (`/admin`, `/pipeline`) authorize the browser via the
+  session cookie from one sign-in at `https://cv.home.lan/admin` (paste the
+  `CV_API_KEY` from the sops `cv-env`). Sessions are process-local: every
+  server restart signs the browser out, and `/pipeline` now says so honestly
+  (server-rendered locked banner + sign-in link) instead of silently 401-ing
+  its SSE/stats requests.
