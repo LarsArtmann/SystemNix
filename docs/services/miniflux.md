@@ -31,9 +31,12 @@ Admin password (random, generated at file creation — nobody knows it):
 SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) sops -d platforms/nixos/secrets/miniflux.yaml
 ```
 
-Change it: `sops` edit the same file (keep the `ADMIN_USERNAME=lars` /
-`ADMIN_PASSWORD=…` env-file format), then `nix run .#deploy` — sops rotation
-restarts the unit via `restartUnits`.
+**Rotation caveat (journal-proven 2026-09-11):** the `ADMIN_*` env only seeds
+the admin on FIRST start (empty users table — miniflux logs `Skipping admin
+user creation because it already exists username=lars` on every subsequent
+start). A sops edit + redeploy does NOT change the password of an EXISTING
+user. Real rotation: log in (OIDC once linked, or with the current password) →
+Settings → change password. The sops value is only the first-boot seed.
 
 Daily login: `rss.home.lan` → "Sign in with Pocket ID". If Pocket ID is
 unreachable, the lazy OIDC init logs an error and the login button fails —
