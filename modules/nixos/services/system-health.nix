@@ -602,19 +602,27 @@ _: {
           # in uninterruptible sleep for >1h is a driver/firmware wedge;
           # the only fix is a reboot. Fail-closed: the metric is emitted
           # ONLY when the /proc scan produced a value.
+          # 2026-09-11: gawk treats a /proc/<pid>/stat that vanished between
+          # glob expansion and open as a FATAL error ("cannot open file") —
+          # END never runs, stdout is empty, and the metric silently
+          # disappears for that cycle (the phantom-metric deploy block:
+          # gate run saw absence, next collector run saw 0). cat absorbs the
+          # vanished file (warning on stderr, suppressed) so awk always
+          # reaches END and emission is deterministic.
           STUCK_DSTATE=$(
-            awk -v now="$(awk '{print int($1)}' /proc/uptime)" '
-              {
-                line = $0
-                sub(/^[^)]*\)[[:space:]]+/, "", line)
-                split(line, f, " ")
-                # f[1] = state (proc(5) field 3); f[20] = starttime
-                # (field 22, USER_HZ=100 ticks) after stripping "pid (comm) ".
-                if (f[1] == "D" && (now - f[20] / 100) >= 3600)
-                  n++
-              }
-              END { print n + 0 }
-            ' /proc/[0-9]*/stat 2>/dev/null || true
+            cat /proc/[0-9]*/stat 2>/dev/null |
+              awk -v now="$(awk '{print int($1)}' /proc/uptime)" '
+                {
+                  line = $0
+                  sub(/^[^)]*\)[[:space:]]+/, "", line)
+                  split(line, f, " ")
+                  # f[1] = state (proc(5) field 3); f[20] = starttime
+                  # (field 22, USER_HZ=100 ticks) after stripping "pid (comm) ".
+                  if (f[1] == "D" && (now - f[20] / 100) >= 3600)
+                    n++
+                }
+                END { print n + 0 }
+              ' || true
           )
           STUCK_DSTATE="''${STUCK_DSTATE:-}"
 

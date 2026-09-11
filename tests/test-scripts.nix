@@ -133,4 +133,101 @@
       """)
     '';
   };
+
+  # 2026-09-11 phantom-metric deploy block: gawk treats an input file it
+  # cannot open (a /proc/<pid>/stat that vanished between shell glob
+  # expansion and open) as a FATAL error — END never runs, stdout stays
+  # empty, and the conditionally-emitted metric silently disappears for
+  # that collector cycle. The system-health STUCK_DSTATE scan hit exactly
+  # this and flipped the pre-deploy phantom-metric gate red.
+  awk-vanished-input = pkgs.testers.runNixOSTest {
+    name = "awk-vanished-input";
+
+    nodes.machine = { pkgs, ... }: {
+      environment.systemPackages = [ pkgs.coreutils-full ];
+    };
+
+    testScript = ''
+      machine.start()
+      machine.wait_for_unit("multi-user.target")
+
+      # Fixture: two readable proc-stat-style files + one glob-matching
+      # dangling symlink (deterministic stand-in for the race).
+      machine.succeed("""
+        mkdir -p /tmp/procfix
+        printf '100 (procA) D 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 0 5 6\n' > /tmp/procfix/100
+        printf '200 (procB) R 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 0 5 6\n' > /tmp/procfix/200
+        ln -s /nonexistent-target /tmp/procfix/300
+      """)
+
+      # The bug form: awk gets the glob as file arguments — dies fat and
+      # SILENT on the vanished entry (empty stdout, not 0).
+      machine.succeed("""
+        set -euo pipefail
+        out=$(awk -v now=100000 '
+          {
+            line = $0
+            sub(/^[^)]*\)[[:space:]]+/, "", line)
+            split(line, f, " ")
+            if (f[1] == "D" && (now - f[20] / 100) >= 3600)
+              n++
+          }
+          END { print n + 0 }
+        ' /tmp/procfix/* 2>/dev/null || true)
+        [ -z "$out" ] || { echo "BUG FORM should be empty, got: $out"; exit 1; }
+        echo "PASS: direct-awk-on-glob emits nothing when an entry vanishes"
+      """)
+
+      # The fixed form: cat absorbs the vanished entry (warning suppressed)
+      # and the D-state process is still counted.
+      machine.succeed("""
+        set -euo pipefail
+        out=$(cat /tmp/procfix/* 2>/dev/null |
+          awk -v now=100000 '
+            {
+              line = $0
+              sub(/^[^)]*\)[[:space:]]+/, "", line)
+              split(line, f, " ")
+              if (f[1] == "D" && (now - f[20] / 100) >= 3600)
+                n++
+            }
+            END { print n + 0 }
+          ' || true)
+        [ "$out" = "1" ] || { echo "fixed form should count 1, got: $out"; exit 1; }
+        echo "PASS: cat-pipe form survives the vanished entry and counts"
+      """)
+
+      # Functional: the exact deployed /proc pipeline always emits an integer.
+      machine.succeed("""
+        set -euo pipefail
+        out=$(cat /proc/[0-9]*/stat 2>/dev/null |
+          awk -v now="$(awk '{print int($1)}' /proc/uptime)" '
+            {
+              line = $0
+              sub(/^[^)]*\)[[:space:]]+/, "", line)
+              split(line, f, " ")
+              if (f[1] == "D" && (now - f[20] / 100) >= 3600)
+                n++
+            }
+            END { print n + 0 }
+          ' || true)
+        case "$out" in ""|*[!0-9]*) echo "proc pipeline emitted non-integer: $out"; exit 1;; esac
+        echo "PASS: live /proc pipeline emits integer: $out"
+      """)
+
+      # Static tripwire: system-health.nix must keep the cat-pipe form and
+      # must never hand the /proc glob to awk as file arguments again.
+      machine.succeed("""
+        grep -q 'cat /proc/\[0-9\]\*/stat' ${../modules/nixos/services/system-health.nix} || {
+          echo "system-health.nix lost the cat-pipe /proc guard"
+          exit 1
+        }
+        if grep -q "' /proc/\[0-9\]\*/stat" ${../modules/nixos/services/system-health.nix}; then
+          echo "system-health.nix passes the /proc glob directly to awk (gawk-fatal class)"
+          exit 1
+        fi
+        echo "PASS: module keeps the cat-pipe form"
+      """)
+    '';
+  };
 }

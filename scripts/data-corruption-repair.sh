@@ -37,16 +37,25 @@ SAFETY_DIR="/mnt/pool/archive/monitor365-nvme-safety"
 need_bins() {
   local b
   for b in "$@"; do
-    command -v "$b" >/dev/null 2>&1 || { echo "FATAL: missing binary: $b" >&2; exit 3; }
+    command -v "$b" >/dev/null 2>&1 || {
+      echo "FATAL: missing binary: $b" >&2
+      exit 3
+    }
   done
 }
 need_bins awk cat cut date dd find findmnt grep head id journalctl pgrep \
   readlink sed sleep sort stat tail tr uniq wc
 
 err=0
-die() { echo "FATAL: $*" >&2; exit 3; }
-fail() { echo "FAIL: $*"; err=1; }
-ok()   { echo "OK: $*"; }
+die() {
+  echo "FATAL: $*" >&2
+  exit 3
+}
+fail() {
+  echo "FAIL: $*"
+  err=1
+}
+ok() { echo "OK: $*"; }
 warn() { echo "WARN: $*"; }
 
 need_root() {
@@ -64,8 +73,8 @@ io_window_clear() {
   fi
   local swap
   swap=$(awk '/^(SwapTotal|SwapFree)/ {print $2}' /proc/meminfo)
-  local swap_used=$(( $(echo "$swap" | head -1) - $(echo "$swap" | tail -1) ))
-  if [ "$(echo "$swap" | head -1)" -gt 0 ] && [ "$swap_used" -gt $(( $(echo "$swap" | head -1) * 92 / 100 )) ]; then
+  local swap_used=$(($(echo "$swap" | head -1) - $(echo "$swap" | tail -1)))
+  if [ "$(echo "$swap" | head -1)" -gt 0 ] && [ "$swap_used" -gt $(($(echo "$swap" | head -1) * 92 / 100)) ]; then
     warn "zram/swap >=92% full — the freeze cliff; postpone heavy IO (or set I_OVERALL_OK=1 to override)"
     return 1
   fi
@@ -82,7 +91,10 @@ cmd_status() {
   echo "--- gate (a): host-disk SMART (Lexar NQ790, /data on nvme0n1p8) ---"
   local dev
   dev=$(findmnt -no SOURCE /data 2>/dev/null)
-  [ -n "$dev" ] || { fail "/data not mounted"; return; }
+  [ -n "$dev" ] || {
+    fail "/data not mounted"
+    return
+  }
   local disk="${dev%p*}"
   if command -v smartctl >/dev/null 2>&1; then
     smartctl --all "$disk" 2>/dev/null | awk \
@@ -93,15 +105,15 @@ cmd_status() {
   else
     warn "smartctl not on PATH — reading the nvme.prom textfile metric instead"
     grep -E "media_errors_total|percentage_used|critical_warning" \
-      /var/lib/prometheus-node-exporter/textfile_collectors/nvme.prom 2>/dev/null | grep -v '^#' | sed 's/^/  /' \
-      || fail "cannot read SMART (no smartctl, no textfile metric)"
+      /var/lib/prometheus-node-exporter/textfile_collectors/nvme.prom 2>/dev/null | grep -v '^#' | sed 's/^/  /' ||
+      fail "cannot read SMART (no smartctl, no textfile metric)"
   fi
 
   echo "--- gate (b): scrub + damage census ---"
-  journalctl --output cat --since "2026-08-23" -g "csum failed" 2>/dev/null \
-    | grep -oP 'ino \K[0-9]+' | sort -n | uniq -c | sort -rn \
-    | awk '{print "  ino " $2 ": " $1 " csum failures"}' \
-    || echo "  (no csum failures journaled since 2026-08-23)"
+  journalctl --output cat --since "2026-08-23" -g "csum failed" 2>/dev/null |
+    grep -oP 'ino \K[0-9]+' | sort -n | uniq -c | sort -rn |
+    awk '{print "  ino " $2 ": " $1 " csum failures"}' ||
+    echo "  (no csum failures journaled since 2026-08-23)"
   local lines
   lines=$(journalctl --output cat --since "48 hours ago" -g "csum failed" 2>/dev/null | wc -l)
   echo "  last 48h csum lines: $lines (steady ~10/day = bounded-static; rising trend = hardware triage)"
@@ -131,9 +143,9 @@ cmd_map_user() {
   mkdir -p "$STATE_DIR"
 
   echo "== journal csum census (full retention) =="
-  journalctl --output cat -g "csum failed" 2>/dev/null \
-    | grep -oP 'ino \K[0-9]+' | sort -n | uniq -c | sort -rn \
-    | awk '{print "  ino " $2 ": " $1 " csum failures"}' | tee "$STATE_DIR/csum-inodes.txt"
+  journalctl --output cat -g "csum failed" 2>/dev/null |
+    grep -oP 'ino \K[0-9]+' | sort -n | uniq -c | sort -rn |
+    awk '{print "  ino " $2 ": " $1 " csum failures"}' | tee "$STATE_DIR/csum-inodes.txt"
   local inodes
   inodes=$(awk '{print $2}' "$STATE_DIR/csum-inodes.txt")
 
@@ -142,28 +154,33 @@ cmd_map_user() {
   local ino resolved=0 unresolved=""
   for ino in $inodes; do
     p=$(find $trees -xdev -inum "$ino" -type f -print -quit 2>/dev/null)
-    if [ -n "$p" ]; then echo "  ino $ino -> $p"; resolved=$((resolved+1));
-    else echo "  ino $ino -> not in user-readable trees (root-owned / docker / snapshot)"; unresolved="$unresolved $ino"; fi
+    if [ -n "$p" ]; then
+      echo "  ino $ino -> $p"
+      resolved=$((resolved + 1))
+    else
+      echo "  ino $ino -> not in user-readable trees (root-owned / docker / snapshot)"
+      unresolved="$unresolved $ino"
+    fi
   done
   [ -n "$unresolved" ] && echo "  unresolved:$unresolved (run --map-full as root for the btrfs ioctl resolve)"
 
   echo "== read-verify all user-readable files (DIRECT IO, no cache pressure; ~615G) =="
   local fails="$STATE_DIR/corrupt-files.txt.raw"
-  : > "$fails"
+  : >"$fails"
   local n=0 total
   total=$(find $trees -xdev -type f 2>/dev/null | wc -l)
   while IFS= read -r f; do
-    n=$((n+1))
+    n=$((n + 1))
     if ! dd if="$f" of=/dev/null iflag=direct bs=4M count=100000 2>/dev/null; then
       if ! dd if="$f" of=/dev/null bs=4M count=100000 2>>"$fails"; then
-        echo "$f" >> "$fails"
+        echo "$f" >>"$fails"
         echo "  EIO: $f"
       fi
     fi
-    (( n % 5000 == 0 )) && echo "  ... $n/$total files"
+    ((n % 5000 == 0)) && echo "  ... $n/$total files"
   done < <(find $trees -xdev -type f 2>/dev/null)
-  sort -u "$fails" | grep -v '^dd:' > "$STATE_DIR/corrupt-files.txt" || true
-  echo "== inventory: $(wc -l < "$STATE_DIR/corrupt-files.txt") corrupt files -> $STATE_DIR/corrupt-files.txt =="
+  sort -u "$fails" | grep -v '^dd:' >"$STATE_DIR/corrupt-files.txt" || true
+  echo "== inventory: $(wc -l <"$STATE_DIR/corrupt-files.txt") corrupt files -> $STATE_DIR/corrupt-files.txt =="
   echo "bounded-vs-progressing verdict: compare this ino set against csum-inodes.txt over time;"
   echo "new inodes appearing = growing damage (hardware triage); static set = bounded (repair as planned)."
 }
@@ -188,12 +205,12 @@ cmd_map_full() {
 
   echo "== read-verify root-owned trees (/data/docker /data/containers) =="
   local tmp="$STATE_DIR/corrupt-files.root-owned"
-  : > "$tmp"
+  : >"$tmp"
   while IFS= read -r -d '' f; do
-    dd if="$f" of=/dev/null bs=4M count=100000 2>/dev/null \
-      || echo "$f" >> "$tmp"
+    dd if="$f" of=/dev/null bs=4M count=100000 2>/dev/null ||
+      echo "$f" >>"$tmp"
   done < <(find /data/docker /data/containers -xdev -type f -print0 2>/dev/null)
-  echo "  root-owned read fails: $(wc -l < "$tmp") (listed in $tmp)"
+  echo "  root-owned read fails: $(wc -l <"$tmp") (listed in $tmp)"
 }
 
 # T04: safety-copy every monitor365 data dir that still exists to the pool
@@ -208,15 +225,21 @@ cmd_safety_copy() {
   mkdir -p "$SAFETY_DIR"
   local src
   for src in /var/lib/monitor365-server /data/monitor365 /mnt/pool/services/monitor365; do
-    [ -d "$src" ] || { echo "  skip (absent): $src"; continue; }
+    [ -d "$src" ] || {
+      echo "  skip (absent): $src"
+      continue
+    }
     echo "== copying $src -> $SAFETY_DIR/$(basename "$src") =="
-    rsync -a --info=stats1 "$src/" "$SAFETY_DIR/$(basename "$src")/" || { fail "rsync $src"; continue; }
+    rsync -a --info=stats1 "$src/" "$SAFETY_DIR/$(basename "$src")/" || {
+      fail "rsync $src"
+      continue
+    }
   done
 
   echo "== checksum manifest =="
-  find "$SAFETY_DIR" -type f -name '*.duckdb' -print0 \
-    | xargs -0 sha256sum > "$SAFETY_DIR/SHA256SUMS" 2>/dev/null
-  wc -l < "$SAFETY_DIR/SHA256SUMS" | awk '{print "  " $1 " duckdb checksums in " $SAFETY_DIR "/SHA256SUMS"}'
+  find "$SAFETY_DIR" -type f -name '*.duckdb' -print0 |
+    xargs -0 sha256sum >"$SAFETY_DIR/SHA256SUMS" 2>/dev/null
+  wc -l <"$SAFETY_DIR/SHA256SUMS" | awk '{print "  " $1 " duckdb checksums in " $SAFETY_DIR "/SHA256SUMS"}'
   cat "$SAFETY_DIR/SHA256SUMS" | sed 's/^/  /'
 }
 
@@ -227,14 +250,18 @@ cmd_repair_list() {
   cat "$inv" 2>/dev/null | while IFS= read -r f; do
     [ -n "$f" ] || continue
     case "$f" in
-      /data/models/*|/data/ai/*)
-        echo "  TRASH (redownloadable model weights): $f" ;;
-      /data/docker/*|/data/containers/*)
-        echo "  MANUAL (container state — restore from pool pg_dumps, do not blind-delete): $f" ;;
-      *.duckdb*|*/monitor365/*)
-        echo "  MANUAL (DuckDB — never auto-delete; safety copy must exist first): $f" ;;
-      *)
-        echo "  REVIEW (unknown class): $f" ;;
+    /data/models/* | /data/ai/*)
+      echo "  TRASH (redownloadable model weights): $f"
+      ;;
+    /data/docker/* | /data/containers/*)
+      echo "  MANUAL (container state — restore from pool pg_dumps, do not blind-delete): $f"
+      ;;
+    *.duckdb* | */monitor365/*)
+      echo "  MANUAL (DuckDB — never auto-delete; safety copy must exist first): $f"
+      ;;
+    *)
+      echo "  REVIEW (unknown class): $f"
+      ;;
     esac
   done
   [ -s "$inv" ] || echo "  (inventory empty — run --map-user, or --map-full as root)"
@@ -245,22 +272,23 @@ cmd_repair_list() {
 cmd_apply_repair() {
   need_root "--apply-repair" "trashes files owned by other users"
   need_bins trash
-  [ -d "$SAFETY_DIR" ] && [ -s "$SAFETY_DIR/SHA256SUMS" ] \
-    || die "T04 precondition not met: $SAFETY_DIR/SHA256SUMS missing — run --safety-copy first"
+  [ -d "$SAFETY_DIR" ] && [ -s "$SAFETY_DIR/SHA256SUMS" ] ||
+    die "T04 precondition not met: $SAFETY_DIR/SHA256SUMS missing — run --safety-copy first"
   [ -s "$CORRUPT_LIST" ] || die "inventory empty — run the read-verify pass first"
   io_window_clear || die "IO window not clear"
   while IFS= read -r f; do
     [ -n "$f" ] || continue
     case "$f" in
-      /data/models/*|/data/ai/*)
-        if [ -e "$f" ]; then
-          trash "$f" && ok "trashed (redownloadable): $f" || fail "trash failed: $f"
-        else
-          warn "already gone: $f"
-        fi ;;
-      *) warn "skipped (manual class, see --repair-list): $f" ;;
+    /data/models/* | /data/ai/*)
+      if [ -e "$f" ]; then
+        trash "$f" && ok "trashed (redownloadable): $f" || fail "trash failed: $f"
+      else
+        warn "already gone: $f"
+      fi
+      ;;
+    *) warn "skipped (manual class, see --repair-list): $f" ;;
     esac
-  done < "$CORRUPT_LIST"
+  done <"$CORRUPT_LIST"
   echo "NOTE: freed extents stay PINNED by /data btrbk snapshots (14d+4w) — scrub-clean (T08) only after they expire."
 }
 
@@ -278,12 +306,17 @@ cmd_metadata_check() {
   echo "== quiesce check =="
   if lsof +f -- /data 2>/dev/null | tail -n +2 | grep -qv '^$'; then
     lsof +f -- /data | tail -n +2 | sed 's/^/  OPEN: /'
-    systemctl start docker.service; fail "/data still in use — aborted (docker restarted)"
+    systemctl start docker.service
+    fail "/data still in use — aborted (docker restarted)"
     return
   fi
   ok "/data quiesced"
   echo "== unmount /data =="
-  umount /data || { fail "umount /data"; systemctl start docker.service; return; }
+  umount /data || {
+    fail "umount /data"
+    systemctl start docker.service
+    return
+  }
   local dev
   dev=$(readlink -f "/dev/disk/by-uuid/046ea663-da55-48b7-b516-0dcdb87ba710" 2>/dev/null)
   [ -n "$dev" ] || dev="/dev/nvme0n1p8"
@@ -331,16 +364,19 @@ cmd_resume_seed() {
 }
 
 case "${1:---status}" in
-  --status)        cmd_status ;;
-  --map-user)      cmd_map_user ;;
-  --map-full)      cmd_map_full ;;
-  --safety-copy)   cmd_safety_copy ;;
-  --repair-list)   cmd_repair_list ;;
-  --apply-repair)  cmd_apply_repair ;;
-  --metadata-check) cmd_metadata_check ;;
-  --scrub)         cmd_scrub ;;
-  --resume-seed)   cmd_resume_seed ;;
-  *) sed -n '2,30p' "${BASH_SOURCE[0]}" | grep -E '^#' | sed 's/^# \{0,1\}//'; exit 2 ;;
+--status) cmd_status ;;
+--map-user) cmd_map_user ;;
+--map-full) cmd_map_full ;;
+--safety-copy) cmd_safety_copy ;;
+--repair-list) cmd_repair_list ;;
+--apply-repair) cmd_apply_repair ;;
+--metadata-check) cmd_metadata_check ;;
+--scrub) cmd_scrub ;;
+--resume-seed) cmd_resume_seed ;;
+*)
+  sed -n '2,30p' "${BASH_SOURCE[0]}" | grep -E '^#' | sed 's/^# \{0,1\}//'
+  exit 2
+  ;;
 esac
 
 exit $err
