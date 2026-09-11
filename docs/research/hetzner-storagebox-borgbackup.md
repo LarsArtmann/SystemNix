@@ -1,7 +1,19 @@
 # Offsite Backup: Hetzner Storage Box + BorgBackup
 
 **Date:** 2026-05-30
-**Status:** Research — not yet implemented
+**Status:** DECIDED 2026-09-11 (task queue, TODO P0 "off-site backup decision") — Hetzner StorageBox + BorgBackup is the chosen 3rd copy. Implementation NOT yet deployed; this doc is the implementation blueprint (proposed module `platforms/nixos/system/backup.nix`, sops `borg_password`, port-23 SSH key).
+
+## Decision Rationale (2026-09-11)
+
+**Chosen: Hetzner StorageBox + Borg.** The BX11 (1 TB) is already purchased (sunk cost — the only option with zero new recurring spend), Hetzner lists Borg as a first-class protocol (port 23), Borg's client-side `repokey-blake2` encryption means the offsite copy is opaque to the provider, and the research below already contains a complete implementation blueprint. Cheapest low-complexity option in the 2026-05 pricing sweep that satisfies true offsite (unlike the alternatives below).
+
+**Rejected: Google Photos/Drive as the 3rd copy.** `services.google-sync` is DORMANT (not deployed; go-live needs interactive user OAuth steps), it mirrors LIVE data (not versioned snapshots — ransomware/user-error/deletion propagates modulo the 30d grace), and it hands plaintext to a third party unless an rclone crypt layer is added. Keep it as a complementary convenience mirror for photos/docs if the user ever completes the go-live; it does not satisfy 3-2-1 on its own.
+
+**Rejected: periodic sdf (WOOACME) vault rotation.** The sdf drive is FROZEN by user decision ("do not touch them; yet", low-endurance W3A894), rotation is a manual cadence (rot gaps = unbounded RPO), and a drive rotating between house and drawer/office adds handling risk to the one low-endurance disk in the fleet.
+
+**Sizing caveat (must handle at implementation):** BX11 is 1 TB; /data carries ~700 G of largely rebuildable content (ai 291 G + models 210 G + Steam 106 G + llamacpp 92 G). The Borg job MUST exclude rebuildable trees (models, Steam, HF caches) so irreplaceable data (home, services, pool backups, configs) fits under 1 TB with dedup+prune headroom; if the irreplaceable set grows past ~800 G, upgrade BX11 → BX21 (5 TB, ~€3.20/mo more, instant upgrade, same credentials).
+
+**Follow-up (new TODO):** implement per the blueprint below — module + sops secret + SSH key provisioning + Gatus/backup-coordination registration.
 
 ---
 
