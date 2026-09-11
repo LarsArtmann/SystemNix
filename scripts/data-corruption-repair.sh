@@ -93,7 +93,7 @@ cmd_status() {
   else
     warn "smartctl not on PATH — reading the nvme.prom textfile metric instead"
     grep -E "media_errors_total|percentage_used|critical_warning" \
-      /var/lib/prometheus-node-exporter/textfile_collectors/nvme.prom 2>/dev/null | sed 's/^/  /' \
+      /var/lib/prometheus-node-exporter/textfile_collectors/nvme.prom 2>/dev/null | grep -v '^#' | sed 's/^/  /' \
       || fail "cannot read SMART (no smartctl, no textfile metric)"
   fi
 
@@ -118,6 +118,56 @@ cmd_status() {
   systemctl is-failed btrbk-data.service 2>&1 | sed 's/^/  btrbk-data is-failed: /'
 }
 
+# T05 user-runnable mapping: journal inode census + full read-verify of the
+# user-readable /data trees (DIRECT IO first, cache fallback), writing the
+# corrupt-file inventory. The 2026-09-11 run found: 7 journal inodes, 6
+# resolved to redownloadable model weights, 2 in root-owned trees, and
+# DISPROVED the historical "~595G/~627-639G" window numbers (the Aug-17
+# fiemap scan silently failed on `filefrag -v1`; read-verify is authoritative).
+cmd_map_user() {
+  need_bins dd
+  io_window_clear || die "IO window not clear (see WARN above)"
+  mkdir -p "$STATE_DIR" 2>/dev/null || STATE_DIR=$(mktemp -d)/systemnix-data-repair
+  mkdir -p "$STATE_DIR"
+
+  echo "== journal csum census (full retention) =="
+  journalctl --output cat -g "csum failed" 2>/dev/null \
+    | grep -oP 'ino \K[0-9]+' | sort -n | uniq -c | sort -rn \
+    | awk '{print "  ino " $2 ": " $1 " csum failures"}' | tee "$STATE_DIR/csum-inodes.txt"
+  local inodes
+  inodes=$(awk '{print $2}' "$STATE_DIR/csum-inodes.txt")
+
+  echo "== resolving inodes via find (user-readable trees) =="
+  local trees="/data/ai /data/models /data/SteamLibrary /data/cache /data/gcs-staging /data/tmp-crush-test /data/.crush"
+  local ino resolved=0 unresolved=""
+  for ino in $inodes; do
+    p=$(find $trees -xdev -inum "$ino" -type f -print -quit 2>/dev/null)
+    if [ -n "$p" ]; then echo "  ino $ino -> $p"; resolved=$((resolved+1));
+    else echo "  ino $ino -> not in user-readable trees (root-owned / docker / snapshot)"; unresolved="$unresolved $ino"; fi
+  done
+  [ -n "$unresolved" ] && echo "  unresolved:$unresolved (run --map-full as root for the btrfs ioctl resolve)"
+
+  echo "== read-verify all user-readable files (DIRECT IO, no cache pressure; ~615G) =="
+  local fails="$STATE_DIR/corrupt-files.txt.raw"
+  : > "$fails"
+  local n=0 total
+  total=$(find $trees -xdev -type f 2>/dev/null | wc -l)
+  while IFS= read -r f; do
+    n=$((n+1))
+    if ! dd if="$f" of=/dev/null iflag=direct bs=4M count=100000 2>/dev/null; then
+      if ! dd if="$f" of=/dev/null bs=4M count=100000 2>>"$fails"; then
+        echo "$f" >> "$fails"
+        echo "  EIO: $f"
+      fi
+    fi
+    (( n % 5000 == 0 )) && echo "  ... $n/$total files"
+  done < <(find $trees -xdev -type f 2>/dev/null)
+  sort -u "$fails" | grep -v '^dd:' > "$STATE_DIR/corrupt-files.txt" || true
+  echo "== inventory: $(wc -l < "$STATE_DIR/corrupt-files.txt") corrupt files -> $STATE_DIR/corrupt-files.txt =="
+  echo "bounded-vs-progressing verdict: compare this ino set against csum-inodes.txt over time;"
+  echo "new inodes appearing = growing damage (hardware triage); static set = bounded (repair as planned)."
+}
+
 # T05 root-extended mapping: resolve the journal inodes via the btrfs ioctl
 # (user inode-resolve is EPERM) and read-verify the root-owned trees.
 cmd_map_full() {
@@ -126,7 +176,9 @@ cmd_map_full() {
   io_window_clear || die "IO window not clear (see WARN above)"
 
   mkdir -p "$STATE_DIR"
-  local known_inodes="2114533 4969950 1331118 85607022"
+  local known_inodes
+  known_inodes=$(awk '{print $2}' "$STATE_DIR/csum-inodes.txt" 2>/dev/null)
+  [ -n "$known_inodes" ] || known_inodes="2114533 4969950 1331118 85607022 4995089 4020751 2608101"
   echo "== resolving journal inodes (btrfs ioctl) =="
   for ino in $known_inodes; do
     local p
@@ -169,8 +221,10 @@ cmd_safety_copy() {
 }
 
 cmd_repair_list() {
+  local inv
+  for inv in "$CORRUPT_LIST" "$STATE_DIR/corrupt-files.txt"; do [ -s "$inv" ] && break; done
   echo "== proposed destructive actions (master plan 06a: review before --apply-repair) =="
-  cat "$CORRUPT_LIST" 2>/dev/null | while IFS= read -r f; do
+  cat "$inv" 2>/dev/null | while IFS= read -r f; do
     [ -n "$f" ] || continue
     case "$f" in
       /data/models/*|/data/ai/*)
@@ -183,7 +237,7 @@ cmd_repair_list() {
         echo "  REVIEW (unknown class): $f" ;;
     esac
   done
-  [ -s "$CORRUPT_LIST" ] || echo "  (inventory empty — nothing to repair)"
+  [ -s "$inv" ] || echo "  (inventory empty — run --map-user, or --map-full as root)"
 }
 
 # T06: trash redownloadable corrupt files. DuckDB/container classes are
@@ -278,6 +332,7 @@ cmd_resume_seed() {
 
 case "${1:---status}" in
   --status)        cmd_status ;;
+  --map-user)      cmd_map_user ;;
   --map-full)      cmd_map_full ;;
   --safety-copy)   cmd_safety_copy ;;
   --repair-list)   cmd_repair_list ;;
