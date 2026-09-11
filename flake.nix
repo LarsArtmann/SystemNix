@@ -287,18 +287,15 @@
     };
 
     # go-taskqueue — projects-aware task work queue + agent pool (tq CLI).
-    # Frozen rev-pin since 2026-09-11: master HEAD (3426afc) carries a STALE
-    # vendorHash (source-only churn after the last refresh — the tq FOD dies
-    # "hash mismatch" specified /rKFWq got NQi6Xp). 200213a is the newest
-    # rev whose committed hash is in sync AND contains task-closeout support
-    # (required by the tq-agent-pool pool.conf — the old ca8a2f4 pin
-    # start-limit-hit tq-agent-pool on "unknown key"). Flip back to
-    # "github:LarsArtmann/go-taskqueue?ref=master" when upstream refreshes
-    # the hash. github: type (not git+file) so CI can fetch it. go-nix-helpers
-    # deliberately NOT followed (bank-sync FOD-mismatch trap): the vendorHash
-    # was validated with upstream's locked helper.
+    # github?ref=master since 2026-09-11 (aea63da): upstream refreshed the
+    # vendorHash that HEAD churn had staled (the 3426afc "hash mismatch"
+    # class — same night as buildflow d082b7e70). master also carries
+    # task-closeout support REQUIRED by the tq-agent-pool pool.conf (the
+    # old ca8a2f4 pin start-limit-hit tq-agent-pool on "unknown key").
+    # go-nix-helpers deliberately NOT followed (bank-sync FOD-mismatch
+    # trap): the vendorHash was validated with upstream's locked helper.
     go-taskqueue = {
-      url = "github:LarsArtmann/go-taskqueue/200213a0be922e38c6ea89d4f6bb9ddd52f3d48a";
+      url = "github:LarsArtmann/go-taskqueue?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
