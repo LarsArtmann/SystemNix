@@ -22,6 +22,20 @@
         mkDnsGate
         ;
       cfg = config.services.hermes;
+      # Hermes v0.21.0 dispatches restart-safe cron workers through
+      # `systemd-run --user --scope` (upstream tools/process_registry.py,
+      # fail-closed by design: falling back would let a gateway restart
+      # kill in-flight jobs). A system service needs three pieces of
+      # wiring for that bus topology: a running user manager (linger),
+      # XDG_RUNTIME_DIR pointing at its bus socket, and an FHS /bin/true
+      # — the scope availability probe execs /bin/true literally and
+      # NixOS has no /bin (missing it kept every cron job failing with
+      # "Restart-safe cron worker dispatch failed" since v0.21.0,
+      # 2026-09-05..09-11). Pinned to the live uid (975) so the runtime
+      # dir path is computable at eval time and the existing home
+      # ownership is untouched; a conflicting uid pin on another host
+      # fails the eval loudly instead of silently breaking the path.
+      hermesUid = 975;
       hermesPkg =
         let
           # Upstream packaging needs no hash patching (true since v2026.7.20
@@ -497,6 +511,12 @@
           home = cfg.stateDir;
           createHome = true;
           description = "Hermes AI Agent Gateway service user";
+          uid = hermesUid;
+          # Starts user@<uid>.service at boot so `systemd-run --user` (the
+          # restart-safe cron dispatch, above) can reach the user bus.
+          # users.manageLingering defaults true and only touches declared
+          # users — imperatively-lingering users (lars) are unaffected.
+          linger = true;
         };
 
         environment.systemPackages = [ hermesPkg ];
@@ -527,6 +547,9 @@
           )
           ++ [
             "f ${cfg.stateDir}/.managed 0644 ${cfg.user} ${cfg.group} -"
+            # FHS compat for the systemd-run --user --scope availability
+            # probe (execs /bin/true literally; NixOS only ships /bin/sh).
+            "L+ /bin/true - - - - ${pkgs.coreutils}/bin/true"
           ];
 
         systemd.services.hermes = {
@@ -536,11 +559,16 @@
             "network-online.target"
             "sops-nix.service"
             "dnsblockd.service"
+            # The user manager must own its bus before the first
+            # restart-safe cron dispatch probes it (probe failures are
+            # cached 60s — ordering avoids the one-shot stale probe).
+            "user@${toString hermesUid}.service"
           ];
           wants = [
             "network-online.target"
             "sops-nix.service"
             "dnsblockd.service"
+            "user@${toString hermesUid}.service"
           ];
           inherit onFailure;
           startLimitIntervalSec = 600;
@@ -581,6 +609,11 @@
                 "HERMES_MANAGED=true"
                 "GATEWAY_ALLOW_ALL_USERS=true"
                 "LD_LIBRARY_PATH=${pkgs.libopus}/lib"
+                # sd-bus refuses to GUESS the user bus socket: without this
+                # the `systemd-run --user --scope` cron dispatch (and its
+                # availability probe) fails "Failed to connect to user scope
+                # bus ... not defined" even with the user manager running.
+                "XDG_RUNTIME_DIR=/run/user/${toString hermesUid}"
                 # OTLP tracing — Python SDK expects full URL with scheme.
                 # Noop until upstream Hermes adds opentelemetry-sdk instrumentation.
                 "OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:${toString ports.signoz-otlp-http}"
