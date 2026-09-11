@@ -27,6 +27,12 @@
 #      a dedicated converge heals group-writable ssh config on EVERY
 #      restart (OpenSSH 'Bad owner or permissions', live 2026-08-21) —
 #      both on the full-walk path and on the fast-path exit
+#  10. restart-safe cron dispatch topology (live outage 2026-09-05..11:
+#      every cron job failed "systemd-run --user --scope is unavailable"
+#      — a system service has no user bus and NixOS has no /bin/true).
+#      Linger + uid pin + /bin/true + XDG_RUNTIME_DIR proven by running
+#      the EXACT upstream probe (systemd-run --user --scope /bin/true)
+#      as the service user, with a no-env negative control
 #
 # The gateway is replaced by `sleep infinity` via mkForce so the unit runs
 # its full ExecStartPre chain and holds its mount namespace open for
@@ -257,6 +263,31 @@ in
     # 8. hermes-github-verify: token env unset in the VM -> skip cleanly
     bound.succeed("systemctl show hermes-github-verify -p Result --value | grep -q success")
     bound.succeed("journalctl -u hermes-github-verify --no-pager | grep -q 'skipping private-repo auth canary'")
+
+    # 9. restart-safe cron dispatch topology (the 2026-09-05..09-11 live
+    #    outage: every cron job failed "systemd-run --user --scope is
+    #    unavailable" because a system service has no user bus and NixOS
+    #    has no /bin/true). Three pieces: linger file, uid pin, /bin/true,
+    #    then the EXACT upstream probe semantics (systemd-run --user
+    #    --scope -- /bin/true) as the service user with the service env.
+    bound.succeed("test -f /var/lib/systemd/linger/hermes")
+    bound.succeed("[ \"$(id -u hermes)\" = \"975\" ]")
+    bound.succeed("test -e /bin/true")
+    env = unit_env(bound)
+    assert "XDG_RUNTIME_DIR=/run/user/975" in env, f"XDG_RUNTIME_DIR missing: {env}"
+    # user manager actually up and answering (linger + wants ordering)
+    bound.wait_until_succeeds("test -S /run/user/975/bus")
+    bound.succeed(
+        "runuser -u hermes -- env XDG_RUNTIME_DIR=/run/user/975 "
+        "systemd-run --user --scope --quiet --unit=hermes-vm-scope-probe --collect "
+        "--property MemoryAccounting=yes --property OOMPolicy=kill -- /bin/true"
+    )
+    # negative control: without XDG_RUNTIME_DIR the probe must fail
+    # (proves the env var is load-bearing, GIT_CONFIG_GLOBAL style)
+    bound.fail(
+        "runuser -u hermes -- systemd-run --user --scope --quiet "
+        "--unit=hermes-vm-scope-probe-neg --collect -- /bin/true"
+    )
 
     # --- bare node: projectsDir = null => no bind, no env ---------------
     bare.start()
