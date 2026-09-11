@@ -252,11 +252,11 @@
         "systems": "systems_2"
       },
       "locked": {
-        "lastModified": 1789035038,
-        "narHash": "sha256-Lm429wGemDRSZdyH8cbTEbtmg3Yoz+sNOIidPGBWuEM=",
+        "lastModified": 1789085034,
+        "narHash": "sha256-dcVnd3G+BczoQmuSyhk1KYFpjRB6j75kSqVUmT/sAFc=",
         "owner": "LarsArtmann",
         "repo": "BuildFlow",
-        "rev": "56c755f0e040a87037e5202d6ef8a3add51d5d0d",
+        "rev": "d082b7e706a260e834aef27693143a152f6d1f2b",
         "type": "github"
       },
       "original": {
@@ -2044,16 +2044,16 @@
     "go-checker-helpers": {
       "flake": false,
       "locked": {
-        "lastModified": 1785106305,
-        "narHash": "sha256-h0CKNCikJoFOGs2SKYDD4xz+k8xey3yoyvdUXz1Q9Cw=",
+        "lastModified": 1786704083,
+        "narHash": "sha256-YytVJORLUggveURIzfaaf/wymv6S2koh/bgB/5xQ1YA=",
         "owner": "LarsArtmann",
         "repo": "go-checker-helpers",
-        "rev": "316c2a880ce7472738b5d593af4c8d2d789879a8",
+        "rev": "24702306f6fb8af3e9b3823d033ce8ac0217053b",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "refs/tags/v0.2.0",
+        "ref": "refs/tags/v0.2.1",
         "repo": "go-checker-helpers",
         "type": "github"
       }
@@ -4450,18 +4450,18 @@
         ]
       },
       "locked": {
-        "lastModified": 1788902803,
-        "narHash": "sha256-jhu1nOLsp5XXb9gEV/idQ9TNJDFz6Y4YYNwTCbORUqY=",
-        "ref": "refs/heads/master",
-        "rev": "ca8a2f4cba88ae77545e3d53f04b5b9f7db74508",
-        "revCount": 329,
-        "type": "git",
-        "url": "file:///home/lars/projects/go-taskqueue"
+        "lastModified": 1789027033,
+        "narHash": "sha256-YiEFTWO3PLujlSn+ddWvYwAyZvqLfzlcrkCguQVVS5k=",
+        "owner": "LarsArtmann",
+        "repo": "go-taskqueue",
+        "rev": "3426afc4740cb5e357186e9dec4d26b7e5aa6eaf",
+        "type": "github"
       },
       "original": {
-        "rev": "ca8a2f4cba88ae77545e3d53f04b5b9f7db74508",
-        "type": "git",
-        "url": "file:///home/lars/projects/go-taskqueue"
+        "owner": "LarsArtmann",
+        "ref": "master",
+        "repo": "go-taskqueue",
+        "type": "github"
       }
     },
     "go-workflow-auditlog": {

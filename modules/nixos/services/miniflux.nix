@@ -8,7 +8,9 @@
 #     internal/oauth2/manager.go), so the mkOidcGate only needs to prove the
 #     TLS/DNS chain is ready, not bootstrap the provider.
 #   - sops admin credentials (break-glass password login; OIDC user creation
-#     auto-provisions the daily-driver account on first login).
+#     auto-provisions the daily-driver account on first login). The
+#     disableLocalAuth option flips to SSO-only (DISABLE_LOCAL_AUTH=1) —
+#     gated on one proven live SSO login (see option description).
 #   - Nightly pg_dump (custom format) onto the HDD pool, cv-backup pattern
 #     (mount-gated dir oneshot + RequiresMountsFor + retention).
 _: {
@@ -43,12 +45,30 @@ _: {
       };
     in
     {
+      options.services.miniflux.disableLocalAuth = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = ''
+          SSO-only posture: sets DISABLE_LOCAL_AUTH=1, removing the password
+          login form entirely. Requires enableOidc (the env var is refused
+          otherwise — a deployment without OIDC and without local auth would
+          be unreachable by design). GO-LIVE GATE: flip this only AFTER one
+          successful live SSO login at https://rss.<domain>/ — enabling it in
+          the same deploy as an unproven OIDC callback risks total lockout.
+          Break-glass: set the option back to false (one line) and redeploy;
+          the admin account stays in the database regardless.
+        '';
+      };
+
       config = lib.mkIf cfg.enable {
         services.miniflux = {
           config = {
             LISTEN_ADDR = "127.0.0.1:${toString ports.miniflux}";
             BASE_URL = "https://rss.${domain}/";
           }
+          // (lib.optionalAttrs (enableOidc && cfg.disableLocalAuth) {
+            DISABLE_LOCAL_AUTH = 1;
+          })
           // (lib.optionalAttrs enableOidc {
             OAUTH2_PROVIDER = "oidc";
             OAUTH2_OIDC_PROVIDER_NAME = "Pocket ID";

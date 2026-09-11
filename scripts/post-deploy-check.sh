@@ -538,10 +538,13 @@ else
 fi
 
 # Miniflux (port from lib/ports.nix: 8101). /healthcheck is Miniflux's own
-# liveness endpoint (plain "OK"). /login proves the UI renders AND the OIDC
-# provider is wired: the "/oauth2/oidc/redirect" href only appears when
-# hasOAuth2Provider "oidc" is true (verified in the embedded login template)
-# — a misconfigured OAUTH2_* env block renders the password-only form instead.
+# liveness endpoint (plain "OK"). The SIGN-IN PAGE is served at "/" for
+# unauthenticated sessions — NOT at /login, which is the POST target only
+# and answers 405 to GET (live-verified against miniflux 2.3.3, 2026-09-11
+# deploy). Asserting "/oauth2/oidc/redirect" proves the UI renders AND the
+# OIDC provider is wired: the href only appears when hasOAuth2Provider
+# "oidc" is true (verified in the embedded login template) — a misconfigured
+# OAUTH2_* env block renders the password-only form instead.
 miniflux_enabled=false
 test -e /etc/systemd/system/miniflux.service && miniflux_enabled=true
 if $miniflux_enabled; then
@@ -553,13 +556,13 @@ if $miniflux_enabled; then
   else
     report_fail "Miniflux — /healthcheck answered but the body is not OK"
   fi
-  miniflux_login="$(wait_body_pattern "http://127.0.0.1:8101/login" "/oauth2/oidc/redirect" 6 5)" || true
+  miniflux_login="$(wait_body_pattern "http://127.0.0.1:8101/" "/oauth2/oidc/redirect" 6 5)" || true
   if grep -q "/oauth2/oidc/redirect" <<<"$miniflux_login"; then
-    report_pass "Miniflux — login renders with the OIDC sign-in route (Pocket ID wiring live)"
+    report_pass "Miniflux — sign-in page renders with the OIDC sign-in route (Pocket ID wiring live)"
   elif [ -z "$miniflux_login" ]; then
-    report_fail "Miniflux — :8101/login unreachable after 6 attempts (journalctl -u miniflux -n 30)"
+    report_fail "Miniflux — :8101/ unreachable after 6 attempts (journalctl -u miniflux -n 30)"
   else
-    report_fail "Miniflux — login page lacks the OIDC redirect route (OAUTH2_* env not picked up — check systemctl cat miniflux)"
+    report_fail "Miniflux — sign-in page lacks the OIDC redirect route (OAUTH2_* env not picked up — check systemctl cat miniflux)"
   fi
   if systemctl is-active --quiet miniflux.service; then
     report_pass "Miniflux — unit active"

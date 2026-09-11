@@ -39,6 +39,20 @@ Daily login: `rss.home.lan` → "Sign in with Pocket ID". If Pocket ID is
 unreachable, the lazy OIDC init logs an error and the login button fails —
 use the admin break-glass (password form stays enabled by design).
 
+**Login-page URL fact (live-verified 2026-09-11, miniflux 2.3.3):** the
+sign-in page is served at `/` for unauthenticated sessions. `/login` is the
+POST target only — `GET /login` answers **405 Method Not Allowed**. Any
+probe/check must hit `/` and assert the `/oauth2/oidc/redirect` href (the
+OIDC sign-in link only renders when the OAUTH2_* wiring is live).
+
+**SSO-only posture (`services.miniflux.disableLocalAuth`, default false):**
+sets `DISABLE_LOCAL_AUTH=1`, removing the password form entirely. GO-LIVE
+GATE: flip only AFTER one successful live SSO login — enabling it in the
+same deploy as an unproven OIDC callback risks total lockout (this is the
+paperless lesson; SSO fully on or fully off, never a locked-out middle).
+Break-glass when enabled: set the option back to false (one line) and
+redeploy; the admin account stays in the database regardless.
+
 ## Operations
 
 - **Feed health**: Miniflux refreshes internally (no cron unit); per-feed
