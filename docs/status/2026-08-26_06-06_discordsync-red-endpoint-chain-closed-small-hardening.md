@@ -48,11 +48,11 @@
 3. CHANGELOG Unreleased entries for this batch + TODO rows (vendorHash-fix pattern, IO-baseline upstream flake, master-rebase-when-go-1.26.6)
 4. Upstream: file/fix `TestIOBaseline_DiskWriteBytes` environmental flake (DiscordSync repo)
 5. Upstream DiscordSync: 3 mirror-outage issues still unfiled (TODO_LIST carries them); consider merging the branch into master once the go floor is satisfiable
-6. Turso quota decision (TODO_LIST P0 since 08-16) — the journal still shows `quota_exceeded` + circuit breaker hourly backoff
+6. ~~Turso quota decision (TODO_LIST P0 since 08-16) — the journal still shows `quota_exceeded` + circuit breaker hourly backoff~~ done at `cee81cbe` (2026-09-11: local-first stance encoded; the upgrade branch is the user-owned remainder)
 
 ### g) Questions (max 3)
 
-1. **Turso plan**: keep local-only (then remove sync env/keys), re-auth, or upgrade? (The quota log line recurs hourly.)
+1. ~~**Turso plan**: keep local-only (then remove sync env/keys), re-auth, or upgrade? (The quota log line recurs hourly.)~~ answered 2026-09-11 at `cee81cbe` — re-auth cannot fix it (the free plan is account-level BLOCKED while the token authenticates); local-first encoded, upgrade = user billing decision
 2. **The frozen 11,404**: schedule the M09 event-store replay sometime (would allow returning to true depth==0 semantics), or accept the growth-flag monitoring as permanent?
 3. **DAS reseat timing**: any window planned? (Everything in f.1 queues behind it.)
 

@@ -64,7 +64,7 @@ Nothing new destroyed this session — but two honest admissions:
 3. **"Never succeeded" vs "went stale"** — backup-coordination could emit `backup_ever_succeeded` (MTIME≠0 gate) so a never-worked backup pages differently from a stale one.
 4. **Post-outage convergence runbook** — today's manual forensics (stamps, journals, prom) were ~30 min of work; a `scripts/backup-catchup-report.sh` (stamps vs OnCalendar, backups.prom diff, btrbk dry-run) would make the next outage a one-command review. The AGENTS bullet I added documents the semantics; a script would operationalize them.
 5. **btrbk-root lacks a boot/deploy catch-up trigger** — data/pool/clean caught up at boot only by luck of the shutdown timing; root waits for 23:00 after every outage that ends mid-day. An extra deploy.sh post-switch `start` (like the existing btrbk-pool-clean `--no-block`) would close multi-day gaps hours earlier.
-6. **AGENTS procedure text vs reality for google-sync** — the Key Procedures/Google Sync sections describe a live mirror; no units are deployed. Either go-live or mark it explicitly dormant.
+6. ~~**AGENTS procedure text vs reality for google-sync** — the Key Procedures/Google Sync sections describe a live mirror; no units are deployed. Either go-live or mark it explicitly dormant.~~ done at `9bcf79d9`
 
 ## f) NEXT THINGS (ranked, session-derived)
 
@@ -87,7 +87,7 @@ Nothing new destroyed this session — but two honest admissions:
 17. Add btrbk receive-freshness (root+data) to `backups.prom` (25h granularity) — currently only the daily 3d-threshold verify guard covers it.
 18. btrbk-pool snapshot freshness (`/mnt/pool/.snapshots/services/*`) is unmonitored — consider a check.
 19. Consider local `snapshot_preserve` widening (3d→e.g. 7d) — the outage showed the NVMe rollback window collapses to zero while the pool is down (space tradeoff on QLC; user decision).
-20. google-sync: go-live or mark dormant in AGENTS.
+20. ~~google-sync: go-live or mark dormant in AGENTS.~~ done at `9bcf79d9`
 21. Tomorrow: confirm local pruning resumed (Aug 17–19 dailies dropped per 3d+1w).
 22. Verify Gatus pool/backup endpoints all resolved after tonight (no lingering outage-era reds).
 23. Investigate the odd `btrfs send -p @.20260816T2231 @.20260814T2300` journal line (low priority).
