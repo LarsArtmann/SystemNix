@@ -504,8 +504,10 @@ _: {
               }
               {
                 # Native OIDC in Miniflux (OAUTH2_PROVIDER=oidc, generic OIDC
-                # provider). The redirect URL is derived from BASE_URL
-                # upstream at /oauth2/oidc/callback; the client secret reaches
+                # provider). The redirect URL is OAUTH2_REDIRECT_URL in
+                # miniflux.nix (upstream default is EMPTY — no BASE_URL
+                # derivation) and MUST equal this callback URL byte-for-byte.
+                # The client secret reaches
                 # the DynamicUser service via systemd LoadCredential +
                 # OAUTH2_CLIENT_SECRET_FILE (no bridge env file).
                 name = "Miniflux";

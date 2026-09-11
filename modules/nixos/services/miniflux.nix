@@ -73,6 +73,12 @@ _: {
             OAUTH2_PROVIDER = "oidc";
             OAUTH2_OIDC_PROVIDER_NAME = "Pocket ID";
             OAUTH2_CLIENT_ID = "miniflux";
+            # MUST be set explicitly — OAUTH2_REDIRECT_URL defaults to ""
+            # upstream (no BASE_URL derivation); without it the authorize
+            # request lacks redirect_uri and Pocket ID answers
+            # "The 'redirect_uri' parameter is required when using
+            # OpenID Connect 1.0". Must match the pocket-id.nix callbackURL.
+            OAUTH2_REDIRECT_URL = "https://rss.${domain}/oauth2/oidc/callback";
             # %d = the unit's CREDENTIALS_DIRECTORY (systemd specifier); the file
             # is bind-mounted from the Pocket ID provisioner via LoadCredential.
             OAUTH2_CLIENT_SECRET_FILE = "%d/miniflux-oidc-secret";
