@@ -39,6 +39,24 @@ Daily login: `rss.home.lan` → "Sign in with Pocket ID". If Pocket ID is
 unreachable, the lazy OIDC init logs an error and the login button fails —
 use the admin break-glass (password form stays enabled by design).
 
+**First login 400s "This user already exists." (fixed 2026-09-11):** Miniflux
+2.3.3 never links an OIDC identity by username — the unauthenticated callback
+looks the user up ONLY by `openid_connect_id` (= the Pocket ID `sub` UUID) and,
+with `OAUTH2_USER_CREATION=1`, refuses on a username collision with the
+pre-seeded `lars` break-glass admin (HTTP 400 `error.user_already_exists`;
+source-verified `internal/ui/oauth2_callback.go` at v2.3.3). Fix = upstream's
+designed linking flow, zero SQL:
+
+1. Log in with the break-glass password (above).
+2. Settings → "Link your Pocket ID account" (= GET `/oauth2/oidc/redirect` —
+   that handler has no auth check, works from any session) → passkey ceremony.
+3. The callback's authenticated branch writes `openid_connect_id = <sub>` and
+   flashes "account linked"; Settings then shows Unlink (upstream refuses
+   unlinking once `DISABLE_LOCAL_AUTH=1`).
+4. Log out → "Sign in with Pocket ID" logs straight in. Journal proof:
+   `User authenticated successfully using OAuth2 … username=lars`. That first
+   live SSO login also satisfies the `disableLocalAuth` go-live gate below.
+
 **Login-page URL fact (live-verified 2026-09-11, miniflux 2.3.3):** the
 sign-in page is served at `/` for unauthenticated sessions. `/login` is the
 POST target only — `GET /login` answers **405 Method Not Allowed**. Any
