@@ -108,6 +108,42 @@ let
       exec btrfs scrub start -B "$mnt"
     '';
   };
+
+  # btrbk-data EIO repair gate (2026-09-11, TODO_LIST P0 marker-gate row).
+  # The /data -> pool send has been structurally dead since 2026-07 (EIO csum
+  # errors from the unsafe-partition-shrink corruption), yet every nightly
+  # run still READ the full ~258G tree for ~3h12m before dying (18G
+  # page-cache peak = the oom-kill failure mode, ~329G written) — ~8TB/month
+  # of pointless QLC reads. Owner stance: btrbk-data keeps FAILING (the
+  # failure is the tripwire), so this gate makes the failure CHEAP instead
+  # of removing it: while the marker is absent it takes the cheap local CoW
+  # snapshot + retention prune (the /data rollback tier never missed a
+  # night — only the send died) and then exits 1, so OnFailure still fires
+  # nightly and ExecStart (the expensive `btrbk run` send) never starts.
+  # With the marker present it exits 0 and the normal nightly run proceeds.
+  # Remove this gate (and the btrfs-verify-pool-backups WARN-only /data
+  # branch) when the T04-T08 repair executes.
+  btrbkDataGate = pkgs.writeShellApplication {
+    name = "btrbk-data-repair-gate";
+    runtimeInputs = [
+      pkgs.btrbk
+      pkgs.coreutils
+    ];
+    text = ''
+      if [ -f /data/.repair-done ]; then
+        exit 0
+      fi
+      echo "btrbk-data: /data EIO repair gate ACTIVE (no /data/.repair-done marker) — taking local snapshot + retention prune, then deliberate fast-fail"
+      if ! btrbk -c /etc/btrbk/data.conf snapshot; then
+        echo "btrbk-data: local snapshot ALSO failed — inspect /data health before the repair run" >&2
+      fi
+      if ! btrbk -c /etc/btrbk/data.conf prune; then
+        echo "btrbk-data: retention prune failed — snapshots may accumulate while the gate is active" >&2
+      fi
+      echo "btrbk-data: nightly pool send deliberately SKIPPED (known /data EIO, TODO_LIST P0). This failure is the tripwire and is EXPECTED while the marker is absent; remove the gate after the T04-T08 repair." >&2
+      exit 1
+    '';
+  };
 in
 {
   fileSystems = {
@@ -277,7 +313,17 @@ in
           "/mnt/pool"
           "/data"
         ];
-        serviceConfig.TimeoutStartSec = "24h";
+        serviceConfig = {
+          TimeoutStartSec = "24h";
+          # EIO repair gate (see btrbkDataGate above): fails the unit in
+          # ~seconds while /data/.repair-done is absent — OnFailure semantics
+          # preserved, the ~258G full-tree send read never starts. Any future
+          # unit-file churn that makes stc restart this chronically-failing
+          # unit also now costs seconds, not a 3h re-send (2026-09-09
+          # exit-4 class, bounded but not eliminated — the failure stance is
+          # deliberate).
+          ExecStartPre = "${lib.getExe btrbkDataGate}";
+        };
         inherit onFailure;
       };
       btrbk-pool = {
