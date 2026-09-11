@@ -353,19 +353,28 @@ in
     __expand_literal_home PLAYWRIGHT_BROWSERS_PATH
     __expand_literal_home GOPATH
 
-    __go_cache_redirect TMPDIR $HOME/tmp
-    __go_cache_redirect GOCACHE $HOME/tmp/go-cache
-    __go_cache_redirect GOMODCACHE $HOME/tmp/go-mod
-    __go_cache_redirect GOLANGCI_LINT_CACHE $HOME/tmp/go-lint
+    # Fallback targets live on the /tmp tmpfs (48G cap), NEVER in $HOME:
+    # the 2026-08-16 outage era silently wrote ~40G of cache trees into
+    # ~/tmp (the user's general scratch dir — opaque pollution), pinned
+    # them via root snapshots (cleanup didn't free df for weeks), and
+    # churned the QLC NVMe whose SLC exhaustion caused the crash era.
+    # tmpfs fallback keeps builds WORKING during an outage while making
+    # the cost honest (RAM, capped — ENOSPC there fails builds loudly),
+    # wiped on reboot, invisible to snapshots. buildcache-usb-recovery
+    # additionally rm -rf's /tmp/bc-fallback after a successful remount.
+    __go_cache_redirect TMPDIR /tmp
+    __go_cache_redirect GOCACHE /tmp/bc-fallback/go-cache
+    __go_cache_redirect GOMODCACHE /tmp/bc-fallback/go-mod
+    __go_cache_redirect GOLANGCI_LINT_CACHE /tmp/bc-fallback/go-lint
     # 2026-08-24 follow-up: the login chain inherits EVERY dead-mount cache
     # var from hm-session-vars.sh, not just the Go ones — an unprobed var
     # still blocks the full device-timeout per lookup during login
     # (docs/status/2026-08-24_08-00_sddm §b.1).
-    __go_cache_redirect CARGO_HOME $HOME/tmp/cargo
-    __go_cache_redirect PIP_CACHE_DIR $HOME/tmp/pip
-    __go_cache_redirect SCCACHE_DIR $HOME/tmp/sccache
-    __go_cache_redirect npm_config_cache $HOME/tmp/npm
-    __go_cache_redirect PLAYWRIGHT_BROWSERS_PATH $HOME/tmp/playwright
+    __go_cache_redirect CARGO_HOME /tmp/bc-fallback/cargo
+    __go_cache_redirect PIP_CACHE_DIR /tmp/bc-fallback/pip
+    __go_cache_redirect SCCACHE_DIR /tmp/bc-fallback/sccache
+    __go_cache_redirect npm_config_cache /tmp/bc-fallback/npm
+    __go_cache_redirect PLAYWRIGHT_BROWSERS_PATH /tmp/bc-fallback/playwright
 
     if test "$GOTOOLCHAIN" = local
         echo "⚠ GOTOOLCHAIN=local blocks go.work ≥1.26.6 projects — switching to auto"

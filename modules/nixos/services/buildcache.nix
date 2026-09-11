@@ -349,6 +349,16 @@
 
             # 5. Re-provision cache dirs and refresh metrics now.
             systemctl start buildcache-init.service buildcache-metrics.service
+            # 6. Sweep the tmpfs fallback caches the fish guard filled during
+            # the outage (/tmp/bc-fallback/* — 00-go-cache-guard redirects
+            # GOCACHE/GOMODCACHE/etc. there when this mount is dead). The
+            # mount is healed and verified above, so the fallback copies are
+            # pure duplication; tmpfs reclaims instantly (no snapshots, no
+            # NVMe writes). rm is safe: rebuildable caches by contract.
+            if [ -d /tmp/bc-fallback ]; then
+              rm -rf /tmp/bc-fallback
+              echo "buildcache fallback sweep: /tmp/bc-fallback removed (tmpfs reclaimed)"
+            fi
             echo "buildcache recovered: $(findmnt -n -t ext4 -o SOURCE -- "$mnt")"
           '';
         };
