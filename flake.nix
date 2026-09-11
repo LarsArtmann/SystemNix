@@ -287,20 +287,14 @@
     };
 
     # go-taskqueue — projects-aware task work queue + agent pool (tq CLI).
-    # git+file INTERIM (upstream ROUND8 plan B0): the local master sits ahead
-    # of origin (owner-blocked push), so the input pins the LOCAL repo —
-    # flip to "github:LarsArtmann/go-taskqueue?ref=master" after the push
-    # lands and drop this comment. CI cannot fetch git+file inputs (local
-    # path) — same window as the storage-collector collector-utils pin.
-    # REV-pinned (not ref=master): the working tree churns constantly
-    # (concurrent agent sessions + auto-commit daemon) and a moving-ref
-    # git+file lock records dirtyRev/narHash of whatever is uncommitted —
-    # breaking every eval on the next tree change. Bump by editing the rev
-    # (update-input is a silent no-op on ?rev= URLs). go-nix-helpers
-    # deliberately NOT followed (bank-sync FOD-mismatch trap above): the
-    # vendorHash was validated with upstream's locked helper.
+    # github?ref=master since 2026-09-11: the interim REV-pinned git+file
+    # input is GONE (the upstream push landed; origin/master == local master,
+    # and master grew task-closeout support the tq-agent-pool pool.conf
+    # requires). CI can fetch this input again. go-nix-helpers deliberately
+    # NOT followed (bank-sync FOD-mismatch trap): the vendorHash was
+    # validated with upstream's locked helper.
     go-taskqueue = {
-      url = "git+file:///home/lars/projects/go-taskqueue?rev=ca8a2f4cba88ae77545e3d53f04b5b9f7db74508";
+      url = "github:LarsArtmann/go-taskqueue?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
