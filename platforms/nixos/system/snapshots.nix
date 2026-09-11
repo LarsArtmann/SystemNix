@@ -291,9 +291,14 @@ in
       # ExecStop (btrfs-scrub-maybe-cancel) from the nixpkgs module is kept —
       # it only matters for the shutdown-cancel path, which the wrapper's
       # `exec btrfs scrub start -B` preserves.
-      "btrfs-scrub--".serviceConfig.ExecStart = lib.mkForce "${scrubGuard} /";
-      btrfs-scrub-data.serviceConfig.ExecStart = lib.mkForce "${scrubGuard} /data";
-      btrfs-scrub-mnt-pool.serviceConfig.ExecStart = lib.mkForce "${scrubGuard} /mnt/pool";
+      # lib.getExe is REQUIRED: writeShellApplication's store path is a
+      # DIRECTORY (script lives at <out>/bin/<name>) — the bare `${scrubGuard}`
+      # interpolation 203/EXEC'd every weekly fire since the 2026-09-07 first
+      # post-deploy window ("Is a directory" on all three units), silently
+      # suspending ALL scrub coverage incl. the /data corruption-delta gate.
+      "btrfs-scrub--".serviceConfig.ExecStart = lib.mkForce "${lib.getExe scrubGuard} /";
+      btrfs-scrub-data.serviceConfig.ExecStart = lib.mkForce "${lib.getExe scrubGuard} /data";
+      btrfs-scrub-mnt-pool.serviceConfig.ExecStart = lib.mkForce "${lib.getExe scrubGuard} /mnt/pool";
 
       # ── btrbk clean: GC for garbled receive targets ────────────────────────
       # `btrbk clean` is btrbk's sanctioned garbage collector for incomplete
