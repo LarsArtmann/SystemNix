@@ -104,13 +104,49 @@ duplicates):
 ```bash
 # preview: sudo -u inboxclean … inboxclean paperless --backfill --dry-run
 # repair (keeps the OLDEST document per checksum, deletes the rest):
+# INBOXCLEAN_CONFIG (the accounts TOML) and PATH (carries qpdf) are pulled
+# from the DEPLOYED unit file — the env reconstruction below is verified
+# against the live 2026-09-12 units. INBOXCLEAN_CONFIG is REQUIRED: without
+# it the CLI sees only the main account and work-account ledger rows
+# resolve no source email (the 2026-08-29 auth-runbook trap).
 sudo -u inboxclean env \
+  $(grep -oP '(INBOXCLEAN_CONFIG|DB_PATH)=\S+' /etc/systemd/system/inboxclean-sync.service) \
+  PATH="$(grep -oP '^Environment="PATH=\K[^"]+' /etc/systemd/system/inboxclean-sync.service)" \
   PAPERLESS_URL=http://127.0.0.1:2892 \
   PAPERLESS_TOKEN="$(sudo grep -oP 'PAPERLESS_TOKEN=\K\S+' /run/secrets/rendered/inboxclean-paperless-env)" \
+  PAPERLESS_DECRYPT_PASSWORD="$(sudo sed -n 's/^PAPERLESS_DECRYPT_PASSWORD=//p' /run/secrets/rendered/inboxclean-paperless-env)" \
   INBOXCLEAN_TOKEN_FILE=/var/lib/inboxclean/token.json \
-  DB_PATH=/var/lib/inboxclean/inboxclean.db \
   /run/current-system/sw/bin/inboxclean paperless --backfill --prune
 ```
+
+The sed (not `grep -oP '\S+'`) for the decrypt password preserves embedded
+spaces; PAPERLESS_TOKEN is a single token so the cheaper grep is safe.
+
+## Retro-decrypt repair (existing encrypted statements)
+
+The four 2026-09-03 statements were archived BEFORE the password existed:
+their stored bytes ARE the encrypted originals, so re-uploading decrypted
+copies cannot dedup against them (different bytes). Repair them in place
+with the upstream `--backfill --decrypt-repair` (InboxClean ≥ 2026-09-12 —
+needs a flake bump after the upstream push; the deployed c65c797 build does
+NOT have it yet):
+
+```bash
+# same env reconstruction as above; add --decrypt-repair and preview first:
+… inboxclean paperless --backfill --decrypt-repair --dry-run   # preview
+… inboxclean paperless --backfill --decrypt-repair             # repair
+```
+
+Per encrypted document it re-fetches the source attachment (verified
+against the ledger checksum — a mismatched or missing source is skipped
+with a reason), decrypts with qpdf, uploads the plaintext with the old
+document's metadata, and on a settled consumption task deletes the
+encrypted original and repoints the ledger row at the replacement. A
+duplicate refusal converges (the pre-existing decrypted copy survives).
+Failures are per-document counters; the encrypted original stays in place
+and a corrected re-run converges. Requires the corrected env
+reconstruction above: INBOXCLEAN_CONFIG for the work-account rows, and
+PATH with qpdf.
 
 ## Encrypted bank statements
 
