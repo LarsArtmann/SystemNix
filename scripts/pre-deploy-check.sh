@@ -486,8 +486,12 @@ if [ -s "$METRICS_FILE" ]; then
   # The list is empty; re-add ONLY when a deploy introduces metrics the
   # running generation's collector cannot yet emit.
   # Read by the sourced metrics-gate.sh.
+  # 2026-09-12 pool-smart-metrics first deploy: the running generation has no
+  # pool-smart-metrics.service, so the four gatus-referenced aggregates are
+  # absent until the switch lands (deploy.sh restarts the collector
+  # post-switch). Clear this list on the NEXT collector-adding deploy.
   # shellcheck disable=SC2034
-  KNOWN_NEW_METRICS=""
+  KNOWN_NEW_METRICS="pool_smart_all_healthy pool_smart_scrape_errors pool_smart_media_flag pool_smart_temp_over"
   for metric in $(extract_gatus_metrics); do
     metrics_gate_classify_absence "$metric" || MISSING_METRICS=$((MISSING_METRICS + 1))
   done
