@@ -873,6 +873,13 @@ in
       # buildcache-usb-recovery; udev-keyed to the two Toshiba serials).
       pool-recovery.enable = true;
 
+      # SMART metrics for the pool members (temp, media counters, G-Sense/
+      # Disk_Shift deltas via state file) — closes the "dying drive alerts
+      # nowhere remote" gap (smartd's only remote channel rides the mail
+      # relay). Gatus "Pool Drives *" checks + the pool-storage SigNoz
+      # dashboard consume these.
+      pool-smart-metrics.enable = true;
+
       # Cross-service backup health monitoring. Checks all backup dirs for
       # freshness and writes Prometheus metrics. Gatus alerts on Discord
       # when any backup is stale (>25h). Schedules are staggered to avoid

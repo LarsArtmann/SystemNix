@@ -1763,6 +1763,55 @@ _: {
                   alerts = discordAlert "Pool RAID1 degraded — exactly one Toshiba member present (or pool-recovery metrics died). The pool may be serving from a single member. Check: btrfs device stats /mnt/pool, scripts/das-link-recovery-check.sh. DAS replug procedure: unplug USB cable (VBUS) AND enclosure power 60s, replug; a degraded mount remains a manual decision (never -o degraded automatically).";
                 })
               ]
+              # pool-smart-metrics module: per-drive SMART health, media
+              # counters (the leading drive-death indicator), temperature.
+              # Vibration/G-Sense deltas ride the metrics (dashboard +
+              # pool_smart_gsense_increased) without a Gatus check — shock
+              # events fire exactly when the enclosure is physically moved,
+              # which would be self-inflicted alert noise.
+              ++ lib.optionals (config.services.pool-smart-metrics.enable or false) [
+                (mkHttpCheck {
+                  name = "Pool Drives SMART";
+                  group = "Filesystem";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    # Anchored forms (HELP comments embed name+digit on one
+                    # line; the \n after the value keeps them out of the
+                    # match).
+                    "[BODY] != pat(*pool_smart_all_healthy 0\n*)"
+                    "[BODY] == pat(*\npool_smart_all_healthy *)"
+                    "[BODY] != pat(*pool_smart_scrape_errors 1\n*)"
+                    "[BODY] == pat(*\npool_smart_scrape_errors *)"
+                  ];
+                  alerts = discordAlert "Pool HDD SMART failing — a Toshiba MG08 member reports FAILED health, or the SMART collector cannot read it (SAT/bridge failure). smartd's remote alert path rides the mail relay (pending domain verification), so THIS is the remote channel. Check: sudo bash scripts/hdd-vibration-check.sh (full report), sudo smartctl -d sat -H /dev/disk/by-id/ata-TOSHIBA_MG08ACA16TE_*; journalctl -u pool-smart-metrics.";
+                })
+                (mkHttpCheck {
+                  name = "Pool Drives Media Counters";
+                  group = "Filesystem";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    # reallocated/reallocated_events/pending/uncorrectable must
+                    # all be zero — any nonzero line is the death indicator.
+                    "[BODY] == pat(*\npool_smart_media_flag 0*)"
+                  ];
+                  alerts = discordAlert "Pool HDD media counters nonzero — reallocated/pending/uncorrectable sectors on a Toshiba member. This is the leading indicator of drive death; the RAID1 still serves but a replace+rebalance window is opening. Check: sudo smartctl -d sat -A /dev/disk/by-id/ata-TOSHIBA_MG08ACA16TE_* | grep -E ' 5 |196|197|198'; btrfs device stats /mnt/pool.";
+                })
+                (mkHttpCheck {
+                  name = "Pool Drives Temperature";
+                  group = "Filesystem";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\npool_smart_temp_over 0*)"
+                  ];
+                  alerts = discordAlert "Pool HDD temperature >= 50C — the MG08s are rated to 60C; sustained heat degrades the drives AND is the classic symptom of a dying enclosure fan. Check enclosure ventilation, sudo smartctl -d sat -A /dev/disk/by-id/ata-TOSHIBA_MG08ACA16TE_* | grep 194.";
+                })
+              ]
               ++ lib.optionals config.services.signoz.enable [
                 (mkHttpCheck {
                   name = "ClickHouse Data Mount";

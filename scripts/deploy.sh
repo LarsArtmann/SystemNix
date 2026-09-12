@@ -477,6 +477,15 @@ if nix run .#pre-deploy-check; then
     sudo systemctl start pool-usb-recovery.service 2>/dev/null || true
   fi
 
+  # Fresh pool SMART metrics every deploy (stc never restarts inactive
+  # oneshots): the "Pool Drives *" Gatus checks and pre-deploy §10 metric
+  # presence validation both read these — without this the first deploy
+  # after a boot races the 5-min timer and phantom-fails the next gate.
+  if systemctl cat pool-smart-metrics.service >/dev/null 2>&1; then
+    echo "Running pool-smart-metrics.service (fresh drive SMART metrics)"
+    sudo systemctl restart pool-smart-metrics.service 2>/dev/null || true
+  fi
+
   # Run the buildcache GC after recovery so every deploy verifies the prune
   # path end-to-end (a silent pnpm failure hid here for a week) and reclaims
   # incident debris without waiting for the weekly Sun 05:00 timer.
