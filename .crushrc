@@ -1,10 +1,9 @@
-# >>> tq bootstrap (managed) >>>
-permissions allow view ls grep glob edit write bash
-model large zai/glm-5.3-flash --reasoning-effort xhigh
-# <<< tq bootstrap (managed) <<<
-
 # statix on this host has no LSP mode (`statix lsp` is not a subcommand), so
 # crush's auto-LSP for nix files burns its init timeout in every session
 # (900+ failures in .crush/logs/crush.log, still failing 2026-09-11).
 # Explicit declaration with --disabled overrides the auto entry.
 lsp add statix --disabled true
+# >>> tq bootstrap (managed) >>>
+permissions allow view ls grep glob edit write bash
+model large zai/glm-5.3-flash --reasoning-effort xhigh
+# <<< tq bootstrap (managed) <<<
