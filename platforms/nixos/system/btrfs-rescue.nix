@@ -72,13 +72,18 @@ let
       # Rotation window: append-only off so this script may prune and create.
       chattr -a "$RESCUE_DIR" 2>/dev/null || true
 
-      # Prune to the newest KEEP entries (sorted names are chronological).
-      prune_list=$(ls -1 "$RESCUE_DIR" 2>/dev/null | grep '^@\.' | sort | head -n -"$KEEP" || true)
-      while IFS= read -r old; do
-        [ -n "$old" ] || continue
-        echo "btrfs-rescue: pruning old rescue snapshot: $old"
-        btrfs subvolume delete "$RESCUE_DIR/$old"
-      done <<<"$prune_list"
+      # Prune to the newest KEEP entries. Glob expansion is sorted and names
+      # are chronological, so the OLDEST prune_count entries get deleted.
+      # ([ -e ] guard makes this correct under both default and null globbing.)
+      snapshots=("$RESCUE_DIR"/@.*)
+      prune_count=$(( ''${#snapshots[@]} - KEEP ))
+      if [ "$prune_count" -gt 0 ]; then
+        for old in "''${snapshots[@]:0:prune_count}"; do
+          [ -e "$old" ] || continue
+          echo "btrfs-rescue: pruning old rescue snapshot: $old"
+          btrfs subvolume delete "$old"
+        done
+      fi
 
       # Fresh rescue snapshot. CoW: metadata-only, zero data copy, seconds.
       name="@.rescue-$(date +%Y%m%dT%H%M%S)"

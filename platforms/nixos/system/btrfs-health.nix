@@ -326,14 +326,25 @@ let
         # window is gone — Gatus fires. ls on the automounted toplevel
         # triggers the automount (instant; harmless). Fail-closed: unreadable
         # dir counts as 0, which alerts.
+        snap_count() {
+          local dir=$1 count=0 entry
+          if [ -d "$dir" ]; then
+            for entry in "$dir"/@.*; do
+              if [ -e "$entry" ]; then
+                count=$(( count + 1 ))
+              fi
+            done
+          fi
+          echo "$count"
+        }
         echo "# HELP btrfs_root_snapshots btrbk @ snapshots in /mnt/btrfs-root/.snapshots (0 = glob-delete or retention wedge)"
         echo "# TYPE btrfs_root_snapshots gauge"
         echo "# HELP btrfs_rescue_snapshots rescue snapshots in /mnt/btrfs-root/.rescue"
         echo "# TYPE btrfs_rescue_snapshots gauge"
         echo "# HELP btrfs_rescue_append_only 1 = .rescue verified chattr +a (subvolume delete blocked, self-tested per run)"
         echo "# TYPE btrfs_rescue_append_only gauge"
-        echo "btrfs_root_snapshots $(ls -1 /mnt/btrfs-root/.snapshots 2>/dev/null | grep -c '^@\.')"
-        echo "btrfs_rescue_snapshots $(ls -1 /mnt/btrfs-root/.rescue 2>/dev/null | grep -c '^@\.')"
+        echo "btrfs_root_snapshots $(snap_count /mnt/btrfs-root/.snapshots)"
+        echo "btrfs_rescue_snapshots $(snap_count /mnt/btrfs-root/.rescue)"
         if [ "$(cat /var/lib/btrfs-rescue/protection 2>/dev/null || echo 0)" = "1" ]; then
           echo "btrfs_rescue_append_only 1"
         else
