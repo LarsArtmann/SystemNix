@@ -41,6 +41,12 @@ in
       blockIPPrefix = 24;
       statsPort = ports.dns-blocker-stats;
 
+      # Caddy reverse-proxies dnsblock.${domain} to the loopback stats API;
+      # trust its X-Forwarded-For so the audit log records the real LAN
+      # client instead of 127.0.0.1. Spoof-safe: 127.0.0.1 is the stats
+      # bind address, so only Caddy (and root-local processes) can connect.
+      trustedProxies = [ "127.0.0.1" ];
+
       inherit (blocklists)
         blocklists
         whitelist

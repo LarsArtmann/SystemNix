@@ -276,6 +276,9 @@ _: {
             dns_doh_port = cfg.dnsDOHPort;
             dns_doh_path = cfg.dnsDOHPath;
           }
+          // lib.optionalAttrs (cfg.trustedProxies != [ ]) {
+            trusted_proxies = cfg.trustedProxies;
+          }
           // lib.optionalAttrs (cfg.dnsDOHTrustedProxies != [ ]) {
             dns_doh_trusted_proxies = cfg.dnsDOHTrustedProxies;
           }
@@ -359,6 +362,17 @@ _: {
           type = types.port;
           default = ports.dns-blocker-stats;
           description = "Port for dnsblockd stats API (localhost only)";
+        };
+
+        trustedProxies = mkOption {
+          type = types.listOf types.str;
+          default = [ ];
+          description = ''
+            Proxy IPs/CIDRs whose X-Forwarded-For / X-Real-IP headers dnsblockd
+            trusts for client-IP attribution (audit log, rate limiting).
+            Only set this for proxies that cannot be bypassed — the stats API
+            binds to 127.0.0.1, so listing 127.0.0.1 (Caddy) is spoof-safe.
+          '';
         };
 
         blocklists = mkOption {
