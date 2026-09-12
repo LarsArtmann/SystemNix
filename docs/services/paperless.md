@@ -104,18 +104,22 @@ duplicates):
 ```bash
 # preview: sudo -u inboxclean … inboxclean paperless --backfill --dry-run
 # repair (keeps the OLDEST document per checksum, deletes the rest):
-# INBOXCLEAN_CONFIG (the accounts TOML) and PATH (carries qpdf) are pulled
-# from the DEPLOYED unit file — the env reconstruction below is verified
-# against the live 2026-09-12 units. INBOXCLEAN_CONFIG is REQUIRED: without
-# it the CLI sees only the main account and work-account ledger rows
-# resolve no source email (the 2026-08-29 auth-runbook trap).
+# Everything except the paperless secrets is pulled from the DEPLOYED unit
+# file. All five extracted vars are REQUIRED (gate-tested against the live
+# CLI 2026-09-12): INBOXCLEAN_CONFIG (the accounts TOML — without it the
+# CLI sees only the main account and work-account ledger rows resolve no
+# source email, the 2026-08-29 auth-runbook trap), LLM_PROVIDER (the CLI's
+# global config gate exits config.api_key_required BEFORE dispatch without
+# it — the default provider is openai, the unit runs ollama),
+# GMAIL_CREDENTIALS_FILE/GMAIL_TOKEN_FILE (the MAIN account's client for
+# --decrypt-repair source re-fetch is built from these; the TOML only
+# covers extra accounts), DB_PATH, and PATH (carries qpdf).
 sudo -u inboxclean env \
-  $(grep -oP '(INBOXCLEAN_CONFIG|DB_PATH)=\S+' /etc/systemd/system/inboxclean-sync.service) \
+  $(grep -oP '(GMAIL_CREDENTIALS_FILE|GMAIL_TOKEN_FILE|INBOXCLEAN_CONFIG|DB_PATH|LLM_PROVIDER)=\S+' /etc/systemd/system/inboxclean-sync.service) \
   PATH="$(grep -oP '^Environment="PATH=\K[^"]+' /etc/systemd/system/inboxclean-sync.service)" \
   PAPERLESS_URL=http://127.0.0.1:2892 \
   PAPERLESS_TOKEN="$(sudo grep -oP 'PAPERLESS_TOKEN=\K\S+' /run/secrets/rendered/inboxclean-paperless-env)" \
   PAPERLESS_DECRYPT_PASSWORD="$(sudo sed -n 's/^PAPERLESS_DECRYPT_PASSWORD=//p' /run/secrets/rendered/inboxclean-paperless-env)" \
-  INBOXCLEAN_TOKEN_FILE=/var/lib/inboxclean/token.json \
   /run/current-system/sw/bin/inboxclean paperless --backfill --prune
 ```
 
@@ -145,8 +149,9 @@ encrypted original and repoints the ledger row at the replacement. A
 duplicate refusal converges (the pre-existing decrypted copy survives).
 Failures are per-document counters; the encrypted original stays in place
 and a corrected re-run converges. Requires the corrected env
-reconstruction above: INBOXCLEAN_CONFIG for the work-account rows, and
-PATH with qpdf.
+reconstruction above: INBOXCLEAN_CONFIG for the work-account rows,
+GMAIL_CREDENTIALS_FILE/GMAIL_TOKEN_FILE for the main account's source
+re-fetch, LLM_PROVIDER for the config gate, and PATH with qpdf.
 
 ## Encrypted bank statements
 
