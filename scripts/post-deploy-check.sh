@@ -1420,6 +1420,30 @@ else
   report_skip "Mail relay — postfix not deployed (enable services.mail-relay)"
 fi
 
+# --- §13 Pool drive SMART collector ---
+# deploy.sh restarts pool-smart-metrics post-switch; the textfile must carry
+# the aggregate flags (Gatus "Pool Drives *" checks + SigNoz pool-storage
+# dashboard read them). A stale/absent prom means the unit failed (caps, SAT)
+# — fail loudly, never a phantom green.
+echo ""
+echo "=== Pool Drives SMART ==="
+if systemctl cat pool-smart-metrics.service >/dev/null 2>&1; then
+  _psm_prom=/var/lib/prometheus-node-exporter/textfile_collectors/pool-smart.prom
+  if [ -f "$_psm_prom" ]; then
+    if grep -q '^pool_smart_all_healthy 1$' "$_psm_prom" &&
+      grep -q '^pool_smart_scrape_errors 0$' "$_psm_prom" &&
+      grep -q '^pool_smart_media_flag 0$' "$_psm_prom"; then
+      report_pass "Pool drives — SMART collector healthy (all_healthy=1, no scrape errors, media counters zero)"
+    else
+      report_fail "Pool drives — SMART flags degraded in $_psm_prom: $(grep -E '^pool_smart_(all_healthy|scrape_errors|media_flag|temp_over) ' "$_psm_prom" | tr '\n' ' ') — check journalctl -u pool-smart-metrics, then sudo bash scripts/hdd-vibration-check.sh"
+    fi
+  else
+    report_fail "Pool drives — collector textfile missing (pool-smart-metrics unit failing; pool drive health unmonitored)"
+  fi
+else
+  report_skip "Pool drives — SMART collector not deployed (enable services.pool-smart-metrics)"
+fi
+
 # --- Summary ---
 echo ""
 echo "=== Summary ==="
