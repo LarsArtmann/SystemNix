@@ -26,6 +26,7 @@ in
     ./dns-blocker-config.nix # DNS blocker: dnsblockd embedded resolver + block page
     ./snapshots.nix # BTRFS snapshots with btrbk
     ./btrfs-health.nix # BTRFS chunk allocation health monitor + GC guard (prevents 2026-06-26 crash)
+    ./btrfs-rescue.nix # Rescue snapshot tier outside btrbk retention (glob-delete survivor, 2026-09-12 incident)
     ./scheduled-tasks.nix # Daily scheduled tasks (crush update-providers, etc.)
     ./sudo.nix # Passwordless sudo for wheel group
     ../hardware/amd-gpu.nix
@@ -350,6 +351,11 @@ in
       # Self-neutralizing: ConditionPathIsDirectory skips the unit once the
       # source is a symlink; started by deploy.sh after every switch.
       activitywatch-data-to-pool.enable = true;
+      # Rescue snapshots of @ in /mnt/btrfs-root/.rescue (chattr +a): a
+      # survivor tier outside btrbk's .snapshots that globs cannot reach —
+      # 2026-09-12: all six local snapshots were glob-deleted by a `sudo
+      # btrfs subvolume delete ... @.20260*` that meant `du`.
+      btrfs-rescue.enable = true;
       pocket-id-config = {
         enable = true;
         provision = {

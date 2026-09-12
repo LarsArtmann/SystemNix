@@ -39,6 +39,120 @@ let
     # ── End Init Caching ─────────────────────────────────────────────────
   '';
 
+  # Destructive-command guard (2026-09-12 incident): all six local btrbk
+  # snapshots were glob-deleted by `sudo btrfs subvolume delete
+  # /mnt/btrfs-root/.snapshots/@.20260*` when the operator meant `du`.
+  # Sudo is passwordless here, and btrfs subvolume delete has no confirmation
+  # or dry-run. Fish expands globs BEFORE a function receives its arguments,
+  # so this guard sees every concrete path that is about to die and demands a
+  # typed "delete" confirmation. Interactive sessions only (this rides
+  # interactiveShellInit) — scripts, bash, and non-interactive fish are
+  # untouched and use the real binaries.
+  btrfsGuardHook = ''
+    # ── Destructive btrfs/snapshot guard (2026-09-12 incident) ───────────
+    function __systemnix_confirm_destructive --description "Print targets and require typing 'delete'"
+        set -l what $argv[1]
+        set -l paths $argv[2..-1]
+        echo (set_color brred)"⚠ $what: "(count $paths)" item(s) will be DELETED:"(set_color normal)
+        for p in $paths
+            echo "  "(set_color red)$p(set_color normal)
+        end
+        echo "If you meant a READ-ONLY command (du / show / list): answer anything but 'delete'."
+        read -l -P 'type "delete" to proceed > ' confirm
+        if test "$confirm" = delete
+            return 0
+        end
+        echo "aborted — nothing was deleted"
+        return 1
+    end
+
+    # Prints the target paths iff argv matches `btrfs <subvolume-prefix>
+    # <delete-prefix> <paths…>` (btrfs-progs accepts unique-prefix
+    # abbreviations like `sub del`, so match prefixes, not exact words).
+    function __systemnix_btrfs_delete_targets --description "Extract subvolume-delete targets (args arrive POST glob-expansion)"
+        set -l n (count $argv)
+        set -l i 1
+        while test $i -le $n; and not test "$argv[$i]" = btrfs
+            set i (math $i + 1)
+        end
+        if test $i -gt $n
+            return 0
+        end
+        set i (math $i + 1)
+        if test $i -le $n; and string match -qr -- '^(su|sub|subv|subvo|subvol|subvolu|subvolum|subvolume)$' "$argv[$i]"
+            set i (math $i + 1)
+            if test $i -le $n; and string match -qr -- '^(d|de|del|dele|delet|delete)$' "$argv[$i]"
+                if test $i -lt $n
+                    for j in (seq (math $i + 1) $n)
+                        echo $argv[$j]
+                    end
+                end
+            end
+        end
+    end
+
+    function __systemnix_guard_btrfs_delete --description "Confirm destructive btrfs subvolume deletes"
+        set -l paths (__systemnix_btrfs_delete_targets $argv)
+        if set -q paths[1]
+            __systemnix_confirm_destructive "btrfs subvolume delete" $paths
+            or return 1
+        end
+        return 0
+    end
+
+    function __systemnix_guard_snapshot_paths --description "Confirm rm/mv/trash targeting .snapshots or .rescue"
+        set -l cmd $argv[1]
+        set -l targets
+        for t in $argv[2..-1]
+            string match -q -- '-*' $t; and continue
+            string match -qr -- '(^|/)\.snapshots(/|$)|(^|/)\.rescue(/|$)' $t; and set -a targets $t
+        end
+        if set -q targets[1]
+            __systemnix_confirm_destructive "$cmd on snapshot dirs" $targets
+            or return 1
+        end
+        return 0
+    end
+
+    function sudo --description "sudo with destructive-command guard (2026-09-12 snapshot glob-delete incident)"
+        set -l argv_count (count $argv)
+        set -l i 1
+        # Skip sudo's own option flags to find the real command. Value-flags
+        # (-u/-g/-p/-C/-r/-t) skip their argument too.
+        while test $i -le $argv_count
+            switch $argv[$i]
+                case '-u' '-g' '-p' '-C' '-r' '-t'
+                    set i (math $i + 2)
+                case '-*'
+                    set i (math $i + 1)
+                case '*'
+                    break
+            end
+        end
+        if test $i -le $argv_count
+            set -l cmd $argv[$i]
+            set -l rest
+            if test $i -lt $argv_count
+                set rest $argv[(math $i + 1)..-1]
+            end
+            switch $cmd
+                case btrfs
+                    __systemnix_guard_btrfs_delete $cmd $rest; or return 1
+                case rm mv trash
+                    __systemnix_guard_snapshot_paths $cmd $rest; or return 1
+            end
+        end
+        command sudo $argv
+    end
+
+    function btrfs --description "btrfs with subvolume-delete confirmation (2026-09-12 incident)"
+        __systemnix_guard_btrfs_delete $argv
+        or return 1
+        command btrfs $argv
+    end
+    # ── End Destructive btrfs/snapshot guard ─────────────────────────────
+  '';
+
   # Direnv caching hook: replaces HM's stock direnv fish integration.
   # Stock direnv spawns a subprocess on every prompt (~43ms). This version
   # checks watched-file mtimes natively in fish (instant) and only calls
@@ -114,6 +228,7 @@ in
     interactiveShellInit =
       direnvCacheHook
       + initCacheHook
+      + btrfsGuardHook
       + ''
         # LOCALE: Set English locale for git and other tools
         set -gx LANG en_US.UTF-8

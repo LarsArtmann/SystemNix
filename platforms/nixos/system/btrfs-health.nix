@@ -162,6 +162,7 @@ let
       pkgs.btrfs-progs
       pkgs.gawk
       pkgs.coreutils # stat for emergency reserve check
+      pkgs.gnugrep # snapshot-canary counts below (L297 grep rides the unit PATH; be explicit)
     ];
     text = ''
       set -uo pipefail
@@ -317,6 +318,26 @@ let
         else
           echo "btrfs_emergency_reserve_present 0"
           echo "btrfs_emergency_reserve_bytes 0"
+        fi
+
+        # ── Snapshot canary (2026-09-12 glob-delete incident) ──────────────
+        # Local btrbk @ snapshots + the rescue tier count. ZERO root snapshots
+        # = the incremental-send chain lost its anchor and the local rollback
+        # window is gone — Gatus fires. ls on the automounted toplevel
+        # triggers the automount (instant; harmless). Fail-closed: unreadable
+        # dir counts as 0, which alerts.
+        echo "# HELP btrfs_root_snapshots btrbk @ snapshots in /mnt/btrfs-root/.snapshots (0 = glob-delete or retention wedge)"
+        echo "# TYPE btrfs_root_snapshots gauge"
+        echo "# HELP btrfs_rescue_snapshots rescue snapshots in /mnt/btrfs-root/.rescue"
+        echo "# TYPE btrfs_rescue_snapshots gauge"
+        echo "# HELP btrfs_rescue_append_only 1 = .rescue verified chattr +a (subvolume delete blocked, self-tested per run)"
+        echo "# TYPE btrfs_rescue_append_only gauge"
+        echo "btrfs_root_snapshots $(ls -1 /mnt/btrfs-root/.snapshots 2>/dev/null | grep -c '^@\.')"
+        echo "btrfs_rescue_snapshots $(ls -1 /mnt/btrfs-root/.rescue 2>/dev/null | grep -c '^@\.')"
+        if [ "$(cat /var/lib/btrfs-rescue/protection 2>/dev/null || echo 0)" = "1" ]; then
+          echo "btrfs_rescue_append_only 1"
+        else
+          echo "btrfs_rescue_append_only 0"
         fi
       } > "$TMP_FILE"
       mv "$TMP_FILE" "$METRICS_FILE"

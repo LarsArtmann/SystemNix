@@ -896,6 +896,32 @@ _: {
                   alerts = discordAlert "BTRFS emergency reserve missing — the 10 GiB safety net at /btrfs-emergency-reserve was deleted or never created. Re-provision: 'sudo systemctl start btrfs-emergency-reserve'.";
                 })
                 (mkHttpCheck {
+                  name = "BTRFS Snapshot Canary";
+                  group = "Filesystem";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "10m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*\nbtrfs_root_snapshots 0\n*)"
+                    "[BODY] == pat(*\nbtrfs_root_snapshots *)"
+                  ];
+                  alerts = discordAlert "ZERO local btrbk snapshots in /mnt/btrfs-root/.snapshots — the incremental-send chain has no local anchor and the rollback window is GONE (2026-09-12 glob-delete incident class: 'sudo btrfs subvolume delete .snapshots/@.20260*' meant as 'du'). If you just deleted them manually: tonight's 23:00 btrbk-root run re-seeds with a full send (~1h QLC read). The rescue tier (.rescue) keeps a separate survivor. Check: ls /mnt/btrfs-root/.snapshots, journalctl -u btrbk-root.";
+                })
+                (mkHttpCheck {
+                  name = "BTRFS Rescue Snapshots";
+                  group = "Filesystem";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "10m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*\nbtrfs_rescue_snapshots 0\n*)"
+                    "[BODY] == pat(*\nbtrfs_rescue_snapshots *)"
+                    "[BODY] != pat(*\nbtrfs_rescue_append_only 0\n*)"
+                    "[BODY] == pat(*\nbtrfs_rescue_append_only *)"
+                  ];
+                  alerts = discordAlert "Rescue snapshot tier broken — either no snapshots in /mnt/btrfs-root/.rescue or the chattr +a self-test FAILED (append-only no longer blocks subvolume delete; protection is location-only). This is the glob-delete survivor tier for .snapshots (2026-09-12 incident). Check: systemctl status btrfs-rescue-snapshot, ls -la /mnt/btrfs-root/.rescue, lsattr -d /mnt/btrfs-root/.rescue.";
+                })
+                (mkHttpCheck {
                   name = "NVMe SMART Metrics";
                   group = "Monitoring";
                   url = "http://localhost:${toString nodePort}/metrics";
