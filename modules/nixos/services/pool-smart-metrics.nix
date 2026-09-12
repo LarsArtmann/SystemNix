@@ -176,7 +176,7 @@
               # first number ("21/39" -> 21; a plain "33" stays 33).
               temp="''${tempraw%%/*}"
               case "$temp" in
-                '' | *[!0-9]*) temp="" ;;
+                "" | *[!0-9]*) temp="" ;;
               esac
 
               [ -n "$temp" ] && echo "pool_smart_temperature_celsius{serial=\"$serial\"} $temp" >> "$METRICS"

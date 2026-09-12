@@ -1,6 +1,6 @@
 {
   "schemaVersion": "v6",
-  "name": "systemnix-overview",
+  "name": "systemnix-pool-storage",
   "tags": [
     {
       "key": "owner",
@@ -9,17 +9,458 @@
   ],
   "spec": {
     "display": {
-      "name": "evo-x2 Overview",
-      "description": "System overview — CPU, memory, disk, network, services, telemetry pipeline"
+      "name": "Pool & Storage — HDD SMART, btrfs, backups",
+      "description": "Toshiba MG08 pool members (SMART via pool-smart-metrics), btrfs health, pool/buildcache usage, backup freshness"
     },
     "variables": [],
     "panels": {
-      "00778ebc-855b-51b9-acb3-bb6b14670dcf": {
+      "08f662f0-409e-500b-8737-9c0bc0314f14": {
         "kind": "Panel",
         "spec": {
           "display": {
-            "name": "PSI Memory (some avg10)",
-            "description": "memory pressure — the episodic-stall freeze forensics signal (avg10 spikes >40% are the pre-freeze pattern)"
+            "name": "Pool Mounted",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "pool_mounted",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "0ce1ee64-25b1-5b65-87cd-c55de88e2497": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Pool Drive Temperature",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "celsius",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "pool_smart_temperature_celsius",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": "{{serial}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "15137dd8-5cb0-5f5f-bb2d-808d84b0b912": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "G-Sense Increased",
+            "description": "shock counter grew since the previous 5-min run"
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "max(pool_smart_gsense_increased)",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "16a6d2d0-44f7-576d-973f-1ae435121720": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Backup All Healthy",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "backup_all_healthy",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "2ac32685-23b5-5ebe-9482-ac03d2b3f30f": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Scrape Errors",
+            "description": "nonzero = SAT read failure (fail-closed)"
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "pool_smart_scrape_errors",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "2cdad3eb-abcb-5acb-90fa-b245795e9b14": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Temp Over",
+            "description": "nonzero = a drive >= 50C"
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "pool_smart_temp_over",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "390be4f5-4804-584a-91d9-3ceb32f057b1": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "RAID1 Members",
+            "description": "2 = healthy, 1 = degraded"
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "pool_usb_recovery_members_present",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "436fdf1d-ff89-59c1-b072-20d8a0f153dd": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Pool SMART Media Counters",
+            "description": "leading drive-death indicator; any growth above 0"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum by (serial) (pool_smart_attribute_raw{attr=~\"reallocated|reallocated_events|pending|uncorrectable\"})",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": "{{serial}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "4b4bc863-ead4-546f-8a9c-2244d1361a90": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Power-On Hours",
+            "description": "context: raw SMART counters are lifetime totals"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "pool_smart_power_on_hours",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": "{{serial}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "5b9d4886-b587-5dc4-9f8e-d16c4b155c26": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Buildcache Usage %",
+            "description": ""
           },
           "plugin": {
             "kind": "signoz/TimeSeriesPanel",
@@ -64,7 +505,7 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "node_psi_memory_some_avg10",
+                    "query": "buildcache_usage_percent",
                     "disabled": false,
                     "step": 0,
                     "stats": false,
@@ -77,116 +518,11 @@
           "links": []
         }
       },
-      "0817bc2d-b4fd-5887-b634-cc463f52565b": {
+      "719b93f7-560b-5d4d-8935-09dc48a5c98e": {
         "kind": "Panel",
         "spec": {
           "display": {
-            "name": "Telemetry: Spans Ingested",
-            "description": ""
-          },
-          "plugin": {
-            "kind": "signoz/TimeSeriesPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time",
-                "fillSpans": false
-              },
-              "formatting": {
-                "unit": "{count}/s",
-                "decimalPrecision": "2"
-              },
-              "chartAppearance": {
-                "lineInterpolation": "spline",
-                "showPoints": false,
-                "lineStyle": "solid",
-                "fillMode": "none",
-                "spanGaps": {
-                  "fillOnlyBelow": false,
-                  "fillLessThan": ""
-                }
-              },
-              "axes": {
-                "softMin": 0,
-                "softMax": 0,
-                "isLogScale": false
-              },
-              "legend": {
-                "position": "bottom",
-                "mode": "list",
-                "customColors": null
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "sum(rate(otelcol_receiver_accepted_spans[5m]))",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": ""
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "62143458-38d7-5b77-9e2a-bc2df69f52b3": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Load (1m)",
-            "description": ""
-          },
-          "plugin": {
-            "kind": "signoz/NumberPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time"
-              },
-              "formatting": {
-                "unit": "none",
-                "decimalPrecision": "2"
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "node_load1",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": ""
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "65487351-3914-5389-8d1c-168f04fabee3": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Disk (/data)",
+            "name": "Pool Usage %",
             "description": ""
           },
           "plugin": {
@@ -232,7 +568,7 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "100 * (1 - node_filesystem_avail_bytes{mountpoint=\"/data\"} / node_filesystem_size_bytes{mountpoint=\"/data\"})",
+                    "query": "pool_usage_percent",
                     "disabled": false,
                     "step": 0,
                     "stats": false,
@@ -245,537 +581,12 @@
           "links": []
         }
       },
-      "68427156-b406-55bc-ba6d-0065520852b5": {
+      "7d2b5f1a-6f39-5ea0-af51-93d61f29f38e": {
         "kind": "Panel",
         "spec": {
           "display": {
-            "name": "CPU by Mode",
-            "description": ""
-          },
-          "plugin": {
-            "kind": "signoz/TimeSeriesPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time",
-                "fillSpans": false
-              },
-              "formatting": {
-                "unit": "percent",
-                "decimalPrecision": "2"
-              },
-              "chartAppearance": {
-                "lineInterpolation": "spline",
-                "showPoints": false,
-                "lineStyle": "solid",
-                "fillMode": "none",
-                "spanGaps": {
-                  "fillOnlyBelow": false,
-                  "fillLessThan": ""
-                }
-              },
-              "axes": {
-                "softMin": 0,
-                "softMax": 0,
-                "isLogScale": false
-              },
-              "legend": {
-                "position": "bottom",
-                "mode": "list",
-                "customColors": null
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "sum by (mode) (rate(node_cpu_seconds_total{mode!=\"idle\"}[5m])) * 100",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": "{{mode}}"
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "7ea72f7f-1750-5df3-bc31-abf7639d1c93": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Telemetry: Logs Ingested",
-            "description": ""
-          },
-          "plugin": {
-            "kind": "signoz/TimeSeriesPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time",
-                "fillSpans": false
-              },
-              "formatting": {
-                "unit": "{count}/s",
-                "decimalPrecision": "2"
-              },
-              "chartAppearance": {
-                "lineInterpolation": "spline",
-                "showPoints": false,
-                "lineStyle": "solid",
-                "fillMode": "none",
-                "spanGaps": {
-                  "fillOnlyBelow": false,
-                  "fillLessThan": ""
-                }
-              },
-              "axes": {
-                "softMin": 0,
-                "softMax": 0,
-                "isLogScale": false
-              },
-              "legend": {
-                "position": "bottom",
-                "mode": "list",
-                "customColors": null
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "sum(rate(otelcol_receiver_accepted_log_records[5m]))",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": ""
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "86ffc8fd-db9e-5101-9dd7-225dcffd8d9c": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Disk (/)",
-            "description": ""
-          },
-          "plugin": {
-            "kind": "signoz/NumberPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time"
-              },
-              "formatting": {
-                "unit": "percent",
-                "decimalPrecision": "2"
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "(1 - (node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"})) * 100",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": ""
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "8cffe569-e690-5cbd-a8b8-cb76432b8070": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Failed Units",
-            "description": ""
-          },
-          "plugin": {
-            "kind": "signoz/NumberPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time"
-              },
-              "formatting": {
-                "unit": "{count}",
-                "decimalPrecision": "2"
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "sum(node_systemd_unit_state{state=\"failed\"})",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": ""
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "97444b05-aaa2-5e4c-bee5-92c1569d9be7": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Disk I/O (read+write)",
-            "description": ""
-          },
-          "plugin": {
-            "kind": "signoz/TimeSeriesPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time",
-                "fillSpans": false
-              },
-              "formatting": {
-                "unit": "By/s",
-                "decimalPrecision": "2"
-              },
-              "chartAppearance": {
-                "lineInterpolation": "spline",
-                "showPoints": false,
-                "lineStyle": "solid",
-                "fillMode": "none",
-                "spanGaps": {
-                  "fillOnlyBelow": false,
-                  "fillLessThan": ""
-                }
-              },
-              "axes": {
-                "softMin": 0,
-                "softMax": 0,
-                "isLogScale": false
-              },
-              "legend": {
-                "position": "bottom",
-                "mode": "list",
-                "customColors": null
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "sum(rate(node_disk_read_bytes_total[5m])) + sum(rate(node_disk_written_bytes_total[5m]))",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": ""
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "9decce5d-57d5-54fa-8b9e-9ddd14d8b8b7": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Network Throughput (RX+TX)",
-            "description": ""
-          },
-          "plugin": {
-            "kind": "signoz/TimeSeriesPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time",
-                "fillSpans": false
-              },
-              "formatting": {
-                "unit": "By/s",
-                "decimalPrecision": "2"
-              },
-              "chartAppearance": {
-                "lineInterpolation": "spline",
-                "showPoints": false,
-                "lineStyle": "solid",
-                "fillMode": "none",
-                "spanGaps": {
-                  "fillOnlyBelow": false,
-                  "fillLessThan": ""
-                }
-              },
-              "axes": {
-                "softMin": 0,
-                "softMax": 0,
-                "isLogScale": false
-              },
-              "legend": {
-                "position": "bottom",
-                "mode": "list",
-                "customColors": null
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "sum(rate(node_network_receive_bytes_total{device!=\"lo\"}[5m])) + sum(rate(node_network_transmit_bytes_total{device!=\"lo\"}[5m]))",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": ""
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "ac355dc1-6f4d-5fd2-9b21-e43bc4e2f018": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "ZRAM Fill",
-            "description": ""
-          },
-          "plugin": {
-            "kind": "signoz/TimeSeriesPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time",
-                "fillSpans": false
-              },
-              "formatting": {
-                "unit": "percent",
-                "decimalPrecision": "2"
-              },
-              "chartAppearance": {
-                "lineInterpolation": "spline",
-                "showPoints": false,
-                "lineStyle": "solid",
-                "fillMode": "none",
-                "spanGaps": {
-                  "fillOnlyBelow": false,
-                  "fillLessThan": ""
-                }
-              },
-              "axes": {
-                "softMin": 0,
-                "softMax": 0,
-                "isLogScale": false
-              },
-              "legend": {
-                "position": "bottom",
-                "mode": "list",
-                "customColors": null
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "system_zram_swap_fill_percent",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": ""
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "bcde494f-b784-5982-ae06-5dd2ca87d6b6": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Swap",
-            "description": ""
-          },
-          "plugin": {
-            "kind": "signoz/NumberPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time"
-              },
-              "formatting": {
-                "unit": "percent",
-                "decimalPrecision": "2"
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "(1 - (node_memory_SwapFree_bytes / node_memory_SwapTotal_bytes)) * 100",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": ""
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "e5877ef6-3de3-5c2d-8a70-c9deda966eb4": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "CPU Usage",
-            "description": ""
-          },
-          "plugin": {
-            "kind": "signoz/NumberPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time"
-              },
-              "formatting": {
-                "unit": "percent",
-                "decimalPrecision": "2"
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": ""
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "e5e4342a-0ace-5983-a334-6dab9178fb01": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Memory",
-            "description": ""
-          },
-          "plugin": {
-            "kind": "signoz/NumberPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time"
-              },
-              "formatting": {
-                "unit": "percent",
-                "decimalPrecision": "2"
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": ""
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "ecd9ba20-b46f-5dae-aa5a-febd992da65d": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Stuck D-State",
-            "description": "unkillable D-state processes (the wedged-driver corpse class)"
+            "name": "Media Increased",
+            "description": "a media counter grew since the previous 5-min run"
           },
           "plugin": {
             "kind": "signoz/NumberPanel",
@@ -799,7 +610,7 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "system_stuck_dstate_processes",
+                    "query": "max(pool_smart_media_increased)",
                     "disabled": false,
                     "step": 0,
                     "stats": false,
@@ -812,12 +623,159 @@
           "links": []
         }
       },
-      "ee5c5532-fe3a-5ee5-bb59-503ad4a8d17b": {
+      "8e28c976-0c39-55c6-bee1-c56d715283d6": {
         "kind": "Panel",
         "spec": {
           "display": {
-            "name": "Pool Drives SMART",
-            "description": "all pool HDDs report SMART PASSED (pool-smart-metrics)"
+            "name": "G-Sense Shock Counter",
+            "description": "lifetime shock-induced errors; a step = physical event"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "pool_smart_attribute_raw{attr=\"gsense\"}",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": "{{serial}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "ae6c42cd-e42b-5854-bf22-38410118e7f5": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "BTRFS Health Critical",
+            "description": "nonzero = unalloc<5% or meta>90% (the 2026-06-26 ENOSPC precursor)"
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "max(btrfs_health_critical)",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "c1e65d75-724b-5edd-8425-89be3ce67cab": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Media Flag",
+            "description": "nonzero = realloc/pending/uncorrectable > 0"
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "pool_smart_media_flag",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "eeca4ed7-ca87-5eb9-8851-abf75190b77f": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "All Healthy",
+            "description": ""
           },
           "plugin": {
             "kind": "signoz/NumberPanel",
@@ -853,6 +811,111 @@
           ],
           "links": []
         }
+      },
+      "f08c43b4-aad5-5063-a50f-365d84573c25": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Drives Present",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "pool_smart_drives_present",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "fbd673f2-a239-5f73-a091-bbd2e07384ee": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "BTRFS Scrub Errors",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum by (mount) (btrfs_scrub_errors_total)",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": "{{mount}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
       }
     },
     "layouts": [
@@ -866,7 +929,7 @@
               "width": 2,
               "height": 4,
               "content": {
-                "$ref": "#/spec/panels/e5877ef6-3de3-5c2d-8a70-c9deda966eb4"
+                "$ref": "#/spec/panels/f08c43b4-aad5-5063-a50f-365d84573c25"
               }
             },
             {
@@ -875,7 +938,7 @@
               "width": 2,
               "height": 4,
               "content": {
-                "$ref": "#/spec/panels/e5e4342a-0ace-5983-a334-6dab9178fb01"
+                "$ref": "#/spec/panels/eeca4ed7-ca87-5eb9-8851-abf75190b77f"
               }
             },
             {
@@ -884,7 +947,7 @@
               "width": 2,
               "height": 4,
               "content": {
-                "$ref": "#/spec/panels/bcde494f-b784-5982-ae06-5dd2ca87d6b6"
+                "$ref": "#/spec/panels/2ac32685-23b5-5ebe-9482-ac03d2b3f30f"
               }
             },
             {
@@ -893,7 +956,7 @@
               "width": 2,
               "height": 4,
               "content": {
-                "$ref": "#/spec/panels/86ffc8fd-db9e-5101-9dd7-225dcffd8d9c"
+                "$ref": "#/spec/panels/c1e65d75-724b-5edd-8425-89be3ce67cab"
               }
             },
             {
@@ -902,7 +965,7 @@
               "width": 2,
               "height": 4,
               "content": {
-                "$ref": "#/spec/panels/62143458-38d7-5b77-9e2a-bc2df69f52b3"
+                "$ref": "#/spec/panels/2cdad3eb-abcb-5acb-90fa-b245795e9b14"
               }
             },
             {
@@ -911,7 +974,7 @@
               "width": 2,
               "height": 4,
               "content": {
-                "$ref": "#/spec/panels/8cffe569-e690-5cbd-a8b8-cb76432b8070"
+                "$ref": "#/spec/panels/390be4f5-4804-584a-91d9-3ceb32f057b1"
               }
             },
             {
@@ -920,7 +983,7 @@
               "width": 6,
               "height": 5,
               "content": {
-                "$ref": "#/spec/panels/68427156-b406-55bc-ba6d-0065520852b5"
+                "$ref": "#/spec/panels/0ce1ee64-25b1-5b65-87cd-c55de88e2497"
               }
             },
             {
@@ -929,7 +992,7 @@
               "width": 6,
               "height": 5,
               "content": {
-                "$ref": "#/spec/panels/9decce5d-57d5-54fa-8b9e-9ddd14d8b8b7"
+                "$ref": "#/spec/panels/436fdf1d-ff89-59c1-b072-20d8a0f153dd"
               }
             },
             {
@@ -938,7 +1001,7 @@
               "width": 6,
               "height": 5,
               "content": {
-                "$ref": "#/spec/panels/7ea72f7f-1750-5df3-bc31-abf7639d1c93"
+                "$ref": "#/spec/panels/8e28c976-0c39-55c6-bee1-c56d715283d6"
               }
             },
             {
@@ -947,7 +1010,7 @@
               "width": 6,
               "height": 5,
               "content": {
-                "$ref": "#/spec/panels/0817bc2d-b4fd-5887-b634-cc463f52565b"
+                "$ref": "#/spec/panels/4b4bc863-ead4-546f-8a9c-2244d1361a90"
               }
             },
             {
@@ -956,7 +1019,7 @@
               "width": 6,
               "height": 5,
               "content": {
-                "$ref": "#/spec/panels/97444b05-aaa2-5e4c-bee5-92c1569d9be7"
+                "$ref": "#/spec/panels/719b93f7-560b-5d4d-8935-09dc48a5c98e"
               }
             },
             {
@@ -965,7 +1028,7 @@
               "width": 6,
               "height": 5,
               "content": {
-                "$ref": "#/spec/panels/ac355dc1-6f4d-5fd2-9b21-e43bc4e2f018"
+                "$ref": "#/spec/panels/fbd673f2-a239-5f73-a091-bbd2e07384ee"
               }
             },
             {
@@ -974,34 +1037,52 @@
               "width": 6,
               "height": 5,
               "content": {
-                "$ref": "#/spec/panels/00778ebc-855b-51b9-acb3-bb6b14670dcf"
+                "$ref": "#/spec/panels/5b9d4886-b587-5dc4-9f8e-d16c4b155c26"
               }
             },
             {
               "x": 6,
               "y": 19,
               "width": 6,
-              "height": 5,
+              "height": 4,
               "content": {
-                "$ref": "#/spec/panels/65487351-3914-5389-8d1c-168f04fabee3"
+                "$ref": "#/spec/panels/ae6c42cd-e42b-5854-bf22-38410118e7f5"
               }
             },
             {
               "x": 0,
               "y": 24,
-              "width": 2,
+              "width": 6,
               "height": 4,
               "content": {
-                "$ref": "#/spec/panels/ecd9ba20-b46f-5dae-aa5a-febd992da65d"
+                "$ref": "#/spec/panels/15137dd8-5cb0-5f5f-bb2d-808d84b0b912"
               }
             },
             {
-              "x": 2,
+              "x": 6,
               "y": 24,
-              "width": 2,
+              "width": 6,
               "height": 4,
               "content": {
-                "$ref": "#/spec/panels/ee5c5532-fe3a-5ee5-bb59-503ad4a8d17b"
+                "$ref": "#/spec/panels/7d2b5f1a-6f39-5ea0-af51-93d61f29f38e"
+              }
+            },
+            {
+              "x": 0,
+              "y": 29,
+              "width": 6,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/16a6d2d0-44f7-576d-973f-1ae435121720"
+              }
+            },
+            {
+              "x": 6,
+              "y": 29,
+              "width": 6,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/08f662f0-409e-500b-8737-9c0bc0314f14"
               }
             }
           ]
@@ -1010,6 +1091,6 @@
     ],
     "duration": "",
     "refreshInterval": "5m",
-    "links": []
+    "links": null
   }
 }

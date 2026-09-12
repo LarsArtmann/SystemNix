@@ -14,48 +14,6 @@
     },
     "variables": [],
     "panels": {
-      "ac1b0dde-0a70-5e04-939f-fca8fd7da901": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "GPU Temperature",
-            "description": "°C across all cards"
-          },
-          "plugin": {
-            "kind": "signoz/NumberPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time"
-              },
-              "formatting": {
-                "unit": "none",
-                "decimalPrecision": "2"
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "max(node_hwmon_temp_celsius{chip=~\".*c5:00_0\"} or ClickHouseAsyncMetrics_Temperature_amdgpu_edge)",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": ""
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
       "0a21b83c-aaf2-5dde-a9c9-ec0743e45d80": {
         "kind": "Panel",
         "spec": {
@@ -86,48 +44,6 @@
                   "spec": {
                     "name": "A",
                     "query": "(sum(node_amdgpu_mem_info_vram_used_bytes) / sum(node_amdgpu_mem_info_vram_total_bytes)) * 100",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": ""
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "4070dc07-ac4e-5bc8-82b3-e4b79f4b2631": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "GPU Busy",
-            "description": ""
-          },
-          "plugin": {
-            "kind": "signoz/NumberPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time"
-              },
-              "formatting": {
-                "unit": "percent",
-                "decimalPrecision": "2"
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "max(node_amdgpu_gpu_busy_percent)",
                     "disabled": false,
                     "step": 0,
                     "stats": false,
@@ -203,6 +119,48 @@
           "links": []
         }
       },
+      "4070dc07-ac4e-5bc8-82b3-e4b79f4b2631": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "GPU Busy",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "percent",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "max(node_amdgpu_gpu_busy_percent)",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
       "5d9e4ce0-b0ad-5203-bb1d-63ea97c2f92a": {
         "kind": "Panel",
         "spec": {
@@ -258,6 +216,48 @@
                     "step": 0,
                     "stats": false,
                     "legend": "{{card}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "ac1b0dde-0a70-5e04-939f-fca8fd7da901": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "GPU Temperature",
+            "description": "°C across all cards"
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "max(node_hwmon_temp_celsius{chip=~\".*c5:00_0\"} or ClickHouseAsyncMetrics_Temperature_amdgpu_edge)",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
                   }
                 }
               }
@@ -322,7 +322,7 @@
       }
     ],
     "duration": "",
-    "refreshInterval": "",
+    "refreshInterval": "5m",
     "links": []
   }
 }

@@ -14,12 +14,12 @@
     },
     "variables": [],
     "panels": {
-      "829a55ae-18cf-505f-8ed7-85babe871ec3": {
+      "0e9951a9-0969-5328-9ab0-fa5930f6c7dd": {
         "kind": "Panel",
         "spec": {
           "display": {
-            "name": "Traces Missing",
-            "description": "Enforced services dark (no span within budget). Healthy: 0"
+            "name": "Logs Pipeline Stale",
+            "description": "1 = journald ingestion stopped (>30 min). Healthy: 0"
           },
           "plugin": {
             "kind": "signoz/NumberPanel",
@@ -43,7 +43,49 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "signoz_traces_missing",
+                    "query": "signoz_logs_pipeline_stale",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "6d3b5ddf-a379-5072-88ca-643503575058": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Collector Scrape Errors",
+            "description": "Coverage collector ClickHouse query failures. Healthy: 0"
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "0"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "signoz_coverage_scrape_errors",
                     "disabled": false,
                     "step": 0,
                     "stats": false,
@@ -140,12 +182,12 @@
           "links": []
         }
       },
-      "6d3b5ddf-a379-5072-88ca-643503575058": {
+      "829a55ae-18cf-505f-8ed7-85babe871ec3": {
         "kind": "Panel",
         "spec": {
           "display": {
-            "name": "Collector Scrape Errors",
-            "description": "Coverage collector ClickHouse query failures. Healthy: 0"
+            "name": "Traces Missing",
+            "description": "Enforced services dark (no span within budget). Healthy: 0"
           },
           "plugin": {
             "kind": "signoz/NumberPanel",
@@ -169,7 +211,7 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "signoz_coverage_scrape_errors",
+                    "query": "signoz_traces_missing",
                     "disabled": false,
                     "step": 0,
                     "stats": false,
@@ -182,22 +224,43 @@
           "links": []
         }
       },
-      "0e9951a9-0969-5328-9ab0-fa5930f6c7dd": {
+      "e234d285-5b2f-5e9e-9ec1-9a8edd03b163": {
         "kind": "Panel",
         "spec": {
           "display": {
-            "name": "Logs Pipeline Stale",
-            "description": "1 = journald ingestion stopped (>30 min). Healthy: 0"
+            "name": "Last Span Age (s)",
+            "description": "-1 = never seen a span. Event-driven services (720h budget) legitimately drift high"
           },
           "plugin": {
-            "kind": "signoz/NumberPanel",
+            "kind": "signoz/TimeSeriesPanel",
             "spec": {
               "visualization": {
-                "timePreference": "global_time"
+                "timePreference": "global_time",
+                "fillSpans": false
               },
               "formatting": {
                 "unit": "none",
-                "decimalPrecision": "0"
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
               },
               "thresholds": null
             }
@@ -211,11 +274,11 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "signoz_logs_pipeline_stale",
+                    "query": "signoz_traces_last_span_age_seconds",
                     "disabled": false,
                     "step": 0,
                     "stats": false,
-                    "legend": ""
+                    "legend": "{{service}}"
                   }
                 }
               }
@@ -277,15 +340,34 @@
             "kind": "signoz/TimeSeriesPanel",
             "spec": {
               "visualization": {
-                "timePreference": "global_time"
+                "timePreference": "global_time",
+                "fillSpans": false
               },
               "formatting": {
-                "unit": "none"
+                "unit": "none",
+                "decimalPrecision": "2"
               },
-              "thresholds": null,
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
               "legend": {
-                "position": "bottom"
-              }
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
             }
           },
           "queries": [
@@ -298,50 +380,6 @@
                   "spec": {
                     "name": "A",
                     "query": "signoz_traces_reporting",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": "{{service}}"
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "e234d285-5b2f-5e9e-9ec1-9a8edd03b163": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Last Span Age (s)",
-            "description": "-1 = never seen a span. Event-driven services (720h budget) legitimately drift high"
-          },
-          "plugin": {
-            "kind": "signoz/TimeSeriesPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time"
-              },
-              "formatting": {
-                "unit": "none"
-              },
-              "thresholds": null,
-              "legend": {
-                "position": "bottom"
-              }
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "signoz_traces_last_span_age_seconds",
                     "disabled": false,
                     "step": 0,
                     "stats": false,
@@ -435,6 +473,9 @@
           ]
         }
       }
-    ]
+    ],
+    "duration": "",
+    "refreshInterval": "",
+    "links": null
   }
 }
