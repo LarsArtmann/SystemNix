@@ -34,9 +34,18 @@ NO_SUDO=0 ERROR_LOG=0
 FLAGS=()
 for arg in "$@"; do
   case "$arg" in
-    --no-sudo) NO_SUDO=1; FLAGS+=(--no-sudo) ;;
-    --error-log) ERROR_LOG=1; FLAGS+=(--error-log) ;;
-    *) echo "unknown argument: $arg (only --no-sudo, --error-log)" >&2; exit 2 ;;
+  --no-sudo)
+    NO_SUDO=1
+    FLAGS+=(--no-sudo)
+    ;;
+  --error-log)
+    ERROR_LOG=1
+    FLAGS+=(--error-log)
+    ;;
+  *)
+    echo "unknown argument: $arg (only --no-sudo, --error-log)" >&2
+    exit 2
+    ;;
   esac
 done
 
@@ -62,7 +71,10 @@ else
     SMARTCTL="$(dirname "$smartd_exec")/../bin/smartctl"
   else
     for candidate in /nix/store/*-smartmontools-*/bin/smartctl; do
-      if [ -x "$candidate" ]; then SMARTCTL="$candidate"; break; fi
+      if [ -x "$candidate" ]; then
+        SMARTCTL="$candidate"
+        break
+      fi
     done
   fi
 fi
@@ -97,8 +109,11 @@ for dev in "${POOL_MEMBERS[@]}"; do
 
   health="$(smart -H -d sat "$dev" 2>/dev/null | awk -F': ' '/overall-health/{print $2}')"
   case "$health" in
-    PASSED) echo "  ✓ overall health: PASSED" ;;
-    *) echo "  ✗ overall health: ${health:-UNKNOWN}"; issues=$((issues + 1)) ;;
+  PASSED) echo "  ✓ overall health: PASSED" ;;
+  *)
+    echo "  ✗ overall health: ${health:-UNKNOWN}"
+    issues=$((issues + 1))
+    ;;
   esac
 
   poh="$(get_raw 9 "$dev")"
@@ -136,9 +151,12 @@ for dev in "${POOL_MEMBERS[@]}"; do
     echo "    $id $name = ${raw:-absent}"
   done
 
-  realloc="$(get_raw 5 "$dev")"; pending="$(get_raw 197 "$dev")"; uncorr="$(get_raw 198 "$dev")"
+  realloc="$(get_raw 5 "$dev")"
+  pending="$(get_raw 197 "$dev")"
+  uncorr="$(get_raw 198 "$dev")"
   for pair in "realloc:$realloc" "pending:$pending" "uncorrectable:$uncorr"; do
-    key="${pair%%:*}"; val="${pair#*:}"
+    key="${pair%%:*}"
+    val="${pair#*:}"
     if [ -n "$val" ] && [ "$val" -gt 0 ] 2>/dev/null; then
       echo "  ⚠ $key sectors = $val (media damage, not vibration — but check with G-Sense history)"
       issues=$((issues + 1))
