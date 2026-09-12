@@ -159,6 +159,58 @@ _: {
             ioTier.background
           ];
         };
+
+        # Weekly live-API canary (landed 2026-09-12, bank-sync master-plan
+        # T8): read-only smoke of every configured non-demo provider against
+        # the real Wise API. The 12-week SCA silence (2026-06→09) was
+        # invisible precisely because no independent tripwire ran; this timer
+        # is that tripwire. Fails closed — OnFailure routes to the house
+        # notifier; the JSON report lands next to the DB for post-mortems.
+        systemd.services.bank-sync-canary = {
+          description = "Bank-Sync weekly provider canary";
+          after = [ "network-online.target" ];
+          wants = [ "network-online.target" ];
+          inherit onFailure;
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = "bank-sync";
+              Group = "bank-sync";
+              # lib.getExe already yields <pkg>/bin/bank-sync — no /bin
+              # concatenation (the 2026-08-29 draft's ExecStart bug).
+              ExecStart = "${lib.getExe cfg.package} canary --provider all --json";
+              # Same secret env as the daemon (Wise key; the encryption key
+              # rides along harmlessly) plus the optional SCA OTT drop-in so
+              # a pending approval clears the canary exactly like the daemon.
+              EnvironmentFile = [
+                envTemplate.path
+                "-/var/lib/bank-sync-sca/token.env"
+              ];
+              # Post-mortem report next to the DB (bank-sync-owned dataDir;
+              # weekly JSON lines, btrbk-pool snapshots it with the DB).
+              StandardOutput = "append:${cfg.dataDir}/canary-last.json";
+            }
+            (harden {
+              # Read-only against the system except the report's directory.
+              ReadWritePaths = [ cfg.dataDir ];
+            })
+            (serviceOneshotDefaults { })
+          ];
+        };
+
+        systemd.timers.bank-sync-canary = {
+          description = "Bank-Sync weekly provider canary timer";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = "weekly";
+            # Catch up when the box was off; jitter avoids a fixed weekly
+            # thunder minute.
+            Persistent = true;
+            RandomizedDelaySec = "1h";
+          };
+        };
       };
     };
 }
