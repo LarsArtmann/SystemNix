@@ -31,6 +31,7 @@
 # (uuid-matched against the pool target), so if .snapshots is ever wiped
 # again, tonight's btrbk run sends a cheap incremental instead of a full send.
 {
+  config,
   pkgs,
   lib,
   ...
