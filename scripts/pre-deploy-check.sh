@@ -490,8 +490,14 @@ if [ -s "$METRICS_FILE" ]; then
   # pool-smart-metrics.service, so the four gatus-referenced aggregates are
   # absent until the switch lands (deploy.sh restarts the collector
   # post-switch). Clear this list on the NEXT collector-adding deploy.
+  # 2026-09-13 btrfs snapshot canary first deploy (glob-delete incident):
+  # the three canary gauges live in the btrfs-health-metrics collector, but
+  # the RUNNING generation's collector script predates the canary block —
+  # same-collector btrfs_scrub_error_free IS present, proving the unit runs
+  # and the absence is version-skew, not a phantom. Clear on the next
+  # btrfs-health-metrics-changing deploy.
   # shellcheck disable=SC2034
-  KNOWN_NEW_METRICS="pool_smart_all_healthy pool_smart_scrape_errors pool_smart_media_flag pool_smart_temp_over"
+  KNOWN_NEW_METRICS="pool_smart_all_healthy pool_smart_scrape_errors pool_smart_media_flag pool_smart_temp_over btrfs_root_snapshots btrfs_rescue_snapshots btrfs_rescue_append_only"
   for metric in $(extract_gatus_metrics); do
     metrics_gate_classify_absence "$metric" || MISSING_METRICS=$((MISSING_METRICS + 1))
   done
