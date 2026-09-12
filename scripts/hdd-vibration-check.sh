@@ -14,9 +14,11 @@
 # external accelerometer (e.g. a phone lying on the enclosure) is the only way.
 #
 # Usage:
-#   bash scripts/hdd-vibration-check.sh        # auto-elevates via sudo
-#   sudo bash scripts/hdd-vibration-check.sh   # already root
-#   bash scripts/hdd-vibration-check.sh --no-sudo  # refuse elevation
+#   bash scripts/hdd-vibration-check.sh            # auto-elevates via sudo
+#   sudo bash scripts/hdd-vibration-check.sh       # already root
+#   bash scripts/hdd-vibration-check.sh --no-sudo      # refuse elevation
+#   bash scripts/hdd-vibration-check.sh --error-log    # per-drive SMART error log
+#                                                      # (entries carry PoH timestamps)
 #
 # Exit codes: 0 = nothing notable, 1 = findings/problems (see output).
 set -uo pipefail
@@ -28,11 +30,13 @@ POOL_MEMBERS=(
   "/dev/disk/by-id/ata-TOSHIBA_MG08ACA16TE_72U0A0ZUFWTG"
 )
 
-NO_SUDO=0
+NO_SUDO=0 ERROR_LOG=0
+FLAGS=()
 for arg in "$@"; do
   case "$arg" in
-    --no-sudo) NO_SUDO=1 ;;
-    *) echo "unknown argument: $arg (only --no-sudo is supported)" >&2; exit 2 ;;
+    --no-sudo) NO_SUDO=1; FLAGS+=(--no-sudo) ;;
+    --error-log) ERROR_LOG=1; FLAGS+=(--error-log) ;;
+    *) echo "unknown argument: $arg (only --no-sudo, --error-log)" >&2; exit 2 ;;
   esac
 done
 
@@ -43,7 +47,7 @@ if [ "$(id -u)" -ne 0 ]; then
   fi
   SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
   echo "SMART needs root — re-running with sudo ..."
-  exec sudo -- bash "$SCRIPT_PATH" --no-sudo
+  exec sudo -- bash "$SCRIPT_PATH" "${FLAGS[@]}"
 fi
 
 # Resolve smartctl: PATH first, then the binary the RUNNING smartd uses
@@ -74,6 +78,11 @@ get_raw() {
   smart -d sat -A "$2" 2>/dev/null | awk -v id="$1" '$1 == id { print $NF }'
 }
 
+# Normalized (0-100) value of one SMART attribute id; empty when absent.
+get_val() {
+  smart -d sat -A "$2" 2>/dev/null | awk -v id="$1" '$1 == id { print $4 }'
+}
+
 issues=0
 
 for dev in "${POOL_MEMBERS[@]}"; do
@@ -99,19 +108,25 @@ for dev in "${POOL_MEMBERS[@]}"; do
   if [ -z "$gsense" ]; then
     echo "  ⚠ attr 191 G-Sense_Error_Rate NOT reported (SAT bridge hid it) — no shock visibility"
     issues=$((issues + 1))
-  elif [ "$gsense" -gt 0 ] 2>/dev/null; then
-    echo "  ⚠ G-Sense_Error_Rate = $gsense — shock/vibration-induced errors RECORDED"
-    issues=$((issues + 1))
   else
-    echo "  ✓ G-Sense_Error_Rate = 0 — no shock-induced errors ever recorded"
+    gnorm="$(get_val 191 "$dev")"
+    if [ "$gsense" -gt 0 ] 2>/dev/null; then
+      echo "  ⚠ G-Sense_Error_Rate: normalized $gnorm, raw $gsense — shock/vibration-induced errors RECORDED"
+      issues=$((issues + 1))
+    else
+      echo "  ✓ G-Sense_Error_Rate: normalized $gnorm, raw 0 — no shock-induced errors ever recorded"
+    fi
   fi
 
   shift="$(get_raw 220 "$dev")"
+  snorm="$(get_val 220 "$dev")"
   if [ -z "$shift" ]; then
     echo "  ⚠ attr 220 Disk_Shift NOT reported — no sustained-shock visibility"
     issues=$((issues + 1))
   else
-    echo "  ℹ Disk_Shift = $shift (nonzero is common from the factory; watch for INCREASES across runs)"
+    echo "  ℹ Disk_Shift: normalized $snorm, raw $shift"
+    echo "    (raw is vendor-packed 48-bit on these Toshibas — millions are common;"
+    echo "     the health signal is normalized ~100 and same-drive raw DELTAS)"
   fi
 
   echo "  --- context ---"
@@ -129,6 +144,11 @@ for dev in "${POOL_MEMBERS[@]}"; do
       issues=$((issues + 1))
     fi
   done
+
+  if [ "$ERROR_LOG" -eq 1 ]; then
+    echo "  --- SMART error log (timestamps are power-on hours, not wall-clock) ---"
+    smart -d sat -l error "$dev" 2>&1 | sed 's/^/    /'
+  fi
   echo
 done
 
@@ -136,7 +156,9 @@ cat <<'EOF'
 How to read this:
 - 191 G-Sense = lifetime count of errors the drive attributed to shock/vibration.
   0 on a healthy install. Any INCREASE between runs = a real mechanical event.
-- 220 Disk_Shift = permanent platter displacement; nonzero is common, growth is not.
+- 220 Disk_Shift = platter displacement. The RAW column is vendor-packed on
+  these Toshibas (huge values are normal); normalized ~100 + raw DELTAS are
+  the signal.
 - Counters are cumulative — the delta across runs is the signal, not the absolute.
 - Live amplitude needs an external accelerometer (phone on the enclosure).
 EOF
