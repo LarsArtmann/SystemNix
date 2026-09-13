@@ -948,18 +948,18 @@
         "vision-review-agent-src": "vision-review-agent-src"
       },
       "locked": {
-        "lastModified": 1789275202,
-        "narHash": "sha256-Tk6ROJ1jN1PPcF9Y2IWLhOxk7WJMltmoqqKb8TcLfz8=",
-        "owner": "LarsArtmann",
-        "repo": "file-and-image-renamer",
-        "rev": "74ef22014c3df8f0e2c237a21d561149b685188d",
-        "type": "github"
+        "lastModified": 1789306178,
+        "narHash": "sha256-tx5ioKqoMp45kjzhD7VpR2BvAgvoEqOUG3T3XeYtGa4=",
+        "ref": "refs/heads/master",
+        "rev": "494c9b7a0a80bdda3a2cb31a4b8c8f2ee315f8f3",
+        "revCount": 1171,
+        "type": "git",
+        "url": "file:///home/lars/projects/file-and-image-renamer"
       },
       "original": {
-        "owner": "LarsArtmann",
-        "ref": "master",
-        "repo": "file-and-image-renamer",
-        "type": "github"
+        "rev": "494c9b7a0a80bdda3a2cb31a4b8c8f2ee315f8f3",
+        "type": "git",
+        "url": "file:///home/lars/projects/file-and-image-renamer"
       }
     },
     "flake-compat": {

@@ -253,7 +253,9 @@
 
     # file-and-image-renamer — AI-powered screenshot renaming tool
     file-and-image-renamer = {
-      url = "github:LarsArtmann/file-and-image-renamer?ref=master";
+      # INTERIM local pin (do NOT flip to github: until upstream carries the
+      # vendorHash refresh forced by the go-nix-helpers /vN fix — commit 494c9b7).
+      url = "git+file:///home/lars/projects/file-and-image-renamer?rev=494c9b7a0a80bdda3a2cb31a4b8c8f2ee315f8f3";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-parts.follows = "flake-parts";
       # Without this, the input locks its own go-nix-helpers via git+ssh:
