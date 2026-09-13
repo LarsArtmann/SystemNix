@@ -122,6 +122,15 @@
                   company = "Freelancermap";
                   provider = "freelancermap";
                 }
+                # German defense/clearance GCP search (Sicherheitsüberprüfung,
+                # Verteidigung, Bundeswehr, Rüstung — upstream config.yaml
+                # 2026-09-12): same freelancermap surface as the primary
+                # search, second query axis.
+                {
+                  url = "https://www.freelancermap.de/projekte/web-und-softwareentwicklung?categories%5B0%5D=8&categories%5B1%5D=11&projectContractTypes%5B0%5D=contracting&query=%28%22Sicherheits%C3%BCberpr%C3%BCfung%22+OR+%22Verteidigung%22+OR+%22Bundeswehr%22+OR+%22R%C3%BCstung%22%29&sort=1&pagenr=1";
+                  company = "Freelancermap";
+                  provider = "freelancermap";
+                }
                 {
                   url = "https://www.freelancermap.com/projects";
                   company = "Freelancermap";
@@ -204,6 +213,26 @@
                 {
                   url = "https://jobs.workable.com/search?query=Google+Cloud&workplace=remote&employment_type=contract&employment_type=other";
                   provider = "workable";
+                }
+                # Structured remote-job feeds (upstream 2026-09-09, issue
+                # #601, live-verified): the pure-automation tier — official
+                # public feeds, no accounts, no scraping. WWR's category feed
+                # IS the filter (feed choice, never skill URLs); Remotive is
+                # filtered client-side to engineering categories; RemoteOK is
+                # a firehose — the scanner applies the HN-style tech-signal
+                # pre-filter.
+                {
+                  url = "https://weworkremotely.com/categories/remote-back-end-programming-jobs.rss";
+                  company = "We Work Remotely";
+                  provider = "wwr";
+                }
+                {
+                  url = "https://remotive.com/api/remote-jobs";
+                  provider = "remotive";
+                }
+                {
+                  url = "https://remoteok.com/api";
+                  provider = "remoteok";
                 }
               ];
               # One-click funnel tail. EXPLICITLY DISABLED until gate Q1
