@@ -11,18 +11,18 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1789115659,
-        "narHash": "sha256-I49q9QEbc+lCr30FwFRz1vXLzxllKbYucVx73uF9mKo=",
-        "owner": "LarsArtmann",
-        "repo": "art-dupl",
-        "rev": "3533d6fdfe8ade523b635240bab52af6b9f101eb",
-        "type": "github"
+        "lastModified": 1789302774,
+        "narHash": "sha256-2+XqErGWuOxYWjindujr7FiI1Uonca8QUm9es3CQFQY=",
+        "ref": "refs/heads/fork",
+        "rev": "9c370324dfcfaef23fa60079af0d9ebfcf84a489",
+        "revCount": 2136,
+        "type": "git",
+        "url": "file:///home/lars/projects/art-dupl"
       },
       "original": {
-        "owner": "LarsArtmann",
-        "ref": "fork",
-        "repo": "art-dupl",
-        "type": "github"
+        "rev": "9c370324dfcfaef23fa60079af0d9ebfcf84a489",
+        "type": "git",
+        "url": "file:///home/lars/projects/art-dupl"
       }
     },
     "art-dupl-src": {
@@ -130,18 +130,18 @@
         ]
       },
       "locked": {
-        "lastModified": 1789273113,
-        "narHash": "sha256-hraAMM1p00MHGLEu1jobqxGMTFFrDG4CyrPuRMyTi/U=",
-        "owner": "LarsArtmann",
-        "repo": "branching-flow",
-        "rev": "eedf7ee2a17075ed0e2ba044b0ba0fc4d07ee4c2",
-        "type": "github"
+        "lastModified": 1789304273,
+        "narHash": "sha256-BRclxSCJT2Fp8IthZXIk/+XSQUOxbPc38ai2Qsw67vM=",
+        "ref": "refs/heads/master",
+        "rev": "46000f38ab44a35692bcdb39d0d061501750dd74",
+        "revCount": 2462,
+        "type": "git",
+        "url": "file:///home/lars/projects/branching-flow"
       },
       "original": {
-        "owner": "LarsArtmann",
-        "ref": "master",
-        "repo": "branching-flow",
-        "type": "github"
+        "rev": "46000f38ab44a35692bcdb39d0d061501750dd74",
+        "type": "git",
+        "url": "file:///home/lars/projects/branching-flow"
       }
     },
     "branching-flow_2": {
@@ -2397,18 +2397,18 @@
         ]
       },
       "locked": {
-        "lastModified": 1789292560,
-        "narHash": "sha256-TtPdTuLrFk7nJEhs+iKK03Pn3qv58MBdEGxJ4pmY1Mo=",
-        "ref": "master",
-        "rev": "7d4a6d000144f64460aa0e042f3f50948a8d64f6",
-        "revCount": 6586,
+        "lastModified": 1789304180,
+        "narHash": "sha256-DhatdANLhXOJPNZ8yZAFIQPu5Nv3hlEYKT3U9D56buA=",
+        "ref": "refs/heads/systemnix-cqrs-lint-hashfix",
+        "rev": "d84e4d6a42b2ed368a7d7110b716448d0c4093f9",
+        "revCount": 6624,
         "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
+        "url": "file:///home/lars/worktrees/go-cqrs-lite-hashfix"
       },
       "original": {
-        "ref": "master",
+        "rev": "d84e4d6a42b2ed368a7d7110b716448d0c4093f9",
         "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
+        "url": "file:///home/lars/worktrees/go-cqrs-lite-hashfix"
       }
     },
     "go-cqrs-lite_7": {

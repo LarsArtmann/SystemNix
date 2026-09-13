@@ -414,7 +414,10 @@
     # Go dep inputs (go-finding, go-output, etc.) are NOT followed — overriding
     # flake=false tarballs changes vendored content and breaks vendorHash.
     go-cqrs-lite = {
-      url = "git+ssh://git@github.com/LarsArtmann/go-cqrs-lite?ref=master";
+      # INTERIM local pin (do NOT flip to github: until upstream master carries
+      # the cqrs-lint vendorHash refresh — local worktree commit d84e4d6a).
+      # Upstream HEAD 5cc025c42 shipped a stale cqrs-lint vendorHash.
+      url = "git+file:///home/lars/worktrees/go-cqrs-lite-hashfix?rev=d84e4d6a42b2ed368a7d7110b716448d0c4093f9";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
@@ -426,7 +429,9 @@
 
     # branching-flow — Error context preservation analyzer
     branching-flow = {
-      url = "github:LarsArtmann/branching-flow?ref=master";
+      # INTERIM local pin (do NOT flip to github: until upstream master carries
+      # the samber-linter publicDeps + vendorHash fix — commit 46000f38).
+      url = "git+file:///home/lars/projects/branching-flow?rev=46000f38ab44a35692bcdb39d0d061501750dd74";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
@@ -438,7 +443,9 @@
 
     # art-dupl — Code duplication detector
     art-dupl = {
-      url = "github:LarsArtmann/art-dupl?ref=fork";
+      # INTERIM local pin (do NOT flip to github: until fork branch pushes the
+      # vendorHash refresh — commit 9c370324).
+      url = "git+file:///home/lars/projects/art-dupl?rev=9c370324dfcfaef23fa60079af0d9ebfcf84a489";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
