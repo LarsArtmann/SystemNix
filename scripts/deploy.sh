@@ -41,7 +41,9 @@ trap deploy_exit_record EXIT
 # on crash or SIGKILL — so a dead deploy can never wedge the next one. The
 # holder PID is recorded for diagnostics.
 deploy_lock=/tmp/.systemnix-deploy.lock
-exec 9>"$deploy_lock"
+# Open in APPEND mode: `>` (O_TRUNC) would wipe the holder's recorded PID
+# before flock even runs, so the abort message always showed an empty PID.
+exec 9>>"$deploy_lock"
 if ! flock -n 9; then
   lock_holder=$(cat "$deploy_lock" 2>/dev/null || echo "unknown")
   echo "❌ Another deploy is already running (lock: $deploy_lock, holder PID: $lock_holder)."
