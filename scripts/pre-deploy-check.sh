@@ -509,7 +509,7 @@ if [ -s "$METRICS_FILE" ]; then
     DEPLOYED_METRICS=$(GATUS_CONFIG="$DEPLOYED_GATUS_CFG" extract_gatus_metrics || true)
     AUTO_NEW_METRICS=$(comm -23 <(extract_gatus_metrics) <(printf '%s\n' "$DEPLOYED_METRICS" | sort -u) || true)
     if [ -n "$AUTO_NEW_METRICS" ]; then
-      warn "Auto-derived new-metric loan from the gatus-config diff (absent from the running generation's config): $(echo $AUTO_NEW_METRICS)"
+      warn "Auto-derived new-metric loan from the gatus-config diff (absent from the running generation's config): $(echo "$AUTO_NEW_METRICS" | tr '\n' ' ')"
       KNOWN_NEW_METRICS="$KNOWN_NEW_METRICS $AUTO_NEW_METRICS"
     else
       pass "gatus-config diff: no new metrics vs the running generation (no loan needed)"
