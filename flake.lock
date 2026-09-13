@@ -661,11 +661,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788809556,
-        "narHash": "sha256-3lj+jg8UmMH9Qmnolrk9DOLrcPv39+EHoZERclMQCIc=",
+        "lastModified": 1789133462,
+        "narHash": "sha256-f8wB65fCDBE+27Qz9m3m21yRiBeBeg6388ZlxoJUalU=",
         "owner": "LarsArtmann",
         "repo": "crush-daily",
-        "rev": "6f824474b90ebe2b8e90f2bb88196dc6c92b7733",
+        "rev": "a8047a2fb10ac0402d765482086ca4e193e777b0",
         "type": "github"
       },
       "original": {
@@ -2266,11 +2266,11 @@
     "go-cqrs-lite_3": {
       "flake": false,
       "locked": {
-        "lastModified": 1788803117,
-        "narHash": "sha256-+zOQ0kAYRFmfm78zLWj7JwYEZC/tsQ7X7UnxlfYba9o=",
+        "lastModified": 1788810778,
+        "narHash": "sha256-J74ETMy4kxfEuJH4tqzQKY2DxdqjvtoabiCA46Tu/Q4=",
         "ref": "master",
-        "rev": "52cb7a2af6b1e0ea1c492b28ebb5f498c2d47683",
-        "revCount": 6246,
+        "rev": "1491aa214ef3512f398c534ef409781102495011",
+        "revCount": 6283,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
       },
@@ -2394,11 +2394,11 @@
     "go-crush-data": {
       "flake": false,
       "locked": {
-        "lastModified": 1788616091,
-        "narHash": "sha256-qvAFRApOmghcllYnjLTFjwXhjlNO6CVIzIPvAYgl1tQ=",
+        "lastModified": 1788811505,
+        "narHash": "sha256-3pyeV1Ic1z3c5a1BYaLjLe7+RsTOBtFKHkrhCJPip2A=",
         "ref": "master",
-        "rev": "40b50aecb5de944b5afb2799e0b057527cb0569a",
-        "revCount": 53,
+        "rev": "916f5e175a1e6ee11ac54958383af13064db2e07",
+        "revCount": 55,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-crush-data"
       },
