@@ -44,11 +44,11 @@
     "art-dupl-src_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1788535463,
-        "narHash": "sha256-hJGtjVjWXJzQyTSemFtn4ZFqcuY4/3/xfCw/wFHIM2A=",
+        "lastModified": 1789115659,
+        "narHash": "sha256-I49q9QEbc+lCr30FwFRz1vXLzxllKbYucVx73uF9mKo=",
         "owner": "LarsArtmann",
         "repo": "art-dupl",
-        "rev": "a1a63804bda719d20cb9aee2522c7b46739e8015",
+        "rev": "3533d6fdfe8ade523b635240bab52af6b9f101eb",
         "type": "github"
       },
       "original": {
@@ -812,11 +812,11 @@
         "templ-components": "templ-components_5"
       },
       "locked": {
-        "lastModified": 1788720211,
-        "narHash": "sha256-3uoMRKM7lzA4l2q1w0Sq4zOoplfV0xtf/jIg+VROa7Q=",
+        "lastModified": 1789263329,
+        "narHash": "sha256-bMre79t44PY9R0plAElx/0lTjbciEZno5m3Gv5jOSoI=",
         "owner": "LarsArtmann",
         "repo": "dnsblockd",
-        "rev": "94c9cb93cd8a0ebb59911b40a304b6460504ce31",
+        "rev": "cf2b69019efcf02e7321f244037b3e11ef2ad9a8",
         "type": "github"
       },
       "original": {
@@ -6796,16 +6796,16 @@
     "templ-components_5": {
       "flake": false,
       "locked": {
-        "lastModified": 1788634889,
-        "narHash": "sha256-Mq6rgWNxUMF9/2clA6ymSlmbncP476MBd8ts23kWs8s=",
-        "ref": "refs/tags/v1.13.2",
-        "rev": "6ebfa635ae5bf18bab44eb6e0e49365de7d60be7",
-        "revCount": 1243,
+        "lastModified": 1788922038,
+        "narHash": "sha256-+81ZgvPkSw1cGygPk4Iz2sSh+Y85OvwkJirlPB+Q5dA=",
+        "ref": "refs/tags/v1.16.0",
+        "rev": "74b07e1f5779a9214d9f86fdae91811c464183b2",
+        "revCount": 1456,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/templ-components"
       },
       "original": {
-        "ref": "refs/tags/v1.13.2",
+        "ref": "refs/tags/v1.16.0",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/templ-components"
       }
