@@ -121,6 +121,18 @@ EOF
 metrics_gate_classify_absence "system_pocket_id_busy_scrape_errors"
 expect "warn" "same-deploy metric absent from running scrape → WARN (appears post-switch)"
 
+echo "=== Fixture D2: self-cleaning loan — listed metric already PRESENT → WARN (retire) ==="
+reset_env
+KNOWN_NEW_METRICS="system_pocket_id_busy_scrape_errors"
+cat >"$METRICS_FILE" <<'EOF'
+node_textfile_scrape_error 0
+system_pocket_id_busy_scrape_errors 0
+EOF
+metrics_gate_classify_absence "system_pocket_id_busy_scrape_errors"
+expect "warn" "listed metric present in /metrics → WARN (stale loan masks phantom regressions)"
+metrics_gate_classify_absence "node_textfile_scrape_error"
+expect "pass" "unlisted present metric → pass (self-cleaning only nags listed entries)"
+
 echo "=== Precedence: known-new wins over scan-failed downgrades (order matters) ==="
 reset_env
 KNOWN_NEW_METRICS="system_pocket_id_busy_over_threshold"

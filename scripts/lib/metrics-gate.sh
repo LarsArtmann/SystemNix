@@ -17,7 +17,15 @@
 metrics_gate_classify_absence() {
   local metric="$1"
   if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
-    pass "Metric '$metric' present"
+    # Self-cleaning loan list: an entry ALREADY present in the running
+    # system's /metrics no longer needs its loan — keeping it would mask a
+    # future genuine phantom-metric regression under the same name. WARN
+    # (never block): the gate's job here is to nag the retirement.
+    if echo "$KNOWN_NEW_METRICS" | grep -qw "$metric"; then
+      warn "Metric '$metric' present but STILL LISTED in KNOWN_NEW_METRICS — retire the stale loan entry (it masks phantom regressions)"
+    else
+      pass "Metric '$metric' present"
+    fi
   elif echo "$KNOWN_NEW_METRICS" | grep -qw "$metric"; then
     warn "Metric '$metric' absent (known new metric in this deploy — will appear post-switch)"
   elif echo "$MONITOR365_METRICS" | grep -qw "$metric" && [ "$MONITOR365_UP" = false ]; then

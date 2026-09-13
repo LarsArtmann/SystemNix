@@ -496,6 +496,27 @@ if [ -s "$METRICS_FILE" ]; then
   # metrics the running generation's collector cannot yet emit.
   # shellcheck disable=SC2034
   KNOWN_NEW_METRICS=""
+  # Auto-derivation (2026-09-13, replaces the error-prone manual loan):
+  # metrics referenced by the TO-BE-DEPLOYED gatus config but ABSENT from
+  # the RUNNING generation's config cannot be visible to the running system
+  # yet — exactly the "new in this deploy" class — so they get the WARN
+  # loan automatically, derived from the config diff instead of a
+  # hand-maintained list. The self-cleaning branch in metrics-gate.sh warns
+  # on any loan entry already present in /metrics, so stale loans (the
+  # 11-entry 2026-08-30 backlog) surface on every run until retired.
+  DEPLOYED_GATUS_CFG=$(systemctl cat gatus 2>/dev/null | grep -oE -- '--config\.file[= ][^[:space:]]+' | awk '{print $NF}' | head -1 || true)
+  if [ -n "$DEPLOYED_GATUS_CFG" ] && [ -r "$DEPLOYED_GATUS_CFG" ]; then
+    DEPLOYED_METRICS=$(GATUS_CONFIG="$DEPLOYED_GATUS_CFG" extract_gatus_metrics || true)
+    AUTO_NEW_METRICS=$(comm -23 <(extract_gatus_metrics) <(printf '%s\n' "$DEPLOYED_METRICS" | sort -u) || true)
+    if [ -n "$AUTO_NEW_METRICS" ]; then
+      warn "Auto-derived new-metric loan from the gatus-config diff (absent from the running generation's config): $(echo $AUTO_NEW_METRICS)"
+      KNOWN_NEW_METRICS="$KNOWN_NEW_METRICS $AUTO_NEW_METRICS"
+    else
+      pass "gatus-config diff: no new metrics vs the running generation (no loan needed)"
+    fi
+  else
+    warn "Could not read the running generation's gatus config — new-metric auto-derivation skipped (manual KNOWN_NEW_METRICS still applies)"
+  fi
   for metric in $(extract_gatus_metrics); do
     metrics_gate_classify_absence "$metric" || MISSING_METRICS=$((MISSING_METRICS + 1))
   done
