@@ -14,12 +14,16 @@
 #   4. bank-sync.enable=false: nothing exists at all.
 {
   pkgs,
-  lib ? pkgs.lib,
+  inputs,
   system,
 }:
 let
+  lib = inputs.nixpkgs.lib;
+in
+let
+  # The module file is a flake-parts wrapper (`_: {...}:`) taking no inputs.
   bankSyncWrapper =
-    (import ../modules/nixos/services/bank-sync.nix).flake.nixosModules.bank-sync;
+    ((import ../modules/nixos/services/bank-sync.nix) { }).flake.nixosModules.bank-sync;
 
   # Stub for the UPSTREAM bank-sync module's options (the wrapper only reads
   # enable/package/dataDir and sets addr/wiseApiKeyFile/encryptionKeyFile).
@@ -27,11 +31,23 @@ let
     { ... }:
     {
       options.services.bank-sync = {
-        enable = lib.mkOption { type = lib.types.bool; default = false; };
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+        };
         package = lib.mkOption { type = lib.types.package; };
-        addr = lib.mkOption { type = lib.types.str; default = "127.0.0.1:8097"; };
-        provider = lib.mkOption { type = lib.types.str; default = "wise"; };
-        dataDir = lib.mkOption { type = lib.types.path; default = "/var/lib/bank-sync"; };
+        addr = lib.mkOption {
+          type = lib.types.str;
+          default = "127.0.0.1:8097";
+        };
+        provider = lib.mkOption {
+          type = lib.types.str;
+          default = "wise";
+        };
+        dataDir = lib.mkOption {
+          type = lib.types.path;
+          default = "/var/lib/bank-sync";
+        };
         wiseApiKeyFile = lib.mkOption {
           type = lib.types.nullOr lib.types.path;
           default = null;
@@ -106,10 +122,9 @@ let
     }
     {
       name = "oneshot-points-at-shared-db";
-      pass =
-        builtins.any (
-          e: lib.hasPrefix "BANK_SYNC_DATABASE_PATH=/mnt/pool/services/bank-sync" e
-        ) oneshot.serviceConfig.Environment;
+      pass = builtins.any (
+        e: lib.hasPrefix "BANK_SYNC_DATABASE_PATH=/mnt/pool/services/bank-sync" e
+      ) oneshot.serviceConfig.Environment;
     }
     {
       name = "oneshot-mount-gated-on-datadir";
@@ -122,8 +137,7 @@ let
     {
       name = "timer-fires-sunday-0300";
       pass =
-        archivalOn.systemd.timers.bank-sync-paperless.timerConfig.OnCalendar
-        == "Sun *-*-* 03:00:00"
+        archivalOn.systemd.timers.bank-sync-paperless.timerConfig.OnCalendar == "Sun *-*-* 03:00:00"
         && archivalOn.systemd.timers.bank-sync-paperless.timerConfig.Persistent;
     }
     {

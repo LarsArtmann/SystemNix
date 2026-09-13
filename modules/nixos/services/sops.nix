@@ -220,13 +220,19 @@ in
                 group = "bank-sync";
                 restartUnits = [ "bank-sync.service" ];
               } [ "encryption_key" ]
-              // mkSecrets "bank-sync-paperless.yaml" {
-                owner = "bank-sync";
-                group = "bank-sync";
-                # Only the archival oneshot consumes these; rotating the
-                # archive token must not restart the sync daemon.
-                restartUnits = [ "bank-sync-paperless.service" ];
-              } [ "paperless_url" "paperless_token" ]
+              //
+                mkSecrets "bank-sync-paperless.yaml"
+                  {
+                    owner = "bank-sync";
+                    group = "bank-sync";
+                    # Only the archival oneshot consumes these; rotating the
+                    # archive token must not restart the sync daemon.
+                    restartUnits = [ "bank-sync-paperless.service" ];
+                  }
+                  [
+                    "paperless_url"
+                    "paperless_token"
+                  ]
             )
             // lib.optionalAttrs (svcEnabled "file-and-image-renamer") (
               mkKeyedSecrets "crush-daily.yaml"
