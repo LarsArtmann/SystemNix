@@ -19,45 +19,41 @@
 }:
 let
   lib = inputs.nixpkgs.lib;
-in
-let
   # The module file is a flake-parts wrapper (`_: {...}:`) taking no inputs.
   bankSyncWrapper =
     ((import ../modules/nixos/services/bank-sync.nix) { }).flake.nixosModules.bank-sync;
 
   # Stub for the UPSTREAM bank-sync module's options (the wrapper only reads
   # enable/package/dataDir and sets addr/wiseApiKeyFile/encryptionKeyFile).
-  upstreamStub =
-    { ... }:
-    {
-      options.services.bank-sync = {
-        enable = lib.mkOption {
-          type = lib.types.bool;
-          default = false;
-        };
-        package = lib.mkOption { type = lib.types.package; };
-        addr = lib.mkOption {
-          type = lib.types.str;
-          default = "127.0.0.1:8097";
-        };
-        provider = lib.mkOption {
-          type = lib.types.str;
-          default = "wise";
-        };
-        dataDir = lib.mkOption {
-          type = lib.types.path;
-          default = "/var/lib/bank-sync";
-        };
-        wiseApiKeyFile = lib.mkOption {
-          type = lib.types.nullOr lib.types.path;
-          default = null;
-        };
-        encryptionKeyFile = lib.mkOption {
-          type = lib.types.nullOr lib.types.path;
-          default = null;
-        };
+  upstreamStub = _: {
+    options.services.bank-sync = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+      };
+      package = lib.mkOption { type = lib.types.package; };
+      addr = lib.mkOption {
+        type = lib.types.str;
+        default = "127.0.0.1:8097";
+      };
+      provider = lib.mkOption {
+        type = lib.types.str;
+        default = "wise";
+      };
+      dataDir = lib.mkOption {
+        type = lib.types.path;
+        default = "/var/lib/bank-sync";
+      };
+      wiseApiKeyFile = lib.mkOption {
+        type = lib.types.nullOr lib.types.path;
+        default = null;
+      };
+      encryptionKeyFile = lib.mkOption {
+        type = lib.types.nullOr lib.types.path;
+        default = null;
       };
     };
+  };
 
   # sops-nix stub: the wrapper reads templates."<name>".path.
   sopsStub =
